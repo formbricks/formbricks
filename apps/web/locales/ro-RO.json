@@ -3989,7 +3989,7 @@
       "import": {
         "ai_note": "Formbricks AI mapează întrebările. Logica nu este importată; raportul listează fiecare regulă.",
         "card_description": "Transformă un export de sondaj Qualtrics (.qsf) într-un sondaj ciornă.",
-        "card_title": "Importă sondaj",
+        "card_title": "Importă un sondaj Qualtrics",
         "dialog_description": "Formbricks AI transformă exportul tău Qualtrics într-o ciornă pe care o poți verifica înainte de a o deschide.",
         "dialog_title": "Importă un sondaj Qualtrics",
         "discard_draft_body": "Ciorna importată nu a fost încă deschisă în editor. Dacă închizi, va fi eliminată.",
@@ -4039,6 +4039,7 @@
         "issues": {
           "choice_dropped": "O opțiune a fost omisă deoarece ID-ul ei nu a putut fi citit.",
           "choice_label_renamed": "Etichetele repetate ale opțiunilor au fost numerotate pentru ca fiecare să fie distinctă.",
+          "ending_added": "Fișierul nu conține un mesaj de final, așa că a fost adăugat un final implicit.",
           "external_url_removed": "Un link a fost eliminat deoarece planul tău nu permite linkuri externe.",
           "field_dropped": "{count, plural, one {# câmp de date încorporate a fost omis} few {# câmpuri de date încorporate au fost omise} other {# de câmpuri de date încorporate au fost omise}}: sondajul nu poate conține mai multe.",
           "field_renamed": "Câmpul de date încorporate „{from}” a fost redenumit în „{to}”.",
@@ -4065,10 +4066,10 @@
           "question_skipped_validation_failed": "Întrebare omisă: întrebarea convertită nu a trecut verificările sondajului.",
           "script_dropped": "Un script a fost eliminat din textul întrebării.",
           "text_too_long": "Un text era prea lung pentru a fi importat și a fost omis.",
-          "translation_fallback": "{count, plural, one {# text lipsea} few {# texte lipseau} other {# de texte lipseau}} în {language}, așa că se folosește textul din limba implicită.",
+          "translation_missing": "{count, plural, one {# text lipsește} few {# texte lipsesc} other {# de texte lipsesc}} în {language}, așa că limba este dezactivată. Adaugă textele lipsă în editor, apoi activeaz-o.",
           "unknown": "Ceva din această întrebare a fost modificat în timpul importului."
         },
-        "menu_item": "Importă sondajul",
+        "menu_item": "Importă un sondaj Qualtrics",
         "pick_another_file": "Alege alt fișier",
         "progress": {
           "ai": "Se mapează întrebările cu AI",
@@ -4092,18 +4093,11 @@
         },
         "reading_file": "Se citește fișierul…",
         "report": {
-          "copied": "Raport copiat",
-          "copy": "Copiază",
-          "copy_failed": "Raportul nu a putut fi copiat.",
-          "download": "Descarcă",
           "empty": "Nu a fost omis nimic",
           "ending": "Final",
-          "note": "Notă",
           "summary_notes": "{count, plural, one {# notă} few {# note} other {# de note}}",
           "summary_warnings": "{count, plural, one {# avertisment} few {# avertismente} other {# de avertismente}}",
-          "text_title": "Raport de import Qualtrics: {fileName}",
-          "title": "Raport de import",
-          "warning": "Avertisment"
+          "title": "Raport de import"
         },
         "your_file": "Fișierul tău"
       },

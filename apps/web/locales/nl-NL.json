@@ -3989,7 +3989,7 @@
       "import": {
         "ai_note": "Formbricks AI koppelt de vragen. Logica wordt niet geïmporteerd; het rapport vermeldt elke regel.",
         "card_description": "Zet een Qualtrics-enquête-export (.qsf) om in een conceptenquête.",
-        "card_title": "Enquête importeren",
+        "card_title": "Qualtrics-vragenlijst importeren",
         "dialog_description": "Formbricks AI zet je Qualtrics-export om in een concept dat je kunt controleren voordat je het opent.",
         "dialog_title": "Een Qualtrics-enquête importeren",
         "discard_draft_body": "Het geïmporteerde concept is nog niet geopend in de editor. Als je sluit, wordt het verwijderd.",
@@ -4039,6 +4039,7 @@
         "issues": {
           "choice_dropped": "Een optie is weggelaten omdat de bijbehorende ID niet gelezen kon worden.",
           "choice_label_renamed": "Herhaalde optielabels zijn genummerd, zodat ze allemaal uniek zijn.",
+          "ending_added": "Het bestand bevat geen afsluitend bericht, dus er is een standaardafsluiting toegevoegd.",
           "external_url_removed": "Een link is verwijderd omdat externe links niet zijn toegestaan in je abonnement.",
           "field_dropped": "{count, plural, one {# embedded data-veld is} other {# embedded data-velden zijn}} weggelaten: de enquête kan er niet meer bevatten.",
           "field_renamed": "Embedded data-veld \"{from}\" is hernoemd naar \"{to}\".",
@@ -4065,10 +4066,10 @@
           "question_skipped_validation_failed": "Vraag overgeslagen: de omgezette vraag is niet door de enquêtecontroles gekomen.",
           "script_dropped": "Er is een script verwijderd uit de vraagtekst.",
           "text_too_long": "Een tekst was te lang om te importeren en is weggelaten.",
-          "translation_fallback": "{count, plural, one {# tekst ontbrak} other {# teksten ontbraken}} in het {language}, dus wordt de tekst in de standaardtaal gebruikt.",
+          "translation_missing": "Er {count, plural, one {ontbreekt # tekst} other {ontbreken # teksten}} in het {language}, dus de taal is uitgezet. Voeg de ontbrekende teksten toe in de editor en zet de taal daarna weer aan.",
           "unknown": "Er is tijdens het importeren iets aangepast in deze vraag."
         },
-        "menu_item": "Enquête importeren",
+        "menu_item": "Qualtrics-vragenlijst importeren",
         "pick_another_file": "Kies een ander bestand",
         "progress": {
           "ai": "Vragen koppelen met AI",
@@ -4092,18 +4093,11 @@
         },
         "reading_file": "Bestand lezen…",
         "report": {
-          "copied": "Rapport gekopieerd",
-          "copy": "Kopiëren",
-          "copy_failed": "Het rapport kon niet worden gekopieerd.",
-          "download": "Downloaden",
           "empty": "Er is niets weggelaten",
           "ending": "Einde",
-          "note": "Opmerking",
           "summary_notes": "{count, plural, one {# opmerking} other {# opmerkingen}}",
           "summary_warnings": "{count, plural, one {# waarschuwing} other {# waarschuwingen}}",
-          "text_title": "Qualtrics-importrapport: {fileName}",
-          "title": "Importrapport",
-          "warning": "Waarschuwing"
+          "title": "Importrapport"
         },
         "your_file": "Jouw bestand"
       },

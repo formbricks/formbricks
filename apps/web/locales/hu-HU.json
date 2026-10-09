@@ -3989,7 +3989,7 @@
       "import": {
         "ai_note": "A Formbricks AI megfelelteti egymásnak a kérdéseket. A logika importálása nem történik meg; a jelentés minden szabályt felsorol.",
         "card_description": "Qualtrics-felmérés exportfájljának (.qsf) átalakítása felmérésvázlattá.",
-        "card_title": "Felmérés importálása",
+        "card_title": "Qualtrics-felmérés importálása",
         "dialog_description": "A Formbricks AI a Qualtrics-exportot olyan vázlattá alakítja, amelyet megnyitás előtt áttekinthet.",
         "dialog_title": "Qualtrics-felmérés importálása",
         "discard_draft_body": "Az importált vázlat még nem lett megnyitva a szerkesztőben. A bezárással a vázlat elvetésre kerül.",
@@ -4039,6 +4039,7 @@
         "issues": {
           "choice_dropped": "Egy válaszlehetőség kimaradt, mivel az azonosítóját nem sikerült beolvasni.",
           "choice_label_renamed": "Az ismétlődő válaszlehetőség-címkék sorszámozásra kerültek, hogy mindegyik egyedi legyen.",
+          "ending_added": "A fájl nem tartalmaz záró üzenetet, ezért egy alapértelmezett befejezés került hozzáadásra.",
           "external_url_removed": "Egy hivatkozás eltávolításra került, mivel az Ön előfizetési csomagja nem engedélyezi a külső hivatkozásokat.",
           "field_dropped": "{count, plural, one {# beágyazott adatmező} other {# beágyazott adatmező}} kimaradt: a kérdőív nem tartalmazhat többet.",
           "field_renamed": "A(z) \"{from}\" beágyazott adatmező átnevezésre került a következőre: \"{to}\".",
@@ -4065,10 +4066,10 @@
           "question_skipped_validation_failed": "A kérdés kimaradt: az átalakított kérdés nem felelt meg a kérdőív-ellenőrzéseknek.",
           "script_dropped": "A kérdés szövegéből egy szkript eltávolításra került.",
           "text_too_long": "Egy szöveg túl hosszú volt az importáláshoz, ezért kimaradt.",
-          "translation_fallback": "{count, plural, one {# szöveg hiányzott} other {# szöveg hiányzott}} a(z) {language} nyelvből, ezért az alapértelmezett nyelvű szöveg kerül felhasználásra.",
+          "translation_missing": "A(z) {language} nyelvből {count, plural, one {# szöveg hiányzik} other {# szöveg hiányzik}}, ezért a nyelv kikapcsolásra került. Kérjük, pótolja a hiányzó szövegeket a szerkesztőben, majd kapcsolja be a nyelvet.",
           "unknown": "Az importálás során a kérdés egy eleme módosult."
         },
-        "menu_item": "Felmérés importálása",
+        "menu_item": "Qualtrics-felmérés importálása",
         "pick_another_file": "Másik fájl kiválasztása",
         "progress": {
           "ai": "Kérdések leképezése mesterséges intelligenciával",
@@ -4092,18 +4093,11 @@
         },
         "reading_file": "A fájl beolvasása…",
         "report": {
-          "copied": "A jelentés másolásra került",
-          "copy": "Másolás",
-          "copy_failed": "A jelentést nem sikerült kimásolni.",
-          "download": "Letöltés",
           "empty": "Semmi sem maradt ki",
           "ending": "Zárás",
-          "note": "Megjegyzés",
           "summary_notes": "{count, plural, one {# megjegyzés} other {# megjegyzés}}",
           "summary_warnings": "{count, plural, one {# figyelmeztetés} other {# figyelmeztetés}}",
-          "text_title": "Qualtrics-importálási jelentés: {fileName}",
-          "title": "Importálási jelentés",
-          "warning": "Figyelmeztetés"
+          "title": "Importálási jelentés"
         },
         "your_file": "Az Ön fájlja"
       },

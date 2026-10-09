@@ -3989,7 +3989,7 @@
       "import": {
         "ai_note": "Formbricks AIが質問をマッピングします。ロジックはインポートされません。レポートにすべてのルールが一覧表示されます。",
         "card_description": "Qualtricsのアンケートエクスポート(.qsf)をアンケートの下書きに変換します。",
-        "card_title": "アンケートをインポート",
+        "card_title": "Qualtricsアンケートをインポート",
         "dialog_description": "Formbricks AIが、Qualtricsのエクスポートファイルを、開く前に確認できる下書きに変換します。",
         "dialog_title": "Qualtricsのアンケートをインポート",
         "discard_draft_body": "インポートした下書きは、まだエディターで開かれていません。閉じると破棄されます。",
@@ -4039,6 +4039,7 @@
         "issues": {
           "choice_dropped": "IDを読み取れなかったため、選択肢が1つ除外されました。",
           "choice_label_renamed": "重複していた選択肢のラベルに番号を付けて、区別できるようにしました。",
+          "ending_added": "ファイルに終了メッセージがなかったため、デフォルトのエンディングを追加しました。",
           "external_url_removed": "ご利用のプランでは外部リンクが許可されていないため、リンクを削除しました。",
           "field_dropped": "{count, plural, other {#個の埋め込みデータフィールド}}を除外しました。アンケートに保存できる上限を超えています。",
           "field_renamed": "埋め込みデータフィールド「{from}」を「{to}」に名前変更しました。",
@@ -4065,10 +4066,10 @@
           "question_skipped_validation_failed": "質問をスキップしました: 変換後の質問がアンケートのチェックに合格しませんでした。",
           "script_dropped": "質問文からスクリプトが削除されました。",
           "text_too_long": "長すぎてインポートできなかったテキストがあり、除外されました。",
-          "translation_fallback": "{language}で{count, plural, other {#件のテキスト}}が見つからなかったため、デフォルト言語のテキストを使用しています。",
+          "translation_missing": "{language}で{count, plural, other {#件のテキストが}}不足しているため、この言語はオフになっています。エディターで不足しているテキストを追加してから、オンにしてください。",
           "unknown": "インポート中に、この質問の一部が変更されました。"
         },
-        "menu_item": "アンケートをインポート",
+        "menu_item": "Qualtricsアンケートをインポート",
         "pick_another_file": "別のファイルを選択",
         "progress": {
           "ai": "AIで質問をマッピング中",
@@ -4092,18 +4093,11 @@
         },
         "reading_file": "ファイルを読み込み中…",
         "report": {
-          "copied": "レポートをコピーしました",
-          "copy": "コピー",
-          "copy_failed": "レポートをコピーできませんでした。",
-          "download": "ダウンロード",
           "empty": "除外された項目はありません",
           "ending": "エンディング",
-          "note": "メモ",
           "summary_notes": "{count, plural, other {メモ#件}}",
           "summary_warnings": "{count, plural, other {警告#件}}",
-          "text_title": "Qualtricsインポートレポート: {fileName}",
-          "title": "インポートレポート",
-          "warning": "警告"
+          "title": "インポートレポート"
         },
         "your_file": "あなたのファイル"
       },

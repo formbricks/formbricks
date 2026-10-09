@@ -3989,7 +3989,7 @@
       "import": {
         "ai_note": "Formbricks AI asigna las preguntas. La lógica no se importa; el informe enumera cada regla.",
         "card_description": "Convierte una exportación de encuesta de Qualtrics (.qsf) en una encuesta en borrador.",
-        "card_title": "Importar encuesta",
+        "card_title": "Importar encuesta de Qualtrics",
         "dialog_description": "Formbricks AI convierte tu exportación de Qualtrics en un borrador que puedes revisar antes de abrirlo.",
         "dialog_title": "Importar una encuesta de Qualtrics",
         "discard_draft_body": "El borrador importado aún no se ha abierto en el editor. Si lo cierras, se descartará.",
@@ -4039,6 +4039,7 @@
         "issues": {
           "choice_dropped": "Se ha omitido una opción porque no se pudo leer su ID.",
           "choice_label_renamed": "Se han numerado las etiquetas de opción repetidas para que cada una sea distinta.",
+          "ending_added": "El archivo no tiene mensaje de cierre, así que se ha añadido un final predeterminado.",
           "external_url_removed": "Se ha eliminado un enlace porque tu plan no permite enlaces externos.",
           "field_dropped": "{count, plural, one {Se ha omitido # campo de datos incrustados} other {Se han omitido # campos de datos incrustados}}: la encuesta no admite más.",
           "field_renamed": "El campo de datos incrustados \"{from}\" se ha renombrado a \"{to}\".",
@@ -4065,10 +4066,10 @@
           "question_skipped_validation_failed": "Pregunta omitida: la pregunta convertida no superó las comprobaciones de la encuesta.",
           "script_dropped": "Se ha eliminado un script del texto de la pregunta.",
           "text_too_long": "Un texto era demasiado largo para importarlo y se ha omitido.",
-          "translation_fallback": "{count, plural, one {Falta # texto} other {Faltan # textos}} en {language}, así que se usa el texto del idioma predeterminado.",
+          "translation_missing": "{count, plural, one {Falta # texto} other {Faltan # textos}} en {language}, así que el idioma está desactivado. Añade los textos que faltan en el editor y luego actívalo.",
           "unknown": "Algo de esta pregunta se ha modificado durante la importación."
         },
-        "menu_item": "Importar encuesta",
+        "menu_item": "Importar encuesta de Qualtrics",
         "pick_another_file": "Elegir otro archivo",
         "progress": {
           "ai": "Asignando preguntas con IA",
@@ -4092,18 +4093,11 @@
         },
         "reading_file": "Leyendo archivo…",
         "report": {
-          "copied": "Informe copiado",
-          "copy": "Copiar",
-          "copy_failed": "No se ha podido copiar el informe.",
-          "download": "Descargar",
           "empty": "No se ha omitido nada",
           "ending": "Final",
-          "note": "Nota",
           "summary_notes": "{count, plural, one {# nota} other {# notas}}",
           "summary_warnings": "{count, plural, one {# advertencia} other {# advertencias}}",
-          "text_title": "Informe de importación de Qualtrics: {fileName}",
-          "title": "Informe de importación",
-          "warning": "Advertencia"
+          "title": "Informe de importación"
         },
         "your_file": "Tu archivo"
       },

@@ -3989,7 +3989,7 @@
       "import": {
         "ai_note": "Formbricks AI associe les questions. La logique n'est pas importée ; le rapport liste chaque règle.",
         "card_description": "Transforme un export d'enquête Qualtrics (.qsf) en brouillon d'enquête.",
-        "card_title": "Importer une enquête",
+        "card_title": "Importer une enquête Qualtrics",
         "dialog_description": "Formbricks AI transforme ton export Qualtrics en un brouillon que tu peux relire avant de l'ouvrir.",
         "dialog_title": "Importer une enquête Qualtrics",
         "discard_draft_body": "Le brouillon importé n'a pas encore été ouvert dans l'éditeur. Si tu fermes, il sera supprimé.",
@@ -4039,6 +4039,7 @@
         "issues": {
           "choice_dropped": "Une option a été ignorée, car son identifiant n'a pas pu être lu.",
           "choice_label_renamed": "Les libellés d'options en double ont été numérotés pour que chacun soit unique.",
+          "ending_added": "Le fichier ne contient pas de message de fin, alors une fin par défaut a été ajoutée.",
           "external_url_removed": "Un lien a été supprimé, car votre formule n'autorise pas les liens externes.",
           "field_dropped": "{count, plural, one {# champ de données intégrées a été omis} many {# de champs de données intégrées ont été omis} other {# champs de données intégrées ont été omis}} : l'enquête ne peut pas en contenir davantage.",
           "field_renamed": "Le champ de données intégrées « {from} » a été renommé en « {to} ».",
@@ -4065,10 +4066,10 @@
           "question_skipped_validation_failed": "Question ignorée : la question convertie n'a pas passé les vérifications de l'enquête.",
           "script_dropped": "Un script a été supprimé du texte de la question.",
           "text_too_long": "Un texte était trop long pour être importé et a été ignoré.",
-          "translation_fallback": "{count, plural, one {# texte était manquant} other {# textes étaient manquants}} en {language}, c'est donc le texte de la langue par défaut qui est utilisé.",
+          "translation_missing": "{count, plural, one {# texte est manquant} many {# de textes sont manquants} other {# textes sont manquants}} en {language}, donc la langue est désactivée. Ajoute les textes manquants dans l'éditeur, puis réactive-la.",
           "unknown": "Un élément de cette question a été modifié pendant l'importation."
         },
-        "menu_item": "Importer une enquête",
+        "menu_item": "Importer une enquête Qualtrics",
         "pick_another_file": "Choisir un autre fichier",
         "progress": {
           "ai": "Association des questions avec l'IA",
@@ -4092,18 +4093,11 @@
         },
         "reading_file": "Lecture du fichier…",
         "report": {
-          "copied": "Rapport copié",
-          "copy": "Copier",
-          "copy_failed": "Impossible de copier le rapport.",
-          "download": "Télécharger",
           "empty": "Rien n'a été laissé de côté",
           "ending": "Fin",
-          "note": "Remarque",
           "summary_notes": "{count, plural, one {# remarque} many {# de remarques} other {# remarques}}",
           "summary_warnings": "{count, plural, one {# avertissement} many {# d'avertissements} other {# avertissements}}",
-          "text_title": "Rapport d'importation Qualtrics : {fileName}",
-          "title": "Rapport d'importation",
-          "warning": "Avertissement"
+          "title": "Rapport d'importation"
         },
         "your_file": "Votre fichier"
       },

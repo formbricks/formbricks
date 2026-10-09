@@ -3989,7 +3989,7 @@
       "import": {
         "ai_note": "A IA do Formbricks mapeia as perguntas. A lógica não é importada; o relatório apresenta todas as regras.",
         "card_description": "Transforme uma exportação de inquérito do Qualtrics (.qsf) num rascunho de inquérito.",
-        "card_title": "Importar inquérito",
+        "card_title": "Importar inquérito do Qualtrics",
         "dialog_description": "A IA do Formbricks transforma a tua exportação do Qualtrics num rascunho que podes rever antes de o abrires.",
         "dialog_title": "Importar um inquérito do Qualtrics",
         "discard_draft_body": "O rascunho importado ainda não foi aberto no editor. Se fechares, será descartado.",
@@ -4039,6 +4039,7 @@
         "issues": {
           "choice_dropped": "Uma opção foi omitida porque não foi possível ler o respetivo ID.",
           "choice_label_renamed": "As etiquetas de opções repetidas foram numeradas para que cada uma seja distinta.",
+          "ending_added": "O ficheiro não tem mensagem de encerramento, por isso foi adicionado um final predefinido.",
           "external_url_removed": "Uma ligação foi removida porque o seu plano não permite ligações externas.",
           "field_dropped": "{count, plural, one {# campo de dados incorporados foi deixado} other {# campos de dados incorporados foram deixados}} de fora: o inquérito não consegue comportar mais.",
           "field_renamed": "O campo de dados incorporados \"{from}\" foi renomeado para \"{to}\".",
@@ -4065,10 +4066,10 @@
           "question_skipped_validation_failed": "Pergunta ignorada: a pergunta convertida não passou nas verificações do inquérito.",
           "script_dropped": "Foi removido um script do texto da pergunta.",
           "text_too_long": "Um texto era demasiado longo para ser importado e foi omitido.",
-          "translation_fallback": "{count, plural, one {Falta # texto} other {Faltam # textos}} em {language}, por isso é utilizado o texto do idioma predefinido.",
+          "translation_missing": "{count, plural, one {Falta # texto} other {Faltam # textos}} em {language}, por isso o idioma foi desativado. Adicione os textos em falta no editor e depois ative-o.",
           "unknown": "Algo nesta pergunta foi alterado durante a importação."
         },
-        "menu_item": "Importar inquérito",
+        "menu_item": "Importar inquérito do Qualtrics",
         "pick_another_file": "Escolher outro ficheiro",
         "progress": {
           "ai": "A mapear perguntas com IA",
@@ -4092,18 +4093,11 @@
         },
         "reading_file": "A ler o ficheiro…",
         "report": {
-          "copied": "Relatório copiado",
-          "copy": "Copiar",
-          "copy_failed": "Não foi possível copiar o relatório.",
-          "download": "Transferir",
           "empty": "Nada ficou de fora",
           "ending": "Final",
-          "note": "Nota",
           "summary_notes": "{count, plural, one {# nota} other {# notas}}",
           "summary_warnings": "{count, plural, one {# aviso} other {# avisos}}",
-          "text_title": "Relatório de importação do Qualtrics: {fileName}",
-          "title": "Relatório de importação",
-          "warning": "Aviso"
+          "title": "Relatório de importação"
         },
         "your_file": "O seu ficheiro"
       },

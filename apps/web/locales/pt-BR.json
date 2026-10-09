@@ -3989,7 +3989,7 @@
       "import": {
         "ai_note": "A IA do Formbricks mapeia as perguntas. A lógica não é importada; o relatório lista todas as regras.",
         "card_description": "Transforme a exportação de uma pesquisa do Qualtrics (.qsf) em um rascunho de pesquisa.",
-        "card_title": "Importar pesquisa",
+        "card_title": "Importar pesquisa do Qualtrics",
         "dialog_description": "A IA do Formbricks transforma sua exportação do Qualtrics em um rascunho que você pode revisar antes de abri-lo.",
         "dialog_title": "Importar uma pesquisa do Qualtrics",
         "discard_draft_body": "O rascunho importado ainda não foi aberto no editor. Se você fechar, ele será descartado.",
@@ -4039,6 +4039,7 @@
         "issues": {
           "choice_dropped": "Uma opção foi deixada de fora porque não foi possível ler o ID dela.",
           "choice_label_renamed": "Os rótulos de opções repetidos foram numerados para que cada um seja distinto.",
+          "ending_added": "O arquivo não tem mensagem de encerramento, então um final padrão foi adicionado.",
           "external_url_removed": "Um link foi removido porque seu plano não permite links externos.",
           "field_dropped": "{count, plural, one {# campo de dados incorporados foi deixado} other {# campos de dados incorporados foram deixados}} de fora: a pesquisa não comporta mais.",
           "field_renamed": "O campo de dados incorporados \"{from}\" foi renomeado para \"{to}\".",
@@ -4065,10 +4066,10 @@
           "question_skipped_validation_failed": "Pergunta ignorada: a pergunta convertida não passou nas verificações da pesquisa.",
           "script_dropped": "Um script foi removido do texto da pergunta.",
           "text_too_long": "Um texto era longo demais para ser importado e foi deixado de fora.",
-          "translation_fallback": "{count, plural, one {# texto não foi encontrado} many {# de textos não foram encontrados} other {# textos não foram encontrados}} em {language}, então o texto do idioma padrão será usado.",
+          "translation_missing": "{count, plural, one {# texto está faltando} many {# de textos estão faltando} other {# textos estão faltando}} em {language}, então o idioma foi desativado. Adicione os textos que faltam no editor e depois ative o idioma novamente.",
           "unknown": "Algo nesta pergunta foi alterado durante a importação."
         },
-        "menu_item": "Importar pesquisa",
+        "menu_item": "Importar pesquisa do Qualtrics",
         "pick_another_file": "Escolher outro arquivo",
         "progress": {
           "ai": "Mapeando perguntas com IA",
@@ -4092,18 +4093,11 @@
         },
         "reading_file": "Lendo arquivo…",
         "report": {
-          "copied": "Relatório copiado",
-          "copy": "Copiar",
-          "copy_failed": "Não foi possível copiar o relatório.",
-          "download": "Baixar",
           "empty": "Nada foi deixado de fora",
           "ending": "Final",
-          "note": "Observação",
           "summary_notes": "{count, plural, one {# observação} other {# observações}}",
           "summary_warnings": "{count, plural, one {# aviso} other {# avisos}}",
-          "text_title": "Relatório de importação do Qualtrics: {fileName}",
-          "title": "Relatório de importação",
-          "warning": "Aviso"
+          "title": "Relatório de importação"
         },
         "your_file": "Seu arquivo"
       },

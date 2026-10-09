@@ -3989,7 +3989,7 @@
       "import": {
         "ai_note": "Formbricks AI ordnet die Fragen zu. Logik wird nicht importiert; der Bericht listet jede Regel auf.",
         "card_description": "Verwandle einen Qualtrics-Umfrage-Export (.qsf) in einen Umfrageentwurf.",
-        "card_title": "Umfrage importieren",
+        "card_title": "Qualtrics-Umfrage importieren",
         "dialog_description": "Formbricks AI verwandelt Deinen Qualtrics-Export in einen Entwurf, den Du prüfen kannst, bevor Du ihn öffnest.",
         "dialog_title": "Qualtrics-Umfrage importieren",
         "discard_draft_body": "Der importierte Entwurf wurde noch nicht im Editor geöffnet. Wenn Du schließt, wird er verworfen.",
@@ -4039,6 +4039,7 @@
         "issues": {
           "choice_dropped": "Eine Option wurde ausgelassen, weil ihre ID nicht gelesen werden konnte.",
           "choice_label_renamed": "Mehrfach vorkommende Optionsbezeichnungen wurden nummeriert, damit jede eindeutig ist.",
+          "ending_added": "Die Datei enthält keine Abschlussnachricht, daher wurde ein Standardabschluss hinzugefügt.",
           "external_url_removed": "Ein Link wurde entfernt, weil dein Tarif keine externen Links zulässt.",
           "field_dropped": "{count, plural, one {# Embedded-Data-Feld wurde} other {# Embedded-Data-Felder wurden}} ausgelassen: Mehr passen nicht in die Umfrage.",
           "field_renamed": "Das Embedded-Data-Feld \"{from}\" wurde in \"{to}\" umbenannt.",
@@ -4065,10 +4066,10 @@
           "question_skipped_validation_failed": "Frage übersprungen: Die konvertierte Frage hat die Umfrageprüfungen nicht bestanden.",
           "script_dropped": "Ein Skript wurde aus dem Fragetext entfernt.",
           "text_too_long": "Ein Text war zu lang für den Import und wurde weggelassen.",
-          "translation_fallback": "{count, plural, one {# Text fehlte} other {# Texte fehlten}} in {language}, deshalb wird stattdessen der Text in der Standardsprache verwendet.",
+          "translation_missing": "{count, plural, one {# Text fehlt} other {# Texte fehlen}} in {language}, weshalb die Sprache deaktiviert ist. Füge die fehlenden Texte im Editor hinzu und aktiviere die Sprache dann wieder.",
           "unknown": "Beim Import wurde etwas an dieser Frage geändert."
         },
-        "menu_item": "Umfrage importieren",
+        "menu_item": "Qualtrics-Umfrage importieren",
         "pick_another_file": "Andere Datei auswählen",
         "progress": {
           "ai": "Fragen werden mit KI zugeordnet",
@@ -4092,18 +4093,11 @@
         },
         "reading_file": "Datei wird gelesen…",
         "report": {
-          "copied": "Bericht kopiert",
-          "copy": "Kopieren",
-          "copy_failed": "Der Bericht konnte nicht kopiert werden.",
-          "download": "Herunterladen",
           "empty": "Es wurde nichts ausgelassen",
           "ending": "Abschluss",
-          "note": "Hinweis",
           "summary_notes": "{count, plural, one {# Hinweis} other {# Hinweise}}",
           "summary_warnings": "{count, plural, one {# Warnung} other {# Warnungen}}",
-          "text_title": "Qualtrics-Importbericht: {fileName}",
-          "title": "Importbericht",
-          "warning": "Warnung"
+          "title": "Importbericht"
         },
         "your_file": "Deine Datei"
       },

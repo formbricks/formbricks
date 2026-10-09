@@ -3989,7 +3989,7 @@
       "import": {
         "ai_note": "Formbricks AI soruları eşleştirir. Mantık (logic) içe aktarılmaz; rapor her kuralı listeler.",
         "card_description": "Qualtrics anket dışa aktarımını (.qsf) taslak ankete dönüştür.",
-        "card_title": "Anketi içe aktar",
+        "card_title": "Qualtrics anketini içe aktar",
         "dialog_description": "Formbricks AI, Qualtrics dışa aktarımını açmadan önce gözden geçirebileceğin bir taslağa dönüştürür.",
         "dialog_title": "Qualtrics anketini içe aktar",
         "discard_draft_body": "İçe aktarılan taslak henüz düzenleyicide açılmadı. Kapatırsan taslak silinir.",
@@ -4039,6 +4039,7 @@
         "issues": {
           "choice_dropped": "Kimliği okunamadığı için bir seçenek dışarıda bırakıldı.",
           "choice_label_renamed": "Tekrarlanan seçenek etiketleri, her biri benzersiz olsun diye numaralandırıldı.",
+          "ending_added": "Dosyada bitiş mesajı olmadığı için varsayılan bir bitiş eklendi.",
           "external_url_removed": "Planın harici bağlantılara izin vermediği için bir bağlantı kaldırıldı.",
           "field_dropped": "{count, plural, one {# gömülü veri alanı} other {# gömülü veri alanı}} dışarıda bırakıldı: anket daha fazlasını barındıramıyor.",
           "field_renamed": "\"{from}\" gömülü veri alanının adı \"{to}\" olarak değiştirildi.",
@@ -4065,10 +4066,10 @@
           "question_skipped_validation_failed": "Soru atlandı: dönüştürülen soru anket denetimlerinden geçemedi.",
           "script_dropped": "Soru metninden bir betik kaldırıldı.",
           "text_too_long": "Bir metin içe aktarılamayacak kadar uzundu ve dışarıda bırakıldı.",
-          "translation_fallback": "{language} dilinde {count, plural, one {# metin eksikti} other {# metin eksikti}}, bu yüzden varsayılan dildeki metin kullanılıyor.",
+          "translation_missing": "{language} dilinde {count, plural, one {# metin} other {# metin}} eksik olduğu için bu dil kapatıldı. Eksik metinleri düzenleyicide ekle, ardından dili aç.",
           "unknown": "Bu sorudaki bir şey içe aktarma sırasında değiştirildi."
         },
-        "menu_item": "Anketi içe aktar",
+        "menu_item": "Qualtrics anketini içe aktar",
         "pick_another_file": "Başka bir dosya seç",
         "progress": {
           "ai": "Sorular yapay zekayla eşleştiriliyor",
@@ -4092,18 +4093,11 @@
         },
         "reading_file": "Dosya okunuyor…",
         "report": {
-          "copied": "Rapor kopyalandı",
-          "copy": "Kopyala",
-          "copy_failed": "Rapor kopyalanamadı.",
-          "download": "İndir",
           "empty": "Dışarıda bırakılan hiçbir şey yok",
           "ending": "Bitiş",
-          "note": "Not",
           "summary_notes": "{count, plural, one {# not} other {# not}}",
           "summary_warnings": "{count, plural, one {# uyarı} other {# uyarı}}",
-          "text_title": "Qualtrics içe aktarma raporu: {fileName}",
-          "title": "İçe aktarma raporu",
-          "warning": "Uyarı"
+          "title": "İçe aktarma raporu"
         },
         "your_file": "Dosyan"
       },

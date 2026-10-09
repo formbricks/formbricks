@@ -3989,7 +3989,7 @@
       "import": {
         "ai_note": "Formbricks AI mappar frågorna. Logik importeras inte – rapporten listar varje regel.",
         "card_description": "Gör om en exporterad Qualtrics-enkät (.qsf) till ett enkätutkast.",
-        "card_title": "Importera enkät",
+        "card_title": "Importera Qualtrics-enkät",
         "dialog_description": "Formbricks AI gör om din Qualtrics-export till ett utkast som du kan granska innan du öppnar det.",
         "dialog_title": "Importera en Qualtrics-enkät",
         "discard_draft_body": "Det importerade utkastet har inte öppnats i redigeraren än. Om du stänger kasseras det.",
@@ -4039,6 +4039,7 @@
         "issues": {
           "choice_dropped": "Ett alternativ utelämnades eftersom dess ID inte gick att läsa.",
           "choice_label_renamed": "Alternativ med samma namn har numrerats så att alla blir unika.",
+          "ending_added": "Filen har inget avslutningsmeddelande, så en standardavslutning har lagts till.",
           "external_url_removed": "En länk har tagits bort eftersom din plan inte tillåter externa länkar.",
           "field_dropped": "{count, plural, one {# inbäddat datafält utelämnades} other {# inbäddade datafält utelämnades}}: enkäten rymmer inte fler.",
           "field_renamed": "Det inbäddade datafältet \"{from}\" har bytt namn till \"{to}\".",
@@ -4065,10 +4066,10 @@
           "question_skipped_validation_failed": "Frågan hoppades över: den konverterade frågan klarade inte enkätkontrollerna.",
           "script_dropped": "Ett skript togs bort från frågetexten.",
           "text_too_long": "En text var för lång för att importeras och lämnades utanför.",
-          "translation_fallback": "{count, plural, one {# text saknades} other {# texter saknades}} på {language}, så standardspråkets text används.",
+          "translation_missing": "{count, plural, one {# text saknas} other {# texter saknas}} på {language}, så språket har stängts av. Lägg till de saknade texterna i redigeraren och slå sedan på språket igen.",
           "unknown": "Något i den här frågan ändrades under importen."
         },
-        "menu_item": "Importera enkät",
+        "menu_item": "Importera Qualtrics-enkät",
         "pick_another_file": "Välj en annan fil",
         "progress": {
           "ai": "Mappar frågor med AI",
@@ -4092,18 +4093,11 @@
         },
         "reading_file": "Läser filen…",
         "report": {
-          "copied": "Rapporten har kopierats",
-          "copy": "Kopiera",
-          "copy_failed": "Det gick inte att kopiera rapporten.",
-          "download": "Ladda ner",
           "empty": "Inget har utelämnats",
           "ending": "Avslutning",
-          "note": "Notering",
           "summary_notes": "{count, plural, one {# notering} other {# noteringar}}",
           "summary_warnings": "{count, plural, one {# varning} other {# varningar}}",
-          "text_title": "Importrapport för Qualtrics: {fileName}",
-          "title": "Importrapport",
-          "warning": "Varning"
+          "title": "Importrapport"
         },
         "your_file": "Din fil"
       },

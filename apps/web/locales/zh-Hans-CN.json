@@ -3989,7 +3989,7 @@
       "import": {
         "ai_note": "Formbricks AI 会自动匹配问题。逻辑规则不会被导入，但报告中会列出每一条规则。",
         "card_description": "将 Qualtrics 问卷导出文件（.qsf）转换为问卷草稿。",
-        "card_title": "导入问卷",
+        "card_title": "导入 Qualtrics 问卷",
         "dialog_description": "Formbricks AI 会将你的 Qualtrics 导出文件转换为草稿，你可以先查看，再打开编辑。",
         "dialog_title": "导入 Qualtrics 问卷",
         "discard_draft_body": "导入的草稿尚未在编辑器中打开。关闭后将丢弃该草稿。",
@@ -4039,6 +4039,7 @@
         "issues": {
           "choice_dropped": "有一个选项因无法读取其 ID 而被略过。",
           "choice_label_renamed": "重复的选项标签已添加编号，以便区分。",
+          "ending_added": "文件中没有结束语，所以已自动添加默认结尾。",
           "external_url_removed": "有一个链接已被移除，因为你的套餐不支持外部链接。",
           "field_dropped": "{count, plural, other {# 个嵌入数据字段已被省略}}：问卷无法容纳更多字段。",
           "field_renamed": "嵌入数据字段“{from}”已重命名为“{to}”。",
@@ -4065,10 +4066,10 @@
           "question_skipped_validation_failed": "问题已跳过：转换后的问题未通过问卷检查。",
           "script_dropped": "问题文本中的脚本已被移除。",
           "text_too_long": "有一段文本过长,无法导入,已被略过。",
-          "translation_fallback": "{count, plural, other {有 # 段文本}}缺少{language}版本,已改用默认语言的文本。",
+          "translation_missing": "{language}缺少 {count, plural, other {# 条文本}}，因此该语言已关闭。请在编辑器中补充缺失的文本，然后再重新开启。",
           "unknown": "导入时,这道题中的部分内容已被修改。"
         },
-        "menu_item": "导入问卷",
+        "menu_item": "导入 Qualtrics 问卷",
         "pick_another_file": "选择其他文件",
         "progress": {
           "ai": "正在用 AI 匹配题目",
@@ -4092,18 +4093,11 @@
         },
         "reading_file": "正在读取文件…",
         "report": {
-          "copied": "报告已复制",
-          "copy": "复制",
-          "copy_failed": "无法复制报告。",
-          "download": "下载",
           "empty": "没有遗漏任何内容",
           "ending": "结束页",
-          "note": "备注",
           "summary_notes": "{count, plural, other {# 条备注}}",
           "summary_warnings": "{count, plural, other {# 条警告}}",
-          "text_title": "Qualtrics 导入报告:{fileName}",
-          "title": "导入报告",
-          "warning": "警告"
+          "title": "导入报告"
         },
         "your_file": "你的文件"
       },
