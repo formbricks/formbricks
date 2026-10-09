@@ -102,6 +102,7 @@ describe("rateLimitConfigs", () => {
         "mcpAuth",
         "v3SurveyGenerate",
         "v3SurveyVisibility",
+        "v3CustomCss",
         "internalDatasetPurge",
         "client",
         "clientEnvironment",

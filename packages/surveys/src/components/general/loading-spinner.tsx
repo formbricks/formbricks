@@ -6,7 +6,7 @@ export function LoadingSpinner({ className }: { className?: string }) {
       data-testid="loading-spinner"
       className={cn("flex h-full w-full items-center justify-center", className ?? "")}>
       <svg
-        className="text-brand m-2 h-6 w-6 animate-spin"
+        className="text-brand-readable m-2 h-6 w-6 animate-spin"
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24">

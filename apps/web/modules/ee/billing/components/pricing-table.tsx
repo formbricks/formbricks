@@ -737,6 +737,7 @@ export const PricingTable = ({
           { type: "text", label: t("workspace.settings.billing.plan_scale_feature_workspaces") },
           { type: "text", label: t("workspace.settings.billing.plan_scale_feature_rbac") },
           { type: "text", label: t("workspace.settings.billing.plan_scale_feature_quota") },
+          { type: "text", label: t("workspace.settings.billing.plan_scale_feature_custom_css") },
           { type: "workflow_runs", plan: "scale" },
           { type: "text", label: t("workspace.settings.billing.plan_scale_feature_feedback") },
           { type: "text", label: t("workspace.settings.billing.plan_scale_feature_semantic_analysis") },

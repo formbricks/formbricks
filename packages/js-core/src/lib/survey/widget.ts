@@ -1,3 +1,4 @@
+import { getAppearance } from "@/lib/common/appearance";
 import { Config } from "@/lib/common/config";
 import { CONTAINER_ID, LIVE_REGION_ID } from "@/lib/common/constants";
 import { FORMBRICKS_EVENTS, emitFormbricksEvent } from "@/lib/common/events";
@@ -7,6 +8,7 @@ import { TimeoutStack } from "@/lib/common/timeout-stack";
 import {
   filterSurveys,
   getBrowserLanguageCodes,
+  getCustomCss,
   getStyling,
   shouldDisplayBasedOnPercentage,
   surveyHasSegmentFilters,
@@ -179,6 +181,7 @@ export const renderWidget = async (
     emitFormbricksEvent(FORMBRICKS_EVENTS.surveyShown, { surveyId: survey.id });
 
     formbricksSurveys.renderSurvey({
+      appearance: getAppearance(),
       appUrl: config.get().appUrl,
       workspaceId: config.get().workspaceId,
       contactId: config.get().user.data.contactId ?? undefined,
@@ -190,6 +193,8 @@ export const renderWidget = async (
       languageCode,
       placement,
       styling: getStyling(settings, survey),
+      // Both scopes from the cached workspace state; the renderer applies CSS from this prop only.
+      customCss: getCustomCss(settings, survey),
       // The ambient Embedded Data bag (ENG-1844) under the per-trigger `track({ hiddenFields })`
       // values — explicit beats ambient, case-insensitively (see `buildDisplayHiddenFields`).
       // Built here, inside the delay timeout at the moment the survey actually shows, from a
@@ -296,6 +301,9 @@ export const closeSurvey = (surveyId?: string): void => {
 
   // remove the survey modal container from DOM
   removeWidgetContainer();
+  // Dropping the container does not unmount the survey, so the renderer's custom CSS would outlive it.
+  // Feature-detected: renderer bundles older than custom CSS have no such function and no such CSS.
+  globalThis.window.formbricksSurveys?.removeCustomCss?.();
 
   const { workspace, user } = config.get();
   const filteredSurveys = filterSurveys(workspace, user);

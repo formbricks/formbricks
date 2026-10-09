@@ -1,10 +1,23 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { successListResponse } from "@/app/api/v3/lib/response";
+import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
+import { problemForbidden, successListResponse, successResponse } from "@/app/api/v3/lib/response";
+import { getV3WorkspaceCustomCss, patchV3WorkspaceCustomCss } from "@/app/api/v3/workspaces/lib/custom-css";
 import { listV3Workspaces } from "@/app/api/v3/workspaces/lib/operations";
-import { registerWorkspaceTools } from "./workspaces";
+import { ZMcpPatchWorkspaceCustomCssInput } from "./schemas";
+import { ZMcpWorkspaceCustomCssOutput, registerWorkspaceTools } from "./workspaces";
 
 vi.mock("@/app/api/v3/workspaces/lib/operations", () => ({
   listV3Workspaces: vi.fn(),
+}));
+
+vi.mock("@/app/api/v3/workspaces/lib/custom-css", () => ({
+  getV3WorkspaceCustomCss: vi.fn(),
+  patchV3WorkspaceCustomCss: vi.fn(),
+}));
+
+vi.mock("@/app/api/v3/lib/audit", () => ({
+  buildV3AuditLog: vi.fn(),
+  queueV3AuditLog: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -117,5 +130,150 @@ describe("registerWorkspaceTools", () => {
 
     expect(listV3Workspaces).toHaveBeenCalled();
     expect(result.isError).toBeUndefined();
+  });
+});
+
+describe("workspace custom CSS tools (ENG-3641)", () => {
+  const workspaceId = "tz4a98xxat96iws9zmbrgj3a";
+  const resource = {
+    workspaceId,
+    customCss: { light: "a{}", dark: null },
+    previous: null,
+    status: "ok",
+    canEdit: true,
+    planAllowed: true,
+  };
+  const warning = {
+    code: "import_removed",
+    scope: "workspace",
+    appearance: "light",
+    line: 1,
+    column: 1,
+    reason: "@import is not supported",
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as never);
+  });
+
+  test("registers the narrow custom CSS tools beside workspace discovery", () => {
+    const { tools } = createToolServer();
+
+    expect([...tools.keys()]).toEqual([
+      "list_workspaces",
+      "get_workspace_custom_css",
+      "patch_workspace_custom_css",
+    ]);
+    expect(tools.get("get_workspace_custom_css")!.config.annotations).toMatchObject({ readOnlyHint: true });
+    expect(tools.get("patch_workspace_custom_css")!.config.annotations).toMatchObject({
+      readOnlyHint: false,
+    });
+    expect(tools.get("get_workspace_custom_css")!.config.outputSchema).toBe(ZMcpWorkspaceCustomCssOutput);
+  });
+
+  test("get_workspace_custom_css reads through the v3 operation with surveys:read", async () => {
+    vi.mocked(getV3WorkspaceCustomCss).mockResolvedValue(
+      successResponse(resource, { requestId: "req_tool" })
+    );
+    const { tools } = createToolServer();
+
+    const result = await tools
+      .get("get_workspace_custom_css")!
+      .handler({ workspaceId }, { http: { authInfo: readAuthInfo } });
+
+    expect(getV3WorkspaceCustomCss).toHaveBeenCalledWith({
+      workspaceId,
+      authentication: oauthSession,
+      requestId: "req_tool",
+      instance: "/api/mcp",
+    });
+    expect(result.structuredContent).toEqual({ data: resource, requestId: "req_tool" });
+    expect(ZMcpWorkspaceCustomCssOutput.safeParse(result.structuredContent).success).toBe(true);
+  });
+
+  test("get_workspace_custom_css refuses a token without surveys:read", async () => {
+    const { tools } = createToolServer();
+
+    const result = await tools
+      .get("get_workspace_custom_css")!
+      .handler({ workspaceId }, { http: { authInfo: writeOnlyAuthInfo } });
+
+    expect(getV3WorkspaceCustomCss).not.toHaveBeenCalled();
+    expect(result.structuredContent.error).toMatchObject({ status: 403 });
+  });
+
+  test("patch_workspace_custom_css saves through the v3 operation, audited, and relays the warnings", async () => {
+    vi.mocked(patchV3WorkspaceCustomCss).mockResolvedValue(
+      successResponse(resource, { requestId: "req_tool", extensions: { warnings: [warning] } })
+    );
+    const { tools } = createToolServer();
+
+    const result = await tools
+      .get("patch_workspace_custom_css")!
+      .handler(
+        { workspaceId, customCss: { light: "a{}", dark: null } },
+        { http: { authInfo: writeOnlyAuthInfo } }
+      );
+
+    expect(patchV3WorkspaceCustomCss).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId,
+        body: { customCss: { light: "a{}", dark: null } },
+        authentication: oauthSession,
+        instance: "/api/mcp",
+      })
+    );
+    expect(result.structuredContent).toEqual({ data: resource, warnings: [warning], requestId: "req_tool" });
+    expect(ZMcpWorkspaceCustomCssOutput.safeParse(result.structuredContent).success).toBe(true);
+    expect(buildV3AuditLog).toHaveBeenCalledWith(oauthSession, "updated", "workspace", expect.any(String));
+    expect(queueV3AuditLog).toHaveBeenCalled();
+  });
+
+  test("patch_workspace_custom_css refuses a read-only token and records the refused attempt", async () => {
+    const { tools } = createToolServer();
+
+    const result = await tools
+      .get("patch_workspace_custom_css")!
+      .handler({ workspaceId, customCss: null }, { http: { authInfo: readAuthInfo } });
+
+    expect(patchV3WorkspaceCustomCss).not.toHaveBeenCalled();
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent.error).toMatchObject({ status: 403 });
+    expect(queueV3AuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ targetId: workspaceId }),
+      "req_tool",
+      expect.anything()
+    );
+  });
+
+  test("the operation's own refusal (a member, not an owner or manager) comes back as a structured error", async () => {
+    vi.mocked(patchV3WorkspaceCustomCss).mockResolvedValue(
+      problemForbidden(
+        "req_tool",
+        "Only organization owners and managers can change workspace custom CSS.",
+        "/api/mcp"
+      )
+    );
+    const { tools } = createToolServer();
+
+    const result = await tools
+      .get("patch_workspace_custom_css")!
+      .handler({ workspaceId, customCss: null }, { http: { authInfo: writeOnlyAuthInfo } });
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent.error).toMatchObject({ status: 403, code: "forbidden" });
+  });
+
+  test("the input schema is strict and source-only", () => {
+    expect(ZMcpPatchWorkspaceCustomCssInput.safeParse({ workspaceId, customCss: null }).success).toBe(true);
+    for (const input of [
+      { workspaceId, customCss: { light: "a{}", dark: null, compiled: "x" } },
+      { workspaceId, customCss: { light: "a{}" } },
+      { workspaceId },
+      { workspaceId, customCss: null, organizationId: "org_1" },
+    ]) {
+      expect(ZMcpPatchWorkspaceCustomCssInput.safeParse(input).success).toBe(false);
+    }
   });
 });

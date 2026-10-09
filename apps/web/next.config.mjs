@@ -73,11 +73,19 @@ const nextConfig = {
     "@prisma/instrumentation",
     "bullmq",
     "ioredis",
+    // Custom CSS processor (modules/custom-css/processor): loads a native binary per platform.
+    "lightningcss",
     "pino",
     "pino-pretty",
     "pino-opentelemetry-transport",
     "posthog-node",
+    "typeorm",
   ],
+  // Jackson is configured exclusively with PostgreSQL (modules/ee/auth/saml/lib/jackson.ts).
+  // TypeORM's lazy SQL Server driver traces unused mssql/tedious code and vulnerable sprintf-js.
+  outputFileTracingExcludes: {
+    "/*": ["../../**/node_modules/{mssql,tedious,sprintf-js}/**/*"],
+  },
   outputFileTracingIncludes: {
     "/api/auth/**/*": ["../../node_modules/jose/**/*"],
     // pino loads transport code in worker threads via dynamic require() — the file tracer
@@ -89,6 +97,12 @@ const nextConfig = {
       "../../node_modules/pino-opentelemetry-transport/**/*",
       "../../node_modules/pino-abstract-transport/**/*",
       "../../node_modules/otlp-logger/**/*",
+      // lightningcss picks its native package at runtime (require of "lightningcss-<platform>"),
+      // which the tracer cannot follow; only the package matching the build's platform/libc is
+      // installed (musl in the Alpine image), so the wildcard copies exactly that one.
+      "../../node_modules/lightningcss/**/*",
+      "../../node_modules/lightningcss-*/**/*",
+      "../../node_modules/detect-libc/**/*",
     ],
   },
   turbopack: {},
@@ -192,7 +206,9 @@ const nextConfig = {
       : [];
     const devLoopbackSourceList = devLoopbackSources.length > 0 ? ` ${devLoopbackSources.join(" ")}` : "";
 
-    const cspBase = `default-src 'self'; script-src 'self' 'unsafe-inline'${scriptSrcUnsafeEval} https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' blob: data:${devLoopbackSourceList} https:; font-src 'self' data: https:; connect-src 'self'${devLoopbackSourceList} https: wss:; frame-src 'self' https://app.cal.com https:; media-src 'self' https:; object-src 'self' data: https:; base-uri 'self'; form-action 'self'`;
+    // `worker-src` must stay explicit: without it browsers fall back to `script-src`, which has no
+    // `blob:`, and blocks the `blob:` worker Sentry Session Replay compresses recordings in (ENG-3194).
+    const cspBase = `default-src 'self'; script-src 'self' 'unsafe-inline'${scriptSrcUnsafeEval} https:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https:; img-src 'self' blob: data:${devLoopbackSourceList} https:; font-src 'self' data: https:; connect-src 'self'${devLoopbackSourceList} https: wss:; frame-src 'self' https://app.cal.com https:; media-src 'self' https:; object-src 'self' data: https:; base-uri 'self'; form-action 'self'`;
 
     return [
       {

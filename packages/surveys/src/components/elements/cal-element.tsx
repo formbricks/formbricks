@@ -1,4 +1,5 @@
 import { useCallback, useState } from "preact/hooks";
+import { FB_PART } from "@formbricks/survey-ui/parts";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyCalElement } from "@formbricks/types/surveys/elements";
 import { CalEmbed } from "@/components/general/cal-embed";
@@ -63,7 +64,12 @@ export function CalElement({
         <Subheader subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""} />
         <CalEmbed key={element.id} element={element} onSuccessfulBooking={onSuccessfulBooking} />
         {errorMessage ? (
-          <span className="text-red-500" role="alert" aria-live="assertive" aria-atomic="true">
+          <span
+            className="text-red-500"
+            data-fb-part={FB_PART.error}
+            role="alert"
+            aria-live="assertive"
+            aria-atomic="true">
             {errorMessage}
           </span>
         ) : null}

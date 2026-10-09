@@ -6,11 +6,11 @@ import Link from "next/link";
 import { type JSX, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
-import { Workspace } from "@formbricks/database/prisma-browser";
 import type { TSurveyElement, TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
+import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -20,7 +20,7 @@ import { useGetBillingInfo } from "@/modules/utils/hooks/useGetBillingInfo";
 
 interface FileUploadFormProps {
   localSurvey: TSurvey;
-  workspace: Workspace;
+  workspace: TWorkspaceWithoutCustomCss;
   element: TSurveyFileUploadElement;
   elementIdx: number;
   updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;

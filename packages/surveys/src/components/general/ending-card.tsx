@@ -75,7 +75,7 @@ export function EndingCard({
     ) : null;
 
   const checkmark = (
-    <div className="text-brand flex flex-col items-center justify-center">
+    <div className="text-brand-readable flex flex-col items-center justify-center">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
@@ -228,7 +228,7 @@ export function EndingCard({
             </div>
             {/* A transient status message, not a section heading — it used to be an <h1>, which
                 put a second top-level heading on the page and skipped the survey's structure. */}
-            <p className="text-brand">{t("common.sending_responses")}</p>
+            <p className="text-brand-readable">{t("common.sending_responses")}</p>
           </>
         )}
         {isOfflineWithPending && isResponseSendingFinished && (

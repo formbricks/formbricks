@@ -8,6 +8,8 @@ info:
   description: |
     **Surveys**: **GET /api/v3/surveys**, **POST /api/v3/surveys**, **POST /api/v3/surveys/generate**, **POST /api/v3/surveys/validate**, **GET /api/v3/surveys/{surveyId}**, **PATCH /api/v3/surveys/{surveyId}**, **PATCH /api/v3/surveys/{surveyId}/blocks**, **PUT /api/v3/surveys/{surveyId}/blocks/order**, and **DELETE /api/v3/surveys/{surveyId}**.
 
+    **Custom CSS**: survey CSS through `customCss` on **POST /api/v3/surveys**, **GET** and **PATCH /api/v3/surveys/{surveyId}**, workspace CSS through **GET** and **PATCH /api/v3/workspaces/{workspaceId}/custom-css**, and previews through `operation: customCss` on **POST /api/v3/surveys/validate**. Writes take and reads return source only; the server compiles it, returns removed constructs as top-level `warnings`, and never accepts compiled output.
+
     **Responses**: **GET /api/v3/responses**, **GET /api/v3/responses/count**, **POST /api/v3/responses/validate**, **POST /api/v3/responses/batch-delete**, **GET /api/v3/responses/{responseId}**, **POST /api/v3/responses**, **PATCH /api/v3/responses/{responseId}**, and **DELETE /api/v3/responses/{responseId}**.
 
     **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and **GET /api/v3/workflows/runs/{runId}**.
@@ -465,6 +467,8 @@ paths:
                 properties:
                   data:
                     $ref: '#/components/schemas/SurveyResource'
+                  warnings:
+                    $ref: '#/components/schemas/CustomCssWarnings'
         '400':
           description: |
             Bad Request — the document failed schema validation, i.e. any rule checkable from the request body alone, without consulting stored state. Covers: invalid JSON; unknown or unsupported fields (including `distribution`/`targeting` sent on a `link` survey, which are `app`-only); missing required fields; wrong types or out-of-range values; bad enum values; malformed multilingual maps; and intra-document field-combination rules — notably `displayLimit` is required (must be >= 1) when `displayOption` is `displaySome`. Cross-reference failures that need stored state to detect return **422** instead. Every offending field is itemized in `invalid_params`. Unknown or forbidden fields carry `code: unsupported_field` (e.g. `distribution` on a link survey); omissions carry `code: missing_required_field` (e.g. `displayLimit` when `displayOption` is `displaySome`). Bare type, range, enum, and malformed-locale-map violations report the field `name` with a human-readable `reason` and no machine `code`.
@@ -475,7 +479,7 @@ paths:
         '401':
           $ref: '#/components/responses/V3Unauthorized'
         '403':
-          description: Forbidden — no write access, missing external URL permission, missing Contacts entitlement for app-survey targeting, or workspace does not exist (404 not used; avoids existence leak)
+          description: 'Forbidden — no write access, missing external URL permission, missing Contacts entitlement for app-survey targeting, or workspace does not exist (404 not used; avoids existence leak). Survey custom CSS on an organization without the Scale plan (Formbricks Cloud) is refused with `code: custom_css_plan_required`.'
           content:
             application/problem+json:
               schema:
@@ -483,6 +487,7 @@ paths:
         '422':
           description: |-
             Unprocessable Content — the document passed schema validation but failed a cross-reference check that requires stored state to detect: duplicate stable ids, dangling logic/jump references, undeclared locale keys used in content, invalid media URLs, a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters` entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an unsupported person identifier, or an unknown device value. Also returned when the document passes this endpoint's request schema but is rejected by the stricter validation the survey service applies on write — for example a CTA `buttonUrl` whose scheme the service does not accept. The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`).
+            Also returned when `customCss` cannot be processed (a syntax error, the 20 000-byte survey budget, a complexity limit): `invalid_params` names `customCss.light` / `customCss.dark` and `details.errors` carries the processor's located errors. Nothing is created.
             Also returned with `code: workspace_survey_limit_reached` when the workspace already holds the maximum number of surveys. That problem carries no `invalid_params`; instead `details` is `{ count, limit }` — the workspace's current survey count and the limit it has reached — so a client can tell the user how many surveys to archive or delete before retrying.
           content:
             application/problem+json:
@@ -746,6 +751,8 @@ paths:
 
         Use `400` only for malformed validation envelopes, unsupported operations, invalid `surveyId`,
         or unsupported query parameters.
+
+        **Custom CSS.** A create or patch payload that carries `customCss` is also run through the custom CSS processor; the result adds the compiled `customCss` and `warnings`, or `errors` and `valid=false`. `operation: customCss` validates CSS alone for a live preview — with `scope: workspace | survey` and, optionally, an existing `surveyId` in `workspaceId` — and returns the compiled CSS and warnings. Validation never saves, versions, touches timestamps or invalidates caches, needs only read access, and grants nothing: the write itself checks permissions and the plan again. Requests that process custom CSS also count against a separate budget of 60 per minute per user or API key, shared with the workspace custom CSS endpoint, with survey creates and updates that add or edit custom CSS, and with the MCP tools; beyond it they return **429**.
       tags:
         - V3 Surveys
       requestBody:
@@ -772,6 +779,17 @@ paths:
                             headline:
                               en-US: What should we improve?
                             required: true
+              customCssValidation:
+                summary: Validate custom CSS for a live preview
+                value:
+                  operation: customCss
+                  workspaceId: clxx1234567890123456789012
+                  scope: survey
+                  surveyId: clsv1234567890123456789012
+                  data:
+                    customCss:
+                      light: '[data-fb-part="headline"] { font-weight: 600; }'
+                      dark: null
               patchValidation:
                 summary: Validate a patch payload
                 value:
@@ -807,7 +825,9 @@ paths:
                   - data
                 properties:
                   data:
-                    $ref: '#/components/schemas/SurveyValidationResult'
+                    anyOf:
+                      - $ref: '#/components/schemas/SurveyValidationResult'
+                      - $ref: '#/components/schemas/CustomCssValidationResult'
               examples:
                 invalid:
                   summary: Invalid survey document
@@ -818,6 +838,39 @@ paths:
                       invalid_params:
                         - name: blocks.0.elements.0.buttonUrl
                           reason: Unsupported field 'buttonUrl' for element type 'openText'. Allowed fields...
+                customCssValid:
+                  summary: Custom CSS processed, with a removed construct
+                  value:
+                    data:
+                      valid: true
+                      operation: customCss
+                      invalid_params: []
+                      customCss:
+                        light: '@layer fb-survey { #fbjs [data-fb-part="headline"] { font-weight: 600 !important; } }'
+                        dark: null
+                      warnings:
+                        - code: import_removed
+                          scope: survey
+                          appearance: light
+                          line: 1
+                          column: 1
+                          reason: '@import is not supported and was removed'
+                customCssInvalid:
+                  summary: Custom CSS rejected
+                  value:
+                    data:
+                      valid: false
+                      operation: customCss
+                      invalid_params:
+                        - name: customCss.light
+                          reason: Unexpected end of input (line 3, column 1)
+                      errors:
+                        - code: syntax_error
+                          scope: survey
+                          appearance: light
+                          line: 3
+                          column: 1
+                          reason: Unexpected end of input
                 valid:
                   summary: Valid survey document
                   value:
@@ -963,6 +1016,7 @@ paths:
                       hiddenFields:
                         enabled: false
                       variables: []
+                      customCss: null
                 filtered:
                   summary: Language-filtered projection with ?lang=de-DE
                   value:
@@ -1010,6 +1064,7 @@ paths:
                       hiddenFields:
                         enabled: false
                       variables: []
+                      customCss: null
         '400':
           description: Invalid survey id, unsupported query parameter, unknown language, or unsupported legacy survey shape
           content:
@@ -1078,6 +1133,16 @@ paths:
                       en-US: Product Feedback
                       de-DE: Produktfeedback
                     cx_operation: product_feedback
+              setCustomCss:
+                summary: Replace the survey's custom CSS
+                value:
+                  customCss:
+                    light: '[data-fb-part="button-primary"] { border-radius: 999px; }'
+                    dark: '#fbjs[data-appearance="dark"] { --acme-ink: #e6eef5; }'
+              clearCustomCss:
+                summary: Clear the survey's custom CSS
+                value:
+                  customCss: null
               replaceBlocks:
                 summary: Replace survey blocks
                 value:
@@ -1114,6 +1179,8 @@ paths:
                 properties:
                   data:
                     $ref: '#/components/schemas/SurveyResource'
+                  warnings:
+                    $ref: '#/components/schemas/CustomCssWarnings'
         '400':
           description: |
             Bad Request — the patch failed schema validation, i.e. any rule checkable from the request body alone, without consulting stored state. Covers: malformed JSON; an unsupported query parameter; unknown or unsupported fields (`distribution`/`targeting` are `app`-only — sending them when patching a `link` survey is rejected); wrong types or out-of-range values; bad enum values; malformed multilingual maps; and intra-document field-combination rules — notably `displayLimit` is required (must be >= 1) when `displayOption` is `displaySome`. Cross-reference failures that need stored state to detect return **422** instead. Every offending field is itemized in `invalid_params`. Unknown, forbidden, immutable, or wrongly-combined fields carry `code: unsupported_field` (e.g. `distribution`/`targeting` on a link survey; a changed server-owned field such as `type` is **422** `read_only_field`, not this); omissions carry `code: missing_required_field`. Bare type, range, enum, and malformed-locale-map violations report the field `name` with a human-readable `reason` and no machine `code`.
@@ -1124,7 +1191,7 @@ paths:
         '401':
           $ref: '#/components/responses/V3Unauthorized'
         '403':
-          description: Forbidden — no write access, missing external URL permission, missing Contacts entitlement for app-survey targeting, or survey does not exist (404 not used; avoids existence leak)
+          description: 'Forbidden — no write access, missing external URL permission, missing Contacts entitlement for app-survey targeting, or survey does not exist (404 not used; avoids existence leak). Adding or editing `customCss` on an organization without the Scale plan (Formbricks Cloud) is refused with `code: custom_css_plan_required`; clearing it, or a patch that leaves it unchanged, is not.'
           content:
             application/problem+json:
               schema:
@@ -1146,13 +1213,15 @@ paths:
                   currentUpdatedAt: '2026-04-21T11:30:00.000Z'
         '422':
           description: |-
-            Unprocessable Content — the request cannot be processed against stored state. Four cases:
+            Unprocessable Content — the request cannot be processed against stored state. Five cases:
             1. The target survey is archived (soft-deleted) and therefore read-only; restore it before editing. The `invalid_params` entry reports `name: archivedAt` with the reason `This survey is archived. Restore it before editing.`
             2. The patched document passed schema validation but failed a cross-reference check that requires stored state to detect: an undeclared locale key used in content, a duplicate stable id, an immutable element-id change on a published survey, a dangling logic/jump reference, an invalid media URL, a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters` entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an unsupported person identifier, or an unknown device value. The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`). A patch that newly *introduces* a forward reference — a recall of an answer not yet given, a logic condition reading a later block, or a `requireAnswer` target that is not in a later block — is refused with `code: misordered_reference`; a survey that already contains one stays patchable, only newly created violations are rejected.
 
             3. A server-owned field was echoed back with a different value — `code: read_only_field`, with the submitted value in `identifier`. Sending the value `GET` returned is always a no-op.
 
             4. The *stored* survey no longer satisfies the v3 document contract — `code: stored_survey_invalid`. The reported paths are into the survey, not into the request, so a patch that includes corrected values for those fields is the way out.
+
+            5. `customCss` could not be processed (a syntax error, the 20 000-byte survey budget, a complexity limit). `invalid_params` names `customCss.light` / `customCss.dark`; `details.errors` carries the processor's located errors. Nothing is written, so the saved CSS stays in effect.
           content:
             application/problem+json:
               schema:
@@ -4097,6 +4166,168 @@ paths:
           $ref: '#/components/responses/V3InternalServerError'
       security:
         - sessionAuth: []
+  /api/v3/workspaces/{workspaceId}/custom-css:
+    get:
+      operationId: getWorkspaceCustomCssV3
+      summary: Read workspace custom CSS
+      description: |
+        Returns the workspace's shared survey CSS as editable **source** (light and dark), the one recoverable previous revision, whether the stored CSS is being delivered to respondents (`status`), and whether this caller may change it (`canEdit`, `planAllowed`). Compiled output is never returned here. Requires read access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Workspaces
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+      responses:
+        '200':
+          description: Workspace custom CSS
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkspaceCustomCssResource'
+              example:
+                data:
+                  workspaceId: clxx1234567890123456789012
+                  customCss:
+                    light: '[data-fb-part="button-primary"] { border-radius: 999px; }'
+                    dark: null
+                  previous: null
+                  status: ok
+                  canEdit: true
+                  planAllowed: true
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    patch:
+      operationId: patchWorkspaceCustomCssV3
+      summary: Save or clear workspace custom CSS
+      description: |
+        Saves or clears the workspace's shared survey CSS. `customCss` replaces both fields; `null` clears all of it. The source is processed by the same processor every save path uses: constructs it removes come back as top-level `warnings`, and CSS it rejects is a **422** that leaves the saved CSS in effect. The replaced value becomes `previous`, the one recoverable revision — restore it by sending its source back. Unchanged source writes nothing.
+
+        Workspace CSS reaches every survey in the workspace, so writing it is narrower than writing a survey: **organization owners and managers** for signed-in users (session or OAuth), and a **`manage`** grant on this workspace for API keys — a Read & write grant is refused with **403**. On Formbricks Cloud, adding or editing needs the Scale plan (**403** `custom_css_plan_required`); clearing never does. Successful changes refresh the cached configuration the SDKs receive (they pick it up on their next configuration fetch). Saves that add or edit CSS count against a custom CSS budget of 60 per minute per user or API key, shared with custom CSS validation and with survey writes that add or edit custom CSS; beyond it they return **429**. Re-saving the same CSS and clearing it are never counted.
+      tags:
+        - V3 Workspaces
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchWorkspaceCustomCssRequest'
+            examples:
+              save:
+                summary: Save light and dark CSS
+                value:
+                  customCss:
+                    light: '[data-fb-part="button-primary"] { border-radius: 999px; }'
+                    dark: '#fbjs[data-appearance="dark"] { --acme-ink: #e6eef5; }'
+              clear:
+                summary: Clear all workspace CSS
+                value:
+                  customCss: null
+      responses:
+        '200':
+          description: Workspace custom CSS saved (or unchanged)
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkspaceCustomCssResource'
+                  warnings:
+                    $ref: '#/components/schemas/CustomCssWarnings'
+              example:
+                data:
+                  workspaceId: clxx1234567890123456789012
+                  customCss:
+                    light: '[data-fb-part="button-primary"] { border-radius: 999px; }'
+                    dark: null
+                  previous: null
+                  status: ok
+                  canEdit: true
+                  planAllowed: true
+                warnings: []
+        '400':
+          description: Bad Request — malformed body, a missing `customCss` key or a missing `light` / `dark` key, an unsupported field (including `compiled` or `processorVersion`), or a field that is neither a string nor null. Every offending field is itemized in `invalid_params`. CSS over the size budget is a **422** `source_too_large`.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          description: 'Forbidden — no access to the workspace (404 not used; avoids existence leak), a principal that may not write workspace CSS (`code: forbidden`), or an addition or edit on an organization without the Scale plan (`code: custom_css_plan_required`).'
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          description: Unprocessable Content — the CSS could not be processed (a syntax error, the 100 000-byte workspace budget, a complexity limit). `invalid_params` names `customCss.light` / `customCss.dark`; `details.errors` carries the processor's located errors. Nothing was saved.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                title: Unprocessable Content
+                status: 422
+                detail: Custom CSS failed validation
+                code: unprocessable_content
+                requestId: req_01j9zq7w3k2m4n5p6r7s8t9v0w
+                invalid_params:
+                  - name: customCss.light
+                    reason: Unexpected end of input (line 3, column 1)
+                details:
+                  errors:
+                    - code: syntax_error
+                      scope: workspace
+                      appearance: light
+                      line: 3
+                      column: 1
+                      reason: Unexpected end of input
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/feedbackRecords:
     get:
       operationId: listFeedbackRecordsV3
@@ -5186,6 +5417,7 @@ components:
             - bad_gateway
             - bad_request
             - conflict
+            - custom_css_plan_required
             - forbidden
             - internal_server_error
             - invalid_workflow_state
@@ -6693,6 +6925,24 @@ components:
         filters:
           $ref: '#/components/schemas/SegmentFilters'
       additionalProperties: false
+    CustomCssInput:
+      type: object
+      description: 'Custom CSS **source** as a caller writes it (ENG-3641). Both keys are required. `light` is base CSS that applies in both appearances; `dark` adds overrides on top of it when the survey renders dark. `null`, an empty string or whitespace means "no CSS" for that field. Source only: compiled output and the processor version are computed by the server on every write, and a request that supplies either is rejected. The combined source is limited to 100 000 UTF-8 bytes for a workspace and 20 000 for a survey; larger CSS is a **422** with error code `source_too_large`.'
+      required:
+        - light
+        - dark
+      properties:
+        light:
+          type:
+            - string
+            - 'null'
+          description: Base CSS, applied in light and dark appearance.
+        dark:
+          type:
+            - string
+            - 'null'
+          description: Additional CSS applied only in dark appearance.
+      additionalProperties: false
     CreateSurveyRequest:
       type: object
       description: |
@@ -6805,6 +7055,11 @@ components:
           allOf:
             - $ref: '#/components/schemas/SurveyTargeting'
           description: App-survey contact targeting. Only valid when `type` is `app`.
+        customCss:
+          anyOf:
+            - $ref: '#/components/schemas/CustomCssInput'
+            - type: 'null'
+          description: Optional survey custom CSS source. Processed by the server; constructs it removes come back as top-level `warnings` on the 201. Adding CSS needs the Scale plan on Formbricks Cloud (403 `custom_css_plan_required`); CSS that cannot be processed is a 422 with `details.errors`. Processing counts against the custom CSS budget of 60 per minute per user or API key, shared with custom CSS validation; beyond it the create is a 429 and nothing is written.
       additionalProperties: false
     SurveyLanguage:
       type: object
@@ -6963,6 +7218,7 @@ components:
             - endings
             - hiddenFields
             - variables
+            - customCss
           properties:
             id:
               type: string
@@ -7039,7 +7295,70 @@ components:
               allOf:
                 - $ref: '#/components/schemas/SurveyTargeting'
               description: App-survey contact targeting. Present only for app surveys; omitted for link surveys.
+            customCss:
+              anyOf:
+                - $ref: '#/components/schemas/CustomCssInput'
+                - type: 'null'
+              description: 'The survey''s custom CSS **source** (ENG-3641), `null` when it has none. Compiled output and the processor version are internal and never exposed here. The full resource may be sent back with PATCH: unchanged source is not reprocessed and needs no plan.'
         - $ref: '#/components/schemas/SurveyVisibilityFields'
+    CustomCssWarning:
+      type: object
+      description: 'A construct the custom CSS processor removed; the rest of the CSS still applies. `unknown_property` and `invalid_value` are notes instead: the declaration stays, but browsers ignore it. The `code` is stable — branch on it, not on `reason`, which never echoes customer source beyond a short construct name.'
+      required:
+        - code
+        - scope
+        - appearance
+        - line
+        - column
+        - reason
+      properties:
+        code:
+          type: string
+          enum:
+            - import_removed
+            - font_face_removed
+            - external_resource_removed
+            - unsupported_at_rule_removed
+            - unsafe_property_removed
+            - unsafe_value_removed
+            - fixed_position_removed
+            - unsafe_selector_removed
+            - unknown_property
+            - invalid_value
+        scope:
+          type: string
+          enum:
+            - workspace
+            - survey
+        appearance:
+          type:
+            - string
+            - 'null'
+          enum:
+            - light
+            - dark
+            - null
+          description: Source field the issue is in; `null` when it concerns the scope as a whole.
+        line:
+          type:
+            - integer
+            - 'null'
+          minimum: 1
+          description: 1-based line in that field's source; `null` when there is no single location.
+        column:
+          type:
+            - integer
+            - 'null'
+          minimum: 1
+        reason:
+          type: string
+      additionalProperties: false
+    CustomCssWarnings:
+      type: array
+      description: 'Processing warnings for this write: constructs the processor removed. Additive, returned beside `data` (never inside it, so `data` can be sent back unchanged); present only when the write processed custom CSS.'
+      maxItems: 50
+      items:
+        $ref: '#/components/schemas/CustomCssWarning'
     AISurveyGenerationLocaleCode:
       type: string
       enum:
@@ -7310,6 +7629,11 @@ components:
           allOf:
             - $ref: '#/components/schemas/SurveyTargeting'
           description: App-survey contact targeting. Only valid for stored app surveys.
+        customCss:
+          anyOf:
+            - $ref: '#/components/schemas/CustomCssInput'
+            - type: 'null'
+          description: 'Survey custom CSS source. Omitted: unchanged. `null`: clears both fields. An object replaces both fields and needs both keys. Change is judged on normalized source, so echoing the value `GET` returned is a no-op that needs no plan. Adding or editing needs the Scale plan on Formbricks Cloud (403 `custom_css_plan_required`); clearing never does. A failed write keeps the saved CSS. Only an addition or edit is processed, so only it counts against the custom CSS budget of 60 per minute per user or API key, shared with custom CSS validation; beyond it the patch is a 429.'
       additionalProperties: false
     ValidateSurveyPatchRequest:
       type: object
@@ -7332,15 +7656,54 @@ components:
             - type: object
               additionalProperties: true
       additionalProperties: false
+    ValidateSurveyCustomCssRequest:
+      type: object
+      description: Validate custom CSS alone, for a live editor preview (ENG-3641). Processes the CSS exactly as a save would and returns the compiled result and warnings, without saving, versioning, touching timestamps or invalidating caches. Requires read access to `workspaceId`, and to `surveyId` when given; a valid result grants nothing — the write path checks permissions and the plan again.
+      required:
+        - operation
+        - workspaceId
+        - scope
+        - data
+      properties:
+        operation:
+          type: string
+          enum:
+            - customCss
+        workspaceId:
+          type: string
+          format: cuid2
+        scope:
+          type: string
+          enum:
+            - workspace
+            - survey
+          description: Which budget and cascade layer the CSS is processed for.
+        surveyId:
+          type: string
+          format: cuid2
+          description: 'Optional, `scope: survey` only. An existing survey, which must belong to `workspaceId`; omit it to validate an unsaved draft.'
+        data:
+          type: object
+          required:
+            - customCss
+          properties:
+            customCss:
+              anyOf:
+                - $ref: '#/components/schemas/CustomCssInput'
+                - type: 'null'
+          additionalProperties: false
+      additionalProperties: false
     ValidateSurveyRequest:
       oneOf:
         - $ref: '#/components/schemas/ValidateSurveyCreateRequest'
         - $ref: '#/components/schemas/ValidateSurveyPatchRequest'
+        - $ref: '#/components/schemas/ValidateSurveyCustomCssRequest'
       discriminator:
         propertyName: operation
         mapping:
           create: '#/components/schemas/ValidateSurveyCreateRequest'
           patch: '#/components/schemas/ValidateSurveyPatchRequest'
+          customCss: '#/components/schemas/ValidateSurveyCustomCssRequest'
     SurveyValidationLanguage:
       type: object
       required:
@@ -7360,6 +7723,67 @@ components:
           enum:
             - connect_or_create
           description: Validation is read-only; a real write would connect an existing language or create it if missing.
+      additionalProperties: false
+    CustomCssCompiled:
+      type: object
+      description: 'Compiled custom CSS returned by a successful validation: complete stylesheets wrapped in the custom CSS cascade layers and scoped to the survey root. `null` for a field with no CSS. Never returned on a failed validation, and never part of an authenticated resource (those carry source).'
+      required:
+        - light
+        - dark
+      properties:
+        light:
+          type:
+            - string
+            - 'null'
+        dark:
+          type:
+            - string
+            - 'null'
+      additionalProperties: false
+    CustomCssError:
+      type: object
+      description: 'A failure that rejects the whole custom CSS operation: nothing is saved, no compiled output is returned, and the previously saved CSS stays in effect.'
+      required:
+        - code
+        - scope
+        - appearance
+        - line
+        - column
+        - reason
+      properties:
+        code:
+          type: string
+          enum:
+            - syntax_error
+            - source_too_large
+            - output_too_large
+            - limit_exceeded
+            - processing_failed
+        scope:
+          type: string
+          enum:
+            - workspace
+            - survey
+        appearance:
+          type:
+            - string
+            - 'null'
+          enum:
+            - light
+            - dark
+            - null
+        line:
+          type:
+            - integer
+            - 'null'
+          minimum: 1
+        column:
+          type:
+            - integer
+            - 'null'
+          minimum: 1
+        reason:
+          type: string
       additionalProperties: false
     SurveyValidationResult:
       type: object
@@ -7386,6 +7810,52 @@ components:
           description: Languages that a successful write would connect or create. Present only when `valid=true`.
           items:
             $ref: '#/components/schemas/SurveyValidationLanguage'
+        customCss:
+          $ref: '#/components/schemas/CustomCssCompiled'
+          description: Compiled custom CSS, when the payload carried `customCss` and `valid=true`. Never present on a failed validation.
+        warnings:
+          type: array
+          maxItems: 50
+          description: Constructs the processor removed from the payload's `customCss`, when it carried one.
+          items:
+            $ref: '#/components/schemas/CustomCssWarning'
+        errors:
+          type: array
+          maxItems: 50
+          description: Why the payload's `customCss` could not be processed, when it could not.
+          items:
+            $ref: '#/components/schemas/CustomCssError'
+      additionalProperties: false
+    CustomCssValidationResult:
+      type: object
+      description: 'Result of `operation: customCss`. On success it carries the compiled CSS and warnings; on failure the processor''s errors, with no compiled output.'
+      required:
+        - valid
+        - operation
+        - invalid_params
+      properties:
+        valid:
+          type: boolean
+        operation:
+          type: string
+          enum:
+            - customCss
+        invalid_params:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvalidParam'
+        customCss:
+          $ref: '#/components/schemas/CustomCssCompiled'
+        warnings:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/CustomCssWarning'
+        errors:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/CustomCssError'
       additionalProperties: false
     SurveyBlockUpdateOperation:
       type: object
@@ -9684,6 +10154,60 @@ components:
           type: integer
           minimum: 0
           description: Responses currently carrying this tag. `0` when the tag exists but has never been applied.
+    WorkspaceCustomCssResource:
+      type: object
+      description: 'A workspace''s shared survey CSS (ENG-3641): editable source for authorized readers, never compiled output. It applies to every survey in the workspace, beneath each survey''s own CSS.'
+      required:
+        - workspaceId
+        - customCss
+        - previous
+        - status
+        - canEdit
+        - planAllowed
+      properties:
+        workspaceId:
+          type: string
+        customCss:
+          anyOf:
+            - $ref: '#/components/schemas/CustomCssInput'
+            - type: 'null'
+          description: Current source; `null` when the workspace has no custom CSS.
+        previous:
+          anyOf:
+            - $ref: '#/components/schemas/CustomCssInput'
+            - type: 'null'
+          description: The one recoverable previous revision. Restore it by sending this source back with PATCH; it is processed and authorized like any other save.
+        status:
+          type: string
+          enum:
+            - ok
+            - stale
+            - withheld
+          description: '`stale`: compiled by an older processor and delivered by recompiling its source. `withheld`: the source no longer passes the current processor, so respondents receive none of it until it is fixed and saved again.'
+        errors:
+          type: array
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/CustomCssError'
+          description: Present only when `status` is `withheld`.
+        canEdit:
+          type: boolean
+          description: 'Whether this caller may PATCH it: organization owners and managers for signed-in users, a `manage` grant on this workspace for API keys.'
+        planAllowed:
+          type: boolean
+          description: Whether the organization's plan allows additions and edits (Scale on Formbricks Cloud; every self-hosted plan). Removing CSS is always allowed.
+      additionalProperties: false
+    PatchWorkspaceCustomCssRequest:
+      type: object
+      required:
+        - customCss
+      properties:
+        customCss:
+          anyOf:
+            - $ref: '#/components/schemas/CustomCssInput'
+            - type: 'null'
+          description: Replaces both fields. `null` clears all workspace CSS. Adding or editing CSS needs the Scale plan on Formbricks Cloud; clearing either field or all CSS never does.
+      additionalProperties: false
     FeedbackRecordFieldType:
       type: string
       description: 'The type of a feedback field, which determines which `value_*` member carries the answer: `text` → `value_text` (the only enrichable type), `categorical` → `value_text` + `value_id`, `nps` / `csat` / `ces` / `rating` / `number` → `value_number`, `boolean` → `value_boolean`, `date` → `value_date`.'
@@ -10608,6 +11132,14 @@ components:
         type: string
         format: cuid2
       description: Workflow identifier.
+    WorkspaceIdPath:
+      in: path
+      name: workspaceId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Workspace identifier.
     FeedbackRecordsTenantIdQuery:
       in: query
       name: tenant_id

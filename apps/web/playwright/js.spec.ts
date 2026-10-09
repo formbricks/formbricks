@@ -116,8 +116,69 @@ test.describe("JS Package Test", async () => {
     const surveyId = /\/surveys\/([^/]+)\/summary/.exec(page.url())?.[1];
     if (!surveyId) throw new Error(`Unable to parse surveyId from ${page.url()}`);
 
+    // ENG-3552: workspace and survey custom CSS, saved through the same v3 endpoints the editors use, so
+    // the processor, storage and cache invalidation are the real ones. Both style the same hook so one
+    // assertion proves both arrive and that survey CSS outranks workspace CSS (M2.03).
+    await test.step("save workspace and survey custom CSS", async () => {
+      const workspaceCss = await page.request.patch(`/api/v3/workspaces/${workspaceId}/custom-css`, {
+        data: {
+          customCss: {
+            light: '[data-fb-part="headline"] { letter-spacing: 3px; color: rgb(10, 20, 30); }',
+            dark: null,
+          },
+        },
+      });
+      expect(workspaceCss.ok()).toBe(true);
+
+      // Survey CSS is delivered only while the survey's "Add custom styles" is on (ENG-3723). The v3 survey
+      // API has no styling field, so it is set directly, before the PATCH below invalidates the cache.
+      const { styling } = await prisma.survey.findUniqueOrThrow({
+        where: { id: surveyId },
+        select: { styling: true },
+      });
+      await prisma.survey.update({
+        where: { id: surveyId },
+        data: { styling: { ...styling, overwriteThemeStyling: true } },
+      });
+
+      const surveyCss = await page.request.patch(`/api/v3/surveys/${surveyId}`, {
+        data: { customCss: { light: '[data-fb-part="headline"] { color: rgb(40, 50, 60); }', dark: null } },
+      });
+      expect(surveyCss.ok()).toBe(true);
+    });
+
+    const environmentResponse = page.waitForResponse((response) =>
+      /\/api\/v1\/client\/[^/]+\/environment/.test(response.url())
+    );
     await page.goto("http://localhost:3004");
     await expect(page.locator("#formbricks-modal-container")).toHaveCount(1, { timeout: 120000 });
+
+    await test.step("the SDK receives compiled custom CSS only, workspace CSS once", async () => {
+      // The endpoint wraps the state in its own envelope: `{ data: { data: <state>, expiresAt } }`.
+      const { data } = ((await (await environmentResponse).json()) as { data: unknown }).data as {
+        data: {
+          workspace: { customCss?: Record<string, string> };
+          project?: { customCss?: unknown };
+          surveys: { id: string; customCss?: Record<string, string> }[];
+        };
+      };
+      const surveyCustomCss = data.surveys.find((survey) => survey.id === surveyId)?.customCss;
+
+      // Compiled `{ light?, dark? }` only — no source, no processor internals — and not repeated in the
+      // legacy `project` alias.
+      expect(Object.keys(data.workspace.customCss ?? {})).toEqual(["light"]);
+      expect(data.workspace.customCss?.light).toContain("fb-workspace");
+      expect(Object.keys(surveyCustomCss ?? {})).toEqual(["light"]);
+      expect(surveyCustomCss?.light).toContain("fb-survey");
+      expect(data.project?.customCss).toBeUndefined();
+    });
+
+    await test.step("workspace and survey custom CSS style the app survey", async () => {
+      const headline = page.locator('#formbricks-modal-container [data-fb-part="headline"]').first();
+      // Workspace CSS applies (letter-spacing), and survey CSS wins where both set a property (color).
+      await expect(headline).toHaveCSS("letter-spacing", "3px");
+      await expect(headline).toHaveCSS("color", "rgb(40, 50, 60)");
+    });
 
     // The widget reads the survey from the public client API, which substitutes a placeholder for
     // every survey name so names are not exposed over an unauthenticated endpoint. This is the only

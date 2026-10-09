@@ -242,6 +242,8 @@ For failures before Prisma records the attempt, check connectivity and permissio
 session. If a migration must be retried, first establish whether partial changes need repair, then use
 the target image's `node /home/nextjs/packages/database/dist/scripts/apply-migrations.js` under maintenance.
 Capture any diagnostic output only in operator-controlled storage; never enable it on normal startup.
+[If a migration fails](/self-hosting/advanced/migration#if-a-migration-fails) shows how to find the real error,
+check what the failed migration left behind, and clear its failed record before retrying.
 
 After database changes, **`helm rollback` or changing the image is not necessarily a safe rollback**.
 Remain in maintenance and either complete the v6 preparation or restore the coordinated backup and

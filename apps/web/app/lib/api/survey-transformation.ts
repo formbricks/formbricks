@@ -533,6 +533,9 @@ export const withDerivedQuestions = <
 };
 
 const INTERNAL_SURVEY_PROJECTION_KEYS = [
+  // ENG-2949: stored custom CSS (source plus compiled output and the internal processor version) is v3's
+  // to describe. The v1 write paths refuse it, so echoing it here would only invite a round trip they reject.
+  "customCss",
   "embeddedFields",
   "ownerId",
   "visibility",

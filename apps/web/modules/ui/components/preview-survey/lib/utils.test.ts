@@ -1,6 +1,7 @@
+// @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { describe, expect, test } from "vitest";
-import { getPlacementStyle, mirrorPlacementForDir } from "./utils";
+import { getPlacementStyle, isInsideSurveyRoot, mirrorPlacementForDir } from "./utils";
 
 describe("getPlacementStyle", () => {
   test("returns correct style for bottomRight placement", () => {
@@ -58,5 +59,23 @@ describe("mirrorPlacementForDir", () => {
     for (const placement of placements) {
       expect(mirrorPlacementForDir(mirrorPlacementForDir(placement, "rtl"), "rtl")).toBe(placement);
     }
+  });
+});
+
+describe("isInsideSurveyRoot", () => {
+  test("counts the card's own survey root and the separate root an open dropdown portals into", () => {
+    // ENG-3552: in a preview the dropdown mounts inside the mock page, beside the card, so the preview
+    // modal's click-outside check must not read picking an option as a click outside the survey.
+    document.body.innerHTML = `
+      <div id="preview-survey-base">
+        <div id="card"><div id="fbjs"><button id="next">Next</button></div></div>
+        <div id="fbjs"><div role="menu"><div id="option" role="menuitemradio">A</div></div></div>
+        <div id="backdrop"></div>
+      </div>`;
+
+    expect(isInsideSurveyRoot(document.getElementById("next"))).toBe(true);
+    expect(isInsideSurveyRoot(document.getElementById("option"))).toBe(true);
+    expect(isInsideSurveyRoot(document.getElementById("backdrop"))).toBe(false);
+    expect(isInsideSurveyRoot(null)).toBe(false);
   });
 });

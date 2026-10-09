@@ -1,5 +1,6 @@
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { isDeepEqual } from "@/lib/utils/object";
+import { toComparableStoredCustomCss } from "@/modules/custom-css/components/lib/draft";
 
 /** Stands in for `updatedAt` on both sides of a comparison, so its real value never decides one. */
 const IGNORED_UPDATED_AT = new Date(0);
@@ -36,6 +37,10 @@ const IGNORED_LEGACY_COLUMNS = {
  * The visibility columns (ENG-3395) are not the author's either: they change only through their own
  * endpoint — the save drops them — and the editor refreshes the route after such a change, so the
  * `survey` prop can differ from `localSurvey` in them with nothing unsaved.
+ *
+ * Custom CSS (ENG-3553) is compared by normalized source only. The editor sends an edited field with
+ * empty compiled output and the server compiles it on save, and the auto-save keeps its result in refs,
+ * so compiled output and the processor version would otherwise keep a saved survey dirty forever.
  */
 const ignoringServerOwned = (survey: TSurvey): TSurvey => ({
   ...survey,
@@ -47,6 +52,7 @@ const ignoringServerOwned = (survey: TSurvey): TSurvey => ({
   visibilityProjectedVersion: 0,
   visibilityChangedAt: null,
   visibilityChangedById: null,
+  customCss: toComparableStoredCustomCss(survey.customCss),
 });
 
 /**

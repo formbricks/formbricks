@@ -15,6 +15,13 @@ info:
     **DELETE /api/v3/surveys/{surveyId}**.
 
 
+    **Custom CSS**: survey CSS through `customCss` on **POST /api/v3/surveys**, **GET** and **PATCH
+    /api/v3/surveys/{surveyId}**, workspace CSS through **GET** and **PATCH
+    /api/v3/workspaces/{workspaceId}/custom-css**, and previews through `operation: customCss` on
+    **POST /api/v3/surveys/validate**. Writes take and reads return source only; the server compiles
+    it, returns removed constructs as top-level `warnings`, and never accepts compiled output.
+
+
     **Responses**: **GET /api/v3/responses**, **GET /api/v3/responses/count**, **POST
     /api/v3/responses/validate**, **POST /api/v3/responses/batch-delete**, **GET
     /api/v3/responses/{responseId}**, **POST /api/v3/responses**, **PATCH
@@ -371,6 +378,8 @@ paths:
     $ref: paths/api_v3_tags_{tagId}.yml
   /api/v3/tags/{tagId}/merge:
     $ref: paths/api_v3_tags_{tagId}_merge.yml
+  /api/v3/workspaces/{workspaceId}/custom-css:
+    $ref: paths/api_v3_workspaces_{workspaceId}_custom-css.yml
   /api/v3/feedbackRecords:
     $ref: paths/api_v3_feedbackRecords.yml
   /api/v3/feedbackRecords/search/semantic:

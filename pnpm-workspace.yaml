@@ -127,9 +127,21 @@ catalog:
 # tree, so the next cleanup can check that single upstream instead of re-deriving it.
 overrides:
   # ENG-1324 / GHSA-5375-pq7m-f5r2, ENG-1325 / GHSA-99f4-grh7-6pcq:
-  # @grpc/grpc-js is patched in 1.14.4 against malformed-request and malformed-compressed-message crashes.
+  # @grpc/grpc-js 1.14.5 also fixes unauthorized certificate acceptance and error-message disclosure
+  # (CVE-2026-101916 / CVE-2026-101915), alongside the malformed-message crash fixes in 1.14.4.
   # load-bearing: @boxyhq/metrics resolves 1.14.3.
-  "@grpc/grpc-js": 1.14.4
+  "@grpc/grpc-js": 1.14.5
+  # CVE-2026-104872 / GHSA-qqmp-wf37-98f9: database instrumentation unconditionally exports db.user.
+  # Pin every affected instrumentation, including nested Sentry copies, to its first patched release.
+  # load-bearing: @opentelemetry/auto-instrumentations-node@0.75 and @sentry/node's instrumentation chain.
+  "@opentelemetry/instrumentation-cassandra-driver": 0.66.0
+  "@opentelemetry/instrumentation-knex": 0.65.0
+  "@opentelemetry/instrumentation-mongoose": 0.67.0
+  "@opentelemetry/instrumentation-mysql": 0.67.0
+  "@opentelemetry/instrumentation-mysql2": 0.67.0
+  "@opentelemetry/instrumentation-oracledb": 0.46.0
+  "@opentelemetry/instrumentation-pg": 0.73.0
+  "@opentelemetry/instrumentation-tedious": 0.40.0
   # Prisma dev tooling and @modelcontextprotocol/sdk chains.
   # ENG-1998 / GHSA-frvp-7c67-39w9: @hono/node-server <2.0.5 serve-static path traversal on Windows via
   # encoded backslash; patched in 2.0.5 (major bump, only peer is hono ^4; node >=20 is already required).
@@ -178,7 +190,18 @@ overrides:
   # load-bearing: xml-crypto/xml-encryption resolve 0.8.13 and @boxyhq/saml20 resolves 0.9.8, both still
   # vulnerable to the original chain (GHSA-2v35-w6hq-6mfw + 4 more).
   "@xmldom/xmldom": 0.9.12
-  axios: 1.18.0 # ENG-1958 / GHSA-gcfj-64vw-6mp9: <1.18.0 Node HTTP adapter can use an inherited proxy after interceptor config cloning; patched in 1.18.0. load-bearing: @boxyhq/saml-jackson pins 1.13.5.
+  # 1.20.0 also fixes HTTP adapter DoS, redirect-control bypass and prototype-pollution gadgets.
+  # load-bearing: @boxyhq/saml-jackson pins 1.13.5.
+  axios: 1.20.0
+  # GHSA-6qxp-vccf-f47h: an MCP server can select the authorization server receiving client credentials.
+  # @posthog/mcp's optional v1 peer retained 1.26.0 in the old lockfile; keep any v1 resolution patched.
+  "@modelcontextprotocol/sdk@1": 1.31.0
+  # GHSA-rj75-hqrm-r3gf: flat selector parsing has quadratic runtime.
+  # load-bearing: @tailwindcss/typography pins 6.0.10; 7.x retains its selector parser API.
+  postcss-selector-parser: 7.1.6
+  # GHSA-jggr-w7fw-pc2j: deeply nested inputs exhaust the stack while copying.
+  # load-bearing: pino-pretty resolves 4.0.2.
+  fast-copy: 4.1.0
   lodash: 4.18.1 # GHSA-r5fr-rjxr-66jc + GHSA-f23m-r3pf-42rh: <=4.17.23 vulnerable, patched in 4.17.24. load-bearing: @boxyhq/saml-jackson and @microsoft/api-extractor resolve 4.17.23.
   node-forge: 1.4.0 # load-bearing: @boxyhq/saml-jackson resolves 1.3.3, still vulnerable (GHSA-2328-f5f3-gj25 + GHSA-5m6q-g25r-mvwx)
   # Webpack / linting / schema validation chains.
@@ -194,7 +217,8 @@ overrides:
   # SDK and runtime transitive security pins.
   # GHSA-55q2-fjhq-7xh7: DOMPurify <=3.4.12 can be bypassed with crafted HTML; patched in 3.4.13.
   # load-bearing: isomorphic-dompurify, posthog-js and redoc resolve vulnerable 3.x versions.
-  dompurify: 3.4.13
+  # GHSA-p98j-92pf-mc4p / GHSA-6688-9rhm-gjv2: IN_PLACE sanitization leaves executable removed roots.
+  dompurify: 3.4.16
   # GHSA-gh4j-gqv2-49f6 + GHSA-jp2q-39xq-3w4g are patched in 5.7.0, but 5.7.0 and 5.7.1 reject
   # entity names starting with "#", and @aws-sdk/xml-builder registers "#xD"/"#10" on its parser —
   # which threw on every XML-parsed S3 response and silently disabled storage prefix cleanup
@@ -269,7 +293,8 @@ overrides:
   # sharp 0.34.5 that next@16 declares as an optional peer, which otherwise keeps the alert open.
   # ENG-3105 / GHSA-rgj7-g3m4-5g8c (refs GHSA-g89c-p67h-r497, GHSA-2jg2-4ch7-h545): sharp <0.35.4 bundles
   # libheif builds vulnerable to a set of HEIF-decoding RCE findings; patched in 0.35.4.
-  sharp: 0.35.4
+  # GHSA-wq5f-xc86-pv6w: 0.35.5 also fixes the bundled librsvg vulnerability CVE-2026-96889.
+  sharp: 0.35.5
   # ENG-1992 / GHSA-45rx-2jwx-cxfr (CVE-2026-59892): @opentelemetry/propagator-jaeger <2.9.0 DoS via an
   # unhandled decodeURIComponent() error on a malformed header; patched in 2.9.0. Coerces the transitive
   # 1.26.0 line up to 2.9.0 (core is already pinned to 2.x above).

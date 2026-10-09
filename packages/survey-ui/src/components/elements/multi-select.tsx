@@ -15,6 +15,7 @@ import {
 import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
+import { FB_PART } from "@/lib/parts";
 import { cn } from "@/lib/utils";
 
 /**
@@ -93,7 +94,7 @@ const getOptionContainerClassName = (isSelected: boolean, isDisabled: boolean): 
   cn(
     "relative flex flex-col border transition-colors outline-none",
     "rounded-option px-option-x py-option-y",
-    isSelected ? "bg-option-selected-bg border-brand" : "bg-option-bg border-option-border",
+    isSelected ? "bg-option-selected-bg border-brand-readable" : "bg-option-bg border-option-border",
     // No focus-within fill: it repainted the option in the *selected* colors, so the card's
     // mount autofocus made option 1 look answered (ENG-2288). Focus has its own uniform ring
     // on the option label, from survey-ui's globals.css.
@@ -110,8 +111,9 @@ function CheckboxIndicator(): React.JSX.Element {
   return (
     <span
       aria-hidden="true"
+      data-fb-part={FB_PART.optionControl}
       className={cn(
-        "border-input-border text-brand-foreground relative flex size-4 shrink-0 items-center justify-center rounded-[4px] border bg-white shadow-xs transition-colors",
+        "border-input-border text-brand-foreground dark:bg-input-bg relative flex size-4 shrink-0 items-center justify-center rounded-[4px] border bg-white shadow-xs transition-colors",
         "peer-checked:bg-brand peer-checked:border-brand",
         // The tick lives inside this sibling span, so reveal it via a peer-checked descendant rule.
         "[&>svg]:opacity-0 [&>svg]:transition-opacity peer-checked:[&>svg]:opacity-100"
@@ -143,9 +145,12 @@ function MultiSelectOptionItem({
   const optionId = `${inputId}-${option.id}`;
 
   return (
+    // Hooked on the visible row; its state is the native checkbox inside it (`:has(:checked)`).
     <label
       key={option.id}
       htmlFor={optionId}
+      data-fb-part={FB_PART.option}
+      data-checked={isChecked ? "true" : undefined}
       className={cn(getOptionContainerClassName(isChecked, isDisabled), isChecked && "z-10")}>
       <span className="flex items-center">
         <input
@@ -166,7 +171,9 @@ function MultiSelectOptionItem({
           }}
         />
         <CheckboxIndicator />
-        <span className={cn("mx-3", optionLabelClassName)}>{option.label}</span>
+        <span data-fb-part={FB_PART.optionLabel} className={cn("mx-3", optionLabelClassName)}>
+          {option.label}
+        </span>
       </span>
     </label>
   );
@@ -262,6 +269,7 @@ function DropdownVariant({
           <Button
             variant="outline"
             disabled={disabled}
+            data-fb-part={FB_PART.dropdown}
             className="rounded-input min-h-input bg-input-bg border-input-border text-input-text py-input-y px-input-x w-full justify-between"
             aria-invalid={errorAria.ariaInvalid}
             aria-describedby={errorAria.ariaDescribedBy}
@@ -309,7 +317,11 @@ function DropdownVariant({
                     e.preventDefault();
                   }}
                   disabled={disabled}>
-                  <span className="font-input font-input-weight text-input-text">{option.label}</span>
+                  <span
+                    data-fb-part={FB_PART.optionLabel}
+                    className="font-input font-input-weight text-input-text">
+                    {option.label}
+                  </span>
                 </DropdownMenuCheckboxItem>
               );
             })}
@@ -329,7 +341,11 @@ function DropdownVariant({
                   e.preventDefault();
                 }}
                 disabled={disabled}>
-                <span className="font-input font-input-weight text-input-text">{otherOptionLabel}</span>
+                <span
+                  data-fb-part={FB_PART.optionLabel}
+                  className="font-input font-input-weight text-input-text">
+                  {otherOptionLabel}
+                </span>
               </DropdownMenuCheckboxItem>
             ) : null}
             {noneOption && noneMatchesSearch ? (
@@ -345,7 +361,11 @@ function DropdownVariant({
                   e.preventDefault();
                 }}
                 disabled={disabled}>
-                <span className="font-input font-input-weight text-input-text">{noneOption.label}</span>
+                <span
+                  data-fb-part={FB_PART.optionLabel}
+                  className="font-input font-input-weight text-input-text">
+                  {noneOption.label}
+                </span>
               </DropdownMenuCheckboxItem>
             ) : null}
             {hasNoResults ? (
@@ -449,6 +469,8 @@ function ListVariant({
           // labelable control, and label-area clicks would forward to the checkbox and toggle "Other"
           // off. The bordered box is a plain container; only the option row is the checkbox's label.
           <div
+            data-fb-part={FB_PART.option}
+            data-checked={isOtherSelected ? "true" : undefined}
             className={cn(
               getOptionContainerClassName(isOtherSelected, disabled || isNoneSelected),
               isOtherSelected && "z-10"
@@ -472,7 +494,9 @@ function ListVariant({
                 }}
               />
               <CheckboxIndicator />
-              <span className={cn("mx-3 grow", optionLabelClassName)}>{otherOptionLabel}</span>
+              <span data-fb-part={FB_PART.optionLabel} className={cn("mx-3 grow", optionLabelClassName)}>
+                {otherOptionLabel}
+              </span>
             </label>
             {/* The enclosing <fieldset> carries aria-describedby, but an ancestor's description is
                 not part of a descendant's accessible description (accname): focusing this input
