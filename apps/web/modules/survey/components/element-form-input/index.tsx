@@ -23,6 +23,7 @@ import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { debounce } from "@/lib/utils/debounce";
 import { useSyncScroll } from "@/lib/utils/hooks/useSyncScroll";
 import { headlineToRecall, recallToHeadline } from "@/lib/utils/recall";
+import { ImageAltTextButton } from "@/modules/survey/components/element-form-input/components/image-alt-text-button";
 import { RecallWrapper } from "@/modules/survey/components/element-form-input/components/recall-wrapper";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { LocalizedEditor } from "@/modules/survey/multi-language-surveys/components/localized-editor";
@@ -310,19 +311,6 @@ export const ElementFormInput = ({
 
   const debouncedHandleUpdate = useMemo(() => debounce((value) => handleUpdate(value), 100), [handleUpdate]);
 
-  // Alt text belongs to one image. The alt input is keyed by that image's URL, so swapping or removing the
-  // image unmounts it; a keystroke still waiting on the debounce must not land on the next image.
-  const latestDebouncedUpdateRef = useRef(debouncedHandleUpdate);
-  useEffect(() => {
-    latestDebouncedUpdateRef.current = debouncedHandleUpdate;
-  }, [debouncedHandleUpdate]);
-  useEffect(() => {
-    const debouncedUpdateRef = latestDebouncedUpdateRef;
-    return () => {
-      if (id === "imageAltText") debouncedUpdateRef.current.cancel();
-    };
-  }, [id]);
-
   const [animationParent] = useAutoAnimate();
   const [internalFirstRender, setInternalFirstRender] = useState(true);
   const suppressEditorUpdatesRef = useRef(false);
@@ -477,28 +465,37 @@ export const ElementFormInput = ({
               isVideoAllowed={true}
               maxSizeInMB={5}
               isStorageConfigured={isStorageConfigured}
+              renderImageAction={
+                isWelcomeCard
+                  ? undefined
+                  : () => (
+                      <ImageAltTextButton
+                        label={t("workspace.surveys.edit.image_alt_text")}
+                        hasAltText={Boolean(getImageAltText()?.default?.trim())}
+                        isInvalid={isValueIncomplete(
+                          "imageAltText",
+                          isInvalid,
+                          surveyLanguageCodes,
+                          getImageAltText()
+                        )}>
+                        <ElementFormInput
+                          id="imageAltText"
+                          value={getImageAltText()}
+                          localSurvey={localSurvey}
+                          elementIdx={elementIdx}
+                          updateElement={updateElement}
+                          updateSurvey={updateSurvey}
+                          isInvalid={isInvalid}
+                          selectedLanguageCode={selectedLanguageCode}
+                          label={t("workspace.surveys.edit.image_alt_text")}
+                          placeholder={t("workspace.surveys.edit.image_alt_text_placeholder")}
+                          locale={locale}
+                          isStorageConfigured={isStorageConfigured}
+                        />
+                      </ImageAltTextButton>
+                    )
+              }
             />
-          )}
-
-          {showImageUploader && id === "headline" && !isWelcomeCard && getFileUrl() && (
-            <div>
-              <ElementFormInput
-                key={getFileUrl()}
-                id="imageAltText"
-                value={getImageAltText()}
-                localSurvey={localSurvey}
-                elementIdx={elementIdx}
-                updateElement={updateElement}
-                updateSurvey={updateSurvey}
-                isInvalid={isInvalid}
-                selectedLanguageCode={selectedLanguageCode}
-                label={t("workspace.surveys.edit.image_alt_text")}
-                placeholder={t("workspace.surveys.edit.image_alt_text_placeholder")}
-                locale={locale}
-                isStorageConfigured={isStorageConfigured}
-              />
-              <p className="mt-1 text-xs text-slate-500">{t("workspace.surveys.edit.image_alt_text_help")}</p>
-            </div>
           )}
 
           <div className="flex w-full items-start gap-2">
