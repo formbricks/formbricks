@@ -84,12 +84,17 @@ ENV BASE_PATH=${BASE_PATH}
 # Prepare the build
 COPY . .
 
-# pnpm fails `pnpm run` with "Patches were modified" when a patch file's mtime is newer than the
-# install's last validation. A reused install layer (Depot's persistent cache) is always older than
-# this checkout, so COPY . . above makes every patch look modified. Their content is the install
-# layer's own (patches/ is part of its cache key), so only the timestamps are reset. Not `COPY
-# --exclude`: BuildKit then follows the apps/web/.env symlink to the root .env, which stays out.
-RUN find patches -type f -exec touch -t 200001010000 {} +
+# Before each `pnpm run`, pnpm 11 re-checks every install input whose mtime is newer than the install's
+# last validation: a newer patch fails as "Patches were modified", a newer manifest gets a deep check
+# against the lockfile that rejects apps/web's `file:` tarball dependency. A reused install layer
+# (Depot's persistent cache) is always older than this checkout, so COPY . . above makes every install
+# input look newer. Their content is exactly what the install read (the COPYs before it are its cache
+# key), so set their timestamps back to before the install, as a fresh install would leave them. The
+# list mirrors those COPYs. Not `COPY --exclude`: BuildKit then follows the apps/web/.env symlink to the
+# root .env, which stays out of the context.
+RUN touch -c -t 200001010000 pnpm-lock.yaml pnpm-workspace.yaml package.json docker/package.json \
+      apps/*/package.json packages/*/package.json \
+    && find patches apps/web/vendor -type f -exec touch -t 200001010000 {} +
 
 # Create a .env file
 RUN touch apps/web/.env
