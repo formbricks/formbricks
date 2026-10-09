@@ -7,6 +7,7 @@ import {
   getTextContent,
   validateId,
 } from "@formbricks/types/surveys/validation";
+import { getDefaultEndingTexts } from "./default-ending";
 import type {
   TDraftChoice,
   TDraftElementBase,
@@ -19,7 +20,7 @@ import type {
 import { createSlicer } from "./event-loop";
 import { QsfIdRegistry, findFreeSuffixedName, isObjectMemberName } from "./id-registry";
 import { type TPipedTextContext, replacePipedText } from "./piped-text";
-import type { TQsfCheckedPlan, TQsfPlannedQuestion } from "./plan-checks";
+import { type TQsfCheckedPlan, type TQsfPlannedQuestion, sliderPoints } from "./plan-checks";
 import type { TQsfPlanContactField } from "./plan-schema";
 import type { TQsfIssue, TQsfQuestion, TQsfSurvey, TQsfTextKey } from "./qsf-model";
 import { type TSanitizedTexts, sanitizeName } from "./sanitize-text";
@@ -144,7 +145,7 @@ const choiceShuffle = (randomized: boolean, hasSpecial: boolean): "none" | "all"
 };
 
 /**
- * The respondent language settings for a draft in `languageCount` languages: the switch and
+ * The respondent language settings for a draft with `languageCount` enabled languages: the switch and
  * browser-language selection on with more than one, nothing with one.
  */
 export const languageSettingsFor = (
@@ -153,13 +154,16 @@ export const languageSettingsFor = (
   languageCount > 1 ? { showLanguageSwitch: true, autoSelectLanguage: true } : {};
 
 /**
- * The document with the language settings its languages call for, after a fit dropped some: a draft
- * cut down to one language loses them.
+ * The document with the language settings its enabled languages call for, after a fit dropped some: a
+ * draft cut down to one enabled language loses them.
  */
 export function withLanguageSettings(document: TQsfDraftDocument): void {
   delete document.showLanguageSwitch;
   delete document.autoSelectLanguage;
-  Object.assign(document, languageSettingsFor(document.languages.length));
+  Object.assign(
+    document,
+    languageSettingsFor(document.languages.filter((language) => language.enabled).length)
+  );
 }
 
 /** Disambiguate labels that repeat within a language: `N/A`, `N/A (2)`. Returns whether any changed. */
@@ -206,11 +210,16 @@ export function disambiguateLabels(
   return true;
 }
 
+/** How many left-out options a report line names, and how much of each. */
+const MAX_NAMED_OPTIONS = 5;
+const MAX_OPTION_NAME_CHARS = 40;
+
 class QsfAssembler {
   private readonly issues: TQsfIssue[] = [];
   private readonly languageCodes: string[];
   private readonly surveyLanguages: TSurveyLanguage[];
-  private readonly fallbackCounts = new Map<string, number>();
+  /** Texts each language is missing. A language missing any is imported turned off. */
+  private readonly missingCounts = new Map<string, number>();
   private readonly elementIdByRef = new Map<string, string>();
   private readonly blockIndexByRef = new Map<string, number>();
   private hiddenFieldIdByName = new Map<string, string>();
@@ -293,9 +302,16 @@ class QsfAssembler {
       this.reportRules(page.logic.length, plan.pageNotes.get(page.id) ?? [], undefined, blockName);
     }
 
-    for (const [language, count] of this.fallbackCounts) {
-      this.issues.push({ code: "translation_fallback", severity: "warning", params: { language, count } });
+    // Built before the languages are settled: an ending's missing translation turns its language off too.
+    const endings = await this.buildEndings();
+    for (const [language, count] of this.missingCounts) {
+      this.issues.push({ code: "translation_missing", severity: "warning", params: { language, count } });
     }
+    const languages = this.languageCodes.map((code, index) => ({
+      code,
+      default: index === 0,
+      enabled: !this.missingCounts.has(code),
+    }));
 
     return {
       document: {
@@ -304,11 +320,11 @@ class QsfAssembler {
         type: "link",
         status: "draft",
         defaultLanguage: survey.defaultLanguage,
-        languages: this.languageCodes.map((code, index) => ({ code, default: index === 0, enabled: true })),
+        languages,
         blocks,
-        endings: this.buildEndings(),
+        endings,
         hiddenFields: { enabled: hidden.fieldIds.length > 0, fieldIds: hidden.fieldIds },
-        ...languageSettingsFor(this.languageCodes.length),
+        ...languageSettingsFor(languages.filter((language) => language.enabled).length),
       },
       issues: this.issues,
       elementRefs,
@@ -316,9 +332,10 @@ class QsfAssembler {
   }
 
   /**
-   * A text in every declared language. A missing or empty translation falls back to the default
-   * language's text and is counted: v3 requires every declared language, and the survey service
-   * refuses an empty label.
+   * A text in every declared language. A missing or empty translation stays empty and is counted: v3
+   * requires every declared language to be present, and the survey service only refuses an empty text
+   * in an enabled language, so a language missing any text is imported turned off for the user to
+   * complete in the editor.
    */
   private localize(
     key: TQsfTextKey,
@@ -339,14 +356,21 @@ class QsfAssembler {
     for (const code of this.languageCodes.slice(1)) {
       const translated = byLanguage?.get(code);
       const converted = translated === undefined ? "" : convert(translated);
-      if (hasTextContent(converted)) {
-        localized[code] = converted;
-      } else {
-        localized[code] = defaultText;
-        if (defaultShows) this.fallbackCounts.set(code, (this.fallbackCounts.get(code) ?? 0) + 1);
+      localized[code] = hasTextContent(converted) ? converted : "";
+      if (!hasTextContent(converted) && defaultShows) {
+        this.missingCounts.set(code, (this.missingCounts.get(code) ?? 0) + 1);
       }
     }
     return localized;
+  }
+
+  /** Left-out options as a report line names them: their default-language text, a few, each short. */
+  private optionNames(keys: TQsfTextKey[]): string {
+    const names = keys.slice(0, MAX_NAMED_OPTIONS).map((key) => {
+      const text = this.params.texts.plainDefault.get(key) || "…";
+      return text.length > MAX_OPTION_NAME_CHARS ? `${text.slice(0, MAX_OPTION_NAME_CHARS - 1)}…` : text;
+    });
+    return keys.length > MAX_NAMED_OPTIONS ? `${names.join(", ")}, …` : names.join(", ");
   }
 
   /** The same fixed text in every language, for a label the file left empty. */
@@ -354,13 +378,19 @@ class QsfAssembler {
     return Object.fromEntries(this.languageCodes.map((code) => [code, text]));
   }
 
-  /** Replace whatever is empty after sanitizing with `fallback`, in that language only. */
+  /**
+   * Replace whatever is empty after sanitizing with `fallback`, in that language only — but only where
+   * the file left the text itself empty. A translation missing beside a default text stays empty: its
+   * language is imported turned off (see `localize`).
+   */
   private filled(text: TQsfLocaleText, fallback: string): { text: TQsfLocaleText; filled: boolean } {
     let filled = false;
     const result: TQsfLocaleText = {};
+    const [defaultCode] = this.languageCodes;
+    const defaultShows = hasTextContent(text[defaultCode] ?? "");
     for (const code of this.languageCodes) {
       const value = text[code] ?? "";
-      if (hasTextContent(value)) {
+      if (hasTextContent(value) || (defaultShows && code !== defaultCode)) {
         result[code] = value;
       } else {
         result[code] = fallback;
@@ -433,6 +463,33 @@ class QsfAssembler {
     };
 
     const element = this.buildTyped(question, planned, base, options, piped);
+    if (planned.leftOut.length > 0) {
+      this.issues.push({
+        code: "options_left_out",
+        severity: "warning",
+        questionTag: tag,
+        questionRef: question.ref,
+        params: { count: planned.leftOut.length, options: this.optionNames(planned.leftOut) },
+      });
+    }
+    const points = sliderPoints(question.slider);
+    if (element.type === "rating" && points !== null && points !== element.range) {
+      this.issues.push({
+        code: "scale_changed",
+        severity: "warning",
+        questionTag: tag,
+        questionRef: question.ref,
+        params: { from: points, to: element.range },
+      });
+    }
+    if (element.type === "matrix" && question.subSelector === "MultipleAnswer") {
+      this.issues.push({
+        code: "matrix_single_answer",
+        severity: "warning",
+        questionTag: tag,
+        questionRef: question.ref,
+      });
+    }
 
     if (piped.removed > 0) {
       this.issues.push({
@@ -591,7 +648,7 @@ class QsfAssembler {
    * organization's plan allows external URLs — the create checks that too — and the URL is one an
    * ending may hold.
    */
-  private buildEndings(): TQsfDraftEnding[] {
+  private async buildEndings(): Promise<TQsfDraftEnding[]> {
     const { survey, allowExternalUrls } = this.params;
     const url = survey.endRedirectUrl;
     if (url) {
@@ -604,7 +661,7 @@ class QsfAssembler {
       this.issues.push({ code: "external_url_removed", severity: "warning" });
     }
 
-    if (!survey.endMessageKey) return [];
+    if (!survey.endMessageKey) return [await this.defaultEnding()];
     const piped = { removed: 0 };
     const headline = this.localize(survey.endMessageKey, this.recallContext(Number.POSITIVE_INFINITY), piped);
     if (piped.removed > 0) {
@@ -616,8 +673,27 @@ class QsfAssembler {
       });
     }
     const defaultHeadline = headline[survey.defaultLanguage] ?? "";
-    if (!hasTextContent(defaultHeadline)) return [];
+    if (!hasTextContent(defaultHeadline)) return [await this.defaultEnding()];
     return [{ id: createId(), type: "endScreen", headline: this.filled(headline, defaultHeadline).text }];
+  }
+
+  /**
+   * The ending the editor gives a new survey, without its link, reported: a file with no end message
+   * of its own relied on Qualtrics' default one, and a survey with no ending should not be published.
+   * A language Formbricks has no strings for keeps both texts empty, like any missing translation.
+   */
+  private async defaultEnding(): Promise<TQsfDraftEnding> {
+    this.issues.push({ code: "ending_added", severity: "info", params: { subject: "ending" } });
+    const texts = await getDefaultEndingTexts(this.languageCodes);
+    const headline: TQsfLocaleText = {};
+    const subheader: TQsfLocaleText = {};
+    for (const [index, code] of this.languageCodes.entries()) {
+      const text = texts[index];
+      headline[code] = text?.headline ?? "";
+      subheader[code] = text?.subheader ?? "";
+      if (!text) this.missingCounts.set(code, (this.missingCounts.get(code) ?? 0) + 2);
+    }
+    return { id: createId(), type: "endScreen", headline, subheader };
   }
 }
 

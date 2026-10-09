@@ -9,6 +9,8 @@ import {
   checkQuestionRoles,
   cleanNote,
   mergeCheckedPlans,
+  ratingRangeFor,
+  sliderPoints,
 } from "./plan-checks";
 import type { TQsfPlanQuestion } from "./plan-schema";
 import { readQsf } from "./read-qsf";
@@ -189,6 +191,28 @@ describe("checkQuestionRoles", () => {
     ).toEqual(["missing_role"]);
   });
 
+  test("sizes a slider's rating from the slider, whatever range the model gave", () => {
+    // QID4 is a five-star slider.
+    const result = checkQuestionRoles(
+      question(advanced, "QID4"),
+      entry("QID4", "rating", { scale: "star", range: "7" })
+    );
+
+    expect(result.ok && result.question.range).toBe(5);
+  });
+
+  test("lists the options left out of a list the element shows, and only those", () => {
+    const multipleChoice = checkQuestionRoles(
+      question(simple, "QID1"),
+      entry("QID1", "multipleChoiceSingle", { choicesFrom: "choices", excludedKeys: ["c2"] })
+    );
+    // An NPS question shows no choice list: its 0–10 choices are not a loss.
+    const nps = checkQuestionRoles(question(simple, "QID2"), entry("QID2", "nps", { excludedKeys: ["c4"] }));
+
+    expect(multipleChoice.ok && multipleChoice.question.leftOut).toEqual(["c2"]);
+    expect(nps.ok && nps.question.leftOut).toEqual([]);
+  });
+
   test("defaults an open text's input type and cleans its notes", () => {
     const result = checkQuestionRoles(
       question(simple, "QID3"),
@@ -199,6 +223,30 @@ describe("checkQuestionRoles", () => {
       inputType: "text",
       notes: ["Shown if 'X' is 'Y'."],
     });
+  });
+});
+
+describe("sliderPoints", () => {
+  test.each([
+    [{ min: 0, max: 5, gridLines: null, stars: 5 }, 5],
+    [{ min: 0, max: 7, gridLines: null, stars: null }, 8],
+    [{ min: 1, max: 5, gridLines: 4, stars: null }, 5],
+    [{ min: 0, max: 10, gridLines: 10, stars: null }, 11],
+    [{ min: null, max: 7, gridLines: null, stars: null }, null],
+    [{ min: 7, max: 0, gridLines: null, stars: null }, null],
+  ])("counts %j as %s points", (slider, points) => {
+    expect(sliderPoints(slider)).toBe(points);
+  });
+});
+
+describe("ratingRangeFor", () => {
+  test.each([
+    [2, 3],
+    [5, 5],
+    [8, 10],
+    [11, 10],
+  ])("fits %s points into a %s-point rating", (points, range) => {
+    expect(ratingRangeFor(points)).toBe(range);
   });
 });
 

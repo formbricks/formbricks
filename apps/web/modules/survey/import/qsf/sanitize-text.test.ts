@@ -94,6 +94,15 @@ describe("sanitizeText", () => {
       expect([...result.dropped].sort()).toEqual(["formatting_dropped", "image_dropped", "script_dropped"]);
     });
 
+    test("wraps text left outside a paragraph, so the survey shows it on one line", () => {
+      expect(
+        sanitizeText('Read <a href="https://example.com/terms">our terms</a> or <b>this</b>.', "rich").text
+      ).toBe('<p>Read <a href="https://example.com/terms">our terms</a> or <b>this</b>.</p>');
+      expect(sanitizeText("<p>One</p> two <b>three</b><ul><li>x</li></ul>", "rich").text).toBe(
+        "<p>One</p><p> two <b>three</b></p><ul><li>x</li></ul>"
+      );
+    });
+
     test("a leading script is seen and reported, not hidden in the document head", () => {
       const result = sanitizeText("<script>alert(1)</script><p>Hello</p>", "rich");
 
@@ -186,7 +195,8 @@ describe("sanitizeQsfTexts", () => {
         { code: "script_dropped", severity: "warning", questionTag: "Q_hello", questionRef: "QID2" },
         { code: "markup_escaped", severity: "warning", questionTag: "Q3", questionRef: "QID3" },
         { code: "text_too_long", severity: "warning", questionTag: "Q6", questionRef: "QID6" },
-        { code: "image_dropped", severity: "warning" },
+        // The end message's image: about the ending, not a question.
+        { code: "image_dropped", severity: "warning", params: { subject: "ending" } },
       ])
     );
     // Formatting is reported once for the whole survey.

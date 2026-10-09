@@ -75,15 +75,16 @@ const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
   "simple.qsf": [{ blocks: 1, questions: 5, languages: ["en-US"], logicRules: 0, hiddenFields: 0 }, []],
   "multilang-en-de.qsf": [
     { blocks: 1, questions: 3, languages: ["en-US", "de-DE"], logicRules: 0, hiddenFields: 0 },
-    [],
+    ["ending_added"],
   ],
   "logic-skip-display-branch.qsf": [
     { blocks: 4, questions: 6, languages: ["en-US"], logicRules: 6, hiddenFields: 1 },
-    Array(6).fill("logic_not_imported"),
+    ["ending_added", ...Array(6).fill("logic_not_imported")],
   ],
   "matrix-slider-ranking.qsf": [
     { blocks: 3, questions: 8, languages: ["en-US"], logicRules: 0, hiddenFields: 0 },
     [
+      "matrix_single_answer",
       "question_skipped:ai_skipped",
       "question_skipped:ai_skipped",
       "question_skipped:unsupported_type",
@@ -93,20 +94,24 @@ const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
   ],
   "pages-and-blocks.qsf": [
     { blocks: 3, questions: 3, languages: ["en-US"], logicRules: 1, hiddenFields: 0 },
-    ["logic_not_imported", "question_skipped:not_in_flow"],
+    ["ending_added", "logic_not_imported", "question_skipped:not_in_flow"],
   ],
   "embedded-data.qsf": [
     { blocks: 2, questions: 2, languages: ["en-US"], logicRules: 0, hiddenFields: 4 },
-    [...Array(4).fill("field_renamed"), "piped_text_removed"],
+    ["ending_added", ...Array(4).fill("field_renamed"), "piped_text_removed"],
   ],
-  "large-150.qsf": [{ blocks: 30, questions: 150, languages: ["en-US"], logicRules: 0, hiddenFields: 0 }, []],
+  "large-150.qsf": [
+    { blocks: 30, questions: 150, languages: ["en-US"], logicRules: 0, hiddenFields: 0 },
+    // Fifteen 0–7 sliders: 8 points, which a rating has not, so each becomes a 10-point rating.
+    ["ending_added", ...Array(15).fill("scale_changed")],
+  ],
   "legacy-object-payload.qsf": [
     { blocks: 1, questions: 2, languages: ["de-DE"], logicRules: 0, hiddenFields: 0 },
-    [],
+    ["ending_added"],
   ],
   "nps-and-numeric-scales.qsf": [
     { blocks: 1, questions: 6, languages: ["en-US"], logicRules: 0, hiddenFields: 0 },
-    [],
+    ["ending_added"],
   ],
   "labels-and-languages.qsf": [
     {
@@ -119,9 +124,10 @@ const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
     [
       "choice_label_renamed",
       "choice_label_renamed",
+      "ending_added",
       "language_skipped",
-      "translation_fallback",
-      "translation_fallback",
+      "translation_missing",
+      "translation_missing",
     ],
   ],
   "rich-text.qsf": [
@@ -133,7 +139,6 @@ const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
       "headline_fallback",
       "image_dropped",
       "image_dropped",
-      "image_dropped",
       "markup_escaped",
       "piped_text_removed",
       "script_dropped",
@@ -143,18 +148,19 @@ const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
   ],
   "prompt-injection.qsf": [
     { blocks: 1, questions: 2, languages: ["en-US"], logicRules: 0, hiddenFields: 0 },
-    [],
+    ["ending_added"],
   ],
   "pollution.qsf": [
     { blocks: 2, questions: 4, languages: ["en-US", "de-DE"], logicRules: 0, hiddenFields: 6 },
     [
       "choice_dropped:invalid_id",
       "choice_dropped:invalid_id",
+      "ending_added",
       ...Array(6).fill("field_renamed"),
       "language_skipped",
       "question_skipped:invalid_id",
       "question_skipped:invalid_id",
-      "translation_fallback",
+      "translation_missing",
     ],
   ],
 };
@@ -208,6 +214,8 @@ describe("runQsfImport on recorded plans", () => {
       expect(checkQsfDraft(result.payload)).toEqual([]);
       // And exactly what POST /api/v3/surveys runs first, on the body the dialog sends.
       expect(prepareV3SurveyCreateInput(JSON.parse(JSON.stringify(result.payload))).ok).toBe(true);
+      // A survey with no ending can be published, and respondents would finish on nothing.
+      expect(result.payload.endings.length).toBeGreaterThan(0);
 
       const [summary, codes] = EXPECTED_REPORTS[fixture];
       expect(result.report.source).toEqual({ kind: "qsf", fileName: fixture });
@@ -224,15 +232,20 @@ describe("runQsfImport on recorded plans", () => {
     30_000
   );
 
-  test("turns on the language switch and browser-language selection for a draft in several languages", async () => {
-    answerFrom("multilang-en-de.qsf");
-    const multi = await run("multilang-en-de.qsf");
+  test("turns on the language switch and browser-language selection for a draft in several enabled languages", async () => {
+    answerFrom("labels-and-languages.qsf");
+    const multi = await run("labels-and-languages.qsf");
+    // German misses some texts, so it is imported turned off, leaving one enabled language.
+    answerFrom("pollution.qsf");
+    const oneEnabled = await run("pollution.qsf");
     answerFrom("simple.qsf");
     const single = await run("simple.qsf");
 
     expect(multi.payload).toMatchObject({ showLanguageSwitch: true, autoSelectLanguage: true });
-    expect("showLanguageSwitch" in single.payload).toBe(false);
-    expect("autoSelectLanguage" in single.payload).toBe(false);
+    for (const payload of [oneEnabled.payload, single.payload]) {
+      expect("showLanguageSwitch" in payload).toBe(false);
+      expect("autoSelectLanguage" in payload).toBe(false);
+    }
     // The create takes them as they are, and stores both.
     const parsed = prepareV3SurveyCreateInput(JSON.parse(JSON.stringify(multi.payload)));
     expect(parsed.ok && parsed.document).toMatchObject({
@@ -240,6 +253,20 @@ describe("runQsfImport on recorded plans", () => {
       autoSelectLanguage: true,
     });
     expect(mocks.realCheckQsfDraft(multi.payload)).toEqual([]);
+  });
+
+  test("reports what was removed from the end message only when the survey shows it", async () => {
+    const endingLines = (result: Awaited<ReturnType<typeof run>>) =>
+      result.report.issues.filter((issue) => issue.params?.subject === "ending").map((issue) => issue.code);
+    answerFrom("rich-text.qsf");
+    const redirected = await run("rich-text.qsf");
+    // Without external URLs the redirect is refused, and the end message is what the survey shows.
+    mocks.getExternalUrlsPermission.mockResolvedValue(false);
+    answerFrom("rich-text.qsf");
+    const shown = await run("rich-text.qsf");
+
+    expect(endingLines(redirected)).toEqual([]);
+    expect(endingLines(shown)).toEqual(["image_dropped"]);
   });
 
   test("calls the organization's AI with the import's tracing feature", async () => {

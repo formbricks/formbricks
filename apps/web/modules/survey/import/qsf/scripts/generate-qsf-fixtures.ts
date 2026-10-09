@@ -161,7 +161,8 @@ write(
         { id: "BL_1", description: "Feedback", type: "Default", elements: ["QID1", "QID2", "QID3"] },
       ]),
       flowElement([flowBlock("BL_1"), flowEnd()]),
-      optionsElement({ EOSMessage: "Danke! / Thank you!" }),
+      // As in a real export: the end message is a Message Library reference, whose text is not in the file.
+      optionsElement({ EOSMessage: "MS_fixture000000000", EOSMessageLibrary: "UR_fixture000000000" }),
     ],
     3
   )
