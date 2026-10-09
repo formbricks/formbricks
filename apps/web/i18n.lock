@@ -646,7 +646,7 @@ checksums:
     emails/member_retention_notice_email_keep: 3b12c1e13e80253cb757f700330a566a
     emails/member_retention_notice_email_sign_in: cb8757c7450e17de1e226e82fb0fa4a2
     emails/member_retention_notice_email_subject: b268c9bfff7e22c2e45a7b626e4f09c5
-    emails/member_retention_notice_email_text: 3171bad6925a39069f7d3fe2f9378a45
+    emails/member_retention_notice_email_text: e7c78e85182235a8fbfbbce93a6a359f
     emails/new_email_verification_text: b7f00f47d04afa9e872176d9933f2d93
     emails/number_variable: d4f2bbb1965c791cf9921a5112914f3f
     emails/password_changed_email_heading: 601f68fc8bef9c5ecf79f4ec4de5ad06
@@ -2906,12 +2906,12 @@ checksums:
     workspace/settings/data_retention/history_load_error: ee2978901cd5ba0ea08367024060ae9a
     workspace/settings/data_retention/history_no_access: a813915b4b0f09f276a4f5affb0a1c18
     workspace/settings/data_retention/member_reactivated: 62210972651a6080eca6357076aacf45
-    workspace/settings/data_retention/members_active_help: e2761ff8f433aea14cf11e80198b8f77
-    workspace/settings/data_retention/members_counts_from: bc91d6b14aa4ee23f66fc5b4226d721d
+    workspace/settings/data_retention/members_active_help: 8f007b1ba7bc129e0de663aa851af292
+    workspace/settings/data_retention/members_counts_from: fdba6b19b657b56e7bacccf2e3b070e7
     workspace/settings/data_retention/members_notice_help: 065591ea24a87c8871f4887d56cc82d5
     workspace/settings/data_retention/members_policy_description: bc2117d082817766bc872c171a4e419b
     workspace/settings/data_retention/members_policy_title: 28ed550ad0eaa2df536cdfdda0600cfe
-    workspace/settings/data_retention/members_summary: 5e40362d674ce54558ff41f6e3a388c8
+    workspace/settings/data_retention/members_summary: da1f678af4028fd052b1df27e106ae94
     workspace/settings/data_retention/nav_label: 29b770f21d46ffce51b70c417a34a609
     workspace/settings/data_retention/no_exemptions: 478eb07c0582b3ffea8edc326e351c28
     workspace/settings/data_retention/no_runs: 7072a06ce3fadc71b019ef069eedc7ad

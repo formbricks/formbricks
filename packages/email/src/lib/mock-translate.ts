@@ -80,7 +80,7 @@ const translations: Record<TranslationKey, TranslationValue> = {
   "emails.member_retention_notice_email_sign_in": "Sign in",
   "emails.member_retention_notice_email_subject": "Your {organizationName} account will be deactivated",
   "emails.member_retention_notice_email_text":
-    "You haven't signed in to {organizationName} for a while, so its data retention policy will deactivate your account on {date}.",
+    "You haven't used {organizationName} for a while, so its data retention policy will deactivate your account on {date}.",
   "emails.retention_notice_email_heading": "Upcoming data retention",
   "emails.retention_notice_email_keep":
     "To keep any of this data, ask an owner or manager of your organization to add an exemption in its data retention settings.",
