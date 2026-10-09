@@ -209,9 +209,13 @@ export async function runQsfImport(params: TRunQsfImportParams): Promise<TQsfImp
     if (problems.length > 0) throw new QsfImportFailedError("draft_invalid");
   }
 
+  // A redirect replaces the end message, as in Qualtrics, so what sanitizing removed from it is moot.
+  const endsWithRedirect = assembly.document.endings.some((ending) => ending.type === "redirectToUrl");
   const issues = [
     ...survey.issues.filter(keepForSurvey),
-    ...texts.issues.filter(keepForSurvey),
+    ...texts.issues.filter(
+      (issue) => keepForSurvey(issue) && !(endsWithRedirect && issue.params?.subject === "ending")
+    ),
     ...surveyFit.issues,
     ...planned.issues,
     ...dropped,

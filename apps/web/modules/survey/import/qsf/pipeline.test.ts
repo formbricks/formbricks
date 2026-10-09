@@ -84,6 +84,7 @@ const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
   "matrix-slider-ranking.qsf": [
     { blocks: 3, questions: 8, languages: ["en-US"], logicRules: 0, hiddenFields: 0 },
     [
+      "matrix_single_answer",
       "question_skipped:ai_skipped",
       "question_skipped:ai_skipped",
       "question_skipped:unsupported_type",
@@ -135,7 +136,6 @@ const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
       "formatting_dropped",
       "headline_fallback",
       "headline_fallback",
-      "image_dropped",
       "image_dropped",
       "image_dropped",
       "markup_escaped",
@@ -252,6 +252,20 @@ describe("runQsfImport on recorded plans", () => {
       autoSelectLanguage: true,
     });
     expect(mocks.realCheckQsfDraft(multi.payload)).toEqual([]);
+  });
+
+  test("reports what was removed from the end message only when the survey shows it", async () => {
+    const endingLines = (result: Awaited<ReturnType<typeof run>>) =>
+      result.report.issues.filter((issue) => issue.params?.subject === "ending").map((issue) => issue.code);
+    answerFrom("rich-text.qsf");
+    const redirected = await run("rich-text.qsf");
+    // Without external URLs the redirect is refused, and the end message is what the survey shows.
+    mocks.getExternalUrlsPermission.mockResolvedValue(false);
+    answerFrom("rich-text.qsf");
+    const shown = await run("rich-text.qsf");
+
+    expect(endingLines(redirected)).toEqual([]);
+    expect(endingLines(shown)).toEqual(["image_dropped"]);
   });
 
   test("calls the organization's AI with the import's tracing feature", async () => {

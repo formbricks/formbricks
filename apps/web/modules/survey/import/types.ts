@@ -17,7 +17,8 @@ export type TQsfImportStage = "reading" | "ai" | "assembling";
  *   rule in plain language, for the user to rebuild in the editor (ENG-3410). A rule of a page none
  *   of whose questions was imported has no `questionTag`; `params.block` names its block instead
  * - `question_skipped` — a question that could not be turned into a Formbricks question (ENG-3479)
- * - `image_dropped`, `script_dropped` — removed from a question text (ENG-3607)
+ * - `image_dropped`, `script_dropped` — removed from a question text (ENG-3607), or from the end
+ *   message, with no `questionTag` and `params.subject: "ending"`
  * - `formatting_dropped` — text colors and other inline styles; at most one per survey (ENG-3607)
  * - `headline_fallback` — the headline was empty after sanitizing, so the export tag stands in (ENG-3607)
  * - `field_renamed` — an embedded data name Formbricks refuses, renamed (ENG-3606)
@@ -39,6 +40,8 @@ export type TQsfImportStage = "reading" | "ai" | "assembling";
  * - `choice_dropped` — a choice whose id the reader refuses
  * - `text_too_long` — a text past the size the import sanitizes, left out
  * - `markup_escaped` — plain text that would have rendered as HTML, shown as typed instead
+ * - `matrix_single_answer` — a Qualtrics matrix that takes several answers per row, imported as a
+ *   Formbricks matrix, which takes one
  * - `ending_added` — the file had no end message the survey can show, so the editor's default ending was
  *   added (`params.subject: "ending"`)
  *
@@ -94,6 +97,7 @@ export type TQsfImportIssueCode =
   | "choice_dropped"
   | "text_too_long"
   | "markup_escaped"
+  | "matrix_single_answer"
   | "ending_added";
 
 export interface TQsfImportIssue {

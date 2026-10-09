@@ -144,6 +144,7 @@ describe("every report code", () => {
     "choice_dropped",
     "text_too_long",
     "markup_escaped",
+    "matrix_single_answer",
   ] as const)("%s has a line of its own", (code) => {
     expect(getQsfImportIssueLine({ code, severity: "info" }, t)).toBe(code);
   });

@@ -5,7 +5,9 @@ import esES from "@/locales/es-ES.json";
 import zhHantTW from "@/locales/zh-Hant-TW.json";
 import { getDefaultEndingTexts } from "./default-ending";
 
-const endingOf = (messages: typeof enUS) => ({
+const endingOf = (messages: {
+  templates: { default_ending_card_headline: string; default_ending_card_subheader: string };
+}) => ({
   headline: messages.templates.default_ending_card_headline,
   subheader: messages.templates.default_ending_card_subheader,
 });

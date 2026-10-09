@@ -272,15 +272,16 @@ class SanitizeReporter {
 
   constructor(private readonly survey: TQsfSurvey) {}
 
-  add(result: TSanitizedText, questionRef: string | null): void {
-    for (const code of result.dropped) this.report(code, questionRef);
-    if (result.escaped) this.report("markup_escaped", questionRef);
-    if (result.tooLong) this.report("text_too_long", questionRef);
+  /** `isEnding`: the text is the end message, whose lines name the ending rather than a question. */
+  add(result: TSanitizedText, questionRef: string | null, isEnding = false): void {
+    for (const code of result.dropped) this.report(code, questionRef, isEnding);
+    if (result.escaped) this.report("markup_escaped", questionRef, isEnding);
+    if (result.tooLong) this.report("text_too_long", questionRef, isEnding);
   }
 
-  private report(code: TQsfImportIssueCode, questionRef: string | null): void {
+  private report(code: TQsfImportIssueCode, questionRef: string | null, isEnding: boolean): void {
     const perSurvey = code === "formatting_dropped";
-    const id = `${code}\u0000${perSurvey ? "" : (questionRef ?? "")}`;
+    const id = `${code}\u0000${perSurvey ? "" : (questionRef ?? (isEnding ? "ending" : ""))}`;
     if (this.reported.has(id)) return;
     this.reported.add(id);
     const exportTag = questionRef === null ? undefined : this.survey.questions.get(questionRef)?.exportTag;
@@ -289,6 +290,7 @@ class SanitizeReporter {
       severity: perSurvey ? "info" : "warning",
       ...(exportTag && !perSurvey ? { questionTag: exportTag } : {}),
       ...(questionRef !== null && !perSurvey ? { questionRef } : {}),
+      ...(isEnding && !perSurvey ? { params: { subject: "ending" } } : {}),
     });
   }
 }
@@ -313,7 +315,7 @@ export async function sanitizeQsfTexts(survey: TQsfSurvey, signal: AbortSignal):
       const result = sanitizeText(raw, entry.format);
       sanitized.set(language, result.text);
       if (language === survey.defaultLanguage) plainDefault.set(key, result.plain);
-      reporter.add(result, entry.questionRef);
+      reporter.add(result, entry.questionRef, key === survey.endMessageKey);
     }
     byKey.set(key, sanitized);
   }

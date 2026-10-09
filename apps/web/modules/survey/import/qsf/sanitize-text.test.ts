@@ -195,7 +195,8 @@ describe("sanitizeQsfTexts", () => {
         { code: "script_dropped", severity: "warning", questionTag: "Q_hello", questionRef: "QID2" },
         { code: "markup_escaped", severity: "warning", questionTag: "Q3", questionRef: "QID3" },
         { code: "text_too_long", severity: "warning", questionTag: "Q6", questionRef: "QID6" },
-        { code: "image_dropped", severity: "warning" },
+        // The end message's image: about the ending, not a question.
+        { code: "image_dropped", severity: "warning", params: { subject: "ending" } },
       ])
     );
     // Formatting is reported once for the whole survey.

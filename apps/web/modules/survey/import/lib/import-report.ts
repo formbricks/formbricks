@@ -145,6 +145,8 @@ export const getQsfImportIssueMessage = (issue: TQsfImportIssue, t: TTranslate):
       return t("workspace.surveys.import.issues.text_too_long");
     case "markup_escaped":
       return t("workspace.surveys.import.issues.markup_escaped");
+    case "matrix_single_answer":
+      return t("workspace.surveys.import.issues.matrix_single_answer");
     case "ending_added":
       return t("workspace.surveys.import.issues.ending_added");
     default:

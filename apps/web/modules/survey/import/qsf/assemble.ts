@@ -450,6 +450,14 @@ class QsfAssembler {
     };
 
     const element = this.buildTyped(question, planned, base, options, piped);
+    if (element.type === "matrix" && question.subSelector === "MultipleAnswer") {
+      this.issues.push({
+        code: "matrix_single_answer",
+        severity: "warning",
+        questionTag: tag,
+        questionRef: question.ref,
+      });
+    }
 
     if (piped.removed > 0) {
       this.issues.push({
