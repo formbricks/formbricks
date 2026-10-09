@@ -127,6 +127,8 @@ export const INVALID_PARAM_CODES = [
   "misordered_reference",
   "missing_required_field",
   "missing_translation",
+  "qsf_limit_exceeded",
+  "qsf_not_recognized",
   "read_only_field",
   "unsupported_field",
   "unsupported_locale",

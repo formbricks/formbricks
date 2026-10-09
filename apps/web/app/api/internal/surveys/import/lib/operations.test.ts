@@ -2,7 +2,11 @@ import { APICallError } from "ai";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError, TooManyRequestsError } from "@formbricks/types/errors";
 import { problemForbidden } from "@/app/api/v3/lib/response";
-import type { TQsfImportResult, TRunQsfImportParams } from "@/modules/survey/import/qsf/pipeline";
+import {
+  QsfImportTimeoutError,
+  type TQsfImportResult,
+  type TRunQsfImportParams,
+} from "@/modules/survey/import/qsf/pipeline";
 import { QSF_IMPORT_DEADLINE_MS, QSF_IMPORT_HEARTBEAT_MS } from "./constants";
 import { streamQsfImport } from "./operations";
 import type { TQsfImportStreamBody } from "./schemas";
@@ -43,8 +47,16 @@ const body: TQsfImportStreamBody = {
   workspaceId: "clxx1234567890123456789012",
   fileName: "onboarding.qsf",
   qsf: {
-    SurveyEntry: { SurveyName: "Onboarding" },
-    SurveyElements: [{ Element: "SQ", Payload: { QuestionText: FILE_CONTENT_MARKER } }],
+    SurveyEntry: { SurveyName: "Onboarding", SurveyLanguage: "EN" },
+    SurveyElements: [
+      {
+        Element: "SQ",
+        PrimaryAttribute: "QID1",
+        Payload: { QuestionText: FILE_CONTENT_MARKER, QuestionType: "TE" },
+      },
+      { Element: "BL", Payload: [{ ID: "BL_1", BlockElements: [{ Type: "Question", QuestionID: "QID1" }] }] },
+      { Element: "FL", Payload: { Flow: [{ Type: "Block", ID: "BL_1" }] } },
+    ],
   },
 };
 
@@ -181,6 +193,23 @@ describe("streamQsfImport", () => {
       expect(mocks.runQsfImport).not.toHaveBeenCalled();
     });
 
+    test("answers a QSF past the reader's limits with 422, before any AI is spent", async () => {
+      let nested: unknown = { Type: "Block", ID: "BL_1" };
+      for (let level = 0; level < 65; level++) nested = { Type: "Group", Flow: [nested] };
+      const elements = body.qsf.SurveyElements as unknown[];
+
+      const response = await call(undefined, {
+        ...body.qsf,
+        SurveyElements: [...elements.slice(0, 2), { Element: "FL", Payload: { Flow: [nested] } }],
+      });
+
+      expect(response.status).toBe(422);
+      const problem = (await response.json()) as { invalid_params: { name: string; reason: string }[] };
+      expect(problem.invalid_params[0].reason).toContain("deeper than 64 levels");
+      expect(JSON.stringify(problem)).not.toContain(FILE_CONTENT_MARKER);
+      expect(mocks.runQsfImport).not.toHaveBeenCalled();
+    });
+
     test("answers a file that is not a QSF with 422 and what is missing", async () => {
       const response = await call(undefined, { name: "some other JSON" });
 
@@ -206,10 +235,11 @@ describe("streamQsfImport", () => {
       ]);
       expect(mocks.runQsfImport).toHaveBeenCalledWith(
         expect.objectContaining({
-          prepared: { fileName: "onboarding.qsf", surveyName: "Onboarding" },
+          prepared: expect.objectContaining({ fileName: "onboarding.qsf", surveyName: "Onboarding" }),
           workspaceId: body.workspaceId,
           organizationId: "org_1",
           userId: "user_1",
+          deadlineMs: QSF_IMPORT_DEADLINE_MS,
         })
       );
     });
@@ -298,6 +328,18 @@ describe("streamQsfImport", () => {
       await vi.advanceTimersByTimeAsync(QSF_IMPORT_DEADLINE_MS);
 
       expect((await events).at(-1)).toMatchObject({ type: "error", code: "import_timed_out" });
+      expect(mocks.log.info).toHaveBeenCalledWith(
+        expect.objectContaining({ outcome: "timed_out", errorCode: "import_timed_out" }),
+        "QSF import finished"
+      );
+    });
+
+    test("reports a plan that ran out of time before any question was planned as a timeout", async () => {
+      mocks.runQsfImport.mockRejectedValue(new QsfImportTimeoutError());
+
+      const events = await readEvents(await call());
+
+      expect(events.at(-1)).toMatchObject({ type: "error", code: "import_timed_out" });
       expect(mocks.log.info).toHaveBeenCalledWith(
         expect.objectContaining({ outcome: "timed_out", errorCode: "import_timed_out" }),
         "QSF import finished"

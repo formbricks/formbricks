@@ -1,5 +1,4 @@
 import "server-only";
-import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import type { TSurvey, TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
@@ -11,11 +10,12 @@ import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
+import { buildV3SurveyCreateInput, getV3SurveyCreateInputInvalidParams } from "./create-input";
 import { v3DistributionToScalars } from "./distribution";
 import { type TV3SurveyLanguageRequest, ensureV3WorkspaceLanguages } from "./languages";
 import { prepareV3SurveyCreate } from "./prepare";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
-import { type TV3CreateSurveyBody, formatV3ZodInvalidParams } from "./schemas";
+import type { TV3CreateSurveyBody } from "./schemas";
 import {
   V3_CONTACTS_NOT_ENABLED_MESSAGE,
   assertV3SurveyTargetingFilterReferences,
@@ -220,33 +220,20 @@ export async function executeV3SurveyCreate(params: {
   const creationFacts = await resolveSurveyCreationFacts({ actor, organizationId });
 
   const languages = await ensureV3WorkspaceLanguages(input.workspaceId, languageRequests, requestId);
-  const surveyCreateInput: TSurveyCreateInput = {
-    name: input.name,
-    type: input.type,
-    status: input.status,
-    metadata: input.metadata,
-    showLanguageSwitch: input.showLanguageSwitch,
-    autoSelectLanguage: input.autoSelectLanguage,
-    welcomeCard: input.welcomeCard,
-    blocks: input.blocks,
-    endings: input.endings,
-    hiddenFields: input.hiddenFields,
-    variables: input.variables,
+  const surveyCreateInput = buildV3SurveyCreateInput(input, {
     languages,
-    questions: [],
     createdBy: getCreatedBy(authentication),
-    ...appCreateFields,
-    ...surveyCreateInputOverrides,
-  };
+    overrides: { ...appCreateFields, ...surveyCreateInputOverrides },
+  });
 
   // Run the survey service's own write schema here, before any DB work, so a document this route's
   // request schema admits but `surveyRefinement` rejects (a CTA `buttonUrl` of `tel:…` being the
   // known case) fails with a typed error the route can answer 422. `createSurvey` validates this
   // same input again; catching its `ValidationError` instead would be wrong, because it also throws
   // one from post-commit work where the survey row already exists. See V3SurveyInputValidationError.
-  const parsedCreateInput = ZSurveyCreateInput.safeParse(surveyCreateInput);
-  if (!parsedCreateInput.success) {
-    throw new V3SurveyInputValidationError(formatV3ZodInvalidParams(parsedCreateInput.error, "body"));
+  const createInputInvalidParams = getV3SurveyCreateInputInvalidParams(surveyCreateInput);
+  if (createInputInvalidParams.length > 0) {
+    throw new V3SurveyInputValidationError(createInputInvalidParams);
   }
 
   // App targeting filters are created atomically with the survey's private segment inside

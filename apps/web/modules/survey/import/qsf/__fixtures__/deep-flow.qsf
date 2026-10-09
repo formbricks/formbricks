@@ -1,0 +1,623 @@
+{
+  "SurveyEntry": {
+    "SurveyID": "SV_fixture000000000",
+    "SurveyName": "Deep flow",
+    "SurveyDescription": null,
+    "SurveyOwnerID": "UR_fixture",
+    "SurveyBrandID": "fixture",
+    "DivisionID": null,
+    "SurveyLanguage": "EN",
+    "SurveyActiveResponseSet": "RS_fixture",
+    "SurveyStatus": "Active",
+    "SurveyStartDate": "0000-00-00 00:00:00",
+    "SurveyExpirationDate": "0000-00-00 00:00:00",
+    "SurveyCreationDate": "2026-09-01 10:00:00",
+    "CreatorID": "UR_fixture",
+    "LastModified": "2026-09-08 10:00:00",
+    "LastAccessed": "0000-00-00 00:00:00",
+    "LastActivated": "2026-09-01 10:00:00",
+    "Deleted": null
+  },
+  "SurveyElements": [
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID1",
+      "SecondaryAttribute": "Deep question",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Deep question",
+        "DataExportTag": "Q1",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Deep question",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID1",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "BL",
+      "PrimaryAttribute": "Survey Blocks",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": [
+        {
+          "Type": "Default",
+          "Description": "Deep",
+          "ID": "BL_1",
+          "BlockElements": [
+            {
+              "Type": "Question",
+              "QuestionID": "QID1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "FL",
+      "PrimaryAttribute": "Survey Flow",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "Type": "Root",
+        "FlowID": "FL_root",
+        "Flow": [
+          {
+            "Type": "Group",
+            "FlowID": "FL_66",
+            "Description": "Group",
+            "Flow": [
+              {
+                "Type": "Group",
+                "FlowID": "FL_65",
+                "Description": "Group",
+                "Flow": [
+                  {
+                    "Type": "Group",
+                    "FlowID": "FL_64",
+                    "Description": "Group",
+                    "Flow": [
+                      {
+                        "Type": "Group",
+                        "FlowID": "FL_63",
+                        "Description": "Group",
+                        "Flow": [
+                          {
+                            "Type": "Group",
+                            "FlowID": "FL_62",
+                            "Description": "Group",
+                            "Flow": [
+                              {
+                                "Type": "Group",
+                                "FlowID": "FL_61",
+                                "Description": "Group",
+                                "Flow": [
+                                  {
+                                    "Type": "Group",
+                                    "FlowID": "FL_60",
+                                    "Description": "Group",
+                                    "Flow": [
+                                      {
+                                        "Type": "Group",
+                                        "FlowID": "FL_59",
+                                        "Description": "Group",
+                                        "Flow": [
+                                          {
+                                            "Type": "Group",
+                                            "FlowID": "FL_58",
+                                            "Description": "Group",
+                                            "Flow": [
+                                              {
+                                                "Type": "Group",
+                                                "FlowID": "FL_57",
+                                                "Description": "Group",
+                                                "Flow": [
+                                                  {
+                                                    "Type": "Group",
+                                                    "FlowID": "FL_56",
+                                                    "Description": "Group",
+                                                    "Flow": [
+                                                      {
+                                                        "Type": "Group",
+                                                        "FlowID": "FL_55",
+                                                        "Description": "Group",
+                                                        "Flow": [
+                                                          {
+                                                            "Type": "Group",
+                                                            "FlowID": "FL_54",
+                                                            "Description": "Group",
+                                                            "Flow": [
+                                                              {
+                                                                "Type": "Group",
+                                                                "FlowID": "FL_53",
+                                                                "Description": "Group",
+                                                                "Flow": [
+                                                                  {
+                                                                    "Type": "Group",
+                                                                    "FlowID": "FL_52",
+                                                                    "Description": "Group",
+                                                                    "Flow": [
+                                                                      {
+                                                                        "Type": "Group",
+                                                                        "FlowID": "FL_51",
+                                                                        "Description": "Group",
+                                                                        "Flow": [
+                                                                          {
+                                                                            "Type": "Group",
+                                                                            "FlowID": "FL_50",
+                                                                            "Description": "Group",
+                                                                            "Flow": [
+                                                                              {
+                                                                                "Type": "Group",
+                                                                                "FlowID": "FL_49",
+                                                                                "Description": "Group",
+                                                                                "Flow": [
+                                                                                  {
+                                                                                    "Type": "Group",
+                                                                                    "FlowID": "FL_48",
+                                                                                    "Description": "Group",
+                                                                                    "Flow": [
+                                                                                      {
+                                                                                        "Type": "Group",
+                                                                                        "FlowID": "FL_47",
+                                                                                        "Description": "Group",
+                                                                                        "Flow": [
+                                                                                          {
+                                                                                            "Type": "Group",
+                                                                                            "FlowID": "FL_46",
+                                                                                            "Description": "Group",
+                                                                                            "Flow": [
+                                                                                              {
+                                                                                                "Type": "Group",
+                                                                                                "FlowID": "FL_45",
+                                                                                                "Description": "Group",
+                                                                                                "Flow": [
+                                                                                                  {
+                                                                                                    "Type": "Group",
+                                                                                                    "FlowID": "FL_44",
+                                                                                                    "Description": "Group",
+                                                                                                    "Flow": [
+                                                                                                      {
+                                                                                                        "Type": "Group",
+                                                                                                        "FlowID": "FL_43",
+                                                                                                        "Description": "Group",
+                                                                                                        "Flow": [
+                                                                                                          {
+                                                                                                            "Type": "Group",
+                                                                                                            "FlowID": "FL_42",
+                                                                                                            "Description": "Group",
+                                                                                                            "Flow": [
+                                                                                                              {
+                                                                                                                "Type": "Group",
+                                                                                                                "FlowID": "FL_41",
+                                                                                                                "Description": "Group",
+                                                                                                                "Flow": [
+                                                                                                                  {
+                                                                                                                    "Type": "Group",
+                                                                                                                    "FlowID": "FL_40",
+                                                                                                                    "Description": "Group",
+                                                                                                                    "Flow": [
+                                                                                                                      {
+                                                                                                                        "Type": "Group",
+                                                                                                                        "FlowID": "FL_39",
+                                                                                                                        "Description": "Group",
+                                                                                                                        "Flow": [
+                                                                                                                          {
+                                                                                                                            "Type": "Group",
+                                                                                                                            "FlowID": "FL_38",
+                                                                                                                            "Description": "Group",
+                                                                                                                            "Flow": [
+                                                                                                                              {
+                                                                                                                                "Type": "Group",
+                                                                                                                                "FlowID": "FL_37",
+                                                                                                                                "Description": "Group",
+                                                                                                                                "Flow": [
+                                                                                                                                  {
+                                                                                                                                    "Type": "Group",
+                                                                                                                                    "FlowID": "FL_36",
+                                                                                                                                    "Description": "Group",
+                                                                                                                                    "Flow": [
+                                                                                                                                      {
+                                                                                                                                        "Type": "Group",
+                                                                                                                                        "FlowID": "FL_35",
+                                                                                                                                        "Description": "Group",
+                                                                                                                                        "Flow": [
+                                                                                                                                          {
+                                                                                                                                            "Type": "Group",
+                                                                                                                                            "FlowID": "FL_34",
+                                                                                                                                            "Description": "Group",
+                                                                                                                                            "Flow": [
+                                                                                                                                              {
+                                                                                                                                                "Type": "Group",
+                                                                                                                                                "FlowID": "FL_33",
+                                                                                                                                                "Description": "Group",
+                                                                                                                                                "Flow": [
+                                                                                                                                                  {
+                                                                                                                                                    "Type": "Group",
+                                                                                                                                                    "FlowID": "FL_32",
+                                                                                                                                                    "Description": "Group",
+                                                                                                                                                    "Flow": [
+                                                                                                                                                      {
+                                                                                                                                                        "Type": "Group",
+                                                                                                                                                        "FlowID": "FL_31",
+                                                                                                                                                        "Description": "Group",
+                                                                                                                                                        "Flow": [
+                                                                                                                                                          {
+                                                                                                                                                            "Type": "Group",
+                                                                                                                                                            "FlowID": "FL_30",
+                                                                                                                                                            "Description": "Group",
+                                                                                                                                                            "Flow": [
+                                                                                                                                                              {
+                                                                                                                                                                "Type": "Group",
+                                                                                                                                                                "FlowID": "FL_29",
+                                                                                                                                                                "Description": "Group",
+                                                                                                                                                                "Flow": [
+                                                                                                                                                                  {
+                                                                                                                                                                    "Type": "Group",
+                                                                                                                                                                    "FlowID": "FL_28",
+                                                                                                                                                                    "Description": "Group",
+                                                                                                                                                                    "Flow": [
+                                                                                                                                                                      {
+                                                                                                                                                                        "Type": "Group",
+                                                                                                                                                                        "FlowID": "FL_27",
+                                                                                                                                                                        "Description": "Group",
+                                                                                                                                                                        "Flow": [
+                                                                                                                                                                          {
+                                                                                                                                                                            "Type": "Group",
+                                                                                                                                                                            "FlowID": "FL_26",
+                                                                                                                                                                            "Description": "Group",
+                                                                                                                                                                            "Flow": [
+                                                                                                                                                                              {
+                                                                                                                                                                                "Type": "Group",
+                                                                                                                                                                                "FlowID": "FL_25",
+                                                                                                                                                                                "Description": "Group",
+                                                                                                                                                                                "Flow": [
+                                                                                                                                                                                  {
+                                                                                                                                                                                    "Type": "Group",
+                                                                                                                                                                                    "FlowID": "FL_24",
+                                                                                                                                                                                    "Description": "Group",
+                                                                                                                                                                                    "Flow": [
+                                                                                                                                                                                      {
+                                                                                                                                                                                        "Type": "Group",
+                                                                                                                                                                                        "FlowID": "FL_23",
+                                                                                                                                                                                        "Description": "Group",
+                                                                                                                                                                                        "Flow": [
+                                                                                                                                                                                          {
+                                                                                                                                                                                            "Type": "Group",
+                                                                                                                                                                                            "FlowID": "FL_22",
+                                                                                                                                                                                            "Description": "Group",
+                                                                                                                                                                                            "Flow": [
+                                                                                                                                                                                              {
+                                                                                                                                                                                                "Type": "Group",
+                                                                                                                                                                                                "FlowID": "FL_21",
+                                                                                                                                                                                                "Description": "Group",
+                                                                                                                                                                                                "Flow": [
+                                                                                                                                                                                                  {
+                                                                                                                                                                                                    "Type": "Group",
+                                                                                                                                                                                                    "FlowID": "FL_20",
+                                                                                                                                                                                                    "Description": "Group",
+                                                                                                                                                                                                    "Flow": [
+                                                                                                                                                                                                      {
+                                                                                                                                                                                                        "Type": "Group",
+                                                                                                                                                                                                        "FlowID": "FL_19",
+                                                                                                                                                                                                        "Description": "Group",
+                                                                                                                                                                                                        "Flow": [
+                                                                                                                                                                                                          {
+                                                                                                                                                                                                            "Type": "Group",
+                                                                                                                                                                                                            "FlowID": "FL_18",
+                                                                                                                                                                                                            "Description": "Group",
+                                                                                                                                                                                                            "Flow": [
+                                                                                                                                                                                                              {
+                                                                                                                                                                                                                "Type": "Group",
+                                                                                                                                                                                                                "FlowID": "FL_17",
+                                                                                                                                                                                                                "Description": "Group",
+                                                                                                                                                                                                                "Flow": [
+                                                                                                                                                                                                                  {
+                                                                                                                                                                                                                    "Type": "Group",
+                                                                                                                                                                                                                    "FlowID": "FL_16",
+                                                                                                                                                                                                                    "Description": "Group",
+                                                                                                                                                                                                                    "Flow": [
+                                                                                                                                                                                                                      {
+                                                                                                                                                                                                                        "Type": "Group",
+                                                                                                                                                                                                                        "FlowID": "FL_15",
+                                                                                                                                                                                                                        "Description": "Group",
+                                                                                                                                                                                                                        "Flow": [
+                                                                                                                                                                                                                          {
+                                                                                                                                                                                                                            "Type": "Group",
+                                                                                                                                                                                                                            "FlowID": "FL_14",
+                                                                                                                                                                                                                            "Description": "Group",
+                                                                                                                                                                                                                            "Flow": [
+                                                                                                                                                                                                                              {
+                                                                                                                                                                                                                                "Type": "Group",
+                                                                                                                                                                                                                                "FlowID": "FL_13",
+                                                                                                                                                                                                                                "Description": "Group",
+                                                                                                                                                                                                                                "Flow": [
+                                                                                                                                                                                                                                  {
+                                                                                                                                                                                                                                    "Type": "Group",
+                                                                                                                                                                                                                                    "FlowID": "FL_12",
+                                                                                                                                                                                                                                    "Description": "Group",
+                                                                                                                                                                                                                                    "Flow": [
+                                                                                                                                                                                                                                      {
+                                                                                                                                                                                                                                        "Type": "Group",
+                                                                                                                                                                                                                                        "FlowID": "FL_11",
+                                                                                                                                                                                                                                        "Description": "Group",
+                                                                                                                                                                                                                                        "Flow": [
+                                                                                                                                                                                                                                          {
+                                                                                                                                                                                                                                            "Type": "Group",
+                                                                                                                                                                                                                                            "FlowID": "FL_10",
+                                                                                                                                                                                                                                            "Description": "Group",
+                                                                                                                                                                                                                                            "Flow": [
+                                                                                                                                                                                                                                              {
+                                                                                                                                                                                                                                                "Type": "Group",
+                                                                                                                                                                                                                                                "FlowID": "FL_9",
+                                                                                                                                                                                                                                                "Description": "Group",
+                                                                                                                                                                                                                                                "Flow": [
+                                                                                                                                                                                                                                                  {
+                                                                                                                                                                                                                                                    "Type": "Group",
+                                                                                                                                                                                                                                                    "FlowID": "FL_8",
+                                                                                                                                                                                                                                                    "Description": "Group",
+                                                                                                                                                                                                                                                    "Flow": [
+                                                                                                                                                                                                                                                      {
+                                                                                                                                                                                                                                                        "Type": "Group",
+                                                                                                                                                                                                                                                        "FlowID": "FL_7",
+                                                                                                                                                                                                                                                        "Description": "Group",
+                                                                                                                                                                                                                                                        "Flow": [
+                                                                                                                                                                                                                                                          {
+                                                                                                                                                                                                                                                            "Type": "Group",
+                                                                                                                                                                                                                                                            "FlowID": "FL_6",
+                                                                                                                                                                                                                                                            "Description": "Group",
+                                                                                                                                                                                                                                                            "Flow": [
+                                                                                                                                                                                                                                                              {
+                                                                                                                                                                                                                                                                "Type": "Group",
+                                                                                                                                                                                                                                                                "FlowID": "FL_5",
+                                                                                                                                                                                                                                                                "Description": "Group",
+                                                                                                                                                                                                                                                                "Flow": [
+                                                                                                                                                                                                                                                                  {
+                                                                                                                                                                                                                                                                    "Type": "Group",
+                                                                                                                                                                                                                                                                    "FlowID": "FL_4",
+                                                                                                                                                                                                                                                                    "Description": "Group",
+                                                                                                                                                                                                                                                                    "Flow": [
+                                                                                                                                                                                                                                                                      {
+                                                                                                                                                                                                                                                                        "Type": "Group",
+                                                                                                                                                                                                                                                                        "FlowID": "FL_3",
+                                                                                                                                                                                                                                                                        "Description": "Group",
+                                                                                                                                                                                                                                                                        "Flow": [
+                                                                                                                                                                                                                                                                          {
+                                                                                                                                                                                                                                                                            "Type": "Group",
+                                                                                                                                                                                                                                                                            "FlowID": "FL_2",
+                                                                                                                                                                                                                                                                            "Description": "Group",
+                                                                                                                                                                                                                                                                            "Flow": [
+                                                                                                                                                                                                                                                                              {
+                                                                                                                                                                                                                                                                                "Type": "Block",
+                                                                                                                                                                                                                                                                                "ID": "BL_1",
+                                                                                                                                                                                                                                                                                "FlowID": "FL_1"
+                                                                                                                                                                                                                                                                              }
+                                                                                                                                                                                                                                                                            ]
+                                                                                                                                                                                                                                                                          }
+                                                                                                                                                                                                                                                                        ]
+                                                                                                                                                                                                                                                                      }
+                                                                                                                                                                                                                                                                    ]
+                                                                                                                                                                                                                                                                  }
+                                                                                                                                                                                                                                                                ]
+                                                                                                                                                                                                                                                              }
+                                                                                                                                                                                                                                                            ]
+                                                                                                                                                                                                                                                          }
+                                                                                                                                                                                                                                                        ]
+                                                                                                                                                                                                                                                      }
+                                                                                                                                                                                                                                                    ]
+                                                                                                                                                                                                                                                  }
+                                                                                                                                                                                                                                                ]
+                                                                                                                                                                                                                                              }
+                                                                                                                                                                                                                                            ]
+                                                                                                                                                                                                                                          }
+                                                                                                                                                                                                                                        ]
+                                                                                                                                                                                                                                      }
+                                                                                                                                                                                                                                    ]
+                                                                                                                                                                                                                                  }
+                                                                                                                                                                                                                                ]
+                                                                                                                                                                                                                              }
+                                                                                                                                                                                                                            ]
+                                                                                                                                                                                                                          }
+                                                                                                                                                                                                                        ]
+                                                                                                                                                                                                                      }
+                                                                                                                                                                                                                    ]
+                                                                                                                                                                                                                  }
+                                                                                                                                                                                                                ]
+                                                                                                                                                                                                              }
+                                                                                                                                                                                                            ]
+                                                                                                                                                                                                          }
+                                                                                                                                                                                                        ]
+                                                                                                                                                                                                      }
+                                                                                                                                                                                                    ]
+                                                                                                                                                                                                  }
+                                                                                                                                                                                                ]
+                                                                                                                                                                                              }
+                                                                                                                                                                                            ]
+                                                                                                                                                                                          }
+                                                                                                                                                                                        ]
+                                                                                                                                                                                      }
+                                                                                                                                                                                    ]
+                                                                                                                                                                                  }
+                                                                                                                                                                                ]
+                                                                                                                                                                              }
+                                                                                                                                                                            ]
+                                                                                                                                                                          }
+                                                                                                                                                                        ]
+                                                                                                                                                                      }
+                                                                                                                                                                    ]
+                                                                                                                                                                  }
+                                                                                                                                                                ]
+                                                                                                                                                              }
+                                                                                                                                                            ]
+                                                                                                                                                          }
+                                                                                                                                                        ]
+                                                                                                                                                      }
+                                                                                                                                                    ]
+                                                                                                                                                  }
+                                                                                                                                                ]
+                                                                                                                                              }
+                                                                                                                                            ]
+                                                                                                                                          }
+                                                                                                                                        ]
+                                                                                                                                      }
+                                                                                                                                    ]
+                                                                                                                                  }
+                                                                                                                                ]
+                                                                                                                              }
+                                                                                                                            ]
+                                                                                                                          }
+                                                                                                                        ]
+                                                                                                                      }
+                                                                                                                    ]
+                                                                                                                  }
+                                                                                                                ]
+                                                                                                              }
+                                                                                                            ]
+                                                                                                          }
+                                                                                                        ]
+                                                                                                      }
+                                                                                                    ]
+                                                                                                  }
+                                                                                                ]
+                                                                                              }
+                                                                                            ]
+                                                                                          }
+                                                                                        ]
+                                                                                      }
+                                                                                    ]
+                                                                                  }
+                                                                                ]
+                                                                              }
+                                                                            ]
+                                                                          }
+                                                                        ]
+                                                                      }
+                                                                    ]
+                                                                  }
+                                                                ]
+                                                              }
+                                                            ]
+                                                          }
+                                                        ]
+                                                      }
+                                                    ]
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "Properties": {
+          "Count": 1
+        }
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SO",
+      "PrimaryAttribute": "Survey Options",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "BackButton": "false",
+        "SaveAndContinue": "true",
+        "SurveyProtection": "PublicSurvey",
+        "ProgressBarDisplay": "None",
+        "PartialData": "+1 week",
+        "EOSMessage": "",
+        "EOSRedirectURL": "",
+        "NextButton": "→",
+        "PreviousButton": "←",
+        "ShowExportTags": "false"
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "QC",
+      "PrimaryAttribute": "Survey Question Count",
+      "SecondaryAttribute": "1",
+      "TertiaryAttribute": null,
+      "Payload": null
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "STAT",
+      "PrimaryAttribute": "Survey Statistics",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "MobileCompatible": true,
+        "ID": "Survey Statistics"
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "RS",
+      "PrimaryAttribute": "RS_fixture",
+      "SecondaryAttribute": "Default Response Set",
+      "TertiaryAttribute": null,
+      "Payload": null
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SCO",
+      "PrimaryAttribute": "Scoring",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "ScoringCategories": [],
+        "ScoringCategoryGroups": [],
+        "ScoringSummaryCategory": null,
+        "ScoringSummaryAfterQuestions": 0,
+        "ScoringSummaryAfterSurvey": 0,
+        "DefaultScoringCategory": null,
+        "AutoScoringCategory": null
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "PROJ",
+      "PrimaryAttribute": "CORE",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": "1.1.0",
+      "Payload": {
+        "ProjectCategory": "CORE",
+        "SchemaVersion": "1.1.0"
+      }
+    }
+  ]
+}

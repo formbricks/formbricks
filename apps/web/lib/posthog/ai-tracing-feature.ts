@@ -7,6 +7,7 @@ export const AI_TRACING_FEATURE = {
   ChartQuery: "ai_chart_query",
   Translation: "ai_translation",
   ExampleResponses: "ai_example_responses",
+  QsfImport: "ai_qsf_import",
 } as const;
 
 export type AITracingFeature = (typeof AI_TRACING_FEATURE)[keyof typeof AI_TRACING_FEATURE];
