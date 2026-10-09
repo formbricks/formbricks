@@ -201,7 +201,7 @@ const emailRecipient = async (
     });
   } catch (error) {
     logger.error(
-      { error, surveyCount: notices.length },
+      { err: error, surveyCount: notices.length },
       "Data retention notice email failed; the notices stay unsent"
     );
     return null;

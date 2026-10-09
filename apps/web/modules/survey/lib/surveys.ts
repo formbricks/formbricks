@@ -98,7 +98,7 @@ export const deleteSurvey = async (surveyId: string, options?: { purgeCutoff?: D
     try {
       await drainDeletionCleanups({ ids: drainNowIds });
     } catch (error) {
-      logger.error({ error, surveyId }, "Deferred a deleted survey's storage cleanup to the drain job");
+      logger.error({ err: error, surveyId }, "Deferred a deleted survey's storage cleanup to the drain job");
     }
 
     return deletedSurvey;

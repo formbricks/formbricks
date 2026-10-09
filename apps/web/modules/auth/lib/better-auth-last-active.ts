@@ -26,7 +26,9 @@ export const recordUserActivity = async (userId: string): Promise<void> => {
       UPDATE "User" SET "lastActiveAt" = GREATEST("lastActiveAt", ${now}) WHERE "id" = ${userId}
     `;
   } catch (error) {
-    logger.withContext({ source: "better-auth" }).error({ error, userId }, "Failed to record user activity");
+    logger
+      .withContext({ source: "better-auth" })
+      .error({ err: error, userId }, "Failed to record user activity");
   }
 };
 

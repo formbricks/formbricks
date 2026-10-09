@@ -146,7 +146,7 @@ const auditDeletion = async (
       },
     });
   } catch (error) {
-    logger.error({ error, surveyId: survey.id }, "Data retention response deletion audit failed");
+    logger.error({ err: error, surveyId: survey.id }, "Data retention response deletion audit failed");
   }
 };
 
@@ -215,7 +215,7 @@ export const deleteDueResponses = async (
       await drainDeletionCleanups({ ids: batch.drainNowIds });
     } catch (error) {
       logger.error(
-        { error, surveyId: survey.id },
+        { err: error, surveyId: survey.id },
         "Deferred deleted responses' storage cleanup to the drain job"
       );
     }

@@ -93,7 +93,7 @@ const markDeferred = async (
     await recordRetentionDeferral(licensed.filter((id): id is string => id !== null));
   } catch (error) {
     logger.error(
-      { error, deferred: organizationIds.length },
+      { err: error, deferred: organizationIds.length },
       "Failed to record the organisations the data retention sweep had no time for"
     );
   }
@@ -107,7 +107,10 @@ const isLicensed = async (
   try {
     return await check(organizationId);
   } catch (error) {
-    logger.error({ error, organizationId }, "Data retention licence check failed; skipping the organisation");
+    logger.error(
+      { err: error, organizationId },
+      "Data retention licence check failed; skipping the organisation"
+    );
     return false;
   }
 };
@@ -127,7 +130,7 @@ const auditWarningRestart = async (run: TOpenedRetentionRun): Promise<void> => {
       newObject: { entity: run.policy.entity, enabledAt: run.policy.enabledAt },
     });
   } catch (error) {
-    logger.error({ error, policyId: run.policy.id }, "Data retention warning restart audit failed");
+    logger.error({ err: error, policyId: run.policy.id }, "Data retention warning restart audit failed");
   }
 };
 
@@ -156,7 +159,7 @@ const runStep = async (policyRun: TPolicyRun, step: () => Promise<void>): Promis
       logger.info(logContext, "Data retention policy changed during its run; stopped");
     } else {
       policyRun.failed = true;
-      logger.error({ ...logContext, error }, "Data retention run failed");
+      logger.error({ ...logContext, err: error }, "Data retention run failed");
     }
   }
 };
@@ -207,7 +210,7 @@ const sendNotices = async (organizationId: string, policyRuns: readonly TPolicyR
       policyRun.plan = null;
       policyRun.failed = true;
     }
-    logger.error({ error, organizationId }, "Data retention notices failed");
+    logger.error({ err: error, organizationId }, "Data retention notices failed");
   }
 };
 
@@ -230,7 +233,7 @@ const sweepOrganization = async (
     runs = await openRetentionRuns(organizationId, entities);
   } catch (error) {
     logger.error(
-      { error, organizationId },
+      { err: error, organizationId },
       "Data retention runs could not be opened; skipping the organisation"
     );
     return;

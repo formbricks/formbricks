@@ -161,7 +161,7 @@ export const revokeCredentials = async (userId: string): Promise<void> => {
     await revokeUserSessionsExcept({ userId });
     await prisma.$transaction((tx) => revokeAllUserOAuthGrants(tx, userId));
   } catch (error) {
-    logger.error({ error, userId }, "Revoking a deactivated member's credentials failed");
+    logger.error({ err: error, userId }, "Revoking a deactivated member's credentials failed");
   }
 };
 
@@ -208,7 +208,10 @@ const notifyMember = async (
       deactivateDate: formatRetentionDate(actionAt.toISOString(), locale, organization.timeZone),
     });
   } catch (error) {
-    logger.error({ error, runId: context.runId, userId: member.userId }, "Member retention notice failed");
+    logger.error(
+      { err: error, runId: context.runId, userId: member.userId },
+      "Member retention notice failed"
+    );
     return;
   }
 
@@ -243,7 +246,7 @@ const afterDeactivation = async (context: TRetentionSweepContext, userId: string
       newObject: { isActive: false, retentionRunId: context.runId },
     });
   } catch (error) {
-    logger.error({ error, userId }, "Data retention deactivation audit failed");
+    logger.error({ err: error, userId }, "Data retention deactivation audit failed");
   }
 };
 

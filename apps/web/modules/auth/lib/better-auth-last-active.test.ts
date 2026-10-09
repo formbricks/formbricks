@@ -51,7 +51,7 @@ describe("recordUserActivity", () => {
     await expect(recordUserActivity("clusr")).resolves.toBeUndefined();
     expect(logger.withContext).toHaveBeenCalledWith({ source: "better-auth" });
     expect(mockError).toHaveBeenCalledWith(
-      { error: failure, userId: "clusr" },
+      { err: failure, userId: "clusr" },
       "Failed to record user activity"
     );
   });

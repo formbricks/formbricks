@@ -223,7 +223,7 @@ export const drainDeletionCleanups = async ({
       try {
         outcome = await processCleanup(row, hubBudget);
       } catch (error) {
-        logger.error({ error, cleanupId: row.id, kind: row.kind }, "Deletion cleanup threw");
+        logger.error({ err: error, cleanupId: row.id, kind: row.kind }, "Deletion cleanup threw");
         outcome = { status: "failed", error: "error" };
       }
       await finishCleanup(row, outcome, new Date());

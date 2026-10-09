@@ -179,7 +179,7 @@ export const archiveDueSurvey = async (
       newObject: { workspaceId: archived.workspaceId, retentionRunId: context.runId },
     });
   } catch (error) {
-    logger.error({ error, surveyId }, "Data retention survey archive audit failed");
+    logger.error({ err: error, surveyId }, "Data retention survey archive audit failed");
   }
   return true;
 };

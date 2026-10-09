@@ -108,7 +108,7 @@ export const deleteResponseFileUrls = async (
       } catch (error) {
         failed.push(fileUrl);
         logger.error(
-          { error, storageId: storageFile.storageId, accessType: storageFile.accessType },
+          { err: error, storageId: storageFile.storageId, accessType: storageFile.accessType },
           "Failed to delete file"
         );
       }

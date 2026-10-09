@@ -267,7 +267,7 @@ describe("runDataRetentionSweep", () => {
     expect(summary).toMatchObject({ organizations: 2, runs: 1, failedRuns: 0 });
     expect(members.act).toHaveBeenCalledOnce();
     expect(logger.error).toHaveBeenCalledWith(
-      { error: failure, organizationId: "org-1" },
+      { err: failure, organizationId: "org-1" },
       "Data retention runs could not be opened; skipping the organisation"
     );
   });
