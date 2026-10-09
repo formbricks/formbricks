@@ -15,7 +15,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { logger } from "@formbricks/logger";
 import { createS3Client } from "./client";
 import { S3_BUCKET_NAME } from "./constants";
-import { toLoggableErrorCode, toLoggableStorageError } from "./loggable-error";
+import { countErrorCodes, toLoggableStorageError } from "./loggable-error";
 import { type Result, type StorageError, StorageErrorCode, err, ok } from "./types/error";
 
 /**
@@ -324,13 +324,7 @@ export const deleteFilesByPrefix = async (prefix: string): Promise<Result<void, 
 
       if (result.Errors && result.Errors.length > 0) {
         totalErrors += result.Errors.length;
-        // Counted by code: a key ends with the uploader's file name, and the message is the provider's text.
-        const errorCodes = new Map<string, number>();
-        for (const { Code } of result.Errors) {
-          const code = toLoggableErrorCode(Code);
-          errorCodes.set(code, (errorCodes.get(code) ?? 0) + 1);
-        }
-        logger.error({ errorCodes: Object.fromEntries(errorCodes) }, "Some objects failed to delete");
+        logger.error({ errorCodes: countErrorCodes(result.Errors) }, "Some objects failed to delete");
       }
     }
 

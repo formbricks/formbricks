@@ -56,3 +56,16 @@ export const toLoggableStorageError = (error: unknown): LoggableStorageError => 
     attempts,
   };
 };
+
+/**
+ * A partial bulk delete's failures, counted by code. Never the per-object `Key` (it ends with the
+ * uploader's file name) or `Message` (the provider's text).
+ */
+export const countErrorCodes = (errors: readonly { Code?: string }[]): Record<string, number> => {
+  const counts = new Map<string, number>();
+  for (const { Code } of errors) {
+    const code = toLoggableErrorCode(Code);
+    counts.set(code, (counts.get(code) ?? 0) + 1);
+  }
+  return Object.fromEntries(counts);
+};

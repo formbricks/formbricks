@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { UNKNOWN_SERVICE_ERROR, toLoggableErrorCode, toLoggableStorageError } from "./loggable-error";
+import {
+  UNKNOWN_SERVICE_ERROR,
+  countErrorCodes,
+  toLoggableErrorCode,
+  toLoggableStorageError,
+} from "./loggable-error";
 
 describe("toLoggableStorageError", () => {
   test("keeps a provider error's code, status and request id, and nothing the provider sent", () => {
@@ -81,4 +86,24 @@ describe("toLoggableErrorCode", () => {
       expect(toLoggableErrorCode(code)).toBe(UNKNOWN_SERVICE_ERROR);
     }
   );
+});
+
+describe("countErrorCodes", () => {
+  test("counts failures by code, and never keeps a key or a message", () => {
+    // The shape of DeleteObjects `Errors[]`, which also carries Key and Message.
+    const errors = [
+      { Code: "AccessDenied", Key: "ws1/private/a.pdf", Message: "Denied: ws1/private/a.pdf" },
+      { Code: "AccessDenied", Key: "ws1/private/b.pdf" },
+      { Code: "InternalError", Key: "ws1/private/c.pdf" },
+      { Key: "ws1/private/d.pdf" },
+    ];
+    const counts = countErrorCodes(errors);
+
+    expect(counts).toStrictEqual({ AccessDenied: 2, InternalError: 1, [UNKNOWN_SERVICE_ERROR]: 1 });
+    expect(JSON.stringify(counts)).not.toContain(".pdf");
+  });
+
+  test("is empty for no failures", () => {
+    expect(countErrorCodes([])).toStrictEqual({});
+  });
 });
