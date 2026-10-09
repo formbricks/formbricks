@@ -8,7 +8,7 @@ import {
   ZQsfPlanQuestion,
   ZQsfPlanSkip,
 } from "./plan-schema";
-import type { TQsfQuestion, TQsfSurvey, TQsfTextKey } from "./qsf-model";
+import type { TQsfQuestion, TQsfSlider, TQsfSurvey, TQsfTextKey } from "./qsf-model";
 
 /**
  * The code checks on an AI plan (ENG-3479). The plan is untrusted output — the file it was made from
@@ -72,6 +72,8 @@ export interface TQsfPlannedQuestion {
   range: number | null;
   format: TQsfPlanQuestion["format"];
   notes: string[];
+  /** Options the AI left out of a list the element shows, for the report. */
+  leftOut: TQsfTextKey[];
 }
 
 export interface TQsfCheckedPlan {
@@ -270,9 +272,33 @@ function planMatrix(
   return { rows, columns };
 }
 
-/** A rating, CSAT or CES question's range, one its type allows, and its scale. */
-function planRange(type: "rating" | "csat" | "ces", entry: TQsfPlanQuestion, fail: TFail): number | null {
+/**
+ * The points a Qualtrics slider offers: its stars, or every whole number from its min to its max.
+ * `null` when the file does not say.
+ */
+export function sliderPoints(slider: TQsfSlider | null): number | null {
+  if (!slider) return null;
+  if (slider.stars !== null) return slider.stars >= 1 ? Math.floor(slider.stars) : null;
+  if (slider.min === null || slider.max === null || slider.max < slider.min) return null;
+  return Math.floor(slider.max) - Math.ceil(slider.min) + 1;
+}
+
+/** The smallest rating size that holds every point, or the largest a rating has. */
+export const ratingRangeFor = (points: number): number =>
+  ALLOWED_RANGES.rating.find((range) => range >= points) ?? Math.max(...ALLOWED_RANGES.rating);
+
+/**
+ * A rating, CSAT or CES question's range, one its type allows, and its scale. A slider's own size
+ * decides a rating's: asked, the model counted the same slider differently from one call to the next.
+ */
+function planRange(
+  type: "rating" | "csat" | "ces",
+  entry: TQsfPlanQuestion,
+  fail: TFail,
+  sliderSize: number | null
+): number | null {
   if (entry.scale === null) fail("missing_scale");
+  if (type === "rating" && sliderSize !== null) return ratingRangeFor(sliderSize);
   const range = entry.range === null ? null : Number(entry.range);
   if (range === null || !ALLOWED_RANGES[type].includes(range)) fail("invalid_range");
   return range;
@@ -294,6 +320,24 @@ function checkChoiceRoles(
     if (fields.length === 0 || new Set(fields).size !== fields.length) fail("missing_role");
     if (entry.contactFields.some((field) => !choiceKeys.has(field.key))) fail("foreign_key");
   }
+}
+
+/**
+ * The keys the AI left out of a list the element shows. A list the element does not show at all, such
+ * as an NPS question's 0–10 choices, is not a loss worth a report line.
+ */
+function leftOutKeys(
+  type: TQsfPlanElementType,
+  question: TQsfQuestion,
+  entry: TQsfPlanQuestion
+): TQsfTextKey[] {
+  const excluded = new Set(entry.excludedKeys);
+  const shown = (["choicesFrom", "rowsFrom", "columnsFrom"] as const)
+    .filter((role) => usesRole(type, role))
+    .map((role) => entry[role]);
+  return [...new Set(shown)].flatMap((source) =>
+    sourceKeys(question, source).filter((key) => excluded.has(key))
+  );
 }
 
 const isRatingType = (type: TQsfPlanElementType): type is "rating" | "csat" | "ces" =>
@@ -320,7 +364,7 @@ export function checkQuestionRoles(question: TQsfQuestion, entry: TQsfPlanQuesti
   const { rows, columns } = usesRole(type, "rowsFrom")
     ? planMatrix(entry, listed, fail)
     : { rows: [], columns: [] };
-  const range = isRatingType(type) ? planRange(type, entry, fail) : null;
+  const range = isRatingType(type) ? planRange(type, entry, fail, sliderPoints(question.slider)) : null;
   if (type === "date" && entry.format === null) fail("missing_format");
   checkChoiceRoles(type, question, entry, fail);
 
@@ -342,6 +386,7 @@ export function checkQuestionRoles(question: TQsfQuestion, entry: TQsfPlanQuesti
       range,
       format: entry.format,
       notes: cleanNotes(entry.logicNotes),
+      leftOut: leftOutKeys(type, question, entry),
     },
   };
 }

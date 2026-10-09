@@ -42,6 +42,10 @@ export type TQsfImportStage = "reading" | "ai" | "assembling";
  * - `markup_escaped` — plain text that would have rendered as HTML, shown as typed instead
  * - `matrix_single_answer` — a Qualtrics matrix that takes several answers per row, imported as a
  *   Formbricks matrix, which takes one
+ * - `options_left_out` — options the AI left out of a list the element shows (`params.count`, and
+ *   `params.options`, their names from the file)
+ * - `scale_changed` — a slider whose number of points a rating does not have, imported at the
+ *   nearest size it does (`params.from`, `params.to`)
  * - `ending_added` — the file had no end message the survey can show, so the editor's default ending was
  *   added (`params.subject: "ending"`)
  *
@@ -50,7 +54,8 @@ export type TQsfImportStage = "reading" | "ai" | "assembling";
  * `invalid_id`, `validation_failed`, `draft_too_large` for a trailing question cut so the draft fits
  * the create's size limit); `choice_dropped` carries `invalid_id`. Params that carry text from the
  * file or the AI — `field_renamed`'s `from`, `description` on `logic_not_imported` and
- * `question_skipped`, `logic_not_imported`'s `block`, `questionTag` — must be rendered as plain text,
+ * `question_skipped`, `logic_not_imported`'s `block`, `options_left_out`'s `options`, `questionTag` — must
+ * be rendered as plain text,
  * never as rich text.
  */
 /**
@@ -98,6 +103,8 @@ export type TQsfImportIssueCode =
   | "text_too_long"
   | "markup_escaped"
   | "matrix_single_answer"
+  | "options_left_out"
+  | "scale_changed"
   | "ending_added";
 
 export interface TQsfImportIssue {

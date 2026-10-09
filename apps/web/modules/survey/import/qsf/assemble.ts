@@ -20,7 +20,7 @@ import type {
 import { createSlicer } from "./event-loop";
 import { QsfIdRegistry, findFreeSuffixedName, isObjectMemberName } from "./id-registry";
 import { type TPipedTextContext, replacePipedText } from "./piped-text";
-import type { TQsfCheckedPlan, TQsfPlannedQuestion } from "./plan-checks";
+import { type TQsfCheckedPlan, type TQsfPlannedQuestion, sliderPoints } from "./plan-checks";
 import type { TQsfPlanContactField } from "./plan-schema";
 import type { TQsfIssue, TQsfQuestion, TQsfSurvey, TQsfTextKey } from "./qsf-model";
 import { type TSanitizedTexts, sanitizeName } from "./sanitize-text";
@@ -210,6 +210,10 @@ export function disambiguateLabels(
   return true;
 }
 
+/** How many left-out options a report line names, and how much of each. */
+const MAX_NAMED_OPTIONS = 5;
+const MAX_OPTION_NAME_CHARS = 40;
+
 class QsfAssembler {
   private readonly issues: TQsfIssue[] = [];
   private readonly languageCodes: string[];
@@ -360,6 +364,15 @@ class QsfAssembler {
     return localized;
   }
 
+  /** Left-out options as a report line names them: their default-language text, a few, each short. */
+  private optionNames(keys: TQsfTextKey[]): string {
+    const names = keys.slice(0, MAX_NAMED_OPTIONS).map((key) => {
+      const text = this.params.texts.plainDefault.get(key) || "…";
+      return text.length > MAX_OPTION_NAME_CHARS ? `${text.slice(0, MAX_OPTION_NAME_CHARS - 1)}…` : text;
+    });
+    return keys.length > MAX_NAMED_OPTIONS ? `${names.join(", ")}, …` : names.join(", ");
+  }
+
   /** The same fixed text in every language, for a label the file left empty. */
   private uniform(text: string): TQsfLocaleText {
     return Object.fromEntries(this.languageCodes.map((code) => [code, text]));
@@ -450,6 +463,25 @@ class QsfAssembler {
     };
 
     const element = this.buildTyped(question, planned, base, options, piped);
+    if (planned.leftOut.length > 0) {
+      this.issues.push({
+        code: "options_left_out",
+        severity: "warning",
+        questionTag: tag,
+        questionRef: question.ref,
+        params: { count: planned.leftOut.length, options: this.optionNames(planned.leftOut) },
+      });
+    }
+    const points = sliderPoints(question.slider);
+    if (element.type === "rating" && points !== null && points !== element.range) {
+      this.issues.push({
+        code: "scale_changed",
+        severity: "warning",
+        questionTag: tag,
+        questionRef: question.ref,
+        params: { from: points, to: element.range },
+      });
+    }
     if (element.type === "matrix" && question.subSelector === "MultipleAnswer") {
       this.issues.push({
         code: "matrix_single_answer",

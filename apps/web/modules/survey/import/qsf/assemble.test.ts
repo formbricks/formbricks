@@ -162,6 +162,24 @@ describe("assembleQsfDraft", () => {
     expect(checkQsfDraft(document)).toEqual([]);
   });
 
+  test("names the options the AI left out", async () => {
+    const { issues } = await assembleFixture("labels-and-languages.qsf", {
+      editPlan: (plan) => {
+        const q1 = plan.questions.get("QID1");
+        // Its two "N/A" choices, the way a plan that left them out would list them.
+        if (q1) q1.leftOut = q1.choices.filter((_, index) => index % 2 === 1).map((choice) => choice.key);
+      },
+    });
+
+    expect(issues).toContainEqual({
+      code: "options_left_out",
+      severity: "warning",
+      questionTag: "Q1",
+      questionRef: "QID1",
+      params: { count: 2, options: "N/A, N/A" },
+    });
+  });
+
   test("numbers duplicate labels per language, so the survey service accepts them", async () => {
     const { document, issues } = await assembleFixture("labels-and-languages.qsf");
     const q1 = element(document, "Q1");

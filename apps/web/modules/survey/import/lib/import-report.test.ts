@@ -95,6 +95,26 @@ describe("getQsfImportIssueLine", () => {
     ).toBe('translation_missing {"count":12,"language":"de-DE"}');
   });
 
+  test("names the options left out, and a slider's old and new size", () => {
+    expect(
+      getQsfImportIssueLine(
+        {
+          code: "options_left_out",
+          severity: "warning",
+          questionTag: "Q1",
+          params: { count: 2, options: "N/A, N/A" },
+        },
+        t
+      )
+    ).toBe('Q1: options_left_out {"count":2,"options":"N/A, N/A"}');
+    expect(
+      getQsfImportIssueLine(
+        { code: "scale_changed", severity: "warning", questionTag: "Q7", params: { from: 8, to: 10 } },
+        t
+      )
+    ).toBe('Q7: scale_changed {"from":"8","to":"10"}');
+  });
+
   test("names the end message for the default ending it added", () => {
     expect(
       getQsfImportIssueLine({ code: "ending_added", severity: "info", params: { subject: "ending" } }, t)

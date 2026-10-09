@@ -102,7 +102,8 @@ const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
   ],
   "large-150.qsf": [
     { blocks: 30, questions: 150, languages: ["en-US"], logicRules: 0, hiddenFields: 0 },
-    ["ending_added"],
+    // Fifteen 0–7 sliders: 8 points, which a rating has not, so each becomes a 10-point rating.
+    ["ending_added", ...Array(15).fill("scale_changed")],
   ],
   "legacy-object-payload.qsf": [
     { blocks: 1, questions: 2, languages: ["de-DE"], logicRules: 0, hiddenFields: 0 },

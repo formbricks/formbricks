@@ -147,6 +147,16 @@ export const getQsfImportIssueMessage = (issue: TQsfImportIssue, t: TTranslate):
       return t("workspace.surveys.import.issues.markup_escaped");
     case "matrix_single_answer":
       return t("workspace.surveys.import.issues.matrix_single_answer");
+    case "options_left_out":
+      return t("workspace.surveys.import.issues.options_left_out", {
+        count: count(issue),
+        options: param(issue, "options"),
+      });
+    case "scale_changed":
+      return t("workspace.surveys.import.issues.scale_changed", {
+        from: param(issue, "from"),
+        to: param(issue, "to"),
+      });
     case "ending_added":
       return t("workspace.surveys.import.issues.ending_added");
     default:
