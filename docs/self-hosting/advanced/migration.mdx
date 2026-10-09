@@ -220,6 +220,25 @@ screen names the response scopes. Access to responses starts only once the user 
   scopes to it yourself.
 </Note>
 
+### Response list indexes (no action required for most instances)
+
+The `response_keyset_index_tiebreakers` migration adds three indexes on `Response` that serve the paginated
+response list. It builds them `CONCURRENTLY`, so responses keep being collected while they build.
+
+A concurrent build also waits for transactions that wrote to `Response`, and for every older transaction that
+still holds a snapshot, on any table: a long report query or a `pg_dump` backup counts too. On a busy instance the
+migration can therefore take longer than the builds themselves. It waits instead of failing, and while it waits,
+`pg_stat_progress_create_index` shows the phase and, as `current_locker_pid`, the session it waits for.
+
+On Docker Compose, the migration service stops the runner after 300 seconds. If `Response` holds millions of rows,
+run the migrations without that limit, using the second command in step 4 of
+[If a migration fails](#if-a-migration-fails).
+
+If this migration fails or is stopped, or the `verify_response_keyset_indexes_valid` migration after it reports
+INVALID indexes, follow [If a migration fails](#if-a-migration-fails). The verify migration's error lists its own
+recovery steps. Pre-release builds of this migration set a 5-second lock timeout and failed whenever such a
+transaction outlasted it; the same steps recover from that.
+
 ## v6
 
 Formbricks v6 replaces the legacy authorization evaluator with SpiceDB, maintained by AuthZed. PostgreSQL
