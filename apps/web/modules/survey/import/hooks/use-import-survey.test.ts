@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TQsfImportStreamEvent } from "@/app/api/internal/surveys/import/lib/events";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 import { QsfImportRequestError, streamQsfImport } from "@/modules/survey/import/lib/import-stream-client";
+import type { TQsfDraftDocument } from "@/modules/survey/import/qsf/draft";
 import { useImportSurvey } from "./use-import-survey";
 
 vi.mock("react-i18next", () => ({
@@ -29,13 +30,14 @@ const report = {
   issues: [],
 };
 
+/** A partial draft: the hook only reads its blocks, and the create is mocked. */
 const payload = {
   workspaceId: "w1",
   name: "Survey (imported)",
   blocks: [
     { name: "Block 1", elements: [{ id: "q1", type: "openText", headline: { "en-US": "<p>Hi</p>" } }] },
   ],
-};
+} as unknown as TQsfDraftDocument;
 
 const qsfFile = (
   content = '{"SurveyEntry":{"SurveyName":"Survey"},"SurveyElements":[]}',

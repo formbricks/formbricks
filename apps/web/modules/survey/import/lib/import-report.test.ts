@@ -56,11 +56,49 @@ describe("getQsfImportIssueLine", () => {
     ],
     [{ cause: "ai_skipped" }, "question_skipped"],
     [{ cause: "ai_budget" }, "question_skipped_ai_budget"],
+    [{ cause: "ai_timeout" }, "question_skipped_ai_timeout"],
+    [{ cause: "draft_too_large" }, "question_skipped_draft_too_large"],
     [{ cause: "something_new" }, "question_skipped"],
   ])("says why a question was skipped: %j", (params, expected) => {
     expect(getQsfImportIssueLine({ code: "question_skipped", severity: "warning", params }, t)).toBe(
       expected
     );
+  });
+
+  test.each([
+    [{ code: "de" }, 'language_skipped {"code":"de"}'],
+    [
+      { code: "fr", cause: "draft_too_large", order: "last_declared_first" },
+      'language_skipped_too_large {"code":"fr"}',
+    ],
+    [
+      { code: "de_DE", cause: "duplicate_language", language: "de-DE" },
+      'language_skipped_duplicate {"code":"de_DE","language":"de-DE"}',
+    ],
+    [{ code: "xx", fallback: "en-US" }, 'language_skipped_default {"code":"xx","fallback":"en-US"}'],
+    [{}, "language_skipped_unnamed"],
+  ])("names the language left out: %j", (params, expected) => {
+    expect(getQsfImportIssueLine({ code: "language_skipped", severity: "warning", params }, t)).toBe(
+      expected
+    );
+  });
+
+  test("passes the count and language of texts filled from the default language", () => {
+    expect(
+      getQsfImportIssueLine(
+        { code: "translation_fallback", severity: "info", params: { language: "de-DE", count: 12 } },
+        t
+      )
+    ).toBe('translation_fallback {"count":12,"language":"de-DE"}');
+  });
+
+  test("names the end message for a piped text removed from it", () => {
+    expect(
+      getQsfImportIssueLine(
+        { code: "piped_text_removed", severity: "warning", params: { count: 2, subject: "ending" } },
+        t
+      )
+    ).toBe('ending: piped_text_removed {"count":2}');
   });
 
   test("names the block for a page rule with no imported question", () => {

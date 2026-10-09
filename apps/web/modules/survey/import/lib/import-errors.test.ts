@@ -36,6 +36,33 @@ describe("getQsfImportRequestErrorCode", () => {
   ])("maps %s", (_case, error, code) => {
     expect(getQsfImportRequestErrorCode(error)).toBe(code);
   });
+  test("names the limit a Qualtrics export is past", () => {
+    const error = new V3ApiError({
+      status: 422,
+      detail: "refused",
+      code: "unprocessable_content",
+      invalid_params: [
+        {
+          name: "qsf.SurveyElements",
+          reason: "too many",
+          code: "qsf_limit_exceeded",
+          identifier: "questions",
+        },
+      ],
+    });
+
+    expect(getQsfImportRequestErrorCode(error)).toBe("qsf_limit_exceeded:questions");
+  });
+});
+
+describe("getQsfImportErrorMessage for a file past a limit", () => {
+  test.each([
+    ["qsf_limit_exceeded:questions", "workspace.surveys.import.errors.limits.questions"],
+    ["qsf_limit_exceeded:prompt_size", "workspace.surveys.import.errors.limits.prompt_size"],
+    ["qsf_limit_exceeded:something_new", "workspace.surveys.import.errors.limits.other"],
+  ])("says which limit for %s", (code, message) => {
+    expect(getQsfImportErrorMessage(code, t)).toBe(message);
+  });
 });
 
 describe("getQsfImportErrorMessage", () => {

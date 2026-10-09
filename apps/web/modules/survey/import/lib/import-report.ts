@@ -3,6 +3,28 @@ import type { TQsfImportIssue, TQsfImportReport } from "@/modules/survey/import/
 type TTranslate = (key: string, options?: Record<string, unknown>) => string;
 
 const param = (issue: TQsfImportIssue, name: string): string => String(issue.params?.[name] ?? "");
+const count = (issue: TQsfImportIssue): number => Number(issue.params?.count ?? 0);
+
+/** A language left out: the survey's default one (with what stands in), a named one, or one with no usable code. */
+const getSkippedLanguageMessage = (issue: TQsfImportIssue, t: TTranslate): string => {
+  const code = param(issue, "code");
+  const fallback = param(issue, "fallback");
+  switch (param(issue, "cause")) {
+    case "draft_too_large":
+      return t("workspace.surveys.import.issues.language_skipped_too_large", { code });
+    case "duplicate_language":
+      return t("workspace.surveys.import.issues.language_skipped_duplicate", {
+        code,
+        language: param(issue, "language"),
+      });
+    default:
+      break;
+  }
+  if (fallback) return t("workspace.surveys.import.issues.language_skipped_default", { code, fallback });
+  return code
+    ? t("workspace.surveys.import.issues.language_skipped", { code })
+    : t("workspace.surveys.import.issues.language_skipped_unnamed");
+};
 
 /** Qualtrics' own name for a question type the import cannot bring over; an unknown code as sent. */
 const getQualtricsTypeName = (type: string, t: TTranslate): string => {
@@ -55,6 +77,10 @@ const getSkippedQuestionMessage = (issue: TQsfImportIssue, t: TTranslate): strin
       return t("workspace.surveys.import.issues.question_skipped_plan_invalid");
     case "ai_budget":
       return t("workspace.surveys.import.issues.question_skipped_ai_budget");
+    case "ai_timeout":
+      return t("workspace.surveys.import.issues.question_skipped_ai_timeout");
+    case "draft_too_large":
+      return t("workspace.surveys.import.issues.question_skipped_draft_too_large");
     case "not_in_flow":
       return t("workspace.surveys.import.issues.question_skipped_not_in_flow");
     case "invalid_id":
@@ -93,6 +119,25 @@ export const getQsfImportIssueMessage = (issue: TQsfImportIssue, t: TTranslate):
       });
     case "external_url_removed":
       return t("workspace.surveys.import.issues.external_url_removed");
+    case "field_dropped":
+      return t("workspace.surveys.import.issues.field_dropped", { count: count(issue) });
+    case "language_skipped":
+      return getSkippedLanguageMessage(issue, t);
+    case "translation_fallback":
+      return t("workspace.surveys.import.issues.translation_fallback", {
+        count: count(issue),
+        language: param(issue, "language"),
+      });
+    case "piped_text_removed":
+      return t("workspace.surveys.import.issues.piped_text_removed", { count: count(issue) });
+    case "choice_label_renamed":
+      return t("workspace.surveys.import.issues.choice_label_renamed");
+    case "choice_dropped":
+      return t("workspace.surveys.import.issues.choice_dropped");
+    case "text_too_long":
+      return t("workspace.surveys.import.issues.text_too_long");
+    case "markup_escaped":
+      return t("workspace.surveys.import.issues.markup_escaped");
     default: {
       // Every code the types know is handled above, so a new code fails the build until it has a
       // line. A server newer than this client can still send one; it gets the generic line.
@@ -104,12 +149,16 @@ export const getQsfImportIssueMessage = (issue: TQsfImportIssue, t: TTranslate):
 };
 
 /**
- * The line with what it is about, e.g. `Q12: Logic not imported: …`: the Qualtrics question, or for a
- * page's rule when none of its questions was imported, the page's block.
+ * The line with what it is about, e.g. `Q12: Logic not imported: …`: the Qualtrics question, the end
+ * message, or for a page's rule when none of its questions was imported, the page's block.
  */
 export const getQsfImportIssueLine = (issue: TQsfImportIssue, t: TTranslate): string => {
   const message = getQsfImportIssueMessage(issue, t);
-  const subject = issue.questionTag ?? param(issue, "block");
+  const subject =
+    issue.questionTag ??
+    (param(issue, "subject") === "ending"
+      ? t("workspace.surveys.import.report.ending")
+      : param(issue, "block"));
   return subject ? `${subject}: ${message}` : message;
 };
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import type { TV3CreateSurveyBody } from "@/app/api/v3/surveys/schemas";
 import { getAIUnavailableReasonForErrorCode } from "@/lib/ai/availability";
 import {
   type TDraftStreamHandlers,
@@ -11,6 +10,7 @@ import { getQsfImportRequestErrorCode } from "@/modules/survey/import/lib/import
 import { QsfImportRequestError, streamQsfImport } from "@/modules/survey/import/lib/import-stream-client";
 import { payloadToDraftSnapshot } from "@/modules/survey/import/lib/payload-to-draft";
 import { type TQsfFileError, readQsfFile } from "@/modules/survey/import/lib/qsf-file";
+import type { TQsfDraftDocument } from "@/modules/survey/import/qsf/draft";
 import type { TQsfImportReport, TQsfImportStage } from "@/modules/survey/import/types";
 import { createV3Survey } from "@/modules/survey/list/lib/v3-surveys-client";
 
@@ -37,7 +37,7 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
   const [retryAfterSeconds, setRetryAfterSeconds] = useState<number | null>(null);
 
   const stream = useCallback(
-    async (input: TQsfImportInput, handlers: TDraftStreamHandlers<TQsfImportReport>) => {
+    async (input: TQsfImportInput, handlers: TDraftStreamHandlers<TQsfImportReport, TQsfDraftDocument>) => {
       setStage(null);
       setRetryAfterSeconds(null);
 
@@ -57,7 +57,7 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
                   handlers.onEvent({ type: "partial", draft: payloadToDraftSnapshot(event.payload) });
                   handlers.onEvent({
                     type: "done",
-                    payload: event.payload as TV3CreateSurveyBody,
+                    payload: event.payload,
                     report: event.report,
                   });
                   break;
@@ -82,9 +82,9 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
     [workspaceId]
   );
 
-  const create = useCallback((payload: TV3CreateSurveyBody) => createV3Survey(payload, "import"), []);
+  const create = useCallback((payload: TQsfDraftDocument) => createV3Survey(payload, "import"), []);
 
-  const draft = useDraftCreation<TQsfImportInput, TQsfImportReport>({
+  const draft = useDraftCreation<TQsfImportInput, TQsfImportReport, TQsfDraftDocument>({
     stream,
     create,
     // The file itself is checked in `selectFile`; a file that passes is submitted at once.

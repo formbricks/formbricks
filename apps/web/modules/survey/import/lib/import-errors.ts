@@ -3,6 +3,41 @@ import { getAiErrorMessage } from "@/modules/survey/components/template-list/lib
 
 type TTranslate = (key: string, options?: Record<string, unknown>) => string;
 
+/** The dialog's code for a file past one of the import's limits: this prefix, then the limit's name. */
+export const QSF_LIMIT_CODE_PREFIX = "qsf_limit_exceeded:";
+
+/** Which limit a file is past, by the name the route sends (`TQsfImportLimit`); an unknown one generically. */
+const getQsfLimitMessage = (limit: string, t: TTranslate): string => {
+  switch (limit) {
+    case "questions":
+      return t("workspace.surveys.import.errors.limits.questions");
+    case "options":
+      return t("workspace.surveys.import.errors.limits.options");
+    case "languages":
+      return t("workspace.surveys.import.errors.limits.languages");
+    case "language_keys":
+      return t("workspace.surveys.import.errors.limits.language_keys");
+    case "blocks":
+      return t("workspace.surveys.import.errors.limits.blocks");
+    case "block_entries":
+      return t("workspace.surveys.import.errors.limits.block_entries");
+    case "flow_nodes":
+      return t("workspace.surveys.import.errors.limits.flow_nodes");
+    case "flow_depth":
+      return t("workspace.surveys.import.errors.limits.flow_depth");
+    case "embedded_data":
+      return t("workspace.surveys.import.errors.limits.embedded_data");
+    case "texts":
+      return t("workspace.surveys.import.errors.limits.texts");
+    case "formatted_texts":
+      return t("workspace.surveys.import.errors.limits.formatted_texts");
+    case "prompt_size":
+      return t("workspace.surveys.import.errors.limits.prompt_size");
+    default:
+      return t("workspace.surveys.import.errors.limits.other");
+  }
+};
+
 /**
  * The dialog's code for a request the route refused before streaming. The 400s are split by what the
  * `invalid_params` name: a path under `qsf.` is the file outgrowing the request budget (too many items
@@ -18,8 +53,12 @@ export const getQsfImportRequestErrorCode = (error: V3ApiError): string => {
       return "not_authenticated";
     case 413:
       return "qsf_too_large";
-    case 422:
-      return "qsf_not_recognized";
+    case 422: {
+      // A Qualtrics export past one of the import's limits names the limit; any other 422 is a file
+      // the import cannot read as a Qualtrics export.
+      const limit = error.invalid_params?.find((param) => param.code === "qsf_limit_exceeded")?.identifier;
+      return limit ? `${QSF_LIMIT_CODE_PREFIX}${limit}` : "qsf_not_recognized";
+    }
     default:
       return error.code ?? "ai_unknown";
   }
@@ -35,6 +74,10 @@ export const getQsfImportErrorMessage = (
   t: TTranslate,
   retryAfterSeconds: number | null = null
 ): string => {
+  if (code.startsWith(QSF_LIMIT_CODE_PREFIX)) {
+    return getQsfLimitMessage(code.slice(QSF_LIMIT_CODE_PREFIX.length), t);
+  }
+
   switch (code) {
     case "qsf_wrong_extension":
       return t("workspace.surveys.import.errors.wrong_extension");
