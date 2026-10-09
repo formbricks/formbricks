@@ -45,6 +45,13 @@ describe("readQsfFile", () => {
     expect(await readQsfFile(qsfFile(content))).toEqual({ ok: false, error });
   });
 
+  test("says the file could not be read when reading it fails", async () => {
+    const file = qsfFile("{}");
+    file.text = () => Promise.reject(new DOMException("Gone", "NotReadableError"));
+
+    expect(await readQsfFile(file)).toEqual({ ok: false, error: "qsf_unreadable" });
+  });
+
   test("refuses by name and size before reading the content", async () => {
     expect(await readQsfFile(qsfFile("{}", "survey.json"))).toEqual({
       ok: false,

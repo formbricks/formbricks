@@ -9,7 +9,8 @@ export type TQsfFileError =
   | "qsf_empty"
   | "qsf_too_large"
   | "qsf_not_json"
-  | "qsf_not_object";
+  | "qsf_not_object"
+  | "qsf_unreadable";
 
 export type TQsfFileReadResult =
   | { ok: true; fileName: string; qsf: Record<string, unknown> }
@@ -34,8 +35,14 @@ export const readQsfFile = async (file: File): Promise<TQsfFileReadResult> => {
   const refused = checkQsfFile(file);
   if (refused) return { ok: false, error: refused };
 
+  // A read can still fail after the file was chosen, e.g. when it was moved or its access changed.
+  let text: string;
+  try {
+    text = await file.text();
+  } catch {
+    return { ok: false, error: "qsf_unreadable" };
+  }
   // `File.text()` decodes as UTF-8 and drops a leading BOM; the slice covers a file read some other way.
-  const text = await file.text();
   const json = text.startsWith("﻿") ? text.slice(1) : text;
 
   let parsed: unknown;

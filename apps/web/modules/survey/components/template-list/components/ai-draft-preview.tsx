@@ -19,8 +19,11 @@ const PIN_THRESHOLD_PX = 32;
 const PENDING_ROW_COUNT = 3;
 /** Above this many rows the list is windowed: only the rows near the viewport are mounted (ENG-3478). */
 export const DRAFT_PREVIEW_VIRTUALIZE_THRESHOLD = 50;
-/** Every row has the same height by construction (truncate, never wrap), which is what makes windowing cheap. */
-const ROW_HEIGHT_PX = 60;
+/**
+ * Every row has the same height by construction (truncate, never wrap), which is what makes windowing
+ * cheap: 24px padding, a 20px headline, a 4px gap, a 16px metadata line and a 1px border.
+ */
+const ROW_HEIGHT_PX = 65;
 const OVERSCAN_ROWS = 8;
 const CHOICE_ELEMENT_TYPES = new Set(["multipleChoiceSingle", "multipleChoiceMulti", "ranking", "matrix"]);
 
@@ -116,7 +119,12 @@ export const AiDraftPreview = ({
   useEffect(() => {
     const element = scrollRef.current;
     if (!element || !isVirtualized) return;
-    const update = () => setViewportHeight(element.clientHeight);
+    // The scroll position too: a list that grows past the threshold can already be scrolled, and no
+    // scroll event has been read in this mode yet.
+    const update = () => {
+      setViewportHeight(element.clientHeight);
+      setScrollTop(element.scrollTop);
+    };
     update();
     const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
     observer?.observe(element);
