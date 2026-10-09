@@ -4109,9 +4109,11 @@ paths:
         to find those.
 
         **Incremental extraction.** To keep a copy of a dataset in sync, filter on `updated_since` and
-        page with `sort=updated_at&order=asc`, bounded by `updated_until` set to the run's start: every
-        page is then one index range, and a record that changes while you page normally comes back later
-        in the run. For the next run,
+        page with `sort=updated_at&order=asc`, bounded by `updated_until`: every page is then one index
+        range, and a record that changes while you page normally comes back later in the run. Start each
+        run with a `limit=1` request and read its `Date` header: that value is this run's `updated_until`
+        and, minus a few minutes, the next run's `updated_since` — both bounds from the same value, or
+        records between them are never read. For the next run,
         pass the time the previous run **started** (its first response's `Date` header) minus a few
         minutes of overlap — not the newest `updated_at` received, which skips a write that was still
         committing when you read past its timestamp.
@@ -4353,7 +4355,7 @@ paths:
               - created_at
               - updated_at
             default: collected_at
-          description: 'Column to order by. `collected_at` and `created_at` never change. `updated_at` does, so it is accepted only with `order=asc`: a record that changes while you page then normally moves ahead of the cursor and is returned again (upsert it by `id`). Descending, or with no `order` (which defaults to `desc`), it answers **400**. Even ascending, a write that started before the cursor''s position and commits after it is missed by that run and picked up by the next, whose `updated_since` is the previous run''s start minus an overlap. Use `sort=updated_at&order=asc` with `updated_since` for incremental extraction.'
+          description: 'Column to order by. `collected_at` and `created_at` never change. `updated_at` does, so it is accepted only with `order=asc`: a record that changes while you page then normally moves ahead of the cursor and is returned again (upsert it by `id`). Descending, or with no `order` (which defaults to `desc`), it answers **400**. Even ascending, a write that started before the cursor''s position and commits after it is missed by that run and picked up by the next, whose `updated_since` is the previous run''s start minus an overlap. Use `sort=updated_at&order=asc` with `updated_since` and `updated_until` for incremental extraction.'
         - in: query
           name: order
           schema:

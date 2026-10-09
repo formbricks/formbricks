@@ -121,7 +121,7 @@ both new and changed records.
 
 ```bash
 # Everything created or changed since the last run, in the order it changed
-curl "https://app.formbricks.com/api/v3/feedbackRecords?tenant_id=<datasetId>&updated_since=2026-10-05T07:55:00Z&sort=updated_at&order=asc&limit=1000" \
+curl "https://app.formbricks.com/api/v3/feedbackRecords?tenant_id=<datasetId>&updated_since=2026-10-05T07:55:00Z&updated_until=2026-10-05T09:00:00Z&sort=updated_at&order=asc&limit=1000" \
   -H "x-api-key: $FORMBRICKS_API_KEY"
 ```
 
@@ -130,11 +130,13 @@ curl "https://app.formbricks.com/api/v3/feedbackRecords?tenant_id=<datasetId>&up
   later in the same run, so upsert by `id`. `updated_at` can only be sorted ascending: descending, or with no
   `order` (the default is `desc`), answers `400`. Even ascending, a write that started before your position and
   commits after you have read past it is missed by this run; the next run's `updated_since`, below, picks it up.
-- **Bound each run with `updated_until` = the run's start** (the first response's `Date` header). Otherwise a
-  run keeps chasing records that change while it pages; anything changed after the start belongs to the next
-  run anyway.
-- **Next `updated_since`: when this run started, minus a few minutes.** Take the start from the `Date` header
-  of the run's first response, so drift between your clock and ours cannot open a gap. Do not use the newest
+- **Bound each run with `updated_until`.** Otherwise a run keeps chasing records that change while it pages.
+  Start each run with a cheap request (a page with `limit=1`) and read its `Date` header: that one value, _S_,
+  is this run's `updated_until`, and _S_ minus a few minutes is the next run's `updated_since`. Take both from
+  the same _S_ — an `updated_until` from your own clock can fall short of the next run's `updated_since` and
+  leave records that neither run ever reads.
+- **Next `updated_since`: _S_ minus a few minutes.** _S_ comes from our `Date` header, so drift between your
+  clock and ours cannot open a gap. Do not use the newest
   `updated_at` you received: `updated_at` is when a write *started*, so a write still committing when you read
   past its timestamp is missing from this run with a timestamp older than the newest you saw, and a watermark
   taken from the results skips it for good.
