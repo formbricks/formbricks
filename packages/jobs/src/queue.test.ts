@@ -3,10 +3,12 @@ import type IORedis from "ioredis";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   AUTHZED_PROJECTION_QUEUE_NAME,
+  DATA_RETENTION_QUEUE_NAME,
   JOBS_DEFAULT_JOB_OPTIONS,
   JOBS_DEFAULT_JOB_SCHEDULER_TEMPLATE_OPTIONS,
   JOBS_PREFIX,
   JOBS_QUEUE_NAME,
+  JOBS_QUEUE_NAMES,
   JOB_NAMES,
   WEBHOOK_DELIVERY_JOB_OPTIONS,
 } from "./constants";
@@ -194,7 +196,7 @@ describe("@formbricks/jobs queue helpers", () => {
 
     expect(first.queue).toBe(second.queue);
     // One Queue per known queue name, created once.
-    expect(Queue).toHaveBeenCalledTimes(2);
+    expect(Queue).toHaveBeenCalledTimes(JOBS_QUEUE_NAMES.length);
   });
 
   test("creates one producer queue per queue name on a single shared connection", async () => {
@@ -214,19 +216,31 @@ describe("@formbricks/jobs queue helpers", () => {
     );
   });
 
-  // A delivery queued behind a long sweep makes every authorization check fail closed, so this pins the
-  // routing of every job: AuthZed projection delivery alone has its own queue.
-  test("routes AuthZed projection delivery, and only it, to the dedicated queue", () => {
+  // A delivery queued behind a long sweep makes every authorization check fail closed, and the sweep
+  // itself would hold up every default-queue job, so this pins the routing of every job: those two have
+  // queues of their own, everything else shares the default one.
+  test("routes AuthZed projection delivery and the data retention sweep to their own queues, and only them", () => {
     const queueNameByJob = Object.fromEntries(
       Object.values(backgroundJobDefinitions).map((definition) => [definition.name, definition.queueName])
     );
+    const dedicated: Record<string, string> = {
+      [JOB_NAMES.authzedProjectionDelivery]: AUTHZED_PROJECTION_QUEUE_NAME,
+      [JOB_NAMES.dataRetentionSweep]: DATA_RETENTION_QUEUE_NAME,
+    };
 
-    expect(queueNameByJob[JOB_NAMES.authzedProjectionDelivery]).toBe(AUTHZED_PROJECTION_QUEUE_NAME);
     for (const [jobName, queueName] of Object.entries(queueNameByJob)) {
-      if (jobName !== JOB_NAMES.authzedProjectionDelivery) {
-        expect(queueName, jobName).toBe(JOBS_QUEUE_NAME);
-      }
+      expect(queueName, jobName).toBe(dedicated[jobName] ?? JOBS_QUEUE_NAME);
     }
+  });
+
+  test("upserts the data retention sweep schedule on its own queue, then retires the legacy one", async () => {
+    mockQueueUpsertJobScheduler.mockResolvedValue({ id: "sweep-1" });
+    mockQueueRemoveJobScheduler.mockResolvedValue(false);
+
+    await recurringJobs.dataRetentionSweep.upsert({ cronPattern: "0 1 * * *", kind: "cron" });
+
+    expect(queueNamesOf(mockQueueUpsertJobScheduler)).toEqual([DATA_RETENTION_QUEUE_NAME]);
+    expect(queueNamesOf(mockQueueRemoveJobScheduler)).toEqual([JOBS_QUEUE_NAME]);
   });
 
   test("upserts the AuthZed delivery schedule on its own queue, then retires the legacy one", async () => {
@@ -289,9 +303,9 @@ describe("@formbricks/jobs queue helpers", () => {
   });
 
   test("leaves the default queue alone for jobs that never moved", async () => {
-    mockQueueUpsertJobScheduler.mockResolvedValue({ id: "sweep-1" });
+    mockQueueUpsertJobScheduler.mockResolvedValue({ id: "drain-1" });
 
-    await recurringJobs.dataRetentionSweep.upsert({ cronPattern: "0 1 * * *", kind: "cron" });
+    await recurringJobs.deletionCleanupDrain.upsert({ everyMs: 300_000, kind: "every" });
 
     expect(queueNamesOf(mockQueueUpsertJobScheduler)).toEqual([JOBS_QUEUE_NAME]);
     expect(mockQueueRemoveJobScheduler).not.toHaveBeenCalled();
@@ -569,8 +583,8 @@ describe("@formbricks/jobs queue helpers", () => {
 
     await expect(getJobsQueue()).rejects.toThrow("redis unavailable");
 
-    // Both queues are closed, not only the one that failed to become ready.
-    expect(mockQueueClose).toHaveBeenCalledTimes(2);
+    // Every queue is closed, not only the one that failed to become ready.
+    expect(mockQueueClose).toHaveBeenCalledTimes(JOBS_QUEUE_NAMES.length);
     expect(mockCloseRedisConnection).toHaveBeenCalledWith(mockConnection);
   });
 
@@ -580,14 +594,14 @@ describe("@formbricks/jobs queue helpers", () => {
 
     await expect(resetJobsQueueFactory()).resolves.toBeUndefined();
 
-    // The other queue and the connection are still closed after the first close fails.
-    expect(mockQueueClose).toHaveBeenCalledTimes(2);
+    // The other queues and the connection are still closed after the first close fails.
+    expect(mockQueueClose).toHaveBeenCalledTimes(JOBS_QUEUE_NAMES.length);
     expect(mockCloseRedisConnection).toHaveBeenCalledWith(mockConnection);
     expect(mockLoggerError).toHaveBeenCalledTimes(1);
     const loggerCalls = mockLoggerError.mock.calls as [{ err: Error; queueName: string }, string][];
     const [context, message] = loggerCalls[0];
     expect(context.err).toBeInstanceOf(Error);
-    expect([JOBS_QUEUE_NAME, AUTHZED_PROJECTION_QUEUE_NAME]).toContain(context.queueName);
+    expect(JOBS_QUEUE_NAMES).toContain(context.queueName);
     expect(message).toBe("Failed to close BullMQ producer queue");
   });
 
@@ -598,6 +612,6 @@ describe("@formbricks/jobs queue helpers", () => {
     const nextQueueResult = await getJobsQueue();
 
     expect(nextQueueResult.queue).toBeDefined();
-    expect(Queue).toHaveBeenCalledTimes(4);
+    expect(Queue).toHaveBeenCalledTimes(2 * JOBS_QUEUE_NAMES.length);
   });
 });

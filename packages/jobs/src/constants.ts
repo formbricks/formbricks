@@ -11,8 +11,15 @@ export const JOBS_QUEUE_NAME = "background-jobs";
  */
 export const AUTHZED_PROJECTION_QUEUE_NAME = "authzed-projection";
 
+/**
+ * The nightly data retention sweep gets a queue of its own too: it may keep starting work for half an
+ * hour, and on the default queue (one worker, one job at a time by default) every webhook delivery,
+ * response pipeline run and cleanup drain would wait behind it.
+ */
+export const DATA_RETENTION_QUEUE_NAME = "data-retention";
+
 /** Queues that each get exactly one worker of their own, outside `workerCount`/`concurrency`. */
-export const DEDICATED_JOBS_QUEUE_NAMES = [AUTHZED_PROJECTION_QUEUE_NAME] as const;
+export const DEDICATED_JOBS_QUEUE_NAMES = [AUTHZED_PROJECTION_QUEUE_NAME, DATA_RETENTION_QUEUE_NAME] as const;
 
 export const JOBS_QUEUE_NAMES = [JOBS_QUEUE_NAME, ...DEDICATED_JOBS_QUEUE_NAMES] as const;
 

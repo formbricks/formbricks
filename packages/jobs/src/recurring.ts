@@ -1,4 +1,9 @@
-import { AUTHZED_PROJECTION_QUEUE_NAME, JOB_NAMES, type TJobsQueueName } from "@/src/constants";
+import {
+  AUTHZED_PROJECTION_QUEUE_NAME,
+  DATA_RETENTION_QUEUE_NAME,
+  JOB_NAMES,
+  type TJobsQueueName,
+} from "@/src/constants";
 import { type AnyBackgroundJobDefinition, toAnyBackgroundJobDefinition } from "@/src/contracts";
 import { createMissingOverrideHandler } from "@/src/processors/missing-override";
 import { type TGlobalScopeJobData, ZGlobalScopeJobData } from "@/src/types";
@@ -83,9 +88,11 @@ export const recurringJobDescriptors = {
     name: JOB_NAMES.authzedSurveyAudit,
     scheduleId: "daily-authzed-survey-audit",
   }),
+  // Its own queue: it may run for half an hour, and must not hold up the default queue's jobs.
   dataRetentionSweep: defineRecurringJob({
     label: "data retention sweep",
     name: JOB_NAMES.dataRetentionSweep,
+    queueName: DATA_RETENTION_QUEUE_NAME,
     scheduleId: "daily-data-retention-sweep",
   }),
   deletionCleanupDrain: defineRecurringJob({

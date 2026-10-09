@@ -28,8 +28,8 @@ export const RETENTION_SWEEP_GAP_MS = 72 * HOUR;
 export const RETENTION_RUN_LEASE_MS = 2 * HOUR;
 
 /**
- * How long one policy's run may keep starting work. The job shares a worker that defaults to one job at
- * a time, so the rest waits for the next night (candidates are always `<=`, so nothing is missed).
+ * How long one policy's run may keep starting work, so one organisation can't use up the night; the
+ * rest waits for the next night (candidates are always `<=`, so nothing is missed).
  */
 export const RETENTION_RUN_BUDGET_MS = 2 * MINUTE;
 

@@ -10,7 +10,14 @@ import {
   createMockRedisConnection,
   createMockWorker,
 } from "../test/boundary-mocks";
-import { AUTHZED_PROJECTION_QUEUE_NAME, JOBS_PREFIX, JOBS_QUEUE_NAME, JOB_NAMES } from "./constants";
+import {
+  AUTHZED_PROJECTION_QUEUE_NAME,
+  DATA_RETENTION_QUEUE_NAME,
+  DEDICATED_JOBS_QUEUE_NAMES,
+  JOBS_PREFIX,
+  JOBS_QUEUE_NAME,
+  JOB_NAMES,
+} from "./constants";
 import type * as QueueModule from "./queue";
 import { startJobsRuntime } from "./runtime";
 
@@ -19,6 +26,7 @@ type TQueueModule = typeof QueueModule;
 let producerConnection = createMockRedisConnection();
 let queueMock = createMockQueue();
 let dedicatedQueueMock = createMockQueue();
+let retentionQueueMock = createMockQueue();
 let workerConnections: MockRedisConnection[] = [];
 let workerMocks: MockWorker[] = [];
 
@@ -36,6 +44,7 @@ const mockCreateWorkerConnection = vi.fn((_: unknown) => {
 const mockCreateJobsQueues = vi.fn((_: unknown) => ({
   [JOBS_QUEUE_NAME]: asQueue(queueMock),
   [AUTHZED_PROJECTION_QUEUE_NAME]: asQueue(dedicatedQueueMock),
+  [DATA_RETENTION_QUEUE_NAME]: asQueue(retentionQueueMock),
 }));
 const mockWorkerConstructor = vi.fn(function MockWorker(_: string, __: unknown, ___?: unknown) {
   const worker = createMockWorker();
@@ -92,6 +101,7 @@ describe("@formbricks/jobs runtime", () => {
     producerConnection = createMockRedisConnection();
     queueMock = createMockQueue();
     dedicatedQueueMock = createMockQueue();
+    retentionQueueMock = createMockQueue();
     workerConnections = [];
     workerMocks = [];
   });
@@ -179,8 +189,8 @@ describe("@formbricks/jobs runtime", () => {
 
     expect(worker.close).toHaveBeenCalledTimes(1);
     expect(queueMock.close).toHaveBeenCalledTimes(1);
-    // Producer, the default worker and the dedicated AuthZed worker.
-    expect(mockCloseRedisConnection).toHaveBeenCalledTimes(3);
+    // Producer, the default worker and one worker per dedicated queue.
+    expect(mockCloseRedisConnection).toHaveBeenCalledTimes(2 + DEDICATED_JOBS_QUEUE_NAMES.length);
   });
 
   /**
@@ -215,16 +225,26 @@ describe("@formbricks/jobs runtime", () => {
         expect.objectContaining({ connectionName: "formbricks-jobs-runtime-authzed-projection-worker" })
       );
       expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.objectContaining({ dedicatedQueueNames: [AUTHZED_PROJECTION_QUEUE_NAME] }),
+        expect.objectContaining({ dedicatedQueueNames: [...DEDICATED_JOBS_QUEUE_NAMES] }),
         "BullMQ runtime started"
       );
+      // The data retention sweep's queue gets its own single worker the same way.
+      const retentionWorkerCalls = mockWorkerConstructor.mock.calls.filter(
+        ([queueName]) => queueName === DATA_RETENTION_QUEUE_NAME
+      );
+      expect(retentionWorkerCalls).toHaveLength(1);
+      expect(retentionWorkerCalls[0]?.[2]).toEqual(expect.objectContaining({ concurrency: 1 }));
+      expect(runtime.queues[DATA_RETENTION_QUEUE_NAME]).toBe(asQueue(retentionQueueMock));
 
       await runtime.close();
 
       const dedicatedWorker = workerMocks[mockWorkerConstructor.mock.calls.indexOf(dedicatedWorkerCalls[0])];
       expect(dedicatedWorker.close).toHaveBeenCalledTimes(1);
       expect(dedicatedQueueMock.close).toHaveBeenCalledTimes(1);
-      expect(mockCloseRedisConnection).toHaveBeenCalledTimes((workerCount ?? 1) + 2);
+      expect(retentionQueueMock.close).toHaveBeenCalledTimes(1);
+      expect(mockCloseRedisConnection).toHaveBeenCalledTimes(
+        (workerCount ?? 1) + 1 + DEDICATED_JOBS_QUEUE_NAMES.length
+      );
     }
   );
 
@@ -274,8 +294,8 @@ describe("@formbricks/jobs runtime", () => {
     });
 
     expect(runtime.workers).toHaveLength(2);
-    // Two on the default queue plus the dedicated AuthZed projection worker.
-    expect(mockWorkerConstructor).toHaveBeenCalledTimes(3);
+    // Two on the default queue plus one per dedicated queue.
+    expect(mockWorkerConstructor).toHaveBeenCalledTimes(2 + DEDICATED_JOBS_QUEUE_NAMES.length);
     expect(mockWorkerConstructor).toHaveBeenNthCalledWith(
       1,
       JOBS_QUEUE_NAME,
@@ -346,13 +366,14 @@ describe("@formbricks/jobs runtime", () => {
       "queue not ready"
     );
 
-    expect(workerMocks).toHaveLength(3);
+    expect(workerMocks).toHaveLength(2 + DEDICATED_JOBS_QUEUE_NAMES.length);
     for (const worker of workerMocks) {
       expect(worker.close).toHaveBeenCalledTimes(1);
     }
     expect(queueMock.close).toHaveBeenCalledTimes(1);
     expect(dedicatedQueueMock.close).toHaveBeenCalledTimes(1);
-    expect(mockCloseRedisConnection).toHaveBeenCalledTimes(4);
+    expect(retentionQueueMock.close).toHaveBeenCalledTimes(1);
+    expect(mockCloseRedisConnection).toHaveBeenCalledTimes(3 + DEDICATED_JOBS_QUEUE_NAMES.length);
     expect(mockLogger.error).toHaveBeenCalledWith(
       { err: startupError, queueName: JOBS_QUEUE_NAME, prefix: JOBS_PREFIX },
       "Failed to start BullMQ runtime"
@@ -368,7 +389,8 @@ describe("@formbricks/jobs runtime", () => {
     expect(workerMocks[1]?.close).toHaveBeenCalledTimes(1);
     expect(queueMock.close).toHaveBeenCalledTimes(1);
     expect(dedicatedQueueMock.close).toHaveBeenCalledTimes(1);
-    expect(mockCloseRedisConnection).toHaveBeenCalledTimes(3);
+    expect(retentionQueueMock.close).toHaveBeenCalledTimes(1);
+    expect(mockCloseRedisConnection).toHaveBeenCalledTimes(2 + DEDICATED_JOBS_QUEUE_NAMES.length);
   });
 
   test("logs signal shutdown failures", async () => {

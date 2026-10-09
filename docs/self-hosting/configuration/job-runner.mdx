@@ -11,22 +11,38 @@ application by default, so a standard self-hosted deployment does not need a sep
 <Note>
   Every Formbricks web process starts one worker with a concurrency of one by default. You can tune these
   values with environment variables after you have measured your workload. Each process also starts one
-  dedicated worker for AuthZed projection delivery, which needs no configuration.
+  dedicated worker each for AuthZed projection delivery and the data retention sweep, which need no
+  configuration.
 </Note>
 
 ## Runtime architecture
 
 The web application creates jobs and consumes them from shared Redis-backed queues:
 
-- Queue names: `background-jobs` for every job except AuthZed projection delivery, which runs on
-  `authzed-projection`
-- Redis key prefix: `{formbricks:jobs}`, shared by both queues
+- Queue names: `background-jobs` for every job except two: AuthZed projection delivery runs on
+  `authzed-projection` and the data retention sweep on `data-retention`
+- Redis key prefix: `{formbricks:jobs}`, shared by every queue
 - Worker startup: Next.js server instrumentation
 - Default workers per web process on `background-jobs`: `1`
 - Default concurrent jobs per worker: `1`
-- Workers per web process on `authzed-projection`: always `1`, with a concurrency of `1`
+- Workers per web process on `authzed-projection` and on `data-retention`: always `1` each, with a
+  concurrency of `1`
 
-### Dedicated AuthZed projection queue
+### Dedicated queues
+
+Two jobs have a queue and a worker of their own in every web process, so neither waits behind the other
+or behind the jobs on `background-jobs`:
+
+- `authzed-projection.deliver`, described below.
+- `data-retention.sweep`, which can keep starting work for half an hour every night. On
+  `background-jobs` (one worker, one job at a time by default), webhook deliveries, response pipeline
+  runs and cleanup drains would all wait for it.
+
+Neither worker needs configuration, and `BULLMQ_WORKER_COUNT` and `BULLMQ_WORKER_CONCURRENCY` do not change
+them. A schedule that moves to its own queue is removed from `background-jobs` by the first process that
+starts on the new version.
+
+### AuthZed projection queue
 
 `authzed-projection.deliver` runs every five seconds and copies permission changes to SpiceDB. If a
 revocation — a removed membership or a deactivated user — waits too long to reach SpiceDB, Formbricks
@@ -117,10 +133,10 @@ claims so one available worker ordinarily processes a queued job. Total processi
 web replicas x BULLMQ_WORKER_COUNT x BULLMQ_WORKER_CONCURRENCY
 ```
 
-Each replica also runs one AuthZed projection delivery at a time on the dedicated queue. That slot does
-not count toward the capacity above, and it does not grow with these settings. It does use two Redis
-connections (BullMQ gives every worker a blocking one of its own) and, while a delivery runs, a
-database connection.
+Each replica also runs one AuthZed projection delivery and one data retention sweep at a time, each on
+its own queue. Those slots don't count toward the capacity above, and they don't grow with these
+settings. Each dedicated worker uses two Redis connections (BullMQ gives every worker a blocking one of
+its own) and, while its job runs, database connections.
 
 Increase concurrency gradually and monitor database, Redis, and downstream service capacity. Adding replicas
 also adds workers, so account for both scaling controls.
@@ -228,7 +244,7 @@ Formbricks writes structured logs to stdout and stderr. Search the `msg` field f
 
 | Log message                                                                                        | What to check                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `BullMQ runtime started`                                                                           | The worker is connected. Verify its `workerCount`, `workerConcurrency`, `queueName`, and `prefix` fields. `dedicatedQueueNames` lists the queues that get one worker of their own (`authzed-projection`).                                                                                                                                                                                                                                                              |
+| `BullMQ runtime started`                                                                           | The worker is connected. Verify its `workerCount`, `workerConcurrency`, `queueName`, and `prefix` fields. `dedicatedQueueNames` lists the queues that get one worker of their own (`authzed-projection`, `data-retention`).                                                                                                                                                                                                                                                              |
 | `BullMQ Redis connection error`                                                                    | Verify `REDIS_URL`, DNS, network access, Redis credentials, and TLS settings.                                                                                                                                                                                                                                                                                                                                                                                          |
 | `BullMQ queue error`                                                                               | The producer queue emitted an error. Review the attached `err` field; usually the same causes as above.                                                                                                                                                                                                                                                                                                                                                                |
 | `Failed to start BullMQ runtime`                                                                   | Review the attached `err` field, then confirm Redis is reachable from the web process.                                                                                                                                                                                                                                                                                                                                                                                 |
