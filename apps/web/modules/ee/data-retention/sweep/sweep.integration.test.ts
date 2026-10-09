@@ -6,7 +6,12 @@ import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handl
 import { updateRetentionPolicy } from "../lib/policies-service";
 import { RETENTION_RUN_LEASE_MS, RETENTION_SWEEP_GAP_MS } from "./constants";
 import { collectDueTargets } from "./due-targets";
-import { openRetentionRun, recordRetentionRunActions, recordRetentionRunSkips } from "./run";
+import {
+  openRetentionRun,
+  openRetentionRuns,
+  recordRetentionRunActions,
+  recordRetentionRunSkips,
+} from "./run";
 import { runDataRetentionSweep } from "./sweep";
 import {
   RetentionPolicyChangedError,
@@ -93,6 +98,38 @@ describe("data retention sweep (real Postgres)", () => {
       expect(opened.filter(Boolean)).toHaveLength(1);
       await prisma.retentionRun.updateMany({ data: { startedAt: ago(RETENTION_RUN_LEASE_MS + HOUR) } });
       await expect(openRetentionRun(organizationId, "members")).resolves.not.toBeNull();
+    });
+
+    test("holds the whole organisation while any of its runs is live: a second sweep opens none of it", async () => {
+      await enablePolicy("responses", ago(10 * DAY));
+      await enablePolicy("members", ago(10 * DAY));
+
+      // A first sweep holds the organisation through one live run, whichever policy it is.
+      expect(await openRetentionRuns(organizationId, ["responses"])).toHaveLength(1);
+
+      await expect(openRetentionRuns(organizationId, ["responses", "members"])).resolves.toEqual([]);
+      expect(await prisma.retentionRun.count({ where: { entity: "members" } })).toBe(0);
+    });
+
+    test("keeps a second sweep out of an organisation another is opening at this moment", async () => {
+      await enablePolicy("responses", ago(10 * DAY));
+      await enablePolicy("members", ago(10 * DAY));
+
+      let locked!: () => void;
+      const lockTaken = new Promise<void>((resolve) => (locked = resolve));
+      let release!: () => void;
+      const released = new Promise<void>((resolve) => (release = resolve));
+      const opening = prisma.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`data-retention-sweep:${organizationId}`}))`;
+        locked();
+        await released;
+      });
+      await lockTaken;
+
+      await expect(openRetentionRuns(organizationId, ["responses", "members"])).resolves.toEqual([]);
+      release();
+      await opening;
+      await expect(openRetentionRuns(organizationId, ["responses", "members"])).resolves.toHaveLength(2);
     });
 
     test("restarts the warning when the last run is too old, as a system change", async () => {

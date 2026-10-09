@@ -11,6 +11,8 @@ import { inlineSurveyEmbeddedFields, selectSurveyEmbeddedDataLinks } from "@/lib
 import { deleteResponsesInTransaction } from "@/lib/response/delete-responses";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { andVisibleSurveys, visibleSurveySqlPredicate } from "@/lib/survey/visibility/predicate";
+import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
+import { enqueueResponsesDeletionCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
 import { collectResponseFileUrls, getSurveyFileUploadElementIds } from "@/modules/storage/utils";
 import type { TV3ResponsesFilter } from "./parse-v3-responses-list-query";
@@ -250,39 +252,53 @@ export type TBatchDeleteResult = {
  * Responses are deleted before displays. Both orders are correct — `Response_displayId_fkey` is
  * `ON DELETE SET NULL`, so removing a display first nulls the referencing rows rather than failing —
  * but that null-out is a wasted write pass over rows about to be deleted anyway, and it touches the
- * unique index on `displayId`. This order also matches the single delete. Files are collected before
- * either and removed only after the transaction commits, for the same reason as the single delete.
+ * unique index on `displayId`. This order also matches the single delete.
+ *
+ * What the rows leave outside the database — their files and their Hub records — is queued in the same
+ * transaction (`enqueueResponsesDeletionCleanups`, per survey): a delete that commits always gets its
+ * cleanup, retried until done, and one that rolls back queues nothing. The files are drained straight
+ * after commit, as before; the Hub records a few minutes later, once any record still on its way has
+ * landed. A drain that fails here leaves the rest to the drain job and never fails the request: the rows
+ * are already gone.
  */
 export async function deleteScopedResponses(
   responseIds: string[],
   { visibleSurveyWhere = {}, workspaceId }: TWorkspaceScope
 ): Promise<TBatchDeleteResult> {
-  let outcome: Awaited<ReturnType<typeof deleteResponsesInTransaction>>;
+  let outcome: TBatchDeleteResult & { drainNowIds: string[] };
 
   try {
-    outcome = await prisma.$transaction((tx) =>
-      deleteResponsesInTransaction(tx, {
+    outcome = await prisma.$transaction(async (tx) => {
+      const { deleted, deletedIds, bySurvey } = await deleteResponsesInTransaction(tx, {
         id: { in: responseIds },
         survey: { workspaceId, ...andVisibleSurveys(visibleSurveyWhere) },
-      })
-    );
+      });
+      if (bySurvey.length === 0) return { deleted, deletedIds, drainNowIds: [] };
+
+      const { organizationId } = await tx.workspace.findUniqueOrThrow({
+        where: { id: workspaceId },
+        select: { organizationId: true },
+      });
+      const { drainNowIds } = await enqueueResponsesDeletionCleanups(tx, {
+        organizationId,
+        workspaceId,
+        surveys: bySurvey,
+      });
+      return { deleted, deletedIds, drainNowIds };
+    });
   } catch (error) {
     rethrowScopedPrismaError(error);
   }
 
-  const { fileUrls, ...result } = outcome;
+  const { drainNowIds, ...result } = outcome;
 
-  if (fileUrls.length > 0) {
-    try {
-      await deleteResponseFileUrls(fileUrls, workspaceId);
-    } catch (error) {
-      // The rows are already gone and the caller's request succeeded; orphaned objects are a
-      // storage-cleanup problem, not a reason to report a failed delete. Same call as the single delete.
-      logger.error(
-        { err: error, workspaceId, responseCount: result.deleted, fileCount: fileUrls.length },
-        "V3 batch response file cleanup failed"
-      );
-    }
+  try {
+    await drainDeletionCleanups({ ids: drainNowIds });
+  } catch (error) {
+    logger.error(
+      { err: error, workspaceId, responseCount: result.deleted },
+      "Deferred deleted responses' file cleanup to the drain job"
+    );
   }
 
   return result;

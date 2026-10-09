@@ -6,6 +6,7 @@ import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handl
 import { sendSurveyRetentionNoticeEmail } from "@/modules/email";
 import { getRetentionClockCutoffs } from "../lib/schedule";
 import { openRetentionRun } from "./run";
+import { sendSurveyNotices } from "./survey-notices";
 import { archiveDueSurvey, createSurveysSweeper } from "./surveys-sweeper";
 import { runDataRetentionSweep } from "./sweep";
 
@@ -104,6 +105,37 @@ describe("surveys sweeper (real Postgres)", () => {
     );
     const items = await prisma.retentionRunItem.findMany({ orderBy: { run: { startedAt: "asc" } } });
     expect(items.map((item) => item.action)).toEqual(["notified", "archived"]);
+  });
+
+  test("a survey changed between the sweep's read and its claim gets a void notice, and a new one before any archive", async () => {
+    await enablePolicy(["noChange"]);
+    const stale = await createSurvey("Old feedback", { age: 400 });
+    // The sweep reads the survey as untouched for 400 days and plans its notice from that clock...
+    const run = (await openRetentionRun(organizationId, "surveys"))!;
+    const plan = await createSurveysSweeper(async (_actor, ids) => new Set(ids))({
+      ...run,
+      deadline: Date.now() + 60_000,
+    });
+    // ...then the survey is edited before the notice is claimed. Still old enough to be due, so the
+    // email's date can't be told apart from a valid one, but it was computed from the old clock.
+    await setSurveyTimes(stale, { createdAt: ago(400), updatedAt: ago(380) });
+    await sendSurveyNotices(organizationId, [plan.surveyNotices!], Date.now() + 60_000);
+    await prisma.retentionRun.update({ where: { id: run.runId }, data: { finishedAt: new Date() } });
+    const raced = (await notice(stale))!;
+    expect(raced.deliveredAt).not.toBeNull();
+    // Stamped with the clock the sweep read (400 days), not the one the survey has now (380).
+    expect(raced.clockAt!.getTime()).toBeLessThan(ago(399).getTime());
+
+    // Its warning has run, but it was given for a clock the survey no longer has: no archive, a new
+    // notice for the survey's clock now.
+    await ageNotice(stale, WARN + 1);
+    await sweep();
+
+    expect((await prisma.survey.findUniqueOrThrow({ where: { id: stale } })).archivedAt).toBeNull();
+    expect(sendSurveyRetentionNoticeEmail).toHaveBeenCalledTimes(2);
+    expect((await notice(stale))?.clockAt?.getTime()).toBe(
+      (await prisma.survey.findUniqueOrThrow({ where: { id: stale } })).updatedAt.getTime()
+    );
   });
 
   test("a recent response keeps a survey under 'no response'; it doesn't count without that condition", async () => {

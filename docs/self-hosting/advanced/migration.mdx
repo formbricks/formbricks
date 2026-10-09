@@ -233,7 +233,7 @@ than queueing behind a long query:
 
 | Migration | What it does |
 | --- | --- |
-| `20261007120000_add_data_retention_tables` | Adds the data retention tables and a nullable `User.reactivatedAt` column. |
+| `20261007120000_add_data_retention_tables` | Adds the data retention tables and two nullable columns, `User.reactivatedAt` and `User.lastActiveAt`, filling `lastActiveAt` from the sessions signed in at the time. |
 | `20261008120000_add_deletion_cleanup` | Adds the `DeletionCleanup` queue. |
 
 ### Data retention (Enterprise, no action required)
@@ -249,6 +249,10 @@ Data retention policies run as a nightly background job, `data-retention.sweep`,
 A policy never acts on the night it is switched on: notices go out first, and nothing is deleted,
 archived or deactivated until its notice has run for the notice period. If the job hasn't run for an
 organization for three days, its notice period starts again before anything is acted on.
+
+The members policy counts a member as active when they sign in. A signed-in session is renewed once it
+is a day old, and a renewal counts too, but only when `SESSION_MAX_AGE` is longer than a day (one day,
+the default, ends the session before it is ever renewed). With the default, only sign-ins count.
 
 ## v6
 

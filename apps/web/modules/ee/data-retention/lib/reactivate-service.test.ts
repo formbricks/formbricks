@@ -63,8 +63,9 @@ describe("reactivateRetentionMember", () => {
       data: { isActive: true, reactivatedAt: DB_NOW },
       select: { reactivatedAt: true },
     });
+    // Their members notices go, so a later lapse gets a new notice and a full warning.
     expect(tx.retentionNotice.deleteMany).toHaveBeenCalledWith({
-      where: { userId: "clmember", organizationId: ORG_ID, entity: "members" },
+      where: { userId: "clmember", entity: "members" },
     });
   });
 

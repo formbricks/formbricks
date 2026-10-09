@@ -41,7 +41,7 @@ vi.mock("./transaction", () => ({
 }));
 
 /**
- * The members policy against a real database (a sign-in or session renewal moves the clock, someone in
+ * The members policy against a real database (a sign-in or recorded activity moves the clock, someone in
  * another organisation is left alone, the last active owner is never deactivated, sessions and grants
  * end, Reactivate wins a race) is proven in `members-sweeper.integration.test.ts`. These pin the
  * decisions made on what the queries return.
@@ -87,11 +87,12 @@ type TRow = {
   locale: string;
   role: "owner" | "manager" | "member" | "billing";
   lastLoginAt: Date | null;
-  lastSessionAt: Date | null;
+  lastActiveAt: Date | null;
   reactivatedAt: Date | null;
   organizationCount: number;
   noticeClaimedAt: Date | null;
   noticeDeliveredAt: Date | null;
+  noticeClockAt: Date | null;
 };
 /** Last signed in 25 days ago: their notice is due. */
 const member = (userId: string, overrides: Partial<TRow> = {}): TRow => ({
@@ -100,11 +101,12 @@ const member = (userId: string, overrides: Partial<TRow> = {}): TRow => ({
   locale: "en-US",
   role: "member",
   lastLoginAt: daysAgo(25),
-  lastSessionAt: null,
+  lastActiveAt: null,
   reactivatedAt: null,
   organizationCount: 1,
   noticeClaimedAt: null,
   noticeDeliveredAt: null,
+  noticeClockAt: null,
   ...overrides,
 });
 /** Away for 40 days and told 10 days ago: their warning has run, they are due to be deactivated. */
@@ -113,6 +115,7 @@ const dueForDeactivation = (userId: string, overrides: Partial<TRow> = {}) =>
     lastLoginAt: daysAgo(40),
     noticeClaimedAt: daysAgo(10),
     noticeDeliveredAt: daysAgo(10),
+    noticeClockAt: daysAgo(40),
     ...overrides,
   });
 
@@ -172,7 +175,8 @@ afterEach(() => {
 
 describe("createMembersSweeper: notices", () => {
   test("tells a member themselves, in their locale, when they will be deactivated", async () => {
-    // A notice is void if claimed before their last activity, here their sign-in.
+    // The notice is stamped with the clock it was computed for, here their last sign-in: any activity
+    // since, even before the claim, voids it.
     database({ candidates: [member("alice", { locale: "de-DE" })] });
 
     await sweep();
@@ -180,7 +184,7 @@ describe("createMembersSweeper: notices", () => {
     expect(claimRetentionNotice).toHaveBeenCalledWith(
       expect.anything(),
       { organizationId: "clorg", entity: "members", userId: "alice" },
-      { claimedAt: NOW, voidBefore: daysAgo(25) }
+      { claimedAt: NOW, voidBefore: POLICY.enabledAt, clockAt: daysAgo(25) }
     );
     expect(lockUnchangedRetentionPolicy).toHaveBeenCalledWith(expect.anything(), POLICY);
     // Told now, the full warning runs from tonight: noon UTC on 8 March, already the 9th in Auckland.
@@ -214,6 +218,8 @@ describe("createMembersSweeper: notices", () => {
     expect(claimRetentionNotice).toHaveBeenCalledWith(expect.anything(), expect.anything(), {
       claimedAt: NOW,
       voidBefore: POLICY.enabledAt,
+      // Counted from when the policy took effect.
+      clockAt: POLICY.enabledAt,
     });
     expect(sendMemberRetentionNoticeEmail).toHaveBeenCalledWith(expect.objectContaining({ locale: "en-US" }));
   });
@@ -367,6 +373,12 @@ describe("deactivateDueMember", () => {
     expect(user.text).toBe('SELECT 1 FROM "User" WHERE "id" = ? FOR UPDATE');
     expect(user.values).toEqual(["bob"]);
     expect(reread.values).toEqual([NOW, "clorg", POLICY.enabledAt, NOTICE_DUE_AT_OR_BEFORE, "bob", 100]);
+    // The clock's activity is the recorded `lastActiveAt`, never the live `Session` rows, which a
+    // sign-out or an expiry deletes along with the activity they showed.
+    expect(reread.text).toContain(
+      'GREATEST( COALESCE(u."lastLoginAt", ?), u."reactivatedAt", u."lastActiveAt" ) <= ?'
+    );
+    expect(reread.text).not.toContain('"Session"');
     expect(vi.mocked(lockUnchangedRetentionPolicy).mock.invocationCallOrder[0]).toBeLessThan(
       tx.$queryRaw.mock.invocationCallOrder[2]
     );
@@ -388,7 +400,14 @@ describe("deactivateDueMember", () => {
 
   test.each([
     ["is no longer an active member", []],
-    ["signed in since their notice", [dueForDeactivation("bob", { lastSessionAt: daysAgo(1) })]],
+    ["signed in since their notice", [dueForDeactivation("bob", { lastLoginAt: daysAgo(1) })]],
+    ["renewed a session since their notice", [dueForDeactivation("bob", { lastActiveAt: daysAgo(1) })]],
+    // Active after the sweep read them and before the notice was claimed: still old enough that the
+    // action would be due, but the notice was computed for the earlier clock, so it doesn't count.
+    [
+      "was active after the notice's clock was read",
+      [dueForDeactivation("bob", { lastActiveAt: daysAgo(39) })],
+    ],
   ])("does nothing when the member %s", async (_case, rows) => {
     const tx = database({ recheck: () => rows });
 

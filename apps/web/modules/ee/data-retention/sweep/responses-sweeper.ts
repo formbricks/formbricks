@@ -41,6 +41,8 @@ const targetState = (candidate: TResponsesCandidate): TRetentionTargetState => (
   clock: candidate.oldestResponseAt,
   noticeClaimedAt: candidate.noticeClaimedAt,
   noticeDeliveredAt: candidate.noticeDeliveredAt,
+  // The reminder follows no one clock (`NOTICE_FOLLOWS_CLOCK`), so it records none.
+  noticeClockAt: null,
   heldUntil: candidate.heldUntil,
   archivedAt: null,
 });
@@ -184,16 +186,14 @@ export const deleteDueResponses = async (
       });
       if (due.length === 0) return null;
 
-      const { deleted, deletedIds, fileUrls } = await deleteResponsesInTransaction(tx, {
+      const { deleted, deletedIds, bySurvey } = await deleteResponsesInTransaction(tx, {
         surveyId: survey.id,
         id: { in: due.map((row) => row.id) },
       });
       const { drainNowIds } = await enqueueResponsesDeletionCleanups(tx, {
         organizationId: context.policy.organizationId,
         workspaceId: current.workspaceId,
-        surveyId: survey.id,
-        responseIds: deletedIds,
-        fileUrls,
+        surveys: bySurvey,
       });
       await recordRetentionRunDeletion(
         tx,
@@ -267,6 +267,7 @@ export const createResponsesSweeper =
           survey: candidate,
           recipient,
           voidBefore: latestOf(context.policy.enabledAt, candidate.heldUntil),
+          clockAt: null,
           describe: (format, url) => ({
             name: candidate.name,
             url,

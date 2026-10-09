@@ -22,85 +22,132 @@ export type TOpenedRetentionRun = {
   resumeAfter: string | null;
 };
 
+/** Namespaces the per-organisation advisory lock taken while an organisation's runs are opened. */
+const RETENTION_SWEEP_LOCK_PREFIX = "data-retention-sweep:";
+
 /**
- * Start one policy's run for one organisation, under the policy row's lock, or return null when there is
- * nothing to run: the policy is off, or another sweep holds it (a run with no `finishedAt`, younger than
- * `RETENTION_RUN_LEASE_MS`). The lock serialises two sweeps opening the same policy, so the second sees
- * the first's run.
+ * Open one organisation's runs for the night, one per enabled policy in `entities` (in that order), or
+ * none when another sweep holds the organisation. The organisation is one unit: a second sweep (another
+ * replica, an overlapping tick) takes all of its policies or none, so it can never split them with the
+ * first and send its people a second email.
+ * - A transaction-scoped advisory lock on the organisation (`pg_try_advisory_xact_lock`) serialises two
+ *   sweeps opening it at the same moment: the one that doesn't get it leaves the organisation alone.
+ * - Past that, the organisation is held while any of its runs is unfinished and younger than
+ *   `RETENTION_RUN_LEASE_MS`; a run that died is released after it.
  *
- * When the policy's last run is more than `RETENTION_SWEEP_GAP_MS` old, and its warning hasn't
- * restarted since, the warning restarts first (`enabledAt` moves to now; ENG-3614): every notice given
- * before is void and the full warning runs again, so no backlog acts on the night the sweep comes back.
- * A policy with no earlier run has nothing to catch up on.
+ * Each policy's row is locked as its run opens, which orders the opening against an edit. When the
+ * policy's last run is more than `RETENTION_SWEEP_GAP_MS` old, and its warning hasn't restarted since,
+ * the warning restarts first (`enabledAt` moves to now; ENG-3614): every notice given before is void and
+ * the full warning runs again, so no backlog acts on the night the sweep comes back. A policy with no
+ * earlier run has nothing to catch up on.
  */
-export const openRetentionRun = (
+export const openRetentionRuns = (
   organizationId: string,
-  entity: RetentionEntity
-): Promise<TOpenedRetentionRun | null> =>
+  entities: readonly RetentionEntity[]
+): Promise<TOpenedRetentionRun[]> =>
   runSweepTransaction(async (tx) => {
-    const [locked] = await tx.$queryRaw<
-      {
-        id: string;
-        enabled: boolean;
-        enabledAt: Date | null;
-        warnDays: number;
-        periodDays: number;
-        conditions: RetentionSurveyCondition[];
-      }[]
-    >`
-      SELECT "id", "enabled", "enabledAt", "warnDays", "periodDays", "conditions"::text[] AS "conditions"
-      FROM "RetentionPolicy"
-      WHERE "organizationId" = ${organizationId} AND "entity" = ${entity}::"RetentionEntity"
-      FOR UPDATE
+    const [{ locked }] = await tx.$queryRaw<{ locked: boolean }[]>`
+      SELECT pg_try_advisory_xact_lock(hashtext(${RETENTION_SWEEP_LOCK_PREFIX + organizationId})) AS "locked"
     `;
-    if (!locked?.enabled || !locked.enabledAt) return null;
+    if (!locked) return [];
 
     const now = await readDatabaseClock(tx);
-    const previous = await tx.retentionRun.findFirst({
-      where: { organizationId, entity },
-      orderBy: [{ startedAt: "desc" }, { id: "desc" }],
-      select: { startedAt: true, finishedAt: true, scanCursor: true },
-    });
-    const age = (date: Date) => now.getTime() - date.getTime();
-    if (previous && !previous.finishedAt && age(previous.startedAt) < RETENTION_RUN_LEASE_MS) return null;
-
-    let enabledAt = locked.enabledAt;
-    let restartedWarning: TOpenedRetentionRun["restartedWarning"] = null;
-    if (
-      previous &&
-      age(previous.startedAt) >= RETENTION_SWEEP_GAP_MS &&
-      age(enabledAt) >= RETENTION_SWEEP_GAP_MS
-    ) {
-      await tx.retentionPolicy.update({
-        where: { id: locked.id },
-        // A system change: no person made it.
-        data: { enabledAt: now, updatedById: null },
-      });
-      restartedWarning = { previousEnabledAt: enabledAt };
-      enabledAt = now;
-    }
-
-    const run = await tx.retentionRun.create({
-      data: { organizationId, entity, startedAt: now },
+    const held = await tx.retentionRun.findFirst({
+      where: {
+        organizationId,
+        finishedAt: null,
+        startedAt: { gt: new Date(now.getTime() - RETENTION_RUN_LEASE_MS) },
+      },
       select: { id: true },
     });
+    if (held) return [];
 
-    return {
-      runId: run.id,
-      now,
-      policy: {
-        id: locked.id,
-        organizationId,
-        entity,
-        enabledAt,
-        warnDays: locked.warnDays,
-        periodDays: locked.periodDays,
-        conditions: locked.conditions,
-      },
-      restartedWarning,
-      resumeAfter: previous?.scanCursor ?? null,
-    };
+    const runs: TOpenedRetentionRun[] = [];
+    for (const entity of entities) {
+      const run = await openPolicyRun(tx, organizationId, entity);
+      if (run) runs.push(run);
+    }
+    return runs;
   });
+
+/** Open one policy's run inside `openRetentionRuns`, or return null when the policy is off. */
+const openPolicyRun = async (
+  tx: Prisma.TransactionClient,
+  organizationId: string,
+  entity: RetentionEntity
+): Promise<TOpenedRetentionRun | null> => {
+  const [locked] = await tx.$queryRaw<
+    {
+      id: string;
+      enabled: boolean;
+      enabledAt: Date | null;
+      warnDays: number;
+      periodDays: number;
+      conditions: RetentionSurveyCondition[];
+    }[]
+  >`
+    SELECT "id", "enabled", "enabledAt", "warnDays", "periodDays", "conditions"::text[] AS "conditions"
+    FROM "RetentionPolicy"
+    WHERE "organizationId" = ${organizationId} AND "entity" = ${entity}::"RetentionEntity"
+    FOR UPDATE
+  `;
+  if (!locked?.enabled || !locked.enabledAt) return null;
+
+  // Read after the policy's lock, so a run that waited for an edit stamps the moment it opens.
+  const now = await readDatabaseClock(tx);
+  const previous = await tx.retentionRun.findFirst({
+    where: { organizationId, entity },
+    orderBy: [{ startedAt: "desc" }, { id: "desc" }],
+    select: { startedAt: true, scanCursor: true },
+  });
+  const age = (date: Date) => now.getTime() - date.getTime();
+
+  let enabledAt = locked.enabledAt;
+  let restartedWarning: TOpenedRetentionRun["restartedWarning"] = null;
+  if (
+    previous &&
+    age(previous.startedAt) >= RETENTION_SWEEP_GAP_MS &&
+    age(enabledAt) >= RETENTION_SWEEP_GAP_MS
+  ) {
+    await tx.retentionPolicy.update({
+      where: { id: locked.id },
+      // A system change: no person made it.
+      data: { enabledAt: now, updatedById: null },
+    });
+    restartedWarning = { previousEnabledAt: enabledAt };
+    enabledAt = now;
+  }
+
+  const run = await tx.retentionRun.create({
+    data: { organizationId, entity, startedAt: now },
+    select: { id: true },
+  });
+
+  return {
+    runId: run.id,
+    now,
+    policy: {
+      id: locked.id,
+      organizationId,
+      entity,
+      enabledAt,
+      warnDays: locked.warnDays,
+      periodDays: locked.periodDays,
+      conditions: locked.conditions,
+    },
+    restartedWarning,
+    resumeAfter: previous?.scanCursor ?? null,
+  };
+};
+
+/**
+ * Open one policy's run on its own (`openRetentionRuns` with that one policy), or null when there is
+ * nothing to run: the policy is off, or another sweep holds the organisation.
+ */
+export const openRetentionRun = async (
+  organizationId: string,
+  entity: RetentionEntity
+): Promise<TOpenedRetentionRun | null> => (await openRetentionRuns(organizationId, [entity]))[0] ?? null;
 
 /** Close a run: History shows it finished, and hides it by default when it changed nothing. */
 export const closeRetentionRun = async (runId: string): Promise<void> => {

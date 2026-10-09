@@ -2,14 +2,15 @@ import "server-only";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { problemForbidden, problemUnprocessableContent, successResponse } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
-import { requireRetentionOrgAccess } from "@/modules/ee/data-retention/lib/api-access";
+import { requireOrgActionAccess } from "@/modules/ee/data-retention/lib/api-access";
 import { reactivateRetentionMember } from "@/modules/ee/data-retention/lib/reactivate-service";
 
 /**
- * Reactivate a member of `organizationId`. User management, so `organization.manage_access`; the target
- * must be a member of that organisation, and a missing user, a member of another organisation and one
- * of this organisation's non-members get the same 403. Reactivating someone already active changes
- * nothing and isn't audited.
+ * Reactivate a member of `organizationId`. User management, so `organization.manage_access` and no data
+ * retention licence: a member deactivated while the organisation held one can be brought back after it
+ * lapses. The target must be a member of that organisation, and a missing user, a member of another
+ * organisation and one of this organisation's non-members get the same 403. Reactivating someone already
+ * active changes nothing and isn't audited.
  */
 export async function reactivateMemberOperation({
   authentication,
@@ -28,7 +29,7 @@ export async function reactivateMemberOperation({
 }): Promise<Response> {
   if (auditLog) auditLog.targetId = userId;
 
-  const access = await requireRetentionOrgAccess({
+  const access = await requireOrgActionAccess({
     authentication,
     organizationId,
     action: "organization.manage_access",

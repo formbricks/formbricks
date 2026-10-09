@@ -1,8 +1,10 @@
 import "server-only";
+import { prisma } from "@formbricks/database";
 import { serializeRetentionExemption } from "@/app/api/internal/retention-exemptions/serializers";
 import { successResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getAuthorizedV3Survey } from "@/app/api/v3/surveys/authorization";
+import { readDatabaseClock } from "@/lib/utils/database-clock";
 import { listActiveSurveyRetentionExemptions } from "@/modules/ee/data-retention/lib/exemptions-service";
 import { getSurveyRetentionPlan } from "@/modules/ee/data-retention/lib/survey-retention";
 import {
@@ -45,10 +47,11 @@ export async function getSurveyRetentionOperation({
     return successResponse(NOT_GOVERNED, { requestId, cache: "private, no-store" });
   }
 
-  const now = new Date();
+  // The database's clock, which exemption ends and notices are stamped with (`readDatabaseClock`).
+  const now = await readDatabaseClock(prisma);
   const [policies, facts, exemptions] = await Promise.all([
     getSurveyRetentionPolicies(authResult.organizationId),
-    getSurveyRetentionFacts(survey),
+    getSurveyRetentionFacts(survey, now),
     listActiveSurveyRetentionExemptions({ surveyId, organizationId: authResult.organizationId, now }),
   ]);
 

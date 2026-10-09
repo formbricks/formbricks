@@ -15,15 +15,20 @@ export type TRetentionNoticeTarget =
 /**
  * Claim the target's notice for sending, so exactly one sweep sends it, or return null. One statement:
  * the row is created, or an existing one is taken over only when it no longer counts — a delivered notice
- * claimed before `voidBefore` (the policy's `enabledAt`, the end of the target's latest exemption and, for
- * clock-bound notices, the target's clock: the same rule as `getValidNoticeDeliveredAt`), or a claim never
- * delivered and older than `RETENTION_NOTICE_STALE_CLAIM_MS`. A valid notice, or a fresh claim in flight,
- * is left alone. The returned token ties the delivery to this claim.
+ * claimed before `voidBefore` (the policy's `enabledAt` and the end of the target's latest exemption) or
+ * computed for another clock than `clockAt` (the same rule as `getValidNoticeDeliveredAt`), or a claim
+ * never delivered and older than `RETENTION_NOTICE_STALE_CLAIM_MS`. A valid notice, or a fresh claim in
+ * flight, is left alone. The returned token ties the delivery to this claim.
+ *
+ * `clockAt` is the target's clock the notice's dates were computed from, stored with the claim: for
+ * surveys and members, the notice counts only while the target's clock is still that, so activity
+ * between the sweep reading the target and this claim voids it rather than leaving a notice whose dates
+ * are wrong. Null for the responses reminder, which follows no one clock.
  */
 export const claimRetentionNotice = async (
   tx: Prisma.TransactionClient,
   target: TRetentionNoticeTarget,
-  { claimedAt, voidBefore }: { claimedAt: Date; voidBefore: Date }
+  { claimedAt, voidBefore, clockAt }: { claimedAt: Date; voidBefore: Date; clockAt: Date | null }
 ): Promise<string | null> => {
   const claimToken = createId();
   const staleBefore = new Date(claimedAt.getTime() - RETENTION_NOTICE_STALE_CLAIM_MS);
@@ -37,13 +42,16 @@ export const claimRetentionNotice = async (
 
   const rows = await tx.$queryRaw<{ claimToken: string }[]>`
     INSERT INTO "RetentionNotice"
-      ("id", "organizationId", "entity", "surveyId", "userId", "sentAt", "deliveredAt", "emailSent", "claimToken")
+      ("id", "organizationId", "entity", "surveyId", "userId", "sentAt", "deliveredAt", "emailSent", "claimToken",
+       "clockAt")
     VALUES (${createId()}, ${target.organizationId}, ${target.entity}::"RetentionEntity", ${surveyId}, ${userId},
-            ${claimedAt}, NULL, false, ${claimToken})
+            ${claimedAt}, NULL, false, ${claimToken}, ${clockAt})
     ON CONFLICT ${conflictTarget} DO UPDATE
-    SET "sentAt" = EXCLUDED."sentAt", "deliveredAt" = NULL, "emailSent" = false, "claimToken" = EXCLUDED."claimToken"
+    SET "sentAt" = EXCLUDED."sentAt", "deliveredAt" = NULL, "emailSent" = false, "claimToken" = EXCLUDED."claimToken",
+        "clockAt" = EXCLUDED."clockAt"
     WHERE ("RetentionNotice"."deliveredAt" IS NULL AND "RetentionNotice"."sentAt" < ${staleBefore})
-       OR ("RetentionNotice"."deliveredAt" IS NOT NULL AND "RetentionNotice"."sentAt" < ${voidBefore})
+       OR ("RetentionNotice"."deliveredAt" IS NOT NULL
+           AND ("RetentionNotice"."sentAt" < ${voidBefore} OR "RetentionNotice"."clockAt" IS DISTINCT FROM ${clockAt}))
     RETURNING "claimToken"
   `;
   return rows[0]?.claimToken ?? null;

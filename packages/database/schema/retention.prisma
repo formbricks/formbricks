@@ -185,6 +185,10 @@ model RetentionNotice {
   /// Set by each claim; delivery is recorded only for the claim that sent the email, so a slow sender
   /// can't mark a newer claim delivered.
   claimToken     String?
+  /// The target's clock the notice was computed for (surveys and members). A notice counts only while
+  /// the target's clock is still this one, so activity between the sweep's read and its claim voids
+  /// it. Null for the responses reminder, which is sent once per survey and follows no one clock.
+  clockAt        DateTime?
 
   @@unique([surveyId, entity])
   /// Per organisation: a member's notice from an organisation they have since left must not block a

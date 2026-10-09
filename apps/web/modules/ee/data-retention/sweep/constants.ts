@@ -21,8 +21,9 @@ const HOUR = 60 * MINUTE;
 export const RETENTION_SWEEP_GAP_MS = 72 * HOUR;
 
 /**
- * A run with no `finishedAt` holds its policy for this long, so a second sweep (another replica, an
- * overlapping tick) skips it. Far longer than a run's budget; a run that died is released after it.
+ * A run with no `finishedAt` holds its organisation for this long, so a second sweep (another replica,
+ * an overlapping tick) skips the whole organisation (`openRetentionRuns`). Far longer than a night's
+ * runs; a run that died is released after it.
  */
 export const RETENTION_RUN_LEASE_MS = 2 * HOUR;
 

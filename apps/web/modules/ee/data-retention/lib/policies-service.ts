@@ -1,8 +1,8 @@
 import "server-only";
 import { createId } from "@paralleldrive/cuid2";
 import { prisma } from "@formbricks/database";
+import { readDatabaseClock } from "@/lib/utils/database-clock";
 import type { TRetentionPolicyKind, TRetentionPolicySettings } from "../types";
-import { readDatabaseClock } from "./database-clock";
 import {
   RETENTION_POLICY_DEFAULTS,
   type TRetentionPolicyIssue,

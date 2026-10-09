@@ -67,10 +67,12 @@ const person = (userId: string, locale: TNoticeRecipient["locale"] = "en-US"): T
 });
 
 const voidBefore = new Date("2030-01-01T00:00:00.000Z");
+const clockAt = new Date("2029-01-01T00:00:00.000Z");
 const surveysItem = (id: string, recipient: TNoticeRecipient): TSurveyNoticeItem<"surveys"> => ({
   survey: { id, name: `Survey ${id}`, workspaceId: "clwsp" },
   recipient,
   voidBefore,
+  clockAt,
   describe: (format, url) => ({
     name: `Survey ${id}`,
     url,
@@ -82,6 +84,7 @@ const responsesItem = (id: string, recipient: TNoticeRecipient): TSurveyNoticeIt
   survey: { id, name: `Survey ${id}`, workspaceId: "clwsp" },
   recipient,
   voidBefore,
+  clockAt: null,
   describe: (format, url) => ({ name: `Survey ${id}`, url, count: format.number(12345), deleteDate: "-" }),
 });
 
@@ -120,11 +123,19 @@ describe("sendSurveyNotices", () => {
     vi.useRealTimers();
   });
 
+  test("refuses notices of another organisation than the one it sends for", async () => {
+    await expect(
+      sendSurveyNotices("clother", [surveysBatch([surveysItem("s1", person("alice"))])], deadline())
+    ).rejects.toThrow("Survey notices of another organisation");
+    expect(claimRetentionNotice).not.toHaveBeenCalled();
+  });
+
   test("sends one email per person, listing both their archives and their response deletions", async () => {
     const alice = person("alice", "de-DE");
     const bob = person("bob");
 
     await sendSurveyNotices(
+      "clorg",
       [
         responsesBatch([responsesItem("r1", alice)]),
         surveysBatch([surveysItem("s1", alice), surveysItem("s2", bob)]),
@@ -181,7 +192,7 @@ describe("sendSurveyNotices", () => {
     };
     vi.mocked(loadNoticeOrganization).mockResolvedValue({ name: "Acme", timeZone: "Pacific/Auckland" });
 
-    await sendSurveyNotices([surveysBatch([item])], deadline());
+    await sendSurveyNotices("clorg", [surveysBatch([item])], deadline());
 
     // Noon UTC on 10 January is already 11 January in Auckland: the organisation's zone, not the server's.
     expect(format?.date(new Date("2030-01-10T12:00:00.000Z"))).toBe("Jan 11, 2030");
@@ -192,7 +203,7 @@ describe("sendSurveyNotices", () => {
     const alice = person("alice");
     const items = ["s1", "s2", "s3", "s4", "s5"].map((id) => surveysItem(id, alice));
 
-    await sendSurveyNotices([surveysBatch(items)], deadline());
+    await sendSurveyNotices("clorg", [surveysBatch(items)], deadline());
 
     expect(claimedSurveyIds()).toEqual(["s1", "s2", "s3"]);
     expect(lockUnchangedRetentionPolicy).toHaveBeenCalledTimes(2);
@@ -200,29 +211,34 @@ describe("sendSurveyNotices", () => {
     expect(claimRetentionNotice).toHaveBeenCalledWith(
       TX,
       { organizationId: "clorg", entity: "surveys", surveyId: "s1" },
-      { claimedAt: NOW, voidBefore }
+      { claimedAt: NOW, voidBefore, clockAt }
     );
   });
 
   test("leaves out a notice that is still valid or claimed by another sweep, and sends nothing when none is left", async () => {
     vi.mocked(claimRetentionNotice).mockResolvedValue(null);
 
-    await sendSurveyNotices([surveysBatch([surveysItem("s1", person("alice"))])], deadline());
+    await expect(
+      sendSurveyNotices("clorg", [surveysBatch([surveysItem("s1", person("alice"))])], deadline())
+    ).resolves.toEqual({ changed: [] });
 
     expect(loadNoticeOrganization).not.toHaveBeenCalled();
     expect(sendSurveyRetentionNoticeEmail).not.toHaveBeenCalled();
   });
 
-  test("skips only the notices of a policy changed since its run read it", async () => {
+  test("skips only the notices of a policy changed since its run read it, and reports it", async () => {
     vi.mocked(lockUnchangedRetentionPolicy).mockImplementation(async (_tx, snapshot) => {
       if (snapshot.entity === "responses") throw new RetentionPolicyChangedError("responses");
     });
     const alice = person("alice");
 
-    await sendSurveyNotices(
-      [responsesBatch([responsesItem("r1", alice)]), surveysBatch([surveysItem("s1", alice)])],
-      deadline()
-    );
+    await expect(
+      sendSurveyNotices(
+        "clorg",
+        [responsesBatch([responsesItem("r1", alice)]), surveysBatch([surveysItem("s1", alice)])],
+        deadline()
+      )
+    ).resolves.toEqual({ changed: ["responses"] });
 
     expect(sendSurveyRetentionNoticeEmail).toHaveBeenCalledWith(
       expect.objectContaining({ archivedSurveys: [expect.anything()], responseDeletions: [] })
@@ -238,14 +254,14 @@ describe("sendSurveyNotices", () => {
     vi.mocked(claimRetentionNotice).mockRejectedValue(failure);
 
     await expect(
-      sendSurveyNotices([surveysBatch([surveysItem("s1", person("alice"))])], deadline())
+      sendSurveyNotices("clorg", [surveysBatch([surveysItem("s1", person("alice"))])], deadline())
     ).rejects.toBe(failure);
   });
 
   test("records the notices without a recipient when there is no SMTP", async () => {
     vi.mocked(sendSurveyRetentionNoticeEmail).mockResolvedValue(false);
 
-    await sendSurveyNotices([surveysBatch([surveysItem("s1", person("alice"))])], deadline());
+    await sendSurveyNotices("clorg", [surveysBatch([surveysItem("s1", person("alice"))])], deadline());
 
     expect(markRetentionNoticeDelivered).toHaveBeenCalledWith(TX, expect.anything(), {
       claimToken: "token-s1",
@@ -263,6 +279,7 @@ describe("sendSurveyNotices", () => {
       .mockResolvedValueOnce(true);
 
     await sendSurveyNotices(
+      "clorg",
       [surveysBatch([surveysItem("s1", person("alice")), surveysItem("s2", person("bob"))])],
       deadline()
     );
@@ -279,7 +296,7 @@ describe("sendSurveyNotices", () => {
   test("records no History row for a claim that was taken over before it was delivered", async () => {
     vi.mocked(markRetentionNoticeDelivered).mockResolvedValue(false);
 
-    await sendSurveyNotices([surveysBatch([surveysItem("s1", person("alice"))])], deadline());
+    await sendSurveyNotices("clorg", [surveysBatch([surveysItem("s1", person("alice"))])], deadline());
 
     expect(recordRetentionRunActions).not.toHaveBeenCalled();
   });
@@ -295,6 +312,7 @@ describe("sendSurveyNotices", () => {
     });
 
     await sendSurveyNotices(
+      "clorg",
       [surveysBatch([surveysItem("s1", alice), surveysItem("s2", bob), surveysItem("s3", bob)])],
       end
     );

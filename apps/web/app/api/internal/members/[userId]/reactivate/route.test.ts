@@ -114,10 +114,17 @@ describe("POST /api/internal/members/{userId}/reactivate", () => {
     mocks.can.mockResolvedValueOnce(false);
     expect((await reactivate()).status).toBe(403);
 
-    mocks.isEnabled.mockResolvedValueOnce(false);
-    expect((await reactivate()).status).toBe(403);
-
     expect(mocks.reactivate).not.toHaveBeenCalled();
+  });
+
+  // User management, not data retention: someone deactivated while the organisation held the licence
+  // must still be able to come back after it lapses.
+  test("reactivates without the data retention licence", async () => {
+    mocks.isEnabled.mockResolvedValue(false);
+
+    expect((await reactivate()).status).toBe(200);
+    expect(mocks.reactivate).toHaveBeenCalledOnce();
+    expect(mocks.isEnabled).not.toHaveBeenCalled();
   });
 
   test("returns 422 for a member of another organisation too, audited as a failure", async () => {

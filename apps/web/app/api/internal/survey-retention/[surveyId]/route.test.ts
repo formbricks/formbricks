@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   exemptions: vi.fn(),
   count: vi.fn(),
   plan: vi.fn(),
+  clock: vi.fn(),
 }));
 
 vi.mock("@/app/api/v3/surveys/authorization", () => ({ getAuthorizedV3Survey: mocks.authorizeSurvey }));
@@ -24,6 +25,7 @@ vi.mock("@/modules/ee/data-retention/lib/exemptions-service", () => ({
   listActiveSurveyRetentionExemptions: mocks.exemptions,
 }));
 vi.mock("@/modules/ee/data-retention/lib/survey-retention", () => ({ getSurveyRetentionPlan: mocks.plan }));
+vi.mock("@/lib/utils/database-clock", () => ({ readDatabaseClock: mocks.clock }));
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: mocks.getSession }));
 vi.mock("@/app/api/v1/auth", () => ({ authenticateRequest: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
@@ -37,6 +39,7 @@ vi.mock("server-only", () => ({}));
 const ORG_ID = "clorg11111111111111111111";
 const SURVEY_ID = "clsrv11111111111111111111";
 const CUTOFF = new Date("2029-01-01T00:00:00.000Z");
+const DB_NOW = new Date("2030-06-01T00:00:00.123Z");
 const SURVEY = {
   id: SURVEY_ID,
   createdAt: new Date("2025-01-01T00:00:00.000Z"),
@@ -59,6 +62,7 @@ describe("GET /api/internal/survey-retention/{surveyId}", () => {
       response: null,
     });
     mocks.isEnabled.mockResolvedValue(true);
+    mocks.clock.mockResolvedValue(DB_NOW);
     mocks.policies.mockResolvedValue({});
     mocks.facts.mockResolvedValue({ createdAt: new Date() });
     mocks.exemptions.mockResolvedValue([]);
@@ -98,8 +102,10 @@ describe("GET /api/internal/survey-retention/{surveyId}", () => {
     );
     expect(mocks.count).toHaveBeenCalledWith(SURVEY_ID, CUTOFF);
     expect(response.headers.get("Cache-Control")).toBe("private, no-store");
-    // The survey the check already read, not a second read of it.
-    expect(mocks.facts).toHaveBeenCalledWith(SURVEY);
+    // The survey the check already read, not a second read of it; dated on the database's clock, which
+    // exemptions and notices are stamped with.
+    expect(mocks.facts).toHaveBeenCalledWith(SURVEY, DB_NOW);
+    expect(mocks.plan).toHaveBeenCalledWith(expect.objectContaining({ now: DB_NOW }));
   });
 
   test("hands the active exemptions to the plan, and returns them serialized", async () => {
@@ -126,7 +132,7 @@ describe("GET /api/internal/survey-retention/{surveyId}", () => {
     expect(mocks.exemptions).toHaveBeenCalledWith({
       surveyId: SURVEY_ID,
       organizationId: ORG_ID,
-      now: expect.any(Date),
+      now: DB_NOW,
     });
     // A responses exemption must reach the plan, which holds the survey from the surveys policy too (ENG-3371).
     expect(mocks.plan).toHaveBeenCalledWith(

@@ -2,19 +2,29 @@ import "server-only";
 import type { Prisma } from "@formbricks/database/prisma";
 import { collectResponseFileUrls, getSurveyFileUploadElementIds } from "@/modules/storage/utils";
 
+/** One survey's share of a delete: what the deletion cleanup queue needs per survey. */
+export type TDeletedSurveyResponses = {
+  surveyId: string;
+  /** The ids that matched when the rows were read. */
+  responseIds: string[];
+  /** The storage files those responses owned, to delete once the transaction commits. */
+  fileUrls: string[];
+};
+
 export type TDeletedResponses = {
   /** Rows the database actually removed. Authoritative, and may be lower than the rows read. */
   deleted: number;
   /** The ids that matched when the rows were read. */
   deletedIds: string[];
-  /** The storage files those responses owned, to delete once the transaction commits. */
-  fileUrls: string[];
+  /** The same rows per survey, with their files; one entry per survey that had any. */
+  bySurvey: TDeletedSurveyResponses[];
 };
 
 /**
  * Delete the responses matching `where`, and their displays, inside the caller's transaction, returning
- * the files they owned. The caller deletes the files after commit, or queues them: the URLs only exist
- * inside `response.data`, so they are read here, before the rows are gone.
+ * the files they owned, per survey. The caller queues them for cleanup (`enqueueResponsesDeletionCleanups`)
+ * in the same transaction: the URLs only exist inside `response.data`, so they are read here, before
+ * the rows are gone.
  *
  * Responses go before displays: `Response_displayId_fkey` is `ON DELETE SET NULL`, so the reverse order
  * would work too, but would first null the column on rows about to be deleted. One survey read per
@@ -28,7 +38,7 @@ export const deleteResponsesInTransaction = async (
     where,
     select: { id: true, displayId: true, data: true, surveyId: true },
   });
-  if (rows.length === 0) return { deleted: 0, deletedIds: [], fileUrls: [] };
+  if (rows.length === 0) return { deleted: 0, deletedIds: [], bySurvey: [] };
 
   const surveys = await tx.survey.findMany({
     where: { id: { in: [...new Set(rows.map((row) => row.surveyId))] } },
@@ -40,9 +50,19 @@ export const deleteResponsesInTransaction = async (
       getSurveyFileUploadElementIds({ blocks: survey.blocks, questions: survey.questions }),
     ])
   );
-  const fileUrls = rows.flatMap((row) =>
-    collectResponseFileUrls(row.data, uploadElementIds.get(row.surveyId) ?? new Set<string>(), row.surveyId)
-  );
+  const bySurvey = new Map<string, TDeletedSurveyResponses>();
+  for (const row of rows) {
+    const survey = bySurvey.get(row.surveyId) ?? { surveyId: row.surveyId, responseIds: [], fileUrls: [] };
+    survey.responseIds.push(row.id);
+    survey.fileUrls.push(
+      ...collectResponseFileUrls(
+        row.data,
+        uploadElementIds.get(row.surveyId) ?? new Set<string>(),
+        row.surveyId
+      )
+    );
+    bySurvey.set(row.surveyId, survey);
+  }
 
   // By the ids read, so the rows deleted are exactly the rows whose files were collected.
   const deletedIds = rows.map((row) => row.id);
@@ -53,5 +73,5 @@ export const deleteResponsesInTransaction = async (
     await tx.display.deleteMany({ where: { id: { in: displayIds } } });
   }
 
-  return { deleted: count, deletedIds, fileUrls };
+  return { deleted: count, deletedIds, bySurvey: [...bySurvey.values()] };
 };

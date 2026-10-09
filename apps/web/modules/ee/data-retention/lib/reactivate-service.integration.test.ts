@@ -40,7 +40,7 @@ describe("reactivate a member (real Postgres)", () => {
     managerId = await createMember("manager@example.com", [organizationId], true, "manager");
   });
 
-  test("reactivates, restarts the clock, clears this organisation's notice and queues the projection", async () => {
+  test("reactivates, restarts the clock, clears their members notices and queues the projection", async () => {
     const userId = await createMember("anna@example.com", [organizationId]);
     await prisma.retentionNotice.createMany({
       data: [
@@ -56,9 +56,9 @@ describe("reactivate a member (real Postgres)", () => {
     const user = await prisma.user.findUniqueOrThrow({ where: { id: userId } });
     expect(user.isActive).toBe(true);
     expect(user.reactivatedAt).toEqual(result.status === "reactivated" ? result.reactivatedAt : null);
-    expect(
-      await prisma.retentionNotice.findMany({ where: { userId }, select: { organizationId: true } })
-    ).toEqual([{ organizationId: otherOrganizationId }]);
+    // The account's clock restarted everywhere, so every members notice of theirs goes, including one
+    // left behind by an organisation they no longer belong to.
+    expect(await prisma.retentionNotice.count({ where: { userId } })).toBe(0);
     // The trigger on User.isActive enqueues a grant, so SpiceDB stops treating the account as disabled.
     expect((await userOutbox(userId)).slice(before)).toEqual([{ isRevocation: false }]);
   });

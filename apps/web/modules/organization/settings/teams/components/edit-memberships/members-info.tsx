@@ -154,7 +154,10 @@ const getMemberColumns = ({
   isOwnerOrManager: boolean;
   isManager: boolean;
   doesOrgHaveMoreThanOneOwner: boolean;
-  /** Owners and managers, on an organisation entitled to data retention. */
+  /**
+   * Owners and managers (`organization.manage_access`), licensed or not: Reactivate is user management,
+   * so a member deactivated while the organisation held data retention can come back after it lapses.
+   */
   canReactivate: boolean;
   lastSignInSort: TLastSignInSort | null;
   onToggleLastSignInSort: () => void;
@@ -275,8 +278,6 @@ interface MembersInfoProps {
   isAccessControlAllowed: boolean;
   isFormbricksCloud: boolean;
   isUserManagementDisabledFromUi: boolean;
-  /** Shows "Reactivate" on inactive members to owners and managers (ENG-3610). */
-  isDataRetentionEnabled?: boolean;
 }
 
 export const MembersInfo = ({
@@ -288,7 +289,6 @@ export const MembersInfo = ({
   isAccessControlAllowed,
   isFormbricksCloud,
   isUserManagementDisabledFromUi,
-  isDataRetentionEnabled = false,
 }: Readonly<MembersInfoProps>) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
@@ -319,7 +319,8 @@ export const MembersInfo = ({
         isOwnerOrManager,
         isManager,
         doesOrgHaveMoreThanOneOwner,
-        canReactivate: isDataRetentionEnabled && isOwnerOrManager,
+        // "Reactivate" on inactive members (ENG-3610).
+        canReactivate: isOwnerOrManager,
         lastSignInSort,
         onToggleLastSignInSort: toggleLastSignInSort,
       })}

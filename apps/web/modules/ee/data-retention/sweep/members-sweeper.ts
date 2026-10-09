@@ -29,8 +29,8 @@ type TMemberCandidate = {
   locale: string;
   role: "owner" | "manager" | "member" | "billing";
   lastLoginAt: Date | null;
-  /** When one of their sessions was last renewed: someone who stays signed in is still active. */
-  lastSessionAt: Date | null;
+  /** When they last started or renewed a session: someone who stays signed in is still active. */
+  lastActiveAt: Date | null;
   reactivatedAt: Date | null;
   /**
    * How many organisations they belong to or are invited to (a pending, unexpired invite counts:
@@ -40,21 +40,24 @@ type TMemberCandidate = {
   organizationCount: number;
   noticeClaimedAt: Date | null;
   noticeDeliveredAt: Date | null;
+  noticeClockAt: Date | null;
 };
 
 const targetState = (context: TRetentionSweepContext, member: TMemberCandidate): TRetentionTargetState => ({
   clock: getMemberRetentionClock(member, context.policy, context.now),
   noticeClaimedAt: member.noticeClaimedAt,
   noticeDeliveredAt: member.noticeDeliveredAt,
+  noticeClockAt: member.noticeClockAt,
   heldUntil: null,
   archivedAt: null,
 });
 
 /**
  * The organisation's active members whose clock is at or before `noticeDueAtOrBefore`: their last
- * sign-in or session renewal, or the day the policy took effect for someone who never signed in, moved
- * on by a reactivation (`getMemberRetentionClock`). Keyset-paged on the user id; `userId` narrows it to one
- * member, for the re-check under lock.
+ * sign-in or recorded activity (`User.lastActiveAt`: a session started or renewed), or the day the
+ * policy took effect for someone who never signed in, moved on by a reactivation
+ * (`getMemberRetentionClock`). Keyset-paged on the user id; `userId` narrows it to one member, for the
+ * re-check under lock.
  */
 const readCandidates = (
   client: Pick<Prisma.TransactionClient, "$queryRaw">,
@@ -62,14 +65,14 @@ const readCandidates = (
   { afterId, userId, noticeDueAtOrBefore }: { afterId?: string; userId?: string; noticeDueAtOrBefore: Date }
 ): Promise<TMemberCandidate[]> => client.$queryRaw<TMemberCandidate[]>`
   SELECT u."id" AS "userId", u."email", u."locale", m."role"::text AS "role",
-         u."lastLoginAt", u."reactivatedAt",
-         (SELECT MAX(se."updated_at") FROM "Session" se WHERE se."userId" = u."id") AS "lastSessionAt",
+         u."lastLoginAt", u."reactivatedAt", u."lastActiveAt",
          (SELECT count(*)::int FROM "Membership" o WHERE o."userId" = u."id")
            + (SELECT count(*)::int FROM "Invite" i
                WHERE lower(i."email") = lower(u."email") AND i."acceptorId" IS NULL
                  AND i."expiresAt" > ${context.now} AND i."organizationId" <> m."organizationId")
            AS "organizationCount",
-         n."sentAt" AS "noticeClaimedAt", n."deliveredAt" AS "noticeDeliveredAt"
+         n."sentAt" AS "noticeClaimedAt", n."deliveredAt" AS "noticeDeliveredAt",
+         n."clockAt" AS "noticeClockAt"
   FROM "Membership" m
   JOIN "User" u ON u."id" = m."userId"
   LEFT JOIN "RetentionNotice" n
@@ -77,11 +80,11 @@ const readCandidates = (
   WHERE m."organizationId" = ${context.policy.organizationId}
     AND u."isActive"
     -- GREATEST skips NULLs: the latest of sign-in (or, with none, the policy's start), reactivation and
-    -- session renewal, as getMemberRetentionClock computes it.
+    -- recorded activity, as getMemberRetentionClock computes it.
     AND GREATEST(
       COALESCE(u."lastLoginAt", ${context.policy.enabledAt}),
       u."reactivatedAt",
-      (SELECT MAX(se."updated_at") FROM "Session" se WHERE se."userId" = u."id")
+      u."lastActiveAt"
     ) <= ${noticeDueAtOrBefore}
     ${userId ? Prisma.sql`AND u."id" = ${userId}` : Prisma.empty}
     ${afterId ? Prisma.sql`AND u."id" > ${afterId}` : Prisma.empty}
@@ -180,8 +183,12 @@ const notifyMember = async (
   const claimToken = await runSweepTransaction(async (tx) => {
     await lockUnchangedRetentionPolicy(tx, context.policy);
     const claimedAt = await readDatabaseClock(tx);
-    const voidBefore = state.clock > context.policy.enabledAt ? state.clock : context.policy.enabledAt;
-    return claimRetentionNotice(tx, target, { claimedAt, voidBefore });
+    // Stamped with the clock read for it: if the member was active since, the notice is void.
+    return claimRetentionNotice(tx, target, {
+      claimedAt,
+      voidBefore: context.policy.enabledAt,
+      clockAt: state.clock,
+    });
   });
   if (!claimToken) return;
 
@@ -241,9 +248,9 @@ const afterDeactivation = async (context: TRetentionSweepContext, userId: string
 };
 
 /**
- * The members policy (ENG-3612): a member who hasn't signed in for `periodDays` is deactivated. They are
- * told themselves `warnDays` before, and signing in (or being reactivated) moves their clock and voids the
- * notice. Someone who belongs to other organisations too is never deactivated by this one
+ * The members policy (ENG-3612): a member inactive for `periodDays` is deactivated. They are told
+ * themselves `warnDays` before, and signing in, a session renewal or a reactivation moves their clock and
+ * voids the notice. Someone who belongs to other organisations too is never deactivated by this one
  * (`otherOrganization`), nor is the organisation's last active owner (`lastOwner`).
  */
 export const createMembersSweeper = (): TRetentionSweeper => async (context) => {

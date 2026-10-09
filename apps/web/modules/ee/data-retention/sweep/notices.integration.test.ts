@@ -13,8 +13,9 @@ const ago = (ms: number) => new Date(Date.now() - ms);
 describe("retention notice claims (real Postgres)", () => {
   let target: { organizationId: string; entity: "surveys"; surveyId: string };
 
-  const claim = (claimedAt = new Date(), voidBefore = ago(1000 * HOUR)) =>
-    prisma.$transaction((tx) => claimRetentionNotice(tx, target, { claimedAt, voidBefore }));
+  const CLOCK = ago(5000 * HOUR);
+  const claim = (claimedAt = new Date(), voidBefore = ago(1000 * HOUR), clockAt: Date | null = CLOCK) =>
+    prisma.$transaction((tx) => claimRetentionNotice(tx, target, { claimedAt, voidBefore, clockAt }));
   const deliver = (claimToken: string, emailSent = true) =>
     prisma.$transaction((tx) =>
       markRetentionNoticeDelivered(tx, target, { claimToken, deliveredAt: new Date(), emailSent })
@@ -58,5 +59,22 @@ describe("retention notice claims (real Postgres)", () => {
         where: { surveyId_entity: { surveyId: target.surveyId, entity: "surveys" } },
       })
     ).toMatchObject({ deliveredAt: null, emailSent: false, claimToken: replaced });
+  });
+
+  test("a delivered notice computed for another clock is void, and is replaced with the new clock", async () => {
+    await deliver((await claim(ago(10 * HOUR)))!);
+
+    // Same clock: still valid, however recent the claim.
+    await expect(claim(new Date(), ago(20 * HOUR), CLOCK)).resolves.toBeNull();
+    // The target was active since: claimed after the activity, but computed for the old clock.
+    const moved = ago(HOUR);
+    const replaced = await claim(new Date(), ago(20 * HOUR), moved);
+
+    expect(replaced).toEqual(expect.any(String));
+    expect(
+      await prisma.retentionNotice.findUniqueOrThrow({
+        where: { surveyId_entity: { surveyId: target.surveyId, entity: "surveys" } },
+      })
+    ).toMatchObject({ deliveredAt: null, claimToken: replaced, clockAt: moved });
   });
 });

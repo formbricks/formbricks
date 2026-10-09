@@ -77,24 +77,44 @@ describe("enqueueSurveyDeletionCleanups", () => {
 });
 
 describe("enqueueResponsesDeletionCleanups", () => {
+  const WORKSPACE = { organizationId: "clorg", workspaceId: "clwsp" };
+  const deleted = (surveyId: string, responseIds: string[], fileUrls: string[] = []) => ({
+    surveyId,
+    responseIds,
+    fileUrls,
+  });
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   test("queues nothing when no response was deleted", async () => {
     const tx = makeTx(["dir-a"]);
 
     await expect(
-      enqueueResponsesDeletionCleanups(tx as never, { ...SCOPE, responseIds: [], fileUrls: urls(1) })
+      enqueueResponsesDeletionCleanups(tx as never, {
+        ...WORKSPACE,
+        surveys: [deleted("clsrv", [], urls(1))],
+      })
+    ).resolves.toEqual({ drainNowIds: [] });
+    await expect(
+      enqueueResponsesDeletionCleanups(tx as never, { ...WORKSPACE, surveys: [] })
     ).resolves.toEqual({ drainNowIds: [] });
     expect(tx.feedbackDirectory.findMany).not.toHaveBeenCalled();
     expect(tx.deletionCleanup.createManyAndReturn).not.toHaveBeenCalled();
   });
 
-  test("drains the responses' files now and leaves their Hub records to the drain job", async () => {
+  test("drains the responses' files now, and their Hub records once anything on its way has landed", async () => {
     const tx = makeTx(["dir-a"]);
 
     await expect(
       enqueueResponsesDeletionCleanups(tx as never, {
-        ...SCOPE,
-        responseIds: ["r1", "r2"],
-        fileUrls: urls(1),
+        ...WORKSPACE,
+        surveys: [deleted("clsrv", ["r1", "r2"], urls(1))],
       })
     ).resolves.toEqual({ drainNowIds: ["cln-1"] });
 
@@ -102,17 +122,43 @@ describe("enqueueResponsesDeletionCleanups", () => {
       data: [{ ...SCOPE, kind: "storageFiles", fileKeys: urls(1) }],
       select: { id: true },
     });
-    // Older than the period by now: nothing is still on its way to the Hub, so no settle wait.
+    // A response deleted just after it was submitted can still have its record on the way to the Hub.
     expect(tx.deletionCleanup.createMany).toHaveBeenCalledWith({
-      data: [{ ...SCOPE, kind: "hubResponses", tenantIds: ["dir-a"], responseIds: ["r1", "r2"] }],
+      data: [
+        {
+          ...SCOPE,
+          kind: "hubResponses",
+          tenantIds: ["dir-a"],
+          responseIds: ["r1", "r2"],
+          nextAttemptAt: new Date(NOW.getTime() + CLEANUP_SETTLE_MS),
+        },
+      ],
     });
+  });
+
+  test("queues each survey's responses under that survey, reading the Hub tenants once", async () => {
+    const tx = makeTx(["dir-a"]);
+
+    await enqueueResponsesDeletionCleanups(tx as never, {
+      ...WORKSPACE,
+      surveys: [deleted("s1", ["r1"], urls(1)), deleted("s2", ["r2", "r3"])],
+    });
+
+    expect(tx.feedbackDirectory.findMany).toHaveBeenCalledTimes(1);
+    expect(tx.deletionCleanup.createManyAndReturn.mock.calls[0][0].data).toEqual([
+      expect.objectContaining({ surveyId: "s1", kind: "storageFiles" }),
+    ]);
+    expect(tx.deletionCleanup.createMany.mock.calls[0][0].data).toEqual([
+      expect.objectContaining({ surveyId: "s1", kind: "hubResponses", responseIds: ["r1"] }),
+      expect.objectContaining({ surveyId: "s2", kind: "hubResponses", responseIds: ["r2", "r3"] }),
+    ]);
   });
 
   test("writes neither kind of row it has nothing for", async () => {
     const tx = makeTx([]);
 
     await expect(
-      enqueueResponsesDeletionCleanups(tx as never, { ...SCOPE, responseIds: ["r1"], fileUrls: [] })
+      enqueueResponsesDeletionCleanups(tx as never, { ...WORKSPACE, surveys: [deleted("clsrv", ["r1"])] })
     ).resolves.toEqual({ drainNowIds: [] });
     expect(tx.deletionCleanup.createManyAndReturn).not.toHaveBeenCalled();
     expect(tx.deletionCleanup.createMany).not.toHaveBeenCalled();

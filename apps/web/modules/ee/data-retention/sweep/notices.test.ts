@@ -26,6 +26,7 @@ const SURVEY: TRetentionNoticeTarget = { organizationId: ORG_ID, entity: "respon
 const MEMBER: TRetentionNoticeTarget = { organizationId: ORG_ID, entity: "members", userId: "clusr" };
 const CLAIMED_AT = new Date("2030-01-10T00:00:00.000Z");
 const VOID_BEFORE = new Date("2030-01-01T00:00:00.000Z");
+const CLOCK_AT = new Date("2029-01-01T00:00:00.000Z");
 
 const client = (rows: unknown = [], affected = 1) => ({
   $queryRaw: vi.fn().mockResolvedValue(rows),
@@ -39,12 +40,14 @@ describe("claimRetentionNotice", () => {
     const token = await claimRetentionNotice(tx as never, SURVEY, {
       claimedAt: CLAIMED_AT,
       voidBefore: VOID_BEFORE,
+      clockAt: null,
     });
 
     const { text, values } = statement(tx.$queryRaw.mock.calls[0]);
     expect(text).toContain('ON CONFLICT ("surveyId", "entity") DO UPDATE');
+    expect(text).toContain('"claimToken" = EXCLUDED."claimToken", "clockAt" = EXCLUDED."clockAt"');
     expect(text).toContain(
-      '("RetentionNotice"."deliveredAt" IS NULL AND "RetentionNotice"."sentAt" < ?) OR ("RetentionNotice"."deliveredAt" IS NOT NULL AND "RetentionNotice"."sentAt" < ?)'
+      '("RetentionNotice"."deliveredAt" IS NULL AND "RetentionNotice"."sentAt" < ?) OR ("RetentionNotice"."deliveredAt" IS NOT NULL AND ("RetentionNotice"."sentAt" < ? OR "RetentionNotice"."clockAt" IS DISTINCT FROM ?))'
     );
     const claimToken = values[6];
     expect(values).toEqual([
@@ -55,18 +58,39 @@ describe("claimRetentionNotice", () => {
       null,
       CLAIMED_AT,
       claimToken,
+      null,
       new Date(CLAIMED_AT.getTime() - RETENTION_NOTICE_STALE_CLAIM_MS),
       VOID_BEFORE,
+      null,
     ]);
     // The token handed back is the one the database stored, not the one this call generated.
     expect(token).toBe("token-1");
+  });
+
+  test("stores the clock a clock-bound notice was computed for, and replaces one computed for another", async () => {
+    const tx = client([{ claimToken: "token-1" }]);
+
+    await claimRetentionNotice(tx as never, MEMBER, {
+      claimedAt: CLAIMED_AT,
+      voidBefore: VOID_BEFORE,
+      clockAt: CLOCK_AT,
+    });
+
+    const { values } = statement(tx.$queryRaw.mock.calls[0]);
+    // Inserted with the claim, and compared with the stored notice's.
+    expect(values[7]).toBe(CLOCK_AT);
+    expect(values.at(-1)).toBe(CLOCK_AT);
   });
 
   test("upserts a member notice on (userId, organizationId, entity), with no survey", async () => {
     const tx = client([]);
 
     await expect(
-      claimRetentionNotice(tx as never, MEMBER, { claimedAt: CLAIMED_AT, voidBefore: VOID_BEFORE })
+      claimRetentionNotice(tx as never, MEMBER, {
+        claimedAt: CLAIMED_AT,
+        voidBefore: VOID_BEFORE,
+        clockAt: CLOCK_AT,
+      })
     ).resolves.toBeNull();
 
     const { text, values } = statement(tx.$queryRaw.mock.calls[0]);

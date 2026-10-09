@@ -22,18 +22,20 @@ export async function getSurveyRetentionPolicies(
 /**
  * The facts a survey's retention dates derive from: its timestamps (from the survey the caller already
  * read), its oldest and newest response (one aggregate over `Response(surveyId, createdAt)`), and the
- * surveys-policy notice if one went out.
+ * survey's notices if they went out. `now` is the caller's database clock (`readDatabaseClock`), which
+ * exemption ends are stamped with.
  */
-export async function getSurveyRetentionFacts(survey: {
-  id: string;
-  createdAt: Date;
-  updatedAt: Date;
-  /** Optional on the survey type; absent means never archived. */
-  archivedAt?: Date | null;
-}): Promise<TSurveyRetentionFacts> {
+export async function getSurveyRetentionFacts(
+  survey: {
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    /** Optional on the survey type; absent means never archived. */
+    archivedAt?: Date | null;
+  },
+  now: Date
+): Promise<TSurveyRetentionFacts> {
   const surveyId = survey.id;
-  // Bound from the app clock, like every timestamp Prisma writes, rather than the session's `now()`.
-  const now = new Date();
   const [responses, notices, heldUntil] = await Promise.all([
     prisma.response.aggregate({
       where: { surveyId },
@@ -43,7 +45,7 @@ export async function getSurveyRetentionFacts(survey: {
     // Both of the survey's notices, by the unique (surveyId, entity) index.
     prisma.retentionNotice.findMany({
       where: { surveyId, entity: { in: ["surveys", "responses"] } },
-      select: { entity: true, sentAt: true, deliveredAt: true },
+      select: { entity: true, sentAt: true, deliveredAt: true, clockAt: true },
     }),
     // When the survey's ended exemptions ended, per policy: a notice from before then is void.
     prisma.$queryRaw<{ entity: "surveys" | "responses"; endedAt: Date }[]>`
@@ -55,7 +57,7 @@ export async function getSurveyRetentionFacts(survey: {
   ]);
   const notice = (entity: "surveys" | "responses") => {
     const row = notices.find((candidate) => candidate.entity === entity);
-    return row ? { claimedAt: row.sentAt, deliveredAt: row.deliveredAt } : null;
+    return row ? { claimedAt: row.sentAt, deliveredAt: row.deliveredAt, clockAt: row.clockAt } : null;
   };
   const endedAt = (entity: "surveys" | "responses") =>
     heldUntil.find((row) => row.entity === entity)?.endedAt ?? null;

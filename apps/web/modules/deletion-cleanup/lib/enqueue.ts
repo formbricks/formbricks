@@ -1,5 +1,6 @@
 import "server-only";
 import type { DeletionCleanupCreateManyInput, Prisma } from "@formbricks/database/prisma";
+import type { TDeletedSurveyResponses } from "@/lib/response/delete-responses";
 import { CLEANUP_SETTLE_MS, STORAGE_CLEANUP_CHUNK_SIZE } from "./constants";
 
 export type TSurveyDeletionCleanupInput = {
@@ -49,30 +50,47 @@ export const enqueueSurveyDeletionCleanups = async (
   return insertCleanups(tx, drainNow, drainLater);
 };
 
-export type TResponsesDeletionCleanupInput = TSurveyDeletionCleanupInput & {
-  /** The deleted responses. At most a batch, so the Hub listing's `submission_id` filter stays short. */
-  responseIds: readonly string[];
+export type TResponsesDeletionCleanupInput = {
+  organizationId: string;
+  workspaceId: string;
+  /**
+   * The deleted responses, per survey (`deleteResponsesInTransaction`'s `bySurvey`), with their files. At
+   * most a batch, so each Hub listing's `submission_id` filter stays short.
+   */
+  surveys: readonly TDeletedSurveyResponses[];
 };
 
 /**
- * Queue what deleting some of a survey's responses leaves outside the database: their files and their
- * Hub records. Call it inside the delete's transaction, like `enqueueSurveyDeletionCleanups`. The files
- * are drained straight after commit; the Hub records are older than the period by then, so nothing is
- * still on its way to the Hub and they wait only for the drain job.
+ * Queue what deleting responses leaves outside the database: their files and their Hub records, per
+ * survey. Call it inside the delete's transaction, like `enqueueSurveyDeletionCleanups`. The files are
+ * drained straight after commit. The Hub records wait `CLEANUP_SETTLE_MS`: a response deleted moments
+ * after it was submitted can still have its record on the way to the Hub.
  */
 export const enqueueResponsesDeletionCleanups = async (
   tx: Prisma.TransactionClient,
-  { organizationId, workspaceId, surveyId, responseIds, fileUrls }: TResponsesDeletionCleanupInput
+  { organizationId, workspaceId, surveys }: TResponsesDeletionCleanupInput
 ): Promise<{ drainNowIds: string[] }> => {
-  if (responseIds.length === 0) return { drainNowIds: [] };
+  const deleted = surveys.filter((survey) => survey.responseIds.length > 0);
+  if (deleted.length === 0) return { drainNowIds: [] };
   const tenantIds = await readTenantIds(tx, organizationId);
-  const scope = { organizationId, workspaceId, surveyId };
+  const settledAt = new Date(Date.now() + CLEANUP_SETTLE_MS);
 
-  return insertCleanups(
-    tx,
-    storageFileRows(scope, fileUrls),
-    tenantIds.length > 0 ? [{ ...scope, kind: "hubResponses", tenantIds, responseIds: [...responseIds] }] : []
-  );
+  const drainNow: DeletionCleanupCreateManyInput[] = [];
+  const drainLater: DeletionCleanupCreateManyInput[] = [];
+  for (const { surveyId, responseIds, fileUrls } of deleted) {
+    const scope = { organizationId, workspaceId, surveyId };
+    drainNow.push(...storageFileRows(scope, fileUrls));
+    if (tenantIds.length > 0) {
+      drainLater.push({
+        ...scope,
+        kind: "hubResponses",
+        tenantIds,
+        responseIds: [...responseIds],
+        nextAttemptAt: settledAt,
+      });
+    }
+  }
+  return insertCleanups(tx, drainNow, drainLater);
 };
 
 /** Every feedback directory of the organisation: a Hub tenant that may hold the deleted data's records. */

@@ -5,7 +5,7 @@ import { logger } from "@formbricks/logger";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsDataRetentionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { RETENTION_RUN_BUDGET_MS, RETENTION_SWEEP_BUDGET_MS } from "./constants";
-import { type TOpenedRetentionRun, closeRetentionRun, openRetentionRun } from "./run";
+import { type TOpenedRetentionRun, closeRetentionRun, openRetentionRuns } from "./run";
 import { type TSurveyNoticeBatch, sendSurveyNotices } from "./survey-notices";
 import { type TRetentionSweepPlan, type TRetentionSweeper, runDataRetentionSweep } from "./sweep";
 import { RetentionPolicyChangedError } from "./transaction";
@@ -15,13 +15,13 @@ vi.mock("@formbricks/database", () => ({ prisma: { $queryRaw: vi.fn() } }));
 vi.mock("@formbricks/logger", () => ({ logger: { info: vi.fn(), error: vi.fn() } }));
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEventWithoutRequest: vi.fn() }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsDataRetentionEnabled: vi.fn() }));
-vi.mock("./run", () => ({ openRetentionRun: vi.fn(), closeRetentionRun: vi.fn() }));
+vi.mock("./run", () => ({ openRetentionRuns: vi.fn(), closeRetentionRun: vi.fn() }));
 vi.mock("./survey-notices", () => ({ sendSurveyNotices: vi.fn() }));
 
 /**
- * The night's sweep against a real database (licence gating, a held lease, one email per person across
- * the two survey policies, a policy changed mid-run) is proven in `sweep.integration.test.ts`. These pin
- * how the sweep orders, budgets and isolates each policy's run.
+ * The night's sweep against a real database (licence gating, a held organisation, one email per person
+ * across the two survey policies, a policy changed mid-run) is proven in `sweep.integration.test.ts`.
+ * These pin how the sweep orders, budgets and isolates each policy's run.
  */
 const NOW = new Date("2030-01-10T01:00:00.000Z");
 
@@ -64,16 +64,16 @@ describe("runDataRetentionSweep", () => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     vi.setSystemTime(NOW);
-    vi.mocked(openRetentionRun).mockImplementation(async (organizationId, entity) =>
-      opened(organizationId, entity)
+    vi.mocked(openRetentionRuns).mockImplementation(async (organizationId, entities) =>
+      entities.map((entity) => opened(organizationId, entity))
     );
-    vi.mocked(sendSurveyNotices).mockResolvedValue(undefined);
+    vi.mocked(sendSurveyNotices).mockResolvedValue({ changed: [] });
   });
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  test("reads every policy first, sends the survey notices together, then acts, closing every run", async () => {
+  test("opens the organisation's runs together, sends the survey notices together, then acts, closing every run", async () => {
     orgs("org-1");
     const responses = sweeperFor("responses");
     const surveys = sweeperFor("surveys");
@@ -90,11 +90,8 @@ describe("runDataRetentionSweep", () => {
     expect(strings.join("?").replace(/\s+/g, " ")).toContain(
       'ORDER BY last."startedAt" ASC NULLS FIRST, o."organizationId"'
     );
-    expect(vi.mocked(openRetentionRun).mock.calls).toEqual([
-      ["org-1", "responses"],
-      ["org-1", "surveys"],
-      ["org-1", "members"],
-    ]);
+    // One call for the organisation, so a second sweep can't split its policies.
+    expect(vi.mocked(openRetentionRuns).mock.calls).toEqual([["org-1", ["responses", "surveys", "members"]]]);
     expect(responses.sweeper).toHaveBeenCalledWith({
       ...opened("org-1", "responses"),
       deadline: NOW.getTime() + RETENTION_RUN_BUDGET_MS,
@@ -102,13 +99,18 @@ describe("runDataRetentionSweep", () => {
     // One call for both survey policies, so each person gets one email listing both.
     expect(sendSurveyNotices).toHaveBeenCalledTimes(1);
     expect(sendSurveyNotices).toHaveBeenCalledWith(
+      "org-1",
       [notices("responses"), notices("surveys")],
       NOW.getTime() + RETENTION_RUN_BUDGET_MS
     );
     const noticesAt = vi.mocked(sendSurveyNotices).mock.invocationCallOrder[0];
-    for (const { sweeper, act } of [responses, surveys, members]) {
+    for (const { sweeper } of [responses, surveys]) {
       expect(sweeper.mock.invocationCallOrder[0]).toBeLessThan(noticesAt);
-      expect(act.mock.invocationCallOrder[0]).toBeGreaterThan(noticesAt);
+    }
+    // Members read what is due only once the survey notices are out, so their recipients are fresh.
+    expect(members.sweeper.mock.invocationCallOrder[0]).toBeGreaterThan(noticesAt);
+    for (const { act } of [responses, surveys, members]) {
+      expect(act.mock.invocationCallOrder[0]).toBeGreaterThan(members.sweeper.mock.invocationCallOrder[0]);
       expect(act).toHaveBeenCalledWith(NOW.getTime() + RETENTION_RUN_BUDGET_MS);
     }
     expect(vi.mocked(closeRetentionRun).mock.calls.map(([runId]) => runId)).toEqual([
@@ -121,14 +123,14 @@ describe("runDataRetentionSweep", () => {
   test("leaves a policy with no sweeper, or no run to open, alone", async () => {
     orgs("org-1");
     const surveys = sweeperFor("surveys");
-    vi.mocked(openRetentionRun).mockResolvedValue(null);
+    vi.mocked(openRetentionRuns).mockResolvedValue([]);
 
     const summary = await runDataRetentionSweep({
       sweepers: { surveys: surveys.sweeper },
       checkLicence: async () => true,
     });
 
-    expect(openRetentionRun).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(openRetentionRuns).mock.calls).toEqual([["org-1", ["surveys"]]]);
     expect(surveys.sweeper).not.toHaveBeenCalled();
     expect(sendSurveyNotices).not.toHaveBeenCalled();
     expect(closeRetentionRun).not.toHaveBeenCalled();
@@ -148,7 +150,7 @@ describe("runDataRetentionSweep", () => {
     });
 
     expect(summary).toEqual({ organizations: 3, unlicensed: 2, runs: 1, failedRuns: 0, deferred: 0 });
-    expect(vi.mocked(openRetentionRun).mock.calls).toEqual([["org-3", "members"]]);
+    expect(vi.mocked(openRetentionRuns).mock.calls).toEqual([["org-3", ["members"]]]);
     expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({ organizationId: "org-2" }),
       "Data retention licence check failed; skipping the organisation"
@@ -191,6 +193,22 @@ describe("runDataRetentionSweep", () => {
     );
   });
 
+  test("acts on neither policy changed before its notices were claimed, quietly", async () => {
+    orgs("org-1");
+    vi.mocked(sendSurveyNotices).mockResolvedValue({ changed: ["surveys"] });
+    const responses = sweeperFor("responses");
+    const surveys = sweeperFor("surveys");
+
+    const summary = await runDataRetentionSweep({
+      sweepers: { responses: responses.sweeper, surveys: surveys.sweeper },
+      checkLicence: async () => true,
+    });
+
+    expect(summary).toMatchObject({ runs: 2, failedRuns: 0 });
+    expect(responses.act).toHaveBeenCalled();
+    expect(surveys.act).not.toHaveBeenCalled();
+  });
+
   test("fails both survey policies when their notices fail, and acts on neither", async () => {
     orgs("org-1");
     vi.mocked(sendSurveyNotices).mockRejectedValue(new Error("smtp exploded"));
@@ -224,12 +242,31 @@ describe("runDataRetentionSweep", () => {
     ).resolves.toMatchObject({ runs: 2, failedRuns: 1 });
   });
 
-  test("closes the runs it opened when the database fails mid-organisation, and fails the job", async () => {
+  test("skips only an organisation whose runs can't be opened, and carries on with the next", async () => {
+    orgs("org-1", "org-2");
+    const failure = new Error("Transaction API error: Unable to start a transaction in the given time.");
+    vi.mocked(openRetentionRuns)
+      .mockRejectedValueOnce(failure)
+      .mockResolvedValueOnce([opened("org-2", "members")]);
+    const members = sweeperFor("members");
+
+    const summary = await runDataRetentionSweep({
+      sweepers: { members: members.sweeper },
+      checkLicence: async () => true,
+    });
+
+    expect(summary).toMatchObject({ organizations: 2, runs: 1, failedRuns: 0 });
+    expect(members.act).toHaveBeenCalledOnce();
+    expect(logger.error).toHaveBeenCalledWith(
+      { error: failure, organizationId: "org-1" },
+      "Data retention runs could not be opened; skipping the organisation"
+    );
+  });
+
+  test("fails the job when the database fails closing a run: an infrastructure failure", async () => {
     orgs("org-1");
     const failure = new Error("connection lost");
-    vi.mocked(openRetentionRun)
-      .mockResolvedValueOnce(opened("org-1", "responses"))
-      .mockRejectedValueOnce(failure);
+    vi.mocked(closeRetentionRun).mockRejectedValueOnce(failure);
 
     await expect(
       runDataRetentionSweep({
@@ -243,10 +280,9 @@ describe("runDataRetentionSweep", () => {
   test("audits a warning restarted after a gap as a system change, and carries on if the audit fails", async () => {
     orgs("org-1");
     const previousEnabledAt = new Date("2029-12-01T00:00:00.000Z");
-    vi.mocked(openRetentionRun).mockResolvedValue({
-      ...opened("org-1", "members"),
-      restartedWarning: { previousEnabledAt },
-    });
+    vi.mocked(openRetentionRuns).mockResolvedValue([
+      { ...opened("org-1", "members"), restartedWarning: { previousEnabledAt } },
+    ]);
     vi.mocked(queueAuditEventWithoutRequest).mockRejectedValue(new Error("audit queue down"));
     const members = sweeperFor("members");
 

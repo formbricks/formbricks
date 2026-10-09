@@ -19,6 +19,23 @@ const ago = (days: number) => new Date(Date.now() - days * DAY);
 const WARN = 30;
 const PERIOD = 365;
 
+/**
+ * Better Auth's own session calls, so its database hooks run exactly as they do for a request: a
+ * sign-in creates a session, a request on a day-old session renews it, a sign-out deletes it.
+ */
+const betterAuthSessions = async () => {
+  const { auth } = await import("@/modules/auth/lib/auth");
+  return (await auth.$context).internalAdapter;
+};
+const startSession = async (userId: string) =>
+  (await (await betterAuthSessions()).createSession(userId)).token;
+const renewSession = async (token: string) =>
+  (await betterAuthSessions()).updateSession(token, {
+    expiresAt: new Date(Date.now() + 7 * DAY),
+    updatedAt: new Date(),
+  });
+const signOut = async (token: string) => (await betterAuthSessions()).deleteSession(token);
+
 describe("members sweeper (real Postgres)", () => {
   let organizationId: string;
 
@@ -118,16 +135,88 @@ describe("members sweeper (real Postgres)", () => {
     expect(await isActive(idle)).toBe(true);
   });
 
-  test("a member who stays signed in is active: a renewed session moves the clock", async () => {
+  test("a member who stays signed in is active: recorded activity moves the clock", async () => {
     const signedIn = await addMember("signed-in@example.com", "member", { lastLoginAt: ago(400) });
-    await prisma.session.create({
-      data: { userId: signedIn, sessionToken: "session-token", expires: ago(-1), updatedAt: ago(1) },
-    });
+    await prisma.user.update({ where: { id: signedIn }, data: { lastActiveAt: ago(1) } });
 
     await sweep();
 
     expect(sendMemberRetentionNoticeEmail).not.toHaveBeenCalled();
     expect(await isActive(signedIn)).toBe(true);
+  });
+
+  test("a session renewal voids the notice, and signing out afterwards doesn't bring it back", async () => {
+    const idle = await addMember("idle@example.com", "member", { lastLoginAt: ago(400) });
+    // A session from long ago, still alive: nothing recorded since the sign-in.
+    const token = await startSession(idle);
+    await prisma.user.update({ where: { id: idle }, data: { lastActiveAt: null } });
+    await sweep();
+    expect(sendMemberRetentionNoticeEmail).toHaveBeenCalledOnce();
+    await ageNotice(idle, WARN + 1);
+
+    // They come back: Better Auth renews the session (its update hook records the activity), then
+    // they sign out, which deletes the session row and, with it, Better Auth's own record of it.
+    await renewSession(token);
+    const { lastActiveAt } = await prisma.user.findUniqueOrThrow({ where: { id: idle } });
+    expect(Date.now() - lastActiveAt!.getTime()).toBeLessThan(60_000);
+    await signOut(token);
+    expect(await prisma.session.count({ where: { userId: idle } })).toBe(0);
+
+    await sweep();
+
+    expect(await isActive(idle)).toBe(true);
+    expect(sendMemberRetentionNoticeEmail).toHaveBeenCalledOnce();
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: idle } })).lastActiveAt).toEqual(lastActiveAt);
+  });
+
+  test("a sign-in records activity too, so the member isn't warned", async () => {
+    const member = await addMember("member@example.com", "member", { lastLoginAt: ago(400) });
+
+    await startSession(member);
+    const { lastActiveAt } = await prisma.user.findUniqueOrThrow({ where: { id: member } });
+    expect(Date.now() - lastActiveAt!.getTime()).toBeLessThan(60_000);
+
+    await sweep();
+    expect(sendMemberRetentionNoticeEmail).not.toHaveBeenCalled();
+  });
+
+  test("a session renewed after the notice was delivered stops the deactivation under the lock", async () => {
+    const idle = await addMember("idle@example.com", "member", { lastLoginAt: ago(400) });
+    const token = await startSession(idle);
+    await prisma.user.update({ where: { id: idle }, data: { lastActiveAt: null } });
+    await sweep();
+    await ageNotice(idle, WARN + 1);
+    const run = (await openRetentionRun(organizationId, "members"))!;
+    const { noticeDueAtOrBefore } = getRetentionClockCutoffs(run.policy, run.now);
+
+    // The sweep has read them as due; they renew a session before the deactivation runs.
+    await renewSession(token);
+
+    await expect(
+      deactivateDueMember({ ...run, deadline: Date.now() + 60_000 }, idle, noticeDueAtOrBefore)
+    ).resolves.toBeNull();
+    expect(await isActive(idle)).toBe(true);
+  });
+
+  test("activity between the sweep's read and its claim voids the notice it claimed", async () => {
+    const idle = await addMember("idle@example.com", "member", { lastLoginAt: ago(400) });
+
+    // The sweep reads the member as away for 400 days and plans the notice from that clock...
+    const run = (await openRetentionRun(organizationId, "members"))!;
+    const plan = await createMembersSweeper()({ ...run, deadline: Date.now() + 60_000 });
+    // ...and they were active before it claims the notice. Still old enough to be due, so the email's
+    // date can't be told apart from a valid one, but it was computed from the old clock.
+    await prisma.user.update({ where: { id: idle }, data: { lastActiveAt: ago(380) } });
+    await plan.act(Date.now() + 60_000);
+    await prisma.retentionRun.update({ where: { id: run.runId }, data: { finishedAt: new Date() } });
+    expect(sendMemberRetentionNoticeEmail).toHaveBeenCalledOnce();
+
+    // Its warning has run, but for a clock the member no longer has: no deactivation, a new notice.
+    await ageNotice(idle, WARN + 1);
+    await sweep();
+
+    expect(await isActive(idle)).toBe(true);
+    expect(sendMemberRetentionNoticeEmail).toHaveBeenCalledTimes(2);
   });
 
   test("counts a member who never signed in from when the policy took effect", async () => {
@@ -186,7 +275,9 @@ describe("members sweeper (real Postgres)", () => {
       targetId: boss,
     });
 
-    // Even with a notice on record from before, the deactivation itself refuses.
+    // Even with a valid notice on record from before (computed for their clock: their last sign-in),
+    // the deactivation itself refuses.
+    const { lastLoginAt } = await prisma.user.findUniqueOrThrow({ where: { id: boss } });
     await prisma.retentionNotice.create({
       data: {
         organizationId,
@@ -194,6 +285,7 @@ describe("members sweeper (real Postgres)", () => {
         userId: boss,
         sentAt: ago(WARN + 1),
         deliveredAt: ago(WARN + 1),
+        clockAt: lastLoginAt,
       },
     });
     await sweep();

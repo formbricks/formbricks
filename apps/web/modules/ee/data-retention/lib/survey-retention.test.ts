@@ -53,7 +53,7 @@ describe("getSurveyRetentionPlan", () => {
   test("once the reminder has run its warning, due responses go on the next run", () => {
     const delivered = daysAgo(61);
     const [responses] = plan({
-      survey: { ...survey, responsesNotice: { claimedAt: delivered, deliveredAt: delivered } },
+      survey: { ...survey, responsesNotice: { claimedAt: delivered, deliveredAt: delivered, clockAt: null } },
     });
 
     expect(responses).toMatchObject({ nextAction: "delete", nextDate: NOW });
@@ -64,12 +64,29 @@ describe("getSurveyRetentionPlan", () => {
     const [responses] = plan({
       survey: {
         ...survey,
-        responsesNotice: { claimedAt: delivered, deliveredAt: delivered },
+        responsesNotice: { claimedAt: delivered, deliveredAt: delivered, clockAt: null },
         responsesHeldUntil: daysAgo(1),
       },
     });
 
     expect(responses.nextDate).toEqual(addRetentionDays(NOW, 60));
+  });
+
+  test("dates the archive from a delivered notice only while the survey's clock is the one it was sent for", () => {
+    const delivered = daysAgo(10);
+    // The survey's clock under the default conditions: its last response, the latest of its timestamps.
+    const clock = survey.newestResponseAt!;
+    const noticed = (clockAt: Date) => ({
+      ...survey,
+      surveysNotice: { claimedAt: delivered, deliveredAt: delivered, clockAt },
+    });
+
+    const [, current] = plan({ survey: noticed(clock) });
+    expect(current.nextDate).toEqual(addRetentionDays(delivered, 60));
+
+    // Activity since the notice: it no longer counts, and the archive waits a full warning again.
+    const [, moved] = plan({ survey: noticed(daysAgo(1100)) });
+    expect(moved.nextDate).toEqual(addRetentionDays(NOW, 60));
   });
 
   test("dates an archived survey's deletion from when it was archived", () => {

@@ -1,6 +1,7 @@
 -- Data retention (ENG-3713, decided in ENG-3697): policies, exemptions, run history and notice
--- markers, plus "User"."reactivatedAt". Nothing on "Survey" or "Response" changes, because retention
--- must never write the survey row (its "updated_at" is one of the survey clocks).
+-- markers, plus "User"."reactivatedAt" and "User"."lastActiveAt". Nothing on "Survey" or "Response"
+-- changes, because retention must never write the survey row (its "updated_at" is one of the survey
+-- clocks).
 --
 -- One transaction for the whole file. Prisma 7.8 does not add one, and these statements only make
 -- sense together: a partial apply would leave tables standing without their constraints or foreign
@@ -199,6 +200,7 @@ CREATE TABLE IF NOT EXISTS "RetentionNotice" (
     "deliveredAt" TIMESTAMP(3),
     "emailSent" BOOLEAN NOT NULL DEFAULT false,
     "claimToken" TEXT,
+    "clockAt" TIMESTAMP(3),
 
     CONSTRAINT "RetentionNotice_pkey" PRIMARY KEY ("id")
 );
@@ -221,6 +223,20 @@ END $$;
 -- A nullable column with no default: a catalog-only change that rewrites nothing. It takes a brief
 -- ACCESS EXCLUSIVE lock on "User", which the SET LOCAL above bounds.
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "reactivatedAt" TIMESTAMP(3);
+
+-- AlterTable
+-- The members retention clock's record of activity, written on every session start and renewal. The
+-- same catalog-only change as above.
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "lastActiveAt" TIMESTAMP(3);
+
+-- Seed it from the sessions alive now, so someone who has stayed signed in since their last sign-in
+-- isn't counted from that sign-in on the first night. Only rows still empty, so a rerun changes
+-- nothing. One pass over "Session" (live sessions only: Better Auth deletes them on sign-out and
+-- expiry); the row locks it takes on "User" are bounded by the SET LOCAL above.
+UPDATE "User" u
+SET "lastActiveAt" = s."lastSessionAt"
+FROM (SELECT "userId", MAX("updated_at") AS "lastSessionAt" FROM "Session" GROUP BY "userId") s
+WHERE u."id" = s."userId" AND u."lastActiveAt" IS NULL;
 
 -- Every index below is on a table this same transaction just created, so it is built over zero rows
 -- and locks nothing anyone else can reach. CONCURRENTLY is not an option here in any case: Postgres

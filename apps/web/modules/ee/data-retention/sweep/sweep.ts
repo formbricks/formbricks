@@ -5,7 +5,7 @@ import { logger } from "@formbricks/logger";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsDataRetentionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { RETENTION_RUN_BUDGET_MS, RETENTION_SWEEP_BUDGET_MS } from "./constants";
-import { type TOpenedRetentionRun, closeRetentionRun, openRetentionRun } from "./run";
+import { type TOpenedRetentionRun, closeRetentionRun, openRetentionRuns } from "./run";
 import { type TSurveyNoticeBatch, sendSurveyNotices } from "./survey-notices";
 import { RetentionPolicyChangedError } from "./transaction";
 
@@ -30,6 +30,13 @@ export type TRetentionSweepers = Partial<Record<RetentionEntity, TRetentionSweep
 
 /** Responses first: their deletion doesn't depend on the survey still being live. */
 const SWEEP_ORDER: readonly RetentionEntity[] = ["responses", "surveys", "members"];
+
+/**
+ * The policies whose notices are survey notices, sent together after both have read what is due. The
+ * others read what is due only after those notices went out, so the recipients chosen for the survey
+ * notices are as fresh as they can be when the email leaves (the members policy may take its time).
+ */
+const SURVEY_NOTICE_ENTITIES: ReadonlySet<RetentionEntity> = new Set(["responses", "surveys"]);
 
 export type TRetentionSweepSummary = {
   organizations: number;
@@ -121,59 +128,93 @@ const runStep = async (policyRun: TPolicyRun, step: () => Promise<void>): Promis
   }
 };
 
-/** Open one policy's run, restarting its warning first if it is due, or null when there is none. */
-const startPolicyRun = async (
-  organizationId: string,
-  entity: RetentionEntity
-): Promise<TPolicyRun | null> => {
-  const run = await openRetentionRun(organizationId, entity);
-  if (!run) return null;
+/** One policy's run, set up once its organisation's runs are open: its warning restart audited. */
+const startPolicyRun = async (run: TOpenedRetentionRun): Promise<TPolicyRun> => {
   await auditWarningRestart(run);
   if (run.restartedWarning) {
     logger.info(
-      { organizationId, entity, runId: run.runId },
+      { organizationId: run.policy.organizationId, entity: run.policy.entity, runId: run.runId },
       "Data retention warning restarted after a gap in sweeps"
     );
   }
   return { run, plan: null, failed: false };
 };
 
+/** Each policy reads what is due and plans its night, in turn, each within its own time budget. */
+const prepare = async (policyRuns: readonly TPolicyRun[], sweepers: TRetentionSweepers): Promise<void> => {
+  for (const policyRun of policyRuns) {
+    const sweeper = sweepers[policyRun.run.policy.entity];
+    if (!sweeper) continue;
+    await runStep(policyRun, async () => {
+      policyRun.plan = await sweeper({ ...policyRun.run, deadline: Date.now() + RETENTION_RUN_BUDGET_MS });
+    });
+  }
+};
+
 /**
- * One licensed organisation's night, counted on the summary: every enabled policy reads what is due,
- * then the survey notices of the responses and surveys policies go out together (one email per person),
- * then each policy acts, each step within its own time budget. Every run is closed, whatever happened.
+ * Send the survey notices of the policies that have them, one email per person across both. A policy
+ * changed before its notices were claimed is stopped there: no actions on its run either. If sending
+ * fails, every policy in it fails and acts on nothing.
+ */
+const sendNotices = async (organizationId: string, policyRuns: readonly TPolicyRun[]): Promise<void> => {
+  const noticeRuns = policyRuns.filter((policyRun) => policyRun.plan?.surveyNotices);
+  if (noticeRuns.length === 0) return;
+  try {
+    const { changed } = await sendSurveyNotices(
+      organizationId,
+      noticeRuns.map((policyRun) => policyRun.plan!.surveyNotices!),
+      Date.now() + RETENTION_RUN_BUDGET_MS
+    );
+    const changedEntities: readonly RetentionEntity[] = changed;
+    for (const policyRun of noticeRuns) {
+      if (changedEntities.includes(policyRun.run.policy.entity)) policyRun.plan = null;
+    }
+  } catch (error) {
+    for (const policyRun of noticeRuns) {
+      policyRun.plan = null;
+      policyRun.failed = true;
+    }
+    logger.error({ error, organizationId }, "Data retention notices failed");
+  }
+};
+
+/**
+ * One licensed organisation's night, counted on the summary. Its runs open together
+ * (`openRetentionRuns`), or none do when another sweep holds the organisation; a failure to open them
+ * skips this organisation only. Then the survey policies read what is due, their notices go out
+ * together (one email per person), the other policies read what is due, and each policy acts, each step
+ * within its own time budget. Every run is closed, whatever happened.
  */
 const sweepOrganization = async (
   organizationId: string,
   sweepers: TRetentionSweepers,
   summary: TRetentionSweepSummary
 ): Promise<void> => {
+  const entities = SWEEP_ORDER.filter((entity) => sweepers[entity]);
+  if (entities.length === 0) return;
+  let runs: TOpenedRetentionRun[];
+  try {
+    runs = await openRetentionRuns(organizationId, entities);
+  } catch (error) {
+    logger.error(
+      { error, organizationId },
+      "Data retention runs could not be opened; skipping the organisation"
+    );
+    return;
+  }
+
   const policyRuns: TPolicyRun[] = [];
   try {
-    for (const entity of SWEEP_ORDER) {
-      const sweeper = sweepers[entity];
-      if (!sweeper) continue;
-      const policyRun = await startPolicyRun(organizationId, entity);
-      if (!policyRun) continue;
-      policyRuns.push(policyRun);
-      await runStep(policyRun, async () => {
-        policyRun.plan = await sweeper({ ...policyRun.run, deadline: Date.now() + RETENTION_RUN_BUDGET_MS });
-      });
-    }
+    for (const run of runs) policyRuns.push(await startPolicyRun(run));
+    const sendsSurveyNotices = (policyRun: TPolicyRun) =>
+      SURVEY_NOTICE_ENTITIES.has(policyRun.run.policy.entity);
 
-    const noticeRuns = policyRuns.filter((policyRun) => policyRun.plan?.surveyNotices);
-    if (noticeRuns.length > 0) {
-      await sendSurveyNotices(
-        noticeRuns.map((policyRun) => policyRun.plan!.surveyNotices!),
-        Date.now() + RETENTION_RUN_BUDGET_MS
-      ).catch((error: unknown) => {
-        for (const policyRun of noticeRuns) {
-          policyRun.plan = null;
-          policyRun.failed = true;
-        }
-        logger.error({ error, organizationId }, "Data retention notices failed");
-      });
-    }
+    await prepare(policyRuns.filter(sendsSurveyNotices), sweepers);
+    await sendNotices(organizationId, policyRuns);
+    await prepare(
+      policyRuns.filter((policyRun) => !sendsSurveyNotices(policyRun)),
+      sweepers
+    );
 
     for (const policyRun of policyRuns) {
       const plan = policyRun.plan;
@@ -191,8 +232,9 @@ const sweepOrganization = async (
 /**
  * One night's sweep: every organisation with an enabled policy, each policy's run in turn. An
  * organisation without the licence (or whose licence lookup fails) is skipped and nothing of it is
- * touched; when it comes back, `openRetentionRun` restarts its warning first. One policy's failure closes
- * its run and the sweep carries on. Only an infrastructure failure (the database) fails the job.
+ * touched; when it comes back, `openRetentionRuns` restarts its warning first. One policy's failure
+ * closes its run, and an organisation whose runs can't be opened is skipped; the sweep carries on. Only
+ * an infrastructure failure past that (closing a run) fails the job.
  */
 export const runDataRetentionSweep = async ({
   sweepers,

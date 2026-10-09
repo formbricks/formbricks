@@ -33,11 +33,13 @@ const membersPolicy: TRetentionSchedulePolicy = {
   periodDays: 365,
 };
 
-// A notice is claimed and delivered at the same moment unless a test says otherwise.
+// A notice is claimed and delivered at the same moment unless a test says otherwise, and was computed
+// for the default clock: a test that moves `clock` alone models activity since the notice.
 const target = (overrides: Partial<TRetentionTargetState> = {}): TRetentionTargetState => ({
   clock: day(0),
   noticeClaimedAt: overrides.noticeDeliveredAt ?? null,
   noticeDeliveredAt: null,
+  noticeClockAt: day(0),
   archivedAt: null,
   heldUntil: null,
   ...overrides,
@@ -116,7 +118,7 @@ describe("getRetentionSchedule", () => {
   });
 
   describe("a clock reset voids the notice", () => {
-    test("a notice older than the clock no longer counts", () => {
+    test("a notice computed for an earlier clock no longer counts", () => {
       const reset = target({ clock: day(400), noticeDeliveredAt: day(335) });
       const schedule = getRetentionSchedule(surveysPolicy, reset, day(401));
 
@@ -131,6 +133,39 @@ describe("getRetentionSchedule", () => {
       expect(
         getRetentionSchedule(surveysPolicy, target({ noticeDeliveredAt: day(0) }), day(1)).noticeSent
       ).toBe(true);
+    });
+
+    test("activity between the sweep's read and its claim voids the notice it claimed", () => {
+      // Read at day 334 with the clock at day 0; the survey changed on day 335 (clock moves); the notice
+      // was claimed on day 336 with the dates of the old clock. Claimed after the new clock, but computed
+      // for the old one: it states a date that will never come, so it doesn't count.
+      const raced = target({
+        clock: day(335),
+        noticeClockAt: day(0),
+        noticeClaimedAt: day(336),
+        noticeDeliveredAt: day(336),
+      });
+
+      expect(getRetentionSchedule(surveysPolicy, raced, day(400)).noticeSent).toBe(false);
+      expect(getDueRetentionStep(surveysPolicy, raced, day(1000))).toBe("notify");
+      expect(getDueRetentionStep(membersPolicy, raced, day(1000))).toBe("notify");
+    });
+
+    test("a notice computed for the current clock counts, whenever the clock last moved", () => {
+      const current = target({ clock: day(335), noticeClockAt: day(335), noticeDeliveredAt: day(670) });
+
+      expect(getRetentionSchedule(surveysPolicy, current, day(671)).noticeSent).toBe(true);
+      expect(getDueRetentionStep(surveysPolicy, current, day(700))).toBe("act");
+    });
+
+    test("a clock-bound notice with no clock on record doesn't count", () => {
+      expect(
+        getRetentionSchedule(
+          surveysPolicy,
+          target({ noticeClockAt: null, noticeDeliveredAt: day(335) }),
+          day(400)
+        ).noticeSent
+      ).toBe(false);
     });
   });
 
@@ -225,7 +260,7 @@ describe("getRetentionSchedule", () => {
     });
 
     test("later responses need no new reminder: newer clocks don't void it", () => {
-      const later = target({ clock: day(500), noticeDeliveredAt: day(400) });
+      const later = target({ clock: day(500), noticeClockAt: null, noticeDeliveredAt: day(400) });
       const schedule = getRetentionSchedule(responsesPolicy, later, day(1300));
 
       expect(schedule.noticeSent).toBe(true);
@@ -308,12 +343,11 @@ describe("getRetentionClockCutoffs", () => {
     const noticeDeliveredAt = addRetentionDays(now, -policy.warnDays);
     if (!actionDueAtOrBefore) throw new Error("expected a cutoff");
 
-    expect(getDueRetentionStep(policy, target({ clock: actionDueAtOrBefore, noticeDeliveredAt }), now)).toBe(
-      "act"
-    );
-    expect(
-      getDueRetentionStep(policy, target({ clock: justAfter(actionDueAtOrBefore), noticeDeliveredAt }), now)
-    ).toBeNull();
+    // A notice computed for the clock it is tested with.
+    const at = (clock: Date) => target({ clock, noticeClockAt: clock, noticeDeliveredAt });
+
+    expect(getDueRetentionStep(policy, at(actionDueAtOrBefore), now)).toBe("act");
+    expect(getDueRetentionStep(policy, at(justAfter(actionDueAtOrBefore)), now)).toBeNull();
   });
 });
 
@@ -341,55 +375,89 @@ describe("getSurveyRetentionClock", () => {
 describe("getMemberRetentionClock", () => {
   test("uses the last sign-in", () => {
     expect(
-      getMemberRetentionClock({ lastLoginAt: day(5), reactivatedAt: null }, membersPolicy, day(10))
+      getMemberRetentionClock(
+        { lastLoginAt: day(5), lastActiveAt: null, reactivatedAt: null },
+        membersPolicy,
+        day(10)
+      )
     ).toEqual(day(5));
   });
 
   test("counts a member with no recorded sign-in from when the policy was switched on", () => {
     expect(
-      getMemberRetentionClock({ lastLoginAt: null, reactivatedAt: null }, membersPolicy, day(10))
+      getMemberRetentionClock(
+        { lastLoginAt: null, lastActiveAt: null, reactivatedAt: null },
+        membersPolicy,
+        day(10)
+      )
     ).toEqual(day(-1000));
     expect(
-      getMemberRetentionClock({ lastLoginAt: null, reactivatedAt: null }, { enabledAt: null }, day(10))
+      getMemberRetentionClock(
+        { lastLoginAt: null, lastActiveAt: null, reactivatedAt: null },
+        { enabledAt: null },
+        day(10)
+      )
     ).toEqual(day(10));
   });
 
   test("a reactivation restarts the clock without a sign-in", () => {
     expect(
-      getMemberRetentionClock({ lastLoginAt: day(5), reactivatedAt: day(400) }, membersPolicy, day(401))
+      getMemberRetentionClock(
+        { lastLoginAt: day(5), lastActiveAt: null, reactivatedAt: day(400) },
+        membersPolicy,
+        day(401)
+      )
     ).toEqual(day(400));
     expect(
-      getMemberRetentionClock({ lastLoginAt: null, reactivatedAt: day(400) }, membersPolicy, day(401))
+      getMemberRetentionClock(
+        { lastLoginAt: null, lastActiveAt: null, reactivatedAt: day(400) },
+        membersPolicy,
+        day(401)
+      )
     ).toEqual(day(400));
   });
 
-  test("a session renewed after the last sign-in counts as activity", () => {
+  test("activity recorded after the last sign-in (a session renewal) counts", () => {
     expect(
       getMemberRetentionClock(
-        { lastLoginAt: day(5), lastSessionAt: day(300), reactivatedAt: null },
+        { lastLoginAt: day(5), lastActiveAt: day(300), reactivatedAt: null },
         membersPolicy,
         day(301)
       )
     ).toEqual(day(300));
-    // An older session changes nothing.
+    // Older activity changes nothing.
     expect(
       getMemberRetentionClock(
-        { lastLoginAt: day(5), lastSessionAt: day(2), reactivatedAt: null },
+        { lastLoginAt: day(5), lastActiveAt: day(2), reactivatedAt: null },
         membersPolicy,
         day(301)
       )
     ).toEqual(day(5));
   });
 
+  test("activity counts even for a member with no sign-in on record, beyond the policy's start", () => {
+    expect(
+      getMemberRetentionClock(
+        { lastLoginAt: null, lastActiveAt: day(300), reactivatedAt: null },
+        membersPolicy,
+        day(301)
+      )
+    ).toEqual(day(300));
+  });
+
   test("a sign-in after the reactivation still counts", () => {
     expect(
-      getMemberRetentionClock({ lastLoginAt: day(500), reactivatedAt: day(400) }, membersPolicy, day(501))
+      getMemberRetentionClock(
+        { lastLoginAt: day(500), lastActiveAt: null, reactivatedAt: day(400) },
+        membersPolicy,
+        day(501)
+      )
     ).toEqual(day(500));
   });
 
   test("a reactivation voids the notice that led to the deactivation", () => {
     const clock = getMemberRetentionClock(
-      { lastLoginAt: day(0), reactivatedAt: day(400) },
+      { lastLoginAt: day(0), lastActiveAt: null, reactivatedAt: day(400) },
       membersPolicy,
       day(401)
     );

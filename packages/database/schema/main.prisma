@@ -1290,6 +1290,10 @@ model User {
   /// without touching `lastLoginAt`, which the member list, usage counts and APIs report as a real
   /// sign-in.
   reactivatedAt             DateTime?
+  /// When the user last started or renewed a session (Better Auth `databaseHooks.session`), on the
+  /// database clock and never moved backwards. The members retention clock reads it: sessions are
+  /// deleted on sign-out and expiry, so their own timestamps can't serve as a record of activity.
+  lastActiveAt              DateTime?
 
   // ENG-2247: marks the ONE account admitted by the fresh-instance exception (closed instance, no
   // invite, zero users). The unique index is the serialization: two concurrent uninvited sign-ups

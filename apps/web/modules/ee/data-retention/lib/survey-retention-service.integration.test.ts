@@ -39,24 +39,25 @@ describe("survey retention service (real Postgres)", () => {
         sentAt: daysAgo(3),
         deliveredAt: daysAgo(3),
         emailSent: true,
+        clockAt: daysAgo(10),
       },
     });
 
     const survey = await prisma.survey.findUniqueOrThrow({ where: { id: surveyId } });
     const other = await prisma.survey.findUniqueOrThrow({ where: { id: otherSurveyId } });
 
-    expect(await getSurveyRetentionFacts(survey)).toEqual({
+    expect(await getSurveyRetentionFacts(survey, new Date())).toEqual({
       createdAt: survey.createdAt,
       updatedAt: survey.updatedAt,
       archivedAt: null,
       oldestResponseAt: daysAgo(50),
       newestResponseAt: daysAgo(10),
-      surveysNotice: { claimedAt: daysAgo(3), deliveredAt: daysAgo(3) },
+      surveysNotice: { claimedAt: daysAgo(3), deliveredAt: daysAgo(3), clockAt: daysAgo(10) },
       responsesNotice: null,
       surveyHeldUntil: null,
       responsesHeldUntil: null,
     });
-    expect(await getSurveyRetentionFacts(other)).toMatchObject({
+    expect(await getSurveyRetentionFacts(other, new Date())).toMatchObject({
       oldestResponseAt: daysAgo(500),
       surveysNotice: null,
     });
@@ -100,7 +101,7 @@ describe("survey retention service (real Postgres)", () => {
       },
     });
 
-    const facts = await getSurveyRetentionFacts(survey);
+    const facts = await getSurveyRetentionFacts(survey, realNow);
 
     expect(facts.responsesHeldUntil?.getTime()).toBe(ago(5).getTime());
     // Either policy's exemption holds the survey itself, so the later of the two ends counts.

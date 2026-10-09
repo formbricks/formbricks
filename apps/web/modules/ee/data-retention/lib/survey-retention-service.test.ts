@@ -82,36 +82,37 @@ describe("getSurveyRetentionFacts", () => {
     vi.useRealTimers();
   });
 
-  test("reads only ended exemptions, bound to the app clock", async () => {
-    await getSurveyRetentionFacts(survey);
+  test("reads only exemptions ended by the caller's clock, and each notice with its clock", async () => {
+    const dbNow = at(10);
+    await getSurveyRetentionFacts(survey, dbNow);
 
     const { text, values } = statement(vi.mocked(prisma.$queryRaw).mock.calls[0]);
     expect(text).toContain('WHERE "surveyId" = ? AND LEAST("until", "revokedAt") <= ?');
-    expect(values).toEqual(["clsrv", NOW]);
+    expect(values).toEqual(["clsrv", dbNow]);
     expect(prisma.retentionNotice.findMany).toHaveBeenCalledWith({
       where: { surveyId: "clsrv", entity: { in: ["surveys", "responses"] } },
-      select: { entity: true, sentAt: true, deliveredAt: true },
+      select: { entity: true, sentAt: true, deliveredAt: true, clockAt: true },
     });
   });
 
   test("combines the survey, its responses, both notices and its ended exemptions", async () => {
     vi.mocked(prisma.retentionNotice.findMany).mockResolvedValue([
-      { entity: "surveys", sentAt: at(5), deliveredAt: at(6) },
-      { entity: "responses", sentAt: at(7), deliveredAt: null },
+      { entity: "surveys", sentAt: at(5), deliveredAt: at(6), clockAt: at(2) },
+      { entity: "responses", sentAt: at(7), deliveredAt: null, clockAt: null },
     ] as never);
     vi.mocked(prisma.$queryRaw).mockResolvedValue([
       { entity: "surveys", endedAt: at(4) },
       { entity: "responses", endedAt: at(8) },
     ]);
 
-    await expect(getSurveyRetentionFacts({ ...survey, archivedAt: at(9) })).resolves.toEqual({
+    await expect(getSurveyRetentionFacts({ ...survey, archivedAt: at(9) }, NOW)).resolves.toEqual({
       createdAt: at(1),
       updatedAt: at(2),
       archivedAt: at(9),
       oldestResponseAt: at(3),
       newestResponseAt: at(9),
-      surveysNotice: { claimedAt: at(5), deliveredAt: at(6) },
-      responsesNotice: { claimedAt: at(7), deliveredAt: null },
+      surveysNotice: { claimedAt: at(5), deliveredAt: at(6), clockAt: at(2) },
+      responsesNotice: { claimedAt: at(7), deliveredAt: null, clockAt: null },
       // Either kind of exemption holds the survey itself; only a responses one holds its responses.
       surveyHeldUntil: at(8),
       responsesHeldUntil: at(8),
@@ -124,13 +125,13 @@ describe("getSurveyRetentionFacts", () => {
       { entity: "responses", endedAt: at(4) },
     ]);
 
-    await expect(getSurveyRetentionFacts(survey)).resolves.toMatchObject({
+    await expect(getSurveyRetentionFacts(survey, NOW)).resolves.toMatchObject({
       surveyHeldUntil: at(8),
       responsesHeldUntil: at(4),
     });
 
     vi.mocked(prisma.$queryRaw).mockResolvedValue([{ entity: "surveys", endedAt: at(8) }]);
-    await expect(getSurveyRetentionFacts(survey)).resolves.toMatchObject({
+    await expect(getSurveyRetentionFacts(survey, NOW)).resolves.toMatchObject({
       surveyHeldUntil: at(8),
       responsesHeldUntil: null,
     });
@@ -142,7 +143,7 @@ describe("getSurveyRetentionFacts", () => {
       _max: { createdAt: null },
     } as never);
 
-    await expect(getSurveyRetentionFacts(survey)).resolves.toEqual({
+    await expect(getSurveyRetentionFacts(survey, NOW)).resolves.toEqual({
       createdAt: at(1),
       updatedAt: at(2),
       archivedAt: null,

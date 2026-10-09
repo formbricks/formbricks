@@ -5,6 +5,7 @@ import { RETENTION_RUN_LEASE_MS, RETENTION_SWEEP_GAP_MS } from "./constants";
 import {
   closeRetentionRun,
   openRetentionRun,
+  openRetentionRuns,
   recordRetentionRunActions,
   recordRetentionRunDeletion,
   recordRetentionRunSkips,
@@ -19,7 +20,7 @@ vi.mock("./transaction", () => ({
 }));
 
 /**
- * Opening, leasing and closing runs against a real database (a held lease skips the policy, a gap
+ * Opening, leasing and closing runs against a real database (a held organisation is skipped whole, a gap
  * restarts the warning, a run that died is released) is proven in `sweep.integration.test.ts`. These
  * pin the decisions made on what the database returned, and what each run records.
  */
@@ -51,7 +52,7 @@ beforeEach(() => {
   tx.retentionRun.create.mockResolvedValue({ id: "clrun" });
 });
 
-describe("openRetentionRun", () => {
+describe("openRetentionRuns", () => {
   const policyRow = (overrides: Record<string, unknown> = {}) => ({
     id: "clpol",
     enabled: true,
@@ -61,33 +62,61 @@ describe("openRetentionRun", () => {
     conditions: ["noResponse"],
     ...overrides,
   });
-  const previousRun = (startedAt: Date, finishedAt: Date | null, scanCursor: string | null = null) => ({
-    startedAt,
-    finishedAt,
-    scanCursor,
-  });
+  const previousRun = (startedAt: Date, scanCursor: string | null = null) => ({ startedAt, scanCursor });
 
-  test("locks the policy row and opens a run on the database clock, resuming the last scan", async () => {
-    tx.$queryRaw.mockResolvedValue([policyRow()]);
-    tx.retentionRun.findFirst.mockResolvedValue(previousRun(ago(24 * HOUR), ago(23 * HOUR), "clsrv9"));
-
-    await expect(openRetentionRun(ORG_ID, "surveys")).resolves.toEqual({
-      runId: "clrun",
-      now: NOW,
-      policy: {
-        id: "clpol",
-        organizationId: ORG_ID,
-        entity: "surveys",
-        enabledAt: ago(10 * 24 * HOUR),
-        warnDays: 7,
-        periodDays: 30,
-        conditions: ["noResponse"],
-      },
-      restartedWarning: null,
-      resumeAfter: "clsrv9",
+  /**
+   * The database as `openRetentionRuns` reads it: whether the organisation's advisory lock was free,
+   * whether a run of the organisation still holds its lease, each policy's row and its last run.
+   */
+  const database = ({
+    locked = true,
+    held = null as { id: string } | null,
+    policies = { surveys: [policyRow()] } as Record<string, unknown[]>,
+    previous = null as ReturnType<typeof previousRun> | null,
+  } = {}) => {
+    tx.$queryRaw.mockImplementation(async (...args: unknown[]) => {
+      const { text, values } = statement(args);
+      if (text.includes("pg_try_advisory_xact_lock")) return [{ locked }];
+      return policies[values[1] as string] ?? [];
     });
+    tx.retentionRun.findFirst.mockImplementation(async ({ where }: { where: Record<string, unknown> }) =>
+      "finishedAt" in where ? held : previous
+    );
+  };
 
-    const { text, values } = statement(tx.$queryRaw.mock.calls[0]);
+  test("locks the organisation, then each policy row, and opens a run on the database clock, resuming the last scan", async () => {
+    database({ previous: previousRun(ago(24 * HOUR), "clsrv9") });
+
+    await expect(openRetentionRuns(ORG_ID, ["surveys"])).resolves.toEqual([
+      {
+        runId: "clrun",
+        now: NOW,
+        policy: {
+          id: "clpol",
+          organizationId: ORG_ID,
+          entity: "surveys",
+          enabledAt: ago(10 * 24 * HOUR),
+          warnDays: 7,
+          periodDays: 30,
+          conditions: ["noResponse"],
+        },
+        restartedWarning: null,
+        resumeAfter: "clsrv9",
+      },
+    ]);
+
+    const lock = statement(tx.$queryRaw.mock.calls[0]);
+    expect(lock.text).toContain("SELECT pg_try_advisory_xact_lock(hashtext(?))");
+    expect(lock.values).toEqual([`data-retention-sweep:${ORG_ID}`]);
+    expect(tx.retentionRun.findFirst).toHaveBeenNthCalledWith(1, {
+      where: {
+        organizationId: ORG_ID,
+        finishedAt: null,
+        startedAt: { gt: ago(RETENTION_RUN_LEASE_MS) },
+      },
+      select: { id: true },
+    });
+    const { text, values } = statement(tx.$queryRaw.mock.calls[1]);
     expect(text).toContain('WHERE "organizationId" = ? AND "entity" = ?::"RetentionEntity" FOR UPDATE');
     expect(values).toEqual([ORG_ID, "surveys"]);
     expect(tx.retentionRun.create).toHaveBeenCalledWith({
@@ -97,33 +126,44 @@ describe("openRetentionRun", () => {
     expect(tx.retentionPolicy.update).not.toHaveBeenCalled();
   });
 
+  test("opens every enabled policy of the organisation in one transaction, in the order given", async () => {
+    database({
+      policies: { responses: [policyRow({ id: "clres" })], members: [policyRow({ id: "clmem" })] },
+    });
+
+    const runs = await openRetentionRuns(ORG_ID, ["responses", "surveys", "members"]);
+
+    expect(runs.map((run) => run.policy.id)).toEqual(["clres", "clmem"]);
+    expect(runSweepTransaction).toHaveBeenCalledTimes(1);
+  });
+
+  test.each([
+    ["another sweep is opening it right now", { locked: false }],
+    ["a run of it still holds its lease", { held: { id: "clother" } }],
+  ])("opens nothing of the organisation when %s", async (_case, state) => {
+    database(state);
+
+    await expect(openRetentionRuns(ORG_ID, ["surveys"])).resolves.toEqual([]);
+    expect(tx.retentionRun.create).not.toHaveBeenCalled();
+  });
+
   test.each([
     ["has no row", []],
     ["is off", [policyRow({ enabled: false })]],
     ["has never been switched on", [policyRow({ enabledAt: null })]],
   ])("opens nothing when the policy %s", async (_case, rows) => {
-    tx.$queryRaw.mockResolvedValue(rows);
+    database({ policies: { members: rows } });
 
     await expect(openRetentionRun(ORG_ID, "members")).resolves.toBeNull();
-    expect(tx.retentionRun.findFirst).not.toHaveBeenCalled();
     expect(tx.retentionRun.create).not.toHaveBeenCalled();
-  });
-
-  test("leaves a policy to the sweep holding its lease, and takes over a run that died", async () => {
-    tx.$queryRaw.mockResolvedValue([policyRow()]);
-    tx.retentionRun.findFirst.mockResolvedValueOnce(previousRun(ago(RETENTION_RUN_LEASE_MS - 1), null));
-
-    await expect(openRetentionRun(ORG_ID, "surveys")).resolves.toBeNull();
-    expect(tx.retentionRun.create).not.toHaveBeenCalled();
-
-    tx.retentionRun.findFirst.mockResolvedValueOnce(previousRun(ago(RETENTION_RUN_LEASE_MS), null));
-    await expect(openRetentionRun(ORG_ID, "surveys")).resolves.toMatchObject({ runId: "clrun" });
   });
 
   test("restarts the warning after a gap in sweeps, as a system change", async () => {
     const enabledAt = ago(RETENTION_SWEEP_GAP_MS);
-    tx.$queryRaw.mockResolvedValue([policyRow({ enabledAt })]);
-    tx.retentionRun.findFirst.mockResolvedValue(previousRun(ago(RETENTION_SWEEP_GAP_MS), ago(1)));
+    database({
+      policies: { surveys: [policyRow({ enabledAt })] },
+      previous: previousRun(ago(RETENTION_SWEEP_GAP_MS)),
+    });
 
     const run = await openRetentionRun(ORG_ID, "surveys");
 
@@ -137,10 +177,9 @@ describe("openRetentionRun", () => {
 
   test.each([
     ["the policy has never run", null],
-    ["the last run is recent", previousRun(ago(RETENTION_SWEEP_GAP_MS - 1), ago(1))],
+    ["the last run is recent", previousRun(ago(RETENTION_SWEEP_GAP_MS - 1))],
   ])("keeps the warning when %s", async (_case, previous) => {
-    tx.$queryRaw.mockResolvedValue([policyRow({ enabledAt: ago(30 * 24 * HOUR) })]);
-    tx.retentionRun.findFirst.mockResolvedValue(previous);
+    database({ policies: { surveys: [policyRow({ enabledAt: ago(30 * 24 * HOUR) })] }, previous });
 
     const run = await openRetentionRun(ORG_ID, "surveys");
 
@@ -149,8 +188,10 @@ describe("openRetentionRun", () => {
   });
 
   test("keeps a warning that already restarted since the last run", async () => {
-    tx.$queryRaw.mockResolvedValue([policyRow({ enabledAt: ago(RETENTION_SWEEP_GAP_MS - 1) })]);
-    tx.retentionRun.findFirst.mockResolvedValue(previousRun(ago(10 * 24 * HOUR), ago(1)));
+    database({
+      policies: { surveys: [policyRow({ enabledAt: ago(RETENTION_SWEEP_GAP_MS - 1) })] },
+      previous: previousRun(ago(10 * 24 * HOUR)),
+    });
 
     await expect(openRetentionRun(ORG_ID, "surveys")).resolves.toMatchObject({ restartedWarning: null });
     expect(tx.retentionPolicy.update).not.toHaveBeenCalled();

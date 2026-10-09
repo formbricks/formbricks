@@ -78,4 +78,4 @@ export const lockUnchangedRetentionPolicy = async (
   if (!unchanged) throw new RetentionPolicyChangedError(snapshot.entity);
 };
 
-export { readDatabaseClock } from "../lib/database-clock";
+export { readDatabaseClock } from "@/lib/utils/database-clock";

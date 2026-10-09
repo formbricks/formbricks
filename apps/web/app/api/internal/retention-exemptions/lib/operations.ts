@@ -10,8 +10,8 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import { readDatabaseClock } from "@/lib/utils/database-clock";
 import { requireRetentionOrgAccess } from "@/modules/ee/data-retention/lib/api-access";
-import { readDatabaseClock } from "@/modules/ee/data-retention/lib/database-clock";
 import {
   confirmReadableRetentionExemptions,
   resolveRetentionExemptionReadScope,
@@ -63,11 +63,15 @@ export async function listRetentionExemptionsOperation({
   });
   if (access instanceof Response) return access;
 
-  const scope = await resolveRetentionExemptionReadScope(access.userId, access.organizationId);
+  const [scope, now] = await Promise.all([
+    resolveRetentionExemptionReadScope(access.userId, access.organizationId),
+    // The database's clock, which exemptions are created and revoked on.
+    readDatabaseClock(prisma),
+  ]);
   const rows = await listRetentionExemptionKeysetPage({
     organizationId: access.organizationId,
     scope,
-    now: new Date(),
+    now,
     limit: query.limit,
     cursor: query.cursor,
   });

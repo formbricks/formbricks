@@ -22,7 +22,12 @@ export type TSurveyRetentionFacts = {
   responsesHeldUntil: Date | null;
 };
 
-export type TNoticeState = { claimedAt: Date; deliveredAt: Date | null };
+export type TNoticeState = {
+  claimedAt: Date;
+  deliveredAt: Date | null;
+  /** The survey's clock the notice was computed for; null for the responses reminder. */
+  clockAt: Date | null;
+};
 
 export type TSurveyRetentionPolicyInput = TRetentionPolicySettings & { enabledAt: Date | null };
 
@@ -71,6 +76,7 @@ const getResponsesPlan = (
       clock: survey.oldestResponseAt,
       noticeClaimedAt: survey.responsesNotice?.claimedAt ?? null,
       noticeDeliveredAt: survey.responsesNotice?.deliveredAt ?? null,
+      noticeClockAt: null,
       archivedAt: null,
       heldUntil: survey.responsesHeldUntil,
     },
@@ -108,6 +114,7 @@ const getSurveysPlan = (
       clock,
       noticeClaimedAt: survey.surveysNotice?.claimedAt ?? null,
       noticeDeliveredAt: survey.surveysNotice?.deliveredAt ?? null,
+      noticeClockAt: survey.surveysNotice?.clockAt ?? null,
       archivedAt: survey.archivedAt,
       heldUntil: survey.surveyHeldUntil,
     },

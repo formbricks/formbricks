@@ -71,6 +71,7 @@ type TRow = {
   newestResponseAt: Date | null;
   noticeClaimedAt: Date | null;
   noticeDeliveredAt: Date | null;
+  noticeClockAt: Date | null;
   heldUntil: Date | null;
 };
 /** Untouched for 25 days: its notice is due. */
@@ -85,12 +86,18 @@ const candidate = (id: string, overrides: Partial<TRow> = {}): TRow => ({
   newestResponseAt: null,
   noticeClaimedAt: null,
   noticeDeliveredAt: null,
+  noticeClockAt: null,
   heldUntil: null,
   ...overrides,
 });
 /** Untouched for 40 days and told 10 days ago: its warning has run, it is due to be archived. */
 const dueForArchive = (id: string) =>
-  candidate(id, { updatedAt: daysAgo(40), noticeClaimedAt: daysAgo(10), noticeDeliveredAt: daysAgo(10) });
+  candidate(id, {
+    updatedAt: daysAgo(40),
+    noticeClaimedAt: daysAgo(10),
+    noticeDeliveredAt: daysAgo(10),
+    noticeClockAt: daysAgo(40),
+  });
 
 const ALICE: TNoticeRecipient = {
   userId: "alice",
@@ -192,10 +199,11 @@ describe("createSurveysSweeper", () => {
       ],
       undefined
     );
-    // The notice is void if claimed before the survey's clock: activity since restarts it.
-    expect(items.map((item) => [item.survey.id, item.voidBefore])).toEqual([
-      ["s1", daysAgo(25)],
-      ["s2", daysAgo(5)],
+    // The notice is stamped with the clock it was computed for: activity since, even before the claim,
+    // voids it. And it is void if claimed before the policy took effect or the survey's last hold ended.
+    expect(items.map((item) => [item.survey.id, item.clockAt, item.voidBefore])).toEqual([
+      ["s1", daysAgo(25), POLICY.enabledAt],
+      ["s2", daysAgo(25), daysAgo(5)],
     ]);
     const archiveAt = addRetentionDays(NOW, 7);
     expect(items[0].describe(format, "https://app/s1")).toEqual({
@@ -268,6 +276,12 @@ describe("archiveDueSurvey", () => {
     ["is gone, archived or held", []],
     // Edited since the scan: its clock moved past the notice, which no longer counts.
     ["was edited since its notice", [{ ...dueForArchive("s1"), updatedAt: daysAgo(1) }]],
+    // Its clock moved after the sweep read it and before the notice was claimed: claimed after the new
+    // clock, but its dates were computed from the old one, so it doesn't count.
+    [
+      "is on another clock than its notice was computed for",
+      [{ ...dueForArchive("s1"), updatedAt: daysAgo(39) }],
+    ],
   ])("archives nothing when the survey %s", async (_case, rows) => {
     database({ recheck: () => rows });
 

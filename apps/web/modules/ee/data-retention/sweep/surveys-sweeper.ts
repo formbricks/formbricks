@@ -30,6 +30,7 @@ type TSurveyCandidate = {
   newestResponseAt: Date | null;
   noticeClaimedAt: Date | null;
   noticeDeliveredAt: Date | null;
+  noticeClockAt: Date | null;
   heldUntil: Date | null;
 };
 
@@ -50,6 +51,7 @@ const targetState = (
   clock: clockOf(candidate, conditions),
   noticeClaimedAt: candidate.noticeClaimedAt,
   noticeDeliveredAt: candidate.noticeDeliveredAt,
+  noticeClockAt: candidate.noticeClockAt,
   heldUntil: candidate.heldUntil,
   archivedAt: null,
 });
@@ -92,6 +94,7 @@ const readCandidates = (
            s."created_at" AS "createdAt", s."updated_at" AS "updatedAt",
            (SELECT MAX(r."created_at") FROM "Response" r WHERE r."surveyId" = s."id") AS "newestResponseAt",
            n."sentAt" AS "noticeClaimedAt", n."deliveredAt" AS "noticeDeliveredAt",
+           n."clockAt" AS "noticeClockAt",
            -- Every exemption's end on either policy, including one revoked after the run opened: a notice
            -- claimed before it is void. An active one keeps the survey out altogether (below).
            (SELECT MAX(LEAST(e."until", e."revokedAt")) FROM "RetentionExemption" e
@@ -217,7 +220,9 @@ export const createSurveysSweeper =
         {
           survey: candidate,
           recipient,
-          voidBefore: latestOf(context.policy.enabledAt, candidate.heldUntil, target.clock),
+          voidBefore: latestOf(context.policy.enabledAt, candidate.heldUntil),
+          // The clock read above: a survey changed since then voids this notice once it is claimed.
+          clockAt: target.clock,
           describe: (format, url) => ({
             name: candidate.name,
             url,

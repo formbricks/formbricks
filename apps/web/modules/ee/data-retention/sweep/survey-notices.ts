@@ -27,6 +27,11 @@ export type TSurveyNoticeItem<TEntity extends "surveys" | "responses"> = {
   recipient: TNoticeRecipient;
   /** The notice counts only if claimed at or after this (`getValidNoticeDeliveredAt`'s rule). */
   voidBefore: Date;
+  /**
+   * The survey's clock the notice's dates were computed from, stored with the claim
+   * (`claimRetentionNotice`); null for the responses reminder.
+   */
+  clockAt: Date | null;
   /** The survey's line in the email, for one reader. */
   describe: (format: TNoticeFormat, url: string) => TNoticeLine<TEntity>;
 };
@@ -82,7 +87,7 @@ const claimBatch = async (batch: TSurveyNoticeBatch, deadline: number): Promise<
             entity: batch.entity,
             surveyId: item.survey.id,
           },
-          { claimedAt, voidBefore: item.voidBefore }
+          { claimedAt, voidBefore: item.voidBefore, clockAt: item.clockAt }
         );
         if (claimToken) {
           claimed.push({
@@ -136,21 +141,26 @@ const recordDelivered = (notices: readonly TClaimedNotice[], emailSent: boolean,
     }
   });
 
-/** Claim every policy's notices; a policy changed since its run read it stops only its own. */
+/**
+ * Claim every policy's notices; a policy changed since its run read it stops only its own, and is
+ * reported, so its run stops there too.
+ */
 const claimAll = async (batches: readonly TSurveyNoticeBatch[], deadline: number) => {
   const claimed: TClaimedNotice[] = [];
+  const changed: TSurveyNoticeBatch["entity"][] = [];
   for (const batch of batches) {
     try {
       claimed.push(...(await claimBatch(batch, deadline)));
     } catch (error) {
       if (!(error instanceof RetentionPolicyChangedError)) throw error;
+      changed.push(batch.entity);
       logger.info(
         { runId: batch.context.runId },
         "Data retention policy changed before its notices; skipped"
       );
     }
   }
-  return claimed;
+  return { claimed, changed };
 };
 
 /** The claimed notices of each person, across both policies. */
@@ -167,6 +177,7 @@ const groupByRecipient = (claimed: readonly TClaimedNotice[]) => {
  * null when sending threw, so the claims stay undelivered.
  */
 const emailRecipient = async (
+  organizationId: string,
   notices: readonly TClaimedNotice[],
   organization: Awaited<ReturnType<typeof loadNoticeOrganization>>
 ): Promise<boolean | null> => {
@@ -183,7 +194,7 @@ const emailRecipient = async (
     return await sendSurveyRetentionNoticeEmail({
       email: recipient.email,
       locale: recipient.locale,
-      organizationId: notices[0].context.policy.organizationId,
+      organizationId,
       organizationName: organization.name,
       archivedSurveys,
       responseDeletions,
@@ -200,7 +211,7 @@ const emailRecipient = async (
 /**
  * Send the night's survey notices of one organisation, from both survey policies at once:
  * - claim each policy's notices (`claimBatch`); a policy changed since its run read it stops only its
- *   own notices;
+ *   own notices, and is returned in `changed`, so the caller stops that policy's run before it acts;
  * - one email per person, listing their surveys to be archived and their surveys whose responses will
  *   be deleted, until `deadline`;
  * - record each delivery and its History row on its policy's run, in one transaction per person.
@@ -210,16 +221,26 @@ const emailRecipient = async (
  * with no email, as decided; the History row then names no recipient.
  */
 export const sendSurveyNotices = async (
+  organizationId: string,
   batches: readonly TSurveyNoticeBatch[],
   deadline: number
-): Promise<void> => {
-  const claimed = await claimAll(batches, deadline);
-  if (claimed.length === 0) return;
+): Promise<{ changed: TSurveyNoticeBatch["entity"][] }> => {
+  // One organisation's notices only: its name and time zone head every email, and a recipient's surveys
+  // are listed together, so a batch of another organisation must never get in.
+  for (const batch of batches) {
+    if (batch.context.policy.organizationId !== organizationId) {
+      throw new Error("Survey notices of another organisation were passed to this one's send");
+    }
+  }
 
-  const organization = await loadNoticeOrganization(claimed[0].context.policy.organizationId);
+  const { claimed, changed } = await claimAll(batches, deadline);
+  if (claimed.length === 0) return { changed };
+
+  const organization = await loadNoticeOrganization(organizationId);
   for (const notices of groupByRecipient(claimed)) {
     if (Date.now() >= deadline) break;
-    const emailSent = await emailRecipient(notices, organization);
+    const emailSent = await emailRecipient(organizationId, notices, organization);
     if (emailSent !== null) await recordDelivered(notices, emailSent, notices[0].recipient.email);
   }
+  return { changed };
 };

@@ -18,12 +18,13 @@ const mocks = vi.hoisted(() => ({
   getSurvey: vi.fn(),
   create: vi.fn(),
   queueAuditEvent: vi.fn(),
+  readClock: vi.fn(async () => new Date()),
 }));
 
 vi.mock("@/lib/authorization", () => ({ can: mocks.can }));
 // The database clock, read where the app clock would be: fake timers pin both.
-vi.mock("@/modules/ee/data-retention/lib/database-clock", () => ({
-  readDatabaseClock: async () => new Date(),
+vi.mock("@/lib/utils/database-clock", () => ({
+  readDatabaseClock: mocks.readClock,
 }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsDataRetentionEnabled: mocks.isEnabled }));
 vi.mock("@/modules/ee/data-retention/lib/exemption-read-scope", () => ({
@@ -128,6 +129,10 @@ describe("GET /api/internal/retention-exemptions", () => {
   });
 
   test("returns the active exemptions to anyone who can read the organisation, within their scope", async () => {
+    // Active as of the database's clock, which exemptions are created and revoked on.
+    const dbNow = new Date("2030-01-05T00:00:00.123Z");
+    mocks.readClock.mockResolvedValueOnce(dbNow);
+
     const response = await get(`organizationId=${ORG_ID}`);
 
     expect(response.status).toBe(200);
@@ -143,7 +148,7 @@ describe("GET /api/internal/retention-exemptions", () => {
     expect(mocks.listPage).toHaveBeenCalledWith({
       organizationId: ORG_ID,
       scope: SCOPE,
-      now: expect.any(Date),
+      now: dbNow,
       limit: 25,
       cursor: null,
     });

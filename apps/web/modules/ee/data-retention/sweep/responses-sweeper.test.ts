@@ -158,7 +158,11 @@ describe("createResponsesSweeper", () => {
     vi.mocked(countSurveysResponsesCreatedAtOrBefore).mockResolvedValue(new Map());
     vi.mocked(deleteResponsesInTransaction).mockImplementation(async (_tx, where) => {
       const ids = (where.id as { in: string[] }).in;
-      return { deleted: ids.length, deletedIds: ids, fileUrls: [] };
+      return {
+        deleted: ids.length,
+        deletedIds: ids,
+        bySurvey: [{ surveyId: "s1", responseIds: ids, fileUrls: [] }],
+      };
     });
     vi.mocked(enqueueResponsesDeletionCleanups).mockResolvedValue({ drainNowIds: ["clcln"] });
     vi.mocked(drainDeletionCleanups).mockResolvedValue({ done: 1, again: 0, failed: 0 });
@@ -191,10 +195,13 @@ describe("createResponsesSweeper", () => {
       undefined,
       tx
     );
-    expect(items.map((item) => [item.survey.id, item.recipient.userId, item.voidBefore])).toEqual([
-      ["s1", "alice", ENABLED_AT],
+    expect(
+      items.map((item) => [item.survey.id, item.recipient.userId, item.voidBefore, item.clockAt])
+    ).toEqual([
+      // The reminder follows no one clock, so it is stamped with none.
+      ["s1", "alice", ENABLED_AT, null],
       // A reminder claimed before the survey's last exemption ended doesn't count.
-      ["s2", "alice", daysAgo(5)],
+      ["s2", "alice", daysAgo(5), null],
     ]);
     // Reminded now, the deletion runs the full warning from tonight.
     expect(items[0].describe(format, "https://app/s1")).toEqual({
@@ -260,9 +267,7 @@ describe("createResponsesSweeper", () => {
     expect(enqueueResponsesDeletionCleanups).toHaveBeenCalledWith(tx, {
       organizationId: "clorg",
       workspaceId: "clwsp",
-      surveyId: "s1",
-      responseIds: ["r1", "r2"],
-      fileUrls: [],
+      surveys: [{ surveyId: "s1", responseIds: ["r1", "r2"], fileUrls: [] }],
     });
     expect(recordRetentionRunDeletion).toHaveBeenCalledWith(
       tx,

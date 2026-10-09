@@ -33,8 +33,10 @@ const isAtOrBefore = (a: Date, b: Date): boolean => a.getTime() <= b.getTime();
 
 /**
  * Whether a target's notice is tied to its clock. A survey's or member's notice is about that target
- * becoming due, so a clock reset (the target became active again) voids it. The responses reminder is
- * sent once per survey (8 Oct), while each response has its own clock, so only a policy change voids it.
+ * becoming due, so it counts only while the target's clock is the one it was computed for
+ * (`RetentionNotice.clockAt`): any activity since voids it. The responses reminder is sent once per
+ * survey (8 Oct), while each response has its own clock, so it records none and only a policy change
+ * voids it.
  */
 const NOTICE_FOLLOWS_CLOCK = {
   responses: false,
@@ -68,6 +70,12 @@ export type TRetentionTargetState = {
   /** When that notice was delivered (`RetentionNotice.deliveredAt`); the warning counts from here. */
   noticeDeliveredAt: Date | null;
   /**
+   * The clock that notice was computed for (`RetentionNotice.clockAt`), for surveys and members. The
+   * notice's dates hold only while the target's clock is still this one, whenever the clock moved (even
+   * between the sweep reading it and claiming the notice). Unused for the responses reminder.
+   */
+  noticeClockAt: Date | null;
+  /**
    * When the target's latest exemption ended (`LEAST(until, revokedAt)`), if it had one. A notice from
    * before it is void, so nothing acts on the strength of a warning given before the hold.
    */
@@ -99,9 +107,10 @@ export type TRetentionStep = "notify" | "act";
 
 /**
  * A notice counts only once delivered, and only if it was claimed after the policy's current
- * configuration took effect (`enabledAt` moves on switch-on, unpause or tightening), after the target's
- * latest exemption ended and, for clock-bound notices, after the target's clock. Otherwise the next cycle
- * sends a new notice and the full warning runs again (ENG-3614). Returns when the warning started.
+ * configuration took effect (`enabledAt` moves on switch-on, unpause or tightening) and after the
+ * target's latest exemption ended, and, for clock-bound notices, only while the target's clock is the one
+ * the notice was computed for. Otherwise the next cycle sends a new notice and the full warning runs
+ * again (ENG-3614). Returns when the warning started.
  */
 const getValidNoticeDeliveredAt = (
   policy: TRetentionSchedulePolicy,
@@ -110,7 +119,9 @@ const getValidNoticeDeliveredAt = (
 ): Date | null => {
   const { noticeClaimedAt, noticeDeliveredAt } = target;
   if (!noticeClaimedAt || !noticeDeliveredAt) return null;
-  if (NOTICE_FOLLOWS_CLOCK[policy.entity] && !isAtOrBefore(target.clock, noticeClaimedAt)) return null;
+  if (NOTICE_FOLLOWS_CLOCK[policy.entity] && target.noticeClockAt?.getTime() !== target.clock.getTime()) {
+    return null;
+  }
   // A policy without `enabledAt` is treated as switched on now, so no earlier notice counts for it.
   if (!isAtOrBefore(policy.enabledAt ?? now, noticeClaimedAt)) return null;
   if (target.heldUntil && !isAtOrBefore(target.heldUntil, noticeClaimedAt)) return null;
@@ -221,16 +232,17 @@ export const getSurveyRetentionClock = (
 
 /**
  * A member's clock under the members policy: when they were last active — their last sign-in, or the
- * last time one of their sessions was renewed (a session in use is renewed daily, so someone who stays
- * signed in for weeks still counts as active) — or, for someone with neither on record, the day the
- * policy was switched on. A reactivation restarts it. Whichever is latest.
+ * last session they started or renewed (`User.lastActiveAt`; a session in use is renewed once it is a
+ * day old, so with a `SESSION_MAX_AGE` above a day someone who stays signed in for weeks still counts as
+ * active) — or, for someone with no sign-in on record, the day the policy was switched on. A
+ * reactivation restarts it. Whichever is latest.
  */
 export const getMemberRetentionClock = (
-  member: { lastLoginAt: Date | null; lastSessionAt?: Date | null; reactivatedAt: Date | null },
+  member: { lastLoginAt: Date | null; lastActiveAt: Date | null; reactivatedAt: Date | null },
   policy: Pick<TRetentionSchedulePolicy, "enabledAt">,
   now: Date
 ): Date =>
-  [member.lastSessionAt ?? null, member.reactivatedAt].reduce<Date>(
+  [member.lastActiveAt, member.reactivatedAt].reduce<Date>(
     (clock, date) => (date ? latest(clock, date) : clock),
     member.lastLoginAt ?? policy.enabledAt ?? now
   );
