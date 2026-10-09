@@ -48,12 +48,6 @@
             },
             "description": "OK",
             "headers": {
-              "Access-Control-Allow-Credentials": {
-                "schema": {
-                  "example": "true",
-                  "type": "boolean"
-                }
-              },
               "Access-Control-Allow-Origin": {
                 "schema": {
                   "example": "*",
@@ -131,12 +125,6 @@
             },
             "description": "Internal Server Error",
             "headers": {
-              "Access-Control-Allow-Credentials": {
-                "schema": {
-                  "example": "true",
-                  "type": "boolean"
-                }
-              },
               "Access-Control-Allow-Headers": {
                 "schema": {
                   "example": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version",
@@ -737,12 +725,6 @@
             },
             "description": "OK",
             "headers": {
-              "Access-Control-Allow-Credentials": {
-                "schema": {
-                  "example": "true",
-                  "type": "boolean"
-                }
-              },
               "Access-Control-Allow-Origin": {
                 "schema": {
                   "example": "*",
@@ -822,12 +804,6 @@
             },
             "description": "Bad Request",
             "headers": {
-              "Access-Control-Allow-Credentials": {
-                "schema": {
-                  "example": "true",
-                  "type": "boolean"
-                }
-              },
               "Access-Control-Allow-Origin": {
                 "schema": {
                   "example": "*",
@@ -902,12 +878,6 @@
             },
             "description": "Not Found",
             "headers": {
-              "Access-Control-Allow-Credentials": {
-                "schema": {
-                  "example": "true",
-                  "type": "boolean"
-                }
-              },
               "Access-Control-Allow-Origin": {
                 "schema": {
                   "example": "*",
@@ -1018,12 +988,6 @@
             },
             "description": "OK",
             "headers": {
-              "Access-Control-Allow-Credentials": {
-                "schema": {
-                  "example": "true",
-                  "type": "boolean"
-                }
-              },
               "Access-Control-Allow-Origin": {
                 "schema": {
                   "example": "*",
@@ -1104,12 +1068,6 @@
             },
             "description": "Not Found",
             "headers": {
-              "Access-Control-Allow-Credentials": {
-                "schema": {
-                  "example": "true",
-                  "type": "boolean"
-                }
-              },
               "Access-Control-Allow-Origin": {
                 "schema": {
                   "example": "*",
@@ -1275,12 +1233,6 @@
             },
             "description": "OK",
             "headers": {
-              "Access-Control-Allow-Credentials": {
-                "schema": {
-                  "example": "true",
-                  "type": "boolean"
-                }
-              },
               "Access-Control-Allow-Origin": {
                 "schema": {
                   "example": "*",
@@ -1351,12 +1303,6 @@
             },
             "description": "Bad Request",
             "headers": {
-              "Access-Control-Allow-Credentials": {
-                "schema": {
-                  "example": "true",
-                  "type": "boolean"
-                }
-              },
               "Access-Control-Allow-Origin": {
                 "schema": {
                   "example": "*",
@@ -1431,12 +1377,6 @@
             },
             "description": "Not Found",
             "headers": {
-              "Access-Control-Allow-Credentials": {
-                "schema": {
-                  "example": "true",
-                  "type": "boolean"
-                }
-              },
               "Access-Control-Allow-Origin": {
                 "schema": {
                   "example": "*",
@@ -1514,12 +1454,6 @@
             },
             "description": "Internal Server Error",
             "headers": {
-              "Access-Control-Allow-Credentials": {
-                "schema": {
-                  "example": "true",
-                  "type": "boolean"
-                }
-              },
               "Access-Control-Allow-Origin": {
                 "schema": {
                   "example": "*",
