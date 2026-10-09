@@ -1,5 +1,6 @@
 "use client";
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { TFunction } from "i18next";
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from "lucide-react";
 import { useState } from "react";
@@ -305,36 +306,41 @@ export const MembersInfo = ({
 
   const doesOrgHaveMoreThanOneOwner = hasMoreThanOneActiveOwner(members);
 
+  // One client for the list's mutations (Reactivate), not one per row.
+  const [queryClient] = useState(() => new QueryClient({ defaultOptions: { mutations: { retry: false } } }));
+
   return (
-    <SettingsTable
-      columns={getMemberColumns({
-        t,
-        locale,
-        organization,
-        currentUserRole,
-        currentUserId,
-        isAccessControlAllowed,
-        isFormbricksCloud,
-        isUserManagementDisabledFromUi,
-        isOwnerOrManager,
-        isManager,
-        doesOrgHaveMoreThanOneOwner,
-        // "Reactivate" on inactive members (ENG-3610).
-        canReactivate: isOwnerOrManager,
-        lastSignInSort,
-        onToggleLastSignInSort: toggleLastSignInSort,
-      })}
-      rows={allMembers}
-      getRowId={(member) => member.email}
-      // Effectively unreachable: whoever is looking at this page is themselves a member.
-      emptyMessage={t("common.no_results")}
-      // These two ids are what `organization.spec.ts` and `invite-existing-account.spec.ts` locate. Kept
-      // exactly where they were — on the row container and on each row — so this conversion needs no
-      // spec changes. `#singleMemberInfo` repeating per row is invalid HTML and worth retiring, but that
-      // is a spec change, so it stays a follow-up.
-      bodyProps={{ id: "membersInfoWrapper" }}
-      getRowProps={() => ({ id: "singleMemberInfo" })}
-      aria-label={t("workspace.settings.general.manage_members")}
-    />
+    <QueryClientProvider client={queryClient}>
+      <SettingsTable
+        columns={getMemberColumns({
+          t,
+          locale,
+          organization,
+          currentUserRole,
+          currentUserId,
+          isAccessControlAllowed,
+          isFormbricksCloud,
+          isUserManagementDisabledFromUi,
+          isOwnerOrManager,
+          isManager,
+          doesOrgHaveMoreThanOneOwner,
+          // "Reactivate" on inactive members (ENG-3610).
+          canReactivate: isOwnerOrManager,
+          lastSignInSort,
+          onToggleLastSignInSort: toggleLastSignInSort,
+        })}
+        rows={allMembers}
+        getRowId={(member) => member.email}
+        // Effectively unreachable: whoever is looking at this page is themselves a member.
+        emptyMessage={t("common.no_results")}
+        // These two ids are what `organization.spec.ts` and `invite-existing-account.spec.ts` locate. Kept
+        // exactly where they were — on the row container and on each row — so this conversion needs no
+        // spec changes. `#singleMemberInfo` repeating per row is invalid HTML and worth retiring, but that
+        // is a spec change, so it stays a follow-up.
+        bodyProps={{ id: "membersInfoWrapper" }}
+        getRowProps={() => ({ id: "singleMemberInfo" })}
+        aria-label={t("workspace.settings.general.manage_members")}
+      />
+    </QueryClientProvider>
   );
 };

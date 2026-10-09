@@ -1,8 +1,7 @@
 "use client";
 
-import { QueryClient, QueryClientProvider, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
@@ -15,7 +14,13 @@ interface ReactivateMemberButtonProps {
   name: string;
 }
 
-const ReactivateMemberButtonContent = ({
+/**
+ * "Reactivate" on an inactive member (ENG-3610): owners and managers bring back someone the members
+ * policy, or anyone, deactivated, which restarts their retention clock. The API refuses someone who
+ * also belongs to another organisation, and its message says so. Runs under the member list's query
+ * client (`MembersInfo`).
+ */
+export const ReactivateMemberButton = ({
   organizationId,
   userId,
   name,
@@ -29,7 +34,7 @@ const ReactivateMemberButtonContent = ({
       onSuccess: () => {
         toast.success(t("workspace.settings.data_retention.member_reactivated", { name }));
         // The member list is rendered on the server (an older module, not on the query cache), so the
-        // page is re-rendered to show the new status.
+        // page is re-rendered to show the new status. Moving the list onto a query is a follow-up.
         router.refresh();
       },
       onError: (error) =>
@@ -46,20 +51,5 @@ const ReactivateMemberButtonContent = ({
       onClick={onClick}>
       {t("workspace.settings.data_retention.reactivate")}
     </Button>
-  );
-};
-
-/**
- * "Reactivate" on an inactive member (ENG-3610): owners and managers bring back someone the members
- * policy, or anyone, deactivated, which restarts their retention clock. The API refuses someone who
- * also belongs to another organisation, and its message says so.
- */
-export const ReactivateMemberButton = (props: Readonly<ReactivateMemberButtonProps>) => {
-  // The member list is rendered on the server and has no query client of its own.
-  const [queryClient] = useState(() => new QueryClient({ defaultOptions: { mutations: { retry: false } } }));
-  return (
-    <QueryClientProvider client={queryClient}>
-      <ReactivateMemberButtonContent {...props} />
-    </QueryClientProvider>
   );
 };
