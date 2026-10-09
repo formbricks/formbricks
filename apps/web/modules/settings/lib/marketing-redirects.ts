@@ -6,10 +6,13 @@ import {
 } from "@/modules/settings/lib/routes";
 
 // Stable, ID-free app links for marketing pages, campaigns and social posts (app.formbricks.com/billing,
-// app.formbricks.com/settings/..., app.formbricks.com/contacts, ...). The route handlers in
-// app/(redirects)/ resolve the user's current organization (and workspace) and hand everything else to
-// the pure helpers below. Logged-out visitors never reach them: the proxy sends them to login first
-// (see `isMarketingLinkPath`).
+// app.formbricks.com/settings/..., app.formbricks.com/contacts, ...). The proxy sends logged-out visitors
+// to login and rewrites every such link to the single route handler at MARKETING_LINKS_ROUTE, which
+// resolves the user's current organization (and workspace) and hands everything else to the pure
+// helpers below.
+
+/** Internal route all marketing links are rewritten to: `/marketing-links/<link>/<sub-page>`. */
+export const MARKETING_LINKS_ROUTE = "/marketing-links";
 
 /**
  * Where a link points once the user's context is known. Organization-scoped destinations only need
@@ -80,7 +83,10 @@ const MARKETING_LINK_ROOTS = ["billing", "settings", ...Object.keys(MARKETING_SE
   (root) => `/${root}`
 );
 
-/** Whether `pathname` is one of the links above, so the proxy sends logged-out visitors to login. */
+/**
+ * Whether `pathname` is one of the links above, so the proxy sends logged-out visitors to login and
+ * rewrites it to MARKETING_LINKS_ROUTE. Matched per path segment, so /billing-confirmation is not one.
+ */
 export const isMarketingLinkPath = (pathname: string): boolean =>
   MARKETING_LINK_ROOTS.some((root) => pathname === root || pathname.startsWith(`${root}/`));
 
@@ -200,4 +206,18 @@ export const getMarketingRedirectTarget = ({
     ? getOrganizationBillingPath(organizationId, isFormbricksCloud)
     : `/organizations/${organizationId}/landing`;
   return appendSearch(fallback, search);
+};
+
+const isMarketingSectionSlug = (slug: string): slug is TMarketingSectionSlug =>
+  Object.hasOwn(MARKETING_SECTIONS, slug);
+
+/** Resolves `[<link>, ...<sub-page>]` (the path after MARKETING_LINKS_ROUTE); undefined if unknown. */
+export const getMarketingDestination = (
+  segments: readonly string[] | undefined,
+  isFormbricksCloud: boolean
+): TMarketingDestination | undefined => {
+  const [link = "", ...rest] = segments ?? [];
+  if (link === "billing") return getBillingDestination(isFormbricksCloud);
+  if (link === "settings") return getSettingsDestination(rest, isFormbricksCloud);
+  return isMarketingSectionSlug(link) ? getSectionDestination(link, rest, isFormbricksCloud) : undefined;
 };

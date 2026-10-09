@@ -1,5 +1,5 @@
 import "server-only";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
@@ -10,17 +10,16 @@ import {
 } from "@/modules/settings/lib/active-organization";
 import {
   type TMarketingDestination,
-  type TMarketingSectionSlug,
+  getMarketingDestination,
   getMarketingRedirectTarget,
-  getSectionDestination,
 } from "@/modules/settings/lib/marketing-redirects";
 
 /**
- * Shared GET handler for the ID-free marketing links in app/(redirects)/: resolves the organization
+ * Redirects an ID-free marketing link: resolves the organization
  * (and, for workspace links, the workspace) the user is currently in and redirects to `destination`
  * (see `getMarketingRedirectTarget`).
  */
-export const handleMarketingRedirect = async (
+const handleMarketingRedirect = async (
   request: Request,
   destination: TMarketingDestination
 ): Promise<never> => {
@@ -53,10 +52,13 @@ export const handleMarketingRedirect = async (
   );
 };
 
-/** GET handler for `app/(redirects)/<section>/[[...path]]/route.ts`, driven by `MARKETING_SECTIONS`. */
-export const marketingSectionRoute =
-  (slug: TMarketingSectionSlug) =>
-  async (request: Request, context: { params: Promise<{ path?: string[] }> }): Promise<never> => {
-    const { path } = await context.params;
-    return handleMarketingRedirect(request, getSectionDestination(slug, path, IS_FORMBRICKS_CLOUD));
-  };
+/** GET handler for `app/(redirects)/marketing-links/[[...path]]`, where the proxy rewrites every link. */
+export const marketingLinksRoute = async (
+  request: Request,
+  context: { params: Promise<{ path?: string[] }> }
+): Promise<never> => {
+  const { path } = await context.params;
+  const destination = getMarketingDestination(path, IS_FORMBRICKS_CLOUD);
+  if (!destination) return notFound();
+  return handleMarketingRedirect(request, destination);
+};
