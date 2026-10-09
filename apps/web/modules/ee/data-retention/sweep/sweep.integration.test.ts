@@ -120,11 +120,13 @@ describe("data retention sweep (real Postgres)", () => {
       let release!: () => void;
       const released = new Promise<void>((resolve) => (release = resolve));
       const opening = prisma.$transaction(async (tx) => {
-        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${"data-retention-sweep"}), hashtext(${organizationId}))`;
+        // `$executeRaw`: the function returns `void`, which `$queryRaw` can't deserialize.
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${"data-retention-sweep"}), hashtext(${organizationId}))`;
         locked();
         await released;
       });
-      await lockTaken;
+      // A failure while taking the lock rejects here rather than leaving the test waiting.
+      await Promise.race([lockTaken, opening]);
 
       await expect(openRetentionRuns(organizationId, ["responses", "members"])).resolves.toEqual([]);
       release();
