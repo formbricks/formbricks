@@ -7,6 +7,7 @@ import {
   getTextContent,
   validateId,
 } from "@formbricks/types/surveys/validation";
+import { getDefaultEndingTexts } from "./default-ending";
 import type {
   TDraftChoice,
   TDraftElementBase,
@@ -209,13 +210,6 @@ export function disambiguateLabels(
   return true;
 }
 
-/**
- * The ending the editor gives a new survey, without its link: a file with no end message of its own
- * relied on Qualtrics' default one, and a survey with no ending at all should not be published.
- */
-const DEFAULT_ENDING_HEADLINE = "Thank you!";
-const DEFAULT_ENDING_SUBHEADER = "We appreciate your feedback.";
-
 class QsfAssembler {
   private readonly issues: TQsfIssue[] = [];
   private readonly languageCodes: string[];
@@ -305,7 +299,7 @@ class QsfAssembler {
     }
 
     // Built before the languages are settled: an ending's missing translation turns its language off too.
-    const endings = this.buildEndings();
+    const endings = await this.buildEndings();
     for (const [language, count] of this.missingCounts) {
       this.issues.push({ code: "translation_missing", severity: "warning", params: { language, count } });
     }
@@ -614,7 +608,7 @@ class QsfAssembler {
    * organization's plan allows external URLs — the create checks that too — and the URL is one an
    * ending may hold.
    */
-  private buildEndings(): TQsfDraftEnding[] {
+  private async buildEndings(): Promise<TQsfDraftEnding[]> {
     const { survey, allowExternalUrls } = this.params;
     const url = survey.endRedirectUrl;
     if (url) {
@@ -627,7 +621,7 @@ class QsfAssembler {
       this.issues.push({ code: "external_url_removed", severity: "warning" });
     }
 
-    if (!survey.endMessageKey) return [this.defaultEnding()];
+    if (!survey.endMessageKey) return [await this.defaultEnding()];
     const piped = { removed: 0 };
     const headline = this.localize(survey.endMessageKey, this.recallContext(Number.POSITIVE_INFINITY), piped);
     if (piped.removed > 0) {
@@ -639,19 +633,27 @@ class QsfAssembler {
       });
     }
     const defaultHeadline = headline[survey.defaultLanguage] ?? "";
-    if (!hasTextContent(defaultHeadline)) return [this.defaultEnding()];
+    if (!hasTextContent(defaultHeadline)) return [await this.defaultEnding()];
     return [{ id: createId(), type: "endScreen", headline: this.filled(headline, defaultHeadline).text }];
   }
 
-  /** The editor's default ending, reported: the file gave none the survey can show. */
-  private defaultEnding(): TQsfDraftEnding {
+  /**
+   * The ending the editor gives a new survey, without its link, reported: a file with no end message
+   * of its own relied on Qualtrics' default one, and a survey with no ending should not be published.
+   * A language Formbricks has no strings for keeps both texts empty, like any missing translation.
+   */
+  private async defaultEnding(): Promise<TQsfDraftEnding> {
     this.issues.push({ code: "ending_added", severity: "info", params: { subject: "ending" } });
-    return {
-      id: createId(),
-      type: "endScreen",
-      headline: this.uniform(DEFAULT_ENDING_HEADLINE),
-      subheader: this.uniform(DEFAULT_ENDING_SUBHEADER),
-    };
+    const texts = await getDefaultEndingTexts(this.languageCodes);
+    const headline: TQsfLocaleText = {};
+    const subheader: TQsfLocaleText = {};
+    for (const [index, code] of this.languageCodes.entries()) {
+      const text = texts[index];
+      headline[code] = text?.headline ?? "";
+      subheader[code] = text?.subheader ?? "";
+      if (!text) this.missingCounts.set(code, (this.missingCounts.get(code) ?? 0) + 2);
+    }
+    return { id: createId(), type: "endScreen", headline, subheader };
   }
 }
 

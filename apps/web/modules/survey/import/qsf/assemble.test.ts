@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import deDE from "@/locales/de-DE.json";
 import { cpuMsSince } from "./__fixtures__/cpu-time";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { loadRecordedPlan, recordedGenerate } from "./__fixtures__/recorded-plans";
@@ -7,6 +8,7 @@ import { type TQsfDraftElement, assembleQsfDraft, buildHiddenFields, disambiguat
 import { checkQsfDraft } from "./final-gate";
 import { isObjectMemberName } from "./id-registry";
 import type { TQsfCheckedPlan } from "./plan-checks";
+import type { TQsfIssue, TQsfSurvey } from "./qsf-model";
 import { readQsf } from "./read-qsf";
 import { sanitizeQsfTexts } from "./sanitize-text";
 
@@ -17,10 +19,12 @@ const assembleFixture = async (
   options: {
     allowExternalUrls?: boolean;
     excludedRefs?: Set<string>;
+    editSurvey?: (survey: TQsfSurvey) => void;
     editPlan?: (plan: TQsfCheckedPlan) => void;
   } = {}
 ) => {
   const survey = readQsf(loadQsfFixture(fixture));
+  options.editSurvey?.(survey);
   const texts = await sanitizeQsfTexts(survey, new AbortController().signal);
   const { plan } = await planQsfImport({
     survey,
@@ -102,6 +106,38 @@ describe("assembleQsfDraft", () => {
     ]);
     expect(issues).toContainEqual({ code: "ending_added", severity: "info", params: { subject: "ending" } });
     expect(checkQsfDraft(document)).toEqual([]);
+  });
+
+  test("writes the default ending in each language Formbricks has strings for", async () => {
+    const { document, issues } = await assembleFixture("multilang-en-de.qsf");
+
+    expect(document.endings).toMatchObject([
+      {
+        headline: { "en-US": "Thank you!", "de-DE": deDE.templates.default_ending_card_headline },
+        subheader: {
+          "en-US": "We appreciate your feedback.",
+          "de-DE": deDE.templates.default_ending_card_subheader,
+        },
+      },
+    ]);
+    expect(document.languages.every((language) => language.enabled)).toBe(true);
+    expect(issues.some((issue) => issue.code === "translation_missing")).toBe(false);
+  });
+
+  test("leaves the default ending empty in a language Formbricks has no strings for, and turns it off", async () => {
+    const withLanguage = (code: string) =>
+      assembleFixture("pages-and-blocks.qsf", { editSurvey: (survey) => survey.languages.push(code) });
+    const missingIn = (issues: TQsfIssue[]) =>
+      Number(issues.find((issue) => issue.code === "translation_missing")?.params?.count);
+    const norwegian = await withLanguage("nb-NO");
+    const austrian = await withLanguage("de-AT");
+
+    expect(norwegian.document.endings).toMatchObject([
+      { headline: { "nb-NO": "" }, subheader: { "nb-NO": "" } },
+    ]);
+    expect(norwegian.document.languages.find((language) => language.code === "nb-NO")?.enabled).toBe(false);
+    // The file's own texts are missing in both languages; only Norwegian also misses the ending's two.
+    expect(missingIn(norwegian.issues)).toBe(missingIn(austrian.issues) + 2);
   });
 
   test("copies every language, leaving a missing translation empty and its language turned off", async () => {

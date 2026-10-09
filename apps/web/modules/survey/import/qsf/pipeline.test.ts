@@ -75,7 +75,7 @@ const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
   "simple.qsf": [{ blocks: 1, questions: 5, languages: ["en-US"], logicRules: 0, hiddenFields: 0 }, []],
   "multilang-en-de.qsf": [
     { blocks: 1, questions: 3, languages: ["en-US", "de-DE"], logicRules: 0, hiddenFields: 0 },
-    ["translation_missing"],
+    ["ending_added"],
   ],
   "logic-skip-display-branch.qsf": [
     { blocks: 4, questions: 6, languages: ["en-US"], logicRules: 6, hiddenFields: 1 },
@@ -234,9 +234,9 @@ describe("runQsfImport on recorded plans", () => {
   test("turns on the language switch and browser-language selection for a draft in several enabled languages", async () => {
     answerFrom("labels-and-languages.qsf");
     const multi = await run("labels-and-languages.qsf");
-    // German misses its end message, so it is imported turned off, leaving one enabled language.
-    answerFrom("multilang-en-de.qsf");
-    const oneEnabled = await run("multilang-en-de.qsf");
+    // German misses some texts, so it is imported turned off, leaving one enabled language.
+    answerFrom("pollution.qsf");
+    const oneEnabled = await run("pollution.qsf");
     answerFrom("simple.qsf");
     const single = await run("simple.qsf");
 
