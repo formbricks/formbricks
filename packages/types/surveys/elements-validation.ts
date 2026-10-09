@@ -36,6 +36,7 @@ const ELEMENT_FIELD_TO_LABEL_MAP: Record<string, string> = {
   lowerLabel: "lower label",
   "consent.label": "checkbox label",
   html: "description",
+  imageAltText: "image alt text",
 };
 
 export const validateElementLabels = (

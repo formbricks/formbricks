@@ -53,7 +53,13 @@ export function CalElement({
       }}
       className="w-full">
       <div>
-        {isMediaAvailable ? <ElementMedia imgUrl={element.imageUrl} videoUrl={element.videoUrl} /> : null}
+        {isMediaAvailable ? (
+          <ElementMedia
+            imgUrl={element.imageUrl}
+            videoUrl={element.videoUrl}
+            altText={getLocalizedValue(element.imageAltText, languageCode)}
+          />
+        ) : null}
         <Headline headline={getLocalizedValue(element.headline, languageCode)} required={element.required} />
         <Subheader subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""} />
         <CalEmbed key={element.id} element={element} onSuccessfulBooking={onSuccessfulBooking} />

@@ -18,6 +18,8 @@ test.beforeEach(async ({ page }) => {
 // Picture choices are named by position, never by file name (a file name can carry personal data).
 const firstPictureChoiceAlt = "Option 1";
 const secondPictureChoiceAlt = "Option 2";
+// ...unless the creator gave the image alt text (ENG-3417); createAndSubmit sets it on the first choice only.
+const creatorPictureChoiceAlt = surveys.createAndSubmit.pictureSelectQuestion.firstChoiceAltText;
 
 const selectPictureChoice = async (pictureSelectQuestion: Locator, choiceAlt: string) => {
   const choiceImage = pictureSelectQuestion.getByRole("img", { name: choiceAlt });
@@ -187,9 +189,9 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       const pictureSelectQuestion = page.locator("#questionCard-7");
       await expect(pictureSelectQuestion.getByRole("button", { name: "Next" })).toBeVisible();
       await expect(pictureSelectQuestion.getByRole("button", { name: "Back" })).toBeVisible();
-      await expect(pictureSelectQuestion.getByRole("img", { name: firstPictureChoiceAlt })).toBeVisible();
+      await expect(pictureSelectQuestion.getByRole("img", { name: creatorPictureChoiceAlt })).toBeVisible();
       await expect(pictureSelectQuestion.getByRole("img", { name: secondPictureChoiceAlt })).toBeVisible();
-      await selectPictureChoice(pictureSelectQuestion, firstPictureChoiceAlt);
+      await selectPictureChoice(pictureSelectQuestion, creatorPictureChoiceAlt);
       await pictureSelectQuestion.getByRole("button", { name: "Next" }).click();
 
       // File Upload Question

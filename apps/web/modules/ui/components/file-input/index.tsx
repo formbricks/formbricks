@@ -2,7 +2,7 @@
 
 import { FileIcon, XIcon } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
@@ -35,6 +35,8 @@ interface FileInputProps {
   isVideoAllowed?: boolean;
   disabled?: boolean;
   isStorageConfigured: boolean;
+  // Extra control overlaid on an uploaded image preview, e.g. the editor's alt text button.
+  renderImageAction?: (url: string) => ReactNode;
 }
 
 interface SelectedFile {
@@ -56,6 +58,7 @@ export const FileInput = ({
   isVideoAllowed = false,
   disabled = false,
   isStorageConfigured = true,
+  renderImageAction,
 }: FileInputProps) => {
   const { t } = useTranslation();
   const options = [
@@ -277,6 +280,7 @@ export const FileInput = ({
                             ) : (
                               <LoadingSpinner />
                             )}
+                            {file.uploaded && renderImageAction?.(file.url)}
                           </div>
                         ) : (
                           <div className="relative flex h-24 w-40 flex-col items-center justify-center rounded-lg border border-slate-300 px-2 py-3">
@@ -345,6 +349,7 @@ export const FileInput = ({
                         ) : (
                           <LoadingSpinner />
                         )}
+                        {selectedFiles[0].uploaded && renderImageAction?.(selectedFiles[0].url)}
                       </div>
                     ) : (
                       <div className="relative flex h-full w-full flex-col items-center justify-center border border-slate-300">

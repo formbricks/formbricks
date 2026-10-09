@@ -149,6 +149,8 @@ interface RatingProps {
   disabled?: boolean;
   /** Image URL to display above the headline */
   imageUrl?: string;
+  /** Alt text for the image; empty or absent marks it decorative */
+  imageAltText?: string;
   /** Video URL to display above the headline */
   videoUrl?: string;
 }
@@ -171,6 +173,7 @@ function Rating({
   dir = "auto",
   disabled = false,
   imageUrl,
+  imageAltText,
   videoUrl,
 }: Readonly<RatingProps>): React.JSX.Element {
   const errorAria = getElementErrorAria(inputId, errorMessage);
@@ -404,6 +407,7 @@ function Rating({
           required={required}
           requiredLabel={requiredLabel}
           imageUrl={imageUrl}
+          imageAltText={imageAltText}
           videoUrl={videoUrl}
         />
 

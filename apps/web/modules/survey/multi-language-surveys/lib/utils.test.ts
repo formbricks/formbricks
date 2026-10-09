@@ -78,6 +78,50 @@ describe("multi-language survey utils", () => {
     );
   });
 
+  test("extracts image alt text of elements, picture choices and endings, skipping empty ones", () => {
+    const survey = createSurvey({
+      blocks: [
+        {
+          id: "block-1",
+          elements: [
+            {
+              id: "pic",
+              type: TSurveyElementTypeEnum.PictureSelection,
+              headline: { default: "Pick one" },
+              required: true,
+              allowMulti: false,
+              imageUrl: "https://example.com/hero.jpg",
+              imageAltText: { default: "Hero shot" },
+              choices: [
+                { id: "a", imageUrl: "https://example.com/a.jpg", imageAltText: { default: "Blue mug" } },
+                { id: "b", imageUrl: "https://example.com/b.jpg", imageAltText: { default: "" } },
+              ],
+            },
+          ],
+        },
+      ],
+      endings: [
+        {
+          id: "end-1",
+          type: "endScreen",
+          headline: { default: "Thanks" },
+          imageUrl: "https://example.com/thanks.jpg",
+          imageAltText: { default: "Team waving" },
+        },
+      ],
+    });
+
+    const altPaths = extractTranslatableStrings(survey, t)
+      .filter((s) => s.path.endsWith("imageAltText"))
+      .map((s) => s.path);
+
+    expect(altPaths).toEqual([
+      "blocks.0.elements.0.imageAltText",
+      "blocks.0.elements.0.choices.0.imageAltText",
+      "endings.0.imageAltText",
+    ]);
+  });
+
   test("extracts the scale labels of csat and ces elements", () => {
     const survey = createSurvey({
       blocks: [

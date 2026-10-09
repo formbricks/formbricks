@@ -40,6 +40,8 @@ export interface CTAProps {
   buttonVariant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "custom";
   /** Image URL to display above the headline */
   imageUrl?: string;
+  /** Alt text for the image; empty or absent marks it decorative */
+  imageAltText?: string;
   /** Video URL to display above the headline */
   videoUrl?: string;
 }
@@ -60,6 +62,7 @@ function CTA({
   disabled = false,
   buttonVariant = "default",
   imageUrl,
+  imageAltText,
   videoUrl,
 }: Readonly<CTAProps>): React.JSX.Element {
   const errorAria = getElementErrorAria(inputId, errorMessage);
@@ -87,6 +90,7 @@ function CTA({
         requiredLabel={requiredLabel}
         htmlFor={inputId}
         imageUrl={imageUrl}
+        imageAltText={imageAltText}
         videoUrl={videoUrl}
       />
 

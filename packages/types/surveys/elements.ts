@@ -62,6 +62,9 @@ export const ZSurveyElementBase = z.object({
   headline: ZI18nString,
   subheader: ZI18nString.optional(),
   imageUrl: ZStorageUrl.optional(),
+  // Text alternative for `imageUrl`. Empty or absent renders `alt=""` (decorative); never derived from the
+  // file name, which can carry personal data.
+  imageAltText: ZI18nString.optional(),
   videoUrl: ZStorageUrl.optional(),
   required: z.boolean(),
   scale: z.enum(["number", "smiley", "star"]).optional(),
@@ -262,6 +265,7 @@ export type TSurveyRatingElement = z.infer<typeof ZSurveyRatingElement>;
 export const ZSurveyPictureChoice = z.object({
   id: z.string(),
   imageUrl: ZStorageUrl,
+  imageAltText: ZI18nString.optional(),
 });
 
 export type TSurveyPictureChoice = z.infer<typeof ZSurveyPictureChoice>;
