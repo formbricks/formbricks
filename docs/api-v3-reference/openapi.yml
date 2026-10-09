@@ -4109,10 +4109,12 @@ paths:
         to find those.
 
         **Incremental extraction.** To keep a copy of a dataset in sync, filter on `updated_since` and
-        page with `sort=created_at` (or `collected_at`): `updated_at` itself is not a sort option, because
-        it changes while you page, but the sort columns never do. For the next run, pass the time the
-        previous run **started** (its first response's `Date` header) minus a few minutes of overlap —
-        not the newest `updated_at` received, which skips a record that changed after you paged past it.
+        page with `sort=updated_at&order=asc`, bounded by `updated_until` set to the run's start: every
+        page is then one index range, and a record that changes while you page normally comes back later
+        in the run. For the next run,
+        pass the time the previous run **started** (its first response's `Date` header) minus a few
+        minutes of overlap — not the newest `updated_at` received, which skips a write that was still
+        committing when you read past its timestamp.
         Upsert by `id` and let the most recent fetch win. Deleted records leave nothing for
         `updated_since` to match, so reconcile deletions separately: periodically list every record id
         with no `updated_since`, and remove the local records that were not returned and were created
@@ -4349,8 +4351,9 @@ paths:
             enum:
               - collected_at
               - created_at
+              - updated_at
             default: collected_at
-          description: 'Column to order by. Only columns that are non-null and immutable after insert are offered: a mutable sort key would let a row move across the cursor between pages and be skipped.'
+          description: 'Column to order by. `collected_at` and `created_at` never change. `updated_at` does, so it is accepted only with `order=asc`: a record that changes while you page then normally moves ahead of the cursor and is returned again (upsert it by `id`). Descending, or with no `order` (which defaults to `desc`), it answers **400**. Even ascending, a write that started before the cursor''s position and commits after it is missed by that run and picked up by the next, whose `updated_since` is the previous run''s start minus an overlap. Use `sort=updated_at&order=asc` with `updated_since` for incremental extraction.'
         - in: query
           name: order
           schema:

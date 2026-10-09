@@ -1,5 +1,6 @@
 import "server-only";
 import { createCacheKey } from "@formbricks/cache";
+import type FormbricksHub from "@formbricks/hub";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
 import { assertRepeatedArrayParams, getHubClient } from "./hub-client";
@@ -262,7 +263,10 @@ export const listFeedbackRecords = async (
     // need to pay for (and fail loudly on) this check. Inside the try so a failure is the same relayed
     // Hub error as any other, not an uncaught exception.
     assertRepeatedArrayParams(client);
-    const data = await client.feedbackRecords.list(params);
+    // The published SDK's sort enum predates sort=updated_at (ENG-3420), which ./types bridges. The
+    // SDK passes query values through untouched (pinned by hub-query-wire.test.ts), so widening the
+    // type at this one boundary is the whole bridge; drop the cast once the SDK ships the value.
+    const data = await client.feedbackRecords.list(params as FormbricksHub.FeedbackRecordListParams);
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, hint: getHubErrorHint(err) }, "Hub: listFeedbackRecords failed");

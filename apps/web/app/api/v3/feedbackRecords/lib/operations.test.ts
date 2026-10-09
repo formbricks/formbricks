@@ -1417,6 +1417,24 @@ describe("feedback-record filters with meaningful falsy values", () => {
     expect(countFeedbackRecords).toHaveBeenCalledWith({ tenant_id: directoryId, ...range });
   });
 
+  test("forwards sort=updated_at with order=asc, the sync ordering (ENG-3420)", async () => {
+    await listV3FeedbackRecords({
+      ...base,
+      updated_since: "2026-10-01T00:00:00Z",
+      sort: "updated_at",
+      order: "asc",
+    });
+
+    expect(listFeedbackRecords).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tenant_id: directoryId,
+        updated_since: "2026-10-01T00:00:00Z",
+        sort: "updated_at",
+        order: "asc",
+      })
+    );
+  });
+
   test("rejects a sentiment score outside the Hub's -1..1 range", async () => {
     const response = await listV3FeedbackRecords({ ...base, sentiment_score_min: -2 });
 
@@ -1471,7 +1489,7 @@ describe("feedback-record filters with meaningful falsy values", () => {
   });
 
   test("rejects an unknown sort column", async () => {
-    const response = await listV3FeedbackRecords({ ...base, sort: "updated_at" as never });
+    const response = await listV3FeedbackRecords({ ...base, sort: "value_number" as never });
 
     expect(response.status).toBe(422);
     expect((await response.json()).invalid_params[0].name).toBe("sort");

@@ -148,6 +148,21 @@ describe("feedback-record list query serialization", () => {
     );
   });
 
+  test("carries sort=updated_at, which the SDK's sort enum predates (ENG-3420)", async () => {
+    const { listFeedbackRecords } = await import("./service");
+
+    await listFeedbackRecords({
+      tenant_id: "dir_1",
+      updated_since: "2026-10-01T00:00:00Z",
+      sort: "updated_at",
+      order: "asc",
+    });
+
+    expect(requestedUrl()).toBe(
+      "https://hub.test/v1/feedback-records?tenant_id=dir_1&updated_since=2026-10-01T00%3A00%3A00Z&sort=updated_at&order=asc"
+    );
+  });
+
   test("sends the updated_at range the SDK types predate (ENG-3420)", async () => {
     const { listFeedbackRecords } = await import("./service");
 

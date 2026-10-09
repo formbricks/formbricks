@@ -13,7 +13,11 @@ type UpdatedAtRangeParams = {
   updated_since?: string;
   updated_until?: string;
 };
-export type FeedbackRecordListParams = FormbricksHub.FeedbackRecordListParams & UpdatedAtRangeParams;
+// sort=updated_at (ascending only, ENG-3420) also postdates the published SDK's sort enum.
+export type FeedbackRecordListParams = Omit<FormbricksHub.FeedbackRecordListParams, "sort"> &
+  UpdatedAtRangeParams & {
+    sort?: FormbricksHub.FeedbackRecordListParams["sort"] | "updated_at";
+  };
 export type FeedbackRecordUpdateParams = FormbricksHub.FeedbackRecordUpdateParams;
 
 // Hub-derived, read-only translation fields (ENG-1255). The published SDK predates them, so bridge

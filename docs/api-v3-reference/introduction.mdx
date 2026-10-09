@@ -120,17 +120,24 @@ is stamped when it is created, corrected, or enriched (translation, sentiment, e
 both new and changed records.
 
 ```bash
-# Everything created or changed since the last run, oldest first
-curl "https://app.formbricks.com/api/v3/feedbackRecords?tenant_id=<datasetId>&updated_since=2026-10-05T07:55:00Z&sort=created_at&order=asc&limit=1000" \
+# Everything created or changed since the last run, in the order it changed
+curl "https://app.formbricks.com/api/v3/feedbackRecords?tenant_id=<datasetId>&updated_since=2026-10-05T07:55:00Z&sort=updated_at&order=asc&limit=1000" \
   -H "x-api-key: $FORMBRICKS_API_KEY"
 ```
 
-- **Sort by `created_at` or `collected_at`.** `updated_at` is not a sort option, because it changes while you
-  page. The sort columns never change, so every page stays stable.
+- **Sort by `updated_at`, ascending.** Every page is then one range of an index, so a sync reads only the
+  records it returns. A record that changes while you page normally gets a newer `updated_at` and comes back
+  later in the same run, so upsert by `id`. `updated_at` can only be sorted ascending: descending, or with no
+  `order` (the default is `desc`), answers `400`. Even ascending, a write that started before your position and
+  commits after you have read past it is missed by this run; the next run's `updated_since`, below, picks it up.
+- **Bound each run with `updated_until` = the run's start** (the first response's `Date` header). Otherwise a
+  run keeps chasing records that change while it pages; anything changed after the start belongs to the next
+  run anyway.
 - **Next `updated_since`: when this run started, minus a few minutes.** Take the start from the `Date` header
   of the run's first response, so drift between your clock and ours cannot open a gap. Do not use the newest
-  `updated_at` you received: a record you paged past early can change while later pages are read, and its new
-  `updated_at` is older than the newest one on your last page, so a watermark taken from the results skips it.
+  `updated_at` you received: `updated_at` is when a write *started*, so a write still committing when you read
+  past its timestamp is missing from this run with a timestamp older than the newest you saw, and a watermark
+  taken from the results skips it for good.
   The overlap has to exceed the longest write to a record (`updated_at` is when a write *started*, so one that
   commits after your run began can carry an earlier timestamp), plus the time the first response took and the
   difference between the clock that stamped `Date` and the database's. Writes are short, so five minutes is a

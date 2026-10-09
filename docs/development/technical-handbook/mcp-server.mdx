@@ -1392,8 +1392,8 @@ character, so an empty value is rejected rather than ignored.
   check relayed as-is, not something validated here, so the message always names the Hub's parameters.
 </Warning>
 
-**Ordering.** `sort` accepts `collected_at` (the default) or `created_at`, and `order` accepts `asc` or
-`desc` (default `desc`). Neither applies to `count_feedback_records`, which rejects them. A cursor marks a
+**Ordering.** `sort` accepts `collected_at` (the default), `created_at` or `updated_at`, and `order` accepts
+`asc` or `desc` (default `desc`). `updated_at` is ascending-only: the Hub answers 400 to any other `order`. Neither applies to `count_feedback_records`, which rejects them. A cursor marks a
 position *within one specific ordering*, so keep `sort` and `order` identical for the whole traversal —
 presenting a cursor under a different ordering is rejected rather than silently returning a page that
 looks like a continuation.
@@ -1403,10 +1403,12 @@ months ago but stored today. Use `created_since` for "what did this import bring
 "what did people tell us in this period".
 
 `updated_at` is the third timestamp: it is stamped on create, on every correction and on every enrichment
-result, so `updated_since` answers "what was created or changed since" — incremental extraction. It is a
-filter only, never a sort: pair it with `sort: created_at` so a record that changes mid-traversal cannot
-jump the cursor. The next run's `updated_since` is when the previous run *started*, minus an overlap — not
-the newest `updated_at` received, which skips a record changed after being paged past. It never returns a
+result, so `updated_since` answers "what was created or changed since" — incremental extraction. Pair it
+with `sort: updated_at, order: asc`: each page is one index range, and a record that changes mid-traversal
+normally moves ahead of the cursor (returned again). A write that started before the cursor's position and
+commits after it still lands behind; the run-start watermark picks it up next run. The next run's `updated_since` is when the
+previous run *started*, minus an overlap — not the newest `updated_at` received, which skips a write that was
+still committing when the traversal read past its timestamp. It never returns a
 deleted record, since a delete leaves nothing to match; the full procedure, deletions included, is in the
 v3 API introduction.
 
