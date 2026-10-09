@@ -94,6 +94,15 @@ describe("sanitizeText", () => {
       expect([...result.dropped].sort()).toEqual(["formatting_dropped", "image_dropped", "script_dropped"]);
     });
 
+    test("wraps text left outside a paragraph, so the survey shows it on one line", () => {
+      expect(
+        sanitizeText('Read <a href="https://example.com/terms">our terms</a> or <b>this</b>.', "rich").text
+      ).toBe('<p>Read <a href="https://example.com/terms">our terms</a> or <b>this</b>.</p>');
+      expect(sanitizeText("<p>One</p> two <b>three</b><ul><li>x</li></ul>", "rich").text).toBe(
+        "<p>One</p><p> two <b>three</b></p><ul><li>x</li></ul>"
+      );
+    });
+
     test("a leading script is seen and reported, not hidden in the document head", () => {
       const result = sanitizeText("<script>alert(1)</script><p>Hello</p>", "rich");
 

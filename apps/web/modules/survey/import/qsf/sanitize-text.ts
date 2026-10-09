@@ -35,6 +35,9 @@ const PLAIN_CONFIG = { ALLOWED_TAGS: [] as string[], FORCE_BODY: true, RETURN_DO
 /** Stands in for `<` in plain text that would otherwise parse as markup. */
 const NEUTRAL_LESS_THAN = "\uFF1C";
 
+/** The allowed tags that stand on their own line; every other allowed tag is inline. */
+const BLOCK_TAGS = new Set(["p", "ul", "ol", "li"]);
+
 /** Removed elements that say nothing about the text: the parser's wrappers and plain structure. */
 const STRUCTURAL_TAGS = new Set(["body", "html", "head", "remove", "div", "p", "br", "span"]);
 const MEDIA_TAGS = new Set([
@@ -207,9 +210,32 @@ function sanitizeRich(
     return { text: neutral.text, plain: neutral.text, escaped: neutral.escaped };
   }
 
+  wrapInlineRuns(fragment);
   const holder = fragment.ownerDocument.createElement("div");
   holder.append(fragment);
   return { text: holder.innerHTML.trim(), plain, escaped: false };
+}
+
+/**
+ * Wraps each run of top-level inline content in a `<p>`, as the editor stores text. `Label` lays an
+ * HTML headline's top-level nodes out as a column, so `Read <a>our terms</a> or <a>this</a>.` left
+ * bare would show each piece on its own line.
+ */
+function wrapInlineRuns(fragment: DocumentFragment): void {
+  let paragraph: HTMLParagraphElement | null = null;
+  for (const node of Array.from(fragment.childNodes)) {
+    if (node.nodeType === node.ELEMENT_NODE && BLOCK_TAGS.has(node.nodeName.toLowerCase())) {
+      paragraph = null;
+      continue;
+    }
+    // Whitespace between blocks is layout, not a line of its own.
+    if (!paragraph && node.nodeType === node.TEXT_NODE && !node.textContent?.trim()) continue;
+    if (!paragraph) {
+      paragraph = fragment.ownerDocument.createElement("p");
+      node.before(paragraph);
+    }
+    paragraph.append(node);
+  }
 }
 
 /** Sanitize one text. Synchronous; callers that sanitize many texts yield between them. */
