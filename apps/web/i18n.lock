@@ -2964,6 +2964,7 @@ checksums:
     workspace/settings/data_retention/exemption_policy_help: 45d72c4f3f628c5a8266ec6e923f0a91
     workspace/settings/data_retention/exemption_revoke_failed: 8fb1de91b342f14507a85e4b2577ec8e
     workspace/settings/data_retention/exemption_revoked: 80697d380f8a508ccbbd85276eab4fc9
+    workspace/settings/data_retention/exemption_until_invalid: 347cc3ed6a526e45968337791ea85ffd
     workspace/settings/data_retention/exemptions: 11bb8ce74ddd66757961835ce2bb4e54
     workspace/settings/data_retention/exemptions_description: b3e858bc448372c75dade6e524785920
     workspace/settings/data_retention/exemptions_load_error: ad2df69e16e3377e61a687b0c5fb98cc

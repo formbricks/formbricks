@@ -3073,6 +3073,7 @@
         "exemption_policy_help": "Felmérések szabályzata: a felmérés megmarad, de a régi válaszait a rendszer továbbra is törli. Válaszok szabályzata: a válaszok megmaradnak, és a felmérés is megmarad.",
         "exemption_revoke_failed": "A kivétel visszavonása nem sikerült. Kérjük, próbálja meg újra.",
         "exemption_revoked": "A kivétel visszavonva",
+        "exemption_until_invalid": "Kérjük, olyan befejezési dátumot válasszon, amely a mai nap vagy annál későbbi, és legfeljebb {years} évre esik a mai naptól.",
         "exemptions": "Kivételek",
         "exemptions_description": "A kivételként kezelt felmérést a szabályzat a befejező dátumig nem archiválja és nem törli.",
         "exemptions_load_error": "A kivételek betöltése nem sikerült. Kérjük, próbálja meg újra.",

@@ -3073,6 +3073,7 @@
         "exemption_policy_help": "問卷政策：問卷會保留，但其過期的回覆仍會被刪除。回覆政策：回覆會保留，問卷也會一併保留。",
         "exemption_revoke_failed": "無法撤銷豁免，請再試一次。",
         "exemption_revoked": "已撤銷豁免",
+        "exemption_until_invalid": "請選擇今天或之後的結束日期,且最多不得超過 {years} 年後。",
         "exemptions": "豁免",
         "exemptions_description": "在結束日期之前，已豁免的問卷不會被政策封存或刪除。",
         "exemptions_load_error": "無法載入豁免清單，請再試一次。",

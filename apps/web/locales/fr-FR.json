@@ -3073,6 +3073,7 @@
         "exemption_policy_help": "Politique des enquêtes : l'enquête est conservée, mais ses anciennes réponses sont quand même supprimées. Politique des réponses : les réponses sont conservées, tout comme l'enquête.",
         "exemption_revoke_failed": "Impossible de révoquer l'exemption. Réessaie.",
         "exemption_revoked": "Exemption révoquée",
+        "exemption_until_invalid": "Choisis une date de fin comprise entre aujourd'hui et {years} ans maximum à partir d'aujourd'hui.",
         "exemptions": "Exemptions",
         "exemptions_description": "Une enquête exemptée n'est ni archivée ni supprimée par une politique jusqu'à la date de fin.",
         "exemptions_load_error": "Impossible de charger les exemptions. Réessaie.",

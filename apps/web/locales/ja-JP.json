@@ -3073,6 +3073,7 @@
         "exemption_policy_help": "アンケートポリシー:アンケートは保持されますが、古い回答は引き続き削除されます。回答ポリシー:回答は保持され、アンケートも保持されます。",
         "exemption_revoke_failed": "除外を取り消せませんでした。もう一度お試しください。",
         "exemption_revoked": "除外を取り消しました",
+        "exemption_until_invalid": "終了日は今日以降、かつ今日から{years}年以内の日付を選んでください。",
         "exemptions": "除外",
         "exemptions_description": "除外対象のアンケートは、終了日までポリシーによってアーカイブも削除もされません。",
         "exemptions_load_error": "除外を読み込めませんでした。もう一度お試しください。",

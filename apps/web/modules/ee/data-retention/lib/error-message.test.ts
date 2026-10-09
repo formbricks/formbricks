@@ -1,7 +1,11 @@
 import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
-import { getRetentionErrorMessage, getRetentionPolicySaveErrorMessage } from "./error-message";
+import {
+  getRetentionErrorMessage,
+  getRetentionExemptionCreateErrorMessage,
+  getRetentionPolicySaveErrorMessage,
+} from "./error-message";
 
 const t = ((key: string) => key) as unknown as TFunction;
 
@@ -54,6 +58,23 @@ describe("getRetentionPolicySaveErrorMessage", () => {
     );
     expect(getRetentionPolicySaveErrorMessage(new Error("boom"), t)).toBe(
       "workspace.settings.data_retention.policy_save_failed"
+    );
+  });
+});
+
+describe("getRetentionExemptionCreateErrorMessage", () => {
+  test("asks to check the end date when the server refuses it", () => {
+    expect(getRetentionExemptionCreateErrorMessage(problem(422, "unprocessable_content"), t)).toBe(
+      "workspace.settings.data_retention.exemption_until_invalid"
+    );
+  });
+
+  test("otherwise reads the shared codes, then falls back to the create failure", () => {
+    expect(getRetentionExemptionCreateErrorMessage(problem(422, "retention_exemption_exists"), t)).toBe(
+      "workspace.settings.data_retention.exemption_exists"
+    );
+    expect(getRetentionExemptionCreateErrorMessage(problem(500), t)).toBe(
+      "workspace.settings.data_retention.exemption_create_failed"
     );
   });
 });

@@ -47,7 +47,7 @@ starts on the new version.
 `authzed-projection.deliver` runs every five seconds and copies permission changes to SpiceDB. If a
 revocation — a removed membership or a deactivated user — waits too long to reach SpiceDB, Formbricks
 denies every request until it does. The job therefore has its own queue and its own worker in every web
-process, so a long job on `background-jobs`, such as the nightly data retention sweep, never delays it.
+process, so a long job on `background-jobs`, such as the nightly survey archive purge, never delays it.
 
 The dedicated worker needs no configuration, and `BULLMQ_WORKER_COUNT` and `BULLMQ_WORKER_CONCURRENCY` do
 not change it. Its Redis keys sit next to the default queue's, under

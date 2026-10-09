@@ -1,5 +1,6 @@
 import type { TFunction } from "i18next";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
+import { RETENTION_EXEMPTION_MAX_YEARS } from "../types";
 
 /**
  * What to tell the user when a data retention request fails, in their language. The server's `detail`
@@ -32,3 +33,13 @@ export const getRetentionPolicySaveErrorMessage = (error: unknown, t: TFunction)
   error instanceof V3ApiError && error.code === "unprocessable_content"
     ? t("workspace.settings.data_retention.policy_invalid")
     : getRetentionErrorMessage(error, t, t("workspace.settings.data_retention.policy_save_failed"));
+
+/**
+ * A failed exemption create. The route's only plain 422 is an end date it refused against the
+ * database clock (past, or more than the maximum ahead), which the form's picker already bounds, so
+ * this is a clock skew or a day boundary: retrying the same date won't help.
+ */
+export const getRetentionExemptionCreateErrorMessage = (error: unknown, t: TFunction): string =>
+  error instanceof V3ApiError && error.code === "unprocessable_content"
+    ? t("workspace.settings.data_retention.exemption_until_invalid", { years: RETENTION_EXEMPTION_MAX_YEARS })
+    : getRetentionErrorMessage(error, t, t("workspace.settings.data_retention.exemption_create_failed"));

@@ -3073,6 +3073,7 @@
         "exemption_policy_help": "Anketler politikası: Anket saklanır, ancak eski yanıtları yine de silinir. Yanıtlar politikası: Yanıtlar saklanır, anket de saklanır.",
         "exemption_revoke_failed": "İstisna iptal edilemedi. Lütfen tekrar dene.",
         "exemption_revoked": "İstisna iptal edildi",
+        "exemption_until_invalid": "Bugün veya daha sonraki bir bitiş tarihi seç; bu tarih en fazla {years} yıl sonrasında olabilir.",
         "exemptions": "İstisnalar",
         "exemptions_description": "İstisna tanımlanan bir anket, bitiş tarihine kadar hiçbir politika tarafından arşivlenmez veya silinmez.",
         "exemptions_load_error": "İstisnalar yüklenemedi. Lütfen tekrar dene.",

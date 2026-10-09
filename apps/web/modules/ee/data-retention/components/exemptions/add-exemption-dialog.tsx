@@ -34,7 +34,7 @@ import {
 import { Textarea } from "@/modules/ui/components/textarea";
 import { useCreateRetentionExemption } from "../../hooks/use-retention-exemptions";
 import { getRetentionPolicyLabel } from "../../lib/display";
-import { getRetentionErrorMessage } from "../../lib/error-message";
+import { getRetentionExemptionCreateErrorMessage } from "../../lib/error-message";
 import {
   type TAddExemptionFormValues,
   getAddExemptionFormSchema,
@@ -104,9 +104,7 @@ export const AddExemptionDialog = ({
         onOpenChange(false);
       },
       onError: (error) => {
-        toast.error(
-          getRetentionErrorMessage(error, t, t("workspace.settings.data_retention.exemption_create_failed"))
-        );
+        toast.error(getRetentionExemptionCreateErrorMessage(error, t));
       },
     });
   };

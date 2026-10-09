@@ -5,7 +5,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { useRetentionRuns } from "./use-retention-runs";
+import { saveBlobAsFile } from "../lib/file-download";
+import { useDownloadRetentionExport, useRetentionRuns } from "./use-retention-runs";
+
+vi.mock("../lib/file-download", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../lib/file-download")>()),
+  saveBlobAsFile: vi.fn(),
+}));
 
 function createWrapper(queryClient: QueryClient) {
   const Wrapper = ({ children }: { children: ReactNode }) =>
@@ -114,5 +120,53 @@ describe("useRetentionRuns", () => {
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.error).toMatchObject({ status: 403 });
     expect(result.current.runs).toEqual([]);
+  });
+});
+
+describe("useDownloadRetentionExport", () => {
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.mocked(saveBlobAsFile).mockReset();
+  });
+
+  const csv = () =>
+    new Response("runId,policy\n", {
+      status: 200,
+      headers: { "Content-Disposition": 'attachment; filename="retention-history-acme.csv"' },
+    });
+
+  test("saves the file the server named once it answers 200", async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce(csv());
+    const { result } = renderHook(() => useDownloadRetentionExport({ organizationId: "org_1" }), {
+      wrapper: createWrapper(newQueryClient()),
+    });
+
+    await act(() => result.current.mutateAsync());
+
+    expect(saveBlobAsFile).toHaveBeenCalledWith(expect.any(Blob), "retention-history-acme.csv");
+  });
+
+  test("aborts the download in flight when the page goes away, and saves nothing", async () => {
+    let signal: AbortSignal | undefined;
+    vi.mocked(global.fetch).mockImplementationOnce((_url, init) => {
+      signal = init?.signal ?? undefined;
+      return new Promise((_resolve, reject) =>
+        signal?.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")))
+      );
+    });
+    const { result, unmount } = renderHook(() => useDownloadRetentionExport({ organizationId: "org_1" }), {
+      wrapper: createWrapper(newQueryClient()),
+    });
+
+    act(() => result.current.mutate());
+    await waitFor(() => expect(signal).toBeDefined());
+    unmount();
+
+    expect(signal?.aborted).toBe(true);
+    expect(saveBlobAsFile).not.toHaveBeenCalled();
   });
 });

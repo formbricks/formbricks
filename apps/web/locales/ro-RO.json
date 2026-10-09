@@ -3073,6 +3073,7 @@
         "exemption_policy_help": "Politica pentru sondaje: sondajul este păstrat, dar răspunsurile vechi sunt șterse în continuare. Politica pentru răspunsuri: răspunsurile sunt păstrate, la fel și sondajul.",
         "exemption_revoke_failed": "Nu am putut revoca excepția. Încearcă din nou.",
         "exemption_revoked": "Excepție revocată",
+        "exemption_until_invalid": "Alege o dată de încheiere care să fie azi sau mai târziu, dar la cel mult {years} ani distanță.",
         "exemptions": "Excepții",
         "exemptions_description": "Un sondaj exceptat nu este arhivat și nici șters de o politică până la data de încheiere.",
         "exemptions_load_error": "Nu am putut încărca excepțiile. Încearcă din nou.",

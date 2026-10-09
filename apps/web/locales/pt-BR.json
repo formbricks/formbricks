@@ -3073,6 +3073,7 @@
         "exemption_policy_help": "Política de pesquisas: a pesquisa é mantida, mas as respostas antigas ainda são excluídas. Política de respostas: as respostas são mantidas, e a pesquisa também.",
         "exemption_revoke_failed": "Não foi possível revogar a isenção. Tente novamente.",
         "exemption_revoked": "Isenção revogada",
+        "exemption_until_invalid": "Escolha uma data de término que seja hoje ou posterior, com no máximo {years} anos a partir de agora.",
         "exemptions": "Isenções",
         "exemptions_description": "Uma pesquisa isenta não é arquivada nem excluída por uma política até a data final.",
         "exemptions_load_error": "Não foi possível carregar as isenções. Tente novamente.",

@@ -3073,6 +3073,7 @@
         "exemption_policy_help": "Enkätpolicy: enkäten sparas, men dess gamla svar raderas ändå. Svarspolicy: svaren sparas, och det gör enkäten också.",
         "exemption_revoke_failed": "Det gick inte att återkalla undantaget. Försök igen.",
         "exemption_revoked": "Undantaget har återkallats",
+        "exemption_until_invalid": "Välj ett slutdatum som är idag eller senare, men högst {years} år fram i tiden.",
         "exemptions": "Undantag",
         "exemptions_description": "En undantagen enkät arkiveras eller raderas inte av en policy förrän till och med slutdatumet.",
         "exemptions_load_error": "Det gick inte att läsa in undantagen. Försök igen.",

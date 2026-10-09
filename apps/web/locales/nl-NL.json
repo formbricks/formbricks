@@ -3073,6 +3073,7 @@
         "exemption_policy_help": "Enquêtebeleid: de enquête blijft behouden, maar de oude reacties worden nog steeds verwijderd. Reactiebeleid: de reacties blijven behouden, en de enquête ook.",
         "exemption_revoke_failed": "De uitzondering kon niet worden ingetrokken. Probeer het opnieuw.",
         "exemption_revoked": "Uitzondering ingetrokken",
+        "exemption_until_invalid": "Kies een einddatum die vandaag of later is, en maximaal {years} jaar in de toekomst ligt.",
         "exemptions": "Uitzonderingen",
         "exemptions_description": "Een uitgezonderde enquête wordt tot de einddatum niet gearchiveerd of verwijderd door een beleid.",
         "exemptions_load_error": "De uitzonderingen konden niet worden geladen. Probeer het opnieuw.",

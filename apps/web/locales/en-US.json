@@ -3073,6 +3073,7 @@
         "exemption_policy_help": "Surveys policy: the survey is kept, but its old responses are still deleted. Responses policy: the responses are kept, and so is the survey.",
         "exemption_revoke_failed": "Couldn't revoke the exemption. Please try again.",
         "exemption_revoked": "Exemption revoked",
+        "exemption_until_invalid": "Choose an end date that is today or later, and at most {years} years away.",
         "exemptions": "Exemptions",
         "exemptions_description": "An exempt survey is not archived or deleted by a policy until the end date.",
         "exemptions_load_error": "Couldn't load the exemptions. Please try again.",

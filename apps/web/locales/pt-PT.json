@@ -3073,6 +3073,7 @@
         "exemption_policy_help": "Política de inquéritos: o inquérito é mantido, mas as respostas antigas continuam a ser eliminadas. Política de respostas: as respostas são mantidas, tal como o inquérito.",
         "exemption_revoke_failed": "Não foi possível revogar a isenção. Tente novamente.",
         "exemption_revoked": "Isenção revogada",
+        "exemption_until_invalid": "Escolha uma data de fim que seja hoje ou posterior, e que não ultrapasse {years} anos a partir de hoje.",
         "exemptions": "Isenções",
         "exemptions_description": "Um inquérito isento não é arquivado nem eliminado por uma política até à data de fim.",
         "exemptions_load_error": "Não foi possível carregar as isenções. Tente novamente.",

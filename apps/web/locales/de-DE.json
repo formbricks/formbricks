@@ -3073,6 +3073,7 @@
         "exemption_policy_help": "Umfragen-Richtlinie: Die Umfrage bleibt erhalten, aber ihre alten Antworten werden trotzdem gelöscht. Antworten-Richtlinie: Die Antworten bleiben erhalten, ebenso die Umfrage.",
         "exemption_revoke_failed": "Die Ausnahme konnte nicht widerrufen werden. Bitte versuche es erneut.",
         "exemption_revoked": "Ausnahme widerrufen",
+        "exemption_until_invalid": "Wähle ein Enddatum, das heute oder später liegt und höchstens {years} Jahre in der Zukunft.",
         "exemptions": "Ausnahmen",
         "exemptions_description": "Eine ausgenommene Umfrage wird bis zum Enddatum nicht von einer Richtlinie archiviert oder gelöscht.",
         "exemptions_load_error": "Die Ausnahmen konnten nicht geladen werden. Bitte versuche es erneut.",

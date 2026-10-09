@@ -3073,6 +3073,7 @@
         "exemption_policy_help": "问卷策略:保留问卷本身,但仍会删除其旧的回复。回复策略:保留回复,问卷也会一并保留。",
         "exemption_revoke_failed": "无法撤销豁免,请重试。",
         "exemption_revoked": "已撤销豁免",
+        "exemption_until_invalid": "请选择今天或之后的结束日期，且最晚不能超过 {years} 年后。",
         "exemptions": "豁免",
         "exemptions_description": "在结束日期之前,被豁免的问卷不会被策略归档或删除。",
         "exemptions_load_error": "无法加载豁免列表,请重试。",

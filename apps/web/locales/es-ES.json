@@ -3073,6 +3073,7 @@
         "exemption_policy_help": "Política de encuestas: la encuesta se conserva, pero sus respuestas antiguas se siguen eliminando. Política de respuestas: las respuestas se conservan, y la encuesta también.",
         "exemption_revoke_failed": "No se ha podido revocar la excepción. Inténtalo de nuevo.",
         "exemption_revoked": "Excepción revocada",
+        "exemption_until_invalid": "Elige una fecha de finalización que sea hoy o posterior, y que no supere los {years} años desde hoy.",
         "exemptions": "Excepciones",
         "exemptions_description": "Una encuesta exenta no se archiva ni se elimina según una política hasta la fecha de finalización.",
         "exemptions_load_error": "No se han podido cargar las excepciones. Inténtalo de nuevo.",
