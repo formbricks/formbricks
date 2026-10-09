@@ -25,19 +25,19 @@ const run = (policy: TRetentionRun["policy"]): TRetentionRun => ({
 });
 
 describe("getRetentionHistoryCounts", () => {
-  test("responses send no notices and have no archive, so only deletions show", () => {
+  test("responses show their one-time notices and their deletions, and have no archive", () => {
     expect(getRetentionHistoryCounts(run("responses"))).toEqual({
-      notified: null,
+      notified: 3,
       archived: null,
       deletedOrDeactivated: 7,
     });
   });
 
-  test("surveys show notices, archives and deletions", () => {
+  test("surveys show notices and archives; the run never deletes one, so that column is missing", () => {
     expect(getRetentionHistoryCounts(run("surveys"))).toEqual({
       notified: 3,
       archived: 5,
-      deletedOrDeactivated: 7,
+      deletedOrDeactivated: null,
     });
   });
 
@@ -51,6 +51,7 @@ describe("getRetentionHistoryCounts", () => {
 
   test("keeps a real zero rather than showing it as missing", () => {
     expect(getRetentionHistoryCounts({ ...run("surveys"), archived: 0 }).archived).toBe(0);
+    expect(getRetentionHistoryCounts({ ...run("responses"), notified: 0 }).notified).toBe(0);
   });
 });
 

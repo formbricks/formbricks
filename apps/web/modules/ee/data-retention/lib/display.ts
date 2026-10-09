@@ -24,17 +24,26 @@ export const getRetentionPolicyLabel = (policy: TRetentionPolicyKind, t: TFuncti
 };
 
 /**
- * The counts History shows for a run, per the mock: `null` where the policy has no such step, shown
- * as "—" rather than a misleading 0. Responses send no notices and have no archive; only surveys are
- * archived; for members the last column counts deactivations, which the API reports as `archived`.
+ * The counts History shows for a run: `null` where the policy's run has no such step, shown as "—"
+ * rather than a 0 that reads as "nothing happened". Every policy notifies (responses once, when they
+ * first fall due). Per policy:
+ * - responses: no archive; the last column counts deletions.
+ * - surveys: Archived counts archives; the last column is "—", because the run never deletes a
+ *   survey (the archive purge does, later and outside any run).
+ * - members: no archive; the last column counts deactivations, which the API reports as `archived`.
  */
 export const getRetentionHistoryCounts = (
   run: TRetentionRun
-): { notified: number | null; archived: number | null; deletedOrDeactivated: number } => ({
-  notified: run.policy === "responses" ? null : run.notified,
-  archived: run.policy === "surveys" ? run.archived : null,
-  deletedOrDeactivated: run.policy === "members" ? run.archived : run.deleted,
-});
+): { notified: number; archived: number | null; deletedOrDeactivated: number | null } => {
+  switch (run.policy) {
+    case "responses":
+      return { notified: run.notified, archived: null, deletedOrDeactivated: run.deleted };
+    case "surveys":
+      return { notified: run.notified, archived: run.archived, deletedOrDeactivated: null };
+    case "members":
+      return { notified: run.notified, archived: null, deletedOrDeactivated: run.archived };
+  }
+};
 
 /**
  * A History count formatter for the app's locale: grouped digits, and "—" where the policy has no
