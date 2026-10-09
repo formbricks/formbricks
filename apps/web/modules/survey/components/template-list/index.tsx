@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { Workspace } from "@formbricks/database/prisma-browser";
 import type { TSurveyType } from "@formbricks/types/surveys/types";
 import { type TTemplate, type TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
 import type { TUserLocale } from "@formbricks/types/user";
@@ -13,6 +12,7 @@ import { CUSTOM_SURVEY_TEMPLATE_ID, templates } from "@/app/lib/templates";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { IS_DEVELOPMENT_BUILD } from "@/lib/env-client";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { CreateWithAITemplate } from "./components/create-with-ai-template";
 import { StartFromScratchTemplate } from "./components/start-from-scratch-template";
 import { Template } from "./components/template";
@@ -21,7 +21,7 @@ import { useCreateSurveyFromTemplate } from "./hooks/use-create-survey-from-temp
 
 interface TemplateListProps {
   workspaceId: string;
-  workspace: Workspace;
+  workspace: TWorkspaceWithoutCustomCss;
   /** The language the created survey is authored in — see `resolveDefaultSurveyLanguage`. */
   defaultLanguage: string;
   templateSearch?: string;

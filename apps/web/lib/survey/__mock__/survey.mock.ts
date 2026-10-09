@@ -277,6 +277,7 @@ export const mockSyncSurveyOutput: SurveyMock = {
   slug: null,
   customHeadScripts: null,
   customHeadScriptsMode: null,
+  customCss: null,
 };
 
 export const mockSurveyOutput: SurveyMock = {
@@ -311,6 +312,7 @@ export const mockSurveyOutput: SurveyMock = {
   slug: null,
   customHeadScripts: null,
   customHeadScriptsMode: null,
+  customCss: null,
 };
 
 export const createSurveyInput: TSurveyCreateInput = {
@@ -373,7 +375,9 @@ export const mockTransformedSurveyOutput = withInlinedEmbeddedFields(mockSurveyO
 
 export const mockTransformedSyncSurveyOutput = withInlinedEmbeddedFields(mockSyncSurveyOutput);
 
-export const mockSurveyWithLogic: TSurvey = {
+// Without `customCss`: `evaluateLogic` takes the respondent-facing survey, whose `customCss` is compiled
+// output, never the stored value a `TSurvey` carries (ENG-2949).
+export const mockSurveyWithLogic: Omit<TSurvey, "customCss"> = {
   ...mockSyncSurveyOutput,
   ...baseSurveyProperties,
   displayPercentage: null,

@@ -66,6 +66,11 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
         customHeadScripts: true,
         customHeadScriptsMode: true,
 
+        // Stored custom CSS (ENG-3552), source included. Server-side input to the compiled CSS the page
+        // delivers; every path that hands this survey to the browser removes it first
+        // (`omitCustomCssSource` in survey-renderer.tsx and validateSurveyPinAction).
+        customCss: true,
+
         // Related data
         languages: {
           select: {

@@ -73,6 +73,8 @@ const nextConfig = {
     "@prisma/instrumentation",
     "bullmq",
     "ioredis",
+    // Custom CSS processor (modules/custom-css/processor): loads a native binary per platform.
+    "lightningcss",
     "pino",
     "pino-pretty",
     "pino-opentelemetry-transport",
@@ -95,6 +97,12 @@ const nextConfig = {
       "../../node_modules/pino-opentelemetry-transport/**/*",
       "../../node_modules/pino-abstract-transport/**/*",
       "../../node_modules/otlp-logger/**/*",
+      // lightningcss picks its native package at runtime (require of "lightningcss-<platform>"),
+      // which the tracer cannot follow; only the package matching the build's platform/libc is
+      // installed (musl in the Alpine image), so the wildcard copies exactly that one.
+      "../../node_modules/lightningcss/**/*",
+      "../../node_modules/lightningcss-*/**/*",
+      "../../node_modules/detect-libc/**/*",
     ],
   },
   turbopack: {},

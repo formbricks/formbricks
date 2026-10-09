@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { sanitizeThemeStyling } from "@formbricks/types/styling-values";
 import type { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { COLOR_DEFAULTS, STYLE_DEFAULTS } from "@/lib/styling/constants";
 import { isLight, mixColor } from "@/lib/utils/colors";
@@ -196,7 +197,10 @@ const getPreviewRoundness = (roundness: TSurveyStyling["roundness"]): number => 
   return 8;
 };
 
-export const getPreviewEmailStyleTokens = (styling: TSurveyStyling): PreviewEmailStyleTokens => {
+export const getPreviewEmailStyleTokens = (storedStyling: TSurveyStyling): PreviewEmailStyleTokens => {
+  // These values end up in server-rendered inline styles: a stored value that is not a valid value for
+  // its property (legacy rows predate the write-side check) falls back to the default (ENG-2950).
+  const styling = sanitizeThemeStyling(storedStyling);
   const questionColor =
     styling.elementHeadlineColor?.light ??
     STYLE_DEFAULTS.elementHeadlineColor?.light ??

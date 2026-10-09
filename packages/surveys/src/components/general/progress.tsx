@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { FB_PART } from "@formbricks/survey-ui/parts";
 
 export function Progress({ progress }: Readonly<{ progress: number }>) {
   const { t } = useTranslation();
@@ -11,6 +12,7 @@ export function Progress({ progress }: Readonly<{ progress: number }>) {
   return (
     <div // NOSONAR(typescript:S6819) - a native <progress> cannot be themed from the survey's CSS variables
       className="progress-track h-2 w-full overflow-hidden rounded-none"
+      data-fb-part={FB_PART.progress}
       role="progressbar"
       aria-label={t("common.survey_progress")}
       aria-valuemin={0}

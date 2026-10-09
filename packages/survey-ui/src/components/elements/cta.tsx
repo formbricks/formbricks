@@ -3,6 +3,7 @@ import * as React from "react";
 import { Button } from "@/components/general/button";
 import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
+import { FB_PART } from "@/lib/parts";
 import { isSafeLinkUrl } from "@/lib/url";
 
 /**
@@ -101,6 +102,7 @@ function CTA({
             <Button
               id={inputId}
               type="button"
+              data-fb-part={FB_PART.buttonPrimary}
               onClick={handleButtonClick}
               disabled={disabled}
               aria-invalid={errorAria.ariaInvalid}

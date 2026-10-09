@@ -2,6 +2,7 @@ import "server-only";
 import { Prisma } from "@formbricks/database/prisma";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
+import { sanitizeThemeStyling } from "@formbricks/types/styling-values";
 import { TSurvey, TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 import { withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 
@@ -24,6 +25,10 @@ export const transformPrismaSurvey = <T extends TSurvey | TJsWorkspaceStateSurve
     displayPercentage: Number(surveyPrisma.displayPercentage) || null,
     segment,
     customHeadScriptsMode: surveyPrisma.customHeadScriptsMode,
+    // Theme values are not validated on write (the API accepts any string, ENG-3723), so a stored value
+    // that could add CSS (ENG-2950) is dropped here, before it reaches the editor, its previews or an API
+    // read. The renderer drops the same values, so nothing a respondent sees changes.
+    ...(surveyPrisma.styling && { styling: sanitizeThemeStyling(surveyPrisma.styling) }),
   } as T;
 
   return transformedSurvey;

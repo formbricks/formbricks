@@ -10,6 +10,8 @@ interface ColorPickerProps {
   containerClass?: string;
   disabled?: boolean;
   placeholder?: string;
+  /** Shown greyed in the input and in the swatch while `color` is empty (e.g. a derived dark color). */
+  placeholderColor?: string;
 }
 export const ColorPicker = ({
   color,
@@ -17,6 +19,7 @@ export const ColorPicker = ({
   containerClass,
   disabled = false,
   placeholder,
+  placeholderColor,
 }: ColorPickerProps) => {
   return (
     <div className={cn(containerClass)}>
@@ -29,9 +32,9 @@ export const ColorPicker = ({
           id="color"
           aria-label="Primary color"
           disabled={disabled}
-          placeholder={placeholder}
+          placeholder={placeholder ?? placeholderColor?.replace(/^#/, "")}
         />
-        <PopoverPicker color={color} onChange={onChange} disabled={disabled} />
+        <PopoverPicker color={color || placeholderColor || ""} onChange={onChange} disabled={disabled} />
       </div>
     </div>
   );

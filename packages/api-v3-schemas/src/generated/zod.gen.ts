@@ -78,6 +78,7 @@ export const zProblem = z.object({
       "bad_gateway",
       "bad_request",
       "conflict",
+      "custom_css_plan_required",
       "forbidden",
       "internal_server_error",
       "invalid_workflow_state",

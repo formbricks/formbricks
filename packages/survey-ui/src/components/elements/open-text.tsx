@@ -61,7 +61,7 @@ function OpenText({
     if (charLimit?.max === undefined) return null;
     const isOverLimit = currentLength >= charLimit.max;
     return (
-      <span className={cn("text-xs", isOverLimit ? "font-semibold text-red-500" : "text-brand")}>
+      <span className={cn("text-xs", isOverLimit ? "font-semibold text-red-500" : "text-brand-readable")}>
         {currentLength}/{charLimit.max}
       </span>
     );

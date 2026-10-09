@@ -32,6 +32,17 @@ describe("@formbricks/cache cacheKeys", () => {
       });
     });
 
+    describe("custom css namespace", () => {
+      test("should version reprocessed output by processor version and source hash", () => {
+        expect(createCacheKey.customCss.reprocessed("survey", 3, "abc123")).toBe(
+          "fb:custom-css:survey:v3:abc123"
+        );
+        expect(createCacheKey.customCss.reprocessed("survey", 4, "abc123")).not.toBe(
+          createCacheKey.customCss.reprocessed("survey", 3, "abc123")
+        );
+      });
+    });
+
     describe("organization namespace", () => {
       test("should create organization billing key", () => {
         const key = createCacheKey.organization.billing("org-123");
