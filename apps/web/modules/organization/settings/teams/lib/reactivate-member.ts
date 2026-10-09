@@ -28,7 +28,7 @@ export type TReactivateMemberResult =
  * takes `FOR KEY SHARE` on the same row through its foreign key, so it either lands first and is counted,
  * or waits. A weaker lock (`FOR NO KEY UPDATE`) would let it through.
  */
-export async function reactivateRetentionMember({
+export async function reactivateOrganizationMember({
   userId,
   organizationId,
   actorUserId,

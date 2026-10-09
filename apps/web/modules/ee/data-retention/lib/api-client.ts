@@ -208,18 +208,3 @@ export async function getSurveyRetention({
   if (!response.ok) throw await parseV3ApiError(response);
   return ((await response.json()) as { data: TSurveyRetention }).data;
 }
-
-/** Reactivate a deactivated member of the organisation, restarting their retention clock. */
-export async function reactivateMember({
-  userId,
-  organizationId,
-}: {
-  userId: string;
-  organizationId: string;
-}): Promise<void> {
-  const response = await fetch(
-    `/api/internal/members/${encodeURIComponent(userId)}/reactivate?${new URLSearchParams({ organizationId })}`,
-    { method: "POST", cache: "no-store", signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS) }
-  );
-  if (!response.ok) throw await parseV3ApiError(response);
-}

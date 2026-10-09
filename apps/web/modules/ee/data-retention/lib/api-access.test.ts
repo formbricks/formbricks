@@ -1,9 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import {
-  RETENTION_NOT_ENABLED_DETAIL,
-  requireOrgActionAccess,
-  requireRetentionOrgAccess,
-} from "./api-access";
+import { RETENTION_NOT_ENABLED_DETAIL, requireRetentionOrgAccess } from "./api-access";
 
 const { mockCan, mockGetIsDataRetentionEnabled } = vi.hoisted(() => ({
   mockCan: vi.fn(),
@@ -75,36 +71,5 @@ describe("requireRetentionOrgAccess", () => {
 
     expect(response.status).toBe(403);
     expect((await response.json()).detail).toBe(RETENTION_NOT_ENABLED_DETAIL);
-  });
-});
-
-describe("requireOrgActionAccess", () => {
-  const checkWithoutLicence = (authentication = session) =>
-    requireOrgActionAccess({
-      authentication,
-      organizationId: "org_1",
-      action: "organization.manage_access",
-      requestId: "req_1",
-    });
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    mockCan.mockResolvedValue(true);
-    mockGetIsDataRetentionEnabled.mockResolvedValue(false);
-  });
-
-  test("authorizes the caller without asking for the data retention licence", async () => {
-    await expect(checkWithoutLicence()).resolves.toEqual({ organizationId: "org_1", userId: USER_ID });
-    expect(mockCan).toHaveBeenCalledWith({ type: "user", id: USER_ID }, "organization.manage_access", {
-      type: "organization",
-      id: "org_1",
-    });
-    expect(mockGetIsDataRetentionEnabled).not.toHaveBeenCalled();
-  });
-
-  test("still refuses a caller without the action, and one without a session", async () => {
-    mockCan.mockResolvedValue(false);
-    expect(((await checkWithoutLicence()) as Response).status).toBe(403);
-    expect(((await checkWithoutLicence(null as never)) as Response).status).toBe(401);
   });
 });

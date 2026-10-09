@@ -1,9 +1,9 @@
 import "server-only";
+import { requireOrgActionAccess } from "@/app/api/internal/lib/organization-access";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { problemForbidden, problemUnprocessableContent, successResponse } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
-import { requireOrgActionAccess } from "@/modules/ee/data-retention/lib/api-access";
-import { reactivateRetentionMember } from "@/modules/ee/data-retention/lib/reactivate-service";
+import { reactivateOrganizationMember } from "@/modules/organization/settings/teams/lib/reactivate-member";
 
 /**
  * Reactivate a member of `organizationId`. User management, so `organization.manage_access` and no data
@@ -39,7 +39,7 @@ export async function reactivateMemberOperation({
   if (access instanceof Response) return access;
   if (auditLog) auditLog.organizationId = access.organizationId;
 
-  const result = await reactivateRetentionMember({
+  const result = await reactivateOrganizationMember({
     userId,
     organizationId: access.organizationId,
     actorUserId: access.userId,

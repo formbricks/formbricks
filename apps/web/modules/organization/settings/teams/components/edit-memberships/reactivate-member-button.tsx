@@ -1,13 +1,13 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
-import { reactivateMember } from "../../lib/api-client";
-import { DataRetentionQueryClientProvider } from "../query-client-provider";
+import { reactivateMember } from "../../lib/reactivate-member-client";
 
 interface ReactivateMemberButtonProps {
   organizationId: string;
@@ -54,8 +54,12 @@ const ReactivateMemberButtonContent = ({
  * policy, or anyone, deactivated, which restarts their retention clock. The API refuses someone who
  * also belongs to another organisation, and its message says so.
  */
-export const ReactivateMemberButton = (props: Readonly<ReactivateMemberButtonProps>) => (
-  <DataRetentionQueryClientProvider>
-    <ReactivateMemberButtonContent {...props} />
-  </DataRetentionQueryClientProvider>
-);
+export const ReactivateMemberButton = (props: Readonly<ReactivateMemberButtonProps>) => {
+  // The member list is rendered on the server and has no query client of its own.
+  const [queryClient] = useState(() => new QueryClient({ defaultOptions: { mutations: { retry: false } } }));
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ReactivateMemberButtonContent {...props} />
+    </QueryClientProvider>
+  );
+};

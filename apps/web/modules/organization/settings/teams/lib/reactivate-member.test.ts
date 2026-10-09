@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { reactivateRetentionMember } from "./reactivate-service";
+import { reactivateOrganizationMember } from "./reactivate-member";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@formbricks/database", () => ({ prisma: { $transaction: vi.fn() } }));
@@ -43,9 +43,9 @@ const transaction = ({
 };
 
 const reactivate = (actorUserId = "cladmin") =>
-  reactivateRetentionMember({ userId: "clmember", organizationId: ORG_ID, actorUserId });
+  reactivateOrganizationMember({ userId: "clmember", organizationId: ORG_ID, actorUserId });
 
-describe("reactivateRetentionMember", () => {
+describe("reactivateOrganizationMember", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

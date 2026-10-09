@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
-import { reactivateRetentionMember } from "./reactivate-service";
+import { reactivateOrganizationMember } from "./reactivate-member";
 
 describe("reactivate a member (real Postgres)", () => {
   let organizationId: string;
@@ -23,7 +23,7 @@ describe("reactivate a member (real Postgres)", () => {
   };
 
   const reactivate = (userId: string, actorUserId = ownerId) =>
-    reactivateRetentionMember({ userId, organizationId, actorUserId });
+    reactivateOrganizationMember({ userId, organizationId, actorUserId });
 
   const userOutbox = (userId: string) =>
     prisma.$queryRaw<{ isRevocation: boolean }[]>`

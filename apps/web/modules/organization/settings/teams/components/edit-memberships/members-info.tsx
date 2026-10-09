@@ -9,7 +9,6 @@ import { TOrganization } from "@formbricks/types/organizations";
 import { getReportingTimeZone } from "@/lib/date-ranges";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { formatDateForDisplay, formatDateWithOrdinal } from "@/lib/utils/datetime";
-import { ReactivateMemberButton } from "@/modules/ee/data-retention/components/members/reactivate-member-button";
 import { EditMembershipRole } from "@/modules/ee/role-management/components/edit-membership-role";
 import { MemberActions } from "@/modules/organization/settings/teams/components/edit-memberships/member-actions";
 import {
@@ -21,6 +20,7 @@ import { TInvite } from "@/modules/organization/settings/teams/types/invites";
 import { Badge } from "@/modules/ui/components/badge";
 import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { ReactivateMemberButton } from "./reactivate-member-button";
 
 /** The two row shapes this table mixes: accepted memberships and pending invites. */
 type TMemberRow = TMember | TInvite;
