@@ -127,7 +127,7 @@ const NewSurveyMenu = ({
             <ChevronDownIcon />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuContent align="end" className="w-60">
           <DropdownMenuItem icon={<AiIcon />} onSelect={() => setIsAIDialogOpen(true)}>
             {t("workspace.surveys.ai_create.create_with_ai")}
           </DropdownMenuItem>

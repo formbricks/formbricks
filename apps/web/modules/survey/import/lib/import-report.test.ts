@@ -1,11 +1,10 @@
 import { describe, expect, test } from "vitest";
 import type { TQsfImportReport } from "@/modules/survey/import/types";
 import {
-  formatQsfImportReport,
   getQsfImportFacts,
   getQsfImportIssueLine,
-  getQsfImportReportFileName,
   hasQsfImportWarnings,
+  sortQsfImportIssues,
 } from "./import-report";
 
 const t = (key: string, options?: Record<string, unknown>) =>
@@ -87,13 +86,19 @@ describe("getQsfImportIssueLine", () => {
     );
   });
 
-  test("passes the count and language of texts filled from the default language", () => {
+  test("passes the count and language of texts missing in a language", () => {
     expect(
       getQsfImportIssueLine(
-        { code: "translation_fallback", severity: "info", params: { language: "de-DE", count: 12 } },
+        { code: "translation_missing", severity: "info", params: { language: "de-DE", count: 12 } },
         t
       )
-    ).toBe('translation_fallback {"count":12,"language":"de-DE"}');
+    ).toBe('translation_missing {"count":12,"language":"de-DE"}');
+  });
+
+  test("names the end message for the default ending it added", () => {
+    expect(
+      getQsfImportIssueLine({ code: "ending_added", severity: "info", params: { subject: "ending" } }, t)
+    ).toBe("ending: ending_added");
   });
 
   test("names the end message for a piped text removed from it", () => {
@@ -193,37 +198,20 @@ describe("getQsfImportFacts", () => {
   });
 });
 
-describe("formatQsfImportReport", () => {
-  test("puts warnings before notes, each with its severity", () => {
-    const text = formatQsfImportReport(
-      report([
-        { code: "field_renamed", severity: "info", params: { from: "a b", to: "a_b" } },
-        { code: "image_dropped", severity: "warning", questionTag: "Q2" },
-      ]),
-      t
-    );
-
-    expect(text.split("\n")).toEqual([
-      'text_title {"fileName":"Customer survey.qsf"}',
-      'questions {"count":12} · blocks {"count":2} · en-US · de-DE · hidden_fields {"count":1} · logic_not_imported {"count":3}',
-      "",
-      "- warning: Q2: image_dropped",
-      '- note: field_renamed {"from":"a b","to":"a_b"}',
-      "",
+describe("sortQsfImportIssues", () => {
+  test("puts warnings before notes, keeping the server's order inside each", () => {
+    const sorted = sortQsfImportIssues([
+      { code: "field_renamed", severity: "info", params: { from: "a b", to: "a_b" } },
+      { code: "image_dropped", severity: "warning", questionTag: "Q2" },
+      { code: "markup_escaped", severity: "info", questionTag: "Q3" },
+      { code: "script_dropped", severity: "warning", questionTag: "Q4" },
     ]);
-  });
 
-  test("says so when nothing was left out", () => {
-    expect(formatQsfImportReport(report([]), t)).toContain("\nempty\n");
-  });
-});
-
-describe("getQsfImportReportFileName", () => {
-  test.each([
-    ["Customer survey.qsf", "Customer survey-import-report.txt"],
-    ["export.QSF", "export-import-report.txt"],
-    [".qsf", "survey-import-report.txt"],
-  ])("names %s's report %s", (fileName, expected) => {
-    expect(getQsfImportReportFileName(fileName)).toBe(expected);
+    expect(sorted.map((issue) => issue.code)).toEqual([
+      "image_dropped",
+      "script_dropped",
+      "field_renamed",
+      "markup_escaped",
+    ]);
   });
 });

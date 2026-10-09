@@ -30,8 +30,8 @@ export type TQsfImportStage = "reading" | "ai" | "assembling";
  *   file declares them. With `params.cause: "duplicate_language"`, a code that normalizes to the same
  *   language (`params.language`) as a code the file gave earlier, the default's included; the first
  *   keeps the language and this one's translations are left out
- * - `translation_fallback` — texts missing in a language, filled with the default language's text,
- *   one line per language (`params.language`, `params.count`)
+ * - `translation_missing` — texts missing in a language, left empty; the language is imported turned
+ *   off, to be completed in the editor. One line per language (`params.language`, `params.count`)
  * - `piped_text_removed` — piped text with no Formbricks equivalent, removed, or a recall of a
  *   question the import cut, shown as its fallback text (`params.count`). Under the question holding
  *   it, or, for the end message, with no `questionTag` and `params.subject: "ending"`
@@ -39,6 +39,8 @@ export type TQsfImportStage = "reading" | "ai" | "assembling";
  * - `choice_dropped` — a choice whose id the reader refuses
  * - `text_too_long` — a text past the size the import sanitizes, left out
  * - `markup_escaped` — plain text that would have rendered as HTML, shown as typed instead
+ * - `ending_added` — the file had no end message the survey can show, so the editor's default ending was
+ *   added (`params.subject: "ending"`)
  *
  * `question_skipped` carries `params.cause`, a fixed code (`unsupported_type` with the Qualtrics
  * `params.qualtricsType`, `ai_skipped`, `plan_invalid`, `ai_budget`, `ai_timeout`, `not_in_flow`,
@@ -86,12 +88,13 @@ export type TQsfImportIssueCode =
   | "field_dropped"
   | "external_url_removed"
   | "language_skipped"
-  | "translation_fallback"
+  | "translation_missing"
   | "piped_text_removed"
   | "choice_label_renamed"
   | "choice_dropped"
   | "text_too_long"
-  | "markup_escaped";
+  | "markup_escaped"
+  | "ending_added";
 
 export interface TQsfImportIssue {
   code: TQsfImportIssueCode;

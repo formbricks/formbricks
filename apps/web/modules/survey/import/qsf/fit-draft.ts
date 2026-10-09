@@ -219,7 +219,7 @@ export function fitQsfDraftToCreateLimit(
   const kept = new Set(assembly.document.languages.map((language) => language.code));
   const droppedLanguages = new Set(languagesBefore.filter((code) => !kept.has(code)));
   const keepIssue = (issue: TQsfIssue) =>
-    !(issue.code === "translation_fallback" && droppedLanguages.has(String(issue.params?.language))) &&
+    !(issue.code === "translation_missing" && droppedLanguages.has(String(issue.params?.language))) &&
     !(issue.questionRef !== undefined && droppedRefs.has(issue.questionRef));
   return { dropped, keepIssue };
 }

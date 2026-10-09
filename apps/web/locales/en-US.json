@@ -3989,7 +3989,7 @@
       "import": {
         "ai_note": "Formbricks AI maps the questions. Logic is not imported; the report lists every rule.",
         "card_description": "Turn a Qualtrics survey export (.qsf) into a draft survey.",
-        "card_title": "Import survey",
+        "card_title": "Import Qualtrics survey",
         "dialog_description": "Formbricks AI turns your Qualtrics export into a draft you can review before opening it.",
         "dialog_title": "Import a Qualtrics survey",
         "discard_draft_body": "The imported draft has not been opened in the editor yet. Closing will discard it.",
@@ -4039,6 +4039,7 @@
         "issues": {
           "choice_dropped": "An option was left out because its ID could not be read.",
           "choice_label_renamed": "Repeated option labels were numbered so each one is distinct.",
+          "ending_added": "The file has no end message, so a default ending was added.",
           "external_url_removed": "A link was removed because your plan does not allow external links.",
           "field_dropped": "{count, plural, one {# embedded data field was} other {# embedded data fields were}} left out: the survey cannot hold more.",
           "field_renamed": "Embedded data field \"{from}\" was renamed to \"{to}\".",
@@ -4065,10 +4066,10 @@
           "question_skipped_validation_failed": "Question skipped: the converted question did not pass the survey checks.",
           "script_dropped": "A script was removed from the question text.",
           "text_too_long": "A text was too long to import and was left out.",
-          "translation_fallback": "{count, plural, one {# text was} other {# texts were}} missing in {language}, so the default language text is used.",
+          "translation_missing": "{count, plural, one {# text is} other {# texts are}} missing in {language}, so the language is turned off. Add the missing texts in the editor, then turn it on.",
           "unknown": "Something in this question was changed during the import."
         },
-        "menu_item": "Import survey",
+        "menu_item": "Import Qualtrics survey",
         "pick_another_file": "Pick another file",
         "progress": {
           "ai": "Mapping questions with AI",
@@ -4092,18 +4093,11 @@
         },
         "reading_file": "Reading file…",
         "report": {
-          "copied": "Report copied",
-          "copy": "Copy",
-          "copy_failed": "The report could not be copied.",
-          "download": "Download",
           "empty": "Nothing was left out",
           "ending": "Ending",
-          "note": "Note",
           "summary_notes": "{count, plural, one {# note} other {# notes}}",
           "summary_warnings": "{count, plural, one {# warning} other {# warnings}}",
-          "text_title": "Qualtrics import report: {fileName}",
-          "title": "Import report",
-          "warning": "Warning"
+          "title": "Import report"
         },
         "your_file": "Your file"
       },

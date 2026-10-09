@@ -89,7 +89,22 @@ describe("assembleQsfDraft", () => {
     expect(generated.every((choice) => /^[a-z0-9]{24,}$/.test(choice.id))).toBe(true);
   });
 
-  test("copies every language, falling back to the default text where a translation is missing", async () => {
+  test("gives a file with no end message the editor's default ending, and says so", async () => {
+    const { document, issues } = await assembleFixture("pages-and-blocks.qsf");
+
+    expect(document.endings).toEqual([
+      {
+        id: expect.any(String),
+        type: "endScreen",
+        headline: { "en-US": "Thank you!" },
+        subheader: { "en-US": "We appreciate your feedback." },
+      },
+    ]);
+    expect(issues).toContainEqual({ code: "ending_added", severity: "info", params: { subject: "ending" } });
+    expect(checkQsfDraft(document)).toEqual([]);
+  });
+
+  test("copies every language, leaving a missing translation empty and its language turned off", async () => {
     const { document, issues } = await assembleFixture("labels-and-languages.qsf");
     const q2 = element(document, "Q2");
 
@@ -99,9 +114,12 @@ describe("assembleQsfDraft", () => {
       "zh-Hans-CN",
       "zh-Hant-TW",
     ]);
-    expect(q2.headline["zh-Hant-TW"]).toBe("Rate each drink");
+    expect(q2.headline["en-US"]).toBe("Rate each drink");
+    expect(q2.headline["zh-Hant-TW"]).toBe("");
+    expect(document.languages.find((language) => language.code === "en-US")?.enabled).toBe(true);
+    expect(document.languages.find((language) => language.code === "zh-Hant-TW")?.enabled).toBe(false);
     expect(issues).toContainEqual({
-      code: "translation_fallback",
+      code: "translation_missing",
       severity: "warning",
       params: { language: "zh-Hant-TW", count: 7 },
     });

@@ -94,7 +94,7 @@ describe("fitQsfDraftToCreateLimit", () => {
     expect(dropped).toEqual([]);
     expect(assembly).toEqual(before);
     expect(
-      keepIssue({ code: "translation_fallback", severity: "warning", params: { language: "it-IT" } })
+      keepIssue({ code: "translation_missing", severity: "warning", params: { language: "it-IT" } })
     ).toBe(true);
   });
 
@@ -211,7 +211,7 @@ describe("fitQsfDraftToCreateLimit", () => {
       ...issue,
     });
 
-    expect(keepIssue(line({ code: "translation_fallback", params: { language: "de-DE", count: 2 } }))).toBe(
+    expect(keepIssue(line({ code: "translation_missing", params: { language: "de-DE", count: 2 } }))).toBe(
       false
     );
     expect(keepIssue(line({ questionTag: "Q10", questionRef: "QID10" }))).toBe(false);

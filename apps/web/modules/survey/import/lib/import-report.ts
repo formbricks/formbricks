@@ -123,8 +123,8 @@ export const getQsfImportIssueMessage = (issue: TQsfImportIssue, t: TTranslate):
       return t("workspace.surveys.import.issues.field_dropped", { count: count(issue) });
     case "language_skipped":
       return getSkippedLanguageMessage(issue, t);
-    case "translation_fallback":
-      return t("workspace.surveys.import.issues.translation_fallback", {
+    case "translation_missing":
+      return t("workspace.surveys.import.issues.translation_missing", {
         count: count(issue),
         language: param(issue, "language"),
       });
@@ -138,6 +138,8 @@ export const getQsfImportIssueMessage = (issue: TQsfImportIssue, t: TTranslate):
       return t("workspace.surveys.import.issues.text_too_long");
     case "markup_escaped":
       return t("workspace.surveys.import.issues.markup_escaped");
+    case "ending_added":
+      return t("workspace.surveys.import.issues.ending_added");
     default: {
       // Every code the types know is handled above, so a new code fails the build until it has a
       // line. A server newer than this client can still send one; it gets the generic line.
@@ -186,30 +188,3 @@ export const getQsfImportFacts = (summary: TQsfImportReport["summary"], t: TTran
   }
   return facts;
 };
-
-/** The report as plain text, for Download and Copy (ENG-3605). Same lines the dialog shows. */
-export const formatQsfImportReport = (report: TQsfImportReport, t: TTranslate): string => {
-  const lines = [
-    t("workspace.surveys.import.report.text_title", { fileName: report.source.fileName }),
-    getQsfImportFacts(report.summary, t).join(" · "),
-    "",
-  ];
-
-  if (report.issues.length === 0) {
-    lines.push(t("workspace.surveys.import.report.empty"));
-  }
-
-  for (const issue of sortQsfImportIssues(report.issues)) {
-    const severity =
-      issue.severity === "warning"
-        ? t("workspace.surveys.import.report.warning")
-        : t("workspace.surveys.import.report.note");
-    lines.push(`- ${severity}: ${getQsfImportIssueLine(issue, t)}`);
-  }
-
-  return `${lines.join("\n")}\n`;
-};
-
-/** `survey.qsf` → `survey-import-report.txt`. */
-export const getQsfImportReportFileName = (fileName: string): string =>
-  `${fileName.replace(/\.qsf$/i, "") || "survey"}-import-report.txt`;
