@@ -118,6 +118,18 @@ describe("members sweeper (real Postgres)", () => {
     expect(await isActive(idle)).toBe(true);
   });
 
+  test("a member who stays signed in is active: a renewed session moves the clock", async () => {
+    const signedIn = await addMember("signed-in@example.com", "member", { lastLoginAt: ago(400) });
+    await prisma.session.create({
+      data: { userId: signedIn, sessionToken: "session-token", expires: ago(-1), updatedAt: ago(1) },
+    });
+
+    await sweep();
+
+    expect(sendMemberRetentionNoticeEmail).not.toHaveBeenCalled();
+    expect(await isActive(signedIn)).toBe(true);
+  });
+
   test("counts a member who never signed in from when the policy took effect", async () => {
     const never = await addMember("never@example.com", "member", { lastLoginAt: null });
 

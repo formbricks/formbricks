@@ -363,6 +363,24 @@ describe("getMemberRetentionClock", () => {
     ).toEqual(day(400));
   });
 
+  test("a session renewed after the last sign-in counts as activity", () => {
+    expect(
+      getMemberRetentionClock(
+        { lastLoginAt: day(5), lastSessionAt: day(300), reactivatedAt: null },
+        membersPolicy,
+        day(301)
+      )
+    ).toEqual(day(300));
+    // An older session changes nothing.
+    expect(
+      getMemberRetentionClock(
+        { lastLoginAt: day(5), lastSessionAt: day(2), reactivatedAt: null },
+        membersPolicy,
+        day(301)
+      )
+    ).toEqual(day(5));
+  });
+
   test("a sign-in after the reactivation still counts", () => {
     expect(
       getMemberRetentionClock({ lastLoginAt: day(500), reactivatedAt: day(400) }, membersPolicy, day(501))

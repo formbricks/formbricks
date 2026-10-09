@@ -220,14 +220,17 @@ export const getSurveyRetentionClock = (
 };
 
 /**
- * A member's clock under the members policy: their last sign-in or, for someone with none on record,
- * the day the policy was switched on. A reactivation restarts it, whichever is later.
+ * A member's clock under the members policy: when they were last active — their last sign-in, or the
+ * last time one of their sessions was renewed (a session in use is renewed daily, so someone who stays
+ * signed in for weeks still counts as active) — or, for someone with neither on record, the day the
+ * policy was switched on. A reactivation restarts it. Whichever is latest.
  */
 export const getMemberRetentionClock = (
-  member: { lastLoginAt: Date | null; reactivatedAt: Date | null },
+  member: { lastLoginAt: Date | null; lastSessionAt?: Date | null; reactivatedAt: Date | null },
   policy: Pick<TRetentionSchedulePolicy, "enabledAt">,
   now: Date
-): Date => {
-  const clock = member.lastLoginAt ?? policy.enabledAt ?? now;
-  return member.reactivatedAt ? latest(clock, member.reactivatedAt) : clock;
-};
+): Date =>
+  [member.lastSessionAt ?? null, member.reactivatedAt].reduce<Date>(
+    (clock, date) => (date ? latest(clock, date) : clock),
+    member.lastLoginAt ?? policy.enabledAt ?? now
+  );

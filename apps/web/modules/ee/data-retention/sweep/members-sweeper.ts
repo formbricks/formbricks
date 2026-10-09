@@ -29,6 +29,8 @@ type TMemberCandidate = {
   locale: string;
   role: "owner" | "manager" | "member" | "billing";
   lastLoginAt: Date | null;
+  /** When one of their sessions was last renewed: someone who stays signed in is still active. */
+  lastSessionAt: Date | null;
   reactivatedAt: Date | null;
   /**
    * How many organisations they belong to or are invited to (a pending, unexpired invite counts:
@@ -50,8 +52,8 @@ const targetState = (context: TRetentionSweepContext, member: TMemberCandidate):
 
 /**
  * The organisation's active members whose clock is at or before `noticeDueAtOrBefore`: their last
- * sign-in, or the day the policy took effect for someone who never signed in, moved on by a
- * reactivation (`getMemberRetentionClock`). Keyset-paged on the user id; `userId` narrows it to one
+ * sign-in or session renewal, or the day the policy took effect for someone who never signed in, moved
+ * on by a reactivation (`getMemberRetentionClock`). Keyset-paged on the user id; `userId` narrows it to one
  * member, for the re-check under lock.
  */
 const readCandidates = (
@@ -61,6 +63,7 @@ const readCandidates = (
 ): Promise<TMemberCandidate[]> => client.$queryRaw<TMemberCandidate[]>`
   SELECT u."id" AS "userId", u."email", u."locale", m."role"::text AS "role",
          u."lastLoginAt", u."reactivatedAt",
+         (SELECT MAX(se."updated_at") FROM "Session" se WHERE se."userId" = u."id") AS "lastSessionAt",
          (SELECT count(*)::int FROM "Membership" o WHERE o."userId" = u."id")
            + (SELECT count(*)::int FROM "Invite" i
                WHERE lower(i."email") = lower(u."email") AND i."acceptorId" IS NULL
@@ -73,7 +76,13 @@ const readCandidates = (
     ON n."userId" = u."id" AND n."organizationId" = m."organizationId" AND n."entity" = 'members'
   WHERE m."organizationId" = ${context.policy.organizationId}
     AND u."isActive"
-    AND GREATEST(COALESCE(u."lastLoginAt", ${context.policy.enabledAt}), u."reactivatedAt") <= ${noticeDueAtOrBefore}
+    -- GREATEST skips NULLs: the latest of sign-in (or, with none, the policy's start), reactivation and
+    -- session renewal, as getMemberRetentionClock computes it.
+    AND GREATEST(
+      COALESCE(u."lastLoginAt", ${context.policy.enabledAt}),
+      u."reactivatedAt",
+      (SELECT MAX(se."updated_at") FROM "Session" se WHERE se."userId" = u."id")
+    ) <= ${noticeDueAtOrBefore}
     ${userId ? Prisma.sql`AND u."id" = ${userId}` : Prisma.empty}
     ${afterId ? Prisma.sql`AND u."id" > ${afterId}` : Prisma.empty}
   ORDER BY u."id"
