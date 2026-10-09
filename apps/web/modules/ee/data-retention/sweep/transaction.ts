@@ -40,8 +40,11 @@ export class RetentionPolicyChangedError extends Error {
   }
 }
 
+/** The same set of conditions, in any order. Both directions, so a repeated entry can't stand in for another. */
 const sameConditions = (a: readonly string[], b: readonly string[]) =>
-  a.length === b.length && a.every((condition) => b.includes(condition));
+  a.length === b.length &&
+  a.every((condition) => b.includes(condition)) &&
+  b.every((condition) => a.includes(condition));
 
 /**
  * Hold the policy row `FOR SHARE` for the rest of the action's transaction and check it still matches the
