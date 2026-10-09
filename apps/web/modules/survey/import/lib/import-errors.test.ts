@@ -57,11 +57,49 @@ describe("getQsfImportRequestErrorCode", () => {
 
 describe("getQsfImportErrorMessage for a file past a limit", () => {
   test.each([
-    ["qsf_limit_exceeded:questions", "workspace.surveys.import.errors.limits.questions"],
-    ["qsf_limit_exceeded:prompt_size", "workspace.surveys.import.errors.limits.prompt_size"],
-    ["qsf_limit_exceeded:something_new", "workspace.surveys.import.errors.limits.other"],
-  ])("says which limit for %s", (code, message) => {
-    expect(getQsfImportErrorMessage(code, t)).toBe(message);
+    "questions",
+    "options",
+    "languages",
+    "language_keys",
+    "blocks",
+    "block_entries",
+    "flow_nodes",
+    "flow_depth",
+    "embedded_data",
+    "texts",
+    "formatted_texts",
+    "prompt_size",
+  ])("says which limit for %s", (limit) => {
+    expect(getQsfImportErrorMessage(`qsf_limit_exceeded:${limit}`, t)).toBe(
+      `workspace.surveys.import.errors.limits.${limit}`
+    );
+  });
+
+  test("falls back to a general line for a limit this client does not know yet", () => {
+    expect(getQsfImportErrorMessage("qsf_limit_exceeded:something_new", t)).toBe(
+      "workspace.surveys.import.errors.limits.other"
+    );
+  });
+});
+
+describe("getQsfImportErrorMessage for each refusal and stream error", () => {
+  test.each([
+    ["qsf_wrong_extension", "wrong_extension"],
+    ["qsf_empty", "empty_file"],
+    ["qsf_too_large", "file_too_large"],
+    ["qsf_not_json", "not_a_qsf"],
+    ["qsf_not_object", "not_a_qsf"],
+    ["qsf_not_recognized", "not_a_qsf"],
+    ["qsf_too_complex", "too_complex"],
+    ["qsf_unreadable", "unreadable"],
+    ["not_authenticated", "session_expired"],
+    ["forbidden", "not_allowed"],
+    ["concurrency_limit_reached", "already_importing"],
+    ["capacity_reached", "busy"],
+    ["import_timed_out", "timed_out"],
+    ["import_failed", "failed"],
+  ])("%s", (code, key) => {
+    expect(getQsfImportErrorMessage(code, t)).toBe(`workspace.surveys.import.errors.${key}`);
   });
 });
 

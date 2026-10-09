@@ -58,6 +58,10 @@ describe("getQsfImportIssueLine", () => {
     [{ cause: "ai_budget" }, "question_skipped_ai_budget"],
     [{ cause: "ai_timeout" }, "question_skipped_ai_timeout"],
     [{ cause: "draft_too_large" }, "question_skipped_draft_too_large"],
+    [{ cause: "plan_invalid" }, "question_skipped_plan_invalid"],
+    [{ cause: "not_in_flow" }, "question_skipped_not_in_flow"],
+    [{ cause: "invalid_id" }, "question_skipped_invalid_id"],
+    [{ cause: "validation_failed" }, "question_skipped_validation_failed"],
     [{ cause: "something_new" }, "question_skipped"],
   ])("says why a question was skipped: %j", (params, expected) => {
     expect(getQsfImportIssueLine({ code: "question_skipped", severity: "warning", params }, t)).toBe(
@@ -121,6 +125,46 @@ describe("getQsfImportIssueLine", () => {
     } as unknown as TQsfImportReport["issues"][number];
 
     expect(getQsfImportIssueLine(unknownIssue, t)).toBe("unknown");
+  });
+});
+
+describe("every report code", () => {
+  test.each([
+    "image_dropped",
+    "script_dropped",
+    "formatting_dropped",
+    "headline_fallback",
+    "external_url_removed",
+    "choice_label_renamed",
+    "choice_dropped",
+    "text_too_long",
+    "markup_escaped",
+  ] as const)("%s has a line of its own", (code) => {
+    expect(getQsfImportIssueLine({ code, severity: "info" }, t)).toBe(code);
+  });
+
+  test.each(["field_dropped", "piped_text_removed"] as const)("%s passes its count", (code) => {
+    expect(getQsfImportIssueLine({ code, severity: "warning", params: { count: 3 } }, t)).toBe(
+      `${code} {"count":3}`
+    );
+  });
+
+  test("names every Qualtrics type the import skips, each differently", () => {
+    const types = ["CS", "SBS", "HeatMap", "HotSpot", "DD", "PGR", "Highlight", "Signature", "Draw", "GAP"];
+    const lines = [...types, "Timing", "Meta", "Captcha"].map((qualtricsType) =>
+      getQsfImportIssueLine(
+        {
+          code: "question_skipped",
+          severity: "warning",
+          params: { cause: "unsupported_type", qualtricsType },
+        },
+        t
+      )
+    );
+
+    expect(new Set(lines).size).toBe(lines.length);
+    for (const line of lines)
+      expect(line).toMatch(/^question_skipped_unsupported_type \{"type":"[a-z_]+"\}$/);
   });
 });
 
