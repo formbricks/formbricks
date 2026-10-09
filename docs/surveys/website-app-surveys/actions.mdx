@@ -78,7 +78,41 @@ Fires when a user clicks a specific element. Define the element by its **CSS Sel
 
 - **Inner Text**: matches the text of the clicked element, such as a button label.
 
-- **CSS Selector**: matches a class, an id, or any other CSS selector.
+- **CSS Selector**: matches a class, an id, or any other CSS selector. See [CSS Selector](#css-selector) below for how to write one.
+
+#### CSS Selector
+
+A CSS selector tells Formbricks which element to watch. The symbol in front of the name says what kind of name it is:
+
+| To match an element by… | Write                   | Matches                          |
+| ----------------------- | ----------------------- | -------------------------------- |
+| its id                  | `#signup-button`        | `<button id="signup-button">`    |
+| its class               | `.btn-primary`          | `<button class="btn-primary">`   |
+| several classes at once | `.btn.btn-primary`      | an element that has both classes |
+| element type and class  | `button.btn-primary`    | only buttons with that class     |
+| an attribute            | `[data-track="signup"]` | `<button data-track="signup">`   |
+
+<Warning>
+  Without `#` or `.`, the name is read as an element type. `signup-button` matches a `<signup-button>` tag, not an element with that id or class. If your page has no such tag, the action saves but cannot trigger.
+</Warning>
+
+Chain several parts without spaces to make a selector more specific, as in `button.btn-primary.large`. A click on an icon or label inside a matched element counts as a click on that element.
+
+To find the id or class of a button on your site:
+
+<Steps>
+  <Step title="Inspect the element">
+    Right-click the button in your browser and choose **Inspect**.
+  </Step>
+
+  <Step title="Read its id or class">
+    In the highlighted HTML, look for `id="…"` or `class="…"`. Prefer an id: it is unique on the page.
+  </Step>
+
+  <Step title="Add the symbol">
+    Put `#` in front of an id, or `.` in front of a class name, and paste it into the CSS Selector field. A `class` attribute with several names separated by spaces holds several classes: join the ones you want with dots, as in `.btn.btn-primary`.
+  </Step>
+</Steps>
 
 ### 2. Page View
 
