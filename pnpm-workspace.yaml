@@ -287,8 +287,8 @@ overrides:
   # runs). The 1.x line is archived (1.34.20 still pins 4.7.9); 2.x drops handlebars.
   handlebars: 4.7.10
   # ENG-3718 / GHSA-pqg4-j6r4-53mv (CVE-2026-102422): quote() lets a line terminator in a token after a
-  # `{ comment }` token escape the comment and run as shell input; patched in 1.11.0. Pinned to 1.12.0,
-  # which only adds parse() syntax, because concurrently 9.2.5 pins exactly that.
+  # `{ comment }` token escape the comment and run as shell input; patched in 1.11.0. Pinned to 1.12.0
+  # (1.11.0 plus new parse() syntax) because concurrently 9.2.5 pins exactly that.
   # load-bearing: dev-only — concurrently 9.2.4 (packages/surveys) pins 1.9.0. Drop this override by
   # bumping concurrently to 9.2.5 once it clears the `minimumReleaseAge` cooldown (published 2026-10-08).
   shell-quote: 1.12.0
