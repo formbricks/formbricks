@@ -3144,7 +3144,7 @@
         "search_surveys": "搜尋問卷",
         "select_end_date": "選擇結束日期",
         "smtp_not_configured_warning": "尚未設定電子郵件,因此此政策的通知不會寄出,但仍會被記錄,通知期間也會完整計算。",
-        "survey_card_description": "組織的資料保留政策將對此問卷執行的動作。",
+        "survey_card_description": "組織的資料保留政策將會對這份問卷產生的影響。",
         "survey_line_exempt": "{policy}:豁免至 {date}。",
         "survey_line_exempt_no_date": "{policy}:已豁免。",
         "survey_line_nothing_due": "{policy}:目前尚無待處理項目。",

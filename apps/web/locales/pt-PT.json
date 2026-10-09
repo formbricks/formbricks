@@ -3144,7 +3144,7 @@
         "search_surveys": "Pesquisar inquéritos",
         "select_end_date": "Selecione uma data de fim",
         "smtp_not_configured_warning": "O email não está configurado, por isso os avisos desta política não serão enviados. Continuam a ser registados e o período de aviso decorre na íntegra.",
-        "survey_card_description": "O que as políticas de retenção de dados da organização vão fazer a este inquérito.",
+        "survey_card_description": "O que as políticas de retenção de dados da organização vão fazer a este questionário.",
         "survey_line_exempt": "{policy}: isento até {date}.",
         "survey_line_exempt_no_date": "{policy}: isento.",
         "survey_line_nothing_due": "{policy}: ainda nada a eliminar.",

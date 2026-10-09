@@ -3144,7 +3144,7 @@
         "search_surveys": "Caută sondaje",
         "select_end_date": "Selectează o dată de încheiere",
         "smtp_not_configured_warning": "E-mailul nu este configurat, așa că notificările acestei politici nu vor fi trimise. Ele sunt înregistrate în continuare, iar perioada de notificare se desfășoară integral.",
-        "survey_card_description": "Cum va fi afectat acest sondaj de politicile de păstrare a datelor ale organizației.",
+        "survey_card_description": "Ce vor face politicile de păstrare a datelor ale organizației cu acest sondaj.",
         "survey_line_exempt": "{policy}: exceptat până la {date}.",
         "survey_line_exempt_no_date": "{policy}: exceptat.",
         "survey_line_nothing_due": "{policy}: nicio acțiune de efectuat deocamdată.",

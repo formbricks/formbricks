@@ -3144,7 +3144,7 @@
         "search_surveys": "Umfragen durchsuchen",
         "select_end_date": "Enddatum auswählen",
         "smtp_not_configured_warning": "E-Mail ist nicht konfiguriert, daher werden die Benachrichtigungen dieser Richtlinie nicht versendet. Sie werden trotzdem aufgezeichnet, und die Benachrichtigungsfrist läuft weiterhin vollständig.",
-        "survey_card_description": "Was die Richtlinien zur Datenspeicherung deiner Organisation mit dieser Umfrage machen.",
+        "survey_card_description": "Was die Richtlinien zur Datenaufbewahrung der Organisation mit dieser Umfrage machen werden.",
         "survey_line_exempt": "{policy}: ausgenommen bis {date}.",
         "survey_line_exempt_no_date": "{policy}: ausgenommen.",
         "survey_line_nothing_due": "{policy}: noch nichts fällig.",

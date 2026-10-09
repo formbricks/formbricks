@@ -3144,7 +3144,7 @@
         "search_surveys": "Felmérések keresése",
         "select_end_date": "Kérjük, válasszon befejező dátumot",
         "smtp_not_configured_warning": "Az e-mail-küldés nincs beállítva, ezért a jelen szabályzathoz tartozó értesítések nem kerülnek elküldésre. Az értesítések rögzítésre kerülnek, és az értesítési időszak továbbra is teljes terjedelmében érvényesül.",
-        "survey_card_description": "Mit eredményeznek a szervezet adatmegőrzési szabályzatai ennél a felmérésnél.",
+        "survey_card_description": "Milyen hatással lesznek a szervezet adatmegőrzési szabályzatai erre a felmérésre.",
         "survey_line_exempt": "{policy}: felmentve eddig: {date}.",
         "survey_line_exempt_no_date": "{policy}: felmentve.",
         "survey_line_nothing_due": "{policy}: egyelőre nincs esedékes művelet.",

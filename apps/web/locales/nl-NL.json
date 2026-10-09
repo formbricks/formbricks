@@ -3144,7 +3144,7 @@
         "search_surveys": "Enquêtes zoeken",
         "select_end_date": "Selecteer een einddatum",
         "smtp_not_configured_warning": "E-mail is niet geconfigureerd, dus de meldingen van dit beleid worden niet verzonden. Ze worden wel vastgelegd en de meldingsperiode loopt gewoon volledig door.",
-        "survey_card_description": "Wat het beleid voor gegevensbewaring van de organisatie met deze enquête gaat doen.",
+        "survey_card_description": "Wat het databewaarbeleid van de organisatie met deze enquête gaat doen.",
         "survey_line_exempt": "{policy}: vrijgesteld tot {date}.",
         "survey_line_exempt_no_date": "{policy}: vrijgesteld.",
         "survey_line_nothing_due": "{policy}: nog niets aan de beurt.",

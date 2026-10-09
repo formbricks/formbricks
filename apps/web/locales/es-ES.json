@@ -3144,7 +3144,7 @@
         "search_surveys": "Buscar encuestas",
         "select_end_date": "Selecciona una fecha de finalización",
         "smtp_not_configured_warning": "El correo electrónico no está configurado, así que los avisos de esta política no se enviarán. Aun así, se registran y el periodo de preaviso se cumple íntegramente.",
-        "survey_card_description": "Qué harán las políticas de conservación de datos de la organización con esta encuesta.",
+        "survey_card_description": "Qué harán las políticas de retención de datos de la organización con esta encuesta.",
         "survey_line_exempt": "{policy}: exenta hasta el {date}.",
         "survey_line_exempt_no_date": "{policy}: exenta.",
         "survey_line_nothing_due": "{policy}: aún no hay nada pendiente.",

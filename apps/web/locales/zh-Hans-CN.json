@@ -3144,7 +3144,7 @@
         "search_surveys": "搜索问卷",
         "select_end_date": "选择结束日期",
         "smtp_not_configured_warning": "尚未配置电子邮件,因此此策略的通知不会发送。通知仍会被记录,通知期也会照常完整计算。",
-        "survey_card_description": "组织的数据保留政策将如何处理此问卷。",
+        "survey_card_description": "组织的数据保留政策将如何处理这份调查问卷。",
         "survey_line_exempt": "{policy}：豁免至 {date}。",
         "survey_line_exempt_no_date": "{policy}：已豁免。",
         "survey_line_nothing_due": "{policy}：暂无到期内容。",

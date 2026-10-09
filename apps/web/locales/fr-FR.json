@@ -3144,7 +3144,7 @@
         "search_surveys": "Rechercher des enquêtes",
         "select_end_date": "Sélectionne une date de fin",
         "smtp_not_configured_warning": "L'envoi d'e-mails n'est pas configuré : les notifications de cette politique ne seront donc pas envoyées. Elles sont tout de même enregistrées, et le délai de préavis court quand même en intégralité.",
-        "survey_card_description": "Ce que les politiques de conservation des données de l'organisation feront de cette enquête.",
+        "survey_card_description": "Ce que les politiques de conservation des données de l'organisation feront de ce sondage.",
         "survey_line_exempt": "{policy} : exemptée jusqu'au {date}.",
         "survey_line_exempt_no_date": "{policy} : exemptée.",
         "survey_line_nothing_due": "{policy} : rien de prévu pour l'instant.",

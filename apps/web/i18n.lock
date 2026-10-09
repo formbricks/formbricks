@@ -2949,7 +2949,7 @@ checksums:
     workspace/settings/data_retention/custom_notice_days: a80e8f448e79e1a1657fe882f97664fb
     workspace/settings/data_retention/custom_period_amount: a0ae9c6ff98b57475cdce56f66066aa4
     workspace/settings/data_retention/custom_period_unit: a5e2f96308799b23b1ade4448c93b8f7
-    workspace/settings/data_retention/customise: 6178e981f01e69be78cff0c323e4026b
+    workspace/settings/data_retention/customise: d5df7bb9f0a1fa3cae4dca3542ea9605
     workspace/settings/data_retention/data: b7b46ab6ce9606032c8f81f6f6afbb9b
     workspace/settings/data_retention/deleted_or_deactivated: edec3a008cd2524151085c2ee84bc1a7
     workspace/settings/data_retention/description: af778035dce2aa51079eb17a3ef48a9b
@@ -3035,7 +3035,7 @@ checksums:
     workspace/settings/data_retention/search_surveys: acb2a01b8fba28ca83171ddeab648558
     workspace/settings/data_retention/select_end_date: 746cd6c3cf52e112e78b944ee3d2c55d
     workspace/settings/data_retention/smtp_not_configured_warning: 8b3fc3052da5f06eb4fa63b7b949a877
-    workspace/settings/data_retention/survey_card_description: 520dd2e24ff8f9ddcad7d887d8dc4136
+    workspace/settings/data_retention/survey_card_description: 30740bd6c8bc0669cbc49cd5ddf932fb
     workspace/settings/data_retention/survey_line_exempt: 7845f214bb225270ed848de4c1b770d2
     workspace/settings/data_retention/survey_line_exempt_no_date: 4fe2d36edd3b1d6df80296ad17960d1b
     workspace/settings/data_retention/survey_line_nothing_due: 2dd9f30c6332b0d918ef14b711731efe
