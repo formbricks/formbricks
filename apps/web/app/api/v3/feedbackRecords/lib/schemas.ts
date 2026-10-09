@@ -146,6 +146,12 @@ export const ZV3FeedbackRecordFilters = z
     created_until: timestampFilter(
       "Only records Hub stored at or before this ISO 8601 timestamp (bounds created_at, inclusive)."
     ),
+    updated_since: timestampFilter(
+      "Only records created or changed at or after this ISO 8601 timestamp (bounds updated_at, inclusive). updated_at is stamped on create, on every correction and on every enrichment result, so this answers one-off questions like 'what was created or changed since Monday'. Use a time the user gives you, and pair it with sort updated_at, order asc. Do not chain calls by feeding the newest updated_at you received back in as the next value: a write still committing when you read past its timestamp carries an older one, and would be skipped. Repeated incremental extraction belongs on the REST API, which documents a safe procedure. Deleted records are never returned."
+    ),
+    updated_until: timestampFilter(
+      "Only records last created or changed at or before this ISO 8601 timestamp (bounds updated_at, inclusive)."
+    ),
     value_date_min: timestampFilter(
       "Only records whose date answer is at or after this ISO 8601 timestamp (inclusive). Bounds the answer itself, not when it was collected. Excludes every record that carries no date."
     ),
@@ -226,10 +232,10 @@ export const ZV3FeedbackRecordListFilters = ZV3FeedbackRecordFilters.extend({
     .optional()
     .describe("Opaque keyset cursor from a previous response's nextCursor. Omit for the first page."),
   sort: z
-    .enum(["collected_at", "created_at"])
+    .enum(["collected_at", "created_at", "updated_at"])
     .optional()
     .describe(
-      "Column to order by. Defaults to collected_at. Keep this identical on every page of one traversal: a cursor is a position within one specific ordering, so presenting it with a different sort or order is rejected."
+      "Column to order by. Defaults to collected_at. Keep this identical on every page of one traversal: a cursor is a position within one specific ordering, so presenting it with a different sort or order is rejected. updated_at requires order asc (anything else is rejected): it is the ordering to use with updated_since, because a record that changes while you page then normally comes back later rather than being skipped."
     ),
   order: z
     .enum(["asc", "desc"])

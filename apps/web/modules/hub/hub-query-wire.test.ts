@@ -147,6 +147,37 @@ describe("feedback-record list query serialization", () => {
       "https://hub.test/v1/feedback-records?tenant_id=dir_1&sort=created_at&order=asc&limit=10"
     );
   });
+
+  test("carries sort=updated_at, which the SDK's sort enum predates (ENG-3420)", async () => {
+    const { listFeedbackRecords } = await import("./service");
+
+    await listFeedbackRecords({
+      tenant_id: "dir_1",
+      updated_since: "2026-10-01T00:00:00Z",
+      sort: "updated_at",
+      order: "asc",
+    });
+
+    expect(requestedUrl()).toBe(
+      "https://hub.test/v1/feedback-records?tenant_id=dir_1&updated_since=2026-10-01T00%3A00%3A00Z&sort=updated_at&order=asc"
+    );
+  });
+
+  test("sends the updated_at range the SDK types predate (ENG-3420)", async () => {
+    const { listFeedbackRecords } = await import("./service");
+
+    await listFeedbackRecords({
+      tenant_id: "dir_1",
+      updated_since: "2026-10-01T00:00:00Z",
+      updated_until: "2026-10-05T00:00:00Z",
+    });
+
+    // Bridged onto the 0.12.0 param types in ./types; this proves the bridge reaches the URL rather
+    // than being a type the SDK quietly drops.
+    expect(requestedUrl()).toBe(
+      "https://hub.test/v1/feedback-records?tenant_id=dir_1&updated_since=2026-10-01T00%3A00%3A00Z&updated_until=2026-10-05T00%3A00%3A00Z"
+    );
+  });
 });
 
 describe("feedback-record count query serialization", () => {
@@ -163,6 +194,22 @@ describe("feedback-record count query serialization", () => {
 
     expect(requestedUrl()).toBe(
       "https://hub.test/v1/feedback-records/count?tenant_id=dir_1&sentiment=negative&sentiment=very_negative"
+    );
+  });
+
+  test("sends the updated_at range to the count path too (ENG-3420)", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ count: 0 }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })
+    );
+    const { countFeedbackRecords } = await import("./service");
+
+    await countFeedbackRecords({ tenant_id: "dir_1", updated_since: "2026-10-01T00:00:00Z" });
+
+    expect(requestedUrl()).toBe(
+      "https://hub.test/v1/feedback-records/count?tenant_id=dir_1&updated_since=2026-10-01T00%3A00%3A00Z"
     );
   });
 });

@@ -7,7 +7,17 @@ import type FormbricksHub from "@formbricks/hub";
 export type FeedbackRecordCreateParams = FormbricksHub.FeedbackRecordCreateParams & {
   value_id?: string;
 };
-export type FeedbackRecordListParams = FormbricksHub.FeedbackRecordListParams;
+// updated_since/updated_until (ENG-3420): bound updated_at for incremental extraction. The published SDK
+// predates them, so bridge them as optional params on both list and count until the SDK ships them.
+type UpdatedAtRangeParams = {
+  updated_since?: string;
+  updated_until?: string;
+};
+// sort=updated_at (ascending only, ENG-3420) also postdates the published SDK's sort enum.
+export type FeedbackRecordListParams = Omit<FormbricksHub.FeedbackRecordListParams, "sort"> &
+  UpdatedAtRangeParams & {
+    sort?: FormbricksHub.FeedbackRecordListParams["sort"] | "updated_at";
+  };
 export type FeedbackRecordUpdateParams = FormbricksHub.FeedbackRecordUpdateParams;
 
 // Hub-derived, read-only translation fields (ENG-1255). The published SDK predates them, so bridge
@@ -30,7 +40,7 @@ export type FeedbackRecordListResponse = Omit<FormbricksHub.FeedbackRecordListRe
 
 // `GET /v1/feedback-records/count` — the Hub documents it as taking the same query parameters as the
 // list endpoint, minus pagination, and answering with a single total.
-export type FeedbackRecordCountParams = FormbricksHub.FeedbackRecordCountParams;
+export type FeedbackRecordCountParams = FormbricksHub.FeedbackRecordCountParams & UpdatedAtRangeParams;
 export type FeedbackRecordCountResponse = FormbricksHub.FeedbackRecordCountResponse;
 
 export type SemanticSearchInput = FormbricksHub.FeedbackRecords.SearchPerformSemanticSearchParams;

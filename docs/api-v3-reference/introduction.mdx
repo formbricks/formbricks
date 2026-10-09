@@ -113,6 +113,50 @@ curl "https://app.formbricks.com/api/v3/feedbackRecords?tenant_id=<datasetId>&fi
 Pagination is keyset: pass the response's `next_cursor` back as `cursor` with the same `sort` and `order`. It is
 absent on the last page.
 
+### Incremental extraction
+
+To keep a copy of a dataset in sync without re-reading it, list with `updated_since`. A record's `updated_at`
+is stamped when it is created, corrected, or enriched (translation, sentiment, emotions), so one filter returns
+both new and changed records.
+
+```bash
+# Everything created or changed since the last run, in the order it changed
+curl "https://app.formbricks.com/api/v3/feedbackRecords?tenant_id=<datasetId>&updated_since=2026-10-05T07:55:00Z&updated_until=2026-10-05T09:00:00Z&sort=updated_at&order=asc&limit=1000" \
+  -H "x-api-key: $FORMBRICKS_API_KEY"
+```
+
+- **Sort by `updated_at`, ascending.** Every page is then one range of an index, so a sync reads only the
+  records it returns. A record that changes while you page normally gets a newer `updated_at` and comes back
+  later in the same run, so upsert by `id`. `updated_at` can only be sorted ascending: descending, or with no
+  `order` (the default is `desc`), answers `400`. Even ascending, a write that started before your position and
+  commits after you have read past it is missed by this run; the next run's `updated_since`, below, picks it up.
+- **Bound each run with `updated_until`.** Otherwise a run keeps chasing records that change while it pages.
+  Start each run with a cheap request (a page with `limit=1`) and read its `Date` header: that one value, _S_,
+  is this run's `updated_until`, and _S_ minus a few minutes is the next run's `updated_since`. Take both from
+  the same _S_ — an `updated_until` from your own clock can fall short of the next run's `updated_since` and
+  leave records that neither run ever reads.
+- **Next `updated_since`: _S_ minus a few minutes.** _S_ comes from our `Date` header, so drift between your
+  clock and ours cannot open a gap. Do not use the newest
+  `updated_at` you received: `updated_at` is when a write *started*, so a write still committing when you read
+  past its timestamp is missing from this run with a timestamp older than the newest you saw, and a watermark
+  taken from the results skips it for good.
+  The overlap has to exceed the longest write to a record (`updated_at` is when a write *started*, so one that
+  commits after your run began can carry an earlier timestamp), plus the time the first response took and the
+  difference between the clock that stamped `Date` and the database's. Writes are short, so five minutes is a
+  comfortable default, but no hard limit is enforced; the full sweep below repairs anything a slower write slips
+  past.
+- **Let the latest fetch win, and run one sync at a time** (the full sweep included). The overlap re-reads some records, so upsert by `id`
+  and keep the copy from the most recent run. Don't compare `updated_at` to choose: two writes to one record can
+  commit in the opposite order to the one they started in, so the newer state can carry the older timestamp.
+- **Deletions are not returned.** A deleted record leaves nothing for `updated_since` to match. To reconcile
+  them, periodically list every record id in the dataset with no `updated_since`, noting when that listing
+  started from its first response's `Date` header. Remove the local records that were not returned **and
+  were created before that start, minus the overlap**. Anything newer may have been stored by your sync after
+  the listing passed it, and deleting it would lose it. This catches every kind of delete, including deleting
+  a user's records. The sweep returns every record in full, so upsert what it returns too: that repairs any change
+  the incremental sync missed. It reads the whole dataset, so run it less often than the incremental sync, for
+  example daily against an hourly sync.
+
 ## Feedback
 
 Beta feedback goes to your Formbricks contact or to [hola@formbricks.com](mailto:hola@formbricks.com).
