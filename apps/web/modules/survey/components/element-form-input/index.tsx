@@ -310,6 +310,19 @@ export const ElementFormInput = ({
 
   const debouncedHandleUpdate = useMemo(() => debounce((value) => handleUpdate(value), 100), [handleUpdate]);
 
+  // Alt text belongs to one image. The alt input is keyed by that image's URL, so swapping or removing the
+  // image unmounts it; a keystroke still waiting on the debounce must not land on the next image.
+  const latestDebouncedUpdateRef = useRef(debouncedHandleUpdate);
+  useEffect(() => {
+    latestDebouncedUpdateRef.current = debouncedHandleUpdate;
+  }, [debouncedHandleUpdate]);
+  useEffect(() => {
+    const debouncedUpdateRef = latestDebouncedUpdateRef;
+    return () => {
+      if (id === "imageAltText") debouncedUpdateRef.current.cancel();
+    };
+  }, [id]);
+
   const [animationParent] = useAutoAnimate();
   const [internalFirstRender, setInternalFirstRender] = useState(true);
   const suppressEditorUpdatesRef = useRef(false);
@@ -470,6 +483,7 @@ export const ElementFormInput = ({
           {showImageUploader && id === "headline" && !isWelcomeCard && getFileUrl() && (
             <div>
               <ElementFormInput
+                key={getFileUrl()}
                 id="imageAltText"
                 value={getImageAltText()}
                 localSurvey={localSurvey}

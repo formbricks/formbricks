@@ -5632,7 +5632,7 @@ components:
         imageAltText:
           allOf:
             - $ref: '#/components/schemas/TranslatableText'
-          description: Text alternative for `imageUrl`, read by screen readers. Omit or leave empty for a decorative image (rendered as `alt=""`).
+          description: Text alternative for `imageUrl`, read by screen readers. Omit or leave empty to fall back to the positional label ("Option 1", "Option 2", …); a choice image is never decorative, since the respondent selects it.
       additionalProperties: false
     SurveyPictureSelectionElement:
       allOf:

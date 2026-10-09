@@ -761,6 +761,7 @@ function validateChoice(
   addUnknownKeyIssues(value, allowedKeys, path, issues, choiceContext);
   if (isPlainObject(value)) {
     validateTranslatableField(value.label, `${path}.label`, issues, defaultLanguage, options);
+    validateTranslatableField(value.imageAltText, `${path}.imageAltText`, issues, defaultLanguage, options);
   }
 }
 

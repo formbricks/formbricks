@@ -673,6 +673,26 @@ describe("ZV3CreateSurveyBody", () => {
       expect(result.data?.endings?.[0]).toMatchObject({ imageAltText: { default: "Team waving" } });
     });
 
+    test("rejects the internal default key in a picture choice's alt text", () => {
+      const result = ZV3CreateSurveyBody.safeParse(
+        bodyWith(
+          {
+            ...pictureElement,
+            choices: [
+              { ...pictureElement.choices[0], imageAltText: { default: "Blue mug" } },
+              pictureElement.choices[1],
+            ],
+          },
+          endingWithImage
+        )
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error?.issues.map((issue) => issue.path.join("."))).toContain(
+        "blocks.0.elements.0.choices.0.imageAltText.default"
+      );
+    });
+
     test("accepts an empty alt text with no translations as a decorative image", () => {
       const result = ZV3CreateSurveyBody.safeParse({
         ...bodyWith(
