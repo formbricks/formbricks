@@ -55,7 +55,8 @@ WORKDIR /app
 
 # Copy only what the install reads, so a source-only change reuses the install layer. Everything
 # that busts this layer (the secrets script, BASE_PATH) is declared after it. xlsx is a `file:`
-# dependency on a tarball under apps/web/vendor, so the install needs that directory too.
+# dependency on a tarball under apps/web/vendor, so the install needs that directory too. Keep these
+# COPYs in sync with the timestamp reset after `COPY . .` below.
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY patches ./patches
 COPY --parents apps/*/package.json packages/*/package.json docker/package.json ./
@@ -83,6 +84,18 @@ ENV BASE_PATH=${BASE_PATH}
 
 # Prepare the build
 COPY . .
+
+# Before each `pnpm run`, pnpm 11 re-checks every install input whose mtime is newer than the install's
+# last validation: a newer patch fails as "Patches were modified", a newer manifest gets a deep check
+# against the lockfile that rejects apps/web's `file:` tarball dependency. A reused install layer
+# (Depot's persistent cache) is always older than this checkout, so COPY . . above makes every install
+# input look newer. Their content is exactly what the install read (the COPYs before it are its cache
+# key), so set their timestamps back to before the install, as a fresh install would leave them. The
+# list mirrors those COPYs. Not `COPY --exclude`: BuildKit then follows the apps/web/.env symlink to the
+# root .env, which stays out of the context.
+RUN touch -c -t 200001010000 pnpm-lock.yaml pnpm-workspace.yaml package.json docker/package.json \
+      apps/*/package.json packages/*/package.json \
+    && find patches apps/web/vendor -type f -exec touch -t 200001010000 {} +
 
 # Create a .env file
 RUN touch apps/web/.env
