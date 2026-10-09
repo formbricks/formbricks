@@ -281,7 +281,10 @@ class SanitizeReporter {
 
   private report(code: TQsfImportIssueCode, questionRef: string | null, isEnding: boolean): void {
     const perSurvey = code === "formatting_dropped";
-    const id = `${code}\u0000${perSurvey ? "" : (questionRef ?? (isEnding ? "ending" : ""))}`;
+    // What the line is about, so each question, and the ending, gets one line per code.
+    let subject = questionRef ?? "";
+    if (questionRef === null && isEnding) subject = "ending";
+    const id = `${code}\u0000${perSurvey ? "" : subject}`;
     if (this.reported.has(id)) return;
     this.reported.add(id);
     const exportTag = questionRef === null ? undefined : this.survey.questions.get(questionRef)?.exportTag;
