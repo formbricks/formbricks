@@ -256,7 +256,15 @@ describe("retention exemptions service (real Postgres)", () => {
 
   describe("searchRetentionExemptionSurveys", () => {
     test("matches names case-insensitively across workspaces, newest change first, wildcards literal", async () => {
-      await prisma.survey.create({ data: { name: "NPS 100% done", workspaceId: otherWorkspaceId } });
+      // Explicitly older: two creates in the same millisecond would tie on updatedAt and fall back to
+      // the id order, which is random.
+      await prisma.survey.create({
+        data: {
+          name: "NPS 100% done",
+          workspaceId: otherWorkspaceId,
+          updatedAt: new Date(Date.now() - 60_000),
+        },
+      });
       await prisma.survey.create({ data: { name: "npS_q3", workspaceId } });
       const otherOrganizationId = (await prisma.organization.create({ data: { name: "Other" } })).id;
       const otherWorkspace = await prisma.workspace.create({
