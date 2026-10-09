@@ -113,6 +113,8 @@ describe("readDatabaseClock", () => {
     const client = { $queryRaw: vi.fn().mockResolvedValue([{ now }]) };
 
     await expect(readDatabaseClock(client as never)).resolves.toBe(now);
-    expect(statement(client.$queryRaw.mock.calls[0]).text).toBe('SELECT clock_timestamp() AS "now"');
+    expect(statement(client.$queryRaw.mock.calls[0]).text).toBe(
+      `SELECT (clock_timestamp() AT TIME ZONE 'UTC') AS "now"`
+    );
   });
 });

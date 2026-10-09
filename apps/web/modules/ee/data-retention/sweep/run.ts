@@ -22,8 +22,12 @@ export type TOpenedRetentionRun = {
   resumeAfter: string | null;
 };
 
-/** Namespaces the per-organisation advisory lock taken while an organisation's runs are opened. */
-const RETENTION_SWEEP_LOCK_PREFIX = "data-retention-sweep:";
+/**
+ * The first key of the per-organisation advisory lock taken while an organisation's runs are opened.
+ * The two-key form has its own key space, apart from the single-key locks other features take (e.g.
+ * `survey-visibility:` in lib/authzed), so a hash collision can't make one wait on the other.
+ */
+const RETENTION_SWEEP_LOCK_NAMESPACE = "data-retention-sweep";
 
 /**
  * Open one organisation's runs for the night, one per enabled policy in `entities` (in that order), or
@@ -47,7 +51,7 @@ export const openRetentionRuns = (
 ): Promise<TOpenedRetentionRun[]> =>
   runSweepTransaction(async (tx) => {
     const [{ locked }] = await tx.$queryRaw<{ locked: boolean }[]>`
-      SELECT pg_try_advisory_xact_lock(hashtext(${RETENTION_SWEEP_LOCK_PREFIX + organizationId})) AS "locked"
+      SELECT pg_try_advisory_xact_lock(hashtext(${RETENTION_SWEEP_LOCK_NAMESPACE}), hashtext(${organizationId})) AS "locked"
     `;
     if (!locked) return [];
 

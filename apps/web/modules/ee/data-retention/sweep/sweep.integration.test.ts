@@ -120,7 +120,7 @@ describe("data retention sweep (real Postgres)", () => {
       let release!: () => void;
       const released = new Promise<void>((resolve) => (release = resolve));
       const opening = prisma.$transaction(async (tx) => {
-        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${`data-retention-sweep:${organizationId}`}))`;
+        await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${"data-retention-sweep"}), hashtext(${organizationId}))`;
         locked();
         await released;
       });

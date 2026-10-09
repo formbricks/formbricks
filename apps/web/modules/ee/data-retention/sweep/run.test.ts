@@ -106,8 +106,8 @@ describe("openRetentionRuns", () => {
     ]);
 
     const lock = statement(tx.$queryRaw.mock.calls[0]);
-    expect(lock.text).toContain("SELECT pg_try_advisory_xact_lock(hashtext(?))");
-    expect(lock.values).toEqual([`data-retention-sweep:${ORG_ID}`]);
+    expect(lock.text).toContain("SELECT pg_try_advisory_xact_lock(hashtext(?), hashtext(?))");
+    expect(lock.values).toEqual(["data-retention-sweep", ORG_ID]);
     expect(tx.retentionRun.findFirst).toHaveBeenNthCalledWith(1, {
       where: {
         organizationId: ORG_ID,

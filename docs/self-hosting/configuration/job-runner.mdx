@@ -118,8 +118,9 @@ web replicas x BULLMQ_WORKER_COUNT x BULLMQ_WORKER_CONCURRENCY
 ```
 
 Each replica also runs one AuthZed projection delivery at a time on the dedicated queue. That slot does
-not count toward the capacity above, and it does not grow with these settings. It does use a Redis
-connection and, while a delivery runs, a database connection.
+not count toward the capacity above, and it does not grow with these settings. It does use two Redis
+connections (BullMQ gives every worker a blocking one of its own) and, while a delivery runs, a
+database connection.
 
 Increase concurrency gradually and monitor database, Redis, and downstream service capacity. Adding replicas
 also adds workers, so account for both scaling controls.
