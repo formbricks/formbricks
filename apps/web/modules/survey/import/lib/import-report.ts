@@ -93,6 +93,13 @@ const getSkippedQuestionMessage = (issue: TQsfImportIssue, t: TTranslate): strin
 };
 
 /**
+ * The generic line. Its code is typed `never`: every code the types know is handled in
+ * `getQsfImportIssueMessage`, so a new code fails the build until it has a line of its own.
+ */
+const getUnknownIssueMessage = (_code: never, t: TTranslate): string =>
+  t("workspace.surveys.import.issues.unknown");
+
+/**
  * One report line in the user's language. Literal `t()` calls per code, so the translation scanner
  * sees every key. `params` come from the file or the AI: callers render the result as text only.
  */
@@ -140,13 +147,9 @@ export const getQsfImportIssueMessage = (issue: TQsfImportIssue, t: TTranslate):
       return t("workspace.surveys.import.issues.markup_escaped");
     case "ending_added":
       return t("workspace.surveys.import.issues.ending_added");
-    default: {
-      // Every code the types know is handled above, so a new code fails the build until it has a
-      // line. A server newer than this client can still send one; it gets the generic line.
-      const unhandled: never = issue.code;
-      void unhandled;
-      return t("workspace.surveys.import.issues.unknown");
-    }
+    default:
+      // A server newer than this client can still send a code it does not know.
+      return getUnknownIssueMessage(issue.code, t);
   }
 };
 

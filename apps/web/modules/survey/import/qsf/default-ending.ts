@@ -34,7 +34,7 @@ export const getDefaultEndingTexts = (
   languageCodes: readonly string[]
 ): Promise<(TDefaultEndingText | null)[]> =>
   Promise.all(
-    languageCodes.map((code, index) => {
+    languageCodes.map(async (code, index) => {
       const locale = matchAppLocale(code) ?? (index === 0 ? "en-US" : null);
       return locale ? loadDefaultEndingText(locale) : null;
     })
