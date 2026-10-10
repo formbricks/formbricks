@@ -67,6 +67,7 @@ export function NPSElement({
         errorMessage={errorMessage}
         dir={dir}
         imageUrl={element.imageUrl}
+        imageAltText={getLocalizedValue(element.imageAltText, languageCode)}
         videoUrl={element.videoUrl}
       />
     </form>

@@ -102,6 +102,7 @@ export function DateElement({
         }
         dir={dir}
         imageUrl={element.imageUrl}
+        imageAltText={getLocalizedValue(element.imageAltText, languageCode)}
         videoUrl={element.videoUrl}
       />
     </form>

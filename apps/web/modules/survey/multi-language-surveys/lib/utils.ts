@@ -115,6 +115,7 @@ export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): Trans
       // Common fields
       pushIfI18n(result, element, "headline", base, did, t("common.headline"), eid);
       pushIfI18n(result, element, "subheader", base, did, t("common.subheader"), eid);
+      pushIfI18n(result, element, "imageAltText", base, did, t("workspace.surveys.edit.image_alt_text"), eid);
 
       // Type-specific fields
       switch (element.type) {
@@ -149,6 +150,19 @@ export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): Trans
           );
           break;
         }
+        case TSurveyElementTypeEnum.PictureSelection:
+          element.choices.forEach((choice, ci) => {
+            pushIfI18n(
+              result,
+              choice,
+              "imageAltText",
+              `${base}.choices.${ci}`,
+              did,
+              t("workspace.surveys.edit.image_alt_text_choice_n", { n: ci + 1 }),
+              eid
+            );
+          });
+          break;
         case TSurveyElementTypeEnum.NPS:
         case TSurveyElementTypeEnum.Rating:
         case TSurveyElementTypeEnum.CSAT:
@@ -267,6 +281,7 @@ export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): Trans
       const eid = ending.id;
       pushIfI18n(result, ending, "headline", base, did, t("common.headline"), eid);
       pushIfI18n(result, ending, "subheader", base, did, t("common.subheader"), eid);
+      pushIfI18n(result, ending, "imageAltText", base, did, t("workspace.surveys.edit.image_alt_text"), eid);
       pushIfI18n(result, ending, "buttonLabel", base, did, t("workspace.surveys.edit.button_label"), eid);
     }
   });

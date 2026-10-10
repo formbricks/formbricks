@@ -12,6 +12,8 @@ import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
+import { ImageAltTextButton } from "@/modules/survey/components/element-form-input/components/image-alt-text-button";
+import { isValueIncomplete } from "@/modules/survey/components/element-form-input/utils";
 import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
@@ -71,6 +73,41 @@ export const PictureSelectionForm = ({
     updateElement(elementIdx, {
       choices: updatedChoices,
     });
+  };
+
+  // ElementFormInput writes `{ imageAltText }` through `updateElement`; route it onto the one choice instead.
+  const updateChoiceAltText = (choiceId: string) => (_elementIdx: number, data: Partial<TSurveyElement>) => {
+    updateElement(elementIdx, {
+      choices: element.choices.map((choice) =>
+        choice.id === choiceId ? { ...choice, imageAltText: data.imageAltText } : choice
+      ),
+    });
+  };
+
+  const renderChoiceAltTextButton = (url: string) => {
+    const choiceIdx = element.choices.findIndex((choice) => choice.imageUrl === url);
+    if (choiceIdx === -1) return null;
+    const choice = element.choices[choiceIdx];
+    const label = t("workspace.surveys.edit.image_alt_text_choice_n", { n: choiceIdx + 1 });
+    return (
+      <ImageAltTextButton
+        label={label}
+        hasAltText={Boolean(choice.imageAltText?.default?.trim())}
+        isInvalid={isValueIncomplete("imageAltText", isInvalid, surveyLanguageCodes, choice.imageAltText)}>
+        <ElementFormInput
+          id="imageAltText"
+          value={choice.imageAltText ?? createI18nString("", surveyLanguageCodes)}
+          label={label}
+          placeholder={t("workspace.surveys.edit.image_alt_text_placeholder")}
+          localSurvey={localSurvey}
+          elementIdx={elementIdx}
+          isInvalid={isInvalid}
+          updateElement={updateChoiceAltText(choice.id)}
+          locale={locale}
+          isStorageConfigured={isStorageConfigured}
+        />
+      </ImageAltTextButton>
+    );
   };
 
   const [parent] = useAutoAnimate();
@@ -145,6 +182,7 @@ export const PictureSelectionForm = ({
             multiple={true}
             maxSizeInMB={5}
             isStorageConfigured={isStorageConfigured}
+            renderImageAction={renderChoiceAltTextButton}
           />
         </div>
       </div>
