@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import type { Session } from "@formbricks/types/auth";
 import type { TOrganizationRole } from "@formbricks/types/memberships";
 import type { TWorkspace } from "@formbricks/types/workspace";
-import { getOrganizationsByUserId } from "@/app/(app)/workspaces/[workspaceId]/lib/organization";
 import { getWorkspacesByUserId } from "@/app/(app)/workspaces/[workspaceId]/lib/workspace";
 import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { FORMBRICKS_ORGANIZATION_ID_COOKIE, FORMBRICKS_WORKSPACE_ID_COOKIE } from "@/lib/localStorage";
@@ -17,6 +16,10 @@ import {
   getAccessControlPermission,
   getOrganizationWorkspacesLimit,
 } from "@/modules/ee/license-check/lib/utils";
+import {
+  pickActiveWorkspaceId,
+  resolveActiveOrganizationId,
+} from "@/modules/settings/lib/active-organization";
 
 type TOrganizationWithBilling = NonNullable<Awaited<ReturnType<typeof getOrganization>>>;
 type TLicense = Awaited<ReturnType<typeof getEnterpriseLicense>>;
@@ -43,48 +46,13 @@ export interface TSettingsLayoutData {
 }
 
 /**
- * Resolves the organization for the routes that carry none in the URL (account settings), so opening
- * a profile/notifications page — and the reload after changing the language there — keeps the
- * sidebar, banners, back link and billing links on the organization the user is in instead of
- * switching a multi-organization user to their first one.
- *
- * The organization cookie wins when present: the proxy only keeps it while an organization-scoped
- * page (e.g. the landing page of an organization with no workspace yet) was visited after the last
- * workspace. Otherwise the organization of the last active workspace is the one the user is in.
- *
- * Both cookies outlive leaving an organization and the workspace cookie outlives deleting a
- * workspace, so each is only trusted while it still resolves to an organization the user is a
- * member of.
- */
-const resolveActiveOrganizationId = async (
-  userId: string,
-  activeWorkspaceId: string | undefined,
-  activeOrganizationId: string | undefined
-): Promise<string | undefined> => {
-  const organizations = await getOrganizationsByUserId(userId);
-
-  if (activeOrganizationId && organizations.some((org) => org.id === activeOrganizationId)) {
-    return activeOrganizationId;
-  }
-
-  if (activeWorkspaceId) {
-    const activeWorkspace = await getWorkspace(activeWorkspaceId);
-    if (activeWorkspace && organizations.some((org) => org.id === activeWorkspace.organizationId)) {
-      return activeWorkspace.organizationId;
-    }
-  }
-
-  return organizations[0]?.id;
-};
-
-/**
  * Assembles everything the shared settings shell (banners + sidebar + top bar) needs for the
  * org-scoped and account-scoped settings routes, where there is no `workspaceId` in the URL. All of
  * it is organization-level data, so no workspace is required to resolve it; we additionally surface
  * the user's first accessible workspace so the sidebar's Workspace section renders identically.
  *
  * `organizationId` is optional — account settings don't carry one, so it is resolved from the last
- * active organization or workspace (see `resolveActiveOrganizationId`).
+ * active organization or workspace (see `resolveActiveOrganizationId` in `./active-organization`).
  *
  * The "current" workspace is resolved from the same `formbricks-workspace-id` cookie (set by the
  * proxy from the last visited `/workspaces/[workspaceId]` path), so navigating into the
@@ -125,10 +93,7 @@ export const getSettingsLayoutData = async (
   // Resolve the workspace to display in the shell. Prefer the last active workspace when it belongs
   // to the accessible list; otherwise fall back to the first accessible workspace so the shell
   // always has something to show.
-  const resolvedWorkspaceId =
-    activeWorkspaceId && workspaces.some((w) => w.id === activeWorkspaceId)
-      ? activeWorkspaceId
-      : workspaces[0]?.id;
+  const resolvedWorkspaceId = pickActiveWorkspaceId(workspaces, activeWorkspaceId);
   // Full workspace object (not just id/name) so the shell can supply the WorkspaceContext.
   const currentWorkspace = resolvedWorkspaceId ? await getWorkspace(resolvedWorkspaceId) : null;
   const isOwnerOrManager = membership.role === "owner" || membership.role === "manager";

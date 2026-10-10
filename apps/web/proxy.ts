@@ -8,6 +8,7 @@ import { FORMBRICKS_ORGANIZATION_ID_COOKIE, FORMBRICKS_WORKSPACE_ID_COOKIE } fro
 import { FORMBRICKS_CLIENT_IP_HEADER, resolveClientIp } from "@/lib/utils/client-ip";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import { getProxySession } from "@/modules/auth/lib/proxy-session";
+import { MARKETING_LINKS_ROUTE, isMarketingLinkPath } from "@/modules/settings/lib/marketing-redirects";
 
 const handleAuth = async (request: NextRequest): Promise<NextResponse | null> => {
   const session = await getProxySession(request);
@@ -105,6 +106,15 @@ export const proxy = async (originalRequest: NextRequest) => {
   // Handle authentication
   const authResponse = await handleAuth(request);
   if (authResponse) return authResponse;
+
+  // ID-free marketing links (/billing, /contacts, ...) are all served by one route handler, which
+  // resolves the user's organization and workspace (see modules/settings/lib/marketing-redirects.ts).
+  const { pathname, search } = request.nextUrl;
+  if (isMarketingLinkPath(pathname)) {
+    return NextResponse.rewrite(new URL(`${MARKETING_LINKS_ROUTE}${pathname}${search}`, request.url), {
+      request: { headers: request.headers },
+    });
+  }
 
   // Remember the active workspace (and organization) so the workspace-agnostic settings shell can
   // resolve it server-side (localStorage is browser-only). Mirrors the /workspaces/[workspaceId] and

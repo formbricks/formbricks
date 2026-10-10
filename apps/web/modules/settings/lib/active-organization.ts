@@ -1,0 +1,85 @@
+import "server-only";
+import { cookies } from "next/headers";
+import { getOrganizationsByUserId } from "@/app/(app)/workspaces/[workspaceId]/lib/organization";
+import { getWorkspacesByUserId } from "@/app/(app)/workspaces/[workspaceId]/lib/workspace";
+import { FORMBRICKS_ORGANIZATION_ID_COOKIE, FORMBRICKS_WORKSPACE_ID_COOKIE } from "@/lib/localStorage";
+import { getWorkspace } from "@/lib/workspace/service";
+
+/**
+ * Resolves the organization for the routes that carry none in the URL (account settings, marketing
+ * links like /billing), so opening one keeps the user on the organization they are in instead of
+ * switching a multi-organization user to their first one.
+ *
+ * The organization cookie wins when present: the proxy only keeps it while an organization-scoped
+ * page (e.g. the landing page of an organization with no workspace yet) was visited after the last
+ * workspace. Otherwise the organization of the last active workspace is the one the user is in.
+ *
+ * Both cookies outlive leaving an organization and the workspace cookie outlives deleting a
+ * workspace, so each is only trusted while it still resolves to an organization the user is a
+ * member of.
+ */
+export const resolveActiveOrganizationId = async (
+  userId: string,
+  activeWorkspaceId: string | undefined,
+  activeOrganizationId: string | undefined
+): Promise<string | undefined> => {
+  const [organizations, activeWorkspace] = await Promise.all([
+    getOrganizationsByUserId(userId),
+    activeWorkspaceId ? getWorkspace(activeWorkspaceId) : null,
+  ]);
+
+  if (activeOrganizationId && organizations.some((org) => org.id === activeOrganizationId)) {
+    return activeOrganizationId;
+  }
+
+  if (activeWorkspace && organizations.some((org) => org.id === activeWorkspace.organizationId)) {
+    return activeWorkspace.organizationId;
+  }
+
+  return organizations[0]?.id;
+};
+
+/** `resolveActiveOrganizationId` fed from the request's active-context cookies (set by the proxy). */
+export const getActiveOrganizationIdForUser = async (userId: string): Promise<string | undefined> => {
+  const cookieStore = await cookies();
+  return resolveActiveOrganizationId(
+    userId,
+    cookieStore.get(FORMBRICKS_WORKSPACE_ID_COOKIE)?.value,
+    cookieStore.get(FORMBRICKS_ORGANIZATION_ID_COOKIE)?.value
+  );
+};
+
+/**
+ * The workspace to open inside an organization: the last active workspace while the user can still
+ * reach it there, otherwise the first accessible one. `workspaces` must be the user's accessible
+ * workspaces of that organization, so a cookie pointing at a deleted workspace or at a workspace of
+ * another organization never wins.
+ */
+export const pickActiveWorkspaceId = (
+  workspaces: readonly { id: string }[],
+  activeWorkspaceId: string | undefined
+): string | undefined =>
+  activeWorkspaceId && workspaces.some((workspace) => workspace.id === activeWorkspaceId)
+    ? activeWorkspaceId
+    : workspaces[0]?.id;
+
+/** `pickActiveWorkspaceId` over the user's accessible workspaces of `organizationId`. */
+export const resolveActiveWorkspaceId = async (
+  userId: string,
+  organizationId: string,
+  activeWorkspaceId: string | undefined
+): Promise<string | undefined> =>
+  pickActiveWorkspaceId(await getWorkspacesByUserId(userId, organizationId), activeWorkspaceId);
+
+/** `resolveActiveWorkspaceId` fed from the request's workspace cookie (set by the proxy). */
+export const getActiveWorkspaceIdForUser = async (
+  userId: string,
+  organizationId: string
+): Promise<string | undefined> => {
+  const cookieStore = await cookies();
+  return resolveActiveWorkspaceId(
+    userId,
+    organizationId,
+    cookieStore.get(FORMBRICKS_WORKSPACE_ID_COOKIE)?.value
+  );
+};
