@@ -33,6 +33,7 @@ import { useLiveWorkspaceCustomCss } from "@/modules/custom-css/components/hooks
 import { getCustomCssSource, toCustomCssDraft } from "@/modules/custom-css/components/lib/draft";
 import { type TSurveyCustomCssEditorConfig } from "@/modules/custom-css/components/types";
 import { isSurveyCustomCssApplied } from "@/modules/custom-css/lib/survey-css-gate";
+import type { TSurveyDataRetentionContext } from "@/modules/ee/data-retention/types";
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { ElementsView } from "@/modules/survey/editor/components/elements-view";
@@ -100,6 +101,8 @@ interface SurveyEditorProps {
   surveyAccess: TSurveyAccess | null;
   ownerName: string | null;
   customCssEditor: TSurveyCustomCssEditorConfig;
+  /** Null when the organisation isn't entitled to data retention. */
+  dataRetention: TSurveyDataRetentionContext;
 }
 
 export const SurveyEditor = ({
@@ -137,6 +140,7 @@ export const SurveyEditor = ({
   surveyAccess,
   ownerName,
   customCssEditor,
+  dataRetention,
 }: Readonly<SurveyEditorProps>) => {
   const isFollowUpsTabVisible = shouldShowFollowUpsTab({
     followUpCount: survey.followUps.length,
@@ -418,6 +422,7 @@ export const SurveyEditor = ({
 
           {activeView === "settings" && (
             <SettingsView
+              dataRetention={dataRetention}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurveyNonNull}
               actionClasses={actionClasses}

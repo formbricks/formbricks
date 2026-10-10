@@ -33,6 +33,8 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   Dashboard: "direct_authorization_resource",
   DashboardWidget: "parent_derived_or_data_integrity",
   DataMigration: "public_or_out_of_scope",
+  // A system queue of cleanup work (Hub records, storage files) left by deletes; no user reads it.
+  DeletionCleanup: "authentication_or_application",
   Display: "parent_derived_or_data_integrity",
   EmbeddedData: "parent_derived_or_data_integrity",
   FeedbackDirectory: "direct_authorization_resource",
@@ -50,6 +52,13 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   PasswordResetToken: "authentication_or_application", // NOSONAR
   Response: "direct_authorization_resource",
   ResponseQuotaLink: "parent_derived_or_data_integrity",
+  // Data retention (ENG-3697) is organisation configuration and its history: every row is authorized
+  // through its organisation (and, for exemptions, the survey's `read` too), never as an ACL of its own.
+  RetentionExemption: "parent_derived_or_data_integrity",
+  RetentionNotice: "parent_derived_or_data_integrity",
+  RetentionPolicy: "parent_derived_or_data_integrity",
+  RetentionRun: "parent_derived_or_data_integrity",
+  RetentionRunItem: "parent_derived_or_data_integrity",
   Segment: "workspace_inherited_resource",
   Session: "authentication_or_application",
   Survey: "direct_authorization_resource",
@@ -108,6 +117,9 @@ export const AUDIT_TARGET_AUTHORIZATION_RESOURCE_INVENTORY = {
   organization: "direct_authorization_resource",
   quota: "parent_derived_or_data_integrity",
   response: "direct_authorization_resource",
+  retentionExemption: "parent_derived_or_data_integrity",
+  retentionPolicy: "parent_derived_or_data_integrity",
+  retentionRun: "parent_derived_or_data_integrity",
   segment: "workspace_inherited_resource",
   survey: "direct_authorization_resource",
   tag: "workspace_inherited_resource",

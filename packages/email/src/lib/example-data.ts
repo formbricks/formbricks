@@ -37,6 +37,34 @@ export const exampleData = {
     securitySettingsLink: "https://app.formbricks.com/account/settings/profile",
   },
 
+  memberRetentionNoticeEmail: {
+    organizationName: "Acme",
+    deactivateDate: "Dec 7, 2026",
+    loginLink: "https://app.formbricks.com/auth/login",
+  },
+
+  surveyRetentionNoticeEmail: {
+    organizationName: "Acme",
+    responseDeletions: [
+      {
+        name: "Customer Satisfaction Survey",
+        url: "https://app.formbricks.com/workspaces/example-workspace-id/surveys/example-survey-id/summary",
+        count: "1,204",
+        deleteDate: "Dec 7, 2026",
+      },
+    ],
+    archivedSurveys: [
+      {
+        name: "Website Feedback 2023",
+        url: "https://app.formbricks.com/workspaces/example-workspace-id/surveys/example-survey-id-2/summary",
+        archiveDate: "Dec 7, 2026",
+        deleteDate: "Jan 6, 2027",
+      },
+    ],
+    settingsLink:
+      "https://app.formbricks.com/organizations/example-organization-id/settings/data-retention/exemptions",
+  },
+
   ssoSignInHintEmail: {
     providerNames: ["Microsoft"],
     loginLink: "https://app.formbricks.com/auth/login",

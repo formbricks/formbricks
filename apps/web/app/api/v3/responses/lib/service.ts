@@ -8,8 +8,11 @@ import { type TKeysetCursor, keysetOrderBy, keysetPagePredicate } from "@/app/ap
 import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation";
 import { deleteDisplay } from "@/lib/display/service";
 import { inlineSurveyEmbeddedFields, selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
+import { deleteResponsesInTransaction } from "@/lib/response/delete-responses";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { andVisibleSurveys, visibleSurveySqlPredicate } from "@/lib/survey/visibility/predicate";
+import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
+import { enqueueResponsesDeletionCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
 import { collectResponseFileUrls, getSurveyFileUploadElementIds } from "@/modules/storage/utils";
 import type { TV3ResponsesFilter } from "./parse-v3-responses-list-query";
@@ -249,82 +252,53 @@ export type TBatchDeleteResult = {
  * Responses are deleted before displays. Both orders are correct — `Response_displayId_fkey` is
  * `ON DELETE SET NULL`, so removing a display first nulls the referencing rows rather than failing —
  * but that null-out is a wasted write pass over rows about to be deleted anyway, and it touches the
- * unique index on `displayId`. This order also matches the single delete. Files are collected before
- * either and removed only after the transaction commits, for the same reason as the single delete.
+ * unique index on `displayId`. This order also matches the single delete.
+ *
+ * What the rows leave outside the database — their files and their Hub records — is queued in the same
+ * transaction (`enqueueResponsesDeletionCleanups`, per survey): a delete that commits always gets its
+ * cleanup, retried until done, and one that rolls back queues nothing. The files are drained straight
+ * after commit, as before; the Hub records a few minutes later, once any record still on its way has
+ * landed. A drain that fails here leaves the rest to the drain job and never fails the request: the rows
+ * are already gone.
  */
 export async function deleteScopedResponses(
   responseIds: string[],
   { visibleSurveyWhere = {}, workspaceId }: TWorkspaceScope
 ): Promise<TBatchDeleteResult> {
-  let outcome: TBatchDeleteResult & { fileUrls: string[] };
+  let outcome: TBatchDeleteResult & { drainNowIds: string[] };
 
   try {
     outcome = await prisma.$transaction(async (tx) => {
-      // Scoped read first: the file URLs live inside `response.data` and the display ids on the rows,
-      // and both are gone once the rows are.
-      const rows = await tx.response.findMany({
-        where: { id: { in: responseIds }, survey: { workspaceId, ...andVisibleSurveys(visibleSurveyWhere) } },
-        select: { id: true, displayId: true, data: true, surveyId: true },
+      const { deleted, deletedIds, bySurvey } = await deleteResponsesInTransaction(tx, {
+        id: { in: responseIds },
+        survey: { workspaceId, ...andVisibleSurveys(visibleSurveyWhere) },
       });
+      if (bySurvey.length === 0) return { deleted, deletedIds, drainNowIds: [] };
 
-      if (rows.length === 0) {
-        return { deleted: 0, deletedIds: [], fileUrls: [] };
-      }
-
-      // One read per distinct survey rather than per response: a batch may span several surveys in the
-      // workspace, and at 100 ids the per-row form would be 100 queries for a handful of answers.
-      const surveys = await tx.survey.findMany({
-        where: { id: { in: [...new Set(rows.map((row) => row.surveyId))] } },
-        select: { id: true, blocks: true, questions: true },
+      const { organizationId } = await tx.workspace.findUniqueOrThrow({
+        where: { id: workspaceId },
+        select: { organizationId: true },
       });
-      const uploadElementIds = new Map(
-        surveys.map((survey) => [
-          survey.id,
-          getSurveyFileUploadElementIds({ blocks: survey.blocks, questions: survey.questions }),
-        ])
-      );
-
-      const fileUrls = rows.flatMap((row) =>
-        collectResponseFileUrls(
-          row.data,
-          uploadElementIds.get(row.surveyId) ?? new Set<string>(),
-          row.surveyId
-        )
-      );
-
-      // Responses before displays — see the note above. Not a correctness constraint: the FK is
-      // SET NULL, so the reverse order also works, it just updates rows on their way out.
-      const { count } = await tx.response.deleteMany({
-        where: { id: { in: responseIds }, survey: { workspaceId, ...andVisibleSurveys(visibleSurveyWhere) } },
+      const { drainNowIds } = await enqueueResponsesDeletionCleanups(tx, {
+        organizationId,
+        workspaceId,
+        surveys: bySurvey,
       });
-
-      const displayIds = rows
-        .map((row) => row.displayId)
-        .filter((displayId): displayId is string => displayId !== null);
-
-      if (displayIds.length > 0) {
-        await tx.display.deleteMany({ where: { id: { in: displayIds } } });
-      }
-
-      return { deleted: count, deletedIds: rows.map((row) => row.id), fileUrls };
+      return { deleted, deletedIds, drainNowIds };
     });
   } catch (error) {
     rethrowScopedPrismaError(error);
   }
 
-  const { fileUrls, ...result } = outcome;
+  const { drainNowIds, ...result } = outcome;
 
-  if (fileUrls.length > 0) {
-    try {
-      await deleteResponseFileUrls(fileUrls, workspaceId);
-    } catch (error) {
-      // The rows are already gone and the caller's request succeeded; orphaned objects are a
-      // storage-cleanup problem, not a reason to report a failed delete. Same call as the single delete.
-      logger.error(
-        { err: error, workspaceId, responseCount: result.deleted, fileCount: fileUrls.length },
-        "V3 batch response file cleanup failed"
-      );
-    }
+  try {
+    await drainDeletionCleanups({ ids: drainNowIds });
+  } catch (error) {
+    logger.error(
+      { err: error, workspaceId, responseCount: result.deleted },
+      "Deferred deleted responses' file cleanup to the drain job"
+    );
   }
 
   return result;

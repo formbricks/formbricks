@@ -1,0 +1,34 @@
+"use client";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getRetentionPolicies, updateRetentionPolicies } from "../lib/api-client";
+import { retentionHealthKeys, retentionPolicyKeys } from "../lib/query";
+import type { TRetentionPoliciesPatch } from "../types";
+
+/** The organisation's three policies. */
+export const useRetentionPolicies = ({ organizationId }: Readonly<{ organizationId: string }>) =>
+  useQuery({
+    queryKey: retentionPolicyKeys.detail(organizationId),
+    queryFn: ({ signal }) => getRetentionPolicies({ organizationId, signal }),
+  });
+
+/**
+ * Change one policy. The response is the whole document, so it replaces the cached one without a
+ * refetch; on failure the cache is refetched in case the server state moved.
+ */
+export const useUpdateRetentionPolicy = ({ organizationId }: Readonly<{ organizationId: string }>) => {
+  const queryClient = useQueryClient();
+  const queryKey = retentionPolicyKeys.detail(organizationId);
+  return useMutation({
+    mutationFn: (patch: TRetentionPoliciesPatch) => updateRetentionPolicies({ organizationId, patch }),
+    // A read already in flight (a window-focus refetch) could land after the change and put the old
+    // document back, so it is cancelled first.
+    onMutate: () => queryClient.cancelQueries({ queryKey }),
+    onSuccess: (policies) => {
+      queryClient.setQueryData(queryKey, policies);
+      // Switching a policy on or off changes which banners apply.
+      void queryClient.invalidateQueries({ queryKey: retentionHealthKeys.detail(organizationId) });
+    },
+    onError: () => queryClient.invalidateQueries({ queryKey }),
+  });
+};

@@ -462,6 +462,8 @@ model Survey {
   /// [SurveyLinkMetadata]
   metadata                    Json                              @default("{}")
   feedbackSourceMappings      FeedbackSourceFormbricksMapping[]
+  retentionExemptions         RetentionExemption[]
+  retentionNotices            RetentionNotice[]
 
   slug String? @unique
 
@@ -734,6 +736,10 @@ model Organization {
   teams                 Team[]
   apiKeys               ApiKey[]
   feedbackDirectories   FeedbackDirectory[]
+  retentionPolicies     RetentionPolicy[]
+  retentionExemptions   RetentionExemption[]
+  retentionRuns         RetentionRun[]
+  retentionNotices      RetentionNotice[]
 }
 
 /// Stores billing and Stripe synchronization data for an organization.
@@ -1245,37 +1251,49 @@ model User {
   legacyEmailVerifiedAt DateTime? @map(name: "email_verified_at") @ignore
 
   twoFactorSecret           String?
-  twoFactorEnabled          Boolean             @default(false)
+  twoFactorEnabled          Boolean              @default(false)
   backupCodes               String?
   password                  String?
-  identityProvider          IdentityProvider    @default(email)
+  identityProvider          IdentityProvider     @default(email)
   identityProviderAccountId String?
   memberships               Membership[]
   accounts                  Account[]
   sessions                  Session[]
   twoFactor                 TwoFactor?
-  oauthClients              oauthClient[]       @relation("OAuthClientUser")
-  oauthAccessTokens         oauthAccessToken[]  @relation("OAuthAccessTokenUser")
-  oauthRefreshTokens        oauthRefreshToken[] @relation("OAuthRefreshTokenUser")
-  oauthConsents             oauthConsent[]      @relation("OAuthConsentUser")
+  oauthClients              oauthClient[]        @relation("OAuthClientUser")
+  oauthAccessTokens         oauthAccessToken[]   @relation("OAuthAccessTokenUser")
+  oauthRefreshTokens        oauthRefreshToken[]  @relation("OAuthRefreshTokenUser")
+  oauthConsents             oauthConsent[]       @relation("OAuthConsentUser")
   passwordResetToken        PasswordResetToken?
   groupId                   String?
-  invitesCreated            Invite[]            @relation("inviteCreatedBy")
-  invitesAccepted           Invite[]            @relation("inviteAcceptedBy")
+  invitesCreated            Invite[]             @relation("inviteCreatedBy")
+  invitesAccepted           Invite[]             @relation("inviteAcceptedBy")
   /// [UserNotificationSettings]
-  notificationSettings      Json                @default("{}")
+  notificationSettings      Json                 @default("{}")
   /// [Locale]
-  locale                    String              @default("en-US")
-  surveys                   Survey[]            @relation("SurveyCreator")
-  ownedSurveys              Survey[]            @relation("SurveyOwner")
-  charts                    Chart[]             @relation("chartCreatedBy")
-  dashboards                Dashboard[]         @relation("dashboardCreatedBy")
+  locale                    String               @default("en-US")
+  surveys                   Survey[]             @relation("SurveyCreator")
+  ownedSurveys              Survey[]             @relation("SurveyOwner")
+  charts                    Chart[]              @relation("chartCreatedBy")
+  dashboards                Dashboard[]          @relation("dashboardCreatedBy")
   feedbackSources           FeedbackSource[]
   teamUsers                 TeamUser[]
-  workflows                 Workflow[]          @relation("workflowCreatedBy")
-  workflowVersionsPublished WorkflowVersion[]   @relation("workflowVersionPublishedBy")
+  workflows                 Workflow[]           @relation("workflowCreatedBy")
+  workflowVersionsPublished WorkflowVersion[]    @relation("workflowVersionPublishedBy")
+  retentionPoliciesUpdated  RetentionPolicy[]    @relation("retentionPolicyUpdatedBy")
+  exemptionsCreated         RetentionExemption[] @relation("retentionExemptionCreatedBy")
+  exemptionsRevoked         RetentionExemption[] @relation("retentionExemptionRevokedBy")
+  retentionNotices          RetentionNotice[]
   lastLoginAt               DateTime?
-  isActive                  Boolean             @default(true)
+  isActive                  Boolean              @default(true)
+  /// When an admin last reactivated this user. Restarts the members retention clock (ENG-3713)
+  /// without touching `lastLoginAt`, which the member list, usage counts and APIs report as a real
+  /// sign-in.
+  reactivatedAt             DateTime?
+  /// When the user last started or renewed a session (Better Auth `databaseHooks.session`), on the
+  /// database clock and never moved backwards. The members retention clock reads it: sessions are
+  /// deleted on sign-out and expiry, so their own timestamps can't serve as a record of activity.
+  lastActiveAt              DateTime?
 
   // ENG-2247: marks the ONE account admitted by the fresh-instance exception (closed instance, no
   // invite, zero users). The unique index is the serialization: two concurrent uninvited sign-ups
@@ -1658,6 +1676,47 @@ enum HubFieldType {
   number
   boolean
   date
+}
+
+enum DeletionCleanupKind {
+  /// Every Hub record of a deleted survey.
+  hubSurvey
+  /// The Hub records of specific deleted responses.
+  hubResponses
+  /// Named storage objects (response file URLs) of deleted responses or surveys.
+  storageFiles
+  /// A deleted survey's whole upload folder, `{workspaceId}/private/surveys/{surveyId}/`.
+  storageSurveyFolder
+}
+
+/// Work left over after a delete commits (ENG-3612, ENG-3614: deleted means deleted): Hub records and
+/// storage files that can't be removed inside the database transaction. A row is written in the same
+/// transaction as the delete, so a delete that commits always gets its cleanup and one that rolls back
+/// queues nothing. A worker drains it with retries, never giving up, and deletes each row once done.
+model DeletionCleanup {
+  id             String              @id @default(cuid(2))
+  createdAt      DateTime            @default(now()) @map(name: "created_at")
+  updatedAt      DateTime            @updatedAt @map(name: "updated_at")
+  kind           DeletionCleanupKind
+  /// Scoping and logs. Not foreign keys: the rows they name are usually gone already.
+  organizationId String
+  workspaceId    String
+  surveyId       String
+  /// Hub kinds: the organisation's feedback directories, read inside the delete's transaction.
+  tenantIds      String[]            @default([])
+  /// `hubResponses`: the deleted responses whose records go.
+  responseIds    String[]            @default([])
+  /// `storageFiles`: the object keys or URLs to delete.
+  fileKeys       String[]            @default([])
+  attempts       Int                 @default(0)
+  /// Not drained before this, so a late pipeline write can't slip in behind a survey's cleanup.
+  nextAttemptAt  DateTime            @default(now())
+  /// The last failure: a short code and message, never record or file content.
+  lastError      String?
+
+  @@index([nextAttemptAt])
+  /// An organisation's oldest pending cleanup, for the Data retention health banner.
+  @@index([organizationId, createdAt])
 }
 
 /// A feedback source — connects external data into Unify Feedback for record creation.

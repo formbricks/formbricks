@@ -220,6 +220,42 @@ screen names the response scopes. Access to responses starts only once the user 
   scopes to it yourself.
 </Note>
 
+### Deleted surveys and responses leave nothing behind (no action required)
+
+Deleting a survey, by hand or through the 30-day archive purge, now also removes its records from the Hub
+and retries any upload or Hub record it could not remove at first. So does deleting responses in bulk
+through the v3 API (`POST /api/v3/responses/batch-delete`), which used to leave the Hub copies in place;
+deleting a single response still does (ENG-2855). The work is queued in the same database
+transaction as the delete and worked off by a new background job, `deletion-cleanup.drain`, every five
+minutes (see [Job Runner](/self-hosting/configuration/job-runner)). The archive purge also skips any survey
+held by a data retention exemption.
+
+Two migrations add new, empty tables; each takes only brief locks and gives up after five seconds rather
+than queueing behind a long query:
+
+| Migration | What it does |
+| --- | --- |
+| `20261007120000_add_data_retention_tables` | Adds the data retention tables and two nullable columns, `User.reactivatedAt` and `User.lastActiveAt`, filling `lastActiveAt` from the sessions signed in at the time. |
+| `20261008120000_add_deletion_cleanup` | Adds the `DeletionCleanup` queue. |
+
+### Data retention (Enterprise, no action required)
+
+Data retention policies run as a nightly background job, `data-retention.sweep`, at 01:00 in
+`SURVEY_SCHEDULING_TIME_ZONE`. Nothing changes until an owner switches a policy on. What it needs:
+
+- **The Job Runner** (Redis), like the other background jobs. Without it the Data retention page tells
+  owners and managers that the nightly run can't happen.
+- **SMTP**, so people are warned before their data is removed. Without it notices are recorded but not
+  sent, the notice period still runs in full, and the page says so.
+
+A policy never acts on the night it is switched on: notices go out first, and nothing is deleted,
+archived or deactivated until its notice has run for the notice period. If the job hasn't run for an
+organization for three days, its notice period starts again before anything is acted on.
+
+The members policy counts a member as active when they sign in. A signed-in session is renewed once it
+is a day old, and a renewal counts too, but only when `SESSION_MAX_AGE` is longer than a day (one day,
+the default, ends the session before it is ever renewed). With the default, only sign-ins count.
+
 ## v6
 
 Formbricks v6 replaces the legacy authorization evaluator with SpiceDB, maintained by AuthZed. PostgreSQL

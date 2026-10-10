@@ -7,6 +7,7 @@ import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { WEBAPP_URL } from "@/lib/constants";
 import { createEmailToken } from "@/lib/jwt";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
+import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
 import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import {
@@ -268,36 +269,9 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
   // MCP OAuth grants the account minted while its address was unproven. Without this the sweep is
   // incomplete in the one direction that outlives it: `oauthProvider` is registered unconditionally
   // (auth.ts) with open dynamic client registration, so a holder of a live session can bank a refresh
-  // token good for 30 days — far longer than the session revoked below, and unreachable by it because
-  // both token tables' `session` FK is `onDelete: SetNull`, which blanks the liveness check rather than
-  // failing it.
-  //
-  // The REFRESH token is the one that matters and the one this actually stops: `handleRefreshTokenGrant`
-  // reads `revoked`, so revoking it ends the 30-day persistence.
-  //
-  // ACCESS tokens are a different story, and worth stating plainly rather than implying this covers them.
-  // Our config sets `resources` and never sets `disableJwtPlugin`, so `isJwtAccessToken` is always true
-  // and every access token is a self-contained JWT: `createJwtAccessToken` signs without persisting, so
-  // there is normally no row here to update, and `/api/mcp` verifies bearers against JWKS
-  // (`modules/mcp/auth.ts`) without reading this table at all. Upstream's own revoke endpoint says as
-  // much — "JWT access tokens are self-contained and cannot be revoked server-side". The write below is
-  // therefore defence for the opaque-token configuration only; the residual is that a squatter's JWT
-  // stays valid for up to `accessTokenExpiresIn` (15 min) after recovery. Shortening that, or checking
-  // revocation at the resource server, is the only thing that would close it.
-  //
-  // Consent goes too: `/authorize` skips the consent screen when a matching `oauthConsent` row exists,
-  // so leaving it would let a still-cookie-cached session (see session-revocation.ts) silently mint a
-  // fresh 30-day refresh token and undo the revocation above.
-  const revokedAt = new Date();
-  const accessRows = await tx.oauthAccessToken.updateMany({
-    where: { userId: user.id, revoked: null },
-    data: { revoked: revokedAt },
-  });
-  const refreshRows = await tx.oauthRefreshToken.updateMany({
-    where: { userId: user.id, revoked: null },
-    data: { revoked: revokedAt },
-  });
-  const consentRows = await tx.oauthConsent.deleteMany({ where: { userId: user.id } });
+  // token good for 30 days — far longer than the session revoked below. What revoking covers, and the
+  // 15-minute JWT access-token residual it leaves, is on `revokeAllUserOAuthGrants`.
+  const oauth = await revokeAllUserOAuthGrants(tx, user.id);
 
   // The keys this user minted (ENG-2634). Ids first: `deleteMany` reports only a count, and the caller
   // needs the ids to drop the SpiceDB relationships after commit. Deleting inside the transaction means
@@ -310,9 +284,9 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
     legacyPasswordCleared: legacyPasswordRows.count > 0,
     twoFactorRowsRemoved: twoFactorRows.count,
     legacyTwoFactorDisarmed: legacyTwoFactorRows.count > 0,
-    oauthAccessTokensRevoked: accessRows.count,
-    oauthRefreshTokensRevoked: refreshRows.count,
-    oauthConsentsRevoked: consentRows.count,
+    oauthAccessTokensRevoked: oauth.accessTokensRevoked,
+    oauthRefreshTokensRevoked: oauth.refreshTokensRevoked,
+    oauthConsentsRevoked: oauth.consentsDeleted,
     apiKeysRevoked: apiKeyRows.count,
     revokedApiKeyIds: apiKeys.map(({ id }) => id),
   };

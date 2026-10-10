@@ -1,12 +1,40 @@
 import type { JobSchedulerTemplateOptions, JobsOptions } from "bullmq";
 
+/** The default queue: every job runs here unless its definition names a dedicated queue. */
 export const JOBS_QUEUE_NAME = "background-jobs";
+
+/**
+ * AuthZed projection delivery gets a queue of its own, served by one dedicated worker in every jobs
+ * runtime. Every authorization check fails closed once a revocation has waited in the outbox longer than
+ * `AUTHZED_OUTBOX_REVOCATION_MAX_AGE_MS` (apps/web), so delivery must never queue behind a long sweep on
+ * the default queue's worker slots.
+ */
+export const AUTHZED_PROJECTION_QUEUE_NAME = "authzed-projection";
+
+/**
+ * The nightly data retention sweep gets a queue of its own too: it may keep starting work for half an
+ * hour, and on the default queue (one worker, one job at a time by default) every webhook delivery,
+ * response pipeline run and cleanup drain would wait behind it.
+ */
+export const DATA_RETENTION_QUEUE_NAME = "data-retention";
+
+/** Queues that each get exactly one worker of their own, outside `workerCount`/`concurrency`. */
+export const DEDICATED_JOBS_QUEUE_NAMES = [AUTHZED_PROJECTION_QUEUE_NAME, DATA_RETENTION_QUEUE_NAME] as const;
+
+export const JOBS_QUEUE_NAMES = [JOBS_QUEUE_NAME, ...DEDICATED_JOBS_QUEUE_NAMES] as const;
+
+export type TJobsQueueName = (typeof JOBS_QUEUE_NAMES)[number];
+
+export type TDedicatedJobsQueueName = (typeof DEDICATED_JOBS_QUEUE_NAMES)[number];
+
 export const JOBS_PREFIX = "{formbricks:jobs}";
 
 export const JOB_NAMES = {
   authzedProjectionDelivery: "authzed-projection.deliver",
   authzedReconciliationAudit: "authzed-reconciliation.audit",
   authzedSurveyAudit: "authzed-survey.audit",
+  dataRetentionSweep: "data-retention.sweep",
+  deletionCleanupDrain: "deletion-cleanup.drain",
   testLog: "system.test-log",
   responsePipeline: "response-pipeline.process",
   surveyScheduling: "survey-scheduling.reconcile",

@@ -37,8 +37,8 @@ const toColumnNames = (fields: unknown[]): string[] =>
 
 /**
  * Database columns of the unique indexes whose name Prisma's default rule cannot round-trip:
- * composite or non-`id` primary keys, columns containing `_`, and names Postgres truncated to 63
- * bytes. Every other unique index is named `${table}_${column1}_…_${columnN}_key` and is parsed by
+ * composite or non-`id` primary keys, columns containing `_`, names Postgres truncated to 63 bytes,
+ * and hand-written partial indexes whose name describes their predicate. Every other unique index is named `${table}_${column1}_…_${columnN}_key` and is parsed by
  * `columnsFromIndexName`. `prisma-constraint.integration.test.ts` checks this against every unique
  * index in the live schema, so an index added without an entry here fails CI instead of silently
  * resolving to the wrong columns.
@@ -63,6 +63,8 @@ const UNIQUE_INDEX_COLUMNS: Readonly<Record<string, readonly string[]>> = {
   OrganizationBilling_stripe_customer_id_key: ["stripe_customer_id"],
   PasswordResetToken_token_hash_key: ["token_hash"],
   ResponseQuotaLink_pkey: ["responseId", "quotaId"],
+  // Partial (`WHERE "revokedAt" IS NULL`): the `active` suffix names the predicate, not a column.
+  RetentionExemption_surveyId_entity_active_key: ["surveyId", "entity"],
   SurveyLanguage_pkey: ["languageId", "surveyId"],
   TagsOnResponses_pkey: ["responseId", "tagId"],
   TeamUser_pkey: ["teamId", "userId"],

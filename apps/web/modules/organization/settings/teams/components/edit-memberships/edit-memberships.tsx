@@ -26,8 +26,10 @@ export const EditMemberships = async ({
   isAccessControlAllowed,
   isUserManagementDisabledFromUi,
 }: EditMembershipsProps) => {
-  const members = await getMembershipByOrganizationId(organization.id);
-  const invites = await getInvitesByOrganizationId(organization.id);
+  const [members, invites] = await Promise.all([
+    getMembershipByOrganizationId(organization.id),
+    getInvitesByOrganizationId(organization.id),
+  ]);
 
   if (!role) return null;
 

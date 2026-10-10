@@ -9,6 +9,7 @@ import {
   SURVEY_ARCHIVE_RETENTION_DAYS,
 } from "@/modules/survey/archive/lib/constants";
 import { deleteSurvey } from "@/modules/survey/lib/surveys";
+import { getSurveyPurgeEligibleWhere } from "./purge-eligibility";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -38,16 +39,17 @@ type TPurgeOutcome = "purged" | "skipped" | "failed";
  * Permanently delete one archived survey and record the audit event. Returns the outcome so the
  * caller can count purges and isolate failures without unwinding the batch:
  * - "purged":  the survey was deleted (audit failures are logged, not fatal — the row is already gone)
- * - "skipped": the survey was restored or already gone (no longer eligible, will not reappear)
- * - "failed":  a real deletion error; the caller excludes it from later batches this run
+ * - "skipped": the survey was restored, held by an exemption, or already gone (no longer eligible)
+ * - "failed":  a real deletion error
+ * The caller excludes skipped and failed surveys from later batches this run.
  */
 const purgeArchivedSurvey = async (survey: TExpiredSurvey, cutoff: Date): Promise<TPurgeOutcome> => {
   try {
-    // Guarded delete: the survey is re-checked (locked) inside deleteSurvey's transaction so a
-    // survey restored after this batch was selected is skipped, not permanently deleted.
-    await deleteSurvey(survey.id, { requireArchivedBefore: cutoff });
+    // Guarded delete: the survey is re-checked (locked) inside deleteSurvey's transaction so a survey
+    // restored or held after this batch was selected is skipped, not permanently deleted.
+    await deleteSurvey(survey.id, { purgeCutoff: cutoff });
   } catch (error) {
-    // Restored or already gone between selection and delete — no longer eligible, won't reappear.
+    // Restored, held or already gone between selection and delete: no longer eligible.
     if (error instanceof ResourceNotFoundError) {
       return "skipped";
     }
@@ -85,16 +87,17 @@ export const purgeExpiredArchivedSurveys = async (now: Date = new Date()): Promi
   const cutoff = getSurveyArchivePurgeCutoff(now);
   let purgedCount = 0;
   let batches = 0;
-  // Surveys that threw a non-recoverable error this run. Excluded from subsequent batches so a single
-  // poison-pill row cannot be re-selected forever (it sorts to the head of every archivedAt-asc page).
-  const failedSurveyIds = new Set<string>();
+  // Surveys attempted but not purged this run (failed, or found ineligible under the lock). Excluded
+  // from subsequent batches so a poison-pill row cannot be re-selected forever (it sorts to the head of
+  // every archivedAt-asc page).
+  const excludedSurveyIds = new Set<string>();
 
   while (batches < MAX_PURGE_BATCHES) {
     batches += 1;
     const expiredSurveys = await prisma.survey.findMany({
       where: {
-        archivedAt: { lt: cutoff },
-        ...(failedSurveyIds.size > 0 ? { id: { notIn: Array.from(failedSurveyIds) } } : {}),
+        ...getSurveyPurgeEligibleWhere(cutoff),
+        ...(excludedSurveyIds.size > 0 ? { id: { notIn: Array.from(excludedSurveyIds) } } : {}),
       },
       orderBy: { archivedAt: "asc" },
       take: SURVEY_ARCHIVE_PURGE_BATCH_SIZE,
@@ -113,8 +116,8 @@ export const purgeExpiredArchivedSurveys = async (now: Date = new Date()): Promi
       const outcome = await purgeArchivedSurvey(survey, cutoff);
       if (outcome === "purged") {
         purgedCount += 1;
-      } else if (outcome === "failed") {
-        failedSurveyIds.add(survey.id);
+      } else {
+        excludedSurveyIds.add(survey.id);
       }
     }
 

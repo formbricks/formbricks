@@ -1,4 +1,9 @@
-import { JOB_NAMES } from "@/src/constants";
+import {
+  AUTHZED_PROJECTION_QUEUE_NAME,
+  DATA_RETENTION_QUEUE_NAME,
+  JOB_NAMES,
+  type TJobsQueueName,
+} from "@/src/constants";
 import { type AnyBackgroundJobDefinition, toAnyBackgroundJobDefinition } from "@/src/contracts";
 import { createMissingOverrideHandler } from "@/src/processors/missing-override";
 import { type TGlobalScopeJobData, ZGlobalScopeJobData } from "@/src/types";
@@ -13,6 +18,12 @@ interface RecurringJobInput {
   /** Human-readable name used in log lines and error messages, e.g. "survey scheduling". */
   label: string;
   name: string;
+  /**
+   * A dedicated queue for the job, when it must never wait behind the default queue's work. Omitted means
+   * the default `background-jobs`. Moving an existing job is safe: its handle retires the schedule left
+   * on the default queue the next time it upserts (see `toRecurringJobHandle` in `queue.ts`).
+   */
+  queueName?: TJobsQueueName;
   /** Stable identity of the schedule in Redis. Changing it orphans the existing production schedule. */
   scheduleId: string;
 }
@@ -42,12 +53,14 @@ export interface RecurringJobDescriptor {
 export const defineRecurringJob = ({
   label,
   name,
+  queueName,
   scheduleId,
 }: RecurringJobInput): RecurringJobDescriptor => ({
   data: { scope: GLOBAL_SCOPE },
   definition: toAnyBackgroundJobDefinition({
     handle: createMissingOverrideHandler<TGlobalScopeJobData>(label, (data) => ({ scope: data.scope })),
     name,
+    queueName,
     schema: ZGlobalScopeJobData,
   }),
   label,
@@ -58,9 +71,11 @@ export const defineRecurringJob = ({
 
 /** Every recurring job in the system. Adding one here wires the registry, the producer and the exports. */
 export const recurringJobDescriptors = {
+  // Its own queue: a delivery stuck behind a long sweep makes every authorization check fail closed.
   authzedProjectionDelivery: defineRecurringJob({
     label: "AuthZed projection delivery",
     name: JOB_NAMES.authzedProjectionDelivery,
+    queueName: AUTHZED_PROJECTION_QUEUE_NAME,
     scheduleId: "authzed-projection-delivery",
   }),
   authzedReconciliationAudit: defineRecurringJob({
@@ -72,6 +87,18 @@ export const recurringJobDescriptors = {
     label: "AuthZed survey audit",
     name: JOB_NAMES.authzedSurveyAudit,
     scheduleId: "daily-authzed-survey-audit",
+  }),
+  // Its own queue: it may run for half an hour, and must not hold up the default queue's jobs.
+  dataRetentionSweep: defineRecurringJob({
+    label: "data retention sweep",
+    name: JOB_NAMES.dataRetentionSweep,
+    queueName: DATA_RETENTION_QUEUE_NAME,
+    scheduleId: "daily-data-retention-sweep",
+  }),
+  deletionCleanupDrain: defineRecurringJob({
+    label: "deletion cleanup drain",
+    name: JOB_NAMES.deletionCleanupDrain,
+    scheduleId: "deletion-cleanup-drain",
   }),
   surveyArchivePurge: defineRecurringJob({
     label: "survey archive purge",

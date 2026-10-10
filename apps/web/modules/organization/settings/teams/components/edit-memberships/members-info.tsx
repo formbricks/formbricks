@@ -1,5 +1,6 @@
 "use client";
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { TFunction } from "i18next";
 import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from "lucide-react";
 import { useState } from "react";
@@ -20,6 +21,7 @@ import { TInvite } from "@/modules/organization/settings/teams/types/invites";
 import { Badge } from "@/modules/ui/components/badge";
 import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { ReactivateMemberButton } from "./reactivate-member-button";
 
 /** The two row shapes this table mixes: accepted memberships and pending invites. */
 type TMemberRow = TMember | TInvite;
@@ -138,6 +140,7 @@ const getMemberColumns = ({
   isOwnerOrManager,
   isManager,
   doesOrgHaveMoreThanOneOwner,
+  canReactivate,
   lastSignInSort,
   onToggleLastSignInSort,
 }: Readonly<{
@@ -152,6 +155,11 @@ const getMemberColumns = ({
   isOwnerOrManager: boolean;
   isManager: boolean;
   doesOrgHaveMoreThanOneOwner: boolean;
+  /**
+   * Owners and managers (`organization.manage_access`), licensed or not: Reactivate is user management,
+   * so a member deactivated while the organisation held data retention can come back after it lapses.
+   */
+  canReactivate: boolean;
   lastSignInSort: TLastSignInSort | null;
   onToggleLastSignInSort: () => void;
 }>): TSettingsTableColumn<TMemberRow>[] => {
@@ -231,17 +239,30 @@ const getMemberColumns = ({
       // `align-middle` and leaving the buttons baseline-aligned rather than centred.
       align: "right",
       cell: (member) => (
-        <MemberActions
-          organization={organization}
-          member={isInvitee(member) ? undefined : member}
-          invite={isInvitee(member) ? member : undefined}
-          showDeleteButton={showDeleteButton(member, {
-            isOwnerOrManager,
-            isManager,
-            currentUserId,
-            doesOrgHaveMoreThanOneOwner,
-          })}
-        />
+        <div className="flex items-center justify-end gap-2">
+          {canReactivate &&
+          !isInvitee(member) &&
+          !member.isActive &&
+          // Managers don't act on owners, as with Delete; the API refuses it too.
+          !(isManager && member.role === "owner") ? (
+            <ReactivateMemberButton
+              organizationId={organization.id}
+              userId={member.userId}
+              name={member.name || member.email}
+            />
+          ) : null}
+          <MemberActions
+            organization={organization}
+            member={isInvitee(member) ? undefined : member}
+            invite={isInvitee(member) ? member : undefined}
+            showDeleteButton={showDeleteButton(member, {
+              isOwnerOrManager,
+              isManager,
+              currentUserId,
+              doesOrgHaveMoreThanOneOwner,
+            })}
+          />
+        </div>
       ),
     });
   }
@@ -285,34 +306,41 @@ export const MembersInfo = ({
 
   const doesOrgHaveMoreThanOneOwner = hasMoreThanOneActiveOwner(members);
 
+  // One client for the list's mutations (Reactivate), not one per row.
+  const [queryClient] = useState(() => new QueryClient({ defaultOptions: { mutations: { retry: false } } }));
+
   return (
-    <SettingsTable
-      columns={getMemberColumns({
-        t,
-        locale,
-        organization,
-        currentUserRole,
-        currentUserId,
-        isAccessControlAllowed,
-        isFormbricksCloud,
-        isUserManagementDisabledFromUi,
-        isOwnerOrManager,
-        isManager,
-        doesOrgHaveMoreThanOneOwner,
-        lastSignInSort,
-        onToggleLastSignInSort: toggleLastSignInSort,
-      })}
-      rows={allMembers}
-      getRowId={(member) => member.email}
-      // Effectively unreachable: whoever is looking at this page is themselves a member.
-      emptyMessage={t("common.no_results")}
-      // These two ids are what `organization.spec.ts` and `invite-existing-account.spec.ts` locate. Kept
-      // exactly where they were — on the row container and on each row — so this conversion needs no
-      // spec changes. `#singleMemberInfo` repeating per row is invalid HTML and worth retiring, but that
-      // is a spec change, so it stays a follow-up.
-      bodyProps={{ id: "membersInfoWrapper" }}
-      getRowProps={() => ({ id: "singleMemberInfo" })}
-      aria-label={t("workspace.settings.general.manage_members")}
-    />
+    <QueryClientProvider client={queryClient}>
+      <SettingsTable
+        columns={getMemberColumns({
+          t,
+          locale,
+          organization,
+          currentUserRole,
+          currentUserId,
+          isAccessControlAllowed,
+          isFormbricksCloud,
+          isUserManagementDisabledFromUi,
+          isOwnerOrManager,
+          isManager,
+          doesOrgHaveMoreThanOneOwner,
+          // "Reactivate" on inactive members (ENG-3610).
+          canReactivate: isOwnerOrManager,
+          lastSignInSort,
+          onToggleLastSignInSort: toggleLastSignInSort,
+        })}
+        rows={allMembers}
+        getRowId={(member) => member.email}
+        // Effectively unreachable: whoever is looking at this page is themselves a member.
+        emptyMessage={t("common.no_results")}
+        // These two ids are what `organization.spec.ts` and `invite-existing-account.spec.ts` locate. Kept
+        // exactly where they were — on the row container and on each row — so this conversion needs no
+        // spec changes. `#singleMemberInfo` repeating per row is invalid HTML and worth retiring, but that
+        // is a spec change, so it stays a follow-up.
+        bodyProps={{ id: "membersInfoWrapper" }}
+        getRowProps={() => ({ id: "singleMemberInfo" })}
+        aria-label={t("workspace.settings.general.manage_members")}
+      />
+    </QueryClientProvider>
   );
 };

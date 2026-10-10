@@ -12,6 +12,7 @@ import {
   DatabaseIcon,
   FoldersIcon,
   GlobeIcon,
+  HourglassIcon,
   KeyIcon,
   LanguagesIcon,
   ListChecksIcon,
@@ -394,6 +395,14 @@ export const SettingsSidebarContent = ({
       icon: <FoldersIcon className={iconClassName} />,
       hidden: isMember,
       disabled: !isOwnerOrManager,
+    },
+    {
+      id: "org-data-retention",
+      label: t("workspace.settings.data_retention.nav_label"),
+      href: organizationSettingsPath(organizationId, "data-retention"),
+      icon: <HourglassIcon className={iconClassName} />,
+      // Members read the policies and exemptions; History is owners and managers only (ENG-3695).
+      hidden: isBilling,
     },
     {
       id: "org-domain",

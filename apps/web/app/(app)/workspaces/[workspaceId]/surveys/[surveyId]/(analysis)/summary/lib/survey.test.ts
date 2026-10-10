@@ -45,7 +45,7 @@ beforeEach(() => {
   mockSurvey(surveyWithoutFileUpload);
   mockResponsePages();
   deleteResponseFileUrls.mockReset();
-  deleteResponseFileUrls.mockResolvedValue(undefined);
+  deleteResponseFileUrls.mockResolvedValue({ failed: [] });
 });
 
 describe("Tests for deleteResponsesAndDisplaysForSurvey service", () => {
@@ -123,6 +123,7 @@ describe("Tests for deleteResponsesAndDisplaysForSurvey service", () => {
       }) as never);
       deleteResponseFileUrls.mockImplementation(async () => {
         callOrder.push("storage");
+        return { failed: [] };
       });
 
       await deleteResponsesAndDisplaysForSurvey(surveyId);

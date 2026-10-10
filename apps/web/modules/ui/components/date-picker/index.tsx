@@ -45,6 +45,9 @@ interface DatePickerProps {
    * when this picker is embedded inside a control that already has one.
    */
   clearButtonClassName?: string;
+  /** Links the trigger to a field's description or error, e.g. from a form. */
+  "aria-describedby"?: string;
+  "aria-invalid"?: boolean;
 }
 
 export const DatePicker = ({
@@ -62,6 +65,8 @@ export const DatePicker = ({
   clearButtonId,
   clearButtonLabel,
   clearButtonClassName,
+  "aria-describedby": ariaDescribedBy,
+  "aria-invalid": ariaInvalid,
 }: Readonly<DatePickerProps>) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -76,6 +81,8 @@ export const DatePicker = ({
             type="button"
             variant="outline"
             disabled={disabled}
+            aria-describedby={ariaDescribedBy}
+            aria-invalid={ariaInvalid || undefined}
             className={cn("w-[280px] justify-start bg-white text-left font-normal", triggerClassName)}>
             <CalendarIcon className="mr-2 size-4 shrink-0" />
             <span className={cn("truncate", !label && "text-slate-500")}>

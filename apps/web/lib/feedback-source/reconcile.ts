@@ -1,5 +1,6 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
+import { mapWithConcurrency } from "@/lib/utils/map-with-concurrency";
 import {
   type HubFeedbackRecordResult,
   createFeedbackRecordsBatch,
@@ -208,28 +209,6 @@ const reconcileConflict = async (
   }
 
   return { status: "reconciled" };
-};
-
-/** Run `fn` over `items` with at most `limit` in flight, preserving input order in the output. */
-const mapWithConcurrency = async <TIn, TOut>(
-  items: TIn[],
-  limit: number,
-  fn: (item: TIn) => Promise<TOut>
-): Promise<TOut[]> => {
-  const results = new Array<TOut>(items.length);
-  let cursor = 0;
-
-  const worker = async (): Promise<void> => {
-    while (cursor < items.length) {
-      const index = cursor;
-      cursor += 1;
-      results[index] = await fn(items[index]);
-    }
-  };
-
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
-
-  return results;
 };
 
 /** One record Hub rejected as already existing, with its index in the input. */
