@@ -259,6 +259,61 @@ jobs:
             exit 1
           fi
 
+      # Dogfoods the post-deployment check (apps/deployment-check) against this already-booted instance:
+      # app, Postgres, Redis, authorization, a seeded workspace and API key are all here, so it costs no
+      # extra boot. File storage is not configured on this runner, so the storage check must take its
+      # CHECK_STORAGE=auto skip path, which is itself part of what this step proves.
+      - name: Install the deployment-check browser
+        if: steps.harness.outputs.present == 'true' && hashFiles('apps/deployment-check/package.json') != ''
+        run: pnpm --filter @formbricks/deployment-check exec playwright install --with-deps chromium
+        shell: bash
+
+      - name: Run the deployment check
+        if: steps.harness.outputs.present == 'true' && hashFiles('apps/deployment-check/package.json') != ''
+        shell: bash
+        env:
+          FORMBRICKS_URL: http://localhost:3000
+          CHECK_STORAGE: auto
+          REPORT_DIR: ${{ github.workspace }}/deployment-check-report
+        run: |
+          FORMBRICKS_WORKSPACE_ID=$(node -p "require('./docs/api-v3-reference/contract-tests/fixtures.json').workspaceId")
+          export FORMBRICKS_WORKSPACE_ID
+          FORMBRICKS_API_KEY="fbk_${SEED_API_KEY}"
+          export FORMBRICKS_API_KEY
+          pnpm --filter @formbricks/deployment-check check
+
+      # The check is only useful if it fails when the deployment is wrong. A bad key must fail the auth
+      # tier by name and skip everything that needs a key, and the run must exit non-zero.
+      - name: Verify the deployment check fails on an invalid API key
+        if: steps.harness.outputs.present == 'true' && hashFiles('apps/deployment-check/package.json') != ''
+        shell: bash
+        env:
+          FORMBRICKS_URL: http://localhost:3000
+          FORMBRICKS_API_KEY: fbk_not_a_real_key
+          REPORT_DIR: ${{ github.workspace }}/deployment-check-report-invalid-key
+        run: |
+          FORMBRICKS_WORKSPACE_ID=$(node -p "require('./docs/api-v3-reference/contract-tests/fixtures.json').workspaceId")
+          export FORMBRICKS_WORKSPACE_ID
+          set +e
+          pnpm --filter @formbricks/deployment-check check > invalid-key.log 2>&1
+          status=$?
+          set -e
+          cat invalid-key.log
+          if [ "${status}" -eq 0 ]; then
+            echo "::error::The deployment check passed with an invalid API key."
+            exit 1
+          fi
+          grep -q "API key invalid" invalid-key.log
+          grep -q "skipped: auth failed" invalid-key.log
+
+      - name: Upload deployment check report
+        if: always() && steps.harness.outputs.present == 'true'
+        uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
+        with:
+          name: deployment-check-report
+          if-no-files-found: ignore
+          path: deployment-check-report/
+
       - name: Set up Python
         if: steps.harness.outputs.present == 'true'
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
