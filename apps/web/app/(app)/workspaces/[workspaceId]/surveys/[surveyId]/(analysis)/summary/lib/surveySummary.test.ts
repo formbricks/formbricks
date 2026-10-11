@@ -1617,14 +1617,14 @@ describe("getResponsesForSummary", () => {
     // Verify that prisma.response.findMany was called twice (two batches)
     expect(prisma.response.findMany).toHaveBeenCalledTimes(2);
 
-    // Second call should have cursor set to last response ID of first batch
+    // Second call continues right after the last response of the first batch, in sort order
+    // (createdAt desc, id desc); cuid2 ids are not time-ordered, so no `id < cursor` range.
     expect(prisma.response.findMany).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
-        where: expect.objectContaining({
-          surveyId: "survey-1",
-          id: { lt: "response-4999" }, // Last ID from first batch
-        }),
+        cursor: { id: "response-4999" },
+        skip: 1,
+        where: expect.not.objectContaining({ id: expect.anything() }),
       })
     );
 
@@ -1664,13 +1664,13 @@ describe("getResponsesForSummary", () => {
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("response-2");
 
-    // Verify that prisma.response.findMany was called with cursor condition
+    // The cursor continues after that row in sort order and leaves the filter's where untouched.
     expect(prisma.response.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({
-          surveyId: "survey-1",
-          id: { lt: "cursor-response-id" },
-        }),
+        cursor: { id: "cursor-response-id" },
+        skip: 1,
+        where: { surveyId: "survey-1" },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       })
     );
   });

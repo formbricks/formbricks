@@ -1105,13 +1105,6 @@ export const getResponsesForSummary = reactCache(
         ...buildWhereClause(survey, filterCriteria),
       };
 
-      // Add cursor condition for cursor-based pagination
-      if (cursor) {
-        whereClause.id = {
-          lt: cursor, // Get responses with ID less than cursor (for desc order)
-        };
-      }
-
       const responses = await prisma.response.findMany({
         where: whereClause,
         select: {
@@ -1140,7 +1133,11 @@ export const getResponsesForSummary = reactCache(
           },
         ],
         take: queryLimit,
-        skip: offset,
+        // Keyset pagination must follow the sort order (createdAt desc, id desc). cuid2 ids are not
+        // time-ordered, so an `id < cursor` condition skipped or repeated responses after the first
+        // batch, and it overwrote any id condition from the filter. Prisma's cursor continues right
+        // after the cursor row in the requested order.
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : { skip: offset }),
       });
 
       const transformedResponses: TSurveySummaryResponse[] = responses.map((responsePrisma) => ({
