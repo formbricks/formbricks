@@ -38,6 +38,7 @@ import {
   VERIFICATION_LINK_TTL_SECONDS,
   buildVerificationLinks,
 } from "@/modules/auth/lib/verification-links";
+import { toInviteDisplayName } from "@/modules/email/lib/invite-display-name";
 import { sendEmail } from "@/modules/email/lib/send-email";
 import { buildVerifiedLinkSurveyUrl } from "@/modules/email/lib/verified-link-survey-url";
 import { resolveStorageUrl } from "@/modules/storage/utils";
@@ -296,7 +297,13 @@ export const sendInviteMemberEmail = async (
 
   const verifyLink = `${WEBAPP_URL}/invite?token=${encodeURIComponent(token)}`;
 
-  const html = await renderInviteEmail({ inviteeName, inviterName, verifyLink, t, ...legalProps });
+  const html = await renderInviteEmail({
+    inviteeName: toInviteDisplayName(inviteeName, ""),
+    inviterName: toInviteDisplayName(inviterName, t("common.anonymous")),
+    verifyLink,
+    t,
+    ...legalProps,
+  });
   return await sendEmail({
     emailType: "invite",
     to: email,
