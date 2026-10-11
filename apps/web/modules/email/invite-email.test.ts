@@ -54,7 +54,7 @@ describe("sendInviteMemberEmail display names", () => {
 
     const { inviterName, inviteeName } = renderedNames();
     expect(inviterName).not.toContain("https://");
-    expect(Array.from(inviterName).length).toBeLessThanOrEqual(61);
+    expect(Array.from(inviterName).length).toBeLessThanOrEqual(60);
     expect(inviteeName).toBe("");
   });
 
