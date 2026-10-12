@@ -2,9 +2,9 @@ import "server-only";
 import { successResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { requireRetentionOrgAccess } from "@/modules/ee/data-retention/lib/api-access";
-import { getRetentionHealthIssues } from "@/modules/ee/data-retention/lib/health";
 import { getRetentionHealthFacts } from "@/modules/ee/data-retention/lib/health-service";
 import type { TRetentionHealthQuery } from "../schemas";
+import { serializeRetentionHealth } from "../serializers";
 
 /**
  * What can keep data retention from working for this organisation. Owners and managers only: it speaks
@@ -31,8 +31,5 @@ export async function getRetentionHealthOperation({
   if (access instanceof Response) return access;
 
   const facts = await getRetentionHealthFacts(access.organizationId);
-  return successResponse(
-    { issues: getRetentionHealthIssues(facts, new Date()), smtpConfigured: facts.smtpConfigured },
-    { requestId }
-  );
+  return successResponse(serializeRetentionHealth(facts, new Date()), { requestId });
 }

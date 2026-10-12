@@ -4,6 +4,7 @@ import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { problemForbidden, problemUnprocessableContent, successResponse } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { reactivateOrganizationMember } from "@/modules/organization/settings/teams/lib/reactivate-member";
+import { serializeReactivatedMember } from "../serializers";
 
 /**
  * Reactivate a member of `organizationId`. User management, so `organization.manage_access` and no data
@@ -58,12 +59,12 @@ export async function reactivateMemberOperation({
       );
     case "already_active":
       skipV3AuditLog(auditLog);
-      return successResponse({ userId, isActive: true }, { requestId });
+      return successResponse(serializeReactivatedMember(userId), { requestId });
     case "reactivated":
       if (auditLog) {
         auditLog.oldObject = { isActive: false };
         auditLog.newObject = { isActive: true, reactivatedAt: result.reactivatedAt.toISOString() };
       }
-      return successResponse({ userId, isActive: true }, { requestId });
+      return successResponse(serializeReactivatedMember(userId), { requestId });
   }
 }

@@ -1,6 +1,5 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { serializeRetentionExemption } from "@/app/api/internal/retention-exemptions/serializers";
 import { successResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getAuthorizedV3Survey } from "@/app/api/v3/surveys/authorization";
@@ -12,10 +11,12 @@ import {
   getSurveyRetentionFacts,
   getSurveyRetentionPolicies,
 } from "@/modules/ee/data-retention/lib/survey-retention-service";
-import type { TSurveyRetention, TSurveyRetentionPolicy } from "@/modules/ee/data-retention/types";
 import { getIsDataRetentionEnabled } from "@/modules/ee/license-check/lib/utils";
-
-const NOT_GOVERNED: TSurveyRetention = { governed: false, policies: [], exemptions: [] };
+import {
+  SURVEY_RETENTION_NOT_GOVERNED,
+  serializeSurveyRetention,
+  serializeSurveyRetentionPolicy,
+} from "../serializers";
 
 /**
  * What data retention will do to one survey, for its summary note and settings card. Anyone who can
@@ -44,7 +45,7 @@ export async function getSurveyRetentionOperation({
   if (response) return response;
 
   if (!(await getIsDataRetentionEnabled(authResult.organizationId))) {
-    return successResponse(NOT_GOVERNED, { requestId, cache: "private, no-store" });
+    return successResponse(SURVEY_RETENTION_NOT_GOVERNED, { requestId, cache: "private, no-store" });
   }
 
   // The database's clock, which exemption ends and notices are stamped with (`readDatabaseClock`).
@@ -62,25 +63,19 @@ export async function getSurveyRetentionOperation({
     now,
   });
 
-  const serializedPolicies: TSurveyRetentionPolicy[] = await Promise.all(
-    plans.map(async (plan) => {
-      const dueCount = plan.dueCreatedAtOrBefore
-        ? await countSurveyResponsesCreatedAtOrBefore(surveyId, plan.dueCreatedAtOrBefore)
-        : null;
-      return {
-        policy: plan.policy,
-        exempt: plan.exempt,
-        nextAction: plan.nextAction,
-        nextDate: plan.nextDate?.toISOString() ?? null,
-        dueCount: dueCount && dueCount.count > 0 ? dueCount : null,
-      };
-    })
+  const serializedPolicies = await Promise.all(
+    plans.map(async (plan) =>
+      serializeSurveyRetentionPolicy(
+        plan,
+        plan.dueCreatedAtOrBefore
+          ? await countSurveyResponsesCreatedAtOrBefore(surveyId, plan.dueCreatedAtOrBefore)
+          : null
+      )
+    )
   );
 
-  const body: TSurveyRetention = {
-    governed: serializedPolicies.length > 0,
-    policies: serializedPolicies,
-    exemptions: exemptions.map(serializeRetentionExemption),
-  };
-  return successResponse(body, { requestId, cache: "private, no-store" });
+  return successResponse(serializeSurveyRetention(serializedPolicies, exemptions), {
+    requestId,
+    cache: "private, no-store",
+  });
 }

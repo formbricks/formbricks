@@ -1,6 +1,6 @@
-import { z } from "zod";
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { getSurveyRetentionOperation } from "./lib/operations";
+import { ZSurveyRetentionPathParams } from "./schemas";
 
 /**
  * `GET /api/internal/survey-retention/{surveyId}`: the next data retention dates for one survey, the
@@ -8,7 +8,7 @@ import { getSurveyRetentionOperation } from "./lib/operations";
  */
 export const GET = withV3ApiWrapper({
   auth: "session",
-  schemas: { params: z.object({ surveyId: z.cuid2() }).strict() },
+  schemas: { params: ZSurveyRetentionPathParams },
   handler: async ({ authentication, parsedInput, requestId, instance }) =>
     getSurveyRetentionOperation({
       authentication,

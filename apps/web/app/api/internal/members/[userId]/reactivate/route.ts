@@ -1,6 +1,6 @@
-import { z } from "zod";
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { reactivateMemberOperation } from "./lib/operations";
+import { ZReactivateMemberPathParams, ZReactivateMemberQuery } from "./schemas";
 
 /**
  * `POST /api/internal/members/{userId}/reactivate?organizationId=`: reactivate a deactivated member and
@@ -9,8 +9,8 @@ import { reactivateMemberOperation } from "./lib/operations";
 export const POST = withV3ApiWrapper({
   auth: "session",
   schemas: {
-    params: z.object({ userId: z.cuid2() }).strict(),
-    query: z.object({ organizationId: z.cuid2() }).strict(),
+    params: ZReactivateMemberPathParams,
+    query: ZReactivateMemberQuery,
   },
   action: "reactivated",
   targetType: "user",
