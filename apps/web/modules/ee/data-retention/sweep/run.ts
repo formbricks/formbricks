@@ -92,6 +92,17 @@ export const recordRetentionDeferral = async (organizationIds: readonly string[]
   for (let start = 0; start < organizationIds.length; start += RETENTION_DEFERRAL_CHUNK) {
     const chunk = organizationIds.slice(start, start + RETENTION_DEFERRAL_CHUNK);
     await runSweepTransaction(async (tx) => {
+      // Lock the rows first, in a fixed order (by organisation, then responses, surveys, members, as
+      // `openRetentionRuns` takes them). A multi-row UPDATE locks in whatever order its plan visits the
+      // rows, and could deadlock with an action holding one policy `FOR SHARE` while it waits for another
+      // (the responses policy's delete holds it, then takes the surveys policy).
+      await tx.$queryRaw`
+        SELECT 1 FROM "RetentionPolicy"
+        WHERE "organizationId" = ANY(${chunk}::text[]) AND "enabled"
+        ORDER BY "organizationId", "entity"
+        FOR UPDATE
+      `;
+      // Read after the locks, so a deferral that waited stamps the moment it went through.
       const now = await readDatabaseClock(tx);
       const unbrokenSince = new Date(now.getTime() - RETENTION_SWEEP_GAP_MS);
       await tx.$executeRaw`

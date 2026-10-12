@@ -237,6 +237,18 @@ describe("recordRetentionDeferral", () => {
     expect(values).toEqual([NOW, ["org_a", "org_b"], new Date(NOW.getTime() - RETENTION_SWEEP_GAP_MS)]);
   });
 
+  test("locks the policies in a fixed order before marking them, then reads the clock", async () => {
+    await recordRetentionDeferral(["org_a", "org_b"]);
+
+    const { text, values } = statement(tx.$queryRaw.mock.calls[0]);
+    expect(text).toContain('"organizationId" = ANY(?::text[]) AND "enabled"');
+    expect(text).toContain('ORDER BY "organizationId", "entity" FOR UPDATE');
+    expect(values).toEqual([["org_a", "org_b"]]);
+    const locked = tx.$queryRaw.mock.invocationCallOrder[0];
+    expect(locked).toBeLessThan(vi.mocked(readDatabaseClock).mock.invocationCallOrder[0]);
+    expect(locked).toBeLessThan(tx.$executeRaw.mock.invocationCallOrder[0]);
+  });
+
   test("marks a large night in chunks, one transaction each", async () => {
     const ids = Array.from({ length: 2500 }, (_, index) => `org_${index}`);
 
