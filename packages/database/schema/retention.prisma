@@ -168,7 +168,12 @@ model RetentionRunItem {
 /// members) before the target's clock: then a later cycle claims it again and sends a new one.
 ///
 /// A CHECK in the migration ties each entity to its target: `surveys` and `responses` → `surveyId`,
-/// `members` → `userId`; another makes a sent email imply a delivery time.
+/// `members` → `userId`; another makes a sent email imply a delivery time. The survey notices that still
+/// hold a clock are the partial index `RetentionNotice_surveys_clock_pending_idx` (`WHERE "entity" =
+/// 'surveys' AND "clockAt" IS NOT NULL`) in
+/// `migration/20261012120000_retention_notice_void_on_response_delete/migration.sql`, with the triggers
+/// that clear `clockAt`; Prisma's `@@index` has no `where`, so it is deliberately not declared here (see
+/// "Indexes Prisma cannot express" in the README).
 model RetentionNotice {
   id             String          @id @default(cuid(2))
   organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -191,7 +196,9 @@ model RetentionNotice {
   claimToken     String?
   /// The target's clock the notice was computed for (surveys and members). A notice counts only while
   /// the target's clock is still this one, so activity between the sweep's read and its claim voids
-  /// it. Null for the responses reminder, which is sent once per survey and follows no one clock.
+  /// it. Null for the responses reminder, which is sent once per survey and follows no one clock, and
+  /// for a survey notice voided for good: a person deleted or moved one of its responses, or the
+  /// responses policy's deletion left it computed for another clock (see `NOTICE_FOLLOWS_CLOCK`).
   clockAt        DateTime?
 
   @@unique([surveyId, entity])
