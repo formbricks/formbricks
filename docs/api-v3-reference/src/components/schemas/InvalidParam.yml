@@ -31,6 +31,8 @@ properties:
       - missing_required_field
       - misordered_reference
       - missing_translation
+      - qsf_limit_exceeded
+      - qsf_not_recognized
       - read_only_field
       - unsupported_field
       - unsupported_locale
@@ -42,6 +44,11 @@ properties:
       today and nothing more — `INVALID_PARAM_CODES` in `app/api/v3/lib/response.ts` is the
       registry, and a code absent from it is dropped before the response is built. Categories for
       operations that do not exist yet are added with the code that emits them, not ahead of it.
+
+
+      `qsf_not_recognized` and `qsf_limit_exceeded` come from the Qualtrics import (an internal,
+      session-only route sharing this shape): the file is not a Qualtrics export it can read, or it
+      is one past an import limit, which `identifier` names.
   identifier:
     type: string
     description: >-

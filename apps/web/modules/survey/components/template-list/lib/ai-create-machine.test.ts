@@ -19,7 +19,7 @@ const snapshot = (headline: string): TSurveyGenerationDraftSnapshot =>
   }) as TSurveyGenerationDraftSnapshot;
 
 const generatingWithOneQuestion = () =>
-  aiCreateReducer(aiCreateReducer(INITIAL_AI_CREATE_STATE, { type: "SUBMIT", prompt: "a prompt" }), {
+  aiCreateReducer(aiCreateReducer(INITIAL_AI_CREATE_STATE, { type: "SUBMIT", sourceLabel: "a prompt" }), {
     type: "SNAPSHOT",
     snapshot: snapshot("How was it?"),
   });
@@ -28,7 +28,7 @@ describe("aiCreateReducer", () => {
   test("SUBMIT enters generating with a clean slate", () => {
     const state = aiCreateReducer(
       { ...INITIAL_AI_CREATE_STATE, errorCode: "ai_generation_failed" },
-      { type: "SUBMIT", prompt: "a prompt" }
+      { type: "SUBMIT", sourceLabel: "a prompt" }
     );
 
     expect(state.status).toBe("generating");
@@ -58,7 +58,7 @@ describe("aiCreateReducer", () => {
   });
 
   test("DONE carrying nothing to answer is treated as a failure", () => {
-    const generating = aiCreateReducer(INITIAL_AI_CREATE_STATE, { type: "SUBMIT", prompt: "a prompt" });
+    const generating = aiCreateReducer(INITIAL_AI_CREATE_STATE, { type: "SUBMIT", sourceLabel: "a prompt" });
     const empty = {
       name: "Onboarding",
       blocks: [{ name: "Block", elements: [] }],
@@ -75,7 +75,7 @@ describe("aiCreateReducer", () => {
     // A provider that returns its object in one final chunk streams no partials, so the preview is
     // empty at this point. Judging success on the preview reported a perfectly good survey as
     // "nothing generated".
-    const generating = aiCreateReducer(INITIAL_AI_CREATE_STATE, { type: "SUBMIT", prompt: "a prompt" });
+    const generating = aiCreateReducer(INITIAL_AI_CREATE_STATE, { type: "SUBMIT", sourceLabel: "a prompt" });
     expect(generating.draft.questions).toHaveLength(0);
 
     const state = aiCreateReducer(generating, { type: "DONE", payload });
@@ -93,7 +93,7 @@ describe("aiCreateReducer", () => {
   });
 
   test("STOP with nothing generated returns to the prompt", () => {
-    const generating = aiCreateReducer(INITIAL_AI_CREATE_STATE, { type: "SUBMIT", prompt: "a prompt" });
+    const generating = aiCreateReducer(INITIAL_AI_CREATE_STATE, { type: "SUBMIT", sourceLabel: "a prompt" });
 
     expect(aiCreateReducer(generating, { type: "STOP" }).status).toBe("idle");
   });
@@ -113,7 +113,7 @@ describe("aiCreateReducer", () => {
   test("REGENERATE clears the old draft before re-entering generating", () => {
     const reviewing = aiCreateReducer(generatingWithOneQuestion(), { type: "DONE", payload });
 
-    const state = aiCreateReducer(reviewing, { type: "REGENERATE", prompt: "a prompt" });
+    const state = aiCreateReducer(reviewing, { type: "REGENERATE", sourceLabel: "a prompt" });
 
     expect(state.status).toBe("generating");
     expect(state.draft.questions).toHaveLength(0);
@@ -146,9 +146,12 @@ describe("aiCreateReducer", () => {
 
 describe("the prompt the draft came from", () => {
   test("SUBMIT records the prompt that was sent", () => {
-    const state = aiCreateReducer(INITIAL_AI_CREATE_STATE, { type: "SUBMIT", prompt: "measure onboarding" });
+    const state = aiCreateReducer(INITIAL_AI_CREATE_STATE, {
+      type: "SUBMIT",
+      sourceLabel: "measure onboarding",
+    });
 
-    expect(state.submittedPrompt).toBe("measure onboarding");
+    expect(state.sourceLabel).toBe("measure onboarding");
   });
 
   test("editing the prompt leaves the kept draft labelled with the prompt that produced it", () => {
@@ -158,15 +161,15 @@ describe("the prompt the draft came from", () => {
     );
 
     // The user is now typing something else; the chip above the kept draft must not follow along.
-    expect(aiCreateReducer(reviewed, { type: "BACK_TO_DRAFT" }).submittedPrompt).toBe("a prompt");
+    expect(aiCreateReducer(reviewed, { type: "BACK_TO_DRAFT" }).sourceLabel).toBe("a prompt");
   });
 
   test("Stop restores the prompt belonging to the draft it puts back", () => {
     const reviewed = aiCreateReducer(generatingWithOneQuestion(), { type: "DONE", payload });
-    const regenerating = aiCreateReducer(reviewed, { type: "REGENERATE", prompt: "something else" });
-    expect(regenerating.submittedPrompt).toBe("something else");
+    const regenerating = aiCreateReducer(reviewed, { type: "REGENERATE", sourceLabel: "something else" });
+    expect(regenerating.sourceLabel).toBe("something else");
 
-    expect(aiCreateReducer(regenerating, { type: "STOP" }).submittedPrompt).toBe("a prompt");
+    expect(aiCreateReducer(regenerating, { type: "STOP" }).sourceLabel).toBe("a prompt");
   });
 });
 
@@ -241,7 +244,7 @@ describe("editing the prompt without losing a finished draft", () => {
 
 describe("regenerating does not cost you the draft you had", () => {
   const finished = () => aiCreateReducer(generatingWithOneQuestion(), { type: "DONE", payload });
-  const regenerating = () => aiCreateReducer(finished(), { type: "REGENERATE", prompt: "a prompt" });
+  const regenerating = () => aiCreateReducer(finished(), { type: "REGENERATE", sourceLabel: "a prompt" });
 
   test("the finished draft is held aside, not destroyed", () => {
     const state = regenerating();
@@ -307,5 +310,38 @@ describe("regenerating does not cost you the draft you had", () => {
 
     expect(state.status).toBe("review");
     expect(state.draft.questions).toHaveLength(1);
+  });
+});
+
+describe("a file source", () => {
+  test("SUBMIT records the source kind, and DONE carries the report", () => {
+    const report = { source: { kind: "qsf", fileName: "survey.qsf" }, issues: [] };
+    const submitted = aiCreateReducer<typeof report>(INITIAL_AI_CREATE_STATE, {
+      type: "SUBMIT",
+      sourceLabel: "survey.qsf",
+      sourceKind: "file",
+    });
+    expect(submitted.sourceKind).toBe("file");
+    expect(submitted.sourceLabel).toBe("survey.qsf");
+    expect(submitted.report).toBeNull();
+
+    const done = aiCreateReducer(submitted, { type: "DONE", payload, report });
+    expect(done.status).toBe("review");
+    expect(done.report).toBe(report);
+
+    // A new run clears the report; a regeneration holds it aside with the previous draft.
+    const regenerating = aiCreateReducer(done, { type: "REGENERATE", sourceLabel: "survey.qsf" });
+    expect(regenerating.report).toBeNull();
+    expect(regenerating.previous?.report).toBe(report);
+    expect(aiCreateReducer(regenerating, { type: "STOP" }).report).toBe(report);
+    expect(aiCreateReducer(done, { type: "SUBMIT", sourceLabel: "other" }).report).toBeNull();
+  });
+
+  test("a prompt run defaults to the prompt kind and carries no report", () => {
+    const submitted = aiCreateReducer(INITIAL_AI_CREATE_STATE, { type: "SUBMIT", sourceLabel: "a prompt" });
+    const done = aiCreateReducer(submitted, { type: "DONE", payload });
+
+    expect(submitted.sourceKind).toBe("prompt");
+    expect(done.report).toBeNull();
   });
 });
