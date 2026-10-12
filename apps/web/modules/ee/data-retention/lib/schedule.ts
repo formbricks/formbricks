@@ -33,12 +33,8 @@ const isAtOrBefore = (a: Date, b: Date): boolean => a.getTime() <= b.getTime();
 
 /**
  * Whether a target's notice is tied to its clock. A survey's or member's notice is about that target
- * becoming due, so it counts only while the target's clock is no later than the one it was computed for
- * (`RetentionNotice.clockAt`): any activity since voids it. A clock that moved earlier (the responses
- * policy deleted the survey's last responses) is not activity and keeps the notice. The action still
- * never comes before the date the notice gave: a notice is only sent once due for its clock, so it is
- * delivered no earlier than `clockAt + periodDays - warnDays`, and the action waits a full `warnDays`
- * after delivery. The responses reminder is sent once per
+ * becoming due, so it counts only while the target's clock is the one it was computed for
+ * (`RetentionNotice.clockAt`): any activity since voids it. The responses reminder is sent once per
  * survey (8 Oct), while each response has its own clock, so it records none and only a policy change
  * voids it.
  */
@@ -75,8 +71,8 @@ export type TRetentionTargetState = {
   noticeDeliveredAt: Date | null;
   /**
    * The clock that notice was computed for (`RetentionNotice.clockAt`), for surveys and members. The
-   * notice holds only while the target's clock is no later than this one: activity since voids it, even
-   * between the sweep reading the target and claiming the notice. Unused for the responses reminder.
+   * notice's dates hold only while the target's clock is still this one, whenever the clock moved (even
+   * between the sweep reading it and claiming the notice). Unused for the responses reminder.
    */
   noticeClockAt: Date | null;
   /**
@@ -123,10 +119,7 @@ const getValidNoticeDeliveredAt = (
 ): Date | null => {
   const { noticeClaimedAt, noticeDeliveredAt } = target;
   if (!noticeClaimedAt || !noticeDeliveredAt) return null;
-  if (
-    NOTICE_FOLLOWS_CLOCK[policy.entity] &&
-    (!target.noticeClockAt || !isAtOrBefore(target.clock, target.noticeClockAt))
-  ) {
+  if (NOTICE_FOLLOWS_CLOCK[policy.entity] && target.noticeClockAt?.getTime() !== target.clock.getTime()) {
     return null;
   }
   // A policy without `enabledAt` is treated as switched on now, so no earlier notice counts for it.

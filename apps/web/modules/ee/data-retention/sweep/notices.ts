@@ -16,13 +16,12 @@ export type TRetentionNoticeTarget =
  * Claim the target's notice for sending, so exactly one sweep sends it, or return null. One statement:
  * the row is created, or an existing one is taken over only when it no longer counts — a delivered notice
  * claimed before `voidBefore` (the policy's `enabledAt` and the end of the target's latest exemption) or
- * computed for an earlier clock than `clockAt`, i.e. with activity since (the same rule as
- * `getValidNoticeDeliveredAt`; a clock that only moved earlier keeps the notice), or a claim
+ * computed for another clock than `clockAt` (the same rule as `getValidNoticeDeliveredAt`), or a claim
  * never delivered and older than `RETENTION_NOTICE_STALE_CLAIM_MS`. A valid notice, or a fresh claim in
  * flight, is left alone. The returned token ties the delivery to this claim.
  *
  * `clockAt` is the target's clock the notice's dates were computed from, stored with the claim: for
- * surveys and members, the notice counts only while the target's clock is no later than that, so activity
+ * surveys and members, the notice counts only while the target's clock is still that, so activity
  * between the sweep reading the target and this claim voids it rather than leaving a notice whose dates
  * are wrong. Null for the responses reminder, which follows no one clock.
  */
@@ -52,9 +51,7 @@ export const claimRetentionNotice = async (
         "clockAt" = EXCLUDED."clockAt"
     WHERE ("RetentionNotice"."deliveredAt" IS NULL AND "RetentionNotice"."sentAt" < ${staleBefore})
        OR ("RetentionNotice"."deliveredAt" IS NOT NULL
-           AND ("RetentionNotice"."sentAt" < ${voidBefore}
-                OR COALESCE("RetentionNotice"."clockAt" < ${clockAt}::timestamp(3),
-                            "RetentionNotice"."clockAt" IS DISTINCT FROM ${clockAt}::timestamp(3))))
+           AND ("RetentionNotice"."sentAt" < ${voidBefore} OR "RetentionNotice"."clockAt" IS DISTINCT FROM ${clockAt}))
     RETURNING "claimToken"
   `;
   return rows[0]?.claimToken ?? null;

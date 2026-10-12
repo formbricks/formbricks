@@ -158,19 +158,6 @@ describe("getRetentionSchedule", () => {
       expect(getDueRetentionStep(surveysPolicy, current, day(700))).toBe("act");
     });
 
-    test("a clock that moved earlier keeps the notice, and the action keeps the date it gave", () => {
-      // Notice computed for day 0 and delivered on day 335 (archive on day 365); then the responses policy
-      // deleted the survey's last responses, so its clock fell back to its last edit on day -100.
-      const earlier = target({ clock: day(-100), noticeClockAt: day(0), noticeDeliveredAt: day(335) });
-      const schedule = getRetentionSchedule(surveysPolicy, earlier, day(340));
-
-      expect(schedule.noticeSent).toBe(true);
-      expect(schedule.actionAt).toEqual(day(365));
-      expect(getDueRetentionStep(surveysPolicy, earlier, day(340))).toBeNull();
-      expect(getDueRetentionStep(surveysPolicy, earlier, day(365))).toBe("act");
-      expect(getDueRetentionStep(membersPolicy, earlier, day(395))).toBe("act");
-    });
-
     test("a clock-bound notice with no clock on record doesn't count", () => {
       expect(
         getRetentionSchedule(

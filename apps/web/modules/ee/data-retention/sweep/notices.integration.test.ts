@@ -77,16 +77,4 @@ describe("retention notice claims (real Postgres)", () => {
       })
     ).toMatchObject({ deliveredAt: null, claimToken: replaced, clockAt: moved });
   });
-
-  test("a clock that only moved earlier keeps the delivered notice", async () => {
-    await deliver((await claim(ago(10 * HOUR)))!);
-
-    // The responses policy deleted the survey's last responses: its clock fell back to its last edit.
-    await expect(claim(new Date(), ago(20 * HOUR), ago(9000 * HOUR))).resolves.toBeNull();
-    expect(
-      await prisma.retentionNotice.findUniqueOrThrow({
-        where: { surveyId_entity: { surveyId: target.surveyId, entity: "surveys" } },
-      })
-    ).toMatchObject({ deliveredAt: expect.any(Date), clockAt: CLOCK });
-  });
 });
