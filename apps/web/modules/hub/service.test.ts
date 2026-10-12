@@ -1,6 +1,6 @@
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { createCacheKey } from "@formbricks/cache";
-import FormbricksHub from "@formbricks/hub";
+import * as hub from "@formbricks/hub";
 import { logger } from "@formbricks/logger";
 import {
   countFeedbackRecords,
@@ -11,11 +11,13 @@ import {
   deleteHubTenantData,
   findSimilarFeedbackRecords,
   getActiveTaxonomyTree,
+  getEnrichmentStatus,
   getFeedbackRecordTenant,
   getTaxonomyRun,
   getTaxonomyTree,
   listFeedbackRecords,
   listTaxonomyFields,
+  listTaxonomyNodeRecordCounts,
   listTaxonomyNodeRecords,
   listTaxonomyRuns,
   purgeHubFeedbackRecords,
@@ -26,27 +28,38 @@ import {
   updateFeedbackRecord,
 } from "./service";
 import type { FeedbackRecordCreateParams } from "./types";
+import { HubApiError } from "./utils";
 
 vi.mock("@formbricks/logger", () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
 }));
 
 vi.mock("@formbricks/hub", () => ({
-  default: {
-    APIError: class APIError extends Error {
-      status: number;
-
-      constructor(message: string, status: number) {
-        super(message);
-        this.status = status;
-      }
-    },
-  },
+  countFeedbackRecords: vi.fn(),
+  countTaxonomyNodeRecords: vi.fn(),
+  createFeedbackRecord: vi.fn(),
+  createTaxonomyRun: vi.fn(),
+  deleteFeedbackRecord: vi.fn(),
+  deleteTenantData: vi.fn(),
+  getActiveTaxonomyTree: vi.fn(),
+  getEnrichmentStatus: vi.fn(),
+  getFeedbackRecord: vi.fn(),
+  getTaxonomyRun: vi.fn(),
+  getTaxonomyRunTree: vi.fn(),
+  listFeedbackRecords: vi.fn(),
+  listTaxonomyFields: vi.fn(),
+  listTaxonomyNodeRecords: vi.fn(),
+  listTaxonomyRuns: vi.fn(),
+  purgeTenantFeedbackRecords: vi.fn(),
+  removeTaxonomyNode: vi.fn(),
+  renameTaxonomyNode: vi.fn(),
+  semanticSearchFeedbackRecords: vi.fn(),
+  similarFeedbackRecords: vi.fn(),
+  updateFeedbackRecord: vi.fn(),
 }));
 
 vi.mock("./hub-client", () => ({
   getHubClient: vi.fn(),
-  assertRepeatedArrayParams: vi.fn(),
 }));
 
 vi.mock("@/lib/cache", () => ({
@@ -55,8 +68,22 @@ vi.mock("@/lib/cache", () => ({
   },
 }));
 
-const { getHubClient, assertRepeatedArrayParams } = await import("./hub-client");
+const { getHubClient } = await import("./hub-client");
 const { cache } = await import("@/lib/cache");
+
+/** Opaque to the service: it only ever hands the client to the SDK functions. */
+const client = { id: "hub-client" } as unknown as hub.Client;
+
+const useClient = () => vi.mocked(getHubClient).mockReturnValue(client);
+
+/** The `{ data, request, response }` a `throwOnError` call resolves with. */
+const resolved = (data: unknown) =>
+  ({ data, request: new Request("https://hub.test"), response: new Response() }) as never;
+
+/** What `hub-client.ts`'s error interceptor produces for a non-2xx response. */
+const apiError = (status: number, body?: unknown) => new HubApiError(status, body, new Headers());
+
+const NO_CONFIG_MESSAGE = "HUB_API_KEY is not set; Hub integration is disabled.";
 
 const sampleInput: FeedbackRecordCreateParams = {
   field_id: "el-1",
@@ -78,6 +105,10 @@ const taxonomyScope = {
   field_id: "question-1",
 };
 
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
 describe("hub service", () => {
   describe("createFeedbackRecord", () => {
     test("returns error result when getHubClient returns null", async () => {
@@ -86,17 +117,14 @@ describe("hub service", () => {
       const result = await createFeedbackRecord(sampleInput);
 
       expect(result.data).toBeNull();
-      expect(result.error).toMatchObject({
-        status: 0,
-        message: "HUB_API_KEY is not set; Hub integration is disabled.",
-      });
+      expect(result.error).toMatchObject({ status: 0, message: NO_CONFIG_MESSAGE });
+      expect(hub.createFeedbackRecord).not.toHaveBeenCalled();
     });
 
-    test("returns data when client.create succeeds", async () => {
+    test("returns data when the create succeeds", async () => {
+      useClient();
       const created = { id: "hub-1", ...sampleInput };
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { create: vi.fn().mockResolvedValue(created) },
-      } as any);
+      vi.mocked(hub.createFeedbackRecord).mockResolvedValue(resolved(created));
 
       const result = await createFeedbackRecord(sampleInput);
 
@@ -105,18 +133,21 @@ describe("hub service", () => {
     });
 
     test("forwards value_id to the Hub (ENG-1673)", async () => {
-      const create = vi.fn().mockResolvedValue({ id: "hub-1" });
-      vi.mocked(getHubClient).mockReturnValue({ feedbackRecords: { create } } as any);
+      useClient();
+      vi.mocked(hub.createFeedbackRecord).mockResolvedValue(resolved({ id: "hub-1" }));
 
       await createFeedbackRecord({ ...sampleInput, value_id: "c-male" });
 
-      expect(create).toHaveBeenCalledWith({ ...sampleInput, value_id: "c-male" });
+      expect(hub.createFeedbackRecord).toHaveBeenCalledWith({
+        client,
+        body: { ...sampleInput, value_id: "c-male" },
+        throwOnError: true,
+      });
     });
 
-    test("returns error result when client.create throws", async () => {
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { create: vi.fn().mockRejectedValue(new Error("Network error")) },
-      } as any);
+    test("returns error result when the create throws", async () => {
+      useClient();
+      vi.mocked(hub.createFeedbackRecord).mockRejectedValue(new Error("Network error"));
 
       const result = await createFeedbackRecord(sampleInput);
 
@@ -125,16 +156,15 @@ describe("hub service", () => {
     });
 
     test("reads status from a foreign error class (simulates dual module scope)", async () => {
-      // Simulates the SDK being loaded into a different module scope under Next dev/Turbopack:
-      // the thrown error is NOT instanceof the FormbricksHub.APIError reference captured in service.ts.
+      // Simulates `utils.ts` being loaded into a second module scope under Next dev/Turbopack: the thrown
+      // error is NOT instanceof the HubApiError this file imported.
       class ForeignConflictError extends Error {
         readonly status = 409;
       }
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: {
-          create: vi.fn().mockRejectedValue(new ForeignConflictError("duplicate submission_id")),
-        },
-      } as any);
+      useClient();
+      vi.mocked(hub.createFeedbackRecord).mockRejectedValue(
+        new ForeignConflictError("duplicate submission_id")
+      );
 
       const result = await createFeedbackRecord(sampleInput);
 
@@ -150,64 +180,44 @@ describe("hub service", () => {
       const result = await listFeedbackRecords({ tenant_id: "env-1" });
 
       expect(result.data).toBeNull();
-      expect(result.error).toMatchObject({
-        status: 0,
-        message: "HUB_API_KEY is not set; Hub integration is disabled.",
-      });
+      expect(result.error).toMatchObject({ status: 0, message: NO_CONFIG_MESSAGE });
     });
 
-    test("returns data when client.list succeeds", async () => {
-      const listResponse = {
-        data: [{ id: "rec-1", field_id: "el-1", field_type: "rating" }],
-        total: 1,
-        limit: 50,
-        offset: 0,
-      };
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { list: vi.fn().mockResolvedValue(listResponse) },
-      } as any);
+    test("passes the filters through as the query and returns the page", async () => {
+      useClient();
+      const listResponse = { data: [{ id: "rec-1", field_id: "el-1", field_type: "rating" }], limit: 50 };
+      vi.mocked(hub.listFeedbackRecords).mockResolvedValue(resolved(listResponse));
 
-      const result = await listFeedbackRecords({ tenant_id: "env-1", limit: 50 });
+      const result = await listFeedbackRecords({ tenant_id: "env-1", limit: 50, source_type: ["a", "b"] });
 
+      expect(hub.listFeedbackRecords).toHaveBeenCalledWith({
+        client,
+        query: { tenant_id: "env-1", limit: 50, source_type: ["a", "b"] },
+        throwOnError: true,
+      });
       expect(result.error).toBeNull();
       expect(result.data).toEqual(listResponse);
     });
 
-    test("returns error result when client.list throws", async () => {
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { list: vi.fn().mockRejectedValue(new Error("Network error")) },
-      } as any);
+    // The SDK would omit an empty array and answer with the whole tenant; the guard refuses it first.
+    test("refuses an empty array filter without calling the Hub", async () => {
+      useClient();
+
+      const result = await listFeedbackRecords({ tenant_id: "env-1", source_type: [] });
+
+      expect(result.data).toBeNull();
+      expect(result.error).toMatchObject({ status: 0, message: expect.stringContaining("source_type") });
+      expect(hub.listFeedbackRecords).not.toHaveBeenCalled();
+    });
+
+    test("returns error result when the list throws", async () => {
+      useClient();
+      vi.mocked(hub.listFeedbackRecords).mockRejectedValue(new Error("Network error"));
 
       const result = await listFeedbackRecords({ tenant_id: "env-1" });
 
       expect(result.data).toBeNull();
       expect(result.error).toMatchObject({ status: 0, message: "Network error" });
-    });
-
-    test("verifies the client before sending the request", async () => {
-      const client = { feedbackRecords: { list: vi.fn().mockResolvedValue({ data: [], limit: 50 }) } };
-      vi.mocked(getHubClient).mockReturnValue(client as any);
-
-      await listFeedbackRecords({ tenant_id: "env-1" });
-
-      expect(assertRepeatedArrayParams).toHaveBeenCalledWith(client);
-    });
-
-    // Confirms the probe now surfaces exactly like any other Hub failure — the fix for it previously
-    // running inside getHubClient(), outside every caller's own try, where it depended on the outer API
-    // wrapper to turn an uncaught exception into a controlled response.
-    test("returns a relayed error rather than throwing when the probe fails", async () => {
-      const list = vi.fn();
-      vi.mocked(getHubClient).mockReturnValue({ feedbackRecords: { list } } as any);
-      vi.mocked(assertRepeatedArrayParams).mockImplementation(() => {
-        throw new Error("@formbricks/hub no longer routes query serialization through stringifyQuery");
-      });
-
-      const result = await listFeedbackRecords({ tenant_id: "env-1" });
-
-      expect(result.data).toBeNull();
-      expect(result.error).toMatchObject({ status: 0 });
-      expect(list).not.toHaveBeenCalled();
     });
   });
 
@@ -220,59 +230,33 @@ describe("hub service", () => {
     });
 
     test("preserves taxonomy included on the Hub single-record response", async () => {
+      useClient();
       const record = {
         id: "rec-1",
         field_id: "f1",
         taxonomy: { status: "unclassified", run_id: "run-1", path: [] },
       };
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { retrieve: vi.fn().mockResolvedValue(record) },
-      } as any);
+      vi.mocked(hub.getFeedbackRecord).mockResolvedValue(resolved(record));
+
       const result = await retrieveFeedbackRecord("rec-1");
+
+      expect(hub.getFeedbackRecord).toHaveBeenCalledWith({
+        client,
+        path: { id: "rec-1" },
+        throwOnError: true,
+      });
       expect(result.data).toEqual(record);
       expect(result.error).toBeNull();
     });
 
     test("returns error on throw", async () => {
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { retrieve: vi.fn().mockRejectedValue(new Error("Not found")) },
-      } as any);
+      useClient();
+      vi.mocked(hub.getFeedbackRecord).mockRejectedValue(apiError(404, { detail: "not found" }));
+
       const result = await retrieveFeedbackRecord("rec-1");
+
       expect(result.data).toBeNull();
-      expect(result.error).toMatchObject({ message: "Not found" });
-    });
-  });
-
-  /**
-   * `assertRepeatedArrayParams` is scoped to the two operations that send array-typed filters. It used to
-   * gate `getHubClient()` itself, which meant every consumer — a single record fetch here, taxonomy
-   * elsewhere, create/update/delete — paid for a probe that only list/count depend on, and a real SDK
-   * regression would break all of them at once. These assert the other side of the scoping fix: an
-   * unrelated call neither triggers the probe nor is affected when it would fail.
-   */
-  describe("assertRepeatedArrayParams scope", () => {
-    test("retrieveFeedbackRecord does not verify array-param support", async () => {
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { retrieve: vi.fn().mockResolvedValue({ id: "rec-1" }) },
-      } as any);
-
-      await retrieveFeedbackRecord("rec-1");
-
-      expect(assertRepeatedArrayParams).not.toHaveBeenCalled();
-    });
-
-    test("listTaxonomyFields succeeds even when array-param support is broken", async () => {
-      const listFields = vi.fn().mockResolvedValue({ fields: [] });
-      vi.mocked(getHubClient).mockReturnValue({ taxonomy: { listFields } } as any);
-      vi.mocked(assertRepeatedArrayParams).mockImplementation(() => {
-        throw new Error("would fail list/count, but taxonomy never calls this");
-      });
-
-      const result = await listTaxonomyFields("tenant-1");
-
-      expect(assertRepeatedArrayParams).not.toHaveBeenCalled();
-      expect(listFields).toHaveBeenCalledWith({ tenant_id: "tenant-1" });
-      expect(result.error).toBeNull();
+      expect(result.error).toMatchObject({ status: 404, problemDetail: "not found" });
     });
   });
 
@@ -287,23 +271,34 @@ describe("hub service", () => {
     });
 
     test("passes the filters through and returns the count", async () => {
-      const count = vi.fn().mockResolvedValue({ count: 42 });
-      vi.mocked(getHubClient).mockReturnValue({ feedbackRecords: { count } } as any);
+      useClient();
+      vi.mocked(hub.countFeedbackRecords).mockResolvedValue(resolved({ count: 42 }));
 
       const result = await countFeedbackRecords({ tenant_id: "env-1", user_id: ["user-1"] });
 
-      expect(count).toHaveBeenCalledWith({ tenant_id: "env-1", user_id: ["user-1"] });
+      expect(hub.countFeedbackRecords).toHaveBeenCalledWith({
+        client,
+        query: { tenant_id: "env-1", user_id: ["user-1"] },
+        throwOnError: true,
+      });
       expect(result.data).toEqual({ count: 42 });
       expect(result.error).toBeNull();
     });
 
+    test("refuses an empty array filter without calling the Hub", async () => {
+      useClient();
+
+      const result = await countFeedbackRecords({ tenant_id: "env-1", user_id: [] });
+
+      expect(result.error).toMatchObject({ status: 0, message: expect.stringContaining("user_id") });
+      expect(hub.countFeedbackRecords).not.toHaveBeenCalled();
+    });
+
     test("returns a relayable error when the Hub rejects the filters", async () => {
-      const apiError = Object.assign(new (FormbricksHub.APIError as any)("400 Bad Request", 400), {
-        error: { code: "validation", detail: "since must be a valid timestamp" },
-      });
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { count: vi.fn().mockRejectedValue(apiError) },
-      } as any);
+      useClient();
+      vi.mocked(hub.countFeedbackRecords).mockRejectedValue(
+        apiError(400, { code: "validation", detail: "since must be a valid timestamp" })
+      );
 
       const result = await countFeedbackRecords({ tenant_id: "env-1", since: "not-a-date" });
 
@@ -312,48 +307,22 @@ describe("hub service", () => {
         problemDetail: "since must be a valid timestamp",
       });
     });
-
-    test("verifies the client before sending the request", async () => {
-      const client = { feedbackRecords: { count: vi.fn().mockResolvedValue({ count: 0 }) } };
-      vi.mocked(getHubClient).mockReturnValue(client as any);
-
-      await countFeedbackRecords({ tenant_id: "env-1" });
-
-      expect(assertRepeatedArrayParams).toHaveBeenCalledWith(client);
-    });
-
-    test("returns a relayed error rather than throwing when the probe fails", async () => {
-      const count = vi.fn();
-      vi.mocked(getHubClient).mockReturnValue({ feedbackRecords: { count } } as any);
-      vi.mocked(assertRepeatedArrayParams).mockImplementation(() => {
-        throw new Error("@formbricks/hub no longer routes query serialization through stringifyQuery");
-      });
-
-      const result = await countFeedbackRecords({ tenant_id: "env-1" });
-
-      expect(result.data).toBeNull();
-      expect(result.error).toMatchObject({ status: 0 });
-      expect(count).not.toHaveBeenCalled();
-    });
   });
 
   describe("semanticSearchFeedbackRecords", () => {
     test("returns error result when getHubClient returns null", async () => {
       vi.mocked(getHubClient).mockReturnValue(null);
 
-      const result = await semanticSearchFeedbackRecords({
-        tenant_id: "env-1",
-        query: "slow checkout",
-      });
+      const result = await semanticSearchFeedbackRecords({ tenant_id: "env-1", query: "slow checkout" });
 
       expect(result.data).toBeNull();
-      expect(result.error).toMatchObject({
-        status: 0,
-        message: "HUB_API_KEY is not set; Hub integration is disabled.",
-      });
+      expect(result.error).toMatchObject({ status: 0, message: NO_CONFIG_MESSAGE });
     });
 
-    test("returns data when client.search.performSemanticSearch succeeds", async () => {
+    // The Hub takes the text in the body and the paging controls in the query string; sending them all in
+    // the body would search with the Hub's defaults and silently ignore the caller's limit and threshold.
+    test("sends the search text in the body and the paging controls in the query", async () => {
+      useClient();
       const searchResponse = {
         data: [
           {
@@ -365,55 +334,43 @@ describe("hub service", () => {
         ],
         limit: 10,
       };
-      const performSemanticSearch = vi.fn().mockResolvedValue(searchResponse);
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { search: { performSemanticSearch } },
-      } as any);
+      vi.mocked(hub.semanticSearchFeedbackRecords).mockResolvedValue(resolved(searchResponse));
 
-      const input = {
+      const result = await semanticSearchFeedbackRecords({
         tenant_id: "env-1",
         query: "slow checkout",
         limit: 10,
         min_score: 0.7,
-      };
-      const result = await semanticSearchFeedbackRecords(input);
+        cursor: "c1",
+      });
 
+      expect(hub.semanticSearchFeedbackRecords).toHaveBeenCalledWith({
+        client,
+        body: { tenant_id: "env-1", query: "slow checkout" },
+        query: { limit: 10, min_score: 0.7, cursor: "c1" },
+        throwOnError: true,
+      });
       expect(result.error).toBeNull();
       expect(result.data).toEqual(searchResponse);
-      expect(performSemanticSearch).toHaveBeenCalledWith(input);
     });
 
-    test("returns error with status when client.search.performSemanticSearch throws APIError", async () => {
-      const apiError = new (FormbricksHub.APIError as any)("Embeddings are not configured", 503);
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: {
-          search: { performSemanticSearch: vi.fn().mockRejectedValue(apiError) },
-        },
-      } as any);
+    test("returns error with status when the search fails with an API error", async () => {
+      useClient();
+      vi.mocked(hub.semanticSearchFeedbackRecords).mockRejectedValue(
+        apiError(503, { message: "Embeddings are not configured" })
+      );
 
-      const result = await semanticSearchFeedbackRecords({
-        tenant_id: "env-1",
-        query: "slow checkout",
-      });
+      const result = await semanticSearchFeedbackRecords({ tenant_id: "env-1", query: "slow checkout" });
 
       expect(result.data).toBeNull();
-      expect(result.error).toMatchObject({
-        status: 503,
-        message: "Embeddings are not configured",
-      });
+      expect(result.error).toMatchObject({ status: 503, message: "503 Embeddings are not configured" });
     });
 
-    test("returns error result when call throws non-API error", async () => {
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: {
-          search: { performSemanticSearch: vi.fn().mockRejectedValue(new Error("Network error")) },
-        },
-      } as any);
+    test("returns error result when the search throws a non-API error", async () => {
+      useClient();
+      vi.mocked(hub.semanticSearchFeedbackRecords).mockRejectedValue(new Error("Network error"));
 
-      const result = await semanticSearchFeedbackRecords({
-        tenant_id: "env-1",
-        query: "slow checkout",
-      });
+      const result = await semanticSearchFeedbackRecords({ tenant_id: "env-1", query: "slow checkout" });
 
       expect(result.data).toBeNull();
       expect(result.error).toMatchObject({ status: 0, message: "Network error" });
@@ -422,12 +379,10 @@ describe("hub service", () => {
     // Callers map the Hub's problem members to their own response (an actionable message for the 503,
     // relayed field errors on a 4xx). A hand-built error object would drop them and degrade to generic text.
     test("preserves the Hub's RFC 9457 problem members", async () => {
-      const apiError = Object.assign(new (FormbricksHub.APIError as any)("503 unavailable", 503), {
-        error: { code: "service_unavailable", detail: "embeddings are not configured" },
-      });
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { search: { performSemanticSearch: vi.fn().mockRejectedValue(apiError) } },
-      } as any);
+      useClient();
+      vi.mocked(hub.semanticSearchFeedbackRecords).mockRejectedValue(
+        apiError(503, { code: "service_unavailable", detail: "embeddings are not configured" })
+      );
 
       const result = await semanticSearchFeedbackRecords({ tenant_id: "env-1", query: "q" });
 
@@ -450,6 +405,7 @@ describe("hub service", () => {
     });
 
     test("passes the record id and params through and returns the matches", async () => {
+      useClient();
       const response = {
         data: [
           {
@@ -461,12 +417,16 @@ describe("hub service", () => {
         ],
         limit: 10,
       };
-      const retrieveSimilar = vi.fn().mockResolvedValue(response);
-      vi.mocked(getHubClient).mockReturnValue({ feedbackRecords: { retrieveSimilar } } as any);
+      vi.mocked(hub.similarFeedbackRecords).mockResolvedValue(resolved(response));
 
       const result = await findSimilarFeedbackRecords("rec-1", { limit: 10, min_score: 0.5 });
 
-      expect(retrieveSimilar).toHaveBeenCalledWith("rec-1", { limit: 10, min_score: 0.5 });
+      expect(hub.similarFeedbackRecords).toHaveBeenCalledWith({
+        client,
+        path: { id: "rec-1" },
+        query: { limit: 10, min_score: 0.5 },
+        throwOnError: true,
+      });
       expect(result.data).toEqual(response);
       expect(result.error).toBeNull();
     });
@@ -475,13 +435,10 @@ describe("hub service", () => {
     // exists, so it must arrive with its status intact rather than as a generic failure. It is also an
     // expected state, so it must not be logged as a fault — a warning per call would carry a stack trace.
     test("surfaces a 404 with its status, logged as debug rather than a warning", async () => {
-      const apiError = new (FormbricksHub.APIError as any)("embedding not found", 404);
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { retrieveSimilar: vi.fn().mockRejectedValue(apiError) },
-      } as any);
-      // This file has no shared reset, so clear the shared logger spies before asserting on them.
-      vi.mocked(logger.warn).mockClear();
-      vi.mocked(logger.debug).mockClear();
+      useClient();
+      vi.mocked(hub.similarFeedbackRecords).mockRejectedValue(
+        apiError(404, { detail: "embedding not found" })
+      );
 
       const result = await findSimilarFeedbackRecords("rec-1");
 
@@ -501,22 +458,30 @@ describe("hub service", () => {
     });
 
     test("returns data on success", async () => {
+      useClient();
       const updated = { id: "rec-1", value_text: "new" };
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { update: vi.fn().mockResolvedValue(updated) },
-      } as any);
+      vi.mocked(hub.updateFeedbackRecord).mockResolvedValue(resolved(updated));
+
       const result = await updateFeedbackRecord("rec-1", { value_text: "new" });
+
+      expect(hub.updateFeedbackRecord).toHaveBeenCalledWith({
+        client,
+        path: { id: "rec-1" },
+        body: { value_text: "new" },
+        throwOnError: true,
+      });
       expect(result.data).toEqual(updated);
       expect(result.error).toBeNull();
     });
 
     test("returns error on throw", async () => {
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { update: vi.fn().mockRejectedValue(new Error("Forbidden")) },
-      } as any);
+      useClient();
+      vi.mocked(hub.updateFeedbackRecord).mockRejectedValue(apiError(403, { message: "Forbidden" }));
+
       const result = await updateFeedbackRecord("rec-1", { value_text: "new" });
+
       expect(result.data).toBeNull();
-      expect(result.error).toMatchObject({ message: "Forbidden" });
+      expect(result.error).toMatchObject({ status: 403, message: "403 Forbidden" });
     });
   });
 
@@ -530,35 +495,34 @@ describe("hub service", () => {
       expect(result.error?.message).toContain("HUB_API_KEY");
     });
 
-    test("returns data when client.delete resolves", async () => {
-      const deleteSpy = vi.fn().mockResolvedValue(undefined);
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { delete: deleteSpy },
-      } as any);
+    test("returns data when the delete resolves", async () => {
+      useClient();
+      vi.mocked(hub.deleteFeedbackRecord).mockResolvedValue(resolved({}));
 
       const result = await deleteFeedbackRecord("rec-1");
 
-      expect(deleteSpy).toHaveBeenCalledWith("rec-1");
+      expect(hub.deleteFeedbackRecord).toHaveBeenCalledWith({
+        client,
+        path: { id: "rec-1" },
+        throwOnError: true,
+      });
       expect(result.data).toEqual({ deleted: true });
       expect(result.error).toBeNull();
     });
 
-    test("returns error when client.delete throws APIError", async () => {
-      const apiError = new (FormbricksHub as any).APIError("Forbidden", 403);
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { delete: vi.fn().mockRejectedValue(apiError) },
-      } as any);
+    test("returns error when the delete fails with an API error", async () => {
+      useClient();
+      vi.mocked(hub.deleteFeedbackRecord).mockRejectedValue(apiError(403, { message: "Forbidden" }));
 
       const result = await deleteFeedbackRecord("rec-1");
 
       expect(result.data).toBeNull();
-      expect(result.error).toMatchObject({ status: 403, message: "Forbidden" });
+      expect(result.error).toMatchObject({ status: 403, message: "403 Forbidden" });
     });
 
-    test("returns error when client.delete throws non-API error", async () => {
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { delete: vi.fn().mockRejectedValue(new Error("network")) },
-      } as any);
+    test("returns error when the delete throws a non-API error", async () => {
+      useClient();
+      vi.mocked(hub.deleteFeedbackRecord).mockRejectedValue(new Error("network"));
 
       const result = await deleteFeedbackRecord("rec-1");
 
@@ -569,12 +533,10 @@ describe("hub service", () => {
     // A tenant purge in progress is reported as a 409 with a detail the caller relays as retryable; that
     // detail only survives if the error goes through the shared problem-parsing helper.
     test("preserves the Hub's RFC 9457 problem members on a conflict", async () => {
-      const apiError = Object.assign(new (FormbricksHub.APIError as any)("409 Conflict", 409), {
-        error: { code: "tenant_write_conflict", detail: "tenant data deletion in progress" },
-      });
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { delete: vi.fn().mockRejectedValue(apiError) },
-      } as any);
+      useClient();
+      vi.mocked(hub.deleteFeedbackRecord).mockRejectedValue(
+        apiError(409, { code: "tenant_write_conflict", detail: "tenant data deletion in progress" })
+      );
 
       const result = await deleteFeedbackRecord("rec-1");
 
@@ -596,18 +558,24 @@ describe("hub service", () => {
       expect(result.error?.message).toContain("HUB_API_KEY");
     });
 
-    test("returns mapped data when client.delete resolves", async () => {
-      const deleteSpy = vi.fn().mockResolvedValue({
-        tenant_id: "tenant-1",
-        deleted_feedback_records: 3,
-        deleted_embeddings: 5,
-        deleted_webhooks: 1,
-      });
-      vi.mocked(getHubClient).mockReturnValue({ delete: deleteSpy } as any);
+    test("returns mapped data when the purge resolves", async () => {
+      useClient();
+      vi.mocked(hub.deleteTenantData).mockResolvedValue(
+        resolved({
+          tenant_id: "tenant-1",
+          deleted_feedback_records: 3,
+          deleted_embeddings: 5,
+          deleted_webhooks: 1,
+        })
+      );
 
       const result = await deleteHubTenantData("tenant-1");
 
-      expect(deleteSpy).toHaveBeenCalledWith("/v1/tenants/tenant-1/data");
+      expect(hub.deleteTenantData).toHaveBeenCalledWith({
+        client,
+        path: { tenant_id: "tenant-1" },
+        throwOnError: true,
+      });
       expect(result.error).toBeNull();
       expect(result.data).toEqual({
         deletedFeedbackRecords: 3,
@@ -616,10 +584,9 @@ describe("hub service", () => {
       });
     });
 
-    test("returns error when client.delete throws", async () => {
-      vi.mocked(getHubClient).mockReturnValue({
-        delete: vi.fn().mockRejectedValue(new Error("network")),
-      } as any);
+    test("returns error when the purge throws", async () => {
+      useClient();
+      vi.mocked(hub.deleteTenantData).mockRejectedValue(new Error("network"));
 
       const result = await deleteHubTenantData("tenant-1");
 
@@ -640,36 +607,33 @@ describe("hub service", () => {
 
     // Targets the tenant sub-resource, not the feedback-records collection: the collection prefix is
     // publicly routed by the gateway, and this must stay off it. Distinct from the offboarding purge
-    // at /v1/tenants/{id}/data, which also destroys taxonomy, webhooks and settings.
+    // at /v1/tenants/{id}/data, which also destroys taxonomy, webhooks and settings. The path encoding
+    // itself is the SDK's, pinned in `hub-client.test.ts`.
     test("targets the tenant's feedback-records sub-resource", async () => {
-      const deleteSpy = vi.fn().mockResolvedValue({
-        tenant_id: "tenant-1",
-        status: "accepted",
-        message: "Feedback records purge accepted for tenant-1",
-      });
-      vi.mocked(getHubClient).mockReturnValue({ delete: deleteSpy } as any);
+      useClient();
+      vi.mocked(hub.purgeTenantFeedbackRecords).mockResolvedValue(
+        resolved({
+          tenant_id: "tenant-1",
+          status: "accepted",
+          message: "Feedback records purge accepted for tenant-1",
+        })
+      );
 
       const result = await purgeHubFeedbackRecords("tenant-1");
 
-      expect(deleteSpy).toHaveBeenCalledWith("/v1/tenants/tenant-1/feedback-records");
+      expect(hub.purgeTenantFeedbackRecords).toHaveBeenCalledWith({
+        client,
+        path: { tenant_id: "tenant-1" },
+        throwOnError: true,
+      });
+      expect(hub.deleteTenantData).not.toHaveBeenCalled();
       expect(result.error).toBeNull();
       expect(result.data).toEqual({ tenantId: "tenant-1", status: "accepted" });
     });
 
-    test("escapes the tenant id in the path", async () => {
-      const deleteSpy = vi.fn().mockResolvedValue({ tenant_id: "a/b", status: "accepted" });
-      vi.mocked(getHubClient).mockReturnValue({ delete: deleteSpy } as any);
-
-      await purgeHubFeedbackRecords("a/b");
-
-      // An unescaped slash would address a different route entirely.
-      expect(deleteSpy).toHaveBeenCalledWith("/v1/tenants/a%2Fb/feedback-records");
-    });
-
     test("returns error when the purge cannot be scheduled", async () => {
-      vi.mocked(getHubClient).mockReturnValue({
-        delete: vi.fn().mockRejectedValue(new Error("network")),
-      } as any);
+      useClient();
+      vi.mocked(hub.purgeTenantFeedbackRecords).mockRejectedValue(new Error("network"));
 
       const result = await purgeHubFeedbackRecords("tenant-1");
 
@@ -691,16 +655,11 @@ describe("hub service", () => {
       });
     });
 
-    test("returns results per input when client creates succeed", async () => {
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: {
-          create: vi
-            .fn()
-            .mockImplementation((input: FeedbackRecordCreateParams) =>
-              Promise.resolve({ id: `hub-${input.field_id}`, ...input })
-            ),
-        },
-      } as any);
+    test("returns results per input when the creates succeed", async () => {
+      useClient();
+      vi.mocked(hub.createFeedbackRecord).mockImplementation(async ({ body }) =>
+        resolved({ id: `hub-${body.field_id}`, ...body })
+      );
 
       const inputs = [sampleInput, { ...sampleInput, field_id: "el-2" }];
       const result = await createFeedbackRecordsBatch(inputs);
@@ -713,13 +672,10 @@ describe("hub service", () => {
     });
 
     test("returns mixed results when some creates fail", async () => {
-      const create = vi
-        .fn()
-        .mockResolvedValueOnce({ id: "hub-1", ...sampleInput })
-        .mockRejectedValueOnce(new Error("Rate limited"));
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { create },
-      } as any);
+      useClient();
+      vi.mocked(hub.createFeedbackRecord)
+        .mockResolvedValueOnce(resolved({ id: "hub-1", ...sampleInput }))
+        .mockRejectedValueOnce(apiError(429, { message: "Rate limited" }));
 
       const inputs = [sampleInput, { ...sampleInput, field_id: "el-2" }];
       const result = await createFeedbackRecordsBatch(inputs);
@@ -728,7 +684,7 @@ describe("hub service", () => {
       expect(result.results[0].data).not.toBeNull();
       expect(result.results[0].error).toBeNull();
       expect(result.results[1].data).toBeNull();
-      expect(result.results[1].error).toMatchObject({ message: "Rate limited" });
+      expect(result.results[1].error).toMatchObject({ status: 429, message: "429 Rate limited" });
     });
   });
 
@@ -740,125 +696,119 @@ describe("hub service", () => {
 
       expect(result).toEqual({
         data: null,
-        error: {
-          status: 0,
-          message: "HUB_API_KEY is not set; Hub integration is disabled.",
-          detail: "HUB_API_KEY is not set; Hub integration is disabled.",
-        },
+        error: { status: 0, message: NO_CONFIG_MESSAGE, detail: NO_CONFIG_MESSAGE },
       });
       expect(vi.mocked(cache.withCache)).not.toHaveBeenCalled();
     });
 
     test("returns cached tenant data when retrieve succeeds", async () => {
-      const retrieve = vi.fn().mockResolvedValue({
-        id: "0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8",
-        tenant_id: "clxx1234567890123456789012",
-      });
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { retrieve },
-      } as any);
+      useClient();
+      vi.mocked(hub.getFeedbackRecord).mockResolvedValue(
+        resolved({ id: "0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8", tenant_id: "clxx1234567890123456789012" })
+      );
 
       const result = await getFeedbackRecordTenant("0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8");
 
-      expect(result).toEqual({
-        data: { tenantId: "clxx1234567890123456789012" },
-        error: null,
-      });
+      expect(result).toEqual({ data: { tenantId: "clxx1234567890123456789012" }, error: null });
       expect(vi.mocked(cache.withCache)).toHaveBeenCalledOnce();
       expect(vi.mocked(cache.withCache)).toHaveBeenCalledWith(
         expect.any(Function),
         createCacheKey.hub.feedbackRecordTenant("0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8"),
         60_000
       );
-      expect(retrieve).toHaveBeenCalledWith("0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8");
+      expect(hub.getFeedbackRecord).toHaveBeenCalledWith({
+        client,
+        path: { id: "0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8" },
+        throwOnError: true,
+      });
     });
 
     test("returns error result when retrieve fails", async () => {
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: {
-          retrieve: vi.fn().mockRejectedValue(new Error("Network error")),
-        },
-      } as any);
+      useClient();
+      vi.mocked(hub.getFeedbackRecord).mockRejectedValue(new Error("Network error"));
 
       const result = await getFeedbackRecordTenant("0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8");
 
       expect(result).toEqual({
         data: null,
-        error: {
-          status: 0,
-          message: "Network error",
-          detail: "Network error",
-        },
+        error: { status: 0, message: "Network error", detail: "Network error" },
       });
+    });
+
+    test("keeps the status and a readable message for a Hub error", async () => {
+      useClient();
+      vi.mocked(hub.getFeedbackRecord).mockRejectedValue(apiError(404, { detail: "not found" }));
+
+      const result = await getFeedbackRecordTenant("0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8");
+
+      expect(result.error).toEqual({
+        status: 404,
+        message: '404 {"detail":"not found"}',
+        detail: '404 {"detail":"not found"}',
+      });
+    });
+  });
+
+  describe("getEnrichmentStatus", () => {
+    test("scopes the status to the tenant", async () => {
+      useClient();
+      vi.mocked(hub.getEnrichmentStatus).mockResolvedValue(resolved({ tenant_id: "tenant-1" }));
+
+      const result = await getEnrichmentStatus("tenant-1");
+
+      expect(hub.getEnrichmentStatus).toHaveBeenCalledWith({
+        client,
+        query: { tenant_id: "tenant-1" },
+        throwOnError: true,
+      });
+      expect(result).toEqual({ data: { tenant_id: "tenant-1" }, error: null });
     });
   });
 
   describe("taxonomy wrappers", () => {
     test("returns config errors when the Hub client is disabled", async () => {
       vi.mocked(getHubClient).mockReturnValue(null);
+      const disabled = { data: null, error: { message: NO_CONFIG_MESSAGE } };
 
-      await expect(listTaxonomyFields("tenant-1")).resolves.toMatchObject({
-        data: null,
-        error: { message: "HUB_API_KEY is not set; Hub integration is disabled." },
-      });
-      await expect(createTaxonomyRun({ ...taxonomyScope, actor_id: "user-1" })).resolves.toMatchObject({
-        data: null,
-        error: { message: "HUB_API_KEY is not set; Hub integration is disabled." },
-      });
-      await expect(listTaxonomyRuns(taxonomyScope)).resolves.toMatchObject({
-        data: null,
-        error: { message: "HUB_API_KEY is not set; Hub integration is disabled." },
-      });
-      await expect(getTaxonomyRun("run-1", "tenant-1")).resolves.toMatchObject({
-        data: null,
-        error: { message: "HUB_API_KEY is not set; Hub integration is disabled." },
-      });
-      await expect(getActiveTaxonomyTree(taxonomyScope)).resolves.toMatchObject({
-        data: null,
-        error: { message: "HUB_API_KEY is not set; Hub integration is disabled." },
-      });
-      await expect(getTaxonomyTree("run-1", "tenant-1")).resolves.toMatchObject({
-        data: null,
-        error: { message: "HUB_API_KEY is not set; Hub integration is disabled." },
-      });
+      await expect(listTaxonomyFields("tenant-1")).resolves.toMatchObject(disabled);
+      await expect(createTaxonomyRun({ ...taxonomyScope, actor_id: "user-1" })).resolves.toMatchObject(
+        disabled
+      );
+      await expect(listTaxonomyRuns(taxonomyScope)).resolves.toMatchObject(disabled);
+      await expect(getTaxonomyRun("run-1", "tenant-1")).resolves.toMatchObject(disabled);
+      await expect(getActiveTaxonomyTree(taxonomyScope)).resolves.toMatchObject(disabled);
+      await expect(getTaxonomyTree("run-1", "tenant-1")).resolves.toMatchObject(disabled);
       await expect(
         renameTaxonomyNode("node-1", { tenant_id: "tenant-1", actor_id: "user-1", label: "New" })
-      ).resolves.toMatchObject({
-        data: null,
-        error: { message: "HUB_API_KEY is not set; Hub integration is disabled." },
-      });
+      ).resolves.toMatchObject(disabled);
       await expect(
         removeTaxonomyNode("node-1", { tenant_id: "tenant-1", actor_id: "user-1" })
-      ).resolves.toMatchObject({
-        data: null,
-        error: { message: "HUB_API_KEY is not set; Hub integration is disabled." },
-      });
-      await expect(listTaxonomyNodeRecords("node-1", { tenant_id: "tenant-1" })).resolves.toMatchObject({
-        data: null,
-        error: { message: "HUB_API_KEY is not set; Hub integration is disabled." },
-      });
+      ).resolves.toMatchObject(disabled);
+      await expect(listTaxonomyNodeRecords("node-1", { tenant_id: "tenant-1" })).resolves.toMatchObject(
+        disabled
+      );
+      await expect(listTaxonomyNodeRecordCounts("run-1", "tenant-1")).resolves.toMatchObject(disabled);
     });
 
-    test("calls the typed taxonomy resource methods with scoped arguments", async () => {
-      const listFields = vi.fn().mockResolvedValue({ data: [] });
-      const start = vi.fn().mockResolvedValue({ run: { id: "run-1" }, in_progress: false });
-      const list = vi.fn().mockResolvedValue({ data: [] });
-      const retrieve = vi.fn().mockResolvedValue({ id: "run-1" });
-      const getTree = vi.fn().mockResolvedValue({ run: { id: "run-1" }, root: null });
-      const activeGetTree = vi.fn().mockResolvedValue({ run: { id: "run-1" }, root: null });
-      const rename = vi.fn().mockResolvedValue({ id: "node-1", label: "Renamed" });
-      const softRemove = vi.fn().mockResolvedValue({ id: "node-1", removed_at: "2026-06-11T00:00:00Z" });
-      const listRecords = vi.fn().mockResolvedValue({ data: [], limit: 25 });
-      vi.mocked(getHubClient).mockReturnValue({
-        taxonomy: {
-          listFields,
-          runs: { start, list, retrieve, getTree, active: { getTree: activeGetTree } },
-          nodes: { rename, softRemove, listRecords },
-        },
-      } as any);
+    test("calls the typed taxonomy operations with scoped arguments", async () => {
+      useClient();
+      for (const operation of [
+        hub.listTaxonomyFields,
+        hub.createTaxonomyRun,
+        hub.listTaxonomyRuns,
+        hub.getTaxonomyRun,
+        hub.getActiveTaxonomyTree,
+        hub.getTaxonomyRunTree,
+        hub.renameTaxonomyNode,
+        hub.removeTaxonomyNode,
+        hub.listTaxonomyNodeRecords,
+        hub.countTaxonomyNodeRecords,
+      ]) {
+        vi.mocked(operation).mockResolvedValue(resolved({}));
+      }
 
-      // The SDK owns path building and URL-encoding now, so ids are passed through verbatim
-      // (note the spaces in "run 1"/"node 1") instead of being pre-encoded by the service.
+      // The SDK owns path building and URL-encoding, so ids are passed through verbatim (note the spaces
+      // in "run 1"/"node 1") instead of being pre-encoded by the service.
       await listTaxonomyFields("tenant-1");
       await createTaxonomyRun({ ...taxonomyScope, field_label: "Question?", actor_id: "user-1" });
       await listTaxonomyRuns({ ...taxonomyScope, limit: 5 });
@@ -868,48 +818,102 @@ describe("hub service", () => {
       await renameTaxonomyNode("node 1", { tenant_id: "tenant-1", actor_id: "user-1", label: "Renamed" });
       await removeTaxonomyNode("node 1", { tenant_id: "tenant-1", actor_id: "user-1" });
       await listTaxonomyNodeRecords("node 1", { tenant_id: "tenant-1", limit: 25 });
+      await listTaxonomyNodeRecordCounts("run 1", "tenant-1");
 
-      expect(listFields).toHaveBeenCalledWith({ tenant_id: "tenant-1" });
-      expect(start).toHaveBeenCalledWith({ ...taxonomyScope, field_label: "Question?", actor_id: "user-1" });
-      expect(list).toHaveBeenCalledWith({ ...taxonomyScope, limit: 5 });
-      expect(retrieve).toHaveBeenCalledWith("run 1", { tenant_id: "tenant-1" });
-      expect(activeGetTree).toHaveBeenCalledWith(taxonomyScope);
-      expect(getTree).toHaveBeenCalledWith("run 1", { tenant_id: "tenant-1" });
-      expect(rename).toHaveBeenCalledWith("node 1", {
-        tenant_id: "tenant-1",
-        actor_id: "user-1",
-        label: "Renamed",
+      const tenant = { tenant_id: "tenant-1" };
+      expect(hub.listTaxonomyFields).toHaveBeenCalledWith({ client, query: tenant, throwOnError: true });
+      expect(hub.createTaxonomyRun).toHaveBeenCalledWith({
+        client,
+        body: { ...taxonomyScope, field_label: "Question?", actor_id: "user-1" },
+        throwOnError: true,
       });
-      expect(softRemove).toHaveBeenCalledWith("node 1", { tenant_id: "tenant-1", actor_id: "user-1" });
-      expect(listRecords).toHaveBeenCalledWith("node 1", { tenant_id: "tenant-1", limit: 25 });
+      expect(hub.listTaxonomyRuns).toHaveBeenCalledWith({
+        client,
+        query: { ...taxonomyScope, limit: 5 },
+        throwOnError: true,
+      });
+      expect(hub.getTaxonomyRun).toHaveBeenCalledWith({
+        client,
+        path: { run_id: "run 1" },
+        query: tenant,
+        throwOnError: true,
+      });
+      expect(hub.getActiveTaxonomyTree).toHaveBeenCalledWith({
+        client,
+        query: taxonomyScope,
+        throwOnError: true,
+      });
+      expect(hub.getTaxonomyRunTree).toHaveBeenCalledWith({
+        client,
+        path: { run_id: "run 1" },
+        query: tenant,
+        throwOnError: true,
+      });
+      expect(hub.renameTaxonomyNode).toHaveBeenCalledWith({
+        client,
+        path: { node_id: "node 1" },
+        body: { tenant_id: "tenant-1", actor_id: "user-1", label: "Renamed" },
+        throwOnError: true,
+      });
+      expect(hub.removeTaxonomyNode).toHaveBeenCalledWith({
+        client,
+        path: { node_id: "node 1" },
+        query: { tenant_id: "tenant-1", actor_id: "user-1" },
+        throwOnError: true,
+      });
+      expect(hub.listTaxonomyNodeRecords).toHaveBeenCalledWith({
+        client,
+        path: { node_id: "node 1" },
+        query: { tenant_id: "tenant-1", limit: 25 },
+        throwOnError: true,
+      });
+      expect(hub.countTaxonomyNodeRecords).toHaveBeenCalledWith({
+        client,
+        path: { run_id: "run 1" },
+        query: tenant,
+        throwOnError: true,
+      });
     });
 
     test("preserves an empty source_id in taxonomy scope (the no-source bucket)", async () => {
-      const activeGetTree = vi.fn().mockResolvedValue({ run: {}, root: null });
-      const list = vi.fn().mockResolvedValue({ data: [] });
-      vi.mocked(getHubClient).mockReturnValue({
-        taxonomy: { runs: { active: { getTree: activeGetTree }, list } },
-      } as any);
+      useClient();
+      vi.mocked(hub.getActiveTaxonomyTree).mockResolvedValue(resolved({ run: {}, root: null }));
+      vi.mocked(hub.listTaxonomyRuns).mockResolvedValue(resolved({ data: [] }));
 
       const noSourceScope = { ...taxonomyScope, source_id: "" };
       await getActiveTaxonomyTree(noSourceScope);
       await listTaxonomyRuns({ ...noSourceScope, limit: 5 });
 
       // source_id="" must be forwarded (not dropped) — otherwise Hub reads it as "no source
-      // filter" instead of "the unattributed bucket". See Hub PR #88.
-      expect(activeGetTree).toHaveBeenCalledWith({ ...taxonomyScope, source_id: "" });
-      expect(list).toHaveBeenCalledWith({ ...taxonomyScope, source_id: "", limit: 5 });
+      // filter" instead of "the unattributed bucket". See Hub PR #88; the wire side is pinned in
+      // `hub-client.test.ts`.
+      expect(hub.getActiveTaxonomyTree).toHaveBeenCalledWith(
+        expect.objectContaining({ query: { ...taxonomyScope, source_id: "" } })
+      );
+      expect(hub.listTaxonomyRuns).toHaveBeenCalledWith(
+        expect.objectContaining({ query: { ...taxonomyScope, source_id: "", limit: 5 } })
+      );
     });
 
     test("maps taxonomy endpoint failures to HubResult errors", async () => {
-      vi.mocked(getHubClient).mockReturnValue({
-        taxonomy: { listFields: vi.fn().mockRejectedValue(new Error("taxonomy unavailable")) },
-      } as any);
+      useClient();
+      vi.mocked(hub.listTaxonomyFields).mockRejectedValue(new Error("taxonomy unavailable"));
 
       const result = await listTaxonomyFields("tenant-1");
 
       expect(result.data).toBeNull();
       expect(result.error).toMatchObject({ status: 0, message: "taxonomy unavailable" });
+    });
+
+    test("logs a missing taxonomy run at debug, since it is polled", async () => {
+      useClient();
+      vi.mocked(hub.getTaxonomyRun).mockRejectedValue(apiError(404));
+
+      const result = await getTaxonomyRun("run-1", "tenant-1");
+
+      expect(result.error).toMatchObject({ status: 404 });
+      expect(logger.debug).toHaveBeenCalled();
+      expect(logger.warn).not.toHaveBeenCalled();
     });
   });
 });
