@@ -195,236 +195,103 @@ UPDATE "DataMigration" SET status = 'failed' WHERE name = '<name>' AND status = 
 
 ## v6.1
 
-### MCP response scopes (no action required)
-
-v6.1 adds MCP tools for survey responses, behind two new OAuth scopes: `responses:read` and
-`responses:write`. Responses carry respondents' answers, so these are separate scopes rather than part
-of `surveys:read` / `surveys:write`, and a client only gets them once a user approves them.
-
-Two data migrations set this up on an existing instance. Both apply automatically during the upgrade
-and are fast, since they touch only OAuth configuration rows:
-
-| Migration | What it does |
-| --- | --- |
-| `eng_2862_grant_responses_scopes` | Adds the two scopes to this instance's MCP resource (`${WEBAPP_URL}/api/mcp`), so the authorization server can grant them. |
-| `eng_3470_grant_responses_scopes_to_clients` | Lets already-registered MCP clients request them, mirroring what each client has today: `responses:read` for clients with a read scope, `responses:write` for clients with a write scope. A read-only client stays read-only. |
-
-What your users see: existing MCP integrations keep working with the access they already have. MCP
-clients discover the new scopes from the server's metadata, so when one next authorizes, the consent
-screen names the response scopes. Access to responses starts only once the user approves.
-
-<Note>
-  The client migration skips OAuth clients registered with consent skipped, which only the admin client
-  API can create. Those clients are authorized without a consent screen, so widening them would grant
-  respondent data with no prompt. If you created one and it should read or write responses, add the
-  scopes to it yourself.
-</Note>
-
-## v6
-
-Formbricks v6 replaces the legacy authorization evaluator with SpiceDB, maintained by AuthZed. PostgreSQL
-remains the source of roles and grants, but SpiceDB is the sole decision engine. There is no runtime fallback,
-so an existing installation must prepare its complete authorization graph before serving v6 traffic.
-
-Use the supported source/target pair in the release notes and the
-[maintenance upgrade procedure](/self-hosting/advanced/v6-maintenance-upgrade). A self-hosted v5 bridge is not required:
-
-1. Enter maintenance, stop all writers, suspend their controllers, and drain in-flight work. Take recoverable
-   backups of the databases, secrets, configuration, and source image versions.
-2. Merge the release-matched AuthZed deployment services or Helm values without overwriting proxy, storage,
-   SMTP, or external-datastore customization.
-3. Run the target-image database migrations while writers remain stopped, never against the still-running v5 app.
-4. Run `formbricks-authzed-prepare --backup-confirmed --writers-stopped`; it runs migrations, reconciliation,
-   one clean full audit, and a second independent `upgrade check` audit.
-5. For one-click or Compose, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true`. For Helm, set
-   `authzed.migrationAcknowledged=true` in the v6 upgrade values.
-6. Deploy v6 and verify critical allow, deny, revocation, and cross-tenant cases.
-
-The update script and Helm upgrade hook verify the prepared graph without repairing it. Do not bypass a failed
-gate. Keep maintenance active on failure: after database changes, recovery may require restoring coordinated
-backups rather than running `helm rollback`. Pin explicit releases and digests, not floating tags.
-
-The Helm chart and Formbricks image are versioned independently. A chart-only patch can retain the same
-`appVersion`; review both pins and the rendered image rather than assuming their version numbers match.
-
-### Survey visibility (opt-in)
-
-Surveys can now be restricted to their owner and the organization's owners and managers. New columns on the
-`Survey` table record each survey's owner and visibility. The migrations set every existing survey to
-workspace-visible and make its creator the owner, so **access is unchanged after the upgrade**.
-
-<Note>
-  Once the marker is set, every survey a person creates starts **Restricted** to its author and the
-  organization's owners and managers. They can make it visible to the workspace from **Collaborate** or
-  when activating it. See [Survey visibility](/surveys/general-features/visibility).
-</Note>
-
-Enforcement stays off until an operator marks the survey scope ready:
-
-```bash
-formbricks-authzed backfill --scope=survey --apply --mark-ready
-```
-
-While the marker is set:
-
-- a survey a person creates is restricted to them until they share it with the workspace;
-- API keys never see restricted surveys or their responses;
-- webhooks, integrations, feedback sources, follow-ups and workflows never receive a restricted survey's
-  responses, and cannot be attached to one.
-
-Two new environment variables:
-
-- **SURVEY_VISIBILITY_FORCE_DISABLED**: emergency switch. `1` ignores the marker, so every survey is
-  workspace-visible again. Takes effect on restart.
-- **SURVEY_WORKSPACE_LIMIT**: most surveys one workspace may hold, archived ones included (default `10000`).
-  This applies whether or not visibility is enforced: creating a survey past it answers
-  `422 workspace_survey_limit_reached`. Raise it before upgrading if a workspace is near the default.
-
-To roll back, clear the marker. This touches only PostgreSQL and keeps each survey's stored visibility:
-
-```bash
-formbricks-authzed backfill --scope=survey --clear-ready
-```
-
-### Bundled TEI log level
-
-The Helm chart now defaults `hub.embeddings.env.RUST_LOG` to `warn` because TEI 1.9 includes its API key in
-INFO-level startup arguments. If you need a different log level, set `hub.embeddings.env.RUST_LOG` explicitly
-and use it only with a runtime that redacts credentials from its logs.
-
-### Database transaction limits (action required if you connect through a connection pooler)
-
-Formbricks now sets its database transaction limits explicitly instead of relying on library defaults.
-Under load, the old 5-second limit was cancelling writes that were about to succeed: user identification,
-response updates and survey resets.
-
-- Transactions may run for up to 20 seconds.
-- Waiting for a free database connection is bounded by `connect_timeout` in `DATABASE_URL` (5 seconds
-  by default). With `connect_timeout=0`, transactions give up waiting after 6 seconds; other queries
-  wait until a connection is free.
-- Formbricks asks PostgreSQL to end any session left idle inside an open transaction for 60 seconds, which
-  releases that session's locks. It does this with the `idle_in_transaction_session_timeout` connection
-  setting. Migrations are not affected.
-
-To change the idle timeout, add it to `DATABASE_URL` in **milliseconds**, for example
-`?idle_in_transaction_session_timeout=30000`. Set it to `0` to send nothing and keep your server's own
-setting.
-
 <Warning>
-  If Formbricks connects to PostgreSQL through **PgBouncer, Supavisor, RDS Proxy or another pooler**, the
-  pooler may reject connections that carry an unknown startup parameter. Before upgrading, add
-  `idle_in_transaction_session_timeout=0` to `DATABASE_URL`. If your `DATABASE_URL` already contains
-  `pgbouncer=true`, Formbricks skips the setting automatically. Adding the parameter to PgBouncer's
-  `ignore_startup_parameters` also works, but PgBouncer then drops it, so the 60-second safeguard does
-  not apply. A direct connection to PostgreSQL needs no change.
+  **Plan a maintenance window.** 6.0 → 6.1 cannot be a rolling update. Stop every 6.0 container or pod
+  before the 6.1 migrations run, and take a database backup first — it is the only way back.
 </Warning>
 
-### Changes in Environment Variables
+### Upgrade checklist
 
-<Note>
-  `DEFAULT_ORGANIZATION_ID` and `DEFAULT_ORGANIZATION_ROLE` drive SSO just-in-time provisioning, which is
-  part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license). On a community instance
-  they have no effect, so there is nothing to rename.
-</Note>
+**Before you start**
 
-- **DEFAULT_ORGANIZATION_ID** has been renamed to **AUTH_SSO_DEFAULT_ORGANIZATION_ID**, matching the
-  `AUTH_SSO_DEFAULT_TEAM_ID` naming pattern. Rename the variable in your configuration; the value is
-  unchanged. Support for this variable was missing between v3.0 and v5.x, so it takes effect again on v6.
+1. Back up your database.
+2. **Docker:** add the `hub-worker` service to your `docker-compose.yml` — see [Hub worker required for Docker](#hub-worker-required-for-docker).
+3. **Behind PgBouncer, RDS Proxy or another pooler:** add `idle_in_transaction_session_timeout=0` to `DATABASE_URL` — see [Database transaction limits](#database-transaction-limits-action-required-if-you-connect-through-a-connection-pooler).
+4. If a workspace holds close to 10,000 surveys, raise `SURVEY_WORKSPACE_LIMIT` — see [Survey visibility](#survey-visibility-opt-in).
 
-- **DEFAULT_ORGANIZATION_ROLE** has been renamed to **AUTH_SSO_DEFAULT_ORGANIZATION_ROLE**.
+**Upgrade**
 
-- **AUTHZED_CONSISTENCY** must be `fully_consistent`. v6 refuses to start with any other value, or with the
-  variable unset. An existing `.env` that still sets `AUTHZED_CONSISTENCY=minimize_latency` must be changed
-  to `AUTHZED_CONSISTENCY=fully_consistent` before upgrading.
+1. Stop all Formbricks containers or pods.
+2. Prepare authorization with the 6.1 image (`formbricks-authzed-prepare`) — see [Authorization schema changed](#authorization-schema-changed-maintenance-required).
+3. Upgrade: `./formbricks.sh update`, or `helm upgrade` with the 6.1 chart. Migrations run on their own.
+4. Once everything runs 6.1, replay authorization events: `formbricks-authzed outbox status`, then `outbox replay`, then `outbox drain`.
 
-- **BETTER_AUTH_URL** and **BETTER_AUTH_SECRET** are now the documented names for the auth base URL and
-  the session-signing secret. This is a documentation change, not a rename: `NEXTAUTH_URL` and
-  `NEXTAUTH_SECRET` keep working exactly as before, so **an existing instance needs no action**. New
-  installs configure the `BETTER_AUTH_*` names, which is what the setup guides now show.
+**After the upgrade**
 
-  <Warning>
-    If you do choose to move to the new names, **copy the existing value across** rather than generating a
-    new one. `BETTER_AUTH_SECRET` takes precedence, so setting it to a *different* value signs everyone
-    out and invalidates outstanding invite, email-verification and email-change links. Formbricks logs a
-    warning at startup when both are set to different values. The secret is no longer rejected for being
-    shorter than 32 characters, so a shorter legacy value can be renamed as-is — you will see a startup
-    warning recommending a longer one, which you can act on whenever a forced sign-out is acceptable.
-  </Warning>
+1. **Docker:** update the Cube schema file and image — see [Cube](#cube-docker-action-required).
+2. If you use encrypted single-use links, regenerate them — see [Encrypted single-use survey links](#encrypted-single-use-survey-links-must-be-regenerated-action-required-if-you-use-them).
+3. Optional: turn on [survey visibility](#survey-visibility-opt-in).
 
-  Formbricks now refuses to start when neither variable has a value, in every environment. Before this
-  release that refusal applied only when `NODE_ENV=production`; a development or test instance with
-  neither variable set still started, using a fallback value for the signing secret, and only invites
-  and verification links failed. So a production instance is already required
-  to have one of these set and is unaffected. If a non-production instance of yours set neither,
-  generate a secret before upgrading — doing so **signs every current user out**, because their cookies
-  were signed with that fallback value rather than with a secret of yours.
+### At a glance
 
-### Encrypted single-use survey links must be regenerated (action required if you use them)
+| Change | Who is affected | Action |
+| --- | --- | --- |
+| [Embedded Data columns removed](#embedded-data-columns-removed-downtime-required) | Everyone | Stop 6.0 before migrating |
+| [Authorization schema changed](#authorization-schema-changed-maintenance-required) | Everyone | Run `formbricks-authzed-prepare` |
+| [Hub worker](#hub-worker-required-for-docker) | Docker | Add the `hub-worker` service |
+| [Cube](#cube-docker-action-required) | Docker | Update the schema file and image |
+| [Database transaction limits](#database-transaction-limits-action-required-if-you-connect-through-a-connection-pooler) | Connection pooler users | Add one `DATABASE_URL` parameter |
+| [Encrypted single-use links](#encrypted-single-use-survey-links-must-be-regenerated-action-required-if-you-use-them) | Single-use link users | Regenerate links |
+| [Survey visibility](#survey-visibility-opt-in) | Everyone | None — opt in when ready |
+| [Auth environment variables](#auth-environment-variables-renamed-no-action-required) | Everyone | None |
+| [Webhook delivery](#webhook-delivery-no-action-required) | Webhook users | None |
+| [New rate limits](#new-rate-limits-no-action-required) | Everyone | None |
+| [Taxonomy record limit](#taxonomy-record-limit-docker) | Docker with taxonomy | Set `TAXONOMY_MAX_RECORDS` to keep 50000 |
+| [TEI log level](#bundled-tei-log-level) | Helm with bundled TEI | None |
+| [MCP response scopes](#mcp-response-scopes-no-action-required) | MCP users | None |
 
-Encrypted single-use survey links issued before v6 stop working and have to be regenerated.
+### Embedded Data columns removed (downtime required)
 
-#### What to do when upgrading
+Hidden fields and variables now live in their own tables. A migration copies any data still left on the
+`Survey` table, then drops the `Survey.variables` and `Survey.hiddenFields` columns.
 
-**Regenerate after upgrading, not before.** Links minted by the old version are unsigned whichever
-day you mint them, so regenerating first produces a second batch that the new version rejects exactly
-like the first.
+- A 6.0 container that is still running when the columns are dropped fails every survey read. Stop all 6.0
+  containers or pods before the migrations run.
+- The drop cannot be undone. To roll back, restore the backup you took before upgrading.
+- If you query the `Survey` table directly, read the `EmbeddedData` and `SurveyEmbeddedData` tables instead.
 
-1. Plan a maintenance window covering the deploy and the redistribution. Outstanding links stop
-   working the moment the new version serves traffic, and a respondent who opened one before the
-   deploy and submits after it sees the invitation error and loses their answers.
-2. Deploy v6.
-3. Regenerate the links for any survey with single-use enabled and **URL encryption of single-use
-   ID** on, from the survey's share modal or via
-   `GET /api/v1/management/surveys/{surveyId}/singleUseIds`. The new version signs them.
-4. Re-send. Formbricks never stores generated links, so there is nothing to migrate and nothing to
-   back up — the new links simply replace the old ones.
+### Authorization schema changed (maintenance required)
 
-**Links with URL encryption off are unaffected**, including custom single-use IDs. Those have carried
-a `suToken` signature since 5.0 and validate exactly as before, so integrations that mint their own
-IDs need no changes.
+Survey visibility adds survey ownership to the SpiceDB schema. The upgrade check blocks 6.1 until you run
+the maintenance preparation with the 6.1 image. Follow
+[Later v6 upgrades](/self-hosting/advanced/v6-maintenance-upgrade#later-v6-upgrades), then replay the outbox
+as described in [Survey visibility](/self-hosting/advanced/v6-maintenance-upgrade#survey-visibility).
 
-#### What you will see if you skip it
+### Cube (Docker, action required)
 
-Opening an old encrypted link shows *"This survey can only be taken by invitation"*, and submissions
-against it are rejected. Server logs record one `warn` per rejection carrying the survey id and a
-`reason` of `missing_signature`.
+`formbricks.sh update` keeps your local Cube files, so two things need updating by hand:
 
-#### Why
+- **Schema file** — needed for the new NPS and CSAT chart presets:
 
-An encrypted single-use link carried only an encrypted id and no signature, so nothing tied it to the
-survey it was issued for and any survey on the same deployment accepted it. Both modes now carry the
-same signature, which is what the old links are missing.
+  ```bash
+  curl -fsSL -o cube/schema/FeedbackRecords.js \
+    https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/schema/FeedbackRecords.js
+  docker compose restart cube
+  ```
 
-#### If you cannot re-issue in time
+- **Image** — 6.1 ships `ghcr.io/formbricks/cube:1.7.47-3`. Set it as the `cube` service's `image:`. If your
+  `cube` service still runs `cubejs/cube`, follow [Bundled Cube image](#bundled-cube-image-action-required-for-some-deployments) first.
 
-`SINGLE_USE_LEGACY_UNSIGNED_UNTIL` keeps the old links working for a fixed period, so an in-flight
-campaign does not die on upgrade day. It takes an ISO 8601 date and is unset by default:
+Helm picks up both changes automatically.
 
-```sh
-SINGLE_USE_LEGACY_UNSIGNED_UNTIL=2026-11-15
-```
+### Webhook delivery (no action required)
 
-Unsigned **encrypted** links are accepted until 00:00 UTC on that date, and rejected from then on.
-Nothing else changes: links with URL encryption off are untouched, a `suToken` that is present but
-wrong is still rejected, and the id must still decrypt under your `ENCRYPTION_KEY`.
+Webhooks are now delivered by background jobs — one per webhook, each with its own retries. If you send a lot of
+webhooks, raise `BULLMQ_WORKER_CONCURRENCY` and your database pool. `WEBHOOK_DELIVERY_TIMEOUT_MS` (default
+`5000`, allowed `1000`–`30000`) sets how long one delivery waits for the receiver.
 
-<Warning>
-  This re-opens the vulnerability the release closed, for as long as it is set. An unsigned encrypted
-  link is bound to no survey, so a link issued for one survey opens **any** survey on the same
-  instance — on a deployment serving more than one organisation, that is across organisations. Set it
-  only on a single-tenant instance, only for as long as re-issuing takes, and only as a deliberate
-  decision. It is not a substitute for step 3 above.
-</Warning>
+### New rate limits (no action required)
 
-Each accepted legacy link is logged at `warn` with the survey id and the configured expiry, and
-counted on `formbricks_survey_single_use_link_validations_total` with `reason="legacy_unsigned"`.
-Watch that series fall to zero, then remove the variable — it tells you when the window has stopped
-carrying traffic and re-issuing is complete.
+- One user can invite at most `INVITE_RATE_LIMIT_PER_24_HOURS` people (default 50) per 24 hours, counted across
+  all of their organizations. The existing per-organization limit still applies.
+- One user can create at most 5 organizations per 24 hours.
 
-#### Rollback
+See [Rate limiting](/self-hosting/configuration/rate-limiting).
 
-Downgrading restores the old links, since nothing about them changed on disk — but it also restores
-the behaviour above, so treat it as a stopgap while you regenerate rather than a fix.
+### Taxonomy record limit (Docker)
+
+The Docker Compose default for `TAXONOMY_MAX_RECORDS` drops from `50000` to `10000`. Set it in your `.env` to
+keep the old limit.
 
 ### Hub worker required for Docker
 
@@ -486,6 +353,239 @@ cp -p docker-compose.yml.before-hub-worker docker-compose.yml
 Completed jobs remain committed and pending jobs remain queued, but all Hub asynchronous processing pauses
 again. A fully custom deployment that runs Hub workers outside this Compose project must use its own manual
 upgrade workflow rather than the one-click updater.
+
+### Survey visibility (opt-in)
+
+Surveys can now be restricted to their owner and the organization's owners and managers. New columns on the
+`Survey` table record each survey's owner and visibility. The migrations set every existing survey to
+workspace-visible and make its creator the owner, so **access is unchanged after the upgrade**.
+
+<Note>
+  Once the marker is set, every survey a person creates starts **Restricted** to its author and the
+  organization's owners and managers. They can make it visible to the workspace from **Collaborate** or
+  when activating it. See [Survey visibility](/surveys/general-features/visibility).
+</Note>
+
+Enforcement stays off until an operator marks the survey scope ready:
+
+```bash
+formbricks-authzed backfill --scope=survey --apply --mark-ready
+```
+
+While the marker is set:
+
+- a survey a person creates is restricted to them until they share it with the workspace;
+- API keys never see restricted surveys or their responses;
+- webhooks, integrations, feedback sources, follow-ups and workflows never receive a restricted survey's
+  responses, and cannot be attached to one.
+
+Two new environment variables:
+
+- **SURVEY_VISIBILITY_FORCE_DISABLED**: emergency switch. `1` ignores the marker, so every survey is
+  workspace-visible again. Takes effect on restart.
+- **SURVEY_WORKSPACE_LIMIT**: most surveys one workspace may hold, archived ones included (default `10000`).
+  This applies whether or not visibility is enforced: creating a survey past it answers
+  `422 workspace_survey_limit_reached`. Raise it before upgrading if a workspace is near the default.
+
+To roll back, clear the marker. This touches only PostgreSQL and keeps each survey's stored visibility:
+
+```bash
+formbricks-authzed backfill --scope=survey --clear-ready
+```
+
+### Database transaction limits (action required if you connect through a connection pooler)
+
+Formbricks now sets its database transaction limits explicitly instead of relying on library defaults.
+Under load, the old 5-second limit was cancelling writes that were about to succeed: user identification,
+response updates and survey resets.
+
+- Transactions may run for up to 20 seconds.
+- Waiting for a free database connection is bounded by `connect_timeout` in `DATABASE_URL` (5 seconds
+  by default). With `connect_timeout=0`, transactions give up waiting after 6 seconds; other queries
+  wait until a connection is free.
+- Formbricks asks PostgreSQL to end any session left idle inside an open transaction for 60 seconds, which
+  releases that session's locks. It does this with the `idle_in_transaction_session_timeout` connection
+  setting. Migrations are not affected.
+
+To change the idle timeout, add it to `DATABASE_URL` in **milliseconds**, for example
+`?idle_in_transaction_session_timeout=30000`. Set it to `0` to send nothing and keep your server's own
+setting.
+
+<Warning>
+  If Formbricks connects to PostgreSQL through **PgBouncer, Supavisor, RDS Proxy or another pooler**, the
+  pooler may reject connections that carry an unknown startup parameter. Before upgrading, add
+  `idle_in_transaction_session_timeout=0` to `DATABASE_URL`. If your `DATABASE_URL` already contains
+  `pgbouncer=true`, Formbricks skips the setting automatically. Adding the parameter to PgBouncer's
+  `ignore_startup_parameters` also works, but PgBouncer then drops it, so the 60-second safeguard does
+  not apply. A direct connection to PostgreSQL needs no change.
+</Warning>
+
+### Encrypted single-use survey links must be regenerated (action required if you use them)
+
+Encrypted single-use survey links issued before 6.1 stop working and have to be regenerated.
+
+#### What to do when upgrading
+
+**Regenerate after upgrading, not before.** Links minted by the old version are unsigned whichever
+day you mint them, so regenerating first produces a second batch that the new version rejects exactly
+like the first.
+
+1. Plan a maintenance window covering the deploy and the redistribution. Outstanding links stop
+   working the moment the new version serves traffic, and a respondent who opened one before the
+   deploy and submits after it sees the invitation error and loses their answers.
+2. Deploy 6.1.
+3. Regenerate the links for any survey with single-use enabled and **URL encryption of single-use
+   ID** on, from the survey's share modal or via
+   `GET /api/v1/management/surveys/{surveyId}/singleUseIds`. The new version signs them.
+4. Re-send. Formbricks never stores generated links, so there is nothing to migrate and nothing to
+   back up — the new links simply replace the old ones.
+
+**Links with URL encryption off are unaffected**, including custom single-use IDs. Those have carried
+a `suToken` signature since 5.0 and validate exactly as before, so integrations that mint their own
+IDs need no changes.
+
+#### What you will see if you skip it
+
+Opening an old encrypted link shows *"This survey can only be taken by invitation"*, and submissions
+against it are rejected. Server logs record one `warn` per rejection carrying the survey id and a
+`reason` of `missing_signature`.
+
+#### Why
+
+An encrypted single-use link carried only an encrypted id and no signature, so nothing tied it to the
+survey it was issued for and any survey on the same deployment accepted it. Both modes now carry the
+same signature, which is what the old links are missing.
+
+#### If you cannot re-issue in time
+
+`SINGLE_USE_LEGACY_UNSIGNED_UNTIL` keeps the old links working for a fixed period, so an in-flight
+campaign does not die on upgrade day. It takes an ISO 8601 date and is unset by default:
+
+```sh
+SINGLE_USE_LEGACY_UNSIGNED_UNTIL=2026-11-15
+```
+
+Unsigned **encrypted** links are accepted until 00:00 UTC on that date, and rejected from then on.
+Nothing else changes: links with URL encryption off are untouched, a `suToken` that is present but
+wrong is still rejected, and the id must still decrypt under your `ENCRYPTION_KEY`.
+
+<Warning>
+  This re-opens the vulnerability the release closed, for as long as it is set. An unsigned encrypted
+  link is bound to no survey, so a link issued for one survey opens **any** survey on the same
+  instance — on a deployment serving more than one organisation, that is across organisations. Set it
+  only on a single-tenant instance, only for as long as re-issuing takes, and only as a deliberate
+  decision. It is not a substitute for step 3 above.
+</Warning>
+
+Each accepted legacy link is logged at `warn` with the survey id and the configured expiry, and
+counted on `formbricks_survey_single_use_link_validations_total` with `reason="legacy_unsigned"`.
+Watch that series fall to zero, then remove the variable — it tells you when the window has stopped
+carrying traffic and re-issuing is complete.
+
+#### Rollback
+
+Downgrading restores the old links, since nothing about them changed on disk — but it also restores
+the behaviour above, so treat it as a stopgap while you regenerate rather than a fix.
+
+### Auth environment variables renamed (no action required)
+
+**BETTER_AUTH_URL** and **BETTER_AUTH_SECRET** are now the documented names for the auth base URL and
+the session-signing secret. This is a documentation change, not a rename: `NEXTAUTH_URL` and
+`NEXTAUTH_SECRET` keep working exactly as before, so **an existing instance needs no action**. New
+installs configure the `BETTER_AUTH_*` names, which is what the setup guides now show.
+
+<Warning>
+  If you do choose to move to the new names, **copy the existing value across** rather than generating a
+  new one. `BETTER_AUTH_SECRET` takes precedence, so setting it to a *different* value signs everyone
+  out and invalidates outstanding invite, email-verification and email-change links. Formbricks logs a
+  warning at startup when both are set to different values. The secret is no longer rejected for being
+  shorter than 32 characters, so a shorter legacy value can be renamed as-is — you will see a startup
+  warning recommending a longer one, which you can act on whenever a forced sign-out is acceptable.
+</Warning>
+
+Formbricks now refuses to start when neither variable has a value, in every environment. Before this
+release that refusal applied only when `NODE_ENV=production`; a development or test instance with
+neither variable set still started, using a fallback value for the signing secret, and only invites
+and verification links failed. So a production instance is already required
+to have one of these set and is unaffected. If a non-production instance of yours set neither,
+generate a secret before upgrading — doing so **signs every current user out**, because their cookies
+were signed with that fallback value rather than with a secret of yours.
+
+### Bundled TEI log level
+
+The Helm chart now defaults `hub.embeddings.env.RUST_LOG` to `warn` because TEI 1.9 includes its API key in
+INFO-level startup arguments. If you need a different log level, set `hub.embeddings.env.RUST_LOG` explicitly
+and use it only with a runtime that redacts credentials from its logs.
+
+### MCP response scopes (no action required)
+
+v6.1 adds MCP tools for survey responses, behind two new OAuth scopes: `responses:read` and
+`responses:write`. Responses carry respondents' answers, so these are separate scopes rather than part
+of `surveys:read` / `surveys:write`, and a client only gets them once a user approves them.
+
+Two data migrations set this up on an existing instance. Both apply automatically during the upgrade
+and are fast, since they touch only OAuth configuration rows:
+
+| Migration | What it does |
+| --- | --- |
+| `eng_2862_grant_responses_scopes` | Adds the two scopes to this instance's MCP resource (`${WEBAPP_URL}/api/mcp`), so the authorization server can grant them. |
+| `eng_3470_grant_responses_scopes_to_clients` | Lets already-registered MCP clients request them, mirroring what each client has today: `responses:read` for clients with a read scope, `responses:write` for clients with a write scope. A read-only client stays read-only. |
+
+What your users see: existing MCP integrations keep working with the access they already have. MCP
+clients discover the new scopes from the server's metadata, so when one next authorizes, the consent
+screen names the response scopes. Access to responses starts only once the user approves.
+
+<Note>
+  The client migration skips OAuth clients registered with consent skipped, which only the admin client
+  API can create. Those clients are authorized without a consent screen, so widening them would grant
+  respondent data with no prompt. If you created one and it should read or write responses, add the
+  scopes to it yourself.
+</Note>
+
+## v6
+
+Formbricks v6 replaces the legacy authorization evaluator with SpiceDB, maintained by AuthZed. PostgreSQL
+remains the source of roles and grants, but SpiceDB is the sole decision engine. There is no runtime fallback,
+so an existing installation must prepare its complete authorization graph before serving v6 traffic.
+
+Use the supported source/target pair in the release notes and the
+[maintenance upgrade procedure](/self-hosting/advanced/v6-maintenance-upgrade). A self-hosted v5 bridge is not required:
+
+1. Enter maintenance, stop all writers, suspend their controllers, and drain in-flight work. Take recoverable
+   backups of the databases, secrets, configuration, and source image versions.
+2. Merge the release-matched AuthZed deployment services or Helm values without overwriting proxy, storage,
+   SMTP, or external-datastore customization.
+3. Run the target-image database migrations while writers remain stopped, never against the still-running v5 app.
+4. Run `formbricks-authzed-prepare --backup-confirmed --writers-stopped`; it runs migrations, reconciliation,
+   one clean full audit, and a second independent `upgrade check` audit.
+5. For one-click or Compose, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true`. For Helm, set
+   `authzed.migrationAcknowledged=true` in the v6 upgrade values.
+6. Deploy v6 and verify critical allow, deny, revocation, and cross-tenant cases.
+
+The update script and Helm upgrade hook verify the prepared graph without repairing it. Do not bypass a failed
+gate. Keep maintenance active on failure: after database changes, recovery may require restoring coordinated
+backups rather than running `helm rollback`. Pin explicit releases and digests, not floating tags.
+
+The Helm chart and Formbricks image are versioned independently. A chart-only patch can retain the same
+`appVersion`; review both pins and the rendered image rather than assuming their version numbers match.
+
+### Changes in Environment Variables
+
+<Note>
+  `DEFAULT_ORGANIZATION_ID` and `DEFAULT_ORGANIZATION_ROLE` drive SSO just-in-time provisioning, which is
+  part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license). On a community instance
+  they have no effect, so there is nothing to rename.
+</Note>
+
+- **DEFAULT_ORGANIZATION_ID** has been renamed to **AUTH_SSO_DEFAULT_ORGANIZATION_ID**, matching the
+  `AUTH_SSO_DEFAULT_TEAM_ID` naming pattern. Rename the variable in your configuration; the value is
+  unchanged. Support for this variable was missing between v3.0 and v5.x, so it takes effect again on v6.
+
+- **DEFAULT_ORGANIZATION_ROLE** has been renamed to **AUTH_SSO_DEFAULT_ORGANIZATION_ROLE**.
+
+- **AUTHZED_CONSISTENCY** must be `fully_consistent`. v6 refuses to start with any other value, or with the
+  variable unset. An existing `.env` that still sets `AUTHZED_CONSISTENCY=minimize_latency` must be changed
+  to `AUTHZED_CONSISTENCY=fully_consistent` before upgrading.
 
 ### Bundled Cube image (action required for some deployments)
 
