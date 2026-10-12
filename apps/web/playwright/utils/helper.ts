@@ -867,6 +867,13 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await fillRichTextEditor(page, "Description", params.pictureSelectQuestion.description);
 
   await uploadImageChoicesForPictureSelection(page);
+  await page.getByRole("button", { name: "Image alt text, choice 1", exact: true }).click();
+  const altTextDialog = page.getByRole("dialog", { name: "Add alt text" });
+  await altTextDialog
+    .getByLabel("Image alt text, choice 1", { exact: true })
+    .fill(params.pictureSelectQuestion.firstChoiceAltText);
+  await altTextDialog.getByRole("button", { name: "Done" }).click();
+  await expect(altTextDialog).toBeHidden();
 
   // File Upload Question
   await addElement(page, "File Upload");

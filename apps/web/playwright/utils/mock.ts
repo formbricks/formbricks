@@ -145,6 +145,7 @@ export const surveys = {
     pictureSelectQuestion: {
       question: "Picture Select Question",
       description: "Picture Select Description",
+      firstChoiceAltText: "Blue coffee mug on a desk",
     },
     dateQuestion: {
       question: "Date Question",

@@ -11,6 +11,8 @@ import { capturePostHogEvent, getEmailDomain, groupIdentifyPostHog } from "@/lib
 import { updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -24,6 +26,8 @@ export const createOrganizationAction = authenticatedActionClient
   .inputSchema(ZCreateOrganizationAction)
   .action(
     withAuditLogging("created", "organization", async ({ ctx, parsedInput }) => {
+      await applyRateLimit(rateLimitConfigs.actions.createOrganization, ctx.user.id);
+
       const isMultiOrgEnabled = await getIsMultiOrgEnabled();
       if (!isMultiOrgEnabled)
         throw new OperationNotAllowedError(

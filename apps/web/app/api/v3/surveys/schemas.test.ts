@@ -634,6 +634,87 @@ describe("ZV3CreateSurveyBody", () => {
     }
   });
 
+  describe("image alt text", () => {
+    const pictureElement = {
+      id: "favourite",
+      type: "pictureSelection",
+      headline: { "en-US": "Pick one" },
+      required: true,
+      allowMulti: false,
+      imageUrl: "https://example.com/hero.jpg",
+      imageAltText: { "en-US": "Product hero shot" },
+      choices: [
+        { id: "a", imageUrl: "https://example.com/a.jpg", imageAltText: { "en-US": "Blue mug" } },
+        { id: "b", imageUrl: "https://example.com/b.jpg" },
+      ],
+    };
+    const endingWithImage = {
+      id: "clend123456789012345678901",
+      type: "endScreen",
+      headline: { "en-US": "Thanks!" },
+      imageUrl: "https://example.com/thanks.jpg",
+      imageAltText: { "en-US": "Team waving" },
+    };
+    const bodyWith = (element: object, ending: object) => ({
+      ...validCreateBody,
+      blocks: [{ ...validCreateBody.blocks[0], elements: [element] }],
+      endings: [ending],
+    });
+
+    test("accepts it on elements, picture choices and end screens, keyed to the default language", () => {
+      const result = ZV3CreateSurveyBody.safeParse(bodyWith(pictureElement, endingWithImage));
+
+      expect(result.error).toBeUndefined();
+      const element = result.data?.blocks[0].elements[0];
+      expect(element).toMatchObject({ imageAltText: { default: "Product hero shot" } });
+      expect(element).toMatchObject({
+        choices: [{ imageAltText: { default: "Blue mug" } }, { id: "b" }],
+      });
+      expect(result.data?.endings?.[0]).toMatchObject({ imageAltText: { default: "Team waving" } });
+    });
+
+    test("rejects the internal default key in a picture choice's alt text", () => {
+      const result = ZV3CreateSurveyBody.safeParse(
+        bodyWith(
+          {
+            ...pictureElement,
+            choices: [
+              { ...pictureElement.choices[0], imageAltText: { default: "Blue mug" } },
+              pictureElement.choices[1],
+            ],
+          },
+          endingWithImage
+        )
+      );
+
+      expect(result.success).toBe(false);
+      expect(result.error?.issues.map((issue) => issue.path.join("."))).toContain(
+        "blocks.0.elements.0.choices.0.imageAltText.default"
+      );
+    });
+
+    test("accepts an empty alt text with no translations as a decorative image", () => {
+      const result = ZV3CreateSurveyBody.safeParse({
+        ...bodyWith(
+          {
+            ...pictureElement,
+            headline: { "en-US": "Pick one", "de-DE": "Wähle eins" },
+            imageAltText: { "en-US": "" },
+            choices: pictureElement.choices.map((choice) => ({ ...choice, imageAltText: { "en-US": "" } })),
+          },
+          {
+            ...endingWithImage,
+            headline: { "en-US": "Thanks!", "de-DE": "Danke!" },
+            imageAltText: { "en-US": "" },
+          }
+        ),
+        languages: [{ code: "de-DE" }],
+      });
+
+      expect(result.error).toBeUndefined();
+    });
+  });
+
   test("reports missing required ending fields before shared ending union errors", () => {
     const result = ZV3CreateSurveyBody.safeParse({
       ...validCreateBody,

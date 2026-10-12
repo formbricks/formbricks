@@ -232,6 +232,8 @@ overrides:
   esbuild: 0.28.1
   tar: 7.5.21
   js-yaml@4: 4.3.2
+  handlebars: 4.7.10
+  shell-quote: 1.12.0
   undici@6: 6.28.1
   undici@7: 7.29.1
   sharp: 0.35.5
@@ -8463,8 +8465,8 @@ packages:
   graphmatch@1.1.1:
     resolution: {integrity: sha512-5ykVn/EXM1hF0XCaWh05VbYvEiOL2lY1kBxZtaYsyvjp7cmWOU1XsAdfQBwClraEofXDT197lFbXOEVMHpvQOg==}
 
-  handlebars@4.7.9:
-    resolution: {integrity: sha512-4E71E0rpOaQuJR2A3xDZ+GM1HyWYv1clR58tC8emQNeQe3RH7MAzSbat+V0wG78LQBo6m6bzSG/L4pBuCsgnUQ==}
+  handlebars@4.7.10:
+    resolution: {integrity: sha512-P5VJMVM7qgBn6vjXMw8WG9uVI+ncf2pi72j4de4yz5ZULLj2RGqLYaKOYGsgyrViQ0tePOVlN1tDCCXXtFqXKg==}
     engines: {node: '>=0.4.7'}
     hasBin: true
 
@@ -10836,8 +10838,8 @@ packages:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
 
-  shell-quote@1.9.0:
-    resolution: {integrity: sha512-Iov+JwFv/2HcTpcwNMKd8+IWNb8tboQJNQTkAY/LLVK7gGH9jy+LGkVqPxfekHl+yMmiqXszdGWXgkfml7hjqA==}
+  shell-quote@1.12.0:
+    resolution: {integrity: sha512-PcByqNyT/38F2kDNi006HAMRJaULuBzq/FOsw3qdZvX/GA9W/jamDaRskgHjubHiftXK5sIFxLNkvrXUwcof6Q==}
     engines: {node: '>= 0.4'}
 
   should-equal@2.0.0:
@@ -16324,7 +16326,7 @@ snapshots:
       form-data: 4.0.6
       get-port-please: 3.0.1
       glob: 7.2.3
-      handlebars: 4.7.9
+      handlebars: 4.7.10
       js-yaml: 4.3.2
       mobx: 6.12.3
       pluralize: 8.0.0
@@ -19011,7 +19013,7 @@ snapshots:
     dependencies:
       chalk: 4.1.2
       rxjs: 7.8.2
-      shell-quote: 1.9.0
+      shell-quote: 1.12.0
       supports-color: 8.1.1
       tree-kill: 1.2.2
       yargs: 17.7.2
@@ -20300,7 +20302,7 @@ snapshots:
 
   graphmatch@1.1.1: {}
 
-  handlebars@4.7.9:
+  handlebars@4.7.10:
     dependencies:
       minimist: 1.2.8
       neo-async: 2.6.2
@@ -22855,7 +22857,7 @@ snapshots:
 
   shebang-regex@3.0.0: {}
 
-  shell-quote@1.9.0: {}
+  shell-quote@1.12.0: {}
 
   should-equal@2.0.0:
     dependencies:

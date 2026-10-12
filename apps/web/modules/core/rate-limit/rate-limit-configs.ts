@@ -72,6 +72,21 @@ export const rateLimitConfigs = {
     licenseRecheck: { interval: 60, allowedPerInterval: 5, namespace: "action:license-recheck" }, // 5 per minute
     unsplash: { interval: 60, allowedPerInterval: 30, namespace: "action:unsplash" }, // 30 per minute per user — bounds one account exhausting the instance-wide UNSPLASH_ACCESS_KEY quota
     inviteMember: { interval: 3600 * 24, allowedPerInterval: 50, namespace: "action:invite-member" }, // 50 recipients per day per org; trusted limits are resolved per organization
+    // The same recipient allowance, counted per inviting user across all their organizations. A
+    // per-org budget alone is reset by creating another organization, so one account could mail
+    // thousands of recipients through throwaway orgs.
+    inviteMemberPerUser: {
+      interval: 3600 * 24,
+      allowedPerInterval: 50,
+      namespace: "action:invite-member:user",
+    },
+    // Per user. Creating an organization is free and each one starts with fresh per-org budgets, so
+    // an unbounded create-and-delete loop is a way around every per-org limit.
+    createOrganization: {
+      interval: 3600 * 24,
+      allowedPerInterval: 5,
+      namespace: "action:create-organization",
+    }, // 5 per day
     generateExampleResponses: {
       interval: 60,
       allowedPerInterval: 1,
