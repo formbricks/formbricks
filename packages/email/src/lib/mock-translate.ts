@@ -81,14 +81,14 @@ const translations: Record<TranslationKey, TranslationValue> = {
   "emails.member_retention_notice_email_subject": "Your {organizationName} account will be deactivated",
   "emails.member_retention_notice_email_text":
     "You haven't used {organizationName} for a while, so its data retention policy will deactivate your account on {date}.",
-  "emails.retention_notice_email_heading": "Upcoming data retention",
+  "emails.retention_notice_email_heading": "Some survey data will be removed soon",
   "emails.retention_notice_email_keep":
     "To keep any of this data, ask an owner or manager of your organization to add an exemption in its data retention settings.",
   "emails.retention_notice_email_responses_after":
     "After that date, each response is deleted once it is older than the period your organization set.",
   "emails.retention_notice_email_responses_heading": "Responses to be deleted",
   "emails.retention_notice_email_responses_item": "{count} due for deletion from {date}",
-  "emails.retention_notice_email_subject": "Upcoming data retention in {organizationName}",
+  "emails.retention_notice_email_subject": "Survey data in {organizationName} will be removed soon",
   "emails.retention_notice_email_surveys_heading": "Surveys to be archived",
   "emails.retention_notice_email_surveys_item": "archived on {archiveDate}, then deleted on {deleteDate}",
   "emails.retention_notice_email_text":
