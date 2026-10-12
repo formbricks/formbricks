@@ -93,8 +93,10 @@ export const ImportSurveyForm = ({
     if (isImporting) stopButtonRef.current?.focus();
   }, [isImporting]);
 
+  // preventScroll: in a short dialog the review body scrolls, and focusing the list would scroll the
+  // file name out of view the moment the review opens.
   useEffect(() => {
-    if (importer.status === "review") draftRef.current?.focus();
+    if (importer.status === "review") draftRef.current?.focus({ preventScroll: true });
   }, [importer.status]);
 
   useEffect(() => {
@@ -195,19 +197,25 @@ export const ImportSurveyForm = ({
       ) : null}
 
       {isImporting || isReviewing ? (
-        <DraftReviewPanel
-          draft={importer.draft}
-          isGenerating={isImporting}
-          source={sourceChip}
-          facts={reviewReport ? <ImportFacts summary={reviewReport.summary} /> : undefined}
-          report={reviewReport ? <ImportReport report={reviewReport} /> : undefined}
-          status={
-            isImporting ? (
-              <AiStatusLine isActive messages={progressMessages} activeIndex={stageIndex} />
-            ) : undefined
-          }
-          scrollContainerRef={draftRef}
-        />
+        // The report and the languages warning can fill a short dialog. Then this part scrolls and the
+        // list keeps two rows instead of shrinking to nothing, while the warning and the footer stay
+        // in view. -m-1/p-1 leave room for focus rings the scroll box would otherwise clip.
+        <div className="-m-1 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-1">
+          <DraftReviewPanel
+            draft={importer.draft}
+            isGenerating={isImporting}
+            source={sourceChip}
+            facts={reviewReport ? <ImportFacts summary={reviewReport.summary} /> : undefined}
+            report={reviewReport ? <ImportReport report={reviewReport} /> : undefined}
+            status={
+              isImporting ? (
+                <AiStatusLine isActive messages={progressMessages} activeIndex={stageIndex} />
+              ) : undefined
+            }
+            scrollContainerRef={draftRef}
+            listClassName="min-h-48"
+          />
+        </div>
       ) : (
         <div className="flex flex-col gap-2">
           <FileDropZone
