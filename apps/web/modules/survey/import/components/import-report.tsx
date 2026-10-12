@@ -49,6 +49,8 @@ export const ImportReport = ({ report, className }: Readonly<ImportReportProps>)
     noteCount > 0 ? t("workspace.surveys.import.report.summary_notes", { count: noteCount }) : null,
   ].filter((part): part is string => part !== null);
 
+  const toggle = () => setIsOpen((open) => !open);
+
   const handleDownload = () => {
     downloadText(formatQsfImportReport(report, t), getQsfImportReportFileName(report.source.fileName));
   };
@@ -62,25 +64,28 @@ export const ImportReport = ({ report, className }: Readonly<ImportReportProps>)
           aria-expanded={isOpen}
           aria-controls="import-report-lines"
           disabled={issues.length === 0}
-          onClick={() => setIsOpen((open) => !open)}>
+          onClick={toggle}>
           <span className="font-medium">{t("workspace.surveys.import.report.title")}</span>
           <span className="truncate text-xs text-slate-500">
             {summary.length > 0 ? summary.join(" · ") : t("workspace.surveys.import.report.empty")}
           </span>
-          {issues.length > 0 ? (
-            <ChevronDownIcon
-              className={cn(
-                "ml-auto size-4 shrink-0 text-slate-500 transition-transform",
-                isOpen && "rotate-180"
-              )}
-              aria-hidden="true"
-            />
-          ) : null}
         </button>
         <Button type="button" variant="ghost" size="sm" onClick={handleDownload}>
           <DownloadIcon aria-hidden="true" />
           {t("workspace.surveys.import.report.download")}
         </Button>
+        {issues.length > 0 ? (
+          // Last in the row, after Download, and a second way to toggle for the pointer only: the
+          // title's button is the one keyboard and screen reader users reach.
+          <button
+            type="button"
+            tabIndex={-1}
+            aria-hidden="true"
+            className="flex size-8 shrink-0 items-center justify-center text-slate-500"
+            onClick={toggle}>
+            <ChevronDownIcon className={cn("size-4 transition-transform", isOpen && "rotate-180")} />
+          </button>
+        ) : null}
       </div>
       {isOpen && issues.length > 0 ? (
         <ul
