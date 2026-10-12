@@ -3999,6 +3999,7 @@
         "dropzone_help": "Qualtrics anket dışa aktarımı (.qsf), en fazla 15 MB",
         "dropzone_primary": "Bir .qsf dosyasını buraya bırak veya seçmek için tıkla",
         "errors": {
+          "ai_busy": "Yapay zekâ sağlayıcısı şu an meşgul. {seconds, plural, one {# saniye} other {# saniye}} sonra tekrar dene.",
           "already_importing": "Zaten devam eden bir içe aktarma işlemin var. Bitmesini bekle, sonra tekrar dene.",
           "busy": "Formbricks şu anda başka içe aktarmalarla meşgul. Birkaç saniye sonra tekrar dene.",
           "empty_file": "Bu dosya boş.",
@@ -4039,7 +4040,8 @@
         "issues": {
           "choice_dropped": "Kimliği okunamadığı için bir seçenek dışarıda bırakıldı.",
           "choice_label_renamed": "Tekrarlanan seçenek etiketleri, her biri benzersiz olsun diye numaralandırıldı.",
-          "ending_added": "Dosyada bitiş mesajı olmadığı için varsayılan bir bitiş eklendi.",
+          "ending_added": "Bitiş mesajı dosyada yok, bu yüzden varsayılan bir bitiş eklendi.",
+          "ending_not_translated": "Dosyada {languages} için çeviri yok, bu yüzden orada varsayılan bir metin gösteriliyor. Düzenleyicide kontrol et.",
           "external_url_removed": "Planın harici bağlantılara izin vermediği için bir bağlantı kaldırıldı.",
           "field_dropped": "{count, plural, one {# gömülü veri alanı} other {# gömülü veri alanı}} dışarıda bırakıldı: anket daha fazlasını barındıramıyor.",
           "field_renamed": "\"{from}\" gömülü veri alanının adı \"{to}\" olarak değiştirildi.",
@@ -4052,6 +4054,7 @@
           "language_skipped_too_large": "\"{code}\" dili dışarıda bırakıldı: anket, tüm dillerle oluşturulamayacak kadar büyüktü.",
           "language_skipped_unnamed": "Formbricks'te karşılığı olmayan bir dil dışarıda bırakıldı.",
           "logic_not_imported": "Mantık içe aktarılmadı: {description}",
+          "logic_not_imported_no_description": "Mantık içe aktarılmadı.",
           "markup_escaped": "HTML olarak görünecek olan metin, yazıldığı gibi gösteriliyor.",
           "matrix_single_answer": "Artık her satır için tek yanıt var: Qualtrics'te bu matris birden fazla yanıta izin veriyordu, Formbricks matrisi ise yalnızca bir yanıt alıyor.",
           "options_left_out": "{count, plural, one {# seçenek} other {# seçenek}} dışarıda bırakıldı: {options}.",
@@ -4072,6 +4075,8 @@
           "translation_missing": "{language} dilinde {count, plural, one {# metin} other {# metin}} eksik olduğu için bu dil kapatıldı. Eksik metinleri düzenleyicide ekle, ardından dili aç.",
           "unknown": "Bu sorudaki bir şey içe aktarma sırasında değiştirildi."
         },
+        "languages_off_description": "{languages} dilinde metinler eksik. Bunları düzenleyicide ekle, ardından Diller bölümünden {count, plural, one {dili} other {dilleri}} aç.",
+        "languages_off_title": "{count, plural, one {# dil kapalı olarak} other {# dil kapalı olarak}} içe aktarıldı",
         "menu_item": "Qualtrics anketini içe aktar",
         "pick_another_file": "Başka bir dosya seç",
         "progress": {

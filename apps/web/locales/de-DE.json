@@ -3999,6 +3999,7 @@
         "dropzone_help": "Qualtrics-Umfrage-Export (.qsf), bis zu 15 MB",
         "dropzone_primary": "Zieh eine .qsf-Datei hierher oder klicke, um eine auszuwählen",
         "errors": {
+          "ai_busy": "Der KI-Anbieter ist gerade ausgelastet. Versuch es in {seconds, plural, one {# Sekunde} other {# Sekunden}} noch einmal.",
           "already_importing": "Es läuft bereits ein Import. Warte, bis er abgeschlossen ist, und versuche es dann erneut.",
           "busy": "Formbricks ist gerade mit anderen Importen beschäftigt. Versuche es in ein paar Sekunden erneut.",
           "empty_file": "Diese Datei ist leer.",
@@ -4039,7 +4040,8 @@
         "issues": {
           "choice_dropped": "Eine Option wurde ausgelassen, weil ihre ID nicht gelesen werden konnte.",
           "choice_label_renamed": "Mehrfach vorkommende Optionsbezeichnungen wurden nummeriert, damit jede eindeutig ist.",
-          "ending_added": "Die Datei enthält keine Abschlussnachricht, daher wurde ein Standardabschluss hinzugefügt.",
+          "ending_added": "Die Abschlussnachricht fehlt in der Datei, deshalb wurde ein Standardende hinzugefügt.",
+          "ending_not_translated": "Die Datei enthält keine Übersetzung für {languages}, deshalb wird dort ein Standardtext angezeigt. Überprüfe ihn im Editor.",
           "external_url_removed": "Ein Link wurde entfernt, weil dein Tarif keine externen Links zulässt.",
           "field_dropped": "{count, plural, one {# Embedded-Data-Feld wurde} other {# Embedded-Data-Felder wurden}} ausgelassen: Mehr passen nicht in die Umfrage.",
           "field_renamed": "Das Embedded-Data-Feld \"{from}\" wurde in \"{to}\" umbenannt.",
@@ -4052,6 +4054,7 @@
           "language_skipped_too_large": "Die Sprache \"{code}\" wurde ausgelassen: Die Umfrage war zu groß, um sie mit allen Sprachen zu erstellen.",
           "language_skipped_unnamed": "Eine Sprache ohne Entsprechung in Formbricks wurde ausgelassen.",
           "logic_not_imported": "Logik nicht importiert: {description}",
+          "logic_not_imported_no_description": "Logik nicht importiert.",
           "markup_escaped": "Text, der sonst als HTML angezeigt worden wäre, wird so angezeigt, wie er eingegeben wurde.",
           "matrix_single_answer": "Jetzt gibt es eine Antwort pro Zeile: In Qualtrics konnten in dieser Matrix mehrere Antworten ausgewählt werden, in Formbricks ist es nur eine.",
           "options_left_out": "{count, plural, one {# Option wurde} other {# Optionen wurden}} ausgelassen: {options}.",
@@ -4072,6 +4075,8 @@
           "translation_missing": "{count, plural, one {# Text fehlt} other {# Texte fehlen}} in {language}, weshalb die Sprache deaktiviert ist. Füge die fehlenden Texte im Editor hinzu und aktiviere die Sprache dann wieder.",
           "unknown": "Beim Import wurde etwas an dieser Frage geändert."
         },
+        "languages_off_description": "In {languages} fehlen Texte. Ergänze sie im Editor und aktiviere dann unter „Sprachen“ {count, plural, one {die Sprache} other {die Sprachen}}.",
+        "languages_off_title": "{count, plural, one {# Sprache wurde} other {# Sprachen wurden}} deaktiviert importiert",
         "menu_item": "Qualtrics-Umfrage importieren",
         "pick_another_file": "Andere Datei auswählen",
         "progress": {

@@ -3999,6 +3999,7 @@
         "dropzone_help": "Qualtrics-enquête-export (.qsf), tot 15 MB",
         "dropzone_primary": "Sleep een .qsf-bestand hierheen of klik om er een te kiezen",
         "errors": {
+          "ai_busy": "De AI-provider is bezig. Probeer het over {seconds, plural, one {# seconde} other {# seconden}} opnieuw.",
           "already_importing": "Er loopt al een import. Wacht tot die klaar is en probeer het dan opnieuw.",
           "busy": "Formbricks is bezig met andere imports. Probeer het over een paar seconden opnieuw.",
           "empty_file": "Dit bestand is leeg.",
@@ -4039,7 +4040,8 @@
         "issues": {
           "choice_dropped": "Een optie is weggelaten omdat de bijbehorende ID niet gelezen kon worden.",
           "choice_label_renamed": "Herhaalde optielabels zijn genummerd, zodat ze allemaal uniek zijn.",
-          "ending_added": "Het bestand bevat geen afsluitend bericht, dus er is een standaardafsluiting toegevoegd.",
+          "ending_added": "Het eindbericht staat niet in het bestand, dus is er een standaardafsluiting toegevoegd.",
+          "ending_not_translated": "Het bestand bevat geen vertaling voor {languages}, dus daar wordt een standaardtekst getoond. Controleer dit in de editor.",
           "external_url_removed": "Een link is verwijderd omdat externe links niet zijn toegestaan in je abonnement.",
           "field_dropped": "{count, plural, one {# embedded data-veld is} other {# embedded data-velden zijn}} weggelaten: de enquête kan er niet meer bevatten.",
           "field_renamed": "Embedded data-veld \"{from}\" is hernoemd naar \"{to}\".",
@@ -4052,6 +4054,7 @@
           "language_skipped_too_large": "De taal \"{code}\" is weggelaten: de enquête was te groot om met alle talen aan te maken.",
           "language_skipped_unnamed": "Een taal zonder equivalent in Formbricks is weggelaten.",
           "logic_not_imported": "Logica niet geïmporteerd: {description}",
+          "logic_not_imported_no_description": "Logica niet geïmporteerd.",
           "markup_escaped": "Tekst die als HTML zou zijn weergegeven, wordt weergegeven zoals getypt.",
           "matrix_single_answer": "Nu één antwoord per rij: in Qualtrics kon je in deze matrix meerdere antwoorden kiezen, maar in een Formbricks-matrix kan dat er maar één zijn.",
           "options_left_out": "{count, plural, one {# optie is} other {# opties zijn}} weggelaten: {options}.",
@@ -4072,6 +4075,8 @@
           "translation_missing": "Er {count, plural, one {ontbreekt # tekst} other {ontbreken # teksten}} in het {language}, dus de taal is uitgezet. Voeg de ontbrekende teksten toe in de editor en zet de taal daarna weer aan.",
           "unknown": "Er is tijdens het importeren iets aangepast in deze vraag."
         },
+        "languages_off_description": "Er ontbreken teksten in {languages}. Voeg ze toe in de editor en zet {count, plural, one {de taal} other {de talen}} daarna aan onder Talen.",
+        "languages_off_title": "{count, plural, one {# taal is} other {# talen zijn}} uitgeschakeld geïmporteerd",
         "menu_item": "Qualtrics-vragenlijst importeren",
         "pick_another_file": "Kies een ander bestand",
         "progress": {

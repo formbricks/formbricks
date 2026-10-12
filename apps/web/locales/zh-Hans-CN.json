@@ -3999,6 +3999,7 @@
         "dropzone_help": "Qualtrics 问卷导出文件（.qsf），最大 15 MB",
         "dropzone_primary": "将 .qsf 文件拖放到此处，或点击选择文件",
         "errors": {
+          "ai_busy": "AI 服务商当前繁忙,请在 {seconds, plural, other {# 秒}}后重试。",
           "already_importing": "你已有一个正在进行的导入。请等待其完成后再试。",
           "busy": "Formbricks 正忙于处理其他导入任务。请几秒钟后再试。",
           "empty_file": "此文件为空。",
@@ -4039,7 +4040,8 @@
         "issues": {
           "choice_dropped": "有一个选项因无法读取其 ID 而被略过。",
           "choice_label_renamed": "重复的选项标签已添加编号，以便区分。",
-          "ending_added": "文件中没有结束语，所以已自动添加默认结尾。",
+          "ending_added": "文件中没有结束语,因此已添加默认结束语。",
+          "ending_not_translated": "文件中没有 {languages} 的翻译,因此这些语言会显示默认文本。请在编辑器中检查。",
           "external_url_removed": "有一个链接已被移除，因为你的套餐不支持外部链接。",
           "field_dropped": "{count, plural, other {# 个嵌入数据字段已被省略}}：问卷无法容纳更多字段。",
           "field_renamed": "嵌入数据字段“{from}”已重命名为“{to}”。",
@@ -4052,6 +4054,7 @@
           "language_skipped_too_large": "语言“{code}”已被省略：问卷过大，无法包含所有语言一并创建。",
           "language_skipped_unnamed": "一种在 Formbricks 中没有对应项的语言已被省略。",
           "logic_not_imported": "逻辑未导入：{description}",
+          "logic_not_imported_no_description": "逻辑未导入。",
           "markup_escaped": "原本会显示为 HTML 的文本将按输入的原样显示。",
           "matrix_single_answer": "现在每行只能选一个答案：在 Qualtrics 中，这个矩阵题可以选多个，而 Formbricks 的矩阵题只能选一个。",
           "options_left_out": "{count, plural, other {# 个选项已被忽略}}:{options}。",
@@ -4072,6 +4075,8 @@
           "translation_missing": "{language}缺少 {count, plural, other {# 条文本}}，因此该语言已关闭。请在编辑器中补充缺失的文本，然后再重新开启。",
           "unknown": "导入时,这道题中的部分内容已被修改。"
         },
+        "languages_off_description": "{languages} 中缺少文本。请在编辑器中补充,然后在“语言”下开启{count, plural, other {这些语言}}。",
+        "languages_off_title": "已导入的语言中有 {count, plural, other {# 种语言}}处于关闭状态",
         "menu_item": "导入 Qualtrics 问卷",
         "pick_another_file": "选择其他文件",
         "progress": {

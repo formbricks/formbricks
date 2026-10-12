@@ -3999,6 +3999,7 @@
         "dropzone_help": "Qualtricsのアンケートエクスポート(.qsf)、最大15 MB",
         "dropzone_primary": ".qsfファイルをここにドロップするか、クリックして選択してください",
         "errors": {
+          "ai_busy": "AIプロバイダーが混み合っています。{seconds, plural, other {#秒}}後にもう一度お試しください。",
           "already_importing": "すでにインポートを実行中です。完了するまでお待ちのうえ、もう一度お試しください。",
           "busy": "Formbricksは他のインポート処理で混み合っています。数秒後にもう一度お試しください。",
           "empty_file": "このファイルは空です。",
@@ -4039,7 +4040,8 @@
         "issues": {
           "choice_dropped": "IDを読み取れなかったため、選択肢が1つ除外されました。",
           "choice_label_renamed": "重複していた選択肢のラベルに番号を付けて、区別できるようにしました。",
-          "ending_added": "ファイルに終了メッセージがなかったため、デフォルトのエンディングを追加しました。",
+          "ending_added": "ファイルに終了メッセージがなかったため、デフォルトの終了メッセージを追加しました。",
+          "ending_not_translated": "ファイルに{languages}の翻訳がないため、そちらではデフォルトのテキストが表示されます。エディターで確認してください。",
           "external_url_removed": "ご利用のプランでは外部リンクが許可されていないため、リンクを削除しました。",
           "field_dropped": "{count, plural, other {#個の埋め込みデータフィールド}}を除外しました。アンケートに保存できる上限を超えています。",
           "field_renamed": "埋め込みデータフィールド「{from}」を「{to}」に名前変更しました。",
@@ -4052,6 +4054,7 @@
           "language_skipped_too_large": "言語「{code}」は除外しました。すべての言語を含めて作成するには、アンケートが大きすぎました。",
           "language_skipped_unnamed": "Formbricksで対応する言語がない言語を1つ除外しました。",
           "logic_not_imported": "ロジックはインポートされませんでした: {description}",
+          "logic_not_imported_no_description": "ロジックはインポートされませんでした。",
           "markup_escaped": "HTMLとして表示されてしまうテキストは、入力されたままの状態で表示されます。",
           "matrix_single_answer": "1行につき回答は1つになりました。Qualtricsではこのマトリクスで複数の回答を選べましたが、Formbricksのマトリクスでは1つのみ選べます。",
           "options_left_out": "{count, plural, other {#件の選択肢が除外されました}}: {options}。",
@@ -4072,6 +4075,8 @@
           "translation_missing": "{language}で{count, plural, other {#件のテキストが}}不足しているため、この言語はオフになっています。エディターで不足しているテキストを追加してから、オンにしてください。",
           "unknown": "インポート中に、この質問の一部が変更されました。"
         },
+        "languages_off_description": "{languages}のテキストが不足しています。エディターで追加してから、「言語」で{count, plural, other {これらの言語}}をオンにしてください。",
+        "languages_off_title": "{count, plural, other {#件の言語}}がオフの状態でインポートされました",
         "menu_item": "Qualtricsアンケートをインポート",
         "pick_another_file": "別のファイルを選択",
         "progress": {

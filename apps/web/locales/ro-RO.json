@@ -3999,6 +3999,7 @@
         "dropzone_help": "Export de sondaj Qualtrics (.qsf), de până la 15 MB",
         "dropzone_primary": "Trage un fișier .qsf aici sau dă clic pentru a alege unul",
         "errors": {
+          "ai_busy": "Furnizorul de AI este ocupat. Încearcă din nou peste {seconds, plural, one {# secundă} few {# secunde} other {# de secunde}}.",
           "already_importing": "Ai deja un import în desfășurare. Așteaptă să se termine, apoi încearcă din nou.",
           "busy": "Formbricks este ocupat cu alte importuri. Încearcă din nou peste câteva secunde.",
           "empty_file": "Acest fișier este gol.",
@@ -4039,7 +4040,8 @@
         "issues": {
           "choice_dropped": "O opțiune a fost omisă deoarece ID-ul ei nu a putut fi citit.",
           "choice_label_renamed": "Etichetele repetate ale opțiunilor au fost numerotate pentru ca fiecare să fie distinctă.",
-          "ending_added": "Fișierul nu conține un mesaj de final, așa că a fost adăugat un final implicit.",
+          "ending_added": "Mesajul de final nu se află în fișier, așa că a fost adăugat un final implicit.",
+          "ending_not_translated": "Fișierul nu conține traducere pentru {languages}, așa că acolo se afișează un text implicit. Verifică-l în editor.",
           "external_url_removed": "Un link a fost eliminat deoarece planul tău nu permite linkuri externe.",
           "field_dropped": "{count, plural, one {# câmp de date încorporate a fost omis} few {# câmpuri de date încorporate au fost omise} other {# de câmpuri de date încorporate au fost omise}}: sondajul nu poate conține mai multe.",
           "field_renamed": "Câmpul de date încorporate „{from}” a fost redenumit în „{to}”.",
@@ -4052,6 +4054,7 @@
           "language_skipped_too_large": "Limba „{code}” a fost omisă: sondajul era prea mare pentru a fi creat cu toate limbile.",
           "language_skipped_unnamed": "O limbă fără echivalent în Formbricks a fost omisă.",
           "logic_not_imported": "Logica nu a fost importată: {description}",
+          "logic_not_imported_no_description": "Logica nu a fost importată.",
           "markup_escaped": "Textul care ar fi fost afișat ca HTML este afișat exact așa cum a fost scris.",
           "matrix_single_answer": "Acum este un singur răspuns pe rând: în Qualtrics, această matrice permitea mai multe, iar o matrice Formbricks permite unul singur.",
           "options_left_out": "{count, plural, one {# opțiune a fost omisă} few {# opțiuni au fost omise} other {# de opțiuni au fost omise}}: {options}.",
@@ -4072,6 +4075,8 @@
           "translation_missing": "{count, plural, one {# text lipsește} few {# texte lipsesc} other {# de texte lipsesc}} în {language}, așa că limba este dezactivată. Adaugă textele lipsă în editor, apoi activeaz-o.",
           "unknown": "Ceva din această întrebare a fost modificat în timpul importului."
         },
+        "languages_off_description": "Lipsesc texte în {languages}. Adaugă-le în editor, apoi activează {count, plural, one {limba} few {limbile} other {limbile}} în secțiunea Limbi.",
+        "languages_off_title": "{count, plural, one {# limbă este importată dezactivată} few {# limbi sunt importate dezactivate} other {# de limbi sunt importate dezactivate}}",
         "menu_item": "Importă un sondaj Qualtrics",
         "pick_another_file": "Alege alt fișier",
         "progress": {

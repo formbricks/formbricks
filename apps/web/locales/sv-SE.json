@@ -3999,6 +3999,7 @@
         "dropzone_help": "Exporterad Qualtrics-enkät (.qsf), upp till 15 MB",
         "dropzone_primary": "Släpp en .qsf-fil här eller klicka för att välja en",
         "errors": {
+          "ai_busy": "AI-leverantören är upptagen. Försök igen om {seconds, plural, one {# sekund} other {# sekunder}}.",
           "already_importing": "Du har redan en import igång. Vänta tills den är klar och försök sedan igen.",
           "busy": "Formbricks är upptaget med andra importer. Försök igen om några sekunder.",
           "empty_file": "Den här filen är tom.",
@@ -4039,7 +4040,8 @@
         "issues": {
           "choice_dropped": "Ett alternativ utelämnades eftersom dess ID inte gick att läsa.",
           "choice_label_renamed": "Alternativ med samma namn har numrerats så att alla blir unika.",
-          "ending_added": "Filen har inget avslutningsmeddelande, så en standardavslutning har lagts till.",
+          "ending_added": "Avslutningsmeddelandet finns inte i filen, så en standardavslutning har lagts till.",
+          "ending_not_translated": "Filen saknar översättning för {languages}, så en standardtext visas där. Kolla den i redigeraren.",
           "external_url_removed": "En länk har tagits bort eftersom din plan inte tillåter externa länkar.",
           "field_dropped": "{count, plural, one {# inbäddat datafält utelämnades} other {# inbäddade datafält utelämnades}}: enkäten rymmer inte fler.",
           "field_renamed": "Det inbäddade datafältet \"{from}\" har bytt namn till \"{to}\".",
@@ -4052,6 +4054,7 @@
           "language_skipped_too_large": "Språket \"{code}\" utelämnades: enkäten var för stor för att skapas med alla språk.",
           "language_skipped_unnamed": "Ett språk utan motsvarighet i Formbricks utelämnades.",
           "logic_not_imported": "Logiken importerades inte: {description}",
+          "logic_not_imported_no_description": "Logiken importerades inte.",
           "markup_escaped": "Text som annars hade visats som HTML visas precis som den skrevs.",
           "matrix_single_answer": "Nu ett svar per rad: i Qualtrics kunde den här matrisen ha flera, men en matris i Formbricks tillåter bara ett.",
           "options_left_out": "{count, plural, one {# alternativ utelämnades} other {# alternativ utelämnades}}: {options}.",
@@ -4072,6 +4075,8 @@
           "translation_missing": "{count, plural, one {# text saknas} other {# texter saknas}} på {language}, så språket har stängts av. Lägg till de saknade texterna i redigeraren och slå sedan på språket igen.",
           "unknown": "Något i den här frågan ändrades under importen."
         },
+        "languages_off_description": "Texter saknas på {languages}. Lägg till dem i redigeraren och aktivera sedan {count, plural, one {språket} other {språken}} under Språk.",
+        "languages_off_title": "{count, plural, one {# språk har} other {# språk har}} importerats avstängt",
         "menu_item": "Importera Qualtrics-enkät",
         "pick_another_file": "Välj en annan fil",
         "progress": {

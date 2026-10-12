@@ -3999,6 +3999,7 @@
         "dropzone_help": "Qualtrics-felmérés exportfájlja (.qsf), legfeljebb 15 MB",
         "dropzone_primary": "Húzzon ide egy .qsf fájlt, vagy kattintson a kiválasztásához",
         "errors": {
+          "ai_busy": "Az MI-szolgáltató jelenleg túlterhelt. Kérjük, próbálkozzon újra {seconds, plural, one {# másodperc} other {# másodperc}} múlva.",
           "already_importing": "Önnél már folyamatban van egy importálás. Kérjük, várja meg annak befejezését, majd próbálja újra.",
           "busy": "A Formbricks jelenleg más importálásokat dolgoz fel. Kérjük, néhány másodperc múlva próbálja újra.",
           "empty_file": "Ez a fájl üres.",
@@ -4039,7 +4040,8 @@
         "issues": {
           "choice_dropped": "Egy válaszlehetőség kimaradt, mivel az azonosítóját nem sikerült beolvasni.",
           "choice_label_renamed": "Az ismétlődő válaszlehetőség-címkék sorszámozásra kerültek, hogy mindegyik egyedi legyen.",
-          "ending_added": "A fájl nem tartalmaz záró üzenetet, ezért egy alapértelmezett befejezés került hozzáadásra.",
+          "ending_added": "A befejező üzenet nem szerepel a fájlban, ezért egy alapértelmezett befejezés került hozzáadásra.",
+          "ending_not_translated": "A fájl nem tartalmaz fordítást a következő nyelv(ek)hez: {languages}, ezért ott egy alapértelmezett szöveg jelenik meg. Kérjük, ellenőrizze a szerkesztőben.",
           "external_url_removed": "Egy hivatkozás eltávolításra került, mivel az Ön előfizetési csomagja nem engedélyezi a külső hivatkozásokat.",
           "field_dropped": "{count, plural, one {# beágyazott adatmező} other {# beágyazott adatmező}} kimaradt: a kérdőív nem tartalmazhat többet.",
           "field_renamed": "A(z) \"{from}\" beágyazott adatmező átnevezésre került a következőre: \"{to}\".",
@@ -4052,6 +4054,7 @@
           "language_skipped_too_large": "A(z) \"{code}\" nyelv kimaradt: a kérdőív túl nagy volt ahhoz, hogy minden nyelvvel létrehozható legyen.",
           "language_skipped_unnamed": "Egy olyan nyelv kimaradt, amelynek nincs Formbricks-megfelelője.",
           "logic_not_imported": "A logika nem került importálásra: {description}",
+          "logic_not_imported_no_description": "A logika importálása nem történt meg.",
           "markup_escaped": "Az a szöveg, amely HTML-kódként jelent volna meg, a begépelt formájában jelenik meg.",
           "matrix_single_answer": "Mostantól soronként egy válasz adható meg: a Qualtricsben ez a mátrix több választ is lehetővé tett, a Formbricks mátrixa azonban csak egyet engedélyez.",
           "options_left_out": "{count, plural, one {# opció kimaradt} other {# opció kimaradt}}: {options}.",
@@ -4072,6 +4075,8 @@
           "translation_missing": "A(z) {language} nyelvből {count, plural, one {# szöveg hiányzik} other {# szöveg hiányzik}}, ezért a nyelv kikapcsolásra került. Kérjük, pótolja a hiányzó szövegeket a szerkesztőben, majd kapcsolja be a nyelvet.",
           "unknown": "Az importálás során a kérdés egy eleme módosult."
         },
+        "languages_off_description": "A következő nyelv(ek)ből hiányoznak a szövegek: {languages}. Kérjük, pótolja azokat a szerkesztőben, majd kapcsolja be {count, plural, one {a nyelvet} other {a nyelveket}} a Nyelvek menüpontban.",
+        "languages_off_title": "{count, plural, one {# nyelv} other {# nyelv}} kikapcsolt állapotban került importálásra",
         "menu_item": "Qualtrics-felmérés importálása",
         "pick_another_file": "Másik fájl kiválasztása",
         "progress": {

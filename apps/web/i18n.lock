@@ -3861,6 +3861,7 @@ checksums:
     workspace/surveys/import/discard_import_title: a350d911d364d17f8ed65052bf596e47
     workspace/surveys/import/dropzone_help: d6f7a433a929cb4af4fda2f7ea2b5251
     workspace/surveys/import/dropzone_primary: 4c36a0fed6edce9bcfbc589eda181742
+    workspace/surveys/import/errors/ai_busy: 0ad540112b9a550f62fc162beea8d78c
     workspace/surveys/import/errors/already_importing: 7429d095a49c34e7419506d33c111c72
     workspace/surveys/import/errors/busy: cb134d432d026c10312c0bd6805b2126
     workspace/surveys/import/errors/empty_file: 791199ebd60a85a47fceb1b3dfbb2b78
@@ -3895,7 +3896,8 @@ checksums:
     workspace/surveys/import/feature_name: 4fbd27b661c94e57474260c294c03bc1
     workspace/surveys/import/issues/choice_dropped: 0946313ce0b50b75c2ba99b9e2a31e75
     workspace/surveys/import/issues/choice_label_renamed: 502409c1cc2243c7b00bd05d193b4c7b
-    workspace/surveys/import/issues/ending_added: 1641da0219145ba06eb742669e5959a6
+    workspace/surveys/import/issues/ending_added: dc719517945ce9f412696d9e462e6588
+    workspace/surveys/import/issues/ending_not_translated: de848f5a695e0644fa6cc3ee1bc44498
     workspace/surveys/import/issues/external_url_removed: dff21351eeea02ef3fdf82ab8af7e086
     workspace/surveys/import/issues/field_dropped: 98f12d4a2322ff486b5e76d3599586b3
     workspace/surveys/import/issues/field_renamed: 295a43e0b1d60741abc75350aa5c8597
@@ -3908,6 +3910,7 @@ checksums:
     workspace/surveys/import/issues/language_skipped_too_large: 9f1c5791b48ec42bdbc940b362bbc5b3
     workspace/surveys/import/issues/language_skipped_unnamed: 3516e830e02e7c60be9fc3f9d79ee3b2
     workspace/surveys/import/issues/logic_not_imported: f16e7996e04b9042bec7ba9538e4a326
+    workspace/surveys/import/issues/logic_not_imported_no_description: 56f8e8b0f689eca44ab1163ca5cc6972
     workspace/surveys/import/issues/markup_escaped: d2384ad3f31c8fcfb2b94e19c63e45a6
     workspace/surveys/import/issues/matrix_single_answer: 9382694709e8546e5a6ee709009db2cc
     workspace/surveys/import/issues/options_left_out: 3400731d2ca05074e720090c33e484a7
@@ -3927,6 +3930,8 @@ checksums:
     workspace/surveys/import/issues/text_too_long: 9abc9b3ccac371b03f2ac5ca05131769
     workspace/surveys/import/issues/translation_missing: da255c38cae954ee94e0c0037dcba58b
     workspace/surveys/import/issues/unknown: beba5c26564d9ca052cc69712a43d91e
+    workspace/surveys/import/languages_off_description: 9b05c8c51985105fce60b8d722ba4932
+    workspace/surveys/import/languages_off_title: be0bf0476bc5dc3ea97513ca6bf5c1b9
     workspace/surveys/import/menu_item: dda9b24d76607ae0ddf00ff549a84cc9
     workspace/surveys/import/pick_another_file: ad913aa5b176c3dfdbc2e3bc936d3d7d
     workspace/surveys/import/progress/ai: 71f291787c0e35c9bcc950994987f6e9

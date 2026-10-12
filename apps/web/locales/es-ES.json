@@ -3999,6 +3999,7 @@
         "dropzone_help": "Exportación de encuesta de Qualtrics (.qsf), hasta 15 MB",
         "dropzone_primary": "Suelta un archivo .qsf aquí o haz clic para elegir uno",
         "errors": {
+          "ai_busy": "El proveedor de IA está ocupado. Inténtalo de nuevo en {seconds, plural, one {# segundo} other {# segundos}}.",
           "already_importing": "Ya tienes una importación en curso. Espera a que termine y vuelve a intentarlo.",
           "busy": "Formbricks está ocupado con otras importaciones. Inténtalo de nuevo en unos segundos.",
           "empty_file": "Este archivo está vacío.",
@@ -4039,7 +4040,8 @@
         "issues": {
           "choice_dropped": "Se ha omitido una opción porque no se pudo leer su ID.",
           "choice_label_renamed": "Se han numerado las etiquetas de opción repetidas para que cada una sea distinta.",
-          "ending_added": "El archivo no tiene mensaje de cierre, así que se ha añadido un final predeterminado.",
+          "ending_added": "El mensaje final no está en el archivo, así que se ha añadido un final predeterminado.",
+          "ending_not_translated": "El archivo no incluye traducción para {languages}, así que allí se muestra un texto predeterminado. Revísalo en el editor.",
           "external_url_removed": "Se ha eliminado un enlace porque tu plan no permite enlaces externos.",
           "field_dropped": "{count, plural, one {Se ha omitido # campo de datos incrustados} other {Se han omitido # campos de datos incrustados}}: la encuesta no admite más.",
           "field_renamed": "El campo de datos incrustados \"{from}\" se ha renombrado a \"{to}\".",
@@ -4052,6 +4054,7 @@
           "language_skipped_too_large": "Se ha omitido el idioma \"{code}\": la encuesta era demasiado grande para crearla con todos los idiomas.",
           "language_skipped_unnamed": "Se ha omitido un idioma sin equivalente en Formbricks.",
           "logic_not_imported": "Lógica no importada: {description}",
+          "logic_not_imported_no_description": "No se ha importado la lógica.",
           "markup_escaped": "El texto que se habría mostrado como HTML se muestra tal como se escribió.",
           "matrix_single_answer": "Ahora hay una respuesta por fila: en Qualtrics esta matriz admitía varias, pero una matriz de Formbricks solo admite una.",
           "options_left_out": "{count, plural, one {Se omitió # opción} other {Se omitieron # opciones}}: {options}.",
@@ -4072,6 +4075,8 @@
           "translation_missing": "{count, plural, one {Falta # texto} other {Faltan # textos}} en {language}, así que el idioma está desactivado. Añade los textos que faltan en el editor y luego actívalo.",
           "unknown": "Algo de esta pregunta se ha modificado durante la importación."
         },
+        "languages_off_description": "Faltan textos en {languages}. Añádelos en el editor y luego activa {count, plural, one {el idioma} other {los idiomas}} en Idiomas.",
+        "languages_off_title": "{count, plural, one {# idioma se ha importado desactivado} other {# idiomas se han importado desactivados}}",
         "menu_item": "Importar encuesta de Qualtrics",
         "pick_another_file": "Elegir otro archivo",
         "progress": {
