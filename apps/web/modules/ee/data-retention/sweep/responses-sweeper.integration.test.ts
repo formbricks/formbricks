@@ -7,6 +7,7 @@ import { updateRetentionPolicy } from "../lib/policies-service";
 import { getRetentionClockCutoffs } from "../lib/schedule";
 import { createResponsesSweeper, deleteDueResponses } from "./responses-sweeper";
 import { openRetentionRun } from "./run";
+import { markRetentionPolicyDelete } from "./survey-notice-restamp";
 import { createSurveysSweeper } from "./surveys-sweeper";
 import { runDataRetentionSweep } from "./sweep";
 
@@ -596,6 +597,56 @@ describe("responses sweeper (real Postgres)", () => {
 
       expect(await prisma.response.count()).toBe(0);
       expect(await clockAtOf(surveyId)).toEqual(newest);
+    });
+
+    describe("a person's deletion (the void-on-delete trigger)", () => {
+      test("voids the archive notice of every survey a delete takes a response from, whichever response", async () => {
+        const other = (await prisma.survey.create({ data: { name: "NPS", workspaceId, ownerId } })).id;
+        await addResponses([400, 380]);
+        await addResponses([400], other);
+        const [oldest] = await prisma.response.findMany({
+          where: { surveyId },
+          orderBy: { createdAt: "asc" },
+        });
+        const otherClock = ago(400);
+        await storeSurveysNotice(surveyId, ago(380));
+        await storeSurveysNotice(other, otherClock);
+
+        // Not even the newest: the survey changed, so its owner is warned again. Other surveys keep theirs.
+        await prisma.response.delete({ where: { id: oldest.id } });
+        expect(await clockAtOf(surveyId)).toBeNull();
+        expect(await clockAtOf(other)).toEqual(otherClock);
+
+        await prisma.response.deleteMany({ where: { surveyId: other } });
+        expect(await clockAtOf(other)).toBeNull();
+      });
+
+      test("leaves the responses policy's own deletes alone, and only inside its transaction", async () => {
+        await addResponses([400, 380]);
+        const kept = ago(380);
+        await storeSurveysNotice(surveyId, kept);
+        const [first, second] = await prisma.response.findMany({ where: { surveyId } });
+
+        await prisma.$transaction(async (tx) => {
+          await markRetentionPolicyDelete(tx);
+          await tx.response.delete({ where: { id: first.id } });
+        });
+        expect(await clockAtOf(surveyId)).toEqual(kept);
+
+        // The flag ended with that transaction, on whichever connection runs this one.
+        await prisma.response.delete({ where: { id: second.id } });
+        expect(await clockAtOf(surveyId)).toBeNull();
+      });
+
+      test("deleting a survey takes its responses and notices without an error", async () => {
+        await addResponses([400, 380]);
+        await storeSurveysNotice(surveyId, ago(380));
+
+        await prisma.survey.delete({ where: { id: surveyId } });
+
+        expect(await prisma.response.count()).toBe(0);
+        expect(await prisma.retentionNotice.count()).toBe(0);
+      });
     });
   });
 });

@@ -4,16 +4,27 @@ import { getSurveyRetentionClock } from "../lib/schedule";
 import { latestOf } from "./due-targets";
 
 /**
+ * Mark the rest of this transaction's response deletes as the responses policy's own: the
+ * `retention_notice_void_on_response_delete` trigger then leaves the surveys' archive notices alone, and
+ * `restampSurveyNoticeAfterRetentionDeletion` re-stamps them instead. Transaction-local
+ * (`set_config(…, true)`), so it never outlives the policy's delete, on a pooled connection either.
+ */
+export const markRetentionPolicyDelete = async (tx: Prisma.TransactionClient): Promise<void> => {
+  await tx.$queryRaw`SELECT set_config('formbricks.retention_policy_delete', 'on', true)`;
+};
+
+/**
  * Keep the surveys policy's archive notice valid across the responses policy's own deletions (ENG-3612).
  *
  * A survey's archive notice holds only while the survey's clock is the one it was computed for
  * (`RetentionNotice.clockAt`, `NOTICE_FOLLOWS_CLOCK`). Under "no response" the clock is the newest
  * response, so deleting responses moves it: back to an older response, or to the last edit once none is
  * left. When a person deletes responses that is a change to the survey, and the notice is void: the
- * owner is warned again and the full warning restarts. When the responses policy deletes them it is the
- * retention the notice already announced, not activity, so this re-stamps the notice for the clock the
- * survey has now. Otherwise the deletion would void the notice every night, the owner would get the
- * same email again, and the archive would slip a full warning each time.
+ * `retention_notice_void_on_response_delete` trigger clears its `clockAt`, so the owner is warned again
+ * and the full warning restarts. When the responses policy deletes them (`markRetentionPolicyDelete`)
+ * it is the retention the notice already announced, not activity, so this re-stamps the notice for the
+ * clock the survey has now. Otherwise the deletion would void the notice every night, the owner would
+ * get the same email again, and the archive would slip a full warning each time.
  *
  * Runs in the responses policy's deleting transaction, after the delete, with the survey locked
  * `FOR UPDATE` (no response can be added in between) and the responses policy held `FOR SHARE`. The

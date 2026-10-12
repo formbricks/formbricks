@@ -13,7 +13,10 @@ import {
 import { type TNoticeRecipient, resolveSurveyNoticeRecipients } from "./recipients";
 import { createResponsesSweeper } from "./responses-sweeper";
 import { recordRetentionRunDeletion, recordRetentionRunSkips } from "./run";
-import { restampSurveyNoticeAfterRetentionDeletion } from "./survey-notice-restamp";
+import {
+  markRetentionPolicyDelete,
+  restampSurveyNoticeAfterRetentionDeletion,
+} from "./survey-notice-restamp";
 import type { TSurveyNoticeItem } from "./survey-notices";
 import type { TRetentionSweepContext } from "./sweep";
 import { lockUnchangedRetentionPolicy, runSweepTransaction } from "./transaction";
@@ -31,7 +34,10 @@ vi.mock("../lib/survey-retention-service", () => ({
 }));
 vi.mock("./recipients", () => ({ resolveSurveyNoticeRecipients: vi.fn() }));
 // Its rules against real rows are in `responses-sweeper.integration.test.ts`.
-vi.mock("./survey-notice-restamp", () => ({ restampSurveyNoticeAfterRetentionDeletion: vi.fn() }));
+vi.mock("./survey-notice-restamp", () => ({
+  markRetentionPolicyDelete: vi.fn(),
+  restampSurveyNoticeAfterRetentionDeletion: vi.fn(),
+}));
 vi.mock("./run", () => ({
   recordRetentionRunDeletion: vi.fn(),
   recordRetentionRunSkips: vi.fn(),
@@ -267,6 +273,12 @@ describe("createResponsesSweeper", () => {
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       take: 2,
     });
+    // Each batch marks its deletes as the policy's before it deletes, so the void-on-delete trigger
+    // leaves the archive notice to the re-stamp.
+    expect(markRetentionPolicyDelete).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(markRetentionPolicyDelete).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(deleteResponsesInTransaction).mock.invocationCallOrder[0]
+    );
     // Each batch re-stamps the survey's archive notice in its transaction, from the newest it deleted.
     expect(vi.mocked(restampSurveyNoticeAfterRetentionDeletion).mock.calls).toEqual([
       [tx, { organizationId: "clorg", surveyId: "s1", newestDeletedAt: created(2) }],

@@ -20,7 +20,10 @@ import { RETENTION_SWEEP_BATCH_SIZE } from "./constants";
 import { collectDueTargets, latestOf, surveySkips } from "./due-targets";
 import { type TSurveyReadCheck, resolveSurveyNoticeRecipients } from "./recipients";
 import { recordRetentionRunDeletion, recordRetentionRunSkips } from "./run";
-import { restampSurveyNoticeAfterRetentionDeletion } from "./survey-notice-restamp";
+import {
+  markRetentionPolicyDelete,
+  restampSurveyNoticeAfterRetentionDeletion,
+} from "./survey-notice-restamp";
 import type { TSurveyNoticeItem } from "./survey-notices";
 import type { TRetentionSweepContext, TRetentionSweeper } from "./sweep";
 import { lockUnchangedRetentionPolicy, runSweepTransaction } from "./transaction";
@@ -189,6 +192,7 @@ export const deleteDueResponses = async (
       });
       if (due.length === 0) return null;
 
+      await markRetentionPolicyDelete(tx);
       const { deleted, deletedIds, bySurvey } = await deleteResponsesInTransaction(tx, {
         surveyId: survey.id,
         id: { in: due.map((row) => row.id) },
