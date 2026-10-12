@@ -660,6 +660,19 @@ describe("responses sweeper (real Postgres)", () => {
 
         await expectFreshWarning();
       });
+
+      test("when its creation date is moved back before the notice's clock", async () => {
+        const response = await warnedThenAnswered();
+        await bothSweep();
+        expect(await isArchived()).toBe(false);
+
+        // The management API accepts a response's createdAt: back before the last edit, the clock is the
+        // last edit again, the very one the notice was computed for.
+        await prisma.response.update({ where: { id: response.id }, data: { createdAt: ago(500) } });
+        expect(await clockAtOf(surveyId)).toBeNull();
+
+        await expectFreshWarning();
+      });
     });
 
     test("does nothing to a survey's notice when the surveys policy is off", async () => {
@@ -675,7 +688,7 @@ describe("responses sweeper (real Postgres)", () => {
       expect(await clockAtOf(surveyId)).toEqual(newest);
     });
 
-    describe("a person's deletion (the void-on-delete trigger)", () => {
+    describe("a person's deletion or move of a response (the void triggers)", () => {
       test("voids the archive notice of every survey a delete takes a response from, whichever response", async () => {
         const other = (await prisma.survey.create({ data: { name: "NPS", workspaceId, ownerId } })).id;
         await addResponses([400, 380]);
@@ -703,15 +716,56 @@ describe("responses sweeper (real Postgres)", () => {
         await storeSurveysNotice(surveyId, kept);
         const [first, second] = await prisma.response.findMany({ where: { surveyId } });
 
+        const backendPid = async (tx: Pick<typeof prisma, "$queryRaw">) =>
+          (await tx.$queryRaw<{ pid: number }[]>`SELECT pg_backend_pid() AS "pid"`)[0].pid;
+
+        let flaggedPid = 0;
         await prisma.$transaction(async (tx) => {
+          flaggedPid = await backendPid(tx);
           await markRetentionPolicyDelete(tx);
           await tx.response.delete({ where: { id: first.id } });
         });
         expect(await clockAtOf(surveyId)).toEqual(kept);
 
-        // The flag ended with that transaction, on whichever connection runs this one.
-        await prisma.response.delete({ where: { id: second.id } });
+        // The flag ended with that transaction: a person's delete on the very same connection voids it.
+        // The pool hands out its connections in turn, so try until that one comes back.
+        let sameConnection = false;
+        for (let attempt = 0; attempt < 50 && !sameConnection; attempt += 1) {
+          await prisma.$transaction(async (tx) => {
+            if ((await backendPid(tx)) !== flaggedPid) return;
+            sameConnection = true;
+            await tx.response.delete({ where: { id: second.id } });
+          });
+        }
+        expect(sameConnection).toBe(true);
         expect(await clockAtOf(surveyId)).toBeNull();
+      });
+
+      test("a contact deleted with its responses voids their surveys' archive notices", async () => {
+        const contact = await prisma.contact.create({ data: { workspaceId } });
+        await prisma.response.create({ data: { surveyId, contactId: contact.id, createdAt: ago(380) } });
+        await storeSurveysNotice(surveyId, ago(380));
+
+        await prisma.contact.delete({ where: { id: contact.id } });
+
+        expect(await prisma.response.count()).toBe(0);
+        expect(await clockAtOf(surveyId)).toBeNull();
+      });
+
+      test("a response moved to another survey voids both surveys' archive notices", async () => {
+        const other = (await prisma.survey.create({ data: { name: "NPS", workspaceId, ownerId } })).id;
+        await addResponses([380]);
+        await storeSurveysNotice(surveyId, ago(380));
+        await storeSurveysNotice(other, ago(400));
+        const [response] = await prisma.response.findMany({ where: { surveyId } });
+
+        // An update that touches neither column leaves them alone.
+        await prisma.response.update({ where: { id: response.id }, data: { finished: true } });
+        expect(await clockAtOf(surveyId)).not.toBeNull();
+
+        await prisma.response.update({ where: { id: response.id }, data: { surveyId: other } });
+        expect(await clockAtOf(surveyId)).toBeNull();
+        expect(await clockAtOf(other)).toBeNull();
       });
 
       test("deleting a survey takes its responses and notices without an error", async () => {
