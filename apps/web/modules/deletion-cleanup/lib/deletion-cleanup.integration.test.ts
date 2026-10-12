@@ -6,7 +6,7 @@ import { deleteFeedbackRecord, listFeedbackRecords } from "@/modules/hub/service
 import { collectSurveyResponseFileUrls } from "@/modules/storage/lib/survey-response-files";
 import { deleteFile, deleteSurveyUploadFolder } from "@/modules/storage/service";
 import { purgeExpiredArchivedSurveys } from "@/modules/survey/archive/lib/process-survey-archive-purge-job";
-import { deleteSurvey } from "@/modules/survey/lib/surveys";
+import { deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
 import { CLEANUP_SETTLE_MS } from "./constants";
 import { drainDeletionCleanups } from "./drain";
 import { enqueueSurveyDeletionCleanups } from "./enqueue";
@@ -176,6 +176,22 @@ describe("deletion cleanup (real Postgres)", () => {
 
       expect(await prisma.survey.findUnique({ where: { id: surveyId } })).not.toBeNull();
       expect(await queueRows()).toEqual([]);
+    });
+
+    test("loses to a restore between its selection and its lock: nothing deleted, nothing queued", async () => {
+      const surveyId = await createSurvey({ archivedAt: daysAgo(90) });
+      // The purge has selected the survey and passed its pre-check; it is restored before the lock.
+      vi.mocked(collectSurveyResponseFileUrls).mockImplementationOnce(async () => {
+        await restoreSurvey(surveyId);
+        return { fileUrls: [], workspaceId };
+      });
+
+      await expect(purgeExpiredArchivedSurveys(NOW)).resolves.toBe(0);
+
+      expect(collectSurveyResponseFileUrls).toHaveBeenCalledOnce();
+      expect(await prisma.survey.findUnique({ where: { id: surveyId } })).toMatchObject({ archivedAt: null });
+      expect(await queueRows()).toEqual([]);
+      expect(deleteSurveyUploadFolder).not.toHaveBeenCalled();
     });
 
     test("never deletes a survey held by an exemption, and queues nothing for it", async () => {
