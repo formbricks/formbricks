@@ -274,61 +274,69 @@ export const PolicyEditDialog = ({
               />
 
               {periodPreset === CUSTOM ? (
-                <div className="flex gap-2">
-                  <FormField
-                    control={form.control}
-                    name="customPeriodAmount"
-                    render={({ field, fieldState: { error } }) => (
-                      <FormItem className="w-24">
-                        <FormLabel>{t("workspace.settings.data_retention.custom_period_amount")}</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            inputMode="numeric"
-                            min={1}
-                            step={1}
-                            value={field.value ?? ""}
-                            onChange={(event) => field.onChange(toNumberOrNull(event.target.value))}
-                            onBlur={field.onBlur}
-                            isInvalid={!!error}
-                            disabled={disabled}
-                          />
-                        </FormControl>
-                        {error?.message ? <FormError>{error.message}</FormError> : null}
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="customPeriodUnit"
-                    render={({ field }) => (
-                      <FormItem className="w-36">
-                        <FormLabel>{t("workspace.settings.data_retention.custom_period_unit")}</FormLabel>
-                        <Select
-                          value={field.value}
-                          onValueChange={(unit) => {
-                            field.onChange(unit);
-                            // The range depends on the unit, so recheck the amount against it.
-                            void form.trigger("customPeriodAmount");
-                          }}
-                          disabled={disabled}>
+                <FormField
+                  control={form.control}
+                  name="customPeriodAmount"
+                  render={({ field, fieldState: { error } }) => (
+                    // The amount's item spans the whole row, so its error runs under both fields rather than
+                    // wrapping inside the narrow amount box. The unit is its own field, nested in the row.
+                    <FormItem>
+                      <div className="flex gap-2">
+                        <div className="w-24 space-y-2">
+                          <FormLabel>{t("workspace.settings.data_retention.custom_period_amount")}</FormLabel>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
+                            <Input
+                              type="number"
+                              inputMode="numeric"
+                              min={1}
+                              step={1}
+                              value={field.value ?? ""}
+                              onChange={(event) => field.onChange(toNumberOrNull(event.target.value))}
+                              onBlur={field.onBlur}
+                              isInvalid={!!error}
+                              disabled={disabled}
+                            />
                           </FormControl>
-                          <SelectContent>
-                            {(Object.keys(RETENTION_DAYS_PER_UNIT) as TRetentionPeriodUnit[]).map((unit) => (
-                              <SelectItem key={unit} value={unit}>
-                                {getUnitLabel(unit, t)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                        </div>
+                        <FormField
+                          control={form.control}
+                          name="customPeriodUnit"
+                          render={({ field: unitField }) => (
+                            <FormItem className="w-36">
+                              <FormLabel>
+                                {t("workspace.settings.data_retention.custom_period_unit")}
+                              </FormLabel>
+                              <Select
+                                value={unitField.value}
+                                onValueChange={(unit) => {
+                                  unitField.onChange(unit);
+                                  // The range depends on the unit, so recheck the amount against it.
+                                  void form.trigger("customPeriodAmount");
+                                }}
+                                disabled={disabled}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {(Object.keys(RETENTION_DAYS_PER_UNIT) as TRetentionPeriodUnit[]).map(
+                                    (unit) => (
+                                      <SelectItem key={unit} value={unit}>
+                                        {getUnitLabel(unit, t)}
+                                      </SelectItem>
+                                    )
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      {error?.message ? <FormError>{error.message}</FormError> : null}
+                    </FormItem>
+                  )}
+                />
               ) : null}
 
               <FormField
