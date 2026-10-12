@@ -754,6 +754,7 @@
     "completed_heading": "Enkäten är stängd",
     "create_your_own": "Skapa din egen öppenkällkodsenkät",
     "enter_pin": "Denna undersökning är skyddad. Ange PIN-koden nedan.",
+    "error_description": "Det uppstod ett problem med den här enkäten. Försök igen.",
     "just_curious": "Bara nyfiken?",
     "link_invalid": "Denna enkät kan endast tas via inbjudan.",
     "paused": "Denna enkät är tillfälligt pausad.",

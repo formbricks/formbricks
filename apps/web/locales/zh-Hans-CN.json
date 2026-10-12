@@ -754,6 +754,7 @@
     "completed_heading": "问卷已关闭",
     "create_your_own": "创建 你 的 开源 调查",
     "enter_pin": "本调查已受保护。请在下方输入PIN码。",
+    "error_description": "这份问卷出了点问题，请重试。",
     "just_curious": "只是好奇 ？",
     "link_invalid": "此调查只能通过邀请参加。",
     "paused": "此调查暂时暂停。",

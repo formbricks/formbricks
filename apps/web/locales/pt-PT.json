@@ -754,6 +754,7 @@
     "completed_heading": "Inquérito fechado",
     "create_your_own": "Crie o seu próprio inquérito de código aberto",
     "enter_pin": "Este inquérito está protegido. Introduza o PIN abaixo.",
+    "error_description": "Este questionário encontrou um problema. Tenta novamente.",
     "just_curious": "Só por curiosidade?",
     "link_invalid": "Este inquérito só pode ser respondido por convite.",
     "paused": "Este inquérito está temporariamente suspenso.",

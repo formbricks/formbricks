@@ -754,6 +754,7 @@
     "completed_heading": "Pesquisa encerrada",
     "create_your_own": "Crie o seu próprio",
     "enter_pin": "Esta pesquisa está protegida. Digite o PIN abaixo.",
+    "error_description": "Esta pesquisa encontrou um problema. Tente novamente.",
     "just_curious": "Só curioso?",
     "link_invalid": "Essa pesquisa só pode ser respondida por convite.",
     "paused": "Essa pesquisa gratuita e de código aberto está temporariamente pausada.",

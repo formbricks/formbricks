@@ -754,6 +754,7 @@
     "completed_heading": "Encuesta cerrada",
     "create_your_own": "Crea tu propia encuesta de código abierto",
     "enter_pin": "Esta encuesta está protegida. Introduce el PIN a continuación.",
+    "error_description": "Esta encuesta ha tenido un problema. Inténtalo de nuevo.",
     "just_curious": "¿Solo tienes curiosidad?",
     "link_invalid": "Esta encuesta solo se puede realizar por invitación.",
     "paused": "Esta encuesta está temporalmente pausada.",

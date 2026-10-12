@@ -754,6 +754,7 @@
     "completed_heading": "Anket kapatıldı",
     "create_your_own": "Kendi açık kaynak survey'inizi oluşturun",
     "enter_pin": "Bu survey korumalıdır. Aşağıya PIN girin.",
+    "error_description": "Bu ankette bir sorun oluştu. Lütfen tekrar dene.",
     "just_curious": "Sadece merak mı ediyorsunuz?",
     "link_invalid": "Bu survey yalnızca davet ile katılıma açıktır.",
     "paused": "Bu survey geçici olarak duraklatılmıştır.",

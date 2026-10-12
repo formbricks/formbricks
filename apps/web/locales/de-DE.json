@@ -754,6 +754,7 @@
     "completed_heading": "Umfrage geschlossen",
     "create_your_own": "Erstelle deine eigene Open-Source-Umfrage",
     "enter_pin": "Diese Umfrage ist geschützt. Gib unten die PIN ein.",
+    "error_description": "Bei dieser Umfrage ist ein Problem aufgetreten. Bitte versuche es noch einmal.",
     "just_curious": "Einfach nur neugierig?",
     "link_invalid": "Diese Umfrage kann nur auf Einladung ausgefüllt werden.",
     "paused": "Diese Umfrage ist vorübergehend pausiert.",

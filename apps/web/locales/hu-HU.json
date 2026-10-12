@@ -754,6 +754,7 @@
     "completed_heading": "A felmérés lezárásra került",
     "create_your_own": "Saját nyílt forráskódú kérdőív létrehozása",
     "enter_pin": "Ez a kérdőív védett. Adja meg a PIN-kódot lent.",
+    "error_description": "A felmérés betöltése közben probléma lépett fel. Kérjük, próbálkozzon újra.",
     "just_curious": "Csak kíváncsi?",
     "link_invalid": "Ez a kérdőív csak meghívás útján tölthető ki.",
     "paused": "Ez a kérdőív átmenetileg szüneteltetve van.",
