@@ -70,6 +70,7 @@ export const AddExemptionDialog = ({
 }: Readonly<AddExemptionDialogProps>) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+  // Its own id rather than FormDescription, which reuses the control's id (see policy-edit-dialog.tsx).
   const policyHelpId = useId();
   const untilErrorId = useId();
   // Taken each time the dialog opens and fixed while it is open, so a tab left open overnight doesn't

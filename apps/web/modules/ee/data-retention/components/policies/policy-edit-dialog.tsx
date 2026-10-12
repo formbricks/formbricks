@@ -139,6 +139,8 @@ export const PolicyEditDialog = ({
 }: Readonly<PolicyEditDialogProps>) => {
   const { t } = useTranslation();
   const copy = getPolicyCopy(policy, t);
+  // Help texts look like FormDescription but carry their own ids: FormDescription reuses the control's
+  // id, so aria-describedby would point at nothing.
   const noticeHelpId = useId();
   const periodHelpId = useId();
   const conditionsErrorId = useId();
