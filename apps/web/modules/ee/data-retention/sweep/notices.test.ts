@@ -47,7 +47,7 @@ describe("claimRetentionNotice", () => {
     expect(text).toContain('ON CONFLICT ("surveyId", "entity") DO UPDATE');
     expect(text).toContain('"claimToken" = EXCLUDED."claimToken", "clockAt" = EXCLUDED."clockAt"');
     expect(text).toContain(
-      '("RetentionNotice"."deliveredAt" IS NULL AND "RetentionNotice"."sentAt" < ?) OR ("RetentionNotice"."deliveredAt" IS NOT NULL AND ("RetentionNotice"."sentAt" < ? OR "RetentionNotice"."clockAt" IS DISTINCT FROM ?))'
+      '("RetentionNotice"."deliveredAt" IS NULL AND "RetentionNotice"."sentAt" < ?) OR ("RetentionNotice"."deliveredAt" IS NOT NULL AND ("RetentionNotice"."sentAt" < ? OR COALESCE("RetentionNotice"."clockAt" < ?::timestamp(3), "RetentionNotice"."clockAt" IS DISTINCT FROM ?::timestamp(3))))'
     );
     const claimToken = values[6];
     expect(values).toEqual([
@@ -62,12 +62,13 @@ describe("claimRetentionNotice", () => {
       new Date(CLAIMED_AT.getTime() - RETENTION_NOTICE_STALE_CLAIM_MS),
       VOID_BEFORE,
       null,
+      null,
     ]);
     // The token handed back is the one the database stored, not the one this call generated.
     expect(token).toBe("token-1");
   });
 
-  test("stores the clock a clock-bound notice was computed for, and replaces one computed for another", async () => {
+  test("stores the clock a clock-bound notice was computed for, and replaces one computed for an earlier clock", async () => {
     const tx = client([{ claimToken: "token-1" }]);
 
     await claimRetentionNotice(tx as never, MEMBER, {
@@ -79,7 +80,7 @@ describe("claimRetentionNotice", () => {
     const { values } = statement(tx.$queryRaw.mock.calls[0]);
     // Inserted with the claim, and compared with the stored notice's.
     expect(values[7]).toBe(CLOCK_AT);
-    expect(values.at(-1)).toBe(CLOCK_AT);
+    expect(values.slice(-2)).toEqual([CLOCK_AT, CLOCK_AT]);
   });
 
   test("upserts a member notice on (userId, organizationId, entity), with no survey", async () => {
