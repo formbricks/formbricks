@@ -352,8 +352,11 @@ describe("event loop", () => {
     // Coarse, cold: ~7 ms on an idle laptop. Cold, the CPU time also counts the JIT compiling on other
     // threads, which a loaded machine stretches, so the plan's 50 ms budget is held warm, below.
     expect(cpuMs(() => prepareQsfImport(qsf, "large-150.qsf"))).toBeLessThan(1_000);
-    // The plan's budget, in CPU time so other processes do not stretch it: ~2 ms warm.
-    expect(cpuMs(() => prepareQsfImport(qsf, "large-150.qsf"))).toBeLessThanOrEqual(50);
+    // The plan's budget, in CPU time so other processes do not stretch it: ~2 ms warm. The best of five:
+    // the process's CPU time also counts its GC and compiler threads, and one of their spikes under a
+    // coverage run once measured 123 ms. A real slowdown fails every run.
+    const warmRuns = Array.from({ length: 5 }, () => cpuMs(() => prepareQsfImport(qsf, "large-150.qsf")));
+    expect(Math.min(...warmRuns)).toBeLessThanOrEqual(50);
   });
 
   test(
