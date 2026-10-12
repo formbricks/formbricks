@@ -284,6 +284,26 @@ describe("surveys sweeper (real Postgres)", () => {
     expect(await notice(old)).not.toBeNull();
   });
 
+  // Decided 12 Oct (Tiago): a draft nobody has touched for the whole period is unused data like any other
+  // survey, so the policy warns about it and archives it. Only a survey scheduled to launch is left alone.
+  test("warns about and archives a draft untouched for the whole period", async () => {
+    await enablePolicy(["noChange"]);
+    const draft = await createSurvey("Forgotten draft", { age: 400, status: "draft" });
+
+    await sweep();
+    expect(await notice(draft)).not.toBeNull();
+    expect(vi.mocked(sendSurveyRetentionNoticeEmail).mock.calls[0][0].archivedSurveys).toEqual([
+      expect.objectContaining({ name: "Forgotten draft" }),
+    ]);
+
+    await ageNotice(draft, WARN + 1);
+    await sweep();
+
+    expect((await prisma.survey.findUniqueOrThrow({ where: { id: draft } })).archivedAt).toEqual(
+      expect.any(Date)
+    );
+  });
+
   test("leaves a survey scheduled to launch later alone", async () => {
     await enablePolicy(["noChange"]);
     const scheduled = await createSurvey("Launches soon", { age: 400 });
