@@ -111,8 +111,9 @@ post:
     "400":
       description: >-
         Bad Request — the envelope itself is malformed: missing or unknown `operation`, missing
-        `data`, or a `patch` without `responseId`. Problems *inside* `data` are the point of this
-        endpoint and come back as `200` with `valid: false`, not as a 400.
+        `data`, or a `patch` without `responseId`; or the body breaks the request limits (an array
+        past its budget, or nesting past 256 levels). Other problems *inside* `data` are the point of
+        this endpoint and come back as `200` with `valid: false`, not as a 400.
       content:
         application/problem+json:
           schema:

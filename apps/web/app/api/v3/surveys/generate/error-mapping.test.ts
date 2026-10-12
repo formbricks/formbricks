@@ -118,8 +118,8 @@ describe("mapV3SurveyGenerateError", () => {
     expect(JSON.stringify(problem)).not.toContain("org_123");
   });
 
-  test("falls back to 502 and logs an unrecognized error by name and frames", () => {
-    const error = new Error("provider exploded");
+  test("falls back to 502 and logs where it failed, never the message that can echo the prompt", () => {
+    const error = new Error("provider exploded on secret-from-the-prompt");
 
     const response = mapV3SurveyGenerateError(error, context);
 
@@ -132,6 +132,7 @@ describe("mapV3SurveyGenerateError", () => {
       }),
       "Failed to generate v3 survey create payload"
     );
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("secret-from-the-prompt");
   });
 
   // ENG-3720: what falls through to the 502 is usually an AI SDK error, which carries the prompt and the

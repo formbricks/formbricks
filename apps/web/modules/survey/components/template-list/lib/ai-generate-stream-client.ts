@@ -35,18 +35,29 @@ export async function streamSurveyGeneration(
     throw await parseV3ApiError(response);
   }
 
+  await readSurveyDraftStream(response, onEvent);
+}
+
+/**
+ * Hand each NDJSON event of an opened draft stream to `onEvent`, until the body ends. Shared by the
+ * generation stream and the import stream, which differ only in how they open the request.
+ */
+export async function readSurveyDraftStream<TEvent extends { type: string }>(
+  response: Response,
+  onEvent: (event: TEvent) => void
+): Promise<void> {
   if (!response.body) {
-    throw new Error("The survey generation stream returned no body.");
+    throw new Error("The survey stream returned no body.");
   }
 
   const reader = response.body.getReader();
   // TextDecoder with { stream: true } rather than TextDecoderStream, so the line splitting stays a
   // pure string function that can be unit-tested without constructing a stream.
   const decoder = new TextDecoder();
-  const parser = new NdjsonParser<TSurveyGenerationStreamEvent>();
+  const parser = new NdjsonParser<TEvent>();
   let sawTerminalEvent = false;
 
-  const handle = (event: TSurveyGenerationStreamEvent) => {
+  const handle = (event: TEvent) => {
     if (event.type === "done" || event.type === "error") {
       sawTerminalEvent = true;
     }
@@ -70,6 +81,6 @@ export async function streamSurveyGeneration(
   // terminal frame mangled past parsing — would otherwise leave the caller waiting on an event that
   // is never coming, stuck in its generating state with the unload guard still armed.
   if (!sawTerminalEvent) {
-    throw new Error("The survey generation stream ended without a result.");
+    throw new Error("The survey stream ended without a result.");
   }
 }

@@ -38,6 +38,8 @@ export const zInvalidParam = z.strictObject({
       "missing_required_field",
       "misordered_reference",
       "missing_translation",
+      "qsf_limit_exceeded",
+      "qsf_not_recognized",
       "read_only_field",
       "unsupported_field",
       "unsupported_locale",

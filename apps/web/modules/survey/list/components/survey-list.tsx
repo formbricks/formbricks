@@ -1,7 +1,7 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { ChevronDownIcon, LayoutTemplateIcon, PlusCircleIcon } from "lucide-react";
+import { ChevronDownIcon, LayoutTemplateIcon, PlusCircleIcon, UploadIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ComponentProps, useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -15,6 +15,7 @@ import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { CreateWithAIDialog } from "@/modules/survey/components/template-list/components/create-with-ai-dialog";
 import { useCreateSurveyFromTemplate } from "@/modules/survey/components/template-list/hooks/use-create-survey-from-template";
+import { ImportSurveyDialog } from "@/modules/survey/import/components/import-survey-dialog";
 import { useArchiveSurvey } from "@/modules/survey/list/hooks/use-archive-survey";
 import { useDeleteSurvey } from "@/modules/survey/list/hooks/use-delete-survey";
 import { useRenameSurvey } from "@/modules/survey/list/hooks/use-rename-survey";
@@ -85,6 +86,7 @@ const NewSurveyMenu = ({
   const { t } = useTranslation();
   const router = useRouter();
   const [isAIDialogOpen, setIsAIDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const createSurveyMutation = useCreateSurveyFromTemplate();
   const workspaceBasePath = `/workspaces/${workspace.id}`;
 
@@ -125,9 +127,15 @@ const NewSurveyMenu = ({
             <ChevronDownIcon />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuContent align="end" className="w-60">
           <DropdownMenuItem icon={<AiIcon />} onSelect={() => setIsAIDialogOpen(true)}>
             {t("workspace.surveys.ai_create.create_with_ai")}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            data-testid="import-survey-menu-item"
+            icon={<UploadIcon className="size-4" />}
+            onSelect={() => setIsImportDialogOpen(true)}>
+            {t("workspace.surveys.import.menu_item")}
           </DropdownMenuItem>
           <DropdownMenuItem
             icon={<LayoutTemplateIcon className="size-4" />}
@@ -152,6 +160,13 @@ const NewSurveyMenu = ({
         aiUnavailableReason={aiUnavailableReason}
         open={isAIDialogOpen}
         onOpenChange={setIsAIDialogOpen}
+      />
+      <ImportSurveyDialog
+        workspaceId={workspace.id}
+        isAIAvailable={isAIAvailable}
+        aiUnavailableReason={aiUnavailableReason}
+        open={isImportDialogOpen}
+        onOpenChange={setIsImportDialogOpen}
       />
     </>
   );
