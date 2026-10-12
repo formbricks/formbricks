@@ -14,7 +14,7 @@ import { useImportSurvey } from "@/modules/survey/import/hooks/use-import-survey
 import { getQsfImportErrorMessage } from "@/modules/survey/import/lib/import-errors";
 import { getSwitchedOffLanguages } from "@/modules/survey/import/lib/import-report";
 import { QSF_FILE_EXTENSION } from "@/modules/survey/import/lib/qsf-file";
-import type { TQsfImportStage } from "@/modules/survey/import/types";
+import type { TQsfImportReport, TQsfImportStage } from "@/modules/survey/import/types";
 import { AiIcon, AiStatusLine } from "@/modules/ui/components/ai";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -36,6 +36,30 @@ type ImportSurveyFormProps = {
   onUnsavedWorkChange?: (hasUnsavedWork: boolean) => void;
   /** Reports whether an import is running, so the host can word its confirmation. */
   onImportingChange?: (isImporting: boolean) => void;
+};
+
+/**
+ * Languages with missing texts import switched off. Said above the save button, not only in the report:
+ * the survey publishes without them and nothing else stops it.
+ */
+const SwitchedOffLanguagesAlert = ({ report }: Readonly<{ report: TQsfImportReport }>) => {
+  const { t } = useTranslation();
+  const languages = getSwitchedOffLanguages(report);
+  if (languages.length === 0) return null;
+
+  return (
+    <Alert variant="warning">
+      <AlertTitle>
+        {t("workspace.surveys.import.languages_off_title", { count: languages.length })}
+      </AlertTitle>
+      <AlertDescription>
+        {t("workspace.surveys.import.languages_off_description", {
+          count: languages.length,
+          languages: languages.join(", "),
+        })}
+      </AlertDescription>
+    </Alert>
+  );
 };
 
 /**
@@ -113,10 +137,6 @@ export const ImportSurveyForm = ({
       onEdit={importer.pickAnotherFile}
     />
   ) : null;
-
-  // Languages with missing texts import switched off; said here, not only in the report, because the
-  // survey publishes without them and nothing else stops it.
-  const switchedOff = isReviewing && importer.report ? getSwitchedOffLanguages(importer.report) : [];
 
   const buildFooter = () => {
     if (isImporting) {
@@ -206,19 +226,7 @@ export const ImportSurveyForm = ({
         </div>
       )}
 
-      {switchedOff.length > 0 ? (
-        <Alert variant="warning">
-          <AlertTitle>
-            {t("workspace.surveys.import.languages_off_title", { count: switchedOff.length })}
-          </AlertTitle>
-          <AlertDescription>
-            {t("workspace.surveys.import.languages_off_description", {
-              count: switchedOff.length,
-              languages: switchedOff.join(", "),
-            })}
-          </AlertDescription>
-        </Alert>
-      ) : null}
+      {isReviewing && importer.report ? <SwitchedOffLanguagesAlert report={importer.report} /> : null}
 
       <div className="mt-auto">{renderFooter(buildFooter())}</div>
     </div>
