@@ -199,6 +199,17 @@ describe("hub service", () => {
       expect(result.data).toEqual(listResponse);
     });
 
+    // The SDK would omit an empty array and answer with the whole tenant; the guard refuses it first.
+    test("refuses an empty array filter without calling the Hub", async () => {
+      useClient();
+
+      const result = await listFeedbackRecords({ tenant_id: "env-1", source_type: [] });
+
+      expect(result.data).toBeNull();
+      expect(result.error).toMatchObject({ status: 0, message: expect.stringContaining("source_type") });
+      expect(hub.listFeedbackRecords).not.toHaveBeenCalled();
+    });
+
     test("returns error result when the list throws", async () => {
       useClient();
       vi.mocked(hub.listFeedbackRecords).mockRejectedValue(new Error("Network error"));
@@ -272,6 +283,15 @@ describe("hub service", () => {
       });
       expect(result.data).toEqual({ count: 42 });
       expect(result.error).toBeNull();
+    });
+
+    test("refuses an empty array filter without calling the Hub", async () => {
+      useClient();
+
+      const result = await countFeedbackRecords({ tenant_id: "env-1", user_id: [] });
+
+      expect(result.error).toMatchObject({ status: 0, message: expect.stringContaining("user_id") });
+      expect(hub.countFeedbackRecords).not.toHaveBeenCalled();
     });
 
     test("returns a relayable error when the Hub rejects the filters", async () => {
