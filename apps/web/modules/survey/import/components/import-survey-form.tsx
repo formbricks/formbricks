@@ -85,6 +85,8 @@ export const ImportSurveyForm = ({
 
   const isImporting = importer.status === "generating";
   const isReviewing = importer.status === "review" || importer.status === "creating";
+  // The finished import's report, while the review shows it.
+  const reviewReport = isReviewing ? importer.report : null;
 
   // The drop zone unmounts when the import starts; Stop is the only action left, so focus goes there.
   useEffect(() => {
@@ -197,10 +199,8 @@ export const ImportSurveyForm = ({
           draft={importer.draft}
           isGenerating={isImporting}
           source={sourceChip}
-          facts={
-            isReviewing && importer.report ? <ImportFacts summary={importer.report.summary} /> : undefined
-          }
-          report={isReviewing && importer.report ? <ImportReport report={importer.report} /> : undefined}
+          facts={reviewReport ? <ImportFacts summary={reviewReport.summary} /> : undefined}
+          report={reviewReport ? <ImportReport report={reviewReport} /> : undefined}
           status={
             isImporting ? (
               <AiStatusLine isActive messages={progressMessages} activeIndex={stageIndex} />
@@ -226,7 +226,7 @@ export const ImportSurveyForm = ({
         </div>
       )}
 
-      {isReviewing && importer.report ? <SwitchedOffLanguagesAlert report={importer.report} /> : null}
+      {reviewReport ? <SwitchedOffLanguagesAlert report={reviewReport} /> : null}
 
       <div className="mt-auto">{renderFooter(buildFooter())}</div>
     </div>
