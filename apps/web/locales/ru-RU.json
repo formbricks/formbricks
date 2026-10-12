@@ -700,7 +700,7 @@
     "retention_notice_email_subject": "Скоро будет применено хранение данных в {organizationName}",
     "retention_notice_email_surveys_heading": "Опросы, которые будут архивированы",
     "retention_notice_email_surveys_item": "архивируется {archiveDate}, затем будет удалён {deleteDate}",
-    "retention_notice_email_text": "{organizationName} удаляет данные опросов по расписанию. Скоро будут удалены следующие данные:",
+    "retention_notice_email_text": "{organizationName} автоматически удаляет ответы по истечении установленного срока и архивирует опросы, которые давно не использовались. Скоро наступит срок для следующего:",
     "retention_notice_email_view_settings": "Открыть настройки хранения данных",
     "schedule_your_meeting": "Запланируйте встречу",
     "select_a_date": "Выберите дату",

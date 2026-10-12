@@ -700,7 +700,7 @@
     "retention_notice_email_subject": "Upcoming data retention in {organizationName}",
     "retention_notice_email_surveys_heading": "Surveys to be archived",
     "retention_notice_email_surveys_item": "archived on {archiveDate}, then deleted on {deleteDate}",
-    "retention_notice_email_text": "{organizationName} removes survey data on a schedule. The following is due soon:",
+    "retention_notice_email_text": "{organizationName} automatically deletes responses after a set time and archives surveys that haven't been used in a while. The following is due soon:",
     "retention_notice_email_view_settings": "View data retention settings",
     "schedule_your_meeting": "Schedule your meeting",
     "select_a_date": "Select a date",

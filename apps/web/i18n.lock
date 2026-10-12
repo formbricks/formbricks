@@ -665,7 +665,7 @@ checksums:
     emails/retention_notice_email_subject: f62b659fde5f3cf6f250cf09064dd474
     emails/retention_notice_email_surveys_heading: d93ad1e18c3a3ad611bb2d2891b5473c
     emails/retention_notice_email_surveys_item: 7db252e45575770484dcbb57dfe70af2
-    emails/retention_notice_email_text: 008b3cf01dbe44d35a549603b5535d95
+    emails/retention_notice_email_text: 23cd85f02fea7661c2c369bec6af7d75
     emails/retention_notice_email_view_settings: 13e113cbbb92df3b06ede52bb28a2b63
     emails/schedule_your_meeting: 01683323bd7373560cd2cb2737dbaf06
     emails/select_a_date: 521e4a705800da06d091fde3e801ce02

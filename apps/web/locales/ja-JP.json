@@ -700,7 +700,7 @@
     "retention_notice_email_subject": "{organizationName}のデータ保持に関するお知らせ",
     "retention_notice_email_surveys_heading": "アーカイブ予定のアンケート",
     "retention_notice_email_surveys_item": "{archiveDate}にアーカイブされ、{deleteDate}に削除されます",
-    "retention_notice_email_text": "{organizationName}では、スケジュールに沿ってアンケートデータを削除しています。以下のデータがまもなく対象となります:",
+    "retention_notice_email_text": "{organizationName}では、一定期間が経過した回答を自動的に削除し、しばらく使用されていないアンケートをアーカイブします。以下の項目がまもなく対象となります。",
     "retention_notice_email_view_settings": "データ保持設定を表示",
     "schedule_your_meeting": "ミーティングを予約",
     "select_a_date": "日付を選択",

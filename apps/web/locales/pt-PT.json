@@ -700,7 +700,7 @@
     "retention_notice_email_subject": "Retenção de dados em breve em {organizationName}",
     "retention_notice_email_surveys_heading": "Inquéritos a arquivar",
     "retention_notice_email_surveys_item": "arquivado em {archiveDate} e eliminado em {deleteDate}",
-    "retention_notice_email_text": "{organizationName} remove os dados dos inquéritos de acordo com um calendário. Os seguintes elementos serão removidos em breve:",
+    "retention_notice_email_text": "A {organizationName} elimina automaticamente as respostas após um determinado período e arquiva os inquéritos que não são utilizados há algum tempo. Os seguintes elementos vão ser afetados em breve:",
     "retention_notice_email_view_settings": "Ver definições de retenção de dados",
     "schedule_your_meeting": "Agende a sua reunião",
     "select_a_date": "Selecionar uma data",

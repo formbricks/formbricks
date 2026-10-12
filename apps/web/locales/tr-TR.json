@@ -700,7 +700,7 @@
     "retention_notice_email_subject": "{organizationName} kuruluşunda yaklaşan veri saklama işlemi",
     "retention_notice_email_surveys_heading": "Arşivlenecek anketler",
     "retention_notice_email_surveys_item": "{archiveDate} tarihinde arşivlenecek, ardından {deleteDate} tarihinde silinecek",
-    "retention_notice_email_text": "{organizationName}, anket verilerini belirli bir takvime göre kaldırır. Aşağıdakilerin zamanı yaklaşıyor:",
+    "retention_notice_email_text": "{organizationName}, yanıtları belirli bir süre sonra otomatik olarak siler ve bir süredir kullanılmayan anketleri arşivler. Yakında şunların süresi doluyor:",
     "retention_notice_email_view_settings": "Veri saklama ayarlarını görüntüle",
     "schedule_your_meeting": "Toplantınızı planlayın",
     "select_a_date": "Bir tarih seçin",

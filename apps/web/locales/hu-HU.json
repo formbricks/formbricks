@@ -700,7 +700,7 @@
     "retention_notice_email_subject": "Közelgő adatmegőrzési határidő a(z) {organizationName} szervezetnél",
     "retention_notice_email_surveys_heading": "Archiválásra kerülő felmérések",
     "retention_notice_email_surveys_item": "archiválásra kerül: {archiveDate}, majd törlésre kerül: {deleteDate}",
-    "retention_notice_email_text": "A(z) {organizationName} meghatározott ütemezés szerint eltávolítja a felmérési adatokat. Az alábbi elemek esedékessége hamarosan bekövetkezik:",
+    "retention_notice_email_text": "A(z) {organizationName} meghatározott idő elteltével automatikusan törli a válaszokat, és archiválja azokat a felméréseket, amelyeket már huzamosabb ideje nem használtak. Az alábbi elemek hamarosan esedékesek:",
     "retention_notice_email_view_settings": "Adatmegőrzési beállítások megtekintése",
     "schedule_your_meeting": "Megbeszélés ütemezése",
     "select_a_date": "Dátum kiválasztása",

@@ -700,7 +700,7 @@
     "retention_notice_email_subject": "Próxima retención de datos en {organizationName}",
     "retention_notice_email_surveys_heading": "Encuestas que se archivarán",
     "retention_notice_email_surveys_item": "se archivará el {archiveDate} y se eliminará el {deleteDate}",
-    "retention_notice_email_text": "{organizationName} elimina los datos de las encuestas según un calendario establecido. Próximamente se eliminará lo siguiente:",
+    "retention_notice_email_text": "{organizationName} elimina automáticamente las respuestas transcurrido un tiempo determinado y archiva las encuestas que llevan un tiempo sin usarse. Lo siguiente vence pronto:",
     "retention_notice_email_view_settings": "Ver la configuración de retención de datos",
     "schedule_your_meeting": "Programa tu reunión",
     "select_a_date": "Selecciona una fecha",

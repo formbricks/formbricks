@@ -92,7 +92,7 @@ const translations: Record<TranslationKey, TranslationValue> = {
   "emails.retention_notice_email_surveys_heading": "Surveys to be archived",
   "emails.retention_notice_email_surveys_item": "archived on {archiveDate}, then deleted on {deleteDate}",
   "emails.retention_notice_email_text":
-    "{organizationName} removes survey data on a schedule. The following is due soon:",
+    "{organizationName} automatically deletes responses after a set time and archives surveys that haven't been used in a while. The following is due soon:",
   "emails.retention_notice_email_view_settings": "View data retention settings",
   "emails.sso_sign_in_hint_email_did_not_request":
     "If you did not request this, you can ignore this email. Nothing about your account has changed.",

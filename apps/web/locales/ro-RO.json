@@ -700,7 +700,7 @@
     "retention_notice_email_subject": "Retenția datelor este în curând în {organizationName}",
     "retention_notice_email_surveys_heading": "Chestionare care vor fi arhivate",
     "retention_notice_email_surveys_item": "arhivat pe {archiveDate}, apoi șters pe {deleteDate}",
-    "retention_notice_email_text": "{organizationName} elimină datele din chestionare conform unui program. Următoarele urmează să fie eliminate în curând:",
+    "retention_notice_email_text": "{organizationName} șterge automat răspunsurile după o perioadă stabilită și arhivează sondajele care nu au mai fost folosite de ceva vreme. Urmează în curând:",
     "retention_notice_email_view_settings": "Vezi setările de retenție a datelor",
     "schedule_your_meeting": "Programați întâlnirea",
     "select_a_date": "Selectați o dată",
