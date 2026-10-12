@@ -3,6 +3,7 @@
 import { CheckIcon, CopyIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { copyToClipboard } from "@/lib/utils/clipboard";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -44,11 +45,15 @@ export const ShareInviteModal = ({ inviteToken, open, setOpen }: ShareInviteModa
               value={`${window.location.protocol}//${window.location.host}/invite?token=${inviteToken}`}></Input>
             <Button
               variant="secondary"
-              onClick={() => {
-                navigator.clipboard.writeText(
+              onClick={async () => {
+                const copied = await copyToClipboard(
                   `${window.location.protocol}//${window.location.host}/invite?token=${inviteToken}`
                 );
-                toast.success(t("common.copied_to_clipboard"));
+                if (copied) {
+                  toast.success(t("common.copied_to_clipboard"));
+                } else {
+                  toast.error(t("common.failed_to_copy_to_clipboard"));
+                }
               }}
               title={t("workspace.settings.general.copy_invite_link_to_clipboard")}
               aria-label="Copy invite link to clipboard">
