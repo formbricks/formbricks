@@ -701,6 +701,8 @@
     "retention_notice_email_surveys_heading": "Enkäter som kommer att arkiveras",
     "retention_notice_email_surveys_item": "arkiveras den {archiveDate} och raderas sedan den {deleteDate}",
     "retention_notice_email_text": "{organizationName} raderar automatiskt svar efter en viss tid och arkiverar enkäter som inte har använts på ett tag. Följande närmar sig snart:",
+    "retention_notice_email_text_responses": "{organizationName} raderar automatiskt svar efter en viss tid. Följande raderas snart:",
+    "retention_notice_email_text_surveys": "{organizationName} arkiverar automatiskt enkäter som inte har använts på ett tag. Följande arkiveras snart:",
     "retention_notice_email_view_settings": "Visa inställningar för datalagring",
     "schedule_your_meeting": "Boka ditt möte",
     "select_a_date": "Välj ett datum",

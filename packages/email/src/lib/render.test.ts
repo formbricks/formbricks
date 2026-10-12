@@ -177,6 +177,32 @@ describe("translation threading", () => {
   });
 });
 
+describe("survey retention notice", () => {
+  const notice = exampleData.surveyRetentionNoticeEmail;
+
+  test("opens by naming only the policy whose list the email carries", async () => {
+    const responsesOnly = await renderSurveyRetentionNoticeEmail({
+      ...notice,
+      archivedSurveys: [],
+      ...legal,
+      t,
+    });
+    const surveysOnly = await renderSurveyRetentionNoticeEmail({
+      ...notice,
+      responseDeletions: [],
+      ...legal,
+      t,
+    });
+    const both = await renderSurveyRetentionNoticeEmail({ ...notice, ...legal, t });
+
+    expect(responsesOnly).toContain("Acme automatically deletes responses after a set time. The following");
+    expect(responsesOnly).not.toContain("archives surveys");
+    expect(surveysOnly).toContain("Acme automatically archives surveys");
+    expect(surveysOnly).not.toContain("deletes responses");
+    expect(both).toContain("deletes responses after a set time and archives surveys");
+  });
+});
+
 describe("SSO sign-in hint", () => {
   test("names every provider the account signs in with and links to the login page", async () => {
     const html = await renderSsoSignInHintEmail({

@@ -701,6 +701,8 @@
     "retention_notice_email_surveys_heading": "即将归档的调查",
     "retention_notice_email_surveys_item": "将于 {archiveDate} 归档，然后于 {deleteDate} 删除",
     "retention_notice_email_text": "{organizationName} 会在设定的时间后自动删除回复,并将一段时间未使用的问卷归档。以下内容即将到期:",
+    "retention_notice_email_text_responses": "{organizationName} 会在设定的时间后自动删除回复。以下内容即将到期：",
+    "retention_notice_email_text_surveys": "{organizationName} 会自动归档一段时间内未使用的问卷。以下内容即将到期：",
     "retention_notice_email_view_settings": "查看数据保留设置",
     "schedule_your_meeting": "安排你的会议",
     "select_a_date": "选择 日期",

@@ -701,6 +701,8 @@
     "retention_notice_email_surveys_heading": "アーカイブ予定のアンケート",
     "retention_notice_email_surveys_item": "{archiveDate}にアーカイブされ、{deleteDate}に削除されます",
     "retention_notice_email_text": "{organizationName}では、一定期間が経過した回答を自動的に削除し、しばらく使用されていないアンケートをアーカイブします。以下の項目がまもなく対象となります。",
+    "retention_notice_email_text_responses": "{organizationName}では、一定期間が過ぎた回答を自動的に削除しています。まもなく削除予定のものは以下のとおりです:",
+    "retention_notice_email_text_surveys": "{organizationName}では、しばらく使われていないアンケートを自動的にアーカイブしています。まもなくアーカイブ予定のものは以下のとおりです:",
     "retention_notice_email_view_settings": "データ保持設定を表示",
     "schedule_your_meeting": "ミーティングを予約",
     "select_a_date": "日付を選択",

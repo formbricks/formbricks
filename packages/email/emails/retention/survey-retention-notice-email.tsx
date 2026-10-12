@@ -4,6 +4,7 @@ import { EmailFooter } from "../../src/components/email-footer";
 import { EmailTemplate } from "../../src/components/email-template";
 import { exampleData } from "../../src/lib/example-data";
 import { t as mockT } from "../../src/lib/mock-translate";
+import { getRetentionNoticeIntro } from "../../src/lib/retention-notice-intro";
 import { TEmailTemplateLegalProps } from "../../src/types/email";
 import { TFunction } from "../../src/types/translations";
 
@@ -50,7 +51,13 @@ export function SurveyRetentionNoticeEmail({
     <EmailTemplate t={t} {...legalProps}>
       <Container>
         <Heading>{t("emails.retention_notice_email_heading")}</Heading>
-        <Text className="text-sm">{t("emails.retention_notice_email_text", { organizationName })}</Text>
+        <Text className="text-sm">
+          {getRetentionNoticeIntro(t, {
+            organizationName,
+            hasResponseDeletions: responseDeletions.length > 0,
+            hasArchivedSurveys: archivedSurveys.length > 0,
+          })}
+        </Text>
         {responseDeletions.length > 0 && (
           <Section className="mb-4">
             <Text className="mb-1 text-sm font-bold">

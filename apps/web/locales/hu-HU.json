@@ -701,6 +701,8 @@
     "retention_notice_email_surveys_heading": "Archiválásra kerülő felmérések",
     "retention_notice_email_surveys_item": "archiválásra kerül: {archiveDate}, majd törlésre kerül: {deleteDate}",
     "retention_notice_email_text": "A(z) {organizationName} meghatározott idő elteltével automatikusan törli a válaszokat, és archiválja azokat a felméréseket, amelyeket már huzamosabb ideje nem használtak. Az alábbi elemek hamarosan esedékesek:",
+    "retention_notice_email_text_responses": "A(z) {organizationName} meghatározott idő elteltével automatikusan törli a válaszokat. Hamarosan esedékes a következő:",
+    "retention_notice_email_text_surveys": "A(z) {organizationName} automatikusan archiválja azokat a felméréseket, amelyeket hosszabb ideje nem használtak. Hamarosan esedékes a következő:",
     "retention_notice_email_view_settings": "Adatmegőrzési beállítások megtekintése",
     "schedule_your_meeting": "Megbeszélés ütemezése",
     "select_a_date": "Dátum kiválasztása",

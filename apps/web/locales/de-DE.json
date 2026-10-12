@@ -701,6 +701,8 @@
     "retention_notice_email_surveys_heading": "Umfragen, die archiviert werden",
     "retention_notice_email_surveys_item": "archiviert am {archiveDate}, danach gelöscht am {deleteDate}",
     "retention_notice_email_text": "{organizationName} löscht Antworten nach einer festgelegten Zeit automatisch und archiviert Umfragen, die längere Zeit nicht verwendet wurden. Folgendes steht demnächst an:",
+    "retention_notice_email_text_responses": "{organizationName} löscht Antworten nach einer festgelegten Zeit automatisch. Folgende Antworten sind bald an der Reihe:",
+    "retention_notice_email_text_surveys": "{organizationName} archiviert Umfragen, die schon länger nicht mehr verwendet wurden, automatisch. Folgende Umfragen sind bald an der Reihe:",
     "retention_notice_email_view_settings": "Einstellungen zur Datenaufbewahrung ansehen",
     "schedule_your_meeting": "Plane dein Meeting",
     "select_a_date": "Wähle ein Datum",

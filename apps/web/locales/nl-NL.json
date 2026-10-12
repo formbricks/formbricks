@@ -701,6 +701,8 @@
     "retention_notice_email_surveys_heading": "Vragenlijsten die worden gearchiveerd",
     "retention_notice_email_surveys_item": "gearchiveerd op {archiveDate}, daarna verwijderd op {deleteDate}",
     "retention_notice_email_text": "{organizationName} verwijdert reacties automatisch na een bepaalde tijd en archiveert enquêtes die al een tijdje niet zijn gebruikt. Het volgende staat binnenkort op de planning:",
+    "retention_notice_email_text_responses": "{organizationName} verwijdert reacties automatisch na een bepaalde tijd. Binnenkort staat het volgende op de planning:",
+    "retention_notice_email_text_surveys": "{organizationName} archiveert enquêtes die al een tijdje niet zijn gebruikt automatisch. Binnenkort staat het volgende op de planning:",
     "retention_notice_email_view_settings": "Instellingen voor gegevensbewaring bekijken",
     "schedule_your_meeting": "Plan uw vergadering",
     "select_a_date": "Selecteer een datum",

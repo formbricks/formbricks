@@ -701,6 +701,8 @@
     "retention_notice_email_surveys_heading": "Sondages à archiver",
     "retention_notice_email_surveys_item": "archivé le {archiveDate}, puis supprimé le {deleteDate}",
     "retention_notice_email_text": "{organizationName} supprime automatiquement les réponses après une durée définie et archive les enquêtes qui n'ont pas été utilisées depuis un moment. Les éléments suivants arrivent bientôt à échéance :",
+    "retention_notice_email_text_responses": "{organizationName} supprime automatiquement les réponses après une durée définie. Les éléments suivants arrivent bientôt à échéance :",
+    "retention_notice_email_text_surveys": "{organizationName} archive automatiquement les enquêtes qui n'ont pas été utilisées depuis un moment. Les éléments suivants seront bientôt concernés :",
     "retention_notice_email_view_settings": "Voir les paramètres de conservation des données",
     "schedule_your_meeting": "Planifier votre rendez-vous",
     "select_a_date": "Sélectionner une date",

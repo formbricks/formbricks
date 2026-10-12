@@ -701,6 +701,8 @@
     "retention_notice_email_surveys_heading": "即將封存的問卷",
     "retention_notice_email_surveys_item": "將於 {archiveDate} 封存,並於 {deleteDate} 刪除",
     "retention_notice_email_text": "{organizationName} 會在設定的時間後自動刪除回覆，並將一段時間未使用的問卷封存。以下項目即將到期：",
+    "retention_notice_email_text_responses": "{organizationName} 會在一段設定的時間後自動刪除回覆。以下內容即將到期:",
+    "retention_notice_email_text_surveys": "{organizationName} 會自動封存一段時間未使用的問卷。以下內容即將到期:",
     "retention_notice_email_view_settings": "查看資料保留設定",
     "schedule_your_meeting": "安排你的會議",
     "select_a_date": "選擇日期",

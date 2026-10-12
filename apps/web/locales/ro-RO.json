@@ -701,6 +701,8 @@
     "retention_notice_email_surveys_heading": "Chestionare care vor fi arhivate",
     "retention_notice_email_surveys_item": "arhivat pe {archiveDate}, apoi șters pe {deleteDate}",
     "retention_notice_email_text": "{organizationName} șterge automat răspunsurile după o perioadă stabilită și arhivează sondajele care nu au mai fost folosite de ceva vreme. Urmează în curând:",
+    "retention_notice_email_text_responses": "{organizationName} șterge automat răspunsurile după o perioadă stabilită. Urmează în curând:",
+    "retention_notice_email_text_surveys": "{organizationName} arhivează automat chestionarele care nu au mai fost folosite de ceva timp. Urmează în curând:",
     "retention_notice_email_view_settings": "Vezi setările de retenție a datelor",
     "schedule_your_meeting": "Programați întâlnirea",
     "select_a_date": "Selectați o dată",
