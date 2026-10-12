@@ -1,17 +1,12 @@
 "use client";
 
-import * as Sentry from "@sentry/nextjs";
 import NextError from "next/error";
 import { useEffect } from "react";
-import { IS_DEVELOPMENT_BUILD } from "@/lib/env-client";
+import { reportBoundaryError } from "@/lib/sentry/boundary-error";
 
 export default function GlobalError({ error }: Readonly<{ error: Error & { digest?: string } }>) {
   useEffect(() => {
-    if (IS_DEVELOPMENT_BUILD) {
-      console.error(error.message);
-    } else {
-      Sentry.captureException(error);
-    }
+    reportBoundaryError(error);
   }, [error]);
   return (
     <html lang="en-US">

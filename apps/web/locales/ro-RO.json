@@ -754,6 +754,7 @@
     "completed_heading": "Sondaj închis",
     "create_your_own": "Creează-ți propriul chestionar open-source",
     "enter_pin": "Acest sondaj este protejat. Introduceți PIN-ul mai jos.",
+    "error_description": "A apărut o problemă cu acest sondaj. Încearcă din nou.",
     "just_curious": "Doar curios?",
     "link_invalid": "Acest sondaj poate fi completat doar pe bază de invitație.",
     "paused": "Acest sondaj este temporar întrerupt.",
