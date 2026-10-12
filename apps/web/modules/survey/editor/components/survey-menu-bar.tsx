@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { Workspace } from "@formbricks/database/prisma-browser";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import formbricks from "@formbricks/js";
 import { TSegment } from "@formbricks/types/segment";
@@ -21,11 +20,17 @@ import {
 } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import type { TSurveyAccess } from "@/lib/survey/visibility/access";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { isDeepEqual } from "@/lib/utils/object";
 import { reportStaleServerActionError } from "@/lib/utils/stale-server-action";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import type { TCustomCssValidationStatus } from "@/modules/custom-css/components/lib/validation";
+import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import {
+  getSurveyToAutosave,
+  isCustomCssBlockingManualSave,
+} from "@/modules/survey/editor/lib/custom-css-autosave";
 import { getLogicDestinationErrorMessage } from "@/modules/survey/editor/lib/logic-destination-error";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
@@ -45,6 +50,8 @@ import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { updateSurveyAction, updateSurveyDraftAction } from "../actions";
+import { type TAutoSaveFailure } from "../lib/auto-save-badge";
+import { createSaveAttemptOrder } from "../lib/save-attempt-order";
 import { describeElementIssue, isMissingRequiredTrigger, isSurveyValid } from "../lib/validation";
 import { AutoSaveIndicator } from "./auto-save-indicator";
 
@@ -57,7 +64,7 @@ interface SurveyMenuBarProps {
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
   setInvalidElements: React.Dispatch<React.SetStateAction<string[] | null>>;
   setHasTriggerError: React.Dispatch<React.SetStateAction<boolean>>;
-  workspace: Workspace;
+  workspace: TWorkspaceWithoutCustomCss;
   responseCount: number;
   finishedResponseCount: number;
   selectedLanguageCode: string;
@@ -80,6 +87,12 @@ interface SurveyMenuBarProps {
   surveyAccess: TSurveyAccess | null;
   /** The author's display name; `null` when the survey has no owner or the gate is off. */
   ownerName: string | null;
+  /**
+   * Where the check of the survey's Custom CSS draft stands (ENG-3553). Saving and publishing are
+   * blocked while it is `invalid`; the autosave sends the draft only once it is `valid` (or there is
+   * no CSS) and keeps the last saved CSS otherwise, so other edits still save.
+   */
+  customCssValidationStatus?: TCustomCssValidationStatus;
 }
 
 export const SurveyMenuBar = ({
@@ -104,6 +117,7 @@ export const SurveyMenuBar = ({
   onVisibilityNotEnabled,
   surveyAccess,
   ownerName,
+  customCssValidationStatus = "empty",
 }: Readonly<SurveyMenuBarProps>) => {
   const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
@@ -114,6 +128,15 @@ export const SurveyMenuBar = ({
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
   const [lastAutoSaved, setLastAutoSaved] = useState<Date | null>(null);
+  // Set when an auto-save tick does not land -- the request failed, or the server refused it -- and
+  // cleared by the next save that does. `retrying` while the tick keeps going (it re-sends the whole
+  // draft, so a retry cannot apply anything twice); `stopped` once a stale deployment has ended it.
+  // This only makes sure the indicator stops claiming the work is safe while it is not (ENG-2899).
+  const [autoSaveFailure, setAutoSaveFailure] = useState<TAutoSaveFailure | null>(null);
+  // The indicator follows the newest save attempt to settle, by start order, not whichever response
+  // arrives last. Next.js happens to send server actions one at a time today, so they settle in start
+  // order anyway; see save-attempt-order.ts for why that is not relied on. One ordering per editor.
+  const [saveAttemptOrder] = useState(createSaveAttemptOrder);
   const isSuccessfullySavedRef = useRef(false);
   const isAutoSavingRef = useRef(false);
   const isSurveyPublishingRef = useRef(false);
@@ -159,6 +182,11 @@ export const SurveyMenuBar = ({
   useEffect(() => {
     surveyRef.current = survey;
   }, [survey]);
+
+  const customCssValidationStatusRef = useRef(customCssValidationStatus);
+  useEffect(() => {
+    customCssValidationStatusRef.current = customCssValidationStatus;
+  }, [customCssValidationStatus]);
 
   useEffect(() => {
     isSurveySavingRef.current = isSurveySaving;
@@ -230,6 +258,16 @@ export const SurveyMenuBar = ({
     toast.error(t("workspace.surveys.edit.please_set_a_survey_trigger"));
     setHasTriggerError(true);
     setActiveId("settings");
+    return true;
+  };
+
+  // The server re-validates Custom CSS on every save and keeps the previous revision when it fails,
+  // so this only spares the author a round trip and points them at the errors.
+  const blockOnInvalidCustomCss = (): boolean => {
+    if (!isCustomCssBlockingManualSave(customCssValidationStatus)) return false;
+
+    toast.error(t("workspace.custom_css.fix_errors_before_saving"));
+    setActiveId("styling");
     return true;
   };
 
@@ -462,15 +500,27 @@ export const SurveyMenuBar = ({
       // Skip if already saving, publishing, or auto-saving
       if (isAutoSavingRef.current || isSurveySavingRef.current || isSurveyPublishingRef.current) return;
 
+      // A Custom CSS draft goes out only once its check has passed; until then the saved CSS stands in
+      // for it, so an unchecked or invalid draft cannot fail the survey's other edits.
+      const currentSurvey = getSurveyToAutosave(
+        localSurveyRef.current,
+        lastSavedSurveyRef.current ?? surveyRef.current,
+        customCssValidationStatusRef.current
+      );
+
       // Check for changes using refs (avoids re-creating interval on every change), and skip if
       // there are none
-      if (!hasUnsavedSurveyChanges(localSurveyRef.current, [surveyRef.current, lastSavedSurveyRef.current]))
+      if (!hasUnsavedSurveyChanges(currentSurvey, [surveyRef.current, lastSavedSurveyRef.current])) {
+        // Nothing is waiting to be saved, so nothing is lost either -- e.g. the author reverted the
+        // edit a failed tick was carrying. (A no-op when the flag is already clear.)
+        setAutoSaveFailure(null);
         return;
+      }
 
       isAutoSavingRef.current = true;
+      const attempt = saveAttemptOrder.begin();
 
       try {
-        const currentSurvey = localSurveyRef.current;
         const updatedSurveyResponse = await updateSurveyDraftAction({
           ...currentSurvey,
           segment: currentSurvey.segment?.id === "temp" ? null : currentSurvey.segment,
@@ -517,7 +567,16 @@ export const SurveyMenuBar = ({
           surveyRef.current = { ...savedData };
           lastSavedSurveyRef.current = structuredClone(savedData);
           isSuccessfullySavedRef.current = true;
-          setLastAutoSaved(new Date());
+          // The refs above follow what the server stored either way; the indicator only follows the
+          // newest attempt, so a tick that lands after a newer save failed does not say "saved".
+          if (saveAttemptOrder.settle(attempt)) {
+            setAutoSaveFailure(null);
+            setLastAutoSaved(new Date());
+          }
+        } else if (saveAttemptOrder.settle(attempt)) {
+          // The request reached the app and the save was refused (`serverError`, validation, a missing
+          // segment) -- just as unsaved as a failed request.
+          setAutoSaveFailure("retrying");
         }
       } catch (e) {
         // A stale bundle's action id is rejected by the new deployment: hand it to the reload
@@ -526,20 +585,30 @@ export const SurveyMenuBar = ({
         // requests behind a prompt that is already up.
         if (reportStaleServerActionError(e)) {
           clearInterval(intervalId);
+          // The edit this tick carried is not saved, and nothing will retry it: say so, without the
+          // "keeps trying" promise the retrying state makes.
+          setAutoSaveFailure("stopped");
           return;
         }
+        // Anything else means this tick's save did not land -- a load balancer error page, a dropped
+        // connection. Nothing reaches `unhandledrejection` from here, so the indicator is the only
+        // place the author can learn about it.
         console.error(e);
+        if (saveAttemptOrder.settle(attempt)) setAutoSaveFailure("retrying");
       } finally {
         isAutoSavingRef.current = false;
       }
     }, 10000);
 
     return () => clearInterval(intervalId);
-  }, [localSurvey.publishOn, localSurvey.status, setLocalSurvey]);
+  }, [localSurvey.publishOn, localSurvey.status, saveAttemptOrder, setLocalSurvey]);
 
   // Add new handler after handleSurveySave
   const handleSurveySaveDraft = async (): Promise<boolean> => {
+    if (blockOnInvalidCustomCss()) return false;
+
     setIsSurveySaving(true);
+    const attempt = saveAttemptOrder.begin();
 
     try {
       const segment = await handleSegmentUpdate();
@@ -554,8 +623,11 @@ export const SurveyMenuBar = ({
         lastSavedSurveyRef.current = structuredClone(updatedSurveyResponse.data);
         toast.success(t("workspace.surveys.edit.changes_saved"));
         isSuccessfullySavedRef.current = true;
+        if (saveAttemptOrder.settle(attempt)) setAutoSaveFailure(null);
         router.refresh();
       } else {
+        // Recorded so an older tick that lands afterwards cannot report this draft as saved.
+        saveAttemptOrder.settle(attempt);
         const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
         toast.error(errorMessage);
         return false;
@@ -563,6 +635,7 @@ export const SurveyMenuBar = ({
       return true;
     } catch (e) {
       setIsSurveySaving(false);
+      saveAttemptOrder.settle(attempt);
       // The reload prompt already explains a stale-deployment failure, so don't also claim the
       // save itself went wrong.
       if (reportStaleServerActionError(e)) {
@@ -577,8 +650,11 @@ export const SurveyMenuBar = ({
   const handleSurveySave = async (): Promise<boolean> => {
     // Ahead of the spinner: a click that cannot go through should report why, not appear to work.
     if (blockOnMissingTrigger(localSurvey.status)) return false;
+    if (blockOnInvalidCustomCss()) return false;
 
     setIsSurveySaving(true);
+    // Begun only once the request is about to go out: a save stopped by validation never raced anything.
+    let attempt: number | undefined;
 
     const isSurveyValidatedWithZod = validateSurveyWithZod();
 
@@ -616,6 +692,7 @@ export const SurveyMenuBar = ({
         }
       });
 
+      attempt = saveAttemptOrder.begin();
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
       const updatedSurveyResponse = await updateSurveyAction({ ...localSurvey, segment });
@@ -630,8 +707,10 @@ export const SurveyMenuBar = ({
         toast.success(t("workspace.surveys.edit.changes_saved"));
         // Set flag to prevent beforeunload warning during router.refresh()
         isSuccessfullySavedRef.current = true;
+        if (saveAttemptOrder.settle(attempt)) setAutoSaveFailure(null);
         router.refresh();
       } else {
+        saveAttemptOrder.settle(attempt);
         const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
         toast.error(errorMessage);
         return false;
@@ -640,6 +719,7 @@ export const SurveyMenuBar = ({
       return true;
     } catch (e) {
       setIsSurveySaving(false);
+      if (attempt !== undefined) saveAttemptOrder.settle(attempt);
       if (reportStaleServerActionError(e)) {
         return false;
       }
@@ -674,6 +754,7 @@ export const SurveyMenuBar = ({
 
   const handleSurveyPublish = async () => {
     if (blockOnMissingTrigger("inProgress")) return;
+    if (blockOnInvalidCustomCss()) return;
 
     isSurveyPublishingRef.current = true;
     setIsSurveyPublishing(true);
@@ -738,6 +819,7 @@ export const SurveyMenuBar = ({
   const handleSurveySchedule = async () => {
     // Scheduling lands on "paused", which is live enough to need a trigger.
     if (blockOnMissingTrigger("paused")) return;
+    if (blockOnInvalidCustomCss()) return;
 
     isSurveyPublishingRef.current = true;
     setIsSurveyPublishing(true);
@@ -796,6 +878,7 @@ export const SurveyMenuBar = ({
   // that could not be activated anyway.
   const isReadyToActivate = (): boolean => {
     if (blockOnMissingTrigger(isPublishScheduled ? "paused" : "inProgress")) return false;
+    if (blockOnInvalidCustomCss()) return false;
     if (!validateSurveyWithZod()) return false;
     return isSurveyValid(localSurvey, selectedLanguageCode, t, finishedResponseCount);
   };
@@ -888,7 +971,15 @@ export const SurveyMenuBar = ({
       </div>
 
       <div className="mt-3 flex items-center gap-2 sm:mt-0 sm:ml-4">
-        <AutoSaveIndicator isDraft={localSurvey.status === "draft"} lastSaved={lastAutoSaved} />
+        <AutoSaveIndicator
+          isDraft={localSurvey.status === "draft"}
+          // Scheduled drafts are not auto-saved (the interval is torn down), so the badge says paused.
+          isScheduled={isPublishScheduled}
+          lastSaved={lastAutoSaved}
+          failure={autoSaveFailure}
+          // CX mode hides the manual save, so the badge must not suggest one.
+          canSaveManually={!isCxMode}
+        />
         {!isStorageConfigured && (
           <div>
             <Alert variant="warning" size="small" role="status">

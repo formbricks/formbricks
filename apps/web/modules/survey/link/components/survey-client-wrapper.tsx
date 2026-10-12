@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Workspace } from "@formbricks/database/prisma-browser";
+import type { TRendererCustomCss } from "@formbricks/types/custom-css";
 import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
@@ -44,6 +45,8 @@ interface SurveyClientWrapperProps {
   TERMS_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
   pinAuthToken?: string;
+  /** Compiled workspace + survey custom CSS, resolved server-side (ENG-3552). Never the source. */
+  customCss?: TRendererCustomCss;
 }
 
 let setBlockId = (_: string) => {};
@@ -70,6 +73,7 @@ export const SurveyClientWrapper = ({
   TERMS_URL,
   IS_FORMBRICKS_CLOUD,
   pinAuthToken,
+  customCss,
 }: SurveyClientWrapperProps) => {
   const searchParams = useSearchParams();
 
@@ -267,6 +271,7 @@ export const SurveyClientWrapper = ({
           isPreviewMode={isPreview}
           survey={jsSurvey}
           styling={styling}
+          customCss={customCss}
           languageCode={languageCode}
           onLanguageChange={setCurrentLanguageCode}
           onPageChange={handlePageChange}

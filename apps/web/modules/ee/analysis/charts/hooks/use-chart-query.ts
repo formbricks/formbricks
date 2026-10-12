@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TChartQuery } from "@formbricks/types/analysis";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { executeQueryAction } from "@/modules/ee/analysis/charts/actions";
 import type { TChartDataRow, TChartLabelMaps } from "@/modules/ee/analysis/types/analysis";
 

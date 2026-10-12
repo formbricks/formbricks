@@ -1,0 +1,18 @@
+description: >
+  One stored answer or field value, in the four shapes the v3 contract can carry: a string, a number,
+  a list of strings, or a string-to-string map.
+
+
+  Declared once and referenced by `ResponseDataMap` and `ResponseUnresolvedEntry.rawValue`, so the two
+  places that publish stored JSON cannot drift apart. A stored value outside these shapes (a legacy
+  JSON `null`, an array with non-string items, a map with non-string values) is not published at all
+  rather than reaching a client as a body this contract would reject.
+oneOf:
+  - type: string
+  - type: number
+  - type: array
+    items:
+      type: string
+  - type: object
+    additionalProperties:
+      type: string

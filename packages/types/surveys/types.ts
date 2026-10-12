@@ -11,6 +11,7 @@ import {
   getZSafeUrl,
 } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
+import { ZCustomCssStored } from "../custom-css";
 import { ZLinkedEmbeddedField } from "../embedded-data";
 import { linkedToDesiredEmbeddedFields, toLegacyEmbeddedFields } from "../embedded-data-mapping";
 import { type TI18nString, ZI18nString } from "../i18n";
@@ -76,6 +77,7 @@ export const ZSurveyEndScreenCard = ZSurveyEndingBase.extend({
   buttonLabel: ZI18nString.optional(),
   buttonLink: ZEndingCardButtonLink.optional(),
   imageUrl: ZStorageUrl.optional(),
+  imageAltText: ZI18nString.optional(),
   videoUrl: ZStorageUrl.optional(),
   // Absent means "show it": the checkmark predates this field, so every survey written before it has to
   // keep rendering the icon.
@@ -1021,6 +1023,9 @@ export const ZSurveyBase = z.object({
   workspaceOverwrites: ZSurveyWorkspaceOverwrites.nullable(),
   styling: ZSurveyStyling.nullable(),
   showLanguageSwitch: z.boolean().nullable(),
+  // Optional so survey literals and API payloads that predate the setting keep validating; null and
+  // undefined both read as "off".
+  autoSelectLanguage: z.boolean().nullish(),
   surveyClosedMessage: ZSurveyClosedMessage.nullable(),
   segment: ZSegment.nullable(),
   singleUse: ZSurveySingleUse.nullable(),
@@ -1049,6 +1054,13 @@ export const ZSurveyBase = z.object({
   slug: ZSurveySlug.nullable(),
   customHeadScripts: z.string().nullish(),
   customHeadScriptsMode: z.enum(["add", "replace"]).nullish(),
+  /**
+   * Survey custom CSS as stored (ENG-2949): source plus trusted compiled output. Nullish so survey
+   * objects built without it still type-check. Only the shared custom CSS save service writes it, and
+   * it reads nothing but `source` from a payload — `compiled` and `processorVersion` sent by a caller
+   * are ignored and recomputed.
+   */
+  customCss: ZCustomCssStored.nullish(),
 });
 
 /**
@@ -1549,6 +1561,48 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
           }
         }
 
+        // Validate image alt text if present. An empty default is a decorative image and needs no translations.
+        if (element.imageAltText?.[defaultLanguageCode].trim()) {
+          elementMultiLangIssue = validateElementLabels(
+            "imageAltText",
+            element.imageAltText,
+            languages,
+            blockIndex,
+            elementIndex
+          );
+          if (elementMultiLangIssue) {
+            ctx.addIssue(elementMultiLangIssue);
+          }
+        }
+
+        if (element.type === TSurveyElementTypeEnum.PictureSelection) {
+          element.choices.forEach((choice, choiceIndex) => {
+            if (!choice.imageAltText?.[defaultLanguageCode]?.trim()) return;
+            const choiceAltIssue = validateElementLabels(
+              `Image alt text of choice ${String(choiceIndex + 1)}`,
+              choice.imageAltText,
+              languages,
+              blockIndex,
+              elementIndex,
+              true
+            );
+            if (choiceAltIssue) {
+              ctx.addIssue({
+                ...choiceAltIssue,
+                path: [
+                  "blocks",
+                  blockIndex,
+                  "elements",
+                  elementIndex,
+                  "choices",
+                  choiceIndex,
+                  "imageAltText",
+                ],
+              });
+            }
+          });
+        }
+
         // Type-specific validation
         if (element.type === TSurveyElementTypeEnum.OpenText) {
           if (
@@ -1909,6 +1963,20 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
 
         if (multiLangIssueInSubheader) {
           ctx.addIssue(multiLangIssueInSubheader);
+        }
+      }
+
+      if (ending.imageAltText?.default.trim()) {
+        const multiLangIssueInImageAltText = validateCardFieldsForAllLanguages(
+          "imageAltText",
+          ending.imageAltText,
+          languages,
+          "end",
+          index
+        );
+
+        if (multiLangIssueInImageAltText) {
+          ctx.addIssue(multiLangIssueInImageAltText);
         }
       }
 
@@ -3991,6 +4059,10 @@ export const ZSurveyUpdateInput = ZSurveyBase.omit({
   // path. Callers that hand `updateSurvey` a raw `TSurvey` (the editor's save actions) never go
   // through this schema and keep the V2 carrier.
   embeddedFields: true,
+  // ENG-2949: stripped, like `embeddedFields`. This is the legacy v1 PUT boundary, which ignores a
+  // `customCss` key like any other unknown one; omitting it here means the merged round-trip never hands
+  // the stored value to `updateSurvey`, which then leaves the survey's CSS untouched.
+  customCss: true,
   // The ENG-3282 authorization facts (`visibility`, `ownerId`, the versions) are deliberately NOT
   // omitted: the v1 PUT round-trip re-parses the loaded survey, which carries them.
   // `updateSurveyInternal` strips them before the write instead, so none is writable through here.
@@ -4042,6 +4114,9 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurveyBase)
     visibilityProjectedVersion: true,
     visibilityChangedAt: true,
     visibilityChangedById: true,
+    // ENG-2949: custom CSS is stripped from generic create payloads. Only callers that ran the shared
+    // custom CSS save service may set it, through `createSurvey`'s options.
+    customCss: true,
   })
   .extend({
     name: z.string(), // Keep name required
@@ -4100,6 +4175,9 @@ export const ZSurveyCreateInputWithWorkspaceId = makeSchemaOptional(ZSurveyBase)
     visibilityProjectedVersion: true,
     visibilityChangedAt: true,
     visibilityChangedById: true,
+    // ENG-2949: custom CSS is stripped from generic create payloads. Only callers that ran the shared
+    // custom CSS save service may set it, through `createSurvey`'s options.
+    customCss: true,
   })
   .extend({
     name: z.string(), // Keep name required

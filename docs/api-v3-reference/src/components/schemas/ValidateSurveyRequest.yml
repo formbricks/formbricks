@@ -1,8 +1,10 @@
 oneOf:
   - $ref: ./ValidateSurveyCreateRequest.yml
   - $ref: ./ValidateSurveyPatchRequest.yml
+  - $ref: ./ValidateSurveyCustomCssRequest.yml
 discriminator:
   propertyName: operation
   mapping:
     create: ./ValidateSurveyCreateRequest.yml
     patch: ./ValidateSurveyPatchRequest.yml
+    customCss: ./ValidateSurveyCustomCssRequest.yml

@@ -27,7 +27,7 @@ beforeEach(() => {
   vi.stubGlobal("localStorage", localStorageMock);
   vi.clearAllMocks();
   baSignOut.mockResolvedValue({ error: null });
-  mockedLogSignOut.mockResolvedValue(undefined);
+  mockedLogSignOut.mockResolvedValue({ data: undefined });
 });
 
 afterEach(() => {
@@ -46,7 +46,7 @@ describe("useSignOut", () => {
 
     await signOut({ reason: "user_initiated", organizationId: "org-1" });
 
-    expect(mockedLogSignOut).toHaveBeenCalledWith("user-1", "ada@example.com", {
+    expect(mockedLogSignOut).toHaveBeenCalledWith({
       reason: "user_initiated",
       redirectUrl: undefined,
       organizationId: "org-1",
@@ -60,7 +60,7 @@ describe("useSignOut", () => {
 
     await signOut({ callbackUrl: "/dashboard" });
 
-    expect(mockedLogSignOut).toHaveBeenCalledWith("u", "e@x.com", {
+    expect(mockedLogSignOut).toHaveBeenCalledWith({
       reason: "user_initiated",
       redirectUrl: "/dashboard",
       organizationId: undefined,
@@ -92,6 +92,26 @@ describe("useSignOut", () => {
     await signOut();
 
     expect(mockedLogSignOut).not.toHaveBeenCalled();
+    expect(baSignOut).toHaveBeenCalledTimes(1);
+    expect(window.location.href).toBe("/auth/login");
+  });
+
+  test("skips the audit log after account deletion, when the session is already gone", async () => {
+    const { signOut } = useSignOut({ id: "u", email: "e@x.com" });
+
+    await signOut({ reason: "account_deletion" });
+
+    expect(mockedLogSignOut).not.toHaveBeenCalled();
+    expect(baSignOut).toHaveBeenCalledTimes(1);
+  });
+
+  test("logs and still signs out when the audit action returns a server error", async () => {
+    mockedLogSignOut.mockResolvedValueOnce({ serverError: "Not authenticated" });
+    const { signOut } = useSignOut({ id: "u", email: "e@x.com" });
+
+    await signOut();
+
+    expect(loggerError).toHaveBeenCalled();
     expect(baSignOut).toHaveBeenCalledTimes(1);
     expect(window.location.href).toBe("/auth/login");
   });

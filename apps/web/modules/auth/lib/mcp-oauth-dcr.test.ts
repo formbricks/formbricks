@@ -17,6 +17,7 @@ vi.mock("@/lib/env", () => ({
     BETTER_AUTH_URL: undefined,
     NEXTAUTH_URL: undefined,
     PUBLIC_URL: undefined,
+    MCP_DCR_ALLOWED_REDIRECT_URIS: undefined,
   },
 }));
 
@@ -46,7 +47,7 @@ const LOOPBACK_REGISTRATION = JSON.stringify({
  * how the missing offline_access advertisement broke every MCP-client login. A pre-seeded
  * full-scope client would mask that bug, so this suite must register via DCR only.
  */
-const createAuthInstance = () => {
+const createAuthInstance = ({ withEmailPassword = false }: { withEmailPassword?: boolean } = {}) => {
   // memoryAdapter needs every model it will touch declared up front — it does not create them
   // lazily. Better Auth 1.7 added the resource tables, and without them the plugin's boot-time
   // resource seeding logs `Model oauthResource not found in the DB` and every authorize fails.
@@ -68,6 +69,8 @@ const createAuthInstance = () => {
     baseURL: BASE_URL,
     secret: "mcp-oauth-dcr-test-secret",
     database: memoryAdapter(db),
+    // Only the end-to-end flow below needs a signed-in user; everything else stops at the login redirect.
+    ...(withEmailPassword ? { emailAndPassword: { enabled: true } } : {}),
     // jwt is a hard dependency of oauthProvider; configured as in production auth.ts.
     plugins: [
       jwt({
@@ -299,6 +302,29 @@ describe("MCP OAuth Dynamic Client Registration → authorize (real-client shape
   });
 
   /**
+   * ENG-3470. A spec-following client — the MCP SDK takes its scope from the 401 challenge, then the
+   * protected-resource metadata — only ever requests what is advertised. While `responses:*` were held
+   * back from that list, such a client was never offered them and every response tool answered 403,
+   * even though the scopes were grantable. Asserted on what reaches the consent step (the login
+   * redirect carries the requested scope), not on the constant, so it fails the way a real client
+   * failed.
+   */
+  test("a spec client that authorizes with the advertised scopes is offered the response scopes", async () => {
+    const auth = createAuthInstance();
+    const advertisedScopes = await fetchAdvertisedScopes();
+    const registration = await registerClient(auth, advertisedScopes);
+
+    const authorize = await requestAuthorize(auth, registration.body.client_id as string, advertisedScopes);
+    const requested = (new URLSearchParams(authorize.location.split("?")[1] ?? "").get("scope") ?? "").split(
+      " "
+    );
+
+    expect(authorize.location).toContain("/auth/login");
+    expect(authorize.location).not.toContain("error=");
+    expect(requested).toEqual(expect.arrayContaining(["responses:read", "responses:write"]));
+  });
+
+  /**
    * Behaviour change in Better Auth 1.7, pinned deliberately (ENG-2343).
    *
    * In 1.6 a client was registered with exactly the scopes it asked for, so a client that requested
@@ -349,6 +375,21 @@ describe("MCP OAuth Dynamic Client Registration → authorize (real-client shape
   });
 });
 
+const REGISTER_PATH = "/api/auth/oauth2/register";
+
+const registrationRequest = (path: string, body: string, contentType = "application/json") =>
+  new Request(`${BASE_URL}${path}`, {
+    method: "POST",
+    headers: { "content-type": contentType },
+    body,
+  });
+
+/** The route's real pipeline: the gate first, then Better Auth for whatever it lets through. */
+const throughRoute = async (auth: ReturnType<typeof createAuthInstance>, request: Request) => {
+  const prepared = await prepareDcrRequest(request);
+  return prepared instanceof Response ? prepared : auth.handler(prepared);
+};
+
 /**
  * The DCR redirect-URI allowlist (ENG-3086) against the REAL plugin, which is the only place its two
  * load-bearing assumptions can be checked. The allowlist is a pre-handler gate keyed on the request
@@ -359,8 +400,6 @@ describe("MCP OAuth Dynamic Client Registration → authorize (real-client shape
  * same discipline as the `application_type` pair above.
  */
 describe("DCR redirect-URI allowlist vs. the real plugin (ENG-3086)", () => {
-  const REGISTER_PATH = "/api/auth/oauth2/register";
-
   /** The pentest report's payload, byte for byte (ENG-3086). */
   const REPORTED_REGISTRATION = JSON.stringify({
     client_name: "SecurityResearchVerify1",
@@ -369,19 +408,6 @@ describe("DCR redirect-URI allowlist vs. the real plugin (ENG-3086)", () => {
     response_types: ["code"],
     token_endpoint_auth_method: "none",
   });
-
-  const registrationRequest = (path: string, body: string, contentType = "application/json") =>
-    new Request(`${BASE_URL}${path}`, {
-      method: "POST",
-      headers: { "content-type": contentType },
-      body,
-    });
-
-  /** The route's real pipeline: the gate first, then Better Auth for whatever it lets through. */
-  const throughRoute = async (auth: ReturnType<typeof createAuthInstance>, request: Request) => {
-    const prepared = await prepareDcrRequest(request);
-    return prepared instanceof Response ? prepared : auth.handler(prepared);
-  };
 
   test("upstream alone registers the reported attacker client", async () => {
     const response = await createAuthInstance().handler(
@@ -466,4 +492,180 @@ describe("DCR redirect-URI allowlist vs. the real plugin (ENG-3086)", () => {
 
     expect(response.status).toBe(415);
   });
+});
+
+/**
+ * ENG-3471. Hosted MCP connectors (claude.ai, ChatGPT) connect from the vendor's cloud and register a
+ * fixed `https` callback on the vendor's own origin. The ENG-3086 gate allows those exact URIs — the
+ * bodies below are the shapes the vendors actually send — and this suite proves the rest of the chain
+ * works once it does: upstream accepts them as public `web` clients, and the flow reaches a token.
+ *
+ * It also pins the upstream behaviour the whole design rests on. The gate only decides what may be
+ * REGISTERED; what may be REDIRECTED TO is decided by Better Auth at `/authorize`. If that ever matched
+ * an https redirect URI loosely (prefix, path, query), registering `https://claude.ai/api/mcp/auth_callback`
+ * would let an attacker send codes to any page on claude.ai. So the exact match is asserted here.
+ */
+describe("hosted MCP connector registration vs. the real plugin (ENG-3471)", () => {
+  const CLAUDE_AI = "https://claude.ai/api/mcp/auth_callback";
+  const CLAUDE_COM = "https://claude.com/api/mcp/auth_callback";
+  const CHATGPT = "https://chatgpt.com/connector_platform_oauth_redirect";
+
+  // claude.ai lists both callbacks in one body and sends no application_type.
+  const CLAUDE_REGISTRATION = JSON.stringify({
+    client_name: "Claude",
+    redirect_uris: [CLAUDE_AI, CLAUDE_COM],
+    grant_types: ["authorization_code", "refresh_token"],
+    response_types: ["code"],
+    token_endpoint_auth_method: "none",
+  });
+
+  const CHATGPT_REGISTRATION = JSON.stringify({
+    client_name: "ChatGPT",
+    redirect_uris: [CHATGPT],
+    grant_types: ["authorization_code", "refresh_token"],
+    response_types: ["code"],
+    token_endpoint_auth_method: "none",
+  });
+
+  // `vitestSetup.ts` stubs node:crypto's createHash, so PKCE is computed with WebCrypto.
+  const createPkcePair = async () => {
+    const verifier = Buffer.from(globalThis.crypto.getRandomValues(new Uint8Array(32))).toString("base64url");
+    const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
+    return { verifier, challenge: Buffer.from(digest).toString("base64url") };
+  };
+
+  test.each([
+    ["claude.ai", CLAUDE_REGISTRATION],
+    ["ChatGPT", CHATGPT_REGISTRATION],
+  ])("a %s registration passes the gate and registers as a public web client", async (_client, body) => {
+    const response = await throughRoute(createAuthInstance(), registrationRequest(REGISTER_PATH, body));
+    const registered = (await response.json()) as {
+      client_id?: string;
+      token_endpoint_auth_method?: string;
+      redirect_uris?: string[];
+    };
+
+    expect(response.status).toBe(201);
+    expect(registered.client_id).toBeTruthy();
+    expect(registered.token_endpoint_auth_method).toBe("none");
+    expect(registered.redirect_uris).toEqual((JSON.parse(body) as { redirect_uris: string[] }).redirect_uris);
+  });
+
+  test("a lookalike of a hosted callback is still refused by the gate", async () => {
+    const response = await throughRoute(
+      createAuthInstance(),
+      registrationRequest(
+        REGISTER_PATH,
+        JSON.stringify({ ...JSON.parse(CLAUDE_REGISTRATION), redirect_uris: [`${CLAUDE_AI}/`] })
+      )
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({ error: "invalid_redirect_uri" });
+  });
+
+  test("a registered claude.ai client completes consent → code → token for the MCP resource", async () => {
+    const auth = createAuthInstance({ withEmailPassword: true });
+    const registration = await throughRoute(auth, registrationRequest(REGISTER_PATH, CLAUDE_REGISTRATION));
+    const { client_id: clientId } = (await registration.json()) as { client_id: string };
+
+    const signUp = await auth.api.signUpEmail({
+      body: { email: "connector-user@example.com", password: "a-long-test-password-1", name: "User" },
+      asResponse: true,
+    });
+    const cookie = signUp.headers
+      .getSetCookie()
+      .map((value) => value.split(";")[0])
+      .join("; ");
+
+    const { verifier, challenge } = await createPkcePair();
+    const resource = getMcpResourceUrl();
+    const query = new URLSearchParams({
+      client_id: clientId,
+      response_type: "code",
+      redirect_uri: CLAUDE_AI,
+      scope: "surveys:read offline_access",
+      state: "claude-state",
+      code_challenge: challenge,
+      code_challenge_method: "S256",
+      resource,
+    });
+    const authorize = await auth.handler(
+      new Request(`${BASE_URL}/api/auth/oauth2/authorize?${query.toString()}`, {
+        headers: { cookie },
+        redirect: "manual",
+      })
+    );
+    const consentLocation = new URL(authorize.headers.get("location") ?? "", BASE_URL);
+    // Consent is never skipped for a dynamically registered client.
+    expect(consentLocation.pathname).toBe("/account/authorize");
+
+    const consent = await auth.handler(
+      new Request(`${BASE_URL}/api/auth/oauth2/consent`, {
+        method: "POST",
+        headers: { "content-type": "application/json", cookie, origin: BASE_URL },
+        body: JSON.stringify({ accept: true, oauth_query: consentLocation.search.slice(1) }),
+      })
+    );
+    const { url: callbackUrl } = (await consent.json()) as { url: string };
+    const callback = new URL(callbackUrl);
+
+    expect(`${callback.origin}${callback.pathname}`).toBe(CLAUDE_AI);
+    expect(callback.searchParams.get("state")).toBe("claude-state");
+    // RFC 9207: ChatGPT only uses its stable callback when the AS returns `iss`.
+    expect(callback.searchParams.get("iss")).toBe(getAuthIssuerUrl());
+
+    const token = await auth.handler(
+      new Request(`${BASE_URL}/api/auth/oauth2/token`, {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          grant_type: "authorization_code",
+          code: callback.searchParams.get("code") ?? "",
+          redirect_uri: CLAUDE_AI,
+          client_id: clientId,
+          code_verifier: verifier,
+          resource,
+        }),
+      })
+    );
+    const tokens = (await token.json()) as { access_token: string; refresh_token?: string };
+
+    expect(token.status).toBe(200);
+    expect(tokens.refresh_token).toBeTruthy();
+    const claims = JSON.parse(Buffer.from(tokens.access_token.split(".")[1], "base64url").toString()) as {
+      aud: string | string[];
+    };
+    expect([claims.aud].flat()).toContain(resource);
+  });
+
+  test.each([`${CLAUDE_AI}?next=https://evil.example.com`, `${CLAUDE_AI}/`, "https://claude.ai/other"])(
+    "upstream refuses to redirect a registered claude.ai client to %s",
+    async (redirectUri) => {
+      const auth = createAuthInstance();
+      const registration = await throughRoute(auth, registrationRequest(REGISTER_PATH, CLAUDE_REGISTRATION));
+      const { client_id: clientId } = (await registration.json()) as { client_id: string };
+      const { challenge } = await createPkcePair();
+
+      const authorize = await auth.handler(
+        new Request(
+          `${BASE_URL}/api/auth/oauth2/authorize?${new URLSearchParams({
+            client_id: clientId,
+            response_type: "code",
+            redirect_uri: redirectUri,
+            scope: "surveys:read",
+            state: "s",
+            code_challenge: challenge,
+            code_challenge_method: "S256",
+          }).toString()}`,
+          { redirect: "manual" }
+        )
+      );
+      const location = authorize.headers.get("location") ?? "";
+
+      // Upstream answers on its own error page and never sends the browser to the unregistered URI.
+      expect(location).not.toContain("claude.ai");
+      expect(location).toContain("invalid_redirect");
+    }
+  );
 });

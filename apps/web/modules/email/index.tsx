@@ -10,6 +10,7 @@ import {
   renderPasswordResetNotifyEmail,
   renderResponseFinishedEmail,
   renderSsoRecoveryFactorsRemovedEmail,
+  renderSsoSignInHintEmail,
   renderVerificationEmail,
 } from "@formbricks/email";
 import { TEmailTemplateLegalProps } from "@formbricks/email/src/types/email";
@@ -37,6 +38,7 @@ import {
   VERIFICATION_LINK_TTL_SECONDS,
   buildVerificationLinks,
 } from "@/modules/auth/lib/verification-links";
+import { toInviteDisplayName } from "@/modules/email/lib/invite-display-name";
 import { sendEmail } from "@/modules/email/lib/send-email";
 import { buildVerifiedLinkSurveyUrl } from "@/modules/email/lib/verified-link-survey-url";
 import { resolveStorageUrl } from "@/modules/storage/utils";
@@ -253,6 +255,35 @@ export const sendSsoRecoveryFactorsRemovedEmail = async ({
   });
 };
 
+/**
+ * Tell a user who asked for a password reset that their account has no password and signs in with an
+ * identity provider instead (ENG-3262). Goes only to the address on file, so naming the provider here
+ * reveals nothing the forgot-password page does not — that page answers identically for every address.
+ */
+export const sendSsoSignInHintEmail = async ({
+  email,
+  locale,
+  providerNames,
+}: {
+  email: string;
+  locale: TUserLocale;
+  providerNames: string[];
+}): Promise<boolean> => {
+  const t = await getTranslate(locale);
+  const html = await renderSsoSignInHintEmail({
+    providerNames,
+    loginLink: `${WEBAPP_URL}/auth/login`,
+    t,
+    ...legalProps,
+  });
+  return await sendEmail({
+    emailType: "sso_sign_in_hint",
+    to: email,
+    subject: t("emails.sso_sign_in_hint_email_subject"),
+    html,
+  });
+};
+
 export const sendInviteMemberEmail = async (
   inviteId: string,
   email: string,
@@ -266,7 +297,13 @@ export const sendInviteMemberEmail = async (
 
   const verifyLink = `${WEBAPP_URL}/invite?token=${encodeURIComponent(token)}`;
 
-  const html = await renderInviteEmail({ inviteeName, inviterName, verifyLink, t, ...legalProps });
+  const html = await renderInviteEmail({
+    inviteeName: toInviteDisplayName(inviteeName, ""),
+    inviterName: toInviteDisplayName(inviterName, t("common.anonymous")),
+    verifyLink,
+    t,
+    ...legalProps,
+  });
   return await sendEmail({
     emailType: "invite",
     to: email,

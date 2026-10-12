@@ -13,6 +13,7 @@ import {
   sendPasswordResetNotifyEmail,
   sendResponseFinishedEmail,
   sendSsoRecoveryFactorsRemovedEmail,
+  sendSsoSignInHintEmail,
   sendVerificationEmail,
   sendVerificationLinkEmail,
   sendVerificationNewEmail,
@@ -45,6 +46,7 @@ vi.mock("@formbricks/email", () => ({
   renderPasswordResetNotifyEmail: async () => "html",
   renderResponseFinishedEmail: async () => "html",
   renderSsoRecoveryFactorsRemovedEmail: async () => "html",
+  renderSsoSignInHintEmail: async () => "html",
   renderVerificationEmail: async () => "html",
 }));
 
@@ -85,6 +87,7 @@ const senders: [string, () => Promise<unknown>][] = [
         apiKeysRemoved: false,
       }),
   ],
+  ["sso_sign_in_hint", () => sendSsoSignInHintEmail({ email, locale, providerNames: ["Microsoft"] })],
   ["response_notification", () => sendResponseFinishedEmail(email, locale, "workspace", survey, response, 1)],
   ["survey_preview", () => sendEmbedSurveyPreviewEmail(email, "html", "workspace", locale)],
   ["customization_preview", () => sendEmailCustomizationPreviewEmail(email, "User", locale)],

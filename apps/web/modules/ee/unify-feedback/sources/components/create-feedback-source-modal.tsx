@@ -10,7 +10,7 @@ import { useTranslation } from "react-i18next";
 import { TFeedbackSourceImportMode, TFeedbackSourceType } from "@formbricks/types/feedback-source";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getResponseCountAction, importHistoricalResponsesAction } from "@/lib/feedback-source/actions";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import {
   RestrictedSurveyHint,
   RestrictedSurveysNote,

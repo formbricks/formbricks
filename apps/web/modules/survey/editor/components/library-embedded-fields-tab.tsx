@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { getSharedEmbeddedDataAction } from "@/modules/embedded-data/actions";
 import { FieldSourceIndicator } from "@/modules/embedded-data/settings/components/field-status";
 import type { TSharedEmbeddedDataListItem } from "@/modules/embedded-data/types";

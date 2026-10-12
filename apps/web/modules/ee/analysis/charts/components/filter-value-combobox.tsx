@@ -4,7 +4,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { getDimensionValuesAction } from "@/modules/ee/analysis/charts/actions";
 import { QUESTION_LABEL_DIMENSION_ID } from "@/modules/ee/analysis/lib/dimension-value-lookup";
 import { FieldTypeIcon } from "@/modules/ee/unify-feedback/lib/field-type-icons";

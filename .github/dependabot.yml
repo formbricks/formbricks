@@ -16,6 +16,13 @@ updates:
       github-actions:
         patterns:
           - "*"
+    # cosign-installer v4 installs cosign v3, which signs images as OCI referrer bundles that cosign
+    # verifiers older than 2.6 cannot find. Moving to it changes how self-hosters verify our published
+    # images, so it needs its own PR with migration notes rather than a monthly group bump.
+    ignore:
+      - dependency-name: sigstore/cosign-installer
+        update-types:
+          - version-update:semver-major
     commit-message:
       prefix: "chore(ci)"
     labels:

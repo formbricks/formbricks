@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { type Response } from "@formbricks/database/prisma-browser";
+import type { TRendererCustomCss } from "@formbricks/types/custom-css";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
@@ -19,10 +20,10 @@ import { SurveyCompletedMessage } from "@/modules/survey/link/components/survey-
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
-import { resolveSurveyLanguageCode } from "@/modules/survey/link/lib/language";
+import { getLinkSurveyCustomCss, omitCustomCssSource } from "@/modules/survey/link/lib/respondent-custom-css";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { hasUserIdSearchParam } from "@/modules/survey/link/lib/user-id";
-import { getGateLocale } from "@/modules/survey/link/lib/utils";
+import { getGateLocale, resolveLinkSurveyLanguage } from "@/modules/survey/link/lib/utils";
 import { TWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 
 interface SurveyRendererProps {
@@ -36,6 +37,8 @@ interface SurveyRendererProps {
   // New props - pre-fetched in parent
   workspaceContext: TWorkspaceContextForLinkSurvey;
   locale: TUserLocale;
+  /** The respondent's languages from the Accept-Language header, most preferred first. */
+  acceptedLanguages: string[];
   responseCount?: number;
 }
 
@@ -48,6 +51,7 @@ interface SurveyRendererProps {
  *
  * @param workspaceContext - Pre-fetched workspace and organization data
  * @param locale - User's locale from Accept-Language header
+ * @param acceptedLanguages - Every language in the Accept-Language header, for browser language auto-selection
  * @param responseCount - Conditionally fetched if showResponseCount is enabled
  */
 export const renderSurvey = async ({
@@ -60,14 +64,18 @@ export const renderSurvey = async ({
   isPreview,
   workspaceContext,
   locale,
+  acceptedLanguages,
   responseCount,
 }: SurveyRendererProps) => {
-  const langParam = searchParams.lang;
   const isEmbed = searchParams.embed === "true";
 
   // The survey's content language, and the locale everything around that content is translated in.
   // Both are resolved once, here, so a gate screen can never disagree with the survey behind it.
-  const languageCode = resolveSurveyLanguageCode(langParam, survey);
+  const { langParam, languageCode } = resolveLinkSurveyLanguage({
+    survey,
+    lang: searchParams.lang,
+    acceptedLanguages,
+  });
   const gateLocale = getGateLocale({ langParam, languageCode, survey, fallbackLocale: locale });
 
   // Archived surveys are absent from the workspace for respondents — treat the public link as a
@@ -81,8 +89,9 @@ export const renderSurvey = async ({
 
   // Every prop passed to a client component is serialized into the RSC payload and readable in the
   // page source, so the survey handed to them must never carry the PIN — the pin gate itself stays
-  // server-side (see the `survey.pin` branch below and `validateSurveyPinAction`).
-  const publicSurvey: TSurvey = { ...survey, pin: null };
+  // server-side (see the `survey.pin` branch below and `validateSurveyPinAction`) — nor its stored
+  // custom CSS, which carries the editable source. Compiled CSS goes through `customCss` below.
+  const publicSurvey: TSurvey = { ...omitCustomCssSource(survey), pin: null };
 
   const isSpamProtectionEnabled = Boolean(IS_RECAPTCHA_CONFIGURED && survey.recaptcha?.enabled);
   const isScheduled = survey.status === "paused" && survey.publishOn !== null;
@@ -144,10 +153,12 @@ export const renderSurvey = async ({
   // Compute final styling based on workspace and survey settings
   const styling = computeStyling(workspace.styling, survey.styling);
   const publicDomain = getPublicDomain();
-  const canReadUserIdFromUrl =
+  const [canReadUserIdFromUrl, customCss] = await Promise.all([
     allowUrlUserIdLookup && !contactId && hasUserIdSearchParam(searchParams)
-      ? await getIsContactsEnabled(workspaceContext.organizationId)
-      : false;
+      ? getIsContactsEnabled(workspaceContext.organizationId)
+      : false,
+    getRendererCustomCss(survey, workspaceContext),
+  ]);
 
   // Handle PIN-protected surveys
   if (survey.pin) {
@@ -199,9 +210,28 @@ export const renderSurvey = async ({
       PRIVACY_URL={PRIVACY_URL}
       TERMS_URL={TERMS_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+      customCss={customCss}
     />
   );
 };
+
+/**
+ * Workspace + survey CSS, compiled only (ENG-3552). A PIN-protected survey gets none here: it gets it from
+ * validateSurveyPinAction once the PIN is right, together with the survey itself.
+ */
+async function getRendererCustomCss(
+  survey: TSurvey,
+  workspaceContext: TWorkspaceContextForLinkSurvey
+): Promise<TRendererCustomCss | undefined> {
+  if (survey.pin) {
+    return undefined;
+  }
+  return getLinkSurveyCustomCss({
+    workspaceCustomCss: workspaceContext.customCss,
+    allowStyleOverwrite: workspaceContext.workspace.styling?.allowStyleOverwrite,
+    survey,
+  });
+}
 
 /**
  * Determines which styling to use based on workspace and survey settings.

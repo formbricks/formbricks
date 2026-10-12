@@ -22,6 +22,12 @@ import { useTranslation } from "react-i18next";
  * @param locale The locale to translate in, already resolved by the caller
  * @returns Whether a locale has been applied, so a gate screen can wait for it
  */
+/**
+ * The locale this hook last asked i18next for, until that request settles. Module-level because
+ * i18next is one singleton: a gate and the survey behind it supersede each other's switches too.
+ */
+let localeInFlight: string | undefined;
+
 export const useAppLocale = (locale: string): boolean => {
   const { i18n } = useTranslation();
 
@@ -44,19 +50,25 @@ export const useAppLocale = (locale: string): boolean => {
   useEffect(() => {
     const i18nInstance = i18nRef.current;
 
-    if (i18nInstance.language === locale) {
+    // Already on the locale is only "nothing to do" while no other switch is still loading: i18next
+    // applies a requested language once its bundle arrives unless a later `changeLanguage` call
+    // superseded it, so skipping the call here lets an abandoned switch land after all (ENG-3170).
+    if (i18nInstance.language === locale && (localeInFlight === undefined || localeInFlight === locale)) {
       setIsLocaleReady(true);
       return;
     }
 
     let isCurrent = true;
     const applyLocale = async () => {
+      localeInFlight = locale;
       try {
         await i18nInstance.changeLanguage(locale);
       } catch {
         // A locale with no bundle would otherwise leave the UI on the previous language mid-render.
-        await i18nInstance.changeLanguage("en-US").catch(() => undefined);
+        // A superseded request must not fall back over the switch that replaced it.
+        if (isCurrent) await i18nInstance.changeLanguage("en-US").catch(() => undefined);
       } finally {
+        if (localeInFlight === locale) localeInFlight = undefined;
         // Settled either way: a caller waiting on this must not be left with nothing to paint.
         if (isCurrent) setIsLocaleReady(true);
       }

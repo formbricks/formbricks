@@ -684,7 +684,7 @@ export const updateResponse = async (
 };
 
 const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey: TSurvey): Promise<void> => {
-  const fileUrls = collectResponseFileUrls(response.data, getSurveyFileUploadElementIds(survey));
+  const fileUrls = collectResponseFileUrls(response.data, getSurveyFileUploadElementIds(survey), survey.id);
 
   await deleteResponseFileUrls(fileUrls, survey.workspaceId);
 };

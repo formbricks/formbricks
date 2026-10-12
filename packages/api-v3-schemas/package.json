@@ -1,0 +1,42 @@
+{
+  "name": "@formbricks/api-v3-schemas",
+  "description": "Zod schemas and TypeScript types for the v3 API, generated from the committed OpenAPI bundle.",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "homepage": "https://formbricks.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/formbricks/formbricks"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing/index.ts"
+  },
+  "scripts": {
+    "clean": "rimraf .turbo node_modules coverage",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "schemas:generate": "tsx scripts/generate.ts",
+    "schemas:check": "tsx scripts/generate.ts --check"
+  },
+  "dependencies": {
+    "js-yaml": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@formbricks/config-eslint": "workspace:*",
+    "@formbricks/config-typescript": "workspace:*",
+    "@hey-api/openapi-ts": "0.99.0",
+    "@types/js-yaml": "catalog:",
+    "@types/node": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "prettier": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

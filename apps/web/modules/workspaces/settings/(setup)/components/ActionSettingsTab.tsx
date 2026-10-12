@@ -8,7 +8,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TActionClass, TActionClassInput } from "@formbricks/types/action-classes";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { buildActionObject } from "@/modules/survey/editor/lib/action-builder";
 import {
   createActionClassZodResolver,

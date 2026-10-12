@@ -6,7 +6,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { ACCOUNT_DELETION_SOLE_OWNER_BLOCK_MESSAGE } from "@/modules/account/constants";
 import { getPostAccountDeletionRedirectUrl } from "@/modules/account/lib/post-account-deletion-redirect";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";

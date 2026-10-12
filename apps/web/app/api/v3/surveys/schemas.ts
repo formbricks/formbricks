@@ -1,5 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import { z } from "zod";
+import { ZCustomCssInput, ZCustomCssScope } from "@formbricks/types/custom-css";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import { ZSurveyBlocks } from "@formbricks/types/surveys/blocks";
 import {
@@ -183,10 +184,11 @@ function normalizeMetadata(
 
 const WELCOME_CARD_I18N_KEYS = ["headline", "subheader", "buttonLabel"] as const;
 const BLOCK_I18N_KEYS = ["buttonLabel", "backButtonLabel"] as const;
-const ENDING_I18N_KEYS = ["headline", "subheader", "buttonLabel"] as const;
+const ENDING_I18N_KEYS = ["headline", "subheader", "buttonLabel", "imageAltText"] as const;
 const ELEMENT_I18N_KEYS = [
   "headline",
   "subheader",
+  "imageAltText",
   "placeholder",
   "label",
   "otherOptionPlaceholder",
@@ -214,7 +216,7 @@ function normalizeChoice(
   defaultLanguage: string,
   options?: TV3LanguageNormalizationOptions
 ): unknown {
-  return normalizePublicI18nFields(value, defaultLanguage, ["label"], options);
+  return normalizePublicI18nFields(value, defaultLanguage, ["label", "imageAltText"], options);
 }
 
 function normalizeToggleInput(
@@ -387,6 +389,7 @@ function createV3SurveyDocumentNormalizer(options: {
 }
 
 const ROOT_KEYS = new Set([
+  "customCss",
   "workspaceId",
   "name",
   "type",
@@ -394,6 +397,8 @@ const ROOT_KEYS = new Set([
   "metadata",
   "defaultLanguage",
   "languages",
+  "showLanguageSwitch",
+  "autoSelectLanguage",
   "welcomeCard",
   "blocks",
   "endings",
@@ -403,10 +408,13 @@ const ROOT_KEYS = new Set([
   "targeting",
 ]);
 const PATCH_ROOT_KEYS = new Set([
+  "customCss",
   "name",
   "status",
   "metadata",
   "languages",
+  "showLanguageSwitch",
+  "autoSelectLanguage",
   "welcomeCard",
   "blocks",
   "endings",
@@ -460,6 +468,7 @@ const END_SCREEN_KEYS = new Set([
   "buttonLabel",
   "buttonLink",
   "imageUrl",
+  "imageAltText",
   "videoUrl",
   "hideDefaultIcon",
 ]);
@@ -471,6 +480,7 @@ const ELEMENT_BASE_KEYS = new Set([
   "headline",
   "subheader",
   "imageUrl",
+  "imageAltText",
   "videoUrl",
   "required",
   "isDraft",
@@ -599,7 +609,7 @@ function isElementTypeWithStrictKeys(type: string): type is ElementTypeWithStric
   return Object.hasOwn(ELEMENT_KEYS_BY_TYPE, type);
 }
 const LABEL_CHOICE_KEYS = new Set(["id", "label"]);
-const PICTURE_CHOICE_KEYS = new Set(["id", "imageUrl"]);
+const PICTURE_CHOICE_KEYS = new Set(["id", "imageUrl", "imageAltText"]);
 const TOGGLE_INPUT_KEYS = new Set(["show", "required", "placeholder"]);
 const CHAR_LIMIT_KEYS = new Set(["enabled", "min", "max"]);
 const VALIDATION_KEYS = new Set(["rules", "logic"]);
@@ -754,6 +764,7 @@ function validateChoice(
   addUnknownKeyIssues(value, allowedKeys, path, issues, choiceContext);
   if (isPlainObject(value)) {
     validateTranslatableField(value.label, `${path}.label`, issues, defaultLanguage, options);
+    validateTranslatableField(value.imageAltText, `${path}.imageAltText`, issues, defaultLanguage, options);
   }
 }
 
@@ -1235,6 +1246,20 @@ function addAppDistributionIssues(
   }
 }
 
+/**
+ * Survey custom CSS as an API caller writes it (ENG-3641): source only, both keys required, strict — a
+ * caller-supplied `compiled` or `processorVersion` is rejected, never trusted. `null` (or an empty
+ * string) for a field means no CSS for it; `customCss: null` clears both. Processed on every write by
+ * the shared custom CSS service, which also enforces the 20 000-byte survey budget.
+ */
+export const ZV3SurveyCustomCss = ZCustomCssInput.nullable().describe(
+  "Survey custom CSS source: `{ light, dark }`, both keys required, each a CSS string or null. Light applies in both appearances, dark adds overrides. null clears both. Source only — compiled output is computed by the server."
+);
+
+// Multi-language respondent settings. Nullable to mirror the Survey columns: `null` and `false` both
+// mean "off". On PATCH, omitting a key keeps the stored value and `null` clears it.
+const ZV3SurveyLanguageSetting = z.boolean().nullable();
+
 /** `bound: false` is for the stored document only — see `TV3SurveyDocumentSchemaOptions.boundArrays`. */
 function createV3SurveyDocumentShape(options?: TV3LanguageCompatibilityOptions, bound = true) {
   return {
@@ -1247,6 +1272,8 @@ function createV3SurveyDocumentShape(options?: TV3LanguageCompatibilityOptions, 
       { max: V3_SURVEY_MAX_LANGUAGES },
       bound
     ).prefault([]),
+    showLanguageSwitch: ZV3SurveyLanguageSetting.prefault(null),
+    autoSelectLanguage: ZV3SurveyLanguageSetting.prefault(null),
     welcomeCard: ZSurveyWelcomeCard.prefault({ enabled: false }),
     blocks: createZV3SurveyBlocks(bound),
     endings: createZV3SurveyEndings(bound).prefault([]),
@@ -1254,6 +1281,7 @@ function createV3SurveyDocumentShape(options?: TV3LanguageCompatibilityOptions, 
     variables: createZV3SurveyVariables(bound).prefault([]),
     distribution: createZV3SurveyDistribution(bound).optional(),
     targeting: ZV3SurveyTargeting.optional(),
+    customCss: ZV3SurveyCustomCss.optional(),
   };
 }
 
@@ -1265,6 +1293,8 @@ function createV3SurveyPatchShape(options?: TV3LanguageCompatibilityOptions) {
     languages: lengthBoundedArray(createZV3SurveyLanguageInput(options), {
       max: V3_SURVEY_MAX_LANGUAGES,
     }).optional(),
+    showLanguageSwitch: ZV3SurveyLanguageSetting.optional(),
+    autoSelectLanguage: ZV3SurveyLanguageSetting.optional(),
     welcomeCard: ZSurveyWelcomeCard.optional(),
     blocks: createZV3SurveyBlocks(true).optional(),
     endings: createZV3SurveyEndings(true).optional(),
@@ -1272,6 +1302,8 @@ function createV3SurveyPatchShape(options?: TV3LanguageCompatibilityOptions) {
     variables: createZV3SurveyVariables(true).optional(),
     distribution: ZV3SurveyDistribution.optional(),
     targeting: ZV3SurveyTargeting.optional(),
+    // Omitted: unchanged. `null`: clear both fields. An object: replaces both fields.
+    customCss: ZV3SurveyCustomCss.optional(),
   };
 }
 
@@ -1453,6 +1485,25 @@ export const ZV3SetSurveyBlockOrderBody = z.strictObject({
   expectedUpdatedAt: ZV3ExpectedUpdatedAt.optional(),
 });
 
+/**
+ * The CSS-only validation variant (ENG-3641), used by the editor's live check and `validate_survey`.
+ * `surveyId`, when given, names an existing survey that must belong to `workspaceId`; survey scope
+ * without one validates an unsaved draft. Read-only: it processes and reports, it never saves.
+ */
+export const ZV3SurveyCustomCssValidationRequest = z
+  .object({
+    operation: z.literal("customCss"),
+    workspaceId: z.cuid2(),
+    scope: ZCustomCssScope,
+    surveyId: z.cuid2().optional(),
+    data: z.object({ customCss: ZV3SurveyCustomCss }).strict(),
+  })
+  .strict()
+  .refine((body) => body.scope === "survey" || body.surveyId === undefined, {
+    message: "surveyId is only valid with scope 'survey'",
+    path: ["surveyId"],
+  });
+
 export const ZV3SurveyValidationRequestBody = z.discriminatedUnion("operation", [
   z
     .object({
@@ -1467,6 +1518,7 @@ export const ZV3SurveyValidationRequestBody = z.discriminatedUnion("operation", 
       data: z.unknown(),
     })
     .strict(),
+  ZV3SurveyCustomCssValidationRequest,
 ]);
 
 /**
@@ -1524,6 +1576,7 @@ export type TV3SurveyDocument = z.infer<typeof ZV3SurveyDocumentBase>;
 export type TV3CreateSurveyBody = z.infer<typeof ZV3CreateSurveyBody>;
 export type TV3PatchSurveyBody = z.infer<typeof ZV3PatchSurveyBody>;
 export type TV3SurveyValidationRequestBody = z.infer<typeof ZV3SurveyValidationRequestBody>;
+export type TV3SurveyCustomCssValidationRequest = z.infer<typeof ZV3SurveyCustomCssValidationRequest>;
 export type TV3SurveyDistribution = z.infer<typeof ZV3SurveyDistribution>;
 export type TV3SurveyTargeting = z.infer<typeof ZV3SurveyTargeting>;
 export type TV3SurveyTrigger = z.infer<typeof ZV3SurveyTrigger>;

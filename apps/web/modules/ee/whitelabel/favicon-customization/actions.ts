@@ -7,7 +7,7 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { checkWhiteLabelPermission } from "@/modules/ee/whitelabel/email-customization/actions";
+import { checkWhiteLabelPermission } from "@/modules/ee/whitelabel/email-customization/lib/permission";
 import { updateOrganizationFaviconUrl } from "@/modules/ee/whitelabel/favicon-customization/lib/organization";
 
 const ZUpdateOrganizationFaviconUrlAction = z.object({

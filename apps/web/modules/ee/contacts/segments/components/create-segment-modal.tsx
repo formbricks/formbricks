@@ -10,7 +10,7 @@ import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type { TBaseFilter, TSegment } from "@formbricks/types/segment";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
 import { Button } from "@/modules/ui/components/button";
 import {

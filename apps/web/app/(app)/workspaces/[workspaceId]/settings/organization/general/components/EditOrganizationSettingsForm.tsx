@@ -13,7 +13,7 @@ import {
   updateOrganizationNameAction,
 } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/actions";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {

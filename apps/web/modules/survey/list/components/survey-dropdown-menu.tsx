@@ -24,12 +24,13 @@ import { logger } from "@formbricks/logger";
 import type { TSurveyStatus } from "@formbricks/types/surveys/types";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
 import { CopySurveyModal } from "@/modules/survey/list/components/copy-survey-modal";
 import { RenameSurveyModal } from "@/modules/survey/list/components/rename-survey-modal";
+import { getCustomCssCopyNotice } from "@/modules/survey/list/lib/custom-css-notice";
 import { surveyKeys } from "@/modules/survey/list/lib/query";
 import { TSurveyListItem } from "@/modules/survey/list/types/survey-overview";
 import { CollaborateModal } from "@/modules/survey/visibility/components/collaborate-modal";
@@ -217,6 +218,8 @@ export const SurveyDropDownMenu = ({
       });
       if (response?.data) {
         toast.success(t("workspace.surveys.survey_duplicated_successfully"));
+        const customCssNotice = getCustomCssCopyNotice(response.data, t);
+        if (customCssNotice) toast.error(customCssNotice, { duration: 8000 });
         await queryClient.invalidateQueries({ queryKey: surveyKeys.lists() });
         return;
       }

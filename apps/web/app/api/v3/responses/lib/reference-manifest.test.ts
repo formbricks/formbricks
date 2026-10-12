@@ -3,9 +3,12 @@ import type { z } from "zod";
 import {
   V3_RESPONSE_BODY_FIELDS,
   V3_RESPONSE_DENIED_FIELDS,
+  V3_RESPONSE_DENIED_NESTED_FIELDS,
+  V3_RESPONSE_NESTED_FIELDS,
   isIdShaped,
   looksLikeReferenceName,
   referenceFor,
+  v3ResponseReferences,
 } from "./reference-manifest";
 import { ZV3CreateResponseBody, ZV3PatchResponseBody, ZV3ResponseValidationRequestBody } from "./schemas";
 
@@ -25,8 +28,8 @@ vi.mock("server-only", () => ({}));
  */
 
 const shapeOf = (schema: z.ZodType): Record<string, z.ZodType> => {
-  // Both bodies are wrapped — `.strict()` on create, `.refine()` on patch — so the object with the
-  // shape sits one or two levels in. Walking beats reaching, since which wrapper is outermost is the
+  // The bodies may be wrapped — `.refine()` on patch — so the object with the shape can sit a level
+  // or two in. Walking beats reaching, since which wrapper is outermost is the
   // schema author's choice and not something this test should pin.
   let current: unknown = schema;
 
@@ -162,6 +165,138 @@ describe("the roster as a whole", () => {
   });
 });
 
+/**
+ * The plain objects nested in a body, flattened to dotted paths. Records are skipped: their keys are
+ * data. Walks through optional/nullable wrappers and refinements the same way `shapeOf` does.
+ */
+/** The element of an array field, through optional/nullable wrappers; `undefined` for anything else. */
+const arrayElementOf = (schema: z.ZodType): z.ZodType | undefined => {
+  let current: unknown = schema;
+  for (let depth = 0; current && depth < 10; depth += 1) {
+    const def = (current as { _zod?: { def?: Record<string, unknown> } })._zod?.def;
+    if (def?.type === "array") return def.element as z.ZodType;
+    current = def?.innerType ?? def?.in ?? def?.schema;
+  }
+  return undefined;
+};
+
+/** The object shape a field exposes — directly, or as the element of an array of objects. */
+const nestedShapeOf = (
+  schema: z.ZodType
+): { shape: Record<string, z.ZodType>; marker: string } | undefined => {
+  for (const [candidate, marker] of [
+    [schema, ""],
+    [arrayElementOf(schema), "[]"],
+  ] as const) {
+    if (!candidate) continue;
+    try {
+      return { shape: shapeOf(candidate), marker };
+    } catch {
+      // not an object; try the next reading
+    }
+  }
+  return undefined;
+};
+
+const nestedFieldsOf = (schema: z.ZodType, prefix = ""): string[] => {
+  const nested = prefix ? nestedShapeOf(schema) : { shape: shapeOf(schema), marker: "" };
+  if (!nested) return [];
+  return Object.entries(nested.shape).flatMap(([name, field]) => {
+    const path = prefix ? `${prefix}${nested.marker}.${name}` : name;
+    const inner = nestedFieldsOf(field, path);
+    return prefix ? [path, ...inner] : inner;
+  });
+};
+
+describe.each(BODIES)("%s nested fields", (_name, body) => {
+  const nested = nestedFieldsOf(body);
+
+  /**
+   * Set equality, as for the top level: a key a spec edit adds inside `meta` fails here until it is
+   * classified, rather than being generated, accepted and stored with nothing noticing.
+   */
+  test("every nested field is classified", () => {
+    expect(nested.filter((path) => !(path in V3_RESPONSE_NESTED_FIELDS))).toEqual([]);
+  });
+
+  test("every nested field classified as a reference has a declaration", () => {
+    const missing = nested.filter(
+      (path) => V3_RESPONSE_NESTED_FIELDS[path] !== "none" && !referenceFor(nestedSchema(body, path))
+    );
+
+    expect(missing).toEqual([]);
+  });
+
+  test("no nested field classified as not-a-reference is visibly an id", () => {
+    const suspicious = nested.filter(
+      (path) =>
+        V3_RESPONSE_NESTED_FIELDS[path] === "none" &&
+        (isIdShaped(nestedSchema(body, path)) || looksLikeReferenceName(path.split(".").pop() ?? ""))
+    );
+
+    expect(suspicious).toEqual([]);
+  });
+
+  test("no denied field appears nested", () => {
+    const denied = new Set<string>([...V3_RESPONSE_DENIED_NESTED_FIELDS]);
+    const deniedNames = new Set<string>(V3_RESPONSE_DENIED_FIELDS);
+    expect(nested.filter((path) => denied.has(path) || deniedNames.has(path.split(".").pop() ?? ""))).toEqual(
+      []
+    );
+  });
+});
+
+function nestedSchema(body: z.ZodType, path: string): z.ZodType {
+  return path.split(".").reduce<z.ZodType>((schema, segment) => {
+    const name = segment.replace(/\[\]$/, "");
+    const field = shapeOf(schema)[name];
+    return segment.endsWith("[]") ? (arrayElementOf(field) ?? field) : field;
+  }, body);
+}
+
+describe("the nested roster as a whole", () => {
+  test("every nested classification names a field that still exists on one of the bodies", () => {
+    const onAnyBody = new Set(BODIES.flatMap(([, schema]) => nestedFieldsOf(schema)));
+    expect(Object.keys(V3_RESPONSE_NESTED_FIELDS).filter((path) => !onAnyBody.has(path))).toEqual([]);
+  });
+
+  test("the walk reaches meta, so an empty result above would mean something", () => {
+    expect(nestedFieldsOf(ZV3CreateResponseBody)).toContain("meta.source");
+  });
+});
+
+/**
+ * The bodies are generated, and a declaration sits on whichever instance a generated field exposes. A
+ * spec edit that points two fields at one shared component would make them share that instance — and
+ * the first field's declaration would then answer for the second without anyone having classified it.
+ * Fields of the same name may share (create and patch reuse one capped `data`); different fields may
+ * not.
+ */
+describe("declarations are each field's own", () => {
+  const declaredInstance = (schema: unknown): unknown => {
+    let current: unknown = schema;
+    for (let depth = 0; current && depth < 10; depth += 1) {
+      if (v3ResponseReferences.get(current as z.ZodType)) return current;
+      const def = (current as { _zod?: { def?: Record<string, unknown> } })._zod?.def;
+      current = def?.innerType ?? def?.in ?? def?.schema;
+    }
+    return undefined;
+  };
+
+  test("no two differently named fields share a declared instance", () => {
+    const owners = new Map<unknown, Set<string>>();
+    for (const [, body] of BODIES) {
+      for (const [field, schema] of Object.entries(shapeOf(body))) {
+        const instance = declaredInstance(schema);
+        if (instance) owners.set(instance, (owners.get(instance) ?? new Set()).add(field));
+      }
+    }
+    const shared = [...owners.values()].filter((fields) => fields.size > 1).map((fields) => [...fields]);
+
+    expect(shared).toEqual([]);
+  });
+});
+
 describe("the detectors themselves", () => {
   // These are what every assertion above rests on, so a detector that quietly stopped detecting would
   // take the whole file green with it.
@@ -178,5 +313,19 @@ describe("the detectors themselves", () => {
   test("the name rule matches id suffixes and not ordinary fields", () => {
     expect(["surveyId", "contactId", "tagIds"].every(looksLikeReferenceName)).toBe(true);
     expect(["finished", "data", "language", "meta"].some(looksLikeReferenceName)).toBe(false);
+  });
+});
+
+describe("the nested walk itself", () => {
+  test("it enters arrays of objects as well as plain objects", async () => {
+    const { z: zod } = await import("zod");
+    const body = zod.strictObject({
+      meta: zod.strictObject({ source: zod.string() }).optional(),
+      items: zod.array(zod.strictObject({ id: zod.cuid2() })).optional(),
+      tags: zod.array(zod.cuid2()),
+    });
+
+    expect(nestedFieldsOf(body).sort()).toEqual(["items[].id", "meta.source"]);
+    expect(isIdShaped(nestedSchema(body, "items[].id"))).toBe(true);
   });
 });

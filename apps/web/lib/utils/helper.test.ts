@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import * as services from "@/lib/utils/services";
 import {
-  getFormattedErrorMessage,
   getOrganizationIdFromActionClassId,
   getOrganizationIdFromApiKeyId,
   getOrganizationIdFromContactAttributeKeyId,
@@ -30,7 +29,6 @@ import {
   getWorkspaceIdFromSurveyId,
   getWorkspaceIdFromTagId,
   getWorkspaceIdFromWebhookId,
-  isStringMatch,
 } from "./helper";
 
 // Mock all service functions
@@ -56,43 +54,6 @@ vi.mock("@/lib/utils/services", () => ({
 describe("Helper Utilities", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
-
-  describe("getFormattedErrorMessage", () => {
-    test("returns server error when present", () => {
-      const result = {
-        serverError: "Internal server error occurred",
-        validationErrors: {},
-      };
-      expect(getFormattedErrorMessage(result)).toBe("Internal server error occurred");
-    });
-
-    test("formats validation errors correctly with _errors", () => {
-      const result = {
-        validationErrors: {
-          _errors: ["Invalid input", "Missing required field"],
-        },
-      };
-      expect(getFormattedErrorMessage(result)).toBe("Invalid input, Missing required field");
-    });
-
-    test("formats validation errors for specific fields", () => {
-      const result = {
-        validationErrors: {
-          name: { _errors: ["Name is required"] },
-          email: { _errors: ["Email is invalid"] },
-          password: { _errors: ["is too short"] },
-        },
-      };
-      expect(getFormattedErrorMessage(result)).toBe(
-        "Name is required\nEmail is invalid\npassword: is too short"
-      );
-    });
-
-    test("returns empty string for undefined errors", () => {
-      const result = { validationErrors: undefined };
-      expect(getFormattedErrorMessage(result)).toBe("");
-    });
   });
 
   describe("Organization ID retrieval functions", () => {
@@ -533,40 +494,6 @@ describe("Helper Utilities", () => {
 
       const workspaceId = await getWorkspaceIdFromQuotaId("quota1");
       expect(workspaceId).toBe("workspace1");
-    });
-  });
-
-  describe("isStringMatch", () => {
-    test("returns true for exact matches", () => {
-      expect(isStringMatch("test", "test")).toBe(true);
-    });
-
-    test("returns true for case-insensitive matches", () => {
-      expect(isStringMatch("TEST", "test")).toBe(true);
-      expect(isStringMatch("test", "TEST")).toBe(true);
-    });
-
-    test("returns true for matches with spaces", () => {
-      expect(isStringMatch("test case", "testcase")).toBe(true);
-      expect(isStringMatch("testcase", "test case")).toBe(true);
-    });
-
-    test("returns true for matches with underscores", () => {
-      expect(isStringMatch("test_case", "testcase")).toBe(true);
-      expect(isStringMatch("testcase", "test_case")).toBe(true);
-    });
-
-    test("returns true for matches with dashes", () => {
-      expect(isStringMatch("test-case", "testcase")).toBe(true);
-      expect(isStringMatch("testcase", "test-case")).toBe(true);
-    });
-
-    test("returns true for partial matches", () => {
-      expect(isStringMatch("test", "testing")).toBe(true);
-    });
-
-    test("returns false for non-matches", () => {
-      expect(isStringMatch("test", "other")).toBe(false);
     });
   });
 });

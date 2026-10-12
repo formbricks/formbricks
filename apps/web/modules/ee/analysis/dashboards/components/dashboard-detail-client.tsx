@@ -10,7 +10,7 @@ import { useTranslation } from "react-i18next";
 import "react-resizable/css/styles.css";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/create-chart-dialog";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { DashboardControlBar } from "@/modules/ee/analysis/dashboards/components/dashboard-control-bar";

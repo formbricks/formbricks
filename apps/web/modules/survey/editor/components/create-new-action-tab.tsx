@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { ActionClass } from "@formbricks/database/prisma-browser";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { ActionNameDescriptionFields } from "@/modules/ui/components/action-name-description-fields";
 import { Button } from "@/modules/ui/components/button";
 import { CodeActionForm } from "@/modules/ui/components/code-action-form";

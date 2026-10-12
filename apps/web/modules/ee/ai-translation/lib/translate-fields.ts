@@ -3,6 +3,7 @@ import { z } from "zod";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
+import { redactAIError } from "@/lib/ai/loggable-error";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 
@@ -104,7 +105,9 @@ Rules:
     if (error instanceof AIOutputTokenLimitError) {
       throw new InvalidInputError(AI_TRANSLATION_OUTPUT_TOO_LONG);
     }
-    throw error;
+    // Logged by the AI service already. From here it reaches the server action client, which logs and
+    // reports a thrown error whole — and an AI SDK error carries the survey text and its translation.
+    throw redactAIError(error);
   });
 
   const translatedById = result.object;

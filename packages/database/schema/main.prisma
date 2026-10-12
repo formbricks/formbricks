@@ -453,6 +453,9 @@ model Survey {
   embeddedData                EmbeddedData[]
   embeddedDataLinks           SurveyEmbeddedData[]
   showLanguageSwitch          Boolean?
+  /// Open the survey in the respondent's browser language when it matches an enabled survey
+  /// language. Null on surveys that predate the setting, which reads as off.
+  autoSelectLanguage          Boolean?
   followUps                   SurveyFollowUp[]
   /// [SurveyRecaptcha]
   recaptcha                   Json?                             @default("{\"enabled\": false, \"threshold\":0.1}")
@@ -464,6 +467,10 @@ model Survey {
 
   customHeadScripts     String?
   customHeadScriptsMode SurveyScriptMode? @default(add)
+
+  /// [CustomCssStored] Survey custom CSS (ENG-2949): source plus trusted compiled output, written only
+  /// by the shared custom CSS save service. null = no survey CSS. Kept outside `styling` (M2.07).
+  customCss Json?
 
   @@unique([id, workspaceId])
   @@index([workspaceId, updatedAt])
@@ -674,6 +681,11 @@ model Workspace {
   workspaceTeams              WorkspaceTeam[]
   appSetupCompleted           Boolean                      @default(false)
   customHeadScripts           String? // Custom HTML scripts for link surveys (self-hosted only)
+  /// [CustomCssStored] Workspace custom CSS (ENG-2949), written only by the shared save service.
+  customCss                   Json?
+  /// [CustomCssStored] The one recoverable previous workspace CSS revision, source included. Restored by
+  /// submitting its source again through the current processor and authorization checks.
+  customCssPrevious           Json?
   feedbackDirectoryWorkspaces FeedbackDirectoryWorkspace[]
   charts                      Chart[]
   dashboards                  Dashboard[]

@@ -1,12 +1,14 @@
 import { type ComponentChildren } from "preact";
-import { type MutableRef, useEffect, useRef } from "preact/hooks";
+import { type MutableRef, useContext, useEffect, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TOverlay, type TPlacement } from "@formbricks/types/common";
 import { type TSurveyCardRect } from "@formbricks/types/formbricks-surveys";
 import { type TOverlayAppearance, getOverlayBackground } from "@formbricks/types/overlay";
+import { getResolvedAppearance, subscribeToAppearance } from "@/lib/appearance";
+import { CustomCssOwnerContext, getCustomCssGeneration, releaseCustomCss } from "@/lib/custom-css";
 import { isPlainEscape } from "@/lib/keyboard";
 import { ensureLiveRegion } from "@/lib/live-region";
-import { SURVEY_INSTRUCTIONS_ID, getSurveyHeadingName } from "@/lib/survey-page";
+import { SURVEY_INSTRUCTIONS_ID } from "@/lib/survey-page";
 import { useFocusTrap } from "@/lib/use-focus-trap";
 import { cn, mirrorPlacementForDir } from "@/lib/utils";
 
@@ -281,6 +283,21 @@ export function SurveyContainer({
   const isModal = mode === "modal";
   const { t } = useTranslation();
   const hasOverlay = overlay !== "none";
+  // Rendered on the root so the first paint already has the right palette; later changes arrive
+  // through setAppearance and only touch this attribute.
+  const [appearance, setAppearance] = useState(getResolvedAppearance);
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => subscribeToAppearance(setAppearance, () => rootRef.current?.isConnected ?? true), []);
+  // Custom CSS is applied by renderSurvey just before each render; this survey owns the generation of
+  // the renderSurvey call that rendered it. It comes from context, not the module counter, so the
+  // survey's own re-renders never adopt the generation of another survey rendered since, and teardown
+  // only removes CSS this survey still owns. A new renderSurvey into the same container updates it.
+  const customCssOwner = useContext(CustomCssOwnerContext);
+  const customCssGenerationRef = useRef(customCssOwner ?? getCustomCssGeneration());
+  useEffect(() => {
+    if (customCssOwner !== null) customCssGenerationRef.current = customCssOwner;
+  }, [customCssOwner]);
+  useEffect(() => () => releaseCustomCss(customCssGenerationRef.current), []);
   // The overlay is what makes a survey modal: it covers the host page and the page stops being usable.
   // Without one the page underneath stays visible and clickable, so the survey is a notification, not a
   // modal. Trapping focus there steals the caret and the text selection from the host page — the trap's
@@ -344,17 +361,19 @@ export function SurveyContainer({
   // dialog on the modal path: `aria-modal="true"` makes assistive tech ignore everything outside
   // the dialog element, so a heading placed on the #fbjs root would be unreachable there.
   //
-  // An inline survey without a name (an app survey, whose name the public API withholds) falls back
-  // to the same generic label the modal dialog uses, so the h1 is always there on inline. A modal
-  // survey still renders it only for a real name — see getSurveyHeadingName.
-  const headingName = getSurveyHeadingName(surveyName, mode, t("common.survey_dialog"));
-  const surveyHeading = headingName ? <h1 className="sr-only">{headingName}</h1> : null;
+  // A survey without a name — an app survey, whose name the public API withholds (see
+  // getSurveyDisplayName) — falls back to a generic label on both surfaces rather than dropping the
+  // heading. A generic h1 still tells a respondent pressing H that they have reached the survey;
+  // no h1 leaves the card headings orphaned on the delivery path most app respondents take (ENG-2799).
+  // The same label names the inline form landmark and the modal dialog, so the three never disagree.
+  const surveyLabel = surveyName ?? t("common.survey_dialog");
+  const surveyHeading = <h1 className="sr-only">{surveyLabel}</h1>;
 
   // The VPAT finding is that "forms themselves have no titles": every input had a label, but the
   // form they belong to had no accessible name at all. role="form" + a name fixes that for BOTH
   // surfaces — an embedded survey cannot own the host document's <title>, so this is the only name it
-  // can carry. On inline the name always exists (the survey name, or the generic fallback above), so
-  // the form landmark is always named rather than left out of the landmark list.
+  // can carry. The name always exists (the survey name, or the generic fallback above), so the form
+  // landmark is always named rather than left out of the landmark list.
   // Survey instructions used to appear on the welcome card and never again. Pointing the form at the
   // persistent region means they are announced on entry to every page.
   //
@@ -371,12 +390,17 @@ export function SurveyContainer({
     return (
       <div // NOSONAR(typescript:S6819) - a native <form> would nest inside the host page's own form
         id="fbjs"
+        ref={rootRef}
         className="formbricks-form"
-        style={{ height: "100%", width: "100%" }}
+        data-appearance={appearance}
+        // Root isolation (ENG-3552): customer z-index values stack inside the survey instead of
+        // interleaving with the host page. The modal path needs no equivalent: its fixed, z-indexed
+        // layer is already a stacking context.
+        style={{ height: "100%", width: "100%", isolation: "isolate" }}
         dir={dir}
         lang={lang ?? undefined}
         role="form"
-        aria-label={headingName}
+        aria-label={surveyLabel}
         aria-describedby={instructionsId}>
         {surveyHeading}
         {children}
@@ -387,7 +411,17 @@ export function SurveyContainer({
   const backdrop = getOverlayBackdrop(overlay, overlayAppearance);
 
   return (
-    <div id="fbjs" className="formbricks-form" dir={dir} lang={lang ?? undefined}>
+    <div
+      id="fbjs"
+      ref={rootRef}
+      className="formbricks-form"
+      data-appearance={appearance}
+      // The root takes no clicks, so survey CSS that stretches it over the page cannot swallow the host
+      // page's clicks; the processor removes `pointer-events`, so it cannot turn this back on. Only the
+      // dialog, and the backdrop when the overlay setting asks for one, set their own.
+      style={{ pointerEvents: "none" }}
+      dir={dir}
+      lang={lang ?? undefined}>
       <div
         // In-dialog updates (question changes after a submit) should wait for the reader to finish
         // speaking instead of interrupting it. A survey is never urgent enough for assertive speech.
@@ -403,15 +437,13 @@ export function SurveyContainer({
             // assistive tech ignore everything outside it, so setting it on a corner survey hides the
             // host page from screen-reader users while they can still see and use it.
             aria-modal={hasOverlay ? "true" : undefined}
-            // The survey name is strictly more informative than the generic "Survey Dialog", which
-            // stays as the fallback for a survey rendered without one (previews).
-            aria-label={surveyName ?? t("common.survey_dialog")}
+            aria-label={surveyLabel}
             aria-describedby={hasInstructions ? SURVEY_INSTRUCTIONS_ID : undefined}
             tabIndex={-1}
             className={cn(
               getPlacementStyle(mirrorPlacementForDir(placement, dir)),
               isOpen ? "opacity-100" : "opacity-0",
-              "rounded-custom pointer-events-auto absolute bottom-0 h-fit w-full overflow-visible bg-white shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
+              "rounded-custom pointer-events-auto absolute bottom-0 h-fit w-full overflow-visible bg-(--fb-dialog-background-color,white) shadow-lg transition-all duration-500 ease-in-out sm:m-4 sm:max-w-sm"
             )}>
             <div>
               {surveyHeading}

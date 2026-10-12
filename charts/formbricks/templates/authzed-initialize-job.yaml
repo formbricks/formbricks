@@ -48,12 +48,14 @@ spec:
         - name: initialize
           image: {{ include "formbricks.deploymentImage" . }}
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          {{- $securityContext := dict "allowPrivilegeEscalation" false "capabilities" (dict "drop" (list "ALL")) "readOnlyRootFilesystem" true "runAsNonRoot" true }}
+          {{- $podSecurityContext := .Values.deployment.securityContext | default dict }}
+          {{- /* Preserve an existing Pod UID; otherwise the image's named USER nextjs needs UID 1001. */}}
+          {{- if eq $podSecurityContext.runAsUser nil }}
+          {{- $_ := set $securityContext "runAsUser" 1001 }}
+          {{- end }}
           securityContext:
-            allowPrivilegeEscalation: false
-            capabilities:
-              drop: ["ALL"]
-            readOnlyRootFilesystem: true
-            runAsNonRoot: true
+            {{- mergeOverwrite $securityContext (.Values.authzed.initialization.securityContext | default dict) | toYaml | nindent 12 }}
           command: ["sh", "-ec"]
           args:
             - |

@@ -1,4 +1,5 @@
 import type {
+  TRendererCustomCss,
   TSurveyStyling,
   TUserState,
   TWorkspaceState,
@@ -161,6 +162,20 @@ export const getStyling = (
   return settings.styling;
 };
 
+/**
+ * The renderer's explicit `customCss` prop (ENG-3552): the workspace CSS, sent once in the workspace
+ * settings, plus this survey's own. Unlike `getStyling`, nothing here picks one object over the other:
+ * the server already leaves out a survey's CSS while its style overrides are off. A state cached before
+ * the server sent CSS simply has neither field, and the renderer then applies none.
+ */
+export const getCustomCss = (
+  settings: TWorkspaceStateSettings,
+  survey: TWorkspaceStateSurvey
+): TRendererCustomCss => ({
+  workspace: settings.customCss,
+  survey: survey.customCss,
+});
+
 export const getDefaultLanguageCode = (survey: TWorkspaceStateSurvey): string | undefined => {
   const defaultSurveyLanguage = survey.languages.find((surveyLanguage) => {
     return surveyLanguage.default;
@@ -168,27 +183,24 @@ export const getDefaultLanguageCode = (survey: TWorkspaceStateSurvey): string | 
   if (defaultSurveyLanguage) return defaultSurveyLanguage.language.code;
 };
 
-export const getLanguageCode = (survey: TWorkspaceStateSurvey, language?: string): string | undefined => {
-  const availableLanguageCodes = survey.languages.map((surveyLanguage) => surveyLanguage.language.code);
-  if (!language) return "default";
+/**
+ * The browser's preferred languages, most preferred first, for "Use browser language by default".
+ * `navigator.languages` is the full preference list; `navigator.language` is the fallback for
+ * environments that only expose the single preferred language. Empty when neither is available
+ * (server rendering, web workers without a navigator, or locked-down embeds).
+ */
+export const getBrowserLanguageCodes = (): string[] => {
+  if (typeof navigator === "undefined") return [];
 
-  const selectedLanguage = survey.languages.find((surveyLanguage) => {
-    return (
-      surveyLanguage.language.code.toLowerCase() === language.toLowerCase() ||
-      surveyLanguage.language.alias?.toLowerCase() === language.toLowerCase()
+  const { languages, language } = navigator as Partial<Navigator>;
+  if (Array.isArray(languages)) {
+    const preferredLanguages = languages.filter(
+      (code): code is string => typeof code === "string" && code.trim() !== ""
     );
-  });
-  if (selectedLanguage?.default) {
-    return "default";
+    if (preferredLanguages.length > 0) return preferredLanguages;
   }
-  if (
-    !selectedLanguage ||
-    !selectedLanguage.enabled ||
-    !availableLanguageCodes.includes(selectedLanguage.language.code)
-  ) {
-    return undefined;
-  }
-  return selectedLanguage.language.code;
+
+  return typeof language === "string" && language.trim() !== "" ? [language] : [];
 };
 
 export const getSecureRandom = (): number => {

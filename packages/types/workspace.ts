@@ -91,6 +91,11 @@ export const ZWorkspace = z.object({
   appSetupCompleted: z.boolean(),
   logo: ZLogo.nullish(),
   customHeadScripts: z.string().nullish(),
+  // ENG-2949: workspace custom CSS is deliberately NOT part of this type. The stored value (source,
+  // compiled output and a previous revision) can be ~400 KB and must never ride along on the workspace
+  // objects client components receive; read it through `getWorkspaceCustomCssRecord`
+  // (`modules/custom-css/lib/service`), deliver it through `toDeliveredCustomCss`. It is never writable
+  // through `ZWorkspaceUpdateInput` either.
 });
 
 export type TWorkspace = z.infer<typeof ZWorkspace>;

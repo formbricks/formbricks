@@ -37,6 +37,10 @@ properties:
     type: boolean
   imageUrl:
     type: string
+  imageAltText:
+    allOf:
+      - $ref: ./TranslatableText.yml
+    description: Text alternative for `imageUrl`, read by screen readers. Omit or leave empty for a decorative image (rendered as `alt=""`).
   videoUrl:
     type: string
   isDraft:

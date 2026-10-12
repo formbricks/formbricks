@@ -16,6 +16,7 @@ import {
   buildV3SurveyGenerationTracing,
 } from "@/app/api/v3/surveys/generate/service";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
+import { loggableAIError } from "@/lib/ai/loggable-error";
 import { assertOrganizationAIConfigured, streamOrganizationAIObject } from "@/lib/ai/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { isClientAbort, toStreamErrorEvent } from "./error-events";
@@ -157,7 +158,9 @@ export async function streamV3SurveyGeneration({
           // gone, so there is nothing to tell them either.
           log.info("AI survey generation aborted by the client");
         } else {
-          log.error({ err: error }, "AI survey generation stream failed");
+          // Name, frames and provider status only: the message can repeat the prompt or the model's
+          // output.
+          log.error(loggableAIError(error), "AI survey generation stream failed");
           // Enqueue the error and close cleanly. controller.error() would truncate the response and
           // the client would see a bare network failure with none of the code this event carries.
           emit(toStreamErrorEvent(error));

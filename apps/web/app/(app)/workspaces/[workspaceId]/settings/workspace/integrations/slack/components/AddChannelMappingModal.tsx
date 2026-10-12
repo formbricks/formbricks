@@ -17,7 +17,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { createOrUpdateIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/actions";
 import SlackLogo from "@/images/slacklogo.png";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {

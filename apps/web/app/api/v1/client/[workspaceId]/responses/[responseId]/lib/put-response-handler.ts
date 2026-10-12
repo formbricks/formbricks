@@ -157,12 +157,14 @@ const validateUpdateRequest = (
 
 const getUpdatedResponse = async (
   responseId: string,
+  surveyId: string,
   responseUpdateInput: TResponseUpdateInput,
   ingestFlags: readonly TIngestFlag[]
 ): Promise<TUpdatedResponseResult> => {
   try {
     const updatedResponse = await updateResponseWithQuotaEvaluation(
       responseId,
+      surveyId,
       responseUpdateInput,
       ingestFlags
     );
@@ -253,7 +255,13 @@ export const putResponseHandler = async ({
     return validationResult;
   }
 
-  const updatedResponseResult = await getUpdatedResponse(responseId, responseUpdateInput, ingestResult.flags);
+  // `survey` was loaded from the stored response's surveyId, never from the request body.
+  const updatedResponseResult = await getUpdatedResponse(
+    responseId,
+    survey.id,
+    responseUpdateInput,
+    ingestResult.flags
+  );
   if ("response" in updatedResponseResult) {
     return updatedResponseResult;
   }

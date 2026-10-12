@@ -1,5 +1,4 @@
-"use server";
-
+import "server-only";
 import { logger } from "@formbricks/logger";
 import { TUserEmail, ZUserEmail } from "@formbricks/types/user";
 import { validateInputs } from "@/lib/utils/validate";

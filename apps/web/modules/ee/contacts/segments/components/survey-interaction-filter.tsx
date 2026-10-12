@@ -112,17 +112,14 @@ export function SurveyInteractionFilter({
     }
   };
 
-  // Exclude the surveys this segment already gates (in the survey editor that's the survey being
-  // edited): targeting a segment by interaction with a survey it controls is circular.
-  const excludedSurveyIds = new Set(segment.surveys ?? []);
-  const surveyOptions = surveys
-    .filter((survey) => !excludedSurveyIds.has(survey.id))
-    .map((survey) => ({
-      // Name is the primary label (id beneath it as secondary); search matches both name and id.
-      value: survey.id,
-      label: survey.name || survey.id,
-      description: survey.id,
-    }));
+  // Every workspace survey stays selectable, including the one being edited: "have not seen" /
+  // "have not completed" on the survey's own segment is a legitimate re-contact rule.
+  const surveyOptions = surveys.map((survey) => ({
+    // Name is the primary label (id beneath it as secondary); search matches both name and id.
+    value: survey.id,
+    label: survey.name || survey.id,
+    description: survey.id,
+  }));
 
   const handleAmountChange = (raw: string) => {
     const parsed = Number.parseInt(raw, 10);

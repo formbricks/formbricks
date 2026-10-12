@@ -7,7 +7,7 @@ import { TResponse, TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { DecrementQuotasCheckbox } from "@/modules/ui/components/decrement-quotas-checkbox";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";

@@ -1,9 +1,12 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import {
   isDcrRegistration,
   prepareDcrRequest,
   withInferredApplicationType,
 } from "./mcp-dcr-application-type";
+
+// The redirect allowlist reads its operator additions from env; none here, so only the built-ins apply.
+vi.mock("@/lib/env", () => ({ env: { MCP_DCR_ALLOWED_REDIRECT_URIS: undefined } }));
 
 const BASE = "https://app.formbricks.test";
 const REGISTER = `${BASE}/api/auth/oauth2/register`;
@@ -149,6 +152,24 @@ describe("prepareDcrRequest", () => {
     const response = prepared as Response;
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({ error: "invalid_redirect_uri" });
+  });
+
+  // ENG-3471: claude.ai registers both of its https callbacks and no application_type. It must pass the
+  // gate untouched — still a `web` client, which is what upstream requires for a non-loopback https URI.
+  test("passes a hosted connector registration through without inferring native", async () => {
+    const body = JSON.stringify({
+      client_name: "Claude",
+      redirect_uris: ["https://claude.ai/api/mcp/auth_callback", "https://claude.com/api/mcp/auth_callback"],
+      grant_types: ["authorization_code", "refresh_token"],
+      response_types: ["code"],
+      token_endpoint_auth_method: "none",
+    });
+    const prepared = await prepareDcrRequest(
+      new Request(REGISTER, { method: "POST", headers: { "content-type": "application/json" }, body })
+    );
+
+    expect(prepared).toBeInstanceOf(Request);
+    await expect((prepared as Request).text()).resolves.toBe(body);
   });
 
   // A Request body is single-use, so the normalizer has to reconstruct even when it changes nothing —

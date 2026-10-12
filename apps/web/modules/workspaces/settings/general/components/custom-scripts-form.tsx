@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {

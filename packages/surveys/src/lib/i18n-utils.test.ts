@@ -37,6 +37,11 @@ describe("getI18nLanguage", () => {
     expect(getI18nLanguage("DE_de", [lang("de-DE"), lang("en-US", true)])).toBe("de-DE");
   });
 
+  test("resolves a regional variant to the configured same-language code", () => {
+    expect(getI18nLanguage("ar", [lang("ar-SA"), lang("en-US", true)])).toBe("ar-SA");
+    expect(getI18nLanguage("en-GB", [lang("de-DE"), lang("en-US", true)])).toBe("en-US");
+  });
+
   test("returns the requested code unchanged when nothing matches", () => {
     expect(getI18nLanguage("fr", [lang("de-DE"), lang("en-US", true)])).toBe("fr");
   });

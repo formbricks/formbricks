@@ -4,11 +4,11 @@ import { createId } from "@paralleldrive/cuid2";
 import { ArrowDownIcon, ArrowRightIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Workspace } from "@formbricks/database/prisma-browser";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
+import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { getBlockDisplayName } from "@/modules/survey/editor/lib/blocks";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { getElementDefaults, getGroupedElementTypes } from "@/modules/survey/lib/elements";
@@ -49,7 +49,7 @@ interface EditorCardMenuProps {
   addCardToBlock?: (element: TSurveyElement, blockId: string, afterElementIdx: number) => void;
   moveElementToBlock?: (elementId: string, targetBlockId: string) => void;
   cardType: "element" | "ending";
-  workspace?: Workspace;
+  workspace?: TWorkspaceWithoutCustomCss;
   isCxMode?: boolean;
 }
 

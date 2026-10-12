@@ -68,6 +68,7 @@ describe("rateLimitConfigs", () => {
         "login",
         "signup",
         "forgotPassword",
+        "forgotPasswordPerAccount",
         "resetPassword",
         "verifyEmail",
         "emailToken",
@@ -76,6 +77,12 @@ describe("rateLimitConfigs", () => {
         interval: 3600,
         allowedPerInterval: 5,
         namespace: "auth:reset-password",
+      });
+      // Per-account cap on forgot-password mail (ENG-3640): loosening it re-opens inbox flooding.
+      expect(rateLimitConfigs.auth.forgotPasswordPerAccount).toEqual({
+        interval: 3600,
+        allowedPerInterval: 3,
+        namespace: "auth:forgot:account",
       });
       // The values, not just the key: emailToken throttles an unauthenticated endpoint that also
       // reveals whether an address is registered, so a loosened quota is a security regression.
@@ -95,6 +102,7 @@ describe("rateLimitConfigs", () => {
         "mcpAuth",
         "v3SurveyGenerate",
         "v3SurveyVisibility",
+        "v3CustomCss",
         "internalDatasetPurge",
         "client",
         "clientEnvironment",
@@ -112,6 +120,8 @@ describe("rateLimitConfigs", () => {
         "licenseRecheck",
         "unsplash",
         "inviteMember",
+        "inviteMemberPerUser",
+        "createOrganization",
         "generateExampleResponses",
         "aiChartGeneration",
         "integrationMutation",
@@ -135,6 +145,16 @@ describe("rateLimitConfigs", () => {
         interval: 3600 * 24,
         allowedPerInterval: 50,
         namespace: "action:invite-member",
+      });
+      expect(rateLimitConfigs.actions.inviteMemberPerUser).toEqual({
+        interval: 3600 * 24,
+        allowedPerInterval: 50,
+        namespace: "action:invite-member:user",
+      });
+      expect(rateLimitConfigs.actions.createOrganization).toEqual({
+        interval: 3600 * 24,
+        allowedPerInterval: 5,
+        namespace: "action:create-organization",
       });
       expect(rateLimitConfigs.actions.aiChartGeneration).toEqual({
         interval: 60,

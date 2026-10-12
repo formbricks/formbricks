@@ -16,67 +16,34 @@ jobs:
       contents: read
     outputs:
       is_latest: ${{ steps.compare_tags.outputs.is_latest }}
-    # This job determines if the current release was marked as "Set as the latest release"
-    # by comparing it with the latest release from GitHub API
+    # Decides whether this release was marked "Set as the latest release" by asking the GitHub API
+    # for its isLatest flag. is_latest promotes GHCR :latest, ECR :production and the stable tag,
+    # so the script grants it only on a well-formed answer: an API error or a malformed response
+    # fails this job, which holds back the rest of the release until it is re-run, instead of
+    # defaulting either way.
+    #
+    # A prerelease is never promoted, so it skips the lookup rather than depending on the API: the
+    # skipped step leaves is_latest empty, which every consumer reads as false.
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
 
-      - name: Get latest release tag from API
-        id: get_latest_release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-        run: |
-          set -euo pipefail
+      - name: Checkout the release scripts
+        if: ${{ !github.event.release.prerelease }}
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts
 
-          # Get the latest release tag from GitHub API with error handling
-          echo "Fetching latest release from GitHub API..."
-
-          # Use curl with error handling - API returns 404 if no releases exist
-          http_code=$(curl -s -w "%{http_code}" -H "Authorization: token ${GITHUB_TOKEN}" \
-            "https://api.github.com/repos/${REPO}/releases/latest" -o /tmp/latest_release.json)
-
-          if [[ "$http_code" == "404" ]]; then
-            echo "⚠️  No previous releases found (404). This appears to be the first release."
-            echo "latest_release=" >> $GITHUB_OUTPUT
-          elif [[ "$http_code" == "200" ]]; then
-            latest_release=$(jq -r .tag_name /tmp/latest_release.json)
-            if [[ "$latest_release" == "null" || -z "$latest_release" ]]; then
-              echo "⚠️  API returned null/empty tag_name. Treating as first release."
-              echo "latest_release=" >> $GITHUB_OUTPUT
-            else
-              echo "Latest release from API: ${latest_release}"
-              echo "latest_release=${latest_release}" >> $GITHUB_OUTPUT
-            fi
-          else
-            echo "❌ GitHub API error (HTTP ${http_code}). Treating as first release."
-            echo "latest_release=" >> $GITHUB_OUTPUT
-          fi
-
-          echo "Current release tag: ${{ github.event.release.tag_name }}"
-
-      - name: Compare release tags
+      - name: Check this release against the latest release
+        if: ${{ !github.event.release.prerelease }}
         id: compare_tags
         env:
           CURRENT_TAG: ${{ github.event.release.tag_name }}
-          LATEST_TAG: ${{ steps.get_latest_release.outputs.latest_release }}
-        run: |
-          set -euo pipefail
-
-          # Handle first release case (no previous releases)
-          if [[ -z "${LATEST_TAG}" ]]; then
-            echo "🎉 This is the first release (${CURRENT_TAG}) - treating as latest"
-            echo "is_latest=true" >> $GITHUB_OUTPUT
-          elif [[ "${CURRENT_TAG}" == "${LATEST_TAG}" ]]; then
-            echo "✅ This release (${CURRENT_TAG}) is marked as the latest release"
-            echo "is_latest=true" >> $GITHUB_OUTPUT
-          else
-            echo "ℹ️  This release (${CURRENT_TAG}) is not the latest release (latest: ${LATEST_TAG})"
-            echo "is_latest=false" >> $GITHUB_OUTPUT
-          fi
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash .github/scripts/resolve-latest-release.sh
   # The chart and Compose file pin a Cube image that cube-image.yml publishes separately, and GitHub
   # creates a new package as private. Pull that pin the way a self-hoster does, without credentials,
   # before anything is built, so a release never ships an image its installs cannot pull.
@@ -93,7 +60,7 @@ jobs:
           egress-policy: audit
 
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -224,7 +191,7 @@ jobs:
           egress-policy: audit
 
       - name: Checkout main
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           persist-credentials: false
@@ -342,7 +309,7 @@ jobs:
           egress-policy: audit
 
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
@@ -355,13 +322,13 @@ jobs:
       # release-docker-github.yml. Using the raw tag_name instead would silently create a
       # second, v-prefixed Linear release the first time somebody tags v5.6.0.
       - name: Stamp Linear release version
-        uses: linear/linear-release-action@17b8c24f8ceb2b98cabaf1965ff83c55dd596fac # v0.15.1
+        uses: linear/linear-release-action@d4af10092984f9bc6d5efa075b242bdf01333463 # v0.18.0
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
           version: ${{ needs.docker-build-community.outputs.VERSION }}
 
       - name: Complete Linear release
-        uses: linear/linear-release-action@17b8c24f8ceb2b98cabaf1965ff83c55dd596fac # v0.15.1
+        uses: linear/linear-release-action@d4af10092984f9bc6d5efa075b242bdf01333463 # v0.18.0
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
           command: complete

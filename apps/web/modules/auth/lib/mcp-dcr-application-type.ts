@@ -1,5 +1,9 @@
 import "server-only";
-import { findDisallowedRedirectUri, isLoopbackRedirectUri } from "./mcp-dcr-redirect-policy";
+import {
+  findDisallowedRedirectUri,
+  getAllowedDcrRedirectUris,
+  isLoopbackRedirectUri,
+} from "./mcp-dcr-redirect-policy";
 
 /**
  * Default `application_type` to `"native"` on Dynamic Client Registration when the client asked for
@@ -76,20 +80,20 @@ export const withInferredApplicationType = (body: string): string => {
 
 /**
  * The request Better Auth should handle — or the rejection for a registration whose redirect URIs
- * fall outside the loopback allowlist (ENG-3086). Reads the body only for a DCR POST, and always
- * reconstructs with the body it read — a Request body is single-use, so it cannot be inspected and
- * then reused.
+ * fall outside the allowlist: loopback or an exact hosted-connector callback (ENG-3086, ENG-3471).
+ * Reads the body only for a DCR POST, and always reconstructs with the body it read — a Request body
+ * is single-use, so it cannot be inspected and then reused.
  */
 export const prepareDcrRequest = async (request: Request): Promise<Request | Response> => {
   if (!isDcrRegistration(request)) return request;
 
   const raw = await request.text();
-  const disallowed = findDisallowedRedirectUri(raw);
+  const disallowed = findDisallowedRedirectUri(raw, getAllowedDcrRedirectUris());
   if (disallowed) {
     return Response.json(
       {
         error: "invalid_redirect_uri",
-        error_description: `"${disallowed.uri}" in ${disallowed.field} is not an allowed loopback redirect URI`,
+        error_description: `"${disallowed.uri}" in ${disallowed.field} is not an allowed redirect URI for dynamic client registration`,
       },
       { status: 400 }
     );

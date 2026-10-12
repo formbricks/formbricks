@@ -25,11 +25,6 @@ interface FollowUpsViewProps {
   mailFrom: string;
   isSurveyFollowUpsAllowed: boolean;
   isWorkflowsAllowed: boolean;
-  /**
-   * Passed down rather than read from `useWorkspace()`: the editor lives in the `(survey-editor)`
-   * route group, whose layout does not mount `WorkspaceContextWrapper`, so the hook returns a null
-   * workspace here and any link built from it would never render.
-   */
   workspaceId: string;
   userEmail: string;
   teamMemberDetails: TFollowUpEmailToUser[];

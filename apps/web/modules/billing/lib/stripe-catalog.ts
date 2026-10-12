@@ -14,4 +14,6 @@ export const CLOUD_STRIPE_FEATURE_LOOKUP_KEYS = {
   DASHBOARDS: "dashboards",
   WORKFLOWS: "workflows",
   BULK_INVITE: "bulk-invite",
+  // ENG-2949: Custom CSS additions/edits on Cloud (Scale). Self-hosted needs no license for it.
+  CUSTOM_CSS: "custom-css",
 } as const;

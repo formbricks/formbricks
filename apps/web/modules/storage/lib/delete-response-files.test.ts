@@ -4,7 +4,15 @@ import { findWorkspaceByIdOrLegacyEnvId } from "@/lib/utils/resolve-client-id";
 import { deleteFile } from "@/modules/storage/service";
 import { deleteResponseFileUrls } from "./delete-response-files";
 
+const { mockDeleteFromS3 } = vi.hoisted(() => ({ mockDeleteFromS3: vi.fn() }));
+
 vi.mock("server-only", () => ({}));
+
+// Only reached by the test that runs the real `deleteFile`; every other test stubs that function itself.
+vi.mock("@formbricks/storage", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@formbricks/storage")>()),
+  deleteFile: mockDeleteFromS3,
+}));
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -136,5 +144,29 @@ describe("deleteResponseFileUrls", () => {
     await deleteResponseFileUrls([`/storage/${OWN_WORKSPACE}/private/my%20file%20(1).png`], OWN_WORKSPACE);
 
     expect(mockedDeleteFile).toHaveBeenCalledWith(OWN_WORKSPACE, "private", "my file (1).png", OWN_WORKSPACE);
+  });
+
+  // Decoded, this is `surveys//svy-other/…`: it names no survey, so collection reads it as a flat key.
+  // Only the real `deleteFile` keeps it from storage, where a backend that merges `//` would read it as
+  // another survey's object.
+  test("never sends an encoded empty-segment key to storage", async () => {
+    const { deleteFile: realDeleteFile } =
+      await vi.importActual<typeof import("@/modules/storage/service")>("@/modules/storage/service");
+    mockedResolve.mockResolvedValue({ id: OWN_WORKSPACE, organizationId: "org-1" });
+    mockedDeleteFile.mockImplementation(realDeleteFile);
+    mockDeleteFromS3.mockResolvedValue({ ok: true, data: undefined });
+
+    await deleteResponseFileUrls(
+      [`/storage/${OWN_WORKSPACE}/private/surveys%2F%2Fsvy-other%2Felements%2Fe%2Ff`],
+      OWN_WORKSPACE
+    );
+
+    expect(mockedDeleteFile).toHaveBeenCalledWith(
+      OWN_WORKSPACE,
+      "private",
+      "surveys//svy-other/elements/e/f",
+      OWN_WORKSPACE
+    );
+    expect(mockDeleteFromS3).not.toHaveBeenCalled();
   });
 });

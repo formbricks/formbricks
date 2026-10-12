@@ -19,7 +19,7 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getBulkInvitePermission, getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import { checkRoleManagementPermission } from "@/modules/ee/role-management/actions";
+import { checkRoleManagementPermission } from "@/modules/ee/role-management/lib/permission";
 import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
 import { sendInviteMemberEmail } from "@/modules/email";
 import {
@@ -177,7 +177,7 @@ export const resendInviteAction = authenticatedActionClient.inputSchema(ZResendI
       id: parsedInput.organizationId,
     });
     await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
-    const rateLimitReservation = await reserveInviteRateLimit(parsedInput.organizationId);
+    const rateLimitReservation = await reserveInviteRateLimit(parsedInput.organizationId, ctx.user.id);
 
     let invite: Awaited<ReturnType<typeof getInvite>>;
     let updatedInvite: Awaited<ReturnType<typeof resendInvite>>;
@@ -347,7 +347,7 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
       await checkRoleManagementPermission(parsedInput.organizationId);
     }
 
-    const rateLimitReservation = await reserveInviteRateLimit(parsedInput.organizationId);
+    const rateLimitReservation = await reserveInviteRateLimit(parsedInput.organizationId, ctx.user.id);
 
     let inviteId: Awaited<ReturnType<typeof inviteUser>>;
     try {
@@ -454,7 +454,7 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
       await checkRoleManagementPermission(organizationId);
     }
 
-    const rateLimitReservation = await reserveInviteRateLimit(organizationId, invitees.length);
+    const rateLimitReservation = await reserveInviteRateLimit(organizationId, ctx.user.id, invitees.length);
 
     const results: TBulkInviteResult[] = [];
     const invitedEmails: string[] = [];

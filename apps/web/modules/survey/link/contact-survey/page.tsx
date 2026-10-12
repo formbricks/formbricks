@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { logger } from "@formbricks/logger";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { findMatchingLocale } from "@/lib/utils/locale";
+import { findMatchingLocale, getAcceptedLanguages } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { verifyContactSurveyToken } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
@@ -38,7 +38,12 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
       };
     }
     const { surveyId } = result.data;
-    const { title, ogTitle, description, survey, ogImage } = await getBasicSurveyMetadata(surveyId);
+    const { title, ogTitle, description, survey, ogImage } = await getBasicSurveyMetadata(
+      surveyId,
+      undefined,
+      undefined,
+      await getAcceptedLanguages()
+    );
 
     if (!survey) {
       return { title, description };
@@ -157,10 +162,11 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     singleUseId = validatedSingleUseId;
   }
 
-  // Parallel fetch of environment context and locale
-  const [workspaceContext, locale, singleUseResponse] = await Promise.all([
+  // Parallel fetch of workspace context, locale and the respondent's browser languages
+  const [workspaceContext, locale, acceptedLanguages, singleUseResponse] = await Promise.all([
     getWorkspaceContextForLinkSurvey(survey.workspaceId),
     findMatchingLocale(),
+    getAcceptedLanguages(),
     // Fetch existing response for this contact
     getExistingContactResponse(survey.id, contactId)(),
   ]);
@@ -179,6 +185,7 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     singleUseResponse,
     workspaceContext,
     locale,
+    acceptedLanguages,
     responseCount,
   });
 };

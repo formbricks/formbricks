@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { resolveSurveyLanguage } from "@formbricks/i18n-utils/survey-language-match";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
@@ -33,11 +34,14 @@ export const getBrandColorForURL = (value: string) => encodeURIComponent(value);
  * @param surveyId - Survey identifier
  * @param languageCode - Language code for localization (default: "default")
  * @param survey - Optional survey data if already available (e.g., from generateMetadata)
+ * @param acceptedLanguages - The respondent's Accept-Language tags, so the title and description follow
+ *   the same browser-selected language as the survey itself
  */
 export const getBasicSurveyMetadata = async (
   surveyId: string,
   languageCode = "default",
-  survey?: Awaited<ReturnType<typeof getSurvey>> | null
+  survey?: Awaited<ReturnType<typeof getSurvey>> | null,
+  acceptedLanguages: string[] = []
 ): Promise<TBasicSurveyMetadata> => {
   const surveyData = survey ?? (await getSurvey(surveyId));
 
@@ -55,21 +59,16 @@ export const getBasicSurveyMetadata = async (
   const metadata = surveyData.metadata;
   const welcomeCard = surveyData.welcomeCard;
 
-  // Resolve the language code, accepting either the language code or its alias (case-insensitive).
-  const selectedLanguage =
-    languageCode === "default"
-      ? undefined
-      : surveyData.languages.find(
-          (lang) =>
-            lang.language.code.toLowerCase() === languageCode.toLowerCase() ||
-            lang.language.alias?.toLowerCase() === languageCode.toLowerCase()
-        );
-
-  // Determine language code to use for metadata
+  // The same resolver the survey renderer uses, so the metadata always names the language the survey
+  // opens in: `?lang=` first, then the browser languages when the survey opted in, then the default.
   const langCode =
-    !selectedLanguage || selectedLanguage.default || !selectedLanguage.enabled
-      ? "default"
-      : selectedLanguage.language.code;
+    resolveSurveyLanguage({
+      languages: surveyData.languages,
+      explicitLanguage: languageCode === "default" ? undefined : languageCode,
+      browserLanguages: acceptedLanguages,
+      autoSelectLanguage: surveyData.autoSelectLanguage,
+      unmatchedExplicitLanguage: "fallback",
+    }) ?? "default";
 
   // Set title - priority: custom link metadata > welcome card > survey name
   const titleFromMetadata = metadata?.title ? getLocalizedValue(metadata.title, langCode) || "" : undefined;

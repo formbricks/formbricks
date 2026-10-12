@@ -6,6 +6,7 @@ import {
   setOrganizationPaymentAttemptError,
   syncOrganizationBillingFromStripe,
 } from "@/modules/ee/billing/lib/organization-billing";
+import { isCanceledSubscriptionUpdateError } from "@/modules/ee/billing/lib/subscription-currency";
 import { getStripeClient, getStripeWebhookSecret } from "./stripe-client";
 
 const relevantEvents = new Set([
@@ -58,9 +59,20 @@ const handleSetupCheckoutCompleted = async (
 
   const subscriptionId = session.metadata?.subscriptionId;
   if (subscriptionId) {
-    await stripe.subscriptions.update(subscriptionId, {
-      default_payment_method: paymentMethodId,
-    });
+    try {
+      await stripe.subscriptions.update(subscriptionId, {
+        default_payment_method: paymentMethodId,
+      });
+    } catch (error) {
+      // An upgrade off a legacy EUR plan replaces (cancels) this subscription when the billing page
+      // finalizes the checkout, which can land before this webhook; a canceled subscription rejects the
+      // update. The card is already the customer default, so don't fail (and retry) the whole webhook.
+      if (!isCanceledSubscriptionUpdateError(error)) throw error;
+      logger.warn(
+        { error, sessionId: session.id, subscriptionId },
+        "Could not attach the setup checkout card to its subscription; kept it as the customer default"
+      );
+    }
   }
 };
 

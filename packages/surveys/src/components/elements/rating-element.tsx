@@ -70,6 +70,7 @@ export function RatingElement({
         requiredLabel={t("common.required")}
         dir={dir}
         imageUrl={element.imageUrl}
+        imageAltText={getLocalizedValue(element.imageAltText, languageCode)}
         videoUrl={element.videoUrl}
         errorMessage={errorMessage}
       />

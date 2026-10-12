@@ -2,7 +2,7 @@ import * as nextHeaders from "next/headers";
 import { describe, expect, test, vi } from "vitest";
 import { AVAILABLE_LOCALES, DEFAULT_LOCALE } from "@/lib/constants";
 import { appLanguages } from "@/lib/i18n/utils";
-import { findMatchingLocale } from "./locale";
+import { findMatchingLocale, getAcceptedLanguages } from "./locale";
 
 // Mock the Next.js headers function
 vi.mock("next/headers", () => ({
@@ -10,6 +10,22 @@ vi.mock("next/headers", () => ({
 }));
 
 describe("locale", () => {
+  test("getAcceptedLanguages reads the Accept-Language header in preference order", async () => {
+    vi.mocked(nextHeaders.headers).mockResolvedValue({
+      get: vi.fn().mockReturnValue("en;q=0.5, de-DE"),
+    } as unknown as Awaited<ReturnType<typeof nextHeaders.headers>>);
+
+    expect(await getAcceptedLanguages()).toEqual(["de-DE", "en"]);
+  });
+
+  test("getAcceptedLanguages returns nothing without the header", async () => {
+    vi.mocked(nextHeaders.headers).mockResolvedValue({
+      get: vi.fn().mockReturnValue(null),
+    } as unknown as Awaited<ReturnType<typeof nextHeaders.headers>>);
+
+    expect(await getAcceptedLanguages()).toEqual([]);
+  });
+
   test("returns DEFAULT_LOCALE when Accept-Language header is missing", async () => {
     // Set up the mock to return null for accept-language header
     vi.mocked(nextHeaders.headers).mockReturnValue({

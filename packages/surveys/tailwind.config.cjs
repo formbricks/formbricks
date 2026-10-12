@@ -1,12 +1,16 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   important: "#fbjs",
-  darkMode: "class",
+  // `dark:` follows the survey's own appearance attribute (set by the renderer on every #fbjs root),
+  // never the host page's `.dark` class or the OS setting.
+  darkMode: ["variant", "&:where([id=fbjs][data-appearance=dark], [id=fbjs][data-appearance=dark] *)"],
   content: ["./src/**/*.{tsx,ts,jsx,js}"],
   theme: {
     extend: {
       colors: {
         brand: "var(--fb-brand-color)",
+        // Brand as text: only set in dark, where the raw brand can be unreadable on the card.
+        "brand-readable": "var(--fb-brand-readable-color, var(--fb-brand-color))",
         "on-brand": "var(--fb-brand-text-color)",
         border: "var(--fb-border-color)",
         "border-highlight": "var(--fb-border-color-highlight)",

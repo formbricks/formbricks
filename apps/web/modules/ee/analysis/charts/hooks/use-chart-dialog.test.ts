@@ -37,7 +37,7 @@ vi.mock("@/modules/ee/analysis/charts/lib/chart-utils", () => ({
   resolveChartType: (type: string) => type,
 }));
 
-vi.mock("@/lib/utils/helper", () => ({
+vi.mock("@/lib/utils/error-message", () => ({
   getFormattedErrorMessage: (result: any) => result?.serverError ?? "formatted-error",
 }));
 

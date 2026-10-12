@@ -17,7 +17,7 @@ import { SummaryDropOffs } from "@/app/(app)/workspaces/[workspaceId]/surveys/[s
 import { SummaryImpressions } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/SummaryImpressions";
 import { CustomFilter } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/CustomFilter";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { QuotasSummary } from "@/modules/ee/quotas/components/quotas-summary";
 import { SummaryList } from "./SummaryList";

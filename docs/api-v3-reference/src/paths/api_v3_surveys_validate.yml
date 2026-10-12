@@ -16,6 +16,17 @@ post:
     invalid `surveyId`,
 
     or unsupported query parameters.
+
+
+    **Custom CSS.** A create or patch payload that carries `customCss` is also run through the custom
+    CSS processor; the result adds the compiled `customCss` and `warnings`, or `errors` and
+    `valid=false`. `operation: customCss` validates CSS alone for a live preview — with
+    `scope: workspace | survey` and, optionally, an existing `surveyId` in `workspaceId` — and returns
+    the compiled CSS and warnings. Validation never saves, versions, touches timestamps or invalidates
+    caches, needs only read access, and grants nothing: the write itself checks permissions and the
+    plan again. Requests that process custom CSS also count against a separate budget of 60 per
+    minute per user or API key, shared with the workspace custom CSS endpoint, with survey creates
+    and updates that add or edit custom CSS, and with the MCP tools; beyond it they return **429**.
   tags:
     - V3 Surveys
   requestBody:
@@ -42,6 +53,17 @@ post:
                         headline:
                           en-US: What should we improve?
                         required: true
+          customCssValidation:
+            summary: Validate custom CSS for a live preview
+            value:
+              operation: customCss
+              workspaceId: clxx1234567890123456789012
+              scope: survey
+              surveyId: clsv1234567890123456789012
+              data:
+                customCss:
+                  light: '[data-fb-part="headline"] { font-weight: 600; }'
+                  dark: null
           patchValidation:
             summary: Validate a patch payload
             value:
@@ -77,7 +99,9 @@ post:
               - data
             properties:
               data:
-                $ref: ../components/schemas/SurveyValidationResult.yml
+                anyOf:
+                  - $ref: ../components/schemas/SurveyValidationResult.yml
+                  - $ref: ../components/schemas/CustomCssValidationResult.yml
           examples:
             invalid:
               summary: Invalid survey document
@@ -90,6 +114,39 @@ post:
                       reason: >-
                         Unsupported field 'buttonUrl' for element type
                         'openText'. Allowed fields...
+            customCssValid:
+              summary: Custom CSS processed, with a removed construct
+              value:
+                data:
+                  valid: true
+                  operation: customCss
+                  invalid_params: []
+                  customCss:
+                    light: '@layer fb-survey { #fbjs [data-fb-part="headline"] { font-weight: 600 !important; } }'
+                    dark: null
+                  warnings:
+                    - code: import_removed
+                      scope: survey
+                      appearance: light
+                      line: 1
+                      column: 1
+                      reason: "@import is not supported and was removed"
+            customCssInvalid:
+              summary: Custom CSS rejected
+              value:
+                data:
+                  valid: false
+                  operation: customCss
+                  invalid_params:
+                    - name: customCss.light
+                      reason: Unexpected end of input (line 3, column 1)
+                  errors:
+                    - code: syntax_error
+                      scope: survey
+                      appearance: light
+                      line: 3
+                      column: 1
+                      reason: Unexpected end of input
             valid:
               summary: Valid survey document
               value:

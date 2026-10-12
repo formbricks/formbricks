@@ -82,6 +82,9 @@ reviews:
     # docs/api-*-reference/openapi*.{yml,json} are deliberately NOT excluded —
     # oasdiff reviews them for breaking API changes.
     - "!apps/web/vendor/**"
+    # Generated from the reviewed OpenAPI bundle and byte-checked by `pnpm api:v3:schemas:check`;
+    # the review belongs on docs/api-v3-reference/src/ and the generator, not on its output.
+    - "!packages/api-v3-schemas/src/generated/**"
 
   path_instructions:
     - path: "**/*.test.tsx"
@@ -254,9 +257,13 @@ reviews:
         - Return **403, not 404**, for a resource the caller may not see — a 404 leaks existence.
         - Responses come from the RFC 9457 problem builders in `app/api/v3/lib/response.ts`. No
           invented error envelopes, and no internal or database types leaking into a public shape.
-        - Any change to a request or response shape must be mirrored in the hand-authored spec
-          under `docs/api-v3-reference/src/**/*.yml`, which CI bundles. A handler change with no
-          spec change is a bug unless the shape is genuinely unchanged.
+        - Request and response shapes start in the hand-authored spec under
+          `docs/api-v3-reference/src/**/*.yml`, which CI bundles. For a resource whose tag is in
+          `packages/api-v3-schemas/scripts/adopted.ts`, the route's Zod must come from
+          `@formbricks/api-v3-schemas` — a hand-written shape there is a finding, and only the
+          refinements the generator cannot express belong beside it. Query-string parsers are the
+          exception until a shared query adapter exists (e.g. `parse-v3-responses-list-query.ts`). Elsewhere, a handler change
+          with no spec change is a bug unless the shape is genuinely unchanged.
         - A `/v3` route with no public OpenAPI entry is internal by definition and belongs under
           `apps/web/app/api/(internal)/`. Shipping an internal route as public v3 is a finding.
 

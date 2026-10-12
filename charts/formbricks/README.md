@@ -250,6 +250,23 @@ the initialization hook so a GitOps sync cannot mutate the authorization graph o
 window. The acknowledgement must be set only after the external preparation succeeds. Fresh self-hosted installs
 should keep the default initialization Job enabled.
 
+The AuthZed initialization / upgrade-check hook defaults to `runAsNonRoot: true` and UID `1001`, matching
+the official image's `nextjs` user. An explicit `deployment.securityContext.runAsUser` is inherited instead;
+`authzed.initialization.securityContext.runAsUser` takes precedence over both. Custom images with a different
+UID must configure one of those overrides. The hook does not inherit the web container's
+`deployment.containerSecurityContext` or change the database migration Job's security settings.
+
+Use `authzed.initialization.securityContext` for hook-only container overrides. Unspecified fields retain
+the hook defaults: read-only root filesystem, non-root enforcement, no privilege escalation, and all
+capabilities dropped. For example, for a custom image built to run as UID `2000`:
+
+```yaml
+authzed:
+  initialization:
+    securityContext:
+      runAsUser: 2000
+```
+
 ## Cube
 
 Cube is part of the baseline Formbricks v5 stack and is deployed by this chart by default
@@ -1106,7 +1123,8 @@ Upgrading from a chart that did not render the web container context:
 | taxonomy.llm.vertex.existingSecret                                 | string | `""`                                                                        | Existing secret containing Vertex service-account JSON.   |
 | taxonomy.llm.vertex.location                                       | string | `""`                                                                        | Vertex AI location for Gemini taxonomy calls.             |
 | taxonomy.llm.vertex.project                                        | string | `""`                                                                        | Google Cloud project for Gemini taxonomy calls.           |
-| taxonomy.llm.vertex.thinkingBudget                                 | string | `"0"`                                                                       | Vertex Gemini thinking-token budget for taxonomy calls.   |
+| taxonomy.llm.vertex.thinkingBudget                                 | string | `"0"`                                                                       | Legacy Vertex thinking-token budget; used when thinkingLevel is unset.   |
+| taxonomy.llm.vertex.thinkingLevel                                  | string | `""`                                                                        | Optional `minimal`, `low`, `medium`, or `high`; replaces thinkingBudget. Requires a taxonomy image supporting thinking levels. |
 | taxonomy.maxClusters                                               | string | `"80"`                                                                      | Compatibility value; production Taxonomy images enforce 80 at startup. |
 | taxonomy.runDeadlineSeconds                                        | string | `"900"`                                                                     | Total taxonomy run deadline.                              |
 | taxonomy.service.type                                              | string | `"ClusterIP"`                                                               | Internal taxonomy service type.                           |

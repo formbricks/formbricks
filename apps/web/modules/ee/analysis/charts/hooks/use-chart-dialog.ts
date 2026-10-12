@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TChartConfig } from "@formbricks/types/analysis";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import {
   createChartAction,
   deleteChartAction,

@@ -13,7 +13,10 @@ import { getSurveyQuestions } from "@/modules/api/v2/management/responses/[respo
 import { findAndDeleteUploadedFilesInResponse } from "@/modules/api/v2/management/responses/[responseId]/lib/utils";
 import { ZResponseUpdateSchema } from "@/modules/api/v2/management/responses/[responseId]/types/responses";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
+import {
+  evaluateResponseQuotas,
+  loadQuotaEvaluationContext,
+} from "@/modules/ee/quotas/lib/evaluation-service";
 
 export const getResponse = reactCache(async (responseId: string) => {
   try {
@@ -115,6 +118,7 @@ export const deleteResponse = async (responseId: string): Promise<Result<Respons
     await findAndDeleteUploadedFilesInResponse(
       deletedResponse.data,
       surveyQuestionsResult.data,
+      deletedResponse.surveyId,
       surveyQuestionsResult.data.workspaceId
     );
 
@@ -298,10 +302,18 @@ export const updateResponse = async (
   }
 };
 
+/**
+ * `surveyId` is the stored response's survey, as the route already loaded it — passed in so the quota
+ * definitions are read before the transaction opens. Evaluation still checks it against the updated
+ * row and skips on a mismatch.
+ */
 export const updateResponseWithQuotaEvaluation = async (
   responseId: string,
+  surveyId: string,
   responseInput: z.infer<typeof ZResponseUpdateSchema>
 ): Promise<Result<Response, ApiErrorResponseV2>> => {
+  const quotaContext = await loadQuotaEvaluationContext(surveyId);
+
   const txResponse = await prisma.$transaction<Result<Response, ApiErrorResponseV2>>(async (tx) => {
     const responseResult = await updateResponse(responseId, responseInput, tx);
 
@@ -321,6 +333,7 @@ export const updateResponseWithQuotaEvaluation = async (
       // The row just written, so `reserved` quota operands resolve (ENG-1840).
       response,
       tx,
+      quotaContext,
     });
 
     if (quotaResult.shouldEndSurvey) {

@@ -6,7 +6,7 @@ import { type SyntheticEvent, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { AuthenticationError } from "@formbricks/types/errors";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { Button } from "@/modules/ui/components/button";
 import { CodeBlock } from "@/modules/ui/components/code-block";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";

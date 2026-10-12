@@ -36,7 +36,7 @@ export const inviteOrganizationMemberAction = authenticatedActionClient
       ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
 
       // Shares one recipient-counted budget with settings, bulk, and resend invite paths.
-      const rateLimitReservation = await reserveInviteRateLimit(parsedInput.organizationId);
+      const rateLimitReservation = await reserveInviteRateLimit(parsedInput.organizationId, ctx.user.id);
 
       let invitedUserId: Awaited<ReturnType<typeof inviteUser>>;
       try {
