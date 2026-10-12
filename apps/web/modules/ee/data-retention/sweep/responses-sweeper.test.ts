@@ -321,6 +321,30 @@ describe("createResponsesSweeper", () => {
     expect(lockUnchangedRetentionPolicy).toHaveBeenCalledWith(tx, POLICY);
   });
 
+  test("re-stamps from the newest row the delete matched, not one a person deleted after the batch was read", async () => {
+    const tx = database({ candidates: [dueForDeletion("s1")] });
+    const created = (day: number) => new Date(Date.UTC(2028, 0, day));
+    tx.response.findMany.mockResolvedValueOnce([
+      { id: "r1", createdAt: created(1) },
+      { id: "r2", createdAt: created(2) },
+    ]);
+    // r2 went between the batch's read and its delete.
+    vi.mocked(deleteResponsesInTransaction).mockResolvedValueOnce({
+      deleted: 1,
+      deletedIds: ["r1"],
+      bySurvey: [{ surveyId: "s1", responseIds: ["r1"], fileUrls: [] }],
+    });
+
+    const { plan } = await run();
+    await plan.act(NOW.getTime() + 60_000);
+
+    expect(restampSurveyNoticeAfterRetentionDeletion).toHaveBeenCalledWith(tx, {
+      organizationId: "clorg",
+      surveyId: "s1",
+      newestDeletedAt: created(1),
+    });
+  });
+
   test("deletes nothing once the survey is no longer due under its lock", async () => {
     // An exemption created after the scan: the re-read under lock no longer returns the survey.
     const tx = database({ candidates: [dueForDeletion("s1")], recheck: () => [] });
