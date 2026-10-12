@@ -1,11 +1,9 @@
 "use client";
 
-import * as Sentry from "@sentry/nextjs";
 import { TriangleAlertIcon } from "lucide-react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { isExpectedError } from "@formbricks/types/errors";
-import { IS_DEVELOPMENT_BUILD } from "@/lib/env-client";
+import { reportBoundaryError } from "@/lib/sentry/boundary-error";
 import { Button } from "@/modules/ui/components/button";
 
 interface LinkSurveyErrorProps {
@@ -17,11 +15,7 @@ export const LinkSurveyError = ({ error, retry }: Readonly<LinkSurveyErrorProps>
   const { t } = useTranslation();
 
   useEffect(() => {
-    if (IS_DEVELOPMENT_BUILD) {
-      console.error(error.message);
-    } else if (!isExpectedError(error)) {
-      Sentry.captureException(error);
-    }
+    reportBoundaryError(error);
   }, [error]);
 
   return (
