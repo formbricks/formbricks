@@ -14,8 +14,8 @@ import { resolveSurveyNoticeRecipients } from "./recipients";
  * the member read the survey.
  *
  * The read check stands in for SpiceDB before the change is projected: it lets everyone read every
- * survey, which is exactly the window this guards. The graph's own answer once the change is projected
- * is the app's survey read check, proven in `lib/authorization/survey-authorization.integration.test.ts`.
+ * survey, which is exactly the window this guards. The same composition with the real read check against
+ * SpiceDB is `recipients-graph.integration.test.ts`.
  */
 const graphNotYetProjected = async (_actor: unknown, surveyIds: ReadonlyArray<string>) => new Set(surveyIds);
 
