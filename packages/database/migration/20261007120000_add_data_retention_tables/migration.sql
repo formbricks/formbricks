@@ -227,25 +227,10 @@ ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "reactivatedAt" TIMESTAMP(3);
 
 -- AlterTable
 -- The members retention clock's record of activity, written on every session start and renewal. The
--- same catalog-only change as above.
+-- same catalog-only change as above. It is seeded from the sessions still valid by the data migration
+-- right after this one (`20261007120001_backfill_user_last_active_at`), in batches that each commit on
+-- their own, rather than here, where it would hold this transaction's lock on "User" for the whole pass.
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "lastActiveAt" TIMESTAMP(3);
-
--- Seed it from the sessions still valid, so someone who has stayed signed in since their last sign-in
--- isn't counted from that sign-in on the first night. Better Auth deletes a session on sign-out but an
--- expired one only lazily, hence the "expires" filter, which also bounds the rows touched. Only users
--- still empty, so a rerun changes nothing. It runs while this transaction holds the ACCESS EXCLUSIVE
--- lock on "User" taken above, so reads of "User" (sign-ins included) wait for it: one pass over live
--- sessions, proportional to the users signed in. "expires" is a UTC `timestamp`, so it is compared with
--- UTC wall-clock time whatever the session time zone.
-UPDATE "User" u
-SET "lastActiveAt" = s."lastSessionAt"
-FROM (
-  SELECT "userId", MAX("updated_at") AS "lastSessionAt"
-  FROM "Session"
-  WHERE "expires" > (now() AT TIME ZONE 'UTC')
-  GROUP BY "userId"
-) s
-WHERE u."id" = s."userId" AND u."lastActiveAt" IS NULL;
 
 -- Every index below is on a table this same transaction just created, so it is built over zero rows
 -- and locks nothing anyone else can reach. CONCURRENTLY is not an option here in any case: Postgres
