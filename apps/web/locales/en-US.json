@@ -4101,11 +4101,15 @@
         },
         "reading_file": "Reading file…",
         "report": {
+          "download": "Download",
           "empty": "Nothing was left out",
           "ending": "Ending",
+          "note": "Note",
           "summary_notes": "{count, plural, one {# note} other {# notes}}",
           "summary_warnings": "{count, plural, one {# warning} other {# warnings}}",
-          "title": "Import report"
+          "text_title": "Qualtrics import report: {fileName}",
+          "title": "Import report",
+          "warning": "Warning"
         },
         "your_file": "Your file"
       },

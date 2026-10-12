@@ -1,25 +1,41 @@
 "use client";
 
-import { AlertTriangleIcon, ChevronDownIcon, InfoIcon } from "lucide-react";
+import { AlertTriangleIcon, ChevronDownIcon, DownloadIcon, InfoIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import {
+  formatQsfImportReport,
   getQsfImportIssueLine,
+  getQsfImportReportFileName,
   hasQsfImportWarnings,
   sortQsfImportIssues,
 } from "@/modules/survey/import/lib/import-report";
 import type { TQsfImportReport } from "@/modules/survey/import/types";
+import { Button } from "@/modules/ui/components/button";
 
 type ImportReportProps = {
   report: TQsfImportReport;
   className?: string;
 };
 
+// Attached while it is clicked, as Firefox needs, and the URL released on the next task: Safari starts
+// the download after the click returns.
+const downloadText = (text: string, fileName: string) => {
+  const url = URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+};
+
 /**
  * Everything the import left out or changed, one line each. Opens by itself when there is a warning
- * (ENG-3411). Every line is rendered as text: file names and `params` come from the user's file or the
- * AI.
+ * (ENG-3411); Download keeps it once the draft opens in the editor (ENG-3605). Every line is rendered
+ * as text: file names and `params` come from the user's file or the AI.
  */
 export const ImportReport = ({ report, className }: Readonly<ImportReportProps>) => {
   const { t } = useTranslation();
@@ -33,29 +49,39 @@ export const ImportReport = ({ report, className }: Readonly<ImportReportProps>)
     noteCount > 0 ? t("workspace.surveys.import.report.summary_notes", { count: noteCount }) : null,
   ].filter((part): part is string => part !== null);
 
+  const handleDownload = () => {
+    downloadText(formatQsfImportReport(report, t), getQsfImportReportFileName(report.source.fileName));
+  };
+
   return (
     <section className={cn("rounded-md border border-slate-200 bg-white", className)}>
-      <button
-        type="button"
-        className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2 text-left text-sm text-slate-700"
-        aria-expanded={isOpen}
-        aria-controls="import-report-lines"
-        disabled={issues.length === 0}
-        onClick={() => setIsOpen((open) => !open)}>
-        <span className="font-medium">{t("workspace.surveys.import.report.title")}</span>
-        <span className="truncate text-xs text-slate-500">
-          {summary.length > 0 ? summary.join(" · ") : t("workspace.surveys.import.report.empty")}
-        </span>
-        {issues.length > 0 ? (
-          <ChevronDownIcon
-            className={cn(
-              "ml-auto size-4 shrink-0 text-slate-500 transition-transform",
-              isOpen && "rotate-180"
-            )}
-            aria-hidden="true"
-          />
-        ) : null}
-      </button>
+      <div className="flex items-center gap-1 pr-1">
+        <button
+          type="button"
+          className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2 text-left text-sm text-slate-700"
+          aria-expanded={isOpen}
+          aria-controls="import-report-lines"
+          disabled={issues.length === 0}
+          onClick={() => setIsOpen((open) => !open)}>
+          <span className="font-medium">{t("workspace.surveys.import.report.title")}</span>
+          <span className="truncate text-xs text-slate-500">
+            {summary.length > 0 ? summary.join(" · ") : t("workspace.surveys.import.report.empty")}
+          </span>
+          {issues.length > 0 ? (
+            <ChevronDownIcon
+              className={cn(
+                "ml-auto size-4 shrink-0 text-slate-500 transition-transform",
+                isOpen && "rotate-180"
+              )}
+              aria-hidden="true"
+            />
+          ) : null}
+        </button>
+        <Button type="button" variant="ghost" size="sm" onClick={handleDownload}>
+          <DownloadIcon aria-hidden="true" />
+          {t("workspace.surveys.import.report.download")}
+        </Button>
+      </div>
       {isOpen && issues.length > 0 ? (
         <ul
           id="import-report-lines"

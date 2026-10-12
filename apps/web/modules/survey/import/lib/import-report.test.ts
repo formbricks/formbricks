@@ -1,8 +1,10 @@
 import { describe, expect, test } from "vitest";
 import type { TQsfImportReport } from "@/modules/survey/import/types";
 import {
+  formatQsfImportReport,
   getQsfImportFacts,
   getQsfImportIssueLine,
+  getQsfImportReportFileName,
   getSwitchedOffLanguages,
   hasQsfImportWarnings,
   sortQsfImportIssues,
@@ -269,5 +271,40 @@ describe("sortQsfImportIssues", () => {
       "field_renamed",
       "markup_escaped",
     ]);
+  });
+});
+
+describe("formatQsfImportReport", () => {
+  test("puts warnings before notes, each with its severity", () => {
+    const text = formatQsfImportReport(
+      report([
+        { code: "field_renamed", severity: "info", params: { from: "a b", to: "a_b" } },
+        { code: "image_dropped", severity: "warning", questionTag: "Q2" },
+      ]),
+      t
+    );
+
+    expect(text.split("\n")).toEqual([
+      'text_title {"fileName":"Customer survey.qsf"}',
+      'questions {"count":12} · blocks {"count":2} · en-US · de-DE · hidden_fields {"count":1} · logic_not_imported {"count":3}',
+      "",
+      "- warning: Q2: image_dropped",
+      '- note: field_renamed {"from":"a b","to":"a_b"}',
+      "",
+    ]);
+  });
+
+  test("says so when nothing was left out", () => {
+    expect(formatQsfImportReport(report([]), t)).toContain("\nempty\n");
+  });
+});
+
+describe("getQsfImportReportFileName", () => {
+  test.each([
+    ["Customer survey.qsf", "Customer survey-import-report.txt"],
+    ["export.QSF", "export-import-report.txt"],
+    [".qsf", "survey-import-report.txt"],
+  ])("names %s's report %s", (fileName, expected) => {
+    expect(getQsfImportReportFileName(fileName)).toBe(expected);
   });
 });

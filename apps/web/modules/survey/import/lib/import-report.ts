@@ -221,3 +221,30 @@ export const getQsfImportFacts = (summary: TQsfImportReport["summary"], t: TTran
   }
   return facts;
 };
+
+/** The report as plain text, for Download (ENG-3605). Same lines the dialog shows. */
+export const formatQsfImportReport = (report: TQsfImportReport, t: TTranslate): string => {
+  const lines = [
+    t("workspace.surveys.import.report.text_title", { fileName: report.source.fileName }),
+    getQsfImportFacts(report.summary, t).join(" · "),
+    "",
+  ];
+
+  if (report.issues.length === 0) {
+    lines.push(t("workspace.surveys.import.report.empty"));
+  }
+
+  for (const issue of sortQsfImportIssues(report.issues)) {
+    const severity =
+      issue.severity === "warning"
+        ? t("workspace.surveys.import.report.warning")
+        : t("workspace.surveys.import.report.note");
+    lines.push(`- ${severity}: ${getQsfImportIssueLine(issue, t)}`);
+  }
+
+  return `${lines.join("\n")}\n`;
+};
+
+/** `survey.qsf` → `survey-import-report.txt`. */
+export const getQsfImportReportFileName = (fileName: string): string =>
+  `${fileName.replace(/\.qsf$/i, "") || "survey"}-import-report.txt`;
