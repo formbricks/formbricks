@@ -203,10 +203,12 @@ const getSafeWarningErrorContext = (cause: Error): { errorType: string; errorCod
  *
  * `state_security_mismatch` carries the load this gate deliberately does not take on, and it is mixed:
  *
- * - The state cookie's `maxAge` is 300s while the verification record lives 10 minutes, so a user who
- *   spends 5–10 minutes at the identity provider loses the cookie first and lands here. Benign, and
- *   probably common — **so this change likely leaves residual noise behind**; it closes the reported
- *   `verification not found` shape (FORMBRICKS-16G), not the whole class.
+ * - A second sign-in started in the same browser while the first is still at the identity provider (a
+ *   second tab, a stale authorize URL): the state cookie is a single slot, so the newer flow overwrites
+ *   it and the older callback finds the wrong value. Benign, and the residual noise this code still
+ *   carries. Until ENG-3314 a user who spent 5–10 minutes at the IdP landed here too, because the
+ *   cookie expired at 300s against a 10-minute state; `auth.ts` now gives it the state's full lifetime,
+ *   so a slow sign-in that runs out of time expires with the state, on `state_mismatch`.
  * - It is also where a `BETTER_AUTH_SECRET` divergence across replicas surfaces, because the signed
  *   cookie cannot be verified with a different secret. That is a genuine outage and must keep paging.
  * - And it is the shape a forged or mixed-up callback takes.
