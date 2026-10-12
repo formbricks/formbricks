@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import deDE from "@/locales/de-DE.json";
 import { cpuMsSince } from "./__fixtures__/cpu-time";
 import { loadQsfFixture } from "./__fixtures__/load-fixture";
 import { loadRecordedPlan, recordedGenerate } from "./__fixtures__/recorded-plans";
@@ -7,6 +8,7 @@ import { type TQsfDraftElement, assembleQsfDraft, buildHiddenFields, disambiguat
 import { checkQsfDraft } from "./final-gate";
 import { isObjectMemberName } from "./id-registry";
 import type { TQsfCheckedPlan } from "./plan-checks";
+import type { TQsfIssue, TQsfSurvey } from "./qsf-model";
 import { readQsf } from "./read-qsf";
 import { sanitizeQsfTexts } from "./sanitize-text";
 
@@ -17,10 +19,12 @@ const assembleFixture = async (
   options: {
     allowExternalUrls?: boolean;
     excludedRefs?: Set<string>;
+    editSurvey?: (survey: TQsfSurvey) => void;
     editPlan?: (plan: TQsfCheckedPlan) => void;
   } = {}
 ) => {
   const survey = readQsf(loadQsfFixture(fixture));
+  options.editSurvey?.(survey);
   const texts = await sanitizeQsfTexts(survey, new AbortController().signal);
   const { plan } = await planQsfImport({
     survey,
@@ -89,7 +93,87 @@ describe("assembleQsfDraft", () => {
     expect(generated.every((choice) => /^[a-z0-9]{24,}$/.test(choice.id))).toBe(true);
   });
 
-  test("copies every language, falling back to the default text where a translation is missing", async () => {
+  test("gives a file with no end message the editor's default ending, and says so", async () => {
+    const { document, issues } = await assembleFixture("pages-and-blocks.qsf");
+
+    expect(document.endings).toEqual([
+      {
+        id: expect.any(String),
+        type: "endScreen",
+        headline: { "en-US": "Thank you!" },
+        subheader: { "en-US": "We appreciate your feedback." },
+      },
+    ]);
+    expect(issues).toContainEqual({ code: "ending_added", severity: "info", params: { subject: "ending" } });
+    expect(checkQsfDraft(document)).toEqual([]);
+  });
+
+  test("writes the default ending in each language Formbricks has strings for", async () => {
+    const { document, issues } = await assembleFixture("multilang-en-de.qsf");
+
+    expect(document.endings).toMatchObject([
+      {
+        headline: { "en-US": "Thank you!", "de-DE": deDE.templates.default_ending_card_headline },
+        subheader: {
+          "en-US": "We appreciate your feedback.",
+          "de-DE": deDE.templates.default_ending_card_subheader,
+        },
+      },
+    ]);
+    expect(document.languages.every((language) => language.enabled)).toBe(true);
+    expect(issues.some((issue) => issue.code === "translation_missing")).toBe(false);
+  });
+
+  test("shows the default language's ending where Formbricks has no strings, and never counts it missing", async () => {
+    const withLanguage = (code: string) =>
+      assembleFixture("pages-and-blocks.qsf", { editSurvey: (survey) => survey.languages.push(code) });
+    const missingIn = (issues: TQsfIssue[]) =>
+      Number(issues.find((issue) => issue.code === "translation_missing")?.params?.count);
+    const norwegian = await withLanguage("nb-NO");
+    const austrian = await withLanguage("de-AT");
+
+    expect(norwegian.document.endings).toMatchObject([
+      {
+        headline: { "en-US": "Thank you!", "nb-NO": "Thank you!" },
+        subheader: { "nb-NO": "We appreciate your feedback." },
+      },
+    ]);
+    expect(norwegian.issues).toContainEqual({
+      code: "ending_not_translated",
+      severity: "warning",
+      params: { subject: "ending", languages: "nb-NO" },
+    });
+    // Only the file's own texts count as missing, in both languages alike.
+    expect(missingIn(norwegian.issues)).toBe(missingIn(austrian.issues));
+  });
+
+  test("keeps a fully translated language on when the file's end message has no translation", async () => {
+    // Qualtrics exports never hold the end message's translations, even in a fully translated survey.
+    const { document, issues } = await assembleFixture("multilang-en-de.qsf", {
+      editSurvey: (survey) => {
+        survey.texts.set("s99", {
+          format: "rich",
+          questionRef: null,
+          byLanguage: new Map([["en-US", "Thanks for taking part!"]]),
+        });
+        survey.endMessageKey = "s99";
+      },
+    });
+
+    expect(document.languages.every((language) => language.enabled)).toBe(true);
+    expect(document.endings).toMatchObject([
+      {
+        type: "endScreen",
+        headline: {
+          "en-US": "Thanks for taking part!",
+          "de-DE": deDE.templates.default_ending_card_headline,
+        },
+      },
+    ]);
+    expect(issues.map((issue) => issue.code)).toEqual(["ending_not_translated"]);
+  });
+
+  test("copies every language, leaving a missing translation empty and its language turned off", async () => {
     const { document, issues } = await assembleFixture("labels-and-languages.qsf");
     const q2 = element(document, "Q2");
 
@@ -99,13 +183,34 @@ describe("assembleQsfDraft", () => {
       "zh-Hans-CN",
       "zh-Hant-TW",
     ]);
-    expect(q2.headline["zh-Hant-TW"]).toBe("Rate each drink");
+    expect(q2.headline["en-US"]).toBe("Rate each drink");
+    expect(q2.headline["zh-Hant-TW"]).toBe("");
+    expect(document.languages.find((language) => language.code === "en-US")?.enabled).toBe(true);
+    expect(document.languages.find((language) => language.code === "zh-Hant-TW")?.enabled).toBe(false);
     expect(issues).toContainEqual({
-      code: "translation_fallback",
+      code: "translation_missing",
       severity: "warning",
       params: { language: "zh-Hant-TW", count: 7 },
     });
     expect(checkQsfDraft(document)).toEqual([]);
+  });
+
+  test("names the options the AI left out", async () => {
+    const { issues } = await assembleFixture("labels-and-languages.qsf", {
+      editPlan: (plan) => {
+        const q1 = plan.questions.get("QID1");
+        // Its two "N/A" choices, the way a plan that left them out would list them.
+        if (q1) q1.leftOut = q1.choices.filter((_, index) => index % 2 === 1).map((choice) => choice.key);
+      },
+    });
+
+    expect(issues).toContainEqual({
+      code: "options_left_out",
+      severity: "warning",
+      questionTag: "Q1",
+      questionRef: "QID1",
+      params: { count: 2, options: "N/A, N/A" },
+    });
   });
 
   test("numbers duplicate labels per language, so the survey service accepts them", async () => {
@@ -154,6 +259,28 @@ describe("assembleQsfDraft", () => {
     const labels = items.map((item) => item.label["en-US"]);
     expect(labels).toEqual(["N/A", "N/A (3)", "N/A (2)", "N/A (4)"]);
     expect(new Set(labels).size).toBe(labels.length);
+  });
+
+  test("leaves a missing translation empty rather than numbering it as a repeat", () => {
+    const items = ["X", "X", "", ""].map((german, index) => ({
+      id: String(index),
+      label: { "en-US": `Option ${index}`, "de-DE": german },
+    }));
+    const languages = ["en-US", "de-DE"].map((code, index) => ({
+      language: {
+        id: code,
+        code,
+        alias: null,
+        workspaceId: WORKSPACE_ID,
+        createdAt: new Date(0),
+        updatedAt: new Date(0),
+      },
+      default: index === 0,
+      enabled: true,
+    }));
+
+    expect(disambiguateLabels(items, ["en-US", "de-DE"], languages)).toBe(true);
+    expect(items.map((item) => item.label["de-DE"])).toEqual(["X", "X (2)", "", ""]);
   });
 
   test("numbers two hundred repeats of one label in linear time", () => {

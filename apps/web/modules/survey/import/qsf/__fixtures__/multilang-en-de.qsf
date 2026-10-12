@@ -268,11 +268,12 @@
         "SurveyProtection": "PublicSurvey",
         "ProgressBarDisplay": "None",
         "PartialData": "+1 week",
-        "EOSMessage": "Danke! / Thank you!",
+        "EOSMessage": "MS_fixture000000000",
         "EOSRedirectURL": "",
         "NextButton": "→",
         "PreviousButton": "←",
-        "ShowExportTags": "false"
+        "ShowExportTags": "false",
+        "EOSMessageLibrary": "UR_fixture000000000"
       }
     },
     {

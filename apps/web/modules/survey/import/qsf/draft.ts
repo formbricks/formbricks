@@ -58,7 +58,7 @@ export type TQsfDraftElement = TDraftElementBase &
   );
 
 export type TQsfDraftEnding =
-  | { id: string; type: "endScreen"; headline: TQsfLocaleText }
+  | { id: string; type: "endScreen"; headline: TQsfLocaleText; subheader?: TQsfLocaleText }
   | { id: string; type: "redirectToUrl"; url: string; label: string };
 
 /**

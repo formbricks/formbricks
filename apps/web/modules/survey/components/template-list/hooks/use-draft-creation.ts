@@ -8,6 +8,7 @@ import type { TV3CreateSurveyBody } from "@/app/api/v3/surveys/schemas";
 import {
   INITIAL_AI_CREATE_STATE,
   type TAiCreateSourceKind,
+  type TDraftPayload,
   aiCreateReducer,
 } from "@/modules/survey/components/template-list/lib/ai-create-machine";
 import {
@@ -20,23 +21,27 @@ import { useBeforeUnloadPrompt } from "@/modules/ui/hooks/use-before-unload-prom
  * What a draft source streams: the generation stream's events, an import's `progress` stages, and the
  * source's `report` on `done`. The hook acts on `partial`, `done` and `error` only.
  */
-export type TDraftStreamEvent<TReport = never> =
+export type TDraftStreamEvent<TReport = never, TPayload extends TDraftPayload = TV3CreateSurveyBody> =
   | { type: "start"; requestId?: string }
   | { type: "progress"; stage: string }
   | { type: "partial"; seq?: number; draft: TSurveyGenerationDraftSnapshot }
-  | { type: "done"; payload: TV3CreateSurveyBody; report?: TReport | null }
+  | { type: "done"; payload: TPayload; report?: TReport | null }
   | { type: "error"; code: string; detail?: string };
 
-export type TDraftStreamHandlers<TReport = never> = {
+export type TDraftStreamHandlers<TReport = never, TPayload extends TDraftPayload = TV3CreateSurveyBody> = {
   signal: AbortSignal;
-  onEvent: (event: TDraftStreamEvent<TReport>) => void;
+  onEvent: (event: TDraftStreamEvent<TReport, TPayload>) => void;
 };
 
-export type UseDraftCreationParams<TInput, TReport = never> = {
+export type UseDraftCreationParams<
+  TInput,
+  TReport = never,
+  TPayload extends TDraftPayload = TV3CreateSurveyBody,
+> = {
   /** Run the source: stream events until `done` or `error`. Throws a `V3ApiError` on a pre-stream failure. */
-  stream: (input: TInput, handlers: TDraftStreamHandlers<TReport>) => Promise<void>;
+  stream: (input: TInput, handlers: TDraftStreamHandlers<TReport, TPayload>) => Promise<void>;
   /** Persist the reviewed payload; returns the created survey id. */
-  create: (payload: TV3CreateSurveyBody) => Promise<{ id: string }>;
+  create: (payload: TPayload) => Promise<{ id: string }>;
   /** Whether the current input is worth sending at all (prompt length, a file present, AI on). */
   canSubmit: boolean;
   /** Labels the draft on screen: the prompt text, or the file name. */
@@ -50,16 +55,20 @@ export type UseDraftCreationParams<TInput, TReport = never> = {
  * the rAF-coalesced snapshot buffer, abort wiring, the unload guard and error-code mapping. The
  * prompt-specific hook and the import hook each pass their own `stream`, `create` and `canSubmit`.
  */
-export const useDraftCreation = <TInput, TReport = never>({
+export const useDraftCreation = <
+  TInput,
+  TReport = never,
+  TPayload extends TDraftPayload = TV3CreateSurveyBody,
+>({
   stream,
   create,
   canSubmit,
   getSourceLabel,
   sourceKind,
   onSuccess,
-}: UseDraftCreationParams<TInput, TReport>) => {
+}: UseDraftCreationParams<TInput, TReport, TPayload>) => {
   const { t } = useTranslation();
-  const [state, dispatch] = useReducer(aiCreateReducer<TReport>, INITIAL_AI_CREATE_STATE);
+  const [state, dispatch] = useReducer(aiCreateReducer<TReport, TPayload>, INITIAL_AI_CREATE_STATE);
   const [isNavigatingToEditor, setIsNavigatingToEditor] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   /** The input the running generation was started with, so Regenerate can replay it. */
@@ -122,7 +131,7 @@ export const useDraftCreation = <TInput, TReport = never>({
   );
 
   const createSurveyMutation = useMutation({
-    mutationFn: (payload: TV3CreateSurveyBody) => create(payload),
+    mutationFn: (payload: TPayload) => create(payload),
     onSuccess: (survey) => {
       setIsNavigatingToEditor(true);
       onSuccess(survey.id);
@@ -220,6 +229,16 @@ export const useDraftCreation = <TInput, TReport = never>({
     dispatch({ type: "EDIT_PROMPT" });
   }, [discardQueuedSnapshot]);
 
+  /**
+   * Back to a clean slate, keeping nothing. Unlike Edit prompt, which keeps a finished draft to return
+   * to, this is for a source with no way back: a new file replaces the old one.
+   */
+  const reset = useCallback(() => {
+    abortControllerRef.current?.abort();
+    discardQueuedSnapshot();
+    dispatch({ type: "RESET" });
+  }, [discardQueuedSnapshot]);
+
   const handleOpenInEditor = useCallback(() => {
     if (state.status !== "review" || !state.payload) return;
 
@@ -252,6 +271,7 @@ export const useDraftCreation = <TInput, TReport = never>({
     regenerate,
     handleStop,
     handleEditPrompt,
+    reset,
     handleBackToDraft,
     handleOpenInEditor,
     clearError,
