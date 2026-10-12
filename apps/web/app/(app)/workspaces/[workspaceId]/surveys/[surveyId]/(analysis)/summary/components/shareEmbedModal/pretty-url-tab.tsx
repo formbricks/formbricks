@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";
+import { copyToClipboard } from "@/lib/utils/clipboard";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { removeSurveySlugAction, updateSurveySlugAction } from "@/modules/survey/slug/actions";
 import { Button } from "@/modules/ui/components/button";
@@ -118,11 +119,14 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
     }
   };
 
-  const handleCopyUrl = () => {
+  const handleCopyUrl = async () => {
     if (!survey.slug) return;
     const prettyUrl = `${publicDomain}/p/${survey.slug}`;
-    navigator.clipboard.writeText(prettyUrl);
-    toast.success(t("common.copied_to_clipboard"));
+    if (await copyToClipboard(prettyUrl)) {
+      toast.success(t("common.copied_to_clipboard"));
+    } else {
+      toast.error(t("common.failed_to_copy_to_clipboard"));
+    }
   };
 
   return (

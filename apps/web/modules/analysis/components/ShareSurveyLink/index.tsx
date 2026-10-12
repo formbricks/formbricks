@@ -5,6 +5,7 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { copyToClipboard } from "@/lib/utils/clipboard";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
 import { Button } from "@/modules/ui/components/button";
 import { getSurveyUrl } from "../../utils";
@@ -70,9 +71,12 @@ export const ShareSurveyLink = ({
           variant="secondary"
           title={t("workspace.surveys.copy_survey_link_to_clipboard")}
           aria-label={t("workspace.surveys.copy_survey_link_to_clipboard")}
-          onClick={() => {
-            navigator.clipboard.writeText(surveyUrl);
-            toast.success(t("common.copied_to_clipboard"));
+          onClick={async () => {
+            if (await copyToClipboard(surveyUrl)) {
+              toast.success(t("common.copied_to_clipboard"));
+            } else {
+              toast.error(t("common.failed_to_copy_to_clipboard"));
+            }
           }}>
           {t("common.copy")}
           <Copy />
