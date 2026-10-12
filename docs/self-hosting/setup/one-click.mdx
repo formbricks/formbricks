@@ -42,9 +42,13 @@ For other operating systems or a more customized installation, please refer to t
 
 - An Ubuntu Virtual Machine with SSH access.
 
-- A custom domain with an **A record** pointing to your server.
+- A custom domain with an **A and/or AAAA record** pointing to your server. If the domain has an AAAA record, it
+  must point to this server's IPv6 address. Remove any AAAA record left over from a previous host or added by
+  your DNS provider by default.
 
-- Ports **80** and **443** are open in your VM's Security Group, allowing Traefik to create an SSL certificate.
+- Ports **80** and **443** are open in your VM's Security Group and host firewall. Traefik uses port 443 to get the
+  SSL certificate from Let's Encrypt and port 80 to redirect HTTP to HTTPS. If your domain has an AAAA record,
+  open both ports for IPv6 as well.
 
 ### Deployment
 
@@ -465,13 +469,17 @@ If you encounter any issues, you can check the logs of the containers with:
 
 If you encounter any issues, consider the following steps:
 
-- **Inbound Rules**: Make sure you have added inbound rules for Port 80 and 443 in your VM's Security Group.
+- **Inbound Rules**: Make sure you have added inbound rules for ports 80 and 443 in your VM's Security Group and
+  host firewall: for IPv4 and, if your domain has an AAAA record, for IPv6. Some cloud firewalls, such as AWS
+  Security Groups, need a separate IPv6 rule (source `::/0`).
 
-- **A Record**: Verify that you have set up an A record for your domain, pointing to your VM's IP address.
+- **A/AAAA Records**: Verify that your domain's A record points to your VM's IPv4 address and, if you have one,
+  that its AAAA record points to your VM's IPv6 address. Let's Encrypt connects over IPv6 first when an AAAA
+  record exists, so an AAAA record pointing to another server makes certificate issuance fail even when the A
+  record is correct. If your domain has only an AAAA record, port 443 must be reachable over IPv6.
 
 - **Check Docker Instances**: Run `docker ps` to check the status of the Docker instances.
 
 - **Check Formbricks Logs**: Run `cd formbricks && docker compose logs` to check the logs of the Formbricks stack.
 
-If you have any questions or require help, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃[
-](https://formbricks.com/docs/developer-docs/rest-api)
+If you have any questions or require help, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃
