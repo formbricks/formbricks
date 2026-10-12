@@ -1674,6 +1674,63 @@ describe("getResponsesForSummary", () => {
       })
     );
   });
+
+  test("getResponsesForSummary pages through every response once when ids differ from createdAt order", async () => {
+    vi.mocked(getSurvey).mockResolvedValue({ id: "survey-1" } as unknown as TSurvey);
+
+    // Id order deliberately disagrees with createdAt order, and three rows share one timestamp.
+    const minute = (m: number) => new Date(Date.UTC(2026, 0, 1, 0, m));
+    const rows = [
+      { id: "a", createdAt: minute(1) },
+      { id: "b", createdAt: minute(5) },
+      { id: "c", createdAt: minute(3) },
+      { id: "d", createdAt: minute(5) },
+      { id: "e", createdAt: minute(2) },
+      { id: "f", createdAt: minute(5) },
+      { id: "g", createdAt: minute(4) },
+    ].map((row) => ({
+      ...row,
+      data: {},
+      updatedAt: row.createdAt,
+      contact: null,
+      contactAttributes: {},
+      language: "en",
+      ttc: {},
+      finished: true,
+    }));
+
+    // In-memory stand-in for Prisma: honours `where.id.lt`, `orderBy` (createdAt desc, id desc),
+    // `cursor` + `skip` (rows after the cursor row in that order) and `take`.
+    vi.mocked(prisma.response.findMany).mockImplementation((async (args: {
+      where?: { id?: { lt?: string } };
+      cursor?: { id: string };
+      skip?: number;
+      take?: number;
+    }) => {
+      const idBelow = args.where?.id?.lt;
+      const ordered = rows
+        .filter((row) => idBelow === undefined || row.id < idBelow)
+        .sort((x, y) => y.createdAt.getTime() - x.createdAt.getTime() || y.id.localeCompare(x.id));
+      const start = args.cursor ? ordered.findIndex((row) => row.id === args.cursor!.id) : 0;
+      return ordered.slice(
+        start + (args.skip ?? 0),
+        start + (args.skip ?? 0) + (args.take ?? ordered.length)
+      );
+    }) as never);
+
+    // Same paging loop as getSurveySummary, with a page size small enough to cross several boundaries.
+    const pageSize = 2;
+    const seen: string[] = [];
+    let cursor: string | undefined;
+    for (let page = 0; page < 10; page++) {
+      const batch = await getResponsesForSummary("survey-1", pageSize, 0, undefined, cursor);
+      seen.push(...batch.map((response) => response.id));
+      if (batch.length < pageSize) break;
+      cursor = batch.at(-1)!.id;
+    }
+
+    expect(seen).toEqual(["f", "d", "b", "g", "c", "e", "a"]);
+  });
 });
 
 describe("Address and ContactInfo question types", () => {
