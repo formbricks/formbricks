@@ -63,11 +63,15 @@ export const buildHiddenSurveyWhere = (ctx: TSurveyActorContext): Prisma.SurveyW
   };
 };
 
+/** The roles `organization.manage` grants, which see every survey in the organization. */
+const ORGANIZATION_ADMIN_ROLES: ReadonlySet<TOrganizationRole> = new Set(["owner", "manager"]);
+
 /**
  * `buildHiddenSurveyWhere` for one survey and one organization member, for a caller that has already
  * read whether the survey is effectively restricted (`effectivelyRestrictedWhere`, `false` while
  * visibility isn't enforced) and needs the decision per person: an effectively restricted survey is
- * hidden from everyone but its owner and the organization's administrators.
+ * hidden from everyone but its owner and the organization's administrators. Fails closed: any role but
+ * owner or manager, including one added later, is hidden from it.
  */
 export const isSurveyHiddenFromMember = ({
   role,
@@ -79,7 +83,7 @@ export const isSurveyHiddenFromMember = ({
   userId: string;
   ownerId: string | null;
   effectivelyRestricted: boolean;
-}>): boolean => effectivelyRestricted && role === "member" && ownerId !== userId;
+}>): boolean => effectivelyRestricted && !ORGANIZATION_ADMIN_ROLES.has(role) && ownerId !== userId;
 
 /**
  * The same rule for a query spanning several organizations (the account-level notification settings),

@@ -197,6 +197,12 @@ describe("isSurveyHiddenFromMember", () => {
     expect(isSurveyHiddenFromMember({ ...restricted, ownerId: null })).toBe(true);
   });
 
+  test("fails closed: hides it from any role but owner and manager, billing included", () => {
+    expect(isSurveyHiddenFromMember({ ...restricted, role: "billing" })).toBe(true);
+    // A role added to the enum later is hidden until this rule says otherwise.
+    expect(isSurveyHiddenFromMember({ ...restricted, role: "auditor" as never })).toBe(true);
+  });
+
   test("never from its owner or the organization's owners and managers", () => {
     expect(isSurveyHiddenFromMember({ ...restricted, ownerId: "u-1" })).toBe(false);
     expect(isSurveyHiddenFromMember({ ...restricted, role: "owner" })).toBe(false);
