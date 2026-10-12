@@ -2,6 +2,7 @@
 
 import type React from "react";
 import type { ReactNode } from "react";
+import { cn } from "@/lib/cn";
 import type { TAiDraftState } from "@/modules/survey/components/template-list/lib/ai-draft-reducer";
 import { AiDraftPreview } from "./ai-draft-preview";
 
@@ -17,6 +18,8 @@ type DraftReviewPanelProps = {
   /** The status line / progress ladder while generating. */
   status?: ReactNode;
   scrollContainerRef?: React.RefObject<HTMLElement | null>;
+  /** Extra classes for the list's wrapper: a host whose body scrolls gives the list a minimum height. */
+  listClassName?: string;
 };
 
 /**
@@ -31,11 +34,12 @@ export const DraftReviewPanel = ({
   report,
   status,
   scrollContainerRef,
+  listClassName,
 }: Readonly<DraftReviewPanelProps>) => (
   <>
     <div className="shrink-0">{source}</div>
     {facts ? <div className="shrink-0">{facts}</div> : null}
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className={cn("flex min-h-0 flex-1 flex-col", listClassName)}>
       <AiDraftPreview
         draft={draft}
         isGenerating={isGenerating}
