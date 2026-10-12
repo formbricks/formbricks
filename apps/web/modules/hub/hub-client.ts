@@ -13,10 +13,14 @@ import { HubApiError } from "./utils";
  * `Error` from `fetch` and passes through untouched, so `getHubErrorHint` can still walk its cause chain.
  * So does a 2xx that failed to parse: it has a status, but the status is not what went wrong.
  */
-const toHubApiError = (error: unknown, response: Response | undefined): unknown =>
-  response && !response.ok
-    ? new HubApiError(response.status, error === "" ? undefined : error, response.headers)
-    : error;
+const toHubApiError = (error: unknown, response: Response | undefined): unknown => {
+  if (!response || response.ok) return error;
+
+  // An empty error body arrives as "", which says nothing; treat it as no body.
+  const body = error === "" ? undefined : error;
+
+  return new HubApiError(response.status, body, response.headers);
+};
 
 /**
  * The SDK's own client — retries, per-attempt timeout and auth all come from `createHubClient` — plus the
