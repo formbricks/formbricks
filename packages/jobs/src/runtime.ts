@@ -111,59 +111,57 @@ export const startJobsRuntime = async ({
   let closeRuntimePromise: Promise<void> | undefined;
 
   const closeRuntime = async (): Promise<void> => {
-    if (!closeRuntimePromise) {
-      closeRuntimePromise = (async () => {
-        removeProcessListener("SIGTERM", handleSigterm);
-        removeProcessListener("SIGINT", handleSigint);
+    closeRuntimePromise ??= (async () => {
+      removeProcessListener("SIGTERM", handleSigterm);
+      removeProcessListener("SIGINT", handleSigint);
 
-        const closeConnectionSafely = async (connection: IORedis, connectionName: string): Promise<void> => {
-          try {
-            await closeRedisConnection(connection);
-          } catch (error) {
-            logger.error({ err: error, connectionName }, "Failed to close BullMQ Redis connection cleanly");
-          }
-        };
-
-        const closeWorkerSafely = async (
-          worker: Worker,
-          queueName: TJobsQueueName,
-          workerNumber: number
-        ): Promise<void> => {
-          try {
-            await worker.close();
-          } catch (error) {
-            logger.error({ err: error, queueName, workerNumber }, "Failed to close BullMQ worker cleanly");
-          }
-        };
-
-        await Promise.all([
-          ...workers.map((worker, index) => closeWorkerSafely(worker, JOBS_QUEUE_NAME, index + 1)),
-          ...DEDICATED_JOBS_QUEUE_NAMES.flatMap((queueName) => {
-            const worker = dedicatedWorkers[queueName];
-            return worker ? [closeWorkerSafely(worker, queueName, 1)] : [];
-          }),
-        ]);
-
-        if (queues) {
-          await Promise.all(
-            Object.entries(queues).map(async ([queueName, queue]) => {
-              try {
-                await queue.close();
-              } catch (error) {
-                logger.error({ err: error, queueName }, "Failed to close BullMQ queue cleanly");
-              }
-            })
-          );
+      const closeConnectionSafely = async (connection: IORedis, connectionName: string): Promise<void> => {
+        try {
+          await closeRedisConnection(connection);
+        } catch (error) {
+          logger.error({ err: error, connectionName }, "Failed to close BullMQ Redis connection cleanly");
         }
+      };
 
-        await Promise.all([
-          closeConnectionSafely(producerConnection, "producer"),
-          ...workerConnections.map(({ connection, connectionName }) =>
-            closeConnectionSafely(connection, connectionName)
-          ),
-        ]);
-      })();
-    }
+      const closeWorkerSafely = async (
+        worker: Worker,
+        queueName: TJobsQueueName,
+        workerNumber: number
+      ): Promise<void> => {
+        try {
+          await worker.close();
+        } catch (error) {
+          logger.error({ err: error, queueName, workerNumber }, "Failed to close BullMQ worker cleanly");
+        }
+      };
+
+      await Promise.all([
+        ...workers.map((worker, index) => closeWorkerSafely(worker, JOBS_QUEUE_NAME, index + 1)),
+        ...DEDICATED_JOBS_QUEUE_NAMES.flatMap((queueName) => {
+          const worker = dedicatedWorkers[queueName];
+          return worker ? [closeWorkerSafely(worker, queueName, 1)] : [];
+        }),
+      ]);
+
+      if (queues) {
+        await Promise.all(
+          Object.entries(queues).map(async ([queueName, queue]) => {
+            try {
+              await queue.close();
+            } catch (error) {
+              logger.error({ err: error, queueName }, "Failed to close BullMQ queue cleanly");
+            }
+          })
+        );
+      }
+
+      await Promise.all([
+        closeConnectionSafely(producerConnection, "producer"),
+        ...workerConnections.map(({ connection, connectionName }) =>
+          closeConnectionSafely(connection, connectionName)
+        ),
+      ]);
+    })();
 
     await closeRuntimePromise;
   };
