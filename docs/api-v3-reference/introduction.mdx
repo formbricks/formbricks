@@ -113,6 +113,27 @@ curl "https://app.formbricks.com/api/v3/feedbackRecords?tenant_id=<datasetId>&fi
 Pagination is keyset: pass the response's `next_cursor` back as `cursor` with the same `sort` and `order`. It is
 absent on the last page.
 
+## Custom CSS
+
+Survey CSS travels as `customCss` on the survey resource (`POST /api/v3/surveys`, `GET` and
+`PATCH /api/v3/surveys/{surveyId}`); the CSS shared by every survey in a workspace has its own resource,
+`GET` and `PATCH /api/v3/workspaces/{workspaceId}/custom-css`. Both take and return **source** —
+`{ "light": "...", "dark": "..." }`, where light applies in both appearances and dark adds overrides. The server
+compiles it on every write and never accepts compiled output.
+
+- **Preview first.** `POST /api/v3/surveys/validate` with `operation: "customCss"` returns the compiled result and
+  the constructs it removed (`warnings`, each with a stable `code` and a line and column), without saving
+  anything.
+- **Removed constructs are warnings, not errors.** `@import`, `@font-face`, `url()` and the like are dropped and
+  the save succeeds; writes return them as a top-level `warnings` array beside `data`. Syntax errors and size or
+  complexity limits are a `422` with `details.errors`, and the saved CSS stays in effect.
+- **Who may write.** Survey CSS: anyone who may edit that survey. Workspace CSS: organization owners and
+  managers, or an API key with `manage` access to the workspace — `write` is not enough.
+- **Plan.** On Formbricks Cloud, adding or editing CSS needs the Scale plan (`403`
+  `custom_css_plan_required`). Clearing it never does, and a `PATCH` that sends the stored CSS back unchanged is
+  not an edit.
+- **Undo.** The workspace resource keeps one `previous` revision; send its source back to restore it.
+
 ## Feedback
 
 Beta feedback goes to your Formbricks contact or to [hola@formbricks.com](mailto:hola@formbricks.com).

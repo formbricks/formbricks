@@ -178,6 +178,15 @@ export const deleteMembership = async (
         },
       });
 
+      // A pending invite is only as trustworthy as the member who sent it, so once the creator is out
+      // of the organization it must stop granting access. Expired rather than deleted: admins still see
+      // it in the invite list and can resend it on purpose.
+      const now = new Date();
+      await tx.invite.updateMany({
+        where: { organizationId, creatorId: userId, expiresAt: { gt: now } },
+        data: { expiresAt: now },
+      });
+
       return teamMemberships;
     });
 

@@ -55,6 +55,8 @@ export const selectSurvey = {
   slug: true,
   customHeadScripts: true,
   customHeadScriptsMode: true,
+  // ENG-2949: the editor round-trips it; the save path reads only its source and reprocesses on change.
+  customCss: true,
   languages: {
     select: {
       default: true,

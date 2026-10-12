@@ -18,6 +18,10 @@ In the left sidebar, open **Settings → Workspace → Appearance**:
 
 ![The Appearance settings, with the theme editor and a live preview](/images/platform/features/styling-theme/appearance.webp)
 
+### Light And Dark
+
+Select **Dark** at the top of the styling settings to set the dark palette used when your app asks for dark mode. Empty fields show the derived color as a placeholder; the brand color is the same in light and dark. Sizes, fonts and layout are shared by both. Link surveys always render light, so **Background styling** (which only applies to link surveys) is unavailable while **Dark** is selected, and the preview's **Link Survey** option is disabled. For a dark link survey, choose a dark background and light text colors in **Light**; the **Cardless** card arrangement lets the background fill the page. You can also switch the preview between light and dark with the sun and moon toggle under it. See [Dark Mode](/surveys/website-app-surveys/framework-guides#dark-mode).
+
 ## Survey styling
 
 The Survey styling section gives you granular control over every text and input element in your survey. Expand the **Survey styling** panel to find collapsible sub-sections for Headlines & Descriptions, Inputs, Buttons, and Options.
@@ -147,3 +151,5 @@ In the survey editor, a **Styling** tab will appear where you can overwrite the 
 Under the hood, every styling property maps to a CSS variable prefixed with `--fb-`. For App & Website Surveys, you can override these directly in your global CSS file (e.g., `globals.css`) by targeting the `#fbjs` selector.
 
 See the full [CSS Variables Reference](/surveys/general-features/overwrite-styling#overwrite-css-styles-for-app-&-website-surveys) in the Custom Styling guide.
+
+To go beyond the theme editor, add [Custom CSS](/surveys/general-features/custom-css) for the whole workspace in **Appearance**, or for a single survey in its **Styling** tab.

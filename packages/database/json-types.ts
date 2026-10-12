@@ -2,6 +2,7 @@
 import { type TActionClassNoCodeConfig } from "@formbricks/types/action-classes";
 import type { TChartConfig, TChartQuery, TWidgetLayout } from "@formbricks/types/analysis";
 import type { TOrganizationAccess } from "@formbricks/types/api-key";
+import type { TCustomCssStored } from "@formbricks/types/custom-css";
 import { type TEmbeddedDataDefaultValue } from "@formbricks/types/embedded-data";
 import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
 import { type TIntegrationConfig } from "@formbricks/types/integration";
@@ -75,6 +76,7 @@ declare global {
     export type UserNotificationSettings = TUserNotificationSettings;
     export type SegmentFilter = TBaseFilters;
     export type Styling = TWorkspaceStyling;
+    export type CustomCssStored = TCustomCssStored;
     export type Logo = TLogo;
     export type Locale = TUserLocale;
     export type SurveyFollowUpTrigger = TSurveyFollowUpTrigger;

@@ -1,10 +1,10 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { Workspace } from "@formbricks/database/prisma-browser";
 import { TTemplate, TTemplateFilter } from "@formbricks/types/templates";
 import { cn } from "@/lib/cn";
 import { replacePresetPlaceholders } from "@/lib/utils/templates";
+import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { Button } from "@/modules/ui/components/button";
 import { TemplateTags } from "./template-tags";
 
@@ -13,7 +13,7 @@ interface TemplateProps {
   activeTemplate: TTemplate | null;
   setActiveTemplate: (template: TTemplate) => void;
   onTemplateClick?: (template: TTemplate) => void;
-  workspace: Workspace;
+  workspace: TWorkspaceWithoutCustomCss;
   createSurvey: (template: TTemplate) => void;
   loading: boolean;
   selectedFilter: TTemplateFilter[];

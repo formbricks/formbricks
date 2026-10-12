@@ -1,3 +1,4 @@
+import * as Appearance from "@/lib/common/appearance";
 import { CommandQueue, CommandType } from "@/lib/common/command-queue";
 import {
   type TFormbricksEventName,
@@ -17,7 +18,12 @@ import { type TTrackProperties } from "@/types/survey";
 
 const queue = CommandQueue.getInstance();
 
-const setup = async (setupConfig: TConfigInput): Promise<void> => {
+const setup = async (setupConfigWithAppearance: TConfigInput): Promise<void> => {
+  // Appearance is local, not part of the persisted setup config, and must be in place before the
+  // first survey renders, so it is applied here rather than through the queue.
+  const { appearance, ...setupConfig } = setupConfigWithAppearance;
+  if (appearance !== undefined) setAppearance(appearance);
+
   // If the initConfig has a userId or attributes, we need to use the legacy init
 
   if (
@@ -160,6 +166,19 @@ const setNonce = (nonce: string | undefined): void => {
   globalThis.window.formbricksSurveys?.setNonce?.(nonce);
 };
 
+/**
+ * Set how surveys render: "light" (default), "dark", or "system" to follow the browser setting.
+ * Not queued, so it works before setup(), and an open survey switches in place.
+ * @param appearance - "light" | "dark" | "system"
+ */
+const setAppearance = (appearance: Appearance.TAppearance): void => {
+  if (!Appearance.setAppearance(appearance)) {
+    console.warn(
+      `🧱 Formbricks - Warning: Unknown appearance "${String(appearance)}", keeping the current one`
+    );
+  }
+};
+
 const formbricks = {
   /** @deprecated Use setup() instead. This method will be removed in a future version */
   init: (initConfig: TLegacyConfigInput) => setup(initConfig as unknown as TConfigInput),
@@ -173,6 +192,7 @@ const formbricks = {
   logout,
   registerRouteChange,
   setNonce,
+  setAppearance,
   setEmbeddedData,
   clearEmbeddedData,
   on,

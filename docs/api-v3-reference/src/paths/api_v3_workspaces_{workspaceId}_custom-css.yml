@@ -1,0 +1,188 @@
+get:
+  operationId: getWorkspaceCustomCssV3
+  summary: Read workspace custom CSS
+  description: >
+    Returns the workspace's shared survey CSS as editable **source** (light and dark), the one
+    recoverable previous revision, whether the stored CSS is being delivered to respondents
+    (`status`), and whether this caller may change it (`canEdit`, `planAllowed`). Compiled output is
+    never returned here. Requires read access to the workspace. Session cookie, `x-api-key`, or a
+    Bearer token.
+  tags:
+    - V3 Workspaces
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdPath.yml
+  responses:
+    "200":
+      description: Workspace custom CSS
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/WorkspaceCustomCssResource.yml
+          example:
+            data:
+              workspaceId: clxx1234567890123456789012
+              customCss:
+                light: '[data-fb-part="button-primary"] { border-radius: 999px; }'
+                dark: null
+              previous: null
+              status: ok
+              canEdit: true
+              planAllowed: true
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+patch:
+  operationId: patchWorkspaceCustomCssV3
+  summary: Save or clear workspace custom CSS
+  description: >
+    Saves or clears the workspace's shared survey CSS. `customCss` replaces both fields; `null`
+    clears all of it. The source is processed by the same processor every save path uses: constructs
+    it removes come back as top-level `warnings`, and CSS it rejects is a **422** that leaves the saved
+    CSS in effect. The replaced value becomes `previous`, the one recoverable revision — restore it by
+    sending its source back. Unchanged source writes nothing.
+
+
+    Workspace CSS reaches every survey in the workspace, so writing it is narrower than writing a
+    survey: **organization owners and managers** for signed-in users (session or OAuth), and a
+    **`manage`** grant on this workspace for API keys — a Read & write grant is refused with **403**.
+    On Formbricks Cloud, adding or editing needs the Scale plan (**403**
+    `custom_css_plan_required`); clearing never does. Successful changes refresh the cached
+    configuration the SDKs receive (they pick it up on their next configuration fetch). Saves that
+    add or edit CSS count against a custom CSS budget of 60 per minute per user or API key, shared
+    with custom CSS validation and with survey writes that add or edit custom CSS; beyond it they
+    return **429**. Re-saving the same CSS and clearing it are never counted.
+  tags:
+    - V3 Workspaces
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/PatchWorkspaceCustomCssRequest.yml
+        examples:
+          save:
+            summary: Save light and dark CSS
+            value:
+              customCss:
+                light: '[data-fb-part="button-primary"] { border-radius: 999px; }'
+                dark: '#fbjs[data-appearance="dark"] { --acme-ink: #e6eef5; }'
+          clear:
+            summary: Clear all workspace CSS
+            value:
+              customCss: null
+  responses:
+    "200":
+      description: Workspace custom CSS saved (or unchanged)
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/WorkspaceCustomCssResource.yml
+              warnings:
+                $ref: ../components/schemas/CustomCssWarnings.yml
+          example:
+            data:
+              workspaceId: clxx1234567890123456789012
+              customCss:
+                light: '[data-fb-part="button-primary"] { border-radius: 999px; }'
+                dark: null
+              previous: null
+              status: ok
+              canEdit: true
+              planAllowed: true
+            warnings: []
+    "400":
+      description: >-
+        Bad Request — malformed body, a missing `customCss` key or a missing `light` / `dark` key, an
+        unsupported field (including `compiled` or `processorVersion`), or a field that is neither a
+        string nor null. Every offending field is itemized in `invalid_params`. CSS over the size
+        budget is a **422** `source_too_large`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      description: >-
+        Forbidden — no access to the workspace (404 not used; avoids existence leak), a principal
+        that may not write workspace CSS (`code: forbidden`), or an addition or edit on an
+        organization without the Scale plan (`code: custom_css_plan_required`).
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "422":
+      description: >-
+        Unprocessable Content — the CSS could not be processed (a syntax error, the 100 000-byte
+        workspace budget, a complexity limit). `invalid_params` names `customCss.light` /
+        `customCss.dark`; `details.errors` carries the processor's located errors. Nothing was saved.
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+          example:
+            title: Unprocessable Content
+            status: 422
+            detail: Custom CSS failed validation
+            code: unprocessable_content
+            requestId: req_01j9zq7w3k2m4n5p6r7s8t9v0w
+            invalid_params:
+              - name: customCss.light
+                reason: Unexpected end of input (line 3, column 1)
+            details:
+              errors:
+                - code: syntax_error
+                  scope: workspace
+                  appearance: light
+                  line: 3
+                  column: 1
+                  reason: Unexpected end of input
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
