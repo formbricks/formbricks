@@ -63,11 +63,18 @@ function classifyOrganizationAIFailure(
     organizationId,
     aiConfig,
     message,
-  }: { organizationId: string; aiConfig: TOrganizationAIConfig; message: string }
+    call,
+  }: {
+    organizationId: string;
+    aiConfig: TOrganizationAIConfig;
+    message: string;
+    /** The call's own abort signal and timeout, which tell a cancellation from a timeout. */
+    call: TAICallControls;
+  }
 ): never {
   // A cancelled generation is the user pressing Stop or closing the tab, not an incident: it must
   // not be logged at error level and it carries no provider status to map.
-  if (isAbortError(error)) throw error;
+  if (isCallerAbort(error, call)) throw error;
 
   // Running out of output budget is a size problem every caller maps to a user-facing message, not a
   // provider incident. Warn with the token counts — they tell a too-large request apart from
@@ -82,20 +89,28 @@ function classifyOrganizationAIFailure(
   }
 
   const providerError = classifyAIProviderError(error);
-  logger.error(
-    {
-      organizationId,
-      isInstanceConfigured: aiConfig.isInstanceConfigured,
-      errorCode: getAIErrorCode(error),
-      ...(error instanceof AIConfigurationError ? { configuration: getConfigurationDetails(error) } : {}),
-      statusCode: providerError?.statusCode,
-      isQuotaExhausted: providerError?.isQuotaExhausted,
-      isRetryable: providerError?.isRetryable,
-      isAuthFailure: providerError?.isAuthFailure,
-      ...describeAIError(error),
-    },
-    message
-  );
+  const fields = {
+    organizationId,
+    isInstanceConfigured: aiConfig.isInstanceConfigured,
+    errorCode: getAIErrorCode(error),
+    ...(error instanceof AIConfigurationError ? { configuration: getConfigurationDetails(error) } : {}),
+    statusCode: providerError?.statusCode,
+    isQuotaExhausted: providerError?.isQuotaExhausted,
+    isRetryable: providerError?.isRetryable,
+    isAuthFailure: providerError?.isAuthFailure,
+    ...describeAIError(error),
+  };
+  // A call that ran out of the time its caller gave it (`timeout`) is a path every caller handles —
+  // the QSF import splits the chunk and carries on — so it warns, with the same fields. An abort that
+  // is not the caller's (see `isCallerAbort`) is that timeout firing during the SDK's retry backoff.
+  // A retryable failure (a 429, a 5xx, a network error) of a call that turned the SDK's retries off
+  // warns too: that caller runs its own retry policy, so one failed attempt is not an incident, and
+  // the failure it finally gives up on is the caller's to log as one.
+  if (isTimeoutError(error) || isAbortError(error) || (ownsRetries(call) && providerError?.isRetryable)) {
+    logger.warn(fields, message);
+  } else {
+    logger.error(fields, message);
+  }
 
   if (providerError?.isQuotaExhausted) {
     throw new TooManyRequestsError(AI_ERROR_CODES.QUOTA_EXCEEDED, providerError.retryAfterSeconds);
@@ -133,6 +148,29 @@ const isAbortError = (error: unknown): boolean => {
 
   return error.cause instanceof Error && error.cause.name === "AbortError";
 };
+
+interface TAICallControls {
+  abortSignal?: AbortSignal;
+  timeout?: unknown;
+  maxRetries?: number;
+}
+
+/** Whether the caller turned the AI SDK's retries off (`maxRetries: 0`) and so retries itself. */
+const ownsRetries = (call: TAICallControls): boolean => call.maxRetries === 0;
+
+/**
+ * Whether an abort is the caller's: its signal fired, or it set no `timeout` that could have aborted
+ * the call instead. With a timeout set and the signal untouched, an `AbortError` is that timeout
+ * firing while the AI SDK waited to retry ("Delay was aborted") — a provider failing until the call
+ * ran out of time, which has to reach the logs.
+ */
+const isCallerAbort = (error: unknown, call: TAICallControls): boolean =>
+  isAbortError(error) && (call.abortSignal?.aborted === true || call.timeout === undefined);
+
+/** The AI SDK's own `timeout` firing: a `TimeoutError`, sometimes wrapped one level down as the `cause`. */
+const isTimeoutError = (error: unknown): boolean =>
+  error instanceof Error &&
+  (error.name === "TimeoutError" || (error.cause instanceof Error && error.cause.name === "TimeoutError"));
 
 export const getOrganizationAIConfig = async (organizationId: string): Promise<TOrganizationAIConfig> => {
   const organization = await getOrganization(organizationId);
@@ -205,6 +243,7 @@ export const generateOrganizationAIText = async ({
       organizationId,
       aiConfig,
       message: "Failed to generate organization AI text",
+      call: options,
     });
   }
 };
@@ -232,6 +271,7 @@ export const generateOrganizationAIObject = async <T = unknown>({
       organizationId,
       aiConfig,
       message: "Failed to generate organization AI object",
+      call: options,
     });
   }
 };
@@ -267,6 +307,7 @@ export const streamOrganizationAIObject = async <T = unknown>({
       organizationId,
       aiConfig,
       message: "Failed to stream organization AI object",
+      call: options,
     });
 
   try {

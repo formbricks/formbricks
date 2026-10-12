@@ -1,9 +1,13 @@
+import { createId } from "@paralleldrive/cuid2";
 import { describe, expect, test } from "vitest";
+import { MAX_SEGMENT_FILTER_DEPTH, ZSegmentFilters } from "@formbricks/types/segment";
 import {
   V3_REQUEST_ARRAY_MAX_ITEMS,
   V3_REQUEST_ARRAY_MAX_TOTAL_ELEMENTS,
+  V3_REQUEST_MAX_DEPTH,
   arrayBudgetInvalidParam,
   findArrayBudgetViolation,
+  findRawArrayBudgetViolation,
 } from "./array-budget";
 
 const junk = (count: number) => Array.from({ length: count }, () => 0);
@@ -32,18 +36,76 @@ describe("findArrayBudgetViolation", () => {
     const violation = findArrayBudgetViolation(body);
 
     expect(violation?.kind).toBe("too_many_elements");
-    expect(violation?.path).toMatch(/^blocks\.\d+\.elements$/);
+    expect(violation?.path).toBe("blocks.49.elements");
   });
 
-  test("walks deep nesting without recursing", () => {
-    // A recursive walk overflows the stack somewhere around ten thousand frames; the budget has to be
-    // checked before that can happen, because the nesting is the caller's choice.
-    let value: unknown = 0;
-    for (let depth = 0; depth < 40_000; depth += 1) {
-      value = [value];
-    }
+  test("reports the first offending array in document order", () => {
+    // `invalid_params[].name` on every v3 route depends on this order.
+    const body = {
+      first: [{ nested: junk(V3_REQUEST_ARRAY_MAX_ITEMS + 1) }],
+      second: junk(V3_REQUEST_ARRAY_MAX_ITEMS + 1),
+    };
 
-    expect(findArrayBudgetViolation(value)).toBeNull();
+    expect(findArrayBudgetViolation(body)?.path).toBe("first.0.nested");
+  });
+
+  const nest = (levels: number, wrap: (inner: unknown) => unknown) => {
+    let value: unknown = 0;
+    for (let level = 0; level < levels; level += 1) {
+      value = wrap(value);
+    }
+    return value;
+  };
+
+  test("accepts nesting at the depth cap and refuses one level more, naming where", () => {
+    expect(findArrayBudgetViolation(nest(V3_REQUEST_MAX_DEPTH, (inner) => ({ a: inner })))).toBeNull();
+
+    const violation = findArrayBudgetViolation(nest(V3_REQUEST_MAX_DEPTH + 1, (inner) => ({ a: inner })));
+
+    expect(violation).toMatchObject({ kind: "too_deep", path: "a.a.a.a.a.a.a.a.a.a.…" });
+    expect(violation && arrayBudgetInvalidParam(violation, "body").reason).toBe(
+      `Too deep: expected the request to nest <=${V3_REQUEST_MAX_DEPTH} levels`
+    );
+  });
+
+  test("accepts the deepest tree the API bounds: a full-depth segment filter tree, inside an MCP batch", () => {
+    // The cap has to stay above this, or valid targeting payloads start getting a 400.
+    let filters: unknown[] = [
+      {
+        id: createId(),
+        connector: null,
+        resource: {
+          id: createId(),
+          root: { type: "attribute", contactAttributeKey: "email" },
+          value: "user@example.com",
+          qualifier: { operator: "equals" },
+        },
+      },
+    ];
+    for (let level = 1; level < MAX_SEGMENT_FILTER_DEPTH; level += 1) {
+      filters = [{ id: createId(), connector: null, resource: filters }];
+    }
+    expect(ZSegmentFilters.safeParse(filters).success).toBe(true);
+    const mcpBatch = [
+      {
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: { name: "update_survey", arguments: { body: { targeting: { filters } } } },
+      },
+    ];
+
+    expect(findArrayBudgetViolation(mcpBatch)).toBeNull();
+  });
+
+  test("refuses deep nesting whatever its shape, without recursing", () => {
+    // A sibling on every level keeps each level's frame open; the cap is what bounds that. And a
+    // recursive walk would overflow the stack around ten thousand levels, so the walk stays iterative.
+    const withSiblings = nest(40_000, (inner) => ({ a: inner, b: 0 }));
+    const arrays = nest(40_000, (inner) => [inner, 0]);
+
+    expect(findArrayBudgetViolation(withSiblings)?.kind).toBe("too_deep");
+    expect(findArrayBudgetViolation(arrays)?.kind).toBe("too_deep");
   });
 
   test("clips the reported path to ten segments and 64 characters per key", () => {
@@ -67,6 +129,80 @@ describe("findArrayBudgetViolation", () => {
     expect(findArrayBudgetViolation("string")).toBeNull();
     expect(findArrayBudgetViolation(null)).toBeNull();
   });
+});
+
+describe("findRawArrayBudgetViolation", () => {
+  const nest = (levels: number, wrap: (inner: unknown) => unknown) => {
+    let value: unknown = 0;
+    for (let level = 0; level < levels; level += 1) {
+      value = wrap(value);
+    }
+    return value;
+  };
+
+  const kindAndPath = (violation: { kind: string; path: string } | null) =>
+    violation && { kind: violation.kind, path: violation.path };
+
+  test.each([
+    ["an array at the cap", { blocks: [{ elements: junk(V3_REQUEST_ARRAY_MAX_ITEMS) }] }],
+    ["an array past the cap", { blocks: [{ elements: junk(V3_REQUEST_ARRAY_MAX_ITEMS + 1) }] }],
+    [
+      "arrays past the whole-body total",
+      { blocks: Array.from({ length: 51 }, () => ({ elements: junk(V3_REQUEST_ARRAY_MAX_ITEMS) })) },
+    ],
+    [
+      "two long arrays, in document order",
+      {
+        first: [{ nested: junk(V3_REQUEST_ARRAY_MAX_ITEMS + 1) }],
+        second: junk(V3_REQUEST_ARRAY_MAX_ITEMS + 1),
+      },
+    ],
+    ["nesting at the depth cap", nest(V3_REQUEST_MAX_DEPTH, (inner) => ({ a: inner }))],
+    ["nesting past the depth cap", nest(V3_REQUEST_MAX_DEPTH + 1, (inner) => [inner, 0])],
+    ["a long key over a long array", { ["k".repeat(100)]: nest(30, (inner) => [inner]) }],
+    ["a long array under a long key", { ["k".repeat(100)]: junk(V3_REQUEST_ARRAY_MAX_ITEMS + 1) }],
+    ["scalars and empty containers", { name: "x", list: [], map: {}, flag: true, none: null, n: -1.5e3 }],
+  ])("refuses %s exactly as the walk over the parsed body does", (_case, body) => {
+    expect(kindAndPath(findRawArrayBudgetViolation(JSON.stringify(body)))).toEqual(
+      kindAndPath(findArrayBudgetViolation(body))
+    );
+  });
+
+  test("reads brackets, commas and escaped quotes inside strings as text", () => {
+    const body = {
+      text: '[[[{{{ \\" ]]] }}} , ,',
+      items: Array.from({ length: V3_REQUEST_ARRAY_MAX_ITEMS }, () => 'a,b,"c",[d]'),
+    };
+
+    expect(findRawArrayBudgetViolation(JSON.stringify(body))).toBeNull();
+  });
+
+  test("names a key the way JSON.parse decodes it", () => {
+    const text = `{"a\\"b\\u0063":[${junk(V3_REQUEST_ARRAY_MAX_ITEMS + 1).join(",")}]}`;
+
+    expect(findRawArrayBudgetViolation(text)?.path).toBe('a"bc');
+  });
+
+  test("refuses a 15 MB nesting from the text alone", () => {
+    const levels = 7_500_000;
+    const text = `${"[".repeat(levels)}${"]".repeat(levels)}`;
+
+    expect(findRawArrayBudgetViolation(text)).toEqual({ kind: "too_deep", path: "0.0.0.0.0.0.0.0.0.0.…" });
+  });
+
+  test("counts the array behind a repeated key, which JSON.parse would drop", () => {
+    const text = `{"a":[${junk(V3_REQUEST_ARRAY_MAX_ITEMS + 1).join(",")}],"a":1}`;
+
+    expect(findArrayBudgetViolation(JSON.parse(text))).toBeNull();
+    expect(findRawArrayBudgetViolation(text)).toMatchObject({ kind: "array_too_long", path: "a" });
+  });
+
+  test.each(["[1,2", '{"a":', "]", '"unterminated', '{"a":"x}', ""])(
+    "leaves %j to JSON.parse when it breaks no limit first",
+    (text) => {
+      expect(findRawArrayBudgetViolation(text)).toBeNull();
+    }
+  );
 });
 
 describe("arrayBudgetInvalidParam", () => {

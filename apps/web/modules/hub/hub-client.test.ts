@@ -45,6 +45,9 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  // Here rather than in the test that fakes them: a failure before its own restore would leave fake timers
+  // installed, and every later test's retry backoff would then never fire.
+  vi.useRealTimers();
 });
 
 describe("getHubClient", () => {
@@ -94,6 +97,24 @@ describe("getHubClient", () => {
  * cover.
  */
 describe("wire format", () => {
+  // The regression the SDK move exists for: the Hub does not split commas, so a comma-joined array is a
+  // 400 on the enum filters and an empty page on the string ones. Pinned here as well as upstream, so an
+  // SDK bump that changes the default serializer fails in this repo too.
+  test("sends a multi-value filter as repeated parameters, not comma-joined", async () => {
+    const fetchStub = stubFetch();
+    const client = await getClient();
+
+    await hub.listFeedbackRecords({
+      client,
+      query: { tenant_id: "dir_1", source_type: ["survey", "review"] },
+      throwOnError: true,
+    });
+
+    const { url } = sentRequest(fetchStub);
+    expect(new URL(url).searchParams.getAll("source_type")).toEqual(["survey", "review"]);
+    expect(url).not.toContain("%2C");
+  });
+
   test("sends an empty source_id, which is the no-source bucket rather than 'no filter'", async () => {
     const fetchStub = stubFetch(() => Response.json({ data: [] }));
     const client = await getClient();
@@ -185,11 +206,29 @@ describe("errors", () => {
       .catch((err: unknown) => err);
     await vi.runAllTimersAsync();
     const error = await pending;
-    vi.useRealTimers();
 
     expect(error).toBe(fetchFailed);
     expect(createHubResultFromError(error).error?.status).toBe(0);
     expect(getHubErrorHint(error)).toContain("Hub looks unreachable");
+  });
+
+  // A 2xx whose body does not parse — a proxy's error page served as JSON, say. Without its status it
+  // would read as status 0, the same as a Hub that was never reached.
+  test("a 2xx with an unparseable body keeps its status, with the parse error as the cause", async () => {
+    stubFetch(
+      () =>
+        new Response("<html>gateway</html>", { status: 200, headers: { "content-type": "application/json" } })
+    );
+    const client = await getClient();
+
+    const error = await hub
+      .getFeedbackRecord({ client, path: { id: "rec-1" }, throwOnError: true })
+      .catch((err: unknown) => err);
+
+    expect(error).toHaveProperty("name", "HubApiError");
+    expect(error).toMatchObject({ status: 200, message: "200 response body could not be parsed" });
+    expect((error as Error).cause).toBeInstanceOf(SyntaxError);
+    expect(createHubResultFromError(error).error?.status).toBe(200);
   });
 
   test("a 204 delete resolves rather than failing to parse an empty body", async () => {

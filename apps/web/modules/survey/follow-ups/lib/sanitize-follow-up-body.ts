@@ -12,8 +12,12 @@ import DOMpurify from "isomorphic-dompurify";
  * was persisted as bare `<span>`s and the email rendered its items run together on one line, unnumbered.
  * `start`/`value` keep the numbering of an `<ol>` that doesn't begin at 1 — Lexical writes those
  * explicitly.
+ *
+ * Exported because the Qualtrics import sanitizes question headlines with exactly this allowlist
+ * (ENG-3607): a headline is rich text a survey author wrote, like a follow-up body, and one allowlist
+ * for both keeps the two from drifting.
  */
-const FOLLOW_UP_BODY_SANITIZE_CONFIG = {
+export const FOLLOW_UP_BODY_SANITIZE_CONFIG = {
   ALLOWED_TAGS: ["p", "span", "b", "strong", "i", "em", "a", "br", "ul", "ol", "li"],
   ALLOWED_ATTR: ["href", "rel", "dir", "class", "start", "value"],
   ALLOWED_URI_REGEXP: /^https?:\/\//, // Only allow safe URLs starting with http or https

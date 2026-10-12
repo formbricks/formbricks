@@ -105,33 +105,3 @@ export const findOpeningTag = (
  */
 export const findClosingTag = (source: string, name: string, from = 0): number =>
   indexOfAsciiCaseInsensitive(source, `</${name}>`, from);
-
-/**
- * Replace every `<name …>` with `replace(attributes, tag)`, matching `/<name\b([^>]*)>/gi` under
- * `replaceAll`. Like the regex, scanning resumes after the replaced tag's `>`, so a replacement
- * that itself contains a tag is never rescanned.
- *
- * `tag` is the matched text exactly as it appeared, which callers that pass a tag through unchanged
- * need: rebuilding it from `name` would normalize `<LI …>` to `<li …>`.
- */
-export const replaceOpeningTags = (
-  source: string,
-  name: string,
-  replace: (attributes: string, tag: string) => string,
-  options: { requireWordBoundary?: boolean } = {}
-): string => {
-  let result = "";
-  let copiedTo = 0;
-
-  for (
-    let match = findOpeningTag(source, name, options, 0);
-    match !== null;
-    match = findOpeningTag(source, name, options, copiedTo)
-  ) {
-    const tag = source.slice(match.index, match.index + match.length);
-    result += source.slice(copiedTo, match.index) + replace(match.attributes, tag);
-    copiedTo = match.index + match.length;
-  }
-
-  return copiedTo === 0 ? source : result + source.slice(copiedTo);
-};

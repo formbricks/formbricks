@@ -4,6 +4,7 @@ import * as hub from "@formbricks/hub";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
 import { getHubClient } from "./hub-client";
+import { assertSerializableHubQuery } from "./hub-query-guard";
 import type {
   CreateTaxonomyRunInput,
   CreateTaxonomyRunResponse,
@@ -248,6 +249,9 @@ export const listFeedbackRecords = async (
     return { data: null, error: { ...NO_CONFIG_ERROR } };
   }
   try {
+    // Before the SDK serializes the filters: it silently drops an empty array or a null, which would widen
+    // the result instead of narrowing it. Inside the try, so a refusal is the same relayed error as any other.
+    assertSerializableHubQuery(params);
     const { data } = await hub.listFeedbackRecords({ client, query: params, throwOnError: true });
     return { data, error: null };
   } catch (err) {
@@ -276,6 +280,8 @@ export const countFeedbackRecords = async (
     return { data: null, error: { ...NO_CONFIG_ERROR } };
   }
   try {
+    // See listFeedbackRecords: the same filters, so the same guard.
+    assertSerializableHubQuery(params);
     const { data } = await hub.countFeedbackRecords({ client, query: params, throwOnError: true });
     return { data, error: null };
   } catch (err) {

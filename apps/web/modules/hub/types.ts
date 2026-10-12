@@ -3,6 +3,7 @@ import type {
   CountFeedbackRecordsOutputBody,
   CreateFeedbackRecordInputBody,
   EnrichmentStatusOutputBody,
+  FeedbackRecordTaxonomyOutputBody,
   EnrichmentTypeStatus as HubEnrichmentTypeStatus,
   FeedbackRecordData as HubFeedbackRecordData,
   SemanticSearchResponse as HubSemanticSearchResponse,
@@ -160,11 +161,8 @@ export type TaxonomyNode = {
   children?: TaxonomyNode[];
 };
 
-export type FeedbackRecordTaxonomy = {
-  status: "classified" | "unclassified" | "no_active_taxonomy";
-  run_id: string | null;
-  path: Pick<TaxonomyNode, "id" | "label" | "level" | "node_type">[];
-};
+/** A record's place in its directory's active taxonomy — `FeedbackRecordData["taxonomy"]`, non-null. */
+export type FeedbackRecordTaxonomy = FeedbackRecordTaxonomyOutputBody;
 
 export type TaxonomyFieldsResponse = {
   data: TaxonomyFieldOption[];

@@ -71,7 +71,7 @@ const makeHubApiErrorMessage = (status: number, body: unknown): string => {
 };
 
 /**
- * A Hub response that was not 2xx.
+ * A Hub response that was not 2xx — or a 2xx whose body could not be parsed, passed as `options.cause`.
  *
  * The Hey API client does not throw an `Error` for these: with `throwOnError` it throws the *parsed
  * body* itself — no status, no stack, and `String(body)` is `"[object Object]"`. The error interceptor in
@@ -83,8 +83,11 @@ export class HubApiError extends Error {
   readonly error: unknown;
   readonly headers: Headers;
 
-  constructor(status: number, body: unknown, headers: Headers) {
-    super(makeHubApiErrorMessage(status, body));
+  constructor(status: number, body: unknown, headers: Headers, options?: { cause: unknown }) {
+    super(
+      options ? `${status} response body could not be parsed` : makeHubApiErrorMessage(status, body),
+      options
+    );
     this.name = "HubApiError";
     this.status = status;
     this.error = body;
