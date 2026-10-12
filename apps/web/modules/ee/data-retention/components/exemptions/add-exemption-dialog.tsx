@@ -120,7 +120,7 @@ export const AddExemptionDialog = ({
                 {t("workspace.settings.data_retention.add_exemption_description")}
               </DialogDescription>
             </DialogHeader>
-            <DialogBody className="space-y-4">
+            <DialogBody className="-m-1 space-y-4 p-1">
               <FormField
                 control={form.control}
                 name="survey"

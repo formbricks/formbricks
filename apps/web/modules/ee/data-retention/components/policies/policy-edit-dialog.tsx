@@ -185,7 +185,7 @@ export const PolicyEditDialog = ({
               <DialogTitle>{copy.title}</DialogTitle>
               <DialogDescription>{copy.description}</DialogDescription>
             </DialogHeader>
-            <DialogBody className="space-y-5">
+            <DialogBody className="-m-1 space-y-5 p-1">
               {copy.countsFrom ? (
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-slate-800">
