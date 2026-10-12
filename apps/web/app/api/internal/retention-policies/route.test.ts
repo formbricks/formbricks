@@ -208,6 +208,13 @@ describe("PATCH /api/internal/retention-policies", () => {
     expect(mocks.update).not.toHaveBeenCalled();
   });
 
+  test("returns 401 without a session", async () => {
+    mocks.getSession.mockResolvedValue(null);
+
+    expect((await patch({ surveys: { enabled: true } })).status).toBe(401);
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
   test("returns 403 to a member, and when the organization isn't entitled", async () => {
     mocks.can.mockResolvedValueOnce(false);
     expect((await patch({ surveys: { enabled: true } })).status).toBe(403);

@@ -280,6 +280,13 @@ describe("POST /api/internal/retention-exemptions", () => {
     expect(mocks.create).not.toHaveBeenCalled();
   });
 
+  test("returns 401 without a session", async () => {
+    mocks.getSession.mockResolvedValue(null);
+
+    expect((await post(body)).status).toBe(401);
+    expect(mocks.create).not.toHaveBeenCalled();
+  });
+
   test("returns 403 to a member, and when the organization isn't entitled", async () => {
     mocks.can.mockResolvedValueOnce(false);
     expect((await post(body)).status).toBe(403);

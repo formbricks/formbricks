@@ -178,6 +178,13 @@ describe("GET /api/internal/survey-retention/{surveyId}", () => {
     expect(mocks.isEnabled).not.toHaveBeenCalled();
   });
 
+  test("returns 401 without a session", async () => {
+    mocks.getSession.mockResolvedValue(null);
+
+    expect((await get()).status).toBe(401);
+    expect(mocks.authorizeSurvey).not.toHaveBeenCalled();
+  });
+
   test("returns 400 on an id that isn't one", async () => {
     expect((await get("not an id")).status).toBe(400);
     expect(mocks.authorizeSurvey).not.toHaveBeenCalled();

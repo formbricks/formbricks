@@ -110,6 +110,14 @@ describe("POST /api/internal/members/{userId}/reactivate", () => {
     expect((await response.json()).detail).toBe("Only an owner can reactivate an owner.");
   });
 
+  test("returns 401 without a session", async () => {
+    mocks.getSession.mockResolvedValue(null);
+
+    expect((await reactivate()).status).toBe(401);
+    expect(mocks.can).not.toHaveBeenCalled();
+    expect(mocks.reactivate).not.toHaveBeenCalled();
+  });
+
   test("checks the caller before touching the member", async () => {
     mocks.can.mockResolvedValueOnce(false);
     expect((await reactivate()).status).toBe(403);

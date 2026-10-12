@@ -145,6 +145,14 @@ describe("POST /api/internal/retention-exemptions/{exemptionId}/revoke", () => {
     expect(mocks.revoke).not.toHaveBeenCalled();
   });
 
+  test("returns 401 without a session", async () => {
+    mocks.getSession.mockResolvedValue(null);
+
+    expect((await revoke()).status).toBe(401);
+    expect(mocks.getOrganizationId).not.toHaveBeenCalled();
+    expect(mocks.revoke).not.toHaveBeenCalled();
+  });
+
   test("returns 403 when the organization isn't entitled", async () => {
     mocks.isEnabled.mockResolvedValueOnce(false);
 

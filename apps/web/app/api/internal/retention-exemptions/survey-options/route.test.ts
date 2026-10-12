@@ -61,6 +61,14 @@ describe("GET /api/internal/retention-exemptions/survey-options", () => {
     expect(mocks.search).not.toHaveBeenCalled();
   });
 
+  test("returns 403 when the organization isn't entitled", async () => {
+    mocks.isEnabled.mockResolvedValueOnce(false);
+
+    expect((await get(`organizationId=${ORG_ID}`)).status).toBe(403);
+    expect(mocks.isEnabled).toHaveBeenCalledWith(ORG_ID);
+    expect(mocks.search).not.toHaveBeenCalled();
+  });
+
   test.each([["limit=51"], ["search=" + "x".repeat(201)], ["workspaceId=clwsp11111111111111111111"]])(
     "returns 400 on %s",
     async (query) => {

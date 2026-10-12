@@ -151,6 +151,22 @@ describe("GET /api/internal/retention-runs/export", () => {
     );
   });
 
+  test("returns 403 when the organization isn't entitled, before counting anything", async () => {
+    mockIsEnabled.mockResolvedValue(false);
+
+    const response = await get(`organizationId=${ORG_ID}`);
+
+    expect(response.status).toBe(403);
+    expect(mockIsEnabled).toHaveBeenCalledWith(ORG_ID);
+    expect(mockCount).not.toHaveBeenCalled();
+    expect(mockIterate).not.toHaveBeenCalled();
+  });
+
+  test("returns 400 on an unknown query parameter", async () => {
+    expect((await get(`organizationId=${ORG_ID}&entity=surveys`)).status).toBe(400);
+    expect(mockCount).not.toHaveBeenCalled();
+  });
+
   test("returns 400 when from isn't before to", async () => {
     const response = await get(`organizationId=${ORG_ID}&from=2030-02-01T00:00:00Z&to=2030-01-01T00:00:00Z`);
 

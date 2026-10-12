@@ -117,6 +117,14 @@ describe("GET /api/internal/retention-exemptions/{exemptionId}", () => {
     expect(denied).toStrictEqual(missing);
   });
 
+  test("returns 401 without a session", async () => {
+    mocks.getSession.mockResolvedValue(null);
+
+    expect((await get()).status).toBe(401);
+    expect(mocks.getOrganizationId).not.toHaveBeenCalled();
+    expect(mocks.find).not.toHaveBeenCalled();
+  });
+
   test("returns 400 on an id that isn't one", async () => {
     expect((await get("not an id")).status).toBe(400);
     expect(mocks.getOrganizationId).not.toHaveBeenCalled();
