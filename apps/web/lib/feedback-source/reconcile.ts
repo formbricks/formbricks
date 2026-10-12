@@ -123,6 +123,11 @@ const toUpdateParams = (record: FeedbackRecordCreateParams): FeedbackRecordUpdat
   // Carries the selected choice's id for single/multi select. Omitting it left a reconciled record
   // pointing at the *old* choice while its text showed the new one, and value_id is what the charts
   // group by — so the correction landed everywhere except the place it is read.
+  //
+  // `?? undefined` changes nothing on the wire: Hub decodes `value_id` into a pointer and only writes it when
+  // non-nil (`UpdateFeedbackRecord`), so a JSON null and an absent key both mean "leave unchanged". The update
+  // API cannot clear a value_id at all — which is safe only because transform.ts omits the key for an answer
+  // without a choice rather than sending null. A record whose answer *loses* its choice would keep the old id.
   value_id: record.value_id ?? undefined,
   metadata: record.metadata,
   language: record.language,
