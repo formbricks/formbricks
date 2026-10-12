@@ -245,7 +245,9 @@ export const PolicyEditDialog = ({
                     <FormLabel>{t("workspace.settings.data_retention.period")}</FormLabel>
                     <Select value={field.value} onValueChange={field.onChange} disabled={disabled}>
                       <FormControl>
-                        <SelectTrigger aria-describedby={copy.periodHelp ? periodHelpId : undefined}>
+                        <SelectTrigger
+                          className="w-48"
+                          aria-describedby={copy.periodHelp ? periodHelpId : undefined}>
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
@@ -275,7 +277,7 @@ export const PolicyEditDialog = ({
                     control={form.control}
                     name="customPeriodAmount"
                     render={({ field, fieldState: { error } }) => (
-                      <FormItem className="flex-1">
+                      <FormItem className="w-24">
                         <FormLabel>{t("workspace.settings.data_retention.custom_period_amount")}</FormLabel>
                         <FormControl>
                           <Input
@@ -335,7 +337,7 @@ export const PolicyEditDialog = ({
                     <FormLabel>{t("workspace.settings.data_retention.notice")}</FormLabel>
                     <Select value={field.value} onValueChange={field.onChange} disabled={disabled}>
                       <FormControl>
-                        <SelectTrigger aria-describedby={noticeHelpId}>
+                        <SelectTrigger className="w-48" aria-describedby={noticeHelpId}>
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
@@ -371,6 +373,7 @@ export const PolicyEditDialog = ({
                           min={RETENTION_WARN_DAYS.min}
                           max={RETENTION_WARN_DAYS.max}
                           step={1}
+                          className="w-24"
                           value={field.value ?? ""}
                           onChange={(event) => field.onChange(toNumberOrNull(event.target.value))}
                           onBlur={field.onBlur}
