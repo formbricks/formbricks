@@ -1,17 +1,20 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { AUTHZED_MAX_BULK_CHECK_ITEMS } from "@/lib/authzed/constants";
-import { type TNoticeSurvey, resolveSurveyNoticeRecipients } from "./recipients";
+import { findNotWorkspaceVisibleSurveyIds } from "@/lib/survey/visibility/outbound";
+import { type TNoticeSurvey, isHiddenByVisibility, resolveSurveyNoticeRecipients } from "./recipients";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@formbricks/database", () => ({ prisma: { membership: { findMany: vi.fn() } } }));
 vi.mock("@/lib/authorization/resource-list", () => ({ filterReadableSurveyIds: vi.fn() }));
+vi.mock("@/lib/survey/visibility/outbound", () => ({ findNotWorkspaceVisibleSurveyIds: vi.fn() }));
 
 /**
  * Recipients against a real database and the real survey read check (a restricted survey falls back to
  * an owner, a survey nobody can be told about is skipped as `noRecipient`) are proven in
- * `surveys-sweeper.integration.test.ts` and `responses-sweeper.integration.test.ts`. These pin the order
- * of preference and how the read checks are batched.
+ * `surveys-sweeper.integration.test.ts` and `responses-sweeper.integration.test.ts`, and the effective
+ * visibility rule against real survey rows in `recipients.integration.test.ts`. These pin the order of
+ * preference and how the read checks are batched.
  */
 const ORG_ID = "clorg";
 
@@ -42,6 +45,7 @@ const readable = (grants: Record<string, string[]>) =>
 describe("resolveSurveyNoticeRecipients", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(findNotWorkspaceVisibleSurveyIds).mockResolvedValue([]);
   });
 
   test("reads nothing for no surveys", async () => {
@@ -136,5 +140,59 @@ describe("resolveSurveyNoticeRecipients", () => {
     await expect(
       resolveSurveyNoticeRecipients(ORG_ID, [survey("s1", "alice")], vi.fn().mockRejectedValue(failure))
     ).rejects.toBe(failure);
+  });
+
+  test("an effectively restricted survey passes over a creator the graph still lets read it, not its owner", async () => {
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([
+      member("alice", "member"),
+      member("bob", "member"),
+      member("yan", "owner"),
+    ] as never);
+    // The graph hasn't caught up with the restriction yet: it still lets both read every survey.
+    const canRead = readable({ alice: ["s1", "s2"], bob: ["s1", "s2"] });
+    vi.mocked(findNotWorkspaceVisibleSurveyIds).mockResolvedValue(["s1", "s2"]);
+
+    const recipients = await resolveSurveyNoticeRecipients(
+      ORG_ID,
+      [survey("s1", "alice", "bob"), survey("s2", null, "bob")],
+      canRead
+    );
+
+    expect(recipients).toEqual(
+      new Map([
+        // The owner may read their own restricted survey.
+        ["s1", recipient("alice")],
+        // The creator may not: the organisation's owner is told instead.
+        ["s2", recipient("yan")],
+      ])
+    );
+    expect(findNotWorkspaceVisibleSurveyIds).toHaveBeenCalledWith(["s1", "s2"]);
+  });
+
+  test("looks up no visibility when nobody needs a read check", async () => {
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([member("yan", "owner")] as never);
+
+    await resolveSurveyNoticeRecipients(ORG_ID, [survey("s1", null)], readable({}));
+
+    expect(findNotWorkspaceVisibleSurveyIds).not.toHaveBeenCalled();
+  });
+});
+
+describe("isHiddenByVisibility", () => {
+  const plain = { userId: "bob", role: "member" } as const;
+
+  test("hides an effectively restricted survey from a plain member who doesn't own it", () => {
+    expect(isHiddenByVisibility(plain, { ownerId: "alice" }, true)).toBe(true);
+    expect(isHiddenByVisibility(plain, { ownerId: null }, true)).toBe(true);
+  });
+
+  test("never from its owner or the organisation's owners and managers", () => {
+    expect(isHiddenByVisibility(plain, { ownerId: "bob" }, true)).toBe(false);
+    expect(isHiddenByVisibility({ userId: "yan", role: "owner" }, { ownerId: "alice" }, true)).toBe(false);
+    expect(isHiddenByVisibility({ userId: "mia", role: "manager" }, { ownerId: null }, true)).toBe(false);
+  });
+
+  test("hides nothing that is workspace-visible", () => {
+    expect(isHiddenByVisibility(plain, { ownerId: "alice" }, false)).toBe(false);
   });
 });
