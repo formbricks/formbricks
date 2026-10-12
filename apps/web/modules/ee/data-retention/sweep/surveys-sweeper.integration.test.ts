@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import type { RetentionSurveyCondition } from "@formbricks/database/prisma";
+import { Prisma, type RetentionSurveyCondition } from "@formbricks/database/prisma";
 import { resetDb } from "@/integration/reset-db";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { sendSurveyRetentionNoticeEmail } from "@/modules/email";
@@ -34,6 +34,8 @@ const DAY = 24 * 60 * 60 * 1000;
 const ago = (days: number) => new Date(Date.now() - days * DAY);
 const WARN = 30;
 const PERIOD = 365;
+/** How far past its boundary a step that should be due goes, against host/database clock drift. */
+const CLOCK_MARGIN_MINUTES = 10;
 
 /** A survey's timestamps are written raw: Prisma would stamp `updated_at` with now. */
 const setSurveyTimes = (surveyId: string, { createdAt, updatedAt }: { createdAt: Date; updatedAt: Date }) =>
@@ -83,16 +85,18 @@ describe("surveys sweeper (real Postgres)", () => {
       data: { sentAt: ago(days), deliveredAt: ago(days) },
     });
 
-  /** As if `days` went by for this survey: its clock and its notice move that far into the past. */
-  const travel = async (surveyId: string, days: number) => {
+  /**
+   * As if `days` (and `minutes`) went by for this survey: its clock and its notice move that far into
+   * the past.
+   */
+  const travel = async (surveyId: string, days: number, minutes = 0) => {
+    const by = Prisma.sql`make_interval(days => ${days}::int, mins => ${minutes}::int)`;
     await prisma.$executeRaw`
-      UPDATE "Survey" SET "created_at" = "created_at" - make_interval(days => ${days}::int),
-                          "updated_at" = "updated_at" - make_interval(days => ${days}::int)
+      UPDATE "Survey" SET "created_at" = "created_at" - ${by}, "updated_at" = "updated_at" - ${by}
       WHERE "id" = ${surveyId}`;
     await prisma.$executeRaw`
-      UPDATE "RetentionNotice" SET "sentAt" = "sentAt" - make_interval(days => ${days}::int),
-                                   "deliveredAt" = "deliveredAt" - make_interval(days => ${days}::int),
-                                   "clockAt" = "clockAt" - make_interval(days => ${days}::int)
+      UPDATE "RetentionNotice"
+      SET "sentAt" = "sentAt" - ${by}, "deliveredAt" = "deliveredAt" - ${by}, "clockAt" = "clockAt" - ${by}
       WHERE "surveyId" = ${surveyId}`;
   };
 
@@ -387,8 +391,10 @@ describe("surveys sweeper (real Postgres)", () => {
     expect(await isArchived(survey)).toBe(false);
     expect(sendSurveyRetentionNoticeEmail).toHaveBeenCalledOnce();
 
-    // A full period less the warning later, it is warned again, and not archived on that notice.
-    await travel(survey, PERIOD - WARN);
+    // A full period less the warning later, it is warned again, and not archived on that notice. Each
+    // step that should be due goes a few minutes past its boundary: `restoreSurvey` stamps the clock
+    // with this process's time and the sweep compares it with the database's, which may drift apart.
+    await travel(survey, PERIOD - WARN, CLOCK_MARGIN_MINUTES);
     await sweep();
     expect(sendSurveyRetentionNoticeEmail).toHaveBeenCalledTimes(2);
     expect(await isArchived(survey)).toBe(false);
@@ -401,7 +407,7 @@ describe("surveys sweeper (real Postgres)", () => {
     await sweep();
     expect(await isArchived(survey)).toBe(false);
 
-    await travel(survey, 1);
+    await travel(survey, 1, CLOCK_MARGIN_MINUTES);
     await sweep();
     expect(await isArchived(survey)).toBe(true);
     expect(sendSurveyRetentionNoticeEmail).toHaveBeenCalledTimes(2);
