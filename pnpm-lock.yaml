@@ -417,8 +417,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/email
       '@formbricks/hub':
-        specifier: file:../../.local/formbricks-hub-0.14.0.tgz
-        version: file:.local/formbricks-hub-0.14.0.tgz(zod@4.3.6)
+        specifier: 0.14.0
+        version: 0.14.0(zod@4.3.6)
       '@formbricks/i18n-utils':
         specifier: workspace:*
         version: link:../../packages/i18n-utils
@@ -2746,9 +2746,8 @@ packages:
   '@formatjs/intl-localematcher@0.6.2':
     resolution: {integrity: sha512-XOMO2Hupl0wdd172Y06h6kLpBz6Dv+J4okPLl4LPtzbr8f66WbIoy4ev98EBuZ6ZK4h5ydTN6XneT4QVpD7cdA==}
 
-  '@formbricks/hub@file:.local/formbricks-hub-0.14.0.tgz':
-    resolution: {integrity: sha512-PsrkxUznVsn511dXOURierMBM8Fz1i5UORqOA8TjUXoNWTxnsz4wwaqi+1p0L0wVF6XGG6oSi4Mf22bGTeBBvg==, tarball: file:.local/formbricks-hub-0.14.0.tgz}
-    version: 0.14.0
+  '@formbricks/hub@0.14.0':
+    resolution: {integrity: sha512-X1UwB1LDxqzaZWMZzeHaZImdoDCHf9nOvls62wfGpd39jW6LY8JLLOtsFOTeS+PZ8BduM6KdLQwTlJre3sie/Q==}
     engines: {node: '>=22'}
     peerDependencies:
       zod: ^4.0.0
@@ -13754,7 +13753,7 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@formbricks/hub@file:.local/formbricks-hub-0.14.0.tgz(zod@4.3.6)':
+  '@formbricks/hub@0.14.0(zod@4.3.6)':
     optionalDependencies:
       zod: 4.3.6
 
