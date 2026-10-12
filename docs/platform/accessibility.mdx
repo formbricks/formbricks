@@ -47,13 +47,14 @@ summarising them away, because a procurement team or an individual respondent ne
 before they rely on it, not after.
 
 <Note>
-  The 9 August 2026 report and the current codebase have since diverged, in both directions. Some gaps the
-  report records have been fixed and will ship in the next release; those entries are marked **Fixed, not yet
-  released** below and still read as *Does Not Support* in the report, which predates the fix. Two areas run
-  the other way: the report records them as supported, but a later review of the code found limitations we now
-  publish below, marked **Not in the 9 August 2026 report**. If you are assessing a released version, the
-  report remains authoritative for the entries marked as fixed here; for the two areas it records as
-  supported, this page is the more accurate description.
+  The 9 August 2026 report and the current product have since diverged, in both directions. Three gaps the
+  report records as *Partially Supports* — page titles, the language switcher, and semantic headings — were
+  fixed in Formbricks 5.4; those entries are marked **Fixed in 5.4** below. Image alt text and the top-level
+  heading on website and in-app surveys followed in 6.1, marked **Fixed in 6.1**. Two areas run the other way:
+  the report records them as supported, but a later review of the code found limitations we now publish below,
+  marked **Not in the 9 August 2026 report**. If you are assessing a version older than 5.4, the report remains
+  authoritative for the entries marked as fixed here; for the two areas it records as supported, this page is
+  the more accurate description.
 </Note>
 
 ---
@@ -85,21 +86,21 @@ exception, it names it and links to the entry describing it.
 The following do not fully conform. Each entry states what a respondent experiences and what a survey creator
 can do about it.
 
-Two markers say where an entry differs from the 9 August 2026 report. **Fixed, not yet released** means the
-gap has been addressed in the codebase since the report was written and will ship in the next release; the
-workaround still applies to released versions. **Not in the 9 August 2026 report** means the report records
+Three markers say where an entry differs from the 9 August 2026 report. **Fixed in 5.4** means the gap was
+closed in Formbricks 5.4, and **Fixed in 6.1** that it was closed in 6.1; either way the workaround applies only
+to older versions. **Not in the 9 August 2026 report** means the report records
 that criterion as supported, and a later review of the code found otherwise.
 
 ### Image Text Alternatives
 
-**Affected criterion:** 1.1.1 — **Not in the 9 August 2026 report**
+**Affected criterion:** 1.1.1 — **Not in the 9 August 2026 report**, **Fixed in 6.1**
 
 Formbricks lets a survey creator add an image to a question or to an ending card. As assessed, those images
 were announced only as "Image", with nothing about what they show, and a survey creator had no way to change that.
 
-Question images, ending card images and each Picture Selection option now take alt text: select the **Alt**
-button on the image in the editor. It is translated per survey language like the headline — **Fixed, not yet released**. The text is read out as the
-image's alternative. An image whose alt text is left empty is marked decorative, so a screen reader skips it
+Since 6.1, question images, ending card images and each Picture Selection option take alt text: select the
+**Alt** button on the image in the editor. It is translated per survey language like the headline. The text is
+read out as the image's alternative. An image whose alt text is left empty is marked decorative, so a screen reader skips it
 instead of announcing a meaningless "Image"; a Picture Selection option without alt text is still named by
 position — "Option 1", "Option 2" — so a respondent can tell the options apart. The field is optional, so
 whether an informative image is described is up to the survey creator.
@@ -107,7 +108,7 @@ whether an informative image is described is up to the survey creator.
 The welcome card's logo and video both carry a fixed text alternative. Uploaded file names are never used as
 text alternatives, because a file name can carry personal data.
 
-**Workaround:** On released versions without the field, treat question and ending images as illustration. Put
+**Workaround for versions before 6.1:** Without the field, treat question and ending images as illustration. Put
 anything a respondent needs in order to answer into the headline or the description, both of which are always
 read out. For a Picture Selection question, describe the options in the headline or description as well — for
 example "Option 1 is the blue design, option 2 the green one" — wherever the image carries the meaning.
@@ -169,7 +170,7 @@ that a respondent reading at their own pace is not cut off.
 
 ### Page Titles and Survey Instructions
 
-**Affected criterion:** 2.4.2 — **Fixed, not yet released**
+**Affected criterion:** 2.4.2 — **Fixed in 5.4**
 
 As assessed, surveys carried no form title and survey instructions were not repeated after the welcome card, so
 a respondent using a screen reader was not given a clear description of the page they were on.
@@ -181,12 +182,12 @@ on every page instead of disappearing once the respondent advances past the welc
 The per-step document title applies to link surveys, which own the page they are shown on. A website or in-app
 survey is embedded in a page belonging to the site that shows it, and does not change that page's title.
 
-**Workaround for released versions:** Write question headlines that make sense on their own, without depending
+**Workaround for versions before 5.4:** Write question headlines that make sense on their own, without depending
 on a title or on instructions given earlier in the survey.
 
 ### Current Language Not Identified in the Language Switcher
 
-**Affected criterion:** 3.1.1 — **Fixed, not yet released**
+**Affected criterion:** 3.1.1 — **Fixed in 5.4**
 
 As assessed, the language switcher was an unlabelled globe: it listed the available languages but gave no
 indication of which one was active, so neither a sighted nor a screen-reader respondent could tell what
@@ -196,14 +197,14 @@ The switcher now names the active language, in that language rather than in tran
 "German" — both visibly and in its accessible name. Each option in the list carries its own language tag, so a
 screen reader pronounces every language name using that language's rules.
 
-**Workaround for released versions:** For link surveys, the `lang` URL parameter sends a respondent straight to
+**Workaround for versions before 5.4:** For link surveys, the `lang` URL parameter sends a respondent straight to
 the correct language, so they do not need to use the switcher. See
 [Multi-language Surveys](/surveys/general-features/multi-language-surveys).
 
 ### Semantic Headings
 
-**Affected criterion:** 2.4.6 — **Fixed, not yet released.** Website and in-app surveys use a generic
-top-level heading rather than the survey's name.
+**Affected criterion:** 2.4.6 — **Fixed in 5.4**; the top-level heading on website and in-app surveys is
+**Fixed in 6.1**. Website and in-app surveys use a generic top-level heading rather than the survey's name.
 
 As assessed, the survey UI used no semantic heading elements, so a respondent using a screen reader could not
 navigate the survey by heading and question headlines were not exposed as headings.
@@ -221,9 +222,10 @@ widget has no name to use, so it uses the generic label "Survey Dialog" instead:
   form landmark, so the landmark is always named.
 
 Either way the card headings always sit under a top-level heading, but on a website or in-app survey that
-heading does not name the survey being answered.
+heading does not name the survey being answered. Before 6.1, a website or in-app survey has the card headings
+only, with no top-level heading above them.
 
-**Workaround for released versions, and for website and in-app surveys:** Keeping surveys short and putting one
+**Workaround for versions before 5.4, and for website and in-app surveys:** Keeping surveys short and putting one
 question on each screen reduces the amount of navigation a respondent has to do. Repeating the survey's purpose
 in the first question's headline gives a respondent the context that a heading naming the survey would
 otherwise carry.
@@ -316,7 +318,7 @@ not.
 **Describe every image that carries information.** Select the **Alt** button on a question image, an ending card
 image, or each Picture Selection option, and translate the text like the headline. Say what the image
 shows that matters for the answer — "Bar chart: sign-ups doubled from May to June", not "chart.png". Leave the
-field empty only for an image that is pure decoration. On versions without the field, put that information in
+field empty only for an image that is pure decoration. Before 6.1, put that information in
 the headline or the description instead. See [Image Text Alternatives](#image-text-alternatives) above.
 
 **Do not convey meaning with colour alone.** If a rating scale, an option, or an instruction depends on a
