@@ -162,8 +162,11 @@ describe("GET /api/internal/retention-runs/export", () => {
     expect(mockIterate).not.toHaveBeenCalled();
   });
 
-  test("returns 400 on an unknown query parameter", async () => {
-    expect((await get(`organizationId=${ORG_ID}&entity=surveys`)).status).toBe(400);
+  test("returns 400 naming an unknown query parameter", async () => {
+    const response = await get(`organizationId=${ORG_ID}&entity=surveys`);
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).invalid_params).toEqual([expect.objectContaining({ name: "entity" })]);
     expect(mockCount).not.toHaveBeenCalled();
   });
 
