@@ -754,6 +754,7 @@
     "completed_heading": "問卷已關閉",
     "create_your_own": "建立您自己的",
     "enter_pin": "此問卷已受保護。請在下方輸入 PIN 碼。",
+    "error_description": "這份問卷發生了問題，請再試一次。",
     "just_curious": "只是好奇？",
     "link_invalid": "此問卷只能透過邀請填寫。",
     "paused": "此免費且開源的問卷已暫時暫停。",

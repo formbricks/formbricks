@@ -754,6 +754,7 @@
     "completed_heading": "Survey closed",
     "create_your_own": "Create your own open-source survey",
     "enter_pin": "This survey is protected. Enter the PIN below.",
+    "error_description": "This survey ran into a problem. Please try again.",
     "just_curious": "Just curious?",
     "link_invalid": "This survey can only be taken by invitation.",
     "paused": "This survey is temporarily paused.",
