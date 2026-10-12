@@ -2,6 +2,7 @@ import { type ButtonHTMLAttributes } from "preact";
 import { useRef } from "preact/compat";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
+import { FB_PART } from "@formbricks/survey-ui/parts";
 import { Button } from "./button";
 
 interface SubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -96,6 +97,7 @@ export function SubmitButton({
       {...props}
       dir="auto"
       variant="primary"
+      data-fb-part={FB_PART.buttonPrimary}
       ref={buttonRef}
       type={type}
       tabIndex={tabIndex}

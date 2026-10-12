@@ -7,6 +7,10 @@
 {{- $vertex := .Values.taxonomy.llm.vertex | default dict -}}
 {{- $vertexProject := get $vertex "project" | default "" -}}
 {{- $vertexLocation := get $vertex "location" | default "" -}}
+{{- $vertexThinkingLevel := get $vertex "thinkingLevel" -}}
+{{- if not (has $vertexThinkingLevel (list "" "minimal" "low" "medium" "high")) }}
+  {{- fail "taxonomy.llm.vertex.thinkingLevel must be minimal, low, medium, or high" }}
+{{- end }}
 {{- if not (has $provider (list "openai-compatible" "bedrock" "vertex-gemini")) }}
   {{- fail "taxonomy.llm.provider must be 'openai-compatible', 'bedrock', or 'vertex-gemini'" }}
 {{- end }}
@@ -92,6 +96,7 @@
   "TAXONOMY_LLM_PROMPT_TOKEN_RESERVE" "taxonomy.llm.promptTokenReserve"
   "TAXONOMY_LLM_PROVIDER_MAX_ATTEMPTS" "taxonomy.llm.providerMaxAttempts"
   "TAXONOMY_VERTEX_THINKING_BUDGET" "taxonomy.llm.vertex.thinkingBudget"
+  "TAXONOMY_VERTEX_THINKING_LEVEL" "taxonomy.llm.vertex.thinkingLevel"
   "HUB_CLIENT_MAX_ATTEMPTS" "taxonomy.hubClientMaxAttempts"
   "HUB_HEARTBEAT_INTERVAL_SECONDS" "taxonomy.heartbeatIntervalSeconds"
   "TAXONOMY_RUN_TIMEOUT_SECONDS" "taxonomy.runDeadlineSeconds"
@@ -285,8 +290,13 @@ spec:
               value: {{ $bedrockRegion | quote }}
             {{- end }}
             {{- if eq $provider "vertex-gemini" }}
+            {{- if $vertexThinkingLevel }}
+            - name: TAXONOMY_VERTEX_THINKING_LEVEL
+              value: {{ $vertexThinkingLevel | quote }}
+            {{- else }}
             - name: TAXONOMY_VERTEX_THINKING_BUDGET
               value: {{ .Values.taxonomy.llm.vertex.thinkingBudget | quote }}
+            {{- end }}
             {{- end }}
             - name: HUB_CLIENT_TIMEOUT_SECONDS
               value: {{ .Values.taxonomy.hubClientTimeoutSeconds | quote }}

@@ -363,6 +363,7 @@ export function FileUploadElement({
         errorMessage={errorMessage}
         isUploading={isUploading}
         imageUrl={element.imageUrl}
+        imageAltText={getLocalizedValue(element.imageAltText, languageCode)}
         videoUrl={element.videoUrl}
         placeholderText={t("errors.file_input.placeholder_text")}
         uploadingText={t("errors.file_input.uploading")}

@@ -1,5 +1,6 @@
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
+import { toCustomCssSource } from "@/modules/custom-css/lib/source";
 import { surveyToV3Distribution, surveyToV3Targeting } from "./distribution";
 import { getV3SurveyDefaultLanguage, getV3SurveyLanguages } from "./language";
 import { type TV3SurveyLanguageRequest, deriveV3SurveyLanguageRequests } from "./languages";
@@ -151,6 +152,9 @@ function parseStoredV3SurveyDocument(
     endings: survey.endings,
     hiddenFields: survey.hiddenFields,
     variables: survey.variables,
+    // ENG-3641: the stored CSS as source, so an omitted `customCss` merges to "unchanged" and the write
+    // path compares normalized source rather than anything compiled.
+    customCss: toCustomCssSource(survey.customCss),
     ...appFields,
   });
 

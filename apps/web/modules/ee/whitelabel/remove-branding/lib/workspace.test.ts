@@ -41,7 +41,6 @@ describe("updateWorkspaceBranding", () => {
         cardBorderColor: { light: "#f8fafc" },
 
         isLogoHidden: false,
-        isDarkModeEnabled: false,
         background: { bg: "#fff", bgType: "color" as const },
         roundness: 8,
         cardArrangement: {

@@ -2,6 +2,7 @@ import { MutableRef } from "preact/hooks";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import { JSX } from "preact/jsx-runtime";
 import React from "react";
+import { FB_PART } from "@formbricks/survey-ui/parts";
 import { type TPlacement } from "@formbricks/types/common";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
@@ -110,6 +111,8 @@ export const StackedCard = ({
       }}
       id={`questionCard-${dynamicQuestionIndex}`}
       data-testid={`questionCard-${dynamicQuestionIndex}`}
+      // Public styling hook (ENG-3554): the visible card surface.
+      data-fb-part={FB_PART.card}
       key={dynamicQuestionIndex}
       style={{
         zIndex: 1000 - dynamicQuestionIndex,
