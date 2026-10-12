@@ -197,10 +197,11 @@ export const deleteDueResponses = async (
         surveyId: survey.id,
         id: { in: due.map((row) => row.id) },
       });
-      // Oldest first, so the last one left in `deletedIds` (the rows the delete matched, read in this
-      // transaction) is the newest. A row a person deleted after `due` was read is not among them; their
-      // delete went through the void-on-delete trigger, which cleared the notice, and the re-stamp keeps a
-      // cleared notice cleared.
+      // Oldest first, so the last of `due` still in `deletedIds` is the newest. `deletedIds` are the rows
+      // the helper read just before its delete, not a record of what the delete removed: a row a person
+      // deletes in between can still be among them, or be missing from them if it went earlier. What keeps
+      // that safe is the void-on-delete trigger: the person's delete cleared the notice, and the re-stamp
+      // never brings a cleared notice back.
       const deletedSet = new Set(deletedIds);
       const newestDeleted = due.findLast((row) => deletedSet.has(row.id));
       if (newestDeleted) {

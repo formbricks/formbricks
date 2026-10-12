@@ -321,14 +321,14 @@ describe("createResponsesSweeper", () => {
     expect(lockUnchangedRetentionPolicy).toHaveBeenCalledWith(tx, POLICY);
   });
 
-  test("re-stamps from the newest row the delete matched, not one a person deleted after the batch was read", async () => {
+  test("re-stamps from the newest due row the delete still read, not one a person deleted before it", async () => {
     const tx = database({ candidates: [dueForDeletion("s1")] });
     const created = (day: number) => new Date(Date.UTC(2028, 0, day));
     tx.response.findMany.mockResolvedValueOnce([
       { id: "r1", createdAt: created(1) },
       { id: "r2", createdAt: created(2) },
     ]);
-    // r2 went between the batch's read and its delete.
+    // A person deleted r2 between the batch's read and the delete helper's own read.
     vi.mocked(deleteResponsesInTransaction).mockResolvedValueOnce({
       deleted: 1,
       deletedIds: ["r1"],

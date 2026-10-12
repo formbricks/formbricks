@@ -37,14 +37,15 @@ const isAtOrBefore = (a: Date, b: Date): boolean => a.getTime() <= b.getTime();
  * (`RetentionNotice.clockAt`): any change since voids it, in either direction.
  *
  * The check itself holds no memory, so a notice must also stay void once it is: a clock that moved and
- * came back would otherwise make it count again, with no new email. Every path that moves a survey's
- * clock back under "no response" therefore settles the notice at once:
- * - a person deleting responses (in the app, the API, or by cascade from a contact): the
- *   `retention_notice_void_on_response_delete` trigger clears `clockAt` to `NULL`, which no clock equals.
- *   It is a change to the survey, and its owner is warned again;
- * - a response's `created_at` moved (the management API accepts one) or the response moved to another
- *   survey: the `retention_notice_void_on_response_move` trigger clears both surveys' notices the same way;
- * - the responses policy's own deletions: they are the retention the notice announced, not activity, so
+ * came back would otherwise make it count again, with no new email. Changes to a survey's responses can
+ * move its clock back under "no response", so they settle the notice at once, whether or not they move the
+ * clock and whatever the policy's conditions:
+ * - a person's change restarts the warning. Deleting responses (in the app, the API, or by cascade from a
+ *   contact) goes through the `retention_notice_void_on_response_delete` trigger, and moving a response's
+ *   `created_at` (the management API accepts one) or its survey through
+ *   `retention_notice_void_on_response_move`; both clear `clockAt` to `NULL`, which no clock equals, so
+ *   the owner is warned again;
+ * - the responses policy's own deletions are the retention the notice announced, not activity:
  *   `restampSurveyNoticeAfterRetentionDeletion` re-stamps a notice computed for the clock before them for
  *   the clock they leave, instead of voiding it every night, and clears any other one to `NULL`.
  *
