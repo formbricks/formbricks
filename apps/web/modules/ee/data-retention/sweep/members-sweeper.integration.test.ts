@@ -383,4 +383,36 @@ describe("members sweeper (real Postgres)", () => {
     ).resolves.toBeNull();
     expect(await isActive(idle)).toBe(true);
   });
+
+  test("a sweep after the deactivation does nothing: no email, no History row, a run without changes", async () => {
+    const idle = await addMember("idle@example.com", "member", { lastLoginAt: ago(400) });
+    await sweep();
+    await ageNotice(idle, WARN + 1);
+    await sweep();
+    expect(await isActive(idle)).toBe(false);
+    const actions = async () =>
+      (
+        await prisma.retentionRunItem.findMany({
+          where: { action: { not: "skipped" } },
+          orderBy: [{ run: { startedAt: "asc" } }, { id: "asc" }],
+        })
+      ).map((item) => [item.action, item.targetId]);
+    expect(await actions()).toEqual([
+      ["notified", idle],
+      ["deactivated", idle],
+    ]);
+
+    await sweep();
+
+    expect(sendMemberRetentionNoticeEmail).toHaveBeenCalledOnce();
+    expect(revokeUserSessionsExcept).toHaveBeenCalledOnce();
+    expect(await actions()).toEqual([
+      ["notified", idle],
+      ["deactivated", idle],
+    ]);
+    expect(await prisma.retentionRun.findFirstOrThrow({ orderBy: { startedAt: "desc" } })).toMatchObject({
+      hasChanges: false,
+      finishedAt: expect.any(Date),
+    });
+  });
 });

@@ -4,12 +4,27 @@ import type { RetentionSurveyCondition } from "@formbricks/database/prisma";
 import { resetDb } from "@/integration/reset-db";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { sendSurveyRetentionNoticeEmail } from "@/modules/email";
+import { restoreSurvey } from "@/modules/survey/lib/surveys";
 import { getRetentionClockCutoffs } from "../lib/schedule";
 import { openRetentionRun } from "./run";
 import { sendSurveyNotices } from "./survey-notices";
 import { archiveDueSurvey, createSurveysSweeper } from "./surveys-sweeper";
 import { runDataRetentionSweep } from "./sweep";
 
+// Per-run caps a test can shrink; read through getters, so the sweep sees the current value.
+const caps = vi.hoisted(() => ({ notices: 0, actions: 0 }));
+vi.mock("./constants", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./constants")>();
+  return {
+    ...actual,
+    get RETENTION_NOTICES_PER_RUN() {
+      return caps.notices || actual.RETENTION_NOTICES_PER_RUN;
+    },
+    get RETENTION_ACTIONS_PER_RUN() {
+      return caps.actions || actual.RETENTION_ACTIONS_PER_RUN;
+    },
+  };
+});
 vi.mock("@/modules/email", () => ({ sendSurveyRetentionNoticeEmail: vi.fn() }));
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   queueAuditEventWithoutRequest: vi.fn().mockResolvedValue(undefined),
@@ -68,8 +83,37 @@ describe("surveys sweeper (real Postgres)", () => {
       data: { sentAt: ago(days), deliveredAt: ago(days) },
     });
 
+  /** As if `days` went by for this survey: its clock and its notice move that far into the past. */
+  const travel = async (surveyId: string, days: number) => {
+    await prisma.$executeRaw`
+      UPDATE "Survey" SET "created_at" = "created_at" - make_interval(days => ${days}::int),
+                          "updated_at" = "updated_at" - make_interval(days => ${days}::int)
+      WHERE "id" = ${surveyId}`;
+    await prisma.$executeRaw`
+      UPDATE "RetentionNotice" SET "sentAt" = "sentAt" - make_interval(days => ${days}::int),
+                                   "deliveredAt" = "deliveredAt" - make_interval(days => ${days}::int),
+                                   "clockAt" = "clockAt" - make_interval(days => ${days}::int)
+      WHERE "surveyId" = ${surveyId}`;
+  };
+
+  /** What the runs did, skips aside: History's rows that changed something. */
+  const actions = async () =>
+    (
+      await prisma.retentionRunItem.findMany({
+        where: { action: { not: "skipped" } },
+        orderBy: [{ run: { startedAt: "asc" } }, { id: "asc" }],
+      })
+    ).map((item) => [item.action, item.targetId]);
+
+  const latestRun = () => prisma.retentionRun.findFirstOrThrow({ orderBy: { startedAt: "desc" } });
+
+  const isArchived = async (surveyId: string) =>
+    (await prisma.survey.findUniqueOrThrow({ where: { id: surveyId } })).archivedAt !== null;
+
   beforeEach(async () => {
     vi.clearAllMocks();
+    caps.notices = 0;
+    caps.actions = 0;
     await resetDb();
     vi.mocked(sendSurveyRetentionNoticeEmail).mockResolvedValue(true);
     organizationId = (await prisma.organization.create({ data: { name: "Acme" } })).id;
@@ -303,5 +347,159 @@ describe("surveys sweeper (real Postgres)", () => {
     await expect(
       archiveDueSurvey({ ...run, deadline: Date.now() + 60_000 }, survey, noticeDueAtOrBefore)
     ).resolves.toBe(false);
+  });
+
+  test("a sweep after the archive does nothing: no email, no History row, a run without changes", async () => {
+    await enablePolicy(["noChange"]);
+    const stale = await createSurvey("Old feedback", { age: 400 });
+    await sweep();
+    await ageNotice(stale, WARN + 1);
+    await sweep();
+    expect(await isArchived(stale)).toBe(true);
+    const before = await actions();
+    expect(before).toEqual([
+      ["notified", stale],
+      ["archived", stale],
+    ]);
+
+    await sweep();
+
+    expect(sendSurveyRetentionNoticeEmail).toHaveBeenCalledOnce();
+    expect(await actions()).toEqual(before);
+    expect(await latestRun()).toMatchObject({ hasChanges: false, finishedAt: expect.any(Date) });
+  });
+
+  test("restoring an archived survey restarts its period: a fresh notice, then the full warning", async () => {
+    await enablePolicy(["noChange"]);
+    const survey = await createSurvey("Old feedback", { age: 400 });
+    await sweep();
+    await ageNotice(survey, WARN + 1);
+    await sweep();
+    expect(await isArchived(survey)).toBe(true);
+
+    await restoreSurvey(survey);
+    const restored = await prisma.survey.findUniqueOrThrow({ where: { id: survey } });
+    expect(restored.archivedAt).toBeNull();
+    expect(Date.now() - restored.updatedAt.getTime()).toBeLessThan(60_000);
+
+    // Right after the restore, nothing is due: its old notice is for a clock it no longer has.
+    await sweep();
+    expect(await isArchived(survey)).toBe(false);
+    expect(sendSurveyRetentionNoticeEmail).toHaveBeenCalledOnce();
+
+    // A full period less the warning later, it is warned again, and not archived on that notice.
+    await travel(survey, PERIOD - WARN);
+    await sweep();
+    expect(sendSurveyRetentionNoticeEmail).toHaveBeenCalledTimes(2);
+    expect(await isArchived(survey)).toBe(false);
+    expect((await notice(survey))?.clockAt).toEqual(
+      (await prisma.survey.findUniqueOrThrow({ where: { id: survey } })).updatedAt
+    );
+
+    // A day short of the period and of the warning: still not archived.
+    await travel(survey, WARN - 1);
+    await sweep();
+    expect(await isArchived(survey)).toBe(false);
+
+    await travel(survey, 1);
+    await sweep();
+    expect(await isArchived(survey)).toBe(true);
+    expect(sendSurveyRetentionNoticeEmail).toHaveBeenCalledTimes(2);
+    expect(await actions()).toEqual([
+      ["notified", survey],
+      ["archived", survey],
+      ["notified", survey],
+      ["archived", survey],
+    ]);
+  });
+
+  test("passes over an owner or creator who was deleted, left the organisation or is billing-only", async () => {
+    await enablePolicy(["noChange"]);
+    const otherOrganizationId = (await prisma.organization.create({ data: { name: "Other" } })).id;
+    const user = async (name: string, role?: "owner" | "member" | "billing") => {
+      const { id } = await prisma.user.create({ data: { name, email: `${name}@example.com` } });
+      if (role)
+        await prisma.membership.create({ data: { userId: id, organizationId, role, accepted: true } });
+      return id;
+    };
+    await user("yan", "owner");
+    const cleo = await user("cleo", "member");
+    const [gone, alsoGone] = [await user("gone", "member"), await user("also-gone", "member")];
+    // Removed from this organisation, still a member of another one.
+    const remy = await user("remy");
+    await prisma.membership.create({
+      data: { userId: remy, organizationId: otherOrganizationId, role: "owner", accepted: true },
+    });
+    const bill = await user("bill", "billing");
+
+    const surveyBy = async (name: string, owner: string, creator: string) => {
+      const { id } = await prisma.survey.create({
+        data: { name, workspaceId, ownerId: owner, createdBy: creator },
+      });
+      await setSurveyTimes(id, { createdAt: ago(400), updatedAt: ago(400) });
+    };
+    await surveyBy("Owner deleted", gone, cleo);
+    await surveyBy("Owner removed", remy, cleo);
+    await surveyBy("Owner billing-only", bill, cleo);
+    await surveyBy("Both deleted", gone, alsoGone);
+    await surveyBy("Both removed", remy, remy);
+    await surveyBy("Both billing-only", bill, bill);
+    await prisma.user.deleteMany({ where: { id: { in: [gone, alsoGone] } } });
+
+    await sweep();
+
+    const told = Object.fromEntries(
+      vi
+        .mocked(sendSurveyRetentionNoticeEmail)
+        .mock.calls.flatMap(([email]) => email.archivedSurveys.map((survey) => [survey.name, email.email]))
+    );
+    expect(told).toEqual({
+      "Owner deleted": "cleo@example.com",
+      "Owner removed": "cleo@example.com",
+      "Owner billing-only": "cleo@example.com",
+      "Both deleted": "yan@example.com",
+      "Both removed": "yan@example.com",
+      "Both billing-only": "yan@example.com",
+    });
+  });
+
+  test("a capped run handles up to its cap, and the next night the rest, none twice", async () => {
+    caps.notices = 2;
+    caps.actions = 2;
+    await enablePolicy(["noChange"]);
+    const surveys = [
+      await createSurvey("Old 1", { age: 400 }),
+      await createSurvey("Old 2", { age: 400 }),
+      await createSurvey("Old 3", { age: 400 }),
+    ];
+    const told = () =>
+      vi
+        .mocked(sendSurveyRetentionNoticeEmail)
+        .mock.calls.flatMap(([email]) => email.archivedSurveys.map((survey) => survey.name))
+        .sort();
+    const archivedCount = () => prisma.survey.count({ where: { archivedAt: { not: null } } });
+
+    await sweep();
+    expect(told()).toHaveLength(2);
+    await sweep();
+    expect(told()).toEqual(["Old 1", "Old 2", "Old 3"]);
+
+    for (const survey of surveys) await ageNotice(survey, WARN + 1);
+    await sweep();
+    expect(await archivedCount()).toBe(2);
+    await sweep();
+    expect(await archivedCount()).toBe(3);
+    await sweep();
+
+    expect(told()).toEqual(["Old 1", "Old 2", "Old 3"]);
+    const history = await actions();
+    for (const action of ["notified", "archived"]) {
+      expect(
+        history
+          .filter(([recorded]) => recorded === action)
+          .map(([, targetId]) => targetId)
+          .sort()
+      ).toEqual([...surveys].sort());
+    }
   });
 });
