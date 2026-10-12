@@ -11,10 +11,13 @@ import { HubApiError } from "./utils";
  *
  * Everything without a response — a connection failure, a timeout, a caller abort — is already an
  * `Error` from `fetch` and passes through untouched, so `getHubErrorHint` can still walk its cause chain.
- * So does a 2xx that failed to parse: it has a status, but the status is not what went wrong.
  */
 const toHubApiError = (error: unknown, response: Response | undefined): unknown => {
-  if (!response || response.ok) return error;
+  if (!response) return error;
+
+  // A 2xx that failed to parse — a proxy answering 200 with an HTML page, say. Keeping its status is what
+  // makes it read as a bad upstream answer; bare, it has none, and looks like the Hub was never reached.
+  if (response.ok) return new HubApiError(response.status, undefined, response.headers, { cause: error });
 
   // An empty error body arrives as "", which says nothing; treat it as no body.
   const body = error === "" ? undefined : error;
