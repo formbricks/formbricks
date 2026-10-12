@@ -4101,11 +4101,15 @@
         },
         "reading_file": "Leyendo archivo…",
         "report": {
+          "download": "Descargar",
           "empty": "No se ha omitido nada",
           "ending": "Final",
+          "note": "Nota",
           "summary_notes": "{count, plural, one {# nota} other {# notas}}",
           "summary_warnings": "{count, plural, one {# advertencia} other {# advertencias}}",
-          "title": "Informe de importación"
+          "text_title": "Informe de importación de Qualtrics: {fileName}",
+          "title": "Informe de importación",
+          "warning": "Advertencia"
         },
         "your_file": "Tu archivo"
       },

@@ -4101,11 +4101,15 @@
         },
         "reading_file": "正在讀取檔案…",
         "report": {
+          "download": "下載",
           "empty": "沒有遺漏任何內容",
           "ending": "結尾",
+          "note": "備註",
           "summary_notes": "{count, plural, other {# 則備註}}",
           "summary_warnings": "{count, plural, other {# 則警告}}",
-          "title": "匯入報告"
+          "text_title": "Qualtrics 匯入報告:{fileName}",
+          "title": "匯入報告",
+          "warning": "警告"
         },
         "your_file": "你的檔案"
       },

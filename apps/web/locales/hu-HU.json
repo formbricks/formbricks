@@ -4101,11 +4101,15 @@
         },
         "reading_file": "A fájl beolvasása…",
         "report": {
+          "download": "Letöltés",
           "empty": "Semmi sem maradt ki",
           "ending": "Zárás",
+          "note": "Megjegyzés",
           "summary_notes": "{count, plural, one {# megjegyzés} other {# megjegyzés}}",
           "summary_warnings": "{count, plural, one {# figyelmeztetés} other {# figyelmeztetés}}",
-          "title": "Importálási jelentés"
+          "text_title": "Qualtrics-importálási jelentés: {fileName}",
+          "title": "Importálási jelentés",
+          "warning": "Figyelmeztetés"
         },
         "your_file": "Az Ön fájlja"
       },

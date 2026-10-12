@@ -4101,11 +4101,15 @@
         },
         "reading_file": "Читаем файл…",
         "report": {
+          "download": "Скачать",
           "empty": "Ничего не пропущено",
           "ending": "Завершение",
+          "note": "Примечание",
           "summary_notes": "{count, plural, one {# примечание} few {# примечания} many {# примечаний} other {# примечания}}",
           "summary_warnings": "{count, plural, one {# предупреждение} few {# предупреждения} many {# предупреждений} other {# предупреждения}}",
-          "title": "Отчёт об импорте"
+          "text_title": "Отчёт об импорте из Qualtrics: {fileName}",
+          "title": "Отчёт об импорте",
+          "warning": "Предупреждение"
         },
         "your_file": "Твой файл"
       },

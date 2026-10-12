@@ -4101,11 +4101,15 @@
         },
         "reading_file": "Dosya okunuyor…",
         "report": {
+          "download": "İndir",
           "empty": "Dışarıda bırakılan hiçbir şey yok",
           "ending": "Bitiş",
+          "note": "Not",
           "summary_notes": "{count, plural, one {# not} other {# not}}",
           "summary_warnings": "{count, plural, one {# uyarı} other {# uyarı}}",
-          "title": "İçe aktarma raporu"
+          "text_title": "Qualtrics içe aktarma raporu: {fileName}",
+          "title": "İçe aktarma raporu",
+          "warning": "Uyarı"
         },
         "your_file": "Dosyan"
       },

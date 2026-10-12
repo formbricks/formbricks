@@ -4101,11 +4101,15 @@
         },
         "reading_file": "Se citește fișierul…",
         "report": {
+          "download": "Descarcă",
           "empty": "Nu a fost omis nimic",
           "ending": "Final",
+          "note": "Notă",
           "summary_notes": "{count, plural, one {# notă} few {# note} other {# de note}}",
           "summary_warnings": "{count, plural, one {# avertisment} few {# avertismente} other {# de avertismente}}",
-          "title": "Raport de import"
+          "text_title": "Raport de import Qualtrics: {fileName}",
+          "title": "Raport de import",
+          "warning": "Avertisment"
         },
         "your_file": "Fișierul tău"
       },

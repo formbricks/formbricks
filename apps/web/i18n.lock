@@ -3951,11 +3951,15 @@ checksums:
     workspace/surveys/import/qualtrics_types/signature: f27cd2bc9c74af4be75578c6417dad41
     workspace/surveys/import/qualtrics_types/timing: b1c53bbe31c875224292e557118d8f01
     workspace/surveys/import/reading_file: 60962e92f158a2f54239f7bec0b9be2d
+    workspace/surveys/import/report/download: 56b7d0834952b39ee394b44bd8179178
     workspace/surveys/import/report/empty: d3d3446349e7b74e7679ddd75a41ff96
     workspace/surveys/import/report/ending: 48c0a4d745cb6d8d373e8e3ac50087a7
+    workspace/surveys/import/report/note: e0337f202c911423275f834edeffc54b
     workspace/surveys/import/report/summary_notes: 7b74b58bf41128b2d85ae04b9357e797
     workspace/surveys/import/report/summary_warnings: 9733c2c9b38a678112df7df98c160575
+    workspace/surveys/import/report/text_title: 5b629dfbd13e89bad40c1456c85a8215
     workspace/surveys/import/report/title: afa7c7c7b86f0f73ea02886574b46883
+    workspace/surveys/import/report/warning: 6618da2c7e5e93bb4ea0e16d29ab8c4c
     workspace/surveys/import/your_file: 37a16818e10901a5ccf7ab7a77b0a3fb
     workspace/surveys/new_survey: 82503c2dba9f071c93860e5ce9584e14
     workspace/surveys/no_other_workspaces_available: c6f91e9290d4fbeec6b34f7a09759395

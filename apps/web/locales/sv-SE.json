@@ -4101,11 +4101,15 @@
         },
         "reading_file": "Läser filen…",
         "report": {
+          "download": "Ladda ner",
           "empty": "Inget har utelämnats",
           "ending": "Avslutning",
+          "note": "Obs",
           "summary_notes": "{count, plural, one {# notering} other {# noteringar}}",
           "summary_warnings": "{count, plural, one {# varning} other {# varningar}}",
-          "title": "Importrapport"
+          "text_title": "Importrapport för Qualtrics: {fileName}",
+          "title": "Importrapport",
+          "warning": "Varning"
         },
         "your_file": "Din fil"
       },

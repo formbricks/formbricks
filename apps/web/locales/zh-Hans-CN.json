@@ -4101,11 +4101,15 @@
         },
         "reading_file": "正在读取文件…",
         "report": {
+          "download": "下载",
           "empty": "没有遗漏任何内容",
           "ending": "结束页",
+          "note": "备注",
           "summary_notes": "{count, plural, other {# 条备注}}",
           "summary_warnings": "{count, plural, other {# 条警告}}",
-          "title": "导入报告"
+          "text_title": "Qualtrics 导入报告:{fileName}",
+          "title": "导入报告",
+          "warning": "警告"
         },
         "your_file": "你的文件"
       },

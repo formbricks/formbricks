@@ -4101,11 +4101,15 @@
         },
         "reading_file": "ファイルを読み込み中…",
         "report": {
+          "download": "ダウンロード",
           "empty": "除外された項目はありません",
           "ending": "エンディング",
+          "note": "メモ",
           "summary_notes": "{count, plural, other {メモ#件}}",
           "summary_warnings": "{count, plural, other {警告#件}}",
-          "title": "インポートレポート"
+          "text_title": "Qualtricsインポートレポート:{fileName}",
+          "title": "インポートレポート",
+          "warning": "警告"
         },
         "your_file": "あなたのファイル"
       },

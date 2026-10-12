@@ -4101,11 +4101,15 @@
         },
         "reading_file": "Bestand lezen…",
         "report": {
+          "download": "Downloaden",
           "empty": "Er is niets weggelaten",
           "ending": "Einde",
+          "note": "Opmerking",
           "summary_notes": "{count, plural, one {# opmerking} other {# opmerkingen}}",
           "summary_warnings": "{count, plural, one {# waarschuwing} other {# waarschuwingen}}",
-          "title": "Importrapport"
+          "text_title": "Qualtrics-importrapport: {fileName}",
+          "title": "Importrapport",
+          "warning": "Waarschuwing"
         },
         "your_file": "Jouw bestand"
       },
