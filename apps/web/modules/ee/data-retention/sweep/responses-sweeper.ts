@@ -20,6 +20,7 @@ import { RETENTION_SWEEP_BATCH_SIZE } from "./constants";
 import { collectDueTargets, latestOf, surveySkips } from "./due-targets";
 import { type TSurveyReadCheck, resolveSurveyNoticeRecipients } from "./recipients";
 import { recordRetentionRunDeletion, recordRetentionRunSkips } from "./run";
+import { restampSurveyNoticeAfterRetentionDeletion } from "./survey-notice-restamp";
 import type { TSurveyNoticeItem } from "./survey-notices";
 import type { TRetentionSweepContext, TRetentionSweeper } from "./sweep";
 import { lockUnchangedRetentionPolicy, runSweepTransaction } from "./transaction";
@@ -155,7 +156,9 @@ const auditDeletion = async (
  * none are left or the run's time is up. Every batch locks the survey (an exemption being created waits,
  * its foreign key needing the row), holds the policy unchanged, and re-reads the survey's schedule: the
  * reminder must still be valid and have run its full warning (`getDueRetentionStep` → `act`), and no
- * exemption may hold it. The deleted rows' files and Hub records are queued in the same transaction.
+ * exemption may hold it. The deleted rows' files and Hub records are queued in the same transaction, and
+ * the survey's archive notice is re-stamped for the clock the deletion leaves it with
+ * (`restampSurveyNoticeAfterRetentionDeletion`): this policy's deletions are not activity.
  *
  * The survey lock also makes a new response to the survey wait (its foreign key takes `FOR KEY SHARE`)
  * for the length of one batch: a hundred rows, milliseconds. That is the price of an exemption being
@@ -180,7 +183,7 @@ export const deleteDueResponses = async (
 
       const due = await tx.response.findMany({
         where: { surveyId: survey.id, createdAt: { lte: cutoffs.actionDueAtOrBefore } },
-        select: { id: true },
+        select: { id: true, createdAt: true },
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         take: RETENTION_SWEEP_BATCH_SIZE,
       });
@@ -190,6 +193,17 @@ export const deleteDueResponses = async (
         surveyId: survey.id,
         id: { in: due.map((row) => row.id) },
       });
+      // Oldest first, so the last one deleted is the newest. Only rows this statement deleted count: one a
+      // person deleted in between is a change to the survey, and must not be re-stamped over.
+      const deletedSet = new Set(deletedIds);
+      const newestDeleted = due.findLast((row) => deletedSet.has(row.id));
+      if (newestDeleted) {
+        await restampSurveyNoticeAfterRetentionDeletion(tx, {
+          organizationId: context.policy.organizationId,
+          surveyId: survey.id,
+          newestDeletedAt: newestDeleted.createdAt,
+        });
+      }
       const { drainNowIds } = await enqueueResponsesDeletionCleanups(tx, {
         organizationId: context.policy.organizationId,
         workspaceId: current.workspaceId,

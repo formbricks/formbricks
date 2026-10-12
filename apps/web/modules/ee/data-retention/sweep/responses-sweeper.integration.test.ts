@@ -415,4 +415,187 @@ describe("responses sweeper (real Postgres)", () => {
       expect(vi.mocked(sendSurveyRetentionNoticeEmail).mock.calls[0][0].responseDeletions).toHaveLength(2);
     });
   });
+
+  describe("with the surveys policy on too", () => {
+    const bothSweep = () =>
+      runDataRetentionSweep({
+        checkLicence: async () => true,
+        sweepers: { responses: createResponsesSweeper(canRead), surveys: createSurveysSweeper(canRead) },
+      });
+
+    const enableSurveysPolicy = (enabled = true) =>
+      prisma.retentionPolicy.create({
+        data: {
+          organizationId,
+          entity: "surveys",
+          enabled,
+          enabledAt: enabled ? ago(1000) : null,
+          warnDays: WARN,
+          periodDays: PERIOD,
+          conditions: ["noResponse", "noChange"],
+        },
+      });
+
+    /** The survey last edited `days` ago, written raw: Prisma would stamp `updated_at` with now. */
+    const editedAgo = (days: number) =>
+      prisma.$executeRaw`UPDATE "Survey" SET "created_at" = ${ago(days)}, "updated_at" = ${ago(days)} WHERE "id" = ${surveyId}`;
+
+    const surveysNotice = () =>
+      prisma.retentionNotice.findUnique({ where: { surveyId_entity: { surveyId, entity: "surveys" } } });
+
+    const ageNotices = (days: number) =>
+      prisma.retentionNotice.updateMany({
+        where: { surveyId },
+        data: { sentAt: ago(days), deliveredAt: ago(days) },
+      });
+
+    const surveyUpdatedAt = async () =>
+      (await prisma.survey.findUniqueOrThrow({ where: { id: surveyId } })).updatedAt;
+
+    const isArchived = async () =>
+      (await prisma.survey.findUniqueOrThrow({ where: { id: surveyId } })).archivedAt !== null;
+
+    test("deleting a survey's last responses keeps its archive notice: one email, then both actions", async () => {
+      await enableSurveysPolicy();
+      await addResponses([390, 380]);
+      await editedAgo(400);
+
+      await bothSweep();
+      expect(sendSurveyRetentionNoticeEmail).toHaveBeenCalledOnce();
+      expect(vi.mocked(sendSurveyRetentionNoticeEmail).mock.calls[0][0]).toMatchObject({
+        responseDeletions: [expect.objectContaining({ name: "Site visit" })],
+        archivedSurveys: [expect.objectContaining({ name: "Site visit" })],
+      });
+
+      const lastEdit = await surveyUpdatedAt();
+      await ageNotices(WARN + 1);
+      await bothSweep();
+
+      expect(await prisma.response.count()).toBe(0);
+      expect(await isArchived()).toBe(true);
+      expect(sendSurveyRetentionNoticeEmail).toHaveBeenCalledOnce();
+      // Re-stamped for the clock the deletion left: the last edit (the archive itself stamps a new one).
+      expect((await surveysNotice())?.clockAt).toEqual(lastEdit);
+    });
+
+    test("a person deleting the newest response voids the archive notice: a new one, and a full warning", async () => {
+      await enableSurveysPolicy();
+      await addResponses([400, 370]);
+      await editedAgo(420);
+      await bothSweep();
+      expect(sendSurveyRetentionNoticeEmail).toHaveBeenCalledOnce();
+
+      // Someone deletes the newest response in the app: the survey's clock falls back to the older one.
+      const newest = await prisma.response.findFirstOrThrow({
+        where: { surveyId },
+        orderBy: { createdAt: "desc" },
+      });
+      await prisma.response.delete({ where: { id: newest.id } });
+      // The archive notice's warning has run; the responses reminder's hasn't, so nothing is deleted.
+      await prisma.retentionNotice.update({
+        where: { surveyId_entity: { surveyId, entity: "surveys" } },
+        data: { sentAt: ago(WARN + 1), deliveredAt: ago(WARN + 1) },
+      });
+
+      await bothSweep();
+      expect(await isArchived()).toBe(false);
+      expect(sendSurveyRetentionNoticeEmail).toHaveBeenCalledTimes(2);
+      expect(vi.mocked(sendSurveyRetentionNoticeEmail).mock.calls[1][0]).toMatchObject({
+        archivedSurveys: [expect.objectContaining({ name: "Site visit" })],
+        responseDeletions: [],
+      });
+      // Computed for the clock the survey has now: the response that is left.
+      const left = await prisma.response.findFirstOrThrow({ where: { surveyId } });
+      expect((await surveysNotice())?.clockAt).toEqual(left.createdAt);
+
+      // Its warning starts again from the new notice.
+      await bothSweep();
+      expect(await isArchived()).toBe(false);
+      await prisma.retentionNotice.update({
+        where: { surveyId_entity: { surveyId, entity: "surveys" } },
+        data: { sentAt: ago(WARN + 1), deliveredAt: ago(WARN + 1) },
+      });
+      await bothSweep();
+      expect(await isArchived()).toBe(true);
+      expect(sendSurveyRetentionNoticeEmail).toHaveBeenCalledTimes(2);
+    });
+
+    /** The surveys policy's notice, delivered and computed for `clockAt`. */
+    const storeSurveysNotice = (survey: string, clockAt: Date) =>
+      prisma.retentionNotice.create({
+        data: {
+          organizationId,
+          entity: "surveys",
+          surveyId: survey,
+          sentAt: ago(5),
+          deliveredAt: ago(5),
+          clockAt,
+        },
+      });
+
+    const clockAtOf = async (survey: string) =>
+      (
+        await prisma.retentionNotice.findUniqueOrThrow({
+          where: { surveyId_entity: { surveyId: survey, entity: "surveys" } },
+        })
+      ).clockAt;
+
+    /** The responses policy alone: its reminder, then its deletions once the warning has run. */
+    const remindThenDelete = async () => {
+      await sweep();
+      await prisma.retentionNotice.updateMany({
+        where: { entity: "responses" },
+        data: { sentAt: ago(WARN + 1), deliveredAt: ago(WARN + 1) },
+      });
+      await sweep();
+    };
+
+    test("re-stamps only a notice computed for the clock before the deletion", async () => {
+      await enableSurveysPolicy();
+      const other = (await prisma.survey.create({ data: { name: "NPS", workspaceId, ownerId } })).id;
+      for (const id of [surveyId, other]) {
+        await prisma.response.create({ data: { surveyId: id, createdAt: ago(380) } });
+        await prisma.$executeRaw`UPDATE "Survey" SET "created_at" = ${ago(400)}, "updated_at" = ${ago(400)} WHERE "id" = ${id}`;
+      }
+      const [{ createdAt: newest }] = await prisma.response.findMany({ where: { surveyId } });
+      await storeSurveysNotice(surveyId, newest);
+      // Computed for a clock the survey no longer had: already void, and left so.
+      const stale = ago(390);
+      await storeSurveysNotice(other, stale);
+
+      await remindThenDelete();
+
+      expect(await prisma.response.count()).toBe(0);
+      expect(await clockAtOf(surveyId)).toEqual(await surveyUpdatedAt());
+      expect(await clockAtOf(other)).toEqual(stale);
+    });
+
+    test("leaves the notice alone while a newer response is left", async () => {
+      await enableSurveysPolicy();
+      await addResponses([380, 340]);
+      await editedAgo(400);
+      const newest = (
+        await prisma.response.findFirstOrThrow({ where: { surveyId }, orderBy: { createdAt: "desc" } })
+      ).createdAt;
+      await storeSurveysNotice(surveyId, newest);
+
+      await remindThenDelete();
+
+      expect(await prisma.response.count()).toBe(1);
+      expect(await clockAtOf(surveyId)).toEqual(newest);
+    });
+
+    test("does nothing to a survey's notice when the surveys policy is off", async () => {
+      await enableSurveysPolicy(false);
+      await addResponses([380]);
+      await editedAgo(400);
+      const [{ createdAt: newest }] = await prisma.response.findMany({ where: { surveyId } });
+      await storeSurveysNotice(surveyId, newest);
+
+      await remindThenDelete();
+
+      expect(await prisma.response.count()).toBe(0);
+      expect(await clockAtOf(surveyId)).toEqual(newest);
+    });
+  });
 });

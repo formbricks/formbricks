@@ -34,9 +34,14 @@ const isAtOrBefore = (a: Date, b: Date): boolean => a.getTime() <= b.getTime();
 /**
  * Whether a target's notice is tied to its clock. A survey's or member's notice is about that target
  * becoming due, so it counts only while the target's clock is the one it was computed for
- * (`RetentionNotice.clockAt`): any activity since voids it. The responses reminder is sent once per
- * survey (8 Oct), while each response has its own clock, so it records none and only a policy change
- * voids it.
+ * (`RetentionNotice.clockAt`): any change since voids it, in either direction, and is never undone, so
+ * a void notice never comes back. That includes a person deleting a survey's responses (in the app, the
+ * API, or with a contact): under "no response" it moves the survey's clock, it is a change to the survey,
+ * and its owner is warned again. The responses policy's own deletions are not: they are the retention the
+ * notice announced, so the responses sweeper re-stamps the survey's notice for the clock they leave
+ * (`restampSurveyNoticeAfterRetentionDeletion`) instead of voiding it every night. The responses reminder
+ * is sent once per survey (8 Oct), while each response has its own clock, so it records none and only a
+ * policy change voids it.
  */
 const NOTICE_FOLLOWS_CLOCK = {
   responses: false,
@@ -72,7 +77,8 @@ export type TRetentionTargetState = {
   /**
    * The clock that notice was computed for (`RetentionNotice.clockAt`), for surveys and members. The
    * notice's dates hold only while the target's clock is still this one, whenever the clock moved (even
-   * between the sweep reading it and claiming the notice). Unused for the responses reminder.
+   * between the sweep reading it and claiming the notice). The responses policy re-stamps it when its own
+   * deletions move a survey's clock (`NOTICE_FOLLOWS_CLOCK`). Unused for the responses reminder.
    */
   noticeClockAt: Date | null;
   /**

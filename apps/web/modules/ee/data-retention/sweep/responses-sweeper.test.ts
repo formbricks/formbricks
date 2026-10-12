@@ -13,6 +13,7 @@ import {
 import { type TNoticeRecipient, resolveSurveyNoticeRecipients } from "./recipients";
 import { createResponsesSweeper } from "./responses-sweeper";
 import { recordRetentionRunDeletion, recordRetentionRunSkips } from "./run";
+import { restampSurveyNoticeAfterRetentionDeletion } from "./survey-notice-restamp";
 import type { TSurveyNoticeItem } from "./survey-notices";
 import type { TRetentionSweepContext } from "./sweep";
 import { lockUnchangedRetentionPolicy, runSweepTransaction } from "./transaction";
@@ -29,6 +30,8 @@ vi.mock("../lib/survey-retention-service", () => ({
   countSurveysResponsesCreatedAtOrBefore: vi.fn(),
 }));
 vi.mock("./recipients", () => ({ resolveSurveyNoticeRecipients: vi.fn() }));
+// Its rules against real rows are in `responses-sweeper.integration.test.ts`.
+vi.mock("./survey-notice-restamp", () => ({ restampSurveyNoticeAfterRetentionDeletion: vi.fn() }));
 vi.mock("./run", () => ({
   recordRetentionRunDeletion: vi.fn(),
   recordRetentionRunSkips: vi.fn(),
@@ -246,9 +249,13 @@ describe("createResponsesSweeper", () => {
 
   test("deletes a survey's due responses batch by batch under its lock, queueing their cleanup", async () => {
     const tx = database({ candidates: [dueForDeletion("s1")] });
+    const created = (day: number) => new Date(Date.UTC(2028, 0, day));
     tx.response.findMany
-      .mockResolvedValueOnce([{ id: "r1" }, { id: "r2" }])
-      .mockResolvedValueOnce([{ id: "r3" }]);
+      .mockResolvedValueOnce([
+        { id: "r1", createdAt: created(1) },
+        { id: "r2", createdAt: created(2) },
+      ])
+      .mockResolvedValueOnce([{ id: "r3", createdAt: created(3) }]);
 
     const { plan } = await run();
     await plan.act(NOW.getTime() + 60_000);
@@ -256,10 +263,15 @@ describe("createResponsesSweeper", () => {
     expect(tx.response.findMany).toHaveBeenCalledTimes(2);
     expect(tx.response.findMany).toHaveBeenCalledWith({
       where: { surveyId: "s1", createdAt: { lte: CUTOFFS.actionDueAtOrBefore } },
-      select: { id: true },
+      select: { id: true, createdAt: true },
       orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       take: 2,
     });
+    // Each batch re-stamps the survey's archive notice in its transaction, from the newest it deleted.
+    expect(vi.mocked(restampSurveyNoticeAfterRetentionDeletion).mock.calls).toEqual([
+      [tx, { organizationId: "clorg", surveyId: "s1", newestDeletedAt: created(2) }],
+      [tx, { organizationId: "clorg", surveyId: "s1", newestDeletedAt: created(3) }],
+    ]);
     expect(deleteResponsesInTransaction).toHaveBeenCalledWith(tx, {
       surveyId: "s1",
       id: { in: ["r1", "r2"] },
@@ -329,7 +341,7 @@ describe("createResponsesSweeper", () => {
 
   test("keeps going when the audit or the storage drain after commit fails", async () => {
     const tx = database({ candidates: [dueForDeletion("s1")] });
-    tx.response.findMany.mockResolvedValueOnce([{ id: "r1" }]);
+    tx.response.findMany.mockResolvedValueOnce([{ id: "r1", createdAt: NOW }]);
     vi.mocked(queueAuditEventWithoutRequest).mockRejectedValue(new Error("audit down"));
     vi.mocked(drainDeletionCleanups).mockRejectedValue(new Error("storage down"));
 
@@ -376,7 +388,10 @@ describe("createResponsesSweeper", () => {
     const tx = database({ candidates: [dueForDeletion("s1")] });
     tx.response.findMany.mockImplementation(async () => {
       vi.advanceTimersByTime(60_000);
-      return [{ id: "r1" }, { id: "r2" }];
+      return [
+        { id: "r1", createdAt: NOW },
+        { id: "r2", createdAt: NOW },
+      ];
     });
 
     const { plan } = await run();
