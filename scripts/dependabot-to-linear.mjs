@@ -4,7 +4,7 @@
 //
 // Create pass: for each OPEN Dependabot alert it creates one Linear issue (if
 // not already present), on the Engineering team, in the Todo state, with the
-// `security` label and a priority mapped from the alert severity.
+// `vulnerability` label and a priority mapped from the alert severity.
 //
 // Reconcile pass: for each RESOLVED alert (fixed / dismissed / auto-dismissed)
 // it moves the matching Linear issue to a completed state, so tickets don't
@@ -30,7 +30,7 @@ const DRY_RUN = process.argv.includes("--dry-run");
 
 const LINEAR_TEAM_ID = "272e6dd2-fcab-4270-be37-1626dce35d2c"; // Engineering
 const LINEAR_TODO_STATE_ID = "c32c8340-e8f8-48f4-a863-afabe3b19e17"; // Todo
-const LINEAR_SECURITY_LABEL_ID = "f9c50a45-3bd9-45e7-a70a-5b88aba910f9"; // security
+const LINEAR_VULNERABILITY_LABEL_ID = "98bce5c9-b5ee-4c4e-887f-1756615b20f9"; // vulnerability
 // The Engineering team uses T-shirt estimation, where the estimate is a plain
 // integer the UI renders as a size: 1=XS, 2=S, 3=M, 5=L. We default every
 // Dependabot issue to "S".
@@ -183,7 +183,7 @@ async function createIssue(apiKey, { title, description, priority }) {
       input: {
         teamId: LINEAR_TEAM_ID,
         stateId: LINEAR_TODO_STATE_ID,
-        labelIds: [LINEAR_SECURITY_LABEL_ID],
+        labelIds: [LINEAR_VULNERABILITY_LABEL_ID],
         estimate: LINEAR_ESTIMATE_S,
         title,
         description,
