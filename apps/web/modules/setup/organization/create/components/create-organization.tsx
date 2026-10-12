@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { ZOrganization } from "@formbricks/types/organizations";
 import { createOrganizationAction } from "@/app/setup/organization/create/actions";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem, FormProvider } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -53,6 +53,7 @@ export const CreateOrganization = () => {
   return (
     <FormProvider {...form}>
       <form
+        className="w-full"
         onSubmit={(e) => {
           e.preventDefault();
           void form.handleSubmit(onSubmit)(e);
@@ -64,13 +65,13 @@ export const CreateOrganization = () => {
             control={form.control}
             name="name"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="w-full max-w-80">
                 <FormControl>
                   <Input
                     {...field}
                     isInvalid={Boolean(form.formState.errors.name)}
                     placeholder="e.g., Acme Inc"
-                    className="w-80"
+                    className="w-full"
                     required
                   />
                 </FormControl>
@@ -81,7 +82,7 @@ export const CreateOrganization = () => {
           />
           <Button
             type="submit"
-            className="flex w-80 justify-center"
+            className="flex w-full max-w-80 justify-center"
             loading={isSubmitting}
             disabled={isSubmitting || organizationName.trim() === ""}>
             {t("setup.organization.create.continue")}

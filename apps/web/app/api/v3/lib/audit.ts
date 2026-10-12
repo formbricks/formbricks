@@ -28,12 +28,23 @@ export function buildV3AuditLog(
   return auditLog;
 }
 
+const SKIPPED_AUDIT_LOGS = new WeakSet<TV3AuditLog>();
+
+/**
+ * Mark a request's audit entry as not worth recording, for an operation that turned out to change
+ * nothing it promises to audit — a visibility no-op (ENG-3282, contract §3). Only a successful no-op
+ * should ever be skipped; a refusal stays audited as a failure.
+ */
+export function skipV3AuditLog(auditLog: TV3AuditLog | undefined): void {
+  if (auditLog) SKIPPED_AUDIT_LOGS.add(auditLog);
+}
+
 export async function queueV3AuditLog(
   auditLog: TV3AuditLog | undefined,
   requestId: string,
   log: ReturnType<typeof logger.withContext>
 ): Promise<void> {
-  if (!auditLog) {
+  if (!auditLog || SKIPPED_AUDIT_LOGS.has(auditLog)) {
     return;
   }
 

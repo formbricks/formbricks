@@ -100,6 +100,18 @@ describe("what is refused", () => {
     expect(namesOf(listQuery("workspaceId=not-a-cuid"))).toEqual(["workspaceId"]);
   });
 
+  /** Postgres `text` cannot hold U+0000; let through, the code fails the query and answers 500 (ENG-3550). */
+  test("a NULL byte in a language code is refused, on the list and the count", () => {
+    const query = `workspaceId=${WORKSPACE}&surveyId=${SURVEY}&filter[language][in]=de,e%00n`;
+    const refused = {
+      ok: false,
+      invalid_params: [{ name: "filter[language][in].1", reason: "must not contain NULL bytes" }],
+    };
+
+    expect(listQuery(query)).toEqual(refused);
+    expect(countQuery(query)).toEqual(refused);
+  });
+
   test("more than a hundred ids is refused", () => {
     const ids = Array.from({ length: 101 }, (_, i) => `clrs${String(i).padStart(22, "0")}`).join(",");
 

@@ -128,6 +128,8 @@ That is deliberate: a recall token can end up interpolated into a redirect URL o
 
 **In exports**, the column set is derived from the catalog rather than from whatever the first response happened to carry, so it is stable for the survey: every response gets every column, and absent values export as empty. `Response ID`, `Survey ID`, `Finished` and the timestamp already have fixed basic columns, so they are not repeated. Turning **Anonymize responses** on removes no column: `Country`, `Browser`, `Os` and `Device Type` stay, responses collected before the toggle keep their values in them, and anonymized responses export them empty. `Ip Address` is only a column when the survey captures it.
 
+**In Settings → Workspace → Embedded Data**, a read-only **Auto-captured fields** card lists every one of them with its type, whether it can be used in logic and recall mid-survey, and what **Anonymize responses** does to it. It is the one place the whole catalog is visible without opening a response, and nothing on it is editable — every survey already has these fields.
+
 <Note>
   Export headers are Title Case renderings of the field name (`Page Path`, `Utm Source`) and are deliberately
   **not** localized, so a download has the same column names whoever clicks it.

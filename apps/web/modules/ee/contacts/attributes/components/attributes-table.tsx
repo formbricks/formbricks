@@ -20,7 +20,7 @@ import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import {
   DataTableHeader,
   DataTableSettingsModal,

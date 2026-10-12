@@ -1,3 +1,4 @@
+import { resolveSurveyLanguage } from "@formbricks/i18n-utils/survey-language-match";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
@@ -137,7 +138,7 @@ export const getWebAppLocale = (languageCode: string, survey: TSurvey): string =
 interface GateLocaleParams {
   /** The raw `?lang=` value, present only when the respondent asked for a language. */
   langParam: string | undefined;
-  /** That value resolved against the survey's enabled languages, or "default". */
+  /** The language the survey renders in — from `?lang=` or the browser languages — or "default". */
   languageCode: string;
   survey: TSurvey;
   /** The locale negotiated from the Accept-Language header. */
@@ -145,12 +146,44 @@ interface GateLocaleParams {
 }
 
 /**
+ * The language a link survey renders in, read once on the server.
+ *
+ * Read from Accept-Language rather than the client's `navigator.languages`, so the very first paint is
+ * already in the right language — no flash of the default language, and it works the same inside an
+ * embed. Explicit `?lang=` first; one that matches nothing falls through to the browser languages (when
+ * the survey opted in) and then the default — see `resolveSurveyLanguage`. A repeated `?lang=a&lang=b`
+ * arrives as an array and counts as no explicit language.
+ */
+export const resolveLinkSurveyLanguage = ({
+  survey,
+  lang,
+  acceptedLanguages,
+}: {
+  survey: Pick<TSurvey, "languages" | "autoSelectLanguage">;
+  lang: string | string[] | undefined;
+  acceptedLanguages: string[];
+}): { langParam: string | undefined; languageCode: string } => {
+  const langParam = typeof lang === "string" ? lang : undefined;
+  const languageCode =
+    resolveSurveyLanguage({
+      languages: survey.languages,
+      explicitLanguage: langParam,
+      browserLanguages: acceptedLanguages,
+      autoSelectLanguage: survey.autoSelectLanguage,
+      unmatchedExplicitLanguage: "fallback",
+    }) ?? "default";
+  return { langParam, languageCode };
+};
+
+/**
  * The locale the gate screens in front of a survey (PIN entry, email verification) translate their own
  * chrome in, and the one the verification email is written in.
  *
- * Precedence is deliberate and narrow: an explicit `?lang=` that resolves to a language we translate
- * the app into wins, because that is the language the survey content itself will render in. Everything
- * else — no `lang` at all, or one the app has no translation for — keeps the Accept-Language locale.
+ * Precedence is deliberate and narrow: once a language was selected — by an explicit `?lang=`, or by
+ * "Use browser language by default" picking one from Accept-Language — the gate follows it whenever we
+ * translate the app into it, because that is the language the survey content itself will render in.
+ * Everything else — no language selected at all, or one the app has no translation for — keeps the
+ * Accept-Language locale.
  */
 export const getGateLocale = ({
   langParam,
@@ -158,6 +191,6 @@ export const getGateLocale = ({
   survey,
   fallbackLocale,
 }: GateLocaleParams): TUserLocale => {
-  if (!langParam) return fallbackLocale;
+  if (!langParam && languageCode === "default") return fallbackLocale;
   return resolveWebAppLocale(languageCode, survey) ?? fallbackLocale;
 };

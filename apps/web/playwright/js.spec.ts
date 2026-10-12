@@ -1,9 +1,10 @@
 import { expect } from "@playwright/test";
 import http from "http";
 import { prisma } from "@formbricks/database";
+import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constants";
 import { test } from "./lib/fixtures";
 import { gotoSurveyList, gotoSurveyTemplates } from "./lib/utils";
-import { useSelectedTemplate } from "./utils/helper";
+import { activateSurvey, useSelectedTemplate } from "./utils/helper";
 
 const HTML_TEMPLATE = `<head>
   <script type="text/javascript">
@@ -109,23 +110,89 @@ test.describe("JS Package Test", async () => {
 
     await Promise.all([
       page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary/, { timeout: 120000 }),
-      page.getByRole("button", { name: "Publish", exact: true }).click(),
+      activateSurvey(page),
     ]);
 
     const surveyId = /\/surveys\/([^/]+)\/summary/.exec(page.url())?.[1];
     if (!surveyId) throw new Error(`Unable to parse surveyId from ${page.url()}`);
 
+    // ENG-3552: workspace and survey custom CSS, saved through the same v3 endpoints the editors use, so
+    // the processor, storage and cache invalidation are the real ones. Both style the same hook so one
+    // assertion proves both arrive and that survey CSS outranks workspace CSS (M2.03).
+    await test.step("save workspace and survey custom CSS", async () => {
+      const workspaceCss = await page.request.patch(`/api/v3/workspaces/${workspaceId}/custom-css`, {
+        data: {
+          customCss: {
+            light: '[data-fb-part="headline"] { letter-spacing: 3px; color: rgb(10, 20, 30); }',
+            dark: null,
+          },
+        },
+      });
+      expect(workspaceCss.ok()).toBe(true);
+
+      // Survey CSS is delivered only while the survey's "Add custom styles" is on (ENG-3723). The v3 survey
+      // API has no styling field, so it is set directly, before the PATCH below invalidates the cache.
+      const { styling } = await prisma.survey.findUniqueOrThrow({
+        where: { id: surveyId },
+        select: { styling: true },
+      });
+      await prisma.survey.update({
+        where: { id: surveyId },
+        data: { styling: { ...styling, overwriteThemeStyling: true } },
+      });
+
+      const surveyCss = await page.request.patch(`/api/v3/surveys/${surveyId}`, {
+        data: { customCss: { light: '[data-fb-part="headline"] { color: rgb(40, 50, 60); }', dark: null } },
+      });
+      expect(surveyCss.ok()).toBe(true);
+    });
+
+    const environmentResponse = page.waitForResponse((response) =>
+      /\/api\/v1\/client\/[^/]+\/environment/.test(response.url())
+    );
     await page.goto("http://localhost:3004");
     await expect(page.locator("#formbricks-modal-container")).toHaveCount(1, { timeout: 120000 });
+
+    await test.step("the SDK receives compiled custom CSS only, workspace CSS once", async () => {
+      // The endpoint wraps the state in its own envelope: `{ data: { data: <state>, expiresAt } }`.
+      const { data } = ((await (await environmentResponse).json()) as { data: unknown }).data as {
+        data: {
+          workspace: { customCss?: Record<string, string> };
+          project?: { customCss?: unknown };
+          surveys: { id: string; customCss?: Record<string, string> }[];
+        };
+      };
+      const surveyCustomCss = data.surveys.find((survey) => survey.id === surveyId)?.customCss;
+
+      // Compiled `{ light?, dark? }` only — no source, no processor internals — and not repeated in the
+      // legacy `project` alias.
+      expect(Object.keys(data.workspace.customCss ?? {})).toEqual(["light"]);
+      expect(data.workspace.customCss?.light).toContain("fb-workspace");
+      expect(Object.keys(surveyCustomCss ?? {})).toEqual(["light"]);
+      expect(surveyCustomCss?.light).toContain("fb-survey");
+      expect(data.project?.customCss).toBeUndefined();
+    });
+
+    await test.step("workspace and survey custom CSS style the app survey", async () => {
+      const headline = page.locator('#formbricks-modal-container [data-fb-part="headline"]').first();
+      // Workspace CSS applies (letter-spacing), and survey CSS wins where both set a property (color).
+      await expect(headline).toHaveCSS("letter-spacing", "3px");
+      await expect(headline).toHaveCSS("color", "rgb(40, 50, 60)");
+    });
 
     // The widget reads the survey from the public client API, which substitutes a placeholder for
     // every survey name so names are not exposed over an unauthenticated endpoint. This is the only
     // place the real API, the widget and the dialog are wired together, so it is the only place that
     // can catch the placeholder leaking into what a screen reader announces: the dialog falls back
-    // to its generic name instead, and no heading carries the placeholder either.
+    // to its generic name instead, and the survey's one h1 carries that same name (ENG-2799). The h1
+    // is looked up inside the dialog, because aria-modal hides anything outside it from assistive tech.
+    // The placeholder is matched through the shared constant, not a literal, so a change to its text
+    // cannot turn this into a matcher that finds nothing and passes vacuously.
     const widget = page.locator("#formbricks-modal-container");
-    await expect(widget.getByRole("dialog")).toHaveAttribute("aria-label", "Survey Dialog");
-    await expect(widget.getByText(/\[deprecated] survey name omitted/)).toHaveCount(0);
+    const dialog = widget.getByRole("dialog");
+    await expect(dialog).toHaveAttribute("aria-label", "Survey Dialog");
+    await expect(dialog.getByRole("heading", { level: 1 })).toHaveText("Survey Dialog");
+    await expect(widget.getByText(PUBLIC_API_SURVEY_NAME_PLACEHOLDER)).toHaveCount(0);
 
     await expect(
       page.locator("#questionCard-0").getByRole("link", { name: "Powered by Formbricks" })
@@ -149,7 +216,19 @@ test.describe("JS Package Test", async () => {
 
     await page.getByTestId("loading-spinner").waitFor({ state: "hidden" });
     await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(5000);
+    // The last lifecycle event fires only once the ending card auto-closes the modal, so wait for it
+    // rather than for a fixed time.
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() =>
+            (window as unknown as { formbricksEvents?: { event: string }[] }).formbricksEvents?.some(
+              ({ event }) => event === "formbricks_survey_closed"
+            )
+          ),
+        { timeout: 15000 }
+      )
+      .toBe(true);
 
     // The `responseId` on the events is the PERSISTED id (ENG-1846). This is the only level that
     // can prove it: the id is minted by the server, so `onResponseCreated`/`onFinished` can only

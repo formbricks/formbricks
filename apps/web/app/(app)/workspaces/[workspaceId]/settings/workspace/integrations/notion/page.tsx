@@ -17,6 +17,7 @@ import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getSettingsPageMetadata } from "@/modules/settings/lib/metadata";
+import { isSurveyVisibilityEnforced } from "@/modules/survey/visibility/lib/gate";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -35,14 +36,16 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
     NOTION_REDIRECT_URI
   );
 
-  const { isReadOnly, session, workspace } = await getWorkspaceAuth(params.workspaceId);
+  const { isReadOnly, organization, session, workspace } = await getWorkspaceAuth(params.workspaceId);
 
-  const [surveys, notionIntegration, locale, contactAttributeKeys] = await Promise.all([
-    getSurveys(workspace.id),
-    getIntegrationByType(workspace.id, "notion"),
-    getUserLocale(session.user.id),
-    getContactAttributeKeys(workspace.id),
-  ]);
+  const [surveys, notionIntegration, locale, contactAttributeKeys, surveyVisibilityEnabled] =
+    await Promise.all([
+      getSurveys(workspace.id, session.user.id, organization.id),
+      getIntegrationByType(workspace.id, "notion"),
+      getUserLocale(session.user.id),
+      getContactAttributeKeys(workspace.id),
+      isSurveyVisibilityEnforced(),
+    ]);
 
   let databasesArray: TIntegrationNotionDatabase[] = [];
   if (notionIntegration && (notionIntegration as TIntegrationNotion).config.key?.bot_id) {
@@ -60,6 +63,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
       <NotionWrapper
         enabled={enabled}
         surveys={surveys}
+        surveyVisibilityEnabled={surveyVisibilityEnabled}
         workspaceId={workspace.id}
         notionIntegration={redactIntegrationCredentials(notionIntegration as TIntegrationNotion)}
         webAppUrl={WEBAPP_URL}

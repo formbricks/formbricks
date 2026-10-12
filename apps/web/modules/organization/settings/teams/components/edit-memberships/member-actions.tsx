@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TMember } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import {
   createInviteTokenAction,
   deleteInviteAction,

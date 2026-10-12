@@ -1,0 +1,5 @@
+allOf:
+  - $ref: ./FeedbackRecord.yml
+  - type: object
+    required:
+      - taxonomy

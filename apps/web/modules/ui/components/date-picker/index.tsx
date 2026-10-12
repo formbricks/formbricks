@@ -40,6 +40,11 @@ interface DatePickerProps {
   onClear?: () => void;
   clearButtonId?: string;
   clearButtonLabel?: string;
+  /**
+   * The clear button's own classes. Its `outline` variant draws a border, which is a second hairline
+   * when this picker is embedded inside a control that already has one.
+   */
+  clearButtonClassName?: string;
 }
 
 export const DatePicker = ({
@@ -56,6 +61,7 @@ export const DatePicker = ({
   onClear,
   clearButtonId,
   clearButtonLabel,
+  clearButtonClassName,
 }: Readonly<DatePickerProps>) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -103,7 +109,7 @@ export const DatePicker = ({
           size="sm"
           disabled={disabled}
           onClick={onClear}
-          className="size-8 shrink-0 p-0">
+          className={cn("size-8 shrink-0 p-0", clearButtonClassName)}>
           <XIcon className="size-4" />
         </Button>
       )}

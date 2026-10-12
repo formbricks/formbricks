@@ -29,7 +29,11 @@ import { isLiteralEmailRecipient } from "../recipients";
 import { createdResponse, dataResponse, listResponse, noContentResponse } from "../responses";
 import type { WorkflowRowWithLastRun } from "../services/ports";
 import type { WorkflowsService } from "../services/workflows.service";
-import { type TWorkflowExecutableDefinition, ZWorkflowExecutableDefinition } from "../types/document";
+import {
+  type TWorkflowDefinition,
+  type TWorkflowExecutableDefinition,
+  ZWorkflowExecutableDefinition,
+} from "../types/document";
 import { redactWorkflowDefinitionPII } from "./audit-redaction";
 import type {
   TriggerSurveyCheck,
@@ -199,12 +203,21 @@ const buildDisallowedRecipientParams = (disallowedEmails: string[]): WorkflowInv
   }));
 
 /** Map a failed trigger-survey check to field-level `invalid_params` on the definition's trigger config. */
+const SURVEY_NOT_WORKSPACE_VISIBLE_REASON =
+  "The referenced survey is not visible to the whole workspace, so workflows cannot use it.";
+
 const buildSurveyInvalidParams = (check: TriggerSurveyCheck): WorkflowInvalidParam[] => {
   const invalidParams: WorkflowInvalidParam[] = [];
   if (!check.surveyExists) {
     invalidParams.push({
       name: "definition.trigger.config.surveyId",
       reason: "The referenced survey does not exist in this workspace.",
+    });
+  }
+  if (check.surveyNotWorkspaceVisible) {
+    invalidParams.push({
+      name: "definition.trigger.config.surveyId",
+      reason: SURVEY_NOT_WORKSPACE_VISIBLE_REASON,
     });
   }
   for (const endingCardId of check.missingEndingCardIds) {
@@ -214,6 +227,31 @@ const buildSurveyInvalidParams = (check: TriggerSurveyCheck): WorkflowInvalidPar
     });
   }
   return invalidParams;
+};
+
+/**
+ * Attach-time guard (ENG-3283): a workflow forwards its trigger survey's responses out of the app, so it
+ * may only be bound to a survey the whole workspace can see. Checked when a binding is created — create,
+ * duplicate, and a patch that points the trigger at another survey — so the refusal is immediate; enable
+ * and dispatch re-check, since a survey restricted after it was bound stays bound (as for every other
+ * outbound connection). Existence is not checked here: a draft may still name a survey being built.
+ */
+const assertTriggerSurveyAttachable = async (
+  ctx: WorkflowApiContext,
+  workspaceId: string,
+  definition: TWorkflowDefinition,
+  previous?: TWorkflowDefinition
+): Promise<void> => {
+  const surveyId = definition.trigger?.config.surveyId;
+  if (!surveyId || surveyId === previous?.trigger?.config.surveyId) return;
+
+  const check = await ctx.verifyTriggerSurvey({ workspaceId, surveyId, endingCardIds: [] });
+  if (check.surveyNotWorkspaceVisible) {
+    throw new WorkflowNotExecutableError(
+      [{ name: "definition.trigger.config.surveyId", reason: SURVEY_NOT_WORKSPACE_VISIBLE_REASON }],
+      SURVEY_NOT_WORKSPACE_VISIBLE_REASON
+    );
+  }
 };
 
 /**
@@ -288,6 +326,7 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
 
       const authorized = await ctx.authorize(input.workspaceId, "readWrite");
       if (authorized instanceof Response) return authorized;
+      await assertTriggerSurveyAttachable(ctx, authorized.workspaceId, input.definition);
 
       const created = await service.createWorkflow(
         { ...input, workspaceId: authorized.workspaceId },
@@ -335,6 +374,9 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
           "A workflow's definition can only be updated while it is draft or disabled."
         );
       }
+      if (input.definition !== undefined) {
+        await assertTriggerSurveyAttachable(ctx, loaded.workspaceId, input.definition, loaded.definition);
+      }
 
       const updated = await service.updateWorkflow(
         { workflowId: params.workflowId, workspaceId: loaded.workspaceId },
@@ -360,6 +402,8 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       if (loaded instanceof Response) return loaded;
 
       const input = ZDuplicateWorkflowInput.parse(await readJsonBody(req, { allowEmpty: true }));
+      // The copy is a new binding of the same survey, so it is refused like a new workflow would be.
+      await assertTriggerSurveyAttachable(ctx, loaded.workspaceId, loaded.definition);
       const created = await service.duplicateWorkflow(loaded, { name: input.name, createdBy: ctx.userId });
 
       const resource = validateOutput(ZWorkflowResource, toWorkflowResource(created));
@@ -480,7 +524,11 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         surveyId,
         endingCardIds,
       });
-      if (!surveyCheck.surveyExists || surveyCheck.missingEndingCardIds.length > 0) {
+      if (
+        !surveyCheck.surveyExists ||
+        surveyCheck.surveyNotWorkspaceVisible ||
+        surveyCheck.missingEndingCardIds.length > 0
+      ) {
         throw new WorkflowNotExecutableError(buildSurveyInvalidParams(surveyCheck));
       }
 
@@ -613,6 +661,13 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
             message: "The referenced survey does not exist in this workspace.",
           });
         }
+        if (surveyCheck.surveyNotWorkspaceVisible) {
+          problems.push({
+            code: "survey_not_workspace_visible",
+            field: "definition.trigger.config.surveyId",
+            message: SURVEY_NOT_WORKSPACE_VISIBLE_REASON,
+          });
+        }
         for (const endingCardId of surveyCheck.missingEndingCardIds) {
           problems.push({
             code: "ending_card_not_found",
@@ -661,7 +716,17 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       const authorized = await ctx.authorize(input.workspaceId, "read");
       if (authorized instanceof Response) return authorized;
 
-      const runPage = await service.listWorkflowRuns({ ...input, workspaceId: authorized.workspaceId });
+      // ENG-3282: one batched visibility lookup per page, applied in the query so pages stay full and the
+      // cursor stays exact.
+      const excludeSurveyIds = await ctx.listUnreadableSurveyIds({
+        workspaceId: authorized.workspaceId,
+        organizationId: authorized.organizationId,
+      });
+      const runPage = await service.listWorkflowRuns({
+        ...input,
+        workspaceId: authorized.workspaceId,
+        excludeSurveyIds,
+      });
 
       const page = validateOutput(ZWorkflowRunListPage, {
         data: runPage.runs.map(toWorkflowRunListItem),
@@ -684,6 +749,17 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
 
       const authorized = await ctx.authorize(run.workspaceId, "read");
       if (authorized instanceof Response) return authorized;
+
+      // ENG-3282: the run carries its trigger survey's response data, so a caller who may not read
+      // that survey gets the same 403 as an unknown run.
+      if (run.surveyId) {
+        const unreadable = await ctx.listUnreadableSurveyIds({
+          workspaceId: authorized.workspaceId,
+          organizationId: authorized.organizationId,
+          surveyIds: [run.surveyId],
+        });
+        if (unreadable.includes(run.surveyId)) throw new WorkflowForbiddenError();
+      }
 
       return dataResponse(validateOutput(ZWorkflowRunResource, toWorkflowRunResource(run)), ctx.requestId);
     } catch (error) {

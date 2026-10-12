@@ -287,6 +287,36 @@ describe("Metadata Utils", () => {
       expect(result.description).toBe("Österreichische Beschreibung");
     });
 
+    test("follows the browser language when the survey opted in and no language is requested", async () => {
+      const mockSurvey = {
+        id: mockSurveyId,
+        workspaceId: mockWorkspaceId,
+        name: "Test Survey",
+        autoSelectLanguage: true,
+        metadata: {
+          title: { default: "Default Title", "de-AT": "Österreichischer Titel" },
+        },
+        languages: [
+          { language: { code: "en-US", alias: null }, default: true, enabled: true },
+          { language: { code: "de-AT", alias: null }, default: false, enabled: true },
+        ],
+        welcomeCard: { enabled: false } as TSurveyWelcomeCard,
+      } as unknown as TSurvey;
+
+      vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
+
+      const result = await getBasicSurveyMetadata(mockSurveyId, undefined, undefined, ["de-DE", "en"]);
+      expect(result.title).toBe("Österreichischer Titel");
+
+      const optedOut = await getBasicSurveyMetadata(
+        mockSurveyId,
+        undefined,
+        { ...mockSurvey, autoSelectLanguage: false },
+        ["de-DE", "en"]
+      );
+      expect(optedOut.title).toBe("Default Title");
+    });
+
     test("falls back to default metadata when language is not enabled", async () => {
       const mockSurvey = {
         id: mockSurveyId,

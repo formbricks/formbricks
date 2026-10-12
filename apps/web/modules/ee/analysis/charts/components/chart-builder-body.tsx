@@ -59,6 +59,9 @@ export function ChartBuilderBody({
 }: Readonly<ChartBuilderBodyProps>) {
   const { t } = useTranslation();
   const showsDisplaySettings = Boolean(chartData) && hasChartDisplaySettings(chartData?.chartType);
+  // A preset hands over a query with no rows yet: the builder runs it, and until then the preview
+  // spins instead of flashing "no data returned".
+  const isAwaitingFirstRun = Boolean(chartData && !chartData.data && !chartData.error && !queryState.error);
 
   return (
     <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
@@ -69,6 +72,7 @@ export function ChartBuilderBody({
           workspaceId={workspaceId}
           chartType={chartType}
           initialQuery={chartData?.query ?? initialQuery}
+          runInitialQuery={isAwaitingFirstRun}
           onChartGenerated={onChartGenerated}
           onQueryStateChange={onQueryStateChange}
           feedbackDirectoryId={feedbackDirectoryId}
@@ -79,7 +83,7 @@ export function ChartBuilderBody({
         className="min-h-0 min-w-0"
         chartData={chartData}
         config={chartConfig}
-        isLoading={isLoadingChart || queryState.isLoading}
+        isLoading={isLoadingChart || queryState.isLoading || isAwaitingFirstRun}
         error={chartLoadError ?? queryState.error}
         emptyMessage={
           chartType === "matrix"

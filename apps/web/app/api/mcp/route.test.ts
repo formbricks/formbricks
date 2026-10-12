@@ -19,9 +19,15 @@ import { authenticateApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { POST } from "./route";
 
-const { verifyBearerTokenMock, userFindUniqueMock } = vi.hoisted(() => ({
+const { getJwksMock, verifyBearerTokenMock, userFindUniqueMock } = vi.hoisted(() => ({
+  getJwksMock: vi.fn(),
   verifyBearerTokenMock: vi.fn(),
   userFindUniqueMock: vi.fn(),
+}));
+
+vi.mock("better-auth/oauth2", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("better-auth/oauth2")>()),
+  getJwks: getJwksMock,
 }));
 
 vi.mock("@better-auth/oauth-provider/resource-client", () => ({
@@ -169,6 +175,7 @@ describe("POST /api/mcp", () => {
     vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
     userFindUniqueMock.mockResolvedValue({ isActive: true });
+    getJwksMock.mockResolvedValue({ keys: [] });
     verifyBearerTokenMock.mockResolvedValue({
       aud: MCP_AUDIENCE,
       sub: "user_1",
@@ -386,6 +393,8 @@ describe("POST /api/mcp", () => {
       "archive_workflow",
       "unarchive_workflow",
       "list_workspaces",
+      "get_workspace_custom_css",
+      "patch_workspace_custom_css",
       "list_feedback_datasets",
       "list_feedback_records",
       "count_feedback_records",
@@ -555,6 +564,10 @@ describe("POST /api/mcp", () => {
 
     expect(response.status).toBe(200);
     expect(authenticateApiKeyFromHeaders).not.toHaveBeenCalled();
+    // The key set is pre-loaded from the same URL verification reads, so both share Better Auth's cache.
+    expect(getJwksMock).toHaveBeenCalledWith("eyJhbGciOiJFZERTQSJ9.payload.signature", {
+      jwksFetch: "http://formbricks:3000/api/auth/jwks",
+    });
     expect(verifyBearerTokenMock).toHaveBeenCalledWith(
       "eyJhbGciOiJFZERTQSJ9.payload.signature",
       expect.objectContaining({

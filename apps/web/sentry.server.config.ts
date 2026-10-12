@@ -4,6 +4,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { logger } from "@formbricks/logger";
 import { SENTRY_DSN, SENTRY_ENVIRONMENT, SENTRY_RELEASE } from "@/lib/constants";
+import { isScannerMultipartNoise } from "@/lib/sentry/scanner-noise";
 
 if (SENTRY_DSN) {
   logger.info("Sentry DSN found, enabling Sentry on the server");
@@ -34,6 +35,12 @@ if (SENTRY_DSN) {
 
       // @ts-expect-error
       if (error?.digest === "NEXT_NOT_FOUND") {
+        return null;
+      }
+
+      // Scanner traffic, not ours: a malformed multipart body that undici rejects before any handler
+      // sees it. Scoped on the stack rather than the route -- see `isScannerMultipartNoise`.
+      if (isScannerMultipartNoise(event)) {
         return null;
       }
 

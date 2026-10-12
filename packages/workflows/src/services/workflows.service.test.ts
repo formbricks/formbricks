@@ -461,6 +461,27 @@ describe("listWorkflowRuns", () => {
     });
   });
 
+  test("leaves out runs of unreadable surveys in SQL, keeping runs with no survey", async () => {
+    runFindMany.mockResolvedValue([]);
+    const cursor = Buffer.from(
+      JSON.stringify({ version: 1, value: "2026-06-12T10:00:00.000Z", id: "cm9zr5a0000000000000000002" }),
+      "utf8"
+    ).toString("base64url");
+
+    await service.listWorkflowRuns({ workspaceId, limit: 20, cursor, excludeSurveyIds: ["s-1", "s-2"] });
+
+    const { where } = runFindMany.mock.calls[0][0];
+    // Nested under AND so the cursor's own OR survives; `IS NULL OR NOT IN` because NOT IN drops nulls.
+    expect(where.AND).toEqual([{ OR: [{ surveyId: null }, { surveyId: { notIn: ["s-1", "s-2"] } }] }]);
+    expect(where.OR).toHaveLength(2);
+  });
+
+  test("adds no survey clause when nothing is excluded", async () => {
+    runFindMany.mockResolvedValue([]);
+    await service.listWorkflowRuns({ workspaceId, limit: 20, excludeSurveyIds: [] });
+    expect(runFindMany.mock.calls[0][0].where).toEqual({ workspaceId });
+  });
+
   test("isDryRun: false is forwarded (excludes dry runs), not dropped", async () => {
     runFindMany.mockResolvedValue([]);
     await service.listWorkflowRuns({ workspaceId, limit: 20, isDryRun: false });

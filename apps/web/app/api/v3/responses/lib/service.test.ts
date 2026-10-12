@@ -59,8 +59,10 @@ vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn() }
 vi.mock("@/lib/display/service", () => ({ deleteDisplay: mockDeleteDisplay }));
 vi.mock("@/modules/ee/quotas/lib/quotas", () => ({ reduceQuotaLimits: mockReduceQuotas }));
 vi.mock("@/modules/storage/lib/delete-response-files", () => ({ deleteResponseFileUrls: mockDeleteFiles }));
-vi.mock("@/modules/storage/utils", () => ({
-  collectResponseFileUrls: (data: unknown) => (data as { screenshots?: string[] })?.screenshots ?? [],
+// The real collection rule, so the tests see which URLs a response's own survey id makes deletable;
+// only the element-id lookup is pinned, to keep the survey fixtures free of upload elements.
+vi.mock("@/modules/storage/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/storage/utils")>()),
   getSurveyFileUploadElementIds: () => new Set(["screenshots"]),
 }));
 
@@ -237,6 +239,17 @@ describe("deleteScopedResponse", () => {
 
     expect(order).toStrictEqual(["commit", "files"]);
     expect(mockDeleteFiles).toHaveBeenCalledWith(["https://s/a.png"], "ws_1");
+  });
+
+  // The answer of an upload element since deleted from the survey sits under an id no longer in the set.
+  // Its key is filed under the response's own survey, which is what makes it this delete's to remove.
+  test("removes an upload left by a removed element of the response's own survey", async () => {
+    const ownFile = "/storage/ws_1/private/surveys/svy_1/elements/removed/a.png";
+    runTransaction(deletedRow({ data: { removed: [ownFile] } }));
+
+    await deleteScopedResponse(RESPONSE_ID, SCOPE);
+
+    expect(mockDeleteFiles).toHaveBeenCalledWith([ownFile], "ws_1");
   });
 
   test("does not call storage at all when the response held no files", async () => {
@@ -427,6 +440,28 @@ describe("deleteScopedResponses", () => {
 
     expect(order).toStrictEqual(["commit", "files"]);
     expect(mockDeleteFiles).toHaveBeenCalledWith(["https://s/a.png", "https://s/b.png"], "ws_1");
+  });
+
+  // Each row is bound to its own survey: svy_1's removed-element upload goes, but the same key in a
+  // svy_2 response is another survey's file and stays.
+  test("removes removed-element uploads by each row's own survey id", async () => {
+    const svy1File = "/storage/ws_1/private/surveys/svy_1/elements/removed/a.png";
+    runBatch(
+      [
+        row({ id: BATCH_IDS[0], surveyId: "svy_1", data: { removed: [svy1File] } }),
+        row({ id: BATCH_IDS[1], surveyId: "svy_2", data: { removed: [svy1File] } }),
+      ],
+      {
+        surveys: [
+          { id: "svy_1", blocks: [], questions: [] },
+          { id: "svy_2", blocks: [], questions: [] },
+        ],
+      }
+    );
+
+    await deleteScopedResponses(BATCH_IDS, SCOPE);
+
+    expect(mockDeleteFiles).toHaveBeenCalledWith([svy1File], "ws_1");
   });
 
   test("still succeeds when storage cleanup fails", async () => {

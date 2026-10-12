@@ -43,6 +43,13 @@ export const copySurveyToOtherWorkspaceAction = authenticatedActionClient
         type: "workspace",
         id: parsedInput.targetWorkspaceId,
       });
+
+      // ENG-3282: a copy carries the whole survey, so the caller must be able to read the source survey
+      // itself — workspace write does not reach a restricted survey. Same denial as any other refusal.
+      await assertCan({ type: "user", id: ctx.user.id }, "survey.read", {
+        type: "survey",
+        id: parsedInput.surveyId,
+      });
       await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.targetWorkspaceId);
 
       ctx.auditLoggingCtx.organizationId = sourceOrganizationId;
@@ -75,6 +82,12 @@ export const generateSingleUseIdsAction = authenticatedActionClient
     await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
       type: "workspace",
       id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
+    });
+    // ENG-3282: the minted links write responses into this survey, as the survey summary's link actions
+    // already require.
+    await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
+      type: "survey",
+      id: parsedInput.surveyId,
     });
 
     if (parsedInput.singleUseId) {

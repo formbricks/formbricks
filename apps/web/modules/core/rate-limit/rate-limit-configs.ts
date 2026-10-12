@@ -4,6 +4,10 @@ export const rateLimitConfigs = {
     login: { interval: 900, allowedPerInterval: 10, namespace: "auth:login" }, // 10 per 15 minutes
     signup: { interval: 3600, allowedPerInterval: 30, namespace: "auth:signup" }, // 30 per hour
     forgotPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:forgot" }, // 5 per hour
+    // Mail a single account can receive from forgot-password (reset link or SSO hint), keyed by user id, so
+    // rotating IPs cannot flood one inbox (ENG-3640). Checked after the response, so hitting it is
+    // invisible. Three covers a user who retries a couple of times while the 30-minute link is still live.
+    forgotPasswordPerAccount: { interval: 3600, allowedPerInterval: 3, namespace: "auth:forgot:account" }, // 3 per hour
     // Keep redemption independent so requesting an email cannot exhaust the budget to use its token.
     resetPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:reset-password" }, // 5 per hour
     verifyEmail: { interval: 3600, allowedPerInterval: 10, namespace: "auth:verify" }, // 10 per hour
@@ -21,6 +25,17 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "api:v3:surveys:generate",
     }, // 10 per minute (AI survey generation)
+    v3SurveyVisibility: {
+      interval: 60,
+      allowedPerInterval: 10,
+      namespace: "api:v3:surveys:visibility",
+    }, // 10 per minute per actor — a loop of workspace → restricted must not be able to arm the freshness guard (ENG-3282)
+    v3CustomCss: {
+      interval: 60,
+      allowedPerInterval: 60,
+      namespace: "api:v3:custom-css",
+    }, // 60 per minute per principal, on top of v3 — custom CSS processing is synchronous and CPU-bound, and
+    // the editor validates ~300 ms after typing stops, so normal editing stays far below this
     internalDatasetPurge: {
       interval: 3600,
       allowedPerInterval: 5,
@@ -52,6 +67,21 @@ export const rateLimitConfigs = {
     licenseRecheck: { interval: 60, allowedPerInterval: 5, namespace: "action:license-recheck" }, // 5 per minute
     unsplash: { interval: 60, allowedPerInterval: 30, namespace: "action:unsplash" }, // 30 per minute per user — bounds one account exhausting the instance-wide UNSPLASH_ACCESS_KEY quota
     inviteMember: { interval: 3600 * 24, allowedPerInterval: 50, namespace: "action:invite-member" }, // 50 recipients per day per org; trusted limits are resolved per organization
+    // The same recipient allowance, counted per inviting user across all their organizations. A
+    // per-org budget alone is reset by creating another organization, so one account could mail
+    // thousands of recipients through throwaway orgs.
+    inviteMemberPerUser: {
+      interval: 3600 * 24,
+      allowedPerInterval: 50,
+      namespace: "action:invite-member:user",
+    },
+    // Per user. Creating an organization is free and each one starts with fresh per-org budgets, so
+    // an unbounded create-and-delete loop is a way around every per-org limit.
+    createOrganization: {
+      interval: 3600 * 24,
+      allowedPerInterval: 5,
+      namespace: "action:create-organization",
+    }, // 5 per day
     generateExampleResponses: {
       interval: 60,
       allowedPerInterval: 1,

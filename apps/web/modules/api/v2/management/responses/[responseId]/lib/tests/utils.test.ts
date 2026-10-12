@@ -24,6 +24,7 @@ vi.mock("@/modules/storage/service", () => ({
 
 // The delete helper takes a survey shape ({ blocks, questions }); most cases here only use questions.
 const questionsSurvey = (questions: unknown[]) => ({ questions, blocks: [] }) as any;
+const surveyId = "kbr8tnr2q2vgztyrfnqlgfjt";
 
 describe("findAndDeleteUploadedFilesInResponse", () => {
   beforeEach(() => {
@@ -40,6 +41,7 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
     const result = await findAndDeleteUploadedFilesInResponse(
       responseData,
       questionsSurvey([fileUploadQuestion]),
+      surveyId,
       workspaceId
     );
 
@@ -61,7 +63,12 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
       [elementId]: [`https://example.com/storage/${workspaceId}/private/block-file.png`],
     } as any;
 
-    const result = await findAndDeleteUploadedFilesInResponse(blockResponseData, blockSurvey, workspaceId);
+    const result = await findAndDeleteUploadedFilesInResponse(
+      blockResponseData,
+      blockSurvey,
+      surveyId,
+      workspaceId
+    );
 
     expect(deleteFile).toHaveBeenCalledTimes(1);
     expect(deleteFile).toHaveBeenCalledWith(workspaceId, "private", "block-file.png", workspaceId);
@@ -80,6 +87,7 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
     const result = await findAndDeleteUploadedFilesInResponse(
       malformedData,
       questionsSurvey([fileUploadQuestion]),
+      surveyId,
       workspaceId
     );
 
@@ -87,10 +95,31 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
     expect(result).toEqual(okVoid());
   });
 
+  // The survey's only upload element was deleted, so no current element id matches the answer it left.
+  // Its key is filed under this survey, which is what makes the file this response's to delete.
+  test("delete an upload left by a removed element of the response's own survey", async () => {
+    const fileName = `surveys/${surveyId}/elements/removed-upload/a.png`;
+    const removedElementData: Response["data"] = {
+      "removed-upload": [`https://example.com/storage/${workspaceId}/private/${fileName}`],
+    };
+
+    const result = await findAndDeleteUploadedFilesInResponse(
+      removedElementData,
+      questionsSurvey([openTextQuestion]),
+      surveyId,
+      workspaceId
+    );
+
+    expect(deleteFile).toHaveBeenCalledTimes(1);
+    expect(deleteFile).toHaveBeenCalledWith(workspaceId, "private", fileName, workspaceId);
+    expect(result).toEqual(okVoid());
+  });
+
   test("not call deleteFile if no file upload questions match response data", async () => {
     const result = await findAndDeleteUploadedFilesInResponse(
       responseData,
       questionsSurvey([openTextQuestion]),
+      surveyId,
       workspaceId
     );
 
@@ -114,6 +143,7 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
     const result = await findAndDeleteUploadedFilesInResponse(
       plantedData,
       questionsSurvey([fileUploadQuestion]),
+      surveyId,
       workspaceId
     );
 
@@ -132,6 +162,7 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
     const result = await findAndDeleteUploadedFilesInResponse(
       invalidResponseData,
       questionsSurvey([fileUploadQuestion]),
+      surveyId,
       workspaceId
     );
 
@@ -146,6 +177,7 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
     const result = await findAndDeleteUploadedFilesInResponse(
       responseData,
       questionsSurvey([fileUploadQuestion]),
+      surveyId,
       workspaceId
     );
 

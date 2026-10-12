@@ -1,5 +1,6 @@
 import type {
   FeedbackRecordData,
+  FeedbackRecordTaxonomy,
   SemanticSearchResultItem,
   SimilarRecordsResultItem,
 } from "@/modules/hub/types";
@@ -97,6 +98,25 @@ export const serializeV3FeedbackRecord = (record: FeedbackRecordData): TV3Feedba
   }
   return dto;
 };
+
+/** Only the get-one-record response carries the current taxonomy projection. */
+export type TV3FeedbackRecordDetail = TV3FeedbackRecord & { taxonomy: FeedbackRecordTaxonomy | null };
+
+export const serializeV3FeedbackRecordDetail = (record: FeedbackRecordData): TV3FeedbackRecordDetail => ({
+  ...serializeV3FeedbackRecord(record),
+  taxonomy: record.taxonomy
+    ? {
+        status: record.taxonomy.status,
+        run_id: record.taxonomy.run_id,
+        path: record.taxonomy.path.map(({ id, label, level, node_type }) => ({
+          id,
+          label,
+          level,
+          node_type,
+        })),
+      }
+    : null,
+});
 
 /**
  * One scored match from a similarity search. The Hub returns an identical row shape for text search and

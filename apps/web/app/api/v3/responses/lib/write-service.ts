@@ -17,7 +17,10 @@ import { sendToPipeline } from "@/app/lib/pipelines";
 import { inlineSurveyEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
 import { getUniqueConstraintFields, isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
-import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
+import {
+  evaluateResponseQuotas,
+  loadQuotaEvaluationContext,
+} from "@/modules/ee/quotas/lib/evaluation-service";
 import { type TV3ResponseSurveyRow, v3ResponseReadSelect, v3ResponseSurveySelect } from "./service";
 
 /**
@@ -328,17 +331,17 @@ export async function collectReferenceIssues(
  *
  * The columns come from `getUniqueConstraintFields`, which is the one place in the codebase allowed
  * to touch Prisma's `error.meta` — a shape Prisma states is not public API and which differs by
- * engine. Reading `meta.target` directly, as the obvious version of this does, matches nothing on
- * this repo: under Prisma 7 + `@prisma/adapter-pg` that key is absent and the columns sit at
- * `meta.driverAdapterError.cause.constraint.fields`, still quoted. The obvious version therefore
- * returns `null` for every real race, and the caller rethrows into the generic 500.
+ * engine and version. Reading `meta.target` directly, as the obvious version of this does, matches
+ * nothing on this repo: under Prisma 7 + `@prisma/adapter-pg` that key is absent, and since 7.10 the
+ * adapter reports only the constraint name (`meta.driverAdapterError.cause.constraint.index`), which
+ * the helper resolves back to columns. The obvious version therefore returns `null` for every real
+ * race, and the caller rethrows into the generic 500.
  *
- * **That fallthrough leaks, which is why this matters beyond the status code.** The 500 branch logs
- * the error under `err`, and pino's error serializer copies its enumerable properties — including
- * `meta.driverAdapterError.cause.originalMessage`, the Postgres DETAIL, which carries the offending
- * values: `Key ("surveyId", "singleUseId")=(…, …) already exists`. That is the single-use token in a
- * log line. `prisma-constraint.ts` warns against surfacing that string to a response *or a log*, and
- * reading only the structured column list is how this path honours it.
+ * Mapping the race here, rather than letting it fall through to the generic 500, also keeps the raw
+ * error out of the logs: the 500 branch logs it under `err`, and pino's error serializer copies every
+ * enumerable property of `meta.driverAdapterError.cause`. `prisma-constraint.ts` warns against
+ * surfacing those fields to a response *or a log*, and reading only the structured column list is how
+ * this path honours it.
  */
 function raceIssuesFromUniqueViolation(error: unknown): InvalidParam[] | null {
   if (!isUniqueConstraintError(error)) return null;
@@ -433,6 +436,8 @@ export async function createScopedResponse(input: TV3CreateResponsePersist): Pro
   // Already resolved to one of the survey's own declared codes by `resolveV3WriteLanguage`, so it is
   // deliberately not canonicalized again here — that is what would push it out of the survey's set.
   const language = input.language ?? null;
+  // Read before the transaction opens — see `TQuotaEvaluationContext`.
+  const quotaContext = await loadQuotaEvaluationContext(survey.id);
 
   try {
     return await prisma.$transaction(async (tx) => {
@@ -505,6 +510,7 @@ export async function createScopedResponse(input: TV3CreateResponsePersist): Pro
         // The row as persisted, so `reserved` quota operands resolve (ENG-1840).
         response: toQuotaEvaluationRow(created),
         tx,
+        quotaContext,
       });
 
       return { ok: true as const, responseId: created.id };
@@ -552,6 +558,9 @@ export async function updateScopedResponse({
   survey,
   patch,
 }: TV3UpdateResponsePersist): Promise<TV3WriteOutcome> {
+  // Read before the transaction opens — see `TQuotaEvaluationContext`.
+  const quotaContext = await loadQuotaEvaluationContext(survey.id);
+
   try {
     return await prisma.$transaction(async (tx) => {
       const { issues } = await collectReferenceIssues(tx, {
@@ -605,6 +614,7 @@ export async function updateScopedResponse({
         responseFinished: updated.finished,
         response: toQuotaEvaluationRow(updated),
         tx,
+        quotaContext,
       });
 
       return { ok: true as const, responseId: updated.id };

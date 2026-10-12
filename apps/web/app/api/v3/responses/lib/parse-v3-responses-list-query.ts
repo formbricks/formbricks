@@ -4,6 +4,7 @@ import {
   computeFilterFingerprint,
   decodeKeysetCursor,
 } from "@/app/api/v3/lib/keyset-cursor";
+import { zPostgresText } from "@/lib/utils/postgres-text";
 
 /**
  * Query parsing for `GET /api/v3/responses` and `GET /api/v3/responses/count`.
@@ -110,9 +111,10 @@ const cuid2 = z.cuid2();
  * A language code, not a BCP-47 locale.
  *
  * The contract is explicit that these are the survey's own codes and that the literal `default` is a
- * legitimate value, so running them through a locale parser would reject a real filter.
+ * legitimate value, so running them through a locale parser would reject a real filter. They are
+ * bound into the query as-is, hence `zPostgresText`.
  */
-const languageCode = z.string().min(1).max(64);
+const languageCode = zPostgresText().min(1).max(64);
 
 const ZDateBound = z.iso.datetime({ offset: true }).transform((value) => new Date(value));
 

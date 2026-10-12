@@ -18,9 +18,7 @@ Add one [select-single](/surveys/question-type/select-single) question per quiz 
 
 ## 2. Add a score variable
 
-Scroll to **Variables** below the question list and add a number variable called `score`, starting at `0`.
-
-![The Variables section with a score variable](/images/surveys/best-practices/quiz-time/variables.webp)
+Scroll to the **Embedded Data** card below the question list, choose **Add field** then **Create new field**, set the source to **Calculated** and the type to **Number**, name it `score` and give it a default of `0`.
 
 ## 3. Add a point per correct answer
 
@@ -50,9 +48,9 @@ Then add a final rule that routes on the total: **when** `score` is greater than
   case to hit.
 </Warning>
 
-## 5. Publish
+## 5. Activate
 
-**Publish**, then share the link like any other [link survey](/surveys/link-surveys/quickstart).
+**Activate**, then share the link like any other [link survey](/surveys/link-surveys/quickstart).
 
 <Tip>
   A quiz makes a good lead magnet: add a [contact info](/surveys/question-type/contact-info) question before

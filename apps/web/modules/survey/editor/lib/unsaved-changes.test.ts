@@ -16,6 +16,19 @@ const baseSurvey = {
 const surveyWith = (overrides: Record<string, unknown>): TSurvey =>
   ({ ...baseSurvey, ...overrides }) as unknown as TSurvey;
 
+/** As the Hidden Fields card builds one: no `id`, because the database assigns that on the write. */
+const ingestedRow = (storageKey: string) => ({
+  field: {
+    name: storageKey,
+    source: "ingested" as const,
+    dataType: "string" as const,
+    defaultValue: null,
+    locked: false,
+    key: null,
+  },
+  link: { storageKey },
+});
+
 describe("hasUnsavedSurveyChanges", () => {
   test("reads clean when the editor matches the survey prop", () => {
     expect(hasUnsavedSurveyChanges(surveyWith({}), [baseSurvey])).toBe(false);
@@ -25,6 +38,28 @@ describe("hasUnsavedSurveyChanges", () => {
     const local = surveyWith({ updatedAt: new Date("2026-03-01T00:00:00.000Z") });
 
     expect(hasUnsavedSurveyChanges(local, [baseSurvey])).toBe(false);
+  });
+
+  // ENG-3395: after Collaborate or Activate changes visibility the editor refreshes the route, so the
+  // `survey` prop comes back with new visibility columns while `localSurvey` keeps the old ones. The
+  // save never writes them, so that difference is not unsaved work.
+  test("ignores the visibility columns, which only the visibility endpoint changes", () => {
+    const local = surveyWith({
+      visibility: "restricted",
+      visibilityVersion: 1,
+      visibilityProjectedVersion: 1,
+    });
+    const refreshedProp = surveyWith({
+      visibility: "workspace",
+      visibilityVersion: 2,
+      visibilityProjectedVersion: 1,
+      visibilityChangedAt: new Date("2026-03-01T00:00:00.000Z"),
+      visibilityChangedById: "user_1",
+    });
+
+    expect(hasUnsavedSurveyChanges(local, [refreshedProp])).toBe(false);
+    // A real edit still reads dirty against the same refreshed prop.
+    expect(hasUnsavedSurveyChanges({ ...local, name: "Renamed" }, [refreshedProp])).toBe(true);
   });
 
   // The reported bug. A draft save sets `localSurvey` from the action's response and then
@@ -45,6 +80,86 @@ describe("hasUnsavedSurveyChanges", () => {
     const local = surveyWith({ name: "My survey (edited)" });
 
     expect(hasUnsavedSurveyChanges(local, [baseSurvey, savedResponse])).toBe(true);
+  });
+
+  // ENG-2628. The cards build a row with no `id` — the database assigns it — and they no longer
+  // touch `variables` / `hiddenFields`, which the server derives from the rows. `isDeepEqual` fails
+  // on a differing key count alone, so without normalizing both the draft auto-save would re-save
+  // every tick and the discard dialog would fire on a fully saved survey.
+  test("a field the cards just added reads clean once the save returns it", () => {
+    const local = surveyWith({
+      embeddedFields: [ingestedRow("plan")],
+      variables: [],
+      hiddenFields: { enabled: false, fieldIds: [] },
+    });
+    const savedResponse = surveyWith({
+      embeddedFields: [{ ...ingestedRow("plan"), field: { ...ingestedRow("plan").field, id: "clx_row_1" } }],
+      variables: [],
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+    });
+
+    expect(hasUnsavedSurveyChanges(local, [savedResponse])).toBe(false);
+  });
+
+  test("an edit to the rows themselves still reads dirty", () => {
+    const savedResponse = surveyWith({
+      embeddedFields: [{ ...ingestedRow("plan"), field: { ...ingestedRow("plan").field, id: "clx_row_1" } }],
+    });
+    const renamed = surveyWith({
+      embeddedFields: [
+        { ...ingestedRow("plan"), field: { ...ingestedRow("plan").field, name: "Plan tier" } },
+      ],
+    });
+
+    expect(hasUnsavedSurveyChanges(renamed, [savedResponse])).toBe(true);
+  });
+
+  // ENG-3553: the editor sends an edited CSS field with empty compiled output; the save compiles it.
+  test("custom CSS reads clean once saved, whatever compiled output the server returned", () => {
+    const local = surveyWith({
+      customCss: {
+        light: { source: "#fbjs { color: red; }", compiled: "" },
+        dark: null,
+        processorVersion: 0,
+      },
+    });
+    const saved = surveyWith({
+      customCss: {
+        light: { source: "#fbjs { color: red; }", compiled: "@layer fb-survey{…}" },
+        dark: null,
+        processorVersion: 2,
+      },
+    });
+
+    expect(hasUnsavedSurveyChanges(local, [saved])).toBe(false);
+  });
+
+  test("an edit to the custom CSS source still reads dirty", () => {
+    const saved = surveyWith({
+      customCss: {
+        light: { source: "#fbjs { color: red; }", compiled: "x" },
+        dark: null,
+        processorVersion: 2,
+      },
+    });
+    const local = surveyWith({
+      customCss: {
+        light: { source: "#fbjs { color: blue; }", compiled: "" },
+        dark: null,
+        processorVersion: 2,
+      },
+    });
+
+    expect(hasUnsavedSurveyChanges(local, [saved])).toBe(true);
+    expect(hasUnsavedSurveyChanges(surveyWith({ customCss: null }), [saved])).toBe(true);
+  });
+
+  test("whitespace-only custom CSS is the same as none", () => {
+    const local = surveyWith({
+      customCss: { light: { source: "  \n", compiled: "" }, dark: null, processorVersion: 0 },
+    });
+
+    expect(hasUnsavedSurveyChanges(local, [baseSurvey])).toBe(false);
   });
 
   test("skips persisted states that are not there yet", () => {

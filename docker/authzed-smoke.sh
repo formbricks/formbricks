@@ -571,6 +571,10 @@ jq --exit-status '.status == "projected"' <<<"${persisted_feedback_seed}" >/dev/
 zed relationship create organization:smoke owner user:alice
 zed relationship create workspace:smoke organization organization:smoke
 zed relationship create survey:smoke workspace workspace:smoke
+# ENG-3282: a workspace-visible survey carries its workspace twice, the second edge being what shares it.
+# Hand-written, so there is no Survey row behind it: only the `--scope=survey` audit sweeps surveys, and
+# this harness never runs that scope, so the edge is never reported as an orphan.
+zed relationship create survey:smoke shared_workspace workspace:smoke
 
 alice_result="$(zed permission check survey:smoke read user:alice --consistency-full)"
 bob_result="$(zed permission check survey:smoke read user:bob --consistency-full)"

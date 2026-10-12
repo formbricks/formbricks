@@ -223,7 +223,9 @@ export interface WorkflowRunWhereInput {
   isDryRun?: boolean;
   createdAt?: { lt: Date } | Date;
   id?: { lt: string };
+  surveyId?: null | { notIn: string[] };
   OR?: WorkflowRunWhereInput[];
+  AND?: WorkflowRunWhereInput[];
 }
 
 export interface WorkflowRunOrderByInput {

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { Language, Workspace } from "@formbricks/database/prisma";
-import { ZSurveyStatus } from "@formbricks/types/surveys/types";
+import { ZSurveyStatus, ZSurveyVisibility } from "@formbricks/types/surveys/types";
 
 export const ZSurvey = z.object({
   id: z.string(),
@@ -25,6 +25,11 @@ export const ZSurvey = z.object({
       isEncrypted: z.boolean(),
     })
     .nullable(),
+  visibility: ZSurveyVisibility,
+  ownerId: z.string().nullable(),
+  owner: z.object({ name: z.string() }).nullable(),
+  visibilityVersion: z.number().int(),
+  visibilityProjectedVersion: z.number().int(),
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;

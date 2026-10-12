@@ -7,13 +7,22 @@ import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 // Neutralize the real default dependencies at import time; behaviour comes from per-test overrides.
 vi.mock("./api-key", () => ({ reconcileApiKeyRelationships: vi.fn() }));
 vi.mock("./backfill", () => ({ runAuthzedBackfill: vi.fn() }));
-vi.mock("./client", () => ({ closeAuthzedClient: vi.fn(), getAuthzedClient: vi.fn() }));
+vi.mock("./client", () => ({
+  closeAuthzedClient: vi.fn(),
+  configureAuthzedClientForBulkWork: vi.fn(),
+  getAuthzedClient: vi.fn(),
+}));
 vi.mock("./config", () => ({ isAuthzedEnabled: vi.fn() }));
 vi.mock("./feedback-directory", () => ({
   deleteFeedbackDirectoryAssignmentRelationships: vi.fn(),
   reconcileFeedbackDirectoryRelationships: vi.fn(),
 }));
 vi.mock("./organization-membership", () => ({ reconcileOrganizationMemberships: vi.fn() }));
+vi.mock("./scope-readiness", () => ({
+  clearProjectionScopeReady: vi.fn(),
+  setProjectionScopeReady: vi.fn(),
+}));
+vi.mock("./survey", () => ({ reconcileSurveyRelationships: vi.fn() }));
 vi.mock("./team-workspace", () => ({ reconcileTeamWorkspaceRelationships: vi.fn() }));
 
 const ORGANIZATION_ID = "clhx8n2p40000qwer1234asdf";
@@ -39,6 +48,7 @@ const result = (overrides: Partial<TAuthzedBackfillResult> = {}): TAuthzedBackfi
   },
   failures: [],
   lastOrganizationId: ORGANIZATION_ID,
+  lastSurveyId: null,
   mismatchedParents: [],
   mismatchedPermissions: [],
   mode: "apply",
@@ -52,14 +62,20 @@ const result = (overrides: Partial<TAuthzedBackfillResult> = {}): TAuthzedBackfi
 });
 
 const command = (overrides: Partial<Parameters<typeof runAuthzedBackfillCli>[0]> = {}) => ({
+  clearReady: false,
+  markReady: false,
   maxPrune: AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN,
   mode: "dry_run" as const,
   prune: false,
+  surveyScope: false,
   ...overrides,
 });
 
 const deps = (overrides = {}) => ({
+  clearSurveyReadiness: vi.fn().mockResolvedValue(undefined),
+  markSurveyReady: vi.fn().mockResolvedValue(undefined),
   closeClient: vi.fn(),
+  configureClient: vi.fn(),
   isEnabled: vi.fn().mockReturnValue(true),
   resolveEndpoint: vi.fn().mockReturnValue(ENDPOINT),
   run: vi.fn().mockResolvedValue(result()),
@@ -75,11 +91,15 @@ describe("parseAuthzedBackfillCommand", () => {
   test("defaults to a dry run over every organization, so a mistyped invocation is inert", () => {
     expect(parseAuthzedBackfillCommand([])).toEqual({
       afterOrganizationId: undefined,
+      afterSurveyId: undefined,
+      clearReady: false,
       expectedEndpoint: undefined,
+      markReady: false,
       maxPrune: AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN,
       mode: "dry_run",
       organizationId: undefined,
       prune: false,
+      surveyScope: false,
     });
   });
 
@@ -363,5 +383,106 @@ describe("runAuthzedBackfillCli", () => {
     await expect(runAuthzedBackfillCli(command(), dependencies)).resolves.toBe(2);
 
     expect(dependencies.writeOutput).toHaveBeenCalledWith(`${JSON.stringify(backfillResult)}\n`);
+  });
+});
+
+describe("survey scope and readiness (ENG-3282)", () => {
+  const SURVEY_ID = "clhx8n2p40003qwer1234asdf";
+
+  test.each([
+    [["--scope=survey"], { surveyScope: true }],
+    [["--scope=survey", "--apply", "--mark-ready"], { markReady: true, mode: "apply", surveyScope: true }],
+    [["--scope=survey", `--after-survey-id=${SURVEY_ID}`], { afterSurveyId: SURVEY_ID, surveyScope: true }],
+    [["--scope=survey", "--clear-ready"], { clearReady: true, surveyScope: true }],
+  ])("accepts %j", (args, expected) => {
+    expect(parseAuthzedBackfillCommand(args)).toMatchObject(expected);
+  });
+
+  test.each([
+    [["--mark-ready"]],
+    [["--scope=all", "--mark-ready"]],
+    [[`--organization-id=${ORGANIZATION_ID}`, "--mark-ready"]],
+    [["--scope=survey", "--mark-ready", "--clear-ready"]],
+    [["--scope=survey", "--clear-ready", "--apply"]],
+    [["--scope=survey", "--mark-ready", `--after-survey-id=${SURVEY_ID}`]],
+    [[`--after-survey-id=${SURVEY_ID}`]],
+    [["--scope=survey", `--after-organization-id=${ORGANIZATION_ID}`]],
+    [["--scope=survey", `--workspace-id=${WORKSPACE_ID}`]],
+  ])("rejects %j", (args) => {
+    expect(parseAuthzedBackfillCommand(args)).toBeUndefined();
+  });
+
+  test("runs the survey scope from the given cursor", async () => {
+    const dependencies = deps();
+    await runAuthzedBackfillCli(command({ afterSurveyId: SURVEY_ID, surveyScope: true }), dependencies);
+
+    expect(dependencies.run).toHaveBeenCalledWith(
+      expect.objectContaining({ scope: { afterSurveyId: SURVEY_ID, kind: "survey" } }),
+      expect.anything()
+    );
+  });
+
+  test("marks ready only after two further clean dry runs", async () => {
+    const dependencies = deps();
+
+    await expect(
+      runAuthzedBackfillCli(command({ markReady: true, mode: "apply", surveyScope: true }), dependencies)
+    ).resolves.toBe(0);
+
+    expect(dependencies.run).toHaveBeenCalledTimes(3);
+    // The real client refuses a second configure once built, so the three runs must share one.
+    expect(dependencies.configureClient).toHaveBeenCalledTimes(1);
+    expect(dependencies.run.mock.calls.slice(1).map(([request]) => request.mode)).toEqual([
+      "dry_run",
+      "dry_run",
+    ]);
+    expect(dependencies.markSurveyReady).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(dependencies.writeOutput.mock.calls[0][0])).toMatchObject({
+      readiness: "ready",
+      status: "reconciled",
+    });
+  });
+
+  test("leaves the marker alone when an audit pass still finds drift", async () => {
+    const dependencies = deps({
+      run: vi
+        .fn()
+        .mockResolvedValueOnce(result())
+        .mockResolvedValueOnce(result())
+        .mockResolvedValueOnce(result({ counters: { ...result().counters, missing: 1 }, status: "drifted" })),
+    });
+
+    await expect(
+      runAuthzedBackfillCli(command({ markReady: true, mode: "apply", surveyScope: true }), dependencies)
+    ).resolves.toBe(2);
+
+    expect(dependencies.markSurveyReady).not.toHaveBeenCalled();
+    expect(JSON.parse(dependencies.writeOutput.mock.calls[0][0])).toMatchObject({ readiness: "not-ready" });
+  });
+
+  test("never audits or marks after a failed run", async () => {
+    const dependencies = deps({ run: vi.fn().mockResolvedValue(result({ status: "failed" })) });
+
+    await expect(
+      runAuthzedBackfillCli(command({ markReady: true, mode: "apply", surveyScope: true }), dependencies)
+    ).resolves.toBe(1);
+
+    expect(dependencies.run).toHaveBeenCalledTimes(1);
+    expect(dependencies.markSurveyReady).not.toHaveBeenCalled();
+  });
+
+  test("clears the marker without touching AuthZed, even while it is disabled", async () => {
+    const dependencies = deps({ isEnabled: vi.fn().mockReturnValue(false) });
+
+    await expect(
+      runAuthzedBackfillCli(command({ clearReady: true, surveyScope: true }), dependencies)
+    ).resolves.toBe(0);
+
+    expect(dependencies.clearSurveyReadiness).toHaveBeenCalledTimes(1);
+    expect(dependencies.run).not.toHaveBeenCalled();
+    expect(JSON.parse(dependencies.writeOutput.mock.calls[0][0])).toEqual({
+      readiness: "not-ready",
+      readinessScope: "survey",
+    });
   });
 });

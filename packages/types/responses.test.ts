@@ -1,5 +1,11 @@
 import { describe, expect, test } from "vitest";
-import { ZResponseInput, ZResponseMeta, ZResponseUpdate, pickAutoCapturedResponseMeta } from "./responses";
+import {
+  ZResponseFilterCriteria,
+  ZResponseInput,
+  ZResponseMeta,
+  ZResponseUpdate,
+  pickAutoCapturedResponseMeta,
+} from "./responses";
 
 /** Everything the renderer snapshots at display time, in one object (ENG-1841). */
 const fullAutoCapturedMeta = {
@@ -15,6 +21,7 @@ const fullAutoCapturedMeta = {
   viewportWidth: 1280,
   viewportHeight: 800,
   timezone: "Europe/Berlin",
+  locale: "de-AT",
 };
 
 describe("ZResponseMeta", () => {
@@ -136,5 +143,14 @@ describe("pickAutoCapturedResponseMeta", () => {
     const picked = pickAutoCapturedResponseMeta({ pagePath: "/checkout" });
 
     expect(Object.keys(picked)).toStrictEqual(["pagePath"]);
+  });
+});
+
+describe("ZResponseFilterCriteria.data", () => {
+  const parse = (value: unknown) => ZResponseFilterCriteria.safeParse({ data: { is_pro: value } });
+
+  test.each(["equals", "notEquals"] as const)("rejects a jsonb boolean under %s", (op) => {
+    expect(parse({ op, value: true }).success).toBe(false);
+    expect(parse({ op, value: "true" }).success).toBe(true);
   });
 });

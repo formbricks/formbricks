@@ -68,6 +68,11 @@ export const recurringJobDescriptors = {
     name: JOB_NAMES.authzedReconciliationAudit,
     scheduleId: "authzed-reconciliation-audit",
   }),
+  authzedSurveyAudit: defineRecurringJob({
+    label: "AuthZed survey audit",
+    name: JOB_NAMES.authzedSurveyAudit,
+    scheduleId: "daily-authzed-survey-audit",
+  }),
   surveyArchivePurge: defineRecurringJob({
     label: "survey archive purge",
     name: JOB_NAMES.surveyArchivePurge,

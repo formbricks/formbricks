@@ -1,9 +1,11 @@
 import { NextRequest } from "next/server";
+import { findNotWorkspaceVisibleSurveyIds } from "@/lib/survey/visibility/outbound";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
 import { getAuthorizedApiKeyWorkspaceIds } from "@/modules/api/v2/management/lib/authorized-workspace-ids";
 import { getWorkspaceIdFromSurveyIds } from "@/modules/api/v2/management/lib/helper";
+import { surveyNotWorkspaceVisibleError } from "@/modules/api/v2/management/lib/survey-visibility";
 import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { createWebhook, getWebhooks } from "@/modules/api/v2/management/webhooks/lib/webhook";
 import { ZGetWebhooksFilter, ZWebhookCreateInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
@@ -66,6 +68,26 @@ export const POST = async (request: NextRequest) =>
 
         if (!workspaceIdResult.ok) {
           return handleApiError(request, workspaceIdResult.error, auditLog);
+        }
+
+        // The body's workspace is the one the key was authorized for; its surveys must be that
+        // workspace's too, as the PUT already checks.
+        if (workspaceIdResult.data !== body.workspaceId) {
+          return handleApiError(
+            request,
+            {
+              type: "bad_request",
+              details: [
+                { field: "surveyIds", issue: "webhook workspace does not match the surveys workspace" },
+              ],
+            },
+            auditLog
+          );
+        }
+
+        const blockedSurveyIds = await findNotWorkspaceVisibleSurveyIds(body.surveyIds);
+        if (blockedSurveyIds.length > 0) {
+          return handleApiError(request, surveyNotWorkspaceVisibleError(blockedSurveyIds), auditLog);
         }
       }
 

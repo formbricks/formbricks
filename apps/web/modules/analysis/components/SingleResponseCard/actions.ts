@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
 import { deleteResponse, getResponse, getResponseWithQuotas } from "@/lib/response/service";
 import { createTag, getTagsByWorkspaceId } from "@/lib/tag/service";
@@ -72,9 +72,9 @@ export const createTagToResponseAction = authenticatedActionClient
 
       const organizationId = await getOrganizationIdFromWorkspaceId(responseWorkspaceId);
 
-      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-        type: "workspace",
-        id: responseWorkspaceId,
+      await assertCan({ type: "user", id: ctx.user.id }, "response.write", {
+        type: "response",
+        id: parsedInput.responseId,
       });
       await applyRateLimit(rateLimitConfigs.actions.stateMutation, responseWorkspaceId);
       ctx.auditLoggingCtx.organizationId = organizationId;
@@ -108,9 +108,9 @@ export const deleteTagOnResponseAction = authenticatedActionClient
         throw new Error("Response and tag are not in the same workspace");
       }
 
-      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-        type: "workspace",
-        id: responseWorkspaceId,
+      await assertCan({ type: "user", id: ctx.user.id }, "response.write", {
+        type: "response",
+        id: parsedInput.responseId,
       });
       await applyRateLimit(rateLimitConfigs.actions.stateMutation, responseWorkspaceId);
       ctx.auditLoggingCtx.organizationId = organizationId;
@@ -131,9 +131,9 @@ export const deleteResponseAction = authenticatedActionClient.inputSchema(ZDelet
   withAuditLogging("deleted", "response", async ({ parsedInput, ctx }) => {
     const organizationId = await getOrganizationIdFromResponseId(parsedInput.responseId);
     const workspaceId = await getWorkspaceIdFromResponseId(parsedInput.responseId);
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-      type: "workspace",
-      id: workspaceId,
+    await assertCan({ type: "user", id: ctx.user.id }, "response.write", {
+      type: "response",
+      id: parsedInput.responseId,
     });
     await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
     ctx.auditLoggingCtx.organizationId = organizationId;
@@ -169,19 +169,11 @@ const ZGetResponseAction = z.object({
 export const getResponseAction = authenticatedActionClient
   .inputSchema(ZGetResponseAction)
   .action(async ({ parsedInput, ctx }) => {
-    let workspaceId: string;
-    try {
-      workspaceId = await getWorkspaceIdFromResponseId(parsedInput.responseId);
-    } catch (error) {
-      if (error instanceof ResourceNotFoundError) {
-        throw new AuthorizationError("Not authorized");
-      }
-      throw error;
-    }
-
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
-      type: "workspace",
-      id: workspaceId,
+    // An unknown response resolves to no scope, which is a denial: the same `AuthorizationError` a
+    // foreign one gets, so a response id's existence is not probeable.
+    await assertCan({ type: "user", id: ctx.user.id }, "response.read", {
+      type: "response",
+      id: parsedInput.responseId,
     });
 
     return await getResponseWithQuotas(parsedInput.responseId);

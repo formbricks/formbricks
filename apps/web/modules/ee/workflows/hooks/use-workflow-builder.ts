@@ -23,7 +23,11 @@ import {
   unarchiveWorkflow,
   updateWorkflow,
 } from "@/modules/ee/workflows/lib/api-client";
-import { classifyWorkflowSaveError, getWorkflowApiErrorMessage } from "@/modules/ee/workflows/lib/api-error";
+import {
+  classifyWorkflowSaveError,
+  getWorkflowApiErrorMessage,
+  isTriggerSurveyRestrictedRefusal,
+} from "@/modules/ee/workflows/lib/api-error";
 import { workflowDefinitionToFlowNodes } from "@/modules/ee/workflows/lib/definition-to-flow";
 import {
   hydrateWorkflowEditorAtom,
@@ -461,7 +465,13 @@ export const useWorkflowBuilder = ({
         setWorkflow(transitioned);
         toast.success(op.success());
       } catch (error) {
-        toast.error(getWorkflowApiErrorMessage(error, op.failure()));
+        // The generic "not executable" detail says nothing about why; a restricted trigger survey
+        // (ENG-3395) gets copy that names the fix.
+        toast.error(
+          isTriggerSurveyRestrictedRefusal(error)
+            ? t("workspace.workflows.enable_failed_survey_restricted")
+            : getWorkflowApiErrorMessage(error, op.failure())
+        );
       } finally {
         setIsTransitioning(false);
       }

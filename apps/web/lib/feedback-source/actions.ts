@@ -12,6 +12,7 @@ import {
 import { assertCan } from "@/lib/authorization";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
+import { assertNewlyAttachedSurveysWorkspaceVisible } from "@/lib/survey/visibility/outbound";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import {
@@ -228,7 +229,11 @@ export const updateFeedbackSourceWithMappingsAction = authenticatedActionClient
       // fails here rather than as a Prisma error from the update.
       const feedbackSource = await prisma.feedbackSource.findUnique({
         where: { id: parsedInput.feedbackSourceId, workspaceId: parsedInput.workspaceId },
-        select: { feedbackDirectoryId: true, type: true },
+        select: {
+          feedbackDirectoryId: true,
+          formbricksMappings: { select: { surveyId: true } },
+          type: true,
+        },
       });
       if (!feedbackSource) {
         throw new ResourceNotFoundError("FeedbackSource", parsedInput.feedbackSourceId);
@@ -245,7 +250,8 @@ export const updateFeedbackSourceWithMappingsAction = authenticatedActionClient
       if (parsedInput.formbricksMappings?.length) {
         mappingsInput = await resolveFormbricksMappingsInput(
           parsedInput.formbricksMappings,
-          parsedInput.workspaceId
+          parsedInput.workspaceId,
+          feedbackSource.formbricksMappings.map(({ surveyId }) => surveyId)
         );
       } else if (parsedInput.fieldMappings && parsedInput.fieldMappings.length > 0) {
         mappingsInput = {
@@ -292,6 +298,11 @@ export const getResponseCountAction = authenticatedActionClient
       await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
         type: "workspace",
         id: surveyWorkspaceId,
+      });
+      // ENG-3282: a restricted survey's response count is its owner's and the administrators'.
+      await assertCan({ type: "user", id: ctx.user.id }, "survey.response_read", {
+        type: "survey",
+        id: parsedInput.surveyId,
       });
 
       return getResponseCountBySurveyId(parsedInput.surveyId);
@@ -347,6 +358,14 @@ export const importHistoricalResponsesAction = authenticatedActionClient
       if (survey.workspaceId !== parsedInput.workspaceId) {
         throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
       }
+      // ENG-3282: the import copies this survey's responses, so the caller must be able to read them.
+      await assertCan({ type: "user", id: ctx.user.id }, "survey.response_read", {
+        type: "survey",
+        id: survey.id,
+      });
+      // Copying responses into a feedback directory is outbound (ENG-3283): a restricted survey's
+      // responses must not leave its access list this way either.
+      await assertNewlyAttachedSurveysWorkspaceVisible([survey.id]);
 
       const importResult = await importHistoricalResponses(feedbackSource, survey);
       ctx.auditLoggingCtx.newObject = importResult;

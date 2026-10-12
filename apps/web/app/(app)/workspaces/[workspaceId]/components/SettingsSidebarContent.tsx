@@ -9,6 +9,7 @@ import {
   ChevronDownIcon,
   CodeXmlIcon,
   CreditCardIcon,
+  DatabaseIcon,
   FoldersIcon,
   GlobeIcon,
   KeyIcon,
@@ -316,6 +317,15 @@ export const SettingsSidebarContent = ({
       label: t("common.survey_languages"),
       href: workspaceSettingsPath(workspaceId, "languages"),
       icon: <LanguagesIcon className={iconClassName} />,
+      disabled: isBilling,
+    },
+    // Directly below Survey Languages: both are things a survey is composed from rather than things
+    // the workspace is connected to, and an author reaches for them at the same point.
+    {
+      id: "embedded-data",
+      label: t("common.embedded_data"),
+      href: workspaceSettingsPath(workspaceId, "embedded-data"),
+      icon: <DatabaseIcon className={iconClassName} />,
       disabled: isBilling,
     },
     {

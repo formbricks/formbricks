@@ -16,13 +16,18 @@ export const selectSurvey = {
   type: true,
   workspaceId: true,
   createdBy: true,
+  // ENG-3282: part of TSurvey, so the editor's client-side ZSurvey check needs them on the row.
+  visibility: true,
+  ownerId: true,
+  visibilityVersion: true,
+  visibilityProjectedVersion: true,
+  visibilityChangedAt: true,
+  visibilityChangedById: true,
   status: true,
   welcomeCard: true,
   questions: true,
   blocks: true,
   endings: true,
-  hiddenFields: true,
-  variables: true,
   displayOption: true,
   recontactDays: true,
   displayLimit: true,
@@ -42,6 +47,7 @@ export const selectSurvey = {
   singleUse: true,
   pin: true,
   showLanguageSwitch: true,
+  autoSelectLanguage: true,
   recaptcha: true,
   isBackButtonHidden: true,
   isAutoProgressingEnabled: true,
@@ -49,6 +55,8 @@ export const selectSurvey = {
   slug: true,
   customHeadScripts: true,
   customHeadScriptsMode: true,
+  // ENG-2949: the editor round-trips it; the save path reads only its source and reprocesses on change.
+  customCss: true,
   languages: {
     select: {
       default: true,

@@ -1,12 +1,19 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
+import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
 import { TFeedbackSourceFormbricksMapping } from "@formbricks/types/feedback-source";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import type { FeedbackRecordCreateParams } from "@/modules/hub";
 import { transformResponseToFeedbackRecords } from "./transform";
 
 // Deliberately unmocked: @/lib/i18n/utils — the real getLocalizedValue has NO default-language
 // fallback, and an earlier mock that added one hid a bug where default-language responses
 // carrying a concrete code (e.g. "en-US") never matched choice labels keyed "default".
+
+vi.mock("@formbricks/logger", () => ({
+  logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+}));
 
 vi.mock("@formbricks/types/surveys/validation", () => ({
   getTextContent: (str: string) => str,
@@ -1283,6 +1290,240 @@ describe("transformResponseToFeedbackRecords", () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]).not.toHaveProperty("metadata");
+    });
+  });
+
+  describe("embedded data metadata (ENG-3290)", () => {
+    const textMapping = [createMapping({ elementId: "el-text", hubFieldType: "text" })];
+
+    const linkedField = (
+      name: string,
+      source: "ingested" | "computed",
+      overrides: Partial<TLinkedEmbeddedField["field"]> = {},
+      storageKey: string = name
+    ): TLinkedEmbeddedField => ({
+      field: { key: null, name, source, dataType: "string", defaultValue: null, locked: false, ...overrides },
+      link: { storageKey },
+    });
+
+    const surveyWith = (embeddedFields: TLinkedEmbeddedField[]): TSurvey =>
+      ({ ...mockSurvey, embeddedFields }) as unknown as TSurvey;
+
+    const responseWith = (
+      data: Record<string, unknown> = {},
+      variables: Record<string, unknown> = {}
+    ): TResponse =>
+      ({
+        ...mockResponse,
+        data: { "el-text": "Great product!", ...data },
+        variables,
+      }) as unknown as TResponse;
+
+    /**
+     * The ENG-1554 context `mockResponse` + `mockSurvey` publish, spelled out rather than taken from
+     * another run of the function under test: a baseline computed that way moves with any
+     * regression in these keys, and so could never fail on one.
+     */
+    const responseContext = {
+      source: "link",
+      url: "https://app.example.com/s/survey-1",
+      browser: "Chrome",
+      os: "macOS",
+      device: "desktop",
+      country: "PT",
+      action: "Clicked pricing CTA",
+      finished: true,
+      duration_seconds: 46,
+      survey_type: "link",
+    };
+
+    const embeddedDataOf = (record: FeedbackRecordCreateParams) => record.metadata?.embedded_data;
+
+    test("publishes every resolved field under embedded_data, keyed by field name", () => {
+      const survey = surveyWith([
+        linkedField("brand", "ingested"),
+        linkedField("cart_value", "ingested", { dataType: "number" }),
+        linkedField("signed_up_at", "ingested", { dataType: "date" }),
+        linkedField("is_trial", "ingested", { dataType: "boolean" }),
+        // A computed field is addressed in storage by the variable's cuid, so its published key and
+        // its storage key are deliberately different — the key is the name (ENG-3233).
+        linkedField("score", "computed", { dataType: "number" }, "var-score"),
+      ]);
+      const response = responseWith(
+        { brand: "AEG", cart_value: "129.90", signed_up_at: "2026-01-15", is_trial: "false" },
+        { "var-score": 42 }
+      );
+
+      const result = transformResponseToFeedbackRecords(response, survey, textMapping, mockTenantId);
+
+      // Values keep their declared type, and embedded_data is the only addition to the record.
+      expect(result[0].metadata).toEqual({
+        ...responseContext,
+        embedded_data: {
+          brand: "AEG",
+          cart_value: 129.9,
+          signed_up_at: "2026-01-15",
+          is_trial: false,
+          score: 42,
+        },
+      });
+    });
+
+    test("repeats the same embedded_data on every record of the submission", () => {
+      const survey = surveyWith([linkedField("brand", "ingested")]);
+      const mappings = [
+        ...textMapping,
+        createMapping({ elementId: "el-multi", hubFieldType: "categorical" }),
+      ];
+
+      const result = transformResponseToFeedbackRecords(
+        responseWith({ brand: "AEG", "el-multi": ["feat-a", "feat-b"] }),
+        survey,
+        mappings,
+        mockTenantId
+      );
+
+      // The expanded paths rebuild `metadata` after spreading baseFields, so a missing merge would
+      // drop the object from exactly those records.
+      expect(result.length).toBeGreaterThan(1);
+      for (const record of result) {
+        expect(embeddedDataOf(record)).toEqual({ brand: "AEG" });
+      }
+    });
+
+    test("adds no embedded_data key when the survey declares no Embedded Data", () => {
+      const result = transformResponseToFeedbackRecords(
+        responseWith(),
+        mockSurvey,
+        textMapping,
+        mockTenantId
+      );
+
+      expect(result[0].metadata).not.toHaveProperty("embedded_data");
+    });
+
+    test("adds no embedded_data key when every declared field resolves to undefined", () => {
+      // Not `{}`: Hub compares metadata byte-wise, so an empty object on a record that had none
+      // counts as a change and fires a pointless feedback_record.updated webhook.
+      const survey = surveyWith([
+        linkedField("brand", "ingested"),
+        linkedField("score", "computed", { dataType: "number" }, "var-score"),
+      ]);
+      const response = responseWith();
+
+      const result = transformResponseToFeedbackRecords(response, survey, textMapping, mockTenantId);
+
+      expect(result[0].metadata).toEqual(responseContext);
+      expect(result[0].metadata).not.toHaveProperty("embedded_data");
+    });
+
+    test("publishes a locked field's defaultValue, never the value stored against it", () => {
+      const survey = surveyWith([linkedField("plan", "ingested", { locked: true, defaultValue: "free" })]);
+      // A field locked after its survey collected responses still has stored values that were
+      // legitimate when they arrived; locking means the default IS the value.
+      const response = responseWith({ plan: "enterprise" });
+
+      const result = transformResponseToFeedbackRecords(response, survey, textMapping, mockTenantId);
+
+      expect(embeddedDataOf(result[0])).toEqual({ plan: "free" });
+    });
+
+    test("omits a value that fails coercion to its dataType", () => {
+      const survey = surveyWith([
+        linkedField("cart_value", "ingested", { dataType: "number" }),
+        linkedField("brand", "ingested"),
+      ]);
+      const response = responseWith({ cart_value: "not a number", brand: "AEG" });
+
+      const result = transformResponseToFeedbackRecords(response, survey, textMapping, mockTenantId);
+
+      // Mirrors recall: the declared type is the contract, so the text that failed to be a number
+      // is dropped rather than published in its place.
+      expect(embeddedDataOf(result[0])).toEqual({ brand: "AEG" });
+    });
+
+    test("truncates an oversized string value", () => {
+      const survey = surveyWith([linkedField("notes", "ingested")]);
+      const response = responseWith({ notes: "x".repeat(300) });
+
+      const result = transformResponseToFeedbackRecords(response, survey, textMapping, mockTenantId);
+
+      // An Embedded Data value may be up to 16 KB; publishing it whole would blow the record's
+      // metadata cap and cost the response every one of its records.
+      expect(embeddedDataOf(result[0])).toEqual({ notes: "x".repeat(256) });
+    });
+
+    test("skips only the fields that overflow the size budget, and keeps going", () => {
+      // 40 fields at the 256-character cap is ~10 KB, past the 8 KiB the object is allowed; roughly
+      // the first 30 fit. `tail` is declared last and costs 11 bytes, so it fits in what is left —
+      // but only if an overflowing field is skipped rather than ending the loop.
+      const bigFields = Array.from({ length: 40 }, (_, index) =>
+        linkedField(`field_${String(index).padStart(2, "0")}`, "ingested")
+      );
+      const survey = surveyWith([...bigFields, linkedField("tail", "ingested")]);
+      const response = responseWith({
+        ...Object.fromEntries(bigFields.map(({ link }) => [link.storageKey, "y".repeat(256)])),
+        tail: "z",
+      });
+
+      const result = transformResponseToFeedbackRecords(response, survey, textMapping, mockTenantId);
+      const published = embeddedDataOf(result[0]) as Record<string, unknown>;
+      const keys = Object.keys(published);
+
+      expect(Buffer.byteLength(JSON.stringify(published), "utf8")).toBeLessThanOrEqual(8 * 1024);
+      // Some big fields land, and at least one does not — otherwise nothing below is being tested.
+      expect(published.field_00).toBe("y".repeat(256));
+      expect(published.field_39).toBeUndefined();
+      expect(keys.length).toBeLessThan(41);
+      // The assertion that separates skipping from stopping: a `break` never reaches `tail`.
+      expect(published.tail).toBe("z");
+      // A dropped field is a Hub dimension that exists on some responses and not others, so the
+      // count is said once per response rather than left silent.
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ responseId: "resp-1", overBudget: expect.any(Number) }),
+        expect.stringContaining("size budget")
+      );
+    });
+
+    test("survives a malformed field name, keeping the records and the other fields", () => {
+      // The pipeline's survey select reads the rows without a Zod parse, so a name that is not a
+      // string reaches `.replaceAll` and throws. Outside a guard that throw leaves the transform
+      // entirely, and the response publishes no records to any feedback source.
+      const survey = surveyWith([
+        linkedField(42 as unknown as string, "ingested", {}, "legacy_42"),
+        linkedField("brand", "ingested"),
+      ]);
+      const response = responseWith({ brand: "AEG" });
+
+      const result = transformResponseToFeedbackRecords(response, survey, textMapping, mockTenantId);
+
+      expect(result).toHaveLength(1);
+      expect(embeddedDataOf(result[0])).toEqual({ brand: "AEG" });
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ responseId: "resp-1", unreadable: 1 }),
+        expect.stringContaining("could not be read")
+      );
+    });
+
+    test("drops only the fields it cannot read, and still publishes the records", () => {
+      const survey = surveyWith([
+        linkedField("brand", "ingested"),
+        linkedField("score", "computed", { dataType: "number" }, "var-score"),
+      ]);
+      // `variables` is a Json column whose stored rows are never re-validated on read, so a null
+      // reaches the resolver where the type promises an object. Only the computed field reads it.
+      const response = { ...responseWith({ brand: "AEG" }), variables: null } as unknown as TResponse;
+
+      const result = transformResponseToFeedbackRecords(response, survey, textMapping, mockTenantId);
+
+      // The response keeps its records, and the field that read cleanly is not thrown away with
+      // the one that did not.
+      expect(result).toHaveLength(1);
+      expect(embeddedDataOf(result[0])).toEqual({ brand: "AEG" });
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ responseId: "resp-1", unreadable: 1 }),
+        expect.stringContaining("could not be read")
+      );
     });
   });
 });

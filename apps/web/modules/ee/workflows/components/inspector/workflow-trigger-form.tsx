@@ -18,8 +18,12 @@ import { useWorkflowNodeFieldFocus } from "@/modules/ee/workflows/hooks/use-work
 import { reconcileEndingCardIds } from "@/modules/ee/workflows/lib/trigger-ending-cards";
 import {
   hasBoundTriggerSurveyAtom,
+  isSurveyVisibilityEnabledAtom,
+  isTriggerSurveyRestrictedAtom,
   prunedTriggerEndingCardIdsAtom,
 } from "@/modules/ee/workflows/state/editor";
+import { RestrictedSurveyHint } from "@/modules/survey/visibility/components/restricted-survey-hint";
+import { isRestrictedSurveyPick } from "@/modules/survey/visibility/lib/outbound";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Label } from "@/modules/ui/components/label";
 import {
@@ -56,7 +60,15 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
   // Stale ending ids deliberately get NO inline error here: they are reconciled out of the config
   // before this form can observe them (see useReconcileTriggerEndingCards), and the widening that
   // prune causes is already reported by the every-ending notice below.
-  const isSurveyInvalid = !hasBoundSurvey;
+  // ENG-3395: a restricted survey cannot trigger a workflow while visibility is enforced — enable and
+  // test refuse it and the runner skips it. One already bound stays selected so it can be replaced.
+  const isSurveyVisibilityEnabled = useAtomValue(isSurveyVisibilityEnabledAtom);
+  const isTriggerSurveyRestricted = useAtomValue(isTriggerSurveyRestrictedAtom);
+  const attachedSurveyIds = triggerSurveyId ? [triggerSurveyId] : [];
+  const isSurveyInvalid = !hasBoundSurvey || isTriggerSurveyRestricted;
+  const surveyErrorMessage = hasBoundSurvey
+    ? t("workspace.workflows.validation_problem_trigger_survey_restricted")
+    : t("workspace.workflows.validation_problem_trigger_survey_unbound");
 
   // Jump target for the trigger's problems, raised by the validation problems dialog: an unbound
   // survey goes to the picker, an ending problem to the scope select it belongs to.
@@ -216,18 +228,26 @@ export const WorkflowTriggerForm = ({ node, isEditable, onChange }: Readonly<Wor
                   : t("workspace.workflows.trigger_survey_empty")}
               </div>
             ) : (
-              surveyOptionsQuery.options.map((survey) => (
-                <SelectItem key={survey.id} value={survey.id}>
-                  {survey.name}
-                </SelectItem>
-              ))
+              surveyOptionsQuery.options.map((survey) => {
+                const isRestrictedPick = isRestrictedSurveyPick(
+                  isSurveyVisibilityEnabled,
+                  survey,
+                  attachedSurveyIds
+                );
+                return (
+                  <SelectItem key={survey.id} value={survey.id} disabled={isRestrictedPick}>
+                    <span className="flex items-center gap-x-2">
+                      {survey.name}
+                      {isRestrictedPick && <RestrictedSurveyHint kind="restricted" />}
+                    </span>
+                  </SelectItem>
+                );
+              })
             )}
           </SelectContent>
         </Select>
         {isSurveyInvalid ? (
-          <WorkflowFieldError id="workflow-trigger-survey-error">
-            {t("workspace.workflows.validation_problem_trigger_survey_unbound")}
-          </WorkflowFieldError>
+          <WorkflowFieldError id="workflow-trigger-survey-error">{surveyErrorMessage}</WorkflowFieldError>
         ) : null}
         <p className="text-xs text-slate-500">{t("workspace.workflows.trigger_survey_description")}</p>
       </div>

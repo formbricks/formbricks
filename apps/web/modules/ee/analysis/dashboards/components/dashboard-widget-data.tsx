@@ -45,6 +45,7 @@ export function DashboardWidgetData({
         data={result.data}
         optionLabels={result.optionLabels}
         fieldLabels={result.fieldLabels}
+        query={result.query}
         bare
       />
     );

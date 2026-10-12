@@ -4,5 +4,6 @@ export const initialFilters: TSurveyOverviewFilters = {
   name: "",
   status: [],
   type: [],
+  visibility: [],
   sortBy: "relevance",
 };

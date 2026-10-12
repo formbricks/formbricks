@@ -6,52 +6,45 @@ import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspac
 import { CreateMembershipInvite } from "@/modules/auth/signup/types/invites";
 import { createTeamMembership, getTeamForOrganization } from "../team";
 
-// Setup all mocks
-const setupMocks = () => {
-  // Mock dependencies
-  vi.mock("@formbricks/database", () => ({
-    prisma: {
-      team: {
-        findUnique: vi.fn(),
-      },
-      teamUser: {
-        upsert: vi.fn(),
-      },
+vi.mock("@formbricks/database", () => ({
+  prisma: {
+    team: {
+      findUnique: vi.fn(),
     },
-  }));
-
-  vi.mock("@/lib/constants", () => ({
-    DEFAULT_TEAM_ID: "team-123",
-    DEFAULT_ORGANIZATION_ID: "org-123",
-  }));
-
-  vi.mock("@/lib/membership/service", () => ({
-    getMembershipByUserIdOrganizationId: vi.fn(),
-  }));
-
-  vi.mock("@/lib/authzed/team-workspace", () => ({
-    reconcileTeamWorkspaceRelationships: vi.fn(),
-  }));
-
-  vi.mock("@formbricks/logger", () => ({
-    logger: {
-      error: vi.fn(),
-      warn: vi.fn(),
+    teamUser: {
+      upsert: vi.fn(),
     },
-  }));
+  },
+}));
 
-  // Mock reactCache to control the getDefaultTeam function
-  vi.mock("react", async () => {
-    const actual = await vi.importActual("react");
-    return {
-      ...actual,
-      cache: vi.fn().mockImplementation((fn) => fn),
-    };
-  });
-};
+vi.mock("@/lib/constants", () => ({
+  DEFAULT_TEAM_ID: "team-123",
+  DEFAULT_ORGANIZATION_ID: "org-123",
+}));
 
-// Set up mocks
-setupMocks();
+vi.mock("@/lib/membership/service", () => ({
+  getMembershipByUserIdOrganizationId: vi.fn(),
+}));
+
+vi.mock("@/lib/authzed/team-workspace", () => ({
+  reconcileTeamWorkspaceRelationships: vi.fn(),
+}));
+
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: vi.fn(),
+    warn: vi.fn(),
+  },
+}));
+
+// Keep the cache mock at module scope so Vitest hoists it with the other mocks.
+vi.mock("react", async () => {
+  const actual = await vi.importActual("react");
+  return {
+    ...actual,
+    cache: vi.fn().mockImplementation((fn) => fn),
+  };
+});
 
 describe("Team Management", () => {
   const mockTeamLookup = { id: MOCK_IDS.teamId };

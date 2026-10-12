@@ -2,9 +2,13 @@ import { format, isValid, parseISO } from "date-fns";
 import {
   SENTIMENT_DIMENSION_ID,
   type TSentimentValue,
+  type TValueBandPolarity,
+  VALUE_BAND_DIMENSION_ID,
+  VALUE_BAND_POLARITY,
   getSentimentValueForMeasureId,
   isNotEnrichedDimensionValue,
   isSentimentValue,
+  isValueBandValue,
 } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
@@ -55,14 +59,29 @@ export const CHART_SENTIMENT_COLORS: Record<TSentimentValue, string> = {
 };
 
 /**
+ * Polarity colors for NPS and CSAT bands: promoter/satisfied teal, passive/neutral yellow,
+ * detractor/dissatisfied red — the palette's own teal, yellow and red, so they keep its CVD
+ * validation. Neutral is deliberately yellow here and blue in sentiment: a passive NPS answer is a
+ * lukewarm 7 or 8, not "no opinion", and a traffic-light reading is what NPS readers expect.
+ */
+export const CHART_VALUE_BAND_COLORS: Record<TValueBandPolarity, string> = {
+  positive: CHART_BRAND_DARK,
+  neutral: "#eda100",
+  negative: "#e34948",
+};
+
+/**
  * Semantic color for an enum dimension value: gray for the "not enriched" bucket, the sentiment
- * scale for sentiment values. Returns undefined when the value has no semantic color (other
+ * scale for sentiment values, polarity colors for value bands. Returns undefined when the value has no semantic color (other
  * dimensions, unknown tokens) so callers fall back to the generic palette.
  */
 export const getSemanticDimensionColor = (dimensionId: string, value: unknown): string | undefined => {
   if (isNotEnrichedDimensionValue(dimensionId, value)) return CHART_NOT_ENRICHED_COLOR;
   if (dimensionId === SENTIMENT_DIMENSION_ID && typeof value === "string" && isSentimentValue(value)) {
     return CHART_SENTIMENT_COLORS[value];
+  }
+  if (dimensionId === VALUE_BAND_DIMENSION_ID && typeof value === "string" && isValueBandValue(value)) {
+    return CHART_VALUE_BAND_COLORS[VALUE_BAND_POLARITY[value]];
   }
   return undefined;
 };
@@ -73,6 +92,25 @@ export const getSentimentMeasureColor = (measureId: string): string | undefined 
   const value = getSentimentValueForMeasureId(measureId);
   return value ? CHART_SENTIMENT_COLORS[value] : undefined;
 };
+
+const BAND_MEASURE_POLARITY = new Map<string, TValueBandPolarity>([
+  ["FeedbackRecords.promoterCount", "positive"],
+  ["FeedbackRecords.passiveCount", "neutral"],
+  ["FeedbackRecords.detractorCount", "negative"],
+  ["FeedbackRecords.csatSatisfiedCount", "positive"],
+  ["FeedbackRecords.csatNeutralCount", "neutral"],
+  ["FeedbackRecords.csatDissatisfiedCount", "negative"],
+]);
+
+/** Band polarity color for the NPS/CSAT bucket count measures, matching the valueBand dimension. */
+export const getBandMeasureColor = (measureId: string): string | undefined => {
+  const polarity = BAND_MEASURE_POLARITY.get(measureId);
+  return polarity ? CHART_VALUE_BAND_COLORS[polarity] : undefined;
+};
+
+/** Meaning-bound series color for a measure (sentiment or band counts), or undefined for the palette. */
+export const getSemanticMeasureColor = (measureId: string): string | undefined =>
+  getSentimentMeasureColor(measureId) ?? getBandMeasureColor(measureId);
 
 /**
  * Chart types that no longer exist, mapped to the type that replaced them. `line` merged into
@@ -93,6 +131,18 @@ const isNumericValue = (val: unknown): boolean => {
   if (val === null || val === undefined || val === "") return false;
   const num = Number(val);
   return !Number.isNaN(num) && Number.isFinite(num);
+};
+
+export const PIE_MEASURE_NAME_KEY = "__measureName";
+export const PIE_MEASURE_VALUE_KEY = "__measureValue";
+/** The measure a slice came from, so the slice can take the measure's semantic color. */
+export const PIE_MEASURE_ID_KEY = "__measureId";
+
+/** A slice's meaning-bound color: its measure's (measure slices) or its dimension value's. */
+const getSliceSemanticColor = (row: TChartDataRow, nameKey?: string): string | undefined => {
+  const measureId = row[PIE_MEASURE_ID_KEY];
+  if (typeof measureId === "string") return getSemanticMeasureColor(measureId);
+  return nameKey ? getSemanticDimensionColor(nameKey, row[nameKey]) : undefined;
 };
 
 export const preparePieData = (
@@ -117,7 +167,7 @@ export const preparePieData = (
   // consume a categorical hue.
   let paletteIndex = 0;
   const colors = processedData.map((row) => {
-    const semanticColor = nameKey ? getSemanticDimensionColor(nameKey, row[nameKey]) : undefined;
+    const semanticColor = getSliceSemanticColor(row, nameKey);
     if (semanticColor) return semanticColor;
     const color = CHART_MEASURE_COLORS[paletteIndex % CHART_MEASURE_COLORS.length];
     paletteIndex++;
@@ -125,9 +175,6 @@ export const preparePieData = (
   });
   return { processedData, colors };
 };
-
-export const PIE_MEASURE_NAME_KEY = "__measureName";
-export const PIE_MEASURE_VALUE_KEY = "__measureValue";
 
 /**
  * Pivot several measures (one/few rows, N measure columns) into one row per measure, so a pie
@@ -141,16 +188,21 @@ export const PIE_MEASURE_VALUE_KEY = "__measureValue";
 export const prepareMeasureSliceData = (
   rows: TChartDataRow[],
   measureKeys: string[],
-  labelFor: (key: string) => string
-): TChartDataRow[] =>
-  measureKeys.map((key) => ({
+  labelFor: (key: string) => string,
+  /** Column to carry onto every slice, summed like the measures, so the tooltip can print "n = …". */
+  responseBaseKey?: string
+): TChartDataRow[] => {
+  const sumColumn = (key: string): number =>
+    rows.reduce((sum, row) => sum + (isNumericValue(row[key]) ? Number(row[key]) : 0), 0);
+  const responseBase = responseBaseKey ? { [responseBaseKey]: sumColumn(responseBaseKey) } : {};
+  return measureKeys.map((key) => ({
     [PIE_MEASURE_NAME_KEY]: labelFor(key),
-    [PIE_MEASURE_VALUE_KEY]: rows.reduce(
-      (sum, row) => sum + (isNumericValue(row[key]) ? Number(row[key]) : 0),
-      0
-    ),
+    [PIE_MEASURE_ID_KEY]: key,
+    [PIE_MEASURE_VALUE_KEY]: sumColumn(key),
     tooltipLabel: labelFor(key),
+    ...responseBase,
   }));
+};
 
 /**
  * Format a 0-1 share as a percentage for display, in the app's active language. One fraction digit
@@ -246,7 +298,9 @@ export const PIVOTED_VALUE_KEY = "value";
 export function pivotMeasuresToCategories(
   data: TChartDataRow[],
   measureKeys: string[],
-  formatLabel: (measureKey: string) => string
+  formatLabel: (measureKey: string) => string,
+  /** Column to carry onto every pivoted row, so the tooltip can still print "n = …" for each bar. */
+  responseBaseKey?: string
 ): TChartDataRow[] {
   const row = data[0] ?? {};
   // Like preparePieData: semantic buckets (sentiment counts) keep their meaning-bound colors and
@@ -254,7 +308,7 @@ export function pivotMeasuresToCategories(
   let paletteIndex = 0;
   return measureKeys.map((key) => {
     const num = Number(row[key]);
-    let fill = getSentimentMeasureColor(key);
+    let fill = getSemanticMeasureColor(key);
     if (!fill) {
       fill = CHART_MEASURE_COLORS[paletteIndex % CHART_MEASURE_COLORS.length];
       paletteIndex++;
@@ -266,6 +320,7 @@ export function pivotMeasuresToCategories(
       [PIVOTED_MEASURE_KEY]: key,
       tooltipLabel: formatLabel(key),
       fill,
+      ...(responseBaseKey ? { [responseBaseKey]: row[responseBaseKey] } : {}),
     };
   });
 }

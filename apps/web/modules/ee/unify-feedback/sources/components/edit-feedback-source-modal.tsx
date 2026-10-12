@@ -6,6 +6,8 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TFeedbackSourceImportMode, TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
+import { RestrictedSurveyHint } from "@/modules/survey/visibility/components/restricted-survey-hint";
+import { isRestrictedSurveyPick } from "@/modules/survey/visibility/lib/outbound";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -68,6 +70,8 @@ interface EditFeedbackSourceModalProps {
   surveys: TUnifySurvey[];
   onOpenCsvImport?: () => void;
   isReadOnly?: boolean;
+  /** ENG-3395: with it on, the source cannot be re-pointed at a restricted survey. */
+  surveyVisibilityEnabled?: boolean;
 }
 
 export const EditFeedbackSourceModal = ({
@@ -78,7 +82,8 @@ export const EditFeedbackSourceModal = ({
   surveys,
   onOpenCsvImport,
   isReadOnly = false,
-}: EditFeedbackSourceModalProps) => {
+  surveyVisibilityEnabled = false,
+}: Readonly<EditFeedbackSourceModalProps>) => {
   const { t } = useTranslation();
   const [csvFeedbackSourceName, setCsvFeedbackSourceName] = useState("");
   const [mappings, setMappings] = useState<TFieldMapping[]>([]);
@@ -112,6 +117,8 @@ export const EditFeedbackSourceModal = ({
   // picker would be empty AND disabled, so `error` would be terminal and the source unrepairable.
   const canChooseSurvey =
     feedbackSource?.type === "formbricks_survey" && feedbackSource.formbricksMappings.length === 0;
+  // The survey the form was opened with stays selectable; only re-pointing at a restricted one is refused.
+  const attachedSurveyIds = feedbackSource?.formbricksMappings.map((mapping) => mapping.surveyId) ?? [];
 
   useEffect(() => {
     if (feedbackSource) {
@@ -323,11 +330,21 @@ export const EditFeedbackSourceModal = ({
                           </SelectTrigger>
                           <SelectContent>
                             {canChooseSurvey
-                              ? surveys.map((survey) => (
-                                  <SelectItem key={survey.id} value={survey.id}>
-                                    {survey.name}
-                                  </SelectItem>
-                                ))
+                              ? surveys.map((survey) => {
+                                  const isRestrictedPick = isRestrictedSurveyPick(
+                                    surveyVisibilityEnabled,
+                                    survey,
+                                    attachedSurveyIds
+                                  );
+                                  return (
+                                    <SelectItem key={survey.id} value={survey.id} disabled={isRestrictedPick}>
+                                      <span className="flex items-center gap-2">
+                                        {survey.name}
+                                        {isRestrictedPick && <RestrictedSurveyHint kind="restricted" />}
+                                      </span>
+                                    </SelectItem>
+                                  );
+                                })
                               : selectedSurvey && (
                                   <SelectItem key={selectedSurvey.id} value={selectedSurvey.id}>
                                     {selectedSurvey.name}

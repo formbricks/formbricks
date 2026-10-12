@@ -4,7 +4,6 @@ import { MainNavigation } from "@/app/(app)/workspaces/[workspaceId]/components/
 import { TopControlBar } from "@/app/(app)/workspaces/[workspaceId]/components/TopControlBar";
 import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD, IS_FORMBRICKS_SURVEYS_CONFIGURED } from "@/lib/constants";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getTrialDaysRemaining } from "@/lib/trial-countdown";
 import { getTranslate } from "@/lingodotdev/server";
 import { TrialEndingWarningModal } from "@/modules/ee/billing/components/trial-ending-warning-modal";
@@ -78,17 +77,8 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
   // Hobby (free) plan only — excludes trial and paid (Pro/Scale) orgs.
   const isHobby = IS_FORMBRICKS_CLOUD && organization.billing?.stripe?.plan === "hobby";
 
-  const [
-    organizationWorkspacesLimit,
-    newTrialBannerVariant,
-    responseWarningVariant,
-    trialEndingVariant,
-    cookieStore,
-  ] = await Promise.all([
+  const [organizationWorkspacesLimit, cookieStore] = await Promise.all([
     getOrganizationWorkspacesLimit(organization.id),
-    getPostHogFeatureFlag(user.id, "a-b_navigation_rich-trial-banner-v2"),
-    isHobby ? getPostHogFeatureFlag(user.id, "a-b_workspace_trial-response-warning") : Promise.resolve(null),
-    isTrialing ? getPostHogFeatureFlag(user.id, "a-b_workspace_trial-ending-warning") : Promise.resolve(null),
     isTrialing || isHobby ? cookies() : Promise.resolve(null),
   ]);
   const isOwnerOrManager = isOwner || isManager;
@@ -100,17 +90,13 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
 
   // (Hobby response warning and trial-ending target mutually exclusive audiences, so no stacking.)
   const responseWarningThreshold =
-    isHobby && responseWarningVariant === "test" && cookieStore
-      ? getResponseWarningThreshold(responseCount, cookieStore)
-      : null;
+    isHobby && cookieStore ? getResponseWarningThreshold(responseCount, cookieStore) : null;
 
   const trialEnd = organization.billing?.stripe?.trialEnd;
   const trialEndingDaysRemaining =
-    isTrialing && trialEndingVariant === "test" && cookieStore && trialEnd
-      ? getTrialEndingDaysRemaining(trialEnd, cookieStore)
-      : null;
+    isTrialing && cookieStore && trialEnd ? getTrialEndingDaysRemaining(trialEnd, cookieStore) : null;
 
-  // Countdown for the sidebar's TrialAlert. `isTrialing` already carries the same cloud +
+  // Countdown for the sidebar's trial banner. `isTrialing` already carries the same cloud +
   // "trialing" subscription guard the sidebar used to apply itself.
   const trialDaysRemaining = isTrialing && trialEnd ? getTrialDaysRemaining(trialEnd) : null;
 
@@ -118,8 +104,8 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
 
   return (
     <div className="flex h-screen min-h-screen flex-col overflow-hidden">
-      {/* Hide the limits-reached toast for Hobby users in the response-warning test variant — the modal replaces it with richer copy + CTAs. */}
-      {IS_FORMBRICKS_CLOUD && !isTrialing && !(isHobby && responseWarningVariant === "test") && (
+      {/* Hide the limits-reached toast for Hobby users: the response-warning modal replaces it with richer copy + CTAs. */}
+      {IS_FORMBRICKS_CLOUD && !isTrialing && !isHobby && (
         <LimitsReachedBanner organization={organization} responseCount={responseCount} />
       )}
 
@@ -157,7 +143,6 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
           isNoLicense={status === "no-license"}
           isAccessControlAllowed={isAccessControlAllowed}
           responseCount={responseCount}
-          newTrialBannerVariant={newTrialBannerVariant}
           isFormbricksSurveysConfigured={IS_FORMBRICKS_SURVEYS_CONFIGURED}
           trialDaysRemaining={trialDaysRemaining}
         />

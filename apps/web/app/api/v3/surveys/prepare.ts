@@ -1,5 +1,6 @@
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
+import { toCustomCssSource } from "@/modules/custom-css/lib/source";
 import { surveyToV3Distribution, surveyToV3Targeting } from "./distribution";
 import { getV3SurveyDefaultLanguage, getV3SurveyLanguages } from "./language";
 import { type TV3SurveyLanguageRequest, deriveV3SurveyLanguageRequests } from "./languages";
@@ -144,11 +145,16 @@ function parseStoredV3SurveyDocument(
     metadata: survey.metadata ?? {},
     defaultLanguage,
     languages: getV3SurveyDocumentLanguages(survey),
+    showLanguageSwitch: survey.showLanguageSwitch ?? null,
+    autoSelectLanguage: survey.autoSelectLanguage ?? null,
     welcomeCard: survey.welcomeCard,
     blocks: survey.blocks,
     endings: survey.endings,
     hiddenFields: survey.hiddenFields,
     variables: survey.variables,
+    // ENG-3641: the stored CSS as source, so an omitted `customCss` merges to "unchanged" and the write
+    // path compares normalized source rather than anything compiled.
+    customCss: toCustomCssSource(survey.customCss),
     ...appFields,
   });
 
@@ -514,10 +520,32 @@ export function prepareV3SurveyCreateInput(input: unknown): TV3SurveyPrepareResu
   return prepareV3SurveyCreate(parsed.data);
 }
 
+/**
+ * ENG-3282: `visibility`, `owner` and `access` are per-request, server-derived fields GET emits.
+ * Visibility changes only through `POST …/visibility` (contract §2), so a PATCH may carry them only as
+ * the exact values this caller's GET returned — the ENG-3069 round trip — and they are dropped. Any
+ * other value is left in place for the strict patch schema to refuse as `unsupported_field`.
+ */
+const VISIBILITY_ECHO_KEYS = ["visibility", "owner", "access"] as const;
+
+export type TV3SurveyReportedVisibility = Readonly<Record<(typeof VISIBILITY_ECHO_KEYS)[number], unknown>>;
+
+function dropEchoedVisibilityFields(input: unknown, reported?: TV3SurveyReportedVisibility): unknown {
+  if (!reported || typeof input !== "object" || input === null || Array.isArray(input)) return input;
+
+  const body = { ...(input as Record<string, unknown>) };
+  for (const key of VISIBILITY_ECHO_KEYS) {
+    if (key in body && JSON.stringify(body[key]) === JSON.stringify(reported[key])) delete body[key];
+  }
+  return body;
+}
+
 export function prepareV3SurveyPatchInput(
   survey: TInternalSurvey,
-  input: unknown
+  rawInput: unknown,
+  options: Readonly<{ reportedVisibility?: TV3SurveyReportedVisibility }> = {}
 ): TV3SurveyPrepareResult<TV3SurveyDocument> {
+  const input = dropEchoedVisibilityFields(rawInput, options.reportedVisibility);
   const allowedLanguageCodes = getV3SurveyPatchAllowedLanguageCodes(survey);
   const currentDocument = parseStoredV3SurveyDocument(survey, allowedLanguageCodes);
 

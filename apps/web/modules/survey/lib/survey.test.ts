@@ -6,7 +6,7 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/lib/organization-billing";
-import { getOrganizationBilling, getSurvey } from "./survey";
+import { getOrganizationBilling, getSurvey, selectSurvey } from "./survey";
 
 // Mock prisma
 vi.mock("@formbricks/database", () => ({
@@ -92,5 +92,22 @@ describe("Survey Library Tests", () => {
       vi.mocked(prisma.survey.findUnique).mockRejectedValueOnce(genericError);
       await expect(getSurvey("survey_error")).rejects.toThrow(genericError);
     });
+  });
+});
+
+describe("selectSurvey", () => {
+  // ENG-3282: the survey editor loads its survey through this select and validates it on the client
+  // with ZSurvey before publishing. A required field missing here makes Publish silently do nothing.
+  test("selects the visibility facts TSurvey requires", () => {
+    for (const column of [
+      "visibility",
+      "ownerId",
+      "visibilityVersion",
+      "visibilityProjectedVersion",
+      "visibilityChangedAt",
+      "visibilityChangedById",
+    ] as const) {
+      expect(selectSurvey).toHaveProperty(column, true);
+    }
   });
 });

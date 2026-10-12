@@ -16,6 +16,8 @@ vi.mock("./backfill-source", () => ({
   organizationExists: vi.fn(),
   readOrganizationIdPage: vi.fn(),
   readOrganizationSource: vi.fn(),
+  readSurveyIdPage: vi.fn(),
+  readSurveySource: vi.fn(),
   readWorkspaceSource: vi.fn(),
 }));
 
@@ -24,6 +26,7 @@ const apply = {
   reconcileApiKeys: vi.fn(),
   reconcileFeedbackDirectories: vi.fn(),
   reconcileMemberships: vi.fn(),
+  reconcileSurveys: vi.fn(),
   reconcileTeamWorkspace: vi.fn(),
 };
 const readRelationships = vi.fn();
@@ -65,8 +68,11 @@ beforeEach(() => {
   apply.deleteFeedbackDirectoryAssignmentResources.mockResolvedValue(PROJECTED);
   apply.reconcileFeedbackDirectories.mockResolvedValue(PROJECTED);
   apply.reconcileMemberships.mockResolvedValue(PROJECTED);
+  apply.reconcileSurveys.mockResolvedValue(PROJECTED);
   apply.reconcileTeamWorkspace.mockResolvedValue(PROJECTED);
   readRelationships.mockResolvedValue(emptyPage);
+  vi.mocked(source.readSurveyIdPage).mockResolvedValue([]);
+  vi.mocked(source.readSurveySource).mockResolvedValue({ expectedRelationships: [], surveyIds: [] });
   vi.mocked(source.organizationExists).mockResolvedValue(true);
   vi.mocked(source.readOrganizationSource).mockResolvedValue(emptySource);
   vi.mocked(source.findMissingSourceRefs).mockResolvedValue([]);
@@ -79,6 +85,7 @@ beforeEach(() => {
     invalidFeedbackDirectoryAssignments: [],
     invalidWorkspaceTeamGrants: [],
     organizationId: "org-1",
+    surveyIds: [],
     workspaceExists: true,
     workspaceTeamGrants: [],
   });
@@ -155,7 +162,13 @@ describe("dry-run inertness", () => {
 
     // `getAuthzedClient` and every reconciler are reachable only through these modules, so verifying
     // none is imported at runtime is the whole guarantee.
-    for (const mutationModule of ["./client", "./organization-membership", "./team-workspace", "./api-key"]) {
+    for (const mutationModule of [
+      "./client",
+      "./organization-membership",
+      "./team-workspace",
+      "./api-key",
+      "./survey",
+    ]) {
       expect(valueImports).not.toContain(mutationModule);
     }
   });
@@ -680,7 +693,7 @@ describe("scope and observation completeness", () => {
       relationships: [
         {
           relation: "workspace",
-          resource: { objectId: "survey-1", objectType: "survey" },
+          resource: { objectId: "dashboard-1", objectType: "dashboard" },
           subject: { objectId: "ws-1", objectType: "workspace" },
         },
       ],
@@ -740,6 +753,7 @@ describe("workspace scope", () => {
       invalidFeedbackDirectoryAssignments: [],
       invalidWorkspaceTeamGrants: [],
       organizationId: null,
+      surveyIds: [],
       workspaceExists: false,
       workspaceTeamGrants: [],
     });
@@ -1174,5 +1188,119 @@ describe("chunking", () => {
       teamIds: [],
       teamMemberships: teamMemberships.slice(AUTHZED_TARGET_CHUNK_SIZE),
     });
+  });
+});
+
+describe("survey scope (ENG-3282)", () => {
+  const surveyEdge = (surveyId: string, relation: string, objectType: string, objectId: string) => ({
+    relation,
+    resource: { objectId: surveyId, objectType: "survey" },
+    subject: { objectId, objectType },
+  });
+  const expected = [
+    surveyEdge("s-1", "workspace", "workspace", "ws-1"),
+    surveyEdge("s-1", "shared_workspace", "workspace", "ws-1"),
+  ];
+
+  beforeEach(() => {
+    vi.mocked(source.readSurveyIdPage).mockResolvedValueOnce(["s-1"]).mockResolvedValue([]);
+    vi.mocked(source.readSurveySource).mockResolvedValue({
+      expectedRelationships: expected,
+      surveyIds: ["s-1"],
+    });
+  });
+
+  test("reports a survey with no relationships as missing, and nothing else", async () => {
+    const result = await runAuthzedBackfill(
+      request({ mode: "dry_run", scope: { kind: "survey" } }),
+      dependencies
+    );
+
+    expect(result.counters).toMatchObject({ missing: 1, mismatchedPermissions: 0, scanned: 1 });
+    expect(result.status).toBe("drifted");
+    expect(result.lastSurveyId).toBe("s-1");
+    expect(apply.reconcileSurveys).not.toHaveBeenCalled();
+  });
+
+  test("reports a converged survey as reconciled", async () => {
+    readRelationships.mockImplementation(({ filter }) =>
+      Promise.resolve(
+        filter.resourceType === "survey"
+          ? { cursor: null, relationships: expected, snapshot: { token: "revision-1" } }
+          : emptyPage
+      )
+    );
+
+    const result = await runAuthzedBackfill(
+      request({ mode: "dry_run", scope: { kind: "survey" } }),
+      dependencies
+    );
+
+    expect(result.status).toBe("reconciled");
+    expect(result.orphanScope).toBe("all");
+  });
+
+  test("hands each page to the survey reconciler when applying", async () => {
+    const result = await runAuthzedBackfill(request({ scope: { kind: "survey" } }), dependencies);
+
+    expect(apply.reconcileSurveys).toHaveBeenCalledWith(["s-1"]);
+    expect(apply.reconcileTeamWorkspace).not.toHaveBeenCalled();
+    expect(result.counters.reconciled).toBe(1);
+  });
+
+  test("resumes after the given survey id", async () => {
+    await runAuthzedBackfill(
+      request({ mode: "dry_run", scope: { afterSurveyId: "s-0", kind: "survey" } }),
+      dependencies
+    );
+
+    expect(source.readSurveyIdPage).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ afterSurveyId: "s-0" })
+    );
+  });
+
+  test("sweeps only survey relationships for rows that are gone, and prunes them within budget", async () => {
+    vi.mocked(source.readSurveyIdPage).mockReset().mockResolvedValue([]);
+    readRelationships.mockImplementation(({ filter }) =>
+      Promise.resolve(
+        filter.resourceType === "survey" && filter.resourceId === undefined
+          ? {
+              cursor: null,
+              relationships: [surveyEdge("s-gone", "workspace", "workspace", "ws-1")],
+              snapshot: { token: "revision-1" },
+            }
+          : emptyPage
+      )
+    );
+    vi.mocked(source.findMissingSourceRefs).mockImplementation((refs) => Promise.resolve(refs));
+
+    const result = await runAuthzedBackfill(
+      request({ prune: true, scope: { kind: "survey" } }),
+      dependencies
+    );
+
+    const sweptTypes = readRelationships.mock.calls
+      .map(([query]) => query.filter)
+      .filter((filter) => filter.resourceId === undefined)
+      .map((filter) => filter.resourceType);
+    // The closing freshness capture reads `organization`; the sweep itself reads nothing but surveys.
+    expect(sweptTypes.slice(0, -1)).toEqual(["survey"]);
+    expect(apply.reconcileSurveys).toHaveBeenCalledWith(["s-gone"]);
+    expect(result.counters).toMatchObject({ orphaned: 1, pruned: 1 });
+  });
+
+  test("counts a failed survey reconcile against the run", async () => {
+    apply.reconcileSurveys.mockResolvedValue({
+      attempts: 3,
+      code: AUTHZED_ERROR_CODES.UNAVAILABLE,
+      retryable: true,
+      status: "failed",
+    });
+
+    const result = await runAuthzedBackfill(request({ scope: { kind: "survey" } }), dependencies);
+
+    expect(result.status).toBe("failed");
+    expect(result.counters.failed).toBe(1);
   });
 });

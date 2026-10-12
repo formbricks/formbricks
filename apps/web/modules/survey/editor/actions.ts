@@ -14,6 +14,7 @@ import {
   UNSPLASH_ALLOWED_DOMAINS,
 } from "@/lib/constants";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import {
   getOrganizationIdFromSurveyId,
@@ -197,9 +198,9 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
 
     const organizationId = await getOrganizationIdFromSurveyId(survey.id);
     const workspaceId = await getWorkspaceIdFromSurveyId(survey.id);
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-      type: "workspace",
-      id: workspaceId,
+    await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
+      type: "survey",
+      id: survey.id,
     });
     await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
@@ -223,8 +224,9 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
     await checkExternalUrlsPermission(organizationId, survey, oldObject);
     await assertCanWriteCustomHeadScripts({ type: "user", id: ctx.user.id }, workspaceId, survey, oldObject);
 
-    // Use the draft version that skips validation
-    const result = await updateSurveyDraft(survey);
+    // Use the draft version that skips validation. This is also the autosave's path, so custom CSS it
+    // processes is charged to the user like a manual save.
+    const result = await updateSurveyDraft(survey, { customCssPrincipal: ctx.user.id });
 
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
@@ -246,9 +248,9 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
   withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.id);
     const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.id);
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-      type: "workspace",
-      id: workspaceId,
+    await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
+      type: "survey",
+      id: parsedInput.id,
     });
     await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
@@ -277,7 +279,7 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
       parsedInput,
       oldObject
     );
-    const result = await updateSurvey(parsedInput);
+    const result = await updateSurvey(parsedInput, { customCssPrincipal: ctx.user.id });
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
 
@@ -321,10 +323,14 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
     // isn't enabled, mirroring the POSTHOG_KEY gate above.
     let isSecondPublish = false;
     if (isPublish && IS_FORMBRICKS_SURVEYS_CONFIGURED) {
-      const publishedCount = await getSurveyCount(result.workspaceId, {
-        status: ["inProgress", "paused", "completed"],
-        createdBy: { userId: ctx.user.id, value: ["you"] },
-      });
+      const publishedCount = await getSurveyCount(
+        result.workspaceId,
+        {
+          status: ["inProgress", "paused", "completed"],
+          createdBy: { userId: ctx.user.id, value: ["you"] },
+        },
+        await resolveSurveyActorContext({ type: "user", id: ctx.user.id }, organizationId)
+      );
       isSecondPublish = publishedCount === 2;
     }
 

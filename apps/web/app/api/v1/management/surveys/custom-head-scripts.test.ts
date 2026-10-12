@@ -13,6 +13,8 @@ import { POST } from "./route";
  * `withV1ApiWrapper` is reduced to its handler: authentication, rate limiting and audit logging are
  * orthogonal to the survey head-scripts boundary this file proves for API keys.
  */
+// Survey visibility (ENG-3282) is not enforced here: the readiness marker is off, not read from a database.
+vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
 vi.mock("@/app/lib/api/with-api-logging", () => ({
   withV1ApiWrapper: ({ handler }: { handler: unknown }) => handler,
 }));
@@ -37,6 +39,14 @@ vi.mock("@/app/lib/api/legacy-environment-id", () => ({
   addLegacyEnvironmentIdToList: vi.fn(async (value) => value),
 }));
 vi.mock("@/modules/storage/utils", () => ({ resolveStorageUrlsInObject: vi.fn((value) => value) }));
+// Survey visibility (ENG-3282) is orthogonal here: an API key creates a workspace-visible, ownerless survey.
+vi.mock("@/lib/survey/visibility/limit", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/survey/visibility/limit")>()),
+  assertWorkspaceSurveyLimit: vi.fn(),
+}));
+vi.mock("@/lib/survey/visibility/creation", () => ({
+  resolveSurveyCreationFacts: vi.fn(async () => ({ ownerId: null, visibility: "workspace" })),
+}));
 
 const workspaceId = "clxworkspace00000000000001";
 const apiKey = { apiKeyId: "key_1", workspacePermissions: [], organizationId: "org_1" };

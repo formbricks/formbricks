@@ -34,9 +34,18 @@
 #   api_key:ci_reader                                     -> read      on workspace:main
 #   api_key:ci_writer                                     -> write     on workspace:main
 #   api_key:ci_manager                                    -> manage    on workspace:main
-#   survey:onboarding (workspace:main), survey:internal (workspace:other)
+#   team:ops       contributor user:mo                    -> manage    on workspace:main
+#   survey:onboarding (workspace:main), survey:internal (workspace:other) — both workspace-visible,
+#     so each carries the day-one identity `#shared_workspace@<its workspace>`
+#   ENG-3282 private surveys, all in workspace:main:
+#     survey:draft     private, owner user:tina    (readWrite through team:product)
+#     survey:orphaned  private, no owner           (the author's account is gone)
+#     survey:stranded  private, owner user:mia     (holds no team, so no workspace read)
+#   survey:leaky (workspace:main) with a FORGED `#shared_workspace@workspace:foreign` edge, where
+#     workspace:foreign belongs to organization:globex (owner user:gary). Documents why the projector
+#     must derive that edge from `Survey.workspaceId` alone: the edge alone hands another tenant read.
 #   dashboard:insights (workspace:main)
-#   response:r1 (survey:onboarding)
+#   response:r1 (survey:onboarding), response:r2 (survey:draft)
 
 schemaFile: schema.zed
 
@@ -73,10 +82,28 @@ relationships: |-
   feedback_directory:customer_feedback#assignment@feedback_directory_assignment:fdwa_main
   feedback_directory_assignment:fdwa_main#directory@feedback_directory:customer_feedback
   feedback_directory_assignment:fdwa_main#workspace@workspace:main
+  organization:acme#member@user:mo
+  team:ops#organization@organization:acme
+  team:ops#contributor@user:mo
+  workspace:main#manager_team@team:ops#member
   survey:onboarding#workspace@workspace:main
+  survey:onboarding#shared_workspace@workspace:main
   survey:internal#workspace@workspace:other
+  survey:internal#shared_workspace@workspace:other
+  survey:draft#workspace@workspace:main
+  survey:draft#owner@user:tina
+  survey:draft#private_owner@user:tina
+  survey:orphaned#workspace@workspace:main
+  survey:stranded#workspace@workspace:main
+  survey:stranded#owner@user:mia
+  survey:stranded#private_owner@user:mia
+  organization:globex#owner@user:gary
+  workspace:foreign#organization@organization:globex
+  survey:leaky#workspace@workspace:main
+  survey:leaky#shared_workspace@workspace:foreign
   dashboard:insights#workspace@workspace:main
   response:r1#survey@survey:onboarding
+  response:r2#survey@survey:draft
 
 assertions:
   assertTrue:
@@ -208,7 +235,58 @@ assertions:
     - dashboard:insights#write@api_key:ci_manager
     - response:r1#manage@api_key:ci_manager
 
+    # Scenario 7 (ENG-3282) — a private survey is reachable by its owner, along the owner's own
+    # workspace ladder, and by organization owners and managers.
+    - survey:draft#read@user:tina
+    - survey:draft#write@user:tina
+    - survey:draft#delete@user:tina
+    - survey:draft#publish@user:tina
+    - survey:draft#response_read@user:tina
+    - survey:draft#response_export@user:tina
+    - survey:draft#change_visibility@user:tina
+    - response:r2#read@user:tina
+    - survey:draft#read@user:olivia
+    - survey:draft#manage@user:mark
+    - survey:draft#change_visibility@user:mark
+    - response:r2#export@user:mark
+    # An ownerless private survey stays recoverable by an administrator (Decision log #3).
+    - survey:orphaned#read@user:mark
+    - survey:orphaned#change_visibility@user:olivia
+    # Administrators may change a workspace-visible survey's visibility too.
+    - survey:onboarding#change_visibility@user:mark
+    # The hazard the survey audit exists to catch: a forged `shared_workspace` edge naming another
+    # organization's workspace grants that organization's members read on this survey.
+    - survey:leaky#read@user:gary
+
   assertFalse:
+    # Scenario 7 (ENG-3282) — nobody else reaches a private survey, and change_visibility is never
+    # workspace write, team-level manage, or an API key.
+    - survey:draft#read@user:uma
+    - survey:draft#read@user:tom
+    - survey:draft#read@user:mo
+    - survey:draft#read@user:bella
+    - survey:draft#read@user:mia
+    - survey:draft#read@api_key:ci_reader
+    - survey:draft#read@api_key:ci_manager
+    - survey:draft#response_read@api_key:ci_manager
+    - response:r2#read@user:uma
+    - response:r2#export@api_key:ci_manager
+    # The owner's own ladder still applies: readWrite does not become manage by owning a survey.
+    - survey:draft#manage@user:tina
+    - survey:draft#change_visibility@user:uma
+    - survey:draft#change_visibility@api_key:ci_manager
+    - survey:orphaned#read@user:tina
+    - survey:orphaned#read@user:mo
+    - survey:orphaned#change_visibility@user:mo
+    # An owner who no longer holds workspace read loses the survey and the control (Decision 2).
+    - survey:stranded#read@user:mia
+    - survey:stranded#change_visibility@user:mia
+    # R-10: workspace write and team-level manage never change visibility, even on a visible survey.
+    - survey:onboarding#change_visibility@user:tina
+    - survey:onboarding#change_visibility@user:mo
+    - survey:onboarding#change_visibility@api_key:ci_manager
+    - survey:leaky#change_visibility@user:gary
+
     # Scenario 1 — managers must not update/delete the organization itself;
     # a teamless member has organization visibility but zero product access.
     - organization:acme#write@user:mark
@@ -333,8 +411,10 @@ validation:
     - "[api_key:ci_writer] is <workspace:main#writer>"
     - "[api_key:ci_manager] is <workspace:main#manager>"
     - "[team:analysts#member] is <workspace:main#reader_team>"
+    - "[team:ops#member] is <workspace:main#manager_team>"
     - "[team:product#member] is <workspace:main#writer_team>"
     - "[user:mark] is <organization:acme#manager>"
+    - "[user:mo] is <organization:acme#member>/<team:ops#contributor>"
     - "[user:olivia] is <organization:acme#owner>"
     - "[user:tina] is <organization:acme#member>/<team:product#contributor>"
     - "[user:tom] is <organization:acme#member>/<team:product#admin>"
@@ -347,6 +427,7 @@ validation:
     - "[api_key:org_writer_key] is <organization:acme#api_key_writer>"
     - "[user:mark] is <organization:acme#manager>"
     - "[user:mia] is <organization:acme#member>"
+    - "[user:mo] is <organization:acme#member>"
     - "[user:olivia] is <organization:acme#owner>"
     - "[user:tina] is <organization:acme#member>"
     - "[user:tom] is <organization:acme#member>"
@@ -364,6 +445,7 @@ validation:
     - "[user:bella] is <organization:acme#billing>"
     - "[user:mark] is <organization:acme#manager>"
     - "[user:mia] is <organization:acme#member>"
+    - "[user:mo] is <organization:acme#member>"
     - "[user:olivia] is <organization:acme#owner>"
     - "[user:tina] is <organization:acme#member>"
     - "[user:tom] is <organization:acme#member>"
@@ -377,8 +459,10 @@ validation:
     - "[api_key:ci_writer] is <workspace:main#writer>"
     - "[api_key:ci_manager] is <workspace:main#manager>"
     - "[team:analysts#member] is <workspace:main#reader_team>"
+    - "[team:ops#member] is <workspace:main#manager_team>"
     - "[team:product#member] is <workspace:main#writer_team>"
     - "[user:mark] is <organization:acme#manager>"
+    - "[user:mo] is <organization:acme#member>/<team:ops#contributor>"
     - "[user:olivia] is <organization:acme#owner>"
     - "[user:tina] is <organization:acme#member>/<team:product#contributor>"
     - "[user:tom] is <organization:acme#member>/<team:product#admin>"

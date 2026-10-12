@@ -197,7 +197,7 @@ const UsageContent = ({ organizationId }: Readonly<{ organizationId: string }>) 
           <UsageStat label={t("common.in_progress")} value={show((usage) => usage.surveys.inProgress)} />
           <UsageStat label={t("common.scheduled")} value={show((usage) => usage.surveys.scheduled)} />
           <UsageStat label={t("common.paused")} value={show((usage) => usage.surveys.paused)} />
-          <UsageStat label={t("common.completed")} value={show((usage) => usage.surveys.completed)} />
+          <UsageStat label={t("common.closed")} value={show((usage) => usage.surveys.completed)} />
           <UsageStat label={t("common.draft")} value={show((usage) => usage.surveys.draft)} />
           <UsageStat label={t("common.archived")} value={show((usage) => usage.surveys.archived)} />
         </div>

@@ -131,8 +131,18 @@ const buildRunCursorWhere = (cursor: TWorkflowRunListCursor): WorkflowRunWhereIn
   return { OR: [{ createdAt: { lt: value } }, { createdAt: value, id: { lt: cursor.id } }] };
 };
 
+/**
+ * Leaves out runs of surveys the caller may not read (ENG-3282). Spelled as `surveyId IS NULL OR NOT IN`
+ * because SQL's `NOT IN` alone also drops the rows whose `surveyId` is null. Nested under `AND` so it
+ * never collides with the cursor's own `OR`.
+ */
+const buildRunSurveyExclusionWhere = (excludeSurveyIds: ReadonlyArray<string>): WorkflowRunWhereInput =>
+  excludeSurveyIds.length === 0
+    ? {}
+    : { AND: [{ OR: [{ surveyId: null }, { surveyId: { notIn: [...excludeSurveyIds] } }] }] };
+
 const buildRunListWhere = (
-  input: TListWorkflowRunsInput,
+  input: TListWorkflowRunsServiceInput,
   cursor: TWorkflowRunListCursor | null
 ): WorkflowRunWhereInput => ({
   workspaceId: input.workspaceId,
@@ -141,7 +151,13 @@ const buildRunListWhere = (
   ...(input.statusIn ? { status: { in: input.statusIn } } : {}),
   ...(input.isDryRun !== undefined ? { isDryRun: input.isDryRun } : {}),
   ...(cursor ? buildRunCursorWhere(cursor) : {}),
+  ...buildRunSurveyExclusionWhere(input.excludeSurveyIds ?? []),
 });
+
+/** The list query plus the surveys whose runs the caller may not read (see `listUnreadableSurveyIds`). */
+export type TListWorkflowRunsServiceInput = TListWorkflowRunsInput & {
+  excludeSurveyIds?: ReadonlyArray<string>;
+};
 
 export interface WorkflowRunListPage {
   runs: WorkflowRunListRow[];
@@ -170,7 +186,7 @@ export interface WorkflowsService {
     options: { definition: TWorkflowExecutableDefinition; publishedBy: string | null }
   ) => Promise<WorkflowRowWithLastRun>;
   disableWorkflow: (params: WorkflowScopedParams) => Promise<WorkflowRowWithLastRun>;
-  listWorkflowRuns: (input: TListWorkflowRunsInput) => Promise<WorkflowRunListPage>;
+  listWorkflowRuns: (input: TListWorkflowRunsServiceInput) => Promise<WorkflowRunListPage>;
   getWorkflowRun: (runId: string) => Promise<WorkflowRunWithLogsRow | null>;
 }
 

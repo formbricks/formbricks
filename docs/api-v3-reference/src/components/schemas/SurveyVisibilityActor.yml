@@ -1,0 +1,16 @@
+type: object
+description: Who made the change. Always a user, since API keys cannot change visibility.
+required:
+  - type
+  - id
+  - name
+properties:
+  type:
+    type: string
+    enum:
+      - user
+  id:
+    type: string
+  name:
+    type: string
+additionalProperties: false

@@ -11,8 +11,19 @@ import {
   TIntegrationInput,
   ZIntegrationType,
 } from "@formbricks/types/integration";
+import { assertNewlyAttachedSurveysWorkspaceVisible } from "@/lib/survey/visibility/outbound";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
+
+const getIntegrationSurveyIds = (config: unknown): string[] => {
+  const data = (config as { data?: unknown } | null | undefined)?.data;
+  if (!Array.isArray(data)) return [];
+  return data.flatMap((entry) =>
+    typeof (entry as { surveyId?: unknown })?.surveyId === "string"
+      ? [(entry as { surveyId: string }).surveyId]
+      : []
+  );
+};
 
 const transformIntegration = (integration: TIntegration): TIntegration => {
   return {
@@ -32,6 +43,18 @@ export const createOrUpdateIntegration = async (
   integrationData: TIntegrationInput
 ): Promise<TIntegration> => {
   validateInputs([workspaceId, ZId]);
+
+  // ENG-3283: an integration row forwards its surveys' responses to a third party, so a newly mapped
+  // survey must be workspace-visible. Surveys already mapped are left alone (dispatch skips a restricted
+  // one), so token refreshes and unrelated edits keep saving.
+  const existing = await prisma.integration.findUnique({
+    where: { type_workspaceId: { workspaceId, type: integrationData.type } },
+    select: { config: true },
+  });
+  await assertNewlyAttachedSurveysWorkspaceVisible(
+    getIntegrationSurveyIds(integrationData.config),
+    getIntegrationSurveyIds(existing?.config)
+  );
 
   try {
     const integration = await prisma.integration.upsert({

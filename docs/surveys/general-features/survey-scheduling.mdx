@@ -1,6 +1,6 @@
 ---
 title: "Schedule a Survey"
-description: "Publish a survey on a future date and close it on another, so a survey runs for a fixed window without anyone having to remember to switch it on or off."
+description: "Activate a survey on a future date and close it on another, so a survey runs for a fixed window without anyone having to remember to switch it on or off."
 icon: "calendar-days"
 ---
 
@@ -12,20 +12,20 @@ Both settings are independent. You can schedule only the start, only the end, or
 
 1. Open the survey in the editor and go to the **Settings** tab.
 2. Open **Response Options**.
-3. Turn on **Publish survey on date**, **Close survey on date**, or both, and pick a date for each.
+3. Turn on **Activate survey on date**, **Close survey on date**, or both, and pick a date for each.
 
-![The publish and close date settings in the survey editor](/images/surveys/general-features/survey-scheduling/publish-and-close.webp)
+![The activate and close date settings in the survey editor](/images/surveys/general-features/survey-scheduling/publish-and-close.webp)
 
 ## What the dates mean
 
 Both actions happen at a fixed time of day, in a fixed time zone, on the date you choose — not at the moment you set them.
 
-- Before its publish date, the survey shows as **Scheduled** in the survey list and the status dropdown. It is a paused survey with a future publish date rather than a status of its own, so pausing and scheduling are the same underlying state.
+- Before its activation date, the survey shows as **Scheduled** in the survey list and the status dropdown. It is a paused survey with a future activation date rather than a status of its own, so pausing and scheduling are the same underlying state.
 - A survey that reaches its close date stops accepting responses, exactly as if you had closed it by hand. Existing responses are untouched.
 - Removing a date with the **×** next to it cancels that half of the schedule.
 
 <Note>
-  The time of day and the time zone are properties of the Formbricks instance, not of the survey. The editor tells you which apply — for example "Survey will be published at 00:00 in the Europe/Berlin timezone on the selected date".
+  The time of day and the time zone are properties of the Formbricks instance, not of the survey. The editor tells you which apply — for example "Survey will be activated at 00:00 in the Europe/Berlin timezone on the selected date".
 </Note>
 
 ## Self-hosting

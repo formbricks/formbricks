@@ -13,7 +13,8 @@ export type TWebhookDeliveryOutcome =
   | "permanent_failure"
   | "load_failed"
   | "skipped_deleted"
-  | "skipped_rescoped";
+  | "skipped_rescoped"
+  | "skipped_not_visible";
 
 /**
  * Metric attributes are deliberately low-cardinality: outcome, event and the status class — never a

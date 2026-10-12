@@ -9,6 +9,7 @@ import {
   TFeedbackSourceWithMappings,
 } from "@formbricks/types/feedback-source";
 import { timeSinceDate } from "@/lib/time";
+import { RestrictedSurveyHint } from "@/modules/survey/visibility/components/restricted-survey-hint";
 import { Badge } from "@/modules/ui/components/badge";
 import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import { TUnifySurvey } from "../types";
@@ -56,6 +57,7 @@ const getFeedbackSourceColumns = ({
   onDelete,
   onFeedbackSourceClick,
   isReadOnly,
+  restrictedSourceIds,
 }: Readonly<{
   t: TFunction;
   locale: string;
@@ -66,6 +68,7 @@ const getFeedbackSourceColumns = ({
   onDelete: (feedbackSourceId: string) => Promise<void>;
   onFeedbackSourceClick: (feedbackSource: TFeedbackSourceWithMappings) => void;
   isReadOnly: boolean;
+  restrictedSourceIds: ReadonlySet<string>;
 }>): TSettingsTableColumn<TFeedbackSourceWithMappings>[] => [
   {
     id: "type",
@@ -114,12 +117,15 @@ const getFeedbackSourceColumns = ({
       }
 
       return (
-        <Link
-          href={`/workspaces/${feedbackSource.workspaceId}/surveys/${originSurveyId}/summary`}
-          title={originSurveyName}
-          className="text-sm text-slate-700 underline underline-offset-2 hover:text-slate-900">
-          {originSurveyName}
-        </Link>
+        <span className="flex min-w-0 items-center gap-x-2">
+          <Link
+            href={`/workspaces/${feedbackSource.workspaceId}/surveys/${originSurveyId}/summary`}
+            title={originSurveyName}
+            className="truncate text-sm text-slate-700 underline underline-offset-2 hover:text-slate-900">
+            {originSurveyName}
+          </Link>
+          {restrictedSourceIds.has(feedbackSource.id) && <RestrictedSurveyHint kind="paused" />}
+        </span>
       );
     },
   },
@@ -180,6 +186,7 @@ const getFeedbackSourceColumns = ({
             onEdit={() => onFeedbackSourceClick(feedbackSource)}
             onCsvImport={feedbackSource.type === "csv" ? () => onCsvImport(feedbackSource) : undefined}
             onReimport={() => onReimport(feedbackSource)}
+            isRestricted={restrictedSourceIds.has(feedbackSource.id)}
             onToggleStatus={() => onToggleStatus(feedbackSource)}
             onDelete={() => onDelete(feedbackSource.id)}
           />
@@ -204,6 +211,10 @@ interface FeedbackSourcesTableProps {
   onSelectQuestions: (survey: TUnifySurvey) => void;
   isLoading?: boolean;
   isReadOnly?: boolean;
+  /** ENG-3395: the restricted-surveys gate. */
+  surveyVisibilityEnabled?: boolean;
+  /** Sources that replay a restricted survey, which dispatch skips. */
+  restrictedSourceIds?: ReadonlySet<string>;
 }
 
 export function FeedbackSourcesTable({
@@ -220,6 +231,8 @@ export function FeedbackSourcesTable({
   onSelectQuestions,
   isLoading = false,
   isReadOnly = false,
+  surveyVisibilityEnabled = false,
+  restrictedSourceIds = new Set<string>(),
 }: Readonly<FeedbackSourcesTableProps>) {
   const { t, i18n } = useTranslation();
 
@@ -247,6 +260,7 @@ export function FeedbackSourcesTable({
         onDelete,
         onFeedbackSourceClick,
         isReadOnly,
+        restrictedSourceIds,
       })}
       rows={feedbackSources}
       getRowId={(feedbackSource) => feedbackSource.id}
@@ -263,6 +277,7 @@ export function FeedbackSourcesTable({
             workspaceId={workspaceId}
             onImportResponses={onImportResponses}
             onSelectQuestions={onSelectQuestions}
+            surveyVisibilityEnabled={surveyVisibilityEnabled}
           />
         )
       }

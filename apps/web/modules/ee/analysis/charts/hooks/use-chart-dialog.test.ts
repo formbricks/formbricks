@@ -37,7 +37,7 @@ vi.mock("@/modules/ee/analysis/charts/lib/chart-utils", () => ({
   resolveChartType: (type: string) => type,
 }));
 
-vi.mock("@/lib/utils/helper", () => ({
+vi.mock("@/lib/utils/error-message", () => ({
   getFormattedErrorMessage: (result: any) => result?.serverError ?? "formatted-error",
 }));
 
@@ -262,6 +262,42 @@ describe("useChartDialog", () => {
       expect(onOpenChange).toHaveBeenCalledWith(false);
       expect(result.current.chartName).toBe("");
       expect(result.current.chartData).toBeNull();
+    });
+  });
+
+  describe("starting from a preset (ENG-3331)", () => {
+    test("adopts the preset's chart type, display settings and name, and saves them", async () => {
+      mockCreateChartAction.mockResolvedValue({ data: { id: NEW_CHART_ID } });
+      const { result } = renderHook(() => useChartDialog(baseProps));
+
+      act(() =>
+        result.current.handleChartGenerated({
+          query: { measures: ["FeedbackRecords.npsScore"] },
+          chartType: "area",
+          config: { areaDisplay: "line" },
+          suggestedName: "NPS over time",
+        })
+      );
+
+      expect(result.current.selectedChartType).toBe("area");
+      expect(result.current.chartConfig).toEqual({ areaDisplay: "line" });
+      expect(result.current.chartName).toBe("NPS over time");
+
+      await act(async () => {
+        await result.current.handleSaveChart();
+      });
+      expect(mockCreateChartAction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          chartInput: expect.objectContaining({ type: "area", config: { areaDisplay: "line" } }),
+        })
+      );
+    });
+
+    test("an AI chart without display settings keeps the ones already set", () => {
+      const { result } = renderHook(() => useChartDialog(baseProps));
+      act(() => result.current.setChartConfig({ barOrientation: "horizontal" }));
+      act(() => result.current.handleChartGenerated(sampleChartData));
+      expect(result.current.chartConfig).toEqual({ barOrientation: "horizontal" });
     });
   });
 

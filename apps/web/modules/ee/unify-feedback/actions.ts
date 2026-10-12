@@ -51,7 +51,9 @@ export const retrieveFeedbackRecordAction = authenticatedActionClient
         parsedInput.workspaceId
       );
 
-      return recordResult.data;
+      // Classification is supplementary: an older Hub or a failed lookup returns no assignment,
+      // without hiding the authorized record.
+      return { record: recordResult.data, taxonomy: recordResult.data.taxonomy ?? null };
     }
   );
 

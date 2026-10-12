@@ -1,0 +1,55 @@
+type: object
+description: >-
+  A construct the custom CSS processor removed; the rest of the CSS still applies. `unknown_property`
+  and `invalid_value` are notes instead: the declaration stays, but browsers ignore it. The `code` is
+  stable — branch on it, not on `reason`, which never echoes customer source beyond a short construct
+  name.
+required:
+  - code
+  - scope
+  - appearance
+  - line
+  - column
+  - reason
+properties:
+  code:
+    type: string
+    enum:
+      - import_removed
+      - font_face_removed
+      - external_resource_removed
+      - unsupported_at_rule_removed
+      - unsafe_property_removed
+      - unsafe_value_removed
+      - fixed_position_removed
+      - unsafe_selector_removed
+      - unknown_property
+      - invalid_value
+  scope:
+    type: string
+    enum:
+      - workspace
+      - survey
+  appearance:
+    type:
+      - string
+      - "null"
+    enum:
+      - light
+      - dark
+      - null
+    description: Source field the issue is in; `null` when it concerns the scope as a whole.
+  line:
+    type:
+      - integer
+      - "null"
+    minimum: 1
+    description: 1-based line in that field's source; `null` when there is no single location.
+  column:
+    type:
+      - integer
+      - "null"
+    minimum: 1
+  reason:
+    type: string
+additionalProperties: false

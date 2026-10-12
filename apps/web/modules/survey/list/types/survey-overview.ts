@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZSurveyStatus } from "@formbricks/types/surveys/types";
+import { ZSurveyStatus, ZSurveyVisibility } from "@formbricks/types/surveys/types";
 
 export const ZSurveyOverviewType = z.enum(["link", "app"]);
 export const ZSurveyOverviewSort = z.enum(["createdAt", "updatedAt", "name", "relevance"]);
@@ -10,7 +10,15 @@ export const ZSurveyOverviewFilters = z.object({
   name: z.string(),
   status: z.array(ZSurveyOverviewStatus),
   type: z.array(ZSurveyOverviewType),
+  // ENG-3395: session-only — never written to or read from the remembered filters.
+  visibility: z.array(ZSurveyVisibility),
   sortBy: ZSurveyOverviewSort,
+});
+
+// Mirrors `TSurveyAccess` in `lib/survey/visibility/access.ts`, the v3 representations' `access` field.
+export const ZSurveyListItemAccess = z.object({
+  via: z.enum(["organizationRole", "owner", "workspace"]),
+  canManageVisibility: z.boolean(),
 });
 
 export const ZSurveyListItem = z.object({
@@ -36,6 +44,10 @@ export const ZSurveyListItem = z.object({
       isEncrypted: z.boolean(),
     })
     .nullable(),
+  // ENG-3282: the visibility enforced on this request, the display-only author, and why the caller can see it.
+  visibility: ZSurveyVisibility,
+  owner: z.object({ name: z.string() }).nullable(),
+  access: ZSurveyListItemAccess,
 });
 
 export type TSurveyOverviewType = z.infer<typeof ZSurveyOverviewType>;
@@ -43,3 +55,4 @@ export type TSurveyOverviewStatus = z.infer<typeof ZSurveyOverviewStatus>;
 export type TSurveyOverviewSort = z.infer<typeof ZSurveyOverviewSort>;
 export type TSurveyOverviewFilters = z.infer<typeof ZSurveyOverviewFilters>;
 export type TSurveyListItem = z.infer<typeof ZSurveyListItem>;
+export type TSurveyListItemAccess = z.infer<typeof ZSurveyListItemAccess>;

@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import type { TLinkedEmbeddedField } from "../embedded-data-resolver";
 import {
   type TDeclaredFieldSource,
   collectDeclaredFieldNames,
@@ -7,6 +8,7 @@ import {
   validateNewDeclaredFieldClashes,
   validateNewDeclaredFieldNames,
   validateNewDeclaredFields,
+  validateNewElementIdClashes,
 } from "./declared-field-guard";
 import { TValidateIdErrorCode } from "./validation";
 
@@ -297,7 +299,7 @@ describe("validateNewDeclaredFieldClashes", () => {
       ).toEqual(["plan"]);
     });
 
-    test("reports the Duplicate code the editor's hidden-fields card reports for the same clash", () => {
+    test("reports the Duplicate code the editor's Embedded Data card reports for the same clash", () => {
       expect(
         validateNewDeclaredFieldClashes({
           existing: declared({ hiddenFields: ["plan"] }),
@@ -434,6 +436,144 @@ describe("validateNewDeclaredFieldClashes", () => {
   });
 });
 
+describe("validateNewElementIdClashes", () => {
+  /** Blocks holding one element per id, as `TSurvey.blocks` carries them. */
+  const blocks = (...elementIds: string[]) => [{ elements: elementIds.map((id) => ({ id })) }];
+
+  const elementClashes = (params: { existing: TDeclaredFieldSource; incoming: TDeclaredFieldSource }) =>
+    validateNewElementIdClashes(params).map((error) => error.field);
+
+  describe("a new clash is refused", () => {
+    test("a hidden field may not take an existing element's id", () => {
+      expect(
+        elementClashes({
+          existing: { blocks: blocks("plan") },
+          incoming: { ...declared({ hiddenFields: ["plan"] }), blocks: blocks("plan") },
+        })
+      ).toEqual(["plan"]);
+    });
+
+    test("an element may not take an existing hidden field's name", () => {
+      expect(
+        elementClashes({
+          existing: { ...declared({ hiddenFields: ["plan"] }), blocks: blocks("q1") },
+          incoming: { ...declared({ hiddenFields: ["plan"] }), blocks: blocks("plan") },
+        })
+      ).toEqual(["plan"]);
+    });
+
+    test("a create may not declare both under one name", () => {
+      expect(
+        validateNewElementIdClashes({
+          existing: {},
+          incoming: { ...declared({ hiddenFields: ["plan"] }), blocks: blocks("plan") },
+        })
+      ).toEqual([{ code: TValidateIdErrorCode.Duplicate, field: "plan" }]);
+    });
+
+    test("matching is case-insensitive, and the error names the side the write introduces", () => {
+      // Only an exact match is dead at storage, but recall and logic address both by name — so the
+      // editor and v3 refuse a case variant, and so does this.
+      expect(
+        elementClashes({
+          existing: { blocks: blocks("Plan") },
+          incoming: { ...declared({ hiddenFields: ["plan"] }), blocks: blocks("Plan") },
+        })
+      ).toEqual(["plan"]);
+      expect(
+        elementClashes({
+          existing: { ...declared({ hiddenFields: ["plan"] }), blocks: [] },
+          incoming: { ...declared({ hiddenFields: ["plan"] }), blocks: blocks("PLAN") },
+        })
+      ).toEqual(["PLAN"]);
+    });
+
+    test("an ingested row is checked by its storage key", () => {
+      expect(
+        elementClashes({
+          existing: { blocks: blocks("plan") },
+          incoming: {
+            embeddedFields: [
+              {
+                field: {
+                  key: null,
+                  name: "Plan tier",
+                  source: "ingested",
+                  dataType: "string",
+                  defaultValue: null,
+                  locked: false,
+                },
+                link: { storageKey: "plan" },
+              },
+            ],
+            blocks: blocks("plan"),
+          },
+        })
+      ).toEqual(["plan"]);
+    });
+  });
+
+  describe("grandfathering", () => {
+    const holdsClash = { ...declared({ hiddenFields: ["plan", "tier"] }), blocks: blocks("plan") };
+
+    test("a survey that already holds the clash may resend it", () => {
+      expect(elementClashes({ existing: holdsClash, incoming: holdsClash })).toEqual([]);
+    });
+
+    test("a grandfathered clash does not license a new one", () => {
+      expect(
+        elementClashes({
+          existing: holdsClash,
+          incoming: { ...declared({ hiddenFields: ["plan", "tier"] }), blocks: blocks("plan", "tier") },
+        })
+      ).toEqual(["tier"]);
+    });
+  });
+
+  describe("what the write leaves in place", () => {
+    test("blocks the payload never mentions are the survey's current ones", () => {
+      expect(
+        elementClashes({
+          existing: { blocks: blocks("plan") },
+          incoming: declared({ hiddenFields: ["plan"] }),
+        })
+      ).toEqual(["plan"]);
+    });
+
+    test("empty blocks are the survey's current ones too, because the update keeps them", () => {
+      expect(
+        elementClashes({
+          existing: { blocks: blocks("plan") },
+          incoming: { ...declared({ hiddenFields: ["plan"] }), blocks: [] },
+        })
+      ).toEqual(["plan"]);
+    });
+
+    test("a variable under an element's id is out of scope here", () => {
+      // A variable is stored under its cuid, not its name, so it never loses its value to an answer.
+      expect(
+        elementClashes({
+          existing: {},
+          incoming: { ...declared({ variables: ["plan"] }), blocks: blocks("plan") },
+        })
+      ).toEqual([]);
+    });
+
+    test("malformed draft blocks are skipped rather than thrown on", () => {
+      // The draft save runs the guard over blocks `ZSurveyDraft` only checks as records.
+      expect(
+        elementClashes({
+          existing: {},
+          incoming: {
+            ...declared({ hiddenFields: ["plan"] }),
+            blocks: [null, {}, { elements: "plan" }, { elements: [null, { id: 7 }, { id: "plan" }] }],
+          },
+        })
+      ).toEqual(["plan"]);
+    });
+  });
+});
+
 describe("validateNewDeclaredFields", () => {
   test("reports reserved names and clashes together", () => {
     expect(
@@ -456,6 +596,18 @@ describe("validateNewDeclaredFields", () => {
     expect(errors).toEqual([{ code: TValidateIdErrorCode.Reserved, field: "country" }]);
   });
 
+  test("a name in both clashes is reported once", () => {
+    expect(
+      validateNewDeclaredFields({
+        existing: {},
+        incoming: {
+          ...declared({ variables: ["plan"], hiddenFields: ["plan"] }),
+          blocks: [{ elements: [{ id: "plan" }] }],
+        },
+      })
+    ).toEqual([{ code: TValidateIdErrorCode.Duplicate, field: "plan" }]);
+  });
+
   test("grandfathers a reserved name and a clash the survey already holds", () => {
     const survey = declared({ variables: ["country", "first_name"], hiddenFields: ["first_name"] });
 
@@ -471,5 +623,116 @@ describe("validateNewDeclaredFields", () => {
     expect(describeDeclaredFieldNameError(error)).toBe(
       'Field name "plan" cannot be used: a second field in this survey would carry that name, and recall and logic address fields by name.'
     );
+  });
+});
+
+/**
+ * ENG-3228: the V2 carrier. A payload that declares its fields as rows says everything the two
+ * legacy keys said and more, so the guard has to read it instead of them — otherwise a panel edit
+ * would pass the reserved-name and clash checks by declaring nothing the guard can see.
+ */
+describe("the embeddedFields carrier", () => {
+  const entry = (
+    name: string,
+    source: "computed" | "ingested",
+    overrides: { key?: string; storageKey?: string } = {}
+  ): TLinkedEmbeddedField => ({
+    field: {
+      key: overrides.key ?? null,
+      name,
+      source,
+      dataType: "string",
+      defaultValue: null,
+      locked: false,
+    },
+    link: { storageKey: overrides.storageKey ?? name },
+  });
+
+  test("names a computed field by its name and an ingested one by its storage key", () => {
+    // Not the same column for both: recall addresses a variable by name and a hidden field by the
+    // key its value arrives under, which is exactly what the legacy columns carried.
+    expect(
+      collectDeclaredFieldNames({
+        embeddedFields: [entry("score", "computed"), entry("Plan tier", "ingested", { storageKey: "plan" })],
+      })
+    ).toEqual(["score", "plan"]);
+  });
+
+  test("takes precedence over the legacy keys in the same payload", () => {
+    expect(
+      collectDeclaredFieldNames({
+        embeddedFields: [entry("score", "computed")],
+        ...declared({ variables: ["ignored_variable"], hiddenFields: ["ignored_hidden_field"] }),
+      })
+    ).toEqual(["score"]);
+  });
+
+  test("refuses a newly declared reserved name, like any other carrier", () => {
+    expect(
+      validateNewDeclaredFields({
+        existing: {},
+        incoming: { embeddedFields: [entry("country", "ingested")] },
+      })
+    ).toEqual([{ code: TValidateIdErrorCode.Reserved, field: "country" }]);
+  });
+
+  test("grandfathers a reserved name the survey's rows already hold", () => {
+    const survey = { embeddedFields: [entry("country", "ingested")] };
+
+    expect(validateNewDeclaredFields({ existing: survey, incoming: survey })).toEqual([]);
+  });
+
+  test("refuses a computed and an ingested field that would share a name", () => {
+    expect(
+      validateNewDeclaredFields({
+        existing: {},
+        incoming: { embeddedFields: [entry("plan", "computed"), entry("plan", "ingested")] },
+      })
+    ).toEqual([{ code: TValidateIdErrorCode.Duplicate, field: "plan" }]);
+  });
+
+  describe("a newly linked shared field", () => {
+    test("is checked by its library key against the survey's local names", () => {
+      // The link is authored here even though the definition is not, so its key enters this survey's
+      // recall namespace for the first time and has to be checked like any other new name.
+      expect(
+        validateNewDeclaredFields({
+          existing: { embeddedFields: [entry("plan", "computed")] },
+          incoming: {
+            embeddedFields: [
+              entry("plan", "computed"),
+              entry("Plan tier", "ingested", { key: "plan", storageKey: "plan" }),
+            ],
+          },
+        })
+      ).toEqual([{ code: TValidateIdErrorCode.Duplicate, field: "plan" }]);
+    });
+
+    test("is named by its key rather than its label, which is never an identifier", () => {
+      // A library field displayed as `Plan tier` is perfectly legal; checking the label would refuse
+      // every link to one, because `validateId` demands a safe identifier from a new name.
+      expect(
+        validateNewDeclaredFields({
+          existing: {},
+          incoming: {
+            embeddedFields: [entry("Plan tier", "computed", { key: "plan_tier", storageKey: "cuid_1" })],
+          },
+        })
+      ).toEqual([]);
+    });
+
+    test("clashes case-insensitively, like every other name here", () => {
+      expect(
+        validateNewDeclaredFields({
+          existing: { embeddedFields: [entry("Plan", "computed")] },
+          incoming: {
+            embeddedFields: [
+              entry("Plan", "computed"),
+              entry("Plan tier", "ingested", { key: "plan", storageKey: "plan" }),
+            ],
+          },
+        })
+      ).toEqual([{ code: TValidateIdErrorCode.Duplicate, field: "plan" }]);
+    });
   });
 });

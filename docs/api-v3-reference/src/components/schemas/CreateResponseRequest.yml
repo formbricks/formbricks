@@ -79,6 +79,7 @@ properties:
       a different contact. Must be a contact in the same workspace.
   displayId:
     type: string
+    format: cuid2
     description: >-
       Display (survey impression) this response answers. Create-only. Each display can back at most
       one response.

@@ -54,6 +54,12 @@ vi.mock("@formbricks/jobs", () => ({
       scope: "global",
       upsert: mockUpsertAuthzedReconciliationAudit,
     },
+    authzedSurveyAudit: {
+      name: "authzed-survey.audit",
+      scheduleId: "daily-authzed-survey-audit",
+      scope: "global",
+      upsert: vi.fn(),
+    },
     surveyArchivePurge: {
       name: "survey-archive-purge.process",
       remove: mockRemoveSurveyArchivePurge,
@@ -141,6 +147,7 @@ vi.mock("@/lib/authzed/outbox-processor", () => ({
 
 vi.mock("@/lib/authzed/scheduled-reconciliation", () => ({
   processAuthzedScheduledReconciliationJob: mockProcessAuthzedScheduledReconciliationJob,
+  processAuthzedSurveyAuditJob: vi.fn(),
 }));
 
 describe("instrumentation-jobs", () => {
@@ -243,6 +250,7 @@ describe("instrumentation-jobs", () => {
       jobHandlerOverrides: {
         "authzed-projection.deliver": expect.any(Function),
         "authzed-reconciliation.audit": expect.any(Function),
+        "authzed-survey.audit": expect.any(Function),
         "response-pipeline.process": expect.any(Function),
         "survey-scheduling.reconcile": expect.any(Function),
         "survey-archive-purge.process": expect.any(Function),

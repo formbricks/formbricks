@@ -148,6 +148,45 @@ export const getSurveyAuthorizationWorkspaceScope = reactCache(
   }
 );
 
+/**
+ * A survey's authorization facts once survey visibility is enforced (ENG-3282): its tenant boundary
+ * plus the ownership and version pair the evaluator needs to tell a settled survey from one whose
+ * visibility change is still being projected.
+ */
+export type TSurveyAuthorizationScopeRow = Readonly<{
+  id: string;
+  organizationId: string;
+  ownerId: string | null;
+  visibility: "restricted" | "workspace";
+  visibilityProjectedVersion: number;
+  visibilityVersion: number;
+  workspaceId: string;
+}>;
+
+export const getSurveyAuthorizationScopeRow = reactCache(
+  async (surveyId: string): Promise<TSurveyAuthorizationScopeRow | null> => {
+    try {
+      const survey = await prisma.survey.findUnique({
+        where: { id: surveyId },
+        select: {
+          id: true,
+          ownerId: true,
+          visibility: true,
+          visibilityProjectedVersion: true,
+          visibilityVersion: true,
+          workspaceId: true,
+          workspace: { select: { organizationId: true } },
+        },
+      });
+      if (!survey) return null;
+      const { workspace, ...facts } = survey;
+      return { ...facts, organizationId: workspace.organizationId };
+    } catch (error) {
+      return rethrowAsDatabaseError(error);
+    }
+  }
+);
+
 /** The workspace and organization a dashboard belongs to. */
 export const getDashboardAuthorizationWorkspaceScope = reactCache(
   async (dashboardId: string): Promise<TAuthorizationWorkspaceScope | null> => {

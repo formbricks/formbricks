@@ -6,6 +6,7 @@ import { E2E_TESTING, IS_DEVELOPMENT, TELEMETRY_DISABLED } from "@/lib/constants
 import { env } from "@/lib/env";
 import { hashString } from "@/lib/hash-string";
 import { getInstanceInfo } from "@/lib/instance";
+import { type TProxiedRequestInit, proxyDispatcher } from "@/lib/proxy-dispatcher";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import packageJson from "@/package.json";
 
@@ -78,11 +79,12 @@ const executeTelemetrySend = async (cache: CacheService, lastSent: number, now: 
     // Update in-memory check to prevent this instance from checking again for 24h.
     nextTelemetryCheck = now + TELEMETRY_INTERVAL_MS;
   } catch (e) {
-    // Log as warning since telemetry is non-essential
+    // Error, not warning: for a licensed instance this report is what the license server bills and
+    // audits against, and a failure repeats silently every day until someone reads the logs.
     const errorMessage = e instanceof Error ? e.message : String(e);
-    logger.warn(
+    logger.error(
       { error: e, message: errorMessage, lastSent, now, hashedLicenseKey },
-      "Failed to send telemetry - applying 1h cooldown"
+      "Failed to send usage update to the license server - applying 1h cooldown"
     );
 
     // Failure cooldown: Prevent retrying immediately to avoid hammering the endpoint.
@@ -385,6 +387,8 @@ const sendTelemetry = async (lastSent: number): Promise<boolean> => {
   const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
   try {
+    // Same dispatcher as the license check: on a network whose only egress is a proxy, a bare
+    // `fetch` here validates the license but never delivers a single usage update.
     const res = await fetch(url, {
       method: "POST",
       headers: {
@@ -392,7 +396,8 @@ const sendTelemetry = async (lastSent: number): Promise<boolean> => {
       },
       body: JSON.stringify(payload),
       signal: controller.signal,
-    });
+      dispatcher: proxyDispatcher,
+    } as TProxiedRequestInit);
 
     // A rejected update must not be recorded as sent, or the instance stays silent for another 24h
     // while the license server still has no usage for it.

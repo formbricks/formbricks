@@ -4,7 +4,8 @@ import { CopyIcon, LinkIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { copyToClipboard } from "@/lib/utils/clipboard";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { getTranslatedPersonalLinkError } from "@/modules/ee/contacts/lib/personal-link-errors";
 import { PublishedLinkSurvey } from "@/modules/ee/contacts/lib/surveys";
 import { Button } from "@/modules/ui/components/button";
@@ -34,16 +35,6 @@ interface GeneratePersonalLinkModalProps {
   contactId: string;
   publishedLinkSurveys: PublishedLinkSurvey[];
 }
-
-const copyToClipboard = async (text: string): Promise<boolean> => {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch (error) {
-    console.warn("Failed to copy to clipboard:", error);
-    return false;
-  }
-};
 
 export const GeneratePersonalLinkModal = ({
   open,

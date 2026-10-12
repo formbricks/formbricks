@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { TWidgetLayout, ZChartConfig, ZChartQuery, ZWidgetLayout } from "@formbricks/types/analysis";
+import {
+  type TChartConfig,
+  TWidgetLayout,
+  ZChartConfig,
+  ZChartQuery,
+  ZWidgetLayout,
+} from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 
 export const CHART_TYPE_IDS = ["area", "bar", "pie", "big_number", "matrix"] as const;
@@ -138,4 +144,6 @@ export interface AnalyticsResponse extends TChartLabelMaps {
   data?: TChartDataRow[];
   error?: string;
   suggestedName?: string;
+  /** Display settings to start from, e.g. a preset's line style. */
+  config?: TChartConfig;
 }

@@ -1,4 +1,4 @@
-import { AIOutputTokenLimitError } from "@formbricks/ai";
+import { AIOutputTokenLimitError, classifyAIProviderError } from "@formbricks/ai";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { V3SurveyGeneratedPayloadValidationError } from "@/app/api/v3/surveys/generate/service";
 import { SURVEY_GENERATION_STREAM_ERROR_CODES, type TSurveyGenerationStreamEvent } from "./events";
@@ -12,6 +12,10 @@ import { SURVEY_GENERATION_STREAM_ERROR_CODES, type TSurveyGenerationStreamEvent
 const STREAM_ERROR_DETAILS = {
   [SURVEY_GENERATION_STREAM_ERROR_CODES.QUOTA_EXCEEDED]:
     "The AI provider is temporarily rate-limited. Try again shortly.",
+  // An operator problem, not a prompt problem: "add more detail" would send the user rewriting a
+  // prompt that was never the cause.
+  [SURVEY_GENERATION_STREAM_ERROR_CODES.AUTH_FAILED]:
+    "The AI provider rejected this instance's credentials. Ask your administrator to check the AI provider configuration.",
   [SURVEY_GENERATION_STREAM_ERROR_CODES.OUTPUT_TOO_LONG]:
     "The generated survey exceeded the AI output token limit. Simplify the prompt or split it into smaller surveys.",
   [SURVEY_GENERATION_STREAM_ERROR_CODES.PAYLOAD_INVALID]:
@@ -48,6 +52,14 @@ export function toStreamErrorEvent(error: unknown): Extract<TSurveyGenerationStr
       code: SURVEY_GENERATION_STREAM_ERROR_CODES.QUOTA_EXCEEDED,
       detail: STREAM_ERROR_DETAILS[SURVEY_GENERATION_STREAM_ERROR_CODES.QUOTA_EXCEEDED],
       retryAfter: error.retryAfter,
+    };
+  }
+
+  if (classifyAIProviderError(error)?.isAuthFailure) {
+    return {
+      type: "error",
+      code: SURVEY_GENERATION_STREAM_ERROR_CODES.AUTH_FAILED,
+      detail: STREAM_ERROR_DETAILS[SURVEY_GENERATION_STREAM_ERROR_CODES.AUTH_FAILED],
     };
   }
 

@@ -68,6 +68,7 @@ import {
   type TV3FeedbackRecord,
   serializeV3FeedbackDataset,
   serializeV3FeedbackRecord,
+  serializeV3FeedbackRecordDetail,
   serializeV3FeedbackRecordMatch,
 } from "./serializers";
 
@@ -548,7 +549,10 @@ export async function getV3FeedbackRecord({
       return owned.response;
     }
 
-    return successResponse(serializeV3FeedbackRecord(owned.record), { requestId, cache: CACHE });
+    return successResponse(serializeV3FeedbackRecordDetail(owned.record), {
+      requestId,
+      cache: CACHE,
+    });
   } catch (err) {
     return handleUnexpectedError(err, log, requestId, instance, "feedbackRecords.get");
   }

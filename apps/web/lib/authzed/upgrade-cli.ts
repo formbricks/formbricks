@@ -15,6 +15,7 @@ import {
   applyCanonicalAuthzedSchema,
   checkCanonicalAuthzedSchema,
 } from "./schema";
+import { type TAuthzedProjectionScope, readProjectionScopeReadiness } from "./scope-readiness";
 import type { TAuthzedUpgradeCliCommand } from "./upgrade-cli-command";
 
 type TAuthzedUpgradeAudit = Readonly<{
@@ -32,6 +33,11 @@ type TAuthzedUpgradeResult = Readonly<{
   outbox?: TAuthzedOutboxStatus | TAuthzedOutboxDrainResult;
   retryable?: boolean;
   schema?: TAuthzedSchemaApplyResult | TAuthzedSchemaCheckResult;
+  /**
+   * Per-scope readiness markers (ENG-3282). Informational: a scope that is not ready is enforced by
+   * the workspace ladder, which is the safe state, so it never blocks an upgrade.
+   */
+  scopes?: Readonly<Record<TAuthzedProjectionScope, "not-ready" | "ready">>;
   status: "blocked" | "failed" | "prepared" | "ready";
 }>;
 
@@ -46,6 +52,7 @@ type TAuthzedUpgradeCliDependencies = Readonly<{
   drainOutbox: () => Promise<TAuthzedOutboxDrainResult>;
   isEnabled: () => boolean;
   outboxStatus: () => Promise<TAuthzedOutboxStatus>;
+  readScopes: () => Promise<Readonly<Record<TAuthzedProjectionScope, "not-ready" | "ready">>>;
   writeOutput: (output: string) => void;
 }>;
 
@@ -71,6 +78,7 @@ const defaultDependencies: TAuthzedUpgradeCliDependencies = {
   drainOutbox: drainAuthzedOutbox,
   isEnabled: () => env.AUTHZED_ENABLED === "true" || env.AUTHZED_ENABLED === "1",
   outboxStatus: getAuthzedOutboxStatus,
+  readScopes: readProjectionScopeReadiness,
   writeOutput: (output) => process.stdout.write(output),
 };
 
@@ -87,6 +95,45 @@ const isOutboxClean = (status: TAuthzedOutboxStatus): boolean =>
   status.pending === 0 &&
   status.revocationsPastCritical === 0 &&
   status.revocationsPastWarning === 0;
+
+const getCheckStatus = (audit: TAuthzedUpgradeAudit): "blocked" | "failed" | "ready" => {
+  if (audit.status === "reconciled") {
+    return "ready";
+  }
+
+  if (audit.status === "failed") {
+    return "failed";
+  }
+
+  return "blocked";
+};
+
+const getPrepareStatus = (
+  audit: TAuthzedUpgradeAudit,
+  outbox: TAuthzedOutboxStatus
+): "blocked" | "failed" | "prepared" => {
+  if (audit.status === "failed") {
+    return "failed";
+  }
+
+  if (audit.status === "reconciled" && isOutboxClean(outbox)) {
+    return "prepared";
+  }
+
+  return "blocked";
+};
+
+const getExitCode = (status: TAuthzedUpgradeResult["status"]): number => {
+  if (status === "ready" || status === "prepared") {
+    return 0;
+  }
+
+  if (status === "blocked") {
+    return 2;
+  }
+
+  return 1;
+};
 
 const assertUpgradeConfiguration = (dependencies: TAuthzedUpgradeCliDependencies): void => {
   if (!dependencies.isEnabled()) {
@@ -137,7 +184,8 @@ const runCheck = async (dependencies: TAuthzedUpgradeCliDependencies): Promise<T
     health,
     outbox,
     schema,
-    status: audit.status === "reconciled" ? "ready" : audit.status === "failed" ? "failed" : "blocked",
+    scopes: await dependencies.readScopes(),
+    status: getCheckStatus(audit),
   };
 };
 
@@ -176,12 +224,7 @@ const runPrepare = async (
     health,
     outbox,
     schema,
-    status:
-      audit.status === "failed"
-        ? "failed"
-        : audit.status === "reconciled" && isOutboxClean(outbox)
-          ? "prepared"
-          : "blocked",
+    status: getPrepareStatus(audit, outbox),
   };
 };
 
@@ -214,5 +257,5 @@ export const runAuthzedUpgradeCli = async (
   }
 
   dependencies.writeOutput(`${JSON.stringify(result)}\n`);
-  return result.status === "ready" || result.status === "prepared" ? 0 : result.status === "blocked" ? 2 : 1;
+  return getExitCode(result.status);
 };

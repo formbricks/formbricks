@@ -8,7 +8,9 @@ import {
 } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
+import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
+import { isSurveyOutboundAllowed, surveyOutboundVisibilitySelect } from "@/lib/survey/visibility/outbound";
 import { WebhookDnsResolutionError } from "@/lib/utils/validate-webhook-url";
 import {
   WebhookDeliveryTimeoutError,
@@ -122,6 +124,18 @@ const isStillSubscribed = (target: TDeliveryTarget, data: TWebhookDeliveryJobDat
   target.triggers.includes(data.event) &&
   (target.surveyIds.length === 0 || target.surveyIds.includes(data.surveyId));
 
+/** One primary-key read, and none at all while survey visibility is not enforced. */
+const isSurveyStillOutboundVisible = async (surveyId: string): Promise<boolean> => {
+  if (!(await isSurveyVisibilityReady())) return true;
+  const survey = await prisma.survey.findUnique({
+    where: { id: surveyId },
+    select: surveyOutboundVisibilitySelect,
+  });
+  // Fail closed on a deleted survey: its queued payload may belong to one restricted before deletion,
+  // and `Webhook.surveyIds` is not a foreign key, so the webhook still looks subscribed.
+  return survey !== null && isSurveyOutboundAllowed(survey, true);
+};
+
 type TDeliveryAttempt = { kind: "completed"; statusCode: number } | { kind: "threw"; error: unknown };
 
 const attemptDelivery = async (
@@ -210,6 +224,17 @@ export const processWebhookDeliveryJob: JobHandler<TWebhookDeliveryJobData> = as
       "Webhook delivery skipped: webhook no longer subscribed to this event"
     );
     recordWebhookDeliveryOutcome({ outcome: "skipped_rescoped", event: data.event });
+    return;
+  }
+
+  // ENG-3283: the survey may have been restricted after this delivery was enqueued (or while it
+  // was retrying). The pipeline checked at fan-out; this closes the window up to the request itself.
+  if (!(await isSurveyStillOutboundVisible(data.surveyId))) {
+    logger.info(
+      { ...logContext, outcome: "skipped_not_visible", webhookUrlHost: getWebhookUrlHost(target.url) },
+      "Webhook delivery skipped: survey is no longer visible to the whole workspace"
+    );
+    recordWebhookDeliveryOutcome({ outcome: "skipped_not_visible", event: data.event });
     return;
   }
 

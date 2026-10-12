@@ -1,5 +1,6 @@
+import { LEAKY_AI_ERRORS, findPlantedContent } from "@/lib/ai/__mocks__/leaky-ai-errors";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { AIOutputTokenLimitError } from "@formbricks/ai";
+import { AIOAuthTokenError, AIOutputTokenLimitError } from "@formbricks/ai";
 import { logger } from "@formbricks/logger";
 import {
   OperationNotAllowedError,
@@ -117,15 +118,59 @@ describe("mapV3SurveyGenerateError", () => {
     expect(JSON.stringify(problem)).not.toContain("org_123");
   });
 
-  test("falls back to 502 and logs for an unrecognized error", () => {
+  test("falls back to 502 and logs an unrecognized error by name and frames", () => {
     const error = new Error("provider exploded");
 
     const response = mapV3SurveyGenerateError(error, context);
 
     expect(response.status).toBe(502);
     expect(logger.error).toHaveBeenCalledWith(
-      expect.objectContaining({ err: error, requestId: context.requestId }),
+      expect.objectContaining({
+        errName: "Error",
+        errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
+        requestId: context.requestId,
+      }),
       "Failed to generate v3 survey create payload"
     );
+  });
+
+  // ENG-3720: what falls through to the 502 is usually an AI SDK error, which carries the prompt and the
+  // model's output in its message and fields.
+  test.each(LEAKY_AI_ERRORS)("logs none of what %s carried", (_, build) => {
+    const error = build();
+
+    const response = mapV3SurveyGenerateError(error, context);
+
+    expect(response.status).toBe(502);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ errName: error.name, requestId: context.requestId }),
+      "Failed to generate v3 survey create payload"
+    );
+    expect(findPlantedContent(vi.mocked(logger.error).mock.calls)).toBeUndefined();
+  });
+
+  test("does not report a throttled token endpoint as rejected credentials", async () => {
+    // The service layer turns this into a TooManyRequestsError before it reaches here; this guards
+    // the raw classification so a 429 can never fall into the credentials branch.
+    const response = mapV3SurveyGenerateError(
+      new AIOAuthTokenError("token_endpoint_throttled", { statusCode: 429, tokenUrlHost: "idp.example" }),
+      context
+    );
+
+    const problem = (await response.json()) as { code?: string; detail?: string };
+    expect(problem.code).not.toBe("ai_provider_auth_failed");
+    expect(problem.detail).not.toContain("credentials");
+  });
+
+  test("maps an OAuth2 token failure to 502 ai_provider_auth_failed instead of prompt advice", async () => {
+    const response = mapV3SurveyGenerateError(
+      new AIOAuthTokenError("token_request_failed", { statusCode: 401, tokenUrlHost: "idp.example" }),
+      context
+    );
+
+    expect(response.status).toBe(502);
+    const problem = (await response.json()) as { code?: string; detail?: string };
+    expect(problem.code).toBe("ai_provider_auth_failed");
+    expect(problem.detail).not.toContain("add more detail");
   });
 });

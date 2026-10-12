@@ -19,6 +19,7 @@ interface GoogleSheetWrapperProps {
   isEnabled: boolean;
   workspaceId: string;
   surveys: TSurvey[];
+  surveyVisibilityEnabled: boolean;
   googleSheetIntegration?: TIntegrationGoogleSheets;
   webAppUrl: string;
   locale: TUserLocale;
@@ -28,10 +29,11 @@ export const GoogleSheetWrapper = ({
   isEnabled,
   workspaceId,
   surveys,
+  surveyVisibilityEnabled,
   googleSheetIntegration,
   webAppUrl,
   locale,
-}: GoogleSheetWrapperProps) => {
+}: Readonly<GoogleSheetWrapperProps>) => {
   const [isConnected, setIsConnected] = useState(
     googleSheetIntegration ? googleSheetIntegration.config?.key : false
   );
@@ -74,6 +76,7 @@ export const GoogleSheetWrapper = ({
           <AddIntegrationModal
             workspaceId={workspaceId}
             surveys={surveys}
+            surveyVisibilityEnabled={surveyVisibilityEnabled}
             open={isModalOpen}
             setOpen={setIsModalOpen}
             googleSheetIntegration={googleSheetIntegration}
@@ -81,6 +84,8 @@ export const GoogleSheetWrapper = ({
           />
           <ManageIntegration
             googleSheetIntegration={googleSheetIntegration}
+            surveys={surveys}
+            surveyVisibilityEnabled={surveyVisibilityEnabled}
             setOpenAddIntegrationModal={setIsModalOpen}
             setIsConnected={setIsConnected}
             setSelectedIntegration={setSelectedIntegration}

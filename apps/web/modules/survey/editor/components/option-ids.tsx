@@ -1,25 +1,24 @@
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { TSurveyVariable } from "@formbricks/types/surveys/types";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { isExternalImageSrc } from "@/lib/image-hosts";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Label } from "@/modules/ui/components/label";
 
-interface OptionIdsElementProps {
+interface OptionIdsProps {
   type: "element";
   element: TSurveyElement;
 }
 
-interface OptionIdsVariablesProps {
-  type: "variables";
-  variables: TSurveyVariable[];
-}
-
-type OptionIdsProps = OptionIdsElementProps | OptionIdsVariablesProps;
-
-export const OptionIds = (props: OptionIdsProps) => {
+/**
+ * The ids of an element's choices, for an author who needs to address one from outside the editor.
+ *
+ * The `variables` variant went with the Variables card (ENG-1851): the Embedded Data card shows each
+ * field's storage key on the row itself, so a second list of the same ids under the card had nothing
+ * left to add.
+ */
+export const OptionIds = (props: Readonly<OptionIdsProps>) => {
   const { t } = useTranslation();
   const selectedLanguageCode = "default";
 
@@ -69,27 +68,6 @@ export const OptionIds = (props: OptionIdsProps) => {
         return <></>;
     }
   };
-
-  const renderVariableIds = (variables: TSurveyVariable[]) => {
-    return (
-      <div className="flex flex-col gap-2">
-        {variables.map((variable) => (
-          <div key={variable.id}>
-            <IdBadge id={variable.id} label={variable.name} />
-          </div>
-        ))}
-      </div>
-    );
-  };
-
-  if (props.type === "variables") {
-    return (
-      <div className="space-y-3">
-        <Label className="text-sm font-medium text-gray-700">{t("common.variable_ids")}</Label>
-        <div className="w-full">{renderVariableIds(props.variables)}</div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-3">

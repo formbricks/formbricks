@@ -1,4 +1,4 @@
-import { AIOutputTokenLimitError } from "@formbricks/ai";
+import { AIOutputTokenLimitError, classifyAIProviderError } from "@formbricks/ai";
 import { logger } from "@formbricks/logger";
 import {
   OperationNotAllowedError,
@@ -13,6 +13,7 @@ import {
   problemTooManyRequests,
   problemUnprocessableContent,
 } from "@/app/api/v3/lib/response";
+import { loggableAIError } from "@/lib/ai/loggable-error";
 import { AI_ERROR_CODES, type TAIErrorCode } from "@/lib/ai/service";
 import { V3SurveyGeneratePromptError, V3SurveyGeneratedPayloadValidationError } from "./service";
 
@@ -105,13 +106,20 @@ export function mapV3SurveyGenerateError(
     });
   }
 
-  logger.error(
-    {
-      err: error,
+  // Logged with its status by handleAIError already; the caller gets an operator-facing message
+  // instead of the prompt advice below, which cannot fix a credentials problem.
+  if (classifyAIProviderError(error)?.isAuthFailure) {
+    return problemBadGateway(
       requestId,
-      workspaceId,
-      organizationId,
-    },
+      "The AI provider rejected this instance's credentials. Ask your administrator to check the AI provider configuration.",
+      instance,
+      "ai_provider_auth_failed"
+    );
+  }
+
+  // Name, frames and provider status only: the message can repeat the prompt or the model's output.
+  logger.error(
+    { ...loggableAIError(error), requestId, workspaceId, organizationId },
     "Failed to generate v3 survey create payload"
   );
 

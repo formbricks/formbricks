@@ -40,6 +40,7 @@ const makeUnifySurvey = (overrides: Partial<TUnifySurvey> = {}): TUnifySurvey =>
   status: "active",
   elements: [],
   createdAt: new Date("2026-01-01T00:00:00Z"),
+  visibility: "workspace",
   ...overrides,
 });
 

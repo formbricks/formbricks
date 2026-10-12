@@ -2,6 +2,7 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { CopyIcon, EllipsisVerticalIcon, PlusIcon, TrashIcon, WorkflowIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import { FieldErrors } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { TSurveyQuotaInput } from "@formbricks/types/quota";
@@ -113,7 +114,7 @@ export function ConditionsEditor({
             {condition.conditions.length > 1 && (
               <div className="absolute top-3 right-3">
                 <DropdownMenu>
-                  <DropdownMenuTrigger>
+                  <DropdownMenuTrigger asChild>
                     <Button
                       variant="secondary"
                       className="flex size-10 items-center justify-center rounded-md">
@@ -165,13 +166,46 @@ export function ConditionsEditor({
       return <div />;
     };
 
+    // A caller-rendered control wins over the default combobox; `null` from it means "no value slot".
+    const customValueInput = config.renderValueInput?.(condition);
+    let valueInput: ReactNode = null;
+    if (customValueInput !== undefined) {
+      valueInput = customValueInput;
+    } else if (show) {
+      valueInput = (
+        <InputCombobox
+          id={`condition-${depth}-${index}-conditionMatchValue`}
+          withInput={showInput}
+          inputProps={{
+            type: inputType,
+            placeholder: t("workspace.surveys.edit.select_or_type_value"),
+          }}
+          key="conditionMatchValue"
+          showSearch={false}
+          groupedOptions={options}
+          allowMultiSelect={allowMultiSelect}
+          showCheckIcon={allowMultiSelect}
+          value={condition.rightOperand?.value}
+          clearable={true}
+          onChangeValue={(val, option) => {
+            handleRightOperandChange(condition, val, option);
+          }}
+        />
+      );
+    }
+
     return (
       <div key={condition.id} className="flex flex-col gap-x-2">
-        <div className="flex items-center gap-x-2">
-          <div className="w-10 shrink-0 text-right text-sm font-medium text-slate-900">{getConnector()}</div>
+        <div className="flex items-start gap-x-2">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-end text-sm font-medium text-slate-900">
+            {getConnector()}
+          </div>
 
-          <div className="grid w-full flex-1 grid-cols-12 gap-x-2">
-            <div className="col-span-4">
+          {/* The three operands sit side by side when the editor has room (the survey logic card) and
+              stack when it does not (a chart builder rail): a container query on the editor's own
+              width, so nesting inside a group narrows the threshold with it. */}
+          <div className="grid w-full min-w-0 flex-1 grid-cols-1 gap-2 @xl:grid-cols-12">
+            <div className="@xl:col-span-4">
               <InputCombobox
                 id={`condition-${depth}-${index}-conditionValue`}
                 key="conditionValue"
@@ -183,7 +217,7 @@ export function ConditionsEditor({
                 }}
               />
             </div>
-            <div className="col-span-4">
+            <div className="@xl:col-span-4">
               <InputCombobox
                 id={`condition-${depth}-${index}-conditionOperator`}
                 key="conditionOperator"
@@ -195,28 +229,7 @@ export function ConditionsEditor({
                 }}
               />
             </div>
-            <div className="col-span-4">
-              {show && (
-                <InputCombobox
-                  id={`condition-${depth}-${index}-conditionMatchValue`}
-                  withInput={showInput}
-                  inputProps={{
-                    type: inputType,
-                    placeholder: t("workspace.surveys.edit.select_or_type_value"),
-                  }}
-                  key="conditionMatchValue"
-                  showSearch={false}
-                  groupedOptions={options}
-                  allowMultiSelect={allowMultiSelect}
-                  showCheckIcon={allowMultiSelect}
-                  value={condition.rightOperand?.value}
-                  clearable={true}
-                  onChangeValue={(val, option) => {
-                    handleRightOperandChange(condition, val, option);
-                  }}
-                />
-              )}
-            </div>
+            {valueInput !== null && <div className="@xl:col-span-4">{valueInput}</div>}
           </div>
 
           <DropdownMenu>
@@ -266,7 +279,7 @@ export function ConditionsEditor({
   };
 
   return (
-    <div ref={parent} className="flex flex-col gap-y-4">
+    <div ref={parent} className="@container flex flex-col gap-y-4">
       {/* Dropdown for changing the connector */}
       {conditions.conditions.length > 1 && (
         <div className="flex items-center gap-x-2 text-sm">

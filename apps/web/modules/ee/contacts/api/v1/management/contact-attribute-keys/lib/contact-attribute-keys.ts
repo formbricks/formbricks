@@ -62,7 +62,8 @@ export const createContactAttributeKey = async (
     return contactAttributeKey;
   } catch (error) {
     if (isUniqueConstraintError(error)) {
-      throw new DatabaseError("Attribute key already exists");
+      // A caller mistake, not a server fault: the route shows this message at 400.
+      throw new InvalidInputError("Attribute key already exists");
     }
     if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);

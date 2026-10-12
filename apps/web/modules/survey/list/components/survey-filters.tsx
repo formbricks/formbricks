@@ -22,10 +22,13 @@ interface SurveyFilterProps {
   surveyFilters: TSurveyOverviewFilters;
   setSurveyFilters: Dispatch<SetStateAction<TSurveyOverviewFilters>>;
   currentWorkspaceChannel: TWorkspaceConfigChannel;
+  /** ENG-3395: the restricted-surveys gate; the Visibility filter exists only while it is on. */
+  surveyVisibilityEnabled: boolean;
 }
 
 type TSurveyStatusFilter = TSurveyOverviewFilters["status"][number];
 type TSurveyTypeFilter = TSurveyOverviewFilters["type"][number];
+type TSurveyVisibilityFilter = TSurveyOverviewFilters["visibility"][number];
 
 // Archived is one more status, set apart by a divider because it is the only one excluded from the
 // default list. Same shape as the workflows status filter.
@@ -33,8 +36,13 @@ const getStatusOptions = (t: TFunction): TFilterOption<TSurveyStatusFilter>[] =>
   { label: t("common.draft"), value: "draft" },
   { label: t("common.in_progress"), value: "inProgress" },
   { label: t("common.paused"), value: "paused" },
-  { label: t("common.completed"), value: "completed" },
+  { label: t("common.closed"), value: "completed" },
   { label: t("common.archived"), value: "archived", separatorBefore: true },
+];
+
+const getVisibilityOptions = (t: TFunction): TFilterOption<TSurveyVisibilityFilter>[] => [
+  { label: t("workspace.surveys.visibility.restricted"), value: "restricted" },
+  { label: t("common.workspace"), value: "workspace" },
 ];
 
 const getSortOptions = (t: TFunction): TSortOption[] => [
@@ -60,8 +68,9 @@ export const SurveyFilters = ({
   surveyFilters,
   setSurveyFilters,
   currentWorkspaceChannel,
+  surveyVisibilityEnabled,
 }: Readonly<SurveyFilterProps>) => {
-  const { sortBy, status, type } = surveyFilters;
+  const { sortBy, status, type, visibility } = surveyFilters;
   const [name, setName] = useState(surveyFilters.name);
   const { t } = useTranslation();
 
@@ -97,6 +106,15 @@ export const SurveyFilters = ({
     setSurveyFilters((prev) => ({
       ...prev,
       type: prev.type.includes(value) ? prev.type.filter((v) => v !== value) : [...prev.type, value],
+    }));
+  };
+
+  const handleVisibilityChange = (value: TSurveyVisibilityFilter) => {
+    setSurveyFilters((prev) => ({
+      ...prev,
+      visibility: prev.visibility.includes(value)
+        ? prev.visibility.filter((v) => v !== value)
+        : [...prev.visibility, value],
     }));
   };
 
@@ -137,8 +155,21 @@ export const SurveyFilters = ({
             />
           </div>
         )}
+        {surveyVisibilityEnabled && (
+          <div>
+            <FilterDropdown
+              title={t("common.visibility")}
+              className="surveyFilterDropdown"
+              options={getVisibilityOptions(t)}
+              selectedOptions={visibility}
+              onToggleOption={handleVisibilityChange}
+              isOpen={Boolean(dropdownOpenStates.get("visibility"))}
+              onOpenChange={() => toggleDropdown("visibility")}
+            />
+          </div>
+        )}
 
-        {(status.length > 0 || type.length > 0 || name) && (
+        {(status.length > 0 || type.length > 0 || visibility.length > 0 || name) && (
           <Button
             size="sm"
             onClick={() => {

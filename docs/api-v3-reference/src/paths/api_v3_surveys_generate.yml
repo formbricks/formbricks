@@ -231,6 +231,16 @@ post:
                   again or add more detail.
                 code: bad_gateway
                 requestId: req_123
+            providerAuthFailed:
+              summary: AI provider rejected the instance's credentials
+              value:
+                title: Bad Gateway
+                status: 502
+                detail: >-
+                  The AI provider rejected this instance's credentials. Ask your
+                  administrator to check the AI provider configuration.
+                code: ai_provider_auth_failed
+                requestId: req_123
     "503":
       description: AI is not configured on this Formbricks instance
       content:

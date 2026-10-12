@@ -1,12 +1,19 @@
 import "server-only";
+import type { TCustomCssStored, TCustomCssWarning } from "@formbricks/types/custom-css";
 import { ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import type { TSurvey, TSurveyCreateInput } from "@formbricks/types/surveys/types";
+import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
+import { type TV3SurveyWriteReport, toV3CustomCssError } from "@/app/api/v3/lib/custom-css";
+import { getV3CustomCssPrincipal } from "@/app/api/v3/lib/custom-css-rate-limit";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
-import { createSurvey, getSurvey } from "@/lib/survey/service";
+import { createSurvey, getSurveyWithCustomCss } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
+import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
+import { assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
+import { resolveCustomCssWrite } from "@/modules/custom-css/lib/service";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { v3DistributionToScalars } from "./distribution";
 import { type TV3SurveyLanguageRequest, ensureV3WorkspaceLanguages } from "./languages";
@@ -20,10 +27,13 @@ import {
 } from "./targeting";
 import { resolveV3SurveyTriggers } from "./triggers";
 import { getV3SurveyMediaInvalidParams } from "./validation";
+import { resolveV3VisibleSurveyWhere } from "./visibility-context";
 
 export type TV3SurveyCreateOptions = {
   skipExternalUrlPermissionCheck?: boolean;
   surveyCreateInputOverrides?: Partial<TSurveyCreateInput>;
+  /** Filled with the custom CSS warnings when the create processed custom CSS. */
+  report?: TV3SurveyWriteReport;
 };
 
 export class V3SurveyCreatePermissionError extends Error {
@@ -168,17 +178,60 @@ async function finalizeV3AppSurveyCreate(survey: TSurvey, input: TV3CreateSurvey
     return survey;
   }
 
-  return (await getSurvey(survey.id)) ?? survey;
+  return (await getSurveyWithCustomCss(survey.id)) ?? survey;
+}
+
+/**
+ * ENG-3641: survey CSS on create goes through the shared custom CSS service — Scale on Cloud, then the
+ * caller's custom CSS budget, then the processor — before anything is written. No CSS (omitted, null or
+ * empty source) needs none of them.
+ */
+async function resolveV3SurveyCreateCustomCss(
+  input: TV3CreateSurveyBody,
+  organizationId: string | undefined,
+  authentication: TV3Authentication
+): Promise<{ stored: TCustomCssStored | null; warnings?: TCustomCssWarning[] }> {
+  if (!input.customCss) {
+    return { stored: null };
+  }
+
+  const outcome = await resolveCustomCssWrite({
+    scope: "survey",
+    organizationId:
+      organizationId ??
+      (async () => {
+        const organization = await getOrganizationByWorkspaceId(input.workspaceId);
+        if (!organization) {
+          throw new V3SurveyCreatePermissionError(
+            `Unable to verify custom CSS permissions for workspaceId '${input.workspaceId}'.`
+          );
+        }
+        return organization.id;
+      }),
+    existing: null,
+    input: input.customCss,
+    principal: getV3CustomCssPrincipal(authentication),
+  });
+
+  if (!outcome.ok) {
+    throw toV3CustomCssError(outcome);
+  }
+
+  return { stored: outcome.stored, warnings: outcome.warnings };
 }
 
 export async function executeV3SurveyCreate(params: {
   input: TV3CreateSurveyBody;
   authentication: TV3Authentication;
   languageRequests: TV3SurveyLanguageRequest[];
+  organizationId?: string;
   requestId?: string;
   surveyCreateInputOverrides?: Partial<TSurveyCreateInput>;
+  /** Already resolved by the shared custom CSS service; never the caller's raw input. */
+  customCss?: TCustomCssStored | null;
 }) {
-  const { input, authentication, languageRequests, requestId, surveyCreateInputOverrides } = params;
+  const { input, authentication, languageRequests, requestId, surveyCreateInputOverrides, customCss } =
+    params;
   const mediaInvalidParams = getV3SurveyMediaInvalidParams(input.blocks);
   if (mediaInvalidParams.length > 0) {
     throw new V3SurveyReferenceValidationError(mediaInvalidParams);
@@ -188,8 +241,31 @@ export async function executeV3SurveyCreate(params: {
   // before any DB write, so an invalid reference fails with a 422 instead of a partial write.
   const appCreateFields = input.type === "app" ? await buildV3AppSurveyCreateFields(input) : {};
   if (input.type === "app") {
-    await assertV3SurveyTargetingFilterReferences(input.workspaceId, input.targeting?.filters ?? []);
+    const visibleSurveyWhere = await resolveV3VisibleSurveyWhere(
+      authentication,
+      params.organizationId ?? (await getOrganizationByWorkspaceId(input.workspaceId))?.id
+    );
+    await assertV3SurveyTargetingFilterReferences(
+      input.workspaceId,
+      input.targeting?.filters ?? [],
+      visibleSurveyWhere
+    );
   }
+
+  // ENG-3282: who owns the survey and whether it starts restricted, decided by the principal — never by
+  // the body, whose schema has no such fields. Both reads happen before any write, as does the cap.
+  const actor = getV3AuthorizationActor(authentication);
+  const organizationId =
+    actor?.type === "user"
+      ? (params.organizationId ?? (await getOrganizationByWorkspaceId(input.workspaceId))?.id ?? null)
+      : null;
+  if (actor?.type === "user" && !organizationId) {
+    throw new V3SurveyCreatePermissionError(
+      `Unable to resolve the organization for workspaceId '${input.workspaceId}'.`
+    );
+  }
+  await assertWorkspaceSurveyLimit(input.workspaceId);
+  const creationFacts = await resolveSurveyCreationFacts({ actor, organizationId });
 
   const languages = await ensureV3WorkspaceLanguages(input.workspaceId, languageRequests, requestId);
   const surveyCreateInput: TSurveyCreateInput = {
@@ -197,6 +273,8 @@ export async function executeV3SurveyCreate(params: {
     type: input.type,
     status: input.status,
     metadata: input.metadata,
+    showLanguageSwitch: input.showLanguageSwitch,
+    autoSelectLanguage: input.autoSelectLanguage,
     welcomeCard: input.welcomeCard,
     blocks: input.blocks,
     endings: input.endings,
@@ -222,7 +300,11 @@ export async function executeV3SurveyCreate(params: {
   // App targeting filters are created atomically with the survey's private segment inside
   // `createSurvey` (a single transaction), so a failed targeting write can't leave a partial survey.
   const privateSegmentFilters = input.type === "app" ? (input.targeting?.filters ?? []) : [];
-  const survey = await createSurvey(input.workspaceId, surveyCreateInput, privateSegmentFilters);
+  const survey = await createSurvey(input.workspaceId, surveyCreateInput, {
+    creationFacts,
+    privateSegmentFilters,
+    customCss,
+  });
 
   return await finalizeV3AppSurveyCreate(survey, input);
 }
@@ -241,12 +323,25 @@ export async function createV3Survey(
 
   await assertV3SurveyCreatePermissions(input, organizationId, options);
   await assertV3SurveyTargetingPermission(preparation.document, organizationId);
+  const customCss = await resolveV3SurveyCreateCustomCss(
+    preparation.document,
+    organizationId,
+    authentication
+  );
 
-  return await executeV3SurveyCreate({
+  const survey = await executeV3SurveyCreate({
     input: preparation.document,
     authentication,
     languageRequests: preparation.languageRequests,
+    organizationId,
     requestId,
     surveyCreateInputOverrides: options.surveyCreateInputOverrides,
+    customCss: customCss.stored,
   });
+
+  if (options.report && customCss.warnings) {
+    options.report.customCssWarnings = customCss.warnings;
+  }
+
+  return survey;
 }

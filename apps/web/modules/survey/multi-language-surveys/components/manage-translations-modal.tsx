@@ -9,7 +9,7 @@ import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getAIUnavailableMessage, getAIUnavailableMessageForErrorCode } from "@/lib/ai/availability";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { cn } from "@/lib/cn";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { translateSurveyFieldsAction } from "@/modules/ee/ai-translation/lib/actions";
 import { Button } from "@/modules/ui/components/button";
 import {

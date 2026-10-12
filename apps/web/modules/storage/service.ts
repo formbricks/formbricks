@@ -139,8 +139,10 @@ export const deleteFile = async (
   fallbackId?: string
 ) => {
   // Same reasoning as the download path: a `..` segment would let an authorized caller delete objects
-  // outside the workspace prefix they were authorized against.
-  if (hasTraversalSegment(fileName)) {
+  // outside the workspace prefix they were authorized against. An empty segment or a `\` is refused too:
+  // a backend or proxy that merges `//` or maps `\` to `/` would turn `surveys//{other}/…` into another
+  // survey's key. Real keys never hold either, so refusing only leaves an object behind.
+  if (hasTraversalSegment(fileName) || fileName.includes("\\") || fileName.split("/").includes("")) {
     return err({ code: StorageErrorCode.InvalidInput });
   }
 

@@ -77,9 +77,15 @@ describe("Survey Editor Library Tests", () => {
     test("delegates to updateSurveyInternal with validation enabled", async () => {
       const result = await updateSurvey(mockSurvey);
 
-      expect(updateSurveyInternal).toHaveBeenCalledWith(mockSurvey);
+      expect(updateSurveyInternal).toHaveBeenCalledWith(mockSurvey, false, undefined);
       expect(updateSurveyInternal).toHaveBeenCalledTimes(1);
       expect(result).toEqual(mockSurvey);
+    });
+
+    test("forwards the custom CSS principal", async () => {
+      await updateSurvey(mockSurvey, { customCssPrincipal: "user_1" });
+
+      expect(updateSurveyInternal).toHaveBeenCalledWith(mockSurvey, false, { customCssPrincipal: "user_1" });
     });
 
     test("propagates errors from updateSurveyInternal", async () => {
@@ -305,8 +311,14 @@ describe("Survey Editor Library Tests", () => {
     test("calls updateSurveyInternal with skipValidation=true", async () => {
       await updateSurveyDraft(mockSurvey);
 
-      expect(updateSurveyInternal).toHaveBeenCalledWith(mockSurvey, true);
+      expect(updateSurveyInternal).toHaveBeenCalledWith(mockSurvey, true, undefined);
       expect(updateSurveyInternal).toHaveBeenCalledTimes(1);
+    });
+
+    test("forwards the custom CSS principal", async () => {
+      await updateSurveyDraft(mockSurvey, { customCssPrincipal: "user_1" });
+
+      expect(updateSurveyInternal).toHaveBeenCalledWith(mockSurvey, true, { customCssPrincipal: "user_1" });
     });
 
     test("returns the survey from updateSurveyInternal", async () => {

@@ -36,6 +36,7 @@ export const DATE_RANGE_PRESETS = [
   "last 24 hours",
   "last 7 days",
   "last 30 days",
+  "last 90 days",
   "this month",
   "last month",
   "this quarter",
@@ -57,6 +58,7 @@ const CALENDAR_PRESET_RESOLVERS: Record<TCalendarDateRangePreset, (today: Date) 
   yesterday: (today) => [addDays(today, -1), addDays(today, -1)],
   "last 7 days": (today) => [addDays(today, -6), today],
   "last 30 days": (today) => [addDays(today, -29), today],
+  "last 90 days": (today) => [addDays(today, -89), today],
   "this month": (today) => [startOfMonth(today), today],
   "last month": (today) => {
     const lastOfLastMonth = addDays(startOfMonth(today), -1);

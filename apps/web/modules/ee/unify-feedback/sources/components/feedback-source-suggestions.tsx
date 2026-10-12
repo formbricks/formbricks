@@ -3,6 +3,8 @@
 import { XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { RestrictedSurveyHint } from "@/modules/survey/visibility/components/restricted-survey-hint";
+import { isRestrictedSurveyPick } from "@/modules/survey/visibility/lib/outbound";
 import { Button } from "@/modules/ui/components/button";
 import { TUnifySurvey } from "../types";
 import { getDismissedStorageKey } from "../utils";
@@ -14,6 +16,8 @@ interface FeedbackSourceSuggestionsProps {
   workspaceId: string;
   onImportResponses: (survey: TUnifySurvey) => Promise<void>;
   onSelectQuestions: (survey: TUnifySurvey) => void;
+  /** ENG-3395: with it on, a restricted survey is listed but cannot be imported. */
+  surveyVisibilityEnabled?: boolean;
 }
 
 export function FeedbackSourceSuggestions({
@@ -21,6 +25,7 @@ export function FeedbackSourceSuggestions({
   workspaceId,
   onImportResponses,
   onSelectQuestions,
+  surveyVisibilityEnabled = false,
 }: Readonly<FeedbackSourceSuggestionsProps>) {
   const { t } = useTranslation();
   const [importingSurveyId, setImportingSurveyId] = useState<string | null>(null);
@@ -74,6 +79,7 @@ export function FeedbackSourceSuggestions({
       {visibleSurveys.map((survey) => {
         const isImporting = importingSurveyId === survey.id;
         const isBusy = importingSurveyId !== null;
+        const isRestricted = isRestrictedSurveyPick(surveyVisibilityEnabled, survey);
         return (
           <div
             key={survey.id}
@@ -84,17 +90,22 @@ export function FeedbackSourceSuggestions({
               <span className="inline-flex shrink-0 items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700">
                 {t("workspace.unify.suggestion")}
               </span>
+              {isRestricted && <RestrictedSurveyHint kind="restricted" />}
             </div>
             <div className="col-span-6 flex items-center justify-end gap-2 pr-4">
               <Button
                 variant="outline"
                 size="sm"
                 className="bg-white"
-                disabled={isBusy}
+                disabled={isBusy || isRestricted}
                 onClick={() => onSelectQuestions(survey)}>
                 {t("workspace.unify.select_questions_for_import")}
               </Button>
-              <Button size="sm" loading={isImporting} disabled={isBusy} onClick={() => handleImport(survey)}>
+              <Button
+                size="sm"
+                loading={isImporting}
+                disabled={isBusy || isRestricted}
+                onClick={() => handleImport(survey)}>
                 {t("workspace.unify.import_responses")}
               </Button>
               <Button

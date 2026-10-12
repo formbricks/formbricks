@@ -1,6 +1,11 @@
 import { describe, expect, test } from "vitest";
 import { ZEmbeddedData } from "./embedded-data";
-import { type TDesiredEmbeddedField, toDesiredEmbeddedFields } from "./embedded-data-mapping";
+import {
+  type TDesiredEmbeddedField,
+  linkedToDesiredEmbeddedFields,
+  toDesiredEmbeddedFields,
+  toLegacyEmbeddedFields,
+} from "./embedded-data-mapping";
 import { coerceToEmbeddedDataType } from "./embedded-data-resolver";
 import { type TSurveyVariable, ZSurveyHiddenFields, ZSurveyVariable } from "./surveys/types";
 
@@ -51,6 +56,8 @@ describe("toDesiredEmbeddedFields", () => {
         source: "computed",
         dataType: "number",
         defaultValue: 42,
+        locked: false,
+        key: null,
       },
     ]);
   });
@@ -63,6 +70,8 @@ describe("toDesiredEmbeddedFields", () => {
         source: "computed",
         dataType: "string",
         defaultValue: "gold",
+        locked: false,
+        key: null,
       },
     ]);
   });
@@ -75,6 +84,8 @@ describe("toDesiredEmbeddedFields", () => {
         source: "ingested",
         dataType: "string",
         defaultValue: null,
+        locked: false,
+        key: null,
       },
     ]);
   });
@@ -176,5 +187,166 @@ describe("computed-field seeding is value-preserving", () => {
     expect(fields.map((field) => coerceToEmbeddedDataType(field.defaultValue, field.dataType))).toStrictEqual(
       variables.map((variable) => variable.value)
     );
+  });
+});
+
+describe("linkedToDesiredEmbeddedFields", () => {
+  test("carries the attributes the legacy columns cannot express", () => {
+    expect(
+      linkedToDesiredEmbeddedFields([
+        {
+          field: {
+            key: null,
+            name: "seats",
+            source: "ingested",
+            dataType: "number",
+            defaultValue: 5,
+            locked: true,
+          },
+          link: { storageKey: "seats" },
+        },
+      ])
+    ).toEqual([
+      {
+        storageKey: "seats",
+        name: "seats",
+        source: "ingested",
+        dataType: "number",
+        defaultValue: 5,
+        locked: true,
+        key: null,
+      },
+    ]);
+  });
+
+  test("reads ownership off `key`, and names the row a shared entry links", () => {
+    const [field] = linkedToDesiredEmbeddedFields([
+      {
+        field: {
+          id: "clx000000000000000000009",
+          key: "plan_tier",
+          name: "Plan tier",
+          source: "ingested",
+          dataType: "string",
+          defaultValue: null,
+          locked: false,
+        },
+        link: { storageKey: "plan_tier" },
+      },
+    ]);
+
+    expect(field.key).toBe("plan_tier");
+    expect(field.embeddedDataId).toBe("clx000000000000000000009");
+  });
+
+  test("ignores an id on a local entry, which is created rather than linked", () => {
+    // A local entry describes a row this survey owns or is about to own. Carrying an id here would
+    // make the reconcile link a definition instead of writing one.
+    const [field] = linkedToDesiredEmbeddedFields([
+      {
+        field: {
+          id: "clx000000000000000000009",
+          key: null,
+          name: "plan",
+          source: "ingested",
+          dataType: "string",
+          defaultValue: null,
+          locked: false,
+        },
+        link: { storageKey: "plan" },
+      },
+    ]);
+
+    expect(field.embeddedDataId).toBeUndefined();
+  });
+});
+
+describe("toLegacyEmbeddedFields", () => {
+  const computed = (overrides: Partial<TDesiredEmbeddedField> = {}): TDesiredEmbeddedField => ({
+    storageKey: "clx000000000000000000001",
+    name: "score",
+    source: "computed",
+    dataType: "number",
+    defaultValue: 42,
+    locked: false,
+    key: null,
+    ...overrides,
+  });
+
+  test("writes a computed field as the variable it is stored as", () => {
+    expect(toLegacyEmbeddedFields([computed()]).variables).toEqual([
+      { id: "clx000000000000000000001", name: "score", type: "number", value: 42 },
+    ]);
+  });
+
+  test("writes an ingested field as its storage key, which is the id the URL carries", () => {
+    expect(
+      toLegacyEmbeddedFields([
+        { ...computed({ source: "ingested", storageKey: "plan", name: "plan", dataType: "string" }) },
+      ]).hiddenFields
+    ).toEqual({ enabled: true, fieldIds: ["plan"] });
+  });
+
+  test("a shared computed field takes its library key as the legacy name", () => {
+    // `ZSurveyVariable` runs every name through `isLegacyVariableName`, so a library label like
+    // `Plan tier` would fail the schema this column is validated by on every save and read.
+    const derived = toLegacyEmbeddedFields([
+      computed({ name: "Plan tier", key: "plan_tier", embeddedDataId: "clx000000000000000000009" }),
+    ]);
+
+    expect(derived.variables[0].name).toBe("plan_tier");
+    expect(ZSurveyVariable.safeParse(derived.variables[0]).success).toBe(true);
+  });
+
+  describe("the derived variables always satisfy ZSurveyVariable", () => {
+    // `defaultValue` is a `string | number | boolean | null`, but the schema's `number` arm demands a
+    // number and its `text` arm a string, so a mismatch would write a column that fails to parse the
+    // next time the survey is read. The last two rows are types `ZEmbeddedData` refuses on a computed
+    // row — covered anyway, because this derivation is what a malformed payload would reach first.
+    test.each([
+      ["a number field with no default", computed({ defaultValue: null }), 0],
+      ["a number field defaulted to a string", computed({ defaultValue: "7" }), 0],
+      ["a text field with no default", computed({ dataType: "string", defaultValue: null }), ""],
+      [
+        "a boolean field, whose default no variable arm accepts",
+        computed({ dataType: "boolean", defaultValue: true }),
+        "",
+      ],
+      [
+        "a date field, whose ISO default the text arm takes verbatim",
+        computed({ dataType: "date", defaultValue: "2026-08-06" }),
+        "2026-08-06",
+      ],
+    ])("%s", (_label, field, expectedValue) => {
+      const [variable] = toLegacyEmbeddedFields([field]).variables;
+
+      expect(variable.value).toBe(expectedValue);
+      expect(ZSurveyVariable.safeParse(variable).success).toBe(true);
+    });
+  });
+
+  describe("hiddenFields.enabled", () => {
+    // ENG-2404: the flag has no storage any more, so it is derived — on exactly when the survey has
+    // an ingested field, which is what the stored flag said for every survey the product wrote.
+    const plan = computed({ source: "ingested", storageKey: "plan", name: "plan", dataType: "string" });
+
+    test("is on when the survey has an ingested field", () => {
+      expect(toLegacyEmbeddedFields([plan]).hiddenFields).toEqual({ enabled: true, fieldIds: ["plan"] });
+    });
+
+    test("is off for a survey with only computed fields", () => {
+      expect(toLegacyEmbeddedFields([computed()]).hiddenFields).toEqual({ enabled: false, fieldIds: [] });
+    });
+  });
+
+  test("round-trips toDesiredEmbeddedFields for local fields", () => {
+    // What the read seam rests on (ENG-2404): a survey the backfill moved from legacy input into rows
+    // has to derive back to exactly that input, or its outbound payloads would change shape.
+    const legacy = {
+      variables: [numberVariable, textVariable],
+      hiddenFields: { enabled: true, fieldIds: ["plan", "Brand-Name"] },
+    };
+
+    expect(toLegacyEmbeddedFields(toDesiredEmbeddedFields(legacy))).toEqual(legacy);
   });
 });

@@ -13,6 +13,8 @@ const { mockAuthenticatedApiClient, mockSuccessResponse } = vi.hoisted(() => ({
   mockSuccessResponse: vi.fn(),
 }));
 
+// Survey visibility (ENG-3282) is not enforced here: the readiness marker is off, not read from a database.
+vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
 vi.mock("@/modules/api/v2/auth/authenticated-api-client", () => ({
   authenticatedApiClient: mockAuthenticatedApiClient,
 }));
@@ -96,8 +98,10 @@ describe("API v2 collection authorization", () => {
       await route(request as never);
 
       expect(getAuthorizedApiKeyWorkspaceIds).toHaveBeenCalledExactlyOnceWith(authentication);
-      expect(read).toHaveBeenCalledWith(["authorized-workspace"], expect.anything());
-      expect(read).not.toHaveBeenCalledWith(["stale-workspace"], expect.anything());
+      // Only the workspace list is under test; responses also take the survey-visibility clause.
+      expect(vi.mocked(read).mock.calls.map(([workspaceIds]) => workspaceIds)).toEqual([
+        ["authorized-workspace"],
+      ]);
     }
   );
 

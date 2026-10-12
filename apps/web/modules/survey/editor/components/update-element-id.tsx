@@ -3,6 +3,7 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { validateId } from "@formbricks/types/surveys/validation";
@@ -41,13 +42,15 @@ export const UpdateElementId = ({
     const elements = getElementsFromBlocks(localSurvey.blocks);
     const elementIds = elements.map((q) => q.id);
     const endingCardIds = localSurvey.endings.map((e) => e.id);
-    const hiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
+    // ENG-2628: the names an element id may not collide with come from the survey's Embedded Data
+    // rows, which is what the Embedded Data card edits.
+    const hiddenFieldIds = getIngestedStorageKeys(localSurvey);
 
     const validateIdError = validateId(currentValue, elementIds, endingCardIds, hiddenFieldIds);
 
     if (validateIdError) {
       setIsInputInvalid(true);
-      toast.error(getValidateIdErrorMessage(validateIdError, "question", t));
+      toast.error(getValidateIdErrorMessage(validateIdError, t));
       setCurrentValue(prevValue);
       return;
     }

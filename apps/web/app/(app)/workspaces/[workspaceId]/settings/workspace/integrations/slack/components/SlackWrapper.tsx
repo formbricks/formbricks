@@ -16,6 +16,7 @@ interface SlackWrapperProps {
   isEnabled: boolean;
   workspaceId: string;
   surveys: TSurvey[];
+  surveyVisibilityEnabled: boolean;
   slackIntegration?: TIntegrationSlack;
   webAppUrl: string;
   locale: TUserLocale;
@@ -25,10 +26,11 @@ export const SlackWrapper = ({
   isEnabled,
   workspaceId,
   surveys,
+  surveyVisibilityEnabled,
   slackIntegration,
   webAppUrl,
   locale,
-}: SlackWrapperProps) => {
+}: Readonly<SlackWrapperProps>) => {
   const [isConnected, setIsConnected] = useState(slackIntegration ? !!slackIntegration.config?.key : false);
   const [slackChannels, setSlackChannels] = useState<TIntegrationItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -70,6 +72,7 @@ export const SlackWrapper = ({
       <AddChannelMappingModal
         workspaceId={workspaceId}
         surveys={surveys}
+        surveyVisibilityEnabled={surveyVisibilityEnabled}
         open={isModalOpen}
         setOpen={setIsModalOpen}
         channels={slackChannels}
@@ -78,6 +81,8 @@ export const SlackWrapper = ({
       />
       <ManageIntegration
         slackIntegration={slackIntegration}
+        surveys={surveys}
+        surveyVisibilityEnabled={surveyVisibilityEnabled}
         setOpenAddIntegrationModal={setIsModalOpen}
         setIsConnected={setIsConnected}
         setSelectedIntegration={setSelectedIntegration}

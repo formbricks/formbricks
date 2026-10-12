@@ -1,20 +1,39 @@
+# syntax=docker/dockerfile:1.20
+# The syntax line must stay first: `COPY --parents` below needs Dockerfile frontend 1.20.
+
 # Node major must stay in sync with .nvmrc (single source of truth for dev + CI + prod).
 FROM node:24-alpine3.23 AS base
 
-#
-## step 1: Prune monorepo
-#
-# FROM base AS builder
-# RUN apk add --no-cache libc6-compat
-# RUN apk update
-# Set working directory
-# WORKDIR /app
-# RUN yarn global add turbo
-# COPY . .
-# RUN turbo prune @formbricks/web --docker
+# Node's official binary embeds OpenSSL, so apk upgrades cannot patch its TLS implementation.
+# Keep Node 24's current Undici fixes while linking its runtime to Alpine's patched OpenSSL/zlib.
+FROM alpine:3.23 AS node-runtime-builder
+ARG NODE_VERSION=24.21.0
+ARG NODE_SOURCE_SHA256=a6f54defb6fd7c84f41dba13d61e78e9b4e0961712cf61f29715c05f5ced94fc
+ARG NODE_BUILD_JOBS=4
+RUN apk add --no-cache curl g++ linux-headers make python3 xz \
+    "openssl-dev>=3.5.9-r0" "zlib-dev>=1.3.2-r1"
+WORKDIR /node-source
+RUN curl --proto '=https' --proto-redir '=https' --fail --location --retry 3 \
+      --output node.tar.xz "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}.tar.xz" \
+    && echo "${NODE_SOURCE_SHA256}  node.tar.xz" | sha256sum -c - \
+    && tar -xJf node.tar.xz --strip-components=1 \
+    && ./configure --shared-openssl --shared-zlib --without-npm
+# Compile within the build layer; release binaries must not read shared writable compiler objects.
+RUN make -j${NODE_BUILD_JOBS} \
+    && install -m 755 out/Release/node /usr/local/bin/node
+RUN install -D -m 644 LICENSE /usr/local/share/doc/node/LICENSE
+
+FROM alpine:3.23 AS runtime-base
+RUN apk update && apk upgrade --no-cache \
+    && apk add --no-cache ca-certificates libgcc libstdc++ \
+      "libssl3>=3.5.9-r0" "libcrypto3>=3.5.9-r0" "zlib>=1.3.2-r1"
+COPY --from=node-runtime-builder /usr/local/bin/node /usr/local/bin/node
+COPY --from=node-runtime-builder /usr/local/share/doc/node/LICENSE /usr/local/share/doc/node/LICENSE
+COPY apps/web/scripts/docker/verify-runtime.mjs /tmp/verify-runtime.mjs
+RUN node /tmp/verify-runtime.mjs && rm /tmp/verify-runtime.mjs
 
 #
-## step 2: Install & build
+## step 1: Install & build
 #
 FROM base AS installer
 
@@ -23,16 +42,37 @@ RUN npm install --ignore-scripts -g corepack@0.35.0
 RUN corepack enable
 RUN corepack prepare pnpm@11.7.0 --activate
 
-# Install necessary build tools and compilers
-RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
+# Increase Node.js memory limit as a regular build argument
+ARG NODE_OPTIONS="--max_old_space_size=8192"
+ENV NODE_OPTIONS=${NODE_OPTIONS}
+
+# pnpm 11 checks node_modules against the manifests before every `pnpm run` and, by default,
+# silently re-installs on drift — without --ignore-scripts or the store mount below. Fail instead.
+ENV pnpm_config_verify_deps_before_run=error
+
+# Set the working directory
+WORKDIR /app
+
+# Copy only what the install reads, so a source-only change reuses the install layer. Everything
+# that busts this layer (the secrets script, BASE_PATH) is declared after it. xlsx is a `file:`
+# dependency on a tarball under apps/web/vendor, so the install needs that directory too. Keep these
+# COPYs in sync with the timestamp reset after `COPY . .` below.
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+COPY patches ./patches
+COPY --parents apps/*/package.json packages/*/package.json docker/package.json ./
+COPY apps/web/vendor ./apps/web/vendor
+
+# Install the dependencies. The store and metadata cache live in cache mounts rather than the layer:
+# a persistent builder (Depot) re-links from a warm store when a manifest changes, and a cold one
+# just downloads as before. No --offline: the release-age re-check (trustLockfile: false in
+# pnpm-workspace.yaml) needs registry metadata whenever the cache mount is empty.
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+    --mount=type=cache,id=pnpm-cache,target=/root/.cache/pnpm \
+    pnpm install --ignore-scripts --frozen-lockfile --prefer-offline --store-dir=/pnpm/store
 
 # Copy the secrets handling script
 COPY apps/web/scripts/docker/read-secrets.sh /tmp/read-secrets.sh
 RUN chmod +x /tmp/read-secrets.sh
-
-# Increase Node.js memory limit as a regular build argument
-ARG NODE_OPTIONS="--max_old_space_size=8192"
-ENV NODE_OPTIONS=${NODE_OPTIONS}
 
 # Target architecture - automatically provided by Docker in multi-platform builds
 # but needs explicit declaration for some build systems (like Depot)
@@ -42,22 +82,23 @@ ARG TARGETARCH
 ARG BASE_PATH=""
 ENV BASE_PATH=${BASE_PATH}
 
-# Set the working directory
-WORKDIR /app
-
-# Copy the package information
-# COPY .gitignore .gitignore
-# COPY --from=builder /app/out/json/ .
-# COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
-
 # Prepare the build
 COPY . .
 
+# Before each `pnpm run`, pnpm 11 re-checks every install input whose mtime is newer than the install's
+# last validation: a newer patch fails as "Patches were modified", a newer manifest gets a deep check
+# against the lockfile that rejects apps/web's `file:` tarball dependency. A reused install layer
+# (Depot's persistent cache) is always older than this checkout, so COPY . . above makes every install
+# input look newer. Their content is exactly what the install read (the COPYs before it are its cache
+# key), so set their timestamps back to before the install, as a fresh install would leave them. The
+# list mirrors those COPYs. Not `COPY --exclude`: BuildKit then follows the apps/web/.env symlink to the
+# root .env, which stays out of the context.
+RUN touch -c -t 200001010000 pnpm-lock.yaml pnpm-workspace.yaml package.json docker/package.json \
+      apps/*/package.json packages/*/package.json \
+    && find patches apps/web/vendor -type f -exec touch -t 200001010000 {} +
+
 # Create a .env file
 RUN touch apps/web/.env
-
-# Install the dependencies
-RUN pnpm install --ignore-scripts --frozen-lockfile
 
 # Build the database package first. `pnpm generate` loads prisma.config.ts, which
 # resolves DATABASE_URL via Prisma's env() helper and throws when it is unset. Mount
@@ -80,16 +121,12 @@ RUN --mount=type=secret,id=database_url \
     /tmp/read-secrets.sh pnpm build --filter=@formbricks/web...
 
 #
-## step 3: setup production runner
+## step 2: setup production runner
 #
-FROM base AS runner
+FROM runtime-base AS runner
 
-# Upgrade Alpine system packages, remove build-only npm tooling from the runtime image, then create user.
-# The application and startup migrations run directly with Node.js; npm and npx are only needed in the installer.
-RUN apk update && apk upgrade --no-cache \
-    && rm -rf /usr/local/lib/node_modules/npm \
-    && rm -f /usr/local/bin/npm /usr/local/bin/npx \
-    && addgroup -S nextjs \
+# The application and migrations invoke Node directly; the runtime contains no npm/npx or build headers.
+RUN addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 
 WORKDIR /home/nextjs
@@ -286,6 +323,9 @@ RUN chmod -R 755 ./node_modules/@noble/hashes
 
 COPY --from=installer /app/node_modules/zod ./node_modules/zod
 RUN chmod -R 755 ./node_modules/zod
+
+COPY apps/web/scripts/docker/verify-runtime.mjs ./verify-runtime.mjs
+RUN node ./verify-runtime.mjs --dependencies && rm ./verify-runtime.mjs
 
 # Pino loads transport code in worker threads via dynamic require().
 # Next.js file tracing only traces static imports, missing runtime-loaded files

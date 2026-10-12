@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import type { TChartQuery } from "@formbricks/types/analysis";
-import { getCubeQueryAuditSummary, validateCubeQueryMembers } from "./cube-query";
+import { applyValueBandNullGuard, getCubeQueryAuditSummary, validateCubeQueryMembers } from "./cube-query";
 
 vi.mock("server-only", () => ({}));
 
@@ -144,5 +144,47 @@ describe("cube-query", () => {
       orderMembers: ["FeedbackRecords.collectedAt"],
     });
     expect(JSON.stringify(summary)).not.toContain("secret-value");
+  });
+
+  describe("applyValueBandNullGuard", () => {
+    const bandGuard = { member: "FeedbackRecords.valueBand", operator: "set" };
+
+    test("drops the NULL band when the query groups by valueBand", () => {
+      const query: TChartQuery = {
+        measures: ["FeedbackRecords.npsCount"],
+        dimensions: ["FeedbackRecords.valueBand"],
+      };
+      expect(applyValueBandNullGuard(query).filters).toEqual([bandGuard]);
+      // The caller's query is never mutated.
+      expect(query.filters).toBeUndefined();
+    });
+
+    test("keeps existing filters and appends the guard after them", () => {
+      const fieldType = { member: "FeedbackRecords.fieldType", operator: "equals", values: ["nps"] };
+      const guarded = applyValueBandNullGuard({
+        measures: ["FeedbackRecords.count"],
+        dimensions: ["FeedbackRecords.valueBand"],
+        filters: [fieldType],
+      });
+      expect(guarded.filters).toEqual([fieldType, bandGuard]);
+    });
+
+    test("is idempotent and returns the same query when nothing changes", () => {
+      const once = applyValueBandNullGuard({
+        measures: ["FeedbackRecords.count"],
+        dimensions: ["FeedbackRecords.valueBand"],
+      });
+      expect(applyValueBandNullGuard(once)).toBe(once);
+
+      const ungrouped: TChartQuery = {
+        measures: ["FeedbackRecords.count"],
+        dimensions: ["FeedbackRecords.sourceType"],
+        filters: [{ member: "FeedbackRecords.valueBand", operator: "equals", values: ["promoter"] }],
+      };
+      expect(applyValueBandNullGuard(ungrouped)).toBe(ungrouped);
+      expect(applyValueBandNullGuard({ measures: ["FeedbackRecords.count"] })).toEqual({
+        measures: ["FeedbackRecords.count"],
+      });
+    });
   });
 });

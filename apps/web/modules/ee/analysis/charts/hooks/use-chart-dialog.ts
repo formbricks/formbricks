@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TChartConfig } from "@formbricks/types/analysis";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import {
   createChartAction,
   deleteChartAction,
@@ -189,6 +189,7 @@ export function useChartDialog({
   const handleChartGenerated = (data: AnalyticsResponse) => {
     setChartData(data);
     setSelectedChartType(data.chartType);
+    if (data.config) setChartConfig(data.config);
     const suggestedName = data.suggestedName?.trim();
     if (suggestedName) {
       // Functional updater: the AI response lands async, so a closure over chartName could be

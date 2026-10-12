@@ -1,0 +1,17 @@
+type: object
+description: The numbers the confirmation dialogues show.
+required:
+  - memberCount
+  - responseCount
+properties:
+  memberCount:
+    type: integer
+    minimum: 0
+    description:
+      People other than the owner and the organisation's owners/managers who can see the survey now (if
+      workspace-visible) or would gain access (if restricted).
+  responseCount:
+    type: integer
+    minimum: 0
+    description: Responses on the survey, partial ones included.
+additionalProperties: false

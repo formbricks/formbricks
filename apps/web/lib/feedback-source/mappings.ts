@@ -3,6 +3,7 @@ import { logger } from "@formbricks/logger";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { THubFieldType } from "@formbricks/types/feedback-source";
 import { getSurvey } from "@/lib/survey/service";
+import { assertNewlyAttachedSurveysWorkspaceVisible } from "@/lib/survey/visibility/outbound";
 import type { TMappingsInput } from "./service";
 import { indexSurveyElements } from "./survey-elements";
 
@@ -69,10 +70,18 @@ const resolveSurveyMappings = async (
  */
 export const resolveFormbricksMappingsInput = async (
   entries: { surveyId: string; elementIds: string[] }[],
-  workspaceId: string
+  workspaceId: string,
+  /** Surveys the source already maps; only newly mapped ones must be workspace-visible (ENG-3283). */
+  previousSurveyIds: ReadonlyArray<string> = []
 ): Promise<TMappingsInput> => {
   const resolved = await Promise.all(
     entries.map(({ surveyId, elementIds }) => resolveSurveyMappings(surveyId, elementIds, workspaceId))
+  );
+  // Only after every survey is pinned to this workspace: checked first, a foreign restricted survey
+  // would answer "not workspace-visible" instead of not-found, confirming that it exists.
+  await assertNewlyAttachedSurveysWorkspaceVisible(
+    entries.map(({ surveyId }) => surveyId),
+    previousSurveyIds
   );
   const flattenedMappings = resolved.flatMap(({ mappings }) => mappings);
   if (flattenedMappings.length === 0) {

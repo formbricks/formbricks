@@ -71,6 +71,7 @@ function MatrixDisplaySettings({
         </Label>
         <div className="min-w-0">
           <OptionsSwitch
+            labelDisplay="active"
             aria-labelledby={cellValueLabelId}
             options={[
               {
@@ -149,6 +150,7 @@ export function ChartDisplaySettings({ chartType, config, onChange }: Readonly<C
           </Label>
           <div className="min-w-0">
             <OptionsSwitch
+              labelDisplay="active"
               aria-labelledby={areaDisplayLabelId}
               options={[
                 {
@@ -175,6 +177,7 @@ export function ChartDisplaySettings({ chartType, config, onChange }: Readonly<C
           </Label>
           <div className="min-w-0">
             <OptionsSwitch
+              labelDisplay="active"
               aria-labelledby={pieDisplayLabelId}
               options={[
                 {
@@ -201,6 +204,7 @@ export function ChartDisplaySettings({ chartType, config, onChange }: Readonly<C
           </Label>
           <div className="min-w-0">
             <OptionsSwitch
+              labelDisplay="active"
               aria-labelledby={barOrientationLabelId}
               options={[
                 {

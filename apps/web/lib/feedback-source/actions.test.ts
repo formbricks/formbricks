@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { getResponseCountBySurveyId } from "@/lib/response/service";
+import { getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   createFeedbackSourceWithMappingsAction,
   deleteFeedbackSourceAction,
+  getResponseCountAction,
   importHistoricalResponsesAction,
   updateFeedbackSourceWithMappingsAction,
 } from "./actions";
@@ -23,6 +26,7 @@ const mocks = vi.hoisted(() => {
     deleteFeedbackSource: vi.fn(),
     importHistoricalResponses: vi.fn(),
     getSurvey: vi.fn(),
+    assertNewlyAttachedSurveysWorkspaceVisible: vi.fn(),
     feedbackDirectoryFindUnique: vi.fn(),
     feedbackSourceFindUnique: vi.fn(),
   };
@@ -48,6 +52,9 @@ vi.mock("@/lib/utils/helper", () => ({
   getWorkspaceIdFromSurveyId: vi.fn(),
 }));
 vi.mock("@/lib/survey/service", () => ({ getSurvey: mocks.getSurvey }));
+vi.mock("@/lib/survey/visibility/outbound", () => ({
+  assertNewlyAttachedSurveysWorkspaceVisible: mocks.assertNewlyAttachedSurveysWorkspaceVisible,
+}));
 vi.mock("@/lib/response/service", () => ({ getResponseCountBySurveyId: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: mocks.applyRateLimit }));
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
@@ -154,5 +161,67 @@ describe("feedback source mutation safeguards", () => {
       feedbackSourceId,
       newObject: { successes: 1, failures: 0, skipped: 0 },
     });
+  });
+
+  test("refuses an import by a caller who cannot read the survey's responses", async () => {
+    mocks.assertCan.mockImplementation(async (_actor, action: string) => {
+      if (action === "survey.response_read") throw new Error("Not authorized");
+    });
+
+    await expect(
+      (importHistoricalResponsesAction as unknown as (args: object) => Promise<unknown>)({
+        ctx,
+        parsedInput: { feedbackSourceId, workspaceId, surveyId: "survey-1" },
+      })
+    ).rejects.toThrow("Not authorized");
+    expect(mocks.assertNewlyAttachedSurveysWorkspaceVisible).not.toHaveBeenCalled();
+    expect(mocks.importHistoricalResponses).not.toHaveBeenCalled();
+    mocks.assertCan.mockReset();
+  });
+
+  test("refuses to import a restricted survey's responses", async () => {
+    mocks.assertNewlyAttachedSurveysWorkspaceVisible.mockRejectedValue(new Error("not workspace-visible"));
+
+    await expect(
+      (importHistoricalResponsesAction as any)({
+        ctx,
+        parsedInput: { feedbackSourceId, workspaceId, surveyId: "survey-1" },
+      })
+    ).rejects.toThrow("not workspace-visible");
+    expect(mocks.assertNewlyAttachedSurveysWorkspaceVisible).toHaveBeenCalledWith(["survey-1"]);
+    expect(mocks.importHistoricalResponses).not.toHaveBeenCalled();
+  });
+});
+
+describe("getResponseCountAction survey visibility (ENG-3282)", () => {
+  const run = () =>
+    (getResponseCountAction as unknown as (args: object) => Promise<number>)({
+      ctx,
+      parsedInput: { surveyId: "survey-1", workspaceId },
+    });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getWorkspaceIdFromSurveyId).mockResolvedValue(workspaceId);
+    vi.mocked(getResponseCountBySurveyId).mockResolvedValue(7);
+  });
+
+  test("refuses a caller who cannot read the survey's responses, without counting them", async () => {
+    mocks.assertCan.mockImplementation(async (_actor, _action, resource: { type: string }) => {
+      if (resource.type === "survey") throw new Error("Not authorized");
+    });
+
+    await expect(run()).rejects.toThrow("Not authorized");
+    expect(mocks.assertCan).toHaveBeenCalledWith({ type: "user", id: "user-1" }, "survey.response_read", {
+      type: "survey",
+      id: "survey-1",
+    });
+    expect(getResponseCountBySurveyId).not.toHaveBeenCalled();
+  });
+
+  test("returns the count when the caller may read the survey's responses", async () => {
+    mocks.assertCan.mockResolvedValue(undefined);
+
+    await expect(run()).resolves.toBe(7);
   });
 });

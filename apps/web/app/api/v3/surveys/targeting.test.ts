@@ -35,6 +35,7 @@ vi.mock("@/modules/ee/contacts/lib/contact-attribute-keys", () => ({
 }));
 
 vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
+  ALL_SEGMENT_SURVEY_REFS: {},
   getSegments: vi.fn(),
   getExistingWorkspaceSurveyIds: vi.fn(),
 }));
@@ -216,6 +217,9 @@ const surveyInteractionNode = (id: string, surveyScope: "any" | "specific", surv
   },
 });
 
+// The caller's visibility clause (ENG-3282); its content is the lookup's business, so any marker works.
+const VISIBLE = { visibility: "workspace" } as const;
+
 const mockSurveyRefs = (ids: string[]): void => {
   vi.mocked(getExistingWorkspaceSurveyIds).mockResolvedValueOnce(new Set(ids));
 };
@@ -224,8 +228,12 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
   test("performs no workspace lookup when filters need none", async () => {
     const validDeviceOnly = [deviceFilterNode("f1", "phone")] as unknown as TFilterTree;
 
-    await expect(assertV3SurveyTargetingFilterReferences("ws_1", EMPTY_FILTERS)).resolves.toBeUndefined();
-    await expect(assertV3SurveyTargetingFilterReferences("ws_1", validDeviceOnly)).resolves.toBeUndefined();
+    await expect(
+      assertV3SurveyTargetingFilterReferences("ws_1", EMPTY_FILTERS, VISIBLE)
+    ).resolves.toBeUndefined();
+    await expect(
+      assertV3SurveyTargetingFilterReferences("ws_1", validDeviceOnly, VISIBLE)
+    ).resolves.toBeUndefined();
     expect(getContactAttributeKeys).not.toHaveBeenCalled();
     expect(getSegments).not.toHaveBeenCalled();
   });
@@ -233,7 +241,7 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
   test("rejects a device filter whose value is not a known device, without any lookup", async () => {
     const filters = [deviceFilterNode("f1", "tablet")] as unknown as TFilterTree;
 
-    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters)).rejects.toMatchObject({
+    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters, VISIBLE)).rejects.toMatchObject({
       invalidParams: [
         {
           name: "targeting.filters.0.resource.value",
@@ -250,7 +258,7 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
   test("rejects a garbage root.deviceType even when value is a known device", async () => {
     const filters = [deviceFilterNode("f1", "phone", "tablet")] as unknown as TFilterTree;
 
-    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters)).rejects.toMatchObject({
+    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters, VISIBLE)).rejects.toMatchObject({
       invalidParams: [
         {
           name: "targeting.filters.0.resource.root.deviceType",
@@ -269,7 +277,7 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
       attributeFilterNode("f2", "role"),
     ] as unknown as TFilterTree;
 
-    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters)).resolves.toBeUndefined();
+    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters, VISIBLE)).resolves.toBeUndefined();
     expect(getContactAttributeKeys).toHaveBeenCalledWith("ws_1");
   });
 
@@ -278,7 +286,7 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
     const filters = [attributeFilterNode("f1", "made_up_key")] as unknown as TFilterTree;
 
     try {
-      await assertV3SurveyTargetingFilterReferences("ws_1", filters);
+      await assertV3SurveyTargetingFilterReferences("ws_1", filters, VISIBLE);
       throw new Error("expected assertion to throw");
     } catch (error) {
       expect(error).toBeInstanceOf(V3SurveyReferenceValidationError);
@@ -303,7 +311,7 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
       },
     ] as unknown as TFilterTree;
 
-    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters)).rejects.toMatchObject({
+    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters, VISIBLE)).rejects.toMatchObject({
       invalidParams: [
         {
           name: "targeting.filters.0.resource.0.resource.root.contactAttributeKey",
@@ -317,11 +325,11 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
   test("validates a person 'userId' filter against the userId attribute key", async () => {
     mockAttributeKeys(["userId"]);
     const ok = [personFilterNode("f1", "userId")] as unknown as TFilterTree;
-    await expect(assertV3SurveyTargetingFilterReferences("ws_1", ok)).resolves.toBeUndefined();
+    await expect(assertV3SurveyTargetingFilterReferences("ws_1", ok, VISIBLE)).resolves.toBeUndefined();
 
     mockAttributeKeys([]);
     const missing = [personFilterNode("f1", "userId")] as unknown as TFilterTree;
-    await expect(assertV3SurveyTargetingFilterReferences("ws_1", missing)).rejects.toMatchObject({
+    await expect(assertV3SurveyTargetingFilterReferences("ws_1", missing, VISIBLE)).rejects.toMatchObject({
       invalidParams: [
         {
           name: "targeting.filters.0.resource.root.personIdentifier",
@@ -335,7 +343,7 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
   test("rejects an unsupported person identifier without any lookup", async () => {
     const filters = [personFilterNode("f1", "email")] as unknown as TFilterTree;
 
-    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters)).rejects.toMatchObject({
+    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters, VISIBLE)).rejects.toMatchObject({
       invalidParams: [
         {
           name: "targeting.filters.0.resource.root.personIdentifier",
@@ -353,15 +361,16 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
     mockSegments(["seg_known"]);
     const filters = [segmentFilterNode("f1", "seg_known")] as unknown as TFilterTree;
 
-    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters)).resolves.toBeUndefined();
-    expect(getSegments).toHaveBeenCalledWith("ws_1");
+    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters, VISIBLE)).resolves.toBeUndefined();
+    // Reference validation needs every segment's id, and the result never reaches a browser.
+    expect(getSegments).toHaveBeenCalledWith("ws_1", {});
   });
 
   test("rejects a segment filter referencing an unknown or foreign segment", async () => {
     mockSegments(["seg_known"]);
     const filters = [segmentFilterNode("f1", "seg_other_workspace")] as unknown as TFilterTree;
 
-    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters)).rejects.toMatchObject({
+    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters, VISIBLE)).rejects.toMatchObject({
       invalidParams: [
         {
           name: "targeting.filters.0.resource.root.segmentId",
@@ -376,7 +385,7 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
   test("skips the survey lookup for an any-scope survey interaction filter", async () => {
     const filters = [surveyInteractionNode("f1", "any", [])] as unknown as TFilterTree;
 
-    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters)).resolves.toBeUndefined();
+    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters, VISIBLE)).resolves.toBeUndefined();
     expect(getExistingWorkspaceSurveyIds).not.toHaveBeenCalled();
   });
 
@@ -384,9 +393,24 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
     mockSurveyRefs(["survey_known"]);
     const filters = [surveyInteractionNode("f1", "specific", ["survey_known"])] as unknown as TFilterTree;
 
-    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters)).resolves.toBeUndefined();
+    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters, VISIBLE)).resolves.toBeUndefined();
     // Validated by the exact referenced ids (unbounded), not the picker's recent-window list.
-    expect(getExistingWorkspaceSurveyIds).toHaveBeenCalledWith("ws_1", ["survey_known"]);
+    expect(getExistingWorkspaceSurveyIds).toHaveBeenCalledWith("ws_1", ["survey_known"], VISIBLE);
+  });
+
+  test("checks survey references against the caller's visibility, so a hidden survey reads as unknown", async () => {
+    // The lookup applies the clause; a restricted survey the caller cannot see is simply not returned.
+    mockSurveyRefs([]);
+    const filters = [
+      surveyInteractionNode("f1", "specific", ["survey_restricted"]),
+    ] as unknown as TFilterTree;
+
+    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters, VISIBLE)).rejects.toMatchObject({
+      invalidParams: [
+        expect.objectContaining({ code: "invalid_reference", identifier: "survey_restricted" }),
+      ],
+    });
+    expect(getExistingWorkspaceSurveyIds).toHaveBeenCalledWith("ws_1", ["survey_restricted"], VISIBLE);
   });
 
   test("rejects a survey interaction filter referencing an unknown or foreign survey", async () => {
@@ -395,7 +419,7 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
       surveyInteractionNode("f1", "specific", ["survey_known", "survey_foreign"]),
     ] as unknown as TFilterTree;
 
-    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters)).rejects.toMatchObject({
+    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters, VISIBLE)).rejects.toMatchObject({
       invalidParams: [
         {
           name: "targeting.filters.0.resource.value.surveyIds.1",

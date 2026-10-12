@@ -1,0 +1,34 @@
+type: object
+description: Read-time view of the record's membership in the active directory taxonomy.
+additionalProperties: false
+required:
+  - status
+  - run_id
+  - path
+properties:
+  status:
+    type: string
+    enum: [classified, unclassified, no_active_taxonomy]
+  run_id:
+    oneOf:
+      - type: string
+        format: uuid
+      - type: "null"
+  path:
+    type: array
+    description: Currently visible non-root nodes in root-to-leaf order; empty unless classified.
+    items:
+      type: object
+      additionalProperties: false
+      required: [id, label, level, node_type]
+      properties:
+        id:
+          type: string
+          format: uuid
+        label:
+          type: string
+        level:
+          type: integer
+        node_type:
+          type: string
+          enum: [branch, leaf]

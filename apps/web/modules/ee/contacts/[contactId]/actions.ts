@@ -48,6 +48,12 @@ export const generatePersonalSurveyLinkAction = authenticatedActionClient
       if (surveyWorkspaceId !== workspaceId) {
         throw new ValidationError(CONTACT_SURVEY_WORKSPACE_MISMATCH_ERROR_CODE);
       }
+      // ENG-3282: a personal link writes responses into this survey, so a restricted one needs the
+      // survey's own write permission, not the workspace's.
+      await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
+        type: "survey",
+        id: parsedInput.surveyId,
+      });
 
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.workspaceId = workspaceId;

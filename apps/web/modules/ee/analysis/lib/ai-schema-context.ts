@@ -72,6 +72,9 @@ like \`start/end\` in any of these fields.
 - "NPS score" or "net promoter score" means \`${CUBE_NAME}.npsScore\`.
 - "NPS value", "NPS average", or "NPS average rating" means \`${CUBE_NAME}.npsAverage\`.
 - "CSAT score" means \`${CUBE_NAME}.csatScore\`; "CSAT average" means \`${CUBE_NAME}.csatAverage\`.
+- "how many NPS answers" or "NPS responses" means \`${CUBE_NAME}.npsCount\`.
+- "NPS breakdown" or "promoters vs passives vs detractors" means measure \`${CUBE_NAME}.npsCount\`, dimension \`${CUBE_NAME}.valueBand\`, filter \`${CUBE_NAME}.fieldType\` equals ["nps"], chart type \`pie\`.
+- "CSAT breakdown" or "satisfied vs neutral vs dissatisfied" means measure \`${CUBE_NAME}.csatCount\`, dimension \`${CUBE_NAME}.valueBand\`, filter \`${CUBE_NAME}.fieldType\` equals ["csat"], chart type \`pie\`.
 - "CES average" or "CES score" means \`${CUBE_NAME}.cesAverage\`.
 - "rating average" or "average rating" means \`${CUBE_NAME}.ratingAverage\` (rating questions; NPS/CSAT/CES have their own averages).
 - "average sentiment" or "sentiment trend" means \`${CUBE_NAME}.sentimentAverage\` (the aggregate). A per-record "sentiment score" (e.g. filtering records by score) means the \`${CUBE_NAME}.sentimentScore\` dimension.
@@ -91,6 +94,7 @@ ${operatorsText}
 - Filters must use the exact operator strings from the schema.
 - For human-readable text dimensions (\`${CUBE_NAME}.sourceName\`, \`${CUBE_NAME}.sourceType\`, \`${CUBE_NAME}.fieldLabel\`, \`${CUBE_NAME}.fieldGroupLabel\`, \`${CUBE_NAME}.valueText\`), prefer the \`contains\` operator over \`equals\` unless the user clearly wants an exact full-string match — \`equals\` is an exact match and the stored value may differ in casing or spacing from the user's phrasing.
 - \`${CUBE_NAME}.sentiment\` stores exact machine tokens: very_negative, negative, neutral, positive, very_positive, mixed. Filter it with \`equals\`/\`notEquals\` using those exact lowercase tokens (e.g. "negative feedback" → sentiment equals ["negative", "very_negative"]).
+- \`${CUBE_NAME}.valueBand\` stores exact machine tokens: promoter, passive, detractor (NPS) and satisfied, neutral, dissatisfied (CSAT). Filter it with \`equals\`/\`notEquals\` using those tokens (e.g. "detractor comments" → valueBand equals ["detractor"]).
 - \`${CUBE_NAME}.emotions\` stores a comma-separated multi-label set from: joy, anger, sadness, fear, surprise, disgust. Filter a single emotion with \`contains\` and the exact lowercase token (e.g. "angry feedback" → emotions contains ["anger"]); never use \`equals\` on it.
 - Response context lives on its own dimensions, not on the answer: "on mobile" → \`${CUBE_NAME}.metadataDevice\`, "in Germany" → \`${CUBE_NAME}.metadataCountry\`, "from the app" → \`${CUBE_NAME}.metadataSource\`, "completed" or "finished" → \`${CUBE_NAME}.metadataFinished\` equals true, "how long people took" → \`${CUBE_NAME}.metadataDurationSeconds\`. All of them are empty on records collected before that context was captured, so never add one as a filter unless the user asked for it.
 - Generate a short, descriptive chart name (max 255 characters) that reflects the user's question.`;

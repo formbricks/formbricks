@@ -1,57 +1,68 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Build context for apps/web/Dockerfile, written as an allowlist: ignore everything, then re-include
+# only what the image build reads. An allowlist keeps whatever piles up in a checkout out of the
+# context: .git, agent worktrees under .claude/, scratch directories, and local credentials.
+#
+# These are Docker patterns, not .gitignore patterns. A pattern without `**/` matches only at the
+# context root, and the last matching line wins, so a `!` re-include can be narrowed again below it.
+# When the build starts reading a new root-level file, re-include it here; docker-build-validation.yml
+# fails the PR until you do.
+*
 
-# dependencies
+# Install inputs (copied ahead of the sources so the install layer survives a source change)
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!patches
+
+# Build inputs outside apps/ and packages/
+!turbo.json
+!.nvmrc
+!prisma.config.mjs
+!authzed/schema.zed
+
+# Workspaces
+!apps
+!packages
+!docker/package.json
+
+# Dependencies and build output
 **/node_modules
-.pnp
-.pnp.js
-.pnpm-store/
-
-# testing
-**/coverage
-
-# next.js
-**/.next/
-**/out/
+**/.next
+**/.turbo
+**/dist
 **/build
-
-# node
-**/dist/
-
-# misc
-**/.DS_Store
-*.pem
-Zone.Identifier
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
-**/.env
-**/.env.local
-**/.env.development.local
-**/.env.test.local
-**/.env.production.local
-!packages/database/.env
-!apps/web/.env
-
-# build tools
-.turbo
+**/out
+**/coverage
+**/test-results
+**/*.tsbuildinfo
+**/next-env.d.ts
 **/*vite.config.*.timestamp-*
 
-# environment specific
-.direnv
+# Local files
+**/*.log
+**/.DS_Store
+**/*.pem
 
-# Playwright
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
+# Env files and credentials. apps/web/.env is a tracked symlink to the root .env, which stays out.
+**/.env
+**/.env.*
+!apps/web/.env
+**/.sentryclirc
+**/token.json
+**/gcp*.json
+**/service-account*.json
+**/*-credentials.json
 
-# project specific
-packages/lib/uploads
+# Runtime state and generated files
+apps/web/uploads
+apps/web/saml-connection
+apps/web/certificates
 apps/web/public/js
 packages/database/generated
-packages/database/migrations
-branch.json
+packages/database/.prisma-migrations
+packages/database/schema-test-boolean
+
+# Not read by the image build. Storybook's manifest stays: it is a workspace importer in the lockfile.
+apps/storybook/**
+!apps/storybook/package.json
+apps/web/playwright

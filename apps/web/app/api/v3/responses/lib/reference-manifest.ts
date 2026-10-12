@@ -47,8 +47,9 @@ export type TV3Reference = {
 /**
  * A dedicated registry, deliberately not `.meta()`.
  *
- * `.meta()` is read by the OpenAPI generator, so declaring internal authorization facts there would
- * publish them to every client. This carries the same information without reaching the document.
+ * `.meta()` is part of what `z.toJSONSchema` publishes, so any consumer that turns these schemas into
+ * JSON Schema — a tool definition, a generated document — would hand internal authorization facts to
+ * every caller. This carries the same information without reaching any published schema.
  */
 export const v3ResponseReferences = z.registry<TV3Reference>();
 
@@ -150,6 +151,20 @@ export const V3_RESPONSE_BODY_FIELDS: Record<string, TV3ReferenceKind> = {
   operation: "none",
 };
 
+/**
+ * Fields of the plain objects nested in a body, by dotted path — today only `meta`.
+ *
+ * Needed because the bodies are generated: a spec edit alone can add a key inside `meta`, and `meta`
+ * is stored as submitted, so a nested field would be accepted and persisted with no code change and no
+ * other test failing. Records (`data`, `embeddedData`, `ttc`) are not walked — their keys are data.
+ */
+export const V3_RESPONSE_NESTED_FIELDS: Record<string, TV3ReferenceKind> = {
+  // Caller-supplied submission context, stored verbatim and resolved against nothing.
+  "meta.source": "none",
+  "meta.url": "none",
+  "meta.action": "none",
+};
+
 /** Field names that read as a reference even when the value is a plain string. */
 export const looksLikeReferenceName = (name: string): boolean => /Ids?$/.test(name);
 
@@ -176,3 +191,9 @@ export const V3_RESPONSE_DENIED_FIELDS = [
   "updatedAt",
   "variables",
 ] as const;
+
+/**
+ * Nested fields that must never appear. The routes derive these from the request, so a caller-supplied
+ * value would be fiction — and, stored in `meta`, a forgeable one.
+ */
+export const V3_RESPONSE_DENIED_NESTED_FIELDS = ["meta.country", "meta.userAgent", "meta.ipAddress"] as const;

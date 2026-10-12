@@ -27,11 +27,40 @@ Every record has the following fields. Required fields must be mapped by every s
 | `value_number` | float64 | No | Numeric responses (ratings, NPS, CSAT). |
 | `value_boolean` | boolean | No | Yes/no responses. |
 | `value_date` | timestamp | No | Date responses. |
-| `metadata` | jsonb | No | Free-form context (device, campaign, custom fields). |
+| `metadata` | jsonb | No | Free-form context (device, campaign, custom fields). See below for what survey records carry. |
 | `language` | string | No | ISO 639-1 language code (`en`, `de`, `fr`, ...). |
 | `user_id` | string | No | Anonymous user ID. Never store PII here. |
 
 The right `value_*` field is set based on `field_type`. For example a `nps` field uses `value_number`, an open-text comment uses `value_text`.
+
+### Metadata on survey records
+
+Records created from a survey response carry the context of that response on every record of the submission, so you can group and segment by it later:
+
+- Flat keys for the response itself: `source`, `url`, `browser`, `os`, `device`, `country`, `action`, `finished`, `duration_seconds`, `ending_id` and `survey_type`.
+- A nested `embedded_data` object holding the response's [Embedded Data](/surveys/embedded-data/overview), keyed by field name.
+
+```json
+{
+  "source": "link",
+  "country": "PT",
+  "finished": true,
+  "embedded_data": { "brand": "AEG", "plan": "pro", "cart_value": 129.9 }
+}
+```
+
+Embedded Data values keep their declared type — text stays text, numbers stay numbers, dates are ISO 8601 strings. A locked field publishes its default value rather than anything supplied with the response, and text values longer than 256 characters are truncated.
+
+Four things can leave a declared field out of `embedded_data`, so do not assume every field appears on every record:
+
+- The value is missing on that response, or does not match the field's type, **and the field has no default value**. A field with a default falls back to it rather than going missing.
+- Two fields share a name. Only one is published: an **ingested** field wins over a **computed** one, and between two of the same source, the one declared first. The winner keeps the name even when it has no value on that response, so the other field does not take its place.
+- `embedded_data` is capped at 8 KiB, measured as its serialized JSON. Once a response's fields reach it, any further field that does not fit is skipped while smaller ones still publish — so a field may be present on some responses and absent on others.
+- The field is named `__proto__`. Readers of the record, the record drawer among them, cannot keep a key with that name, so it is not published.
+
+<Note>
+  `metadata` is returned with a record but is not filterable or searchable through the API, so narrowing by a metadata value means fetching and filtering on your side.
+</Note>
 
 ## Viewing and managing records
 

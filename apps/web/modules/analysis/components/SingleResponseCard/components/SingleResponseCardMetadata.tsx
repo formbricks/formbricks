@@ -10,7 +10,7 @@ import {
 } from "@formbricks/types/embedded-data-resolver";
 import { TResponse } from "@formbricks/types/responses";
 import { TUserLocale } from "@formbricks/types/user";
-import { getReservedFieldLabel } from "@/modules/analysis/lib/reserved-field-display";
+import { getReservedFieldLabel } from "@/modules/embedded-data/lib/field-display";
 import { Button } from "@/modules/ui/components/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 

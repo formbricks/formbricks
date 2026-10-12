@@ -3,6 +3,8 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { RestrictedSurveyHint } from "@/modules/survey/visibility/components/restricted-survey-hint";
+import { isRestrictedSurveyPick } from "@/modules/survey/visibility/lib/outbound";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 
 interface SurveyCheckboxGroupProps {
@@ -12,15 +14,21 @@ interface SurveyCheckboxGroupProps {
   onSelectAllSurveys: () => void;
   onSelectedSurveyChange: (surveyId: string) => void;
   allowChanges: boolean;
+  /** ENG-3395: the restricted-surveys gate. With it on, a restricted survey cannot be newly selected. */
+  surveyVisibilityEnabled: boolean;
+  /** The webhook's saved surveys: a restricted one among them stays selectable so it can be removed. */
+  attachedSurveyIds?: string[];
 }
 
-export const SurveyCheckboxGroup: React.FC<SurveyCheckboxGroupProps> = ({
+export const SurveyCheckboxGroup: React.FC<Readonly<SurveyCheckboxGroupProps>> = ({
   surveys,
   selectedSurveys,
   selectedAllSurveys,
   onSelectAllSurveys,
   onSelectedSurveyChange,
   allowChanges,
+  surveyVisibilityEnabled,
+  attachedSurveyIds,
 }) => {
   const { t } = useTranslation();
   return (
@@ -44,30 +52,38 @@ export const SurveyCheckboxGroup: React.FC<SurveyCheckboxGroupProps> = ({
             <span className="ml-2">{t("workspace.integrations.webhooks.all_current_and_new_surveys")}</span>
           </label>
         </div>
-        {surveys.map((survey) => (
-          <div key={survey.id} className="my-1 flex items-center gap-x-2">
-            <label
-              htmlFor={survey.id}
-              className={`flex items-center ${
-                selectedAllSurveys || !allowChanges ? "cursor-not-allowed opacity-50" : "cursor-pointer"
-              }`}>
-              <Checkbox
-                type="button"
-                id={survey.id}
-                value={survey.id}
-                className="bg-white"
-                checked={selectedSurveys.includes(survey.id) && !selectedAllSurveys}
-                disabled={selectedAllSurveys || !allowChanges}
-                onCheckedChange={() => {
-                  if (allowChanges) {
-                    onSelectedSurveyChange(survey.id);
-                  }
-                }}
-              />
-              <span className="ml-2">{survey.name}</span>
-            </label>
-          </div>
-        ))}
+        {surveyVisibilityEnabled && selectedAllSurveys && (
+          <p className="text-xs text-slate-500">
+            {t("workspace.surveys.visibility.all_surveys_skip_restricted")}
+          </p>
+        )}
+        {surveys.map((survey) => {
+          const isRestrictedPick = isRestrictedSurveyPick(surveyVisibilityEnabled, survey, attachedSurveyIds);
+          const isDisabled = selectedAllSurveys || !allowChanges || isRestrictedPick;
+          return (
+            <div key={survey.id} className="my-1 flex items-center gap-x-2">
+              <label
+                htmlFor={survey.id}
+                className={`flex items-center ${isDisabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}>
+                <Checkbox
+                  type="button"
+                  id={survey.id}
+                  value={survey.id}
+                  className="bg-white"
+                  checked={selectedSurveys.includes(survey.id) && !selectedAllSurveys}
+                  disabled={isDisabled}
+                  onCheckedChange={() => {
+                    if (!isDisabled) {
+                      onSelectedSurveyChange(survey.id);
+                    }
+                  }}
+                />
+                <span className="ml-2">{survey.name}</span>
+              </label>
+              {isRestrictedPick && <RestrictedSurveyHint kind="restricted" />}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

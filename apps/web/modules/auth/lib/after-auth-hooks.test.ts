@@ -7,6 +7,7 @@ import { runAfterAuthHooks } from "./after-auth-hooks";
 import { auditFailedAuthAfter } from "./better-auth-observability";
 import { twoFactorBackfillAfterHandler } from "./better-auth-two-factor-backfill";
 import { verificationAutoSignInAfterHandler } from "./better-auth-verification-autosignin";
+import { requireOAuthConsentOnRefreshAfterHandler } from "./oauth-grant-revocation";
 
 vi.mock("@/modules/ee/sso/lib/better-auth-hooks", () => ({
   ssoRecoveryAfterHandler: vi.fn(),
@@ -17,6 +18,7 @@ vi.mock("./better-auth-two-factor-backfill", () => ({ twoFactorBackfillAfterHand
 vi.mock("./better-auth-verification-autosignin", () => ({
   verificationAutoSignInAfterHandler: vi.fn(),
 }));
+vi.mock("./oauth-grant-revocation", () => ({ requireOAuthConsentOnRefreshAfterHandler: vi.fn() }));
 
 describe("runAfterAuthHooks", () => {
   test("records the failed-auth audit before the personal-email redirect handler (which throws)", async () => {
@@ -33,6 +35,9 @@ describe("runAfterAuthHooks", () => {
     vi.mocked(verificationAutoSignInAfterHandler).mockImplementation(async () => {
       calls.push("verification-auto-sign-in");
     });
+    vi.mocked(requireOAuthConsentOnRefreshAfterHandler).mockImplementation(async () => {
+      calls.push("oauth-refresh-consent");
+    });
     vi.mocked(blockedSignupDomainRedirectAfterHandler).mockImplementation(async () => {
       calls.push("redirect");
       throw new Error("ctx.redirect"); // mirrors the real handler's ctx.redirect throw
@@ -46,11 +51,15 @@ describe("runAfterAuthHooks", () => {
     // The ENG-2562 auto-sign-in also has to sit ahead of that throw: it is the only handler here that
     // GRANTS something, and a redirect thrown before it would silently cost a legitimate same-browser
     // sign-up its session on any request that hit both.
+    //
+    // The ENG-2499 refresh-consent check only touches /oauth2/token, so its place relative to the SSO
+    // handlers is not load-bearing; it is pinned so a reorder is a deliberate edit.
     expect(calls).toEqual([
       "recovery",
       "audit",
       "two-factor-backfill",
       "verification-auto-sign-in",
+      "oauth-refresh-consent",
       "redirect",
     ]);
   });

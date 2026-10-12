@@ -91,21 +91,23 @@ export const getHiddenFieldsFromSearchParams = (
 };
 
 /**
- * The client-side canary for a survey whose legacy hidden-field column is populated while its
- * Embedded Data rows are missing — a dropped `embeddedDataLinks` join, or column/row drift. No
- * production write path creates that state (ENG-2412 reconciles both in one transaction), which is
- * exactly why it deserves a loud line when it appears anyway.
+ * The client-side canary for a survey that reached the link page without its Embedded Data rows —
+ * a select that dropped the `embeddedDataLinks` join. The allow-list is those rows and nothing else,
+ * so such a survey silently stops capturing every URL parameter.
  *
- * This is the ONLY signal on the link path. ENG-1845's server-side missing-rows warning cannot fire
- * here: the renderer submits the contract-filtered record, so with zero ingested rows the unknown
- * keys never reach the server — and with an empty allow-list nothing reaches the client contract
- * either, so its per-key console lines are silent too. Without this, such a survey simply stops
- * capturing with no output anywhere.
+ * The signal is the missing `embeddedFields` key: a survey with no fields carries an empty list. It
+ * used to be the legacy `hiddenFields.fieldIds` column disagreeing with the rows; since ENG-2404
+ * that is derived from the same rows, so it can no longer disagree.
+ *
+ * This is the ONLY signal on the link path. ENG-1845's server-side warning cannot fire here: the
+ * renderer submits the contract-filtered record, so with no rows the unknown keys never reach the
+ * server — and with an empty allow-list nothing reaches the client contract either, so its per-key
+ * console lines are silent too.
  */
-export const warnOnMissingIngestRows = (ingestedStorageKeys: string[], legacyFieldIds: string[]): void => {
-  if (isBrowser() && ingestedStorageKeys.length === 0 && legacyFieldIds.length > 0) {
+export const warnOnMissingEmbeddedDataJoin = (hasEmbeddedFields: boolean): void => {
+  if (isBrowser() && !hasEmbeddedFields) {
     console.warn(
-      "Formbricks: this survey declares hidden fields but has no ingested Embedded Data rows, so no URL parameter can fill them."
+      "Formbricks: this survey was loaded without its Embedded Data fields, so no URL parameter can fill them."
     );
   }
 };

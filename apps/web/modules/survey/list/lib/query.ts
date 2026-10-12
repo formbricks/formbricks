@@ -12,6 +12,7 @@ export const surveyKeys = {
   all: ["surveys"] as const,
   lists: () => [...surveyKeys.all, "list"] as const,
   list: (input: TSurveyListKeyInput) => [...surveyKeys.lists(), input] as const,
+  visibility: (surveyId: string) => [...surveyKeys.all, "visibility", surveyId] as const,
 };
 
 export const surveyMutationKeys = {

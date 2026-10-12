@@ -102,7 +102,7 @@ describe("getSettingsLayoutData", () => {
     const data = await getSettingsLayoutData("user-1", "org-1");
 
     expect(data?.currentWorkspace).toBeNull();
-    expect(data?.backUrl).toBe("/");
+    expect(data?.backUrl).toBe("/organizations/org-1/landing");
   });
 
   test("uses the active-workspace cookie when it is in the accessible list", async () => {
@@ -170,5 +170,51 @@ describe("getSettingsLayoutData", () => {
 
     expect(data?.currentWorkspace?.id).toBe("ws-1");
     expect(data?.backUrl).toBe("/workspaces/ws-1/surveys");
+  });
+
+  test("keeps the organization the user opened last when it has no workspace yet", async () => {
+    seedSuccess();
+    mocks.getOrganization.mockImplementation((id: string) =>
+      Promise.resolve({ id, name: `Org ${id}`, billing: {} })
+    );
+    mocks.getOrganizationsByUserId.mockResolvedValue([{ id: "org-1" }, { id: "org-2" }, { id: "org-3" }]);
+    mocks.getWorkspacesByUserId.mockResolvedValue([]);
+    mocks.getWorkspace.mockResolvedValue({ id: "ws-2", name: "WS", organizationId: "org-2" });
+    // The workspace cookie still names the previous organization's workspace; the organization cookie
+    // records the workspace-less organization the user switched to afterwards.
+    const cookies: Record<string, string> = {
+      "formbricks-workspace-id": "ws-2",
+      "formbricks-organization-id": "org-3",
+    };
+    mocks.cookieGet.mockImplementation((name: string) =>
+      cookies[name] ? { value: cookies[name] } : undefined
+    );
+
+    const data = await getSettingsLayoutData("user-1");
+
+    expect(data?.organization.id).toBe("org-3");
+    expect(data?.currentWorkspace).toBeNull();
+    expect(data?.backUrl).toBe("/organizations/org-3/landing");
+  });
+
+  test("ignores an organization cookie for an organization the user is no longer a member of", async () => {
+    seedSuccess();
+    mocks.getOrganization.mockImplementation((id: string) =>
+      Promise.resolve({ id, name: `Org ${id}`, billing: {} })
+    );
+    mocks.getOrganizationsByUserId.mockResolvedValue([{ id: "org-1" }, { id: "org-2" }]);
+    mocks.getWorkspacesByUserId.mockResolvedValue([{ id: "ws-2" }]);
+    mocks.getWorkspace.mockResolvedValue({ id: "ws-2", name: "WS", organizationId: "org-2" });
+    const cookies: Record<string, string> = {
+      "formbricks-workspace-id": "ws-2",
+      "formbricks-organization-id": "org-left",
+    };
+    mocks.cookieGet.mockImplementation((name: string) =>
+      cookies[name] ? { value: cookies[name] } : undefined
+    );
+
+    const data = await getSettingsLayoutData("user-1");
+
+    expect(data?.organization.id).toBe("org-2");
   });
 });

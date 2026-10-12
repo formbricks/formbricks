@@ -18,6 +18,12 @@ export const surveySelect = {
   archivedAt: true,
   singleUse: true,
   workspaceId: true,
+  // ENG-3282: what the v3 list item's `visibility` / `owner` / `access` are derived from.
+  visibility: true,
+  ownerId: true,
+  owner: { select: { name: true } },
+  visibilityVersion: true,
+  visibilityProjectedVersion: true,
 } satisfies Prisma.SurveySelect;
 
 export type TSurveyRow = Prisma.SurveyGetPayload<{ select: typeof surveySelect }>;

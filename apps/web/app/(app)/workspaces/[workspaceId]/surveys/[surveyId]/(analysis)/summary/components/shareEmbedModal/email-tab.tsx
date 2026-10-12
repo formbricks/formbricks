@@ -6,7 +6,8 @@ import { type SyntheticEvent, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { AuthenticationError } from "@formbricks/types/errors";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { copyToClipboard } from "@/lib/utils/clipboard";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { Button } from "@/modules/ui/components/button";
 import { CodeBlock } from "@/modules/ui/components/code-block";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
@@ -185,11 +186,10 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
           <Button
             title={t("workspace.surveys.share.send_email.copy_embed_code")}
             aria-label={t("workspace.surveys.share.send_email.copy_embed_code")}
-            onClick={() => {
-              try {
-                navigator.clipboard.writeText(emailHtml);
+            onClick={async () => {
+              if (await copyToClipboard(emailHtml)) {
                 toast.success(t("workspace.surveys.share.send_email.embed_code_copied_to_clipboard"));
-              } catch {
+              } else {
                 toast.error(t("workspace.surveys.share.send_email.embed_code_copied_to_clipboard_failed"));
               }
             }}

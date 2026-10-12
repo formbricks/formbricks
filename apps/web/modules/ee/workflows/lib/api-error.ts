@@ -32,3 +32,17 @@ const isRefusal = (error: unknown): error is V3ApiError => error instanceof V3Ap
  */
 export const classifyWorkflowSaveError = (error: unknown): "unreachable" | "rejected" =>
   isRefusal(error) ? "rejected" : "unreachable";
+
+/**
+ * The server's enable/test pre-flight refused the trigger survey because it is restricted (ENG-3283).
+ * `packages/workflows` reports that as an `invalid_params` entry on the trigger's survey id; its
+ * reason is the only thing telling it apart from "the survey does not exist", so match its wording.
+ */
+const TRIGGER_SURVEY_FIELD = "definition.trigger.config.surveyId";
+const NOT_WORKSPACE_VISIBLE_REASON = "not visible to the whole workspace";
+
+export const isTriggerSurveyRestrictedRefusal = (error: unknown): boolean =>
+  isRefusal(error) &&
+  (error.invalid_params ?? []).some(
+    (param) => param.name === TRIGGER_SURVEY_FIELD && param.reason.includes(NOT_WORKSPACE_VISIBLE_REASON)
+  );

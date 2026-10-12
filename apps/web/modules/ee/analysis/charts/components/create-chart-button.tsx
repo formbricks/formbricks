@@ -1,20 +1,18 @@
 "use client";
 
-import { ChevronDownIcon, PlusCircleIcon, PlusIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
+import { CreateChartChooserDialog } from "@/modules/ee/analysis/charts/components/create-chart-chooser-dialog";
 import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/create-chart-dialog";
 import { CreateChartWithAIDialog } from "@/modules/ee/analysis/charts/components/create-chart-with-ai-dialog";
-import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
-import { AiIcon } from "@/modules/ui/components/ai";
-import { Button, type ButtonProps } from "@/modules/ui/components/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/modules/ui/components/dropdown-menu";
+  getChartPresetCopy,
+  presetToAnalyticsResponse,
+} from "@/modules/ee/analysis/charts/lib/chart-presets";
+import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
+import { Button, type ButtonProps } from "@/modules/ui/components/button";
 
 interface CreateChartButtonProps {
   workspaceId: string;
@@ -39,6 +37,7 @@ export function CreateChartButton({
   isAIAvailable,
   aiUnavailableReason,
 }: Readonly<CreateChartButtonProps>) {
+  const [isChooserOpen, setIsChooserOpen] = useState(false);
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [isAIDialogOpen, setIsAIDialogOpen] = useState(false);
   /** A chart handed over by the AI dialog, opened straight into the builder for review and naming. */
@@ -48,7 +47,6 @@ export function CreateChartButton({
   const { t } = useTranslation();
 
   const buttonLabel = label ?? t("workspace.analysis.charts.new_chart");
-  const canUseAI = isAIAvailable !== false;
 
   const openBuilder = (chart: AnalyticsResponse | null) => {
     setGeneratedChart(chart);
@@ -57,33 +55,30 @@ export function CreateChartButton({
 
   return (
     <>
-      {canUseAI ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button size="sm" {...buttonProps}>
-              {buttonLabel}
-              <ChevronDownIcon />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            {/* Building by hand leads: it is the path that always produces the chart someone asked
-                for. AI generation sits second and says Beta, because it reads the dataset's sources
-                and questions but still guesses at everything else. */}
-            <DropdownMenuItem icon={<PlusCircleIcon className="size-4" />} onSelect={() => openBuilder(null)}>
-              {t("workspace.analysis.charts.from_scratch")}
-            </DropdownMenuItem>
-            <DropdownMenuItem icon={<AiIcon />} onSelect={() => setIsAIDialogOpen(true)}>
-              {t("workspace.analysis.charts.ai_create.generate_with_ai_beta")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ) : (
-        // With AI off there is only one way to start, and a one-item dropdown is just a worse button.
-        <Button size="sm" onClick={() => openBuilder(null)} {...buttonProps}>
-          {showIcon && <PlusIcon className="mr-2 size-4" />}
-          {buttonLabel}
-        </Button>
-      )}
+      <Button size="sm" onClick={() => setIsChooserOpen(true)} {...buttonProps}>
+        {showIcon && <PlusIcon className="mr-2 size-4" />}
+        {buttonLabel}
+      </Button>
+
+      <CreateChartChooserDialog
+        open={isChooserOpen}
+        onOpenChange={setIsChooserOpen}
+        directoryName={directories[0]?.name}
+        isAIAvailable={isAIAvailable}
+        aiUnavailableReason={aiUnavailableReason}
+        onBlank={() => {
+          setIsChooserOpen(false);
+          openBuilder(null);
+        }}
+        onPreset={(presetId) => {
+          setIsChooserOpen(false);
+          openBuilder(presetToAnalyticsResponse(presetId, getChartPresetCopy(t)[presetId].name));
+        }}
+        onDescribe={() => {
+          setIsChooserOpen(false);
+          setIsAIDialogOpen(true);
+        }}
+      />
 
       <CreateChartWithAIDialog
         open={isAIDialogOpen}

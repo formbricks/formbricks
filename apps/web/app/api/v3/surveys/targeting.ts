@@ -12,7 +12,11 @@ import type {
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
-import { getExistingWorkspaceSurveyIds, getSegments } from "@/modules/ee/contacts/segments/lib/segments";
+import {
+  ALL_SEGMENT_SURVEY_REFS,
+  getExistingWorkspaceSurveyIds,
+  getSegments,
+} from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import type { TV3SurveyTargeting } from "./schemas";
@@ -230,7 +234,8 @@ function collectV3TargetingFilterReferences(
  */
 export async function assertV3SurveyTargetingFilterReferences(
   workspaceId: string,
-  filters: TV3SurveyFilters
+  filters: TV3SurveyFilters,
+  visibleSurveyWhere: Prisma.SurveyWhereInput
 ): Promise<void> {
   const references = collectV3TargetingFilterReferences(filters, "targeting.filters");
 
@@ -276,7 +281,7 @@ export async function assertV3SurveyTargetingFilterReferences(
   if (segmentRefs.length > 0) {
     // Scope to the workspace's own segments — `getSegment(id)` is global, so a bare existence check
     // would accept (and store) a reference to another workspace's segment.
-    const segments = await getSegments(workspaceId);
+    const segments = await getSegments(workspaceId, ALL_SEGMENT_SURVEY_REFS);
     const knownSegmentIds = new Set(segments.map((segment) => segment.id));
     for (const reference of segmentRefs.filter((ref) => !knownSegmentIds.has(ref.value))) {
       invalidParams.push({
@@ -293,9 +298,12 @@ export async function assertV3SurveyTargetingFilterReferences(
     // Scope to the workspace's own surveys so a survey-interaction filter cannot reference another
     // workspace's survey. Look up by the exact referenced ids (not the picker's bounded recent list)
     // so a valid survey in a large workspace isn't wrongly rejected for being outside that window.
+    // ENG-3282: and only surveys the caller may see. A restricted survey they cannot read answers
+    // exactly like an unknown id, so the response never reveals that it exists.
     const knownSurveyIds = await getExistingWorkspaceSurveyIds(
       workspaceId,
-      surveyRefs.map((ref) => ref.value)
+      surveyRefs.map((ref) => ref.value),
+      visibleSurveyWhere
     );
     for (const reference of surveyRefs.filter((ref) => !knownSurveyIds.has(ref.value))) {
       invalidParams.push({

@@ -1,6 +1,7 @@
 import * as React from "react";
 import { ElementMedia } from "@/components/general/element-media";
 import { Label } from "@/components/general/label";
+import { FB_PART } from "@/lib/parts";
 import { cn } from "@/lib/utils";
 
 interface ElementHeaderProps extends React.ComponentProps<"div"> {
@@ -63,7 +64,7 @@ function ElementHeader({
       <div>
         <div>{required ? <span className="label-card mb-[3px]">{requiredLabel}</span> : null}</div>
         <HeadingTag className="flex" data-slot="element-headline">
-          <Label htmlFor={htmlFor} id={headlineId} variant="headline">
+          <Label htmlFor={htmlFor} id={headlineId} variant="headline" data-fb-part={FB_PART.headline}>
             {headline}
           </Label>
         </HeadingTag>
@@ -71,7 +72,7 @@ function ElementHeader({
 
       {/* Description/Subheader */}
       {description ? (
-        <Label id={descriptionId} variant="description">
+        <Label id={descriptionId} variant="description" data-fb-part={FB_PART.description}>
           {description}
         </Label>
       ) : null}

@@ -8,6 +8,8 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import { resolveV3ResponsesActorContext } from "@/app/api/v3/responses/lib/visibility";
+import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
 import { getTag, getTagsByWorkspaceId } from "@/lib/tag/service";
 import { getTagsOnResponsesCount } from "@/lib/tagOnResponse/service";
 import { deleteTag, mergeTags, updateTagName } from "@/modules/workspaces/settings/lib/tag";
@@ -51,6 +53,17 @@ async function authorizeTagMutation(
   return { tag, organizationId: access.organizationId };
 }
 
+/** A tag's count only covers responses the caller may read (ENG-3282). */
+const getVisibleTagCounts = async (
+  authentication: TV3Authentication,
+  workspaceId: string,
+  organizationId: string
+) =>
+  getTagsOnResponsesCount(
+    workspaceId,
+    buildVisibleSurveyWhere(await resolveV3ResponsesActorContext(authentication, organizationId))
+  );
+
 export async function listV3Tags(params: TBaseParams & { workspaceId: string }): Promise<Response> {
   const { authentication, workspaceId, requestId, instance } = params;
 
@@ -59,7 +72,7 @@ export async function listV3Tags(params: TBaseParams & { workspaceId: string }):
 
   const [tags, counts] = await Promise.all([
     getTagsByWorkspaceId(access.workspaceId),
-    getTagsOnResponsesCount(access.workspaceId),
+    getVisibleTagCounts(authentication, access.workspaceId, access.organizationId),
   ]);
 
   const countByTagId = new Map(counts.map((entry) => [entry.tagId, entry.count]));
@@ -99,7 +112,11 @@ export async function renameV3Tag(
   // use — that would be false data, not merely an omission. A rename does not change the count, so this
   // reads the current one. `getTagsOnResponsesCount` is workspace-wide and `reactCache`d, the same call
   // the list route makes.
-  const counts = await getTagsOnResponsesCount(authorized.tag.workspaceId);
+  const counts = await getVisibleTagCounts(
+    params.authentication,
+    authorized.tag.workspaceId,
+    authorized.organizationId
+  );
   const count = counts.find((entry) => entry.tagId === tagId)?.count ?? 0;
 
   return successResponse(serializeV3Tag(result.data, count), { requestId });

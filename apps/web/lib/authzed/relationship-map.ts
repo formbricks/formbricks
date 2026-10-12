@@ -51,6 +51,18 @@ export const WORKSPACE_API_KEY_RELATIONS = {
 } as const satisfies Record<ApiKeyPermission, string>;
 
 /**
+ * `Survey` facts → `survey#<relation>` (ENG-3282). Which of these a survey carries is decided by
+ * `expectedSurveyRelationships` in `./survey`; this is only the vocabulary, shared with the backfill so
+ * the audit derives the expected set from the same names the projector writes.
+ */
+export const SURVEY_RELATIONS = {
+  owner: "owner",
+  privateOwner: "private_owner",
+  sharedWorkspace: "shared_workspace",
+  workspace: "workspace",
+} as const;
+
+/**
  * An API key's organization-level access rights.
  *
  * Unlike the role ladders these two flags are independent: a key may hold both, either, or neither.

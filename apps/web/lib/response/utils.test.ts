@@ -1,9 +1,10 @@
 import { describe, expect, test } from "vitest";
 import * as xlsx from "xlsx";
 import { Prisma } from "@formbricks/database/prisma";
+import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
 import {
   type TEmbeddedValueResponse,
-  deriveLegacyEmbeddedData,
+  type TLinkedEmbeddedField,
 } from "@formbricks/types/embedded-data-resolver";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { TResponse, TResponseFilterCriteria, ZResponseFilterCriteria } from "@formbricks/types/responses";
@@ -34,7 +35,13 @@ import { RESERVED_FILTER_LOCATORS, buildWhereClause } from "./where-clause";
 // generic: inferring the type parameter from those uses made TypeScript demand the whole survey
 // shape from fixtures that are partial on purpose.
 const asRead = (survey: Partial<TSurvey>): TSurvey =>
-  ({ ...survey, embeddedFields: deriveLegacyEmbeddedData(survey) }) as unknown as TSurvey;
+  ({ ...survey, embeddedFields: embeddedFieldsFromLegacyInput(survey) }) as unknown as TSurvey;
+
+/** One stored ingested row whose display name need not match the key its value lives under. */
+const ingestedRow = (name: string, storageKey: string): TLinkedEmbeddedField => ({
+  field: { name, key: null, source: "ingested", dataType: "string", defaultValue: null, locked: false },
+  link: { storageKey },
+});
 
 describe("Response Utils", () => {
   describe("calculateTtcTotal", () => {
@@ -1272,9 +1279,9 @@ describe("Response Utils", () => {
 
     /**
      * ENG-1837: the export columns are built from the survey's Embedded Data definitions rather than
-     * `variables` / `hiddenFields`. Both the grouping (variables labelled by name, hidden fields by
-     * storage key) and the order inside each group are user-visible CSV/XLSX header order, so they
-     * are asserted exactly, not by membership.
+     * `variables` / `hiddenFields`. Both the grouping (both groups labelled by name since ENG-3233)
+     * and the order inside each group are user-visible CSV/XLSX header order, so they are asserted
+     * exactly, not by membership.
      */
     describe("Embedded Data columns", () => {
       // Legacy columns populated, join absent — `embeddedFields` is cleared explicitly because
@@ -1341,6 +1348,57 @@ describe("Response Utils", () => {
         expect(result.variables).toEqual(["renamed_tier", "score"]);
         expect(result.hiddenFields).toEqual(["utm_source"]);
       });
+
+      /**
+       * ENG-3233. A shared library field's name differs from the key its value is stored under, and
+       * so does any renamed local one; the header is the name either way. Red on main, which
+       * exported `utm_campaign`.
+       */
+      test("an ingested column is headed by the field's name, not its storage key", () => {
+        const renamed = {
+          ...legacySurvey,
+          embeddedFields: [ingestedRow("Campaign", "utm_campaign")],
+        } as TSurvey;
+
+        expect(extractSurveyDetails(renamed, mockResponses as TResponse[]).hiddenFields).toEqual([
+          "Campaign",
+        ]);
+      });
+
+      test("two ingested fields sharing a name keep distinct headers", () => {
+        // Names carry no uniqueness constraint, and the rows below are keyed by header — two equal
+        // headers would drop a column's values into the other's.
+        const colliding = {
+          ...legacySurvey,
+          embeddedFields: [ingestedRow("Channel", "utm_channel"), ingestedRow("Channel", "partner_ref")],
+        } as TSurvey;
+
+        expect(extractSurveyDetails(colliding, mockResponses as TResponse[]).hiddenFields).toEqual([
+          "Channel",
+          "Channel (partner_ref)",
+        ]);
+      });
+
+      /**
+       * The other half of the same rule, and the one a name-only allocation misses: the row object
+       * is keyed by header across the *whole* schema, not just this group, so a display name equal
+       * to a column the export already writes would overwrite that column rather than add one. A
+       * storage key never could — it is a safe identifier — but a library field's name is free text.
+       */
+      test.each([
+        ["a fixed column", "Response ID", "resp_id", "Response ID (resp_id)"],
+        // `formatFieldNameToTitleCase` heads the reserved `source` entry exactly this way.
+        ["a reserved column", "Source", "utm_source", "Source (utm_source)"],
+      ])("an ingested field named like %s does not take it", (_case, name, storageKey, expected) => {
+        const shadowing = {
+          ...legacySurvey,
+          embeddedFields: [ingestedRow(name, storageKey)],
+        } as TSurvey;
+
+        expect(extractSurveyDetails(shadowing, mockResponses as TResponse[]).hiddenFields).toEqual([
+          expected,
+        ]);
+      });
     });
   });
 
@@ -1395,13 +1453,11 @@ describe("Response Utils", () => {
     test("should generate correct JSON data", () => {
       const questionsHeadlines = [["1. Question 1"]];
       const userAttributes = ["email"];
-      const hiddenFields: string[] = [];
       const result = getResponsesJson(
         mockSurvey as TSurvey,
         mockResponses as TResponse[],
         questionsHeadlines,
         userAttributes,
-        hiddenFields,
         false
       );
       expect(result[0]["Response ID"]).toBe("response1");
@@ -1426,7 +1482,7 @@ describe("Response Utils", () => {
       }) as TSurvey;
       const protoResponse = { ...mockResponses[0], variables: { v1: "kept" } } as TResponse;
 
-      const result = getResponsesJson(protoSurvey, [protoResponse], [], [], [], false);
+      const result = getResponsesJson(protoSurvey, [protoResponse], [], [], false);
 
       expect(Object.keys(result[0])).toContain("__proto__");
       expect(result[0]["__proto__"]).toBe("kept");
@@ -1461,7 +1517,6 @@ describe("Response Utils", () => {
         [richResponse] as TResponse[],
         [["1. Question 1"]],
         [],
-        [],
         false
       );
 
@@ -1490,7 +1545,6 @@ describe("Response Utils", () => {
         [olderResponse, anonymizedResponse],
         [["1. Question 1"]],
         [],
-        [],
         false
       );
 
@@ -1510,9 +1564,48 @@ describe("Response Utils", () => {
         data: { ...mockResponses[0].data, seats: 12 },
       } as unknown as TResponse;
 
-      const result = getResponsesJson(surveyWithNumberField, [response], [], [], ["seats"], false);
+      const result = getResponsesJson(surveyWithNumberField, [response], [], [], false);
 
       expect(result[0]["seats"]).toBe(12);
+    });
+
+    test("an ingested cell is written under the field's name and read from its storage key", () => {
+      // ENG-3233: the column header and the cell key are the same string, so this moves with
+      // `extractSurveyDetails` or the row lands under a header the sheet does not have. Red on main,
+      // which keyed the cell by `utm_campaign`.
+      const renamed = {
+        ...(mockSurvey as TSurvey),
+        embeddedFields: [ingestedRow("Campaign", "utm_campaign")],
+      } as TSurvey;
+      const response = {
+        ...mockResponses[0],
+        data: { ...mockResponses[0].data, utm_campaign: "spring_sale" },
+      } as unknown as TResponse;
+
+      const result = getResponsesJson(renamed, [response], [], [], false);
+
+      expect(result[0]["Campaign"]).toBe("spring_sale");
+      expect(result[0]).not.toHaveProperty("utm_campaign");
+    });
+
+    test("an ingested field named like a fixed column does not take that column's cell", () => {
+      // The `extractSurveyDetails` counterpart of this pins the header row; this pins the cells.
+      // Both call sites need the same seed and neither guards the other: a row is one flat object
+      // keyed by label, so an unseeded `Response ID` here would write the field's value over the
+      // response's own id — under a header the sheet still has, holding the wrong value.
+      const shadowing = {
+        ...(mockSurvey as TSurvey),
+        embeddedFields: [ingestedRow("Response ID", "resp_id")],
+      } as TSurvey;
+      const response = {
+        ...mockResponses[0],
+        data: { ...mockResponses[0].data, resp_id: "spring_sale" },
+      } as unknown as TResponse;
+
+      const result = getResponsesJson(shadowing, [response], [], [], false);
+
+      expect(result[0]["Response ID"]).toBe("response1");
+      expect(result[0]["Response ID (resp_id)"]).toBe("spring_sale");
     });
 
     test("a computed field the response never captured leaves an empty cell", () => {
@@ -1527,7 +1620,6 @@ describe("Response Utils", () => {
         surveyWithVariables,
         [{ ...mockResponses[0], variables: {} }] as TResponse[],
         [["1. Question 1"]],
-        [],
         [],
         false
       );
@@ -1547,7 +1639,6 @@ describe("Response Utils", () => {
         [{ ...mockResponses[0], variables: { clx0000000000000000000v1: 12 } }] as TResponse[],
         [["1. Question 1"]],
         [],
-        [],
         false
       );
 
@@ -1564,7 +1655,6 @@ describe("Response Utils", () => {
         responsesWithContact,
         [["1. Question 1"]],
         ["plan", "email"],
-        [],
         false
       );
       expect(result[0]["person.plan"]).toBe("pro");
@@ -1580,7 +1670,6 @@ describe("Response Utils", () => {
         responsesWithFixedDate,
         [["1. Question 1"]],
         [],
-        [],
         false
       );
       expect(result[0]["Timestamp"]).toBe("2026-01-01 20:00:00 UTC");
@@ -1594,7 +1683,6 @@ describe("Response Utils", () => {
         mockSurvey as TSurvey,
         responsesWithFixedDate,
         [["1. Question 1"]],
-        [],
         [],
         false,
         "Asia/Manila"
@@ -1796,6 +1884,22 @@ describe("Response Utils", () => {
         hidden1: [],
         hidden2: [],
       });
+    });
+
+    test("a number field offers its stored values to the filter (ENG-3266)", () => {
+      // These are the filter's value options. Under the old `typeof === "string"` gate a `number`
+      // field collected nothing, so it appeared in the filter with an empty dropdown — filterable in
+      // name only. `boolean` never reaches here: `surveys.ts` hardcodes its two options.
+      const responses = [
+        { contactAttributes: {}, data: { hidden1: 42, hidden2: "value2" }, meta: {} },
+        { contactAttributes: {}, data: { hidden1: 0, hidden2: "value4" }, meta: {} },
+      ];
+      const result = getResponseHiddenFields(
+        mockSurvey as TSurvey,
+        responses as unknown as Pick<TResponse, "contactAttributes" | "data" | "meta">[]
+      );
+      expect(result.hidden1).toContain("42");
+      expect(result.hidden1).toContain("0");
     });
   });
 });

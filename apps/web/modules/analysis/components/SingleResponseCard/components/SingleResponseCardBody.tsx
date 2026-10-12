@@ -39,7 +39,7 @@ export const SingleResponseCardBody = ({
 }: Readonly<SingleResponseCardBodyProps>) => {
   const elements = getElementsFromBlocks(survey.blocks);
   // ENG-1837: both blocks below render the survey's Embedded Data definitions, resolved through the
-  // tables with the legacy columns as fallback.
+  // tables — the only place they are stored since ENG-2404.
   const computedFields = getComputedEmbeddedFields(survey);
   const ingestedFields = getIngestedEmbeddedFields(survey);
   const dateFormats = getSurveyDateFormatMap(elements);

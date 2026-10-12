@@ -3,6 +3,7 @@ import type { TAuthzedRelationship } from "./client";
 import {
   ORGANIZATION_ACCESS_RELATIONS,
   ORGANIZATION_RELATIONS,
+  SURVEY_RELATIONS,
   TEAM_RELATIONS,
   WORKSPACE_API_KEY_RELATIONS,
   WORKSPACE_TEAM_RELATIONS,
@@ -27,8 +28,9 @@ import {
  * Deliberately unprojected during the current-model migration: resource-level access is resolved
  * through PostgreSQL parent lookups instead. Reconciliation must classify these as ignored rather
  * than orphaned — pruning them would delete relationships a future projector is expected to own.
+ * `survey` left this list with ENG-3282, when `./survey` began projecting it.
  */
-const UNPROJECTED_RESOURCE_TYPES = ["dashboard", "response", "survey"] as const;
+const UNPROJECTED_RESOURCE_TYPES = ["dashboard", "response"] as const;
 
 export type TAuthzedRelationshipRef = Readonly<{
   objectId: string;
@@ -53,6 +55,7 @@ export type TAuthzedSourceRef =
       workspaceId?: string;
     }>
   | Readonly<{ kind: "membership"; organizationId: string; userId: string }>
+  | Readonly<{ kind: "survey"; surveyId: string }>
   | Readonly<{ kind: "team"; teamId: string }>
   | Readonly<{ kind: "teamMembership"; teamId: string; userId: string }>
   | Readonly<{ kind: "workspace"; workspaceId: string }>
@@ -181,6 +184,23 @@ const toFeedbackDirectoryAssignmentSourceRef: TSourceRefResolver = ({ relation, 
   return null;
 };
 
+const SURVEY_WORKSPACE_RELATIONS = new Set<string>([
+  SURVEY_RELATIONS.workspace,
+  SURVEY_RELATIONS.sharedWorkspace,
+]);
+const SURVEY_OWNER_RELATIONS = new Set<string>([SURVEY_RELATIONS.owner, SURVEY_RELATIONS.privateOwner]);
+
+const toSurveySourceRef: TSourceRefResolver = ({ relation, resource, subject }) => {
+  if (
+    (subject.objectType === "workspace" && SURVEY_WORKSPACE_RELATIONS.has(relation)) ||
+    (subject.objectType === "user" && SURVEY_OWNER_RELATIONS.has(relation))
+  ) {
+    return { kind: "survey", surveyId: resource.objectId };
+  }
+
+  return null;
+};
+
 /**
  * The vocabulary in one table: which resource types imply a source record, and how.
  *
@@ -196,6 +216,7 @@ const SOURCE_REF_RESOLVERS = {
   feedback_directory: toFeedbackDirectorySourceRef,
   feedback_directory_assignment: toFeedbackDirectoryAssignmentSourceRef,
   organization: toOrganizationSourceRef,
+  survey: toSurveySourceRef,
   team: toTeamSourceRef,
   workspace: toWorkspaceSourceRef,
 } as const satisfies Readonly<Record<string, TSourceRefResolver>>;
@@ -226,6 +247,18 @@ const MANAGED_RESOURCE_TYPES: ReadonlyArray<string> = Object.keys(SOURCE_REF_RES
 
 export const getManagedResourceTypes = (): ReadonlyArray<string> => MANAGED_RESOURCE_TYPES;
 
+/**
+ * Resource types projected per survey rather than per organization (ENG-3282).
+ *
+ * Swept only by the dedicated `survey` scope. The full-deployment scope — which the six-hourly audit
+ * runs — leaves them out, so that audit stays proportional to the number of grants rather than to the
+ * number of surveys.
+ */
+export const SURVEY_SCOPED_RESOURCE_TYPES: ReadonlyArray<string> = ["survey"];
+
+export const getOrganizationScopedResourceTypes = (): ReadonlyArray<string> =>
+  MANAGED_RESOURCE_TYPES.filter((type) => !SURVEY_SCOPED_RESOURCE_TYPES.includes(type));
+
 /** Name the source record an observed relationship implies, or `null` if it names none. */
 export const toSourceRef = (relationship: TAuthzedRelationship): TAuthzedSourceRef | null => {
   const resolve: TSourceRefResolver | undefined =
@@ -247,7 +280,9 @@ export const toSourceRef = (relationship: TAuthzedRelationship): TAuthzedSourceR
  * hands every owner and manager of that organization full access to another tenant's workspace, with
  * nothing in PostgreSQL to show for it.
  */
-export type TAuthzedParentEdge = Readonly<{
+export type TAuthzedParentEdge = TAuthzedOrganizationParentEdge | TAuthzedSurveyWorkspaceEdge;
+
+export type TAuthzedOrganizationParentEdge = Readonly<{
   childId: string;
   childType: "api_key" | "feedback_directory" | "team" | "workspace";
   organizationId: string;
@@ -264,6 +299,20 @@ export type TAuthzedParentEdge = Readonly<{
    * both cases render identically and only one of them matches the documented remediation.
    */
   relation: string;
+}>;
+
+/**
+ * A survey claiming a workspace (ENG-3282): `survey:S#workspace@workspace:W`, and the
+ * `#shared_workspace` edge that grants that workspace's members read.
+ *
+ * Checked exactly like an organization parent. `shared_workspace` is the dangerous one: naming another
+ * tenant's workspace hands that tenant's members the survey, with nothing in PostgreSQL to show for it.
+ */
+export type TAuthzedSurveyWorkspaceEdge = Readonly<{
+  childId: string;
+  childType: "survey";
+  relation: string;
+  workspaceId: string;
 }>;
 
 /** Stable identity for deduplication and ordering. Field order is fixed by the union's key order. */
@@ -304,6 +353,14 @@ const toParentEdge = (relationship: TAuthzedRelationship): TAuthzedParentEdge | 
       organizationId: resource.objectId,
       relation,
     };
+  }
+
+  if (
+    resource.objectType === "survey" &&
+    subject.objectType === "workspace" &&
+    SURVEY_WORKSPACE_RELATIONS.has(relation)
+  ) {
+    return { childId: resource.objectId, childType: "survey", relation, workspaceId: subject.objectId };
   }
 
   if (relation !== PARENT_RELATION || subject.objectType !== "organization") {
@@ -366,6 +423,15 @@ const relationNames = (relationships: ReadonlyArray<TAuthzedRelationship>): Read
   [...new Set(relationships.map(({ relation }) => relation))].sort(byCodeUnit);
 
 /**
+ * Whether a relationship only asserts ownership, which `findMismatchedParentEdges` verifies instead:
+ * every `#organization` parent edge, and a survey's `#workspace` edge. Not `#shared_workspace` — that
+ * one encodes visibility, so a survey whose visibility drifted must show up as a permission mismatch.
+ */
+const isParentRelationship = ({ relation, resource }: TAuthzedRelationship): boolean =>
+  relation === PARENT_RELATION ||
+  (resource.objectType === "survey" && relation === SURVEY_RELATIONS.workspace);
+
+/**
  * Find source records that exist on both sides but carry a different exact permission relation set.
  *
  * Parent edges are deliberately excluded: their correctness is verified by `findMismatchedParentEdges`,
@@ -395,7 +461,7 @@ export const findMismatchedPermissionRelations = (
 
       const key = sourceRefKey(source);
       const group = groups.get(key) ?? { permissionRelationships: [], source };
-      if (relationship.relation !== PARENT_RELATION) {
+      if (!isParentRelationship(relationship)) {
         group.permissionRelationships.push(relationship);
       }
       groups.set(key, group);

@@ -4,6 +4,7 @@ import { InvalidInputError } from "@formbricks/types/errors";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
 import { IMAGE_FILE_EXTENSIONS } from "@formbricks/types/storage";
+import { sanitizeThemeStyling } from "@formbricks/types/styling-values";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import {
   TSurveyElement,
@@ -56,12 +57,17 @@ export const transformPrismaSurvey = <T extends TSurvey | TJsWorkspaceStateSurve
 
   const transformedSurvey = {
     // ENG-1837: swaps the raw `embeddedDataLinks` relation for the inlined `embeddedFields` the read
-    // seam consumes, so the Prisma relation shape never leaks onto TSurvey. A no-op for surveys read
-    // through a select without the join — those fall back to their legacy columns in the accessor.
+    // seam consumes, so the Prisma relation shape never leaks onto TSurvey, and derives the legacy
+    // `variables` / `hiddenFields` from the same rows (ENG-2404). A no-op for surveys read through a
+    // select without the join — those carry no Embedded Data at all.
     ...withInlinedEmbeddedFields(surveyPrisma),
     displayPercentage: Number(surveyPrisma.displayPercentage) || null,
     segment,
     customHeadScriptsMode: surveyPrisma.customHeadScriptsMode,
+    // Theme values are not validated on write (the API accepts any string, ENG-3723), so a stored value
+    // that could add CSS (ENG-2950) is dropped here, before it reaches the editor, its previews or an API
+    // read. The renderer drops the same values, so nothing a respondent sees changes.
+    ...(surveyPrisma.styling && { styling: sanitizeThemeStyling(surveyPrisma.styling) }),
   } as T;
 
   return transformedSurvey;

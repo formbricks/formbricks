@@ -7,6 +7,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { deleteActionClass, getActionClass, updateActionClass } from "@/lib/actionClass/service";
 import { assertCan } from "@/lib/authorization";
 import { getSurveysByActionClassId } from "@/lib/survey/service";
+import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromActionClassId, getWorkspaceIdFromActionClassId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -69,12 +70,20 @@ const ZGetActiveInactiveSurveysAction = z.object({
 export const getActiveInactiveSurveysAction = authenticatedActionClient
   .inputSchema(ZGetActiveInactiveSurveysAction)
   .action(async ({ ctx, parsedInput }) => {
+    const workspaceId = await getWorkspaceIdFromActionClassId(parsedInput.actionClassId);
     await assertCan({ type: "user", id: ctx.user.id }, "workspace.read", {
       type: "workspace",
-      id: await getWorkspaceIdFromActionClassId(parsedInput.actionClassId),
+      id: workspaceId,
     });
 
-    const surveys = await getSurveysByActionClassId(parsedInput.actionClassId);
+    const surveys = await getSurveysByActionClassId(
+      parsedInput.actionClassId,
+      workspaceId,
+      await getUserVisibleSurveyWhere(
+        ctx.user.id,
+        await getOrganizationIdFromActionClassId(parsedInput.actionClassId)
+      )
+    );
     const filteredSurveys = parsedInput.excludeSurveyId
       ? surveys.filter((survey) => survey.id !== parsedInput.excludeSurveyId)
       : surveys;

@@ -25,6 +25,7 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   ApiKey: "relationship_or_grant_source",
   ApiKeyWorkspace: "relationship_or_grant_source",
   AuthzedProjectionOutbox: "authentication_or_application",
+  AuthzedProjectionScopeState: "authentication_or_application",
   Chart: "workspace_inherited_resource",
   Contact: "workspace_inherited_resource",
   ContactAttribute: "parent_derived_or_data_integrity",
@@ -92,6 +93,10 @@ export const AUDIT_TARGET_AUTHORIZATION_RESOURCE_INVENTORY = {
   cubeQuery: "parent_derived_or_data_integrity",
   dashboard: "direct_authorization_resource",
   dashboardWidget: "parent_derived_or_data_integrity",
+  // Every write to a shared Embedded Data field is authorized as `workspace.read` / `workspace.write`
+  // against the workspace resolved from the row, so the audit target inherits from the workspace even
+  // though the Prisma model also carries survey-owned rows.
+  embeddedData: "workspace_inherited_resource",
   feedbackDirectory: "direct_authorization_resource",
   feedbackRecord: "parent_derived_or_data_integrity",
   feedbackSource: "parent_derived_or_data_integrity",

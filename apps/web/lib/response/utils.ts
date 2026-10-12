@@ -1,10 +1,12 @@
 import { normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
+import { labelEmbeddedFields } from "@formbricks/types/embedded-data-label";
 import {
   RESERVED_FIELD_CATALOG,
   type TEmbeddedValueResponse,
   type TReservedFieldCatalogEntry,
   dropShadowedReservedEntries,
   getComputedEmbeddedFields,
+  getIngestedEmbeddedFields,
   getIngestedStorageKeys,
   getSurveyEmbeddedFields,
   listShadowingNames,
@@ -30,6 +32,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
+import { displayEmbeddedValue } from "@/modules/embedded-data/lib/value-display";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { processResponseData } from "../responses";
 import { getTodaysDateTimeFormatted } from "../time";
@@ -267,13 +270,13 @@ export const getResponseVariableFilterValues = (
   return Object.fromEntries(Object.entries(values).map(([key, set]) => [key, Array.from(set)]));
 };
 
-export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) => {
-  const metaDataFields = getReservedExportEntries(survey).map(getReservedExportHeader);
+/** The export's element column headers, one row per element — two for the types that add an Option ID. */
+const exportElementHeadlines = (survey: TSurvey): string[][] => {
   const modifiedSurvey = replaceHeadlineRecall(survey, "default");
 
   const modifiedElements = getElementsFromBlocks(modifiedSurvey.blocks);
 
-  const elements = modifiedElements.map((element, idx) => {
+  return modifiedElements.map((element, idx) => {
     const headline = getTextContent(getLocalizedValue(element.headline, "default")) ?? element.id;
     if (element.type === "matrix") {
       return element.rows.map((row) => {
@@ -289,10 +292,61 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
       return [`${idx + 1}. ${headline}`];
     }
   });
+};
 
-  // ENG-1837: the two column groups keep today's shape — computed fields labelled by name, ingested
-  // ones by storage key — and today's order, which `inlineSurveyEmbeddedFields` preserves.
-  const hiddenFields = getIngestedStorageKeys(survey);
+/** Written unconditionally or not at all, so they are not derivable from the survey. */
+const FIXED_EXPORT_HEADERS = [
+  "No.",
+  "Response ID",
+  "Timestamp",
+  "Finished",
+  "Survey ID",
+  "Formbricks ID (internal)",
+  "User ID",
+  "Tags",
+  // The two conditional columns, reserved whether or not this survey has them — see below.
+  "Quotas",
+  "Verified Email",
+];
+
+/**
+ * Every export column an Embedded Data label must not land on (ENG-3233).
+ *
+ * `getResponsesJson` builds each row as one flat object keyed by header, so two columns sharing a
+ * string are not two columns: the later write wins and the earlier value never reaches the file. A
+ * *storage* key could never collide with `Response ID` — it is a safe identifier — but a library
+ * field's display name is free text, so labelling the ingested group by name made it reachable.
+ * Seeding `labelEmbeddedFields` with the rest of the schema keeps its collision rule covering the
+ * whole row rather than only its own group.
+ *
+ * Deterministic on `(survey, responses)` alone, which is what stops the header row and the cells
+ * disagreeing — they are built by two functions and must reach the same labels. That is also why
+ * `Quotas` and `Verified Email` are reserved unconditionally: over-reserving only disambiguates a
+ * label that need not have been, while reserving in one caller and not the other would put a value
+ * back under the wrong header.
+ */
+export const reservedExportHeaders = (survey: TSurvey, responses: TResponse[]): ReadonlySet<string> =>
+  new Set([
+    ...FIXED_EXPORT_HEADERS,
+    ...getReservedExportEntries(survey).map(getReservedExportHeader),
+    ...exportElementHeadlines(survey).flat(),
+    ...getComputedEmbeddedFields(survey).map(({ field }) => field.name),
+    ...responses
+      .flatMap((response) => Object.keys(response.contactAttributes ?? {}))
+      .map((a) => `person.${a}`),
+  ]);
+
+export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) => {
+  const metaDataFields = getReservedExportEntries(survey).map(getReservedExportHeader);
+  const elements = exportElementHeadlines(survey);
+
+  // ENG-1837: the two column groups keep today's order, which `inlineSurveyEmbeddedFields`
+  // preserves. Both are labelled by name — ENG-3233 moved the ingested group off its storage key,
+  // which stays the address `getResponsesJson` reads each cell from.
+  const hiddenFields = labelEmbeddedFields(
+    getIngestedEmbeddedFields(survey),
+    reservedExportHeaders(survey, responses)
+  ).map(({ label }) => label);
   const userAttributes = Array.from(
     new Set(responses.map((response) => Object.keys(response.contactAttributes ?? {})).flat())
   );
@@ -325,12 +379,17 @@ export const getResponsesJson = (
   responses: TResponseWithQuotas[],
   elementsHeadlines: string[][],
   userAttributes: string[],
-  hiddenFields: string[],
   isQuotasAllowed: boolean = false,
   timeZone: string = "UTC"
 ): Record<string, string | number>[] => {
   const jsonData: Record<string, string | number>[] = [];
   const reservedEntries = getReservedExportEntries(survey);
+  // Hoisted out of the per-response loop: the definitions are the survey's, not the response's.
+  const ingestedFields = labelEmbeddedFields(
+    getIngestedEmbeddedFields(survey),
+    reservedExportHeaders(survey, responses)
+  );
+  const computedFields = getComputedEmbeddedFields(survey);
 
   responses.forEach((response, idx) => {
     // basic response details
@@ -403,7 +462,7 @@ export const getResponsesJson = (
     // The raw slot, uncoerced and with no default substituted: a response written before this field
     // existed has no key, and the cell must stay empty rather than display a value that run never
     // produced. (This is why the export does not read through `resolveEmbeddedValue`.)
-    getComputedEmbeddedFields(survey).forEach(({ field, link }) => {
+    computedFields.forEach(({ field, link }) => {
       const answer = response.variables[link.storageKey];
       jsonData[idx][field.name] = answer;
     });
@@ -412,16 +471,20 @@ export const getResponsesJson = (
       jsonData[idx][`person.${attribute}`] = response.contactAttributes?.[attribute] || "";
     });
 
-    // hidden fields — a number stays a number (the ingest contract stores coerced values, so a
-    // `dataType: "number"` field holds a real number and the XLSX cell should be numeric, not text)
-    hiddenFields.forEach((field) => {
-      const value = response.data[field];
+    // Hidden fields, keyed by the same labels `extractSurveyDetails` put in the header row — derived
+    // from the survey here rather than taken as an argument, exactly like the computed group above,
+    // so a cell and its column cannot be built from two different lists.
+    //
+    // A number stays a number (the ingest contract stores coerced values, so a `dataType: "number"`
+    // field holds a real number and the XLSX cell should be numeric, not text).
+    ingestedFields.forEach(({ link, label }) => {
+      const value = response.data[link.storageKey];
       if (Array.isArray(value)) {
-        jsonData[idx][field] = value.join("; ");
+        jsonData[idx][label] = value.join("; ");
       } else if (typeof value === "number") {
-        jsonData[idx][field] = value;
+        jsonData[idx][label] = value;
       } else {
-        jsonData[idx][field] = processResponseData(value);
+        jsonData[idx][label] = processResponseData(value);
       }
     });
 
@@ -523,11 +586,13 @@ export const getResponseHiddenFields = (
       responses.forEach((response) => {
         // Handling data fields(Hidden fields)
         surveyHiddenFields.forEach((fieldId) => {
-          const hiddenFieldValue = response.data[fieldId];
+          // Same widening as the three analysis surfaces (ENG-3266): a `number` field stores a JSON
+          // number, so the old `typeof === "string"` gate offered no values at all for one, leaving
+          // it filterable in name only. `boolean` never reaches here — `surveys.ts` hardcodes its
+          // two options — but it costs nothing to read the same way.
+          const hiddenFieldValue = displayEmbeddedValue(response.data[fieldId]);
           if (hiddenFieldValue) {
-            if (typeof hiddenFieldValue === "string") {
-              hiddenFields[fieldId].add(hiddenFieldValue);
-            }
+            hiddenFields[fieldId].add(hiddenFieldValue);
           }
         });
       });

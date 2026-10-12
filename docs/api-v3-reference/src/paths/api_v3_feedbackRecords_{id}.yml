@@ -2,7 +2,10 @@ get:
   operationId: getFeedbackRecordV3
   summary: Get a feedback record
   description: |
-    Returns one feedback record by id. The gateway looks the record up to learn its dataset and
+    Returns one feedback record by id, with its read-only assignment in the active directory
+    taxonomy. The assignment reflects the current visible path in the active run; editing a record
+    does not reclassify it until another run. `taxonomy` is null if its lookup is unavailable.
+    The gateway looks the record up to learn its dataset and
     authorizes against that, so no `tenant_id` is sent. Requires an API key with **read**
     permission (or higher) on a workspace the record's dataset is assigned to.
 
@@ -19,7 +22,7 @@ get:
       content:
         application/json:
           schema:
-            $ref: ../components/schemas/FeedbackRecord.yml
+            $ref: ../components/schemas/FeedbackRecordDetail.yml
           examples:
             enriched:
               summary: A text record after enrichment
@@ -45,6 +48,18 @@ get:
                   - anger
                 value_text_translated: Die Warteschlangen am Nordtor waren viel zu lang.
                 translation_lang_key: de
+                taxonomy:
+                  status: classified
+                  run_id: 018e1234-5678-7abc-8ef0-123456789abe
+                  path:
+                    - id: 018e1234-5678-7abc-8ef0-123456789abf
+                      label: Queueing
+                      level: 1
+                      node_type: branch
+                    - id: 018e1234-5678-7abc-8ef0-123456789ac0
+                      label: North gate
+                      level: 2
+                      node_type: leaf
     "400":
       $ref: ../components/responses/FeedbackRecordsBadRequest.yml
     "401":

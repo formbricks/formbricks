@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { resetDb } from "@/integration/reset-db";
 import { getUniqueConstraintFields } from "@/lib/utils/prisma-constraint";
 
@@ -49,8 +50,8 @@ describe("getUniqueConstraintFields vs real Prisma 7 + adapter-pg (ENG-1801)", (
     expect(getUniqueConstraintFields(error)).toEqual(["token_hash"]);
   });
 
-  test("unquotes camelCase columns, which Postgres quotes in the error DETAIL (ENG-2174)", async () => {
-    const organization = await prisma.organization.create({ data: { name: "ENG-2174 quoting" } });
+  test("resolves a default-named composite key from the constraint name (adapter-pg 7.10+)", async () => {
+    const organization = await prisma.organization.create({ data: { name: "ENG-3285 constraint name" } });
     await prisma.workspace.create({ data: { name: "Duplicate", organizationId: organization.id } });
 
     const error = await prisma.workspace
@@ -58,15 +59,81 @@ describe("getUniqueConstraintFields vs real Prisma 7 + adapter-pg (ENG-1801)", (
       .catch((e) => e);
 
     expect(error?.code).toBe("P2002");
-    // The premise: Postgres quotes any identifier that is not all-lowercase, and the adapter
-    // regex-scrapes the DETAIL without unquoting — so the raw meta carries the quotes.
-    const rawFields = (
-      error?.meta as { driverAdapterError?: { cause?: { constraint?: { fields?: string[] } } } }
-    )?.driverAdapterError?.cause?.constraint?.fields;
-    expect(rawFields).toContain('"organizationId"');
+    // The premise (prisma#29587): from 7.10 the adapter reports the constraint name and table, and
+    // no longer passes the column list through.
+    const cause = (
+      error?.meta as {
+        driverAdapterError?: { cause?: { constraint?: Record<string, unknown>; table?: unknown } };
+      }
+    )?.driverAdapterError?.cause;
+    expect(cause?.constraint).toEqual({ index: "Workspace_organizationId_name_key" });
+    expect(cause?.table).toBe("Workspace");
 
-    // ...and the helper hands back usable Prisma field names. Note `name` is lowercase and therefore
-    // never quoted, which is why callers that only read fields[0] kept working by luck.
+    // Callers that only read fields[0] (action classes) depend on the order being preserved.
     expect(getUniqueConstraintFields(error)).toEqual(["organizationId", "name"]);
+  });
+
+  test("resolves a composite primary key from the explicit map (TagsOnResponses)", async () => {
+    const organization = await prisma.organization.create({ data: { name: "ENG-3285 tags" } });
+    const workspace = await prisma.workspace.create({
+      data: { name: "ENG-3285 Workspace", organizationId: organization.id },
+    });
+    const survey = await prisma.survey.create({
+      data: { name: "ENG-3285 Survey", workspaceId: workspace.id },
+    });
+    const response = await prisma.response.create({ data: { surveyId: survey.id, data: {} } });
+    const tag = await prisma.tag.create({ data: { name: "ENG-3285", workspaceId: workspace.id } });
+    await prisma.tagsOnResponses.create({ data: { responseId: response.id, tagId: tag.id } });
+
+    const error = await prisma.tagsOnResponses
+      .create({ data: { responseId: response.id, tagId: tag.id } })
+      .catch((e) => e);
+
+    expect(error?.code).toBe("P2002");
+    expect(getUniqueConstraintFields(error)).toEqual(["responseId", "tagId"]);
+  });
+
+  /**
+   * Drift guard. The 7.10 shape only carries the constraint name, so the helper resolves columns from
+   * Prisma's default naming rule plus an explicit map for the names that rule cannot round-trip. This
+   * checks that resolution against every unique index in the migrated schema: an index added with an
+   * underscore column, a composite primary key, a custom `map:` or a name past Postgres's 63-byte
+   * limit fails here until it gets a map entry, instead of resolving to the wrong columns in prod.
+   */
+  test("resolves the exact columns of every unique index in the schema", async () => {
+    const indexes = await prisma.$queryRaw<{ table: string; index: string; columns: string[] }[]>`
+      SELECT t.relname AS "table",
+             i.relname AS "index",
+             ARRAY(
+               SELECT a.attname::text
+               FROM unnest(ix.indkey) WITH ORDINALITY AS k(attnum, ord)
+               JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = k.attnum
+               ORDER BY k.ord
+             ) AS "columns"
+      FROM pg_index ix
+      JOIN pg_class i ON i.oid = ix.indexrelid
+      JOIN pg_class t ON t.oid = ix.indrelid
+      JOIN pg_namespace n ON n.oid = t.relnamespace
+      WHERE n.nspname = current_schema() AND ix.indisunique
+      ORDER BY 1, 2
+    `;
+
+    // Sanity: the query found the schema rather than vacuously passing on an empty result.
+    expect(indexes.length).toBeGreaterThan(50);
+
+    const resolve = (index: string, table: string) =>
+      getUniqueConstraintFields(
+        new Prisma.PrismaClientKnownRequestError("duplicate", {
+          code: "P2002",
+          clientVersion: "test",
+          meta: { driverAdapterError: { cause: { constraint: { index }, table } } },
+        })
+      );
+
+    const mismatches = indexes
+      .map(({ table, index, columns }) => ({ index, expected: columns, actual: resolve(index, table) }))
+      .filter(({ expected, actual }) => JSON.stringify(expected) !== JSON.stringify(actual));
+
+    expect(mismatches).toEqual([]);
   });
 });

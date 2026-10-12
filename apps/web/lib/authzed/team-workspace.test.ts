@@ -257,6 +257,11 @@ describe("team and workspace relationship projection", () => {
       resourceId: WORKSPACE_ID,
       resourceType: "workspace",
     });
+    // ENG-3282: and the workspace edges of every survey that pointed at it.
+    expect(clientMocks.deleteRelationships).toHaveBeenCalledWith({
+      resourceType: "survey",
+      subject: { objectId: WORKSPACE_ID, objectType: "workspace" },
+    });
   });
 
   test("bounds parallel relationship deletion for large cascades", async () => {

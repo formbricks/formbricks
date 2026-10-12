@@ -173,7 +173,7 @@ describe("createContactAttributeKey", () => {
     await expect(createContactAttributeKey(workspaceId, createInput)).rejects.toThrow(errorMessage);
   });
 
-  test("should throw DatabaseError when attribute key already exists (unique constraint)", async () => {
+  test("should throw InvalidInputError when attribute key already exists (unique constraint)", async () => {
     vi.mocked(prisma.contactAttributeKey.count).mockResolvedValue(0);
     vi.mocked(prisma.contactAttributeKey.create).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
@@ -182,7 +182,7 @@ describe("createContactAttributeKey", () => {
       })
     );
 
-    await expect(createContactAttributeKey(workspaceId, createInput)).rejects.toThrow(DatabaseError);
+    await expect(createContactAttributeKey(workspaceId, createInput)).rejects.toThrow(InvalidInputError);
     await expect(createContactAttributeKey(workspaceId, createInput)).rejects.toThrow(
       "Attribute key already exists"
     );

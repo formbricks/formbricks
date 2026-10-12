@@ -25,11 +25,6 @@ export const SOURCE_TYPE_PRESET_OPTIONS = [
 
 export const SOURCE_TYPE_CUSTOM_VALUE = "__custom__";
 
-const ZMetadataEntry = z.object({
-  key: z.string().trim(),
-  value: z.string(),
-});
-
 export const ZFeedbackRecordFormValues = z.object({
   id: z.string().optional(),
   tenant_id: z.string().min(1),
@@ -51,7 +46,6 @@ export const ZFeedbackRecordFormValues = z.object({
   value_date: z.string().optional(),
   language: z.string().optional(),
   user_id: z.string().optional(),
-  metadataEntries: z.array(ZMetadataEntry),
 });
 
 export type TFeedbackRecordFormValues = z.infer<typeof ZFeedbackRecordFormValues>;

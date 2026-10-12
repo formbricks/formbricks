@@ -31,8 +31,12 @@ const baseWorkspace: Workspace = {
   placement: "bottomRight",
   clickOutsideClose: false,
   overlay: "none",
+  overlayColor: null,
+  overlayOpacity: null,
   logo: null,
   customHeadScripts: null,
+  customCss: null,
+  customCssPrevious: null,
   appSetupCompleted: false,
 };
 

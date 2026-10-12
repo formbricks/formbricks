@@ -1,22 +1,21 @@
 import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { ZEmbeddedData, ZLinkedEmbeddedField } from "./embedded-data";
+import { type TLegacyEmbeddedFields, embeddedFieldsFromLegacyInput } from "./embedded-data-mapping";
 import {
   RESERVED_FIELD_CATALOG,
   type TClientEmbeddedValueResponse,
+  type TEmbeddedFieldsSurvey,
   type TEmbeddedValueRef,
   type TEmbeddedValueResponse,
   type TLinkedEmbeddedField,
   type TReservedFieldCatalogEntry,
+  buildEmbeddedLookup,
   coerceToEmbeddedDataType,
-  deriveLegacyEmbeddedData,
   dropShadowedReservedEntries,
   findComputedEmbeddedField,
   getComputedEmbeddedFields,
   getComputedFieldDataType,
-  getDeclaredComputedFields,
-  getDeclaredEmbeddedFields,
-  getDeclaredIngestedStorageKeys,
   getIngestedEmbeddedFields,
   getIngestedStorageKeys,
   getLogicVariableValue,
@@ -27,6 +26,7 @@ import {
   listShadowingNames,
   mergeReservedValues,
   projectClientReservedValues,
+  projectIngestedDefaults,
   projectReservedValues,
   redactUrlQuery,
   resolveEmbeddedValue,
@@ -91,6 +91,7 @@ const sparseResponse: TEmbeddedValueResponse = {
 const makeField = (
   overrides: Partial<TLinkedEmbeddedField["field"]> = {}
 ): TLinkedEmbeddedField["field"] => ({
+  key: null,
   name: "Field",
   source: "ingested",
   dataType: "string",
@@ -1156,6 +1157,68 @@ describe("listReadableFields", () => {
     ]);
   });
 
+  test("one Embedded Data group carries every source and dataType in the definitions' order", () => {
+    // ENG-1853: the pickers draw one group where they used to draw Variables and Hidden Fields, so
+    // this list is the group. A row's source and type decide its icon and its operators at the call
+    // site, but never which group it lands in, and the order is the definitions' own.
+    const fields = listReadableFields({
+      blocks: [],
+      embeddedData: [
+        { field: makeField({ name: "Plan tier" }), link: { storageKey: "plan" } },
+        {
+          field: makeField({ name: "Seats", source: "computed", dataType: "number", defaultValue: 0 }),
+          link: { storageKey: "seats" },
+        },
+        { field: makeField({ name: "Is trial", dataType: "boolean" }), link: { storageKey: "is_trial" } },
+        { field: makeField({ name: "Signed up", dataType: "date" }), link: { storageKey: "signed_up" } },
+      ],
+      reservedEntries: [],
+      contactAttributeKeys: [],
+    });
+
+    expect(fields.embeddedData).toEqual([
+      { key: "plan", label: "Plan tier" },
+      { key: "seats", label: "Seats" },
+      { key: "is_trial", label: "Is trial" },
+      { key: "signed_up", label: "Signed up" },
+    ]);
+  });
+
+  test("a shared field carries its library key as the secondary label, a survey-owned one does not", () => {
+    // The name is workspace-wide prose and the key is the identifier a URL parameter actually
+    // spells; the two are edited independently, so someone who knows only the key needs the key on
+    // the row to find the field at all. A local field has no library key and shows one string.
+    const fields = listReadableFields({
+      blocks: [],
+      embeddedData: [
+        { field: makeField({ name: "Plan tier", key: "plan_tier" }), link: { storageKey: "plan" } },
+        { field: makeField({ name: "Referrer", key: null }), link: { storageKey: "ref" } },
+      ],
+      reservedEntries: [],
+      contactAttributeKeys: [],
+    });
+
+    expect(fields.embeddedData).toEqual([
+      { key: "plan", label: "Plan tier", secondaryLabel: "plan_tier" },
+      { key: "ref", label: "Referrer" },
+    ]);
+    // Absent rather than null, so a consumer can test it with a plain truthiness check.
+    expect(fields.embeddedData[1].secondaryLabel).toBeUndefined();
+  });
+
+  test("the storage key labels a blank-named field and is never the secondary label", () => {
+    // Repeating the storage key under every local field's name would be noise on the common case,
+    // so the fallback is the label itself — one row, one string.
+    const fields = listReadableFields({
+      blocks: [],
+      embeddedData: [{ field: makeField({ name: "   " }), link: { storageKey: "plan" } }],
+      reservedEntries: [],
+      contactAttributeKeys: [],
+    });
+
+    expect(fields.embeddedData).toEqual([{ key: "plan", label: "plan" }]);
+  });
+
   test("question labels come from headlines: HTML stripped, recall flattened, empty falls back to id", () => {
     const fields = listReadableFields({
       blocks,
@@ -1321,7 +1384,7 @@ describe("listReadableFields", () => {
   });
 });
 
-describe("deriveLegacyEmbeddedData", () => {
+describe("embeddedFieldsFromLegacyInput", () => {
   const legacySurvey = {
     variables: [
       { id: "clx0000000000000000000v1", name: "score", type: "number" as const, value: 10 },
@@ -1331,17 +1394,25 @@ describe("deriveLegacyEmbeddedData", () => {
   };
 
   test("maps a variable to a computed field addressed by its existing cuid", () => {
-    const [scorePair] = deriveLegacyEmbeddedData(legacySurvey);
+    const [scorePair] = embeddedFieldsFromLegacyInput(legacySurvey);
     expect(scorePair).toStrictEqual({
-      field: { name: "score", source: "computed", dataType: "number", defaultValue: 10, locked: false },
+      field: {
+        key: null,
+        name: "score",
+        source: "computed",
+        dataType: "number",
+        defaultValue: 10,
+        locked: false,
+      },
       link: { storageKey: "clx0000000000000000000v1" },
     });
   });
 
   test("maps a text variable to a string field with its value as default", () => {
-    const pairs = deriveLegacyEmbeddedData(legacySurvey);
+    const pairs = embeddedFieldsFromLegacyInput(legacySurvey);
     expect(pairs[1]).toStrictEqual({
       field: {
+        key: null,
         name: "plan_name",
         source: "computed",
         dataType: "string",
@@ -1353,10 +1424,11 @@ describe("deriveLegacyEmbeddedData", () => {
   });
 
   test("maps hidden fields to ingested string fields addressed by name, keeping legacy spellings", () => {
-    const pairs = deriveLegacyEmbeddedData(legacySurvey);
+    const pairs = embeddedFieldsFromLegacyInput(legacySurvey);
     expect(pairs.slice(2)).toStrictEqual([
       {
         field: {
+          key: null,
           name: "source_page",
           source: "ingested",
           dataType: "string",
@@ -1367,6 +1439,7 @@ describe("deriveLegacyEmbeddedData", () => {
       },
       {
         field: {
+          key: null,
           name: "Coupon-Code",
           source: "ingested",
           dataType: "string",
@@ -1381,7 +1454,7 @@ describe("deriveLegacyEmbeddedData", () => {
   test("derives declared hidden fields even when hiddenFields is disabled", () => {
     // Recall and logic consult fieldIds alone today — and the link-survey URL path ingests values
     // even when disabled — so deriving must not hide fields that may hold data.
-    const pairs = deriveLegacyEmbeddedData({
+    const pairs = embeddedFieldsFromLegacyInput({
       variables: [],
       hiddenFields: { enabled: false, fieldIds: ["plan"] },
     });
@@ -1390,14 +1463,14 @@ describe("deriveLegacyEmbeddedData", () => {
   });
 
   test("handles absent fieldIds and fully empty declarations", () => {
-    expect(deriveLegacyEmbeddedData({ variables: [], hiddenFields: { enabled: true } })).toEqual([]);
+    expect(embeddedFieldsFromLegacyInput({ variables: [], hiddenFields: { enabled: true } })).toEqual([]);
     expect(
-      deriveLegacyEmbeddedData({ variables: [], hiddenFields: { enabled: false, fieldIds: [] } })
+      embeddedFieldsFromLegacyInput({ variables: [], hiddenFields: { enabled: false, fieldIds: [] } })
     ).toEqual([]);
   });
 
   test("derived pairs resolve end-to-end through resolveEmbeddedValue", () => {
-    const pairs = deriveLegacyEmbeddedData(legacySurvey);
+    const pairs = embeddedFieldsFromLegacyInput(legacySurvey);
 
     // The variable's value arrives under its cuid in response.variables.
     expect(resolveEmbeddedValue(pairs[0], response)).toBe(42);
@@ -1410,7 +1483,7 @@ describe("deriveLegacyEmbeddedData", () => {
   test("derived pairs enumerate through listReadableFields keyed by storageKey", () => {
     const fields = listReadableFields({
       blocks: [],
-      embeddedData: deriveLegacyEmbeddedData(legacySurvey),
+      embeddedData: embeddedFieldsFromLegacyInput(legacySurvey),
       reservedEntries: [],
       contactAttributeKeys: [],
     });
@@ -1425,7 +1498,9 @@ describe("deriveLegacyEmbeddedData", () => {
 });
 
 describe("getSurveyEmbeddedFields", () => {
-  const legacySurvey = {
+  // A survey still carrying the legacy keys beside (or instead of) its rows: the accessor reads only
+  // the rows, since the legacy keys are derived from them at the read seam (ENG-2404).
+  const legacySurvey: TEmbeddedFieldsSurvey & TLegacyEmbeddedFields = {
     variables: [{ id: "clx0000000000000000000v1", name: "score", type: "number" as const, value: 10 }],
     hiddenFields: { enabled: true, fieldIds: ["source_page"] },
   };
@@ -1433,6 +1508,7 @@ describe("getSurveyEmbeddedFields", () => {
   const rows: TLinkedEmbeddedField[] = [
     {
       field: {
+        key: null,
         name: "renamed_score",
         source: "computed",
         dataType: "number",
@@ -1447,23 +1523,26 @@ describe("getSurveyEmbeddedFields", () => {
     expect(getSurveyEmbeddedFields({ ...legacySurvey, embeddedFields: rows })).toStrictEqual(rows);
   });
 
-  test("reports nothing when the select omitted the join, rather than reading the columns", () => {
+  test("reports nothing when the select omitted the join, rather than reading the legacy keys", () => {
     // ENG-2412 removed the legacy fallback: the rows are the whole answer. The consequence is that
     // every survey select reaching a reader has to carry `selectSurveyEmbeddedDataLinks` — one that
     // does not makes the survey read as having no Embedded Data at all.
     expect(getSurveyEmbeddedFields(legacySurvey)).toStrictEqual([]);
     expect(getSurveyEmbeddedFields({ ...legacySurvey, embeddedFields: null })).toStrictEqual([]);
-    expect(deriveLegacyEmbeddedData(legacySurvey)).not.toStrictEqual([]);
+    expect(embeddedFieldsFromLegacyInput(legacySurvey)).not.toStrictEqual([]);
   });
 
   test("an empty row list means no fields, so deleting a survey's rows removes them", () => {
-    // Previously this fell back to the columns, which is why deleting a survey's rows made its
+    // Previously this fell back to the legacy columns, which is why deleting a survey's rows made its
     // fields reappear. Now they disappear, which is what the tables being the source of truth means.
     expect(getSurveyEmbeddedFields({ ...legacySurvey, embeddedFields: [] })).toStrictEqual([]);
   });
 
   test("a survey with no fields at all answers [] through either path", () => {
-    const empty = { variables: [], hiddenFields: { enabled: false, fieldIds: [] } };
+    const empty: TEmbeddedFieldsSurvey & TLegacyEmbeddedFields = {
+      variables: [],
+      hiddenFields: { enabled: false, fieldIds: [] },
+    };
     expect(getSurveyEmbeddedFields(empty)).toEqual([]);
     expect(getSurveyEmbeddedFields({ ...empty, embeddedFields: [] })).toEqual([]);
   });
@@ -1475,6 +1554,7 @@ describe("getSurveyEmbeddedFields", () => {
         ...rows,
         {
           field: {
+            key: null,
             name: "utm_source",
             source: "ingested" as const,
             dataType: "string" as const,
@@ -1485,6 +1565,7 @@ describe("getSurveyEmbeddedFields", () => {
         },
         {
           field: {
+            key: null,
             name: "plan",
             source: "ingested" as const,
             dataType: "string" as const,
@@ -1512,7 +1593,14 @@ describe("getSurveyEmbeddedFields", () => {
 
 describe("ZLinkedEmbeddedField mirrors TLinkedEmbeddedField", () => {
   const pair: TLinkedEmbeddedField = {
-    field: { name: "score", source: "computed", dataType: "number", defaultValue: 10, locked: false },
+    field: {
+      key: null,
+      name: "score",
+      source: "computed",
+      dataType: "number",
+      defaultValue: 10,
+      locked: false,
+    },
     link: { storageKey: "clx0000000000000000000v1" },
   };
 
@@ -1525,8 +1613,8 @@ describe("ZLinkedEmbeddedField mirrors TLinkedEmbeddedField", () => {
     expect(asSchemaType).toStrictEqual(pair);
   });
 
-  test("every field deriveLegacyEmbeddedData produces round-trips through the schema", () => {
-    const derived = deriveLegacyEmbeddedData({
+  test("every field embeddedFieldsFromLegacyInput produces round-trips through the schema", () => {
+    const derived = embeddedFieldsFromLegacyInput({
       variables: [
         { id: "clx0000000000000000000v1", name: "score", type: "number", value: 10 },
         { id: "clx0000000000000000000v3", name: "plan_name", type: "text", value: "basic" },
@@ -1554,59 +1642,6 @@ describe("ZLinkedEmbeddedField mirrors TLinkedEmbeddedField", () => {
   });
 });
 
-describe("getDeclaredEmbeddedFields", () => {
-  const legacySurvey = {
-    variables: [{ id: "clx0000000000000000000v1", name: "score", type: "number" as const, value: 10 }],
-    hiddenFields: { enabled: true, fieldIds: ["source_page"] },
-  };
-
-  const staleRows: TLinkedEmbeddedField[] = [
-    {
-      field: { name: "old_name", source: "computed", dataType: "string", defaultValue: "", locked: false },
-      link: { storageKey: "clx0000000000000000000v1" },
-    },
-  ];
-
-  test("ignores the stored rows and answers from the declarations", () => {
-    // The editor's working copy carries the rows as of the last save, so a rename or a newly added
-    // field is only visible through this accessor.
-    expect(getDeclaredEmbeddedFields({ ...legacySurvey, embeddedFields: staleRows })).toStrictEqual(
-      deriveLegacyEmbeddedData(legacySurvey)
-    );
-    expect(getSurveyEmbeddedFields({ ...legacySurvey, embeddedFields: staleRows })).toStrictEqual(staleRows);
-  });
-
-  test("partitions the declarations the same way the stored accessor does", () => {
-    expect(getDeclaredComputedFields(legacySurvey).map(({ field }) => field.name)).toStrictEqual(["score"]);
-    expect(getDeclaredIngestedStorageKeys(legacySurvey)).toStrictEqual(["source_page"]);
-  });
-
-  test("still answers from the declarations when the rows are a superset", () => {
-    // A row for a field the survey no longer declares: the stored accessor keeps it, the declared
-    // accessor does not. Asserted with a genuinely differing pair rather than two runs of the same
-    // derivation, which could not fail.
-    const withExtraRow = {
-      ...legacySurvey,
-      embeddedFields: [
-        ...deriveLegacyEmbeddedData(legacySurvey),
-        {
-          field: {
-            name: "removed",
-            source: "ingested" as const,
-            dataType: "string" as const,
-            defaultValue: null,
-            locked: false,
-          },
-          link: { storageKey: "removed" },
-        },
-      ],
-    };
-
-    expect(getDeclaredIngestedStorageKeys(withExtraRow)).toStrictEqual(["source_page"]);
-    expect(getIngestedStorageKeys(withExtraRow)).toStrictEqual(["source_page", "removed"]);
-  });
-});
-
 /**
  * The logic engines' read of a computed field. Lives here because
  * `packages/surveys/src/lib/logic.ts` and `apps/web/lib/surveyLogic/utils.ts` are near-copies and
@@ -1615,7 +1650,14 @@ describe("getDeclaredEmbeddedFields", () => {
 describe("getLogicVariableValue", () => {
   const computedField = (storageKey: string, dataType: "number" | "string", defaultValue: number | string) =>
     ({
-      field: { name: storageKey, source: "computed" as const, dataType, defaultValue, locked: false },
+      field: {
+        key: null,
+        name: storageKey,
+        source: "computed" as const,
+        dataType,
+        defaultValue,
+        locked: false,
+      },
       link: { storageKey },
     }) satisfies TLinkedEmbeddedField;
 
@@ -1659,7 +1701,14 @@ describe("getLogicVariableValue", () => {
 describe("getComputedFieldDataType", () => {
   const fields: TLinkedEmbeddedField[] = [
     {
-      field: { name: "score", source: "computed", dataType: "number", defaultValue: 5, locked: false },
+      field: {
+        key: null,
+        name: "score",
+        source: "computed",
+        dataType: "number",
+        defaultValue: 5,
+        locked: false,
+      },
       link: { storageKey: "score" },
     },
   ];
@@ -1973,5 +2022,112 @@ describe("listMidSurveyReservedEntries", () => {
 
     expect(entry?.dataType).toBe("string");
     expect(entry?.availability).not.toBe("server");
+  });
+});
+
+describe("projectIngestedDefaults", () => {
+  const surveyWith = (...fields: TLinkedEmbeddedField["field"][]) => ({
+    embeddedFields: fields.map((field, index) => ({ field, link: { storageKey: `k${index}` } })),
+  });
+
+  test("a field nothing arrived for answers with its default", () => {
+    // The regression (ENG-3266 follow-up): ingest never writes `defaultValue`, and nothing read it
+    // back, so a recall token rendered its own `fallback:` text and a logic condition read unset.
+    const survey = surveyWith(makeField({ dataType: "number", defaultValue: 20 }));
+
+    expect(projectIngestedDefaults(survey, {})).toStrictEqual({ k0: 20 });
+  });
+
+  test("a supplied value wins, including the ones that look empty", () => {
+    const survey = surveyWith(
+      makeField({ dataType: "number", defaultValue: 20 }),
+      makeField({ dataType: "string", defaultValue: "fallback" })
+    );
+
+    // `0` and `""` are values the respondent supplied; only the caller's merge order can protect
+    // them, and it only can if this function leaves their keys out.
+    expect(projectIngestedDefaults(survey, { k0: 0, k1: "" })).toStrictEqual({});
+  });
+
+  test("a stored value that does not fit the type resolves to the default", () => {
+    // What `?pts=name` leaves behind: ingest keeps it verbatim and flags `coercion_failed`, and the
+    // survey should show the declared fallback rather than the text that failed to be a number.
+    const survey = surveyWith(makeField({ dataType: "number", defaultValue: 20 }));
+
+    expect(projectIngestedDefaults(survey, { k0: "name" })).toStrictEqual({ k0: 20 });
+  });
+
+  test("a field with no default contributes no key", () => {
+    const survey = surveyWith(makeField({ dataType: "number" }));
+
+    expect(projectIngestedDefaults(survey, {})).toStrictEqual({});
+  });
+
+  test("a boolean default is stringified the way ingest stores one", () => {
+    // `TResponseData` has no boolean member, and the read seams downstream compare on `"true"`.
+    const survey = surveyWith(makeField({ dataType: "boolean", defaultValue: true }));
+
+    expect(projectIngestedDefaults(survey, {})).toStrictEqual({ k0: "true" });
+  });
+
+  test("a locked field answers with its default even when storage holds a value", () => {
+    // Locking is retroactive: a field locked after its survey collected responses has values that
+    // were legitimate when they arrived, and `resolveEmbeddedValue` answers with the default for
+    // them. Leaving `locked` to `applyIngestContract` alone would disagree on exactly that survey.
+    const survey = surveyWith(makeField({ dataType: "number", defaultValue: 20, locked: true }));
+
+    expect(projectIngestedDefaults(survey, { k0: 99 })).toStrictEqual({ k0: 20 });
+  });
+
+  test("computed fields are not this function's business", () => {
+    // They are seeded from their own definitions into `variables`, which is a different map.
+    const survey = surveyWith(makeField({ source: "computed", dataType: "number", defaultValue: 7 }));
+
+    expect(projectIngestedDefaults(survey, {})).toStrictEqual({});
+  });
+});
+
+describe("buildEmbeddedLookup", () => {
+  const survey = {
+    embeddedFields: [
+      { field: makeField({ dataType: "number", defaultValue: 20 }), link: { storageKey: "pts" } },
+    ],
+  };
+
+  test("the response beats the default", () => {
+    expect(buildEmbeddedLookup(survey, {}, { pts: 5 })).toStrictEqual({ pts: 5 });
+  });
+
+  test("the default answers when the response has nothing", () => {
+    expect(buildEmbeddedLookup(survey, {}, {})).toStrictEqual({ pts: 20 });
+  });
+
+  test("the response beats a reserved entry of the same name", () => {
+    // The layer order this function exists to pin: flipping any pair here is a regression that used
+    // to live in two identical spreads inside a component, where nothing could fail on it.
+    expect(buildEmbeddedLookup(survey, { url: "reserved" }, { url: "answered", pts: 5 })).toStrictEqual({
+      url: "answered",
+      pts: 5,
+    });
+  });
+
+  test("a stored value that does not fit the type loses to the default", () => {
+    // What `?pts=name` leaves behind. `projectIngestedDefaults` gets this right on its own, so the
+    // only thing that can break it is the merge: the response layer carries the uncoercible value
+    // too, and spreading it last puts `"name"` back over the 20 the default just supplied.
+    expect(buildEmbeddedLookup(survey, {}, { pts: "name" })).toStrictEqual({ pts: 20 });
+  });
+
+  test("a supplied value its own type accepts is an answer, falsy ones included", () => {
+    // The falsy cases the last spread must not overwrite — and they are per type, not universal:
+    // `0` is a number, `""` is a string, and each coerces under its own field, so neither emits a
+    // default. An `""` under a *number* field is not this case: it does not coerce, and the resolver
+    // answers with the default for it, which is what the row above pins.
+    const text = {
+      embeddedFields: [{ field: makeField({ defaultValue: "fallback" }), link: { storageKey: "who" } }],
+    };
+
+    expect(buildEmbeddedLookup(survey, { pts: 7 }, { pts: 0 })).toStrictEqual({ pts: 0 });
+    expect(buildEmbeddedLookup(text, {}, { who: "" })).toStrictEqual({ who: "" });
   });
 });

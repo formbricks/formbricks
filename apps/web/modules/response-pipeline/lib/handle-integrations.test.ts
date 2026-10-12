@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
-import { deriveLegacyEmbeddedData } from "@formbricks/types/embedded-data-resolver";
+import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
 import {
   TIntegrationAirtable,
   TIntegrationAirtableConfig,
@@ -148,7 +148,7 @@ const mockSurvey = {
   },
   variables: [{ id: variableId, name: "Variable 1" } as unknown as TSurvey["variables"][0]],
   // The rows are what the accessors read since ENG-2412; a real survey read carries both.
-  embeddedFields: deriveLegacyEmbeddedData({
+  embeddedFields: embeddedFieldsFromLegacyInput({
     variables: [{ id: variableId, name: "Variable 1", type: "text", value: "" }],
     hiddenFields: { enabled: true, fieldIds: [hiddenFieldId] },
   }),

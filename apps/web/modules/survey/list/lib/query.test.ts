@@ -17,6 +17,9 @@ const surveyA = {
   completedResponseCount: 0,
   creator: { name: "Alice" },
   singleUse: null,
+  visibility: "workspace" as const,
+  owner: { name: "Test User" },
+  access: { via: "workspace" as const, canManageVisibility: false },
 };
 
 const surveyB = {

@@ -166,7 +166,7 @@ test.describe("Survey overview", () => {
     // Edit is a Link, not a button; its onClick preventDefaults and opens the caution dialog instead
     // of navigating, precisely because the survey has responses.
     await page.getByRole("link", { name: "Edit", exact: true }).click();
-    await expect(page.getByText("Edit a published survey?")).toBeVisible();
+    await expect(page.getByText("Edit an active survey?")).toBeVisible();
   });
 
   test("loads surveys, applies filters and sort, and paginates with load more", async ({ page, users }) => {

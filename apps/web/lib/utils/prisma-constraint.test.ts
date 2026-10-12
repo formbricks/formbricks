@@ -21,6 +21,23 @@ const adapterP2002 = (fields: string[]): PrismaClientKnownRequestError =>
     },
   });
 
+// The shape @prisma/adapter-pg 7.10+ produces (verified against a real P2002, prisma#29587): the
+// constraint name and table instead of the column list.
+const indexP2002 = (index: string, table?: string): PrismaClientKnownRequestError =>
+  knownError("P2002", {
+    modelName: table,
+    driverAdapterError: {
+      name: "DriverAdapterError",
+      cause: {
+        kind: "UniqueConstraintViolation",
+        originalCode: "23505",
+        originalMessage: `duplicate key value violates unique constraint "${index}"`,
+        constraint: { index },
+        ...(table !== undefined && { table }),
+      },
+    },
+  });
+
 // The legacy / library-engine shape (top-level target). Still supported as a fallback.
 const legacyP2002 = (target: string[]): PrismaClientKnownRequestError => knownError("P2002", { target });
 
@@ -39,6 +56,72 @@ describe("getUniqueConstraintFields", () => {
     expect(adapterP2002(["email"]).meta?.target).toBeUndefined(); // guards the premise of the bug
     expect(getUniqueConstraintFields(adapterP2002(["email"]))).toEqual(["email"]);
     expect(getUniqueConstraintFields(adapterP2002(["responseId", "tagId"]))).toEqual(["responseId", "tagId"]);
+  });
+
+  describe("adapter-pg 7.10+ shape (constraint name instead of columns)", () => {
+    test("parses Prisma's default `${table}_${columns}_key` name, preserving column order", () => {
+      expect(getUniqueConstraintFields(indexP2002("User_email_key", "User"))).toEqual(["email"]);
+      expect(getUniqueConstraintFields(indexP2002("Response_surveyId_singleUseId_key", "Response"))).toEqual([
+        "surveyId",
+        "singleUseId",
+      ]);
+      // ActionClass callers read fields[0].
+      expect(
+        getUniqueConstraintFields(indexP2002("ActionClass_name_workspaceId_key", "ActionClass"))[0]
+      ).toBe("name");
+    });
+
+    test("resolves names the default rule cannot round-trip from the explicit map", () => {
+      expect(getUniqueConstraintFields(indexP2002("TagsOnResponses_pkey", "TagsOnResponses"))).toEqual([
+        "responseId",
+        "tagId",
+      ]);
+      expect(
+        getUniqueConstraintFields(indexP2002("PasswordResetToken_token_hash_key", "PasswordResetToken"))
+      ).toEqual(["token_hash"]);
+      expect(
+        getUniqueConstraintFields(
+          indexP2002(
+            "FeedbackSourceFieldMapping_workspaceId_feedbackSourceId_sourceF",
+            "FeedbackSourceFieldMapping"
+          )
+        )
+      ).toEqual(["workspaceId", "feedback_source_id", "source_field_id", "target_field_id"]);
+    });
+
+    test("maps the survey projection primary key to scope", () => {
+      expect(
+        getUniqueConstraintFields(
+          indexP2002("AuthzedProjectionScopeState_pkey", "AuthzedProjectionScopeState")
+        )
+      ).toEqual(["scope"]);
+    });
+
+    test("maps a single-column primary key to id", () => {
+      expect(getUniqueConstraintFields(indexP2002("Survey_pkey", "Survey"))).toEqual(["id"]);
+    });
+
+    test("returns [] for a name it cannot attribute to the reported table", () => {
+      expect(getUniqueConstraintFields(indexP2002("some_custom_index", "User"))).toEqual([]);
+      expect(getUniqueConstraintFields(indexP2002("Other_email_key", "User"))).toEqual([]);
+      expect(getUniqueConstraintFields(indexP2002("User__key", "User"))).toEqual([]);
+      expect(getUniqueConstraintFields(indexP2002("User_a__b_key", "User"))).toEqual([]);
+      // A name colliding with an Object.prototype member must not resolve through the prototype.
+      expect(getUniqueConstraintFields(indexP2002("constructor", "User"))).toEqual([]);
+      expect(getUniqueConstraintFields(indexP2002("__proto__", "User"))).toEqual([]);
+      // Without a table only the explicit map can resolve a name.
+      expect(getUniqueConstraintFields(indexP2002("User_email_key"))).toEqual([]);
+      expect(getUniqueConstraintFields(indexP2002("TagsOnResponses_pkey"))).toEqual(["responseId", "tagId"]);
+    });
+
+    test("returns a copy, so a caller cannot mutate the map", () => {
+      const fields = getUniqueConstraintFields(indexP2002("TagsOnResponses_pkey", "TagsOnResponses"));
+      fields.push("mutated");
+      expect(getUniqueConstraintFields(indexP2002("TagsOnResponses_pkey", "TagsOnResponses"))).toEqual([
+        "responseId",
+        "tagId",
+      ]);
+    });
   });
 
   test("extracts columns from the legacy top-level meta.target shape", () => {

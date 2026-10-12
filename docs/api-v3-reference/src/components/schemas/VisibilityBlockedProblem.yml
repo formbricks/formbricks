@@ -1,0 +1,17 @@
+allOf:
+  - $ref: ./Problem.yml
+  - type: object
+    required:
+      - details
+    properties:
+      details:
+        type: object
+        required:
+          - blockers
+        properties:
+          blockers:
+            type: array
+            minItems: 1
+            items:
+              $ref: ./SurveyVisibilityBlocker.yml
+            description: The same list `GET …/visibility` returns as `blockers[]`.

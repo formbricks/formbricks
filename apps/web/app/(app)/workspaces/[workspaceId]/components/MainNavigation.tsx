@@ -58,7 +58,6 @@ interface NavigationProps {
   isNoLicense: boolean;
   isAccessControlAllowed: boolean;
   responseCount: number;
-  newTrialBannerVariant: string | boolean;
   isFormbricksSurveysConfigured: boolean;
   // Whole days left in the trial, or null when there is no trial to count down. Computed by the
   // server layout: deriving it here would mean reading `Date.now()` during render, which diverges
@@ -69,9 +68,8 @@ interface NavigationProps {
 /**
  * A nav section header carrying a Beta badge.
  *
- * Analyze and Act are both pre-1.0 surfaces, and the badge is what tells someone the difference
- * between "this is finished" and "this is early". Extracted rather than duplicated so the two
- * sections cannot drift into looking subtly different from each other.
+ * Act is still a pre-1.0 surface, and the badge is what tells someone the difference between
+ * "this is finished" and "this is early". Analyze graduated out of beta and no longer carries it.
  */
 const sectionLabelWithBeta = (label: React.ReactNode) => (
   <span className="inline-flex items-center gap-2">
@@ -136,7 +134,6 @@ export const MainNavigation = ({
   isNoLicense,
   isAccessControlAllowed,
   responseCount,
-  newTrialBannerVariant,
   isFormbricksSurveysConfigured,
   trialDaysRemaining,
 }: Readonly<NavigationProps>) => {
@@ -206,7 +203,7 @@ export const MainNavigation = ({
         id: "unify-feedback",
         // Same policy as "Ask" above: product section labels stay English in every locale.
         // Was "Unify" until ENG-2742 settled on Ask / Analyze / Act as the three pillars.
-        name: sectionLabelWithBeta("Analyze"),
+        name: "Analyze",
         items: [
           {
             name: t("workspace.unify.feedback_data"),
@@ -498,7 +495,6 @@ export const MainNavigation = ({
                 isDevelopment={isDevelopment}
                 latestVersion={latestVersion}
                 trialDaysRemaining={trialDaysRemaining}
-                newTrialBannerVariant={newTrialBannerVariant}
                 organization={organization}
                 responseCount={responseCount}
               />

@@ -177,10 +177,10 @@ const writeSnapshot = async (
   const updateGroups: TAuthzedRelationshipUpdate[][] = [];
 
   for (const apiKey of snapshot) {
-    updateGroups.push([createParentUpdate(apiKey.id, apiKey.organizationId)]);
-    updateGroups.push([
-      ...createOrganizationAccessUpdates(apiKey.id, apiKey.organizationId, apiKey.organizationAccess),
-    ]);
+    updateGroups.push(
+      [createParentUpdate(apiKey.id, apiKey.organizationId)],
+      [...createOrganizationAccessUpdates(apiKey.id, apiKey.organizationId, apiKey.organizationAccess)]
+    );
 
     const currentGrants = new Map(
       apiKey.apiKeyWorkspaces.map((grant) => [grant.workspaceId, grant.permission])
@@ -221,15 +221,17 @@ const writeSnapshot = async (
       continue;
     }
 
-    deletionFilters.push({ resourceId: apiKeyId, resourceType: "api_key" });
-    deletionFilters.push({
-      resourceType: "organization",
-      subject: { objectId: apiKeyId, objectType: "api_key" },
-    });
-    deletionFilters.push({
-      resourceType: "workspace",
-      subject: { objectId: apiKeyId, objectType: "api_key" },
-    });
+    deletionFilters.push(
+      { resourceId: apiKeyId, resourceType: "api_key" },
+      {
+        resourceType: "organization",
+        subject: { objectId: apiKeyId, objectType: "api_key" },
+      },
+      {
+        resourceType: "workspace",
+        subject: { objectId: apiKeyId, objectType: "api_key" },
+      }
+    );
   }
 
   await deleteRelationshipsInBoundedBatches(client, deletionFilters);

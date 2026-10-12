@@ -218,9 +218,13 @@ describe("hub service", () => {
       expect(result.error?.message).toContain("HUB_API_KEY");
     });
 
-    test("returns data on success", async () => {
+    test("preserves taxonomy included on the Hub single-record response", async () => {
       useClient();
-      const record = { id: "rec-1", field_id: "f1" };
+      const record = {
+        id: "rec-1",
+        field_id: "f1",
+        taxonomy: { status: "unclassified", run_id: "run-1", path: [] },
+      };
       vi.mocked(hub.getFeedbackRecord).mockResolvedValue(resolved(record));
 
       const result = await retrieveFeedbackRecord("rec-1");

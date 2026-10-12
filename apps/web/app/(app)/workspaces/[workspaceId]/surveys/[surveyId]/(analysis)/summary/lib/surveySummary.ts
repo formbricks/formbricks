@@ -4,7 +4,8 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
-import { getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
+import { labelEmbeddedFields } from "@formbricks/types/embedded-data-label";
+import { getIngestedEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TResponseContact,
@@ -38,6 +39,7 @@ import { buildWhereClause } from "@/lib/response/where-clause";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
+import { displayEmbeddedValue } from "@/modules/embedded-data/lib/value-display";
 import { convertFloatTo2Decimal } from "./utils";
 
 interface TSurveySummaryResponse {
@@ -986,11 +988,13 @@ export const getElementSummary = async (
     }
   }
 
-  getIngestedStorageKeys(survey).forEach((hiddenFieldId) => {
+  // ENG-3233: the card is titled by the field's name and the samples are read by its storage key,
+  // which stays on `id` — the two are the same string only for a field nobody renamed.
+  labelEmbeddedFields(getIngestedEmbeddedFields(survey)).forEach(({ link, label }) => {
     let values: TSurveyElementSummaryHiddenFields["samples"] = [];
     responses.forEach((response) => {
-      const answer = response.data[hiddenFieldId];
-      if (answer && typeof answer === "string") {
+      const answer = displayEmbeddedValue(response.data[link.storageKey]);
+      if (answer) {
         values.push({
           updatedAt: response.updatedAt,
           value: answer,
@@ -1002,7 +1006,8 @@ export const getElementSummary = async (
 
     summary.push({
       type: "hiddenField",
-      id: hiddenFieldId,
+      id: link.storageKey,
+      label,
       responseCount: values.length,
       samples: values.slice(0, VALUES_LIMIT),
     });

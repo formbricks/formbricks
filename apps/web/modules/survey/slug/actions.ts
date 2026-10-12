@@ -24,9 +24,9 @@ export const updateSurveySlugAction = authenticatedActionClient
     }
 
     const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-      type: "workspace",
-      id: workspaceId,
+    await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
+      type: "survey",
+      id: parsedInput.surveyId,
     });
     await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 
@@ -45,9 +45,9 @@ export const removeSurveySlugAction = authenticatedActionClient
     }
 
     const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-      type: "workspace",
-      id: workspaceId,
+    await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
+      type: "survey",
+      id: parsedInput.surveyId,
     });
     await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
 

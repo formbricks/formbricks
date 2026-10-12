@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
-import { classifyWorkflowSaveError, getWorkflowApiErrorMessage } from "@/modules/ee/workflows/lib/api-error";
+import {
+  classifyWorkflowSaveError,
+  getWorkflowApiErrorMessage,
+  isTriggerSurveyRestrictedRefusal,
+} from "@/modules/ee/workflows/lib/api-error";
 
 const rejected = (detail: string) => new V3ApiError({ status: 422, detail });
 const gatewayError = (status: number) => new V3ApiError({ status, detail: "Bad Gateway" });
@@ -58,5 +62,35 @@ describe("classifyWorkflowSaveError", () => {
     ["a 499", 499],
   ])("treats %s as a refusal that must not auto-retry", (_label, status) => {
     expect(classifyWorkflowSaveError(new V3ApiError({ status, detail: "Nope." }))).toBe("rejected");
+  });
+});
+
+describe("isTriggerSurveyRestrictedRefusal", () => {
+  const notExecutable = (reason: string, name = "definition.trigger.config.surveyId") =>
+    new V3ApiError({ status: 422, detail: "Workflow is not executable", invalid_params: [{ name, reason }] });
+
+  test("recognises the pre-flight's refusal of a restricted trigger survey", () => {
+    expect(
+      isTriggerSurveyRestrictedRefusal(
+        notExecutable(
+          "The referenced survey is not visible to the whole workspace, so workflows cannot use it."
+        )
+      )
+    ).toBe(true);
+  });
+
+  test("ignores other refusals of the same field, other fields, and errors that never reached the API", () => {
+    expect(
+      isTriggerSurveyRestrictedRefusal(
+        notExecutable("The referenced survey does not exist in this workspace.")
+      )
+    ).toBe(false);
+    expect(
+      isTriggerSurveyRestrictedRefusal(
+        notExecutable("not visible to the whole workspace", "definition.trigger.config.endingCardIds")
+      )
+    ).toBe(false);
+    expect(isTriggerSurveyRestrictedRefusal(new Error("Failed to fetch"))).toBe(false);
+    expect(isTriggerSurveyRestrictedRefusal(gatewayError(502))).toBe(false);
   });
 });

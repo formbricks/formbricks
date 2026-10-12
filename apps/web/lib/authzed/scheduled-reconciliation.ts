@@ -70,3 +70,46 @@ export const processAuthzedScheduledReconciliationJob = async (): Promise<void> 
   // covered by `reconciled`; replaying it anyway is idempotent and strictly better than denying.
   if (result.status === "reconciled") await replayAuthzedOutboxDeadLetters();
 };
+
+/**
+ * Daily survey projection audit (ENG-3282). Dry run only — metrics and a warning, never a write: the
+ * outbox converges surveys continuously, and a repair is an operator's `--scope=survey --apply`. It
+ * leaves dead letters alone; a survey event is not a revocation-guard input worth replaying blind.
+ */
+export const processAuthzedSurveyAuditJob = async (): Promise<void> => {
+  if (!isAuthzedEnabled()) return;
+  const result = await runAuthzedBackfill(
+    {
+      maxPrune: AUTHZED_MAX_PRUNED_RESOURCES_PER_RUN,
+      mode: "dry_run",
+      prune: false,
+      scope: { kind: "survey" },
+    },
+    { apply: createAuthzedBackfillNoopApply(), client: getAuthzedClient() }
+  );
+  const drift =
+    result.counters.missing +
+    result.counters.mismatchedPermissions +
+    result.counters.mismatchedParents +
+    result.counters.orphaned;
+
+  recordAuthzedReconciliationAudit({
+    drift,
+    failures: result.counters.failed,
+    scope: "survey",
+    status: result.status,
+  });
+
+  if (result.status !== "reconciled") {
+    logger.warn(
+      {
+        component: "authzed",
+        drift,
+        failures: result.counters.failed,
+        operation: "scheduled_survey_audit",
+        status: result.status,
+      },
+      "Scheduled AuthZed survey audit found drift"
+    );
+  }
+};

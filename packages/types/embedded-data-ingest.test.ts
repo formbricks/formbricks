@@ -7,6 +7,7 @@ import {
   normalizeIngestedValue,
 } from "./embedded-data-ingest";
 import { type TLinkedEmbeddedField, coerceToEmbeddedDataType } from "./embedded-data-resolver";
+import { ZResponseDataValue } from "./responses";
 
 const ingestedField = ({
   storageKey,
@@ -17,12 +18,19 @@ const ingestedField = ({
   dataType?: TEmbeddedDataType;
   locked?: boolean;
 }): TLinkedEmbeddedField => ({
-  field: { name: storageKey, source: "ingested", dataType, defaultValue: null, locked },
+  field: { key: null, name: storageKey, source: "ingested", dataType, defaultValue: null, locked },
   link: { storageKey },
 });
 
 const computedField = (storageKey: string): TLinkedEmbeddedField => ({
-  field: { name: storageKey, source: "computed", dataType: "string", defaultValue: null, locked: false },
+  field: {
+    key: null,
+    name: storageKey,
+    source: "computed",
+    dataType: "string",
+    defaultValue: null,
+    locked: false,
+  },
   link: { storageKey },
 });
 
@@ -144,6 +152,29 @@ describe("normalizeIngestedValue", () => {
         flag: "coercion_failed",
       });
       expect(normalizeIngestedValue(2, "boolean")).toEqual({ value: "2", flag: "coercion_failed" });
+    });
+
+    test("the stored form is a legal ZResponseDataValue that reads back as the boolean it came from", () => {
+      // The whole round trip in one assertion, because every consumer downstream of ingest — the
+      // filter, the export, the logic engines — compares against the *stored* spelling rather than
+      // against a boolean (ENG-3231). Two things have to hold at once for that to be safe: the
+      // stored value must fit the column's schema (so no reader has to learn a fourth value shape),
+      // and the read seam must turn it back into the boolean the caller sent.
+      for (const [incoming, expected] of [
+        [true, true],
+        ["1", true],
+        ["yes", true],
+        [false, false],
+        ["off", false],
+        [0, false],
+      ] as const) {
+        const normalized = normalizeIngestedValue(incoming, "boolean");
+
+        expect(normalized?.flag).toBeUndefined();
+        expect(normalized?.value).toBe(expected ? "true" : "false");
+        expect(ZResponseDataValue.safeParse(normalized?.value).success).toBe(true);
+        expect(coerceToEmbeddedDataType(normalized?.value, "boolean")).toBe(expected);
+      }
     });
   });
 
@@ -487,19 +518,20 @@ describe("applyIngestContract", () => {
     });
 
     test("measures UTF-8 bytes, not code units, and cuts on a code-point boundary", () => {
-      // "😀" is 4 UTF-8 bytes and 2 UTF-16 units, so a byte budget of 4n+2 has to stop short of one.
-      const emoji = "😀".repeat(MAX_INGESTED_VALUE_BYTES); // 4× the budget in bytes
+      // "😀" is 4 UTF-8 bytes and 2 UTF-16 units. The one-byte prefix leaves a budget that is not a
+      // multiple of 4, so the cut lands inside an emoji and has to stop short of it.
+      const value = `a${"😀".repeat(MAX_INGESTED_VALUE_BYTES)}`; // ~4× the budget in bytes
       const result = applyIngestContract({
-        incoming: { note: emoji },
+        incoming: { note: value },
         ingestedFields: [ingestedField({ storageKey: "note" })],
         elementIds: [],
       });
 
       const stored = result.data.note as string;
       expect(new TextEncoder().encode(stored).length).toBeLessThanOrEqual(MAX_INGESTED_VALUE_BYTES);
-      expect(stored).toBe("😀".repeat(MAX_INGESTED_VALUE_BYTES / 4));
+      expect(stored).toBe(`a${"😀".repeat(Math.floor((MAX_INGESTED_VALUE_BYTES - 1) / 4))}`);
       // No lone surrogate survived the cut.
-      expect(stored).toEqual([...stored].join(""));
+      expect(stored).not.toMatch(/\p{Surrogate}/u);
       expect(result.flags).toEqual([{ key: "note", reason: "truncated" }]);
     });
 

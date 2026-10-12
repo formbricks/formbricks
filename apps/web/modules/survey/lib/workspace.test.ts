@@ -84,9 +84,22 @@ describe("getWorkspaceWithTeamIds", () => {
           },
         },
       },
+      // ENG-2949: never ships custom CSS to the client props this feeds.
+      omit: { customCss: true, customCssPrevious: true },
     });
 
     expect(workspace).toEqual(mockWorkspaceWithTeam);
+  });
+
+  test("drops stored theme values that could add CSS before the editor copies them", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspacePrisma,
+      styling: { allowStyleOverwrite: true, fontFamily: "Inter's Font", buttonHeight: "40px" },
+    } as unknown as Workspace);
+
+    const workspace = await getWorkspaceWithTeamIds(workspaceId);
+
+    expect(workspace?.styling).toEqual({ allowStyleOverwrite: true, buttonHeight: "40px" });
   });
 
   test("should return null when workspace is not found", async () => {
@@ -105,6 +118,8 @@ describe("getWorkspaceWithTeamIds", () => {
           },
         },
       },
+      // ENG-2949: never ships custom CSS to the client props this feeds.
+      omit: { customCss: true, customCssPrevious: true },
     });
     expect(workspace).toBeNull();
   });

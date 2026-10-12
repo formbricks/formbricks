@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ZColor, ZOverlay, ZPlacement } from "./common";
+import { ZOverlayColor, ZOverlayOpacity } from "./overlay";
 import { ZBaseStyling, ZLogo } from "./styling";
 
 export const ZWorkspaceStyling = ZBaseStyling.extend({
@@ -83,10 +84,18 @@ export const ZWorkspace = z.object({
   placement: ZPlacement,
   clickOutsideClose: z.boolean(),
   overlay: ZOverlay,
+  // Nullish so workspace objects built without them still type-check. null = the preset.
+  overlayColor: ZOverlayColor.nullish(),
+  overlayOpacity: ZOverlayOpacity.nullish(),
   languages: z.array(ZLanguage),
   appSetupCompleted: z.boolean(),
   logo: ZLogo.nullish(),
   customHeadScripts: z.string().nullish(),
+  // ENG-2949: workspace custom CSS is deliberately NOT part of this type. The stored value (source,
+  // compiled output and a previous revision) can be ~400 KB and must never ride along on the workspace
+  // objects client components receive; read it through `getWorkspaceCustomCssRecord`
+  // (`modules/custom-css/lib/service`), deliver it through `toDeliveredCustomCss`. It is never writable
+  // through `ZWorkspaceUpdateInput` either.
 });
 
 export type TWorkspace = z.infer<typeof ZWorkspace>;
@@ -110,6 +119,9 @@ export const ZWorkspaceUpdateInput = z.object({
   placement: ZPlacement.optional(),
   clickOutsideClose: z.boolean().optional(),
   overlay: ZOverlay.optional(),
+  // null clears the custom value back to the preset.
+  overlayColor: ZOverlayColor.nullish(),
+  overlayOpacity: ZOverlayOpacity.nullish(),
   styling: ZWorkspaceStyling.optional(),
   logo: ZLogo.optional(),
   // Optimistic-concurrency baseline: the `updatedAt` the caller loaded. Only surfaces that edit a

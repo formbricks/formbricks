@@ -394,6 +394,9 @@ export const ZV3FeedbackRecordCreateBodyFields = z.object({
         "a chart groups by. NOT filterable or searchable through this API — metadata is read back " +
         "with a record, so narrowing by a metadata value means fetching and filtering client-side. " +
         "On update the whole object is REPLACED, not merged, so send every key you want to keep. " +
+        "Records published by the Formbricks survey pipeline carry the response's Embedded Data as " +
+        "a nested `embedded_data` object keyed by field name, alongside flat context keys such as " +
+        "`source`, `url`, `device`, `country` and `finished`. " +
         "Avoid personal data: it is stored unredacted (and the Formbricks survey pipeline repeats " +
         "its own metadata on every record of a submission)."
     ),

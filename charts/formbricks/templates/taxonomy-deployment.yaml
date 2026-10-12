@@ -7,6 +7,10 @@
 {{- $vertex := .Values.taxonomy.llm.vertex | default dict -}}
 {{- $vertexProject := get $vertex "project" | default "" -}}
 {{- $vertexLocation := get $vertex "location" | default "" -}}
+{{- $vertexThinkingLevel := get $vertex "thinkingLevel" -}}
+{{- if not (has $vertexThinkingLevel (list "" "minimal" "low" "medium" "high")) }}
+  {{- fail "taxonomy.llm.vertex.thinkingLevel must be minimal, low, medium, or high" }}
+{{- end }}
 {{- if not (has $provider (list "openai-compatible" "bedrock" "vertex-gemini")) }}
   {{- fail "taxonomy.llm.provider must be 'openai-compatible', 'bedrock', or 'vertex-gemini'" }}
 {{- end }}
@@ -25,6 +29,13 @@
 {{- end }}
 {{- if not .Values.taxonomy.llm.contextWindowTokens }}
   {{- fail "taxonomy.llm.contextWindowTokens is required when taxonomy.enabled=true and must match the selected provider/model deployment" }}
+{{- end }}
+{{- /* These two relations span the pod spec and Hub, so neither runtime can check them. */ -}}
+{{- if lt (int .Values.taxonomy.terminationGracePeriodSeconds) (add (int .Values.taxonomy.runDeadlineSeconds) 30) }}
+  {{- fail "taxonomy.terminationGracePeriodSeconds must be at least taxonomy.runDeadlineSeconds + 30" }}
+{{- end }}
+{{- if and .Values.taxonomy.autoConfigureHub (le (int .Values.taxonomy.hubStaleRunTimeoutSeconds) (int .Values.taxonomy.runDeadlineSeconds)) }}
+  {{- fail "taxonomy.hubStaleRunTimeoutSeconds must exceed taxonomy.runDeadlineSeconds when taxonomy.autoConfigureHub=true" }}
 {{- end }}
 {{- if and (eq $provider "openai-compatible") .Values.llm.enabled (not .Values.taxonomy.llm.baseUrl) }}
   {{- $enabledBundledModels := list -}}
@@ -67,6 +78,10 @@
     {{- fail "the selected bundled vLLM maxModelLen must be >= taxonomy.llm.contextWindowTokens" }}
   {{- end }}
 {{- end }}
+{{- $taxonomyServiceAccount := .Values.taxonomy.serviceAccount | default dict -}}
+{{- if and (not (get $taxonomyServiceAccount "create")) (or (get $taxonomyServiceAccount "annotations") (get $taxonomyServiceAccount "additionalLabels")) }}
+  {{- fail "taxonomy.serviceAccount.annotations and additionalLabels apply only when taxonomy.serviceAccount.create=true; annotate an existing ServiceAccount directly" }}
+{{- end }}
 {{- if and (eq $provider "bedrock") (not $bedrockRegion) (not $bedrockEnvRegion) }}
   {{- fail "taxonomy.llm.bedrock.region or taxonomy.env.AWS_REGION is required when taxonomy.llm.provider is 'bedrock'" }}
 {{- end }}
@@ -81,6 +96,7 @@
   "TAXONOMY_LLM_PROMPT_TOKEN_RESERVE" "taxonomy.llm.promptTokenReserve"
   "TAXONOMY_LLM_PROVIDER_MAX_ATTEMPTS" "taxonomy.llm.providerMaxAttempts"
   "TAXONOMY_VERTEX_THINKING_BUDGET" "taxonomy.llm.vertex.thinkingBudget"
+  "TAXONOMY_VERTEX_THINKING_LEVEL" "taxonomy.llm.vertex.thinkingLevel"
   "HUB_CLIENT_MAX_ATTEMPTS" "taxonomy.hubClientMaxAttempts"
   "HUB_HEARTBEAT_INTERVAL_SECONDS" "taxonomy.heartbeatIntervalSeconds"
   "TAXONOMY_RUN_TIMEOUT_SECONDS" "taxonomy.runDeadlineSeconds"
@@ -156,6 +172,9 @@ spec:
       {{- with .Values.taxonomy.topologySpreadConstraints }}
       topologySpreadConstraints:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with include "formbricks.taxonomyServiceAccountName" . }}
+      serviceAccountName: {{ . }}
       {{- end }}
       {{- if .Values.deployment.imagePullSecrets }}
       imagePullSecrets:
@@ -271,8 +290,13 @@ spec:
               value: {{ $bedrockRegion | quote }}
             {{- end }}
             {{- if eq $provider "vertex-gemini" }}
+            {{- if $vertexThinkingLevel }}
+            - name: TAXONOMY_VERTEX_THINKING_LEVEL
+              value: {{ $vertexThinkingLevel | quote }}
+            {{- else }}
             - name: TAXONOMY_VERTEX_THINKING_BUDGET
               value: {{ .Values.taxonomy.llm.vertex.thinkingBudget | quote }}
+            {{- end }}
             {{- end }}
             - name: HUB_CLIENT_TIMEOUT_SECONDS
               value: {{ .Values.taxonomy.hubClientTimeoutSeconds | quote }}

@@ -1,7 +1,6 @@
 import { z } from "zod";
 import type { TContactAttributeKey } from "./contact-attribute-key";
 import type { TEmbeddedData, TEmbeddedDataType, TSurveyEmbeddedData } from "./embedded-data";
-import { type TLegacyEmbeddedFields, toDesiredEmbeddedFields } from "./embedded-data-mapping";
 import type { TI18nString } from "./i18n";
 import type { TResponse, TResponseData, TResponseVariables } from "./responses";
 import { formatFieldNameToTitleCase } from "./safe-identifier";
@@ -567,12 +566,18 @@ export type TEmbeddedValueRef =
 
 /**
  * A stored field definition paired with the survey link that addresses it — the unit
- * {@link listReadableFields} enumerates and {@link deriveLegacyEmbeddedData} synthesizes. The pair
+ * {@link listReadableFields} enumerates and `embeddedFieldsFromLegacyInput` synthesizes. The pair
  * is assignable to {@link TEmbeddedValueRef}, so whatever a caller lists it can also resolve,
  * without repackaging.
+ *
+ * `key` and `id` are what make the pair writable as well as readable (ENG-3228): the survey write
+ * path takes these same pairs back, and `key !== null` is how an entry says it links a shared
+ * library row rather than one the survey owns. `id` is optional because a pair built from legacy
+ * input describes no stored row. Mirrored by `ZLinkedEmbeddedField` (embedded-data.ts),
+ * which carries the reasoning for what is and is not in this shape.
  */
 export interface TLinkedEmbeddedField {
-  field: TResolvableEmbeddedField & Pick<TEmbeddedData, "name">;
+  field: TResolvableEmbeddedField & Pick<TEmbeddedData, "name" | "key"> & Partial<Pick<TEmbeddedData, "id">>;
   link: TEmbeddedDataLink;
 }
 
@@ -946,6 +951,35 @@ export const mergeReservedValues = (
   responseData: TResponseData
 ): TResponseData => ({ ...reservedValues, ...responseData });
 
+/**
+ * The map a recall token or a logic operand is looked up in: what the survey knows about every name
+ * it can address, right now.
+ *
+ * The response layer goes on first and the defaults last, which reads backwards and is the point:
+ * {@link projectIngestedDefaults} has already decided, per field, whether the response holds
+ * anything usable. It emits a key only when the response does not, so spreading it last overrides
+ * nothing that was supplied — while spreading it first would let the response layer put an
+ * uncoercible value (`?pts=name`) straight back over the default that replaced it.
+ *
+ * Reserved entries sit inside the response layer, under the response itself, for the reason
+ * {@link mergeReservedValues} gives. They cannot collide with a default: a declared field's name is
+ * dropped from the reserved projection by {@link dropShadowedReservedEntries} before it gets here.
+ *
+ * It exists as a function so the order is pinned by a test rather than by two identical spreads in a
+ * component, which is where it lived and where nothing could fail on it. Callers pass the response
+ * data they want read — mid-block logic passes the in-flight answers, recall passes the committed
+ * ones — and this never writes anything back: the record the response queue submits is built
+ * elsewhere and must not carry defaults (see {@link projectIngestedDefaults}).
+ */
+export const buildEmbeddedLookup = (
+  survey: TEmbeddedFieldsSurvey,
+  reservedValues: Record<string, string | number>,
+  responseData: TResponseData
+): TResponseData => ({
+  ...mergeReservedValues(reservedValues, responseData),
+  ...projectIngestedDefaults(survey, responseData),
+});
+
 /** One reserved field as a human-facing surface renders it: the entry, plus the value it resolved to. */
 export interface TDisplayableReservedField {
   entry: TReservedFieldCatalogEntry;
@@ -1021,13 +1055,11 @@ export const dropShadowedReservedEntries = (
  * {@link listMidSurveyReservedEntries} expect: every name a survey's own definitions already own in
  * the read namespace.
  *
- * Takes resolved fields rather than a survey because the two kinds of caller legitimately read
- * different definitions of "declared", and hiding that choice inside here would make one of them
- * silently wrong: the **editor** must derive from the working copy
- * ({@link getDeclaredEmbeddedFields}), whose rows are stale from the first card edit until the next
- * save, while every **runtime** reader holds a saved survey and must use the rows
- * ({@link getSurveyEmbeddedFields}). Passing the fields in keeps that decision at the call site,
- * where it is visible.
+ * Takes resolved fields rather than a survey so the choice of which read a caller makes stays at the
+ * call site, where it is visible. Every caller now passes {@link getSurveyEmbeddedFields} — the
+ * editor included, since ENG-2628 made its working copy rows-native — and the one remaining reason
+ * to pass anything else is a survey that has never been written and therefore has no rows at all
+ * (see `embeddedFieldsFromLegacyInput`).
  *
  * What is *not* the caller's choice is which kinds count. All three do, and the doc for
  * {@link dropShadowedReservedEntries} says why element ids are the easy one to forget.
@@ -1072,6 +1104,19 @@ export interface TReadableField {
   key: string;
   /** Display label for pickers. Falls back to the key when nothing better exists. */
   label: string;
+  /**
+   * A second, dimmer string a picker may render beside the label — set only for a **shared**
+   * Embedded Data field, where it carries the workspace library `key` (ENG-1853).
+   *
+   * A shared field's name is workspace-wide prose ("Plan tier") while its key is the identifier an
+   * integration or a URL parameter actually spells (`plan_tier`), and the two are edited
+   * independently. Someone who knows only the key would otherwise have no way to find the field in
+   * a picker that labels by name alone. A survey-only field has no library key and therefore no
+   * secondary string — one row, one label — which is why this is optional rather than falling back
+   * to `storageKey`: repeating the storage key under every local field's name would be noise on the
+   * common case.
+   */
+  secondaryLabel?: string;
 }
 
 /**
@@ -1091,7 +1136,7 @@ export interface TReadableFields {
  * Inputs are explicit: the field/link pairs don't live on `TSurvey` until ENG-1837 inlines them,
  * contact attribute keys are workspace-level, the reserved catalog is code — and `blocks`, which
  * does live on `TSurvey`, is taken alone so the function needs no survey object. Passing them in
- * keeps this pure and lets legacy surveys participate via {@link deriveLegacyEmbeddedData}.
+ * keeps this pure and lets a never-written survey participate via `embeddedFieldsFromLegacyInput`.
  */
 export interface TListReadableFieldsInput {
   /** The survey's blocks — elements live here (the legacy `questions` model is not enumerated). */
@@ -1142,7 +1187,7 @@ const toElementLabel = (headline: TI18nString, languageCode: string): string => 
  * - question → the element id (label from its headline; the id itself when the headline is empty)
  * - embeddedData → the link's `storageKey` (never the definition's library `key` — the storage key
  *   is what recall tokens and response maps use, and the two can differ)
- * - reserved → the catalog entry name (title-cased for the label until the picker adds real labels)
+ * - reserved → the catalog entry name (title-cased; rendering callers relabel, see `reserved` below)
  * - contactAttribute → the contact attribute key (label from its display name when one is set)
  */
 export const listReadableFields = (input: TListReadableFieldsInput): TReadableFields => {
@@ -1158,10 +1203,18 @@ export const listReadableFields = (input: TListReadableFieldsInput): TReadableFi
   const embeddedData = input.embeddedData.map(({ field, link }) => ({
     key: link.storageKey,
     label: labelOrKey(field.name, link.storageKey),
+    // `key` is null for a survey-owned field and the library name for a shared one, so this is the
+    // shared/local distinction itself rather than a display choice made here. `?? undefined` keeps
+    // the property absent instead of null, so a consumer can test it with a plain truthiness check.
+    secondaryLabel: field.key ?? undefined,
   }));
 
   const reserved = input.reservedEntries.map((entry) => ({
     key: entry.name,
+    // English, derived from the catalog name. `packages/types` has no translator, so a *rendering*
+    // caller overrides this with `getReservedFieldLabel` (apps/web), which is localized and knows
+    // that `url` is "URL" rather than "Url". This stays as the label a non-rendering caller — an
+    // export header, a test — gets without one.
     label: labelOrKey(formatFieldNameToTitleCase(entry.name), entry.name),
   }));
 
@@ -1174,54 +1227,29 @@ export const listReadableFields = (input: TListReadableFieldsInput): TReadableFi
 };
 
 /**
- * Maps a survey's legacy declarations (`variables`, `hiddenFields.fieldIds`) into the same
- * field/link pairs the resolver and enumerator consume — the pure-function fallback that lets
- * ENG-1837 serve surveys whose rows haven't been backfilled (migration spec §8), with no fetch
- * logic here.
- *
- * The §8 rules live in `toDesiredEmbeddedFields`, shared with ENG-1978's write bridge and ENG-1835's
- * backfill; this only reshapes them into `{field, link}` pairs and adds `locked: false`, which has no
- * legacy equivalent.
- *
- * `hiddenFields.enabled` is deliberately ignored: recall and logic consult `fieldIds` alone today,
- * and ingestion is split on the flag — the js-core SDK drops hidden fields when disabled, while the
- * link-survey URL path fills them regardless (`getHiddenFieldsFromSearchParams` receives only
- * `fieldIds`). Deriving from `fieldIds` alone therefore preserves today's read behavior exactly:
- * whatever either path stored still resolves, and what nothing stored reports as unset.
- */
-export const deriveLegacyEmbeddedData = (survey: TLegacyEmbeddedFields): TLinkedEmbeddedField[] =>
-  toDesiredEmbeddedFields(survey).map(({ storageKey, ...field }) => ({
-    field: { ...field, locked: false },
-    link: { storageKey },
-  }));
-
-/**
  * The survey slice {@link getSurveyEmbeddedFields} needs. Deliberately looser than `TSurvey`: the
  * readers this serves hold everything from a full survey to a four-key `Pick`, and every one of them
  * must be able to call the accessor without widening its own select.
  */
-export interface TEmbeddedFieldsSurvey extends TLegacyEmbeddedFields {
+export interface TEmbeddedFieldsSurvey {
   /** The rows, joined and inlined at load. Absent when the select omitted the join. */
   embeddedFields?: TLinkedEmbeddedField[] | null;
 }
 
 /**
- * **Where a saved survey's Embedded Data definitions come from.** Every reader outside the editor —
- * recall, logic, export columns, response filters, response tables, emails, integrations — calls
- * this and nothing else. Its counterpart is {@link getDeclaredEmbeddedFields}; between the two, no
- * reader may call {@link deriveLegacyEmbeddedData} directly, which is what keeps "exactly two named
- * decisions, and no third" a property a reviewer can check with grep.
+ * **Where a survey's Embedded Data definitions come from.** Every reader — recall, logic, export
+ * columns, response filters, response tables, emails, integrations, the editor's own cards and
+ * pickers, and the preview — calls this and nothing else.
  *
- * **The rows are the whole answer** (ENG-2412). This used to fall back to the legacy columns for a
- * survey with no rows, which is why deleting a survey's rows made its fields reappear rather than
- * disappear. The write path now writes the rows from the payload, so a survey with no rows is a
- * survey with no fields, and that is what this reports.
+ * **The rows are the whole answer** (ENG-2412, ENG-2404). A survey with no rows is a survey with no
+ * fields. The legacy `variables` / `hiddenFields` a survey still carries are derived *from* these
+ * rows at the read seam, so there is nothing else to consult; a survey that has never been written
+ * (a template in the gallery) is given `embeddedFields` where it is built, by
+ * `embeddedFieldsFromLegacyInput`.
  *
  * **Every survey select that reaches a reader must therefore carry the join** —
  * `selectSurveyEmbeddedDataLinks`, inlined by `transformPrismaSurvey`. A select that omits it yields
- * `undefined` here and the survey reads as having no fields at all. Audited when the fallback was
- * removed: every reader gets its survey through `selectSurvey` or a select that embeds the same
- * constant.
+ * `undefined` here and the survey reads as having no fields at all.
  *
  * This is a *definition* lookup only. ENG-1837 repoints where a field's name, source and dataType
  * come from; it deliberately does not repoint value arithmetic onto {@link resolveEmbeddedValue},
@@ -1244,48 +1272,45 @@ export const getIngestedStorageKeys = (survey: TEmbeddedFieldsSurvey): string[] 
   getIngestedEmbeddedFields(survey).map(({ link }) => link.storageKey);
 
 /**
- * **What a survey declares right now, ignoring what is stored.** The counterpart to
- * {@link getSurveyEmbeddedFields}; between the two, no caller needs
- * {@link deriveLegacyEmbeddedData} directly, so "which of two named decisions does this reader
- * make" stays a property a reviewer can check with grep.
+ * What an ingested field answers with when nothing usable was supplied for it — its `defaultValue`,
+ * keyed by storage key, for the caller to merge **under** `response.data`.
  *
- * Two groups of callers need this rather than the stored rows:
+ * The default only ever exists at read time. `applyIngestContract` deliberately never writes it
+ * (rule 8: two writers would let a later change to a default apply on one path and not the other),
+ * so a field nothing arrived for keeps its key omitted from storage — and without a read that
+ * applies the default, the declared fallback reaches nothing at all. A recall token then renders its
+ * own `fallback:` text, and a logic condition reads the field as unset.
  *
- * 1. **The editor.** Its working copy is cloned from the server survey at mount and never
- *    re-fetched, while the rows are only written on save — so an inlined `embeddedFields` is stale
- *    from the first card edit until the next save. Deriving is what makes a rename or a newly added
- *    field show up in the pickers, the logic builder, the calculate widget, the follow-up recipient
- *    list and the preview on the next render. Note this cannot be fixed by reshaping the working
- *    copy instead: it is compared against the server survey with a key-count-sensitive deep equal
- *    to gate the draft auto-save, the discard-changes dialog and the beforeunload prompt, and a
- *    save round-trip puts the server's shape back anyway.
- * 2. **Recall labelling** (`apps/web/lib/utils/recall.ts`). A recall token's label is authoring
- *    syntax: the picker writes `@label` into the text and the label resolver reads it back, so the
- *    two must agree on the same instant's definitions or the round-trip desyncs — a field added
- *    since the last save would render as a raw `#recall:…#` token, and a renamed one would stop
- *    matching. The same functions also label saved surveys for exports and summaries, where this is
- *    a no-op — a saved survey's rows and declarations agree element for element, because every write
- *    path that persists those columns calls `reconcileEmbeddedData` in the same transaction with the
- *    same payload it wrote them from (ENG-2412 moved that call onto the payload; before it, onto the
- *    row just written). There are exactly four: `updateSurveyInternal` and `createSurvey`
- *    (apps/web/lib/survey/service.ts), the copy flow (modules/survey/list/lib/survey.ts) and the v3
- *    patch (app/api/v3/surveys/patch.ts) — a `reconcileEmbeddedData(` grep is the audit, and a fifth
- *    write that skips it reintroduces the divergence. They can also diverge once a shared library definition can be renamed independently
- *    of the survey (ENG-1851), which is when the unified picker (ENG-1853) moves recall and the
- *    pickers onto the tables together.
+ * The two tiers match {@link resolveEmbeddedValue}'s field arm rather than restating it: a stored
+ * value that does not fit the field's `dataType` reads as unset and resolves to the default. That is
+ * the same answer, and the right one — ingest keeps an uncoercible value verbatim and flags it
+ * `coercion_failed`, and what a survey shows should be the field's declared fallback, not the text
+ * that failed to be a number.
+ *
+ * `locked` is read before the stored value, not instead of it. `applyIngestContract` already drops
+ * an incoming value for a locked field, so on the ingest path the key is absent anyway — but a field
+ * locked *after* its survey collected responses has values in storage that were legitimate when they
+ * arrived, and for those the resolver answers with the default. Leaving `locked` to the contract
+ * alone would make this projection disagree with the seam it mirrors on exactly that survey.
+ *
+ * Booleans are stringified the way {@link projectReservedValues} stringifies them — `TResponseData`
+ * has no boolean member, and `"true"` / `"false"` is the spelling ingest stores.
  */
-// Takes the same survey slice as {@link getSurveyEmbeddedFields}, not the narrower legacy one, so a
-// caller holding a full survey can pass it and the "ignores the stored rows" contract is visible in
-// the signature rather than enforced by which keys happen to be omitted at the call site.
-export const getDeclaredEmbeddedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
-  deriveLegacyEmbeddedData(survey);
+export const projectIngestedDefaults = (
+  survey: TEmbeddedFieldsSurvey,
+  data: TResponseData
+): Record<string, string | number> => {
+  const defaults: Record<string, string | number> = {};
 
-/** The computed (ex-variable) fields a survey declares right now. */
-export const getDeclaredComputedFields = (survey: TEmbeddedFieldsSurvey): TLinkedEmbeddedField[] =>
-  getDeclaredEmbeddedFields(survey).filter(({ field }) => field.source === "computed");
+  for (const { field, link } of getIngestedEmbeddedFields(survey)) {
+    const stored = field.locked ? undefined : data[link.storageKey];
+    if (coerceToEmbeddedDataType(stored, field.dataType) !== undefined) continue;
 
-/** The storage keys of the ingested (ex-hidden) fields a survey declares right now. */
-export const getDeclaredIngestedStorageKeys = (survey: TEmbeddedFieldsSurvey): string[] =>
-  getDeclaredEmbeddedFields(survey)
-    .filter(({ field }) => field.source === "ingested")
-    .map(({ link }) => link.storageKey);
+    const fallback = coerceToEmbeddedDataType(field.defaultValue, field.dataType);
+    if (fallback === undefined) continue;
+
+    defaults[link.storageKey] = typeof fallback === "boolean" ? String(fallback) : fallback;
+  }
+
+  return defaults;
+};

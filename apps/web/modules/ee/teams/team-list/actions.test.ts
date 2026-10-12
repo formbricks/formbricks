@@ -31,7 +31,7 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   withAuditLogging: vi.fn((_eventName, _objectType, fn) => fn),
 }));
 
-vi.mock("@/modules/ee/role-management/actions", () => ({
+vi.mock("@/modules/ee/role-management/lib/permission", () => ({
   checkRoleManagementPermission: mocks.checkRoleManagementPermission,
 }));
 

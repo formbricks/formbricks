@@ -3,6 +3,7 @@ import { closeAuthzedClient } from "./client";
 import type { TAuthzedOutboxCliCommand } from "./outbox-cli-command";
 import { drainAuthzedOutbox } from "./outbox-processor";
 import { getAuthzedOutboxStatus, replayAuthzedOutboxDeadLetters } from "./outbox-repository";
+import type { TAuthzedOutboxStatus } from "./outbox-types";
 
 type TOutboxCliDependencies = Readonly<{
   closeClient: () => void;
@@ -20,6 +21,18 @@ const defaultDependencies: TOutboxCliDependencies = {
   writeOutput: (output) => process.stdout.write(output),
 };
 
+const getHealthStatus = (status: TAuthzedOutboxStatus): "critical" | "warning" | "healthy" => {
+  if (status.deadLettered > 0 || status.revocationsPastCritical > 0) {
+    return "critical";
+  }
+
+  if (status.revocationsPastWarning > 0) {
+    return "warning";
+  }
+
+  return "healthy";
+};
+
 export const runAuthzedOutboxCli = async (
   command: TAuthzedOutboxCliCommand,
   overrides: Partial<TOutboxCliDependencies> = {}
@@ -32,12 +45,7 @@ export const runAuthzedOutboxCli = async (
     switch (command.action) {
       case "status": {
         const status = await dependencies.status();
-        const health =
-          status.deadLettered > 0 || status.revocationsPastCritical > 0
-            ? "critical"
-            : status.revocationsPastWarning > 0
-              ? "warning"
-              : "healthy";
+        const health = getHealthStatus(status);
         result = { ...status, status: health };
         exitCode = health === "healthy" ? 0 : 2;
         break;

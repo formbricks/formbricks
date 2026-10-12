@@ -5,16 +5,22 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
+import { ZOverlay } from "@formbricks/types/common";
+import { ZOverlayColor, ZOverlayOpacity } from "@formbricks/types/overlay";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormField, FormItem, FormLabel, FormProvider } from "@/modules/ui/components/form";
 import { Label } from "@/modules/ui/components/label";
+import { OverlaySettings } from "@/modules/ui/components/overlay-settings";
+import {
+  TOverlaySettingsValue,
+  getOverlayPreviewStyle,
+} from "@/modules/ui/components/overlay-settings/lib/utils";
 import { getPlacementStyle } from "@/modules/ui/components/preview-survey/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
-import { StylingTabs } from "@/modules/ui/components/styling-tabs";
 import { updateWorkspaceAction } from "@/modules/workspaces/settings/actions";
 
 interface EditPlacementProps {
@@ -24,7 +30,9 @@ interface EditPlacementProps {
 
 const ZWorkspacePlacementInput = z.object({
   placement: z.enum(["bottomRight", "topRight", "topLeft", "bottomLeft", "center"]),
-  overlay: z.enum(["none", "light", "dark"]),
+  overlay: ZOverlay,
+  overlayColor: ZOverlayColor.nullable(),
+  overlayOpacity: ZOverlayOpacity.nullable(),
   clickOutsideClose: z.boolean(),
 });
 
@@ -45,6 +53,8 @@ export const EditPlacementForm = ({ workspace, isReadOnly }: EditPlacementProps)
     defaultValues: {
       placement: workspace.placement,
       overlay: workspace.overlay ?? "none",
+      overlayColor: workspace.overlayColor ?? null,
+      overlayOpacity: workspace.overlayOpacity ?? null,
       clickOutsideClose: workspace.clickOutsideClose ?? false,
     },
     resolver: zodResolver(ZWorkspacePlacementInput),
@@ -52,12 +62,22 @@ export const EditPlacementForm = ({ workspace, isReadOnly }: EditPlacementProps)
 
   const currentPlacement = form.watch("placement");
   const overlay = form.watch("overlay");
+  const overlayColor = form.watch("overlayColor");
+  const overlayOpacity = form.watch("overlayOpacity");
   const clickOutsideClose = form.watch("clickOutsideClose");
   const isSubmitting = form.formState.isSubmitting;
 
   const hasOverlay = overlay !== "none";
+  const customOverlayStyle = getOverlayPreviewStyle({ overlay, overlayColor, overlayOpacity });
+
+  const handleOverlayChange = (value: TOverlaySettingsValue) => {
+    form.setValue("overlay", value.overlay, { shouldDirty: true });
+    form.setValue("overlayColor", value.overlayColor, { shouldDirty: true });
+    form.setValue("overlayOpacity", value.overlayOpacity, { shouldDirty: true });
+  };
 
   const getOverlayStyle = () => {
+    if (customOverlayStyle) return "";
     if (overlay === "dark") return "bg-slate-700/80";
     if (overlay === "light") return "bg-slate-400/50";
     return "bg-slate-200";
@@ -69,6 +89,8 @@ export const EditPlacementForm = ({ workspace, isReadOnly }: EditPlacementProps)
       data: {
         placement: data.placement,
         overlay: data.overlay,
+        overlayColor: data.overlayColor,
+        overlayOpacity: data.overlayOpacity,
         clickOutsideClose: data.clickOutsideClose,
       },
     });
@@ -123,7 +145,8 @@ export const EditPlacementForm = ({ workspace, isReadOnly }: EditPlacementProps)
                 hasOverlay && !clickOutsideClose ? "cursor-not-allowed" : "",
                 "relative ml-8 h-40 w-full rounded-sm",
                 getOverlayStyle()
-              )}>
+              )}
+              style={customOverlayStyle}>
               <div
                 className={cn(
                   "absolute h-16 w-16 cursor-default rounded-sm bg-slate-700",
@@ -132,27 +155,13 @@ export const EditPlacementForm = ({ workspace, isReadOnly }: EditPlacementProps)
             </div>
           </div>
 
-          <div className="mt-6 space-y-2">
-            <FormField
-              control={form.control}
-              name="overlay"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <StylingTabs
-                      id="overlay"
-                      options={[
-                        { value: "none", label: t("common.no_overlay") },
-                        { value: "light", label: t("common.light_overlay") },
-                        { value: "dark", label: t("common.dark_overlay") },
-                      ]}
-                      defaultSelected={field.value}
-                      onChange={(value) => field.onChange(value)}
-                      label={t("common.overlay_color")}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
+          <div className="mt-6">
+            <OverlaySettings
+              overlay={overlay}
+              overlayColor={overlayColor}
+              overlayOpacity={overlayOpacity}
+              onChange={handleOverlayChange}
+              disabled={isReadOnly}
             />
           </div>
 

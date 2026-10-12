@@ -7,7 +7,7 @@ import {
   formatCellValue,
   formatPercentShare,
   getSemanticDimensionColor,
-  getSentimentMeasureColor,
+  getSemanticMeasureColor,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import {
   getMeasureAxisLabel,
@@ -24,6 +24,8 @@ interface BreakdownBarsProps {
   hasCategoryAxis: boolean;
   xAxisKey: string;
   formatDimensionValue: (value: unknown) => string;
+  /** Response base column; each grouped section's tooltip prints its own "n = …". */
+  responseBaseKey?: string;
 }
 
 /**
@@ -45,11 +47,20 @@ export function BreakdownBars({
   hasCategoryAxis,
   xAxisKey,
   formatDimensionValue,
+  responseBaseKey,
 }: Readonly<BreakdownBarsProps>) {
   const { t, i18n } = useTranslation();
 
+  // A section's base, keyed like its entry. Not shown when the base is the plotted measure itself.
+  const baseBySection = new Map<string, number>();
   let entries: TDistributionEntry[];
   if (hasCategoryAxis) {
+    if (responseBaseKey && responseBaseKey !== dataKey) {
+      sortedData.forEach((row, index) => {
+        const base = Number(row[responseBaseKey] ?? Number.NaN);
+        if (Number.isFinite(base)) baseBySection.set(`${String(row[xAxisKey] ?? "")}-${index}`, base);
+      });
+    }
     // Grouped query: one section per row, the first measure supplying the size.
     entries = sortedData.map((row, index) => ({
       key: `${String(row[xAxisKey] ?? "")}-${index}`,
@@ -64,7 +75,7 @@ export function BreakdownBars({
       key,
       label: getMeasureAxisLabel(key, t),
       value: sortedData.reduce((sum, row) => sum + (Number(row[key]) || 0), 0),
-      color: getSentimentMeasureColor(key),
+      color: getSemanticMeasureColor(key),
     }));
   }
 
@@ -122,6 +133,13 @@ export function BreakdownBars({
                   <span className="text-foreground text-sm font-medium">{segment.label}</span>
                   <span className="text-muted-foreground text-sm tabular-nums">{segment.valueShare}</span>
                 </div>
+                {baseBySection.has(segment.key) && (
+                  <div className="text-muted-foreground mt-1 text-xs tabular-nums">
+                    {t("workspace.analysis.charts.tooltip_response_base", {
+                      count: baseBySection.get(segment.key),
+                    })}
+                  </div>
+                )}
               </TooltipContent>
             </Tooltip>
           ))}

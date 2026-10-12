@@ -3,7 +3,9 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { TOverlay, TPlacement } from "@formbricks/types/common";
 import { cn } from "@/lib/cn";
-import { getPlacementStyle } from "../lib/utils";
+import { getOverlayPreviewStyle } from "@/modules/ui/components/overlay-settings/lib/utils";
+import { PREVIEW_BOUNDARY_CLASS_NAME, previewBoundaryProps } from "../lib/containment";
+import { getPlacementStyle, isInsideSurveyRoot } from "../lib/utils";
 
 interface ModalProps {
   children: ReactNode;
@@ -12,6 +14,8 @@ interface ModalProps {
   previewMode: string;
   clickOutsideClose: boolean;
   overlay: TOverlay;
+  overlayColor?: string | null;
+  overlayOpacity?: number | null;
   borderRadius?: number | string;
   background?: string;
 }
@@ -23,9 +27,11 @@ export const Modal = ({
   previewMode,
   clickOutsideClose,
   overlay,
+  overlayColor = null,
+  overlayOpacity = null,
   borderRadius,
   background,
-}: ModalProps) => {
+}: Readonly<ModalProps>) => {
   const [show, setShow] = useState(true);
   const modalRef = useRef<HTMLDivElement | null>(null);
   const [windowWidth, setWindowWidth] = useState<number | null>(null);
@@ -87,7 +93,10 @@ export const Modal = ({
         modalRef.current &&
         previewBase &&
         previewBase.contains(e.target as Node) &&
-        !modalRef.current.contains(e.target as Node)
+        !modalRef.current.contains(e.target as Node) &&
+        // An open dropdown mounts its own #fbjs root inside this box, outside the card (ENG-3552).
+        // Picking an option there is a click in the survey, not outside it.
+        !isInsideSurveyRoot(e.target)
       ) {
         setShow(false);
         setTimeout(() => {
@@ -123,16 +132,22 @@ export const Modal = ({
           : "-bottom-full"
         : "";
 
+  const customOverlayStyle = getOverlayPreviewStyle({ overlay, overlayColor, overlayOpacity });
+
   return (
     <div
       id="preview-survey-base"
       aria-live="assertive"
+      // The mock page is the survey's trusted, contained box (see lib/containment.ts).
+      {...previewBoundaryProps}
       className={cn(
-        "relative h-full w-full overflow-hidden rounded-b-md",
-        overlay === "dark" ? "bg-slate-700/80" : "",
-        overlay === "light" ? "bg-slate-400/50" : "",
+        "h-full w-full rounded-b-md",
+        PREVIEW_BOUNDARY_CLASS_NAME,
+        !customOverlayStyle && overlay === "dark" ? "bg-slate-700/80" : "",
+        !customOverlayStyle && overlay === "light" ? "bg-slate-400/50" : "",
         "transition-all duration-500 ease-in-out"
-      )}>
+      )}
+      style={customOverlayStyle}>
       <div
         ref={modalRef}
         style={{

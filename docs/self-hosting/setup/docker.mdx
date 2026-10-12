@@ -329,9 +329,8 @@ PY
 This command runs inside the taxonomy container, so `127.0.0.1:8000` refers to the taxonomy service itself.
 The preflight endpoint then checks Hub internal auth and LLM reachability from taxonomy.
 
-The taxonomy service remains internal to the compose network by default. For production workloads,
-`TAXONOMY_MAX_RECORDS` defaults to `50000`; override it only as an advanced safety limit after sizing CPU,
-memory, and LLM capacity.
+The taxonomy service remains internal to the compose network by default. `TAXONOMY_MAX_RECORDS` defaults to
+`10000`; change it only after sizing CPU, memory, and LLM capacity.
 
 <Info>
   The taxonomy service is internal to the Docker network. Formbricks Web still calls Hub with
@@ -420,7 +419,8 @@ rollback procedure in [AuthZed Operations](/self-hosting/configuration/authzed-o
    ```
 
 1. Wait for PostgreSQL and complete application migrations before restarting the updated stack. Stop if a
-   command fails; do not restart against a partially migrated database.
+   command fails; do not restart against a partially migrated database. If `formbricks-migrate` fails, follow
+   [If a migration fails](/self-hosting/advanced/migration#if-a-migration-fails).
 
    ```bash
    docker compose up -d --wait postgres &&
@@ -709,7 +709,8 @@ Common checks:
 - **Missing or empty secrets**: Confirm `.env` contains `BETTER_AUTH_SECRET`, `ENCRYPTION_KEY`, `CRON_SECRET`,
   `HUB_API_KEY`, and `CUBEJS_API_SECRET`.
 - **Migration failures**: Check `formbricks-migrate`, `hub-migrate`, and `postgres` logs. Do not remove Docker
-  volumes on an existing install unless you intend to delete its data.
+  volumes on an existing install unless you intend to delete its data. For a failed `formbricks-migrate`, follow
+  [If a migration fails](/self-hosting/advanced/migration#if-a-migration-fails).
 - **Cube is unhealthy**: Confirm `cube/cube.js`, `cube/schema/FeedbackRecords.js`, and `CUBEJS_API_SECRET`
   exist, then inspect `docker compose logs cube`.
 - **Hub auth errors**: Confirm the same `HUB_API_KEY` from `.env` is used by Formbricks Web and the Hub

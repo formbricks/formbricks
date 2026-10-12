@@ -7,6 +7,8 @@ import {
   organizationExists,
   readOrganizationIdPage,
   readOrganizationSource,
+  readSurveyIdPage,
+  readSurveySource,
   readWorkspaceSource,
 } from "./backfill-source";
 import { AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE, AUTHZED_TARGET_CHUNK_SIZE } from "./constants";
@@ -22,6 +24,7 @@ vi.mock("@formbricks/database", () => ({
     feedbackDirectoryWorkspace: { findMany: vi.fn() },
     membership: { findMany: vi.fn() },
     organization: { count: vi.fn(), findMany: vi.fn() },
+    survey: { findMany: vi.fn() },
     team: { findMany: vi.fn() },
     teamUser: { findMany: vi.fn() },
     workspace: { findMany: vi.fn(), findUnique: vi.fn() },
@@ -42,6 +45,7 @@ const setEmptySource = (): void => {
   vi.mocked(prisma.teamUser.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.workspaceTeam.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.apiKeyWorkspace.findMany).mockResolvedValue([] as never);
+  vi.mocked(prisma.survey.findMany).mockResolvedValue([] as never);
 };
 
 beforeEach(() => {
@@ -297,6 +301,7 @@ describe("readOrganizationSource", () => {
       invalidFeedbackDirectoryAssignments: [],
       invalidWorkspaceTeamGrants: [],
       organizationId: ORGANIZATION_ID,
+      surveyIds: [],
       workspaceExists: true,
       workspaceTeamGrants: [{ teamId: "team-1", workspaceId: "ws-1" }],
     });
@@ -604,5 +609,91 @@ describe("findMissingSourceRefs", () => {
     await expect(findMissingSourceRefs([])).resolves.toEqual([]);
 
     expect(prisma.team.findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("survey sources (ENG-3282)", () => {
+  const surveyRow = (id: string, overrides: Record<string, unknown> = {}) => ({
+    id,
+    ownerId: "user-1",
+    visibility: "restricted",
+    visibilityVersion: 0,
+    workspaceId: "ws-1",
+    ...overrides,
+  });
+
+  test("pages survey ids by keyset", async () => {
+    vi.mocked(prisma.survey.findMany).mockResolvedValue([{ id: "s-2" }, { id: "s-3" }] as never);
+
+    await expect(readSurveyIdPage({ afterSurveyId: "s-1", limit: 2 })).resolves.toEqual(["s-2", "s-3"]);
+    expect(prisma.survey.findMany).toHaveBeenCalledWith({
+      where: { id: { gt: "s-1" } },
+      select: { id: true },
+      orderBy: { id: "asc" },
+      take: 2,
+    });
+  });
+
+  test("derives the expected edges with the projector's own function, for rows that still exist", async () => {
+    vi.mocked(prisma.survey.findMany).mockResolvedValue([surveyRow("s-1")] as never);
+
+    await expect(readSurveySource(["s-1", "s-gone"])).resolves.toEqual({
+      expectedRelationships: [
+        {
+          relation: "workspace",
+          resource: { objectId: "s-1", objectType: "survey" },
+          subject: { objectId: "ws-1", objectType: "workspace" },
+        },
+        {
+          relation: "owner",
+          resource: { objectId: "s-1", objectType: "survey" },
+          subject: { objectId: "user-1", objectType: "user" },
+        },
+        {
+          relation: "private_owner",
+          resource: { objectId: "s-1", objectType: "survey" },
+          subject: { objectId: "user-1", objectType: "user" },
+        },
+      ],
+      surveyIds: ["s-1"],
+    });
+  });
+
+  test("includes a workspace's surveys in its repair scope", async () => {
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({ organizationId: ORGANIZATION_ID } as never);
+    vi.mocked(prisma.survey.findMany).mockResolvedValue([
+      surveyRow("s-1", { visibility: "workspace" }),
+    ] as never);
+
+    const source = await readWorkspaceSource("ws-1");
+
+    expect(source.surveyIds).toEqual(["s-1"]);
+    expect(source.expectedRelationships).toEqual(
+      expect.arrayContaining([expect.objectContaining({ relation: "shared_workspace" })])
+    );
+  });
+
+  test("reports a survey edge that names a workspace other than the survey's own", async () => {
+    vi.mocked(prisma.survey.findMany).mockResolvedValue([{ id: "s-1", workspaceId: "ws-1" }] as never);
+
+    await expect(
+      findMismatchedParentEdges([
+        { childId: "s-1", childType: "survey", relation: "workspace", workspaceId: "ws-1" },
+        { childId: "s-1", childType: "survey", relation: "shared_workspace", workspaceId: "ws-foreign" },
+      ])
+    ).resolves.toEqual([
+      { childId: "s-1", childType: "survey", relation: "shared_workspace", workspaceId: "ws-foreign" },
+    ]);
+  });
+
+  test("names a survey with no row as missing", async () => {
+    vi.mocked(prisma.survey.findMany).mockResolvedValue([{ id: "s-1" }] as never);
+
+    await expect(
+      findMissingSourceRefs([
+        { kind: "survey", surveyId: "s-1" },
+        { kind: "survey", surveyId: "s-gone" },
+      ])
+    ).resolves.toEqual([{ kind: "survey", surveyId: "s-gone" }]);
   });
 });

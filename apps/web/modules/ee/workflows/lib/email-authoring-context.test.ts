@@ -8,6 +8,7 @@ const {
   mockGetUserEmail,
   mockGetUserLocale,
   mockGetSurvey,
+  mockCanReadSurveyInWorkspace,
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn(),
   mockGetWorkflowById: vi.fn(),
@@ -15,6 +16,7 @@ const {
   mockGetUserEmail: vi.fn(),
   mockGetUserLocale: vi.fn(),
   mockGetSurvey: vi.fn(),
+  mockCanReadSurveyInWorkspace: vi.fn(),
 }));
 
 vi.mock("@formbricks/database", () => ({ prisma: {} }));
@@ -30,6 +32,9 @@ vi.mock("@/modules/survey/editor/lib/user", () => ({
   getUserLocale: mockGetUserLocale,
 }));
 vi.mock("@/modules/survey/lib/survey", () => ({ getSurvey: mockGetSurvey }));
+vi.mock("@/modules/survey/lib/survey-auth", () => ({
+  canReadSurveyInWorkspace: mockCanReadSurveyInWorkspace,
+}));
 
 const WORKSPACE_ID = "cm9zr4wsp000508l8y6nh9r2v";
 const SURVEY_ID = "cm9zr4mps000008l8btfy1vtz";
@@ -60,6 +65,7 @@ describe("getWorkflowEmailAuthoringContext", () => {
     mockGetUserEmail.mockResolvedValue("me@example.com");
     mockGetUserLocale.mockResolvedValue("de-DE");
     mockGetSurvey.mockResolvedValue({ id: SURVEY_ID, workspaceId: WORKSPACE_ID, blocks: [] });
+    mockCanReadSurveyInWorkspace.mockResolvedValue(true);
   });
 
   test("returns the bound survey + member/user/sender context for a same-workspace survey", async () => {
@@ -91,6 +97,19 @@ describe("getWorkflowEmailAuthoringContext", () => {
     expect(ctx.survey).toBeNull();
     // The rest of the context still loads so the form can render (degraded to plain inputs).
     expect(ctx.userEmail).toBe("me@example.com");
+  });
+
+  test("never loads a bound survey the viewer may not read, e.g. another member's restricted survey (ENG-3282)", async () => {
+    mockCanReadSurveyInWorkspace.mockResolvedValue(false);
+
+    const ctx = await getWorkflowEmailAuthoringContext({ workflowId: "wf1", workspaceId: WORKSPACE_ID });
+
+    expect(mockCanReadSurveyInWorkspace).toHaveBeenCalledWith(WORKSPACE_ID, SURVEY_ID);
+    // Treated exactly like a missing survey: nothing of it — not even the title — reaches the client.
+    expect(ctx.survey).toBeNull();
+    expect(mockGetSurvey).not.toHaveBeenCalled();
+    expect(ctx.userEmail).toBe("me@example.com");
+    expect(ctx.teamMemberDetails).toEqual([{ name: "Alice", email: "alice@example.com" }]);
   });
 
   test("returns a null survey when the workflow has no survey bound", async () => {

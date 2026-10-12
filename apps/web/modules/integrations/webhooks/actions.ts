@@ -6,6 +6,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
 import { generateWebhookSecret } from "@/lib/crypto";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { assertNewlyAttachedSurveysWorkspaceVisible } from "@/lib/survey/visibility/outbound";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import {
   getOrganizationIdFromWebhookId,
@@ -41,6 +42,7 @@ export const createWebhookAction = authenticatedActionClient.inputSchema(ZCreate
       id: parsedInput.workspaceId,
     });
     await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.workspaceId);
+    await assertNewlyAttachedSurveysWorkspaceVisible(parsedInput.webhookInput.surveyIds ?? []);
     const webhook = await createWebhook(
       parsedInput.workspaceId,
       parsedInput.webhookInput,
@@ -104,7 +106,12 @@ export const updateWebhookAction = authenticatedActionClient.inputSchema(ZUpdate
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.webhookId = parsedInput.webhookId;
-    ctx.auditLoggingCtx.oldObject = await getWebhook(parsedInput.webhookId);
+    const existing = await getWebhook(parsedInput.webhookId);
+    ctx.auditLoggingCtx.oldObject = existing;
+    await assertNewlyAttachedSurveysWorkspaceVisible(
+      parsedInput.webhookInput.surveyIds ?? [],
+      existing.ok ? existing.data.surveyIds : []
+    );
 
     const result = await updateWebhook(parsedInput.webhookId, parsedInput.webhookInput);
     ctx.auditLoggingCtx.newObject = await getWebhook(parsedInput.webhookId);

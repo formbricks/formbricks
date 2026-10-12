@@ -1,26 +1,40 @@
 import { type Locator, type Page, expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
-import { createSurveyFromScratch, fillRichTextEditor } from "./utils/helper";
+import {
+  type EmbeddedFieldSource,
+  addEmbeddedField,
+  createSurveyFromScratch,
+  editEmbeddedField,
+  editorPanel,
+  embeddedFieldRow,
+  fillEmbeddedFieldDialog,
+  fillRichTextEditor,
+  openCreateEmbeddedFieldTab,
+  openEmbeddedDataCard,
+} from "./utils/helper";
 
 /**
- * Embedded Data definitions in the survey editor (ENG-1837).
+ * Embedded Data definitions in the survey editor (ENG-1837, ENG-2628, ENG-1851).
  *
  * The `EmbeddedData` / `SurveyEmbeddedData` tables are the read source of truth for Embedded Data
- * definitions (variables + hidden fields): readers resolve through the `embeddedFields` list inlined
- * onto the survey at load instead of reading `survey.variables` / `survey.hiddenFields`. The editor
- * is the one surface where those rows must NOT win: `localSurvey` is cloned once at mount and never
- * re-fetched, while the rows are only rewritten on save — so a reader resolving through them would
- * show pre-edit definitions until a reload.
+ * definitions: readers resolve through the `embeddedFields` list inlined onto the survey at load
+ * instead of reading `survey.variables` / `survey.hiddenFields`. ENG-1837 made the editor the one
+ * exception — its cards owned the legacy columns, so every editor surface had to derive from them or
+ * show pre-edit definitions until the next save.
  *
- * That regression is invisible on a survey with no rows (an empty inlined list falls back to the
- * cards anyway), so this spec deliberately saves first and reloads: from there on, `localSurvey`
- * carries real rows and every assertion below can tell "derived from the cards" apart from
- * "resolved through the rows".
+ * ENG-2628 removed that exception by removing the second description: the cards edited
+ * `embeddedFields` itself, and every editor surface read it like every runtime reader does. ENG-1851
+ * then replaced the two cards with **one Embedded Data card** over that same list, so the rows win
+ * here too and a card edit still reaches the pickers on the next render.
+ *
+ * Neither half is observable on a survey with no rows (an empty inlined list falls back to the legacy
+ * columns anyway), so this spec deliberately saves first and reloads: from there on, `localSurvey`
+ * carries real rows and every assertion below can tell "reads the rows" apart from "derives from the
+ * legacy columns".
  */
 
 const QUESTION_HEADLINE = "Which plan are you on?";
-const VARIABLE_NAME_PLACEHOLDER = "Field name e.g, score, price";
 
 /**
  * Safe-identifier names (lowercase letters, digits and underscores, leading letter) with a random
@@ -28,82 +42,45 @@ const VARIABLE_NAME_PLACEHOLDER = "Field name e.g, score, price";
  */
 const uniqueName = (prefix: string): string => `${prefix}_${Math.random().toString(36).slice(2, 8)}`;
 
-/** The editor's left panel. Scoping to it keeps the live preview's copies of the same text out. */
-const editorPanel = (page: Page): Locator => page.getByRole("main");
-
 /** Same label -> container walk as `fillRichTextEditor` (utils/helper.ts). */
 const headlineEditor = (page: Page): Locator =>
   editorPanel(page).locator('label:has-text("Question*")').locator("..").locator("..");
 
-/** The Variables card's forms in card order — one per variable, then the "create" form last. */
-const variableForms = (page: Page): Locator =>
-  editorPanel(page)
-    .locator("form")
-    .filter({ has: page.getByPlaceholder(VARIABLE_NAME_PLACEHOLDER) });
-
-/**
- * Opens one of the editor's collapsible cards. Only one card is open at a time, so opening is
- * expressed as "click until its content is on screen": the click is a toggle, and asserting on the
- * content first keeps that idempotent whichever card was open before.
- */
-const openCard = async (page: Page, name: "Variables" | "Hidden fields"): Promise<void> => {
-  const content =
-    name === "Variables"
-      ? editorPanel(page).getByRole("button", { name: "Add variable", exact: true })
-      : editorPanel(page).locator("#hiddenField");
-
-  await expect(async () => {
-    if (!(await content.isVisible())) {
-      await editorPanel(page).getByText(name, { exact: true }).click();
-    }
-    await expect(content).toBeVisible({ timeout: 5000 });
-  }).toPass({ timeout: 30000 });
+/** Opens the Add field dialog's create tab with the source already picked. */
+const openNewFieldDialog = async (page: Page, source: EmbeddedFieldSource): Promise<Locator> => {
+  const dialog = await openCreateEmbeddedFieldTab(page);
+  await fillEmbeddedFieldDialog(page, { source });
+  return dialog;
 };
 
 /**
- * Picks a variable's type and commits it. The card's edit forms submit on blur, so leaving the
- * select is what writes the change into `localSurvey`.
+ * Submits the open dialog under `name` and expects the reserved-name refusal.
+ *
+ * Refusal is asserted as behaviour — the dialog stays open and no row reaches the card — rather than
+ * by matching the inline message, whose exact copy is translated and belongs to the dialog rather
+ * than to this journey.
  */
-const selectVariableType = async (page: Page, form: Locator, type: "Text" | "Number"): Promise<void> => {
-  await form.getByRole("combobox").click();
-  await page.getByRole("option", { name: type, exact: true }).click();
-  const valueInput = form.getByPlaceholder("Initial value");
-  await valueInput.click();
-  await valueInput.press("Tab");
+const expectReservedNameRefused = async (page: Page, name: string): Promise<void> => {
+  const dialog = page.getByRole("dialog");
+
+  await fillEmbeddedFieldDialog(page, { name });
+  await dialog.getByRole("button", { name: "Add", exact: true }).click();
+
+  await expect(dialog, "a refused name must leave the dialog open").toBeVisible();
+  await expect(
+    editorPanel(page).getByTestId("embedded-field-row"),
+    "a refused name must not reach the card"
+  ).toHaveCount(0);
 };
 
-const addVariable = async (page: Page, name: string, type: "Text" | "Number"): Promise<void> => {
-  const existingCount = await variableForms(page).count();
-  const createForm = variableForms(page).last();
-
-  await createForm.getByPlaceholder(VARIABLE_NAME_PLACEHOLDER).fill(name);
-  await selectVariableType(page, createForm, type);
-  await createForm.getByRole("button", { name: "Add variable", exact: true }).click();
-
-  // The create form resets and the new variable renders its own edit form above it.
-  await expect(variableForms(page)).toHaveCount(existingCount + 1);
-  await expect(variableForms(page).first().getByPlaceholder(VARIABLE_NAME_PLACEHOLDER)).toHaveValue(name);
+/** Adds the field the open dialog is filled for, and waits for its row. */
+const addFieldFromOpenDialog = async (page: Page, name: string): Promise<void> => {
+  await fillEmbeddedFieldDialog(page, { name });
+  await page.getByRole("dialog").getByRole("button", { name: "Add", exact: true }).click();
+  await expect(embeddedFieldRow(page, name)).toBeVisible();
 };
 
-const renameVariable = async (page: Page, from: string, to: string): Promise<void> => {
-  const form = variableForms(page).first();
-  const nameInput = form.getByPlaceholder(VARIABLE_NAME_PLACEHOLDER);
-
-  await expect(nameInput).toHaveValue(from);
-  await nameInput.fill(to);
-  // Blur commits the rename — the edit forms have no submit button.
-  await nameInput.press("Tab");
-  await expect(nameInput).toHaveValue(to);
-};
-
-const addHiddenField = async (page: Page, name: string): Promise<void> => {
-  await openCard(page, "Hidden fields");
-  await editorPanel(page).locator("#hiddenField").fill(name);
-  await editorPanel(page).getByRole("button", { name: "Add hidden field ID", exact: true }).click();
-  await expect(editorPanel(page).getByText(name, { exact: true })).toBeVisible();
-};
-
-/** Opens the element card if it is collapsed — same click-until-open shape as {@link openCard}. */
+/** Opens the element card if it is collapsed — same click-until-open shape as `openEmbeddedDataCard`. */
 const openQuestionCard = async (page: Page, heading = QUESTION_HEADLINE): Promise<void> => {
   const questionLabel = editorPanel(page).locator('label:has-text("Question*")');
 
@@ -192,7 +169,7 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
   }) => {
     const variableName = uniqueName("var_alpha");
     const renamedVariableName = uniqueName("var_beta");
-    const staleRowName = uniqueName("var_stale");
+    const rowEditedName = uniqueName("var_row");
     const firstHiddenField = uniqueName("hidden_one");
     const secondHiddenField = uniqueName("hidden_two");
 
@@ -204,10 +181,9 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     await openQuestionCard(page, "What would you like to know?");
     await fillRichTextEditor(page, "Question*", QUESTION_HEADLINE);
 
-    // A text variable and a hidden field, declared on the legacy cards.
-    await openCard(page, "Variables");
-    await addVariable(page, variableName, "Text");
-    await addHiddenField(page, firstHiddenField);
+    // A calculated field and a passed-in one, both declared on the one card.
+    await addEmbeddedField(page, { name: variableName, source: "Calculated", type: "Text" });
+    await addEmbeddedField(page, { name: firstHiddenField, source: "Passed in", type: "Text" });
 
     // Persist them, which is what writes the EmbeddedData rows, then reload so the editor mounts
     // with those rows inlined on the survey. Everything below is asserted against that state — the
@@ -215,58 +191,64 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     await saveDraft(page);
     expect(await prisma.surveyEmbeddedData.count({ where: { surveyId } })).toBe(2);
 
-    // Force that disagreement rather than waiting for it: the saved row is edited behind the
-    // editor's back so it claims a different name and a different type than the card does. This is
-    // what an editor reader resolving through the rows would show, so every card-derived assertion
-    // below now has something to be wrong about.
-    const staleRowUpdate = await prisma.embeddedData.updateMany({
+    // Pull the two descriptions apart rather than waiting for them to drift: the saved row is edited
+    // behind the editor's back so it claims a different name and a different type than the legacy
+    // column derived from it does. Whichever one the editor reads, the other is now wrong about
+    // something — which is what every assertion below reads off.
+    const rowUpdate = await prisma.embeddedData.updateMany({
       where: { surveyId, source: "computed" },
-      data: { name: staleRowName, dataType: "number" },
+      data: { name: rowEditedName, dataType: "number" },
     });
-    expect(staleRowUpdate.count).toBe(1);
+    expect(rowUpdate.count).toBe(1);
 
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(editorPanel(page).getByRole("heading", { name: QUESTION_HEADLINE })).toBeVisible();
-    // The editor really was handed that row: the survey reaches this client component as a
-    // serialized prop, so the stale name is in the payload even though no picker may show it.
-    // Without this the assertions below could pass for the wrong reason (rows never inlined at all).
-    expect(
-      (await page.content()).includes(staleRowName),
-      "the editor page should carry the diverging row in its serialized survey prop"
-    ).toBe(true);
 
-    // Baseline: the cards' definitions are offered, not the rows'.
+    // Baseline: the rows' definitions are offered, and the legacy column's name is nowhere. Before
+    // ENG-2628 this pair was the other way round.
     const pickerBeforeEdit = await openRecallPicker(page, "at-key");
-    await expect(recallItem(pickerBeforeEdit, variableName)).toHaveAttribute("title", "variable");
-    await expect(recallItem(pickerBeforeEdit, firstHiddenField)).toHaveAttribute("title", "hiddenField");
-    await expect(recallItem(pickerBeforeEdit, staleRowName)).toHaveCount(0);
+    await expect(recallItem(pickerBeforeEdit, rowEditedName)).toHaveAttribute("data-recall-type", "variable");
+    await expect(recallItem(pickerBeforeEdit, firstHiddenField)).toHaveAttribute(
+      "data-recall-type",
+      "hiddenField"
+    );
+    await expect(recallItem(pickerBeforeEdit, variableName)).toHaveCount(0);
     await closeRecallPicker(page);
+
+    // The card edits the same list it reads, so it names the row too.
+    await openEmbeddedDataCard(page);
+    await expect(embeddedFieldRow(page, rowEditedName)).toBeVisible();
 
     await openBlockLogic(page);
     const operandsBeforeEdit = await openCombobox(page, "condition-0-0-conditionValue");
-    await expect(operandsBeforeEdit.getByRole("option", { name: variableName, exact: true })).toBeVisible();
-    await expect(operandsBeforeEdit.getByRole("option", { name: staleRowName, exact: true })).toHaveCount(0);
+    await expect(operandsBeforeEdit.getByRole("option", { name: rowEditedName, exact: true })).toBeVisible();
+    await expect(operandsBeforeEdit.getByRole("option", { name: variableName, exact: true })).toHaveCount(0);
     await operandsBeforeEdit.getByRole("option", { name: firstHiddenField, exact: true }).click();
 
     await openCombobox(page, "action-0-objective");
     await page.getByRole("option", { name: "Calculate", exact: true }).click();
     const variablesBeforeEdit = await openCombobox(page, "action-0-variableId");
-    await variablesBeforeEdit.getByRole("option", { name: variableName, exact: true }).click();
-    // The card says text while the row says number, so this is the card's answer.
-    await expect(page.locator("#action-0-value-input")).toHaveAttribute("type", "text");
+    await variablesBeforeEdit.getByRole("option", { name: rowEditedName, exact: true }).click();
+    // The row says number while the legacy column still says text, so this is the row's answer.
+    await expect(page.locator("#action-0-value-input")).toHaveAttribute("type", "number");
 
-    // Edit the definitions through the legacy cards: rename the variable, retype it to a number,
-    // and declare a second hidden field. None of this touches the saved rows.
-    await openCard(page, "Variables");
-    await renameVariable(page, variableName, renamedVariableName);
-    await selectVariableType(page, variableForms(page).first(), "Number");
-    await addHiddenField(page, secondHiddenField);
+    // Now edit through the card: rename the calculated field, retype it back to text, and declare a
+    // second passed-in field. The card writes `embeddedFields`, which is what every reader below is
+    // reading — so this must land with no save and no reload.
+    await editEmbeddedField(page, rowEditedName, { name: renamedVariableName, type: "Text" });
+    await addEmbeddedField(page, { name: secondHiddenField, source: "Passed in" });
 
-    // Recall picker: the new name and the new hidden field, and no trace of the stale one.
+    // Recall picker: the new name and the new passed-in field, and no trace of the name it replaced.
     const pickerAfterEdit = await openRecallPicker(page, "toolbar");
-    await expect(recallItem(pickerAfterEdit, renamedVariableName)).toHaveAttribute("title", "variable");
-    await expect(recallItem(pickerAfterEdit, secondHiddenField)).toHaveAttribute("title", "hiddenField");
-    await expect(recallItem(pickerAfterEdit, variableName)).toHaveCount(0);
+    await expect(recallItem(pickerAfterEdit, renamedVariableName)).toHaveAttribute(
+      "data-recall-type",
+      "variable"
+    );
+    await expect(recallItem(pickerAfterEdit, secondHiddenField)).toHaveAttribute(
+      "data-recall-type",
+      "hiddenField"
+    );
+    await expect(recallItem(pickerAfterEdit, rowEditedName)).toHaveCount(0);
     await closeRecallPicker(page);
 
     // Logic operand picker: same, live.
@@ -278,40 +260,37 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     await expect(
       operandsAfterEdit.getByRole("option", { name: secondHiddenField, exact: true })
     ).toBeVisible();
-    await expect(operandsAfterEdit.getByRole("option", { name: variableName, exact: true })).toHaveCount(0);
+    await expect(operandsAfterEdit.getByRole("option", { name: rowEditedName, exact: true })).toHaveCount(0);
     await closeCombobox(page);
 
-    // Calculate action: still bound to the same field (renaming keeps its id), now labelled with the
-    // new name, and its value widget follows the field's new type.
+    // Calculate action: still bound to the same field (renaming keeps its address), now labelled with
+    // the new name, and its value widget follows the field's new type.
     await expect(page.locator("#action-0-variableId")).toContainText(renamedVariableName);
-    await expect(page.locator("#action-0-value-input")).toHaveAttribute("type", "number");
+    await expect(page.locator("#action-0-value-input")).toHaveAttribute("type", "text");
 
-    // The edits survive a save and a reload, and the save is also what makes the rows catch up:
-    // the deliberately stale row is rewritten from the card it belongs to.
+    // The edits survive a save and a reload, and the save is what writes the card's answer back onto
+    // the row — including over the type the behind-the-back edit put there.
     await saveDraft(page);
     expect(await prisma.surveyEmbeddedData.count({ where: { surveyId } })).toBe(3);
     expect(await prisma.embeddedData.findFirst({ where: { surveyId, source: "computed" } })).toMatchObject({
       name: renamedVariableName,
-      dataType: "number",
+      dataType: "string",
     });
     await page.reload({ waitUntil: "domcontentloaded" });
 
-    await openCard(page, "Variables");
-    await expect(variableForms(page).first().getByPlaceholder(VARIABLE_NAME_PLACEHOLDER)).toHaveValue(
-      renamedVariableName
-    );
-    await openCard(page, "Hidden fields");
-    await expect(editorPanel(page).getByText(firstHiddenField, { exact: true })).toBeVisible();
-    await expect(editorPanel(page).getByText(secondHiddenField, { exact: true })).toBeVisible();
+    await openEmbeddedDataCard(page);
+    await expect(embeddedFieldRow(page, renamedVariableName)).toBeVisible();
+    await expect(embeddedFieldRow(page, firstHiddenField)).toBeVisible();
+    await expect(embeddedFieldRow(page, secondHiddenField)).toBeVisible();
 
     await openBlockLogic(page);
     await expect(page.locator("#action-0-variableId")).toContainText(renamedVariableName);
-    await expect(page.locator("#action-0-value-input")).toHaveAttribute("type", "number");
+    await expect(page.locator("#action-0-value-input")).toHaveAttribute("type", "text");
   });
 
   /**
-   * ENG-1839. `country` is a Tier-1 reserved field, read off every response. A newly declared hidden
-   * field may not take that name — the two would collide in the recall/logic namespace, and
+   * ENG-1839. `country` is a Tier-1 reserved field, read off every response. A newly declared
+   * passed-in field may not take that name — the two would collide in the recall/logic namespace, and
    * `getHiddenFieldsFromSearchParams` would refuse to fill it, leaving it silently empty forever.
    *
    * Surveys that ALREADY declare `country` are grandfathered and keep working; that half is covered
@@ -326,38 +305,14 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
     const surveyId = await createSurveyFromScratch(page);
 
-    await openCard(page, "Hidden fields");
-    const input = editorPanel(page).locator("#hiddenField");
-    const addButton = editorPanel(page).getByRole("button", { name: "Add hidden field ID", exact: true });
-
-    await input.fill("country");
-    await addButton.click();
-
-    // The error names the field, and the field is NOT added to the card.
-    await expect(
-      page.getByText("Hidden field ID “country” is not allowed. It is a reserved keyword.", {
-        exact: true,
-      })
-    ).toBeVisible();
-    await expect(
-      editorPanel(page).getByText("country", { exact: true }),
-      "the refused name must not be added to the hidden fields card"
-    ).toHaveCount(0);
-
+    await openNewFieldDialog(page, "Passed in");
+    await expectReservedNameRefused(page, "country");
     // Uppercase is refused too: the reserved match is case-insensitive, and a survey declaring
     // `Country` would collide with the same reserved read.
-    await input.fill("Country");
-    await addButton.click();
-    await expect(
-      page.getByText("Hidden field ID “Country” is not allowed. It is a reserved keyword.", {
-        exact: true,
-      })
-    ).toBeVisible();
+    await expectReservedNameRefused(page, "Country");
 
-    // An ordinary name still works, so the guard rejects the reserved name rather than the card.
-    await input.fill(allowedName);
-    await addButton.click();
-    await expect(editorPanel(page).getByText(allowedName, { exact: true })).toBeVisible();
+    // An ordinary name still works, so the guard rejects the reserved name rather than the dialog.
+    await addFieldFromOpenDialog(page, allowedName);
 
     // And the refusal really did not reach the database: the save writes one field, not three.
     await saveDraft(page);
@@ -369,10 +324,10 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
   });
 
   /**
-   * The variables half of the same guard. `isSafeIdentifier("country")` passes — it is lowercase with
-   * no separators — so this card accepted the name and the author only found out at save time, from
-   * the server guard's untranslated message. The card now applies the same `validateId` strict gate
-   * the hidden-fields card does, so the refusal is translated and immediate.
+   * The calculated half of the same guard. `isSafeIdentifier("country")` passes — it is lowercase
+   * with no separators — so the old Variables card accepted the name and the author only found out at
+   * save time, from the server guard's untranslated message. The one card applies the same
+   * `validateId` strict gate to both sources, so the refusal is translated and immediate either way.
    */
   test("refuses a variable named after a reserved field", async ({ page, users }) => {
     const allowedName = uniqueName("score");
@@ -382,42 +337,15 @@ test.describe("Survey editor Embedded Data definitions @slow", () => {
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
     const surveyId = await createSurveyFromScratch(page);
 
-    await openCard(page, "Variables");
-    const createForm = variableForms(page).last();
-    const nameInput = createForm.getByPlaceholder(VARIABLE_NAME_PLACEHOLDER);
-
-    await nameInput.fill("country");
-    await selectVariableType(page, createForm, "Text");
-    await createForm.getByRole("button", { name: "Add variable", exact: true }).click();
-
-    // Inline under the field rather than a toast — that is how this card reports name errors.
-    await expect(
-      createForm.getByText("Variable ID “country” is not allowed. It is a reserved keyword.", {
-        exact: true,
-      })
-    ).toBeVisible();
-
-    // Case-insensitive, matching the server guard and the hidden-fields card.
-    await nameInput.fill("Country");
-    await createForm.getByRole("button", { name: "Add variable", exact: true }).click();
-    await expect(
-      createForm.getByText("Variable ID “Country” is not allowed. It is a reserved keyword.", {
-        exact: true,
-      })
-    ).toBeVisible();
-
-    // An ordinary name still works, so the gate refuses the name rather than the card.
-    await nameInput.fill(allowedName);
-    await selectVariableType(page, createForm, "Text");
-    await createForm.getByRole("button", { name: "Add variable", exact: true }).click();
-    await expect(variableForms(page).first().getByPlaceholder(VARIABLE_NAME_PLACEHOLDER)).toHaveValue(
-      allowedName
-    );
+    await openNewFieldDialog(page, "Calculated");
+    await expectReservedNameRefused(page, "country");
+    await expectReservedNameRefused(page, "Country");
+    await addFieldFromOpenDialog(page, allowedName);
 
     await saveDraft(page);
-    // Asserted on the definition, not on the link's `storageKey`: a variable is addressed by its cuid
-    // everywhere, so `toDesiredEmbeddedFields` stores that id as the storage key while the name — the
-    // only thing this gate reads — lives on the definition. A hidden field's two happen to be equal,
+    // Asserted on the definition, not on the link's `storageKey`: a calculated field is addressed by
+    // its cuid everywhere, so the card mints that id as the storage key while the name — the only
+    // thing this gate reads — lives on the definition. A passed-in field's two happen to be equal,
     // which is why the sibling test above can compare storage keys directly.
     const stored = await prisma.surveyEmbeddedData.findMany({
       where: { surveyId },

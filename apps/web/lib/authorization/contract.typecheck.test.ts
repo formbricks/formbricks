@@ -40,6 +40,7 @@ type TExpectedAuthorizationAction =
   | "survey.publish"
   | "survey.response_read"
   | "survey.response_export"
+  | "survey.change_visibility"
   | "dashboard.read"
   | "dashboard.write"
   | "feedbackDirectory.read"

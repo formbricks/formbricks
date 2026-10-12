@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { updateSurveyAction } from "@/modules/survey/editor/actions";
 import {
   Select,
@@ -95,7 +95,7 @@ export const SurveyStatusDropdown = () => {
                 <span className="ml-2 text-sm text-slate-700">
                   {survey.status === "inProgress" && t("common.in_progress")}
                   {survey.status === "paused" && (isScheduled ? t("common.scheduled") : t("common.paused"))}
-                  {survey.status === "completed" && t("common.completed")}
+                  {survey.status === "completed" && t("common.closed")}
                 </span>
               </div>
             </SelectValue>
@@ -116,7 +116,7 @@ export const SurveyStatusDropdown = () => {
             <SelectItem className="group font-normal hover:text-slate-900" value="completed">
               <div className="flex w-full items-center justify-center gap-2">
                 <SurveyStatusIndicator status={"completed"} />
-                {t("common.completed")}
+                {t("common.closed")}
               </div>
             </SelectItem>
           </SelectContent>

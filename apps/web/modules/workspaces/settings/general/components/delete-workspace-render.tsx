@@ -7,7 +7,7 @@ import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { FORMBRICKS_ENVIRONMENT_ID_LS, FORMBRICKS_WORKSPACE_ID_LS } from "@/lib/localStorage";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { truncate } from "@/lib/utils/strings";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";

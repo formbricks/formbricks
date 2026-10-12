@@ -11,12 +11,11 @@ import { transformPrismaSurvey } from "@/lib/survey/utils";
 /**
  * The v3 PATCH write path against real Postgres (ENG-1837).
  *
- * `PATCH /api/v3/surveys/{surveyId}` and MCP `patch_survey` write `variables` / `hiddenFields`
- * straight through `survey.update`. Once readers resolve definitions through the EmbeddedData tables,
- * a patch that does not reconcile leaves the rows describing the pre-patch survey — a variable added
- * over the API would be invisible to the logic engine, the export columns and the response filters,
- * and a deleted one would keep its column. The unit suite mocks `@formbricks/database`, so only a
- * real database shows that the rows actually end up agreeing with the columns.
+ * `PATCH /api/v3/surveys/{surveyId}` and MCP `patch_survey` send `variables` / `hiddenFields`, and
+ * since ENG-2404 the EmbeddedData rows are the only place either is stored — so a patch that does
+ * not reconcile would not persist them at all. The unit suite mocks `@formbricks/database`, so only
+ * a real database shows that the rows actually end up describing the patched survey, and that what
+ * the patch returns (and every later read serves) is derived from those rows.
  */
 
 /** A variable's storage key is its cuid, so a rename moves the name but never the address. */
@@ -54,23 +53,28 @@ const seedSurvey = async (legacy?: {
       status: "draft",
       workspaceId: workspace.id,
       blocks: BLOCKS,
-      variables: (legacy?.variables ?? []) as never,
-      hiddenFields: (legacy?.hiddenFields ?? { enabled: false }) as never,
     },
-    select: selectSurvey,
+    select: { id: true },
   });
 
-  // Mirror the state every stored survey is in: rows reconciled from the columns it was saved with.
+  // The survey's fields exist only as rows (ENG-2404): write them the way a legacy save would.
   await prisma.$transaction((tx) =>
     reconcileEmbeddedData(tx, {
       surveyId: survey.id,
       workspaceId: workspace.id,
-      patch: survey,
+      patch: { variables: legacy?.variables as never, hiddenFields: legacy?.hiddenFields },
     })
   );
 
-  return transformPrismaSurvey<TSurvey>(survey);
+  // Read back after the reconcile, the way the route loads the survey it patches: its legacy keys are
+  // derived from these rows, and the patch merges its body over them.
+  return loadSurvey(survey.id);
 };
+
+const loadSurvey = async (surveyId: string): Promise<TSurvey> =>
+  transformPrismaSurvey<TSurvey>(
+    await prisma.survey.findUniqueOrThrow({ where: { id: surveyId }, select: selectSurvey })
+  );
 
 /** The survey's rows, in the shape `toDesiredEmbeddedFields` produces, so the two can be compared. */
 const readRows = async (surveyId: string) =>
@@ -79,7 +83,18 @@ const readRows = async (surveyId: string) =>
       where: { surveyId },
       select: {
         storageKey: true,
-        embeddedData: { select: { name: true, source: true, dataType: true, defaultValue: true } },
+        embeddedData: {
+          select: {
+            name: true,
+            source: true,
+            dataType: true,
+            defaultValue: true,
+            // Both are part of what `toDesiredEmbeddedFields` describes since ENG-3228, and both are
+            // what a legacy patch must leave alone: a local, unlocked field.
+            locked: true,
+            key: true,
+          },
+        },
       },
     })
     .then((links) =>
@@ -88,18 +103,14 @@ const readRows = async (surveyId: string) =>
         .sort((a, b) => a.storageKey.localeCompare(b.storageKey))
     );
 
-/** What the rows SHOULD be, read back from the columns the patch persisted. */
-const expectedRowsFromColumns = async (surveyId: string) => {
-  const survey = await prisma.survey.findUniqueOrThrow({
-    where: { id: surveyId },
-    select: { variables: true, hiddenFields: true },
-  });
+/** What the rows SHOULD be, read back from the legacy shape a later read serves for the survey. */
+const expectedRowsFromServedShape = async (surveyId: string) =>
+  toDesiredEmbeddedFields(await loadSurvey(surveyId)).sort((a, b) =>
+    a.storageKey.localeCompare(b.storageKey)
+  );
 
-  return toDesiredEmbeddedFields(survey).sort((a, b) => a.storageKey.localeCompare(b.storageKey));
-};
-
-const expectRowsAgreeWithColumns = async (surveyId: string) => {
-  expect(await readRows(surveyId)).toEqual(await expectedRowsFromColumns(surveyId));
+const expectRowsAgreeWithServedShape = async (surveyId: string) => {
+  expect(await readRows(surveyId)).toEqual(await expectedRowsFromServedShape(surveyId));
 };
 
 beforeEach(async () => {
@@ -123,9 +134,12 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
         source: "computed",
         dataType: "number",
         defaultValue: 7,
+        // A column-derived field is local and unlocked: the legacy carrier can say neither.
+        locked: false,
+        key: null,
       },
     ]);
-    await expectRowsAgreeWithColumns(survey.id);
+    await expectRowsAgreeWithServedShape(survey.id);
   });
 
   test("a patch that adds a hidden field writes its row and link", async () => {
@@ -144,9 +158,11 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
         source: "ingested",
         dataType: "string",
         defaultValue: null,
+        locked: false,
+        key: null,
       },
     ]);
-    await expectRowsAgreeWithColumns(survey.id);
+    await expectRowsAgreeWithServedShape(survey.id);
   });
 
   test("a patch that renames a variable updates its row rather than orphaning it", async () => {
@@ -167,9 +183,32 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
         source: "computed",
         dataType: "number",
         defaultValue: 9,
+        locked: false,
+        key: null,
       },
     ]);
-    await expectRowsAgreeWithColumns(survey.id);
+    await expectRowsAgreeWithServedShape(survey.id);
+  });
+
+  test("the patch returns the patched fields, not the ones the survey was read with", async () => {
+    // ENG-2404: the response's `variables` / `hiddenFields` are derived from the rows, so the route
+    // re-reads the survey after its reconcile. A read taken before it would hand the caller that just
+    // renamed a field — an MCP agent, typically — the old name back.
+    const survey = await seedSurvey({
+      variables: [{ id: VARIABLE_ID, name: "score", type: "number", value: 7 }],
+    });
+
+    const patched = await patchV3Survey(
+      survey,
+      {
+        variables: [{ id: VARIABLE_ID, name: "renamed_score", type: "number", value: 9 }],
+        hiddenFields: { enabled: true, fieldIds: ["utm_source"] },
+      },
+      "req_v3_patch_returns_patched"
+    );
+
+    expect(patched.variables).toEqual([{ id: VARIABLE_ID, name: "renamed_score", type: "number", value: 9 }]);
+    expect(patched.hiddenFields).toEqual({ enabled: true, fieldIds: ["utm_source"] });
   });
 
   test("a patch that removes a field drops its row, so it stops appearing as a column", async () => {
@@ -185,7 +224,7 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
     );
 
     expect((await readRows(survey.id)).map(({ storageKey }) => storageKey)).toEqual([VARIABLE_ID, "plan"]);
-    await expectRowsAgreeWithColumns(survey.id);
+    await expectRowsAgreeWithServedShape(survey.id);
   });
 
   test("a patch that touches neither key leaves the rows alone", async () => {
@@ -200,7 +239,7 @@ describe("v3 survey patch keeps the Embedded Data rows in step (real Postgres)",
     await patchV3Survey(survey, { name: "Renamed survey" }, "req_v3_patch_name_only");
 
     expect(await readRows(survey.id)).toEqual(before);
-    await expectRowsAgreeWithColumns(survey.id);
+    await expectRowsAgreeWithServedShape(survey.id);
   });
 
   test("renaming both kinds of field leaves stored responses byte-identical (AC #4)", async () => {

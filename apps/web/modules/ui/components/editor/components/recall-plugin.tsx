@@ -500,7 +500,6 @@ export const RecallPlugin = ({
           setShowRecallItemSelect={setShowRecallItemSelect}
           recallItems={recallItems}
           selectedLanguageCode={selectedLanguageCode}
-          hiddenFields={localSurvey.hiddenFields}
         />
       )}
     </>

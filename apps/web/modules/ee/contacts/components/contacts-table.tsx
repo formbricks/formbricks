@@ -20,7 +20,7 @@ import { useTranslation } from "react-i18next";
 import { TUserLocale } from "@formbricks/types/user";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { deleteContactAction } from "@/modules/ee/contacts/actions";
 import { Button } from "@/modules/ui/components/button";
 import {

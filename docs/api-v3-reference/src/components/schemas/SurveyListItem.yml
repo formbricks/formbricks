@@ -1,79 +1,81 @@
-type: object
-description: >
-  Shape returned by `GET /api/v3/surveys`. Serialized dates are ISO 8601
-  strings.
+allOf:
+  - type: object
+    description: >
+      Shape returned by `GET /api/v3/surveys`. Serialized dates are ISO 8601
+      strings.
 
-  The v3 overview contract intentionally omits internal fields such as `_count`.
+      The v3 overview contract intentionally omits internal fields such as `_count`.
 
-  Legacy DB rows may include survey **type** values `website` or `web` (see
-  Prisma); filter **type** only accepts `link` | `app`.
-required:
-  - id
-  - name
-  - workspaceId
-  - type
-  - status
-  - publishOn
-  - createdAt
-  - updatedAt
-  - archivedAt
-  - responseCount
-  - completedResponseCount
-  - creator
-properties:
-  id:
-    type: string
-  name:
-    type: string
-  workspaceId:
-    type: string
-  type:
-    type: string
-    enum:
-      - link
-      - app
-      - website
-      - web
-  status:
-    type: string
-    enum:
-      - draft
-      - inProgress
-      - paused
-      - completed
-  createdAt:
-    type: string
-    format: date-time
-  updatedAt:
-    type: string
-    format: date-time
-  archivedAt:
-    type:
-      - string
-      - "null"
-    format: date-time
-    description: >-
-      Soft-delete/archive marker (ISO 8601); `null` when the survey is active.
-  publishOn:
-    type:
-      - string
-      - "null"
-    format: date-time
-    description: Scheduled publish time (ISO 8601), or null if not scheduled.
-  responseCount:
-    type: integer
-    description: Number of responses, including partial ones.
-  completedResponseCount:
-    type: integer
-    description: Number of responses the respondent finished.
-  creator:
-    type:
-      - object
-      - "null"
-    description: The user who created the survey, or null for API-key/system-created surveys.
+      Legacy DB rows may include survey **type** values `website` or `web` (see
+      Prisma); filter **type** only accepts `link` | `app`.
     required:
+      - id
       - name
+      - workspaceId
+      - type
+      - status
+      - publishOn
+      - createdAt
+      - updatedAt
+      - archivedAt
+      - responseCount
+      - completedResponseCount
+      - creator
     properties:
+      id:
+        type: string
       name:
         type: string
-    additionalProperties: false
+      workspaceId:
+        type: string
+      type:
+        type: string
+        enum:
+          - link
+          - app
+          - website
+          - web
+      status:
+        type: string
+        enum:
+          - draft
+          - inProgress
+          - paused
+          - completed
+      createdAt:
+        type: string
+        format: date-time
+      updatedAt:
+        type: string
+        format: date-time
+      archivedAt:
+        type:
+          - string
+          - "null"
+        format: date-time
+        description: >-
+          Soft-delete/archive marker (ISO 8601); `null` when the survey is active.
+      publishOn:
+        type:
+          - string
+          - "null"
+        format: date-time
+        description: Scheduled publish time (ISO 8601), or null if not scheduled.
+      responseCount:
+        type: integer
+        description: Number of responses, including partial ones.
+      completedResponseCount:
+        type: integer
+        description: Number of responses the respondent finished.
+      creator:
+        type:
+          - object
+          - "null"
+        description: The user who created the survey, or null for API-key/system-created surveys.
+        required:
+          - name
+        properties:
+          name:
+            type: string
+        additionalProperties: false
+  - $ref: ./SurveyVisibilityFields.yml

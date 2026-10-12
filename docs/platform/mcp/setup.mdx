@@ -76,6 +76,29 @@ Use this for **claude.ai** and **Claude Desktop**, where Formbricks is added as 
     Code** instead — it runs locally.
 </Warning>
 
+## ChatGPT (MCP apps)
+
+Use this to add Formbricks to **ChatGPT** as a custom MCP app. Custom MCP apps need ChatGPT
+**developer mode**, which is available on Business and Enterprise/Edu plans and has to be enabled by
+a workspace admin first — see OpenAI's
+[Developer mode and MCP apps in ChatGPT](https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt).
+
+<Steps>
+  <Step title="Create the app">
+    In ChatGPT, go to **Settings → Apps → Create**. Enter the MCP URL
+    `https://app.formbricks.com/api/mcp` and choose **OAuth** as the authentication mechanism.
+  </Step>
+  <Step title="Approve access">
+    ChatGPT opens Formbricks in your browser and registers itself. Sign in and **approve** the
+    requested access; ChatGPT then scans the available tools.
+  </Step>
+</Steps>
+
+<Note>
+  Like the Claude apps, ChatGPT connects from OpenAI's servers, so the MCP URL must be a **public
+  HTTPS** address — not `localhost`.
+</Note>
+
 ## Codex
 
 <Steps>
@@ -94,7 +117,7 @@ Use this for **claude.ai** and **Claude Desktop**, where Formbricks is added as 
     Codex opens the browser to Formbricks, registers itself, and you **approve** on the consent
     screen. For read-only access, restrict the scopes:
     ```bash
-    codex mcp login formbricks --scopes surveys:read,workflows:read,feedbackRecords:read,offline_access
+    codex mcp login formbricks --scopes surveys:read,workflows:read,feedbackRecords:read,responses:read,offline_access
     ```
     Scope groups are independent — request only the ones you need (for example
     `feedbackRecords:read,offline_access` for feedback data alone).
@@ -131,10 +154,15 @@ periodically for safety.
 ## Troubleshooting
 
 <AccordionGroup>
-  <Accordion title="claude.ai says it couldn't register / connect">
-    Custom connectors connect from Anthropic's cloud, which can't reach `localhost` or a private
+  <Accordion title="claude.ai or ChatGPT says it couldn't register / connect">
+    Custom connectors connect from the vendor's cloud, which can't reach `localhost` or a private
     network. Use a **public HTTPS** MCP URL (Formbricks Cloud, or a tunnel to a self-hosted instance),
     or connect a local server with **Claude Code** instead.
+
+    If registration fails with `400 invalid_redirect_uri`, the client asked to register a callback
+    Formbricks doesn't allow. Formbricks accepts local (`http://localhost`, `127.0.0.1`, `[::1]`)
+    callbacks and the exact claude.ai and ChatGPT callbacks. To allow another hosted client, a
+    self-hoster can add its exact callback with `MCP_DCR_ALLOWED_REDIRECT_URIS`.
   </Accordion>
   <Accordion title="invalid_client or a stale-registration error after reconnecting">
     The client cached a registration that no longer exists on the server (e.g. the server data was
@@ -145,11 +173,8 @@ periodically for safety.
   <Accordion title="invalid_scope during sign-in">
     The client requested a scope it isn't registered for. Reconnect from scratch so it re-registers
     with the scopes the server advertises (`surveys:read`, `surveys:write`, `workflows:read`,
-    `workflows:write`, `feedbackRecords:read`, `feedbackRecords:write`, `offline_access`).
-
-    `responses:read` and `responses:write` are deliberately **not** in that list yet. They can be
-    granted, but the server does not advertise them, so a client that asks for them by name is the
-    one case where this error is expected rather than a misconfiguration.
+    `workflows:write`, `feedbackRecords:read`, `feedbackRecords:write`, `responses:read`,
+    `responses:write`, `offline_access`).
   </Accordion>
   <Accordion title="Stuck in a consent loop / keeps asking you to sign in">
     Usually a cookie or stale-session issue. Make sure you're signed in to Formbricks in the same
@@ -178,6 +203,39 @@ periodically for safety.
     `/api/auth/jwks` is correct only when no custom application subpath is configured. If Formbricks is
     mounted at `/formbricks`, use the complete internal URL, such as
     `http://formbricks:3000/formbricks/api/auth/jwks`.
+  </Accordion>
+  <Accordion title="Self-hosted behind Cloudflare: the client can't connect, but the URL works in your browser">
+    Only sign-in and consent happen in your browser. Discovery, registration, the token exchange and
+    every tool call come straight from the client — for claude.ai and ChatGPT, from Anthropic's or
+    OpenAI's servers. Cloudflare can treat that traffic as an AI agent or bot and block or challenge it
+    while still letting your browser through. The client then gets a Cloudflare page instead of the JSON
+    it expects, and reports what looks like an OAuth, registration or MCP error. So a URL that opens
+    in your browser, or a consent screen that works, does not rule Cloudflare out.
+
+    Check Cloudflare's **Security Events** for blocked or challenged requests to these paths (prefix
+    each with your [custom subpath](/self-hosting/configuration/custom-subpath) if you use one):
+
+    - `/.well-known/oauth-protected-resource`, `/.well-known/oauth-authorization-server`,
+      `/.well-known/openid-configuration` and `/api/auth/.well-known/` — discovery
+    - `/api/auth/oauth2/` — registration and tokens
+    - `/api/mcp` — the MCP server itself
+
+    Then let the client through without turning protection off for the whole site:
+
+    - **AI bot policies:** under **Security → Settings → Configure AI bot policies**, set **Agent** to
+      **Allow**. Agent covers AI tools acting for a person in real time, which is what an MCP client
+      is. **Training** and **Search** can stay blocked. If you still use the older **Block AI bots**
+      setting, check that too.
+    - **Bot Fight Mode** can't be skipped for specific paths, so if it blocks the client, turn it off.
+      **Super Bot Fight Mode** can: add a WAF custom rule with the **Skip** action for the paths above.
+    - **WAF custom rules and Cloudflare Access:** make sure no Block, Managed Challenge or Access policy
+      covers the paths above. An MCP client can't solve a challenge or sign in to Access.
+
+    Formbricks also fetches its own signing keys from your public `/api/auth/jwks` to verify tokens.
+    If Cloudflare challenges that request, sign-in succeeds but every call to `/api/mcp` is rejected
+    with `401`, and Formbricks logs `MCP OAuth authentication failed` with `failureSource: "jwks_fetch"`.
+    Set `MCP_OAUTH_JWKS_URL` to the internal endpoint so that fetch doesn't go through Cloudflare (see
+    the entry above).
   </Accordion>
 </AccordionGroup>
 

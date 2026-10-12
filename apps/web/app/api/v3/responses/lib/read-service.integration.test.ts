@@ -11,6 +11,9 @@ import {
   listV3ResponseKeysetPage,
 } from "./service";
 
+// The survey visibility marker is off in this suite, so the predicate restricts nothing.
+const UNENFORCED = { enforced: false, kind: "apiKey" } as const;
+
 /**
  * The keyset walk against a real Postgres.
  *
@@ -93,7 +96,7 @@ const walk = async (filter: TV3ResponsesFilter, limit: number, sortBy: "-created
 
   // Bounded so a cursor that fails to advance ends the test rather than the process.
   for (let page = 0; page < TOTAL + 5; page++) {
-    const rows = await listV3ResponseKeysetPage({ filter, sortBy, limit, cursor });
+    const rows = await listV3ResponseKeysetPage({ access: UNENFORCED, filter, sortBy, limit, cursor });
     const hasMore = rows.length > limit;
     const pageRows = hasMore ? rows.slice(0, limit) : rows;
 
@@ -159,7 +162,13 @@ describe("the keyset walk, against real Postgres", () => {
   });
 
   test("rows come back newest first, with ties broken consistently", async () => {
-    const rows = await listV3ResponseKeysetPage({ filter, sortBy: "-createdAt", limit: TOTAL, cursor: null });
+    const rows = await listV3ResponseKeysetPage({
+      access: UNENFORCED,
+      filter,
+      sortBy: "-createdAt",
+      limit: TOTAL,
+      cursor: null,
+    });
     const times = rows.map((row) => row.createdAt.getTime());
 
     expect(times).toEqual([...times].sort((a, b) => b - a));
@@ -184,6 +193,7 @@ describe("scope is enforced in the query, not assumed", () => {
    */
   test("another workspace's surveyId yields an empty page, not their rows", async () => {
     const rows = await listV3ResponseKeysetPage({
+      access: UNENFORCED,
       filter: { workspaceId: mine.workspaceId, surveyId: theirs.surveyId },
       sortBy: "-createdAt",
       limit: 50,
@@ -195,6 +205,7 @@ describe("scope is enforced in the query, not assumed", () => {
 
   test("a workspace-wide list reaches only its own responses", async () => {
     const rows = await listV3ResponseKeysetPage({
+      access: UNENFORCED,
       filter: { workspaceId: mine.workspaceId },
       sortBy: "-createdAt",
       limit: 100,
@@ -206,6 +217,7 @@ describe("scope is enforced in the query, not assumed", () => {
 
   test("counting another workspace's survey counts nothing", async () => {
     const result = await countV3Responses({
+      access: UNENFORCED,
       filter: { workspaceId: mine.workspaceId, surveyId: theirs.surveyId },
       precision: "exact",
     });
@@ -236,6 +248,7 @@ describe("filters reach the database intact", () => {
 
   test("finished narrows to the completed half", async () => {
     const rows = await listV3ResponseKeysetPage({
+      access: UNENFORCED,
       filter: { ...filter, finished: true },
       sortBy: "-createdAt",
       limit: 100,
@@ -247,6 +260,7 @@ describe("filters reach the database intact", () => {
 
   test("a language filter matches the stored codes", async () => {
     const rows = await listV3ResponseKeysetPage({
+      access: UNENFORCED,
       filter: { ...filter, languages: ["de"] },
       sortBy: "-createdAt",
       limit: 100,
@@ -259,6 +273,7 @@ describe("filters reach the database intact", () => {
   /** Inclusive lower bound, exclusive upper — the four bounds are not interchangeable. */
   test("createdAt bounds select the expected window", async () => {
     const rows = await listV3ResponseKeysetPage({
+      access: UNENFORCED,
       filter: {
         ...filter,
         createdAtGte: new Date(BASE.getTime() + 60_000),
@@ -276,6 +291,7 @@ describe("filters reach the database intact", () => {
     const own = await prisma.response.findFirstOrThrow({ where: { surveyId: scope.surveyId } });
 
     const rows = await listV3ResponseKeysetPage({
+      access: UNENFORCED,
       filter: { ...filter, ids: [own.id, "clrs000000000000000000404"] },
       sortBy: "-createdAt",
       limit: 100,
@@ -297,6 +313,7 @@ describe("counting", () => {
 
   test("an exact count is exact and says so", async () => {
     const result = await countV3Responses({
+      access: UNENFORCED,
       filter: { workspaceId: scope.workspaceId },
       precision: "exact",
     });
@@ -312,6 +329,7 @@ describe("counting", () => {
    */
   test("a capped count that reaches the cap reports gte, and stops at the cap", async () => {
     const result = await countV3Responses({
+      access: UNENFORCED,
       filter: { workspaceId: scope.workspaceId },
       precision: "capped",
       cap: 2,
@@ -323,6 +341,7 @@ describe("counting", () => {
   /** One below the cap is still exact, so `gte` is not simply always reported. */
   test("a capped count one short of the cap still reports eq", async () => {
     const result = await countV3Responses({
+      access: UNENFORCED,
       filter: { workspaceId: scope.workspaceId },
       precision: "capped",
       cap: TOTAL + 1,
@@ -334,6 +353,7 @@ describe("counting", () => {
   /** Below the cap the capped path is exact too — `gte` is reserved for a count that hit the cap. */
   test("a capped count below the cap reports eq", async () => {
     const result = await countV3Responses({
+      access: UNENFORCED,
       filter: { workspaceId: scope.workspaceId },
       precision: "capped",
     });
@@ -358,6 +378,7 @@ describe("hydration", () => {
    */
   test("rows come back in the order the ids were given, not the database's", async () => {
     const page = await listV3ResponseKeysetPage({
+      access: UNENFORCED,
       filter: { workspaceId: scope.workspaceId },
       sortBy: "-createdAt",
       limit: 10,
@@ -399,7 +420,13 @@ describe("the cursor is a position, not a promise", () => {
    */
   test("a row inserted mid-walk does not shift the pages already served", async () => {
     const filter = { workspaceId: scope.workspaceId, surveyId: scope.surveyId };
-    const first = await listV3ResponseKeysetPage({ filter, sortBy: "-createdAt", limit: 5, cursor: null });
+    const first = await listV3ResponseKeysetPage({
+      access: UNENFORCED,
+      filter,
+      sortBy: "-createdAt",
+      limit: 5,
+      cursor: null,
+    });
     const last = first[4];
 
     await prisma.response.create({
@@ -407,6 +434,7 @@ describe("the cursor is a position, not a promise", () => {
     });
 
     const second = await listV3ResponseKeysetPage({
+      access: UNENFORCED,
       filter,
       sortBy: "-createdAt",
       limit: 5,
@@ -422,7 +450,13 @@ describe("the cursor is a position, not a promise", () => {
   /** The encoded token round-trips through the same comparison the raw page predicate uses. */
   test("an encoded cursor resumes exactly where the page ended", async () => {
     const filter = { workspaceId: scope.workspaceId, surveyId: scope.surveyId };
-    const page = await listV3ResponseKeysetPage({ filter, sortBy: "-createdAt", limit: 4, cursor: null });
+    const page = await listV3ResponseKeysetPage({
+      access: UNENFORCED,
+      filter,
+      sortBy: "-createdAt",
+      limit: 4,
+      cursor: null,
+    });
     const last = page[3];
 
     const token = encodeKeysetCursor({
@@ -437,6 +471,7 @@ describe("the cursor is a position, not a promise", () => {
     expect(token).toMatch(/^[\w-]+$/);
 
     const next = await listV3ResponseKeysetPage({
+      access: UNENFORCED,
       filter,
       sortBy: "-createdAt",
       limit: 4,

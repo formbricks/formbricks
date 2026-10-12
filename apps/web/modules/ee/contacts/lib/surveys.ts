@@ -3,6 +3,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
+import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 
 export interface PublishedLinkSurvey {
   id: string;
@@ -10,10 +11,20 @@ export interface PublishedLinkSurvey {
 }
 
 export const getPublishedLinkSurveys = reactCache(
-  async (workspaceId: string): Promise<PublishedLinkSurvey[]> => {
+  async (
+    workspaceId: string,
+    /** ENG-3282: the viewer's survey-visibility clause. */
+    visibleSurveyWhere: Prisma.SurveyWhereInput
+  ): Promise<PublishedLinkSurvey[]> => {
     try {
       const surveys = await prisma.survey.findMany({
-        where: { workspaceId, status: "inProgress", type: "link", archivedAt: null },
+        where: {
+          workspaceId,
+          status: "inProgress",
+          type: "link",
+          archivedAt: null,
+          ...andVisibleSurveys(visibleSurveyWhere),
+        },
         select: {
           id: true,
           name: true,

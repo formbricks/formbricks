@@ -41,10 +41,10 @@ const toStoredDefaultValue = (
  * nothing. That also covers the survey the ENG-1978 write bridge migrated on its own when someone
  * edited it — in local development that is the normal state, since the bridge merged before this.
  *
- * A skipped survey is not stranded. It keeps resolving through ENG-1836's `deriveLegacyEmbeddedData`,
- * which serves a survey with no rows straight from its legacy JSON, and it migrates itself the next
- * time someone saves it in the editor — the write bridge runs the same mapping. Fixing the offending
- * declaration and saving is the whole recovery path; this migration will not run a second time.
+ * A skipped survey is not stranded. It kept resolving through a zero-row fallback to its legacy JSON
+ * until ENG-2404, whose final backfill (`20260928120000_eng_2404_backfill_remaining_embedded_data`)
+ * salvages what it can of every survey still without links before the columns are dropped. This
+ * migration will not run a second time.
  */
 export const backfillEmbeddedDataRows = async (
   tx: DataMigrationContext["tx"]

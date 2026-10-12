@@ -49,6 +49,11 @@ export const isLabelValidForAllLanguages = (
   return languages.every((language) => label?.[language] && getTextContent(label[language]).length > 0);
 };
 
+// An optional field left empty in the default language (e.g. the alt text of a decorative image) needs no
+// translations; once the default has text, every enabled language needs it too.
+const isOptionalLabelValid = (label: TI18nString | undefined, surveyLanguages: TSurveyLanguage[]): boolean =>
+  !label?.default?.trim() || isLabelValidForAllLanguages(label, surveyLanguages);
+
 // Validation logic for multiple choice elements
 const handleI18nCheckForMultipleChoice = (
   element: TSurveyMultipleChoiceElement,
@@ -126,8 +131,11 @@ export const validationRules = {
   consent: (element: TSurveyConsentElement, languages: TSurveyLanguage[]) => {
     return isLabelValidForAllLanguages(element.label, languages);
   },
-  pictureSelection: (element: TSurveyPictureSelectionElement) => {
-    return element.choices.length >= 2;
+  pictureSelection: (element: TSurveyPictureSelectionElement, languages: TSurveyLanguage[]) => {
+    return (
+      element.choices.length >= 2 &&
+      element.choices.every((choice) => isOptionalLabelValid(choice.imageAltText, languages))
+    );
   },
   cta: (element: TSurveyCTAElement, languages: TSurveyLanguage[]) => {
     return element.buttonExternal && element.ctaButtonLabel
@@ -156,7 +164,7 @@ export const validationRules = {
     let isValid = isHeadlineValid && isSubheaderValid;
     const defaultLanguageCode = "default";
     // Element specific fields (note: buttonLabel and backButtonLabel are now block-level, not element-level)
-    let fieldsToValidate = ["upperLabel", "lowerLabel"];
+    let fieldsToValidate = ["upperLabel", "lowerLabel", "imageAltText"];
 
     for (const field of fieldsToValidate) {
       const fieldValue = (element as unknown as Record<string, Record<string, string> | undefined>)[field];
@@ -246,7 +254,8 @@ export const isEndingCardValid = (
     return (
       isContentValid(card.headline, surveyLanguages) &&
       isContentValid(card.subheader, surveyLanguages) &&
-      isContentValid(card.buttonLabel, surveyLanguages)
+      isContentValid(card.buttonLabel, surveyLanguages) &&
+      isOptionalLabelValid(card.imageAltText, surveyLanguages)
     );
   } else {
     // Use ZEndingCardUrl for consistent validation - allows dynamic URLs via hidden fields/recall values
@@ -335,6 +344,7 @@ export const isSurveyValid = (
 const I18N_STRING_FIELDS = new Set([
   "headline",
   "subheader",
+  "imageAltText",
   "html",
   "label",
   "placeholder",
@@ -357,6 +367,7 @@ const NUMBERED_COLLECTION_LABEL_KEYS: Record<string, string> = {
 // t() calls rather than a key table, because the translation scanner only sees literal keys.
 const getElementFieldLabel = (field: string, t: TFunction): string | undefined => {
   if (field === "shuffleOption") return t("workspace.surveys.edit.field_label_shuffle_option");
+  if (field === "imageAltText") return t("workspace.surveys.edit.image_alt_text");
   return undefined;
 };
 
@@ -519,31 +530,28 @@ export const describeElementIssue = (
   };
 };
 
-export const getValidateIdErrorMessage = (
-  error: TValidateIdError,
-  type: "hiddenField" | "question" | "variable",
-  t: TFunction
-): string => {
-  const localizedType = {
-    hiddenField: () => t("common.hidden_field"),
-    question: () => t("workspace.surveys.edit.question"),
-    variable: () => t("common.variable"),
-  }[type]();
-
+/**
+ * Why an element id the author typed cannot be used.
+ *
+ * Question ids are the only thing left that reaches these strings. They used to be shared with the
+ * hidden-fields and variables cards through a `{type}` placeholder, which is why every sentence read
+ * "{Hidden field,Variable} ID …" — vocabulary the merged Embedded Data card removed. That card
+ * phrases its own refusals now (`getEmbeddedFieldErrorMessage`), naming whichever of Name or Key the
+ * author is looking at, so the placeholder had one value left and the sentences say it outright.
+ */
+export const getValidateIdErrorMessage = (error: TValidateIdError, t: TFunction): string => {
   switch (error.code) {
     case TValidateIdErrorCode.Empty:
-      return t("workspace.surveys.edit.validate_id_empty", { type: localizedType });
+      return t("workspace.surveys.edit.validate_id_empty");
     case TValidateIdErrorCode.Duplicate:
-      return t("workspace.surveys.edit.validate_id_duplicate", { type: localizedType });
+      return t("workspace.surveys.edit.validate_id_duplicate");
     case TValidateIdErrorCode.Reserved:
-      return t("workspace.surveys.edit.validate_id_reserved", { type: localizedType, field: error.field });
+      return t("workspace.surveys.edit.validate_id_reserved", { field: error.field });
     case TValidateIdErrorCode.HasSpaces:
-      return t("workspace.surveys.edit.validate_id_no_spaces", { type: localizedType });
+      return t("workspace.surveys.edit.validate_id_no_spaces");
     case TValidateIdErrorCode.InvalidChars:
-      return t("workspace.surveys.edit.validate_id_invalid_chars", { type: localizedType });
+      return t("workspace.surveys.edit.validate_id_invalid_chars");
     case TValidateIdErrorCode.NotSafeIdentifier:
-      return t("workspace.surveys.edit.validate_id_not_safe_identifier", { type: localizedType });
-    default:
-      return t("workspace.surveys.edit.validate_id_invalid_chars", { type: localizedType });
+      return t("workspace.surveys.edit.validate_id_not_safe_identifier");
   }
 };

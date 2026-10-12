@@ -4,6 +4,7 @@ import * as React from "react";
 import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
+import { FB_PART } from "@/lib/parts";
 import { cn } from "@/lib/utils";
 
 /**
@@ -48,6 +49,8 @@ interface RankingProps {
   disabled?: boolean;
   /** Image URL to display above the headline */
   imageUrl?: string;
+  /** Alt text for the image; empty or absent marks it decorative */
+  imageAltText?: string;
   /** Video URL to display above the headline */
   videoUrl?: string;
   /** ID of the 'other' option; once it is ranked, a free-text input appears inside its item */
@@ -145,8 +148,12 @@ function RankingItem({
   const displayNumber = isRanked ? rankIndex + 1 : undefined;
 
   return (
+    // Hooked as an option for its box. A ranked item has no native/ARIA state to style from (the
+    // toggle's label already says "Remove … from ranking"), so the ranked look stays built in.
     <li
       dir={dir}
+      data-fb-part={FB_PART.option}
+      data-checked={isRanked ? "true" : undefined}
       className={cn(
         "rounded-option flex min-h-12 cursor-pointer flex-col border px-3 transition-all",
         "bg-option-bg border-option-border",
@@ -174,6 +181,7 @@ function RankingItem({
           className="group flex h-full grow items-center gap-4 text-start focus:outline-none"
           aria-label={isRanked ? `Remove ${item.label} from ranking` : `Add ${item.label} to ranking`}>
           <span
+            data-fb-part={FB_PART.optionControl}
             className={cn(
               "border-brand flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
               isRanked
@@ -182,7 +190,9 @@ function RankingItem({
             )}>
             {displayNumber}
           </span>
-          <span className="font-option text-option font-option-weight text-option-label shrink grow text-start">
+          <span
+            data-fb-part={FB_PART.optionLabel}
+            className="font-option text-option font-option-weight text-option-label shrink grow text-start">
             {item.label}
           </span>
         </button>
@@ -244,6 +254,7 @@ function Ranking({
   dir = "auto",
   disabled = false,
   imageUrl,
+  imageAltText,
   videoUrl,
   otherOptionId,
   otherOptionPlaceholder = "Please specify",
@@ -307,6 +318,7 @@ function Ranking({
         requiredLabel={requiredLabel}
         htmlFor={inputId}
         imageUrl={imageUrl}
+        imageAltText={imageAltText}
         videoUrl={videoUrl}
       />
 

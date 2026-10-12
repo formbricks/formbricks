@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import type { TSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
 import { generateSingleUseIdsAction } from "@/modules/survey/list/actions";
 import type { TSurvey as TSurveyList } from "@/modules/survey/list/types/surveys";

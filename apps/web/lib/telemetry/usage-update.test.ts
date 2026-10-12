@@ -65,6 +65,12 @@ vi.mock("@/lib/hash-string", () => ({
 vi.mock("@/modules/ee/license-check/lib/license", () => ({
   getEnterpriseLicense: vi.fn(),
 }));
+// A sentinel rather than a real ProxyAgent: the test only has to prove the shared dispatcher reaches
+// the fetch call, which is what a proxied self-hoster's usage update depends on.
+const { proxyDispatcherSentinel } = vi.hoisted(() => ({
+  proxyDispatcherSentinel: { kind: "proxy-dispatcher" },
+}));
+vi.mock("@/lib/proxy-dispatcher", () => ({ proxyDispatcher: proxyDispatcherSentinel }));
 
 // Mock fetch
 const fetchMock = vi.fn();
@@ -150,6 +156,8 @@ describe("sendTelemetryEvents", () => {
 
     // Check fetch call
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    // The usage update must go out through the same proxy dispatcher as the license check.
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: "POST", dispatcher: proxyDispatcherSentinel });
     const payload = JSON.parse(fetchMock.mock.calls[0][1].body);
     expect(payload.organizationCount).toBe(1);
     expect(payload.userCount).toBe(5);
@@ -331,15 +339,15 @@ describe("sendTelemetryEvents", () => {
     // Verify lock was acquired
     expect(mockCacheService.tryLock).toHaveBeenCalledWith("telemetry_lock", "locked", 60 * 1000);
 
-    // The error should be caught in the inner catch block
-    // The actual implementation logs as warning, not error
-    expect(logger.warn).toHaveBeenCalledWith(
+    // The error is caught in the inner catch block and logged at error level, since a licensed
+    // instance that cannot deliver its usage update is a compliance problem, not a nicety.
+    expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({
         error: networkError,
         message: "Network error",
         hashedLicenseKey: "hashed-test-license-key",
       }),
-      "Failed to send telemetry - applying 1h cooldown"
+      "Failed to send usage update to the license server - applying 1h cooldown"
     );
 
     // Lock should be released in finally block
@@ -461,9 +469,9 @@ describe("sendTelemetryEvents", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     // A rejected update is a failure, not a send: the timestamp stays put so the next run retries.
     expect(mockCacheService.set).not.toHaveBeenCalled();
-    expect(logger.warn).toHaveBeenCalledWith(
+    expect(logger.error).toHaveBeenCalledWith(
       expect.objectContaining({ message: "Usage update endpoint responded with status 503" }),
-      "Failed to send telemetry - applying 1h cooldown"
+      "Failed to send usage update to the license server - applying 1h cooldown"
     );
     expect(mockCacheService.del).toHaveBeenCalledWith(["telemetry_lock"]);
   });

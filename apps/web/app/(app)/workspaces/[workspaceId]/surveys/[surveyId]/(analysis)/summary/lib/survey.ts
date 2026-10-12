@@ -8,6 +8,14 @@ import {
   deleteSurveyResponseFiles,
 } from "@/modules/storage/lib/survey-response-files";
 
+/**
+ * Execution budget for a survey reset, which deletes every response (with its cascades) and display of
+ * the survey in one batch, so its cost grows with the survey. Prisma's timeout cancels nothing on the
+ * server — the statements run to completion either way — so a budget below that only turns a reset
+ * that was about to commit into a rolled-back failure (ENG-3285). `maxWait` stays the client default.
+ */
+const SURVEY_RESET_TRANSACTION_TIMEOUT_MS = 120_000;
+
 export const deleteResponsesAndDisplaysForSurvey = async (
   surveyId: string
 ): Promise<{ deletedResponsesCount: number; deletedDisplaysCount: number }> => {
@@ -17,18 +25,21 @@ export const deleteResponsesAndDisplaysForSurvey = async (
 
     // Delete all responses for this survey
 
-    const [deletedResponsesCount, deletedDisplaysCount] = await prisma.$transaction([
-      prisma.response.deleteMany({
-        where: {
-          surveyId: surveyId,
-        },
-      }),
-      prisma.display.deleteMany({
-        where: {
-          surveyId: surveyId,
-        },
-      }),
-    ]);
+    const [deletedResponsesCount, deletedDisplaysCount] = await prisma.$transaction(
+      [
+        prisma.response.deleteMany({
+          where: {
+            surveyId: surveyId,
+          },
+        }),
+        prisma.display.deleteMany({
+          where: {
+            surveyId: surveyId,
+          },
+        }),
+      ],
+      { timeout: SURVEY_RESET_TRANSACTION_TIMEOUT_MS }
+    );
 
     // Runs after the rows are gone so a storage failure can never delete files whose responses
     // survived. It logs and swallows storage errors, so cleanup cannot turn a committed reset into a

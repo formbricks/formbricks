@@ -525,6 +525,70 @@ The default destructive cap is 500 orphaned resources. `--max-prune=<number>` ma
 the run observes more than the cap, it deletes nothing. Investigate a wrong endpoint, wrong database, partial
 restore, or shared SpiceDB before proceeding.
 
+### Audit and repair surveys
+
+Surveys are audited and repaired as their own scope, never as part of `--scope=all`, so the six-hourly audit
+stays proportional to your number of grants rather than your number of surveys. A daily job audits them as a
+dry run and reports drift through metrics.
+
+```bash
+formbricks-authzed backfill --scope=survey
+formbricks-authzed backfill --scope=survey --apply
+formbricks-authzed backfill --scope=survey --apply --after-survey-id=<last-survey-id>
+```
+
+<Note>
+  Once the marker is set, every survey a person creates starts **Restricted** to its author and the
+  organization's owners and managers. They can make it visible to the workspace from **Collaborate** or
+  when activating it. See [Survey visibility](/surveys/general-features/visibility).
+</Note>
+
+Survey visibility is enforced only once the survey scope is marked ready. Marking it runs the repair, then
+two further dry runs, and sets the marker only if both come back clean:
+
+```bash
+formbricks-authzed backfill --scope=survey --apply --mark-ready
+```
+
+To roll enforcement back to workspace permissions, clear the marker. This touches only PostgreSQL:
+
+```bash
+formbricks-authzed backfill --scope=survey --clear-ready
+```
+
+`formbricks-authzed upgrade check` reports the marker as `scopes.survey`.
+
+After upgrading to the release that adds survey visibility, and once every Formbricks container or pod runs
+the new version, check durable delivery and replay any dead letters:
+
+```bash
+formbricks-authzed outbox status
+formbricks-authzed outbox replay
+formbricks-authzed outbox drain
+```
+
+The database migration adds the survey trigger while containers of the previous version may still be
+delivering outbox events. Those do not know survey events yet and dead-letter them on the spot instead of
+retrying. A dead-lettered survey revocation makes every enforced authorization check fail closed until it is
+replayed, so do not wait for the scheduled audit. Run `replay` only after the rollout has finished, since an
+old container would dead-letter the event again. `replay` resets every unresolved dead letter, and `status`
+only counts them, so check what they are first:
+
+```sql
+SELECT "targetType", "lastErrorCode", COUNT(*) FROM "AuthzedProjectionOutbox"
+WHERE "deadLetteredAt" IS NOT NULL AND "processedAt" IS NULL GROUP BY 1, 2;
+```
+
+Expect `survey` rows with `authzed_projection_invalid_event`; investigate anything else before replaying.
+
+<Warning>
+  Do not set `SURVEY_VISIBILITY_FORCE_DISABLED=1` as a workaround when PostgreSQL or SpiceDB is failing. It
+  makes every restricted survey, and its responses, visible to the whole workspace. An outage fails
+  closed, and it should: with PostgreSQL down every decision fails anyway, and the exposure begins as soon
+  as it recovers with the flag still set. Fix the dependency instead, and use the flag only for a deliberate
+  decision to switch survey visibility off.
+</Warning>
+
 ### Interpret drift categories
 
 | Category            | Meaning and response                                                                                                                        |

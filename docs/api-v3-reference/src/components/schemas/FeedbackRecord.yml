@@ -2,7 +2,7 @@ type: object
 description: >-
   One piece of feedback in the normalized Feedback Record shape. Field names are `snake_case`: the
   payload is the Hub's, passed through the API gateway unchanged. Optional members are **absent**
-  (not `null`) when unset.
+  (not `null`) when unset, except `taxonomy` on the get-one response, which is null if its lookup fails.
 additionalProperties: false
 required:
   - id
@@ -15,6 +15,11 @@ required:
   - submission_id
   - tenant_id
 properties:
+  taxonomy:
+    description: Read-only active directory taxonomy assignment. Returned only by the get-one operation; null if the lookup is temporarily unavailable.
+    oneOf:
+      - $ref: ./FeedbackRecordTaxonomy.yml
+      - type: "null"
   id:
     type: string
     format: uuid

@@ -10,17 +10,8 @@ const createContainerId = () => `formbricks-survey-container`;
 // Module-level flag to prevent concurrent script loads across component instances
 let isLoadingScript = false;
 
-declare global {
-  interface Window {
-    formbricksSurveys: {
-      renderSurveyInline: (props: SurveyContainerProps) => void;
-      renderSurveyModal: (props: SurveyContainerProps) => void;
-      renderSurvey: (props: SurveyContainerProps) => void;
-      onFilePick: (files: { name: string; type: string; base64: string }[]) => void;
-      setNonce: (nonce: string | undefined) => void;
-    };
-  }
-}
+// `window.formbricksSurveys` is typed once, in packages/types/surveys.d.ts. A second declaration here
+// had drifted from it (no `setAppearance`), which TypeScript rejects as a conflicting redeclaration.
 
 export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) => {
   const containerId = useMemo(() => createContainerId(), []);

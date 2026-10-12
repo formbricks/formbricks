@@ -4,6 +4,9 @@ import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "./oauth-urls";
 
 type TOauthProviderOptions = Parameters<typeof oauthProvider>[0];
 
+/** Exported so the grant-revocation hooks can recognise the refresh tokens this provider issues. */
+export const MCP_OAUTH_REFRESH_TOKEN_PREFIX = "fbor_";
+
 /**
  * Options for the Better Auth oauthProvider plugin backing the MCP OAuth flow (ENG-1055).
  * Extracted from auth.ts so integration tests can spin up a throwaway Better Auth instance
@@ -23,7 +26,7 @@ export const getMcpOauthProviderOptions = (): TOauthProviderOptions => ({
   // actually approved (GHSA-p2fr-6hmx-4528). 1.7 binds the grant instead.
   //
   // `allowedScopes` intersects the requested scopes rather than rejecting them, so it MUST be the
-  // full MCP_OAUTH_SCOPES set. Narrowing it to the six resource scopes would silently strip openid,
+  // full MCP_OAUTH_SCOPES set. Narrowing it to the resource scopes alone would silently strip openid,
   // profile, email and offline_access from every token — killing id_tokens and refresh with no error
   // anywhere. Derived from the constant so the two cannot drift.
   //
@@ -84,7 +87,7 @@ export const getMcpOauthProviderOptions = (): TOauthProviderOptions => ({
   storeTokens: "hashed",
   prefix: {
     opaqueAccessToken: "fboa_",
-    refreshToken: "fbor_",
+    refreshToken: MCP_OAUTH_REFRESH_TOKEN_PREFIX,
     clientSecret: "fbocs_",
   },
   customAccessTokenClaims: ({ user }) => ({

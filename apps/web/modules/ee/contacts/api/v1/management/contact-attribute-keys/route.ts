@@ -1,6 +1,6 @@
 import { logger } from "@formbricks/logger";
-import { DatabaseError } from "@formbricks/types/errors";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
+import { handleApiError } from "@/app/lib/api/handle-api-error";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
@@ -36,12 +36,9 @@ export const GET = withV1ApiWrapper({
         response: responses.successResponse(contactAttributeKeys),
       };
     } catch (error) {
-      if (error instanceof DatabaseError) {
-        return {
-          response: responses.badRequestResponse(error.message),
-        };
-      }
-      throw error;
+      // Shared v1 boundary: domain 4xx messages surface, anything else (a DatabaseError wrapping a raw
+      // Prisma or Postgres message included) answers with a generic 500 and is logged server-side.
+      return handleApiError(error);
     }
   },
 });
@@ -121,12 +118,9 @@ export const POST = withV1ApiWrapper({
         response: responses.successResponse(contactAttributeKey),
       };
     } catch (error) {
-      if (error instanceof DatabaseError) {
-        return {
-          response: responses.badRequestResponse(error.message),
-        };
-      }
-      throw error;
+      // Shared v1 boundary: domain 4xx messages surface, anything else (a DatabaseError wrapping a raw
+      // Prisma or Postgres message included) answers with a generic 500 and is logged server-side.
+      return handleApiError(error);
     }
   },
   action: "created",

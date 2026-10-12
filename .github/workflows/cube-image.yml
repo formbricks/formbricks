@@ -1,0 +1,278 @@
+name: Cube Image
+
+# Builds ghcr.io/formbricks/cube from docker/cube-image (see its README.md). Pull requests and the merge
+# queue build it for amd64, gate it on Trivy and run the smoke test. Pushes to main and manual runs on
+# main also publish it for amd64 and arm64 under its immutable tag plus `latest`, and sign it with cosign.
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "docker/cube-image/**"
+      - "docker/cube/**"
+      # smoke-test.sh runs the cube service exactly as this file declares it.
+      - "docker/docker-compose.yml"
+      - ".github/workflows/cube-image.yml"
+  # merge_group has no `paths` filter; the verify job diffs against the queue's base instead.
+  merge_group:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+    paths:
+      - "docker/cube-image/**"
+      - "docker/cube/**"
+      # smoke-test.sh runs the cube service exactly as this file declares it.
+      - "docker/docker-compose.yml"
+      - ".github/workflows/cube-image.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # Never cancel a run on main: it may be halfway through pushing and signing.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  IMAGE: ghcr.io/formbricks/cube
+
+jobs:
+  verify:
+    name: Build, scan and smoke-test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Detect Cube changes
+        id: changes
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
+        run: |
+          set -euo pipefail
+
+          # A manual run, or a push with no previous commit to compare against, checks everything.
+          if [[ "$EVENT_NAME" == "workflow_dispatch" || -z "$BASE_SHA" || "$BASE_SHA" =~ ^0+$ ]]; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+            echo "image=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git fetch --no-tags --depth=1 origin "$BASE_SHA"
+          if git diff --quiet "$BASE_SHA" HEAD -- docker/cube-image docker/cube docker/docker-compose.yml \
+            .github/workflows/cube-image.yml; then
+            echo "No Cube image changes; skipping."
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "relevant=true" >> "$GITHUB_OUTPUT"
+
+          # What goes into the image. Only a change here (or to the gate itself) runs the builds for both
+          # architectures and the Trivy gate, so a schema or Compose edit gets the smoke test without going
+          # red over a base-image CVE it did not introduce.
+          image_inputs=(docker/cube-image/Dockerfile docker/cube-image/package.json
+            docker/cube-image/package-lock.json docker/cube-image/native.sha256)
+          if git diff --quiet "$BASE_SHA" HEAD -- "${image_inputs[@]}" docker/cube-image/.trivyignore.yaml \
+            .github/workflows/cube-image.yml; then
+            echo "image=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "image=true" >> "$GITHUB_OUTPUT"
+          fi
+
+          # The published tag is immutable, so a change to what goes into the image must also change the
+          # tag, or main would have nothing new to publish (see docker/cube-image/README.md). Pull requests
+          # and the merge queue enforce it; a push to main has already passed it.
+          if [[ "$EVENT_NAME" == "push" ]] || git diff --quiet "$BASE_SHA" HEAD -- "${image_inputs[@]}"; then
+            exit 0
+          fi
+          base_tag="$(docker/cube-image/image-tag.sh "$BASE_SHA")"
+          head_tag="$(docker/cube-image/image-tag.sh)"
+          if [[ "$base_tag" == "$head_tag" ]]; then
+            echo "::error file=docker/cube-image/REVISION::The image changed but its tag is still ${head_tag}. Bump docker/cube-image/REVISION, or reset it to 1 when the Cube version changes."
+            exit 1
+          fi
+          echo "Image tag changes from ${base_tag:-<none>} to ${head_tag}."
+
+      - name: Set up Docker Buildx
+        if: steps.changes.outputs.relevant == 'true'
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      # The build stage cross-builds (see the Dockerfile), so arm64 needs no emulation. Building it here
+      # catches a bad arm64 checksum before main tries to publish.
+      - name: Build linux/arm64
+        if: steps.changes.outputs.image == 'true'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: docker/cube-image
+          platforms: linux/arm64
+          outputs: type=cacheonly
+
+      - name: Build linux/amd64
+        if: steps.changes.outputs.relevant == 'true'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: docker/cube-image
+          platforms: linux/amd64
+          load: true
+          tags: formbricks-cube:ci
+
+      - name: Trivy gate (CRITICAL and HIGH with a fix)
+        if: steps.changes.outputs.image == 'true'
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: formbricks-cube:ci
+          scanners: vuln
+          severity: "CRITICAL,HIGH"
+          ignore-unfixed: true
+          trivyignores: docker/cube-image/.trivyignore.yaml
+          exit-code: "1"
+          format: table
+          version: "v0.71.2"
+
+      - name: Set up Node.js
+        if: steps.changes.outputs.relevant == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Smoke test
+        if: steps.changes.outputs.relevant == 'true'
+        run: bash docker/cube-image/smoke-test.sh formbricks-cube:ci
+
+  publish:
+    name: Publish ghcr.io/formbricks/cube
+    # Only from main: a manual run on another branch would publish unreviewed code under the real tag.
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+      # Keyless cosign signing through Sigstore's OIDC identity.
+      id-token: write
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Resolve image tag
+        id: tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Assigned first: inside `echo "tag=$(...)"` a failing image-tag.sh would still exit 0.
+          tag="$(docker/cube-image/image-tag.sh)"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # An existing immutable tag is never pushed again: a run whose image inputs did not change (a schema
+      # edit under docker/cube/, a README change, a re-run) has nothing new to publish. Any lookup error
+      # other than "absent" fails the job rather than risk overwriting a published tag.
+      - name: Refuse to overwrite a published tag
+        id: existing
+        shell: bash
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          if output="$(docker buildx imagetools inspect "$IMAGE:$TAG" 2>&1)"; then
+            echo "::notice::$IMAGE:$TAG is already published and immutable, so nothing is pushed. Bump docker/cube-image/REVISION to publish a changed image."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          elif grep -qiE "not found|403 Forbidden|denied" <<<"$output"; then
+            # A 403 is what GHCR answers before the package's first push. Without read access the push
+            # below fails too, so treating it as absent cannot overwrite anything.
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "$output" >&2
+            echo "::error::Could not tell whether $IMAGE:$TAG is already published; refusing to push."
+            exit 1
+          fi
+
+      - name: Set up Docker Buildx
+        if: steps.existing.outputs.exists == 'false'
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build and push linux/amd64 and linux/arm64
+        id: build
+        if: steps.existing.outputs.exists == 'false'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: docker/cube-image
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.tag.outputs.tag }}
+            ${{ env.IMAGE }}:latest
+          labels: |
+            org.opencontainers.image.version=${{ steps.tag.outputs.tag }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Install cosign
+        if: steps.existing.outputs.exists == 'false'
+        uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
+
+      # Mirrors .github/actions/build-and-push-docker: sign every pushed tag by the digest it points at.
+      - name: Sign the image
+        if: steps.existing.outputs.exists == 'false'
+        shell: bash
+        env:
+          TAGS: |
+            ${{ env.IMAGE }}:${{ steps.tag.outputs.tag }}
+            ${{ env.IMAGE }}:latest
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          set -euo pipefail
+          echo "${TAGS}" | sed '/^$/d' | xargs -I {} cosign sign --yes "{}@${DIGEST}"
+
+      # GitHub creates a new package as private, and a private image fails every install that pulls it
+      # without credentials. Check the tag the way a self-hoster pulls it, on every run, so a re-run after
+      # the first publish stays red until the package is made public.
+      - name: Check the image is publicly pullable
+        shell: bash
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          set -euo pipefail
+          DOCKER_CONFIG="$(mktemp -d)"
+          export DOCKER_CONFIG
+          if ! docker manifest inspect "$IMAGE:$TAG" > /dev/null; then
+            echo "::error::$IMAGE:$TAG cannot be pulled without credentials. Set the formbricks/cube package to public in its GitHub package settings, then re-run this job."
+            exit 1
+          fi
+
+      - name: Summary
+        if: steps.existing.outputs.exists == 'false'
+        shell: bash
+        env:
+          TAG: ${{ steps.tag.outputs.tag }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: echo "Published \`$IMAGE:$TAG\` (and \`latest\`) at \`$DIGEST\`." >> "$GITHUB_STEP_SUMMARY"

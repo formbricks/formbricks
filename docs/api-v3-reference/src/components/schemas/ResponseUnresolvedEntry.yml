@@ -37,15 +37,7 @@ properties:
       field that *does* still exist — that reason means the key resolved and the value did not.
   rawValue:
     description: The stored value, returned verbatim and untyped because nothing describes it any more.
-    oneOf:
-      - type: string
-      - type: number
-      - type: array
-        items:
-          type: string
-      - type: object
-        additionalProperties:
-          type: string
+    $ref: ./ResponseRawValue.yml
   reason:
     type: string
     enum:

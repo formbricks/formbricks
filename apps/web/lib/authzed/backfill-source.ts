@@ -2,7 +2,11 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import type { TAuthzedParentEdge, TAuthzedSourceRef } from "./backfill-diff";
 import type { TAuthzedRelationship } from "./client";
-import { AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE, AUTHZED_TARGET_CHUNK_SIZE } from "./constants";
+import {
+  AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE,
+  AUTHZED_BACKFILL_SURVEY_PAGE_SIZE,
+  AUTHZED_TARGET_CHUNK_SIZE,
+} from "./constants";
 import { getFeedbackDirectoryAssignmentObjectId } from "./feedback-directory-assignment-id";
 import {
   ORGANIZATION_ACCESS_RELATIONS,
@@ -12,6 +16,7 @@ import {
   WORKSPACE_TEAM_RELATIONS,
   normalizeOrganizationAccess,
 } from "./relationship-map";
+import { expectedSurveyRelationships } from "./survey-relationships";
 
 /**
  * PostgreSQL enumeration for relationship backfill and repair.
@@ -102,6 +107,8 @@ export type TAuthzedWorkspaceSource = Readonly<{
    * orphan — leaving the two indistinguishable in the output.
    */
   organizationId: string | null;
+  /** The workspace's surveys (ENG-3282), observed and reconciled with it. */
+  surveyIds: ReadonlyArray<string>;
   /** Reported rather than enforced: a missing workspace is a valid repair target, not an error. */
   workspaceExists: boolean;
   workspaceTeamGrants: ReadonlyArray<TAuthzedWorkspaceTeamTarget>;
@@ -242,6 +249,52 @@ const getFeedbackDirectorySource = (
 
   return { assignments, invalidAssignments, relationships };
 };
+/** The surveys of one page of the `survey` scope, in the vocabulary the audit compares. */
+export type TAuthzedSurveySource = Readonly<{
+  /** Exact relationship set the rows imply, derived with the projector's own function. */
+  expectedRelationships: ReadonlyArray<TAuthzedRelationship>;
+  /** Of the requested IDs, those that still have a row. */
+  surveyIds: ReadonlyArray<string>;
+}>;
+
+const surveyProjectionSelect = {
+  id: true,
+  ownerId: true,
+  visibility: true,
+  visibilityVersion: true,
+  workspaceId: true,
+} as const;
+
+/** One keyset page of survey IDs for the `survey` scope. Keyset for the same reasons as organizations. */
+export const readSurveyIdPage = async (
+  page: Readonly<{ afterSurveyId?: string; limit?: number }> = {}
+): Promise<ReadonlyArray<string>> => {
+  const surveys = await prisma.survey.findMany({
+    where: page.afterSurveyId ? { id: { gt: page.afterSurveyId } } : undefined,
+    select: { id: true },
+    orderBy: { id: "asc" },
+    take: page.limit ?? AUTHZED_BACKFILL_SURVEY_PAGE_SIZE,
+  });
+
+  return surveys.map(({ id }) => id);
+};
+
+export const readSurveySource = async (surveyIds: ReadonlyArray<string>): Promise<TAuthzedSurveySource> => {
+  const rows =
+    surveyIds.length === 0
+      ? []
+      : await prisma.survey.findMany({
+          where: { id: { in: [...surveyIds] } },
+          select: surveyProjectionSelect,
+          orderBy: { id: "asc" },
+        });
+
+  return {
+    expectedRelationships: rows.flatMap(expectedSurveyRelationships),
+    surveyIds: rows.map(({ id }) => id),
+  };
+};
+
 /**
  * One keyset page of organization IDs.
  *
@@ -275,7 +328,7 @@ export const organizationExists = async (organizationId: string): Promise<boolea
  * organization ID is not needed to reach them, because the caller supplies the workspace ID directly.
  */
 export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzedWorkspaceSource> => {
-  const [workspace, workspaceTeams, apiKeyWorkspaces, directoryAssignments] = await Promise.all([
+  const [workspace, workspaceTeams, apiKeyWorkspaces, directoryAssignments, surveys] = await Promise.all([
     prisma.workspace.findUnique({ where: { id: workspaceId }, select: { organizationId: true } }),
     prisma.workspaceTeam.findMany({
       where: { workspaceId },
@@ -307,6 +360,11 @@ export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzed
         workspaceId: true,
       },
       orderBy: { feedbackDirectoryId: "asc" },
+    }),
+    prisma.survey.findMany({
+      where: { workspaceId },
+      select: surveyProjectionSelect,
+      orderBy: { id: "asc" },
     }),
   ]);
 
@@ -384,6 +442,10 @@ export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzed
     );
   }
 
+  if (organizationId !== null) {
+    expectedRelationships.push(...surveys.flatMap(expectedSurveyRelationships));
+  }
+
   return {
     apiKeyWorkspaceGrants: keyGrants.valid.map(toApiKeyWorkspaceTarget),
     expectedRelationships,
@@ -395,6 +457,7 @@ export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzed
     })),
     invalidWorkspaceTeamGrants: teamGrants.invalid.map(toWorkspaceTeamTarget),
     organizationId,
+    surveyIds: surveys.map(({ id }) => id),
     // Truthiness rather than `!== null`, so a row is required to claim existence rather than merely the
     // absence of one particular falsy value.
     workspaceExists: Boolean(workspace),
@@ -592,8 +655,9 @@ export const findMismatchedParentEdges = async (
   const workspaceIds = idsFor("workspace");
   const apiKeyIds = idsFor("api_key");
   const feedbackDirectoryIds = idsFor("feedback_directory");
+  const surveyIds = idsFor("survey");
 
-  const [teams, workspaces, apiKeys, feedbackDirectories] = await Promise.all([
+  const [teams, workspaces, apiKeys, feedbackDirectories, surveys] = await Promise.all([
     teamIds.length === 0
       ? []
       : prisma.team.findMany({
@@ -618,6 +682,12 @@ export const findMismatchedParentEdges = async (
           where: { id: { in: [...feedbackDirectoryIds] } },
           select: { id: true, organizationId: true },
         }),
+    surveyIds.length === 0
+      ? []
+      : prisma.survey.findMany({
+          where: { id: { in: [...surveyIds] } },
+          select: { id: true, workspaceId: true },
+        }),
   ]);
 
   const trueParents = new Map<string, string>([
@@ -628,14 +698,16 @@ export const findMismatchedParentEdges = async (
       `feedback_directory:${id}`,
       organizationId,
     ]),
+    ...surveys.map(({ id, workspaceId }): [string, string] => [`survey:${id}`, workspaceId]),
   ]);
 
   // A resource with no row at all is not reported here — that is an orphan, handled by the existence
   // check, and it has a working repair path. This is only about a resource that exists under a different
-  // organization than the edge claims.
+  // organization (or, for a survey, workspace) than the edge claims.
   return edges.filter((edge) => {
     const trueParent = trueParents.get(`${edge.childType}:${edge.childId}`);
-    return trueParent !== undefined && trueParent !== edge.organizationId;
+    const claimedParent = edge.childType === "survey" ? edge.workspaceId : edge.organizationId;
+    return trueParent !== undefined && trueParent !== claimedParent;
   });
 };
 
@@ -674,6 +746,7 @@ export const findMissingSourceRefs = async (
   const apiKeyWorkspaceGrantRefs = byKind(refs, "apiKeyWorkspaceGrant");
   const feedbackDirectoryRefs = byKind(refs, "feedbackDirectory");
   const feedbackDirectoryAssignmentRefs = byKind(refs, "feedbackDirectoryAssignment");
+  const surveyRefs = byKind(refs, "survey");
 
   const [
     apiKeys,
@@ -685,6 +758,7 @@ export const findMissingSourceRefs = async (
     apiKeyWorkspaces,
     feedbackDirectories,
     feedbackDirectoryAssignments,
+    surveys,
   ] = await Promise.all([
     apiKeyRefs.length === 0
       ? []
@@ -752,6 +826,12 @@ export const findMissingSourceRefs = async (
           },
           select: { feedbackDirectoryId: true, workspaceId: true },
         }),
+    surveyRefs.length === 0
+      ? []
+      : prisma.survey.findMany({
+          where: { id: { in: surveyRefs.map(({ surveyId }) => surveyId) } },
+          select: { id: true },
+        }),
   ]);
 
   const existingApiKeyIds = new Set(apiKeys.map(({ id }) => id));
@@ -770,6 +850,7 @@ export const findMissingSourceRefs = async (
     apiKeyWorkspaces.map(({ apiKeyId, workspaceId }) => pairKey(apiKeyId, workspaceId))
   );
   const existingFeedbackDirectoryIds = new Set(feedbackDirectories.map(({ id }) => id));
+  const existingSurveyIds = new Set(surveys.map(({ id }) => id));
   const existingFeedbackDirectoryAssignments = new Set(
     feedbackDirectoryAssignments.map(({ feedbackDirectoryId, workspaceId }) =>
       getFeedbackDirectoryAssignmentObjectId(feedbackDirectoryId, workspaceId)
@@ -788,6 +869,8 @@ export const findMissingSourceRefs = async (
         return existingFeedbackDirectoryAssignments.has(ref.assignmentId);
       case "membership":
         return existingMemberships.has(pairKey(ref.organizationId, ref.userId));
+      case "survey":
+        return existingSurveyIds.has(ref.surveyId);
       case "team":
         return existingTeamIds.has(ref.teamId);
       case "teamMembership":

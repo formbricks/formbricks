@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { ZActionClass } from "./action-classes";
 import { ZId } from "./common";
+import { ZCustomCssCompiled } from "./custom-css";
+import { ZOverlayAppearance } from "./overlay";
 import { ZUploadFileConfig } from "./storage";
 import { ZSurveyBase, surveyRefinement } from "./surveys/types";
 import { ZWorkspace } from "./workspace";
@@ -14,6 +16,7 @@ export const ZJsWorkspaceStateSurvey = ZSurveyBase.pick({
   variables: true,
   type: true,
   showLanguageSwitch: true,
+  autoSelectLanguage: true,
   languages: true,
   endings: true,
   autoClose: true,
@@ -34,9 +37,18 @@ export const ZJsWorkspaceStateSurvey = ZSurveyBase.pick({
   isBackButtonHidden: true,
   isAutoProgressingEnabled: true,
   recaptcha: true,
-}).superRefine((survey, ctx) => {
-  surveyRefinement(survey as z.infer<typeof ZSurveyBase>, ctx);
-});
+})
+  .extend({
+    // Resolved custom overlay, set by the environment endpoint (see environment/lib/data.ts).
+    overlayAppearance: ZOverlayAppearance.nullish(),
+    // Compiled survey custom CSS (ENG-3552). Respondent-facing, so compiled output only — never the
+    // editable source. Absent when the survey has none, when it is withheld, or while the survey's
+    // style overrides are off.
+    customCss: ZCustomCssCompiled.optional(),
+  })
+  .superRefine((survey, ctx) => {
+    surveyRefinement(survey as z.infer<typeof ZSurveyBase>, ctx);
+  });
 
 export type TJsWorkspaceStateSurvey = z.infer<typeof ZJsWorkspaceStateSurvey>;
 
@@ -58,6 +70,10 @@ export const ZJsWorkspaceStateWorkspaceSetting = ZWorkspace.pick({
   placement: true,
   inAppSurveyBranding: true,
   styling: true,
+}).extend({
+  // Compiled workspace custom CSS, sent once per response rather than copied into every survey
+  // (ENG-3552). Same omission rules as the survey field.
+  customCss: ZCustomCssCompiled.optional(),
 });
 
 export type TJsWorkspaceStateWorkspaceSetting = z.infer<typeof ZJsWorkspaceStateWorkspaceSetting>;

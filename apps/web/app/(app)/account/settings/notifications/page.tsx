@@ -5,6 +5,8 @@ import { EditAlerts } from "@/app/(app)/workspaces/[workspaceId]/settings/accoun
 import { IntegrationsTip } from "@/app/(app)/workspaces/[workspaceId]/settings/account/notifications/components/IntegrationsTip";
 import type { Membership } from "@/app/(app)/workspaces/[workspaceId]/settings/account/notifications/types";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
+import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
+import { buildVisibleSurveyWhereAcrossOrganizations } from "@/lib/survey/visibility/predicate";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getSession } from "@/modules/auth/lib/session";
@@ -35,6 +37,11 @@ const setCompleteNotificationSettings = (
 };
 
 const getMemberships = async (userId: string): Promise<Membership[]> => {
+  // ENG-3282: alerts are only offered for surveys whose responses this user may read.
+  const visibleSurveyWhere = buildVisibleSurveyWhereAcrossOrganizations(
+    await isSurveyVisibilityReady(),
+    userId
+  );
   const memberships = await prisma.membership.findMany({
     where: {
       userId,
@@ -112,6 +119,7 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
               id: true,
               name: true,
               surveys: {
+                where: visibleSurveyWhere,
                 select: {
                   id: true,
                   name: true,

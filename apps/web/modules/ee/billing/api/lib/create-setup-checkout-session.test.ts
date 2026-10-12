@@ -78,4 +78,25 @@ describe("createSetupCheckoutSession", () => {
       })
     );
   });
+
+  // ENG-3370: the upgrade is confirmed with confirmCardPayment and may replace a legacy EUR subscription
+  // with a USD one, so the checkout must not offer a method (e.g. SEPA for EUR) that can't pay it.
+  test("restricts an upgrade checkout to cards, even for a EUR subscription", async () => {
+    mocks.subscriptionsRetrieve.mockResolvedValue({ currency: "eur" });
+
+    await createSetupCheckoutSession("cus_1", "sub_1", "https://app.formbricks.com/billing", "org_1", {
+      targetPlan: "pro",
+      targetInterval: "monthly",
+    });
+
+    expect(mocks.checkoutSessionsCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ payment_method_types: ["card"] })
+    );
+  });
+
+  test("leaves a card-only (no upgrade) checkout on the account's payment methods", async () => {
+    await createSetupCheckoutSession("cus_1", "sub_1", "https://app.formbricks.com/billing", "org_1");
+
+    expect(mocks.checkoutSessionsCreate.mock.calls[0][0]).not.toHaveProperty("payment_method_types");
+  });
 });

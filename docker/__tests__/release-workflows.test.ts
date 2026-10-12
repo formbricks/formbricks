@@ -19,8 +19,8 @@ const releaseWorkflows = [
 ];
 
 const linearAction = "linear/linear-release-action";
-const linearActionSha = "17b8c24f8ceb2b98cabaf1965ff83c55dd596fac";
-const linearActionVersion = "v0.15.1";
+const linearActionSha = "d4af10092984f9bc6d5efa075b242bdf01333463";
+const linearActionVersion = "v0.18.0";
 const releasedVersion = "${{ needs.docker-build-community.outputs.VERSION }}";
 
 type WorkflowStep = {
@@ -58,6 +58,7 @@ type WorkflowTriggers = {
 type WorkflowJob = {
   if?: string;
   needs?: string[];
+  outputs?: Record<string, string>;
   steps?: WorkflowStep[];
   uses?: string;
   with?: Record<string, string>;
@@ -153,6 +154,32 @@ describe("release workflows", () => {
     // workflow_dispatch runs the file as it exists on the caller's chosen ref, so the trigger
     // list alone is not enough - the job itself has to refuse any ref but main.
     expect(workflow.jobs?.["linear-release-smoke"]?.if).toBe("github.ref == 'refs/heads/main'");
+  });
+
+  // is_latest promotes GHCR :latest, ECR :production and the stable tag. The script is what fails
+  // closed on an API error (ENG-2927), so the decision has to go through it and nowhere else.
+  test("decides latest-release promotion only through the fail-closed script", () => {
+    const jobs = readWorkflow(formbricksReleaseWorkflow).jobs;
+    const steps = jobs?.["check-latest-release"]?.steps ?? [];
+    const decide = steps.find((step) => step.id === "compare_tags");
+    const promote = "${{ needs.check-latest-release.outputs.is_latest == 'true' }}";
+
+    expect(jobs?.["check-latest-release"]?.outputs?.is_latest).toBe(
+      "${{ steps.compare_tags.outputs.is_latest }}"
+    );
+    expect(decide?.run).toBe("bash .github/scripts/resolve-latest-release.sh");
+    // The tag reaches the script through env; interpolated into a run body it would be shell input.
+    expect(decide?.env?.CURRENT_TAG).toBe("${{ github.event.release.tag_name }}");
+    expect(steps.filter((step) => step.run?.includes("${{"))).toEqual([]);
+    // A prerelease is never promoted, so an API outage must not block one: it skips the lookup.
+    const scriptCheckout = steps.find((step) => step.name === "Checkout the release scripts");
+    expect(scriptCheckout?.uses).toMatch(/^actions\/checkout@/);
+    expect(scriptCheckout?.if).toBe("${{ !github.event.release.prerelease }}");
+    expect(decide?.if).toBe("${{ !github.event.release.prerelease }}");
+
+    expect(jobs?.["docker-build-community"]?.with?.MAKE_LATEST).toBe(promote);
+    expect(jobs?.["docker-build-cloud"]?.with?.MAKE_LATEST).toBe(promote);
+    expect(jobs?.["move-stable-tag"]?.with?.make_latest).toBe(promote);
   });
 
   test("stamps the released version on Linear before completing the release", () => {

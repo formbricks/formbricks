@@ -28,5 +28,5 @@ import { prisma } from "@formbricks/database";
  */
 export const resetDb = (): Promise<unknown> =>
   prisma.$executeRawUnsafe(
-    'TRUNCATE "User", "Organization", "Team", "AuthzedProjectionOutbox", "oauthResource" RESTART IDENTITY CASCADE;'
+    'TRUNCATE "User", "Organization", "Team", "AuthzedProjectionOutbox", "AuthzedProjectionScopeState", "oauthResource" RESTART IDENTITY CASCADE;'
   );

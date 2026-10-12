@@ -1,5 +1,10 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
+import {
+  dropLegacySurveyColumns,
+  restoreLegacySurveyColumns,
+  setLegacySurveyColumns,
+} from "@/integration/legacy-survey-columns";
 import { resetDb } from "@/integration/reset-db";
 // The data migration under test (auto-discovered by the migration runner at deploy).
 import { backfillEmbeddedDataRows } from "../../../packages/database/migration/20260812121944_backfill_embedded_data/migration";
@@ -10,6 +15,9 @@ import { backfillEmbeddedDataRows } from "../../../packages/database/migration/2
  * Everything that can go wrong here is database state: the unique constraints that decide which
  * surveys are migratable, the candidate query that makes re-runs a no-op, and the promise that
  * `Response` is never touched. The unit suite covers the mapping; none of this is visible there.
+ *
+ * The columns it reads were dropped by ENG-2404, a later migration, so they are restored for this
+ * file — see `legacy-survey-columns.ts`.
  */
 
 const seedWorkspace = async (): Promise<string> => {
@@ -25,13 +33,10 @@ const seedSurvey = async (
   legacy: { variables?: unknown[]; fieldIds?: string[] },
   name = "Survey"
 ): Promise<string> => {
-  const survey = await prisma.survey.create({
-    data: {
-      name,
-      workspaceId,
-      variables: (legacy.variables ?? []) as never,
-      hiddenFields: { enabled: true, fieldIds: legacy.fieldIds ?? [] } as never,
-    },
+  const survey = await prisma.survey.create({ data: { name, workspaceId } });
+  await setLegacySurveyColumns(survey.id, {
+    variables: legacy.variables ?? [],
+    hiddenFields: { enabled: true, fieldIds: legacy.fieldIds ?? [] },
   });
   return survey.id;
 };
@@ -60,6 +65,14 @@ const readFields = async (surveyId: string) =>
     .then((links) => links.map((link) => ({ storageKey: link.storageKey, ...link.embeddedData })));
 
 const numberVariable = { id: "clx000000000000000000001", name: "score", type: "number", value: 7 };
+
+beforeAll(async () => {
+  await restoreLegacySurveyColumns();
+});
+
+afterAll(async () => {
+  await dropLegacySurveyColumns();
+});
 
 beforeEach(async () => {
   await resetDb();
@@ -185,13 +198,10 @@ describe("Embedded Data backfill (real Postgres)", () => {
     // `variables` is an object. Before the JS shape check it reached `.map()` and threw — inside the
     // runner's single transaction, taking every already-migrated survey with it.
     const workspaceId = await seedWorkspace();
-    const broken = await prisma.survey.create({
-      data: {
-        name: "Broken",
-        workspaceId,
-        variables: { oops: true } as never,
-        hiddenFields: { enabled: true, fieldIds: ["plan"] } as never,
-      },
+    const broken = await prisma.survey.create({ data: { name: "Broken", workspaceId } });
+    await setLegacySurveyColumns(broken.id, {
+      variables: { oops: true },
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
     });
     const healthy = await seedSurvey(workspaceId, { fieldIds: ["campaign"] }, "Healthy");
 

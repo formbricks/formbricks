@@ -102,8 +102,10 @@ export function RenderSurvey(props: Readonly<SurveyContainerProps>) {
       mode={mode}
       placement={props.placement}
       overlay={props.overlay}
+      overlayAppearance={props.survey.overlayAppearance}
       clickOutside={props.clickOutside}
       onClose={close}
+      onCardRectChange={props.onCardRectChange}
       isOpen={isOpen}
       dir={dir}
       surveyName={getSurveyDisplayName(props.survey.name)}

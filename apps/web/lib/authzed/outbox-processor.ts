@@ -31,6 +31,7 @@ import type {
 } from "./outbox-types";
 import type { TAuthzedProjectionResult } from "./projection";
 import { runChunked } from "./projection-chunks";
+import { reconcileSurveyRelationships } from "./survey";
 import { deleteUserTeamRelationships, reconcileTeamWorkspaceRelationships } from "./team-workspace";
 
 const DELIVERY_ERROR_CODE = "authzed_projection_delivery_failed";
@@ -248,6 +249,10 @@ const buildDeliveryGroups = (grouped: TGroupedEvents): ReadonlyArray<TDeliveryGr
           ),
           feedbackDirectoryIds: byType(events, "feedback_directory").map(({ primaryId }) => primaryId),
         }),
+    },
+    {
+      events: collect("survey"),
+      run: (events) => reconcileSurveyRelationships(events.map(({ primaryId }) => primaryId)),
     },
   ];
 

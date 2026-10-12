@@ -21,9 +21,14 @@ import { createOrUpdateIntegrationAction } from "@/app/(app)/workspaces/[workspa
 import { BaseSelectDropdown } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/airtable/components/BaseSelectDropdown";
 import { fetchTables } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/airtable/lib/airtable";
 import AirtableLogo from "@/images/airtableLogo.svg";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import {
+  RestrictedSurveyHint,
+  RestrictedSurveysNote,
+} from "@/modules/survey/visibility/components/restricted-survey-hint";
+import { isRestrictedSurveyPick } from "@/modules/survey/visibility/lib/outbound";
 import { AdditionalIntegrationSettings } from "@/modules/ui/components/additional-integration-settings";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -96,6 +101,7 @@ type AddIntegrationModalProps = {
   workspaceId: string;
   airtableArray: TIntegrationItem[];
   surveys: TSurvey[];
+  surveyVisibilityEnabled: boolean;
   airtableIntegration: TIntegrationAirtable;
 } & EditModeProps;
 
@@ -181,10 +187,11 @@ export const AddIntegrationModal = ({
   workspaceId,
   airtableArray,
   surveys,
+  surveyVisibilityEnabled,
   airtableIntegration,
   isEditMode,
   defaultData,
-}: AddIntegrationModalProps) => {
+}: Readonly<AddIntegrationModalProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
   const [tables, setTables] = useState<TIntegrationAirtableTables["tables"]>([]);
@@ -227,6 +234,8 @@ export const AddIntegrationModal = ({
   };
 
   const selectedSurvey = surveys.find((item) => item.id === survey);
+  // The mapping being edited keeps its survey selectable even if it has since been restricted.
+  const attachedSurveyIds = defaultData ? [defaultData.survey] : [];
   const elements = useMemo(
     () => (selectedSurvey ? getElementsFromBlocks(selectedSurvey.blocks) : []),
     [selectedSurvey]
@@ -423,16 +432,31 @@ export const AddIntegrationModal = ({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {surveys.map((item) => (
-                              <SelectItem key={item.id} value={item.id}>
-                                {item.name}
-                              </SelectItem>
-                            ))}
+                            {surveys.map((item) => {
+                              const isRestrictedPick = isRestrictedSurveyPick(
+                                surveyVisibilityEnabled,
+                                item,
+                                attachedSurveyIds
+                              );
+                              return (
+                                <SelectItem key={item.id} value={item.id} disabled={isRestrictedPick}>
+                                  <span className="flex items-center gap-x-2">
+                                    {item.name}
+                                    {isRestrictedPick && <RestrictedSurveyHint kind="restricted" />}
+                                  </span>
+                                </SelectItem>
+                              );
+                            })}
                           </SelectContent>
                         </Select>
                       )}
                     />
                   </div>
+                  <RestrictedSurveysNote
+                    surveyVisibilityEnabled={surveyVisibilityEnabled}
+                    surveys={surveys}
+                    attachedSurveyIds={attachedSurveyIds}
+                  />
                 </div>
               ) : (
                 <p className="m-1 text-xs text-slate-500">

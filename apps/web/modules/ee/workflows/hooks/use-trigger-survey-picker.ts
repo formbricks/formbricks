@@ -6,13 +6,14 @@ import { extractFallbackValue, extractId, extractRecallInfo } from "@/lib/utils/
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
 import { listSurveys } from "@/modules/survey/list/lib/v3-surveys-client";
+import type { TOutboundSurvey } from "@/modules/survey/visibility/lib/outbound";
 
 // Picker needs every survey, so walk the v3 cursor list until exhausted.
 const SURVEY_LIST_PAGE_SIZE = 100;
 // Ceiling so a runaway cursor can't spin forever; covers 2,000 surveys, then the picker truncates.
 const SURVEY_LIST_MAX_PAGES = 20;
 
-interface TWorkflowSurveyOption {
+interface TWorkflowSurveyOption extends TOutboundSurvey {
   id: string;
   name: string;
 }
@@ -173,7 +174,8 @@ export const useWorkflowSurveyOptions = (workspaceId: string) => {
           signal,
         });
         for (const survey of page.data) {
-          options.push({ id: survey.id, name: survey.name });
+          // `visibility` lets the picker refuse a restricted survey (ENG-3395).
+          options.push({ id: survey.id, name: survey.name, visibility: survey.visibility });
         }
         cursor = page.meta.nextCursor;
         pages += 1;

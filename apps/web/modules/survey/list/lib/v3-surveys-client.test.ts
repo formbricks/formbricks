@@ -6,7 +6,9 @@ import {
   createV3Survey,
   deleteSurvey,
   generateSurveyCreatePayload,
+  getSurveyVisibility,
   renameSurvey,
+  updateSurveyVisibility,
   validateSurveyCreatePayload,
 } from "./v3-surveys-client";
 
@@ -35,6 +37,7 @@ describe("buildSurveyListSearchParams", () => {
         name: "  Product feedback  ",
         status: ["paused", "draft"],
         type: ["link", "app"],
+        visibility: [],
         sortBy: "relevance",
       },
     });
@@ -54,6 +57,7 @@ describe("buildSurveyListSearchParams", () => {
         name: "",
         status: [],
         type: [],
+        visibility: [],
         sortBy: "relevance",
       },
     });
@@ -61,6 +65,34 @@ describe("buildSurveyListSearchParams", () => {
     expect(searchParams.toString()).toBe(
       "workspaceId=env_1&limit=20&sortBy=relevance&cursor=cursor_1&includeTotalCount=false"
     );
+  });
+});
+
+describe("buildSurveyListSearchParams visibility", () => {
+  test("emits one filter[visibility][in] per normalized value", () => {
+    const searchParams = buildSurveyListSearchParams({
+      workspaceId: "env_1",
+      limit: 20,
+      filters: {
+        name: "",
+        status: [],
+        type: [],
+        visibility: ["workspace", "restricted", "workspace"],
+        sortBy: "relevance",
+      },
+    });
+
+    expect(searchParams.getAll("filter[visibility][in]")).toEqual(["restricted", "workspace"]);
+  });
+
+  test("emits no visibility param when the filter is empty", () => {
+    const searchParams = buildSurveyListSearchParams({
+      workspaceId: "env_1",
+      limit: 20,
+      filters: { name: "", status: [], type: [], visibility: [], sortBy: "relevance" },
+    });
+
+    expect(searchParams.has("filter[visibility][in]")).toBe(false);
   });
 });
 
@@ -243,5 +275,67 @@ describe("renameSurvey", () => {
       code: "unprocessable_entity",
     };
     await expect(renameSurvey("survey_1", " ")).rejects.toMatchObject(expectedError);
+  });
+});
+
+describe("survey visibility", () => {
+  const visibilityState = {
+    id: "survey_1",
+    visibility: "workspace",
+    owner: { name: "Ada" },
+    access: { via: "workspace", canManageVisibility: true },
+    blockers: [],
+    impact: { memberCount: 4, responseCount: 12 },
+    pending: null,
+    version: 3,
+    allowedTargets: ["restricted"],
+  };
+
+  test("GETs the visibility sub-resource", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ data: visibilityState }, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(getSurveyVisibility("survey_1")).resolves.toEqual(visibilityState);
+    expect(fetchMock).toHaveBeenCalledWith("/api/v3/surveys/survey_1/visibility", {
+      method: "GET",
+      cache: "no-store",
+    });
+  });
+
+  test("POSTs only the requested visibility and returns the change result", async () => {
+    const result = {
+      id: "survey_1",
+      visibility: "restricted",
+      owner: { name: "Ada" },
+      access: { via: "owner", canManageVisibility: true },
+      version: 4,
+      pending: null,
+      changedAt: "2026-09-29T10:00:00.000Z",
+      changedBy: { id: "user_1", name: "Ada", type: "user" },
+    };
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({ data: result }, { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(updateSurveyVisibility("survey_1", "restricted")).resolves.toEqual(result);
+    expect(fetchMock).toHaveBeenCalledWith("/api/v3/surveys/survey_1/visibility", {
+      method: "POST",
+      cache: "no-store",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ visibility: "restricted" }),
+    });
+  });
+
+  test.each([
+    [getSurveyVisibility, 403, "visibility_not_enabled"],
+    [(id: string) => updateSurveyVisibility(id, "restricted"), 409, "visibility_blocked_by_connections"],
+    [(id: string) => updateSurveyVisibility(id, "workspace"), 503, "projection_pending"],
+  ])("maps a %#th problem response to V3ApiError", async (call, status, code) => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(Response.json({ status, detail: "Nope", code }, { status }))
+    );
+
+    const expectedError: Partial<V3ApiError> = { status, code };
+    await expect(call("survey_1")).rejects.toMatchObject(expectedError);
   });
 });

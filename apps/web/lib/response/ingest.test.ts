@@ -20,28 +20,24 @@ const ingestedField = ({
   dataType?: TEmbeddedDataType;
   locked?: boolean;
 }): TLinkedEmbeddedField => ({
-  field: { name: storageKey, source: "ingested", dataType, defaultValue: null, locked },
+  field: { key: null, name: storageKey, source: "ingested", dataType, defaultValue: null, locked },
   link: { storageKey },
 });
 
 const survey = ({
   embeddedFields = [],
-  hiddenFieldsEnabled = true,
   elementIds = ["q1"],
-  // Defaults to the rows, which is the consistent state. Set it explicitly to express the drifted
-  // one: legacy ids declared with no rows behind them.
-  fieldIds = embeddedFields.map(({ link }) => link.storageKey),
+  // A survey read through a select that omitted the Embedded Data join: no `embeddedFields` key.
+  withoutJoin = false,
 }: {
   embeddedFields?: TLinkedEmbeddedField[];
-  hiddenFieldsEnabled?: boolean;
   elementIds?: string[];
-  fieldIds?: string[];
+  withoutJoin?: boolean;
 } = {}): TIngestContractSurvey =>
   ({
     id: surveyId,
     blocks: [{ id: "block_1", elements: elementIds.map((id) => ({ id })) }],
-    hiddenFields: { enabled: hiddenFieldsEnabled, fieldIds },
-    embeddedFields,
+    ...(withoutJoin ? {} : { embeddedFields }),
   }) as unknown as TIngestContractSurvey;
 
 describe("applyIngestContractToResponseData", () => {
@@ -88,30 +84,28 @@ describe("applyIngestContractToResponseData", () => {
     expect(result.dropped).toEqual([{ key: "plan", reason: "unknown_key" }]);
   });
 
-  test("warns loudly when a survey declares hidden fields but resolved no rows to ingest into", () => {
-    // The fail-closed regression: a select that omitted the join, or a drifted `fieldIds` column.
-    // Through the generic drop line this is indistinguishable from one typo'd param, so it gets its
-    // own level and message.
-    applyIngestContractToResponseData(survey({ fieldIds: ["plan"] }), { q1: "answer", plan: "gold" });
+  test("warns loudly when the survey was read without its Embedded Data rows", () => {
+    // The fail-closed regression: a select that omitted the join. Through the generic drop line this
+    // is indistinguishable from one typo'd param, so it gets its own level and message.
+    applyIngestContractToResponseData(survey({ withoutJoin: true }), { q1: "answer", plan: "gold" });
 
     expect(logger.warn).toHaveBeenCalledWith(
       expect.objectContaining({
         surveyId,
-        legacyFieldIdCount: 1,
-        // 0 rows says the join is missing; non-zero would say rows loaded but none are `ingested`.
-        embeddedFieldCount: 0,
         dropped: { entries: [{ key: "plan", reason: "unknown_key" }], omitted: 0 },
       }),
-      expect.stringContaining("no ingested fields")
+      expect.stringContaining("without its Embedded Data rows")
     );
   });
 
-  test("does not raise the drift alarm when nothing was dropped, or when rows did resolve", () => {
-    // Same broken survey, but nobody sent a param for it — nothing was lost, so nothing to report.
-    applyIngestContractToResponseData(survey({ fieldIds: ["plan"] }), { q1: "answer" });
+  test("does not raise the missing-join alarm when nothing was dropped, or when the join was read", () => {
+    // Same broken read, but nobody sent a param for it — nothing was lost, so nothing to report.
+    applyIngestContractToResponseData(survey({ withoutJoin: true }), { q1: "answer" });
     expect(logger.warn).not.toHaveBeenCalled();
 
-    // A healthy survey drops an unknown key all the time; that must never look like the regression.
+    // A survey with no fields carries an empty list, not an absent one, and drops unknown keys all
+    // the time; that must never look like the regression.
+    applyIngestContractToResponseData(survey(), { rogue: "injected" });
     applyIngestContractToResponseData(survey({ embeddedFields: [ingestedField({ storageKey: "plan" })] }), {
       rogue: "injected",
     });
@@ -142,40 +136,6 @@ describe("applyIngestContractToResponseData", () => {
     ];
     expect(logged.dropped.entries).toHaveLength(20);
     expect(logged.dropped.omitted).toBe(5);
-  });
-
-  /**
-   * Pins ENG-1845 decision 5. The allow-list is the stored rows and a row carries no `enabled`
-   * concept, so the legacy flag is not an ingest gate — `locked` is the per-field control for
-   * refusing writes. The state is near-unreachable through the editor, which is why the behaviour is
-   * asserted here rather than left incidental, and why acceptance is logged.
-   */
-  test("ingests into a survey whose legacy hiddenFields.enabled flag is false, and says so", () => {
-    const result = applyIngestContractToResponseData(
-      survey({
-        embeddedFields: [ingestedField({ storageKey: "plan" })],
-        hiddenFieldsEnabled: false,
-      }),
-      { plan: "gold" }
-    );
-
-    expect(result.data).toEqual({ plan: "gold" });
-    expect(logger.info).toHaveBeenCalledWith(
-      expect.objectContaining({ surveyId, keys: { entries: ["plan"], omitted: 0 } }),
-      expect.stringContaining("hiddenFields.enabled")
-    );
-  });
-
-  test("does not claim it ingested into a disabled survey when nothing was accepted", () => {
-    applyIngestContractToResponseData(
-      survey({ embeddedFields: [ingestedField({ storageKey: "plan" })], hiddenFieldsEnabled: false }),
-      { q1: "answer" }
-    );
-
-    expect(logger.info).not.toHaveBeenCalledWith(
-      expect.anything(),
-      expect.stringContaining("hiddenFields.enabled")
-    );
   });
 
   test("truncates an oversize value and reports the flag for persistence", () => {

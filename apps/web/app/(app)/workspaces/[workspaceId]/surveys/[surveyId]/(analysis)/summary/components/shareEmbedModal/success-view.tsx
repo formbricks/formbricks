@@ -41,7 +41,7 @@ export const SuccessView: React.FC<SuccessViewProps> = ({
       {survey.type === "link" && (
         <div className="flex h-2/5 w-full flex-col items-center justify-center gap-8 py-[100px] text-center">
           <p className="text-xl font-semibold text-slate-900">
-            {t("workspace.surveys.summary.your_survey_is_public")} 🎉
+            {t("workspace.surveys.summary.your_survey_is_active")} 🎉
           </p>
           <ShareSurveyLink
             survey={survey}

@@ -13,7 +13,7 @@ interface TooltipPayloadItem {
   name?: string | number;
   value?: unknown;
   color?: string;
-  payload?: { fill?: string; tooltipLabel?: string };
+  payload?: { fill?: string; tooltipLabel?: string } & Record<string, unknown>;
 }
 
 interface RechartsTooltipProps {
@@ -25,6 +25,8 @@ interface RechartsTooltipProps {
   /** Suppress the header entirely for measure-only charts, where the label is a meaningless
    * fallback value (e.g. a stray "1") rather than a real category. */
   hideLabel?: boolean;
+  /** Response base column on the hovered row, printed as "n = …" under the values. */
+  responseBaseKey?: string;
 }
 
 export const PolishedChartTooltip = ({
@@ -33,6 +35,7 @@ export const PolishedChartTooltip = ({
   label,
   labelFormatter,
   hideLabel = false,
+  responseBaseKey,
 }: Readonly<RechartsTooltipProps>) => {
   const { t } = useTranslation();
   if (!active || !payload?.length) return null;
@@ -41,6 +44,11 @@ export const PolishedChartTooltip = ({
   const headerSource = label != null && String(label).length > 0 ? label : (payload[0]?.name ?? "");
   const formatHeader = labelFormatter ?? formatXAxisTick;
   const headerText = hideLabel ? "" : formatHeader(headerSource);
+  // Skipped when the base is itself one of the plotted values (a breakdown of npsCount).
+  const baseValue = responseBaseKey
+    ? Number(payload[0]?.payload?.[responseBaseKey] ?? Number.NaN)
+    : Number.NaN;
+  const showBase = Number.isFinite(baseValue) && !payload.some((item) => item.dataKey === responseBaseKey);
 
   return (
     <div className="border-border/50 max-w-xs min-w-[180px] rounded-lg border bg-white px-3 py-2.5 shadow-lg dark:bg-gray-950">
@@ -66,6 +74,11 @@ export const PolishedChartTooltip = ({
           );
         })}
       </div>
+      {showBase && (
+        <div className="text-muted-foreground mt-2 border-t border-slate-100 pt-1.5 text-xs tabular-nums">
+          {t("workspace.analysis.charts.tooltip_response_base", { count: baseValue })}
+        </div>
+      )}
     </div>
   );
 };

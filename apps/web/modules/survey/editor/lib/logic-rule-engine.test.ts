@@ -9,6 +9,51 @@ const mockT = vi.fn((key: string) => `mockTranslate(${key})`);
 const logicRules = getLogicRules(mockT as unknown as TFunction);
 const elementRules = logicRules.element as Record<string, { options: TLogicRuleOption }>;
 
+/**
+ * The expected option runs, named once.
+ *
+ * Every family's expectation re-spelled these lists in full — the submitted/skipped pair twelve
+ * times over — which is duplicated code to Sonar and, more to the point, buries what actually
+ * differs between one family's operators and the next.
+ */
+const OPT = (key: string, op: keyof typeof ZSurveyLogicConditionsOperator.enum) => ({
+  label: `mockTranslate(workspace.surveys.edit.${key})`,
+  value: ZSurveyLogicConditionsOperator.enum[op],
+});
+
+const EQUALITY = [OPT("equals", "equals"), OPT("does_not_equal", "doesNotEqual")];
+
+const TEXT_OPERATORS = [
+  ...EQUALITY,
+  OPT("contains", "contains"),
+  OPT("does_not_contain", "doesNotContain"),
+  OPT("starts_with", "startsWith"),
+  OPT("does_not_start_with", "doesNotStartWith"),
+  OPT("ends_with", "endsWith"),
+  OPT("does_not_end_with", "doesNotEndWith"),
+];
+
+/** Symbol-labelled on purpose: the numeric families never showed the worded equality pair. */
+const NUMBER_COMPARISONS = [
+  { label: "=", value: ZSurveyLogicConditionsOperator.enum.equals },
+  { label: "!=", value: ZSurveyLogicConditionsOperator.enum.doesNotEqual },
+  { label: ">", value: ZSurveyLogicConditionsOperator.enum.isGreaterThan },
+  { label: "<", value: ZSurveyLogicConditionsOperator.enum.isLessThan },
+  { label: ">=", value: ZSurveyLogicConditionsOperator.enum.isGreaterThanOrEqual },
+  { label: "<=", value: ZSurveyLogicConditionsOperator.enum.isLessThanOrEqual },
+];
+
+const MULTI_SELECT = [
+  OPT("does_not_include_one_of", "doesNotIncludeOneOf"),
+  OPT("does_not_include_all_of", "doesNotIncludeAllOf"),
+  OPT("includes_all_of", "includesAllOf"),
+  OPT("includes_one_of", "includesOneOf"),
+];
+
+const SUBMISSION = [OPT("is_submitted", "isSubmitted"), OPT("is_skipped", "isSkipped")];
+
+const PRESENCE = [OPT("is_set", "isSet"), OPT("is_not_set", "isNotSet")];
+
 describe("getLogicRules", () => {
   test("should return correct structure for question rules", () => {
     expect(logicRules).toHaveProperty("element");
@@ -27,227 +72,54 @@ describe("getLogicRules", () => {
     expect(Array.isArray(logicRules["variable.number"].options)).toBe(true);
   });
 
-  test("should return correct structure for hiddenField rules", () => {
-    expect(logicRules).toHaveProperty("hiddenField");
-    expect(logicRules.hiddenField).toBeInstanceOf(Object);
-    expect(logicRules.hiddenField).toHaveProperty("options");
-    expect(Array.isArray(logicRules.hiddenField.options)).toBe(true);
-  });
-
   describe("Question Specific Rules", () => {
     test("OpenText.text", () => {
       const openTextTextRules = elementRules[TSurveyQuestionTypeEnum.OpenText + ".text"];
       expect(openTextTextRules).toBeDefined();
-      expect(openTextTextRules.options).toEqual([
-        {
-          label: "mockTranslate(workspace.surveys.edit.equals)",
-          value: ZSurveyLogicConditionsOperator.enum.equals,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_equal)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.contains)",
-          value: ZSurveyLogicConditionsOperator.enum.contains,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_contain)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotContain,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.starts_with)",
-          value: ZSurveyLogicConditionsOperator.enum.startsWith,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_start_with)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotStartWith,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.ends_with)",
-          value: ZSurveyLogicConditionsOperator.enum.endsWith,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_end_with)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotEndWith,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
-          value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
-          value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-        },
-      ]);
+      expect(openTextTextRules.options).toEqual([...TEXT_OPERATORS, ...SUBMISSION]);
     });
 
     test("OpenText.number", () => {
       const openTextNumberRules = elementRules[TSurveyQuestionTypeEnum.OpenText + ".number"];
       expect(openTextNumberRules).toBeDefined();
-      expect(openTextNumberRules.options).toEqual([
-        { label: "=", value: ZSurveyLogicConditionsOperator.enum.equals },
-        { label: "!=", value: ZSurveyLogicConditionsOperator.enum.doesNotEqual },
-        { label: ">", value: ZSurveyLogicConditionsOperator.enum.isGreaterThan },
-        { label: "<", value: ZSurveyLogicConditionsOperator.enum.isLessThan },
-        { label: ">=", value: ZSurveyLogicConditionsOperator.enum.isGreaterThanOrEqual },
-        { label: "<=", value: ZSurveyLogicConditionsOperator.enum.isLessThanOrEqual },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
-          value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
-          value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-        },
-      ]);
+      expect(openTextNumberRules.options).toEqual([...NUMBER_COMPARISONS, ...SUBMISSION]);
     });
 
     test("MultipleChoiceSingle", () => {
       const rules = elementRules[TSurveyQuestionTypeEnum.MultipleChoiceSingle];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
-        {
-          label: "mockTranslate(workspace.surveys.edit.equals)",
-          value: ZSurveyLogicConditionsOperator.enum.equals,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_equal)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
-        },
+        ...EQUALITY,
         {
           label: "mockTranslate(workspace.surveys.edit.equals_one_of)",
           value: ZSurveyLogicConditionsOperator.enum.equalsOneOf,
         },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
-          value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
-          value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-        },
+        ...SUBMISSION,
       ]);
     });
 
     test("MultipleChoiceMulti", () => {
       const rules = elementRules[TSurveyQuestionTypeEnum.MultipleChoiceMulti];
       expect(rules).toBeDefined();
-      expect(rules.options).toEqual([
-        {
-          label: "mockTranslate(workspace.surveys.edit.equals)",
-          value: ZSurveyLogicConditionsOperator.enum.equals,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_equal)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_include_one_of)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotIncludeOneOf,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_include_all_of)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotIncludeAllOf,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.includes_all_of)",
-          value: ZSurveyLogicConditionsOperator.enum.includesAllOf,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.includes_one_of)",
-          value: ZSurveyLogicConditionsOperator.enum.includesOneOf,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
-          value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
-          value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-        },
-      ]);
+      expect(rules.options).toEqual([...EQUALITY, ...MULTI_SELECT, ...SUBMISSION]);
     });
 
     test("PictureSelection", () => {
       const rules = elementRules[TSurveyQuestionTypeEnum.PictureSelection];
       expect(rules).toBeDefined();
-      expect(rules.options).toEqual([
-        {
-          label: "mockTranslate(workspace.surveys.edit.equals)",
-          value: ZSurveyLogicConditionsOperator.enum.equals,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_equal)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_include_one_of)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotIncludeOneOf,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_include_all_of)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotIncludeAllOf,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.includes_all_of)",
-          value: ZSurveyLogicConditionsOperator.enum.includesAllOf,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.includes_one_of)",
-          value: ZSurveyLogicConditionsOperator.enum.includesOneOf,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
-          value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
-          value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-        },
-      ]);
+      expect(rules.options).toEqual([...EQUALITY, ...MULTI_SELECT, ...SUBMISSION]);
     });
 
     test("Rating", () => {
       const rules = elementRules[TSurveyQuestionTypeEnum.Rating];
       expect(rules).toBeDefined();
-      expect(rules.options).toEqual([
-        { label: "=", value: ZSurveyLogicConditionsOperator.enum.equals },
-        { label: "!=", value: ZSurveyLogicConditionsOperator.enum.doesNotEqual },
-        { label: ">", value: ZSurveyLogicConditionsOperator.enum.isGreaterThan },
-        { label: "<", value: ZSurveyLogicConditionsOperator.enum.isLessThan },
-        { label: ">=", value: ZSurveyLogicConditionsOperator.enum.isGreaterThanOrEqual },
-        { label: "<=", value: ZSurveyLogicConditionsOperator.enum.isLessThanOrEqual },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
-          value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
-          value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-        },
-      ]);
+      expect(rules.options).toEqual([...NUMBER_COMPARISONS, ...SUBMISSION]);
     });
 
     test("NPS", () => {
       const rules = elementRules[TSurveyQuestionTypeEnum.NPS];
       expect(rules).toBeDefined();
-      expect(rules.options).toEqual([
-        { label: "=", value: ZSurveyLogicConditionsOperator.enum.equals },
-        { label: "!=", value: ZSurveyLogicConditionsOperator.enum.doesNotEqual },
-        { label: ">", value: ZSurveyLogicConditionsOperator.enum.isGreaterThan },
-        { label: "<", value: ZSurveyLogicConditionsOperator.enum.isLessThan },
-        { label: ">=", value: ZSurveyLogicConditionsOperator.enum.isGreaterThanOrEqual },
-        { label: "<=", value: ZSurveyLogicConditionsOperator.enum.isLessThanOrEqual },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
-          value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
-          value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-        },
-      ]);
+      expect(rules.options).toEqual([...NUMBER_COMPARISONS, ...SUBMISSION]);
     });
 
     test("CTA", () => {
@@ -284,14 +156,7 @@ describe("getLogicRules", () => {
       const rules = elementRules[TSurveyQuestionTypeEnum.Date];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
-        {
-          label: "mockTranslate(workspace.surveys.edit.equals)",
-          value: ZSurveyLogicConditionsOperator.enum.equals,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_equal)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
-        },
+        ...EQUALITY,
         {
           label: "mockTranslate(workspace.surveys.edit.is_before)",
           value: ZSurveyLogicConditionsOperator.enum.isBefore,
@@ -300,45 +165,20 @@ describe("getLogicRules", () => {
           label: "mockTranslate(workspace.surveys.edit.is_after)",
           value: ZSurveyLogicConditionsOperator.enum.isAfter,
         },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
-          value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
-          value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-        },
+        ...SUBMISSION,
       ]);
     });
 
     test("FileUpload", () => {
       const rules = elementRules[TSurveyQuestionTypeEnum.FileUpload];
       expect(rules).toBeDefined();
-      expect(rules.options).toEqual([
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
-          value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
-          value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-        },
-      ]);
+      expect(rules.options).toEqual([...SUBMISSION]);
     });
 
     test("Ranking", () => {
       const rules = elementRules[TSurveyQuestionTypeEnum.Ranking];
       expect(rules).toBeDefined();
-      expect(rules.options).toEqual([
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
-          value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
-          value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-        },
-      ]);
+      expect(rules.options).toEqual([...SUBMISSION]);
     });
 
     test("Cal", () => {
@@ -379,14 +219,7 @@ describe("getLogicRules", () => {
       const rules = elementRules[TSurveyQuestionTypeEnum.Matrix + ".row"];
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
-        {
-          label: "mockTranslate(workspace.surveys.edit.equals)",
-          value: ZSurveyLogicConditionsOperator.enum.equals,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_equal)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
-        },
+        ...EQUALITY,
         {
           label: "mockTranslate(workspace.surveys.edit.is_empty)",
           value: ZSurveyLogicConditionsOperator.enum.isEmpty,
@@ -405,31 +238,13 @@ describe("getLogicRules", () => {
     test("Address", () => {
       const rules = elementRules[TSurveyQuestionTypeEnum.Address];
       expect(rules).toBeDefined();
-      expect(rules.options).toEqual([
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
-          value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
-          value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-        },
-      ]);
+      expect(rules.options).toEqual([...SUBMISSION]);
     });
 
     test("ContactInfo", () => {
       const rules = elementRules[TSurveyQuestionTypeEnum.ContactInfo];
       expect(rules).toBeDefined();
-      expect(rules.options).toEqual([
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
-          value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
-          value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-        },
-      ]);
+      expect(rules.options).toEqual([...SUBMISSION]);
     });
   });
 
@@ -437,102 +252,24 @@ describe("getLogicRules", () => {
     test("variable.text", () => {
       const rules = logicRules["variable.text"];
       expect(rules).toBeDefined();
-      expect(rules.options).toEqual([
-        {
-          label: "mockTranslate(workspace.surveys.edit.equals)",
-          value: ZSurveyLogicConditionsOperator.enum.equals,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_equal)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.contains)",
-          value: ZSurveyLogicConditionsOperator.enum.contains,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_contain)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotContain,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.starts_with)",
-          value: ZSurveyLogicConditionsOperator.enum.startsWith,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_start_with)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotStartWith,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.ends_with)",
-          value: ZSurveyLogicConditionsOperator.enum.endsWith,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_end_with)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotEndWith,
-        },
-      ]);
+      expect(rules.options).toEqual([...TEXT_OPERATORS]);
     });
 
     test("variable.number", () => {
       const rules = logicRules["variable.number"];
       expect(rules).toBeDefined();
-      expect(rules.options).toEqual([
-        { label: "=", value: ZSurveyLogicConditionsOperator.enum.equals },
-        { label: "!=", value: ZSurveyLogicConditionsOperator.enum.doesNotEqual },
-        { label: ">", value: ZSurveyLogicConditionsOperator.enum.isGreaterThan },
-        { label: "<", value: ZSurveyLogicConditionsOperator.enum.isLessThan },
-        { label: ">=", value: ZSurveyLogicConditionsOperator.enum.isGreaterThanOrEqual },
-        { label: "<=", value: ZSurveyLogicConditionsOperator.enum.isLessThanOrEqual },
-      ]);
+      expect(rules.options).toEqual([...NUMBER_COMPARISONS]);
     });
   });
 
-  describe("HiddenField Rules", () => {
-    test("hiddenField", () => {
-      const rules = logicRules.hiddenField;
+  // The list an ingested Embedded Data field inherits when it declares no narrower dataType — which
+  // every field a legacy survey has does. Asserted in full because ENG-1853 retired the separate
+  // `hiddenField` family in favour of this one, and "the operators did not change" is the claim.
+  describe("Field Rules (string)", () => {
+    test("field.string", () => {
+      const rules = logicRules["field.string"];
       expect(rules).toBeDefined();
-      expect(rules.options).toEqual([
-        {
-          label: "mockTranslate(workspace.surveys.edit.equals)",
-          value: ZSurveyLogicConditionsOperator.enum.equals,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_equal)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.contains)",
-          value: ZSurveyLogicConditionsOperator.enum.contains,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_contain)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotContain,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.starts_with)",
-          value: ZSurveyLogicConditionsOperator.enum.startsWith,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_start_with)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotStartWith,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.ends_with)",
-          value: ZSurveyLogicConditionsOperator.enum.endsWith,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.does_not_end_with)",
-          value: ZSurveyLogicConditionsOperator.enum.doesNotEndWith,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_set)",
-          value: ZSurveyLogicConditionsOperator.enum.isSet,
-        },
-        {
-          label: "mockTranslate(workspace.surveys.edit.is_not_set)",
-          value: ZSurveyLogicConditionsOperator.enum.isNotSet,
-        },
-      ]);
+      expect(rules.options).toEqual([...TEXT_OPERATORS, ...PRESENCE]);
     });
   });
 });
@@ -549,15 +286,16 @@ describe("TLogicRuleOption type", () => {
   });
 });
 
-describe("reserved field rules (ENG-1840)", () => {
+describe("dataType-keyed field rules (ENG-1840, ENG-1853)", () => {
   // Indexed explicitly rather than through a `Record<string, …>` cast: `getConditionOperatorOptions`
-  // reaches these keys as `reserved.${entry.dataType}`, and naming all four here means deleting one
-  // is a compile error in this test rather than a silently skipped loop iteration.
+  // reaches these keys as `field.${dataType}` — for a reserved catalog entry and, since ENG-1853, for
+  // an ingested Embedded Data field too — and naming all four here means deleting one is a compile
+  // error in this test rather than a silently skipped loop iteration.
   const reservedRules = {
-    string: logicRules["reserved.string"],
-    number: logicRules["reserved.number"],
-    boolean: logicRules["reserved.boolean"],
-    date: logicRules["reserved.date"],
+    string: logicRules["field.string"],
+    number: logicRules["field.number"],
+    boolean: logicRules["field.boolean"],
+    date: logicRules["field.date"],
   };
 
   const dataTypes = Object.keys(reservedRules) as (keyof typeof reservedRules)[];
@@ -575,8 +313,9 @@ describe("reserved field rules (ENG-1840)", () => {
   });
 
   test("every family can branch on absence", () => {
-    // A reserved value is legitimately absent (`source` on a link opened without one), and isSet /
-    // isNotSet are the only operators that let an author handle that.
+    // Such a value is legitimately absent (`source` on a link opened without one, an Embedded Data
+    // field nothing filled), and isSet / isNotSet are the only operators that let an author handle
+    // that.
     for (const dataType of dataTypes) {
       expect(opValues(dataType)).toEqual(
         expect.arrayContaining([

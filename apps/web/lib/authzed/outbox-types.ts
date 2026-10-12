@@ -7,6 +7,7 @@ export const AUTHZED_OUTBOX_TARGET_TYPES = [
   "feedback_directory_assignment",
   "membership",
   "organization",
+  "survey",
   "team",
   "team_membership",
   "user",

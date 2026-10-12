@@ -14,7 +14,6 @@ import { createId } from "@paralleldrive/cuid2";
 import React, { SetStateAction, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { Workspace } from "@formbricks/database/prisma-browser";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSurveyBlock, TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
@@ -27,13 +26,13 @@ import { addMultiLanguageLabels, createI18nString, extractLanguageCodes } from "
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { isConditionGroup } from "@/lib/surveyLogic/utils";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
+import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { AddElementButton } from "@/modules/survey/editor/components/add-element-button";
 import { AddEndingCardButton } from "@/modules/survey/editor/components/add-ending-card-button";
 import { BlocksDroppable } from "@/modules/survey/editor/components/blocks-droppable";
 import { EditEndingCard } from "@/modules/survey/editor/components/edit-ending-card";
 import { EditWelcomeCard } from "@/modules/survey/editor/components/edit-welcome-card";
-import { HiddenFieldsCard } from "@/modules/survey/editor/components/hidden-fields-card";
-import { SurveyVariablesCard } from "@/modules/survey/editor/components/survey-variables-card";
+import { EmbeddedDataCard } from "@/modules/survey/editor/components/embedded-data-card";
 import {
   addElementToBlock,
   deleteBlock,
@@ -70,9 +69,11 @@ const POINTER_SENSOR_OPTIONS = { activationConstraint: { distance: 5 } };
 interface ElementsViewProps {
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<SetStateAction<TSurvey>>;
+  /** The survey as stored. The Embedded Data card reads it for promote and for the name guard. */
+  persistedSurvey: TSurvey;
   activeElementId: string | null;
   setActiveElementId: (elementId: string | null) => void;
-  workspace: Workspace;
+  workspace: TWorkspaceWithoutCustomCss;
   invalidElements: string[] | null;
   setInvalidElements: React.Dispatch<SetStateAction<string[] | null>>;
   selectedLanguageCode: string;
@@ -91,6 +92,7 @@ export const ElementsView = ({
   setActiveElementId,
   localSurvey,
   setLocalSurvey,
+  persistedSurvey,
   workspace,
   invalidElements,
   setInvalidElements,
@@ -103,7 +105,7 @@ export const ElementsView = ({
   isStorageConfigured = true,
   quotas,
   isExternalUrlsAllowed,
-}: ElementsViewProps) => {
+}: Readonly<ElementsViewProps>) => {
   const { t } = useTranslation();
   const [logicDeletionWarning, setLogicDeletionWarning] = React.useState<{
     open: boolean;
@@ -973,19 +975,16 @@ export const ElementsView = ({
           <>
             <AddEndingCardButton localSurvey={localSurvey} addEndingCard={addEndingCard} />
             <hr />
-            <HiddenFieldsCard
+            <EmbeddedDataCard
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
-              setActiveElementId={setActiveElementId}
-              activeElementId={activeElementId}
-              quotas={quotas}
-            />
-            <SurveyVariablesCard
-              localSurvey={localSurvey}
-              setLocalSurvey={setLocalSurvey}
+              persistedSurvey={persistedSurvey}
               activeElementId={activeElementId}
               setActiveElementId={setActiveElementId}
               quotas={quotas}
+              responseCount={responseCount}
+              workspaceId={workspace.id}
+              locale={locale}
             />
           </>
         )}

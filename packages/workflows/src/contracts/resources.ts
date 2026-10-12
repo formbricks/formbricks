@@ -82,6 +82,7 @@ export const ZWorkflowTestProblemCode = z.enum([
   "definition_not_executable",
   "survey_not_found",
   "ending_card_not_found",
+  "survey_not_workspace_visible",
   "recipient_not_allowed",
 ]);
 export type TWorkflowTestProblemCode = z.infer<typeof ZWorkflowTestProblemCode>;
