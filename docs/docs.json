@@ -119,6 +119,7 @@
                   "surveys/general-features/limit-submissions",
                   "surveys/general-features/survey-scheduling",
                   "surveys/general-features/multi-language-surveys",
+                  "surveys/general-features/migrate-from-qualtrics",
                   "surveys/general-features/partial-submissions",
                   "surveys/general-features/recall",
                   "surveys/general-features/metadata",
