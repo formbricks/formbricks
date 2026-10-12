@@ -19,21 +19,12 @@ export type FeedbackRecordCreateParams = CreateFeedbackRecordInputBody;
 export type FeedbackRecordListParams = ListFeedbackRecordsData["query"];
 export type FeedbackRecordUpdateParams = UpdateFeedbackRecordInputBody;
 
-// The SDK's own read shape, translation and enrichment fields included. Hub serializes each of them
-// `omitempty` from a pointer (`internal/models/feedback_records.go`), so an unset one is absent rather
-// than null, and `emotions` is always an array — which is exactly how the SDK types them.
-//
-// `taxonomy` (hub#136) is only on the single-record GET, and null when the lookup is unavailable; older
-// Hubs omit it. The SDK build this branch was verified against predates hub#136, so it is declared here —
-// through `Omit`, which stays correct once the SDK ships the field. Drop the bridge when it does: hub
-// main's spec types it identically (`FeedbackRecordTaxonomyOutputBody | null`).
-export type FeedbackRecordData = Omit<HubFeedbackRecordData, "taxonomy"> & {
-  taxonomy?: FeedbackRecordTaxonomy | null;
-};
-
-export type FeedbackRecordListResponse = Omit<ListFeedbackRecordsOutputBody, "data"> & {
-  data: FeedbackRecordData[];
-};
+// The SDK's own read shape, translation, enrichment and taxonomy fields included. Hub serializes each
+// enrichment field `omitempty` from a pointer (`internal/models/feedback_records.go`), so an unset one is
+// absent rather than null, and `emotions` is always an array — which is exactly how the SDK types them.
+// `taxonomy` (hub#136) is only on the single-record GET, and null when the lookup is unavailable.
+export type FeedbackRecordData = HubFeedbackRecordData;
+export type FeedbackRecordListResponse = ListFeedbackRecordsOutputBody;
 
 // `GET /v1/feedback-records/count` — the Hub documents it as taking the same query parameters as the
 // list endpoint, minus pagination, and answering with a single total.

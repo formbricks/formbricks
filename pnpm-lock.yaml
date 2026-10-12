@@ -2747,7 +2747,7 @@ packages:
     resolution: {integrity: sha512-XOMO2Hupl0wdd172Y06h6kLpBz6Dv+J4okPLl4LPtzbr8f66WbIoy4ev98EBuZ6ZK4h5ydTN6XneT4QVpD7cdA==}
 
   '@formbricks/hub@file:.local/formbricks-hub-0.14.0.tgz':
-    resolution: {integrity: sha512-B0n9xQCHKwGWMmggO71iyLi/PD//uT1fLO2gOgQx1qmeI0/rESfI6Vf2dUPGhwvQ9x8bNk3E9aPtIRZgLU3gOw==, tarball: file:.local/formbricks-hub-0.14.0.tgz}
+    resolution: {integrity: sha512-PsrkxUznVsn511dXOURierMBM8Fz1i5UORqOA8TjUXoNWTxnsz4wwaqi+1p0L0wVF6XGG6oSi4Mf22bGTeBBvg==, tarball: file:.local/formbricks-hub-0.14.0.tgz}
     version: 0.14.0
     engines: {node: '>=22'}
     peerDependencies:
