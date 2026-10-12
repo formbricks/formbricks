@@ -4351,10 +4351,8 @@ paths:
         range, and a record that changes while you page normally comes back later in the run. Start each
         run with a `limit=1` request and read its `Date` header: that value is this run's `updated_until`
         and, minus a few minutes, the next run's `updated_since` — both bounds from the same value, or
-        records between them are never read. For the next run,
-        pass the time the previous run **started** (its first response's `Date` header) minus a few
-        minutes of overlap — not the newest `updated_at` received, which skips a write that was still
-        committing when you read past its timestamp.
+        records between them are never read. Do not use the newest `updated_at` received instead: it
+        skips a write that was still committing when you read past its timestamp.
         Upsert by `id` and let the most recent fetch win. Deleted records leave nothing for
         `updated_since` to match, so reconcile deletions separately: periodically list every record id
         with no `updated_since`, and remove the local records that were not returned and were created

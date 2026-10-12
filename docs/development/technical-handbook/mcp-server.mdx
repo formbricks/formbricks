@@ -1482,7 +1482,7 @@ character, so an empty value is rejected rather than ignored.
 </Warning>
 
 **Ordering.** `sort` accepts `collected_at` (the default), `created_at` or `updated_at`, and `order` accepts
-`asc` or `desc` (default `desc`). `updated_at` is ascending-only: the Hub answers 400 to any other `order`. Neither applies to `count_feedback_records`, which rejects them. A cursor marks a
+`asc` or `desc` (default `desc`). `updated_at` is ascending-only: pass `order: asc` explicitly, since the Hub answers 400 to `desc` and to an omitted `order`. Neither applies to `count_feedback_records`, which rejects them. A cursor marks a
 position *within one specific ordering*, so keep `sort` and `order` identical for the whole traversal —
 presenting a cursor under a different ordering is rejected rather than silently returning a page that
 looks like a continuation.
@@ -1491,8 +1491,8 @@ looks like a continuation.
 months ago but stored today. Use `created_since` for "what did this import bring in", and `since` for
 "what did people tell us in this period".
 
-`updated_at` is the third timestamp: it is stamped on create, on every correction and on every enrichment
-result, so `updated_since` answers "what was created or changed since" — incremental extraction. Pair it
+`updated_at` is the third timestamp: it is stamped on create, on every correction and on every translation,
+sentiment and emotion result (not on embeddings or topic assignment), so `updated_since` answers "what was created or changed since" — incremental extraction. Pair it
 with `sort: updated_at, order: asc`: each page is one index range, and a record that changes mid-traversal
 normally moves ahead of the cursor (returned again). A write that started before the cursor's position and
 commits after it still lands behind; the run-start watermark picks it up next run. The next run's `updated_since` is when the

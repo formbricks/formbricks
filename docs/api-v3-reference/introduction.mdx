@@ -136,17 +136,15 @@ curl "https://app.formbricks.com/api/v3/feedbackRecords?tenant_id=<datasetId>&up
   the same _S_ — an `updated_until` from your own clock can fall short of the next run's `updated_since` and
   leave records that neither run ever reads.
 - **Next `updated_since`: _S_ minus a few minutes.** _S_ comes from our `Date` header, so drift between your
-  clock and ours cannot open a gap. Do not use the newest
-  `updated_at` you received: `updated_at` is when a write *started*, so a write still committing when you read
-  past its timestamp is missing from this run with a timestamp older than the newest you saw, and a watermark
-  taken from the results skips it for good.
-  The overlap has to exceed the longest write to a record (`updated_at` is when a write *started*, so one that
-  commits after your run began can carry an earlier timestamp), plus the time the first response took and the
-  difference between the clock that stamped `Date` and the database's. Writes are short, so five minutes is a
-  comfortable default, but no hard limit is enforced; the full sweep below repairs anything a slower write slips
-  past.
-- **Let the latest fetch win, and run one sync at a time** (the full sweep included). The overlap re-reads some records, so upsert by `id`
-  and keep the copy from the most recent run. Don't compare `updated_at` to choose: two writes to one record can
+  clock and ours cannot open a gap. Do not use the newest `updated_at` you received: `updated_at` is when a
+  write *started*, so a write still committing when you read past its timestamp is missing from this run with
+  a timestamp older than the newest you saw, and a watermark taken from the results skips it for good. For the
+  same reason the overlap has to exceed the longest write to a record, plus the time the first response took and
+  the difference between the clock that stamped `Date` and the database's. Writes are short, so five minutes is
+  a comfortable default, but no hard limit is enforced; the full sweep below repairs anything a slower write
+  slips past.
+- **Let the latest fetch win, and run one sync at a time** (the full sweep included). The overlap re-reads
+  some records, so upsert by `id` and keep the copy from the most recent run. Don't compare `updated_at` to choose: two writes to one record can
   commit in the opposite order to the one they started in, so the newer state can carry the older timestamp.
 - **Deletions are not returned.** A deleted record leaves nothing for `updated_since` to match. To reconcile
   them, periodically list every record id in the dataset with no `updated_since`, noting when that listing
