@@ -116,6 +116,19 @@ describe("getQsfImportErrorMessage", () => {
     );
   });
 
+  test("says when to retry once the AI provider's quota frees up", () => {
+    expect(getQsfImportErrorMessage("ai_quota_exceeded", t, 30)).toBe(
+      'workspace.surveys.import.errors.ai_busy {"seconds":30}'
+    );
+  });
+
+  test.each([
+    ["ai_output_too_long", "workspace.surveys.import.errors.too_complex"],
+    ["bad_request", "workspace.surveys.import.errors.failed"],
+  ])("words %s for a file, not a prompt", (code, message) => {
+    expect(getQsfImportErrorMessage(code, t)).toBe(message);
+  });
+
   test("tells an import already running apart from the rate limit", () => {
     expect(getQsfImportErrorMessage("concurrency_limit_reached", t, 15)).toBe(
       "workspace.surveys.import.errors.already_importing"

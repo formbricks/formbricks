@@ -9,6 +9,7 @@ import type { TQsfImportStreamEvent } from "@/app/api/internal/surveys/import/li
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 import { QsfImportRequestError, streamQsfImport } from "@/modules/survey/import/lib/import-stream-client";
 import type { TQsfDraftDocument } from "@/modules/survey/import/qsf/draft";
+import { createV3Survey } from "@/modules/survey/list/lib/v3-surveys-client";
 import { useImportSurvey } from "./use-import-survey";
 
 vi.mock("react-i18next", () => ({
@@ -167,6 +168,34 @@ describe("useImportSurvey", () => {
 
     await waitFor(() => expect(result.current.errorCode).toBe("ai_quota_exceeded"));
     expect(result.current.retryAfterSeconds).toBe(30);
+  });
+
+  test("saves the reviewed draft as an import, as it came", async () => {
+    streamWith([{ type: "done", payload, report }] as TQsfImportStreamEvent[]);
+    const { result } = renderImport();
+
+    await act(async () => result.current.selectFile(qsfFile()));
+    await waitFor(() => expect(result.current.status).toBe("review"));
+    act(() => result.current.handleOpenInEditor());
+
+    await waitFor(() => expect(createV3Survey).toHaveBeenCalledWith(payload, "import"));
+  });
+
+  test("starts nothing when the dialog closes while the file is still being read", async () => {
+    let finishRead: (text: string) => void = () => undefined;
+    const file = qsfFile();
+    file.text = () =>
+      new Promise<string>((resolve) => {
+        finishRead = resolve;
+      });
+    const { result, unmount } = renderImport();
+
+    const selecting = result.current.selectFile(file);
+    unmount();
+    finishRead('{"SurveyEntry":{"SurveyName":"Survey"},"SurveyElements":[]}');
+    await selecting;
+
+    expect(streamQsfImport).not.toHaveBeenCalled();
   });
 
   test("picking another file goes back to the drop zone", async () => {

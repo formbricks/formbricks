@@ -194,6 +194,8 @@ export function disambiguateLabels(
     const nextNumber = new Map<string, number>();
     for (const item of items) {
       const text = (item.label[code] ?? "").trim();
+      // An empty label is a missing translation, not a repeat: numbered, " (2)" would read as content.
+      if (!text) continue;
       if (!seen.has(text)) {
         seen.add(text);
         continue;
@@ -340,7 +342,8 @@ class QsfAssembler {
   private localize(
     key: TQsfTextKey,
     context: TPipedTextContext | null,
-    piped: { removed: number }
+    piped: { removed: number },
+    countMissing = true
   ): TQsfLocaleText {
     const byLanguage = this.params.texts.byKey.get(key);
     const [defaultCode] = this.languageCodes;
@@ -357,7 +360,7 @@ class QsfAssembler {
       const translated = byLanguage?.get(code);
       const converted = translated === undefined ? "" : convert(translated);
       localized[code] = hasTextContent(converted) ? converted : "";
-      if (!hasTextContent(converted) && defaultShows) {
+      if (countMissing && !hasTextContent(converted) && defaultShows) {
         this.missingCounts.set(code, (this.missingCounts.get(code) ?? 0) + 1);
       }
     }
@@ -663,7 +666,14 @@ class QsfAssembler {
 
     if (!survey.endMessageKey) return [await this.defaultEnding()];
     const piped = { removed: 0 };
-    const headline = this.localize(survey.endMessageKey, this.recallContext(Number.POSITIVE_INFINITY), piped);
+    // Not counted as missing: a Qualtrics export never holds the end message's translations, so
+    // counting them would turn off every other language of a fully translated survey.
+    const headline = this.localize(
+      survey.endMessageKey,
+      this.recallContext(Number.POSITIVE_INFINITY),
+      piped,
+      false
+    );
     if (piped.removed > 0) {
       // No question to name: the line says it is about the ending.
       this.issues.push({
@@ -674,25 +684,49 @@ class QsfAssembler {
     }
     const defaultHeadline = headline[survey.defaultLanguage] ?? "";
     if (!hasTextContent(defaultHeadline)) return [await this.defaultEnding()];
-    return [{ id: createId(), type: "endScreen", headline: this.filled(headline, defaultHeadline).text }];
+
+    // A language without the message gets Formbricks' own thank-you, else the default language's text.
+    const thanks = await getDefaultEndingTexts(this.languageCodes);
+    const standIns: string[] = [];
+    for (const [index, code] of this.languageCodes.entries()) {
+      if (index === 0 || hasTextContent(headline[code] ?? "")) continue;
+      headline[code] = thanks[index]?.headline ?? defaultHeadline;
+      standIns.push(code);
+    }
+    this.reportEndingStandIns(standIns);
+    return [{ id: createId(), type: "endScreen", headline }];
+  }
+
+  /** One line naming the languages whose ending shows a stand-in text, for the user to check. */
+  private reportEndingStandIns(languages: string[]): void {
+    if (languages.length === 0) return;
+    this.issues.push({
+      code: "ending_not_translated",
+      severity: "warning",
+      params: { subject: "ending", languages: languages.join(", ") },
+    });
   }
 
   /**
    * The ending the editor gives a new survey, without its link, reported: a file with no end message
    * of its own relied on Qualtrics' default one, and a survey with no ending should not be published.
-   * A language Formbricks has no strings for keeps both texts empty, like any missing translation.
+   * A language Formbricks has no strings for shows the default language's, named in the report.
    */
   private async defaultEnding(): Promise<TQsfDraftEnding> {
     this.issues.push({ code: "ending_added", severity: "info", params: { subject: "ending" } });
     const texts = await getDefaultEndingTexts(this.languageCodes);
+    // The default language always has a text: its own, else English.
+    const fallback = texts[0] ?? { headline: "", subheader: "" };
     const headline: TQsfLocaleText = {};
     const subheader: TQsfLocaleText = {};
+    const standIns: string[] = [];
     for (const [index, code] of this.languageCodes.entries()) {
-      const text = texts[index];
-      headline[code] = text?.headline ?? "";
-      subheader[code] = text?.subheader ?? "";
-      if (!text) this.missingCounts.set(code, (this.missingCounts.get(code) ?? 0) + 2);
+      const text = texts[index] ?? fallback;
+      if (!texts[index]) standIns.push(code);
+      headline[code] = text.headline;
+      subheader[code] = text.subheader;
     }
+    this.reportEndingStandIns(standIns);
     return { id: createId(), type: "endScreen", headline, subheader };
   }
 }

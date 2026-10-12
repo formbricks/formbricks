@@ -105,10 +105,12 @@ const getUnknownIssueMessage = (_code: never, t: TTranslate): string =>
  */
 export const getQsfImportIssueMessage = (issue: TQsfImportIssue, t: TTranslate): string => {
   switch (issue.code) {
-    case "logic_not_imported":
-      return t("workspace.surveys.import.issues.logic_not_imported", {
-        description: param(issue, "description"),
-      });
+    case "logic_not_imported": {
+      const description = param(issue, "description");
+      return description
+        ? t("workspace.surveys.import.issues.logic_not_imported", { description })
+        : t("workspace.surveys.import.issues.logic_not_imported_no_description");
+    }
     case "question_skipped":
       return getSkippedQuestionMessage(issue, t);
     case "image_dropped":
@@ -159,6 +161,10 @@ export const getQsfImportIssueMessage = (issue: TQsfImportIssue, t: TTranslate):
       });
     case "ending_added":
       return t("workspace.surveys.import.issues.ending_added");
+    case "ending_not_translated":
+      return t("workspace.surveys.import.issues.ending_not_translated", {
+        languages: param(issue, "languages"),
+      });
     default:
       // A server newer than this client can still send a code it does not know.
       return getUnknownIssueMessage(issue.code, t);
@@ -183,6 +189,18 @@ export const getQsfImportIssueLine = (issue: TQsfImportIssue, t: TTranslate): st
 export const sortQsfImportIssues = (issues: readonly TQsfImportIssue[]): TQsfImportIssue[] => [
   ...issues.filter((issue) => issue.severity === "warning"),
   ...issues.filter((issue) => issue.severity !== "warning"),
+];
+
+/**
+ * The languages the draft imports switched off, because texts are missing in them: the review names
+ * them above the save button, so nobody publishes without noticing.
+ */
+export const getSwitchedOffLanguages = (report: TQsfImportReport): string[] => [
+  ...new Set(
+    report.issues
+      .filter((issue) => issue.code === "translation_missing")
+      .map((issue) => param(issue, "language"))
+  ),
 ];
 
 export const hasQsfImportWarnings = (report: TQsfImportReport): boolean =>

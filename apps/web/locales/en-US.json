@@ -3999,6 +3999,7 @@
         "dropzone_help": "Qualtrics survey export (.qsf), up to 15 MB",
         "dropzone_primary": "Drop a .qsf file here or click to choose one",
         "errors": {
+          "ai_busy": "The AI provider is busy. Try again in {seconds, plural, one {# second} other {# seconds}}.",
           "already_importing": "You already have an import running. Wait for it to finish, then try again.",
           "busy": "Formbricks is busy with other imports. Try again in a few seconds.",
           "empty_file": "This file is empty.",
@@ -4039,7 +4040,8 @@
         "issues": {
           "choice_dropped": "An option was left out because its ID could not be read.",
           "choice_label_renamed": "Repeated option labels were numbered so each one is distinct.",
-          "ending_added": "The file has no end message, so a default ending was added.",
+          "ending_added": "The end message is not in the file, so a default ending was added.",
+          "ending_not_translated": "The file has no translation for {languages}, so a default text is shown there. Check it in the editor.",
           "external_url_removed": "A link was removed because your plan does not allow external links.",
           "field_dropped": "{count, plural, one {# embedded data field was} other {# embedded data fields were}} left out: the survey cannot hold more.",
           "field_renamed": "Embedded data field \"{from}\" was renamed to \"{to}\".",
@@ -4052,6 +4054,7 @@
           "language_skipped_too_large": "Language \"{code}\" was left out: the survey was too large to create with every language.",
           "language_skipped_unnamed": "A language with no Formbricks equivalent was left out.",
           "logic_not_imported": "Logic not imported: {description}",
+          "logic_not_imported_no_description": "Logic not imported.",
           "markup_escaped": "Text that would have shown as HTML is shown as typed.",
           "matrix_single_answer": "Now one answer per row: in Qualtrics this matrix took several, and a Formbricks matrix takes one.",
           "options_left_out": "{count, plural, one {# option was} other {# options were}} left out: {options}.",
@@ -4072,6 +4075,8 @@
           "translation_missing": "{count, plural, one {# text is} other {# texts are}} missing in {language}, so the language is turned off. Add the missing texts in the editor, then turn it on.",
           "unknown": "Something in this question was changed during the import."
         },
+        "languages_off_description": "Texts are missing in {languages}. Add them in the editor, then switch {count, plural, one {the language} other {the languages}} on under Languages.",
+        "languages_off_title": "{count, plural, one {# language is} other {# languages are}} imported switched off",
         "menu_item": "Import Qualtrics survey",
         "pick_another_file": "Pick another file",
         "progress": {

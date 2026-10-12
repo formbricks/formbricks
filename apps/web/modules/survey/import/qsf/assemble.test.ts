@@ -124,7 +124,7 @@ describe("assembleQsfDraft", () => {
     expect(issues.some((issue) => issue.code === "translation_missing")).toBe(false);
   });
 
-  test("leaves the default ending empty in a language Formbricks has no strings for, and turns it off", async () => {
+  test("shows the default language's ending where Formbricks has no strings, and never counts it missing", async () => {
     const withLanguage = (code: string) =>
       assembleFixture("pages-and-blocks.qsf", { editSurvey: (survey) => survey.languages.push(code) });
     const missingIn = (issues: TQsfIssue[]) =>
@@ -133,11 +133,44 @@ describe("assembleQsfDraft", () => {
     const austrian = await withLanguage("de-AT");
 
     expect(norwegian.document.endings).toMatchObject([
-      { headline: { "nb-NO": "" }, subheader: { "nb-NO": "" } },
+      {
+        headline: { "en-US": "Thank you!", "nb-NO": "Thank you!" },
+        subheader: { "nb-NO": "We appreciate your feedback." },
+      },
     ]);
-    expect(norwegian.document.languages.find((language) => language.code === "nb-NO")?.enabled).toBe(false);
-    // The file's own texts are missing in both languages; only Norwegian also misses the ending's two.
-    expect(missingIn(norwegian.issues)).toBe(missingIn(austrian.issues) + 2);
+    expect(norwegian.issues).toContainEqual({
+      code: "ending_not_translated",
+      severity: "warning",
+      params: { subject: "ending", languages: "nb-NO" },
+    });
+    // Only the file's own texts count as missing, in both languages alike.
+    expect(missingIn(norwegian.issues)).toBe(missingIn(austrian.issues));
+  });
+
+  test("keeps a fully translated language on when the file's end message has no translation", async () => {
+    // Qualtrics exports never hold the end message's translations, even in a fully translated survey.
+    const { document, issues } = await assembleFixture("multilang-en-de.qsf", {
+      editSurvey: (survey) => {
+        survey.texts.set("s99", {
+          format: "rich",
+          questionRef: null,
+          byLanguage: new Map([["en-US", "Thanks for taking part!"]]),
+        });
+        survey.endMessageKey = "s99";
+      },
+    });
+
+    expect(document.languages.every((language) => language.enabled)).toBe(true);
+    expect(document.endings).toMatchObject([
+      {
+        type: "endScreen",
+        headline: {
+          "en-US": "Thanks for taking part!",
+          "de-DE": deDE.templates.default_ending_card_headline,
+        },
+      },
+    ]);
+    expect(issues.map((issue) => issue.code)).toEqual(["ending_not_translated"]);
   });
 
   test("copies every language, leaving a missing translation empty and its language turned off", async () => {
@@ -226,6 +259,28 @@ describe("assembleQsfDraft", () => {
     const labels = items.map((item) => item.label["en-US"]);
     expect(labels).toEqual(["N/A", "N/A (3)", "N/A (2)", "N/A (4)"]);
     expect(new Set(labels).size).toBe(labels.length);
+  });
+
+  test("leaves a missing translation empty rather than numbering it as a repeat", () => {
+    const items = ["X", "X", "", ""].map((german, index) => ({
+      id: String(index),
+      label: { "en-US": `Option ${index}`, "de-DE": german },
+    }));
+    const languages = ["en-US", "de-DE"].map((code, index) => ({
+      language: {
+        id: code,
+        code,
+        alias: null,
+        workspaceId: WORKSPACE_ID,
+        createdAt: new Date(0),
+        updatedAt: new Date(0),
+      },
+      default: index === 0,
+      enabled: true,
+    }));
+
+    expect(disambiguateLabels(items, ["en-US", "de-DE"], languages)).toBe(true);
+    expect(items.map((item) => item.label["de-DE"])).toEqual(["X", "X (2)", "", ""]);
   });
 
   test("numbers two hundred repeats of one label in linear time", () => {

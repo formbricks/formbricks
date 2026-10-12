@@ -3,6 +3,7 @@ import type { TQsfImportReport } from "@/modules/survey/import/types";
 import {
   getQsfImportFacts,
   getQsfImportIssueLine,
+  getSwitchedOffLanguages,
   hasQsfImportWarnings,
   sortQsfImportIssues,
 } from "./import-report";
@@ -115,6 +116,25 @@ describe("getQsfImportIssueLine", () => {
     ).toBe('Q7: scale_changed {"from":"8","to":"10"}');
   });
 
+  test("says a logic rule was not imported even without its description", () => {
+    expect(
+      getQsfImportIssueLine({ code: "logic_not_imported", severity: "warning", questionTag: "Q4" }, t)
+    ).toBe("Q4: logic_not_imported_no_description");
+  });
+
+  test("names the languages whose ending shows a stand-in", () => {
+    expect(
+      getQsfImportIssueLine(
+        {
+          code: "ending_not_translated",
+          severity: "warning",
+          params: { subject: "ending", languages: "de-DE, nb-NO" },
+        },
+        t
+      )
+    ).toBe('ending: ending_not_translated {"languages":"de-DE, nb-NO"}');
+  });
+
   test("names the end message for the default ending it added", () => {
     expect(
       getQsfImportIssueLine({ code: "ending_added", severity: "info", params: { subject: "ending" } }, t)
@@ -191,6 +211,21 @@ describe("every report code", () => {
     expect(new Set(lines).size).toBe(lines.length);
     for (const line of lines)
       expect(line).toMatch(/^question_skipped_unsupported_type \{"type":"[a-z_]+"\}$/);
+  });
+});
+
+describe("getSwitchedOffLanguages", () => {
+  test("names each language with missing texts once, in the report's order", () => {
+    expect(
+      getSwitchedOffLanguages(
+        report([
+          { code: "translation_missing", severity: "warning", params: { language: "zh-Hant-TW", count: 7 } },
+          { code: "image_dropped", severity: "warning", questionTag: "Q1" },
+          { code: "translation_missing", severity: "warning", params: { language: "zh-Hans-CN", count: 1 } },
+        ])
+      )
+    ).toEqual(["zh-Hant-TW", "zh-Hans-CN"]);
+    expect(getSwitchedOffLanguages(report([]))).toEqual([]);
   });
 });
 

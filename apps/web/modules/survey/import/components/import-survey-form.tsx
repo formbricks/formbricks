@@ -12,6 +12,7 @@ import { ImportFacts } from "@/modules/survey/import/components/import-facts";
 import { ImportReport } from "@/modules/survey/import/components/import-report";
 import { useImportSurvey } from "@/modules/survey/import/hooks/use-import-survey";
 import { getQsfImportErrorMessage } from "@/modules/survey/import/lib/import-errors";
+import { getSwitchedOffLanguages } from "@/modules/survey/import/lib/import-report";
 import { QSF_FILE_EXTENSION } from "@/modules/survey/import/lib/qsf-file";
 import type { TQsfImportStage } from "@/modules/survey/import/types";
 import { AiIcon, AiStatusLine } from "@/modules/ui/components/ai";
@@ -113,6 +114,10 @@ export const ImportSurveyForm = ({
     />
   ) : null;
 
+  // Languages with missing texts import switched off; said here, not only in the report, because the
+  // survey publishes without them and nothing else stops it.
+  const switchedOff = isReviewing && importer.report ? getSwitchedOffLanguages(importer.report) : [];
+
   const buildFooter = () => {
     if (isImporting) {
       return (
@@ -189,6 +194,7 @@ export const ImportSurveyForm = ({
             id="import-survey-file"
             accept={QSF_FILE_EXTENSION}
             onFileSelect={importer.selectFile}
+            isLoading={importer.isReadingFile}
             primaryText={t("workspace.surveys.import.dropzone_primary")}
             helpText={t("workspace.surveys.import.dropzone_help")}
             loadingText={t("workspace.surveys.import.reading_file")}
@@ -199,6 +205,20 @@ export const ImportSurveyForm = ({
           </p>
         </div>
       )}
+
+      {switchedOff.length > 0 ? (
+        <Alert variant="warning">
+          <AlertTitle>
+            {t("workspace.surveys.import.languages_off_title", { count: switchedOff.length })}
+          </AlertTitle>
+          <AlertDescription>
+            {t("workspace.surveys.import.languages_off_description", {
+              count: switchedOff.length,
+              languages: switchedOff.join(", "),
+            })}
+          </AlertDescription>
+        </Alert>
+      ) : null}
 
       <div className="mt-auto">{renderFooter(buildFooter())}</div>
     </div>

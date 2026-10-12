@@ -249,6 +249,12 @@ const DOCUMENT_SKELETON_BYTES = 512;
 const RECALL_GROWTH_BYTES = 86;
 /** What numbering a repeated label adds: ` (400)`. */
 const LABEL_SUFFIX_BYTES = 6;
+/**
+ * The most the default ending's headline or subheader weighs as a JSON value in any app locale; the
+ * longest is under 50 bytes. The import adds that ending, in every language, when the file has no end
+ * message it can show. A test holds every locale under it.
+ */
+export const DEFAULT_ENDING_TEXT_BYTES = 64;
 /** A hidden field id (a safe identifier of at most 64 characters), quoted, with its comma. */
 const HIDDEN_FIELD_BYTES = 67;
 /** `"showLanguageSwitch":true,"autoSelectLanguage":true` and their commas, on a multi-language draft. */
@@ -282,10 +288,11 @@ export interface TQsfSurveyFit {
  * Cut the survey in place, before it is planned, so its draft cannot outweigh `maxBytes`: languages
  * first, the last the file declares first (`params.order` says so), then trailing questions, and pages
  * they empty. The estimate is an upper
- * bound on the assembled draft — every text in every language as the draft writes it (a missing
- * translation is the default text, an empty headline the export tag), every option of every question
- * whatever the plan keeps, JSON escaping, piped text grown to a recall, labels numbered, and room for
- * each element's, option's and block's own keys — so nothing it keeps can push the draft over.
+ * bound on the assembled draft — every text in every language (a missing translation, left empty in
+ * the draft, counted as the default text; an empty headline as the export tag; the end message, or the
+ * default ending added in its place), every option of every question whatever the plan keeps, JSON
+ * escaping, piped text grown to a recall, labels numbered, and room for each element's, option's and
+ * block's own keys — so nothing it keeps can push the draft over.
  *
  * A question of a type the import skips before planning (`Timing`, `CS`, …) is never in the draft, so it
  * weighs nothing, opens no page and is never cut here: it keeps its `unsupported_type` line.
@@ -317,8 +324,8 @@ export function fitQsfSurveyToCreateLimit(
     const headline = entry(code, valueIn(question.textKey, code, tagFallback));
     const options = [...question.choices, ...question.answers];
     if (options.length === 0) return headline;
-    // As assembly writes them: a blank translation is the default text. A label with piped text or
-    // markup may come out equal to another once that is resolved, so it counts as a possible repeat.
+    // A blank translation, left empty in the draft, counts as the default text. A label with piped text
+    // or markup may come out equal to another once that is resolved, so it counts as a possible repeat.
     const labels = options.map((option) => {
       const translated = textIn(option.key, code);
       return translated?.trim() ? translated : (textIn(option.key, defaultLanguage) ?? "");
@@ -342,14 +349,18 @@ export function fitQsfSurveyToCreateLimit(
     return question && !isUnsupportedType(question) ? question : undefined;
   };
   const questions = survey.pages.flatMap((page) => page.questionRefs.flatMap((ref) => kept(ref) ?? []));
-  const endMessageIn = (code: string) =>
-    survey.endMessageKey === null ? 0 : entry(code, valueIn(survey.endMessageKey, code, 0));
+  // The end message, or the default ending added when the file has none it can show.
+  const endingIn = (code: string) =>
+    Math.max(
+      survey.endMessageKey === null ? 0 : entry(code, valueIn(survey.endMessageKey, code, 0)),
+      2 * entry(code, DEFAULT_ENDING_TEXT_BYTES)
+    );
 
   // Every language but the default: its entry in `languages` and its share of each text.
   const languageWeight = (code: string) =>
     jsonBytes({ code, default: false, enabled: true }) +
     1 +
-    endMessageIn(code) +
+    endingIn(code) +
     questions.reduce((total, question) => total + questionIn(question, code), 0);
 
   const fixed =
@@ -359,7 +370,8 @@ export function fitQsfSurveyToCreateLimit(
     HIDDEN_FIELD_BYTES * survey.embeddedDataNames.length +
     2 * jsonBytes(survey.endRedirectUrl ?? "") +
     jsonBytes({ code: defaultLanguage, default: true, enabled: true }) +
-    endMessageIn(defaultLanguage);
+    jsonBytes({ subheader: {} }) +
+    endingIn(defaultLanguage);
   // A block is named after its Qualtrics block, or `Block <n>`.
   const pageWeight = (page: TQsfPage) =>
     BLOCK_SKELETON_BYTES + Math.max(jsonBytes(textIn(page.blockNameKey, defaultLanguage) ?? ""), 12);

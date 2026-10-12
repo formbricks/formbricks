@@ -109,6 +109,15 @@ export const getQsfImportErrorMessage = (
       return retryAfterSeconds === null
         ? getAiErrorMessage(code, t)
         : t("workspace.surveys.import.errors.rate_limited", { seconds: retryAfterSeconds });
+    case "ai_quota_exceeded":
+      return retryAfterSeconds === null
+        ? getAiErrorMessage(code, t)
+        : t("workspace.surveys.import.errors.ai_busy", { seconds: retryAfterSeconds });
+    // Create with AI's lines for these talk about a prompt; an import has a file.
+    case "ai_output_too_long":
+      return t("workspace.surveys.import.errors.too_complex");
+    case "bad_request":
+      return t("workspace.surveys.import.errors.failed");
     default:
       return getAiErrorMessage(code, t);
   }

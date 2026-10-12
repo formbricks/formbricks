@@ -1,4 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import { refsInPrompt } from "./__fixtures__/recorded-plans";
@@ -7,6 +10,7 @@ import type { TQsfAssembly, TQsfDraftElement } from "./assemble";
 import { assembleQsfDraft } from "./assemble";
 import { checkQsfDraft } from "./final-gate";
 import {
+  DEFAULT_ENDING_TEXT_BYTES,
   QSF_DRAFT_MAX_BYTES,
   fitQsfDraftToCreateLimit,
   fitQsfSurveyToCreateLimit,
@@ -386,6 +390,21 @@ describe("fitQsfSurveyToCreateLimit", () => {
     });
     return { survey, fit, assembly, planIssues };
   };
+
+  test("allows for the longest default ending in any app language", () => {
+    const localesDir = fileURLToPath(new URL("../../../../locales/", import.meta.url));
+    const longest = readdirSync(localesDir)
+      .filter((name) => name.endsWith(".json"))
+      .flatMap((name) => {
+        const { templates } = JSON.parse(readFileSync(join(localesDir, name), "utf8")) as {
+          templates: Record<string, string>;
+        };
+        return [templates.default_ending_card_headline, templates.default_ending_card_subheader];
+      })
+      .map((text) => new TextEncoder().encode(JSON.stringify(text)).length);
+
+    expect(Math.max(...longest)).toBeLessThanOrEqual(DEFAULT_ENDING_TEXT_BYTES);
+  });
 
   test("leaves a survey that fits as it is", async () => {
     const { fit, survey, assembly } = await fitAndAssemble(

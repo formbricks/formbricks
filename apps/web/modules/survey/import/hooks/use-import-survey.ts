@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getAIUnavailableReasonForErrorCode } from "@/lib/ai/availability";
 import {
   type TDraftStreamHandlers,
@@ -94,14 +94,28 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
     onSuccess,
   });
 
+  // The read a finished `readQsfFile` belongs to. Picking another file or closing the dialog moves it
+  // on, so a read that lands after starts nothing: closing mid-read once started an import nobody saw,
+  // and it held the user's one import slot.
+  const readId = useRef(0);
+  useEffect(
+    () => () => {
+      readId.current += 1;
+    },
+    []
+  );
+
   /** Choosing a file is the submit: it is read and checked here, then sent if it passes. */
   const selectFile = async (next: File) => {
+    readId.current += 1;
+    const read = readId.current;
     draft.clearError();
     setFileError(null);
     setFile({ name: next.name, size: next.size });
     setIsReadingFile(true);
 
     const result = await readQsfFile(next);
+    if (read !== readId.current) return;
     setIsReadingFile(false);
 
     if (!result.ok) {
@@ -113,6 +127,8 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
   };
 
   const pickAnotherFile = () => {
+    readId.current += 1;
+    setIsReadingFile(false);
     draft.reset();
     setFile(null);
     setFileError(null);

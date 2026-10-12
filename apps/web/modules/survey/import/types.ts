@@ -46,6 +46,9 @@ export type TQsfImportStage = "reading" | "ai" | "assembling";
  *   `params.options`, their names from the file)
  * - `scale_changed` — a slider whose number of points a rating does not have, imported at the
  *   nearest size it does (`params.from`, `params.to`)
+ * - `ending_not_translated` — languages whose ending shows a stand-in, because the file has no
+ *   translation of it: Formbricks' own thank-you, else the default language's text (`params.languages`,
+ *   `params.subject: "ending"`). Qualtrics exports never hold the end message's translations
  * - `ending_added` — the file had no end message the survey can show, so the editor's default ending was
  *   added (`params.subject: "ending"`)
  *
@@ -103,6 +106,7 @@ export type TQsfImportIssueCode =
   | "text_too_long"
   | "markup_escaped"
   | "matrix_single_answer"
+  | "ending_not_translated"
   | "options_left_out"
   | "scale_changed"
   | "ending_added";
