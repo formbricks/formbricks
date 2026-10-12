@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { AUTHZED_MAX_BULK_CHECK_ITEMS } from "@/lib/authzed/constants";
-import { findNotWorkspaceVisibleSurveyIds } from "@/lib/survey/visibility/outbound";
-import { type TNoticeSurvey, isHiddenByVisibility, resolveSurveyNoticeRecipients } from "./recipients";
+import { findEffectivelyRestrictedSurveyIds } from "@/lib/survey/visibility/outbound";
+import { type TNoticeSurvey, resolveSurveyNoticeRecipients } from "./recipients";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@formbricks/database", () => ({ prisma: { membership: { findMany: vi.fn() } } }));
 vi.mock("@/lib/authorization/resource-list", () => ({ filterReadableSurveyIds: vi.fn() }));
-vi.mock("@/lib/survey/visibility/outbound", () => ({ findNotWorkspaceVisibleSurveyIds: vi.fn() }));
+vi.mock("@/lib/survey/visibility/outbound", () => ({ findEffectivelyRestrictedSurveyIds: vi.fn() }));
 
 /**
  * Recipients against a real database and the real survey read check (a restricted survey falls back to
@@ -45,7 +45,7 @@ const readable = (grants: Record<string, string[]>) =>
 describe("resolveSurveyNoticeRecipients", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(findNotWorkspaceVisibleSurveyIds).mockResolvedValue([]);
+    vi.mocked(findEffectivelyRestrictedSurveyIds).mockResolvedValue([]);
   });
 
   test("reads nothing for no surveys", async () => {
@@ -150,7 +150,7 @@ describe("resolveSurveyNoticeRecipients", () => {
     ] as never);
     // The graph hasn't caught up with the restriction yet: it still lets both read every survey.
     const canRead = readable({ alice: ["s1", "s2"], bob: ["s1", "s2"] });
-    vi.mocked(findNotWorkspaceVisibleSurveyIds).mockResolvedValue(["s1", "s2"]);
+    vi.mocked(findEffectivelyRestrictedSurveyIds).mockResolvedValue(["s1", "s2"]);
 
     const recipients = await resolveSurveyNoticeRecipients(
       ORG_ID,
@@ -166,7 +166,7 @@ describe("resolveSurveyNoticeRecipients", () => {
         ["s2", recipient("yan")],
       ])
     );
-    expect(findNotWorkspaceVisibleSurveyIds).toHaveBeenCalledWith(["s1", "s2"]);
+    expect(findEffectivelyRestrictedSurveyIds).toHaveBeenCalledWith(["s1", "s2"]);
   });
 
   test("looks up no visibility when nobody needs a read check", async () => {
@@ -174,25 +174,6 @@ describe("resolveSurveyNoticeRecipients", () => {
 
     await resolveSurveyNoticeRecipients(ORG_ID, [survey("s1", null)], readable({}));
 
-    expect(findNotWorkspaceVisibleSurveyIds).not.toHaveBeenCalled();
-  });
-});
-
-describe("isHiddenByVisibility", () => {
-  const plain = { userId: "bob", role: "member" } as const;
-
-  test("hides an effectively restricted survey from a plain member who doesn't own it", () => {
-    expect(isHiddenByVisibility(plain, { ownerId: "alice" }, true)).toBe(true);
-    expect(isHiddenByVisibility(plain, { ownerId: null }, true)).toBe(true);
-  });
-
-  test("never from its owner or the organisation's owners and managers", () => {
-    expect(isHiddenByVisibility(plain, { ownerId: "bob" }, true)).toBe(false);
-    expect(isHiddenByVisibility({ userId: "yan", role: "owner" }, { ownerId: "alice" }, true)).toBe(false);
-    expect(isHiddenByVisibility({ userId: "mia", role: "manager" }, { ownerId: null }, true)).toBe(false);
-  });
-
-  test("hides nothing that is workspace-visible", () => {
-    expect(isHiddenByVisibility(plain, { ownerId: "alice" }, false)).toBe(false);
+    expect(findEffectivelyRestrictedSurveyIds).not.toHaveBeenCalled();
   });
 });

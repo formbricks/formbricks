@@ -7,6 +7,7 @@ import {
   buildVisibleResponseWhere,
   buildVisibleSurveyWhere,
   buildVisibleSurveyWhereAcrossOrganizations,
+  isSurveyHiddenFromMember,
   visibleSurveySqlPredicate,
 } from "./predicate";
 
@@ -185,5 +186,24 @@ describe("buildHiddenSurveyWhere", () => {
       expect(matches(hidden ?? {}, row)).toBe(!visible);
       expect(matches(buildVisibleSurveyWhere(ctx), row)).toBe(visible);
     }
+  });
+});
+
+describe("isSurveyHiddenFromMember", () => {
+  const restricted = { role: "member", userId: "u-1", ownerId: "u-9", effectivelyRestricted: true } as const;
+
+  test("hides an effectively restricted survey from a plain member who doesn't own it", () => {
+    expect(isSurveyHiddenFromMember(restricted)).toBe(true);
+    expect(isSurveyHiddenFromMember({ ...restricted, ownerId: null })).toBe(true);
+  });
+
+  test("never from its owner or the organization's owners and managers", () => {
+    expect(isSurveyHiddenFromMember({ ...restricted, ownerId: "u-1" })).toBe(false);
+    expect(isSurveyHiddenFromMember({ ...restricted, role: "owner" })).toBe(false);
+    expect(isSurveyHiddenFromMember({ ...restricted, role: "manager", ownerId: null })).toBe(false);
+  });
+
+  test("hides nothing that is workspace-visible, or while visibility isn't enforced", () => {
+    expect(isSurveyHiddenFromMember({ ...restricted, effectivelyRestricted: false })).toBe(false);
   });
 });

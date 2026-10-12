@@ -4,7 +4,8 @@ import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
 import type { TAuthorizationActor } from "@/lib/authorization";
 import { filterReadableSurveyIds } from "@/lib/authorization/resource-list";
 import { AUTHZED_MAX_BULK_CHECK_ITEMS } from "@/lib/authzed/constants";
-import { findNotWorkspaceVisibleSurveyIds } from "@/lib/survey/visibility/outbound";
+import { findEffectivelyRestrictedSurveyIds } from "@/lib/survey/visibility/outbound";
+import { isSurveyHiddenFromMember } from "@/lib/survey/visibility/predicate";
 import { mapWithConcurrency } from "@/lib/utils/map-with-concurrency";
 import { RETENTION_RECIPIENT_CHECK_CONCURRENCY } from "./constants";
 
@@ -30,7 +31,7 @@ type TCandidate = TNoticeRecipient & { role: "owner" | "manager" | "member" };
  * `AUTHZED_MAX_BULK_CHECK_ITEMS` surveys per person, a few in flight at once, so a restricted survey
  * (ENG-3282) or a workspace they have lost access to rules them out. That check reads the graph, which
  * lags a visibility change until it is projected, so the survey's effective visibility is applied too
- * (`isHiddenByVisibility`): a change still pending counts as restricted at once, as on every read path.
+ * (`isSurveyHiddenFromMember`): a change still pending counts as restricted at once, as on every read path.
  * Owners and managers can read every survey in the organisation, so they need no check. A failed check
  * throws: the run fails closed rather than emailing a fallback.
  */
@@ -94,7 +95,7 @@ export const resolveSurveyNoticeRecipients = async (
     // Effectively restricted surveys, `[]` while visibility isn't enforced. Only needed when a check runs.
     checks.length === 0
       ? Promise.resolve([])
-      : findNotWorkspaceVisibleSurveyIds(surveys.map((survey) => survey.id)),
+      : findEffectivelyRestrictedSurveyIds(surveys.map((survey) => survey.id)),
   ]);
   const restricted = new Set(restrictedIds);
   const readable = new Map<string, Set<string>>();
@@ -110,7 +111,12 @@ export const resolveSurveyNoticeRecipients = async (
         (candidate) =>
           candidate &&
           readable.get(candidate.userId)?.has(survey.id) &&
-          !isHiddenByVisibility(candidate, survey, restricted.has(survey.id))
+          !isSurveyHiddenFromMember({
+            role: candidate.role,
+            userId: candidate.userId,
+            ownerId: survey.ownerId,
+            effectivelyRestricted: restricted.has(survey.id),
+          })
       );
     const recipient = personal ?? fallbacks[0];
     if (recipient) {
@@ -122,15 +128,3 @@ export const resolveSurveyNoticeRecipients = async (
 };
 
 const isPresent = (value: string | null): value is string => value !== null;
-
-/**
- * Whether survey visibility (ENG-3282) hides `survey` from `candidate`, the rule `buildHiddenSurveyWhere`
- * applies to every read path: an effectively restricted survey is hidden from everyone but its owner and
- * the organisation's owners and managers. `effectivelyRestricted` is already `false` while visibility
- * isn't enforced (`findNotWorkspaceVisibleSurveyIds`).
- */
-export const isHiddenByVisibility = (
-  candidate: Pick<TCandidate, "userId" | "role">,
-  survey: Pick<TNoticeSurvey, "ownerId">,
-  effectivelyRestricted: boolean
-): boolean => effectivelyRestricted && candidate.role === "member" && survey.ownerId !== candidate.userId;

@@ -37,6 +37,12 @@ export const findNotWorkspaceVisibleSurveyIds = async (
 };
 
 /**
+ * The same lookup under a name for callers outside outbound plumbing: of `surveyIds`, the effectively
+ * restricted ones (`getEffectiveVisibility(row) === "restricted"`). `[]` while enforcement is off.
+ */
+export const findEffectivelyRestrictedSurveyIds = findNotWorkspaceVisibleSurveyIds;
+
+/**
  * Of `next`, the surveys newly attached and not workspace-visible. Only additions are refused: a survey
  * restricted after it was attached stays on the connection (dispatch skips it), so saving an
  * unrelated edit to that connection must not fail.

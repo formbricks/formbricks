@@ -1,4 +1,5 @@
 import { Prisma } from "@formbricks/database/prisma";
+import type { TOrganizationRole } from "@formbricks/types/memberships";
 import type { TSurveyVisibility } from "@formbricks/types/surveys/types";
 import type { TSurveyActorContext } from "./actor-context";
 
@@ -61,6 +62,24 @@ export const buildHiddenSurveyWhere = (ctx: TSurveyActorContext): Prisma.SurveyW
     AND: [effectivelyRestrictedWhere, { OR: [{ ownerId: null }, { ownerId: { not: ctx.userId } }] }],
   };
 };
+
+/**
+ * `buildHiddenSurveyWhere` for one survey and one organization member, for a caller that has already
+ * read whether the survey is effectively restricted (`effectivelyRestrictedWhere`, `false` while
+ * visibility isn't enforced) and needs the decision per person: an effectively restricted survey is
+ * hidden from everyone but its owner and the organization's administrators.
+ */
+export const isSurveyHiddenFromMember = ({
+  role,
+  userId,
+  ownerId,
+  effectivelyRestricted,
+}: Readonly<{
+  role: TOrganizationRole;
+  userId: string;
+  ownerId: string | null;
+  effectivelyRestricted: boolean;
+}>): boolean => effectivelyRestricted && role === "member" && ownerId !== userId;
 
 /**
  * The same rule for a query spanning several organizations (the account-level notification settings),
