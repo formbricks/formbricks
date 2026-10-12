@@ -45,6 +45,9 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  // Here rather than in the test that fakes them: a failure before its own restore would leave fake timers
+  // installed, and every later test's retry backoff would then never fire.
+  vi.useRealTimers();
 });
 
 describe("getHubClient", () => {
@@ -185,7 +188,6 @@ describe("errors", () => {
       .catch((err: unknown) => err);
     await vi.runAllTimersAsync();
     const error = await pending;
-    vi.useRealTimers();
 
     expect(error).toBe(fetchFailed);
     expect(createHubResultFromError(error).error?.status).toBe(0);
