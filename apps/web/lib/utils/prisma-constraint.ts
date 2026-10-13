@@ -65,6 +65,7 @@ const UNIQUE_INDEX_COLUMNS: Readonly<Record<string, readonly string[]>> = {
   ResponseQuotaLink_pkey: ["responseId", "quotaId"],
   // Partial (`WHERE "revokedAt" IS NULL`): the `active` suffix names the predicate, not a column.
   RetentionExemption_surveyId_entity_active_key: ["surveyId", "entity"],
+  RetentionSurveyRestore_pkey: ["surveyId"],
   SurveyLanguage_pkey: ["languageId", "surveyId"],
   TagsOnResponses_pkey: ["responseId", "tagId"],
   TeamUser_pkey: ["teamId", "userId"],

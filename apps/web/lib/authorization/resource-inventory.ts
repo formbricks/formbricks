@@ -59,6 +59,7 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   RetentionPolicy: "parent_derived_or_data_integrity",
   RetentionRun: "parent_derived_or_data_integrity",
   RetentionRunItem: "parent_derived_or_data_integrity",
+  RetentionSurveyRestore: "parent_derived_or_data_integrity",
   Segment: "workspace_inherited_resource",
   Session: "authentication_or_application",
   Survey: "direct_authorization_resource",
