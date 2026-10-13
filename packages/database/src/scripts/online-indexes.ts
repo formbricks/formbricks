@@ -53,7 +53,7 @@ const readIndex = async (client: Client, index: OnlineIndex) => {
     WHERE i.relnamespace = current_schema()::regnamespace AND i.relname = $1`,
     [index.name]
   );
-  const row = rows[0];
+  const row = rows.length > 0 ? rows[0] : undefined;
   if (
     row &&
     (!row.simple ||
@@ -72,7 +72,9 @@ export const ensureOnlineIndexes = async (databaseUrl: string): Promise<void> =>
   const client = new Client({ connectionString: databaseUrl, connectionTimeoutMillis: 10_000 });
   await client.connect();
   try {
-    await client.query("SET lock_timeout = '1s'");
+    // Concurrent builds also wait for older writers and snapshots. A short DDL lock timeout
+    // would cancel a healthy online build (ENG-3701); this dedicated connection is closed below.
+    await client.query("SET lock_timeout = 0");
     for (const index of ONLINE_INDEXES) {
       const existing = await readIndex(client, index);
       if (existing?.valid) continue;
