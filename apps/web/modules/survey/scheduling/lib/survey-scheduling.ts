@@ -12,6 +12,8 @@ import { createSurveySchedulingDateUtils, isDateDue } from "./date-utils";
 const { normalizeDateOnlySelectionToSurveySchedulingDateTime } =
   createSurveySchedulingDateUtils(SURVEY_SCHEDULING_CONFIG);
 
+const SURVEY_SCHEDULER_ACTOR_ID = "system:survey-scheduler";
+
 type TSurveySchedulingTransition = "publish" | "close";
 
 interface SurveySchedulingLogContext {
@@ -107,6 +109,39 @@ const getTransitionAuditState = (
   };
 };
 
+const getTransitionReason = (transition: TSurveySchedulingTransition): string =>
+  transition === "publish" ? "scheduled_publish_due" : "scheduled_close_due";
+
+/** Records a transition the scheduler could not apply. The caller rethrows so the job still retries. */
+const queueTransitionFailureAudit = async (
+  candidate: TSurveySchedulingCandidate,
+  transition: TSurveySchedulingTransition,
+  error: unknown,
+  logContext: SurveySchedulingLogContext
+): Promise<void> => {
+  try {
+    await queueAuditEventWithoutRequest({
+      action: "updated",
+      newObject: {
+        errorName: error instanceof Error ? error.name : "unknown",
+        jobId: logContext.jobId,
+        reason: getTransitionReason(transition),
+      },
+      organizationId: candidate.workspace.organizationId,
+      status: "failure",
+      targetId: candidate.id,
+      targetType: "survey",
+      userId: SURVEY_SCHEDULER_ACTOR_ID,
+      userType: "system",
+    });
+  } catch (auditError) {
+    logger.error(
+      { ...logContext, err: auditError, surveyId: candidate.id, transition },
+      "Survey scheduling failure audit log failed"
+    );
+  }
+};
+
 const logAuditFailure = (
   candidate: TSurveySchedulingCandidate,
   transition: TSurveySchedulingTransition,
@@ -138,7 +173,7 @@ const queueTransitionAudit = async (
 
     await queueAuditEventWithoutRequest({
       action: "updated",
-      newObject,
+      newObject: { ...newObject, jobId: logContext.jobId, reason: getTransitionReason(transition) },
       oldObject,
       organizationId: candidate.workspace.organizationId,
       status: "success",
@@ -225,6 +260,7 @@ const applyTransition = async (
       },
       "Survey scheduling transition failed"
     );
+    await queueTransitionFailureAudit(candidate, transition, error, logContext);
 
     throw error;
   }

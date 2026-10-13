@@ -11,7 +11,10 @@ import { assertFeedbackSourceDirectoryAccess } from "@/lib/feedback-source/acces
 import { CsvImportValidationError, importCsvFile } from "@/lib/feedback-source/csv-file-import";
 import { getFeedbackSourceWithMappingsById } from "@/lib/feedback-source/service";
 import { getUser } from "@/lib/user/service";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getSession } from "@/modules/auth/lib/session";
+import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
+import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import {
   CSV_FILE_TOO_LARGE_ERROR_CODE,
   CSV_IMPORT_FAILED_ERROR_CODE,
@@ -44,7 +47,55 @@ const buildCsvImportErrorResponse = (
   details: { row?: number; max?: number } = {}
 ) => NextResponse.json({ error, ...details }, { status });
 
+type TCsvImportAuditContext = {
+  userId: string;
+  workspaceId: string;
+  feedbackSourceId: string;
+  feedbackDirectoryId?: string;
+};
+
+/**
+ * Audit a CSV import attempt: counts, ids and the error name only — never row or file content. `phase`
+ * separates the request being accepted and run from completed ingestion on the Hub. Auditing must never
+ * fail the import, so a failure to record it is only logged.
+ */
+const emitCsvImportAudit = async (
+  request: Request,
+  context: TCsvImportAuditContext,
+  status: TAuditStatus,
+  newObject: Record<string, unknown>
+) => {
+  try {
+    const organizationId = await getOrganizationIdFromWorkspaceId(context.workspaceId).catch(
+      () => UNKNOWN_DATA
+    );
+    await queueAuditEvent({
+      action: "createdFromCSV",
+      targetType: "feedbackSource",
+      userId: context.userId,
+      userType: "user",
+      targetId: context.feedbackSourceId,
+      organizationId,
+      status,
+      newObject: {
+        workspaceId: context.workspaceId,
+        feedbackDirectoryId: context.feedbackDirectoryId,
+        phase: "accepted",
+        ...newObject,
+      },
+      eventId: request.headers.get("x-request-id") ?? crypto.randomUUID(),
+      apiUrl: request.url,
+    });
+  } catch (auditError) {
+    logger.error(
+      { errorName: auditError instanceof Error ? auditError.name : "unknown" },
+      "Failed to queue CSV import audit event"
+    );
+  }
+};
+
 export const POST = async (request: Request) => {
+  let auditContext: TCsvImportAuditContext | undefined;
   try {
     const contentLength = getContentLength(request.headers);
     if (contentLength !== null && contentLength > CSV_IMPORT_REQUEST_BODY_LIMIT) {
@@ -78,12 +129,15 @@ export const POST = async (request: Request) => {
       throw new InvalidInputError("workspaceId, feedbackSourceId, and file are required");
     }
 
+    auditContext = { userId: user.id, workspaceId, feedbackSourceId };
+
     await assertCan({ type: "user", id: user.id }, "workspace.write", { type: "workspace", id: workspaceId });
 
     const feedbackSource = await getFeedbackSourceWithMappingsById(feedbackSourceId, workspaceId);
     if (!feedbackSource) {
       throw new ResourceNotFoundError("FeedbackSource", feedbackSourceId);
     }
+    auditContext.feedbackDirectoryId = feedbackSource.feedbackDirectoryId;
     await assertFeedbackSourceDirectoryAccess(
       user.id,
       feedbackSource.feedbackDirectoryId,
@@ -93,8 +147,21 @@ export const POST = async (request: Request) => {
 
     const result = await importCsvFile({ feedbackSourceId, workspaceId, file });
 
+    await emitCsvImportAudit(request, auditContext, "success", {
+      successes: result.successes,
+      failures: result.failures,
+      skipped: result.skipped,
+    });
+
     return NextResponse.json(result);
   } catch (error) {
+    if (auditContext) {
+      await emitCsvImportAudit(request, auditContext, "failure", {
+        errorName: error instanceof Error ? error.name : "unknown",
+        ...(error instanceof CsvImportValidationError ? { errorCode: error.code } : {}),
+      });
+    }
+
     if (error instanceof CsvImportValidationError) {
       return buildCsvImportErrorResponse(
         error.code,

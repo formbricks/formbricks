@@ -5,12 +5,14 @@ import { createGatewayServiceTokenResponse } from "@/modules/gateway-auth/lib/to
 
 export const POST = withV3ApiWrapper({
   auth: "session",
+  action: "jwtTokenCreated",
+  targetType: "user",
   schemas: {
     body: z.object({
       service: ZGatewayAuthService,
     }),
   },
-  handler: async ({ authentication, parsedInput }) => {
-    return createGatewayServiceTokenResponse(authentication, parsedInput.body.service);
+  handler: async ({ authentication, parsedInput, auditLog }) => {
+    return createGatewayServiceTokenResponse(authentication, parsedInput.body.service, auditLog);
   },
 });

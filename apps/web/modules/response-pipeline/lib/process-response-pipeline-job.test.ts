@@ -736,7 +736,9 @@ describe("processResponsePipelineJob", () => {
         status: "failure",
       })
     );
-    expect(auditCall).not.toHaveProperty("newObject");
+    // The failed update carries the job context but never claims the status change happened.
+    expect(auditCall.newObject).toMatchObject({ jobId: "job_123", reason: "response_limit_reached" });
+    expect(auditCall.newObject).not.toHaveProperty("status");
   });
 
   test("fails the job before the final attempt when a webhook delivery cannot be enqueued", async () => {
