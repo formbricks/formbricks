@@ -6,7 +6,13 @@ import { readDatabaseClock } from "@/lib/utils/database-clock";
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 /**
- * What restoring a survey from the archive does to data retention: the survey gets a full period again.
+ * What restoring a survey the surveys policy archived does to data retention: the survey gets a full
+ * period again.
+ *
+ * Only a survey the policy archived since its last restore (History holds an `archived` row for it from a
+ * sweep run that started after that restore). A survey archived by hand is restored as it always was,
+ * with nothing restarted: otherwise anyone who may archive and restore it (an editor, an API key) could
+ * restart its clocks, or get a period's exemption, at will, which only owners and managers may grant.
  *
  * - The restore is recorded (`RetentionSurveyRestore`, only ever moving forward), which starts the surveys
  *   policy's "no response" and "no change" periods over (`getSurveyRetentionClock`).
@@ -30,6 +36,21 @@ export const restartSurveyRetention = async (
     restoredById,
   }: { surveyId: string; organizationId: string; restoredById: string | null }
 ): Promise<{ exemptionId: string | null }> => {
+  const [archived] = await tx.$queryRaw<{ byPolicy: boolean }[]>`
+    SELECT EXISTS (
+      SELECT 1
+      FROM "RetentionRunItem" i
+      JOIN "RetentionRun" r ON r."id" = i."runId"
+      WHERE i."targetId" = ${surveyId} AND i."targetType" = 'survey' AND i."action" = 'archived'
+        AND r."entity" = 'surveys' AND r."kind" = 'sweep'
+        AND r."startedAt" > COALESCE(
+          (SELECT "restoredAt" FROM "RetentionSurveyRestore" WHERE "surveyId" = ${surveyId}),
+          '-infinity'::timestamp
+        )
+    ) AS "byPolicy"
+  `;
+  if (!archived?.byPolicy) return { exemptionId: null };
+
   const now = await readDatabaseClock(tx);
   await tx.$executeRaw`
     INSERT INTO "RetentionSurveyRestore" ("surveyId", "restoredAt")

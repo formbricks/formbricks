@@ -23,14 +23,17 @@ const DAY = 24 * 60 * 60 * 1000;
 const transaction = ({
   policy,
   inserted,
+  byPolicy = true,
 }: {
   policy?: { periodDays: number };
   inserted?: { id: string };
+  byPolicy?: boolean;
 }) => {
   const tx = {
     $executeRaw: vi.fn().mockResolvedValue(1),
     $queryRaw: vi.fn(async (...args: unknown[]) => {
       const { text } = statement(args);
+      if (text.includes('AS "byPolicy"')) return [{ byPolicy }];
       if (text.includes('FROM "RetentionPolicy"')) return policy ? [policy] : [];
       if (text.includes('INSERT INTO "RetentionExemption"')) return inserted ? [inserted] : [];
       return [];
@@ -52,6 +55,19 @@ describe("restartSurveyRetention", () => {
     vi.mocked(readDatabaseClock).mockResolvedValue(NOW);
   });
 
+  test("restarts nothing for a survey the policy didn't archive since its last restore", async () => {
+    const tx = transaction({ policy: { periodDays: 30 }, inserted: { id: "clexm" }, byPolicy: false });
+
+    await expect(restart(tx)).resolves.toEqual({ exemptionId: null });
+
+    const check = statement(tx.$queryRaw.mock.calls[0]);
+    expect(check.text).toContain(`i."action" = 'archived'`);
+    expect(check.text).toContain(`r."kind" = 'sweep'`);
+    expect(check.text).toContain('r."startedAt" > COALESCE(');
+    expect(tx.$executeRaw).not.toHaveBeenCalled();
+    expect(tx.$queryRaw).toHaveBeenCalledTimes(1);
+  });
+
   test("records the restore on the database clock, moving it only forward", async () => {
     const tx = transaction({});
 
@@ -68,7 +84,7 @@ describe("restartSurveyRetention", () => {
 
     await restart(tx);
 
-    const policy = statement(tx.$queryRaw.mock.calls[0]);
+    const policy = statement(tx.$queryRaw.mock.calls[1]);
     expect(policy.text).toContain(`"entity" = 'surveys' AND "enabled"`);
     expect(policy.text).toContain(`"conditions" = ARRAY['createdBefore']::"RetentionSurveyCondition"[]`);
     expect(policy.text).toContain("FOR SHARE");
@@ -86,7 +102,7 @@ describe("restartSurveyRetention", () => {
     expect(close.text).toContain('SET "revokedAt" = "until"');
     expect(close.values).toEqual(["clsrv", NOW]);
 
-    const insert = statement(tx.$queryRaw.mock.calls[1]);
+    const insert = statement(tx.$queryRaw.mock.calls[2]);
     expect(insert.text).toContain(`'surveys'`);
     expect(insert.text).toContain(`'restore'`);
     expect(insert.text).toContain(`ON CONFLICT ("surveyId", "entity") WHERE "revokedAt" IS NULL DO NOTHING`);
@@ -104,6 +120,6 @@ describe("restartSurveyRetention", () => {
     const tx = transaction({ policy: { periodDays: 30 } });
 
     await expect(restart(tx, null)).resolves.toEqual({ exemptionId: null });
-    expect(statement(tx.$queryRaw.mock.calls[1]).values.at(-1)).toBeNull();
+    expect(statement(tx.$queryRaw.mock.calls[2]).values.at(-1)).toBeNull();
   });
 });

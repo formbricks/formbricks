@@ -104,6 +104,16 @@ describe("surveys sweeper (real Postgres)", () => {
       WHERE "surveyId" = ${surveyId}`;
   };
 
+  /** History's record that the surveys policy archived it (what lets a restore start its period over). */
+  const recordPolicyArchive = async (surveyId: string) => {
+    const run = await prisma.retentionRun.create({
+      data: { organizationId, entity: "surveys", startedAt: ago(1), finishedAt: ago(1) },
+    });
+    await prisma.retentionRunItem.create({
+      data: { runId: run.id, targetType: "survey", targetId: surveyId, action: "archived" },
+    });
+  };
+
   /** What the runs did, skips aside: History's rows that changed something. */
   const actions = async () =>
     (
@@ -339,6 +349,7 @@ describe("surveys sweeper (real Postgres)", () => {
     await enablePolicy(["noResponse"]);
     const survey = await createSurvey("Old feedback", { age: 400 });
     await prisma.survey.update({ where: { id: survey }, data: { archivedAt: ago(1) } });
+    await recordPolicyArchive(survey);
     await setSurveyTimes(survey, { createdAt: ago(400), updatedAt: ago(400) });
 
     await restoreSurvey(survey);
@@ -357,12 +368,13 @@ describe("surveys sweeper (real Postgres)", () => {
     await enablePolicy(["createdBefore"]);
     const survey = await createSurvey("Old feedback", { age: 400 });
     await prisma.survey.update({ where: { id: survey }, data: { archivedAt: ago(1) } });
+    await recordPolicyArchive(survey);
 
     await restoreSurvey(survey, { restoredById: ownerId });
     await sweep();
 
     expect(await notice(survey)).toBeNull();
-    expect(await prisma.retentionRunItem.findMany()).toEqual([
+    expect(await prisma.retentionRunItem.findMany({ where: { action: "skipped" } })).toEqual([
       expect.objectContaining({ action: "skipped", skipReason: "exempt", targetId: survey }),
     ]);
   });

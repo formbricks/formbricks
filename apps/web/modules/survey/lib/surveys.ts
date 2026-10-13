@@ -190,7 +190,7 @@ export const archiveSurvey = async (surveyId: string, options?: { tx?: Prisma.Tr
 
 /**
  * Restore an archived survey by clearing archivedAt. The survey keeps its current status. Restoring one
- * that was archived gives it a full data retention period again (`restartSurveyRetention`), in the same
+ * the surveys policy archived gives it a full data retention period again (`restartSurveyRetention`), in the same
  * transaction, with the survey locked; `retentionExemptionId` is the exemption that made, if any.
  * Restoring a survey that isn't archived writes nothing, so it doesn't count as a change to it either.
  */

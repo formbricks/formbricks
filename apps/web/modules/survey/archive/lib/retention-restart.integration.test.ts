@@ -18,10 +18,22 @@ describe("restoring a survey restarts its data retention (real Postgres)", () =>
   let workspaceId: string;
   let userId: string;
 
-  const archivedSurvey = async () => {
+  /** History's record that the surveys policy archived it, in a sweep run started at `runStartedAt`. */
+  const recordPolicyArchive = async (surveyId: string, runStartedAt = ago(1)) => {
+    const run = await prisma.retentionRun.create({
+      data: { organizationId, entity: "surveys", startedAt: runStartedAt, finishedAt: runStartedAt },
+    });
+    await prisma.retentionRunItem.create({
+      data: { runId: run.id, targetType: "survey", targetId: surveyId, action: "archived" },
+    });
+  };
+
+  /** A survey the surveys policy archived, unless `byHand`. */
+  const archivedSurvey = async ({ byHand = false }: { byHand?: boolean } = {}) => {
     const { id } = await prisma.survey.create({
       data: { name: "Old feedback", workspaceId, status: "paused", archivedAt: ago(1) },
     });
+    if (!byHand) await recordPolicyArchive(id, ago(1));
     return id;
   };
 
@@ -52,14 +64,43 @@ describe("restoring a survey restarts its data retention (real Postgres)", () =>
     const first = await prisma.retentionSurveyRestore.findUniqueOrThrow({ where: { surveyId } });
     expect(Math.abs(Date.now() - first.restoredAt.getTime())).toBeLessThan(60_000);
 
-    // A marker somehow ahead of the clock stays where it is.
+    // A marker somehow ahead of the clock stays where it is (archived by the policy again after it).
     const ahead = new Date(Date.now() + DAY);
     await prisma.retentionSurveyRestore.update({ where: { surveyId }, data: { restoredAt: ahead } });
     await prisma.survey.update({ where: { id: surveyId }, data: { archivedAt: new Date() } });
+    await recordPolicyArchive(surveyId, new Date(Date.now() + 2 * DAY));
     await restoreSurvey(surveyId);
     expect(
       (await prisma.retentionSurveyRestore.findUniqueOrThrow({ where: { surveyId } })).restoredAt
     ).toEqual(ahead);
+  });
+
+  test("restoring a survey archived by hand restarts nothing: no marker, no exemption", async () => {
+    await surveysPolicy(["createdBefore"]);
+    const surveyId = await archivedSurvey({ byHand: true });
+
+    await expect(restoreSurvey(surveyId, { restoredById: userId })).resolves.toMatchObject({
+      archivedAt: null,
+      retentionExemptionId: null,
+    });
+
+    expect(await prisma.retentionSurveyRestore.count()).toBe(0);
+    expect(await prisma.retentionExemption.count()).toBe(0);
+  });
+
+  test("a policy archive from before the last restore doesn't count: archiving by hand since restarts nothing", async () => {
+    await surveysPolicy(["createdBefore"]);
+    const surveyId = await archivedSurvey();
+    await restoreSurvey(surveyId, { restoredById: userId });
+    await prisma.retentionExemption.deleteMany();
+    const marker = await prisma.retentionSurveyRestore.findUniqueOrThrow({ where: { surveyId } });
+
+    // Archived again, by hand this time, and restored.
+    await prisma.survey.update({ where: { id: surveyId }, data: { archivedAt: new Date() } });
+    await restoreSurvey(surveyId, { restoredById: userId });
+
+    expect(await prisma.retentionExemption.count()).toBe(0);
+    expect(await prisma.retentionSurveyRestore.findUniqueOrThrow({ where: { surveyId } })).toEqual(marker);
   });
 
   test("restoring a survey that isn't archived changes nothing for retention", async () => {
