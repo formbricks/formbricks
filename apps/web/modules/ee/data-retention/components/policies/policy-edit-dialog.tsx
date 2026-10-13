@@ -182,7 +182,7 @@ export const PolicyEditDialog = ({
     <Dialog open onOpenChange={handleOpenChange}>
       <DialogContent>
         <FormProvider {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+          <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="contents">
             <DialogHeader>
               <DialogTitle>{copy.title}</DialogTitle>
               <DialogDescription>{copy.description}</DialogDescription>

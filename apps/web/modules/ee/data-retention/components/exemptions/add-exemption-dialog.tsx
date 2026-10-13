@@ -114,7 +114,7 @@ export const AddExemptionDialog = ({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <FormProvider {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
+          <form onSubmit={form.handleSubmit(onSubmit)} noValidate className="contents">
             <DialogHeader>
               <DialogTitle>{t("workspace.settings.data_retention.add_exemption")}</DialogTitle>
               <DialogDescription>
