@@ -9,7 +9,6 @@ import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { getOrganizationWorkspacesCount } from "@/lib/workspace/service";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
   getAccessControlPermission,
@@ -41,13 +40,6 @@ export const createWorkspaceAction = authenticatedActionClient.inputSchema(ZCrea
       throw new ResourceNotFoundError("Organization", organizationId);
     }
 
-    const organizationWorkspacesLimit = await getOrganizationWorkspacesLimit(organization.id);
-    const organizationWorkspacesCount = await getOrganizationWorkspacesCount(organization.id);
-
-    if (organizationWorkspacesCount >= organizationWorkspacesLimit) {
-      throw new OperationNotAllowedError("Organization workspace limit reached");
-    }
-
     if (parsedInput.data.teamIds && parsedInput.data.teamIds.length > 0) {
       const isAccessControlAllowed = await getAccessControlPermission(organization.id);
 
@@ -56,7 +48,11 @@ export const createWorkspaceAction = authenticatedActionClient.inputSchema(ZCrea
       }
     }
 
-    const workspace = await createWorkspace(parsedInput.organizationId, parsedInput.data);
+    // ENG-3921: the cap is enforced inside createWorkspace's transaction, under a lock on the
+    // organization. A count compared here would let a burst of concurrent requests all pass it.
+    const workspace = await createWorkspace(parsedInput.organizationId, parsedInput.data, {
+      workspaceLimit: await getOrganizationWorkspacesLimit(organization.id),
+    });
     const updatedNotificationSettings = {
       ...user.notificationSettings,
       alert: {
