@@ -241,14 +241,25 @@ Older migrations say otherwise. `20260417120000_add_survey_publish_pause_schedul
 state that `prisma migrate deploy` always runs a migration inside a transaction, and build write-blocking indexes
 on that basis. The first and last parse, so a concurrent build would have worked in them. The middle one contains
 a `DO` block, so it did run in an implicit transaction, though not for the reason it gives.
-`20260909120000_response_keyset_index_tiebreakers` and the guard after it,
-`20260909120001_verify_response_keyset_indexes_valid`, describe the trigger as Prisma recognising concurrent
-statements. The effects they list are right, but the trigger is whether the file parses, and the guard, being a
-single statement, gets no transaction block. `20260909120000` also sets `lock_timeout = '5s'` on the belief that
-it bounds only acquiring the lock; it bounds the build's waits for older transactions too. These files are left
-as they are, because editing an applied migration, even a comment, changes its checksum. `prisma migrate deploy`
-ignores that, but `prisma migrate dev`, which `pnpm create-migration` runs, then asks to reset every development
-database that already applied the old version.
+`20260909120001_verify_response_keyset_indexes_valid` describes the trigger as Prisma recognising concurrent
+statements. The effects it lists are right, but the trigger is whether the file parses, and the guard, being a
+single statement, gets no transaction block. These files are left as they are, because editing an applied
+migration, even a comment, changes its checksum. `prisma migrate deploy` ignores that, but `prisma migrate dev`,
+which `pnpm create-migration` runs, then asks to reset every development database that already applied the old
+version.
+
+The exception is the build that guard checks, `20260909120000_response_keyset_index_tiebreakers`. It reached
+`main` with `lock_timeout = '5s'`, which failed the deploy whenever a backup or a long query outlasted it, and was
+corrected to `0` before any release shipped it (ENG-3701). `src/scripts/concurrent-index-migrations.test.ts` now
+holds every concurrent build to `0`. If `pnpm create-migration` reports that this migration was modified after it
+was applied, your development database applied the earlier version. Reset it, or record the corrected file's
+checksum, which is its SHA-256:
+
+```sql
+UPDATE "_prisma_migrations"
+SET checksum = 'f207ef3fb9a8de52756704abb92a25a7788028640d41a14b193ddf66a2eb8d04'
+WHERE migration_name = '20260909120000_response_keyset_index_tiebreakers';
+```
 
 ### Available Scripts
 

@@ -11,8 +11,8 @@ import { effectivelyRestrictedWhere } from "./predicate";
  * is workspace-visible *now*. A pending change counts as restricted either way (fail closed).
  *
  * Enforced twice: when a connection is attached (a clear error for the caller) and when a response is
- * dispatched (the attach check cannot see a survey restricted later). Both are no-ops while survey
- * visibility is not enforced, so a deployment that has not opted in behaves exactly as before.
+ * dispatched (the attach check cannot see a survey restricted later). Stored visibility facts are
+ * enforced even before projection readiness or feature activation.
  */
 
 export const SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE =
@@ -21,7 +21,7 @@ export const SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE =
 /** The rows an outbound check needs: `getEffectiveVisibility(row) === "restricted"`, as SQL. */
 const notWorkspaceVisibleWhere: Prisma.SurveyWhereInput = effectivelyRestrictedWhere;
 
-/** Of `surveyIds`, the ones outbound plumbing must not serve. `[]` while enforcement is off. */
+/** Of `surveyIds`, the ones outbound plumbing must not serve. */
 export const findNotWorkspaceVisibleSurveyIds = async (
   surveyIds: ReadonlyArray<string>
 ): Promise<string[]> => {

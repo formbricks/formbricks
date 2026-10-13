@@ -9,6 +9,7 @@ import {
   resetSurveyVisibilityReadinessMemo,
   setProjectionScopeReady,
 } from "@/lib/authzed/scope-readiness";
+import { getSurveyVisibilityGates } from "@/lib/survey/visibility/gates";
 
 /**
  * ENG-3282: survey and response decisions against a real PostgreSQL and SpiceDB, for the contract's
@@ -22,6 +23,7 @@ const ids = {
   manager: "",
   member: "",
   orgOwner: "",
+  organization: "",
   owner: "",
   ownedPrivateSurvey: "",
   pendingRestrictionSurvey: "",
@@ -80,6 +82,7 @@ beforeAll(async () => {
   });
   ids.apiKey = apiKey.id;
   ids.workspace = workspace.id;
+  ids.organization = organization.id;
 
   const survey = (name: string, visibility: "restricted" | "workspace") =>
     prisma.survey.create({ data: { name, ownerId: ids.owner, visibility, workspaceId: workspace.id } });
@@ -120,34 +123,48 @@ afterAll(async () => {
   await setMarker(false);
 });
 
-describe("marker off: exactly the workspace ladder, as before ENG-3282", () => {
+describe("marker off: PostgreSQL visibility policy remains enforced", () => {
   beforeAll(() => setMarker(false));
 
-  test("every workspace reader reads every survey, restricted or not", async () => {
-    for (const surveyId of [ids.visibleSurvey, ids.privateSurvey, ids.pendingSurvey]) {
-      await expect(readSurvey(user(ids.member), surveyId)).resolves.toBe(true);
-      await expect(readSurvey({ id: ids.apiKey, type: "apiKey" }, surveyId)).resolves.toBe(true);
-    }
-    await expect(
-      can(user(ids.member), "response.read", { id: ids.privateResponse, type: "response" })
-    ).resolves.toBe(true);
-  });
-
-  test("nobody may change visibility while it is not enforced", async () => {
-    await expect(
-      can(user(ids.manager), "survey.change_visibility", { id: ids.privateSurvey, type: "survey" })
-    ).resolves.toBe(false);
-  });
-
-  test("survey manage follows the workspace manage ladder while visibility is not enforced", async () => {
-    for (const surveyId of [ids.visibleSurvey, ids.privateSurvey, ids.pendingSurvey]) {
-      await expect(
-        can(user(ids.teamManager), "survey.manage", { id: surveyId, type: "survey" })
-      ).resolves.toBe(true);
-      await expect(can(user(ids.owner), "survey.manage", { id: surveyId, type: "survey" })).resolves.toBe(
+  test("workspace readers and API keys cannot read restricted surveys or responses", async () => {
+    for (const actor of [user(ids.member), { id: ids.apiKey, type: "apiKey" } as const]) {
+      await expect(readSurvey(actor, ids.visibleSurvey)).resolves.toBe(true);
+      for (const surveyId of [ids.privateSurvey, ids.pendingSurvey, ids.pendingRestrictionSurvey]) {
+        await expect(readSurvey(actor, surveyId)).resolves.toBe(false);
+      }
+      await expect(can(actor, "response.read", { id: ids.privateResponse, type: "response" })).resolves.toBe(
         false
       );
     }
+    await expect(readSurvey(user(ids.owner), ids.privateSurvey)).resolves.toBe(true);
+    await expect(readSurvey(user(ids.manager), ids.privateSurvey)).resolves.toBe(true);
+  });
+
+  test("visibility mutations stay disabled independently of the caller's permission", async () => {
+    await expect(
+      can(user(ids.manager), "survey.change_visibility", { id: ids.privateSurvey, type: "survey" })
+    ).resolves.toBe(true);
+    await expect(getSurveyVisibilityGates(ids.organization)).resolves.toMatchObject({
+      ready: false,
+      entitled: false,
+    });
+  });
+
+  test("survey manage combines workspace permissions with stored visibility", async () => {
+    await expect(
+      can(user(ids.teamManager), "survey.manage", { id: ids.visibleSurvey, type: "survey" })
+    ).resolves.toBe(true);
+    for (const surveyId of [ids.privateSurvey, ids.pendingSurvey, ids.pendingRestrictionSurvey]) {
+      await expect(
+        can(user(ids.teamManager), "survey.manage", { id: surveyId, type: "survey" })
+      ).resolves.toBe(false);
+      await expect(can(user(ids.manager), "survey.manage", { id: surveyId, type: "survey" })).resolves.toBe(
+        true
+      );
+    }
+    await expect(
+      can(user(ids.owner), "survey.manage", { id: ids.privateSurvey, type: "survey" })
+    ).resolves.toBe(false);
   });
 });
 

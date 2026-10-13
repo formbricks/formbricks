@@ -371,21 +371,21 @@ enum SurveyScriptMode {
 /// @property customHeadScriptsMode - "add" (merge with workspace) or "replace" (override workspace)
 model Survey {
   /// [SurveyHiddenFields]
-  hiddenFields Json @default("{\"enabled\": false}")
+  hiddenFields         Json       @default("{\"enabled\": false}")
   /// [SurveyVariables]
-  variables Json @default("[]")
+  variables            Json       @default("[]")
   // False identifies surveys written by 6.0 during the online upgrade.
-  ownershipInitialized Boolean @default(false)
-  id          String     @id @default(cuid())
-  createdAt   DateTime   @default(now()) @map(name: "created_at")
-  updatedAt   DateTime   @updatedAt @map(name: "updated_at")
-  name        String
-  redirectUrl String?
-  type        SurveyType @default(app)
-  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
-  creator     User?      @relation("SurveyCreator", fields: [createdBy], references: [id])
-  createdBy   String?
+  ownershipInitialized Boolean    @default(false)
+  id                   String     @id @default(cuid())
+  createdAt            DateTime   @default(now()) @map(name: "created_at")
+  updatedAt            DateTime   @updatedAt @map(name: "updated_at")
+  name                 String
+  redirectUrl          String?
+  type                 SurveyType @default(app)
+  workspace            Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId          String
+  creator              User?      @relation("SurveyCreator", fields: [createdBy], references: [id])
+  createdBy            String?
 
   /// ENG-3282: authorization facts, projected into SpiceDB by the survey outbox trigger. `ownerId` is
   /// the durable ownership source; `createdBy` stays pure attribution and is never rewritten.

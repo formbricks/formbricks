@@ -123,7 +123,7 @@ const isStillSubscribed = (target: TDeliveryTarget, data: TWebhookDeliveryJobDat
   target.triggers.includes(data.event) &&
   (target.surveyIds.length === 0 || target.surveyIds.includes(data.surveyId));
 
-/** One primary-key read, and none at all while survey visibility is not enforced. */
+/** Check stored visibility at delivery time, including before graph readiness. */
 const isSurveyStillOutboundVisible = async (surveyId: string): Promise<boolean> => {
   const survey = await prisma.survey.findUnique({
     where: { id: surveyId },

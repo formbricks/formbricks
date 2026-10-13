@@ -13,17 +13,6 @@ interface TParsedPrismaPgConfig {
   poolAcquireTimeoutMillis: number;
 }
 
-export interface TPrismaPgAdapterOptions {
-  /**
-   * Default for Postgres's `idle_in_transaction_session_timeout` on every pooled connection: the
-   * server ends a session left idle inside an open transaction and releases its locks, which Prisma's
-   * own transaction timeout cannot do. Opt-in, because the migration runner and scripts build their
-   * adapter here too and must not inherit it. `DATABASE_URL` overrides it; see
-   * `resolveIdleInTransactionSessionTimeout`.
-   */
-  idleInTransactionSessionTimeoutMillis?: number;
-}
-
 /** pg-pool's acquire timeout when `DATABASE_URL` carries no `connect_timeout`. */
 export const DEFAULT_POOL_ACQUIRE_TIMEOUT_MS = 5_000;
 
@@ -195,50 +184,44 @@ const sslConfigFromSslAccept = (value: string | null): PoolConfig["ssl"] | undef
 
 // The effective `idle_in_transaction_session_timeout`, in milliseconds; undefined means "send nothing",
 // leaving the server's own setting in place.
-//   not opted in         → undefined, whatever DATABASE_URL says (migrations and scripts stay unaffected)
-//   URL param absent     → the caller's default, unless the URL declares PgBouncer (below)
-//   URL param = 0        → undefined: the opt-out for poolers that reject unknown startup parameters
+//   URL param absent     → undefined: the backstop is opt-in, so every existing install is unaffected
+//   URL param = 0        → undefined: the way to say "send nothing" in as many words
 //   URL param = n        → n
-//   URL param invalid    → warn and fall back to the default rather than take the app down at connect
-const resolveIdleInTransactionSessionTimeout = (
-  url: URL,
-  defaultMillis: number | undefined
-): number | undefined => {
-  if (defaultMillis === undefined) return undefined;
+//   URL param blank or invalid → warn and send nothing, rather than guess a value nobody asked for
+const resolveIdleInTransactionSessionTimeout = (url: URL): number | undefined => {
+  // `null` is "the operator did not ask for it". A value that is present but blank is a mistake worth
+  // naming, so it falls through to the warning below instead of passing for an absent parameter.
+  const parameter = url.searchParams.get(IDLE_IN_TRANSACTION_SESSION_TIMEOUT_PARAM);
+  if (parameter === null) return undefined;
 
-  const raw = url.searchParams.get(IDLE_IN_TRANSACTION_SESSION_TIMEOUT_PARAM)?.trim() ?? "";
-  if (raw === "") {
-    // `pgbouncer=true` (Prisma's convention) says a pooler sits in front, and PgBouncer refuses a
-    // connection that carries a startup parameter it does not know. Sending the default there would turn
-    // an upgrade into an outage, so only an explicit value is sent through a declared PgBouncer.
-    if (url.searchParams.get("pgbouncer")?.trim().toLowerCase() === "true") {
-      logger.warn(
-        { [IDLE_IN_TRANSACTION_SESSION_TIMEOUT_PARAM]: "not sent", reason: "pgbouncer=true" },
-        "DATABASE_URL declares PgBouncer; not sending idle_in_transaction_session_timeout. Set it explicitly in DATABASE_URL to send it anyway."
-      );
-      return undefined;
-    }
-    return defaultMillis || undefined;
-  }
+  const raw = parameter.trim();
 
   // Digits only: parseInt would read "60s" as 60 and pass an off-by-1000 value straight through.
   const value = /^\d+$/.test(raw) ? Number(raw) : Number.NaN;
   if (!Number.isSafeInteger(value) || value > MAX_POSTGRES_TIMEOUT_MS) {
     // Only the parameter's own value is logged — never the URL, which carries credentials.
     logger.warn(
-      { [IDLE_IN_TRANSACTION_SESSION_TIMEOUT_PARAM]: raw, default_ms: defaultMillis },
-      "Invalid idle_in_transaction_session_timeout in DATABASE_URL (expected integer milliseconds, 0 to disable); using the default."
+      { [IDLE_IN_TRANSACTION_SESSION_TIMEOUT_PARAM]: raw },
+      "Invalid idle_in_transaction_session_timeout in DATABASE_URL (expected integer milliseconds, 0 to disable); not sending it."
     );
-    return defaultMillis || undefined;
+    return undefined;
+  }
+
+  // `pgbouncer=true` (Prisma's convention) says a pooler sits in front, and PgBouncer refuses a
+  // connection carrying a startup parameter it does not know — this one included, unless it is listed in
+  // `ignore_startup_parameters`. An explicit value is still sent, because the operator asked for it, but
+  // say out loud what that means for the connection.
+  if (value && url.searchParams.get("pgbouncer")?.trim().toLowerCase() === "true") {
+    logger.warn(
+      { [IDLE_IN_TRANSACTION_SESSION_TIMEOUT_PARAM]: value, reason: "pgbouncer=true" },
+      "DATABASE_URL declares PgBouncer and sets idle_in_transaction_session_timeout; sending it, which PgBouncer refuses unless the parameter is listed in ignore_startup_parameters."
+    );
   }
 
   return value || undefined;
 };
 
-export const createPrismaPgAdapter = (
-  databaseUrl = process.env.DATABASE_URL,
-  options: TPrismaPgAdapterOptions = {}
-): TParsedPrismaPgConfig => {
+export const createPrismaPgAdapter = (databaseUrl = process.env.DATABASE_URL): TParsedPrismaPgConfig => {
   if (!databaseUrl) {
     throw new Error("DATABASE_URL is required to create a Prisma PostgreSQL adapter.");
   }
@@ -276,10 +259,7 @@ export const createPrismaPgAdapter = (
   // 0 = "no max lifetime" (Prisma 6 semantics).
   const maxConnectionLifetime = toNonNegativeInt(parsedUrl.searchParams.get("max_connection_lifetime"));
   const ssl = sslConfigFromSslAccept(parsedUrl.searchParams.get("sslaccept"));
-  const idleInTransactionSessionTimeout = resolveIdleInTransactionSessionTimeout(
-    parsedUrl,
-    options.idleInTransactionSessionTimeoutMillis
-  );
+  const idleInTransactionSessionTimeout = resolveIdleInTransactionSessionTimeout(parsedUrl);
   const connectionString = getConnectionString(parsedUrl);
 
   const poolConfig: PoolConfig = {
