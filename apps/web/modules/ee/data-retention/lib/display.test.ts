@@ -177,6 +177,50 @@ describe("survey retention copy", () => {
     ]);
   });
 
+  test("a survey held by both kinds of exemption shows the one that ends last; responses only their own", () => {
+    const surveysUntilDecember = {
+      ...exemption,
+      id: "clsrvexm",
+      policy: "surveys" as const,
+      until: "2026-12-31T00:00:00.000Z",
+    };
+    const responsesUntilJune = {
+      ...exemption,
+      id: "clrspexm",
+      policy: "responses" as const,
+      until: "2027-06-30T00:00:00.000Z",
+    };
+    const lines = getSurveyRetentionLines(
+      {
+        governed: true,
+        policies: [plan("responses", { exempt: true }), plan("surveys", { exempt: true })],
+        exemptions: [surveysUntilDecember, responsesUntilJune],
+      },
+      echo,
+      formatDate
+    );
+    expect(lines).toEqual([
+      'survey_line_exempt {"policy":"responses","date":"2027-06-30"}',
+      // Either kind holds the survey itself, so the later end decides.
+      'survey_line_exempt {"policy":"surveys","date":"2027-06-30"}',
+    ]);
+    expect(
+      getSurveyRetentionLines(
+        {
+          governed: true,
+          policies: [plan("responses", { exempt: true }), plan("surveys", { exempt: true })],
+          exemptions: [{ ...surveysUntilDecember, until: "2028-01-31T00:00:00.000Z" }, responsesUntilJune],
+        },
+        echo,
+        formatDate
+      )
+    ).toEqual([
+      // A surveys exemption doesn't hold the responses.
+      'survey_line_exempt {"policy":"responses","date":"2027-06-30"}',
+      'survey_line_exempt {"policy":"surveys","date":"2028-01-31"}',
+    ]);
+  });
+
   test("the summary note repeats only the exemptions, not the dates", () => {
     const retention = {
       governed: true,

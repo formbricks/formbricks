@@ -131,6 +131,20 @@ export const getRetentionPolicySummary = (
   }
 };
 
+/**
+ * The exemption that holds a survey from a policy the longest. Responses: only a responses exemption
+ * holds them. Surveys: either kind holds the survey itself (ENG-3371), so the one that ends last.
+ */
+const getHoldingExemption = (
+  exemptions: readonly TRetentionExemption[],
+  policy: TRetentionExemption["policy"]
+): TRetentionExemption | undefined =>
+  exemptions
+    .filter((exemption) => policy === "surveys" || exemption.policy === policy)
+    .reduce<
+      TRetentionExemption | undefined
+    >((longest, exemption) => (!longest || exemption.until > longest.until ? exemption : longest), undefined);
+
 /** One policy's line for a survey: what it does next and when, or that the survey is exempt. */
 const describeSurveyRetentionPlan = (
   retention: TSurveyRetention,
@@ -140,9 +154,7 @@ const describeSurveyRetentionPlan = (
 ): string => {
   const policy = getRetentionPolicyLabel(plan.policy, t);
   if (plan.exempt) {
-    // The exemption that holds it; under ENG-3371 either one holds the survey from the surveys policy.
-    const holding: TRetentionExemption | undefined =
-      retention.exemptions.find((exemption) => exemption.policy === plan.policy) ?? retention.exemptions[0];
+    const holding = getHoldingExemption(retention.exemptions, plan.policy);
     return holding
       ? t("workspace.settings.data_retention.survey_line_exempt", {
           policy,

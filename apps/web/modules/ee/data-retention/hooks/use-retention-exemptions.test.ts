@@ -155,10 +155,13 @@ describe("Exemptions hooks", () => {
   test("takes a revoked exemption out at once, and puts it back when the revoke fails", async () => {
     const fetchMock = vi.mocked(global.fetch);
     let rejectRevoke: (response: Response) => void = () => undefined;
+    let answerRefetch: (response: Response) => void = () => undefined;
     fetchMock
       .mockResolvedValueOnce(page(["exm_2", "exm_1"], null))
       .mockImplementationOnce(() => new Promise<Response>((resolve) => (rejectRevoke = resolve)))
-      .mockResolvedValueOnce(page(["exm_2", "exm_1"], null));
+      // The refetch after the failure is held, so while it is pending only the rollback can have
+      // brought the row back; it then answers with a different list, so the two can't be confused.
+      .mockImplementationOnce(() => new Promise<Response>((resolve) => (answerRefetch = resolve)));
     const wrapper = createWrapper(newQueryClient());
     const list = renderHook(() => useRetentionExemptions({ organizationId: ORG_ID, limit: 25 }), { wrapper });
     await waitFor(() => expect(list.result.current.isSuccess).toBe(true));
@@ -184,8 +187,14 @@ describe("Exemptions hooks", () => {
       rejectRevoke(problem(422, "retention_exemption_not_active"));
     });
 
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+    expect(list.result.current.exemptions.map((e) => e.id)).toEqual(["exm_2", "exm_1"]);
+
+    await act(async () => {
+      answerRefetch(page(["exm_9"], null));
+    });
     await waitFor(() => expect(result.current.isError).toBe(true));
-    await waitFor(() => expect(list.result.current.exemptions.map((e) => e.id)).toEqual(["exm_2", "exm_1"]));
+    await waitFor(() => expect(list.result.current.exemptions.map((e) => e.id)).toEqual(["exm_9"]));
   });
 
   test("asks for survey options only while enabled, with the search", async () => {
