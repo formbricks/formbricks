@@ -265,31 +265,42 @@ The Helm chart now defaults `hub.embeddings.env.RUST_LOG` to `warn` because TEI 
 INFO-level startup arguments. If you need a different log level, set `hub.embeddings.env.RUST_LOG` explicitly
 and use it only with a runtime that redacts credentials from its logs.
 
-### Database transaction limits (action required if you connect through a connection pooler)
+### Database transaction limits
 
 Formbricks now sets its database transaction limits explicitly instead of relying on library defaults.
 Under load, the old 5-second limit was cancelling writes that were about to succeed: user identification,
-response updates and survey resets.
+response updates and survey resets. Nothing to do here: the new limits are at least as permissive as the
+old ones.
 
 - Transactions may run for up to 20 seconds.
 - Waiting for a free database connection is bounded by `connect_timeout` in `DATABASE_URL` (5 seconds
   by default). With `connect_timeout=0`, transactions give up waiting after 6 seconds; other queries
   wait until a connection is free.
-- Formbricks asks PostgreSQL to end any session left idle inside an open transaction for 60 seconds, which
-  releases that session's locks. It does this with the `idle_in_transaction_session_timeout` connection
-  setting. Migrations are not affected.
 
-To change the idle timeout, add it to `DATABASE_URL` in **milliseconds**, for example
-`?idle_in_transaction_session_timeout=30000`. Set it to `0` to send nothing and keep your server's own
-setting.
+#### Idle transactions (opt-in)
+
+PostgreSQL can end any session left idle inside an open transaction, which releases the locks that session
+holds and frees its connection. Formbricks does not ask for this by default: it travels as a startup
+parameter, and a server or pooler that does not accept the parameter refuses the whole connection instead
+of ignoring it. Turn it on by adding it to `DATABASE_URL` in **milliseconds**:
+
+```bash
+DATABASE_URL="postgresql://user:password@host:5432/formbricks?idle_in_transaction_session_timeout=60000"
+```
+
+Leaving the parameter out, or setting it to `0`, sends nothing and keeps your server's own setting. An
+invalid value (anything but digits, or past PostgreSQL's 32-bit limit) sends nothing and logs a warning.
+It applies to every process that connects with that `DATABASE_URL` — the migration runner uses
+`MIGRATE_DATABASE_URL` instead when that is set, so it follows that one. Keep the value well above the
+longest a migration leaves a transaction idle, or leave the parameter out.
 
 <Warning>
-  If Formbricks connects to PostgreSQL through **PgBouncer, Supavisor, RDS Proxy or another pooler**, the
-  pooler may reject connections that carry an unknown startup parameter. Before upgrading, add
-  `idle_in_transaction_session_timeout=0` to `DATABASE_URL`. If your `DATABASE_URL` already contains
-  `pgbouncer=true`, Formbricks skips the setting automatically. Adding the parameter to PgBouncer's
-  `ignore_startup_parameters` also works, but PgBouncer then drops it, so the 60-second safeguard does
-  not apply. A direct connection to PostgreSQL needs no change.
+  Do not set it if Formbricks reaches PostgreSQL through **PgBouncer, Supavisor, RDS Proxy or another
+  pooler**: PgBouncer answers a connection carrying a startup parameter it does not know with
+  `FATAL: unsupported startup parameter: idle_in_transaction_session_timeout`. Listing the parameter in
+  PgBouncer's `ignore_startup_parameters` lets the connection through, but PgBouncer then drops it, so the
+  safeguard does not apply either way. If `DATABASE_URL` carries both the parameter and `pgbouncer=true`,
+  Formbricks sends it and logs a warning.
 </Warning>
 
 ### Changes in Environment Variables
