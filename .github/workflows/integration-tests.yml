@@ -136,6 +136,12 @@ jobs:
         run: pnpm build --filter=@formbricks/web^...
         shell: bash
 
+      - name: Verify online migration recovery against PostgreSQL
+        if: steps.harness.outputs.present == 'true'
+        run: pnpm --filter @formbricks/database exec vitest run src/scripts/online-upgrade.integration.test.ts
+        env:
+          ONLINE_UPGRADE_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+
       - name: Create the test database
         if: steps.harness.outputs.present == 'true'
         run: psql "postgresql://postgres:postgres@localhost:5432/postgres" -v ON_ERROR_STOP=1 -c 'CREATE DATABASE formbricks_ba_test;'

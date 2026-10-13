@@ -1,3 +1,4 @@
+{{- if ne .Values.upgrade.mode "online" }}
 {{- if .Values.migration.enabled }}
 ---
 apiVersion: batch/v1
@@ -78,4 +79,6 @@ spec:
           resources:
             {{- toYaml .Values.migration.resources | nindent 12 }}
           {{- end }}
+{{- end }}
+
 {{- end }}

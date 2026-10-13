@@ -1,0 +1,117 @@
+---
+title: "Online Kubernetes Upgrade"
+description: "Coordinator phases, recovery boundaries, and outstanding acceptance gates for the 6.1 Kubernetes upgrade."
+icon: "arrows-rotate"
+---
+
+<Warning>
+  This implementation is under validation. It does not yet establish a supported zero-downtime upgrade
+  from the released 6.0 images. Keep the release maintenance checklist until the acceptance matrix below
+  passes. In particular, released web processes with embedded BullMQ workers fail preflight because their
+  HTTP and worker signal handlers can exit independently.
+</Warning>
+
+The intended customer action is one Helm upgrade or Argo sync. The chart's default remains
+`upgrade.mode: maintenance` while validation is incomplete. Online mode adds automatic preparation,
+surge capacity, traffic handoff, finalization, and survey-visibility activation. Cleanup of legacy
+columns, permission names, compatibility writes, and creation provenance belongs in a later release.
+
+## Prerequisites
+
+The current implementation requires fixed web replicas of at least two, enough capacity for another
+complete web Deployment, `/health/ready` readiness probes, a termination budget of at least 300 seconds,
+and an immutable application image digest. Autoscaling during handoff is not yet supported.
+
+Supply a session-affine `MIGRATE_DATABASE_URL`. Transaction-pooling connections are unsuitable for the
+coordinator's session advisory lock. Set `upgrade.online.sessionAffinity: true` only for a connection
+whose pool mode guarantees that property. The coordinator tests lock ownership throughout the run.
+
+List every application writer and worker in `upgrade.online.workloads`, and pin the compatible paired
+Hub/Cube services and infrastructure in `upgrade.online.dependencies`. Source image digests for 6.0.0,
+6.0.1, and 6.0.2 are bundled with the release. Unknown images, schemas, and migration histories block
+preparation. Dependency API/migration compatibility still requires rehearsal; matching an image digest
+alone does not prove that compatibility.
+
+The current drain adapter targets namespace-local Envoy pods, selected by
+`upgrade.online.ingress.selector`, with an explicit upstream cluster name and readable admin port. It
+verifies EndpointSlice withdrawal, removal of old upstream hosts on every selected proxy, and zero
+active upstream requests. Missing telemetry blocks handoff. Ingress discovery, all traffic paths, and
+removed-host accounting must be demonstrated in a real rehearsal before this adapter is supported.
+
+## Upgrade sequence
+
+<Steps>
+  <Step title="Prepare">
+    The pre-upgrade Helm hook or Argo PreSync hook validates the source, records preparation intent,
+    applies additive database changes, and expands the SpiceDB schema. Deferred cleanup stays unapplied.
+  </Step>
+  <Step title="Hand off traffic">
+    The coordinator creates a deterministic surge Deployment using the primary workload's pod template.
+    After readiness succeeds, it switches the existing Service and verifies draining. A failed hook leaves
+    surge capacity intact. Only a successful preparation hook allows workload replacement.
+  </Step>
+  <Step title="Finalize">
+    The post-upgrade Helm hook or Argo PostSync hook verifies target workloads and checks for old Pods,
+    terminating Pods, Jobs, and CronJobs. It records the forward-only boundary before ownership catch-up
+    and the survey trigger, then backfills and reconciles the survey graph in bounded pages.
+  </Step>
+  <Step title="Activate">
+    Activation requires a completed baseline, no unexplained stable-version drift, no dead letters, and
+    healthy revocation delivery. Fresh pending grants need not empty the live outbox. Already-running
+    replicas observe activation through PostgreSQL. Surge endpoints are withdrawn and drained before
+    removal, after the primary workload is healthy.
+  </Step>
+</Steps>
+
+The commands run in the coordinator pod, with its mounted release configuration:
+
+```sh
+formbricks-authzed upgrade online prepare
+formbricks-authzed upgrade online finalize
+formbricks-authzed upgrade online status
+```
+
+Status contains the phase, processed survey count, baseline completion, retryability, a sanitized blocker
+code, and whether rollback to 6.0 is still allowed. Repeating the same upgrade resumes durable checkpoints.
+Old admin tabs may require reload; preserving unsaved 6.0 editor state is outside the intended guarantee.
+
+## Recovery
+
+<Warning>
+  Do not use Helm `--atomic`, automatic GitOps rollback, or direct rollback to 6.0 once finalization begins.
+  Retaining legacy columns does not make that rollback safe. Restricted visibility and new queue work
+  must never be handed back to old consumers.
+</Warning>
+
+Before finalization, controlled recovery may restore the source workload and traffic after checking
+status. After the boundary, resume the same target. Changing the target image currently blocks checkpoint
+reuse; a verified procedure for a compatible 6.1 repair image is still an open acceptance requirement.
+Do not delete or edit upgrade checkpoints to bypass a blocker.
+
+`SURVEY_VISIBILITY_FORCE_DISABLED=1` suppresses feature mutations; it never disables stored visibility
+policy enforcement. Clearing graph readiness uses PostgreSQL policy with workspace authorization and
+must not expose restricted data.
+
+## Acceptance status
+
+The following are release blockers, not optional follow-up cleanup:
+
+| Gate | Status |
+| --- | --- |
+| Application unit suites, migration-phase selection, additive schema assertions | Exercised locally |
+| Real PostgreSQL invalid-index recovery and coordinator lock loss | Exercised locally |
+| Fresh prepare migration retains legacy columns and excludes deferred history | Exercised locally |
+| Production Next.js build and Helm/Argo render ordering | Exercised locally |
+| Released embedded-worker handoff without lost or interrupted work | Blocked; safe drain protocol still required |
+| Isolated Kubernetes rehearsal harness and six source/controller runs | Not implemented or run |
+| Slow HTTP requests, public bundles, sessions, cache and shared queue compatibility across actual images | Not fully rehearsed |
+| Membership revocations, alternate authorization paths, coordinator interruption and capacity exhaustion during rollout | Not fully rehearsed |
+| Dependency upgrades and compatible repair-image recovery | Not validated |
+
+The release gate requires zero upgrade-induced failures for supported public-survey and API journeys,
+no lost submissions, no authorization leaks, and successful interrupted-upgrade recovery. Attach measured
+latency and queue-lag evidence to each of the six source/controller runs; unmeasured values are unknown.
+
+See [AuthZed online schema migrations](https://authzed.com/blog/online-schema-migrations) and
+[Argo's Helm hook mapping](https://argo-cd.readthedocs.io/en/latest/user-guide/helm/). Hook rendering tests
+verify manifests; they do not prove either controller's runtime behavior.

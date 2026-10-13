@@ -32,6 +32,16 @@ jobs:
       - name: Validate default operator against Kubernetes API
         run: bash charts/formbricks/tests/authzed-api-server.sh
 
+      - name: Validate online Helm and Argo manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Use the repository's parser version without installing the application workspace.
+          parser_version=$(awk '/^  js-yaml: / { print $2 }' pnpm-workspace.yaml)
+          test -n "$parser_version"
+          npm install --ignore-scripts --no-audit --no-fund --prefix "$RUNNER_TEMP/online-chart-deps" "js-yaml@$parser_version"
+          NODE_PATH="$RUNNER_TEMP/online-chart-deps/node_modules" bash charts/formbricks/tests/online-upgrade.sh
+
       - name: Validate chart renders
         shell: bash
         run: |
