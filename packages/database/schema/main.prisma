@@ -1846,14 +1846,17 @@ model AuthzedProjectionOutbox {
 
 // Durable checkpoints for the supported 6.0 -> 6.1 online upgrade.
 model OnlineUpgradeState {
-  release             String    @id
-  targetImage         String
-  phase               String
-  completedPhases     String[]  @default([])
-  surveyCursor        String?
-  surveyCount         BigInt    @default(0)
-  baselineCompletedAt DateTime?
-  forwardOnlyAt       DateTime?
-  activatedAt         DateTime?
-  updatedAt           DateTime  @default(now()) @updatedAt
+  release              String    @id
+  targetImage          String
+  phase                String
+  completedPhases      String[]  @default([])
+  surveyCursor         String?
+  surveyCount          BigInt    @default(0)
+  baselineCompletedAt  DateTime?
+  forwardOnlyAt        DateTime?
+  queuePausedAt        DateTime?
+  queuePauseDeadlineAt DateTime?
+  queueResumedAt       DateTime?
+  activatedAt          DateTime?
+  updatedAt            DateTime  @default(now()) @updatedAt
 }

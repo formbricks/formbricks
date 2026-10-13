@@ -113,11 +113,13 @@
     },
     "@formbricks/jobs#test": {
       "cache": false,
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build"],
+      "env": ["ONLINE_UPGRADE_TEST_REDIS_URL"]
     },
     "@formbricks/jobs#test:coverage": {
       "cache": false,
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build"],
+      "env": ["ONLINE_UPGRADE_TEST_REDIS_URL"]
     },
     "@formbricks/jobs#typecheck": {
       "dependsOn": ["@formbricks/logger#build"]

@@ -24,6 +24,9 @@ const setup = () => {
         baselineCompletedAt: null,
         forwardOnlyAt: null,
         activatedAt: null,
+        queuePausedAt: null,
+        queuePauseDeadlineAt: null,
+        queueResumedAt: null,
         ...state,
         ...patch,
       };

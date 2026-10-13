@@ -179,6 +179,10 @@ spec:
             {{- if eq .Values.upgrade.mode "online" }}
             - name: FORMBRICKS_UPGRADE_MODE
               value: online
+            {{- if not (hasKey .Values.deployment.env "BULLMQ_WORKER_ENABLED") }}
+            - name: BULLMQ_WORKER_ENABLED
+              value: "1"
+            {{- end }}
             {{- end }}
             {{- if or .Values.migration.enabled (eq .Values.upgrade.mode "online") }}
             - name: SKIP_STARTUP_MIGRATION

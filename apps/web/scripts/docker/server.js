@@ -42,6 +42,7 @@ getRequestHandlers({ dir, port, isDev: false, server, hostname, onDevServerClean
         closeWorkers: async () => {
           await globalThis.formbricksJobsRuntimeInitializing?.catch(() => undefined);
           await globalThis.formbricksJobsRuntime?.close();
+          await globalThis.formbricksOnlinePauseDelivery?.close();
         },
         closeApp: () => handlers.server.close(),
       }).then(

@@ -19,6 +19,9 @@
 !.nvmrc
 !prisma.config.mjs
 !authzed/schema.zed
+!authzed/upgrade/schema-6.0.zed
+!authzed/upgrade/source-images.json
+!authzed/upgrade/source-migrations.json
 
 # Workspaces
 !apps

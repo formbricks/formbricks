@@ -33,6 +33,7 @@ export const onlineConfigSchema = z.object({
     adminPort: z.number().int().positive().default(19000),
     cluster: z.string().min(1),
   }),
+  jobDrainTimeoutSeconds: z.number().int().min(10).max(900).default(180),
   timeoutSeconds: z.number().int().min(30).max(3600).default(900),
 });
 export type OnlineConfig = z.infer<typeof onlineConfigSchema>;
@@ -42,6 +43,7 @@ type Metadata = {
   resourceVersion: string;
   deletionTimestamp?: string;
   labels?: Record<string, string>;
+  ownerReferences?: { kind: string; name: string; uid: string }[];
 };
 type Container = {
   name: string;
@@ -76,7 +78,9 @@ type Workload = {
   };
 };
 type Service = { metadata: Metadata; spec: { selector: Record<string, string> } };
-type Slice = { endpoints: { targetRef?: { uid: string }; conditions?: { ready?: boolean } }[] };
+type Slice = {
+  endpoints: { addresses?: string[]; targetRef?: { uid: string }; conditions?: { ready?: boolean } }[];
+};
 const ready = (pod: Pod) =>
   !pod.metadata.deletionTimestamp &&
   pod.status?.conditions?.some((c) => c.type === "Ready" && c.status === "True");
@@ -140,13 +144,15 @@ export class KubernetesUpgrade {
     });
   }
   path(kind: string, name = "") {
-    const api = ["deployments", "statefulsets"].includes(kind)
+    const api = ["deployments", "statefulsets", "replicasets"].includes(kind)
       ? "/apis/apps/v1"
       : ["jobs", "cronjobs"].includes(kind)
         ? "/apis/batch/v1"
-        : kind === "endpointslices"
-          ? "/apis/discovery.k8s.io/v1"
-          : "/api/v1";
+        : kind === "horizontalpodautoscalers"
+          ? "/apis/autoscaling/v2"
+          : kind === "endpointslices"
+            ? "/apis/discovery.k8s.io/v1"
+            : "/api/v1";
     return `${api}/namespaces/${this.config.namespace}/${kind}${name ? `/${encodeURIComponent(name)}` : ""}`;
   }
   async pods(selector?: string) {
@@ -174,34 +180,86 @@ export class KubernetesUpgrade {
         throw new OnlineUpgradeBlocked("dependency_unhealthy", true);
     }
   }
-  async preflight() {
+  private oldPods(pods: Pod[]) {
+    return pods.filter(
+      (p) =>
+        !["Succeeded", "Failed"].includes(p.status?.phase ?? "") &&
+        p.metadata.labels?.["formbricks.com/upgrade-role"] !== "coordinator" &&
+        p.spec.containers.some((c) => this.isApplicationImage(c.image) && c.image !== this.config.targetImage)
+    );
+  }
+  private async verifySourceInventory(pods: Pod[]) {
+    const workloads = await Promise.all(
+      this.config.workloads.map((w) => this.call<Workload>(this.path(w.kind, w.name)))
+    );
+    const replicas = await this.call<{ items: { metadata: Metadata }[] }>(this.path("replicasets"));
+    const owners = new Set(workloads.map((w) => w.metadata.uid));
+    for (const replica of replicas.items) {
+      if (replica.metadata.ownerReferences?.some((owner) => owners.has(owner.uid)))
+        owners.add(replica.metadata.uid);
+    }
+    if (
+      this.oldPods(pods).some((pod) => !pod.metadata.ownerReferences?.some((owner) => owners.has(owner.uid)))
+    )
+      throw new OnlineUpgradeBlocked("unmanaged_source_consumer");
+    const autoscalers = await this.call<{ items: { spec: { scaleTargetRef: { name: string } } }[] }>(
+      this.path("horizontalpodautoscalers")
+    );
+    if (
+      autoscalers.items.some((hpa) =>
+        this.config.workloads.some((w) => w.name === hpa.spec.scaleTargetRef.name)
+      )
+    )
+      throw new OnlineUpgradeBlocked("source_autoscaler_present");
+  }
+  private async verifyServingSurge() {
+    const surge = await this.call<Workload>(
+      this.path("deployments", `${this.config.deployment}-online-surge`)
+    );
+    const expected = this.config.workloads.find((w) => w.name === this.config.deployment);
+    if (
+      !expected ||
+      surge.metadata.deletionTimestamp ||
+      surge.metadata.labels?.["formbricks.com/upgrade-owner"] !== this.config.deployment ||
+      surge.status?.observedGeneration !== surge.metadata.generation ||
+      (surge.status.readyReplicas ?? 0) < expected.replicas ||
+      !surge.spec.template.spec.containers.some(
+        (c) =>
+          c.image === this.config.targetImage &&
+          c.env?.some((e) => e.name === "BULLMQ_WORKER_ENABLED" && e.value === "1")
+      )
+    )
+      throw new OnlineUpgradeBlocked("serving_surge_workers_required", true);
+  }
+  async preflight(retirementStarted = false) {
     await this.verifyDependencies();
     for (const expected of this.config.workloads) {
       if (expected.image !== this.config.targetImage)
         throw new OnlineUpgradeBlocked("workload_target_mismatch");
       const workload = await this.call<Workload>(this.path(expected.kind, expected.name));
-      if ((workload.spec.replicas ?? 1) < 2 || (workload.status?.readyReplicas ?? 0) < 2)
-        throw new OnlineUpgradeBlocked("ha_capacity_required", true);
+      if ((workload.spec.replicas ?? 1) < 2 || (workload.status?.readyReplicas ?? 0) < 2) {
+        if (!retirementStarted) throw new OnlineUpgradeBlocked("ha_capacity_required", true);
+        await this.verifyServingSurge();
+      }
     }
     const pods = await this.pods();
+    await this.verifySourceInventory(pods);
+    await this.verifyBatchConsumers();
     for (const pod of pods) {
+      if (["Succeeded", "Failed"].includes(pod.status?.phase ?? "")) continue;
       for (const container of pod.spec.containers.filter((c) => this.isApplicationImage(c.image))) {
         if (pod.metadata.labels?.["formbricks.com/upgrade-role"] === "coordinator") continue;
         const identity = pod.status?.containerStatuses?.find((c) => c.name === container.name)?.imageID ?? "";
         if (container.image === this.config.targetImage) continue;
         if (!this.config.sourceDigests.some((digest) => identity.endsWith(digest)))
           throw new OnlineUpgradeBlocked("unsupported_source_image");
-        // Released web processes cannot coordinate their two SIGTERM handlers. Do not pretend that
-        // draining HTTP also drains embedded workers. A repaired source needs its own acceptance run.
-        if (container.env?.find((e) => e.name === "BULLMQ_WORKER_ENABLED")?.value !== "0")
-          throw new OnlineUpgradeBlocked("source_worker_drain_unverified");
       }
     }
     const gateways = await this.pods(this.config.ingress.selector);
     if (!gateways.length || gateways.some((p) => !ready(p)))
       throw new OnlineUpgradeBlocked("ingress_inventory_unhealthy", true);
   }
-  async verifyConsumers() {
+  private async verifyBatchConsumers() {
     for (const kind of ["jobs", "cronjobs"]) {
       const batch = await this.call<{
         items: {
@@ -209,17 +267,26 @@ export class KubernetesUpgrade {
             template?: { spec: { containers: Container[] } };
             jobTemplate?: { spec: { template: { spec: { containers: Container[] } } } };
           };
-          status?: { succeeded?: number; failed?: number };
+          status?: { conditions?: { type: string; status: string }[] };
         }[];
       }>(this.path(kind));
       for (const job of batch.items) {
-        if (kind === "jobs" && (job.status?.succeeded || job.status?.failed)) continue;
+        if (
+          kind === "jobs" &&
+          job.status?.conditions?.some(
+            (condition) => ["Complete", "Failed"].includes(condition.type) && condition.status === "True"
+          )
+        )
+          continue;
         const containers =
           job.spec.template?.spec.containers ?? job.spec.jobTemplate?.spec.template.spec.containers ?? [];
         if (containers.some((c) => this.isApplicationImage(c.image) && c.image !== this.config.targetImage))
           throw new OnlineUpgradeBlocked("old_consumer_present", true);
       }
     }
+  }
+  async verifyConsumers() {
+    await this.verifyBatchConsumers();
     for (const expected of this.config.workloads) {
       if (expected.image !== this.config.targetImage)
         throw new OnlineUpgradeBlocked("workload_target_mismatch");
@@ -244,6 +311,56 @@ export class KubernetesUpgrade {
           throw new OnlineUpgradeBlocked("consumer_compatibility_mode_missing");
       }
     }
+  }
+  async waitForConsumers() {
+    await this.wait(async () => {
+      try {
+        await this.verifyConsumers();
+        return true;
+      } catch (error) {
+        if (error instanceof OnlineUpgradeBlocked && error.retryable) return false;
+        throw error;
+      }
+    });
+  }
+  async verifySourceConsumersAbsent() {
+    await this.verifyServingSurge();
+    await this.verifyBatchConsumers();
+    if (this.oldPods(await this.pods()).length) throw new OnlineUpgradeBlocked("old_consumer_present", true);
+    for (const expected of this.config.workloads) {
+      const workload = await this.call<Workload>(this.path(expected.kind, expected.name));
+      if (
+        (workload.spec.replicas ?? 1) > 0 &&
+        workload.spec.template.spec.containers.some(
+          (c) => this.isApplicationImage(c.image) && c.image !== this.config.targetImage
+        )
+      )
+        throw new OnlineUpgradeBlocked("source_controller_can_restart", true);
+    }
+  }
+  /** Called only while the shared queue is paused and its active count is zero. */
+  async retireSourceConsumers() {
+    await this.verifyServingSurge();
+    await this.verifyBatchConsumers();
+    await this.verifySourceInventory(await this.pods());
+    for (const expected of this.config.workloads) {
+      const workload = await this.call<Workload>(this.path(expected.kind, expected.name));
+      if (
+        workload.spec.template.spec.containers.some(
+          (c) => this.isApplicationImage(c.image) && c.image !== this.config.targetImage
+        )
+      ) {
+        await this.call(this.path(expected.kind, expected.name), "PATCH", {
+          metadata: { resourceVersion: workload.metadata.resourceVersion },
+          spec: { replicas: 0 },
+        });
+      }
+    }
+    await this.wait(async () => {
+      await this.verifyServingSurge();
+      await this.verifyBatchConsumers();
+      return this.oldPods(await this.pods()).length === 0;
+    });
   }
   async wait(check: () => Promise<boolean>) {
     const deadline = Date.now() + this.config.timeoutSeconds * 1000;
@@ -312,6 +429,18 @@ export class KubernetesUpgrade {
     await this.wait(async () => {
       const gateways = await this.pods(this.config.ingress.selector);
       if (!gateways.length || gateways.some((p) => !ready(p))) return false;
+      const slices = await this.call<{ items: Slice[] }>(
+        this.path("endpointslices") +
+          `?labelSelector=kubernetes.io/service-name%3D${encodeURIComponent(this.config.service)}`
+      );
+      const liveAddresses = new Set(
+        slices.items.flatMap((slice) =>
+          slice.endpoints
+            .filter((endpoint) => endpoint.conditions?.ready)
+            .flatMap((endpoint) => endpoint.addresses ?? [])
+        )
+      );
+      if (!liveAddresses.size) return false;
       for (const gateway of gateways) {
         const proxy =
           this.path("pods", `${gateway.metadata.name}:${this.config.ingress.adminPort}`) + "/proxy/";
@@ -323,10 +452,13 @@ export class KubernetesUpgrade {
         }>(proxy + "clusters?format=json");
         const cluster = clusters.cluster_statuses?.find((c) => c.name === this.config.ingress.cluster);
         if (
-          !cluster ||
-          cluster.host_statuses?.some((h) =>
-            old.some((p) => p.status?.podIP === h.address?.socket_address?.address)
-          )
+          !cluster?.host_statuses?.length ||
+          cluster.host_statuses.some((h) => {
+            const address = h.address?.socket_address?.address;
+            // A Service VIP or another proxy can retain connections to withdrawn pods. Only EDS
+            // hosts that identify current pod endpoints establish this adapter's drain condition.
+            return !address || !liveAddresses.has(address) || old.some((p) => p.status?.podIP === address);
+          })
         )
           return false;
         const stats = await this.call<{ stats: { name: string; value: number }[] }>(

@@ -142,6 +142,12 @@ jobs:
         env:
           ONLINE_UPGRADE_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
 
+      - name: Verify online queue handoff against Redis
+        if: steps.harness.outputs.present == 'true'
+        run: pnpm --filter @formbricks/jobs exec vitest run src/upgrade.integration.test.ts
+        env:
+          ONLINE_UPGRADE_TEST_REDIS_URL: redis://localhost:6379/14
+
       - name: Create the test database
         if: steps.harness.outputs.present == 'true'
         run: psql "postgresql://postgres:postgres@localhost:5432/postgres" -v ON_ERROR_STOP=1 -c 'CREATE DATABASE formbricks_ba_test;'

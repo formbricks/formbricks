@@ -16,7 +16,7 @@ const config = onlineConfigSchema.parse({
   ingress: { selector: "app=envoy", cluster: "web" },
 });
 const targetWorkload = {
-  metadata: { name: "web", generation: 2 },
+  metadata: { name: "web", uid: "workload", generation: 2 },
   spec: { replicas: 2, template: { metadata: { labels: {} }, spec: { containers: [{ image: target }] } } },
   status: { observedGeneration: 2, readyReplicas: 2, updatedReplicas: 2 },
 };
@@ -68,30 +68,33 @@ test("a suspended old CronJob remains a blocker because it can create another ol
   await expect(kube.verifyConsumers()).rejects.toThrow("old_consumer_present");
 });
 
-test("released embedded-worker processes fail preflight before traffic or schema mutation", async () => {
+test("released embedded workers may prepare when their controller is inventoried", async () => {
   const kube = platform();
-  respond(kube, (path) =>
-    path.includes("/deployments/")
-      ? targetWorkload
-      : {
-          items: [
-            {
-              metadata: { name: "old" },
-              spec: {
-                containers: [
-                  { name: "web", image: "app:6.0.2", env: [{ name: "BULLMQ_WORKER_ENABLED", value: "1" }] },
-                ],
-              },
-              status: {
-                containerStatuses: [
-                  { name: "web", imageID: `docker-pullable://app@sha256:${"a".repeat(64)}` },
-                ],
-              },
+  respond(kube, (path) => {
+    if (path.includes("/deployments/")) return targetWorkload;
+    if (path.includes("labelSelector"))
+      return {
+        items: [
+          { metadata: { name: "gateway" }, status: { conditions: [{ type: "Ready", status: "True" }] } },
+        ],
+      };
+    if (path.endsWith("/pods"))
+      return {
+        items: [
+          {
+            metadata: { name: "old", ownerReferences: [{ uid: "workload" }] },
+            spec: {
+              containers: [
+                { name: "web", image: "app:6.0.2", env: [{ name: "BULLMQ_WORKER_ENABLED", value: "1" }] },
+              ],
             },
-          ],
-        }
-  );
-  await expect(kube.preflight()).rejects.toThrow("source_worker_drain_unverified");
+            status: { containerStatuses: [{ name: "web", imageID: `app@sha256:${"a".repeat(64)}` }] },
+          },
+        ],
+      };
+    return { items: [] };
+  });
+  await expect(kube.preflight()).resolves.toBeUndefined();
   expect(kube.call).not.toHaveBeenCalledWith(expect.anything(), "PATCH", expect.anything());
 });
 
@@ -141,4 +144,151 @@ test("a colliding surge name cannot adopt an unrelated Deployment", async () => 
     "surge_identity_changed"
   );
   expect(kube.call).not.toHaveBeenCalledWith(expect.anything(), "PATCH", expect.anything());
+});
+
+test("drained source controllers scale to zero only while healthy target surge workers remain", async () => {
+  const kube = platform();
+  let replicas = 2;
+  let podChecks = 0;
+  const source = {
+    ...targetWorkload,
+    spec: {
+      ...targetWorkload.spec,
+      template: { metadata: { labels: {} }, spec: { containers: [{ image: "app:6.0.2" }] } },
+    },
+  };
+  const surge = {
+    ...targetWorkload,
+    metadata: { ...targetWorkload.metadata, labels: { "formbricks.com/upgrade-owner": "web" } },
+    spec: {
+      ...targetWorkload.spec,
+      template: {
+        metadata: { labels: {} },
+        spec: { containers: [{ image: target, env: [{ name: "BULLMQ_WORKER_ENABLED", value: "1" }] }] },
+      },
+    },
+  };
+  const oldPod = {
+    metadata: { name: "old", ownerReferences: [{ uid: "workload" }] },
+    spec: { containers: [{ image: "app:6.0.2" }] },
+  };
+  respond(kube, (path, method, body) => {
+    if (path.endsWith("/deployments/web-online-surge")) return surge;
+    if (path.endsWith("/deployments/web")) {
+      if (method === "PATCH") {
+        expect(body).toMatchObject({ spec: { replicas: 0 } });
+        replicas = 0;
+      }
+      return { ...source, spec: { ...source.spec, replicas } };
+    }
+    if (path.endsWith("/pods")) return { items: replicas || podChecks++ === 0 ? [oldPod] : [] };
+    return { items: [] };
+  });
+  kube.wait = async (check) => {
+    expect(await check()).toBe(false);
+    expect(await check()).toBe(true);
+  };
+  await kube.retireSourceConsumers();
+  await kube.verifySourceConsumersAbsent();
+  expect(replicas).toBe(0);
+  expect(kube.call).toHaveBeenCalledWith(
+    expect.stringContaining("/deployments/web"),
+    "PATCH",
+    expect.objectContaining({ spec: { replicas: 0 } })
+  );
+});
+
+test("an unmanaged source pod prevents retiring any configured workload", async () => {
+  const kube = platform();
+  respond(kube, (path) => {
+    if (path.endsWith("/deployments/web-online-surge"))
+      return {
+        ...targetWorkload,
+        metadata: { ...targetWorkload.metadata, labels: { "formbricks.com/upgrade-owner": "web" } },
+        spec: {
+          ...targetWorkload.spec,
+          template: {
+            metadata: { labels: {} },
+            spec: { containers: [{ image: target, env: [{ name: "BULLMQ_WORKER_ENABLED", value: "1" }] }] },
+          },
+        },
+      };
+    if (path.endsWith("/deployments/web")) return targetWorkload;
+    return {
+      items: path.endsWith("/pods")
+        ? [{ metadata: { name: "unmanaged" }, spec: { containers: [{ image: "app:6.0.2" }] } }]
+        : [],
+    };
+  });
+  await expect(kube.retireSourceConsumers()).rejects.toThrow("unmanaged_source_consumer");
+  expect(kube.call).not.toHaveBeenCalledWith(expect.anything(), "PATCH", expect.anything());
+});
+
+test("an HPA that can recreate source workers blocks preflight", async () => {
+  const kube = platform();
+  respond(kube, (path) => {
+    if (path.includes("/deployments/")) return targetWorkload;
+    if (path.endsWith("/horizontalpodautoscalers"))
+      return { items: [{ spec: { scaleTargetRef: { name: "web" } } }] };
+    return { items: [] };
+  });
+  await expect(kube.preflight()).rejects.toThrow("source_autoscaler_present");
+  expect(kube.call).not.toHaveBeenCalledWith(expect.anything(), "PATCH", expect.anything());
+});
+
+test.each([
+  { host: "10.0.0.2", active: 0, drained: true },
+  { host: "10.96.0.10", active: 0, drained: false },
+  { host: "10.0.0.1", active: 0, drained: false },
+  { host: "10.0.0.2", active: 1, drained: false },
+  { host: "10.0.0.2", active: undefined, drained: false },
+])(
+  "drain requires current pod endpoints and known zero active requests: $host / $active",
+  async ({ host, active, drained }) => {
+    const kube = platform();
+    const gateway = {
+      metadata: { name: "envoy", uid: "envoy" },
+      status: { conditions: [{ type: "Ready", status: "True" }] },
+    };
+    respond(kube, (path) => {
+      if (path.includes("endpointslices"))
+        return { items: [{ endpoints: [{ addresses: ["10.0.0.2"], conditions: { ready: true } }] }] };
+      if (path.endsWith("clusters?format=json"))
+        return {
+          cluster_statuses: [
+            { name: "web", host_statuses: [{ address: { socket_address: { address: host } } }] },
+          ],
+        };
+      if (path.endsWith("stats?format=json"))
+        return {
+          stats: active === undefined ? [] : [{ name: "cluster.web.upstream_rq_active", value: active }],
+        };
+      return { items: [gateway] };
+    });
+    kube.wait = async (check) => {
+      expect(await check()).toBe(drained);
+    };
+    await kube.verifyIngressDrain([
+      {
+        metadata: { name: "old", uid: "old", resourceVersion: "1" },
+        spec: { containers: [] },
+        status: { podIP: "10.0.0.1" },
+      },
+    ]);
+  }
+);
+
+test("a failed source Job attempt still blocks while the Job can retry", async () => {
+  const kube = platform();
+  respond(kube, (path) => ({
+    items: path.endsWith("/jobs")
+      ? [
+          {
+            spec: { template: { spec: { containers: [{ image: "app:6.0.2" }] } } },
+            status: { failed: 1 },
+          },
+        ]
+      : [],
+  }));
+  await expect(kube.verifyConsumers()).rejects.toThrow("old_consumer_present");
 });

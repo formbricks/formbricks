@@ -2,6 +2,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 import { openUpgradeSession, readOnlineUpgradeCheckpoint } from "@formbricks/database/upgrade-session";
 import { type OnlinePlatform, runOnlineCommand } from "./runtime";
 
+vi.mock("@formbricks/jobs", () => ({ openJobsUpgradeQueue: vi.fn() }));
 vi.mock("@formbricks/database", () => ({ prisma: {} }));
 vi.mock("@formbricks/database/upgrade-session", () => ({
   openUpgradeSession: vi.fn(),
@@ -23,6 +24,9 @@ const platform: OnlinePlatform = {
   sourceVersion: "6.0.2",
   sessionAffinity: true,
   preflight: vi.fn(),
+  retireSourceConsumers: vi.fn(),
+  jobDrainTimeoutSeconds: 180,
+  verifySourceConsumersAbsent: vi.fn(),
   verifyConsumers: vi.fn(),
 };
 const root = new URL("file:///fixture/");

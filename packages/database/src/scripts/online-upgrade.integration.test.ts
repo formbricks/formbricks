@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import { Client } from "pg";
 import { afterAll, beforeAll, expect, test } from "vitest";
 import { ensureOnlineIndexes } from "./online-indexes";
@@ -107,3 +109,37 @@ test.skipIf(!connection)("rolls back SQL and its history together, then resumes 
     await session.close();
   }
 });
+
+test.skipIf(!connection)(
+  "persists queue pause recovery timestamps through the actual release migration",
+  async () => {
+    const session = await openUpgradeSession(url);
+    try {
+      const name = "20261013130000_add_online_upgrade_queue_pause";
+      const sql = await readFile(new URL(`../../migration/${name}/migration.sql`, import.meta.url), "utf8");
+      const migration = { name, sql, checksum: createHash("sha256").update(sql).digest("hex") };
+      await applyOnlineSchemaMigrations(session, [migration]);
+      const paused = new Date("2026-10-13T12:00:00Z");
+      const deadline = new Date(paused.getTime() + 180_000);
+      await client.query(
+        'UPDATE "OnlineUpgradeState" SET "queuePausedAt" = $1, "queuePauseDeadlineAt" = $2 WHERE release = $3',
+        [paused, deadline, "6.1"]
+      );
+      // A restarted coordinator reuses migration history and reads the same pending intent.
+      await applyOnlineSchemaMigrations(session, [migration]);
+      expect(await readOnlineUpgradeCheckpoint(url, "6.1")).toMatchObject({
+        queuePausedAt: paused,
+        queuePauseDeadlineAt: deadline,
+        queueResumedAt: null,
+      });
+      const resumed = new Date(deadline.getTime() + 30_000);
+      await client.query('UPDATE "OnlineUpgradeState" SET "queueResumedAt" = $1 WHERE release = $2', [
+        resumed,
+        "6.1",
+      ]);
+      expect(await readOnlineUpgradeCheckpoint(url, "6.1")).toMatchObject({ queueResumedAt: resumed });
+    } finally {
+      await session.close();
+    }
+  }
+);

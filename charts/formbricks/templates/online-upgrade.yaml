@@ -1,6 +1,7 @@
 {{- if not (has .Values.upgrade.mode (list "online" "maintenance")) }}{{ fail "upgrade.mode must be online or maintenance" }}{{ end }}
 {{- if eq .Values.upgrade.mode "online" }}
 {{- if or (hasKey .Values.deployment.env "FORMBRICKS_UPGRADE_MODE") (hasKey .Values.deployment.env "SKIP_STARTUP_MIGRATION") }}{{ fail "Online mode owns FORMBRICKS_UPGRADE_MODE and SKIP_STARTUP_MIGRATION; remove deployment.env overrides" }}{{ end }}
+{{- if and (hasKey .Values.deployment.env "BULLMQ_WORKER_ENABLED") (ne (toString .Values.deployment.env.BULLMQ_WORKER_ENABLED) "1") }}{{ fail "Online mode requires target web workers enabled so surge replicas can consume queued work" }}{{ end }}
 {{- if not .Values.authzed.enabled }}{{ fail "Online mode requires authzed.enabled" }}{{ end }}
 {{- if not .Values.upgrade.online.sessionAffinity }}{{ fail "Online mode requires a session-affine MIGRATE_DATABASE_URL and upgrade.online.sessionAffinity=true" }}{{ end }}
 {{- if not (regexMatch "^sha256:[a-f0-9]{64}$" .Values.deployment.image.digest) }}{{ fail "Online mode requires deployment.image.digest" }}{{ end }}
@@ -49,8 +50,17 @@ rules:
     resourceNames: [{{ include "formbricks.name" . | quote }}]
     verbs: [get, patch]
   - apiGroups: [apps]
-    resources: [deployments, statefulsets]
+    resources: [deployments, statefulsets, replicasets]
     verbs: [get, list]
+  - apiGroups: [autoscaling]
+    resources: [horizontalpodautoscalers]
+    verbs: [get, list]
+  {{- range $workload := $workloads }}
+  - apiGroups: [apps]
+    resources: [{{ $workload.kind }}]
+    resourceNames: [{{ $workload.name | quote }}]
+    verbs: [patch]
+  {{- end }}
   - apiGroups: [apps]
     resources: [deployments]
     verbs: [create]

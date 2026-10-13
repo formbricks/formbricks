@@ -9,6 +9,7 @@ export async function GET() {
   const runtime = globalThis as typeof globalThis & {
     formbricksServerLifecycle?: { draining: boolean };
     formbricksJobsRuntime?: unknown;
+    formbricksOnlinePauseDelivery?: unknown;
   };
   try {
     if (runtime.formbricksServerLifecycle?.draining) throw new Error("draining");
@@ -16,6 +17,7 @@ export async function GET() {
       throw new Error("worker_starting");
     }
     if (env.FORMBRICKS_UPGRADE_MODE === "online") {
+      if (!runtime.formbricksOnlinePauseDelivery) throw new Error("pause_delivery_starting");
       const state = await prisma.onlineUpgradeState.findUnique({
         where: { release: ONLINE_UPGRADE_RELEASE },
         select: { completedPhases: true },

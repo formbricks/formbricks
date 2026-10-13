@@ -10,6 +10,9 @@ export type OnlineState = {
   baselineCompletedAt: Date | null;
   forwardOnlyAt: Date | null;
   activatedAt: Date | null;
+  queuePausedAt: Date | null;
+  queuePauseDeadlineAt: Date | null;
+  queueResumedAt: Date | null;
 };
 
 export class OnlineUpgradeBlocked extends Error {
@@ -26,6 +29,7 @@ export type OnlineStatus = {
   phase: string;
   progress: { surveys: string; baselineComplete: boolean };
   rollbackTo60Allowed: boolean;
+  jobs: { paused: boolean; pausedAt: string | null; deadlineAt: string | null; resumedAt: string | null };
   retryable: boolean;
   blockerCode: string | null;
 };
@@ -46,6 +50,12 @@ export const summarizeOnlineState = (
   phase: state?.phase ?? "preflight",
   progress: { surveys: state?.surveyCount.toString() ?? "0", baselineComplete: !!state?.baselineCompletedAt },
   rollbackTo60Allowed: !state?.forwardOnlyAt,
+  jobs: {
+    paused: !!state?.queuePausedAt && !state.queueResumedAt,
+    pausedAt: state?.queuePausedAt?.toISOString() ?? null,
+    deadlineAt: state?.queuePauseDeadlineAt?.toISOString() ?? null,
+    resumedAt: state?.queueResumedAt?.toISOString() ?? null,
+  },
   retryable: blocker?.retryable ?? false,
   blockerCode: blocker?.code ?? null,
 });
@@ -107,13 +117,16 @@ export const runOnlineUpgrade = async (
   await deps.backfill();
   await deps.verifyProjection();
   await deps.assertLock();
-  await deps.save({ phase: "activating", completedPhases: ["prepare", "finalize"] });
+  await deps.save({
+    phase: "activating",
+    completedPhases: [...new Set([...state.completedPhases, "finalize"])],
+  });
   await deps.verifyConsumers();
   await deps.activate();
   await deps.assertLock();
   await deps.save({
     phase: "cleanup",
-    completedPhases: [...ONLINE_PHASES],
+    completedPhases: [...new Set([...state.completedPhases, ...ONLINE_PHASES])],
     activatedAt: state.activatedAt ?? new Date(),
   });
   await deps.cleanup?.();

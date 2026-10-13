@@ -10,6 +10,7 @@ import {
   openUpgradeSession,
   readOnlineUpgradeCheckpoint,
 } from "@formbricks/database/upgrade-session";
+import { openJobsUpgradeQueue } from "@formbricks/jobs";
 import { closeAuthzedClient } from "@/lib/authzed/client";
 import { applyCanonicalAuthzedSchema, checkCanonicalAuthzedSchema } from "@/lib/authzed/schema";
 import { setProjectionScopeReady } from "@/lib/authzed/scope-readiness";
@@ -28,12 +29,16 @@ import {
   verifyMigrationHistory,
 } from "./history";
 import { backfillOnlineSurveys, verifyOnlineProjection } from "./projection";
+import { handoffJobs } from "./queue-handoff";
 
 export type OnlinePlatform = {
   targetImage: string;
   sourceVersion: "6.0.0" | "6.0.1" | "6.0.2";
   sessionAffinity: boolean;
-  preflight: () => Promise<void>;
+  preflight: (retirementStarted: boolean) => Promise<void>;
+  retireSourceConsumers: (assertLock: () => Promise<void>) => Promise<void>;
+  jobDrainTimeoutSeconds: number;
+  verifySourceConsumersAbsent: () => Promise<void>;
   verifyConsumers: () => Promise<void>;
   handoff?: (assertLock: () => Promise<void>) => Promise<void>;
   cleanup?: (assertLock: () => Promise<void>) => Promise<void>;
@@ -147,7 +152,8 @@ export const runOnlineCommand = async (
       save,
       assertLock: lock.assertLock,
       preflight: async () => {
-        await platform.preflight();
+        const checkpoint = await read();
+        await platform.preflight(!!checkpoint?.queuePausedAt);
         await verifyHistory();
         const canonical = await checkCanonicalAuthzedSchema();
         if (canonical.status === "matched" && (await read())) return;
@@ -190,9 +196,30 @@ export const runOnlineCommand = async (
       cleanup: platform.cleanup ? () => platform.cleanup!(lock.assertLock) : undefined,
     });
     if (command === "prepare" && platform.handoff && !(await read())?.activatedAt) {
-      await save({ phase: "handoff" });
-      await platform.handoff(lock.assertLock);
-      await save({ phase: "rollout" });
+      const checkpoint = await read();
+      if (!checkpoint?.queuePausedAt || checkpoint.queueResumedAt) {
+        await save({ phase: "handoff" });
+        await platform.handoff(lock.assertLock);
+      }
+      if (!env.REDIS_URL) throw new OnlineUpgradeBlocked("queue_connection_required");
+      const queue = await openJobsUpgradeQueue(env.REDIS_URL);
+      try {
+        await handoffJobs({
+          read: async () => {
+            const value = await read();
+            if (!value) throw new OnlineUpgradeBlocked("preparation_required");
+            return value;
+          },
+          save,
+          assertLock: lock.assertLock,
+          queue,
+          retireSourceConsumers: (assertDrained) => platform.retireSourceConsumers(assertDrained),
+          verifySourceConsumersAbsent: platform.verifySourceConsumersAbsent,
+          timeoutSeconds: platform.jobDrainTimeoutSeconds,
+        });
+      } finally {
+        await queue.close();
+      }
       return summarizeOnlineState(await read());
     }
     return result;

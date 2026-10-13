@@ -1623,6 +1623,8 @@ upgrade:
   online:
     sourceVersion: "6.0.2"
     sessionAffinity: false
+    # Abort without source termination if active BullMQ jobs exceed this deadline.
+    jobDrainTimeoutSeconds: 180
     timeoutSeconds: 900
     # Exact immutable images for every app writer/worker. The web Deployment is added automatically.
     workloads: []

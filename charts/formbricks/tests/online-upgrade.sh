@@ -65,6 +65,12 @@ for (const controller of ['helm', 'argo']) {
     assert.deepEqual(workload.spec.strategy.rollingUpdate, {maxSurge: 1, maxUnavailable: 0});
   }
   assert.equal(primary.spec.template.spec.containers[0].env.find(e => e.name === 'SKIP_STARTUP_MIGRATION').value, 'true');
+  assert.equal(primary.spec.template.spec.containers[0].env.find(e => e.name === 'BULLMQ_WORKER_ENABLED').value, '1');
+  assert.equal(JSON.parse(cm.data['config.json']).jobDrainTimeoutSeconds, 180);
+  const role = docs.find(d => d.kind === 'Role' && d.metadata.name === 'formbricks-online');
+  const workloadPatches = role.rules.filter(r => r.apiGroups.includes('apps') && r.verbs.includes('patch'));
+  assert.equal(workloadPatches.length, 1);
+  assert.deepEqual(workloadPatches[0].resourceNames, ['formbricks']);
   assert.equal(docs.some(d => d.kind === 'Job' && d.metadata.name === 'formbricks-authzed-initialize'), false);
   assert.equal(docs.some(d => d.kind === 'Deployment' && d.metadata.name.endsWith('online-surge')), false);
   assert.equal(docs.some(d => d.kind === 'ClusterRole' && d.metadata.name.includes('online')), false);
@@ -78,5 +84,8 @@ if helm template fixture "$chart" -f "$tmp/values.yaml" --set upgrade.mode=onlie
 fi
 if helm template fixture "$chart" -f "$tmp/values.yaml" --set deployment.env.FORMBRICKS_UPGRADE_MODE=maintenance > "$tmp/rejected" 2>&1; then
   echo 'compatibility mode override was accepted' >&2; exit 1
+fi
+if helm template fixture "$chart" -f "$tmp/values.yaml" --set deployment.env.BULLMQ_WORKER_ENABLED=0 > "$tmp/rejected" 2>&1; then
+  echo 'target surge with disabled workers was accepted' >&2; exit 1
 fi
 printf '%s\n' 'Online Helm and Argo render contracts passed.'

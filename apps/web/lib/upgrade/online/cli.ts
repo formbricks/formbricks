@@ -23,8 +23,14 @@ export const runKubernetesOnlineCli = async (args: string[], assetRoot: URL) => 
         targetImage: config.targetImage,
         sourceVersion: config.sourceVersion,
         sessionAffinity: config.sessionAffinity,
-        preflight: () => platform.preflight(),
-        verifyConsumers: () => platform.verifyConsumers(),
+        preflight: (retirementStarted) => platform.preflight(retirementStarted),
+        verifySourceConsumersAbsent: () => platform.verifySourceConsumersAbsent(),
+        jobDrainTimeoutSeconds: config.jobDrainTimeoutSeconds,
+        retireSourceConsumers: async (assertLock) => {
+          platform.assertLock = assertLock;
+          await platform.retireSourceConsumers();
+        },
+        verifyConsumers: () => platform.waitForConsumers(),
         handoff: async (assertLock) => {
           platform.assertLock = assertLock;
           const template = JSON.parse(await readFile("/etc/formbricks-online/deployment.json", "utf8"));
