@@ -408,13 +408,17 @@ carrying traffic and re-issuing is complete.
 Downgrading restores the old links, since nothing about them changed on disk — but it also restores
 the behaviour above, so treat it as a stopgap while you regenerate rather than a fix.
 
-### Hub worker required for Docker
+### Hub worker for Docker
 
-Fresh Docker and one-click installations start `hub-worker` with the Hub API. The worker consumes every
-PostgreSQL-backed asynchronous Hub job, including webhook deliveries and any configured enrichment. An existing
-installation keeps its local `docker-compose.yml` during `formbricks.sh update`, so merge the worker before
-updating; the updater now exits before pulling images, running migrations, or stopping services when the
-resolved Compose project does not contain `hub-worker`.
+Fresh Docker and one-click installations start `hub-worker` with the Hub API. It has been part of the stack since
+v5 and is what the bundled Compose file ships. The worker consumes every PostgreSQL-backed asynchronous Hub job,
+including webhook deliveries and any configured enrichment, so an installation that runs the Hub API without it
+leaves those jobs queued.
+
+An existing installation keeps its local `docker-compose.yml` during `formbricks.sh update`, so the updater
+cannot add the service for you. Adding it is recommended rather than required in this release: the updater prints
+a warning and continues when the resolved Compose project does not contain `hub-worker`. The next major release
+will require it, so merging it now avoids the interruption later.
 
 1. Start in the directory containing your customized `docker-compose.yml`, then back it up and download the file
    from the release you are upgrading to. For a one-click installation, run `cd formbricks` first. Use that
@@ -437,8 +441,9 @@ resolved Compose project does not contain `hub-worker`.
    docker compose config --services | grep -Fx hub-worker
    ```
 
-4. For a one-click installation, rerun `./formbricks.sh update`. For a manually managed Compose installation,
-   apply Hub migrations before starting the API and worker from the new image:
+4. For a one-click installation, rerun `./formbricks.sh update` — the warning disappears once the resolved project
+   contains `hub-worker`. For a manually managed Compose installation, apply Hub migrations before starting the
+   API and worker from the new image:
 
    ```bash
    docker compose pull hub hub-migrate hub-worker
@@ -466,8 +471,8 @@ cp -p docker-compose.yml.before-hub-worker docker-compose.yml
 ```
 
 Completed jobs remain committed and pending jobs remain queued, but all Hub asynchronous processing pauses
-again. A fully custom deployment that runs Hub workers outside this Compose project must use its own manual
-upgrade workflow rather than the one-click updater.
+again. A fully custom deployment that runs Hub workers outside this Compose project can ignore the warning: the
+update is not blocked.
 
 ### Bundled Cube image (action required for some deployments)
 
