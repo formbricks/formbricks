@@ -10,7 +10,7 @@ import {
 } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
-import { can } from "@/lib/authorization";
+import { filterAuthorizedUserIds } from "@/lib/authorization/user-list";
 import { POSTHOG_KEY } from "@/lib/constants";
 import { selectSurveyEmbeddedDataLinks, withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { handleFeedbackSourcePipeline } from "@/lib/feedback-source/pipeline-handler";
@@ -341,12 +341,15 @@ const keepRecipientsWhoMayReadResponses = async <TUser extends { id: string }>(
   survey: TPipelineSurvey
 ): Promise<TUser[]> => {
   if (users.length === 0) return users;
-  const allowed = await Promise.all(
-    users.map((user) =>
-      can({ id: user.id, type: "user" }, "survey.response_read", { id: survey.id, type: "survey" })
-    )
+  const allowed = await filterAuthorizedUserIds(
+    users.map((user) => user.id),
+    "survey.response_read",
+    {
+      id: survey.id,
+      type: "survey",
+    }
   );
-  return users.filter((_, index) => allowed[index]);
+  return users.filter((user) => allowed.has(user.id));
 };
 
 const getUsersWithNotifications = async ({

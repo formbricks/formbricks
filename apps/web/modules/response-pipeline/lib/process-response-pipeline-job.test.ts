@@ -14,7 +14,7 @@ vi.mock("./process-webhook-delivery-job", () => ({ processWebhookDeliveryJob: on
 vi.mock("node:crypto", async (importOriginal) => await importOriginal());
 
 const {
-  mockCan,
+  mockFilterAuthorizedUserIds,
   mockIsSurveyVisibilityReady,
   mockCaptureSurveyResponsePostHogEvent,
   mockEnqueueResponseCompletedWorkflowRuns,
@@ -39,7 +39,7 @@ const {
   process.env.HUB_API_URL ??= "https://hub.test";
 
   return {
-    mockCan: vi.fn(),
+    mockFilterAuthorizedUserIds: vi.fn(),
     mockIsSurveyVisibilityReady: vi.fn(),
     mockCaptureSurveyResponsePostHogEvent: vi.fn(),
     mockEnqueueResponseCompletedWorkflowRuns: vi.fn(),
@@ -148,7 +148,7 @@ vi.mock("@/modules/ee/workflows/lib/runner/dispatch", () => ({
   dispatchWorkflowRunViaJobs: vi.fn(),
 }));
 
-vi.mock("@/lib/authorization", () => ({ can: mockCan }));
+vi.mock("@/lib/authorization/user-list", () => ({ filterAuthorizedUserIds: mockFilterAuthorizedUserIds }));
 vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: mockIsSurveyVisibilityReady }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -234,7 +234,7 @@ describe("processResponsePipelineJob", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     online.enabled = true;
-    mockCan.mockResolvedValue(true);
+    mockFilterAuthorizedUserIds.mockImplementation(async (ids: string[]) => new Set(ids));
     mockPrismaOrganizationFindFirst.mockResolvedValue(organization);
     mockPrismaSurveyFindUnique.mockResolvedValue(survey);
     mockGetIntegrations.mockResolvedValue([]);
@@ -425,14 +425,18 @@ describe("processResponsePipelineJob", () => {
       { email: "owner@example.com", id: "user_owner", locale: "en" },
       { email: "member@example.com", id: "user_member", locale: "en" },
     ]);
-    mockCan.mockImplementation(async (actor: { id: string }) => actor.id === "user_owner");
+    mockFilterAuthorizedUserIds.mockResolvedValue(new Set(["user_owner"]));
 
     await processResponsePipelineJob({ ...baseData, event: "responseFinished" }, baseContext);
 
-    expect(mockCan).toHaveBeenCalledWith({ id: "user_member", type: "user" }, "survey.response_read", {
-      id: "survey_123",
-      type: "survey",
-    });
+    expect(mockFilterAuthorizedUserIds).toHaveBeenCalledWith(
+      ["user_owner", "user_member"],
+      "survey.response_read",
+      {
+        id: "survey_123",
+        type: "survey",
+      }
+    );
     expect(mockSendResponseFinishedEmail).toHaveBeenCalledTimes(1);
     expect(mockSendResponseFinishedEmail.mock.calls[0][0]).toBe("owner@example.com");
   });
@@ -765,9 +769,9 @@ describe("processResponsePipelineJob", () => {
       { id: "member", email: "member@example.com", locale: "en-US" },
       { id: "billing", email: "billing@example.com", locale: "en-US" },
     ]);
-    mockCan.mockImplementation(async (actor: { id: string }) => actor.id === "member");
+    mockFilterAuthorizedUserIds.mockResolvedValue(new Set(["member"]));
     await processResponsePipelineJob({ ...baseData, event: "responseFinished" }, baseContext);
-    expect(mockCan).toHaveBeenCalledWith({ id: "billing", type: "user" }, "survey.response_read", {
+    expect(mockFilterAuthorizedUserIds).toHaveBeenCalledWith(["member", "billing"], "survey.response_read", {
       id: baseData.surveyId,
       type: "survey",
     });

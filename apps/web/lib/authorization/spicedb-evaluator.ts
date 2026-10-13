@@ -1,5 +1,6 @@
 import "server-only";
-import { getAuthzedClient } from "@/lib/authzed/client";
+import { type TAuthzedPermissionCheck, getAuthzedClient } from "@/lib/authzed/client";
+import { AUTHZED_MAX_BULK_CHECK_ITEMS } from "@/lib/authzed/constants";
 import { assertAuthzedProjectionFreshness } from "@/lib/authzed/outbox-freshness";
 import { USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
 import {
@@ -15,6 +16,7 @@ import {
   type TPendingPrivateSurveyPolicy,
   type TResolvedAuthorizationScope,
   resolveAuthorizationScope,
+  resolveAuthorizationUserBatch,
 } from "./source-scope";
 
 const parseAction = (
@@ -224,4 +226,38 @@ export const spicedbEvaluator: AuthorizationEvaluator = {
     const scope = await resolveAuthorizationScope(actor, resource);
     return scope ? checkSpicedbPermissionAtScope(actor, action, resource, scope) : false;
   },
+};
+
+/** Same stored-policy and graph decisions as `can`, with bounded multi-subject requests. */
+export const filterSpicedbAuthorizedUserIds = async <TAction extends TAuthorizationAction>(
+  userIds: ReadonlyArray<string>,
+  action: TAction,
+  resource: TAuthorizationResourceForAction<NoInfer<TAction>>
+): Promise<ReadonlySet<string>> => {
+  const ids = [...new Set(userIds)];
+  const allowed = new Set<string>();
+  assertActionMatchesResource(action, resource.type);
+  for (let offset = 0; offset < ids.length; offset += AUTHZED_MAX_BULK_CHECK_ITEMS) {
+    const page = ids.slice(offset, offset + AUTHZED_MAX_BULK_CHECK_ITEMS);
+    const scopes = await resolveAuthorizationUserBatch(page, resource);
+    const checks: TAuthzedPermissionCheck[] = [];
+    for (const id of page) {
+      const scope = scopes.get(id);
+      if (!scope?.actorValid) continue;
+      const check = getCheck({ id, type: "user" }, action, resource.type, scope);
+      if (!check) continue;
+      checks.push({
+        permission: check.permission,
+        resource: { objectId: check.resource.id, objectType: getSpicedbObjectType(check.resource.type) },
+        subject: { objectId: id, objectType: getSpicedbObjectType("user") },
+      });
+    }
+    if (checks.length === 0) continue;
+    await assertAuthzedProjectionFreshness();
+    const decisions = await getAuthzedClient().checkPermissionBatch(checks);
+    checks.forEach((check, index) => {
+      if (decisions[index]) allowed.add(check.subject.objectId);
+    });
+  }
+  return allowed;
 };
