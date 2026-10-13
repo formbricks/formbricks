@@ -210,16 +210,20 @@ const enqueueWebhookDeliveryJobs = async ({
         const jobId = options?.jobId ?? createWebhookDeliveryJobId(logContext.jobId, payload.webhookId);
         try {
           await processWebhookDeliveryJob(payload, {
-            attempt: logContext.maxAttempts,
+            attempt: logContext.attempt,
             maxAttempts: logContext.maxAttempts,
             jobId,
             jobName: "response-pipeline.process",
             queueName: "formbricks-jobs",
           });
         } catch (error) {
+          // Keep the released 6.0 queue contract: transient failures retry this pipeline job before
+          // its other side effects start. Old consumers cannot process a delivery-only retry payload.
+          // A permanently rejected webhook must not make the entire response job unrecoverable.
+          if (!(error instanceof UnrecoverableError)) throw error;
           logger.error(
             { ...logContext, err: error, webhookId: payload.webhookId },
-            "Inline webhook delivery failed"
+            "Inline webhook delivery failed permanently; continuing response processing"
           );
         }
         return { jobId, jobName: "response-pipeline.process", queueName: "formbricks-jobs" };
@@ -329,15 +333,14 @@ const loadResponseCountSafely = async ({
 /**
  * ENG-3282: an alert carries the response, so it only goes to someone who may read it — for a restricted
  * survey, its owner and the organization administrators. A subscription made while the survey was
- * workspace-visible does not survive a restriction. Workspace-visible surveys use the recipient query
- * authorization; restricted surveys additionally check each recipient.
+ * workspace-visible does not survive a restriction. The recipient query can include billing-only team
+ * members, so every recipient still needs a response-read decision, including workspace-visible surveys.
  */
 const keepRecipientsWhoMayReadResponses = async <TUser extends { id: string }>(
   users: TUser[],
   survey: TPipelineSurvey
 ): Promise<TUser[]> => {
-  // The recipient query already scopes current membership and workspace permissions.
-  if (users.length === 0 || isSurveyOutboundAllowed(survey)) return users;
+  if (users.length === 0) return users;
   const allowed = await Promise.all(
     users.map((user) =>
       can({ id: user.id, type: "user" }, "survey.response_read", { id: survey.id, type: "survey" })
