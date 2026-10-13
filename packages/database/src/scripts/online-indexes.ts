@@ -31,6 +31,11 @@ export const ONLINE_INDEXES: readonly OnlineIndex[] = [
 ];
 
 const quote = (identifier: string): string => `"${identifier.replaceAll('"', '""')}"`;
+
+/** Shadow databases have no live traffic and Prisma replays a migration as one transaction. */
+export const createOnlineIndexSql = (index: OnlineIndex, mode: "online" | "shadow"): string =>
+  `CREATE ${index.unique ? "UNIQUE " : ""}INDEX ${mode === "online" ? "CONCURRENTLY" : "IF NOT EXISTS"} ${quote(index.name)} ON ${quote(index.table)} (${index.columns.map(quote).join(", ")})${index.predicate ? ` WHERE ${quote(index.predicate)}` : ""}`;
+
 const readIndex = async (client: Client, index: OnlineIndex) => {
   const { rows } = await client.query<{
     valid: boolean;
@@ -79,9 +84,7 @@ export const ensureOnlineIndexes = async (databaseUrl: string): Promise<void> =>
       const existing = await readIndex(client, index);
       if (existing?.valid) continue;
       if (existing) await client.query(`DROP INDEX CONCURRENTLY ${quote(index.name)}`);
-      await client.query(
-        `CREATE ${index.unique ? "UNIQUE " : ""}INDEX CONCURRENTLY ${quote(index.name)} ON ${quote(index.table)} (${index.columns.map(quote).join(", ")})${index.predicate ? ` WHERE ${quote(index.predicate)}` : ""}`
-      );
+      await client.query(createOnlineIndexSql(index, "online"));
       if (!(await readIndex(client, index))?.valid)
         throw new Error(`Upgrade index is not valid: ${index.name}`);
     }

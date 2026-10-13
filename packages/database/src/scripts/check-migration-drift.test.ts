@@ -59,6 +59,11 @@ describe("stagePrismaMigrationHistory", () => {
     await createMigration(migrationsDir, "20260103000000_second_schema", "migration.sql");
     await createMigration(migrationsDir, "20260102000000_data_only", "migration.ts");
     await createMigration(migrationsDir, "20260101000000_first_schema", "migration.sql");
+    await createMigration(
+      migrationsDir,
+      "20260928120001_eng_2404_drop_survey_legacy_embedded_data_columns",
+      "migration.sql"
+    );
 
     const stagedMigrations = await stagePrismaMigrationHistory(migrationsDir, destinationDir);
 
@@ -205,6 +210,17 @@ describe("checkMigrationDrift", () => {
       expect(await fs.readFile(path.join(migrationsPath, "migration_lock.toml"), "utf8")).toBe(
         MIGRATION_LOCK_CONTENT
       );
+      const indexes = await fs.readFile(
+        path.join(migrationsPath, "99999999999999_online_indexes", "migration.sql"),
+        "utf8"
+      );
+      expect(indexes).toContain(
+        'CREATE UNIQUE INDEX IF NOT EXISTS "User_isBootstrapAdmin_key" ON "User" ("isBootstrapAdmin")'
+      );
+      expect(indexes).toContain(
+        'CREATE INDEX IF NOT EXISTS "Survey_visibility_pending_idx" ON "Survey" ("workspaceId") WHERE "visibilityPending"'
+      );
+      expect(indexes).not.toContain("CONCURRENTLY");
       return exitCode;
     });
 
