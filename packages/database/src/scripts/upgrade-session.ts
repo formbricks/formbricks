@@ -17,16 +17,19 @@ export const openUpgradeSession = async (connectionString: string): Promise<Upgr
   const loseLock = () => controller.abort(new Error("upgrade_lock_lost"));
   client.on("error", loseLock);
   client.on("end", loseLock);
-  await client.connect();
-  const { rows } = await client.query<{ pid: number; locked: boolean }>(
-    "SELECT pg_backend_pid() AS pid, pg_try_advisory_lock($1, $2) AS locked",
-    [LOCK_NAMESPACE, LOCK_ID]
-  );
-  if (!rows[0]?.locked) {
-    await client.end();
-    throw new Error("upgrade_already_running");
+  let pid: number;
+  try {
+    await client.connect();
+    const { rows } = await client.query<{ pid: number; locked: boolean }>(
+      "SELECT pg_backend_pid() AS pid, pg_try_advisory_lock($1, $2) AS locked",
+      [LOCK_NAMESPACE, LOCK_ID]
+    );
+    if (!rows[0]?.locked) throw new Error("upgrade_already_running");
+    pid = rows[0].pid;
+  } catch (error) {
+    await client.end().catch(() => {});
+    throw error;
   }
-  const pid = rows[0].pid;
   const assertLock = async () => {
     if (controller.signal.aborted) throw new Error("upgrade_lock_lost");
     const result = await client.query<{ held: boolean }>(

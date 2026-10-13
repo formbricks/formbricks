@@ -292,3 +292,85 @@ test("a failed source Job attempt still blocks while the Job can retry", async (
   }));
   await expect(kube.verifyConsumers()).rejects.toThrow("old_consumer_present");
 });
+
+const servingSurge = {
+  ...targetWorkload,
+  metadata: {
+    ...targetWorkload.metadata,
+    name: "web-online-surge",
+    labels: { "formbricks.com/upgrade-owner": "web" },
+  },
+};
+const surgePod = {
+  metadata: { name: "surge-pod", uid: "surge-pod", resourceVersion: "7" },
+  spec: { containers: [{ name: "web", image: target }] },
+};
+
+test("cleanup withdraws surge endpoints, verifies ingress and primary health, then deletes surge", async () => {
+  const kube = platform();
+  const events: string[] = [];
+  vi.spyOn(kube, "verifyConsumers").mockImplementation(() => {
+    events.push("healthy-primary");
+    return Promise.resolve();
+  });
+  vi.spyOn(kube, "verifyIngressDrain").mockImplementation((pods) => {
+    expect(pods).toEqual([surgePod]);
+    events.push("ingress-drained");
+    return Promise.resolve();
+  });
+  respond(kube, (path, method, body) => {
+    if (method === "PATCH") {
+      expect(body).toMatchObject({
+        metadata: { resourceVersion: "7", labels: { "formbricks.com/upgrade-generation": "draining" } },
+      });
+      events.push("withdraw-surge");
+      return {};
+    }
+    if (method === "DELETE") {
+      expect(body).toEqual({ propagationPolicy: "Foreground" });
+      events.push("delete-surge");
+      return {};
+    }
+    if (path.endsWith("/deployments")) return { items: [servingSurge] };
+    if (path.includes("/pods?")) return { items: [surgePod] };
+    if (path.includes("endpointslices")) {
+      events.push("endpoints-withdrawn");
+      return { items: [{ endpoints: [{ targetRef: { uid: "primary" }, conditions: { ready: true } }] }] };
+    }
+    throw new Error(`Unexpected Kubernetes call: ${path}`);
+  });
+  await kube.cleanup();
+  expect(events).toEqual([
+    "healthy-primary",
+    "withdraw-surge",
+    "endpoints-withdrawn",
+    "ingress-drained",
+    "healthy-primary",
+    "delete-surge",
+  ]);
+});
+
+test("cleanup preserves surge if the ingress cannot prove it has drained", async () => {
+  const kube = platform();
+  vi.spyOn(kube, "verifyConsumers").mockResolvedValue(undefined);
+  vi.spyOn(kube, "verifyIngressDrain").mockRejectedValue(new Error("drain unverified"));
+  respond(kube, (path, method) => {
+    if (method === "PATCH") return {};
+    if (path.endsWith("/deployments")) return { items: [servingSurge] };
+    if (path.includes("/pods?")) return { items: [surgePod] };
+    return { items: [{ endpoints: [{ targetRef: { uid: "primary" }, conditions: { ready: true } }] }] };
+  });
+  await expect(kube.cleanup()).rejects.toThrow("drain unverified");
+  expect(kube.call).not.toHaveBeenCalledWith(expect.anything(), "DELETE", expect.anything());
+});
+
+test("cleanup is idempotent after surge removal and refuses a colliding workload", async () => {
+  const kube = platform();
+  vi.spyOn(kube, "verifyConsumers").mockResolvedValue(undefined);
+  respond(kube, () => ({ items: [] }));
+  await kube.cleanup();
+  expect(kube.call).toHaveBeenCalledOnce();
+  respond(kube, () => ({ items: [{ ...servingSurge, metadata: { ...servingSurge.metadata, labels: {} } }] }));
+  await expect(kube.cleanup()).rejects.toThrow("surge_identity_changed");
+  expect(kube.call).not.toHaveBeenCalledWith(expect.anything(), "DELETE", expect.anything());
+});
