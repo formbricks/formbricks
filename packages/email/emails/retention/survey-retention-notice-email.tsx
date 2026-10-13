@@ -73,7 +73,8 @@ export function SurveyRetentionNoticeEmail({
                 })}
               </Text>
             ))}
-            <Text className="mt-1 text-sm">{t("emails.retention_notice_email_responses_after")}</Text>
+            {/* No bottom margin: the section adds its own, as after the surveys list. */}
+            <Text className="mt-1 mb-0 text-sm">{t("emails.retention_notice_email_responses_after")}</Text>
           </Section>
         )}
         {archivedSurveys.length > 0 && (
