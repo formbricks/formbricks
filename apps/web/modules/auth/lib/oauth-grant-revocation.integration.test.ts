@@ -344,12 +344,13 @@ describe("narrowing an OAuth app's consent ends the tokens beyond it (ENG-3529, 
       select: { id: true },
     });
 
-    await handle("/oauth2/update-consent", {
+    const response = await handle("/oauth2/update-consent", {
       method: "POST",
       headers: { "content-type": "application/json", cookie, origin: ORIGIN },
       body: JSON.stringify({ id: consentId, update: { scopes: NARROW.split(" ") } }),
     });
 
+    expect(response.status).toBe(200);
     expect(await prisma.oauthRefreshToken.count({ where: { id: wideRefresh.id } })).toBe(0);
     // Kept, as ENG-2499's revoke keeps them, rather than removed by the cascade.
     const after = await prisma.oauthAccessToken.findUnique({
