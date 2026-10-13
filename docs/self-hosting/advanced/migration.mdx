@@ -269,8 +269,8 @@ and use it only with a runtime that redacts credentials from its logs.
 
 Formbricks now sets its database transaction limits explicitly instead of relying on library defaults.
 Under load, the old 5-second limit was cancelling writes that were about to succeed: user identification,
-response updates and survey resets. Nothing to do here: the new limits are at least as permissive as the
-old ones.
+response updates and survey resets. The new limits are at least as permissive as the old ones, so they need
+no upgrade step of their own.
 
 - Transactions may run for up to 20 seconds.
 - Waiting for a free database connection is bounded by `connect_timeout` in `DATABASE_URL` (5 seconds
