@@ -17,14 +17,14 @@ export const revokeOAuthConsentAction = authenticatedActionClient
     withAuditLogging("deleted", "user", async ({ ctx, parsedInput }) => {
       // Account-level: the consent belongs to the user, not to an organization.
       ctx.auditLoggingCtx.userId = ctx.user.id;
-      ctx.auditLoggingCtx.oldObject = { oauthConsentId: parsedInput.id };
 
       await auth.api.deleteOAuthConsent({
         body: { id: parsedInput.id },
         headers: await headers(),
       });
 
-      ctx.auditLoggingCtx.newObject = { oauthConsentRevoked: true };
+      // Only newObject: a diff against an old snapshot would drop the unchanged consent id.
+      ctx.auditLoggingCtx.newObject = { oauthConsentId: parsedInput.id, oauthConsentRevoked: true };
       revalidatePath("/account/settings/authorized-apps");
 
       return { success: true };

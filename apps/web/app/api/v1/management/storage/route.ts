@@ -36,6 +36,12 @@ export const POST = withV1ApiWrapper({
       };
     }
 
+    // Attribute the attempt to the requested workspace before the permission check, so a denied
+    // request is not recorded against an unknown target.
+    if (auditLog && typeof storageInput.workspaceId === "string") {
+      auditLog.targetId = `${storageInput.workspaceId}:public`;
+    }
+
     // Accept workspaceId
     if (authentication && "apiKeyId" in authentication) {
       // API key auth: resolveBodyIds handles resolution + permission check

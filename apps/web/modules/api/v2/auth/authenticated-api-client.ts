@@ -33,10 +33,10 @@ export const authenticatedApiClient = async <S extends ExtendedSchemas>({
    */
   allowOrganizationOnlyApiKey?: boolean;
 }): Promise<Response> => {
-  try {
-    const auditLog =
-      action && targetType ? buildAuditLogBaseObject(action, targetType, request.url) : undefined;
+  const auditLog =
+    action && targetType ? buildAuditLogBaseObject(action, targetType, request.url) : undefined;
 
+  try {
     const response = await apiWrapper({
       request,
       schemas,
@@ -58,7 +58,7 @@ export const authenticatedApiClient = async <S extends ExtendedSchemas>({
     return response;
   } catch (err) {
     if (err !== null && typeof err === "object" && "type" in err) {
-      return handleApiError(request, err as ApiErrorResponseV2, undefined, err);
+      return handleApiError(request, err as ApiErrorResponseV2, auditLog, err);
     }
 
     return handleApiError(
@@ -72,7 +72,7 @@ export const authenticatedApiClient = async <S extends ExtendedSchemas>({
           },
         ],
       },
-      undefined,
+      auditLog,
       err
     );
   }
