@@ -30,7 +30,7 @@ describe("survey retention service (real Postgres)", () => {
     await prisma.response.create({ data: { surveyId: otherSurveyId, createdAt: daysAgo(500) } });
   });
 
-  test("reads a survey's timestamps, its oldest and newest response, and its notice", async () => {
+  test("reads a survey's timestamps, its oldest and newest response, its last restore and its notice", async () => {
     await prisma.retentionNotice.create({
       data: {
         organizationId,
@@ -42,6 +42,7 @@ describe("survey retention service (real Postgres)", () => {
         clockAt: daysAgo(10),
       },
     });
+    await prisma.retentionSurveyRestore.create({ data: { surveyId, restoredAt: daysAgo(4) } });
 
     const survey = await prisma.survey.findUniqueOrThrow({ where: { id: surveyId } });
     const other = await prisma.survey.findUniqueOrThrow({ where: { id: otherSurveyId } });
@@ -52,6 +53,7 @@ describe("survey retention service (real Postgres)", () => {
       archivedAt: null,
       oldestResponseAt: daysAgo(50),
       newestResponseAt: daysAgo(10),
+      restoredAt: daysAgo(4),
       surveysNotice: { claimedAt: daysAgo(3), deliveredAt: daysAgo(3), clockAt: daysAgo(10) },
       responsesNotice: null,
       surveyHeldUntil: null,
@@ -59,6 +61,7 @@ describe("survey retention service (real Postgres)", () => {
     });
     expect(await getSurveyRetentionFacts(other, new Date())).toMatchObject({
       oldestResponseAt: daysAgo(500),
+      restoredAt: null,
       surveysNotice: null,
     });
   });

@@ -1,5 +1,5 @@
--- Data retention (ENG-3713, decided in ENG-3697): policies, exemptions, run history and notice
--- markers, plus "User"."reactivatedAt" and "User"."lastActiveAt". Nothing on "Survey" or "Response"
+-- Data retention (ENG-3713, decided in ENG-3697): policies, exemptions, run history, notice and
+-- restore markers, plus "User"."reactivatedAt" and "User"."lastActiveAt". Nothing on "Survey" or "Response"
 -- changes, because retention must never write the survey row (its "updated_at" is one of the survey
 -- clocks).
 --
@@ -16,8 +16,8 @@
 -- behind a long-running query and holding the lock queue open behind us.
 --
 -- The CHECK constraints hold the structural invariants Prisma cannot express: positive day counts,
--- conditions only on the surveys policy, exactly one target per exemption and notice, and a reason on
--- every skipped run item. The allowed ranges are validated by the API instead, because they are
+-- conditions on the surveys policy only (and at least one there), exactly one target per exemption and
+-- notice, a reason on every person's exemption, and a reason on every skipped run item. The allowed ranges are validated by the API instead, because they are
 -- expected to widen. Prisma neither models nor drops CHECK constraints, so they cause no schema drift.
 -- A guard that finds a type or constraint already there keeps it as it is: a development database that
 -- applied an earlier draft of this unreleased file keeps that draft's definitions. Reset it instead.
@@ -36,6 +36,14 @@ END $$;
 DO $$
 BEGIN
   CREATE TYPE "RetentionSurveyCondition" AS ENUM ('noResponse', 'noChange', 'createdBefore');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+-- CreateEnum
+DO $$
+BEGIN
+  CREATE TYPE "RetentionExemptionSource" AS ENUM ('manual', 'restore');
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
@@ -102,7 +110,7 @@ END $$;
 
 DO $$
 BEGIN
-  ALTER TABLE "RetentionPolicy" ADD CONSTRAINT "RetentionPolicy_conditions_check" CHECK ("entity" = 'surveys' OR COALESCE(cardinality("conditions"), 0) = 0);
+  ALTER TABLE "RetentionPolicy" ADD CONSTRAINT "RetentionPolicy_conditions_check" CHECK (CASE WHEN "entity" = 'surveys' THEN COALESCE(cardinality("conditions"), 0) >= 1 ELSE COALESCE(cardinality("conditions"), 0) = 0 END);
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
@@ -115,7 +123,8 @@ CREATE TABLE IF NOT EXISTS "RetentionExemption" (
     "entity" "RetentionEntity" NOT NULL,
     "surveyId" TEXT,
     "until" TIMESTAMP(3) NOT NULL,
-    "reason" TEXT NOT NULL,
+    "source" "RetentionExemptionSource" NOT NULL DEFAULT 'manual',
+    "reason" TEXT,
     "createdById" TEXT,
     "revokedAt" TIMESTAMP(3),
     "revokedById" TEXT,
@@ -143,6 +152,24 @@ BEGIN
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
+
+-- A person's exemption carries their reason; one a restore made carries none (the app labels it).
+DO $$
+BEGIN
+  ALTER TABLE "RetentionExemption" ADD CONSTRAINT "RetentionExemption_reason_check" CHECK (("source" = 'manual') = ("reason" IS NOT NULL));
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+-- CreateTable
+-- When each survey was last restored from the archive: it starts the surveys policy's "no response" and
+-- "no change" periods over. Kept apart from "Survey" so retention adds nothing to the survey row.
+CREATE TABLE IF NOT EXISTS "RetentionSurveyRestore" (
+    "surveyId" TEXT NOT NULL,
+    "restoredAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "RetentionSurveyRestore_pkey" PRIMARY KEY ("surveyId")
+);
 
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "RetentionRun" (
@@ -328,6 +355,15 @@ END $$;
 DO $$
 BEGIN
   ALTER TABLE "RetentionExemption" ADD CONSTRAINT "RetentionExemption_surveyId_fkey" FOREIGN KEY ("surveyId") REFERENCES "Survey"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+-- AddForeignKey
+-- squawk-ignore constraint-missing-not-valid, adding-foreign-key-constraint
+DO $$
+BEGIN
+  ALTER TABLE "RetentionSurveyRestore" ADD CONSTRAINT "RetentionSurveyRestore_surveyId_fkey" FOREIGN KEY ("surveyId") REFERENCES "Survey"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;

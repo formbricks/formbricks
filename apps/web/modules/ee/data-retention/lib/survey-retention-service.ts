@@ -21,8 +21,8 @@ export async function getSurveyRetentionPolicies(
 
 /**
  * The facts a survey's retention dates derive from: its timestamps (from the survey the caller already
- * read), its oldest and newest response (one aggregate over `Response(surveyId, createdAt)`), and the
- * survey's notices if they went out. `now` is the caller's database clock (`readDatabaseClock`), which
+ * read), its oldest and newest response (one aggregate over `Response(surveyId, createdAt)`), its last
+ * restore, and the survey's notices if they went out. `now` is the caller's database clock (`readDatabaseClock`), which
  * exemption ends are stamped with.
  */
 export async function getSurveyRetentionFacts(
@@ -36,7 +36,7 @@ export async function getSurveyRetentionFacts(
   now: Date
 ): Promise<TSurveyRetentionFacts> {
   const surveyId = survey.id;
-  const [responses, notices, heldUntil] = await Promise.all([
+  const [responses, notices, heldUntil, restore] = await Promise.all([
     prisma.response.aggregate({
       where: { surveyId },
       _min: { createdAt: true },
@@ -54,6 +54,7 @@ export async function getSurveyRetentionFacts(
       WHERE "surveyId" = ${surveyId} AND LEAST("until", "revokedAt") <= ${now}
       GROUP BY "entity"
     `,
+    prisma.retentionSurveyRestore.findUnique({ where: { surveyId }, select: { restoredAt: true } }),
   ]);
   const notice = (entity: "surveys" | "responses") => {
     const row = notices.find((candidate) => candidate.entity === entity);
@@ -72,6 +73,7 @@ export async function getSurveyRetentionFacts(
     archivedAt: survey.archivedAt ?? null,
     oldestResponseAt: responses._min.createdAt,
     newestResponseAt: responses._max.createdAt,
+    restoredAt: restore?.restoredAt ?? null,
     surveysNotice: notice("surveys"),
     responsesNotice: notice("responses"),
     // Either kind of exemption holds the survey itself (ENG-3371).

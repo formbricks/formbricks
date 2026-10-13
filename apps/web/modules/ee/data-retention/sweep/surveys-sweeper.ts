@@ -28,6 +28,7 @@ type TSurveyCandidate = {
   createdAt: Date;
   updatedAt: Date;
   newestResponseAt: Date | null;
+  restoredAt: Date | null;
   noticeClaimedAt: Date | null;
   noticeDeliveredAt: Date | null;
   noticeClockAt: Date | null;
@@ -40,6 +41,7 @@ const clockOf = (candidate: TSurveyCandidate, conditions: readonly RetentionSurv
       createdAt: candidate.createdAt,
       updatedAt: candidate.updatedAt,
       lastResponseAt: candidate.newestResponseAt,
+      restoredAt: candidate.restoredAt,
     },
     conditions
   );
@@ -57,28 +59,38 @@ const targetState = (
 });
 
 /**
- * The ticked conditions as SQL over `Survey s`, beyond the `updated_at` bound that always applies: "no
- * response" needs no response after the cutoff (one index probe on `Response(surveyId, created_at)`),
- * "created before" the creation date.
+ * The ticked conditions as SQL over `Survey s` and its restore marker `rs`: each has held since at or
+ * before the cutoff (`getSurveyConditionSince`, which this mirrors). "No response" needs no response after
+ * the cutoff (one index probe on `Response(surveyId, created_at)`), "no change" no write after it, both
+ * no restore after it; "created before" only the creation date.
  */
-const conditionClauses = (conditions: readonly RetentionSurveyCondition[], cutoff: Date): Prisma.Sql =>
-  Prisma.sql`
-    ${
-      conditions.includes("noResponse")
-        ? Prisma.sql`AND NOT EXISTS (
+const conditionClauses = (conditions: readonly RetentionSurveyCondition[], cutoff: Date): Prisma.Sql => {
+  const notRestoredSince = Prisma.sql`AND (rs."restoredAt" IS NULL OR rs."restoredAt" <= ${cutoff})`;
+  const clauses = conditions.map((condition) => {
+    switch (condition) {
+      case "noResponse":
+        return Prisma.sql`AND s."created_at" <= ${cutoff}
+          AND NOT EXISTS (
             SELECT 1 FROM "Response" r WHERE r."surveyId" = s."id" AND r."created_at" > ${cutoff}
-          )`
-        : Prisma.empty
+          )
+          ${notRestoredSince}`;
+      case "noChange":
+        return Prisma.sql`AND s."updated_at" <= ${cutoff} ${notRestoredSince}`;
+      case "createdBefore":
+        return Prisma.sql`AND s."created_at" <= ${cutoff}`;
     }
-    ${conditions.includes("createdBefore") ? Prisma.sql`AND s."created_at" <= ${cutoff}` : Prisma.empty}
-  `;
+  });
+  // An empty condition list would match every survey; the policy CHECK and the API never allow one.
+  if (clauses.length === 0) throw new Error("The surveys policy needs at least one condition");
+  return Prisma.join(clauses, " ");
+};
 
 /**
  * The organisation's live surveys whose clock is at or before `noticeDueAtOrBefore`, held by no active
  * exemption on either policy (deleting a survey deletes its responses, so a responses exemption holds it
- * too), keyset-paged on the id. The ticked conditions are pushed into SQL: `updated_at` always counts,
- * "no response" needs no response after the cutoff (one index probe on `Response(surveyId, created_at)`),
- * "created before" the creation date. `surveyId` narrows it to one survey, for the re-check under lock.
+ * too), keyset-paged on the id. The ticked conditions are pushed into SQL (`conditionClauses`), so only
+ * those count: without "no change", an edit doesn't hold a survey back. `surveyId` narrows it to one
+ * survey, for the re-check under lock.
  */
 const readCandidates = (
   client: Pick<Prisma.TransactionClient, "$queryRaw">,
@@ -93,6 +105,7 @@ const readCandidates = (
     SELECT s."id", s."name", s."workspaceId", s."ownerId", s."createdBy",
            s."created_at" AS "createdAt", s."updated_at" AS "updatedAt",
            (SELECT MAX(r."created_at") FROM "Response" r WHERE r."surveyId" = s."id") AS "newestResponseAt",
+           rs."restoredAt" AS "restoredAt",
            n."sentAt" AS "noticeClaimedAt", n."deliveredAt" AS "noticeDeliveredAt",
            n."clockAt" AS "noticeClockAt",
            -- Every exemption's end on either policy, including one revoked after the run opened: a notice
@@ -102,11 +115,11 @@ const readCandidates = (
     FROM "Survey" s
     JOIN "Workspace" w ON w."id" = s."workspaceId"
     LEFT JOIN "RetentionNotice" n ON n."surveyId" = s."id" AND n."entity" = 'surveys'
+    LEFT JOIN "RetentionSurveyRestore" rs ON rs."surveyId" = s."id"
     WHERE w."organizationId" = ${context.policy.organizationId}
       AND s."archivedAt" IS NULL
       -- A survey scheduled to launch later hasn't had its chance yet.
       AND (s."publishOn" IS NULL OR s."publishOn" <= ${context.now})
-      AND s."updated_at" <= ${noticeDueAtOrBefore}
       ${conditionClauses(context.policy.conditions, noticeDueAtOrBefore)}
       ${surveyId ? Prisma.sql`AND s."id" = ${surveyId}` : Prisma.empty}
       ${afterId ? Prisma.sql`AND s."id" > ${afterId}` : Prisma.empty}
@@ -127,10 +140,11 @@ const readHeldSurveys = (context: TRetentionSweepContext, noticeDueAtOrBefore: D
       FROM "RetentionExemption" e
       JOIN "Survey" s ON s."id" = e."surveyId"
       JOIN "Workspace" w ON w."id" = s."workspaceId"
+      LEFT JOIN "RetentionSurveyRestore" rs ON rs."surveyId" = s."id"
       WHERE w."organizationId" = ${context.policy.organizationId}
         AND e."organizationId" = ${context.policy.organizationId}
         AND e."revokedAt" IS NULL AND e."until" > ${context.now}
-        AND s."archivedAt" IS NULL AND s."updated_at" <= ${noticeDueAtOrBefore}
+        AND s."archivedAt" IS NULL
         AND (s."publishOn" IS NULL OR s."publishOn" <= ${context.now})
         ${conditionClauses(context.policy.conditions, noticeDueAtOrBefore)}
     `

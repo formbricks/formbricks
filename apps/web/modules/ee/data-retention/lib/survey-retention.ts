@@ -12,6 +12,8 @@ export type TSurveyRetentionFacts = {
   archivedAt: Date | null;
   oldestResponseAt: Date | null;
   newestResponseAt: Date | null;
+  /** When the survey was last restored from the archive, if ever. */
+  restoredAt: Date | null;
   /** The surveys-policy notice for this survey, if one was claimed. */
   surveysNotice: TNoticeState | null;
   /** The one-time responses reminder for this survey, if one was claimed. */
@@ -105,7 +107,12 @@ const getSurveysPlan = (
   }
 
   const clock = getSurveyRetentionClock(
-    { createdAt: survey.createdAt, updatedAt: survey.updatedAt, lastResponseAt: survey.newestResponseAt },
+    {
+      createdAt: survey.createdAt,
+      updatedAt: survey.updatedAt,
+      lastResponseAt: survey.newestResponseAt,
+      restoredAt: survey.restoredAt,
+    },
     policy.conditions
   );
   const schedule = getRetentionSchedule(

@@ -27,6 +27,7 @@ const exemption = (id: string): TRetentionExemption => ({
   workspaceId: "clwsp11111111111111111111",
   policy: "surveys",
   until: "2031-03-31T21:59:59.999Z",
+  source: "manual",
   reason: "Supplier audit",
   createdBy: { id: "cluser1111111111111111111", name: "Anna Keller" },
   createdAt: "2030-01-02T00:00:00.000Z",
@@ -101,6 +102,7 @@ describe("Exemptions hooks", () => {
       surveyId: "clsrv11111111111111111111",
       policy: "responses" as const,
       until: "2031-03-31T21:59:59.999Z",
+      source: "manual",
       reason: "Supplier audit",
     };
 

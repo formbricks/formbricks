@@ -51,8 +51,9 @@ const isAtOrBefore = (a: Date, b: Date): boolean => a.getTime() <= b.getTime();
  *
  * What remains only ever moves a clock forward, so it can't bring one back: a new response, a survey's
  * `updatedAt` (Prisma's `@updatedAt`, and `updateSurvey` in `lib/survey/service.ts` stamps `new Date()`),
- * and a member's sign-ins, activity and reactivation. A write that set `updatedAt` back by hand would
- * break this.
+ * a restore (`RetentionSurveyRestore.restoredAt` only ever moves forward), and a member's sign-ins,
+ * activity and reactivation. A survey's `createdAt` never changes. A write that set `updatedAt` back by
+ * hand would break this.
  *
  * The responses reminder is sent once per survey (8 Oct), while each response has its own clock, so it
  * records none and only a policy change voids it.
@@ -229,26 +230,52 @@ export type TSurveyRetentionClockInput = {
   updatedAt: Date;
   /** The newest response's `createdAt`, or null for a survey with none. */
   lastResponseAt: Date | null;
+  /** When the survey was last restored from the archive (`RetentionSurveyRestore`), or null. */
+  restoredAt: Date | null;
 };
 
 /**
- * A survey's clock under the surveys policy: the latest of the timestamps its ticked conditions read.
- * Every ticked condition must hold and they share one period, so the latest timestamp decides.
- * `updatedAt` always counts, ticked or not, so restoring an archived survey (which bumps it) restarts
- * the full period. A survey with no responses satisfies "no response" from the start.
+ * When each surveys-policy condition started to hold, so a survey meets it once that is `periodDays` ago:
+ * - "no response": since its newest response, or its creation when it has none;
+ * - "no change": since its last write (`updatedAt`);
+ * - "created before": since its creation.
+ * A restore starts "no response" and "no change" over (`restoredAt`): a survey brought back from the
+ * archive gets a full period on both. Creation can't start over, so a restore under a policy whose only
+ * condition is "created before" exempts the survey instead (`restartSurveyRetention`).
+ */
+const getSurveyConditionSince = (
+  survey: TSurveyRetentionClockInput,
+  condition: RetentionSurveyCondition
+): Date => {
+  const restarted = (date: Date) => (survey.restoredAt ? latest(date, survey.restoredAt) : date);
+  switch (condition) {
+    case "noResponse":
+      return restarted(
+        survey.lastResponseAt ? latest(survey.createdAt, survey.lastResponseAt) : survey.createdAt
+      );
+    case "noChange":
+      return restarted(survey.updatedAt);
+    case "createdBefore":
+      return survey.createdAt;
+  }
+};
+
+/**
+ * A survey's clock under the surveys policy: the latest of the dates its ticked conditions started to
+ * hold (`getSurveyConditionSince`). Every ticked condition must hold and they share one period, so the
+ * latest decides. Only ticked conditions count: without "no change", an edit doesn't move the clock.
+ * The policy always has at least one condition (`RetentionPolicy_conditions_check` and the API).
  */
 export const getSurveyRetentionClock = (
   survey: TSurveyRetentionClockInput,
   conditions: readonly RetentionSurveyCondition[]
 ): Date => {
-  let clock = survey.updatedAt;
-  if (conditions.includes("noResponse") && survey.lastResponseAt) {
-    clock = latest(clock, survey.lastResponseAt);
+  if (conditions.length === 0) {
+    throw new Error("The surveys policy needs at least one condition");
   }
-  if (conditions.includes("createdBefore")) {
-    clock = latest(clock, survey.createdAt);
-  }
-  return clock;
+  return conditions
+    .map((condition) => getSurveyConditionSince(survey, condition))
+    .reduce((clock, since) => latest(clock, since));
 };
 
 /**

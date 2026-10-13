@@ -18,6 +18,7 @@ const survey: TSurveyRetentionFacts = {
   archivedAt: null,
   oldestResponseAt: daysAgo(1100),
   newestResponseAt: daysAgo(1080),
+  restoredAt: null,
   surveysNotice: null,
   responsesNotice: null,
   surveyHeldUntil: null,

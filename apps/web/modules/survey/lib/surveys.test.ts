@@ -10,6 +10,7 @@ import { validateInputs } from "@/lib/utils/validate";
 import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
 import { enqueueSurveyDeletionCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
 import { getSurveyPurgeEligibleWhere } from "@/modules/survey/archive/lib/purge-eligibility";
+import { restartSurveyRetention } from "@/modules/survey/archive/lib/retention-restart";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "./surveys";
 
 vi.mock("@/lib/utils/validate", () => ({
@@ -39,6 +40,10 @@ vi.mock("@/modules/deletion-cleanup/lib/enqueue", () => ({
 
 vi.mock("@/modules/deletion-cleanup/lib/drain", () => ({
   drainDeletionCleanups: vi.fn(),
+}));
+
+vi.mock("@/modules/survey/archive/lib/retention-restart", () => ({
+  restartSurveyRetention: vi.fn(),
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -378,24 +383,55 @@ describe("archiveSurvey", () => {
 });
 
 describe("restoreSurvey", () => {
+  const organizationId = "clq5n7p1q0000m7z0h5p6g3r9";
+  const restored = { id: surveyId, status: "paused", archivedAt: null };
+  const restoreTx = (locked: { archivedAt: Date | null; organizationId: string } | undefined) => {
+    const tx = {
+      $queryRaw: vi.fn().mockResolvedValue(locked ? [locked] : []),
+      survey: { update: vi.fn().mockResolvedValue(restored) },
+    };
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(tx as never));
+    return tx;
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  test("should restore a survey by clearing archivedAt", async () => {
-    vi.mocked(prisma.survey.update).mockResolvedValue({
-      id: surveyId,
-      status: "paused",
-      archivedAt: null,
-    } as never);
+  test("clears archivedAt and restarts the survey's retention, with the survey locked", async () => {
+    const tx = restoreTx({ archivedAt: new Date("2030-01-01T00:00:00.000Z"), organizationId });
+    vi.mocked(restartSurveyRetention).mockResolvedValue({ exemptionId: "clexm" });
 
-    await restoreSurvey(surveyId);
+    await expect(restoreSurvey(surveyId, { restoredById: "user-1" })).resolves.toEqual({
+      ...restored,
+      retentionExemptionId: "clexm",
+    });
 
-    expect(prisma.survey.update).toHaveBeenCalledWith({
+    expect(String(tx.$queryRaw.mock.calls[0][0].join("?"))).toContain("FOR UPDATE");
+    expect(tx.survey.update).toHaveBeenCalledWith({
       where: { id: surveyId },
       data: { archivedAt: null },
       select: { id: true, status: true, archivedAt: true },
     });
+    expect(restartSurveyRetention).toHaveBeenCalledWith(tx, {
+      surveyId,
+      organizationId,
+      restoredById: "user-1",
+    });
+  });
+
+  test("restoring a survey that isn't archived leaves retention alone", async () => {
+    restoreTx({ archivedAt: null, organizationId });
+
+    await expect(restoreSurvey(surveyId)).resolves.toEqual({ ...restored, retentionExemptionId: null });
+    expect(restartSurveyRetention).not.toHaveBeenCalled();
+  });
+
+  test("a survey that doesn't exist is not found", async () => {
+    const tx = restoreTx(undefined);
+
+    await expect(restoreSurvey(surveyId)).rejects.toThrow(ResourceNotFoundError);
+    expect(tx.survey.update).not.toHaveBeenCalled();
   });
 
   test("should map Prisma P2025 during restore to ResourceNotFoundError", async () => {
@@ -403,7 +439,7 @@ describe("restoreSurvey", () => {
       code: "P2025",
       clientVersion: "4.0.0",
     });
-    vi.mocked(prisma.survey.update).mockRejectedValue(prismaError);
+    vi.mocked(prisma.$transaction).mockRejectedValue(prismaError);
 
     await expect(restoreSurvey(surveyId)).rejects.toThrow(ResourceNotFoundError);
   });
@@ -413,7 +449,7 @@ describe("restoreSurvey", () => {
       code: "P2003",
       clientVersion: "4.0.0",
     });
-    vi.mocked(prisma.survey.update).mockRejectedValue(prismaError);
+    vi.mocked(prisma.$transaction).mockRejectedValue(prismaError);
 
     await expect(restoreSurvey(surveyId)).rejects.toThrow(DatabaseError);
     expect(logger.error).toHaveBeenCalledWith({ error: prismaError, surveyId }, "Error restoring survey");

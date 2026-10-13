@@ -93,10 +93,13 @@ export async function updateRetentionPolicy({
 }): Promise<TRetentionPolicyUpdate> {
   return prisma.$transaction(async (tx) => {
     const defaults = RETENTION_POLICY_DEFAULTS[policy];
+    // The first row starts from the defaults, conditions included: the surveys policy always has one.
     const inserted = await tx.$executeRaw`
-      INSERT INTO "RetentionPolicy" ("id", "organizationId", "entity", "warnDays", "periodDays", "updated_at")
+      INSERT INTO "RetentionPolicy"
+        ("id", "organizationId", "entity", "warnDays", "periodDays", "conditions", "updated_at")
       VALUES (${createId()}, ${organizationId}, ${policy}::"RetentionEntity", ${defaults.warnDays},
-              ${defaults.periodDays}, ${nowOverride ?? new Date()})
+              ${defaults.periodDays}, ${defaults.conditions}::text[]::"RetentionSurveyCondition"[],
+              ${nowOverride ?? new Date()})
       ON CONFLICT ("organizationId", "entity") DO NOTHING
     `;
     // Lock the row, then read it through Prisma: raw SQL would hand the enum array back unparsed.

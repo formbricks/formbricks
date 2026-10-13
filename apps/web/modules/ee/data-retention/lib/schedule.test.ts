@@ -352,23 +352,51 @@ describe("getRetentionClockCutoffs", () => {
 });
 
 describe("getSurveyRetentionClock", () => {
-  const survey = { createdAt: day(0), updatedAt: day(100), lastResponseAt: day(200) };
+  // Created on day 0, last changed on day 100, last response on day 200, never restored.
+  const survey = { createdAt: day(0), updatedAt: day(100), lastResponseAt: day(200), restoredAt: null };
 
-  test("always counts updatedAt, whatever is ticked", () => {
-    expect(getSurveyRetentionClock({ ...survey, lastResponseAt: null }, ["createdBefore"])).toEqual(day(100));
+  test("'no response' counts from the last response", () => {
+    expect(getSurveyRetentionClock(survey, ["noResponse"])).toEqual(day(200));
   });
 
-  test("counts the last response when 'no response' is ticked", () => {
-    expect(getSurveyRetentionClock(survey, ["noResponse"])).toEqual(day(200));
+  test("'no response' counts from the creation for a survey with no responses, ignoring edits", () => {
+    expect(getSurveyRetentionClock({ ...survey, lastResponseAt: null }, ["noResponse"])).toEqual(day(0));
+  });
+
+  test("'no change' counts from the last change, ignoring responses", () => {
     expect(getSurveyRetentionClock(survey, ["noChange"])).toEqual(day(100));
   });
 
-  test("a survey with no responses satisfies 'no response' from its other clocks", () => {
-    expect(getSurveyRetentionClock({ ...survey, lastResponseAt: null }, ["noResponse"])).toEqual(day(100));
+  test("'created before' counts from the creation, ignoring changes and responses", () => {
+    expect(getSurveyRetentionClock(survey, ["createdBefore"])).toEqual(day(0));
   });
 
-  test("a restore, which bumps updatedAt, restarts the period", () => {
-    expect(getSurveyRetentionClock({ ...survey, updatedAt: day(900) }, ["noResponse"])).toEqual(day(900));
+  test("ticked together, the latest date decides: every ticked condition must hold", () => {
+    expect(getSurveyRetentionClock(survey, ["noResponse", "noChange"])).toEqual(day(200));
+    expect(getSurveyRetentionClock(survey, ["noChange", "createdBefore"])).toEqual(day(100));
+    expect(getSurveyRetentionClock(survey, ["noResponse", "noChange", "createdBefore"])).toEqual(day(200));
+    expect(getSurveyRetentionClock({ ...survey, updatedAt: day(300) }, ["noResponse", "noChange"])).toEqual(
+      day(300)
+    );
+  });
+
+  test("a restore starts 'no response' and 'no change' over", () => {
+    const restored = { ...survey, restoredAt: day(900) };
+    expect(getSurveyRetentionClock(restored, ["noResponse"])).toEqual(day(900));
+    expect(getSurveyRetentionClock({ ...restored, lastResponseAt: null }, ["noResponse"])).toEqual(day(900));
+    expect(getSurveyRetentionClock(restored, ["noChange"])).toEqual(day(900));
+    // A response or change after the restore counts from then.
+    expect(getSurveyRetentionClock({ ...restored, lastResponseAt: day(950) }, ["noResponse"])).toEqual(
+      day(950)
+    );
+  });
+
+  test("a restore can't start 'created before' over: that is the restore's exemption's job", () => {
+    expect(getSurveyRetentionClock({ ...survey, restoredAt: day(900) }, ["createdBefore"])).toEqual(day(0));
+  });
+
+  test("a policy with no conditions is refused rather than read as 'always due'", () => {
+    expect(() => getSurveyRetentionClock(survey, [])).toThrow();
   });
 });
 

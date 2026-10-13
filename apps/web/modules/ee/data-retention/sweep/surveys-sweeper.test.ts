@@ -46,7 +46,7 @@ const POLICY: TRetentionPolicySnapshot = {
   enabledAt: daysAgo(60),
   warnDays: 7,
   periodDays: 30,
-  conditions: ["noResponse", "createdBefore"],
+  conditions: ["noResponse", "noChange"],
 };
 const NOTICE_DUE_AT_OR_BEFORE = daysAgo(23);
 
@@ -69,6 +69,7 @@ type TRow = {
   createdAt: Date;
   updatedAt: Date;
   newestResponseAt: Date | null;
+  restoredAt: Date | null;
   noticeClaimedAt: Date | null;
   noticeDeliveredAt: Date | null;
   noticeClockAt: Date | null;
@@ -84,6 +85,7 @@ const candidate = (id: string, overrides: Partial<TRow> = {}): TRow => ({
   createdAt: daysAgo(100),
   updatedAt: daysAgo(25),
   newestResponseAt: null,
+  restoredAt: null,
   noticeClaimedAt: null,
   noticeDeliveredAt: null,
   noticeClockAt: null,
@@ -151,30 +153,47 @@ describe("createSurveysSweeper", () => {
   });
 
   test("pushes the ticked conditions into the candidate query, and only them", async () => {
-    const ticked = database();
-    await createSurveysSweeper()(context());
-    const [withConditions] = candidateStatements(ticked);
-    expect(withConditions.text).toContain('s."archivedAt" IS NULL');
-    expect(withConditions.text).toContain('(s."publishOn" IS NULL OR s."publishOn" <= ?)');
-    expect(withConditions.text).toContain(
-      'AND NOT EXISTS ( SELECT 1 FROM "Response" r WHERE r."surveyId" = s."id" AND r."created_at" > ? )'
-    );
-    expect(withConditions.text).toContain('AND s."created_at" <= ?');
-    expect(withConditions.values).toEqual([
-      "clorg",
-      NOW,
-      NOTICE_DUE_AT_OR_BEFORE,
-      NOTICE_DUE_AT_OR_BEFORE,
-      NOTICE_DUE_AT_OR_BEFORE,
-      NOW,
-      100,
-    ]);
+    const NO_RESPONSE_SINCE =
+      'AND s."created_at" <= ? AND NOT EXISTS ( SELECT 1 FROM "Response" r WHERE r."surveyId" = s."id" AND r."created_at" > ? ) AND (rs."restoredAt" IS NULL OR rs."restoredAt" <= ?)';
+    const NO_CHANGE_SINCE = 'AND s."updated_at" <= ? AND (rs."restoredAt" IS NULL OR rs."restoredAt" <= ?)';
+    const CREATED_BEFORE = 'AND s."created_at" <= ?';
+    const candidateQuery = async (conditions: TRetentionPolicySnapshot["conditions"]) => {
+      const tx = database();
+      await createSurveysSweeper()(context({ policy: { ...POLICY, conditions } }));
+      return candidateStatements(tx)[0];
+    };
 
-    const unticked = database();
-    await createSurveysSweeper()(context({ policy: { ...POLICY, conditions: [] } }));
-    const [updatedOnly] = candidateStatements(unticked);
-    expect(updatedOnly.text).not.toContain('r."created_at" > ?');
-    expect(updatedOnly.text).not.toContain('s."created_at" <= ?');
+    const both = await candidateQuery(["noResponse", "noChange"]);
+    expect(both.text).toContain('s."archivedAt" IS NULL');
+    expect(both.text).toContain('(s."publishOn" IS NULL OR s."publishOn" <= ?)');
+    expect(both.text).toContain('LEFT JOIN "RetentionSurveyRestore" rs ON rs."surveyId" = s."id"');
+    expect(both.text).toContain(`${NO_RESPONSE_SINCE} ${NO_CHANGE_SINCE}`);
+    expect(both.values).toEqual(["clorg", NOW, ...Array<Date>(5).fill(NOTICE_DUE_AT_OR_BEFORE), NOW, 100]);
+
+    // Each condition alone: only its own clause, so an unticked one never holds a survey back.
+    const noResponse = await candidateQuery(["noResponse"]);
+    expect(noResponse.text).toContain(NO_RESPONSE_SINCE);
+    expect(noResponse.text).not.toContain('s."updated_at" <=');
+
+    const noChange = await candidateQuery(["noChange"]);
+    expect(noChange.text).toContain(NO_CHANGE_SINCE);
+    expect(noChange.text).not.toContain(
+      'FROM "Response" r WHERE r."surveyId" = s."id" AND r."created_at" > ?'
+    );
+    expect(noChange.text).not.toContain('s."created_at" <=');
+
+    const createdBefore = await candidateQuery(["createdBefore"]);
+    expect(createdBefore.text).toContain(CREATED_BEFORE);
+    expect(createdBefore.text).not.toContain('s."updated_at" <=');
+    expect(createdBefore.text).not.toContain('rs."restoredAt" <=');
+    expect(createdBefore.text).not.toContain('r."created_at" > ?');
+  });
+
+  test("refuses a policy with no conditions instead of reading every survey as due", async () => {
+    database();
+    await expect(
+      createSurveysSweeper()(context({ policy: { ...POLICY, conditions: [] } }))
+    ).rejects.toThrow();
   });
 
   test("tells a survey's recipient when it will be archived and purged, voided by any later activity", async () => {

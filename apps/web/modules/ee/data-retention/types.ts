@@ -26,8 +26,15 @@ export const RETENTION_EXEMPTION_REASON_MAX_LENGTH = 500;
 export const RETENTION_EXEMPTION_MAX_YEARS = 10;
 
 /**
+ * Who made an exemption: a person, with a reason, or a restore from the archive under a surveys policy
+ * whose only condition is "created before", without one.
+ */
+export type TRetentionExemptionSource = "manual" | "restore";
+
+/**
  * An exemption as the `retention-exemptions` routes return it (ENG-3695). `until` is the instant it
- * ends; `revokedAt` is set once it is revoked, or closed after it ended.
+ * ends; `revokedAt` is set once it is revoked, or closed after it ended. `reason` is null exactly when
+ * `source` is `restore`.
  */
 export type TRetentionExemption = {
   id: string;
@@ -36,7 +43,8 @@ export type TRetentionExemption = {
   workspaceId: string;
   policy: TRetentionExemptionPolicy;
   until: string;
-  reason: string;
+  source: TRetentionExemptionSource;
+  reason: string | null;
   createdBy: { id: string; name: string } | null;
   createdAt: string;
   revokedAt: string | null;

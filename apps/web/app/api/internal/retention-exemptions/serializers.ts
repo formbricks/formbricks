@@ -9,6 +9,7 @@ export const serializeRetentionExemption = (row: TRetentionExemptionRow): TReten
   workspaceId: row.workspaceId,
   policy: row.entity,
   until: row.until.toISOString(),
+  source: row.source,
   reason: row.reason,
   // The creator is cleared when their account is deleted, which leaves the exemption in place.
   createdBy: row.createdById ? { id: row.createdById, name: row.createdByName ?? "" } : null,

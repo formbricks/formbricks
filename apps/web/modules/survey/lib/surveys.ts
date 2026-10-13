@@ -10,6 +10,7 @@ import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
 import { enqueueSurveyDeletionCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
 import { collectSurveyResponseFileUrls } from "@/modules/storage/lib/survey-response-files";
 import { getSurveyPurgeEligibleWhere } from "@/modules/survey/archive/lib/purge-eligibility";
+import { restartSurveyRetention } from "@/modules/survey/archive/lib/retention-restart";
 
 /**
  * Permanently deletes a survey, cascades private-segment cleanup, and removes what it leaves outside the
@@ -178,17 +179,48 @@ export const archiveSurvey = async (surveyId: string, options?: { tx?: Prisma.Tr
   }
 };
 
-/** Restore an archived survey by clearing archivedAt. The survey keeps its current status. */
-export const restoreSurvey = async (surveyId: string) => {
+/**
+ * Restore an archived survey by clearing archivedAt. The survey keeps its current status. Restoring one
+ * that was archived gives it a full data retention period again (`restartSurveyRetention`), in the same
+ * transaction, with the survey locked; `retentionExemptionId` is the exemption that made, if any.
+ * Restoring a survey that isn't archived changes nothing for retention.
+ */
+export const restoreSurvey = async (surveyId: string, options?: { restoredById?: string | null }) => {
   validateInputs([surveyId, ZId]);
 
   try {
-    return await prisma.survey.update({
-      where: { id: surveyId },
-      data: { archivedAt: null },
-      select: { id: true, status: true, archivedAt: true },
+    return await prisma.$transaction(async (tx) => {
+      const [locked] = await tx.$queryRaw<{ archivedAt: Date | null; organizationId: string }[]>`
+        SELECT s."archivedAt", w."organizationId"
+        FROM "Survey" s
+        JOIN "Workspace" w ON w."id" = s."workspaceId"
+        WHERE s."id" = ${surveyId}
+        FOR UPDATE OF s
+      `;
+      if (!locked) {
+        throw new ResourceNotFoundError("Survey", surveyId);
+      }
+      const survey = await tx.survey.update({
+        where: { id: surveyId },
+        data: { archivedAt: null },
+        select: { id: true, status: true, archivedAt: true },
+      });
+      if (!locked.archivedAt) {
+        return { ...survey, retentionExemptionId: null };
+      }
+      const { exemptionId } = await restartSurveyRetention(tx, {
+        surveyId,
+        organizationId: locked.organizationId,
+        restoredById: options?.restoredById ?? null,
+      });
+      return { ...survey, retentionExemptionId: exemptionId };
     });
   } catch (error) {
+    if (error instanceof ResourceNotFoundError) {
+      logger.warn({ surveyId }, "Survey not found during restore");
+      throw error;
+    }
+
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2025") {
         logger.warn({ surveyId }, "Survey not found during restore");

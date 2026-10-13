@@ -58,7 +58,10 @@ const getExemptionColumns = ({
     header: t("workspace.settings.data_retention.reason"),
     hideBelow: "md",
     cellClassName: "whitespace-pre-line break-words",
-    cell: (exemption) => exemption.reason,
+    cell: (exemption) =>
+      exemption.source === "restore"
+        ? t("workspace.settings.data_retention.exemption_reason_restored")
+        : exemption.reason,
   },
   {
     id: "createdBy",

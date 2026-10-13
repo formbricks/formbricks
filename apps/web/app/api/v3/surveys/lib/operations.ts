@@ -673,7 +673,10 @@ async function runV3SurveyLifecycleMutation(
     mutate,
   }: {
     operation: "archive" | "restore";
-    mutate: (id: string) => Promise<{ id: string; status: string; archivedAt: Date | null }>;
+    mutate: (
+      id: string,
+      authentication: TV3Authentication
+    ) => Promise<{ id: string; status: string; archivedAt: Date | null }>;
   }
 ): Promise<Response> {
   const log = logger.withContext({ requestId, surveyId });
@@ -698,7 +701,7 @@ async function runV3SurveyLifecycleMutation(
       auditLog.oldObject = survey;
     }
 
-    const mutatedSurvey = await mutate(surveyId);
+    const mutatedSurvey = await mutate(surveyId, authentication);
 
     if (auditLog) {
       auditLog.newObject = mutatedSurvey;
@@ -719,11 +722,15 @@ async function runV3SurveyLifecycleMutation(
 }
 
 export async function archiveV3Survey(params: TV3SurveyMutationParams): Promise<Response> {
-  return runV3SurveyLifecycleMutation(params, { operation: "archive", mutate: archiveSurvey });
+  return runV3SurveyLifecycleMutation(params, { operation: "archive", mutate: (id) => archiveSurvey(id) });
 }
 
 export async function restoreV3Survey(params: TV3SurveyMutationParams): Promise<Response> {
-  return runV3SurveyLifecycleMutation(params, { operation: "restore", mutate: restoreSurvey });
+  // The restorer is recorded on any data retention exemption the restore makes; an API key has no user.
+  return runV3SurveyLifecycleMutation(params, {
+    operation: "restore",
+    mutate: (id, authentication) => restoreSurvey(id, { restoredById: getSessionUserId(authentication) }),
+  });
 }
 
 /** The 422 for an archived survey, shared by the pre-write guard and the write's own `archivedAt` check. */

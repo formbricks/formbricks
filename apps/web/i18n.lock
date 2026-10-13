@@ -2942,11 +2942,12 @@ checksums:
     workspace/settings/data_retention/add_exemption: ffd32798505e9cbe470c6ef07e8940b9
     workspace/settings/data_retention/add_exemption_description: 36eb90ad00003f8e911556e9fd905fcf
     workspace/settings/data_retention/condition_created_before: caa54cfde5d47b4c39338c8390c769d4
+    workspace/settings/data_retention/condition_created_before_only_hint: be7bb071344c662d7b54b10d025a5b57
     workspace/settings/data_retention/condition_created_before_short: a69eb94175dfcca4e7b0b8376866a7d4
-    workspace/settings/data_retention/condition_no_change: aae6f17c4f674137a0f9272717b7d14a
-    workspace/settings/data_retention/condition_no_change_short: 3daa2a25d7cadf56db6cb6b20662ba5e
-    workspace/settings/data_retention/condition_no_response: 04a5753d03a1a44530fd48c00488daba
-    workspace/settings/data_retention/condition_no_response_short: 82154b5dd4b338a4756b124ad195e81b
+    workspace/settings/data_retention/condition_no_change: 81aaec4aabac5c15206c2871d5d11403
+    workspace/settings/data_retention/condition_no_change_short: 1bdefda745be8876193525101ae665b5
+    workspace/settings/data_retention/condition_no_response: f289597c7ffae6dc2d6ae226c7e1efb6
+    workspace/settings/data_retention/condition_no_response_short: 2a4a3464ead24468245262c5edecc8f4
     workspace/settings/data_retention/conditions_required: dda2edf57bd45529bd6b217bd7d59c86
     workspace/settings/data_retention/counts_from: 0cea5f8c8605a716a106bc65a93767d8
     workspace/settings/data_retention/custom: b7b89901f46267f532600a23cfc54ae2
@@ -2966,6 +2967,7 @@ checksums:
     workspace/settings/data_retention/exemption_exists: ca7e16b4bb643e8011a3124caf04ffb9
     workspace/settings/data_retention/exemption_not_active: 1ddd2a675091c51e9c56947b7af02672
     workspace/settings/data_retention/exemption_policy_help: 45d72c4f3f628c5a8266ec6e923f0a91
+    workspace/settings/data_retention/exemption_reason_restored: 91ba38b498b924014355ec0f810dc271
     workspace/settings/data_retention/exemption_revoke_failed: 8fb1de91b342f14507a85e4b2577ec8e
     workspace/settings/data_retention/exemption_revoked: 80697d380f8a508ccbbd85276eab4fc9
     workspace/settings/data_retention/exemption_until_invalid: 347cc3ed6a526e45968337791ea85ffd
@@ -3058,7 +3060,7 @@ checksums:
     workspace/settings/data_retention/surveys_active_help: 94082032b817e6e0453176d8b145372d
     workspace/settings/data_retention/surveys_conditions_heading: dd21d6a8ec1abc226f0b79db7a4e1f0f
     workspace/settings/data_retention/surveys_notice_help: fba280492cae48caae3d94417c4bf2ba
-    workspace/settings/data_retention/surveys_period_help: d8cae7fccd0f2b7628d83c4703cdb42f
+    workspace/settings/data_retention/surveys_period_help: 4bfb6a440bcc25bceb64706395a91d0d
     workspace/settings/data_retention/surveys_policy_description: 2a4ddf9a005a0a5e9575176c6e3c0be8
     workspace/settings/data_retention/surveys_policy_title: 4964987825ba25c5bd3bcd70639d4aa7
     workspace/settings/data_retention/surveys_summary: 31cd3ca4f3fde2f6d57b0aefe9ccd350

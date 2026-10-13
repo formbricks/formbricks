@@ -144,6 +144,7 @@ export const PolicyEditDialog = ({
   const noticeHelpId = useId();
   const periodHelpId = useId();
   const conditionsErrorId = useId();
+  const conditionsHintId = useId();
   const updatePolicy = useUpdateRetentionPolicy({ organizationId });
   const health = useRetentionHealth({ organizationId });
 
@@ -201,41 +202,56 @@ export const PolicyEditDialog = ({
                 <FormField
                   control={form.control}
                   name="conditions"
-                  render={({ field, fieldState: { error } }) => (
-                    <fieldset className="space-y-2" aria-describedby={error ? conditionsErrorId : undefined}>
-                      <legend className="text-sm font-medium text-slate-800">
-                        {t("workspace.settings.data_retention.surveys_conditions_heading")}
-                      </legend>
-                      {RETENTION_SURVEY_CONDITIONS.map((condition) => {
-                        const id = `${periodHelpId}-${condition}`;
-                        const checked = field.value.includes(condition);
-                        return (
-                          <div key={condition} className="flex items-center gap-2">
-                            <Checkbox
-                              id={id}
-                              checked={checked}
-                              disabled={disabled}
-                              onCheckedChange={(next) =>
-                                field.onChange(
-                                  next === true
-                                    ? [...field.value, condition]
-                                    : field.value.filter((value) => value !== condition)
-                                )
-                              }
-                            />
-                            <Label htmlFor={id} className="font-normal">
-                              {getConditionLabel(condition, t)}
-                            </Label>
-                          </div>
-                        );
-                      })}
-                      {error?.message ? (
-                        <p id={conditionsErrorId} role="alert" className="text-sm text-error">
-                          {error.message}
-                        </p>
-                      ) : null}
-                    </fieldset>
-                  )}
+                  render={({ field, fieldState: { error } }) => {
+                    // Only "created before": the survey's age alone decides, so activity doesn't hold it.
+                    const createdBeforeOnly = field.value.length === 1 && field.value[0] === "createdBefore";
+                    const describedBy = [
+                      createdBeforeOnly ? conditionsHintId : null,
+                      error ? conditionsErrorId : null,
+                    ].filter(Boolean);
+                    return (
+                      <fieldset
+                        className="space-y-2"
+                        aria-describedby={describedBy.length > 0 ? describedBy.join(" ") : undefined}>
+                        <legend className="text-sm font-medium text-slate-800">
+                          {t("workspace.settings.data_retention.surveys_conditions_heading")}
+                        </legend>
+                        {RETENTION_SURVEY_CONDITIONS.map((condition) => {
+                          const id = `${periodHelpId}-${condition}`;
+                          const checked = field.value.includes(condition);
+                          return (
+                            <div key={condition} className="flex items-center gap-2">
+                              <Checkbox
+                                id={id}
+                                checked={checked}
+                                disabled={disabled}
+                                onCheckedChange={(next) =>
+                                  field.onChange(
+                                    next === true
+                                      ? [...field.value, condition]
+                                      : field.value.filter((value) => value !== condition)
+                                  )
+                                }
+                              />
+                              <Label htmlFor={id} className="font-normal">
+                                {getConditionLabel(condition, t)}
+                              </Label>
+                            </div>
+                          );
+                        })}
+                        {createdBeforeOnly ? (
+                          <p id={conditionsHintId} className="text-sm text-slate-600">
+                            {t("workspace.settings.data_retention.condition_created_before_only_hint")}
+                          </p>
+                        ) : null}
+                        {error?.message ? (
+                          <p id={conditionsErrorId} role="alert" className="text-sm text-error">
+                            {error.message}
+                          </p>
+                        ) : null}
+                      </fieldset>
+                    );
+                  }}
                 />
               ) : null}
 

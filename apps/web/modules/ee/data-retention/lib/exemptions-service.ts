@@ -6,14 +6,16 @@ import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context"
 import { visibleSurveySqlPredicate } from "@/lib/survey/visibility/predicate";
 import { escapeLikePattern } from "@/lib/utils/like-pattern";
 import { getUniqueConstraintFields, isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
-import type { TRetentionExemptionPolicy } from "../types";
+import type { TRetentionExemptionPolicy, TRetentionExemptionSource } from "../types";
 
 /** One exemption, with the survey and creator it names. */
 export type TRetentionExemptionRow = {
   id: string;
   entity: TRetentionExemptionPolicy;
   until: Date;
-  reason: string;
+  source: TRetentionExemptionSource;
+  /** Null for an exemption a restore made. */
+  reason: string | null;
   createdAt: Date;
   revokedAt: Date | null;
   surveyId: string;
@@ -51,7 +53,7 @@ const readScopeClause = (scope: TRetentionExemptionReadScope): Prisma.Sql | null
 const selectExemptionRows = (where: Prisma.Sql[], tail: Prisma.Sql) => prisma.$queryRaw<
   TRetentionExemptionRow[]
 >`
-  SELECT e."id", e."entity", e."until", e."reason", e."created_at" AS "createdAt", e."revokedAt",
+  SELECT e."id", e."entity", e."until", e."source", e."reason", e."created_at" AS "createdAt", e."revokedAt",
          s."id" AS "surveyId", s."name" AS "surveyName", s."workspaceId",
          u."id" AS "createdById", u."name" AS "createdByName",
          s."visibilityVersion", s."visibilityProjectedVersion"

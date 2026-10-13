@@ -83,6 +83,7 @@ describe("updateRetentionPolicy", () => {
       "members",
       RETENTION_POLICY_DEFAULTS.members.warnDays,
       RETENTION_POLICY_DEFAULTS.members.periodDays,
+      RETENTION_POLICY_DEFAULTS.members.conditions,
       NOW,
     ]);
     expect(statement(tx.$queryRaw.mock.calls[0]).text).toContain("FOR UPDATE");

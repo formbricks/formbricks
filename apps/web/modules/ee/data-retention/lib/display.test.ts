@@ -120,6 +120,7 @@ describe("survey retention copy", () => {
     workspaceId: "clwsp",
     policy: "responses" as const,
     until: "2031-03-31T21:59:59.999Z",
+    source: "manual" as const,
     reason: "Audit",
     createdBy: null,
     createdAt: "2030-01-01T00:00:00.000Z",

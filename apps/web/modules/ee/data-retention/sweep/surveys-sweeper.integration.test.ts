@@ -86,14 +86,18 @@ describe("surveys sweeper (real Postgres)", () => {
     });
 
   /**
-   * As if `days` (and `minutes`) went by for this survey: its clock and its notice move that far into
-   * the past.
+   * As if `days` (and `minutes`) went by for this survey: its clocks (its timestamps, its responses and
+   * its last restore) and its notice move that far into the past.
    */
   const travel = async (surveyId: string, days: number, minutes = 0) => {
     const by = Prisma.sql`make_interval(days => ${days}::int, mins => ${minutes}::int)`;
     await prisma.$executeRaw`
       UPDATE "Survey" SET "created_at" = "created_at" - ${by}, "updated_at" = "updated_at" - ${by}
       WHERE "id" = ${surveyId}`;
+    await prisma.$executeRaw`
+      UPDATE "Response" SET "created_at" = "created_at" - ${by} WHERE "surveyId" = ${surveyId}`;
+    await prisma.$executeRaw`
+      UPDATE "RetentionSurveyRestore" SET "restoredAt" = "restoredAt" - ${by} WHERE "surveyId" = ${surveyId}`;
     await prisma.$executeRaw`
       UPDATE "RetentionNotice"
       SET "sentAt" = "sentAt" - ${by}, "deliveredAt" = "deliveredAt" - ${by}, "clockAt" = "clockAt" - ${by}
@@ -284,6 +288,85 @@ describe("surveys sweeper (real Postgres)", () => {
     expect(await notice(old)).not.toBeNull();
   });
 
+  // Decided 13 Oct (Tiago): each condition reads only its own date, so an unticked one never holds a
+  // survey back; ticked together, all must hold.
+  describe("each condition decides on its own date, and only ticked ones count", () => {
+    const fixtures = async () => {
+      const survey = async (
+        name: string,
+        { created, updated, answered }: { created: number; updated: number; answered?: number }
+      ) => {
+        const id = await createSurvey(name, { age: created });
+        if (answered !== undefined) {
+          await prisma.response.create({ data: { surveyId: id, createdAt: ago(answered) } });
+        }
+        await setSurveyTimes(id, { createdAt: ago(created), updatedAt: ago(updated) });
+        return [name, id] as const;
+      };
+      return Object.fromEntries([
+        await survey("Edited lately", { created: 400, updated: 5 }),
+        await survey("Answered lately", { created: 400, updated: 400, answered: 5 }),
+        await survey("Created lately", { created: 100, updated: 100 }),
+        await survey("Untouched", { created: 400, updated: 400, answered: 400 }),
+      ]);
+    };
+
+    test.each<[RetentionSurveyCondition[], string[]]>([
+      [["noResponse"], ["Edited lately", "Untouched"]],
+      [["noChange"], ["Answered lately", "Untouched"]],
+      [["createdBefore"], ["Edited lately", "Answered lately", "Untouched"]],
+      [["noResponse", "noChange"], ["Untouched"]],
+      [
+        ["noChange", "createdBefore"],
+        ["Answered lately", "Untouched"],
+      ],
+      [["noResponse", "noChange", "createdBefore"], ["Untouched"]],
+    ])("%j warns about %j", async (conditions, expected) => {
+      const surveys = await fixtures();
+      await enablePolicy(conditions);
+
+      await sweep();
+
+      const warned = await prisma.retentionNotice.findMany({ where: { entity: "surveys" } });
+      const names = Object.entries(surveys)
+        .filter(([, id]) => warned.some((row) => row.surveyId === id))
+        .map(([name]) => name);
+      expect(names.sort()).toEqual([...expected].sort());
+    });
+  });
+
+  test("a restore under 'no response' alone starts the period over, though no edit counts", async () => {
+    await enablePolicy(["noResponse"]);
+    const survey = await createSurvey("Old feedback", { age: 400 });
+    await prisma.survey.update({ where: { id: survey }, data: { archivedAt: ago(1) } });
+    await setSurveyTimes(survey, { createdAt: ago(400), updatedAt: ago(400) });
+
+    await restoreSurvey(survey);
+    // Wind the edit the restore made back: only the restore itself may hold the survey.
+    await setSurveyTimes(survey, { createdAt: ago(400), updatedAt: ago(400) });
+    await sweep();
+    expect(await notice(survey)).toBeNull();
+    expect(await prisma.retentionExemption.count()).toBe(0);
+
+    await travel(survey, PERIOD - WARN, CLOCK_MARGIN_MINUTES);
+    await sweep();
+    expect(await notice(survey)).not.toBeNull();
+  });
+
+  test("a restore under 'created before' alone exempts the survey for a period instead", async () => {
+    await enablePolicy(["createdBefore"]);
+    const survey = await createSurvey("Old feedback", { age: 400 });
+    await prisma.survey.update({ where: { id: survey }, data: { archivedAt: ago(1) } });
+
+    await restoreSurvey(survey, { restoredById: ownerId });
+    await sweep();
+
+    expect(await notice(survey)).toBeNull();
+    expect(await prisma.retentionRunItem.findMany()).toEqual([
+      expect.objectContaining({ action: "skipped", skipReason: "exempt", targetId: survey }),
+    ]);
+  });
+
   // Decided 12 Oct (Tiago): a draft nobody has touched for the whole period is unused data like any other
   // survey, so the policy warns about it and archives it. Only a survey scheduled to launch is left alone.
   test("warns about and archives a draft untouched for the whole period", async () => {
@@ -405,6 +488,10 @@ describe("surveys sweeper (real Postgres)", () => {
     const restored = await prisma.survey.findUniqueOrThrow({ where: { id: survey } });
     expect(restored.archivedAt).toBeNull();
     expect(Date.now() - restored.updatedAt.getTime()).toBeLessThan(60_000);
+    const restoredAt = (
+      await prisma.retentionSurveyRestore.findUniqueOrThrow({ where: { surveyId: survey } })
+    ).restoredAt;
+    expect(Math.abs(Date.now() - restoredAt.getTime())).toBeLessThan(60_000);
 
     // Right after the restore, nothing is due: its old notice is for a clock it no longer has.
     await sweep();
@@ -418,8 +505,13 @@ describe("surveys sweeper (real Postgres)", () => {
     await sweep();
     expect(sendSurveyRetentionNoticeEmail).toHaveBeenCalledTimes(2);
     expect(await isArchived(survey)).toBe(false);
+    // The clock is the restore or the edit it made, whichever is later (two clocks, so either may lead).
+    const [after, marker] = await Promise.all([
+      prisma.survey.findUniqueOrThrow({ where: { id: survey } }),
+      prisma.retentionSurveyRestore.findUniqueOrThrow({ where: { surveyId: survey } }),
+    ]);
     expect((await notice(survey))?.clockAt).toEqual(
-      (await prisma.survey.findUniqueOrThrow({ where: { id: survey } })).updatedAt
+      new Date(Math.max(after.updatedAt.getTime(), marker.restoredAt.getTime()))
     );
 
     // A day short of the period and of the warning: still not archived.

@@ -59,17 +59,26 @@ export const restampSurveyNoticeAfterRetentionDeletion = async (
   if (!policy?.conditions.includes("noResponse")) return;
 
   // One probe on `Response(surveyId, created_at)` for what is left.
-  const [survey] = await tx.$queryRaw<{ createdAt: Date; updatedAt: Date; newestResponseAt: Date | null }[]>`
+  const [survey] = await tx.$queryRaw<
+    { createdAt: Date; updatedAt: Date; newestResponseAt: Date | null; restoredAt: Date | null }[]
+  >`
     SELECT s."created_at" AS "createdAt", s."updated_at" AS "updatedAt",
-           (SELECT MAX(r."created_at") FROM "Response" r WHERE r."surveyId" = s."id") AS "newestResponseAt"
+           (SELECT MAX(r."created_at") FROM "Response" r WHERE r."surveyId" = s."id") AS "newestResponseAt",
+           rs."restoredAt" AS "restoredAt"
     FROM "Survey" s
+    LEFT JOIN "RetentionSurveyRestore" rs ON rs."surveyId" = s."id"
     WHERE s."id" = ${surveyId}
   `;
   if (!survey) return;
 
   const clockWith = (lastResponseAt: Date | null) =>
     getSurveyRetentionClock(
-      { createdAt: survey.createdAt, updatedAt: survey.updatedAt, lastResponseAt },
+      {
+        createdAt: survey.createdAt,
+        updatedAt: survey.updatedAt,
+        lastResponseAt,
+        restoredAt: survey.restoredAt,
+      },
       policy.conditions
     );
   const before = clockWith(latestOf(newestDeletedAt, survey.newestResponseAt));

@@ -17,6 +17,7 @@ vi.mock("@formbricks/database", () => ({
     response: { aggregate: vi.fn() },
     retentionNotice: { findMany: vi.fn() },
     retentionPolicy: { findMany: vi.fn() },
+    retentionSurveyRestore: { findUnique: vi.fn() },
   },
 }));
 
@@ -77,6 +78,7 @@ describe("getSurveyRetentionFacts", () => {
     } as never);
     vi.mocked(prisma.retentionNotice.findMany).mockResolvedValue([]);
     vi.mocked(prisma.$queryRaw).mockResolvedValue([]);
+    vi.mocked(prisma.retentionSurveyRestore.findUnique).mockResolvedValue(null);
   });
   afterEach(() => {
     vi.useRealTimers();
@@ -104,6 +106,7 @@ describe("getSurveyRetentionFacts", () => {
       { entity: "surveys", endedAt: at(4) },
       { entity: "responses", endedAt: at(8) },
     ]);
+    vi.mocked(prisma.retentionSurveyRestore.findUnique).mockResolvedValue({ restoredAt: at(8) } as never);
 
     await expect(getSurveyRetentionFacts({ ...survey, archivedAt: at(9) }, NOW)).resolves.toEqual({
       createdAt: at(1),
@@ -111,6 +114,7 @@ describe("getSurveyRetentionFacts", () => {
       archivedAt: at(9),
       oldestResponseAt: at(3),
       newestResponseAt: at(9),
+      restoredAt: at(8),
       surveysNotice: { claimedAt: at(5), deliveredAt: at(6), clockAt: at(2) },
       responsesNotice: { claimedAt: at(7), deliveredAt: null, clockAt: null },
       // Either kind of exemption holds the survey itself; only a responses one holds its responses.
@@ -149,6 +153,7 @@ describe("getSurveyRetentionFacts", () => {
       archivedAt: null,
       oldestResponseAt: null,
       newestResponseAt: null,
+      restoredAt: null,
       surveysNotice: null,
       responsesNotice: null,
       surveyHeldUntil: null,

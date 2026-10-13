@@ -12,6 +12,13 @@ enum RetentionSurveyCondition {
   createdBefore
 }
 
+/// Who made an exemption: a person (with a reason), or a restore from the archive under a surveys policy
+/// whose only condition is "created before" (`restartSurveyRetention`), which carries no reason.
+enum RetentionExemptionSource {
+  manual
+  restore
+}
+
 /// What a `RetentionRunItem` row points at. Response deletions are grouped into one `survey` row per
 /// survey, with the number of responses in `count`.
 enum RetentionTargetType {
@@ -94,19 +101,21 @@ model RetentionPolicy {
 /// column in that CHECK. The survey's organisation can't be tied to `organizationId` in the database
 /// (a survey carries its workspace, not its organisation): writers derive it from the survey.
 model RetentionExemption {
-  id             String          @id @default(cuid(2))
-  createdAt      DateTime        @default(now()) @map(name: "created_at")
-  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id             String                   @id @default(cuid(2))
+  createdAt      DateTime                 @default(now()) @map(name: "created_at")
+  organization   Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
   entity         RetentionEntity
-  survey         Survey?         @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  survey         Survey?                  @relation(fields: [surveyId], references: [id], onDelete: Cascade)
   surveyId       String?
   until          DateTime
-  reason         String
-  createdBy      User?           @relation("retentionExemptionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  source         RetentionExemptionSource @default(manual)
+  /// Required for `manual`, absent for `restore` (`RetentionExemption_reason_check`).
+  reason         String?
+  createdBy      User?                    @relation("retentionExemptionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   createdById    String?
   revokedAt      DateTime?
-  revokedBy      User?           @relation("retentionExemptionRevokedBy", fields: [revokedById], references: [id], onDelete: SetNull)
+  revokedBy      User?                    @relation("retentionExemptionRevokedBy", fields: [revokedById], references: [id], onDelete: SetNull)
   revokedById    String?
 
   @@index([organizationId, createdAt, id])
@@ -206,4 +215,13 @@ model RetentionNotice {
   /// notice from the one they are in now.
   @@unique([userId, organizationId, entity])
   @@index([organizationId])
+}
+
+/// When a survey was last restored from the archive. A restore starts the surveys policy's "no response"
+/// and "no change" periods over (`getSurveyRetentionClock`); only ever moves forward. A table of its own
+/// so retention adds nothing to the survey row.
+model RetentionSurveyRestore {
+  survey     Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId   String   @id
+  restoredAt DateTime
 }
