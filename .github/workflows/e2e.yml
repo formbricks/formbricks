@@ -3,24 +3,11 @@ name: E2E Tests
 on:
   workflow_call:
     secrets:
-      PLAYWRIGHT_SERVICE_URL:
-        required: false
-      PLAYWRIGHT_SERVICE_ACCESS_TOKEN:
-        required: false
       ENTERPRISE_LICENSE_KEY:
         required: true
       # A secret added here must also be named in pr.yml's e2e-test job: the caller does not
       # `inherit`, so an unnamed optional secret arrives empty and a required one fails the call.
   workflow_dispatch:
-    inputs:
-      force_mode:
-        description: "Playwright execution mode (auto = use the service when its secrets are set)"
-        type: choice
-        options:
-          - auto
-          - service
-          - local
-        default: auto
 
 permissions:
   contents: read
@@ -29,7 +16,12 @@ permissions:
 jobs:
   build:
     name: Run E2E Tests
-    runs-on: ubuntu-latest
+    # Browsers run on this runner (the Azure Playwright service is retired, ENG-3763). The label is the
+    # repository variable E2E_RUNNER so the runner can be changed — e.g. to a larger Depot runner such
+    # as `depot-ubuntu-24.04-8` — or rolled back without a code change; unset means GitHub's standard
+    # runner. Pair a bigger runner with E2E_WORKERS (see playwright.config.ts). A runner label with no
+    # runner behind it queues until the job timeout, so check the runner exists before setting it.
+    runs-on: ${{ vars.E2E_RUNNER || 'ubuntu-latest' }}
     # Chosen so the step timeouts below always fire FIRST, because a step timeout names
     # the culprit while a job timeout just says "exceeded the maximum execution time" —
     # the opaque symptom this workflow is being changed to eliminate.
@@ -75,46 +67,6 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./.github/actions/dangerous-git-checkout
-
-      # Resolved before anything expensive runs, because it decides whether local browser
-      # binaries are needed at all. In service mode the browsers execute on Azure, so the
-      # apt-backed `playwright install` further down is pure waste — and that apt step has
-      # stalled for 40+ minutes on the Ubuntu mirror, wedging the merge queue behind a job
-      # whose build had long since finished.
-      - name: Determine Playwright execution mode
-        shell: bash
-        env:
-          # `inputs` is empty when this workflow is reached via workflow_call, so the
-          # fallback keeps the automatic secret-based detection for PR/merge_group runs.
-          FORCE_MODE: ${{ inputs.force_mode || 'auto' }}
-          PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
-          PLAYWRIGHT_SERVICE_ACCESS_TOKEN: ${{ secrets.PLAYWRIGHT_SERVICE_ACCESS_TOKEN }}
-        run: |
-          set -euo pipefail
-
-          if [[ "${FORCE_MODE}" == "local" ]]; then
-            echo "PW_MODE=local" >> "$GITHUB_ENV"
-            echo "Playwright mode forced to 'local' via workflow_dispatch input."
-            exit 0
-          fi
-
-          if [[ "${FORCE_MODE}" == "service" ]]; then
-            if [[ -z "${PLAYWRIGHT_SERVICE_URL}" || -z "${PLAYWRIGHT_SERVICE_ACCESS_TOKEN}" ]]; then
-              echo "::error::force_mode=service but PLAYWRIGHT_SERVICE_URL / PLAYWRIGHT_SERVICE_ACCESS_TOKEN are not both set."
-              exit 1
-            fi
-            echo "PW_MODE=service" >> "$GITHUB_ENV"
-            echo "Playwright mode forced to 'service' via workflow_dispatch input."
-            exit 0
-          fi
-
-          if [[ -n "${PLAYWRIGHT_SERVICE_URL}" && -n "${PLAYWRIGHT_SERVICE_ACCESS_TOKEN}" ]]; then
-            echo "PW_MODE=service" >> "$GITHUB_ENV"
-            echo "Playwright mode: service (both service secrets present)."
-          else
-            echo "PW_MODE=local" >> "$GITHUB_ENV"
-            echo "Playwright mode: local (service secrets absent — fork PR or unconfigured repo)."
-          fi
 
       - name: Install pnpm
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
@@ -200,12 +152,10 @@ jobs:
       # Cache the downloaded browser binaries so re-runs skip the ~100MB
       # Chromium download. `--with-deps` below still runs the (uncacheable) apt
       # step, but a cache hit avoids the browser fetch itself.
-      # Local mode only — service-mode runs never download a browser to cache.
       # NOTE: Actions caches are branch-scoped and every merge_group run happens on a
       # throwaway `gh-readonly-queue/...` branch, so this misses ~always there. It still
       # earns its keep on repeat runs of the same PR branch.
       - name: Cache Playwright browsers
-        if: env.PW_MODE == 'local'
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
@@ -213,7 +163,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-playwright-
 
-      - name: Build App (with Playwright browser install in parallel when needed)
+      - name: Build App (with Playwright browser install in parallel)
         timeout-minutes: 12
         env:
           # Turborepo hashes its own process environment, not the `.env` file this value
@@ -249,27 +199,23 @@ jobs:
           }
           trap on_exit EXIT
 
-          if [[ "${PW_MODE:-}" == "local" ]]; then
-            # Install Playwright browsers + OS deps concurrently with the Next.js build.
-            # Both are largely I/O-bound, so overlapping them shaves the browser-install
-            # time (~1-2 min) off the critical path.
-            #
-            # Only `chromium` is enabled in playwright.config.ts (firefox/webkit are
-            # commented out), and `ffmpeg` is a separate download that the config's
-            # `video: "retain-on-failure"` needs — naming neither would pull Firefox and
-            # WebKit for nothing, naming only chromium would silently break failure videos.
-            #
-            # Bounded with `timeout` and logged to a file that is always echoed below:
-            # the `--with-deps` apt step has hung for 40+ minutes on the Ubuntu mirror,
-            # and because it is backgrounded that looked like a hung build with no output.
-            # 420s is ~5x the observed healthy install; it runs concurrently with the
-            # ~247s build, so it only becomes this step's critical path when it misbehaves.
-            (timeout 420 pnpm exec playwright install chromium ffmpeg --with-deps \
-              > /tmp/playwright-install.log 2>&1) &
-            PW_INSTALL_PID=$!
-          else
-            echo "PW_MODE=${PW_MODE:-unset}: browsers run on the Playwright service, skipping local install."
-          fi
+          # Install Playwright browsers + OS deps concurrently with the Next.js build.
+          # Both are largely I/O-bound, so overlapping them shaves the browser-install
+          # time (~1-2 min) off the critical path.
+          #
+          # Only `chromium` is enabled in playwright.config.ts (firefox/webkit are
+          # commented out), and `ffmpeg` is a separate download that the config's
+          # `video: "retain-on-failure"` needs — naming neither would pull Firefox and
+          # WebKit for nothing, naming only chromium would silently break failure videos.
+          #
+          # Bounded with `timeout` and logged to a file that is always echoed below:
+          # the `--with-deps` apt step has hung for 40+ minutes on the Ubuntu mirror,
+          # and because it is backgrounded that looked like a hung build with no output.
+          # 420s is ~5x the observed healthy install; it runs concurrently with the
+          # ~247s build, so it only becomes this step's critical path when it misbehaves.
+          (timeout 420 pnpm exec playwright install chromium ffmpeg --with-deps \
+            > /tmp/playwright-install.log 2>&1) &
+          PW_INSTALL_PID=$!
 
           pnpm build --filter=@formbricks/web...
 
@@ -463,21 +409,12 @@ jobs:
           exit 1
         shell: bash
 
-      - name: Run E2E Tests (Playwright Service)
-        if: env.PW_MODE == 'service'
-        timeout-minutes: 15
-        env:
-          PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
-          PLAYWRIGHT_SERVICE_ACCESS_TOKEN: ${{ secrets.PLAYWRIGHT_SERVICE_ACCESS_TOKEN }}
-          CI: true
-        run: |
-          pnpm test-e2e:azure
-
-      - name: Run E2E Tests (Local)
-        if: env.PW_MODE == 'local'
+      - name: Run E2E Tests
         timeout-minutes: 15
         env:
           CI: true
+          # Empty when the variable is unset; playwright.config.ts then keeps its default of 4.
+          PW_WORKERS: ${{ vars.E2E_WORKERS }}
         run: |
           pnpm test:e2e
 

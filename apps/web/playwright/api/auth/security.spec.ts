@@ -127,14 +127,6 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
 
   test.describe("Timing Attack Prevention - User Enumeration Protection", () => {
     test("should not reveal user existence through response timing differences", async ({ request }) => {
-      // Sub-100ms enumeration-timing differences can't be measured meaningfully through Playwright
-      // service mode's remote-browser tunnel — tunnel network jitter dwarfs the signal and makes the
-      // assertion flaky. Keep it running in local mode, where the measurement is valid.
-      // (PLAYWRIGHT_SERVICE_URL is the Azure Playwright service endpoint — present only in service mode.)
-      test.skip(
-        Boolean(process.env.PLAYWRIGHT_SERVICE_URL),
-        "Timing-attack measurement is unreliable through the service-mode remote-browser tunnel."
-      );
       // Helper functions for statistical analysis
       const calculateMedian = (values: number[]): number => {
         const sorted = [...values].sort((a, b) => a - b);

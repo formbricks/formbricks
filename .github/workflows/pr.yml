@@ -51,10 +51,8 @@ jobs:
   e2e-test:
     name: Run E2E Tests
     uses: ./.github/workflows/e2e.yml
-    # The three e2e.yml declares, named rather than inherited — see api-v3-contract-tests below.
+    # The one secret e2e.yml declares, named rather than inherited — see api-v3-contract-tests below.
     secrets:
-      PLAYWRIGHT_SERVICE_URL: ${{ secrets.PLAYWRIGHT_SERVICE_URL }}
-      PLAYWRIGHT_SERVICE_ACCESS_TOKEN: ${{ secrets.PLAYWRIGHT_SERVICE_ACCESS_TOKEN }}
       ENTERPRISE_LICENSE_KEY: ${{ secrets.ENTERPRISE_LICENSE_KEY }}
 
   validate-authzed-schema:
