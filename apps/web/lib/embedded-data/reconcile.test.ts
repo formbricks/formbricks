@@ -448,6 +448,7 @@ describe("reconcileEmbeddedData refusals", () => {
 
   /** Just enough of a transaction client for the guards; nothing here should reach a write. */
   const stubTx = (sharedRows: { id: string; key: string | null; source: string }[]) => ({
+    survey: { update: vi.fn().mockResolvedValue({}) },
     surveyEmbeddedData: {
       findMany: vi.fn().mockResolvedValue([]),
       create: vi.fn(),
@@ -574,6 +575,27 @@ describe("reconcileEmbeddedData refusals", () => {
     });
     expect(tx.surveyEmbeddedData.create).not.toHaveBeenCalled();
     expect(tx.surveyEmbeddedData.deleteMany).not.toHaveBeenCalled();
+  });
+
+  test("projects an intentionally empty field set into both legacy columns in the same transaction", async () => {
+    const tx = stubTx([]);
+    await reconcile(tx, []);
+    expect(tx.survey.update).toHaveBeenCalledWith({
+      where: { id: SURVEY_ID, workspaceId: WORKSPACE_ID },
+      data: { variables: [], hiddenFields: { enabled: false, fieldIds: [] } },
+    });
+  });
+
+  test("projects computed and ingested fields for overlapping 6.0 readers", async () => {
+    const tx = stubTx([]);
+    await reconcile(tx, [desiredScore, desiredPlan]);
+    expect(tx.survey.update).toHaveBeenCalledWith({
+      where: { id: SURVEY_ID, workspaceId: WORKSPACE_ID },
+      data: {
+        variables: [{ id: "var_score", name: "score", type: "number", value: 0 }],
+        hiddenFields: { enabled: true, fieldIds: ["plan"] },
+      },
+    });
   });
 
   test("refuses two fields at one address before it writes either", async () => {

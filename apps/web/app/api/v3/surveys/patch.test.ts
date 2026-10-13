@@ -281,7 +281,7 @@ describe("patchV3Survey", () => {
     );
     vi.mocked(prisma.survey.findUniqueOrThrow).mockImplementation((() =>
       Promise.resolve(
-        readBackUpdatedSurvey(vi.mocked(prisma.survey.update).mock.lastCall?.[0].data)
+        readBackUpdatedSurvey(vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0].data)
       )) as unknown as typeof prisma.survey.findUniqueOrThrow);
     vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
     // ENG-1837: the patch reconciles the EmbeddedData rows in the same transaction as the survey
@@ -1188,7 +1188,7 @@ describe("patchV3Survey", () => {
       processorVersion: 3,
     };
     const surveyWithCss = { ...currentSurvey, customCss: storedCss } as unknown as TSurvey;
-    const lastUpdateData = () => vi.mocked(prisma.survey.update).mock.lastCall?.[0].data ?? {};
+    const lastUpdateData = () => vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0].data ?? {};
 
     beforeEach(() => {
       vi.mocked(cache.del).mockResolvedValue({ ok: true, data: undefined });

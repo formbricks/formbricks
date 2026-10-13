@@ -991,6 +991,7 @@ const attachSurveyCreationFactsToCreateData = (
 ): Omit<Prisma.SurveyCreateInput, "workspace"> => ({
   ...data,
   visibility,
+  ownershipInitialized: true,
   ...(ownerId ? { owner: { connect: { id: ownerId } } } : {}),
 });
 

@@ -13,10 +13,8 @@ import {
   getDashboardAuthorizationWorkspaceScope,
   getFeedbackDirectoryAssignmentAuthorizationScope,
   getFeedbackDirectoryAuthorizationScope,
-  getResponseAuthorizationWorkspaceScope,
   getResponseSurveyId,
   getSurveyAuthorizationScopeRow,
-  getSurveyAuthorizationWorkspaceScope,
   getTeamOrganizationId,
   getWorkspaceOrganizationId,
   isAuthorizationUserActive,
@@ -83,9 +81,12 @@ const toWorkspaceResourceScope = (
  * key or member that created it can use it at once; anything else is restricted to its owner and the
  * administrators.
  */
-const toSurveyResourceScope = (row: TSurveyAuthorizationScopeRow | null): TResourceScope | null => {
+const toSurveyResourceScope = (
+  row: TSurveyAuthorizationScopeRow | null,
+  graphReady: boolean
+): TResourceScope | null => {
   if (!row) return null;
-  if (!isAwaitingProjection(row)) {
+  if (graphReady && !isAwaitingProjection(row)) {
     return { organizationId: row.organizationId, permissionResource: { type: "survey", id: row.id } };
   }
   return {
@@ -93,26 +94,26 @@ const toSurveyResourceScope = (row: TSurveyAuthorizationScopeRow | null): TResou
     permissionResource: { type: "workspace", id: row.workspaceId },
     policy: {
       kind: getEffectiveVisibility(row) === "workspace" ? "initialShared" : "pendingPrivate",
-      neverAcknowledged: isNeverAcknowledged(row),
+      neverAcknowledged: !graphReady || isNeverAcknowledged(row),
       ownerId: row.ownerId,
       surveyId: row.id,
     },
   };
 };
 
-/** Readiness marker off: exactly the pre-ENG-3282 behaviour, workspace permissions throughout. */
-const resolveSurveyScope = async (surveyId: string): Promise<TResourceScope | null> =>
-  (await isSurveyVisibilityReady())
-    ? toSurveyResourceScope(await getSurveyAuthorizationScopeRow(surveyId))
-    : toWorkspaceResourceScope(await getSurveyAuthorizationWorkspaceScope(surveyId));
+/** Read the stored visibility even when the graph has not been activated or readiness was cleared. */
+const resolveSurveyScope = async (surveyId: string): Promise<TResourceScope | null> => {
+  const [row, graphReady] = await Promise.all([
+    getSurveyAuthorizationScopeRow(surveyId),
+    isSurveyVisibilityReady(),
+  ]);
+  return toSurveyResourceScope(row, graphReady);
+};
 
-/** Responses follow their survey (contract §7). */
+/** Responses follow the same policy as their survey. */
 const resolveResponseScope = async (responseId: string): Promise<TResourceScope | null> => {
-  if (!(await isSurveyVisibilityReady())) {
-    return toWorkspaceResourceScope(await getResponseAuthorizationWorkspaceScope(responseId));
-  }
   const surveyId = await getResponseSurveyId(responseId);
-  return surveyId ? toSurveyResourceScope(await getSurveyAuthorizationScopeRow(surveyId)) : null;
+  return surveyId ? resolveSurveyScope(surveyId) : null;
 };
 
 const resolveResourceScope = async (resource: TAuthorizationResource): Promise<TResourceScope | null> => {

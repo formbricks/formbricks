@@ -51,10 +51,10 @@ const WORKSPACE_PERMISSION_FOR_DERIVED_ACTION = {
 
 /** A response action decided on its survey's node (ENG-3282): the survey permission it inherits. */
 const SURVEY_PERMISSION_FOR_RESPONSE_ACTION = {
-  "response.export": "response_export",
-  "response.manage": "manage",
-  "response.read": "response_read",
-  "response.write": "write",
+  "response.export": "response_export_v2",
+  "response.manage": "manage_v2",
+  "response.read": "response_read_v2",
+  "response.write": "write_v2",
 } as const satisfies Partial<Record<TAuthorizationAction, string>>;
 
 const assertActionMatchesResource = (
@@ -103,7 +103,10 @@ const getPermission = (
     ];
   }
 
-  return parseAction(action).permission;
+  const permission = parseAction(action).permission;
+  return permissionResourceType === "survey" && permission !== "change_visibility"
+    ? `${permission}_v2`
+    : permission;
 };
 
 type TSpicedbCheck = Readonly<{

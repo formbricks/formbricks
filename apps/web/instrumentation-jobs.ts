@@ -2,10 +2,12 @@ import { type JobHandlerOverrides, type JobsRuntimeHandle, startJobsRuntime } fr
 import { logger } from "@formbricks/logger";
 import { getJobsQueueingConfig, getJobsWorkerBootstrapConfig } from "@/lib/jobs/config";
 import { RECURRING_JOB_REGISTRATIONS, getJobHandlerOverrides } from "@/lib/jobs/recurring-registrations";
+import { isNewReleaseWorkEnabled } from "@/lib/upgrade/compatibility";
 
 const WORKER_STARTUP_RETRY_DELAY_MS = 30_000;
 
 type TJobsRuntimeGlobal = typeof globalThis & {
+  formbricksServerLifecycle?: { draining: boolean };
   formbricksJobsRecurringRegistration: Promise<void> | undefined;
   formbricksJobsRecurringRegistered: boolean | undefined;
   formbricksJobsRecurringRetryTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -34,10 +36,13 @@ const globalForJobsRuntime = globalThis as TJobsRuntimeGlobal;
  * without a queued run, and it is the right way round: a config change landing one cycle late is
  * recoverable, a schedule that silently stops firing is not.
  */
-const registerRecurringJobSchedules = async (): Promise<void> => {
+const registerRecurringJobSchedules = async (): Promise<boolean> => {
+  const activated = await isNewReleaseWorkEnabled();
   for (const registration of RECURRING_JOB_REGISTRATIONS) {
+    if (registration.requiresReleaseActivation && !activated) continue;
     await registration.job.upsert(registration.schedule);
   }
+  return activated;
 };
 
 const clearRecurringJobsRetryTimeout = (): void => {
@@ -92,6 +97,7 @@ const scheduleJobsWorkerRetry = (): void => {
 };
 
 export const registerRecurringJobs = async (): Promise<void> => {
+  if (globalForJobsRuntime.formbricksServerLifecycle?.draining) return;
   const jobsQueueingConfig = getJobsQueueingConfig();
 
   if (!jobsQueueingConfig.enabled || !jobsQueueingConfig.redisUrl) {
@@ -109,10 +115,11 @@ export const registerRecurringJobs = async (): Promise<void> => {
   }
 
   globalForJobsRuntime.formbricksJobsRecurringRegistration = (async () => {
-    await registerRecurringJobSchedules();
+    const activated = await registerRecurringJobSchedules();
     clearRecurringJobsRetryTimeout();
-    globalForJobsRuntime.formbricksJobsRecurringRegistered = true;
+    globalForJobsRuntime.formbricksJobsRecurringRegistered = activated;
     globalForJobsRuntime.formbricksJobsRecurringRegistration = undefined;
+    if (!activated) scheduleRecurringJobsRetry();
   })();
 
   try {
@@ -126,6 +133,7 @@ export const registerRecurringJobs = async (): Promise<void> => {
 };
 
 export const registerJobsWorker = async (): Promise<JobsRuntimeHandle | null> => {
+  if (globalForJobsRuntime.formbricksServerLifecycle?.draining) return null;
   const jobsWorkerBootstrapConfig = getJobsWorkerBootstrapConfig();
 
   if (!jobsWorkerBootstrapConfig.enabled || !jobsWorkerBootstrapConfig.runtimeOptions) {
@@ -153,6 +161,7 @@ export const registerJobsWorker = async (): Promise<JobsRuntimeHandle | null> =>
     const runtime = await startJobsRuntime({
       ...runtimeOptions,
       jobHandlerOverrides,
+      manageSignals: !globalForJobsRuntime.formbricksServerLifecycle,
     });
 
     clearJobsWorkerRetryTimeout();

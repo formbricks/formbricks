@@ -18,6 +18,7 @@ const VISIBILITY = { actorContext: {}, gates: { entitled: false, ready: false },
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(can).mockResolvedValue(true);
   vi.mocked(isSurveyVisibilityReady).mockResolvedValue(false);
   vi.mocked(resolveV3SurveyResourceVisibility).mockResolvedValue(VISIBILITY as never);
 });
@@ -83,8 +84,10 @@ describe("getAuthorizedV3Survey", () => {
       response: null,
       visibility: VISIBILITY,
     });
-    // Marker off: the workspace check is the whole decision, as before ENG-3282.
-    expect(can).not.toHaveBeenCalled();
+    expect(can).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "survey.read", {
+      type: "survey",
+      id: survey.id,
+    });
   });
 
   test.each([

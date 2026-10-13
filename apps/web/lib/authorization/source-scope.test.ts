@@ -3,7 +3,6 @@ import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import {
   getApiKeyOrganizationId,
   getAuthorizationOrganizationId,
-  getDashboardAuthorizationWorkspaceScope,
   getFeedbackDirectoryAssignmentAuthorizationScope,
   getFeedbackDirectoryAuthorizationScope,
   getResponseAuthorizationWorkspaceScope,
@@ -56,41 +55,28 @@ describe("resolveAuthorizationScope", () => {
     });
   });
 
-  test("resolves survey, dashboard, and response parent chains", async () => {
-    vi.mocked(getSurveyAuthorizationWorkspaceScope).mockResolvedValue({
-      organizationId: "org-workspace-survey",
-      workspaceId: "workspace-survey",
+  test("resolves surveys and their responses from stored policy before the graph is ready", async () => {
+    vi.mocked(getSurveyAuthorizationScopeRow).mockResolvedValue({
+      id: "survey-1",
+      organizationId: "org-1",
+      workspaceId: "workspace-1",
+      ownerId: "owner",
+      visibility: "restricted",
+      visibilityVersion: 0,
+      visibilityProjectedVersion: 0,
     });
-    vi.mocked(getDashboardAuthorizationWorkspaceScope).mockResolvedValue({
-      organizationId: "org-workspace-dashboard",
-      workspaceId: "workspace-dashboard",
-    });
-    vi.mocked(getResponseAuthorizationWorkspaceScope).mockResolvedValue({
-      organizationId: "org-workspace-response",
-      workspaceId: "workspace-response",
-    });
-
-    await expect(
-      resolveAuthorizationScope({ type: "user", id: "user-1" }, { type: "survey", id: "survey-1" })
-    ).resolves.toEqual({
-      actorValid: true,
-      organizationId: "org-workspace-survey",
-      permissionResource: { type: "workspace", id: "workspace-survey" },
-    });
-    await expect(
-      resolveAuthorizationScope({ type: "user", id: "user-1" }, { type: "dashboard", id: "dashboard-1" })
-    ).resolves.toEqual({
-      actorValid: true,
-      organizationId: "org-workspace-dashboard",
-      permissionResource: { type: "workspace", id: "workspace-dashboard" },
-    });
-    await expect(
-      resolveAuthorizationScope({ type: "user", id: "user-1" }, { type: "response", id: "response-1" })
-    ).resolves.toEqual({
-      actorValid: true,
-      organizationId: "org-workspace-response",
-      permissionResource: { type: "workspace", id: "workspace-response" },
-    });
+    vi.mocked(getResponseSurveyId).mockResolvedValue("survey-1");
+    for (const resource of [
+      { type: "survey", id: "survey-1" },
+      { type: "response", id: "response-1" },
+    ] as const) {
+      await expect(resolveAuthorizationScope({ type: "user", id: "user-1" }, resource)).resolves.toEqual({
+        actorValid: true,
+        organizationId: "org-1",
+        permissionResource: { type: "workspace", id: "workspace-1" },
+        policy: { kind: "pendingPrivate", neverAcknowledged: true, ownerId: "owner", surveyId: "survey-1" },
+      });
+    }
   });
 
   test("resolves directory and exact directory-workspace assignment resources", async () => {

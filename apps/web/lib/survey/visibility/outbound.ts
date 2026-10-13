@@ -2,7 +2,6 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { getEffectiveVisibility } from "./policy";
 import { effectivelyRestrictedWhere } from "./predicate";
 
@@ -27,7 +26,7 @@ export const findNotWorkspaceVisibleSurveyIds = async (
   surveyIds: ReadonlyArray<string>
 ): Promise<string[]> => {
   const unique = [...new Set(surveyIds)];
-  if (unique.length === 0 || !(await isSurveyVisibilityReady())) return [];
+  if (unique.length === 0) return [];
 
   const rows = await prisma.survey.findMany({
     where: { id: { in: unique }, ...notWorkspaceVisibleWhere },
@@ -61,8 +60,8 @@ export const assertNewlyAttachedSurveysWorkspaceVisible = async (
 type TOutboundVisibilityRow = Parameters<typeof getEffectiveVisibility>[0];
 
 /** Dispatch-time guard over a row already loaded, so the hot path pays no extra query. */
-export const isSurveyOutboundAllowed = (row: TOutboundVisibilityRow, enforced: boolean): boolean =>
-  !enforced || getEffectiveVisibility(row) === "workspace";
+export const isSurveyOutboundAllowed = (row: TOutboundVisibilityRow): boolean =>
+  getEffectiveVisibility(row) === "workspace";
 
 /** The columns {@link isSurveyOutboundAllowed} reads, for callers' `select`. */
 export const surveyOutboundVisibilitySelect = {

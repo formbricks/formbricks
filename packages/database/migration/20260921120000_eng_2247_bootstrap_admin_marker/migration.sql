@@ -25,11 +25,6 @@ END $$;
 -- AlterTable
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "isBootstrapAdmin" "BootstrapAdminMarker";
 
--- CreateIndex
--- Not CONCURRENTLY. "User" is ~55k rows in production, where this build measures ~45ms; an
--- interrupted concurrent build instead leaves an INVALID index, which enforces nothing while looking
--- present. For the index that IS this fix, 45ms of write lock is the better failure mode.
--- squawk-ignore require-concurrent-index-creation
-CREATE UNIQUE INDEX IF NOT EXISTS "User_isBootstrapAdmin_key" ON "User"("isBootstrapAdmin");
+-- Built concurrently and validated by the migration runner.
 
 RESET lock_timeout;

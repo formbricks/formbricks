@@ -11,7 +11,6 @@ import {
 import { logger } from "@formbricks/logger";
 import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
 import { can } from "@/lib/authorization";
-import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { POSTHOG_KEY } from "@/lib/constants";
 import { selectSurveyEmbeddedDataLinks, withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { handleFeedbackSourcePipeline } from "@/lib/feedback-source/pipeline-handler";
@@ -20,6 +19,7 @@ import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { isSurveyOutboundAllowed, surveyOutboundVisibilitySelect } from "@/lib/survey/visibility/outbound";
 import { sendTelemetryEvents } from "@/lib/telemetry/usage-update";
+import { isNewReleaseWorkEnabled } from "@/lib/upgrade/compatibility";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { type TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { recordResponseCreatedMeterEvent } from "@/modules/ee/billing/lib/metering";
@@ -32,6 +32,7 @@ import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { getFinishedResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { handleIntegrations } from "./handle-integrations";
 import { recordSurveyOutboundSkipped } from "./outbound-visibility-metrics";
+import { processWebhookDeliveryJob } from "./process-webhook-delivery-job";
 
 const DEFAULT_NOTIFICATION_LOCALE: TUserLocale = "en-US";
 
@@ -202,9 +203,23 @@ const enqueueWebhookDeliveryJobs = async ({
     return;
   }
 
+  const enqueue = await isNewReleaseWorkEnabled();
+  const deliver: (...args: Parameters<typeof enqueueWebhookDeliveryJob>) => Promise<unknown> = enqueue
+    ? enqueueWebhookDeliveryJob
+    : async (payload, options) => {
+        const jobId = options?.jobId ?? createWebhookDeliveryJobId(logContext.jobId, payload.webhookId);
+        await processWebhookDeliveryJob(payload, {
+          attempt: logContext.attempt,
+          maxAttempts: logContext.maxAttempts,
+          jobId,
+          jobName: "response-pipeline.process",
+          queueName: "formbricks-jobs",
+        });
+        return { jobId, jobName: "response-pipeline.process", queueName: "formbricks-jobs" };
+      };
   const results = await Promise.allSettled(
     webhooks.map((webhook) =>
-      enqueueWebhookDeliveryJob(
+      deliver(
         {
           webhookId: webhook.id,
           workspaceId: data.workspaceId,
@@ -314,7 +329,7 @@ const keepRecipientsWhoMayReadResponses = async <TUser extends { id: string }>(
   users: TUser[],
   surveyId: string
 ): Promise<TUser[]> => {
-  if (users.length === 0 || !(await isSurveyVisibilityReady())) return users;
+  if (users.length === 0) return users;
   const allowed = await Promise.all(
     users.map((user) =>
       can({ id: user.id, type: "user" }, "survey.response_read", { id: surveyId, type: "survey" })
@@ -835,7 +850,7 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
     // ENG-3283: a restricted survey's responses never leave the app — no webhook, integration, feedback
     // source, follow-up or workflow. Metering, telemetry, auto-complete and the (already filtered)
     // alert emails are internal and still run.
-    const outboundAllowed = isSurveyOutboundAllowed(survey, await isSurveyVisibilityReady());
+    const outboundAllowed = isSurveyOutboundAllowed(survey);
     if (outboundAllowed) {
       await enqueueWebhookDeliveryJobs({
         data,

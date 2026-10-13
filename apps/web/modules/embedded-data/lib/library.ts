@@ -10,6 +10,7 @@ import {
   ZEmbeddedData,
 } from "@formbricks/types/embedded-data";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { assertNewReleaseWorkEnabled } from "@/lib/upgrade/compatibility";
 import {
   EmbeddedDataInUseError,
   EmbeddedDataKeyConflictError,
@@ -231,6 +232,7 @@ export const createSharedEmbeddedData = async (
   workspaceId: string,
   input: TCreateSharedEmbeddedDataInput
 ): Promise<TSharedEmbeddedData> => {
+  await assertNewReleaseWorkEnabled();
   const row = candidateRow({
     id: createId(),
     key: input.key,
@@ -294,6 +296,7 @@ export const updateSharedEmbeddedData = async (
   patch: TUpdateSharedEmbeddedDataInput,
   options?: { acknowledgeExistingResponses?: boolean }
 ): Promise<TSharedEmbeddedData> => {
+  await assertNewReleaseWorkEnabled();
   const existing = await requireSharedField(id, workspaceId);
 
   const merged = candidateRow({
@@ -363,6 +366,7 @@ export const deleteSharedEmbeddedData = async (
   id: string,
   workspaceId: string
 ): Promise<TSharedEmbeddedData> => {
+  await assertNewReleaseWorkEnabled();
   const existing = await requireSharedField(id, workspaceId);
 
   const usage = await getEmbeddedDataUsage(id, workspaceId);
@@ -391,6 +395,7 @@ export const promoteEmbeddedDataToShared = async (
   workspaceId: string,
   input: TPromoteEmbeddedDataInput
 ): Promise<TSharedEmbeddedData> => {
+  await assertNewReleaseWorkEnabled();
   const existing = await prisma.embeddedData.findFirst({
     where: { id, workspaceId, surveyId: { not: null } },
     select: SELECT_SHARED_FIELD,

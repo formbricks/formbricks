@@ -5,6 +5,10 @@ import { selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { processResponsePipelineJob } from "./process-response-pipeline-job";
 
+const online = vi.hoisted(() => ({ enabled: true, deliver: vi.fn(async () => {}) }));
+vi.mock("@/lib/upgrade/compatibility", () => ({ isNewReleaseWorkEnabled: async () => online.enabled }));
+vi.mock("./process-webhook-delivery-job", () => ({ processWebhookDeliveryJob: online.deliver }));
+
 // vitestSetup.ts stubs crypto.createHash to a constant for the license checks. The webhook-id derivation
 // is a subject of this suite, so this file uses the real implementation.
 vi.mock("node:crypto", async (importOriginal) => await importOriginal());
@@ -201,6 +205,9 @@ const organization = {
 };
 
 const survey = {
+  visibility: "workspace",
+  visibilityVersion: 0,
+  visibilityProjectedVersion: 0,
   blocks: [],
   autoComplete: null,
   createdAt: new Date("2026-04-01T10:00:00.000Z"),
@@ -226,6 +233,8 @@ const expectedWebhookMessageId = (jobId: string, webhookId: string, event: strin
 describe("processResponsePipelineJob", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    online.enabled = true;
+    mockCan.mockResolvedValue(true);
     mockPrismaOrganizationFindFirst.mockResolvedValue(organization);
     mockPrismaSurveyFindUnique.mockResolvedValue(survey);
     mockGetIntegrations.mockResolvedValue([]);
@@ -737,6 +746,18 @@ describe("processResponsePipelineJob", () => {
       })
     );
     expect(auditCall).not.toHaveProperty("newObject");
+  });
+
+  test("delivers webhooks inline during overlap without exposing the new job type to old workers", async () => {
+    online.enabled = false;
+    mockPrismaWebhookFindMany.mockResolvedValue([webhookRow]);
+    await processResponsePipelineJob(baseData, baseContext);
+    expect(mockEnqueueWebhookDeliveryJob).not.toHaveBeenCalled();
+    expect(online.deliver).toHaveBeenCalledOnce();
+    expect(online.deliver).toHaveBeenCalledWith(
+      expect.objectContaining({ webhookId: webhookRow.id }),
+      expect.objectContaining({ attempt: baseContext.attempt })
+    );
   });
 
   test("fails the job before the final attempt when a webhook delivery cannot be enqueued", async () => {

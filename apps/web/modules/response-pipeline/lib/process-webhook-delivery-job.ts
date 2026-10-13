@@ -8,7 +8,6 @@ import {
 } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
 import { isSurveyOutboundAllowed, surveyOutboundVisibilitySelect } from "@/lib/survey/visibility/outbound";
 import { WebhookDnsResolutionError } from "@/lib/utils/validate-webhook-url";
@@ -126,14 +125,13 @@ const isStillSubscribed = (target: TDeliveryTarget, data: TWebhookDeliveryJobDat
 
 /** One primary-key read, and none at all while survey visibility is not enforced. */
 const isSurveyStillOutboundVisible = async (surveyId: string): Promise<boolean> => {
-  if (!(await isSurveyVisibilityReady())) return true;
   const survey = await prisma.survey.findUnique({
     where: { id: surveyId },
     select: surveyOutboundVisibilitySelect,
   });
   // Fail closed on a deleted survey: its queued payload may belong to one restricted before deletion,
   // and `Webhook.surveyIds` is not a foreign key, so the webhook still looks subscribed.
-  return survey !== null && isSurveyOutboundAllowed(survey, true);
+  return survey !== null && isSurveyOutboundAllowed(survey);
 };
 
 type TDeliveryAttempt = { kind: "completed"; statusCode: number } | { kind: "threw"; error: unknown };
