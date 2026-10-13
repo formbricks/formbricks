@@ -1,12 +1,16 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { filterReadableSurveyIds, lookupAuthorizedWorkspaceIds } from "@/lib/authorization/resource-list";
 import { AUTHZED_MAX_BULK_CHECK_ITEMS } from "@/lib/authzed/constants";
 import { findEffectivelyRestrictedSurveyIds } from "@/lib/survey/visibility/outbound";
 import { type TNoticeSurvey, resolveSurveyNoticeRecipients } from "./recipients";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@formbricks/database", () => ({ prisma: { membership: { findMany: vi.fn() } } }));
-vi.mock("@/lib/authorization/resource-list", () => ({ filterReadableSurveyIds: vi.fn() }));
+vi.mock("@/lib/authorization/resource-list", () => ({
+  filterReadableSurveyIds: vi.fn(),
+  lookupAuthorizedWorkspaceIds: vi.fn(),
+}));
 vi.mock("@/lib/survey/visibility/outbound", () => ({ findEffectivelyRestrictedSurveyIds: vi.fn() }));
 
 /**
@@ -31,6 +35,7 @@ const recipient = (id: string, locale = "de-DE") => ({
 });
 const survey = (id: string, ownerId: string | null, createdBy: string | null = null): TNoticeSurvey => ({
   id,
+  workspaceId: "clworkspace",
   ownerId,
   createdBy,
 });
@@ -175,5 +180,35 @@ describe("resolveSurveyNoticeRecipients", () => {
     await resolveSurveyNoticeRecipients(ORG_ID, [survey("s1", null)], readable({}));
 
     expect(findEffectivelyRestrictedSurveyIds).not.toHaveBeenCalled();
+  });
+
+  test("by default, checks the workspace before the graph, which lets everything through until visibility is enforced", async () => {
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([
+      member("alice", "member"),
+      member("yan", "owner"),
+    ] as never);
+    vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValue(["ws-team"]);
+    vi.mocked(filterReadableSurveyIds).mockImplementation(async (_actor, ids) => new Set(ids));
+    const inWorkspace = (id: string, workspaceId: string) => ({
+      ...survey(id, "alice", "alice"),
+      workspaceId,
+    });
+
+    const recipients = await resolveSurveyNoticeRecipients(ORG_ID, [
+      inWorkspace("s1", "ws-team"),
+      inWorkspace("s2", "ws-other"),
+    ]);
+
+    expect(recipients).toEqual(
+      new Map([
+        ["s1", recipient("alice")],
+        // Alice has no access to s2's workspace: the organisation's owner is told instead.
+        ["s2", recipient("yan")],
+      ])
+    );
+    // One workspace lookup per person; the graph only sees surveys in workspaces she can read.
+    expect(lookupAuthorizedWorkspaceIds).toHaveBeenCalledTimes(1);
+    expect(lookupAuthorizedWorkspaceIds).toHaveBeenCalledWith({ type: "user", id: "alice" });
+    expect(filterReadableSurveyIds).toHaveBeenCalledWith({ type: "user", id: "alice" }, ["s1"]);
   });
 });

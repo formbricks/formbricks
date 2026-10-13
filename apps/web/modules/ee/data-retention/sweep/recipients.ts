@@ -2,7 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
 import type { TAuthorizationActor } from "@/lib/authorization";
-import { filterReadableSurveyIds } from "@/lib/authorization/resource-list";
+import { filterReadableSurveyIds, lookupAuthorizedWorkspaceIds } from "@/lib/authorization/resource-list";
 import { AUTHZED_MAX_BULK_CHECK_ITEMS } from "@/lib/authzed/constants";
 import { findEffectivelyRestrictedSurveyIds } from "@/lib/survey/visibility/outbound";
 import { isSurveyHiddenFromMember } from "@/lib/survey/visibility/predicate";
@@ -11,13 +11,40 @@ import { RETENTION_RECIPIENT_CHECK_CONCURRENCY } from "./constants";
 
 export type TNoticeRecipient = { userId: string; email: string; name: string; locale: TUserLocale };
 
-export type TNoticeSurvey = { id: string; ownerId: string | null; createdBy: string | null };
+export type TNoticeSurvey = {
+  id: string;
+  workspaceId: string;
+  ownerId: string | null;
+  createdBy: string | null;
+};
 
-/** Which of `surveyIds` the user may read: the app's own survey read check (ENG-3282), in one bulk call. */
+/** Which of `surveyIds` the user may read: the app's own survey read check, in one bulk call. */
 export type TSurveyReadCheck = (
   actor: TAuthorizationActor,
   surveyIds: ReadonlyArray<string>
 ) => Promise<ReadonlySet<string>>;
+
+/**
+ * The app's read check for `surveys`, as every read route applies it: the workspace first (looked up once
+ * per person), then the graph's survey check (ENG-3282). The graph check takes workspace access as given,
+ * and lets every survey through while survey visibility isn't enforced yet, so it never stands alone.
+ */
+const appSurveyReadCheck = (surveys: readonly TNoticeSurvey[]): TSurveyReadCheck => {
+  const workspaceOf = new Map(surveys.map((survey) => [survey.id, survey.workspaceId]));
+  const workspacesOf = new Map<string, Promise<ReadonlySet<string>>>();
+  return async (actor, surveyIds) => {
+    let workspaces = workspacesOf.get(actor.id);
+    if (!workspaces) {
+      workspaces = lookupAuthorizedWorkspaceIds(actor).then((ids) => new Set(ids));
+      workspacesOf.set(actor.id, workspaces);
+    }
+    const readableWorkspaces = await workspaces;
+    const inReadableWorkspaces = surveyIds.filter((surveyId) =>
+      readableWorkspaces.has(workspaceOf.get(surveyId) ?? "")
+    );
+    return filterReadableSurveyIds(actor, inReadableWorkspaces);
+  };
+};
 
 type TCandidate = TNoticeRecipient & { role: "owner" | "manager" | "member" };
 
@@ -27,9 +54,9 @@ type TCandidate = TNoticeRecipient & { role: "owner" | "manager" | "member" };
  * the survey. Surveys with nobody eligible are left out of the result, and the caller skips them
  * (`noRecipient`): a notice no one receives must never let the action run.
  *
- * The owner and creator are checked with the app's own survey read check, in bulk calls of at most
- * `AUTHZED_MAX_BULK_CHECK_ITEMS` surveys per person, a few in flight at once, so a restricted survey
- * (ENG-3282) or a workspace they have lost access to rules them out. That check reads the graph, which
+ * The owner and creator are checked with the app's own survey read check (`appSurveyReadCheck`), in bulk
+ * calls of at most `AUTHZED_MAX_BULK_CHECK_ITEMS` surveys per person, a few in flight at once, so a
+ * workspace they can't read, or a restricted survey (ENG-3282), rules them out. That check reads the graph, which
  * lags a visibility change until it is projected, so the survey's effective visibility is applied too
  * (`isSurveyHiddenFromMember`): a change still pending counts as restricted at once, as on every read path.
  * Owners and managers can read every survey in the organisation, so they need no check. A failed check
@@ -38,10 +65,11 @@ type TCandidate = TNoticeRecipient & { role: "owner" | "manager" | "member" };
 export const resolveSurveyNoticeRecipients = async (
   organizationId: string,
   surveys: readonly TNoticeSurvey[],
-  canRead: TSurveyReadCheck = filterReadableSurveyIds
+  readCheck?: TSurveyReadCheck
 ): Promise<Map<string, TNoticeRecipient>> => {
   const recipients = new Map<string, TNoticeRecipient>();
   if (surveys.length === 0) return recipients;
+  const canRead = readCheck ?? appSurveyReadCheck(surveys);
 
   const personalIds = [
     ...new Set(surveys.flatMap((survey) => [survey.ownerId, survey.createdBy]).filter(isPresent)),
@@ -92,7 +120,8 @@ export const resolveSurveyNoticeRecipients = async (
       userId: check.userId,
       allowed: await canRead({ type: "user", id: check.userId }, check.surveyIds),
     })),
-    // Effectively restricted surveys, `[]` while visibility isn't enforced. Only needed when a check runs.
+    // Effectively restricted surveys, from the stored facts even before visibility is enforced. Only needed
+    // when a check runs.
     checks.length === 0
       ? Promise.resolve([])
       : findEffectivelyRestrictedSurveyIds(surveys.map((survey) => survey.id)),

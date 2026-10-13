@@ -53,7 +53,7 @@ const recipientsByName = async () => {
     { id: surveys.byBob, ownerId: ids.olive, createdBy: ids.bob },
     { id: surveys.byMia, ownerId: ids.olive, createdBy: ids.mia },
     { id: surveys.byCarl, ownerId: null, createdBy: ids.carl },
-  ];
+  ].map((survey) => ({ ...survey, workspaceId: ids.workspace }));
   // No read check passed: the real one, against the graph.
   const recipients = await resolveSurveyNoticeRecipients(ids.organization, notice);
   return Object.fromEntries(notice.map((survey) => [survey.id, recipients.get(survey.id)?.name]));
@@ -115,6 +115,26 @@ beforeAll(async () => {
 afterAll(async () => {
   await clearProjectionScopeReady("survey");
   resetSurveyVisibilityReadinessMemo();
+});
+
+test("before survey visibility is enforced, a creator without access to the workspace is still passed over", async () => {
+  // The graph's survey check lets every survey through until the readiness marker is set; the
+  // workspace check must rule Carl out on its own.
+  await clearProjectionScopeReady("survey");
+  resetSurveyVisibilityReadinessMemo();
+  try {
+    const carlReads = await filterReadableSurveyIds({ type: "user", id: ids.carl }, [surveys.byCarl]);
+    expect(carlReads.has(surveys.byCarl)).toBe(true);
+    expect(await recipientsByName()).toEqual({
+      [surveys.owned]: "ada",
+      [surveys.byBob]: "bob",
+      [surveys.byMia]: "mia",
+      [surveys.byCarl]: "yan",
+    });
+  } finally {
+    await setProjectionScopeReady("survey", "integration");
+    resetSurveyVisibilityReadinessMemo();
+  }
 });
 
 test("a restriction stored but not yet projected passes over a member the graph still lets read the survey", async () => {

@@ -37,7 +37,8 @@ export const findNotWorkspaceVisibleSurveyIds = async (
 
 /**
  * The same lookup under a name for callers outside outbound plumbing: of `surveyIds`, the effectively
- * restricted ones (`getEffectiveVisibility(row) === "restricted"`). `[]` while enforcement is off.
+ * restricted ones (`getEffectiveVisibility(row) === "restricted"`), from the stored facts, before
+ * projection readiness too.
  */
 export const findEffectivelyRestrictedSurveyIds = findNotWorkspaceVisibleSurveyIds;
 

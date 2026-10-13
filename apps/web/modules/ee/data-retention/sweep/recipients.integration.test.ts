@@ -39,7 +39,7 @@ describe("resolveSurveyNoticeRecipients and survey visibility (real Postgres)", 
   const settledSurvey = async (name: string, ownerId: string | null, createdBy: string) => {
     const { id } = await prisma.survey.create({ data: { name, workspaceId, ownerId, createdBy } });
     await prisma.$executeRaw`UPDATE "Survey" SET "visibilityProjectedVersion" = 0 WHERE "id" = ${id}`;
-    return { id, ownerId, createdBy };
+    return { id, workspaceId, ownerId, createdBy };
   };
 
   /** A restriction stored through the visibility endpoint that the graph hasn't acknowledged yet. */
@@ -52,7 +52,9 @@ describe("resolveSurveyNoticeRecipients and survey visibility (real Postgres)", 
     expect(row.visibilityPending).toBe(true);
   };
 
-  const emailOf = async (surveys: { id: string; ownerId: string | null; createdBy: string }[]) => {
+  const emailOf = async (
+    surveys: { id: string; workspaceId: string; ownerId: string | null; createdBy: string }[]
+  ) => {
     const recipients = await resolveSurveyNoticeRecipients(organizationId, surveys, graphNotYetProjected);
     return Object.fromEntries(surveys.map((survey) => [survey.id, recipients.get(survey.id)?.name]));
   };
@@ -100,17 +102,20 @@ describe("resolveSurveyNoticeRecipients and survey visibility (real Postgres)", 
     // Awaiting its first projection: the column says pending, but it is not a pending change.
     expect(initial).toEqual({ visibilityPending: true, visibilityProjectedVersion: -1 });
 
-    expect(await emailOf([settled, { id: fresh, ownerId: null, createdBy: people.bob }])).toEqual({
+    expect(
+      await emailOf([settled, { id: fresh, workspaceId, ownerId: null, createdBy: people.bob }])
+    ).toEqual({
       [settled.id]: "bob",
       [fresh]: "bob",
     });
   });
 
-  test("with visibility not enforced, the pending restriction changes nothing", async () => {
+  test("before visibility is enforced, a stored restriction still passes over a plain-member creator", async () => {
+    // Stored visibility facts hold before projection readiness, as on the outbound paths: fail closed.
     const ownerless = await settledSurvey("Ownerless", null, people.bob);
     await restrictPending(ownerless.id);
     await setMarker(false);
 
-    expect(await emailOf([ownerless])).toEqual({ [ownerless.id]: "bob" });
+    expect(await emailOf([ownerless])).toEqual({ [ownerless.id]: "yan" });
   });
 });
