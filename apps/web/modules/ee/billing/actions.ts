@@ -40,6 +40,7 @@ export const manageSubscriptionAction = authenticatedActionClient
   .action(
     withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
       const { organizationId } = parsedInput;
+      ctx.auditLoggingCtx.organizationId = organizationId;
       await assertCan({ type: "user", id: ctx.user.id }, "organization.manage_billing", {
         type: "organization",
         id: organizationId,
@@ -54,7 +55,6 @@ export const manageSubscriptionAction = authenticatedActionClient
         throw new ResourceNotFoundError("OrganizationBilling", organizationId);
       }
 
-      ctx.auditLoggingCtx.organizationId = organizationId;
       const result = await createCustomerPortalSession(
         organization.billing.stripeCustomerId,
         `${WEBAPP_URL}/organizations/${organizationId}/settings/billing`
@@ -75,6 +75,7 @@ export const createPlanCheckoutAction = authenticatedActionClient
   .action(
     withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
       const { organizationId } = parsedInput;
+      ctx.auditLoggingCtx.organizationId = organizationId;
       await assertCan({ type: "user", id: ctx.user.id }, "organization.manage_billing", {
         type: "organization",
         id: organizationId,
@@ -100,7 +101,6 @@ export const createPlanCheckoutAction = authenticatedActionClient
         interval: parsedInput.targetInterval,
       });
 
-      ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.newObject = {
         checkoutCreated: true,
         targetPlan: parsedInput.targetPlan,
@@ -148,17 +148,19 @@ const ZRetryStripeSetupAction = z.object({
   organizationId: ZId,
 });
 
-export const retryStripeSetupAction = authenticatedActionClient
-  .inputSchema(ZRetryStripeSetupAction)
-  .action(async ({ ctx, parsedInput }) => {
+export const retryStripeSetupAction = authenticatedActionClient.inputSchema(ZRetryStripeSetupAction).action(
+  withAuditLogging("subscriptionUpdated", "organization", async ({ ctx, parsedInput }) => {
     await assertCan({ type: "user", id: ctx.user.id }, "organization.manage_billing", {
       type: "organization",
       id: parsedInput.organizationId,
     });
 
+    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
     await ensureCloudStripeSetupForOrganization(parsedInput.organizationId);
+    ctx.auditLoggingCtx.newObject = { stripeSetupRetried: true };
     return { success: true };
-  });
+  })
+);
 
 const ZCreateTrialPaymentCheckoutAction = z.object({
   organizationId: ZId,
@@ -171,6 +173,7 @@ export const createTrialPaymentCheckoutAction = authenticatedActionClient
   .action(
     withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
       const { organizationId } = parsedInput;
+      ctx.auditLoggingCtx.organizationId = organizationId;
       await assertCan({ type: "user", id: ctx.user.id }, "organization.manage_billing", {
         type: "organization",
         id: organizationId,
@@ -190,7 +193,6 @@ export const createTrialPaymentCheckoutAction = authenticatedActionClient
         throw new ResourceNotFoundError("subscription", organizationId);
       }
 
-      ctx.auditLoggingCtx.organizationId = organizationId;
       const returnUrl = `${WEBAPP_URL}/organizations/${organizationId}/settings/billing`;
       const upgradeIntent =
         parsedInput.targetPlan !== undefined
@@ -224,13 +226,14 @@ const ZStartScaleTrialAction = z.object({
   organizationId: ZId,
 });
 
-export const startHobbyAction = authenticatedActionClient
-  .inputSchema(ZStartScaleTrialAction)
-  .action(async ({ ctx, parsedInput }) => {
+export const startHobbyAction = authenticatedActionClient.inputSchema(ZStartScaleTrialAction).action(
+  withAuditLogging("subscriptionUpdated", "organization", async ({ ctx, parsedInput }) => {
     await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
       type: "organization",
       id: parsedInput.organizationId,
     });
+
+    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
 
     const organization = await getOrganization(parsedInput.organizationId);
     if (!organization) {
@@ -256,11 +259,15 @@ export const startHobbyAction = authenticatedActionClient
       { organizationId: parsedInput.organizationId }
     );
 
+    ctx.auditLoggingCtx.newObject = { plan: "hobby" };
+
     return { success: true };
-  });
+  })
+);
 
 export const startProTrialAction = authenticatedActionClient.inputSchema(ZStartScaleTrialAction).action(
-  withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
+  withAuditLogging("subscriptionUpdated", "organization", async ({ ctx, parsedInput }) => {
+    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
     await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
       type: "organization",
       id: parsedInput.organizationId,
@@ -278,8 +285,6 @@ export const startProTrialAction = authenticatedActionClient.inputSchema(ZStartS
     if (!customerId) {
       throw new ResourceNotFoundError("OrganizationBilling", parsedInput.organizationId);
     }
-
-    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
 
     const trialDays = await getProTrialDays(parsedInput.organizationId);
 
@@ -338,8 +343,9 @@ const ZChangeBillingPlanAction = z.discriminatedUnion("targetPlan", [
 ]);
 
 export const changeBillingPlanAction = authenticatedActionClient.inputSchema(ZChangeBillingPlanAction).action(
-  withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
+  withAuditLogging("subscriptionUpdated", "organization", async ({ ctx, parsedInput }) => {
     const { organizationId } = parsedInput;
+    ctx.auditLoggingCtx.organizationId = organizationId;
     await assertCan({ type: "user", id: ctx.user.id }, "organization.manage_billing", {
       type: "organization",
       id: organizationId,
@@ -374,7 +380,6 @@ export const changeBillingPlanAction = authenticatedActionClient.inputSchema(ZCh
       await syncOrganizationBillingFromStripe(organizationId);
     }
 
-    ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.newObject = {
       targetPlan: parsedInput.targetPlan,
       targetInterval: parsedInput.targetInterval,
@@ -395,8 +400,9 @@ const ZReportUpgradePaymentIssueAction = z.object({
 export const reportUpgradePaymentIssueAction = authenticatedActionClient
   .inputSchema(ZReportUpgradePaymentIssueAction)
   .action(
-    withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
+    withAuditLogging("subscriptionUpdated", "organization", async ({ ctx, parsedInput }) => {
       const { organizationId, paymentIntentId } = parsedInput;
+      ctx.auditLoggingCtx.organizationId = organizationId;
       await assertCan({ type: "user", id: ctx.user.id }, "organization.manage_billing", {
         type: "organization",
         id: organizationId,
@@ -409,7 +415,6 @@ export const reportUpgradePaymentIssueAction = authenticatedActionClient
         createdAt: new Date().toISOString(),
       });
 
-      ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.newObject = { paymentAttemptError: "requires_action" };
       return { success: true };
     })
@@ -425,8 +430,9 @@ const ZFinalizeSetupCheckoutUpgradeAction = z.object({
 export const finalizeSetupCheckoutUpgradeAction = authenticatedActionClient
   .inputSchema(ZFinalizeSetupCheckoutUpgradeAction)
   .action(
-    withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
+    withAuditLogging("subscriptionUpdated", "organization", async ({ ctx, parsedInput }) => {
       const { organizationId, checkoutSessionId } = parsedInput;
+      ctx.auditLoggingCtx.organizationId = organizationId;
       await assertCan({ type: "user", id: ctx.user.id }, "organization.manage_billing", {
         type: "organization",
         id: organizationId,
@@ -438,7 +444,6 @@ export const finalizeSetupCheckoutUpgradeAction = authenticatedActionClient
         await syncOrganizationBillingFromStripe(organizationId);
       }
 
-      ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.newObject = { targetPlan: result.targetPlan, mode: result.mode };
       return result;
     })
@@ -479,6 +484,7 @@ export const waitForBillingPlanAction = authenticatedActionClient
   .action(
     withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
       const { organizationId, targetPlan } = parsedInput;
+      ctx.auditLoggingCtx.organizationId = organizationId;
       await assertCan({ type: "user", id: ctx.user.id }, "organization.manage_billing", {
         type: "organization",
         id: organizationId,
@@ -490,7 +496,6 @@ export const waitForBillingPlanAction = authenticatedActionClient
         (value) => value === targetPlan
       );
 
-      ctx.auditLoggingCtx.organizationId = organizationId;
       return { plan };
     })
   );
@@ -507,6 +512,7 @@ export const waitForBillingPaymentMethodAction = authenticatedActionClient
   .action(
     withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
       const { organizationId } = parsedInput;
+      ctx.auditLoggingCtx.organizationId = organizationId;
       await assertCan({ type: "user", id: ctx.user.id }, "organization.manage_billing", {
         type: "organization",
         id: organizationId,
@@ -518,7 +524,6 @@ export const waitForBillingPaymentMethodAction = authenticatedActionClient
         (value) => value
       );
 
-      ctx.auditLoggingCtx.organizationId = organizationId;
       return { hasPaymentMethod };
     })
   );
@@ -530,8 +535,9 @@ const ZUndoPendingPlanChangeAction = z.object({
 export const undoPendingPlanChangeAction = authenticatedActionClient
   .inputSchema(ZUndoPendingPlanChangeAction)
   .action(
-    withAuditLogging("subscriptionAccessed", "organization", async ({ ctx, parsedInput }) => {
+    withAuditLogging("subscriptionUpdated", "organization", async ({ ctx, parsedInput }) => {
       const { organizationId } = parsedInput;
+      ctx.auditLoggingCtx.organizationId = organizationId;
       await assertCan({ type: "user", id: ctx.user.id }, "organization.manage_billing", {
         type: "organization",
         id: organizationId,
@@ -549,7 +555,6 @@ export const undoPendingPlanChangeAction = authenticatedActionClient
       await undoPendingOrganizationPlanChange(organizationId, organization.billing.stripeCustomerId);
       await syncOrganizationBillingFromStripe(organizationId);
 
-      ctx.auditLoggingCtx.organizationId = organizationId;
       return { success: true };
     })
   );

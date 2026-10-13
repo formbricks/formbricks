@@ -54,7 +54,8 @@ export const removeOrganizationEmailLogoUrlAction = authenticatedActionClient
 
       await checkWhiteLabelPermission(parsedInput.organizationId);
       ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
-      ctx.auditLoggingCtx.oldObject = { logoUrl: "" };
+      const organization = await getOrganization(parsedInput.organizationId);
+      ctx.auditLoggingCtx.oldObject = { logoUrl: organization?.whitelabel?.logoUrl ?? null };
       return await removeOrganizationEmailLogoUrl(parsedInput.organizationId);
     })
   );

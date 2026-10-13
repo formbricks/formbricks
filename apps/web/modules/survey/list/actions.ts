@@ -78,25 +78,37 @@ const ZGenerateSingleUseIdAction = z
 
 export const generateSingleUseIdsAction = authenticatedActionClient
   .inputSchema(ZGenerateSingleUseIdAction)
-  .action(async ({ ctx, parsedInput }) => {
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-      type: "workspace",
-      id: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-    });
-    // ENG-3282: the minted links write responses into this survey, as the survey summary's link actions
-    // already require.
-    await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
-      type: "survey",
-      id: parsedInput.surveyId,
-    });
+  .action(
+    withAuditLogging("created", "survey", async ({ ctx, parsedInput }) => {
+      ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
+      const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
+      ctx.auditLoggingCtx.organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+      await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+        type: "workspace",
+        id: workspaceId,
+      });
+      // ENG-3282: the minted links write responses into this survey, as the survey summary's link actions
+      // already require.
+      await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
+        type: "survey",
+        id: parsedInput.surveyId,
+      });
 
-    if (parsedInput.singleUseId) {
-      return [generateSurveySingleUseLinkParams(parsedInput.surveyId, false, parsedInput.singleUseId)];
-    }
+      const result = parsedInput.singleUseId
+        ? [generateSurveySingleUseLinkParams(parsedInput.surveyId, false, parsedInput.singleUseId)]
+        : generateSurveySingleUseLinkParamsList(
+            parsedInput.count,
+            parsedInput.surveyId,
+            parsedInput.isEncrypted
+          );
 
-    return generateSurveySingleUseLinkParamsList(
-      parsedInput.count,
-      parsedInput.surveyId,
-      parsedInput.isEncrypted
-    );
-  });
+      // Link issuance only: the single-use ids themselves are never recorded.
+      ctx.auditLoggingCtx.newObject = {
+        linkKind: "singleUse",
+        requestedCount: parsedInput.singleUseId ? 1 : parsedInput.count,
+        issuedCount: result.length,
+        isEncrypted: parsedInput.isEncrypted,
+      };
+      return result;
+    })
+  );

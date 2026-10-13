@@ -3,7 +3,9 @@ import { createGatewayServiceTokenResponse } from "@/modules/gateway-auth/lib/to
 
 export const POST = withV3ApiWrapper({
   auth: "session",
-  handler: async ({ authentication }) => {
-    return createGatewayServiceTokenResponse(authentication, "feedbackRecords");
+  action: "jwtTokenCreated",
+  targetType: "user",
+  handler: async ({ authentication, auditLog }) => {
+    return createGatewayServiceTokenResponse(authentication, "feedbackRecords", auditLog);
   },
 });

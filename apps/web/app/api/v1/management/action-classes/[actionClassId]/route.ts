@@ -76,6 +76,10 @@ export const PUT = withV1ApiWrapper({
 
     const params = await props.params;
 
+    if (auditLog) {
+      auditLog.targetId = params.actionClassId;
+    }
+
     try {
       const actionClass = await fetchAndAuthorizeActionClass(authentication, params.actionClassId, "PUT");
       if (!actionClass) {

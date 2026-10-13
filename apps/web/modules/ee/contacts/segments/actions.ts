@@ -130,7 +130,9 @@ const ZUpdateSegmentAction = z.object({
 
 export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdateSegmentAction).action(
   withAuditLogging("updated", "segment", async ({ ctx, parsedInput }) => {
+    ctx.auditLoggingCtx.segmentId = parsedInput.segmentId;
     const organizationId = await getOrganizationIdFromSegmentId(parsedInput.segmentId);
+    ctx.auditLoggingCtx.organizationId = organizationId;
     const segmentWorkspaceId = await getWorkspaceIdFromSegmentId(parsedInput.segmentId);
     await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
       type: "workspace",
@@ -176,8 +178,6 @@ export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdate
     const oldObject = await getSegment(parsedInput.segmentId);
     const updated = await updateSegment(parsedInput.segmentId, parsedInput.data);
 
-    ctx.auditLoggingCtx.segmentId = parsedInput.segmentId;
-    ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = updated;
 
@@ -246,7 +246,9 @@ export const cloneSegmentAction = authenticatedActionClient.inputSchema(ZCloneSe
     ctx.auditLoggingCtx.segmentId = parsedInput.segmentId;
 
     const result = await cloneSegment(parsedInput.segmentId, parsedInput.surveyId);
-    ctx.auditLoggingCtx.newObject = result;
+    // The created resource is the copy; keep the source id as metadata.
+    ctx.auditLoggingCtx.segmentId = result.id;
+    ctx.auditLoggingCtx.newObject = { ...result, clonedFromSegmentId: parsedInput.segmentId };
     return result;
   })
 );

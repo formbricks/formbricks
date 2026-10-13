@@ -96,6 +96,8 @@ export const createContactsFromCSVAction = authenticatedActionClient
       await ensureContactsEnabled(organizationId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
+      // A batch has no single contact: the workspace receiving the import is the target.
+      ctx.auditLoggingCtx.contactId = workspaceId;
       const existingContactCount = await prisma.contact.count({
         where: { workspaceId },
       });
@@ -108,6 +110,9 @@ export const createContactsFromCSVAction = authenticatedActionClient
 
       if ("contacts" in result) {
         ctx.auditLoggingCtx.newObject = {
+          workspaceId,
+          requestedCount: parsedInput.csvData.length,
+          count: result.contacts.length,
           contacts: result.contacts,
         };
 
@@ -123,6 +128,16 @@ export const createContactsFromCSVAction = authenticatedActionClient
           },
           { organizationId, workspaceId }
         );
+      }
+
+      if ("validationErrors" in result) {
+        // The import was rejected as a whole: nothing was created.
+        ctx.auditLoggingCtx.newObject = {
+          workspaceId,
+          requestedCount: parsedInput.csvData.length,
+          count: 0,
+          validationErrorCount: result.validationErrors.length,
+        };
       }
 
       return result;

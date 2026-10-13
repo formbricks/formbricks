@@ -178,6 +178,8 @@ const setupAuditLog = (
 
   if (authentication && auditLog && "user" in authentication) {
     auditLog.userId = authentication.user.id;
+    // A session-authenticated call is a person, not an API key.
+    auditLog.userType = "user";
   }
 };
 

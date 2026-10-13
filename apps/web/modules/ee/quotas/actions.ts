@@ -15,7 +15,7 @@ import {
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotaLinkCountByQuotaId } from "@/modules/ee/quotas/lib/quota-link";
-import { createQuota, deleteQuota, updateQuota } from "@/modules/ee/quotas/lib/quotas";
+import { createQuota, deleteQuota, getQuota, updateQuota } from "@/modules/ee/quotas/lib/quotas";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 
 const ZDeleteQuotaAction = z.object({
@@ -67,9 +67,9 @@ export const updateQuotaAction = authenticatedActionClient.inputSchema(ZUpdateQu
     });
 
     ctx.auditLoggingCtx.organizationId = organizationId;
-    const result = await updateQuota(parsedInput.quota, parsedInput.quotaId);
     ctx.auditLoggingCtx.quotaId = parsedInput.quotaId;
-    ctx.auditLoggingCtx.oldObject = parsedInput.quota;
+    ctx.auditLoggingCtx.oldObject = await getQuota(parsedInput.quotaId);
+    const result = await updateQuota(parsedInput.quota, parsedInput.quotaId);
     ctx.auditLoggingCtx.newObject = result;
     return result;
   })

@@ -37,6 +37,7 @@ const ZCreateWebhookAction = z.object({
 export const createWebhookAction = authenticatedActionClient.inputSchema(ZCreateWebhookAction).action(
   withAuditLogging("created", "webhook", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+    ctx.auditLoggingCtx.organizationId = organizationId;
     await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
       type: "workspace",
       id: parsedInput.workspaceId,
@@ -48,7 +49,7 @@ export const createWebhookAction = authenticatedActionClient.inputSchema(ZCreate
       parsedInput.webhookInput,
       parsedInput.webhookSecret
     );
-    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.webhookId = webhook.id;
     ctx.auditLoggingCtx.newObject = parsedInput.webhookInput;
 
     capturePostHogEvent(
