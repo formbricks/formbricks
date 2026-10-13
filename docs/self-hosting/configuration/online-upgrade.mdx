@@ -196,10 +196,20 @@ The following are release blockers, not optional follow-up cleanup:
 | Fresh prepare migration retains legacy columns and excludes deferred history | Exercised locally |
 | Container installer build (Next.js, TypeScript, coordinator) and Helm/Argo render ordering | Exercised locally; final runtime image and Kubernetes rollout unverified |
 | Queue pause, active-job drain, HTTP enqueueing and target consumption | Real Redis protocol test passes; released-image handoff unverified |
-| Isolated Kubernetes rehearsal harness and six source/controller runs | Not implemented or run |
+| Restricted PodSecurity, ingress proxy RBAC and temporary credential garbage collection | Disposable Kind smoke test passes |
+| Isolated Kubernetes upgrade harness and six source/controller runs | Not implemented or run |
 | Slow HTTP requests, public bundles, sessions, cache and shared queue compatibility across actual images | Not fully rehearsed |
 | Membership revocations, alternate authorization paths, coordinator interruption and capacity exhaustion during rollout | Not fully rehearsed |
 | Dependency upgrades and compatible repair-image recovery | Not validated |
+
+The isolated access smoke test creates and deletes its own Kind cluster and kubeconfig:
+
+```sh
+python3 charts/formbricks/tests/online-access.py
+```
+
+It checks admission of a rendered coordinator Pod, exact ingress proxy permissions, and credential
+cleanup after hook deletion. It does not start application images or exercise an upgrade.
 
 The release gate requires zero upgrade-induced failures for supported public-survey and API journeys,
 no lost submissions, no authorization leaks, and successful interrupted-upgrade recovery. Attach measured
