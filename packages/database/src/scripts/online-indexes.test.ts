@@ -23,6 +23,7 @@ describe("online index builds", () => {
   test("allows older transactions to drain without a short lock timeout and validates each build", async () => {
     const seen = new Set<string>();
     query.mockImplementation((_sql: string, values?: string[]) => {
+      if (_sql.includes("pg_try_advisory_lock")) return Promise.resolve({ rows: [{ acquired: true }] });
       const index = ONLINE_INDEXES.find(({ name }) => name === values?.[0]);
       if (!index) return Promise.resolve({ rows: [] });
       if (!seen.has(index.name)) {
@@ -44,6 +45,7 @@ describe("online index builds", () => {
       ONLINE_INDEXES.length
     );
     expect(statements.some((sql) => /^BEGIN/i.test(sql))).toBe(false);
+    expect(statements[1]).toContain("pg_try_advisory_lock");
     expect(end).toHaveBeenCalledOnce();
   });
 

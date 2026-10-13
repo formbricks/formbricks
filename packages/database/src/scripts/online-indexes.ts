@@ -1,3 +1,4 @@
+import { setTimeout as delay } from "node:timers/promises";
 import { Client } from "pg";
 
 export type OnlineIndex = Readonly<{
@@ -47,7 +48,7 @@ const readIndex = async (client: Client, index: OnlineIndex) => {
   }>(
     `
     SELECT x.indisvalid AS valid, x.indisunique AS unique, t.relname AS table,
-      (x.indexprs IS NULL AND x.indnkeyatts = x.indnatts AND NOT x.indnullsnotdistinct
+      (x.indexprs IS NULL AND x.indnkeyatts = x.indnatts AND NOT COALESCE((to_jsonb(x)->>'indnullsnotdistinct')::boolean, false)
        AND am.amname = 'btree' AND NOT EXISTS (SELECT 1 FROM unnest(x.indoption) AS opt WHERE opt <> 0)) AS simple,
       ARRAY(SELECT a.attname::text FROM unnest(x.indkey) WITH ORDINALITY AS k(attnum, ord)
         JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = k.attnum ORDER BY ord) AS columns,
@@ -75,11 +76,24 @@ const readIndex = async (client: Client, index: OnlineIndex) => {
 /** Autocommit statements on one connection: never CREATE/DROP CONCURRENTLY inside a transaction. */
 export const ensureOnlineIndexes = async (databaseUrl: string): Promise<void> => {
   const client = new Client({ connectionString: databaseUrl, connectionTimeoutMillis: 10_000 });
-  await client.connect();
   try {
+    await client.connect();
     // Concurrent builds also wait for older writers and snapshots. A short DDL lock timeout
     // would cancel a healthy online build (ENG-3701); this dedicated connection is closed below.
     await client.query("SET lock_timeout = 0");
+    // Serialize inspection, repair and construction on the same session. An invalid index can
+    // belong to an active concurrent build until that build commits its validation phase.
+    // A blocking advisory-lock query holds a snapshot: CREATE INDEX CONCURRENTLY can wait
+    // for that snapshot, deadlocking with the lock waiter. Poll without an open transaction.
+    const deadline = Date.now() + 3_600_000;
+    for (;;) {
+      const { rows } = await client.query<{ acquired: boolean }>(
+        "SELECT pg_try_advisory_lock(hashtext('formbricks-online-indexes')) AS acquired"
+      );
+      if (rows[0]?.acquired) break;
+      if (Date.now() >= deadline) throw new Error("Timed out waiting for the online index builder");
+      await delay(250);
+    }
     for (const index of ONLINE_INDEXES) {
       const existing = await readIndex(client, index);
       if (existing?.valid) continue;
@@ -89,6 +103,7 @@ export const ensureOnlineIndexes = async (databaseUrl: string): Promise<void> =>
         throw new Error(`Upgrade index is not valid: ${index.name}`);
     }
   } finally {
+    // Closing the session releases its lock even when the connection or a build failed.
     await client.end();
   }
 };

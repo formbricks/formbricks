@@ -80,6 +80,7 @@ vi.mock("@formbricks/database", () => {
       updateMany: vi.fn(),
     },
     // Interactive transaction: run the callback with the mocked client as the tx client.
+    $executeRaw: vi.fn(),
     $transaction: vi.fn((callback: (tx: typeof prisma) => Promise<unknown>) => callback(prisma)),
   };
   return { prisma };
@@ -372,10 +373,7 @@ describe("patchV3Survey", () => {
     );
   });
 
-  test("never writes the dropped legacy columns, and returns the survey read back after the reconcile", async () => {
-    // ENG-2404: `Survey` has no `variables` / `hiddenFields` column, so Prisma would refuse either
-    // key. They reach the database as rows, and the response is re-read after the reconcile so the
-    // projection derived from those rows describes the patched survey rather than the stored one.
+  test("writes compatible legacy columns and returns the survey read back after the reconcile", async () => {
     await patchV3Survey(
       currentSurvey,
       { hiddenFields: { enabled: true, fieldIds: ["utm_source"] } },
@@ -383,9 +381,11 @@ describe("patchV3Survey", () => {
       "org_1"
     );
 
-    const [[updateArgs]] = vi.mocked(prisma.survey.update).mock.calls;
-    expect(updateArgs.data).not.toHaveProperty("variables");
-    expect(updateArgs.data).not.toHaveProperty("hiddenFields");
+    expect(prisma.survey.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ hiddenFields: { enabled: true, fieldIds: ["utm_source"] } }),
+      })
+    );
     expect(vi.mocked(prisma.survey.findUniqueOrThrow).mock.invocationCallOrder[0]).toBeGreaterThan(
       vi.mocked(prisma.surveyEmbeddedData.create).mock.invocationCallOrder[0]
     );

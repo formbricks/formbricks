@@ -30,27 +30,40 @@ const server = createServer((request, response) => {
   });
 });
 
-getRequestHandlers({ dir, port, isDev: false, server, hostname, onDevServerCleanup: undefined })
-  .then((initialized) => {
-    handlers = initialized;
-    server.on("upgrade", handlers.upgradeHandler);
-    const stop = () => {
-      state.draining = true;
-      stopping ??= shutdown({
-        closeHttp: () =>
-          new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve()))),
-        closeWorkers: async () => {
-          await globalThis.formbricksJobsRuntimeInitializing?.catch(() => undefined);
-          await globalThis.formbricksJobsRuntime?.close();
-        },
-        closeApp: () => handlers.server.close(),
-      }).then(
-        () => process.exit(0),
-        () => process.exit(1)
-      );
-    };
-    process.once("SIGTERM", stop);
-    process.once("SIGINT", stop);
-    server.listen(port, hostname);
-  })
-  .catch(() => process.exit(1));
+// Signals can arrive while instrumentation is starting workers, before Next has returned handlers.
+const stop = (exitCode = 0) => {
+  state.draining = true;
+  stopping ??= (async () => {
+    await initialization.catch(() => undefined);
+    await shutdown({
+      closeHttp: () =>
+        server.listening
+          ? new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())))
+          : Promise.resolve(),
+      closeWorkers: async () => {
+        await globalThis.formbricksJobsRuntimeInitializing?.catch(() => undefined);
+        await globalThis.formbricksJobsRuntime?.close();
+      },
+      closeApp: () => handlers?.server.close(),
+    });
+  })().then(
+    () => process.exit(exitCode),
+    () => process.exit(1)
+  );
+};
+process.once("SIGTERM", () => stop());
+process.once("SIGINT", () => stop());
+const initialization = Promise.resolve().then(async () => {
+  handlers = await getRequestHandlers({
+    dir,
+    port,
+    isDev: false,
+    server,
+    hostname,
+    onDevServerCleanup: undefined,
+  });
+  if (state.draining) return;
+  server.on("upgrade", handlers.upgradeHandler);
+  server.listen(port, hostname);
+});
+initialization.catch(() => stop(1));

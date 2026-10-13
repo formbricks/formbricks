@@ -789,11 +789,11 @@ const parsedEnv = createEnv({
     SURVEY_SCHEDULING_TIME_ZONE: ZSurveySchedulingTimeZone.optional().default("Europe/Berlin"),
     SURVEY_SCHEDULING_LOCAL_HOUR: ZSurveySchedulingLocalHour.optional().default(0),
     SURVEY_SCHEDULING_LOCAL_MINUTE: ZSurveySchedulingLocalMinute.optional().default(0),
-    // ENG-3282 emergency switch: "1" makes the survey-visibility readiness marker read as unset, so the
-    // evaluator collapses to workspace permissions everywhere without touching the database.
+    // Online upgrade settings.
     FORMBRICKS_DEPLOYMENT_ID: z.string().min(1).optional(),
     MIGRATE_DATABASE_URL: z.string().optional(),
     FORMBRICKS_UPGRADE_MODE: z.enum(["online", "maintenance"]).optional(),
+    // "1" disables visibility mutations; stored restrictions remain enforced.
     SURVEY_VISIBILITY_FORCE_DISABLED: z.enum(["1", "0"]).optional(),
     // ENG-3282: most surveys one workspace may hold (archived included). Unset means 10,000.
     SURVEY_WORKSPACE_LIMIT: z.coerce.number().int().positive().optional(),
