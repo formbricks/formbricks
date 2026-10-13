@@ -504,7 +504,13 @@ jobs:
           fi
 
       - name: Verify and Initialize PostgreSQL
+        env:
+          POSTGRES_SERVICE_ID: ${{ job.services.postgres.id }}
+          REDIS_SERVICE_ID: ${{ job.services.redis.id }}
         run: |
+          # Runner hardening can restart Docker after Actions creates the service containers.
+          # Restore only this job's fixtures before testing the application against them.
+          docker start "$POSTGRES_SERVICE_ID" "$REDIS_SERVICE_ID"
           echo "Verifying PostgreSQL connection..."
           # Install PostgreSQL client to test connection
           sudo apt-get update && sudo apt-get install -y postgresql-client

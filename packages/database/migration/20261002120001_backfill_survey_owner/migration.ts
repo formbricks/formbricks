@@ -23,7 +23,7 @@ export const backfillSurveyOwner: MigrationScript = {
         UPDATE "Survey" SET "ownerId" = "createdBy"
         WHERE id IN (
           SELECT id FROM "Survey"
-          WHERE "ownerId" IS NULL AND "createdBy" IS NOT NULL
+          WHERE "ownerId" IS NULL AND "createdBy" IS NOT NULL AND NOT "ownershipInitialized"
           ORDER BY id
           LIMIT ${BATCH_SIZE}
         )
@@ -31,7 +31,7 @@ export const backfillSurveyOwner: MigrationScript = {
     );
 
     const [remaining] = await prisma.$queryRaw<Array<{ count: bigint }>>`
-      SELECT count(*) AS count FROM "Survey" WHERE "ownerId" IS NULL AND "createdBy" IS NOT NULL
+      SELECT count(*) AS count FROM "Survey" WHERE "ownerId" IS NULL AND "createdBy" IS NOT NULL AND NOT "ownershipInitialized"
     `;
     if (remaining.count > 0n) {
       throw new Error(`Survey owner backfill left ${remaining.count.toString()} surveys without an owner`);

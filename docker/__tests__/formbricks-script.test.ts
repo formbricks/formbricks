@@ -825,7 +825,7 @@ describe("docker/formbricks.sh AuthZed setup", () => {
     expect(updateFunction.indexOf("upgrade check")).toBeLessThan(updateFunction.indexOf("compose down"));
   });
 
-  test("blocks an update before pulling images when the Hub worker is missing", () => {
+  test("warns and continues the update when the Hub worker is missing", () => {
     const tempDir = createTempDir();
     const installationDir = join(tempDir, "formbricks");
     const binDir = join(tempDir, "bin");
@@ -857,10 +857,55 @@ describe("docker/formbricks.sh AuthZed setup", () => {
       },
     });
 
+    // A minor release must not require the operator to change their Compose file first, so the update runs.
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("does not contain the Hub worker service");
+    expect(result.stdout).toContain("/self-hosting/advanced/migration#hub-worker-for-docker");
+
+    const commands = readFileSync(commandLog, "utf8");
+    expect(commands).toContain("docker compose pull");
+    expect(commands).toContain("run --rm --no-deps formbricks-migrate");
+    // The file is rewritten only where documented — the Valkey pin — and the worker the warning is about is
+    // not inserted: merging it stays the operator's decision.
+    const rewritten = readFileSync(composePath, "utf8");
+    expect(rewritten).toContain(multiArchValkeyImage);
+    expect(readFileSync(`${composePath}.before-valkey-8.1.9`, "utf8")).toContain(legacyValkeyImage);
+    expect(rewritten).not.toContain("hub-worker");
+  });
+
+  test("leaves the Compose file untouched when a later gate stops the update", () => {
+    const tempDir = createTempDir();
+    const installationDir = join(tempDir, "formbricks");
+    const binDir = join(tempDir, "bin");
+    const composePath = join(installationDir, "docker-compose.yml");
+    // No hub-worker, so the warning path runs, and no AuthZed services, so the AuthZed gate stops the update.
+    const composeContents = `services:
+  redis:
+    image: ${legacyValkeyImage}
+`;
+    mkdirSync(installationDir, { recursive: true });
+    mkdirSync(binDir, { recursive: true });
+    writeFileSync(composePath, composeContents);
+    writeFileSync(join(installationDir, ".env"), "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true\n");
+    writeFileSync(
+      join(binDir, "sudo"),
+      '#!/bin/sh\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\ncase "$*" in *"config --services") printf "redis\\n" ;; esac\n',
+      { mode: 0o700 }
+    );
+
+    const result = spawnSync("bash", ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath], {
+      cwd: tempDir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        COMMAND_LOG: join(tempDir, "commands.log"),
+        PATH: `${binDir}:${process.env.PATH ?? ""}`,
+      },
+    });
+
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain("does not contain the required Hub worker service");
-    expect(result.stderr).toContain("/self-hosting/advanced/migration#hub-worker-required-for-docker");
-    expect(readFileSync(commandLog, "utf8")).toBe("docker compose config --services\n");
+    expect(result.stdout).toContain("does not yet contain the AuthZed v6 Compose services");
+    // That gate runs before the Valkey rewrite, so a stopped update leaves the file exactly as it was.
     expect(readFileSync(composePath, "utf8")).toBe(composeContents);
     expect(existsSync(`${composePath}.before-valkey-8.1.9`)).toBe(false);
   });

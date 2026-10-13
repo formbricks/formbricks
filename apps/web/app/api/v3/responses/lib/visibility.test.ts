@@ -15,11 +15,12 @@ describe("refuseUnlessV3SurveyVisible (ENG-3282)", () => {
     vi.clearAllMocks();
   });
 
-  test("asks nothing while survey visibility is not enforced", async () => {
+  test("still denies unauthorized access while the graph is not ready", async () => {
     vi.mocked(isSurveyVisibilityReady).mockResolvedValue(false);
 
-    await expect(refuseUnlessV3SurveyVisible(session, "response.read", resource, "req")).resolves.toBeNull();
-    expect(can).not.toHaveBeenCalled();
+    vi.mocked(can).mockResolvedValue(false);
+    expect((await refuseUnlessV3SurveyVisible(session, "response.read", resource, "req"))?.status).toBe(403);
+    expect(can).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "response.read", resource);
   });
 
   test("lets a caller the graph admits through", async () => {

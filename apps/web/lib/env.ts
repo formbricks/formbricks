@@ -789,8 +789,11 @@ const parsedEnv = createEnv({
     SURVEY_SCHEDULING_TIME_ZONE: ZSurveySchedulingTimeZone.optional().default("Europe/Berlin"),
     SURVEY_SCHEDULING_LOCAL_HOUR: ZSurveySchedulingLocalHour.optional().default(0),
     SURVEY_SCHEDULING_LOCAL_MINUTE: ZSurveySchedulingLocalMinute.optional().default(0),
-    // ENG-3282 emergency switch: "1" makes the survey-visibility readiness marker read as unset, so the
-    // evaluator collapses to workspace permissions everywhere without touching the database.
+    // Online upgrade settings.
+    FORMBRICKS_DEPLOYMENT_ID: z.string().min(1).optional(),
+    MIGRATE_DATABASE_URL: z.string().optional(),
+    FORMBRICKS_UPGRADE_MODE: z.enum(["online", "maintenance"]).optional(),
+    // "1" disables visibility mutations; stored restrictions remain enforced.
     SURVEY_VISIBILITY_FORCE_DISABLED: z.enum(["1", "0"]).optional(),
     // ENG-3282: most surveys one workspace may hold (archived included). Unset means 10,000.
     SURVEY_WORKSPACE_LIMIT: z.coerce.number().int().positive().optional(),
@@ -904,6 +907,9 @@ const parsedEnv = createEnv({
     SURVEY_SCHEDULING_LOCAL_HOUR: process.env.SURVEY_SCHEDULING_LOCAL_HOUR,
     SURVEY_SCHEDULING_LOCAL_MINUTE: process.env.SURVEY_SCHEDULING_LOCAL_MINUTE,
     SURVEY_SCHEDULING_TIME_ZONE: process.env.SURVEY_SCHEDULING_TIME_ZONE,
+    FORMBRICKS_DEPLOYMENT_ID: process.env.FORMBRICKS_DEPLOYMENT_ID,
+    MIGRATE_DATABASE_URL: process.env.MIGRATE_DATABASE_URL,
+    FORMBRICKS_UPGRADE_MODE: process.env.FORMBRICKS_UPGRADE_MODE,
     SURVEY_VISIBILITY_FORCE_DISABLED: process.env.SURVEY_VISIBILITY_FORCE_DISABLED,
     SURVEY_WORKSPACE_LIMIT: process.env.SURVEY_WORKSPACE_LIMIT,
     SENTRY_DSN: process.env.SENTRY_DSN,

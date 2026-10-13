@@ -60,7 +60,7 @@ const storedCss: TCustomCssStored = {
 const storedRow = { ...mockSurveyOutput, customCss: storedCss };
 
 const lastUpdateData = (): Record<string, unknown> =>
-  (vi.mocked(prisma.survey.update).mock.calls.at(-1)?.[0].data ?? {}) as Record<string, unknown>;
+  (vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0].data ?? {}) as Record<string, unknown>;
 
 beforeEach(() => {
   vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));

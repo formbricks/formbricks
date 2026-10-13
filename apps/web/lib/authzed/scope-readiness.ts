@@ -1,18 +1,7 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { env } from "@/lib/env";
 
-/**
- * Per-scope readiness of a SpiceDB projection (ENG-3282).
- *
- * A scope is ready once its backfill has converged and two consecutive audits came back clean — only
- * then may the evaluator decide from its relationships. Set and cleared only by the backfill CLI
- * (`--mark-ready`, `--clear-ready`); nothing on a request path writes it.
- *
- * While the survey scope is not ready, survey and response decisions collapse to workspace
- * permissions exactly as before the projection existed, so a fresh deploy changes nothing until an
- * operator marks it.
- */
+/** Projection readiness chooses graph checks versus PostgreSQL policy, never whether to enforce it. */
 
 export type TAuthzedProjectionScope = "survey";
 
@@ -40,18 +29,8 @@ const readSurveyReadiness = async (): Promise<boolean> => {
   return state?.readyAt != null;
 };
 
-/**
- * Whether survey visibility is enforced on this deployment.
- *
- * `false` means exactly two things: the marker is not set, or `SURVEY_VISIBILITY_FORCE_DISABLED=1`
- * (checked before any read). A failed read is neither — every caller treats `false` as workspace-wide
- * legacy access, so answering it on an error would release restricted surveys. A failed read therefore
- * keeps enforcing when the last successful read saw the marker set, and rejects otherwise, so the
- * caller fails with its own error path (5xx, error page, retried job) rather than deciding. Neither
- * outcome is memoized: the next check reads again.
- */
+/** A failed readiness read rejects; callers must never use failure to grant workspace-wide access. */
 export const isSurveyVisibilityReady = (): Promise<boolean> => {
-  if (env.SURVEY_VISIBILITY_FORCE_DISABLED === "1") return Promise.resolve(false);
   if (performance.now() - memoizedAt < SURVEY_VISIBILITY_READINESS_MEMO_TTL_MS) {
     return Promise.resolve(memoizedValue);
   }

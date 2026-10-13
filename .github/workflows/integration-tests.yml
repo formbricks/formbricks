@@ -19,6 +19,7 @@ on:
       - "package.json"
       - "pnpm-workspace.yaml"
       - ".github/actions/dangerous-git-checkout/action.yml"
+      - ".github/actions/restore-test-services/action.yml"
       - ".github/workflows/integration-tests.yml"
   # Also run in the merge queue (matches pr.yml / docker-build-validation.yml) so this suite can be
   # promoted to a required check that actually gates merges. merge_group events ignore `paths`, so the
@@ -66,6 +67,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false # no later step needs git auth (dangerous-git-checkout re-auths)
+      - name: Restore test services after runner hardening
+        uses: ./.github/actions/restore-test-services
+        with:
+          postgres: ${{ job.services.postgres.id }}
+          cache: ${{ job.services.valkey.id }}
+
       - uses: ./.github/actions/dangerous-git-checkout
 
       # Branches that predate the Better Auth cutover (#8384) don't contain the integration harness,
@@ -135,6 +142,18 @@ jobs:
         if: steps.harness.outputs.present == 'true'
         run: pnpm build --filter=@formbricks/web^...
         shell: bash
+
+      - name: Verify online migration recovery against PostgreSQL
+        if: steps.harness.outputs.present == 'true'
+        run: pnpm --filter @formbricks/database exec vitest run src/scripts/online-upgrade.integration.test.ts
+        env:
+          ONLINE_UPGRADE_TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres
+
+      - name: Verify online queue handoff against Redis
+        if: steps.harness.outputs.present == 'true'
+        run: pnpm --filter @formbricks/jobs exec vitest run src/upgrade.integration.test.ts
+        env:
+          ONLINE_UPGRADE_TEST_REDIS_URL: redis://localhost:6379/14
 
       - name: Create the test database
         if: steps.harness.outputs.present == 'true'
