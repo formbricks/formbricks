@@ -101,6 +101,9 @@ const seedWebhook = async (input: {
   const workspace = await prisma.workspace.create({
     data: { name: "webhook fan-out", organizationId: organization.id },
   });
+  await prisma.survey.create({
+    data: { id: SURVEY_ID, name: "Integration survey", workspaceId: workspace.id, visibility: "workspace" },
+  });
   return prisma.webhook.create({
     data: {
       url: `${receiverBaseUrl}${input.path}`,
@@ -269,6 +272,23 @@ describe("webhook delivery job (integration)", () => {
 
     expect(requestsTo("/ok")).toHaveLength(1);
   }, 20_000);
+
+  test("a survey restricted after enqueue is not delivered while projection is unready", async () => {
+    const webhook = await seedWebhook({ path: "/ok", secret: null });
+    const payload = buildPayload(webhook);
+    await runtime.queue.pause();
+    const job = await enqueue(payload, { jobId: `whd-int-${payload.webhookMessageId}` });
+    try {
+      await prisma.survey.update({
+        where: { id: SURVEY_ID },
+        data: { visibility: "restricted", visibilityVersion: { increment: 1 } },
+      });
+    } finally {
+      await runtime.queue.resume();
+    }
+    await expect(job.waitUntilFinished(queueEvents)).resolves.toBeNull();
+    expect(received).toHaveLength(0);
+  });
 
   test("a webhook deleted while its delivery was queued is skipped", async () => {
     const webhook = await seedWebhook({ path: "/ok", secret: null });

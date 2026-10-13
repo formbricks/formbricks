@@ -84,16 +84,7 @@ END $$;
 -- squawk-ignore prefer-robust-stmts
 ALTER TABLE "Survey" VALIDATE CONSTRAINT "Survey_ownerId_fkey";
 
--- CreateIndex
--- Not CONCURRENTLY: an interrupted concurrent build leaves an INVALID index that `IF NOT EXISTS` then
--- skips on retry. "Survey" is small (thousands to low hundreds of thousands of rows), so a plain build
--- is brief.
--- squawk-ignore require-concurrent-index-creation
-CREATE INDEX IF NOT EXISTS "Survey_workspaceId_ownerId_idx" ON "Survey"("workspaceId", "ownerId");
-
--- Only surveys with a visibility change in flight: the repair sweep's lookup.
--- squawk-ignore require-concurrent-index-creation
-CREATE INDEX IF NOT EXISTS "Survey_visibility_pending_idx" ON "Survey"("workspaceId") WHERE "visibilityPending";
+-- Survey indexes are built concurrently and validated by the migration runner.
 
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "AuthzedProjectionScopeState" (

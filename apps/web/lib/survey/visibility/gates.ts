@@ -1,19 +1,16 @@
 import "server-only";
 import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
+import { env } from "@/lib/env";
+import { isNewReleaseWorkEnabled } from "@/lib/upgrade/compatibility";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 
-/**
- * The two switches of the contract's gating table (README §5).
- *
- * - `ready`: the deployment's readiness marker. Decides *enforcement* — while it is off every survey is
- *   workspace-visible on every path, exactly as before ENG-3282.
- * - `entitled`: the organization's RBAC entitlement, meaningful only while `ready`. Decides whether
- *   anyone may *change* visibility and whether signed-in creation defaults to restricted. Losing it never
- *   releases a restricted survey (Decision 6).
- */
+/** Readiness and entitlement control mutations only. Stored visibility is always enforced. */
 export type TSurveyVisibilityGates = Readonly<{ entitled: boolean; ready: boolean }>;
 
 export const getSurveyVisibilityGates = async (organizationId: string): Promise<TSurveyVisibilityGates> => {
-  const ready = await isSurveyVisibilityReady();
+  const ready =
+    env.SURVEY_VISIBILITY_FORCE_DISABLED !== "1" &&
+    (await isNewReleaseWorkEnabled()) &&
+    (await isSurveyVisibilityReady());
   return { entitled: ready && (await getAccessControlPermission(organizationId)), ready };
 };

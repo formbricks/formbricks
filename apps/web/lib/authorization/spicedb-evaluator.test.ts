@@ -234,17 +234,17 @@ describe("survey visibility decisions (ENG-3282)", () => {
         resource: { objectId: "survey-1", objectType: "survey" },
       }),
       expect.objectContaining({
-        permission: "delete",
+        permission: "delete_v2",
         resource: { objectId: "survey-1", objectType: "survey" },
       }),
     ]);
   });
 
   test.each([
-    ["response.read", "response_read"],
-    ["response.write", "write"],
-    ["response.manage", "manage"],
-    ["response.export", "response_export"],
+    ["response.read", "response_read_v2"],
+    ["response.write", "write_v2"],
+    ["response.manage", "manage_v2"],
+    ["response.export", "response_export_v2"],
   ] as const)("maps %s on the survey node to survey#%s", async (action, permission) => {
     await checkSpicedbPermissionAtScope(user, action, { type: "response", id: "response-1" }, surveyScope);
 

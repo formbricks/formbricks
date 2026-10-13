@@ -377,7 +377,7 @@ describe("Tests for updateSurvey", () => {
 
       await updateSurvey(updateSurveyInput);
 
-      const updateArg = vi.mocked(prisma.survey.update).mock.calls.at(-1)?.[0];
+      const updateArg = vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0];
       // workspaceId/id are the survey's tenant anchors: they must come from the existing record,
       // never the client payload, so an authorized editor cannot re-point their survey to another
       // workspace/organization on update.
@@ -400,7 +400,7 @@ describe("Tests for updateSurvey", () => {
 
       await updateSurvey({ ...updateSurveyInput, languages: [mockSurveyLanguages[0]] });
 
-      const updateArg = vi.mocked(prisma.survey.update).mock.calls.at(-1)?.[0];
+      const updateArg = vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0];
       expect(updateArg?.data.languages).toEqual(
         expect.objectContaining({
           deleteMany: [{ languageId: mockSurveyLanguages[1].language.id }],
@@ -877,7 +877,7 @@ describe("Tests for updateSurvey", () => {
     const updateWith = (embeddedFields: unknown[]) =>
       updateSurvey({ ...updateSurveyInput, embeddedFields } as never);
 
-    test("writes the payload's fields as rows and never the dropped legacy columns", async () => {
+    test("writes authoritative rows and compatible legacy columns in the same transaction", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
       prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
 
@@ -896,11 +896,14 @@ describe("Tests for updateSurvey", () => {
         },
       ]);
 
-      // ENG-2404: `Survey` has no column for either key, so Prisma would refuse both. The rows are
-      // the only place the fields land — with everything the legacy shape could not carry.
-      const data = vi.mocked(prisma.survey.update).mock.calls.at(-1)?.[0].data;
-      expect(data).not.toHaveProperty("variables");
-      expect(data).not.toHaveProperty("hiddenFields");
+      expect(prisma.survey.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            variables: expect.arrayContaining([expect.objectContaining({ name: "score", value: 3 })]),
+            hiddenFields: expect.objectContaining({ fieldIds: expect.any(Array) }),
+          }),
+        })
+      );
       expect(prisma.embeddedData.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ name: "plan", dataType: "number", defaultValue: 7, locked: true }),
@@ -1003,7 +1006,7 @@ describe("Tests for updateSurvey", () => {
       expect(prisma.segment.update).not.toHaveBeenCalled();
     });
 
-    test("a legacy payload without the key reaches the rows through the reconcile, not a column", async () => {
+    test("a legacy payload reaches both authoritative rows and the compatible columns", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
       prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
 
@@ -1012,9 +1015,14 @@ describe("Tests for updateSurvey", () => {
         variables: [{ id: "clx000000000000000000001", name: "score", type: "number", value: 3 }],
       });
 
-      const data = vi.mocked(prisma.survey.update).mock.calls.at(-1)?.[0].data;
-      expect(data).not.toHaveProperty("variables");
-      expect(data).not.toHaveProperty("hiddenFields");
+      expect(prisma.survey.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            variables: expect.arrayContaining([expect.objectContaining({ name: "score", value: 3 })]),
+            hiddenFields: expect.objectContaining({ fieldIds: expect.any(Array) }),
+          }),
+        })
+      );
       expect(prisma.embeddedData.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ name: "score", source: "computed", defaultValue: 3 }),

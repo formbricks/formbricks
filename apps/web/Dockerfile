@@ -118,7 +118,7 @@ RUN --mount=type=secret,id=database_url \
     --mount=type=secret,id=cubejs_api_secret \
     --mount=type=secret,id=sentry_auth_token \
     --mount=type=secret,id=posthog_key \
-    /tmp/read-secrets.sh pnpm build --filter=@formbricks/web...
+    /tmp/read-secrets.sh sh -c 'export FORMBRICKS_DEPLOYMENT_ID="$(node -e "process.stdout.write(require(\"node:crypto\").randomUUID())")"; exec pnpm build --filter=@formbricks/web...'
 
 #
 ## step 2: setup production runner
@@ -133,6 +133,9 @@ WORKDIR /home/nextjs
 
 # Ensure no write permissions are assigned to the copied resources
 COPY --from=installer /app/apps/web/.next/standalone ./
+COPY --from=installer /app/apps/web/.next/required-server-files.json ./apps/web/.next/required-server-files.json
+COPY --from=installer /app/apps/web/scripts/docker/server.js ./apps/web/online-server.js
+COPY --from=installer /app/apps/web/scripts/docker/shutdown.js ./apps/web/shutdown.js
 RUN chown -R nextjs:nextjs ./ && chmod -R 755 ./
 
 COPY --from=installer /app/apps/web/next.config.mjs .

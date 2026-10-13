@@ -6,6 +6,8 @@ import { promisify } from "node:util";
 import { logger } from "@formbricks/logger";
 import { Prisma, PrismaClient } from "../prisma";
 import { createPrismaPgAdapter } from "../prisma-adapter";
+import { type MigrationRunPhase, shouldRunMigration } from "./migration-phases";
+import { ensureOnlineIndexes } from "./online-indexes";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -524,7 +526,7 @@ const loadMigrations = async (): Promise<MigrationScript[]> => {
   return migrations;
 };
 
-export async function applyMigrations(): Promise<void> {
+export async function applyMigrations(phase: MigrationRunPhase = "maintenance"): Promise<void> {
   try {
     const allMigrations = await loadMigrations();
     logger.info(
@@ -532,7 +534,9 @@ export async function applyMigrations(): Promise<void> {
         isBuilt ? "dist" : "src"
       })`
     );
-    await runMigrations(allMigrations);
+    await runMigrations(allMigrations.filter((migration) => shouldRunMigration(migration.name, phase)));
+    if (!migrationDatabaseUrl) throw new Error("A migration database URL is required");
+    await ensureOnlineIndexes(migrationDatabaseUrl);
   } finally {
     await prisma.$disconnect();
   }

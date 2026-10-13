@@ -83,7 +83,11 @@ const buildSession = (userId: string): Session => ({
 // Only `workspace.id` is read by the code under test; the rest of TWorkspaceAuth is getWorkspaceAuth's
 // contract, covered where that helper is tested.
 const buildWorkspaceAuth = (workspaceId: string) =>
-  ({ workspace: { id: workspaceId }, isOwner: true }) as unknown as TWorkspaceAuth;
+  ({
+    workspace: { id: workspaceId },
+    session: buildSession(ATTACKER_USER_ID),
+    isOwner: true,
+  }) as unknown as TWorkspaceAuth;
 
 describe("canReadSurveyInWorkspace", () => {
   beforeEach(() => {
@@ -100,9 +104,9 @@ describe("canReadSurveyInWorkspace", () => {
       where: { id: SURVEY_ID },
       select: { workspaceId: true },
     });
-    expect(mockCan).toHaveBeenCalledWith({ type: "user", id: ATTACKER_USER_ID }, "workspace.read", {
-      type: "workspace",
-      id: VICTIM_WORKSPACE_ID,
+    expect(mockCan).toHaveBeenCalledWith({ type: "user", id: ATTACKER_USER_ID }, "survey.read", {
+      type: "survey",
+      id: SURVEY_ID,
     });
   });
 
@@ -137,6 +141,7 @@ describe("canReadSurveyInWorkspace", () => {
 describe("getSurveyAuth", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockCan.mockResolvedValue(true);
   });
 
   test("returns the workspace authorization when the survey belongs to the workspace", async () => {

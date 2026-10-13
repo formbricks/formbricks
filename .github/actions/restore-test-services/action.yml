@@ -1,0 +1,35 @@
+name: Restore test services
+description: Restore this job's PostgreSQL and optional cache after runner hardening restarts Docker.
+inputs:
+  postgres:
+    description: PostgreSQL container ID from job.services.
+    required: true
+  cache:
+    description: Optional Valkey container ID from job.services.
+    required: false
+    default: ""
+runs:
+  using: composite
+  steps:
+    - name: Restore services and wait for readiness
+      shell: bash
+      env:
+        POSTGRES_SERVICE_ID: ${{ inputs.postgres }}
+        CACHE_SERVICE_ID: ${{ inputs.cache }}
+      run: |
+        service_ids=("$POSTGRES_SERVICE_ID")
+        if [[ -n "$CACHE_SERVICE_ID" ]]; then
+          service_ids+=("$CACHE_SERVICE_ID")
+        fi
+        docker start "${service_ids[@]}"
+        for attempt in {1..30}; do
+          if docker exec "$POSTGRES_SERVICE_ID" pg_isready -U postgres; then
+            if [[ -z "$CACHE_SERVICE_ID" ]] || \
+              docker exec "$CACHE_SERVICE_ID" valkey-cli ping | grep -qx PONG; then
+              exit 0
+            fi
+          fi
+          sleep 1
+        done
+        echo "::error::Test services did not become ready after runner hardening."
+        exit 1

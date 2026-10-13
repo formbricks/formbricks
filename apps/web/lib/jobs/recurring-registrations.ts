@@ -54,6 +54,7 @@ interface RecurringJobRegistration {
   handler: JobHandler<TGlobalScopeJobData>;
   job: RecurringJobHandle;
   schedule: TRecurringBackgroundJobSchedule;
+  requiresReleaseActivation?: boolean;
 }
 
 /**
@@ -88,6 +89,7 @@ export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, Recurr
   },
   // ENG-3282: daily rather than six-hourly — its cost grows with the number of surveys, not grants.
   authzedSurveyAudit: {
+    requiresReleaseActivation: true,
     handler: processAuthzedSurveyAuditJob,
     job: recurringJobs.authzedSurveyAudit,
     schedule: {

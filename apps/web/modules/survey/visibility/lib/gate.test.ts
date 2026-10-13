@@ -45,7 +45,7 @@ describe("getSurveyVisibilityUiGate", () => {
     ],
     [
       { entitled: false, ready: false },
-      { enforced: false, manageable: false },
+      { enforced: true, manageable: false },
     ],
   ])("gates %o → %o", async (gates, expected) => {
     vi.mocked(getSurveyVisibilityGates).mockResolvedValue(gates);
@@ -55,25 +55,24 @@ describe("getSurveyVisibilityUiGate", () => {
 });
 
 describe("isSurveyVisibilityEnforced", () => {
-  test.each([true, false])("follows the readiness marker alone (%s)", async (ready) => {
+  test.each([true, false])("keeps enforcement on regardless of readiness (%s)", async (ready) => {
     vi.mocked(isSurveyVisibilityReady).mockResolvedValue(ready);
-    await expect(isSurveyVisibilityEnforced()).resolves.toBe(ready);
+    await expect(isSurveyVisibilityEnforced()).resolves.toBe(true);
   });
 });
 
 describe("getSurveyVisibilityViewer", () => {
-  test("not enforced: answers without resolving the actor or the owner, exactly as before", async () => {
+  test("readiness off still reports stored restrictions and ownership", async () => {
     vi.mocked(getSurveyVisibilityGates).mockResolvedValue({ entitled: false, ready: false });
-
+    vi.mocked(resolveSurveyActorContext).mockResolvedValue(admin);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ name: "Ada" } as never);
     await expect(getSurveyVisibilityViewer(survey("restricted"), "admin", "org")).resolves.toEqual({
-      surveyVisibilityGate: { enforced: false, manageable: false },
-      visibility: "workspace",
+      surveyVisibilityGate: { enforced: true, manageable: false },
+      visibility: "restricted",
       pendingVisibility: null,
-      surveyAccess: null,
-      ownerName: null,
+      surveyAccess: { canManageVisibility: false, via: "organizationRole" },
+      ownerName: "Ada",
     });
-    expect(resolveSurveyActorContext).not.toHaveBeenCalled();
-    expect(prisma.user.findUnique).not.toHaveBeenCalled();
   });
 
   test("enforced but no longer entitled: still describes the survey, without the right to change it", async () => {

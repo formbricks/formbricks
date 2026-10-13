@@ -4,11 +4,14 @@ import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { resetDb } from "@/integration/reset-db";
 import { type TAuthorizationActor, can } from "@/lib/authorization";
 import { getIssuedAuthorizationCheckCount, withAuthorizationSurface } from "@/lib/authorization/context";
+import { filterAuthorizedUserIds } from "@/lib/authorization/user-list";
+import { drainAuthzedOutbox } from "@/lib/authzed/outbox-processor";
 import {
   clearProjectionScopeReady,
   resetSurveyVisibilityReadinessMemo,
   setProjectionScopeReady,
 } from "@/lib/authzed/scope-readiness";
+import { getSurveyVisibilityGates } from "@/lib/survey/visibility/gates";
 
 /**
  * ENG-3282: survey and response decisions against a real PostgreSQL and SpiceDB, for the contract's
@@ -19,9 +22,13 @@ import {
  */
 const ids = {
   apiKey: "",
+  billing: "",
+  inactive: "",
+  outsider: "",
   manager: "",
   member: "",
   orgOwner: "",
+  organization: "",
   owner: "",
   ownedPrivateSurvey: "",
   pendingRestrictionSurvey: "",
@@ -50,7 +57,7 @@ beforeAll(async () => {
     data: { name: "Visibility Workspace", organizationId: organization.id },
   });
 
-  const makeUser = async (label: string, role: "manager" | "member" | "owner") => {
+  const makeUser = async (label: string, role: "manager" | "member" | "owner" | "billing") => {
     const created = await prisma.user.create({ data: { email: `${label}@visibility.test`, name: label } });
     await prisma.membership.create({
       data: { accepted: true, organizationId: organization.id, role, userId: created.id },
@@ -63,6 +70,13 @@ beforeAll(async () => {
     await prisma.workspaceTeam.create({ data: { permission, teamId: team.id, workspaceId: workspace.id } });
   };
 
+  ids.billing = await makeUser("billing", "billing");
+  ids.inactive = await makeUser("inactive", "member");
+  ids.outsider = (
+    await prisma.user.create({ data: { email: "outsider@visibility.test", name: "outsider" } })
+  ).id;
+  await grantTeam("Billing readers", ids.billing, "read");
+  await grantTeam("Inactive readers", ids.inactive, "read");
   ids.owner = await makeUser("owner", "member");
   ids.manager = await makeUser("manager", "manager");
   ids.orgOwner = await makeUser("org-owner", "owner");
@@ -80,6 +94,7 @@ beforeAll(async () => {
   });
   ids.apiKey = apiKey.id;
   ids.workspace = workspace.id;
+  ids.organization = organization.id;
 
   const survey = (name: string, visibility: "restricted" | "workspace") =>
     prisma.survey.create({ data: { name, ownerId: ids.owner, visibility, workspaceId: workspace.id } });
@@ -102,6 +117,9 @@ beforeAll(async () => {
   ).id;
 
   await synchronizeAuthzedIntegrationFixture();
+  // Deactivate a previously authorized reader, then deliver the revocation before recipient checks.
+  await prisma.user.update({ where: { id: ids.inactive }, data: { isActive: false } });
+  expect((await drainAuthzedOutbox()).status).toBe("drained");
 
   // A grant stored but not yet acknowledged: the graph still says restricted, PostgreSQL says workspace.
   await prisma.survey.update({
@@ -120,34 +138,73 @@ afterAll(async () => {
   await setMarker(false);
 });
 
-describe("marker off: exactly the workspace ladder, as before ENG-3282", () => {
+test.each([false, true])(
+  "recipient batches match individual response-read decisions with projection ready=%s",
+  async (ready) => {
+    await setMarker(ready);
+    const recipients = [ids.owner, ids.member, ids.manager, ids.billing, ids.inactive, ids.outsider];
+    for (const surveyId of [
+      ids.visibleSurvey,
+      ids.privateSurvey,
+      ids.pendingSurvey,
+      ids.pendingRestrictionSurvey,
+    ]) {
+      const resource = { id: surveyId, type: "survey" } as const;
+      const individual = await Promise.all(
+        recipients.map((id) => can(user(id), "survey.response_read", resource))
+      );
+      const allowed = await filterAuthorizedUserIds(recipients, "survey.response_read", resource);
+      expect(allowed).toEqual(new Set(recipients.filter((_, index) => individual[index])));
+      expect(allowed.has(ids.owner)).toBe(true);
+      expect(allowed.has(ids.manager)).toBe(true);
+      expect(allowed.has(ids.member)).toBe(surveyId === ids.visibleSurvey);
+      for (const id of [ids.billing, ids.inactive, ids.outsider]) expect(allowed.has(id)).toBe(false);
+    }
+  }
+);
+
+describe("marker off: PostgreSQL visibility policy remains enforced", () => {
   beforeAll(() => setMarker(false));
 
-  test("every workspace reader reads every survey, restricted or not", async () => {
-    for (const surveyId of [ids.visibleSurvey, ids.privateSurvey, ids.pendingSurvey]) {
-      await expect(readSurvey(user(ids.member), surveyId)).resolves.toBe(true);
-      await expect(readSurvey({ id: ids.apiKey, type: "apiKey" }, surveyId)).resolves.toBe(true);
-    }
-    await expect(
-      can(user(ids.member), "response.read", { id: ids.privateResponse, type: "response" })
-    ).resolves.toBe(true);
-  });
-
-  test("nobody may change visibility while it is not enforced", async () => {
-    await expect(
-      can(user(ids.manager), "survey.change_visibility", { id: ids.privateSurvey, type: "survey" })
-    ).resolves.toBe(false);
-  });
-
-  test("survey manage follows the workspace manage ladder while visibility is not enforced", async () => {
-    for (const surveyId of [ids.visibleSurvey, ids.privateSurvey, ids.pendingSurvey]) {
-      await expect(
-        can(user(ids.teamManager), "survey.manage", { id: surveyId, type: "survey" })
-      ).resolves.toBe(true);
-      await expect(can(user(ids.owner), "survey.manage", { id: surveyId, type: "survey" })).resolves.toBe(
+  test("workspace readers and API keys cannot read restricted surveys or responses", async () => {
+    for (const actor of [user(ids.member), { id: ids.apiKey, type: "apiKey" } as const]) {
+      await expect(readSurvey(actor, ids.visibleSurvey)).resolves.toBe(true);
+      for (const surveyId of [ids.privateSurvey, ids.pendingSurvey, ids.pendingRestrictionSurvey]) {
+        await expect(readSurvey(actor, surveyId)).resolves.toBe(false);
+      }
+      await expect(can(actor, "response.read", { id: ids.privateResponse, type: "response" })).resolves.toBe(
         false
       );
     }
+    await expect(readSurvey(user(ids.owner), ids.privateSurvey)).resolves.toBe(true);
+    await expect(readSurvey(user(ids.manager), ids.privateSurvey)).resolves.toBe(true);
+  });
+
+  test("visibility mutations stay disabled independently of the caller's permission", async () => {
+    await expect(
+      can(user(ids.manager), "survey.change_visibility", { id: ids.privateSurvey, type: "survey" })
+    ).resolves.toBe(true);
+    await expect(getSurveyVisibilityGates(ids.organization)).resolves.toMatchObject({
+      ready: false,
+      entitled: false,
+    });
+  });
+
+  test("survey manage combines workspace permissions with stored visibility", async () => {
+    await expect(
+      can(user(ids.teamManager), "survey.manage", { id: ids.visibleSurvey, type: "survey" })
+    ).resolves.toBe(true);
+    for (const surveyId of [ids.privateSurvey, ids.pendingSurvey, ids.pendingRestrictionSurvey]) {
+      await expect(
+        can(user(ids.teamManager), "survey.manage", { id: surveyId, type: "survey" })
+      ).resolves.toBe(false);
+      await expect(can(user(ids.manager), "survey.manage", { id: surveyId, type: "survey" })).resolves.toBe(
+        true
+      );
+    }
+    await expect(
+      can(user(ids.owner), "survey.manage", { id: ids.privateSurvey, type: "survey" })
+    ).resolves.toBe(false);
   });
 });
 

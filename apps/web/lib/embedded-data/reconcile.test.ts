@@ -1,8 +1,9 @@
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   type TDesiredEmbeddedField,
   embeddedFieldsFromLegacyInput,
 } from "@formbricks/types/embedded-data-mapping";
+import { assertNewReleaseWorkEnabled } from "@/lib/upgrade/compatibility";
 import {
   type TCurrentEmbeddedField,
   assertLinkableEmbeddedFields,
@@ -10,6 +11,11 @@ import {
   reconcileEmbeddedData,
   resolveDesiredEmbeddedFields,
 } from "./reconcile";
+
+vi.mock("@/lib/upgrade/compatibility", () => ({ assertNewReleaseWorkEnabled: vi.fn() }));
+beforeEach(() => {
+  vi.mocked(assertNewReleaseWorkEnabled).mockReset();
+});
 
 const SURVEY_ID = "srv_1";
 const OTHER_SURVEY_ID = "srv_2";
@@ -448,6 +454,8 @@ describe("reconcileEmbeddedData refusals", () => {
 
   /** Just enough of a transaction client for the guards; nothing here should reach a write. */
   const stubTx = (sharedRows: { id: string; key: string | null; source: string }[]) => ({
+    $executeRaw: vi.fn(),
+    survey: { update: vi.fn().mockResolvedValue({}) },
     surveyEmbeddedData: {
       findMany: vi.fn().mockResolvedValue([]),
       create: vi.fn(),
@@ -574,6 +582,70 @@ describe("reconcileEmbeddedData refusals", () => {
     });
     expect(tx.surveyEmbeddedData.create).not.toHaveBeenCalled();
     expect(tx.surveyEmbeddedData.deleteMany).not.toHaveBeenCalled();
+  });
+
+  test("projects an intentionally empty field set into both legacy columns in the same transaction", async () => {
+    const tx = stubTx([]);
+    const current = localField(desiredPlan, "ed_plan");
+    tx.surveyEmbeddedData.findMany.mockResolvedValue([
+      { id: current.linkId, ...current, embeddedData: current.field },
+    ]);
+    await reconcile(tx, []);
+    expect(tx.survey.update).toHaveBeenCalledWith({
+      where: { id: SURVEY_ID, workspaceId: WORKSPACE_ID },
+      data: { variables: [], hiddenFields: { enabled: false, fieldIds: [] } },
+    });
+  });
+
+  test("preserves legacy-only columns on a zero-row save without resurrecting fields", async () => {
+    const tx = stubTx([]);
+    await reconcile(tx, []);
+    expect(tx.survey.update).not.toHaveBeenCalled();
+    expect(tx.embeddedData.create).not.toHaveBeenCalled();
+  });
+
+  test.each(["legacy", "v2"])(
+    "allows unchanged shared links in a %s save before activation",
+    async (carrier) => {
+      vi.mocked(assertNewReleaseWorkEnabled).mockRejectedValue(new Error("not activated"));
+      const current = sharedLink(desiredPlan, "shared", "plan");
+      const tx = stubTx([{ ...current.field, source: "ingested" }]);
+      tx.surveyEmbeddedData.findMany.mockResolvedValue([
+        { id: current.linkId, ...current, embeddedData: current.field },
+      ]);
+      if (carrier === "v2") await reconcile(tx, [sharedDesired(desiredPlan, "shared", "plan")]);
+      else
+        await reconcileEmbeddedData(tx as never, {
+          surveyId: SURVEY_ID,
+          workspaceId: WORKSPACE_ID,
+          patch: {},
+        });
+      expect(assertNewReleaseWorkEnabled).not.toHaveBeenCalled();
+      expect(tx.surveyEmbeddedData.create).not.toHaveBeenCalled();
+    }
+  );
+
+  test("refuses a newly attached shared field before activation", async () => {
+    vi.mocked(assertNewReleaseWorkEnabled).mockRejectedValue(new Error("not activated"));
+    const tx = stubTx([]);
+    await expect(reconcile(tx, [sharedDesired(desiredPlan, "new", "plan")])).rejects.toThrow("not activated");
+    expect(tx.survey.update).not.toHaveBeenCalled();
+  });
+
+  test("projects computed and ingested fields for overlapping 6.0 readers", async () => {
+    const tx = stubTx([]);
+    await reconcile(tx, [desiredScore, desiredPlan]);
+    expect(tx.$executeRaw).toHaveBeenCalledOnce();
+    expect(tx.$executeRaw.mock.invocationCallOrder[0]).toBeLessThan(
+      tx.embeddedData.create.mock.invocationCallOrder[0]
+    );
+    expect(tx.survey.update).toHaveBeenCalledWith({
+      where: { id: SURVEY_ID, workspaceId: WORKSPACE_ID },
+      data: {
+        variables: [{ id: "var_score", name: "score", type: "number", value: 0 }],
+        hiddenFields: { enabled: true, fieldIds: ["plan"] },
+      },
+    });
   });
 
   test("refuses two fields at one address before it writes either", async () => {
