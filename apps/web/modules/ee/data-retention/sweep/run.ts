@@ -300,12 +300,26 @@ export const recordRetentionRunSkips = async (
       return previous?.action !== "skipped" || previous.skipReason !== skip.skipReason;
     });
 
+    // A survey's name as it is now, with the row held FOR KEY SHARE until this commits: the names in
+    // `skips` were read earlier, and a survey deleted since must not get its name written back into
+    // History after the delete's scrub trigger has run. A delete that comes after waits for this
+    // transaction, then scrubs these rows too.
+    const surveyIds = fresh.filter((skip) => skip.targetType === "survey").map((skip) => skip.targetId);
+    const surveyNames = new Map(
+      surveyIds.length === 0
+        ? []
+        : (
+            await tx.$queryRaw<{ id: string; name: string }[]>`
+              SELECT "id", "name" FROM "Survey" WHERE "id" = ANY(${surveyIds}::text[]) FOR KEY SHARE
+            `
+          ).map((survey) => [survey.id, survey.name])
+    );
     await tx.retentionRunItem.createMany({
       data: fresh.map((skip) => ({
         runId: run.runId,
         targetType: skip.targetType,
         targetId: skip.targetId,
-        targetName: skip.targetName ?? null,
+        targetName: skip.targetType === "survey" ? (surveyNames.get(skip.targetId) ?? null) : null,
         action: "skipped" as const,
         skipReason: skip.skipReason,
       })),

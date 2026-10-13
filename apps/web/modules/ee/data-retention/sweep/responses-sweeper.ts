@@ -309,7 +309,7 @@ export const createResponsesSweeper =
         if (actionDueAtOrBefore) {
           for (const candidate of act) {
             if (Date.now() >= deadline) break;
-            await actOnTarget(context.policy, candidate.id, () =>
+            await actOnTarget(context, candidate.id, () =>
               deleteDueResponses({ ...context, deadline }, candidate, {
                 noticeDueAtOrBefore: cutoffs.noticeDueAtOrBefore,
                 actionDueAtOrBefore,

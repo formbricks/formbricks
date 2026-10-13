@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { purgeExpiredArchivedSurveys } from "@/modules/survey/archive/lib/process-survey-archive-purge-job";
 import { deleteSurvey } from "@/modules/survey/lib/surveys";
+import { createRetentionPurgeHistory } from "./retention-purge-history";
 
 // The boundaries a survey delete talks to beyond the database; the delete, its guard and History are real.
 vi.mock("@/modules/hub/service", () => ({ deleteFeedbackRecord: vi.fn(), listFeedbackRecords: vi.fn() }));
@@ -82,6 +83,23 @@ describe("retention History of deleted surveys (real Postgres)", () => {
       }),
     ]);
     expect(await prisma.retentionRunItem.count({ where: { targetId: byHand } })).toBe(0);
+  });
+
+  test("a purge that dies before closing its run still shows the deletion in History", async () => {
+    const byPolicy = await createSurvey("Old feedback", ago(35));
+    await sweepRun([{ surveyId: byPolicy, name: "Old feedback", action: "archived" }]);
+    const history = createRetentionPurgeHistory();
+    const runId = await history.runFor(organizationId);
+
+    await deleteSurvey(byPolicy, { inTransaction: (tx) => history.recordDeletion(tx, runId, byPolicy) });
+    // No close(): the process went away.
+
+    expect(await prisma.retentionRun.findUniqueOrThrow({ where: { id: runId } })).toMatchObject({
+      kind: "purge",
+      deletedCount: 1,
+      hasChanges: true,
+      finishedAt: null,
+    });
   });
 
   test("a purge that records nothing leaves no run behind", async () => {

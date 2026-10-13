@@ -268,6 +268,32 @@ describe("data retention sweep (real Postgres)", () => {
   });
 
   describe("History", () => {
+    test("a skip carries the survey's name as it is now, and none for a survey deleted since it was read", async () => {
+      await enablePolicy("surveys", ago(10 * DAY));
+      const workspaceId = (await prisma.workspace.create({ data: { name: "Europe", organizationId } })).id;
+      const renamed = (await prisma.survey.create({ data: { name: "New name", workspaceId } })).id;
+      const run = (await openRetentionRun(organizationId, "surveys"))!;
+
+      // Both names were read before: one survey renamed since, the other deleted since.
+      await recordRetentionRunSkips(run, [
+        { targetType: "survey", targetId: renamed, targetName: "Old name", skipReason: "exempt" },
+        {
+          targetType: "survey",
+          targetId: "clgone00000000000000000000",
+          targetName: "Exit – Jane",
+          skipReason: "exempt",
+        },
+      ]);
+
+      const names = await prisma.retentionRunItem.findMany({ select: { targetId: true, targetName: true } });
+      expect(names).toEqual(
+        expect.arrayContaining([
+          { targetId: renamed, targetName: "New name" },
+          { targetId: "clgone00000000000000000000", targetName: null },
+        ])
+      );
+    });
+
     test("counts what a run did on the run itself", async () => {
       await enablePolicy("responses", ago(10 * DAY));
       const run = (await openRetentionRun(organizationId, "responses"))!;

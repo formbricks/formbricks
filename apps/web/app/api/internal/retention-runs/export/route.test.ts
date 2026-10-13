@@ -158,8 +158,10 @@ describe("GET /api/internal/retention-runs/export", () => {
     expect(response.status).toBe(403);
     expect(mockCount).not.toHaveBeenCalled();
     expect(mockQueueAuditEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ action: "exported", status: "failure", organizationId: ORG_ID })
+      expect.objectContaining({ action: "exported", status: "failure" })
     );
+    // Not filed under the organisation the refused request named.
+    expect(mockQueueAuditEvent).not.toHaveBeenCalledWith(expect.objectContaining({ organizationId: ORG_ID }));
   });
 
   test("returns 403 when the organization isn't entitled, before counting anything", async () => {

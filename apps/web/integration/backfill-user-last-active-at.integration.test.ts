@@ -12,8 +12,8 @@ const runBackfill = () => backfillUserLastActiveAt.run!({ prisma, tx: prisma as 
 
 const DAY = 24 * 60 * 60 * 1000;
 
-const addUser = async (name: string, lastActiveAt: Date | null = null) =>
-  (await prisma.user.create({ data: { name, email: `${name}@example.com`, lastActiveAt } })).id;
+const addUser = async (name: string, lastActiveAt: Date | null = null, lastLoginAt: Date | null = null) =>
+  (await prisma.user.create({ data: { name, email: `${name}@example.com`, lastActiveAt, lastLoginAt } })).id;
 
 /**
  * A session last renewed `renewedDaysAgo` and expiring in `expiresInDays` (negative: already expired).
@@ -47,7 +47,41 @@ describe("backfillUserLastActiveAt (real Postgres)", () => {
     await resetDb();
   });
 
-  test("seeds each user from their live sessions only, and leaves a recorded value alone", async () => {
+  test("seeds from the last sign-in and the live sessions, whichever is newer", async () => {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * DAY);
+    const signInOnly = await addUser("sign-in-only", null, thirtyDaysAgo);
+    const signInNewer = await addUser("sign-in-newer", null, new Date(Date.now() - DAY));
+    await addSession(signInNewer, 10, 5);
+    const sessionNewer = await addUser("session-newer", null, new Date(Date.now() - 40 * DAY));
+    await addSession(sessionNewer, 2, 5);
+
+    await runBackfill();
+
+    expect(await lastActiveOf(signInOnly)).toEqual(thirtyDaysAgo);
+    expect(await lastActiveOf(signInNewer)).toEqual(
+      (await prisma.user.findUniqueOrThrow({ where: { id: signInNewer } })).lastLoginAt
+    );
+    expect(await lastActiveOf(sessionNewer)).toEqual(await newestLiveRenewal(sessionNewer));
+  });
+
+  test("walks every user, past the first batch, however many have nothing to seed", async () => {
+    // More users with nothing to seed than one batch holds (5,000), all sorting before the one that has.
+    await prisma.$executeRaw`
+      INSERT INTO "User" ("id", "created_at", "updated_at", "name", "email")
+      SELECT 'aaa' || lpad(n::text, 6, '0'), now(), now(), 'Never', 'never' || n || '@example.com'
+      FROM generate_series(1, 5_100) n`;
+    const lastLoginAt = new Date(Date.now() - 3 * DAY);
+    await prisma.user.create({
+      data: { id: "zzz-last", name: "Last", email: "last@example.com", lastLoginAt },
+    });
+
+    await runBackfill();
+
+    expect(await lastActiveOf("zzz-last")).toEqual(lastLoginAt);
+    expect(await prisma.user.count({ where: { lastActiveAt: { not: null } } })).toBe(1);
+  });
+
+  test("seeds each user from their live sessions when they have no sign-in, and leaves a recorded value alone", async () => {
     const live = await addUser("live");
     await addSession(live, 2, 5);
     const expiredOnly = await addUser("expired-only");

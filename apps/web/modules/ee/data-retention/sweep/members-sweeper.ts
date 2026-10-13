@@ -295,12 +295,12 @@ export const createMembersSweeper = (): TRetentionSweeper => async (context) => 
       const organization = await loadNoticeOrganization(context.policy.organizationId);
       for (const member of notify) {
         if (Date.now() >= deadline) break;
-        await actOnTarget(context.policy, member.userId, () => notifyMember(context, member, organization));
+        await actOnTarget(context, member.userId, () => notifyMember(context, member, organization));
       }
 
       for (const member of act) {
         if (Date.now() >= deadline) break;
-        const outcome = await actOnTarget(context.policy, member.userId, () =>
+        const outcome = await actOnTarget(context, member.userId, () =>
           deactivateDueMember(context, member.userId, cutoffs.noticeDueAtOrBefore)
         );
         if (outcome === "lastOwner" || outcome === "otherOrganization") {

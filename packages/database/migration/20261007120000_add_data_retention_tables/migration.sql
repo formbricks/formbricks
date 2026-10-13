@@ -431,13 +431,15 @@ END $$;
 
 -- AlterTable
 -- Last, right before COMMIT: adding a column takes ACCESS EXCLUSIVE on "User", which blocks every
--- session lookup until the transaction ends. Taken earlier, it would be held while the foreign keys
+-- session lookup until the transaction ends, and a request for it queues every read of "User" behind
+-- it while it waits, so it gives up after a second rather than the five allowed above. Taken earlier, it would be held while the foreign keys
 -- above wait (up to the SET LOCAL timeout each) for their locks on "Organization" and "Survey". Both
 -- columns are nullable with no default, a catalog-only change that rewrites nothing.
+SET LOCAL lock_timeout = '1s';
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "reactivatedAt" TIMESTAMP(3);
 
--- The members retention clock's record of activity, written on every session start and renewal. It is
--- seeded from the sessions still valid by the data migration right after this one
+-- The members retention clock's record of activity, written on every completed sign-in and session
+-- renewal. It is seeded from the last sign-in and the sessions still valid by the data migration right after this one
 -- (`20261007120001_backfill_user_last_active_at`), in batches that each commit on their own, rather than
 -- here, where it would hold this transaction's lock on "User" for the whole pass.
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "lastActiveAt" TIMESTAMP(3);

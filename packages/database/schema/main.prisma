@@ -371,23 +371,23 @@ enum SurveyScriptMode {
 /// @property customHeadScriptsMode - "add" (merge with workspace) or "replace" (override workspace)
 model Survey {
   /// [SurveyHiddenFields]
-  hiddenFields         Json       @default("{\"enabled\": false}")
+  hiddenFields             Json       @default("{\"enabled\": false}")
   /// [SurveyVariables]
-  variables            Json       @default("[]")
+  variables                Json       @default("[]")
   // False identifies surveys written by 6.0 during the online upgrade.
-  ownershipInitialized Boolean    @default(false)
+  ownershipInitialized     Boolean    @default(false)
   // Recovery copy for deferred legacy-only field salvage; never an application read source.
-  legacyEmbeddedDataBackup Json? @ignore
-  id                   String     @id @default(cuid())
-  createdAt            DateTime   @default(now()) @map(name: "created_at")
-  updatedAt            DateTime   @updatedAt @map(name: "updated_at")
-  name                 String
-  redirectUrl          String?
-  type                 SurveyType @default(app)
-  workspace            Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId          String
-  creator              User?      @relation("SurveyCreator", fields: [createdBy], references: [id])
-  createdBy            String?
+  legacyEmbeddedDataBackup Json?      @ignore
+  id                       String     @id @default(cuid())
+  createdAt                DateTime   @default(now()) @map(name: "created_at")
+  updatedAt                DateTime   @updatedAt @map(name: "updated_at")
+  name                     String
+  redirectUrl              String?
+  type                     SurveyType @default(app)
+  workspace                Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId              String
+  creator                  User?      @relation("SurveyCreator", fields: [createdBy], references: [id])
+  createdBy                String?
 
   /// ENG-3282: authorization facts, projected into SpiceDB by the survey outbox trigger. `ownerId` is
   /// the durable ownership source; `createdBy` stays pure attribution and is never rewritten.
@@ -1299,8 +1299,9 @@ model User {
   /// without touching `lastLoginAt`, which the member list, usage counts and APIs report as a real
   /// sign-in.
   reactivatedAt             DateTime?
-  /// When the user last started or renewed a session (Better Auth `databaseHooks.session`), on the
-  /// database clock and never moved backwards. The members retention clock reads it: sessions are
+  /// When the user last completed a sign-in (`lastActivePlugin`, after any second factor) or renewed a
+  /// session (Better Auth `databaseHooks.session.update`), on the database clock and never moved
+  /// backwards. The members retention clock reads it: sessions are
   /// deleted on sign-out and expiry, so their own timestamps can't serve as a record of activity.
   lastActiveAt              DateTime?
 

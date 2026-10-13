@@ -16,7 +16,11 @@ import { type TSurveyNoticeBatch, sendSurveyNotices } from "./survey-notices";
 import { RetentionPolicyChangedError } from "./transaction";
 
 /** What a policy's sweeper gets: its run (policy snapshot, clock, run id) and when to stop starting work. */
-export type TRetentionSweepContext = TOpenedRetentionRun & { deadline: number };
+export type TRetentionSweepContext = TOpenedRetentionRun & {
+  deadline: number;
+  /** One target's action failed and the run went on (`actOnTarget`): the run still counts as failed. */
+  onTargetFailure?: () => void;
+};
 
 /** What a policy will do tonight, once it has read what is due. */
 export type TRetentionSweepPlan = {
@@ -182,7 +186,13 @@ const prepare = async (policyRuns: readonly TPolicyRun[], sweepers: TRetentionSw
     const sweeper = sweepers[policyRun.run.policy.entity];
     if (!sweeper) continue;
     await runStep(policyRun, async () => {
-      policyRun.plan = await sweeper({ ...policyRun.run, deadline: Date.now() + RETENTION_RUN_BUDGET_MS });
+      policyRun.plan = await sweeper({
+        ...policyRun.run,
+        deadline: Date.now() + RETENTION_RUN_BUDGET_MS,
+        onTargetFailure: () => {
+          policyRun.failed = true;
+        },
+      });
     });
   }
 };

@@ -25,7 +25,7 @@ vi.mock("@/modules/survey/lib/surveys", () => ({
 }));
 
 const history = vi.hoisted(() => ({
-  wasArchivedByPolicy: vi.fn(),
+  archivedByPolicy: vi.fn(),
   runFor: vi.fn(),
   recordDeletion: vi.fn(),
   close: vi.fn(),
@@ -53,7 +53,7 @@ describe("purgeExpiredArchivedSurveys", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(queueAuditEventWithoutRequest).mockResolvedValue(undefined as never);
-    history.wasArchivedByPolicy.mockResolvedValue(false);
+    history.archivedByPolicy.mockResolvedValue(new Set());
     history.runFor.mockResolvedValue("run_1");
     history.close.mockResolvedValue(undefined);
   });
@@ -62,12 +62,14 @@ describe("purgeExpiredArchivedSurveys", () => {
     vi.mocked(prisma.survey.findMany)
       .mockResolvedValueOnce([makeSurvey("s1"), makeSurvey("s2")] as never)
       .mockResolvedValueOnce([] as never);
-    history.wasArchivedByPolicy.mockImplementation(async (id: string) => id === "s1");
+    history.archivedByPolicy.mockResolvedValue(new Set(["s1"]));
     vi.mocked(deleteSurvey).mockResolvedValue({} as never);
 
     await purgeExpiredArchivedSurveys(new Date("2026-07-31T00:00:00.000Z"));
 
     expect(createRetentionPurgeHistory).toHaveBeenCalledOnce();
+    // One check for the whole batch.
+    expect(history.archivedByPolicy).toHaveBeenCalledExactlyOnceWith(["s1", "s2"]);
     expect(history.runFor).toHaveBeenCalledExactlyOnceWith("org_1");
     // s1 carries a hook that writes its row inside the delete; s2, archived by hand, none.
     const [[, s1Options], [, s2Options]] = vi.mocked(deleteSurvey).mock.calls;

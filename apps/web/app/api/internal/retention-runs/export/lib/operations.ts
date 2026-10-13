@@ -47,11 +47,6 @@ export async function exportRetentionRunsOperation({
   instance?: string;
   auditLog?: TV3AuditLog;
 }): Promise<Response> {
-  if (auditLog) {
-    auditLog.organizationId = query.organizationId;
-    auditLog.targetId = query.organizationId;
-  }
-
   const access = await requireRetentionOrgAccess({
     authentication,
     organizationId: query.organizationId,
@@ -60,6 +55,12 @@ export async function exportRetentionRunsOperation({
     instance,
   });
   if (access instanceof Response) return access;
+  // Only once access is granted, like the other retention routes: a refused request mustn't file an
+  // event into the audit log of whatever organisation it named.
+  if (auditLog) {
+    auditLog.organizationId = access.organizationId;
+    auditLog.targetId = access.organizationId;
+  }
 
   const range = { organizationId: access.organizationId, from: query.from, to: query.to };
   const rowCount = await countRetentionExportRows(range, RETENTION_EXPORT_MAX_ROWS);

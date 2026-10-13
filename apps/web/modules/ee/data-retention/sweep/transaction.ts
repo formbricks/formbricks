@@ -78,10 +78,15 @@ export const lockUnchangedRetentionPolicy = async (
  * Run one target's action so that its failure stays its own: logged, and the loop goes on to the next
  * target. Otherwise a target that fails every night (a batch that always times out, say) would stop its
  * policy's run there each time, and no target after it in id order would ever be acted on. A changed
- * policy still stops the whole run, as it must. Returns undefined when the action failed.
+ * policy still stops the whole run, as it must. The failure is reported to the run
+ * (`onTargetFailure`), so a night of failed actions still counts as a failed run. Returns undefined when
+ * the action failed.
  */
 export const actOnTarget = async <T>(
-  snapshot: Pick<TRetentionPolicySnapshot, "organizationId" | "entity">,
+  context: {
+    policy: Pick<TRetentionPolicySnapshot, "organizationId" | "entity">;
+    onTargetFailure?: () => void;
+  },
   targetId: string,
   action: () => Promise<T>
 ): Promise<T | undefined> => {
@@ -90,9 +95,10 @@ export const actOnTarget = async <T>(
   } catch (error) {
     if (error instanceof RetentionPolicyChangedError) throw error;
     logger.error(
-      { err: error, organizationId: snapshot.organizationId, entity: snapshot.entity, targetId },
+      { err: error, organizationId: context.policy.organizationId, entity: context.policy.entity, targetId },
       "Data retention action failed for one target; the run goes on"
     );
+    context.onTargetFailure?.();
     return undefined;
   }
 };

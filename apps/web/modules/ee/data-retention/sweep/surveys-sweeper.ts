@@ -252,7 +252,7 @@ export const createSurveysSweeper =
       act: async (deadline) => {
         for (const candidate of act) {
           if (Date.now() >= deadline) break;
-          await actOnTarget(context.policy, candidate.id, () =>
+          await actOnTarget(context, candidate.id, () =>
             archiveDueSurvey({ ...context, deadline }, candidate.id, cutoffs.noticeDueAtOrBefore)
           );
         }

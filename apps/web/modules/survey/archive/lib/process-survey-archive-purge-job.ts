@@ -47,14 +47,13 @@ type TPurgeOutcome = "purged" | "skipped" | "failed";
 const purgeArchivedSurvey = async (
   survey: TExpiredSurvey,
   cutoff: Date,
-  history: TRetentionPurgeHistory
+  history: TRetentionPurgeHistory,
+  archivedByPolicy: boolean
 ): Promise<TPurgeOutcome> => {
   try {
     // A survey the surveys policy archived gets its deletion in data retention History, written in the
     // delete's transaction (so a refused or failed delete records nothing).
-    const historyRunId = (await history.wasArchivedByPolicy(survey.id))
-      ? await history.runFor(survey.workspace.organizationId)
-      : null;
+    const historyRunId = archivedByPolicy ? await history.runFor(survey.workspace.organizationId) : null;
     // Guarded delete: the survey is re-checked (locked) inside deleteSurvey's transaction so a survey
     // restored or held after this batch was selected is skipped, not permanently deleted.
     await deleteSurvey(survey.id, {
@@ -131,8 +130,10 @@ const purgeBatches = async (
       break;
     }
 
+    // One query per batch for which of its surveys the surveys policy archived.
+    const archivedByPolicy = await history.archivedByPolicy(expiredSurveys.map((survey) => survey.id));
     for (const survey of expiredSurveys) {
-      const outcome = await purgeArchivedSurvey(survey, cutoff, history);
+      const outcome = await purgeArchivedSurvey(survey, cutoff, history, archivedByPolicy.has(survey.id));
       if (outcome === "purged") {
         purgedCount += 1;
       } else {

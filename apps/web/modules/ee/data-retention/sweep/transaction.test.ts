@@ -130,17 +130,19 @@ describe("actOnTarget", () => {
   });
 
   test("returns what the action returns", async () => {
-    await expect(actOnTarget(policy, "clsrv", async () => "archived")).resolves.toBe("archived");
+    await expect(actOnTarget({ policy }, "clsrv", async () => "archived")).resolves.toBe("archived");
   });
 
-  test("keeps a target's failure to that target: logged, and undefined for the loop to move on", async () => {
+  test("keeps a target's failure to that target: logged, reported to the run, undefined for the loop", async () => {
     const failure = new Error("statement timeout");
+    const onTargetFailure = vi.fn();
 
     await expect(
-      actOnTarget(policy, "clsrv", async () => {
+      actOnTarget({ policy, onTargetFailure }, "clsrv", async () => {
         throw failure;
       })
     ).resolves.toBeUndefined();
+    expect(onTargetFailure).toHaveBeenCalledOnce();
     expect(logger.error).toHaveBeenCalledWith(
       { err: failure, organizationId: "clorg", entity: "surveys", targetId: "clsrv" },
       "Data retention action failed for one target; the run goes on"
@@ -149,7 +151,7 @@ describe("actOnTarget", () => {
 
   test("still stops the run when the policy changed", async () => {
     await expect(
-      actOnTarget(policy, "clsrv", async () => {
+      actOnTarget({ policy }, "clsrv", async () => {
         throw new RetentionPolicyChangedError("surveys");
       })
     ).rejects.toBeInstanceOf(RetentionPolicyChangedError);

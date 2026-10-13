@@ -104,6 +104,7 @@ describe("runDataRetentionSweep", () => {
     expect(responses.sweeper).toHaveBeenCalledWith({
       ...opened("org-1", "responses"),
       deadline: NOW.getTime() + RETENTION_RUN_BUDGET_MS,
+      onTargetFailure: expect.any(Function),
     });
     // One call for both survey policies, so each person gets one email listing both.
     expect(sendSurveyNotices).toHaveBeenCalledTimes(1);
@@ -172,6 +173,24 @@ describe("runDataRetentionSweep", () => {
 
     await expect(runDataRetentionSweep({ sweepers: {} })).resolves.toMatchObject({ unlicensed: 1 });
     expect(getIsDataRetentionEnabled).toHaveBeenCalledWith("org-1");
+  });
+
+  test("a run whose targets failed, though it went on past them, counts as failed", async () => {
+    orgs("org-1");
+    const responses = sweeperFor("responses");
+    const surveys = sweeperFor("surveys");
+    const members = sweeperFor("members");
+    // The members run's act met a failing target (actOnTarget reports it and goes on).
+    members.sweeper.mockImplementation(async (context) => ({
+      act: async () => context.onTargetFailure?.(),
+    }));
+
+    const summary = await runDataRetentionSweep({
+      sweepers: { responses: responses.sweeper, surveys: surveys.sweeper, members: members.sweeper },
+      checkLicence: async () => true,
+    });
+
+    expect(summary).toMatchObject({ runs: 3, failedRuns: 1 });
   });
 
   test("stops a policy changed mid-run quietly, fails one that broke, and carries on with the rest", async () => {
