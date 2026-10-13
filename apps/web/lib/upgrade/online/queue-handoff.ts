@@ -42,6 +42,12 @@ export const handoffJobs = async (deps: QueueHandoffDependencies): Promise<void>
     });
     state = await deps.read();
   }
+  if (state.phase !== "retiring_consumers" && state.queuePausedAt && !state.queueResumedAt) {
+    // A new lock holder gets a fresh, bounded drain attempt after a crash. The old deadline
+    // must not make every late retry abort immediately. Retirement never auto-resumes the queue.
+    await deps.save({ queuePauseDeadlineAt: new Date(now().getTime() + deps.timeoutSeconds * 1000) });
+    state = await deps.read();
+  }
   // The persisted intent precedes Redis pause so both sides of a crash can be retried safely.
   await deps.assertLock();
   if (!(await deps.queue.isPaused())) {

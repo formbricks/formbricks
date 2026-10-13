@@ -197,6 +197,11 @@ beforeEach(() => {
       events.push("consumers-verified");
       return Promise.resolve();
     }),
+    releaseAccess: vi.fn(async (assertLock) => {
+      await assertLock();
+      expect(state?.phase).toBe("complete");
+      events.push("access-released");
+    }),
     cleanup: vi.fn().mockImplementation(() => {
       events.push("cleanup");
       return Promise.resolve();
@@ -236,6 +241,7 @@ test("finalization catches up owners before triggers and activates only after pr
   expect(events.indexOf("consumers-verified")).toBeLessThan(events.indexOf("owner-page"));
   expect(events.indexOf("projection-verified")).toBeLessThan(events.indexOf("activated"));
   expect(events.indexOf("activated")).toBeLessThan(events.indexOf("cleanup"));
+  expect(events.indexOf("cleanup")).toBeLessThan(events.indexOf("access-released"));
   expect(setProjectionScopeReady).toHaveBeenCalledWith("survey", "online-upgrade-6.1");
   expect(state?.completedPhases).toEqual(["prepare", "finalize", "activate"]);
 });
@@ -248,6 +254,7 @@ test("projection failure preserves the forward-only boundary and a retry complet
   expect(JSON.stringify(failed)).not.toContain("private database failure");
   expect(setProjectionScopeReady).not.toHaveBeenCalled();
   expect(platform.cleanup).not.toHaveBeenCalled();
+  expect(platform.releaseAccess).not.toHaveBeenCalled();
   expect(await runOnlineCommand("finalize", platform, root)).toMatchObject({ status: "complete" });
 });
 

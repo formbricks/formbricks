@@ -30,6 +30,7 @@ export const onlineConfigSchema = z.object({
     .min(1),
   ingress: z.object({
     selector: z.string().min(1),
+    proxyResourceNames: z.array(z.string().min(1)).min(1),
     adminPort: z.number().int().positive().default(19000),
     cluster: z.string().min(1),
   }),
@@ -152,7 +153,9 @@ export class KubernetesUpgrade {
           ? "/apis/autoscaling/v2"
           : kind === "endpointslices"
             ? "/apis/discovery.k8s.io/v1"
-            : "/api/v1";
+            : ["roles", "rolebindings"].includes(kind)
+              ? "/apis/rbac.authorization.k8s.io/v1"
+              : "/api/v1";
     return `${api}/namespaces/${this.config.namespace}/${kind}${name ? `/${encodeURIComponent(name)}` : ""}`;
   }
   async pods(selector?: string) {
@@ -256,7 +259,16 @@ export class KubernetesUpgrade {
       }
     }
     const gateways = await this.pods(this.config.ingress.selector);
-    if (!gateways.length || gateways.some((p) => !ready(p)))
+    if (
+      !gateways.length ||
+      gateways.some(
+        (p) =>
+          !ready(p) ||
+          !this.config.ingress.proxyResourceNames.includes(
+            `${p.metadata.name}:${this.config.ingress.adminPort}`
+          )
+      )
+    )
       throw new OnlineUpgradeBlocked("ingress_inventory_unhealthy", true);
   }
   private async verifyBatchConsumers() {
@@ -442,6 +454,12 @@ export class KubernetesUpgrade {
       );
       if (!liveAddresses.size) return false;
       for (const gateway of gateways) {
+        if (
+          !this.config.ingress.proxyResourceNames.includes(
+            `${gateway.metadata.name}:${this.config.ingress.adminPort}`
+          )
+        )
+          throw new OnlineUpgradeBlocked("ingress_inventory_changed");
         const proxy =
           this.path("pods", `${gateway.metadata.name}:${this.config.ingress.adminPort}`) + "/proxy/";
         const clusters = await this.call<{
@@ -477,6 +495,29 @@ export class KubernetesUpgrade {
         after.every((p) => gateways.some((g) => g.metadata.uid === p.metadata.uid) && ready(p))
       );
     });
+  }
+  /** Successful hook deletion collects credentials and configuration along with the finalizer Job. */
+  async releaseAccess() {
+    const name = `${this.config.deployment}-online`;
+    const job = await this.call<{
+      metadata: Metadata;
+      spec: { template: { spec: { serviceAccountName: string } } };
+    }>(this.path("jobs", `${name}-finalize`));
+    if (job.spec.template.spec.serviceAccountName !== name)
+      throw new OnlineUpgradeBlocked("coordinator_identity_changed");
+    for (const kind of ["serviceaccounts", "roles", "rolebindings", "configmaps"]) {
+      const resource = await this.call<{ metadata: Metadata }>(this.path(kind, name));
+      if (resource.metadata.labels?.["formbricks.com/upgrade-owner"] !== this.config.deployment)
+        throw new OnlineUpgradeBlocked("coordinator_identity_changed");
+      await this.call(this.path(kind, name), "PATCH", {
+        metadata: {
+          resourceVersion: resource.metadata.resourceVersion,
+          ownerReferences: [
+            { apiVersion: "batch/v1", kind: "Job", name: job.metadata.name, uid: job.metadata.uid },
+          ],
+        },
+      });
+    }
   }
   async cleanup() {
     await this.verifyConsumers();

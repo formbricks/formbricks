@@ -3,10 +3,10 @@ import { beforeEach, expect, test, vi } from "vitest";
 import { runKubernetesOnlineCli } from "./cli";
 import { summarizeOnlineState } from "./coordinator";
 import { KubernetesUpgrade, onlineConfigSchema } from "./kubernetes";
-import { runOnlineCommand } from "./runtime";
+import { readOnlineStatus, runOnlineCommand } from "./runtime";
 
 vi.mock("node:fs/promises", () => ({ readFile: vi.fn() }));
-vi.mock("./runtime", () => ({ runOnlineCommand: vi.fn() }));
+vi.mock("./runtime", () => ({ readOnlineStatus: vi.fn(), runOnlineCommand: vi.fn() }));
 
 const image = `app@sha256:${"b".repeat(64)}`;
 const releasedDigest = `sha256:${"a".repeat(64)}`;
@@ -20,7 +20,7 @@ const config = onlineConfigSchema.parse({
   service: "web",
   workloads: [{ kind: "deployments", name: "web", image, replicas: 2 }],
   dependencies: [{ kind: "deployments", name: "hub", image }],
-  ingress: { selector: "app=envoy", cluster: "web" },
+  ingress: { selector: "app=envoy", cluster: "web", proxyResourceNames: ["envoy:19000"] },
 });
 const root = new URL("file:///release/");
 const template = { metadata: { name: "target" } };
@@ -72,27 +72,24 @@ test("source identities must come from the bundled release manifest", async () =
   expect(KubernetesUpgrade.connect).not.toHaveBeenCalled();
 });
 
-test.each(["prepare", "finalize", "status"] as const)(
-  "dispatches %s with verified source digests",
-  async (command) => {
-    expect(await runKubernetesOnlineCli([command], root)).toEqual(summarizeOnlineState(null));
-    expect(KubernetesUpgrade.connect).toHaveBeenCalledWith(
-      expect.objectContaining({ sourceDigests: [releasedDigest] })
-    );
-    expect(runOnlineCommand).toHaveBeenCalledWith(
-      command,
-      expect.objectContaining({ targetImage: image, sourceVersion: "6.0.2" }),
-      root
-    );
-  }
-);
+test.each(["prepare", "finalize"] as const)("dispatches %s with verified source digests", async (command) => {
+  expect(await runKubernetesOnlineCli([command], root)).toEqual(summarizeOnlineState(null));
+  expect(KubernetesUpgrade.connect).toHaveBeenCalledWith(
+    expect.objectContaining({ sourceDigests: [releasedDigest] })
+  );
+  expect(runOnlineCommand).toHaveBeenCalledWith(
+    command,
+    expect.objectContaining({ targetImage: image, sourceVersion: "6.0.2" }),
+    root
+  );
+});
 
 test("wires lock assertions into every platform mutation and loads the target pod template", async () => {
   const assertLock = vi.fn().mockResolvedValue(undefined);
   vi.spyOn(kube, "preflight").mockResolvedValue(undefined);
   vi.spyOn(kube, "verifySourceConsumersAbsent").mockResolvedValue(undefined);
   vi.spyOn(kube, "waitForConsumers").mockResolvedValue(undefined);
-  for (const method of ["handoff", "retireSourceConsumers", "cleanup"] as const) {
+  for (const method of ["handoff", "retireSourceConsumers", "cleanup", "releaseAccess"] as const) {
     vi.spyOn(kube, method).mockImplementation(async () => {
       expect(kube.assertLock).toBe(assertLock);
       await kube.assertLock();
@@ -105,6 +102,7 @@ test("wires lock assertions into every platform mutation and loads the target po
     await platform.verifySourceConsumersAbsent();
     await platform.verifyConsumers();
     await platform.cleanup!(assertLock);
+    await platform.releaseAccess!(assertLock);
     return summarizeOnlineState(null);
   });
   await runKubernetesOnlineCli(["prepare"], root);
@@ -112,5 +110,13 @@ test("wires lock assertions into every platform mutation and loads the target po
   expect(kube.handoff).toHaveBeenCalledWith(template);
   expect(kube.verifySourceConsumersAbsent).toHaveBeenCalledOnce();
   expect(kube.waitForConsumers).toHaveBeenCalledOnce();
-  expect(assertLock).toHaveBeenCalledTimes(3);
+  expect(assertLock).toHaveBeenCalledTimes(4);
+});
+
+test("status remains usable after temporary Kubernetes configuration and access are removed", async () => {
+  vi.mocked(readOnlineStatus).mockResolvedValue(summarizeOnlineState(null));
+  await expect(runKubernetesOnlineCli(["status"], root)).resolves.toMatchObject({ status: "not_started" });
+  expect(readFile).not.toHaveBeenCalled();
+  expect(KubernetesUpgrade.connect).not.toHaveBeenCalled();
+  expect(readOnlineStatus).toHaveBeenCalledOnce();
 });

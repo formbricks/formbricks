@@ -13,7 +13,7 @@ const config = onlineConfigSchema.parse({
   service: "web",
   workloads: [{ kind: "deployments", name: "web", image: target, replicas: 2 }],
   dependencies: [{ kind: "deployments", name: "hub", image: target }],
-  ingress: { selector: "app=envoy", cluster: "web" },
+  ingress: { selector: "app=envoy", cluster: "web", proxyResourceNames: ["envoy:19000"] },
 });
 const targetWorkload = {
   metadata: { name: "web", uid: "workload", generation: 2 },
@@ -74,9 +74,7 @@ test("released embedded workers may prepare when their controller is inventoried
     if (path.includes("/deployments/")) return targetWorkload;
     if (path.includes("labelSelector"))
       return {
-        items: [
-          { metadata: { name: "gateway" }, status: { conditions: [{ type: "Ready", status: "True" }] } },
-        ],
+        items: [{ metadata: { name: "envoy" }, status: { conditions: [{ type: "Ready", status: "True" }] } }],
       };
     if (path.endsWith("/pods"))
       return {
@@ -373,4 +371,59 @@ test("cleanup is idempotent after surge removal and refuses a colliding workload
   respond(kube, () => ({ items: [{ ...servingSurge, metadata: { ...servingSurge.metadata, labels: {} } }] }));
   await expect(kube.cleanup()).rejects.toThrow("surge_identity_changed");
   expect(kube.call).not.toHaveBeenCalledWith(expect.anything(), "DELETE", expect.anything());
+});
+
+test("temporary access is collected with the successful finalizer Job", async () => {
+  const kube = platform();
+  respond(kube, (path) =>
+    path.includes("/jobs/")
+      ? {
+          metadata: { name: "web-online-finalize", uid: "finalizer-uid" },
+          spec: { template: { spec: { serviceAccountName: "web-online" } } },
+        }
+      : { metadata: { resourceVersion: "7", labels: { "formbricks.com/upgrade-owner": "web" } } }
+  );
+  await kube.releaseAccess();
+  for (const kind of ["serviceaccounts", "roles", "rolebindings", "configmaps"]) {
+    expect(kube.call).toHaveBeenCalledWith(kube.path(kind, "web-online"), "PATCH", {
+      metadata: {
+        resourceVersion: "7",
+        ownerReferences: [
+          { apiVersion: "batch/v1", kind: "Job", name: "web-online-finalize", uid: "finalizer-uid" },
+        ],
+      },
+    });
+  }
+});
+
+test("a foreign coordinator identity cannot adopt access resources", async () => {
+  const kube = platform();
+  respond(kube, () => ({
+    metadata: { uid: "foreign" },
+    spec: { template: { spec: { serviceAccountName: "another-account" } } },
+  }));
+  await expect(kube.releaseAccess()).rejects.toThrow("coordinator_identity_changed");
+  expect(kube.call).not.toHaveBeenCalledWith(expect.anything(), "PATCH", expect.anything());
+});
+
+test("a replacement ingress outside the proxy allowlist blocks drain", async () => {
+  const kube = platform();
+  respond(kube, (path) =>
+    path.includes("endpointslices")
+      ? {
+          items: [{ endpoints: [{ addresses: ["10.0.0.2"], conditions: { ready: true } }] }],
+        }
+      : {
+          items: [
+            {
+              metadata: { name: "other-envoy" },
+              status: { conditions: [{ type: "Ready", status: "True" }] },
+            },
+          ],
+        }
+  );
+  kube.wait = async (check) => {
+    await check();
+  };
+  await expect(kube.verifyIngressDrain([])).rejects.toThrow("ingress_inventory_changed");
 });

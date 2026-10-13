@@ -151,3 +151,18 @@ test("each source mutation rechecks queue activity under the coordinator lock", 
   expect(mutate).not.toHaveBeenCalled();
   expect(deps.queue.resume).not.toHaveBeenCalled();
 });
+
+test("a retry after the previous drain deadline gets a fresh bounded attempt", async () => {
+  const { state, deps } = fixture();
+  deps.wait = async () => {
+    throw new Error("coordinator_killed");
+  };
+  vi.mocked(deps.queue.active).mockResolvedValueOnce(1).mockResolvedValue(0);
+  await expect(handoffJobs(deps)).rejects.toThrow("coordinator_killed");
+  expect(state.phase).toBe("draining_jobs");
+  deps.now = () => new Date(10_000);
+  await handoffJobs(deps);
+  expect(state.queuePauseDeadlineAt).toEqual(new Date(11_000));
+  expect(deps.retireSourceConsumers).toHaveBeenCalledOnce();
+  expect(deps.queue.resume).toHaveBeenCalledOnce();
+});

@@ -41,6 +41,7 @@ export type OnlinePlatform = {
   verifySourceConsumersAbsent: () => Promise<void>;
   verifyConsumers: () => Promise<void>;
   handoff?: (assertLock: () => Promise<void>) => Promise<void>;
+  releaseAccess?: (assertLock: () => Promise<void>) => Promise<void>;
   cleanup?: (assertLock: () => Promise<void>) => Promise<void>;
 };
 type BundledMigration = { name: string; sql?: string; checksum?: string };
@@ -50,11 +51,31 @@ const finalization = new Set([
 ]);
 const execFileAsync = promisify(execFile);
 
+/** Read-only status remains available after the successful hook's temporary credentials are removed. */
+export const readOnlineStatus = async () => {
+  try {
+    const connection = env.MIGRATE_DATABASE_URL ?? env.DATABASE_URL;
+    const schema = new URL(connection).searchParams.get("schema");
+    if (schema && schema !== "public") throw new OnlineUpgradeBlocked("nonpublic_schema_unsupported");
+    return summarizeOnlineState(
+      await readOnlineUpgradeCheckpoint<OnlineState>(connection, ONLINE_UPGRADE_RELEASE)
+    );
+  } catch (error) {
+    const result = summarizeOnlineState(
+      null,
+      error instanceof OnlineUpgradeBlocked ? error : new OnlineUpgradeBlocked("online_upgrade_failed", true)
+    );
+    result.rollbackTo60Allowed = false;
+    return result;
+  }
+};
+
 export const runOnlineCommand = async (
   command: "prepare" | "finalize" | "status",
   platform: OnlinePlatform,
   assetRoot: URL
 ) => {
+  if (command === "status") return readOnlineStatus();
   let session: Awaited<ReturnType<typeof openUpgradeSession>> | undefined;
   let state: OnlineState | null = null;
   let stateKnown = false;
@@ -67,10 +88,6 @@ export const runOnlineCommand = async (
       new URL(env.MIGRATE_DATABASE_URL).searchParams.get("schema") !== "public"
     )
       throw new OnlineUpgradeBlocked("nonpublic_schema_unsupported");
-    if (command === "status")
-      return summarizeOnlineState(
-        await readOnlineUpgradeCheckpoint<OnlineState>(env.MIGRATE_DATABASE_URL, ONLINE_UPGRADE_RELEASE)
-      );
     session = await openUpgradeSession(env.MIGRATE_DATABASE_URL);
     const lock = session;
     const read = async (): Promise<OnlineState | null> => {
@@ -222,6 +239,8 @@ export const runOnlineCommand = async (
       }
       return summarizeOnlineState(await read());
     }
+    if (command === "finalize" && result.phase === "complete")
+      await platform.releaseAccess?.(lock.assertLock);
     return result;
   } catch (error) {
     if (readLatest) {

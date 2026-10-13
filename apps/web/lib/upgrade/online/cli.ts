@@ -2,13 +2,14 @@ import "server-only";
 import { readFile } from "node:fs/promises";
 import { OnlineUpgradeBlocked, summarizeOnlineState } from "./coordinator";
 import { KubernetesUpgrade, onlineConfigSchema } from "./kubernetes";
-import { runOnlineCommand } from "./runtime";
+import { readOnlineStatus, runOnlineCommand } from "./runtime";
 
 export const runKubernetesOnlineCli = async (args: string[], assetRoot: URL) => {
   try {
     const [command, ...extra] = args;
     if (!["prepare", "finalize", "status"].includes(command) || extra.length)
       throw new OnlineUpgradeBlocked("invalid_online_command");
+    if (command === "status") return await readOnlineStatus();
     const raw: unknown = JSON.parse(await readFile("/etc/formbricks-online/config.json", "utf8"));
     const config = onlineConfigSchema.parse(raw);
     const sources: Record<string, string[]> = JSON.parse(
@@ -35,6 +36,10 @@ export const runKubernetesOnlineCli = async (args: string[], assetRoot: URL) => 
           platform.assertLock = assertLock;
           const template = JSON.parse(await readFile("/etc/formbricks-online/deployment.json", "utf8"));
           await platform.handoff(template);
+        },
+        releaseAccess: async (assertLock) => {
+          platform.assertLock = assertLock;
+          await platform.releaseAccess();
         },
         cleanup: async (assertLock) => {
           platform.assertLock = assertLock;

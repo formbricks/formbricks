@@ -1621,6 +1621,9 @@ postgresql:
 upgrade:
   mode: maintenance
   online:
+    # Argo renders Helm charts as installs; select its explicit existing-installation path.
+    controller: helm
+    existingInstallation: false
     sourceVersion: "6.0.2"
     sessionAffinity: false
     # Abort without source termination if active BullMQ jobs exceed this deadline.
@@ -1633,4 +1636,6 @@ upgrade:
     ingress:
       selector: ""
       adminPort: 19000
+      # Exact Kubernetes proxy resource names, e.g. envoy-abc-xyz:19000. No wildcard proxy access.
+      proxyResourceNames: []
       cluster: ""
