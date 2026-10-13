@@ -2,6 +2,7 @@ import * as React from "react";
 import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Label } from "@/components/general/label";
+import { FB_PART } from "@/lib/parts";
 import { cn } from "@/lib/utils";
 
 /**
@@ -43,6 +44,8 @@ interface MatrixProps {
   disabled?: boolean;
   /** Image URL to display above the headline */
   imageUrl?: string;
+  /** Alt text for the image; empty or absent marks it decorative */
+  imageAltText?: string;
   /** Video URL to display above the headline */
   videoUrl?: string;
 }
@@ -57,11 +60,12 @@ function MatrixRadioIndicator(): React.JSX.Element {
     <span
       aria-hidden="true"
       data-fb-focus-ring
+      data-fb-part={FB_PART.optionControl}
       className={cn(
-        "border-input-border relative flex size-4 shrink-0 items-center justify-center rounded-full border bg-white shadow-xs transition-colors",
-        "peer-checked:border-brand",
+        "border-input-border dark:bg-input-bg relative flex size-4 shrink-0 items-center justify-center rounded-full border bg-white shadow-xs transition-colors",
+        "peer-checked:border-brand-readable",
         "after:size-2 after:rounded-full after:bg-transparent after:transition-colors after:content-['']",
-        "peer-checked:after:bg-brand"
+        "peer-checked:after:bg-brand-readable"
       )}
     />
   );
@@ -82,6 +86,7 @@ function Matrix({
   dir = "auto",
   disabled = false,
   imageUrl,
+  imageAltText,
   videoUrl,
 }: Readonly<MatrixProps>): React.JSX.Element {
   const errorAria = getElementErrorAria(inputId, errorMessage);
@@ -120,6 +125,7 @@ function Matrix({
           required={required}
           requiredLabel={requiredLabel}
           imageUrl={imageUrl}
+          imageAltText={imageAltText}
           videoUrl={videoUrl}
         />
 
@@ -174,6 +180,8 @@ function Matrix({
                             className={cn("p-2 text-center align-middle", isLastColumn && "rounded-e-input")}>
                             <label
                               htmlFor={cellId}
+                              data-fb-part={FB_PART.option}
+                              data-checked={isSelected ? "true" : undefined}
                               className={cn(
                                 "flex justify-center",
                                 disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"

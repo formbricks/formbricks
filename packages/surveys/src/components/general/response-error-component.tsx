@@ -26,15 +26,15 @@ export function ResponseErrorComponent({
         <br />
         {t("common.please_retry_now_or_try_again_later")}
       </p>
-      <div className="mt-4 rounded-lg border border-slate-200 bg-slate-100 px-4 py-5">
+      <div className="dark:border-border dark:bg-input-bg mt-4 rounded-lg border border-slate-200 bg-slate-100 px-4 py-5">
         <div className="flex max-h-48 flex-1 flex-col space-y-2 overflow-y-scroll">
           {questions.map((question, index) => {
             const response = responseData[question.id];
             if (!response) return;
             return (
               <div className="flex flex-col" key={`response-${index.toString()}`}>
-                <span className="text-sm leading-5 text-slate-900">{`${t("common.question")} ${(index + 1).toString()}`}</span>
-                <span className="text-sm leading-5 font-semibold text-slate-900">
+                <span className="dark:text-heading text-sm leading-5 text-slate-900">{`${t("common.question")} ${(index + 1).toString()}`}</span>
+                <span className="dark:text-heading text-sm leading-5 font-semibold text-slate-900">
                   {processResponseData(response)}
                 </span>
               </div>

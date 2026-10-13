@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Response, Workspace } from "@formbricks/database/prisma-browser";
+import type { TRendererCustomCss } from "@formbricks/types/custom-css";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -69,6 +70,7 @@ export const PinScreen = (props: Readonly<PinScreenProps>) => {
   const [error, setError] = useState("");
   const [survey, setSurvey] = useState<TSurvey>();
   const [pinAuthToken, setPinAuthToken] = useState<string | undefined>();
+  const [customCss, setCustomCss] = useState<TRendererCustomCss | undefined>();
   const isCardless = styling.cardArrangement?.linkSurveys === "cardless";
   const linkSurveyCardMaxWidth = getLinkSurveyCardMaxWidth(styling.linkSurveyCardWidth);
 
@@ -99,6 +101,7 @@ export const PinScreen = (props: Readonly<PinScreenProps>) => {
         if (response?.data?.survey) {
           setSurvey(response.data.survey);
           setPinAuthToken(response.data.pinAuthToken ?? undefined);
+          setCustomCss(response.data.customCss);
         } else {
           const errorMessage = getFormattedErrorMessage(response);
           setError(errorMessage);
@@ -162,6 +165,7 @@ export const PinScreen = (props: Readonly<PinScreenProps>) => {
       TERMS_URL={TERMS_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
       pinAuthToken={pinAuthToken}
+      customCss={customCss}
     />
   );
 };

@@ -118,6 +118,7 @@ const FIELD_TO_LABEL_MAP: Record<string, string> = {
   cardHeadline: "note",
   welcomeCardHtml: "welcome message",
   endingCardButtonLabel: "button label",
+  imageAltText: "image alt text",
 };
 
 const extractLanguageCodes = (surveyLanguages?: TSurveyLanguage[]): string[] => {

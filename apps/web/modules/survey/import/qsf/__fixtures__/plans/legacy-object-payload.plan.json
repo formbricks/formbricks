@@ -1,0 +1,48 @@
+{
+  "plan": {
+    "pages": [],
+    "questions": [
+      {
+        "choicesFrom": "choices",
+        "columnsFrom": null,
+        "contactFields": [],
+        "excludedKeys": [],
+        "format": null,
+        "inputType": null,
+        "labelKey": null,
+        "logicNotes": [],
+        "noneChoiceKey": null,
+        "otherChoiceKey": null,
+        "range": null,
+        "ref": "QID1",
+        "required": false,
+        "rowsFrom": null,
+        "scale": null,
+        "type": "multipleChoiceSingle"
+      },
+      {
+        "choicesFrom": null,
+        "columnsFrom": null,
+        "contactFields": [],
+        "excludedKeys": [],
+        "format": null,
+        "inputType": "text",
+        "labelKey": null,
+        "logicNotes": [],
+        "noneChoiceKey": null,
+        "otherChoiceKey": null,
+        "range": null,
+        "ref": "QID2",
+        "required": false,
+        "rowsFrom": null,
+        "scale": null,
+        "type": "openText"
+      }
+    ],
+    "skipped": []
+  },
+  "recording": {
+    "note": "Written by hand in the shape the model returns, to run CI without a model. Re-record with `pnpm qsf:eval --record` against a real provider.",
+    "source": "hand-authored"
+  }
+}

@@ -43,3 +43,11 @@ export const mirrorPlacementForDir = (placement: TPlacement, dir: "ltr" | "rtl" 
       return placement;
   }
 };
+
+/**
+ * Whether an event target sits inside a survey root (`#fbjs`): the card's own, or the separate root an
+ * open dropdown portals into. In a preview that portal mounts inside the mock page, beside the card
+ * (ENG-3552), so a click-outside check has to treat it as part of the survey.
+ */
+export const isInsideSurveyRoot = (target: EventTarget | null): boolean =>
+  typeof Element !== "undefined" && target instanceof Element && target.closest('[id="fbjs"]') !== null;

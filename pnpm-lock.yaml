@@ -232,6 +232,8 @@ overrides:
   esbuild: 0.28.1
   tar: 7.5.21
   js-yaml@4: 4.3.2
+  handlebars: 4.7.10
+  shell-quote: 1.12.0
   undici@6: 6.28.1
   undici@7: 7.29.1
   sharp: 0.35.5
@@ -415,8 +417,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/email
       '@formbricks/hub':
-        specifier: 0.12.0
-        version: 0.12.0
+        specifier: 0.14.0
+        version: 0.14.0(zod@4.3.6)
       '@formbricks/i18n-utils':
         specifier: workspace:*
         version: link:../../packages/i18n-utils
@@ -636,6 +638,9 @@ importers:
       cmdk:
         specifier: 1.1.1
         version: 1.1.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      css-tree:
+        specifier: 3.2.1
+        version: 3.2.1
       csv-parse:
         specifier: 7.0.2
         version: 7.0.2
@@ -687,6 +692,9 @@ importers:
       lexical:
         specifier: 0.41.0
         version: 0.41.0
+      lightningcss:
+        specifier: 1.32.0
+        version: 1.32.0
       lucide-react:
         specifier: 'catalog:'
         version: 0.577.0(react@19.2.6)
@@ -2738,8 +2746,14 @@ packages:
   '@formatjs/intl-localematcher@0.6.2':
     resolution: {integrity: sha512-XOMO2Hupl0wdd172Y06h6kLpBz6Dv+J4okPLl4LPtzbr8f66WbIoy4ev98EBuZ6ZK4h5ydTN6XneT4QVpD7cdA==}
 
-  '@formbricks/hub@0.12.0':
-    resolution: {integrity: sha512-DsSEBaEjSN/KQ/B6w0pI2XmQgeKGUn8BHui72HdDIqWm06rMgfxbmZpB1n9f6ZsVUcBiz74wOahIPT/2WW9vnA==}
+  '@formbricks/hub@0.14.0':
+    resolution: {integrity: sha512-X1UwB1LDxqzaZWMZzeHaZImdoDCHf9nOvls62wfGpd39jW6LY8JLLOtsFOTeS+PZ8BduM6KdLQwTlJre3sie/Q==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      zod: ^4.0.0
+    peerDependenciesMeta:
+      zod:
+        optional: true
 
   '@formbricks/js@5.0.0':
     resolution: {integrity: sha512-mQGngmTKFP+x6rxTsqHawT0eDc1txHzSuyJvEZyG69cs7ACxBfesMRamBmabmw4LdMRODZ2J8WaBLuzck3v9Ig==}
@@ -8457,8 +8471,8 @@ packages:
   graphmatch@1.1.1:
     resolution: {integrity: sha512-5ykVn/EXM1hF0XCaWh05VbYvEiOL2lY1kBxZtaYsyvjp7cmWOU1XsAdfQBwClraEofXDT197lFbXOEVMHpvQOg==}
 
-  handlebars@4.7.9:
-    resolution: {integrity: sha512-4E71E0rpOaQuJR2A3xDZ+GM1HyWYv1clR58tC8emQNeQe3RH7MAzSbat+V0wG78LQBo6m6bzSG/L4pBuCsgnUQ==}
+  handlebars@4.7.10:
+    resolution: {integrity: sha512-P5VJMVM7qgBn6vjXMw8WG9uVI+ncf2pi72j4de4yz5ZULLj2RGqLYaKOYGsgyrViQ0tePOVlN1tDCCXXtFqXKg==}
     engines: {node: '>=0.4.7'}
     hasBin: true
 
@@ -10830,8 +10844,8 @@ packages:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
 
-  shell-quote@1.9.0:
-    resolution: {integrity: sha512-Iov+JwFv/2HcTpcwNMKd8+IWNb8tboQJNQTkAY/LLVK7gGH9jy+LGkVqPxfekHl+yMmiqXszdGWXgkfml7hjqA==}
+  shell-quote@1.12.0:
+    resolution: {integrity: sha512-PcByqNyT/38F2kDNi006HAMRJaULuBzq/FOsw3qdZvX/GA9W/jamDaRskgHjubHiftXK5sIFxLNkvrXUwcof6Q==}
     engines: {node: '>= 0.4'}
 
   should-equal@2.0.0:
@@ -13739,7 +13753,9 @@ snapshots:
     dependencies:
       tslib: 2.8.1
 
-  '@formbricks/hub@0.12.0': {}
+  '@formbricks/hub@0.14.0(zod@4.3.6)':
+    optionalDependencies:
+      zod: 4.3.6
 
   '@formbricks/js@5.0.0': {}
 
@@ -16318,7 +16334,7 @@ snapshots:
       form-data: 4.0.6
       get-port-please: 3.0.1
       glob: 7.2.3
-      handlebars: 4.7.9
+      handlebars: 4.7.10
       js-yaml: 4.3.2
       mobx: 6.12.3
       pluralize: 8.0.0
@@ -19005,7 +19021,7 @@ snapshots:
     dependencies:
       chalk: 4.1.2
       rxjs: 7.8.2
-      shell-quote: 1.9.0
+      shell-quote: 1.12.0
       supports-color: 8.1.1
       tree-kill: 1.2.2
       yargs: 17.7.2
@@ -20294,7 +20310,7 @@ snapshots:
 
   graphmatch@1.1.1: {}
 
-  handlebars@4.7.9:
+  handlebars@4.7.10:
     dependencies:
       minimist: 1.2.8
       neo-async: 2.6.2
@@ -22849,7 +22865,7 @@ snapshots:
 
   shebang-regex@3.0.0: {}
 
-  shell-quote@1.9.0: {}
+  shell-quote@1.12.0: {}
 
   should-equal@2.0.0:
     dependencies:

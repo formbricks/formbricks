@@ -70,11 +70,13 @@
                   "platform/features/integrations/overview",
                   "platform/features/integrations/activepieces",
                   "platform/features/integrations/airtable",
+                  "platform/features/integrations/attio",
                   "platform/features/integrations/google-sheets",
                   "platform/features/integrations/hubspot",
                   "platform/features/integrations/make",
                   "platform/features/integrations/n8n",
                   "platform/features/integrations/notion",
+                  "platform/features/integrations/salesforce",
                   "platform/features/integrations/slack",
                   "platform/features/integrations/wordpress",
                   "platform/features/integrations/zapier",
@@ -115,10 +117,12 @@
                   "surveys/general-features/add-image-or-video-question",
                   "surveys/general-features/conditional-logic",
                   "surveys/general-features/overwrite-styling",
+                  "surveys/general-features/custom-css",
                   "surveys/general-features/hidden-fields",
                   "surveys/general-features/limit-submissions",
                   "surveys/general-features/survey-scheduling",
                   "surveys/general-features/multi-language-surveys",
+                  "surveys/general-features/migrate-from-qualtrics",
                   "surveys/general-features/partial-submissions",
                   "surveys/general-features/recall",
                   "surveys/general-features/metadata",
@@ -176,6 +180,7 @@
                 "pages": [
                   "surveys/website-app-surveys/quickstart",
                   "surveys/website-app-surveys/framework-guides",
+                  "surveys/website-app-surveys/sdk-compatibility",
                   "surveys/website-app-surveys/google-tag-manager",
                   "surveys/website-app-surveys/custom-css",
                   {
@@ -408,6 +413,7 @@
               "development/technical-handbook/api-v3-schema-generation",
               "development/technical-handbook/mcp-server",
               "development/technical-handbook/cube-tenant-isolation",
+              "development/technical-handbook/custom-css-rollout",
               "development/technical-handbook/database-model",
               "development/technical-handbook/tenant-separation"
             ]

@@ -422,6 +422,30 @@ describe("validation.isEndingCardValid", () => {
     expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
   });
 
+  test("requires every language for image alt text once the default has text", () => {
+    const card: TSurveyEndScreenCard = {
+      ...baseEndScreenCard,
+      imageUrl: "https://example.com/img.jpg",
+      imageAltText: { default: "Team photo", en: "Team photo", de: "" },
+    };
+    expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(false);
+    expect(
+      validation.isEndingCardValid(
+        { ...card, imageAltText: { default: "Team photo", en: "Team photo", de: "Teamfoto" } },
+        surveyLanguagesEnabled
+      )
+    ).toBe(true);
+  });
+
+  test("accepts an empty image alt text without translations (decorative image)", () => {
+    const card: TSurveyEndScreenCard = {
+      ...baseEndScreenCard,
+      imageUrl: "https://example.com/img.jpg",
+      imageAltText: { default: "" },
+    };
+    expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(true);
+  });
+
   test("should return false for endScreen card if headline is invalid", () => {
     const card = { ...baseEndScreenCard, headline: { default: "Thank You", en: "Thank You", de: "" } };
     expect(validation.isEndingCardValid(card, surveyLanguagesEnabled)).toBe(false);
@@ -684,6 +708,38 @@ describe("validation.validateElement", () => {
       const q = {
         ...pictureSelectionElementBase,
         choices: [],
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
+    });
+
+    test("requires every language for a choice's image alt text once the default has text", () => {
+      const withAlt = (de: string) => ({
+        ...pictureSelectionElementBase,
+        choices: [
+          { ...pictureSelectionElementBase.choices[0], imageAltText: { default: "Cat", en: "Cat", de } },
+          pictureSelectionElementBase.choices[1],
+        ],
+      });
+      expect(validation.validateElement(withAlt(""), surveyLanguagesEnabled)).toBe(false);
+      expect(validation.validateElement(withAlt("Katze"), surveyLanguagesEnabled)).toBe(true);
+    });
+
+    test("accepts empty choice alt text without translations (decorative image)", () => {
+      const q = {
+        ...pictureSelectionElementBase,
+        choices: pictureSelectionElementBase.choices.map((choice) => ({
+          ...choice,
+          imageAltText: { default: "" },
+        })),
+      };
+      expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(true);
+    });
+
+    test("requires every language for the question image's alt text once the default has text", () => {
+      const q = {
+        ...pictureSelectionElementBase,
+        imageUrl: "https://example.com/hero.jpg",
+        imageAltText: { default: "Hero", en: "Hero", de: "" },
       };
       expect(validation.validateElement(q, surveyLanguagesEnabled)).toBe(false);
     });

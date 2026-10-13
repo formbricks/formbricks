@@ -1,0 +1,467 @@
+{
+  "SurveyEntry": {
+    "SurveyID": "SV_fixture000000000",
+    "SurveyName": "Pollution",
+    "SurveyDescription": null,
+    "SurveyOwnerID": "UR_fixture",
+    "SurveyBrandID": "fixture",
+    "DivisionID": null,
+    "SurveyLanguage": "EN",
+    "SurveyActiveResponseSet": "RS_fixture",
+    "SurveyStatus": "Active",
+    "SurveyStartDate": "0000-00-00 00:00:00",
+    "SurveyExpirationDate": "0000-00-00 00:00:00",
+    "SurveyCreationDate": "2026-09-01 10:00:00",
+    "CreatorID": "UR_fixture",
+    "LastModified": "2026-09-08 10:00:00",
+    "LastAccessed": "0000-00-00 00:00:00",
+    "LastActivated": "2026-09-01 10:00:00",
+    "Deleted": null
+  },
+  "SurveyElements": [
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID1",
+      "SecondaryAttribute": "Do you agree?",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Do you agree?",
+        "DataExportTag": "constructor",
+        "QuestionType": "MC",
+        "Selector": "SAVR",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Do you agree?",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID1",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1,
+        "Choices": {
+          "1": {
+            "Display": "Yes"
+          },
+          "2": {
+            "Display": "No"
+          },
+          "__proto__": {
+            "Display": "Proto choice",
+            "polluted": "yes"
+          },
+          "constructor": {
+            "Display": "Constructor choice"
+          }
+        },
+        "ChoiceOrder": [
+          "__proto__",
+          "constructor",
+          "1",
+          "2"
+        ],
+        "Language": {
+          "__proto__": {
+            "QuestionText": "Proto language",
+            "polluted": "yes"
+          },
+          "constructor": {
+            "QuestionText": "Constructor language"
+          },
+          "toString": {
+            "QuestionText": "toString language"
+          },
+          "DE": {
+            "QuestionText": "Stimmen Sie zu?",
+            "Choices": {
+              "1": {
+                "Display": "Ja"
+              },
+              "2": {
+                "Display": "Nein"
+              }
+            }
+          }
+        },
+        "__proto__": {
+          "polluted": "yes"
+        }
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID2",
+      "SecondaryAttribute": "Question tagged __proto__",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question tagged __proto__",
+        "DataExportTag": "__proto__",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question tagged __proto__",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID2",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID3",
+      "SecondaryAttribute": "Question tagged toString",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question tagged toString",
+        "DataExportTag": "toString",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question tagged toString",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID3",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "QID4",
+      "SecondaryAttribute": "Question tagged prototype",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Question tagged prototype",
+        "DataExportTag": "prototype",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Question tagged prototype",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "QID4",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "__proto__",
+      "SecondaryAttribute": "Proto question id",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Proto question id",
+        "DataExportTag": "__proto__",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Proto question id",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "__proto__",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SQ",
+      "PrimaryAttribute": "constructor",
+      "SecondaryAttribute": "Constructor question id",
+      "TertiaryAttribute": null,
+      "Payload": {
+        "QuestionText": "Constructor question id",
+        "DataExportTag": "constructor",
+        "QuestionType": "TE",
+        "Selector": "SL",
+        "Configuration": {
+          "QuestionDescriptionOption": "UseText"
+        },
+        "QuestionDescription": "Constructor question id",
+        "Validation": {
+          "Settings": {
+            "ForceResponse": "OFF",
+            "ForceResponseType": "OFF",
+            "Type": "None"
+          }
+        },
+        "QuestionID": "constructor",
+        "DataVisibility": {
+          "Private": false,
+          "Hidden": false
+        },
+        "NextChoiceId": 1,
+        "NextAnswerId": 1
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "__proto__",
+      "Payload": {
+        "polluted": "yes"
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "BL",
+      "PrimaryAttribute": "Survey Blocks",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": [
+        {
+          "Type": "Default",
+          "Description": "Proto block",
+          "ID": "__proto__",
+          "BlockElements": [
+            {
+              "Type": "Question",
+              "QuestionID": "QID1"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID2"
+            }
+          ]
+        },
+        {
+          "Type": "Standard",
+          "Description": "constructor",
+          "ID": "BL_2",
+          "BlockElements": [
+            {
+              "Type": "Question",
+              "QuestionID": "QID3"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "QID4"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "__proto__"
+            },
+            {
+              "Type": "Question",
+              "QuestionID": "constructor"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "FL",
+      "PrimaryAttribute": "Survey Flow",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "Type": "Root",
+        "FlowID": "FL_root",
+        "Flow": [
+          {
+            "Type": "EmbeddedData",
+            "FlowID": "FL_1",
+            "EmbeddedData": [
+              {
+                "Description": "__proto__",
+                "Type": "Custom",
+                "Field": "__proto__",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false
+              },
+              {
+                "Description": "constructor",
+                "Type": "Custom",
+                "Field": "constructor",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false
+              },
+              {
+                "Description": "toString",
+                "Type": "Custom",
+                "Field": "toString",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false
+              },
+              {
+                "Description": "prototype",
+                "Type": "Custom",
+                "Field": "prototype",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false
+              },
+              {
+                "Description": "hasOwnProperty",
+                "Type": "Custom",
+                "Field": "hasOwnProperty",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false
+              },
+              {
+                "Description": "valueOf",
+                "Type": "Custom",
+                "Field": "valueOf",
+                "VariableType": "String",
+                "DataVisibility": [],
+                "AnalyzeText": false
+              }
+            ]
+          },
+          {
+            "Type": "Block",
+            "ID": "__proto__",
+            "FlowID": "FL_2"
+          },
+          {
+            "Type": "Block",
+            "ID": "BL_2",
+            "FlowID": "FL_3"
+          },
+          {
+            "Type": "EndSurvey",
+            "FlowID": "FL_4"
+          }
+        ],
+        "Properties": {
+          "Count": 4
+        }
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SO",
+      "PrimaryAttribute": "Survey Options",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "BackButton": "false",
+        "SaveAndContinue": "true",
+        "SurveyProtection": "PublicSurvey",
+        "ProgressBarDisplay": "None",
+        "PartialData": "+1 week",
+        "EOSMessage": "",
+        "EOSRedirectURL": "",
+        "NextButton": "→",
+        "PreviousButton": "←",
+        "ShowExportTags": "false"
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "QC",
+      "PrimaryAttribute": "Survey Question Count",
+      "SecondaryAttribute": "6",
+      "TertiaryAttribute": null,
+      "Payload": null
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "STAT",
+      "PrimaryAttribute": "Survey Statistics",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "MobileCompatible": true,
+        "ID": "Survey Statistics"
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "RS",
+      "PrimaryAttribute": "RS_fixture",
+      "SecondaryAttribute": "Default Response Set",
+      "TertiaryAttribute": null,
+      "Payload": null
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "SCO",
+      "PrimaryAttribute": "Scoring",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": null,
+      "Payload": {
+        "ScoringCategories": [],
+        "ScoringCategoryGroups": [],
+        "ScoringSummaryCategory": null,
+        "ScoringSummaryAfterQuestions": 0,
+        "ScoringSummaryAfterSurvey": 0,
+        "DefaultScoringCategory": null,
+        "AutoScoringCategory": null
+      }
+    },
+    {
+      "SurveyID": "SV_fixture000000000",
+      "Element": "PROJ",
+      "PrimaryAttribute": "CORE",
+      "SecondaryAttribute": null,
+      "TertiaryAttribute": "1.1.0",
+      "Payload": {
+        "ProjectCategory": "CORE",
+        "SchemaVersion": "1.1.0"
+      }
+    }
+  ]
+}

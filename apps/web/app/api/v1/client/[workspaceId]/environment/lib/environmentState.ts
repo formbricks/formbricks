@@ -54,6 +54,11 @@ export const getWorkspaceState = async (
         }
       }
 
+      // The legacy `project` alias below would otherwise repeat the workspace custom CSS (up to 100 KB)
+      // in the same response. Only SDKs from before the rename read `project`, and none of them knows
+      // custom CSS, so the alias leaves it out and the CSS is sent exactly once (ENG-3552).
+      const { customCss: _workspaceCustomCss, ...legacyProjectSettings } = workspace.workspaceSettings;
+
       // Build the response data
       // Backwards compat: include `project` alongside `workspace`, and
       // `projectOverwrites` alongside `workspaceOverwrites` in each survey
@@ -61,6 +66,7 @@ export const getWorkspaceState = async (
         surveys: addLegacyProjectOverwritesToList(surveys),
         actionClasses,
         workspace: workspace.workspaceSettings,
+        project: legacyProjectSettings,
         ...(IS_RECAPTCHA_CONFIGURED ? { recaptchaSiteKey: RECAPTCHA_SITE_KEY } : {}),
       } as TJsWorkspaceState["data"]);
 

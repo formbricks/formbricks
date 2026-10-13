@@ -15,6 +15,7 @@ import {
   TiredFace,
   WearyFace,
 } from "@/components/general/smileys";
+import { FB_PART } from "@/lib/parts";
 import { useRovingRadioGroup } from "@/lib/use-roving-radio-group";
 import { cn, getRTLScaleOptionClasses } from "@/lib/utils";
 
@@ -148,6 +149,8 @@ interface RatingProps {
   disabled?: boolean;
   /** Image URL to display above the headline */
   imageUrl?: string;
+  /** Alt text for the image; empty or absent marks it decorative */
+  imageAltText?: string;
   /** Video URL to display above the headline */
   videoUrl?: string;
 }
@@ -170,6 +173,7 @@ function Rating({
   dir = "auto",
   disabled = false,
   imageUrl,
+  imageAltText,
   videoUrl,
 }: Readonly<RatingProps>): React.JSX.Element {
   const errorAria = getElementErrorAria(inputId, errorMessage);
@@ -238,6 +242,8 @@ function Rating({
       <label
         key={number}
         data-fb-scale-cell
+        data-fb-part={FB_PART.option}
+        data-checked={isSelected ? "true" : undefined}
         className={cn(
           "text-input-text font-input font-input-weight relative flex w-full cursor-pointer items-center justify-center overflow-hidden transition-colors",
           borderClasses,
@@ -292,6 +298,8 @@ function Rating({
       // global focus ring hugs the star (matching the design) instead of spanning the whole cell.
       <div key={number} className="flex flex-1 items-center justify-center">
         <label
+          data-fb-part={FB_PART.option}
+          data-checked={isSelected ? "true" : undefined}
           className={cn(
             "flex min-h-[48px] w-full max-w-[74px] cursor-pointer items-center justify-center rounded-lg transition-opacity",
             disabled && "cursor-not-allowed opacity-50"
@@ -339,6 +347,8 @@ function Rating({
       // global focus ring hugs the smiley (matching the design) instead of spanning the whole cell.
       <div key={number} className="flex flex-1 items-center justify-center">
         <label
+          data-fb-part={FB_PART.option}
+          data-checked={isSelected ? "true" : undefined}
           className={cn(
             "relative flex max-h-16 min-h-9 w-full max-w-[74px] cursor-pointer justify-center rounded-lg transition-colors",
             isActive ? "stroke-brand text-brand" : "stroke-muted-foreground text-muted-foreground",
@@ -397,6 +407,7 @@ function Rating({
           required={required}
           requiredLabel={requiredLabel}
           imageUrl={imageUrl}
+          imageAltText={imageAltText}
           videoUrl={videoUrl}
         />
 

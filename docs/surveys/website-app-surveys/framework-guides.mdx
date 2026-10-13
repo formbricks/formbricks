@@ -663,6 +663,35 @@ To this:
 
 ![The Connection status card, green, reading "Receiving data" and "Formbricks SDK is connected"](/images/surveys/website-app-surveys/framework-guides/widget-status-connected.webp)
 
+## Dark Mode
+
+Surveys render light unless your app asks for something else. Tell the SDK which appearance to use, either when you set it up or whenever your app's own theme changes:
+
+```javascript Setting the survey appearance
+formbricks.setup({
+  workspaceId: "<workspace-id>",
+  appUrl: "<app-url>",
+  appearance: "dark", // "light" (default), "dark" or "system"
+});
+
+// Later, when the user switches your app's theme:
+formbricks.setAppearance("light");
+```
+
+<Note>
+  Dark mode needs the script-tag SDK for now. The `@formbricks/js` npm package does not yet pass
+  `appearance` through `setup` or expose `setAppearance`, so with it surveys stay light.
+</Note>
+
+- `"system"` follows the visitor's browser setting and updates if it changes. If your app has its own light/dark toggle, pass `"light"` or `"dark"` from that toggle instead, because the SDK cannot see your app's theme.
+- A survey that is already open switches in place. Answers, progress and focus are kept.
+- `setAppearance` can be called before `setup`. The value is kept for the page session and survives `logout`.
+- The dark colors are derived from your brand color, which is the same in light and dark. Override any other color in **Look & Feel** (or a survey's **Styling** tab) with the **Light / Dark** toggle at the top of the styling settings.
+- Link surveys always render light: they do not follow dark mode. For a dark link survey, design it dark in the light theme: pick a dark color in **Background styling**, set light text, input and button colors, and use the **Cardless** card arrangement so the background fills the page.
+- `setAppearance` needs a recent SDK. If you support older SDK versions, check `typeof formbricks.setAppearance === "function"` before calling it.
+
+The iOS, Android, React Native and Flutter SDKs offer the same appearance setting and also apply your [Custom CSS](/surveys/general-features/custom-css). See [SDK Compatibility](/surveys/website-app-surveys/sdk-compatibility) for the versions, how `"system"` is resolved on each platform, and what respondents see while versions are mixed.
+
 ## Content Security Policy
 
 If your app serves a strict `Content-Security-Policy` header, the browser can block the Formbricks widget before anything renders. Three directives are involved.

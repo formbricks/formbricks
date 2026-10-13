@@ -4,6 +4,7 @@ import { CopyIcon } from "lucide-react";
 import Image from "next/image";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { copyToClipboard } from "@/lib/utils/clipboard";
 import { Button } from "@/modules/ui/components/button";
 import { EnableTwoFactorModalStep } from "./enable-two-factor-modal";
 
@@ -37,10 +38,12 @@ export const ScanQRCode = ({ dataUri, secret, setCurrentStep, setOpen }: ScanQRC
           <Button
             variant="secondary"
             size="sm"
-            onClick={() => {
-              navigator.clipboard.writeText(secret).then(() => {
+            onClick={async () => {
+              if (await copyToClipboard(secret)) {
                 toast.success(t("common.copied_to_clipboard"));
-              });
+              } else {
+                toast.error(t("common.failed_to_copy_to_clipboard"));
+              }
             }}>
             <CopyIcon className="size-4" />
           </Button>
