@@ -86,6 +86,7 @@ type TRow = {
   email: string;
   locale: string;
   role: "owner" | "manager" | "member" | "billing";
+  createdAt: Date;
   lastLoginAt: Date | null;
   lastActiveAt: Date | null;
   reactivatedAt: Date | null;
@@ -100,6 +101,7 @@ const member = (userId: string, overrides: Partial<TRow> = {}): TRow => ({
   email: `${userId}@example.com`,
   locale: "en-US",
   role: "member",
+  createdAt: daysAgo(1000),
   lastLoginAt: daysAgo(25),
   lastActiveAt: null,
   reactivatedAt: null,
@@ -376,7 +378,7 @@ describe("deactivateDueMember", () => {
     // The clock's activity is the recorded `lastActiveAt`, never the live `Session` rows, which a
     // sign-out or an expiry deletes along with the activity they showed.
     expect(reread.text).toContain(
-      'GREATEST( COALESCE(u."lastLoginAt", ?), u."reactivatedAt", u."lastActiveAt" ) <= ?'
+      'GREATEST( COALESCE(u."lastLoginAt", ?), u."created_at", u."reactivatedAt", u."lastActiveAt" ) <= ?'
     );
     expect(reread.text).not.toContain('"Session"');
     expect(vi.mocked(lockUnchangedRetentionPolicy).mock.invocationCallOrder[0]).toBeLessThan(

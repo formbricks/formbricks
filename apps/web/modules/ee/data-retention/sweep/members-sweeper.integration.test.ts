@@ -45,9 +45,14 @@ describe("members sweeper (real Postgres)", () => {
   const addMember = async (
     email: string,
     role: "owner" | "manager" | "member",
-    { lastLoginAt, org = organizationId }: { lastLoginAt: Date | null; org?: string }
+    {
+      lastLoginAt,
+      org = organizationId,
+      // Accounts predate the policy unless a test says otherwise: a sign-in can't come before creation.
+      createdAt = ago(2000),
+    }: { lastLoginAt: Date | null; org?: string; createdAt?: Date }
   ) => {
-    const user = await prisma.user.create({ data: { name: email, email, lastLoginAt } });
+    const user = await prisma.user.create({ data: { name: email, email, lastLoginAt, createdAt } });
     await prisma.membership.create({ data: { userId: user.id, organizationId: org, role, accepted: true } });
     return user.id;
   };
@@ -228,6 +233,16 @@ describe("members sweeper (real Postgres)", () => {
       expect.objectContaining({ email: "never@example.com" })
     );
     expect(await isActive(never)).toBe(true);
+  });
+
+  test("counts an account provisioned after the policy took effect from its creation", async () => {
+    // Created through the users API a month ago, long after the policy was switched on; never signed in.
+    await addMember("new-hire@example.com", "member", { lastLoginAt: null, createdAt: ago(30) });
+
+    await sweep();
+
+    expect(sendMemberRetentionNoticeEmail).not.toHaveBeenCalled();
+    expect(await prisma.retentionNotice.count()).toBe(0);
   });
 
   test("counts a pending invite to another organisation as belonging there too", async () => {
