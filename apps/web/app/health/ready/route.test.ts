@@ -1,10 +1,8 @@
+import { prisma } from "@/lib/__mocks__/database";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { GET } from "./route";
 
-const fixtures = vi.hoisted(() => ({ read: vi.fn(), query: vi.fn(), mode: "online", workers: true }));
-vi.mock("@formbricks/database", () => ({
-  prisma: { $queryRaw: fixtures.query, onlineUpgradeState: { findUnique: fixtures.read } },
-}));
+const fixtures = vi.hoisted(() => ({ mode: "online", workers: true }));
 vi.mock("@/lib/env", () => ({
   env: {
     get FORMBRICKS_UPGRADE_MODE() {
@@ -14,10 +12,10 @@ vi.mock("@/lib/env", () => ({
 }));
 vi.mock("@/lib/jobs/config", () => ({ getJobsWorkerBootstrapConfig: () => ({ enabled: fixtures.workers }) }));
 beforeEach(() => {
-  fixtures.query.mockReset().mockResolvedValue([{ ready: true }]);
+  prisma.$queryRaw.mockResolvedValue([{ ready: true }]);
   fixtures.mode = "online";
   fixtures.workers = true;
-  fixtures.read.mockReset().mockResolvedValue({ completedPhases: ["prepare"] });
+  prisma.onlineUpgradeState.findUnique.mockResolvedValue({ completedPhases: ["prepare"] } as never);
   vi.stubGlobal("formbricksJobsRuntime", {});
   vi.stubGlobal("formbricksOnlinePauseDelivery", {});
   vi.stubGlobal("formbricksServerLifecycle", { draining: false });
@@ -35,17 +33,17 @@ test("required workers and independent revocation delivery must both be started"
   expect((await GET()).status).toBe(503);
 });
 test("missing preparation and draining replicas stay outside endpoints", async () => {
-  fixtures.read.mockResolvedValueOnce(null);
+  prisma.onlineUpgradeState.findUnique.mockResolvedValueOnce(null);
   expect((await GET()).status).toBe(503);
   vi.stubGlobal("formbricksServerLifecycle", { draining: true });
   expect((await GET()).status).toBe(503);
 });
 
 test("requires a valid unique bootstrap index even with a preparation checkpoint", async () => {
-  fixtures.query.mockResolvedValue([{ ready: false }]);
+  prisma.$queryRaw.mockResolvedValue([{ ready: false }]);
   expect((await GET()).status).toBe(503);
 });
 test("fails closed on catalog errors", async () => {
-  fixtures.query.mockRejectedValue(new Error("connection lost"));
+  prisma.$queryRaw.mockRejectedValue(new Error("connection lost"));
   expect((await GET()).status).toBe(503);
 });

@@ -756,37 +756,76 @@ describe("processResponsePipelineJob", () => {
     expect(online.deliver).toHaveBeenCalledOnce();
     expect(online.deliver).toHaveBeenCalledWith(
       expect.objectContaining({ webhookId: webhookRow.id }),
-      expect.objectContaining({ attempt: baseContext.maxAttempts })
+      expect.objectContaining({ attempt: baseContext.attempt })
     );
   });
 
-  test("does not fan out authorization calls for workspace-visible notification recipients", async () => {
-    mockPrismaUserFindMany.mockResolvedValue(
-      Array.from({ length: 50 }, (_, i) => ({ id: `u${i}`, email: `u${i}@example.com`, locale: "en-US" }))
-    );
+  test("excludes unauthorized billing subscribers even from workspace-visible response alerts", async () => {
+    mockPrismaUserFindMany.mockResolvedValue([
+      { id: "member", email: "member@example.com", locale: "en-US" },
+      { id: "billing", email: "billing@example.com", locale: "en-US" },
+    ]);
+    mockCan.mockImplementation(async (actor: { id: string }) => actor.id === "member");
     await processResponsePipelineJob({ ...baseData, event: "responseFinished" }, baseContext);
-    expect(mockCan).not.toHaveBeenCalled();
+    expect(mockCan).toHaveBeenCalledWith({ id: "billing", type: "user" }, "survey.response_read", {
+      id: baseData.surveyId,
+      type: "survey",
+    });
+    expect(mockSendResponseFinishedEmail).toHaveBeenCalledOnce();
+    expect(mockSendResponseFinishedEmail.mock.calls[0][0]).toBe("member@example.com");
   });
 
-  test.each([new Error("receiver 503"), new UnrecoverableError("receiver 404")])(
-    "continues side effects after an inline webhook failure: %s",
-    async (failure) => {
-      online.enabled = false;
-      mockPrismaWebhookFindMany.mockResolvedValue([webhookRow, { ...webhookRow, id: "healthy" }]);
-      online.deliver.mockRejectedValueOnce(failure).mockResolvedValueOnce(undefined);
-      mockGetIntegrations.mockResolvedValue([{ id: "integration_123", type: "slack" }]);
-      await expect(
-        processResponsePipelineJob({ ...baseData, event: "responseFinished" }, baseContext)
-      ).resolves.toBeUndefined();
-      expect(online.deliver).toHaveBeenCalledTimes(2);
-      expect(mockHandleIntegrations).toHaveBeenCalledOnce();
-      expect(mockEnqueueWebhookDeliveryJob).not.toHaveBeenCalled();
-      expect(mockLoggerError).toHaveBeenCalledWith(
-        expect.objectContaining({ webhookId: webhookRow.id, err: failure }),
-        "Inline webhook delivery failed"
-      );
-    }
-  );
+  test("continues side effects after a permanently rejected inline webhook", async () => {
+    online.enabled = false;
+    const failure = new UnrecoverableError("receiver 404");
+    mockPrismaWebhookFindMany.mockResolvedValue([webhookRow, { ...webhookRow, id: "healthy" }]);
+    online.deliver.mockRejectedValueOnce(failure).mockResolvedValueOnce(undefined);
+    mockGetIntegrations.mockResolvedValue([{ id: "integration_123", type: "slack" }]);
+    await expect(
+      processResponsePipelineJob({ ...baseData, event: "responseFinished" }, baseContext)
+    ).resolves.toBeUndefined();
+    expect(online.deliver).toHaveBeenCalledTimes(2);
+    expect(mockHandleIntegrations).toHaveBeenCalledOnce();
+    expect(mockEnqueueWebhookDeliveryJob).not.toHaveBeenCalled();
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ webhookId: webhookRow.id, err: failure }),
+      "Inline webhook delivery failed permanently; continuing response processing"
+    );
+  });
+
+  test("retains legacy durable pipeline retries before any other response side effects", async () => {
+    online.enabled = false;
+    const failure = new Error("receiver 503");
+    mockPrismaWebhookFindMany.mockResolvedValue([webhookRow]);
+    online.deliver.mockRejectedValueOnce(failure).mockResolvedValueOnce(undefined);
+    mockGetIntegrations.mockResolvedValue([{ id: "integration_123", type: "slack" }]);
+    const data = { ...baseData, event: "responseFinished" as const };
+    await expect(processResponsePipelineJob(data, baseContext)).rejects.toThrow(failure);
+    expect(mockHandleIntegrations).not.toHaveBeenCalled();
+    expect(mockSendResponseFinishedEmail).not.toHaveBeenCalled();
+    expect(mockSendFollowUpsForResponse).not.toHaveBeenCalled();
+    expect(mockEnqueueResponseCompletedWorkflowRuns).not.toHaveBeenCalled();
+    await expect(
+      processResponsePipelineJob(data, { ...baseContext, attempt: baseContext.attempt + 1 })
+    ).resolves.toBeUndefined();
+    expect(mockHandleIntegrations).toHaveBeenCalledOnce();
+    expect(mockEnqueueWebhookDeliveryJob).not.toHaveBeenCalled();
+  });
+
+  test("finishes remaining response side effects when inline delivery exhausts its retry budget", async () => {
+    online.enabled = false;
+    mockPrismaWebhookFindMany.mockResolvedValue([webhookRow]);
+    online.deliver.mockRejectedValue(new Error("receiver 503"));
+    mockGetIntegrations.mockResolvedValue([{ id: "integration_123", type: "slack" }]);
+    await expect(
+      processResponsePipelineJob(
+        { ...baseData, event: "responseFinished" },
+        { ...baseContext, attempt: baseContext.maxAttempts }
+      )
+    ).resolves.toBeUndefined();
+    expect(mockHandleIntegrations).toHaveBeenCalledOnce();
+    expect(mockEnqueueWebhookDeliveryJob).not.toHaveBeenCalled();
+  });
 
   test("fails the job before the final attempt when a webhook delivery cannot be enqueued", async () => {
     const enqueueError = new Error("redis unavailable");

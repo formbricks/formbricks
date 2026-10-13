@@ -178,8 +178,10 @@ upgrade gate before enabling the v6 application image.
 | AUTHZED_INSECURE    | Allows plaintext gRPC for an in-cluster service. Keep disabled for endpoints outside the trusted cluster network. | optional              | `true` in Helm and bundled Docker/dev |
 | AUTHZED_CONSISTENCY | Must be `fully_consistent` for v6 authorization.                                                               | required              | `fully_consistent` in released Docker and Helm |
 
-Two variables govern survey visibility, which is enforced only once the survey projection is marked ready
-(see [AuthZed operations](/self-hosting/configuration/authzed-operations)):
+Stored survey visibility restrictions are always enforced. Projection readiness gates visibility mutations
+and survey graph checks; before readiness, the PostgreSQL policy and workspace authorization apply
+(see [AuthZed operations](/self-hosting/configuration/authzed-operations)). The following variables control
+visibility mutations and workspace survey limits:
 
 | Variable                         | Description                                                                                                                                             | Required | Default  |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------- |
