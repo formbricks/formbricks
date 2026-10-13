@@ -408,6 +408,12 @@ model Survey {
   blocks              Json[]                  @default([])
   /// [SurveyEnding]
   endings             Json[]                  @default([])
+  // Legacy Embedded Data columns (ENG-2404): app code no longer uses them, so `@ignore` keeps them out of
+  // the generated model API; only the two Embedded Data backfills read them, through raw SQL. They stay
+  // in the database until Formbricks 7 so a 6.0 pod still serving during a rolling upgrade keeps
+  // working; dropping them sooner would make every minor-to-minor upgrade a downtime one.
+  hiddenFields        Json                    @default("{\"enabled\": false}") @ignore
+  variables           Json                    @default("[]") @ignore
   responses           Response[]
   quotas              SurveyQuota[]
   displayOption       displayOptions          @default(displayOnce)

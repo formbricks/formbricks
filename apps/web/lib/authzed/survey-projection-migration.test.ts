@@ -104,7 +104,6 @@ describe("survey projection trigger migration (ENG-3282)", () => {
     const shippedBefore = [
       "20260928120000_add_matrix_chart_type",
       "20260928120000_eng_2404_backfill_remaining_embedded_data",
-      "20260928120001_eng_2404_drop_survey_legacy_embedded_data_columns",
     ];
     for (const name of shippedBefore) {
       expect(readdirSync(MIGRATIONS_DIR)).toContain(name);
