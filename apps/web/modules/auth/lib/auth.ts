@@ -34,7 +34,7 @@ import { EMAIL_VERIFICATION_TTL_SECONDS, USE_SECURE_COOKIES } from "./auth-cooki
 import { rejectInactiveUserOnSessionCreate } from "./better-auth-active-user-gate";
 import { runAfterEmailVerificationHooks } from "./better-auth-email-verification";
 import { hibpBreachCheckBeforeHandler } from "./better-auth-hibp";
-import { recordActivityOnSessionCreate, recordActivityOnSessionUpdate } from "./better-auth-last-active";
+import { lastActivePlugin, recordActivityOnSessionUpdate } from "./better-auth-last-active";
 import { auditPasswordReset, betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
 import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
 import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
@@ -299,16 +299,16 @@ export const auth = betterAuth({
   // (gate + writes) re-expressed as Better Auth database hooks (design doc §13). Verify-before-link
   // recovery is the remaining Phase 5c work. The session hook composes the isActive gate (reject
   // deactivated users before a session is created — parity with authOptions, covers every sign-in
-  // path) with the Phase 7 `signedIn` success audit, and records every session start and renewal as
-  // the user's last activity (`User.lastActiveAt`, the data retention members clock). Each `after`
-  // swallows its own failures, so neither can fail the other or the sign-in.
+  // path) with the Phase 7 `signedIn` success audit, and records every session renewal as the user's
+  // last activity (`User.lastActiveAt`, the data retention members clock; a completed sign-in is
+  // recorded by `lastActivePlugin`, below). Each `after` swallows its own failures, so neither can fail
+  // the other or the sign-in.
   databaseHooks: {
     ...ssoDatabaseHooks,
     session: {
       create: {
         before: rejectInactiveUserOnSessionCreate,
         after: async (session, context) => {
-          await recordActivityOnSessionCreate(session, context);
           await signInAuditDatabaseHook.create?.after?.(session, context);
         },
       },
@@ -439,6 +439,9 @@ export const auth = betterAuth({
     // SSO-recovery magic-link sign-in — the BA replacement for the "token" provider's sso_recovery
     // path (recovery-scoped, not a general magic-link). See better-auth-recovery-signin.ts.
     ssoRecoverySignInPlugin,
+    // Records a completed sign-in as the user's last activity (the members retention clock). After
+    // twoFactor(), whose after hook drops the session a password alone created while 2FA is pending.
+    lastActivePlugin,
     // nextCookies MUST remain the last plugin so server-action sign-in/out can set cookies.
     nextCookies(),
   ],

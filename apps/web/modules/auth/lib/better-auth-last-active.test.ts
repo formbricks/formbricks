@@ -4,8 +4,8 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { readDatabaseClock } from "@/lib/utils/database-clock";
 import {
-  recordActivityOnSessionCreate,
   recordActivityOnSessionUpdate,
+  recordCompletedSignIn,
   recordUserActivity,
 } from "./better-auth-last-active";
 
@@ -56,14 +56,20 @@ describe("recordUserActivity", () => {
     );
   });
 
-  test("records a new session and a renewed one as activity of their user", async () => {
-    await recordActivityOnSessionCreate(session("clnew"), null);
+  test("records a completed sign-in and a renewed session as activity of their user", async () => {
+    await recordCompletedSignIn({ user: { id: "clnew" } });
     await recordActivityOnSessionUpdate(session("clrenewed"), null);
 
     expect(vi.mocked(prisma.$executeRaw).mock.calls.map((call) => statement(call).values[1])).toEqual([
       "clnew",
       "clrenewed",
     ]);
+  });
+
+  test("records nothing for a sign-in that ended without a session: a 2FA challenge still pending", async () => {
+    await recordCompletedSignIn(null);
+
+    expect(prisma.$executeRaw).not.toHaveBeenCalled();
   });
 
   test("records nothing for a renewal whose session was deleted meanwhile", async () => {

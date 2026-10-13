@@ -401,101 +401,55 @@ describe("getSurveyRetentionClock", () => {
 });
 
 describe("getMemberRetentionClock", () => {
-  test("uses the last sign-in", () => {
-    expect(
-      getMemberRetentionClock(
-        { createdAt: day(-2000), lastLoginAt: day(5), lastActiveAt: null, reactivatedAt: null },
-        membersPolicy,
-        day(10)
-      )
-    ).toEqual(day(5));
+  // An account long older than the policy, unless a test says otherwise.
+  const member = (fields: { lastActiveAt?: Date | null; reactivatedAt?: Date | null; createdAt?: Date }) => ({
+    createdAt: day(-2000),
+    lastActiveAt: null,
+    reactivatedAt: null,
+    ...fields,
+  });
+
+  test("uses the last recorded activity: a completed sign-in or a session renewal", () => {
+    expect(getMemberRetentionClock(member({ lastActiveAt: day(5) }), membersPolicy, day(10))).toEqual(day(5));
+  });
+
+  test("counts a member with no activity on record from when the policy was switched on", () => {
+    expect(getMemberRetentionClock(member({}), membersPolicy, day(10))).toEqual(day(-1000));
+    expect(getMemberRetentionClock(member({}), { enabledAt: null }, day(10))).toEqual(day(10));
   });
 
   test("counts an account created after the policy took effect from its creation, not the switch-on", () => {
     // Provisioned (say through the users API) long after the policy was switched on, never signed in.
+    expect(getMemberRetentionClock(member({ createdAt: day(300) }), membersPolicy, day(301))).toEqual(
+      day(300)
+    );
+    // Creation never moves the clock of someone active since.
     expect(
       getMemberRetentionClock(
-        { createdAt: day(300), lastLoginAt: null, lastActiveAt: null, reactivatedAt: null },
-        membersPolicy,
-        day(301)
-      )
-    ).toEqual(day(300));
-    // Creation never moves the clock of someone who has signed in since.
-    expect(
-      getMemberRetentionClock(
-        { createdAt: day(300), lastLoginAt: day(350), lastActiveAt: null, reactivatedAt: null },
+        member({ createdAt: day(300), lastActiveAt: day(350) }),
         membersPolicy,
         day(400)
       )
     ).toEqual(day(350));
   });
 
-  test("counts a member with no recorded sign-in from when the policy was switched on", () => {
-    expect(
-      getMemberRetentionClock(
-        { createdAt: day(-2000), lastLoginAt: null, lastActiveAt: null, reactivatedAt: null },
-        membersPolicy,
-        day(10)
-      )
-    ).toEqual(day(-1000));
-    expect(
-      getMemberRetentionClock(
-        { createdAt: day(-2000), lastLoginAt: null, lastActiveAt: null, reactivatedAt: null },
-        { enabledAt: null },
-        day(10)
-      )
-    ).toEqual(day(10));
-  });
-
   test("a reactivation restarts the clock without a sign-in", () => {
     expect(
       getMemberRetentionClock(
-        { createdAt: day(-2000), lastLoginAt: day(5), lastActiveAt: null, reactivatedAt: day(400) },
+        member({ lastActiveAt: day(5), reactivatedAt: day(400) }),
         membersPolicy,
         day(401)
       )
     ).toEqual(day(400));
-    expect(
-      getMemberRetentionClock(
-        { createdAt: day(-2000), lastLoginAt: null, lastActiveAt: null, reactivatedAt: day(400) },
-        membersPolicy,
-        day(401)
-      )
-    ).toEqual(day(400));
+    expect(getMemberRetentionClock(member({ reactivatedAt: day(400) }), membersPolicy, day(401))).toEqual(
+      day(400)
+    );
   });
 
-  test("activity recorded after the last sign-in (a session renewal) counts", () => {
+  test("activity after the reactivation still counts", () => {
     expect(
       getMemberRetentionClock(
-        { createdAt: day(-2000), lastLoginAt: day(5), lastActiveAt: day(300), reactivatedAt: null },
-        membersPolicy,
-        day(301)
-      )
-    ).toEqual(day(300));
-    // Older activity changes nothing.
-    expect(
-      getMemberRetentionClock(
-        { createdAt: day(-2000), lastLoginAt: day(5), lastActiveAt: day(2), reactivatedAt: null },
-        membersPolicy,
-        day(301)
-      )
-    ).toEqual(day(5));
-  });
-
-  test("activity counts even for a member with no sign-in on record, beyond the policy's start", () => {
-    expect(
-      getMemberRetentionClock(
-        { createdAt: day(-2000), lastLoginAt: null, lastActiveAt: day(300), reactivatedAt: null },
-        membersPolicy,
-        day(301)
-      )
-    ).toEqual(day(300));
-  });
-
-  test("a sign-in after the reactivation still counts", () => {
-    expect(
-      getMemberRetentionClock(
-        { createdAt: day(-2000), lastLoginAt: day(500), lastActiveAt: null, reactivatedAt: day(400) },
+        member({ lastActiveAt: day(500), reactivatedAt: day(400) }),
         membersPolicy,
         day(501)
       )
@@ -504,7 +458,7 @@ describe("getMemberRetentionClock", () => {
 
   test("a reactivation voids the notice that led to the deactivation", () => {
     const clock = getMemberRetentionClock(
-      { createdAt: day(-2000), lastLoginAt: day(0), lastActiveAt: null, reactivatedAt: day(400) },
+      member({ lastActiveAt: day(0), reactivatedAt: day(400) }),
       membersPolicy,
       day(401)
     );

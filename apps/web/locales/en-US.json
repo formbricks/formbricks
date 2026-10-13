@@ -3102,7 +3102,7 @@
         "history_no_access": "Only owners and managers can see the data retention history.",
         "member_reactivated": "{name} reactivated",
         "members_active_help": "The last active owner and members of other organizations are never deactivated. Reactivate members in the member list.",
-        "members_counts_from": "The member's last sign-in or reactivation. Staying signed in counts too, where sessions last longer than a day. Use through MCP or the API doesn't count; a member who never signed in counts from when the policy was switched on or last tightened.",
+        "members_counts_from": "The member's last sign-in (with its second factor, where they have one) or reactivation. Staying signed in counts too, where sessions last longer than a day. Use through MCP or the API doesn't count; a member who never signed in counts from when the policy was switched on or last tightened, or from when their account was created, if later.",
         "members_notice_help": "The member gets one email when the notice starts.",
         "members_policy_description": "Members are deactivated when the period ends. Nothing is deleted.",
         "members_policy_title": "Members policy",

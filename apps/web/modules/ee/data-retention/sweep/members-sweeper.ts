@@ -30,8 +30,7 @@ type TMemberCandidate = {
   role: "owner" | "manager" | "member" | "billing";
   /** When the account was created: the clock never starts before it. */
   createdAt: Date;
-  lastLoginAt: Date | null;
-  /** When they last started or renewed a session: someone who stays signed in is still active. */
+  /** When they last signed in or renewed a session: someone who stays signed in is still active. */
   lastActiveAt: Date | null;
   reactivatedAt: Date | null;
   /**
@@ -55,10 +54,9 @@ const targetState = (context: TRetentionSweepContext, member: TMemberCandidate):
 });
 
 /**
- * The organisation's active members whose clock is at or before `noticeDueAtOrBefore`: their last
- * sign-in or recorded activity (`User.lastActiveAt`: a session started or renewed), or the day the
- * policy took effect for someone who never signed in, never before the account was created, moved on by a
- * reactivation
+ * The organisation's active members whose clock is at or before `noticeDueAtOrBefore`: their recorded
+ * activity (`User.lastActiveAt`: a completed sign-in, or a session renewed), or the day the policy took
+ * effect for someone with none, never before the account was created, moved on by a reactivation
  * (`getMemberRetentionClock`). Keyset-paged on the user id; `userId` narrows it to one member, for the
  * re-check under lock.
  */
@@ -68,7 +66,7 @@ const readCandidates = (
   { afterId, userId, noticeDueAtOrBefore }: { afterId?: string; userId?: string; noticeDueAtOrBefore: Date }
 ): Promise<TMemberCandidate[]> => client.$queryRaw<TMemberCandidate[]>`
   SELECT u."id" AS "userId", u."email", u."locale", m."role"::text AS "role",
-         u."created_at" AS "createdAt", u."lastLoginAt", u."reactivatedAt", u."lastActiveAt",
+         u."created_at" AS "createdAt", u."reactivatedAt", u."lastActiveAt",
          (SELECT count(*)::int FROM "Membership" o WHERE o."userId" = u."id")
            + (SELECT count(*)::int FROM "Invite" i
                WHERE lower(i."email") = lower(u."email") AND i."acceptorId" IS NULL
@@ -82,13 +80,12 @@ const readCandidates = (
     ON n."userId" = u."id" AND n."organizationId" = m."organizationId" AND n."entity" = 'members'
   WHERE m."organizationId" = ${context.policy.organizationId}
     AND u."isActive"
-    -- GREATEST skips NULLs: the latest of sign-in (or, with none, the policy's start), the account's
-    -- creation, reactivation and recorded activity, as getMemberRetentionClock computes it.
+    -- GREATEST skips NULLs: the latest of recorded activity (or, with none, the policy's start), the
+    -- account's creation and reactivation, as getMemberRetentionClock computes it.
     AND GREATEST(
-      COALESCE(u."lastLoginAt", ${context.policy.enabledAt}),
+      COALESCE(u."lastActiveAt", ${context.policy.enabledAt}),
       u."created_at",
-      u."reactivatedAt",
-      u."lastActiveAt"
+      u."reactivatedAt"
     ) <= ${noticeDueAtOrBefore}
     ${userId ? Prisma.sql`AND u."id" = ${userId}` : Prisma.empty}
     ${afterId ? Prisma.sql`AND u."id" > ${afterId}` : Prisma.empty}

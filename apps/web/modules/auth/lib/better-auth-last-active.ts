@@ -1,11 +1,11 @@
 import "server-only";
-import type { BetterAuthOptions } from "better-auth";
+import type { BetterAuthOptions, BetterAuthPlugin } from "better-auth";
+import { createAuthMiddleware } from "better-auth/api";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { readDatabaseClock } from "@/lib/utils/database-clock";
 
 type SessionDatabaseHook = NonNullable<NonNullable<BetterAuthOptions["databaseHooks"]>["session"]>;
-type SessionCreateAfter = NonNullable<NonNullable<SessionDatabaseHook["create"]>["after"]>;
 type SessionUpdateAfter = NonNullable<NonNullable<SessionDatabaseHook["update"]>["after"]>;
 
 /**
@@ -33,12 +33,29 @@ export const recordUserActivity = async (userId: string): Promise<void> => {
 };
 
 /**
- * `databaseHooks.session.create.after`: every new session (a sign-in of any kind) is activity. Composed
- * in auth.ts with the sign-in audit, which runs on the same slot.
+ * A completed sign-in, of any kind, is activity: the session the request ends with
+ * (`ctx.context.newSession`), read once every hook before this one has run.
+ *
+ * Not `databaseHooks.session.create`: for a user with two-factor authentication, a correct password
+ * alone creates a session, which the two-factor plugin's after hook then deletes (setting `newSession`
+ * back to null) until the second factor is verified. Counting that session would let a password alone
+ * keep a dormant 2FA account active under the members policy. Better Auth runs `hooks.after` first and
+ * the plugins' after hooks in list order, so this must be a plugin listed after `twoFactor()`.
  */
-export const recordActivityOnSessionCreate: SessionCreateAfter = async (session) => {
-  await recordUserActivity(session.userId);
+export const recordActivityOnSignIn = createAuthMiddleware(async (ctx) => {
+  await recordCompletedSignIn(ctx.context.newSession);
+});
+
+/** The session a request ended with, if any: its user was active. None (a 2FA challenge) is nothing. */
+export const recordCompletedSignIn = async (newSession: { user: { id: string } } | null): Promise<void> => {
+  if (newSession) await recordUserActivity(newSession.user.id);
 };
+
+/** `recordActivityOnSignIn` as a plugin, for auth.ts's plugin list, after `twoFactor()`. */
+export const lastActivePlugin = {
+  id: "formbricks-last-active",
+  hooks: { after: [{ matcher: () => true, handler: recordActivityOnSignIn }] },
+} satisfies BetterAuthPlugin;
 
 /**
  * `databaseHooks.session.update.after`: a session renewal (`updateSession`, which Better Auth runs

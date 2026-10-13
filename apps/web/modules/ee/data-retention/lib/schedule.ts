@@ -282,26 +282,25 @@ export const getSurveyRetentionClock = (
 };
 
 /**
- * A member's clock under the members policy: when they were last active — their last sign-in, or the
- * last session they started or renewed (`User.lastActiveAt`; a session in use is renewed once it is a
- * day old, so with a `SESSION_MAX_AGE` above a day someone who stays signed in for weeks still counts as
- * active) — or, for someone with no sign-in on record, the day the policy was switched on. The account's
- * creation counts too, so someone provisioned after the policy took effect (through the users API, say,
- * before their first day) gets the full period from then rather than a notice on their first night; it
- * never moves the clock of anyone who has signed in, which happens after it. A reactivation restarts
- * it. Whichever is latest.
+ * A member's clock under the members policy: when they were last active (`User.lastActiveAt`: a
+ * completed sign-in, or a session in use being renewed, which happens once it is a day old, so with a
+ * `SESSION_MAX_AGE` above a day someone who stays signed in for weeks still counts as active), or, for
+ * someone with no activity on record, the day the policy was switched on. The account's creation counts
+ * too, so someone provisioned after the policy took effect (through the users API, say, before their
+ * first day) gets the full period from then rather than a notice on their first night. A reactivation
+ * restarts it. Whichever is latest.
+ *
+ * `lastLoginAt` is deliberately not read: it is also written when a password is accepted but the second
+ * factor never is, which would let a password alone keep a dormant 2FA account active. `lastActiveAt` is
+ * written only for a session that survives the sign-in (`recordActivityOnSignIn`), and was seeded from
+ * `lastLoginAt` once (`20261007120001_backfill_user_last_active_at`).
  */
 export const getMemberRetentionClock = (
-  member: {
-    createdAt: Date;
-    lastLoginAt: Date | null;
-    lastActiveAt: Date | null;
-    reactivatedAt: Date | null;
-  },
+  member: { createdAt: Date; lastActiveAt: Date | null; reactivatedAt: Date | null },
   policy: Pick<TRetentionSchedulePolicy, "enabledAt">,
   now: Date
 ): Date =>
-  [member.createdAt, member.lastActiveAt, member.reactivatedAt].reduce<Date>(
+  [member.createdAt, member.reactivatedAt].reduce<Date>(
     (clock, date) => (date ? latest(clock, date) : clock),
-    member.lastLoginAt ?? policy.enabledAt ?? now
+    member.lastActiveAt ?? policy.enabledAt ?? now
   );
