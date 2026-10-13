@@ -81,7 +81,7 @@ Current workloads on the shared `background-jobs` queue include:
 | Webhook delivery  | `webhook-delivery.process`                       | Delivers one response event to one webhook, with its own retry budget.                     |
 | Survey scheduling | `survey-scheduling.reconcile`                    | Reconciles scheduled survey state.                                                         |
 | Survey archive    | `survey-archive-purge.process`                   | Permanently deletes surveys past the archive retention window.                             |
-| Deletion cleanup  | `deletion-cleanup.drain`                         | Removes the Hub records and stored files of deleted surveys, retrying until done.          |
+| Deletion cleanup  | `deletion-cleanup.drain`                         | Removes the Hub records and stored files of deleted surveys and responses, retrying until done. |
 | Usage telemetry   | `usage-telemetry.process`                        | Sends the instance's daily usage update.                                                   |
 | Workflows         | `workflow-run.process`, `workflow-run.reconcile` | Executes workflow runs and recovers stalled runs.                                          |
 
@@ -240,8 +240,19 @@ REDIS_URL=redis://redis:6379
 <Warning>
   `BULLMQ_EXTERNAL_WORKER_ENABLED=1` only keeps queueing enabled. It does not provide, start, or deploy a
   worker. Only use this configuration after your custom consumer registers the complete Formbricks job
-  handlers and is already consuming the same queue. Otherwise, background jobs will remain queued.
+  handlers and is already consuming every queue the web process writes to. Otherwise, background jobs will
+  remain queued.
 </Warning>
+
+A custom consumer must serve all three queues, under the same `{formbricks:jobs}` prefix:
+
+- `background-jobs`, for every job in the shared table above;
+- `authzed-projection`, for `authzed-projection.deliver`. Undelivered permission revocations make
+  Formbricks deny every request once they are older than a minute, so this queue must never go unserved;
+- `data-retention`, for `data-retention.sweep`.
+
+If your consumer was built when everything ran on `background-jobs`, add the other two queues before you
+upgrade.
 
 ## Troubleshoot the Job Runner
 

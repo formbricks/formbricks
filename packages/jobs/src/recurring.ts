@@ -71,7 +71,8 @@ export const defineRecurringJob = ({
 
 /** Every recurring job in the system. Adding one here wires the registry, the producer and the exports. */
 export const recurringJobDescriptors = {
-  // Its own queue: a delivery stuck behind a long sweep makes every authorization check fail closed.
+  // Its own queue: a delivery stuck behind a long job (the nightly archive purge, a cleanup drain)
+  // makes every authorization check fail closed.
   authzedProjectionDelivery: defineRecurringJob({
     label: "AuthZed projection delivery",
     name: JOB_NAMES.authzedProjectionDelivery,

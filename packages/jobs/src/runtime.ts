@@ -17,8 +17,9 @@ const DEFAULT_WORKER_CONCURRENCY = 1;
 const DEFAULT_WORKER_COUNT = 1;
 
 /**
- * A dedicated queue's jobs are short and recurring (AuthZed delivery runs every 5 s), so one slot per
- * runtime is enough; replicas add more. Deliberately not `concurrency`/`workerCount`: those size the
+ * A dedicated queue serves one recurring job that runs on its own (AuthZed delivery every 5 s, the
+ * nightly data retention sweep, which can run for half an hour), so one slot per runtime is enough;
+ * replicas add more. Deliberately not `concurrency`/`workerCount`: those size the
  * default queue for its own workload, and tuning them must not starve — or multiply — this one.
  */
 const DEDICATED_WORKER_CONCURRENCY = 1;
