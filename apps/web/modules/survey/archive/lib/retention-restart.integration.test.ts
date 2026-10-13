@@ -64,9 +64,11 @@ describe("restoring a survey restarts its data retention (real Postgres)", () =>
 
   test("restoring a survey that isn't archived changes nothing for retention", async () => {
     await surveysPolicy(["createdBefore"]);
-    const { id: surveyId } = await prisma.survey.create({ data: { name: "Live", workspaceId } });
+    const { id: surveyId, updatedAt } = await prisma.survey.create({ data: { name: "Live", workspaceId } });
 
     await expect(restoreSurvey(surveyId)).resolves.toMatchObject({ retentionExemptionId: null });
+    // Not even a write: it would bump updated_at, the "no changes" clock.
+    expect((await prisma.survey.findUniqueOrThrow({ where: { id: surveyId } })).updatedAt).toEqual(updatedAt);
 
     expect(await prisma.retentionSurveyRestore.count()).toBe(0);
     expect(await prisma.retentionExemption.count()).toBe(0);

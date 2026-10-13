@@ -8,7 +8,7 @@ vi.mock("@formbricks/database", () => ({ prisma: { $transaction: vi.fn() } }));
 
 /**
  * Reactivating against a real database (the user row lock ordering it against a deactivation or a new
- * membership, the notice cleared, the clock restarted) is proven in `reactivate-service.integration.test.ts`.
+ * membership, the notice cleared, the clock restarted) is proven in `reactivate-member.integration.test.ts`.
  * These pin who may reactivate whom, and when it does nothing.
  */
 const statement = (args: unknown[]) => {

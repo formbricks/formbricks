@@ -75,7 +75,10 @@ export const useRevokeRetentionExemption = ({
   });
 };
 
-/** Surveys the Add exemption picker offers for a search, fetched only while the picker is open. */
+/**
+ * Surveys the Add exemption picker offers for a search, fetched while `enabled` (the picker passes true
+ * while the Add exemption dialog is open, so the first page is ready when the list is opened).
+ */
 export const useRetentionExemptionSurveyOptions = ({
   organizationId,
   search,

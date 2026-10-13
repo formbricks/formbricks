@@ -139,6 +139,17 @@ describe("GET /api/internal/retention-runs/export", () => {
     expect((await get(`organizationId=${ORG_ID}`)).status).toBe(200);
   });
 
+  test("asks for organization.manage: a member, who can read the organization, gets a 403", async () => {
+    // A member passes a read check and fails only the manage one, so this fails if the route asks for less.
+    mockCan.mockImplementation(async (_actor: unknown, action: string) => action !== "organization.manage");
+
+    const response = await get(`organizationId=${ORG_ID}`);
+
+    expect(response.status).toBe(403);
+    expect(mockCan).toHaveBeenCalledWith(expect.anything(), "organization.manage", expect.anything());
+    expect(mockCount).not.toHaveBeenCalled();
+  });
+
   test("returns 403 to a member and audits the refusal", async () => {
     mockCan.mockResolvedValue(false);
 

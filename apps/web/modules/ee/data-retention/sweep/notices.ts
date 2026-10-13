@@ -78,14 +78,3 @@ const noticeTargetWhere = (target: TRetentionNoticeTarget): Prisma.Sql =>
   target.entity === "members"
     ? Prisma.sql`"userId" = ${target.userId} AND "organizationId" = ${target.organizationId} AND "entity" = 'members'`
     : Prisma.sql`"surveyId" = ${target.surveyId} AND "entity" = ${target.entity}::"RetentionEntity"`;
-
-/**
- * Forget the target's notice, so the next time it becomes due it gets a new one. The responses reminder
- * is re-armed this way once a survey has no response left in its warning window.
- */
-export const deleteRetentionNotice = async (
-  tx: Prisma.TransactionClient,
-  target: TRetentionNoticeTarget
-): Promise<void> => {
-  await tx.$executeRaw`DELETE FROM "RetentionNotice" WHERE ${noticeTargetWhere(target)}`;
-};

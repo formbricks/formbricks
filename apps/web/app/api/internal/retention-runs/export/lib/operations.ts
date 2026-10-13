@@ -29,7 +29,8 @@ const exportFileName = (organizationId: string, now: Date) =>
  * Every check happens before the stream opens; once it has, the status is a 200 whatever follows. The
  * export's own audit event is written when the stream finishes, fails or is cancelled, so the wrapper's
  * event (which would record success the moment the response object is returned) is suppressed then.
- * Failures before the stream (403, 422, 429) are still audited by the wrapper.
+ * Failures before the stream are still audited by the wrapper (403, 422); a 429 is refused before the
+ * audit log is built, and only the rate limiter logs it.
  */
 export async function exportRetentionRunsOperation({
   req,

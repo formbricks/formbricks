@@ -188,7 +188,7 @@ describe("Exemptions hooks", () => {
     await waitFor(() => expect(list.result.current.exemptions.map((e) => e.id)).toEqual(["exm_2", "exm_1"]));
   });
 
-  test("asks for survey options only while the picker is open, with the search", async () => {
+  test("asks for survey options only while enabled, with the search", async () => {
     const fetchMock = vi.mocked(global.fetch);
     fetchMock.mockResolvedValue(
       json({ data: [{ id: "clsrv", name: "Site visit feedback", workspaceName: "Europe" }] })

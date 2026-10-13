@@ -4,7 +4,6 @@ import {
   RETENTION_NOTICE_STALE_CLAIM_MS,
   type TRetentionNoticeTarget,
   claimRetentionNotice,
-  deleteRetentionNotice,
   markRetentionNoticeDelivered,
 } from "./notices";
 
@@ -125,21 +124,5 @@ describe("markRetentionNoticeDelivered", () => {
     const { text, values } = statement(tx.$executeRaw.mock.calls[0]);
     expect(text).toContain('WHERE "userId" = ? AND "organizationId" = ? AND "entity" = \'members\'');
     expect(values).toEqual([CLAIMED_AT, false, "clusr", ORG_ID, "token-1"]);
-  });
-});
-
-describe("deleteRetentionNotice", () => {
-  test("forgets exactly the target's notice", async () => {
-    const tx = client();
-
-    await deleteRetentionNotice(tx as never, SURVEY);
-    await deleteRetentionNotice(tx as never, MEMBER);
-
-    const [survey, member] = tx.$executeRaw.mock.calls.map(statement);
-    expect(survey.text).toBe(
-      'DELETE FROM "RetentionNotice" WHERE "surveyId" = ? AND "entity" = ?::"RetentionEntity"'
-    );
-    expect(survey.values).toEqual(["clsrv", "responses"]);
-    expect(member.values).toEqual(["clusr", ORG_ID]);
   });
 });

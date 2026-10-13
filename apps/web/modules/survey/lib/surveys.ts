@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
+import { Prisma, type SurveyStatus } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
@@ -192,15 +192,17 @@ export const archiveSurvey = async (surveyId: string, options?: { tx?: Prisma.Tr
  * Restore an archived survey by clearing archivedAt. The survey keeps its current status. Restoring one
  * that was archived gives it a full data retention period again (`restartSurveyRetention`), in the same
  * transaction, with the survey locked; `retentionExemptionId` is the exemption that made, if any.
- * Restoring a survey that isn't archived changes nothing for retention.
+ * Restoring a survey that isn't archived writes nothing, so it doesn't count as a change to it either.
  */
 export const restoreSurvey = async (surveyId: string, options?: { restoredById?: string | null }) => {
   validateInputs([surveyId, ZId]);
 
   try {
     return await prisma.$transaction(async (tx) => {
-      const [locked] = await tx.$queryRaw<{ archivedAt: Date | null; organizationId: string }[]>`
-        SELECT s."archivedAt", w."organizationId"
+      const [locked] = await tx.$queryRaw<
+        { status: SurveyStatus; archivedAt: Date | null; organizationId: string }[]
+      >`
+        SELECT s."status", s."archivedAt", w."organizationId"
         FROM "Survey" s
         JOIN "Workspace" w ON w."id" = s."workspaceId"
         WHERE s."id" = ${surveyId}
@@ -209,14 +211,15 @@ export const restoreSurvey = async (surveyId: string, options?: { restoredById?:
       if (!locked) {
         throw new ResourceNotFoundError("Survey", surveyId);
       }
+      if (!locked.archivedAt) {
+        // Nothing to restore: no write, which would bump updated_at (a "no changes" clock) for nothing.
+        return { id: surveyId, status: locked.status, archivedAt: null, retentionExemptionId: null };
+      }
       const survey = await tx.survey.update({
         where: { id: surveyId },
         data: { archivedAt: null },
         select: { id: true, status: true, archivedAt: true },
       });
-      if (!locked.archivedAt) {
-        return { ...survey, retentionExemptionId: null };
-      }
       const { exemptionId } = await restartSurveyRetention(tx, {
         surveyId,
         organizationId: locked.organizationId,

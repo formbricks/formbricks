@@ -385,7 +385,9 @@ describe("archiveSurvey", () => {
 describe("restoreSurvey", () => {
   const organizationId = "clq5n7p1q0000m7z0h5p6g3r9";
   const restored = { id: surveyId, status: "paused", archivedAt: null };
-  const restoreTx = (locked: { archivedAt: Date | null; organizationId: string } | undefined) => {
+  const restoreTx = (
+    locked: { status?: string; archivedAt: Date | null; organizationId: string } | undefined
+  ) => {
     const tx = {
       $queryRaw: vi.fn().mockResolvedValue(locked ? [locked] : []),
       survey: { update: vi.fn().mockResolvedValue(restored) },
@@ -420,10 +422,12 @@ describe("restoreSurvey", () => {
     });
   });
 
-  test("restoring a survey that isn't archived leaves retention alone", async () => {
-    restoreTx({ archivedAt: null, organizationId });
+  test("restoring a survey that isn't archived writes nothing and leaves retention alone", async () => {
+    const tx = restoreTx({ status: "paused", archivedAt: null, organizationId });
 
     await expect(restoreSurvey(surveyId)).resolves.toEqual({ ...restored, retentionExemptionId: null });
+    // An update would bump updated_at, which the surveys policy's "no changes" reads.
+    expect(tx.survey.update).not.toHaveBeenCalled();
     expect(restartSurveyRetention).not.toHaveBeenCalled();
   });
 
