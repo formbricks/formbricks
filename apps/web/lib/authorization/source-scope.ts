@@ -8,6 +8,7 @@ import {
 import type { TAuthorizationActor, TAuthorizationResource, TAuthorizationResourceType } from "./contract";
 import {
   type TSurveyAuthorizationScopeRow,
+  getActiveAuthorizationUserIds,
   getApiKeyOrganizationId,
   getAuthorizationOrganizationId,
   getDashboardAuthorizationWorkspaceScope,
@@ -207,4 +208,17 @@ export const resolveAuthorizationScope = async (
     actorValid: actorOrganizationId !== null && actorOrganizationId === resourceScope.organizationId,
     ...resourceScope,
   };
+};
+
+/** Resolve shared resource facts once for a recipient batch, retaining active-user validation. */
+export const resolveAuthorizationUserBatch = async (
+  userIds: ReadonlyArray<string>,
+  resource: TAuthorizationResource
+): Promise<ReadonlyMap<string, TResolvedAuthorizationScope>> => {
+  const [scope, activeIds] = await Promise.all([
+    resolveResourceScope(resource),
+    getActiveAuthorizationUserIds(userIds),
+  ]);
+  if (!scope) return new Map();
+  return new Map(userIds.map((id) => [id, { ...scope, actorValid: activeIds.has(id) }]));
 };

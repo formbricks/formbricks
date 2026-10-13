@@ -4,6 +4,8 @@ import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { resetDb } from "@/integration/reset-db";
 import { type TAuthorizationActor, can } from "@/lib/authorization";
 import { getIssuedAuthorizationCheckCount, withAuthorizationSurface } from "@/lib/authorization/context";
+import { filterAuthorizedUserIds } from "@/lib/authorization/user-list";
+import { drainAuthzedOutbox } from "@/lib/authzed/outbox-processor";
 import {
   clearProjectionScopeReady,
   resetSurveyVisibilityReadinessMemo,
@@ -20,6 +22,9 @@ import { getSurveyVisibilityGates } from "@/lib/survey/visibility/gates";
  */
 const ids = {
   apiKey: "",
+  billing: "",
+  inactive: "",
+  outsider: "",
   manager: "",
   member: "",
   orgOwner: "",
@@ -52,7 +57,7 @@ beforeAll(async () => {
     data: { name: "Visibility Workspace", organizationId: organization.id },
   });
 
-  const makeUser = async (label: string, role: "manager" | "member" | "owner") => {
+  const makeUser = async (label: string, role: "manager" | "member" | "owner" | "billing") => {
     const created = await prisma.user.create({ data: { email: `${label}@visibility.test`, name: label } });
     await prisma.membership.create({
       data: { accepted: true, organizationId: organization.id, role, userId: created.id },
@@ -65,6 +70,13 @@ beforeAll(async () => {
     await prisma.workspaceTeam.create({ data: { permission, teamId: team.id, workspaceId: workspace.id } });
   };
 
+  ids.billing = await makeUser("billing", "billing");
+  ids.inactive = await makeUser("inactive", "member");
+  ids.outsider = (
+    await prisma.user.create({ data: { email: "outsider@visibility.test", name: "outsider" } })
+  ).id;
+  await grantTeam("Billing readers", ids.billing, "read");
+  await grantTeam("Inactive readers", ids.inactive, "read");
   ids.owner = await makeUser("owner", "member");
   ids.manager = await makeUser("manager", "manager");
   ids.orgOwner = await makeUser("org-owner", "owner");
@@ -105,6 +117,9 @@ beforeAll(async () => {
   ).id;
 
   await synchronizeAuthzedIntegrationFixture();
+  // Deactivate a previously authorized reader, then deliver the revocation before recipient checks.
+  await prisma.user.update({ where: { id: ids.inactive }, data: { isActive: false } });
+  expect((await drainAuthzedOutbox()).status).toBe("drained");
 
   // A grant stored but not yet acknowledged: the graph still says restricted, PostgreSQL says workspace.
   await prisma.survey.update({
@@ -122,6 +137,31 @@ beforeAll(async () => {
 afterAll(async () => {
   await setMarker(false);
 });
+
+test.each([false, true])(
+  "recipient batches match individual response-read decisions with projection ready=%s",
+  async (ready) => {
+    await setMarker(ready);
+    const recipients = [ids.owner, ids.member, ids.manager, ids.billing, ids.inactive, ids.outsider];
+    for (const surveyId of [
+      ids.visibleSurvey,
+      ids.privateSurvey,
+      ids.pendingSurvey,
+      ids.pendingRestrictionSurvey,
+    ]) {
+      const resource = { id: surveyId, type: "survey" } as const;
+      const individual = await Promise.all(
+        recipients.map((id) => can(user(id), "survey.response_read", resource))
+      );
+      const allowed = await filterAuthorizedUserIds(recipients, "survey.response_read", resource);
+      expect(allowed).toEqual(new Set(recipients.filter((_, index) => individual[index])));
+      expect(allowed.has(ids.owner)).toBe(true);
+      expect(allowed.has(ids.manager)).toBe(true);
+      expect(allowed.has(ids.member)).toBe(surveyId === ids.visibleSurvey);
+      for (const id of [ids.billing, ids.inactive, ids.outsider]) expect(allowed.has(id)).toBe(false);
+    }
+  }
+);
 
 describe("marker off: PostgreSQL visibility policy remains enforced", () => {
   beforeAll(() => setMarker(false));
