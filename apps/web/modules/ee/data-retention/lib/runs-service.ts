@@ -113,9 +113,11 @@ export type TRetentionExportRow = { run: TRetentionRunRow; item: TRetentionRunIt
 
 /**
  * Every run in the range, oldest first, each followed by its items. Runs come in keyset batches on
- * `(startedAt, id)`, and each batch's items in one keyset walk on `(runId, id)` over
- * `RetentionRunItem(runId, id)`, so the query count grows with the number of batches, not of runs. The
- * consumer pulls rows, so the database is read only as fast as the client downloads.
+ * `(startedAt, id)`, each knowing whether it has items (one index probe per run, in the same query), and
+ * each run's items come in keyset pages on `RetentionRunItem(runId, id)`, yielded as they arrive. The
+ * consumer pulls rows, so the database is read only as fast as the client downloads, and at most one batch
+ * of runs and one page of items are held at a time, however large the export. Queries: one per batch of
+ * runs, plus one per page of items of each run that has any (most runs change nothing and have none).
  */
 export async function* iterateRetentionExportRows(
   range: TRetentionExportRange,
@@ -136,9 +138,10 @@ export async function* iterateRetentionExportRows(
       );
     }
 
-    const runs = await prisma.$queryRaw<TRetentionRunRow[]>`
+    const runs = await prisma.$queryRaw<(TRetentionRunRow & { hasItems: boolean })[]>`
       SELECT r."id", r."entity", r."startedAt", r."finishedAt", r."notifiedCount", r."archivedCount",
-             r."deletedCount", r."skippedCount", r."hasChanges"
+             r."deletedCount", r."skippedCount", r."hasChanges",
+             EXISTS (SELECT 1 FROM "RetentionRunItem" i WHERE i."runId" = r."id") AS "hasItems"
       FROM "RetentionRun" r
       WHERE ${Prisma.join(clauses, " AND ")}
       ${keysetOrderBy({ sortColumn: runSortColumn(), idColumn: runIdColumn(), direction: "asc" })}
@@ -146,18 +149,12 @@ export async function* iterateRetentionExportRows(
     `;
     if (runs.length === 0) return;
 
-    const itemsByRun = await loadRunItems(
-      runs.map((run) => run.id),
-      itemBatchSize
-    );
-
-    for (const run of runs) {
-      const items = itemsByRun.get(run.id);
-      if (!items) {
+    for (const { hasItems, ...run } of runs) {
+      if (!hasItems) {
         yield { run, item: null };
         continue;
       }
-      for (const item of items) {
+      for await (const item of iterateRunItems(run.id, itemBatchSize)) {
         yield { run, item };
       }
     }
@@ -168,32 +165,24 @@ export async function* iterateRetentionExportRows(
   }
 }
 
-const loadRunItems = async (
-  runIds: string[],
-  batchSize: number
-): Promise<Map<string, TRetentionRunItemRow[]>> => {
-  const byRun = new Map<string, TRetentionRunItemRow[]>();
-  let after: { runId: string; id: string } | null = null;
+/** One run's items in id order, a keyset page at a time over `RetentionRunItem(runId, id)`. */
+async function* iterateRunItems(runId: string, batchSize: number): AsyncGenerator<TRetentionRunItemRow> {
+  let afterId: string | null = null;
 
   for (;;) {
     const page: TRetentionRunItemRow[] = await prisma.$queryRaw<TRetentionRunItemRow[]>`
       SELECT i."id", i."runId", i."targetType", i."targetId", i."targetName", i."action", i."count",
              i."recipient", i."skipReason"
       FROM "RetentionRunItem" i
-      WHERE i."runId" IN (${Prisma.join(runIds)})
-        ${after ? Prisma.sql`AND (i."runId", i."id") > (${after.runId}, ${after.id})` : Prisma.empty}
-      ORDER BY i."runId" ASC, i."id" ASC
+      WHERE i."runId" = ${runId}
+        ${afterId ? Prisma.sql`AND i."id" > ${afterId}` : Prisma.empty}
+      ORDER BY i."id" ASC
       LIMIT ${batchSize}
     `;
-
-    for (const item of page) {
-      const list = byRun.get(item.runId);
-      if (list) list.push(item);
-      else byRun.set(item.runId, [item]);
-    }
+    yield* page;
 
     const last = page.at(-1);
-    if (!last || page.length < batchSize) return byRun;
-    after = { runId: last.runId, id: last.id };
+    if (!last || page.length < batchSize) return;
+    afterId = last.id;
   }
-};
+}

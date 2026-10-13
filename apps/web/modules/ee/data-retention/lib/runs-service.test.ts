@@ -128,18 +128,17 @@ describe("iterateRetentionExportRows", () => {
   });
 
   test("walks runs oldest first in batches, each followed by its items, and an itemless run once", async () => {
-    const runA = run("run_a", "2030-01-01T02:00:00.000Z");
-    const runB = run("run_b", "2030-01-02T02:00:00.000Z");
-    const runC = run("run_c", "2030-01-03T02:00:00.000Z");
+    const runA = { ...run("run_a", "2030-01-01T02:00:00.000Z"), hasItems: true };
+    const runB = { ...run("run_b", "2030-01-02T02:00:00.000Z"), hasItems: false };
+    const runC = { ...run("run_c", "2030-01-03T02:00:00.000Z"), hasItems: false };
     queryRaw()
       // First run batch is full, so the walk continues past run_b.
       .mockResolvedValueOnce([runA, runB] as never)
-      // Its items arrive over two pages; the second is short, which ends the item walk.
+      // run_a's items arrive over two pages; the second is short, which ends its item walk.
       .mockResolvedValueOnce([item("run_a", "i1"), item("run_a", "i2")] as never)
       .mockResolvedValueOnce([item("run_a", "i3")] as never)
-      // A short second batch ends the run walk; run_c has no items.
-      .mockResolvedValueOnce([runC] as never)
-      .mockResolvedValueOnce([] as never);
+      // A short second batch ends the run walk; run_b and run_c have no items, so no item query.
+      .mockResolvedValueOnce([runC] as never);
 
     const rows = await collect(
       iterateRetentionExportRows(
@@ -155,25 +154,43 @@ describe("iterateRetentionExportRows", () => {
       ["run_b", null],
       ["run_c", null],
     ]);
+    // The run rows go out without the helper flag.
+    expect(rows[0].run).not.toHaveProperty("hasItems");
 
-    const [firstRuns, firstItems, nextItems, nextRuns, lastItems] = statements();
-    expect(statements()).toHaveLength(5);
+    const [firstRuns, firstItems, nextItems, nextRuns] = statements();
+    expect(statements()).toHaveLength(4);
 
     expect(firstRuns.text).toContain('ORDER BY r."startedAt" ASC, r."id" ASC LIMIT ?');
+    expect(firstRuns.text).toContain('EXISTS (SELECT 1 FROM "RetentionRunItem" i WHERE i."runId" = r."id")');
     expect(firstRuns.text).not.toContain('(r."startedAt", r."id") >');
     expect(firstRuns.values).toStrictEqual([ORG_ID, 2]);
 
-    expect(firstItems.text).toContain('WHERE i."runId" IN (?,?)');
-    expect(firstItems.text).not.toContain('(i."runId", i."id") >');
-    expect(firstItems.values).toStrictEqual(["run_a", "run_b", 2]);
+    expect(firstItems.text).toContain('WHERE i."runId" = ?');
+    expect(firstItems.text).toContain('ORDER BY i."id" ASC LIMIT ?');
+    expect(firstItems.values).toStrictEqual(["run_a", 2]);
 
-    expect(nextItems.text).toContain('AND (i."runId", i."id") > (?, ?)');
-    expect(nextItems.values).toStrictEqual(["run_a", "run_b", "run_a", "i2", 2]);
+    expect(nextItems.text).toContain('AND i."id" > ?');
+    expect(nextItems.values).toStrictEqual(["run_a", "i2", 2]);
 
     expect(nextRuns.text).toContain('(r."startedAt", r."id") > (?, ?)');
     expect(nextRuns.values).toStrictEqual([ORG_ID, runB.startedAt, "run_b", 2]);
+  });
 
-    expect(lastItems.values).toStrictEqual(["run_c", 2]);
+  test("yields each page of items before reading the next: a large run is never held whole", async () => {
+    const runA = { ...run("run_a", "2030-01-01T02:00:00.000Z"), hasItems: true };
+    queryRaw()
+      .mockResolvedValueOnce([runA] as never)
+      .mockResolvedValueOnce([item("run_a", "i1"), item("run_a", "i2")] as never);
+
+    const rows = iterateRetentionExportRows(
+      { organizationId: ORG_ID, from: null, to: null },
+      { runBatchSize: 1, itemBatchSize: 2 }
+    );
+    await rows.next();
+
+    // The run batch and one page of its items, nothing more yet.
+    expect(statements()).toHaveLength(2);
+    await rows.return(undefined);
   });
 
   test("stops after one query when the range holds no runs", async () => {
@@ -189,10 +206,9 @@ describe("iterateRetentionExportRows", () => {
   });
 
   test("ends the run walk on a full batch followed by an empty one", async () => {
-    const runA = run("run_a", "2030-01-01T02:00:00.000Z");
+    const runA = { ...run("run_a", "2030-01-01T02:00:00.000Z"), hasItems: false };
     queryRaw()
       .mockResolvedValueOnce([runA] as never)
-      .mockResolvedValueOnce([] as never)
       .mockResolvedValueOnce([] as never);
 
     const rows = await collect(
@@ -200,6 +216,6 @@ describe("iterateRetentionExportRows", () => {
     );
 
     expect(rows.map(({ run, item }) => [run.id, item])).toStrictEqual([["run_a", null]]);
-    expect(statements()).toHaveLength(3);
+    expect(statements()).toHaveLength(2);
   });
 });
