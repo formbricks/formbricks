@@ -36,6 +36,13 @@ vi.mock("@/modules/storage/lib/survey-response-files", async (importOriginal) =>
   return { ...actual, collectSurveyResponseFileUrls: vi.fn(actual.collectSurveyResponseFileUrls) };
 });
 
+// Storage is mocked below, so the instance has it, whatever the environment says (CI sets no bucket):
+// without it, no storage cleanup is queued at all (`enqueue.ts`).
+vi.mock("@/lib/constants", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/constants")>()),
+  IS_STORAGE_CONFIGURED: true,
+}));
+
 // The two boundaries the drain talks to; everything else (the queue, the locks, the guards) is real.
 vi.mock("@/modules/hub/service", () => ({
   deleteFeedbackRecord: vi.fn(),
