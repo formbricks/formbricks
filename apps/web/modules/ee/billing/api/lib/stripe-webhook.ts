@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { logger } from "@formbricks/logger";
+import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import {
   findOrganizationIdByStripeCustomerId,
   reconcileCloudStripeSubscriptionsForOrganization,
@@ -23,6 +24,19 @@ const relevantEvents = new Set([
   "payment_intent.requires_action",
   "payment_intent.canceled",
 ]);
+
+// Plan, trial, entitlement and payment-state changes are driven by Stripe, not by a signed-in user.
+const auditStripeWebhookChange = (organizationId: string, stripeEventType: string, stripeEventId: string) =>
+  queueAuditEventWithoutRequest({
+    action: "subscriptionUpdated",
+    targetType: "organization",
+    userId: "stripe-webhook",
+    userType: "system",
+    targetId: organizationId,
+    organizationId,
+    status: "success",
+    newObject: { stripeEventType, stripeEventId },
+  });
 
 /**
  * Setup-mode Checkout completed: save the provided card as the default on the customer
@@ -96,6 +110,7 @@ const handlePaymentIntentRequiresAction = async (
     },
     event
   );
+  await auditStripeWebhookChange(organizationId, "payment_intent.requires_action", event.id);
 
   logger.info(
     { paymentIntentId: paymentIntent.id, organizationId },
@@ -127,6 +142,7 @@ const handlePaymentIntentCanceled = async (
     },
     event
   );
+  await auditStripeWebhookChange(organizationId, "payment_intent.canceled", event.id);
 
   logger.info(
     {
@@ -248,6 +264,8 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
       id: event.id,
       created: event.created,
     });
+
+    await auditStripeWebhookChange(organizationId, event.type, event.id);
   } catch (error) {
     logger.error({ error, eventId: event.id, eventType: event.type }, "Failed to process Stripe webhook");
     return { status: 500, message: "Stripe webhook processing failed; please retry." };

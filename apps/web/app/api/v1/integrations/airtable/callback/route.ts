@@ -13,6 +13,7 @@ import {
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { canUserWriteWorkspaceIntegrations } from "@/lib/workspace/auth";
+import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 
 const getEmail = async (token: string) => {
   const req_ = await fetch("https://api.airtable.com/v0/meta/whoami", {
@@ -79,12 +80,14 @@ const createAirtableIntegration = async ({
   code,
   codeVerifier,
   redirectUri,
+  userId,
   workspaceId,
 }: {
   clientId: string;
   code: string;
   codeVerifier: string;
   redirectUri: string;
+  userId: string;
   workspaceId: string;
 }) => {
   const key = await fetchAirtableAuthToken({
@@ -105,7 +108,7 @@ const createAirtableIntegration = async ({
   const existingIntegration = await getIntegrationByType(workspaceId, "airtable");
   const existingData = existingIntegration?.config?.data ?? [];
 
-  await createOrUpdateIntegration(workspaceId, {
+  const result = await createOrUpdateIntegration(workspaceId, {
     type: "airtable" as const,
     config: {
       key,
@@ -113,6 +116,22 @@ const createAirtableIntegration = async ({
       email,
     },
   });
+
+  try {
+    await queueAuditEvent({
+      action: "createdUpdated",
+      targetType: "integration",
+      userId,
+      userType: "user",
+      targetId: result.id,
+      organizationId: await getOrganizationIdFromWorkspaceId(workspaceId),
+      status: "success",
+      // Metadata only: never the OAuth tokens or the callback code.
+      newObject: { type: "airtable", workspaceId },
+    });
+  } catch (err) {
+    logger.error({ error: err }, "Failed to queue audit event for airtable integration");
+  }
 
   return null;
 };
@@ -185,6 +204,7 @@ export const GET = withV1ApiWrapper({
         code,
         codeVerifier,
         redirectUri: redirect_uri,
+        userId: authentication.user.id,
         workspaceId,
       });
 
