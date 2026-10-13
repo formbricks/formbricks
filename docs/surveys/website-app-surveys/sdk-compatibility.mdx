@@ -1,0 +1,101 @@
+---
+title: "SDK Compatibility"
+description: "Which SDK versions support dark mode and Custom CSS, how each platform resolves the survey appearance, and what respondents see when versions are mixed."
+icon: "code-compare"
+---
+
+Dark mode and [Custom CSS](/surveys/general-features/custom-css) need support on two sides: the Formbricks server that delivers the survey, and the SDK that shows it. This page lists the versions and explains what happens while they do not match yet.
+
+Upgrade in this order: the Formbricks server first, then your SDKs. A newer server never breaks an older SDK, and a newer SDK never breaks against an older server: surveys keep working, they only lack the new styling until both sides support it.
+
+## Minimum Versions
+
+| Component | Package | Dark mode (`setAppearance`) | Custom CSS |
+| --- | --- | --- | --- |
+| Formbricks server (self-hosted) | Formbricks | Pending release | Pending release |
+| JavaScript, script tag | Served by your Formbricks server | Included with the server | Included with the server |
+| JavaScript, npm | `@formbricks/js` | Pending release | Included with the server, no upgrade needed |
+| iOS | `FormbricksSDK` | Pending release | Pending release |
+| Android | `com.formbricks:android` | Pending release | Pending release |
+| React Native | `@formbricks/react-native` | Pending release | Pending release |
+| Flutter | `formbricks` | Pending release | Pending release |
+
+Formbricks Cloud always runs the current server. The JavaScript SDK loads its survey code from the server, so website and app surveys get Custom CSS as soon as the server supports it. Mobile SDKs have to pass Custom CSS to the survey themselves, so they need the release listed above.
+
+## Appearance
+
+Every SDK shares one appearance contract:
+
+- Choose `"light"`, `"dark"` or `"system"`, either as the `appearance` setup option or with `setAppearance` at any time.
+- Without a choice, surveys render **light**.
+- `setAppearance` works before setup. The latest explicit choice wins: a later setup value or `setAppearance` call replaces an earlier one, and a setup without `appearance` keeps a choice made before it.
+- The choice is kept in memory for the current app or page session. It survives logout and identity reset, and is forgotten when the app restarts or the page reloads. It is not stored as a contact attribute and sends no request to Formbricks.
+- The appearance is applied before the survey first appears. Changing it while a survey is open switches the colors in place and keeps the respondent's answers, progress and focus.
+
+```javascript Setting the appearance with the JavaScript SDK
+formbricks.setup({
+  workspaceId: "<workspace-id>",
+  appUrl: "<app-url>",
+  appearance: "system", // "light" (default), "dark" or "system"
+});
+
+// When the user switches your app's theme:
+formbricks.setAppearance("dark");
+```
+
+The mobile SDKs expose the same `setAppearance` method and setup option, using each platform's usual enum or type. Their READMEs show the exact syntax.
+
+### What "system" Follows
+
+`"system"` means the appearance your app is currently showing, which is not always the phone's setting:
+
+| Platform | `"system"` follows |
+| --- | --- |
+| Website & app (JavaScript) | The browser's `prefers-color-scheme`, updated live |
+| iOS | The presenting view's effective interface style, including an appearance your app or window overrides |
+| Android | The host Activity's `uiMode`, including an app-level night mode override |
+| React Native | `Appearance.getColorScheme()`; an unknown value counts as light |
+| Flutter | `Theme.of(context).brightness` where the survey is shown; the platform brightness when there is no theme |
+
+If your app keeps its theme only in its own code, such as a React context or an in-app toggle, `"system"` cannot see it. Call `setAppearance("light")` or `setAppearance("dark")` from that toggle instead.
+
+### Older Versions Without setAppearance
+
+Check that the method exists before calling it, so older SDK versions keep working:
+
+```javascript Feature-detecting setAppearance
+if (typeof formbricks.setAppearance === "function") {
+  formbricks.setAppearance("dark");
+}
+```
+
+An SDK that has `setAppearance` but talks to an older self-hosted server accepts the call without an error. The survey stays light until the server is upgraded.
+
+## Custom CSS In Apps
+
+- **Link surveys** and **website & app surveys** get Custom CSS from the server. Nothing to change in your code.
+- **Mobile apps** need an SDK version with Custom CSS support. It passes both the workspace CSS and the survey CSS to the survey, in light and dark mode, whether or not the survey overrides the workspace theme.
+- **Older mobile SDKs** show surveys without any Custom CSS. They never apply only part of it, such as the survey CSS without the workspace CSS it builds on.
+
+Saved changes reach respondents within about an hour, as SDKs refresh the survey configuration. A survey that is already open keeps the styling it opened with until the respondent finishes it.
+
+## Mixed Versions
+
+| Situation | What respondents see |
+| --- | --- |
+| New server, older mobile SDK | Surveys work as before: light, without Custom CSS |
+| New server, older `@formbricks/js` | Custom CSS applies. `setAppearance` is not available yet, so surveys stay light |
+| Older self-hosted server, new SDK | Surveys work and stay light, without Custom CSS. `setAppearance` is accepted and has no effect |
+| No Custom CSS saved | The theme styling only, unchanged |
+| Configuration cached before Custom CSS was saved | No Custom CSS until the SDK refreshes its configuration, at most about an hour later |
+
+## Browser And WebView Support
+
+| Where | Supported | Renders, may look off |
+| --- | --- | --- |
+| Link surveys, website & app surveys | Chrome and Edge 111+, Safari 16.4+, Firefox 128+ | Chrome 99, Safari 15.4, Firefox 97 and later |
+| iOS apps | iOS 16.4+ (WKWebView) | iOS 16.0 to 16.3 |
+| Android apps | Android System WebView 111+ | WebView 99 to 110 |
+| React Native and Flutter apps | As iOS and Android above | As iOS and Android above |
+
+These are the browser versions the survey styles are built for. The SDKs keep their existing minimum OS versions. On a device below the supported range, surveys still open but colors and layout can be off.

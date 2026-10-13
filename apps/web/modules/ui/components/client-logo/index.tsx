@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import { TLogo } from "@formbricks/types/styling";
+import { isSafeThemeColor } from "@formbricks/types/styling-values";
 import { cn } from "@/lib/cn";
 import { isExternalImageSrc } from "@/lib/image-hosts";
 
@@ -52,7 +53,9 @@ export const ClientLogo = ({
         position === "overlay" ? "absolute z-0" : "relative",
         "group rounded-lg"
       )}
-      style={{ backgroundColor: logoToUse?.bgColor }}>
+      // Server-rendered into a style attribute, so a stored value that is not a color (legacy rows
+      // predate the write-side check) is dropped rather than able to add declarations (ENG-2950).
+      style={{ backgroundColor: isSafeThemeColor(logoToUse?.bgColor) ? logoToUse?.bgColor : undefined }}>
       {previewSurvey && !disableLinks && (
         <Link
           href={lookSettingsHref}

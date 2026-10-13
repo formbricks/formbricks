@@ -12,13 +12,8 @@ const mocks = vi.hoisted(() => ({
   assertV3SurveyGeneratePrompt: vi.fn(),
   buildV3SurveyCreatePayloadFromDraft: vi.fn(),
   capturePostHogEvent: vi.fn(),
-  logError: vi.fn(),
+  log: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
-
-vi.mock("@formbricks/logger", () => {
-  const log = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: mocks.logError };
-  return { logger: { ...log, withContext: () => log } };
-});
 
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: mocks.requireV3WorkspaceAccess }));
 vi.mock("@/app/api/v3/surveys/lib/operations", () => ({ getSessionUserId: mocks.getSessionUserId }));
@@ -35,6 +30,9 @@ vi.mock("@/app/api/v3/surveys/generate/service", async (importOriginal) => ({
   buildV3SurveyCreatePayloadFromDraft: mocks.buildV3SurveyCreatePayloadFromDraft,
 }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: mocks.capturePostHogEvent }));
+vi.mock("@formbricks/logger", () => ({
+  logger: { withContext: vi.fn(() => mocks.log), error: vi.fn(), warn: vi.fn() },
+}));
 
 const body: TV3SurveyGenerateBody = {
   workspaceId: "workspace1",
@@ -59,6 +57,29 @@ const readEvents = async (response: Response) => {
     .filter((line) => line.length > 0)
     .map((line) => JSON.parse(line));
 };
+
+/** A generation that streams nothing until the provider call is aborted, then fails as the AI SDK does. */
+const hangUntilAborted = () => {
+  mocks.streamOrganizationAIObject.mockImplementation(
+    async ({ abortSignal }: { abortSignal: AbortSignal }) => {
+      const aborted = new Promise<never>((_resolve, reject) => {
+        abortSignal.addEventListener("abort", () => reject(abortSignal.reason), { once: true });
+      });
+      aborted.catch(() => undefined);
+      return {
+        partialObjectStream: {
+          async *[Symbol.asyncIterator]() {
+            await aborted;
+          },
+        },
+        completion: aborted,
+      };
+    }
+  );
+};
+
+const passedSignal = () =>
+  mocks.streamOrganizationAIObject.mock.calls.at(-1)?.[0]?.abortSignal as AbortSignal | undefined;
 
 const asyncIterable = <T>(items: T[]) => ({
   async *[Symbol.asyncIterator]() {
@@ -203,6 +224,53 @@ describe("streamV3SurveyGeneration", () => {
     expect(mocks.capturePostHogEvent).not.toHaveBeenCalled();
   });
 
+  test("Stop aborts the provider call, and the stream ends without done or an error", async () => {
+    // A user pressing Stop is not an incident: nothing is logged as an error, and no error event is sent.
+    hangUntilAborted();
+    const client = new AbortController();
+
+    const response = await call(client.signal);
+    const events = readEvents(response);
+    await vi.waitFor(() => expect(mocks.streamOrganizationAIObject).toHaveBeenCalled());
+    client.abort();
+
+    const types = (await events).map((event) => event.type);
+    expect(types).not.toContain("done");
+    expect(types).not.toContain("error");
+    expect(passedSignal()?.aborted).toBe(true);
+    expect(mocks.log.error).not.toHaveBeenCalled();
+    expect(mocks.log.info).toHaveBeenCalledWith("AI survey generation aborted by the client");
+  });
+
+  test("a client cancelling the body aborts the provider call too", async () => {
+    // Next can cancel the body before the request signal fires; the cancel alone has to stop the spend.
+    hangUntilAborted();
+
+    const response = await call();
+    await vi.waitFor(() => expect(mocks.streamOrganizationAIObject).toHaveBeenCalled());
+    await response.body?.cancel();
+
+    expect(passedSignal()?.aborted).toBe(true);
+  });
+
+  test("logs a mid-generation failure by name and frames, never the message that can echo the prompt", async () => {
+    mocks.streamOrganizationAIObject.mockResolvedValue({
+      partialObjectStream: asyncIterable([]),
+      completion: Promise.reject(new Error("model output: secret-from-the-prompt")),
+    });
+
+    await readEvents(await call());
+
+    expect(mocks.log.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        errName: "Error",
+        errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
+      }),
+      "AI survey generation stream failed"
+    );
+    expect(JSON.stringify(mocks.log.error.mock.calls)).not.toContain("secret-from-the-prompt");
+  });
+
   // ENG-3720: the completion rejects with the AI SDK's own error, which carries the prompt and the
   // model's output in its message and fields.
   test.each(LEAKY_AI_ERRORS)(
@@ -219,14 +287,14 @@ describe("streamV3SurveyGeneration", () => {
       const events = await readEvents(await call());
 
       expect(events.at(-1)).toMatchObject({ type: "error", code: "ai_generation_failed" });
-      expect(mocks.logError).toHaveBeenCalledWith(
+      expect(mocks.log.error).toHaveBeenCalledWith(
         expect.objectContaining({
           errName: error.name,
           errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
         }),
         "AI survey generation stream failed"
       );
-      expect(findPlantedContent(mocks.logError.mock.calls)).toBeUndefined();
+      expect(findPlantedContent(mocks.log.error.mock.calls)).toBeUndefined();
     }
   );
 });

@@ -164,6 +164,7 @@ describe("invite rate-limit settlement", () => {
       } as never)
     ).rejects.toBe(error);
 
+    expect(mocks.reserveInviteRateLimit).toHaveBeenCalledWith(organizationId, ctx.user.id);
     expect(mocks.settleInviteRateLimit).toHaveBeenCalledWith(reservation, 0);
     expect(mocks.sendInviteMemberEmail).not.toHaveBeenCalled();
   });
@@ -211,7 +212,7 @@ describe("invite rate-limit settlement", () => {
       { email: "member@example.com", success: false, failureReason: "user_already_member" },
       { email: "third@example.com", success: true },
     ]);
-    expect(mocks.reserveInviteRateLimit).toHaveBeenCalledWith(organizationId, 3);
+    expect(mocks.reserveInviteRateLimit).toHaveBeenCalledWith(organizationId, ctx.user.id, 3);
     expect(mocks.settleInviteRateLimit).toHaveBeenCalledWith(reservation, 2);
   });
 
@@ -244,6 +245,7 @@ describe("invite rate-limit settlement", () => {
       } as never)
     ).rejects.toBe(error);
 
+    expect(mocks.reserveInviteRateLimit).toHaveBeenCalledWith(organizationId, ctx.user.id);
     expect(mocks.settleInviteRateLimit).toHaveBeenCalledWith(reservation, 0);
   });
 

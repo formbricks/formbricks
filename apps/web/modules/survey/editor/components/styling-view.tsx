@@ -6,10 +6,15 @@ import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
-import { Workspace } from "@formbricks/database/prisma-browser";
+import { type TCustomCssStored } from "@formbricks/types/custom-css";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { COLOR_DEFAULTS, STYLE_DEFAULTS, getSuggestedColors } from "@/lib/styling/constants";
+import { type TStylingAppearance } from "@/lib/styling/dark-mode";
+import { type TCustomCssValidationState } from "@/modules/custom-css/components/lib/validation";
+import { SurveyCustomCssCard } from "@/modules/custom-css/components/survey-custom-css-card";
+import { type TSurveyCustomCssEditorConfig } from "@/modules/custom-css/components/types";
+import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
 import { LogoSettingsCard } from "@/modules/survey/editor/components/logo-settings-card";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
@@ -24,11 +29,16 @@ import {
   FormLabel,
   FormProvider,
 } from "@/modules/ui/components/form";
+import {
+  DarkContrastWarnings,
+  StylingAppearanceProvider,
+  StylingAppearanceToggle,
+} from "@/modules/ui/components/styling-appearance";
 import { Switch } from "@/modules/ui/components/switch";
 
 interface StylingViewProps {
   workspaceId: string;
-  workspace: Workspace;
+  workspace: TWorkspaceWithoutCustomCss;
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
   colors: string[];
@@ -39,6 +49,13 @@ interface StylingViewProps {
   isUnsplashConfigured: boolean;
   isCxMode: boolean;
   isStorageConfigured: boolean;
+  /** Which palette the form edits and the preview shows. Only app surveys can render dark (D4). */
+  appearance?: TStylingAppearance;
+  setAppearance?: (appearance: TStylingAppearance) => void;
+  customCssEditor: TSurveyCustomCssEditorConfig;
+  customCssValidation: TCustomCssValidationState;
+  /** The survey's Custom CSS as last persisted. */
+  savedCustomCss: TCustomCssStored | null;
 }
 
 export const StylingView = ({
@@ -54,6 +71,11 @@ export const StylingView = ({
   isUnsplashConfigured,
   isCxMode,
   isStorageConfigured = true,
+  appearance = "light",
+  setAppearance,
+  customCssEditor,
+  customCssValidation,
+  savedCustomCss,
 }: StylingViewProps) => {
   const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
@@ -85,6 +107,9 @@ export const StylingView = ({
   const [stylingOpen, setStylingOpen] = useState(false);
   const [confirmResetStylingModalOpen, setConfirmResetStylingModalOpen] = useState(false);
   const [confirmSuggestColorsOpen, setConfirmSuggestColorsOpen] = useState(false);
+  const [customCssOpen, setCustomCssOpen] = useState(false);
+  // Only app surveys render dark (D4), so a link survey edits and previews base CSS only.
+  const effectiveAppearance = localSurvey.type === "app" ? appearance : "light";
 
   const handleSuggestColors = () => {
     const currentBrandColor =
@@ -93,6 +118,10 @@ export const StylingView = ({
 
     for (const [key, value] of Object.entries(suggested)) {
       form.setValue(key as keyof TSurveyStyling, value, { shouldDirty: true });
+      // The dark palette derives from the new light colors, so stale dark overrides are cleared.
+      if (key.endsWith(".light")) {
+        form.setValue(key.replace(/\.light$/, ".dark") as keyof TSurveyStyling, null, { shouldDirty: true });
+      }
     }
 
     // Footer link color auto-adjusts for contrast when unset; clear any override so it
@@ -126,6 +155,7 @@ export const StylingView = ({
       setLogoSettingsOpen(false);
       setCardStylingOpen(false);
       setStylingOpen(false);
+      setCustomCssOpen(false);
     }
   }, [overwriteThemeStyling]);
 
@@ -226,21 +256,34 @@ export const StylingView = ({
             />
           </div>
 
-          <FormStylingSettings
-            open={formStylingOpen}
-            setOpen={setFormStylingOpen}
-            disabled={!overwriteThemeStyling}
-            form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
-            onSuggestColorsClick={() => setConfirmSuggestColorsOpen(true)}
-          />
+          {localSurvey.type === "app" && setAppearance && (
+            <StylingAppearanceToggle appearance={appearance} onChange={setAppearance} />
+          )}
 
-          <CardStylingSettings
-            open={cardStylingOpen}
-            setOpen={setCardStylingOpen}
-            surveyType={localSurvey.type}
-            disabled={!overwriteThemeStyling}
-            form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
-          />
+          <StylingAppearanceProvider appearance={effectiveAppearance}>
+            <FormStylingSettings
+              open={formStylingOpen}
+              setOpen={setFormStylingOpen}
+              disabled={!overwriteThemeStyling}
+              form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
+              onSuggestColorsClick={() => setConfirmSuggestColorsOpen(true)}
+              brandColorNotice={
+                localSurvey.type === "app" &&
+                setAppearance &&
+                overwriteThemeStyling && (
+                  <DarkContrastWarnings appearance={appearance} styling={form.watch()} />
+                )
+              }
+            />
+
+            <CardStylingSettings
+              open={cardStylingOpen}
+              setOpen={setCardStylingOpen}
+              surveyType={localSurvey.type}
+              disabled={!overwriteThemeStyling}
+              form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
+            />
+          </StylingAppearanceProvider>
 
           {localSurvey.type === "link" && (
             <>
@@ -265,6 +308,20 @@ export const StylingView = ({
               />
             </>
           )}
+
+          {/* Like the cards above, survey CSS only applies while "Add custom styles" is on (ENG-3723). */}
+          <SurveyCustomCssCard
+            config={customCssEditor}
+            localSurvey={localSurvey}
+            setLocalSurvey={setLocalSurvey}
+            savedCustomCss={savedCustomCss}
+            validation={customCssValidation}
+            appearance={effectiveAppearance}
+            appearanceHref={`${workspaceBasePath}/settings/workspace/look`}
+            disabled={!overwriteThemeStyling}
+            open={customCssOpen}
+            setOpen={setCustomCssOpen}
+          />
 
           {!isCxMode && (
             <div className="mt-4 flex h-8 items-center justify-between">

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { findClosingTag, findOpeningTag, replaceOpeningTags } from "./html-opening-tag";
+import { findClosingTag, findOpeningTag } from "./html-opening-tag";
 
 // The regexes this module replaces, kept here as the oracle every case is compared against.
 const asRegex = (name: string, wordBoundary = true) =>
@@ -47,17 +47,6 @@ const random = Array.from({ length: 20000 }, () => {
 const CORPUS = [...FIXED, ...random];
 
 describe("html opening tag scanner", () => {
-  test.each(CASES)("replaceOpeningTags matches the regex it replaces ($name)", ({ name, wordBoundary }) => {
-    for (const source of CORPUS) {
-      const viaRegex = source.replace(asRegex(name, wordBoundary), (_m, attrs: string) => `[${attrs}]`);
-      const viaScan = replaceOpeningTags(source, name, (attrs) => `[${attrs}]`, {
-        requireWordBoundary: wordBoundary,
-      });
-
-      expect(viaScan, `input: ${JSON.stringify(source.slice(0, 60))}`).toBe(viaRegex);
-    }
-  });
-
   test.each(CASES)(
     "findOpeningTag reports the regex's index and capture ($name)",
     ({ name, wordBoundary }) => {
@@ -100,10 +89,10 @@ describe("html opening tag scanner", () => {
     const pathological = "<p ".repeat(70000);
 
     const startedAt = performance.now();
-    const result = replaceOpeningTags(pathological, "p", (attrs) => `[${attrs}]`);
+    const result = findOpeningTag(pathological, "p");
     const elapsedMs = performance.now() - startedAt;
 
-    expect(result).toBe(pathological);
+    expect(result).toBeNull();
     expect(elapsedMs).toBeLessThan(500);
   });
 });

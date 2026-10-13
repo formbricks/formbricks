@@ -15,6 +15,13 @@ info:
     **DELETE /api/v3/surveys/{surveyId}**.
 
 
+    **Custom CSS**: survey CSS through `customCss` on **POST /api/v3/surveys**, **GET** and **PATCH
+    /api/v3/surveys/{surveyId}**, workspace CSS through **GET** and **PATCH
+    /api/v3/workspaces/{workspaceId}/custom-css**, and previews through `operation: customCss` on
+    **POST /api/v3/surveys/validate**. Writes take and reads return source only; the server compiles
+    it, returns removed constructs as top-level `warnings`, and never accepts compiled output.
+
+
     **Responses**: **GET /api/v3/responses**, **GET /api/v3/responses/count**, **POST
     /api/v3/responses/validate**, **POST /api/v3/responses/batch-delete**, **GET
     /api/v3/responses/{responseId}**, **POST /api/v3/responses**, **PATCH
@@ -109,6 +116,8 @@ info:
     Inside a body, **no array may hold more than 1 000 items, and all arrays together may hold at
     most 50 000 elements**, at any depth — a body that exceeds either bound is refused with **400**
     and a single `invalid_params` entry naming the offending array, before any field is validated.
+    The same holds for nesting: a body may nest at most **256** levels of objects and arrays, counted
+    from the root, and a deeper one is refused the same way, naming where it went too deep.
     Fields with a tighter bound document it as `maxItems` on the field (a survey's `blocks`,
     `endings`, `variables`, `languages`, `hiddenFields.fieldIds` and `distribution.triggers` since
     0.2.0). A 400 or 422 lists at most **50** `invalid_params` entries; when there are more, the last
@@ -371,6 +380,8 @@ paths:
     $ref: paths/api_v3_tags_{tagId}.yml
   /api/v3/tags/{tagId}/merge:
     $ref: paths/api_v3_tags_{tagId}_merge.yml
+  /api/v3/workspaces/{workspaceId}/custom-css:
+    $ref: paths/api_v3_workspaces_{workspaceId}_custom-css.yml
   /api/v3/feedbackRecords:
     $ref: paths/api_v3_feedbackRecords.yml
   /api/v3/feedbackRecords/search/semantic:

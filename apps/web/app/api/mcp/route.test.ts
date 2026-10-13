@@ -393,6 +393,8 @@ describe("POST /api/mcp", () => {
       "archive_workflow",
       "unarchive_workflow",
       "list_workspaces",
+      "get_workspace_custom_css",
+      "patch_workspace_custom_css",
       "list_feedback_datasets",
       "list_feedback_records",
       "count_feedback_records",

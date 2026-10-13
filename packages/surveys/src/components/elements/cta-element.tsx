@@ -72,6 +72,7 @@ export function CTAElement({
         required={false}
         buttonVariant="custom"
         imageUrl={element.imageUrl}
+        imageAltText={getLocalizedValue(element.imageAltText, languageCode)}
         videoUrl={element.videoUrl}
       />
     </form>

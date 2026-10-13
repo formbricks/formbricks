@@ -408,6 +408,12 @@ model Survey {
   blocks              Json[]                  @default([])
   /// [SurveyEnding]
   endings             Json[]                  @default([])
+  // Legacy Embedded Data columns (ENG-2404): app code no longer uses them, so `@ignore` keeps them out of
+  // the generated model API; only the two Embedded Data backfills read them, through raw SQL. They stay
+  // in the database until Formbricks 7 so a 6.0 pod still serving during a rolling upgrade keeps
+  // working; dropping them sooner would make every minor-to-minor upgrade a downtime one.
+  hiddenFields        Json                    @default("{\"enabled\": false}") @ignore
+  variables           Json                    @default("[]") @ignore
   responses           Response[]
   quotas              SurveyQuota[]
   displayOption       displayOptions          @default(displayOnce)
@@ -467,6 +473,10 @@ model Survey {
 
   customHeadScripts     String?
   customHeadScriptsMode SurveyScriptMode? @default(add)
+
+  /// [CustomCssStored] Survey custom CSS (ENG-2949): source plus trusted compiled output, written only
+  /// by the shared custom CSS save service. null = no survey CSS. Kept outside `styling` (M2.07).
+  customCss Json?
 
   @@unique([id, workspaceId])
   @@index([workspaceId, updatedAt])
@@ -677,6 +687,11 @@ model Workspace {
   workspaceTeams              WorkspaceTeam[]
   appSetupCompleted           Boolean                      @default(false)
   customHeadScripts           String? // Custom HTML scripts for link surveys (self-hosted only)
+  /// [CustomCssStored] Workspace custom CSS (ENG-2949), written only by the shared save service.
+  customCss                   Json?
+  /// [CustomCssStored] The one recoverable previous workspace CSS revision, source included. Restored by
+  /// submitting its source again through the current processor and authorization checks.
+  customCssPrevious           Json?
   feedbackDirectoryWorkspaces FeedbackDirectoryWorkspace[]
   charts                      Chart[]
   dashboards                  Dashboard[]

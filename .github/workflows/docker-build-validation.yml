@@ -69,6 +69,8 @@ jobs:
   validate-docker-build:
     name: Validate Docker Build
     runs-on: ubuntu-latest
+    # Forks cannot access Depot credentials and need time for a cold Node source build.
+    timeout-minutes: 180
     permissions:
       contents: read
 
@@ -108,6 +110,22 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
+      - name: Select Docker builder
+        id: docker-builder
+        shell: bash
+        env:
+          DEPOT_PROJECT_TOKEN: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+        run: |
+          if [[ -n "$DEPOT_PROJECT_TOKEN" ]]; then
+            echo "depot=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "depot=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Depot CLI
+        if: steps.docker-builder.outputs.depot == 'true'
+        uses: depot/setup-action@91bc8495a33ebfc504ffc89e5674379ccf23c29c # v1.7.2
+
       - name: Verify Valkey Image Platforms
         shell: bash
         env:
@@ -126,16 +144,32 @@ jobs:
             any(.manifests[]; .platform.os == "linux" and .platform.architecture == "arm64")
           ' <<<"$manifest"
 
-      # NOTE: deliberately no `cache-from`/`cache-to: type=gha`. Measured over four runs, exporting
-      # the cache cost 222-407s per run while the layers it could restore added up to 12s of work,
-      # because `COPY . .` used to sit ahead of `pnpm install` and invalidated everything after it.
-      # apps/web/Dockerfile now installs from the manifests alone, so the install layer survives a
-      # source-only change (ENG-587). What is still missing is a producer this job can read: no
-      # workflow runs on pushes to main, and merge_group runs write to throwaway
-      # `gh-readonly-queue/...` scopes. Revisit together with a push-to-main build or a registry
-      # cache, which is not branch-scoped. The pnpm store sits in a cache mount, and no exported
-      # cache carries those, so a restored install layer is the whole of the win.
+      # Reuse the release builder's persistent Node compilation and pnpm caches. Load the PR image
+      # onto this runner so every runtime check below still exercises the current checkout.
       - name: Build Docker Image
+        if: steps.docker-builder.outputs.depot == 'true'
+        uses: depot/build-push-action@98e78adca7817480b8185f474a400b451d74e287 # v1.18.0
+        with:
+          project: tw0fqmsx3c
+          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          context: .
+          file: ./apps/web/Dockerfile
+          platforms: linux/amd64
+          pull: true
+          push: false
+          load: true
+          tags: formbricks-test:${{ github.sha }}
+          secrets: |
+            database_url=${{ secrets.DUMMY_DATABASE_URL }}
+            encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
+            redis_url=redis://localhost:6379
+            hub_api_url=http://localhost:4000
+            hub_api_key=build-time-placeholder
+            cubejs_api_url=http://localhost:4000
+            cubejs_api_secret=build-time-placeholder
+
+      - name: Build Docker Image without Depot credentials
+        if: steps.docker-builder.outputs.depot == 'false'
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         env:
           GITHUB_SHA: ${{ github.sha }}

@@ -59,6 +59,8 @@ describe("getWorkspace", () => {
     expect(workspace).toEqual(mockWorkspace);
     expect(prisma.workspace.findUnique).toHaveBeenCalledWith({
       where: { id: "testWorkspaceId" },
+      // ENG-2949: the editor's tab-focus refetch never carries custom CSS to the client.
+      omit: { customCss: true, customCssPrevious: true },
     });
   });
 

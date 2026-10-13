@@ -1,5 +1,17 @@
 type TJsonObject = Record<string, unknown>;
 
+/** Respondent-facing compiled custom CSS for one scope (mirrors `TCustomCssCompiled` in @formbricks/types). */
+export interface TCustomCssCompiled {
+  light?: string;
+  dark?: string;
+}
+
+/** The renderer's explicit `customCss` prop (mirrors `TRendererCustomCss` in @formbricks/types). */
+export interface TRendererCustomCss {
+  workspace?: TCustomCssCompiled | null;
+  survey?: TCustomCssCompiled | null;
+}
+
 export type TActionClassPageUrlRule =
   | "exactMatch"
   | "contains"
@@ -110,6 +122,9 @@ export interface TWorkspaceStateSurvey {
     onResponse: boolean;
     onFinished: boolean;
   };
+  // Compiled survey custom CSS (ENG-3552). Forwarded to the renderer untouched; absent when the
+  // survey has none or the server withholds it.
+  customCss?: TCustomCssCompiled;
 }
 
 export interface TWorkspaceStateSettings {
@@ -121,6 +136,8 @@ export interface TWorkspaceStateSettings {
   placement: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
   inAppSurveyBranding: boolean;
   styling: TWorkspaceStyling;
+  // Compiled workspace custom CSS (ENG-3552), sent once per workspace state rather than per survey.
+  customCss?: TCustomCssCompiled;
 }
 
 export interface TWorkspaceState {
@@ -172,6 +189,8 @@ export interface TConfigInput {
   environmentId?: string;
   workspaceId?: string;
   appUrl: string;
+  /** How surveys render. Defaults to light; can be changed later with `setAppearance`. */
+  appearance?: "light" | "dark" | "system";
 }
 
 export interface TStylingColor {
@@ -237,7 +256,6 @@ export interface TBaseStyling {
   cardBackgroundColor?: TStylingColor | null;
   cardBorderColor?: TStylingColor | null;
   highlightBorderColor?: TStylingColor | null;
-  isDarkModeEnabled?: boolean | null;
   roundness?: TDimension;
   cardArrangement?: {
     // "cardless" is only supported for link surveys.

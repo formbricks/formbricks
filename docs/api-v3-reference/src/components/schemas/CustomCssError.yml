@@ -1,0 +1,46 @@
+type: object
+description: >-
+  A failure that rejects the whole custom CSS operation: nothing is saved, no compiled output is
+  returned, and the previously saved CSS stays in effect.
+required:
+  - code
+  - scope
+  - appearance
+  - line
+  - column
+  - reason
+properties:
+  code:
+    type: string
+    enum:
+      - syntax_error
+      - source_too_large
+      - output_too_large
+      - limit_exceeded
+      - processing_failed
+  scope:
+    type: string
+    enum:
+      - workspace
+      - survey
+  appearance:
+    type:
+      - string
+      - "null"
+    enum:
+      - light
+      - dark
+      - null
+  line:
+    type:
+      - integer
+      - "null"
+    minimum: 1
+  column:
+    type:
+      - integer
+      - "null"
+    minimum: 1
+  reason:
+    type: string
+additionalProperties: false
