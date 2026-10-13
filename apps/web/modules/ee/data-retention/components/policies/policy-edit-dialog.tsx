@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { TFunction } from "i18next";
-import { useId } from "react";
+import { useId, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -40,7 +40,7 @@ import { Switch } from "@/modules/ui/components/switch";
 import { Muted } from "@/modules/ui/components/typography";
 import { useRetentionHealth } from "../../hooks/use-retention-health";
 import { useUpdateRetentionPolicy } from "../../hooks/use-retention-policies";
-import { formatRetentionPeriod } from "../../lib/display";
+import { formatRetentionNotice, formatRetentionPeriod } from "../../lib/display";
 import { getRetentionPolicySaveErrorMessage } from "../../lib/error-message";
 import { RETENTION_DAYS_PER_UNIT, type TRetentionPeriodUnit } from "../../lib/period";
 import {
@@ -122,7 +122,7 @@ const toNumberOrNull = (value: string): number | null => (value.trim() === "" ? 
 interface PolicyEditDialogProps {
   organizationId: string;
   policy: TRetentionPolicyKind;
-  /** The saved settings; the form starts from them, since the parent mounts the dialog per edit. */
+  /** The saved settings. Read once, when the dialog opens: the parent mounts it per edit. */
   settings: TRetentionPolicySettings;
   onClose: () => void;
 }
@@ -138,6 +138,10 @@ export const PolicyEditDialog = ({
   onClose,
 }: Readonly<PolicyEditDialogProps>) => {
   const { t } = useTranslation();
+  // What the dialog opened with, kept fixed: `settings` is live query data, and a refetch while the
+  // dialog is open (someone else pausing the policy, say) must not change what Save diffs against, or
+  // the patch would undo that change (`toPoliciesPatch`).
+  const [openedWith] = useState(settings);
   const copy = getPolicyCopy(policy, t);
   // Help texts look like FormDescription but carry their own ids: FormDescription reuses the control's
   // id, so aria-describedby would point at nothing.
@@ -145,13 +149,14 @@ export const PolicyEditDialog = ({
   const periodHelpId = useId();
   const conditionsErrorId = useId();
   const conditionsHintId = useId();
+  const noticeErrorId = useId();
   const updatePolicy = useUpdateRetentionPolicy({ organizationId });
   const health = useRetentionHealth({ organizationId });
 
   const form = useForm<TPolicyFormValues>({
     resolver: zodResolver(getPolicyFormSchema(t, policy)),
     mode: "onChange",
-    defaultValues: toPolicyFormValues(settings),
+    defaultValues: toPolicyFormValues(openedWith),
   });
   const [periodPreset, warnPreset] = useWatch({
     control: form.control,
@@ -163,7 +168,7 @@ export const PolicyEditDialog = ({
   };
 
   const onSubmit = (values: TPolicyFormValues) => {
-    const patch = toPoliciesPatch(policy, values, settings);
+    const patch = toPoliciesPatch(policy, values, openedWith);
     if (!patch) {
       onClose();
       return;
@@ -358,7 +363,7 @@ export const PolicyEditDialog = ({
               <FormField
                 control={form.control}
                 name="warnPreset"
-                render={({ field }) => (
+                render={({ field, fieldState: { error } }) => (
                   <FormItem>
                     <FormLabel>{t("workspace.settings.data_retention.notice")}</FormLabel>
                     <Muted id={noticeHelpId} className="block text-slate-500">
@@ -366,14 +371,17 @@ export const PolicyEditDialog = ({
                     </Muted>
                     <Select value={field.value} onValueChange={field.onChange} disabled={disabled}>
                       <FormControl>
-                        <SelectTrigger className="w-48" aria-describedby={noticeHelpId}>
+                        <SelectTrigger
+                          className="w-48"
+                          // A preset at or past the period is refused here, not on the custom field.
+                          aria-describedby={error ? `${noticeHelpId} ${noticeErrorId}` : noticeHelpId}>
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {RETENTION_WARN_PRESETS.map((days) => (
                           <SelectItem key={days} value={String(days)}>
-                            {formatRetentionPeriod(days, t)}
+                            {formatRetentionNotice(days, t)}
                           </SelectItem>
                         ))}
                         <SelectItem value={CUSTOM}>
@@ -381,6 +389,7 @@ export const PolicyEditDialog = ({
                         </SelectItem>
                       </SelectContent>
                     </Select>
+                    {error?.message ? <FormError id={noticeErrorId}>{error.message}</FormError> : null}
                   </FormItem>
                 )}
               />
@@ -426,7 +435,9 @@ export const PolicyEditDialog = ({
                     </div>
                     <Muted className="block text-slate-500">{copy.activeHelp}</Muted>
                     {field.value && health.data?.smtpConfigured === false ? (
-                      <Alert variant="warning" size="small" role="status">
+                      // Default size: the small one truncates to a line, cutting off the half that
+                      // says the notice period still runs.
+                      <Alert variant="warning" role="status">
                         <AlertDescription>
                           {t("workspace.settings.data_retention.smtp_not_configured_warning")}
                         </AlertDescription>

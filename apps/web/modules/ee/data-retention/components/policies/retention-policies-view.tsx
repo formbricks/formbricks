@@ -10,7 +10,7 @@ import { Button } from "@/modules/ui/components/button";
 import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import { Switch } from "@/modules/ui/components/switch";
 import { useRetentionPolicies, useUpdateRetentionPolicy } from "../../hooks/use-retention-policies";
-import { formatRetentionPeriod, getRetentionPolicyLabel, getRetentionPolicySummary } from "../../lib/display";
+import { formatRetentionNotice, getRetentionPolicyLabel, getRetentionPolicySummary } from "../../lib/display";
 import { getRetentionErrorMessage, getRetentionPolicySaveErrorMessage } from "../../lib/error-message";
 import type {
   TRetentionPolicies,
@@ -71,7 +71,7 @@ const getPolicyColumns = ({
     header: t("workspace.settings.data_retention.notice"),
     headerClassName: "w-28",
     hideBelow: "md",
-    cell: ({ settings }) => formatRetentionPeriod(settings.warnDays, t),
+    cell: ({ settings }) => formatRetentionNotice(settings.warnDays, t),
   },
   {
     id: "active",
