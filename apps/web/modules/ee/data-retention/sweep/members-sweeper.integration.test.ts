@@ -198,6 +198,8 @@ describe("members sweeper (real Postgres)", () => {
     await context.internalAdapter.linkAccount({
       userId: member,
       providerId: "credential",
+      // Better Auth 1.7 finds a credential account by this issuer (see credential-issuer-heal.ts).
+      issuer: "local:credential",
       accountId: member,
       password: await context.password.hash("Passw0rd!"),
     });

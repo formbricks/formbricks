@@ -16,7 +16,7 @@ import { type TSurveyReadCheck, resolveSurveyNoticeRecipients } from "./recipien
 import { recordRetentionRunActions, recordRetentionRunSkips } from "./run";
 import type { TSurveyNoticeItem } from "./survey-notices";
 import type { TRetentionSweepContext, TRetentionSweeper } from "./sweep";
-import { lockUnchangedRetentionPolicy, runSweepTransaction } from "./transaction";
+import { actOnTarget, lockUnchangedRetentionPolicy, runSweepTransaction } from "./transaction";
 
 /** A live survey whose clock may be in the warning window, and what its schedule reads. */
 type TSurveyCandidate = {
@@ -252,7 +252,9 @@ export const createSurveysSweeper =
       act: async (deadline) => {
         for (const candidate of act) {
           if (Date.now() >= deadline) break;
-          await archiveDueSurvey({ ...context, deadline }, candidate.id, cutoffs.noticeDueAtOrBefore);
+          await actOnTarget(context.policy, candidate.id, () =>
+            archiveDueSurvey({ ...context, deadline }, candidate.id, cutoffs.noticeDueAtOrBefore)
+          );
         }
         await recordRetentionRunSkips(
           context,

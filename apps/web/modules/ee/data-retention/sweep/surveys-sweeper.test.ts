@@ -23,7 +23,12 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEventWithoutRe
 vi.mock("@/modules/survey/lib/surveys", () => ({ archiveSurvey: vi.fn() }));
 vi.mock("./recipients", () => ({ resolveSurveyNoticeRecipients: vi.fn() }));
 vi.mock("./run", () => ({ recordRetentionRunActions: vi.fn(), recordRetentionRunSkips: vi.fn() }));
-vi.mock("./transaction", () => ({ runSweepTransaction: vi.fn(), lockUnchangedRetentionPolicy: vi.fn() }));
+vi.mock("./transaction", async (importOriginal) => ({
+  runSweepTransaction: vi.fn(),
+  lockUnchangedRetentionPolicy: vi.fn(),
+  // The real per-target isolation: what it does to a failing target is part of the sweep's behaviour.
+  actOnTarget: (await importOriginal<typeof import("./transaction")>()).actOnTarget,
+}));
 
 /**
  * The surveys policy against a real database (the ticked conditions select the right surveys, an
@@ -248,6 +253,21 @@ describe("createSurveysSweeper", () => {
       { targetType: "survey", targetId: "s9", targetName: "Held", skipReason: "exempt" },
       { targetType: "survey", targetId: "s0", targetName: "Survey s0", skipReason: "noRecipient" },
     ]);
+  });
+
+  test("one survey's failure is logged and the run goes on to the next, and to its skips", async () => {
+    database({ candidates: [dueForArchive("s1"), dueForArchive("s2")] });
+    vi.mocked(archiveSurvey).mockRejectedValueOnce(new Error("statement timeout"));
+
+    const plan = await createSurveysSweeper()(context());
+    await plan.act(NOW.getTime() + 60_000);
+
+    expect(archiveSurvey).toHaveBeenNthCalledWith(2, "s2", { tx: expect.anything() });
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ targetId: "s1", organizationId: "clorg", entity: "surveys" }),
+      "Data retention action failed for one target; the run goes on"
+    );
+    expect(recordRetentionRunSkips).toHaveBeenCalled();
   });
 
   test("starts no archive past the deadline", async () => {

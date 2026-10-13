@@ -34,10 +34,12 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEventWithoutRe
 vi.mock("@/modules/email", () => ({ sendMemberRetentionNoticeEmail: vi.fn() }));
 vi.mock("./notices", () => ({ claimRetentionNotice: vi.fn(), markRetentionNoticeDelivered: vi.fn() }));
 vi.mock("./run", () => ({ recordRetentionRunActions: vi.fn(), recordRetentionRunSkips: vi.fn() }));
-vi.mock("./transaction", () => ({
+vi.mock("./transaction", async (importOriginal) => ({
   runSweepTransaction: vi.fn(),
   lockUnchangedRetentionPolicy: vi.fn(),
   readDatabaseClock: vi.fn(),
+  // The real per-target isolation: what it does to a failing target is part of the sweep's behaviour.
+  actOnTarget: (await importOriginal<typeof import("./transaction")>()).actOnTarget,
 }));
 
 /**

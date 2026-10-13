@@ -26,7 +26,7 @@ import {
 } from "./survey-notice-restamp";
 import type { TSurveyNoticeItem } from "./survey-notices";
 import type { TRetentionSweepContext, TRetentionSweeper } from "./sweep";
-import { lockUnchangedRetentionPolicy, runSweepTransaction } from "./transaction";
+import { actOnTarget, lockUnchangedRetentionPolicy, runSweepTransaction } from "./transaction";
 
 /** A survey with responses in the warning window, and what its schedule reads. */
 type TResponsesCandidate = {
@@ -309,10 +309,12 @@ export const createResponsesSweeper =
         if (actionDueAtOrBefore) {
           for (const candidate of act) {
             if (Date.now() >= deadline) break;
-            await deleteDueResponses({ ...context, deadline }, candidate, {
-              noticeDueAtOrBefore: cutoffs.noticeDueAtOrBefore,
-              actionDueAtOrBefore,
-            });
+            await actOnTarget(context.policy, candidate.id, () =>
+              deleteDueResponses({ ...context, deadline }, candidate, {
+                noticeDueAtOrBefore: cutoffs.noticeDueAtOrBefore,
+                actionDueAtOrBefore,
+              })
+            );
           }
         }
         await rearmReminders(context, cutoffs.noticeDueAtOrBefore);

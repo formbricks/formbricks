@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { logger } from "@formbricks/logger";
 import {
   RETENTION_SWEEP_STATEMENT_TIMEOUT_MS,
   RETENTION_SWEEP_TRANSACTION_MAX_WAIT_MS,
@@ -9,6 +10,7 @@ import {
 import {
   RetentionPolicyChangedError,
   type TRetentionPolicySnapshot,
+  actOnTarget,
   lockUnchangedRetentionPolicy,
   readDatabaseClock,
   runSweepTransaction,
@@ -16,6 +18,7 @@ import {
 
 vi.mock("server-only", () => ({}));
 vi.mock("@formbricks/database", () => ({ prisma: { $transaction: vi.fn() } }));
+vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn() } }));
 
 /**
  * The lock and the statement timeout against a real database are proven by the sweep's integration
@@ -116,5 +119,40 @@ describe("readDatabaseClock", () => {
     expect(statement(client.$queryRaw.mock.calls[0]).text).toBe(
       `SELECT (clock_timestamp() AT TIME ZONE 'UTC') AS "now"`
     );
+  });
+});
+
+describe("actOnTarget", () => {
+  const policy = { organizationId: "clorg", entity: "surveys" as const };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("returns what the action returns", async () => {
+    await expect(actOnTarget(policy, "clsrv", async () => "archived")).resolves.toBe("archived");
+  });
+
+  test("keeps a target's failure to that target: logged, and undefined for the loop to move on", async () => {
+    const failure = new Error("statement timeout");
+
+    await expect(
+      actOnTarget(policy, "clsrv", async () => {
+        throw failure;
+      })
+    ).resolves.toBeUndefined();
+    expect(logger.error).toHaveBeenCalledWith(
+      { err: failure, organizationId: "clorg", entity: "surveys", targetId: "clsrv" },
+      "Data retention action failed for one target; the run goes on"
+    );
+  });
+
+  test("still stops the run when the policy changed", async () => {
+    await expect(
+      actOnTarget(policy, "clsrv", async () => {
+        throw new RetentionPolicyChangedError("surveys");
+      })
+    ).rejects.toBeInstanceOf(RetentionPolicyChangedError);
+    expect(logger.error).not.toHaveBeenCalled();
   });
 });

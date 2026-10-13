@@ -47,9 +47,11 @@ vi.mock("./constants", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./constants")>()),
   RETENTION_SWEEP_BATCH_SIZE: 2,
 }));
-vi.mock("./transaction", () => ({
+vi.mock("./transaction", async (importOriginal) => ({
   runSweepTransaction: vi.fn(),
   lockUnchangedRetentionPolicy: vi.fn(),
+  // The real per-target isolation: what it does to a failing target is part of the sweep's behaviour.
+  actOnTarget: (await importOriginal<typeof import("./transaction")>()).actOnTarget,
 }));
 
 /**

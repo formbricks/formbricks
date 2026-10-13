@@ -20,7 +20,12 @@ import { collectDueTargets, loadNoticeOrganization } from "./due-targets";
 import { claimRetentionNotice, markRetentionNoticeDelivered } from "./notices";
 import { type TRetentionRunSkip, recordRetentionRunActions, recordRetentionRunSkips } from "./run";
 import type { TRetentionSweepContext, TRetentionSweeper } from "./sweep";
-import { lockUnchangedRetentionPolicy, readDatabaseClock, runSweepTransaction } from "./transaction";
+import {
+  actOnTarget,
+  lockUnchangedRetentionPolicy,
+  readDatabaseClock,
+  runSweepTransaction,
+} from "./transaction";
 
 /** An active member whose clock may be in the warning window, and what their schedule reads. */
 type TMemberCandidate = {
@@ -290,12 +295,14 @@ export const createMembersSweeper = (): TRetentionSweeper => async (context) => 
       const organization = await loadNoticeOrganization(context.policy.organizationId);
       for (const member of notify) {
         if (Date.now() >= deadline) break;
-        await notifyMember(context, member, organization);
+        await actOnTarget(context.policy, member.userId, () => notifyMember(context, member, organization));
       }
 
       for (const member of act) {
         if (Date.now() >= deadline) break;
-        const outcome = await deactivateDueMember(context, member.userId, cutoffs.noticeDueAtOrBefore);
+        const outcome = await actOnTarget(context.policy, member.userId, () =>
+          deactivateDueMember(context, member.userId, cutoffs.noticeDueAtOrBefore)
+        );
         if (outcome === "lastOwner" || outcome === "otherOrganization") {
           skips.push({ targetType: "user", targetId: member.userId, skipReason: outcome });
         }

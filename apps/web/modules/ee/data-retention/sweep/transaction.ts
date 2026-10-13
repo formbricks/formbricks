@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import type { Prisma, RetentionEntity, RetentionSurveyCondition } from "@formbricks/database/prisma";
+import { logger } from "@formbricks/logger";
 import { sameConditions } from "../lib/policy-rules";
 import {
   RETENTION_SWEEP_STATEMENT_TIMEOUT_MS,
@@ -71,6 +72,29 @@ export const lockUnchangedRetentionPolicy = async (
     row.periodDays === snapshot.periodDays &&
     sameConditions(row.conditions, snapshot.conditions);
   if (!unchanged) throw new RetentionPolicyChangedError(snapshot.entity);
+};
+
+/**
+ * Run one target's action so that its failure stays its own: logged, and the loop goes on to the next
+ * target. Otherwise a target that fails every night (a batch that always times out, say) would stop its
+ * policy's run there each time, and no target after it in id order would ever be acted on. A changed
+ * policy still stops the whole run, as it must. Returns undefined when the action failed.
+ */
+export const actOnTarget = async <T>(
+  snapshot: Pick<TRetentionPolicySnapshot, "organizationId" | "entity">,
+  targetId: string,
+  action: () => Promise<T>
+): Promise<T | undefined> => {
+  try {
+    return await action();
+  } catch (error) {
+    if (error instanceof RetentionPolicyChangedError) throw error;
+    logger.error(
+      { err: error, organizationId: snapshot.organizationId, entity: snapshot.entity, targetId },
+      "Data retention action failed for one target; the run goes on"
+    );
+    return undefined;
+  }
 };
 
 export { readDatabaseClock } from "@/lib/utils/database-clock";
