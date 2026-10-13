@@ -234,9 +234,9 @@ const processResponse = async (
   if (auditLog) {
     if (res.ok) {
       auditLog.status = "success";
-    } else {
-      auditLog.eventId = correlationId;
     }
+    // On both outcomes, so an event can be matched with its request in the application log.
+    auditLog.eventId = correlationId;
   }
 
   // Handle error logging

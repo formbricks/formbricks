@@ -147,7 +147,9 @@ export const POST = async (request: Request) => {
 
     const result = await importCsvFile({ feedbackSourceId, workspaceId, file });
 
-    await emitCsvImportAudit(request, auditContext, "success", {
+    // An import that accepted no row at all did not do what it was asked to.
+    const importStatus = result.successes === 0 && result.failures > 0 ? "failure" : "success";
+    await emitCsvImportAudit(request, auditContext, importStatus, {
       successes: result.successes,
       failures: result.failures,
       skipped: result.skipped,

@@ -60,14 +60,15 @@ const ZUpdateQuotaAction = z.object({
 export const updateQuotaAction = authenticatedActionClient.inputSchema(ZUpdateQuotaAction).action(
   withAuditLogging("updated", "quota", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromQuotaId(parsedInput.quotaId);
+    // Stamped before the checks so a refused update is attributed to its quota and tenant.
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.quotaId = parsedInput.quotaId;
     await checkQuotasEnabled(organizationId);
     await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
       type: "survey",
       id: await getSurveyIdFromQuotaId(parsedInput.quotaId),
     });
 
-    ctx.auditLoggingCtx.organizationId = organizationId;
-    ctx.auditLoggingCtx.quotaId = parsedInput.quotaId;
     ctx.auditLoggingCtx.oldObject = await getQuota(parsedInput.quotaId);
     const result = await updateQuota(parsedInput.quota, parsedInput.quotaId);
     ctx.auditLoggingCtx.newObject = result;
