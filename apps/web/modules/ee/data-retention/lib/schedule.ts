@@ -273,9 +273,12 @@ export const getSurveyRetentionClock = (
   if (conditions.length === 0) {
     throw new Error("The surveys policy needs at least one condition");
   }
-  return conditions
-    .map((condition) => getSurveyConditionSince(survey, condition))
-    .reduce((clock, since) => latest(clock, since));
+  // Seeded with the first condition's date: a policy always has at least one condition, so the reduce
+  // stays total without a sentinel date.
+  const [firstSince, ...restSince] = conditions.map((condition) =>
+    getSurveyConditionSince(survey, condition)
+  );
+  return restSince.reduce((clock, since) => latest(clock, since), firstSince);
 };
 
 /**
