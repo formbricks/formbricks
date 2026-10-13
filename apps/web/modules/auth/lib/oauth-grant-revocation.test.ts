@@ -16,17 +16,20 @@ import {
  * the queries end the right tokens, against a real database, the real provider and a concurrent refresh,
  * is `oauth-grant-revocation.integration.test.ts`.
  */
+type TMockConsent = { id: string; clientId: string; scopes: string[]; updatedAt: Date; skipConsent: boolean };
+
 const mocks = vi.hoisted(() => ({
   getSessionFromCtx: vi.fn(),
   getOAuthProviderState: vi.fn(),
   calls: [] as string[],
   /** The consent rows the locking read returns. */
-  consents: [] as { id: string; scopes: string[]; updatedAt: Date }[],
+  consents: [] as TMockConsent[],
+  /** Whether the presented token's grant holds a token beyond the consent. */
+  grantBeyond: false,
   tx: {
     oauthConsent: { findFirst: vi.fn(), deleteMany: vi.fn(), update: vi.fn() },
     oauthRefreshToken: { updateMany: vi.fn() },
     oauthAccessToken: { updateMany: vi.fn() },
-    oauthClient: { findUnique: vi.fn() },
     $queryRaw: vi.fn(),
     $executeRaw: vi.fn(),
   },
@@ -77,11 +80,24 @@ beforeEach(() => {
     return { count: 0 };
   });
   mocks.consents = [];
-  // The consent read is the one raw query whose rows steer a decision; the token queries find nothing.
-  mocks.tx.$queryRaw.mockImplementation(async (sql: TemplateStringsArray) =>
-    sql.join("?").includes(`FROM "oauthConsent"`) ? mocks.consents : []
-  );
+  mocks.grantBeyond = false;
+  // Two raw reads steer a decision, the consent rows and the grant check; the token queries find nothing.
+  mocks.tx.$queryRaw.mockImplementation(async (sql: TemplateStringsArray | { strings: string[] }) => {
+    const text = (Array.isArray(sql) ? sql : (sql as { strings: string[] }).strings).join("?");
+    if (text.includes(`FROM "oauthConsent" c`)) return mocks.consents;
+    if (text.includes("EXISTS")) return [{ beyond: mocks.grantBeyond }];
+    return [];
+  });
   mocks.tx.$executeRaw.mockResolvedValue(0);
+});
+
+/** A consent row as the locking read returns it. */
+const consentRow = (id: string, scopes: string[], updatedAt: Date, skipConsent = false): TMockConsent => ({
+  id,
+  clientId: "client-1",
+  scopes,
+  updatedAt,
+  skipConsent,
 });
 
 /** Whether the hook went on to end tokens beyond the consent (the raw writes; which rows is SQL's job). */
@@ -178,11 +194,9 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
   });
   /** Consent rows newest first, each a second older than the one before. */
   const consentWith = (...scopes: string[][]) => {
-    mocks.consents = scopes.map((consentScopes, i) => ({
-      id: `consent-${i}`,
-      scopes: consentScopes,
-      updatedAt: new Date(Date.UTC(2026, 9, 8, 10, 0, 59 - i)),
-    }));
+    mocks.consents = scopes.map((consentScopes, i) =>
+      consentRow(`consent-${i}`, consentScopes, new Date(Date.UTC(2026, 9, 8, 10, 0, 59 - i)))
+    );
   };
 
   test.each([
@@ -280,8 +294,8 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
     vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue(storedRow() as never);
     const sameSecond = new Date("2026-10-08T10:00:59Z");
     mocks.consents = [
-      { id: "consent-0", scopes: WIDE, updatedAt: sameSecond },
-      { id: "consent-1", scopes: ["surveys:read", "offline_access"], updatedAt: sameSecond },
+      consentRow("consent-0", WIDE, sameSecond),
+      consentRow("consent-1", ["surveys:read", "offline_access"], sameSecond),
     ];
 
     await expectApiError(
@@ -289,6 +303,33 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
       "BAD_REQUEST",
       "invalid_grant"
     );
+  });
+
+  test("refuses a covered token whose grant holds another token beyond the consent", async () => {
+    vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue({
+      ...storedRow(),
+      scopes: ["surveys:read", "offline_access"],
+    } as never);
+    consentWith(["surveys:read", "offline_access"]);
+    mocks.grantBeyond = true;
+
+    await expectApiError(
+      requireOAuthConsentOnRefreshAfterHandler(refreshCtx()),
+      "BAD_REQUEST",
+      "invalid_grant"
+    );
+    expect(endedTokensBeyondConsent()).toBe(true);
+  });
+
+  test("lets a covered token through when its whole grant fits the consent", async () => {
+    vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue({
+      ...storedRow(),
+      scopes: ["surveys:read", "offline_access"],
+    } as never);
+    consentWith(["surveys:read", "offline_access"]);
+
+    await expect(requireOAuthConsentOnRefreshAfterHandler(refreshCtx())).resolves.toBeUndefined();
+    expect(endedTokensBeyondConsent()).toBe(false);
   });
 
   test("exempts a skipConsent client, which never has a consent row", async () => {
@@ -325,8 +366,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
   beforeEach(() => {
     mocks.getSessionFromCtx.mockResolvedValue({ user: { id: "user-1" } });
     mocks.getOAuthProviderState.mockResolvedValue({ query: oauthQuery });
-    mocks.tx.oauthClient.findUnique.mockResolvedValue({ skipConsent: false });
-    mocks.consents = [{ id: "consent-1", scopes: NARROW, updatedAt: new Date("2026-10-08T10:00:00Z") }];
+    mocks.consents = [consentRow("consent-1", NARROW, new Date("2026-10-08T10:00:00Z"))];
   });
 
   test.each([
@@ -348,9 +388,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
   test("reads the client from the provider's request state, not the request body", async () => {
     await revokeTokensBeyondConsentAfterHandler(ctx("/oauth2/consent", { accept: true }));
 
-    expect(mocks.tx.oauthClient.findUnique).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { clientId: "client-1" } })
-    );
+    expect(endedTokensBeyondConsent()).toBe(true);
   });
 
   test("does nothing without a session", async () => {
@@ -370,12 +408,8 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
 
   test("folds duplicate consent rows into the newest, so /authorize can't read a stale wider one", async () => {
     mocks.consents = [
-      {
-        id: "consent-old",
-        scopes: ["surveys:read", "responses:read", "offline_access"],
-        updatedAt: new Date(1_000),
-      },
-      { id: "consent-new", scopes: NARROW, updatedAt: new Date(2_000) },
+      consentRow("consent-old", ["surveys:read", "responses:read", "offline_access"], new Date(1_000)),
+      consentRow("consent-new", NARROW, new Date(2_000)),
     ];
 
     await revokeTokensBeyondConsentAfterHandler(approve());
@@ -386,15 +420,46 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
     expect(mocks.tx.oauthConsent.update).not.toHaveBeenCalled();
   });
 
-  test("on a same-second tie, keeps one row holding what every tied row allows", async () => {
+  test("on a same-second tie, keeps the row the approval just wrote", async () => {
+    const sameSecond = new Date(2_000);
+    // The approval asked for NARROW (the signed query's scope), so the NARROW row is the one it wrote.
+    mocks.consents = [
+      consentRow("consent-a", ["surveys:read", "responses:read", "offline_access"], sameSecond),
+      consentRow("consent-b", NARROW, sameSecond),
+    ];
+
+    await revokeTokensBeyondConsentAfterHandler(approve());
+
+    expect(mocks.tx.oauthConsent.deleteMany).toHaveBeenCalledWith({
+      where: { userId: "user-1", clientId: "client-1", id: { not: "consent-b" } },
+    });
+    expect(mocks.tx.oauthConsent.update).not.toHaveBeenCalled();
+  });
+
+  test("on a same-second tie, a widening re-approval keeps what the user approved", async () => {
+    const WIDE = ["surveys:read", "responses:read", "offline_access"];
+    mocks.getOAuthProviderState.mockResolvedValue({
+      query: new URLSearchParams({ client_id: "client-1", scope: WIDE.join(" ") }).toString(),
+    });
+    const sameSecond = new Date(2_000);
+    mocks.consents = [consentRow("consent-a", NARROW, sameSecond), consentRow("consent-b", WIDE, sameSecond)];
+
+    await revokeTokensBeyondConsentAfterHandler(approve());
+
+    expect(mocks.tx.oauthConsent.deleteMany).toHaveBeenCalledWith({
+      where: { userId: "user-1", clientId: "client-1", id: { not: "consent-b" } },
+    });
+    expect(mocks.tx.oauthConsent.update).not.toHaveBeenCalled();
+  });
+
+  test("on a same-second tie no write can be named, so keeps what every tied row allows", async () => {
+    mocks.getOAuthProviderState.mockResolvedValue({
+      query: new URLSearchParams({ client_id: "client-1", scope: "openid" }).toString(),
+    });
     const sameSecond = new Date(2_000);
     mocks.consents = [
-      {
-        id: "consent-a",
-        scopes: ["surveys:read", "responses:read", "offline_access"],
-        updatedAt: sameSecond,
-      },
-      { id: "consent-b", scopes: NARROW, updatedAt: sameSecond },
+      consentRow("consent-a", ["surveys:read", "responses:read", "offline_access"], sameSecond),
+      consentRow("consent-b", NARROW, sameSecond),
     ];
 
     await revokeTokensBeyondConsentAfterHandler(approve());
@@ -402,6 +467,22 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
     expect(mocks.tx.oauthConsent.update).toHaveBeenCalledWith({
       where: { id: "consent-a" },
       data: { scopes: NARROW },
+    });
+  });
+
+  test("on a same-second tie, update-consent keeps the row it updated", async () => {
+    const sameSecond = new Date(2_000);
+    mocks.consents = [
+      consentRow("consent-a", NARROW, sameSecond),
+      consentRow("consent-b", ["surveys:read", "responses:read", "offline_access"], sameSecond),
+    ];
+
+    await revokeTokensBeyondConsentAfterHandler(
+      ctx("/oauth2/update-consent", { id: "consent-b", update: { scopes: [] } }, { id: "consent-b" })
+    );
+
+    expect(mocks.tx.oauthConsent.deleteMany).toHaveBeenCalledWith({
+      where: { userId: "user-1", clientId: "client-1", id: { not: "consent-b" } },
     });
   });
 
@@ -414,29 +495,12 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
-  test("finds an updated consent's client through a lookup scoped to the caller", async () => {
-    vi.mocked(prisma.oauthConsent.findFirst).mockResolvedValue({ clientId: "client-1" } as never);
-
+  test("reconciles an update-consent through the consent it names", async () => {
     await revokeTokensBeyondConsentAfterHandler(
       ctx("/oauth2/update-consent", { id: "consent-1", update: { scopes: NARROW } }, { id: "consent-1" })
     );
 
-    expect(prisma.oauthConsent.findFirst).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: "consent-1", userId: "user-1" } })
-    );
-    expect(mocks.tx.oauthClient.findUnique).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { clientId: "client-1" } })
-    );
     expect(endedTokensBeyondConsent()).toBe(true);
-  });
-
-  test("does nothing for an updated consent the caller doesn't own", async () => {
-    vi.mocked(prisma.oauthConsent.findFirst).mockResolvedValue(null);
-
-    await revokeTokensBeyondConsentAfterHandler(
-      ctx("/oauth2/update-consent", { id: "someone-elses", update: { scopes: NARROW } })
-    );
-    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
   test("still reconciles when the provider's answer is an error, since the consent may be written", async () => {
@@ -446,10 +510,22 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
   });
 
   test("leaves a skipConsent client alone: the provider issues its tokens without consulting consent", async () => {
-    mocks.tx.oauthClient.findUnique.mockResolvedValue({ skipConsent: true });
+    mocks.consents = [consentRow("consent-1", NARROW, new Date(2_000), true)];
 
     await revokeTokensBeyondConsentAfterHandler(approve());
     expect(endedTokensBeyondConsent()).toBe(false);
+  });
+
+  test("retries once, so a lock conflict with a racing refresh doesn't leave tokens behind", async () => {
+    mocks.tx.$executeRaw.mockResolvedValue(1).mockRejectedValueOnce(new Error("deadlock detected"));
+
+    await revokeTokensBeyondConsentAfterHandler(approve());
+
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(logger.info).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "user-1", clientId: "client-1" }),
+      expect.any(String)
+    );
   });
 
   test("logs a failure instead of failing an approval that is already committed", async () => {

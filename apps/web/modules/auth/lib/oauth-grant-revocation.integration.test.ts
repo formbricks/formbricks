@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
+import type { Prisma } from "@formbricks/database/prisma";
 import {
   ORIGIN,
   authorize,
@@ -64,17 +65,18 @@ const liveRefreshTokensWith = (userId: string, clientId: string, scope: string):
   });
 
 /**
- * Resolves once a refresh's `FOR SHARE` read of the consent is blocked on a row lock, i.e. the refresh has
- * issued its tokens and is waiting on the uncommitted consent write. Fails if that never happens, so the
- * race tests can't pass by the refresh simply running after the commit.
+ * Resolves once a statement is blocked on a lock the transaction `tx` holds, i.e. the refresh has issued
+ * its tokens and its read of the consent is waiting on the uncommitted consent write. Scoped to `tx`'s
+ * own backend through `pg_blocking_pids`, so no other session's lock wait counts, and fails if it never
+ * happens, so the race tests can't pass by the refresh simply running after the commit.
  */
-const waitForConsentReadToBlock = async (): Promise<void> => {
+const waitForRefreshToBlockOn = async (tx: Prisma.TransactionClient): Promise<void> => {
+  const [{ pid }] = await tx.$queryRaw<{ pid: number }[]>`SELECT pg_backend_pid() AS "pid"`;
   const deadline = Date.now() + 8_000;
   while (Date.now() < deadline) {
     const [{ waiting }] = await prisma.$queryRaw<{ waiting: number }[]>`
       SELECT count(*)::int AS "waiting" FROM pg_stat_activity
-      WHERE datname = current_database() AND wait_event_type = 'Lock'
-        AND query LIKE '%FROM "oauthConsent"%FOR SHARE%'`;
+      WHERE ${pid}::int = ANY(pg_blocking_pids("pid"))`;
     if (waiting > 0) return;
     await new Promise((resolve) => setTimeout(resolve, 25));
   }
@@ -168,7 +170,7 @@ describe("revoking an OAuth app ends its access (ENG-2499, real Postgres)", () =
         raced = refresh(clientId, tokens.refresh_token).finally(() => {
           settled = true;
         });
-        await waitForConsentReadToBlock();
+        await waitForRefreshToBlockOn(tx);
         expect(settled, "the refresh answered before the revoke committed").toBe(false);
       },
       { timeout: 10_000 }
@@ -471,6 +473,54 @@ describe("narrowing an OAuth app's consent ends the tokens beyond it (ENG-3529, 
     expect((await refresh(clientId, child.body.refresh_token as string)).body.error).toBe("invalid_grant");
   });
 
+  test("a child inside a narrowing made before this fix is refused while its grant reaches past it", async () => {
+    const { cookie, userId } = await signIn();
+    const clientId = await registerRevokeClient();
+    const wide = await grant(cookie, clientId);
+    const child = await refresh(clientId, wide.refresh_token, NARROW);
+    expect(child.status, JSON.stringify(child.body)).toBe(200);
+    // Narrowed with no consent hook to reconcile it: the wide parent row is still there, rotated.
+    await prisma.oauthConsent.updateMany({
+      where: { userId, clientId },
+      data: { scopes: NARROW.split(" ") },
+    });
+
+    const after = await refresh(clientId, child.body.refresh_token as string);
+
+    expect(after.status).toBe(400);
+    expect(after.body.error).toBe("invalid_grant");
+    expect(await liveTokens(userId, clientId)).toBe(0);
+  });
+
+  test("update-consent naming another user's consent leaves that user's tokens alone", async () => {
+    const { cookie } = await signIn();
+    const clientId = await registerRevokeClient();
+    const stranger = await prisma.user.create({ data: { email: "stranger@example.com", name: "Stranger" } });
+    const now = new Date();
+    const theirs = await prisma.oauthConsent.create({
+      data: { clientId, userId: stranger.id, scopes: SCOPE.split(" "), createdAt: now, updatedAt: now },
+    });
+    await prisma.oauthRefreshToken.create({
+      data: {
+        token: randomBytes(16).toString("hex"),
+        clientId,
+        userId: stranger.id,
+        scopes: SCOPE.split(" "),
+        createdAt: now,
+        expiresAt: new Date(Date.now() + 15 * 60_000),
+      },
+    });
+
+    const response = await handle("/oauth2/update-consent", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie, origin: ORIGIN },
+      body: JSON.stringify({ id: theirs.id, update: { scopes: NARROW.split(" ") } }),
+    });
+
+    expect(response.status).toBe(401);
+    expect(await liveTokens(stranger.id, clientId)).toBe(1);
+  });
+
   test("narrowing one app leaves the user's other apps and other users' tokens alone", async () => {
     const { cookie, userId } = await signIn();
     const narrowed = await registerRevokeClient();
@@ -531,7 +581,7 @@ describe("narrowing an OAuth app's consent ends the tokens beyond it (ENG-3529, 
         raced = refresh(clientId, wide.refresh_token).finally(() => {
           settled = true;
         });
-        await waitForConsentReadToBlock();
+        await waitForRefreshToBlockOn(tx);
         expect(settled, "the refresh answered before the narrowing committed").toBe(false);
       },
       { timeout: 10_000 }
