@@ -74,25 +74,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: ./.github/actions/dangerous-git-checkout
-
       - name: Restore test services after runner hardening
-        env:
-          POSTGRES_SERVICE_ID: ${{ job.services.postgres.id }}
-          VALKEY_SERVICE_ID: ${{ job.services.valkey.id }}
-        run: |
-          # Hardening can restart Docker after Actions creates these service containers.
-          docker start "$POSTGRES_SERVICE_ID" "$VALKEY_SERVICE_ID"
-          for attempt in {1..30}; do
-            if docker exec "$POSTGRES_SERVICE_ID" pg_isready -U postgres && \
-              docker exec "$VALKEY_SERVICE_ID" valkey-cli ping | grep -qx PONG; then
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "::error::Test services did not become ready after runner hardening."
-          exit 1
-        shell: bash
+        uses: ./.github/actions/restore-test-services
+        with:
+          postgres: ${{ job.services.postgres.id }}
+          cache: ${{ job.services.valkey.id }}
+
+      - uses: ./.github/actions/dangerous-git-checkout
 
       # Resolved before anything expensive runs, because it decides whether local browser
       # binaries are needed at all. In service mode the browsers execute on Azure, so the
