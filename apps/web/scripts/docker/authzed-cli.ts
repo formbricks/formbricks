@@ -115,6 +115,15 @@ const run = async (): Promise<void> => {
         return;
       }
       case "upgrade": {
+        if (args[0] === "online") {
+          shouldCloseDatabase = true;
+          const { runKubernetesOnlineCli } = await import("../../lib/upgrade/online/cli");
+          const result = await runKubernetesOnlineCli(args.slice(1), new URL("./", import.meta.url));
+          console.error = originalConsoleError;
+          writeResult(result);
+          process.exitCode = result.status === "blocked" ? 1 : 0;
+          return;
+        }
         const { parseAuthzedUpgradeCliCommand } = await import("../../lib/authzed/upgrade-cli-command");
         const upgradeCommand = parseAuthzedUpgradeCliCommand(args);
 

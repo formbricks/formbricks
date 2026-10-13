@@ -80,6 +80,7 @@ vi.mock("@formbricks/database", () => {
       updateMany: vi.fn(),
     },
     // Interactive transaction: run the callback with the mocked client as the tx client.
+    $executeRaw: vi.fn(),
     $transaction: vi.fn((callback: (tx: typeof prisma) => Promise<unknown>) => callback(prisma)),
   };
   return { prisma };
@@ -281,7 +282,7 @@ describe("patchV3Survey", () => {
     );
     vi.mocked(prisma.survey.findUniqueOrThrow).mockImplementation((() =>
       Promise.resolve(
-        readBackUpdatedSurvey(vi.mocked(prisma.survey.update).mock.lastCall?.[0].data)
+        readBackUpdatedSurvey(vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0].data)
       )) as unknown as typeof prisma.survey.findUniqueOrThrow);
     vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
     // ENG-1837: the patch reconciles the EmbeddedData rows in the same transaction as the survey
@@ -372,10 +373,7 @@ describe("patchV3Survey", () => {
     );
   });
 
-  test("never writes the dropped legacy columns, and returns the survey read back after the reconcile", async () => {
-    // ENG-2404: `Survey` has no `variables` / `hiddenFields` column, so Prisma would refuse either
-    // key. They reach the database as rows, and the response is re-read after the reconcile so the
-    // projection derived from those rows describes the patched survey rather than the stored one.
+  test("writes compatible legacy columns and returns the survey read back after the reconcile", async () => {
     await patchV3Survey(
       currentSurvey,
       { hiddenFields: { enabled: true, fieldIds: ["utm_source"] } },
@@ -383,9 +381,11 @@ describe("patchV3Survey", () => {
       "org_1"
     );
 
-    const [[updateArgs]] = vi.mocked(prisma.survey.update).mock.calls;
-    expect(updateArgs.data).not.toHaveProperty("variables");
-    expect(updateArgs.data).not.toHaveProperty("hiddenFields");
+    expect(prisma.survey.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ hiddenFields: { enabled: true, fieldIds: ["utm_source"] } }),
+      })
+    );
     expect(vi.mocked(prisma.survey.findUniqueOrThrow).mock.invocationCallOrder[0]).toBeGreaterThan(
       vi.mocked(prisma.surveyEmbeddedData.create).mock.invocationCallOrder[0]
     );
@@ -1188,7 +1188,7 @@ describe("patchV3Survey", () => {
       processorVersion: 3,
     };
     const surveyWithCss = { ...currentSurvey, customCss: storedCss } as unknown as TSurvey;
-    const lastUpdateData = () => vi.mocked(prisma.survey.update).mock.lastCall?.[0].data ?? {};
+    const lastUpdateData = () => vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0].data ?? {};
 
     beforeEach(() => {
       vi.mocked(cache.del).mockResolvedValue({ ok: true, data: undefined });

@@ -1,6 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
 import {
-  APP_IDLE_IN_TRANSACTION_SESSION_TIMEOUT_MS,
   APP_TRANSACTION_TIMEOUT_MS,
   PRISMA_GLOBAL_OMIT,
   createAppPrismaClientOptions,
@@ -26,7 +25,7 @@ describe("getAppTransactionOptions", () => {
 });
 
 describe("createAppPrismaClientOptions", () => {
-  test("derives maxWait from the pool the adapter actually built", async () => {
+  test("derives maxWait from the pool the adapter actually built, and leaves the idle backstop to DATABASE_URL", async () => {
     const options = createAppPrismaClientOptions(
       "postgresql://app:secret@database:5432/formbricks?connect_timeout=3"
     );
@@ -36,9 +35,20 @@ describe("createAppPrismaClientOptions", () => {
 
     const pool = (await options.adapter.connect()).underlyingDriver();
     try {
-      expect(pool.options.idle_in_transaction_session_timeout).toBe(
-        APP_IDLE_IN_TRANSACTION_SESSION_TIMEOUT_MS
-      );
+      expect(pool.options).not.toHaveProperty("idle_in_transaction_session_timeout");
+    } finally {
+      await pool.end();
+    }
+  });
+
+  test("sends the idle backstop when DATABASE_URL opts in", async () => {
+    const options = createAppPrismaClientOptions(
+      "postgresql://app:secret@database:5432/formbricks?idle_in_transaction_session_timeout=60000"
+    );
+
+    const pool = (await options.adapter.connect()).underlyingDriver();
+    try {
+      expect(pool.options.idle_in_transaction_session_timeout).toBe(60_000);
     } finally {
       await pool.end();
     }

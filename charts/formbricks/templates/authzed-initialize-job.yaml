@@ -1,3 +1,4 @@
+{{- if ne .Values.upgrade.mode "online" }}
 {{- if and .Values.authzed.enabled .Values.authzed.initialization.enabled (or .Release.IsInstall (and .Release.IsUpgrade .Values.authzed.migrationAcknowledged)) }}
 ---
 apiVersion: batch/v1
@@ -136,4 +137,6 @@ spec:
               value: {{ include "formbricks.authzedInsecure" . | quote }}
             - name: AUTHZED_CONSISTENCY
               value: fully_consistent
+{{- end }}
+
 {{- end }}

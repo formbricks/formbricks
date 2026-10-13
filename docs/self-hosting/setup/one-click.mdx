@@ -334,8 +334,9 @@ chmod +x formbricks.sh
 ./formbricks.sh update
 ```
 
-The script first validates the resolved Compose project and requires the baseline `hub-worker`, then pulls
-images and runs the read-only AuthZed upgrade check. A failed preflight leaves the existing application running.
+The script first validates the resolved Compose project and warns — without stopping — when the baseline
+`hub-worker` is missing, then pulls images and runs the read-only AuthZed upgrade check. A failed preflight leaves
+the existing application running.
 Otherwise it stops the stack, waits for PostgreSQL, completes application migrations, and only then starts the
 new stack. A failed migration leaves the stack stopped for recovery; preparation is never run against a live
 installation by the updater.
@@ -355,10 +356,11 @@ The update command does not regenerate or rotate them.
   your existing deployment, confirm `HUB_API_KEY` is set, and only then run the update command. If your older
   one-click install also uses bundled MinIO for file uploads, review that storage path separately before the
   first v5 restart; newer self-hosting updates move the bundled object-storage path to RustFS, while external
-  S3-compatible storage keeps the same `S3_*` app contract. The updater refuses to continue until the Compose
-  project includes the release-matched `hub-worker`; follow the
-  [Hub worker migration](/self-hosting/advanced/migration#hub-worker-required-for-docker) if that preflight
-  fails. The v6 updater also requires the release-matched AuthZed services and requires `.env` to contain
+  S3-compatible storage keeps the same `S3_*` app contract. The updater warns and continues when the Compose
+  project is missing the release-matched `hub-worker`; adding it is recommended, and the next major release will
+  require it — see the
+  [Hub worker migration](/self-hosting/advanced/migration#hub-worker-for-docker). The v6 updater also requires the
+  release-matched AuthZed services and requires `.env` to contain
   `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` after a clean preparation.
 
   The same applies to pinned third-party images. Because the update command only re-pulls what your Compose

@@ -26,6 +26,8 @@ const DEDICATED_WORKER_CONCURRENCY = 1;
 
 export interface JobsRuntimeOptions {
   redisUrl: string;
+  /** The embedding HTTP server owns shutdown when false. */
+  manageSignals?: boolean;
   prefix?: string;
   concurrency?: number;
   workerCount?: number;
@@ -93,6 +95,7 @@ const registerWorkerLogging = (worker: Worker, queueName: TJobsQueueName, worker
 
 export const startJobsRuntime = async ({
   redisUrl,
+  manageSignals = true,
   prefix = JOBS_PREFIX,
   concurrency = DEFAULT_WORKER_CONCURRENCY,
   workerCount = DEFAULT_WORKER_COUNT,
@@ -243,8 +246,10 @@ export const startJobsRuntime = async ({
       ...Object.values(startedDedicatedWorkers).map((worker) => worker.waitUntilReady()),
     ]);
 
-    process.once("SIGTERM", handleSigterm);
-    process.once("SIGINT", handleSigint);
+    if (manageSignals) {
+      process.once("SIGTERM", handleSigterm);
+      process.once("SIGINT", handleSigint);
+    }
 
     logger.info(
       {

@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+const online = vi.hoisted(() => ({ enabled: true }));
+vi.mock("@/lib/upgrade/compatibility", () => ({ isNewReleaseWorkEnabled: async () => online.enabled }));
+
 const mockStartJobsRuntime = vi.fn();
 const mockRemoveSurveyScheduling = vi.fn();
 const mockUpsertSurveyScheduling = vi.fn();
@@ -178,6 +181,7 @@ describe("instrumentation-jobs", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    online.enabled = true;
     vi.useFakeTimers();
     mockRemoveSurveyScheduling.mockResolvedValue(true);
     mockRemoveSurveyArchivePurge.mockResolvedValue(true);
@@ -270,6 +274,7 @@ describe("instrumentation-jobs", () => {
     expect(second).toBe(mockRuntime);
     expect(mockStartJobsRuntime).toHaveBeenCalledTimes(1);
     expect(mockStartJobsRuntime).toHaveBeenCalledWith({
+      manageSignals: true,
       concurrency: 4,
       jobHandlerOverrides: {
         "authzed-projection.deliver": expect.any(Function),
@@ -504,6 +509,21 @@ describe("instrumentation-jobs", () => {
 
     expect(mockStartJobsRuntime).toHaveBeenCalledTimes(2);
     await expect(registerJobsWorker()).resolves.toBe(recoveredRuntime);
+  });
+
+  test("keeps the survey audit scheduler inactive until durable activation is observed", async () => {
+    online.enabled = false;
+    mockGetJobsQueueingConfig.mockReturnValue({ enabled: true, redisUrl: "redis://localhost:6379" });
+    const { registerRecurringJobs } = await import("./instrumentation-jobs");
+    const { RECURRING_JOB_REGISTRATIONS_BY_KEY } = await import("@/lib/jobs/recurring-registrations");
+    const audit = RECURRING_JOB_REGISTRATIONS_BY_KEY.authzedSurveyAudit.job.upsert;
+    await registerRecurringJobs();
+    expect(audit).not.toHaveBeenCalled();
+    online.enabled = true;
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(audit).toHaveBeenCalledOnce();
+    await registerRecurringJobs();
+    expect(audit).toHaveBeenCalledOnce();
   });
 
   slowTest(

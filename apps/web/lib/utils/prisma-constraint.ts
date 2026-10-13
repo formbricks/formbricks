@@ -59,6 +59,7 @@ const UNIQUE_INDEX_COLUMNS: Readonly<Record<string, readonly string[]>> = {
     "elementId",
   ],
   Membership_pkey: ["userId", "organizationId"],
+  OnlineUpgradeState_pkey: ["release"],
   OrganizationBilling_pkey: ["organization_id"],
   OrganizationBilling_stripe_customer_id_key: ["stripe_customer_id"],
   PasswordResetToken_token_hash_key: ["token_hash"],

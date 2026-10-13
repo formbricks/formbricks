@@ -1,7 +1,6 @@
 import "server-only";
 import type { Prisma } from "@formbricks/database/prisma";
 import { type TAuthorizationAction, type TAuthorizationResourceForAction, can } from "@/lib/authorization";
-import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { buildVisibleSurveyWhere } from "./predicate";
 
 /**
@@ -11,7 +10,7 @@ import { buildVisibleSurveyWhere } from "./predicate";
 
 /** The `Survey` clause every list an API key reads must carry. `{}` while the marker is off. */
 export const getApiKeyVisibleSurveyWhere = async (): Promise<Prisma.SurveyWhereInput> =>
-  buildVisibleSurveyWhere({ enforced: await isSurveyVisibilityReady(), kind: "apiKey" });
+  buildVisibleSurveyWhere({ enforced: true, kind: "apiKey" });
 
 /**
  * For a route that already passed its workspace check: whether the key may act on this survey or
@@ -23,7 +22,6 @@ export const canApiKeyReachSurveyResource = async <TAction extends TAuthorizatio
   action: TAction,
   resource: TAuthorizationResourceForAction<NoInfer<TAction>>
 ): Promise<boolean> => {
-  if (!(await isSurveyVisibilityReady())) return true;
   return can({ type: "apiKey", id: apiKeyId }, action, resource);
 };
 

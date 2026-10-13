@@ -370,16 +370,24 @@ enum SurveyScriptMode {
 /// @property customHeadScripts - Survey-specific custom HTML scripts (self-hosted only)
 /// @property customHeadScriptsMode - "add" (merge with workspace) or "replace" (override workspace)
 model Survey {
-  id          String     @id @default(cuid())
-  createdAt   DateTime   @default(now()) @map(name: "created_at")
-  updatedAt   DateTime   @updatedAt @map(name: "updated_at")
-  name        String
-  redirectUrl String?
-  type        SurveyType @default(app)
-  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
-  creator     User?      @relation("SurveyCreator", fields: [createdBy], references: [id])
-  createdBy   String?
+  /// [SurveyHiddenFields]
+  hiddenFields         Json       @default("{\"enabled\": false}")
+  /// [SurveyVariables]
+  variables            Json       @default("[]")
+  // False identifies surveys written by 6.0 during the online upgrade.
+  ownershipInitialized Boolean    @default(false)
+  // Recovery copy for deferred legacy-only field salvage; never an application read source.
+  legacyEmbeddedDataBackup Json? @ignore
+  id                   String     @id @default(cuid())
+  createdAt            DateTime   @default(now()) @map(name: "created_at")
+  updatedAt            DateTime   @updatedAt @map(name: "updated_at")
+  name                 String
+  redirectUrl          String?
+  type                 SurveyType @default(app)
+  workspace            Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId          String
+  creator              User?      @relation("SurveyCreator", fields: [createdBy], references: [id])
+  createdBy            String?
 
   /// ENG-3282: authorization facts, projected into SpiceDB by the survey outbox trigger. `ownerId` is
   /// the durable ownership source; `createdBy` stays pure attribution and is never rewritten.
@@ -1896,4 +1904,21 @@ model AuthzedProjectionOutbox {
   lastErrorCode     String?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+}
+
+// Durable checkpoints for the supported 6.0 -> 6.1 online upgrade.
+model OnlineUpgradeState {
+  release              String    @id
+  targetImage          String
+  phase                String
+  completedPhases      String[]  @default([])
+  surveyCursor         String?
+  surveyCount          BigInt    @default(0)
+  baselineCompletedAt  DateTime?
+  forwardOnlyAt        DateTime?
+  queuePausedAt        DateTime?
+  queuePauseDeadlineAt DateTime?
+  queueResumedAt       DateTime?
+  activatedAt          DateTime?
+  updatedAt            DateTime  @default(now()) @updatedAt
 }

@@ -3,6 +3,8 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { getMigrationPhase } from "./migration-phases";
+import { ONLINE_INDEXES, createOnlineIndexSql } from "./online-indexes";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATABASE_PACKAGE_DIR = path.resolve(__dirname, "../..");
@@ -128,6 +130,7 @@ export const stagePrismaMigrationHistory = async (
   );
 
   for (const migrationName of migrationDirectoryNames) {
+    if (getMigrationPhase(migrationName) === "deferred") continue;
     const sourceSqlPath = path.join(migrationsDir, migrationName, "migration.sql");
 
     try {
@@ -213,6 +216,16 @@ export const checkMigrationDrift = async ({
 
   try {
     await stagePrismaMigrationHistory(migrationsDir, temporaryMigrationsDir);
+
+    // Indexes are built after SQL replay by the online runner. Include those same definitions in
+    // the disposable shadow history so drift still detects missing or incorrect schema indexes.
+    // This synthetic migration is never recorded in an application database or release history.
+    const indexesDir = path.join(temporaryMigrationsDir, "99999999999999_online_indexes");
+    await fs.mkdir(indexesDir);
+    await fs.writeFile(
+      path.join(indexesDir, "migration.sql"),
+      ONLINE_INDEXES.map((index) => `${createOnlineIndexSql(index, "shadow")};`).join("\n")
+    );
 
     return await executePrismaDiff({
       environment,

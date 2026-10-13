@@ -2,8 +2,9 @@ import { mockValidateFileUploads } from "./__mocks__/storage-utils";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { validateV3Response, validateV3ResponseFromRawInput } from "./validate-operations";
 
-// Survey visibility (ENG-3282) is not enforced here: the readiness marker is off, not read from a database.
+// Exercise response writes with an authorized actor; denial behavior is covered in visibility.test.ts.
 vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
+vi.mock("@/lib/authorization", () => ({ can: vi.fn(async () => true) }));
 vi.mock("server-only", () => ({}));
 vi.mock("node:crypto", async (importOriginal) => await importOriginal<typeof import("node:crypto")>());
 vi.mock("crypto", async (importOriginal) => await importOriginal<typeof import("crypto")>());
@@ -38,7 +39,10 @@ const {
   mockValidateResponseData: vi.fn(),
 }));
 
-vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: mockRequireAccess }));
+vi.mock("@/app/api/v3/lib/auth", () => ({
+  requireV3WorkspaceAccess: mockRequireAccess,
+  getV3AuthorizationActor: () => ({ type: "apiKey", id: "key" }),
+}));
 vi.mock("@/modules/api/lib/validation", () => ({ validateResponseData: mockValidateResponseData }));
 vi.mock("@/lib/workspace/service", () => ({ getWorkspaceLegacyStoragePrefixes: async () => [] }));
 vi.mock("@/lib/organization/service", () => ({ getOrganization: mockGetOrganization }));
