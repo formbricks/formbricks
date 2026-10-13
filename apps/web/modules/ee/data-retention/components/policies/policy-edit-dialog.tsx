@@ -194,7 +194,7 @@ export const PolicyEditDialog = ({
                   <p className="text-sm font-medium text-slate-800">
                     {t("workspace.settings.data_retention.counts_from")}
                   </p>
-                  <p className="text-sm text-slate-600">{copy.countsFrom}</p>
+                  <p className="text-xs text-slate-500">{copy.countsFrom}</p>
                 </div>
               ) : null}
 
@@ -240,7 +240,7 @@ export const PolicyEditDialog = ({
                           );
                         })}
                         {createdBeforeOnly ? (
-                          <p id={conditionsHintId} className="text-sm text-slate-600">
+                          <p id={conditionsHintId} className="text-xs text-slate-500">
                             {t("workspace.settings.data_retention.condition_created_before_only_hint")}
                           </p>
                         ) : null}

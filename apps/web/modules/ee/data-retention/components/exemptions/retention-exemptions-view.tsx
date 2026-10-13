@@ -33,6 +33,8 @@ const getExemptionColumns = ({
   {
     id: "survey",
     header: t("common.survey"),
+    // The reason is the column that wraps; survey names keep a readable width.
+    headerClassName: "min-w-40",
     cellClassName: "font-medium text-slate-900",
     cell: (exemption) => (
       <Link
@@ -67,6 +69,8 @@ const getExemptionColumns = ({
     id: "createdBy",
     header: t("common.created_by"),
     hideBelow: "lg",
+    headerClassName: "whitespace-nowrap",
+    cellClassName: "whitespace-nowrap",
     cell: (exemption) => exemption.createdBy?.name || "—",
   },
   ...(canManage
@@ -223,6 +227,8 @@ export const RetentionExemptionsView = ({
               if (!open && !revokeExemption.isPending) setRevoking(null);
             }}
             title={t("workspace.settings.data_retention.revoke_exemption_title")}
+            // Not the modal's default "This action cannot be undone": an exemption can simply be added again.
+            description={t("workspace.settings.data_retention.revoke_exemption_description")}
             body={
               revoking
                 ? t("workspace.settings.data_retention.revoke_exemption_body", {

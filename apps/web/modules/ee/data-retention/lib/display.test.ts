@@ -5,10 +5,12 @@ import {
   createRetentionCountFormatter,
   formatRetentionDate,
   formatRetentionPeriod,
+  formatRetentionRunTime,
   getRetentionHistoryCounts,
   getRetentionPolicyLabel,
   getRetentionPolicySummary,
   getSurveyRetentionDueWarning,
+  getSurveyRetentionExemptLines,
   getSurveyRetentionLines,
 } from "./display";
 import { RETENTION_POLICY_DEFAULTS } from "./policy-rules";
@@ -71,6 +73,14 @@ describe("createRetentionCountFormatter", () => {
     expect(createRetentionCountFormatter("de-DE")(12345)).toBe("12.345");
     expect(createRetentionCountFormatter("en-US")(0)).toBe("0");
     expect(createRetentionCountFormatter("en-US")(null)).toBe("—");
+  });
+});
+
+describe("formatRetentionRunTime", () => {
+  test("shows the day and time in the organisation's time zone", () => {
+    expect(formatRetentionRunTime("2031-03-31T22:30:00.000Z", "en-US", "Europe/Berlin")).toBe(
+      "Apr 1, 2031, 12:30 AM"
+    );
   });
 });
 
@@ -154,6 +164,23 @@ describe("survey retention copy", () => {
       // Held by the responses exemption, the only one there is (ENG-3371).
       'survey_line_exempt {"policy":"surveys","date":"2031-03-31"}',
     ]);
+  });
+
+  test("the summary note repeats only the exemptions, not the dates", () => {
+    const retention = {
+      governed: true,
+      policies: [
+        plan("responses", { nextAction: "delete" as const, nextDate: "2030-10-03T00:00:00.000Z" }),
+        plan("surveys", { exempt: true }),
+      ],
+      exemptions: [{ ...exemption, policy: "surveys" as const }],
+    };
+    expect(getSurveyRetentionExemptLines(retention, echo, formatDate)).toEqual([
+      'survey_line_exempt {"policy":"surveys","date":"2031-03-31"}',
+    ]);
+    expect(
+      getSurveyRetentionExemptLines({ ...retention, policies: [plan("responses")] }, echo, formatDate)
+    ).toEqual([]);
   });
 
   test("says when nothing is due, and tells an archive from a deletion", () => {

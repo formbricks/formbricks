@@ -6,7 +6,11 @@ import { useTranslation } from "react-i18next";
 import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { useSurveyRetention } from "../../hooks/use-survey-retention";
-import { formatRetentionDate, getSurveyRetentionDueWarning } from "../../lib/display";
+import {
+  formatRetentionDate,
+  getSurveyRetentionDueWarning,
+  getSurveyRetentionExemptLines,
+} from "../../lib/display";
 import { DataRetentionQueryClientProvider } from "../query-client-provider";
 
 interface SurveyRetentionNoteProps {
@@ -26,15 +30,15 @@ const SurveyRetentionNoteContent = ({
   const { data: retention } = useSurveyRetention({ surveyId });
   if (!retention?.governed) return null;
 
-  const warning = getSurveyRetentionDueWarning(retention, t, locale, (iso) =>
-    formatRetentionDate(iso, locale, timeZone)
-  );
+  const formatDate = (iso: string) => formatRetentionDate(iso, locale, timeZone);
+  const warning = getSurveyRetentionDueWarning(retention, t, locale, formatDate);
+  const exemptLines = getSurveyRetentionExemptLines(retention, t, formatDate);
 
   return (
     <div className="mb-4 space-y-2">
       <p className="flex items-center gap-1.5 text-sm text-slate-500">
         <HourglassIcon className="size-3.5 shrink-0" aria-hidden />
-        {t("workspace.settings.data_retention.survey_note")}{" "}
+        {[t("workspace.settings.data_retention.survey_note"), ...exemptLines].join(" ")}{" "}
         <Link
           href={organizationSettingsPath(organizationId, "data-retention/policies")}
           className="font-medium text-slate-700 underline-offset-2 hover:underline">

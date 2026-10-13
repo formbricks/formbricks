@@ -14,7 +14,7 @@ import { Switch } from "@/modules/ui/components/switch";
 import { useDownloadRetentionExport, useRetentionRuns } from "../../hooks/use-retention-runs";
 import {
   createRetentionCountFormatter,
-  formatRetentionDate,
+  formatRetentionRunTime,
   getRetentionHistoryCounts,
   getRetentionPolicyLabel,
 } from "../../lib/display";
@@ -90,7 +90,7 @@ export const RetentionHistoryView = ({ organizationId, timeZone }: Readonly<Rete
   const downloadExport = useDownloadRetentionExport({ organizationId });
 
   const formatCount = createRetentionCountFormatter(locale);
-  const formatRunDate = (iso: string) => formatRetentionDate(iso, locale, timeZone);
+  const formatRunDate = (iso: string) => formatRetentionRunTime(iso, locale, timeZone);
 
   const errorMessage = getRetentionErrorMessage(
     error,

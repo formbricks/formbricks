@@ -2976,7 +2976,7 @@ checksums:
     workspace/settings/data_retention/exemptions_load_error: ad2df69e16e3377e61a687b0c5fb98cc
     workspace/settings/data_retention/export_too_large: 72e6876f0f40f356d0199b9b0585c2b1
     workspace/settings/data_retention/first_night_note: 869323ee30846e10a46a72bd60d31734
-    workspace/settings/data_retention/health_cleanup_description: f0ee795ee9c36d822c81a572c9a8b303
+    workspace/settings/data_retention/health_cleanup_description: 9c1ade27d70cab0b22f15b604ea227c8
     workspace/settings/data_retention/health_cleanup_title: 26075a5ea4266d5e4b39b8ab16d60b45
     workspace/settings/data_retention/health_jobs_description: 160569b502146031469561935d3e7ddb
     workspace/settings/data_retention/health_jobs_title: ea295a35dd1c242d881cf5d9fb85cf26
@@ -3041,6 +3041,7 @@ checksums:
     workspace/settings/data_retention/responses_summary: db44b700fa15c436e129501336e7c5c5
     workspace/settings/data_retention/revoke: be57685a85b6dfeaeb6eab4e9560b520
     workspace/settings/data_retention/revoke_exemption_body: e2a0e5ba39c99319ec9e63033bdc0018
+    workspace/settings/data_retention/revoke_exemption_description: f7067a0748d2733e52a1dfec99c3f00d
     workspace/settings/data_retention/revoke_exemption_for: f313bbb13110ba5bfffe4bd1b177425b
     workspace/settings/data_retention/revoke_exemption_title: 32bcbfda37b3d7ccab3749173411612f
     workspace/settings/data_retention/rule: 5b3477fee7a10f7883c68819c4e24fc4

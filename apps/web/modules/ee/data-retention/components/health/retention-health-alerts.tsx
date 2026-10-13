@@ -51,7 +51,8 @@ export const RetentionHealthAlerts = ({
   };
 
   return (
-    <div className="mb-6 space-y-3">
+    // As wide as the settings cards below it (SettingsCard's max-w-4xl).
+    <div className="mb-6 max-w-4xl space-y-3">
       {data.issues.map((issue) => {
         const { title, description } = describe(issue);
         return (

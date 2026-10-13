@@ -1,5 +1,5 @@
 import type { TFunction } from "i18next";
-import { formatDateForDisplay } from "@/lib/utils/datetime";
+import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { SURVEY_ARCHIVE_RETENTION_DAYS } from "@/modules/survey/archive/lib/retention-days";
 import type {
   TRetentionExemption,
@@ -61,6 +61,20 @@ export const createRetentionCountFormatter = (locale: string): ((value: number |
 export const formatRetentionDate = (iso: string, locale: string, timeZone: string): string =>
   formatDateForDisplay(new Date(iso), locale, { year: "numeric", month: "short", day: "numeric", timeZone });
 
+/**
+ * When a run started, as History shows it: the day and the time in the organisation's display time zone,
+ * so several runs on one day (a re-run, a capped night finishing) can be told apart.
+ */
+export const formatRetentionRunTime = (iso: string, locale: string, timeZone: string): string =>
+  formatDateTimeForDisplay(new Date(iso), locale, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone,
+  });
+
 /** A number of days as the dialogs state it: "3 years", "6 months", "45 days". */
 export const formatRetentionPeriod = (days: number, t: TFunction): string => {
   const { amount, unit } = daysToRetentionPeriod(days);
@@ -110,36 +124,56 @@ export const getRetentionPolicySummary = (
   }
 };
 
+/** One policy's line for a survey: what it does next and when, or that the survey is exempt. */
+const describeSurveyRetentionPlan = (
+  retention: TSurveyRetention,
+  plan: TSurveyRetentionPolicy,
+  t: TFunction,
+  formatDate: (iso: string) => string
+): string => {
+  const policy = getRetentionPolicyLabel(plan.policy, t);
+  if (plan.exempt) {
+    // The exemption that holds it; under ENG-3371 either one holds the survey from the surveys policy.
+    const holding: TRetentionExemption | undefined =
+      retention.exemptions.find((exemption) => exemption.policy === plan.policy) ?? retention.exemptions[0];
+    return holding
+      ? t("workspace.settings.data_retention.survey_line_exempt", {
+          policy,
+          date: formatDate(holding.until),
+        })
+      : t("workspace.settings.data_retention.survey_line_exempt_no_date", { policy });
+  }
+  if (!plan.nextAction || !plan.nextDate) {
+    return t("workspace.settings.data_retention.survey_line_nothing_due", { policy });
+  }
+  const date = formatDate(plan.nextDate);
+  if (plan.policy === "responses") {
+    return t("workspace.settings.data_retention.survey_line_responses_delete", { date });
+  }
+  return plan.nextAction === "archive"
+    ? t("workspace.settings.data_retention.survey_line_survey_archive", { date })
+    : t("workspace.settings.data_retention.survey_line_survey_delete", { date });
+};
+
 /** One line per active policy, for the survey's settings card: what happens next, and when. */
 export const getSurveyRetentionLines = (
   retention: TSurveyRetention,
   t: TFunction,
   formatDate: (iso: string) => string
+): string[] => retention.policies.map((plan) => describeSurveyRetentionPlan(retention, plan, t, formatDate));
+
+/**
+ * Only the lines for the policies the survey is exempt from, for the survey summary's note, which
+ * otherwise just points at the policies: "Surveys: exempt until Mar 31, 2027."
+ */
+export const getSurveyRetentionExemptLines = (
+  retention: TSurveyRetention,
+  t: TFunction,
+  formatDate: (iso: string) => string
 ): string[] =>
-  retention.policies.map((plan: TSurveyRetentionPolicy) => {
-    const policy = getRetentionPolicyLabel(plan.policy, t);
-    if (plan.exempt) {
-      // The exemption that holds it; under ENG-3371 either one holds the survey from the surveys policy.
-      const holding: TRetentionExemption | undefined =
-        retention.exemptions.find((exemption) => exemption.policy === plan.policy) ?? retention.exemptions[0];
-      return holding
-        ? t("workspace.settings.data_retention.survey_line_exempt", {
-            policy,
-            date: formatDate(holding.until),
-          })
-        : t("workspace.settings.data_retention.survey_line_exempt_no_date", { policy });
-    }
-    if (!plan.nextAction || !plan.nextDate) {
-      return t("workspace.settings.data_retention.survey_line_nothing_due", { policy });
-    }
-    const date = formatDate(plan.nextDate);
-    if (plan.policy === "responses") {
-      return t("workspace.settings.data_retention.survey_line_responses_delete", { date });
-    }
-    return plan.nextAction === "archive"
-      ? t("workspace.settings.data_retention.survey_line_survey_archive", { date })
-      : t("workspace.settings.data_retention.survey_line_survey_delete", { date });
-  });
+  retention.policies
+    .filter((plan) => plan.exempt)
+    .map((plan) => describeSurveyRetentionPlan(retention, plan, t, formatDate));
 
 /**
  * The dated warning on the survey summary while responses are inside the notice window: "214

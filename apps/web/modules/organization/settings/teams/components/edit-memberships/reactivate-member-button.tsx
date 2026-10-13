@@ -1,10 +1,12 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
+import { UserCheckIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { reactivateMember } from "../../lib/reactivate-member-client";
 import { getReactivateMemberErrorMessage } from "../../lib/reactivate-member-error";
 
@@ -40,15 +42,18 @@ export const ReactivateMemberButton = ({
       onError: (error) => toast.error(getReactivateMemberErrorMessage(error, t)),
     });
 
+  // An icon with a tooltip, like the row's other actions, so it doesn't widen the actions column.
   return (
-    <Button
-      type="button"
-      variant="secondary"
-      size="sm"
-      loading={reactivate.isPending}
-      aria-label={t("workspace.settings.data_retention.reactivate_member_label", { name })}
-      onClick={onClick}>
-      {t("workspace.settings.data_retention.reactivate")}
-    </Button>
+    <TooltipRenderer tooltipContent={t("workspace.settings.data_retention.reactivate")}>
+      <Button
+        type="button"
+        variant="secondary"
+        size="icon"
+        loading={reactivate.isPending}
+        aria-label={t("workspace.settings.data_retention.reactivate_member_label", { name })}
+        onClick={onClick}>
+        <UserCheckIcon />
+      </Button>
+    </TooltipRenderer>
   );
 };
