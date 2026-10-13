@@ -2,7 +2,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
-import { ONLINE_INDEXES } from "./online-indexes";
 
 // A concurrent index build waits under `lock_timeout` for more than its table lock: for every transaction
 // that wrote to the table, and for every older snapshot in the database, on any table. Any value but 0
@@ -23,16 +22,15 @@ const concurrentIndexMigrations = fs
   .filter(({ sql }) => CONCURRENT_INDEX_BUILD.test(sql));
 
 describe("schema migrations that build an index CONCURRENTLY", () => {
-  test("are covered in SQL or by the online index builder tests", () => {
-    // The 6.1 runner moved concurrent builds into autocommit connections with invalid-index repair.
-    // online-indexes.test.ts checks the runtime timeout; retain the SQL guard for future migrations.
-    expect(concurrentIndexMigrations.length + ONLINE_INDEXES.length).toBeGreaterThan(0);
-  });
+  test("sets lock_timeout to 0 for every concurrent SQL index build", () => {
+    for (const { name, sql } of concurrentIndexMigrations) {
+      const values = Array.from(sql.matchAll(SET_LOCK_TIMEOUT), (match) => match[1].trim());
 
-  test.each(concurrentIndexMigrations)("$name sets lock_timeout to 0", ({ sql }) => {
-    const values = Array.from(sql.matchAll(SET_LOCK_TIMEOUT), (match) => match[1].trim());
-
-    expect(values).not.toHaveLength(0);
-    expect(values.filter((value) => value !== "0" && value !== "'0'")).toEqual([]);
+      expect(values, name).not.toHaveLength(0);
+      expect(
+        values.filter((value) => value !== "0" && value !== "'0'"),
+        name
+      ).toEqual([]);
+    }
   });
 });

@@ -38,8 +38,6 @@ ALTER TABLE "Survey" ADD COLUMN IF NOT EXISTS "visibilityChangedAt" TIMESTAMP(3)
 ALTER TABLE "Survey" ADD COLUMN IF NOT EXISTS "visibilityChangedById" TEXT;
 ALTER TABLE "Survey" ADD COLUMN IF NOT EXISTS "visibilityPending" BOOLEAN NOT NULL DEFAULT false;
 
-ALTER TABLE "Survey" ADD COLUMN IF NOT EXISTS "ownershipInitialized" BOOLEAN NOT NULL DEFAULT false;
-
 -- Derived, never written by the application: recomputed on every insert and on any update that
 -- touches either version (or the column itself, so a stray write cannot stick).
 --

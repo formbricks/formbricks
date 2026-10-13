@@ -376,6 +376,8 @@ model Survey {
   variables            Json       @default("[]")
   // False identifies surveys written by 6.0 during the online upgrade.
   ownershipInitialized Boolean    @default(false)
+  // Recovery copy for deferred legacy-only field salvage; never an application read source.
+  legacyEmbeddedDataBackup Json? @ignore
   id                   String     @id @default(cuid())
   createdAt            DateTime   @default(now()) @map(name: "created_at")
   updatedAt            DateTime   @updatedAt @map(name: "updated_at")

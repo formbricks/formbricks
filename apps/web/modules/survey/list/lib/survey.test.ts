@@ -140,6 +140,7 @@ vi.mock("@formbricks/database", () => ({
       updateMany: vi.fn(),
     },
     $transaction: vi.fn(),
+    $executeRaw: vi.fn(),
   },
 }));
 

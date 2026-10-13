@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { TResponsePipelineJobData } from "@formbricks/jobs";
+import { type TResponsePipelineJobData, UnrecoverableError } from "@formbricks/jobs";
 import { selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { processResponsePipelineJob } from "./process-response-pipeline-job";
@@ -419,8 +419,8 @@ describe("processResponsePipelineJob", () => {
     expect(mockEnqueueResponseCompletedWorkflowRuns).not.toHaveBeenCalled();
   });
 
-  test("alerts only subscribers who may read the survey's responses once visibility is enforced", async () => {
-    mockIsSurveyVisibilityReady.mockResolvedValue(true);
+  test("alerts only authorized subscribers for a restricted survey", async () => {
+    mockPrismaSurveyFindUnique.mockResolvedValue({ ...survey, visibility: "restricted" });
     mockPrismaUserFindMany.mockResolvedValue([
       { email: "owner@example.com", id: "user_owner", locale: "en" },
       { email: "member@example.com", id: "user_member", locale: "en" },
@@ -756,9 +756,37 @@ describe("processResponsePipelineJob", () => {
     expect(online.deliver).toHaveBeenCalledOnce();
     expect(online.deliver).toHaveBeenCalledWith(
       expect.objectContaining({ webhookId: webhookRow.id }),
-      expect.objectContaining({ attempt: baseContext.attempt })
+      expect.objectContaining({ attempt: baseContext.maxAttempts })
     );
   });
+
+  test("does not fan out authorization calls for workspace-visible notification recipients", async () => {
+    mockPrismaUserFindMany.mockResolvedValue(
+      Array.from({ length: 50 }, (_, i) => ({ id: `u${i}`, email: `u${i}@example.com`, locale: "en-US" }))
+    );
+    await processResponsePipelineJob({ ...baseData, event: "responseFinished" }, baseContext);
+    expect(mockCan).not.toHaveBeenCalled();
+  });
+
+  test.each([new Error("receiver 503"), new UnrecoverableError("receiver 404")])(
+    "continues side effects after an inline webhook failure: %s",
+    async (failure) => {
+      online.enabled = false;
+      mockPrismaWebhookFindMany.mockResolvedValue([webhookRow, { ...webhookRow, id: "healthy" }]);
+      online.deliver.mockRejectedValueOnce(failure).mockResolvedValueOnce(undefined);
+      mockGetIntegrations.mockResolvedValue([{ id: "integration_123", type: "slack" }]);
+      await expect(
+        processResponsePipelineJob({ ...baseData, event: "responseFinished" }, baseContext)
+      ).resolves.toBeUndefined();
+      expect(online.deliver).toHaveBeenCalledTimes(2);
+      expect(mockHandleIntegrations).toHaveBeenCalledOnce();
+      expect(mockEnqueueWebhookDeliveryJob).not.toHaveBeenCalled();
+      expect(mockLoggerError).toHaveBeenCalledWith(
+        expect.objectContaining({ webhookId: webhookRow.id, err: failure }),
+        "Inline webhook delivery failed"
+      );
+    }
+  );
 
   test("fails the job before the final attempt when a webhook delivery cannot be enqueued", async () => {
     const enqueueError = new Error("redis unavailable");

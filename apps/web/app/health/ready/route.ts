@@ -24,6 +24,15 @@ export async function GET() {
       });
       if (!state?.completedPhases.includes("prepare")) throw new Error("preparation_incomplete");
     }
+    // This constraint arbitrates concurrent bootstrap sign-ups, including maintenance installs.
+    const [index] = await prisma.$queryRaw<{ ready: boolean }[]>`
+      SELECT EXISTS (
+        SELECT 1 FROM pg_index x JOIN pg_class i ON i.oid = x.indexrelid
+        WHERE i.relnamespace = current_schema()::regnamespace
+          AND i.relname = 'User_isBootstrapAdmin_key' AND x.indisvalid AND x.indisunique
+      ) AS ready
+    `;
+    if (!index?.ready) throw new Error("bootstrap_constraint_missing");
     return Response.json({ status: "ready" });
   } catch {
     return Response.json({ status: "not_ready" }, { status: 503 });

@@ -208,13 +208,20 @@ const enqueueWebhookDeliveryJobs = async ({
     ? enqueueWebhookDeliveryJob
     : async (payload, options) => {
         const jobId = options?.jobId ?? createWebhookDeliveryJobId(logContext.jobId, payload.webhookId);
-        await processWebhookDeliveryJob(payload, {
-          attempt: logContext.attempt,
-          maxAttempts: logContext.maxAttempts,
-          jobId,
-          jobName: "response-pipeline.process",
-          queueName: "formbricks-jobs",
-        });
+        try {
+          await processWebhookDeliveryJob(payload, {
+            attempt: logContext.maxAttempts,
+            maxAttempts: logContext.maxAttempts,
+            jobId,
+            jobName: "response-pipeline.process",
+            queueName: "formbricks-jobs",
+          });
+        } catch (error) {
+          logger.error(
+            { ...logContext, err: error, webhookId: payload.webhookId },
+            "Inline webhook delivery failed"
+          );
+        }
         return { jobId, jobName: "response-pipeline.process", queueName: "formbricks-jobs" };
       };
   const results = await Promise.allSettled(
@@ -322,17 +329,18 @@ const loadResponseCountSafely = async ({
 /**
  * ENG-3282: an alert carries the response, so it only goes to someone who may read it — for a restricted
  * survey, its owner and the organization administrators. A subscription made while the survey was
- * workspace-visible does not survive a restriction. Bounded by the subscriber count; a no-op while
- * survey visibility is not enforced.
+ * workspace-visible does not survive a restriction. Workspace-visible surveys use the recipient query
+ * authorization; restricted surveys additionally check each recipient.
  */
 const keepRecipientsWhoMayReadResponses = async <TUser extends { id: string }>(
   users: TUser[],
-  surveyId: string
+  survey: TPipelineSurvey
 ): Promise<TUser[]> => {
-  if (users.length === 0) return users;
+  // The recipient query already scopes current membership and workspace permissions.
+  if (users.length === 0 || isSurveyOutboundAllowed(survey)) return users;
   const allowed = await Promise.all(
     users.map((user) =>
-      can({ id: user.id, type: "user" }, "survey.response_read", { id: surveyId, type: "survey" })
+      can({ id: user.id, type: "user" }, "survey.response_read", { id: survey.id, type: "survey" })
     )
   );
   return users.filter((_, index) => allowed[index]);
@@ -342,10 +350,12 @@ const getUsersWithNotifications = async ({
   data,
   logContext,
   workspaceId,
+  survey,
 }: {
   data: TResponsePipelineJobData;
   logContext: ReturnType<typeof getPipelineLogContext>;
   workspaceId: string;
+  survey: TPipelineSurvey;
 }): Promise<Array<{ email: string; locale: TUserLocale }>> => {
   try {
     const users = await prisma.user.findMany({
@@ -402,7 +412,7 @@ const getUsersWithNotifications = async ({
       select: { email: true, id: true, locale: true },
     });
 
-    return (await keepRecipientsWhoMayReadResponses(users, data.surveyId)).map((user) => ({
+    return (await keepRecipientsWhoMayReadResponses(users, survey)).map((user) => ({
       email: user.email,
       locale: toUserLocale(user.locale),
     }));
@@ -677,6 +687,7 @@ const runResponseFinishedSideEffects = async ({
   const [integrations, usersWithNotifications] = await Promise.all([
     outboundAllowed ? loadIntegrationsSafely({ logContext, workspaceId }) : Promise.resolve([]),
     getUsersWithNotifications({
+      survey,
       data,
       logContext,
       workspaceId,
