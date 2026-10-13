@@ -46,7 +46,11 @@ describe("getRetentionHealthFacts", () => {
       select: { enabledAt: true },
     });
     expect(prisma.retentionRun.findFirst).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { organizationId: "clorg" }, orderBy: { startedAt: "desc" } })
+      // The sweep's runs only: an archive purge's run must not hide a sweep that stopped.
+      expect.objectContaining({
+        where: { organizationId: "clorg", kind: "sweep" },
+        orderBy: { startedAt: "desc" },
+      })
     );
     expect(prisma.deletionCleanup.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({ where: { organizationId: "clorg" }, orderBy: { createdAt: "asc" } })

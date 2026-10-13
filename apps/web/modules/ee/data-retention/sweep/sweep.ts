@@ -63,7 +63,7 @@ const listOrganizationsToSweep = async (): Promise<string[]> => {
     FROM (SELECT DISTINCT "organizationId" FROM "RetentionPolicy" WHERE "enabled") o
     LEFT JOIN LATERAL (
       SELECT r."startedAt" FROM "RetentionRun" r
-      WHERE r."organizationId" = o."organizationId"
+      WHERE r."organizationId" = o."organizationId" AND r."kind" = 'sweep'
       ORDER BY r."startedAt" DESC
       LIMIT 1
     ) last ON true

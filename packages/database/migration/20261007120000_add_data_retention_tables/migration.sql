@@ -17,8 +17,9 @@
 --
 -- The CHECK constraints hold the structural invariants Prisma cannot express: positive day counts,
 -- conditions on the surveys policy only (and at least one there), exactly one target per exemption and
--- notice, a reason on every person's exemption, and a reason on every skipped run item. The allowed ranges are validated by the API instead, because they are
--- expected to widen. Prisma neither models nor drops CHECK constraints, so they cause no schema drift.
+-- notice, a reason on every person's exemption, and a reason on every skipped run item, plus the two
+-- range bounds that guard against acting early (a notice of at least 14 days, shorter than the period).
+-- The other ranges are validated by the API, because they are expected to widen. Prisma neither models nor drops CHECK constraints, so they cause no schema drift.
 -- A guard that finds a type or constraint already there keeps it as it is: a development database that
 -- applied an earlier draft of this unreleased file keeps that draft's definitions. Reset it instead.
 BEGIN;
@@ -36,6 +37,14 @@ END $$;
 DO $$
 BEGIN
   CREATE TYPE "RetentionSurveyCondition" AS ENUM ('noResponse', 'noChange', 'createdBefore');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+-- CreateEnum
+DO $$
+BEGIN
+  CREATE TYPE "RetentionRunKind" AS ENUM ('sweep', 'purge');
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
@@ -176,6 +185,7 @@ CREATE TABLE IF NOT EXISTS "RetentionRun" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "entity" "RetentionEntity" NOT NULL,
+    "kind" "RetentionRunKind" NOT NULL DEFAULT 'sweep',
     "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "finishedAt" TIMESTAMP(3),
     "notifiedCount" INTEGER NOT NULL DEFAULT 0,
@@ -246,18 +256,6 @@ BEGIN
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
-
--- AlterTable
--- A nullable column with no default: a catalog-only change that rewrites nothing. It takes a brief
--- ACCESS EXCLUSIVE lock on "User", which the SET LOCAL above bounds.
-ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "reactivatedAt" TIMESTAMP(3);
-
--- AlterTable
--- The members retention clock's record of activity, written on every session start and renewal. The
--- same catalog-only change as above. It is seeded from the sessions still valid by the data migration
--- right after this one (`20261007120001_backfill_user_last_active_at`), in batches that each commit on
--- their own, rather than here, where it would hold this transaction's lock on "User" for the whole pass.
-ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "lastActiveAt" TIMESTAMP(3);
 
 -- Every index below is on a table this same transaction just created, so it is built over zero rows
 -- and locks nothing anyone else can reach. CONCURRENTLY is not an option here in any case: Postgres
@@ -430,5 +428,18 @@ BEGIN
 EXCEPTION
   WHEN duplicate_object THEN NULL;
 END $$;
+
+-- AlterTable
+-- Last, right before COMMIT: adding a column takes ACCESS EXCLUSIVE on "User", which blocks every
+-- session lookup until the transaction ends. Taken earlier, it would be held while the foreign keys
+-- above wait (up to the SET LOCAL timeout each) for their locks on "Organization" and "Survey". Both
+-- columns are nullable with no default, a catalog-only change that rewrites nothing.
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "reactivatedAt" TIMESTAMP(3);
+
+-- The members retention clock's record of activity, written on every session start and renewal. It is
+-- seeded from the sessions still valid by the data migration right after this one
+-- (`20261007120001_backfill_user_last_active_at`), in batches that each commit on their own, rather than
+-- here, where it would hold this transaction's lock on "User" for the whole pass.
+ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "lastActiveAt" TIMESTAMP(3);
 
 COMMIT;

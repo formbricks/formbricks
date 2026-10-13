@@ -185,6 +185,26 @@ describe("data retention sweep (real Postgres)", () => {
       });
     });
 
+    test("an archive purge's run doesn't count as the sweep having run", async () => {
+      const policy = await enablePolicy("surveys", ago(100 * DAY));
+      // The sweep last ran a week ago; the purge, which runs whether or not the sweep can, ran last night.
+      await addRun("surveys", ago(7 * DAY));
+      await prisma.retentionRun.create({
+        data: { organizationId, entity: "surveys", kind: "purge", startedAt: ago(DAY), finishedAt: ago(DAY) },
+      });
+      // A purge run left open (its process died) holds no lease either.
+      await prisma.retentionRun.create({
+        data: { organizationId, entity: "surveys", kind: "purge", startedAt: ago(HOUR) },
+      });
+
+      await recordRetentionDeferral([organizationId]);
+      expect(
+        (await prisma.retentionPolicy.findUniqueOrThrow({ where: { id: policy.id } })).deferredAt
+      ).toBeNull();
+      const run = await openRetentionRun(organizationId, "surveys");
+      expect(run?.restartedWarning).toEqual({ previousEnabledAt: policy.enabledAt });
+    });
+
     test.each([
       ["the last run is recent", ago(DAY), ago(100 * DAY)],
       // One missed night (a dropped tick, a failed licence lookup) must not re-notify everyone.

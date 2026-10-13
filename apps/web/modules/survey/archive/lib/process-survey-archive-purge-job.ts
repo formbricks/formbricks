@@ -10,6 +10,7 @@ import {
 } from "@/modules/survey/archive/lib/constants";
 import { deleteSurvey } from "@/modules/survey/lib/surveys";
 import { getSurveyPurgeEligibleWhere } from "./purge-eligibility";
+import { type TRetentionPurgeHistory, createRetentionPurgeHistory } from "./retention-purge-history";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -43,11 +44,23 @@ type TPurgeOutcome = "purged" | "skipped" | "failed";
  * - "failed":  a real deletion error
  * The caller excludes skipped and failed surveys from later batches this run.
  */
-const purgeArchivedSurvey = async (survey: TExpiredSurvey, cutoff: Date): Promise<TPurgeOutcome> => {
+const purgeArchivedSurvey = async (
+  survey: TExpiredSurvey,
+  cutoff: Date,
+  history: TRetentionPurgeHistory
+): Promise<TPurgeOutcome> => {
   try {
+    // A survey the surveys policy archived gets its deletion in data retention History, written in the
+    // delete's transaction (so a refused or failed delete records nothing).
+    const historyRunId = (await history.wasArchivedByPolicy(survey.id))
+      ? await history.runFor(survey.workspace.organizationId)
+      : null;
     // Guarded delete: the survey is re-checked (locked) inside deleteSurvey's transaction so a survey
     // restored or held after this batch was selected is skipped, not permanently deleted.
-    await deleteSurvey(survey.id, { purgeCutoff: cutoff });
+    await deleteSurvey(survey.id, {
+      purgeCutoff: cutoff,
+      ...(historyRunId ? { inTransaction: (tx) => history.recordDeletion(tx, historyRunId, survey.id) } : {}),
+    });
   } catch (error) {
     // Restored, held or already gone between selection and delete: no longer eligible.
     if (error instanceof ResourceNotFoundError) {
@@ -83,8 +96,14 @@ const purgeArchivedSurvey = async (survey: TExpiredSurvey, cutoff: Date): Promis
   return "purged";
 };
 
-export const purgeExpiredArchivedSurveys = async (now: Date = new Date()): Promise<number> => {
-  const cutoff = getSurveyArchivePurgeCutoff(now);
+/**
+ * Purge batches until no eligible survey is left or the batch cap is hit. Returns how many surveys were
+ * purged and how many batches it took.
+ */
+const purgeBatches = async (
+  cutoff: Date,
+  history: TRetentionPurgeHistory
+): Promise<{ purgedCount: number; batches: number }> => {
   let purgedCount = 0;
   let batches = 0;
   // Surveys attempted but not purged this run (failed, or found ineligible under the lock). Excluded
@@ -113,7 +132,7 @@ export const purgeExpiredArchivedSurveys = async (now: Date = new Date()): Promi
     }
 
     for (const survey of expiredSurveys) {
-      const outcome = await purgeArchivedSurvey(survey, cutoff);
+      const outcome = await purgeArchivedSurvey(survey, cutoff, history);
       if (outcome === "purged") {
         purgedCount += 1;
       } else {
@@ -126,6 +145,21 @@ export const purgeExpiredArchivedSurveys = async (now: Date = new Date()): Promi
       break;
     }
   }
+
+  return { purgedCount, batches };
+};
+
+export const purgeExpiredArchivedSurveys = async (now: Date = new Date()): Promise<number> => {
+  const cutoff = getSurveyArchivePurgeCutoff(now);
+  const history = createRetentionPurgeHistory();
+  let result: { purgedCount: number; batches: number };
+  try {
+    result = await purgeBatches(cutoff, history);
+  } finally {
+    // Also after a failure part-way: the History runs opened so far get their totals.
+    await history.close();
+  }
+  const { purgedCount, batches } = result;
 
   if (batches >= MAX_PURGE_BATCHES) {
     logger.warn(

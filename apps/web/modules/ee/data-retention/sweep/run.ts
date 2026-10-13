@@ -59,6 +59,8 @@ export const openRetentionRuns = (
     const held = await tx.retentionRun.findFirst({
       where: {
         organizationId,
+        // The archive purge's runs record deletions; only a sweep holds the lease.
+        kind: "sweep",
         finishedAt: null,
         startedAt: { gt: new Date(now.getTime() - RETENTION_RUN_LEASE_MS) },
       },
@@ -113,7 +115,8 @@ export const recordRetentionDeferral = async (organizationIds: readonly string[]
             p."enabledAt",
             p."deferredAt",
             (SELECT MAX(r."startedAt") FROM "RetentionRun" r
-              WHERE r."organizationId" = p."organizationId" AND r."entity" = p."entity")
+              WHERE r."organizationId" = p."organizationId" AND r."entity" = p."entity"
+                AND r."kind" = 'sweep')
           ) > ${unbrokenSince}
       `;
     });
@@ -148,7 +151,7 @@ const openPolicyRun = async (
   // Read after the policy's lock, so a run that waited for an edit stamps the moment it opens.
   const now = await readDatabaseClock(tx);
   const previous = await tx.retentionRun.findFirst({
-    where: { organizationId, entity },
+    where: { organizationId, entity, kind: "sweep" },
     orderBy: [{ startedAt: "desc" }, { id: "desc" }],
     select: { startedAt: true, scanCursor: true },
   });

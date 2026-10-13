@@ -113,6 +113,7 @@ describe("openRetentionRuns", () => {
     expect(tx.retentionRun.findFirst).toHaveBeenNthCalledWith(1, {
       where: {
         organizationId: ORG_ID,
+        kind: "sweep",
         finishedAt: null,
         startedAt: { gt: ago(RETENTION_RUN_LEASE_MS) },
       },

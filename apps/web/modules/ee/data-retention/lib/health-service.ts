@@ -12,7 +12,8 @@ export async function getRetentionHealthFacts(organizationId: string): Promise<T
       select: { enabledAt: true },
     }),
     prisma.retentionRun.findFirst({
-      where: { organizationId },
+      // The sweep's runs: the archive purge also writes runs, and must not hide a sweep that stopped.
+      where: { organizationId, kind: "sweep" },
       orderBy: { startedAt: "desc" },
       select: { startedAt: true },
     }),

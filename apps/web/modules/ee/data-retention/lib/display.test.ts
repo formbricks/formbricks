@@ -4,6 +4,7 @@ import type { TRetentionRun, TSurveyRetentionPolicy } from "../types";
 import {
   createRetentionCountFormatter,
   formatRetentionDate,
+  formatRetentionNotice,
   formatRetentionPeriod,
   formatRetentionRunTime,
   getRetentionHistoryCounts,
@@ -35,11 +36,11 @@ describe("getRetentionHistoryCounts", () => {
     });
   });
 
-  test("surveys show notices and archives; the run never deletes one, so that column is missing", () => {
+  test("surveys show notices, archives and the deletions the archive purge recorded", () => {
     expect(getRetentionHistoryCounts(run("surveys"))).toEqual({
       notified: 3,
       archived: 5,
-      deletedOrDeactivated: null,
+      deletedOrDeactivated: 7,
     });
   });
 
@@ -73,6 +74,16 @@ describe("createRetentionCountFormatter", () => {
     expect(createRetentionCountFormatter("de-DE")(12345)).toBe("12.345");
     expect(createRetentionCountFormatter("en-US")(0)).toBe("0");
     expect(createRetentionCountFormatter("en-US")(null)).toBe("—");
+  });
+});
+
+describe("formatRetentionNotice", () => {
+  const t = ((key: string, values?: Record<string, unknown>) =>
+    `${key.split(".").pop()} ${JSON.stringify(values)}`) as unknown as TFunction;
+
+  test("states a notice in days, however many months it makes", () => {
+    expect(formatRetentionNotice(60, t)).toBe('period_days {"count":60}');
+    expect(formatRetentionNotice(14, t)).toBe('period_days {"count":14}');
   });
 });
 

@@ -12,6 +12,14 @@ enum RetentionSurveyCondition {
   createdBefore
 }
 
+/// What wrote a `RetentionRun`: the nightly sweep, or the archive purge recording the deletion of surveys
+/// the surveys policy archived. Only sweep runs count as the sweep having run (its lease, its warning
+/// restart after a gap, where its scan resumes, the health check).
+enum RetentionRunKind {
+  sweep
+  purge
+}
+
 /// Who made an exemption: a person (with a reason), or a restore from the archive under a surveys policy
 /// whose only condition is "created before" (`restartSurveyRetention`), which carries no reason.
 enum RetentionExemptionSource {
@@ -131,12 +139,13 @@ model RetentionRun {
   organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   organizationId String
   entity         RetentionEntity
+  kind           RetentionRunKind   @default(sweep)
   startedAt      DateTime           @default(now())
   finishedAt     DateTime?
   notifiedCount  Int                @default(0)
   /// Archived surveys, or deactivated members.
   archivedCount  Int                @default(0)
-  /// Deleted responses. (Archived surveys are deleted by the archive purge, not counted here.)
+  /// Deleted responses, or, on a purge run, deleted surveys.
   deletedCount   Int                @default(0)
   skippedCount   Int                @default(0)
   /// False when the run changed nothing. History hides those by default.

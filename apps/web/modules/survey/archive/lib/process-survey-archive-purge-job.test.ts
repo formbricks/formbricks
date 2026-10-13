@@ -6,6 +6,7 @@ import { SURVEY_ARCHIVE_PURGE_BATCH_SIZE } from "@/modules/survey/archive/lib/co
 import { deleteSurvey } from "@/modules/survey/lib/surveys";
 import { getSurveyArchivePurgeCutoff, purgeExpiredArchivedSurveys } from "./process-survey-archive-purge-job";
 import { getSurveyPurgeEligibleWhere } from "./purge-eligibility";
+import { createRetentionPurgeHistory } from "./retention-purge-history";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -22,6 +23,14 @@ vi.mock("@formbricks/logger", () => ({
 vi.mock("@/modules/survey/lib/surveys", () => ({
   deleteSurvey: vi.fn(),
 }));
+
+const history = vi.hoisted(() => ({
+  wasArchivedByPolicy: vi.fn(),
+  runFor: vi.fn(),
+  recordDeletion: vi.fn(),
+  close: vi.fn(),
+}));
+vi.mock("./retention-purge-history", () => ({ createRetentionPurgeHistory: vi.fn(() => history) }));
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   queueAuditEventWithoutRequest: vi.fn().mockResolvedValue(undefined),
@@ -44,6 +53,38 @@ describe("purgeExpiredArchivedSurveys", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(queueAuditEventWithoutRequest).mockResolvedValue(undefined as never);
+    history.wasArchivedByPolicy.mockResolvedValue(false);
+    history.runFor.mockResolvedValue("run_1");
+    history.close.mockResolvedValue(undefined);
+  });
+
+  test("records the deletion of a survey the policy archived in History, in the delete's transaction", async () => {
+    vi.mocked(prisma.survey.findMany)
+      .mockResolvedValueOnce([makeSurvey("s1"), makeSurvey("s2")] as never)
+      .mockResolvedValueOnce([] as never);
+    history.wasArchivedByPolicy.mockImplementation(async (id: string) => id === "s1");
+    vi.mocked(deleteSurvey).mockResolvedValue({} as never);
+
+    await purgeExpiredArchivedSurveys(new Date("2026-07-31T00:00:00.000Z"));
+
+    expect(createRetentionPurgeHistory).toHaveBeenCalledOnce();
+    expect(history.runFor).toHaveBeenCalledExactlyOnceWith("org_1");
+    // s1 carries a hook that writes its row inside the delete; s2, archived by hand, none.
+    const [[, s1Options], [, s2Options]] = vi.mocked(deleteSurvey).mock.calls;
+    expect(s2Options).not.toHaveProperty("inTransaction");
+    const tx = {};
+    await s1Options?.inTransaction?.(tx as never);
+    expect(history.recordDeletion).toHaveBeenCalledWith(tx, "run_1", "s1");
+    expect(history.close).toHaveBeenCalledOnce();
+  });
+
+  test("closes the History runs it opened even when the purge fails part-way", async () => {
+    vi.mocked(prisma.survey.findMany).mockRejectedValueOnce(new Error("db down"));
+
+    await expect(purgeExpiredArchivedSurveys(new Date("2026-07-31T00:00:00.000Z"))).rejects.toThrow(
+      "db down"
+    );
+    expect(history.close).toHaveBeenCalledOnce();
   });
 
   test("queries surveys archived before the cutoff and deletes each one with the eligibility guard", async () => {

@@ -42,10 +42,11 @@ BEGIN
   IF current_setting('formbricks.retention_policy_delete', true) IS NOT DISTINCT FROM 'on' THEN
     RETURN NULL;
   END IF;
-  -- Most deletes find no survey notice holding a clock: skip reading the deleted rows then. Notices are
-  -- kept past their delivery (an archived survey's until its purge, a deactivated member's, a reminder
-  -- until it is re-armed), so this is one probe of "RetentionNotice_surveys_clock_pending_idx", which
-  -- holds only survey notices with a clock, rather than a scan of the table.
+  -- An instance where no survey notice holds a clock (no surveys policy anywhere) skips reading the
+  -- deleted rows: one probe of "RetentionNotice_surveys_clock_pending_idx", which holds only survey
+  -- notices with a clock. The check spans every organisation, so on a shared instance where any one
+  -- has the surveys policy on it never skips, and the UPDATE below does the work, through the same
+  -- index.
   IF NOT EXISTS (SELECT 1 FROM "RetentionNotice" WHERE "entity" = 'surveys' AND "clockAt" IS NOT NULL) THEN
     RETURN NULL;
   END IF;

@@ -29,7 +29,14 @@ import { restartSurveyRetention } from "@/modules/survey/archive/lib/retention-r
  * storage part is drained straight after commit; the Hub part a few minutes later, once any record still
  * on its way has landed.
  */
-export const deleteSurvey = async (surveyId: string, options?: { purgeCutoff?: Date }) => {
+export const deleteSurvey = async (
+  surveyId: string,
+  options?: {
+    purgeCutoff?: Date;
+    /** Runs in the delete's transaction, after the survey is gone: a record that must commit with it. */
+    inTransaction?: (tx: Prisma.TransactionClient) => Promise<void>;
+  }
+) => {
   validateInputs([surveyId, ZId]);
   const eligibleWhere = options?.purgeCutoff ? getSurveyPurgeEligibleWhere(options.purgeCutoff) : null;
   const isStillEligible = async (client: Pick<Prisma.TransactionClient, "survey">) =>
@@ -90,6 +97,8 @@ export const deleteSurvey = async (surveyId: string, options?: { purgeCutoff?: D
           },
         });
       }
+
+      await options?.inTransaction?.(tx);
 
       return { deletedSurvey, drainNowIds };
     });

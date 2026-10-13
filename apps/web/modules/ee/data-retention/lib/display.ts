@@ -28,8 +28,8 @@ export const getRetentionPolicyLabel = (policy: TRetentionPolicyKind, t: TFuncti
  * rather than a 0 that reads as "nothing happened". Every policy notifies (responses once, when they
  * first fall due). Per policy:
  * - responses: no archive; the last column counts deletions.
- * - surveys: Archived counts archives; the last column is "—", because the run never deletes a
- *   survey (the archive purge does, later and outside any run).
+ * - surveys: Archived counts archives, and the last column deletions: the archive purge, which deletes
+ *   an archived survey 30 days later, records the ones the policy archived in a run of its own.
  * - members: no archive; the last column counts deactivations, which the API reports as `archived`.
  */
 export const getRetentionHistoryCounts = (
@@ -39,7 +39,7 @@ export const getRetentionHistoryCounts = (
     case "responses":
       return { notified: run.notified, archived: null, deletedOrDeactivated: run.deleted };
     case "surveys":
-      return { notified: run.notified, archived: run.archived, deletedOrDeactivated: null };
+      return { notified: run.notified, archived: run.archived, deletedOrDeactivated: run.deleted };
     case "members":
       return { notified: run.notified, archived: null, deletedOrDeactivated: run.archived };
   }
@@ -87,6 +87,13 @@ export const formatRetentionPeriod = (days: number, t: TFunction): string => {
       return t("workspace.settings.data_retention.period_days", { count: amount });
   }
 };
+
+/**
+ * A notice length, always in days: "14 days", "60 days". The notice is set and validated in days (its
+ * custom field and its 14–90 limits), so "2 months" next to them would read as a different unit.
+ */
+export const formatRetentionNotice = (days: number, t: TFunction): string =>
+  t("workspace.settings.data_retention.period_days", { count: days });
 
 const getConditionShortLabel = (condition: TRetentionSurveyCondition, t: TFunction): string => {
   switch (condition) {
