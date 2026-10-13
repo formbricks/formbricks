@@ -82,14 +82,30 @@ beforeEach(() => {
   mocks.consents = [];
   mocks.grantBeyond = false;
   // Two raw reads steer a decision, the consent rows and the grant check; the token queries find nothing.
-  mocks.tx.$queryRaw.mockImplementation(async (sql: TemplateStringsArray | { strings: string[] }) => {
-    const text = (Array.isArray(sql) ? sql : (sql as { strings: string[] }).strings).join("?");
-    if (text.includes(`FROM "oauthConsent" c`)) return mocks.consents;
+  mocks.tx.$queryRaw.mockImplementation(async (sql: TemplateStringsArray, ...values: unknown[]) => {
+    const text = sql.join("?");
+    // The consent read only finds the rows of the client or consent it was asked for.
+    if (text.includes(`FROM "oauthConsent" c`)) {
+      // By client id, or, for update-consent, through the client of the consent it names.
+      const asked = flattenSqlValues(values);
+      const named = mocks.consents.find((row) => asked.includes(row.id));
+      const clientId =
+        named?.clientId ?? mocks.consents.find((row) => asked.includes(row.clientId))?.clientId;
+      return mocks.consents.filter((row) => row.clientId === clientId);
+    }
     if (text.includes("EXISTS")) return [{ beyond: mocks.grantBeyond }];
     return [];
   });
   mocks.tx.$executeRaw.mockResolvedValue(0);
 });
+
+/** A raw query's bound values, with nested `Prisma.sql` fragments' values flattened in. */
+const flattenSqlValues = (values: unknown[]): unknown[] =>
+  values.flatMap((value) =>
+    value && typeof value === "object" && "values" in value
+      ? flattenSqlValues((value as { values: unknown[] }).values)
+      : [value]
+  );
 
 /** A consent row as the locking read returns it. */
 const consentRow = (id: string, scopes: string[], updatedAt: Date, skipConsent = false): TMockConsent => ({
@@ -391,6 +407,16 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
     expect(endedTokensBeyondConsent()).toBe(true);
   });
 
+  test("reconciles only the client the provider's state names", async () => {
+    mocks.getOAuthProviderState.mockResolvedValue({
+      query: new URLSearchParams({ client_id: "another-client", scope: NARROW.join(" ") }).toString(),
+    });
+
+    await revokeTokensBeyondConsentAfterHandler(approve());
+
+    expect(endedTokensBeyondConsent()).toBe(false);
+  });
+
   test("does nothing without a session", async () => {
     mocks.getSessionFromCtx.mockResolvedValue(null);
 
@@ -450,6 +476,57 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
       where: { userId: "user-1", clientId: "client-1", id: { not: "consent-b" } },
     });
     expect(mocks.tx.oauthConsent.update).not.toHaveBeenCalled();
+  });
+
+  test("on a same-second tie, the scopes accepted in the body name the row the approval wrote", async () => {
+    const sameSecond = new Date(2_000);
+    // The query asked for every scope; the user accepted NARROW only, so NARROW is what was stored.
+    mocks.getOAuthProviderState.mockResolvedValue({
+      query: new URLSearchParams({
+        client_id: "client-1",
+        scope: "surveys:read responses:read offline_access",
+      }).toString(),
+    });
+    mocks.consents = [
+      consentRow("consent-a", ["surveys:read", "responses:read", "offline_access"], sameSecond),
+      consentRow("consent-b", NARROW, sameSecond),
+    ];
+
+    await revokeTokensBeyondConsentAfterHandler(
+      ctx("/oauth2/consent", { accept: true, scope: NARROW.join(" ") }, { redirect: true })
+    );
+
+    expect(mocks.tx.oauthConsent.deleteMany).toHaveBeenCalledWith({
+      where: { userId: "user-1", clientId: "client-1", id: { not: "consent-b" } },
+    });
+  });
+
+  test("on a same-second tie after a refused request, names no write and keeps what every row allows", async () => {
+    const sameSecond = new Date(2_000);
+    mocks.consents = [
+      consentRow("consent-a", NARROW, sameSecond),
+      consentRow("consent-b", ["surveys:read", "responses:read", "offline_access"], sameSecond),
+    ];
+
+    await revokeTokensBeyondConsentAfterHandler(
+      ctx(
+        "/oauth2/update-consent",
+        { id: "consent-b", update: { scopes: ["nope"] } },
+        new APIError("BAD_REQUEST")
+      )
+    );
+
+    // The refused request wrote nothing, so the wide row it named isn't trusted as the latest write.
+    expect(mocks.tx.oauthConsent.deleteMany).toHaveBeenCalledWith({
+      where: { userId: "user-1", clientId: "client-1", id: { not: "consent-a" } },
+    });
+  });
+
+  test("ignores a malformed scope in the body rather than failing", async () => {
+    await revokeTokensBeyondConsentAfterHandler(ctx("/oauth2/consent", { accept: true, scope: 1 }));
+
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(endedTokensBeyondConsent()).toBe(true);
   });
 
   test("on a same-second tie no write can be named, so keeps what every tied row allows", async () => {
@@ -516,12 +593,16 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
     expect(endedTokensBeyondConsent()).toBe(false);
   });
 
-  test("retries once, so a lock conflict with a racing refresh doesn't leave tokens behind", async () => {
+  test("retries a failure once, logging the first one, so a transient error doesn't leave tokens behind", async () => {
     mocks.tx.$executeRaw.mockResolvedValue(1).mockRejectedValueOnce(new Error("deadlock detected"));
 
     await revokeTokensBeyondConsentAfterHandler(approve());
 
     expect(logger.error).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(Error), userId: "user-1" }),
+      expect.any(String)
+    );
     expect(logger.info).toHaveBeenCalledWith(
       expect.objectContaining({ userId: "user-1", clientId: "client-1" }),
       expect.any(String)

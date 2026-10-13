@@ -30,8 +30,9 @@ import { MCP_OAUTH_REFRESH_TOKEN_PREFIX } from "./mcp-oauth-provider-options";
  *
  *  - {@link revokeTokensBeyondConsentAfterHandler} ends the client's tokens that reach past the consent
  *    as soon as it is narrowed.
- *  - The refresh check refuses a refresh token whose scopes the consent no longer covers, and ends the
- *    tokens beyond it, for the same race and for grants narrowed before this fix.
+ *  - The refresh check refuses a refresh token when the consent no longer covers it or any other token
+ *    of its grant, and ends the tokens beyond it, for the same race and for grants narrowed before this
+ *    fix.
  *
  * Access tokens are self-contained JWTs verified against JWKS (`modules/mcp/auth.ts`), so one minted
  * before the revoke stays valid until it expires (`accessTokenExpiresIn`, 15 minutes). That residual
@@ -94,7 +95,9 @@ const lockConsents = (
   const clientId =
     "clientId" in target
       ? Prisma.sql`${target.clientId}`
-      : Prisma.sql`(SELECT "clientId" FROM "oauthConsent" WHERE "id" = ${target.consentId} AND "userId" = ${userId})`;
+      : Prisma.sql`(
+          SELECT "clientId" FROM "oauthConsent" WHERE "id" = ${target.consentId} AND "userId" = ${userId}
+        )`;
   const lock = mode === "update" ? Prisma.sql`FOR UPDATE OF c` : Prisma.sql`FOR SHARE OF c`;
   return tx.$queryRaw<TConsentRow[]>`
     SELECT c."id", c."clientId", c."scopes", c."updatedAt", cl."skipConsent"
@@ -355,19 +358,24 @@ const sameScopes = (a: string[], b: string[]): boolean =>
   a.length === b.length && a.every((scope) => b.includes(scope));
 
 const consentChange = async (ctx: AuthHookContext): Promise<TConsentChange | null> => {
+  // Only a request the provider accepted wrote anything; after a refusal no row is the latest write.
+  const wrote = !isAPIError((ctx.context as { returned?: unknown }).returned);
   if (isApproval(ctx)) {
     const query = new URLSearchParams((await getOAuthProviderState())?.query ?? "");
     const clientId = query.get("client_id");
     if (!clientId) return null;
     // The provider stores the scopes the user accepted, or every scope the request asked for.
-    const accepted = ((ctx.body as { scope?: unknown }).scope as string | undefined) ?? query.get("scope");
-    const approved = accepted?.split(" ") ?? [];
-    return { target: { clientId }, isLatestWrite: (consent) => sameScopes(consent.scopes, approved) };
+    const bodyScope = (ctx.body as { scope?: unknown }).scope;
+    const approved = (typeof bodyScope === "string" ? bodyScope : query.get("scope"))?.split(" ") ?? [];
+    return {
+      target: { clientId },
+      isLatestWrite: (consent) => wrote && sameScopes(consent.scopes, approved),
+    };
   }
   if (ctx.path === CONSENT_UPDATE_PATH) {
     const consentId = (ctx.body as { id?: unknown } | undefined)?.id;
     if (typeof consentId !== "string") return null;
-    return { target: { consentId }, isLatestWrite: (consent) => consent.id === consentId };
+    return { target: { consentId }, isLatestWrite: (consent) => wrote && consent.id === consentId };
   }
   return null;
 };
@@ -409,11 +417,14 @@ export const revokeTokensBeyondConsentAfterHandler = async (ctx: AuthHookContext
       return;
     }
 
-    // One retry: the likeliest failure is a lock conflict with a racing refresh, which a second attempt
-    // settles. Opaque access tokens beyond the consent have no later check of their own until the
-    // grant's next refresh, so it is worth one.
+    // One retry, for a transient failure (a transaction timeout, a dropped connection): opaque access
+    // tokens beyond the consent have no check of their own until the grant's next refresh. The first
+    // failure is still logged, so a recurring one doesn't hide behind a retry that succeeds.
     const settle = () => endTokensBeyondChangedConsent(userId, change);
-    const ended = await settle().catch(settle);
+    const ended = await settle().catch((err: unknown) => {
+      logger.warn({ err, ...ids }, "OAuth consent changed but ending the tokens beyond it failed; retrying");
+      return settle();
+    });
     if (!ended) return;
     ids.clientId = ended.clientId;
     if (ended.refreshTokensDeleted + ended.accessTokensRevoked === 0) return;
@@ -458,10 +469,10 @@ const invalidGrant = (): APIError =>
  *  - No consent (ENG-2499): revokes every token the client holds for the user (the one just issued
  *    included) and replaces the response with `invalid_grant`, so the new tokens never leave.
  *  - A consent narrowed below the token, or below any other token of its grant (ENG-3529): ends the
- *    client's tokens that reach past the consent and the presented token's whole grant (the one just issued included, even when the client
- *    asked for scopes the consent does cover), and answers `invalid_grant`. The client has to go back
- *    through `/authorize`, which only issues what the consent covers. Grants within the consent, such
- *    as the narrowed approval's own, keep working.
+ *    client's tokens that reach past the consent and the presented token's whole grant (the one just
+ *    issued included, even when the client asked for scopes the consent does cover), and answers
+ *    `invalid_grant`. The client has to go back through `/authorize`, which only issues what the
+ *    consent covers. Grants within the consent, such as the narrowed approval's own, keep working.
  *
  * It runs after issuance on purpose. A check before issuance could pass, then lose to a revoke that
  * commits before the new refresh token is inserted, leaving that token outside the revoke's update.
