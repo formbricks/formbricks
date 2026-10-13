@@ -6,8 +6,11 @@ import { ZLinkSurveyEmailData } from "@formbricks/types/email";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { actionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
+import { shouldLogAuthFailure } from "@/modules/auth/lib/utils";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
 import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
@@ -52,6 +55,25 @@ const ZValidateSurveyPinAction = z.object({
   pin: z.string(),
 });
 
+// The caller is an unauthenticated respondent, so the survey's organization is neither known to the caller
+// nor disclosed through the audit event: actor and organization are UNKNOWN_DATA, and the client IP is
+// attached by the audit pipeline. The PIN itself is never recorded.
+const auditSurveyPinAttempt = (surveyId: string, isSuccess: boolean) =>
+  queueAuditEventBackground({
+    action: isSuccess ? "authenticationSucceeded" : "authenticationAttempted",
+    targetType: "survey",
+    userId: UNKNOWN_DATA,
+    userType: "user",
+    targetId: surveyId,
+    organizationId: UNKNOWN_DATA,
+    status: isSuccess ? "success" : "failure",
+    newObject: {
+      provider: "link_survey",
+      authMethod: "survey_pin",
+      ...(isSuccess ? {} : { failureReason: "invalid_pin" }),
+    },
+  });
+
 export const validateSurveyPinAction = actionClient
   .inputSchema(ZValidateSurveyPinAction)
   .action(async ({ parsedInput }) => {
@@ -67,6 +89,10 @@ export const validateSurveyPinAction = actionClient
     const originalPin = surveyPin?.toString();
 
     if (originalPin && originalPin !== parsedInput.pin) {
+      // Failures are attacker-controlled (PIN guessing), so they are throttled per survey.
+      if (await shouldLogAuthFailure(`survey-pin:${parsedInput.surveyId}`)) {
+        auditSurveyPinAttempt(parsedInput.surveyId, false);
+      }
       throw new InvalidInputError("INVALID_PIN");
     }
 
@@ -82,5 +108,7 @@ export const validateSurveyPinAction = actionClient
     const publicSurvey = omitCustomCssSource(survey);
 
     if (!originalPin) return { survey: publicSurvey, customCss };
-    return { survey: publicSurvey, customCss, pinAuthToken: createLinkSurveyPinToken(survey.id) };
+    const pinAuthToken = createLinkSurveyPinToken(survey.id);
+    auditSurveyPinAttempt(survey.id, true);
+    return { survey: publicSurvey, customCss, pinAuthToken };
   });

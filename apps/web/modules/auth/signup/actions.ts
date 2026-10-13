@@ -52,7 +52,7 @@ import { createTeamMembership } from "@/modules/auth/signup/lib/team";
 import { verifyTurnstileToken } from "@/modules/auth/signup/lib/utils";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { queueAuditEventBackground, withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
@@ -243,6 +243,29 @@ async function handleInviteAcceptance(
     );
   }
 
+  // The enclosing action only records the new user; the membership and the consumed invite are separate
+  // records in the invited organization. A failure after this point fails the action, which is audited.
+  const auditInviteEvent = (
+    action: "created" | "deleted",
+    targetType: "membership" | "invite",
+    newObject: Record<string, unknown>
+  ) =>
+    queueAuditEventBackground({
+      action,
+      targetType,
+      userId: user.id,
+      userType: "user",
+      targetId: targetType === "invite" ? invite.id : `${user.id}-${invite.organizationId}`,
+      organizationId: invite.organizationId,
+      status: "success",
+      newObject,
+    });
+  auditInviteEvent("created", "membership", {
+    role: invite.role,
+    teamIdsCount: invite.teamIds?.length ?? 0,
+    inviteId: invite.id,
+  });
+
   await updateUser(user.id, {
     notificationSettings: {
       alert: {},
@@ -258,6 +281,7 @@ async function handleInviteAcceptance(
     invite.creator.locale
   );
   await deleteInvite(invite.id);
+  auditInviteEvent("deleted", "invite", { acceptedInvite: true });
 }
 
 async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUser): Promise<void> {

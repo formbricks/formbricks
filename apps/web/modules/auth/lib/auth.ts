@@ -69,9 +69,8 @@ export const getUserLocale = async (userId: string): Promise<TUserLocale> => {
  * `session.storeSessionInDatabase` is set (the forward-auth proxies need DB sessions); verification
  * stays Redis-only (ephemeral; no Verification Prisma model needed).
  *
- * Known deferral (not blocking): the 2FA-challenge failure audit (`/two-factor/verify-*`) — the user
- * identity lives in the two-factor cookie, not the request body, so it is tracked separately. The
- * credential sign-in + sole-owner-deletion failure audits and the signedIn-success / lastLoginAt /
+ * The credential sign-in, 2FA-challenge (the user is resolved from the two-factor cookie's pending challenge)
+ * and sole-owner-deletion failure audits and the signedIn-success / lastLoginAt /
  * analytics / Sentry / logger wiring are all live in better-auth-observability.ts.
  */
 export const auth = betterAuth({
