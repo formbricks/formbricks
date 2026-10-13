@@ -57,8 +57,11 @@ const getExemptionColumns = ({
   {
     id: "reason",
     header: t("workspace.settings.data_retention.reason"),
-    hideBelow: "md",
-    // Wraps anywhere, so a long reason gives way at narrow widths instead of pushing Revoke out of the card.
+    // Below lg the settings sidebar leaves too little room for a readable reason, so it drops out with
+    // Created by. The floor keeps it from collapsing to a word a line; wrapping anywhere stops a long
+    // unbroken token (a case number, a URL) from pushing Revoke out of the card.
+    hideBelow: "lg",
+    headerClassName: "min-w-40",
     cellClassName: "whitespace-pre-line wrap-anywhere",
     cell: (exemption) =>
       exemption.source === "restore"
