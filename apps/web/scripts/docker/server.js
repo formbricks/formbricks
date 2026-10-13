@@ -43,6 +43,7 @@ const stop = (exitCode = 0) => {
       closeWorkers: async () => {
         await globalThis.formbricksJobsRuntimeInitializing?.catch(() => undefined);
         await globalThis.formbricksJobsRuntime?.close();
+        await globalThis.formbricksOnlinePauseDelivery?.close();
       },
       closeApp: () => handlers?.server.close(),
     });

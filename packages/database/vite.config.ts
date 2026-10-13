@@ -53,6 +53,7 @@ export default defineConfig(async (): Promise<ViteUserConfig> => {
           "src/prisma-adapter": resolve(__dirname, "src/prisma-adapter.ts"),
           "scripts/apply-migrations": resolve(__dirname, "src/scripts/apply-migrations.ts"),
           "scripts/create-saml-database": resolve(__dirname, "src/scripts/create-saml-database.ts"),
+          "scripts/upgrade-session": resolve(__dirname, "src/scripts/upgrade-session.ts"),
           "scripts/migration-runner": resolve(__dirname, "src/scripts/migration-runner.ts"),
           "scripts/wait-for-database": resolve(__dirname, "src/scripts/wait-for-database.ts"),
           "scripts/backfill-attribute-values": resolve(__dirname, "src/scripts/backfill-attribute-values.ts"),
@@ -90,6 +91,7 @@ export default defineConfig(async (): Promise<ViteUserConfig> => {
         rollupTypes: false,
         include: [
           "src/index.ts",
+          "src/scripts/upgrade-session.ts",
           "src/client.ts",
           "src/json-types.ts",
           "src/prisma.ts",

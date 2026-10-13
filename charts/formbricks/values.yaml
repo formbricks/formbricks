@@ -1087,6 +1087,7 @@ cube:
   image:
     repository: "ghcr.io/formbricks/cube"
     tag: "1.7.47-3"
+    digest: ""
     pullPolicy: IfNotPresent
 
   imagePullSecrets: []
@@ -1615,3 +1616,26 @@ postgresql:
       enabled: true
       runAsUser: 1001
       readOnlyRootFilesystem: false
+
+# Online upgrades remain opt-in until the release acceptance matrix is complete.
+upgrade:
+  mode: maintenance
+  online:
+    # Argo renders Helm charts as installs; select its explicit existing-installation path.
+    controller: helm
+    existingInstallation: false
+    sourceVersion: "6.0.2"
+    sessionAffinity: false
+    # Abort without source termination if active BullMQ jobs exceed this deadline.
+    jobDrainTimeoutSeconds: 180
+    timeoutSeconds: 900
+    # Exact immutable images for every app writer/worker. The web Deployment is added automatically.
+    workloads: []
+    # Paired Hub/Cube and datastores must already run these compatible immutable images.
+    dependencies: []
+    ingress:
+      selector: ""
+      adminPort: 19000
+      # Exact Kubernetes proxy resource names, e.g. envoy-abc-xyz:19000. No wildcard proxy access.
+      proxyResourceNames: []
+      cluster: ""

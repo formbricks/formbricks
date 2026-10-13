@@ -1,0 +1,296 @@
+{{- define "formbricks.webDeployment" -}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "formbricks.name" . }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+    {{- if .Values.deployment.additionalLabels }}
+    {{- toYaml .Values.deployment.additionalLabels | nindent 4 }}
+    {{- end }}
+  {{- if or .Values.deployment.annotations .Values.deployment.reloadOnChange .Values.authzed.enabled }}
+  annotations:
+    {{- if .Values.deployment.annotations }}
+    {{- toYaml .Values.deployment.annotations | nindent 4 }}
+    {{- end }}
+  {{- if .Values.deployment.reloadOnChange }}
+    reloader.stakater.com/auto: "true"
+  {{- end }}
+  {{- if and .Values.authzed.enabled (not (hasKey (default dict .Values.deployment.annotations) "argocd.argoproj.io/sync-wave")) }}
+    # The release-matched AuthZed preparation runs at wave 1. This orders GitOps reconciliation without
+    # coupling the application process, startup, or probes to SpiceDB availability.
+    argocd.argoproj.io/sync-wave: "2"
+  {{- end }}
+  {{- end }}
+spec:
+  {{- if and (not .Values.autoscaling.enabled) (not (kindIs "invalid" .Values.deployment.replicas)) }}
+  replicas: {{ .Values.deployment.replicas }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "formbricks.selectorLabels" . | nindent 6 }}
+  {{- if or (eq .Values.upgrade.mode "online") .Values.deployment.strategy }}
+  strategy:
+    {{- if eq .Values.upgrade.mode "online" }}
+    type: RollingUpdate
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+    {{- else }}
+    {{- toYaml .Values.deployment.strategy | nindent 4 }}
+    {{- end }}
+  {{- end }}
+  {{- if not (kindIs "invalid" .Values.deployment.revisionHistoryLimit) }}
+  revisionHistoryLimit: {{ .Values.deployment.revisionHistoryLimit }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "formbricks.selectorLabels" . | nindent 8 }}
+        {{- if eq .Values.upgrade.mode "online" }}
+        formbricks.com/upgrade-generation: {{ include "formbricks.onlineGeneration" . | quote }}
+        {{- end }}
+        {{- if .Values.deployment.additionalPodLabels }}
+        {{- toYaml .Values.deployment.additionalPodLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.deployment.disableIstioInject }}
+        sidecar.istio.io/inject: "false"
+        {{- end }}
+      {{- if .Values.deployment.additionalPodAnnotations }}
+      annotations:
+        {{- toYaml .Values.deployment.additionalPodAnnotations | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- if .Values.deployment.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.deployment.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- if .Values.deployment.tolerations }}
+      tolerations:
+        {{- toYaml .Values.deployment.tolerations | nindent 8 }}
+      {{- end }}
+      {{- if .Values.deployment.affinity }}
+      affinity:
+        {{- toYaml .Values.deployment.affinity | nindent 8 }}
+      {{- end }}
+      {{- if .Values.deployment.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml .Values.deployment.topologySpreadConstraints | nindent 10 }}
+      {{- end }}
+      {{- if .Values.deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.deployment.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      {{- if .Values.deployment.hostNetwork }}
+      hostNetwork: true
+      {{- end }}
+      {{- if .Values.rbac.serviceAccount.enabled }}
+      serviceAccountName: {{ .Values.rbac.serviceAccount.name | default (include "formbricks.name" .) }}
+      {{- end }}
+      {{- if .Values.deployment.securityContext }}
+      securityContext:
+        {{ toYaml .Values.deployment.securityContext | nindent 8 }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.deployment.terminationGracePeriodSeconds | default 30 }}
+      {{- /* A read-only root filesystem needs writable mounts on every path the app writes at runtime. A path
+      the operator already mounts through extraVolumeMounts is left to them, and a generated volume name that
+      an extraVolumes entry already uses gets a prefix so pod volume names stay unique. */}}
+      {{- $writableMounts := dict }}
+      {{- if include "formbricks.readOnlyRootFilesystem" . }}
+      {{- $operatorPaths := list }}
+      {{- range .Values.deployment.extraVolumeMounts }}
+      {{- $operatorPaths = append $operatorPaths (trimSuffix "/" .mountPath) }}
+      {{- end }}
+      {{- $operatorVolumes := list }}
+      {{- range .Values.deployment.extraVolumes }}
+      {{- $operatorVolumes = append $operatorVolumes .name }}
+      {{- end }}
+      {{- $candidates := dict "writable-tmp" "/tmp" "writable-next-cache" "/home/nextjs/apps/web/.next/cache" }}
+      {{- if not .Values.migration.enabled }}
+      {{- $_ := set $candidates "writable-prisma-migrations" (include "formbricks.prismaMigrationsStagingPath" .) }}
+      {{- end }}
+      {{- range $name, $path := $candidates }}
+      {{- if not (has $path $operatorPaths) }}
+      {{- $volumeName := ternary (printf "formbricks-%s" $name) $name (has $name $operatorVolumes) }}
+      {{- if has $volumeName $operatorVolumes }}
+      {{- fail (printf "deployment.extraVolumes uses both %s and %s; rename one so the chart can mount %s" $name $volumeName $path) }}
+      {{- end }}
+      {{- $_ := set $writableMounts $volumeName $path }}
+      {{- end }}
+      {{- end }}
+      {{- end }}
+      containers:
+        - name: {{ template "formbricks.name" . }}
+          image: {{ include "formbricks.deploymentImage" . }}
+          imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          {{- with .Values.deployment.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.deployment.command }}
+          command:
+            {{- toYaml .Values.deployment.command | nindent 12 }}
+          {{- end }}
+          {{- if .Values.deployment.args }}
+          args:
+            {{- toYaml .Values.deployment.args | nindent 12 }}
+          {{- end }}
+          {{- with .Values.deployment.lifecycle }}
+          lifecycle:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.deployment.ports }}
+          ports:
+            {{- range $name, $config := .Values.deployment.ports }}
+            - name: {{ $name | quote }}
+              containerPort: {{ $config.containerPort | default $config.port }}
+              protocol: {{ $config.protocol | default "TCP" | quote }}
+            {{- end }}
+          {{- end }}
+          {{- if or .Values.deployment.envFrom (or (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) .Values.secret.enabled) }}
+          envFrom:
+          {{- if or .Values.secret.enabled (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) }}
+          - secretRef:
+              name: {{ template "formbricks.name" . }}-app-secrets
+          {{- end }}
+          {{- range $value := .Values.deployment.envFrom }}
+          {{- if (eq .type "configmap") }}
+          - configMapRef:
+              {{- if .name }}
+              name: {{ include "formbricks.tplvalues.render" ( dict "value" $value.name "context" $ ) }}
+              {{- else if .nameSuffix }}
+              name: {{ template "formbricks.name" $ }}-{{ include "formbricks.tplvalues.render" ( dict "value" $value.nameSuffix "context" $ ) }}
+              {{- else }}
+              name: {{ template "formbricks.name" $ }}
+              {{- end }}
+          {{- end }}
+          {{- if (eq .type "secret") }}
+          - secretRef:
+              {{- if .name }}
+              name: {{ include "formbricks.tplvalues.render" ( dict "value" $value.name "context" $ ) }}
+              {{- else if .nameSuffix }}
+              name: {{ template "formbricks.name" $ }}-{{ include "formbricks.tplvalues.render" ( dict "value" $value.nameSuffix "context" $ ) }}
+              {{- else }}
+              name: {{ template "formbricks.name" $ }}
+              {{- end }}
+          {{- end }}
+          {{- end }}
+          {{- end }}
+          env:
+            {{- if eq .Values.upgrade.mode "online" }}
+            - name: FORMBRICKS_UPGRADE_MODE
+              value: online
+            {{- if not (hasKey .Values.deployment.env "BULLMQ_WORKER_ENABLED") }}
+            - name: BULLMQ_WORKER_ENABLED
+              value: "1"
+            {{- end }}
+            {{- end }}
+            {{- if or .Values.migration.enabled (eq .Values.upgrade.mode "online") }}
+            - name: SKIP_STARTUP_MIGRATION
+              value: "true"
+            {{- end }}
+            {{- if and .Values.formbricks.mcpOauthJwksUrl (not (hasKey .Values.deployment.env "MCP_OAUTH_JWKS_URL")) }}
+            - name: MCP_OAUTH_JWKS_URL
+              value: {{ .Values.formbricks.mcpOauthJwksUrl | quote }}
+            {{- end }}
+            {{- if .Values.authzed.enabled }}
+            {{- if not (hasKey .Values.deployment.env "AUTHZED_ENABLED") }}
+            - name: AUTHZED_ENABLED
+              value: "true"
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AUTHZED_ENDPOINT") }}
+            - name: AUTHZED_ENDPOINT
+              value: {{ include "formbricks.authzedEndpoint" . | quote }}
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AUTHZED_TOKEN") }}
+            - name: AUTHZED_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "formbricks.authzedAuthSecretName" . }}
+                  key: {{ .Values.authzed.auth.tokenKey }}
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AUTHZED_SYSTEM_KEY") }}
+            - name: AUTHZED_SYSTEM_KEY
+              value: {{ required "authzed.systemKey is required when AuthZed is enabled" .Values.authzed.systemKey | quote }}
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AUTHZED_INSECURE") }}
+            - name: AUTHZED_INSECURE
+              value: {{ include "formbricks.authzedInsecure" . | quote }}
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AUTHZED_CONSISTENCY") }}
+            - name: AUTHZED_CONSISTENCY
+              value: {{ .Values.authzed.consistency | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "HUB_API_URL") }}
+            - name: HUB_API_URL
+              value: "http://{{ include "formbricks.hubname" . }}:8080"
+            {{- end }}
+            {{- if and .Values.cube.enabled (not (hasKey .Values.deployment.env "CUBEJS_API_URL")) }}
+            - name: CUBEJS_API_URL
+              value: "http://{{ include "formbricks.cubeName" . }}:{{ .Values.cube.service.port }}"
+            {{- end }}
+            {{- if and .Values.llm.enabled .Values.llm.autoConfigureApp }}
+            {{- if not (hasKey .Values.deployment.env "AI_PROVIDER") }}
+            - name: AI_PROVIDER
+              value: "openai-compatible"
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AI_MODEL") }}
+            - name: AI_MODEL
+              value: {{ .Values.llm.formbricks.model | quote }}
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AI_OPENAI_COMPATIBLE_BASE_URL") }}
+            - name: AI_OPENAI_COMPATIBLE_BASE_URL
+              value: {{ include "formbricks.llmBaseUrl" . | quote }}
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AI_OPENAI_COMPATIBLE_PROVIDER_NAME") }}
+            - name: AI_OPENAI_COMPATIBLE_PROVIDER_NAME
+              value: {{ .Values.llm.formbricks.providerName | quote }}
+            {{- end }}
+            {{- if not (hasKey .Values.deployment.env "AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS") }}
+            - name: AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS
+              value: {{ .Values.llm.formbricks.supportsStructuredOutputs | quote }}
+            {{- end }}
+            {{- end }}
+            {{- range $key, $value := .Values.deployment.env }}
+            {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
+            {{- end }}
+          {{- if .Values.deployment.resources }}
+          resources:
+              {{- toYaml .Values.deployment.resources | nindent 12 }}
+          {{- end }}
+          {{- if or $writableMounts .Values.deployment.extraVolumeMounts }}
+          volumeMounts:
+            {{- range $name, $path := $writableMounts }}
+            - name: {{ $name }}
+              mountPath: {{ $path }}
+            {{- end }}
+            {{- with .Values.deployment.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- end }}
+          {{- with .Values.deployment.probes }}
+          {{- if .livenessProbe }}
+          livenessProbe:
+            {{- toYaml .livenessProbe | nindent 12 }}
+          {{- end }}
+          {{- if .readinessProbe }}
+          readinessProbe:
+            {{- toYaml .readinessProbe | nindent 12 }}
+          {{- end }}
+          {{- if .startupProbe }}
+          startupProbe:
+            {{- toYaml .startupProbe | nindent 12 }}
+          {{- end }}
+          {{- end }}
+      {{- if or $writableMounts .Values.deployment.extraVolumes }}
+      volumes:
+        {{- range $name, $_ := $writableMounts }}
+        - name: {{ $name }}
+          emptyDir: {}
+        {{- end }}
+        {{- with .Values.deployment.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+
+{{- end -}}

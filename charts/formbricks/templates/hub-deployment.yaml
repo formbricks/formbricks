@@ -15,6 +15,9 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
 spec:
+  {{- if eq .Values.upgrade.mode "online" }}
+  strategy: { type: RollingUpdate, rollingUpdate: { maxUnavailable: 0, maxSurge: 1 } }
+  {{- end }}
   {{- if not .Values.hub.autoscaling.enabled }}
   replicas: {{ .Values.hub.replicas | default 1 }}
   {{- end }}
@@ -49,12 +52,12 @@ spec:
       imagePullSecrets:
         {{- toYaml .Values.deployment.imagePullSecrets | nindent 8 }}
       {{- end }}
-      {{- if and .Values.migration.enabled .Values.hub.migration.waitForFormbricksMigration.enabled }}
+      {{- if and (ne .Values.upgrade.mode "online") .Values.migration.enabled .Values.hub.migration.waitForFormbricksMigration.enabled }}
       serviceAccountName: {{ include "formbricks.hubMigrationWaitServiceAccountName" . }}
       automountServiceAccountToken: true
       {{- end }}
       initContainers:
-        {{- if and .Values.migration.enabled .Values.hub.migration.waitForFormbricksMigration.enabled }}
+        {{- if and (ne .Values.upgrade.mode "online") .Values.migration.enabled .Values.hub.migration.waitForFormbricksMigration.enabled }}
         - name: wait-for-formbricks-migration
           image: {{ include "formbricks.deploymentImage" . }}
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}

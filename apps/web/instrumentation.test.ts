@@ -2,6 +2,8 @@ import type { Instrumentation } from "next";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 
+vi.mock("./lib/upgrade/pause-delivery", () => ({ registerOnlinePauseDelivery: vi.fn() }));
+
 const mockRegisterJobsWorker = vi.fn();
 const mockRegisterRecurringJobs = vi.fn();
 const mockAssertAuthzedRuntimeConfiguration = vi.fn();
