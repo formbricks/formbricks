@@ -1086,7 +1086,7 @@ cube:
   # repository and tag back at an upstream "cubejs/cube" release is supported.
   image:
     repository: "ghcr.io/formbricks/cube"
-    tag: "1.7.47-3"
+    tag: "1.7.50-1"
     pullPolicy: IfNotPresent
 
   imagePullSecrets: []
