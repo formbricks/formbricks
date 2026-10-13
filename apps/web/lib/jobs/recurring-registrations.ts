@@ -104,7 +104,10 @@ export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, Recurr
       kind: "every",
     },
   },
+  // New in this release, like the cleanup drain below: during an online upgrade, scheduled only once
+  // the release is activated (older replicas have no handler for either, and the sweep acts on data).
   dataRetentionSweep: {
+    requiresReleaseActivation: true,
     handler: processDataRetentionSweepJob,
     job: recurringJobs.dataRetentionSweep,
     schedule: {
@@ -114,6 +117,7 @@ export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, Recurr
     },
   },
   deletionCleanupDrain: {
+    requiresReleaseActivation: true,
     handler: processDeletionCleanupDrainJob,
     job: recurringJobs.deletionCleanupDrain,
     schedule: {

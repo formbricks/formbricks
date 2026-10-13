@@ -526,6 +526,27 @@ describe("instrumentation-jobs", () => {
     expect(audit).toHaveBeenCalledOnce();
   });
 
+  test("schedules the data retention sweep and cleanup drain only once the release is activated, but AuthZed delivery at once", async () => {
+    online.enabled = false;
+    mockGetJobsQueueingConfig.mockReturnValue({ enabled: true, redisUrl: "redis://localhost:6379" });
+    const { registerRecurringJobs } = await import("./instrumentation-jobs");
+    const { RECURRING_JOB_REGISTRATIONS_BY_KEY } = await import("@/lib/jobs/recurring-registrations");
+    const sweep = RECURRING_JOB_REGISTRATIONS_BY_KEY.dataRetentionSweep.job.upsert;
+    const drain = RECURRING_JOB_REGISTRATIONS_BY_KEY.deletionCleanupDrain.job.upsert;
+    const delivery = RECURRING_JOB_REGISTRATIONS_BY_KEY.authzedProjectionDelivery.job.upsert;
+
+    await registerRecurringJobs();
+    expect(sweep).not.toHaveBeenCalled();
+    expect(drain).not.toHaveBeenCalled();
+    // Revocations must keep reaching SpiceDB throughout the upgrade, or every check fails closed.
+    expect(delivery).toHaveBeenCalled();
+
+    online.enabled = true;
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(sweep).toHaveBeenCalledOnce();
+    expect(drain).toHaveBeenCalledOnce();
+  });
+
   slowTest(
     "registers recurring schedules once when queueing is enabled without an in-process worker",
     async () => {

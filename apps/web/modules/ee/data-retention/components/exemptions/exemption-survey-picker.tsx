@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { InputCombobox } from "@/modules/ui/components/input-combo-box";
@@ -35,6 +35,8 @@ export const ExemptionSurveyPicker = ({
   disabled,
 }: Readonly<ExemptionSurveyPickerProps>) => {
   const { t } = useTranslation();
+  // FormControl always passes an id; a fallback keeps the picker usable on its own.
+  const fallbackId = useId();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
 
@@ -52,7 +54,7 @@ export const ExemptionSurveyPicker = ({
 
   return (
     <InputCombobox
-      id={id}
+      id={id ?? fallbackId}
       // The trigger renders as div[role="combobox"], which <label htmlFor> can't name.
       aria-label={t("common.survey")}
       aria-describedby={ariaDescribedBy}
