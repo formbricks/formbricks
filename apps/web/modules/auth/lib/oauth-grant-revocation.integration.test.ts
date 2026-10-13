@@ -320,6 +320,46 @@ describe("narrowing an OAuth app's consent ends the tokens beyond it (ENG-3529, 
     expect(await liveTokens(userId, clientId)).toBe(0);
   });
 
+  test("an opaque access token minted from an ended refresh token stays behind as revoked", async () => {
+    const { cookie, userId } = await signIn();
+    const clientId = await registerRevokeClient();
+    await grant(cookie, clientId);
+    const { id: consentId } = await consentOf(userId, clientId);
+    const wideRefresh = await prisma.oauthRefreshToken.findFirstOrThrow({
+      where: { userId, clientId, revoked: null },
+      select: { id: true },
+    });
+    // Opaque access tokens carry the refresh token they were minted from; deleting that refresh token
+    // would cascade to them. Seeded, as MCP grants only ever get JWTs.
+    const linked = await prisma.oauthAccessToken.create({
+      data: {
+        token: randomBytes(16).toString("hex"),
+        clientId,
+        userId,
+        scopes: NARROW.split(" "),
+        refreshId: wideRefresh.id,
+        createdAt: new Date(),
+        expiresAt: new Date(Date.now() + 15 * 60_000),
+      },
+      select: { id: true },
+    });
+
+    await handle("/oauth2/update-consent", {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie, origin: ORIGIN },
+      body: JSON.stringify({ id: consentId, update: { scopes: NARROW.split(" ") } }),
+    });
+
+    expect(await prisma.oauthRefreshToken.count({ where: { id: wideRefresh.id } })).toBe(0);
+    // Kept, as ENG-2499's revoke keeps them, rather than removed by the cascade.
+    const after = await prisma.oauthAccessToken.findUnique({
+      where: { id: linked.id },
+      select: { revoked: true },
+    });
+    expect(after, "the access token row was removed by the cascade").not.toBeNull();
+    expect(after?.revoked).toBeInstanceOf(Date);
+  });
+
   test("a grant narrowed before this fix (consent narrowed, tokens live) is refused at its next refresh", async () => {
     const { cookie, userId } = await signIn();
     const clientId = await registerRevokeClient();

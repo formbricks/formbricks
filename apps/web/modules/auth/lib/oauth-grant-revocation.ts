@@ -165,8 +165,9 @@ type TRefusedGrant = { authorizationCodeId: string | null; rotatedAt: Date | nul
  * revoked refresh token presented again as a stolen one and deletes every refresh token the client holds
  * for the user, so a client still holding a token from before the narrowing would take the narrowed
  * grant down with it. A deleted token is answered `invalid_grant` and nothing else. Access tokens have
- * no such reuse check, and are revoked like the rest of this module's. Those minted from a refresh token
- * about to be deleted are counted here; the `refreshId` cascade then removes them.
+ * no such reuse check, and are revoked like the rest of this module's, including those minted from a
+ * refresh token about to be deleted. Those are then unlinked from it, so the `refreshId` cascade leaves
+ * them behind as revoked rows, as ENG-2499's revoke does, instead of removing them.
  */
 const endTokensBeyondScopes = async (
   tx: Prisma.TransactionClient,
@@ -207,6 +208,9 @@ const endTokensBeyondScopes = async (
       AND (NOT ("scopes" <@ ${consentedScopes}::text[])
         OR "authorizationCodeId" = ANY(${grantIds}::text[])
         OR "refreshId" = ANY(${refreshIds}::text[]))`;
+  await tx.$executeRaw`
+    UPDATE "oauthAccessToken" SET "refreshId" = NULL
+    WHERE "userId" = ${userId} AND "clientId" = ${clientId} AND "refreshId" = ANY(${refreshIds}::text[])`;
   const refreshTokensDeleted = await tx.$executeRaw`
     DELETE FROM "oauthRefreshToken" WHERE "id" = ANY(${refreshIds}::text[])`;
   return { refreshTokensDeleted, accessTokensRevoked };
