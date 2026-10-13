@@ -865,8 +865,49 @@ describe("docker/formbricks.sh AuthZed setup", () => {
     const commands = readFileSync(commandLog, "utf8");
     expect(commands).toContain("docker compose pull");
     expect(commands).toContain("run --rm --no-deps formbricks-migrate");
-    // Warned, not inserted: the updater does not add services to a file the operator owns.
-    expect(readFileSync(composePath, "utf8")).not.toContain("hub-worker");
+    // The file is rewritten only where documented — the Valkey pin — and the worker the warning is about is
+    // not inserted: merging it stays the operator's decision.
+    const rewritten = readFileSync(composePath, "utf8");
+    expect(rewritten).toContain(multiArchValkeyImage);
+    expect(readFileSync(`${composePath}.before-valkey-8.1.9`, "utf8")).toContain(legacyValkeyImage);
+    expect(rewritten).not.toContain("hub-worker");
+  });
+
+  test("leaves the Compose file untouched when a later gate stops the update", () => {
+    const tempDir = createTempDir();
+    const installationDir = join(tempDir, "formbricks");
+    const binDir = join(tempDir, "bin");
+    const composePath = join(installationDir, "docker-compose.yml");
+    // No hub-worker, so the warning path runs, and no AuthZed services, so the AuthZed gate stops the update.
+    const composeContents = `services:
+  redis:
+    image: ${legacyValkeyImage}
+`;
+    mkdirSync(installationDir, { recursive: true });
+    mkdirSync(binDir, { recursive: true });
+    writeFileSync(composePath, composeContents);
+    writeFileSync(join(installationDir, ".env"), "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true\n");
+    writeFileSync(
+      join(binDir, "sudo"),
+      '#!/bin/sh\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\ncase "$*" in *"config --services") printf "redis\\n" ;; esac\n',
+      { mode: 0o700 }
+    );
+
+    const result = spawnSync("bash", ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath], {
+      cwd: tempDir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        COMMAND_LOG: join(tempDir, "commands.log"),
+        PATH: `${binDir}:${process.env.PATH ?? ""}`,
+      },
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("does not yet contain the AuthZed v6 Compose services");
+    // That gate runs before the Valkey rewrite, so a stopped update leaves the file exactly as it was.
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(existsSync(`${composePath}.before-valkey-8.1.9`)).toBe(false);
   });
 
   test("blocks an update before pulling images when Compose cannot be rendered", () => {

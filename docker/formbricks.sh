@@ -1322,8 +1322,6 @@ update_formbricks() {
     echo "https://formbricks.com/docs/self-hosting/advanced/migration#hub-worker-for-docker"
   fi
 
-  migrate_legacy_valkey_image docker-compose.yml
-
   if ! grep -Eq '^  authzed-ops:$' docker-compose.yml || ! grep -Eq '^  spicedb:$' docker-compose.yml; then
     echo "❌ This installation does not yet contain the AuthZed v6 Compose services."
     echo "Your customized Compose file was not changed. Follow the v6 AuthZed migration guide before updating:"
@@ -1338,6 +1336,11 @@ update_formbricks() {
     echo "https://formbricks.com/docs/self-hosting/advanced/authzed-operations#upgrade-an-existing-installation-to-v6"
     exit 1
   fi
+
+  # Rewrites the operator's Compose file, so it runs only once every check that can stop the update has
+  # passed: a failed gate must not leave them a modified file to reason about.
+  migrate_legacy_valkey_image docker-compose.yml
+
   sudo docker compose pull
   # Preparation is an explicit maintenance operation. Never run target-version
   # database migrations or schema/relationship writes against the still-running app.
