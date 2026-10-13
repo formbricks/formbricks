@@ -25,16 +25,13 @@
 -- highest-volume table in the product, which is real but is not worth coupling to the change that adds
 -- their replacements — a drop is the half that cannot be rolled back by deleting a migration.
 --
--- CONCURRENTLY, and the rule is narrower than the one several older migrations in this directory
--- assert. Measured against Prisma 7.8 on scratch databases:
---
---   * `CREATE INDEX CONCURRENTLY` — Prisma recognises it and runs the file with no transaction
---     wrapper, so several in one file is fine. This is what those older comments get wrong.
---   * `DROP INDEX CONCURRENTLY` — Prisma does not recognise it, wraps the file, and Postgres rejects
---     the statement. It survives only alone in a migration of its own.
---
--- That asymmetry is the other reason the drops are a separate change: they need their own shape.
--- ENG-2820 tracks correcting the stale comments.
+-- CONCURRENTLY works here because Prisma's parser accepts every statement in this file, and a file it
+-- parses runs one statement at a time in autocommit, with nothing around it. So several concurrent
+-- builds can share it. The parser rejects `DROP INDEX CONCURRENTLY`, and a file it cannot parse is sent
+-- as one string, which PostgreSQL runs as one implicit transaction once it holds a second statement.
+-- The drop fails there, so it survives only alone in a migration of its own. That is the other reason
+-- the drops are a separate change. "How Prisma applies a migration file" in packages/database/README.md
+-- has the full rule.
 --
 -- No cleanup DROP before each CREATE, because neither spelling can live in this file: squawk rejects a
 -- plain `DROP INDEX` (correctly — ACCESS EXCLUSIVE), and a concurrent one cannot share a file with
@@ -43,18 +40,22 @@
 -- success while the index stayed unusable — the planner ignores invalid indexes.
 --
 -- The migration that follows this one checks for exactly that and fails loudly. It has to be a
--- separate file: Prisma only skips its transaction wrapper for a file it recognises as concurrent,
--- and adding so much as a `DO $$ … $$` block here flips that heuristic and breaks the CREATEs.
+-- separate file: the parser rejects a `DO $$ … $$` block, so adding one here would turn this whole
+-- file into one implicit transaction and break the CREATEs.
 
--- Bound only the WAIT for the lock, not the work. A concurrent build needs a SHARE UPDATE EXCLUSIVE
--- lock, which conflicts with other schema changes; without a timeout an unlucky overlap would queue
--- everything behind it. Five seconds is generous for acquisition — the expensive part is the scan,
--- which happens after the lock is held.
+-- No lock timeout, set explicitly so that no server, role or earlier-file default applies one either.
+-- `lock_timeout` does not only bound acquiring the SHARE UPDATE EXCLUSIVE lock. A concurrent build also
+-- waits, under the same timeout, for every transaction that wrote to "Response", and for every
+-- transaction in the database still holding an older snapshot, on any table. A short value fails the
+-- build whenever a long report query, a `pg_dump` backup or a `REPEATABLE READ` transaction left open
+-- outlasts it, and leaves an INVALID index behind (ENG-3701). The build's own lock never blocks reads
+-- or writes, so a timeout protects nothing here. With 0 a busy deploy waits instead of failing, and
+-- `pg_stat_progress_create_index` shows what it waits for.
 --
 -- Deliberately NO `statement_timeout`: these builds are long by nature on a table this size, and a
 -- global limit would abort a healthy migration. Same reasoning `.squawk.toml` gives for excluding
 -- `require-statement-timeout`.
-SET lock_timeout = '5s';
+SET lock_timeout = 0;
 
 CREATE INDEX CONCURRENTLY IF NOT EXISTS "Response_created_at_id_idx" ON "Response"(created_at, id);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS "Response_surveyId_created_at_id_idx" ON "Response"("surveyId", created_at, id);
