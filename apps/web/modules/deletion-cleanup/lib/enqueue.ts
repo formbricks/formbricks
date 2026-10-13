@@ -1,5 +1,6 @@
 import "server-only";
 import type { DeletionCleanupCreateManyInput, Prisma } from "@formbricks/database/prisma";
+import { IS_STORAGE_CONFIGURED } from "@/lib/constants";
 import type { TDeletedSurveyResponses } from "@/lib/response/delete-responses";
 import { CLEANUP_SETTLE_MS, STORAGE_CLEANUP_CHUNK_SIZE } from "./constants";
 
@@ -27,6 +28,9 @@ export type TSurveyDeletionCleanupInput = {
  * Returns the ids of the rows to drain straight after commit (the storage ones). The rest wait
  * `CLEANUP_SETTLE_MS` for what can still land after the delete: the Hub cleanup, for records on their way
  * to the Hub, and a second sweep of the upload folder, for an upload signed before the delete.
+ *
+ * Without file storage (no `S3_BUCKET_NAME`, a supported setup with uploads off) no storage row is
+ * queued: nothing can have been uploaded, and a row could never succeed, so it would be retried forever.
  */
 export const enqueueSurveyDeletionCleanups = async (
   tx: Prisma.TransactionClient,
@@ -36,13 +40,12 @@ export const enqueueSurveyDeletionCleanups = async (
   const scope = { organizationId, workspaceId, surveyId };
   const settledAt = new Date(Date.now() + CLEANUP_SETTLE_MS);
 
-  const drainNow: DeletionCleanupCreateManyInput[] = [
-    { ...scope, kind: "storageSurveyFolder" },
-    ...storageFileRows(scope, fileUrls),
-  ];
-  const drainLater: DeletionCleanupCreateManyInput[] = [
-    { ...scope, kind: "storageSurveyFolder", nextAttemptAt: settledAt },
-  ];
+  const drainNow: DeletionCleanupCreateManyInput[] = IS_STORAGE_CONFIGURED
+    ? [{ ...scope, kind: "storageSurveyFolder" }, ...storageFileRows(scope, fileUrls)]
+    : [];
+  const drainLater: DeletionCleanupCreateManyInput[] = IS_STORAGE_CONFIGURED
+    ? [{ ...scope, kind: "storageSurveyFolder", nextAttemptAt: settledAt }]
+    : [];
   if (tenantIds.length > 0) {
     drainLater.push({ ...scope, kind: "hubSurvey", tenantIds, nextAttemptAt: settledAt });
   }
@@ -63,7 +66,7 @@ export type TResponsesDeletionCleanupInput = {
 /**
  * Queue what deleting responses leaves outside the database: their files and their Hub records, per
  * survey. Call it inside the delete's transaction, like `enqueueSurveyDeletionCleanups`. The files are
- * drained straight after commit. The Hub records wait `CLEANUP_SETTLE_MS`: a response deleted moments
+ * drained straight after commit (and, as there, not queued at all without file storage). The Hub records wait `CLEANUP_SETTLE_MS`: a response deleted moments
  * after it was submitted can still have its record on the way to the Hub.
  */
 export const enqueueResponsesDeletionCleanups = async (
@@ -79,7 +82,7 @@ export const enqueueResponsesDeletionCleanups = async (
   const drainLater: DeletionCleanupCreateManyInput[] = [];
   for (const { surveyId, responseIds, fileUrls } of deleted) {
     const scope = { organizationId, workspaceId, surveyId };
-    drainNow.push(...storageFileRows(scope, fileUrls));
+    if (IS_STORAGE_CONFIGURED) drainNow.push(...storageFileRows(scope, fileUrls));
     if (tenantIds.length > 0) {
       drainLater.push({
         ...scope,

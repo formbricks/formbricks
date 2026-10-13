@@ -28,9 +28,11 @@ export const DELETION_CLEANUP_CLAIM_BATCH = 10;
 
 /**
  * A drain stops once this much time has passed: it claims no more rows, and a Hub cleanup in progress
- * stops before its next page. A storage call already in flight finishes.
+ * stops before its next page. A storage call already in flight finishes. Kept to a few percent of the
+ * drain interval: the drain shares `background-jobs`, whose single default slot also serves webhook
+ * deliveries and the response pipeline, so a backlog is worked off over several ticks instead.
  */
-export const DELETION_CLEANUP_RUN_BUDGET_MS = 60 * 1000;
+export const DELETION_CLEANUP_RUN_BUDGET_MS = 15 * 1000;
 
 /** Hub calls (lists and deletes) one drain may make, across all its rows. */
 export const DELETION_CLEANUP_HUB_CALL_BUDGET = 5000;

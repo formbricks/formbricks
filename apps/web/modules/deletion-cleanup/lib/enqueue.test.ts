@@ -3,6 +3,12 @@ import { CLEANUP_SETTLE_MS, STORAGE_CLEANUP_CHUNK_SIZE } from "./constants";
 import { enqueueResponsesDeletionCleanups, enqueueSurveyDeletionCleanups } from "./enqueue";
 
 vi.mock("server-only", () => ({}));
+const storage = vi.hoisted(() => ({ configured: true }));
+vi.mock("@/lib/constants", () => ({
+  get IS_STORAGE_CONFIGURED() {
+    return storage.configured;
+  },
+}));
 
 /**
  * Enqueueing against a real database (rows committed with the delete, rolled back with it, drained in
@@ -63,6 +69,24 @@ describe("enqueueSurveyDeletionCleanups", () => {
         { ...SCOPE, kind: "hubSurvey", tenantIds: ["dir-a", "dir-b"], nextAttemptAt: settledAt },
       ],
     });
+  });
+
+  test("without file storage, queues only the Hub cleanup: a storage row could never succeed", async () => {
+    storage.configured = false;
+    try {
+      const tx = makeTx(["dir-a"]);
+
+      await expect(
+        enqueueSurveyDeletionCleanups(tx as never, { ...SCOPE, fileUrls: urls(2) })
+      ).resolves.toEqual({ drainNowIds: [] });
+
+      expect(tx.deletionCleanup.createManyAndReturn).not.toHaveBeenCalled();
+      expect(tx.deletionCleanup.createMany.mock.calls[0][0].data).toEqual([
+        expect.objectContaining({ kind: "hubSurvey", tenantIds: ["dir-a"] }),
+      ]);
+    } finally {
+      storage.configured = true;
+    }
   });
 
   test("queues no Hub cleanup for an organisation with no feedback directory", async () => {
@@ -152,6 +176,25 @@ describe("enqueueResponsesDeletionCleanups", () => {
       expect.objectContaining({ surveyId: "s1", kind: "hubResponses", responseIds: ["r1"] }),
       expect.objectContaining({ surveyId: "s2", kind: "hubResponses", responseIds: ["r2", "r3"] }),
     ]);
+  });
+
+  test("without file storage, queues the responses' Hub cleanup but none for their files", async () => {
+    storage.configured = false;
+    try {
+      const tx = makeTx(["dir-a"]);
+
+      await enqueueResponsesDeletionCleanups(tx as never, {
+        ...WORKSPACE,
+        surveys: [deleted("s1", ["r1"], urls(1))],
+      });
+
+      expect(tx.deletionCleanup.createManyAndReturn).not.toHaveBeenCalled();
+      expect(tx.deletionCleanup.createMany.mock.calls[0][0].data).toEqual([
+        expect.objectContaining({ surveyId: "s1", kind: "hubResponses" }),
+      ]);
+    } finally {
+      storage.configured = true;
+    }
   });
 
   test("writes neither kind of row it has nothing for", async () => {
