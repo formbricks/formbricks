@@ -125,7 +125,7 @@ export const RetentionHistoryView = ({ organizationId, timeZone }: Readonly<Rete
           </div>
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             size="sm"
             loading={downloadExport.isPending}
             onClick={download}>

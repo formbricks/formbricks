@@ -88,6 +88,11 @@ export interface InputComboboxProps {
   showCheckIcon?: boolean;
   comboboxClasses?: string;
   emptyDropdownText?: string;
+  /**
+   * Hands the search to the caller, which filters `options` itself — on the server, for a list too
+   * long to load whole. The built-in filter is off then, and the search resets to "" on close.
+   */
+  onSearchChange?: (search: string) => void;
   iconClassName?: string;
   disabled?: boolean;
   // The interactive trigger renders as a div[role="combobox"], which is not a labelable element,
@@ -204,6 +209,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
   showCheckIcon = false,
   comboboxClasses,
   emptyDropdownText,
+  onSearchChange,
   iconClassName = "h-5 w-5 text-slate-400",
   disabled = false,
   "aria-label": ariaLabel,
@@ -257,6 +263,12 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
     }
   }, [value, validOptions, withInput]);
 
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    // The search box unmounts with the menu, so the caller's search has to start over with it.
+    if (!next) onSearchChange?.("");
+  };
+
   const handleMultiSelect = (option: TComboboxOption) => {
     const arr = Array.isArray(localValue) ? [...localValue] : [];
     const exists = arr.includes(option.value as string);
@@ -277,7 +289,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
     } else {
       onChangeValue(option.value, option);
       setLocalValue(option.value);
-      setOpen(false);
+      handleOpenChange(false);
     }
   };
 
@@ -410,7 +422,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
         />
       )}
 
-      <DropdownMenu open={disabled ? false : open} onOpenChange={disabled ? undefined : setOpen}>
+      <DropdownMenu open={disabled ? false : open} onOpenChange={disabled ? undefined : handleOpenChange}>
         <DropdownMenuTrigger asChild className="z-10 min-w-0 flex-1">
           <div
             id={id}
@@ -467,7 +479,10 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
           align="start"
           className="w-(--radix-dropdown-menu-trigger-width) min-w-52 overflow-y-hidden"
           data-testid="dropdown-menu-content">
-          <Command className="flex h-full w-full flex-col overflow-hidden" filter={filterComboboxOption}>
+          <Command
+            className="flex h-full w-full flex-col overflow-hidden"
+            filter={filterComboboxOption}
+            shouldFilter={!onSearchChange}>
             {showSearch ? (
               <div className="border-b border-slate-100">
                 <CommandInput
@@ -475,7 +490,10 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                   className="h-8 border-none placeholder-slate-300 outline-hidden"
                   autoFocus
                   ref={searchRef}
-                  onValueChange={resetListScroll}
+                  onValueChange={(search) => {
+                    resetListScroll();
+                    onSearchChange?.(search);
+                  }}
                 />
               </div>
             ) : (

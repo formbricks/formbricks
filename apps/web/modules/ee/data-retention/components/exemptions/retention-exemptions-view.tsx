@@ -1,7 +1,6 @@
 "use client";
 
 import type { TFunction } from "i18next";
-import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -83,7 +82,7 @@ const getExemptionColumns = ({
           stopRowClick: true,
           cell: (exemption: TRetentionExemption) => (
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               aria-label={t("workspace.settings.data_retention.revoke_exemption_for", {
                 survey: exemption.surveyName,
@@ -165,7 +164,6 @@ export const RetentionExemptionsView = ({
         cta={
           canManage ? (
             <Button size="sm" onClick={() => setIsAddOpen(true)}>
-              <PlusIcon />
               {t("workspace.settings.data_retention.add_exemption")}
             </Button>
           ) : undefined

@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Textarea } from "@/modules/ui/components/textarea";
+import { Muted } from "@/modules/ui/components/typography";
 import { useCreateRetentionExemption } from "../../hooks/use-retention-exemptions";
 import { getRetentionPolicyLabel } from "../../lib/display";
 import { getRetentionExemptionCreateErrorMessage } from "../../lib/error-message";
@@ -151,6 +152,10 @@ export const AddExemptionDialog = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("workspace.settings.data_retention.policy")}</FormLabel>
+                    {/* Not FormDescription: it renders the control's own id, which would duplicate it. */}
+                    <Muted id={policyHelpId} className="block text-slate-500">
+                      {t("workspace.settings.data_retention.exemption_policy_help")}
+                    </Muted>
                     <Select
                       value={field.value}
                       onValueChange={field.onChange}
@@ -168,10 +173,6 @@ export const AddExemptionDialog = ({
                         ))}
                       </SelectContent>
                     </Select>
-                    {/* Not FormDescription: it renders the control's own id, which would duplicate it. */}
-                    <p id={policyHelpId} className="text-xs text-slate-500">
-                      {t("workspace.settings.data_retention.exemption_policy_help")}
-                    </p>
                   </FormItem>
                 )}
               />

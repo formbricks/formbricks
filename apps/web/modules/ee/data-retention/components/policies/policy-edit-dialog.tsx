@@ -37,6 +37,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
+import { Muted } from "@/modules/ui/components/typography";
 import { useRetentionHealth } from "../../hooks/use-retention-health";
 import { useUpdateRetentionPolicy } from "../../hooks/use-retention-policies";
 import { formatRetentionPeriod } from "../../lib/display";
@@ -61,7 +62,6 @@ import {
 
 /** The copy that differs per policy (mock, ENG-3610). */
 const getPolicyCopy = (policy: TRetentionPolicyKind, t: TFunction) => {
-  const notice = { min: RETENTION_WARN_DAYS.min, max: RETENTION_WARN_DAYS.max };
   const deletePeriod = formatRetentionPeriod(SURVEY_ARCHIVE_RETENTION_DAYS, t);
   switch (policy) {
     case "responses":
@@ -70,7 +70,7 @@ const getPolicyCopy = (policy: TRetentionPolicyKind, t: TFunction) => {
         description: t("workspace.settings.data_retention.responses_policy_description"),
         countsFrom: t("workspace.settings.data_retention.responses_counts_from"),
         periodHelp: null,
-        noticeHelp: t("workspace.settings.data_retention.responses_notice_help", notice),
+        noticeHelp: t("workspace.settings.data_retention.responses_notice_help"),
         activeHelp: t("workspace.settings.data_retention.responses_active_help"),
       };
     case "surveys":
@@ -79,7 +79,7 @@ const getPolicyCopy = (policy: TRetentionPolicyKind, t: TFunction) => {
         description: t("workspace.settings.data_retention.surveys_policy_description", { deletePeriod }),
         countsFrom: null,
         periodHelp: t("workspace.settings.data_retention.surveys_period_help"),
-        noticeHelp: t("workspace.settings.data_retention.surveys_notice_help", notice),
+        noticeHelp: t("workspace.settings.data_retention.surveys_notice_help"),
         activeHelp: t("workspace.settings.data_retention.surveys_active_help", { deletePeriod }),
       };
     case "members":
@@ -88,7 +88,7 @@ const getPolicyCopy = (policy: TRetentionPolicyKind, t: TFunction) => {
         description: t("workspace.settings.data_retention.members_policy_description"),
         countsFrom: t("workspace.settings.data_retention.members_counts_from"),
         periodHelp: null,
-        noticeHelp: t("workspace.settings.data_retention.members_notice_help", notice),
+        noticeHelp: t("workspace.settings.data_retention.members_notice_help"),
         activeHelp: t("workspace.settings.data_retention.members_active_help"),
       };
   }
@@ -194,7 +194,7 @@ export const PolicyEditDialog = ({
                   <p className="text-sm font-medium text-slate-800">
                     {t("workspace.settings.data_retention.counts_from")}
                   </p>
-                  <p className="text-xs text-slate-500">{copy.countsFrom}</p>
+                  <Muted className="block text-slate-500">{copy.countsFrom}</Muted>
                 </div>
               ) : null}
 
@@ -240,9 +240,9 @@ export const PolicyEditDialog = ({
                           );
                         })}
                         {createdBeforeOnly ? (
-                          <p id={conditionsHintId} className="text-xs text-slate-500">
+                          <Muted id={conditionsHintId} className="block text-slate-500">
                             {t("workspace.settings.data_retention.condition_created_before_only_hint")}
-                          </p>
+                          </Muted>
                         ) : null}
                         {error?.message ? (
                           <p id={conditionsErrorId} role="alert" className="text-sm text-error">
@@ -261,6 +261,11 @@ export const PolicyEditDialog = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("workspace.settings.data_retention.period")}</FormLabel>
+                    {copy.periodHelp ? (
+                      <Muted id={periodHelpId} className="block text-slate-500">
+                        {copy.periodHelp}
+                      </Muted>
+                    ) : null}
                     <Select value={field.value} onValueChange={field.onChange} disabled={disabled}>
                       <FormControl>
                         <SelectTrigger
@@ -280,11 +285,6 @@ export const PolicyEditDialog = ({
                         </SelectItem>
                       </SelectContent>
                     </Select>
-                    {copy.periodHelp ? (
-                      <p id={periodHelpId} className="text-xs text-slate-500">
-                        {copy.periodHelp}
-                      </p>
-                    ) : null}
                   </FormItem>
                 )}
               />
@@ -361,6 +361,9 @@ export const PolicyEditDialog = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>{t("workspace.settings.data_retention.notice")}</FormLabel>
+                    <Muted id={noticeHelpId} className="block text-slate-500">
+                      {copy.noticeHelp}
+                    </Muted>
                     <Select value={field.value} onValueChange={field.onChange} disabled={disabled}>
                       <FormControl>
                         <SelectTrigger className="w-48" aria-describedby={noticeHelpId}>
@@ -378,9 +381,6 @@ export const PolicyEditDialog = ({
                         </SelectItem>
                       </SelectContent>
                     </Select>
-                    <p id={noticeHelpId} className="text-xs text-slate-500">
-                      {copy.noticeHelp}
-                    </p>
                   </FormItem>
                 )}
               />
@@ -424,7 +424,7 @@ export const PolicyEditDialog = ({
                         <Switch checked={field.value} onCheckedChange={field.onChange} disabled={disabled} />
                       </FormControl>
                     </div>
-                    <p className="text-xs text-slate-500">{copy.activeHelp}</p>
+                    <Muted className="block text-slate-500">{copy.activeHelp}</Muted>
                     {field.value && health.data?.smtpConfigured === false ? (
                       <Alert variant="warning" size="small" role="status">
                         <AlertDescription>

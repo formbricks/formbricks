@@ -99,7 +99,7 @@ const getPolicyColumns = ({
           stopRowClick: true,
           cell: ({ policy }: TPolicyRow) => (
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               aria-label={t("workspace.settings.data_retention.edit_policy", {
                 policy: getRetentionPolicyLabel(policy, t),
