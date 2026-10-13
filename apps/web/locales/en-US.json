@@ -3140,7 +3140,7 @@
         "reason_placeholder": "Why does this survey need to be kept?",
         "reason_required": "Add a reason.",
         "reason_too_long": "The reason can be at most {max} characters.",
-        "responses_active_help": "Responses of an exempt survey are skipped.",
+        "responses_active_help": "Responses of a survey exempt from this policy are skipped.",
         "responses_counts_from": "The day each response was collected.",
         "responses_due_for_deletion": "{count, plural, one {# response is} other {# responses are}} due for deletion, the first on {date}.",
         "responses_due_for_deletion_capped": "At least {total} responses are due for deletion, the first on {date}.",

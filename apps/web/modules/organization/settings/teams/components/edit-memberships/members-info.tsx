@@ -176,7 +176,9 @@ const getMemberColumns = ({
       id: "email",
       header: t("common.email"),
       headerClassName: "w-[22%]",
-      cellClassName: "ph-no-capture",
+      // A long address wraps rather than widening the table: an inactive member's Reactivate button
+      // already takes the actions column's room.
+      cellClassName: "ph-no-capture break-all",
       cell: (member) => member.email,
     },
   ];

@@ -58,7 +58,8 @@ const getExemptionColumns = ({
     id: "reason",
     header: t("workspace.settings.data_retention.reason"),
     hideBelow: "md",
-    cellClassName: "whitespace-pre-line break-words",
+    // Wraps anywhere, so a long reason gives way at narrow widths instead of pushing Revoke out of the card.
+    cellClassName: "whitespace-pre-line wrap-anywhere",
     cell: (exemption) =>
       exemption.source === "restore"
         ? t("workspace.settings.data_retention.exemption_reason_restored")

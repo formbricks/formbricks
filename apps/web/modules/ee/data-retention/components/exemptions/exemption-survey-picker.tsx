@@ -11,7 +11,11 @@ import type { TRetentionExemptionSurveyOption } from "../../types";
 
 const SEARCH_DEBOUNCE_MS = 250;
 
+/** `id` and `aria-*` arrive from `FormControl`, which ties the field's label and error to the combobox. */
 interface ExemptionSurveyPickerProps {
+  id?: string;
+  "aria-describedby"?: string;
+  "aria-invalid"?: boolean;
   organizationId: string;
   value: TRetentionExemptionSurveyOption | null;
   onChange: (survey: TRetentionExemptionSurveyOption) => void;
@@ -21,6 +25,9 @@ interface ExemptionSurveyPickerProps {
 
 /** Any survey in the organisation, searched by name on the server as the user types. */
 export const ExemptionSurveyPicker = ({
+  id,
+  "aria-describedby": ariaDescribedBy,
+  "aria-invalid": ariaInvalid,
   organizationId,
   value,
   onChange,
@@ -45,9 +52,11 @@ export const ExemptionSurveyPicker = ({
 
   return (
     <InputCombobox
-      id="exemption-survey"
+      id={id}
       // The trigger renders as div[role="combobox"], which <label htmlFor> can't name.
       aria-label={t("common.survey")}
+      aria-describedby={ariaDescribedBy}
+      aria-invalid={ariaInvalid}
       searchPlaceholder={t("workspace.settings.data_retention.search_surveys")}
       placeholder={t("common.select_survey")}
       groupedOptions={groupSurveyOptionsByWorkspace(surveys, value)}

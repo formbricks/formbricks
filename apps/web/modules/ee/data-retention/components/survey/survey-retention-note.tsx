@@ -36,15 +36,18 @@ const SurveyRetentionNoteContent = ({
 
   return (
     <div className="mb-4 space-y-2">
-      <p className="flex items-center gap-1.5 text-sm text-slate-500">
-        <HourglassIcon className="size-3.5 shrink-0" aria-hidden />
-        {[t("workspace.settings.data_retention.survey_note"), ...exemptLines].join(" ")}{" "}
-        <Link
-          href={organizationSettingsPath(organizationId, "data-retention/policies")}
-          className="font-medium text-slate-700 underline-offset-2 hover:underline">
-          {t("workspace.settings.data_retention.view_policies")}
-        </Link>
-      </p>
+      {/* The icon in its own column; the text and its link wrap together, as one line of prose. */}
+      <div className="flex items-start gap-1.5 text-sm text-slate-500">
+        <HourglassIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+        <p>
+          {[t("workspace.settings.data_retention.survey_note"), ...exemptLines].join(" ")}{" "}
+          <Link
+            href={organizationSettingsPath(organizationId, "data-retention/policies")}
+            className="font-medium text-slate-700 underline-offset-2 hover:underline">
+            {t("workspace.settings.data_retention.view_policies")}
+          </Link>
+        </p>
+      </div>
       {warning ? (
         // A status, not an alert: it is there on load, not news that should interrupt a screen reader.
         <Alert variant="warning" role="status">

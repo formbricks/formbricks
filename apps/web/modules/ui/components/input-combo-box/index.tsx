@@ -99,6 +99,9 @@ export interface InputComboboxProps {
   // so a paired <label htmlFor> gives it no accessible name. Callers pass one of these instead.
   "aria-label"?: string;
   "aria-labelledby"?: string;
+  // For a form field: what describes the trigger (its error, say), and whether its value is invalid.
+  "aria-describedby"?: string;
+  "aria-invalid"?: boolean;
 }
 
 // Helper to flatten all options and their children
@@ -214,6 +217,8 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
   disabled = false,
   "aria-label": ariaLabel,
   "aria-labelledby": ariaLabelledBy,
+  "aria-describedby": ariaDescribedBy,
+  "aria-invalid": ariaInvalid,
 }) => {
   const { t, i18n } = useTranslation();
   const resolvedSearchPlaceholder = searchPlaceholder ?? t("common.search");
@@ -430,6 +435,8 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
             tabIndex={disabled ? -1 : 0}
             aria-label={ariaLabel}
             aria-labelledby={ariaLabelledBy}
+            aria-describedby={ariaDescribedBy}
+            aria-invalid={ariaInvalid}
             aria-controls="options"
             aria-expanded={open}
             aria-disabled={disabled || undefined}
