@@ -825,7 +825,7 @@ describe("docker/formbricks.sh AuthZed setup", () => {
     expect(updateFunction.indexOf("upgrade check")).toBeLessThan(updateFunction.indexOf("compose down"));
   });
 
-  test("blocks an update before pulling images when the Hub worker is missing", () => {
+  test("warns and continues the update when the Hub worker is missing", () => {
     const tempDir = createTempDir();
     const installationDir = join(tempDir, "formbricks");
     const binDir = join(tempDir, "bin");
@@ -857,12 +857,16 @@ describe("docker/formbricks.sh AuthZed setup", () => {
       },
     });
 
-    expect(result.status).toBe(1);
-    expect(result.stderr).toContain("does not contain the required Hub worker service");
-    expect(result.stderr).toContain("/self-hosting/advanced/migration#hub-worker-required-for-docker");
-    expect(readFileSync(commandLog, "utf8")).toBe("docker compose config --services\n");
-    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
-    expect(existsSync(`${composePath}.before-valkey-8.1.9`)).toBe(false);
+    // A minor release must not require the operator to change their Compose file first, so the update runs.
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("does not contain the Hub worker service");
+    expect(result.stdout).toContain("/self-hosting/advanced/migration#hub-worker-for-docker");
+
+    const commands = readFileSync(commandLog, "utf8");
+    expect(commands).toContain("docker compose pull");
+    expect(commands).toContain("run --rm --no-deps formbricks-migrate");
+    // Warned, not inserted: the updater does not add services to a file the operator owns.
+    expect(readFileSync(composePath, "utf8")).not.toContain("hub-worker");
   });
 
   test("blocks an update before pulling images when Compose cannot be rendered", () => {

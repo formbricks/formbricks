@@ -1317,10 +1317,9 @@ update_formbricks() {
   fi
 
   if ! printf '%s\n' "$compose_services" | grep -Fxq "hub-worker"; then
-    echo "❌ This installation does not contain the required Hub worker service." >&2
-    echo "Your customized Compose file was not changed. Merge the release-matched hub-worker service, validate it with 'docker compose config', and retry." >&2
-    echo "https://formbricks.com/docs/self-hosting/advanced/migration#hub-worker-required-for-docker" >&2
-    exit 1
+    echo "⚠️ This installation does not contain the Hub worker service, so Hub webhook deliveries and enrichment jobs will stay queued."
+    echo "Continuing the update. Adding the worker is recommended; from the next major release the updater will require it."
+    echo "https://formbricks.com/docs/self-hosting/advanced/migration#hub-worker-for-docker"
   fi
 
   migrate_legacy_valkey_image docker-compose.yml
