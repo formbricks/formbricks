@@ -7,6 +7,14 @@ const SENSITIVE_KEYS = new Set([
   "access_token",
   "refresh_token",
   "id_token",
+  // camelCase / compact spellings of the same credentials; keys are compared lower-cased.
+  "accesstoken",
+  "refreshtoken",
+  "idtoken",
+  "clientsecret",
+  "client_secret",
+  "privatekey",
+  "signedurl",
   "twofactorsecret",
   "backupcodes",
   "session_state",
@@ -110,9 +118,16 @@ export const redactPII = (obj: any, seen: WeakSet<any> = new WeakSet()): any => 
  * @returns The difference between the two objects.
  */
 export const deepDiff = (oldObj: any, newObj: any): any => {
+  // Arrays are compared as a whole: diffing them index by index loses a removed trailing element
+  // (the new array simply has no such index) and yields sparse results otherwise.
+  if (Array.isArray(oldObj) || Array.isArray(newObj)) {
+    return JSON.stringify(oldObj) === JSON.stringify(newObj) ? undefined : (newObj ?? null);
+  }
+
   if (typeof oldObj !== "object" || typeof newObj !== "object" || oldObj === null || newObj === null) {
     if (JSON.stringify(oldObj) !== JSON.stringify(newObj)) {
-      return newObj;
+      // `undefined` would read as "no change", so a value that was removed is reported as `null`.
+      return newObj ?? null;
     }
     return undefined;
   }
@@ -144,6 +159,23 @@ export const sanitizeUrlForLogging = (url: string): string => {
     });
 
     return urlObj.origin + urlObj.pathname + (urlObj.search ? `${urlObj.search}` : "");
+  } catch {
+    return "[invalid-url]";
+  }
+};
+
+/**
+ * Sanitizes the request URL of an audit event. Unlike {@link sanitizeUrlForLogging} it redacts the value
+ * of EVERY query parameter: callers choose parameter names freely, so a name list can never be complete.
+ * The names stay, since they show which filters were used.
+ */
+export const sanitizeAuditApiUrl = (url: string): string => {
+  try {
+    const urlObj = new URL(url);
+    for (const key of new Set(urlObj.searchParams.keys())) {
+      urlObj.searchParams.set(key, "********");
+    }
+    return urlObj.origin + urlObj.pathname + urlObj.search;
   } catch {
     return "[invalid-url]";
   }
