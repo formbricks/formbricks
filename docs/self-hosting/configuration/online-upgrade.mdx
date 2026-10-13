@@ -128,7 +128,7 @@ The following are release blockers, not optional follow-up cleanup:
 | Application unit suites, migration-phase selection, additive schema assertions | Exercised locally |
 | Real PostgreSQL invalid-index recovery and coordinator lock loss | Exercised locally |
 | Fresh prepare migration retains legacy columns and excludes deferred history | Exercised locally |
-| Production Next.js build and Helm/Argo render ordering | Earlier build and current render checks exercised locally; current rehearsal image blocked on npm metadata fetches |
+| Container installer build (Next.js, TypeScript, coordinator) and Helm/Argo render ordering | Exercised locally; final runtime image and Kubernetes rollout unverified |
 | Queue pause, active-job drain, HTTP enqueueing and target consumption | Real Redis protocol test passes; released-image handoff unverified |
 | Isolated Kubernetes rehearsal harness and six source/controller runs | Not implemented or run |
 | Slow HTTP requests, public bundles, sessions, cache and shared queue compatibility across actual images | Not fully rehearsed |
