@@ -1991,6 +1991,9 @@ checksums:
     workspace/api_keys/organization_access: 96a92fa907b15e0c0e47e33cac15be88
     workspace/api_keys/organization_access_cloud_note: afb6cefacc0ecef63384f820e63462e9
     workspace/api_keys/organization_access_description: e9b856a868875efbee35016d9c5986f2
+    workspace/api_keys/permission_manage: a3d40c0267b81ae53c9598eaeb05087d
+    workspace/api_keys/permission_read: 2494ca23d10e5b6381eb271aceeb5270
+    workspace/api_keys/permission_write: 0c8cd5e85bbf4a4ef271c6df37736df3
     workspace/api_keys/permissions: 2160be68b1d6b6577e64634e9feba2ed
     workspace/api_keys/secret: f041e5eb96121c8b4f2b8af7e0f83a9b
     workspace/api_keys/unable_to_copy_api_key: 148506832e31d033fa3569ce292d2120
