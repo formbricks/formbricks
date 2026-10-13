@@ -187,10 +187,14 @@ const sslConfigFromSslAccept = (value: string | null): PoolConfig["ssl"] | undef
 //   URL param absent     → undefined: the backstop is opt-in, so every existing install is unaffected
 //   URL param = 0        → undefined: the way to say "send nothing" in as many words
 //   URL param = n        → n
-//   URL param invalid    → warn and send nothing, rather than guess a value nobody asked for
+//   URL param blank or invalid → warn and send nothing, rather than guess a value nobody asked for
 const resolveIdleInTransactionSessionTimeout = (url: URL): number | undefined => {
-  const raw = url.searchParams.get(IDLE_IN_TRANSACTION_SESSION_TIMEOUT_PARAM)?.trim() ?? "";
-  if (raw === "") return undefined;
+  // `null` is "the operator did not ask for it". A value that is present but blank is a mistake worth
+  // naming, so it falls through to the warning below instead of passing for an absent parameter.
+  const parameter = url.searchParams.get(IDLE_IN_TRANSACTION_SESSION_TIMEOUT_PARAM);
+  if (parameter === null) return undefined;
+
+  const raw = parameter.trim();
 
   // Digits only: parseInt would read "60s" as 60 and pass an off-by-1000 value straight through.
   const value = /^\d+$/.test(raw) ? Number(raw) : Number.NaN;

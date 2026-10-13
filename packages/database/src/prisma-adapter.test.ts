@@ -288,6 +288,22 @@ describe("createPrismaPgAdapter", () => {
       expect(startupParams(pool)).not.toHaveProperty("idle_in_transaction_session_timeout");
     });
 
+    test("warns on a parameter that is present but blank, instead of passing for an absent one", async () => {
+      const { pool: empty } = await connectAdapter(`${BASE_URL}?idle_in_transaction_session_timeout=`);
+      const { pool: whitespace } = await connectAdapter(
+        `${BASE_URL}?idle_in_transaction_session_timeout=${encodeURIComponent("  ")}`
+      );
+
+      // Nothing is sent either way; the point is that the operator hears about the mistake.
+      expect(startupParams(empty)).not.toHaveProperty("idle_in_transaction_session_timeout");
+      expect(startupParams(whitespace)).not.toHaveProperty("idle_in_transaction_session_timeout");
+      expect(loggerWarnMock).toHaveBeenCalledTimes(2);
+      expect(loggerWarnMock).toHaveBeenCalledWith(
+        { idle_in_transaction_session_timeout: "" },
+        expect.stringContaining("Invalid idle_in_transaction_session_timeout")
+      );
+    });
+
     test.each([
       ["a unit suffix pg would misread as milliseconds", "60s"],
       ["a non-number", "abc"],

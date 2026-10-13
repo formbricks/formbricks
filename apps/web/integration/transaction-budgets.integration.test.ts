@@ -1,3 +1,4 @@
+import { Client } from "pg";
 import { afterAll, describe, expect, test } from "vitest";
 import { PrismaClient } from "../../../packages/database/generated/prisma-test/client";
 import { createAppPrismaClientOptions } from "../../../packages/database/src/client-options";
@@ -19,12 +20,35 @@ const clientWith = (idleInTransactionSessionTimeout: string): PrismaClient => {
   return client;
 };
 
-const clientWithout = (): PrismaClient => {
+/** The connection URL with the parameter removed — what an app connection sends when nobody opted in. */
+const urlWithoutParameter = (): string => {
   const url = new URL(process.env.DATABASE_URL ?? "");
   url.searchParams.delete("idle_in_transaction_session_timeout");
-  const client = new PrismaClient(createAppPrismaClientOptions(url.toString()));
+  return url.toString();
+};
+
+const clientWithout = (): PrismaClient => {
+  const client = new PrismaClient(createAppPrismaClientOptions(urlWithoutParameter()));
   extraClients.push(client);
   return client;
+};
+
+/**
+ * The value a connection that carries no startup parameter sees — the server's own setting. "Sends
+ * nothing" can only be asserted against this: a literal "0" fails wherever the server configures a
+ * timeout of its own, and says nothing either way about what the app client sent.
+ */
+const serverDefault = async (): Promise<string> => {
+  const client = new Client({ connectionString: urlWithoutParameter() });
+  try {
+    await client.connect();
+    const result = await client.query<{ idle_in_transaction_session_timeout: string }>(
+      "SHOW idle_in_transaction_session_timeout"
+    );
+    return result.rows[0].idle_in_transaction_session_timeout;
+  } finally {
+    await client.end().catch(() => undefined);
+  }
 };
 
 const showSetting = async (client: { $queryRaw: PrismaClient["$queryRaw"] }): Promise<string> => {
@@ -40,12 +64,12 @@ afterAll(async () => {
 
 describe("app client idle_in_transaction_session_timeout (ENG-3285)", () => {
   test("is not sent unless DATABASE_URL asks for it", async () => {
-    expect(await showSetting(clientWithout())).toBe("0");
+    expect(await showSetting(clientWithout())).toBe(await serverDefault());
   });
 
   test("follows the DATABASE_URL value, and 0 leaves the server default in place", async () => {
     expect(await showSetting(clientWith("5000"))).toBe("5s");
-    expect(await showSetting(clientWith("0"))).toBe("0");
+    expect(await showSetting(clientWith("0"))).toBe(await serverDefault());
   });
 
   test("ends a session left idle inside a transaction, and the pool recovers", async () => {
