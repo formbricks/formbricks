@@ -21,7 +21,7 @@ import { canApiKeyReachSurveyResource, getApiKeyVisibleSurveyWhere } from "./api
  * ENG-3282, Gate E: the read paths outside `/api/v3/surveys` against a real PostgreSQL and SpiceDB.
  * Four principals — the survey's owner, an organization manager, a plain read member and a manage-level
  * API key — over one workspace-visible and one restricted survey, each with a tagged response from the
- * same contact. With the marker off every path returns exactly what it returned before.
+ * same contact. Clearing readiness must preserve the same visibility restrictions on every path.
  */
 const ids = {
   apiKey: "",
@@ -110,26 +110,8 @@ afterAll(async () => {
   await setMarker(false);
 });
 
-describe("marker off: every read path is unchanged", () => {
-  beforeAll(() => setMarker(false));
-
-  test("API keys and members see every survey, response and count", async () => {
-    expect(
-      idsOf(await getV1Surveys([ids.workspace], undefined, undefined, await getApiKeyVisibleSurveyWhere()))
-    ).toEqual(bothSurveys());
-    await expect(
-      canApiKeyReachSurveyResource(ids.apiKey, "survey.read", { id: ids.privateSurvey, type: "survey" })
-    ).resolves.toBe(true);
-
-    const memberWhere = await getUserVisibleSurveyWhere(ids.member, ids.organization);
-    expect(memberWhere).toEqual({});
-    expect(idsOf(await getSurveys(ids.workspace, memberWhere))).toEqual(bothSurveys());
-    expect(await getTagsOnResponsesCount(ids.workspace, memberWhere)).toEqual([{ count: 2, tagId: ids.tag }]);
-  });
-});
-
-describe("marker on: restricted surveys leave every read path of those who may not see them", () => {
-  beforeAll(() => setMarker(true));
+describe.each([false, true])("read paths enforce stored visibility with graph readiness %s", (ready) => {
+  beforeAll(() => setMarker(ready));
 
   test("v1 and v2 management: an API key lists, counts and reaches workspace-visible surveys only", async () => {
     const where = await getApiKeyVisibleSurveyWhere();

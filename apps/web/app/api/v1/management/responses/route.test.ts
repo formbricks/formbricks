@@ -117,14 +117,14 @@ describe("POST /api/v1/management/responses survey visibility", () => {
     );
   });
 
-  test("makes no survey-level check while visibility is not enforced", async () => {
+  test("denies survey access even before graph readiness", async () => {
     vi.mocked(isSurveyVisibilityReady).mockResolvedValue(false);
     actAsKey(false);
 
     const { response } = await post();
 
-    expect(response.status).toBe(200);
-    expect(can).not.toHaveBeenCalledWith(expect.anything(), expect.anything(), {
+    expect(response.status).toBe(401);
+    expect(can).toHaveBeenCalledWith(expect.anything(), expect.anything(), {
       type: "survey",
       id: surveyId,
     });

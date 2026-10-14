@@ -109,6 +109,7 @@ describe("AuthZed client facade", () => {
     expect(Object.keys(first).sort()).toEqual([
       "checkBulkPermissions",
       "checkPermission",
+      "checkPermissionBatch",
       "consistency",
       "deleteRelationships",
       "diffSchema",
@@ -220,7 +221,11 @@ describe("AuthZed client facade", () => {
       subject: { objectId: "user-1", objectType: "user" },
     } as const;
     const pair = (objectId: string, permissionship: number) => ({
-      request: { resource: { objectId, objectType: "survey" } },
+      request: {
+        permission: "read",
+        resource: { objectId, objectType: "survey" },
+        subject: { object: { objectId: "user-1", objectType: "user" }, optionalRelation: "" },
+      },
       response: { item: { permissionship }, oneofKind: "item" },
     });
 
@@ -279,6 +284,51 @@ describe("AuthZed client facade", () => {
       await expect(getAuthzedClient().checkBulkPermissions({ ...check, resourceIds: [] })).resolves.toEqual(
         new Set()
       );
+      expect(sdkMocks.checkBulkPermissions).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("multi-subject permission batches", () => {
+    const checks = ["member", "billing"].map((id) => ({
+      permission: "response_read_v2",
+      resource: { objectId: "survey-1", objectType: "survey" },
+      subject: { objectId: id, objectType: "user" },
+    }));
+    const pair = (index: number, permissionship: number) => ({
+      request: { ...checks[index], subject: { object: checks[index].subject, optionalRelation: "" } },
+      response: { oneofKind: "item", item: { permissionship } },
+    });
+    test("checks multiple subjects in one fully consistent request", async () => {
+      sdkMocks.checkBulkPermissions.mockResolvedValue({ pairs: [pair(0, 2), pair(1, 1)] });
+      await expect(getAuthzedClient().checkPermissionBatch(checks)).resolves.toEqual([true, false]);
+      expect(sdkMocks.checkBulkPermissions).toHaveBeenCalledOnce();
+      expect(sdkMocks.checkBulkPermissions).toHaveBeenCalledWith(
+        expect.objectContaining({
+          consistency: { requirement: { fullyConsistent: true, oneofKind: "fullyConsistent" } },
+          items: checks.map((check) => ({
+            ...check,
+            subject: { object: check.subject, optionalRelation: "" },
+            context: undefined,
+          })),
+        })
+      );
+    });
+    test.each([
+      [pair(1, 2), pair(0, 1)],
+      [pair(0, 2)],
+      [pair(0, 2), { ...pair(1, 1), request: undefined }],
+      [pair(0, 2), { ...pair(1, 1), response: { oneofKind: "error", error: { code: 5 } } }],
+      [pair(0, 2), pair(1, 3)],
+      [pair(0, 2), { ...pair(1, 1), request: { ...pair(1, 1).request, permission: "read" } }],
+    ])("fails closed on mismatched, missing, failed, or caveated results", async (...pairs) => {
+      sdkMocks.checkBulkPermissions.mockResolvedValue({ pairs });
+      await expect(getAuthzedClient().checkPermissionBatch(checks)).rejects.toThrow(AuthzedError);
+    });
+    test("bounds batches and skips empty requests", async () => {
+      await expect(getAuthzedClient().checkPermissionBatch([])).resolves.toEqual([]);
+      await expect(
+        getAuthzedClient().checkPermissionBatch(Array.from({ length: 251 }, () => checks[0]))
+      ).rejects.toThrow(AuthzedError);
       expect(sdkMocks.checkBulkPermissions).not.toHaveBeenCalled();
     });
   });

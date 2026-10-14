@@ -278,6 +278,8 @@ export const mockSyncSurveyOutput: SurveyMock = {
   customHeadScripts: null,
   customHeadScriptsMode: null,
   customCss: null,
+  ownershipInitialized: true,
+  variables: [],
 };
 
 export const mockSurveyOutput: SurveyMock = {
@@ -313,6 +315,8 @@ export const mockSurveyOutput: SurveyMock = {
   customHeadScripts: null,
   customHeadScriptsMode: null,
   customCss: null,
+  ownershipInitialized: true,
+  variables: [],
 };
 
 export const createSurveyInput: TSurveyCreateInput = {

@@ -402,7 +402,7 @@ services:
   # Playground) runs its refresh keys on an embedded Cube Store, which ghcr.io/formbricks/cube leaves
   # out. cube.js refuses to start without CUBEJS_API_SECRET.
   cube:
-    image: cubejs/cube:v1.7.47
+    image: cubejs/cube:v1.7.50
     env_file:
       - path: apps/web/.env
         required: false

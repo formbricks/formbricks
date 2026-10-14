@@ -139,6 +139,11 @@ describe("buildWebhookDeliveryBody", () => {
 describe("processWebhookDeliveryJob", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSurveyFindUnique.mockResolvedValue({
+      visibility: "workspace",
+      visibilityVersion: 0,
+      visibilityProjectedVersion: 0,
+    });
     mockFindFirst.mockResolvedValue({ ...target, surveyIds: [] });
   });
 

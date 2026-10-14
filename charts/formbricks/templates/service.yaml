@@ -26,6 +26,9 @@ spec:
   # Define how the service selects pods
   selector:
     {{- include "formbricks.selectorLabels" . | nindent 4 }}
+    {{- if eq .Values.upgrade.mode "online" }}
+    formbricks.com/upgrade-generation: {{ include "formbricks.onlineGeneration" . | quote }}
+    {{- end }}
 
   # Include additional pod labels if defined
   {{- if .Values.deployment.podLabels }}

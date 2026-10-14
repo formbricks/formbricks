@@ -3,7 +3,6 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { type TAuthorizationActor, can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
-import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { SURVEY_ACTION_FOR_METHOD } from "@/lib/survey/visibility/api-key";
 import { getSession } from "@/modules/auth/lib/session";
 import { getStorageFileNameScope } from "@/modules/storage/utils";
@@ -27,7 +26,6 @@ const canReachSurveyFile = async (
   const scope = getStorageFileNameScope(filePath.join("/"));
   if (!scope.decodable) return false;
   if (!scope.isSurveyScope) return true;
-  if (!(await isSurveyVisibilityReady())) return true;
   if (!scope.surveyId) return false;
   return can(actor, SURVEY_ACTION_FOR_METHOD[action], { type: "survey", id: scope.surveyId });
 };

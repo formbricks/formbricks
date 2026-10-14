@@ -16,6 +16,9 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
 spec:
+  {{- if eq .Values.upgrade.mode "online" }}
+  strategy: { type: RollingUpdate, rollingUpdate: { maxUnavailable: 0, maxSurge: 1 } }
+  {{- end }}
   replicas: {{ .Values.cube.replicas }}
   selector:
     matchLabels:
@@ -52,7 +55,7 @@ spec:
       {{- end }}
       containers:
         - name: cube
-          image: "{{ .Values.cube.image.repository }}:{{ .Values.cube.image.tag }}"
+          image: {{ include "formbricks.cubeImage" . | quote }}
           imagePullPolicy: {{ .Values.cube.image.pullPolicy }}
           {{- with .Values.cube.containerSecurityContext }}
           securityContext:

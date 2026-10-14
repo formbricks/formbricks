@@ -463,6 +463,7 @@ export const copySurveyToOtherWorkspace = async (
       },
       owner: { connect: { id: userId } },
       visibility: creationFacts.visibility,
+      ownershipInitialized: true,
       surveyClosedMessage: existingSurvey.surveyClosedMessage
         ? structuredClone(existingSurvey.surveyClosedMessage)
         : Prisma.JsonNull,
