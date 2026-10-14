@@ -1,9 +1,19 @@
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, test } from "vitest";
+import { assembleNextRuntime } from "../../apps/web/scripts/docker/build-next-runtime.mjs";
 import { runtimeInventory } from "../../apps/web/scripts/docker/verify-next-runtime.mjs";
 
 const verifier = fileURLToPath(
@@ -54,6 +64,34 @@ afterEach(() =>
 );
 
 describe("Next runtime artifact", () => {
+  test("preserves traced dependency links when the build directory no longer exists", () => {
+    const { root } = fixture();
+    const source = mkdtempSync(join(tmpdir(), "next-source-"));
+    const output = mkdtempSync(join(tmpdir(), "next-output-"));
+    directories.push(source, output);
+    const web = join(source, "apps/web");
+    const standalone = join(web, ".next/standalone");
+    cpSync(root, standalone, { recursive: true });
+    cpSync(join(root, "apps/web/.next/static"), join(web, ".next/static"), { recursive: true });
+    cpSync(join(root, "apps/web/public"), join(web, "public"), { recursive: true });
+    mkdirSync(join(web, "scripts/docker"), { recursive: true });
+    for (const file of ["server.js", "shutdown.js"]) writeFileSync(join(web, "scripts/docker", file), "{}");
+    cpSync(verifier, join(web, "scripts/docker/verify-next-runtime.mjs"));
+    const dependency = join(standalone, "node_modules/fixture");
+    mkdirSync(dependency, { recursive: true });
+    writeFileSync(join(dependency, "index.js"), "module.exports = 42;");
+    const link = join(standalone, "apps/web/.next/node_modules/fixture");
+    mkdirSync(dirname(link), { recursive: true });
+    symlinkSync(relative(dirname(link), dependency), link);
+
+    assembleNextRuntime(web, output, "cloud-one", "ecr");
+    rmSync(source, { recursive: true });
+    const packagedDependency = join(output, "apps/web/.next/node_modules/fixture/index.js");
+    expect(readFileSync(packagedDependency, "utf8")).toBe("module.exports = 42;");
+    expect(realpathSync(packagedDependency)).toBe(join(output, "node_modules/fixture/index.js"));
+    expect(verify(output).status).toBe(0);
+  });
+
   test("accepts a complete artifact, including a local build without a CI-supplied identity", () => {
     const { root } = fixture();
     expect(verify(root).status).toBe(0);

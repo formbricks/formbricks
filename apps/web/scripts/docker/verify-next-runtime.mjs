@@ -54,10 +54,14 @@ export function verifyNextRuntime(root, expectedId, expectedVariant) {
   if (expectedId) assert.equal(metadata.deploymentId, expectedId, "Unexpected runtime artifact identity");
   if (expectedVariant) assert.equal(metadata.variant, expectedVariant, "Unexpected runtime artifact variant");
   const result = verifyNextAssets(root, metadata.deploymentId);
-  assert.deepEqual(
-    runtimeInventory(root),
-    metadata.files,
-    "Runtime artifact contents changed after assembly"
+  const actual = runtimeInventory(root);
+  const changed = [...new Set([...Object.keys(actual), ...Object.keys(metadata.files)])].filter(
+    (file) => actual[file] !== metadata.files[file]
+  );
+  assert.equal(
+    changed.length,
+    0,
+    `Runtime artifact contents changed after assembly: ${changed.slice(0, 8).join(", ")}`
   );
   return { ...result, variant: metadata.variant, files: Object.keys(metadata.files).length };
 }
