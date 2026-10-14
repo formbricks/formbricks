@@ -46,12 +46,15 @@ export const createWorkspaceAction = authenticatedActionClient.inputSchema(ZCrea
       throw new ResourceNotFoundError("Organization", organizationId);
     }
 
-    const workspaceLimit = await getOrganizationWorkspacesLimit(organization.id);
+    const [workspaceLimit, workspaceCount] = await Promise.all([
+      getOrganizationWorkspacesLimit(organization.id),
+      getOrganizationWorkspacesCount(organization.id),
+    ]);
 
     // A fast path for the common case, before the access-control lookup and the transaction. It
     // cannot enforce the cap on its own (concurrent requests all read the same count), so
     // createWorkspace checks again under a lock on the organization (ENG-3921).
-    if ((await getOrganizationWorkspacesCount(organization.id)) >= workspaceLimit) {
+    if (workspaceCount >= workspaceLimit) {
       throw new OperationNotAllowedError("Organization workspace limit reached");
     }
 
