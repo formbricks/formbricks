@@ -1,6 +1,6 @@
 import { load } from "js-yaml";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -105,12 +105,13 @@ const composite = (name: string) =>
   };
 
 describe("release promotion boundary", () => {
-  test("exports by digest without creating public candidate tags", () => {
+  test("saves candidates privately without writing release registry tags", () => {
     const build = steps.find((step) => step.id === "build");
     expect(build?.with?.tags).toBeUndefined();
-    expect(build?.with?.outputs).toContain("push-by-digest=true");
-    expect(build?.with?.outputs).toContain("name=${{ steps.candidate.outputs.image }}");
-    expect(steps.some((step) => step.run?.includes("imagetools create"))).toBe(false);
+    expect(build?.with?.push).toBe(false);
+    expect(build?.with?.save).toBe(true);
+    expect(build?.with?.outputs).toBeUndefined();
+    expect(steps.some((step) => step.run?.includes("depot push"))).toBe(false);
   });
 
   test.each(["build-and-push-ecr", "release-docker-github", "release-docker-github-experimental"])(
@@ -131,16 +132,66 @@ describe("release promotion boundary", () => {
       const promote = promotion.steps.find((step) => step.uses?.endsWith("/promote-verified-image"));
       expect(smoke?.with?.image_ref).toBe(promote?.with?.image_ref);
       expect(smoke?.with?.image_ref).toContain("outputs.IMAGE_REF");
+      expect(smoke?.with?.depot_build_id).toBe(promote?.with?.depot_build_id);
       expect(smoke?.with?.platform).toBe("${{ matrix.platform }}");
       expect(smoke?.["continue-on-error"]).not.toBe(true);
     }
   );
 
+  test.each(["success", "source changed", "destination changed"])(
+    "binds publication to the validated digest (%s)",
+    (scenario) => {
+      const directory = mkdtempSync(join(tmpdir(), "image-promotion-"));
+      const trace = join(directory, "copies");
+      try {
+        const script = composite("promote-verified-image").runs.steps.find((step) =>
+          step.run?.includes("depot push")
+        )?.run;
+        const boundaries = String.raw`
+          docker() {
+            for arg in "$@"; do last_arg="$arg"; done
+            if [[ "$last_arg" == registry.depot.dev/* ]]; then
+              printf '{"digest":"%s"}\n' "$SOURCE_DIGEST"
+            else
+              printf '{"digest":"%s"}\n' "$DESTINATION_DIGEST"
+            fi
+          }
+          depot() { printf '%s\n' "$*" >> "$TRACE"; }
+        `;
+        const result = spawnSync("/bin/bash", ["-c", boundaries + script], {
+          encoding: "utf8",
+          env: {
+            PATH: process.env.PATH,
+            TRACE: trace,
+            IMAGE: "registry.depot.dev/tw0fqmsx3c@sha256:verified",
+            BUILD_ID: "saved-build",
+            RELEASE_TAGS: "registry.example/app:6.1.0",
+            SOURCE_DIGEST: scenario === "source changed" ? "sha256:wrong" : "sha256:verified",
+            DESTINATION_DIGEST: scenario === "destination changed" ? "sha256:wrong" : "sha256:verified",
+          },
+        });
+        expect(result.status).toBe(scenario === "success" ? 0 : 1);
+        if (scenario === "source changed") {
+          expect(existsSync(trace)).toBe(false);
+        } else {
+          expect(readFileSync(trace, "utf8").trim()).toBe(
+            "push --project tw0fqmsx3c --tag registry.example/app:6.1.0 saved-build"
+          );
+        }
+        if (scenario !== "success") expect(result.stderr).toContain("resume with the verified digest");
+      } finally {
+        rmSync(directory, { recursive: true, force: true });
+      }
+    }
+  );
+
   test("checks promoted tags against the tested digest and keeps explicit repair cache bypass", () => {
     const promotion = composite("promote-verified-image").runs.steps;
-    expect(promotion.find((step) => step.run?.includes("imagetools create"))?.run).toContain(
-      'test "$actual" = "${IMAGE##*@}"'
-    );
+    const publish = promotion.find((step) => step.run?.includes("depot push"));
+    expect(publish?.run).toContain('test "$saved" = "${IMAGE##*@}"');
+    expect(publish?.run).toContain('test "${#args[@]}" -gt 0');
+    expect(publish?.run).toContain('depot push --project tw0fqmsx3c "${args[@]}" "$BUILD_ID"');
+    expect(publish?.run).toContain('test "$actual" = "${IMAGE##*@}"');
     expect(steps.find((step) => step.id === "build")?.with?.["no-cache-filters"]).toBe(
       "${{ inputs.rebuild_application == 'true' && 'installer,runner' || '' }}"
     );

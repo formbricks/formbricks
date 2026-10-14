@@ -17,10 +17,13 @@ not runtime configuration or secrets. Local Docker builds need neither argument;
 they receive a local identity during compilation. Do not override deployment identity
 when starting an already-built image.
 
-Release workflows export candidates by digest without creating `candidate-*` tags. This
-prevents candidate tag accumulation on both successful and failed runs. Untagged digests
-can still be pulled from public repositories; this is not a private staging registry.
-Do not delete a GHCR package version to remove a tag: it may also carry release tags.
+Release workflows save candidates in Depot's private build registry. They publish no candidate
+tags or unverified digests to GHCR/ECR. After validation, `depot push` copies the saved build
+to explicit release tags and the workflow checks every destination digest against the tested
+private digest. The saved build ID is also checked against that digest before copying.
+Do not use multi-platform `push-by-digest` with Depot here: its merge step can create an
+implicit `latest` tag. Do not delete GHCR package versions to clean up temporary tags;
+a version may also carry published release tags.
 
 Separate AMD64 and ARM64 jobs validate the exact index digest in parallel on matching native
 runners. They do not install QEMU or pull different architectures into the same Docker image
@@ -71,7 +74,8 @@ repeat with warm caches, and run the same verifier/browser checks on each digest
 the release Sentry configuration, since PR builds intentionally omit upload credentials.
 
 Failed candidate validation leaves deployment tags unchanged. Keep its digest and failed-check
-output for diagnosis, then rerun validation of that digest. Use the explicit repair option
+output and private build ID for diagnosis, then rerun validation of that digest.
+Private pulls require the existing Depot project credential and a build-scoped pull token. Use the explicit repair option
 when the application needs to be rebuilt.
 
 Registry writes to multiple tags are not transactional. A failure after promotion begins

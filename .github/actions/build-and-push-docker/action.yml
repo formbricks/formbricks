@@ -1,6 +1,6 @@
 name: Build and Push Docker Image
 description: |
-  Build an untagged candidate for ECR or GHCR. Callers must gate promotion on native image validation jobs.
+  Save a private Depot candidate for ECR or GHCR. Callers must gate promotion on native image validation jobs.
 
   Supports:
   - ECR builds for Formbricks Cloud deployment
@@ -79,8 +79,11 @@ inputs:
 
 outputs:
   image_ref:
-    description: "Untagged candidate repository and digest"
-    value: ${{ steps.candidate.outputs.image }}@${{ steps.build.outputs.digest }}
+    description: "Private candidate repository and digest"
+    value: registry.depot.dev/tw0fqmsx3c@${{ steps.build.outputs.digest }}
+  depot_build_id:
+    description: "Saved Depot build used for validated promotion"
+    value: ${{ steps.build.outputs.build-id }}
   build_identity:
     description: "Identity of the compiled application"
     value: ${{ steps.candidate.outputs.identity }}
@@ -148,12 +151,6 @@ runs:
       uses: ./.github/actions/update-package-version
       with:
         version: ${{ steps.version.outputs.version }}
-
-    - uses: ./.github/actions/image-registry-login
-      with:
-        registry_type: ${{ inputs.registry_type }}
-        ecr_region: ${{ inputs.ecr_region }}
-        aws_role_arn: ${{ inputs.aws_role_arn }}
 
     - name: Set up Docker build tools
       uses: ./.github/actions/docker-build-setup
@@ -285,17 +282,12 @@ runs:
         IDENTITY_SCRIPT: ${{ github.action_path }}/build-identity.mjs
         SENTRY_AUTH_TOKEN: ${{ env.SENTRY_AUTH_TOKEN }}
         POSTHOG_KEY: ${{ env.POSTHOG_KEY }}
-        ECR_IMAGE: ${{ inputs.ecr_registry }}/${{ inputs.ecr_repository }}
-        GHCR_IMAGE: ghcr.io/${{ inputs.ghcr_image_name }}
         RELEASE_TAGS: ${{ inputs.registry_type == 'ecr' && steps.ecr-tags.outputs.tags || (inputs.experimental_mode == 'true' && steps.ghcr-meta-experimental.outputs.tags) || steps.ghcr-extra-tags.outputs.tags || format('ghcr.io/{0}:{1}', inputs.ghcr_image_name, steps.version.outputs.version) }}
       run: |
         set -euo pipefail
         identity="$(node "$IDENTITY_SCRIPT")"
-        image="$GHCR_IMAGE"
-        if [ "$REGISTRY_TYPE" = ecr ]; then image="$ECR_IMAGE"; fi
         {
           echo "identity=$identity"
-          echo "image=$image"
           echo "release_tags<<FORMBRICKS_TAGS"
           printf '%s\n' "$RELEASE_TAGS"
           echo "FORMBRICKS_TAGS"
@@ -311,8 +303,9 @@ runs:
         file: ${{ inputs.dockerfile }}
         platforms: linux/amd64,linux/arm64
         pull: true
-        # Digest-only export creates no candidate tags in the public package, even on failed runs.
-        outputs: type=image,name=${{ steps.candidate.outputs.image }},push-by-digest=true,name-canonical=true,push=${{ github.event_name != 'pull_request' }}
+        # Save privately. Depot's multi-platform push-by-digest merge can create an implicit latest tag.
+        push: false
+        save: true
         build-args: |
           FORMBRICKS_DEPLOYMENT_ID=${{ steps.candidate.outputs.identity }}
           FORMBRICKS_BUILD_VARIANT=${{ inputs.registry_type }}
