@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
+import { DatabaseError } from "@formbricks/types/errors";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getIsActiveCustomer } from "./customer";
 
@@ -10,6 +12,10 @@ vi.mock("@/lib/constants", () => ({
   get IS_FORMBRICKS_CLOUD() {
     return constantsOverrides.IS_FORMBRICKS_CLOUD;
   },
+}));
+
+vi.mock("@formbricks/logger", () => ({
+  logger: { error: vi.fn() },
 }));
 
 vi.mock("@/lib/organization/service", () => ({
@@ -77,5 +83,11 @@ describe("getIsActiveCustomer", () => {
     mockOrgs([orgWith("scale", "active")]);
     await expect(getIsActiveCustomer("user-1")).resolves.toBe(false);
     expect(getOrganizationsByUserId).not.toHaveBeenCalled();
+  });
+
+  test("returns false and logs instead of throwing when the organization lookup fails", async () => {
+    vi.mocked(getOrganizationsByUserId).mockRejectedValue(new DatabaseError("connection pool exhausted"));
+    await expect(getIsActiveCustomer("user-1")).resolves.toBe(false);
+    expect(logger.error).toHaveBeenCalledTimes(1);
   });
 });
