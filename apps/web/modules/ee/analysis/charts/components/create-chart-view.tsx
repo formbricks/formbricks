@@ -127,10 +127,14 @@ export function CreateChartView({
     ? {
         title: t("workspace.analysis.charts.edit_chart_title"),
         description: t("workspace.analysis.charts.edit_chart_description"),
+        discardTitle: t("workspace.analysis.charts.discard_chart_changes_title"),
+        discardBody: t("workspace.analysis.charts.discard_chart_changes_body"),
       }
     : {
         title: t("workspace.analysis.charts.create_chart"),
         description: t("workspace.analysis.charts.create_chart_description"),
+        discardTitle: t("workspace.analysis.charts.discard_chart_title"),
+        discardBody: t("workspace.analysis.charts.discard_chart_body"),
       };
 
   return (
@@ -198,8 +202,8 @@ export function CreateChartView({
       <ConfirmationModal
         open={isConfirmingDiscard}
         setOpen={setIsConfirmingDiscard}
-        title={t("workspace.analysis.charts.discard_chart_title")}
-        body={t("workspace.analysis.charts.discard_chart_body")}
+        title={copy.discardTitle}
+        body={copy.discardBody}
         buttonText={t("workspace.surveys.ai_create.discard")}
         buttonVariant="destructive"
         cancelButtonText={t("workspace.surveys.ai_create.keep_editing")}
