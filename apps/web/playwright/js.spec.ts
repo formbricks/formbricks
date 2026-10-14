@@ -8,6 +8,12 @@ import { activateSurvey, useSelectedTemplate } from "./utils/helper";
 
 const HTML_TEMPLATE = `<head>
   <script type="text/javascript">
+    // An AMD loader stub, kept for the whole page life, so both UMD bundles (the SDK and the lazily
+    // loaded survey renderer) must still take their browser-global branch on an AMD page (ENG-3657).
+    window.define = function () {};
+    window.define.amd = {};
+  </script>
+  <script type="text/javascript">
     !(function () {
       var t = document.createElement("script");
       (t.type = "text/javascript"), (t.async = !0), (t.src = "http://localhost:3000/js/formbricks.umd.cjs");
