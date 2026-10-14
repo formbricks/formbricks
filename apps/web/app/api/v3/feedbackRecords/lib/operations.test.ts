@@ -1459,7 +1459,7 @@ describe("feedback-record filters with meaningful falsy values", () => {
   });
 
   test("rejects an unknown sort column", async () => {
-    const response = await listV3FeedbackRecords({ ...base, sort: "updated_at" as never });
+    const response = await listV3FeedbackRecords({ ...base, sort: "value_number" as never });
 
     expect(response.status).toBe(422);
     expect((await response.json()).invalid_params[0].name).toBe("sort");
