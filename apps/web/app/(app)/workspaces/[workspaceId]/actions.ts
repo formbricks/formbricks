@@ -9,6 +9,9 @@ import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { getOrganizationWorkspacesCount } from "@/lib/workspace/service";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
   getAccessControlPermission,
@@ -33,11 +36,23 @@ export const createWorkspaceAction = authenticatedActionClient.inputSchema(ZCrea
       type: "organization",
       id: parsedInput.organizationId,
     });
+    // Defence in depth for ENG-3921: bounds how wide a burst can be. The lock below is what
+    // enforces the cap.
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
 
     const organization = await getOrganization(organizationId);
 
     if (!organization) {
       throw new ResourceNotFoundError("Organization", organizationId);
+    }
+
+    const workspaceLimit = await getOrganizationWorkspacesLimit(organization.id);
+
+    // A fast path for the common case, before the access-control lookup and the transaction. It
+    // cannot enforce the cap on its own (concurrent requests all read the same count), so
+    // createWorkspace checks again under a lock on the organization (ENG-3921).
+    if ((await getOrganizationWorkspacesCount(organization.id)) >= workspaceLimit) {
+      throw new OperationNotAllowedError("Organization workspace limit reached");
     }
 
     if (parsedInput.data.teamIds && parsedInput.data.teamIds.length > 0) {
@@ -48,10 +63,8 @@ export const createWorkspaceAction = authenticatedActionClient.inputSchema(ZCrea
       }
     }
 
-    // ENG-3921: the cap is enforced inside createWorkspace's transaction, under a lock on the
-    // organization. A count compared here would let a burst of concurrent requests all pass it.
     const workspace = await createWorkspace(parsedInput.organizationId, parsedInput.data, {
-      workspaceLimit: await getOrganizationWorkspacesLimit(organization.id),
+      workspaceLimit,
     });
     const updatedNotificationSettings = {
       ...user.notificationSettings,

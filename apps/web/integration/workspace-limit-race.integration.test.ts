@@ -39,6 +39,15 @@ const countWorkspaces = (organizationId: string) => prisma.workspace.count({ whe
 const rejectionsOf = (outcomes: PromiseSettledResult<unknown>[]) =>
   outcomes.flatMap((outcome) => (outcome.status === "rejected" ? [outcome.reason] : []));
 
+/** Every loser is the limit, not a deadlock, a lock timeout or a unique violation. */
+const expectLimitRejections = (outcomes: PromiseSettledResult<unknown>[], expected: number) => {
+  const rejections = rejectionsOf(outcomes);
+  expect(rejections).toHaveLength(expected);
+  for (const reason of rejections) {
+    expect(reason).toBeInstanceOf(OperationNotAllowedError);
+  }
+};
+
 beforeEach(async () => {
   await resetDb();
 });
@@ -51,12 +60,7 @@ describe("createWorkspace workspace limit (real Postgres)", () => {
 
     expect(await countWorkspaces(organizationId)).toBe(LIMIT);
     expect(outcomes.filter((outcome) => outcome.status === "fulfilled")).toHaveLength(LIMIT - 1);
-    // Every loser is the limit, not a deadlock, a lock timeout or a unique violation.
-    const rejections = rejectionsOf(outcomes);
-    expect(rejections).toHaveLength(BURST - (LIMIT - 1));
-    for (const reason of rejections) {
-      expect(reason).toBeInstanceOf(OperationNotAllowedError);
-    }
+    expectLimitRejections(outcomes, BURST - (LIMIT - 1));
   });
 
   test("a concurrent burst at the limit creates nothing", async () => {
@@ -65,15 +69,17 @@ describe("createWorkspace workspace limit (real Postgres)", () => {
     const outcomes = await burst(organizationId);
 
     expect(await countWorkspaces(organizationId)).toBe(LIMIT);
-    expect(rejectionsOf(outcomes)).toHaveLength(BURST);
+    expectLimitRejections(outcomes, BURST);
   });
 
   test("concurrent bursts on two organizations each fill their own limit", async () => {
     const [first, second] = await Promise.all([seedOrganization("First", 0), seedOrganization("Second", 2)]);
 
-    await Promise.all([burst(first), burst(second)]);
+    const [firstOutcomes, secondOutcomes] = await Promise.all([burst(first), burst(second)]);
 
     expect(await countWorkspaces(first)).toBe(LIMIT);
     expect(await countWorkspaces(second)).toBe(LIMIT);
+    expectLimitRejections(firstOutcomes, BURST - LIMIT);
+    expectLimitRejections(secondOutcomes, BURST - (LIMIT - 2));
   });
 });
