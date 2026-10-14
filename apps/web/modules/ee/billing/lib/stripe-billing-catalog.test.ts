@@ -8,10 +8,11 @@ const mocks = vi.hoisted(() => ({
   pricesList: vi.fn(),
   cacheWithCache: vi.fn(),
   loggerError: vi.fn(),
+  loggerWarn: vi.fn(),
 }));
 
 vi.mock("@formbricks/logger", () => ({
-  logger: { error: mocks.loggerError },
+  logger: { error: mocks.loggerError, warn: mocks.loggerWarn },
 }));
 
 vi.mock("./stripe-client", () => ({
@@ -51,21 +52,27 @@ const createPrice = ({
   kind,
   interval,
   tiersMode = "graduated",
+  created = 1_700_000_000,
+  tagged = true,
 }: {
   id: string;
   plan: "hobby" | "pro" | "scale";
   kind: "base" | "responses";
   interval: "monthly" | "yearly";
   tiersMode?: "graduated" | "volume";
+  created?: number;
+  // false omits formbricks_price_kind, so getPriceKind classifies it via the usage_type fallback.
+  tagged?: boolean;
 }) => ({
   id,
   active: true,
+  created,
   currency: "usd",
   unit_amount: kind === "responses" ? 0 : interval === "monthly" ? 1000 : 10000,
   ...(kind === "responses" ? { tiers: RESPONSE_PRICE_TIERS, tiers_mode: tiersMode } : {}),
   metadata: {
     formbricks_plan: plan,
-    formbricks_price_kind: kind,
+    ...(tagged ? { formbricks_price_kind: kind } : {}),
     formbricks_interval: interval,
   },
   recurring: {
@@ -98,6 +105,17 @@ const createWorkflowRunsPrice = (id: string) => ({
   recurring: { usage_type: "metered", interval: "month" },
   product: { id: "prod_scale", active: true, metadata: { formbricks_plan: "scale" } },
 });
+
+// The standard catalog minus the Pro responses price, so a test can supply its own Pro candidates.
+const catalogWithProResponses = (proResponsePrices: ReturnType<typeof createPrice>[]) => [
+  createPrice({ id: "price_hobby_monthly", plan: "hobby", kind: "base", interval: "monthly" }),
+  createPrice({ id: "price_pro_monthly", plan: "pro", kind: "base", interval: "monthly" }),
+  createPrice({ id: "price_pro_yearly", plan: "pro", kind: "base", interval: "yearly" }),
+  ...proResponsePrices,
+  createPrice({ id: "price_scale_monthly", plan: "scale", kind: "base", interval: "monthly" }),
+  createPrice({ id: "price_scale_yearly", plan: "scale", kind: "base", interval: "yearly" }),
+  createPrice({ id: "price_scale_responses", plan: "scale", kind: "responses", interval: "monthly" }),
+];
 
 const STANDARD_CATALOG_PRICES = [
   createPrice({ id: "price_hobby_monthly", plan: "hobby", kind: "base", interval: "monthly" }),
@@ -384,6 +402,235 @@ describe("stripe-billing-catalog", () => {
     },
     TEST_TIMEOUT_MS
   );
+
+  describe("responses price resolution (ENG-1971)", () => {
+    test(
+      "picks the graduated price over a legacy volume price on the same plan instead of throwing",
+      async () => {
+        // Production shape behind FORMBRICKS-178: an untagged legacy metered volume price (newer, so
+        // recency alone would pick it) next to the current graduated one. Both classify as
+        // pro/responses/monthly; the old getSinglePrice threw "found 2" and 500'd the billing page.
+        mocks.pricesList.mockResolvedValue({
+          data: catalogWithProResponses([
+            createPrice({
+              id: "price_pro_responses_legacy",
+              plan: "pro",
+              kind: "responses",
+              interval: "monthly",
+              tiersMode: "volume",
+              tagged: false,
+              created: 1_800_000_000,
+            }),
+            createPrice({
+              id: "price_pro_responses_graduated",
+              plan: "pro",
+              kind: "responses",
+              interval: "monthly",
+              created: 1_700_000_000,
+            }),
+          ]),
+          has_more: false,
+        });
+
+        const { getStripeBillingCatalogDisplay, getCatalogItemsForPlan } =
+          await import("./stripe-billing-catalog");
+
+        const display = await getStripeBillingCatalogDisplay();
+        expect(display.pro.monthly.responseOverage).toEqual(EXPECTED_RESPONSE_OVERAGE);
+        expect(display.pro.yearly.responseOverage).toEqual(EXPECTED_RESPONSE_OVERAGE);
+
+        // Checkout reads the same catalog item, so it provisions the same price the card displays.
+        await expect(getCatalogItemsForPlan("pro", "monthly")).resolves.toEqual([
+          { price: "price_pro_monthly", quantity: 1 },
+          { price: "price_pro_responses_graduated" },
+        ]);
+        await expect(getCatalogItemsForPlan("pro", "yearly")).resolves.toEqual([
+          { price: "price_pro_yearly", quantity: 1 },
+          { price: "price_pro_responses_graduated" },
+        ]);
+
+        expect(mocks.loggerWarn).toHaveBeenCalledTimes(1);
+        expect(mocks.loggerWarn).toHaveBeenCalledWith(
+          expect.objectContaining({
+            plan: "pro",
+            interval: "monthly",
+            chosenPriceId: "price_pro_responses_graduated",
+            ignoredPriceIds: ["price_pro_responses_legacy"],
+          }),
+          expect.any(String)
+        );
+      },
+      TEST_TIMEOUT_MS
+    );
+
+    test(
+      "prefers an untagged graduated price over a tagged volume price, and escalates to error",
+      async () => {
+        // The duplicated-in-dashboard case: Stripe copies metadata, so a legacy volume price can still
+        // carry formbricks_price_kind=responses while the current graduated price is untagged. Graduated
+        // must outrank the tag, or the tooltip disappears again.
+        mocks.pricesList.mockResolvedValue({
+          data: catalogWithProResponses([
+            createPrice({
+              id: "price_pro_responses_tagged_volume",
+              plan: "pro",
+              kind: "responses",
+              interval: "monthly",
+              tiersMode: "volume",
+              created: 1_800_000_000,
+            }),
+            createPrice({
+              id: "price_pro_responses_untagged_graduated",
+              plan: "pro",
+              kind: "responses",
+              interval: "monthly",
+              tagged: false,
+              created: 1_700_000_000,
+            }),
+          ]),
+          has_more: false,
+        });
+
+        const { getStripeBillingCatalogDisplay, getCatalogItemsForPlan } =
+          await import("./stripe-billing-catalog");
+
+        await expect(getCatalogItemsForPlan("pro", "monthly")).resolves.toEqual([
+          { price: "price_pro_monthly", quantity: 1 },
+          { price: "price_pro_responses_untagged_graduated" },
+        ]);
+        const display = await getStripeBillingCatalogDisplay();
+        expect(display.pro.monthly.responseOverage).toEqual(EXPECTED_RESPONSE_OVERAGE);
+
+        // An untagged winner over a skipped tagged price is logged at error, not warn.
+        expect(mocks.loggerWarn).not.toHaveBeenCalled();
+        expect(mocks.loggerError).toHaveBeenCalledWith(
+          expect.objectContaining({
+            chosenPriceId: "price_pro_responses_untagged_graduated",
+            chosenTiersMode: "graduated",
+            ignoredPriceIds: ["price_pro_responses_tagged_volume"],
+          }),
+          expect.any(String)
+        );
+      },
+      TEST_TIMEOUT_MS
+    );
+
+    test(
+      "picks the most recently created price when two graduated prices are equally tagged",
+      async () => {
+        mocks.pricesList.mockResolvedValue({
+          data: catalogWithProResponses([
+            createPrice({
+              id: "price_pro_responses_old",
+              plan: "pro",
+              kind: "responses",
+              interval: "monthly",
+              created: 1_700_000_000,
+            }),
+            createPrice({
+              id: "price_pro_responses_new",
+              plan: "pro",
+              kind: "responses",
+              interval: "monthly",
+              created: 1_750_000_000,
+            }),
+          ]),
+          has_more: false,
+        });
+
+        const { getCatalogItemsForPlan } = await import("./stripe-billing-catalog");
+
+        await expect(getCatalogItemsForPlan("pro", "monthly")).resolves.toEqual([
+          { price: "price_pro_monthly", quantity: 1 },
+          { price: "price_pro_responses_new" },
+        ]);
+        expect(mocks.loggerWarn).toHaveBeenCalledWith(
+          expect.objectContaining({
+            chosenPriceId: "price_pro_responses_new",
+            ignoredPriceIds: ["price_pro_responses_old"],
+          }),
+          expect.any(String)
+        );
+      },
+      TEST_TIMEOUT_MS
+    );
+
+    test(
+      "prefers an explicitly tagged graduated price over a newer untagged graduated one",
+      async () => {
+        mocks.pricesList.mockResolvedValue({
+          data: catalogWithProResponses([
+            createPrice({
+              id: "price_pro_responses_tagged",
+              plan: "pro",
+              kind: "responses",
+              interval: "monthly",
+              created: 1_700_000_000,
+            }),
+            createPrice({
+              id: "price_pro_responses_untagged",
+              plan: "pro",
+              kind: "responses",
+              interval: "monthly",
+              tagged: false,
+              created: 1_800_000_000,
+            }),
+          ]),
+          has_more: false,
+        });
+
+        const { getCatalogItemsForPlan } = await import("./stripe-billing-catalog");
+
+        await expect(getCatalogItemsForPlan("pro", "monthly")).resolves.toEqual([
+          { price: "price_pro_monthly", quantity: 1 },
+          { price: "price_pro_responses_tagged" },
+        ]);
+      },
+      TEST_TIMEOUT_MS
+    );
+
+    test(
+      "keeps responseOverage null when the only responses price is volume-mode, without warning",
+      async () => {
+        mocks.pricesList.mockResolvedValue({
+          data: catalogWithProResponses([
+            createPrice({
+              id: "price_pro_responses",
+              plan: "pro",
+              kind: "responses",
+              interval: "monthly",
+              tiersMode: "volume",
+            }),
+          ]),
+          has_more: false,
+        });
+
+        const { getStripeBillingCatalogDisplay } = await import("./stripe-billing-catalog");
+        const display = await getStripeBillingCatalogDisplay();
+
+        expect(display.pro.monthly.responseOverage).toBeNull();
+        expect(mocks.loggerWarn).not.toHaveBeenCalled();
+      },
+      TEST_TIMEOUT_MS
+    );
+
+    test(
+      "still fails the catalog when a plan has no responses price at all",
+      async () => {
+        mocks.pricesList.mockResolvedValue({
+          data: catalogWithProResponses([]),
+          has_more: false,
+        });
+
+        const { getCatalogItemsForPlan } = await import("./stripe-billing-catalog");
+
+        await expect(getCatalogItemsForPlan("pro", "monthly")).rejects.toThrow(
+          "Expected a Stripe price for pro/responses/monthly, but found 0"
+        );
+      },
+      TEST_TIMEOUT_MS
+    );
+  });
 
   test(
     "fails fast when the catalog is incomplete",
