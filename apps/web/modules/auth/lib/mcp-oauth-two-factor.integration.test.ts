@@ -61,9 +61,9 @@ const codeIn = async (response: Response): Promise<string | null> => {
 };
 
 /** A user with TOTP who has consented to the client once, signed in with both factors. */
-const consentingTwoFactorUser = async (): Promise<{ clientId: string; secret: string }> => {
+const consentingTwoFactorUser = async (): Promise<{ clientId: string; secret: string; userId: string }> => {
   await createUser(EMAIL, PASSWORD, "Mcp 2FA");
-  const { cookie } = await signIn(EMAIL, PASSWORD);
+  const { cookie, userId } = await signIn(EMAIL, PASSWORD);
   const enrolled = await auth.api.enableTwoFactor({ body: { password: PASSWORD }, headers: { cookie } });
   if (enrolled.method !== "totp") throw new Error(`expected a TOTP enrolment, got "${enrolled.method}"`);
   const secret = /[?&]secret=([^&]+)/.exec(enrolled.totpURI)?.[1] as string;
@@ -78,7 +78,7 @@ const consentingTwoFactorUser = async (): Promise<{ clientId: string; secret: st
   const clientId = await registerClient("MCP client");
   await grant(enrolledCookie, clientId, SCOPE);
   await prisma.session.deleteMany();
-  return { clientId, secret };
+  return { clientId, secret, userId };
 };
 
 /** Starts an authorization while signed out: the provider sends the browser to log in with a signed query. */
@@ -159,7 +159,7 @@ describe("MCP authorization for a user with two-factor authentication (real Post
   test.each<TMode>(["navigate", "fetch"])(
     "the second factor completes the authorization, and its code exchanges for tokens (%s)",
     async (mode) => {
-      const { clientId, secret } = await consentingTwoFactorUser();
+      const { clientId, secret, userId } = await consentingTwoFactorUser();
       const { signedQuery, verifier } = await startAuthorization(clientId);
       const challenge = await passwordStep(mode, signedQuery);
       await challenge.text();
@@ -184,6 +184,9 @@ describe("MCP authorization for a user with two-factor authentication (real Post
       });
       expect(exchanged.status, JSON.stringify(exchanged.body)).toBe(200);
       expect(exchanged.body).toHaveProperty("access_token");
+      // The token is issued to the user whose second factor completed the sign-in.
+      const [, payload] = String(exchanged.body.access_token).split(".");
+      expect((JSON.parse(Buffer.from(payload, "base64url").toString()) as { sub?: string }).sub).toBe(userId);
     }
   );
 });
