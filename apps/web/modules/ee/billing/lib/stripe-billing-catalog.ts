@@ -271,15 +271,38 @@ const resolveResponsePrice = (
     throw new Error(`Expected a Stripe price for ${plan}/responses/${interval}, but found 0`);
   }
 
-  const [chosen, ...ignored] = [...matches].sort((a, b) => {
+  // The usage_type fallback in getPriceKind also catches untagged metered prices of OTHER meters. When a
+  // tagged responses price names its meter, only that meter's untagged prices stay in the running, so a
+  // foreign-meter price can never outrank it and be attached to checkouts. Without a tagged meter there
+  // is nothing to verify against, and ranking alone decides.
+  const isResponsesTagged = (price: TStripeCatalogPrice) =>
+    price.metadata?.formbricks_price_kind === "responses";
+  const getMeter = (price: TStripeCatalogPrice) => price.recurring?.meter ?? null;
+  const responseMeters = new Set(
+    matches.filter(isResponsesTagged).flatMap((price) => {
+      const meter = getMeter(price);
+      return meter ? [meter] : [];
+    })
+  );
+  const candidates =
+    responseMeters.size === 0
+      ? matches
+      : matches.filter((price) => isResponsesTagged(price) || responseMeters.has(getMeter(price) ?? ""));
+  const foreignMeterIds = matches.filter((price) => !candidates.includes(price)).map((price) => price.id);
+  if (foreignMeterIds.length > 0) {
+    logger.warn(
+      { plan, interval, excludedPriceIds: foreignMeterIds },
+      "Excluded untagged metered prices on a different meter from the responses price"
+    );
+  }
+
+  const [chosen, ...ignored] = [...candidates].sort((a, b) => {
     const [aMode, aTag] = getResponsePriceRank(a);
     const [bMode, bTag] = getResponsePriceRank(b);
     return aMode - bMode || aTag - bTag || b.created - a.created;
   });
 
   if (ignored.length > 0) {
-    const isResponsesTagged = (price: TStripeCatalogPrice) =>
-      price.metadata?.formbricks_price_kind === "responses";
     // An untagged winner over a skipped tagged price means a metered price we never labelled (possibly a
     // foreign meter) is now billed as responses — escalate so it gets looked at.
     const untaggedBeatTagged = !isResponsesTagged(chosen) && ignored.some(isResponsesTagged);
