@@ -9,17 +9,27 @@ import {
 } from "./oauth-grant-revocation";
 
 /**
- * The decisions each hook makes, against a mocked Prisma. Whether the queries hold up against a real
- * database, the real provider and a concurrent refresh is `oauth-grant-revocation.integration.test.ts`.
+ * The decisions each hook makes, against a mocked Prisma: refuse or let through, which consent rows it
+ * writes, what it logs, and when it does nothing. What the raw SQL selects is not asserted here; whether
+ * the queries end the right tokens, against a real database, the real provider and a concurrent refresh,
+ * is `oauth-grant-revocation.integration.test.ts`.
  */
+type TMockConsent = { id: string; clientId: string; scopes: string[]; updatedAt: Date; skipConsent: boolean };
+
 const mocks = vi.hoisted(() => ({
   getSessionFromCtx: vi.fn(),
+  getOAuthProviderState: vi.fn(),
   calls: [] as string[],
+  /** The consent rows the locking read returns. */
+  consents: [] as TMockConsent[],
+  /** Whether the presented token's grant holds a token beyond the consent. */
+  grantBeyond: false,
   tx: {
-    oauthConsent: { findFirst: vi.fn(), deleteMany: vi.fn() },
+    oauthConsent: { findFirst: vi.fn(), deleteMany: vi.fn(), update: vi.fn() },
     oauthRefreshToken: { updateMany: vi.fn() },
     oauthAccessToken: { updateMany: vi.fn() },
     $queryRaw: vi.fn(),
+    $executeRaw: vi.fn(),
   },
 }));
 
@@ -27,10 +37,12 @@ vi.mock("better-auth/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("better-auth/api")>()),
   getSessionFromCtx: mocks.getSessionFromCtx,
 }));
+vi.mock("@better-auth/oauth-provider", () => ({ getOAuthProviderState: mocks.getOAuthProviderState }));
 vi.mock("@formbricks/database", () => ({
   prisma: {
     $transaction: vi.fn((run: (tx: typeof mocks.tx) => unknown) => run(mocks.tx)),
     oauthRefreshToken: { findUnique: vi.fn() },
+    oauthConsent: { findFirst: vi.fn() },
   },
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
@@ -65,7 +77,45 @@ beforeEach(() => {
     mocks.calls.push("revoke access tokens");
     return { count: 0 };
   });
+  mocks.consents = [];
+  mocks.grantBeyond = false;
+  // Two raw reads steer a decision, the consent rows and the grant check; the token queries find nothing.
+  mocks.tx.$queryRaw.mockImplementation(async (sql: TemplateStringsArray, ...values: unknown[]) => {
+    const text = sql.join("?");
+    // The consent read only finds the rows of the client or consent it was asked for.
+    if (text.includes(`FROM "oauthConsent" c`)) {
+      // By client id, or, for update-consent, through the client of the consent it names.
+      const asked = flattenSqlValues(values);
+      const named = mocks.consents.find((row) => asked.includes(row.id));
+      const clientId =
+        named?.clientId ?? mocks.consents.find((row) => asked.includes(row.clientId))?.clientId;
+      return mocks.consents.filter((row) => row.clientId === clientId);
+    }
+    if (text.includes("EXISTS")) return [{ beyond: mocks.grantBeyond }];
+    return [];
+  });
+  mocks.tx.$executeRaw.mockResolvedValue(0);
 });
+
+/** A raw query's bound values, with nested `Prisma.sql` fragments' values flattened in. */
+const flattenSqlValues = (values: unknown[]): unknown[] =>
+  values.flatMap((value) =>
+    value && typeof value === "object" && "values" in value
+      ? flattenSqlValues((value as { values: unknown[] }).values)
+      : [value]
+  );
+
+/** A consent row as the locking read returns it. */
+const consentRow = (id: string, scopes: string[], updatedAt: Date, skipConsent = false): TMockConsent => ({
+  id,
+  clientId: "client-1",
+  scopes,
+  updatedAt,
+  skipConsent,
+});
+
+/** Whether the hook went on to end tokens beyond the consent (the raw writes; which rows is SQL's job). */
+const endedTokensBeyondConsent = (): boolean => mocks.tx.$executeRaw.mock.calls.length > 0;
 
 describe("revokeOAuthConsentGrant", () => {
   test("deletes the client's consents before revoking its tokens, scoped to the user", async () => {
@@ -144,13 +194,24 @@ describe("revokeOAuthConsentBeforeHandler", () => {
 });
 
 describe("requireOAuthConsentOnRefreshAfterHandler", () => {
+  const WIDE = ["surveys:read", "responses:read", "offline_access"];
   const refreshCtx = (refreshToken: unknown = "fbor_raw-token", returned: unknown = { access_token: "a" }) =>
     ctx("/oauth2/token", { grant_type: "refresh_token", refresh_token: refreshToken }, returned);
   const storedRow = (skipConsent = false) => ({
     userId: "user-1",
     clientId: "client-1",
+    scopes: WIDE,
+    authorizationCodeId: "code-1" as string | null,
+    rotatedAt: new Date("2026-10-08T10:00:00Z"),
+    sessionId: "session-1",
     client: { skipConsent },
   });
+  /** Consent rows newest first, each a second older than the one before. */
+  const consentWith = (...scopes: string[][]) => {
+    mocks.consents = scopes.map((consentScopes, i) =>
+      consentRow(`consent-${i}`, consentScopes, new Date(Date.UTC(2026, 9, 8, 10, 0, 59 - i)))
+    );
+  };
 
   test.each([
     ["another path", ctx("/oauth2/consent", { grant_type: "refresh_token", refresh_token: "fbor_x" })],
@@ -164,7 +225,7 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
 
   test("looks the presented token up by the provider's stored hash", async () => {
     vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue(storedRow() as never);
-    mocks.tx.$queryRaw.mockResolvedValue([{ id: "consent-1" }]);
+    consentWith(WIDE);
 
     await requireOAuthConsentOnRefreshAfterHandler(refreshCtx());
 
@@ -174,17 +235,18 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
     );
   });
 
-  test("lets the refresh through while the consent exists", async () => {
+  test("lets the refresh through while the consent covers the token's scopes", async () => {
     vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue(storedRow() as never);
-    mocks.tx.$queryRaw.mockResolvedValue([{ id: "consent-1" }]);
+    consentWith([...WIDE, "workflows:read"]);
 
     await expect(requireOAuthConsentOnRefreshAfterHandler(refreshCtx())).resolves.toBeUndefined();
     expect(mocks.calls).toEqual([]);
+    expect(endedTokensBeyondConsent()).toBe(false);
   });
 
   test("revokes the grant and refuses the refresh once the consent is gone", async () => {
     vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue(storedRow() as never);
-    mocks.tx.$queryRaw.mockResolvedValue([]);
+    consentWith();
 
     await expectApiError(
       requireOAuthConsentOnRefreshAfterHandler(refreshCtx()),
