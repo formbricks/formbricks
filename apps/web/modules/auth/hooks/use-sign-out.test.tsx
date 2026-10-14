@@ -13,6 +13,10 @@ vi.mock("@/modules/auth/lib/auth-client", () => ({
   authClient: { signOut: (...args: unknown[]) => baSignOut(...args) },
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: loggerError } }));
+const { logoutPlainBeforeNavigation } = vi.hoisted(() => ({
+  logoutPlainBeforeNavigation: vi.fn(),
+}));
+vi.mock("@/app/plain/lib/plain-sdk", () => ({ logoutPlainBeforeNavigation }));
 
 const mockedLogSignOut = vi.mocked(logSignOutAction);
 // The hook reads a bare `localStorage` global, which vitest's jsdom doesn't expose on globalThis.
@@ -52,6 +56,15 @@ describe("useSignOut", () => {
       organizationId: "org-1",
     });
     expect(baSignOut).toHaveBeenCalledTimes(1);
+    expect(window.location.href).toBe("/auth/login");
+  });
+
+  test("logs the Plain support chat out before the full-page redirect", async () => {
+    const { signOut } = useSignOut({ id: "user-1", email: "ada@example.com" });
+
+    await signOut();
+
+    expect(logoutPlainBeforeNavigation).toHaveBeenCalledTimes(1);
     expect(window.location.href).toBe("/auth/login");
   });
 
