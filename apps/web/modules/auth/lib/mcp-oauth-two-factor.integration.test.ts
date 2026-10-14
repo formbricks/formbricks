@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { generateSync } from "otplib";
-import { beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import {
   BASE_URL,
@@ -100,12 +100,33 @@ const startAuthorization = async (clientId: string): Promise<{ signedQuery: stri
   return { signedQuery: login.search.slice(1), verifier };
 };
 
+/**
+ * Counts authorization codes as the provider mints them, delivered or not: on a fetch the old order
+ * minted one too, it just never reached the caller (the 2FA challenge replaced the response body).
+ */
+const watchAuthorizationCodes = async (): Promise<() => number> => {
+  const { internalAdapter } = await auth.$context;
+  const spy = vi.spyOn(internalAdapter, "createVerificationValue");
+  return () =>
+    spy.mock.calls.filter(([data]) => {
+      try {
+        return (JSON.parse(data.value) as { type?: string }).type === "authorization_code";
+      } catch {
+        return false;
+      }
+    }).length;
+};
+
 const passwordStep = (mode: TMode, signedQuery: string) =>
   handle("/sign-in/email", {
     method: "POST",
     headers: requestHeaders(mode),
     body: JSON.stringify({ email: EMAIL, password: PASSWORD, oauth_query: signedQuery }),
   });
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 beforeEach(async () => {
   await resetDb();
@@ -123,9 +144,11 @@ describe("MCP authorization for a user with two-factor authentication (real Post
     async (mode) => {
       const { clientId } = await consentingTwoFactorUser();
       const { signedQuery } = await startAuthorization(clientId);
+      const authorizationCodes = await watchAuthorizationCodes();
 
       const response = await passwordStep(mode, signedQuery);
 
+      expect(authorizationCodes()).toBe(0);
       expect(response.status).toBe(200);
       expect(response.headers.get("location")).toBeNull();
       expect(await response.json()).toMatchObject({ twoFactorRedirect: true });
@@ -140,6 +163,7 @@ describe("MCP authorization for a user with two-factor authentication (real Post
       const { signedQuery, verifier } = await startAuthorization(clientId);
       const challenge = await passwordStep(mode, signedQuery);
       await challenge.text();
+      const authorizationCodes = await watchAuthorizationCodes();
 
       const totp = await handle("/two-factor/verify-totp", {
         method: "POST",
@@ -148,6 +172,7 @@ describe("MCP authorization for a user with two-factor authentication (real Post
       });
       const code = await codeIn(totp);
       expect(code).toBeTruthy();
+      expect(authorizationCodes()).toBe(1);
 
       const exchanged = await token({
         grant_type: "authorization_code",

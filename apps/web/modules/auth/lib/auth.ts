@@ -428,10 +428,11 @@ export const auth = betterAuth({
       },
     }),
     // twoFactor() MUST come before every plugin whose after hook acts on the session a request set:
-    // Better Auth runs plugin after hooks in list order, and for a user with 2FA a correct password alone
-    // sets a session that this plugin's after hook then withdraws until the second factor arrives.
-    // Ahead of it, oauthProvider() resumed a pending MCP authorization with that session and minted an
-    // authorization code for a password alone (ENG-3933).
+    // Better Auth runs plugin after hooks in list order (the root `hooks.after` runs before all of them,
+    // so it gets no such guarantee), and for a user with 2FA a correct password alone sets a session
+    // that twoFactor()'s after hook then withdraws until the second factor arrives. Ahead of it,
+    // oauthProvider() resumed a pending MCP authorization with that session and minted an authorization
+    // code for a password alone (ENG-3933).
     // TOTP + backup codes, matched to the current otplib setup (6 digits / 30s) and 10 encrypted
     // backup codes. Trusted-device is left off (never passed client-side) so 2FA is required every
     // login — strict parity. Cutover work (Phase 7): migrate secrets/backup codes out of
