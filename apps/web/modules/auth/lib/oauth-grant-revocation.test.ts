@@ -107,6 +107,9 @@ const flattenSqlValues = (values: unknown[]): unknown[] =>
       : [value]
   );
 
+/** The start of the current second, as the provider stamps a consent row it has just written. */
+const thisSecond = (): Date => new Date(Math.floor(Date.now() / 1000) * 1000);
+
 /** A consent row as the locking read returns it. */
 const consentRow = (id: string, scopes: string[], updatedAt: Date, skipConsent = false): TMockConsent => ({
   id,
@@ -447,7 +450,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
   });
 
   test("on a same-second tie, keeps the row the approval just wrote", async () => {
-    const sameSecond = new Date(2_000);
+    const sameSecond = thisSecond();
     // The approval asked for NARROW (the signed query's scope), so the NARROW row is the one it wrote.
     mocks.consents = [
       consentRow("consent-a", ["surveys:read", "responses:read", "offline_access"], sameSecond),
@@ -467,7 +470,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
     mocks.getOAuthProviderState.mockResolvedValue({
       query: new URLSearchParams({ client_id: "client-1", scope: WIDE.join(" ") }).toString(),
     });
-    const sameSecond = new Date(2_000);
+    const sameSecond = thisSecond();
     mocks.consents = [consentRow("consent-a", NARROW, sameSecond), consentRow("consent-b", WIDE, sameSecond)];
 
     await revokeTokensBeyondConsentAfterHandler(approve());
@@ -479,7 +482,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
   });
 
   test("on a same-second tie, the scopes accepted in the body name the row the approval wrote", async () => {
-    const sameSecond = new Date(2_000);
+    const sameSecond = thisSecond();
     // The query asked for every scope; the user accepted NARROW only, so NARROW is what was stored.
     mocks.getOAuthProviderState.mockResolvedValue({
       query: new URLSearchParams({
@@ -502,7 +505,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
   });
 
   test("on a same-second tie after a refused request, names no write and keeps what every row allows", async () => {
-    const sameSecond = new Date(2_000);
+    const sameSecond = thisSecond();
     mocks.consents = [
       consentRow("consent-a", NARROW, sameSecond),
       consentRow("consent-b", ["surveys:read", "responses:read", "offline_access"], sameSecond),
@@ -529,11 +532,34 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
     expect(endedTokensBeyondConsent()).toBe(true);
   });
 
+  test("on a same-second tie from an earlier write, trusts no row and keeps what every tied row allows", async () => {
+    // The approval's scopes match consent-a, but both rows were stamped long before this request, as
+    // when an accepted path (a prompt=login bounce) writes nothing.
+    const earlier = new Date(Date.now() - 60_000);
+    mocks.consents = [
+      consentRow("consent-a", ["surveys:read", "responses:read", "offline_access"], earlier),
+      consentRow("consent-b", NARROW, earlier),
+    ];
+    mocks.getOAuthProviderState.mockResolvedValue({
+      query: new URLSearchParams({
+        client_id: "client-1",
+        scope: "surveys:read responses:read offline_access",
+      }).toString(),
+    });
+
+    await revokeTokensBeyondConsentAfterHandler(approve());
+
+    expect(mocks.tx.oauthConsent.update).toHaveBeenCalledWith({
+      where: { id: "consent-a" },
+      data: { scopes: NARROW },
+    });
+  });
+
   test("on a same-second tie no write can be named, so keeps what every tied row allows", async () => {
     mocks.getOAuthProviderState.mockResolvedValue({
       query: new URLSearchParams({ client_id: "client-1", scope: "openid" }).toString(),
     });
-    const sameSecond = new Date(2_000);
+    const sameSecond = thisSecond();
     mocks.consents = [
       consentRow("consent-a", ["surveys:read", "responses:read", "offline_access"], sameSecond),
       consentRow("consent-b", NARROW, sameSecond),
@@ -548,7 +574,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
   });
 
   test("on a same-second tie, update-consent keeps the row it updated", async () => {
-    const sameSecond = new Date(2_000);
+    const sameSecond = thisSecond();
     mocks.consents = [
       consentRow("consent-a", NARROW, sameSecond),
       consentRow("consent-b", ["surveys:read", "responses:read", "offline_access"], sameSecond),

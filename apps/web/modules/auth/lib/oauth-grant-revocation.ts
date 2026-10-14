@@ -358,8 +358,13 @@ const sameScopes = (a: string[], b: string[]): boolean =>
   a.length === b.length && a.every((scope) => b.includes(scope));
 
 const consentChange = async (ctx: AuthHookContext): Promise<TConsentChange | null> => {
-  // Only a request the provider accepted wrote anything; after a refusal no row is the latest write.
-  const wrote = !isAPIError((ctx.context as { returned?: unknown }).returned);
+  // A row is this request's write only if the provider accepted the request and the row was stamped in
+  // this request's second (the provider stamps to the second, just before this hook runs). Some
+  // accepted paths write nothing, such as a `prompt=login` bounce, so acceptance alone isn't enough: a
+  // tie left over from earlier must fall back to what every tied row allows.
+  const accepted = !isAPIError((ctx.context as { returned?: unknown }).returned);
+  const thisSecond = Math.floor(Date.now() / 1000) * 1000 - 1000;
+  const wrote = (consent: TConsentRow) => accepted && consent.updatedAt.getTime() >= thisSecond;
   if (isApproval(ctx)) {
     const query = new URLSearchParams((await getOAuthProviderState())?.query ?? "");
     const clientId = query.get("client_id");
@@ -369,13 +374,16 @@ const consentChange = async (ctx: AuthHookContext): Promise<TConsentChange | nul
     const approved = (typeof bodyScope === "string" ? bodyScope : query.get("scope"))?.split(" ") ?? [];
     return {
       target: { clientId },
-      isLatestWrite: (consent) => wrote && sameScopes(consent.scopes, approved),
+      isLatestWrite: (consent) => wrote(consent) && sameScopes(consent.scopes, approved),
     };
   }
   if (ctx.path === CONSENT_UPDATE_PATH) {
     const consentId = (ctx.body as { id?: unknown } | undefined)?.id;
     if (typeof consentId !== "string") return null;
-    return { target: { consentId }, isLatestWrite: (consent) => wrote && consent.id === consentId };
+    return {
+      target: { consentId },
+      isLatestWrite: (consent) => wrote(consent) && consent.id === consentId,
+    };
   }
   return null;
 };
@@ -506,7 +514,9 @@ export const requireOAuthConsentOnRefreshAfterHandler = async (ctx: AuthHookCont
       })
     : null;
   if (!refreshToken) {
-    logger.error("OAuth refresh succeeded but its refresh token could not be matched to a stored row");
+    // Either a narrowing or revoke ended the token while this refresh was in flight, or the provider's
+    // storage format has drifted (the integration suite catches the latter). Fail closed either way.
+    logger.warn("OAuth refresh token no longer stored: ended concurrently, or the storage format drifted");
     throw invalidGrant();
   }
   if (refreshToken.client.skipConsent) return;
