@@ -21,7 +21,8 @@ export function runtimeInventory(root) {
     }
   };
   for (const directory of [".next", "public"]) visit(join(web, directory));
-  return Object.fromEntries(files.sort().map((file) => [file, hash(join(web, file))]));
+  const sortedFiles = files.toSorted((left, right) => left.localeCompare(right, "en"));
+  return Object.fromEntries(sortedFiles.map((file) => [file, hash(join(web, file))]));
 }
 
 export function verifyNextAssets(root, expectedId) {
@@ -73,10 +74,13 @@ export function verifyNextRuntime(root, expectedId, expectedVariant) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   try {
-    console.log(JSON.stringify(verifyNextRuntime(process.argv[2] || ".", process.argv[3], process.argv[4])));
-  } catch (error) {
-    // Do not dump inventories, config objects or embedded build-time values in assertion errors.
-    console.error(error.message.split("\n")[0]);
+    // The CLI only verifies its working directory; arguments cannot select another filesystem tree.
+    assert.ok(process.argv.length <= 4, "Expected only build identity and variant");
+    verifyNextRuntime(process.cwd(), process.argv[2], process.argv[3]);
+    console.log("Next runtime verification passed");
+  } catch {
+    // Even malformed JSON and assertion diagnostics can contain embedded configuration values.
+    console.error("Next runtime verification failed");
     process.exitCode = 1;
   }
 }

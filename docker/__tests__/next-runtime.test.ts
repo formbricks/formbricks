@@ -14,7 +14,7 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, test } from "vitest";
 import { assembleNextRuntime } from "../../apps/web/scripts/docker/build-next-runtime.mjs";
-import { runtimeInventory } from "../../apps/web/scripts/docker/verify-next-runtime.mjs";
+import { runtimeInventory, verifyNextRuntime } from "../../apps/web/scripts/docker/verify-next-runtime.mjs";
 
 const verifier = fileURLToPath(
   new URL("../../apps/web/scripts/docker/verify-next-runtime.mjs", import.meta.url)
@@ -57,7 +57,7 @@ function fixture() {
 }
 
 const verify = (root: string, id = "cloud-one", variant = "ecr") =>
-  spawnSync(process.execPath, [verifier, root, id, variant], { encoding: "utf8" });
+  spawnSync(process.execPath, [verifier, id, variant], { cwd: root, encoding: "utf8" });
 
 afterEach(() =>
   directories.splice(0).forEach((directory) => rmSync(directory, { recursive: true, force: true }))
@@ -116,7 +116,7 @@ describe("Next runtime artifact", () => {
       seal();
       const result = verify(root);
       expect(result.status).toBe(1);
-      expect(result.stderr).toContain(`Missing Next asset: static/chunks/${file}`);
+      expect(() => verifyNextRuntime(root)).toThrow(`Missing Next asset: static/chunks/${file}`);
     }
   );
 
@@ -124,7 +124,7 @@ describe("Next runtime artifact", () => {
     const { root, seal } = fixture();
     rmSync(join(root, "apps/web/.next/static/chunks/login.css"));
     seal();
-    expect(verify(root).stderr).toContain("Missing Next asset: static/chunks/login.css");
+    expect(() => verifyNextRuntime(root)).toThrow("Missing Next asset: static/chunks/login.css");
   });
 
   test("rejects a coherent but stale build or a different release variant", () => {
@@ -140,7 +140,7 @@ describe("Next runtime artifact", () => {
       JSON.stringify({ config: { deploymentId: "community-one" } })
     );
     seal();
-    expect(verify(root).stderr).toContain("Unexpected Next deployment identity");
+    expect(() => verifyNextRuntime(root)).toThrow("Unexpected Next deployment identity");
   });
 
   test("rejects overwritten assets without printing their contents", () => {
@@ -148,7 +148,8 @@ describe("Next runtime artifact", () => {
     write("apps/web/.next/static/chunks/login.css", "private-value-sentinel");
     const result = verify(root);
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain("Runtime artifact contents changed");
+    expect(result.stderr).toContain("Next runtime verification failed");
+    expect(() => verifyNextRuntime(root)).toThrow("Runtime artifact contents changed");
     expect(result.stderr).not.toContain("private-value-sentinel");
     expect(result.stderr.trim().split("\n")).toHaveLength(1);
   });
@@ -164,5 +165,40 @@ describe("Next runtime artifact", () => {
     expect(JSON.parse(readFileSync(join(root, "next-runtime.json"), "utf8")).version).toBe(1);
     rmSync(join(root, "next-runtime.json"));
     expect(verify(root).status).toBe(1);
+  });
+
+  test.each([[], ["cloud-one", "ecr"]])(
+    "CLI arguments cannot redirect verification to another directory (%j)",
+    (...suffix) => {
+      const broken = fixture();
+      const valid = fixture();
+      rmSync(join(broken.root, "next-runtime.json"));
+      const result = spawnSync(process.execPath, [verifier, valid.root, ...suffix], {
+        cwd: broken.root,
+        encoding: "utf8",
+      });
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe("");
+      expect(result.stderr.trim()).toBe("Next runtime verification failed");
+    }
+  );
+
+  test("successful CLI output never includes manifest values", () => {
+    const { root, write } = fixture();
+    const metadata = JSON.parse(readFileSync(join(root, "next-runtime.json"), "utf8"));
+    write("next-runtime.json", JSON.stringify({ ...metadata, variant: "private-value-sentinel" }));
+    const result = verify(root, "", "");
+    expect(result.status).toBe(0);
+    expect(result.stdout.trim()).toBe("Next runtime verification passed");
+    expect(result.stderr).toBe("");
+  });
+
+  test("malformed manifests cannot leak JSON excerpts through CLI errors", () => {
+    const { root, write } = fixture();
+    write("next-runtime.json", '{"token":"private-value-sentinel" broken');
+    const result = verify(root);
+    expect(result.status).toBe(1);
+    expect(result.stderr.trim()).toBe("Next runtime verification failed");
+    expect(result.stdout).toBe("");
   });
 });

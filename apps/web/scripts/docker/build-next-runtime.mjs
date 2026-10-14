@@ -24,7 +24,8 @@ export function assembleNextRuntime(web, root, deploymentId, variant) {
     join(root, "next-runtime.json"),
     JSON.stringify({ version: 1, deploymentId, variant, files: runtimeInventory(root) })
   );
-  console.log(JSON.stringify(verifyNextRuntime(root, deploymentId, variant)));
+  verifyNextRuntime(root, deploymentId, variant);
+  console.log("Next runtime assembled and verified");
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
@@ -34,7 +35,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   const variant = process.env.FORMBRICKS_BUILD_VARIANT || "local";
   const web = join(process.cwd(), "apps/web");
   rmSync(join(web, ".next"), { recursive: true, force: true });
-  const build = spawnSync("pnpm", ["build", "--filter=@formbricks/web..."], {
+  // Corepack installs this shim in the Docker installer's root-owned executable directory.
+  const build = spawnSync("/usr/local/bin/pnpm", ["build", "--filter=@formbricks/web..."], {
     stdio: "inherit",
     env: { ...process.env, FORMBRICKS_DEPLOYMENT_ID: deploymentId },
   });

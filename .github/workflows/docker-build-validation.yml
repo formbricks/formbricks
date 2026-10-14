@@ -201,7 +201,7 @@ jobs:
         env:
           IMAGE: formbricks-test:${{ github.sha }}
           BUILD_IDENTITY: ${{ github.sha }}-pr-${{ github.run_id }}-${{ github.run_attempt }}
-        run: docker run --rm --network none --entrypoint node "$IMAGE" verify-next-runtime.mjs . "$BUILD_IDENTITY" pr
+        run: docker run --rm --network none --entrypoint node "$IMAGE" verify-next-runtime.mjs "$BUILD_IDENTITY" pr
 
       - name: Verify Runtime Image Excludes npm
         shell: bash

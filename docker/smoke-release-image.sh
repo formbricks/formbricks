@@ -21,7 +21,7 @@ case "$image" in
   *@sha256:*) docker pull --platform "$platform" "$image" >/dev/null ;;
 esac
 docker run --rm --platform "$platform" --network none --entrypoint node "$image" \
-  verify-next-runtime.mjs . "$identity" "$variant"
+  verify-next-runtime.mjs "$identity" "$variant"
 docker network create "$prefix" >/dev/null
 docker run -d --name "$prefix-pg" --network "$prefix" --network-alias postgres \
   -e POSTGRES_USER=test -e POSTGRES_PASSWORD=test -e POSTGRES_DB=formbricks \

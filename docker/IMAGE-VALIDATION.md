@@ -41,7 +41,7 @@ on success and failure. To inspect an image without starting the application:
 
 ```sh
 docker run --rm --network none --entrypoint node REPOSITORY@sha256:DIGEST \
-  verify-next-runtime.mjs . BUILD_IDENTITY ecr
+  verify-next-runtime.mjs BUILD_IDENTITY ecr
 ```
 
 ## Repair and recovery

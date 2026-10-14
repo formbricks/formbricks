@@ -141,8 +141,8 @@ ARG FORMBRICKS_BUILD_VARIANT="local"
 LABEL com.formbricks.build.identity=$FORMBRICKS_DEPLOYMENT_ID
 LABEL com.formbricks.build.variant=$FORMBRICKS_BUILD_VARIANT
 COPY --from=installer /app/next-runtime ./
-RUN node verify-next-runtime.mjs . "$FORMBRICKS_DEPLOYMENT_ID" "$FORMBRICKS_BUILD_VARIANT"
-RUN chown -R nextjs:nextjs ./ && chmod -R 755 ./
+RUN node verify-next-runtime.mjs "$FORMBRICKS_DEPLOYMENT_ID" "$FORMBRICKS_BUILD_VARIANT" \
+    && chown -R nextjs:nextjs ./ && chmod -R 755 ./
 
 COPY --from=installer /app/apps/web/next.config.mjs .
 RUN chmod 644 ./next.config.mjs
@@ -385,11 +385,10 @@ ENV HOSTNAME="0.0.0.0"
 USER nextjs
 
 # Prepare volumes for uploads and SAML connections
-RUN mkdir -p /home/nextjs/apps/web/uploads/ && \
-    mkdir -p /home/nextjs/apps/web/saml-connection
-
 # Check the finished filesystem as the runtime user, after all dependency overlays.
-RUN node verify-next-runtime.mjs . "$FORMBRICKS_DEPLOYMENT_ID" "$FORMBRICKS_BUILD_VARIANT"
+RUN mkdir -p /home/nextjs/apps/web/uploads/ && \
+    mkdir -p /home/nextjs/apps/web/saml-connection && \
+    node verify-next-runtime.mjs "$FORMBRICKS_DEPLOYMENT_ID" "$FORMBRICKS_BUILD_VARIANT"
 
 VOLUME /home/nextjs/apps/web/uploads/
 VOLUME /home/nextjs/apps/web/saml-connection
