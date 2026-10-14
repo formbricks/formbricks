@@ -5518,6 +5518,9 @@ components:
             - number
             - "null"
           description: Auto close time in seconds
+        keepEndingCardOpen:
+          type: boolean
+          description: Keep the ending card open until the respondent closes it instead of closing after 3 seconds
         autoComplete:
           type:
             - number
@@ -5825,6 +5828,7 @@ components:
         - recontactDays
         - displayLimit
         - autoClose
+        - keepEndingCardOpen
         - autoComplete
         - delay
         - surveyClosedMessage

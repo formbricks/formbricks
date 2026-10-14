@@ -418,6 +418,7 @@ describe("copySurveyToOtherWorkspace", () => {
       pin: "1234",
       autoComplete: 50,
       autoClose: 30,
+      keepEndingCardOpen: true,
       delay: 5,
       redirectUrl: "https://example.com/thanks",
       displayPercentage: 25,

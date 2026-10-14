@@ -32,6 +32,7 @@ export const selectSurvey = {
   recontactDays: true,
   displayLimit: true,
   autoClose: true,
+  keepEndingCardOpen: true,
   delay: true,
   displayPercentage: true,
   autoComplete: true,

@@ -3759,6 +3759,8 @@
         "italic": "斜体",
         "jump_to_block": "跳转到区块",
         "keep_current_order": "保持 当前 顺序",
+        "keep_ending_card_open": "保持结束卡片打开",
+        "keep_ending_card_open_description": "让结束卡片一直显示在屏幕上，直到受访者主动关闭，而不是在其出现 3 秒后自动关闭问卷。",
         "keep_showing_while_conditions_match": "条件 符合 时 保持 显示",
         "key": "键",
         "last_name": "姓",

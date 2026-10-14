@@ -3759,6 +3759,8 @@
         "italic": "Kursiv",
         "jump_to_block": "Zum Block springen",
         "keep_current_order": "Aktuelle Reihenfolge beibehalten",
+        "keep_ending_card_open": "Abschlusskarte geöffnet lassen",
+        "keep_ending_card_open_description": "Lass die Abschlusskarte auf dem Bildschirm, bis die befragte Person sie schließt, anstatt die Umfrage 3 Sekunden nach dem Erscheinen zu beenden.",
         "keep_showing_while_conditions_match": "Weiter anzeigen, solange Bedingungen erfüllt sind",
         "key": "Schlüssel",
         "last_name": "Nachname",

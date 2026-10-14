@@ -3759,6 +3759,8 @@
         "italic": "Kursiv",
         "jump_to_block": "Hoppa till block",
         "keep_current_order": "Behåll nuvarande ordning",
+        "keep_ending_card_open": "Håll avslutningskortet öppet",
+        "keep_ending_card_open_description": "Låt avslutningskortet ligga kvar på skärmen tills respondenten stänger det, i stället för att stänga enkäten 3 sekunder efter att det visats.",
         "keep_showing_while_conditions_match": "Fortsätt visa medan villkoren matchar",
         "key": "Nyckel",
         "last_name": "Efternamn",

@@ -194,6 +194,7 @@ const baseSurveyProperties = {
   id: mockId,
   name: "Mock Survey",
   autoClose: 10,
+  keepEndingCardOpen: false,
   delay: 0,
   autoComplete: 7,
   publishOn: null,

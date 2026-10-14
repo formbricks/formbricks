@@ -3759,6 +3759,8 @@
         "italic": "Itálico",
         "jump_to_block": "Pular para o bloco",
         "keep_current_order": "Manter pedido atual",
+        "keep_ending_card_open": "Manter o cartão de encerramento aberto",
+        "keep_ending_card_open_description": "Deixe o cartão de encerramento na tela até que o respondente o feche, em vez de encerrar a pesquisa 3 segundos após a exibição.",
         "keep_showing_while_conditions_match": "Continue mostrando enquanto as condições corresponderem",
         "key": "chave",
         "last_name": "Sobrenome",

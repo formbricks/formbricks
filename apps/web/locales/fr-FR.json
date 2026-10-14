@@ -3759,6 +3759,8 @@
         "italic": "Italique",
         "jump_to_block": "Aller au bloc",
         "keep_current_order": "Conserver la commande actuelle",
+        "keep_ending_card_open": "Garder la carte de fin ouverte",
+        "keep_ending_card_open_description": "Laisse la carte de fin affichée à l'écran jusqu'à ce que le répondant la ferme, au lieu de fermer l'enquête 3 secondes après son apparition.",
         "keep_showing_while_conditions_match": "Continuer à afficher tant que les conditions correspondent",
         "key": "Clé",
         "last_name": "Nom de famille",

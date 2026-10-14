@@ -3759,6 +3759,8 @@
         "italic": "Cursiv",
         "jump_to_block": "Sari la bloc",
         "keep_current_order": "Păstrați ordinea actuală",
+        "keep_ending_card_open": "Păstrează cardul de final deschis",
+        "keep_ending_card_open_description": "Lasă cardul de final pe ecran până când respondentul îl închide, în loc să închizi sondajul la 3 secunde după ce apare.",
         "keep_showing_while_conditions_match": "Continuă să afișezi cât timp condițiile se potrivesc",
         "key": "Cheie",
         "last_name": "Nume de familie",

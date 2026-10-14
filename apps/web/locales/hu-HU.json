@@ -3759,6 +3759,8 @@
         "italic": "Dőlt",
         "jump_to_block": "Ugrás a blokkhoz",
         "keep_current_order": "Jelenlegi sorrend megtartása",
+        "keep_ending_card_open": "A záró kártya nyitva tartása",
+        "keep_ending_card_open_description": "A záró kártya maradjon a képernyőn mindaddig, amíg a válaszadó be nem zárja, ahelyett hogy a felmérés a megjelenését követő 3 másodperc elteltével bezáródna.",
         "keep_showing_while_conditions_match": "Addig jelenjen meg, amíg a feltételek teljesülnek",
         "key": "Kulcs",
         "last_name": "Vezetéknév",

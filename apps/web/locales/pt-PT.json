@@ -3759,6 +3759,8 @@
         "italic": "Itálico",
         "jump_to_block": "Saltar para o bloco",
         "keep_current_order": "Manter ordem atual",
+        "keep_ending_card_open": "Manter o cartão final aberto",
+        "keep_ending_card_open_description": "Deixa o cartão final no ecrã até o inquirido o fechar, em vez de fechar o inquérito 3 segundos depois de aparecer.",
         "keep_showing_while_conditions_match": "Continuar a mostrar enquanto as condições corresponderem",
         "key": "Chave",
         "last_name": "Apelido",

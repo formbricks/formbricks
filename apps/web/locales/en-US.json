@@ -3759,6 +3759,8 @@
         "italic": "Italic",
         "jump_to_block": "Jump to block",
         "keep_current_order": "Keep current order",
+        "keep_ending_card_open": "Keep ending card open",
+        "keep_ending_card_open_description": "Leave the ending card on screen until the respondent closes it, instead of closing the survey 3 seconds after it appears.",
         "keep_showing_while_conditions_match": "Keep showing while conditions match",
         "key": "Key",
         "last_name": "Last Name",

@@ -3759,6 +3759,8 @@
         "italic": "斜體",
         "jump_to_block": "跳至區塊",
         "keep_current_order": "保留目前順序",
+        "keep_ending_card_open": "保持結尾卡片開啟",
+        "keep_ending_card_open_description": "讓結尾卡片持續顯示在畫面上,直到受訪者自行關閉,而不是在卡片出現 3 秒後自動關閉問卷。",
         "keep_showing_while_conditions_match": "在條件符合時持續顯示",
         "key": "金鑰",
         "last_name": "姓氏",

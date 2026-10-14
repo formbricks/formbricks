@@ -450,11 +450,23 @@ describe("ZV3CreateSurveyBody", () => {
       displayPercentage: null,
       displayLimit: null,
       autoClose: null,
+      keepEndingCardOpen: false,
       autoComplete: null,
       delay: 0,
       triggers: [{ actionClassId: "claa1234567890123456789012" }],
     });
     expect(result.targeting).toEqual({ filters: [] });
+  });
+
+  test("accepts keepEndingCardOpen in distribution and rejects a non-boolean", () => {
+    const base = { ...validCreateBody, type: "app" as const };
+
+    expect(
+      ZV3CreateSurveyBody.parse({ ...base, distribution: { keepEndingCardOpen: true } }).distribution
+    ).toMatchObject({ keepEndingCardOpen: true });
+    expect(
+      ZV3CreateSurveyBody.safeParse({ ...base, distribution: { keepEndingCardOpen: "yes" } }).success
+    ).toBe(false);
   });
 
   test("rejects distribution and targeting on link surveys", () => {

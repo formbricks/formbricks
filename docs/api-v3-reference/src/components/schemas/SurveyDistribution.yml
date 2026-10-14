@@ -52,6 +52,13 @@ properties:
     minimum: 0
     default: null
     description: Seconds of inactivity after which the survey widget auto-closes. Null disables auto-close.
+  keepEndingCardOpen:
+    type: boolean
+    default: false
+    description: >
+      Keep the ending card on screen until the respondent closes the survey. When false, the survey
+      widget closes 3 seconds after the ending card appears. Has no effect on a survey with no ending
+      card (it closes immediately) or whose first ending redirects to a URL. Independent of `autoClose`.
   autoComplete:
     type:
       - integer
@@ -83,6 +90,7 @@ example:
   displayPercentage: null
   recontactDays: 7
   autoClose: null
+  keepEndingCardOpen: false
   autoComplete: null
   delay: 0
   triggers:

@@ -97,6 +97,7 @@ const getExistingSurvey = async (surveyId: string) => {
       redirectUrl: true,
       autoComplete: true,
       autoClose: true,
+      keepEndingCardOpen: true,
       delay: true,
       displayPercentage: true,
       showLanguageSwitch: true,

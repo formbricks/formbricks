@@ -3759,6 +3759,8 @@
         "italic": "İtalik",
         "jump_to_block": "Bloğa atla",
         "keep_current_order": "Mevcut sırayı koru",
+        "keep_ending_card_open": "Bitiş kartını açık tut",
+        "keep_ending_card_open_description": "Anketi, bitiş kartı göründükten 3 saniye sonra kapatmak yerine, katılımcı kapatana kadar bitiş kartını ekranda tut.",
         "keep_showing_while_conditions_match": "Koşullar eşleşirken göstermeye devam et",
         "key": "Anahtar",
         "last_name": "Soyadı",

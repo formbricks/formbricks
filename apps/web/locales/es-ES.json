@@ -3759,6 +3759,8 @@
         "italic": "Cursiva",
         "jump_to_block": "Saltar al bloque",
         "keep_current_order": "Mantener orden actual",
+        "keep_ending_card_open": "Mantener abierta la tarjeta final",
+        "keep_ending_card_open_description": "Deja la tarjeta final en pantalla hasta que la persona encuestada la cierre, en lugar de cerrar la encuesta 3 segundos después de que aparezca.",
         "keep_showing_while_conditions_match": "Seguir mostrando mientras las condiciones coincidan",
         "key": "Clave",
         "last_name": "Apellido",

@@ -3759,6 +3759,8 @@
         "italic": "Cursief",
         "jump_to_block": "Spring naar blok",
         "keep_current_order": "Huidige bestelling behouden",
+        "keep_ending_card_open": "Eindkaart open laten staan",
+        "keep_ending_card_open_description": "Laat de eindkaart op het scherm staan totdat de respondent hem sluit, in plaats van de enquête 3 seconden nadat de kaart verschijnt af te sluiten.",
         "keep_showing_while_conditions_match": "Blijf weergeven zolang de omstandigheden overeenkomen",
         "key": "Sleutel",
         "last_name": "Achternaam",

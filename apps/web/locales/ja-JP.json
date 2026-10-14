@@ -3759,6 +3759,8 @@
         "italic": "イタリック",
         "jump_to_block": "ブロックへジャンプ",
         "keep_current_order": "現在の順序を維持",
+        "keep_ending_card_open": "終了カードを開いたままにする",
+        "keep_ending_card_open_description": "終了カードが表示されてから3秒後にアンケートを閉じるのではなく、回答者が閉じるまで終了カードを画面に表示したままにします。",
         "keep_showing_while_conditions_match": "条件が一致する間、表示し続ける",
         "key": "キー",
         "last_name": "姓",

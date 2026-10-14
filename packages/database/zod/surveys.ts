@@ -97,6 +97,9 @@ const ZSurveyBase = z.object({
   recontactDays: z.number().nullable().describe("Days before recontacting"),
   displayLimit: z.number().nullable().describe("Display limit for the survey"),
   autoClose: z.number().nullable().describe("Auto close time in seconds"),
+  keepEndingCardOpen: z
+    .boolean()
+    .describe("Keep the ending card open until the respondent closes it instead of closing after 3 seconds"),
   autoComplete: z.number().nullable().describe("Auto complete time in seconds"),
   delay: z.number().describe("Delay before showing survey"),
   publishOn: z.coerce.date().nullable().describe("Date when the survey should be published"),
