@@ -27,9 +27,13 @@ const ZGeneratePersonalSurveyLinkAction = z.object({
 export const generatePersonalSurveyLinkAction = authenticatedActionClient
   .inputSchema(ZGeneratePersonalSurveyLinkAction)
   .action(
-    withAuditLogging("created", "contact", async ({ ctx, parsedInput }) => {
+    // Issuing a link creates no contact: the audited thing is a link to the survey (never the link itself).
+    withAuditLogging("created", "survey", async ({ ctx, parsedInput }) => {
+      ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
       const organizationId = await getOrganizationIdFromContactId(parsedInput.contactId);
       const workspaceId = await getWorkspaceIdFromContactId(parsedInput.contactId);
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.workspaceId = workspaceId;
 
       await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
         type: "workspace",
@@ -54,11 +58,6 @@ export const generatePersonalSurveyLinkAction = authenticatedActionClient
         type: "survey",
         id: parsedInput.surveyId,
       });
-
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.workspaceId = workspaceId;
-      ctx.auditLoggingCtx.contactId = parsedInput.contactId;
-      ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
 
       const result = await getContactSurveyLink(
         parsedInput.contactId,
@@ -92,7 +91,12 @@ export const generatePersonalSurveyLinkAction = authenticatedActionClient
       const response = {
         surveyUrl: result.data,
       };
-      ctx.auditLoggingCtx.newObject = { surveyId: parsedInput.surveyId };
+      ctx.auditLoggingCtx.newObject = {
+        linkKind: "personal",
+        contactId: parsedInput.contactId,
+        issuedCount: 1,
+        expirationDays: parsedInput.expirationDays ?? null,
+      };
       return response;
     })
   );

@@ -15,7 +15,7 @@ import {
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotaLinkCountByQuotaId } from "@/modules/ee/quotas/lib/quota-link";
-import { createQuota, deleteQuota, updateQuota } from "@/modules/ee/quotas/lib/quotas";
+import { createQuota, deleteQuota, getQuota, updateQuota } from "@/modules/ee/quotas/lib/quotas";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 
 const ZDeleteQuotaAction = z.object({
@@ -60,16 +60,17 @@ const ZUpdateQuotaAction = z.object({
 export const updateQuotaAction = authenticatedActionClient.inputSchema(ZUpdateQuotaAction).action(
   withAuditLogging("updated", "quota", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromQuotaId(parsedInput.quotaId);
+    // Stamped before the checks so a refused update is attributed to its quota and tenant.
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.quotaId = parsedInput.quotaId;
     await checkQuotasEnabled(organizationId);
     await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
       type: "survey",
       id: await getSurveyIdFromQuotaId(parsedInput.quotaId),
     });
 
-    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.oldObject = await getQuota(parsedInput.quotaId);
     const result = await updateQuota(parsedInput.quota, parsedInput.quotaId);
-    ctx.auditLoggingCtx.quotaId = parsedInput.quotaId;
-    ctx.auditLoggingCtx.oldObject = parsedInput.quota;
     ctx.auditLoggingCtx.newObject = result;
     return result;
   })

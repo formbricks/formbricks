@@ -16,6 +16,7 @@ import {
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { canUserWriteWorkspaceIntegrations } from "@/lib/workspace/auth";
+import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ req, authentication }) => {
@@ -143,6 +144,22 @@ export const GET = withV1ApiWrapper({
       const result = await createOrUpdateIntegration(workspaceId, integration);
 
       if (result) {
+        try {
+          await queueAuditEvent({
+            action: "createdUpdated",
+            targetType: "integration",
+            userId: authentication.user.id,
+            userType: "user",
+            targetId: result.id,
+            organizationId: await getOrganizationIdFromWorkspaceId(workspaceId),
+            status: "success",
+            // Metadata only: never the OAuth tokens or the callback code.
+            newObject: { type: "slack", workspaceId },
+          });
+        } catch (err) {
+          logger.error({ error: err }, "Failed to queue audit event for slack integration");
+        }
+
         try {
           const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
           capturePostHogEvent(

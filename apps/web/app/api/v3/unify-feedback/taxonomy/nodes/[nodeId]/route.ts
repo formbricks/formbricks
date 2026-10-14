@@ -9,11 +9,13 @@ import { ZNodeIdParams, ZRenameNodeBody, ZWorkspaceDirectoryQuery } from "../../
 
 export const PATCH = withV3ApiWrapper({
   auth: "session",
+  action: "updated",
+  targetType: "feedbackDirectory",
   schemas: {
     body: ZRenameNodeBody,
     params: ZNodeIdParams,
   },
-  handler: async ({ authentication, parsedInput, requestId, instance }) =>
+  handler: async ({ authentication, parsedInput, requestId, instance, auditLog }) =>
     renameV3TaxonomyNode({
       authentication,
       workspaceId: parsedInput.body.workspaceId,
@@ -22,16 +24,19 @@ export const PATCH = withV3ApiWrapper({
       label: parsedInput.body.label,
       requestId,
       instance,
+      auditLog,
     }),
 });
 
 export const DELETE = withV3ApiWrapper({
   auth: "session",
+  action: "deleted",
+  targetType: "feedbackDirectory",
   schemas: {
     query: ZWorkspaceDirectoryQuery,
     params: ZNodeIdParams,
   },
-  handler: async ({ authentication, parsedInput, requestId, instance }) =>
+  handler: async ({ authentication, parsedInput, requestId, instance, auditLog }) =>
     removeV3TaxonomyNode({
       authentication,
       workspaceId: parsedInput.query.workspaceId,
@@ -39,5 +44,6 @@ export const DELETE = withV3ApiWrapper({
       nodeId: parsedInput.params.nodeId,
       requestId,
       instance,
+      auditLog,
     }),
 });

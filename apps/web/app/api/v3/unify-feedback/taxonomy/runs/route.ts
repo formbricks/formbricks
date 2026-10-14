@@ -9,10 +9,12 @@ import { ZTriggerRunBody } from "../lib/schemas";
 
 export const POST = withV3ApiWrapper({
   auth: "session",
+  action: "created",
+  targetType: "feedbackDirectory",
   schemas: {
     body: ZTriggerRunBody,
   },
-  handler: async ({ authentication, parsedInput, requestId, instance }) =>
+  handler: async ({ authentication, parsedInput, requestId, instance, auditLog }) =>
     triggerV3TaxonomyRun({
       authentication,
       workspaceId: parsedInput.body.workspaceId,
@@ -24,5 +26,6 @@ export const POST = withV3ApiWrapper({
       fieldLabel: parsedInput.body.fieldLabel,
       requestId,
       instance,
+      auditLog,
     }),
 });

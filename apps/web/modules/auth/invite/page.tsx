@@ -15,6 +15,7 @@ import { getTranslate } from "@/lingodotdev/server";
 import { deleteInvite, getInvite } from "@/modules/auth/invite/lib/invite";
 import { createTeamMembership } from "@/modules/auth/invite/lib/team";
 import { getSession } from "@/modules/auth/lib/session";
+import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { sendInviteAcceptedEmail } from "@/modules/email";
 import { Button } from "@/modules/ui/components/button";
 import { ContentLayout } from "./components/content-layout";
@@ -92,21 +93,56 @@ export const InvitePage = async (props: InvitePageProps) => {
 
       if (!session || !user) return;
 
-      await createMembership(invite.organizationId, session.user.id, {
-        accepted: true,
-        role: invite.role,
-      });
-      if (invite.teamIds) {
-        await createTeamMembership(
-          {
-            organizationId: invite.organizationId,
-            role: invite.role,
-            teamIds: invite.teamIds,
-          },
-          user.id
-        );
+      // The invitee acts on their own behalf, inside the inviting organization.
+      const auditInviteEvent = (
+        action: "created" | "deleted",
+        targetType: "membership" | "invite",
+        status: "success" | "failure",
+        newObject?: Record<string, unknown>
+      ) =>
+        queueAuditEventBackground({
+          action,
+          targetType,
+          userId: user.id,
+          userType: "user",
+          targetId: targetType === "invite" ? inviteId : `${user.id}-${invite.organizationId}`,
+          organizationId: invite.organizationId,
+          status,
+          newObject,
+        });
+
+      try {
+        await createMembership(invite.organizationId, session.user.id, {
+          accepted: true,
+          role: invite.role,
+        });
+        if (invite.teamIds) {
+          await createTeamMembership(
+            {
+              organizationId: invite.organizationId,
+              role: invite.role,
+              teamIds: invite.teamIds,
+            },
+            user.id
+          );
+        }
+        auditInviteEvent("created", "membership", "success", {
+          role: invite.role,
+          teamIdsCount: invite.teamIds?.length ?? 0,
+          inviteId,
+        });
+      } catch (error) {
+        auditInviteEvent("created", "membership", "failure", { role: invite.role, inviteId });
+        throw error;
       }
-      await deleteInvite(inviteId);
+
+      try {
+        await deleteInvite(inviteId);
+        auditInviteEvent("deleted", "invite", "success", { acceptedInvite: true });
+      } catch (error) {
+        auditInviteEvent("deleted", "invite", "failure", { acceptedInvite: true });
+        throw error;
+      }
       await sendInviteAcceptedEmail(
         invite.creator.name ?? "",
         user?.name ?? "",

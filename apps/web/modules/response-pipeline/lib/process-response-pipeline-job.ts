@@ -21,7 +21,7 @@ import { isSurveyOutboundAllowed, surveyOutboundVisibilitySelect } from "@/lib/s
 import { sendTelemetryEvents } from "@/lib/telemetry/usage-update";
 import { isNewReleaseWorkEnabled } from "@/lib/upgrade/compatibility";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
-import { type TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import { type TAuditStatus } from "@/modules/ee/audit-logs/types/audit-log";
 import { recordResponseCreatedMeterEvent } from "@/modules/ee/billing/lib/metering";
 import { dispatchWorkflowRunViaJobs } from "@/modules/ee/workflows/lib/runner/dispatch";
 import { enqueueResponseCompletedWorkflowRuns } from "@/modules/ee/workflows/lib/runner/enqueue-response-completed-runs";
@@ -33,6 +33,8 @@ import { getFinishedResponseCountBySurveyId } from "@/modules/survey/lib/respons
 import { handleIntegrations } from "./handle-integrations";
 import { recordSurveyOutboundSkipped } from "./outbound-visibility-metrics";
 import { processWebhookDeliveryJob } from "./process-webhook-delivery-job";
+
+const RESPONSE_PIPELINE_ACTOR_ID = "system:response-pipeline";
 
 const DEFAULT_NOTIFICATION_LOCALE: TUserLocale = "en-US";
 
@@ -585,17 +587,17 @@ const handleSurveyAutoCompleteSafely = async ({
       status: logStatus,
       action: "updated",
       targetType: "survey",
-      userId: UNKNOWN_DATA,
+      userId: RESPONSE_PIPELINE_ACTOR_ID,
       userType: "system",
       targetId: survey.id,
       organizationId,
-      ...(logStatus === "success"
-        ? {
-            newObject: {
-              status: "completed",
-            },
-          }
-        : {}),
+      newObject: {
+        // The job and the limit that closed the survey; the `status` change itself only on success.
+        jobId: logContext.jobId,
+        reason: "response_limit_reached",
+        autoComplete: autoCompleteThreshold,
+        ...(logStatus === "success" ? { status: "completed" } : {}),
+      },
     });
   } catch (error) {
     logger.error(

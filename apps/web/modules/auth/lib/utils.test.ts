@@ -438,14 +438,15 @@ describe("Auth Utils", () => {
         // Mock Redis transaction returning count that is divisible by 10
         mockMulti.exec.mockResolvedValue([
           null, // zRemRangeByScore result
-          10, // zCard result - 10th attempt
+          9, // zCard result - 9 prior attempts, so this is the 10th
           null, // zAdd result
           null, // expire result
         ]);
 
-        // Mock zRange returning recent entries
+        // Mock zRange returning recent entries (the newest is this attempt itself)
         mockRedis.zRange.mockResolvedValue([
-          `${now - 30000}:uuid1`, // 30 seconds ago
+          `${now - 30000}:uuid1`, // previous attempt, 30 seconds ago
+          `${now}:uuid2`, // this attempt
         ]);
 
         const email = "tenth-attempt@example.com";
@@ -461,14 +462,15 @@ describe("Auth Utils", () => {
         // Mock Redis transaction returning count not divisible by 10
         mockMulti.exec.mockResolvedValue([
           null, // zRemRangeByScore result
-          7, // zCard result - 7th attempt (not divisible by 10)
+          6, // zCard result - 6 prior attempts, so this is the 7th (not divisible by 10)
           null, // zAdd result
           null, // expire result
         ]);
 
-        // Mock zRange returning entry older than 1 minute
+        // Mock zRange returning the previous attempt older than 1 minute, then this attempt
         mockRedis.zRange.mockResolvedValue([
-          `${now - 120000}:uuid1`, // 2 minutes ago
+          `${now - 120000}:uuid1`, // previous attempt, 2 minutes ago
+          `${now}:uuid2`, // this attempt
         ]);
 
         const email = "one-minute-gap@example.com";

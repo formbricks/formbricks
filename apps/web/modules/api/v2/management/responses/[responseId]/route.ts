@@ -148,6 +148,10 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
     handler: async ({ authentication, parsedInput, auditLog }) => {
       const { body, params } = parsedInput;
 
+      if (auditLog && params) {
+        auditLog.targetId = params.responseId;
+      }
+
       if (!body || !params) {
         return handleApiError(
           request,
@@ -234,18 +238,22 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
       });
 
       if (otherResponseInvalidQuestionId) {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [
-            {
-              field: "response",
-              issue: `Response for question ${otherResponseInvalidQuestionId} exceeds character limit`,
-              meta: {
-                questionId: otherResponseInvalidQuestionId,
+        return handleApiError(
+          request,
+          {
+            type: "bad_request",
+            details: [
+              {
+                field: "response",
+                issue: `Response for question ${otherResponseInvalidQuestionId} exceeds character limit`,
+                meta: {
+                  questionId: otherResponseInvalidQuestionId,
+                },
               },
-            },
-          ],
-        });
+            ],
+          },
+          auditLog
+        );
       }
 
       // Validate response data against validation rules

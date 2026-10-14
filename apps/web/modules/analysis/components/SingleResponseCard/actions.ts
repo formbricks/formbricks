@@ -9,6 +9,7 @@ import { deleteResponse, getResponse, getResponseWithQuotas } from "@/lib/respon
 import { createTag, getTagsByWorkspaceId } from "@/lib/tag/service";
 import { addTagToRespone, deleteTagOnResponse } from "@/lib/tagOnResponse/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import {
   getOrganizationIdFromResponseId,
   getOrganizationIdFromWorkspaceId,
@@ -25,28 +26,51 @@ const ZCreateTagAction = z.object({
   tagName: z.string(),
 });
 
-export const createTagAction = authenticatedActionClient.inputSchema(ZCreateTagAction).action(
-  withAuditLogging("created", "tag", async ({ parsedInput, ctx }) => {
-    const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+type TCreateTagResult = Awaited<ReturnType<typeof createTag>>;
 
-    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
-      type: "workspace",
-      id: parsedInput.workspaceId,
-    });
-    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.workspaceId);
-    ctx.auditLoggingCtx.organizationId = organizationId;
-    const result = await createTag(parsedInput.workspaceId, parsedInput.tagName);
+// `withAuditLogging` only records a failure when the handler throws, but the client reads the failed
+// Result (e.g. "tag already exists"). Throw inside the audited handler, hand the Result back outside it.
+class CreateTagFailedError extends Error {
+  constructor(readonly result: TCreateTagResult) {
+    super("Tag could not be created");
+  }
+}
 
-    if (result.ok) {
-      ctx.auditLoggingCtx.tagId = result.data.id;
-      ctx.auditLoggingCtx.newObject = result.data;
-    } else {
-      ctx.auditLoggingCtx.newObject = null;
+const createTagAudited = withAuditLogging<
+  AuthenticatedActionClientCtx,
+  z.infer<typeof ZCreateTagAction>,
+  TCreateTagResult
+>("created", "tag", async ({ parsedInput, ctx }) => {
+  const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+
+  await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+    type: "workspace",
+    id: parsedInput.workspaceId,
+  });
+  await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.workspaceId);
+  ctx.auditLoggingCtx.organizationId = organizationId;
+  const result = await createTag(parsedInput.workspaceId, parsedInput.tagName);
+
+  if (!result.ok) {
+    throw new CreateTagFailedError(result);
+  }
+
+  ctx.auditLoggingCtx.tagId = result.data.id;
+  ctx.auditLoggingCtx.newObject = result.data;
+
+  return result;
+});
+
+export const createTagAction = authenticatedActionClient
+  .inputSchema(ZCreateTagAction)
+  .action(async ({ parsedInput, ctx }) => {
+    try {
+      return await createTagAudited({ ctx, parsedInput });
+    } catch (error) {
+      if (error instanceof CreateTagFailedError) return error.result;
+      throw error;
     }
-
-    return result;
-  })
-);
+  });
 
 const ZCreateTagToResponseAction = z.object({
   responseId: ZId,

@@ -6,7 +6,7 @@ import {
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import {
   createTaxonomyRun,
   getActiveTaxonomyTree,
@@ -27,7 +27,21 @@ type TBaseParams = {
   directoryId: string;
   requestId: string;
   instance: string;
+  auditLog?: TV3AuditLog;
 };
+
+/** Attribute the request's audit entry to the directory it changes; the wrapper emits it with the response status. */
+function attributeDirectoryAudit(
+  auditLog: TV3AuditLog | undefined,
+  organizationId: string,
+  directoryId: string,
+  newObject: Record<string, unknown>
+): void {
+  if (!auditLog) return;
+  auditLog.organizationId = organizationId;
+  auditLog.targetId = directoryId;
+  auditLog.newObject = { directoryId, ...newObject };
+}
 
 /**
  * Build the Hub scope for a request. Directory scope sends only `scope_type` (covers all text feedback
@@ -220,6 +234,7 @@ export async function triggerV3TaxonomyRun(
     fieldLabel,
     requestId,
     instance,
+    auditLog,
   } = params;
 
   const access = await requireUnifyDirectoryMutationAccess(
@@ -230,6 +245,11 @@ export async function triggerV3TaxonomyRun(
     instance
   );
   if (access instanceof Response) return access;
+  attributeDirectoryAudit(auditLog, access.organizationId, directoryId, {
+    operation: "taxonomyRunTriggered",
+    workspaceId,
+    scopeType,
+  });
 
   const actorId = getSessionUserId(authentication);
   if (!actorId) return problemUnauthorized(requestId, "Session required", instance);
@@ -246,6 +266,14 @@ export async function triggerV3TaxonomyRun(
       badGatewayDetail: "Failed to start taxonomy generation",
       serviceUnavailableDetail: TAXONOMY_UNAVAILABLE_DETAIL,
     });
+  }
+
+  if (auditLog) {
+    auditLog.newObject = {
+      ...auditLog.newObject,
+      runId: result.data.run.id,
+      inProgress: result.data.in_progress,
+    };
   }
 
   return successResponse({ run: result.data.run, inProgress: result.data.in_progress }, { requestId });
@@ -281,7 +309,7 @@ export async function getV3TaxonomyNodeRecords(
 export async function renameV3TaxonomyNode(
   params: TBaseParams & { nodeId: string; label: string }
 ): Promise<Response> {
-  const { authentication, workspaceId, directoryId, nodeId, label, requestId, instance } = params;
+  const { authentication, workspaceId, directoryId, nodeId, label, requestId, instance, auditLog } = params;
 
   const access = await requireUnifyDirectoryMutationAccess(
     authentication,
@@ -291,6 +319,13 @@ export async function renameV3TaxonomyNode(
     instance
   );
   if (access instanceof Response) return access;
+  // The label is feedback-derived text, so the event carries the node id and its length only.
+  attributeDirectoryAudit(auditLog, access.organizationId, directoryId, {
+    operation: "taxonomyNodeRenamed",
+    workspaceId,
+    nodeId,
+    labelLength: label.length,
+  });
 
   const actorId = getSessionUserId(authentication);
   if (!actorId) return problemUnauthorized(requestId, "Session required", instance);
@@ -312,7 +347,7 @@ export async function renameV3TaxonomyNode(
 }
 
 export async function removeV3TaxonomyNode(params: TBaseParams & { nodeId: string }): Promise<Response> {
-  const { authentication, workspaceId, directoryId, nodeId, requestId, instance } = params;
+  const { authentication, workspaceId, directoryId, nodeId, requestId, instance, auditLog } = params;
 
   const access = await requireUnifyDirectoryMutationAccess(
     authentication,
@@ -322,6 +357,11 @@ export async function removeV3TaxonomyNode(params: TBaseParams & { nodeId: strin
     instance
   );
   if (access instanceof Response) return access;
+  attributeDirectoryAudit(auditLog, access.organizationId, directoryId, {
+    operation: "taxonomyNodeRemoved",
+    workspaceId,
+    nodeId,
+  });
 
   const actorId = getSessionUserId(authentication);
   if (!actorId) return problemUnauthorized(requestId, "Session required", instance);

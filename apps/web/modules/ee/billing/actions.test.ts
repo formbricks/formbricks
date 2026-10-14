@@ -115,7 +115,7 @@ describe("billing actions", () => {
 
   test("startHobbyAction ensures a customer, reconciles hobby, and syncs billing", async () => {
     const result = await startHobbyAction({
-      ctx: { user: { id: "user_1" } },
+      ctx: { user: { id: "user_1" }, auditLoggingCtx: {} },
       parsedInput: { organizationId: "org_1" },
     } as any);
 
@@ -139,7 +139,7 @@ describe("billing actions", () => {
     });
 
     const result = await startHobbyAction({
-      ctx: { user: { id: "user_1" } },
+      ctx: { user: { id: "user_1" }, auditLoggingCtx: {} },
       parsedInput: { organizationId: "org_1" },
     } as any);
 

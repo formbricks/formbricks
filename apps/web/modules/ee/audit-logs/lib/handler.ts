@@ -3,7 +3,7 @@ import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP } from "@/lib/constants";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { deepDiff, redactPII } from "@/lib/utils/logger-helpers";
+import { deepDiff, redactPII, sanitizeAuditApiUrl } from "@/lib/utils/logger-helpers";
 import { logAuditEvent } from "@/modules/ee/audit-logs/lib/service";
 import {
   TActor,
@@ -75,9 +75,10 @@ export const buildAndLogAuditEvent = async ({
       organizationId,
       status,
       ipAddress: AUDIT_LOG_GET_USER_IP ? ipAddress : UNKNOWN_DATA,
-      apiUrl,
+      apiUrl: apiUrl ? sanitizeAuditApiUrl(apiUrl) : undefined,
       ...(changes ? { changes } : {}),
-      ...(status === "failure" && eventId ? { eventId } : {}),
+      // Present on success too, so an event can be correlated with its request in the application log.
+      ...(eventId ? { eventId } : {}),
     };
 
     await logAuditEvent(auditEvent);
@@ -244,9 +245,7 @@ export const withAuditLogging = <
       try {
         const userId: string = ctx?.user?.id ?? UNKNOWN_DATA;
         let organizationId =
-          auditLoggingCtx?.organizationId || // NOSONAR // We want to use the organizationId from the auditLoggingCtx if it is present and not empty
-          (parsedInput as Record<string, any>)?.organizationId || // NOSONAR // We want to use the organizationId from the parsedInput if it is present and not empty
-          UNKNOWN_DATA;
+          auditLoggingCtx?.organizationId || (parsedInput as Record<string, any>)?.organizationId; // NOSONAR // We want to use the organizationId from the auditLoggingCtx if it is present and not empty // NOSONAR // We want to use the organizationId from the parsedInput if it is present and not empty
 
         if (!organizationId) {
           const workspaceId = (parsedInput as Record<string, any>)?.workspaceId;
@@ -299,6 +298,15 @@ export const withAuditLogging = <
             break;
           case "contact":
             targetId = auditLoggingCtx.contactId;
+            break;
+          case "contactAttributeKey":
+            targetId = auditLoggingCtx.contactAttributeKeyId;
+            break;
+          case "team":
+            targetId = auditLoggingCtx.teamId;
+            break;
+          case "twoFactorAuth":
+            targetId = auditLoggingCtx.userId;
             break;
           case "apiKey":
             targetId = auditLoggingCtx.apiKeyId;

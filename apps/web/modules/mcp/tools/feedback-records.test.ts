@@ -782,13 +782,16 @@ describe("create_feedback_records", () => {
     await tools.get("create_feedback_records")!.handler(input, { http: { authInfo } });
 
     expect(built).toHaveLength(2);
-    expect(queueV3AuditLog).toHaveBeenCalledTimes(1);
+    // One success for the created record, plus one failure summary for the rejected member.
+    expect(queueV3AuditLog).toHaveBeenCalledTimes(2);
     expect(built[0].status).toBe("success");
     expect(built[1].status).toBe("failure");
     // The rejected record keeps the placeholder, so it must never be reported as a creation: an
     // audit trail that invents records is worse than one with gaps.
     expect(built[1].targetId).toBe(UNKNOWN_DATA);
     expect(vi.mocked(queueV3AuditLog).mock.calls[0][0]).toBe(built[0]);
+    expect(vi.mocked(queueV3AuditLog).mock.calls[1][0]).toBe(built[1]);
+    expect(built[1].newObject).toMatchObject({ requested: 2, created: 1, failed: 1, failedIndexes: [1] });
   });
 
   test("still queues a failure event when the batch operation throws, and rethrows", async () => {

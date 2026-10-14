@@ -166,8 +166,8 @@ describe("deepDiff", () => {
   });
   test("returns diff for added/removed keys", () => {
     expect(deepDiff({ a: 1 }, { a: 1, b: 2 })).toEqual({ b: 2 });
-    // The following case should return undefined, as removed keys are not included in the diff
-    expect(deepDiff({ a: 1, b: 2 }, { a: 1 })).toBeUndefined();
+    // A removed key is reported as null so the removal is not mistaken for "no change"
+    expect(deepDiff({ a: 1, b: 2 }, { a: 1 })).toEqual({ b: null });
   });
 });
 

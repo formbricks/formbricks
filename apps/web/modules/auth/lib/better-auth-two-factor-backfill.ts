@@ -20,6 +20,10 @@ import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
  * it from being an unauthenticated, email-guessable write. It materializes only the user's OWN existing
  * secret, returns nothing to the client, and no-ops for SSO users, non-2FA users, and users who already
  * have a `TwoFactor` row.
+ *
+ * Audit: deliberately emits no event. This is a mechanical repair of a storage mismatch that re-encodes
+ * the user's own existing secret; the enable/disable decisions themselves are audited by the
+ * `twoFactorAuth` server actions, and the sign-in it precedes by `signedIn` / the 2FA attempt events.
  */
 export const twoFactorBackfillAfterHandler = async (ctx: AuthHookContext): Promise<void> => {
   if (ctx.path !== "/sign-in/email") return;

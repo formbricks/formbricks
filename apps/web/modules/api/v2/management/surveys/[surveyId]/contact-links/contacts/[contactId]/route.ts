@@ -27,20 +27,28 @@ export const GET = async (request: Request, props: { params: Promise<TContactLin
       params: ZContactLinkParams,
       query: ZContactLinkQuery,
     },
-    handler: async ({ authentication, parsedInput }) => {
+    handler: async ({ authentication, parsedInput, auditLog }) => {
       const { params, query } = parsedInput;
 
       if (!params) {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [{ field: "params", issue: "missing" }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "bad_request",
+            details: [{ field: "params", issue: "missing" }],
+          },
+          auditLog
+        );
+      }
+
+      if (auditLog) {
+        auditLog.targetId = params.surveyId;
       }
 
       const workspaceIdResult = await getWorkspaceId(params.surveyId, false);
 
       if (!workspaceIdResult.ok) {
-        return handleApiError(request, workspaceIdResult.error);
+        return handleApiError(request, workspaceIdResult.error, auditLog);
       }
 
       const { workspaceId } = workspaceIdResult.data;
@@ -57,68 +65,95 @@ export const GET = async (request: Request, props: { params: Promise<TContactLin
           id: params.surveyId,
         }))
       ) {
-        return handleApiError(request, {
-          type: "unauthorized",
-        });
+        return handleApiError(
+          request,
+          {
+            type: "unauthorized",
+          },
+          auditLog
+        );
       }
 
       const organizationId = await getOrganizationIdFromSurveyId(params.surveyId);
       const isContactsEnabled = await getIsContactsEnabled(organizationId);
       if (!isContactsEnabled) {
-        return handleApiError(request, {
-          type: "forbidden",
-          details: [
-            { field: "contacts", issue: "Contacts are only enabled for Enterprise Edition, please upgrade." },
-          ],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "forbidden",
+            details: [
+              {
+                field: "contacts",
+                issue: "Contacts are only enabled for Enterprise Edition, please upgrade.",
+              },
+            ],
+          },
+          auditLog
+        );
       }
 
       const surveyResult = await getSurvey(params.surveyId);
 
       if (!surveyResult.ok) {
-        return handleApiError(request, surveyResult.error as ApiErrorResponseV2);
+        return handleApiError(request, surveyResult.error as ApiErrorResponseV2, auditLog);
       }
 
       const survey = surveyResult.data;
 
       if (!survey) {
-        return handleApiError(request, {
-          type: "not_found",
-          details: [{ field: "surveyId", issue: "Not found" }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "not_found",
+            details: [{ field: "surveyId", issue: "Not found" }],
+          },
+          auditLog
+        );
       }
 
       if (survey.type !== "link") {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [{ field: "surveyId", issue: "Not a link survey" }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "bad_request",
+            details: [{ field: "surveyId", issue: "Not a link survey" }],
+          },
+          auditLog
+        );
       }
 
       // Check if contact exists and belongs to the environment
       const contactResult = await getContact(params.contactId, workspaceId);
 
       if (!contactResult.ok) {
-        return handleApiError(request, contactResult.error as ApiErrorResponseV2);
+        return handleApiError(request, contactResult.error as ApiErrorResponseV2, auditLog);
       }
 
       const contact = contactResult.data;
 
       if (!contact) {
-        return handleApiError(request, {
-          type: "not_found",
-          details: [{ field: "contactId", issue: "Not found" }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "not_found",
+            details: [{ field: "contactId", issue: "Not found" }],
+          },
+          auditLog
+        );
       }
 
       // Check if contact has already responded to this survey
       const existingResponseResult = await getResponse(params.contactId, params.surveyId);
 
       if (existingResponseResult.ok) {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [{ field: "contactId", issue: "Already responded" }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "bad_request",
+            details: [{ field: "contactId", issue: "Already responded" }],
+          },
+          auditLog
+        );
       }
 
       // Calculate expiration date based on expirationDays
@@ -134,7 +169,16 @@ export const GET = async (request: Request, props: { params: Promise<TContactLin
       );
 
       if (!surveyUrlResult.ok) {
-        return handleApiError(request, surveyUrlResult.error);
+        return handleApiError(request, surveyUrlResult.error, auditLog);
+      }
+
+      if (auditLog) {
+        auditLog.newObject = {
+          linkKind: "personal",
+          contactId: params.contactId,
+          issuedCount: 1,
+          expirationDays: query?.expirationDays ?? null,
+        };
       }
 
       return responses.successResponse({
@@ -144,4 +188,6 @@ export const GET = async (request: Request, props: { params: Promise<TContactLin
         },
       });
     },
+    action: "created",
+    targetType: "survey",
   });

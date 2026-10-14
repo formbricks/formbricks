@@ -215,78 +215,90 @@ const ZGeneratePersonalLinksAction = z.object({
 
 export const generatePersonalLinksAction = authenticatedActionClient
   .inputSchema(ZGeneratePersonalLinksAction)
-  .action(async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-    const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
-    const isContactsEnabled = await getIsContactsEnabled(organizationId);
-    if (!isContactsEnabled) {
-      throw new OperationNotAllowedError("Contacts are not enabled for this workspace");
-    }
+  .action(
+    withAuditLogging("created", "survey", async ({ ctx, parsedInput }) => {
+      ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
+      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+      const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      const isContactsEnabled = await getIsContactsEnabled(organizationId);
+      if (!isContactsEnabled) {
+        throw new OperationNotAllowedError("Contacts are not enabled for this workspace");
+      }
 
-    await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
-      type: "survey",
-      id: parsedInput.surveyId,
-    });
+      await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
+        type: "survey",
+        id: parsedInput.surveyId,
+      });
 
-    // Get contacts and generate personal links
-    const contactsResult = await generatePersonalLinks(
-      parsedInput.surveyId,
-      parsedInput.segmentId,
-      parsedInput.expirationDays
-    );
+      // Get contacts and generate personal links
+      const contactsResult = await generatePersonalLinks(
+        parsedInput.surveyId,
+        parsedInput.segmentId,
+        parsedInput.expirationDays
+      );
 
-    if (!contactsResult || contactsResult.length === 0) {
-      throw new InvalidInputError(NO_CONTACTS_IN_SEGMENT_ERROR_CODE);
-    }
+      if (!contactsResult || contactsResult.length === 0) {
+        throw new InvalidInputError(NO_CONTACTS_IN_SEGMENT_ERROR_CODE);
+      }
 
-    capturePostHogEvent(
-      ctx.user.id,
-      "personal_link_created",
-      {
-        organization_id: organizationId,
-        workspace_id: workspaceId,
-        survey_id: parsedInput.surveyId,
-        link_count: contactsResult.length,
-      },
-      { organizationId, workspaceId }
-    );
+      capturePostHogEvent(
+        ctx.user.id,
+        "personal_link_created",
+        {
+          organization_id: organizationId,
+          workspace_id: workspaceId,
+          survey_id: parsedInput.surveyId,
+          link_count: contactsResult.length,
+        },
+        { organizationId, workspaceId }
+      );
 
-    // Prepare CSV data with the specified headers and order
-    const csvHeaders = [
-      "Formbricks Contact ID",
-      "User ID",
-      "First Name",
-      "Last Name",
-      "Email",
-      "Personal Link",
-    ];
+      // Link issuance only: neither the links nor the contacts' attributes are recorded.
+      ctx.auditLoggingCtx.newObject = {
+        linkKind: "personal",
+        segmentId: parsedInput.segmentId,
+        issuedCount: contactsResult.length,
+        expirationDays: parsedInput.expirationDays ?? null,
+      };
 
-    const csvData = contactsResult
-      .map((contact) => {
-        if (!contact) {
-          return null;
-        }
-        const attributes = contact.attributes ?? {};
-        return {
-          "Formbricks Contact ID": contact.contactId,
-          "User ID": attributes.userId ?? "",
-          "First Name": attributes.firstName ?? "",
-          "Last Name": attributes.lastName ?? "",
-          Email: attributes.email ?? "",
-          "Personal Link": contact.surveyUrl,
-        };
-      })
-      .filter((contact) => contact !== null);
+      // Prepare CSV data with the specified headers and order
+      const csvHeaders = [
+        "Formbricks Contact ID",
+        "User ID",
+        "First Name",
+        "Last Name",
+        "Email",
+        "Personal Link",
+      ];
 
-    // Convert to CSV using the file conversion utility
-    const csvContent = await convertToCsv(csvHeaders, csvData);
-    const fileName = `personal-links-${parsedInput.surveyId}-${Date.now()}.csv`;
+      const csvData = contactsResult
+        .map((contact) => {
+          if (!contact) {
+            return null;
+          }
+          const attributes = contact.attributes ?? {};
+          return {
+            "Formbricks Contact ID": contact.contactId,
+            "User ID": attributes.userId ?? "",
+            "First Name": attributes.firstName ?? "",
+            "Last Name": attributes.lastName ?? "",
+            Email: attributes.email ?? "",
+            "Personal Link": contact.surveyUrl,
+          };
+        })
+        .filter((contact) => contact !== null);
 
-    return {
-      fileName,
-      csvContent,
-    };
-  });
+      // Convert to CSV using the file conversion utility
+      const csvContent = await convertToCsv(csvHeaders, csvData);
+      const fileName = `personal-links-${parsedInput.surveyId}-${Date.now()}.csv`;
+
+      return {
+        fileName,
+        csvContent,
+      };
+    })
+  );
 
 const ZUpdateSingleUseLinksAction = z.object({
   surveyId: ZId,
@@ -297,21 +309,27 @@ const ZUpdateSingleUseLinksAction = z.object({
 
 export const updateSingleUseLinksAction = authenticatedActionClient
   .inputSchema(ZUpdateSingleUseLinksAction)
-  .action(async ({ ctx, parsedInput }) => {
-    await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
-      type: "survey",
-      id: parsedInput.surveyId,
-    });
+  .action(
+    withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
+      ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
+      ctx.auditLoggingCtx.organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+      await assertCan({ type: "user", id: ctx.user.id }, "survey.write", {
+        type: "survey",
+        id: parsedInput.surveyId,
+      });
 
-    const survey = await getSurvey(parsedInput.surveyId);
-    if (!survey) {
-      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
-    }
+      const survey = await getSurvey(parsedInput.surveyId);
+      if (!survey) {
+        throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+      }
 
-    const updatedSurvey = await updateSurvey({
-      ...survey,
-      singleUse: { enabled: parsedInput.isSingleUse, isEncrypted: parsedInput.isSingleUseEncryption },
-    });
+      const singleUse = { enabled: parsedInput.isSingleUse, isEncrypted: parsedInput.isSingleUseEncryption };
+      const updatedSurvey = await updateSurvey({ ...survey, singleUse });
 
-    return updatedSurvey;
-  });
+      // The link settings only: no survey content and no ids.
+      ctx.auditLoggingCtx.oldObject = { singleUse: survey.singleUse };
+      ctx.auditLoggingCtx.newObject = { singleUse };
+
+      return updatedSurvey;
+    })
+  );

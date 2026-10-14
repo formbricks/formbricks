@@ -12,6 +12,7 @@ export const GET = withV1ApiWrapper({
   handler: async ({
     req,
     props,
+    auditLog,
     authentication,
   }: THandlerParams<{ params: Promise<{ surveyId: string }> }>) => {
     if (!authentication || !("apiKeyId" in authentication)) {
@@ -20,6 +21,9 @@ export const GET = withV1ApiWrapper({
 
     try {
       const params = await props.params;
+      if (auditLog) {
+        auditLog.targetId = params.surveyId;
+      }
       const survey = await getSurvey(params.surveyId);
       if (!survey) {
         return {
@@ -92,6 +96,16 @@ export const GET = withV1ApiWrapper({
         return surveyLink.toString();
       });
 
+      // Link issuance only: the links and their ids are never recorded.
+      if (auditLog) {
+        auditLog.newObject = {
+          linkKind: "singleUse",
+          requestedCount: limit,
+          issuedCount: surveyLinks.length,
+          isEncrypted: survey.singleUse.isEncrypted,
+        };
+      }
+
       return {
         response: responses.successResponse(surveyLinks),
       };
@@ -99,4 +113,6 @@ export const GET = withV1ApiWrapper({
       return handleErrorResponse(error);
     }
   },
+  action: "created",
+  targetType: "survey",
 });

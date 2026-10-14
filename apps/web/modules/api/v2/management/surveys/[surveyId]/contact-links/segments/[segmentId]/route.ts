@@ -28,20 +28,28 @@ export const GET = async (
       params: ZContactLinksBySegmentParams,
       query: ZContactLinksBySegmentQuery,
     },
-    handler: async ({ authentication, parsedInput }) => {
+    handler: async ({ authentication, parsedInput, auditLog }) => {
       const { params, query } = parsedInput;
 
       if (!params) {
-        return handleApiError(request, {
-          type: "bad_request",
-          details: [{ field: "params", issue: "missing" }],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "bad_request",
+            details: [{ field: "params", issue: "missing" }],
+          },
+          auditLog
+        );
+      }
+
+      if (auditLog) {
+        auditLog.targetId = params.surveyId;
       }
 
       const workspaceIdResult = await getWorkspaceId(params.surveyId, false);
 
       if (!workspaceIdResult.ok) {
-        return handleApiError(request, workspaceIdResult.error);
+        return handleApiError(request, workspaceIdResult.error, auditLog);
       }
 
       const { workspaceId } = workspaceIdResult.data;
@@ -58,20 +66,31 @@ export const GET = async (
           id: params.surveyId,
         }))
       ) {
-        return handleApiError(request, {
-          type: "unauthorized",
-        });
+        return handleApiError(
+          request,
+          {
+            type: "unauthorized",
+          },
+          auditLog
+        );
       }
 
       const organizationId = await getOrganizationIdFromSurveyId(params.surveyId);
       const isContactsEnabled = await getIsContactsEnabled(organizationId);
       if (!isContactsEnabled) {
-        return handleApiError(request, {
-          type: "forbidden",
-          details: [
-            { field: "contacts", issue: "Contacts are only enabled for Enterprise Edition, please upgrade." },
-          ],
-        });
+        return handleApiError(
+          request,
+          {
+            type: "forbidden",
+            details: [
+              {
+                field: "contacts",
+                issue: "Contacts are only enabled for Enterprise Edition, please upgrade.",
+              },
+            ],
+          },
+          auditLog
+        );
       }
 
       // Get contacts based on segment
@@ -84,7 +103,7 @@ export const GET = async (
       );
 
       if (!contactsResult.ok) {
-        return handleApiError(request, contactsResult.error as ApiErrorResponseV2);
+        return handleApiError(request, contactsResult.error as ApiErrorResponseV2, auditLog);
       }
 
       const { data: contacts, meta } = contactsResult.data;
@@ -124,9 +143,21 @@ export const GET = async (
       );
 
       const filteredContactLinks = contactLinks.filter(Boolean);
+      if (auditLog) {
+        auditLog.newObject = {
+          linkKind: "personal",
+          segmentId: params.segmentId,
+          requestedCount: query?.limit || 10,
+          issuedCount: filteredContactLinks.length,
+          expirationDays: query?.expirationDays ?? null,
+        };
+      }
+
       return responses.successResponse({
         data: filteredContactLinks,
         meta,
       });
     },
+    action: "created",
+    targetType: "survey",
   });

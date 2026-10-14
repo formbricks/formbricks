@@ -213,6 +213,10 @@ export const gateSsoProvisioning = async ({
  * log an error for alerting instead — there is no automatic retry on later sign-ins, so a sustained
  * failure needs manual reconciliation, and the writes are idempotent (`createMembership` /
  * `createDefaultTeamMembership` upsert) so an operational retry is safe.
+ *
+ * Audit: deliberately emits no membership event today. The grant is implied by the user's `signedIn`
+ * record and is derived from instance configuration (default organization/role), not chosen by an actor;
+ * a dedicated `created` / `membership` event here is a tracked follow-up.
  */
 const assignSsoUserToOrganization = async ({
   userId,

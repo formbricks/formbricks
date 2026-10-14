@@ -12,7 +12,7 @@ import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { getBetterAuthRequestContext } from "./better-auth-request-context";
 import { finalizeSuccessfulSignIn } from "./sign-in-tracking";
 import { SSO_PROVISIONING_REJECT_REASONS } from "./sso-provisioning-reject-reasons";
-import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
+import { logAuthAttempt, logTwoFactorAttempt, shouldLogAuthFailure } from "./utils";
 
 /**
  * Observability parity for the Better Auth cutover (ENG-1054) — re-expresses the audit + Sentry
@@ -395,12 +395,16 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
  * attempts are rate-limited (fail-closed when Redis is down), and the failure is mirrored to Sentry in
  * production.
  *
- * Scope: the credential password sign-in (`/sign-in/email`). A failed 2FA challenge
- * (`/two-factor/verify-*`) identifies the user via the two-factor cookie rather than the request body,
- * so it is tracked separately; SSO sign-in failures are redirects (not `APIError`s) and never reach
- * this branch. Composed with `ssoRecoveryAfter` at the single `hooks.after` slot in auth.ts.
+ * Scope: the credential password sign-in (`/sign-in/email`) and a failed 2FA challenge
+ * (`/two-factor/verify-*`, see `auditFailedTwoFactorAfter`). SSO sign-in failures are redirects (not
+ * `APIError`s) and never reach this branch. Composed with `ssoRecoveryAfter` at the single `hooks.after`
+ * slot in auth.ts.
  */
 export const auditFailedAuthAfter = async (ctx: AuthHookContext): Promise<void> => {
+  if (ctx.path === "/two-factor/verify-totp" || ctx.path === "/two-factor/verify-backup-code") {
+    await auditFailedTwoFactorAfter(ctx);
+    return;
+  }
   if (ctx.path !== "/sign-in/email") return;
 
   // A created session (success) is audited by signInAuditDatabaseHook; only a returned APIError here
@@ -418,6 +422,40 @@ export const auditFailedAuthAfter = async (ctx: AuthHookContext): Promise<void> 
   const code = (returned.body as { code?: unknown } | undefined)?.code;
   const failureReason = (typeof code === "string" ? code : String(returned.status)).toLowerCase();
   logAuthAttempt(failureReason, "credentials", "password", UNKNOWN_DATA, email);
+};
+
+/**
+ * Failed 2FA challenge audit. Unlike `/sign-in/email` the request body carries no identity: the user is
+ * the one the two-factor cookie's pending challenge was issued for, which is read the way Better Auth's
+ * own `verifyTwoFactor` reads it. A failed attempt leaves that challenge in place, so it resolves; once
+ * the attempt budget is spent Better Auth consumes it, and the later requests (no cookie / no challenge)
+ * cannot be attributed and are not recorded. Throttled per user like the password failures.
+ */
+const TWO_FACTOR_COOKIE_NAME = "two_factor"; // not re-exported by better-auth; stable plugin constant
+const TWO_FACTOR_AUTH_METHODS: Record<string, string> = {
+  "/two-factor/verify-totp": "totp",
+  "/two-factor/verify-backup-code": "backup_code",
+};
+
+const auditFailedTwoFactorAfter = async (ctx: AuthHookContext): Promise<void> => {
+  const returned = (ctx.context as { returned?: unknown }).returned;
+  if (!isAPIError(returned)) return;
+
+  let userId: string | undefined;
+  try {
+    const cookie = ctx.context.createAuthCookie(TWO_FACTOR_COOKIE_NAME);
+    const challengeId = await ctx.getSignedCookie(cookie.name, ctx.context.secret);
+    if (challengeId) {
+      userId = (await ctx.context.internalAdapter.findVerificationValue(challengeId))?.value;
+    }
+  } catch {
+    // Auditing must never alter the response; an unresolvable challenge is simply not recorded.
+  }
+  if (!userId || !(await shouldLogAuthFailure(`two-factor:${userId}`))) return;
+
+  const code = (returned.body as { code?: unknown } | undefined)?.code;
+  const failureReason = (typeof code === "string" ? code : String(returned.status)).toLowerCase();
+  logTwoFactorAttempt(false, TWO_FACTOR_AUTH_METHODS[ctx.path as string], userId, "", failureReason);
 };
 
 /**

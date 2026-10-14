@@ -47,6 +47,11 @@ export const PUT = async (request: Request) =>
 
       const { contacts } = parsedInput.body ?? { contacts: [] };
 
+      // A batch has no single contact: the workspace receiving the upsert is the target.
+      if (auditLog) {
+        auditLog.targetId = workspaceId;
+      }
+
       if (
         !(await can(
           { type: "apiKey", id: authentication.apiKeyId },
@@ -80,6 +85,14 @@ export const PUT = async (request: Request) =>
       }
 
       const { contactIdxWithConflictingUserIds } = upsertBulkContactsResult.data;
+
+      if (auditLog) {
+        auditLog.newObject = {
+          workspaceId,
+          requestedCount: contacts.length,
+          skippedCount: contactIdxWithConflictingUserIds.length,
+        };
+      }
 
       if (contactIdxWithConflictingUserIds.length) {
         return responses.multiStatusResponse({

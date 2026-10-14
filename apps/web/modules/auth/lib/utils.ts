@@ -236,10 +236,11 @@ export const shouldLogAuthFailure = async (
       throw new Error("Redis transaction failed");
     }
 
-    const currentCount = results[1] as unknown as number;
+    // zCard ran BEFORE this attempt was added, so it is the number of PRIOR attempts in the window.
+    const attemptNumber = (results[1] as unknown as number) + 1;
 
-    // Apply throttling logic
-    if (currentCount <= AGGREGATION_THRESHOLD) {
+    // Apply throttling logic: the first AGGREGATION_THRESHOLD attempts are always logged
+    if (attemptNumber <= AGGREGATION_THRESHOLD) {
       return true;
     }
 
@@ -247,10 +248,11 @@ export const shouldLogAuthFailure = async (
     const recentEntries = await redis.zRange(rateLimitKey, -10, -1);
     if (recentEntries.length === 0) return true;
 
-    const lastLogTime = Number.parseInt(recentEntries[recentEntries.length - 1].split(":")[0]);
-    const timeSinceLastLog = now - lastLogTime;
+    // The newest entry is this attempt (added above), so the gap is measured to the one before it.
+    const previousEntry = recentEntries.at(-2);
+    const timeSincePrevious = previousEntry ? now - Number.parseInt(previousEntry.split(":")[0]) : 0;
 
-    return currentCount % 10 === 0 || timeSinceLastLog > 60000;
+    return attemptNumber % 10 === 0 || timeSincePrevious > 60000;
   } catch (error) {
     logger.warn({ error }, "Redis rate limiting failed, not logging due to Redis requirement");
     // If Redis fails, do not log as Redis is required for audit logs

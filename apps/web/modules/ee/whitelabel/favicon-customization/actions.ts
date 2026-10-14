@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { ZId, ZStorageUrl } from "@formbricks/types/common";
 import { assertCan } from "@/lib/authorization";
+import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -55,7 +56,8 @@ export const removeOrganizationFaviconUrlAction = authenticatedActionClient
       await checkWhiteLabelPermission(organizationId);
 
       ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.oldObject = { faviconUrl: "" };
+      const organization = await getOrganization(organizationId);
+      ctx.auditLoggingCtx.oldObject = { faviconUrl: organization?.whitelabel?.faviconUrl ?? null };
 
       return await updateOrganizationFaviconUrl(organizationId, null);
     })

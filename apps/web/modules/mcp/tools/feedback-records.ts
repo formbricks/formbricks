@@ -271,6 +271,24 @@ export function registerFeedbackRecordTools(server: McpServer): void {
           await queueV3AuditLog(auditLog, requestId, log);
         }
         if (stamped.length > 0) {
+          // A partially accepted batch: one summary failure for the rejected members — counts and
+          // positions only, never record content.
+          const failedIndexes = auditLogs.flatMap((auditLog, index) =>
+            auditLog && auditLog.targetId === UNKNOWN_DATA ? [index] : []
+          );
+          const rejected = failedIndexes.length > 0 ? auditLogs[failedIndexes[0]] : undefined;
+          if (rejected) {
+            rejected.organizationId = stamped[0].organizationId;
+            rejected.eventId = requestId;
+            rejected.newObject = {
+              workspaceId: input.workspaceId,
+              requested: input.records.length,
+              created: stamped.length,
+              failed: failedIndexes.length,
+              failedIndexes,
+            };
+            await queueV3AuditLog(rejected, requestId, log);
+          }
           return;
         }
         // Nothing created — record the attempt once rather than once per record.

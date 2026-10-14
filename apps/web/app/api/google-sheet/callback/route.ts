@@ -18,6 +18,7 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { canUserWriteWorkspaceIntegrations } from "@/lib/workspace/auth";
 import { getSession } from "@/modules/auth/lib/session";
+import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 
 const getGoogleSheetsRedirectUrl = (workspaceId: string) =>
   new URL(`/workspaces/${workspaceId}/settings/workspace/integrations/google-sheets`, WEBAPP_URL);
@@ -155,6 +156,22 @@ export const GET = async (req: Request) => {
   const result = await createOrUpdateIntegration(workspaceId, googleSheetIntegration);
   if (!result) {
     return responses.internalServerErrorResponse("Failed to create or update Google Sheets integration");
+  }
+
+  try {
+    await queueAuditEvent({
+      action: "createdUpdated",
+      targetType: "integration",
+      userId: session.user.id,
+      userType: "user",
+      targetId: result.id,
+      organizationId: await getOrganizationIdFromWorkspaceId(workspaceId),
+      status: "success",
+      // Metadata only: never the OAuth tokens or the callback code.
+      newObject: { type: "googleSheets", workspaceId },
+    });
+  } catch (err) {
+    logger.error({ error: err }, "Failed to queue audit event for googleSheets integration");
   }
 
   await captureGoogleSheetsConnectedEvent(session.user.id, workspaceId);

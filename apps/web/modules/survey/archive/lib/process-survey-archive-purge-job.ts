@@ -32,6 +32,9 @@ type TExpiredSurvey = {
   workspace: { organizationId: string };
 };
 
+const ARCHIVE_PURGE_ACTOR_ID = "system:archive-purge";
+const ARCHIVE_PURGE_REASON = "archive_retention_elapsed";
+
 type TPurgeOutcome = "purged" | "skipped" | "failed";
 
 /**
@@ -41,7 +44,11 @@ type TPurgeOutcome = "purged" | "skipped" | "failed";
  * - "skipped": the survey was restored or already gone (no longer eligible, will not reappear)
  * - "failed":  a real deletion error; the caller excludes it from later batches this run
  */
-const purgeArchivedSurvey = async (survey: TExpiredSurvey, cutoff: Date): Promise<TPurgeOutcome> => {
+const purgeArchivedSurvey = async (
+  survey: TExpiredSurvey,
+  cutoff: Date,
+  jobId?: string
+): Promise<TPurgeOutcome> => {
   try {
     // Guarded delete: the survey is re-checked (locked) inside deleteSurvey's transaction so a
     // survey restored after this batch was selected is skipped, not permanently deleted.
@@ -56,6 +63,27 @@ const purgeArchivedSurvey = async (survey: TExpiredSurvey, cutoff: Date): Promis
       { err: error, surveyId: survey.id, workspaceId: survey.workspaceId },
       "Failed to purge archived survey"
     );
+    try {
+      await queueAuditEventWithoutRequest({
+        action: "deleted",
+        organizationId: survey.workspace.organizationId,
+        status: "failure",
+        targetId: survey.id,
+        targetType: "survey",
+        newObject: {
+          errorName: error instanceof Error ? error.name : "unknown",
+          jobId,
+          reason: ARCHIVE_PURGE_REASON,
+        },
+        userId: ARCHIVE_PURGE_ACTOR_ID,
+        userType: "system",
+      });
+    } catch (auditError) {
+      logger.error(
+        { err: auditError, surveyId: survey.id, workspaceId: survey.workspaceId },
+        "Survey archive purge failure audit log failed"
+      );
+    }
     return "failed";
   }
 
@@ -68,6 +96,7 @@ const purgeArchivedSurvey = async (survey: TExpiredSurvey, cutoff: Date): Promis
       status: "success",
       targetId: survey.id,
       targetType: "survey",
+      newObject: { jobId, reason: ARCHIVE_PURGE_REASON },
       userId: "system",
       userType: "system",
     });
@@ -81,7 +110,10 @@ const purgeArchivedSurvey = async (survey: TExpiredSurvey, cutoff: Date): Promis
   return "purged";
 };
 
-export const purgeExpiredArchivedSurveys = async (now: Date = new Date()): Promise<number> => {
+export const purgeExpiredArchivedSurveys = async (
+  now: Date = new Date(),
+  jobId?: string
+): Promise<number> => {
   const cutoff = getSurveyArchivePurgeCutoff(now);
   let purgedCount = 0;
   let batches = 0;
@@ -110,7 +142,7 @@ export const purgeExpiredArchivedSurveys = async (now: Date = new Date()): Promi
     }
 
     for (const survey of expiredSurveys) {
-      const outcome = await purgeArchivedSurvey(survey, cutoff);
+      const outcome = await purgeArchivedSurvey(survey, cutoff, jobId);
       if (outcome === "purged") {
         purgedCount += 1;
       } else if (outcome === "failed") {
@@ -146,7 +178,7 @@ export const processSurveyArchivePurgeJob: JobHandler<TSurveyArchivePurgeJobData
 
   logger.info(logContext, "Survey archive purge job started");
 
-  const purgedCount = await purgeExpiredArchivedSurveys(new Date());
+  const purgedCount = await purgeExpiredArchivedSurveys(new Date(), context.jobId);
 
   logger.info({ ...logContext, purgedCount }, "Survey archive purge job completed");
 };

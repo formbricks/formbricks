@@ -414,6 +414,10 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
 
     const { organizationId, invitees } = parsedInput;
 
+    // A batch has no single invite: the organization receiving the invites is the target.
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.inviteId = organizationId;
+
     if (invitees.length === 0) {
       throw new ValidationError("No invitees provided");
     }
@@ -490,11 +494,11 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
       await settleInviteRateLimit(rateLimitReservation, invitedEmails.length);
     }
 
-    ctx.auditLoggingCtx.organizationId = organizationId;
+    // Never the invitee emails: the manifest is counts only.
     ctx.auditLoggingCtx.newObject = {
       invitedCount: invitedEmails.length,
       totalCount: invitees.length,
-      emails: invitedEmails,
+      failedCount: invitees.length - invitedEmails.length,
     };
 
     capturePostHogEvent(
