@@ -78,9 +78,11 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     assert.ok(process.argv.length <= 4, "Expected only build identity and variant");
     verifyNextRuntime(process.cwd(), process.argv[2], process.argv[3]);
     console.log("Next runtime verification passed");
-  } catch {
-    // Even malformed JSON and assertion diagnostics can contain embedded configuration values.
-    console.error("Next runtime verification failed");
+  } catch (error) {
+    // Our assertion messages contain only fixed diagnostics and file paths. Node appends
+    // actual/expected values after a newline; never log those or unexpected JSON errors.
+    const detail = error instanceof assert.AssertionError ? error.message.split("\n", 1)[0] : "";
+    console.error("Next runtime verification failed%s", detail ? `: ${detail}` : "");
     process.exitCode = 1;
   }
 }

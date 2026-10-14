@@ -162,7 +162,7 @@ jobs:
           push: false
           load: true
           build-args: |
-            FORMBRICKS_DEPLOYMENT_ID=${{ github.sha }}-pr-${{ github.run_id }}-${{ github.run_attempt }}
+            FORMBRICKS_DEPLOYMENT_ID=${{ github.sha }}-pr
             FORMBRICKS_BUILD_VARIANT=pr
           tags: formbricks-test:${{ github.sha }}
           secrets: |
@@ -185,7 +185,7 @@ jobs:
           push: false
           load: true
           build-args: |
-            FORMBRICKS_DEPLOYMENT_ID=${{ github.sha }}-pr-${{ github.run_id }}-${{ github.run_attempt }}
+            FORMBRICKS_DEPLOYMENT_ID=${{ github.sha }}-pr
             FORMBRICKS_BUILD_VARIANT=pr
           tags: formbricks-test:${{ env.GITHUB_SHA }}
           secrets: |
@@ -200,7 +200,7 @@ jobs:
       - name: Verify assembled Next runtime
         env:
           IMAGE: formbricks-test:${{ github.sha }}
-          BUILD_IDENTITY: ${{ github.sha }}-pr-${{ github.run_id }}-${{ github.run_attempt }}
+          BUILD_IDENTITY: ${{ github.sha }}-pr
         run: docker run --rm --network none --entrypoint node "$IMAGE" verify-next-runtime.mjs "$BUILD_IDENTITY" pr
 
       - name: Verify Runtime Image Excludes npm

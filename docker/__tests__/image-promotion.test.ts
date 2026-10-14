@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
+import { buildIdentity } from "../../.github/actions/build-and-push-docker/build-identity.mjs";
 
 type Step = {
   name?: string;
@@ -83,33 +84,102 @@ describe("image startup validation", () => {
   );
 });
 
+type Job = {
+  needs?: string | string[];
+  if?: string;
+  "runs-on"?: string;
+  strategy?: { matrix: { include: { platform: string; runner: string }[] } };
+  steps: Step[];
+};
+const workflow = (name: string) =>
+  load(
+    readFileSync(fileURLToPath(new URL(`../../.github/workflows/${name}.yml`, import.meta.url)), "utf8")
+  ) as {
+    jobs: Record<string, Job>;
+  };
+const composite = (name: string) =>
+  load(
+    readFileSync(fileURLToPath(new URL(`../../.github/actions/${name}/action.yml`, import.meta.url)), "utf8")
+  ) as {
+    runs: { steps: Step[] };
+  };
+
 describe("release promotion boundary", () => {
-  test("publishes only a candidate until both architectures pass the image browser check", () => {
-    const build = steps.findIndex((step) => step.id === "build");
-    const smoke = steps.findIndex((step) => step.run?.includes("bash docker/smoke-release-image.sh"));
-    const promote = steps.findIndex((step) => step.run?.includes("docker buildx imagetools create"));
-    expect(build).toBeGreaterThan(-1);
-    expect(smoke).toBeGreaterThan(build);
-    expect(promote).toBeGreaterThan(smoke);
-    expect(steps[build].with?.tags).toBe("${{ steps.candidate.outputs.tag }}");
-    expect(steps[smoke].run).toContain("set -euo pipefail");
-    expect(steps[smoke].run).toContain("linux/amd64");
-    expect(steps[smoke].run).toContain("linux/arm64");
-    expect(steps[smoke]["continue-on-error"]).not.toBe(true);
-    expect(steps[smoke].if).toBe(steps[promote].if);
-    expect(steps[promote].if).not.toMatch(/always\(|failure\(/);
-    expect(steps[smoke].env?.IMAGE).toBe(steps[promote].env?.IMAGE);
-    expect(steps[promote].env?.IMAGE).toContain("@${{ steps.build.outputs.digest }}");
-    expect(steps[promote].run).toContain('test "$actual" = "${IMAGE##*@}"');
+  test("exports by digest without creating public candidate tags", () => {
+    const build = steps.find((step) => step.id === "build");
+    expect(build?.with?.tags).toBeUndefined();
+    expect(build?.with?.outputs).toContain("push-by-digest=true");
+    expect(build?.with?.outputs).toContain("name=${{ steps.candidate.outputs.image }}");
+    expect(steps.some((step) => step.run?.includes("imagetools create"))).toBe(false);
   });
 
-  test("makes build identity and variant explicit inputs to the Docker cache", () => {
-    const build = steps.find((step) => step.id === "build");
-    expect(build?.with?.["build-args"]).toContain(
-      "FORMBRICKS_DEPLOYMENT_ID=${{ steps.candidate.outputs.identity }}"
+  test.each(["build-and-push-ecr", "release-docker-github", "release-docker-github-experimental"])(
+    "%s gates promotion on both native architectures testing the same digest",
+    (name) => {
+      const { jobs } = workflow(name);
+      const validation = jobs.validate;
+      const promotion = jobs.promote;
+      expect(validation.strategy?.matrix.include).toEqual([
+        { platform: "linux/amd64", runner: "ubuntu-24.04" },
+        { platform: "linux/arm64", runner: "ubuntu-24.04-arm" },
+      ]);
+      expect(validation["runs-on"]).toBe("${{ matrix.runner }}");
+      expect(promotion.needs).toContain("validate");
+      expect(promotion.needs).toContain(validation.needs);
+      expect(promotion.if).toBeUndefined();
+      const smoke = validation.steps.find((step) => step.uses?.endsWith("/test-release-image"));
+      const promote = promotion.steps.find((step) => step.uses?.endsWith("/promote-verified-image"));
+      expect(smoke?.with?.image_ref).toBe(promote?.with?.image_ref);
+      expect(smoke?.with?.image_ref).toContain("outputs.IMAGE_REF");
+      expect(smoke?.with?.platform).toBe("${{ matrix.platform }}");
+      expect(smoke?.["continue-on-error"]).not.toBe(true);
+    }
+  );
+
+  test("checks promoted tags against the tested digest and keeps explicit repair cache bypass", () => {
+    const promotion = composite("promote-verified-image").runs.steps;
+    expect(promotion.find((step) => step.run?.includes("imagetools create"))?.run).toContain(
+      'test "$actual" = "${IMAGE##*@}"'
     );
-    expect(build?.with?.["build-args"]).toContain("FORMBRICKS_BUILD_VARIANT=${{ inputs.registry_type }}");
-    const identity = steps.find((step) => step.id === "candidate");
-    expect(identity?.run).toContain("${GITHUB_SHA}-${REGISTRY_TYPE}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}");
+    expect(steps.find((step) => step.id === "build")?.with?.["no-cache-filters"]).toBe(
+      "${{ inputs.rebuild_application == 'true' && 'installer,runner' || '' }}"
+    );
+  });
+});
+
+const buildEnv = {
+  GITHUB_SHA: "revision-one",
+  REGISTRY_TYPE: "ecr",
+  BUILD_VERSION: "6.1.0",
+  SENTRY_AUTH_TOKEN: "token-one",
+  POSTHOG_KEY: "public-ingestion-key",
+  GITHUB_RUN_ID: "1",
+  GITHUB_RUN_ATTEMPT: "1",
+};
+
+describe("cacheable deployment identity", () => {
+  test("reruns and credential rotations reuse the same build profile", () => {
+    expect(
+      buildIdentity({
+        ...buildEnv,
+        GITHUB_RUN_ID: "2",
+        GITHUB_RUN_ATTEMPT: "3",
+        SENTRY_AUTH_TOKEN: "token-two",
+      })
+    ).toBe(buildIdentity(buildEnv));
+  });
+  test.each([
+    { GITHUB_SHA: "revision-two" },
+    { REGISTRY_TYPE: "ghcr" },
+    { BUILD_VERSION: "6.1.1" },
+    { SENTRY_AUTH_TOKEN: "" },
+    { POSTHOG_KEY: "different-key" },
+  ])("changed build inputs invalidate the cache (%j)", (change) => {
+    expect(buildIdentity({ ...buildEnv, ...change })).not.toBe(buildIdentity(buildEnv));
+  });
+  test("explicit repairs get a distinct identity on each attempt", () => {
+    const repair = { ...buildEnv, REBUILD_APPLICATION: "true" };
+    expect(buildIdentity(repair)).not.toBe(buildIdentity(buildEnv));
+    expect(buildIdentity({ ...repair, GITHUB_RUN_ATTEMPT: "2" })).not.toBe(buildIdentity(repair));
   });
 });

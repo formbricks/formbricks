@@ -125,12 +125,24 @@ describe("Next runtime artifact", () => {
     rmSync(join(root, "apps/web/.next/static/chunks/login.css"));
     seal();
     expect(() => verifyNextRuntime(root)).toThrow("Missing Next asset: static/chunks/login.css");
+    expect(verify(root).stderr.trim()).toBe(
+      "Next runtime verification failed: Missing Next asset: static/chunks/login.css"
+    );
   });
 
   test("rejects a coherent but stale build or a different release variant", () => {
     const { root } = fixture();
-    expect(verify(root, "cloud-two").status).toBe(1);
-    expect(verify(root, "cloud-one", "ghcr").status).toBe(1);
+    const mismatch = verify(root, "private-value-sentinel");
+    expect(mismatch.status).toBe(1);
+    expect(mismatch.stderr.trim()).toBe(
+      "Next runtime verification failed: Unexpected runtime artifact identity"
+    );
+    expect(mismatch.stderr).not.toContain("private-value-sentinel");
+    const variant = verify(root, "cloud-one", "ghcr");
+    expect(variant.status).toBe(1);
+    expect(variant.stderr.trim()).toBe(
+      "Next runtime verification failed: Unexpected runtime artifact variant"
+    );
   });
 
   test("rejects a mixed server configuration before serving any requests", () => {
@@ -148,7 +160,9 @@ describe("Next runtime artifact", () => {
     write("apps/web/.next/static/chunks/login.css", "private-value-sentinel");
     const result = verify(root);
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain("Next runtime verification failed");
+    expect(result.stderr).toContain(
+      "Runtime artifact contents changed after assembly: .next/static/chunks/login.css"
+    );
     expect(() => verifyNextRuntime(root)).toThrow("Runtime artifact contents changed");
     expect(result.stderr).not.toContain("private-value-sentinel");
     expect(result.stderr.trim().split("\n")).toHaveLength(1);
@@ -179,7 +193,8 @@ describe("Next runtime artifact", () => {
       });
       expect(result.status).toBe(1);
       expect(result.stdout).toBe("");
-      expect(result.stderr.trim()).toBe("Next runtime verification failed");
+      expect(result.stderr).toContain("Next runtime verification failed");
+      expect(result.stderr).not.toContain(valid.root);
     }
   );
 

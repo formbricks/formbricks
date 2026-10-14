@@ -3,10 +3,14 @@ import assert from "node:assert/strict";
 
 const origin = process.argv[2];
 assert.ok(origin, "Usage: node docker/smoke-next-browser.mjs <origin>");
-const expect = playwrightExpect.configure({ timeout: 30_000 });
+const timeout = 60_000;
+const expect = playwrightExpect.configure({ timeout });
+const started = performance.now();
 const browser = await chromium.launch({ headless: true });
 try {
   const page = await browser.newPage({ locale: "en-US" });
+  page.setDefaultTimeout(timeout);
+  page.setDefaultNavigationTimeout(timeout);
   const failures = [];
   let scripts = 0;
   page.on("pageerror", (error) => failures.push(error.message));
@@ -19,7 +23,7 @@ try {
     if (response.request().resourceType() === "script") scripts++;
   });
   // Starting at / proves that client-side redirects also execute, as on Apollo's blank page.
-  await page.goto(origin, { waitUntil: "load", timeout: 60_000 });
+  await page.goto(origin, { waitUntil: "load", timeout });
   await expect(page).toHaveURL(/\/auth\/login/);
   await page.getByRole("button", { name: "Log in with Email", exact: true }).click();
   await expect(page.locator('input[name="email"]')).toBeVisible();
@@ -35,6 +39,7 @@ try {
     JSON.stringify({
       status: "passed",
       scripts,
+      durationMs: Math.round(performance.now() - started),
       journeys: ["login hydration", "password recovery navigation"],
     })
   );

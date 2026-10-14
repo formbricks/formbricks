@@ -9,14 +9,24 @@ are completed by the Dockerfile's existing Prisma/logger overlays and checked se
 by its runtime dependency audit. Relative dependency symlinks are preserved during assembly.
 
 CI supplies `FORMBRICKS_DEPLOYMENT_ID` as a Docker build argument derived from the
-source revision, registry variant, workflow run and attempt. `FORMBRICKS_BUILD_VARIANT`
+source revision, resolved version, registry variant and build profile (Sentry enabled and
+PostHog configuration). Workflow run IDs and credential rotations do not invalidate normal
+builds. `FORMBRICKS_BUILD_VARIANT`
 distinguishes ECR/cloud and GHCR/community builds. These are public build inputs,
 not runtime configuration or secrets. Local Docker builds need neither argument;
 they receive a local identity during compilation. Do not override deployment identity
 when starting an already-built image.
 
-Release workflows first publish a candidate tag. They validate that exact digest
-on AMD64 and ARM64 before moving release or environment tags. The smoke test uses
+Release workflows export candidates by digest without creating `candidate-*` tags. This
+prevents candidate tag accumulation on both successful and failed runs. Untagged digests
+can still be pulled from public repositories; this is not a private staging registry.
+Do not delete a GHCR package version to remove a tag: it may also carry release tags.
+
+Separate AMD64 and ARM64 jobs validate the exact index digest in parallel on matching native
+runners. They do not install QEMU or pull different architectures into the same Docker image
+store. Promotion depends on both jobs succeeding. Browser assertions and actions have bounded
+60-second timeouts, and the complete validation job has a 20-minute budget. Failed checks
+remain blocking; rerunning a failed validation job reuses the built digest without rebuilding. The smoke test uses
 disposable PostgreSQL and Redis containers, runs migrations, seeds a non-authenticating
 user fixture so the instance selects login instead of setup, loads `/`, verifies
 login hydration and navigates to password recovery. It rejects missing scripts,
@@ -35,7 +45,7 @@ bash docker/smoke-release-image.sh REPOSITORY@sha256:DIGEST BUILD_IDENTITY ecr l
 bash docker/smoke-release-image.sh REPOSITORY@sha256:DIGEST BUILD_IDENTITY ecr linux/arm64
 ```
 
-Cross-architecture execution needs QEMU or a native runner. The script creates its own
+Run each command on the matching native architecture (CI enforces this). The script creates its own
 isolated datastores; it does not accept application database credentials. Cleanup runs
 on success and failure. To inspect an image without starting the application:
 
@@ -44,11 +54,16 @@ docker run --rm --network none --entrypoint node REPOSITORY@sha256:DIGEST \
   verify-next-runtime.mjs BUILD_IDENTITY ecr
 ```
 
+Assertion failures report their specific reason and affected file paths, without actual/expected
+configuration values. Unexpected errors, including malformed JSON, retain a generic diagnostic.
+
 ## Repair and recovery
 
 Use `rebuild_application: true` on **Deploy Selected Branch to Apollo** or
 **Build Cloud Deployment Images** to bypass the installer and runner caches. Node
-compilation and dependency-download caches remain reusable. This builds, validates
+compilation and dependency-download caches remain reusable. Only this explicit repair mode
+adds a run/attempt nonce to the deployment identity. Ordinary reruns retain the identity and
+can reuse the complete application artifact. This builds, validates
 and promotes a new candidate; it does not modify the existing image.
 
 For cache regression testing, build community then cloud variants with the same source,
@@ -56,7 +71,8 @@ repeat with warm caches, and run the same verifier/browser checks on each digest
 the release Sentry configuration, since PR builds intentionally omit upload credentials.
 
 Failed candidate validation leaves deployment tags unchanged. Keep its digest and failed-check
-output for diagnosis, then retry with a new build identity.
+output for diagnosis, then rerun validation of that digest. Use the explicit repair option
+when the application needs to be rebuilt.
 
 Registry writes to multiple tags are not transactional. A failure after promotion begins
 can leave only some tags updated, including a tag already consumed by a deployment controller.

@@ -1,6 +1,6 @@
 name: Build and Push Docker Image
 description: |
-  Unified Docker build and push action for both ECR and GHCR registries.
+  Build an untagged candidate for ECR or GHCR. Callers must gate promotion on native image validation jobs.
 
   Supports:
   - ECR builds for Formbricks Cloud deployment
@@ -78,11 +78,17 @@ inputs:
     default: "."
 
 outputs:
+  image_ref:
+    description: "Untagged candidate repository and digest"
+    value: ${{ steps.candidate.outputs.image }}@${{ steps.build.outputs.digest }}
+  build_identity:
+    description: "Identity of the compiled application"
+    value: ${{ steps.candidate.outputs.identity }}
   image_tag:
     description: "Resolved image tag used for the build"
     value: ${{ steps.version.outputs.version }}
   registry_tags:
-    description: "Complete registry tags that were pushed"
+    description: "Intended tags, applied only by the validation and promotion workflow"
     value: ${{ steps.candidate.outputs.release_tags }}
   image_digest:
     description: "Image digest from the build"
@@ -143,22 +149,17 @@ runs:
       with:
         version: ${{ steps.version.outputs.version }}
 
-    - name: Configure AWS credentials (ECR only)
-      if: ${{ inputs.registry_type == 'ecr' }}
-      uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+    - uses: ./.github/actions/image-registry-login
       with:
-        role-to-assume: ${{ inputs.aws_role_arn }}
-        aws-region: ${{ inputs.ecr_region }}
-
-    - name: Log in to Amazon ECR (ECR only)
-      if: ${{ inputs.registry_type == 'ecr' }}
-      uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+        registry_type: ${{ inputs.registry_type }}
+        ecr_region: ${{ inputs.ecr_region }}
+        aws_role_arn: ${{ inputs.aws_role_arn }}
 
     - name: Set up Docker build tools
       uses: ./.github/actions/docker-build-setup
       with:
-        registry: ${{ inputs.registry_type == 'ghcr' && 'ghcr.io' || '' }}
-        setup_cosign: ${{ inputs.registry_type == 'ghcr' && 'true' || 'false' }}
+        registry: ""
+        setup_cosign: "false"
         skip_login_on_pr: ${{ inputs.registry_type == 'ghcr' && 'true' || 'false' }}
 
     - name: Build ECR tag list
@@ -279,18 +280,22 @@ runs:
       shell: bash
       env:
         REGISTRY_TYPE: ${{ inputs.registry_type }}
+        BUILD_VERSION: ${{ steps.version.outputs.version }}
+        REBUILD_APPLICATION: ${{ inputs.rebuild_application }}
+        IDENTITY_SCRIPT: ${{ github.action_path }}/build-identity.mjs
+        SENTRY_AUTH_TOKEN: ${{ env.SENTRY_AUTH_TOKEN }}
+        POSTHOG_KEY: ${{ env.POSTHOG_KEY }}
         ECR_IMAGE: ${{ inputs.ecr_registry }}/${{ inputs.ecr_repository }}
         GHCR_IMAGE: ghcr.io/${{ inputs.ghcr_image_name }}
         RELEASE_TAGS: ${{ inputs.registry_type == 'ecr' && steps.ecr-tags.outputs.tags || (inputs.experimental_mode == 'true' && steps.ghcr-meta-experimental.outputs.tags) || steps.ghcr-extra-tags.outputs.tags || format('ghcr.io/{0}:{1}', inputs.ghcr_image_name, steps.version.outputs.version) }}
       run: |
         set -euo pipefail
-        identity="${GITHUB_SHA}-${REGISTRY_TYPE}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+        identity="$(node "$IDENTITY_SCRIPT")"
         image="$GHCR_IMAGE"
         if [ "$REGISTRY_TYPE" = ecr ]; then image="$ECR_IMAGE"; fi
         {
           echo "identity=$identity"
           echo "image=$image"
-          echo "tag=$image:candidate-$identity"
           echo "release_tags<<FORMBRICKS_TAGS"
           printf '%s\n' "$RELEASE_TAGS"
           echo "FORMBRICKS_TAGS"
@@ -306,8 +311,8 @@ runs:
         file: ${{ inputs.dockerfile }}
         platforms: linux/amd64,linux/arm64
         pull: true
-        push: ${{ github.event_name != 'pull_request' }}
-        tags: ${{ steps.candidate.outputs.tag }}
+        # Digest-only export creates no candidate tags in the public package, even on failed runs.
+        outputs: type=image,name=${{ steps.candidate.outputs.image }},push-by-digest=true,name-canonical=true,push=${{ github.event_name != 'pull_request' }}
         build-args: |
           FORMBRICKS_DEPLOYMENT_ID=${{ steps.candidate.outputs.identity }}
           FORMBRICKS_BUILD_VARIANT=${{ inputs.registry_type }}
@@ -334,77 +339,3 @@ runs:
         DUMMY_CUBEJS_API_SECRET: ${{ env.DUMMY_CUBEJS_API_SECRET }}
         SENTRY_AUTH_TOKEN: ${{ env.SENTRY_AUTH_TOKEN }}
         POSTHOG_KEY: ${{ env.POSTHOG_KEY }}
-
-    - name: Set up candidate browser checks
-      if: github.event_name != 'pull_request'
-      uses: ./.github/actions/setup-image-smoke
-
-    - name: Enable ARM64 candidate execution
-      if: github.event_name != 'pull_request'
-      uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
-      with:
-        platforms: arm64
-
-    - name: Test the exact candidate digest on both architectures
-      if: github.event_name != 'pull_request'
-      shell: bash
-      env:
-        IMAGE: ${{ steps.candidate.outputs.image }}@${{ steps.build.outputs.digest }}
-        BUILD_IDENTITY: ${{ steps.candidate.outputs.identity }}
-        BUILD_VARIANT: ${{ inputs.registry_type }}
-      run: |
-        set -euo pipefail
-        bash docker/smoke-release-image.sh "$IMAGE" "$BUILD_IDENTITY" "$BUILD_VARIANT" linux/amd64
-        bash docker/smoke-release-image.sh "$IMAGE" "$BUILD_IDENTITY" "$BUILD_VARIANT" linux/arm64
-
-    - name: Promote verified digest without rebuilding
-      if: github.event_name != 'pull_request'
-      shell: bash
-      env:
-        IMAGE: ${{ steps.candidate.outputs.image }}@${{ steps.build.outputs.digest }}
-        RELEASE_TAGS: ${{ steps.candidate.outputs.release_tags }}
-      run: |
-        set -euo pipefail
-        # Registry tag writes are not transactional. A deployer may already have consumed a changed tag.
-        trap 'echo "Tag promotion failed; inspect release tags and resume with the verified digest. Do not automatically roll back deployed workloads." >&2' ERR
-        args=()
-        while IFS= read -r tag; do
-          if [ -n "$tag" ]; then args+=(--tag "$tag"); fi
-        done <<< "$RELEASE_TAGS"
-        test "${#args[@]}" -gt 0
-        docker buildx imagetools create "${args[@]}" "$IMAGE"
-        while IFS= read -r tag; do
-          if [ -z "$tag" ]; then continue; fi
-          actual="$(docker buildx imagetools inspect --format '{{json .Manifest}}' "$tag" | jq -r .digest)"
-          test "$actual" = "${IMAGE##*@}"
-        done <<< "$RELEASE_TAGS"
-
-    - name: Sign GHCR image (GHCR only)
-      if: ${{ inputs.registry_type == 'ghcr' && (github.event_name == 'workflow_call' || github.event_name == 'release' || github.event_name == 'workflow_dispatch') }}
-      shell: bash
-      env:
-        TAGS: ${{ inputs.experimental_mode == 'true' && steps.ghcr-meta-experimental.outputs.tags || steps.ghcr-extra-tags.outputs.tags }}
-        DIGEST: ${{ steps.build.outputs.digest }}
-      run: |
-        set -euo pipefail
-        echo "${TAGS}" | xargs -I {} cosign sign --yes "{}@${DIGEST}"
-
-    - name: Output build summary
-      shell: bash
-      env:
-        REGISTRY_TYPE: ${{ inputs.registry_type }}
-        IMAGE_TAG: ${{ steps.version.outputs.version }}
-        VERSION_SOURCE: ${{ steps.version.outputs.source }}
-        DEPLOYMENT_TAG: ${{ inputs.deployment_tag }}
-      run: |
-        echo "SUCCESS: Built and pushed Docker image to $REGISTRY_TYPE"
-        echo "Image Tag: $IMAGE_TAG (source: $VERSION_SOURCE)"
-        if [[ "$REGISTRY_TYPE" == "ecr" ]]; then
-          echo "ECR Registry: ${{ inputs.ecr_registry }}"
-          echo "ECR Repository: ${{ inputs.ecr_repository }}"
-          if [[ -n "$DEPLOYMENT_TAG" ]]; then
-            echo "Environment Tag: $DEPLOYMENT_TAG"
-          fi
-        else
-          echo "GHCR Image: ghcr.io/${{ inputs.ghcr_image_name }}"
-        fi
