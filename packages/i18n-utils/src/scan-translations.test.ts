@@ -34,6 +34,12 @@ describe("forEachConcurrently", () => {
     expect(peak).toBe(4);
   });
 
+  test.each([0, -1, 2.5, Number.NaN])("refuses a concurrency of %s", async (concurrency) => {
+    await expect(forEachConcurrently([1, 2, 3], concurrency, () => Promise.resolve())).rejects.toThrow(
+      "positive integer"
+    );
+  });
+
   test("does nothing for no items", async () => {
     let calls = 0;
     await forEachConcurrently([], 8, () => {

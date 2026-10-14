@@ -166,20 +166,23 @@ export function extractKeysFromContent(content: string): string[] {
 /**
  * Source files read at once. The reads are independent (each only adds to a set), so reading them one
  * after another left the scan waiting on each in turn; a bounded pool overlaps them without opening
- * thousands of files at once (`EMFILE`). Past ~32 the gain flattens: reading a few thousand files fell from
- * ~200 ms to ~50 ms locally.
+ * thousands of files at once (`EMFILE`).
  */
 const FILE_READ_CONCURRENCY = 32;
 
 /**
- * Run `task` over `items` with at most `concurrency` in flight, resolving when every task has finished.
- * A task that rejects rejects the whole run, so `task` handles its own errors.
+ * Run `task` over `items` with at most `concurrency` (a positive integer) in flight, resolving when every
+ * task has finished. A task that rejects rejects the whole run while the remaining items still run, so
+ * `task` handles its own errors.
  */
 export async function forEachConcurrently<T>(
   items: readonly T[],
   concurrency: number,
   task: (item: T) => Promise<void>
 ): Promise<void> {
+  if (!Number.isSafeInteger(concurrency) || concurrency <= 0) {
+    throw new Error(`forEachConcurrently: concurrency must be a positive integer, got ${concurrency}`);
+  }
   let next = 0;
   const worker = async (): Promise<void> => {
     while (next < items.length) {
@@ -188,7 +191,7 @@ export async function forEachConcurrently<T>(
       await task(item);
     }
   };
-  await Promise.all(Array.from({ length: Math.max(1, Math.min(concurrency, items.length)) }, worker));
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));
 }
 
 /**
