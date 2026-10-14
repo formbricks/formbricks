@@ -7,10 +7,42 @@ import {
   detectKeysWithSpaces,
   extractKeysFromContent,
   flattenKeys,
+  forEachConcurrently,
   parseLockfile,
   stripComments,
   validateLockfile,
 } from "./scan-translations";
+
+describe("forEachConcurrently", () => {
+  test("runs every item once, never more than the limit at a time", async () => {
+    const seen: number[] = [];
+    let inFlight = 0;
+    let peak = 0;
+    await forEachConcurrently(
+      Array.from({ length: 50 }, (_, i) => i),
+      4,
+      async (item) => {
+        inFlight += 1;
+        peak = Math.max(peak, inFlight);
+        await new Promise((resolve) => setTimeout(resolve, 1));
+        seen.push(item);
+        inFlight -= 1;
+      }
+    );
+
+    expect(seen.sort((a, b) => a - b)).toEqual(Array.from({ length: 50 }, (_, i) => i));
+    expect(peak).toBe(4);
+  });
+
+  test("does nothing for no items", async () => {
+    let calls = 0;
+    await forEachConcurrently([], 8, () => {
+      calls += 1;
+      return Promise.resolve();
+    });
+    expect(calls).toBe(0);
+  });
+});
 
 describe("Translation Scanner", () => {
   describe("stripComments", () => {
