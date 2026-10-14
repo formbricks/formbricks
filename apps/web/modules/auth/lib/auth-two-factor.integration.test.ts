@@ -104,6 +104,21 @@ describe("Better Auth two-factor (real Postgres)", () => {
     expect(await prisma.session.count()).toBe(1);
   });
 
+  test("turning 2FA on is not a sign-in", async () => {
+    const userId = await createVerifiedUser("enrol2fa@example.com", "Passw0rd!");
+    const cookie = await sessionCookie("enrol2fa@example.com", "Passw0rd!");
+    await prisma.user.update({ where: { id: userId }, data: { lastLoginAt: null } });
+    vi.clearAllMocks();
+
+    // Verifying the first code swaps the signed-in session for a new one; nobody signed in.
+    const secret = secretFromUri(await enrolTotp(cookie));
+    await auth.api.verifyTOTP({ body: { code: totp(secret) }, headers: { cookie } });
+
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: userId } })).twoFactorEnabled).toBe(true);
+    expect(signedInAudits()).toHaveLength(0);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: userId } })).lastLoginAt).toBeNull();
+  });
+
   test("a sign-in is recorded once, when the second factor completes it, not at the password step", async () => {
     const userId = await createVerifiedUser("audit2fa@example.com", "Passw0rd!");
     const enrollCookie = await sessionCookie("audit2fa@example.com", "Passw0rd!");

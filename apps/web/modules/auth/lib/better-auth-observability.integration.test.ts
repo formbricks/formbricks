@@ -29,7 +29,7 @@ beforeEach(async () => {
   vi.clearAllMocks();
 });
 
-describe("Observability — signedIn audit on session creation (real Postgres)", () => {
+describe("Observability — signedIn audit on a completed sign-in (real Postgres)", () => {
   test("a successful password sign-in emits a signedIn success audit event", async () => {
     const password = "Observe-Me1!";
     const user = await prisma.user.create({

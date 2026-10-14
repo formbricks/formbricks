@@ -14,6 +14,7 @@ import {
   auditVerificationSessionWithheld,
   betterAuthLogger,
   getSignInAuthMethod,
+  isNewSignIn,
   recordCompletedSignIn,
   recordSsoCallbackOutcome,
   recordSsoCallbackThrow,
@@ -94,6 +95,9 @@ describe("getSignInAuthMethod (signedIn audit allow-list)", () => {
     ["/two-factor/verify-backup-code", "password"],
     ["/callback/google", "sso"],
     ["/callback/azuread", "sso"],
+    // Google's ID-token sign-in creates its session here; the redirect branch ends with none, and a
+    // request without a session records nothing.
+    ["/sign-in/social", "sso"],
   ])("audits sign-in completion %s as %s", (path, expected) => {
     expect(getSignInAuthMethod(path)).toBe(expected);
   });
@@ -102,9 +106,9 @@ describe("getSignInAuthMethod (signedIn audit allow-list)", () => {
   test.each([
     "/two-factor/disable",
     "/two-factor/enable",
-    "/two-factor/verify-otp", // ambiguous — also the first-time-enable path → not a sign-in
+    "/two-factor/verify-otp", // no OTP sender is configured
     "/change-password",
-    "/sign-in/social", // OAuth initiation, no session created
+    "/get-session", // a refresh re-sets the session
   ])("does not audit non-sign-in path %s", (path) => {
     expect(getSignInAuthMethod(path)).toBeNull();
   });
@@ -276,6 +280,56 @@ describe("recordCompletedSignIn (signedIn success audit)", () => {
   });
 });
 
+describe("isNewSignIn", () => {
+  const newSession = {
+    session: { id: "s-new", token: "t-new" },
+    user: { id: "user-1", email: "ada@example.com" },
+  };
+
+  test("a session the request did not arrive with is a sign-in", () => {
+    expect(isNewSignIn({ path: "/sign-in/email", newSession, incomingToken: null, priorSession: null })).toBe(
+      true
+    );
+    // Signed in elsewhere in this browser, signing in again: a new session all the same.
+    expect(
+      isNewSignIn({ path: "/sign-in/email", newSession, incomingToken: "t-old", priorSession: null })
+    ).toBe(true);
+  });
+
+  test("a refresh of the session the request arrived with is not", () => {
+    expect(
+      isNewSignIn({ path: "/verify-email", newSession, incomingToken: "t-new", priorSession: null })
+    ).toBe(false);
+  });
+
+  test("on the two-factor verify endpoints, a challenge is a sign-in and turning 2FA on is not", () => {
+    const challenge = { path: "/two-factor/verify-totp", newSession, incomingToken: null };
+    expect(isNewSignIn({ ...challenge, priorSession: null })).toBe(true);
+    // Another plugin's after hook may set the new session as the request's session: still a sign-in.
+    expect(isNewSignIn({ ...challenge, priorSession: { session: { id: "s-new" } } })).toBe(true);
+    // A signed-in user turning 2FA on: verifyTwoFactor found their session, which is swapped.
+    expect(
+      isNewSignIn({
+        path: "/two-factor/verify-backup-code",
+        newSession,
+        incomingToken: "t-old",
+        priorSession: { session: { id: "s-old" } },
+      })
+    ).toBe(false);
+  });
+
+  test("a prior session only matters on the two-factor verify endpoints", () => {
+    expect(
+      isNewSignIn({
+        path: "/callback/google",
+        newSession,
+        incomingToken: "t-old",
+        priorSession: { session: { id: "s-old" } },
+      })
+    ).toBe(true);
+  });
+});
+
 describe("signInAuditPlugin", () => {
   test("runs only on sign-in completions", () => {
     const [{ matcher }] = signInAuditPlugin.hooks.after;
@@ -283,6 +337,7 @@ describe("signInAuditPlugin", () => {
     expect(matcher({ path: "/sign-in/email" })).toBe(true);
     expect(matcher({ path: "/two-factor/verify-backup-code" })).toBe(true);
     expect(matcher({ path: "/callback/google" })).toBe(true);
+    expect(matcher({ path: "/sign-in/social" })).toBe(true);
     expect(matcher({ path: "/get-session" })).toBe(false);
     expect(matcher({ path: "/two-factor/disable" })).toBe(false);
   });
