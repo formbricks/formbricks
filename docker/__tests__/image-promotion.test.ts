@@ -1,5 +1,8 @@
 import { load } from "js-yaml";
-import { readFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 
@@ -20,6 +23,65 @@ const action = load(
   )
 ) as { runs: { steps: Step[] } };
 const steps = action.runs.steps;
+const validation = load(
+  readFileSync(
+    fileURLToPath(new URL("../../.github/workflows/docker-build-validation.yml", import.meta.url)),
+    "utf8"
+  )
+) as { jobs: { "validate-docker-build": { steps: Step[] } } };
+
+describe("image startup validation", () => {
+  test.each([true, false])(
+    "cleans up and only starts the browser after health succeeds (healthy=%s)",
+    (healthy) => {
+      const directory = mkdtempSync(join(tmpdir(), "image-workflow-"));
+      const trace = join(directory, "calls");
+      try {
+        const script = validation.jobs["validate-docker-build"].steps.find(
+          (step) => step.name === "Test Docker Image with Health Check"
+        )?.run;
+        expect(script).toBeTruthy();
+        // Execute the actual workflow shell with disposable boundaries; timeout polling never sleeps.
+        const boundaries = String.raw`
+        docker() {
+          printf '%s\n' "$1" >> "$TRACE"
+          case "$1" in
+            inspect) echo true ;;
+            logs) printf '%s\n' 'Environment variables validated successfully' 'Running database migrations' 'Running SAML database setup' ;;
+          esac
+        }
+        curl() { test "$SMOKE_HEALTHY" = true; }
+        sleep() { :; }
+        psql() { printf 'fixture\n' >> "$TRACE"; }
+        node() { printf 'browser\n' >> "$TRACE"; }
+      `;
+        const result = spawnSync("/bin/bash", ["-c", boundaries + script], {
+          encoding: "utf8",
+          env: {
+            PATH: process.env.PATH,
+            GITHUB_SHA: "fixture",
+            DUMMY_ENCRYPTION_KEY: "fixture",
+            TRACE: trace,
+            SMOKE_HEALTHY: String(healthy),
+          },
+        });
+        const calls = readFileSync(trace, "utf8").trim().split("\n");
+        expect(result.status).toBe(healthy ? 0 : 1);
+        expect(calls.filter((call) => call === "rm")).toHaveLength(1);
+        expect(calls.at(-1)).toBe("rm");
+        if (healthy) {
+          expect(calls.slice(-3)).toEqual(["fixture", "browser", "rm"]);
+        } else {
+          expect(result.stdout).toContain("Health check failed");
+          expect(calls).not.toContain("fixture");
+          expect(calls).not.toContain("browser");
+        }
+      } finally {
+        rmSync(directory, { recursive: true, force: true });
+      }
+    }
+  );
+});
 
 describe("release promotion boundary", () => {
   test("publishes only a candidate until both architectures pass the image browser check", () => {

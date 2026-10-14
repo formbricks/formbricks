@@ -581,6 +581,8 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
           DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
         run: |
+          set -euo pipefail
+          trap 'docker rm -f formbricks-test >/dev/null 2>&1 || true' EXIT
           echo "🧪 Testing if the Docker image starts correctly..."
 
           # Add extra docker run args to support host.docker.internal on Linux
@@ -610,8 +612,6 @@ jobs:
           MAX_RETRIES=60  # 60 attempts × 5 seconds = 5 minutes
           RETRY_COUNT=0
           HEALTH_CHECK_SUCCESS=false
-
-          set +e  # Disable exit on error to allow for retries
 
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
             RETRY_COUNT=$((RETRY_COUNT + 1))
@@ -643,6 +643,12 @@ jobs:
             sleep 5
           done
 
+          if [ "$HEALTH_CHECK_SUCCESS" != "true" ]; then
+            echo "❌ Health check failed after $((MAX_RETRIES * 5)) seconds (5 minutes)"
+            docker logs formbricks-test || true
+            exit 1
+          fi
+
           # Show full container logs for debugging and verify startup work ran exactly once
           echo "📋 Full container logs:"
           CONTAINER_LOGS="$(docker logs formbricks-test 2>&1)"
@@ -663,17 +669,7 @@ jobs:
           assert_log_once "Running SAML database setup"
 
           # Exercise browser hydration against the image, not a separate Next build.
-          PGPASSWORD=test psql -h localhost -U test -d formbricks -v ON_ERROR_STOP=1 -f docker/fixtures/image-smoke.sql || { docker rm -f formbricks-test; exit 1; }
-          node docker/smoke-next-browser.mjs http://localhost:3000 || { docker rm -f formbricks-test; exit 1; }
-
-          # Clean up the container
-          echo "🧹 Cleaning up..."
-          docker rm -f formbricks-test
-
-          # Exit with failure if health check did not succeed
-          if [ "$HEALTH_CHECK_SUCCESS" != "true" ]; then
-            echo "❌ Health check failed after $((MAX_RETRIES * 5)) seconds (5 minutes)"
-            exit 1
-          fi
+          PGPASSWORD=test psql -h localhost -U test -d formbricks -v ON_ERROR_STOP=1 -f docker/fixtures/image-smoke.sql
+          node docker/smoke-next-browser.mjs http://localhost:3000
 
           echo "✨ Docker validation complete - all checks passed!"

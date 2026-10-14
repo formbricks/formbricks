@@ -365,6 +365,8 @@ runs:
         RELEASE_TAGS: ${{ steps.candidate.outputs.release_tags }}
       run: |
         set -euo pipefail
+        # Registry tag writes are not transactional. A deployer may already have consumed a changed tag.
+        trap 'echo "Tag promotion failed; inspect release tags and resume with the verified digest. Do not automatically roll back deployed workloads." >&2' ERR
         args=()
         while IFS= read -r tag; do
           if [ -n "$tag" ]; then args+=(--tag "$tag"); fi

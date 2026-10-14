@@ -55,8 +55,18 @@ For cache regression testing, build community then cloud variants with the same 
 repeat with warm caches, and run the same verifier/browser checks on each digest. Include
 the release Sentry configuration, since PR builds intentionally omit upload credentials.
 
-A failed candidate leaves deployment tags unchanged. Keep its digest and failed-check
-output for diagnosis, then retry with a new build identity. Do not patch manifests or
+Failed candidate validation leaves deployment tags unchanged. Keep its digest and failed-check
+output for diagnosis, then retry with a new build identity.
+
+Registry writes to multiple tags are not transactional. A failure after promotion begins
+can leave only some tags updated, including a tag already consumed by a deployment controller.
+Inspect every intended tag's current digest and resume promotion of the same verified digest.
+Do not automatically restore previous tag values or roll back workloads: a deployment may
+already have crossed the upgrade's forward-recovery boundary. Keep the promotion job's
+verified candidate digest when recovering; rebuilding creates a different candidate that
+must pass validation again.
+
+Do not patch manifests or
 rename chunks inside running pods. For a 6.1 repair, preserve the deployed migration
 and authorization state; reverting the image to 6.0 requires separately establishing
 that the upgrade has not crossed its forward-recovery boundary.
