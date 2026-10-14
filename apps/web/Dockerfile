@@ -388,6 +388,9 @@ USER nextjs
 RUN mkdir -p /home/nextjs/apps/web/uploads/ && \
     mkdir -p /home/nextjs/apps/web/saml-connection
 
+# Check the finished filesystem as the runtime user, after all dependency overlays.
+RUN node verify-next-runtime.mjs . "$FORMBRICKS_DEPLOYMENT_ID" "$FORMBRICKS_BUILD_VARIANT"
+
 VOLUME /home/nextjs/apps/web/uploads/
 VOLUME /home/nextjs/apps/web/saml-connection
 

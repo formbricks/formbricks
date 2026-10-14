@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const readJson = (path) => JSON.parse(readFileSync(path, "utf8"));
@@ -9,13 +9,18 @@ const hash = (path) => createHash("sha256").update(readFileSync(path)).digest("h
 
 // These files move together. Dependencies are separately traced by Next and checked by verify-runtime.mjs.
 export function runtimeInventory(root) {
-  const web = join(root, "apps/web");
+  const web = resolve(root, "apps/web");
   const files = ["package.json", "server.js", "online-server.js", "shutdown.js"];
-  for (const directory of [".next", "public"]) {
-    for (const file of readdirSync(join(web, directory), { recursive: true, withFileTypes: true })) {
-      if (file.isFile()) files.push(join(file.parentPath, file.name).slice(web.length + 1));
+  const visit = (directory) => {
+    for (const file of readdirSync(directory, { withFileTypes: true })) {
+      const path = join(directory, file.name);
+      // The runner deliberately overlays full Prisma/logger packages onto traced dependencies.
+      // Do not follow Next's dependency symlinks or include their mutable package contents.
+      if (file.isDirectory() && file.name !== "node_modules") visit(path);
+      else if (file.isFile()) files.push(relative(web, path));
     }
-  }
+  };
+  for (const directory of [".next", "public"]) visit(join(web, directory));
   return Object.fromEntries(files.sort().map((file) => [file, hash(join(web, file))]));
 }
 

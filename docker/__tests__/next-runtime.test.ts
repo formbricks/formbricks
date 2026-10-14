@@ -88,7 +88,9 @@ describe("Next runtime artifact", () => {
     rmSync(source, { recursive: true });
     const packagedDependency = join(output, "apps/web/.next/node_modules/fixture/index.js");
     expect(readFileSync(packagedDependency, "utf8")).toBe("module.exports = 42;");
-    expect(realpathSync(packagedDependency)).toBe(join(output, "node_modules/fixture/index.js"));
+    expect(realpathSync(packagedDependency)).toBe(
+      realpathSync(join(output, "node_modules/fixture/index.js"))
+    );
     expect(verify(output).status).toBe(0);
   });
 
@@ -96,6 +98,14 @@ describe("Next runtime artifact", () => {
     const { root } = fixture();
     expect(verify(root).status).toBe(0);
     expect(verify(root, "", "").status).toBe(0);
+  });
+
+  test("allows the runner to complete traced dependency packages without altering the application inventory", () => {
+    const { root, write, seal } = fixture();
+    write("apps/web/.next/node_modules/prisma/index.js", "traced dependency");
+    seal();
+    write("apps/web/.next/node_modules/prisma/index.d.ts", "full dependency overlay");
+    expect(verify(root).status).toBe(0);
   });
 
   test.each(missingApolloFiles)(

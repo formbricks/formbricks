@@ -4,6 +4,9 @@ Next's standalone server, manifests, static assets and public files are assemble
 one build step. `next-runtime.json` records the deployment identity, build variant
 and file hashes. The image build checks referenced assets before export and checks
 the inventory again after copying it into the runtime image.
+The inventory covers application output and public assets. Traced dependency packages
+are completed by the Dockerfile's existing Prisma/logger overlays and checked separately
+by its runtime dependency audit. Relative dependency symlinks are preserved during assembly.
 
 CI supplies `FORMBRICKS_DEPLOYMENT_ID` as a Docker build argument derived from the
 source revision, registry variant, workflow run and attempt. `FORMBRICKS_BUILD_VARIANT`
