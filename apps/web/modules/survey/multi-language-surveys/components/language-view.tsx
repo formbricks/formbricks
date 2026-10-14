@@ -37,6 +37,8 @@ import {
   extractTranslatableStrings,
   getProgressColor,
   getProgressTextColor,
+  makeLanguageSoleDefault,
+  removeAllTranslations,
   removeLanguageKeysFromSurvey,
 } from "../lib/utils";
 import { ManageTranslationsModal } from "./manage-translations-modal";
@@ -168,14 +170,7 @@ export const LanguageView = ({
           buttonText: t("workspace.surveys.edit.remove_translations"),
           buttonVariant: "destructive",
           onConfirm: () => {
-            // Strip all non-default language keys from the survey data
-            let cleanedSurvey = localSurvey;
-            for (const lang of localSurvey.languages) {
-              if (!lang.default) {
-                cleanedSurvey = removeLanguageKeysFromSurvey(cleanedSurvey, lang.language.code);
-              }
-            }
-            updateLocalSurvey({ ...cleanedSurvey, languages: [] });
+            updateLocalSurvey({ ...removeAllTranslations(localSurvey), languages: [] });
             setIsMultiLanguageActivated(false);
             setConfirmationModalInfo((prev) => ({ ...prev, open: false }));
           },
@@ -278,28 +273,39 @@ export const LanguageView = ({
     });
   };
 
-  const handleChangeDefault = () => {
+  // Changing the default means removing every translation first, so both entry points share one
+  // confirmation that says so. From the default row the survey drops back to no languages; from
+  // "Make default" on a language, that language becomes the sole default in the same step.
+  const openChangeDefaultConfirmation = (onConfirm: () => void) => {
     setConfirmationModalInfo({
       open: true,
-      title: t("workspace.surveys.edit.remove_translations"),
-      body: t("workspace.surveys.edit.this_action_will_remove_all_the_translations_from_this_survey"),
-      buttonText: t("workspace.surveys.edit.remove_translations"),
+      title: t("workspace.surveys.edit.change_default"),
+      body: t("workspace.surveys.edit.to_change_the_default_you_need_to_remove_all_translations_first"),
+      buttonText: t("workspace.surveys.edit.remove_and_change_default"),
       buttonVariant: "destructive",
       onConfirm: () => {
-        // Actually strip every non-default language's keys from the survey object. Using
-        // updateSurveyTranslations([]) here only re-seeds keys and leaves stale empty code keys
-        // behind, which can later be promoted into a broken default (ENG-2001).
-        let cleanedSurvey = localSurvey;
-        for (const lang of localSurvey.languages) {
-          if (!lang.default) {
-            cleanedSurvey = removeLanguageKeysFromSurvey(cleanedSurvey, lang.language.code);
-          }
-        }
-        updateLocalSurvey({ ...cleanedSurvey, languages: [] });
-        setIsMultiLanguageActivated(false);
+        onConfirm();
         setConfirmationModalInfo((prev) => ({ ...prev, open: false }));
       },
     });
+  };
+
+  const handleChangeDefault = () => {
+    openChangeDefaultConfirmation(() => {
+      // Actually strip every non-default language's keys from the survey object. Using
+      // updateSurveyTranslations([]) here only re-seeds keys and leaves stale empty code keys
+      // behind, which can later be promoted into a broken default (ENG-2001).
+      updateLocalSurvey({ ...removeAllTranslations(localSurvey), languages: [] });
+      setIsMultiLanguageActivated(false);
+    });
+  };
+
+  const handleMakeDefault = (code: string) => {
+    const language =
+      workspaceLanguages.find((l) => l.code === code) ??
+      localSurvey.languages.find((sl) => sl.language.code === code)?.language;
+    if (!language) return;
+    openChangeDefaultConfirmation(() => updateLocalSurvey(makeLanguageSoleDefault(localSurvey, language)));
   };
 
   const handleLanguageSwitchToggle = () => {
@@ -420,9 +426,7 @@ export const LanguageView = ({
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            className="text-red-600 focus:text-red-600"
-                            onClick={handleChangeDefault}>
+                          <DropdownMenuItem onClick={handleChangeDefault}>
                             {t("workspace.surveys.edit.change_default")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -480,25 +484,30 @@ export const LanguageView = ({
                           <Switch checked={enabled} onCheckedChange={() => handleToggleLanguage(code)} />
                         </td>
                         <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                          {inSurvey && (
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <button type="button" className="rounded-sm p-1 hover:bg-slate-100">
-                                  <EllipsisVerticalIcon className="size-4 text-slate-500" />
-                                </button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => openTranslationModal(code)}>
-                                  {t("workspace.surveys.edit.manage_translations")}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-red-600 focus:text-red-600"
-                                  onClick={() => handleRemoveTranslations(code)}>
-                                  {t("workspace.surveys.edit.remove_translations")}
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button type="button" className="rounded-sm p-1 hover:bg-slate-100">
+                                <EllipsisVerticalIcon className="size-4 text-slate-500" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleMakeDefault(code)}>
+                                {t("workspace.surveys.edit.make_default")}
+                              </DropdownMenuItem>
+                              {inSurvey && (
+                                <>
+                                  <DropdownMenuItem onClick={() => openTranslationModal(code)}>
+                                    {t("workspace.surveys.edit.manage_translations")}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    className="text-red-600 focus:text-red-600"
+                                    onClick={() => handleRemoveTranslations(code)}>
+                                    {t("workspace.surveys.edit.remove_translations")}
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </td>
                       </tr>
                     );

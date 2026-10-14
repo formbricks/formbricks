@@ -1,7 +1,7 @@
 import { type TFunction } from "i18next";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import type { TSurveyMultipleChoiceElement, TSurveyRankingElement } from "@formbricks/types/surveys/elements";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { isI18nObject } from "@/lib/i18n/utils";
 import type { TranslatableString, TranslationProgress } from "./types";
@@ -345,6 +345,26 @@ export const removeLanguageKeysFromSurvey = (survey: TSurvey, languageCode: stri
   processObject(clone);
   return clone;
 };
+
+/**
+ * Strips every non-default language's keys from the survey object. The `languages` list itself is
+ * left untouched; callers decide what it becomes.
+ */
+export const removeAllTranslations = (survey: TSurvey): TSurvey =>
+  survey.languages.reduce(
+    (cleaned, lang) => (lang.default ? cleaned : removeLanguageKeysFromSurvey(cleaned, lang.language.code)),
+    survey
+  );
+
+/**
+ * Removes all translations and makes `language` the survey's only (and default) language. The
+ * promoted language's own code keys are stripped too: the default is always keyed as "default", so a
+ * leftover code key next to it is the stale state that breaks the response API (ENG-2001).
+ */
+export const makeLanguageSoleDefault = (survey: TSurvey, language: TSurveyLanguage["language"]): TSurvey => ({
+  ...removeLanguageKeysFromSurvey(removeAllTranslations(survey), language.code),
+  languages: [{ language, default: true, enabled: true }],
+});
 
 type Traversable = Record<string, unknown> | unknown[];
 
