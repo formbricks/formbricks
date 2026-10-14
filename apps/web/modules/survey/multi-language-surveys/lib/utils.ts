@@ -352,8 +352,9 @@ export const removeLanguageKeysFromSurvey = (survey: TSurvey, languageCode: stri
  * callers decide what it becomes.
  */
 export const removeAllTranslations = (survey: TSurvey): TSurvey => {
-  const { languages, ...content } = survey;
+  const { languages, metadata, ...content } = survey;
   const clone = structuredClone(content);
+  const metadataClone = structuredClone(metadata);
 
   const stripTranslations = (value: unknown) => {
     if (Array.isArray(value)) {
@@ -371,7 +372,12 @@ export const removeAllTranslations = (survey: TSurvey): TSurvey => {
   };
 
   stripTranslations(clone);
-  return { ...clone, languages } as TSurvey;
+  // metadata accepts arbitrary extra keys; only its declared i18n fields are translations.
+  if (metadataClone) {
+    stripTranslations(metadataClone.title);
+    stripTranslations(metadataClone.description);
+  }
+  return { ...clone, metadata: metadataClone, languages } as TSurvey;
 };
 
 /**

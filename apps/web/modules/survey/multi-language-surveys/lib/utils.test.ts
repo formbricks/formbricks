@@ -388,6 +388,25 @@ describe("multi-language survey utils", () => {
       expect(result.languages).toEqual(survey.languages);
     });
 
+    test("removeAllTranslations strips metadata title/description but keeps arbitrary metadata", () => {
+      const survey = createSurvey({
+        languages: [{ language: language("en"), default: true, enabled: true }],
+        metadata: {
+          title: { default: "Title", de: "Titel" },
+          description: { default: "Desc", de: "Beschreibung" },
+          arbitraryConfig: { default: "x", mode: "strict" },
+        },
+      });
+
+      const result = removeAllTranslations(survey);
+
+      expect(result.metadata).toEqual({
+        title: { default: "Title" },
+        description: { default: "Desc" },
+        arbitraryConfig: { default: "x", mode: "strict" },
+      });
+    });
+
     test("makeLanguageSoleDefault removes all translations and leaves the language as sole default", () => {
       const de = language("de");
       const result = makeLanguageSoleDefault(multiLanguageSurvey(), de);
