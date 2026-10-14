@@ -1,0 +1,20 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "check": {
+      "cache": false,
+      "outputs": [],
+      "passThroughEnv": [
+        "CHECK_STORAGE",
+        "CHECK_TIMEOUT_MS",
+        "DEPLOYMENT_CHECK_STATE_FILE",
+        "FORMBRICKS_API_KEY",
+        "FORMBRICKS_PUBLIC_URL",
+        "FORMBRICKS_URL",
+        "FORMBRICKS_WORKSPACE_ID",
+        "REPORT_DIR"
+      ]
+    }
+  }
+}

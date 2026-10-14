@@ -66,6 +66,53 @@ jobs:
       - name: Run AuthZed application and persistence smoke test
         run: bash docker/authzed-smoke.sh
 
+  validate-deployment-check-image:
+    name: Validate Deployment Check Image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout Repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
+      - name: Build Deployment Check Image
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: .
+          file: ./apps/deployment-check/Dockerfile
+          push: false
+          load: true
+          tags: deployment-check-test:${{ github.sha }}
+
+      # An unconfigured run must fail fast with a readable message instead of starting a browser.
+      - name: Verify the image rejects a missing configuration
+        shell: bash
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          set +e
+          output="$(docker run --rm "deployment-check-test:$GITHUB_SHA" 2>&1)"
+          status=$?
+          set -e
+
+          echo "$output"
+          test "$status" -eq 2
+          grep -q "FORMBRICKS_URL" <<<"$output"
+          grep -q "FORMBRICKS_API_KEY" <<<"$output"
+
   validate-docker-build:
     name: Validate Docker Build
     runs-on: ubuntu-latest
