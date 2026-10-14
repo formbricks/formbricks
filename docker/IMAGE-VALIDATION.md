@@ -17,7 +17,8 @@ when starting an already-built image.
 
 Release workflows first publish a candidate tag. They validate that exact digest
 on AMD64 and ARM64 before moving release or environment tags. The smoke test uses
-disposable PostgreSQL and Redis containers, runs migrations, loads `/`, verifies
+disposable PostgreSQL and Redis containers, runs migrations, seeds a non-authenticating
+user fixture so the instance selects login instead of setup, loads `/`, verifies
 login hydration and navigates to password recovery. It rejects missing scripts,
 styles and uncaught browser errors. It does not validate authorization, survey
 submission, Hub/Cube integration or the Kubernetes handoff.

@@ -663,6 +663,7 @@ jobs:
           assert_log_once "Running SAML database setup"
 
           # Exercise browser hydration against the image, not a separate Next build.
+          PGPASSWORD=test psql -h localhost -U test -d formbricks -v ON_ERROR_STOP=1 -f docker/fixtures/image-smoke.sql || { docker rm -f formbricks-test; exit 1; }
           node docker/smoke-next-browser.mjs http://localhost:3000 || { docker rm -f formbricks-test; exit 1; }
 
           # Clean up the container

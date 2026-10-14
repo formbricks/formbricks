@@ -52,4 +52,5 @@ for attempt in $(seq 1 180); do
   fi
   sleep 2
 done
+docker exec -i "$prefix-pg" psql -U test -d formbricks -v ON_ERROR_STOP=1 < docker/fixtures/image-smoke.sql
 node docker/smoke-next-browser.mjs "$origin"

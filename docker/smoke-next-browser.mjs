@@ -1,8 +1,9 @@
-import { chromium, expect } from "@playwright/test";
+import { chromium, expect as playwrightExpect } from "@playwright/test";
 import assert from "node:assert/strict";
 
 const origin = process.argv[2];
 assert.ok(origin, "Usage: node docker/smoke-next-browser.mjs <origin>");
+const expect = playwrightExpect.configure({ timeout: 30_000 });
 const browser = await chromium.launch({ headless: true });
 try {
   const page = await browser.newPage({ locale: "en-US" });
@@ -20,6 +21,7 @@ try {
   // Starting at / proves that client-side redirects also execute, as on Apollo's blank page.
   await page.goto(origin, { waitUntil: "load", timeout: 60_000 });
   await expect(page).toHaveURL(/\/auth\/login/);
+  await page.getByRole("button", { name: "Log in with Email", exact: true }).click();
   await expect(page.locator('input[name="email"]')).toBeVisible();
   // SSR markup alone cannot pass this: the password toggle needs the client runtime to hydrate.
   await page.getByRole("button", { name: "Show password", exact: true }).click();
