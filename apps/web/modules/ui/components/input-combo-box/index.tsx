@@ -484,7 +484,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
 
             <CommandList
               ref={listRef}
-              className="max-h-none overflow-y-auto border-0 p-1"
+              className="subtle-scrollbar max-h-none overflow-y-auto border-0 p-1"
               style={{ maxHeight: getOptionListMaxHeight(showSearch) }}>
               <CommandEmpty className="mx-2 my-0 text-xs font-semibold text-slate-500">
                 {emptyDropdownText ?? t("workspace.surveys.edit.no_option_found")}

@@ -7,7 +7,10 @@ import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { getWorkspacesForSwitcherAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
-import { SwitcherDropdownBody } from "@/modules/settings/components/switcher-dropdown-body";
+import {
+  SWITCHER_DROPDOWN_CONTENT_CLASS_NAME,
+  SwitcherDropdownBody,
+} from "@/modules/settings/components/switcher-dropdown-body";
 import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
 import {
@@ -151,7 +154,7 @@ export const WorkspaceBreadcrumb = ({
           </div>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="start" className="mt-2">
+        <DropdownMenuContent align="start" className={`mt-2 ${SWITCHER_DROPDOWN_CONTENT_CLASS_NAME}`}>
           <SwitcherDropdownBody
             type="workspace"
             isLoading={workspaceSwitcher.isLoading}
