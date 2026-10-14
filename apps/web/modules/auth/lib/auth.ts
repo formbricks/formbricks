@@ -427,9 +427,11 @@ export const auth = betterAuth({
         audience: getMcpResourceUrl(),
       },
     }),
-    // Options extracted to mcp-oauth-provider-options.ts so the DCR/authorize scope semantics are
-    // integration-testable against a throwaway Better Auth instance.
-    oauthProvider(getMcpOauthProviderOptions()),
+    // twoFactor() MUST come before every plugin whose after hook acts on the session a request set:
+    // Better Auth runs plugin after hooks in list order, and for a user with 2FA a correct password alone
+    // sets a session that this plugin's after hook then withdraws until the second factor arrives.
+    // Ahead of it, oauthProvider() resumed a pending MCP authorization with that session and minted an
+    // authorization code for a password alone (ENG-3933).
     // TOTP + backup codes, matched to the current otplib setup (6 digits / 30s) and 10 encrypted
     // backup codes. Trusted-device is left off (never passed client-side) so 2FA is required every
     // login — strict parity. Cutover work (Phase 7): migrate secrets/backup codes out of
@@ -441,6 +443,9 @@ export const auth = betterAuth({
       totpOptions: { digits: 6, period: 30 },
       backupCodeOptions: { amount: 10, length: 10, storeBackupCodes: "encrypted" },
     }),
+    // Options extracted to mcp-oauth-provider-options.ts so the DCR/authorize scope semantics are
+    // integration-testable against a throwaway Better Auth instance.
+    oauthProvider(getMcpOauthProviderOptions()),
     // SSO via generic OAuth (Azure/OIDC + the BoxyHQ SAML bridge); empty config when no license or
     // providers are configured. The account-linking/provisioning hooks are a separate reviewed pass.
     genericOAuth({ config: ssoGenericOAuthConfig }),
