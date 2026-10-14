@@ -52,7 +52,7 @@ const labelAuthPath = createAuthPathLabeller(Object.values(auth.api).map((endpoi
  * route at all (ENG-2259 / FORMBRICKS-183).
  *
  * NOTE (S2 / observability): the old route also emitted the failed-`signedIn` audit + Sentry capture
- * on thrown errors. The success audit is covered by `signInAuditDatabaseHook`; the failure audit by
+ * on thrown errors. The success audit is covered by `signInAuditPlugin`; the failure audit by
  * `auditFailedAuthAfter` in `hooks.after`, because a rejected sign-in is a handled `APIError`
  * *response* rather than a throw. `onAPIError.onError` is deliberately NOT configured: Better Auth
  * calls it and `return`s (`better-auth/dist/api/index.mjs:194-197`), skipping the logger path

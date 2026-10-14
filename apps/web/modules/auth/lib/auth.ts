@@ -34,7 +34,7 @@ import { EMAIL_VERIFICATION_TTL_SECONDS, USE_SECURE_COOKIES } from "./auth-cooki
 import { rejectInactiveUserOnSessionCreate } from "./better-auth-active-user-gate";
 import { runAfterEmailVerificationHooks } from "./better-auth-email-verification";
 import { hibpBreachCheckBeforeHandler } from "./better-auth-hibp";
-import { auditPasswordReset, betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
+import { auditPasswordReset, betterAuthLogger, signInAuditPlugin } from "./better-auth-observability";
 import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
 import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
@@ -311,15 +311,15 @@ export const auth = betterAuth({
 
   // SSO sign-up flow — email-verification, identity denormalization, and JIT provisioning
   // (gate + writes) re-expressed as Better Auth database hooks (design doc §13). Verify-before-link
-  // recovery is the remaining Phase 5c work. The session hook composes the isActive gate (reject
+  // recovery is the remaining Phase 5c work. The session hook is the isActive gate (reject
   // deactivated users before a session is created — parity with authOptions, covers every sign-in
-  // path) with the Phase 7 `signedIn` success audit.
+  // path). The Phase 7 `signedIn` success audit is `signInAuditPlugin`, below: a session created here
+  // may still be withdrawn by the two-factor plugin (ENG-3271).
   databaseHooks: {
     ...ssoDatabaseHooks,
     session: {
       create: {
         before: rejectInactiveUserOnSessionCreate,
-        after: signInAuditDatabaseHook.create?.after,
       },
     },
   },
@@ -447,6 +447,10 @@ export const auth = betterAuth({
     // SSO-recovery magic-link sign-in — the BA replacement for the "token" provider's sso_recovery
     // path (recovery-scoped, not a general magic-link). See better-auth-recovery-signin.ts.
     ssoRecoverySignInPlugin,
+    // The `signedIn` audit and `lastLoginAt`, from the session a sign-in really ends with. MUST come
+    // after twoFactor(), whose after hook withdraws the session a password alone created while 2FA is
+    // pending (ENG-3271).
+    signInAuditPlugin,
     // nextCookies MUST remain the last plugin so server-action sign-in/out can set cookies.
     nextCookies(),
   ],

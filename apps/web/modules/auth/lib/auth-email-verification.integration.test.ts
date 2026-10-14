@@ -17,7 +17,7 @@ vi.mock("@/modules/auth/lib/brevo", async (importOriginal) => {
   return { ...actual, createBrevoCustomer: vi.fn().mockResolvedValue(undefined) };
 });
 
-// Spy queueAuditEventBackground (the session.create.after `signedIn` audit) so the auto-login-after-
+// Spy queueAuditEventBackground (the `signedIn` audit, `signInAuditPlugin`) so the auto-login-after-
 // verification path can be asserted without depending on the real setImmediate/headers() emission.
 vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/modules/ee/audit-logs/lib/handler")>();
