@@ -74,7 +74,8 @@ type TAuthorizeRequest = { target: URL; verifier: string };
 export const authorize = async (
   cookie: string,
   clientId: string,
-  scope: string
+  scope: string,
+  { prompt }: { prompt?: "consent" } = {}
 ): Promise<TAuthorizeRequest> => {
   const verifier = base64Url(randomBytes(32));
   const query = new URLSearchParams({
@@ -86,6 +87,9 @@ export const authorize = async (
     code_challenge_method: "S256",
     resource: getMcpResourceUrl(),
     state: "state",
+    // `prompt=consent` forces the consent screen even when an existing consent covers `scope`, which is
+    // how a client re-asks for fewer scopes.
+    ...(prompt ? { prompt } : {}),
   });
   const target = await redirectTarget(await handle(`/oauth2/authorize?${query}`, { headers: { cookie } }));
   return { target, verifier };
@@ -105,8 +109,13 @@ export const token = async (
 export type TTokens = { access_token: string; refresh_token: string; scope: string };
 
 /** authorize → consent (when asked for) → code exchange, as the signed-in user. */
-export const grant = async (cookie: string, clientId: string, scope: string): Promise<TTokens> => {
-  const { verifier, target: authorizeTarget } = await authorize(cookie, clientId, scope);
+export const grant = async (
+  cookie: string,
+  clientId: string,
+  scope: string,
+  options: { prompt?: "consent" } = {}
+): Promise<TTokens> => {
+  const { verifier, target: authorizeTarget } = await authorize(cookie, clientId, scope, options);
   let target = authorizeTarget;
   if (!target.searchParams.get("code")) {
     expect(target.pathname).toBe("/account/authorize");

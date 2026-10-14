@@ -6,11 +6,10 @@
   t.type = "text/javascript";
   t.async = !0;
   t.src = appUrl + "/js/formbricks.umd.cjs";
+  t.onload = function () {
+    window.formbricks.setup({ workspaceId: workspaceId, appUrl: appUrl });
+  };
 
   var e = document.getElementsByTagName("script")[0];
   e.parentNode.insertBefore(t, e);
-
-  setTimeout(function () {
-    window.formbricks.setup({ workspaceId: workspaceId, appUrl: appUrl });
-  }, 500);
 })();

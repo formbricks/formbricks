@@ -5,6 +5,7 @@ import { defineConfig } from "vitest/config";
 import type { ViteUserConfig } from "vitest/config";
 import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
 import { rewriteNodeNextDtsSpecifiers } from "../vite-plugins/node-next-dts";
+import { UMD_WITHOUT_AMD_OUTPUT } from "../vite-plugins/umd-without-amd";
 
 type VitestPluginOption = NonNullable<ViteUserConfig["plugins"]>[number];
 
@@ -16,7 +17,7 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      output: { inlineDynamicImports: true },
+      output: { inlineDynamicImports: true, ...UMD_WITHOUT_AMD_OUTPUT },
     },
     emptyOutDir: false, // keep the dist folder to avoid errors with pnpm go when folder is empty during build
     lib: {

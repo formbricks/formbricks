@@ -28,6 +28,18 @@
 @source "../../src/**/*.{ts,tsx,js,jsx}";
 /* NOSONAR */
 
+/*
+  Unitless line heights (ENG-3427). Without these, `leading-<n>` is `calc(var(--spacing) * n)`, a
+  length: in the surveys bundle rem→em makes it an em length, which iPhone WebKit scales twice under
+  the iOS SDK's `-webkit-text-size-adjust` (Dynamic Type). A ratio scales once, and n / 4 is what the
+  length gave on the element itself. Keep in sync with packages/surveys/src/styles/global.css.
+*/
+@theme inline {
+  --leading-4: 1;
+  --leading-5: 1.25;
+  --leading-6: 1.5;
+}
+
 /* =============================================================================
    Design Tokens
    ============================================================================= */
