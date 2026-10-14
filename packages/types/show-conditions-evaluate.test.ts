@@ -78,6 +78,10 @@ describe("evaluateShowConditions", () => {
     ["endsWith", "il", source, true],
     ["equals", "x", { key: "utm_campaign" }, false],
     ["doesNotEqual", "x", { key: "utm_campaign" }, true],
+    ["isSet", undefined, source, true],
+    ["isNotSet", undefined, source, false],
+    ["isSet", undefined, { key: "utm_campaign" }, false],
+    ["isNotSet", undefined, { key: "utm_campaign" }, true],
   ])("query parameter: %s %j with %j → %s", (operator, value, meta, expected) => {
     expect(passes(condition("queryParam", operator, value, meta))).toBe(expected);
   });
@@ -87,6 +91,13 @@ describe("evaluateShowConditions", () => {
 
     expect(passes(condition("queryParam", "equals", "b", { key: "tag" }), repeated)).toBe(true);
     expect(passes(condition("queryParam", "doesNotEqual", "a", { key: "tag" }), repeated)).toBe(false);
+  });
+
+  test("query parameter: an empty value still counts as set", () => {
+    const empty = { ...context, url: "https://example.com/?source=" };
+
+    expect(passes(condition("queryParam", "isSet", undefined, source), empty)).toBe(true);
+    expect(passes(condition("queryParam", "isNotSet", undefined, source), empty)).toBe(false);
   });
 
   test("query parameter: an unparsable URL has no parameters", () => {

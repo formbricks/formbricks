@@ -135,6 +135,10 @@ const getTextMatcher = (operator: string, expected: unknown): ((value: string) =
 // positive operator passes when any value matches; a negated one passes when none does — so an
 // absent query parameter passes "does not equal" and fails "equals".
 const evaluateText = (values: string[], operator: string, expected: unknown): boolean => {
+  // Presence ignores the value, so `?source=` counts as set.
+  if (operator === "isSet") return values.length > 0;
+  if (operator === "isNotSet") return values.length === 0;
+
   const positiveOperator = NEGATED_OPERATORS.get(operator) ?? operator;
   const matches = getTextMatcher(positiveOperator, expected);
   if (!matches) return false;

@@ -42,13 +42,15 @@ const NUMBER_OPERATORS = [
 ] as const;
 const VISITED_URL_OPERATORS = ["includes", "doesNotInclude"] as const;
 const ENUM_OPERATORS = ["equals", "doesNotEqual"] as const;
+/** Whether the operand is there at all. These take no value. */
+const PRESENCE_OPERATORS = ["isSet", "isNotSet"] as const;
 
 /** Which operators each operand accepts. The editor builds its operator list from this too. */
 export const SHOW_CONDITION_OPERATORS = {
   currentUrl: [...TEXT_OPERATORS, ...LIST_OPERATORS],
   pageReferrer: [...TEXT_OPERATORS, ...LIST_OPERATORS],
   entryReferrer: [...TEXT_OPERATORS, ...LIST_OPERATORS],
-  queryParam: TEXT_OPERATORS,
+  queryParam: [...TEXT_OPERATORS, ...PRESENCE_OPERATORS],
   pagesViewed: NUMBER_OPERATORS,
   uniquePagesViewed: NUMBER_OPERATORS,
   timeOnSite: NUMBER_OPERATORS,
@@ -115,6 +117,7 @@ const OPERATORS_BY_OPERAND = new Map<string, ReadonlySet<string>>(
   Object.entries(SHOW_CONDITION_OPERATORS).map(([operand, operators]) => [operand, new Set(operators)])
 );
 const LIST_OPERATOR_SET: ReadonlySet<string> = new Set(LIST_OPERATORS);
+const PRESENCE_OPERATOR_SET: ReadonlySet<string> = new Set(PRESENCE_OPERATORS);
 const NUMBER_OPERANDS: ReadonlySet<string> = new Set([
   "pagesViewed",
   "uniquePagesViewed",
@@ -126,23 +129,19 @@ const ENUM_VALUES_BY_OPERAND = new Map<string, ReadonlySet<string>>([
   ["browser", new Set(SHOW_CONDITION_BROWSERS)],
 ]);
 
-/** Returns why the right operand doesn't fit the operand and operator, or `undefined` when it does. */
-const getRightOperandIssue = (condition: TShowConditionSingle): string | undefined => {
-  const value = condition.rightOperand?.value;
-  const operand = condition.leftOperand.value;
+type TRightOperandValue = NonNullable<TShowConditionSingle["rightOperand"]>["value"];
 
-  if (value === undefined) return "a value is required";
-
-  if (LIST_OPERATOR_SET.has(condition.operator)) {
-    if (!Array.isArray(value) || value.length === 0) return "expected a list with at least one entry";
-    if (value.length > SHOW_CONDITIONS_LIMITS.maxListEntries) {
-      return `a list can have at most ${SHOW_CONDITIONS_LIMITS.maxListEntries} entries`;
-    }
-    // An empty entry would match every URL, so a stray blank line must not slip through.
-    if (value.some((entry) => entry === "")) return "list entries cannot be empty";
-    return undefined;
+const getListValueIssue = (value: TRightOperandValue): string | undefined => {
+  if (!Array.isArray(value) || value.length === 0) return "expected a list with at least one entry";
+  if (value.length > SHOW_CONDITIONS_LIMITS.maxListEntries) {
+    return `a list can have at most ${SHOW_CONDITIONS_LIMITS.maxListEntries} entries`;
   }
+  // An empty entry would match every URL, so a stray blank line must not slip through.
+  if (value.includes("")) return "list entries cannot be empty";
+  return undefined;
+};
 
+const getSingleValueIssue = (operand: string, value: TRightOperandValue): string | undefined => {
   if (NUMBER_OPERANDS.has(operand)) {
     return typeof value === "number" && value >= 0 ? undefined : "expected a number of 0 or more";
   }
@@ -155,6 +154,18 @@ const getRightOperandIssue = (condition: TShowConditionSingle): string | undefin
   }
 
   return typeof value === "string" && value !== "" ? undefined : "expected a non-empty text value";
+};
+
+/** Returns why the right operand doesn't fit the operand and operator, or `undefined` when it does. */
+const getRightOperandIssue = (condition: TShowConditionSingle): string | undefined => {
+  const { operator, rightOperand } = condition;
+
+  if (PRESENCE_OPERATOR_SET.has(operator)) {
+    return rightOperand === undefined ? undefined : `"${operator}" takes no value`;
+  }
+  if (rightOperand === undefined) return "a value is required";
+  if (LIST_OPERATOR_SET.has(operator)) return getListValueIssue(rightOperand.value);
+  return getSingleValueIssue(condition.leftOperand.value, rightOperand.value);
 };
 
 const refineCondition = (condition: TShowConditionSingle, ctx: z.RefinementCtx): void => {
@@ -204,7 +215,13 @@ const ZShowConditionSingle = z
       ]),
       meta: z.object({ key: z.string().trim() }).optional(),
     }),
-    operator: z.enum([...TEXT_OPERATORS, ...LIST_OPERATORS, ...NUMBER_OPERATORS, ...VISITED_URL_OPERATORS]),
+    operator: z.enum([
+      ...TEXT_OPERATORS,
+      ...LIST_OPERATORS,
+      ...NUMBER_OPERATORS,
+      ...VISITED_URL_OPERATORS,
+      ...PRESENCE_OPERATORS,
+    ]),
     rightOperand: z
       .object({
         type: z.literal("static"),
