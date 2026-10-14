@@ -107,6 +107,10 @@ RUN touch apps/web/.env
 RUN --mount=type=secret,id=database_url \
     /tmp/read-secrets.sh pnpm build --filter=@formbricks/database
 
+# Public inputs participate in Docker cache keys; credentials remain secret mounts.
+ARG FORMBRICKS_DEPLOYMENT_ID=""
+ARG FORMBRICKS_BUILD_VARIANT="local"
+
 # Build the project using our secret reader script
 # This mounts the secrets only during this build step without storing them in layers
 RUN --mount=type=secret,id=database_url \
@@ -118,7 +122,7 @@ RUN --mount=type=secret,id=database_url \
     --mount=type=secret,id=cubejs_api_secret \
     --mount=type=secret,id=sentry_auth_token \
     --mount=type=secret,id=posthog_key \
-    /tmp/read-secrets.sh sh -c 'export FORMBRICKS_DEPLOYMENT_ID="$(node -e "process.stdout.write(require(\"node:crypto\").randomUUID())")"; exec pnpm build --filter=@formbricks/web...'
+    /tmp/read-secrets.sh node apps/web/scripts/docker/build-next-runtime.mjs
 
 #
 ## step 2: setup production runner
@@ -132,10 +136,12 @@ RUN addgroup -S nextjs \
 WORKDIR /home/nextjs
 
 # Ensure no write permissions are assigned to the copied resources
-COPY --from=installer /app/apps/web/.next/standalone ./
-COPY --from=installer /app/apps/web/.next/required-server-files.json ./apps/web/.next/required-server-files.json
-COPY --from=installer /app/apps/web/scripts/docker/server.js ./apps/web/online-server.js
-COPY --from=installer /app/apps/web/scripts/docker/shutdown.js ./apps/web/shutdown.js
+ARG FORMBRICKS_DEPLOYMENT_ID=""
+ARG FORMBRICKS_BUILD_VARIANT="local"
+LABEL com.formbricks.build.identity=$FORMBRICKS_DEPLOYMENT_ID
+LABEL com.formbricks.build.variant=$FORMBRICKS_BUILD_VARIANT
+COPY --from=installer /app/next-runtime ./
+RUN node verify-next-runtime.mjs . "$FORMBRICKS_DEPLOYMENT_ID" "$FORMBRICKS_BUILD_VARIANT"
 RUN chown -R nextjs:nextjs ./ && chmod -R 755 ./
 
 COPY --from=installer /app/apps/web/next.config.mjs .
@@ -160,12 +166,6 @@ RUN chown root:root /usr/local/bin/formbricks-authzed-prepare && chmod 555 /usr/
 
 COPY --from=installer /app/prisma.config.mjs ./prisma.config.mjs
 RUN chmod 644 ./prisma.config.mjs
-
-COPY --from=installer /app/apps/web/.next/static ./apps/web/.next/static
-RUN chown -R nextjs:nextjs ./apps/web/.next/static && chmod -R 755 ./apps/web/.next/static
-
-COPY --from=installer /app/apps/web/public ./apps/web/public
-RUN chown -R nextjs:nextjs ./apps/web/public && chmod -R 755 ./apps/web/public
 
 # Create packages/database directory structure with proper ownership for runtime migrations
 RUN mkdir -p ./packages/database/.prisma-migrations && chown -R nextjs:nextjs ./packages/database

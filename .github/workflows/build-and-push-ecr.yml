@@ -7,6 +7,11 @@ name: Build Cloud Deployment Images
 on:
   workflow_dispatch:
     inputs:
+      rebuild_application:
+        description: "Bypass application build and packaging caches for a repair candidate"
+        required: false
+        type: boolean
+        default: false
       version_override:
         description: "Override version (SemVer only, e.g., 1.2.3). Leave empty to auto-detect from branch."
         required: false
@@ -23,6 +28,11 @@ on:
         type: boolean
   workflow_call:
     inputs:
+      rebuild_application:
+        description: "Bypass application build and packaging caches for a repair candidate"
+        required: false
+        type: boolean
+        default: false
       image_tag:
         description: "Image tag to push (required for workflow_call)"
         required: true
@@ -110,6 +120,7 @@ jobs:
         uses: ./.github/actions/build-and-push-docker
         with:
           registry_type: "ecr"
+          rebuild_application: ${{ inputs.rebuild_application }}
           ecr_registry: ${{ env.ECR_REGISTRY }}
           ecr_repository: ${{ env.ECR_REPOSITORY }}
           ecr_region: ${{ env.ECR_REGION }}

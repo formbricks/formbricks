@@ -64,6 +64,10 @@ inputs:
     default: "false"
 
   # Build options
+  rebuild_application:
+    description: "Bypass application build and packaging caches for a repair candidate"
+    required: false
+    default: "false"
   dockerfile:
     description: "Path to Dockerfile"
     required: false
@@ -79,7 +83,7 @@ outputs:
     value: ${{ steps.version.outputs.version }}
   registry_tags:
     description: "Complete registry tags that were pushed"
-    value: ${{ steps.build.outputs.tags }}
+    value: ${{ steps.candidate.outputs.release_tags }}
   image_digest:
     description: "Image digest from the build"
     value: ${{ steps.build.outputs.digest }}
@@ -270,6 +274,28 @@ runs:
           echo "GHCR Extra Tags: ${{ steps.ghcr-extra-tags.outputs.tags }}"
         fi
 
+    - name: Identify candidate and intended release tags
+      id: candidate
+      shell: bash
+      env:
+        REGISTRY_TYPE: ${{ inputs.registry_type }}
+        ECR_IMAGE: ${{ inputs.ecr_registry }}/${{ inputs.ecr_repository }}
+        GHCR_IMAGE: ghcr.io/${{ inputs.ghcr_image_name }}
+        RELEASE_TAGS: ${{ inputs.registry_type == 'ecr' && steps.ecr-tags.outputs.tags || (inputs.experimental_mode == 'true' && steps.ghcr-meta-experimental.outputs.tags) || steps.ghcr-extra-tags.outputs.tags || format('ghcr.io/{0}:{1}', inputs.ghcr_image_name, steps.version.outputs.version) }}
+      run: |
+        set -euo pipefail
+        identity="${GITHUB_SHA}-${REGISTRY_TYPE}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+        image="$GHCR_IMAGE"
+        if [ "$REGISTRY_TYPE" = ecr ]; then image="$ECR_IMAGE"; fi
+        {
+          echo "identity=$identity"
+          echo "image=$image"
+          echo "tag=$image:candidate-$identity"
+          echo "release_tags<<FORMBRICKS_TAGS"
+          printf '%s\n' "$RELEASE_TAGS"
+          echo "FORMBRICKS_TAGS"
+        } >> "$GITHUB_OUTPUT"
+
     - name: Build and push Docker image
       id: build
       uses: depot/build-push-action@98e78adca7817480b8185f474a400b451d74e287 # v1.18.0
@@ -281,7 +307,11 @@ runs:
         platforms: linux/amd64,linux/arm64
         pull: true
         push: ${{ github.event_name != 'pull_request' }}
-        tags: ${{ inputs.registry_type == 'ecr' && steps.ecr-tags.outputs.tags || (inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'true' && steps.ghcr-meta-experimental.outputs.tags) || (inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'false' && steps.ghcr-extra-tags.outputs.tags) || (inputs.registry_type == 'ghcr' && format('ghcr.io/{0}:{1}', inputs.ghcr_image_name, steps.version.outputs.version)) || (inputs.registry_type == 'ecr' && format('{0}/{1}:{2}', inputs.ecr_registry, inputs.ecr_repository, steps.version.outputs.version)) }}
+        tags: ${{ steps.candidate.outputs.tag }}
+        build-args: |
+          FORMBRICKS_DEPLOYMENT_ID=${{ steps.candidate.outputs.identity }}
+          FORMBRICKS_BUILD_VARIANT=${{ inputs.registry_type }}
+        no-cache-filters: ${{ inputs.rebuild_application == 'true' && 'installer,runner' || '' }}
         labels: ${{ inputs.registry_type == 'ghcr' && inputs.experimental_mode == 'true' && steps.ghcr-meta-experimental.outputs.labels || '' }}
         secrets: |
           database_url=${{ env.DUMMY_DATABASE_URL }}
@@ -304,6 +334,48 @@ runs:
         DUMMY_CUBEJS_API_SECRET: ${{ env.DUMMY_CUBEJS_API_SECRET }}
         SENTRY_AUTH_TOKEN: ${{ env.SENTRY_AUTH_TOKEN }}
         POSTHOG_KEY: ${{ env.POSTHOG_KEY }}
+
+    - name: Set up candidate browser checks
+      if: github.event_name != 'pull_request'
+      uses: ./.github/actions/setup-image-smoke
+
+    - name: Enable ARM64 candidate execution
+      if: github.event_name != 'pull_request'
+      uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+      with:
+        platforms: arm64
+
+    - name: Test the exact candidate digest on both architectures
+      if: github.event_name != 'pull_request'
+      shell: bash
+      env:
+        IMAGE: ${{ steps.candidate.outputs.image }}@${{ steps.build.outputs.digest }}
+        BUILD_IDENTITY: ${{ steps.candidate.outputs.identity }}
+        BUILD_VARIANT: ${{ inputs.registry_type }}
+      run: |
+        set -euo pipefail
+        bash docker/smoke-release-image.sh "$IMAGE" "$BUILD_IDENTITY" "$BUILD_VARIANT" linux/amd64
+        bash docker/smoke-release-image.sh "$IMAGE" "$BUILD_IDENTITY" "$BUILD_VARIANT" linux/arm64
+
+    - name: Promote verified digest without rebuilding
+      if: github.event_name != 'pull_request'
+      shell: bash
+      env:
+        IMAGE: ${{ steps.candidate.outputs.image }}@${{ steps.build.outputs.digest }}
+        RELEASE_TAGS: ${{ steps.candidate.outputs.release_tags }}
+      run: |
+        set -euo pipefail
+        args=()
+        while IFS= read -r tag; do
+          if [ -n "$tag" ]; then args+=(--tag "$tag"); fi
+        done <<< "$RELEASE_TAGS"
+        test "${#args[@]}" -gt 0
+        docker buildx imagetools create "${args[@]}" "$IMAGE"
+        while IFS= read -r tag; do
+          if [ -z "$tag" ]; then continue; fi
+          actual="$(docker buildx imagetools inspect --format '{{json .Manifest}}' "$tag" | jq -r .digest)"
+          test "$actual" = "${IMAGE##*@}"
+        done <<< "$RELEASE_TAGS"
 
     - name: Sign GHCR image (GHCR only)
       if: ${{ inputs.registry_type == 'ghcr' && (github.event_name == 'workflow_call' || github.event_name == 'release' || github.event_name == 'workflow_dispatch') }}

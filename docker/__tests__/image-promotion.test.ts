@@ -1,0 +1,53 @@
+import { load } from "js-yaml";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { describe, expect, test } from "vitest";
+
+type Step = {
+  name?: string;
+  id?: string;
+  if?: string;
+  run?: string;
+  uses?: string;
+  "continue-on-error"?: boolean;
+  with?: Record<string, string>;
+  env?: Record<string, string>;
+};
+const action = load(
+  readFileSync(
+    fileURLToPath(new URL("../../.github/actions/build-and-push-docker/action.yml", import.meta.url)),
+    "utf8"
+  )
+) as { runs: { steps: Step[] } };
+const steps = action.runs.steps;
+
+describe("release promotion boundary", () => {
+  test("publishes only a candidate until both architectures pass the image browser check", () => {
+    const build = steps.findIndex((step) => step.id === "build");
+    const smoke = steps.findIndex((step) => step.run?.includes("bash docker/smoke-release-image.sh"));
+    const promote = steps.findIndex((step) => step.run?.includes("docker buildx imagetools create"));
+    expect(build).toBeGreaterThan(-1);
+    expect(smoke).toBeGreaterThan(build);
+    expect(promote).toBeGreaterThan(smoke);
+    expect(steps[build].with?.tags).toBe("${{ steps.candidate.outputs.tag }}");
+    expect(steps[smoke].run).toContain("set -euo pipefail");
+    expect(steps[smoke].run).toContain("linux/amd64");
+    expect(steps[smoke].run).toContain("linux/arm64");
+    expect(steps[smoke]["continue-on-error"]).not.toBe(true);
+    expect(steps[smoke].if).toBe(steps[promote].if);
+    expect(steps[promote].if).not.toMatch(/always\(|failure\(/);
+    expect(steps[smoke].env?.IMAGE).toBe(steps[promote].env?.IMAGE);
+    expect(steps[promote].env?.IMAGE).toContain("@${{ steps.build.outputs.digest }}");
+    expect(steps[promote].run).toContain('test "$actual" = "${IMAGE##*@}"');
+  });
+
+  test("makes build identity and variant explicit inputs to the Docker cache", () => {
+    const build = steps.find((step) => step.id === "build");
+    expect(build?.with?.["build-args"]).toContain(
+      "FORMBRICKS_DEPLOYMENT_ID=${{ steps.candidate.outputs.identity }}"
+    );
+    expect(build?.with?.["build-args"]).toContain("FORMBRICKS_BUILD_VARIANT=${{ inputs.registry_type }}");
+    const identity = steps.find((step) => step.id === "candidate");
+    expect(identity?.run).toContain("${GITHUB_SHA}-${REGISTRY_TYPE}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}");
+  });
+});

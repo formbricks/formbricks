@@ -107,6 +107,9 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Set up image browser checks
+        uses: ./.github/actions/setup-image-smoke
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
@@ -158,6 +161,9 @@ jobs:
           pull: true
           push: false
           load: true
+          build-args: |
+            FORMBRICKS_DEPLOYMENT_ID=${{ github.sha }}-pr-${{ github.run_id }}-${{ github.run_attempt }}
+            FORMBRICKS_BUILD_VARIANT=pr
           tags: formbricks-test:${{ github.sha }}
           secrets: |
             database_url=${{ secrets.DUMMY_DATABASE_URL }}
@@ -178,6 +184,9 @@ jobs:
           file: ./apps/web/Dockerfile
           push: false
           load: true
+          build-args: |
+            FORMBRICKS_DEPLOYMENT_ID=${{ github.sha }}-pr-${{ github.run_id }}-${{ github.run_attempt }}
+            FORMBRICKS_BUILD_VARIANT=pr
           tags: formbricks-test:${{ env.GITHUB_SHA }}
           secrets: |
             database_url=${{ secrets.DUMMY_DATABASE_URL }}
@@ -187,6 +196,12 @@ jobs:
             hub_api_key=build-time-placeholder
             cubejs_api_url=http://localhost:4000
             cubejs_api_secret=build-time-placeholder
+
+      - name: Verify assembled Next runtime
+        env:
+          IMAGE: formbricks-test:${{ github.sha }}
+          BUILD_IDENTITY: ${{ github.sha }}-pr-${{ github.run_id }}-${{ github.run_attempt }}
+        run: docker run --rm --network none --entrypoint node "$IMAGE" verify-next-runtime.mjs . "$BUILD_IDENTITY" pr
 
       - name: Verify Runtime Image Excludes npm
         shell: bash
@@ -646,6 +661,9 @@ jobs:
           assert_log_once "Environment variables validated successfully"
           assert_log_once "Running database migrations"
           assert_log_once "Running SAML database setup"
+
+          # Exercise browser hydration against the image, not a separate Next build.
+          node docker/smoke-next-browser.mjs http://localhost:3000 || { docker rm -f formbricks-test; exit 1; }
 
           # Clean up the container
           echo "🧹 Cleaning up..."
