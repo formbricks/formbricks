@@ -55,11 +55,14 @@ export function AutoCloseWrapper({
     }
   };
 
+  // Re-run when the respondent leaves the first block, so the cleanup stops the countdown even when no
+  // interaction event fired (a prefilled block that submits itself). Otherwise the timer could close the
+  // ending card that `keepEndingCardOpen` is meant to keep on screen.
   useEffect(() => {
     startCountdown();
     return stopCountdown;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- we don't want to run this effect on every render
-  }, [survey.autoClose]);
+  }, [survey.autoClose, isFirstQuestion]);
 
   // Cancel the countdown on the first interaction. Listeners are attached to the
   // container (events bubble up from the children) so the wrapper stays a plain,
