@@ -49,6 +49,10 @@ jobs:
     outputs:
       VERSION: ${{ steps.extract_release_tag.outputs.VERSION }}
       IMAGE_DIGEST: ${{ steps.build.outputs.image_digest }}
+      TAGS: ${{ steps.build.outputs.registry_tags }}
+      IMAGE_REF: ${{ steps.build.outputs.image_ref }}
+      BUILD_IDENTITY: ${{ steps.build.outputs.build_identity }}
+      DEPOT_BUILD_ID: ${{ steps.build.outputs.depot_build_id }}
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -114,3 +118,56 @@ jobs:
           DUMMY_CUBEJS_API_URL: ${{ secrets.DUMMY_CUBEJS_API_URL }}
           DUMMY_CUBEJS_API_SECRET: ${{ secrets.DUMMY_CUBEJS_API_SECRET }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+  validate:
+    name: Image smoke (${{ matrix.platform }})
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/test-release-image
+        with:
+          depot_build_id: ${{ needs.build.outputs.DEPOT_BUILD_ID }}
+          depot_token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          image_ref: ${{ needs.build.outputs.IMAGE_REF }}
+          build_identity: ${{ needs.build.outputs.BUILD_IDENTITY }}
+          registry_type: "ghcr"
+          platform: ${{ matrix.platform }}
+
+  promote:
+    name: Promote verified image
+    needs: [build, validate]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/promote-verified-image
+        with:
+          depot_build_id: ${{ needs.build.outputs.DEPOT_BUILD_ID }}
+          depot_token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          image_ref: ${{ needs.build.outputs.IMAGE_REF }}
+          registry_type: "ghcr"
+          release_tags: ${{ needs.build.outputs.TAGS }}

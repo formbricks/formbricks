@@ -1,3 +1,4 @@
+import { createInMemoryResponseFindMany } from "@/lib/response/__mocks__/response-find-many.mock";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
@@ -1348,14 +1349,12 @@ describe("getResponsesForSummary", () => {
 
   test("fetches and transforms responses", async () => {
     const limit = 2;
-    const offset = 0;
-    const result = await getResponsesForSummary(mockSurveyId, limit, offset);
+    const result = await getResponsesForSummary(mockSurveyId, limit);
 
     expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
     expect(prisma.response.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         take: limit,
-        skip: offset,
         where: { surveyId: mockSurveyId }, // buildWhereClause is mocked to return {}
       })
     );
@@ -1366,13 +1365,13 @@ describe("getResponsesForSummary", () => {
 
   test("returns empty array if survey not found", async () => {
     vi.mocked(getSurvey).mockResolvedValue(null);
-    const result = await getResponsesForSummary(mockSurveyId, 10, 0);
+    const result = await getResponsesForSummary(mockSurveyId, 10);
     expect(result).toEqual([]);
   });
 
   test("throws DatabaseError on prisma failure", async () => {
     vi.mocked(prisma.response.findMany).mockRejectedValue(new Error("DB error"));
-    await expect(getResponsesForSummary(mockSurveyId, 10, 0)).rejects.toThrow("DB error");
+    await expect(getResponsesForSummary(mockSurveyId, 10)).rejects.toThrow("DB error");
   });
 
   test("getResponsesForSummary handles null contact properly", async () => {
@@ -1402,7 +1401,7 @@ describe("getResponsesForSummary", () => {
     vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
     vi.mocked(prisma.response.findMany).mockResolvedValue([mockResponse]);
 
-    const result = await getResponsesForSummary("survey-1", 10, 0);
+    const result = await getResponsesForSummary("survey-1", 10);
 
     expect(result).toHaveLength(1);
     expect(result[0].contact).toBeNull();
@@ -1446,7 +1445,7 @@ describe("getResponsesForSummary", () => {
     vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
     vi.mocked(prisma.response.findMany).mockResolvedValue([mockResponse]);
 
-    const result = await getResponsesForSummary("survey-1", 10, 0);
+    const result = await getResponsesForSummary("survey-1", 10);
 
     expect(result).toHaveLength(1);
     expect(result[0].contact).toEqual({
@@ -1485,7 +1484,7 @@ describe("getResponsesForSummary", () => {
     vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
     vi.mocked(prisma.response.findMany).mockResolvedValue([mockResponse]);
 
-    const result = await getResponsesForSummary("survey-1", 10, 0);
+    const result = await getResponsesForSummary("survey-1", 10);
 
     expect(result).toHaveLength(1);
     expect(result[0].contact).toEqual({
@@ -1504,8 +1503,8 @@ describe("getResponsesForSummary", () => {
 
     vi.mocked(prisma.response.findMany).mockRejectedValue(prismaError);
 
-    await expect(getResponsesForSummary("survey-1", 10, 0)).rejects.toThrow(DatabaseError);
-    await expect(getResponsesForSummary("survey-1", 10, 0)).rejects.toThrow("Database connection error");
+    await expect(getResponsesForSummary("survey-1", 10)).rejects.toThrow(DatabaseError);
+    await expect(getResponsesForSummary("survey-1", 10)).rejects.toThrow("Database connection error");
   });
 
   test("getResponsesForSummary rethrows non-Prisma errors", async () => {
@@ -1514,9 +1513,9 @@ describe("getResponsesForSummary", () => {
     const genericError = new Error("Something else went wrong");
     vi.mocked(prisma.response.findMany).mockRejectedValue(genericError);
 
-    await expect(getResponsesForSummary("survey-1", 10, 0)).rejects.toThrow("Something else went wrong");
-    await expect(getResponsesForSummary("survey-1", 10, 0)).rejects.toThrow(Error);
-    await expect(getResponsesForSummary("survey-1", 10, 0)).rejects.not.toThrow(DatabaseError);
+    await expect(getResponsesForSummary("survey-1", 10)).rejects.toThrow("Something else went wrong");
+    await expect(getResponsesForSummary("survey-1", 10)).rejects.toThrow(Error);
+    await expect(getResponsesForSummary("survey-1", 10)).rejects.not.toThrow(DatabaseError);
   });
 
   test("getSurveySummary throws DatabaseError when Prisma throws PrismaClientKnownRequestError from getDisplayCountBySurveyId", async () => {
@@ -1568,7 +1567,7 @@ describe("getResponsesForSummary", () => {
     await expect(getSurveySummary("survey-1")).rejects.not.toThrow(DatabaseError);
   });
 
-  test("getSurveySummary handles multiple batches when responses exceed batchSize", async () => {
+  test("getSurveySummary counts every response once across batches when ids differ from createdAt order", async () => {
     vi.mocked(getSurvey).mockResolvedValue({
       id: "survey-1",
       blocks: [],
@@ -1577,62 +1576,38 @@ describe("getResponsesForSummary", () => {
       languages: [],
     } as unknown as TSurvey);
 
-    // Create mock responses for two batches
-    // First batch: 5000 responses (exactly batchSize, triggers continuation)
-    // Second batch: 100 responses (less than batchSize, stops loop)
-    const createMockResponses = (count: number, startIdx: number) =>
-      Array.from({ length: count }, (_, i) => ({
-        id: `response-${startIdx + i}`,
-        data: {},
-        updatedAt: new Date(),
-        contact: null,
-        contactAttributes: {},
-        language: "en",
-        ttc: {},
-        finished: true,
-        createdAt: new Date(),
-        meta: {},
-        variables: {},
-        surveyId: "survey-1",
-        contactId: null,
-        personAttributes: {},
-        singleUseId: null,
-        ingestFlags: null,
-        isFinished: true,
-        displayId: "display-1",
-        endingId: null,
-      }));
-
-    const firstBatch = createMockResponses(5000, 0);
-    const secondBatch = createMockResponses(100, 5000);
-
-    // First call returns 5000, second call returns 100
-    vi.mocked(prisma.response.findMany).mockResolvedValueOnce(firstBatch).mockResolvedValueOnce(secondBatch);
-
+    // 5,100 responses, so the summary needs two 5,000-row batches. Ids follow insertion order but
+    // createdAt does not, as with imported responses, and every timestamp is shared by three responses,
+    // so the batch boundary falls inside a tie.
+    const start = Date.UTC(2026, 0, 1);
+    const rows = Array.from({ length: 5100 }, (_, i) => ({
+      id: `response-${String(i).padStart(4, "0")}`,
+      createdAt: new Date(start + ((i * 7919) % 1700) * 1000),
+      data: {},
+      updatedAt: new Date(start),
+      contact: null,
+      contactAttributes: {},
+      language: "en",
+      ttc: {},
+      finished: true,
+    }));
+    vi.mocked(prisma.response.findMany).mockImplementation(createInMemoryResponseFindMany(rows) as never);
     vi.mocked(getDisplayCountBySurveyId).mockResolvedValue(5100);
     vi.mocked(getQuotasSummary).mockResolvedValue([]);
 
     const result = await getSurveySummary("survey-1");
 
-    // Verify that prisma.response.findMany was called twice (two batches)
-    expect(prisma.response.findMany).toHaveBeenCalledTimes(2);
-
-    // Second call should have cursor set to last response ID of first batch
-    expect(prisma.response.findMany).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({
-        where: expect.objectContaining({
-          surveyId: "survey-1",
-          id: { lt: "response-4999" }, // Last ID from first batch
-        }),
-      })
+    const batches = await Promise.all(
+      vi.mocked(prisma.response.findMany).mock.results.map((call) => call.value as Promise<typeof rows>)
     );
-
-    // Result should contain data from all responses
+    const fetchedIds = batches.flat().map((response) => response.id);
+    expect(batches).toHaveLength(2);
+    expect(fetchedIds).toHaveLength(rows.length);
+    expect(new Set(fetchedIds).size).toBe(rows.length);
     expect(result.meta.totalResponses).toBe(5100);
   });
 
-  test("getResponsesForSummary applies cursor-based pagination when cursor is provided", async () => {
+  test("getResponsesForSummary applies cursor-based pagination without replacing the filter", async () => {
     const mockSurvey = { id: "survey-1" } as unknown as TSurvey;
     const mockResponse = {
       id: "response-2",
@@ -1659,18 +1634,19 @@ describe("getResponsesForSummary", () => {
     vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
     vi.mocked(prisma.response.findMany).mockResolvedValue([mockResponse]);
 
-    const result = await getResponsesForSummary("survey-1", 10, 0, undefined, "cursor-response-id");
+    const result = await getResponsesForSummary("survey-1", 10, undefined, {
+      id: "cursor-response-id",
+      createdAt: new Date(Date.UTC(2026, 0, 1)),
+    });
 
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("response-2");
 
-    // Verify that prisma.response.findMany was called with cursor condition
+    // The cursor condition is ANDed with the filter's where instead of overwriting part of it.
     expect(prisma.response.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({
-          surveyId: "survey-1",
-          id: { lt: "cursor-response-id" },
-        }),
+        where: { AND: [{ surveyId: "survey-1" }, expect.anything()] },
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       })
     );
   });
