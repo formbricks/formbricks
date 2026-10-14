@@ -59,12 +59,26 @@ describe("useSignOut", () => {
     expect(window.location.href).toBe("/auth/login");
   });
 
-  test("logs the Plain support chat out before the full-page redirect", async () => {
+  test("logs the Plain support chat out before signing out and redirecting", async () => {
+    let finishPlainLogout: () => void = () => undefined;
+    logoutPlainBeforeNavigation.mockReturnValue(
+      new Promise<void>((resolve) => {
+        finishPlainLogout = resolve;
+      })
+    );
     const { signOut } = useSignOut({ id: "user-1", email: "ada@example.com" });
 
-    await signOut();
+    const pending = signOut();
+    await vi.waitFor(() => expect(logoutPlainBeforeNavigation).toHaveBeenCalledTimes(1));
 
-    expect(logoutPlainBeforeNavigation).toHaveBeenCalledTimes(1);
+    // While Plain's logout is still pending, neither Better Auth nor the redirect has run.
+    expect(baSignOut).not.toHaveBeenCalled();
+    expect(window.location.href).toBe("");
+
+    finishPlainLogout();
+    await pending;
+
+    expect(baSignOut).toHaveBeenCalledTimes(1);
     expect(window.location.href).toBe("/auth/login");
   });
 

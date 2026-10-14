@@ -33,11 +33,15 @@ const BRAND_COLOR = "#00C4B8";
 // identity, and the next mount must still be able to init once the script is there.
 let mountedInitOptions: PlainInitOptions | null = null;
 
+// Guarded: PlainChat lives in the (app) layout, so a throw from the third-party SDK here would
+// escape the effect and replace the whole (app) subtree with the error boundary.
 const initPlainIfReady = () => {
   const plain = getPlain();
-  if (plain && mountedInitOptions && !plain.isInitialized()) {
-    plain.init(mountedInitOptions);
-  }
+  const options = mountedInitOptions;
+  if (!plain || !options) return;
+  void runPlainStep("init", () => {
+    if (!plain.isInitialized()) plain.init(options);
+  });
 };
 
 export const PlainChat = ({
@@ -92,7 +96,9 @@ export const PlainChat = ({
       // launcher visibility through the effects below.
       mountedInitOptions = null;
       const plain = getPlain();
-      if (plain?.isInitialized()) void logoutPlain(plain);
+      if (plain) {
+        void runPlainStep("cleanup", () => (plain.isInitialized() ? logoutPlain(plain) : undefined));
+      }
     };
   }, []);
 
