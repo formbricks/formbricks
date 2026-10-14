@@ -46,6 +46,21 @@ import { signupPolicyBeforeHandler } from "./signup-policy";
 
 const DAY_IN_SECONDS = 60 * 60 * 24;
 
+/**
+ * Lifetime of the signed OAuth `state` cookie, matched to the state it binds to this browser (ENG-3314).
+ *
+ * Better Auth 1.7 gives an SSO sign-in 10 minutes at the identity provider — the verification record and
+ * the `expiresAt` it enforces on callback — but hardcodes the cookie at 5 (`maxAge: 300` in
+ * `better-auth/dist/state.mjs`). A user who spent 5–10 minutes on 2FA, consent or an account chooser came
+ * back to a valid state and no cookie, and was rejected with `state_security_mismatch`. Equal rather than
+ * longer: past 10 minutes the state is gone anyway, and the cookie only proves which browser started it.
+ *
+ * Applied through `advanced.cookies.state`, which Better Auth spreads over its own default. Drop it once
+ * upstream derives the cookie from the state expiry (better-auth/better-auth#11170);
+ * `oauth-state-cookie.integration.test.ts` fails if a version bump moves either lifetime apart.
+ */
+const OAUTH_STATE_COOKIE_MAX_AGE_SECONDS = 10 * 60;
+
 // `USE_SECURE_COOKIES` and `EMAIL_VERIFICATION_TTL_SECONDS` live in auth-cookies.ts — the sign-up
 // intent cookie (ENG-2562) needs both, and it is reached FROM this module, so keeping them here and
 // exporting them would close an import cycle. Their derivation is documented there.
@@ -403,6 +418,8 @@ export const auth = betterAuth({
     // write path) would reject BA-created users at cutover — caught by the SSO-provisioning test.
     database: { generateId: () => createId() },
     defaultCookieAttributes: { sameSite: "lax", httpOnly: true, secure: USE_SECURE_COOKIES, path: "/" },
+    // The OAuth state cookie would otherwise expire 5 minutes before the state it guards (ENG-3314).
+    cookies: { state: { attributes: { maxAge: OAUTH_STATE_COOKIE_MAX_AGE_SECONDS } } },
     // Proxy has already selected the configured trusted hop. Do not re-parse forwarding chains or add
     // Better Auth trustedProxies here; the private single-value header is the canonical identity.
     ipAddress: BETTER_AUTH_IP_ADDRESS_CONFIG,
