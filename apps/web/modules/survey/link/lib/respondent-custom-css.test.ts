@@ -17,7 +17,7 @@ const stored = (light: string, dark: string | null = null): TCustomCssStored => 
   processorVersion: 1,
 });
 
-// A survey whose "Add custom styles" is on, so its own CSS applies.
+// A survey that uses custom styling, so its own CSS applies.
 const overriding = { overwriteThemeStyling: true };
 
 // Delivery as W2's contract describes it: compiled output only, `undefined` when withheld.

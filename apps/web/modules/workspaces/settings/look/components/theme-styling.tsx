@@ -219,34 +219,6 @@ export const ThemeStyling = ({
           <div className="relative flex w-1/2 flex-col pr-6">
             <div className="flex flex-1 flex-col gap-4">
               <div className="flex flex-col gap-4 rounded-lg bg-slate-50 p-4">
-                <div className="flex items-center gap-6">
-                  <FormField
-                    control={form.control}
-                    name="allowStyleOverwrite"
-                    render={({ field }) => (
-                      <FormItem className="flex w-full items-center gap-2 gap-y-0">
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={(value) => {
-                              field.onChange(value);
-                            }}
-                          />
-                        </FormControl>
-
-                        <div>
-                          <FormLabel>{t("workspace.look.enable_custom_styling")}</FormLabel>
-                          <FormDescription>
-                            {t("workspace.look.enable_custom_styling_description")}
-                          </FormDescription>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-4 rounded-lg bg-slate-50 p-4">
                 <StylingAppearanceToggle appearance={appearance} onChange={handleAppearanceChange} />
                 <StylingAppearanceProvider appearance={appearance}>
                   <div className="grid grid-cols-2 items-end gap-4">
@@ -308,6 +280,37 @@ export const ThemeStyling = ({
                   setOpen={setCustomCssOpen}
                   onPreviewCssChange={setCustomCssPreview}
                   saveRef={customCssSaveRef}
+                />
+              </div>
+
+              {/* After the theme it guards: whether a survey may replace this theme with its own styling. */}
+              <div className="flex flex-col gap-3 rounded-lg bg-slate-50 p-4">
+                <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                  {t("workspace.look.survey_overrides")}
+                </p>
+                <FormField
+                  control={form.control}
+                  name="allowStyleOverwrite"
+                  render={({ field }) => (
+                    <FormItem className="flex w-full items-start gap-3 space-y-0">
+                      <FormControl>
+                        <Switch
+                          className="mt-0.5"
+                          checked={field.value}
+                          onCheckedChange={(value) => {
+                            field.onChange(value);
+                          }}
+                        />
+                      </FormControl>
+
+                      <div>
+                        <FormLabel>{t("workspace.look.allow_survey_level_styling")}</FormLabel>
+                        <FormDescription className="mt-1">
+                          {t("workspace.look.allow_survey_level_styling_description")}
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
                 />
               </div>
             </div>

@@ -46,8 +46,8 @@ test.describe("Survey Styling", async () => {
     await page.goto(`/workspaces/${workspaceId}/settings/workspace/look`);
     await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/look/);
 
-    // Toggle "Enable custom styling"
-    const addCustomStyles = page.getByLabel("Enable custom styling");
+    // Toggle "Allow survey-level styling"
+    const addCustomStyles = page.getByLabel("Allow survey-level styling");
     if (!(await addCustomStyles.isChecked())) {
       await addCustomStyles.click();
     }
@@ -220,8 +220,8 @@ test.describe("Survey Styling", async () => {
     await page.goto(`/workspaces/${workspaceId}/settings/workspace/look`);
     await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/look/);
 
-    // Toggle "Enable custom styling"
-    const addCustomStyles = page.getByLabel("Enable custom styling");
+    // Toggle "Allow survey-level styling"
+    const addCustomStyles = page.getByLabel("Allow survey-level styling");
     if (!(await addCustomStyles.isChecked())) {
       await addCustomStyles.click();
     }
@@ -309,8 +309,8 @@ test.describe("Survey Styling", async () => {
     await page.goto(`/workspaces/${workspaceId}/settings/workspace/look`);
     await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/look/);
 
-    // Toggle "Enable custom styling"
-    const addCustomStyles = page.getByLabel("Enable custom styling");
+    // Toggle "Allow survey-level styling"
+    const addCustomStyles = page.getByLabel("Allow survey-level styling");
     if (!(await addCustomStyles.isChecked())) {
       await addCustomStyles.click();
     }
@@ -369,9 +369,7 @@ test.describe("Survey Styling", async () => {
     // Navigate to Styling tab
     await page.getByRole("button", { name: "Styling" }).click();
 
-    // Toggle "Enable custom styling" (Survey override)
-    // Note: The label text might be "Add custom styles" in survey editor?
-    // Checking previous file: `page.getByLabel("Add custom styles")`
+    // Toggle "Use custom styling for this survey" (Survey override)
     const addCustomStyles = page
       .locator("label")
       .filter({ hasText: /custom styling|custom styles/i })
@@ -462,7 +460,7 @@ test.describe("Survey Styling", async () => {
       surveyId = await createSurveyFromScratch(page);
       await page.getByRole("button", { name: "Styling" }).click();
       // Survey CSS follows the survey's other style overrides (ENG-3723).
-      const addCustomStyles = page.getByRole("switch", { name: "Add custom styles" });
+      const addCustomStyles = page.getByRole("switch", { name: "Use custom styling for this survey" });
       await addCustomStyles.click();
       await page.getByRole("button", { name: /^Custom CSS/ }).click();
       await page.getByLabel("Survey base CSS", { exact: true }).fill(surveyCss);

@@ -27,7 +27,7 @@ interface SurveyCustomCssCardProps {
   appearance: TCustomCssAppearance;
   /** The Appearance settings, where the inherited workspace CSS is edited. */
   appearanceHref: string;
-  /** "Add custom styles" is off, so the survey's CSS does not apply (ENG-3723). */
+  /** "Use custom styling for this survey" is off, so the survey's CSS does not apply (ENG-3723). */
   disabled: boolean;
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -35,9 +35,10 @@ interface SurveyCustomCssCardProps {
 
 /**
  * Survey Custom CSS in the Styling tab (ENG-3553). Like the tab's other styling cards it is only
- * available while "Add custom styles" is on; turned off, the saved CSS stays but stops applying
- * (ENG-3723). Edits go into the working copy of the survey and are saved — and validated again — by
- * the editor's normal save and publish, which is what the survey's own edit permission already governs.
+ * available while "Use custom styling for this survey" is on; turned off, the saved CSS stays but
+ * stops applying (ENG-3723). Edits go into the working copy of the survey and are saved — and
+ * validated again — by the editor's normal save and publish, which is what the survey's own edit
+ * permission already governs.
  */
 export const SurveyCustomCssCard = ({
   config,

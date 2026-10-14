@@ -245,7 +245,7 @@ export const StylingView = ({
                     <FormLabel
                       htmlFor="overwrite-theme-styling"
                       className="text-base font-semibold text-slate-900">
-                      {t("workspace.surveys.edit.add_custom_styles")}
+                      {t("workspace.surveys.edit.use_custom_styling_for_this_survey")}
                     </FormLabel>
                     <FormDescription className="text-sm text-slate-500">
                       {t("workspace.surveys.edit.override_theme_with_individual_styles_for_this_survey")}
@@ -309,7 +309,7 @@ export const StylingView = ({
             </>
           )}
 
-          {/* Like the cards above, survey CSS only applies while "Add custom styles" is on (ENG-3723). */}
+          {/* Like the cards above, survey CSS only applies while the survey uses custom styling (ENG-3723). */}
           <SurveyCustomCssCard
             config={customCssEditor}
             localSurvey={localSurvey}
