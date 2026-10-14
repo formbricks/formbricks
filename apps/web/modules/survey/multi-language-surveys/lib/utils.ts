@@ -347,22 +347,40 @@ export const removeLanguageKeysFromSurvey = (survey: TSurvey, languageCode: stri
 };
 
 /**
- * Strips every non-default language's keys from the survey object. The `languages` list itself is
- * left untouched; callers decide what it becomes.
+ * Strips every translation from the survey's i18n strings, keeping only their "default" value —
+ * including keys of languages no longer on the survey. The `languages` list itself is left untouched;
+ * callers decide what it becomes.
  */
-export const removeAllTranslations = (survey: TSurvey): TSurvey =>
-  survey.languages.reduce(
-    (cleaned, lang) => (lang.default ? cleaned : removeLanguageKeysFromSurvey(cleaned, lang.language.code)),
-    survey
-  );
+export const removeAllTranslations = (survey: TSurvey): TSurvey => {
+  const { languages, ...content } = survey;
+  const clone = structuredClone(content);
+
+  const stripTranslations = (value: unknown) => {
+    if (Array.isArray(value)) {
+      value.forEach(stripTranslations);
+    } else if (value && typeof value === "object") {
+      const record = value as Record<string, unknown>;
+      if (typeof record.default === "string") {
+        for (const key of Object.keys(record)) {
+          if (key !== "default" && typeof record[key] === "string") delete record[key];
+        }
+        return;
+      }
+      Object.values(record).forEach(stripTranslations);
+    }
+  };
+
+  stripTranslations(clone);
+  return { ...clone, languages } as TSurvey;
+};
 
 /**
  * Removes all translations and makes `language` the survey's only (and default) language. The
- * promoted language's own code keys are stripped too: the default is always keyed as "default", so a
- * leftover code key next to it is the stale state that breaks the response API (ENG-2001).
+ * promoted language's own code keys go too: the default is always keyed as "default", so a leftover
+ * code key next to it is the stale state that breaks the response API (ENG-2001).
  */
 export const makeLanguageSoleDefault = (survey: TSurvey, language: TSurveyLanguage["language"]): TSurvey => ({
-  ...removeLanguageKeysFromSurvey(removeAllTranslations(survey), language.code),
+  ...removeAllTranslations(survey),
   languages: [{ language, default: true, enabled: true }],
 });
 

@@ -362,6 +362,32 @@ describe("multi-language survey utils", () => {
       expect(survey.blocks[0].elements[0].headline).toEqual({ default: "Hello", de: "Hallo", fr: "Bonjour" });
     });
 
+    test("removeAllTranslations also strips keys of languages no longer on the survey", () => {
+      const survey = createSurvey({
+        languages: [
+          { language: language("en"), default: true, enabled: true },
+          { language: language("de"), default: false, enabled: true },
+        ],
+        blocks: [
+          {
+            id: "b1",
+            elements: [
+              {
+                id: "q1",
+                type: TSurveyElementTypeEnum.OpenText,
+                headline: { default: "Hello", de: "Hallo", es: "Hola" },
+              },
+            ],
+          },
+        ],
+      });
+
+      const result = removeAllTranslations(survey);
+
+      expect(result.blocks[0].elements[0].headline).toEqual({ default: "Hello" });
+      expect(result.languages).toEqual(survey.languages);
+    });
+
     test("makeLanguageSoleDefault removes all translations and leaves the language as sole default", () => {
       const de = language("de");
       const result = makeLanguageSoleDefault(multiLanguageSurvey(), de);
