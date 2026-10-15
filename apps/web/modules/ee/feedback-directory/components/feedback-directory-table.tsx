@@ -148,7 +148,12 @@ export const FeedbackDirectoryTable = ({
       setSelectedDirectory(await getFeedbackDataset(directoryId));
       setOpenSettingsModal(true);
     } catch (error) {
-      toast.error(getTranslatedFeedbackDirectoryError(getV3ApiErrorReason(error), t));
+      toast.error(
+        getTranslatedFeedbackDirectoryError(
+          getV3ApiErrorReason(error, t("common.something_went_wrong_please_try_again")),
+          t
+        )
+      );
     } finally {
       setLoadingDirectoryId(null);
     }
@@ -178,7 +183,12 @@ export const FeedbackDirectoryTable = ({
       // The directory list is server-rendered; re-render it.
       router.refresh();
     } catch (error) {
-      toast.error(getTranslatedFeedbackDirectoryError(getV3ApiErrorReason(error), t));
+      toast.error(
+        getTranslatedFeedbackDirectoryError(
+          getV3ApiErrorReason(error, t("common.something_went_wrong_please_try_again")),
+          t
+        )
+      );
     } finally {
       setLoadingDirectoryId(null);
     }

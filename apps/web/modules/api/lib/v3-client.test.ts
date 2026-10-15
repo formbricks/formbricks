@@ -60,10 +60,17 @@ describe("parseV3ApiError", () => {
       detail: "DIRECTORY_NAME_DUPLICATE",
       details: { reason: "DIRECTORY_NAME_DUPLICATE" },
     });
-    expect(getV3ApiErrorReason(refused)).toBe("DIRECTORY_NAME_DUPLICATE");
-    expect(getV3ApiErrorReason(new V3ApiError({ status: 403, detail: "Forbidden" }))).toBe("Forbidden");
-    expect(getV3ApiErrorReason(new Error("boom"))).toBe("boom");
-    expect(getV3ApiErrorReason("nope")).toBe("");
+    expect(getV3ApiErrorReason(refused, "fallback")).toBe("DIRECTORY_NAME_DUPLICATE");
+    expect(getV3ApiErrorReason(new V3ApiError({ status: 403, detail: "Forbidden" }), "fallback")).toBe(
+      "Forbidden"
+    );
+    // Nothing a page can translate: its own message, never a browser's.
+    expect(getV3ApiErrorReason(new V3ApiError({ status: 0, detail: "" }), "fallback")).toBe("fallback");
+    expect(getV3ApiErrorReason(new Error("Failed to fetch"), "fallback")).toBe("fallback");
+  });
+
+  test("shows the fallback for a failure with no detail", () => {
+    expect(getV3ApiErrorMessage(new V3ApiError({ status: 0, detail: "" }), "fallback")).toBe("fallback");
   });
 
   test("falls back to a provided fallback message", () => {

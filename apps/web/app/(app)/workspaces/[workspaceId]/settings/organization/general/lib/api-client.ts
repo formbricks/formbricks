@@ -11,6 +11,12 @@ export const updateOrganizationSettings = (organizationId: string, body: TOrgani
     body,
   });
 
-/** Delete the organization and every workspace in it. */
+/**
+ * Delete the organization and every workspace in it. No client timeout: the cascade grows with the
+ * organization, and the server finishes it whether or not the client is still waiting.
+ */
 export const deleteOrganization = (organizationId: string) =>
-  sendApiRequest<void>(`${BASE_PATH}/${encodeURIComponent(organizationId)}`, { method: "DELETE" });
+  sendApiRequest<void>(`${BASE_PATH}/${encodeURIComponent(organizationId)}`, {
+    method: "DELETE",
+    timeoutMs: null,
+  });

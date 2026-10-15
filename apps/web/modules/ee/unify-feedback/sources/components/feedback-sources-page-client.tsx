@@ -140,7 +140,12 @@ export function FeedbackSourcesSection({
       router.refresh();
       return created.id;
     } catch (error) {
-      toast.error(getTranslatedFeedbackSourceError(getV3ApiErrorReason(error), t));
+      toast.error(
+        getTranslatedFeedbackSourceError(
+          getV3ApiErrorReason(error, t("common.something_went_wrong_please_try_again")),
+          t
+        )
+      );
       return undefined;
     }
   };
@@ -166,7 +171,12 @@ export function FeedbackSourcesSection({
           : undefined,
       });
     } catch (error) {
-      toast.error(getTranslatedFeedbackSourceError(getV3ApiErrorReason(error), t));
+      toast.error(
+        getTranslatedFeedbackSourceError(
+          getV3ApiErrorReason(error, t("common.something_went_wrong_please_try_again")),
+          t
+        )
+      );
       return false;
     }
 
@@ -179,7 +189,12 @@ export function FeedbackSourcesSection({
     try {
       await deleteFeedbackSource(feedbackSourceId);
     } catch (error) {
-      toast.error(getTranslatedFeedbackSourceError(getV3ApiErrorReason(error), t));
+      toast.error(
+        getTranslatedFeedbackSourceError(
+          getV3ApiErrorReason(error, t("common.something_went_wrong_please_try_again")),
+          t
+        )
+      );
       return;
     }
 
@@ -232,7 +247,12 @@ export function FeedbackSourcesSection({
       announceImportResult(await importFeedbackSourceResponses(feedbackSourceId, survey.id));
     } catch (error) {
       // The source was created; only the historical import failed.
-      toast.error(getTranslatedFeedbackSourceError(getV3ApiErrorReason(error), t));
+      toast.error(
+        getTranslatedFeedbackSourceError(
+          getV3ApiErrorReason(error, t("common.something_went_wrong_please_try_again")),
+          t
+        )
+      );
     }
 
     router.refresh();
@@ -287,7 +307,12 @@ export function FeedbackSourcesSection({
 
       announceImportResult(sumImportTotals(totals));
     } catch (error) {
-      toast.error(getTranslatedFeedbackSourceError(getV3ApiErrorReason(error), t));
+      toast.error(
+        getTranslatedFeedbackSourceError(
+          getV3ApiErrorReason(error, t("common.something_went_wrong_please_try_again")),
+          t
+        )
+      );
       return;
     }
 
@@ -299,7 +324,12 @@ export function FeedbackSourcesSection({
     try {
       await updateFeedbackSource(feedbackSource.id, { source: { status: newStatus } });
     } catch (error) {
-      toast.error(getTranslatedFeedbackSourceError(getV3ApiErrorReason(error), t));
+      toast.error(
+        getTranslatedFeedbackSourceError(
+          getV3ApiErrorReason(error, t("common.something_went_wrong_please_try_again")),
+          t
+        )
+      );
       return;
     }
 

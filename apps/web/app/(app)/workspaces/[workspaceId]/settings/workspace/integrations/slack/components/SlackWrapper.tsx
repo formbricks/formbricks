@@ -44,7 +44,7 @@ export const SlackWrapper = ({
     try {
       setSlackChannels(await fetchSlackChannels(workspaceId));
     } catch (error) {
-      if (getV3ApiErrorReason(error) === "reauthorization_required") setShowReconnectButton(true);
+      if (getV3ApiErrorReason(error, "") === "reauthorization_required") setShowReconnectButton(true);
     }
   }, [workspaceId]);
 

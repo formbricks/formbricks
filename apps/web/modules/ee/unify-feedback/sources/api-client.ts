@@ -24,11 +24,15 @@ export const updateFeedbackSource = (feedbackSourceId: string, body: TFeedbackSo
 export const deleteFeedbackSource = (feedbackSourceId: string) =>
   sendApiRequest<void>(sourcePath(feedbackSourceId), { method: "DELETE" });
 
-/** Replay one mapped survey's past responses into a source. */
+/**
+ * Replay one mapped survey's past responses into a source. No client timeout: the import walks every
+ * response and can take minutes, and a timed-out client would only invite a second, concurrent import.
+ */
 export const importFeedbackSourceResponses = (feedbackSourceId: string, surveyId: string) =>
   sendApiRequest<TFeedbackSourceImportResource>(`${sourcePath(feedbackSourceId)}/imports`, {
     method: "POST",
     body: { surveyId },
+    timeoutMs: null,
   });
 
 /**

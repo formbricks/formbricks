@@ -28,7 +28,7 @@ import {
   GOOGLE_SHEET_INTEGRATION_INVALID_GRANT,
 } from "@/lib/googleSheet/constants";
 import { recallToHeadline } from "@/lib/utils/recall";
-import { getV3ApiErrorReason } from "@/modules/api/lib/v3-client";
+import { getV3ApiErrorMessage, getV3ApiErrorReason } from "@/modules/api/lib/v3-client";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
   RestrictedSurveyHint,
@@ -137,15 +137,16 @@ export const AddIntegrationModal = ({
   }, [selectedIntegration, surveys]);
 
   const showErrorMessageToast = (error: unknown) => {
-    const errorMessage = getV3ApiErrorReason(error);
-    if (errorMessage === GOOGLE_SHEET_INTEGRATION_INVALID_GRANT) {
+    const errorMessage = getV3ApiErrorReason(error, "");
+    // Disconnected in another tab, or the grant expired: either way the way out is to reconnect.
+    if (errorMessage === GOOGLE_SHEET_INTEGRATION_INVALID_GRANT || errorMessage === "not_connected") {
       toast.error(t("workspace.integrations.google_sheets.token_expired_error"));
     } else if (errorMessage === GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION) {
       toast.error(t("workspace.integrations.google_sheets.spreadsheet_permission_error"));
     } else if (errorMessage === GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_SCOPES) {
       toast.error(t("workspace.integrations.google_sheets.spreadsheet_scope_error"));
     } else {
-      toast.error(errorMessage);
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 

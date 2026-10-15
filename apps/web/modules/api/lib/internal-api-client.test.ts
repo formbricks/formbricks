@@ -92,3 +92,51 @@ describe("sendApiRequest", () => {
     );
   });
 });
+
+describe("failures with no problem response", () => {
+  test.each([
+    ["the network", () => fetchMock.mockRejectedValue(new TypeError("Failed to fetch"))],
+    [
+      "a 2xx that isn't JSON",
+      () => fetchMock.mockResolvedValue(new Response("<html>challenge</html>", { status: 200 })),
+    ],
+    ["a timeout", () => fetchMock.mockRejectedValue(new DOMException("signal timed out", "TimeoutError"))],
+  ])(
+    "turns %s into a V3ApiError with no detail, so callers show their own message",
+    async (_label, arrange) => {
+      arrange();
+
+      const error = await sendApiRequest("/api/internal/things", { method: "POST" }).catch(
+        (caught: unknown) => caught
+      );
+
+      expect(error).toBeInstanceOf(V3ApiError);
+      expect(error).toMatchObject({ status: 0, code: "network_error", detail: "" });
+    }
+  );
+
+  test("lets a cancelled query's own abort error through, for TanStack to recognize", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const aborted = new DOMException("The operation was aborted.", "AbortError");
+    fetchMock.mockRejectedValue(aborted);
+
+    await expect(getApiData("/api/internal/things", { signal: controller.signal })).rejects.toBe(aborted);
+  });
+
+  test("a problem with an empty body and no reason phrase still throws, with no detail", async () => {
+    fetchMock.mockResolvedValue(new Response("", { status: 502, statusText: "" }));
+
+    await expect(getApiData("/api/internal/things")).rejects.toMatchObject({ status: 502, detail: "" });
+  });
+});
+
+describe("timeouts", () => {
+  test("a long write can opt out of the timeout", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+    await sendApiRequest("/api/internal/imports", { method: "POST", timeoutMs: null });
+
+    expect(fetchMock.mock.calls[0][1].signal).toBeUndefined();
+  });
+});

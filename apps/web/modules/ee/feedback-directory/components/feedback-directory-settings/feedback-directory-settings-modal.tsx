@@ -174,7 +174,12 @@ export const FeedbackDirectorySettingsModal = ({
         });
       }
     } catch (error) {
-      toast.error(getTranslatedFeedbackDirectoryError(getV3ApiErrorReason(error), t));
+      toast.error(
+        getTranslatedFeedbackDirectoryError(
+          getV3ApiErrorReason(error, t("common.something_went_wrong_please_try_again")),
+          t
+        )
+      );
       return false;
     }
 
