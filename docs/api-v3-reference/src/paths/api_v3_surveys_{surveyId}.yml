@@ -399,7 +399,11 @@ patch:
         A patch that newly *introduces* a forward reference — a recall of an answer not yet given, a
         logic condition reading a later block, or a `requireAnswer` target that is not in a later block
         — is refused with `code: misordered_reference`; a survey that already contains one stays
-        patchable, only newly created violations are rejected.
+        patchable, only newly created violations are rejected. A patch that newly *introduces* a
+        loop in the conditional logic — jumps, fallbacks and next blocks leading back on themselves,
+        so a respondent could never reach an ending — is refused the same way, reported at the
+        `logic` of each block a new looping step leaves ("Cyclic logic detected in block N"). A
+        survey that already loops stays patchable, and blocks that only lead into a loop are fine.
 
 
         3. A server-owned field was echoed back with a different value — `code: read_only_field`,
