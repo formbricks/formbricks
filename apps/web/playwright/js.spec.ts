@@ -384,7 +384,7 @@ test.describe("JS Package Test", async () => {
       await prisma.survey.update({ where: { id: surveyId }, data: { type: "link" } });
       cspConsoleMessages.length = 0;
       await page.goto(`/s/${surveyId}`);
-      await expect(page.getByRole("button", { name: "Happy to help!" })).toBeVisible();
+      await expect(page.locator("#questionCard-0")).toBeVisible();
       await expectNoCspViolations(page, cspConsoleMessages);
     });
   });
