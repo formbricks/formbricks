@@ -62,8 +62,10 @@ describe("countSamlResponseMarkup", () => {
     // xmldom raises and recovers from an error for each of these, which costs far more than an element.
     expect(count("<r>< </r>")).toBe(18);
     expect(count("<r><0</r>")).toBe(18);
-    // A leading `:` and a non-ASCII byte are not cheap starts either.
+    // A leading `:` and a non-ASCII start are not cheap either. `×` decodes to a character that cannot start a
+    // name, so xmldom raises and recovers for each one; a rule that let valid UTF-8 through would miss it.
     expect(count("<r><:a/></r>")).toBe(18);
+    expect(count("<r><\u00d7/></r>")).toBe(18);
     expect(
       countSamlResponseMarkup(
         Buffer.from([0x3c, 0x72, 0x3e, 0x3c, 0xff, 0x30, 0x3c, 0x2f, 0x72, 0x3e]).toString("base64")
