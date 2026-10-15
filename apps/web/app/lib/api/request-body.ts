@@ -94,3 +94,19 @@ export const parseJsonBodyWithLimit = async <TJson = unknown>(
   request: Request,
   limitBytes: number = DEFAULT_REQUEST_BODY_LIMIT_BYTES
 ): Promise<TJson> => JSON.parse(await readRequestBodyWithLimit(request, limitBytes)) as TJson;
+
+/**
+ * `request.formData()`, but bounded: the body is read under `limitBytes` first, so a multipart upload
+ * with no `Content-Length` cannot be buffered whole. Parse failures surface exactly as `formData()`'s.
+ */
+export const parseFormDataWithLimit = async (
+  request: Request,
+  limitBytes: number = DEFAULT_REQUEST_BODY_LIMIT_BYTES
+): Promise<FormData> => {
+  const body = await readRequestBytesWithLimit(request, limitBytes);
+  const contentType = request.headers.get("content-type");
+  return new Response(
+    body as BodyInit,
+    contentType ? { headers: { "content-type": contentType } } : {}
+  ).formData();
+};
