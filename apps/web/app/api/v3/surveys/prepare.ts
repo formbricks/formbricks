@@ -1,3 +1,4 @@
+import { isDeepStrictEqual } from "node:util";
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { toCustomCssSource } from "@/modules/custom-css/lib/source";
@@ -170,13 +171,25 @@ function invalidParamSignature(param: InvalidParam): string {
   return `${param.name}\u0000${param.code ?? ""}\u0000${param.identifier ?? ""}`;
 }
 
+/** The value a reported path points at, or `undefined` once the path leaves the document. */
+function getValueAtPath(document: TV3SurveyDocument, path: string): unknown {
+  let value: unknown = document;
+  for (const segment of path.split(".")) {
+    if (typeof value !== "object" || value === null) return undefined;
+    value = (value as Record<string, unknown>)[segment];
+  }
+  return value;
+}
+
 /**
- * Whose fault is a merged-document failure?
+ * The issues a patch introduced: those the stored survey did not already have.
  *
  * Decided by delta, not by path prefix: validate the *stored* document too, and anything the merged
- * document reports that the stored one did not is the request's doing. `storedSurvey` only when
- * every reported issue already existed — one new issue is enough to make the whole response the
- * caller's, since a partial repair still leaves them responsible.
+ * document reports that the stored one did not is the request's doing. An issue counts as pre-existing
+ * only when the stored survey reports the same one *and* the value at its path is unchanged
+ * (ENG-3975). The signature alone is not enough: replacing `blocks.0.elements.0` with a different
+ * element that also lacks a translation reports the identical (path, code, identifier), and accepting
+ * that would write a new problem while claiming the old one was left alone.
  *
  * The path-prefix heuristic this replaces was wrong in both directions, and only one had been
  * noticed. It needed a hand-carved exemption for `languages` (adding a locale reports
@@ -184,22 +197,19 @@ function invalidParamSignature(param: InvalidParam): string {
  * still misattributed the symmetric case: reference validation walks the whole merged document, so a
  * request that submits only `blocks` — which is *every* call to the two block endpoints, since they
  * synthesize `{ blocks }` — got `storedSurvey` for damage it had just caused under `endings`,
- * `welcomeCard` or `metadata`. Removing a block that an ending recalled answered with "the stored
- * survey does not satisfy the contract, so this request was not evaluated … repair them in the
- * editor" about a survey that was valid until that very call. That is ENG-3070's own failure mode,
- * pointed the other way.
+ * `welcomeCard` or `metadata`.
  *
  * Cost is one extra validation, and only on a path that is already returning an error.
  *
  * Known limit: a problem whose path shifts because the request moved an array element (a pre-existing
- * `blocks.1.x` becoming `blocks.0.x` after a remove) reads as new and is attributed to the request.
- * That errs toward blaming the caller, which is the safer half — it never tells someone their request
- * "was not evaluated" when it was.
+ * `blocks.1.x` becoming `blocks.0.x` after a remove) reads as new and is refused. That errs toward
+ * refusing, which is the safer half.
  */
-function deriveFailureOrigin(
+function getIntroducedIssues(
   invalidParams: InvalidParam[],
-  storedDocument: TV3SurveyDocument
-): "request" | "storedSurvey" {
+  storedDocument: TV3SurveyDocument,
+  patchedDocument: TV3SurveyDocument
+): InvalidParam[] {
   // The stored document is validated under the *same* policy shape the caller judges the patched one
   // with, and that matters. `introduced` filters precedence violations on `violation.key`, which is
   // `recall|<scopeKey>|<recallId>` — a scope, not a path — while `invalidParamSignature` is
@@ -207,26 +217,26 @@ function deriveFailureOrigin(
   // carry the stored survey's own precedence violations keyed by path, and a violation the
   // request genuinely introduced could match one of them: move a different element into the index the
   // old one occupied, recalling the same target, and the new violation's (path, code, recallId) is
-  // identical to the old one's while its scope is not. It survives the `introduced` filter, then gets
-  // blamed on the stored survey — the ENG-3070 misattribution, back through a side door.
+  // identical to the old one's while its scope is not.
   //
   // Validating the stored document against itself introduces nothing, so no precedence violation enters
   // `preExisting` at all. That is the correct set: an `introduced`-mode precedence finding is by
-  // definition the request's doing. Language, media and reference issues are unaffected by the policy
-  // and still appear on both sides, which is what ENG-3070 actually needed.
+  // definition the request's doing. Language and reference issues are unaffected by the policy and
+  // still appear on both sides, which is what ENG-3070 actually needed.
   const storedValidation = validateV3SurveyDocument(storedDocument, {
     mode: "introduced",
     baseline: storedDocument,
   });
-  if (storedValidation.valid) {
-    return "request";
-  }
-
   const preExisting = new Set(storedValidation.invalidParams.map(invalidParamSignature));
 
-  return invalidParams.some((param) => !preExisting.has(invalidParamSignature(param)))
-    ? "request"
-    : "storedSurvey";
+  return invalidParams.filter(
+    (param) =>
+      !preExisting.has(invalidParamSignature(param)) ||
+      !isDeepStrictEqual(
+        getValueAtPath(storedDocument, param.name),
+        getValueAtPath(patchedDocument, param.name)
+      )
+  );
 }
 
 function mergeV3SurveyPatch(document: TV3SurveyDocument, patch: TV3PatchSurveyBody): TV3SurveyDocument {
@@ -588,16 +598,26 @@ export function prepareV3SurveyPatchInput(
   });
 
   if (!validation.valid) {
-    return invalidPreparation(
-      validation.invalidParams,
-      deriveFailureOrigin(validation.invalidParams, currentDocument.document)
-    );
+    // ENG-3975: issues the stored survey already had, at values this patch leaves untouched, are not the
+    // request's to fix. Refusing them blocked every edit to such a survey — a rename from the survey
+    // list included — while the merge writes those values back exactly as stored. One introduced issue
+    // makes the whole response the caller's, since a partial repair still leaves them responsible.
+    if (getIntroducedIssues(validation.invalidParams, currentDocument.document, patchedDocument).length > 0) {
+      return invalidPreparation(validation.invalidParams);
+    }
+
+    // Publishing is the exception: the editor runs the full check before a draft goes live and saves
+    // drafts leniently, so moving a draft out of `draft` still requires a survey that passes. Reported
+    // as `stored_survey_invalid`, because every issue is the stored survey's.
+    if (currentDocument.document.status === "draft" && patchedDocument.status !== "draft") {
+      return invalidPreparation(validation.invalidParams, "storedSurvey");
+    }
   }
 
   return {
     ok: true,
     document: patchedDocument,
-    validation,
+    validation: { valid: true, invalidParams: [] },
     languageRequests: deriveV3SurveyLanguageRequests(patchedDocument),
     ...(readOnly.precondition ? { precondition: readOnly.precondition } : {}),
   };
