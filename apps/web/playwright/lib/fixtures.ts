@@ -23,20 +23,23 @@ export const test = base.extend<Fixtures>({
     const usersFixture = createUsersFixture(page, workerInfo);
     await use(usersFixture);
   },
+  // Auto only when the log is on: an auto fixture that needs a browser context would otherwise create one
+  // for every test, API-only ones included. The context, not the page, so popups are recorded too.
   serverActionRecorder: [
-    async ({ page }, use, testInfo) => {
-      if (SERVER_ACTION_LOG) {
-        page.on("request", (request) => {
+    async ({ context }, use, testInfo) => {
+      const logFile = SERVER_ACTION_LOG;
+      if (logFile) {
+        context.on("request", (request) => {
           const actionId = request.headers()["next-action"];
           if (!actionId) return;
           appendFileSync(
-            SERVER_ACTION_LOG,
+            logFile,
             `${JSON.stringify({ actionId, url: request.url(), test: testInfo.titlePath.join(" › ") })}\n`
           );
         });
       }
       await use();
     },
-    { auto: true },
+    { auto: Boolean(SERVER_ACTION_LOG) },
   ],
 });
