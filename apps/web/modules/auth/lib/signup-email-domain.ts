@@ -1,5 +1,6 @@
 import "server-only";
 import disposableEmailDomains from "disposable-email-domains/index.json";
+import wildcardDisposableEmailDomains from "disposable-email-domains/wildcard.json";
 import { IS_FORMBRICKS_CLOUD, SIGNUP_DOMAIN_CHECK_ON_INVITES } from "@/lib/constants";
 import { PERSONAL_EMAIL_DOMAINS } from "./personal-email-domains";
 
@@ -15,11 +16,31 @@ import { PERSONAL_EMAIL_DOMAINS } from "./personal-email-domains";
  *
  * Server-only: the disposable list alone is ~121k domains and must never be pulled into the client bundle.
  */
-const blockedEmailDomains = new Set<string>(
-  [...PERSONAL_EMAIL_DOMAINS, ...(disposableEmailDomains as string[])].map((domain) =>
-    domain.trim().toLowerCase()
-  )
+const normalizeDomains = (domains: readonly string[]) => domains.map((domain) => domain.trim().toLowerCase());
+
+/**
+ * Providers that hand every user their own subdomain (33mail: `alias@jerry.33mail.com`), so the
+ * domain itself and any subdomain of it are blocked. Kept separate from the exact-match set so only
+ * these ~400 entries widen to subdomains — `user@sub.gmail.com` stays allowed.
+ */
+const wildcardBlockedEmailDomains = new Set<string>(
+  normalizeDomains(wildcardDisposableEmailDomains as string[])
 );
+
+const blockedEmailDomains = new Set<string>([
+  ...normalizeDomains([...PERSONAL_EMAIL_DOMAINS, ...(disposableEmailDomains as string[])]),
+  ...wildcardBlockedEmailDomains,
+]);
+
+/** True when any parent domain of `domain` (`a.b.33mail.com` → `b.33mail.com`, `33mail.com`, …) is a wildcard entry. */
+const isSubdomainOfWildcardDomain = (domain: string): boolean => {
+  let dotIndex = domain.indexOf(".");
+  while (dotIndex !== -1) {
+    if (wildcardBlockedEmailDomains.has(domain.slice(dotIndex + 1))) return true;
+    dotIndex = domain.indexOf(".", dotIndex + 1);
+  }
+  return false;
+};
 
 /**
  * Pure predicate: is the email's domain a known personal/free/disposable provider?
@@ -41,7 +62,7 @@ export const isBlockedEmailDomain = (email: string): boolean => {
   let end = normalized.length;
   while (end > atIndex + 1 && normalized[end - 1] === ".") end--;
   const domain = normalized.slice(atIndex + 1, end);
-  return blockedEmailDomains.has(domain);
+  return blockedEmailDomains.has(domain) || isSubdomainOfWildcardDomain(domain);
 };
 
 /**
