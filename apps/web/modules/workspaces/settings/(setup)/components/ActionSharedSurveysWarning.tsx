@@ -31,7 +31,7 @@ export const ActionSharedSurveysWarning = ({
     };
 
     void fetchOtherSurveys();
-  }, [actionClassId, currentSurveyId]);
+  }, [actionClassId, currentSurveyId, t]);
 
   if (!otherSurveyNames?.length) {
     return null;

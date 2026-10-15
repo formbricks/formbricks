@@ -38,7 +38,7 @@ export const ActionActivityTab = ({ actionClass }: ActivityTabProps) => {
     };
 
     updateState();
-  }, [actionClass.id]);
+  }, [actionClass.id, t]);
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorComponent />;
