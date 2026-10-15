@@ -79,8 +79,12 @@ const handleIngestBodyLimit = (request: NextRequest): NextResponse | null => {
   if (request.headers.has("transfer-encoding")) return new NextResponse(null, { status: 411 });
 
   const contentLength = request.headers.get("content-length");
-  if (contentLength !== null && !(Number(contentLength) <= INGEST_REQUEST_BODY_LIMIT_BYTES)) {
-    return new NextResponse(null, { status: 413 });
+  if (contentLength !== null) {
+    // A length that does not parse is refused too; Node rejects one first, but nothing here relies on it.
+    const declared = Number(contentLength);
+    if (Number.isNaN(declared) || declared > INGEST_REQUEST_BODY_LIMIT_BYTES) {
+      return new NextResponse(null, { status: 413 });
+    }
   }
 
   return null;

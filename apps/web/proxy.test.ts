@@ -299,6 +299,12 @@ describe("proxy", () => {
       expect(response.status).toBe(413);
     });
 
+    test("refuses a Content-Length that does not parse with 413", async () => {
+      const response = await ingest("/ingest/e/", { "content-length": "lots" });
+
+      expect(response.status).toBe(413);
+    });
+
     test("refuses a body of undeclared length with 411", async () => {
       const response = await ingest("/ingest/e/", { "transfer-encoding": "chunked" });
 
