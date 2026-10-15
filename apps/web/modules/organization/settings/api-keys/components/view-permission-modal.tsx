@@ -5,10 +5,10 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
+import type { TApiKeyResource } from "@/app/api/internal/api-keys/serializers";
 import { type TOrganizationWorkspace } from "@/modules/ee/teams/team-list/types/workspace";
 import {
   type TApiKeyUpdateInput,
-  type TApiKeyWithEnvironmentPermission,
   ZApiKeyUpdateInput,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Button } from "@/modules/ui/components/button";
@@ -29,7 +29,7 @@ interface ViewPermissionModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
   onSubmit: (data: TApiKeyUpdateInput) => Promise<void>;
-  apiKey: TApiKeyWithEnvironmentPermission;
+  apiKey: TApiKeyResource;
   workspaces: TOrganizationWorkspace[];
   isUpdating: boolean;
 }

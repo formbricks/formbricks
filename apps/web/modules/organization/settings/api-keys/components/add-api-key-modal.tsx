@@ -40,7 +40,7 @@ interface AddApiKeyModalProps {
   /**
    * Whether the signed-in user clears USER_MANAGEMENT_MINIMUM_ROLE (ENG-3075). A key with
    * organization write access can manage the org's users, teams and workspace-team grants, so the
-   * toggle is withheld rather than disabled when the floor is not cleared — `createApiKeyAction`
+   * toggle is withheld rather than disabled when the floor is not cleared — `POST /api/internal/api-keys`
    * refuses the same request, and this keeps the form from offering it. Read access is not gated.
    */
   canGrantOrganizationWriteAccess: boolean;

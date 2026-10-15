@@ -20,10 +20,10 @@ import {
  */
 
 /** Exported server actions left to migrate. Only ever lower this. */
-const SERVER_ACTION_BASELINE = 177;
+const SERVER_ACTION_BASELINE = 174;
 
 /** Client modules that still call a server action directly. Only ever lower this. */
-const CLIENT_ACTION_IMPORTER_BASELINE = 130;
+const CLIENT_ACTION_IMPORTER_BASELINE = 129;
 
 const INTERNAL_AUTH_MODES = new Set(["session", "none"]);
 

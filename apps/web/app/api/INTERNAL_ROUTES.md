@@ -8,6 +8,8 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | Path | Methods | Auth | Audience | Location | File |
 | --- | --- | --- | --- | --- | --- |
 | `/api/envoy-auth/{...path}` | GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS | custom | gateway | `(internal)` group | `app/api/(internal)/envoy-auth/[...path]/route.ts` |
+| `/api/internal/api-keys` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/api-keys/route.ts` |
+| `/api/internal/api-keys/{apiKeyId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/api-keys/[apiKeyId]/route.ts` |
 | `/api/internal/feedback-datasets/{datasetId}/purge` | POST | session | dashboard | `/api/internal` | `app/api/internal/feedback-datasets/[datasetId]/purge/route.ts` |
 | `/api/internal/members/{userId}/reactivate` | POST | session | dashboard | `/api/internal` | `app/api/internal/members/[userId]/reactivate/route.ts` |
 | `/api/internal/retention-exemptions` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/retention-exemptions/route.ts` |
