@@ -192,13 +192,37 @@ describe("withAuthRequestBodyLimit", () => {
     expect(handler.mock.calls[1][0]).toBe(emptyPost);
   });
 
-  test("forwards the route context argument", async () => {
+  test("forwards the route context argument, with and without a body", async () => {
     const handler = vi.fn((_request: Request, _context: { params: Promise<{ all: string[] }> }) => ok());
     const context = { params: Promise.resolve({ all: ["get-session"] }) };
+    const wrapped = withAuthRequestBodyLimit(handler);
 
-    await withAuthRequestBodyLimit(handler)(new Request("http://localhost/api/auth/get-session"), context);
+    await wrapped(new Request("http://localhost/api/auth/get-session"), context);
+    await wrapped(
+      new Request("http://localhost/api/auth/sign-in/email", { method: "POST", body: "{}" }),
+      context
+    );
 
     expect(handler.mock.calls[0][1]).toBe(context);
+    expect(handler.mock.calls[1][1]).toBe(context);
+  });
+
+  test("carries the abort signal, so a client disconnect still cancels the handler", async () => {
+    const seen = vi.fn(async (_request: Request) => ok());
+    const controller = new AbortController();
+    const request = new Request("http://localhost/api/auth/sign-in/email", {
+      method: "POST",
+      body: "{}",
+      signal: controller.signal,
+    });
+
+    await withAuthRequestBodyLimit(seen)(request);
+    const forwarded = seen.mock.calls[0][0];
+    expect(forwarded).not.toBe(request);
+    expect(forwarded.signal.aborted).toBe(false);
+
+    controller.abort();
+    expect(forwarded.signal.aborted).toBe(true);
   });
 
   test("keeps a NextRequest a NextRequest when it rebuilds the body", async () => {

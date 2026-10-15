@@ -1,4 +1,4 @@
-import { readdirSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
@@ -48,6 +48,11 @@ const findRouteFiles = (dir: string, prefix = "."): string[] =>
 
 const routeFiles = findRouteFiles(__dirname).sort();
 
+// Read from source so a GET-only route is never counted as a passing 413 test it cannot run.
+const postRouteFiles = routeFiles.filter((file) =>
+  /\bPOST\b/.test(readFileSync(path.join(__dirname, file), "utf8"))
+);
+
 const loadRoute = (file: string) => import(/* @vite-ignore */ file) as Promise<RouteModule>;
 
 const HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] as const;
@@ -84,10 +89,13 @@ describe("/api/auth route surface", () => {
         expect(isAuthRequestBodyLimited(mod[method]), `${file} ${method}`).toBe(true);
       }
     });
+  });
 
-    test("a POST handler refuses an oversized body with 413 before doing any work", async () => {
+  test.each(postRouteFiles)(
+    "%s POST refuses an oversized body with 413 before doing any work",
+    async (file) => {
       const mod = await loadRoute(file);
-      if (typeof mod.POST !== "function") return;
+      expect(typeof mod.POST).toBe("function");
       const post = mod.POST as (request: Request) => Promise<Response>;
       const url = `http://localhost/api/auth/${file
         .replace(/^\.\/|\/route\.ts$/g, "")
@@ -103,8 +111,8 @@ describe("/api/auth route surface", () => {
       expect(handlerCalls).not.toHaveBeenCalled();
       expect(jacksonMock).not.toHaveBeenCalled();
       expect(prepareDcrRequestMock).not.toHaveBeenCalled();
-    });
-  });
+    }
+  );
 
   describe("the SAML callback, which sets a higher limit of its own", () => {
     const callback = (bytes: number) =>
