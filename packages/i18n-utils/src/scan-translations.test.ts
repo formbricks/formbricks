@@ -7,10 +7,71 @@ import {
   detectKeysWithSpaces,
   extractKeysFromContent,
   flattenKeys,
+  forEachConcurrently,
   parseLockfile,
   stripComments,
   validateLockfile,
 } from "./scan-translations";
+
+describe("forEachConcurrently", () => {
+  test("runs every item once, never more than the limit at a time", async () => {
+    const seen: number[] = [];
+    let inFlight = 0;
+    let peak = 0;
+    await forEachConcurrently(
+      Array.from({ length: 50 }, (_, i) => i),
+      4,
+      async (item) => {
+        inFlight += 1;
+        peak = Math.max(peak, inFlight);
+        await new Promise((resolve) => setTimeout(resolve, 1));
+        seen.push(item);
+        inFlight -= 1;
+      }
+    );
+
+    expect(seen.sort((a, b) => a - b)).toEqual(Array.from({ length: 50 }, (_, i) => i));
+    expect(peak).toBe(4);
+  });
+
+  test.each([0, -1, 2.5, Number.NaN])("refuses a concurrency of %s", async (concurrency) => {
+    await expect(forEachConcurrently([1, 2, 3], concurrency, () => Promise.resolve())).rejects.toThrow(
+      "positive integer"
+    );
+  });
+
+  test.each([1, 3])(
+    "runs every remaining item after a task rejects, then rejects with each failure (concurrency %s)",
+    async (concurrency) => {
+      const seen: number[] = [];
+      const run = forEachConcurrently([0, 1, 2, 3, 4, 5], concurrency, async (item) => {
+        await new Promise((resolve) => setTimeout(resolve, 1));
+        seen.push(item);
+        if (item === 1 || item === 4) throw new Error(`item ${item.toString()} failed`);
+      });
+
+      const failure = await run.then(
+        () => null,
+        (error: unknown) => error
+      );
+      expect(failure).toBeInstanceOf(AggregateError);
+      expect((failure as AggregateError).errors.map((error: Error) => error.message).sort()).toEqual([
+        "item 1 failed",
+        "item 4 failed",
+      ]);
+      expect(seen.sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4, 5]);
+    }
+  );
+
+  test("does nothing for no items", async () => {
+    let calls = 0;
+    await forEachConcurrently([], 8, () => {
+      calls += 1;
+      return Promise.resolve();
+    });
+    expect(calls).toBe(0);
+  });
+});
 
 describe("Translation Scanner", () => {
   describe("stripComments", () => {
