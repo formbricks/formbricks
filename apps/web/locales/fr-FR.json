@@ -483,6 +483,7 @@
     "reload_page": "Recharger la page",
     "remove": "Retirer",
     "remove_from_team": "Retirer de l'équipe",
+    "remove_item": "Supprimer {item}",
     "rename": "Renommer",
     "reorder_and_hide_columns": "Réorganiser et masquer des colonnes",
     "replace": "Remplacer",

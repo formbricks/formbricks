@@ -483,6 +483,7 @@
     "reload_page": "重新載入頁面",
     "remove": "移除",
     "remove_from_team": "從團隊中移除",
+    "remove_item": "移除 {item}",
     "rename": "重新命名",
     "reorder_and_hide_columns": "重新排序和隱藏欄位",
     "replace": "取代",

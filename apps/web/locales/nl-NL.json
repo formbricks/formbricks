@@ -483,6 +483,7 @@
     "reload_page": "Pagina herladen",
     "remove": "Verwijderen",
     "remove_from_team": "Verwijderen uit team",
+    "remove_item": "Verwijder {item}",
     "rename": "Hernoemen",
     "reorder_and_hide_columns": "Kolommen opnieuw rangschikken en verbergen",
     "replace": "Vervangen",

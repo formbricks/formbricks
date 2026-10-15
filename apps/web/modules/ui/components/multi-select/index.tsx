@@ -226,7 +226,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
               <span className="truncate">{option.label}</span>
               <button
                 type="button"
-                aria-label={`${t("common.remove")} ${option.label}`}
+                aria-label={t("common.remove_item", { item: option.label })}
                 className="ring-offset-background focus:ring-ring ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-offset-2"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {

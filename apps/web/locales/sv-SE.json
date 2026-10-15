@@ -483,6 +483,7 @@
     "reload_page": "Ladda om sidan",
     "remove": "Ta bort",
     "remove_from_team": "Ta bort från teamet",
+    "remove_item": "Ta bort {item}",
     "rename": "Byt namn",
     "reorder_and_hide_columns": "Ordna om och dölj kolumner",
     "replace": "Ersätt",
