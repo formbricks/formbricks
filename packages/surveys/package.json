@@ -10,7 +10,9 @@
     "type": "git",
     "url": "https://github.com/formbricks/formbricks"
   },
-  "sideEffects": false,
+  "sideEffects": [
+    "./src/lib/zod-jitless.ts"
+  ],
   "source": "./src/index.ts",
   "main": "./dist/index.umd.cjs",
   "module": "./dist/index.js",

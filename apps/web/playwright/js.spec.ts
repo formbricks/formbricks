@@ -1,4 +1,5 @@
-import { expect } from "@playwright/test";
+import { type Page, expect } from "@playwright/test";
+import { randomBytes } from "crypto";
 import http from "http";
 import { prisma } from "@formbricks/database";
 import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constants";
@@ -7,13 +8,13 @@ import { gotoSurveyList, gotoSurveyTemplates } from "./lib/utils";
 import { activateSurvey, useSelectedTemplate } from "./utils/helper";
 
 const HTML_TEMPLATE = `<head>
-  <script type="text/javascript">
+  <script type="text/javascript" nonce="CSP_NONCE">
     // An AMD loader stub, kept for the whole page life, so both UMD bundles (the SDK and the lazily
     // loaded survey renderer) must still take their browser-global branch on an AMD page (ENG-3657).
     window.define = function () {};
     window.define.amd = {};
   </script>
-  <script type="text/javascript">
+  <script type="text/javascript" nonce="CSP_NONCE">
     !(function () {
       var t = document.createElement("script");
       (t.type = "text/javascript"), (t.async = !0), (t.src = "http://localhost:3000/js/formbricks.umd.cjs");
@@ -30,6 +31,9 @@ const HTML_TEMPLATE = `<head>
               });
             }
           );
+          // The host page's CSP has no 'unsafe-inline' for styles, so the renderer's <style> elements
+          // only apply because they carry this nonce. Called before setup(), as the docs require.
+          window.formbricks.setNonce("CSP_NONCE");
           window.formbricks.setup({workspaceId: "WORKSPACE_ID", appUrl: "http://localhost:3000"});
         } else {
           console.error("Formbricks library failed to load properly. The formbricks object is not available.");
@@ -40,10 +44,64 @@ const HTML_TEMPLATE = `<head>
   </script>
 </head>
 
-<body style="background-color: #fff">
+<body>
   <p>This is my sample page using the Formbricks JS javascript widget</p>
 </body>
 `;
+
+// A customer-style policy for the host page, built from what the CSP section of the framework guide
+// (docs/surveys/website-app-surveys/framework-guides.mdx) tells customers to allow: the SDK host in
+// script-src/connect-src, and a per-response nonce instead of 'unsafe-inline' for styles. Anything the
+// SDK or the survey renderer needs beyond this shows up as a violation and fails the journey.
+// 'strict-dynamic' and reCAPTCHA are deliberately not covered (ENG-1878).
+const buildHostCsp = (nonce: string): string =>
+  [
+    "default-src 'self'",
+    `script-src 'nonce-${nonce}' http://localhost:3000`,
+    `style-src 'self' 'nonce-${nonce}'`,
+    "connect-src http://localhost:3000",
+    "img-src http://localhost:3000",
+    "font-src http://localhost:3000",
+  ].join("; ");
+
+type TCspViolation = { directive: string; blockedURI: string; sourceFile: string; sample: string };
+
+// Registered before navigation so nothing the page does is missed. Each document starts its own list.
+const collectCspViolations = async (page: Page): Promise<string[]> => {
+  await page.addInitScript(() => {
+    const violations: TCspViolation[] = [];
+    (window as unknown as { __cspViolations: TCspViolation[] }).__cspViolations = violations;
+    document.addEventListener(
+      "securitypolicyviolation",
+      (event) => {
+        violations.push({
+          directive: event.effectiveDirective,
+          blockedURI: event.blockedURI,
+          sourceFile: event.sourceFile,
+          sample: event.sample,
+        });
+      },
+      true
+    );
+  });
+
+  // The browser's own console report too, in case a violation fires before the listener exists.
+  const consoleMessages: string[] = [];
+  page.on("console", (message) => {
+    if (message.text().includes("Content Security Policy")) consoleMessages.push(message.text());
+  });
+  return consoleMessages;
+};
+
+const expectNoCspViolations = async (page: Page, consoleMessages: string[]): Promise<void> => {
+  const violations = await page.evaluate(
+    () => (window as unknown as { __cspViolations?: TCspViolation[] }).__cspViolations ?? []
+  );
+  expect(
+    { violations, consoleMessages },
+    `CSP violations on ${page.url()}:\n${JSON.stringify({ violations, consoleMessages }, null, 2)}`
+  ).toEqual({ violations: [], consoleMessages: [] });
+};
 
 test.describe("JS Package Test", async () => {
   let server: http.Server;
@@ -53,8 +111,12 @@ test.describe("JS Package Test", async () => {
   test.beforeAll(async () => {
     // Create a simple HTTP server
     server = http.createServer((_, res) => {
-      const htmlContent = HTML_TEMPLATE.replace("WORKSPACE_ID", workspaceId || "");
-      res.writeHead(200, { "Content-Type": "text/html" });
+      const nonce = randomBytes(16).toString("base64");
+      const htmlContent = HTML_TEMPLATE.replace("WORKSPACE_ID", workspaceId || "").replaceAll(
+        "CSP_NONCE",
+        nonce
+      );
+      res.writeHead(200, { "Content-Type": "text/html", "Content-Security-Policy": buildHostCsp(nonce) });
       res.end(htmlContent);
     });
 
@@ -69,6 +131,8 @@ test.describe("JS Package Test", async () => {
   });
 
   test("Create, display and validate PMF survey", async ({ page, users }) => {
+    const cspConsoleMessages = await collectCspViolations(page);
+
     // Create and login user
     const user = await users.create();
     await user.login();
@@ -156,6 +220,8 @@ test.describe("JS Package Test", async () => {
     const environmentResponse = page.waitForResponse((response) =>
       /\/api\/v1\/client\/[^/]+\/environment/.test(response.url())
     );
+    // Only what happens from the host page on counts towards the host-page assertion below.
+    cspConsoleMessages.length = 0;
     await page.goto("http://localhost:3004");
     await expect(page.locator("#formbricks-modal-container")).toHaveCount(1, { timeout: 120000 });
 
@@ -236,6 +302,13 @@ test.describe("JS Package Test", async () => {
       )
       .toBe(true);
 
+    // A customer reported CSP breaking the widget on their site after QA had passed it: survey-ui
+    // rendered raw `style="..."` attributes, which a nonce-based style-src blocks. Asserted after the
+    // survey was shown, answered and closed, so every card, the custom CSS and the ending are covered.
+    await test.step("the SDK journey raises no violation under the host page's CSP", async () => {
+      await expectNoCspViolations(page, cspConsoleMessages);
+    });
+
     // The `responseId` on the events is the PERSISTED id (ENG-1846). This is the only level that
     // can prove it: the id is minted by the server, so `onResponseCreated`/`onFinished` can only
     // carry it by firing from the response queue's creation ack — and the renderer that passes it
@@ -283,6 +356,7 @@ test.describe("JS Package Test", async () => {
     });
 
     // Validate displays and response
+    cspConsoleMessages.length = 0;
     await page.goto("/");
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
     await page.getByRole("link", { name: "product Market Fit (Superhuman)" }).click();
@@ -300,5 +374,17 @@ test.describe("JS Package Test", async () => {
     await expect(page.getByText("People who believe that PMF").first()).toBeVisible();
     await expect(page.getByText("Much higher response rates!").first()).toBeVisible();
     await expect(page.getByText("Make this end to end test").first()).toBeVisible();
+
+    // Our own CSP (next.config.mjs) in the browser: next-config-csp.test.ts checks the header text, but
+    // only a browser shows what it blocks — like Sentry Replay's blob: worker (ENG-3194).
+    await test.step("an app page and a link survey raise no violation under our own CSP", async () => {
+      await expectNoCspViolations(page, cspConsoleMessages);
+
+      await prisma.survey.update({ where: { id: surveyId }, data: { type: "link" } });
+      cspConsoleMessages.length = 0;
+      await page.goto(`/s/${surveyId}`);
+      await expect(page.getByRole("button", { name: "Happy to help!" })).toBeVisible();
+      await expectNoCspViolations(page, cspConsoleMessages);
+    });
   });
 });
