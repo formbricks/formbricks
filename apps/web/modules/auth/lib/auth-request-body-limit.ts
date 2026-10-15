@@ -3,8 +3,7 @@ import { NextRequest } from "next/server";
 import { RequestBodyTooLargeError, readRequestBytesWithLimit } from "@/app/lib/api/request-body";
 
 /**
- * Largest request body an `/api/auth/*` route will read unless it names its own limit (ENG-3846,
- * ENG-3248).
+ * Largest request body any `/api/auth/*` route will read (ENG-3846, ENG-3248).
  *
  * Every route under that prefix answers anonymous callers, and none of them buffers its body with a
  * bound of its own: Better Auth's handler, the dynamic-client-registration preprocessing and the SAML
@@ -13,17 +12,16 @@ import { RequestBodyTooLargeError, readRequestBytesWithLimit } from "@/app/lib/a
  * damage without stopping the work.
  *
  * 256 KiB is far above anything these routes legitimately receive — credentials, an OAuth/OIDC
- * `form_post` carrying an id_token, a ~1 KB client registration. It is also 64 times below the proxy
- * ceiling, so a body that hits the ceiling is refused here as well.
+ * `form_post` carrying an id_token, a ~1 KB client registration. The largest honest payload is the SAML
+ * callback's base64 `SAMLResponse`, and AWS, a service provider every major IdP federates into, refuses one
+ * over 100,000 characters (STS `AssumeRoleWithSAML`), so this leaves more than twice that. It is also 64
+ * times below the proxy ceiling, so a body that hits the ceiling is refused here as well.
+ *
+ * One limit for the whole surface on purpose: the SAML callback parses the XML before checking anything
+ * (jackson's `parseIssuer`), so a larger limit there would buy memory amplification for an anonymous
+ * caller, not headroom for a real IdP.
  */
 export const AUTH_REQUEST_BODY_LIMIT_BYTES = 256 * 1024;
-
-/**
- * The SAML callback is the one honest payload that can be large: a base64 `SAMLResponse` form post that is
- * signed, possibly encrypted, and carries every group the IdP asserts — and, unlike Azure AD's cap of 150
- * group claims, Okta and ADFS set none. Four times the default still sits 16 times below the proxy ceiling.
- */
-export const SAML_CALLBACK_BODY_LIMIT_BYTES = 1024 * 1024;
 
 // A registered symbol rather than a module-level WeakSet: Next can bundle this module once per route, and
 // a marker that only its own copy recognises would read as "not guarded" across that boundary.
@@ -75,15 +73,14 @@ const withBody = <R extends Request>(request: R, body: Uint8Array): R => {
  * cancelled, whether it declared its size, understated it, or carried no `Content-Length` at all.
  */
 export const withAuthRequestBodyLimit = <Args extends unknown[], R extends Request>(
-  handler: (request: R, ...args: Args) => Response | Promise<Response>,
-  limitBytes: number = AUTH_REQUEST_BODY_LIMIT_BYTES
+  handler: (request: R, ...args: Args) => Response | Promise<Response>
 ) => {
   const limited = async (request: R, ...args: Args): Promise<Response> => {
     if (!request.body) return handler(request, ...args);
 
     let body: Uint8Array;
     try {
-      body = await readRequestBytesWithLimit(request, limitBytes);
+      body = await readRequestBytesWithLimit(request, AUTH_REQUEST_BODY_LIMIT_BYTES);
     } catch (error) {
       if (error instanceof RequestBodyTooLargeError) return bodyTooLargeResponse(error.limitBytes);
       throw error;

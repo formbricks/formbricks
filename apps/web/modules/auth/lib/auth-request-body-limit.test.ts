@@ -4,7 +4,6 @@ import path from "node:path";
 import { describe, expect, test, vi } from "vitest";
 import {
   AUTH_REQUEST_BODY_LIMIT_BYTES,
-  SAML_CALLBACK_BODY_LIMIT_BYTES,
   isAuthRequestBodyLimited,
   withAuthRequestBodyLimit,
 } from "./auth-request-body-limit";
@@ -114,17 +113,6 @@ describe("withAuthRequestBodyLimit", () => {
     const response = await withAuthRequestBodyLimit(seen)(request);
 
     expect(await response.json()).toEqual({ bytes: LIMIT });
-  });
-
-  test("honours a limit the route sets for itself", async () => {
-    const handler = vi.fn(ok);
-    const wrapped = withAuthRequestBodyLimit(handler, SAML_CALLBACK_BODY_LIMIT_BYTES);
-    const post = (bytes: number) =>
-      new Request("http://localhost/api/auth/saml/callback", { method: "POST", body: new Uint8Array(bytes) });
-
-    expect((await wrapped(post(LIMIT + 1))).status).toBe(200);
-    expect((await wrapped(post(SAML_CALLBACK_BODY_LIMIT_BYTES))).status).toBe(200);
-    expect((await wrapped(post(SAML_CALLBACK_BODY_LIMIT_BYTES + 1))).status).toBe(413);
   });
 
   test("hands over a body that parses as the form or multipart post it was", async () => {
@@ -267,16 +255,10 @@ const readProxyClientMaxBodySize = (): number => {
 };
 
 describe("AUTH_REQUEST_BODY_LIMIT_BYTES", () => {
-  test.each([
-    ["default", LIMIT],
-    ["SAML callback", SAML_CALLBACK_BODY_LIMIT_BYTES],
-  ])(
-    "%s limit stays below Next's proxy buffer, which truncates a body instead of refusing it",
-    (_name, limit) => {
-      // A body the proxy cut at its ceiling is still over this limit, so it is refused here rather than
-      // reaching a handler as a silently truncated payload.
-      expect(limit).toBeLessThan(readProxyClientMaxBodySize());
-      expect(Number.isSafeInteger(limit)).toBe(true);
-    }
-  );
+  test("stays below Next's proxy buffer, which truncates a body instead of refusing it", () => {
+    // A body the proxy cut at its ceiling is still over this limit, so it is refused here rather than
+    // reaching a handler as a silently truncated payload.
+    expect(LIMIT).toBeLessThan(readProxyClientMaxBodySize());
+    expect(Number.isSafeInteger(LIMIT)).toBe(true);
+  });
 });

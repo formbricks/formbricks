@@ -3,7 +3,6 @@ import path from "node:path";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   AUTH_REQUEST_BODY_LIMIT_BYTES,
-  SAML_CALLBACK_BODY_LIMIT_BYTES,
   isAuthRequestBodyLimited,
 } from "@/modules/auth/lib/auth-request-body-limit";
 
@@ -57,8 +56,7 @@ const loadRoute = (file: string) => import(/* @vite-ignore */ file) as Promise<R
 
 const HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] as const;
 
-// Over the largest limit any route sets, so one request is oversized for all of them.
-const OVERSIZED_BYTES = SAML_CALLBACK_BODY_LIMIT_BYTES + 1;
+const OVERSIZED_BYTES = AUTH_REQUEST_BODY_LIMIT_BYTES + 1;
 
 const oversizedPost = (url: string, headers: HeadersInit = {}) =>
   new Request(url, { method: "POST", headers, body: new Uint8Array(OVERSIZED_BYTES) });
@@ -114,7 +112,7 @@ describe("/api/auth route surface", () => {
     }
   );
 
-  describe("the SAML callback, which sets a higher limit of its own", () => {
+  describe("the SAML callback, at the same boundary", () => {
     const callback = (bytes: number) =>
       new Request("http://localhost/api/auth/saml/callback", {
         method: "POST",
@@ -122,11 +120,11 @@ describe("/api/auth route surface", () => {
         body: new Uint8Array(bytes),
       });
 
-    test("takes a body past the default limit, up to its own", async () => {
+    test("a body of exactly the limit reaches the handler", async () => {
       const { POST } = await loadRoute("./saml/callback/route.ts");
 
       const response = await (POST as (request: Request) => Promise<Response>)(
-        callback(SAML_CALLBACK_BODY_LIMIT_BYTES)
+        callback(AUTH_REQUEST_BODY_LIMIT_BYTES)
       );
 
       // Not 413: the request reached the handler, which answers 403 because the licence mock has no SAML.
@@ -134,11 +132,11 @@ describe("/api/auth route surface", () => {
       expect(jacksonMock).toHaveBeenCalledTimes(1);
     });
 
-    test("refuses one byte past its own limit", async () => {
+    test("one byte more is refused before jackson sees it", async () => {
       const { POST } = await loadRoute("./saml/callback/route.ts");
 
       const response = await (POST as (request: Request) => Promise<Response>)(
-        callback(SAML_CALLBACK_BODY_LIMIT_BYTES + 1)
+        callback(AUTH_REQUEST_BODY_LIMIT_BYTES + 1)
       );
 
       expect(response.status).toBe(413);
