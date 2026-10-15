@@ -412,6 +412,28 @@ rollback procedure in [AuthZed Operations](/self-hosting/configuration/authzed-o
    docker compose --profile authzed-ops run --rm --no-deps authzed-ops upgrade check
    ```
 
+1. Refresh the bundled Cube model, so analytics charts can use members the release adds. The commands do
+   nothing when Cube runs outside this Compose project. They download both files before replacing either one,
+   and keep the previous copies in `cube/previous/`. Use the release's tag instead of `stable` when your
+   deployment is pinned.
+
+   ```bash
+   if [ -f cube/schema/FeedbackRecords.js ]; then
+     base=https://raw.githubusercontent.com/formbricks/formbricks/stable/docker
+     curl -fsSL -o cube/cube.js.download "$base/cube/cube.js" &&
+       curl -fsSL -o cube/FeedbackRecords.js.download "$base/cube/schema/FeedbackRecords.js" &&
+       mkdir -p cube/previous/schema &&
+       cp -p cube/cube.js cube/previous/cube.js &&
+       cp -p cube/schema/FeedbackRecords.js cube/previous/schema/FeedbackRecords.js &&
+       mv cube/cube.js.download cube/cube.js &&
+       {
+         # Never leave the new cube.js paired with the old model.
+         mv cube/FeedbackRecords.js.download cube/schema/FeedbackRecords.js ||
+           { cp -p cube/previous/cube.js cube/cube.js; false; }
+       }
+   fi
+   ```
+
 1. Stop the Formbricks stack
 
    ```bash
