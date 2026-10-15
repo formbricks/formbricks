@@ -160,6 +160,37 @@ export function getV3SurveyMediaInvalidParams(blocks: TV3SurveyDocument["blocks"
   ];
 }
 
+/** Every media URL the media check reads, in block/element order — what decides whether it can change. */
+function getMediaFingerprint(blocks: ReadonlyArray<Pick<TSurveyBlock, "elements">>): string {
+  return JSON.stringify(
+    blocks.map((block) =>
+      block.elements.map((element) => [
+        element.imageUrl ?? null,
+        element.videoUrl ?? null,
+        "choices" in element && Array.isArray(element.choices)
+          ? element.choices.map((choice) => ("imageUrl" in choice ? (choice.imageUrl ?? null) : null))
+          : null,
+      ])
+    )
+  );
+}
+
+/**
+ * The media check for the patch family (ENG-3975): a survey whose stored media already fails it stays
+ * patchable as long as the patch leaves every media URL where it was. Any media change is judged in full,
+ * because the check reports only its first finding under `blocks` and cannot say which URL is new.
+ */
+export function getV3SurveyIntroducedMediaInvalidParams(
+  blocks: TV3SurveyDocument["blocks"],
+  baselineBlocks: ReadonlyArray<Pick<TSurveyBlock, "elements">>
+): InvalidParam[] {
+  if (getMediaFingerprint(blocks) === getMediaFingerprint(baselineBlocks)) {
+    return [];
+  }
+
+  return getV3SurveyMediaInvalidParams(blocks);
+}
+
 /**
  * How strictly to apply the ordering rules (ENG-3069).
  *
@@ -306,7 +337,10 @@ export function validateV3SurveyDocument(
   precedence: TV3SurveyPrecedencePolicy
 ): TV3SurveyDocumentValidationResult {
   const languageInvalidParams = getV3SurveyLanguageInvalidParams(document);
-  const mediaInvalidParams = getV3SurveyMediaInvalidParams(document.blocks);
+  const mediaInvalidParams =
+    precedence.mode === "introduced"
+      ? getV3SurveyIntroducedMediaInvalidParams(document.blocks, precedence.baseline.blocks)
+      : getV3SurveyMediaInvalidParams(document.blocks);
   const invalidParams = [...languageInvalidParams, ...mediaInvalidParams];
 
   const referenceInput = toReferenceInput(document);
