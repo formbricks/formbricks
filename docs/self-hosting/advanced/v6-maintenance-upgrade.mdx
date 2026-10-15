@@ -192,9 +192,10 @@ image-pull credentials, network policy, and environment bindings for your instal
 - `DATABASE_URL`
 - `AUTHZED_ENABLED=true`, `AUTHZED_ENDPOINT`, `AUTHZED_TOKEN`, `AUTHZED_SYSTEM_KEY`, `AUTHZED_INSECURE`, and
   `AUTHZED_CONSISTENCY=fully_consistent`
-- `WEBAPP_URL`. Preparation runs the database migrations, and an installation upgrading from 5.3 or earlier
-  with MCP OAuth clients needs it: that data migration derives the clients' resource link from it, and
-  without it preparation stops with `upgrade_database_migration_failed`.
+- `WEBAPP_URL`, in every case. Preparation runs the database migrations, and the OAuth resource-link data
+  migration (`eng_2343_backfill_oauth_resource_links`, first released in 5.4.0) derives each MCP OAuth client's
+  resource link from it. Whenever that migration runs on a database with MCP OAuth clients, as in any upgrade
+  from before 5.4.0, preparation stops with `upgrade_database_migration_failed` without it.
 
 The chart's application Secret does not necessarily contain `DATABASE_URL` or the AuthZed values, which the
 chart injects separately. Prefer explicit `valueFrom.secretKeyRef` bindings to existing Secrets when possible.
