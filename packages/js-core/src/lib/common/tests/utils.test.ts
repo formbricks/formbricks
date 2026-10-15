@@ -1,5 +1,5 @@
 // utils.test.ts
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { mockSurveyId } from "@/lib/common/tests/__mocks__/config.mock";
 import {
   checkUrlMatch,
@@ -12,6 +12,7 @@ import {
   getIsDebug,
   getSecureRandom,
   getStyling,
+  getSurveyExclusionReason,
   handleUrlFilters,
   isNowExpired,
   shouldDisplayBasedOnPercentage,
@@ -1225,6 +1226,64 @@ describe("utils.ts", () => {
       });
       expect(getIsDebug()).toBe(false);
     });
+
+    describe("stays on for the tab", () => {
+      const setSearch = (search: string) =>
+        Object.defineProperty(window, "location", { value: { search }, writable: true });
+      let stored: Map<string, string>;
+
+      beforeEach(() => {
+        stored = new Map();
+        vi.stubGlobal("sessionStorage", {
+          getItem: (key: string) => stored.get(key) ?? null,
+          setItem: (key: string, value: string) => stored.set(key, value),
+          removeItem: (key: string) => stored.delete(key),
+        });
+      });
+
+      afterEach(() => {
+        // Other suites run without sessionStorage, as node does.
+        delete (globalThis as { sessionStorage?: unknown }).sessionStorage;
+      });
+
+      test("the next page load stays in debug mode without the parameter", () => {
+        setSearch("?formbricksDebug=true");
+        expect(getIsDebug()).toBe(true);
+
+        setSearch("");
+        expect(getIsDebug()).toBe(true);
+      });
+
+      test("?formbricksDebug=false turns it off for the tab", () => {
+        setSearch("?formbricksDebug=true");
+        getIsDebug();
+
+        setSearch("?formbricksDebug=false");
+        expect(getIsDebug()).toBe(false);
+
+        setSearch("");
+        expect(getIsDebug()).toBe(false);
+      });
+
+      test("with storage blocked, only the URL counts", () => {
+        vi.stubGlobal("sessionStorage", {
+          getItem: () => {
+            throw new Error("SecurityError");
+          },
+          setItem: () => {
+            throw new Error("SecurityError");
+          },
+          removeItem: () => {
+            throw new Error("SecurityError");
+          },
+        });
+
+        setSearch("?formbricksDebug=true");
+        expect(getIsDebug()).toBe(true);
+        setSearch("");
+        expect(getIsDebug()).toBe(false);
+      });
+    });
   });
 
   // ---------------------------------------------------------------------------------
@@ -1409,5 +1468,94 @@ describe("filterSurveys() — interaction targeting × recontact/display-cap mat
     const userState = buildUser(user);
     const result = filterSurveys(workspace, userState);
     expect(result.some((s) => s.id === SURVEY)).toBe(shown);
+  });
+});
+
+describe("getSurveyExclusionReason", () => {
+  // The same decision as `filterSurveys`, with the reason kept: the debug panel shows it to explain
+  // why a survey on the trigger that fired never had a chance to show.
+  const SURVEY = "e3kxlpnzmdp84op9qzxl9olj";
+  const SEGMENT = "p6yrnz3s2tvoe5r0l28unq7k";
+  const DAY = 1000 * 60 * 60 * 24;
+
+  const workspace = (cooldownDays: number): TWorkspaceState => ({
+    expiresAt: new Date(),
+    data: {
+      settings: {
+        recontactDays: cooldownDays,
+        clickOutsideClose: false,
+        overlay: "none",
+        placement: "bottomRight",
+        inAppSurveyBranding: true,
+        styling: { allowStyleOverwrite: false },
+      },
+      surveys: [],
+      actionClasses: [],
+    },
+  });
+
+  const user = (data: Partial<TUserState["data"]>): TUserState => ({
+    expiresAt: null,
+    data: {
+      userId: null,
+      contactId: null,
+      segments: [],
+      displays: [],
+      responses: [],
+      lastDisplayAt: null,
+      ...data,
+    },
+  });
+
+  const survey = (overrides: Partial<TWorkspaceStateSurvey>): TWorkspaceStateSurvey =>
+    ({
+      id: SURVEY,
+      displayOption: "respondMultiple",
+      displayLimit: null,
+      recontactDays: null,
+      segment: { id: SEGMENT, hasFilters: false },
+      ...overrides,
+    }) as TWorkspaceStateSurvey;
+
+  const shownBefore = { displays: [{ surveyId: SURVEY, createdAt: new Date() }] };
+
+  test.each([
+    ["nothing", survey({}), user({}), null],
+    ["shown once already", survey({ displayOption: "displayOnce" }), user(shownBefore), "alreadyDisplayed"],
+    [
+      "already answered",
+      survey({ displayOption: "displayMultiple" }),
+      user({ responses: [SURVEY] }),
+      "alreadyResponded",
+    ],
+    [
+      "shown as often as allowed",
+      survey({ displayOption: "displaySome", displayLimit: 1 }),
+      user(shownBefore),
+      "displayLimitReached",
+    ],
+    [
+      "inside the cooldown",
+      survey({ recontactDays: 3 }),
+      user({ lastDisplayAt: new Date(Date.now() - DAY) }),
+      "cooldown",
+    ],
+    [
+      "an anonymous visitor and a segment with filters",
+      survey({ segment: { id: SEGMENT, hasFilters: true } }),
+      user({}),
+      "segment",
+    ],
+    ["a contact outside the segment", survey({}), user({ userId: "user_abc", segments: [] }), "segment"],
+  ])("excluded by %s → %s", (_, surveyState, userState, expected) => {
+    expect(getSurveyExclusionReason(surveyState, workspace(7), userState)).toBe(expected);
+  });
+
+  test("a survey's own 0-day cooldown wins over the workspace's", () => {
+    const recent = user({ lastDisplayAt: new Date() });
+
+    expect(getSurveyExclusionReason(survey({ recontactDays: 0 }), workspace(7), recent)).toBeNull();
+    expect(getSurveyExclusionReason(survey({}), workspace(7), recent)).toBe("cooldown");
+    expect(getSurveyExclusionReason(survey({}), workspace(0), recent)).toBeNull();
   });
 });

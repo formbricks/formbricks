@@ -29,6 +29,7 @@ export function surveyToV3Distribution(survey: TSurvey): TV3SurveyDistribution {
     autoClose: nonNegativeOrNull(survey.autoClose),
     autoComplete: responseLimitOrNull(survey.autoComplete),
     delay: nonNegativeOrNull(survey.delay) ?? 0,
+    showConditions: survey.showConditions ?? null,
     triggers: surveyTriggersToV3(survey.triggers),
   };
 }

@@ -1,3 +1,4 @@
+import { DEBUG_SESSION_STORAGE_KEY } from "@/lib/common/constants";
 import type {
   TRendererCustomCss,
   TSurveyStyling,
@@ -8,6 +9,7 @@ import type {
   TWorkspaceStateSurvey,
   TWorkspaceStyling,
 } from "@/types/config";
+import type { TDebugSurveyExclusion } from "@/types/debug";
 import type { Result } from "@/types/error";
 import { type TActionClassNoCodeConfig, type TActionClassPageUrlRule } from "@/types/survey";
 
@@ -62,86 +64,72 @@ export const surveyHasSegmentFilters = (survey: TWorkspaceStateSurvey): boolean 
   return Array.isArray(segment.filters) && segment.filters.length > 0;
 };
 
-/**
- * Filters surveys based on the displayOption, recontactDays, and segments
- * @param workspace -  The workspace state
- * @param userState - The user state
- * @returns The filtered surveys
- */
+/** Why a survey is dropped before any trigger fires. The debug panel shows it to explain a no-show. */
+type TSurveyExclusionReason = TDebugSurveyExclusion;
 
-// takes the workspace and user state and returns the filtered surveys
-export const filterSurveys = (workspace: TWorkspaceState, userState: TUserState): TWorkspaceStateSurvey[] => {
-  const { settings, surveys } = workspace.data;
-  const { displays, responses, lastDisplayAt, segments, userId } = userState.data;
+const getDisplayOptionExclusion = (
+  survey: TWorkspaceStateSurvey,
+  userState: TUserState
+): TSurveyExclusionReason | null => {
+  const { displays, responses } = userState.data;
+  const displayCount = displays.filter((display) => display.surveyId === survey.id).length;
+  const hasResponded = responses.includes(survey.id);
 
-  // Function to filter surveys based on displayOption criteria
-  let filteredSurveys = surveys.filter((survey: TWorkspaceStateSurvey) => {
-    switch (survey.displayOption) {
-      case "respondMultiple":
-        return true;
-      case "displayOnce":
-        return displays.filter((display) => display.surveyId === survey.id).length === 0;
-      case "displayMultiple":
-        return responses.filter((surveyId) => surveyId === survey.id).length === 0;
-
-      case "displaySome":
-        if (survey.displayLimit === null) {
-          return true;
-        }
-
-        // Check if survey response exists, if so, stop here
-        if (responses.filter((surveyId) => surveyId === survey.id).length) {
-          return false;
-        }
-
-        // Otherwise, check if displays length is less than displayLimit
-        return displays.filter((display) => display.surveyId === survey.id).length < survey.displayLimit;
-
-      default:
-        throw Error("Invalid displayOption");
-    }
-  });
-
-  // filter surveys that meet the recontactDays criteria
-  filteredSurveys = filteredSurveys.filter((survey) => {
-    // if no survey was displayed yet, show the survey
-    if (!lastDisplayAt) {
-      return true;
-    }
-
-    // if survey has recontactDays, check if the last display was more than recontactDays ago
-    // The previous approach checked the last display for each survey which is why we still have a surveyId in the displays array.
-    // TODO: Remove the surveyId from the displays array
-    if (survey.recontactDays !== null) {
-      return diffInDays(new Date(), new Date(lastDisplayAt)) >= survey.recontactDays;
-    }
-
-    // use recontactDays of the workspace if survey does not have recontactDays
-    if (settings.recontactDays) {
-      return diffInDays(new Date(), new Date(lastDisplayAt)) >= settings.recontactDays;
-    }
-
-    // if no recontactDays is set, show the survey
-
-    return true;
-  });
-
-  if (!userId) {
-    // exclude surveys that have a segment with filters
-    return filteredSurveys.filter((survey) => {
-      return !surveyHasSegmentFilters(survey);
-    });
+  switch (survey.displayOption) {
+    case "respondMultiple":
+      return null;
+    case "displayOnce":
+      return displayCount === 0 ? null : "alreadyDisplayed";
+    case "displayMultiple":
+      return hasResponded ? "alreadyResponded" : null;
+    case "displaySome":
+      if (survey.displayLimit === null) return null;
+      if (hasResponded) return "alreadyResponded";
+      return displayCount < survey.displayLimit ? null : "displayLimitReached";
+    default:
+      throw Error("Invalid displayOption");
   }
-
-  if (!segments.length) {
-    return [];
-  }
-
-  // filter surveys based on segments
-  return filteredSurveys.filter((survey) => {
-    return survey.segment?.id && segments.includes(survey.segment.id);
-  });
 };
+
+// The cooldown counts from the visitor's last display of ANY survey. `surveyId` stays on each stored
+// display anyway: a per-survey recontact window (ENG-3571, paused) would need it, so don't remove it.
+const isInCooldown = (
+  survey: TWorkspaceStateSurvey,
+  workspace: TWorkspaceState,
+  userState: TUserState
+): boolean => {
+  const { lastDisplayAt } = userState.data;
+  if (!lastDisplayAt) return false;
+
+  // The survey's own value wins, even 0; the workspace value applies only when set and non-zero.
+  const cooldownDays = survey.recontactDays ?? (workspace.data.settings.recontactDays || null);
+  if (cooldownDays === null) return false;
+
+  return diffInDays(new Date(), new Date(lastDisplayAt)) < cooldownDays;
+};
+
+const isOutsideSegment = (survey: TWorkspaceStateSurvey, userState: TUserState): boolean => {
+  const { segments, userId } = userState.data;
+  // Anonymous visitors only see surveys whose segment has no filters.
+  if (!userId) return surveyHasSegmentFilters(survey);
+  return !(survey.segment?.id && segments.includes(survey.segment.id));
+};
+
+export const getSurveyExclusionReason = (
+  survey: TWorkspaceStateSurvey,
+  workspace: TWorkspaceState,
+  userState: TUserState
+): TSurveyExclusionReason | null => {
+  const displayOptionExclusion = getDisplayOptionExclusion(survey, userState);
+  if (displayOptionExclusion) return displayOptionExclusion;
+  if (isInCooldown(survey, workspace, userState)) return "cooldown";
+  if (isOutsideSegment(survey, userState)) return "segment";
+  return null;
+};
+
+/** The surveys this visitor can be shown at all: display option, cooldown and segment. */
+export const filterSurveys = (workspace: TWorkspaceState, userState: TUserState): TWorkspaceStateSurvey[] =>
+  workspace.data.surveys.filter((survey) => getSurveyExclusionReason(survey, workspace, userState) === null);
 
 export const getStyling = (
   settings: TWorkspaceStateSettings,
@@ -318,4 +306,24 @@ export const evaluateNoCodeConfigClick = (
   return true;
 };
 
-export const getIsDebug = (): boolean => window.location.search.includes("formbricksDebug=true");
+/**
+ * Debug mode starts with `?formbricksDebug=true` and stays on for the rest of the tab, so a multi-page
+ * site keeps it on the next page load without the parameter on every link. `?formbricksDebug=false`
+ * turns it off. Kept in sessionStorage, like the visit; with storage blocked, only the URL counts.
+ */
+export const getIsDebug = (): boolean => {
+  const { search } = window.location;
+  try {
+    if (search.includes("formbricksDebug=true")) {
+      sessionStorage.setItem(DEBUG_SESSION_STORAGE_KEY, "true");
+      return true;
+    }
+    if (search.includes("formbricksDebug=false")) {
+      sessionStorage.removeItem(DEBUG_SESSION_STORAGE_KEY);
+      return false;
+    }
+    return sessionStorage.getItem(DEBUG_SESSION_STORAGE_KEY) === "true";
+  } catch {
+    return search.includes("formbricksDebug=true");
+  }
+};

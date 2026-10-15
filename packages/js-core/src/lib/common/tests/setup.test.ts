@@ -45,6 +45,15 @@ vi.mock("@/lib/common/event-listeners", () => ({
   removeAllEventListeners: vi.fn(),
 }));
 
+// The visit store and the debug panel have their own tests; here they only need to stay out of the way.
+vi.mock("@/lib/visit/visit-tracking", () => ({
+  startVisitTracking: vi.fn(),
+}));
+
+vi.mock("@/lib/common/debug", () => ({
+  startDebugSession: vi.fn(),
+}));
+
 // 5) Mock fetchWorkspaceState
 vi.mock("@/lib/workspace/state", () => ({
   fetchWorkspaceState: vi.fn(),

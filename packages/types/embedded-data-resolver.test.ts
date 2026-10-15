@@ -826,6 +826,41 @@ describe("RESERVED_FIELD_CATALOG", () => {
       },
       { name: "timezone", dataType: "string", availability: "client", privacy: "keep", display: "secondary" },
       { name: "locale", dataType: "string", availability: "client", privacy: "keep", display: "secondary" },
+      {
+        name: "visitPagesViewed",
+        dataType: "number",
+        availability: "client",
+        privacy: "keep",
+        display: "secondary",
+      },
+      {
+        name: "visitUniquePagesViewed",
+        dataType: "number",
+        availability: "client",
+        privacy: "keep",
+        display: "secondary",
+      },
+      {
+        name: "visitTimeOnSite",
+        dataType: "number",
+        availability: "client",
+        privacy: "keep",
+        display: "secondary",
+      },
+      {
+        name: "visitEntryReferrer",
+        dataType: "string",
+        availability: "client",
+        privacy: "redactQuery",
+        display: "secondary",
+      },
+      {
+        name: "visitUrls",
+        dataType: "string",
+        availability: "client",
+        privacy: "keep",
+        display: "secondary",
+      },
     ]);
   });
 
@@ -1758,6 +1793,11 @@ describe("listDisplayableReservedFields", () => {
       viewportHeight: 800,
       timezone: "Europe/Berlin",
       locale: "de-AT",
+      visitPagesViewed: 4,
+      visitUniquePagesViewed: 3,
+      visitTimeOnSite: 125,
+      visitEntryReferrer: "https://www.google.com/",
+      visitUrls: "/ · /pricing · /plans · /pricing",
     },
   };
 
@@ -1779,7 +1819,7 @@ describe("listDisplayableReservedFields", () => {
     ]);
   });
 
-  test("secondary carries the browser-runtime context, plus ipAddress", () => {
+  test("secondary carries the browser-runtime context and the visit, plus ipAddress", () => {
     expect(names("secondary")).toStrictEqual([
       "ipAddress",
       "pagePath",
@@ -1795,6 +1835,11 @@ describe("listDisplayableReservedFields", () => {
       "viewportHeight",
       "timezone",
       "locale",
+      "visitPagesViewed",
+      "visitUniquePagesViewed",
+      "visitTimeOnSite",
+      "visitEntryReferrer",
+      "visitUrls",
     ]);
   });
 

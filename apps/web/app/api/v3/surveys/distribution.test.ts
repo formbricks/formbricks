@@ -26,8 +26,28 @@ describe("surveyToV3Distribution", () => {
       autoClose: 30,
       autoComplete: 100,
       delay: 5,
+      showConditions: null,
       triggers: [{ actionClassId: "claa1234567890123456789012" }],
     });
+  });
+
+  test("returns stored show conditions as they are", () => {
+    const showConditions = {
+      id: "grp1",
+      connector: "and",
+      conditions: [
+        {
+          id: "cnd1",
+          leftOperand: { type: "visit", value: "pagesViewed" },
+          operator: "isGreaterThanOrEqual",
+          rightOperand: { type: "static", value: 3 },
+        },
+      ],
+    };
+
+    expect(
+      surveyToV3Distribution({ ...appSurvey, showConditions } as unknown as TSurvey).showConditions
+    ).toEqual(showConditions);
   });
 
   test("clamps legacy out-of-bounds values to schema-valid ones so reconstruction never fails", () => {
@@ -62,6 +82,7 @@ describe("v3DistributionToScalars", () => {
       autoClose: null,
       autoComplete: null,
       delay: 0,
+      showConditions: null,
       triggers: [{ actionClassId: "claa1234567890123456789012" }],
     };
 
@@ -76,6 +97,7 @@ describe("v3DistributionToScalars", () => {
       autoClose: null,
       autoComplete: null,
       delay: 0,
+      showConditions: null,
     });
   });
 });

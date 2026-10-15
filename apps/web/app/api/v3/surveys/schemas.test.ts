@@ -515,6 +515,91 @@ describe("ZV3CreateSurveyBody", () => {
     expect(zeroLimit.success).toBe(false);
   });
 
+  describe("distribution.showConditions", () => {
+    const cmsRule = {
+      id: "grp1",
+      connector: "and",
+      conditions: [
+        {
+          id: "cnd1",
+          leftOperand: { type: "page", value: "currentUrl" },
+          operator: "containsAnyOf",
+          rightOperand: { type: "static", value: ["/plan-compare", "/drug-coverage"] },
+        },
+        {
+          id: "grp2",
+          connector: "or",
+          conditions: [
+            {
+              id: "cnd2",
+              leftOperand: { type: "visit", value: "timeOnSite" },
+              operator: "isGreaterThanOrEqual",
+              rightOperand: { type: "static", value: 120 },
+            },
+            {
+              id: "cnd3",
+              leftOperand: { type: "visit", value: "pagesViewed" },
+              operator: "isGreaterThanOrEqual",
+              rightOperand: { type: "static", value: 3 },
+            },
+          ],
+        },
+      ],
+    };
+
+    test("accepts a rule and defaults to null when omitted", () => {
+      const withRule = ZV3CreateSurveyBody.safeParse({
+        ...validCreateBody,
+        type: "app",
+        distribution: { showConditions: cmsRule },
+      });
+      const without = ZV3CreateSurveyBody.safeParse({ ...validCreateBody, type: "app", distribution: {} });
+
+      expect(withRule.success && withRule.data.distribution?.showConditions).toEqual(cmsRule);
+      expect(without.success && without.data.distribution?.showConditions).toBeNull();
+    });
+
+    test("stores an empty group as null", () => {
+      const result = ZV3CreateSurveyBody.safeParse({
+        ...validCreateBody,
+        type: "app",
+        distribution: { showConditions: { id: "grp1", connector: "and", conditions: [] } },
+      });
+
+      expect(result.success && result.data.distribution?.showConditions).toBeNull();
+    });
+
+    test("refuses a condition that cannot work, pointing at the field", () => {
+      const result = ZV3CreateSurveyBody.safeParse({
+        ...validCreateBody,
+        type: "app",
+        distribution: {
+          showConditions: {
+            id: "grp1",
+            connector: "and",
+            conditions: [
+              {
+                id: "cnd1",
+                leftOperand: { type: "visit", value: "pagesViewed" },
+                operator: "contains",
+                rightOperand: { type: "static", value: "3" },
+              },
+            ],
+          },
+        },
+      });
+
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ name: "distribution.showConditions.conditions.0.operator" }),
+          ])
+        );
+      }
+    });
+  });
+
   test("accepts displayPercentage with any displayOption (independent throttle)", () => {
     const result = ZV3CreateSurveyBody.safeParse({
       ...validCreateBody,

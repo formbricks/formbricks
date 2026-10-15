@@ -159,6 +159,8 @@ async function buildV3AppSurveyPatchWrites(params: {
   const resolvedTriggers = resolveV3SurveyTriggers(distribution.triggers, actionClasses);
 
   Object.assign(data, v3DistributionToScalars(distribution));
+  // A nullable JSON column takes `Prisma.DbNull`, not `null`, to store "no conditions".
+  if (distribution.showConditions === null) data.showConditions = Prisma.DbNull;
   data.triggers = handleTriggerUpdates(resolvedTriggers, currentSurvey.triggers, actionClasses);
 
   const nextFilters = document.targeting?.filters ?? [];

@@ -35,6 +35,7 @@ export const isShowConditionGroup = (
 
 type TResolvedOperand =
   | { kind: "text"; actual: string | string[]; values: string[] }
+  | { kind: "queryParam"; actual: string[]; values: string[] }
   | { kind: "number"; actual: number }
   | { kind: "missing" };
 
@@ -88,8 +89,12 @@ const resolveOperand = (
       return text(context.url);
     case "pageReferrer":
       return text(context.pageReferrer);
-    case "queryParam":
-      return textList(getQueryParamValues(context.url, condition.leftOperand.meta?.key ?? ""));
+    case "queryParam": {
+      const key = condition.leftOperand.meta?.key;
+      if (!key) return MISSING;
+      const values = getQueryParamValues(context.url, key);
+      return { kind: "queryParam", actual: values, values };
+    }
     case "deviceType":
       return text(context.device.deviceType);
     case "browser":
@@ -135,15 +140,19 @@ const getTextMatcher = (operator: string, expected: unknown): ((value: string) =
 // positive operator passes when any value matches; a negated one passes when none does — so an
 // absent query parameter passes "does not equal" and fails "equals".
 const evaluateText = (values: string[], operator: string, expected: unknown): boolean => {
-  // Presence ignores the value, so `?source=` counts as set.
-  if (operator === "isSet") return values.length > 0;
-  if (operator === "isNotSet") return values.length === 0;
-
   const positiveOperator = NEGATED_OPERATORS.get(operator) ?? operator;
   const matches = getTextMatcher(positiveOperator, expected);
   if (!matches) return false;
   const anyMatches = values.some((value) => matches(value.toLowerCase()));
   return positiveOperator === operator ? anyMatches : !anyMatches;
+};
+
+// A query parameter is the only operand that can be absent, so only it answers `isSet` / `isNotSet`.
+// Presence ignores the value: `?source=` counts as set.
+const evaluateQueryParam = (values: string[], operator: string, expected: unknown): boolean => {
+  if (operator !== "isSet" && operator !== "isNotSet") return evaluateText(values, operator, expected);
+  if (expected !== undefined) return false;
+  return operator === "isSet" ? values.length > 0 : values.length === 0;
 };
 
 const evaluateNumber = (actual: number, operator: string, expected: unknown): boolean => {
@@ -174,6 +183,9 @@ const evaluateCondition = (
 
   let passed = false;
   if (resolved.kind === "text") passed = evaluateText(resolved.values, condition.operator, expected);
+  if (resolved.kind === "queryParam") {
+    passed = evaluateQueryParam(resolved.values, condition.operator, expected);
+  }
   if (resolved.kind === "number") passed = evaluateNumber(resolved.actual, condition.operator, expected);
 
   results.push({
