@@ -273,6 +273,7 @@ test.describe("Feedback sources page", () => {
 
     await page.goto(`/workspaces/${workspaceId}/unify/sources`, { waitUntil: "domcontentloaded" });
     const suggestion = page.getByTestId("feedback-source-suggestion").filter({ hasText: survey.name });
+    // Skipped, not failed, where the licence lacks the feature: the page is an upgrade prompt there.
     test.skip(
       await isBehindUpgradePrompt(page, suggestion),
       "The E2E licence does not include Unify Feedback."

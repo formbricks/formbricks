@@ -24,6 +24,7 @@ test.describe("Feedback datasets", () => {
     await page.goto(`/organizations/${organizationId}/settings/feedback-directories`, {
       waitUntil: "domcontentloaded",
     });
+    // Skipped, not failed, where the licence lacks the feature: the page is an upgrade prompt there.
     test.skip(
       await isBehindUpgradePrompt(page, page.getByRole("button", { name: "Create dataset" })),
       "The E2E licence does not include feedback datasets."

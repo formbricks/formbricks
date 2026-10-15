@@ -112,9 +112,14 @@ export const listRouteFiles = (): TRouteFile[] =>
 /** The paths published in the public v3 OpenAPI bundle, with `{param}` names normalized away. */
 export const readPublicBundlePaths = (): Set<string> => {
   const bundle = readFileSync(OPENAPI_BUNDLE, "utf8");
-  return new Set(
-    [...bundle.matchAll(/^ {2}(\/[^:\s]+):[ \t]*$/gm)].map((match) => normalizePathParams(match[1]))
-  );
+  // A path is a key indented by exactly two spaces under `paths:` — `  /api/v3/...:`.
+  const paths = bundle
+    .split("\n")
+    .map((line) => line.trimEnd())
+    .filter((line) => line.startsWith("  /") && !line.startsWith("   ") && line.endsWith(":"))
+    .map((line) => line.slice(2, -1))
+    .filter((path) => !/[\s:]/.test(path));
+  return new Set(paths.map(normalizePathParams));
 };
 
 /** `/a/{x}/b` and `/a/{y}/b` are the same route: compare paths with parameter names erased. */

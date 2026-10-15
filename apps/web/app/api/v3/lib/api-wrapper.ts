@@ -724,29 +724,27 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         return authResult.response;
       }
 
-      // Before rate limiting, so a forged request spends nothing; after authentication, because whether
-      // the check applies depends on how the caller authenticated (see `origin-check.ts`).
-      const crossOriginResponse = refuseCrossOriginOrContinue({
-        req,
-        authMode: auth,
-        authentication: authResult.authentication,
-        requestId,
-        instance,
-        log,
-      });
-      if (crossOriginResponse) {
-        return crossOriginResponse;
-      }
-
-      const rateLimitResponse = await applyV3RateLimitOrRespond({
-        authentication: authResult.authentication,
-        enabled: rateLimit,
-        config: customRateLimitConfig ?? rateLimitConfigs.api.v3,
-        requestId,
-        log,
-      });
-      if (rateLimitResponse) {
-        return rateLimitResponse;
+      // The cross-origin check runs before rate limiting, so a forged request spends nothing, and after
+      // authentication, because whether it applies depends on how the caller authenticated
+      // (see `origin-check.ts`).
+      const guardResponse =
+        refuseCrossOriginOrContinue({
+          req,
+          authMode: auth,
+          authentication: authResult.authentication,
+          requestId,
+          instance,
+          log,
+        }) ??
+        (await applyV3RateLimitOrRespond({
+          authentication: authResult.authentication,
+          enabled: rateLimit,
+          config: customRateLimitConfig ?? rateLimitConfigs.api.v3,
+          requestId,
+          log,
+        }));
+      if (guardResponse) {
+        return guardResponse;
       }
 
       if (concurrency) {

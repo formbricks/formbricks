@@ -47,6 +47,8 @@ describe("internal routes", () => {
 
   test("none of them is published in the public v3 OpenAPI bundle", () => {
     const publicPaths = readPublicBundlePaths();
+    // An unparsed bundle would make the check below pass on nothing.
+    expect(publicPaths.size).toBeGreaterThan(0);
     const published = internalRoutes.filter((route) => publicPaths.has(normalizePathParams(route.path)));
     expect(published.map((route) => route.path)).toEqual([]);
   });
