@@ -351,9 +351,11 @@ result before pulling. An already-updated or custom Valkey image is left unchang
 and its AOF data are preserved.
 
 While the stack is stopped, the updater also refreshes the bundled Cube model (`cube/cube.js` and
-`cube/schema/FeedbackRecords.js`) from the current release, so analytics charts can use members a release adds.
+`cube/schema/FeedbackRecords.js`), so analytics charts can use members a release adds. It downloads the files
+of the release your Formbricks image runs: the `stable` branch for `latest`, or the tag the image is pinned to.
 It keeps the previous files in `cube/previous/`. A file it cannot download or back up is left as it was; the
-updater prints the command to retry and finishes the update.
+updater prints the command to retry and finishes the update. An image pinned to anything else, such as a
+digest, leaves both files unchanged.
 
 Existing one-click installations keep the database credentials in their local `docker-compose.yml` or `.env`.
 The update command does not regenerate or rotate them.

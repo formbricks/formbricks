@@ -1309,28 +1309,59 @@ migrate_legacy_valkey_image() {
   echo "✅ Updated bundled Valkey to the native amd64/arm64 image. Backup: $backup_file"
 }
 
+# The git ref holding the Cube model that matches the Formbricks image: its release tag when the image is pinned
+# to one, stable for latest. Prints nothing when the image names no single release, such as a digest pin.
+formbricks_release_ref() {
+  local images tag
+
+  images=$(sudo docker compose config --images 2>/dev/null | grep -E '^ghcr\.io/formbricks/formbricks([:@]|$)' | sort -u) || true
+  # The app, migration and AuthZed services share the image; if they disagree there is no one release to match.
+  [[ -n "$images" && "$images" != *$'\n'* ]] || return 0
+
+  case "$images" in
+    ghcr.io/formbricks/formbricks | ghcr.io/formbricks/formbricks:latest) echo "stable" ;;
+    ghcr.io/formbricks/formbricks:*)
+      tag="${images#ghcr.io/formbricks/formbricks:}"
+      tag="${tag%%@*}"
+      if [[ "$tag" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then echo "$tag"; fi
+      ;;
+  esac
+}
+
 keep_current_cube_file() {
-  local cube_file="$1" download_file="$2" reason="$3"
+  local cube_file="$1" download_file="$2" files_url="$3" reason="$4"
+  # Not in cube/previous, which may be what failed, nor in cube/schema, which Cube loads as a whole.
+  local retry_backup="cube/${cube_file##*/}.before-update"
 
   rm -f "$download_file"
   echo "⚠️ $reason, so the existing one is kept. To refresh it later, run:"
   # The updater is started from the directory above this one, so the command enters it first.
-  echo "   cd $(printf '%q' "$PWD") && curl -fsSL -o $download_file $stable_docker_files_url/$cube_file && mv $download_file $cube_file && sudo docker compose up -d --force-recreate cube"
+  echo "   cd $(printf '%q' "$PWD") && curl -fsSL -o $download_file $files_url/$cube_file && cp -p $cube_file $retry_backup && mv $download_file $cube_file && sudo docker compose up -d --force-recreate cube"
 }
 
 # Only install downloaded the Cube model, so an update kept serving the previous release's model to the new
 # app, whose charts query members that model lacks (ENG-3951). Nothing here may stop the update, because the
 # stack is already down: any failure keeps the current file, which Cube still starts with.
 refresh_bundled_cube_files() {
-  local cube_file download_file backup_file
+  local cube_file download_file backup_file release_ref="" files_url=""
 
   for cube_file in "${bundled_cube_files[@]}"; do
     # Installations that run Cube elsewhere have no bundled model to refresh.
     [[ -f "$cube_file" ]] || continue
 
+    if [[ -z "$files_url" ]]; then
+      release_ref=$(formbricks_release_ref)
+      if [[ -z "$release_ref" ]]; then
+        echo "⚠️ The Formbricks image is not pinned to latest or a release tag, so the Cube model files were left as they were."
+        echo "   To match them to your image: https://formbricks.com/docs/self-hosting/advanced/migration#cube-model-files-for-docker"
+        return 0
+      fi
+      files_url="https://raw.githubusercontent.com/formbricks/formbricks/$release_ref/docker"
+    fi
+
     download_file="${cube_file}.download"
-    if ! curl -fsSL -o "$download_file" "$stable_docker_files_url/$cube_file"; then
-      keep_current_cube_file "$cube_file" "$download_file" "Could not download the current $cube_file"
+    if ! curl -fsSL -o "$download_file" "$files_url/$cube_file"; then
+      keep_current_cube_file "$cube_file" "$download_file" "$files_url" "Could not download $cube_file from $release_ref"
       continue
     fi
 
@@ -1342,14 +1373,14 @@ refresh_bundled_cube_files() {
     # Kept outside cube/schema: Cube mounts that whole directory as its model and would load the backup too.
     backup_file="cube/previous/${cube_file#cube/}"
     if ! { mkdir -p "$(dirname "$backup_file")" && cp -p "$cube_file" "$backup_file"; }; then
-      keep_current_cube_file "$cube_file" "$download_file" "Could not back up $cube_file to $backup_file"
+      keep_current_cube_file "$cube_file" "$download_file" "$files_url" "Could not back up $cube_file to $backup_file"
       continue
     fi
     if ! mv "$download_file" "$cube_file"; then
-      keep_current_cube_file "$cube_file" "$download_file" "Could not replace $cube_file"
+      keep_current_cube_file "$cube_file" "$download_file" "$files_url" "Could not replace $cube_file"
       continue
     fi
-    echo "✅ Updated $cube_file to the current release. Backup: $backup_file"
+    echo "✅ Updated $cube_file to the $release_ref model. Backup: $backup_file"
   done
 }
 

@@ -1131,10 +1131,12 @@ describe("docker/formbricks.sh Cube model refresh (ENG-3951)", () => {
     withCubeFiles,
     downloadFails = false,
     backupBlocked = false,
+    formbricksImage = "ghcr.io/formbricks/formbricks:latest",
   }: {
     withCubeFiles: boolean;
     downloadFails?: boolean;
     backupBlocked?: boolean;
+    formbricksImage?: string;
   }) => {
     const tempDir = createTempDir();
     const installationDir = join(tempDir, "formbricks");
@@ -1158,7 +1160,15 @@ describe("docker/formbricks.sh Cube model refresh (ENG-3951)", () => {
     }
     writeFileSync(
       join(binDir, "sudo"),
-      '#!/bin/sh\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\ncase "$*" in *"config --services") printf "authzed-ops\\nhub-worker\\nspicedb\\n" ;; esac\n',
+      [
+        "#!/bin/sh",
+        'printf "%s\\n" "$*" >> "$COMMAND_LOG"',
+        'case "$*" in',
+        '  *"config --services") printf "authzed-ops\\nhub-worker\\nspicedb\\n" ;;',
+        '  *"config --images") printf "pgvector/pgvector:pg18\\n%s\\n%s\\n" "$FORMBRICKS_IMAGE" "$FORMBRICKS_IMAGE" ;;',
+        "esac",
+        "",
+      ].join("\n"),
       { mode: 0o700 }
     );
     // Serves the release's copy of whatever file is requested, or fails like an unreachable GitHub.
@@ -1180,7 +1190,7 @@ describe("docker/formbricks.sh Cube model refresh (ENG-3951)", () => {
     const result = spawnSync("bash", ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath], {
       cwd: tempDir,
       encoding: "utf8",
-      env: { ...env, DOWNLOAD_FAILS: downloadFails ? "1" : "" },
+      env: { ...env, DOWNLOAD_FAILS: downloadFails ? "1" : "", FORMBRICKS_IMAGE: formbricksImage },
     });
 
     // Runs a printed command the way an operator would: pasted where they started the updater, once the
@@ -1232,7 +1242,7 @@ describe("docker/formbricks.sh Cube model refresh (ENG-3951)", () => {
     const model = join(installationDir, "cube", "schema", "FeedbackRecords.js");
 
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain("Could not download the current cube/schema/FeedbackRecords.js");
+    expect(result.stdout).toContain("Could not download cube/schema/FeedbackRecords.js from stable");
     expect(readFileSync(model, "utf8")).toBe("// previous model\n");
     expect(readdirSync(join(installationDir, "cube", "schema"))).toEqual(["FeedbackRecords.js"]);
     expect(existsSync(join(installationDir, "cube", "previous"))).toBe(false);
@@ -1244,15 +1254,58 @@ describe("docker/formbricks.sh Cube model refresh (ENG-3951)", () => {
     expect(readdirSync(join(installationDir, "cube", "schema"))).toEqual(["FeedbackRecords.js"]);
   });
 
-  test("keeps the current model and finishes the update when the backup cannot be written", () => {
-    const { result, installationDir, commands } = runUpdate({ withCubeFiles: true, backupBlocked: true });
+  test("keeps the current model when the backup cannot be written, and the retry still backs it up", () => {
+    const { result, installationDir, commands, runAsOperator } = runUpdate({
+      withCubeFiles: true,
+      backupBlocked: true,
+    });
+    const model = join(installationDir, "cube", "schema", "FeedbackRecords.js");
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("Could not back up cube/schema/FeedbackRecords.js");
-    expect(readFileSync(join(installationDir, "cube", "schema", "FeedbackRecords.js"), "utf8")).toBe(
+    expect(readFileSync(model, "utf8")).toBe("// previous model\n");
+    expect(readdirSync(join(installationDir, "cube", "schema"))).toEqual(["FeedbackRecords.js"]);
+    expect(commands.at(-1)).toBe("docker compose up -d");
+
+    // cube/previous is still unusable, so the retry has to keep its own copy before replacing the model.
+    const retry = runAsOperator(retryCommandFor(result.stdout, "cube/schema/FeedbackRecords.js"));
+    expect(retry.status).toBe(0);
+    expect(readFileSync(model, "utf8")).toBe("// release FeedbackRecords.js\n");
+    expect(readFileSync(join(installationDir, "cube", "FeedbackRecords.js.before-update"), "utf8")).toBe(
       "// previous model\n"
     );
     expect(readdirSync(join(installationDir, "cube", "schema"))).toEqual(["FeedbackRecords.js"]);
+  });
+
+  test("serves the model of the release the Formbricks image is pinned to", () => {
+    const { result, installationDir, commands } = runUpdate({
+      withCubeFiles: true,
+      formbricksImage: "ghcr.io/formbricks/formbricks:6.0.2",
+    });
+    const pinnedUrl = "https://raw.githubusercontent.com/formbricks/formbricks/6.0.2/docker";
+
+    expect(result.status).toBe(0);
+    expect(commands.filter((command) => command.startsWith("curl "))).toEqual([
+      `curl ${pinnedUrl}/cube/cube.js`,
+      `curl ${pinnedUrl}/cube/schema/FeedbackRecords.js`,
+    ]);
+    expect(readFileSync(join(installationDir, "cube", "schema", "FeedbackRecords.js"), "utf8")).toBe(
+      "// release FeedbackRecords.js\n"
+    );
+  });
+
+  test("leaves the model alone when the image names no release", () => {
+    const { result, installationDir, commands } = runUpdate({
+      withCubeFiles: true,
+      formbricksImage: `ghcr.io/formbricks/formbricks@sha256:${"a".repeat(64)}`,
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("migration#cube-model-files-for-docker");
+    expect(commands.some((command) => command.startsWith("curl "))).toBe(false);
+    expect(readFileSync(join(installationDir, "cube", "schema", "FeedbackRecords.js"), "utf8")).toBe(
+      "// previous model\n"
+    );
     expect(commands.at(-1)).toBe("docker compose up -d");
   });
 

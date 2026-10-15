@@ -482,9 +482,11 @@ breakdown** chart presets use them. On Docker the model is two files next to you
 `'npsCount' not found`.
 
 - **One-click:** `./formbricks.sh update`, run with the current updater as described under
-  [Update](/self-hosting/setup/one-click#update), refreshes both files while the stack is stopped. It keeps the
-  previous copies in `cube/previous/`. A file that cannot be downloaded or backed up is left as it was, and the
-  update finishes and prints the command to retry.
+  [Update](/self-hosting/setup/one-click#update), refreshes both files while the stack is stopped. It takes them
+  from the release your Formbricks image runs, and keeps the previous copies in `cube/previous/`. A file that
+  cannot be downloaded or backed up is left as it was, and the update finishes and prints the command to retry.
+  If the image is pinned to a digest or a custom tag, the updater leaves both files alone; use the Docker
+  Compose step below with your release's tag.
 - **Docker Compose:** run the Cube refresh step of the [Docker update](/self-hosting/setup/docker#update) from
   the directory containing your `docker-compose.yml`. If you refresh outside an update, recreate Cube
   afterwards with `docker compose up -d --force-recreate cube`.
