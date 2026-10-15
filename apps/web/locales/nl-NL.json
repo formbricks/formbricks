@@ -3377,7 +3377,6 @@
         "only_org_owner_can_perform_action": "Alleen organisatie-eigenaren hebben toegang tot deze instelling.",
         "organization_created_successfully": "Organisatie succesvol aangemaakt!",
         "organization_deleted_successfully": "Organisatie succesvol verwijderd.",
-        "organization_deletion_disabled": "Het verwijderen van organisaties is uitgeschakeld.",
         "organization_invite_link_ready": "De uitnodigingslink voor uw organisatie is gereed!",
         "organization_name": "Organisatienaam",
         "organization_name_description": "Geef uw organisatie een beschrijvende naam.",

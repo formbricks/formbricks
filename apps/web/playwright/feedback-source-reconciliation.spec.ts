@@ -2,7 +2,7 @@ import { type Page, expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES } from "@formbricks/types/feedback-source";
 import { test } from "./lib/fixtures";
-import { createSurveyFromScratch, publishSurvey } from "./utils/helper";
+import { createSurveyFromScratch, isBehindUpgradePrompt, publishSurvey } from "./utils/helper";
 
 // ENG-2064. A feedback source stores one mapping row per survey question it publishes to Hub, and the
 // publish path iterates those rows rather than the survey. So when a survey is edited, any drift
@@ -272,13 +272,14 @@ test.describe("Feedback sources page", () => {
     const sourceRow = () => page.getByRole("row").filter({ hasText: survey.name });
 
     await page.goto(`/workspaces/${workspaceId}/unify/sources`, { waitUntil: "domcontentloaded" });
+    const suggestion = page.getByTestId("feedback-source-suggestion").filter({ hasText: survey.name });
+    test.skip(
+      await isBehindUpgradePrompt(page, suggestion),
+      "The E2E licence does not include Unify Feedback."
+    );
 
     await test.step("add a source from the suggestion", async () => {
-      await page
-        .getByText(survey.name)
-        .locator("xpath=ancestor::div[contains(@class,'grid')][1]")
-        .getByRole("button", { name: "Import responses" })
-        .click();
+      await suggestion.getByRole("button", { name: "Import responses" }).click();
 
       await expect.poll(storedSource).toMatchObject({ status: "active", formbricksMappings: [{ surveyId }] });
       await expect(sourceRow()).toBeVisible();

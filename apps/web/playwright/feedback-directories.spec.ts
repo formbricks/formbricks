@@ -1,13 +1,14 @@
 import { expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
+import { isBehindUpgradePrompt } from "./utils/helper";
 
 /**
  * Feedback datasets (feedback directories) on the organization settings page: create one, rename it,
  * archive it and bring it back. Asserted on what the page shows and what the database holds, so it holds
  * before and after the page moved from server actions onto `/api/internal/feedback-datasets` (ENG-3984).
  *
- * Datasets are an Enterprise feature: this needs the licence the E2E stack runs with.
+ * Datasets are an Enterprise feature: the spec skips, saying why, where the E2E licence lacks them.
  */
 test.describe("Feedback datasets", () => {
   test("creates, renames, archives and unarchives a dataset", async ({ page, users }) => {
@@ -23,6 +24,10 @@ test.describe("Feedback datasets", () => {
     await page.goto(`/organizations/${organizationId}/settings/feedback-directories`, {
       waitUntil: "domcontentloaded",
     });
+    test.skip(
+      await isBehindUpgradePrompt(page, page.getByRole("button", { name: "Create dataset" })),
+      "The E2E licence does not include feedback datasets."
+    );
 
     const row = (rowName: string) => page.getByRole("row").filter({ hasText: rowName });
     const stored = () =>

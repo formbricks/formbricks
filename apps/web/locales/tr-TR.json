@@ -3377,7 +3377,6 @@
         "only_org_owner_can_perform_action": "Bu ayara yalnızca organizasyon sahipleri erişebilir.",
         "organization_created_successfully": "Organizasyon başarıyla oluşturuldu",
         "organization_deleted_successfully": "Organizasyon başarıyla silindi",
-        "organization_deletion_disabled": "Organizasyon silme işlemi devre dışı.",
         "organization_invite_link_ready": "Organizasyon davet bağlantınız hazır!",
         "organization_name": "Organizasyon Adı",
         "organization_name_description": "Organizasyonunuza açıklayıcı bir ad verin.",

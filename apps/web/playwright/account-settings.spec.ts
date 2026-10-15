@@ -98,7 +98,10 @@ test.describe("Account settings", () => {
       await expect(nameInput).toHaveValue(name);
 
       await nameInput.fill(`Renamed ${run}`);
+      // The form reloads the page once the name is saved; wait for that before the next step fills it in.
+      const reloaded = page.waitForEvent("load");
       await page.getByRole("button", { name: "Update" }).click();
+      await reloaded;
 
       await expect(page.getByRole("textbox", { name: "Full name" })).toHaveValue(`Renamed ${run}`);
       await expect.poll(async () => (await storedUser(user.id)).name).toBe(`Renamed ${run}`);

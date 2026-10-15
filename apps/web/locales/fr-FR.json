@@ -3377,7 +3377,6 @@
         "only_org_owner_can_perform_action": "Seules les personnes ayant un rôle d'administrateur dans l'organisation peuvent accéder à ce paramètre.",
         "organization_created_successfully": "Organisation créée avec succès !",
         "organization_deleted_successfully": "Organisation supprimée avec succès.",
-        "organization_deletion_disabled": "La suppression des organisations est désactivée.",
         "organization_invite_link_ready": "Le lien d'invitation de votre organisation est prêt !",
         "organization_name": "Nom de l'organisation",
         "organization_name_description": "Attribuez un nom descriptif à votre organisation.",

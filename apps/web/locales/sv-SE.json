@@ -3377,7 +3377,6 @@
         "only_org_owner_can_perform_action": "Endast organisationsägare kan komma åt denna inställning.",
         "organization_created_successfully": "Organisation skapad!",
         "organization_deleted_successfully": "Organisation borttagen.",
-        "organization_deletion_disabled": "Borttagning av organisationer är inaktiverad.",
         "organization_invite_link_ready": "Din organisationsinbjudningslänk är redo!",
         "organization_name": "Organisationsnamn",
         "organization_name_description": "Ge din organisation ett beskrivande namn.",

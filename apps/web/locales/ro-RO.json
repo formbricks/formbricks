@@ -3377,7 +3377,6 @@
         "only_org_owner_can_perform_action": "Doar proprietarii organizației pot accesa această setare.",
         "organization_created_successfully": "Organizație creată cu succes!",
         "organization_deleted_successfully": "Organizație ștearsă cu succes!",
-        "organization_deletion_disabled": "Ștergerea organizațiilor este dezactivată.",
         "organization_invite_link_ready": "Linkul de invitație al organizației tale este gata!",
         "organization_name": "Nume Organizație",
         "organization_name_description": "Oferiți organizației dumneavoastră un nume descriptiv.",
