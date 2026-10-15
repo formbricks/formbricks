@@ -21,10 +21,38 @@ const verboseGroups = (count: number) =>
   "</saml2:Attribute></saml2:AttributeStatement></saml2:Assertion>" +
   RESPONSE_TAIL;
 
+/** Group values written as AD distinguished names: five `=` of text per group, and no attributes. */
+const distinguishedNameGroups = (count: number) =>
+  RESPONSE_HEAD +
+  '<saml2:Assertion><saml2:AttributeStatement><saml2:Attribute Name="memberOf">' +
+  "<saml2:AttributeValue>CN=G1,OU=Grp,DC=corp,DC=ex,DC=com</saml2:AttributeValue>".repeat(count) +
+  "</saml2:Attribute></saml2:AttributeStatement></saml2:Assertion>" +
+  RESPONSE_TAIL;
+
 describe("countSamlResponseMarkup", () => {
   test("counts every tag and every attribute in the decoded XML", () => {
     // 3 tags (<r, <a, </r) and 2 attributes.
     expect(countSamlResponseMarkup(b64('<r><a x="1" y="2"/></r>'))).toBe(5);
+  });
+
+  test("never counts text, however many = it holds", () => {
+    expect(countSamlResponseMarkup(b64("<v>CN=G1,OU=Grp,DC=corp,DC=ex,DC=com</v>"))).toBe(2);
+  });
+
+  test("counts attributes with no value and attributes with no space between them", () => {
+    // xmldom builds a node for each, warning rather than refusing.
+    expect(countSamlResponseMarkup(b64("<a b c d/>"))).toBe(4);
+    expect(countSamlResponseMarkup(b64('<a b=""c=""d=""/>'))).toBe(4);
+  });
+
+  test("reads a quoted value whole, so a > or = inside it is not markup", () => {
+    expect(countSamlResponseMarkup(b64('<a href="x?y=1&gt;2" title=">">t</a>'))).toBe(4);
+  });
+
+  test("counts a comment, CDATA section or processing instruction once, whatever it contains", () => {
+    expect(countSamlResponseMarkup(b64('<!-- <a b="c"> --><r/>'))).toBe(2);
+    expect(countSamlResponseMarkup(b64("<r><![CDATA[<a b c><d/>]]></r>"))).toBe(3);
+    expect(countSamlResponseMarkup(b64('<?xml version="1.0"?><r/>'))).toBe(2);
   });
 
   test("counts nothing in plain text and treats an empty response as empty", () => {
@@ -49,6 +77,14 @@ describe("isSamlResponseWithinBudget", () => {
     expect(isSamlResponseWithinBudget(response)).toBe(true);
   });
 
+  test("lets through AD distinguished-name groups that fill the body limit", () => {
+    // 2,300 groups is about 234 KiB of base64. Counting every = would have refused this at ~1,700 groups.
+    const response = b64(distinguishedNameGroups(2300));
+
+    expect(response.length).toBeGreaterThan(200 * 1024);
+    expect(isSamlResponseWithinBudget(response)).toBe(true);
+  });
+
   test("allows exactly the budget and refuses one node more", () => {
     // Each <a/> is one '<'; the head, tail and namespaces add their own, so pad up to the budget precisely.
     const fixed = countSamlResponseMarkup(b64(RESPONSE_HEAD + RESPONSE_TAIL));
@@ -61,7 +97,7 @@ describe("isSamlResponseWithinBudget", () => {
   });
 
   test("refuses a flood of attributes on a single element", () => {
-    // One tag, many attributes: a '<'-only count would let this through.
+    // One tag, many attributes: a tag-only count would let this through.
     const attributes = Array.from({ length: SAML_RESPONSE_MARKUP_BUDGET }, (_, i) => `a${i}=""`).join(" ");
 
     expect(isSamlResponseWithinBudget(b64(`${RESPONSE_HEAD}<a ${attributes}/>${RESPONSE_TAIL}`))).toBe(false);
