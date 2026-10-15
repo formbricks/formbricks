@@ -44,6 +44,26 @@ active upstream requests. The upstream hosts must identify current pod endpoints
 does not establish that old connections drained. Missing telemetry blocks handoff. Ingress discovery, all traffic paths, and
 removed-host accounting must be demonstrated in a real rehearsal before this adapter is supported.
 
+## Pin Cube by digest on the source release
+
+Preparation compares each dependency's running image string exactly, so the **source** 6.0.x release
+must already run Hub and Cube from digest-pinned images. The 6.0.x chart pins Hub by digest by default but
+renders Cube as `repository:tag`, so a stock 6.0.x install is blocked with the non-retryable
+`dependency_image_changed` code until Cube is rolled to a digest reference.
+
+On the 6.0.x release, set the Cube digest through the repository and tag values, then wait for the rollout
+to finish before starting the online upgrade:
+
+```yaml
+cube:
+  image:
+    repository: ghcr.io/formbricks/cube@sha256
+    tag: "<64-character digest hex, without the sha256: prefix>"
+```
+
+The running image then reads `ghcr.io/formbricks/cube@sha256:<digest>`, matching the digest you list in
+`upgrade.online.dependencies` and `cube.image.digest`.
+
 ## Start the upgrade
 
 Online mode is only for the supported **6.0.0, 6.0.1, or 6.0.2 → 6.1** transition. Install a new
