@@ -11,6 +11,7 @@ CHART_DIR="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 REPO_DIR="$(cd -- "${CHART_DIR}/../.." && pwd)"
 readonly SCRIPT_DIR CHART_DIR REPO_DIR
 readonly DEFERRED_MIGRATION="20260928120000_eng_2404_backfill_remaining_embedded_data"
+readonly DEFERRED_SCHEMA_MIGRATION="20260928120001_eng_2404_drop_survey_legacy_embedded_data_columns"
 
 tmp="$(mktemp -d)"
 trap 'rm -rf "${tmp}"' EXIT
@@ -78,10 +79,11 @@ https.request = (_options, callback) => {
 };
 JS
 
-# A fixture image tree: one schema and one data migration that ran, plus the deferred data migration that
-# apply-migrations never runs. QA_NEVER_APPLIED lists the markers the database lacks.
+# A fixture image tree: one schema and one data migration that ran, plus a deferred data and a deferred schema
+# migration that apply-migrations never runs. QA_NEVER_APPLIED lists the markers the database lacks.
+# phases: "yes" ships the helper, "no" predates it, "broken" ships one that fails to load.
 make_image() {
-  local root="$1" with_phases="$2" with_deferred="$3"
+  local root="$1" phases="$2" with_deferred="$3"
   local dist="${root}/packages/database/dist"
   mkdir -p "${dist}/src" "${dist}/scripts" "${dist}/migration/20250101000000_schema_one" \
     "${dist}/migration/20250101000001_data_one"
@@ -90,17 +92,23 @@ make_image() {
   printf 'export const dataOne = { type: "data", id: "data-one", name: "20250101000001_data_one" };\n' \
     >"${dist}/migration/20250101000001_data_one/migration.js"
   if [[ "${with_deferred}" == yes ]]; then
-    mkdir -p "${dist}/migration/${DEFERRED_MIGRATION}"
-    printf 'export const deferred = { type: "data", id: "deferred-data", name: "%s" };\n' "${DEFERRED_MIGRATION}" \
+    mkdir -p "${dist}/migration/${DEFERRED_MIGRATION}" "${dist}/migration/${DEFERRED_SCHEMA_MIGRATION}"
+    # Exported without a name, so the script falls back to the directory name to ask about its phase.
+    printf 'export const deferred = { type: "data", id: "deferred-data" };\n' \
       >"${dist}/migration/${DEFERRED_MIGRATION}/migration.js"
+    printf 'ALTER TABLE "Survey" DROP COLUMN "variables";\n' \
+      >"${dist}/migration/${DEFERRED_SCHEMA_MIGRATION}/migration.sql"
   fi
-  if [[ "${with_phases}" == yes ]]; then
+  if [[ "${phases}" == yes ]]; then
     cat >"${dist}/scripts/migration-phases.cjs" <<JS
+const deferred = new Set(["${DEFERRED_MIGRATION}", "${DEFERRED_SCHEMA_MIGRATION}"]);
 exports.shouldRunMigration = (name, phase) => {
   if (phase !== "maintenance") throw new Error("Hub must mirror the migration Job's phase, got " + phase);
-  return name !== "${DEFERRED_MIGRATION}";
+  return !deferred.has(name);
 };
 JS
+  elif [[ "${phases}" == broken ]]; then
+    printf 'throw new Error("broken phase helper");\n' >"${dist}/scripts/migration-phases.cjs"
   fi
   cat >"${dist}/src/prisma.cjs" <<'JS'
 const neverApplied = new Set((process.env.QA_NEVER_APPLIED || "").split(",").filter(Boolean));
@@ -135,18 +143,22 @@ run_wait() {
 
 readonly started="all Formbricks migration success markers are present"
 
-# 6.1 image: the deferred migration has no marker, as on every real install, and Hub still starts.
+# 6.1 image: the deferred migrations have no markers, as on every real install, and Hub still starts.
 make_image "${tmp}/current" yes yes
-output="$(run_wait "${tmp}/current" deferred-data 2>&1)" ||
-  fail "Hub must start when only a deferred migration lacks its marker:"$'\n'"${output}"
+output="$(run_wait "${tmp}/current" "deferred-data,${DEFERRED_SCHEMA_MIGRATION}" 2>&1)" ||
+  fail "Hub must start when only deferred migrations lack their markers:"$'\n'"${output}"
 grep -q "${started}" <<<"${output}" || fail "Expected the marker fallback to start Hub:"$'\n'"${output}"
 
-# A migration the Job does run is still required: missing its marker keeps Hub waiting.
-if output="$(run_wait "${tmp}/current" data-one 2>&1)"; then
-  fail "Hub must keep waiting while a migration that runs lacks its marker:"$'\n'"${output}"
-fi
-grep -q "Data migration markers are incomplete; 1 data migration(s) are missing." <<<"${output}" ||
-  fail "Expected the missing data migration to be reported:"$'\n'"${output}"
+# Migrations the Job does run are still required: a missing marker of either kind keeps Hub waiting.
+expect_waiting() {
+  local missing="$1" message="$2"
+  if output="$(run_wait "${tmp}/current" "${missing}" 2>&1)"; then
+    fail "Hub must keep waiting while ${missing} lacks its marker:"$'\n'"${output}"
+  fi
+  grep -qF "${message}" <<<"${output}" || fail "Expected '${message}':"$'\n'"${output}"
+}
+expect_waiting data-one "Data migration markers are incomplete; 1 data migration(s) are missing."
+expect_waiting 20250101000000_schema_one "Prisma migration markers are incomplete; 1 schema migration(s) are missing."
 
 # Images that predate migration phases have no deferred migrations and no helper; Hub still starts.
 make_image "${tmp}/older" no no
@@ -155,5 +167,15 @@ output="$(run_wait "${tmp}/older" "" 2>&1)" ||
 grep -q "Migration phases are not available in this image" <<<"${output}" ||
   fail "Expected the phase-helper fallback to be logged:"$'\n'"${output}"
 grep -q "${started}" <<<"${output}" || fail "Expected the marker fallback to start Hub:"$'\n'"${output}"
+
+# A helper that exists but fails to load must stop the wait, not quietly fall back to expecting every marker.
+make_image "${tmp}/broken" broken yes
+if output="$(run_wait "${tmp}/broken" "" 2>&1)"; then
+  fail "Hub must not start when the phase helper fails to load:"$'\n'"${output}"
+fi
+grep -q "broken phase helper" <<<"${output}" || fail "Expected the helper's load error:"$'\n'"${output}"
+if grep -q "Migration phases are not available in this image" <<<"${output}"; then
+  fail "A broken phase helper must not be treated as a missing one:"$'\n'"${output}"
+fi
 
 printf 'Hub migration wait skips deferred migrations and still requires the ones that run\n'
