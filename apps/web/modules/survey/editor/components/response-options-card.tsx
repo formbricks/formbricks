@@ -117,9 +117,12 @@ export const ResponseOptionsCard = ({
   const handleCloseSurveyMessageToggle = () => {
     setSurveyClosedMessageToggle((prev) => !prev);
 
-    if (surveyClosedMessageToggle && localSurvey.surveyClosedMessage) {
-      setLocalSurvey({ ...localSurvey, surveyClosedMessage: null });
-    }
+    // Turning it on writes the prefilled texts too: they only reach the survey through the inputs'
+    // onChange, so saving without typing would store null and the toggle would come back off.
+    setLocalSurvey({
+      ...localSurvey,
+      surveyClosedMessage: surveyClosedMessageToggle ? null : surveyClosedMessage,
+    });
   };
 
   const handleVerifyEmailToogle = () => {
