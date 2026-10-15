@@ -3,7 +3,8 @@ import { NextRequest } from "next/server";
 import { RequestBodyTooLargeError, readRequestBytesWithLimit } from "@/app/lib/api/request-body";
 
 /**
- * Largest request body any `/api/auth/*` route will read (ENG-3846, ENG-3248).
+ * Largest request body an `/api/auth/*` route will read unless it names its own limit (ENG-3846,
+ * ENG-3248).
  *
  * Every route under that prefix answers anonymous callers, and none of them buffers its body with a
  * bound of its own: Better Auth's handler, the dynamic-client-registration preprocessing and the SAML
@@ -12,31 +13,50 @@ import { RequestBodyTooLargeError, readRequestBytesWithLimit } from "@/app/lib/a
  * damage without stopping the work.
  *
  * 256 KiB is far above anything these routes legitimately receive — credentials, an OAuth/OIDC
- * `form_post` carrying an id_token, a ~1 KB client registration — and the SAML `SAMLResponse` form post,
- * the largest honest payload, is tens of KB even with a group-heavy signed assertion. It is also 64 times
- * below the proxy ceiling, so a body that hits the ceiling is refused here as well.
+ * `form_post` carrying an id_token, a ~1 KB client registration. It is also 64 times below the proxy
+ * ceiling, so a body that hits the ceiling is refused here as well.
  */
 export const AUTH_REQUEST_BODY_LIMIT_BYTES = 256 * 1024;
 
+/**
+ * The SAML callback is the one honest payload that can be large: a base64 `SAMLResponse` form post that is
+ * signed, possibly encrypted, and carries every group the IdP asserts — and, unlike Azure AD's cap of 150
+ * group claims, Okta and ADFS set none. Four times the default still sits 16 times below the proxy ceiling.
+ */
+export const SAML_CALLBACK_BODY_LIMIT_BYTES = 1024 * 1024;
+
+// A registered symbol rather than a module-level WeakSet: Next can bundle this module once per route, and
+// a marker that only its own copy recognises would read as "not guarded" across that boundary.
 const LIMITED = Symbol.for("formbricks.authRequestBodyLimited");
 
-const bodyTooLargeResponse = (limitBytes: number): Response =>
-  Response.json(
+// `error` / `error_description` are what an OAuth client reads (RFC 6749 §5.2, RFC 7591 §3.2.2);
+// `message` / `code` are what Better Auth's own client reads. `no-store` because a token-endpoint response
+// must never be cached (RFC 6749 §5.1).
+const bodyTooLargeResponse = (limitBytes: number): Response => {
+  const description = `Request body must not exceed ${limitBytes} bytes`;
+  return Response.json(
     {
       error: "payload_too_large",
-      error_description: `Request body must not exceed ${limitBytes} bytes`,
+      error_description: description,
+      code: "PAYLOAD_TOO_LARGE",
+      message: description,
     },
-    { status: 413 }
+    { status: 413, headers: { "cache-control": "no-store" } }
   );
+};
 
 /**
  * The bytes were already read, so hand the handler a request that carries them. A `NextRequest` stays
  * one: a handler that reads `nextUrl` or cookies must not find a bare `Request` where it expected one.
  */
 const withBody = <R extends Request>(request: R, body: Uint8Array): R => {
+  // The framing headers described the stream that was just consumed; the new body carries its own.
+  const headers = new Headers(request.headers);
+  headers.delete("content-length");
+  headers.delete("transfer-encoding");
   const init = {
     method: request.method,
-    headers: request.headers,
+    headers,
     body: body as BodyInit,
     signal: request.signal,
   };
@@ -55,14 +75,15 @@ const withBody = <R extends Request>(request: R, body: Uint8Array): R => {
  * cancelled, whether it declared its size, understated it, or carried no `Content-Length` at all.
  */
 export const withAuthRequestBodyLimit = <Args extends unknown[], R extends Request>(
-  handler: (request: R, ...args: Args) => Response | Promise<Response>
+  handler: (request: R, ...args: Args) => Response | Promise<Response>,
+  limitBytes: number = AUTH_REQUEST_BODY_LIMIT_BYTES
 ) => {
   const limited = async (request: R, ...args: Args): Promise<Response> => {
     if (!request.body) return handler(request, ...args);
 
     let body: Uint8Array;
     try {
-      body = await readRequestBytesWithLimit(request, AUTH_REQUEST_BODY_LIMIT_BYTES);
+      body = await readRequestBytesWithLimit(request, limitBytes);
     } catch (error) {
       if (error instanceof RequestBodyTooLargeError) return bodyTooLargeResponse(error.limitBytes);
       throw error;

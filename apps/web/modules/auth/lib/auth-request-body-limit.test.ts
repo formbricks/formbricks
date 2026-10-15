@@ -4,13 +4,14 @@ import path from "node:path";
 import { describe, expect, test, vi } from "vitest";
 import {
   AUTH_REQUEST_BODY_LIMIT_BYTES,
+  SAML_CALLBACK_BODY_LIMIT_BYTES,
   isAuthRequestBodyLimited,
   withAuthRequestBodyLimit,
 } from "./auth-request-body-limit";
 
 const LIMIT = AUTH_REQUEST_BODY_LIMIT_BYTES;
 
-const ok = () => new Response("ok", { status: 200 });
+const ok = (_request?: Request) => new Response("ok", { status: 200 });
 
 /** A POST whose body streams in `chunkBytes` pieces with no Content-Length, like a chunked upload. */
 const chunkedRequest = (totalBytes: number, chunkBytes = 16 * 1024, headers: HeadersInit = {}) => {
@@ -47,7 +48,10 @@ describe("withAuthRequestBodyLimit", () => {
     expect(await response.json()).toEqual({
       error: "payload_too_large",
       error_description: `Request body must not exceed ${LIMIT} bytes`,
+      code: "PAYLOAD_TOO_LARGE",
+      message: `Request body must not exceed ${LIMIT} bytes`,
     });
+    expect(response.headers.get("cache-control")).toBe("no-store");
     expect(handler).not.toHaveBeenCalled();
     // A ReadableStream primes one pull on construction; the guard itself must not read any further.
     expect(state.pulls).toBeLessThanOrEqual(1);
@@ -99,6 +103,70 @@ describe("withAuthRequestBodyLimit", () => {
     expect(forwarded.url).toBe("http://localhost/api/auth/oauth2/register");
     expect(forwarded.method).toBe("POST");
     expect(forwarded.headers.get("x-trace")).toBe("keep-me");
+  });
+
+  test("accepts a body of exactly the limit that arrives in several chunks", async () => {
+    const seen = vi.fn(async (request: Request) =>
+      Response.json({ bytes: (await request.arrayBuffer()).byteLength })
+    );
+    const { request } = chunkedRequest(LIMIT, 10_000);
+
+    const response = await withAuthRequestBodyLimit(seen)(request);
+
+    expect(await response.json()).toEqual({ bytes: LIMIT });
+  });
+
+  test("honours a limit the route sets for itself", async () => {
+    const handler = vi.fn(ok);
+    const wrapped = withAuthRequestBodyLimit(handler, SAML_CALLBACK_BODY_LIMIT_BYTES);
+    const post = (bytes: number) =>
+      new Request("http://localhost/api/auth/saml/callback", { method: "POST", body: new Uint8Array(bytes) });
+
+    expect((await wrapped(post(LIMIT + 1))).status).toBe(200);
+    expect((await wrapped(post(SAML_CALLBACK_BODY_LIMIT_BYTES))).status).toBe(200);
+    expect((await wrapped(post(SAML_CALLBACK_BODY_LIMIT_BYTES + 1))).status).toBe(413);
+  });
+
+  test("hands over a body that parses as the form or multipart post it was", async () => {
+    const seen = vi.fn(async (request: Request) => {
+      const form = await request.formData();
+      return Response.json(Object.fromEntries(form.entries()));
+    });
+    const urlencoded = new Request("http://localhost/api/auth/saml/token", {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: "grant_type=authorization_code&code=abc%20def",
+    });
+    const multipartBody = new FormData();
+    multipartBody.set("SAMLResponse", "PHNhbWw+");
+    const multipart = new Request("http://localhost/api/auth/saml/callback", {
+      method: "POST",
+      body: multipartBody,
+    });
+
+    expect(await (await withAuthRequestBodyLimit(seen)(urlencoded)).json()).toEqual({
+      grant_type: "authorization_code",
+      code: "abc def",
+    });
+    expect(await (await withAuthRequestBodyLimit(seen)(multipart)).json()).toEqual({
+      SAMLResponse: "PHNhbWw+",
+    });
+  });
+
+  test("drops the framing headers that described the stream it consumed", async () => {
+    const seen = vi.fn(async (_request: Request) => ok());
+    const { request } = chunkedRequest(1024, 512, {
+      "content-length": "1024",
+      "transfer-encoding": "chunked",
+      "x-keep": "yes",
+    });
+
+    await withAuthRequestBodyLimit(seen)(request);
+
+    const forwarded = seen.mock.calls[0][0];
+    expect(forwarded.headers.has("content-length")).toBe(false);
+    expect(forwarded.headers.has("transfer-encoding")).toBe(false);
+    expect(forwarded.headers.get("x-keep")).toBe("yes");
   });
 
   test("rejects one byte over the limit", async () => {
@@ -175,10 +243,16 @@ const readProxyClientMaxBodySize = (): number => {
 };
 
 describe("AUTH_REQUEST_BODY_LIMIT_BYTES", () => {
-  test("stays below Next's proxy buffer, which truncates a body instead of refusing it", () => {
-    // A body the proxy cut at its ceiling is still over this limit, so it is refused here rather than
-    // reaching a handler as a silently truncated payload.
-    expect(LIMIT).toBeLessThan(readProxyClientMaxBodySize());
-    expect(Number.isSafeInteger(LIMIT)).toBe(true);
-  });
+  test.each([
+    ["default", LIMIT],
+    ["SAML callback", SAML_CALLBACK_BODY_LIMIT_BYTES],
+  ])(
+    "%s limit stays below Next's proxy buffer, which truncates a body instead of refusing it",
+    (_name, limit) => {
+      // A body the proxy cut at its ceiling is still over this limit, so it is refused here rather than
+      // reaching a handler as a silently truncated payload.
+      expect(limit).toBeLessThan(readProxyClientMaxBodySize());
+      expect(Number.isSafeInteger(limit)).toBe(true);
+    }
+  );
 });

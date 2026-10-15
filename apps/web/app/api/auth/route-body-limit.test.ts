@@ -1,6 +1,9 @@
+import { readdirSync } from "node:fs";
+import path from "node:path";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   AUTH_REQUEST_BODY_LIMIT_BYTES,
+  SAML_CALLBACK_BODY_LIMIT_BYTES,
   isAuthRequestBodyLimited,
 } from "@/modules/auth/lib/auth-request-body-limit";
 
@@ -37,16 +40,23 @@ type RouteModule = Record<string, unknown>;
 
 // Every route file under /api/auth, discovered rather than listed: a new route that skips the guard
 // shows up here without anyone remembering to register it.
-const routeModules = import.meta.glob<RouteModule>("./**/route.ts");
+const findRouteFiles = (dir: string, prefix = "."): string[] =>
+  readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    if (entry.isDirectory()) return findRouteFiles(path.join(dir, entry.name), `${prefix}/${entry.name}`);
+    return /^route\.(ts|tsx|js|jsx|mjs)$/.test(entry.name) ? [`${prefix}/${entry.name}`] : [];
+  });
+
+const routeFiles = findRouteFiles(__dirname).sort();
+
+const loadRoute = (file: string) => import(/* @vite-ignore */ file) as Promise<RouteModule>;
 
 const HTTP_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"] as const;
 
+// Over the largest limit any route sets, so one request is oversized for all of them.
+const OVERSIZED_BYTES = SAML_CALLBACK_BODY_LIMIT_BYTES + 1;
+
 const oversizedPost = (url: string, headers: HeadersInit = {}) =>
-  new Request(url, {
-    method: "POST",
-    headers,
-    body: new Uint8Array(AUTH_REQUEST_BODY_LIMIT_BYTES + 1),
-  });
+  new Request(url, { method: "POST", headers, body: new Uint8Array(OVERSIZED_BYTES) });
 
 describe("/api/auth route surface", () => {
   beforeEach(() => {
@@ -54,7 +64,7 @@ describe("/api/auth route surface", () => {
   });
 
   test("finds the routes it is meant to guard", () => {
-    expect(Object.keys(routeModules).sort()).toEqual([
+    expect(routeFiles).toEqual([
       "./[...all]/route.ts",
       "./saml/authorize/route.ts",
       "./saml/callback/route.ts",
@@ -64,9 +74,9 @@ describe("/api/auth route surface", () => {
     ]);
   });
 
-  describe.each(Object.entries(routeModules))("%s", (file, load) => {
+  describe.each(routeFiles)("%s", (file) => {
     test("every exported HTTP handler goes through the body guard", async () => {
-      const mod = await load();
+      const mod = await loadRoute(file);
       const exported = HTTP_METHODS.filter((method) => method in mod);
 
       expect(exported.length).toBeGreaterThan(0);
@@ -76,7 +86,7 @@ describe("/api/auth route surface", () => {
     });
 
     test("a POST handler refuses an oversized body with 413 before doing any work", async () => {
-      const mod = await load();
+      const mod = await loadRoute(file);
       if (typeof mod.POST !== "function") return;
       const post = mod.POST as (request: Request) => Promise<Response>;
       const url = `http://localhost/api/auth/${file
@@ -85,7 +95,7 @@ describe("/api/auth route surface", () => {
 
       for (const request of [
         oversizedPost(url),
-        oversizedPost(url, { "content-length": String(AUTH_REQUEST_BODY_LIMIT_BYTES + 1) }),
+        oversizedPost(url, { "content-length": String(OVERSIZED_BYTES) }),
       ]) {
         const response = await post(request);
         expect(response.status).toBe(413);
@@ -96,8 +106,40 @@ describe("/api/auth route surface", () => {
     });
   });
 
+  describe("the SAML callback, which sets a higher limit of its own", () => {
+    const callback = (bytes: number) =>
+      new Request("http://localhost/api/auth/saml/callback", {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: new Uint8Array(bytes),
+      });
+
+    test("takes a body past the default limit, up to its own", async () => {
+      const { POST } = await loadRoute("./saml/callback/route.ts");
+
+      const response = await (POST as (request: Request) => Promise<Response>)(
+        callback(SAML_CALLBACK_BODY_LIMIT_BYTES)
+      );
+
+      // Not 413: the request reached the handler, which answers 403 because the licence mock has no SAML.
+      expect(response.status).toBe(403);
+      expect(jacksonMock).toHaveBeenCalledTimes(1);
+    });
+
+    test("refuses one byte past its own limit", async () => {
+      const { POST } = await loadRoute("./saml/callback/route.ts");
+
+      const response = await (POST as (request: Request) => Promise<Response>)(
+        callback(SAML_CALLBACK_BODY_LIMIT_BYTES + 1)
+      );
+
+      expect(response.status).toBe(413);
+      expect(jacksonMock).not.toHaveBeenCalled();
+    });
+  });
+
   describe("the catch-all, at the boundary", () => {
-    const register = (body: Uint8Array) =>
+    const register = (body: Uint8Array<ArrayBuffer>) =>
       new Request("http://localhost/api/auth/oauth2/register", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -105,7 +147,7 @@ describe("/api/auth route surface", () => {
       });
 
     test("a body of exactly the limit reaches the DCR preprocessing and Better Auth with its bytes intact", async () => {
-      const { POST } = await routeModules["./[...all]/route.ts"]();
+      const { POST } = await loadRoute("./[...all]/route.ts");
       const body = new Uint8Array(AUTH_REQUEST_BODY_LIMIT_BYTES).fill(99);
 
       const response = await (POST as (request: Request) => Promise<Response>)(register(body));
@@ -118,7 +160,7 @@ describe("/api/auth route surface", () => {
     });
 
     test("one byte more is refused before the DCR preprocessing sees it", async () => {
-      const { POST } = await routeModules["./[...all]/route.ts"]();
+      const { POST } = await loadRoute("./[...all]/route.ts");
 
       const response = await (POST as (request: Request) => Promise<Response>)(
         register(new Uint8Array(AUTH_REQUEST_BODY_LIMIT_BYTES + 1))
