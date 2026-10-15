@@ -48,8 +48,8 @@ describe("Fresh-instance sign-up exception (real Postgres)", () => {
     expect(SIGNUP_ENABLED).toBe(false);
     expect(await prisma.user.count()).toBe(0);
 
-    // Genuinely concurrent: both reach the policy check, which is a database round trip, before either
-    // has inserted anything — so both can read zero users, exactly as two racing HTTP requests would.
+    // Genuinely concurrent: both are in flight before either has inserted anything, so both can read zero
+    // users at the policy check, exactly as two racing HTTP requests would.
     const outcomes = await Promise.allSettled([signUp("first@example.com"), signUp("second@example.com")]);
 
     expect(await prisma.user.count()).toBe(1);
@@ -65,7 +65,7 @@ describe("Fresh-instance sign-up exception (real Postgres)", () => {
     // before-hook's count already sees the winner (the policy 403). But when only the backstop's later
     // count sees the winner, its 403 comes out of `createUser`, and with `autoSignIn: false` Better Auth
     // answers that with its generic-duplicate 200 — a fulfilled result carrying a user that was never
-    // inserted (ENG-2812). Counting fulfilled results therefore flaked; matching the persisted id does not.
+    // inserted (ENG-2812). So count the fulfilled result that carries the persisted id, not every one.
     const [admin] = markedUsers;
     expect(
       outcomes.filter((outcome) => outcome.status === "fulfilled" && outcome.value.user.id === admin.id)
