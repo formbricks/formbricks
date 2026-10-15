@@ -31,6 +31,13 @@ export const requiredOrganizationActions = (body: TOrganizationPatchBody): TOrgA
   return [...actions];
 };
 
+/** Name the target before anything can refuse, so a refusal's audit entry says what was attempted. */
+const recordAuditTarget = ({ auditLog, organizationId }: TRequestContext) => {
+  if (!auditLog) return;
+  auditLog.organizationId = organizationId;
+  auditLog.targetId = organizationId;
+};
+
 /** Authorize every action, in order; the first refusal is the answer. */
 async function requireOrgActions(
   context: TRequestContext,
@@ -51,6 +58,7 @@ export async function updateOrganizationOperation({
   ...context
 }: TRequestContext & { body: TOrganizationPatchBody }): Promise<Response> {
   const { organizationId, requestId, instance, auditLog } = context;
+  recordAuditTarget(context);
   const access = await requireOrgActions(context, requiredOrganizationActions(body));
   if (access instanceof Response) return access;
 
@@ -70,8 +78,6 @@ export async function updateOrganizationOperation({
 
   const updated = await updateOrganization(organizationId, body);
   if (auditLog) {
-    auditLog.organizationId = organizationId;
-    auditLog.targetId = organizationId;
     auditLog.oldObject = organization;
     auditLog.newObject = updated;
   }
@@ -84,6 +90,7 @@ export async function updateOrganizationOperation({
  */
 export async function deleteOrganizationOperation(context: TRequestContext): Promise<Response> {
   const { organizationId, requestId, instance, auditLog } = context;
+  recordAuditTarget(context);
   const access = await requireOrgActions(context, ["organization.write"]);
   if (access instanceof Response) return access;
 
@@ -95,10 +102,6 @@ export async function deleteOrganizationOperation(context: TRequestContext): Pro
   if (!organization) return problemForbidden(requestId, undefined, instance);
 
   await deleteOrganization(organizationId);
-  if (auditLog) {
-    auditLog.organizationId = organizationId;
-    auditLog.targetId = organizationId;
-    auditLog.oldObject = organization;
-  }
+  if (auditLog) auditLog.oldObject = organization;
   return noContentResponse({ requestId });
 }

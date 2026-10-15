@@ -9,7 +9,7 @@ import { TOrganization } from "@formbricks/types/organizations";
 import { updateOrganizationSettings } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/lib/api-client";
 import { getDisplayedOrganizationAISettingValue, getOrganizationAIEnablementState } from "@/lib/ai/utils";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { V3ApiError, getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -62,7 +62,14 @@ export const AISettingsToggle = ({
       toast.success(t("workspace.settings.general.ai_settings_updated_successfully"));
       router.refresh();
     } catch (error) {
-      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+      // The instance lost its AI provider since this page rendered: say so in the user's language.
+      const isInstanceNotConfigured =
+        error instanceof V3ApiError && error.code === "ai_instance_not_configured";
+      toast.error(
+        isInstanceNotConfigured
+          ? aiEnablementBlockedMessage
+          : getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"))
+      );
     } finally {
       setLoadingField(null);
     }

@@ -145,10 +145,13 @@ describe("PATCH /api/internal/organizations/{organizationId}", () => {
     expect(mocks.getOrganization).not.toHaveBeenCalled();
   });
 
-  test("refuses a member with 403", async () => {
+  test("refuses a member with 403, and audits the refusal against the organization", async () => {
     allow();
     expect((await patch({ displayTimeZone: "Europe/Lisbon" })).status).toBe(403);
     expect(mocks.updateOrganization).not.toHaveBeenCalled();
+    expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "failure", organizationId: ORG_ID, targetId: ORG_ID })
+    );
   });
 
   test("answers 403 for an organization that is gone, the same as for one the caller can't see", async () => {
@@ -231,10 +234,18 @@ describe("DELETE /api/internal/organizations/{organizationId}", () => {
     );
   });
 
-  test("refuses a manager with 403, and deletes nothing", async () => {
+  test("refuses a manager with 403, deletes nothing, and audits the refusal against the organization", async () => {
     allow("organization.manage");
     expect((await remove()).status).toBe(403);
     expect(mocks.deleteOrganization).not.toHaveBeenCalled();
+    expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "deleted",
+        status: "failure",
+        organizationId: ORG_ID,
+        targetId: ORG_ID,
+      })
+    );
   });
 
   test("refuses when the licence allows only one organization, after authorizing the caller", async () => {
