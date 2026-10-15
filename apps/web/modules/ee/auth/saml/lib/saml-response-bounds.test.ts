@@ -53,6 +53,19 @@ describe("countSamlResponseMarkup", () => {
     expect(count('<a b=""c=""d=""/>')).toBe(4);
   });
 
+  test("separates attributes on any control byte, as xmldom does", () => {
+    // Form feed, vertical tab and NUL separate attributes for xmldom; each becomes an attribute node.
+    expect(count("<a\fb\vc\u0000d/>")).toBe(4);
+  });
+
+  test("weighs a < that cannot start anything far above an element", () => {
+    // xmldom raises and recovers from an error for each `<0` or `< `, which costs it ten times an element.
+    expect(count("<r>< </r>")).toBe(18);
+    expect(count("<r><0</r>")).toBe(18);
+    // A closing tag, comment or processing instruction is still one.
+    expect(count("<r></r><!---->")).toBe(3);
+  });
+
   test("reads a quoted value whole, so a > or = inside it is not markup", () => {
     expect(count('<a href="x?y=1&gt;2" title=">">t</a>')).toBe(4);
   });
@@ -89,6 +102,12 @@ describe("the budget", () => {
     expect(count(atBudget)).toBe(SAML_RESPONSE_MARKUP_BUDGET);
     expect(withinBudget(atBudget)).toBe(true);
     expect(withinBudget(overBudget)).toBe(false);
+  });
+
+  test("refuses attributes separated by form feeds", () => {
+    const attributes = Array.from({ length: SAML_RESPONSE_MARKUP_BUDGET }, (_, i) => `a${i}`).join("\f");
+
+    expect(withinBudget(`<r\f${attributes}></r>`)).toBe(false);
   });
 
   test("refuses a flood of attributes on a single element", () => {

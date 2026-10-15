@@ -14,7 +14,8 @@ import "server-only";
  * such as AD distinguished names (`CN=…,OU=…,DC=…`) cost nothing however many `=` they hold. A real response
  * written as verbosely as Okta writes one (`xmlns:xs`, `xmlns:xsi` and `xsi:type` on every group) reaches about
  * 5,000 only at 1,000 groups, where it already fills the whole 256 KiB body limit; one with the shortest
- * possible group names tops out near 8,000. At 12,000 the costliest shape (a `<0` flood) parses in ~50 ms.
+ * possible group names tops out near 8,000. At 12,000 the costliest shape found parses in ~25 ms, against
+ * ~5 ms for 12,000 empty elements and ~300 ms for the uncapped attack.
  */
 export const SAML_RESPONSE_MARKUP_BUDGET = 12_000;
 
@@ -27,7 +28,26 @@ const QUESTION = 0x3f;
 const DOUBLE_QUOTE = 0x22;
 const SINGLE_QUOTE = 0x27;
 
-const isWhitespace = (byte: number) => byte === 0x20 || byte === 0x09 || byte === 0x0a || byte === 0x0d;
+/**
+ * What separates attributes, as xmldom reads it: any byte up to a space, so form feed and NUL count as well as
+ * space, tab and newlines, plus 0x80, which xmldom also takes as a space. A narrower test lets attributes
+ * separated by a control byte through uncounted.
+ */
+const isSeparator = (byte: number) => byte <= 0x20 || byte === 0x80;
+
+/** Whether a byte can start an element name: a letter, `_`, `:`, or any non-ASCII byte. */
+const isNameStart = (byte: number) =>
+  (byte >= 0x61 && byte <= 0x7a) ||
+  (byte >= 0x41 && byte <= 0x5a) ||
+  byte === 0x5f ||
+  byte === 0x3a ||
+  byte >= 0x80;
+
+/**
+ * Weight of a `<` that cannot start anything: `<0`, `< `, `<-`. xmldom raises and recovers from an error for
+ * each, which makes it ten to sixteen times dearer than an element, and no well-formed response contains one.
+ */
+const STRAY_LESS_THAN_WEIGHT = 16;
 
 /**
  * Attribute names in the tag whose name starts at `from`: each name that starts after whitespace or a closing
@@ -47,8 +67,8 @@ const countAttributes = (xml: Buffer, from: number, end: number): number => {
       afterSeparator = true;
       continue;
     }
-    if (afterSeparator && !isWhitespace(byte) && byte !== EQUALS && byte !== SLASH) attributes++;
-    afterSeparator = isWhitespace(byte);
+    if (afterSeparator && !isSeparator(byte) && byte !== EQUALS && byte !== SLASH) attributes++;
+    afterSeparator = isSeparator(byte);
     j++;
   }
   return attributes;
@@ -56,10 +76,10 @@ const countAttributes = (xml: Buffer, from: number, end: number): number => {
 
 /**
  * Counts the markup in the decoded response in one pass over its bytes, without building a string or a tree
- * (~1 ms at the body limit). Every `<` counts wherever it sits: xmldom turns each one into a node, or into an
- * error it raises and recovers from, and either costs about the same. Following XML structure instead lets
- * malformed input hide markup, which is exactly what an attacker sends. A `<` inside a comment or CDATA
- * section is counted too; over-counting that rarity is the safe direction.
+ * (~1 ms at the body limit). Every `<` counts wherever it sits, because xmldom turns each one into a node or
+ * into an error it raises and recovers from; one that cannot start anything costs more, so it weighs more.
+ * Following XML structure instead lets malformed input hide markup, which is exactly what an attacker sends. A
+ * `<` inside a comment or CDATA section is counted too; over-counting that rarity is the safe direction.
  */
 export const countSamlResponseMarkup = (samlResponseBase64: string): number => {
   const xml = Buffer.from(samlResponseBase64, "base64");
@@ -69,10 +89,15 @@ export const countSamlResponseMarkup = (samlResponseBase64: string): number => {
   while (lt !== -1) {
     const next = xml.indexOf(LESS_THAN, lt + 1);
     const end = next === -1 ? xml.length : next;
-    count++;
-    // `</…`, `<!…` and `<?…` carry no attributes.
     const kind = xml[lt + 1];
-    if (kind !== SLASH && kind !== BANG && kind !== QUESTION) count += countAttributes(xml, lt + 1, end);
+    if (kind === SLASH || kind === BANG || kind === QUESTION) {
+      // `</…`, `<!…` and `<?…` carry no attributes; malformed ones are fatal to xmldom, so cheap.
+      count++;
+    } else if (isNameStart(kind)) {
+      count += 1 + countAttributes(xml, lt + 1, end);
+    } else {
+      count += STRAY_LESS_THAN_WEIGHT;
+    }
     lt = next;
   }
 
