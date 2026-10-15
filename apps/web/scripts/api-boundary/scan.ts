@@ -95,6 +95,27 @@ const readReexportedNames = (source: string): Set<string> => {
   return names;
 };
 
+/** Where the comment or literal opening at `i` ends (exclusive), or `null` when none opens there. */
+const tokenEnd = (source: string, i: number): number | null => {
+  const char = source[i];
+  const pair = source.slice(i, i + 2);
+  if (pair === "//") {
+    const newline = source.indexOf("\n", i);
+    return newline === -1 ? source.length : newline;
+  }
+  if (pair === "/*") {
+    const close = source.indexOf("*/", i + 2);
+    return close === -1 ? source.length : close + 2;
+  }
+  if (char !== '"' && char !== "'" && char !== "`") return null;
+  let j = i + 1;
+  while (j < source.length && source[j] !== char) j += source[j] === "\\" ? 2 : 1;
+  return Math.min(j + 1, source.length);
+};
+
+/** A comment's stand-in: a space, plus its line breaks so line numbers still match the source. */
+const blankComment = (comment: string): string => " " + "\n".repeat(comment.split("\n").length - 1);
+
 /**
  * The source with its comments blanked out, so a commented-out handler or an `auth:` in a doc comment
  * counts for nothing. A linear scan rather than a regex: string and template literals are skipped intact,
@@ -104,25 +125,15 @@ export const stripComments = (source: string): string => {
   let out = "";
   let i = 0;
   while (i < source.length) {
-    const char = source[i];
-    const next = source[i + 1];
-    if (char === "/" && next === "/") {
-      while (i < source.length && source[i] !== "\n") i++;
-    } else if (char === "/" && next === "*") {
-      const end = source.indexOf("*/", i + 2);
-      const stop = end === -1 ? source.length : end + 2;
-      // Keep the comment's line breaks, so line numbers in the result still match the source.
-      out += " " + "\n".repeat(source.slice(i, stop).split("\n").length - 1);
-      i = stop;
-    } else if (char === '"' || char === "'" || char === "`") {
-      let j = i + 1;
-      while (j < source.length && source[j] !== char) j += source[j] === "\\" ? 2 : 1;
-      out += source.slice(i, j + 1);
-      i = j + 1;
-    } else {
-      out += char;
+    const end = tokenEnd(source, i);
+    if (end === null) {
+      out += source[i];
       i++;
+      continue;
     }
+    const token = source.slice(i, end);
+    out += source[i] === "/" ? blankComment(token) : token;
+    i = end;
   }
   return out;
 };
