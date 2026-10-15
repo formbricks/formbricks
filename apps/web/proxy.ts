@@ -60,6 +60,33 @@ const handleDomainAwareRouting = (request: NextRequest): NextResponse | null => 
 };
 
 /**
+ * Largest body the PostHog `/ingest` rewrite will forward: the size Next cut these bodies off at before
+ * `patches/next@16.3.8.patch` stopped it cloning them (ENG-3972), so nothing that passed before is refused.
+ */
+export const INGEST_REQUEST_BODY_LIMIT_BYTES = 16 * 1024 * 1024;
+
+/**
+ * The `/ingest` rewrite pipes the request body straight to PostHog, so without a bound an anonymous caller
+ * could stream any amount through this server. Proxy never reads bodies, so the bound comes from the framing:
+ * a declared length over the limit is refused, and so is a body of undeclared length (chunked), which no
+ * browser sends for the Blob and string bodies posthog-js posts. Node stops reading at the declared length,
+ * so an accepted body cannot outgrow it.
+ */
+const handleIngestBodyLimit = (request: NextRequest): NextResponse | null => {
+  const { pathname } = request.nextUrl;
+  if (pathname !== "/ingest" && !pathname.startsWith("/ingest/")) return null;
+
+  if (request.headers.has("transfer-encoding")) return new NextResponse(null, { status: 411 });
+
+  const contentLength = request.headers.get("content-length");
+  if (contentLength !== null && !(Number(contentLength) <= INGEST_REQUEST_BODY_LIMIT_BYTES)) {
+    return new NextResponse(null, { status: 413 });
+  }
+
+  return null;
+};
+
+/**
  * Request headers Next.js sets only on prefetches (`next/dist/client/components/app-router-headers`).
  * A prefetch is speculative — the router issues one for every link it has rendered, whether or not
  * the user ever opens it — so it must never be read as "the user is here now".
@@ -82,6 +109,9 @@ export const proxy = async (originalRequest: NextRequest) => {
   // Handle domain-aware routing first
   const domainResponse = handleDomainAwareRouting(originalRequest);
   if (domainResponse) return domainResponse;
+
+  const ingestResponse = handleIngestBodyLimit(originalRequest);
+  if (ingestResponse) return ingestResponse;
 
   // Create a new Request object to override headers and add a unique request ID header
   const request = new NextRequest(originalRequest, {
