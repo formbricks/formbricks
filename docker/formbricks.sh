@@ -403,8 +403,9 @@ in_formbricks && /^  [A-Za-z0-9_-]+:/ && !/^  formbricks:$/ { in_formbricks = 0 
         # reaches the app (ENG-3977): an edge ceiling, set above the 256 KiB auth limit in the app (ENG-3846). The
         # buffering middleware reads the whole request first (413 past maxRequestBodyBytes), so a slow sender ties
         # up Traefik, bounded by the entrypoint readTimeout, instead of the app. The in-memory request threshold is
-        # pinned to the same 1 MiB, so no accepted request body spills to disk. Only auth routes get it: the
-        # imports take up to 16 MiB.
+        # pinned to the same 1 MiB, so no accepted request body spills to disk. Only auth routes get it (the imports
+        # take up to 16 MiB). Priority 1000 beats the catch-all, whose default priority is the length of its Host()
+        # rule: at most 261, for a 253-character domain.
         print "      - \"traefik.http.middlewares.auth-body-limit.buffering.maxRequestBodyBytes=1048576\""
         print "      - \"traefik.http.middlewares.auth-body-limit.buffering.memRequestBodyBytes=1048576\""
         print "      - \"traefik.http.routers.formbricks-auth.rule=Host(`" domain_name "`) && PathPrefix(`/api/auth`)\""
@@ -414,7 +415,7 @@ in_formbricks && /^  [A-Za-z0-9_-]+:/ && !/^  formbricks:$/ { in_formbricks = 0 
             print "      - \"traefik.http.routers.formbricks-auth.tls.certresolver=default\""
         }
         print "      - \"traefik.http.routers.formbricks-auth.service=formbricks\""
-        print "      - \"traefik.http.routers.formbricks-auth.priority=200\""
+        print "      - \"traefik.http.routers.formbricks-auth.priority=1000\""
         print "      - \"traefik.http.routers.formbricks-auth.middlewares=auth-body-limit\""
         if (hsts_enabled == "y") {
             print "      - \"traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000\""
@@ -431,7 +432,7 @@ in_formbricks && /^  [A-Za-z0-9_-]+:/ && !/^  formbricks:$/ { in_formbricks = 0 
             print "      - \"traefik.http.routers.formbricks-auth-http.rule=Host(`" domain_name "`) && PathPrefix(`/api/auth`)\""
             print "      - \"traefik.http.routers.formbricks-auth-http.entrypoints=web\""
             print "      - \"traefik.http.routers.formbricks-auth-http.service=formbricks\""
-            print "      - \"traefik.http.routers.formbricks-auth-http.priority=200\""
+            print "      - \"traefik.http.routers.formbricks-auth-http.priority=1000\""
             print "      - \"traefik.http.routers.formbricks-auth-http.middlewares=auth-body-limit\""
         }
         inserted = 1

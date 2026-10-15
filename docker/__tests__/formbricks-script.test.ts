@@ -1167,7 +1167,7 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(formbricksBlock).toContain(
       "traefik.http.routers.formbricks-auth.rule=Host(`example.com`) && PathPrefix(`/api/auth`)"
     );
-    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.priority=200");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.priority=1000");
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.entrypoints=websecure");
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.tls.certresolver=default");
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.service=formbricks");
@@ -1221,7 +1221,7 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(formbricksBlock).toContain(
       "traefik.http.routers.formbricks-auth-http.middlewares=auth-body-limit"
     );
-    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth-http.priority=200");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth-http.priority=1000");
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth-http.service=formbricks");
     expect(formbricksBlock).not.toContain("formbricks-auth-http.tls");
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.middlewares=auth-body-limit");

@@ -436,7 +436,7 @@ In `formbricks/docker-compose.yml`, add these lines to the `labels` of the `form
 - "traefik.http.routers.formbricks-auth.entrypoints=websecure"
 - "traefik.http.routers.formbricks-auth.tls=true"
 - "traefik.http.routers.formbricks-auth.service=formbricks"
-- "traefik.http.routers.formbricks-auth.priority=200"
+- "traefik.http.routers.formbricks-auth.priority=1000"
 - "traefik.http.routers.formbricks-auth.middlewares=auth-body-limit"
 ```
 
@@ -448,7 +448,7 @@ too, or plain-HTTP requests to `/api/auth/*` stay uncapped:
 - "traefik.http.routers.formbricks-auth-http.rule=Host(`your-domain.com`) && PathPrefix(`/api/auth`)"
 - "traefik.http.routers.formbricks-auth-http.entrypoints=web"
 - "traefik.http.routers.formbricks-auth-http.service=formbricks"
-- "traefik.http.routers.formbricks-auth-http.priority=200"
+- "traefik.http.routers.formbricks-auth-http.priority=1000"
 - "traefik.http.routers.formbricks-auth-http.middlewares=auth-body-limit"
 ```
 
