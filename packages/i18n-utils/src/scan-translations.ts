@@ -171,9 +171,9 @@ export function extractKeysFromContent(content: string): string[] {
 const FILE_READ_CONCURRENCY = 32;
 
 /**
- * Run `task` over `items` with at most `concurrency` (a positive integer) in flight, resolving when every
- * task has finished. A task that rejects rejects the whole run while the remaining items still run, so
- * `task` handles its own errors.
+ * Run `task` over `items` with at most `concurrency` (a positive integer) in flight, settling once every
+ * task has finished. A task that rejects does not stop the others: every item still runs, and the run
+ * then rejects with an `AggregateError` of each failure, so nothing is left in flight when it settles.
  */
 export async function forEachConcurrently<T>(
   items: readonly T[],
@@ -184,14 +184,22 @@ export async function forEachConcurrently<T>(
     throw new Error(`forEachConcurrently: concurrency must be a positive integer, got ${concurrency}`);
   }
   let next = 0;
+  const failures: unknown[] = [];
   const worker = async (): Promise<void> => {
     while (next < items.length) {
       const item = items[next];
       next += 1;
-      await task(item);
+      try {
+        await task(item);
+      } catch (error) {
+        failures.push(error);
+      }
     }
   };
   await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));
+  if (failures.length > 0) {
+    throw new AggregateError(failures, `forEachConcurrently: ${failures.length.toString()} task(s) failed`);
+  }
 }
 
 /**

@@ -40,6 +40,29 @@ describe("forEachConcurrently", () => {
     );
   });
 
+  test.each([1, 3])(
+    "runs every remaining item after a task rejects, then rejects with each failure (concurrency %s)",
+    async (concurrency) => {
+      const seen: number[] = [];
+      const run = forEachConcurrently([0, 1, 2, 3, 4, 5], concurrency, async (item) => {
+        await new Promise((resolve) => setTimeout(resolve, 1));
+        seen.push(item);
+        if (item === 1 || item === 4) throw new Error(`item ${item.toString()} failed`);
+      });
+
+      const failure = await run.then(
+        () => null,
+        (error: unknown) => error
+      );
+      expect(failure).toBeInstanceOf(AggregateError);
+      expect((failure as AggregateError).errors.map((error: Error) => error.message).sort()).toEqual([
+        "item 1 failed",
+        "item 4 failed",
+      ]);
+      expect(seen.sort((a, b) => a - b)).toEqual([0, 1, 2, 3, 4, 5]);
+    }
+  );
+
   test("does nothing for no items", async () => {
     let calls = 0;
     await forEachConcurrently([], 8, () => {
