@@ -10,7 +10,7 @@ import { useTranslation } from "react-i18next";
 import { PipelineTriggers, Webhook } from "@formbricks/database/prisma-browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { SurveyCheckboxGroup } from "@/modules/integrations/webhooks/components/survey-checkbox-group";
+import { SurveySelect } from "@/modules/integrations/webhooks/components/survey-select";
 import { TriggerCheckboxGroup } from "@/modules/integrations/webhooks/components/trigger-checkbox-group";
 import { WebhookCreatedModal } from "@/modules/integrations/webhooks/components/webhook-created-modal";
 import { isDiscordWebhook, validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
@@ -109,14 +109,6 @@ export const AddWebhookModal = ({
   const handleSelectAllSurveys = () => {
     setSelectedAllSurveys(!selectedAllSurveys);
     setSelectedSurveys([]);
-  };
-
-  const handleSelectedSurveyChange = (surveyId: string) => {
-    setSelectedSurveys((prevSelectedSurveys: string[]) =>
-      prevSelectedSurveys.includes(surveyId)
-        ? prevSelectedSurveys.filter((id) => id !== surveyId)
-        : [...prevSelectedSurveys, surveyId]
-    );
   };
 
   const handleCheckboxChange = (selectedValue: PipelineTriggers) => {
@@ -266,12 +258,12 @@ export const AddWebhookModal = ({
 
             <div>
               <Label htmlFor="Surveys">{t("common.surveys")}</Label>
-              <SurveyCheckboxGroup
+              <SurveySelect
                 surveys={surveys}
                 selectedSurveys={selectedSurveys}
                 selectedAllSurveys={selectedAllSurveys}
                 onSelectAllSurveys={handleSelectAllSurveys}
-                onSelectedSurveyChange={handleSelectedSurveyChange}
+                onSelectedSurveysChange={setSelectedSurveys}
                 allowChanges={true}
                 surveyVisibilityEnabled={surveyVisibilityEnabled}
               />
