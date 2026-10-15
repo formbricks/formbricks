@@ -62,7 +62,9 @@ function parseDraft(
 
 /** The v3 document validation, recall ordering enforced. */
 function validateDraft(data: TParsedDraft): InvalidParam[] {
-  const validation = validateV3SurveyDocument(data, { mode: "enforce" });
+  // `skip` for cyclic logic: `checkCreateInput` below runs `ZSurveyCreateInput`, which reports it —
+  // the same gate, and the same reason, the create itself applies (ENG-3946).
+  const validation = validateV3SurveyDocument(data, { mode: "enforce" }, "skip");
   return validation.valid ? [] : validation.invalidParams;
 }
 

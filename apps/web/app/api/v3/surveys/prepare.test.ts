@@ -1009,3 +1009,188 @@ describe("visibility fields on PATCH (ENG-3282)", () => {
     );
   });
 });
+
+describe("cyclic block logic on the update paths (ENG-3946)", () => {
+  // The three v3 update paths all reach `prepareV3SurveyPatchInput`: PATCH hands it the body,
+  // `edit_survey_blocks` and `set_survey_block_order` hand it the `{ blocks }` array they built from
+  // the stored survey. Each case below is the document one of them produces.
+  const BLOCK_A = "clbkaaaa111111111111111111";
+  const BLOCK_B = "clbkbbbb222222222222222222";
+  const BLOCK_C = "clbkcccc333333333333333333";
+
+  /** `defaultKey` is `default` for a stored survey and `en-US` for a request body. */
+  const block = (
+    id: string,
+    name: string,
+    elementId: string,
+    defaultKey: "default" | "en-US",
+    extra: Record<string, unknown> = {}
+  ) => ({
+    id,
+    name,
+    elements: [
+      {
+        id: elementId,
+        type: "openText",
+        headline: { [defaultKey]: name, "de-DE": name },
+        required: false,
+      },
+    ],
+    ...extra,
+  });
+
+  /** One logic rule on the block's own element, jumping to `target`. */
+  const jumpTo = (target: string, elementId: string, seed: string) => ({
+    logic: [
+      {
+        id: `cllogic${seed}11111111111111`,
+        conditions: {
+          id: `clcond${seed}111111111111111`,
+          connector: "and",
+          conditions: [
+            {
+              id: `clcond${seed}222222222222222`,
+              leftOperand: { type: "element", value: elementId },
+              operator: "isSubmitted",
+            },
+          ],
+        },
+        actions: [{ id: `clact${seed}1111111111111111`, objective: "jumpToBlock", target }],
+      },
+    ],
+  });
+
+  // A, B, C in order. A jumps forward over B to C, which is legal and stays legal.
+  const storedBlocks = [
+    block(BLOCK_A, "Block A", "qa", "default", jumpTo(BLOCK_C, "qa", "a")),
+    block(BLOCK_B, "Block B", "qb", "default"),
+    block(BLOCK_C, "Block C", "qc", "default"),
+  ];
+  const storedSurvey = { ...survey, blocks: storedBlocks } as unknown as TSurvey;
+
+  const requestBlocks = {
+    a: block(BLOCK_A, "Block A", "qa", "en-US", jumpTo(BLOCK_C, "qa", "a")),
+    b: block(BLOCK_B, "Block B", "qb", "en-US"),
+    c: block(BLOCK_C, "Block C", "qc", "en-US"),
+  };
+
+  const cyclicParams = (preparation: ReturnType<typeof prepareV3SurveyPatchInput>) => {
+    expect(preparation.ok).toBe(false);
+    if (preparation.ok) return [];
+    return preparation.validation.invalidParams.filter((param) => param.reason.includes("Cyclic logic"));
+  };
+
+  test("PATCH: a whole-document body whose blocks form a cycle is refused", () => {
+    // `patch_survey`. Block C jumps back to A, and A reaches C by falling through B — a respondent
+    // loops forever without reaching an ending.
+    const preparation = prepareV3SurveyPatchInput(storedSurvey, {
+      name: "Renamed",
+      blocks: [
+        requestBlocks.a,
+        requestBlocks.b,
+        block(BLOCK_C, "Block C", "qc", "en-US", jumpTo(BLOCK_A, "qc", "c")),
+      ],
+    });
+
+    expect(cyclicParams(preparation)).toEqual(
+      expect.arrayContaining([
+        {
+          name: "blocks.2.logic",
+          reason: "Conditional Logic: Cyclic logic detected in block 3 (Block C).",
+        },
+      ])
+    );
+  });
+
+  test("block edit: a cycle closed by a logicFallback on one edited block is refused", () => {
+    // `edit_survey_blocks` synthesizes `{ blocks }` from the stored array with its ops applied. Only
+    // B changed here; the cycle exists because A and C are what the survey already stores.
+    const editedB = block(BLOCK_B, "Block B", "qb", "en-US", {
+      ...jumpTo(BLOCK_C, "qb", "b"),
+      logicFallback: BLOCK_A,
+    });
+
+    const preparation = prepareV3SurveyPatchInput(storedSurvey, {
+      blocks: [requestBlocks.a, editedB, requestBlocks.c],
+    });
+
+    expect(cyclicParams(preparation)).toEqual(
+      expect.arrayContaining([
+        {
+          name: "blocks.1.logic",
+          reason: "Conditional Logic: Cyclic logic detected in block 2 (Block B).",
+        },
+      ])
+    );
+  });
+
+  test("block reorder: a cycle created by the new order alone is refused", () => {
+    // `set_survey_block_order` sends the stored blocks permuted, nothing else. C, B, A falls through
+    // C → B → A while A still jumps to C, so the order by itself closes the loop.
+    const preparation = prepareV3SurveyPatchInput(storedSurvey, {
+      blocks: [requestBlocks.c, requestBlocks.b, requestBlocks.a],
+    });
+
+    expect(cyclicParams(preparation)).toEqual(
+      expect.arrayContaining([
+        {
+          name: "blocks.2.logic",
+          reason: "Conditional Logic: Cyclic logic detected in block 3 (Block A).",
+        },
+      ])
+    );
+  });
+
+  test("a reorder that stays acyclic is still accepted", () => {
+    // B, A, C: A's jump to C now points at the block right after it. Jumping around is legitimate
+    // survey design and only cycles are policed — this is the over-rejection guard.
+    const preparation = prepareV3SurveyPatchInput(storedSurvey, {
+      blocks: [requestBlocks.b, requestBlocks.a, requestBlocks.c],
+    });
+
+    expect(preparation.ok).toBe(true);
+  });
+
+  test("a survey that already contains a cycle blames the stored survey, not the request", () => {
+    // The whole patch family rewrites `blocks` wholesale, so even a `{ name }` patch would persist
+    // the cycle and must be refused — but the caller did not cause it, and the response says so.
+    const cyclicSurvey = {
+      ...survey,
+      blocks: [
+        block(BLOCK_A, "Block A", "qa", "default"),
+        block(BLOCK_B, "Block B", "qb", "default", jumpTo(BLOCK_A, "qb", "b")),
+      ],
+    } as unknown as TSurvey;
+
+    const preparation = prepareV3SurveyPatchInput(cyclicSurvey, { name: "Renamed" });
+
+    expect(preparation.ok).toBe(false);
+    if (preparation.ok) return;
+    expect(preparation.origin).toBe("storedSurvey");
+    expect(cyclicParams(preparation).length).toBeGreaterThan(0);
+  });
+
+  test("create keeps its own cyclic gate — this rule does not move it earlier", () => {
+    // Create rejects cycles a layer down, in `ZSurveyCreateInput`, after its permission and limit
+    // checks. Enforcing the rule here too would change which 422 a create answers with.
+    const preparation = prepareV3SurveyCreateInput({
+      workspaceId,
+      name: "Cyclic on create",
+      blocks: [
+        {
+          id: BLOCK_A,
+          name: "Block A",
+          elements: [{ id: "qa", type: "openText", headline: { "en-US": "A" }, required: false }],
+        },
+        {
+          id: BLOCK_B,
+          name: "Block B",
+          elements: [{ id: "qb", type: "openText", headline: { "en-US": "B" }, required: false }],
+          ...jumpTo(BLOCK_A, "qb", "b"),
+        },
+      ],
+    });
+
+    expect(preparation.ok).toBe(true);
+  });
+});

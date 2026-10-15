@@ -65,7 +65,9 @@ function validPreparation<TDocument extends TV3SurveyDocument>(
   document: TDocument,
   precedence: TV3SurveyPrecedencePolicy
 ): TV3SurveyPrepareResult<TDocument> {
-  const validation = validateV3SurveyDocument(document, precedence);
+  // `skip`: create keeps its own cyclic-logic gate (`ZSurveyCreateInput` in `executeV3SurveyCreate`),
+  // which already answers 422 with this exact reason — see TV3SurveyCyclicLogicPolicy.
+  const validation = validateV3SurveyDocument(document, precedence, "skip");
 
   if (!validation.valid) {
     return invalidPreparation(validation.invalidParams);
@@ -214,10 +216,14 @@ function deriveFailureOrigin(
   // `preExisting` at all. That is the correct set: an `introduced`-mode precedence finding is by
   // definition the request's doing. Language, media and reference issues are unaffected by the policy
   // and still appear on both sides, which is what ENG-3070 actually needed.
-  const storedValidation = validateV3SurveyDocument(storedDocument, {
-    mode: "introduced",
-    baseline: storedDocument,
-  });
+  const storedValidation = validateV3SurveyDocument(
+    storedDocument,
+    { mode: "introduced", baseline: storedDocument },
+    // Same lens the merged document is judged with, so a cycle the stored survey already contains is
+    // reported as `stored_survey_invalid` ("repair it in the editor") rather than blamed on a request
+    // that merely touched the survey — the ENG-3070 attribution rule, applied to ENG-3946.
+    "enforce"
+  );
   if (storedValidation.valid) {
     return "request";
   }
@@ -582,10 +588,14 @@ export function prepareV3SurveyPatchInput(
   // recall is refused exactly as a reorder is, and the PATCH 422 contract lists `misordered_reference`.
   // (v3 is not publicly released, so this tightening ships without a version bump; create stays on
   // `skip` as `prepareV3SurveyCreate` explains.)
-  const validation = validateV3SurveyDocument(patchedDocument, {
-    mode: "introduced",
-    baseline: currentDocument.document,
-  });
+  // `enforce` for the cyclic-logic rule, and absolute rather than a delta (ENG-3946): the whole patch
+  // family rewrites `blocks` wholesale, so a request that leaves a cycle in place persists it just as
+  // surely as one that introduces it — and the editor refuses to save the result either way.
+  const validation = validateV3SurveyDocument(
+    patchedDocument,
+    { mode: "introduced", baseline: currentDocument.document },
+    "enforce"
+  );
 
   if (!validation.valid) {
     return invalidPreparation(

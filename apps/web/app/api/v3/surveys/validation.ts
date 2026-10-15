@@ -1,3 +1,4 @@
+import { findBlocksWithCyclicLogic } from "@formbricks/types/surveys/blocks-validation";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import { isInternalI18nString, isPlainObject } from "./guards";
@@ -160,6 +161,42 @@ export function getV3SurveyMediaInvalidParams(blocks: TV3SurveyDocument["blocks"
 }
 
 /**
+ * Blocks whose conditional logic forms a cycle (ENG-3946): a respondent can loop between them
+ * forever without ever reaching an ending.
+ *
+ * The detection and the wording are the ones `surveyRefinement` already applies on create
+ * (`ZSurveyCreateInput`), down to the path and the sentence — so the create and the update paths
+ * refuse the same document for the same stated reason, and there is one cycle-finder, not two.
+ */
+export function getV3SurveyCyclicLogicInvalidParams(blocks: TV3SurveyDocument["blocks"]): InvalidParam[] {
+  return findBlocksWithCyclicLogic(blocks).flatMap((blockId) => {
+    const blockIndex = blocks.findIndex((block) => block.id === blockId);
+    if (blockIndex === -1) {
+      return [];
+    }
+
+    return [
+      {
+        name: `blocks.${String(blockIndex)}.logic`,
+        reason: `Conditional Logic: Cyclic logic detected in block ${String(blockIndex + 1)} (${blocks[blockIndex].name}).`,
+      },
+    ];
+  });
+}
+
+/**
+ * Whether the cyclic-logic rule is applied here (ENG-3946).
+ *
+ * `enforce` on the patch family: PATCH and both block endpoints write the whole `blocks` array, so
+ * every one of them persists the cycle — including a request that only reorders, or only renames the
+ * survey. `skip` on create, which already rejects cycles a layer down through `ZSurveyCreateInput`;
+ * running the rule here too would move that 422 ahead of create's permission and limit checks and
+ * change a response that is correct today. Required rather than defaulted, like the precedence
+ * policy above, so a new caller has to choose.
+ */
+export type TV3SurveyCyclicLogicPolicy = "enforce" | "skip";
+
+/**
  * How strictly to apply the ordering rules (ENG-3069).
  *
  * `introduced` on the patch family (PATCH, block edit, reorder): only what the change adds is reported —
@@ -187,7 +224,8 @@ function toReferenceInput(document: TV3SurveyDocument) {
 
 export function validateV3SurveyDocument(
   document: TV3SurveyDocument,
-  precedence: TV3SurveyPrecedencePolicy
+  precedence: TV3SurveyPrecedencePolicy,
+  cyclicLogic: TV3SurveyCyclicLogicPolicy
 ): TV3SurveyDocumentValidationResult {
   const languageInvalidParams = getV3SurveyLanguageInvalidParams(document);
   const mediaInvalidParams = getV3SurveyMediaInvalidParams(document.blocks);
@@ -198,6 +236,10 @@ export function validateV3SurveyDocument(
 
   if (!referenceValidation.ok) {
     invalidParams.push(...referenceValidation.invalidParams);
+  }
+
+  if (cyclicLogic === "enforce") {
+    invalidParams.push(...getV3SurveyCyclicLogicInvalidParams(document.blocks));
   }
 
   if (precedence.mode === "enforce") {

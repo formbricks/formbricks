@@ -1519,4 +1519,84 @@ describe("patchV3Survey", () => {
       expect(err.currentUpdatedAt).toBe(movedOnAt);
     });
   });
+  /**
+   * ENG-3946. Every v3 update path — PATCH, `edit_survey_blocks`, `set_survey_block_order` — reaches
+   * the database through here, so the cyclic-logic refusal has to hold at this boundary and before
+   * the transaction, or a survey the editor then refuses to save is already persisted.
+   */
+  describe("cyclic block logic", () => {
+    const BLOCK_A = "clbkaaaa111111111111111111";
+    const BLOCK_B = "clbkbbbb222222222222222222";
+    const BLOCK_C = "clbkcccc333333333333333333";
+
+    const block = (id: string, name: string, elementId: string, target?: string) => ({
+      id,
+      name,
+      elements: [{ id: elementId, type: "openText", headline: { "en-US": name }, required: false }],
+      ...(target
+        ? {
+            logic: [
+              {
+                id: "cllogic11111111111111111",
+                conditions: {
+                  id: "clcond111111111111111111",
+                  connector: "and",
+                  conditions: [
+                    {
+                      id: "clcond222222222222222222",
+                      leftOperand: { type: "element", value: elementId },
+                      operator: "isSubmitted",
+                    },
+                  ],
+                },
+                actions: [{ id: "clact1111111111111111111", objective: "jumpToBlock", target }],
+              },
+            ],
+          }
+        : {}),
+    });
+
+    test("refuses a patch whose blocks form a cycle, and writes nothing", async () => {
+      // B jumps back to A, and A reaches B again by falling through: a respondent never leaves.
+      const error = await patchV3Survey(
+        currentSurvey,
+        { blocks: [block(BLOCK_A, "Block A", "qa"), block(BLOCK_B, "Block B", "qb", BLOCK_A)] },
+        "req_cyclic_1",
+        "org_1"
+      ).catch((caught: unknown) => caught);
+
+      expect(error).toBeInstanceOf(V3SurveyReferenceValidationError);
+      expect((error as V3SurveyReferenceValidationError).invalidParams).toEqual(
+        expect.arrayContaining([
+          {
+            name: "blocks.1.logic",
+            reason: "Conditional Logic: Cyclic logic detected in block 2 (Block B).",
+          },
+        ])
+      );
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+      // Before `ensureV3WorkspaceLanguages`, so a refused patch leaves no workspace language behind.
+      expect(prisma.language.upsert).not.toHaveBeenCalled();
+    });
+
+    test("leaves a jump that skips forward over a block alone", async () => {
+      // Jumping around is legitimate survey design; only cycles are policed.
+      await expect(
+        patchV3Survey(
+          currentSurvey,
+          {
+            blocks: [
+              block(BLOCK_A, "Block A", "qa", BLOCK_C),
+              block(BLOCK_B, "Block B", "qb"),
+              block(BLOCK_C, "Block C", "qc"),
+            ],
+          },
+          "req_cyclic_2",
+          "org_1"
+        )
+      ).resolves.toBeDefined();
+
+      expect(prisma.survey.update).toHaveBeenCalled();
+    });
+  });
 });
