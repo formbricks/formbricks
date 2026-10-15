@@ -7,15 +7,16 @@ import { RequestBodyTooLargeError, readRequestBytesWithLimit } from "@/app/lib/a
  *
  * Every route under that prefix answers anonymous callers, and none of them buffers its body with a
  * bound of its own: Better Auth's handler, the dynamic-client-registration preprocessing and the SAML
- * bridge's `formData()` each read the whole thing. Next's `proxyClientMaxBodySize` (16 MB,
- * next.config.mjs) caps what the proxy clones, but it truncates rather than refuses, so it bounds the
- * damage without stopping the work.
+ * bridge's `formData()` each read the whole thing. This guard is the first thing to read the body:
+ * `patches/next@16.3.8.patch` stops Next cloning it for the proxy (ENG-3972), so an oversized or slow
+ * upload is refused as soon as it passes the limit, not after the client's last byte.
  *
  * 256 KiB is far above anything these routes legitimately receive — credentials, an OAuth/OIDC
  * `form_post` carrying an id_token, a ~1 KB client registration. The largest honest payload is the SAML
  * callback's base64 `SAMLResponse`, and AWS, a service provider every major IdP federates into, refuses one
  * over 100,000 characters (STS `AssumeRoleWithSAML`), so this leaves more than twice that. It is also 64
- * times below the proxy ceiling, so a body that hits the ceiling is refused here as well.
+ * times below Next's `proxyClientMaxBodySize` (16 MB), so without the patch a body Next cut off at that
+ * size is still refused here.
  *
  * One limit for the whole surface on purpose: the SAML callback parses the XML before checking anything
  * (jackson's `parseIssuer`), so a larger limit there would buy memory amplification for an anonymous

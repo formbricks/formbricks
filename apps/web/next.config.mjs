@@ -108,6 +108,9 @@ const nextConfig = {
   },
   turbopack: {},
   experimental: {
+    // Inert while patches/next@16.3.8.patch is applied: the patched Next never clones a request body for
+    // proxy.ts (ENG-3972). Kept as the fallback for a Next without the patch, which would clone again and
+    // cut bodies off at this size, so the import routes keep their limits below it.
     proxyClientMaxBodySize: "16mb",
   },
   transpilePackages: ["@formbricks/database", "@formbricks/workflows"],

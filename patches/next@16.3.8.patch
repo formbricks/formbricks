@@ -1,0 +1,32 @@
+diff --git a/dist/server/next-server.js b/dist/server/next-server.js
+--- a/dist/server/next-server.js
++++ b/dist/server/next-server.js
+@@ -1181,7 +1181,11 @@
+             },
+             url: url,
+             page,
+-            body: method !== 'GET' && method !== 'HEAD' ? (0, _requestmeta.getRequestMeta)(params.request, 'clonableBody') : undefined,
++            // Formbricks patch (ENG-3972): never hand the proxy a request body. Cloning it for the proxy reads
++            // the whole upload off the socket, buffers up to proxyClientMaxBodySize, and holds the route until
++            // the client sends its last byte, on every path the proxy matches. Formbricks proxy.ts never reads
++            // the body, so the route reads the original, unread stream instead.
++            body: undefined,
+             signal: (0, _nextrequest.signalFromNodeResponse)(params.response.originalResponse),
+             waitUntil: this.getWaitUntil()
+         };
+diff --git a/dist/esm/server/next-server.js b/dist/esm/server/next-server.js
+--- a/dist/esm/server/next-server.js
++++ b/dist/esm/server/next-server.js
+@@ -1112,7 +1112,11 @@
+             },
+             url: url,
+             page,
+-            body: method !== 'GET' && method !== 'HEAD' ? getRequestMeta(params.request, 'clonableBody') : undefined,
++            // Formbricks patch (ENG-3972): never hand the proxy a request body. Cloning it for the proxy reads
++            // the whole upload off the socket, buffers up to proxyClientMaxBodySize, and holds the route until
++            // the client sends its last byte, on every path the proxy matches. Formbricks proxy.ts never reads
++            // the body, so the route reads the original, unread stream instead.
++            body: undefined,
+             signal: signalFromNodeResponse(params.response.originalResponse),
+             waitUntil: this.getWaitUntil()
+         };
