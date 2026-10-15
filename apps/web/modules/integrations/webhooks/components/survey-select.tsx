@@ -77,7 +77,6 @@ export const SurveySelect = ({
         }
         disabled={selectedAllSurveys || !allowChanges}
         placeholder={t("workspace.surveys.search_by_survey_name")}
-        containerClassName="focus-within:ring-0 focus-within:ring-offset-0"
       />
       {!selectedAllSurveys && (
         <RestrictedSurveysNote
