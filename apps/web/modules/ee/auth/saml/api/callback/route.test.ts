@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { SAML_RESPONSE_MARKUP_BUDGET } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
 import { POST } from "./route";
@@ -54,15 +55,22 @@ describe("SAML callback route", () => {
 
   test("refuses a response over the markup budget before jackson parses it", async () => {
     const flood = `<samlp:Response>${"<a/>".repeat(SAML_RESPONSE_MARKUP_BUDGET)}</samlp:Response>`;
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
 
     const response = await POST(callback({ SAMLResponse: b64(flood), RelayState: "s" }));
 
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({ code: "bad_request" });
     expect(samlResponseMock).not.toHaveBeenCalled();
+    // The refusal is logged by size only: no SAMLResponse content may reach the log.
+    expect(warn).toHaveBeenCalledWith(
+      { markup: expect.any(Number), length: b64(flood).length },
+      "Refused a SAML response over the markup budget"
+    );
+    expect(JSON.stringify(warn.mock.calls)).not.toContain(b64(flood).slice(0, 32));
   });
 
-  test("answers 429 once the caller's IP is over its limit, without reading or parsing the body", async () => {
+  test("answers 429 with Retry-After once the caller's IP is over its limit, before jackson parses anything", async () => {
     applyIPRateLimitMock.mockRejectedValueOnce(
       new TooManyRequestsError("Maximum number of requests reached.", 42)
     );
