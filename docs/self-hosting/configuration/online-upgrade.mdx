@@ -25,6 +25,10 @@ enabled; the chart sets `BULLMQ_WORKER_ENABLED=1`. Autoscaling during handoff is
 could recreate source workers after retirement, so preflight rejects it. Source Pods must belong to an
 inventoried Deployment or StatefulSet.
 
+Hub also needs fixed replicas of at least two (`hub.replicas`, default `1`) and no Hub autoscaling. Cube can
+keep its default single replica and in-memory driver: it rolls out with `maxUnavailable: 0`, so it stays
+available during the upgrade. More Cube replicas need Cube Store, as they do outside online mode.
+
 Supply a session-affine `MIGRATE_DATABASE_URL`. Transaction-pooling connections are unsuitable for the
 coordinator's session advisory lock. Set `upgrade.online.sessionAffinity: true` only for a connection
 whose pool mode guarantees that property. The coordinator tests lock ownership throughout the run.
