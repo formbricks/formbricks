@@ -25,8 +25,8 @@ import {
 } from "../../lib/publish-check";
 import { getMockDisplayState } from "../../mock/data";
 import type { TCreative, TCreativeDevice } from "../../types";
-import { CREATIVE_TYPE_ICONS } from "../creative-icons";
-import { CreativeStatusBadge } from "../creative-status-badge";
+import { CreativeTypeIndicator } from "../creative-icons";
+import { CreativeStatusPill } from "../creative-status-pill";
 import { MockDataBadge } from "../mock-data-badge";
 import { ContentTab } from "./content-tab";
 import { CreativePreview } from "./creative-preview";
@@ -60,7 +60,6 @@ export const CreativeEditor = ({
   const issues = shownIssues.length > 0 ? getPublishIssues(creative) : [];
   const tabsWithIssues = new Set(issues.map((issue) => PUBLISH_ISSUE_TABS[issue]));
   const displayState = getMockDisplayState(creative, now);
-  const TypeIconComponent = CREATIVE_TYPE_ICONS[creative.type];
 
   const tabLabels: Record<TCreativeEditorTab, string> = {
     content: t("workspace.creatives.editor.tab_content"),
@@ -113,11 +112,6 @@ export const CreativeEditor = ({
     }, 600);
   };
 
-  const typeLabel =
-    creative.type === "banner"
-      ? t("workspace.creatives.type_banner")
-      : t("workspace.creatives.type_feedback_button");
-
   return (
     <div className="flex h-full flex-col">
       <header className="flex h-14 shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4">
@@ -135,11 +129,10 @@ export const CreativeEditor = ({
           aria-invalid={issues.includes("name_missing") || undefined}
           className="h-9 w-56 min-w-0 rounded-md border border-transparent px-2 text-base font-semibold text-slate-900 transition-colors outline-none placeholder:font-normal placeholder:text-slate-400 hover:border-slate-200 focus:border-slate-300 aria-invalid:border-red-400 lg:w-72"
         />
-        <span className="hidden items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 sm:inline-flex">
-          <TypeIconComponent className="size-3.5" aria-hidden="true" />
-          {typeLabel}
+        <span className="hidden sm:block">
+          <CreativeTypeIndicator type={creative.type} />
         </span>
-        <CreativeStatusBadge state={displayState} />
+        <CreativeStatusPill state={displayState} />
         <div className="ml-auto flex items-center gap-2">
           <span className="hidden md:inline-flex">
             <MockDataBadge />

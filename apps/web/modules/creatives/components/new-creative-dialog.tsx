@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -58,11 +59,7 @@ const TypeCard = ({
     <span className="space-y-1">
       <span className="flex items-center gap-2 text-sm font-semibold text-slate-900">
         {title}
-        {disabledBadge && (
-          <span className="rounded-full border border-slate-200 bg-white px-1.5 py-px text-[11px] font-medium text-slate-500">
-            {disabledBadge}
-          </span>
-        )}
+        {disabledBadge && <Badge text={disabledBadge} type="gray" size="tiny" />}
       </span>
       <span className="block text-xs leading-relaxed text-slate-500">{description}</span>
     </span>

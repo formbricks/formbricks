@@ -1,53 +1,35 @@
 "use client";
 
-import {
-  ArchiveIcon,
-  ArchiveRestoreIcon,
-  CopyIcon,
-  CopyPlusIcon,
-  LinkIcon,
-  MessageCircleIcon,
-  MoreHorizontalIcon,
-  PauseIcon,
-  PencilIcon,
-  PlayIcon,
-  SearchXIcon,
-  SquareChartGanttIcon,
-  TrashIcon,
-} from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { LinkIcon, MessageCircleIcon, X } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { timeSinceDate } from "@/lib/time";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { Button } from "@/modules/ui/components/button";
+import { CardTableHeader, CardTableRow } from "@/modules/ui/components/card-table";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/modules/ui/components/dropdown-menu";
+import { FilterDropdown, type TFilterOption } from "@/modules/ui/components/filter-dropdown";
 import { SearchBar } from "@/modules/ui/components/search-bar";
-import { Tabs, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
-import type { TCreativeDisplayState } from "../lib/display-status";
+import type { TCreativeDisplayStatus } from "../lib/display-status";
+import {
+  INITIAL_CREATIVE_FILTERS,
+  type TCreativeListFilters,
+  type TCreativeListRow,
+  filterCreativeRows,
+  hasActiveCreativeFilters,
+} from "../lib/list-filters";
 import { getCreativeEditPath, getCreativeSummaryPath } from "../lib/paths";
 import { getMockDisplayState, getMockLinkedSurvey } from "../mock/data";
-import type { TCreative } from "../types";
-import { CreativeTypeIcon } from "./creative-icons";
-import { CreativeStatusBadge } from "./creative-status-badge";
+import type { TCreative, TCreativeType } from "../types";
+import { CreativeTypeIndicator } from "./creative-icons";
+import { CreativeListActions } from "./creative-list-actions";
+import { CreativeStatusPill } from "./creative-status-pill";
+import { CreativesSortDropdown } from "./creatives-sort-dropdown";
 
-type TQuickTab = "active" | "scheduled" | "all";
-
-interface TCreativeRow {
-  creative: TCreative;
-  state: TCreativeDisplayState;
-}
-
-const ROW_GRID =
-  "grid grid-cols-[minmax(0,1fr)_auto_2.5rem] items-center gap-x-4 md:grid-cols-[minmax(0,2.2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)_2.5rem]";
+// Same layout as the surveys list: toolbar, then a card table with the columns of the surveys
+// list, where Responses becomes what the creative opens (counts live on the summary page only).
+const GRID = "grid-cols-8";
 
 const getLinkPath = (url: string): string => {
   try {
@@ -59,21 +41,17 @@ const getLinkPath = (url: string): string => {
 
 const OpensCell = ({ creative }: Readonly<{ creative: TCreative }>) => {
   const { t } = useTranslation();
-  if (creative.action.kind === "link") {
-    if (!creative.action.url) return <span className="text-slate-400">—</span>;
-    return (
-      <span className="flex min-w-0 items-center gap-1.5">
-        <LinkIcon className="size-3.5 shrink-0 text-slate-400" />
-        <span className="truncate">{`${t("common.link")} · ${getLinkPath(creative.action.url)}`}</span>
-      </span>
-    );
-  }
   const survey = getMockLinkedSurvey(creative);
-  if (!survey) return <span className="text-slate-400">—</span>;
+  const target =
+    creative.action.kind === "link" && creative.action.url
+      ? { icon: LinkIcon, text: `${t("common.link")} · ${getLinkPath(creative.action.url)}` }
+      : survey && { icon: MessageCircleIcon, text: survey.name };
+  if (!target) return <span>-</span>;
+  const Icon = target.icon;
   return (
     <span className="flex min-w-0 items-center gap-1.5">
-      <MessageCircleIcon className="size-3.5 shrink-0 text-slate-400" />
-      <span className="truncate">{survey.name}</span>
+      <Icon className="size-4 shrink-0" />
+      <span className="truncate">{target.text}</span>
     </span>
   );
 };
@@ -83,48 +61,58 @@ export const CreativesList = ({
   initialCreatives,
 }: Readonly<{ workspaceId: string; initialCreatives: TCreative[] }>) => {
   const { t, i18n } = useTranslation();
-  const router = useRouter();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const [now] = useState(() => new Date());
   const [creatives, setCreatives] = useState(initialCreatives);
-  const [quickTab, setQuickTab] = useState<TQuickTab>("all");
-  const [search, setSearch] = useState("");
+  const [filters, setFilters] = useState<TCreativeListFilters>(INITIAL_CREATIVE_FILTERS);
+  const [openFilter, setOpenFilter] = useState<"status" | "type" | null>(null);
   const [pendingDelete, setPendingDelete] = useState<TCreative | null>(null);
 
-  const rows: TCreativeRow[] = creatives.map((creative) => ({
-    creative,
-    state: getMockDisplayState(creative, now),
-  }));
-  const counts: Record<TQuickTab, number> = {
-    active: rows.filter((row) => row.state.status === "active").length,
-    scheduled: rows.filter((row) => row.state.status === "scheduled").length,
-    all: rows.length,
-  };
-  const query = search.trim().toLowerCase();
-  const visibleRows = rows.filter(
-    (row) =>
-      (quickTab === "all" || row.state.status === quickTab) &&
-      (!query || row.creative.name.toLowerCase().includes(query))
+  const rows = filterCreativeRows(
+    creatives.map((creative) => ({ creative, state: getMockDisplayState(creative, now) })),
+    filters
   );
 
-  const typeLabels = {
-    feedback_button: t("workspace.creatives.type_feedback_button"),
-    banner: t("workspace.creatives.type_banner"),
-  };
+  const statusOptions: TFilterOption<TCreativeDisplayStatus>[] = [
+    { label: t("common.draft"), value: "draft" },
+    { label: t("common.scheduled"), value: "scheduled" },
+    { label: t("common.active"), value: "active" },
+    { label: t("common.paused"), value: "paused" },
+    { label: t("common.closed"), value: "closed" },
+    { label: t("common.archived"), value: "archived", separatorBefore: true },
+  ];
+  const typeOptions: TFilterOption<TCreativeType>[] = [
+    { label: t("workspace.creatives.type_feedback_button"), value: "feedback_button" },
+    { label: t("workspace.creatives.type_banner"), value: "banner" },
+  ];
+  const toggle = <K extends "status" | "type">(key: K, value: TCreativeListFilters[K][number]) =>
+    setFilters((current) => {
+      const selected = current[key] as string[];
+      const next = selected.includes(value)
+        ? selected.filter((item) => item !== value)
+        : [...selected, value];
+      return { ...current, [key]: next };
+    });
 
-  const getRowHref = ({ creative }: TCreativeRow) =>
-    creative.status === "draft"
+  const getRowHref = ({ creative }: TCreativeListRow) =>
+    creative.status === "draft" && !creative.archivedAt
       ? getCreativeEditPath(workspaceId, creative.id)
       : getCreativeSummaryPath(workspaceId, creative.id);
+
+  const patch = (creativeId: string, change: Partial<TCreative>) =>
+    setCreatives((current) =>
+      current.map((item) => (item.id === creativeId ? { ...item, ...change } : item))
+    );
 
   const duplicate = (creative: TCreative) => {
     const copy: TCreative = {
       ...creative,
-      id: `${creative.id}_copy_${Date.now()}`,
+      id: `${creative.id}_copy_${crypto.randomUUID().slice(0, 8)}`,
       name: t("workspace.creatives.copy_of", { name: creative.name }),
       status: "draft",
       archivedAt: null,
       publishedAt: null,
+      createdAt: new Date(),
       updatedAt: new Date(),
       daily: [],
       pages: [],
@@ -132,11 +120,6 @@ export const CreativesList = ({
     setCreatives((current) => [copy, ...current]);
     toast.success(t("workspace.creatives.toast_duplicated"));
   };
-
-  const patch = (creativeId: string, change: Partial<TCreative>) =>
-    setCreatives((current) =>
-      current.map((item) => (item.id === creativeId ? { ...item, ...change } : item))
-    );
 
   const toggleArchived = (creative: TCreative) => {
     patch(creative.id, { archivedAt: creative.archivedAt ? null : new Date() });
@@ -170,147 +153,109 @@ export const CreativesList = ({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Tabs value={quickTab} onValueChange={(value) => setQuickTab(value as TQuickTab)}>
-          <TabsList>
-            {(["active", "scheduled", "all"] as const).map((tab) => (
-              <TabsTrigger key={tab} value={tab} className="gap-2">
-                {tab === "active" && t("workspace.creatives.quick_tab_active")}
-                {tab === "scheduled" && t("common.scheduled")}
-                {tab === "all" && t("common.all")}
-                <span className="rounded-full bg-slate-200/70 px-1.5 text-xs text-slate-600 tabular-nums">
-                  {counts[tab]}
-                </span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-        <SearchBar
-          value={search}
-          onChange={setSearch}
-          placeholder={t("workspace.creatives.search_placeholder")}
-          className="sm:w-72"
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-x-2">
+          <SearchBar
+            value={filters.name}
+            onChange={(name) => setFilters((current) => ({ ...current, name }))}
+            placeholder={t("workspace.creatives.search_placeholder")}
+            className="w-80 border-slate-700"
+          />
+          <FilterDropdown
+            title={t("common.status")}
+            className="creativeFilterDropdown"
+            options={statusOptions}
+            selectedOptions={filters.status}
+            onToggleOption={(value) => toggle("status", value)}
+            isOpen={openFilter === "status"}
+            onOpenChange={(open) => setOpenFilter(open ? "status" : null)}
+          />
+          <FilterDropdown
+            title={t("common.type")}
+            className="creativeFilterDropdown"
+            options={typeOptions}
+            selectedOptions={filters.type}
+            onToggleOption={(value) => toggle("type", value)}
+            isOpen={openFilter === "type"}
+            onOpenChange={(open) => setOpenFilter(open ? "type" : null)}
+          />
+          {hasActiveCreativeFilters(filters) && (
+            <Button
+              size="sm"
+              className="h-8"
+              onClick={() => setFilters({ ...INITIAL_CREATIVE_FILTERS, sortBy: filters.sortBy })}>
+              {t("common.clear_filters")}
+              <X />
+            </Button>
+          )}
+        </div>
+        <CreativesSortDropdown
+          sortBy={filters.sortBy}
+          onSortChange={(sortBy) => setFilters((current) => ({ ...current, sortBy }))}
         />
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
-        <div
-          className={`${ROW_GRID} border-b border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-medium text-slate-500`}>
-          <span>{t("common.name")}</span>
-          <span>{t("common.status")}</span>
-          <span className="hidden md:block">{t("common.type")}</span>
-          <span className="hidden md:block">{t("workspace.creatives.column_opens")}</span>
-          <span className="hidden md:block">{t("common.updated")}</span>
-          <span className="sr-only">{t("common.actions")}</span>
+      {rows.length === 0 ? (
+        <div className="flex w-full flex-col items-center justify-center py-16 text-slate-600">
+          <span className="size-24 p-4 text-center text-5xl">🕵️</span>
+          {t("workspace.creatives.no_matches")}
         </div>
-
-        {visibleRows.length === 0 && (
-          <div className="flex flex-col items-center gap-2 px-4 py-14 text-center text-sm text-slate-500">
-            <SearchXIcon className="size-6 text-slate-400" strokeWidth={1.5} />
-            {t("workspace.creatives.no_matches")}
-          </div>
-        )}
-
-        <ul>
-          {visibleRows.map((row) => {
+      ) : (
+        <div className="space-y-3">
+          <CardTableHeader className={GRID}>
+            <div className="col-span-2 place-self-start">{t("common.name")}</div>
+            <div className="col-span-1">{t("common.status")}</div>
+            <div className="col-span-1">{t("common.type")}</div>
+            <div className="col-span-1">{t("workspace.creatives.column_opens")}</div>
+            <div className="col-span-1">{t("common.created_at")}</div>
+            <div className="col-span-1">{t("common.updated_at")}</div>
+            <div className="col-span-1">{t("common.created_by")}</div>
+          </CardTableHeader>
+          {rows.map((row) => {
             const { creative, state } = row;
-            const canTogglePause =
-              !creative.archivedAt && (creative.status === "inProgress" || creative.status === "paused");
             return (
-              <li
+              <CardTableRow
                 key={creative.id}
-                className={`${ROW_GRID} group relative border-b border-slate-100 px-4 py-3 text-sm text-slate-700 last:border-b-0 hover:bg-slate-50`}>
-                <Link
-                  href={getRowHref(row)}
-                  className="flex min-w-0 items-center gap-3 font-medium text-slate-900 after:absolute after:inset-0 focus-visible:outline-hidden">
-                  <CreativeTypeIcon type={creative.type} />
-                  <span className="truncate">
+                href={getRowHref(row)}
+                className={GRID}
+                actions={
+                  <CreativeListActions
+                    workspaceId={workspaceId}
+                    creative={creative}
+                    onDuplicate={() => duplicate(creative)}
+                    onTogglePause={() => toggleOwnPause(creative)}
+                    onToggleArchived={() => toggleArchived(creative)}
+                    onCopyId={() => void copyId(creative)}
+                    onDelete={() => setPendingDelete(creative)}
+                  />
+                }>
+                <div className="col-span-2 flex max-w-full items-center justify-self-start text-sm font-medium text-slate-900">
+                  <div className="min-w-0 truncate">
                     {creative.name || t("workspace.creatives.untitled_creative")}
-                  </span>
-                </Link>
-                <span className="relative">
-                  <CreativeStatusBadge state={state} />
-                </span>
-                <span className="hidden truncate text-slate-600 md:block">{typeLabels[creative.type]}</span>
-                <span className="hidden min-w-0 text-slate-600 md:block">
+                  </div>
+                </div>
+                <CreativeStatusPill state={state} />
+                <div className="col-span-1">
+                  <CreativeTypeIndicator type={creative.type} />
+                </div>
+                <div className="col-span-1 max-w-full overflow-hidden text-sm text-slate-600">
                   <OpensCell creative={creative} />
-                </span>
-                <span className="hidden text-slate-500 tabular-nums md:block">
-                  {formatDateForDisplay(creative.updatedAt, locale)}
-                </span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="relative z-10 size-8 text-slate-500"
-                      aria-label={t("common.actions")}>
-                      <MoreHorizontalIcon />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem
-                      icon={<PencilIcon className="size-4" />}
-                      onClick={() => router.push(getCreativeEditPath(workspaceId, creative.id))}>
-                      {t("common.edit")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      icon={<SquareChartGanttIcon className="size-4" />}
-                      disabled={creative.status === "draft"}
-                      onClick={() => router.push(getCreativeSummaryPath(workspaceId, creative.id))}>
-                      {t("workspace.creatives.view_summary")}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      icon={<CopyPlusIcon className="size-4" />}
-                      onClick={() => duplicate(creative)}>
-                      {t("common.duplicate")}
-                    </DropdownMenuItem>
-                    {canTogglePause && (
-                      <DropdownMenuItem
-                        icon={
-                          creative.status === "paused" ? (
-                            <PlayIcon className="size-4" />
-                          ) : (
-                            <PauseIcon className="size-4" />
-                          )
-                        }
-                        onClick={() => toggleOwnPause(creative)}>
-                        {creative.status === "paused"
-                          ? t("workspace.creatives.resume")
-                          : t("workspace.creatives.pause")}
-                      </DropdownMenuItem>
-                    )}
-                    {creative.status !== "draft" && (
-                      <DropdownMenuItem
-                        icon={
-                          creative.archivedAt ? (
-                            <ArchiveRestoreIcon className="size-4" />
-                          ) : (
-                            <ArchiveIcon className="size-4" />
-                          )
-                        }
-                        onClick={() => toggleArchived(creative)}>
-                        {creative.archivedAt ? t("workspace.creatives.restore") : t("common.archive")}
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem icon={<CopyIcon className="size-4" />} onClick={() => copyId(creative)}>
-                      {t("workspace.creatives.copy_id")}
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      icon={<TrashIcon className="size-4" />}
-                      className="text-red-600 focus:text-red-700"
-                      onClick={() => setPendingDelete(creative)}>
-                      {t("common.delete")}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </li>
+                </div>
+                <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
+                  {formatDateForDisplay(creative.createdAt, locale)}
+                </div>
+                <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
+                  {timeSinceDate(creative.updatedAt, locale)}
+                </div>
+                <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
+                  {creative.creatorName ?? "-"}
+                </div>
+              </CardTableRow>
             );
           })}
-        </ul>
-      </div>
+        </div>
+      )}
 
       <DeleteDialog
         open={!!pendingDelete}

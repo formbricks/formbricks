@@ -26,8 +26,8 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { getCreativeEditPath, getCreativesPath } from "../../lib/paths";
 import { getMockDisplayState, getMockLinkedSurvey } from "../../mock/data";
 import type { TCreative } from "../../types";
-import { CREATIVE_TYPE_ICONS } from "../creative-icons";
-import { CreativeStatusBadge } from "../creative-status-badge";
+import { CreativeTypeIndicator } from "../creative-icons";
+import { CreativeStatusPill } from "../creative-status-pill";
 import { Segmented } from "../editor/editor-primitives";
 import { MockDataBadge } from "../mock-data-badge";
 
@@ -51,7 +51,6 @@ export const CreativeSummary = ({
   const [range, setRange] = useState<TRange>("30");
   const state = getMockDisplayState(creative, now);
   const survey = getMockLinkedSurvey(creative);
-  const TypeIconComponent = CREATIVE_TYPE_ICONS[creative.type];
 
   const numberFormat = new Intl.NumberFormat(locale);
   const percentFormat = new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 1 });
@@ -81,7 +80,9 @@ export const CreativeSummary = ({
         pageTitle={
           <span className="flex items-center gap-3">
             {creative.name}
-            <CreativeStatusBadge state={state} className="text-sm" />
+            <span className="text-base font-normal">
+              <CreativeStatusPill state={state} />
+            </span>
           </span>
         }
         cta={
@@ -96,12 +97,7 @@ export const CreativeSummary = ({
           </div>
         }>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pb-4 text-sm text-slate-600">
-          <span className="inline-flex items-center gap-1.5">
-            <TypeIconComponent className="size-4 text-slate-400" aria-hidden="true" />
-            {creative.type === "banner"
-              ? t("workspace.creatives.type_banner")
-              : t("workspace.creatives.type_feedback_button")}
-          </span>
+          <CreativeTypeIndicator type={creative.type} />
           {survey && (
             <span className="inline-flex items-center gap-1.5">
               <MessageCircleIcon className="size-4 text-slate-400" aria-hidden="true" />

@@ -14,7 +14,7 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import type { TCreativeDisplayState } from "../../lib/display-status";
 import { getCreativesPath } from "../../lib/paths";
-import { CreativeStatusBadge } from "../creative-status-badge";
+import { CreativeStatusPill } from "../creative-status-pill";
 
 // A living spec for the kit pieces Creatives adds. apps/storybook only renders packages/survey-ui,
 // so apps/web components are reviewed here, inside the real app shell, theme and i18n.
@@ -190,7 +190,7 @@ export const CreativesKitPlayground = ({ workspaceId }: Readonly<{ workspaceId: 
         <Demo label={t("common.status")}>
           <div className="flex flex-wrap gap-2">
             {STATUS_STATES.map((state) => (
-              <CreativeStatusBadge key={`${state.status}-${state.reason}`} state={state} />
+              <CreativeStatusPill key={`${state.status}-${state.reason}`} state={state} />
             ))}
           </div>
         </Demo>

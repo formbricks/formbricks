@@ -19,29 +19,38 @@ const HeaderSkeleton = ({ withActions = true }: Readonly<{ withActions?: boolean
   </div>
 );
 
+/** Mirrors the workflows/surveys list loading state: toolbar, card-table header and rows. */
 export const CreativesListSkeleton = () => (
   <div className="space-y-6 p-6">
     <HeaderSkeleton />
-    <div className="space-y-4">
-      <div className="flex justify-between gap-3">
-        <Bone className="h-9 w-72 rounded-lg" />
-        <Bone className="hidden h-9 w-72 sm:block" />
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex gap-x-2">
+        <Bone className="h-8 w-80" />
+        <Bone className="h-8 w-24" />
+        <Bone className="h-8 w-20" />
       </div>
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-        <div className="h-10 border-b border-slate-200 bg-slate-50" />
-        {Array.from({ length: 5 }, (_, index) => (
-          <div
-            key={index}
-            className="flex items-center gap-4 border-b border-slate-100 px-4 py-3 last:border-0">
-            <Bone className="size-8 rounded-lg" />
-            <Bone className="h-4 w-48" />
-            <Bone className="ml-auto h-5 w-20 rounded-full md:ml-12" />
-            <Bone className="hidden h-4 w-28 md:block" />
-            <Bone className="hidden h-4 w-36 md:block" />
-            <Bone className="hidden h-4 w-24 md:block" />
-          </div>
+      <Bone className="h-8 w-40" />
+    </div>
+    <div className="space-y-3">
+      <div className="mt-6 grid w-full grid-cols-8 place-items-center gap-3 px-6 pr-8">
+        <Bone className="col-span-2 h-4 w-full" />
+        {Array.from({ length: 6 }, (_, index) => (
+          <Bone key={index} className="col-span-1 h-4 w-full" />
         ))}
       </div>
+      {Array.from({ length: 5 }, (_, index) => (
+        <div
+          key={index}
+          className="grid w-full grid-cols-8 place-items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 pr-8">
+          <div className="col-span-2 w-full">
+            <Bone className="h-4 w-44" />
+          </div>
+          <Bone className="col-span-1 h-6 w-20 rounded-full" />
+          {Array.from({ length: 5 }, (_, cell) => (
+            <Bone key={cell} className="col-span-1 h-4 w-full" />
+          ))}
+        </div>
+      ))}
     </div>
   </div>
 );

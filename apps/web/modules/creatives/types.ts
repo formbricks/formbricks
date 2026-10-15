@@ -77,7 +77,9 @@ export interface TCreative {
   styling: TCreativeStyling;
   layout: Record<TCreativeDevice, TCreativeLayout>;
   targeting: TCreativeTargeting;
+  createdAt: Date;
   updatedAt: Date;
+  creatorName: string | null;
   daily: TCreativeDailyStat[];
   pages: TCreativePageStat[];
 }

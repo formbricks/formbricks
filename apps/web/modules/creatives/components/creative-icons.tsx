@@ -1,3 +1,5 @@
+"use client";
+
 import {
   type LucideIcon,
   MegaphoneIcon,
@@ -6,7 +8,7 @@ import {
   PanelTopIcon,
   SparklesIcon,
 } from "lucide-react";
-import { cn } from "@/lib/cn";
+import { useTranslation } from "react-i18next";
 import type { TCreativeIcon, TCreativeType } from "../types";
 
 export const CREATIVE_TYPE_ICONS: Record<TCreativeType, LucideIcon> = {
@@ -21,18 +23,18 @@ export const CREATIVE_CONTENT_ICONS: Record<TCreativeIcon, LucideIcon> = {
   sparkles: SparklesIcon,
 };
 
-export const CreativeTypeIcon = ({
-  type,
-  className,
-}: Readonly<{ type: TCreativeType; className?: string }>) => {
+/** Same look as the surveys list's type column: a small icon and the type's name. */
+export const CreativeTypeIndicator = ({ type }: Readonly<{ type: TCreativeType }>) => {
+  const { t } = useTranslation();
   const Icon = CREATIVE_TYPE_ICONS[type];
+  const labels: Record<TCreativeType, string> = {
+    feedback_button: t("workspace.creatives.type_feedback_button"),
+    banner: t("workspace.creatives.type_banner"),
+  };
   return (
-    <span
-      className={cn(
-        "flex size-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600",
-        className
-      )}>
-      <Icon className="size-4" strokeWidth={1.75} />
-    </span>
+    <div className="flex items-center gap-x-2 text-sm whitespace-nowrap text-slate-600">
+      <Icon className="size-4 shrink-0" />
+      <span>{labels[type]}</span>
+    </div>
   );
 };
