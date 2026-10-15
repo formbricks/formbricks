@@ -2,7 +2,13 @@ import { type TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { computeTranslationProgress, extractTranslatableStrings, setTranslationAtPathMutable } from "./utils";
+import {
+  computeTranslationProgress,
+  extractTranslatableStrings,
+  makeLanguageSoleDefault,
+  removeAllTranslations,
+  setTranslationAtPathMutable,
+} from "./utils";
 
 const t = ((key: string, options?: Record<string, unknown>) => {
   const translations: Record<string, string> = {
@@ -312,6 +318,121 @@ describe("multi-language survey utils", () => {
 
     expect(survey.blocks[0].elements[0]).toMatchObject({
       otherOptionPlaceholder: { default: "Please specify", de: "Bitte angeben" },
+    });
+  });
+
+  describe("changing the default language", () => {
+    const language = (code: string) => ({
+      id: `lang-${code}`,
+      code,
+      alias: null,
+      workspaceId: "ws",
+      createdAt: new Date(0),
+      updatedAt: new Date(0),
+    });
+
+    const multiLanguageSurvey = () =>
+      createSurvey({
+        languages: [
+          { language: language("en"), default: true, enabled: true },
+          { language: language("de"), default: false, enabled: true },
+          { language: language("fr"), default: false, enabled: false },
+        ],
+        blocks: [
+          {
+            id: "b1",
+            elements: [
+              {
+                id: "q1",
+                type: TSurveyElementTypeEnum.OpenText,
+                headline: { default: "Hello", de: "Hallo", fr: "Bonjour" },
+              },
+            ],
+          },
+        ],
+      });
+
+    test("removeAllTranslations strips every non-default language key and keeps the languages list", () => {
+      const survey = multiLanguageSurvey();
+      const result = removeAllTranslations(survey);
+
+      expect(result.blocks[0].elements[0].headline).toEqual({ default: "Hello" });
+      expect(result.languages).toEqual(survey.languages);
+      // input is not mutated
+      expect(survey.blocks[0].elements[0].headline).toEqual({ default: "Hello", de: "Hallo", fr: "Bonjour" });
+    });
+
+    test("removeAllTranslations also strips keys of languages no longer on the survey", () => {
+      const survey = createSurvey({
+        languages: [
+          { language: language("en"), default: true, enabled: true },
+          { language: language("de"), default: false, enabled: true },
+        ],
+        blocks: [
+          {
+            id: "b1",
+            elements: [
+              {
+                id: "q1",
+                type: TSurveyElementTypeEnum.OpenText,
+                headline: { default: "Hello", de: "Hallo", es: "Hola" },
+              },
+            ],
+          },
+        ],
+      });
+
+      const result = removeAllTranslations(survey);
+
+      expect(result.blocks[0].elements[0].headline).toEqual({ default: "Hello" });
+      expect(result.languages).toEqual(survey.languages);
+    });
+
+    test("removeAllTranslations strips metadata title/description but keeps arbitrary metadata", () => {
+      const survey = createSurvey({
+        languages: [{ language: language("en"), default: true, enabled: true }],
+        metadata: {
+          title: { default: "Title", de: "Titel" },
+          description: { default: "Desc", de: "Beschreibung" },
+          arbitraryConfig: { default: "x", mode: "strict" },
+        },
+      });
+
+      const result = removeAllTranslations(survey);
+
+      expect(result.metadata).toEqual({
+        title: { default: "Title" },
+        description: { default: "Desc" },
+        arbitraryConfig: { default: "x", mode: "strict" },
+      });
+    });
+
+    test("makeLanguageSoleDefault removes all translations and leaves the language as sole default", () => {
+      const de = language("de");
+      const result = makeLanguageSoleDefault(multiLanguageSurvey(), de);
+
+      expect(result.blocks[0].elements[0].headline).toEqual({ default: "Hello" });
+      expect(result.languages).toEqual([{ language: de, default: true, enabled: true }]);
+    });
+
+    test("makeLanguageSoleDefault strips the promoted language's own key even when it is not on the survey", () => {
+      const es = language("es");
+      const survey = createSurvey({
+        languages: [{ language: language("en"), default: true, enabled: true }],
+        blocks: [
+          {
+            id: "b1",
+            elements: [
+              { id: "q1", type: TSurveyElementTypeEnum.OpenText, headline: { default: "Hello", es: "" } },
+            ],
+          },
+        ],
+      });
+
+      const result = makeLanguageSoleDefault(survey, es);
+
+      expect(result.blocks[0].elements[0].headline).toEqual({ default: "Hello" });
+      expect(result.languages).toEqual([{ language: es, default: true, enabled: true }]);
     });
   });
 });
