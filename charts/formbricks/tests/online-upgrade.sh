@@ -33,12 +33,10 @@ hub:
   replicas: 2
   image:
     digest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+# Cube keeps the chart default: one replica with the in-memory driver (ENG-3955).
 cube:
-  replicas: 2
   image:
     digest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-  env:
-    CUBEJS_CACHE_AND_QUEUE_DRIVER: cubestore
 VALUES
 # Argo renders Helm as an install. Assert its phases independently from Helm's upgrade hooks.
 for controller in helm argo; do
@@ -98,22 +96,26 @@ for (const controller of ['helm', 'argo']) {
   assert.equal(docs.some(d => d.kind === 'ClusterRole' && d.metadata.name.includes('online')), false);
 }
 JS
-if helm template fixture "$chart" -f "$tmp/values.yaml" --is-upgrade --set deployment.replicas=1 > "$tmp/rejected" 2>&1; then
-  echo 'single-replica online upgrade was accepted' >&2; exit 1
-fi
-if helm template fixture "$chart" -f "$tmp/values.yaml" --set upgrade.mode=onlien > "$tmp/rejected" 2>&1; then
-  echo 'unknown upgrade mode was accepted' >&2; exit 1
-fi
-if helm template fixture "$chart" -f "$tmp/values.yaml" --is-upgrade --set deployment.env.FORMBRICKS_UPGRADE_MODE=maintenance > "$tmp/rejected" 2>&1; then
-  echo 'compatibility mode override was accepted' >&2; exit 1
-fi
-if helm template fixture "$chart" -f "$tmp/values.yaml" --is-upgrade --set deployment.env.BULLMQ_WORKER_ENABLED=0 > "$tmp/rejected" 2>&1; then
-  echo 'target surge with disabled workers was accepted' >&2; exit 1
-fi
-if helm template fixture "$chart" -f "$tmp/values.yaml" > "$tmp/rejected" 2>&1; then
-  echo 'fresh Helm online install was accepted' >&2; exit 1
-fi
-if helm template fixture "$chart" -f "$tmp/values.yaml" --set upgrade.online.controller=argo --set upgrade.online.existingInstallation=false > "$tmp/rejected" 2>&1; then
-  echo 'fresh Argo online installation was accepted' >&2; exit 1
-fi
+# Each case must fail on its own rule. Without the passwords every render fails in the PostgreSQL subchart
+# instead, which would hide a removed rule.
+rejects() {
+  local expected="$1"; shift
+  if helm template fixture "$chart" -f "$tmp/values.yaml" \
+    --set global.postgresql.auth.password=fixture --set global.redis.password=fixture "$@" > "$tmp/rejected" 2>&1; then
+    echo "accepted: $*" >&2; exit 1
+  fi
+  if ! grep -qF "$expected" "$tmp/rejected"; then
+    echo "rejected without \"$expected\": $*" >&2; cat "$tmp/rejected" >&2; exit 1
+  fi
+}
+rejects 'requires fixed deployment.replicas >= 2' --is-upgrade --set deployment.replicas=1
+rejects 'upgrade.mode must be online or maintenance' --set upgrade.mode=onlien
+rejects 'Online mode owns FORMBRICKS_UPGRADE_MODE' --is-upgrade --set deployment.env.FORMBRICKS_UPGRADE_MODE=maintenance
+rejects 'requires target web workers enabled' --is-upgrade --set deployment.env.BULLMQ_WORKER_ENABLED=0
+rejects 'supports helm upgrade only' # a fresh Helm install
+rejects 'requires an existing stable 6.0 installation' \
+  --set upgrade.online.controller=argo --set upgrade.online.existingInstallation=false
+rejects 'requires fixed hub.replicas >= 2' --is-upgrade --set hub.replicas=1
+# More than one Cube replica still needs Cube Store (ENG-3955).
+rejects 'CUBEJS_CACHE_AND_QUEUE_DRIVER=memory is only supported when cube.replicas=1' --is-upgrade --set cube.replicas=2
 printf '%s\n' 'Online Helm and Argo render contracts passed.'

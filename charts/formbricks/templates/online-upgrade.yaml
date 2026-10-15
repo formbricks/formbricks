@@ -15,7 +15,8 @@
 {{- if not .Values.upgrade.online.ingress.proxyResourceNames }}{{ fail "Online mode requires explicit ingress.proxyResourceNames (pod:admin-port)" }}{{ end }}
 {{- if not .Values.upgrade.online.dependencies }}{{ fail "Online mode requires pinned paired-service and datastore inventories" }}{{ end }}
 {{- if or (not (regexMatch "^sha256:[a-f0-9]{64}$" .Values.hub.image.digest)) (not (regexMatch "^sha256:[a-f0-9]{64}$" .Values.cube.image.digest)) }}{{ fail "Online mode requires pinned Hub and Cube digests" }}{{ end }}
-{{- if or .Values.hub.autoscaling.enabled (lt (int .Values.hub.replicas) 2) (lt (int .Values.cube.replicas) 2) }}{{ fail "Online mode requires HA Hub and Cube replicas" }}{{ end }}
+{{- /* Cube is exempt: it rolls out with maxUnavailable 0, and more than one replica needs Cube Store. */}}
+{{- if or .Values.hub.autoscaling.enabled (lt (int .Values.hub.replicas) 2) }}{{ fail "Online mode requires fixed hub.replicas >= 2" }}{{ end }}
 {{- $name := printf "%s-online" (include "formbricks.name" .) }}
 {{- $deployment := include "formbricks.webDeployment" . | fromYaml }}
 {{- $web := index $deployment.spec.template.spec.containers 0 }}
