@@ -23,6 +23,10 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/feedback-sources` | POST | session | dashboard | `/api/internal` | `app/api/internal/feedback-sources/route.ts` |
 | `/api/internal/feedback-sources/{feedbackSourceId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/feedback-sources/[feedbackSourceId]/route.ts` |
 | `/api/internal/feedback-sources/{feedbackSourceId}/imports` | POST | session | dashboard | `/api/internal` | `app/api/internal/feedback-sources/[feedbackSourceId]/imports/route.ts` |
+| `/api/internal/integrations/{type}` | PUT, DELETE | session | dashboard | `/api/internal` | `app/api/internal/integrations/[type]/route.ts` |
+| `/api/internal/integrations/{type}/channels` | GET | session | dashboard | `/api/internal` | `app/api/internal/integrations/[type]/channels/route.ts` |
+| `/api/internal/integrations/{type}/connection` | GET | session | dashboard | `/api/internal` | `app/api/internal/integrations/[type]/connection/route.ts` |
+| `/api/internal/integrations/{type}/spreadsheets/{spreadsheetId}` | GET | session | dashboard | `/api/internal` | `app/api/internal/integrations/[type]/spreadsheets/[spreadsheetId]/route.ts` |
 | `/api/internal/members/{userId}/reactivate` | POST | session | dashboard | `/api/internal` | `app/api/internal/members/[userId]/reactivate/route.ts` |
 | `/api/internal/organizations/{organizationId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/route.ts` |
 | `/api/internal/retention-exemptions` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/retention-exemptions/route.ts` |

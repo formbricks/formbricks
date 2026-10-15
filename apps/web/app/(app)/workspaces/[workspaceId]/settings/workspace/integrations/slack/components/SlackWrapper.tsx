@@ -5,11 +5,12 @@ import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationSlack, TIntegrationSlackConfigData } from "@formbricks/types/integration/slack";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { getSlackChannelsAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/slack/actions";
+import { getSlackChannels as fetchSlackChannels } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
 import { AddChannelMappingModal } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/slack/components/AddChannelMappingModal";
 import { ManageIntegration } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/slack/components/ManageIntegration";
 import { authorize } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/slack/lib/slack";
 import slackLogo from "@/images/slacklogo.png";
+import { getV3ApiErrorReason } from "@/modules/api/lib/v3-client";
 import { ConnectIntegration } from "@/modules/ui/components/connect-integration";
 
 interface SlackWrapperProps {
@@ -40,18 +41,10 @@ export const SlackWrapper = ({
   >(null);
 
   const getSlackChannels = useCallback(async () => {
-    const getSlackChannelsResponse = await getSlackChannelsAction({ workspaceId });
-
-    if (
-      getSlackChannelsResponse?.serverError &&
-      (getSlackChannelsResponse.serverError.includes("missing_scope") ||
-        getSlackChannelsResponse.serverError.includes("invalid_auth"))
-    ) {
-      setShowReconnectButton(true);
-    }
-
-    if (getSlackChannelsResponse?.data) {
-      setSlackChannels(getSlackChannelsResponse.data);
+    try {
+      setSlackChannels(await fetchSlackChannels(workspaceId));
+    } catch (error) {
+      if (getV3ApiErrorReason(error) === "reauthorization_required") setShowReconnectButton(true);
     }
   }, [workspaceId]);
 
