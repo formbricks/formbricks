@@ -99,6 +99,11 @@ put:
         forward reference — a recall of an answer not yet given, or a logic condition reading a
         later block — reported as `misordered_reference` at the stored-document path. An order that
         already contains such a reference stays reorderable; only newly created ones are refused.
+        Likewise when the new order would *introduce* a loop in the conditional logic — a jump that
+        now points back at a block whose next step leads to it again, so a respondent could never
+        reach an ending — reported at the `logic` of each block a new looping step leaves. Moving a
+        block in front of an existing loop is fine; reordering blocks inside one changes the loop
+        and is refused.
 
 
         `stored_survey_invalid` — the stored survey cannot be reordered by id: it is a legacy
