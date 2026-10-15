@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { Label } from "@/modules/ui/components/label";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
-import { getActiveInactiveSurveysAction } from "@/modules/workspaces/settings/(setup)/app-connection/actions";
+import { getActionClassSurveys } from "@/modules/workspaces/settings/(setup)/app-connection/lib/api-client";
 import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/workspaces/settings/(setup)/app-connection/utils";
 
 interface ActivityTabProps {
@@ -27,15 +27,12 @@ export const ActionActivityTab = ({ actionClass }: ActivityTabProps) => {
 
     const updateState = async () => {
       setLoading(true);
-      const getActiveInactiveSurveysResponse = await getActiveInactiveSurveysAction({
-        actionClassId: actionClass.id,
-      });
-      if (getActiveInactiveSurveysResponse?.data) {
-        setActiveSurveys(getActiveInactiveSurveysResponse.data.activeSurveys);
-        setInactiveSurveys(getActiveInactiveSurveysResponse.data.inactiveSurveys);
-      } else {
-        const errorMessage = getFormattedErrorMessage(getActiveInactiveSurveysResponse);
-        setError(new Error(errorMessage));
+      try {
+        const surveys = await getActionClassSurveys(actionClass.id);
+        setActiveSurveys(surveys.activeSurveys);
+        setInactiveSurveys(surveys.inactiveSurveys);
+      } catch (error) {
+        setError(new Error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"))));
       }
       setLoading(false);
     };

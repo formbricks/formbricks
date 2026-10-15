@@ -8,7 +8,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TActionClass, TActionClassInput } from "@formbricks/types/action-classes";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { buildActionObject } from "@/modules/survey/editor/lib/action-builder";
 import {
   createActionClassZodResolver,
@@ -21,9 +21,9 @@ import { CodeActionForm } from "@/modules/ui/components/code-action-form";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { NoCodeActionForm } from "@/modules/ui/components/no-code-action-form";
 import {
-  deleteActionClassAction,
-  updateActionClassAction,
-} from "@/modules/workspaces/settings/(setup)/app-connection/actions";
+  deleteActionClass,
+  updateActionClass,
+} from "@/modules/workspaces/settings/(setup)/app-connection/lib/api-client";
 import { ActionSharedSurveysWarning } from "./ActionSharedSurveysWarning";
 
 interface ActionSettingsTabProps {
@@ -98,17 +98,8 @@ export const ActionSettingsTab = ({
       validatePermissions(isReadOnly, t);
       const updatedAction = buildActionObject(data, actionClass.workspaceId, t);
 
-      const result = await updateActionClassAction({
-        actionClassId: actionClass.id,
-        updatedAction: updatedAction,
-      });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
-      if (result?.data) {
-        onActionUpdated?.(result.data);
-      }
+      const result = await updateActionClass(actionClass.id, updatedAction);
+      onActionUpdated?.(result);
       setOpen(false);
       if (!onActionUpdated) {
         router.refresh();
@@ -124,16 +115,12 @@ export const ActionSettingsTab = ({
   const handleDeleteAction = async () => {
     try {
       setIsDeletingAction(true);
-      const result = await deleteActionClassAction({ actionClassId: actionClass.id });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
+      await deleteActionClass(actionClass.id);
       router.refresh();
       toast.success(t("workspace.actions.action_deleted_successfully"));
       setOpen(false);
-    } catch {
-      toast.error(t("common.something_went_wrong_please_try_again"));
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsDeletingAction(false);
     }

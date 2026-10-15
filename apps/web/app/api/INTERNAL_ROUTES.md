@@ -8,6 +8,8 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | Path | Methods | Auth | Audience | Location | File |
 | --- | --- | --- | --- | --- | --- |
 | `/api/envoy-auth/{...path}` | GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS | custom | gateway | `(internal)` group | `app/api/(internal)/envoy-auth/[...path]/route.ts` |
+| `/api/internal/action-classes/{actionClassId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/action-classes/[actionClassId]/route.ts` |
+| `/api/internal/action-classes/{actionClassId}/surveys` | GET | session | dashboard | `/api/internal` | `app/api/internal/action-classes/[actionClassId]/surveys/route.ts` |
 | `/api/internal/api-keys` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/api-keys/route.ts` |
 | `/api/internal/api-keys/{apiKeyId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/api-keys/[apiKeyId]/route.ts` |
 | `/api/internal/embedded-data` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/embedded-data/route.ts` |
@@ -27,8 +29,10 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/integrations/{type}/channels` | GET | session | dashboard | `/api/internal` | `app/api/internal/integrations/[type]/channels/route.ts` |
 | `/api/internal/integrations/{type}/connection` | GET | session | dashboard | `/api/internal` | `app/api/internal/integrations/[type]/connection/route.ts` |
 | `/api/internal/integrations/{type}/spreadsheets/{spreadsheetId}` | GET | session | dashboard | `/api/internal` | `app/api/internal/integrations/[type]/spreadsheets/[spreadsheetId]/route.ts` |
+| `/api/internal/license-checks` | POST | session | dashboard | `/api/internal` | `app/api/internal/license-checks/route.ts` |
 | `/api/internal/members/{userId}/reactivate` | POST | session | dashboard | `/api/internal` | `app/api/internal/members/[userId]/reactivate/route.ts` |
 | `/api/internal/organizations/{organizationId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/route.ts` |
+| `/api/internal/releases/latest` | GET | session | dashboard | `/api/internal` | `app/api/internal/releases/latest/route.ts` |
 | `/api/internal/retention-exemptions` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/retention-exemptions/route.ts` |
 | `/api/internal/retention-exemptions/{exemptionId}` | GET | session | dashboard | `/api/internal` | `app/api/internal/retention-exemptions/[exemptionId]/route.ts` |
 | `/api/internal/retention-exemptions/{exemptionId}/revoke` | POST | session | dashboard | `/api/internal` | `app/api/internal/retention-exemptions/[exemptionId]/revoke/route.ts` |
