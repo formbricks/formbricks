@@ -1,5 +1,6 @@
 import "server-only";
 import { AuthenticationError, OperationNotAllowedError, UnknownError } from "@formbricks/types/errors";
+import type { TIntegrationInput } from "@formbricks/types/integration";
 import type { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 import { applyRateLimitOrRespond } from "@/app/api/internal/lib/rate-limit";
 import { requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
@@ -8,6 +9,7 @@ import {
   problemBadGateway,
   problemBadRequest,
   problemConflict,
+  problemForbidden,
   problemNotFound,
   successResponse,
 } from "@/app/api/v3/lib/response";
@@ -26,6 +28,7 @@ import {
 } from "@/lib/integration/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getSlackChannels } from "@/lib/slack/service";
+import { SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE } from "@/lib/survey/visibility/outbound";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   type TIntegrationConflictReason,
@@ -84,8 +87,8 @@ export async function putIntegrationOperation({
   if (access instanceof Response) return access;
   if (auditLog) auditLog.organizationId = access.organizationId;
   const { userId } = access;
-  // Bound before any lookup: every call past this point reads the stored integration and writes the
-  // provider config plus an audit entry.
+  // Bound right after authorization: every call past this point reads the stored integration and writes
+  // the provider config plus an audit entry.
   const limited = await applyRateLimitOrRespond(
     rateLimitConfigs.actions.integrationMutation,
     userId,
@@ -94,10 +97,13 @@ export async function putIntegrationOperation({
   if (limited) return limited;
 
   // The settings pages hand the client a redacted integration and echo it back whole on every add, edit
-  // and delete of a mapping, so a client-sent `config.key` is blank or forged. The stored credentials are
-  // the only source of truth, merged in before validating; only the OAuth callbacks write them. With
-  // nothing stored the configuration has no credentials and is refused: connect first.
+  // and delete of a mapping, so a client-sent `config.key` is blank or forged. Credentials only ever come
+  // from the OAuth callbacks, which write the integration directly: one never connected has nothing to
+  // configure here, and taking the client's key would let a caller plant a token of their choosing.
   const stored = await getIntegrationByType(workspaceId, type);
+  if (!stored?.config?.key) {
+    return conflict(context, "not_connected", "Connect the integration before configuring it.");
+  }
   const config = (body as { config: Record<string, unknown> }).config;
   const parsed = parseIntegrationInput(withStoredIntegrationKey({ type, config }, stored));
   if (!parsed.success) {
@@ -110,7 +116,21 @@ export async function putIntegrationOperation({
     });
   }
 
-  const integration = await createOrUpdateIntegration(workspaceId, parsed.data);
+  // The stored key goes back exactly as stored: parsing it would drop fields the schema doesn't name,
+  // such as parts of a provider's token response.
+  let integration: Awaited<ReturnType<typeof createOrUpdateIntegration>>;
+  try {
+    integration = await createOrUpdateIntegration(workspaceId, {
+      ...parsed.data,
+      config: { ...parsed.data.config, key: stored.config.key },
+    } as TIntegrationInput);
+  } catch (error) {
+    // ENG-3283: a survey restricted to some members can't feed an outbound integration.
+    if (error instanceof OperationNotAllowedError && error.message === SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE) {
+      return problemForbidden(requestId, error.message, instance, "survey_not_workspace_visible");
+    }
+    throw error;
+  }
 
   if (auditLog) {
     auditLog.targetId = integration.id;

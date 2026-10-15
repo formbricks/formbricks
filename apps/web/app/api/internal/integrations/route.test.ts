@@ -7,6 +7,7 @@ import {
   UnknownError,
 } from "@formbricks/types/errors";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE } from "@/lib/survey/visibility/outbound";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { GET as CHANNELS } from "./[type]/channels/route";
 import { GET as CONNECTION } from "./[type]/connection/route";
@@ -164,10 +165,48 @@ describe("PUT /api/internal/integrations/{type}", () => {
     });
   });
 
-  test("refuses to configure an integration that was never connected: there are no credentials", async () => {
+  test("refuses to configure an integration that was never connected, even with a well-formed key", async () => {
+    // A complete Slack credential: it would pass the schema, so only the "connect first" rule stops it.
     mocks.getIntegrationByType.mockResolvedValue(null);
-    expect((await put({ config: { key: { access_token: "forged" }, data: [] } })).status).toBe(400);
+    const response = await put({
+      config: { key: { ...STORED_KEY, access_token: "attacker-token" }, data: [] },
+    });
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).details).toEqual({ reason: "not_connected" });
     expect(mocks.createOrUpdateIntegration).not.toHaveBeenCalled();
+  });
+
+  test("writes the stored key back exactly as stored, including fields the schema doesn't name", async () => {
+    const storedKey = { ...STORED_KEY, scope: "chat:write", enterprise: null };
+    mocks.getIntegrationByType.mockResolvedValue(storedSlack({ config: { key: storedKey, data: [] } }));
+
+    await put({ config: { key: { access_token: "" }, data: [slackMapping] } });
+
+    expect(mocks.createOrUpdateIntegration.mock.calls[0][1].config.key).toEqual(storedKey);
+  });
+
+  test("refuses a mapping to a survey restricted to some members (ENG-3283), with its own message", async () => {
+    mocks.createOrUpdateIntegration.mockRejectedValue(
+      new OperationNotAllowedError(SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE)
+    );
+    const response = await put({ config: { key: {}, data: [slackMapping] } });
+    const body = await response.json();
+
+    expect(response.status).toBe(403);
+    expect(body.code).toBe("survey_not_workspace_visible");
+    expect(body.detail).toBe(SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE);
+  });
+
+  test("records the integration_connected event", async () => {
+    await put({ config: { key: {}, data: [slackMapping] } });
+
+    expect(mocks.capturePostHogEvent).toHaveBeenCalledWith(
+      USER_ID,
+      "integration_connected",
+      { integration_type: "slack", organization_id: ORG_ID, workspace_id: WORKSPACE_ID },
+      { organizationId: ORG_ID, workspaceId: WORKSPACE_ID }
+    );
   });
 
   test("refuses a caller without write access to the workspace, and stores nothing", async () => {
