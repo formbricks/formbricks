@@ -483,6 +483,7 @@
     "reload_page": "Sayfayı yenile",
     "remove": "Kaldır",
     "remove_from_team": "Takımdan çıkar",
+    "remove_item": "{item} öğesini kaldır",
     "rename": "Yeniden Adlandır",
     "reorder_and_hide_columns": "Sütunları yeniden sırala ve gizle",
     "replace": "Değiştir",

@@ -483,6 +483,7 @@
     "reload_page": "ページを再読み込み",
     "remove": "削除",
     "remove_from_team": "チームから削除",
+    "remove_item": "{item}を削除",
     "rename": "名前を変更",
     "reorder_and_hide_columns": "列の並び替えと非表示",
     "replace": "置き換え",

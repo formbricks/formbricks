@@ -483,6 +483,7 @@
     "reload_page": "Oldal újratöltése",
     "remove": "Eltávolítás",
     "remove_from_team": "Eltávolítás a csapatból",
+    "remove_item": "Kérjük, távolítsa el a következőt: {item}",
     "rename": "Átnevezés",
     "reorder_and_hide_columns": "Oszlopok átrendezése és elrejtése",
     "replace": "Csere",

@@ -450,6 +450,7 @@ checksums:
     common/reload_page: 77740065847251933add64d7a50ccdd8
     common/remove: dba2fe5fe9f83f8078c687f28cba4b52
     common/remove_from_team: 69bcc7a1001c3017f9de578ee22cffd6
+    common/remove_item: 5e882910b55d90dfe0b2d96acb411602
     common/rename: 6f9413e4606e8d83a010685008fb2931
     common/reorder_and_hide_columns: a5e3d7c0c7ef879211d05a37be1c5069
     common/replace: 98b2268975b1a737b2e4ad837df96703

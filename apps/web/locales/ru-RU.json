@@ -483,6 +483,7 @@
     "reload_page": "Перезагрузить страницу",
     "remove": "Удалить",
     "remove_from_team": "Удалить из команды",
+    "remove_item": "Удалить {item}",
     "rename": "Переименовать",
     "reorder_and_hide_columns": "Изменить порядок и скрыть столбцы",
     "replace": "Заменить",

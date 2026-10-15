@@ -483,6 +483,7 @@
     "reload_page": "Reîncarcă pagina",
     "remove": "Șterge",
     "remove_from_team": "Elimină din echipă",
+    "remove_item": "Elimină {item}",
     "rename": "Redenumește",
     "reorder_and_hide_columns": "Reordonați și ascundeți coloanele",
     "replace": "Înlocuiește",
