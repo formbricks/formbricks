@@ -42,6 +42,8 @@ export const getApiKeysWithEnvironmentPermissions = reactCache(
             },
           },
         },
+        // Oldest first, so a rename or a new key doesn't reshuffle the list the page refetches.
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       });
       return apiKeys;
     } catch (error) {

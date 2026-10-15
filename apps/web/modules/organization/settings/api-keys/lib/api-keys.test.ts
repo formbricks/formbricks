@@ -141,6 +141,7 @@ describe("API Key Management", () => {
           label: true,
           organizationAccess: true,
         },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       });
     });
 

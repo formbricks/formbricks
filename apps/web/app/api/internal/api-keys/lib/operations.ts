@@ -69,6 +69,8 @@ export async function createApiKeyOperation({
   instance,
   auditLog,
 }: TRequestContext & { organizationId: string; body: TApiKeyCreateBody }): Promise<Response> {
+  // Named before anything can refuse, so a refusal's audit entry says where the key was asked for.
+  if (auditLog) auditLog.organizationId = organizationId;
   const access = await requireOrgActionAccess({
     authentication,
     organizationId,
@@ -77,7 +79,6 @@ export async function createApiKeyOperation({
     instance,
   });
   if (access instanceof Response) return access;
-  if (auditLog) auditLog.organizationId = access.organizationId;
 
   try {
     await assertCanGrantOrganizationAccess(access.userId, access.organizationId, body.organizationAccess);
@@ -157,14 +158,14 @@ export async function updateApiKeyOperation({
   ...context
 }: TRequestContext & { apiKeyId: string; body: TApiKeyUpdateBody }): Promise<Response> {
   const { auditLog, requestId } = context;
-  if (auditLog) auditLog.newObject = body;
+  if (auditLog) {
+    auditLog.targetId = apiKeyId;
+    auditLog.newObject = body;
+  }
 
   const authorized = await authorizeApiKeyChange(apiKeyId, context);
   if (authorized instanceof Response) return authorized;
-  if (auditLog) {
-    auditLog.organizationId = authorized.organizationId;
-    auditLog.targetId = apiKeyId;
-  }
+  if (auditLog) auditLog.organizationId = authorized.organizationId;
 
   const updated = await updateApiKey(apiKeyId, body);
   return successResponse(serializeApiKey(updated), { requestId });
@@ -175,13 +176,11 @@ export async function deleteApiKeyOperation({
   ...context
 }: TRequestContext & { apiKeyId: string }): Promise<Response> {
   const { auditLog, requestId } = context;
+  if (auditLog) auditLog.targetId = apiKeyId;
 
   const authorized = await authorizeApiKeyChange(apiKeyId, context);
   if (authorized instanceof Response) return authorized;
-  if (auditLog) {
-    auditLog.organizationId = authorized.organizationId;
-    auditLog.targetId = apiKeyId;
-  }
+  if (auditLog) auditLog.organizationId = authorized.organizationId;
 
   const deleted = await deleteApiKey(apiKeyId);
   // What was removed, minus the stored hashes, which the action used to write into the audit log.

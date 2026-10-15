@@ -180,8 +180,14 @@ describe("POST /api/internal/api-keys", () => {
     const response = await createRequest(validBody);
 
     expect(response.status).toBe(403);
+    expect(mocks.can).toHaveBeenCalledWith({ type: "user", id: USER_ID }, "organization.manage_api_keys", {
+      type: "organization",
+      id: ORG_ID,
+    });
     expect(mocks.create).not.toHaveBeenCalled();
-    expect(mocks.queueAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ status: "failure" }));
+    expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "failure", organizationId: ORG_ID })
+    );
   });
 
   test("answers 403 when the caller's role can't grant user management access (ENG-3075)", async () => {

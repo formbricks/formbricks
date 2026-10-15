@@ -213,6 +213,7 @@ export const AddApiKeyModal = ({
               <Label>{t("workspace.api_keys.api_key_label")}</Label>
               <Input
                 placeholder="e.g. GitHub, PostHog, Slack"
+                maxLength={255}
                 {...register("label", { required: true, validate: (value) => value.trim() !== "" })}
               />
             </div>

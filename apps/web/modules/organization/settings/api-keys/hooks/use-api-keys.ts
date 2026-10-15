@@ -11,14 +11,16 @@ export const useApiKeys = (organizationId: string) => useQuery(apiKeyListQueryOp
 
 /**
  * Mint a key. The created key is added to the list as soon as the server answers; the plaintext `apiKey`
- * in the result is the caller's to show and is never put in the cache, so a refetch can't drop it from
- * view and nothing else can read it.
+ * in the result is the caller's to show and is never put in the query cache, so a refetch can't drop it
+ * from view and nothing else can read it. `gcTime: 0` drops the mutation's own copy as soon as the
+ * component that showed it unmounts, rather than keeping it for the default five minutes.
  */
 export const useCreateApiKey = (organizationId: string) => {
   const queryClient = useQueryClient();
   const queryKey = apiKeyKeys.list(organizationId);
   return useMutation({
     mutationFn: (body: TApiKeyCreateBody) => createApiKey({ organizationId, body }),
+    gcTime: 0,
     onSuccess: ({ apiKey: _plaintext, ...created }) => {
       queryClient.setQueryData<TApiKeyResource[]>(queryKey, (keys) => [...(keys ?? []), created]);
     },

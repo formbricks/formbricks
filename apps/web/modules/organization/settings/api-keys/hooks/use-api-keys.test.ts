@@ -75,6 +75,30 @@ describe("API key hooks", () => {
     ).not.toContain("fbk_plaintext");
   });
 
+  test("forgets the plaintext key once the component that minted it unmounts", async () => {
+    routeFetch({
+      [`POST ${LIST_URL}`]: [json({ data: { ...key("k2"), apiKey: "fbk_plaintext" } }, 201)],
+      [`GET ${LIST_URL}`]: [json({ data: [key("k2")] })],
+    });
+    const { queryClient, wrapper } = setup([]);
+    const { result, unmount } = renderHook(() => useCreateApiKey(ORG_ID), { wrapper });
+    await act(async () => {
+      await result.current.mutateAsync({ label: "k2", organizationAccess: ORG_ACCESS });
+    });
+    const mutationData = () =>
+      JSON.stringify(
+        queryClient
+          .getMutationCache()
+          .getAll()
+          .map((mutation) => mutation.state.data)
+      );
+    expect(mutationData()).toContain("fbk_plaintext");
+
+    unmount();
+
+    await waitFor(() => expect(mutationData()).not.toContain("fbk_plaintext"));
+  });
+
   test("replaces a renamed key with the one the server returns", async () => {
     routeFetch({
       [`PATCH ${keyUrl("k1")}`]: [json({ data: key("k1", "Renamed") })],

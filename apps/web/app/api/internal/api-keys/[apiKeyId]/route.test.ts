@@ -187,10 +187,17 @@ describe("DELETE /api/internal/api-keys/{apiKeyId}", () => {
     expect(audited).not.toContain("stored-sha256");
   });
 
-  test("answers 403 for a key the caller can't manage, and deletes nothing", async () => {
+  test("answers 403 for a key the caller can't manage, deletes nothing, and audits the attempt", async () => {
     mocks.can.mockResolvedValue(false);
     expect((await remove()).status).toBe(403);
+    expect(mocks.can).toHaveBeenCalledWith({ type: "user", id: USER_ID }, "apiKey.manage", {
+      type: "apiKey",
+      id: KEY_ID,
+    });
     expect(mocks.remove).not.toHaveBeenCalled();
+    expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "failure", targetId: KEY_ID })
+    );
   });
 
   test("refuses a request with neither Sec-Fetch-Site nor Origin (CSRF, fail-safe)", async () => {
