@@ -71,14 +71,29 @@ const toUrlPath = (file: string): string =>
     )
     .join("/");
 
-const readMethods = (source: string): THttpMethod[] => {
-  const found = new Set<THttpMethod>();
-  for (const method of HTTP_METHODS) {
-    const declared = new RegExp(String.raw`^export\s+(const|async\s+function|function)\s+${method}\b`, "m");
-    const reexported = new RegExp(String.raw`^export\s*\{[^}]*\b${method}\b[^}]*\}`, "m");
-    if (declared.test(source) || reexported.test(source)) found.add(method);
+/** The names an `export { … }` list makes public: `GET`, and `handler as GET` → `GET`. */
+const readReexportedNames = (source: string): Set<string> => {
+  const names = new Set<string>();
+  for (const match of source.matchAll(/^export\s*\{([^}]*)\}/gm)) {
+    for (const entry of match[1].split(",")) {
+      const name = entry
+        .trim()
+        .split(/\s+as\s+/)
+        .pop()
+        ?.trim();
+      if (name) names.add(name);
+    }
   }
-  return HTTP_METHODS.filter((method) => found.has(method));
+  return names;
+};
+
+const readMethods = (source: string): THttpMethod[] => {
+  const reexported = readReexportedNames(source);
+  return HTTP_METHODS.filter(
+    (method) =>
+      reexported.has(method) ||
+      new RegExp(String.raw`^export\s+(const|async\s+function|function)\s+${method}\b`, "m").test(source)
+  );
 };
 
 const byText = (a: string, b: string) => a.localeCompare(b);
