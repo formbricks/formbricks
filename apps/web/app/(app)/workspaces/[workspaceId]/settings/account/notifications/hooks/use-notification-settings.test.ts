@@ -59,6 +59,40 @@ describe("notification settings hooks", () => {
     expect(cached()).toEqual(settings({ s1: false, s2: true }));
   });
 
+  test("sends quick successive flips one at a time, so the server never sees two at once", async () => {
+    let releaseFirst!: () => void;
+    const fetchMock = vi.mocked(global.fetch);
+    fetchMock
+      .mockImplementationOnce(
+        () =>
+          new Promise<Response>((resolve) => {
+            releaseFirst = () => resolve(json({ data: settings({ s1: false, s2: false }) }));
+          })
+      )
+      .mockResolvedValueOnce(json({ data: settings({ s1: false, s2: true }) }));
+    const { wrapper, cached } = setup(settings({ s1: true, s2: false }));
+    const { result } = renderHook(() => useUpdateNotificationSetting(), { wrapper });
+
+    let both!: Promise<unknown>;
+    act(() => {
+      both = Promise.all([
+        result.current.mutateAsync({ type: "alert", surveyId: "s1", enabled: false }),
+        result.current.mutateAsync({ type: "alert", surveyId: "s2", enabled: true }),
+      ]);
+    });
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    // Give a parallel second request every chance to start.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 20)));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      releaseFirst();
+      await both;
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(cached()).toEqual(settings({ s1: false, s2: true }));
+  });
+
   test("sends an organization subscription toggle", async () => {
     routeFetch({ [`PATCH ${URL}`]: [json({ data: settings({}, ["org1"]) })] });
     const { wrapper, cached } = setup(settings({}));

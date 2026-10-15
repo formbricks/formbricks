@@ -91,16 +91,14 @@ describe("updateNotificationSetting", () => {
     mocks.findMany.mockResolvedValue([membership(["s1", "s2"])]);
   });
 
-  test("applies the toggle to the stored, completed settings and stores the result", async () => {
+  test("applies the toggle to the stored, completed settings, and reports what was stored before", async () => {
     mocks.getUser.mockResolvedValue({ id: "u1", notificationSettings: { alert: { s1: true } } });
 
     const result = await updateNotificationSetting("u1", { type: "alert", surveyId: "s2", enabled: true });
 
     const after = { alert: { s1: true, s2: true }, unsubscribedOrganizationIds: [] };
-    expect(result).toEqual({
-      before: { alert: { s1: true, s2: false }, unsubscribedOrganizationIds: [] },
-      after,
-    });
+    // `before` is the stored value as it was, not the completed view: the audit log records what changed.
+    expect(result).toEqual({ before: { alert: { s1: true } }, after });
     expect(mocks.updateUser).toHaveBeenCalledWith("u1", { notificationSettings: after });
   });
 

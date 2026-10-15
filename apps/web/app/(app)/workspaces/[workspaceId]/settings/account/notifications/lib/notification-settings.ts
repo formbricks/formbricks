@@ -155,26 +155,38 @@ export type TNotificationSettingsView = {
   memberships: Membership[];
 };
 
+/** The settings as stored, and completed against what the user can see now. */
+const loadNotificationSettings = async (userId: string) => {
+  const [user, memberships] = await Promise.all([getUser(userId), getNotificationMemberships(userId)]);
+  if (!user) return null;
+  return {
+    stored: user.notificationSettings,
+    settings: completeNotificationSettings(user.notificationSettings, memberships),
+    memberships,
+  };
+};
+
 /** The user's complete settings and the organizations, workspaces and surveys they apply to. */
 export const getNotificationSettingsView = async (
   userId: string
 ): Promise<TNotificationSettingsView | null> => {
-  const [user, memberships] = await Promise.all([getUser(userId), getNotificationMemberships(userId)]);
-  if (!user) return null;
-  return { settings: completeNotificationSettings(user.notificationSettings, memberships), memberships };
+  const loaded = await loadNotificationSettings(userId);
+  return loaded && { settings: loaded.settings, memberships: loaded.memberships };
 };
 
 /**
- * Flip one switch and store the result. Applied on the server to the stored settings, so two switches flipped
- * in quick succession can't overwrite each other the way whole-object writes from two stale copies could.
+ * Flip one switch and store the result. The switch is applied here, to the stored settings, so a request
+ * carries one change rather than a whole settings object copied from a possibly stale page. It is still a
+ * read-modify-write: two requests racing each other can lose one change, which is why the page sends its
+ * changes one at a time. `before` is what was stored, for the audit log; `after` is what is stored now.
  */
 export const updateNotificationSetting = async (
   userId: string,
   toggle: TNotificationToggle
 ): Promise<{ before: TUserNotificationSettings; after: TUserNotificationSettings } | null> => {
-  const view = await getNotificationSettingsView(userId);
-  if (!view) return null;
-  const after = applyNotificationToggle(view.settings, toggle);
+  const loaded = await loadNotificationSettings(userId);
+  if (!loaded) return null;
+  const after = applyNotificationToggle(loaded.settings, toggle);
   await updateUser(userId, { notificationSettings: after });
-  return { before: view.settings, after };
+  return { before: loaded.stored, after };
 };
