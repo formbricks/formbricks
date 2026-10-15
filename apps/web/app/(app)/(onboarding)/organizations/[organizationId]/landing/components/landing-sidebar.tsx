@@ -41,7 +41,9 @@ export const LandingSidebar = ({
 
   const organizationSwitcher = useSwitcherData(
     () => getOrganizationsForSwitcherAction({ organizationId: organization.id }),
-    t("common.failed_to_load_organizations")
+    t("common.failed_to_load_organizations"),
+    undefined,
+    organization.name
   );
   const { load: loadOrganizations } = organizationSwitcher;
 

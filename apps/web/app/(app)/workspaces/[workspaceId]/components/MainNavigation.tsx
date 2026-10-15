@@ -263,11 +263,15 @@ export const MainNavigation = ({
   const [isOrganizationDropdownOpen, setIsOrganizationDropdownOpen] = useState(false);
   const workspaceSwitcher = useSwitcherData(
     () => getWorkspacesForSwitcherAction({ organizationId: organization.id }),
-    t("common.failed_to_load_workspaces")
+    t("common.failed_to_load_workspaces"),
+    undefined,
+    workspace.name
   );
   const organizationSwitcher = useSwitcherData(
     () => getOrganizationsForSwitcherAction({ organizationId: organization.id }),
-    t("common.failed_to_load_organizations")
+    t("common.failed_to_load_organizations"),
+    undefined,
+    organization.name
   );
   const { load: loadWorkspaces } = workspaceSwitcher;
   const { load: loadOrganizations } = organizationSwitcher;

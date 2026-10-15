@@ -44,6 +44,11 @@ export const OrganizationBreadcrumb = ({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
+  // Name comes from context, falling back to the prop when there's no context yet.
+  const workspaceContext = useOptionalWorkspaceContext();
+  const currentOrganization = workspaceContext?.organization ?? null;
+  const organizationName = currentOrganization?.name || currentOrganizationName || "";
+
   const organizationSwitcher = useSwitcherData(
     () => getOrganizationsForSwitcherAction({ organizationId: currentOrganizationId }),
     t("common.failed_to_load_organizations"),
@@ -51,14 +56,10 @@ export const OrganizationBreadcrumb = ({
       const error = new Error(message);
       logger.error(error, "Failed to load organizations");
       Sentry.captureException(error);
-    }
+    },
+    organizationName
   );
   const { load: loadOrganizations } = organizationSwitcher;
-
-  // Name comes from context, falling back to the prop when there's no context yet.
-  const workspaceContext = useOptionalWorkspaceContext();
-  const currentOrganization = workspaceContext?.organization ?? null;
-  const organizationName = currentOrganization?.name || currentOrganizationName || "";
 
   // Lazy-load organizations when dropdown opens (the hook guards against duplicate/looping loads).
   useEffect(() => {

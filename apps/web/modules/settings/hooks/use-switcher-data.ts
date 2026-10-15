@@ -25,7 +25,10 @@ export const useSwitcherData = (
   // Already-translated fallback message shown when the action returns no usable error.
   fallbackError: string,
   // Optional hook for consumers that want to log/report load failures (e.g. Sentry).
-  onError?: (message: string) => void
+  onError?: (message: string) => void,
+  // Optional value that, when it changes, drops the cached list so the next open refetches. Pass the
+  // current item's name so a rename (followed by router.refresh) doesn't leave a stale list behind.
+  reloadKey?: string
 ) => {
   const [items, setItems] = useState<SwitcherItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -51,6 +54,10 @@ export const useSwitcherData = (
     loaderRef.current = loader;
     onErrorRef.current = onError;
   }, [loader, onError]);
+
+  useEffect(() => {
+    hasDataRef.current = false;
+  }, [reloadKey]);
 
   const load = useCallback(
     async (force = false) => {

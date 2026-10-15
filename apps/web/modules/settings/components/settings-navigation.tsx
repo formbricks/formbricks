@@ -47,11 +47,15 @@ export const SettingsNavigation = ({
 
   const workspaceSwitcher = useSwitcherData(
     () => getWorkspacesForSwitcherAction({ organizationId }),
-    t("common.failed_to_load_workspaces")
+    t("common.failed_to_load_workspaces"),
+    undefined,
+    workspaceName
   );
   const organizationSwitcher = useSwitcherData(
     () => getOrganizationsForSwitcherAction({ organizationId }),
-    t("common.failed_to_load_organizations")
+    t("common.failed_to_load_organizations"),
+    undefined,
+    organizationName
   );
 
   const handleWorkspaceChange = useCallback(

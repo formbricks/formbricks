@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -50,6 +51,7 @@ export const EditOrganizationSettingsForm = ({
   membershipRole,
 }: Readonly<EditOrganizationSettingsFormProps>) => {
   const { t } = useTranslation();
+  const router = useRouter();
   const form = useForm<TEditOrganizationSettingsForm>({
     defaultValues: {
       name: organization.name,
@@ -89,6 +91,8 @@ export const EditOrganizationSettingsForm = ({
         if (response?.data) {
           toast.success(t("workspace.settings.general.organization_name_updated_successfully"));
           form.resetField("name", { defaultValue: response.data.name });
+          // Re-render the server layouts so the breadcrumb and sidebar pick up the new name.
+          router.refresh();
         } else {
           toast.error(getFormattedErrorMessage(response));
         }
