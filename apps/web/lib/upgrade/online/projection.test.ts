@@ -1,7 +1,10 @@
 import { beforeEach, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import type { TAuthzedRelationship } from "@/lib/authzed/client";
 import { getAuthzedOutboxStatus } from "@/lib/authzed/outbox-repository";
-import { diffSurveyRelationships, reconcileSurveyRelationships } from "@/lib/authzed/survey";
+import { readAllRelationships } from "@/lib/authzed/relationship-reads";
+import { reconcileSurveyRelationships } from "@/lib/authzed/survey";
+import { type TSurveyProjectionRow, expectedSurveyRelationships } from "@/lib/authzed/survey-relationships";
 import { backfillOnlineSurveys, verifyOnlineProjection } from "./projection";
 
 vi.mock("@formbricks/database", () => ({
@@ -11,17 +14,20 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 vi.mock("@/lib/authzed/client", () => ({ getAuthzedClient: () => ({}) }));
-vi.mock("@/lib/authzed/relationship-reads", () => ({
-  readAllRelationships: async () => ({ relationships: [] }),
-}));
-vi.mock("@/lib/authzed/survey", () => ({
-  reconcileSurveyRelationships: vi.fn(),
-  expectedSurveyRelationships: () => [],
-  diffSurveyRelationships: vi.fn(),
-}));
+vi.mock("@/lib/authzed/relationship-reads", () => ({ readAllRelationships: vi.fn() }));
+// The comparison and the expected edges stay real: a mocked comparison is how ENG-3950 went unnoticed.
+vi.mock("@/lib/authzed/survey", () => ({ reconcileSurveyRelationships: vi.fn() }));
 vi.mock("@/lib/authzed/outbox-processor", () => ({ processAuthzedOutboxBatch: vi.fn() }));
 vi.mock("@/lib/authzed/outbox-repository", () => ({ getAuthzedOutboxStatus: vi.fn() }));
-const row = { id: "a", workspaceId: "w", ownerId: "u", visibility: "workspace", visibilityVersion: 1 };
+const row: TSurveyProjectionRow = {
+  id: "a",
+  workspaceId: "w",
+  ownerId: "u",
+  visibility: "workspace",
+  visibilityVersion: 1,
+};
+const observeGraph = (relationships: TAuthzedRelationship[]) =>
+  vi.mocked(readAllRelationships).mockResolvedValue({ relationships } as never);
 const lock = vi.fn(async () => {});
 beforeEach(() => {
   vi.clearAllMocks();
@@ -32,7 +38,7 @@ beforeEach(() => {
   vi.mocked(prisma.onlineUpgradeState.update).mockResolvedValue({ surveyCursor: "a" } as never);
   vi.mocked(prisma.survey.findMany).mockResolvedValue([]);
   vi.mocked(reconcileSurveyRelationships).mockResolvedValue({ status: "projected", passes: 1 });
-  vi.mocked(diffSurveyRelationships).mockReturnValue([]);
+  observeGraph([]);
   vi.mocked(getAuthzedOutboxStatus).mockResolvedValue({
     pending: 17,
     oldestPendingAgeSeconds: 0,
@@ -86,7 +92,7 @@ test("unexplained stable-version drift is repaired but cannot activate in that p
   } as never);
   vi.mocked(prisma.survey.findMany).mockResolvedValueOnce([row] as never);
   vi.mocked(prisma.survey.findUnique).mockResolvedValue(row as never);
-  vi.mocked(diffSurveyRelationships).mockReturnValue([{}] as never);
+  observeGraph(expectedSurveyRelationships(row).slice(1));
   await expect(verifyOnlineProjection(lock)).rejects.toThrow("stable_projection_drift");
   expect(reconcileSurveyRelationships).toHaveBeenCalledWith(["a"]);
 });
