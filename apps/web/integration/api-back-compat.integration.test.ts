@@ -415,6 +415,43 @@ describe("which names a write may newly declare (ENG-1839)", () => {
       "accepted"
     );
   });
+
+  test("a draft that holds the clash still cannot be published", async () => {
+    // The editor checks a draft in full before it goes live and saves drafts leniently, so leniency for
+    // untouched issues must not let a patch publish one.
+    const survey = await seedSurvey({
+      variables: [{ id: VARIABLE_ID, name: "plan", type: "text", value: "free" }],
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+    });
+
+    expect(await patchOutcome(survey, { status: "inProgress" }, "req_backcompat_clash_publish")).toEqual({
+      storedSurveyRefused: ["duplicate_identifier"],
+    });
+    expect((await readAsLegacyApi(survey.id)).status).toBe("draft");
+  });
+
+  test("a survey with stored media that fails the media check can still be renamed", async () => {
+    // The write path runs its own media check on top of prepare's; both have to judge only what the
+    // patch changed, or the rename is refused one layer later.
+    const seeded = await seedSurvey();
+    await prisma.survey.update({
+      where: { id: seeded.id },
+      data: {
+        blocks: BLOCKS.map((block) => ({
+          ...block,
+          elements: block.elements.map((element) => ({
+            ...element,
+            imageUrl: "https://example.com/picture",
+          })),
+        })),
+      },
+    });
+    const survey = await readAsLegacyApi(seeded.id);
+
+    expect(await patchOutcome(survey, { name: "Renamed" }, "req_backcompat_media_untouched")).toBe(
+      "accepted"
+    );
+  });
 });
 
 /**

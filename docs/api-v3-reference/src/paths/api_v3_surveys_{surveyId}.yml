@@ -414,7 +414,8 @@ patch:
         stored_survey_invalid`. The reported paths are into the survey, not into the request; repair
         it in the editor. A stored survey that reads fine but already fails validation (a missing
         translation, a dangling recall) stays patchable: only issues a patch newly introduces are
-        refused.
+        refused. The exception is publishing: moving a `draft` out of `draft` still requires a survey
+        that passes, and is refused as `stored_survey_invalid` while it does not.
 
 
         5. `customCss` could not be processed (a syntax error, the 20 000-byte survey budget, a

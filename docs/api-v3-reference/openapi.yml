@@ -1219,7 +1219,7 @@ paths:
 
             3. A server-owned field was echoed back with a different value — `code: read_only_field`, with the submitted value in `identifier`. Sending the value `GET` returned is always a no-op.
 
-            4. The *stored* survey cannot be read as a v3 document at all — `code: stored_survey_invalid`. The reported paths are into the survey, not into the request; repair it in the editor. A stored survey that reads fine but already fails validation (a missing translation, a dangling recall) stays patchable: only issues a patch newly introduces are refused.
+            4. The *stored* survey cannot be read as a v3 document at all — `code: stored_survey_invalid`. The reported paths are into the survey, not into the request; repair it in the editor. A stored survey that reads fine but already fails validation (a missing translation, a dangling recall) stays patchable: only issues a patch newly introduces are refused. The exception is publishing: moving a `draft` out of `draft` still requires a survey that passes, and is refused as `stored_survey_invalid` while it does not.
 
             5. `customCss` could not be processed (a syntax error, the 20 000-byte survey budget, a complexity limit). `invalid_params` names `customCss.light` / `customCss.dark`; `details.errors` carries the processor's located errors. Nothing is written, so the saved CSS stays in effect.
           content:
