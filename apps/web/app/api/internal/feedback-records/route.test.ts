@@ -219,6 +219,17 @@ describe("GET /api/internal/feedback-records/{recordId}", () => {
     expect(await withoutRequestId(foreign)).toEqual(await withoutRequestId(missing));
   });
 
+  test("answers 502 or 503 when the Hub can't answer, rather than a 403 that blames the record", async () => {
+    mocks.retrieveFeedbackRecord.mockResolvedValue({ data: null, error: { status: 500, message: "boom" } });
+    const failed = await retrieve();
+    mocks.retrieveFeedbackRecord.mockResolvedValue({ data: null, error: NOT_CONFIGURED });
+    const unconfigured = await retrieve();
+
+    expect(failed.status).toBe(502);
+    expect((await failed.json()).detail).toBe("The feedback records could not be loaded.");
+    expect(unconfigured.status).toBe(503);
+  });
+
   test("refuses a caller without access to the record's dataset in this workspace", async () => {
     refuse("feedbackDirectoryAssignment.read");
     expect((await retrieve()).status).toBe(403);
@@ -273,9 +284,12 @@ describe("DELETE /api/internal/feedback-records/{recordId}", () => {
     expect(mocks.deleteFeedbackRecord).not.toHaveBeenCalled();
   });
 
-  test("answers 502 when the Hub refuses the delete", async () => {
+  test("answers 502 when the Hub refuses the delete, saying it was the delete that failed", async () => {
     mocks.deleteFeedbackRecord.mockResolvedValue({ data: null, error: { status: 500, message: "boom" } });
-    expect((await remove()).status).toBe(502);
+    const response = await remove();
+
+    expect(response.status).toBe(502);
+    expect((await response.json()).detail).toBe("The feedback records could not be deleted.");
   });
 
   test("refuses a cross-site request (CSRF)", async () => {

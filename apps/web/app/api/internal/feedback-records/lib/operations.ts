@@ -43,12 +43,13 @@ const sessionUserId = (authentication: TV3Authentication): string | null =>
   authentication && "user" in authentication ? (authentication.user?.id ?? null) : null;
 
 /**
- * A Hub failure. The Hub's own error text is never relayed — it can carry internal Hub URLs; it is
- * logged in `@/modules/hub/service` and correlated by `requestId`.
+ * A Hub failure, naming what could not be done. The Hub's own error text is never relayed — it can carry
+ * internal Hub URLs; it is logged in `@/modules/hub/service` and correlated by `requestId`.
  */
 const hubFailure = (
   error: HubError | null | undefined,
-  { requestId, instance }: TRequestContext
+  { requestId, instance }: Pick<TRequestContext, "requestId" | "instance">,
+  failed: "loaded" | "deleted"
 ): Response =>
   error && isHubNotConfigured(error)
     ? problemServiceUnavailable(
@@ -56,7 +57,10 @@ const hubFailure = (
         "The Hub integration is not configured on this deployment.",
         instance
       )
-    : problemBadGateway(requestId, "The feedback records could not be loaded.", instance);
+    : problemBadGateway(requestId, `The feedback records could not be ${failed}.`, instance);
+
+/** The Hub answered about the record itself (absent, malformed id), rather than failing to answer. */
+const isAnswerAboutRecord = (error: HubError): boolean => error.status >= 400 && error.status < 500;
 
 /** `GET /api/internal/feedback-records?workspaceId=&datasetId=`: one page of one dataset's records. */
 export async function listFeedbackRecordsOperation({
@@ -83,13 +87,14 @@ export async function listFeedbackRecordsOperation({
   if (query.until) params.until = query.until;
 
   const result = await listFeedbackRecords(params);
-  if (result.error || !result.data) return hubFailure(result.error, { ...context, workspaceId });
+  if (result.error || !result.data) return hubFailure(result.error, context, "loaded");
   return successResponse(result.data, { requestId });
 }
 
 /**
  * The record, once it is known to be reachable from the workspace and its dataset assignment is
- * readable. A record outside the workspace answers 403 like one that does not exist.
+ * readable. A record outside the workspace answers 403 like one that does not exist; a Hub that could not
+ * answer is a 502 or 503, not a claim about the record.
  */
 async function getReachableRecord(context: TRequestContext, userId: string, recordId: string) {
   const { workspaceId, requestId, instance } = context;
@@ -97,6 +102,9 @@ async function getReachableRecord(context: TRequestContext, userId: string, reco
     getWorkspaceDirectoryIds(workspaceId),
     retrieveFeedbackRecord(recordId),
   ]);
+  if (recordResult.error && !isAnswerAboutRecord(recordResult.error)) {
+    return hubFailure(recordResult.error, context, "loaded");
+  }
   if (!recordResult.data || recordResult.error) return problemForbidden(requestId, FORBIDDEN, instance);
 
   assertRecordBelongsToWorkspace(workspaceDatasetIds, recordResult.data.tenant_id, recordId);
@@ -143,7 +151,7 @@ export async function deleteFeedbackRecordOperation({
   if (record instanceof Response) return record;
 
   const deleted = await deleteFeedbackRecord(recordId);
-  if (!deleted.data || deleted.error) return hubFailure(deleted.error, context);
+  if (!deleted.data || deleted.error) return hubFailure(deleted.error, context, "deleted");
 
   // Identify what was deleted without copying it: the value_* fields are end-user feedback, which has
   // no business being duplicated into the audit trail.
