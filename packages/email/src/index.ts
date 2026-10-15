@@ -5,6 +5,12 @@ export { NewEmailVerification } from "../emails/auth/new-email-verification";
 export { PasswordResetNotifyEmail } from "../emails/auth/password-reset-notify-email";
 export { SsoRecoveryFactorsRemovedEmail } from "../emails/auth/sso-recovery-factors-removed-email";
 export { SsoSignInHintEmail } from "../emails/auth/sso-sign-in-hint-email";
+export { MemberRetentionNoticeEmail } from "../emails/retention/member-retention-notice-email";
+export {
+  SurveyRetentionNoticeEmail,
+  type TRetentionNoticeArchivedSurvey,
+  type TRetentionNoticeResponseDeletion,
+} from "../emails/retention/survey-retention-notice-email";
 export { InviteEmail } from "../emails/invite/invite-email";
 export { InviteAcceptedEmail } from "../emails/invite/invite-accepted-email";
 export { LinkSurveyEmail } from "../emails/survey/link-survey-email";
@@ -26,6 +32,8 @@ export {
   renderPasswordResetNotifyEmail,
   renderSsoRecoveryFactorsRemovedEmail,
   renderSsoSignInHintEmail,
+  renderSurveyRetentionNoticeEmail,
+  renderMemberRetentionNoticeEmail,
   renderInviteEmail,
   renderInviteAcceptedEmail,
   renderLinkSurveyEmail,

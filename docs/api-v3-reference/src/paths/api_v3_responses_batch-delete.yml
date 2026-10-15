@@ -20,8 +20,10 @@ post:
 
 
     Because `deleted` can therefore be lower than the number of ids sent — or zero — do not treat a
-    shortfall as an error. Deletion cascades to uploaded files exactly as the single-response delete
-    does — and, exactly as it does, leaves the Hub copy in place. See that operation for why.
+    shortfall as an error. Deletion also removes the responses' uploaded files and their Hub copies:
+    both are queued in the delete's transaction and cleaned up after it commits, files at once and Hub
+    feedback records within minutes, retried until done. This differs from the single-response delete,
+    which does not yet remove the Hub copy (see that operation).
 
 
     **`workspaceId` is the scope, and it is required.** Unlike the single-response delete — which

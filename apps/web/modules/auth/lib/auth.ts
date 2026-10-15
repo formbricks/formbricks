@@ -34,6 +34,7 @@ import { EMAIL_VERIFICATION_TTL_SECONDS, USE_SECURE_COOKIES } from "./auth-cooki
 import { rejectInactiveUserOnSessionCreate } from "./better-auth-active-user-gate";
 import { runAfterEmailVerificationHooks } from "./better-auth-email-verification";
 import { hibpBreachCheckBeforeHandler } from "./better-auth-hibp";
+import { lastActivePlugin, recordActivityOnSessionUpdate } from "./better-auth-last-active";
 import { auditPasswordReset, betterAuthLogger, signInAuditPlugin } from "./better-auth-observability";
 import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
 import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
@@ -313,13 +314,18 @@ export const auth = betterAuth({
   // (gate + writes) re-expressed as Better Auth database hooks (design doc §13). Verify-before-link
   // recovery is the remaining Phase 5c work. The session hook is the isActive gate (reject
   // deactivated users before a session is created — parity with authOptions, covers every sign-in
-  // path). The Phase 7 `signedIn` success audit is `signInAuditPlugin`, below: a session created here
-  // may still be withdrawn by the two-factor plugin (ENG-3271).
+  // path), and records every session renewal as the user's last activity (`User.lastActiveAt`, the data
+  // retention members clock). A completed sign-in is recorded by plugins below, not here: a session
+  // created here may still be withdrawn by the two-factor plugin (ENG-3271) — the `signedIn` audit by
+  // `signInAuditPlugin`, the activity by `lastActivePlugin`.
   databaseHooks: {
     ...ssoDatabaseHooks,
     session: {
       create: {
         before: rejectInactiveUserOnSessionCreate,
+      },
+      update: {
+        after: recordActivityOnSessionUpdate,
       },
     },
   },
@@ -457,6 +463,9 @@ export const auth = betterAuth({
     // after twoFactor(), whose after hook withdraws the session a password alone created while 2FA is
     // pending (ENG-3271).
     signInAuditPlugin,
+    // Records a completed sign-in as the user's last activity (the members retention clock). After
+    // twoFactor(), for the same reason.
+    lastActivePlugin,
     // nextCookies MUST remain the last plugin so server-action sign-in/out can set cookies.
     nextCookies(),
   ],

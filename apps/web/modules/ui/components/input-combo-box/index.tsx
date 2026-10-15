@@ -88,12 +88,20 @@ export interface InputComboboxProps {
   showCheckIcon?: boolean;
   comboboxClasses?: string;
   emptyDropdownText?: string;
+  /**
+   * Hands the search to the caller, which filters `options` itself — on the server, for a list too
+   * long to load whole. The built-in filter is off then, and the search resets to "" on close.
+   */
+  onSearchChange?: (search: string) => void;
   iconClassName?: string;
   disabled?: boolean;
   // The interactive trigger renders as a div[role="combobox"], which is not a labelable element,
   // so a paired <label htmlFor> gives it no accessible name. Callers pass one of these instead.
   "aria-label"?: string;
   "aria-labelledby"?: string;
+  // For a form field: what describes the trigger (its error, say), and whether its value is invalid.
+  "aria-describedby"?: string;
+  "aria-invalid"?: boolean;
 }
 
 // Helper to flatten all options and their children
@@ -204,10 +212,13 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
   showCheckIcon = false,
   comboboxClasses,
   emptyDropdownText,
+  onSearchChange,
   iconClassName = "h-5 w-5 text-slate-400",
   disabled = false,
   "aria-label": ariaLabel,
   "aria-labelledby": ariaLabelledBy,
+  "aria-describedby": ariaDescribedBy,
+  "aria-invalid": ariaInvalid,
 }) => {
   const { t, i18n } = useTranslation();
   const resolvedSearchPlaceholder = searchPlaceholder ?? t("common.search");
@@ -257,6 +268,12 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
     }
   }, [value, validOptions, withInput]);
 
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    // The search box unmounts with the menu, so the caller's search has to start over with it.
+    if (!next) onSearchChange?.("");
+  };
+
   const handleMultiSelect = (option: TComboboxOption) => {
     const arr = Array.isArray(localValue) ? [...localValue] : [];
     const exists = arr.includes(option.value as string);
@@ -277,7 +294,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
     } else {
       onChangeValue(option.value, option);
       setLocalValue(option.value);
-      setOpen(false);
+      handleOpenChange(false);
     }
   };
 
@@ -410,7 +427,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
         />
       )}
 
-      <DropdownMenu open={disabled ? false : open} onOpenChange={disabled ? undefined : setOpen}>
+      <DropdownMenu open={disabled ? false : open} onOpenChange={disabled ? undefined : handleOpenChange}>
         <DropdownMenuTrigger asChild className="z-10 min-w-0 flex-1">
           <div
             id={id}
@@ -418,6 +435,8 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
             tabIndex={disabled ? -1 : 0}
             aria-label={ariaLabel}
             aria-labelledby={ariaLabelledBy}
+            aria-describedby={ariaDescribedBy}
+            aria-invalid={ariaInvalid}
             aria-controls="options"
             aria-expanded={open}
             aria-disabled={disabled || undefined}
@@ -467,7 +486,10 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
           align="start"
           className="w-(--radix-dropdown-menu-trigger-width) min-w-52 overflow-y-hidden"
           data-testid="dropdown-menu-content">
-          <Command className="flex h-full w-full flex-col overflow-hidden" filter={filterComboboxOption}>
+          <Command
+            className="flex h-full w-full flex-col overflow-hidden"
+            filter={filterComboboxOption}
+            shouldFilter={!onSearchChange}>
             {showSearch ? (
               <div className="border-b border-slate-100">
                 <CommandInput
@@ -475,7 +497,10 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                   className="h-8 border-none placeholder-slate-300 outline-hidden"
                   autoFocus
                   ref={searchRef}
-                  onValueChange={resetListScroll}
+                  onValueChange={(search) => {
+                    resetListScroll();
+                    onSearchChange?.(search);
+                  }}
                 />
               </div>
             ) : (
@@ -484,7 +509,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
 
             <CommandList
               ref={listRef}
-              className="max-h-none overflow-y-auto border-0 p-1"
+              className="subtle-scrollbar max-h-none overflow-y-auto border-0 p-1"
               style={{ maxHeight: getOptionListMaxHeight(showSearch) }}>
               <CommandEmpty className="mx-2 my-0 text-xs font-semibold text-slate-500">
                 {emptyDropdownText ?? t("workspace.surveys.edit.no_option_found")}

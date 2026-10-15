@@ -34,6 +34,10 @@ export const ZAuditTarget = z.enum([
   "feedbackRecord",
   "feedbackSource",
   "embeddedData",
+  // Data retention (ENG-3615): an organisation's policies, its exemptions, and the History export.
+  "retentionPolicy",
+  "retentionExemption",
+  "retentionRun",
 ]);
 export const ZAuditAction = z.enum([
   "created",
@@ -76,6 +80,11 @@ export const ZAuditAction = z.enum([
   "sso_recovery_failed",
   // ENG-3282: a survey's visibility changed through `POST /api/v3/surveys/{id}/visibility`.
   "visibilityChanged",
+  // Data retention (ENG-3615): the sweep switches an inactive member off, an admin switches them back on,
+  // and an exemption ends early. Expiry by date is not an event.
+  "deactivated",
+  "reactivated",
+  "revoked",
 ]);
 export const ZActor = z.enum(["user", "api", "system"]);
 export const ZAuditStatus = z.enum(["success", "failure"]);

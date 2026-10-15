@@ -5,6 +5,7 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
+import { lockUserActiveState, reactivateLockedUser } from "@/lib/user/reactivation";
 import { isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
 import { getUsersQuery } from "@/modules/api/v2/organizations/[organizationId]/users/lib/utils";
 import {
@@ -308,17 +309,26 @@ export const updateUser = async (
     // (already loosely-typed) User <-> TUser mapping isn't written to satisfy.
     let updatedUser: any;
 
-    if (isDemotingOwner) {
+    if (isDemotingOwner || isActive === true) {
       // The owner-count re-check and the role write must be one atomic unit: read then act in two
       // separate statements lets two callers demoting different owners at once both read "more
       // than one owner" and both writes land, leaving none. Serializable isolation makes Postgres
       // abort one side of that race instead, surfaced here as a thrown LastOwnerConflictError.
+      //
+      // Turning an account back on is decided under the user row's lock too: a false→true change goes
+      // through `reactivateLockedUser`, like Reactivate in the member list, so the data retention
+      // members clock restarts and the old notice is cleared. Without it the member would be
+      // deactivated again the next night, with no warning.
       updatedUser = await prisma.$transaction(
         async (tx) => {
-          const ownerCount = await getOrganizationOwnerCount(organizationId, tx);
-          if (ownerCount <= 1) {
-            throw new LastOwnerConflictError();
+          if (isDemotingOwner) {
+            const ownerCount = await getOrganizationOwnerCount(organizationId, tx);
+            if (ownerCount <= 1) {
+              throw new LastOwnerConflictError();
+            }
           }
+          const reactivating =
+            isActive === true && (await lockUserActiveState(tx, existingUser.id))?.isActive === false;
 
           // Re-run against `tx` rather than reusing deleteTeamOps/createTeamOps below: those are
           // built against the root client, so awaiting them here would run them as separate
@@ -346,7 +356,7 @@ export const updateUser = async (
 
           // Update by id so the mutation is bound to the org-scoped lookup above. Email is
           // a global unique key and using it here would defeat the membership check.
-          return tx.user.update({
+          const user = await tx.user.update({
             where: { id: existingUser.id },
             data: prismaData,
             include: {
@@ -355,8 +365,10 @@ export const updateUser = async (
               },
             },
           });
+          if (reactivating) await reactivateLockedUser(tx, existingUser.id);
+          return user;
         },
-        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+        isDemotingOwner ? { isolationLevel: Prisma.TransactionIsolationLevel.Serializable } : undefined
       );
     } else {
       // Update by id so the mutation is bound to the org-scoped lookup above. Email is

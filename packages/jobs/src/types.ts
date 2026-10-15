@@ -62,6 +62,16 @@ export const ZSurveyArchivePurgeJobData = ZGlobalScopeJobData;
 
 export type TSurveyArchivePurgeJobData = TGlobalScopeJobData;
 
+/** The nightly data retention sweep (ENG-3612). */
+export const ZDataRetentionSweepJobData = ZGlobalScopeJobData;
+
+export type TDataRetentionSweepJobData = TGlobalScopeJobData;
+
+/** Hub records and storage files left over by a delete (ENG-3612). */
+export const ZDeletionCleanupDrainJobData = ZGlobalScopeJobData;
+
+export type TDeletionCleanupDrainJobData = TGlobalScopeJobData;
+
 export const ZUsageTelemetryJobData = ZGlobalScopeJobData;
 
 export type TUsageTelemetryJobData = TGlobalScopeJobData;

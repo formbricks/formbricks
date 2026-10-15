@@ -430,10 +430,7 @@ describe("service.ts", () => {
       }
 
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        {
-          error: transientError,
-          fileKey: "documents/recovered.pdf",
-        },
+        { error: { name: "Error", httpStatusCode: 500, requestId: undefined, attempts: undefined } },
         "HeadObject check failed; proceeding to sign download URL"
       );
     });
@@ -616,7 +613,11 @@ describe("service.ts", () => {
     test("logs and returns unknown when streaming fails unexpectedly", async () => {
       vi.doMock("./constants", () => mockConstants);
 
-      const s3Error = new Error("network failure");
+      // What a real S3Client throws when the store is down: the retry middleware adds $metadata.
+      const s3Error = Object.assign(new Error("connect ECONNREFUSED 127.0.0.1:9000"), {
+        code: "ECONNREFUSED",
+        $metadata: { attempts: 1, totalRetryDelay: 0 },
+      });
       const mockS3Client = {
         send: vi.fn().mockRejectedValueOnce(s3Error),
       };
@@ -635,7 +636,17 @@ describe("service.ts", () => {
         expect(result.error.code).toBe("unknown");
       }
 
-      expect(mockLogger.error).toHaveBeenCalledWith({ error: s3Error }, "Failed to get file stream");
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        {
+          error: {
+            name: "Error",
+            code: "ECONNREFUSED",
+            attempts: 1,
+            message: "connect ECONNREFUSED 127.0.0.1:9000",
+          },
+        },
+        "Failed to get file stream"
+      );
     });
   });
 
@@ -861,15 +872,7 @@ describe("service.ts", () => {
       expect(result.ok).toBe(true);
       expect(mockLogger.debug).toHaveBeenCalledWith({ count: 2 }, "Successfully deleted objects in batch");
       expect(mockLogger.error).toHaveBeenCalledWith(
-        {
-          errors: [
-            {
-              code: "AccessDenied",
-              key: "uploads/fail.txt",
-              message: "Denied",
-            },
-          ],
-        },
+        { errorCodes: { AccessDenied: 1 } },
         "Some objects failed to delete"
       );
       expect(mockLogger.warn).toHaveBeenCalledWith(
@@ -1405,6 +1408,88 @@ describe("service.ts", () => {
       });
 
       expect(result.ok).toBe(true);
+    });
+  });
+
+  // ENG-3721: an S3-compatible store (MinIO, RustFS) returns the object's Key and Resource in its error
+  // body, and the AWS SDK copies them onto the exception. The key ends with the file name a respondent
+  // chose, so none of it may reach a log.
+  describe("never logs an object key", () => {
+    const PLANTED = "jane-doe-passport-scan.pdf";
+    const KEY = `ws1/private/${PLANTED}`;
+
+    const providerError = () =>
+      Object.assign(new Error("Access Denied."), {
+        name: "AccessDenied",
+        $metadata: { httpStatusCode: 403, requestId: "req-1" },
+        Key: KEY,
+        Resource: `/bucket/${KEY}`,
+        BucketName: "bucket",
+      });
+
+    const loggedText = () => JSON.stringify([...mockLogger.error.mock.calls, ...mockLogger.warn.mock.calls]);
+
+    const withFailingClient = (send: ReturnType<typeof vi.fn>) => {
+      vi.doMock("./constants", () => mockConstants);
+      vi.doMock("./client", () => ({ createS3Client: vi.fn(() => ({ send })) }));
+    };
+
+    test.each([
+      ["deleteFile", (svc: typeof import("./service")) => svc.deleteFile(KEY)],
+      ["getFileStream", (svc: typeof import("./service")) => svc.getFileStream(KEY)],
+      [
+        "getSignedDownloadUrl",
+        (svc: typeof import("./service")) => {
+          mockGetSignedUrl.mockRejectedValueOnce(providerError());
+          return svc.getSignedDownloadUrl(KEY);
+        },
+      ],
+      [
+        "getSignedUploadUrl",
+        (svc: typeof import("./service")) => {
+          mockCreatePresignedPost.mockRejectedValueOnce(providerError());
+          return svc.getSignedUploadUrl(PLANTED, "application/pdf", "ws1/private");
+        },
+      ],
+    ])("%s", async (_name, call) => {
+      withFailingClient(vi.fn().mockRejectedValue(providerError()));
+
+      await call(await import("./service"));
+
+      expect(mockLogger.error.mock.calls.length + mockLogger.warn.mock.calls.length).toBeGreaterThan(0);
+      expect(loggedText()).toContain("AccessDenied");
+      expect(loggedText()).toContain("req-1");
+      expect(loggedText()).not.toContain(PLANTED);
+    });
+
+    test("deleteFilesByPrefix, a failed batch and a failed listing", async () => {
+      withFailingClient(
+        vi.fn().mockResolvedValueOnce({
+          Errors: [{ Key: KEY, Code: "AccessDenied", Message: `Access denied: ${KEY}` }],
+        })
+      );
+      mockPaginateListObjectsV2.mockReturnValueOnce({
+        *[Symbol.asyncIterator]() {
+          yield { Contents: [{ Key: KEY }] };
+        },
+      } as unknown as Paginator<ListObjectsV2CommandOutput>);
+      const { deleteFilesByPrefix } = await import("./service");
+      await deleteFilesByPrefix("ws1/private/");
+
+      mockPaginateListObjectsV2.mockReturnValueOnce({
+        // eslint-disable-next-line require-yield -- the listing fails before it yields a page
+        *[Symbol.asyncIterator]() {
+          throw providerError();
+        },
+      } as unknown as Paginator<ListObjectsV2CommandOutput>);
+      await deleteFilesByPrefix("ws1/private/");
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        { errorCodes: { AccessDenied: 1 } },
+        "Some objects failed to delete"
+      );
+      expect(loggedText()).toContain("req-1");
+      expect(loggedText()).not.toContain(PLANTED);
     });
   });
 });

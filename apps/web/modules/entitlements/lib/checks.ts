@@ -14,6 +14,7 @@ const LICENSE_GUARDED_ENTITLEMENTS: Partial<Record<string, keyof TEnterpriseLice
   "feedback-directories": "feedbackDirectories",
   dashboards: "dashboards",
   workflows: "workflows",
+  "data-retention": "dataRetention",
 };
 
 const TRIAL_RESTRICTED_ENTITLEMENT_KEYS = [

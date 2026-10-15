@@ -15,6 +15,7 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { logger } from "@formbricks/logger";
 import { createS3Client } from "./client";
 import { S3_BUCKET_NAME } from "./constants";
+import { countErrorCodes, toLoggableStorageError } from "./loggable-error";
 import { type Result, type StorageError, StorageErrorCode, err, ok } from "./types/error";
 
 /**
@@ -76,7 +77,7 @@ export const getSignedUploadUrl = async (
       presignedFields: fields,
     });
   } catch (error) {
-    logger.error({ error }, "Failed to get signed upload URL");
+    logger.error({ error: toLoggableStorageError(error) }, "Failed to get signed upload URL");
 
     return err({
       code: StorageErrorCode.Unknown,
@@ -114,7 +115,7 @@ export const getSignedDownloadUrl = async (fileKey: string): Promise<Result<stri
     try {
       await s3Client.send(headObjectCommand);
     } catch (error: unknown) {
-      logger.error({ error }, "Failed to check if file exists");
+      logger.error({ error: toLoggableStorageError(error) }, "Failed to check if file exists");
       if (
         (error as Error).name === "NotFound" ||
         (error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode === 404
@@ -124,7 +125,10 @@ export const getSignedDownloadUrl = async (fileKey: string): Promise<Result<stri
         });
       }
 
-      logger.warn({ error, fileKey }, "HeadObject check failed; proceeding to sign download URL");
+      logger.warn(
+        { error: toLoggableStorageError(error) },
+        "HeadObject check failed; proceeding to sign download URL"
+      );
     }
 
     const getObjectCommand = new GetObjectCommand({
@@ -134,7 +138,7 @@ export const getSignedDownloadUrl = async (fileKey: string): Promise<Result<stri
 
     return ok(await getSignedUrl(s3Client, getObjectCommand, { expiresIn: 60 * 30 }));
   } catch (error) {
-    logger.error({ error }, "Failed to get signed download URL");
+    logger.error({ error: toLoggableStorageError(error) }, "Failed to get signed download URL");
     return err({
       code: StorageErrorCode.Unknown,
     });
@@ -198,7 +202,7 @@ export const getFileStream = async (fileKey: string): Promise<Result<FileStreamR
         code: StorageErrorCode.FileNotFoundError,
       });
     }
-    logger.error({ error }, "Failed to get file stream");
+    logger.error({ error: toLoggableStorageError(error) }, "Failed to get file stream");
     return err({
       code: StorageErrorCode.Unknown,
     });
@@ -235,7 +239,7 @@ export const deleteFile = async (fileKey: string): Promise<Result<void, StorageE
 
     return ok(undefined);
   } catch (error) {
-    logger.error({ error }, "Failed to delete file");
+    logger.error({ error: toLoggableStorageError(error) }, "Failed to delete file");
 
     return err({
       code: StorageErrorCode.Unknown,
@@ -320,16 +324,7 @@ export const deleteFilesByPrefix = async (prefix: string): Promise<Result<void, 
 
       if (result.Errors && result.Errors.length > 0) {
         totalErrors += result.Errors.length;
-        logger.error(
-          {
-            errors: result.Errors.map((e) => ({
-              key: e.Key,
-              code: e.Code,
-              message: e.Message,
-            })),
-          },
-          "Some objects failed to delete"
-        );
+        logger.error({ errorCodes: countErrorCodes(result.Errors) }, "Some objects failed to delete");
       }
     }
 
@@ -340,7 +335,7 @@ export const deleteFilesByPrefix = async (prefix: string): Promise<Result<void, 
 
     return ok(undefined);
   } catch (error) {
-    logger.error({ error }, "Failed to delete files by prefix");
+    logger.error({ error: toLoggableStorageError(error) }, "Failed to delete files by prefix");
 
     return err({
       code: StorageErrorCode.Unknown,

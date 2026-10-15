@@ -5,9 +5,11 @@ import {
   TooManyRequestsError,
   ValidationError,
 } from "@formbricks/types/errors";
+import { queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { V3CustomCssInvalidError, V3CustomCssPlanRequiredError } from "@/app/api/v3/lib/custom-css";
 import { problemForbidden } from "@/app/api/v3/lib/response";
+import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { recordSurveyListPredicateMismatch } from "@/lib/authorization/metrics";
 import { filterReadableSurveyIds } from "@/lib/authorization/resource-list";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -86,6 +88,7 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+vi.mock("@/app/api/v3/lib/audit", () => ({ queueV3AuditLog: vi.fn() }));
 vi.mock("@/modules/survey/lib/surveys", () => ({
   deleteSurvey: vi.fn(),
   archiveSurvey: vi.fn(),
@@ -1154,8 +1157,48 @@ describe("restoreV3Survey", () => {
     });
 
     expect(response.status).toBe(200);
-    expect(vi.mocked(restoreSurvey)).toHaveBeenCalledWith("survey_1");
+    // An API key has no user to record on a retention exemption the restore makes.
+    expect(vi.mocked(restoreSurvey)).toHaveBeenCalledWith("survey_1", { restoredById: null });
+    // No exemption made, no exemption event.
+    expect(vi.mocked(queueV3AuditLog)).not.toHaveBeenCalled();
     expect(auditLog).toMatchObject({ organizationId: "org_1", targetId: "survey_1", oldObject: survey });
+  });
+
+  test("records the signed-in user as the restorer, and the retention exemption in the audit log", async () => {
+    vi.mocked(restoreSurvey).mockResolvedValue({
+      id: "survey_1",
+      status: "paused",
+      archivedAt: null,
+      retentionExemptionId: "exemption_1",
+    });
+    const auditLog: TV3AuditLog = {} as TV3AuditLog;
+
+    const response = await restoreV3Survey({
+      surveyId: "survey_1",
+      authentication: { user: { id: "user_1" } } as unknown as TV3Authentication,
+      requestId,
+      instance,
+      auditLog,
+    });
+
+    expect(response.status).toBe(200);
+    expect(vi.mocked(restoreSurvey)).toHaveBeenCalledWith("survey_1", { restoredById: "user_1" });
+    expect(auditLog.newObject).toMatchObject({ retentionExemptionId: "exemption_1" });
+    // The exemption gets its own event, like one made through the exemptions API.
+    expect(vi.mocked(queueV3AuditLog)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "created",
+        targetType: "retentionExemption",
+        targetId: "exemption_1",
+        organizationId: "org_1",
+        status: "success",
+        newObject: { surveyId: "survey_1", policy: "surveys", source: "restore" },
+      }),
+      requestId,
+      expect.anything()
+    );
+    // The lifecycle ack stays the minimal shape.
+    expect((await response.json()).data).toEqual({ id: "survey_1", status: "paused", archivedAt: null });
   });
 
   test("maps missing resource and database failures", async () => {
