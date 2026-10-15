@@ -140,6 +140,13 @@ export const setup = async (
     return okVoid();
   }
 
+  // Count this page before anything that can wait or bail out: counting needs no network, and a
+  // visitor who leaves before the workspace state arrives, or a page where Formbricks is in an error
+  // state, still saw the page. Also before `addEventListeners`, so no trigger on this page is ever
+  // checked against the previous page's visit.
+  startVisitTracking();
+  if (isDebug) startDebugSession(configInput.appUrl);
+
   let existingConfig: TConfig | undefined;
   try {
     existingConfig = config.get();
@@ -388,11 +395,6 @@ export const setup = async (
       await handleErrorOnFirstSetup(e as { code: string; responseMessage: string });
     }
   }
-
-  // Before `addEventListeners`: the page has to be counted, and the visit listeners registered first,
-  // so no trigger on this page is ever checked against the previous page's visit.
-  startVisitTracking();
-  if (isDebug) startDebugSession(configInput.appUrl);
 
   logger.debug("Adding event listeners");
   addEventListeners();
