@@ -41,9 +41,46 @@ const skipPast = (xml: Buffer, from: number, close: Buffer): number => {
   return end === -1 ? xml.length : end + close.length;
 };
 
+/** Where a comment, CDATA section or processing instruction starting at `lt` ends, or -1 if `lt` opens a tag. */
+const endOfSingleNode = (xml: Buffer, lt: number): number => {
+  if (xml[lt + 1] === QUESTION) return skipPast(xml, lt + 2, PI_CLOSE);
+  if (xml[lt + 1] !== BANG) return -1;
+  if (xml.subarray(lt, lt + COMMENT_OPEN.length).equals(COMMENT_OPEN)) {
+    return skipPast(xml, lt + COMMENT_OPEN.length, COMMENT_CLOSE);
+  }
+  if (xml.subarray(lt, lt + CDATA_OPEN.length).equals(CDATA_OPEN)) {
+    return skipPast(xml, lt + CDATA_OPEN.length, CDATA_CLOSE);
+  }
+  return -1;
+};
+
+/**
+ * Reads the tag that starts at `lt`, past its name, and counts every attribute name that starts after
+ * whitespace or a closing quote. Quoted values are skipped whole, so neither `>` nor `=` inside one is misread.
+ */
+const readTag = (xml: Buffer, lt: number): { end: number; attributes: number } => {
+  let attributes = 0;
+  let afterSeparator = false;
+  let j = lt + 1;
+  while (j < xml.length && xml[j] !== GREATER_THAN) {
+    const byte = xml[j];
+    if (byte === DOUBLE_QUOTE || byte === SINGLE_QUOTE) {
+      const close = xml.indexOf(byte, j + 1);
+      j = close === -1 ? xml.length : close + 1;
+      afterSeparator = true;
+      continue;
+    }
+    const startsAttribute = afterSeparator && !isWhitespace(byte) && byte !== EQUALS && byte !== SLASH;
+    if (startsAttribute) attributes++;
+    afterSeparator = isWhitespace(byte);
+    j++;
+  }
+  return { end: j + 1, attributes };
+};
+
 /**
  * Counts the nodes the decoded response would become, in one pass over its bytes, without building a string
- * or a tree (~0.2 ms at the body limit). Not a parser and not a validator: whatever it miscounts, jackson still
+ * or a tree (~1 ms at the body limit). Not a parser and not a validator: whatever it miscounts, jackson still
  * parses and rejects exactly as before. It only has to be right about what is expensive, which is a node.
  */
 export const countSamlResponseMarkup = (samlResponseBase64: string): number => {
@@ -57,43 +94,15 @@ export const countSamlResponseMarkup = (samlResponseBase64: string): number => {
     count++;
 
     // A comment, CDATA section or processing instruction is one node, whatever its content says.
-    if (xml[lt + 1] === BANG && xml.subarray(lt, lt + COMMENT_OPEN.length).equals(COMMENT_OPEN)) {
-      i = skipPast(xml, lt + COMMENT_OPEN.length, COMMENT_CLOSE);
-      continue;
-    }
-    if (xml[lt + 1] === BANG && xml.subarray(lt, lt + CDATA_OPEN.length).equals(CDATA_OPEN)) {
-      i = skipPast(xml, lt + CDATA_OPEN.length, CDATA_CLOSE);
-      continue;
-    }
-    if (xml[lt + 1] === QUESTION) {
-      i = skipPast(xml, lt + 2, PI_CLOSE);
+    const singleNodeEnd = endOfSingleNode(xml, lt);
+    if (singleNodeEnd !== -1) {
+      i = singleNodeEnd;
       continue;
     }
 
-    // An ordinary tag: skip its name, then count every attribute name that starts after whitespace or a
-    // closing quote. Quoted values are skipped whole, so neither `>` nor `=` inside one is misread.
-    let j = lt + 1;
-    let afterSeparator = false;
-    while (j < xml.length) {
-      const byte = xml[j];
-      if (byte === GREATER_THAN) break;
-      if (byte === DOUBLE_QUOTE || byte === SINGLE_QUOTE) {
-        const close = xml.indexOf(byte, j + 1);
-        j = close === -1 ? xml.length : close + 1;
-        afterSeparator = true;
-        continue;
-      }
-      if (isWhitespace(byte)) {
-        afterSeparator = true;
-      } else if (byte === EQUALS || byte === SLASH) {
-        afterSeparator = false;
-      } else {
-        if (afterSeparator) count++;
-        afterSeparator = false;
-      }
-      j++;
-    }
-    i = j + 1;
+    const tag = readTag(xml, lt);
+    count += tag.attributes;
+    i = tag.end;
   }
 
   return count;
