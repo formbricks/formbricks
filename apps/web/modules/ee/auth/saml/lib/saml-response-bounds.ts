@@ -41,9 +41,10 @@ const SINGLE_QUOTE = 0x27;
 const isSeparator = (byte: number) => byte <= 0x20 || byte === 0x80;
 
 /**
- * Whether a byte starts an element name that xmldom accepts cheaply: an ASCII letter or `_`. A leading `:` and a
- * byte that does not decode to a name character (an invalid UTF-8 byte becomes U+FFFD) make xmldom raise and
- * recover just as a stray `<` does, and SAML element names are ASCII, so anything else is weighted as stray.
+ * Whether a byte starts an element name that xmldom accepts cheaply: an ASCII letter or `_`. A leading `:` makes
+ * xmldom raise and recover just as a stray `<` does, and so does a non-ASCII byte that decodes to a character
+ * that cannot start a name (`×`, `÷`, combining marks). SAML element names are ASCII, so every other start,
+ * non-ASCII included, is weighted as stray; for the rare non-ASCII letter that is an over-count, the safe side.
  */
 const isNameStart = (byte: number) =>
   (byte >= 0x61 && byte <= 0x7a) || (byte >= 0x41 && byte <= 0x5a) || byte === 0x5f;
