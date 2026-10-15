@@ -1,3 +1,5 @@
+import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { findBlocksWithCyclicLogic } from "@formbricks/types/surveys/blocks-validation";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import { isInternalI18nString, isPlainObject } from "./guards";
@@ -174,6 +176,60 @@ export type TV3SurveyPrecedencePolicy =
   | { mode: "introduced"; baseline: TV3SurveyDocument }
   | { mode: "skip" };
 
+/**
+ * ENG-3946: blocks whose jumps, fallbacks and default flow lead back to themselves, so a respondent can
+ * loop without ever reaching an ending. Create already refuses these through the survey service's own
+ * write schema (`surveyRefinement`), which the patch family never runs — so without this a reorder or a
+ * block edit stored a survey the editor then refuses to save. Same message as that refinement, so a
+ * caller sees one wording whichever path caught it.
+ */
+function getV3SurveyCyclicLogicViolations(
+  blocks: TV3SurveyDocument["blocks"]
+): { blockId: string; issue: InvalidParam }[] {
+  const cyclicBlockIds = new Set(findBlocksWithCyclicLogic(blocks as TSurveyBlock[]));
+
+  return blocks.flatMap((block, index) =>
+    block.id && cyclicBlockIds.has(block.id)
+      ? [
+          {
+            blockId: block.id,
+            issue: {
+              name: `blocks.${String(index)}.logic`,
+              reason: `Conditional Logic: Cyclic logic detected in block ${String(index + 1)} (${block.name}).`,
+            },
+          },
+        ]
+      : []
+  );
+}
+
+/**
+ * The cycles to report under `precedence`. Keyed by block id under `introduced`, like the ordering rule,
+ * so a survey that already loops stays patchable by a request that does not touch the loop — and a
+ * request that removes it is accepted. `skip` reports nothing: create's write schema already rejects
+ * every cycle, and reporting it here too would list each one twice.
+ */
+function getV3SurveyCyclicLogicInvalidParams(
+  blocks: TV3SurveyDocument["blocks"],
+  precedence: TV3SurveyPrecedencePolicy
+): InvalidParam[] {
+  if (precedence.mode === "skip") {
+    return [];
+  }
+
+  const violations = getV3SurveyCyclicLogicViolations(blocks);
+  if (precedence.mode === "enforce") {
+    return violations.map((violation) => violation.issue);
+  }
+
+  const existing = new Set(
+    getV3SurveyCyclicLogicViolations(precedence.baseline.blocks).map((violation) => violation.blockId)
+  );
+  return violations
+    .filter((violation) => !existing.has(violation.blockId))
+    .map((violation) => violation.issue);
+}
+
 function toReferenceInput(document: TV3SurveyDocument) {
   return {
     blocks: document.blocks,
@@ -207,6 +263,8 @@ export function validateV3SurveyDocument(
       ...getV3SurveyIntroducedPrecedenceInvalidParams(toReferenceInput(precedence.baseline), referenceInput)
     );
   }
+
+  invalidParams.push(...getV3SurveyCyclicLogicInvalidParams(document.blocks, precedence));
 
   if (invalidParams.length > 0) {
     return {

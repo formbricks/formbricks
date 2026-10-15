@@ -778,6 +778,93 @@ describe("v3 survey preparation", () => {
   });
 });
 
+describe("prepareV3SurveyPatchInput with cyclic block logic (ENG-3946)", () => {
+  const openText = (id: string, label: string, localeKey: "default" | "en-US") => ({
+    id,
+    type: "openText",
+    headline: { [localeKey]: label, "de-DE": `${label} (de)` },
+    required: false,
+  });
+
+  // `Rate` jumps forward to `Pick`. In the stored order that is a plain skip; move `Rate` after `Pick`
+  // and the jump points back at a block whose default next step is `Rate` again — a loop.
+  const buildBlocks = (localeKey: "default" | "en-US", order: ("rate" | "why" | "pick")[]) => {
+    const blocks = {
+      rate: {
+        id: "clbkrate000000000000000000",
+        name: "Rate",
+        elements: [openText("q_rate", "Rate us", localeKey)],
+        logic: [
+          {
+            id: "cllogic0000000000000000000",
+            conditions: {
+              id: "clcondgroup000000000000000",
+              connector: "and",
+              conditions: [
+                {
+                  id: "clcond00000000000000000000",
+                  leftOperand: { type: "element", value: "q_rate" },
+                  operator: "isSubmitted",
+                },
+              ],
+            },
+            actions: [
+              {
+                id: "claction000000000000000000",
+                objective: "jumpToBlock",
+                target: "clbkpick000000000000000000",
+              },
+            ],
+          },
+        ],
+      },
+      why: { id: "clbkwhy0000000000000000000", name: "Why", elements: [openText("q_why", "Why", localeKey)] },
+      pick: {
+        id: "clbkpick000000000000000000",
+        name: "Pick",
+        elements: [openText("q_pick", "Pick", localeKey)],
+      },
+    };
+    return order.map((key) => blocks[key]);
+  };
+
+  const surveyWithLogic = {
+    ...survey,
+    blocks: buildBlocks("default", ["rate", "why", "pick"]),
+  } as unknown as TSurvey;
+
+  test("rejects a reorder that turns a forward jump into a loop", () => {
+    const preparation = prepareV3SurveyPatchInput(surveyWithLogic, {
+      blocks: buildBlocks("en-US", ["why", "pick", "rate"]),
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.origin).toBe("request");
+      expect(preparation.validation.invalidParams).toEqual(
+        expect.arrayContaining([
+          {
+            name: "blocks.2.logic",
+            reason: "Conditional Logic: Cyclic logic detected in block 3 (Rate).",
+          },
+        ])
+      );
+    }
+  });
+
+  test("keeps a survey that already loops patchable, and accepts the patch that breaks the loop", () => {
+    const loopingSurvey = {
+      ...survey,
+      blocks: buildBlocks("default", ["why", "pick", "rate"]),
+    } as unknown as TSurvey;
+
+    expect(prepareV3SurveyPatchInput(loopingSurvey, { name: "Renamed" }).ok).toBe(true);
+    expect(
+      prepareV3SurveyPatchInput(loopingSurvey, { blocks: buildBlocks("en-US", ["rate", "why", "pick"]) }).ok
+    ).toBe(true);
+  });
+});
+
 describe("prepareV3SurveyPatchInput with a semantically invalid stored survey", () => {
   // ENG-3070. The stored survey parses fine but fails the semantic pass: `de-DE` is configured and
   // the headline has no German. Both halves of the ticket are asserted here — the failure must be
