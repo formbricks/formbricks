@@ -1,7 +1,9 @@
 /**
  * @vitest-environment jsdom
  */
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
+import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { createQueryWrapper, jsonResponse as json, routeFetch } from "@/modules/api/lib/hook-test-utils";
 import { embeddedDataKeys } from "../lib/query";
@@ -80,6 +82,28 @@ describe("embedded data hooks", () => {
 
     rerender({ enabled: true });
     await waitFor(() => expect(result.current.data).toEqual(USAGE));
+  });
+
+  test("gives up on a refusal at once, even under a client that retries everything (the editor's)", async () => {
+    routeFetch({
+      [`GET ${LIST_URL}`]: [json({ status: 403, detail: "Forbidden", code: "forbidden" }, 403)],
+      [`GET ${fieldUrl("/usage")}`]: [json({ status: 403, detail: "Forbidden", code: "forbidden" }, 403)],
+    });
+    const queryClient = new QueryClient();
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(QueryClientProvider, { client: queryClient }, children);
+
+    const { result } = renderHook(
+      () => ({
+        library: useEmbeddedDataLibrary(WORKSPACE_ID),
+        usage: useEmbeddedDataUsage(FIELD_ID, { enabled: true }),
+      }),
+      { wrapper }
+    );
+
+    await waitFor(() => expect(result.current.library.isError && result.current.usage.isError).toBe(true));
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    queryClient.clear();
   });
 
   test("a created field comes back as ok, and the library is marked stale", async () => {

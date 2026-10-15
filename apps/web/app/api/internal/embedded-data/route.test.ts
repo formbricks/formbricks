@@ -378,6 +378,34 @@ describe("refusals", () => {
     expect(lastAudit()).toMatchObject({ status: "failure" });
   });
 
+  test("a create naming a survey is a 400: a library field belongs to no survey", async () => {
+    const response = await create({
+      key: "plan_tier",
+      name: "Plan tier",
+      source: "ingested",
+      surveyId: "clsurv1111111111111111111",
+    });
+
+    expect(response.status).toBe(400);
+    expect(mocks.library.createSharedEmbeddedData).not.toHaveBeenCalled();
+  });
+
+  test("a promote carrying anything but the key and description is a 400", async () => {
+    const response = await promote({ key: "plan_tier", workspaceId: OTHER_WORKSPACE_ID });
+
+    expect(response.status).toBe(400);
+    expect(mocks.library.promoteEmbeddedDataToShared).not.toHaveBeenCalled();
+  });
+
+  test("an unexpected failure is a 500 that relays nothing, audited as a failure", async () => {
+    mocks.library.createSharedEmbeddedData.mockRejectedValue(new Error("connection to db-7.internal lost"));
+    const response = await create({ key: "plan_tier", name: "Plan tier", source: "ingested" });
+
+    expect(response.status).toBe(500);
+    expect(await response.text()).not.toContain("db-7.internal");
+    expect(lastAudit()).toMatchObject({ action: "created", status: "failure", organizationId: ORG_ID });
+  });
+
   test("a write during an online upgrade is a 503 saying so", async () => {
     mocks.library.updateSharedEmbeddedData.mockRejectedValue(
       new OperationNotAllowedError("This change is unavailable until the online upgrade completes")

@@ -34,7 +34,7 @@ export const FieldUsageCell = ({ fieldId, workspaceId, surveyCount }: Readonly<F
   const { t } = useTranslation();
   // Fetched the first time the popover opens, then kept in the query cache like any other read.
   const [isRequested, setIsRequested] = useState(false);
-  const { data: usage, error } = useEmbeddedDataUsage(fieldId, { enabled: isRequested });
+  const { data: usage, error, refetch } = useEmbeddedDataUsage(fieldId, { enabled: isRequested });
   const label = getUsageLabel(surveyCount);
 
   if (label.kind === "unused") {
@@ -78,7 +78,10 @@ export const FieldUsageCell = ({ fieldId, workspaceId, surveyCount }: Readonly<F
   return (
     <Popover
       onOpenChange={(open) => {
-        if (open) setIsRequested(true);
+        if (!open) return;
+        setIsRequested(true);
+        // A failed load is not cached as the answer: reopening asks again.
+        if (error) void refetch();
       }}>
       <PopoverTrigger
         // The row behind this one opens the edit dialog. Stopping the click here and on the panel
