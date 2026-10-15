@@ -47,6 +47,11 @@ import type { TV3AuditLog, TV3Authentication } from "./types";
 type TV3Schema = z.ZodTypeAny;
 type MaybePromise<T> = T | Promise<T>;
 
+/**
+ * How a route authenticates. `session` and `none` serve browsers on this origin only: their unsafe
+ * methods pass the cross-origin check (`origin-check.ts`), so a script or another site gets a 403 there.
+ * `both` checks the session path the same way and leaves API-key callers alone.
+ */
 export type TV3AuthMode = "none" | "session" | "apiKey" | "both";
 
 export type TV3Schemas = {

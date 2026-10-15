@@ -1,5 +1,5 @@
 import "server-only";
-import { AUTH_TRUSTED_ORIGINS, WEBAPP_URL } from "@/lib/constants";
+import { AUTH_TRUSTED_ORIGINS, BETTER_AUTH_ENV_TRUSTED_ORIGINS, WEBAPP_URL } from "@/lib/constants";
 
 /**
  * Cross-site request forgery protection for requests that carry an ambient credential: the session
@@ -17,15 +17,18 @@ import { AUTH_TRUSTED_ORIGINS, WEBAPP_URL } from "@/lib/constants";
  * 1. `GET`, `HEAD` and `OPTIONS` pass. They must not change state.
  * 2. When `Sec-Fetch-Site` is present, only `same-origin` passes. `same-site` is refused: a sibling
  *    subdomain is not trusted. There is no fallback to `Origin` once the header is present.
- * 3. Without `Sec-Fetch-Site` (an older browser, or plain HTTP, where browsers don't send it), the full
- *    `Origin` must be one of the configured origins. `Origin: null` never matches.
- * 4. With neither header, the request is refused. Go assumes a non-browser caller here; no non-browser
- *    caller uses a session or pre-login route, so refusing costs nothing.
+ * 3. Without `Sec-Fetch-Site` (an older browser, or plain HTTP, where browsers send it only for
+ *    localhost), `Origin` must be one of the configured origins, or have the same host as the request:
+ *    the first `X-Forwarded-Host` value, else `Host`. That second rule is exactly the one Next.js applies
+ *    to server actions, so a self-hosted instance reached by LAN address or by an alternate hostname keeps
+ *    working as it did before the move to routes. A cross-site page can't satisfy it: its `Origin` is its
+ *    own host, and it can't set `X-Forwarded-Host` without a CORS preflight that fails.
+ *    `Origin: null` never matches.
+ * 4. With neither header, the request is refused. Go assumes a non-browser caller here (Next lets it
+ *    through); no non-browser caller may use a session or pre-login route, so refusing costs nothing.
  *
- * The trusted origins come from configuration, never from `Host` or `X-Forwarded-Host`: they are the
- * origins Better Auth already enforces for sign-in (`AUTH_TRUSTED_ORIGINS`) plus the app's own
- * `WEBAPP_URL`, which is also what Next.js allows server actions from. A deployment whose sign-in works
- * therefore passes.
+ * The configured origins are those Better Auth trusts for sign-in (`BETTER_AUTH_URL` / `NEXTAUTH_URL` and
+ * `BETTER_AUTH_TRUSTED_ORIGINS`) plus the app's own `WEBAPP_URL`.
  */
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
@@ -39,7 +42,7 @@ const toOrigin = (url: string): string | null => {
 };
 
 const TRUSTED_ORIGINS: ReadonlySet<string> = new Set(
-  [...AUTH_TRUSTED_ORIGINS, WEBAPP_URL]
+  [...AUTH_TRUSTED_ORIGINS, ...BETTER_AUTH_ENV_TRUSTED_ORIGINS, WEBAPP_URL]
     .map(toOrigin)
     .filter((origin): origin is string => origin !== null && origin !== "null")
 );
@@ -58,5 +61,19 @@ export const getCrossOriginRefusal = (req: Request): TCrossOriginRefusal | null 
 
   const origin = req.headers.get("origin");
   if (origin === null) return "no_origin";
-  return TRUSTED_ORIGINS.has(origin) ? null : "untrusted_origin";
+  if (TRUSTED_ORIGINS.has(origin)) return null;
+  return isSameHost(origin, req.headers) ? null : "untrusted_origin";
+};
+
+/** Whether `Origin` names the host this request was sent to, as Next.js decides for server actions. */
+const isSameHost = (origin: string, headers: Headers): boolean => {
+  let originHost: string;
+  try {
+    originHost = new URL(origin).host;
+  } catch {
+    return false;
+  }
+  if (!originHost) return false;
+  const forwardedHost = headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  return originHost === (forwardedHost || headers.get("host"));
 };
