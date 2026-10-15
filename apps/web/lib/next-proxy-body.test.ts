@@ -4,10 +4,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 
-// Guards patches/next@16.3.8.patch (ENG-3972). For every non-GET request the proxy matches, an unpatched
-// Next clones the body for proxy.ts: it reads the whole upload off the socket, keeps up to
-// `proxyClientMaxBodySize` in memory, and holds the route until the client's last byte, so any anonymous
-// caller can pin 16 MB per connection on any path. The patch hands the proxy no body at all.
+// Guards patches/next@16.3.8.patch (ENG-3972). For every non-GET request the proxy matches, and for every
+// external rewrite (the PostHog /ingest proxy), an unpatched Next clones the body: it reads the whole upload
+// off the socket, keeps up to `proxyClientMaxBodySize` in memory, and holds the request until the client's
+// last byte, so any anonymous caller can pin 16 MB per connection on any path. The patch hands the proxy no
+// body at all, and lets a rewrite stream the request to its target instead.
 //
 // Two things keep that safe, and each half is checked below: the installed Next really is patched (a
 // `pnpm install` that skipped the patch, or a Next upgrade that dropped it, would quietly restore the
@@ -32,6 +33,20 @@ describe("Next proxy request body (patches/next@16.3.8.patch)", () => {
     "%s hands the proxy no body to clone",
     (file) => {
       expect(readProxyRequestBody(file)).toBe("undefined");
+    }
+  );
+
+  test.each(["next/dist/server/lib/router-server.js", "next/dist/esm/server/lib/router-server.js"])(
+    "%s streams an external rewrite's body instead of cloning it",
+    (file) => {
+      const source = fs.readFileSync(require.resolve(file), "utf8");
+      const rewrite =
+        /^\s*return await .*proxyRequest\)?\(req, res, parsedUrl, undefined, (.+), config\.experimental\.proxyTimeout\);$/m.exec(
+          source
+        );
+      if (!rewrite) throw new Error(`the external-rewrite proxyRequest call was not found in ${file}`);
+      expect(rewrite[1]).toBe("undefined");
+      expect(source).not.toContain("cloneBodyStream()");
     }
   );
 
