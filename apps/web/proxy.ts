@@ -73,6 +73,11 @@ const NEXT_PREFETCH_HEADERS = [
 const isPrefetchRequest = (request: NextRequest): boolean =>
   NEXT_PREFETCH_HEADERS.some((header) => request.headers.has(header));
 
+/**
+ * Never read the request body here. `patches/next@16.3.8.patch` stops Next handing the proxy one
+ * (ENG-3972), so a read would find nothing, while the route still gets the untouched stream.
+ * `lib/next-proxy-body.test.ts` enforces both halves.
+ */
 export const proxy = async (originalRequest: NextRequest) => {
   // Handle domain-aware routing first
   const domainResponse = handleDomainAwareRouting(originalRequest);
