@@ -779,89 +779,102 @@ describe("v3 survey preparation", () => {
 });
 
 describe("prepareV3SurveyPatchInput with cyclic block logic (ENG-3946)", () => {
-  const openText = (id: string, label: string, localeKey: "default" | "en-US") => ({
-    id,
-    type: "openText",
-    headline: { [localeKey]: label, "de-DE": `${label} (de)` },
-    required: false,
+  type TKey = "rate" | "why" | "pick";
+  const ids: Record<TKey, string> = {
+    rate: "clbkrate000000000000000000",
+    why: "clbkwhy0000000000000000000",
+    pick: "clbkpick000000000000000000",
+  };
+  const names: Record<TKey, string> = { rate: "Rate", why: "Why", pick: "Pick" };
+
+  const jumpLogic = (from: TKey, to: TKey) => ({
+    id: `cllogic${from}${to}`.padEnd(26, "0"),
+    conditions: {
+      id: `clgroup${from}${to}`.padEnd(26, "0"),
+      connector: "and",
+      conditions: [
+        {
+          id: `clcond${from}${to}`.padEnd(26, "0"),
+          leftOperand: { type: "element", value: `q_${from}` },
+          operator: "isSubmitted",
+        },
+      ],
+    },
+    actions: [{ id: `clact${from}${to}`.padEnd(26, "0"), objective: "jumpToBlock", target: ids[to] }],
   });
 
-  // `Rate` jumps forward to `Pick`. In the stored order that is a plain skip; move `Rate` after `Pick`
-  // and the jump points back at a block whose default next step is `Rate` again — a loop.
-  const buildBlocks = (localeKey: "default" | "en-US", order: ("rate" | "why" | "pick")[]) => {
-    const blocks = {
-      rate: {
-        id: "clbkrate000000000000000000",
-        name: "Rate",
-        elements: [openText("q_rate", "Rate us", localeKey)],
-        logic: [
+  // `Rate` jumps to `Pick` unless told otherwise. Stored as Rate → Why → Pick that is a plain skip; move
+  // `Rate` after `Pick` and the jump points back at a block whose next step is `Rate` again — a loop.
+  const buildBlocks = (
+    localeKey: "default" | "en-US",
+    order: TKey[],
+    jumps: Partial<Record<TKey, TKey>> = { rate: "pick" }
+  ) =>
+    order.map((key) => {
+      const target = jumps[key];
+      return {
+        id: ids[key],
+        name: names[key],
+        elements: [
           {
-            id: "cllogic0000000000000000000",
-            conditions: {
-              id: "clcondgroup000000000000000",
-              connector: "and",
-              conditions: [
-                {
-                  id: "clcond00000000000000000000",
-                  leftOperand: { type: "element", value: "q_rate" },
-                  operator: "isSubmitted",
-                },
-              ],
-            },
-            actions: [
-              {
-                id: "claction000000000000000000",
-                objective: "jumpToBlock",
-                target: "clbkpick000000000000000000",
-              },
-            ],
+            id: `q_${key}`,
+            type: "openText",
+            headline: { [localeKey]: names[key], "de-DE": `${names[key]} (de)` },
+            required: false,
           },
         ],
-      },
-      why: { id: "clbkwhy0000000000000000000", name: "Why", elements: [openText("q_why", "Why", localeKey)] },
-      pick: {
-        id: "clbkpick000000000000000000",
-        name: "Pick",
-        elements: [openText("q_pick", "Pick", localeKey)],
-      },
-    };
-    return order.map((key) => blocks[key]);
-  };
+        ...(target ? { logic: [jumpLogic(key, target)] } : {}),
+      };
+    });
 
-  const surveyWithLogic = {
-    ...survey,
-    blocks: buildBlocks("default", ["rate", "why", "pick"]),
-  } as unknown as TSurvey;
+  const storedSurvey = (order: TKey[], jumps?: Partial<Record<TKey, TKey>>) =>
+    ({ ...survey, blocks: buildBlocks("default", order, jumps) }) as unknown as TSurvey;
 
-  test("rejects a reorder that turns a forward jump into a loop", () => {
-    const preparation = prepareV3SurveyPatchInput(surveyWithLogic, {
+  const loopParam = (index: number, key: TKey) => ({
+    name: `blocks.${String(index)}.logic`,
+    reason: `Conditional Logic: Cyclic logic detected in block ${String(index + 1)} (${names[key]}).`,
+  });
+
+  test("rejects a reorder that turns a forward jump into a loop, naming only the blocks on it", () => {
+    const preparation = prepareV3SurveyPatchInput(storedSurvey(["rate", "why", "pick"]), {
       blocks: buildBlocks("en-US", ["why", "pick", "rate"]),
     });
 
     expect(preparation.ok).toBe(false);
     if (!preparation.ok) {
       expect(preparation.origin).toBe("request");
-      expect(preparation.validation.invalidParams).toEqual(
-        expect.arrayContaining([
-          {
-            name: "blocks.2.logic",
-            reason: "Conditional Logic: Cyclic logic detected in block 3 (Rate).",
-          },
-        ])
-      );
+      // `Why` only leads into the loop, so it is not reported.
+      expect(preparation.validation.invalidParams).toEqual([loopParam(1, "pick"), loopParam(2, "rate")]);
     }
   });
 
   test("keeps a survey that already loops patchable, and accepts the patch that breaks the loop", () => {
-    const loopingSurvey = {
-      ...survey,
-      blocks: buildBlocks("default", ["why", "pick", "rate"]),
-    } as unknown as TSurvey;
+    const looping = storedSurvey(["why", "pick", "rate"]);
 
-    expect(prepareV3SurveyPatchInput(loopingSurvey, { name: "Renamed" }).ok).toBe(true);
+    expect(prepareV3SurveyPatchInput(looping, { name: "Renamed" }).ok).toBe(true);
     expect(
-      prepareV3SurveyPatchInput(loopingSurvey, { blocks: buildBlocks("en-US", ["rate", "why", "pick"]) }).ok
+      prepareV3SurveyPatchInput(looping, { blocks: buildBlocks("en-US", ["rate", "why", "pick"]) }).ok
     ).toBe(true);
+  });
+
+  test("accepts moving a block in front of an existing loop — it leads in, it is not on it", () => {
+    const preparation = prepareV3SurveyPatchInput(storedSurvey(["pick", "rate", "why"]), {
+      blocks: buildBlocks("en-US", ["why", "pick", "rate"]),
+    });
+
+    expect(preparation.ok).toBe(true);
+  });
+
+  test("rejects a new loop between blocks that already loop", () => {
+    // Pick → Why → Rate → Pick already loops; a Pick → Rate jump is a second loop over the same blocks.
+    const preparation = prepareV3SurveyPatchInput(storedSurvey(["pick", "why", "rate"]), {
+      blocks: buildBlocks("en-US", ["pick", "why", "rate"], { rate: "pick", pick: "rate" }),
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual([loopParam(0, "pick")]);
+    }
   });
 });
 
