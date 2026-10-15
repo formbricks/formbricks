@@ -23,6 +23,10 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/survey-retention/{surveyId}` | GET | session | dashboard | `/api/internal` | `app/api/internal/survey-retention/[surveyId]/route.ts` |
 | `/api/internal/surveys/generate/stream` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/generate/stream/route.ts` |
 | `/api/internal/surveys/import/stream` | POST | session | dashboard | `/api/internal` | `app/api/internal/surveys/import/stream/route.ts` |
+| `/api/internal/users/me` | PATCH | session | dashboard | `/api/internal` | `app/api/internal/users/me/route.ts` |
+| `/api/internal/users/me/deletion-requests` | POST | session | dashboard | `/api/internal` | `app/api/internal/users/me/deletion-requests/route.ts` |
+| `/api/internal/users/me/notification-settings` | GET, PATCH | session | dashboard | `/api/internal` | `app/api/internal/users/me/notification-settings/route.ts` |
+| `/api/internal/users/me/password-resets` | POST | session | dashboard | `/api/internal` | `app/api/internal/users/me/password-resets/route.ts` |
 | `/api/organizations/{organizationId}/usage` | GET | session | dashboard | `(internal)` group | `app/api/(internal)/organizations/[organizationId]/usage/route.ts` |
 | `/api/surveys/{surveyId}/attachments` | GET | session | dashboard | `(internal)` group | `app/api/(internal)/surveys/[surveyId]/attachments/route.ts` |
 | `/api/traefik-auth/{...path}` | GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS | custom | gateway | `(internal)` group | `app/api/(internal)/traefik-auth/[...path]/route.ts` |

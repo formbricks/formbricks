@@ -1,10 +1,10 @@
 /**
  * @vitest-environment jsdom
  */
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { createQueryWrapper, jsonResponse as json, routeFetch } from "@/modules/api/lib/hook-test-utils";
 import { apiKeyKeys } from "../lib/query";
 import { useApiKeys, useCreateApiKey, useDeleteApiKey, useUpdateApiKey } from "./use-api-keys";
 
@@ -21,28 +21,10 @@ const key = (id: string, label = id) => ({
   apiKeyWorkspaces: [],
 });
 
-const json = (body: unknown, status = 200): Response =>
-  new Response(status === 204 ? null : JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": status < 400 ? "application/json" : "application/problem+json" },
-  });
-
-/** Answer `fetch` by method and URL; each route repeats its last answer; an unexpected request fails. */
-const routeFetch = (routes: Record<string, Response[]>) =>
-  vi.mocked(global.fetch).mockImplementation(async (input, init) => {
-    const routeKey = `${init?.method ?? "GET"} ${String(input)}`;
-    const answers = routes[routeKey];
-    if (!answers) throw new Error(`Unexpected request: ${routeKey}`);
-    return (answers.length > 1 ? answers.shift()! : answers[0]).clone();
-  });
-
 const setup = (seed?: ReturnType<typeof key>[]) => {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const { queryClient, wrapper } = createQueryWrapper();
   if (seed) queryClient.setQueryData(apiKeyKeys.list(ORG_ID), seed);
-  const Wrapper = ({ children }: { children: ReactNode }) =>
-    createElement(QueryClientProvider, { client: queryClient }, children);
-  Wrapper.displayName = "UseApiKeysTestWrapper";
-  return { queryClient, wrapper: Wrapper };
+  return { queryClient, wrapper };
 };
 
 const cached = (queryClient: QueryClient) => queryClient.getQueryData(apiKeyKeys.list(ORG_ID));
