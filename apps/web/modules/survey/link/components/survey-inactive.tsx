@@ -37,7 +37,7 @@ export const SurveyInactive = async ({
   const headings = {
     paused: isScheduled ? t("common.survey_scheduled") : t("s.paused_heading"),
     completed: t("s.completed_heading"),
-    "link invalid": t("s.this_looks_fishy"),
+    "link invalid": t("s.link_not_valid"),
     "response submitted": t("s.survey_already_answered_heading"),
     "link expired": t("c.link_expired_heading"),
   };
