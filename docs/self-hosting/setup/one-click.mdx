@@ -415,9 +415,16 @@ For upgrades, restoration, schema changes, and relationship repair, follow the c
 ### Limit request bodies on authentication routes
 
 New installations cap request bodies on `/api/auth/*` at 1 MiB in Traefik. An oversized upload to a sign-in or
-OAuth endpoint is refused before it reaches Formbricks, and a slow one is read in full by Traefik first, so it
-does not tie up Formbricks while it arrives. No legitimate request to these routes comes close to that size. The update command does not add the cap to an existing installation, so add
-it yourself if you want it.
+OAuth endpoint is refused by Traefik, and a slow one is read in full by Traefik first, so it does not tie up
+Formbricks while it arrives. No legitimate request to these routes comes close to that size. The cap applies to
+requests that go through Traefik, not to ones sent straight to port `3000`. The update command does not add it to
+an existing installation, so add it yourself if you want it.
+
+<Warning>
+  Check the `image: traefik:` line in `formbricks/docker-compose.yml` first. Older installations may still run
+  Traefik v2.7, which does not normalize paths such as `/x/../api/auth/...`, so those requests skip the cap. Upgrade
+  Traefik to v2.11.29 or later before adding these labels; new installations use v3.6.4.
+</Warning>
 
 In `formbricks/docker-compose.yml`, add these lines to the `labels` of the `formbricks` service, replacing
 `your-domain.com` with your domain:
@@ -434,9 +441,18 @@ In `formbricks/docker-compose.yml`, add these lines to the `labels` of the `form
 ```
 
 Copy the `tls.certresolver` line from your existing `formbricks` router as well, with the router name changed
-to `formbricks-auth`. If your installation also has a `formbricks_http` router (HSTS disabled), add the same
-router for the `web` entrypoint under the name `formbricks-auth-http`, without the `tls` lines. Then apply it
-from the `formbricks` directory:
+to `formbricks-auth`. If your installation also has a `formbricks_http` router (HSTS disabled), add these lines
+too, or plain-HTTP requests to `/api/auth/*` stay uncapped:
+
+```yaml
+- "traefik.http.routers.formbricks-auth-http.rule=Host(`your-domain.com`) && PathPrefix(`/api/auth`)"
+- "traefik.http.routers.formbricks-auth-http.entrypoints=web"
+- "traefik.http.routers.formbricks-auth-http.service=formbricks"
+- "traefik.http.routers.formbricks-auth-http.priority=200"
+- "traefik.http.routers.formbricks-auth-http.middlewares=auth-body-limit"
+```
+
+Then apply the change from the `formbricks` directory:
 
 ```bash
 docker compose up -d formbricks

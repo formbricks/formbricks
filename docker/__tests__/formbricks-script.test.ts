@@ -1222,9 +1222,27 @@ describe("docker/formbricks.sh Traefik label injection", () => {
       "traefik.http.routers.formbricks-auth-http.middlewares=auth-body-limit"
     );
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth-http.priority=200");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth-http.service=formbricks");
+    expect(formbricksBlock).not.toContain("formbricks-auth-http.tls");
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.middlewares=auth-body-limit");
     expect(formbricksBlock).not.toContain("tls.certresolver=default");
     expect(formbricksBlock).not.toContain("traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000");
+  });
+
+  test("caps auth bodies on both entrypoints when HTTPS is on and HSTS is off", () => {
+    const composePath = writeDockerComposeTemplate();
+
+    addFormbricksTraefikLabels(composePath, "n", "y");
+
+    const formbricksBlock = getServiceBlock(readFileSync(composePath, "utf8"), "formbricks");
+
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.tls.certresolver=default");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.middlewares=auth-body-limit");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth-http.entrypoints=web");
+    expect(formbricksBlock).toContain(
+      "traefik.http.routers.formbricks-auth-http.middlewares=auth-body-limit"
+    );
+    expect(formbricksBlock).not.toContain("formbricks-auth-http.tls");
   });
 
   test("fails when the formbricks service insertion point is missing", () => {
