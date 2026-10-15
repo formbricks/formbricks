@@ -1,4 +1,5 @@
 import "server-only";
+import type { TActionClass } from "@formbricks/types/action-classes";
 import { requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { noContentResponse, problemForbidden, successResponse } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
@@ -41,6 +42,32 @@ async function authorizeActionClass(context: TRequestContext, permission: TTeamP
   return { actionClass, organizationId: access.organizationId };
 }
 
+/**
+ * The action's own fields. The stored row also carries `surveyTriggers` — the id of every survey it
+ * triggers, restricted ones included — which is not the caller's to see (`/surveys` names only visible ones).
+ */
+const serializeActionClass = ({
+  id,
+  name,
+  description,
+  type,
+  key,
+  noCodeConfig,
+  workspaceId,
+  createdAt,
+  updatedAt,
+}: TActionClass): TActionClass => ({
+  id,
+  name,
+  description,
+  type,
+  key,
+  noCodeConfig,
+  workspaceId,
+  createdAt,
+  updatedAt,
+});
+
 /** `PATCH /api/internal/action-classes/{actionClassId}`: change an action. */
 export async function updateActionClassOperation({
   body,
@@ -59,7 +86,7 @@ export async function updateActionClassOperation({
     context.auditLog.oldObject = actionClass;
     context.auditLog.newObject = updated;
   }
-  return successResponse(updated, { requestId: context.requestId });
+  return successResponse(serializeActionClass(updated), { requestId: context.requestId });
 }
 
 /** `DELETE /api/internal/action-classes/{actionClassId}`: delete an action. */

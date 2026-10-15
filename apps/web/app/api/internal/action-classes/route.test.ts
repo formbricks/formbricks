@@ -131,6 +131,28 @@ describe("PATCH /api/internal/action-classes/{actionClassId}", () => {
     });
   });
 
+  test("answers with the action's own fields, never the surveys it triggers", async () => {
+    mocks.updateActionClass.mockResolvedValue({
+      ...actionClass(),
+      surveyTriggers: [{ surveyId: "clsurvrestricted111111111" }],
+    });
+    const response = await patch(codeInput());
+
+    const data = (await response.json()).data;
+    expect(Object.keys(data).sort()).toEqual([
+      "createdAt",
+      "description",
+      "id",
+      "key",
+      "name",
+      "noCodeConfig",
+      "type",
+      "updatedAt",
+      "workspaceId",
+    ]);
+    expect(JSON.stringify(data)).not.toContain("clsurvrestricted");
+  });
+
   test("can't move an action to another workspace through the body", async () => {
     await patch(codeInput({ workspaceId: OTHER_WORKSPACE_ID }));
 
