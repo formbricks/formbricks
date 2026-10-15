@@ -1394,8 +1394,8 @@ refresh_bundled_cube_files() {
         if ! cp -p "$backup_dir/${replaced_file#cube/}" "$replaced_file"; then
           # The update still goes on: stopping here would leave all of Formbricks down, not just Cube.
           rm -rf "$staging_dir"
-          echo "❌ Could not replace $cube_file or restore $replaced_file, so the Cube model files are from different releases."
-          echo "   Copy $backup_dir/${replaced_file#cube/} to $replaced_file, then run: sudo docker compose up -d --force-recreate cube"
+          echo "❌ Could not replace $cube_file or restore $replaced_file, so the Cube model files are from different releases. Once that is fixed, put the previous model back with:"
+          echo "   cd $(printf '%q' "$PWD") && cp -p $backup_dir/${replaced_file#cube/} $replaced_file && sudo docker compose up -d --force-recreate cube"
           return 1
         fi
       done

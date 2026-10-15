@@ -1303,19 +1303,27 @@ describe("docker/formbricks.sh Cube model refresh (ENG-3951)", () => {
   });
 
   test("says how to fix a model it could neither replace nor restore, and still finishes the update", () => {
-    const { result, installationDir, commands, read } = runUpdate({
+    const { result, installationDir, commands, runAsOperator, readCommands, model } = runUpdate({
       withCubeFiles: true,
       replaceFails: "cube/schema/FeedbackRecords.js",
       restoreFails: "cube/cube.js",
     });
 
     expect(result.status).toBe(0);
-    expect(result.stdout).toContain("the Cube model files are from different releases");
-    expect(result.stdout).toContain("Copy cube/previous/cube.js to cube/cube.js");
+    expect(model()).toEqual({ config: releaseModel.config, schema: previousModel.schema });
     expect(result.stdout).not.toContain("left as it was");
-    expect(read("cube/previous/cube.js")).toBe(previousModel.config);
     expect(existsSync(join(installationDir, "cube", ".download"))).toBe(false);
     expect(commands.at(-1)).toBe("docker compose up -d");
+
+    const lines = result.stdout.split("\n");
+    const warning = lines.findIndex((line) =>
+      line.includes("the Cube model files are from different releases")
+    );
+    expect(warning).toBeGreaterThanOrEqual(0);
+    const recovery = runAsOperator(lines[warning + 1].trim());
+    expect(recovery.status).toBe(0);
+    expect(model()).toEqual(previousModel);
+    expect(readCommands().at(-1)).toBe("docker compose up -d --force-recreate cube");
   });
 
   test("never replaces the model without a backup, in the update or its retry", () => {
