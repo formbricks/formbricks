@@ -31,6 +31,24 @@ describe("parseV3ApiError", () => {
     expect(error.invalid_params).toEqual([{ name: "surveyId", reason: "Invalid id" }]);
   });
 
+  test("keeps a problem's details, the part a client acts on", async () => {
+    const response = new Response(
+      JSON.stringify({
+        title: "Conflict",
+        status: 409,
+        detail: "Embedded data key already exists",
+        code: "conflict",
+        requestId: "req_2",
+        details: { reason: "key_conflict", existingId: "clfield1111111111111111111" },
+      }),
+      { status: 409, headers: { "Content-Type": "application/problem+json" } }
+    );
+
+    const error = await parseV3ApiError(response);
+
+    expect(error.details).toEqual({ reason: "key_conflict", existingId: "clfield1111111111111111111" });
+  });
+
   test("falls back to a provided fallback message", () => {
     expect(getV3ApiErrorMessage(new Error("boom"), "fallback")).toBe("boom");
     expect(getV3ApiErrorMessage("bad", "fallback")).toBe("fallback");

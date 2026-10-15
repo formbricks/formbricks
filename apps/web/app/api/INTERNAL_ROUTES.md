@@ -10,6 +10,10 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/envoy-auth/{...path}` | GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS | custom | gateway | `(internal)` group | `app/api/(internal)/envoy-auth/[...path]/route.ts` |
 | `/api/internal/api-keys` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/api-keys/route.ts` |
 | `/api/internal/api-keys/{apiKeyId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/api-keys/[apiKeyId]/route.ts` |
+| `/api/internal/embedded-data` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/embedded-data/route.ts` |
+| `/api/internal/embedded-data/{embeddedDataId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/embedded-data/[embeddedDataId]/route.ts` |
+| `/api/internal/embedded-data/{embeddedDataId}/promotion` | POST | session | dashboard | `/api/internal` | `app/api/internal/embedded-data/[embeddedDataId]/promotion/route.ts` |
+| `/api/internal/embedded-data/{embeddedDataId}/usage` | GET | session | dashboard | `/api/internal` | `app/api/internal/embedded-data/[embeddedDataId]/usage/route.ts` |
 | `/api/internal/feedback-datasets/{datasetId}/purge` | POST | session | dashboard | `/api/internal` | `app/api/internal/feedback-datasets/[datasetId]/purge/route.ts` |
 | `/api/internal/members/{userId}/reactivate` | POST | session | dashboard | `/api/internal` | `app/api/internal/members/[userId]/reactivate/route.ts` |
 | `/api/internal/organizations/{organizationId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/route.ts` |

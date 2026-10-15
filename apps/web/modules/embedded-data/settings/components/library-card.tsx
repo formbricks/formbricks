@@ -1,11 +1,11 @@
 "use client";
 
 import { PlusIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
-import type { TSharedEmbeddedDataListItem } from "@/modules/embedded-data/types";
+import type { TEmbeddedDataListItemResource } from "@/app/api/internal/embedded-data/serializers";
+import { useEmbeddedDataLibrary } from "@/modules/embedded-data/hooks/use-embedded-data";
 import { Button } from "@/modules/ui/components/button";
 import { SettingsTable } from "@/modules/ui/components/settings-table";
 import { DeleteFieldDialog } from "./delete-field-dialog";
@@ -14,7 +14,6 @@ import { LibraryFieldModal } from "./library-field-modal";
 
 interface LibraryCardProps {
   workspaceId: string;
-  fields: TSharedEmbeddedDataListItem[];
   isReadOnly: boolean;
   /** App locale — the edit dialog's created-on line and date default picker format against it. */
   locale: string;
@@ -24,16 +23,15 @@ interface LibraryCardProps {
  * The Library card: the workspace's shared Embedded Data fields, and the three dialogs that change
  * them.
  *
- * The rows come from the server component that renders this, and every write goes back through a
- * server action followed by `router.refresh()` — the same flow as the contact-attributes page. There
- * is deliberately no client-side copy of the list to keep in step with the server's.
+ * The rows are the library query, which the page fills on the server; every write goes through
+ * `/api/internal/embedded-data` and refetches it. There is no other copy of the list to keep in step.
  */
-export const LibraryCard = ({ workspaceId, fields, isReadOnly, locale }: Readonly<LibraryCardProps>) => {
+export const LibraryCard = ({ workspaceId, isReadOnly, locale }: Readonly<LibraryCardProps>) => {
   const { t } = useTranslation();
-  const router = useRouter();
+  const { data: fields = [] } = useEmbeddedDataLibrary(workspaceId);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editingField, setEditingField] = useState<TSharedEmbeddedDataListItem | null>(null);
-  const [deletingField, setDeletingField] = useState<TSharedEmbeddedDataListItem | null>(null);
+  const [editingField, setEditingField] = useState<TEmbeddedDataListItemResource | null>(null);
+  const [deletingField, setDeletingField] = useState<TEmbeddedDataListItemResource | null>(null);
 
   const newFieldButton = (
     <Button size="sm" onClick={() => setIsCreateOpen(true)}>
@@ -83,7 +81,6 @@ export const LibraryCard = ({ workspaceId, fields, isReadOnly, locale }: Readonl
           open={isCreateOpen}
           setOpen={setIsCreateOpen}
           locale={locale}
-          onSaved={() => router.refresh()}
         />
       )}
 
@@ -99,7 +96,6 @@ export const LibraryCard = ({ workspaceId, fields, isReadOnly, locale }: Readonl
             if (!open) setEditingField(null);
           }}
           locale={locale}
-          onSaved={() => router.refresh()}
         />
       )}
 
@@ -112,7 +108,6 @@ export const LibraryCard = ({ workspaceId, fields, isReadOnly, locale }: Readonl
           setOpen={(open) => {
             if (!open) setDeletingField(null);
           }}
-          onDeleted={() => router.refresh()}
         />
       )}
     </>

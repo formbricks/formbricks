@@ -14,14 +14,15 @@ import {
   ZEmbeddedDataType,
 } from "@formbricks/types/embedded-data";
 import { toSafeIdentifier } from "@formbricks/types/safe-identifier";
+import type { TEmbeddedDataResource } from "@/app/api/internal/embedded-data/serializers";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import {
-  createSharedEmbeddedDataAction,
-  updateSharedEmbeddedDataAction,
-} from "@/modules/embedded-data/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { DefaultValueInput } from "@/modules/embedded-data/components/default-value-input";
-import type { TSharedEmbeddedData, TSharedEmbeddedDataWriteResult } from "@/modules/embedded-data/types";
+import {
+  useCreateEmbeddedData,
+  useUpdateEmbeddedData,
+} from "@/modules/embedded-data/hooks/use-embedded-data";
+import type { TEmbeddedDataWriteResult } from "@/modules/embedded-data/lib/api-client";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -137,7 +138,7 @@ const ZLibraryFieldDraft = z
     }
   });
 
-const toDraft = (field: TSharedEmbeddedData | null): TLibraryFieldDraft => ({
+const toDraft = (field: TEmbeddedDataResource | null): TLibraryFieldDraft => ({
   name: field?.name ?? "",
   key: field?.key ?? "",
   description: field?.description ?? "",
@@ -150,12 +151,11 @@ const toDraft = (field: TSharedEmbeddedData | null): TLibraryFieldDraft => ({
 interface LibraryFieldModalProps {
   workspaceId: string;
   /** The field being edited, or null for the create dialog. */
-  field: TSharedEmbeddedData | null;
+  field: TEmbeddedDataResource | null;
   open: boolean;
   setOpen: (open: boolean) => void;
   /** App locale — the date default's picker formats against it. */
   locale: string;
-  onSaved: () => void;
 }
 
 export const LibraryFieldModal = ({
@@ -164,9 +164,10 @@ export const LibraryFieldModal = ({
   open,
   setOpen,
   locale,
-  onSaved,
 }: Readonly<LibraryFieldModalProps>) => {
   const { t } = useTranslation();
+  const createField = useCreateEmbeddedData(workspaceId);
+  const updateField = useUpdateEmbeddedData(workspaceId);
   const isEdit = field !== null;
   // The dataType change the server refused, held until the author has seen which surveys it touches.
   const [pendingTypeChange, setPendingTypeChange] = useState<{
@@ -257,36 +258,35 @@ export const LibraryFieldModal = ({
     acknowledgeExistingResponses?: boolean
   ): Promise<void> => {
     const candidate = toCandidateRow(draft);
-    const response = isEdit
-      ? await updateSharedEmbeddedDataAction({
-          id: field.id,
-          name: candidate.name,
-          description: candidate.description,
-          dataType: candidate.dataType,
-          defaultValue: candidate.defaultValue,
-          locked: candidate.locked,
-          acknowledgeExistingResponses,
-        })
-      : await createSharedEmbeddedDataAction({
-          workspaceId,
-          key: candidate.key,
-          name: candidate.name,
-          description: candidate.description,
-          source: candidate.source,
-          dataType: candidate.dataType,
-          defaultValue: candidate.defaultValue,
-          locked: candidate.locked,
-        });
-
-    if (!response?.data) {
-      toast.error(getFormattedErrorMessage(response) || t("common.something_went_wrong_please_try_again"));
-      return;
+    try {
+      const result = isEdit
+        ? await updateField.mutateAsync({
+            id: field.id,
+            body: {
+              name: candidate.name,
+              description: candidate.description,
+              dataType: candidate.dataType,
+              defaultValue: candidate.defaultValue,
+              locked: candidate.locked,
+              acknowledgeExistingResponses,
+            },
+          })
+        : await createField.mutateAsync({
+            key: candidate.key,
+            name: candidate.name,
+            description: candidate.description,
+            source: candidate.source,
+            dataType: candidate.dataType,
+            defaultValue: candidate.defaultValue,
+            locked: candidate.locked,
+          });
+      handleWriteResult(result, draft);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
-
-    handleWriteResult(response.data, draft);
   };
 
-  const handleWriteResult = (result: TSharedEmbeddedDataWriteResult, draft: TLibraryFieldDraft): void => {
+  const handleWriteResult = (result: TEmbeddedDataWriteResult, draft: TLibraryFieldDraft): void => {
     if (result.status === "keyConflict") {
       const message = t("workspace.embedded_data.key_already_exists");
       // An update never sends a key, so this only reaches the create dialog — where the control the
@@ -318,7 +318,6 @@ export const LibraryFieldModal = ({
         : t("workspace.embedded_data.field_created", { name: result.field.name })
     );
     close();
-    onSaved();
   };
 
   const onSubmit: SubmitHandler<TLibraryFieldDraft> = async (draft) => {
@@ -543,7 +542,7 @@ export const LibraryFieldModal = ({
                       the field it belongs to, not a column competing with the values. */}
                   {isEdit && (
                     <p className="text-xs text-slate-500">
-                      {`${t("common.created_at")}: ${formatDateForDisplay(field.createdAt, locale)}`}
+                      {`${t("common.created_at")}: ${formatDateForDisplay(new Date(field.createdAt), locale)}`}
                     </p>
                   )}
                 </div>
