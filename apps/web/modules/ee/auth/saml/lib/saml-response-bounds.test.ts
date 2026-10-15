@@ -79,6 +79,11 @@ describe("countSamlResponseMarkup", () => {
     expect(count('<a href="x?y=1&gt;2" title=">">t</a>')).toBe(4);
   });
 
+  test("keeps counting attributes after a quote that never closes", () => {
+    expect(count("<a ' b c d/>")).toBe(4);
+    expect(count('<a e="1 b c d/>')).toBe(5);
+  });
+
   test("counts every < inside a comment, CDATA section or processing instruction", () => {
     // Over-counting these rarities is the safe direction; skipping them is how markup gets hidden.
     expect(count("<!-- <x/><y/> --><r/>")).toBe(4);
@@ -118,6 +123,12 @@ describe("the budget", () => {
     const attributes = Array.from({ length: SAML_RESPONSE_MARKUP_BUDGET }, (_, i) => `a${i}`).join("\f");
 
     expect(withinBudget(`<r\f${attributes}></r>`)).toBe(false);
+  });
+
+  test("refuses attributes hidden behind a quote that never closes", () => {
+    const attributes = Array.from({ length: SAML_RESPONSE_MARKUP_BUDGET }, (_, i) => `a${i}`).join(" ");
+
+    expect(withinBudget(`<r><b ' ${attributes}/></r>`)).toBe(false);
   });
 
   test("refuses a flood of attributes on a single element", () => {

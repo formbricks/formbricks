@@ -116,9 +116,26 @@ describe("SAML callback route", () => {
     expect(samlResponseMock).not.toHaveBeenCalled();
   });
 
-  test("passes a missing SAMLResponse to jackson unchanged, which rejects it as before", async () => {
-    await POST(callback({ RelayState: "s" }));
+  test("hands an IdP-initiated response with no RelayState to jackson as an empty RelayState", async () => {
+    const response = await POST(callback({ SAMLResponse: b64(ISSUER) }));
 
-    expect(samlResponseMock).toHaveBeenCalledWith({ RelayState: "s", SAMLResponse: undefined });
+    expect(response.status).toBe(307);
+    expect(samlResponseMock).toHaveBeenCalledWith({ RelayState: "", SAMLResponse: b64(ISSUER) });
+  });
+
+  test.each([
+    ["no SAMLResponse", { RelayState: "s" }],
+    ["SAMLResponse as a file part", { SAMLResponse: new File([b64(ISSUER)], "r.xml"), RelayState: "s" }],
+    ["RelayState as a file part", { SAMLResponse: b64(ISSUER), RelayState: new File(["s"], "s.txt") }],
+  ])("answers 400 to %s without handing it to jackson", async (_name, fields) => {
+    const form = new FormData();
+    for (const [name, value] of Object.entries(fields)) form.append(name, value);
+
+    const response = await POST(
+      new Request("http://localhost/api/auth/saml/callback", { method: "POST", body: form })
+    );
+
+    expect(response.status).toBe(400);
+    expect(samlResponseMock).not.toHaveBeenCalled();
   });
 });
