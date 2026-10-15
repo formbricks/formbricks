@@ -1,3 +1,4 @@
-import { POST } from "@/modules/ee/auth/saml/api/callback/route";
+import { withAuthRequestBodyLimit } from "@/modules/auth/lib/auth-request-body-limit";
+import { POST as callback } from "@/modules/ee/auth/saml/api/callback/route";
 
-export { POST };
+export const POST = withAuthRequestBodyLimit(callback);
