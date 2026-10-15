@@ -5,6 +5,7 @@ import {
   Building2Icon,
   ChevronRightIcon,
   FoldersIcon,
+  LayoutTemplateIcon,
   Loader2,
   MessageCircle,
   MessageSquareTextIcon,
@@ -188,6 +189,13 @@ export const MainNavigation = ({
             icon: MessageCircle,
             isActive: pathname?.includes("/surveys"),
             isHidden: false,
+            disabled: isMembershipPending || isBilling,
+          },
+          {
+            name: t("common.creatives"),
+            href: `/workspaces/${workspace.id}/creatives`,
+            icon: LayoutTemplateIcon,
+            isActive: pathname?.includes("/creatives"),
             disabled: isMembershipPending || isBilling,
           },
           {
