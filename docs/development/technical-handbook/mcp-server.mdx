@@ -1947,10 +1947,11 @@ query, like `create_feedback_record`.
   alone, so an existing survey never becomes unpatchable — enforcing the full set would repeat the
   ENG-3070 failure. `create_survey` is deliberately not covered: tightening it would reject payloads
   that are valid today, which needs its own versioned rollout.
-- `stored_survey_invalid` (422) means the *stored* survey no longer satisfies the v3 document
-  contract; the reported paths are into the survey, not the request. A patch that includes corrected
-  values for those fields is accepted — or repair it in the editor. Only a survey the API cannot read
-  at all (legacy questions, no v3 block list) is refused before the request is evaluated.
+- `stored_survey_invalid` (422) means the *stored* survey cannot be read as a v3 document (legacy
+  questions, no v3 block list, a shape that does not parse); the reported paths are into the survey,
+  not the request — repair it in the editor. A survey that reads fine but already fails validation
+  stays patchable: issues it already had are not refused, only issues a patch newly introduces
+  (ENG-3975).
 - `patch_survey` follows the v3 PATCH contract: top-level partial document updates only, no JSON Patch,
   and no nested deep merge. Provided top-level objects and arrays replace their whole subtree and can
   remove omitted nested entries.

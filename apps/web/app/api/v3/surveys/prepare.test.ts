@@ -879,9 +879,9 @@ describe("prepareV3SurveyPatchInput with cyclic block logic (ENG-3946)", () => {
 });
 
 describe("prepareV3SurveyPatchInput with a semantically invalid stored survey", () => {
-  // ENG-3070. The stored survey parses fine but fails the semantic pass: `de-DE` is configured and
-  // the headline has no German. Both halves of the ticket are asserted here — the failure must be
-  // attributed to the stored survey, and a patch that repairs the offending field must be accepted.
+  // ENG-3070 / ENG-3975. The stored survey parses fine but fails the semantic pass: `de-DE` is
+  // configured and the headline has no German. A patch that leaves that issue as it was is accepted,
+  // one that adds a new issue is refused, and one that repairs it is accepted.
   const storedInvalidSurvey = {
     ...survey,
     blocks: [
@@ -900,14 +900,16 @@ describe("prepareV3SurveyPatchInput with a semantically invalid stored survey", 
     ],
   } as unknown as TSurvey;
 
-  test("attributes the failure to the stored survey, not the request", () => {
+  test("accepts a rename that leaves the pre-existing issue as it was", () => {
+    // ENG-3975: refusing this blocked the survey list's Rename on any survey with a stored issue.
     const result = prepareV3SurveyPatchInput(storedInvalidSurvey, { name: "Renamed" });
 
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    // Without this the caller is told its `{ name }` patch is malformed, and the reported path is
-    // `blocks.0.…` — an array it never sent.
-    expect(result.origin).toBe("storedSurvey");
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.document.name).toBe("Renamed");
+    expect(result.document.blocks).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: "clbk1234567890123456789012" })])
+    );
   });
 
   test("blames the request when it adds a new problem beside a pre-existing one", () => {
@@ -996,9 +998,9 @@ describe("prepareV3SurveyPatchInput failure attribution for cross-key breakage",
     expect(result.origin).toBe("request");
   });
 
-  test("still blames the stored survey when the same problem pre-dates the request", () => {
-    // Same shape, but the recall is already dangling before anything is patched. A blocks patch that
-    // does not repair it must keep reporting `storedSurvey`, or ENG-3070 regresses.
+  test("accepts a patch when the same problem pre-dates the request", () => {
+    // Same shape, but the recall is already dangling before anything is patched. A patch that neither
+    // repairs nor worsens it is accepted (ENG-3975).
     const alreadyBroken = {
       ...survey,
       endings: [
@@ -1012,9 +1014,7 @@ describe("prepareV3SurveyPatchInput failure attribution for cross-key breakage",
 
     const result = prepareV3SurveyPatchInput(alreadyBroken, { name: "Renamed" });
 
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.origin).toBe("storedSurvey");
+    expect(result.ok).toBe(true);
   });
 });
 

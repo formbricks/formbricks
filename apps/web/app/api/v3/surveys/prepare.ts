@@ -176,7 +176,9 @@ function invalidParamSignature(param: InvalidParam): string {
  * Decided by delta, not by path prefix: validate the *stored* document too, and anything the merged
  * document reports that the stored one did not is the request's doing. `storedSurvey` only when
  * every reported issue already existed — one new issue is enough to make the whole response the
- * caller's, since a partial repair still leaves them responsible.
+ * caller's, since a partial repair still leaves them responsible. A merged-document failure that comes
+ * back `storedSurvey` is accepted rather than refused (ENG-3975); shape failures that stop the stored
+ * survey parsing at all are still reported as `stored_survey_invalid`.
  *
  * The path-prefix heuristic this replaces was wrong in both directions, and only one had been
  * noticed. It needed a hand-carved exemption for `languages` (adding a locale reports
@@ -587,17 +589,21 @@ export function prepareV3SurveyPatchInput(
     baseline: currentDocument.document,
   });
 
-  if (!validation.valid) {
-    return invalidPreparation(
-      validation.invalidParams,
-      deriveFailureOrigin(validation.invalidParams, currentDocument.document)
-    );
+  // ENG-3975: issues the stored survey already had are not the request's to fix. Refusing them blocked
+  // every edit to such a survey — a rename from the survey list included — while the merge writes those
+  // fields back exactly as stored, so accepting the patch leaves the survey no worse than it was. Only
+  // an issue this request introduces is refused.
+  if (
+    !validation.valid &&
+    deriveFailureOrigin(validation.invalidParams, currentDocument.document) === "request"
+  ) {
+    return invalidPreparation(validation.invalidParams);
   }
 
   return {
     ok: true,
     document: patchedDocument,
-    validation,
+    validation: { valid: true, invalidParams: [] },
     languageRequests: deriveV3SurveyLanguageRequests(patchedDocument),
     ...(readOnly.precondition ? { precondition: readOnly.precondition } : {}),
   };
