@@ -1133,6 +1133,7 @@ describe("docker/formbricks.sh Cube model refresh (ENG-3951)", () => {
     withCubeFiles,
     downloadFails = "",
     replaceFails = "",
+    restoreFails = "",
     backupBlocked = false,
     formbricksImage = "ghcr.io/formbricks/formbricks:latest",
   }: {
@@ -1141,6 +1142,8 @@ describe("docker/formbricks.sh Cube model refresh (ENG-3951)", () => {
     downloadFails?: string;
     // Fails moving a file onto this path, relative to the installation.
     replaceFails?: string;
+    // Fails copying a file onto this path, relative to the installation.
+    restoreFails?: string;
     backupBlocked?: boolean;
     formbricksImage?: string;
   }) => {
@@ -1203,6 +1206,11 @@ describe("docker/formbricks.sh Cube model refresh (ENG-3951)", () => {
       '#!/bin/sh\nfor arg; do target="$arg"; done\n[ -n "$MV_FAILS" ] && [ "$target" = "$MV_FAILS" ] && exit 1\nexec /bin/mv "$@"\n',
       { mode: 0o700 }
     );
+    writeFileSync(
+      join(binDir, "cp"),
+      '#!/bin/sh\nfor arg; do target="$arg"; done\n[ -n "$CP_FAILS" ] && [ "$target" = "$CP_FAILS" ] && exit 1\nexec /bin/cp "$@"\n',
+      { mode: 0o700 }
+    );
 
     const env = {
       ...process.env,
@@ -1213,7 +1221,7 @@ describe("docker/formbricks.sh Cube model refresh (ENG-3951)", () => {
     const result = spawnSync("bash", ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath], {
       cwd: tempDir,
       encoding: "utf8",
-      env: { ...env, DOWNLOAD_FAILS: downloadFails, MV_FAILS: replaceFails },
+      env: { ...env, DOWNLOAD_FAILS: downloadFails, MV_FAILS: replaceFails, CP_FAILS: restoreFails },
     });
 
     // Runs a printed command the way an operator would: pasted where they started the updater, once the cause
@@ -1294,6 +1302,22 @@ describe("docker/formbricks.sh Cube model refresh (ENG-3951)", () => {
     expect(commands.at(-1)).toBe("docker compose up -d");
   });
 
+  test("says how to fix a model it could neither replace nor restore, and still finishes the update", () => {
+    const { result, installationDir, commands, read } = runUpdate({
+      withCubeFiles: true,
+      replaceFails: "cube/schema/FeedbackRecords.js",
+      restoreFails: "cube/cube.js",
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("the Cube model files are from different releases");
+    expect(result.stdout).toContain("Copy cube/previous/cube.js to cube/cube.js");
+    expect(result.stdout).not.toContain("left as it was");
+    expect(read("cube/previous/cube.js")).toBe(previousModel.config);
+    expect(existsSync(join(installationDir, "cube", ".download"))).toBe(false);
+    expect(commands.at(-1)).toBe("docker compose up -d");
+  });
+
   test("never replaces the model without a backup, in the update or its retry", () => {
     const { result, commands, runAsOperator, readCommands, model } = runUpdate({
       withCubeFiles: true,
@@ -1327,11 +1351,12 @@ describe("docker/formbricks.sh Cube model refresh (ENG-3951)", () => {
     expect(model()).toEqual(releaseModel);
   });
 
-  test("leaves the model alone when the image names no release", () => {
-    const { result, commands, model } = runUpdate({
-      withCubeFiles: true,
-      formbricksImage: `ghcr.io/formbricks/formbricks@sha256:${"a".repeat(64)}`,
-    });
+  // A tag next to a digest is only a label: the digest decides what runs.
+  test.each([
+    `ghcr.io/formbricks/formbricks@sha256:${"a".repeat(64)}`,
+    `ghcr.io/formbricks/formbricks:6.0.2@sha256:${"a".repeat(64)}`,
+  ])("leaves the model alone when the image names no release: %s", (formbricksImage) => {
+    const { result, commands, model } = runUpdate({ withCubeFiles: true, formbricksImage });
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain("migration#cube-model-files-for-docker");

@@ -1321,8 +1321,8 @@ formbricks_release_ref() {
   case "$images" in
     ghcr.io/formbricks/formbricks | ghcr.io/formbricks/formbricks:latest) echo "stable" ;;
     ghcr.io/formbricks/formbricks:*)
+      # A tag that also carries a digest runs whatever the digest names, so it is not trusted as the release.
       tag="${images#ghcr.io/formbricks/formbricks:}"
-      tag="${tag%%@*}"
       if [[ "$tag" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then echo "$tag"; fi
       ;;
   esac
@@ -1391,8 +1391,13 @@ refresh_bundled_cube_files() {
     if ! mv "$staging_dir/${cube_file#cube/}" "$cube_file"; then
       # Put back what was already replaced, so Cube never starts with half of each model.
       for replaced_file in "${replaced[@]}"; do
-        cp -p "$backup_dir/${replaced_file#cube/}" "$replaced_file" ||
-          echo "❌ Could not restore $replaced_file. Copy $backup_dir/${replaced_file#cube/} back before starting Cube."
+        if ! cp -p "$backup_dir/${replaced_file#cube/}" "$replaced_file"; then
+          # The update still goes on: stopping here would leave all of Formbricks down, not just Cube.
+          rm -rf "$staging_dir"
+          echo "❌ Could not replace $cube_file or restore $replaced_file, so the Cube model files are from different releases."
+          echo "   Copy $backup_dir/${replaced_file#cube/} to $replaced_file, then run: sudo docker compose up -d --force-recreate cube"
+          return 1
+        fi
       done
       keep_current_cube_model "Could not replace $cube_file"
       return 1
