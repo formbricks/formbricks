@@ -12,6 +12,7 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/api-keys/{apiKeyId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/api-keys/[apiKeyId]/route.ts` |
 | `/api/internal/feedback-datasets/{datasetId}/purge` | POST | session | dashboard | `/api/internal` | `app/api/internal/feedback-datasets/[datasetId]/purge/route.ts` |
 | `/api/internal/members/{userId}/reactivate` | POST | session | dashboard | `/api/internal` | `app/api/internal/members/[userId]/reactivate/route.ts` |
+| `/api/internal/organizations/{organizationId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/route.ts` |
 | `/api/internal/retention-exemptions` | GET, POST | session | dashboard | `/api/internal` | `app/api/internal/retention-exemptions/route.ts` |
 | `/api/internal/retention-exemptions/{exemptionId}` | GET | session | dashboard | `/api/internal` | `app/api/internal/retention-exemptions/[exemptionId]/route.ts` |
 | `/api/internal/retention-exemptions/{exemptionId}/revoke` | POST | session | dashboard | `/api/internal` | `app/api/internal/retention-exemptions/[exemptionId]/revoke/route.ts` |

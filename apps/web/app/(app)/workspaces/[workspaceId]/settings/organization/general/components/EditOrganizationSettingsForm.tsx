@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -8,12 +9,11 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization, ZOrganization, ZOrganizationUpdateInput } from "@formbricks/types/organizations";
-import {
-  updateOrganizationDisplayTimeZoneAction,
-  updateOrganizationNameAction,
-} from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/actions";
+import { updateOrganizationSettings } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/general/lib/api-client";
+import type { TOrganizationPatchBody } from "@/app/api/internal/organizations/schemas";
+import type { TOrganizationSettingsResource } from "@/app/api/internal/organizations/serializers";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -50,6 +50,7 @@ export const EditOrganizationSettingsForm = ({
   membershipRole,
 }: Readonly<EditOrganizationSettingsFormProps>) => {
   const { t } = useTranslation();
+  const router = useRouter();
   const form = useForm<TEditOrganizationSettingsForm>({
     defaultValues: {
       name: organization.name,
@@ -76,41 +77,50 @@ export const EditOrganizationSettingsForm = ({
     [t]
   );
 
-  const handleUpdateOrganizationSettings: SubmitHandler<TEditOrganizationSettingsForm> = async (data) => {
+  /** Send one field; a failure is reported and leaves the other field's update to go ahead. */
+  const saveField = async (
+    body: TOrganizationPatchBody,
+    successMessage: string
+  ): Promise<TOrganizationSettingsResource | null> => {
     try {
-      // Only persist the fields the user changed and is allowed to change.
-      if (dirtyFields.name && isOwner) {
-        const name = data.name.trim();
-        const response = await updateOrganizationNameAction({
-          organizationId: organization.id,
-          data: { name },
-        });
-
-        if (response?.data) {
-          toast.success(t("workspace.settings.general.organization_name_updated_successfully"));
-          form.resetField("name", { defaultValue: response.data.name });
-        } else {
-          toast.error(getFormattedErrorMessage(response));
-        }
-      }
-
-      if (dirtyFields.displayTimeZone && canEditTimeZone) {
-        const displayTimeZone = data.displayTimeZone ?? null;
-        const response = await updateOrganizationDisplayTimeZoneAction({
-          organizationId: organization.id,
-          data: { displayTimeZone },
-        });
-
-        if (response?.data) {
-          toast.success(t("workspace.settings.general.display_time_zone_updated_successfully"));
-          form.resetField("displayTimeZone", { defaultValue: response.data.displayTimeZone ?? null });
-        } else {
-          toast.error(getFormattedErrorMessage(response));
-        }
-      }
-    } catch (err) {
-      toast.error(`Error: ${err instanceof Error ? err.message : "Unknown error occurred"}`);
+      const settings = await updateOrganizationSettings(organization.id, body);
+      toast.success(successMessage);
+      return settings;
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+      return null;
     }
+  };
+
+  const handleUpdateOrganizationSettings: SubmitHandler<TEditOrganizationSettingsForm> = async (data) => {
+    // Only persist the fields the user changed and is allowed to change. They have different permissions,
+    // so each goes on its own and reports on its own.
+    let saved = false;
+
+    if (dirtyFields.name && isOwner) {
+      const settings = await saveField(
+        { name: data.name.trim() },
+        t("workspace.settings.general.organization_name_updated_successfully")
+      );
+      if (settings) {
+        form.resetField("name", { defaultValue: settings.name });
+        saved = true;
+      }
+    }
+
+    if (dirtyFields.displayTimeZone && canEditTimeZone) {
+      const settings = await saveField(
+        { displayTimeZone: data.displayTimeZone ?? null },
+        t("workspace.settings.general.display_time_zone_updated_successfully")
+      );
+      if (settings) {
+        form.resetField("displayTimeZone", { defaultValue: settings.displayTimeZone });
+        saved = true;
+      }
+    }
+
+    // The organization name also shows in the server-rendered shell (breadcrumb, organization switcher).
+    if (saved) router.refresh();
   };
 
   return (
