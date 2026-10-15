@@ -76,11 +76,8 @@ const readReexportedNames = (source: string): Set<string> => {
   const names = new Set<string>();
   for (const match of source.matchAll(/^export\s*\{([^}]*)\}/gm)) {
     for (const entry of match[1].split(",")) {
-      const name = entry
-        .trim()
-        .split(/\s+as\s+/)
-        .pop()
-        ?.trim();
+      // The exported name is the last word: `GET` itself, or the alias in `handler as GET`.
+      const name = entry.trim().split(/\s+/).pop();
       if (name) names.add(name);
     }
   }
