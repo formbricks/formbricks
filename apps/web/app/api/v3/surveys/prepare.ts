@@ -219,9 +219,11 @@ function deriveFailureOrigin(
   const storedValidation = validateV3SurveyDocument(
     storedDocument,
     { mode: "introduced", baseline: storedDocument },
-    // Same lens the merged document is judged with, so a cycle the stored survey already contains is
-    // reported as `stored_survey_invalid` ("repair it in the editor") rather than blamed on a request
-    // that merely touched the survey — the ENG-3070 attribution rule, applied to ENG-3946.
+    // Always `enforce` here, which is deliberately *not* the lens the merged document gets: that one
+    // is only judged on cycles when the request changes `blocks`. This call builds the excused set, so
+    // it has to see every cycle the stored survey already contains. A blocks-changing request that
+    // leaves one is then reported as `stored_survey_invalid` ("repair it in the editor") instead of
+    // being blamed on the request — the ENG-3070 attribution rule, applied to ENG-3946.
     "enforce"
   );
   if (storedValidation.valid) {
@@ -240,6 +242,22 @@ function mergeV3SurveyPatch(document: TV3SurveyDocument, patch: TV3PatchSurveyBo
     ...document,
     ...Object.fromEntries(Object.entries(patch).filter(([, value]) => value !== undefined)),
   };
+}
+
+/**
+ * Did this request leave `blocks` untouched?
+ *
+ * An omitted `blocks` key merges by reference, which settles `{ status }`, `{ name }` and
+ * `{ customCss }` without comparing anything. The serialization is for the ENG-3069 round trip —
+ * fetch the survey, change one field, send the whole thing back — where the array is rebuilt from
+ * the body and is equal without being identical. Both sides come out of the same Zod schemas, so
+ * their keys are in the same order.
+ */
+function hasSameBlocks(storedDocument: TV3SurveyDocument, patchedDocument: TV3SurveyDocument): boolean {
+  return (
+    storedDocument.blocks === patchedDocument.blocks ||
+    JSON.stringify(storedDocument.blocks) === JSON.stringify(patchedDocument.blocks)
+  );
 }
 
 function getElementIds(document: TV3SurveyDocument): Set<string> {
@@ -588,13 +606,16 @@ export function prepareV3SurveyPatchInput(
   // recall is refused exactly as a reorder is, and the PATCH 422 contract lists `misordered_reference`.
   // (v3 is not publicly released, so this tightening ships without a version bump; create stays on
   // `skip` as `prepareV3SurveyCreate` explains.)
-  // `enforce` for the cyclic-logic rule, and absolute rather than a delta (ENG-3946): the whole patch
-  // family rewrites `blocks` wholesale, so a request that leaves a cycle in place persists it just as
-  // surely as one that introduces it — and the editor refuses to save the result either way.
   const validation = validateV3SurveyDocument(
     patchedDocument,
     { mode: "introduced", baseline: currentDocument.document },
-    "enforce"
+    // ENG-3946, and the same shape of answer the precedence rule above gives: a request that leaves
+    // `blocks` exactly as it found them is not judged on cycles. Rewriting the column with the bytes
+    // already in it is not new harm, and the one caller that does it is the survey list's pause and
+    // resume (`updateSurveyStatus` sends `{ status }`) — so enforcing here would leave a customer
+    // whose survey is already looping respondents with no way to stop it. A survey can only be in
+    // that state because of the bug this check closes: the editor and v1 PUT both refuse to save one.
+    hasSameBlocks(currentDocument.document, patchedDocument) ? "skip" : "enforce"
   );
 
   if (!validation.valid) {

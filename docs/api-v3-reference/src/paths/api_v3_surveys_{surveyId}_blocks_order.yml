@@ -99,11 +99,18 @@ put:
         forward reference — a recall of an answer not yet given, or a logic condition reading a
         later block — reported as `misordered_reference` at the stored-document path. An order that
         already contains such a reference stays reorderable; only newly created ones are refused.
+        Also used when the resulting order would leave the survey's conditional logic forming a
+        cycle, so a respondent could loop between blocks without ever reaching an ending. Unlike the
+        forward-reference rule above this one is not a delta: every order that comes out cyclic is
+        refused, whether or not the stored order already was. The block is named by `identifier`,
+        because the reason's "block N" counts positions in the order you sent, not stored ones.
 
 
         `stored_survey_invalid` — the stored survey cannot be reordered by id: it is a legacy
         question-based survey, exposes no v3 block list, or a block id occurs more than once. The
-        request was not evaluated; `invalid_params[].name` points into the stored survey.
+        request was not evaluated; `invalid_params[].name` points into the stored survey. Also
+        returned when the cycle above was already present in the stored survey, in which case repair
+        it in the editor or send corrected blocks.
 
 
         `archivedAt` in `invalid_params` (no `code`) — the survey is archived; restore it first.

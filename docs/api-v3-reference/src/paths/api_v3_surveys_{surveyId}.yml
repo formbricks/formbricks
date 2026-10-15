@@ -399,7 +399,12 @@ patch:
         A patch that newly *introduces* a forward reference — a recall of an answer not yet given, a
         logic condition reading a later block, or a `requireAnswer` target that is not in a later block
         — is refused with `code: misordered_reference`; a survey that already contains one stays
-        patchable, only newly created violations are rejected.
+        patchable, only newly created violations are rejected. A patch that *changes* `blocks` is
+        also refused when the result's conditional logic forms a cycle, letting a respondent loop
+        between blocks without ever reaching an ending; the cyclic blocks are named by `identifier`.
+        That rule is not a delta — any patched `blocks` that comes out cyclic is rejected — but a
+        patch that leaves `blocks` untouched (`{ "status": "paused" }`, a rename) is never judged on
+        it, so an affected survey can still be paused and renamed.
 
 
         3. A server-owned field was echoed back with a different value — `code: read_only_field`,

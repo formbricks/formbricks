@@ -131,7 +131,10 @@ patch:
         `duplicate_identifier` (inserting an id that already exists), `missing_required_field` (an
         inserted block whose `id` is present but empty — omitting `id` entirely is fine, the server
         generates one), `immutable_identifier` (`block.id` contradicting the op's `id`),
-        and `stored_survey_invalid` when the stored survey itself fails the document contract.
+        and `stored_survey_invalid` when the stored survey itself fails the document contract. The
+        edited document is also refused when its conditional logic forms a cycle, so a respondent
+        could loop between blocks without ever reaching an ending; the cyclic blocks are named by
+        `identifier`, since the reason's "block N" counts positions in the edited array.
       content:
         application/problem+json:
           schema:

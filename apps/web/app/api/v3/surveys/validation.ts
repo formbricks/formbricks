@@ -167,6 +167,11 @@ export function getV3SurveyMediaInvalidParams(blocks: TV3SurveyDocument["blocks"
  * The detection and the wording are the ones `surveyRefinement` already applies on create
  * (`ZSurveyCreateInput`), down to the path and the sentence — so the create and the update paths
  * refuse the same document for the same stated reason, and there is one cycle-finder, not two.
+ *
+ * That sentence names the block by its 1-based position in the array being validated, and
+ * `remapBlockInvalidParamPath` cannot rewrite it: it translates `blocks.<i>` prose, not "block 3".
+ * After a reorder the ordinal therefore disagrees with the remapped `name`, so the block id travels
+ * in `identifier` as well — the one field that means the same thing in either coordinate system.
  */
 export function getV3SurveyCyclicLogicInvalidParams(blocks: TV3SurveyDocument["blocks"]): InvalidParam[] {
   return findBlocksWithCyclicLogic(blocks).flatMap((blockId) => {
@@ -179,6 +184,8 @@ export function getV3SurveyCyclicLogicInvalidParams(blocks: TV3SurveyDocument["b
       {
         name: `blocks.${String(blockIndex)}.logic`,
         reason: `Conditional Logic: Cyclic logic detected in block ${String(blockIndex + 1)} (${blocks[blockIndex].name}).`,
+        identifier: blockId,
+        referenceType: "block" as const,
       },
     ];
   });
@@ -187,12 +194,14 @@ export function getV3SurveyCyclicLogicInvalidParams(blocks: TV3SurveyDocument["b
 /**
  * Whether the cyclic-logic rule is applied here (ENG-3946).
  *
- * `enforce` on the patch family: PATCH and both block endpoints write the whole `blocks` array, so
- * every one of them persists the cycle — including a request that only reorders, or only renames the
- * survey. `skip` on create, which already rejects cycles a layer down through `ZSurveyCreateInput`;
- * running the rule here too would move that 422 ahead of create's permission and limit checks and
- * change a response that is correct today. Required rather than defaulted, like the precedence
- * policy above, so a new caller has to choose.
+ * `enforce` on a request that changes `blocks` — PATCH, `edit_survey_blocks` and
+ * `set_survey_block_order` all write the whole array, and a reorder alone is enough to close a loop.
+ * `skip` on a request that leaves `blocks` as it found them, so a `{ status }` patch can still pause
+ * a survey that is already looping (see `prepareV3SurveyPatchInput`), and on create, which already
+ * rejects cycles a layer down through `ZSurveyCreateInput` — running the rule here too would move
+ * that 422 ahead of create's permission and limit checks and change a response that is correct
+ * today. Required rather than defaulted, like the precedence policy above, so a new caller has to
+ * choose.
  */
 export type TV3SurveyCyclicLogicPolicy = "enforce" | "skip";
 

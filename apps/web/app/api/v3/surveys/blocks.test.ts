@@ -373,6 +373,25 @@ describe("remapBlockInvalidParamPath", () => {
     };
     expect(remapBlockInvalidParamPath(param, origins)).toEqual({ ...param, name: "ops.3.block.id" });
   });
+
+  test("carries a cyclic-logic param's block id through, since its reason cannot be remapped", () => {
+    // ENG-3946. The cyclic reason names the block as "block 3", a 1-based ordinal into the array
+    // validation saw — not a `blocks.<i>` path, so `remapWithin` cannot translate it and the
+    // sentence keeps naming a slot the caller never sent. `identifier` is what survives the move.
+    const remapped = remapBlockInvalidParamPath(
+      {
+        name: "blocks.2.logic",
+        reason: "Conditional Logic: Cyclic logic detected in block 3 (Rate).",
+        identifier: "clbkaaaa111111111111111111",
+        referenceType: "block",
+      },
+      origins
+    );
+
+    expect(remapped.name).toBe("blocks.3.logic");
+    expect(remapped.identifier).toBe("clbkaaaa111111111111111111");
+    expect(remapped.referenceType).toBe("block");
+  });
 });
 
 describe("reorderSurveyBlocks diagnostics bound", () => {

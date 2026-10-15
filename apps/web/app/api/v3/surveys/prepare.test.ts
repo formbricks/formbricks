@@ -1097,6 +1097,8 @@ describe("cyclic block logic on the update paths (ENG-3946)", () => {
         {
           name: "blocks.2.logic",
           reason: "Conditional Logic: Cyclic logic detected in block 3 (Block C).",
+          identifier: BLOCK_C,
+          referenceType: "block",
         },
       ])
     );
@@ -1119,6 +1121,8 @@ describe("cyclic block logic on the update paths (ENG-3946)", () => {
         {
           name: "blocks.1.logic",
           reason: "Conditional Logic: Cyclic logic detected in block 2 (Block B).",
+          identifier: BLOCK_B,
+          referenceType: "block",
         },
       ])
     );
@@ -1136,6 +1140,10 @@ describe("cyclic block logic on the update paths (ENG-3946)", () => {
         {
           name: "blocks.2.logic",
           reason: "Conditional Logic: Cyclic logic detected in block 3 (Block A).",
+          // The ordinal says "block 3" (post-reorder) while `name` will be remapped to the caller's
+          // stored index — `identifier` is what stays true in both coordinate systems.
+          identifier: BLOCK_A,
+          referenceType: "block",
         },
       ])
     );
@@ -1151,9 +1159,9 @@ describe("cyclic block logic on the update paths (ENG-3946)", () => {
     expect(preparation.ok).toBe(true);
   });
 
-  test("a survey that already contains a cycle blames the stored survey, not the request", () => {
-    // The whole patch family rewrites `blocks` wholesale, so even a `{ name }` patch would persist
-    // the cycle and must be refused — but the caller did not cause it, and the response says so.
+  describe("a survey that already contains a cycle", () => {
+    // Only reachable because of the bug this check closes: the editor and the v1 PUT both refuse to
+    // save a cyclic survey, so a stored one was written by these very update paths.
     const cyclicSurvey = {
       ...survey,
       blocks: [
@@ -1162,12 +1170,37 @@ describe("cyclic block logic on the update paths (ENG-3946)", () => {
       ],
     } as unknown as TSurvey;
 
-    const preparation = prepareV3SurveyPatchInput(cyclicSurvey, { name: "Renamed" });
+    test("can still be paused: a patch that leaves blocks alone is not judged on cycles", () => {
+      // The survey list's pause and resume sends exactly this body (`updateSurveyStatus`). Refusing
+      // it would leave a customer whose live survey is looping respondents with no way to stop it,
+      // and rewriting the blocks column with the bytes already in it is not new harm.
+      expect(prepareV3SurveyPatchInput(cyclicSurvey, { status: "paused" }).ok).toBe(true);
+      expect(prepareV3SurveyPatchInput(cyclicSurvey, { name: "Renamed" }).ok).toBe(true);
+    });
 
-    expect(preparation.ok).toBe(false);
-    if (preparation.ok) return;
-    expect(preparation.origin).toBe("storedSurvey");
-    expect(cyclicParams(preparation).length).toBeGreaterThan(0);
+    test("can still be repaired: a patch that removes the cycle is accepted", () => {
+      const preparation = prepareV3SurveyPatchInput(cyclicSurvey, {
+        blocks: [block(BLOCK_A, "Block A", "qa", "en-US"), block(BLOCK_B, "Block B", "qb", "en-US")],
+      });
+
+      expect(preparation.ok).toBe(true);
+    });
+
+    test("but a request that changes blocks and leaves the cycle is still refused", () => {
+      const preparation = prepareV3SurveyPatchInput(cyclicSurvey, {
+        blocks: [
+          block(BLOCK_A, "Block A renamed", "qa", "en-US"),
+          block(BLOCK_B, "Block B", "qb", "en-US", jumpTo(BLOCK_A, "qb", "b")),
+        ],
+      });
+
+      expect(cyclicParams(preparation).length).toBeGreaterThan(0);
+      // The cycle was already in the stored survey, so this answers `stored_survey_invalid`
+      // ("repair it in the editor") rather than blaming a request that only renamed a block.
+      expect(preparation.ok).toBe(false);
+      if (preparation.ok) return;
+      expect(preparation.origin).toBe("storedSurvey");
+    });
   });
 
   test("create keeps its own cyclic gate — this rule does not move it earlier", () => {

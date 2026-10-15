@@ -1571,6 +1571,8 @@ describe("patchV3Survey", () => {
           {
             name: "blocks.1.logic",
             reason: "Conditional Logic: Cyclic logic detected in block 2 (Block B).",
+            identifier: BLOCK_B,
+            referenceType: "block",
           },
         ])
       );
