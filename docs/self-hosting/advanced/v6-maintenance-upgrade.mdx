@@ -174,15 +174,31 @@ spec:
           envFrom:
             - secretRef:
                 name: formbricks-maintenance-env
+          # Required by the shared environment check; preparation does not use them.
+          env:
+            - { name: LOG_LEVEL, value: fatal }
+            - { name: ENCRYPTION_KEY, value: maintenance-unused }
+            - { name: CUBEJS_API_SECRET, value: maintenance-unused }
+            - { name: CUBEJS_API_URL, value: "http://localhost" }
+            - { name: HUB_API_KEY, value: maintenance-unused }
+            - { name: HUB_API_URL, value: "http://localhost" }
+            - { name: REDIS_URL, value: "redis://localhost" }
 ```
 
 This is a template, not a ready-to-apply manifest: set the namespace, digest, resource requests/limits,
-image-pull credentials, network policy, and environment bindings for your installation. The example
-Secret must contain the required runtime/migration environment; the chart's application Secret does
-not necessarily contain `DATABASE_URL` or AuthZed values that it normally injects separately. Prefer
-explicit `valueFrom.secretKeyRef` bindings to existing Secrets when possible. Never put secrets on a
-command line or commit their values. If migrations use a different database credential, bind
-`MIGRATE_DATABASE_URL` as well as `DATABASE_URL`; the target image's migration runner uses it when set.
+image-pull credentials, network policy, and environment bindings for your installation. The
+`formbricks-maintenance-env` Secret holds what preparation uses, with the values your release already uses:
+
+- `DATABASE_URL`
+- `AUTHZED_ENABLED=true`, `AUTHZED_ENDPOINT`, `AUTHZED_TOKEN`, `AUTHZED_SYSTEM_KEY`, `AUTHZED_INSECURE`, and
+  `AUTHZED_CONSISTENCY=fully_consistent`
+
+The chart's application Secret does not necessarily contain `DATABASE_URL` or the AuthZed values, which the
+chart injects separately. Prefer explicit `valueFrom.secretKeyRef` bindings to existing Secrets when possible.
+Never put secrets on a command line or commit their values. If migrations use a different database credential,
+bind `MIGRATE_DATABASE_URL` as well as `DATABASE_URL`; the target image's migration runner uses it when set. If
+the configuration is still incomplete, the Job reports `upgrade_configuration_invalid` with the names of the
+variables to fix.
 
 Wait for Job completion and inspect its sanitized result before running `helm upgrade` or resuming an
 Argo CD/Flux reconciliation. Preparation is not a Helm migration hook or a permanent chart component.
