@@ -123,7 +123,11 @@ export const readPublicBundlePaths = (): Set<string> => {
 };
 
 /** `/a/{x}/b` and `/a/{y}/b` are the same route: compare paths with parameter names erased. */
-export const normalizePathParams = (path: string) => path.replace(/\{[^}]+\}/g, "{}");
+export const normalizePathParams = (path: string) =>
+  path
+    .split("/")
+    .map((segment) => (segment.startsWith("{") && segment.endsWith("}") ? "{}" : segment))
+    .join("/");
 
 // --- Server actions ------------------------------------------------------------------------------------
 
