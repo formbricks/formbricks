@@ -7,6 +7,7 @@ import {
   DatabaseError,
   InvalidInputError,
   OperationNotAllowedError,
+  ResourceNotFoundError,
   ValidationError,
 } from "@formbricks/types/errors";
 import { TWorkspace } from "@formbricks/types/workspace";
@@ -52,6 +53,7 @@ vi.mock("@formbricks/database", () => ({
     workspace: {
       update: vi.fn(),
       create: vi.fn(),
+      count: vi.fn(),
       delete: vi.fn(),
       findUnique: vi.fn(),
     },
@@ -115,6 +117,9 @@ vi.mock("@/modules/storage/service", () => ({
 vi.mock("@/lib/workspace/service", () => ({
   getWorkspaceLegacyStoragePrefixes: vi.fn(),
 }));
+
+// Existing cases exercise everything but the cap; it has its own describe below (ENG-3921).
+const NEW_ORGANIZATION = { workspaceLimit: null };
 
 describe("workspace lib", () => {
   beforeEach(() => {
@@ -334,7 +339,7 @@ describe("workspace lib", () => {
       test("is stripped by createWorkspace too", async () => {
         vi.mocked(prisma.workspace.create).mockResolvedValueOnce(baseWorkspace);
 
-        await createWorkspace("org1", { name: "New", expectedUpdatedAt: loadedAt });
+        await createWorkspace("org1", { name: "New", expectedUpdatedAt: loadedAt }, NEW_ORGANIZATION);
 
         expect(prisma.workspace.create).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -481,7 +486,11 @@ describe("workspace lib", () => {
       vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
       vi.mocked(prisma.workspaceTeam.createMany).mockResolvedValueOnce({} as any);
 
-      const result = await createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1"] });
+      const result = await createWorkspace(
+        "org1",
+        { name: "Workspace 1", teamIds: ["t1"] },
+        NEW_ORGANIZATION
+      );
 
       expect(result).toEqual(createdWorkspace);
       // ENG-1922: teamIds must be validated against the target org before linking.
@@ -503,7 +512,7 @@ describe("workspace lib", () => {
       vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockOrgTeams());
 
       await expect(
-        createWorkspace("org1", { name: "Workspace 1", teamIds: ["foreign-team"] })
+        createWorkspace("org1", { name: "Workspace 1", teamIds: ["foreign-team"] }, NEW_ORGANIZATION)
       ).rejects.toThrow(ValidationError);
 
       // The membership check must run org-scoped...
@@ -526,7 +535,7 @@ describe("workspace lib", () => {
       vi.mocked(prisma.workspace.create).mockResolvedValueOnce({ ...baseWorkspace, id: "p3" } as any);
       vi.mocked(prisma.workspaceTeam.createMany).mockResolvedValueOnce({} as any);
 
-      await createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1"] });
+      await createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1"] }, NEW_ORGANIZATION);
 
       expect(logger.warn).not.toHaveBeenCalled();
     });
@@ -538,7 +547,7 @@ describe("workspace lib", () => {
       vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockOrgTeams("t1"));
 
       await expect(
-        createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1", "foreign-team"] })
+        createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1", "foreign-team"] }, NEW_ORGANIZATION)
       ).rejects.toThrow(ValidationError);
 
       expect(prisma.team.findMany).toHaveBeenCalledWith(
@@ -549,9 +558,9 @@ describe("workspace lib", () => {
     });
 
     test("rejects duplicate teamIds", async () => {
-      await expect(createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1", "t1"] })).rejects.toThrow(
-        ValidationError
-      );
+      await expect(
+        createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1", "t1"] }, NEW_ORGANIZATION)
+      ).rejects.toThrow(ValidationError);
 
       // Rejected before any lookup or write.
       expect(prisma.team.findMany).not.toHaveBeenCalled();
@@ -563,7 +572,7 @@ describe("workspace lib", () => {
       const createdWorkspace = { ...baseWorkspace, id: "p-language" };
       vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
 
-      await createWorkspace("org1", { name: "Workspace language" });
+      await createWorkspace("org1", { name: "Workspace language" }, NEW_ORGANIZATION);
 
       const createArgs = vi.mocked(prisma.workspace.create).mock.calls[0][0];
       expect((createArgs.data as any).languages.create).toEqual([{ code: "en-US", alias: null }]);
@@ -573,7 +582,7 @@ describe("workspace lib", () => {
       const createdWorkspace = { ...baseWorkspace, id: "p-defaults" };
       vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
 
-      await createWorkspace("org1", { name: "Workspace defaults" });
+      await createWorkspace("org1", { name: "Workspace defaults" }, NEW_ORGANIZATION);
 
       const createArgs = vi.mocked(prisma.workspace.create).mock.calls[0][0];
       const attributeCreate = (createArgs.data as any).contactAttributeKeys.create as Array<{
@@ -593,7 +602,7 @@ describe("workspace lib", () => {
       const createdWorkspace = { ...baseWorkspace, id: "p3" };
       vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
 
-      const result = await createWorkspace("org1", { name: "Workspace No Teams" });
+      const result = await createWorkspace("org1", { name: "Workspace No Teams" }, NEW_ORGANIZATION);
 
       expect(result).toEqual(createdWorkspace);
       expect(prisma.workspaceTeam.createMany).not.toHaveBeenCalled();
@@ -604,14 +613,14 @@ describe("workspace lib", () => {
       const createdWorkspace = { ...baseWorkspace, id: "p4" };
       vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
 
-      await createWorkspace("org1", { name: "Second Workspace" });
+      await createWorkspace("org1", { name: "Second Workspace" }, NEW_ORGANIZATION);
 
       expect(prisma.feedbackDirectory.upsert).not.toHaveBeenCalled();
       expect(prisma.feedbackDirectoryWorkspace.create).not.toHaveBeenCalled();
     });
 
     test("throws ValidationError if name is missing", async () => {
-      await expect(createWorkspace("org1", {})).rejects.toThrow(ValidationError);
+      await expect(createWorkspace("org1", {}, NEW_ORGANIZATION)).rejects.toThrow(ValidationError);
     });
 
     test("throws InvalidInputError on unique constraint", async () => {
@@ -620,7 +629,9 @@ describe("workspace lib", () => {
         clientVersion: "5.0.0",
       });
       vi.mocked(prisma.workspace.create).mockRejectedValueOnce(prismaError);
-      await expect(createWorkspace("org1", { name: "Workspace 1" })).rejects.toThrow(InvalidInputError);
+      await expect(createWorkspace("org1", { name: "Workspace 1" }, NEW_ORGANIZATION)).rejects.toThrow(
+        InvalidInputError
+      );
     });
 
     test("throws DatabaseError on Prisma error", async () => {
@@ -629,12 +640,90 @@ describe("workspace lib", () => {
         clientVersion: "5.0.0",
       });
       vi.mocked(prisma.workspace.create).mockRejectedValueOnce(prismaError);
-      await expect(createWorkspace("org1", { name: "Workspace 1" })).rejects.toThrow(DatabaseError);
+      await expect(createWorkspace("org1", { name: "Workspace 1" }, NEW_ORGANIZATION)).rejects.toThrow(
+        DatabaseError
+      );
     });
 
     test("throws unknown error", async () => {
       vi.mocked(prisma.workspace.create).mockRejectedValueOnce(new Error("fail"));
-      await expect(createWorkspace("org1", { name: "Workspace 1" })).rejects.toThrow("fail");
+      await expect(createWorkspace("org1", { name: "Workspace 1" }, NEW_ORGANIZATION)).rejects.toThrow(
+        "fail"
+      );
+    });
+  });
+
+  // ENG-3921: the cap used to be a count compared in the action, outside the transaction, so a burst of
+  // concurrent creates all passed it. The race itself is proven against real Postgres in
+  // integration/workspace-limit-race.integration.test.ts; these pin the shape that makes it safe.
+  describe("createWorkspace workspace limit", () => {
+    const lockQuery = () => {
+      const [strings, ...values] = vi.mocked(prisma.$queryRaw).mock.calls[0] as unknown as [
+        TemplateStringsArray,
+        ...unknown[],
+      ];
+      return { sql: strings.join("?"), values };
+    };
+
+    test("locks the organization, then counts, then creates — all inside the transaction", async () => {
+      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([{ id: "org1" }]);
+      vi.mocked(prisma.workspace.count).mockResolvedValueOnce(2);
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(baseWorkspace);
+
+      await expect(createWorkspace("org1", { name: "Workspace 3" }, { workspaceLimit: 3 })).resolves.toEqual(
+        baseWorkspace
+      );
+
+      const { sql, values } = lockQuery();
+      expect(sql).toMatch(/FROM "Organization"\s+WHERE "id" = \?\s+FOR NO KEY UPDATE/);
+      expect(values).toEqual(["org1"]);
+      expect(prisma.workspace.count).toHaveBeenCalledWith({ where: { organizationId: "org1" } });
+
+      const [lockOrder] = vi.mocked(prisma.$queryRaw).mock.invocationCallOrder;
+      const [countOrder] = vi.mocked(prisma.workspace.count).mock.invocationCallOrder;
+      const [createOrder] = vi.mocked(prisma.workspace.create).mock.invocationCallOrder;
+      const [transactionOrder] = vi.mocked(prisma.$transaction).mock.invocationCallOrder;
+      expect(transactionOrder).toBeLessThan(lockOrder);
+      expect(lockOrder).toBeLessThan(countOrder);
+      expect(countOrder).toBeLessThan(createOrder);
+    });
+
+    test("rejects at the limit without writing anything", async () => {
+      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([{ id: "org1" }]);
+      vi.mocked(prisma.workspace.count).mockResolvedValueOnce(3);
+
+      await expect(
+        createWorkspace("org1", { name: "Workspace 4", teamIds: ["t1"] }, { workspaceLimit: 3 })
+      ).rejects.toThrow(new OperationNotAllowedError("Organization workspace limit reached"));
+
+      expect(prisma.team.findMany).not.toHaveBeenCalled();
+      expect(prisma.workspace.create).not.toHaveBeenCalled();
+      expect(prisma.workspaceTeam.createMany).not.toHaveBeenCalled();
+      expect(reconcileTeamWorkspaceRelationships).not.toHaveBeenCalled();
+    });
+
+    test("rejects an organization that no longer exists before counting", async () => {
+      vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([]);
+
+      await expect(createWorkspace("org1", { name: "Workspace" }, { workspaceLimit: 3 })).rejects.toThrow(
+        ResourceNotFoundError
+      );
+
+      expect(prisma.workspace.count).not.toHaveBeenCalled();
+      expect(prisma.workspace.create).not.toHaveBeenCalled();
+    });
+
+    test.each([
+      ["an unlimited plan", Infinity],
+      ["a just-created organization", null],
+    ])("takes no lock for %s", async (_label, workspaceLimit) => {
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(baseWorkspace);
+
+      await createWorkspace("org1", { name: "Workspace" }, { workspaceLimit });
+
+      expect(prisma.$queryRaw).not.toHaveBeenCalled();
+      expect(prisma.workspace.count).not.toHaveBeenCalled();
+      expect(prisma.workspace.create).toHaveBeenCalled();
     });
   });
 
@@ -647,7 +736,7 @@ describe("workspace lib", () => {
       vi.mocked(prisma.feedbackDirectoryWorkspace.findMany).mockResolvedValueOnce([
         feedbackDirectoryAssignment,
       ] as any);
-      vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace as any);
+      vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace);
 
       const result = await deleteWorkspace("p1");
       expect(result).toEqual(baseWorkspace);
@@ -670,7 +759,7 @@ describe("workspace lib", () => {
     });
 
     test("selects legacyEnvironmentId off the deleted row", async () => {
-      vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace as any);
+      vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace);
 
       await deleteWorkspace("p1");
 
@@ -697,7 +786,7 @@ describe("workspace lib", () => {
 
     test("deletes a workspace while another workspace remains", async () => {
       vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([{ id: "p1" }, { id: "p2" }]);
-      vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace as any);
+      vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace);
 
       await expect(deleteWorkspaceIfNotLast("p1", "org1")).resolves.toEqual(baseWorkspace);
     });
