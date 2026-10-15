@@ -29,12 +29,14 @@ import {
 import { buildV3AuditLog, queueV3AuditLog } from "./audit";
 import { mapV3ThrownError } from "./errors";
 import { BoundedInvalidParams } from "./invalid-params";
+import { getCrossOriginRefusal } from "./origin-check";
 import {
   type InvalidParam,
   isInvalidParamCode,
   problemBadRequest,
   problemCapacityReached,
   problemConcurrencyLimitReached,
+  problemForbidden,
   problemPayloadTooLarge,
   problemTooManyRequests,
   problemUnauthorized,
@@ -507,6 +509,16 @@ function ensureRequestIdHeader(response: Response, requestId: string): Response 
   });
 }
 
+/**
+ * Whether this request carries an ambient credential and so needs the cross-origin check: a session
+ * cookie, or nothing at all on a pre-login (`auth: "none"`) route. API-key requests carry no ambient
+ * credential, so a forged cross-site request has nothing to ride on.
+ */
+function carriesAmbientCredential(authMode: TV3AuthMode, authentication: TV3Authentication): boolean {
+  if (authMode === "none") return true;
+  return Boolean(authentication && "user" in authentication);
+}
+
 async function authenticateV3RequestOrRespond(
   req: NextRequest,
   authMode: TV3AuthMode,
@@ -688,6 +700,23 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
           "V3 API authentication failed"
         );
         return authResult.response;
+      }
+
+      // Before rate limiting, so a forged request spends nothing; after authentication, because whether
+      // the check applies depends on how the caller authenticated (see `origin-check.ts`).
+      const crossOriginRefusal = carriesAmbientCredential(auth, authResult.authentication)
+        ? getCrossOriginRefusal(req)
+        : null;
+      if (crossOriginRefusal) {
+        log.warn(
+          {
+            reason: crossOriginRefusal,
+            secFetchSite: req.headers.get("sec-fetch-site"),
+            origin: req.headers.get("origin"),
+          },
+          "V3 API refused a cross-origin request"
+        );
+        return problemForbidden(requestId, "Cross-origin requests are not allowed.", instance);
       }
 
       const rateLimitResponse = await applyV3RateLimitOrRespond({

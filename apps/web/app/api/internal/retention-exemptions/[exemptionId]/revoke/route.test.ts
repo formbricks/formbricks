@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { POST } from "./route";
 
 const mocks = vi.hoisted(() => ({
@@ -50,7 +51,7 @@ const revoke = () =>
   POST(
     new NextRequest(`http://localhost/api/internal/retention-exemptions/${EXEMPTION_ID}/revoke`, {
       method: "POST",
-      headers: { "x-request-id": "req_1" },
+      headers: { ...SAME_ORIGIN_HEADERS, "x-request-id": "req_1" },
     }),
     { params: Promise.resolve({ exemptionId: EXEMPTION_ID }) } as never
   );

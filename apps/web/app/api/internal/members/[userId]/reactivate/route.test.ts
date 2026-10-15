@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { POST } from "./route";
 
 const mocks = vi.hoisted(() => ({
@@ -42,7 +43,7 @@ const reactivate = (userId = MEMBER_ID, query = `organizationId=${ORG_ID}`) =>
   POST(
     new NextRequest(`http://localhost/api/internal/members/${userId}/reactivate?${query}`, {
       method: "POST",
-      headers: { "x-request-id": "req_1" },
+      headers: { ...SAME_ORIGIN_HEADERS, "x-request-id": "req_1" },
     }),
     { params: Promise.resolve({ userId }) } as never
   );

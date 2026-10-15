@@ -2,6 +2,7 @@ import { type Browser, type Locator, type Page, expect } from "@playwright/test"
 import { prisma } from "@formbricks/database";
 import { type UsersFixture, login } from "./fixtures/users";
 import { test } from "./lib/fixtures";
+import { SAME_ORIGIN_HEADERS } from "./utils/same-origin";
 
 // ENG-3395: restricted surveys, end to end. Relies on the survey readiness marker, which the E2E job
 // sets before the suite runs (`e2e.yml`, `authzed:backfill --scope=survey --apply --mark-ready`) — the
@@ -56,6 +57,7 @@ const openMemberPage = async (
 // same v3 endpoint the editor's "Create survey" calls, with the owner's session.
 const createSurveyAsOwner = async (page: Page, workspaceId: string, name: string): Promise<string> => {
   const response = await page.context().request.post("/api/v3/surveys", {
+    headers: SAME_ORIGIN_HEADERS,
     data: {
       workspaceId,
       name,
