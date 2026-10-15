@@ -1,4 +1,6 @@
+import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { beforeEach, expect, test, vi } from "vitest";
 import { applyOnlineSchemaMigrations, openUpgradeSession } from "@formbricks/database/upgrade-session";
 import { openJobsUpgradeQueue } from "@formbricks/jobs";
@@ -46,7 +48,8 @@ vi.mock("@/lib/env", () => ({
 }));
 
 const target = "app@sha256:target";
-const root = new URL("file:///release/");
+// The CLI bundle's directory in the published image, which the CLI passes as the asset root.
+const root = new URL("file:///home/nextjs/authzed-cli/");
 const ownerMigration = "20261002120001_backfill_survey_owner";
 const triggerMigration = "20261002120002_add_survey_projection_trigger";
 const stateMigration = "20261013120000_add_online_upgrade_state";
@@ -217,7 +220,7 @@ test("preparation expands only approved schemas and resumes without replaying mi
   expect(applyCanonicalAuthzedSchema).toHaveBeenCalledWith("sha256:legacy");
   expect(childProcess).toHaveBeenCalledWith(
     expect.any(String),
-    [expect.stringContaining("apply-migrations.js"), "--phase", "prepare"],
+    ["/home/nextjs/packages/database/dist/scripts/apply-migrations.js", "--phase", "prepare"],
     expect.objectContaining({ signal: controller.signal }),
     expect.any(Function)
   );
@@ -226,6 +229,37 @@ test("preparation expands only approved schemas and resumes without replaying mi
   vi.mocked(applyOnlineSchemaMigrations).mockClear();
   expect(await runOnlineCommand("prepare", platform, root)).toMatchObject({ status: "prepared" });
   expect(applyOnlineSchemaMigrations).not.toHaveBeenCalled();
+});
+
+// The bundle inlines @formbricks/database, so the path above holds only while the image keeps the bundle and the
+// database build under one WORKDIR.
+test("the image keeps the CLI bundle beside the database build", () => {
+  const dockerfile = readFileSync(new URL("../../../Dockerfile", import.meta.url), "utf8");
+  const runner = dockerfile.slice(dockerfile.indexOf("AS runner"));
+  // Source and destination only: options such as --chown or --chmod may change freely.
+  const copies = (source: string, destination: string) =>
+    new RegExp(String.raw`^COPY(?:\s+--\S+)*\s+${source}/?\s+${destination}/?\s*$`, "m");
+  expect(runner.match(/^WORKDIR .+$/gm)).toEqual([
+    `WORKDIR ${fileURLToPath(new URL("..", root)).slice(0, -1)}`,
+  ]);
+  expect(runner).toMatch(copies(String.raw`/app/apps/web/dist/authzed-cli`, String.raw`\./authzed-cli`));
+  expect(runner).toMatch(
+    copies(String.raw`/app/packages/database/dist`, String.raw`\./packages/database/dist`)
+  );
+});
+
+test("a failed migration step reports the error's class and code, never its message", async () => {
+  childProcess.mockImplementationOnce((_command, _args, _options, callback) =>
+    callback(Object.assign(new Error("Command failed: credential=must-not-appear"), { code: 1 }), "", "")
+  );
+  const result = await runOnlineCommand("prepare", platform, root);
+  expect(result).toMatchObject({
+    status: "blocked",
+    blockerCode: "online_upgrade_failed",
+    retryable: true,
+    cause: { name: "Error", code: "1" },
+  });
+  expect(JSON.stringify(result)).not.toContain("must-not-appear");
 });
 
 test("finalization catches up owners before triggers and activates only after projection verification", async () => {

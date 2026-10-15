@@ -15,14 +15,38 @@ export type OnlineState = {
   queueResumedAt: Date | null;
 };
 
+/** What an operator may see of an unexpected error: its class and machine code, never its message. */
+export type OnlineFailure = { name: string; code: string | null };
+
 export class OnlineUpgradeBlocked extends Error {
   constructor(
     readonly code: string,
-    readonly retryable = false
+    readonly retryable = false,
+    readonly failure?: OnlineFailure
   ) {
     super(code);
   }
 }
+
+// Messages can carry connection strings and SDK payloads, so only bounded identifiers are copied: enough to tell
+// MODULE_NOT_FOUND from ENOENT, a Prisma P1001 or a Kubernetes 403.
+export const describeOnlineFailure = (error: unknown): OnlineFailure => {
+  if (!(error instanceof Error)) return { name: typeof error, code: null };
+  const code: unknown = (error as { code?: unknown }).code;
+  const boundedCode =
+    (typeof code === "number" && Number.isInteger(code)) ||
+    (typeof code === "string" && /^[\w.-]{1,64}$/.test(code));
+  return {
+    name: /^\w{1,64}$/.test(error.name) ? error.name : "Error",
+    code: boundedCode ? String(code) : null,
+  };
+};
+
+/** Keeps a deliberate blocker as is, and reports anything else under `code` with its bounded description. */
+export const toOnlineBlocker = (error: unknown, code: string, retryable = false): OnlineUpgradeBlocked =>
+  error instanceof OnlineUpgradeBlocked
+    ? error
+    : new OnlineUpgradeBlocked(code, retryable, describeOnlineFailure(error));
 
 export type OnlineStatus = {
   status: "blocked" | "prepared" | "complete" | "not_started" | "in_progress";
@@ -32,6 +56,7 @@ export type OnlineStatus = {
   jobs: { paused: boolean; pausedAt: string | null; deadlineAt: string | null; resumedAt: string | null };
   retryable: boolean;
   blockerCode: string | null;
+  cause?: OnlineFailure;
 };
 
 export const summarizeOnlineState = (
@@ -58,6 +83,7 @@ export const summarizeOnlineState = (
   },
   retryable: blocker?.retryable ?? false,
   blockerCode: blocker?.code ?? null,
+  ...(blocker?.failure && { cause: blocker.failure }),
 });
 
 export type OnlineDependencies = {

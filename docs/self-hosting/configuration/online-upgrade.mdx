@@ -114,6 +114,17 @@ code, queue pause/deadline/resumption timestamps, and whether rollback to 6.0 is
 status reflects the durable coordinator checkpoint, not a separate Redis health probe. Repeating the same upgrade resumes durable checkpoints.
 Old admin tabs may require reload; preserving unsaved 6.0 editor state is outside the intended guarantee.
 
+The checkpoint does not keep a failed attempt's blocker, so status read afterwards reports `blockerCode: null`.
+The blocker is in the failed coordinator Job's output. When prepare or finalize stops on an unexpected error
+(`online_upgrade_failed` or `invalid_online_configuration`), that output also has a `cause` with the error's
+type and code, such as `{"name":"Error","code":"ENOENT"}`, and never its message. Read the Job of the phase
+that failed:
+
+```sh
+kubectl -n <namespace> logs job/<web-deployment>-online-prepare
+kubectl -n <namespace> logs job/<web-deployment>-online-finalize
+```
+
 ## Background job handoff
 
 `upgrade.online.jobDrainTimeoutSeconds` defaults to 180 seconds (10–900 allowed). This limits the wait
