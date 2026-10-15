@@ -11,11 +11,6 @@ import {
   countSamlResponseMarkup,
 } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
 
-interface SAMLCallbackBody {
-  RelayState: string;
-  SAMLResponse: string;
-}
-
 export const POST = async (req: Request) => {
   const jacksonInstance = await jackson();
   if (!jacksonInstance) {
@@ -41,24 +36,24 @@ export const POST = async (req: Request) => {
   }
 
   const formData = await req.formData();
-  const body = Object.fromEntries(formData.entries());
+  const SAMLResponse = formData.get("SAMLResponse");
+  // An IdP-initiated sign-in carries no RelayState; jackson reads a missing one as "".
+  const RelayState = formData.get("RelayState") ?? "";
 
-  const { RelayState, SAMLResponse } = body as unknown as SAMLCallbackBody;
-
-  if (typeof SAMLResponse === "string") {
-    const markup = countSamlResponseMarkup(SAMLResponse);
-    if (markup > SAML_RESPONSE_MARKUP_BUDGET) {
-      // The size only, never the content: with jackson's traces off (ENG-3976) this line is the one record a
-      // real IdP response refused here would leave.
-      logger.warn({ markup, length: SAMLResponse.length }, "Refused a SAML response over the markup budget");
-      return responses.badRequestResponse("SAMLResponse is too large to process");
-    }
+  // A file part, or no SAMLResponse at all, is not a SAML response; jackson would throw on it and answer 500.
+  if (typeof SAMLResponse !== "string" || typeof RelayState !== "string") {
+    return responses.badRequestResponse("SAMLResponse and RelayState must be text fields");
   }
 
-  const { redirect_url } = await oauthController.samlResponse({
-    RelayState,
-    SAMLResponse,
-  });
+  const markup = countSamlResponseMarkup(SAMLResponse);
+  if (markup > SAML_RESPONSE_MARKUP_BUDGET) {
+    // The size only, never the content: with jackson's traces off (ENG-3976) this line is the one record a
+    // real IdP response refused here would leave.
+    logger.warn({ markup, length: SAMLResponse.length }, "Refused a SAML response over the markup budget");
+    return responses.badRequestResponse("SAMLResponse is too large to process");
+  }
+
+  const { redirect_url } = await oauthController.samlResponse({ RelayState, SAMLResponse });
 
   if (!redirect_url) {
     return responses.internalServerErrorResponse("Failed to get redirect URL");

@@ -57,8 +57,10 @@ const STRAY_LESS_THAN_WEIGHT = 16;
 
 /**
  * Attribute names in the tag whose name starts at `from`: each name that starts after whitespace or a closing
- * quote, with or without a value. The scan never passes `end`, the next `<`, so a missing `>` or an unclosed
- * quote can hide no markup from the count, and each byte is read at most once per tag.
+ * quote, with or without a value. The scan never passes `end`, the next `<`, so a missing `>` can hide no markup
+ * from the count, and each byte is read at most once per tag. A quote that never closes before `end` is stepped
+ * over rather than ending the scan, so the names after it still count: xmldom happens to reject that shape
+ * before reading them today, but the count does not rely on it.
  */
 const countAttributes = (xml: Buffer, from: number, end: number): number => {
   let attributes = 0;
@@ -68,9 +70,8 @@ const countAttributes = (xml: Buffer, from: number, end: number): number => {
     const byte = xml[j];
     if (byte === DOUBLE_QUOTE || byte === SINGLE_QUOTE) {
       const close = xml.subarray(j + 1, end).indexOf(byte);
-      if (close === -1) break;
-      j += close + 2;
-      afterSeparator = true;
+      j += close === -1 ? 1 : close + 2;
+      afterSeparator = close !== -1;
       continue;
     }
     if (afterSeparator && !isSeparator(byte) && byte !== EQUALS && byte !== SLASH) attributes++;
