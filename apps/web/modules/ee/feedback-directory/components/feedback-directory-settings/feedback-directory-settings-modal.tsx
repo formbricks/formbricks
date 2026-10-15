@@ -9,14 +9,11 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags } from "@/lib/membership/utils";
+import { getV3ApiErrorReason } from "@/modules/api/lib/v3-client";
 import { ArchiveFeedbackDirectory } from "@/modules/ee/feedback-directory/components/feedback-directory-settings/archive-feedback-directory";
 import { PurgeFeedbackDirectoryData } from "@/modules/ee/feedback-directory/components/feedback-directory-settings/purge-feedback-directory-data";
 import { FeedbackDirectoryQueryClientProvider } from "@/modules/ee/feedback-directory/components/query-client-provider";
-import {
-  createFeedbackDataset,
-  getFeedbackDatasetErrorCode,
-  updateFeedbackDataset,
-} from "@/modules/ee/feedback-directory/lib/api-client";
+import { createFeedbackDataset, updateFeedbackDataset } from "@/modules/ee/feedback-directory/lib/api-client";
 import { getWorkspaceAccessConflictState } from "@/modules/ee/feedback-directory/lib/workspace-access-conflicts";
 import {
   TFeedbackDirectoryDetails,
@@ -177,7 +174,7 @@ export const FeedbackDirectorySettingsModal = ({
         });
       }
     } catch (error) {
-      toast.error(getTranslatedFeedbackDirectoryError(getFeedbackDatasetErrorCode(error), t));
+      toast.error(getTranslatedFeedbackDirectoryError(getV3ApiErrorReason(error), t));
       return false;
     }
 

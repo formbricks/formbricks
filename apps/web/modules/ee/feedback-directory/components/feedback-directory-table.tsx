@@ -8,12 +8,9 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags } from "@/lib/membership/utils";
+import { getV3ApiErrorReason } from "@/modules/api/lib/v3-client";
 import { FeedbackDirectorySettingsModal } from "@/modules/ee/feedback-directory/components/feedback-directory-settings/feedback-directory-settings-modal";
-import {
-  getFeedbackDataset,
-  getFeedbackDatasetErrorCode,
-  updateFeedbackDataset,
-} from "@/modules/ee/feedback-directory/lib/api-client";
+import { getFeedbackDataset, updateFeedbackDataset } from "@/modules/ee/feedback-directory/lib/api-client";
 import {
   TFeedbackDirectory,
   TFeedbackDirectoryDetails,
@@ -151,7 +148,7 @@ export const FeedbackDirectoryTable = ({
       setSelectedDirectory(await getFeedbackDataset(directoryId));
       setOpenSettingsModal(true);
     } catch (error) {
-      toast.error(getTranslatedFeedbackDirectoryError(getFeedbackDatasetErrorCode(error), t));
+      toast.error(getTranslatedFeedbackDirectoryError(getV3ApiErrorReason(error), t));
     } finally {
       setLoadingDirectoryId(null);
     }
@@ -181,7 +178,7 @@ export const FeedbackDirectoryTable = ({
       // The directory list is server-rendered; re-render it.
       router.refresh();
     } catch (error) {
-      toast.error(getTranslatedFeedbackDirectoryError(getFeedbackDatasetErrorCode(error), t));
+      toast.error(getTranslatedFeedbackDirectoryError(getV3ApiErrorReason(error), t));
     } finally {
       setLoadingDirectoryId(null);
     }

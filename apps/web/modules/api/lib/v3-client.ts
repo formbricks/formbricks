@@ -65,6 +65,18 @@ export function getV3ApiErrorMessage(error: unknown, fallbackMessage: string): s
   return fallbackMessage;
 }
 
+/**
+ * The machine-readable reason a refused request carries in `details.reason` — a service's error code that
+ * the page translates — falling back to the human message for anything else.
+ */
+export function getV3ApiErrorReason(error: unknown): string {
+  if (error instanceof V3ApiError) {
+    const reason = error.details?.reason;
+    return typeof reason === "string" ? reason : error.detail;
+  }
+  return error instanceof Error ? error.message : "";
+}
+
 export async function parseV3ApiError(response: Response): Promise<V3ApiError> {
   let problemBody: TV3ProblemBody | undefined;
 

@@ -254,10 +254,11 @@ export function problemUnauthorized(
 export function problemForbidden(
   requestId: string,
   detail: string = "You are not authorized to access this resource",
-  instance?: string
+  instance?: string,
+  code: ProblemCode = "forbidden"
 ): Response {
   return problemResponse(403, "Forbidden", detail, requestId, {
-    code: "forbidden",
+    code,
     instance,
   });
 }

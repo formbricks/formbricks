@@ -13,13 +13,13 @@ import {
   THubTargetField,
 } from "@formbricks/types/feedback-source";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
+import { getV3ApiErrorReason } from "@/modules/api/lib/v3-client";
 import {
-  createFeedbackSourceWithMappingsAction,
-  deleteFeedbackSourceAction,
-  importHistoricalResponsesAction,
-  updateFeedbackSourceWithMappingsAction,
-} from "@/lib/feedback-source/actions";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+  createFeedbackSource,
+  deleteFeedbackSource,
+  importFeedbackSourceResponses,
+  updateFeedbackSource,
+} from "@/modules/ee/unify-feedback/sources/api-client";
 import {
   hasRestrictedAttachedSurvey,
   isRestrictedSurveyPick,
@@ -117,33 +117,32 @@ export function FeedbackSourcesSection({
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }): Promise<string | undefined> => {
-    const result = await createFeedbackSourceWithMappingsAction({
-      workspaceId: workspaceId,
-      feedbackSourceInput: {
-        name: data.name,
-        type: data.type,
-        feedbackDirectoryId: data.feedbackDirectoryId,
-        importMode: data.importMode,
-      },
-      formbricksMappings:
-        data.type === "formbricks_survey" && data.surveyMappings?.length ? data.surveyMappings : undefined,
-      fieldMappings:
-        data.type !== "formbricks_survey" && data.fieldMappings?.length
-          ? data.fieldMappings.map((m) => ({
-              sourceFieldId: m.sourceFieldId || "",
-              targetFieldId: m.targetFieldId as THubTargetField,
-              staticValue: m.staticValue,
-            }))
-          : undefined,
-    });
-
-    if (!result?.data) {
-      toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(result), t));
+    try {
+      const created = await createFeedbackSource(workspaceId, {
+        source: {
+          name: data.name,
+          type: data.type,
+          feedbackDirectoryId: data.feedbackDirectoryId,
+          importMode: data.importMode,
+        },
+        formbricksMappings:
+          data.type === "formbricks_survey" && data.surveyMappings?.length ? data.surveyMappings : undefined,
+        fieldMappings:
+          data.type !== "formbricks_survey" && data.fieldMappings?.length
+            ? data.fieldMappings.map((m) => ({
+                sourceFieldId: m.sourceFieldId || "",
+                targetFieldId: m.targetFieldId as THubTargetField,
+                staticValue: m.staticValue,
+              }))
+            : undefined,
+      });
+      // The source list is server-rendered; re-render it.
+      router.refresh();
+      return created.id;
+    } catch (error) {
+      toast.error(getTranslatedFeedbackSourceError(getV3ApiErrorReason(error), t));
       return undefined;
     }
-
-    router.refresh();
-    return result.data.id;
   };
 
   const handleUpdateFeedbackSource = async (data: {
@@ -154,25 +153,20 @@ export function FeedbackSourcesSection({
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }): Promise<boolean> => {
-    const result = await updateFeedbackSourceWithMappingsAction({
-      feedbackSourceId: data.feedbackSourceId,
-      workspaceId: workspaceId,
-      feedbackSourceInput: {
-        name: data.name,
-        importMode: data.importMode,
-      },
-      formbricksMappings: data.surveyMappings?.length ? data.surveyMappings : undefined,
-      fieldMappings: data.fieldMappings?.length
-        ? data.fieldMappings.map((m) => ({
-            sourceFieldId: m.sourceFieldId || "",
-            targetFieldId: m.targetFieldId as THubTargetField,
-            staticValue: m.staticValue,
-          }))
-        : undefined,
-    });
-
-    if (!result?.data) {
-      toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(result), t));
+    try {
+      await updateFeedbackSource(data.feedbackSourceId, {
+        source: { name: data.name, importMode: data.importMode },
+        formbricksMappings: data.surveyMappings?.length ? data.surveyMappings : undefined,
+        fieldMappings: data.fieldMappings?.length
+          ? data.fieldMappings.map((m) => ({
+              sourceFieldId: m.sourceFieldId || "",
+              targetFieldId: m.targetFieldId as THubTargetField,
+              staticValue: m.staticValue,
+            }))
+          : undefined,
+      });
+    } catch (error) {
+      toast.error(getTranslatedFeedbackSourceError(getV3ApiErrorReason(error), t));
       return false;
     }
 
@@ -182,10 +176,10 @@ export function FeedbackSourcesSection({
   };
 
   const handleDeleteFeedbackSource = async (feedbackSourceId: string): Promise<void> => {
-    const result = await deleteFeedbackSourceAction({ feedbackSourceId, workspaceId: workspaceId });
-
-    if (!result?.data) {
-      toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(result), t));
+    try {
+      await deleteFeedbackSource(feedbackSourceId);
+    } catch (error) {
+      toast.error(getTranslatedFeedbackSourceError(getV3ApiErrorReason(error), t));
       return;
     }
 
@@ -235,20 +229,10 @@ export function FeedbackSourcesSection({
     }
 
     try {
-      const importResult = await importHistoricalResponsesAction({
-        feedbackSourceId,
-        workspaceId,
-        surveyId: survey.id,
-      });
-
-      if (importResult?.data) {
-        announceImportResult(importResult.data);
-      } else {
-        // The source was created; only the historical import failed.
-        toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(importResult), t));
-      }
-    } catch {
-      toast.error(t("common.something_went_wrong"));
+      announceImportResult(await importFeedbackSourceResponses(feedbackSourceId, survey.id));
+    } catch (error) {
+      // The source was created; only the historical import failed.
+      toast.error(getTranslatedFeedbackSourceError(getV3ApiErrorReason(error), t));
     }
 
     router.refresh();
@@ -298,23 +282,12 @@ export function FeedbackSourcesSection({
       // and writes them into the same feedback directory, so running them in parallel would only
       // multiply the load on one directory. Normally there is a single survey anyway.
       for (const surveyId of surveyIds) {
-        const importResult = await importHistoricalResponsesAction({
-          feedbackSourceId: feedbackSource.id,
-          workspaceId,
-          surveyId,
-        });
-
-        if (!importResult?.data) {
-          toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(importResult), t));
-          return;
-        }
-
-        totals.push(importResult.data);
+        totals.push(await importFeedbackSourceResponses(feedbackSource.id, surveyId));
       }
 
       announceImportResult(sumImportTotals(totals));
-    } catch {
-      toast.error(t("common.something_went_wrong"));
+    } catch (error) {
+      toast.error(getTranslatedFeedbackSourceError(getV3ApiErrorReason(error), t));
       return;
     }
 
@@ -323,14 +296,10 @@ export function FeedbackSourcesSection({
 
   const handleToggleStatus = async (feedbackSource: TFeedbackSourceWithMappings): Promise<void> => {
     const newStatus = feedbackSource.status === "active" ? "paused" : "active";
-    const result = await updateFeedbackSourceWithMappingsAction({
-      feedbackSourceId: feedbackSource.id,
-      workspaceId: workspaceId,
-      feedbackSourceInput: { status: newStatus },
-    });
-
-    if (!result?.data) {
-      toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(result), t));
+    try {
+      await updateFeedbackSource(feedbackSource.id, { source: { status: newStatus } });
+    } catch (error) {
+      toast.error(getTranslatedFeedbackSourceError(getV3ApiErrorReason(error), t));
       return;
     }
 

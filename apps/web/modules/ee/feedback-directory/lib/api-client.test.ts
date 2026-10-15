@@ -3,7 +3,6 @@ import { V3ApiError } from "@/modules/api/lib/v3-client";
 import {
   createFeedbackDataset,
   getFeedbackDataset,
-  getFeedbackDatasetErrorCode,
   purgeFeedbackDataset,
   updateFeedbackDataset,
 } from "./api-client";
@@ -95,23 +94,5 @@ describe("dataset settings", () => {
     expect(fetchMock.mock.calls[0][0]).toBe("/api/internal/feedback-datasets/ds_1");
     expect(fetchMock.mock.calls[1][0]).toBe("/api/internal/feedback-datasets/ds_1");
     expect(fetchMock.mock.calls[1][1].method).toBe("PATCH");
-  });
-});
-
-describe("getFeedbackDatasetErrorCode", () => {
-  test("reads the service code a refused write carries", () => {
-    const error = new V3ApiError({
-      status: 409,
-      detail: "DIRECTORY_NAME_DUPLICATE",
-      details: { reason: "DIRECTORY_NAME_DUPLICATE" },
-    });
-    expect(getFeedbackDatasetErrorCode(error)).toBe("DIRECTORY_NAME_DUPLICATE");
-  });
-
-  test("falls back to the message for anything else", () => {
-    expect(getFeedbackDatasetErrorCode(new V3ApiError({ status: 403, detail: "Forbidden" }))).toBe(
-      "Forbidden"
-    );
-    expect(getFeedbackDatasetErrorCode(new Error("boom"))).toBe("boom");
   });
 });

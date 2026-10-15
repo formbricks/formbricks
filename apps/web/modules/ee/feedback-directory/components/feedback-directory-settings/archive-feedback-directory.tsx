@@ -5,10 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import {
-  getFeedbackDatasetErrorCode,
-  updateFeedbackDataset,
-} from "@/modules/ee/feedback-directory/lib/api-client";
+import { getV3ApiErrorReason } from "@/modules/api/lib/v3-client";
+import { updateFeedbackDataset } from "@/modules/ee/feedback-directory/lib/api-client";
 import { getTranslatedFeedbackDirectoryError } from "@/modules/ee/feedback-directory/types/feedback-directory";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -47,7 +45,7 @@ export const ArchiveFeedbackDirectory = ({
       // The directory list is server-rendered; re-render it.
       router.refresh();
     } catch (error) {
-      toast.error(getTranslatedFeedbackDirectoryError(getFeedbackDatasetErrorCode(error), t));
+      toast.error(getTranslatedFeedbackDirectoryError(getV3ApiErrorReason(error), t));
     }
 
     setIsArchiveDialogOpen(false);

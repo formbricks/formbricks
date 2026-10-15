@@ -2,7 +2,7 @@ import { type Page, expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES } from "@formbricks/types/feedback-source";
 import { test } from "./lib/fixtures";
-import { createSurveyFromScratch } from "./utils/helper";
+import { createSurveyFromScratch, publishSurvey } from "./utils/helper";
 
 // ENG-2064. A feedback source stores one mapping row per survey question it publishes to Hub, and the
 // publish path iterates those rows rather than the survey. So when a survey is edited, any drift
@@ -241,5 +241,64 @@ test.describe("Feedback source reconciliation @slow", () => {
         { timeout: 15000 }
       )
       .not.toBe("nps");
+  });
+});
+
+/**
+ * The sources page itself: add a source from a suggested survey, disable it, delete it. Asserted on what
+ * the database holds, so it holds before and after the page moved from server actions onto
+ * `/api/internal/feedback-sources` (ENG-3984). The one-click add also asks the Hub to import the
+ * survey's past responses; the E2E stack runs without a Hub, so that half is not asserted here.
+ */
+test.describe("Feedback sources page", () => {
+  test("adds a source from a suggested survey, disables it and deletes it", async ({ page, users }) => {
+    const user = await users.create();
+    const { organizationId, workspaceId } = user;
+    if (!organizationId || !workspaceId) throw new Error("Workspace not seeded for the test user");
+    const datasetId = await seedDirectory(organizationId, workspaceId);
+
+    await user.login();
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    const surveyId = await createSurveyFromScratch(page);
+    // Only a survey past draft, and visible to the whole workspace, is suggested as a source.
+    await publishSurvey(page);
+    const survey = await prisma.survey.findUniqueOrThrow({ where: { id: surveyId }, select: { name: true } });
+
+    const storedSource = () =>
+      prisma.feedbackSource.findFirst({
+        where: { workspaceId, feedbackDirectoryId: datasetId },
+        select: { id: true, status: true, formbricksMappings: { select: { surveyId: true } } },
+      });
+    const sourceRow = () => page.getByRole("row").filter({ hasText: survey.name });
+
+    await page.goto(`/workspaces/${workspaceId}/unify/sources`, { waitUntil: "domcontentloaded" });
+
+    await test.step("add a source from the suggestion", async () => {
+      await page
+        .getByText(survey.name)
+        .locator("xpath=ancestor::div[contains(@class,'grid')][1]")
+        .getByRole("button", { name: "Import responses" })
+        .click();
+
+      await expect.poll(storedSource).toMatchObject({ status: "active", formbricksMappings: [{ surveyId }] });
+      await expect(sourceRow()).toBeVisible();
+    });
+
+    await test.step("disable it", async () => {
+      await sourceRow().getByRole("button", { name: "Open options" }).click();
+      await page.getByRole("menuitem", { name: "Disable" }).click();
+
+      await expect(page.getByText("Feedback source status updated successfully")).toBeVisible();
+      await expect.poll(async () => (await storedSource())?.status).toBe("paused");
+    });
+
+    await test.step("delete it", async () => {
+      await sourceRow().getByRole("button", { name: "Open options" }).click();
+      await page.getByRole("menuitem", { name: "Delete" }).click();
+      await page.getByRole("dialog").getByRole("button", { name: "Delete", exact: true }).click();
+
+      await expect(page.getByText("Feedback source deleted successfully")).toBeVisible();
+      await expect.poll(storedSource).toBeNull();
+    });
   });
 });
