@@ -86,14 +86,18 @@ describe("maintenance-only preparation", () => {
   );
 
   test.each([
-    { AUTHZED_ENABLED: "false" },
-    { AUTHZED_ENABLED: "" },
-    { AUTHZED_CONSISTENCY: "minimize_latency" },
-  ])("rejects incompatible authorization before migrations: %j", (env) => {
+    { env: { AUTHZED_ENABLED: "false" }, variable: "AUTHZED_ENABLED" },
+    { env: { AUTHZED_ENABLED: "" }, variable: "AUTHZED_ENABLED" },
+    { env: { AUTHZED_CONSISTENCY: "minimize_latency" }, variable: "AUTHZED_CONSISTENCY" },
+  ])("rejects incompatible authorization before migrations, naming $variable", ({ env, variable }) => {
     const result = execute(acknowledgements, env);
     expect(result.status).toBe(2);
     expect(result.trace).toEqual([]);
-    expect(result.output.code).toBe("upgrade_configuration_invalid");
+    expect(result.output).toEqual({
+      status: "blocked",
+      code: "upgrade_configuration_invalid",
+      variables: [variable],
+    });
   });
 
   const steps = [

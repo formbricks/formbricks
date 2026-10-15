@@ -4,9 +4,12 @@
 set +x
 set -eu
 
+# The optional third argument lists the variables to fix, as quoted names for a JSON array. Never values.
 result() {
   if [ "$1" = prepared ]; then
     printf '{"status":"prepared","code":"%s","restartRequired":true}\n' "$2"
+  elif [ -n "${3:-}" ]; then
+    printf '{"status":"blocked","code":"%s","variables":[%s]}\n' "$2" "$3"
   else
     printf '{"status":"blocked","code":"%s"}\n' "$2"
   fi
@@ -45,10 +48,10 @@ export LOG_LEVEL=fatal
 export NODE_ENV=production
 case "${AUTHZED_ENABLED:-}" in
   true | 1) ;;
-  *) result blocked upgrade_configuration_invalid; exit 2 ;;
+  *) result blocked upgrade_configuration_invalid '"AUTHZED_ENABLED"'; exit 2 ;;
 esac
 if [ "${AUTHZED_CONSISTENCY:-}" != fully_consistent ]; then
-  result blocked upgrade_configuration_invalid
+  result blocked upgrade_configuration_invalid '"AUTHZED_CONSISTENCY"'
   exit 2
 fi
 
@@ -63,7 +66,13 @@ run_step() {
   fi
 }
 
-run_step upgrade_configuration_invalid node /home/nextjs/validate-env.mjs
+# The validator lists each invalid variable as "  - NAME: message". Only the names are reported: they say
+# what to fix, and nothing else of the output is copied, as for every other step.
+if ! validation=$(timeout 1800 node /home/nextjs/validate-env.mjs 2>&1); then
+  invalid=$(printf '%s\n' "$validation" | sed -n 's/^ *- \([A-Z][A-Z0-9_]*\):.*/"\1"/p' | sort -u | tr '\n' , | sed 's/,$//')
+  result blocked upgrade_configuration_invalid "$invalid"
+  exit 2
+fi
 run_step upgrade_spicedb_unhealthy formbricks-authzed health
 run_step upgrade_database_migration_failed node /home/nextjs/packages/database/dist/scripts/apply-migrations.js
 if [ -n "$digest" ]; then
