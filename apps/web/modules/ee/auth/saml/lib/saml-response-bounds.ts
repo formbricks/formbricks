@@ -14,8 +14,12 @@ import "server-only";
  * such as AD distinguished names (`CN=…,OU=…,DC=…`) cost nothing however many `=` they hold. A real response
  * written as verbosely as Okta writes one (`xmlns:xs`, `xmlns:xsi` and `xsi:type` on every group) reaches about
  * 5,000 only at 1,000 groups, where it already fills the whole 256 KiB body limit; one with the shortest
- * possible group names tops out near 8,000. At 12,000 the costliest shape found parses in ~25 ms, against
- * ~5 ms for 12,000 empty elements and ~300 ms for the uncapped attack.
+ * possible group names tops out near 8,000.
+ *
+ * Costs above and below were measured on Node 26.4 (arm64 laptop), warm, as the median of five single
+ * `parseIssuer` calls; read them as ratios. At the budget, the costliest shape found (a valueless attribute
+ * followed by a stray quote, repeated) costs about four times as much as the same budget of empty elements,
+ * against roughly sixty times for the uncapped attack.
  */
 export const SAML_RESPONSE_MARKUP_BUDGET = 12_000;
 
@@ -31,21 +35,22 @@ const SINGLE_QUOTE = 0x27;
 /**
  * What separates attributes, as xmldom reads it: any byte up to a space, so form feed and NUL count as well as
  * space, tab and newlines, plus 0x80, which xmldom also takes as a space. A narrower test lets attributes
- * separated by a control byte through uncounted.
+ * separated by a control byte through uncounted. Taking the byte 0x80 as a separator also splits the rare
+ * non-ASCII character that contains it, which over-counts: the safe direction.
  */
 const isSeparator = (byte: number) => byte <= 0x20 || byte === 0x80;
 
-/** Whether a byte can start an element name: a letter, `_`, `:`, or any non-ASCII byte. */
+/**
+ * Whether a byte starts an element name that xmldom accepts cheaply: an ASCII letter or `_`. A leading `:` and a
+ * byte that does not decode to a name character (an invalid UTF-8 byte becomes U+FFFD) make xmldom raise and
+ * recover just as a stray `<` does, and SAML element names are ASCII, so anything else is weighted as stray.
+ */
 const isNameStart = (byte: number) =>
-  (byte >= 0x61 && byte <= 0x7a) ||
-  (byte >= 0x41 && byte <= 0x5a) ||
-  byte === 0x5f ||
-  byte === 0x3a ||
-  byte >= 0x80;
+  (byte >= 0x61 && byte <= 0x7a) || (byte >= 0x41 && byte <= 0x5a) || byte === 0x5f;
 
 /**
- * Weight of a `<` that cannot start anything: `<0`, `< `, `<-`. xmldom raises and recovers from an error for
- * each, which makes it ten to sixteen times dearer than an element, and no well-formed response contains one.
+ * Weight of a `<` that cannot start an element: `<0`, `< `, `<:`. xmldom raises and recovers from an error for
+ * each, which measured eight to sixteen times dearer than an element, and no SAML response contains one.
  */
 const STRAY_LESS_THAN_WEIGHT = 16;
 

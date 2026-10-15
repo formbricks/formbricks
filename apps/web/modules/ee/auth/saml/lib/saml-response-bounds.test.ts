@@ -58,10 +58,17 @@ describe("countSamlResponseMarkup", () => {
     expect(count("<a\fb\vc\u0000d/>")).toBe(4);
   });
 
-  test("weighs a < that cannot start anything far above an element", () => {
-    // xmldom raises and recovers from an error for each `<0` or `< `, which costs it ten times an element.
+  test("weighs a < that cannot start an element far above an element", () => {
+    // xmldom raises and recovers from an error for each of these, which costs far more than an element.
     expect(count("<r>< </r>")).toBe(18);
     expect(count("<r><0</r>")).toBe(18);
+    // A leading `:` and a non-ASCII byte are not cheap starts either.
+    expect(count("<r><:a/></r>")).toBe(18);
+    expect(
+      countSamlResponseMarkup(
+        Buffer.from([0x3c, 0x72, 0x3e, 0x3c, 0xff, 0x30, 0x3c, 0x2f, 0x72, 0x3e]).toString("base64")
+      )
+    ).toBe(18);
     // A closing tag, comment or processing instruction is still one.
     expect(count("<r></r><!---->")).toBe(3);
   });
@@ -90,7 +97,8 @@ describe("the budget", () => {
     ["the most minimal group names that fit", tinyGroups(Math.floor((BODY_LIMIT * 0.75) / 49))],
   ])("lets through %s, which fill the body limit", (_name, xml) => {
     expect(b64(xml).length).toBeGreaterThan(200 * 1024);
-    expect(b64(xml).length).toBeLessThanOrEqual(BODY_LIMIT);
+    // Leave room for the multipart boundary, field names and RelayState that share the body limit.
+    expect(b64(xml).length).toBeLessThanOrEqual(BODY_LIMIT - 1024);
     expect(withinBudget(xml)).toBe(true);
   });
 
