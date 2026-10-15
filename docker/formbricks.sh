@@ -399,12 +399,14 @@ in_formbricks && /^  [A-Za-z0-9_-]+:/ && !/^  formbricks:$/ { in_formbricks = 0 
         }
         print "      - \"traefik.http.routers.feedback-records-token.service=formbricks\""
         print "      - \"traefik.http.routers.feedback-records-token.priority=200\""
-        # Every /api/auth/* route answers anonymous callers, and the largest honest body is a SAML response of a
-        # few hundred KiB, so Traefik refuses one over 1 MiB before it reaches the app (ENG-3977). The buffering
-        # middleware reads the whole request first (413 past maxRequestBodyBytes), so a slow sender ties up
-        # Traefik, bounded by the entrypoint readTimeout, instead of the app. 1 MiB is also its in-memory
-        # threshold, so nothing spills to disk. Only auth routes get it: the imports take up to 16 MiB.
+        # Every /api/auth/* route answers anonymous callers, so Traefik refuses a request body over 1 MiB before it
+        # reaches the app (ENG-3977): an edge ceiling with headroom over the tighter auth limit in the app itself. The
+        # buffering middleware reads the whole request first (413 past maxRequestBodyBytes), so a slow sender ties
+        # up Traefik, bounded by the entrypoint readTimeout, instead of the app. The in-memory request threshold is
+        # pinned to the same 1 MiB, so no accepted request body spills to disk. Only auth routes get it: the
+        # imports take up to 16 MiB.
         print "      - \"traefik.http.middlewares.auth-body-limit.buffering.maxRequestBodyBytes=1048576\""
+        print "      - \"traefik.http.middlewares.auth-body-limit.buffering.memRequestBodyBytes=1048576\""
         print "      - \"traefik.http.routers.formbricks-auth.rule=Host(`" domain_name "`) && PathPrefix(`/api/auth`)\""
         print "      - \"traefik.http.routers.formbricks-auth.entrypoints=websecure\""
         print "      - \"traefik.http.routers.formbricks-auth.tls=true\""

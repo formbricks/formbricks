@@ -412,11 +412,11 @@ stores both Formbricks and SpiceDB data.
 For upgrades, restoration, schema changes, and relationship repair, follow the canonical
 [AuthZed Operations guide](/self-hosting/configuration/authzed-operations).
 
-### Limit Request Bodies on Authentication Routes
+### Limit request bodies on authentication routes
 
-New installations cap request bodies on `/api/auth/*` at 1 MiB in Traefik, so an oversized or slowly sent
-upload to a sign-in or OAuth endpoint is refused before it reaches Formbricks. No legitimate request to these
-routes comes close to that size. The update command does not add the cap to an existing installation, so add
+New installations cap request bodies on `/api/auth/*` at 1 MiB in Traefik. An oversized upload to a sign-in or
+OAuth endpoint is refused before it reaches Formbricks, and a slow one is read in full by Traefik first, so it
+does not tie up Formbricks while it arrives. No legitimate request to these routes comes close to that size. The update command does not add the cap to an existing installation, so add
 it yourself if you want it.
 
 In `formbricks/docker-compose.yml`, add these lines to the `labels` of the `formbricks` service, replacing
@@ -424,6 +424,7 @@ In `formbricks/docker-compose.yml`, add these lines to the `labels` of the `form
 
 ```yaml
 - "traefik.http.middlewares.auth-body-limit.buffering.maxRequestBodyBytes=1048576"
+- "traefik.http.middlewares.auth-body-limit.buffering.memRequestBodyBytes=1048576"
 - "traefik.http.routers.formbricks-auth.rule=Host(`your-domain.com`) && PathPrefix(`/api/auth`)"
 - "traefik.http.routers.formbricks-auth.entrypoints=websecure"
 - "traefik.http.routers.formbricks-auth.tls=true"

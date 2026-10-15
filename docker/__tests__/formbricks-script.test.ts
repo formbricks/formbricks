@@ -1162,8 +1162,12 @@ describe("docker/formbricks.sh Traefik label injection", () => {
       "traefik.http.middlewares.auth-body-limit.buffering.maxRequestBodyBytes=1048576"
     );
     expect(formbricksBlock).toContain(
+      "traefik.http.middlewares.auth-body-limit.buffering.memRequestBodyBytes=1048576"
+    );
+    expect(formbricksBlock).toContain(
       "traefik.http.routers.formbricks-auth.rule=Host(`example.com`) && PathPrefix(`/api/auth`)"
     );
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.priority=200");
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.entrypoints=websecure");
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.tls.certresolver=default");
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.service=formbricks");
@@ -1191,6 +1195,7 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.middlewares=auth-body-limit");
     expect(formbricksBlock).toContain("traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000");
     expect(formbricksBlock).not.toContain("tls.certresolver=default");
+    expect(formbricksBlock).not.toContain("formbricks-auth-http");
   });
 
   test("adds HTTP fallback labels when HSTS is disabled", () => {
@@ -1216,6 +1221,7 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(formbricksBlock).toContain(
       "traefik.http.routers.formbricks-auth-http.middlewares=auth-body-limit"
     );
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth-http.priority=200");
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.middlewares=auth-body-limit");
     expect(formbricksBlock).not.toContain("tls.certresolver=default");
     expect(formbricksBlock).not.toContain("traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000");
