@@ -73,6 +73,21 @@ spec:
               const { Prisma, PrismaClient } = require("./packages/database/dist/src/prisma.cjs");
               const { createPrismaPgAdapter } = require("./packages/database/dist/src/prisma-adapter.cjs");
 
+              // The migration Job runs apply-migrations.js without --phase, which is the maintenance phase.
+              // Deferred migrations never run there, so their markers must not be expected here either.
+              const MIGRATION_PHASE = "maintenance";
+              const loadShouldRunMigration = () => {
+                try {
+                  return require("./packages/database/dist/scripts/migration-phases.cjs").shouldRunMigration;
+                } catch (error) {
+                  if (!error || error.code !== "MODULE_NOT_FOUND") throw error;
+                  // Images that predate migration phases ship no deferred migrations, so every marker is expected.
+                  console.log("Migration phases are not available in this image; expecting every migration marker.");
+                  return () => true;
+                }
+              };
+              const shouldRunMigration = loadShouldRunMigration();
+
               const parsePositiveInteger = (value, fallback) => {
                 const parsed = Number.parseInt(value || "", 10);
                 return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
@@ -149,7 +164,7 @@ spec:
                   const migrationPath = path.join(migrationsDir, entry.name);
                   const files = await fsp.readdir(migrationPath);
 
-                  if (files.includes("migration.sql")) {
+                  if (files.includes("migration.sql") && shouldRunMigration(entry.name, MIGRATION_PHASE)) {
                     schemaMigrationNames.push(entry.name);
                   }
 
@@ -163,7 +178,8 @@ spec:
                         exportedValue &&
                         typeof exportedValue === "object" &&
                         exportedValue.type === "data" &&
-                        exportedValue.id
+                        exportedValue.id &&
+                        shouldRunMigration(exportedValue.name || entry.name, MIGRATION_PHASE)
                       ) {
                         dataMigrationIds.push(exportedValue.id);
                       }
