@@ -56,10 +56,16 @@ test.each([[], ["unexpected"], ["prepare", "extra"]])(
   }
 );
 
-test("configuration failures are sanitized and never claim rollback safety", async () => {
-  vi.mocked(readFile).mockRejectedValueOnce(new Error("private mounted secret"));
+test("configuration failures name only the error's class and code, and never claim rollback safety", async () => {
+  vi.mocked(readFile).mockRejectedValueOnce(
+    Object.assign(new Error("private mounted secret"), { code: "ENOENT" })
+  );
   const result = await runKubernetesOnlineCli(["prepare"], root);
-  expect(result).toMatchObject({ blockerCode: "invalid_online_configuration", rollbackTo60Allowed: false });
+  expect(result).toMatchObject({
+    blockerCode: "invalid_online_configuration",
+    rollbackTo60Allowed: false,
+    cause: { name: "Error", code: "ENOENT" },
+  });
   expect(JSON.stringify(result)).not.toContain("private mounted secret");
   expect(KubernetesUpgrade.connect).not.toHaveBeenCalled();
 });
