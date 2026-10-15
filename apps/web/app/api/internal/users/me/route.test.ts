@@ -122,16 +122,11 @@ beforeEach(() => {
 });
 
 describe("PATCH /api/internal/users/me", () => {
-  test("changes a credential user's name and locale and returns the profile", async () => {
+  test("changes a credential user's name and locale, answering 204 with no body", async () => {
     const response = await patchProfile({ name: "Ada King", locale: "de-DE" });
 
-    expect(response.status).toBe(200);
-    expect((await response.json()).data).toEqual({
-      id: USER_ID,
-      name: "Ada King",
-      email: "ada@example.com",
-      locale: "de-DE",
-    });
+    expect(response.status).toBe(204);
+    expect(await response.text()).toBe("");
     expect(mocks.updateUser).toHaveBeenCalledWith(USER_ID, { name: "Ada King", locale: "de-DE" });
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({ action: "updated", targetType: "user", status: "success", targetId: USER_ID })
@@ -152,14 +147,14 @@ describe("PATCH /api/internal/users/me", () => {
 
     const response = await patchProfile({ name: "Ada Lovelace", locale: "fr-FR" });
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(204);
     expect(mocks.updateUser).toHaveBeenCalledWith(USER_ID, { name: "Ada Lovelace", locale: "fr-FR" });
   });
 
   test("sends a verification email instead of changing the address when verification is on", async () => {
     const response = await patchProfile({ email: "new@example.com", password: "Correct-horse-1" });
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(204);
     expect(mocks.verifyUserPassword).toHaveBeenCalledWith(USER_ID, "Correct-horse-1");
     expect(mocks.sendVerificationNewEmail).toHaveBeenCalledWith(USER_ID, "new@example.com", "en-US");
     expect(mocks.updateUser).not.toHaveBeenCalled();
@@ -174,7 +169,7 @@ describe("PATCH /api/internal/users/me", () => {
 
     const response = await patchProfile({ email: "New@Example.com", password: "Correct-horse-1" });
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(204);
     expect(mocks.updateUser).toHaveBeenCalledWith(USER_ID, { email: "new@example.com" });
     expect(mocks.updateBrevoCustomer).toHaveBeenCalledWith({ id: USER_ID, email: "new@example.com" });
   });
@@ -204,10 +199,24 @@ describe("PATCH /api/internal/users/me", () => {
 
     const response = await patchProfile({ email: "taken@example.com", password: "Correct-horse-1" });
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(204);
     expect(mocks.sendVerificationNewEmail).not.toHaveBeenCalled();
     expect(mocks.updateUser).not.toHaveBeenCalled();
   });
+
+  test.each([true, false])(
+    "answers identically for a free and a taken address with verification off (free: %s)",
+    async (isFree) => {
+      mocks.constants.EMAIL_VERIFICATION_DISABLED = true;
+      mocks.getIsEmailUnique.mockResolvedValue(isFree);
+
+      const response = await patchProfile({ email: "other@example.com", password: "Correct-horse-1" });
+
+      // A body echoing the stored address would say which one this was.
+      expect(response.status).toBe(204);
+      expect(await response.text()).toBe("");
+    }
+  );
 
   test("refuses an email change from an SSO user", async () => {
     mocks.getUser.mockResolvedValue(ssoUser);

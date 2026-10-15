@@ -14,6 +14,7 @@ import {
 import { applyRateLimitOrRespond, rateLimitedResponse } from "@/app/api/internal/lib/rate-limit";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import {
+  noContentResponse,
   problemBadRequest,
   problemForbidden,
   problemUnauthorized,
@@ -26,7 +27,6 @@ import { requestSsoAccountDeletionEmail } from "@/modules/account/lib/better-aut
 import { auth } from "@/modules/auth/lib/auth";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TNotificationSettingPatchBody, TProfilePatchBody } from "../schemas";
-import { serializeProfile } from "../serializers";
 import { updateOwnProfile } from "./profile";
 
 type TRequestContext = {
@@ -52,7 +52,11 @@ async function requireCurrentUser({
   return user;
 }
 
-/** `PATCH /api/internal/users/me`: change your own name, locale or email address. */
+/**
+ * `PATCH /api/internal/users/me`: change your own name, locale or email address. Answers 204 with no body:
+ * the stored profile would show whether a requested address was free (with verification off, a free one
+ * changes at once and a taken one silently doesn't), which is the account oracle the email change avoids.
+ */
 export async function updateProfileOperation({
   body,
   ...context
@@ -91,7 +95,7 @@ export async function updateProfileOperation({
   }
 
   if (auditLog) auditLog.newObject = updated;
-  return successResponse(serializeProfile(updated), { requestId });
+  return noContentResponse({ requestId });
 }
 
 /** `GET /api/internal/users/me/notification-settings`: every switch on the notifications page. */
