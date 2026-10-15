@@ -6,7 +6,9 @@ import {
   listClientActionImporters,
   listRouteFiles,
   normalizePathParams,
+  readHandlers,
   readPublicBundlePaths,
+  stripComments,
 } from "./scan";
 
 /**
@@ -19,8 +21,8 @@ import {
  * without touching this file. Lower the baselines when a migration lands, to lock the progress in.
  */
 
-/** Exported server actions left to migrate. Only ever lower this. */
-const SERVER_ACTION_BASELINE = 137;
+/** Server actions left to migrate, inline ones included. Only ever lower this. */
+const SERVER_ACTION_BASELINE = 138;
 
 /** Client modules that still call a server action directly. Only ever lower this. */
 const CLIENT_ACTION_IMPORTER_BASELINE = 96;
@@ -35,12 +37,15 @@ describe("internal routes", () => {
   });
 
   test.each(internalRoutes.map((route) => [route.path, route] as const))(
-    "%s goes through withV3ApiWrapper and never accepts an API key",
+    "%s: every method goes through withV3ApiWrapper and never accepts an API key",
     (_path, route) => {
-      expect(route.usesWrapper, `${route.file} must use withV3ApiWrapper`).toBe(true);
-      // The default mode is "both", so a route that omits `auth` would accept API keys.
-      for (const mode of route.authModes) {
-        expect(INTERNAL_AUTH_MODES.has(mode), `${route.file} uses auth "${mode}"`).toBe(true);
+      expect(route.handlers.length, `${route.file} exports no method handler`).toBeGreaterThan(0);
+      for (const { method, usesWrapper, authMode } of route.handlers) {
+        expect(usesWrapper, `${route.file} ${method} must be withV3ApiWrapper({ … })`).toBe(true);
+        // The default mode is "both", so a handler that omits `auth` would accept API keys.
+        expect(INTERNAL_AUTH_MODES.has(authMode), `${route.file} ${method} uses auth "${authMode}"`).toBe(
+          true
+        );
       }
     }
   );
@@ -54,12 +59,56 @@ describe("internal routes", () => {
   });
 });
 
+describe("the route scan", () => {
+  const route = (source: string) => readHandlers(source);
+
+  test("reads each method's own wrapper and auth mode", () => {
+    expect(
+      route(`export const GET = withV3ApiWrapper({ auth: "session", handler });
+export const POST = withV3ApiWrapper({ handler });`)
+    ).toEqual([
+      { method: "GET", usesWrapper: true, authMode: "session" },
+      { method: "POST", usesWrapper: true, authMode: "both" },
+    ]);
+  });
+
+  test("does not let one wrapped method vouch for a raw one beside it", () => {
+    expect(
+      route(`export const GET = withV3ApiWrapper({ auth: "session", handler });
+export async function DELETE() { return new Response(null); }`)
+    ).toContainEqual({ method: "DELETE", usesWrapper: false, authMode: "custom" });
+  });
+
+  test("ignores a wrapper or an auth mode that only appears in a comment", () => {
+    expect(
+      route(`// export const GET = withV3ApiWrapper({ auth: "session" })
+/* auth: "session" */
+export const GET = withV3ApiWrapper({ handler });`)
+    ).toEqual([{ method: "GET", usesWrapper: true, authMode: "both" }]);
+  });
+
+  test("treats a re-exported handler as unverified", () => {
+    expect(route(`const handler = () => new Response();\nexport { handler as POST };`)).toEqual([
+      { method: "POST", usesWrapper: false, authMode: "custom" },
+    ]);
+  });
+
+  test("strips comments without touching strings or line numbers", () => {
+    const source = `const url = "https://example.com"; // trailing\n/* a\nb */ const x = '/*';`;
+    const stripped = stripComments(source);
+    expect(stripped).toContain(`"https://example.com"`);
+    expect(stripped).toContain(`'/*'`);
+    expect(stripped).not.toContain("trailing");
+    expect(stripped.split("\n")).toHaveLength(source.split("\n").length);
+  });
+});
+
 describe("server action ratchet", () => {
   test("no new server actions: new UI data flows go through the internal API", () => {
     const { total, actionsByFile } = countServerActions();
     expect(
       total,
-      `Found ${total} exported server actions, more than the baseline of ${SERVER_ACTION_BASELINE}. New UI ` +
+      `Found ${total} server actions, more than the baseline of ${SERVER_ACTION_BASELINE}. New UI ` +
         "data flows go through an /api/internal route consumed with TanStack Query (see the api-routes and " +
         `frontend-coding skills). Files: ${[...actionsByFile.keys()].join(", ")}`
     ).toBeLessThanOrEqual(SERVER_ACTION_BASELINE);

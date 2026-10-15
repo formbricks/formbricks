@@ -45,14 +45,25 @@ const read = (file: string) => readFileSync(join(WEB_ROOT, file), "utf8");
 const HTTP_METHODS = ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"] as const;
 export type THttpMethod = (typeof HTTP_METHODS)[number];
 
+/** One exported method handler. */
+export type TRouteHandler = {
+  method: THttpMethod;
+  /** Whether the export is `withV3ApiWrapper({ … })` itself, rather than a function or a re-export. */
+  usesWrapper: boolean;
+  /** The `auth` mode passed to that wrapper (its default, "both", when none is), or `custom`. */
+  authMode: string;
+};
+
 export type TRouteFile = {
   /** Relative to `apps/web`, e.g. `app/api/internal/api-keys/route.ts`. */
   file: string;
   /** The URL it serves: route groups dropped, dynamic segments as `{name}` (`{...path}` for catch-alls). */
   path: string;
   methods: THttpMethod[];
-  /** The `auth` modes passed to `withV3ApiWrapper`, or `custom` for a handler that doesn't use it. */
+  handlers: TRouteHandler[];
+  /** Every handler's auth mode, deduplicated and sorted, for the inventory. */
   authModes: string[];
+  /** Whether every handler goes through `withV3ApiWrapper`. */
   usesWrapper: boolean;
 };
 
@@ -84,39 +95,89 @@ const readReexportedNames = (source: string): Set<string> => {
   return names;
 };
 
-const readMethods = (source: string): THttpMethod[] => {
-  const reexported = readReexportedNames(source);
-  return HTTP_METHODS.filter(
-    (method) =>
-      reexported.has(method) ||
-      new RegExp(String.raw`^export\s+(const|async\s+function|function)\s+${method}\b`, "m").test(source)
+/**
+ * The source with its comments blanked out, so a commented-out handler or an `auth:` in a doc comment
+ * counts for nothing. A linear scan rather than a regex: string and template literals are skipped intact,
+ * so a `//` inside a URL string is not mistaken for a comment.
+ */
+export const stripComments = (source: string): string => {
+  let out = "";
+  let i = 0;
+  while (i < source.length) {
+    const char = source[i];
+    const next = source[i + 1];
+    if (char === "/" && next === "/") {
+      while (i < source.length && source[i] !== "\n") i++;
+    } else if (char === "/" && next === "*") {
+      const end = source.indexOf("*/", i + 2);
+      const stop = end === -1 ? source.length : end + 2;
+      // Keep the comment's line breaks, so line numbers in the result still match the source.
+      out += " " + "\n".repeat(source.slice(i, stop).split("\n").length - 1);
+      i = stop;
+    } else if (char === '"' || char === "'" || char === "`") {
+      let j = i + 1;
+      while (j < source.length && source[j] !== char) j += source[j] === "\\" ? 2 : 1;
+      out += source.slice(i, j + 1);
+      i = j + 1;
+    } else {
+      out += char;
+      i++;
+    }
+  }
+  return out;
+};
+
+/** Each top-level `export` statement, from its keyword to the next one. */
+const splitExports = (source: string): string[] => {
+  const starts = [...source.matchAll(/^export\b/gm)].map((match) => match.index);
+  return starts.map((start, index) => source.slice(start, starts[index + 1] ?? source.length));
+};
+
+const declaredMethod = (statement: string): THttpMethod | undefined => {
+  const name = /^export\s+(?:const|async\s+function|function)\s+(\w+)/.exec(statement)?.[1];
+  return HTTP_METHODS.find((method) => method === name);
+};
+
+const describeHandler = (method: THttpMethod, statement: string): TRouteHandler => {
+  const usesWrapper = new RegExp(String.raw`^export\s+const\s+${method}\s*=\s*withV3ApiWrapper\(`).test(
+    statement
   );
+  if (!usesWrapper) return { method, usesWrapper, authMode: "custom" };
+  const declared = /\bauth:\s*"([a-zA-Z]+)"/.exec(statement)?.[1];
+  // The wrapper's default, when a route names no mode, is "both".
+  return { method, usesWrapper, authMode: declared ?? "both" };
+};
+
+/** A route's method handlers. A re-exported one (`export { GET }`) is opaque to this scan: `custom`. */
+export const readHandlers = (source: string): TRouteHandler[] => {
+  const code = stripComments(source);
+  const handlers = new Map<THttpMethod, TRouteHandler>();
+  for (const statement of splitExports(code)) {
+    const method = declaredMethod(statement);
+    if (method) handlers.set(method, describeHandler(method, statement));
+  }
+  for (const name of readReexportedNames(code)) {
+    const method = HTTP_METHODS.find((candidate) => candidate === name);
+    if (method) handlers.set(method, { method, usesWrapper: false, authMode: "custom" });
+  }
+  return HTTP_METHODS.flatMap((method) => handlers.get(method) ?? []);
 };
 
 const byText = (a: string, b: string) => a.localeCompare(b);
-
-/** A route's auth modes; the wrapper's default when no `auth` is given is "both". */
-const resolveAuthModes = (usesWrapper: boolean, declared: string[]): string[] => {
-  if (!usesWrapper) return ["custom"];
-  return declared.length > 0 ? declared.toSorted(byText) : ["both"];
-};
 
 /** Every `route.ts` under `app/api`. */
 export const listRouteFiles = (): TRouteFile[] =>
   listSourceFiles()
     .filter((file) => file.startsWith("app/api/") && /\/route\.tsx?$/.test(file))
     .map((file) => {
-      const source = read(file);
-      const usesWrapper = source.includes("withV3ApiWrapper(");
-      const authModes = usesWrapper
-        ? [...new Set([...source.matchAll(/\bauth:\s*"([a-zA-Z]+)"/g)].map((match) => match[1]))]
-        : [];
+      const handlers = readHandlers(read(file));
       return {
         file,
         path: toUrlPath(file),
-        methods: readMethods(source),
-        authModes: resolveAuthModes(usesWrapper, authModes),
-        usesWrapper,
+        methods: handlers.map((handler) => handler.method),
+        handlers,
+        authModes: [...new Set(handlers.map((handler) => handler.authMode))].toSorted(byText),
+        usesWrapper: handlers.length > 0 && handlers.every((handler) => handler.usesWrapper),
       };
     })
     .sort((a, b) => a.path.localeCompare(b.path));
@@ -145,24 +206,40 @@ export const normalizePathParams = (path: string) =>
 
 const ACTION_EXPORT = /^export const (\w+)\s*=\s*(?:authenticatedActionClient|actionClient)\b/gm;
 const USE_SERVER = /^\s*["']use server["'];?/;
+/** A `"use server"` directive opening a function body rather than a module: an inline server action. */
+const INLINE_USE_SERVER = /^[ \t]+["']use server["'];?[ \t]*$/gm;
 const USE_CLIENT = /^\s*["']use client["'];?/;
 
 export type TServerActionCensus = {
-  /** `file → exported action names`, for every `"use server"` module. */
+  /** `file → action names`, for every module that defines one; an inline action is named by its line. */
   actionsByFile: Map<string, string[]>;
   total: number;
 };
 
-/** Every exported server action: `next-safe-action` clients and plain exported `"use server"` functions. */
-export const countServerActions = (): TServerActionCensus => {
-  const actionsByFile = new Map<string, string[]>();
-  for (const file of listSourceFiles()) {
-    const source = read(file);
-    if (!USE_SERVER.test(source)) continue;
-    const names = [
+const lineOf = (source: string, index: number) => source.slice(0, index).split("\n").length;
+
+/** The server actions a module defines: exported ones in a `"use server"` module, inline ones anywhere. */
+const readServerActions = (source: string): string[] => {
+  if (USE_SERVER.test(source)) {
+    return [
       ...[...source.matchAll(ACTION_EXPORT)].map((match) => match[1]),
       ...[...source.matchAll(/^export\s+async\s+function\s+(\w+)/gm)].map((match) => match[1]),
     ];
+  }
+  const code = stripComments(source);
+  return [...code.matchAll(INLINE_USE_SERVER)].map(
+    (match) => `inline action at line ${lineOf(code, match.index)}`
+  );
+};
+
+/**
+ * Every server action: `next-safe-action` clients and plain exported functions in `"use server"` modules,
+ * and functions marked `"use server"` inline (in a server component, say).
+ */
+export const countServerActions = (): TServerActionCensus => {
+  const actionsByFile = new Map<string, string[]>();
+  for (const file of listSourceFiles()) {
+    const names = readServerActions(read(file));
     if (names.length > 0) actionsByFile.set(file, names);
   }
   const total = [...actionsByFile.values()].reduce((sum, names) => sum + names.length, 0);
