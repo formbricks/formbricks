@@ -350,6 +350,14 @@ Compose file, replaces only that exact image reference with the native amd64/arm
 result before pulling. An already-updated or custom Valkey image is left unchanged. The named `redis` volume
 and its AOF data are preserved.
 
+While the stack is stopped, the updater also refreshes the bundled Cube model (`cube/cube.js` and
+`cube/schema/FeedbackRecords.js`), so analytics charts can use members a release adds. It downloads the files
+of the release your Formbricks image runs: the `stable` branch for `latest`, or the tag the image is pinned to.
+It keeps the previous files in `cube/previous/`. The two files change together: if either cannot be
+downloaded, backed up or replaced, both stay as they were, the update finishes, and the updater prints the
+command to retry, `./formbricks.sh refresh-cube`. An image pinned to anything else, such as a digest, leaves
+both files unchanged.
+
 Existing one-click installations keep the database credentials in their local `docker-compose.yml` or `.env`.
 The update command does not regenerate or rotate them.
 

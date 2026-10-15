@@ -474,6 +474,24 @@ Completed jobs remain committed and pending jobs remain queued, but all Hub asyn
 again. A fully custom deployment that runs Hub workers outside this Compose project can ignore the warning: the
 update is not blocked.
 
+### Cube model files for Docker
+
+6.1 adds the `npsCount` measure and the `valueBand` dimension to the Cube model. The **NPS breakdown** and **CSAT
+breakdown** chart presets use them. On Docker the model is two files next to your Compose file,
+`cube/cube.js` and `cube/schema/FeedbackRecords.js`. Until they are refreshed, those presets fail with
+`'npsCount' not found`.
+
+- **One-click:** `./formbricks.sh update`, run with the current updater as described under
+  [Update](/self-hosting/setup/one-click#update), refreshes both files while the stack is stopped. It takes them
+  from the release your Formbricks image runs, and keeps the previous copies in `cube/previous/`. If either file
+  cannot be refreshed, both stay as they were, and the update finishes and prints the command to retry.
+  If the image is pinned to a digest or a custom tag, the updater leaves both files alone; use the Docker
+  Compose step below with your release's tag.
+- **Docker Compose:** run the Cube refresh step of the [Docker update](/self-hosting/setup/docker#update) from
+  the directory containing your `docker-compose.yml`. If you refresh outside an update, recreate Cube
+  afterwards with `docker compose up -d --force-recreate cube`.
+- **Helm:** the chart ships the model, so `helm upgrade` replaces it. No action is needed.
+
 ### Bundled Cube image (action required for some deployments)
 
 From 6.0.2, the bundled Cube service runs `ghcr.io/formbricks/cube:1.7.47-2` instead of `cubejs/cube:v1.6.6`;
