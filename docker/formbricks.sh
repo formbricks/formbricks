@@ -4,6 +4,9 @@ set -e
 ubuntu_version=$(lsb_release -a 2>/dev/null | grep -v "No LSB modules are available." | grep "Description:" | awk -F "Description:\t" '{print $2}')
 legacy_valkey_image="valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d"
 multi_arch_valkey_image="valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84"
+stable_docker_files_url="https://raw.githubusercontent.com/formbricks/formbricks/stable/docker"
+# Cube reads its model from these files, bind-mounted out of the installation directory.
+bundled_cube_files=("cube/cube.js" "cube/schema/FeedbackRecords.js")
 
 write_rustfs_init_script() {
   local target_path="${1:-rustfs-init.sh}"
@@ -789,8 +792,9 @@ EOT
   chmod 700 authzed-postgres-bootstrap.sh
   mkdir -p cube/schema
   echo "📥 Downloading Cube.js configuration for XM Suite v5 analytics..."
-  curl -fsSL -o cube/cube.js https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/cube.js
-  curl -fsSL -o cube/schema/FeedbackRecords.js https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/schema/FeedbackRecords.js
+  for cube_file in "${bundled_cube_files[@]}"; do
+    curl -fsSL -o "$cube_file" "$stable_docker_files_url/$cube_file"
+  done
 
   echo "🚙 Updating docker-compose.yml with your custom inputs..."
   sed -i "/WEBAPP_URL:/s|WEBAPP_URL:.*|WEBAPP_URL: \"https://$domain_name\"|" docker-compose.yml
@@ -1305,6 +1309,121 @@ migrate_legacy_valkey_image() {
   echo "✅ Updated bundled Valkey to the native amd64/arm64 image. Backup: $backup_file"
 }
 
+# The git ref holding the Cube model that matches the Formbricks image: its release tag when the image is pinned
+# to one, stable for latest. Prints nothing when the image names no single release, such as a digest pin.
+formbricks_release_ref() {
+  local images tag
+
+  images=$(sudo docker compose config --images 2>/dev/null | grep -E '^ghcr\.io/formbricks/formbricks([:@]|$)' | sort -u) || true
+  # The app, migration and AuthZed services share the image; if they disagree there is no one release to match.
+  [[ -n "$images" && "$images" != *$'\n'* ]] || return 0
+
+  case "$images" in
+    ghcr.io/formbricks/formbricks | ghcr.io/formbricks/formbricks:latest) echo "stable" ;;
+    ghcr.io/formbricks/formbricks:*)
+      # A tag that also carries a digest runs whatever the digest names, so it is not trusted as the release.
+      tag="${images#ghcr.io/formbricks/formbricks:}"
+      if [[ "$tag" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then echo "$tag"; fi
+      ;;
+  esac
+}
+
+has_bundled_cube_model() {
+  local cube_file
+
+  for cube_file in "${bundled_cube_files[@]}"; do
+    [[ -f "$cube_file" ]] || return 1
+  done
+}
+
+keep_current_cube_model() {
+  local reason="$1"
+
+  rm -rf cube/.download
+  echo "⚠️ $reason, so the Cube model was left as it was. Once that is fixed, refresh it with:"
+  # The updater is started from the directory above this one, so the command enters it first.
+  echo "   cd $(printf '%q' "$(dirname "$PWD")") && ./formbricks.sh refresh-cube"
+}
+
+# Only install downloaded the Cube model, so an update kept serving the previous release's model to the new
+# app, whose charts query members that model lacks (ENG-3951). The files are one model, so they change together
+# or not at all: on any failure both stay as they were, which Cube still starts with. Returns 1 when the model
+# was not refreshed.
+refresh_bundled_cube_files() {
+  local cube_file replaced_file release_ref files_url changed=false replaced=()
+  # Both outside cube/schema, which Cube loads as a whole.
+  local staging_dir="cube/.download" backup_dir="cube/previous"
+
+  # Installations that run Cube elsewhere have no bundled model to refresh.
+  has_bundled_cube_model || return 0
+
+  release_ref=$(formbricks_release_ref)
+  if [[ -z "$release_ref" ]]; then
+    echo "⚠️ The Formbricks image is not pinned to latest or a release tag, so the Cube model files were left as they were."
+    echo "   To match them to your image: https://formbricks.com/docs/self-hosting/advanced/migration#cube-model-files-for-docker"
+    return 1
+  fi
+  files_url="https://raw.githubusercontent.com/formbricks/formbricks/$release_ref/docker"
+
+  rm -rf "$staging_dir"
+  for cube_file in "${bundled_cube_files[@]}"; do
+    if ! { mkdir -p "$(dirname "$staging_dir/${cube_file#cube/}")" &&
+      curl -fsSL -o "$staging_dir/${cube_file#cube/}" "$files_url/$cube_file"; }; then
+      keep_current_cube_model "Could not download $cube_file from $release_ref"
+      return 1
+    fi
+    cmp -s "$staging_dir/${cube_file#cube/}" "$cube_file" || changed=true
+  done
+  if [[ "$changed" == false ]]; then
+    rm -rf "$staging_dir"
+    return 0
+  fi
+
+  for cube_file in "${bundled_cube_files[@]}"; do
+    if ! { mkdir -p "$(dirname "$backup_dir/${cube_file#cube/}")" &&
+      cp -p "$cube_file" "$backup_dir/${cube_file#cube/}"; }; then
+      keep_current_cube_model "Could not back up $cube_file to $backup_dir/"
+      return 1
+    fi
+  done
+
+  for cube_file in "${bundled_cube_files[@]}"; do
+    if ! mv "$staging_dir/${cube_file#cube/}" "$cube_file"; then
+      # Put back what was already replaced, so Cube never starts with half of each model.
+      for replaced_file in "${replaced[@]}"; do
+        if ! cp -p "$backup_dir/${replaced_file#cube/}" "$replaced_file"; then
+          # The update still goes on: stopping here would leave all of Formbricks down, not just Cube.
+          rm -rf "$staging_dir"
+          echo "❌ Could not replace $cube_file or restore $replaced_file, so the Cube model files are from different releases. Once that is fixed, put the previous model back with:"
+          echo "   cd $(printf '%q' "$PWD") && cp -p $backup_dir/${replaced_file#cube/} $replaced_file && sudo docker compose up -d --force-recreate cube"
+          return 1
+        fi
+      done
+      keep_current_cube_model "Could not replace $cube_file"
+      return 1
+    fi
+    replaced+=("$cube_file")
+  done
+
+  rm -rf "$staging_dir"
+  echo "✅ Updated the Cube model to $release_ref. Previous files: $backup_dir/"
+}
+
+refresh_cube_model() {
+  echo "🔄 Refreshing the bundled Cube model..."
+  cd formbricks
+
+  if ! has_bundled_cube_model; then
+    echo "This installation has no bundled Cube model to refresh."
+    return 0
+  fi
+  if ! refresh_bundled_cube_files; then
+    exit 1
+  fi
+  sudo docker compose up -d --force-recreate cube
+  echo "🎉 Cube now serves the refreshed model."
+}
+
 update_formbricks() {
   echo "🔄 Updating Formbricks..."
   cd formbricks
@@ -1346,6 +1465,9 @@ update_formbricks() {
   # database migrations or schema/relationship writes against the still-running app.
   sudo docker compose --profile authzed-ops run --rm --no-deps authzed-ops upgrade check
   sudo docker compose down
+  # Past every gate and with Cube stopped, so the next start serves the release's model. A failed refresh leaves
+  # the previous model, which Cube still starts with, so it never stops the update.
+  refresh_bundled_cube_files || true
   sudo docker compose up -d --wait postgres
   sudo docker compose run --rm --no-deps formbricks-migrate
   sudo docker compose up -d
@@ -1425,6 +1547,9 @@ if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
     ;;
   logs)
     get_logs
+    ;;
+  refresh-cube)
+    refresh_cube_model
     ;;
   cleanup-rustfs-init)
     cleanup_rustfs_init
