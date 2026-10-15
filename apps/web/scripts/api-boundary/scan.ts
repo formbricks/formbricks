@@ -64,7 +64,10 @@ const toUrlPath = (file: string): string =>
     .split("/")
     .filter((segment) => !/^\(.+\)$/.test(segment))
     .map((segment) =>
-      segment.replace(/^\[\[?(\.\.\.)?([^\]]+)\]?\]$/, (_m, rest = "", name) => `{${rest}${name}}`)
+      segment.replace(
+        /^\[\[?(\.\.\.)?([^\]]+)\]?\]$/,
+        (_m, rest: string | undefined, name: string) => `{${rest ?? ""}${name}}`
+      )
     )
     .join("/");
 
@@ -76,6 +79,14 @@ const readMethods = (source: string): THttpMethod[] => {
     if (declared.test(source) || reexported.test(source)) found.add(method);
   }
   return HTTP_METHODS.filter((method) => found.has(method));
+};
+
+const byText = (a: string, b: string) => a.localeCompare(b);
+
+/** A route's auth modes; the wrapper's default when no `auth` is given is "both". */
+const resolveAuthModes = (usesWrapper: boolean, declared: string[]): string[] => {
+  if (!usesWrapper) return ["custom"];
+  return declared.length > 0 ? declared.toSorted(byText) : ["both"];
 };
 
 /** Every `route.ts` under `app/api`. */
@@ -92,8 +103,7 @@ export const listRouteFiles = (): TRouteFile[] =>
         file,
         path: toUrlPath(file),
         methods: readMethods(source),
-        // The wrapper's default when no `auth` is given is "both".
-        authModes: usesWrapper ? (authModes.length > 0 ? authModes.sort() : ["both"]) : ["custom"],
+        authModes: resolveAuthModes(usesWrapper, authModes),
         usesWrapper,
       };
     })
@@ -103,7 +113,7 @@ export const listRouteFiles = (): TRouteFile[] =>
 export const readPublicBundlePaths = (): Set<string> => {
   const bundle = readFileSync(OPENAPI_BUNDLE, "utf8");
   return new Set(
-    [...bundle.matchAll(/^ {2}(\/[^:\s]+):\s*$/gm)].map((match) => normalizePathParams(match[1]))
+    [...bundle.matchAll(/^ {2}(\/[^:\s]+):[ \t]*$/gm)].map((match) => normalizePathParams(match[1]))
   );
 };
 
@@ -112,7 +122,7 @@ export const normalizePathParams = (path: string) => path.replace(/\{[^}]+\}/g, 
 
 // --- Server actions ------------------------------------------------------------------------------------
 
-const ACTION_EXPORT = /^export const ([A-Za-z0-9_]+)\s*=\s*(?:authenticatedActionClient|actionClient)\b/gm;
+const ACTION_EXPORT = /^export const (\w+)\s*=\s*(?:authenticatedActionClient|actionClient)\b/gm;
 const USE_SERVER = /^\s*["']use server["'];?/;
 const USE_CLIENT = /^\s*["']use client["'];?/;
 
@@ -130,7 +140,7 @@ export const countServerActions = (): TServerActionCensus => {
     if (!USE_SERVER.test(source)) continue;
     const names = [
       ...[...source.matchAll(ACTION_EXPORT)].map((match) => match[1]),
-      ...[...source.matchAll(/^export\s+async\s+function\s+([A-Za-z0-9_]+)/gm)].map((match) => match[1]),
+      ...[...source.matchAll(/^export\s+async\s+function\s+(\w+)/gm)].map((match) => match[1]),
     ];
     if (names.length > 0) actionsByFile.set(file, names);
   }
@@ -153,7 +163,7 @@ export const listClientActionImporters = (): string[] => {
       importers.push(file);
     }
   }
-  return importers.sort();
+  return importers.toSorted(byText);
 };
 
 const resolvesToActionModule = (fromFile: string, specifier: string, actionModules: Set<string>) => {

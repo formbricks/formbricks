@@ -29,7 +29,7 @@ export const completeNotificationSettings = (
         newNotificationSettings.alert[survey.id] =
           (notificationSettings as unknown as Record<string, Record<string, boolean>>)[survey.id]
             ?.responseFinished ||
-          (notificationSettings.alert && notificationSettings.alert[survey.id]) ||
+          notificationSettings.alert?.[survey.id] ||
           false; // check for legacy notification settings w/o "alerts" key
       }
     }

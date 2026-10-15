@@ -519,6 +519,28 @@ function carriesAmbientCredential(authMode: TV3AuthMode, authentication: TV3Auth
   return Boolean(authentication && "user" in authentication);
 }
 
+/** A 403 for a cross-origin request that carries the browser's credentials; null for any other request. */
+function refuseCrossOriginOrContinue(params: {
+  req: NextRequest;
+  authMode: TV3AuthMode;
+  authentication: TV3Authentication;
+  requestId: string;
+  instance?: string;
+  log: ReturnType<typeof logger.withContext>;
+}): Response | null {
+  const { req, authMode, authentication, requestId, instance, log } = params;
+  if (!carriesAmbientCredential(authMode, authentication)) return null;
+
+  const refusal = getCrossOriginRefusal(req);
+  if (!refusal) return null;
+
+  log.warn(
+    { reason: refusal, secFetchSite: req.headers.get("sec-fetch-site"), origin: req.headers.get("origin") },
+    "V3 API refused a cross-origin request"
+  );
+  return problemForbidden(requestId, "Cross-origin requests are not allowed.", instance);
+}
+
 async function authenticateV3RequestOrRespond(
   req: NextRequest,
   authMode: TV3AuthMode,
@@ -704,19 +726,16 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
 
       // Before rate limiting, so a forged request spends nothing; after authentication, because whether
       // the check applies depends on how the caller authenticated (see `origin-check.ts`).
-      const crossOriginRefusal = carriesAmbientCredential(auth, authResult.authentication)
-        ? getCrossOriginRefusal(req)
-        : null;
-      if (crossOriginRefusal) {
-        log.warn(
-          {
-            reason: crossOriginRefusal,
-            secFetchSite: req.headers.get("sec-fetch-site"),
-            origin: req.headers.get("origin"),
-          },
-          "V3 API refused a cross-origin request"
-        );
-        return problemForbidden(requestId, "Cross-origin requests are not allowed.", instance);
+      const crossOriginResponse = refuseCrossOriginOrContinue({
+        req,
+        authMode: auth,
+        authentication: authResult.authentication,
+        requestId,
+        instance,
+        log,
+      });
+      if (crossOriginResponse) {
+        return crossOriginResponse;
       }
 
       const rateLimitResponse = await applyV3RateLimitOrRespond({
