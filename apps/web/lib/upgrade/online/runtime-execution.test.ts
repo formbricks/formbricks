@@ -46,7 +46,8 @@ vi.mock("@/lib/env", () => ({
 }));
 
 const target = "app@sha256:target";
-const root = new URL("file:///release/");
+// The CLI bundle's directory in the published image, which the CLI passes as the asset root.
+const root = new URL("file:///home/nextjs/authzed-cli/");
 const ownerMigration = "20261002120001_backfill_survey_owner";
 const triggerMigration = "20261002120002_add_survey_projection_trigger";
 const stateMigration = "20261013120000_add_online_upgrade_state";
@@ -217,7 +218,7 @@ test("preparation expands only approved schemas and resumes without replaying mi
   expect(applyCanonicalAuthzedSchema).toHaveBeenCalledWith("sha256:legacy");
   expect(childProcess).toHaveBeenCalledWith(
     expect.any(String),
-    [expect.stringContaining("apply-migrations.js"), "--phase", "prepare"],
+    ["/home/nextjs/packages/database/dist/scripts/apply-migrations.js", "--phase", "prepare"],
     expect.objectContaining({ signal: controller.signal }),
     expect.any(Function)
   );
