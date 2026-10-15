@@ -9,14 +9,14 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import {
-  createFeedbackDirectoryAction,
-  updateFeedbackDirectoryAction,
-} from "@/modules/ee/feedback-directory/actions";
 import { ArchiveFeedbackDirectory } from "@/modules/ee/feedback-directory/components/feedback-directory-settings/archive-feedback-directory";
 import { PurgeFeedbackDirectoryData } from "@/modules/ee/feedback-directory/components/feedback-directory-settings/purge-feedback-directory-data";
 import { FeedbackDirectoryQueryClientProvider } from "@/modules/ee/feedback-directory/components/query-client-provider";
+import {
+  createFeedbackDataset,
+  getFeedbackDatasetErrorCode,
+  updateFeedbackDataset,
+} from "@/modules/ee/feedback-directory/lib/api-client";
 import { getWorkspaceAccessConflictState } from "@/modules/ee/feedback-directory/lib/workspace-access-conflicts";
 import {
   TFeedbackDirectoryDetails,
@@ -167,32 +167,29 @@ export const FeedbackDirectorySettingsModal = ({
   };
 
   const submitDirectory = async (data: TFeedbackDirectoryUpdateInput) => {
-    const response =
-      isEdit && directory
-        ? await updateFeedbackDirectoryAction({
-            directoryId: directory.id,
-            data: { name: data.name, workspaceIds: data.workspaceIds },
-          })
-        : await createFeedbackDirectoryAction({
-            organizationId,
-            name: data.name ?? "",
-            workspaceIds: data.workspaceIds,
-          });
-
-    if (response?.data) {
-      toast.success(
-        isEdit
-          ? t("workspace.settings.feedback_directories.directory_updated_successfully")
-          : t("workspace.settings.feedback_directories.directory_created_successfully")
-      );
-      closeModal();
-      router.refresh();
-      return true;
-    } else {
-      const errorCode = getFormattedErrorMessage(response);
-      toast.error(getTranslatedFeedbackDirectoryError(errorCode, t));
+    try {
+      if (isEdit && directory) {
+        await updateFeedbackDataset(directory.id, { name: data.name, workspaceIds: data.workspaceIds });
+      } else {
+        await createFeedbackDataset(organizationId, {
+          name: data.name ?? "",
+          workspaceIds: data.workspaceIds,
+        });
+      }
+    } catch (error) {
+      toast.error(getTranslatedFeedbackDirectoryError(getFeedbackDatasetErrorCode(error), t));
       return false;
     }
+
+    toast.success(
+      isEdit
+        ? t("workspace.settings.feedback_directories.directory_updated_successfully")
+        : t("workspace.settings.feedback_directories.directory_created_successfully")
+    );
+    closeModal();
+    // The directory list is server-rendered; re-render it.
+    router.refresh();
+    return true;
   };
 
   const handleConfirmAddAndContinue = async () => {

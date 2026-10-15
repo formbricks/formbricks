@@ -291,12 +291,18 @@ export function problemAIUnavailable(
 export function problemUnprocessableContent(
   requestId: string,
   detail: string,
-  options?: { invalid_params?: InvalidParam[]; instance?: string; code?: ProblemCode }
+  options?: {
+    invalid_params?: InvalidParam[];
+    instance?: string;
+    code?: ProblemCode;
+    details?: Record<string, unknown>;
+  }
 ): Response {
   return problemResponse(422, "Unprocessable Content", detail, requestId, {
     code: options?.code ?? "unprocessable_content",
     instance: options?.instance,
     invalid_params: options?.invalid_params,
+    ...(options?.details && { details: options.details }),
   });
 }
 

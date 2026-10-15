@@ -1,9 +1,27 @@
 import "server-only";
-import { problemBadGateway, problemServiceUnavailable, successResponse } from "@/app/api/v3/lib/response";
+import { InvalidInputError } from "@formbricks/types/errors";
+import {
+  createdResponse,
+  problemBadGateway,
+  problemConflict,
+  problemForbidden,
+  problemServiceUnavailable,
+  problemUnprocessableContent,
+  successResponse,
+} from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import { capturePostHogEvent } from "@/lib/posthog";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import {
+  createFeedbackDirectory,
+  getFeedbackDirectoryDetails,
+  updateFeedbackDirectory,
+} from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { purgeHubFeedbackRecords } from "@/modules/hub/service";
 import { isHubNotConfigured } from "@/modules/hub/utils";
-import { requireFeedbackDatasetMutationAccess } from "./access";
+import { requireFeedbackDatasetMutationAccess, requireFeedbackDatasetOrganizationAccess } from "./access";
+import type { TDatasetCreateBody, TDatasetUpdateBody } from "./schemas";
 
 type TPurgeDatasetParams = {
   authentication: TV3Authentication;
@@ -61,4 +79,130 @@ export async function purgeV3FeedbackDataset(params: TPurgeDatasetParams): Promi
   }
 
   return successResponse({ datasetId, status: result.data.status }, { requestId, status: 202 });
+}
+
+/**
+ * A dataset write the service refused with one of its codes (`DIRECTORY_NAME_DUPLICATE`, …). The code is
+ * the `detail` and `details.reason`, which the settings UI translates; it never carries anything else.
+ * A clash with what is stored is a 409, a workspace from another organization a 422.
+ */
+const DATASET_CONFLICT_CODES = new Set([
+  "DIRECTORY_NAME_DUPLICATE",
+  "DIRECTORY_HAS_FEEDBACK_SOURCES",
+  "DIRECTORY_WORKSPACE_HAS_FEEDBACK_SOURCES",
+  "WORKSPACE_ALREADY_ASSIGNED_TO_DIFFERENT_DIRECTORY",
+]);
+
+const mapDatasetWriteError = (error: unknown, requestId: string, instance?: string): Response | null => {
+  if (!(error instanceof InvalidInputError)) return null;
+  const details = { reason: error.message };
+  return DATASET_CONFLICT_CODES.has(error.message)
+    ? problemConflict(requestId, error.message, instance, { details })
+    : problemUnprocessableContent(requestId, error.message, { instance, details });
+};
+
+type TDatasetRequestContext = {
+  authentication: TV3Authentication;
+  requestId: string;
+  instance?: string;
+  auditLog?: TV3AuditLog;
+};
+
+/** The dataset as stored, for a route that has just authorized it; gone in between reads as forbidden. */
+const readDatasetDetails = async (datasetId: string, requestId: string, instance?: string) =>
+  (await getFeedbackDirectoryDetails(datasetId)) ??
+  problemForbidden(requestId, "You are not authorized to access this resource", instance);
+
+/** `POST /api/internal/feedback-datasets?organizationId=`: create a dataset. Owners and managers. */
+export async function createFeedbackDatasetOperation({
+  organizationId,
+  body,
+  authentication,
+  requestId,
+  instance,
+  auditLog,
+}: TDatasetRequestContext & { organizationId: string; body: TDatasetCreateBody }): Promise<Response> {
+  if (auditLog) auditLog.organizationId = organizationId;
+  const access = await requireFeedbackDatasetOrganizationAccess(
+    authentication,
+    organizationId,
+    requestId,
+    instance
+  );
+  if (access instanceof Response) return access;
+  const { userId } = access;
+  await applyRateLimit(rateLimitConfigs.actions.feedbackDirectoryMutation, userId);
+
+  let datasetId: string;
+  try {
+    datasetId = await createFeedbackDirectory(organizationId, body.name, body.workspaceIds);
+  } catch (error) {
+    const mapped = mapDatasetWriteError(error, requestId, instance);
+    if (mapped) return mapped;
+    throw error;
+  }
+
+  const details = await readDatasetDetails(datasetId, requestId, instance);
+  if (details instanceof Response) return details;
+  if (auditLog) {
+    auditLog.targetId = datasetId;
+    auditLog.newObject = details;
+  }
+  capturePostHogEvent(
+    userId,
+    "feedback_directory_created",
+    { feedback_directory_id: datasetId },
+    { organizationId }
+  );
+  return createdResponse(details, { requestId, location: `/api/internal/feedback-datasets/${datasetId}` });
+}
+
+/** `GET /api/internal/feedback-datasets/{datasetId}`: a dataset with its workspaces and sources. */
+export async function getFeedbackDatasetOperation({
+  datasetId,
+  authentication,
+  requestId,
+  instance,
+}: TDatasetRequestContext & { datasetId: string }): Promise<Response> {
+  const access = await requireFeedbackDatasetMutationAccess(authentication, datasetId, requestId, instance);
+  if (access instanceof Response) return access;
+
+  const details = await readDatasetDetails(datasetId, requestId, instance);
+  if (details instanceof Response) return details;
+  return successResponse(details, { requestId });
+}
+
+/** `PATCH /api/internal/feedback-datasets/{datasetId}`: rename, reassign, archive or unarchive it. */
+export async function updateFeedbackDatasetOperation({
+  datasetId,
+  body,
+  authentication,
+  requestId,
+  instance,
+  auditLog,
+}: TDatasetRequestContext & { datasetId: string; body: TDatasetUpdateBody }): Promise<Response> {
+  // Set before the guard so a denied attempt is still attributable to the dataset it targeted.
+  if (auditLog) auditLog.targetId = datasetId;
+  const access = await requireFeedbackDatasetMutationAccess(authentication, datasetId, requestId, instance);
+  if (access instanceof Response) return access;
+  if (auditLog) auditLog.organizationId = access.organizationId;
+  await applyRateLimit(rateLimitConfigs.actions.feedbackDirectoryMutation, access.userId);
+
+  const before = await readDatasetDetails(datasetId, requestId, instance);
+  if (before instanceof Response) return before;
+  try {
+    await updateFeedbackDirectory(datasetId, access.organizationId, body);
+  } catch (error) {
+    const mapped = mapDatasetWriteError(error, requestId, instance);
+    if (mapped) return mapped;
+    throw error;
+  }
+
+  const after = await readDatasetDetails(datasetId, requestId, instance);
+  if (after instanceof Response) return after;
+  if (auditLog) {
+    auditLog.oldObject = before;
+    auditLog.newObject = after;
+  }
+  return successResponse(after, { requestId });
 }

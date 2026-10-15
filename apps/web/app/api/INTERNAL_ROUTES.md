@@ -14,6 +14,8 @@ carry no stability promise and no spec entry; this list is their inventory. CI f
 | `/api/internal/embedded-data/{embeddedDataId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/embedded-data/[embeddedDataId]/route.ts` |
 | `/api/internal/embedded-data/{embeddedDataId}/promotion` | POST | session | dashboard | `/api/internal` | `app/api/internal/embedded-data/[embeddedDataId]/promotion/route.ts` |
 | `/api/internal/embedded-data/{embeddedDataId}/usage` | GET | session | dashboard | `/api/internal` | `app/api/internal/embedded-data/[embeddedDataId]/usage/route.ts` |
+| `/api/internal/feedback-datasets` | POST | session | dashboard | `/api/internal` | `app/api/internal/feedback-datasets/route.ts` |
+| `/api/internal/feedback-datasets/{datasetId}` | GET, PATCH | session | dashboard | `/api/internal` | `app/api/internal/feedback-datasets/[datasetId]/route.ts` |
 | `/api/internal/feedback-datasets/{datasetId}/purge` | POST | session | dashboard | `/api/internal` | `app/api/internal/feedback-datasets/[datasetId]/purge/route.ts` |
 | `/api/internal/members/{userId}/reactivate` | POST | session | dashboard | `/api/internal` | `app/api/internal/members/[userId]/reactivate/route.ts` |
 | `/api/internal/organizations/{organizationId}` | PATCH, DELETE | session | dashboard | `/api/internal` | `app/api/internal/organizations/[organizationId]/route.ts` |

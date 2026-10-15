@@ -8,12 +8,12 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import {
-  getFeedbackDirectoryDetailsAction,
-  updateFeedbackDirectoryAction,
-} from "@/modules/ee/feedback-directory/actions";
 import { FeedbackDirectorySettingsModal } from "@/modules/ee/feedback-directory/components/feedback-directory-settings/feedback-directory-settings-modal";
+import {
+  getFeedbackDataset,
+  getFeedbackDatasetErrorCode,
+  updateFeedbackDataset,
+} from "@/modules/ee/feedback-directory/lib/api-client";
 import {
   TFeedbackDirectory,
   TFeedbackDirectoryDetails,
@@ -148,15 +148,10 @@ export const FeedbackDirectoryTable = ({
   const handleManageDirectory = async (directoryId: string) => {
     setLoadingDirectoryId(directoryId);
     try {
-      const response = await getFeedbackDirectoryDetailsAction({ directoryId });
-
-      if (response?.data) {
-        setSelectedDirectory(response.data);
-        setOpenSettingsModal(true);
-      } else {
-        const errorCode = getFormattedErrorMessage(response);
-        toast.error(getTranslatedFeedbackDirectoryError(errorCode, t));
-      }
+      setSelectedDirectory(await getFeedbackDataset(directoryId));
+      setOpenSettingsModal(true);
+    } catch (error) {
+      toast.error(getTranslatedFeedbackDirectoryError(getFeedbackDatasetErrorCode(error), t));
     } finally {
       setLoadingDirectoryId(null);
     }
@@ -165,18 +160,13 @@ export const FeedbackDirectoryTable = ({
   const handleUnarchiveDirectory = async (directoryId: string) => {
     setLoadingDirectoryId(directoryId);
     try {
-      const directoryDetailsResponse = await getFeedbackDirectoryDetailsAction({ directoryId });
-      if (!directoryDetailsResponse?.data) {
-        const errorCode = getFormattedErrorMessage(directoryDetailsResponse);
-        toast.error(getTranslatedFeedbackDirectoryError(errorCode, t));
-        return;
-      }
+      const directoryDetails = await getFeedbackDataset(directoryId);
 
       const workspaceAccessMap = new Map(
         workspaceAccessByWorkspace.map((assignment) => [assignment.workspaceId, assignment])
       );
 
-      const hasConflicts = directoryDetailsResponse.data.workspaces.some((workspace) => {
+      const hasConflicts = directoryDetails.workspaces.some((workspace) => {
         const assignment = workspaceAccessMap.get(workspace.workspaceId);
         return assignment && assignment.feedbackDirectoryId !== directoryId;
       });
@@ -186,17 +176,12 @@ export const FeedbackDirectoryTable = ({
         return;
       }
 
-      const response = await updateFeedbackDirectoryAction({
-        directoryId,
-        data: { isArchived: false },
-      });
-      if (response?.data) {
-        toast.success(t("workspace.settings.feedback_directories.directory_unarchived_successfully"));
-        router.refresh();
-      } else {
-        const errorCode = getFormattedErrorMessage(response);
-        toast.error(getTranslatedFeedbackDirectoryError(errorCode, t));
-      }
+      await updateFeedbackDataset(directoryId, { isArchived: false });
+      toast.success(t("workspace.settings.feedback_directories.directory_unarchived_successfully"));
+      // The directory list is server-rendered; re-render it.
+      router.refresh();
+    } catch (error) {
+      toast.error(getTranslatedFeedbackDirectoryError(getFeedbackDatasetErrorCode(error), t));
     } finally {
       setLoadingDirectoryId(null);
     }
