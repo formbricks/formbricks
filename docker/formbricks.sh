@@ -399,6 +399,21 @@ in_formbricks && /^  [A-Za-z0-9_-]+:/ && !/^  formbricks:$/ { in_formbricks = 0 
         }
         print "      - \"traefik.http.routers.feedback-records-token.service=formbricks\""
         print "      - \"traefik.http.routers.feedback-records-token.priority=200\""
+        # Every /api/auth/* route answers anonymous callers, and the largest honest body is a SAML response of a
+        # few hundred KiB, so Traefik refuses one over 1 MiB before it reaches the app (ENG-3977). The buffering
+        # middleware reads the whole request first (413 past maxRequestBodyBytes), so a slow sender ties up
+        # Traefik, bounded by the entrypoint readTimeout, instead of the app. 1 MiB is also its in-memory
+        # threshold, so nothing spills to disk. Only auth routes get it: the imports take up to 16 MiB.
+        print "      - \"traefik.http.middlewares.auth-body-limit.buffering.maxRequestBodyBytes=1048576\""
+        print "      - \"traefik.http.routers.formbricks-auth.rule=Host(`" domain_name "`) && PathPrefix(`/api/auth`)\""
+        print "      - \"traefik.http.routers.formbricks-auth.entrypoints=websecure\""
+        print "      - \"traefik.http.routers.formbricks-auth.tls=true\""
+        if (https_setup == "y") {
+            print "      - \"traefik.http.routers.formbricks-auth.tls.certresolver=default\""
+        }
+        print "      - \"traefik.http.routers.formbricks-auth.service=formbricks\""
+        print "      - \"traefik.http.routers.formbricks-auth.priority=200\""
+        print "      - \"traefik.http.routers.formbricks-auth.middlewares=auth-body-limit\""
         if (hsts_enabled == "y") {
             print "      - \"traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000\""
             print "      - \"traefik.http.middlewares.hstsHeader.headers.forceSTSHeader=true\""
@@ -411,6 +426,11 @@ in_formbricks && /^  [A-Za-z0-9_-]+:/ && !/^  formbricks:$/ { in_formbricks = 0 
             print "      - \"traefik.http.routers.feedback-records-token-http.entrypoints=web\""
             print "      - \"traefik.http.routers.feedback-records-token-http.service=formbricks\""
             print "      - \"traefik.http.routers.feedback-records-token-http.priority=200\""
+            print "      - \"traefik.http.routers.formbricks-auth-http.rule=Host(`" domain_name "`) && PathPrefix(`/api/auth`)\""
+            print "      - \"traefik.http.routers.formbricks-auth-http.entrypoints=web\""
+            print "      - \"traefik.http.routers.formbricks-auth-http.service=formbricks\""
+            print "      - \"traefik.http.routers.formbricks-auth-http.priority=200\""
+            print "      - \"traefik.http.routers.formbricks-auth-http.middlewares=auth-body-limit\""
         }
         inserted = 1
     }

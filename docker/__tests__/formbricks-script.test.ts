@@ -1158,6 +1158,22 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(formbricksBlock).toContain("traefik.http.routers.feedback-records-token.tls.certresolver=default");
     expect(formbricksBlock).toContain("traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000");
     expect(formbricksBlock).not.toContain("traefik.http.routers.formbricks_http.entrypoints=web");
+    expect(formbricksBlock).toContain(
+      "traefik.http.middlewares.auth-body-limit.buffering.maxRequestBodyBytes=1048576"
+    );
+    expect(formbricksBlock).toContain(
+      "traefik.http.routers.formbricks-auth.rule=Host(`example.com`) && PathPrefix(`/api/auth`)"
+    );
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.entrypoints=websecure");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.tls.certresolver=default");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.service=formbricks");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.middlewares=auth-body-limit");
+    expect(formbricksBlock).not.toContain("formbricks-auth-http");
+
+    const compose = load(composeContents) as { services: { formbricks: { labels: string[] } } };
+    expect(compose.services.formbricks.labels).toContain(
+      "traefik.http.routers.formbricks-auth.rule=Host(`example.com`) && PathPrefix(`/api/auth`)"
+    );
   });
 
   test("omits ACME certresolver labels when HTTPS setup is disabled", () => {
@@ -1171,6 +1187,8 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks.entrypoints=websecure");
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks.tls=true");
     expect(formbricksBlock).toContain("traefik.http.routers.feedback-records-token.tls=true");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.tls=true");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.middlewares=auth-body-limit");
     expect(formbricksBlock).toContain("traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000");
     expect(formbricksBlock).not.toContain("tls.certresolver=default");
   });
@@ -1191,6 +1209,14 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(formbricksBlock).toContain(
       "traefik.http.routers.feedback-records-token-http.rule=Host(`example.com`) && Path(`/api/v3/feedbackRecords/token`)"
     );
+    expect(formbricksBlock).toContain(
+      "traefik.http.routers.formbricks-auth-http.rule=Host(`example.com`) && PathPrefix(`/api/auth`)"
+    );
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth-http.entrypoints=web");
+    expect(formbricksBlock).toContain(
+      "traefik.http.routers.formbricks-auth-http.middlewares=auth-body-limit"
+    );
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.middlewares=auth-body-limit");
     expect(formbricksBlock).not.toContain("tls.certresolver=default");
     expect(formbricksBlock).not.toContain("traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000");
   });
