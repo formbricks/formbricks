@@ -91,6 +91,10 @@ export const WhenToSendCard = ({
     }
   };
 
+  const handleKeepEndingCardOpenToggle = () => {
+    setLocalSurvey({ ...localSurvey, keepEndingCardOpen: !localSurvey.keepEndingCardOpen });
+  };
+
   const handleDelayToggle = () => {
     if (delay) {
       const updatedSurvey = { ...localSurvey, delay: 0 };
@@ -358,6 +362,13 @@ export const WhenToSendCard = ({
                 </p>
               </label>
             </AdvancedOptionToggle>
+            <AdvancedOptionToggle
+              htmlId="keepEndingCardOpen"
+              isChecked={localSurvey.keepEndingCardOpen ?? false}
+              onToggle={handleKeepEndingCardOpenToggle}
+              title={t("workspace.surveys.edit.keep_ending_card_open")}
+              description={t("workspace.surveys.edit.keep_ending_card_open_description")}
+            />
             <AdvancedOptionToggle
               htmlId="randomizer"
               isChecked={randomizerToggle}

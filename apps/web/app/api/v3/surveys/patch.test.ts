@@ -1045,6 +1045,7 @@ describe("patchV3Survey", () => {
           distribution: {
             displayOption: "displayMultiple",
             recontactDays: 14,
+            keepEndingCardOpen: true,
             triggers: [{ actionClassId: actionClass.id }],
           },
         },
@@ -1057,6 +1058,7 @@ describe("patchV3Survey", () => {
           data: expect.objectContaining({
             displayOption: "displayMultiple",
             recontactDays: 14,
+            keepEndingCardOpen: true,
             triggers: { create: [{ actionClassId: actionClass.id }] },
           }),
         })

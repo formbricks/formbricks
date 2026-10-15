@@ -158,6 +158,7 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
             },
             endings: true,
             autoClose: true,
+            keepEndingCardOpen: true,
             styling: true,
             status: true,
             recaptcha: true,

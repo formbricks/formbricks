@@ -23,6 +23,7 @@ export const getMinimalSurvey = (t: TFunction): TSurvey => ({
   closeOn: null,
   displayOption: "displayOnce",
   autoClose: null,
+  keepEndingCardOpen: false,
   triggers: [],
   recontactDays: null,
   displayLimit: null,
