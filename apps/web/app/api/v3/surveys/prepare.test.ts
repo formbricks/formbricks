@@ -1,8 +1,9 @@
 import { describe, expect, test, vi } from "vitest";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { prepareV3SurveyCreate, prepareV3SurveyCreateInput, prepareV3SurveyPatchInput } from "./prepare";
-import { ZV3CreateSurveyBody } from "./schemas";
+import { type TV3SurveyDocument, ZV3CreateSurveyBody } from "./schemas";
 import { serializeV3SurveyResource } from "./serializers";
+import { getV3SurveyIntroducedMediaInvalidParams } from "./validation";
 
 // ENG-3282: marker off, a session user — every survey reads as workspace-visible, no controls.
 const TEST_VISIBILITY = {
@@ -879,9 +880,9 @@ describe("prepareV3SurveyPatchInput with cyclic block logic (ENG-3946)", () => {
 });
 
 describe("prepareV3SurveyPatchInput with a semantically invalid stored survey", () => {
-  // ENG-3070. The stored survey parses fine but fails the semantic pass: `de-DE` is configured and
-  // the headline has no German. Both halves of the ticket are asserted here — the failure must be
-  // attributed to the stored survey, and a patch that repairs the offending field must be accepted.
+  // ENG-3070 / ENG-3975. The stored survey parses fine but fails the semantic pass: `de-DE` is
+  // configured and the headline has no German. A patch that leaves that issue as it was is accepted,
+  // one that adds a new issue is refused, and one that repairs it is accepted.
   const storedInvalidSurvey = {
     ...survey,
     blocks: [
@@ -900,14 +901,16 @@ describe("prepareV3SurveyPatchInput with a semantically invalid stored survey", 
     ],
   } as unknown as TSurvey;
 
-  test("attributes the failure to the stored survey, not the request", () => {
+  test("accepts a rename that leaves the pre-existing issue as it was", () => {
+    // ENG-3975: refusing this blocked the survey list's Rename on any survey with a stored issue.
     const result = prepareV3SurveyPatchInput(storedInvalidSurvey, { name: "Renamed" });
 
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    // Without this the caller is told its `{ name }` patch is malformed, and the reported path is
-    // `blocks.0.…` — an array it never sent.
-    expect(result.origin).toBe("storedSurvey");
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.document.name).toBe("Renamed");
+    expect(result.document.blocks).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: "clbk1234567890123456789012" })])
+    );
   });
 
   test("blames the request when it adds a new problem beside a pre-existing one", () => {
@@ -949,6 +952,119 @@ describe("prepareV3SurveyPatchInput with a semantically invalid stored survey", 
     // The whole point of the restructure: sending corrected values has to actually work. Judging the
     // stored document on its own makes this impossible, because the patch is never reached.
     expect(result.ok).toBe(true);
+  });
+
+  test("refuses replacing the offending element with another that has the same issue", () => {
+    // Same path, code and identifier as the stored issue, but a different value: a new problem, not
+    // the old one left alone.
+    const result = prepareV3SurveyPatchInput(storedInvalidSurvey, {
+      blocks: [
+        {
+          id: "clbk1234567890123456789012",
+          name: "Main Block",
+          elements: [
+            {
+              id: "satisfaction",
+              type: "openText",
+              headline: { "en-US": "How satisfied are you?" },
+              required: true,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.origin).toBe("request");
+    expect(result.validation.invalidParams).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: "blocks.0.elements.0.headline" })])
+    );
+  });
+
+  test("refuses publishing a draft that still has the issue", () => {
+    // The editor checks a draft in full before it goes live; leniency for untouched issues must not
+    // become a way around that.
+    const result = prepareV3SurveyPatchInput(storedInvalidSurvey, { status: "inProgress" });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.origin).toBe("storedSurvey");
+  });
+
+  test("accepts a status change on a survey that is already live", () => {
+    const result = prepareV3SurveyPatchInput({ ...storedInvalidSurvey, status: "inProgress" } as TSurvey, {
+      status: "paused",
+    });
+
+    expect(result.ok).toBe(true);
+  });
+});
+
+describe("prepareV3SurveyPatchInput with stored media that fails the media check", () => {
+  // ENG-3975: an extension-less image URL saved before the check existed.
+  const blockWithImage = (imageUrl: string) => ({
+    id: "clbk1234567890123456789012",
+    name: "Main Block",
+    elements: [
+      {
+        id: "satisfaction",
+        type: "openText",
+        headline: { "en-US": "What should we improve?" },
+        required: true,
+        imageUrl,
+      },
+    ],
+  });
+  const storedBadMediaSurvey = {
+    ...survey,
+    languages: survey.languages.filter((language) => language.default),
+    blocks: [blockWithImage("https://example.com/picture")],
+  } as unknown as TSurvey;
+
+  test("accepts a rename that leaves the media untouched", () => {
+    expect(prepareV3SurveyPatchInput(storedBadMediaSurvey, { name: "Renamed" }).ok).toBe(true);
+  });
+
+  test("refuses a patch that swaps in another invalid media URL", () => {
+    const result = prepareV3SurveyPatchInput(storedBadMediaSurvey, {
+      blocks: [blockWithImage("https://example.com/other-picture")],
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.origin).toBe("request");
+  });
+});
+
+describe("getV3SurveyIntroducedMediaInvalidParams", () => {
+  // The write path's own media check (`executeV3SurveyPatch`) compares against the stored survey's
+  // internal blocks, not the v3 document — only the URLs have to line up.
+  const blocks = (imageUrl: string) =>
+    [
+      {
+        id: "clbk1234567890123456789012",
+        name: "Main Block",
+        elements: [{ id: "q", type: "openText", headline: {}, required: true, imageUrl }],
+      },
+    ] as unknown as TV3SurveyDocument["blocks"];
+
+  test("reports nothing when every media URL is where it was", () => {
+    expect(
+      getV3SurveyIntroducedMediaInvalidParams(
+        blocks("https://example.com/a"),
+        blocks("https://example.com/a")
+      )
+    ).toEqual([]);
+  });
+
+  test("judges the media in full once a URL changed", () => {
+    expect(
+      getV3SurveyIntroducedMediaInvalidParams(
+        blocks("https://example.com/b"),
+        blocks("https://example.com/a")
+      )
+    ).toEqual([expect.objectContaining({ name: "blocks" })]);
   });
 });
 
@@ -996,9 +1112,9 @@ describe("prepareV3SurveyPatchInput failure attribution for cross-key breakage",
     expect(result.origin).toBe("request");
   });
 
-  test("still blames the stored survey when the same problem pre-dates the request", () => {
-    // Same shape, but the recall is already dangling before anything is patched. A blocks patch that
-    // does not repair it must keep reporting `storedSurvey`, or ENG-3070 regresses.
+  test("accepts a patch when the same problem pre-dates the request", () => {
+    // Same shape, but the recall is already dangling before anything is patched. A patch that neither
+    // repairs nor worsens it is accepted (ENG-3975).
     const alreadyBroken = {
       ...survey,
       endings: [
@@ -1012,9 +1128,7 @@ describe("prepareV3SurveyPatchInput failure attribution for cross-key breakage",
 
     const result = prepareV3SurveyPatchInput(alreadyBroken, { name: "Renamed" });
 
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.origin).toBe("storedSurvey");
+    expect(result.ok).toBe(true);
   });
 });
 
@@ -1035,7 +1149,7 @@ describe("prepareV3SurveyPatchInput failure attribution for language patches", (
 });
 
 /**
- * The delta in `deriveFailureOrigin` compares `invalidParamSignature` — `<path>\0<code>\0<recallId>` —
+ * The delta in `getIntroducedIssues` compares `invalidParamSignature` — `<path>\0<code>\0<recallId>` —
  * against the stored survey's own findings. The `introduced` precedence filter it is paired with keys
  * on `violation.key`, which is `recall|<scopeKey>|<recallId>`: a *scope*, not a path. Two different
  * lenses, so a violation the request genuinely introduced can carry the same signature as a stored one

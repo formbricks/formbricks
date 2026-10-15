@@ -393,34 +393,64 @@ describe("which names a write may newly declare (ENG-1839)", () => {
     ).toEqual({ refused: ["duplicate_identifier"] });
   });
 
-  test("a survey that already holds the clash is refused against the stored survey, not the request", async () => {
+  test("a survey that already holds the clash stays patchable by a request that does not touch it", async () => {
     // The counterpart to the row above: there, the patch *introduces* the clash and is the caller's
-    // fault; here the survey already holds one — a variable and a hidden field both named `plan` —
-    // and v3 refuses EVERY patch of it, including the one below, which only renames the survey and
-    // resends neither key. Reference validation runs over the whole merged document, so there is no
-    // patch small enough to slip past it.
+    // fault; here the survey already holds one — a variable and a hidden field both named `plan`.
     //
     // The editor refuses to CREATE such a survey — the Embedded Data card checks it through
     // `validateEmbeddedFieldName`, which passes both namespaces' declared names and so reports the
     // generic `Duplicate` (ENG-1851; the two legacy cards had a message each). But surveys holding
     // the clash already exist — as of the September 2026 production copy, 46 of them, 28 `inProgress`,
-    // with names like `first_name`, `brand`, `score` — and v3 then refuses EVERY patch of one,
-    // including a patch that resends neither key: the one below only renames the survey and is still
-    // rejected, because reference validation runs over the whole merged document.
+    // with names like `first_name`, `brand`, `score`.
     //
-    // What ENG-3070 changed is the attribution, not the refusal. This used to come back as
-    // `duplicate_identifier` in `invalid_params`, which reads as "your request is malformed" and sent
-    // integrators looking for a payload bug that was not there. It is now a `stored_survey_invalid`
-    // 422 whose paths point into the stored survey, with a detail saying a patch that supplies the fix
-    // is accepted. Still 422 for this `{ name }` patch — but now honestly attributed.
+    // ENG-3070 made v3 refuse every patch of one as `stored_survey_invalid`, including the rename below,
+    // which resends neither key. ENG-3975 accepts it: the issue pre-dates the request, and the merge
+    // writes both keys back exactly as stored, so the survey is no worse after the rename than before.
     const survey = await seedSurvey({
       variables: [{ id: VARIABLE_ID, name: "plan", type: "text", value: "free" }],
       hiddenFields: { enabled: true, fieldIds: ["plan"] },
     });
 
-    expect(await patchOutcome(survey, { name: "Renamed" }, "req_backcompat_clash_untouched")).toEqual({
+    expect(await patchOutcome(survey, { name: "Renamed" }, "req_backcompat_clash_untouched")).toBe(
+      "accepted"
+    );
+  });
+
+  test("a draft that holds the clash still cannot be published", async () => {
+    // The editor checks a draft in full before it goes live and saves drafts leniently, so leniency for
+    // untouched issues must not let a patch publish one.
+    const survey = await seedSurvey({
+      variables: [{ id: VARIABLE_ID, name: "plan", type: "text", value: "free" }],
+      hiddenFields: { enabled: true, fieldIds: ["plan"] },
+    });
+
+    expect(await patchOutcome(survey, { status: "inProgress" }, "req_backcompat_clash_publish")).toEqual({
       storedSurveyRefused: ["duplicate_identifier"],
     });
+    expect((await readAsLegacyApi(survey.id)).status).toBe("draft");
+  });
+
+  test("a survey with stored media that fails the media check can still be renamed", async () => {
+    // The write path runs its own media check on top of prepare's; both have to judge only what the
+    // patch changed, or the rename is refused one layer later.
+    const seeded = await seedSurvey();
+    await prisma.survey.update({
+      where: { id: seeded.id },
+      data: {
+        blocks: BLOCKS.map((block) => ({
+          ...block,
+          elements: block.elements.map((element) => ({
+            ...element,
+            imageUrl: "https://example.com/picture",
+          })),
+        })),
+      },
+    });
+    const survey = await readAsLegacyApi(seeded.id);
+
+    expect(await patchOutcome(survey, { name: "Renamed" }, "req_backcompat_media_untouched")).toBe(
+      "accepted"
+    );
   });
 });
 
