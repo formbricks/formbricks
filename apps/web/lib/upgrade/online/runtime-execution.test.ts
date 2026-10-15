@@ -236,12 +236,15 @@ test("preparation expands only approved schemas and resumes without replaying mi
 test("the image keeps the CLI bundle beside the database build", () => {
   const dockerfile = readFileSync(new URL("../../../Dockerfile", import.meta.url), "utf8");
   const runner = dockerfile.slice(dockerfile.indexOf("AS runner"));
+  // Source and destination only: options such as --chown or --chmod may change freely.
+  const copies = (source: string, destination: string) =>
+    new RegExp(String.raw`^COPY(?:\s+--\S+)*\s+${source}/?\s+${destination}/?\s*$`, "m");
   expect(runner.match(/^WORKDIR .+$/gm)).toEqual([
     `WORKDIR ${fileURLToPath(new URL("..", root)).slice(0, -1)}`,
   ]);
-  expect(runner).toMatch(/^COPY --from=installer \/app\/apps\/web\/dist\/authzed-cli \.\/authzed-cli$/m);
+  expect(runner).toMatch(copies(String.raw`/app/apps/web/dist/authzed-cli`, String.raw`\./authzed-cli`));
   expect(runner).toMatch(
-    /^COPY --from=installer \/app\/packages\/database\/dist \.\/packages\/database\/dist$/m
+    copies(String.raw`/app/packages/database/dist`, String.raw`\./packages/database/dist`)
   );
 });
 
