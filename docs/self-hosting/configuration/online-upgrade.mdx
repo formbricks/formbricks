@@ -54,7 +54,10 @@ release and the 6.1 online values must name the **same** Hub digest and the **sa
 - 6.0.x pins Hub to 0.8.5, while 6.1 pins Hub 0.14.0.
 
 Roll the 6.0.x release to these images first and wait for the rollout to finish. Hub 0.14.0 and Cube
-1.7.47-1 are the pair verified to keep serving traffic through the upgrade:
+1.7.47-1 are the pair verified to keep serving traffic through an upgrade from 6.0.2. 6.0.0 and 6.0.1 still
+run `cubejs/cube:v1.6.6`, so on them this step also switches to the Formbricks Cube image: check
+[Bundled Cube image](/self-hosting/advanced/migration#bundled-cube-image-action-required-for-some-deployments)
+before rolling it out.
 
 ```yaml
 hub:
@@ -66,9 +69,10 @@ cube:
     tag: "3859ec17f4e81fe5147cde8b6b81bccbed329023b803e4a315f0988e5c9372b8" # cube:1.7.47-1, hex without the sha256: prefix
 ```
 
-Then put the same digests in the 6.1 online values (`hub.image.digest`, `cube.image.digest`) and in
-`upgrade.online.dependencies`. The 6.1 chart defaults Cube to 1.7.50-1 with no digest, so set
-`cube.image.digest` explicitly to the 1.7.47-1 digest above.
+Then put the same digests in the 6.1 online values (`hub.image.digest`, `cube.image.digest`). The chart adds
+Hub and Cube to the dependency inventory from them, so they need no `upgrade.online.dependencies` entry. The
+6.1 chart defaults Cube to 1.7.50-1 with no digest, so set `cube.image.digest` explicitly to the 1.7.47-1
+digest above.
 
 ## Start the upgrade
 
