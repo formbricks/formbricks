@@ -166,6 +166,16 @@ describe("hasOrganizationEntitlementWithLicenseGuard", () => {
     expect(await hasOrganizationEntitlementWithLicenseGuard("org1", "workflows")).toBe(false);
   });
 
+  test("returns false when license active but data-retention mapped to dataRetention, which it lacks", async () => {
+    mockGetContext.mockResolvedValue({
+      ...baseContext,
+      features: ["data-retention"],
+      licenseStatus: "active",
+      licenseFeatures: { dataRetention: false } as TOrganizationEntitlementsContext["licenseFeatures"],
+    });
+    expect(await hasOrganizationEntitlementWithLicenseGuard("org1", "data-retention")).toBe(false);
+  });
+
   test("returns true when license active and feature has no license mapping", async () => {
     mockGetContext.mockResolvedValue({
       ...baseContext,

@@ -5,7 +5,7 @@ import { TAccessType } from "@formbricks/types/storage";
 import {
   deleteFile,
   deleteFilesByWorkspaceId,
-  deleteSurveyUploadFilesBestEffort,
+  deleteSurveyUploadFolder,
   deleteWorkspaceFilesBestEffort,
   getFileStreamForDownload,
   getSignedUrlForUpload,
@@ -512,7 +512,7 @@ describe("storage service", () => {
       expect(deleteFilesByPrefix).toHaveBeenCalledWith("ws-456");
     });
 
-    test("should log and resolve when the storage call returns an error", async () => {
+    test("should log and report failure when the storage call returns an error", async () => {
       vi.mocked(deleteFilesByPrefix).mockResolvedValue({
         ok: false,
         error: { code: StorageErrorCode.S3CredentialsError },
@@ -536,15 +536,18 @@ describe("storage service", () => {
     });
   });
 
-  // ENG-3373: runs after a survey delete has committed, so it must never throw.
-  describe("deleteSurveyUploadFilesBestEffort", () => {
+  // ENG-3373: runs after a survey delete has committed, so it must never throw; ENG-3612: it reports
+  // the outcome so the cleanup drain can retry.
+  describe("deleteSurveyUploadFolder", () => {
     test("should delete only the survey's own upload folder", async () => {
       vi.mocked(deleteFilesByPrefix).mockResolvedValue({
         ok: true,
         data: undefined,
       } as MockedDeleteFilesByPrefixReturn);
 
-      await deleteSurveyUploadFilesBestEffort({ workspaceId: "ws-456", surveyId: "survey-1" });
+      await expect(deleteSurveyUploadFolder({ workspaceId: "ws-456", surveyId: "survey-1" })).resolves.toBe(
+        true
+      );
 
       // Must match the key the client upload route writes, and end in "/" so survey-1 cannot also
       // match survey-10.
@@ -559,19 +562,19 @@ describe("storage service", () => {
         error: { code: StorageErrorCode.S3CredentialsError },
       } as MockedDeleteFilesByPrefixReturn);
 
-      await expect(
-        deleteSurveyUploadFilesBestEffort({ workspaceId: "ws-456", surveyId: "survey-1" })
-      ).resolves.toBeUndefined();
+      await expect(deleteSurveyUploadFolder({ workspaceId: "ws-456", surveyId: "survey-1" })).resolves.toBe(
+        false
+      );
 
       expect(logger.error).toHaveBeenCalled();
     });
 
-    test("should log and resolve when the storage call rejects", async () => {
+    test("should log and report failure when the storage call rejects", async () => {
       vi.mocked(deleteFilesByPrefix).mockRejectedValue(new Error("bucket unreachable"));
 
-      await expect(
-        deleteSurveyUploadFilesBestEffort({ workspaceId: "ws-456", surveyId: "survey-1" })
-      ).resolves.toBeUndefined();
+      await expect(deleteSurveyUploadFolder({ workspaceId: "ws-456", surveyId: "survey-1" })).resolves.toBe(
+        false
+      );
 
       expect(logger.error).toHaveBeenCalled();
     });

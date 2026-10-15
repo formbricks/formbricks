@@ -2,7 +2,7 @@ import { AsyncParser } from "@json2csv/node";
 import { describe, expect, test, vi } from "vitest";
 import * as xlsx from "xlsx";
 import { logger } from "@formbricks/logger";
-import { convertToCsv, convertToXlsxBuffer } from "./file-conversion";
+import { convertToCsv, convertToXlsxBuffer, toCsvLine } from "./file-conversion";
 
 // Mock the logger to capture error calls
 vi.mock("@formbricks/logger", () => ({
@@ -147,5 +147,30 @@ describe("convertToXlsxBuffer", () => {
     expect(sheet["B1"].v).toBe("'=field");
     expect(sheet["A2"].v).toBe("a");
     expect(sheet["B2"].v).toBe("b");
+  });
+});
+
+describe("toCsvLine", () => {
+  test("quotes strings, leaves numbers bare, and ends with CRLF", () => {
+    expect(toCsvLine(["run_1", 42, "surveys"])).toBe('"run_1",42,"surveys"\r\n');
+  });
+
+  test("doubles quotes inside a string so commas and quotes can't break the row", () => {
+    expect(toCsvLine(['He said "hi", then left'])).toBe('"He said ""hi"", then left"\r\n');
+  });
+
+  test("writes null and undefined as empty cells", () => {
+    expect(toCsvLine(["a", null, undefined, "b"])).toBe('"a",,,"b"\r\n');
+  });
+
+  test.each(["=SUM(A1)", "+1", "-1", "@cmd", "\tlead", "\rlead"])(
+    "defangs %j so a spreadsheet won't run it as a formula",
+    (value) => {
+      expect(toCsvLine([value])).toBe(`"'${value}"\r\n`);
+    }
+  );
+
+  test("keeps a newline inside a quoted cell", () => {
+    expect(toCsvLine(["line one\nline two"])).toBe('"line one\nline two"\r\n');
   });
 });
