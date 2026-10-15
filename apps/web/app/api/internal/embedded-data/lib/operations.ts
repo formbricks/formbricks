@@ -1,5 +1,6 @@
 import "server-only";
 import { InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { applyRateLimitOrRespond } from "@/app/api/internal/lib/rate-limit";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
 import {
@@ -13,7 +14,6 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import {
@@ -160,7 +160,12 @@ export async function createEmbeddedDataOperation({
   // Authorized before anything is read about the workspace: an unauthorized caller learns nothing.
   const access = await authorizeWorkspace(context, workspaceId, "readWrite");
   if (access instanceof Response) return access;
-  await applyRateLimit(rateLimitConfigs.actions.stateMutation, access.workspaceId);
+  const limited = await applyRateLimitOrRespond(
+    rateLimitConfigs.actions.stateMutation,
+    access.workspaceId,
+    context
+  );
+  if (limited) return limited;
   if (context.auditLog) context.auditLog.organizationId = access.organizationId;
 
   const result = await runWrite(context, () => createSharedEmbeddedData(access.workspaceId, body));
@@ -196,7 +201,12 @@ export async function updateEmbeddedDataOperation({
 }: TRequestContext & { embeddedDataId: string; body: TEmbeddedDataUpdateBody }): Promise<Response> {
   const access = await authorizeField(context, embeddedDataId, "readWrite");
   if (access instanceof Response) return access;
-  await applyRateLimit(rateLimitConfigs.actions.stateMutation, access.workspaceId);
+  const limited = await applyRateLimitOrRespond(
+    rateLimitConfigs.actions.stateMutation,
+    access.workspaceId,
+    context
+  );
+  if (limited) return limited;
 
   const { acknowledgeExistingResponses, ...patch } = body;
   const before = await getSharedEmbeddedDataById(embeddedDataId, access.workspaceId);
@@ -219,7 +229,12 @@ export async function deleteEmbeddedDataOperation({
 }: TRequestContext & { embeddedDataId: string }): Promise<Response> {
   const access = await authorizeField(context, embeddedDataId, "readWrite");
   if (access instanceof Response) return access;
-  await applyRateLimit(rateLimitConfigs.actions.stateMutation, access.workspaceId);
+  const limited = await applyRateLimitOrRespond(
+    rateLimitConfigs.actions.stateMutation,
+    access.workspaceId,
+    context
+  );
+  if (limited) return limited;
 
   const result = await runWrite(context, () => deleteSharedEmbeddedData(embeddedDataId, access.workspaceId));
   if (result instanceof Response) return result;
@@ -241,7 +256,12 @@ export async function promoteEmbeddedDataOperation({
 }: TRequestContext & { embeddedDataId: string; body: TEmbeddedDataPromoteBody }): Promise<Response> {
   const access = await authorizeField(context, embeddedDataId, "readWrite");
   if (access instanceof Response) return access;
-  await applyRateLimit(rateLimitConfigs.actions.stateMutation, access.workspaceId);
+  const limited = await applyRateLimitOrRespond(
+    rateLimitConfigs.actions.stateMutation,
+    access.workspaceId,
+    context
+  );
+  if (limited) return limited;
 
   // Read before the write, and local-scoped: once promote lands the row is shared, so this is the last
   // moment the "before" side exists to be read at all.

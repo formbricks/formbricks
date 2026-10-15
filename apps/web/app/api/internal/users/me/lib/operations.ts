@@ -1,11 +1,17 @@
 import "server-only";
 import { headers } from "next/headers";
-import { AuthenticationError, AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
+import {
+  AuthenticationError,
+  AuthorizationError,
+  OperationNotAllowedError,
+  TooManyRequestsError,
+} from "@formbricks/types/errors";
 import type { TUser } from "@formbricks/types/user";
 import {
   getNotificationSettingsView,
   updateNotificationSetting,
 } from "@/app/(app)/workspaces/[workspaceId]/settings/account/notifications/lib/notification-settings";
+import { applyRateLimitOrRespond, rateLimitedResponse } from "@/app/api/internal/lib/rate-limit";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import {
   problemBadRequest,
@@ -18,7 +24,6 @@ import { PASSWORD_RESET_DISABLED, WEBAPP_URL } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { requestSsoAccountDeletionEmail } from "@/modules/account/lib/better-auth-account-deletion-request";
 import { auth } from "@/modules/auth/lib/auth";
-import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TNotificationSettingPatchBody, TProfilePatchBody } from "../schemas";
 import { serializeProfile } from "../serializers";
@@ -64,6 +69,8 @@ export async function updateProfileOperation({
   try {
     updated = await updateOwnProfile(user, body);
   } catch (error) {
+    // The email-change budget (a few per hour) is spent inside `updateOwnProfile`.
+    if (error instanceof TooManyRequestsError) return rateLimitedResponse(error, context);
     if (error instanceof OperationNotAllowedError) {
       return problemForbidden(
         requestId,
@@ -149,7 +156,8 @@ export async function requestAccountDeletionOperation(context: TRequestContext):
   const user = await requireCurrentUser(context);
   if (user instanceof Response) return user;
 
-  await applyRateLimit(rateLimitConfigs.actions.accountDeletion, user.id);
+  const limited = await applyRateLimitOrRespond(rateLimitConfigs.actions.accountDeletion, user.id, context);
+  if (limited) return limited;
   try {
     await requestSsoAccountDeletionEmail();
   } catch (error) {

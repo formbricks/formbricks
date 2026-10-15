@@ -1,5 +1,6 @@
 import "server-only";
 import { InvalidInputError } from "@formbricks/types/errors";
+import { applyRateLimitOrRespond } from "@/app/api/internal/lib/rate-limit";
 import {
   createdResponse,
   problemBadGateway,
@@ -11,7 +12,6 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { capturePostHogEvent } from "@/lib/posthog";
-import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   createFeedbackDirectory,
@@ -131,7 +131,11 @@ export async function createFeedbackDatasetOperation({
   );
   if (access instanceof Response) return access;
   const { userId } = access;
-  await applyRateLimit(rateLimitConfigs.actions.feedbackDirectoryMutation, userId);
+  const limited = await applyRateLimitOrRespond(rateLimitConfigs.actions.feedbackDirectoryMutation, userId, {
+    requestId,
+    instance,
+  });
+  if (limited) return limited;
 
   let datasetId: string;
   try {
@@ -186,7 +190,12 @@ export async function updateFeedbackDatasetOperation({
   const access = await requireFeedbackDatasetMutationAccess(authentication, datasetId, requestId, instance);
   if (access instanceof Response) return access;
   if (auditLog) auditLog.organizationId = access.organizationId;
-  await applyRateLimit(rateLimitConfigs.actions.feedbackDirectoryMutation, access.userId);
+  const limited = await applyRateLimitOrRespond(
+    rateLimitConfigs.actions.feedbackDirectoryMutation,
+    access.userId,
+    { requestId, instance }
+  );
+  if (limited) return limited;
 
   const before = await readDatasetDetails(datasetId, requestId, instance);
   if (before instanceof Response) return before;

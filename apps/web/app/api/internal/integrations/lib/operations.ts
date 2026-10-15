@@ -1,6 +1,7 @@
 import "server-only";
 import { AuthenticationError, OperationNotAllowedError, UnknownError } from "@formbricks/types/errors";
 import type { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
+import { applyRateLimitOrRespond } from "@/app/api/internal/lib/rate-limit";
 import { requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
 import {
   noContentResponse,
@@ -25,7 +26,6 @@ import {
 } from "@/lib/integration/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getSlackChannels } from "@/lib/slack/service";
-import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   type TIntegrationConflictReason,
@@ -86,7 +86,12 @@ export async function putIntegrationOperation({
   const { userId } = access;
   // Bound before any lookup: every call past this point reads the stored integration and writes the
   // provider config plus an audit entry.
-  await applyRateLimit(rateLimitConfigs.actions.integrationMutation, userId);
+  const limited = await applyRateLimitOrRespond(
+    rateLimitConfigs.actions.integrationMutation,
+    userId,
+    context
+  );
+  if (limited) return limited;
 
   // The settings pages hand the client a redacted integration and echo it back whole on every add, edit
   // and delete of a mapping, so a client-sent `config.key` is blank or forged. The stored credentials are
@@ -130,7 +135,12 @@ export async function deleteIntegrationOperation({
   if (access instanceof Response) return access;
   if (auditLog) auditLog.organizationId = access.organizationId;
   // Same budget as the writes: a delete is the cheapest way to churn integration rows.
-  await applyRateLimit(rateLimitConfigs.actions.integrationMutation, access.userId);
+  const limited = await applyRateLimitOrRespond(
+    rateLimitConfigs.actions.integrationMutation,
+    access.userId,
+    context
+  );
+  if (limited) return limited;
 
   const integration = await getIntegrationByType(workspaceId, type);
   if (!integration) return problemNotFound(requestId, "Integration", type, instance);

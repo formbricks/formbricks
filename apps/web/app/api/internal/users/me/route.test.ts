@@ -220,12 +220,18 @@ describe("PATCH /api/internal/users/me", () => {
 
   test("answers 429 once the email-change rate limit is hit", async () => {
     mocks.applyRateLimit.mockImplementation(async (config: { namespace: string }) => {
-      if (config.namespace === "action:email") throw new TooManyRequestsError("Too many requests");
+      if (config.namespace === "action:email")
+        throw new TooManyRequestsError("Maximum number of requests reached. Please try again later.", 1800);
     });
 
     const response = await patchProfile({ email: "new@example.com", password: "Correct-horse-1" });
 
     expect(response.status).toBe(429);
+    // The limiter's own words and wait, not the wrapper's "the service is rate limiting".
+    expect((await response.json()).detail).toBe(
+      "Maximum number of requests reached. Please try again later."
+    );
+    expect(response.headers.get("Retry-After")).toBe("1800");
     expect(mocks.verifyUserPassword).not.toHaveBeenCalled();
   });
 

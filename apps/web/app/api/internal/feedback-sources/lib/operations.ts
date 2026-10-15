@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import { InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { applyRateLimitOrRespond } from "@/app/api/internal/lib/rate-limit";
 import { requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
 import {
   createdResponse,
@@ -33,7 +34,6 @@ import {
   SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE,
   assertNewlyAttachedSurveysWorkspaceVisible,
 } from "@/lib/survey/visibility/outbound";
-import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type {
   TFeedbackSourceCreateBody,
@@ -150,7 +150,12 @@ export async function createFeedbackSourceOperation({
   );
   if (access instanceof Response) return access;
   if (auditLog) auditLog.organizationId = access.organizationId;
-  await applyRateLimit(rateLimitConfigs.actions.feedbackSourceMutation, userId);
+  const limited = await applyRateLimitOrRespond(
+    rateLimitConfigs.actions.feedbackSourceMutation,
+    userId,
+    context
+  );
+  if (limited) return limited;
 
   // The dataset must be this organization's (otherwise the same 403 as no dataset at all) and assigned to
   // this workspace. The composite foreign key enforces the assignment too; this answers it first.
@@ -199,7 +204,12 @@ export async function updateFeedbackSourceOperation({
   const authorized = await authorizeSource(context, feedbackSourceId);
   if (authorized instanceof Response) return authorized;
   const { userId, scope } = authorized;
-  await applyRateLimit(rateLimitConfigs.actions.feedbackSourceMutation, userId);
+  const limited = await applyRateLimitOrRespond(
+    rateLimitConfigs.actions.feedbackSourceMutation,
+    userId,
+    context
+  );
+  if (limited) return limited;
 
   const updated = await runWrite(context, async () => {
     let mappings: TMappingsInput | undefined;
@@ -233,7 +243,12 @@ export async function deleteFeedbackSourceOperation({
 }: TRequestContext & { feedbackSourceId: string }): Promise<Response> {
   const authorized = await authorizeSource(context, feedbackSourceId);
   if (authorized instanceof Response) return authorized;
-  await applyRateLimit(rateLimitConfigs.actions.feedbackSourceMutation, authorized.userId);
+  const limited = await applyRateLimitOrRespond(
+    rateLimitConfigs.actions.feedbackSourceMutation,
+    authorized.userId,
+    context
+  );
+  if (limited) return limited;
 
   const deleted = await deleteFeedbackSource(feedbackSourceId, authorized.scope.workspaceId);
   if (context.auditLog) context.auditLog.oldObject = deleted;
@@ -257,7 +272,12 @@ export async function importFeedbackSourceResponsesOperation({
   const authorized = await authorizeSource(context, feedbackSourceId);
   if (authorized instanceof Response) return authorized;
   const { userId, scope } = authorized;
-  await applyRateLimit(rateLimitConfigs.actions.historicalResponseImport, userId);
+  const limited = await applyRateLimitOrRespond(
+    rateLimitConfigs.actions.historicalResponseImport,
+    userId,
+    context
+  );
+  if (limited) return limited;
 
   const [feedbackSource, survey] = await Promise.all([
     getFeedbackSourceWithMappingsById(feedbackSourceId, scope.workspaceId),
