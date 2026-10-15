@@ -174,9 +174,9 @@ spec:
           envFrom:
             - secretRef:
                 name: formbricks-maintenance-env
-          # Required by the shared environment check; preparation does not use them.
+          # Inert placeholders for the shared environment check. Preparation never reads them, and they are
+          # not application secrets: never reuse these values in a running installation.
           env:
-            - { name: LOG_LEVEL, value: fatal }
             - { name: ENCRYPTION_KEY, value: maintenance-unused }
             - { name: CUBEJS_API_SECRET, value: maintenance-unused }
             - { name: CUBEJS_API_URL, value: "http://localhost" }
@@ -192,6 +192,9 @@ image-pull credentials, network policy, and environment bindings for your instal
 - `DATABASE_URL`
 - `AUTHZED_ENABLED=true`, `AUTHZED_ENDPOINT`, `AUTHZED_TOKEN`, `AUTHZED_SYSTEM_KEY`, `AUTHZED_INSECURE`, and
   `AUTHZED_CONSISTENCY=fully_consistent`
+- `WEBAPP_URL`. Preparation runs the database migrations, and an installation upgrading from 5.3 or earlier
+  with MCP OAuth clients needs it: that data migration derives the clients' resource link from it, and
+  without it preparation stops with `upgrade_database_migration_failed`.
 
 The chart's application Secret does not necessarily contain `DATABASE_URL` or the AuthZed values, which the
 chart injects separately. Prefer explicit `valueFrom.secretKeyRef` bindings to existing Secrets when possible.
@@ -234,7 +237,7 @@ including when arguments were rejected before any work ran. The code identifies 
 | `upgrade_maintenance_required` | Complete and acknowledge backup and writer shutdown. |
 | `upgrade_invalid_arguments` | Check options and the reviewed digest format. |
 | `upgrade_timeout_unavailable` | Use the supported release image containing `timeout`. |
-| `upgrade_configuration_invalid` | Correct the required runtime environment and fully consistent mode. |
+| `upgrade_configuration_invalid` | Correct the required runtime environment and fully consistent mode. The result's `variables` array, when present, names the variables to fix, never their values. |
 | `upgrade_spicedb_unhealthy` | Check datastore migrations, networking, TLS, and token configuration. |
 | `upgrade_database_migration_failed` | Diagnose the migration in a restricted operator session; do not restart v5 blindly. |
 | `upgrade_graph_not_ready` | Inspect `schema check`, outbox status, and aggregate `upgrade check`; investigate invalid/orphaned data. |
