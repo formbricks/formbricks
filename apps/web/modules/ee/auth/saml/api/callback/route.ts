@@ -1,11 +1,15 @@
 import { redirect } from "next/navigation";
+import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { responses } from "@/app/lib/api/response";
 import { UNTRUSTED_CLIENT_IP, getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import jackson from "@/modules/ee/auth/saml/lib/jackson";
-import { isSamlResponseWithinBudget } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
+import {
+  SAML_RESPONSE_MARKUP_BUDGET,
+  countSamlResponseMarkup,
+} from "@/modules/ee/auth/saml/lib/saml-response-bounds";
 
 interface SAMLCallbackBody {
   RelayState: string;
@@ -41,8 +45,14 @@ export const POST = async (req: Request) => {
 
   const { RelayState, SAMLResponse } = body as unknown as SAMLCallbackBody;
 
-  if (typeof SAMLResponse === "string" && !isSamlResponseWithinBudget(SAMLResponse)) {
-    return responses.badRequestResponse("SAMLResponse is too large to process");
+  if (typeof SAMLResponse === "string") {
+    const markup = countSamlResponseMarkup(SAMLResponse);
+    if (markup > SAML_RESPONSE_MARKUP_BUDGET) {
+      // The size only, never the content: with jackson's traces off (ENG-3976) this line is the one record a
+      // real IdP response refused here would leave.
+      logger.warn({ markup, length: SAMLResponse.length }, "Refused a SAML response over the markup budget");
+      return responses.badRequestResponse("SAMLResponse is too large to process");
+    }
   }
 
   const { redirect_url } = await oauthController.samlResponse({

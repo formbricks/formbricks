@@ -1,20 +1,20 @@
 import "server-only";
 
 /**
- * Most nodes a `SAMLResponse` may carry before jackson parses it (ENG-3973, ENG-3248).
+ * Most markup a `SAMLResponse` may carry before jackson parses it (ENG-3973, ENG-3248).
  *
  * jackson decodes the response and builds its whole DOM (`saml20.parseIssuer`) before it checks the issuer,
  * the connection or RelayState, so an anonymous caller chooses how much parsing the callback does. Parse cost
- * follows the number of nodes, not the number of bytes: inside the 256 KiB `/api/auth` body limit, a response
- * that is nothing but ~49,000 empty elements holds a ~52 MB DOM and blocks the event loop for 60-200 ms,
- * against ~1 MB and ~5 ms for a real signed assertion carrying 150 groups.
+ * follows the markup, not the bytes: inside the 256 KiB `/api/auth` body limit, a response that is nothing but
+ * ~49,000 empty elements holds a ~52 MB DOM and blocks the event loop for 60-200 ms, and ~97,000 stray `<0`
+ * cost ~300 ms because xmldom raises and recovers from an error for each. A real signed assertion carrying 150
+ * groups costs ~1 MB and ~5 ms.
  *
- * The budget counts what becomes a node: every `<` (tags, comments, CDATA, processing instructions) and every
- * attribute name inside a tag, with or without a value. Text is never counted, so group values such as AD
- * distinguished names (`CN=…,OU=…,DC=…`) cost nothing however many `=` they hold. A real response written as
- * verbosely as Okta writes one (`xmlns:xs`, `xmlns:xsi` and `xsi:type` on every group) reaches about 5,000
- * only at 1,000 groups, where it already fills the whole 256 KiB body limit, so nothing legitimate that fits
- * comes near 12,000.
+ * The budget counts every `<` byte and every attribute name inside a tag. Text is never counted, so group values
+ * such as AD distinguished names (`CN=…,OU=…,DC=…`) cost nothing however many `=` they hold. A real response
+ * written as verbosely as Okta writes one (`xmlns:xs`, `xmlns:xsi` and `xsi:type` on every group) reaches about
+ * 5,000 only at 1,000 groups, where it already fills the whole 256 KiB body limit; one with the shortest
+ * possible group names tops out near 8,000. At 12,000 the costliest shape (a `<0` flood) parses in ~50 ms.
  */
 export const SAML_RESPONSE_MARKUP_BUDGET = 12_000;
 
@@ -29,85 +29,52 @@ const SINGLE_QUOTE = 0x27;
 
 const isWhitespace = (byte: number) => byte === 0x20 || byte === 0x09 || byte === 0x0a || byte === 0x0d;
 
-const COMMENT_OPEN = Buffer.from("<!--");
-const COMMENT_CLOSE = Buffer.from("-->");
-const CDATA_OPEN = Buffer.from("<![CDATA[");
-const CDATA_CLOSE = Buffer.from("]]>");
-const PI_CLOSE = Buffer.from("?>");
-
-/** Index just past the next `close` at or after `from`, or the end of the buffer if it never closes. */
-const skipPast = (xml: Buffer, from: number, close: Buffer): number => {
-  const end = xml.indexOf(close, from);
-  return end === -1 ? xml.length : end + close.length;
-};
-
-/** Where a comment, CDATA section or processing instruction starting at `lt` ends, or -1 if `lt` opens a tag. */
-const endOfSingleNode = (xml: Buffer, lt: number): number => {
-  if (xml[lt + 1] === QUESTION) return skipPast(xml, lt + 2, PI_CLOSE);
-  if (xml[lt + 1] !== BANG) return -1;
-  if (xml.subarray(lt, lt + COMMENT_OPEN.length).equals(COMMENT_OPEN)) {
-    return skipPast(xml, lt + COMMENT_OPEN.length, COMMENT_CLOSE);
-  }
-  if (xml.subarray(lt, lt + CDATA_OPEN.length).equals(CDATA_OPEN)) {
-    return skipPast(xml, lt + CDATA_OPEN.length, CDATA_CLOSE);
-  }
-  return -1;
-};
-
 /**
- * Reads the tag that starts at `lt`, past its name, and counts every attribute name that starts after
- * whitespace or a closing quote. Quoted values are skipped whole, so neither `>` nor `=` inside one is misread.
+ * Attribute names in the tag whose name starts at `from`: each name that starts after whitespace or a closing
+ * quote, with or without a value. The scan never passes `end`, the next `<`, so a missing `>` or an unclosed
+ * quote can hide no markup from the count, and each byte is read at most once per tag.
  */
-const readTag = (xml: Buffer, lt: number): { end: number; attributes: number } => {
+const countAttributes = (xml: Buffer, from: number, end: number): number => {
   let attributes = 0;
   let afterSeparator = false;
-  let j = lt + 1;
-  while (j < xml.length && xml[j] !== GREATER_THAN) {
+  let j = from;
+  while (j < end && xml[j] !== GREATER_THAN) {
     const byte = xml[j];
     if (byte === DOUBLE_QUOTE || byte === SINGLE_QUOTE) {
-      const close = xml.indexOf(byte, j + 1);
-      j = close === -1 ? xml.length : close + 1;
+      const close = xml.subarray(j + 1, end).indexOf(byte);
+      if (close === -1) break;
+      j += close + 2;
       afterSeparator = true;
       continue;
     }
-    const startsAttribute = afterSeparator && !isWhitespace(byte) && byte !== EQUALS && byte !== SLASH;
-    if (startsAttribute) attributes++;
+    if (afterSeparator && !isWhitespace(byte) && byte !== EQUALS && byte !== SLASH) attributes++;
     afterSeparator = isWhitespace(byte);
     j++;
   }
-  return { end: j + 1, attributes };
+  return attributes;
 };
 
 /**
- * Counts the nodes the decoded response would become, in one pass over its bytes, without building a string
- * or a tree (~1 ms at the body limit). Not a parser and not a validator: whatever it miscounts, jackson still
- * parses and rejects exactly as before. It only has to be right about what is expensive, which is a node.
+ * Counts the markup in the decoded response in one pass over its bytes, without building a string or a tree
+ * (~1 ms at the body limit). Every `<` counts wherever it sits: xmldom turns each one into a node, or into an
+ * error it raises and recovers from, and either costs about the same. Following XML structure instead lets
+ * malformed input hide markup, which is exactly what an attacker sends. A `<` inside a comment or CDATA
+ * section is counted too; over-counting that rarity is the safe direction.
  */
 export const countSamlResponseMarkup = (samlResponseBase64: string): number => {
   const xml = Buffer.from(samlResponseBase64, "base64");
   let count = 0;
-  let i = 0;
+  let lt = xml.indexOf(LESS_THAN);
 
-  while (i < xml.length) {
-    const lt = xml.indexOf(LESS_THAN, i);
-    if (lt === -1) break;
+  while (lt !== -1) {
+    const next = xml.indexOf(LESS_THAN, lt + 1);
+    const end = next === -1 ? xml.length : next;
     count++;
-
-    // A comment, CDATA section or processing instruction is one node, whatever its content says.
-    const singleNodeEnd = endOfSingleNode(xml, lt);
-    if (singleNodeEnd !== -1) {
-      i = singleNodeEnd;
-      continue;
-    }
-
-    const tag = readTag(xml, lt);
-    count += tag.attributes;
-    i = tag.end;
+    // `</…`, `<!…` and `<?…` carry no attributes.
+    const kind = xml[lt + 1];
+    if (kind !== SLASH && kind !== BANG && kind !== QUESTION) count += countAttributes(xml, lt + 1, end);
+    lt = next;
   }
 
   return count;
 };
-
-/** Whether jackson should be allowed to parse this response at all. */
-export const isSamlResponseWithinBudget = (samlResponseBase64: string): boolean =>
-  countSamlResponseMarkup(samlResponseBase64) <= SAML_RESPONSE_MARKUP_BUDGET;
