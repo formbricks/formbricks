@@ -1,8 +1,7 @@
 import "server-only";
 import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
-import { createRequire } from "node:module";
-import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
 import { prisma } from "@formbricks/database";
 import {
@@ -21,6 +20,7 @@ import {
   OnlineUpgradeBlocked,
   runOnlineUpgrade,
   summarizeOnlineState,
+  toOnlineBlocker,
 } from "./coordinator";
 import {
   type DataHistoryRow,
@@ -61,10 +61,7 @@ export const readOnlineStatus = async () => {
       await readOnlineUpgradeCheckpoint<OnlineState>(connection, ONLINE_UPGRADE_RELEASE)
     );
   } catch (error) {
-    const result = summarizeOnlineState(
-      null,
-      error instanceof OnlineUpgradeBlocked ? error : new OnlineUpgradeBlocked("online_upgrade_failed", true)
-    );
+    const result = summarizeOnlineState(null, toOnlineBlocker(error, "online_upgrade_failed", true));
     result.rollbackTo60Allowed = false;
     return result;
   }
@@ -154,12 +151,16 @@ export const runOnlineCommand = async (
         .sort((a, b) => a.name.localeCompare(b.name));
       await applyOnlineSchemaMigrations(lock, sql);
       await lock.assertLock();
-      const packageDir = dirname(createRequire(import.meta.url).resolve("@formbricks/database"));
-      await execFileAsync(
-        process.execPath,
-        [join(packageDir, "scripts/apply-migrations.js"), "--phase", phase],
-        { signal: lock.signal, timeout: 30 * 60_000, maxBuffer: 2 * 1024 * 1024 }
+      // The CLI bundle inlines @formbricks/database, so the package cannot be resolved at runtime. The image
+      // keeps the bundle (assetRoot) beside packages/database/dist, which holds the migration script.
+      const applyMigrations = fileURLToPath(
+        new URL("../packages/database/dist/scripts/apply-migrations.js", assetRoot)
       );
+      await execFileAsync(process.execPath, [applyMigrations, "--phase", phase], {
+        signal: lock.signal,
+        timeout: 30 * 60_000,
+        maxBuffer: 2 * 1024 * 1024,
+      });
       await lock.assertLock();
       await verifyHistory();
     };
@@ -252,9 +253,7 @@ export const runOnlineCommand = async (
         /* Never infer rollback safety from an unavailable checkpoint. */
       }
     }
-    const blocker =
-      error instanceof OnlineUpgradeBlocked ? error : new OnlineUpgradeBlocked("online_upgrade_failed", true);
-    const result = summarizeOnlineState(state, blocker);
+    const result = summarizeOnlineState(state, toOnlineBlocker(error, "online_upgrade_failed", true));
     // On connection loss, never advertise rollback based on a stale pre-finalization read.
     if (!stateKnown || !session || session.signal.aborted) result.rollbackTo60Allowed = false;
     return result;

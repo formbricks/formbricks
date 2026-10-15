@@ -112,6 +112,15 @@ kubectl -n <namespace> exec deployment/<web-deployment> -- formbricks-authzed up
 Status contains the phase, processed survey count, baseline completion, retryability, a sanitized blocker
 code, queue pause/deadline/resumption timestamps, and whether rollback to 6.0 is still allowed. Queue
 status reflects the durable coordinator checkpoint, not a separate Redis health probe. Repeating the same upgrade resumes durable checkpoints.
+
+When prepare or finalize stops on an unexpected error (`online_upgrade_failed` or
+`invalid_online_configuration`), the coordinator's own output adds a `cause` with the error's type and code,
+such as `{"name":"Error","code":"ENOENT"}`, and never its message. Status reads the checkpoint, so it shows
+only the blocker code. Read the cause from the failed coordinator pod:
+
+```sh
+kubectl -n <namespace> logs job/<web-deployment>-online-prepare
+```
 Old admin tabs may require reload; preserving unsaved 6.0 editor state is outside the intended guarantee.
 
 ## Background job handoff

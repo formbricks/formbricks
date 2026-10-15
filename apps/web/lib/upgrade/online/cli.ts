@@ -1,6 +1,6 @@
 import "server-only";
 import { readFile } from "node:fs/promises";
-import { OnlineUpgradeBlocked, summarizeOnlineState } from "./coordinator";
+import { OnlineUpgradeBlocked, summarizeOnlineState, toOnlineBlocker } from "./coordinator";
 import { KubernetesUpgrade, onlineConfigSchema } from "./kubernetes";
 import { readOnlineStatus, runOnlineCommand } from "./runtime";
 
@@ -49,10 +49,7 @@ export const runKubernetesOnlineCli = async (args: string[], assetRoot: URL) => 
       assetRoot
     );
   } catch (error) {
-    const result = summarizeOnlineState(
-      null,
-      error instanceof OnlineUpgradeBlocked ? error : new OnlineUpgradeBlocked("invalid_online_configuration")
-    );
+    const result = summarizeOnlineState(null, toOnlineBlocker(error, "invalid_online_configuration"));
     result.rollbackTo60Allowed = false;
     return result;
   }

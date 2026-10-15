@@ -3,8 +3,10 @@ import {
   type OnlineDependencies,
   type OnlineState,
   OnlineUpgradeBlocked,
+  describeOnlineFailure,
   runOnlineUpgrade,
   summarizeOnlineState,
+  toOnlineBlocker,
 } from "./coordinator";
 
 const setup = () => {
@@ -115,4 +117,47 @@ test("resuming activated cleanup does not repeat finalization or activation", as
   expect((await runOnlineUpgrade("prepare", deps)).status).toBe("complete");
   expect((await runOnlineUpgrade("finalize", deps)).status).toBe("complete");
   expect(deps.cleanup).toHaveBeenCalledTimes(2);
+});
+
+test("an unexpected failure is described by its class and code, never its message", () => {
+  const secret = "postgresql://formbricks:password@db/formbricks";
+  class PrismaClientInitializationError extends Error {
+    name = "PrismaClientInitializationError";
+    code = "P1001";
+  }
+  expect(describeOnlineFailure(new PrismaClientInitializationError(secret))).toEqual({
+    name: "PrismaClientInitializationError",
+    code: "P1001",
+  });
+  expect(describeOnlineFailure(Object.assign(new Error(secret), { code: 403 }))).toEqual({
+    name: "Error",
+    code: "403",
+  });
+  // Anything but a short identifier could be a payload, so it is dropped rather than copied.
+  for (const code of [secret, "A".repeat(65), 1.5])
+    expect(describeOnlineFailure(Object.assign(new Error(secret), { code }))).toEqual({
+      name: "Error",
+      code: null,
+    });
+  expect(describeOnlineFailure(Object.assign(new Error(secret), { name: secret }))).toEqual({
+    name: "Error",
+    code: null,
+  });
+  expect(describeOnlineFailure(secret)).toEqual({ name: "string", code: null });
+
+  const reported = summarizeOnlineState(
+    null,
+    toOnlineBlocker(new Error(secret), "online_upgrade_failed", true)
+  );
+  expect(reported).toMatchObject({
+    blockerCode: "online_upgrade_failed",
+    cause: { name: "Error", code: null },
+  });
+  expect(JSON.stringify(reported)).not.toContain("password");
+});
+
+test("a deliberate blocker is reported as raised, without a cause", () => {
+  const blocker = new OnlineUpgradeBlocked("unknown_source_schema");
+  expect(toOnlineBlocker(blocker, "online_upgrade_failed", true)).toBe(blocker);
+  expect(summarizeOnlineState(null, blocker)).not.toHaveProperty("cause");
 });
