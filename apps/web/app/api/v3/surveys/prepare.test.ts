@@ -778,6 +778,106 @@ describe("v3 survey preparation", () => {
   });
 });
 
+describe("prepareV3SurveyPatchInput with cyclic block logic (ENG-3946)", () => {
+  type TKey = "rate" | "why" | "pick";
+  const ids: Record<TKey, string> = {
+    rate: "clbkrate000000000000000000",
+    why: "clbkwhy0000000000000000000",
+    pick: "clbkpick000000000000000000",
+  };
+  const names: Record<TKey, string> = { rate: "Rate", why: "Why", pick: "Pick" };
+
+  const jumpLogic = (from: TKey, to: TKey) => ({
+    id: `cllogic${from}${to}`.padEnd(26, "0"),
+    conditions: {
+      id: `clgroup${from}${to}`.padEnd(26, "0"),
+      connector: "and",
+      conditions: [
+        {
+          id: `clcond${from}${to}`.padEnd(26, "0"),
+          leftOperand: { type: "element", value: `q_${from}` },
+          operator: "isSubmitted",
+        },
+      ],
+    },
+    actions: [{ id: `clact${from}${to}`.padEnd(26, "0"), objective: "jumpToBlock", target: ids[to] }],
+  });
+
+  // `Rate` jumps to `Pick` unless told otherwise. Stored as Rate → Why → Pick that is a plain skip; move
+  // `Rate` after `Pick` and the jump points back at a block whose next step is `Rate` again — a loop.
+  const buildBlocks = (
+    localeKey: "default" | "en-US",
+    order: TKey[],
+    jumps: Partial<Record<TKey, TKey>> = { rate: "pick" }
+  ) =>
+    order.map((key) => {
+      const target = jumps[key];
+      return {
+        id: ids[key],
+        name: names[key],
+        elements: [
+          {
+            id: `q_${key}`,
+            type: "openText",
+            headline: { [localeKey]: names[key], "de-DE": `${names[key]} (de)` },
+            required: false,
+          },
+        ],
+        ...(target ? { logic: [jumpLogic(key, target)] } : {}),
+      };
+    });
+
+  const storedSurvey = (order: TKey[], jumps?: Partial<Record<TKey, TKey>>) =>
+    ({ ...survey, blocks: buildBlocks("default", order, jumps) }) as unknown as TSurvey;
+
+  const loopParam = (index: number, key: TKey) => ({
+    name: `blocks.${String(index)}.logic`,
+    reason: `Conditional Logic: Cyclic logic detected in block ${String(index + 1)} (${names[key]}).`,
+  });
+
+  test("rejects a reorder that turns a forward jump into a loop, naming only the blocks on it", () => {
+    const preparation = prepareV3SurveyPatchInput(storedSurvey(["rate", "why", "pick"]), {
+      blocks: buildBlocks("en-US", ["why", "pick", "rate"]),
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.origin).toBe("request");
+      // `Why` only leads into the loop, so it is not reported.
+      expect(preparation.validation.invalidParams).toEqual([loopParam(1, "pick"), loopParam(2, "rate")]);
+    }
+  });
+
+  test("keeps a survey that already loops patchable, and accepts the patch that breaks the loop", () => {
+    const looping = storedSurvey(["why", "pick", "rate"]);
+
+    expect(prepareV3SurveyPatchInput(looping, { name: "Renamed" }).ok).toBe(true);
+    expect(
+      prepareV3SurveyPatchInput(looping, { blocks: buildBlocks("en-US", ["rate", "why", "pick"]) }).ok
+    ).toBe(true);
+  });
+
+  test("accepts moving a block in front of an existing loop — it leads in, it is not on it", () => {
+    const preparation = prepareV3SurveyPatchInput(storedSurvey(["pick", "rate", "why"]), {
+      blocks: buildBlocks("en-US", ["why", "pick", "rate"]),
+    });
+
+    expect(preparation.ok).toBe(true);
+  });
+
+  test("rejects a new loop between blocks that already loop", () => {
+    // Pick → Why → Rate → Pick already loops; a Pick → Rate jump is a second loop over the same blocks.
+    const preparation = prepareV3SurveyPatchInput(storedSurvey(["pick", "why", "rate"]), {
+      blocks: buildBlocks("en-US", ["pick", "why", "rate"], { rate: "pick", pick: "rate" }),
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual([loopParam(0, "pick")]);
+    }
+  });
+});
+
 describe("prepareV3SurveyPatchInput with a semantically invalid stored survey", () => {
   // ENG-3070. The stored survey parses fine but fails the semantic pass: `de-DE` is configured and
   // the headline has no German. Both halves of the ticket are asserted here — the failure must be
