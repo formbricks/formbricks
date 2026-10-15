@@ -43,9 +43,11 @@ export interface WorkspaceStateData {
  * never round-trips through the server) would stop matching, and the survey would be hidden.
  *
  * So alongside each region-tagged language we expose a duplicate entry under its bare legacy code
- * (`de-DE` → `de`). The legacy entry only exists to satisfy the SDK's exact match; the survey renderer
- * canonicalizes whatever it receives, so content lookup still resolves to the canonical key. Canonical
- * entries are kept first so the renderer resolves to the canonical code.
+ * (`de-DE` → `de`). The legacy entry only exists to satisfy the SDK's exact match. The shared matcher
+ * (`matchSurveyLanguage` in `@formbricks/i18n-utils`) treats a stored code whose canonical form is also
+ * stored as a duplicate and resolves it to that canonical sibling (ENG-3961), so new SDKs and the
+ * renderer — which also re-resolves the code an old SDK hands it — always land on the canonical
+ * content key, never on the legacy one no content is stored under.
  *
  * Applied to multi-language surveys only: a single-language survey skips language matching in the SDK,
  * and adding an entry would flip it to "multi-language" and could hide it. Remove once SDK clients

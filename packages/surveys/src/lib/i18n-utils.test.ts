@@ -45,4 +45,13 @@ describe("getI18nLanguage", () => {
   test("returns the requested code unchanged when nothing matches", () => {
     expect(getI18nLanguage("fr", [lang("de-DE"), lang("en-US", true)])).toBe("fr");
   });
+
+  test("resolves a legacy request to the canonical code when the list also carries legacy duplicates", () => {
+    // The client environment endpoint appends `de`/`en` duplicates for old SDKs (ENG-3961); content
+    // is keyed `de-DE`, so the renderer must render — and pick its UI bundle — under `de-DE`.
+    const legacyAugmented = [lang("de-DE"), lang("en-US", true), lang("de"), lang("en", true)];
+    expect(getI18nLanguage("de", legacyAugmented)).toBe("de-DE");
+    expect(getI18nLanguage("de-DE", legacyAugmented)).toBe("de-DE");
+    expect(getI18nLanguage("en", legacyAugmented)).toBe("en-US");
+  });
 });

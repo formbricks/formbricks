@@ -261,3 +261,61 @@ describe("resolveSurveyLanguage", () => {
     ).toBe(DEFAULT_SURVEY_LANGUAGE_KEY);
   });
 });
+
+// What the client environment endpoint serves an app survey (ENG-1067): the real languages, then a
+// duplicate under each legacy code so SDKs that only match exactly keep matching (ENG-3961).
+describe("legacy duplicate entries from the client environment endpoint", () => {
+  const legacyAugmented = [
+    language("de-DE"),
+    language("en-US", { isDefault: true }),
+    language("de"),
+    language("en", { isDefault: true }),
+  ];
+
+  test.each([
+    ["de", "de-DE"],
+    ["DE", "de-DE"],
+    ["de-DE", "de-DE"],
+    ["en", DEFAULT_SURVEY_LANGUAGE_KEY],
+    ["en-US", DEFAULT_SURVEY_LANGUAGE_KEY],
+    ["fr", null],
+  ])("matchSurveyLanguage(%s) resolves to %s, never to a legacy duplicate", (requested, expected) => {
+    expect(matchSurveyLanguage(legacyAugmented, requested)).toBe(expected);
+  });
+
+  test("resolves every legacy spelling to its canonical sibling", () => {
+    const chinese = withDefault(
+      language("zh-Hans-CN"),
+      language("pt-BR"),
+      language("zh"),
+      language("zh-CN"),
+      language("zh-Hans"),
+      language("pt")
+    );
+    expect(matchSurveyLanguage(chinese, "zh")).toBe("zh-Hans-CN");
+    expect(matchSurveyLanguage(chinese, "zh-CN")).toBe("zh-Hans-CN");
+    expect(matchSurveyLanguage(chinese, "zh_hans")).toBe("zh-Hans-CN");
+    expect(matchSurveyLanguage(chinese, "pt")).toBe("pt-BR");
+  });
+
+  test("resolves to the canonical sibling whatever order the entries are stored in", () => {
+    expect(matchSurveyLanguage(withDefault(language("de"), language("de-DE")), "de")).toBe("de-DE");
+    expect(matchSurveyLanguage(withDefault(language("de"), language("de-DE")), "de-AT")).toBe("de-DE");
+  });
+
+  test("keeps a legacy code that has no canonical sibling (an unmigrated survey)", () => {
+    const unmigrated = withDefault(language("de"));
+    expect(matchSurveyLanguage(unmigrated, "de")).toBe("de");
+    expect(matchSurveyLanguage(unmigrated, "de-DE")).toBe("de");
+  });
+
+  test("an explicit or browser de resolves to de-DE in the SDK; fr still skips", () => {
+    const sdk = { languages: legacyAugmented, unmatchedExplicitLanguage: "skip" as const };
+    expect(resolveSurveyLanguage({ ...sdk, explicitLanguage: "de" })).toBe("de-DE");
+    expect(resolveSurveyLanguage({ ...sdk, browserLanguages: ["de"], autoSelectLanguage: true })).toBe(
+      "de-DE"
+    );
+    expect(resolveSurveyLanguage({ ...sdk, explicitLanguage: "en" })).toBe(DEFAULT_SURVEY_LANGUAGE_KEY);
+    expect(resolveSurveyLanguage({ ...sdk, explicitLanguage: "fr" })).toBeNull();
+  });
+});
