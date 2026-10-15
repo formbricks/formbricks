@@ -66,6 +66,7 @@ describe("Fresh-instance sign-up exception (real Postgres)", () => {
     // count sees the winner, its 403 comes out of `createUser`, and with `autoSignIn: false` Better Auth
     // answers that with its generic-duplicate 200 — a fulfilled result carrying a user that was never
     // inserted (ENG-2812). So count the fulfilled result that carries the persisted id, not every one.
+    // Once ENG-2812 is fixed, the loser always rejects: assert that the other outcome is rejected again.
     const [admin] = markedUsers;
     expect(
       outcomes.filter((outcome) => outcome.status === "fulfilled" && outcome.value.user.id === admin.id)
