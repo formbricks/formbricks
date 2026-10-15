@@ -112,7 +112,7 @@ export const VerifyEmail = ({
     return (
       <div className="flex h-screen w-screen flex-col items-center justify-center bg-slate-50">
         <span className="size-24 rounded-full bg-slate-300 p-6 text-5xl">🤔</span>
-        <p className="mt-8 text-4xl font-bold">{t("s.this_looks_fishy")}</p>
+        <p className="mt-8 text-4xl font-bold">{t("s.link_not_valid")}</p>
         <Button variant="ghost" className="mt-4" onClick={handleGoBackClick}>
           {t("s.please_try_again_with_the_original_link")}
         </Button>

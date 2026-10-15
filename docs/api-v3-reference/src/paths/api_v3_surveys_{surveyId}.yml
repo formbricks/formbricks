@@ -399,16 +399,23 @@ patch:
         A patch that newly *introduces* a forward reference — a recall of an answer not yet given, a
         logic condition reading a later block, or a `requireAnswer` target that is not in a later block
         — is refused with `code: misordered_reference`; a survey that already contains one stays
-        patchable, only newly created violations are rejected.
+        patchable, only newly created violations are rejected. A patch that newly *introduces* a
+        loop in the conditional logic — jumps, fallbacks and next blocks leading back on themselves,
+        so a respondent could never reach an ending — is refused the same way, reported at the
+        `logic` of each block a new looping step leaves ("Cyclic logic detected in block N"). A
+        survey that already loops stays patchable, and blocks that only lead into a loop are fine.
 
 
         3. A server-owned field was echoed back with a different value — `code: read_only_field`,
         with the submitted value in `identifier`. Sending the value `GET` returned is always a no-op.
 
 
-        4. The *stored* survey no longer satisfies the v3 document contract — `code:
-        stored_survey_invalid`. The reported paths are into the survey, not into the request, so a
-        patch that includes corrected values for those fields is the way out.
+        4. The *stored* survey cannot be read as a v3 document at all — `code:
+        stored_survey_invalid`. The reported paths are into the survey, not into the request; repair
+        it in the editor. A stored survey that reads fine but already fails validation (a missing
+        translation, a dangling recall) stays patchable: only issues a patch newly introduces are
+        refused. The exception is publishing: moving a `draft` out of `draft` still requires a survey
+        that passes, and is refused as `stored_survey_invalid` while it does not.
 
 
         5. `customCss` could not be processed (a syntax error, the 20 000-byte survey budget, a

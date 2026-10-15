@@ -132,6 +132,10 @@ patch:
         inserted block whose `id` is present but empty — omitting `id` entirely is fine, the server
         generates one), `immutable_identifier` (`block.id` contradicting the op's `id`),
         and `stored_survey_invalid` when the stored survey itself fails the document contract.
+        The edit is also refused when it newly *introduces* a loop in the conditional logic —
+        jumps, fallbacks and next blocks leading back on themselves, so a respondent could never
+        reach an ending — reported at the `logic` of each block a new looping step leaves. A survey
+        that already loops stays editable.
       content:
         application/problem+json:
           schema:

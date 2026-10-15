@@ -40,7 +40,7 @@ import {
   setV3SurveySegmentFilters,
 } from "./targeting";
 import { resolveV3SurveyTriggers } from "./triggers";
-import { getV3SurveyMediaInvalidParams } from "./validation";
+import { getV3SurveyIntroducedMediaInvalidParams } from "./validation";
 import { NO_VISIBLE_SURVEYS } from "./visibility-context";
 import {
   V3SurveyWritePermissionError,
@@ -295,7 +295,9 @@ export async function executeV3SurveyPatch(params: {
     visibleSurveyWhere = NO_VISIBLE_SURVEYS,
     customCss,
   } = params;
-  const mediaInvalidParams = getV3SurveyMediaInvalidParams(document.blocks);
+  // Same rule as prepare's validation (ENG-3975): media the stored survey already had does not block a
+  // patch that leaves it untouched.
+  const mediaInvalidParams = getV3SurveyIntroducedMediaInvalidParams(document.blocks, currentSurvey.blocks);
   if (mediaInvalidParams.length > 0) {
     throw new V3SurveyReferenceValidationError(mediaInvalidParams);
   }
