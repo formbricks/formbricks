@@ -1309,9 +1309,18 @@ migrate_legacy_valkey_image() {
   echo "✅ Updated bundled Valkey to the native amd64/arm64 image. Backup: $backup_file"
 }
 
+keep_current_cube_file() {
+  local cube_file="$1" download_file="$2" reason="$3"
+
+  rm -f "$download_file"
+  echo "⚠️ $reason, so the existing one is kept. To refresh it later, run:"
+  # The updater is started from the directory above this one, so the command enters it first.
+  echo "   cd $(printf '%q' "$PWD") && curl -fsSL -o $download_file $stable_docker_files_url/$cube_file && mv $download_file $cube_file && sudo docker compose up -d --force-recreate cube"
+}
+
 # Only install downloaded the Cube model, so an update kept serving the previous release's model to the new
-# app, whose charts query members that model lacks (ENG-3951). A failed download keeps the current file: Cube
-# still starts, and only the newer members stay missing until the next update.
+# app, whose charts query members that model lacks (ENG-3951). Nothing here may stop the update, because the
+# stack is already down: any failure keeps the current file, which Cube still starts with.
 refresh_bundled_cube_files() {
   local cube_file download_file backup_file
 
@@ -1321,9 +1330,7 @@ refresh_bundled_cube_files() {
 
     download_file="${cube_file}.download"
     if ! curl -fsSL -o "$download_file" "$stable_docker_files_url/$cube_file"; then
-      rm -f "$download_file"
-      echo "⚠️ Could not download the current $cube_file, so the existing one is kept. To refresh it later, run:"
-      echo "   curl -fsSL -o $cube_file $stable_docker_files_url/$cube_file && sudo docker compose up -d --force-recreate cube"
+      keep_current_cube_file "$cube_file" "$download_file" "Could not download the current $cube_file"
       continue
     fi
 
@@ -1334,9 +1341,14 @@ refresh_bundled_cube_files() {
 
     # Kept outside cube/schema: Cube mounts that whole directory as its model and would load the backup too.
     backup_file="cube/previous/${cube_file#cube/}"
-    mkdir -p "$(dirname "$backup_file")"
-    cp -p "$cube_file" "$backup_file"
-    mv "$download_file" "$cube_file"
+    if ! { mkdir -p "$(dirname "$backup_file")" && cp -p "$cube_file" "$backup_file"; }; then
+      keep_current_cube_file "$cube_file" "$download_file" "Could not back up $cube_file to $backup_file"
+      continue
+    fi
+    if ! mv "$download_file" "$cube_file"; then
+      keep_current_cube_file "$cube_file" "$download_file" "Could not replace $cube_file"
+      continue
+    fi
     echo "✅ Updated $cube_file to the current release. Backup: $backup_file"
   done
 }

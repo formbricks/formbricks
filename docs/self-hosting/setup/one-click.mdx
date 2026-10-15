@@ -352,8 +352,8 @@ and its AOF data are preserved.
 
 While the stack is stopped, the updater also refreshes the bundled Cube model (`cube/cube.js` and
 `cube/schema/FeedbackRecords.js`) from the current release, so analytics charts can use members a release adds.
-It keeps the previous files in `cube/previous/`. If the download fails, it keeps the existing files, prints the
-command to retry, and finishes the update.
+It keeps the previous files in `cube/previous/`. A file it cannot download or back up is left as it was; the
+updater prints the command to retry and finishes the update.
 
 Existing one-click installations keep the database credentials in their local `docker-compose.yml` or `.env`.
 The update command does not regenerate or rotate them.
