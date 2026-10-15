@@ -4,6 +4,9 @@ set -e
 ubuntu_version=$(lsb_release -a 2>/dev/null | grep -v "No LSB modules are available." | grep "Description:" | awk -F "Description:\t" '{print $2}')
 legacy_valkey_image="valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d"
 multi_arch_valkey_image="valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84"
+stable_docker_files_url="https://raw.githubusercontent.com/formbricks/formbricks/stable/docker"
+# Cube reads its model from these files, bind-mounted out of the installation directory.
+bundled_cube_files=("cube/cube.js" "cube/schema/FeedbackRecords.js")
 
 write_rustfs_init_script() {
   local target_path="${1:-rustfs-init.sh}"
@@ -789,8 +792,9 @@ EOT
   chmod 700 authzed-postgres-bootstrap.sh
   mkdir -p cube/schema
   echo "📥 Downloading Cube.js configuration for XM Suite v5 analytics..."
-  curl -fsSL -o cube/cube.js https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/cube.js
-  curl -fsSL -o cube/schema/FeedbackRecords.js https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/schema/FeedbackRecords.js
+  for cube_file in "${bundled_cube_files[@]}"; do
+    curl -fsSL -o "$cube_file" "$stable_docker_files_url/$cube_file"
+  done
 
   echo "🚙 Updating docker-compose.yml with your custom inputs..."
   sed -i "/WEBAPP_URL:/s|WEBAPP_URL:.*|WEBAPP_URL: \"https://$domain_name\"|" docker-compose.yml
@@ -1305,6 +1309,38 @@ migrate_legacy_valkey_image() {
   echo "✅ Updated bundled Valkey to the native amd64/arm64 image. Backup: $backup_file"
 }
 
+# Only install downloaded the Cube model, so an update kept serving the previous release's model to the new
+# app, whose charts query members that model lacks (ENG-3951). A failed download keeps the current file: Cube
+# still starts, and only the newer members stay missing until the next update.
+refresh_bundled_cube_files() {
+  local cube_file download_file backup_file
+
+  for cube_file in "${bundled_cube_files[@]}"; do
+    # Installations that run Cube elsewhere have no bundled model to refresh.
+    [[ -f "$cube_file" ]] || continue
+
+    download_file="${cube_file}.download"
+    if ! curl -fsSL -o "$download_file" "$stable_docker_files_url/$cube_file"; then
+      rm -f "$download_file"
+      echo "⚠️ Could not download the current $cube_file, so the existing one is kept. To refresh it later, run:"
+      echo "   curl -fsSL -o $cube_file $stable_docker_files_url/$cube_file && sudo docker compose up -d --force-recreate cube"
+      continue
+    fi
+
+    if cmp -s "$download_file" "$cube_file"; then
+      rm -f "$download_file"
+      continue
+    fi
+
+    # Kept outside cube/schema: Cube mounts that whole directory as its model and would load the backup too.
+    backup_file="cube/previous/${cube_file#cube/}"
+    mkdir -p "$(dirname "$backup_file")"
+    cp -p "$cube_file" "$backup_file"
+    mv "$download_file" "$cube_file"
+    echo "✅ Updated $cube_file to the current release. Backup: $backup_file"
+  done
+}
+
 update_formbricks() {
   echo "🔄 Updating Formbricks..."
   cd formbricks
@@ -1346,6 +1382,8 @@ update_formbricks() {
   # database migrations or schema/relationship writes against the still-running app.
   sudo docker compose --profile authzed-ops run --rm --no-deps authzed-ops upgrade check
   sudo docker compose down
+  # Past every gate and with Cube stopped, so the next start serves the release's model.
+  refresh_bundled_cube_files
   sudo docker compose up -d --wait postgres
   sudo docker compose run --rm --no-deps formbricks-migrate
   sudo docker compose up -d

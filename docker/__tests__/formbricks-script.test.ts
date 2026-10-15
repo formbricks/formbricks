@@ -6,6 +6,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  readdirSync,
   rmSync,
   statSync,
   writeFileSync,
@@ -1119,6 +1120,114 @@ volumes:
     expect(readFileSync(composePath, "utf8")).toBe(legacyCompose);
     expect(readFileSync(`${composePath}.before-valkey-8.1.9`, "utf8")).toBe(legacyCompose);
     expect(existsSync(`${composePath}.tmp`)).toBe(false);
+  });
+});
+
+describe("docker/formbricks.sh Cube model refresh (ENG-3951)", () => {
+  const releaseUrl = "https://raw.githubusercontent.com/formbricks/formbricks/stable/docker";
+
+  // An update that passes every gate, from an installation that may or may not run the bundled Cube.
+  const runUpdate = ({
+    withCubeFiles,
+    downloadFails = false,
+  }: {
+    withCubeFiles: boolean;
+    downloadFails?: boolean;
+  }) => {
+    const tempDir = createTempDir();
+    const installationDir = join(tempDir, "formbricks");
+    const binDir = join(tempDir, "bin");
+    const commandLog = join(tempDir, "commands.log");
+    mkdirSync(installationDir, { recursive: true });
+    mkdirSync(binDir, { recursive: true });
+    writeFileSync(
+      join(installationDir, "docker-compose.yml"),
+      "services:\n  authzed-ops:\n  hub-worker:\n  spicedb:\n"
+    );
+    writeFileSync(join(installationDir, ".env"), "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true\n");
+    if (withCubeFiles) {
+      mkdirSync(join(installationDir, "cube", "schema"), { recursive: true });
+      writeFileSync(join(installationDir, "cube", "cube.js"), "// previous cube.js\n");
+      writeFileSync(join(installationDir, "cube", "schema", "FeedbackRecords.js"), "// previous model\n");
+    }
+    writeFileSync(
+      join(binDir, "sudo"),
+      '#!/bin/sh\nprintf "%s\\n" "$*" >> "$COMMAND_LOG"\ncase "$*" in *"config --services") printf "authzed-ops\\nhub-worker\\nspicedb\\n" ;; esac\n',
+      { mode: 0o700 }
+    );
+    // Serves the release's copy of whatever file is requested, or fails like an unreachable GitHub.
+    writeFileSync(
+      join(binDir, "curl"),
+      [
+        "#!/bin/sh",
+        'for arg; do url="$arg"; done',
+        'printf "curl %s\\n" "$url" >> "$COMMAND_LOG"',
+        '[ -n "$DOWNLOAD_FAILS" ] && exit 22',
+        'while [ $# -gt 0 ]; do [ "$1" = "-o" ] && out="$2"; shift; done',
+        'printf "// release %s\\n" "${url##*/}" > "$out"',
+        "",
+      ].join("\n"),
+      { mode: 0o700 }
+    );
+
+    const result = spawnSync("bash", ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath], {
+      cwd: tempDir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        COMMAND_LOG: commandLog,
+        DOWNLOAD_FAILS: downloadFails ? "1" : "",
+        PATH: `${binDir}:${process.env.PATH ?? ""}`,
+      },
+    });
+
+    return { result, installationDir, commands: readFileSync(commandLog, "utf8").trim().split("\n") };
+  };
+
+  test("serves the release's model after the update and keeps the previous files", () => {
+    const { result, installationDir, commands } = runUpdate({ withCubeFiles: true });
+    const read = (path: string) => readFileSync(join(installationDir, path), "utf8");
+
+    expect(result.status).toBe(0);
+    expect(read("cube/cube.js")).toBe("// release cube.js\n");
+    expect(read("cube/schema/FeedbackRecords.js")).toBe("// release FeedbackRecords.js\n");
+    expect(read("cube/previous/cube.js")).toBe("// previous cube.js\n");
+    expect(read("cube/previous/schema/FeedbackRecords.js")).toBe("// previous model\n");
+    // Cube mounts cube/schema as its model directory, so a backup or download left there would load too.
+    expect(readdirSync(join(installationDir, "cube", "schema"))).toEqual(["FeedbackRecords.js"]);
+    // Only once every gate has passed, and while Cube is stopped so its next start reads the new model.
+    expect(commands).toEqual([
+      "docker compose config --services",
+      "docker compose pull",
+      "docker compose --profile authzed-ops run --rm --no-deps authzed-ops upgrade check",
+      "docker compose down",
+      `curl ${releaseUrl}/cube/cube.js`,
+      `curl ${releaseUrl}/cube/schema/FeedbackRecords.js`,
+      "docker compose up -d --wait postgres",
+      "docker compose run --rm --no-deps formbricks-migrate",
+      "docker compose up -d",
+    ]);
+  });
+
+  test("keeps the current model and finishes the update when the download fails", () => {
+    const { result, installationDir, commands } = runUpdate({ withCubeFiles: true, downloadFails: true });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Could not download the current cube/schema/FeedbackRecords.js");
+    expect(readFileSync(join(installationDir, "cube", "schema", "FeedbackRecords.js"), "utf8")).toBe(
+      "// previous model\n"
+    );
+    expect(readdirSync(join(installationDir, "cube", "schema"))).toEqual(["FeedbackRecords.js"]);
+    expect(existsSync(join(installationDir, "cube", "previous"))).toBe(false);
+    expect(commands.at(-1)).toBe("docker compose up -d");
+  });
+
+  test("leaves an installation without the bundled Cube model alone", () => {
+    const { result, installationDir, commands } = runUpdate({ withCubeFiles: false });
+
+    expect(result.status).toBe(0);
+    expect(commands.some((command) => command.startsWith("curl "))).toBe(false);
+    expect(existsSync(join(installationDir, "cube"))).toBe(false);
   });
 });
 

@@ -418,6 +418,16 @@ rollback procedure in [AuthZed Operations](/self-hosting/configuration/authzed-o
    docker compose down
    ```
 
+1. Refresh the Cube model files, so analytics charts can use members the release adds. Use the release's tag
+   instead of `stable` when your deployment is pinned.
+
+   ```bash
+   curl -fsSL -o cube/cube.js \
+     https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/cube.js
+   curl -fsSL -o cube/schema/FeedbackRecords.js \
+     https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/schema/FeedbackRecords.js
+   ```
+
 1. Wait for PostgreSQL and complete application migrations before restarting the updated stack. Stop if a
    command fails; do not restart against a partially migrated database. If `formbricks-migrate` fails, follow
    [If a migration fails](/self-hosting/advanced/migration#if-a-migration-fails).
