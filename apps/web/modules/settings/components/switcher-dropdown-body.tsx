@@ -13,6 +13,11 @@ import {
 
 type SwitcherType = "organization" | "workspace";
 
+// Pass to the DropdownMenuContent that wraps SwitcherDropdownBody: the content stops scrolling as a
+// whole so the header and footer stay pinned, and only the item list scrolls.
+export const SWITCHER_DROPDOWN_CONTENT_CLASS_NAME =
+  "flex max-h-[min(24rem,var(--radix-dropdown-menu-content-available-height))] flex-col overflow-y-hidden";
+
 const SWITCHER_CONFIG: Record<
   SwitcherType,
   { icon: typeof Building2Icon; settingsPath: (id: string) => string }
@@ -95,7 +100,7 @@ export const SwitcherDropdownBody = ({
       )}
       {!isLoading && !error && (
         <>
-          <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
+          <DropdownMenuGroup className="subtle-scrollbar min-h-0 overflow-y-auto">
             {items.map((item) => (
               <DropdownMenuCheckboxItem
                 key={item.id}

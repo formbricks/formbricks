@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { buildPlainCustomerDetails } from "../lib/customer-details";
+import { buildPlainIdentity } from "../lib/customer-details";
 import { type PlainInitOptions, getPlain, logoutPlain, runPlainStep } from "../lib/plain-sdk";
 import { isOnboardingPathname } from "../lib/utils";
 
@@ -11,8 +11,8 @@ interface PlainChatProps {
   userEmail?: string | null;
   userName?: string | null;
   userId?: string | null;
-  /** HMAC-SHA256 of the user's email, computed server-side. Verifies the customer's identity. */
-  emailHash?: string | null;
+  /** HMAC-SHA256 over the user's email and ID, computed server-side. Verifies the customer's identity. */
+  customerDetailsSignature?: string | null;
   /**
    * Plain label type applied to every thread this user opens. The layout resolves
    * this to the paying-customer label id (or null) server-side, so it is attached
@@ -49,7 +49,7 @@ export const PlainChat = ({
   userEmail,
   userName,
   userId,
-  emailHash,
+  customerDetailsSignature,
   activeCustomerLabelTypeId,
 }: Readonly<PlainChatProps>) => {
   const pathname = usePathname();
@@ -67,7 +67,7 @@ export const PlainChat = ({
         launcherBackgroundColor: BRAND_COLOR,
         launcherIconColor: "#FFFFFF",
       },
-      customerDetails: buildPlainCustomerDetails({ userEmail, emailHash, userName, userId }),
+      ...buildPlainIdentity({ userEmail, customerDetailsSignature, userName, userId }),
       threadDetails: activeCustomerLabelTypeId ? { labelTypeIds: [activeCustomerLabelTypeId] } : undefined,
     };
   });
@@ -108,17 +108,17 @@ export const PlainChat = ({
   useEffect(() => {
     const plain = getPlain();
     if (!plain?.isInitialized()) return;
-    const customerDetails = buildPlainCustomerDetails({ userEmail, emailHash, userName, userId });
-    if (!customerDetails) {
+    const identity = buildPlainIdentity({ userEmail, customerDetailsSignature, userName, userId });
+    if (!identity) {
       void logoutPlain(plain);
       return;
     }
-    void runPlainStep("setCustomer", () => plain.setCustomerDetails(customerDetails));
-    // Undo a launcher hidden by an earlier logout.
-    void runPlainStep("showLauncher", () =>
-      plain.update({ hideLauncher: mountedInitOptions?.hideLauncher ?? false })
+    // update() rather than setCustomerDetails(), which has no way to carry the signature. The
+    // launcher is un-hidden in the same call to undo one hidden by an earlier logout.
+    void runPlainStep("setCustomer", () =>
+      plain.update({ ...identity, hideLauncher: mountedInitOptions?.hideLauncher ?? false })
     );
-  }, [userEmail, emailHash, userName, userId]);
+  }, [userEmail, customerDetailsSignature, userName, userId]);
 
   // Keep the active-customer label in sync once resolved.
   useEffect(() => {

@@ -12,10 +12,10 @@ import {
   DatabaseIcon,
   FoldersIcon,
   GlobeIcon,
+  HourglassIcon,
   KeyIcon,
   LanguagesIcon,
   ListChecksIcon,
-  Loader2,
   ShieldIcon,
   TagIcon,
   UnplugIcon,
@@ -29,15 +29,17 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
 import {
+  SWITCHER_DROPDOWN_CONTENT_CLASS_NAME,
+  SwitcherDropdownBody,
+} from "@/modules/settings/components/switcher-dropdown-body";
+import {
   accountSettingsPath,
   organizationSettingsPath,
   workspaceSettingsPath,
 } from "@/modules/settings/lib/routes";
 import {
   DropdownMenu,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
@@ -176,6 +178,7 @@ const SettingsNavLink = ({
 
 const SectionHeader = ({
   label,
+  switcherType,
   isCollapsed,
   isTextVisible,
   switcherName,
@@ -188,6 +191,7 @@ const SectionHeader = ({
   onSwitcherOpen,
 }: Readonly<{
   label: string;
+  switcherType?: "organization" | "workspace";
   isCollapsed: boolean;
   isTextVisible: boolean;
   switcherName?: string;
@@ -199,46 +203,6 @@ const SectionHeader = ({
   onSwitcherChange?: (id: string) => void;
   onSwitcherOpen?: () => void;
 }>) => {
-  const { t } = useTranslation();
-
-  const renderSwitcherContent = () => {
-    if (isLoadingSwitcher) {
-      return (
-        <div className="flex items-center justify-center py-2">
-          <Loader2 className="size-4 animate-spin" />
-        </div>
-      );
-    }
-
-    if (errorSwitcher) {
-      return (
-        <div className="px-2 py-4 text-center">
-          <p className="mb-2 text-sm text-red-600">{errorSwitcher}</p>
-          <button
-            type="button"
-            onClick={onSwitcherRetry}
-            className="text-xs text-slate-600 underline hover:text-slate-800">
-            {t("common.try_again")}
-          </button>
-        </div>
-      );
-    }
-
-    return (
-      <DropdownMenuGroup className="overflow-y-auto">
-        {switcherItems?.map((item) => (
-          <DropdownMenuCheckboxItem
-            key={item.id}
-            checked={item.id === currentId}
-            onClick={() => onSwitcherChange?.(item.id)}
-            className="cursor-pointer text-sm">
-            {item.name}
-          </DropdownMenuCheckboxItem>
-        ))}
-      </DropdownMenuGroup>
-    );
-  };
-
   if (isCollapsed) {
     return null;
   }
@@ -250,14 +214,23 @@ const SectionHeader = ({
         isTextVisible ? "opacity-0" : "opacity-100"
       )}>
       <span className="shrink-0 text-xs font-semibold tracking-wider text-slate-500 uppercase">{label}</span>
-      {switcherName && switcherItems && onSwitcherChange && (
+      {switcherType && switcherName && switcherItems && onSwitcherChange && (
         <DropdownMenu onOpenChange={(open) => open && onSwitcherOpen?.()}>
           <DropdownMenuTrigger className="ml-auto flex max-w-[50%] min-w-0 items-center gap-1 rounded-md border border-slate-200 px-2 py-0.5 text-xs text-slate-600 hover:bg-slate-50">
             <span className="truncate">{switcherName}</span>
             <ChevronDownIcon className="size-3" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="max-h-[300px]">
-            {renderSwitcherContent()}
+          <DropdownMenuContent align="end" className={SWITCHER_DROPDOWN_CONTENT_CLASS_NAME}>
+            <SwitcherDropdownBody
+              type={switcherType}
+              isLoading={isLoadingSwitcher ?? false}
+              error={errorSwitcher ?? null}
+              onRetry={() => onSwitcherRetry?.()}
+              items={switcherItems}
+              selectedId={currentId ?? ""}
+              onSelect={onSwitcherChange}
+              showSettings={false}
+            />
           </DropdownMenuContent>
         </DropdownMenu>
       )}
@@ -396,6 +369,14 @@ export const SettingsSidebarContent = ({
       disabled: !isOwnerOrManager,
     },
     {
+      id: "org-data-retention",
+      label: t("workspace.settings.data_retention.nav_label"),
+      href: organizationSettingsPath(organizationId, "data-retention"),
+      icon: <HourglassIcon className={iconClassName} />,
+      // Members read the policies and exemptions; History is owners and managers only (ENG-3695).
+      hidden: isBilling,
+    },
+    {
       id: "org-domain",
       label: t("common.domain"),
       href: organizationSettingsPath(organizationId, "domain"),
@@ -475,6 +456,7 @@ export const SettingsSidebarContent = ({
         <div>
           <SectionHeader
             label={t("common.workspace")}
+            switcherType="workspace"
             isCollapsed={isCollapsed}
             isTextVisible={isTextVisible}
             switcherName={workspaceName}
@@ -493,6 +475,7 @@ export const SettingsSidebarContent = ({
       <div>
         <SectionHeader
           label={t("common.organization")}
+          switcherType="organization"
           isCollapsed={isCollapsed}
           isTextVisible={isTextVisible}
           switcherName={organizationName}

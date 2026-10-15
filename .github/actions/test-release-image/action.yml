@@ -1,0 +1,43 @@
+name: Test release image
+description: Exercise one candidate architecture on its native runner
+inputs:
+  depot_build_id:
+    description: "Saved build ID"
+    required: true
+  depot_token:
+    description: "Depot project credential"
+    required: true
+  image_ref:
+    description: "Immutable candidate image digest"
+    required: true
+  registry_type:
+    description: "ecr or ghcr"
+    required: true
+  build_identity:
+    description: "Compiled application identity"
+    required: true
+  platform:
+    description: "linux/amd64 or linux/arm64"
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: ./.github/actions/depot-registry-login
+      with:
+        depot_build_id: ${{ inputs.depot_build_id }}
+        depot_token: ${{ inputs.depot_token }}
+    - uses: ./.github/actions/setup-image-smoke
+    - name: Test exact candidate digest natively
+      shell: bash
+      env:
+        IMAGE: ${{ inputs.image_ref }}
+        BUILD_IDENTITY: ${{ inputs.build_identity }}
+        BUILD_VARIANT: ${{ inputs.registry_type }}
+        PLATFORM: ${{ inputs.platform }}
+      run: |
+        set -euo pipefail
+        case "$PLATFORM:$(uname -m)" in
+          linux/amd64:x86_64|linux/arm64:aarch64) ;;
+          *) echo "Image checks require a matching native runner" >&2; exit 1 ;;
+        esac
+        bash docker/smoke-release-image.sh "$IMAGE" "$BUILD_IDENTITY" "$BUILD_VARIANT" "$PLATFORM"

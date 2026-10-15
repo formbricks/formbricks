@@ -22,6 +22,9 @@ const {
   mockReduceQuotas,
   mockDeleteFiles,
   mockSurveyFindMany,
+  mockTxWorkspace,
+  mockEnqueue,
+  mockDrain,
 } = vi.hoisted(() => ({
   mockTxDelete: vi.fn(),
   mockTxFindMany: vi.fn(),
@@ -35,6 +38,9 @@ const {
   mockReduceQuotas: vi.fn(),
   mockDeleteFiles: vi.fn(),
   mockSurveyFindMany: vi.fn(),
+  mockTxWorkspace: vi.fn(),
+  mockEnqueue: vi.fn(),
+  mockDrain: vi.fn(),
 }));
 
 vi.mock("@formbricks/database", () => ({
@@ -59,6 +65,8 @@ vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn() }
 vi.mock("@/lib/display/service", () => ({ deleteDisplay: mockDeleteDisplay }));
 vi.mock("@/modules/ee/quotas/lib/quotas", () => ({ reduceQuotaLimits: mockReduceQuotas }));
 vi.mock("@/modules/storage/lib/delete-response-files", () => ({ deleteResponseFileUrls: mockDeleteFiles }));
+vi.mock("@/modules/deletion-cleanup/lib/enqueue", () => ({ enqueueResponsesDeletionCleanups: mockEnqueue }));
+vi.mock("@/modules/deletion-cleanup/lib/drain", () => ({ drainDeletionCleanups: mockDrain }));
 // The real collection rule, so the tests see which URLs a response's own survey id makes deletable;
 // only the element-id lookup is pinned, to keep the survey fixtures free of upload elements.
 vi.mock("@/modules/storage/utils", async (importOriginal) => ({
@@ -317,7 +325,7 @@ describe("getResponseWorkspaceId", () => {
 describe("deleteScopedResponses", () => {
   const BATCH_IDS = ["clrsaaaaaaaaaaaaaaaaaaaa", "clrsbbbbbbbbbbbbbbbbbbbb"];
 
-  /** A tx exposing the four statements the batch issues. */
+  /** A tx exposing the statements the batch issues, and the cleanup queue's two steps. */
   const runBatch = (
     rows: Record<string, unknown>[],
     { count = rows.length, surveys = [{ id: "svy_1", blocks: [], questions: [] }] } = {}
@@ -326,13 +334,16 @@ describe("deleteScopedResponses", () => {
     mockTxDeleteMany.mockResolvedValue({ count });
     mockTxSurveyMany.mockResolvedValue(surveys);
     mockTxDisplayDeleteMany.mockResolvedValue({ count: 0 });
-    mockTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) =>
-      fn({
-        response: { findMany: mockTxFindMany, deleteMany: mockTxDeleteMany },
-        survey: { findMany: mockTxSurveyMany },
-        display: { deleteMany: mockTxDisplayDeleteMany },
-      })
-    );
+    mockTxWorkspace.mockResolvedValue({ organizationId: "org_1" });
+    mockEnqueue.mockResolvedValue({ drainNowIds: ["cln_1"] });
+    mockDrain.mockResolvedValue({ done: 1, again: 0, failed: 0 });
+    mockTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => fn(batchTx));
+  };
+  const batchTx = {
+    response: { findMany: mockTxFindMany, deleteMany: mockTxDeleteMany },
+    survey: { findMany: mockTxSurveyMany },
+    display: { deleteMany: mockTxDisplayDeleteMany },
+    workspace: { findUniqueOrThrow: mockTxWorkspace },
   };
 
   const row = (over: Record<string, unknown> = {}) => ({
@@ -358,9 +369,9 @@ describe("deleteScopedResponses", () => {
       id: { in: BATCH_IDS },
       survey: { workspaceId: "ws_1" },
     });
+    // Still scoped, and narrowed to the rows read, so only rows whose files were collected are deleted.
     expect(mockTxDeleteMany.mock.calls[0][0].where).toStrictEqual({
-      id: { in: BATCH_IDS },
-      survey: { workspaceId: "ws_1" },
+      AND: [{ id: { in: BATCH_IDS }, survey: { workspaceId: "ws_1" } }, { id: { in: [row().id] } }],
     });
   });
 
@@ -374,7 +385,7 @@ describe("deleteScopedResponses", () => {
     await expect(deleteScopedResponses(BATCH_IDS, SCOPE)).resolves.toMatchObject({ deleted: 1 });
   });
 
-  test("short-circuits without deleting when nothing is in scope", async () => {
+  test("short-circuits without deleting or queueing anything when nothing is in scope", async () => {
     runBatch([]);
 
     await expect(deleteScopedResponses(BATCH_IDS, SCOPE)).resolves.toStrictEqual({
@@ -382,7 +393,8 @@ describe("deleteScopedResponses", () => {
       deletedIds: [],
     });
     expect(mockTxDeleteMany).not.toHaveBeenCalled();
-    expect(mockDeleteFiles).not.toHaveBeenCalled();
+    expect(mockEnqueue).not.toHaveBeenCalled();
+    expect(mockDrain).toHaveBeenCalledWith({ ids: [] });
   });
 
   /**
@@ -416,35 +428,58 @@ describe("deleteScopedResponses", () => {
     expect(mockTxDisplayDeleteMany).not.toHaveBeenCalled();
   });
 
-  test("collects file urls across the batch and deletes them after the transaction", async () => {
+  /**
+   * Files and Hub records go through the cleanup queue, written in the delete's own transaction: a
+   * delete that commits always gets its cleanup, retried until done. Only the files are drained at once.
+   */
+  test("queues each survey's files and Hub records in the delete's transaction, then drains the files", async () => {
     const order: string[] = [];
-    mockTxFindMany.mockResolvedValue([
-      row({ data: { screenshots: ["https://s/a.png"] } }),
-      row({ data: { screenshots: ["https://s/b.png"] } }),
-    ]);
-    mockTxDeleteMany.mockResolvedValue({ count: 2 });
-    mockTxSurveyMany.mockResolvedValue([{ id: "svy_1", blocks: [], questions: [] }]);
-    mockTxDisplayDeleteMany.mockResolvedValue({ count: 0 });
+    runBatch(
+      [
+        row({ id: BATCH_IDS[0], surveyId: "svy_1", data: { screenshots: ["https://s/a.png"] } }),
+        row({ id: BATCH_IDS[1], surveyId: "svy_2", data: { screenshots: ["https://s/b.png"] } }),
+      ],
+      {
+        surveys: [
+          { id: "svy_1", blocks: [], questions: [] },
+          { id: "svy_2", blocks: [], questions: [] },
+        ],
+      }
+    );
+    mockEnqueue.mockImplementation(async () => {
+      order.push("enqueue");
+      return { drainNowIds: ["cln_1", "cln_2"] };
+    });
     mockTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
-      const out = await fn({
-        response: { findMany: mockTxFindMany, deleteMany: mockTxDeleteMany },
-        survey: { findMany: mockTxSurveyMany },
-        display: { deleteMany: mockTxDisplayDeleteMany },
-      });
+      const out = await fn(batchTx);
       order.push("commit");
       return out;
     });
-    mockDeleteFiles.mockImplementation(async () => void order.push("files"));
+    mockDrain.mockImplementation(async () => void order.push("drain"));
 
-    await deleteScopedResponses(BATCH_IDS, SCOPE);
+    await expect(deleteScopedResponses(BATCH_IDS, SCOPE)).resolves.toStrictEqual({
+      deleted: 2,
+      deletedIds: BATCH_IDS,
+    });
 
-    expect(order).toStrictEqual(["commit", "files"]);
-    expect(mockDeleteFiles).toHaveBeenCalledWith(["https://s/a.png", "https://s/b.png"], "ws_1");
+    expect(order).toStrictEqual(["enqueue", "commit", "drain"]);
+    expect(mockTxWorkspace).toHaveBeenCalledWith({ where: { id: "ws_1" }, select: { organizationId: true } });
+    expect(mockEnqueue).toHaveBeenCalledWith(batchTx, {
+      organizationId: "org_1",
+      workspaceId: "ws_1",
+      surveys: [
+        { surveyId: "svy_1", responseIds: [BATCH_IDS[0]], fileUrls: ["https://s/a.png"] },
+        { surveyId: "svy_2", responseIds: [BATCH_IDS[1]], fileUrls: ["https://s/b.png"] },
+      ],
+    });
+    expect(mockDrain).toHaveBeenCalledWith({ ids: ["cln_1", "cln_2"] });
+    // No storage call outside the queue any more.
+    expect(mockDeleteFiles).not.toHaveBeenCalled();
   });
 
   // Each row is bound to its own survey: svy_1's removed-element upload goes, but the same key in a
   // svy_2 response is another survey's file and stays.
-  test("removes removed-element uploads by each row's own survey id", async () => {
+  test("queues removed-element uploads by each row's own survey id", async () => {
     const svy1File = "/storage/ws_1/private/surveys/svy_1/elements/removed/a.png";
     runBatch(
       [
@@ -461,14 +496,25 @@ describe("deleteScopedResponses", () => {
 
     await deleteScopedResponses(BATCH_IDS, SCOPE);
 
-    expect(mockDeleteFiles).toHaveBeenCalledWith([svy1File], "ws_1");
+    expect(mockEnqueue.mock.calls[0][1].surveys).toStrictEqual([
+      { surveyId: "svy_1", responseIds: [BATCH_IDS[0]], fileUrls: [svy1File] },
+      { surveyId: "svy_2", responseIds: [BATCH_IDS[1]], fileUrls: [] },
+    ]);
   });
 
-  test("still succeeds when storage cleanup fails", async () => {
+  test("still succeeds when draining the files fails: the queue keeps them for the drain job", async () => {
     runBatch([row({ data: { screenshots: ["https://s/a.png"] } })]);
-    mockDeleteFiles.mockRejectedValue(new Error("storage down"));
+    mockDrain.mockRejectedValue(new Error("storage down"));
 
     await expect(deleteScopedResponses(BATCH_IDS, SCOPE)).resolves.toMatchObject({ deleted: 1 });
+  });
+
+  test("rolls back with nothing deleted when queueing the cleanup fails", async () => {
+    runBatch([row()]);
+    mockEnqueue.mockRejectedValue(new Error("insert failed"));
+
+    await expect(deleteScopedResponses(BATCH_IDS, SCOPE)).rejects.toThrow("insert failed");
+    expect(mockDrain).not.toHaveBeenCalled();
   });
 
   /**

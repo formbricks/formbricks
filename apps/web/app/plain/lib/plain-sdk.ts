@@ -12,6 +12,7 @@ export interface PlainInitOptions {
     launcherIconColor?: string;
   };
   customerDetails?: PlainCustomerDetails;
+  customerDetailsSignature?: string;
   threadDetails?: { labelTypeIds?: string[] };
 }
 

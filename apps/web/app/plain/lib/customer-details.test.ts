@@ -1,42 +1,50 @@
 import { describe, expect, test } from "vitest";
-import { buildPlainCustomerDetails } from "./customer-details";
+import { buildPlainIdentity } from "./customer-details";
 
-describe("buildPlainCustomerDetails", () => {
-  test("never sends an email without its verification hash", () => {
-    expect(buildPlainCustomerDetails({ userEmail: "john@example.com", emailHash: null })).toBeUndefined();
-    expect(buildPlainCustomerDetails({ userEmail: "john@example.com" })).toBeUndefined();
-    expect(buildPlainCustomerDetails({ userEmail: "john@example.com", emailHash: "" })).toBeUndefined();
+describe("buildPlainIdentity", () => {
+  test("never sends an email without its signature", () => {
+    expect(
+      buildPlainIdentity({ userEmail: "john@example.com", customerDetailsSignature: null })
+    ).toBeUndefined();
+    expect(buildPlainIdentity({ userEmail: "john@example.com" })).toBeUndefined();
+    expect(
+      buildPlainIdentity({ userEmail: "john@example.com", customerDetailsSignature: "" })
+    ).toBeUndefined();
   });
 
   test("returns no identity without an email", () => {
-    expect(buildPlainCustomerDetails({ userEmail: null, emailHash: "hash" })).toBeUndefined();
-    expect(buildPlainCustomerDetails({})).toBeUndefined();
+    expect(buildPlainIdentity({ userEmail: null, customerDetailsSignature: "sig" })).toBeUndefined();
+    expect(buildPlainIdentity({})).toBeUndefined();
   });
 
-  test("sends the verified identity with display fields", () => {
+  test("sends the signed identity with display fields", () => {
     expect(
-      buildPlainCustomerDetails({
+      buildPlainIdentity({
         userEmail: "john@example.com",
-        emailHash: "hash",
+        customerDetailsSignature: "sig",
         userName: "John Doe",
         userId: "user_1",
       })
     ).toEqual({
-      email: "john@example.com",
-      emailHash: "hash",
-      fullName: "John Doe",
-      shortName: "John",
-      externalId: "user_1",
+      customerDetails: {
+        email: "john@example.com",
+        fullName: "John Doe",
+        shortName: "John",
+        externalId: "user_1",
+      },
+      customerDetailsSignature: "sig",
     });
   });
 
   test("leaves optional fields undefined when unknown", () => {
-    expect(buildPlainCustomerDetails({ userEmail: "john@example.com", emailHash: "hash" })).toEqual({
-      email: "john@example.com",
-      emailHash: "hash",
-      fullName: undefined,
-      shortName: undefined,
-      externalId: undefined,
+    expect(buildPlainIdentity({ userEmail: "john@example.com", customerDetailsSignature: "sig" })).toEqual({
+      customerDetails: {
+        email: "john@example.com",
+        fullName: undefined,
+        shortName: undefined,
+        externalId: undefined,
+      },
+      customerDetailsSignature: "sig",
     });
   });
 });

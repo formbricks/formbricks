@@ -1,0 +1,28 @@
+name: Authenticate image registry
+description: Authenticate ECR or GHCR without building an image
+inputs:
+  registry_type:
+    description: "ecr or ghcr"
+    required: true
+  ecr_region:
+    description: "AWS region for ECR"
+    required: false
+  aws_role_arn:
+    description: "AWS role for ECR"
+    required: false
+runs:
+  using: composite
+  steps:
+    - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+      if: inputs.registry_type == 'ecr'
+      with:
+        role-to-assume: ${{ inputs.aws_role_arn }}
+        aws-region: ${{ inputs.ecr_region }}
+    - uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+      if: inputs.registry_type == 'ecr'
+    - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+      if: inputs.registry_type == 'ghcr' && github.event_name != 'pull_request'
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ github.token }}

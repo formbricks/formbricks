@@ -43,6 +43,7 @@ const getCustomPlanFeaturePermission = async (
     | "feedbackDirectories"
     | "dashboards"
     | "workflows"
+    | "dataRetention"
   >
 ): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) {
@@ -54,6 +55,7 @@ const getCustomPlanFeaturePermission = async (
       feedbackDirectories: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.FEEDBACK_DIRECTORIES,
       dashboards: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.DASHBOARDS,
       workflows: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.WORKFLOWS,
+      dataRetention: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.DATA_RETENTION,
     };
     const lookupKey = featureLookupKeyMap[featureKey];
     if (lookupKey) {
@@ -178,6 +180,10 @@ export const getIsDashboardsEnabled = async (organizationId: string): Promise<bo
 
 export const getIsWorkflowsEnabled = async (organizationId: string): Promise<boolean> => {
   return getCustomPlanFeaturePermission(organizationId, "workflows");
+};
+
+export const getIsDataRetentionEnabled = async (organizationId: string): Promise<boolean> => {
+  return getCustomPlanFeaturePermission(organizationId, "dataRetention");
 };
 
 export const getBulkInvitePermission = async (organizationId: string): Promise<boolean> => {
