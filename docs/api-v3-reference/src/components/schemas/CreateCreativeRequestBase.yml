@@ -1,0 +1,52 @@
+type: object
+description: >-
+  Fields every create request takes, whatever the type. `type` selects the `content` and `styling`
+  shape; see `CreateCreativeRequest`.
+required:
+  - workspaceId
+  - name
+  - type
+properties:
+  workspaceId:
+    type: string
+    format: cuid2
+    description: Workspace to create the creative in. Requires read/write access.
+  name:
+    type: string
+    minLength: 1
+    maxLength: 255
+  type:
+    $ref: ./CreativeType.yml
+  status:
+    type: string
+    enum:
+      - draft
+      - inProgress
+      - paused
+      - completed
+    default: draft
+    description: >-
+      The author's status (see `CreativeStatus`). Omit to create a draft. Any other value publishes
+      the creative straight away, so it must meet the publish rules (see `POST /api/v3/creatives`).
+  defaultLanguage:
+    type: string
+    pattern: ^[a-z]{2}(?:-[A-Z][a-z]{3})?-[A-Z]{2}$
+    default: en-US
+    description: The language every text map must hold, as a canonical locale code.
+  languages:
+    type: array
+    maxItems: 50
+    items:
+      $ref: ./CreativeLanguageInput.yml
+    description: Other languages the texts are written in. Omit for none.
+  destination:
+    anyOf:
+      - $ref: ./CreativeDestinationInput.yml
+      - type: "null"
+    description: Omit or `null` for none.
+  distribution:
+    $ref: ./CreativeDistribution.yml
+    description: Omit to show on every page view, to everyone, with no conditions.
+  schedule:
+    $ref: ./CreativeSchedule.yml
+    description: Omit for no start or end time.

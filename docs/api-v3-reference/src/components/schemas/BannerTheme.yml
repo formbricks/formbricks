@@ -1,0 +1,51 @@
+type: object
+description: >
+  The banner's custom styles. With `customStyles` off the banner follows the workspace Look & Feel
+  (the survey card, with the survey button inside) and the values below are kept but not applied.
+  With it on, each value overrides the workspace one; `null` keeps the workspace value. Colours are
+  `#rrggbb`.
+required:
+  - customStyles
+  - backgroundColor
+  - textColor
+  - borderColor
+  - fontWeight
+  - fontSize
+  - paddingX
+  - paddingY
+properties:
+  customStyles:
+    type: boolean
+    description: The "Add custom styles" switch.
+  backgroundColor:
+    type:
+      - string
+      - "null"
+    pattern: ^#[0-9a-fA-F]{6}$
+  textColor:
+    type:
+      - string
+      - "null"
+    pattern: ^#[0-9a-fA-F]{6}$
+  borderColor:
+    type:
+      - string
+      - "null"
+    pattern: ^#[0-9a-fA-F]{6}$
+  fontWeight:
+    type:
+      - integer
+      - "null"
+    enum:
+      - 400
+      - 500
+      - 600
+      - 700
+      - null
+  fontSize:
+    $ref: ./CreativeFontSize.yml
+  paddingX:
+    $ref: ./CreativePadding.yml
+  paddingY:
+    $ref: ./CreativePadding.yml
+additionalProperties: false

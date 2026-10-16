@@ -1,39 +1,55 @@
-// The status a creative shows is derived, never stored (T1 · ENG-3690, approved): the author's own
-// status, narrowed by archiving, its schedule and the survey it opens. Nothing writes a status when
-// a schedule ends or a survey pauses, so the list, the editor and the API can't disagree.
+import type {
+  CreativeDisplayStatusReasonZodType,
+  CreativeDisplayStatusZodType,
+  CreativeStatusZodType,
+} from "@formbricks/api-v3-schemas";
 
-/** Stored on the row, mirroring the survey statuses. */
-export type TCreativeOwnStatus = "draft" | "inProgress" | "paused" | "completed";
-export type TCreativeDisplayStatus = "draft" | "scheduled" | "active" | "paused" | "closed" | "archived";
-export type TCreativeStatusReason = "survey_not_active" | "schedule_ended" | null;
-export type TLinkedSurveyStatus = "inProgress" | "paused" | "completed" | "draft" | "scheduled";
+// The status a creative shows is derived, never stored (ADR 0002): the author's own status, narrowed by
+// archiving, its schedule and the survey it opens. Nothing writes a status when a schedule ends or a
+// survey pauses, so the list, the editor, the API and the SDK can't disagree. `creativeDisplayStatusSql`
+// (display-status-sql.ts) is the SQL twin the list filter uses; `display-status-cases.ts` holds both to
+// one case table.
+
+/** Stored on the row: the author's intent, the same values as a survey's status. */
+export type TCreativeStatus = CreativeStatusZodType;
+export type TCreativeDisplayStatus = CreativeDisplayStatusZodType;
+export type TCreativeDisplayStatusReason = CreativeDisplayStatusReasonZodType;
+
+/** The Destination survey's own lifecycle facts. Active means `inProgress` and not archived. */
+export interface TCreativeDestinationSurveyState {
+  status: "draft" | "inProgress" | "paused" | "completed";
+  archivedAt: Date | null;
+}
 
 export interface TCreativeStatusInput {
-  status: TCreativeOwnStatus;
+  status: TCreativeStatus;
   archivedAt: Date | null;
-  startsAt: Date | null;
-  endsAt: Date | null;
-  /** Status of the survey the creative opens; null when it opens a link. */
-  linkedSurveyStatus: TLinkedSurveyStatus | null;
+  startAt: Date | null;
+  endAt: Date | null;
+  /** The survey the creative opens; `null` when it opens a link or nothing. */
+  destinationSurvey: TCreativeDestinationSurveyState | null;
 }
 
 export interface TCreativeDisplayState {
   status: TCreativeDisplayStatus;
-  reason: TCreativeStatusReason;
+  reason: TCreativeDisplayStatusReason;
 }
 
+export const isDestinationSurveyActive = (survey: TCreativeDestinationSurveyState): boolean =>
+  survey.status === "inProgress" && survey.archivedAt === null;
+
 export const getCreativeDisplayState = (
-  { status, archivedAt, startsAt, endsAt, linkedSurveyStatus }: TCreativeStatusInput,
+  { status, archivedAt, startAt, endAt, destinationSurvey }: TCreativeStatusInput,
   now: Date
 ): TCreativeDisplayState => {
   if (archivedAt) return { status: "archived", reason: null };
   if (status === "draft") return { status: "draft", reason: null };
   if (status === "completed") return { status: "closed", reason: null };
-  if (endsAt && endsAt <= now) return { status: "closed", reason: "schedule_ended" };
+  if (endAt && endAt <= now) return { status: "closed", reason: "scheduleEnded" };
   if (status === "paused") return { status: "paused", reason: null };
-  if (startsAt && startsAt > now) return { status: "scheduled", reason: null };
-  if (linkedSurveyStatus && linkedSurveyStatus !== "inProgress") {
-    return { status: "paused", reason: "survey_not_active" };
+  if (startAt && startAt > now) return { status: "scheduled", reason: null };
+  if (destinationSurvey && !isDestinationSurveyActive(destinationSurvey)) {
+    return { status: "paused", reason: "surveyNotActive" };
   }
   return { status: "active", reason: null };
 };

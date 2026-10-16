@@ -1,5 +1,5 @@
 import type { TShowConditions } from "@formbricks/types/show-conditions";
-import type { TCreativeOwnStatus, TLinkedSurveyStatus } from "./lib/display-status";
+import type { TCreativeDestinationSurveyState, TCreativeStatus } from "./lib/display-status";
 
 // UI-prototype shapes following the approved T1 model (ENG-3690): one Creative row with `content`
 // and `styling` JSON validated per type. They will give way to the generated API v3 types.
@@ -67,7 +67,7 @@ export interface TCreative {
   name: string;
   /** Fixed at creation. */
   type: TCreativeType;
-  status: TCreativeOwnStatus;
+  status: TCreativeStatus;
   archivedAt: Date | null;
   publishedAt: Date | null;
   startsAt: Date | null;
@@ -88,5 +88,5 @@ export interface TCreativeSurveyOption {
   id: string;
   name: string;
   type: "app" | "link";
-  status: TLinkedSurveyStatus;
+  status: TCreativeDestinationSurveyState["status"];
 }

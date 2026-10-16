@@ -1,0 +1,360 @@
+import "server-only";
+import { logger } from "@formbricks/logger";
+import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
+import {
+  type InvalidParam,
+  createdResponse,
+  noContentResponse,
+  problemBadRequest,
+  problemForbidden,
+  problemUnprocessableContent,
+  successListResponse,
+  successResponse,
+} from "@/app/api/v3/lib/response";
+import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import { authorizeCreative, authorizeCreativeWorkspace } from "@/modules/creatives/lib/authorization";
+import { toCreativeState } from "@/modules/creatives/lib/record";
+import {
+  type TCreativeRecord,
+  findCreativeRecord,
+  findCreativeRecordsPage,
+} from "@/modules/creatives/lib/repository";
+import {
+  CreativeReferenceError,
+  archiveCreative,
+  createCreative,
+  deleteCreative,
+  duplicateCreative,
+  restoreCreative,
+  updateCreative,
+} from "@/modules/creatives/lib/service";
+import {
+  applyCreativePatch,
+  buildCreativeCreateState,
+  validateCreativeState,
+} from "@/modules/creatives/lib/write-rules";
+import { parseV3CreativesListQuery } from "./list-query";
+import type { TV3CreateCreativeBody, TV3PatchCreativeBody } from "./schemas";
+import { type TV3CreativeResource, serializeV3Creative } from "./serializers";
+
+/**
+ * The v3 creative operations (ENG-3993): the layer the `/api/v3/creatives` routes and the creative MCP
+ * tools both call. Each takes parsed input and the caller's authentication and returns a `Response`
+ * (success, or RFC 9457 problem), so an MCP tool is a thin adapter over the same behaviour.
+ *
+ * Access goes through `authorizeCreative` / `authorizeCreativeWorkspace` only (T8). Writes validate the
+ * whole resulting state with `validateCreativeState` (422 on a semantic problem) before the service
+ * checks the references only the database can answer, inside the write's transaction.
+ */
+
+type TOperationContext = {
+  authentication: TV3Authentication;
+  requestId: string;
+  instance: string;
+  auditLog?: TV3AuditLog;
+};
+
+type TCreativeOperationParams = TOperationContext & { creativeId: string };
+
+const NO_STORE = "private, no-store";
+
+const getCreatorId = (authentication: TV3Authentication): string | null =>
+  authentication && "user" in authentication && authentication.user?.id ? authentication.user.id : null;
+
+const creativeLocation = (creativeId: string): string => `/api/v3/creatives/${creativeId}`;
+
+const problemInvalidCreative = (
+  requestId: string,
+  instance: string,
+  invalidParams: InvalidParam[]
+): Response =>
+  problemUnprocessableContent(requestId, "The creative failed validation", {
+    invalid_params: invalidParams,
+    instance,
+  });
+
+const problemCreativeArchived = (requestId: string, instance: string): Response =>
+  problemInvalidCreative(requestId, instance, [
+    { name: "archivedAt", reason: "This creative is archived. Restore it before editing." },
+  ]);
+
+const recordAudit = (
+  auditLog: TV3AuditLog | undefined,
+  organizationId: string,
+  targetId: string,
+  objects: { oldObject?: TV3CreativeResource; newObject?: TV3CreativeResource }
+): void => {
+  if (!auditLog) return;
+  auditLog.organizationId = organizationId;
+  auditLog.targetId = targetId;
+  if (objects.oldObject !== undefined) auditLog.oldObject = objects.oldObject;
+  if (objects.newObject !== undefined) auditLog.newObject = objects.newObject;
+};
+
+const mapWriteError = (
+  error: unknown,
+  {
+    log,
+    requestId,
+    instance,
+    operation,
+  }: { log: ReturnType<typeof logger.withContext>; requestId: string; instance: string; operation: string }
+): Response => {
+  if (error instanceof CreativeReferenceError) {
+    log.warn(
+      { statusCode: 422, invalidParams: error.invalidParams },
+      "Creative references failed validation"
+    );
+    return problemInvalidCreative(requestId, instance, error.invalidParams);
+  }
+  return mapV3ThrownError(error, { log, requestId, instance, operation });
+};
+
+/**
+ * Authorizes the caller for one creative and loads it, scoped by `{ creativeId, workspaceId }`. A
+ * creative deleted in between answers the same 403 as an unknown one.
+ */
+const loadAuthorizedCreative = async (
+  { creativeId, authentication, requestId, instance }: TCreativeOperationParams,
+  access: "read" | "readWrite"
+): Promise<{ response: Response } | { record: TCreativeRecord; organizationId: string }> => {
+  const authorized = await authorizeCreative({ creativeId, authentication, access, requestId, instance });
+  if (authorized instanceof Response) return { response: authorized };
+
+  const record = await findCreativeRecord(authorized.creativeId, authorized.workspaceId);
+  if (!record) {
+    return {
+      response: problemForbidden(requestId, "You are not authorized to access this resource", instance),
+    };
+  }
+  return { record, organizationId: authorized.organizationId };
+};
+
+export async function listV3Creatives({
+  searchParams,
+  authentication,
+  requestId,
+  instance,
+}: Omit<TOperationContext, "auditLog"> & { searchParams: URLSearchParams }): Promise<Response> {
+  const log = logger.withContext({ requestId });
+
+  try {
+    const parsed = parseV3CreativesListQuery(searchParams);
+    if (!parsed.ok) {
+      log.warn({ statusCode: 400, invalidParams: parsed.invalidParams }, "Validation failed");
+      return problemBadRequest(requestId, "Invalid query parameters", {
+        invalid_params: parsed.invalidParams,
+        instance,
+      });
+    }
+    const { query } = parsed;
+
+    const authorized = await authorizeCreativeWorkspace({
+      workspaceId: query.workspaceId,
+      authentication,
+      access: "read",
+      requestId,
+      instance,
+    });
+    if (authorized instanceof Response) return authorized;
+
+    const now = new Date();
+    const rows = await findCreativeRecordsPage({
+      workspaceId: authorized.workspaceId,
+      sortBy: query.sortBy,
+      after: query.after,
+      take: query.limit + 1,
+      name: query.name,
+      types: query.types,
+      surveyId: query.surveyId,
+      displayStatuses: query.displayStatuses,
+      now,
+    });
+    const page = rows.slice(0, query.limit);
+    const last = page.at(-1);
+
+    return successListResponse(
+      page.map((record) => serializeV3Creative(record, now)),
+      { limit: query.limit, nextCursor: rows.length > query.limit && last ? query.nextCursor(last) : null },
+      { requestId, cache: NO_STORE }
+    );
+  } catch (error) {
+    return mapV3ThrownError(error, { log, requestId, instance, operation: "creatives.list" });
+  }
+}
+
+export async function createV3Creative({
+  body,
+  authentication,
+  requestId,
+  instance,
+  auditLog,
+}: TOperationContext & { body: TV3CreateCreativeBody }): Promise<Response> {
+  const log = logger.withContext({ requestId, workspaceId: body.workspaceId });
+
+  try {
+    const authorized = await authorizeCreativeWorkspace({
+      workspaceId: body.workspaceId,
+      authentication,
+      access: "readWrite",
+      requestId,
+      instance,
+    });
+    if (authorized instanceof Response) return authorized;
+
+    const now = new Date();
+    const state = buildCreativeCreateState(body, now);
+    const problems = validateCreativeState(state);
+    if (problems.length > 0) {
+      log.warn({ statusCode: 422, invalidParams: problems }, "Creative failed validation");
+      return problemInvalidCreative(requestId, instance, problems);
+    }
+
+    const record = await createCreative({
+      workspaceId: authorized.workspaceId,
+      createdBy: getCreatorId(authentication),
+      state,
+    });
+    const resource = serializeV3Creative(record, now);
+    recordAudit(auditLog, authorized.organizationId, record.id, { newObject: resource });
+
+    return createdResponse(resource, {
+      location: creativeLocation(record.id),
+      requestId,
+      cache: NO_STORE,
+    });
+  } catch (error) {
+    return mapWriteError(error, { log, requestId, instance, operation: "creatives.create" });
+  }
+}
+
+export async function getV3Creative(params: Omit<TCreativeOperationParams, "auditLog">): Promise<Response> {
+  const { creativeId, requestId, instance } = params;
+  const log = logger.withContext({ requestId, creativeId });
+
+  try {
+    const loaded = await loadAuthorizedCreative(params, "read");
+    if ("response" in loaded) return loaded.response;
+
+    return successResponse(serializeV3Creative(loaded.record, new Date()), { requestId, cache: NO_STORE });
+  } catch (error) {
+    return mapV3ThrownError(error, { log, requestId, instance, operation: "creatives.get" });
+  }
+}
+
+export async function patchV3Creative(
+  params: TCreativeOperationParams & { body: TV3PatchCreativeBody }
+): Promise<Response> {
+  const { creativeId, body, requestId, instance, auditLog } = params;
+  const log = logger.withContext({ requestId, creativeId });
+
+  try {
+    const loaded = await loadAuthorizedCreative(params, "readWrite");
+    if ("response" in loaded) return loaded.response;
+    const { record, organizationId } = loaded;
+
+    const now = new Date();
+    const before = serializeV3Creative(record, now);
+    if (record.archivedAt) {
+      log.warn({ statusCode: 422 }, "Creative is archived");
+      return problemCreativeArchived(requestId, instance);
+    }
+    // An empty patch changes nothing, `updatedAt` included.
+    if (Object.keys(body).length === 0) return successResponse(before, { requestId, cache: NO_STORE });
+
+    const previous = toCreativeState(record);
+    const planned = applyCreativePatch(previous, body, now);
+    const problems = planned.ok ? validateCreativeState(planned.state, previous) : planned.invalidParams;
+    if (!planned.ok || problems.length > 0) {
+      log.warn({ statusCode: 422, invalidParams: problems }, "Creative failed validation");
+      return problemInvalidCreative(requestId, instance, problems);
+    }
+
+    const updated = await updateCreative({
+      creativeId: record.id,
+      workspaceId: record.workspaceId,
+      previous,
+      next: planned.state,
+    });
+    const resource = serializeV3Creative(updated, now);
+    recordAudit(auditLog, organizationId, record.id, { oldObject: before, newObject: resource });
+
+    return successResponse(resource, { requestId, cache: NO_STORE });
+  } catch (error) {
+    return mapWriteError(error, { log, requestId, instance, operation: "creatives.patch" });
+  }
+}
+
+export async function deleteV3Creative(params: TCreativeOperationParams): Promise<Response> {
+  const { creativeId, requestId, instance, auditLog } = params;
+  const log = logger.withContext({ requestId, creativeId });
+
+  try {
+    const loaded = await loadAuthorizedCreative(params, "readWrite");
+    if ("response" in loaded) return loaded.response;
+    const { record, organizationId } = loaded;
+
+    recordAudit(auditLog, organizationId, record.id, { oldObject: serializeV3Creative(record, new Date()) });
+    await deleteCreative(record.id, record.workspaceId);
+
+    return noContentResponse({ requestId });
+  } catch (error) {
+    return mapV3ThrownError(error, { log, requestId, instance, operation: "creatives.delete" });
+  }
+}
+
+/** Archive and restore: authorize, run the lifecycle change, audit before and after, return the resource. */
+const runLifecycleOperation = async (
+  params: TCreativeOperationParams,
+  operation: "archive" | "restore",
+  mutate: (record: TCreativeRecord, now: Date) => Promise<TCreativeRecord>
+): Promise<Response> => {
+  const { creativeId, requestId, instance, auditLog } = params;
+  const log = logger.withContext({ requestId, creativeId });
+
+  try {
+    const loaded = await loadAuthorizedCreative(params, "readWrite");
+    if ("response" in loaded) return loaded.response;
+    const { record, organizationId } = loaded;
+
+    const now = new Date();
+    const resource = serializeV3Creative(await mutate(record, now), now);
+    recordAudit(auditLog, organizationId, record.id, {
+      oldObject: serializeV3Creative(record, now),
+      newObject: resource,
+    });
+
+    return successResponse(resource, { requestId, cache: NO_STORE });
+  } catch (error) {
+    return mapV3ThrownError(error, { log, requestId, instance, operation: `creatives.${operation}` });
+  }
+};
+
+export const archiveV3Creative = (params: TCreativeOperationParams): Promise<Response> =>
+  runLifecycleOperation(params, "archive", archiveCreative);
+
+export const restoreV3Creative = (params: TCreativeOperationParams): Promise<Response> =>
+  runLifecycleOperation(params, "restore", (record) => restoreCreative(record));
+
+export async function duplicateV3Creative(params: TCreativeOperationParams): Promise<Response> {
+  const { creativeId, authentication, requestId, instance, auditLog } = params;
+  const log = logger.withContext({ requestId, creativeId });
+
+  try {
+    const loaded = await loadAuthorizedCreative(params, "readWrite");
+    if ("response" in loaded) return loaded.response;
+    const { record, organizationId } = loaded;
+
+    const copy = await duplicateCreative({ record, createdBy: getCreatorId(authentication) });
+    const resource = serializeV3Creative(copy, new Date());
+    recordAudit(auditLog, organizationId, copy.id, { newObject: resource });
+
+    return createdResponse(resource, {
+      location: creativeLocation(copy.id),
+      requestId,
+      cache: NO_STORE,
+    });
+  } catch (error) {
+    return mapWriteError(error, { log, requestId, instance, operation: "creatives.duplicate" });
+  }
+}

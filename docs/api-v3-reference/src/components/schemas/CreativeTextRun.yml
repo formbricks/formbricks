@@ -1,0 +1,26 @@
+type: object
+description: >
+  One stretch of banner text with the same formatting. Banner text is stored and delivered as runs,
+  never as HTML, so it can't carry markup, scripts or images.
+
+
+  `href` makes the run a link. Allowed: `https://` and `http://` URLs, `mailto:` and `tel:` links, and
+  root-relative paths (`/open-enrollment`), which resolve on whichever site shows the banner.
+required:
+  - text
+properties:
+  text:
+    type: string
+    minLength: 1
+    maxLength: 2000
+  bold:
+    type: boolean
+  italic:
+    type: boolean
+  underline:
+    type: boolean
+  href:
+    type: string
+    maxLength: 2048
+    pattern: ^(?:https?://|mailto:|tel:|/(?!/))\S*$
+additionalProperties: false
