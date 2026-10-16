@@ -6,7 +6,7 @@ legacy_valkey_image="valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a
 multi_arch_valkey_image="valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84"
 # v3.6.15 or later: before it, the buffering middleware on the auth routers turned an empty chunked response,
 # such as the redirect every OAuth/SSO callback answers with, into a 500 (traefik#11568, ENG-3977).
-# docker/traefik-auth-smoke.sh runs this image against the installer's labels.
+# docker/traefik-auth-smoke.sh runs this image with the installer's static config and labels.
 traefik_image="traefik:v3.6.25"
 stable_docker_files_url="https://raw.githubusercontent.com/formbricks/formbricks/stable/docker"
 # Cube reads its model from these files, bind-mounted out of the installation directory.
@@ -377,9 +377,9 @@ write_base_env_file() {
 }
 
 # Writes Traefik's static configuration. Both entry points refuse every encoded character Traefik can screen
-# request paths for, which Traefik itself did by default until v3.6.7: the app and Hub decode these, so letting
-# them through would show a router one path and its backend another. An encoded slash, for one, would carry an
-# /api/auth request past the auth routers and their body cap (ENG-3977).
+# request paths for, as Traefik itself did by default until v3.6.7, and as its docs advise whenever a backend may
+# decode them: otherwise a router matches one path and the backend acts on another. An encoded slash, for one,
+# carried /api%2Fauth/... past the auth routers and their body cap (ENG-3977).
 write_traefik_config() {
   local target_path="$1"
   local hsts_enabled="$2"

@@ -7,7 +7,8 @@
 
 set -euo pipefail
 
-readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+readonly SCRIPT_DIR
 readonly PROJECT_NAME="formbricks-traefik-auth-smoke-${$}"
 readonly DOMAIN="smoke.localhost"
 readonly AUTH_BODY_LIMIT=1048576
@@ -89,8 +90,10 @@ request() {
     --resolve "${DOMAIN}:${web_port}:127.0.0.1" --resolve "${DOMAIN}:${websecure_port}:127.0.0.1" "$@" "${url}"
 }
 
+# `expected` is a glob, so "302 */auth/login" accepts the Location under any port.
 expect() {
   local label=$1 expected=$2 actual=$3
+  # shellcheck disable=SC2053
   if [[ "${actual}" == ${expected} ]]; then
     printf '  ok    %-58s %s\n' "${label}" "${actual}"
   else
