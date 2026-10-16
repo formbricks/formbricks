@@ -5,7 +5,7 @@ import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   DateTimePicker,
-  getEditorTimeZone,
+  useEditorTimeZone,
   validateDateTimeRange,
 } from "@/modules/ui/components/date-time-picker";
 import type { TCreative } from "../../types";
@@ -23,7 +23,8 @@ export const ScheduleTab = ({
     date.setHours(0, 0, 0, 0);
     return date;
   });
-  const [timeZone] = useState(getEditorTimeZone);
+  const timeZone = useEditorTimeZone();
+  const zoneNoteId = `${ids}-zone`;
   const rangeError = validateDateTimeRange(creative.startsAt, creative.endsAt);
 
   return (
@@ -35,35 +36,37 @@ export const ScheduleTab = ({
         <EditorField label={t("workspace.creatives.editor.starts")} htmlFor={`${ids}-start`}>
           <DateTimePicker
             id={`${ids}-start`}
+            label={t("workspace.creatives.editor.starts")}
             locale={locale}
             value={creative.startsAt}
             onChange={(startsAt) => onChange({ ...creative, startsAt })}
             minDate={today}
             placeholder={t("workspace.creatives.editor.starts_placeholder")}
+            aria-describedby={zoneNoteId}
           />
         </EditorField>
         <EditorField label={t("workspace.creatives.editor.ends")} htmlFor={`${ids}-end`}>
           <DateTimePicker
             id={`${ids}-end`}
+            label={t("workspace.creatives.editor.ends")}
             locale={locale}
             value={creative.endsAt}
             onChange={(endsAt) => onChange({ ...creative, endsAt })}
             minDate={creative.startsAt ?? today}
             placeholder={t("workspace.creatives.editor.ends_placeholder")}
-            aria-invalid={!!rangeError}
-            aria-describedby={rangeError ? `${ids}-range-error` : undefined}
+            error={rangeError ? t("workspace.creatives.editor.end_before_start") : undefined}
+            aria-describedby={zoneNoteId}
           />
         </EditorField>
       </div>
-      {rangeError && (
-        <p id={`${ids}-range-error`} className="text-sm text-red-600">
-          {t("workspace.creatives.editor.end_before_start")}
+      {timeZone && (
+        <p
+          id={zoneNoteId}
+          className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
+          <GlobeIcon className="size-3.5" aria-hidden="true" />
+          {t("common.times_in", { timeZone })}
         </p>
       )}
-      <p className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
-        <GlobeIcon className="size-3.5" aria-hidden="true" />
-        {t("workspace.creatives.editor.times_in", { timeZone })}
-      </p>
     </EditorPanel>
   );
 };
