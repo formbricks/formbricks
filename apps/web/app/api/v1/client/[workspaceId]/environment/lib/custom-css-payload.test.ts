@@ -15,6 +15,8 @@ import { getWorkspaceState } from "./environmentState";
  */
 
 vi.mock("server-only", () => ({}));
+// Banner words come from the dashboard translator (getTranslate); its session-locale lookup is unused here.
+vi.mock("@/lingodotdev/language", () => ({ getLocale: vi.fn() }));
 vi.mock("@formbricks/database", () => ({
   prisma: { workspace: { findUnique: vi.fn(), update: vi.fn() }, segment: { findMany: vi.fn() } },
 }));

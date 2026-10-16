@@ -355,7 +355,10 @@ export const CreativeEditor = ({
 
         <div className="hidden min-w-0 flex-1 bg-slate-100/70 lg:block">
           <CreativePreview
-            view={toPreviewView(creative.id, form, style)}
+            view={toPreviewView(creative.id, form, style, {
+              siteNotice: t("workspace.creatives.visitor_site_notice"),
+              dismiss: t("workspace.creatives.visitor_dismiss"),
+            })}
             siteName={siteName}
             workspaceStyling={workspaceStyling}
             device={device}

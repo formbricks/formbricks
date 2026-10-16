@@ -10,6 +10,8 @@ import { resolveRespondentCustomCss } from "@/modules/survey/link/lib/respondent
 import { getWorkspaceStateData } from "./data";
 
 vi.mock("server-only", () => ({}));
+// Banner words come from the dashboard translator (getTranslate); its session-locale lookup is unused here.
+vi.mock("@/lingodotdev/language", () => ({ getLocale: vi.fn() }));
 
 // Mock dependencies
 vi.mock("@formbricks/database", () => ({

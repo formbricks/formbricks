@@ -8,15 +8,20 @@ import type { TCreativeEditorForm } from "./editor-form";
  */
 const PREVIEW_DESTINATION: TCreativeDestination = { type: "link", url: "about:blank" };
 
+/** The words a banner shows visitors that its author doesn't write (`workspace.creatives.visitor_*`). */
+export type TPreviewVisitorLabels = Readonly<{ siteNotice: string; dismiss: string }>;
+
 /**
  * What the editor preview hands to `@formbricks/creatives`' `render` (ADR 0003): the unsaved form, with
  * the look `getCreativeStyle` computed from it, in the shape `resolve` builds for a visitor. Texts are the
- * default language's, as the form edits them.
+ * default language's, as the form edits them; the visitor words come translated from the editor, as the
+ * payload's `labels` do for a visitor.
  */
 export const toPreviewView = (
   id: string,
   form: TCreativeEditorForm,
-  style: TCreativeStyle
+  style: TCreativeStyle,
+  labels: TPreviewVisitorLabels
 ): TCreativeView => {
   const { content, styling } = form;
 
@@ -38,7 +43,8 @@ export const toPreviewView = (
       message: content.message,
       buttonLabel: content.hasButton ? content.buttonLabel : null,
       dismissible: content.dismissible,
-      accessibleName: content.accessibleName.trim() || null,
+      accessibleName: content.accessibleName.trim() || labels.siteNotice,
+      dismissLabel: labels.dismiss,
       position: styling.position,
       style,
       destination: content.hasButton ? PREVIEW_DESTINATION : null,

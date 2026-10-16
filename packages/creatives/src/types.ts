@@ -200,9 +200,9 @@ export interface TBannerView {
   message: TCreativeTextRun[];
   buttonLabel: string | null;
   dismissible: boolean;
-  /** The region's name; `null` draws "Site notice" in English (the editor preview). */
+  /** The region's name; `null` draws "Site notice" in English (a view built without labels). */
   accessibleName: string | null;
-  /** The Dismiss control's name; absent draws "Dismiss" in English (the editor preview). */
+  /** The Dismiss control's name; absent draws "Dismiss" in English (a view built without labels). */
   dismissLabel?: string;
   position: TCreativePosition<TBannerPlacement>;
   style: TCreativeStyle;
