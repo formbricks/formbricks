@@ -1252,6 +1252,111 @@ describe("docker/formbricks.sh loopback-only app port (ENG-3983)", () => {
     expect(existsSync(`${composePath}.tmp`)).toBe(false);
   });
 
+  const runUpdate = (failPortValidation: boolean) => {
+    const tempDir = createTempDir();
+    const installationDir = join(tempDir, "formbricks");
+    const binDir = join(tempDir, "bin");
+    const commandLog = join(tempDir, "commands.log");
+    const composePath = join(installationDir, "docker-compose.yml");
+    const composeContents = `services:
+  authzed-ops:
+  spicedb:
+  hub-worker:
+  formbricks:
+    image: ghcr.io/formbricks/formbricks:latest
+    ports:
+      - 3000:3000
+`;
+    mkdirSync(installationDir, { recursive: true });
+    mkdirSync(binDir, { recursive: true });
+    writeFileSync(composePath, composeContents);
+    writeFileSync(join(installationDir, ".env"), "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true\n");
+    writeFileSync(
+      join(binDir, "sudo"),
+      `#!/bin/sh
+printf "%s\\n" "$*" >> "$COMMAND_LOG"
+case "$*" in
+  *"config --services") printf "authzed-ops\\nspicedb\\nhub-worker\\nformbricks\\n" ;;
+  *"-f docker-compose.yml config") [ "$FAIL_PORT_VALIDATION" = "1" ] && exit 1 ;;
+esac
+exit 0
+`,
+      { mode: 0o700 }
+    );
+
+    const result = spawnSync("bash", ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath], {
+      cwd: tempDir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        COMMAND_LOG: commandLog,
+        FAIL_PORT_VALIDATION: failPortValidation ? "1" : "0",
+        PATH: `${binDir}:${process.env.PATH ?? ""}`,
+      },
+    });
+
+    return { result, composePath, composeContents, commands: readFileSync(commandLog, "utf8") };
+  };
+
+  test("the updater narrows an existing install's port, validated, before pulling images", () => {
+    const { result, composePath, composeContents, commands } = runUpdate(false);
+
+    expect(result.status).toBe(0);
+    expect(getPublishedPorts(readFileSync(composePath, "utf8"), "formbricks")).toEqual([
+      "127.0.0.1:3000:3000",
+    ]);
+    expect(readFileSync(`${composePath}.before-loopback-port`, "utf8")).toBe(composeContents);
+    const validation = commands.indexOf("docker compose -f docker-compose.yml config");
+    expect(validation).toBeGreaterThanOrEqual(0);
+    expect(validation).toBeLessThan(commands.indexOf("docker compose pull"));
+  });
+
+  test("the updater restores the file and still updates when the narrowed file does not validate", () => {
+    const { result, composePath, composeContents, commands } = runUpdate(true);
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Continuing the update with port 3000 published as before");
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(commands).toContain("docker compose pull");
+    expect(commands).toContain("docker compose up -d");
+  });
+
+  test("the installer narrows the port after adding the Traefik labels and before starting anything", () => {
+    const script = readFileSync(formbricksScriptPath, "utf8");
+    const installFunction = script.slice(
+      script.indexOf("install_formbricks()"),
+      script.indexOf("uninstall_formbricks()")
+    );
+    const labels = installFunction.indexOf('add_formbricks_traefik_labels "docker-compose.yml"');
+    const narrowing = installFunction.indexOf('bind_formbricks_port_to_loopback "docker-compose.yml"');
+
+    expect(labels).toBeGreaterThanOrEqual(0);
+    expect(narrowing).toBeGreaterThan(labels);
+    expect(narrowing).toBeLessThan(installFunction.indexOf("docker compose up"));
+  });
+
+  test("a commented service header still scopes the rewrite to the formbricks service", () => {
+    const tempDir = createTempDir();
+    const composePath = join(tempDir, "docker-compose.yml");
+    writeFileSync(
+      composePath,
+      `services:
+  formbricks: # the app
+    ports:
+      - 3000:3000
+  hub: # the hub
+    ports:
+      - 3000:3000
+`
+    );
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    const updatedCompose = readFileSync(composePath, "utf8");
+    expect(getPublishedPorts(updatedCompose, "formbricks")).toEqual(["127.0.0.1:3000:3000"]);
+    expect(getPublishedPorts(updatedCompose, "hub")).toEqual(["3000:3000"]);
+  });
+
   test("is idempotent", () => {
     const composePath = writeDockerComposeTemplate();
     bindFormbricksPortToLoopback(composePath, "install");

@@ -1380,7 +1380,7 @@ bind_formbricks_port_to_loopback() {
   fi
 
   # Prints the file with the formbricks service's bare 3000:3000 published port bound to loopback, and exits 0
-  # when it rewrote one, 2 when there was nothing to rewrite.
+  # when it rewrote one, 3 when there was nothing to rewrite (awk itself exits 2 on a fatal error).
   local rewrite_program='
     function indentation(line) {
       match(line, /[^ ]/)
@@ -1397,11 +1397,11 @@ bind_formbricks_port_to_loopback() {
       in_formbricks=0
       in_ports=0
     }
-    in_services && /^[ ]+[A-Za-z0-9_-]+:[[:space:]]*$/ {
+    in_services && /^[ ]+[A-Za-z0-9_-]+:[[:space:]]*(#.*)?$/ {
       line_indent=indentation($0)
       if (service_indent < 0) service_indent=line_indent
       if (line_indent == service_indent) {
-        in_formbricks=($0 ~ /^[ ]+formbricks:[[:space:]]*$/)
+        in_formbricks=($0 ~ /^[ ]+formbricks:[[:space:]]*(#.*)?$/)
         in_ports=0
       }
     }
@@ -1430,14 +1430,14 @@ bind_formbricks_port_to_loopback() {
       }
     }
     { print }
-    END { exit(replacements > 0 ? 0 : 2) }
+    END { exit(replacements > 0 ? 0 : 3) }
   '
 
   # Written into a `cp -p` copy so the result keeps the original's mode: the file holds secrets.
   local status=0
   cp -p "$compose_file" "$temp_file"
   awk "$rewrite_program" "$compose_file" >"$temp_file" || status=$?
-  if [[ $status -eq 2 ]]; then
+  if [[ $status -eq 3 ]]; then
     rm -f "$temp_file"
     return 0
   fi
@@ -1462,7 +1462,8 @@ bind_formbricks_port_to_loopback() {
   fi
 
   echo "🔒 Formbricks now publishes port 3000 on 127.0.0.1 only. Traefik still serves it on ports 80 and 443."
-  echo "   Backup: $backup_file. If you reach port 3000 from another machine on purpose, restore that line."
+  echo "   Backup: $backup_file. To reach port 3000 from other machines on purpose, publish it on an explicit"
+  echo "   address instead, such as - 0.0.0.0:3000:3000 (updates leave an explicit address alone)."
 }
 
 # The git ref holding the Cube model that matches the Formbricks image: its release tag when the image is pinned

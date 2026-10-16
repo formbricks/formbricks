@@ -338,18 +338,18 @@ chmod +x formbricks.sh
 ./formbricks.sh update
 ```
 
-The update also publishes the Formbricks container's port `3000` on `127.0.0.1` only, if your
-`docker-compose.yml` still publishes it on every interface (`- 3000:3000`). Traefik reaches Formbricks over the
-Compose network and keeps serving it on ports `80` and `443`, so outside traffic always passes through Traefik.
-The original file is kept as `docker-compose.yml.before-loopback-port`. Any other mapping you set yourself is left
-as it is.
-
 The script first validates the resolved Compose project and warns — without stopping — when the baseline
 `hub-worker` is missing, then pulls images and runs the read-only AuthZed upgrade check. A failed preflight leaves
 the existing application running.
 Otherwise it stops the stack, waits for PostgreSQL, completes application migrations, and only then starts the
 new stack. A failed migration leaves the stack stopped for recovery; preparation is never run against a live
 installation by the updater.
+
+Once those checks pass, the update also publishes the Formbricks container's port `3000` on `127.0.0.1` only, if
+your `docker-compose.yml` still publishes it on every interface (`- 3000:3000`). Traefik reaches Formbricks over the
+Compose network and keeps serving it on ports `80` and `443`, so outside traffic always passes through Traefik. The
+original file is kept as `docker-compose.yml.before-loopback-port`. A mapping with an address you chose, such as
+`- 0.0.0.0:3000:3000`, is left as it is.
 
 Starting with v5.4, the updater also recognizes the old amd64-only bundled Valkey digest. It backs up your
 Compose file, replaces only that exact image reference with the native amd64/arm64 digest, and validates the
