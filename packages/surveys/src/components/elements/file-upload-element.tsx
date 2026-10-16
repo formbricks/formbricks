@@ -52,6 +52,9 @@ export function FileUploadElement({
   useEffect(() => {
     latestValueRef.current = value;
   }, [value]);
+  // Files picked but still uploading. Overlapping uploads all land in the answer, so the file
+  // limit has to count these too, or two picks at 24 files would end at 26.
+  const uploadingFileCountRef = useRef(0);
 
   // Use centralized error message for required validation, file-specific errors for upload issues
   const errorMessage = centralizedErrorMessage || fileErrorMessage;
@@ -202,14 +205,15 @@ export function FileUploadElement({
         return false;
       }
 
-      if (element.allowMultipleFiles && (value?.length || 0) + fileArray.length > FILE_LIMIT) {
+      const fileCount = (latestValueRef.current?.length || 0) + uploadingFileCountRef.current;
+      if (element.allowMultipleFiles && fileCount + fileArray.length > FILE_LIMIT) {
         setFileErrorMessage(t("errors.file_input.you_can_only_upload_a_maximum_of_files", { FILE_LIMIT }));
         return false;
       }
 
       return true;
     },
-    [element.allowMultipleFiles, value, t]
+    [element.allowMultipleFiles, t]
   );
 
   /**
@@ -253,6 +257,7 @@ export function FileUploadElement({
   const uploadFiles = useCallback(
     async (filesToUpload: File[]): Promise<void> => {
       setIsUploading(true);
+      uploadingFileCountRef.current += filesToUpload.length;
 
       try {
         // Convert files to base64 and upload
@@ -308,6 +313,8 @@ export function FileUploadElement({
           setFileErrorMessage(t("errors.file_input.upload_failed"));
         }
       } finally {
+        // On success the files are already in `latestValueRef`; on failure their slots free up.
+        uploadingFileCountRef.current -= filesToUpload.length;
         setIsUploading(false);
       }
     },
