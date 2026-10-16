@@ -180,8 +180,10 @@ export function BlockConditional({
       return acc;
     }, {});
 
-    // Merge with existing block data to preserve other element values
-    onChange(mergedValue);
+    // Pass up only this element's change; `Survey` merges it into the latest answers. Sending
+    // `mergedValue` would write back this render's copy of every other answer, which is stale
+    // when the change comes from a file upload that finished after the respondent kept editing.
+    onChange(responseData);
 
     if (
       shouldTriggerAutoProgress({
