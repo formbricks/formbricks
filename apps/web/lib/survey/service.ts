@@ -51,11 +51,11 @@ import {
 } from "@/lib/organization/service";
 import type { TSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
-import { isAppSurveyBlockedFromPublishing } from "@/modules/creatives/lib/survey-publish";
 import {
   assertNoLinkedCreatives,
   getDestinationSettingTurnedOn,
 } from "@/modules/creatives/lib/linked-creatives";
+import { isAppSurveyBlockedFromPublishing } from "@/modules/creatives/lib/survey-publish";
 import {
   invalidateCustomCssCaches,
   parseStoredCustomCss,
@@ -592,7 +592,13 @@ export const updateSurveyInternal = async (
       // An app survey can never be shown without a trigger or a creative that opens it, so block
       // publishing (non-draft status) one with neither. The editor runs the same rule before saving.
       if (
-        await isAppSurveyBlockedFromPublishing({ surveyId, type, status: updatedSurvey.status, triggers })
+        await isAppSurveyBlockedFromPublishing({
+          surveyId,
+          workspaceId: currentSurvey.workspaceId,
+          type,
+          status: updatedSurvey.status,
+          triggers,
+        })
       ) {
         throw new InvalidInputError(APP_SURVEY_TRIGGER_REQUIRED_MESSAGE);
       }

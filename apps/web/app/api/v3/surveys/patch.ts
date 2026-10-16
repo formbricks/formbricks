@@ -304,6 +304,7 @@ export async function executeV3SurveyPatch(params: {
   if (
     await isAppSurveyBlockedFromPublishing({
       surveyId: currentSurvey.id,
+      workspaceId: currentSurvey.workspaceId,
       type: currentSurvey.type,
       status: document.status,
       triggers: effectiveTriggers,

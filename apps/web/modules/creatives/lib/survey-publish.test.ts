@@ -8,7 +8,12 @@ vi.mock("@formbricks/database", () => ({
   prisma: { creative: { findFirst: vi.fn() } },
 }));
 
-const appSurvey = { surveyId: "survey-1", type: "app", status: "inProgress" } as const;
+const appSurvey = {
+  surveyId: "survey-1",
+  workspaceId: "workspace-1",
+  type: "app",
+  status: "inProgress",
+} as const;
 
 describe("isAppSurveyBlockedFromPublishing", () => {
   beforeEach(() => {
@@ -20,7 +25,7 @@ describe("isAppSurveyBlockedFromPublishing", () => {
 
     expect(await isAppSurveyBlockedFromPublishing({ ...appSurvey, triggers: [] })).toBe(false);
     expect(prisma.creative.findFirst).toHaveBeenCalledWith({
-      where: { surveyId: "survey-1", archivedAt: null },
+      where: { surveyId: "survey-1", workspaceId: "workspace-1", archivedAt: null },
       select: { id: true },
     });
   });

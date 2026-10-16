@@ -155,7 +155,7 @@ export const SurveyEditorPage = async (props: {
     await Promise.all([
       getSurveyVisibilityViewer(survey, session.user.id, workspaceWithTeamIds.organizationId),
       getSurveyDataRetentionContext(organization, session.user.id),
-      isSurveyOpenedByCreative(survey.id),
+      isSurveyOpenedByCreative({ surveyId: survey.id, workspaceId: survey.workspaceId }),
     ]);
 
   // The workspace row reaches the editor without its CSS columns (source, compiled output and the

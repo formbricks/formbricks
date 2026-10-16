@@ -706,7 +706,7 @@ describe("patchV3Survey", () => {
     });
 
     expect(prisma.creative.findFirst).toHaveBeenCalledWith({
-      where: { surveyId: currentSurvey.id, archivedAt: null },
+      where: { surveyId: currentSurvey.id, workspaceId: currentSurvey.workspaceId, archivedAt: null },
       select: { id: true },
     });
     expect(prisma.survey.update).toHaveBeenCalled();
