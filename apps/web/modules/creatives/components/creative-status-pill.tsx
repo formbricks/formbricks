@@ -23,8 +23,8 @@ const PILL_STATES: Record<
 export const CreativeStatusPill = ({ state }: Readonly<{ state: TCreativeDisplayState }>) => {
   const { t } = useTranslation();
   const reasons: Record<NonNullable<TCreativeDisplayState["reason"]>, string> = {
-    survey_not_active: t("workspace.creatives.status_reason_survey_not_active"),
-    schedule_ended: t("workspace.creatives.status_reason_schedule_ended"),
+    surveyNotActive: t("workspace.creatives.status_reason_survey_not_active"),
+    scheduleEnded: t("workspace.creatives.status_reason_schedule_ended"),
   };
   const reason = state.reason ? reasons[state.reason] : null;
 

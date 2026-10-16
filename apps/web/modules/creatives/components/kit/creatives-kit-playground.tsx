@@ -54,8 +54,8 @@ const STATUS_STATES: TCreativeDisplayState[] = [
   { status: "scheduled", reason: null },
   { status: "active", reason: null },
   { status: "paused", reason: null },
-  { status: "paused", reason: "survey_not_active" },
-  { status: "closed", reason: "schedule_ended" },
+  { status: "paused", reason: "surveyNotActive" },
+  { status: "closed", reason: "scheduleEnded" },
   { status: "archived", reason: null },
 ];
 

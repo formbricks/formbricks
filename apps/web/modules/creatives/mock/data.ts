@@ -53,17 +53,19 @@ export const getMockLinkedSurvey = (creative: Pick<TCreative, "action">): TCreat
   return MOCK_SURVEYS.find((survey) => survey.id === surveyId) ?? null;
 };
 
-export const getMockDisplayState = (creative: TCreative, now: Date): TCreativeDisplayState =>
-  getCreativeDisplayState(
+export const getMockDisplayState = (creative: TCreative, now: Date): TCreativeDisplayState => {
+  const linkedSurvey = getMockLinkedSurvey(creative);
+  return getCreativeDisplayState(
     {
       status: creative.status,
       archivedAt: creative.archivedAt,
-      startsAt: creative.startsAt,
-      endsAt: creative.endsAt,
-      linkedSurveyStatus: getMockLinkedSurvey(creative)?.status ?? null,
+      startAt: creative.startsAt,
+      endAt: creative.endsAt,
+      destinationSurvey: linkedSurvey ? { status: linkedSurvey.status, archivedAt: null } : null,
     },
     now
   );
+};
 
 const urlStartsWith = (id: string, path: string): TShowConditions => ({
   id: `${id}_group`,
