@@ -9,7 +9,7 @@ import { CreativesList } from "./components/creatives-list";
 import { CreativeEditor } from "./components/editor/creative-editor";
 import { CreativesKitPlayground } from "./components/kit/creatives-kit-playground";
 import { CreativeSummary } from "./components/summary/creative-summary";
-import { MOCK_CREATIVES, createMockDraft, getMockCreative } from "./mock/data";
+import { createMockDraft, getMockCreative } from "./mock/data";
 import type { TCreativeType } from "./types";
 
 // Server entry points for the Creatives prototype routes. Each still runs the workspace auth
@@ -20,18 +20,19 @@ type TCreativeParams = Promise<{ workspaceId: string; creativeId: string }>;
 
 export const creativesMetadata: Metadata = { title: "Creatives" };
 
+// The list reads `/api/v3/creatives` in the browser; the server only decides who may write.
 export const CreativesListPage = async ({ params }: Readonly<{ params: TWorkspaceParams }>) => {
   const { workspaceId } = await params;
-  await getWorkspaceAuth(workspaceId);
+  const { isReadOnly } = await getWorkspaceAuth(workspaceId);
   const t = await getTranslate();
 
   return (
     <PageContentWrapper>
       <PageHeader
         pageTitle={t("common.creatives")}
-        cta={<CreativesHeaderActions workspaceId={workspaceId} />}
+        cta={<CreativesHeaderActions workspaceId={workspaceId} isReadOnly={isReadOnly} />}
       />
-      <CreativesList workspaceId={workspaceId} initialCreatives={MOCK_CREATIVES} />
+      <CreativesList workspaceId={workspaceId} isReadOnly={isReadOnly} />
     </PageContentWrapper>
   );
 };

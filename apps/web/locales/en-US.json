@@ -2324,8 +2324,6 @@
         "title": "Show when",
         "value": "Value"
       },
-      "copy_id": "Copy ID",
-      "copy_of": "Copy of {name}",
       "creative": "creative",
       "delete_confirmation": "\"{name}\" disappears from your site right away, and its numbers are deleted with it.",
       "editor": {
@@ -2416,6 +2414,8 @@
         "weight_semibold": "Semibold",
         "when_action_fires": "When an action fires"
       },
+      "empty_description": "Add a feedback button or a banner to your site. It shows next to your surveys, with no code beyond the snippet.",
+      "empty_title": "No creatives yet",
       "kit": {
         "at_bounds": "Bounded 0 to 2",
         "date_time_picker": "Date and time picker",
@@ -2440,12 +2440,10 @@
       "new_creative": "New creative",
       "new_creative_description": "Pick what visitors will see on your site.",
       "no_matches": "No creatives match these filters.",
-      "pause": "Pause",
       "restore": "Restore",
-      "resume": "Resume",
       "search_placeholder": "Search creatives",
       "status_reason_schedule_ended": "Its schedule has ended",
-      "status_reason_survey_not_active": "Paused with its survey",
+      "status_reason_survey_not_active": "Paused with its survey, which isn't active. It comes back by itself when the survey is active again.",
       "summary": {
         "click_rate": "Click rate",
         "click_rate_hint": "Clicks per impression",
@@ -2462,9 +2460,8 @@
       "toast_archived": "{name} is archived",
       "toast_deleted": "Creative deleted",
       "toast_duplicated": "Creative duplicated as a draft",
-      "toast_paused": "{name} is paused",
       "toast_restored": "{name} is back in the list",
-      "toast_resumed": "{name} is running again",
+      "toast_restored_as_draft": "{name} is back as a draft, since it has nothing to open. Pick what it opens before you publish it again.",
       "type_banner": "Banner",
       "type_banner_description": "A bar across the top or bottom of the page.",
       "type_drawer": "Drawer",
@@ -2472,7 +2469,10 @@
       "type_feedback_button": "Feedback button",
       "type_feedback_button_description": "A tab on the page edge that opens a survey.",
       "untitled_creative": "Untitled creative",
-      "view_summary": "View summary"
+      "warning_action_missing": "It shows when an action fires, but no action is set, so it never shows.",
+      "warning_destination_missing": "It has nothing to open. Pick a survey or a link on its Content tab.",
+      "warning_destination_not_allowed": "Its survey can't be opened by a creative anymore: it's Restricted, single-use or PIN-protected. Pick another survey or a link.",
+      "warning_overlap": "It could overlap {names} on the same page."
     },
     "custom_css": {
       "base_css_help": "This CSS applies in light and dark mode.",

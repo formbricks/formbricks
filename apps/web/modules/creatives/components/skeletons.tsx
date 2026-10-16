@@ -19,42 +19,6 @@ const HeaderSkeleton = ({ withActions = true }: Readonly<{ withActions?: boolean
   </div>
 );
 
-/** Mirrors the workflows/surveys list loading state: toolbar, card-table header and rows. */
-export const CreativesListSkeleton = () => (
-  <div className="space-y-6 p-6">
-    <HeaderSkeleton />
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex gap-x-2">
-        <Bone className="h-8 w-80" />
-        <Bone className="h-8 w-24" />
-        <Bone className="h-8 w-20" />
-      </div>
-      <Bone className="h-8 w-40" />
-    </div>
-    <div className="space-y-3">
-      <div className="mt-6 grid w-full grid-cols-8 place-items-center gap-3 px-6 pr-8">
-        <Bone className="col-span-2 h-4 w-full" />
-        {Array.from({ length: 6 }, (_, index) => (
-          <Bone key={index} className="col-span-1 h-4 w-full" />
-        ))}
-      </div>
-      {Array.from({ length: 5 }, (_, index) => (
-        <div
-          key={index}
-          className="grid w-full grid-cols-8 place-items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 pr-8">
-          <div className="col-span-2 w-full">
-            <Bone className="h-4 w-44" />
-          </div>
-          <Bone className="col-span-1 h-6 w-20 rounded-full" />
-          {Array.from({ length: 5 }, (_, cell) => (
-            <Bone key={cell} className="col-span-1 h-4 w-full" />
-          ))}
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
 const PanelSkeleton = ({ rows }: Readonly<{ rows: number }>) => (
   <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
     <Bone className="h-4 w-24" />
