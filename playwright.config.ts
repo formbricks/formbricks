@@ -19,11 +19,11 @@ export default defineConfig({
   timeout: 120000,
   /* Fail the test run after the first failure */
   maxFailures: process.env.CI ? undefined : 1, // Allow more failures in CI to avoid cascading shutdowns
-  /* Pin worker count on CI. The GitHub runner has ~4 vCPUs; Playwright's default
-     is only ~50% of cores (≈2 workers). Running 4 in parallel roughly halves the
-     test-execution portion of the run. Tune down if CPU contention with the app
-     server starts causing timeout-driven flakiness. */
-  workers: process.env.CI ? 4 : undefined,
+  /* On CI use one worker per CPU. The app, Postgres and the other services share the runner, so
+     going above one per core only adds contention; 4 workers on the 4 vCPU GitHub runner and 8 on
+     an 8 vCPU runner both measured well. PW_WORKERS (the E2E_WORKERS repository variable in
+     e2e.yml) overrides it. */
+  workers: process.env.PW_WORKERS ? Number(process.env.PW_WORKERS) : process.env.CI ? "100%" : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [["html", { outputFolder: "playwright-report", open: "never" }]],
   /* Shared settings for all the workspaces below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -44,6 +44,18 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
       testMatch: "**/*.spec.ts",
+      grepInvert: /@timing/,
+    },
+
+    /* Latency-comparison tests (@timing) measure sub-100ms differences, so they must not share the
+       machine with the parallel suite: with 4 workers on the app's own vCPUs the measurement is
+       noise. Depending on "chromium" makes this project start only once that one has finished. */
+    {
+      name: "chromium-timing",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: "**/*.spec.ts",
+      grep: /@timing/,
+      dependencies: ["chromium"],
     },
 
     // {
