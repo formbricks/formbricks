@@ -53,9 +53,12 @@ export const createOrganizationAction = authenticatedActionClient
         });
       }
 
-      const newWorkspace = await createWorkspace(newOrganization.id, {
-        name: DEFAULT_WORKSPACE_NAME,
-      });
+      // The organization was created just above and owns no workspaces, so there is no cap to enforce.
+      const newWorkspace = await createWorkspace(
+        newOrganization.id,
+        { name: DEFAULT_WORKSPACE_NAME },
+        { workspaceLimit: null }
+      );
 
       ctx.auditLoggingCtx.organizationId = newOrganization.id;
       ctx.auditLoggingCtx.newObject = newOrganization;
