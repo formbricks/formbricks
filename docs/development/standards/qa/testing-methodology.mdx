@@ -68,22 +68,23 @@ source of truth for when one is warranted; the short version:
 
 #### How E2E Runs in CI
 
-The suite runs entirely on the GitHub Actions runner that executes `.github/workflows/e2e.yml`: the app,
-Postgres, Valkey, AuthZed and RustFS start on the runner, and Playwright drives a locally installed
-Chromium. There is no remote browser service. Failure artifacts (`playwright-report/`, with traces,
+The suite runs entirely on the runner that executes `.github/workflows/e2e.yml`: the app, Postgres, Valkey,
+AuthZed and RustFS start on the runner, and Playwright drives a locally installed Chromium. There is no
+remote browser service. The runner is an 8 vCPU Blacksmith runner (`blacksmith-8vcpu-ubuntu-2404`). Fork
+PRs run on GitHub's free `ubuntu-latest` instead. Failure artifacts (`playwright-report/`, with traces,
 screenshots and videos, plus `app.log`) are uploaded from the same job.
 
-Two repository variables (Settings → Secrets and variables → Actions → Variables) tune the run without a
-code change:
+Two optional repository variables (Settings → Secrets and variables → Actions → Variables) override the
+defaults without a code change:
 
-| Variable      | Effect                                                                                  | Default         |
-| ------------- | --------------------------------------------------------------------------------------- | --------------- |
-| `E2E_RUNNER`  | The `runs-on` label for the E2E job, for example a Depot runner `depot-ubuntu-24.04-8`. | `ubuntu-latest` |
-| `E2E_WORKERS` | Playwright worker count. Raise it together with the runner's vCPU count.                | `4`             |
+| Variable      | Effect                                                                  | Default                        |
+| ------------- | ----------------------------------------------------------------------- | ------------------------------ |
+| `E2E_RUNNER`  | The `runs-on` label for the E2E job.                                    | `blacksmith-8vcpu-ubuntu-2404` |
+| `E2E_WORKERS` | Playwright worker count. Unset, it is one worker per CPU on the runner. | one per CPU                    |
 
-To roll back a runner change, delete the variables; the next run uses the standard GitHub-hosted runner.
-Check that the runner exists before setting `E2E_RUNNER`: a label with no runner behind it leaves the job
-queued until its 30-minute timeout.
+To roll back to GitHub's runner, set `E2E_RUNNER=ubuntu-latest`; the worker count follows its 4 CPUs. Check
+that a runner exists before setting `E2E_RUNNER` to another label: one with no runner behind it leaves the
+job queued until its 30-minute timeout.
 
 ## Testing Setup
 

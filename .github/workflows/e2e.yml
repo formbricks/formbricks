@@ -16,12 +16,14 @@ permissions:
 jobs:
   build:
     name: Run E2E Tests
-    # Browsers run on this runner (the Azure Playwright service is retired, ENG-3763). The label is the
-    # repository variable E2E_RUNNER so the runner can be changed — e.g. to a larger Depot runner such
-    # as `depot-ubuntu-24.04-8` — or rolled back without a code change; unset means GitHub's standard
-    # runner. Pair a bigger runner with E2E_WORKERS (see playwright.config.ts). A runner label with no
-    # runner behind it queues until the job timeout, so check the runner exists before setting it.
-    runs-on: ${{ vars.E2E_RUNNER || 'ubuntu-latest' }}
+    # Browsers run on this runner (the Azure Playwright service is retired, ENG-3763). Default is an
+    # 8 vCPU Blacksmith runner: measured 8.3 min per job against 17.8+ on GitHub's 4 vCPU runner.
+    # The repository variable E2E_RUNNER overrides it, and setting it to `ubuntu-latest` is the
+    # rollback; Playwright sizes its workers to the runner's CPUs. A label with no runner behind it
+    # queues until the job timeout, so check the runner exists before setting it. Fork PRs stay on
+    # GitHub's free runner: a third-party runner may not serve them, and they shouldn't spend paid
+    # minutes. merge_group and same-repo PRs have no fork flag and take the default.
+    runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-latest' || vars.E2E_RUNNER || 'blacksmith-8vcpu-ubuntu-2404' }}
     # Chosen so the step timeouts below always fire FIRST, because a step timeout names
     # the culprit while a job timeout just says "exceeded the maximum execution time" —
     # the opaque symptom this workflow is being changed to eliminate.
@@ -419,7 +421,7 @@ jobs:
         timeout-minutes: 15
         env:
           CI: true
-          # Empty when the variable is unset; playwright.config.ts then keeps its default of 4.
+          # Empty when the variable is unset; playwright.config.ts then uses one worker per CPU.
           PW_WORKERS: ${{ vars.E2E_WORKERS }}
         run: |
           pnpm test:e2e

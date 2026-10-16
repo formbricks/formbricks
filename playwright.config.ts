@@ -19,12 +19,11 @@ export default defineConfig({
   timeout: 120000,
   /* Fail the test run after the first failure */
   maxFailures: process.env.CI ? undefined : 1, // Allow more failures in CI to avoid cascading shutdowns
-  /* Pin worker count on CI. The GitHub runner has ~4 vCPUs; Playwright's default
-     is only ~50% of cores (≈2 workers). Running 4 in parallel roughly halves the
-     test-execution portion of the run. Tune down if CPU contention with the app
-     server starts causing timeout-driven flakiness. PW_WORKERS (the E2E_WORKERS repository
-     variable in e2e.yml) overrides it so a larger runner can be used without a code change. */
-  workers: process.env.PW_WORKERS ? Number(process.env.PW_WORKERS) : process.env.CI ? 4 : undefined,
+  /* On CI use one worker per CPU. The app, Postgres and the other services share the runner, so
+     going above one per core only adds contention; 4 workers on the 4 vCPU GitHub runner and 8 on
+     an 8 vCPU runner both measured well. PW_WORKERS (the E2E_WORKERS repository variable in
+     e2e.yml) overrides it. */
+  workers: process.env.PW_WORKERS ? Number(process.env.PW_WORKERS) : process.env.CI ? "100%" : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [["html", { outputFolder: "playwright-report", open: "never" }]],
   /* Shared settings for all the workspaces below. See https://playwright.dev/docs/api/class-testoptions. */
