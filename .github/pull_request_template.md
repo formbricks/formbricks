@@ -126,8 +126,9 @@ so "none" is a claim rather than a formality. -->
 
 ---
 
-<!-- Delete if no agent was involved. Read both values out of the tool, never from memory; a value the
-tool does not expose is `unknown`, never a guess. AGENTS.md says where each tool reports them. -->
+<!-- Delete if no agent was involved. Read both values out of the tool, never from memory. Leave out
+any value the tool does not expose — drop "`, reasoning effort `<level>`" when the effort is unknown,
+and never write `unknown` or guess. If neither is known, keep just "Agent-assisted." -->
 
 > [!NOTE]
 > **AI model used** — `<model>`, reasoning effort `<level>`.
