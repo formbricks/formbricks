@@ -122,8 +122,9 @@ const handleCreativeClick = (view: TCreativeView): void => {
   }
 
   countClick(view.id);
-  // A banner whose button opened its Destination has done its job on this page (ENG-3576).
-  if (view.type === "banner") dismissBanner(view.id);
+  // A dismissible banner whose button opened its Destination has done its job on this page (ENG-3576);
+  // one that can't be dismissed stays, so a critical notice can't be clicked away (story 15).
+  if (view.type === "banner" && view.dismissible) dismissBanner(view.id);
 };
 
 const showCreatives = (views: readonly TCreativeView[], appearance: "light" | "dark" = "light"): void => {

@@ -650,19 +650,20 @@ describe("banners (ENG-3576)", () => {
     });
   });
 
-  test("its button opens the Destination, counts a Click, and closes the banner on that page", async () => {
+  const bannerWithButton = (dismissible: boolean) =>
+    banner("notice", {
+      content: {
+        message: { "en-US": [{ text: "Open Enrollment ends Dec 15." }] },
+        button: { label: { "en-US": "See plans" } },
+        dismissible,
+        accessibleName: null,
+      },
+      destination: { type: "link", url: "https://example.com/plans" },
+    });
+
+  test("its button opens the Destination, counts a Click, and closes a dismissible banner on that page", async () => {
     const open = vi.spyOn(window, "open").mockReturnValue(null);
-    state.creatives = [
-      banner("notice", {
-        content: {
-          message: { "en-US": [{ text: "Open Enrollment ends Dec 15." }] },
-          button: { label: { "en-US": "See plans" } },
-          dismissible: false,
-          accessibleName: null,
-        },
-        destination: { type: "link", url: "https://example.com/plans" },
-      }),
-    ];
+    state.creatives = [bannerWithButton(true)];
     reconcileCreatives();
 
     controlOf("notice", ".fb-creative-banner-button").click();
@@ -676,6 +677,18 @@ describe("banners (ENG-3576)", () => {
         { creativeId: "notice", type: "click" },
       ],
     });
+  });
+
+  test("its button leaves a banner that can't be dismissed in place, so a critical notice stays", () => {
+    const open = vi.spyOn(window, "open").mockReturnValue(null);
+    state.creatives = [bannerWithButton(false)];
+    reconcileCreatives();
+
+    controlOf("notice", ".fb-creative-banner-button").click();
+    reconcileCreatives();
+
+    expect(open).toHaveBeenCalledTimes(1);
+    expect(bannerHosts()).toHaveLength(1);
   });
 });
 
