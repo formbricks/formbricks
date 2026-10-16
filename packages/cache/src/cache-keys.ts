@@ -21,6 +21,20 @@ export const createCacheKey = {
     config: (workspaceId: string): CacheKey => makeCacheKey("env", workspaceId, "config"),
     segments: (workspaceId: string): CacheKey => makeCacheKey("env", workspaceId, "segments"),
     languages: (workspaceId: string): CacheKey => makeCacheKey("env", workspaceId, "languages"),
+    /** The creatives a client events request may count for (ENG-4000), keyed by the id the SDK sends. */
+    creativeIds: (workspaceId: string): CacheKey => makeCacheKey("env", workspaceId, "creative-ids"),
+  },
+
+  // Creative counters (ENG-4000, ADR 0005): one UTC day's running totals, which the flush job copies to
+  // Postgres, and the sets of creatives with totals not yet copied. Counters, not a cache: they carry a
+  // TTL of about two days and are never invalidated.
+  creativeStats: {
+    devices: (day: string, creativeId: string): CacheKey =>
+      makeCacheKey("creative-stats", day, creativeId, "devices"),
+    pages: (day: string, creativeId: string): CacheKey =>
+      makeCacheKey("creative-stats", day, creativeId, "pages"),
+    pending: (day: string): CacheKey => makeCacheKey("creative-stats", day, "pending"),
+    flushing: (day: string): CacheKey => makeCacheKey("creative-stats", day, "flushing"),
   },
 
   // Organization-related keys

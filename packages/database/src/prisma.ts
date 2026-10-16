@@ -66,6 +66,8 @@ export type {
   Creative,
   CreativeTrigger,
   CreativeLanguage,
+  CreativeDailyStat,
+  CreativeDailyPageStat,
 } from "../generated/prisma/client";
 // Reaches into the generator's `internal/` path because Prisma 7's
 // `prisma-client` provider does not re-export PrismaClientKnownRequestError

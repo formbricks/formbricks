@@ -18,6 +18,7 @@ const mockUpsertAuthzedProjectionDelivery = vi.fn();
 const mockUpsertAuthzedReconciliationAudit = vi.fn();
 const mockUpsertDeletionCleanupDrain = vi.fn();
 const mockUpsertDataRetentionSweep = vi.fn();
+const mockUpsertCreativeStatsFlush = vi.fn();
 const mockDebug = vi.fn();
 const mockError = vi.fn();
 const mockWarn = vi.fn();
@@ -34,6 +35,7 @@ const mockProcessAuthzedProjectionDeliveryJob = vi.fn();
 const mockProcessAuthzedScheduledReconciliationJob = vi.fn();
 const mockProcessDeletionCleanupDrainJob = vi.fn();
 const mockProcessDataRetentionSweepJob = vi.fn();
+const mockProcessCreativeStatsFlushJob = vi.fn();
 const TEST_TIMEOUT_MS = 15_000;
 
 const slowTest = (name: string, fn: () => Promise<void>): void => {
@@ -66,6 +68,12 @@ vi.mock("@formbricks/jobs", () => ({
       scheduleId: "daily-authzed-survey-audit",
       scope: "global",
       upsert: vi.fn(),
+    },
+    creativeStatsFlush: {
+      name: "creative-stats.flush",
+      scheduleId: "creative-stats-flush",
+      scope: "global",
+      upsert: mockUpsertCreativeStatsFlush,
     },
     dataRetentionSweep: {
       name: "data-retention.sweep",
@@ -162,6 +170,11 @@ vi.mock("@/modules/ee/workflows/lib/analytics/process-workflows-usage-snapshot-j
 
 vi.mock("@/modules/ee/data-retention/sweep/process-data-retention-sweep-job", () => ({
   processDataRetentionSweepJob: mockProcessDataRetentionSweepJob,
+}));
+
+vi.mock("@/modules/creatives/lib/process-creative-stats-flush-job", () => ({
+  CREATIVE_STATS_FLUSH_INTERVAL_MS: 60_000,
+  processCreativeStatsFlushJob: mockProcessCreativeStatsFlushJob,
 }));
 
 vi.mock("@/modules/deletion-cleanup/lib/process-deletion-cleanup-drain-job", () => ({
@@ -280,6 +293,7 @@ describe("instrumentation-jobs", () => {
         "authzed-projection.deliver": expect.any(Function),
         "authzed-reconciliation.audit": expect.any(Function),
         "authzed-survey.audit": expect.any(Function),
+        "creative-stats.flush": expect.any(Function),
         "data-retention.sweep": expect.any(Function),
         "deletion-cleanup.drain": expect.any(Function),
         "response-pipeline.process": expect.any(Function),
@@ -533,11 +547,14 @@ describe("instrumentation-jobs", () => {
     const { RECURRING_JOB_REGISTRATIONS_BY_KEY } = await import("@/lib/jobs/recurring-registrations");
     const sweep = RECURRING_JOB_REGISTRATIONS_BY_KEY.dataRetentionSweep.job.upsert;
     const drain = RECURRING_JOB_REGISTRATIONS_BY_KEY.deletionCleanupDrain.job.upsert;
+    const creativeStats = RECURRING_JOB_REGISTRATIONS_BY_KEY.creativeStatsFlush.job.upsert;
     const delivery = RECURRING_JOB_REGISTRATIONS_BY_KEY.authzedProjectionDelivery.job.upsert;
 
     await registerRecurringJobs();
     expect(sweep).not.toHaveBeenCalled();
     expect(drain).not.toHaveBeenCalled();
+    // Replicas of the previous release have no handler for the creative counter flush.
+    expect(creativeStats).not.toHaveBeenCalled();
     // Revocations must keep reaching SpiceDB throughout the upgrade, or every check fails closed.
     expect(delivery).toHaveBeenCalled();
 
@@ -545,6 +562,7 @@ describe("instrumentation-jobs", () => {
     await vi.advanceTimersByTimeAsync(30_000);
     expect(sweep).toHaveBeenCalledOnce();
     expect(drain).toHaveBeenCalledOnce();
+    expect(creativeStats).toHaveBeenCalledOnce();
   });
 
   slowTest(
@@ -613,6 +631,9 @@ describe("instrumentation-jobs", () => {
         everyMs: DELETION_CLEANUP_DRAIN_INTERVAL_MS,
         kind: "every",
       });
+      // Creative counts reach the stats operation within about a minute (ENG-4000).
+      expect(mockUpsertCreativeStatsFlush).toHaveBeenCalledOnce();
+      expect(mockUpsertCreativeStatsFlush).toHaveBeenCalledWith({ everyMs: 60_000, kind: "every" });
       expect(mockUpsertSurveyScheduling).toHaveBeenCalledTimes(1);
       expect(mockUpsertSurveyScheduling).toHaveBeenCalledWith({
         cronPattern: SURVEY_SCHEDULING_DAILY_CRON_PATTERN,

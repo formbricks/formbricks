@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { zCreativeResource } from "@formbricks/api-v3-schemas";
+import { zCreativeResource, zCreativeStats } from "@formbricks/api-v3-schemas";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import {
@@ -10,18 +10,20 @@ import {
   insertCreativeRecord,
   replaceCreativeRecord,
 } from "@/modules/creatives/lib/repository";
+import type { TCreativeDayDeviceCount, TCreativePageCount } from "@/modules/creatives/lib/stats-repository";
 import {
   archiveV3Creative,
   createV3Creative,
   deleteV3Creative,
   duplicateV3Creative,
   getV3Creative,
+  getV3CreativeStats,
   listV3Creatives,
   patchV3Creative,
   restoreV3Creative,
 } from "./operations";
 import type { TV3CreateCreativeBody, TV3PatchCreativeBody } from "./schemas";
-import { ZV3CreateCreativeBody, ZV3PatchCreativeBody } from "./schemas";
+import { ZV3CreateCreativeBody, ZV3CreativeStatsQuery, ZV3PatchCreativeBody } from "./schemas";
 
 /**
  * Seam 1 · the v3 creative operations, which the API routes and the MCP tools both call. Storage is
@@ -182,6 +184,38 @@ vi.mock("@/modules/creatives/lib/repository", () => ({
   }),
 }));
 
+// ---- The stored daily counts (ENG-4000), as the flush job leaves them. ----
+type TStoredDeviceCount = TCreativeDayDeviceCount & { creativeId: string };
+type TStoredPageCount = TCreativePageCount & { creativeId: string; date: string };
+const storedDeviceCounts: TStoredDeviceCount[] = [];
+const storedPageCounts: TStoredPageCount[] = [];
+
+vi.mock("@/modules/creatives/lib/stats-repository", () => ({
+  findCreativeDayDeviceCounts: vi.fn(
+    async (creativeId: string, _workspaceId: string, from: string, to: string) =>
+      storedDeviceCounts
+        .filter((row) => row.creativeId === creativeId && row.date >= from && row.date <= to)
+        .map(({ creativeId: _creativeId, ...row }) => row)
+  ),
+  // Sums each page over the range. The real query also folds everything past `limit` into `(other)`,
+  // which the integration test proves against Postgres; these tests stay under the limit.
+  findCreativePageCounts: vi.fn(
+    async (creativeId: string, _workspaceId: string, from: string, to: string) => {
+      const byPage = new Map<string, TCreativePageCount>();
+      for (const row of storedPageCounts) {
+        if (row.creativeId !== creativeId || row.date < from || row.date > to) continue;
+        const sum = byPage.get(row.page) ?? { page: row.page, impressions: 0, clicks: 0 };
+        byPage.set(row.page, {
+          page: row.page,
+          impressions: sum.impressions + row.impressions,
+          clicks: sum.clicks + row.clicks,
+        });
+      }
+      return [...byPage.values()];
+    }
+  ),
+}));
+
 const API_KEY: TV3Authentication = {
   type: "apiKey",
   apiKeyId: "clak1234567890123456789012",
@@ -244,6 +278,8 @@ const hoursFromNow = (hours: number) => new Date(Date.now() + hours * 3_600_000)
 beforeEach(() => {
   vi.clearAllMocks();
   store.clear();
+  storedDeviceCounts.length = 0;
+  storedPageCounts.length = 0;
   grantAccess();
 });
 
@@ -924,5 +960,161 @@ describe("listV3Creatives", () => {
       base.instance
     );
     expect(findCreativeRecordsPage).not.toHaveBeenCalled();
+  });
+});
+
+describe("getV3CreativeStats", () => {
+  const stats = (creativeId: string, query: Record<string, string> = {}) =>
+    getV3CreativeStats({ ...base, creativeId, query: ZV3CreativeStatsQuery.parse(query) });
+
+  /** The response body, checked against the contract. */
+  const statsOf = async (response: Response) => {
+    expect(response.status).toBe(200);
+    const { data } = await readBody(response);
+    expect(zCreativeStats.safeParse(data).error?.issues ?? []).toEqual([]);
+    return data;
+  };
+
+  const count = (
+    creativeId: string,
+    date: string,
+    deviceType: TCreativeDayDeviceCount["deviceType"],
+    impressions: number,
+    clicks: number
+  ) => storedDeviceCounts.push({ creativeId, date, deviceType, impressions, clicks });
+
+  const countPage = (creativeId: string, date: string, page: string, impressions: number, clicks: number) =>
+    storedPageCounts.push({ creativeId, date, page, impressions, clicks });
+
+  test("counts every UTC day of the range, days without counts included, with totals and Click rate", async () => {
+    const { id } = await created(feedbackButton());
+    count(id, "2026-10-14", "phone", 30, 3);
+    count(id, "2026-10-14", "desktop", 70, 1);
+    count(id, "2026-10-16", "desktop", 50, 0);
+    count(id, "2026-10-17", "desktop", 999, 9);
+
+    const data = await statsOf(await stats(id, { from: "2026-10-14", to: "2026-10-16" }));
+
+    expect(data).toEqual({
+      creativeId: id,
+      from: "2026-10-14",
+      to: "2026-10-16",
+      groupBy: null,
+      totals: { impressions: 150, clicks: 4, clickRate: 4 / 150 },
+      days: [
+        { date: "2026-10-14", impressions: 100, clicks: 4, clickRate: 0.04 },
+        { date: "2026-10-15", impressions: 0, clicks: 0, clickRate: null },
+        { date: "2026-10-16", impressions: 50, clicks: 0, clickRate: 0 },
+      ],
+    });
+  });
+
+  test("by device type, lists phone, tablet and desktop, the ones without counts too", async () => {
+    const { id } = await created(feedbackButton());
+    count(id, "2026-10-15", "desktop", 40, 2);
+    count(id, "2026-10-16", "desktop", 60, 3);
+    count(id, "2026-10-16", "phone", 20, 4);
+
+    const data = await statsOf(await stats(id, { from: "2026-10-15", to: "2026-10-16", groupBy: "device" }));
+
+    expect(data.groupBy).toBe("device");
+    expect(data.devices).toEqual([
+      { deviceType: "phone", impressions: 20, clicks: 4, clickRate: 0.2 },
+      { deviceType: "tablet", impressions: 0, clicks: 0, clickRate: null },
+      { deviceType: "desktop", impressions: 100, clicks: 5, clickRate: 0.05 },
+    ]);
+    expect(data.pages).toBeUndefined();
+  });
+
+  test("by page, lists the most Impressions first, then the most Clicks, and `(other)` last", async () => {
+    const { id } = await created(feedbackButton());
+    countPage(id, "2026-10-15", "example.com/", 10, 1);
+    countPage(id, "2026-10-15", "(other)", 50, 0);
+    countPage(id, "2026-10-16", "example.com/pricing", 30, 6);
+    countPage(id, "2026-10-16", "example.com/", 15, 0);
+    countPage(id, "2026-10-16", "example.com/blog", 25, 2);
+    countPage(id, "2026-10-16", "example.com/about", 25, 3);
+
+    const data = await statsOf(await stats(id, { from: "2026-10-15", to: "2026-10-16", groupBy: "page" }));
+
+    expect(data.groupBy).toBe("page");
+    expect(data.pages).toEqual([
+      { page: "example.com/pricing", impressions: 30, clicks: 6, clickRate: 0.2 },
+      { page: "example.com/about", impressions: 25, clicks: 3, clickRate: 0.12 },
+      { page: "example.com/blog", impressions: 25, clicks: 2, clickRate: 0.08 },
+      { page: "example.com/", impressions: 25, clicks: 1, clickRate: 0.04 },
+      { page: "(other)", impressions: 50, clicks: 0, clickRate: 0 },
+    ]);
+    expect(data.devices).toBeUndefined();
+  });
+
+  test("covers the 30 UTC days up to today when no range is given, and from 29 days before `to`", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-16T23:30:00-05:00"));
+    try {
+      const { id } = await created(feedbackButton());
+
+      const latest = await statsOf(await stats(id));
+      const ending = await statsOf(await stats(id, { to: "2026-09-30" }));
+      const starting = await statsOf(await stats(id, { from: "2026-10-10" }));
+
+      expect([latest.from, latest.to, latest.days.length]).toEqual(["2026-09-18", "2026-10-17", 30]);
+      expect([ending.from, ending.to]).toEqual(["2026-09-01", "2026-09-30"]);
+      expect([starting.from, starting.to]).toEqual(["2026-10-10", "2026-10-17"]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test.each([
+    ["`from` after `to`", { from: "2026-10-17", to: "2026-10-16" }, "from"],
+    ["a range longer than 366 days", { from: "2025-10-15", to: "2026-10-16" }, "from"],
+  ])("answers 400 for %s", async (_name, query, param) => {
+    const { id } = await created(feedbackButton());
+
+    const response = await stats(id, query);
+
+    expect(response.status).toBe(400);
+    expect(await invalidParamNames(response)).toEqual([param]);
+  });
+
+  test("the route refuses a day that isn't `YYYY-MM-DD`, an unknown breakdown and unknown parameters", () => {
+    expect(ZV3CreativeStatsQuery.safeParse({ from: "2026-10-16T00:00:00Z" }).success).toBe(false);
+    expect(ZV3CreativeStatsQuery.safeParse({ groupBy: "browser" }).success).toBe(false);
+    expect(ZV3CreativeStatsQuery.safeParse({ limit: "10" }).success).toBe(false);
+  });
+
+  test("a range of exactly 366 days is fine", async () => {
+    const { id } = await created(feedbackButton());
+
+    const data = await statsOf(await stats(id, { from: "2025-10-16", to: "2026-10-16" }));
+
+    expect(data.days).toHaveLength(366);
+  });
+
+  test("an archived creative keeps its counts, and a duplicate starts with none", async () => {
+    const source = await created(feedbackButton());
+    count(source.id, "2026-10-16", "phone", 5, 1);
+    await archiveV3Creative({ ...base, creativeId: source.id });
+    const { data: copy } = await readBody(await duplicateV3Creative({ ...base, creativeId: source.id }));
+
+    const range = { from: "2026-10-16", to: "2026-10-16" };
+    expect((await statsOf(await stats(source.id, range))).totals.impressions).toBe(5);
+    expect((await statsOf(await stats(copy.id, range))).totals.impressions).toBe(0);
+  });
+
+  test("needs read access, and an unknown creative answers the same 403", async () => {
+    const { id } = await created(feedbackButton());
+    vi.mocked(requireV3WorkspaceAccess).mockImplementation(async (_auth, workspaceId, permission) =>
+      permission === "read"
+        ? { workspaceId, organizationId: ORGANIZATION_ID }
+        : Response.json({ code: "forbidden" }, { status: 403 })
+    );
+
+    expect((await stats(id)).status).toBe(200);
+    expect((await stats(UNKNOWN_ID)).status).toBe(403);
+
+    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(Response.json({}, { status: 403 }));
+    expect((await stats(id)).status).toBe(403);
   });
 });

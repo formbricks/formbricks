@@ -2,6 +2,7 @@ import { type TCreativeView, createShareRolls, render, resolve, resolveClick } f
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { getIsSetup } from "@/lib/common/status";
+import { countClick, countImpressions, stopCountingCreatives } from "@/lib/creatives/events";
 import { getOpenSurveyIds, openSurveyForCreative } from "@/lib/survey/widget";
 
 /**
@@ -35,6 +36,7 @@ const handleCreativeClick = (view: TCreativeView): void => {
 
   if (click.kind === "openTab") {
     window.open(click.url, "_blank", "noopener");
+    countClick(view.id);
     return;
   }
   if (click.kind === "none") return;
@@ -47,6 +49,7 @@ const handleCreativeClick = (view: TCreativeView): void => {
     return;
   }
 
+  countClick(view.id);
   void openSurveyForCreative(survey, view.id, click.close);
 };
 
@@ -72,6 +75,9 @@ const showCreatives = (views: readonly TCreativeView[]): void => {
     host.remove();
     shownCreatives.delete(id);
   }
+
+  // Only what was drawn: a creative `render` can't draw yet showed nothing, so it isn't an Impression.
+  if (shownCreatives.size > 0) countImpressions(shownCreatives.keys());
 };
 
 const scheduleNextChange = (nextChangeAt: number | null, now: number): void => {
@@ -108,4 +114,5 @@ export const reconcileCreatives = (): void => {
 export const removeCreatives = (): void => {
   showCreatives([]);
   scheduleNextChange(null, 0);
+  stopCountingCreatives();
 };

@@ -1469,6 +1469,72 @@ export const zPatchCreativeRequest = z.strictObject({
 export type PatchCreativeRequestZodType = z.infer<typeof zPatchCreativeRequest>;
 
 /**
+ * Impressions, Clicks and Click rate (Clicks divided by Impressions; `null` without Impressions).
+ */
+export const zCreativeStatsCounts = z.strictObject({
+  impressions: z.int().gte(0),
+  clicks: z.int().gte(0),
+  clickRate: z.number().gte(0).nullable(),
+});
+
+export type CreativeStatsCountsZodType = z.infer<typeof zCreativeStatsCounts>;
+
+/**
+ * One UTC day's counts.
+ */
+export const zCreativeStatsDay = z.strictObject({
+  date: z.iso.date(),
+  impressions: z.int().gte(0),
+  clicks: z.int().gte(0),
+  clickRate: z.number().gte(0).nullable(),
+});
+
+export type CreativeStatsDayZodType = z.infer<typeof zCreativeStatsDay>;
+
+/**
+ * One page's counts over the range.
+ */
+export const zCreativeStatsPage = z.strictObject({
+  page: z.string(),
+  impressions: z.int().gte(0),
+  clicks: z.int().gte(0),
+  clickRate: z.number().gte(0).nullable(),
+});
+
+export type CreativeStatsPageZodType = z.infer<typeof zCreativeStatsPage>;
+
+/**
+ * One device type's counts over the range.
+ */
+export const zCreativeStatsDevice = z.strictObject({
+  deviceType: z.enum(["phone", "tablet", "desktop"]),
+  impressions: z.int().gte(0),
+  clicks: z.int().gte(0),
+  clickRate: z.number().gte(0).nullable(),
+});
+
+export type CreativeStatsDeviceZodType = z.infer<typeof zCreativeStatsDevice>;
+
+/**
+ * A creative's Impressions and Clicks over a range of UTC days. An **Impression** is one page view on which the creative showed (showing it again on the same page adds none; a new page, a single-page-app route change included, does). A **Click** is one press that opened its Destination; dismissing a banner, or pressing while its survey is already open, isn't one. `clickRate` is Clicks divided by Impressions, as a fraction (`0.05` is 5 %), or `null` without Impressions.
+ *
+ * `totals` and every breakdown count the same events, so `days`, `pages` and `devices` each add up to `totals`.
+ *
+ */
+export const zCreativeStats = z.strictObject({
+  creativeId: z.cuid2(),
+  from: z.iso.date(),
+  to: z.iso.date(),
+  groupBy: z.enum(["page", "device"]).nullable(),
+  totals: zCreativeStatsCounts,
+  days: z.array(zCreativeStatsDay),
+  pages: z.array(zCreativeStatsPage).optional(),
+  devices: z.array(zCreativeStatsDevice).optional(),
+});
+
+export type CreativeStatsZodType = z.infer<typeof zCreativeStats>;
+
+/**
  * Workspace identifier. This is the canonical container ID for v3 APIs.
  */
 export const zWorkspaceIdQuery = z.cuid2();
@@ -1662,3 +1728,17 @@ export const zDuplicateCreativeV3Path = z.object({
 });
 
 export type DuplicateCreativeV3PathZodType = z.infer<typeof zDuplicateCreativeV3Path>;
+
+export const zGetCreativeStatsV3Path = z.object({
+  creativeId: z.cuid2(),
+});
+
+export type GetCreativeStatsV3PathZodType = z.infer<typeof zGetCreativeStatsV3Path>;
+
+export const zGetCreativeStatsV3Query = z.object({
+  from: z.iso.date().optional(),
+  to: z.iso.date().optional(),
+  groupBy: z.enum(["page", "device"]).optional(),
+});
+
+export type GetCreativeStatsV3QueryZodType = z.infer<typeof zGetCreativeStatsV3Query>;

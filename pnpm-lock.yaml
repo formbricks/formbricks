@@ -1379,6 +1379,9 @@ importers:
       '@formbricks/creatives':
         specifier: workspace:*
         version: link:../creatives
+      '@formbricks/types':
+        specifier: workspace:*
+        version: link:../types
       '@formbricks/vite-plugins':
         specifier: workspace:*
         version: link:../vite-plugins

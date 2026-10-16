@@ -8,7 +8,12 @@ import {
   readBundle,
   validatorFor,
 } from "@formbricks/api-v3-schemas/testing";
-import { ZV3CreateCreativeBody, ZV3CreativeIdParams, ZV3PatchCreativeBody } from "./schemas";
+import {
+  ZV3CreateCreativeBody,
+  ZV3CreativeIdParams,
+  ZV3CreativeStatsQuery,
+  ZV3PatchCreativeBody,
+} from "./schemas";
 
 vi.mock("server-only", () => ({}));
 
@@ -35,11 +40,22 @@ describe("the creative route schemas match the contract", () => {
     "archiveCreativeV3",
     "restoreCreativeV3",
     "duplicateCreativeV3",
+    "getCreativeStatsV3",
   ])("%s path parameters match the contract, closed", (operationId) => {
     const spec = parametersAsObjectSchema(bundle, operationId, "path");
     expect(spec).toBeDefined();
     if (spec) {
       expect(diffAgainstSpec(bundle, spec, ZV3CreativeIdParams)).toEqual([
+        { path: "$", attr: "closed", spec: false, zod: true },
+      ]);
+    }
+  });
+
+  test("getCreativeStatsV3 query parameters match the contract, closed", () => {
+    const spec = parametersAsObjectSchema(bundle, "getCreativeStatsV3", "query");
+    expect(spec).toBeDefined();
+    if (spec) {
+      expect(diffAgainstSpec(bundle, spec, ZV3CreativeStatsQuery)).toEqual([
         { path: "$", attr: "closed", spec: false, zod: true },
       ]);
     }
@@ -63,6 +79,7 @@ describe("the creative route schemas match the contract", () => {
       "archiveCreativeV3",
       "restoreCreativeV3",
       "duplicateCreativeV3",
+      "getCreativeStatsV3",
     ])
   );
 

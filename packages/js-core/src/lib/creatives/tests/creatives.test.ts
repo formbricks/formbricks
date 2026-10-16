@@ -52,13 +52,30 @@ beforeAll(() => {
   });
 });
 
+const sendEvents = vi.fn((_url: string, _init: RequestInit) =>
+  Promise.resolve(new Response(null, { status: 204 }))
+);
+
+/** The events requests sent so far, with their bodies parsed. */
+const sentEvents = () =>
+  sendEvents.mock.calls.map(([url, init]) => ({
+    url,
+    init,
+    body: JSON.parse(init.body as string) as unknown,
+  }));
+
 beforeEach(() => {
   vi.useFakeTimers({ now: NOW });
   setIsSetup(true);
+  window.history.replaceState({}, "", "/");
+  sendEvents.mockClear();
+  vi.stubGlobal("fetch", sendEvents);
   state = { creatives: [feedbackButton()], surveys: [mockSurvey] };
   vi.spyOn(Config, "getInstance").mockReturnValue({
     get: () =>
       ({
+        appUrl: "https://app.formbricks.test",
+        workspaceId: "clws1234567890123456789012",
         workspace: {
           expiresAt: new Date(NOW + 3_600_000),
           clockOffset: state.clockOffset,
@@ -190,5 +207,104 @@ describe("pressing a creative", () => {
 
     expect(open).toHaveBeenCalledWith("https://example.com/help", "_blank", "noopener");
     expect(openSurveyForCreative).not.toHaveBeenCalled();
+  });
+});
+
+describe("counting Impressions and Clicks", () => {
+  const EVENTS_URL = "https://app.formbricks.test/api/v2/client/clws1234567890123456789012/creatives/events";
+
+  test("sends one Impression per creative and page view, as one keepalive text/plain request 2 s later", async () => {
+    state.creatives = [feedbackButton(), feedbackButton({ id: "creative-2" })];
+    reconcileCreatives();
+    reconcileCreatives();
+
+    await vi.advanceTimersByTimeAsync(1_999);
+    expect(sendEvents).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(sentEvents()).toHaveLength(1);
+    expect(sentEvents()[0].init).toMatchObject({
+      method: "POST",
+      keepalive: true,
+      headers: { "Content-Type": "text/plain" },
+    });
+    expect(sentEvents().map(({ url, body }) => ({ url, body }))).toEqual([
+      {
+        url: EVENTS_URL,
+        body: {
+          page: "localhost:3000/",
+          deviceType: "desktop",
+          events: [
+            { creativeId: "creative-1", type: "impression" },
+            { creativeId: "creative-2", type: "impression" },
+          ],
+        },
+      },
+    ]);
+
+    // Shown again on the same page, by a refresh or a schedule boundary: no second Impression.
+    reconcileCreatives();
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(sendEvents).toHaveBeenCalledOnce();
+  });
+
+  test("counts a new Impression on a new page, a route change included, and sends the last page's events first", async () => {
+    reconcileCreatives();
+
+    window.history.pushState({}, "", "/pricing?plan=pro#faq");
+    reconcileCreatives();
+    expect(sentEvents().map(({ body }) => body)).toEqual([
+      expect.objectContaining({
+        page: "localhost:3000/",
+        events: [{ creativeId: "creative-1", type: "impression" }],
+      }),
+    ]);
+
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(sentEvents().map(({ body }) => body)).toEqual([
+      expect.objectContaining({ page: "localhost:3000/" }),
+      expect.objectContaining({
+        page: "localhost:3000/pricing",
+        events: [{ creativeId: "creative-1", type: "impression" }],
+      }),
+    ]);
+  });
+
+  test("counts a Click for each press that opens the Destination, and none for a press on its open survey", async () => {
+    vi.mocked(getOpenSurveyIds).mockReturnValue([]);
+    reconcileCreatives();
+    shownButtons()[0].click();
+    shownButtons()[0].click();
+    vi.mocked(getOpenSurveyIds).mockReturnValue([mockSurvey.id]);
+    shownButtons()[0].click();
+
+    await vi.advanceTimersByTimeAsync(2_000);
+
+    expect(sentEvents()[0].body).toMatchObject({
+      events: [
+        { creativeId: "creative-1", type: "impression" },
+        { creativeId: "creative-1", type: "click" },
+        { creativeId: "creative-1", type: "click" },
+      ],
+    });
+  });
+
+  test("sends what is waiting as soon as the page is hidden", () => {
+    reconcileCreatives();
+
+    Object.defineProperty(document, "visibilityState", { configurable: true, value: "hidden" });
+    document.dispatchEvent(new Event("visibilitychange"));
+    Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" });
+
+    expect(sendEvents).toHaveBeenCalledOnce();
+  });
+
+  test("never lets a failed request reach the page", async () => {
+    sendEvents.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    reconcileCreatives();
+
+    await vi.advanceTimersByTimeAsync(2_000);
+
+    expect(sendEvents).toHaveBeenCalledOnce();
   });
 });

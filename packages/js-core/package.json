@@ -43,6 +43,7 @@
     "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/creatives": "workspace:*",
+    "@formbricks/types": "workspace:*",
     "@formbricks/vite-plugins": "workspace:*",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",

@@ -466,6 +466,43 @@ async function main(): Promise<void> {
     status: "inProgress",
     surveyId: CONTRACT_IDS.SURVEY_READ,
   });
+  // Counts for today (UTC), inside the stats operation's default range, so its response carries days,
+  // pages and devices with numbers rather than only zeros.
+  const today = new Date(new Date().toISOString().slice(0, 10));
+  await prisma.creativeDailyStat.upsert({
+    where: {
+      creativeId_date_deviceType: {
+        creativeId: CONTRACT_IDS.CREATIVE_READ,
+        date: today,
+        deviceType: "phone",
+      },
+    },
+    update: {},
+    create: {
+      creativeId: CONTRACT_IDS.CREATIVE_READ,
+      date: today,
+      deviceType: "phone",
+      impressions: 40,
+      clicks: 2,
+    },
+  });
+  await prisma.creativeDailyPageStat.upsert({
+    where: {
+      creativeId_date_page: {
+        creativeId: CONTRACT_IDS.CREATIVE_READ,
+        date: today,
+        page: "example.com/pricing",
+      },
+    },
+    update: {},
+    create: {
+      creativeId: CONTRACT_IDS.CREATIVE_READ,
+      date: today,
+      page: "example.com/pricing",
+      impressions: 40,
+      clicks: 2,
+    },
+  });
   // A notice-only banner: the patch examples (pause, reschedule) answer 200 without a Destination.
   await seedCreative(CONTRACT_IDS.CREATIVE_PATCH, {
     name: "Contract fixture — patch",
