@@ -3009,6 +3009,7 @@
         "plan_selection_description": "Hobby, Pro és Scale csomagok összehasonlítása, majd csomagok közötti váltás közvetlenül a Formbricksben.",
         "plan_selection_title": "Csomag kiválasztása",
         "plan_unknown": "Ismeretlen",
+        "responses_above_limit_billed_per_response": "A(z) {limit} feletti válaszokat válaszonként számlázzuk <dynamicPricing>ezen díjszabás szerint</dynamicPricing>.",
         "retry_setup": "Beállítás újrapróbálása",
         "select_plan_cta": "Kezdjen hozzá",
         "select_plan_feature_1": "MI-natív többnyelvű kérdőívek",

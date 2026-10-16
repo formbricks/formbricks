@@ -3009,6 +3009,7 @@
         "plan_selection_description": "Vergleiche Hobby, Pro und Scale und wechsle deinen Plan direkt in Formbricks.",
         "plan_selection_title": "Wähle deinen Plan",
         "plan_unknown": "Unbekannt",
+        "responses_above_limit_billed_per_response": "Antworten über {limit} hinaus werden pro Antwort zu <dynamicPricing>diesen Preisen</dynamicPricing> abgerechnet.",
         "retry_setup": "Einrichtung wiederholen",
         "select_plan_cta": "Los geht's",
         "select_plan_feature_1": "KI-gestützte mehrsprachige Umfragen",

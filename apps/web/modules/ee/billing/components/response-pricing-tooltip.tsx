@@ -93,6 +93,26 @@ export const PlanResponseFeature = ({ plan, locale, overage, t }: Readonly<PlanR
   );
 };
 
+interface ResponseOverageNoteProps {
+  limit: number;
+  locale: string;
+  overage: TResponseOverageDisplay;
+}
+
+// Shown under the Responses usage bar on plans with metered overage, so the bar's limit reads as an
+// included volume rather than a hard cap.
+export const ResponseOverageNote = ({ limit, locale, overage }: Readonly<ResponseOverageNoteProps>) => {
+  return (
+    <p className="text-sm text-slate-500">
+      <Trans
+        i18nKey="workspace.settings.billing.responses_above_limit_billed_per_response"
+        values={{ limit: limit.toLocaleString(locale) }}
+        components={{ dynamicPricing: dynamicPricingComponent(overage, locale) }}
+      />
+    </p>
+  );
+};
+
 interface PlanWorkflowRunsFeatureProps {
   locale: string;
   overage: TResponseOverageDisplay | null;
