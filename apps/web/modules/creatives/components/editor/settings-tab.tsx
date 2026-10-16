@@ -14,22 +14,24 @@ import {
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
 import { MOCK_ACTIONS } from "../../mock/data";
-import type { TCreative, TCreativeTargeting } from "../../types";
+import type { TCreativeTargeting } from "../../types";
 import { EditorField, EditorPanel, Segmented } from "./editor-primitives";
 import { ShowConditionsCard } from "./show-conditions-card";
 
 const DEFAULT_SHARE = 50;
 
 export const SettingsTab = ({
-  creative,
+  targeting,
   onChange,
   showErrors,
-}: Readonly<{ creative: TCreative; onChange: (creative: TCreative) => void; showErrors: boolean }>) => {
+}: Readonly<{
+  targeting: TCreativeTargeting;
+  onChange: (targeting: TCreativeTargeting) => void;
+  showErrors: boolean;
+}>) => {
   const { t } = useTranslation();
   const ids = useId();
-  const { targeting } = creative;
-  const setTargeting = (patch: Partial<TCreativeTargeting>) =>
-    onChange({ ...creative, targeting: { ...targeting, ...patch } });
+  const setTargeting = (patch: Partial<TCreativeTargeting>) => onChange({ ...targeting, ...patch });
 
   return (
     <>

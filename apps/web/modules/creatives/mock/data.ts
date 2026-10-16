@@ -41,7 +41,7 @@ export const MOCK_SURVEYS: TCreativeSurveyOption[] = [
 export const MOCK_ACTIONS = ["Clicked “Compare plans”", "Opened pricing", "Started checkout"];
 
 /** Stand-in for the workspace's survey button theme. */
-export const MOCK_WORKSPACE_THEME = {
+const MOCK_WORKSPACE_THEME = {
   backgroundColor: "#0f172a",
   textColor: "#ffffff",
   borderColor: "#0f172a",

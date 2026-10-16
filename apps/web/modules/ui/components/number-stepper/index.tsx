@@ -99,7 +99,8 @@ export const NumberStepper = ({
           onChange={(event) => setEditing(event.target.value)}
           onBlur={() => commit(commitStepperInput(draft, value, bounds))}
           onKeyDown={onKeyDown}
-          className="w-full min-w-0 bg-transparent text-right text-sm font-medium text-slate-800 tabular-nums outline-hidden disabled:cursor-not-allowed"
+          // `border-0 p-0`: the forms plugin's input padding would leave no room for the digits.
+          className="w-full min-w-0 border-0 bg-transparent p-0 text-right text-sm font-medium text-slate-800 tabular-nums shadow-none outline-hidden focus:ring-0 disabled:cursor-not-allowed"
           style={{ maxWidth: `${Math.max(draft.length, 1) + 1}ch` }}
         />
         {unit && <span className="text-sm text-slate-500">{unit}</span>}

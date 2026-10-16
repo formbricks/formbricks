@@ -2036,7 +2036,8 @@ describe("custom CSS (ENG-3641)", () => {
         requestId,
         instance
       );
-      expect(previewCustomCss).toHaveBeenCalledWith("survey", { light: "a{}", dark: null });
+      // No creative type: the survey root, `#fbjs`.
+      expect(previewCustomCss).toHaveBeenCalledWith("survey", { light: "a{}", dark: null }, undefined);
       expect(await readJson(response)).toEqual({
         data: {
           valid: true,
@@ -2142,11 +2143,34 @@ describe("custom CSS (ENG-3641)", () => {
       expect(previewCustomCss).not.toHaveBeenCalled();
     });
 
+    test("a creative type compiles the CSS for that creative's root element, as it is delivered", async () => {
+      const response = await validateV3Survey({
+        body: customCssBody({ creativeType: "banner" }),
+        authentication,
+        requestId,
+        instance,
+      } as never);
+
+      expect(response.status).toBe(200);
+      expect(previewCustomCss).toHaveBeenCalledWith(
+        "survey",
+        { light: "a{}", dark: null },
+        { type: "class", name: "fb-creative-banner" }
+      );
+      expect((await readJson(response)).data).toMatchObject({
+        valid: true,
+        customCss: { light: "@layer fb-survey{a}", dark: null },
+      });
+    });
+
     test("the raw entry point rejects compiled output and a surveyId on workspace scope", async () => {
       for (const body of [
         customCssBody({ data: { customCss: { light: "a{}", dark: null, compiled: "x" } } }),
         customCssBody({ scope: "workspace", surveyId: validSurveyId }),
         customCssBody({ data: { customCss: { light: "a{}" } } }),
+        customCssBody({ scope: "workspace", creativeType: "feedbackButton" }),
+        customCssBody({ surveyId: validSurveyId, creativeType: "feedbackButton" }),
+        customCssBody({ creativeType: "drawer" }),
       ]) {
         const response = await validateV3SurveyFromRawInput({ body, authentication, requestId, instance });
         expect(response.status).toBe(400);

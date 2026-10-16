@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { serializeV3Creative } from "@/app/api/v3/creatives/lib/serializers";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
+import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
@@ -65,12 +67,13 @@ export const CreativeSummaryPage = async ({ params }: Readonly<{ params: TCreati
  */
 export const CreativeEditorPage = async ({ params }: Readonly<{ params: TCreativeParams }>) => {
   const { workspaceId, creativeId } = await params;
-  const { workspace, isReadOnly } = await getWorkspaceAuth(workspaceId);
+  const { workspace, organization, isReadOnly } = await getWorkspaceAuth(workspaceId);
   if (isReadOnly) redirect(getCreativesPath(workspaceId));
 
-  const [record, surveyCandidates] = await Promise.all([
+  const [record, surveyCandidates, isCustomCssPlanAllowed] = await Promise.all([
     findCreativeRecord(creativeId, workspaceId),
     findDestinationSurveyCandidates(workspaceId),
+    getCustomCssPlanAllowed(organization.id),
   ]);
   if (!record) notFound();
 
@@ -85,6 +88,11 @@ export const CreativeEditorPage = async ({ params }: Readonly<{ params: TCreativ
       siteName={workspace.name}
       initialCreative={serializeV3Creative(record, new Date())}
       surveyOptions={surveyOptions}
+      workspaceStyling={workspace.styling}
+      customCss={{
+        planAllowed: isCustomCssPlanAllowed,
+        billingHref: IS_FORMBRICKS_CLOUD ? `/organizations/${organization.id}/settings/billing` : null,
+      }}
     />
   );
 };

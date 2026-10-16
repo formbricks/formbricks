@@ -12,6 +12,7 @@ import {
   processCustomCss,
 } from "@/modules/custom-css/processor";
 import type { TCreativeType } from "./creative";
+import { CREATIVE_CSS_SCOPE } from "./style";
 
 /**
  * A creative's own Custom CSS (ENG-3865, ADR 0012). It is stored as source in the creative's styling (the
@@ -21,9 +22,10 @@ import type { TCreativeType } from "./creative";
  * creative's own rules. The workspace Custom CSS is never compiled for, or sent to, a creative.
  *
  * This module is on the environment request's path, so it talks to the processor directly; the write
- * checks (plan, budget) live in `custom-css-write.ts`.
+ * checks (plan, budget) live in `custom-css-write.ts`. The scope constant is in `style.ts`, so the
+ * editor (client) budgets the same way.
  */
-export const CREATIVE_CSS_SCOPE = "survey";
+export { CREATIVE_CSS_SCOPE };
 
 export const getCreativeCssRoot = (type: TCreativeType): TCustomCssRoot => ({
   type: "class",
