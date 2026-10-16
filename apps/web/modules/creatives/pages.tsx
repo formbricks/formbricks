@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { serializeV3Creative } from "@/app/api/v3/creatives/lib/serializers";
+import { getActionClasses } from "@/lib/actionClass/service";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
@@ -70,9 +71,10 @@ export const CreativeEditorPage = async ({ params }: Readonly<{ params: TCreativ
   const { workspace, organization, isReadOnly } = await getWorkspaceAuth(workspaceId);
   if (isReadOnly) redirect(getCreativesPath(workspaceId));
 
-  const [record, surveyCandidates, isCustomCssPlanAllowed] = await Promise.all([
+  const [record, surveyCandidates, actionClasses, isCustomCssPlanAllowed] = await Promise.all([
     findCreativeRecord(creativeId, workspaceId),
     findDestinationSurveyCandidates(workspaceId),
+    getActionClasses(workspaceId),
     getCustomCssPlanAllowed(organization.id),
   ]);
   if (!record) notFound();
@@ -88,6 +90,7 @@ export const CreativeEditorPage = async ({ params }: Readonly<{ params: TCreativ
       siteName={workspace.name}
       initialCreative={serializeV3Creative(record, new Date())}
       surveyOptions={surveyOptions}
+      actionOptions={actionClasses.map(({ id, name }) => ({ id, name }))}
       workspaceStyling={workspace.styling}
       customCss={{
         planAllowed: isCustomCssPlanAllowed,

@@ -1,5 +1,6 @@
 import { validateDateTimeRange } from "@/modules/ui/components/date-time-picker/lib/date-time";
 import { type TCreativeEditorForm, formNeedsDestination } from "./editor-form";
+import { hasIncompleteConditions } from "./show-conditions-ui";
 
 /**
  * What blocks Save and Publish in the editor, and which tab owns the fix. These mirror the v3 rules
@@ -7,7 +8,8 @@ import { type TCreativeEditorForm, formNeedsDestination } from "./editor-form";
  * judge, and whatever it still refuses is routed to a tab by `getInvalidParamTab`.
  *
  * A draft saves with gaps: only what the API would refuse even for a draft blocks it (no name, a link
- * that isn't one, an end before the start). Anything published must meet every publish rule on each save.
+ * that isn't one, a Show when condition without its value, an end before the start). Anything published
+ * must meet every publish rule on each save.
  */
 
 export type TCreativeEditorTab = "content" | "styling" | "settings" | "schedule";
@@ -19,6 +21,8 @@ export type TPublishIssue =
   | "button_label_missing"
   | "survey_missing"
   | "link_invalid"
+  | "action_missing"
+  | "condition_incomplete"
   | "end_before_start";
 
 /** `null`: the name field in the header, outside the tabs. */
@@ -29,6 +33,8 @@ export const PUBLISH_ISSUE_TABS: Record<TPublishIssue, TCreativeEditorTab | null
   button_label_missing: "content",
   survey_missing: "content",
   link_invalid: "content",
+  action_missing: "settings",
+  condition_incomplete: "settings",
   end_before_start: "schedule",
 };
 
@@ -58,6 +64,13 @@ const getDestinationIssues = (form: TCreativeEditorForm): TPublishIssue[] => {
   return isValidLink(destination.url) ? [] : ["link_invalid"];
 };
 
+/** When an action fires needs an action; a condition the card left without its value is refused by the API. */
+const getActionIssues = ({ distribution }: TCreativeEditorForm): TPublishIssue[] =>
+  distribution.showOn === "action" && distribution.actionClassIds.length === 0 ? ["action_missing"] : [];
+
+const getConditionIssues = ({ distribution }: TCreativeEditorForm): TPublishIssue[] =>
+  hasIncompleteConditions(distribution.conditions) ? ["condition_incomplete"] : [];
+
 const getScheduleIssues = ({ schedule }: TCreativeEditorForm): TPublishIssue[] =>
   validateDateTimeRange(schedule.startAt, schedule.endAt) ? ["end_before_start"] : [];
 
@@ -68,6 +81,8 @@ export const getPublishIssues = (form: TCreativeEditorForm): TPublishIssue[] => 
   ...getNameIssues(form),
   ...getContentIssues(form.content),
   ...getDestinationIssues(form),
+  ...getActionIssues(form),
+  ...getConditionIssues(form),
   ...getScheduleIssues(form),
 ];
 
@@ -86,6 +101,7 @@ export const getSaveIssues = (
   return [
     ...getNameIssues(form),
     ...(hasBrokenLink ? (["link_invalid"] as const) : []),
+    ...getConditionIssues(form),
     ...getScheduleIssues(form),
   ];
 };

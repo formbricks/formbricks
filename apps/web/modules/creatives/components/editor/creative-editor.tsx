@@ -43,16 +43,13 @@ import {
 } from "../../lib/publish-check";
 import { CREATIVE_CSS_SCOPE, getCreativeStyle } from "../../lib/style";
 import { type TCreativeDevice, toStyleSource, withTheme } from "../../lib/styling-form";
-import { createMockDraft } from "../../mock/data";
-import type { TCreativeTargeting } from "../../types";
 import { CreativeTypeIndicator } from "../creative-icons";
 import { CreativeStatusPill } from "../creative-status-pill";
-import { MockDataBadge } from "../mock-data-badge";
 import { ContentTab } from "./content-tab";
 import { CreativePreview } from "./creative-preview";
 import type { TCreativeCustomCssConfig } from "./custom-css-panel";
 import { ScheduleTab } from "./schedule-tab";
-import { SettingsTab } from "./settings-tab";
+import { SettingsTab, type TCreativeActionOption } from "./settings-tab";
 import { StylingTab } from "./styling-tab";
 
 const TAB_ICONS: Record<TCreativeEditorTab, LucideIcon> = {
@@ -65,10 +62,6 @@ const TAB_ICONS: Record<TCreativeEditorTab, LucideIcon> = {
 // `CreativeTypeIndicator` still speaks the mock's type names, like the list.
 const INDICATOR_TYPES = { feedbackButton: "feedback_button", banner: "banner" } as const;
 
-/** Show on and Show when are still the prototype's local state (ENG-4002). */
-const createMockTargeting = (type: TCreativeResource["type"]): TCreativeTargeting =>
-  createMockDraft(INDICATOR_TYPES[type]).targeting;
-
 /** Whether the form would change the stored creative if saved now. */
 const hasUnsavedChanges = (form: TCreativeEditorForm, creative: TCreativeResource): boolean =>
   JSON.stringify(buildCreativePatch(form, creative, "save")) !==
@@ -79,6 +72,7 @@ export const CreativeEditor = ({
   siteName,
   initialCreative,
   surveyOptions,
+  actionOptions,
   workspaceStyling,
   customCss,
 }: Readonly<{
@@ -86,6 +80,8 @@ export const CreativeEditor = ({
   siteName: string;
   initialCreative: TCreativeResource;
   surveyOptions: TDestinationSurveyOption[];
+  /** The workspace's actions, for Show on: When an action fires. */
+  actionOptions: TCreativeActionOption[];
   /** The workspace Look & Feel a creative starts from (never the linked survey's own styling). */
   workspaceStyling: TWorkspaceStyling;
   customCss: TCreativeCustomCssConfig;
@@ -95,7 +91,6 @@ export const CreativeEditor = ({
   const { data: creative } = useCreativeResource(initialCreative);
   const updateCreative = useUpdateCreative(initialCreative.id);
   const [form, setForm] = useState(() => toCreativeEditorForm(initialCreative));
-  const [targeting, setTargeting] = useState(() => createMockTargeting(initialCreative.type));
   const [activeTab, setActiveTab] = useState<TCreativeEditorTab>("content");
   const [device, setDevice] = useState<TCreativeDevice>("desktop");
   const [appearance, setAppearance] = useState<TStylingAppearance>("light");
@@ -137,6 +132,8 @@ export const CreativeEditor = ({
     button_label_missing: t("workspace.creatives.editor.issue_button_label_missing"),
     survey_missing: t("workspace.creatives.editor.issue_survey_missing"),
     link_invalid: t("workspace.creatives.editor.issue_link_invalid"),
+    action_missing: t("workspace.creatives.editor.issue_action_missing"),
+    condition_incomplete: t("workspace.creatives.editor.issue_condition_incomplete"),
     end_before_start: t("workspace.creatives.editor.end_before_start"),
   };
 
@@ -299,7 +296,6 @@ export const CreativeEditor = ({
                 <AlertDescription>{t("workspace.creatives.editor.archived_read_only")}</AlertDescription>
               </Alert>
             )}
-            {activeTab === "settings" && <MockDataBadge />}
             {activeTab === "content" && (
               <ContentTab
                 form={form}
@@ -323,7 +319,13 @@ export const CreativeEditor = ({
               />
             )}
             {activeTab === "settings" && (
-              <SettingsTab targeting={targeting} onChange={setTargeting} showErrors={false} />
+              <SettingsTab
+                distribution={form.distribution}
+                onChange={(distribution) => setForm((current) => ({ ...current, distribution }))}
+                actionOptions={actionOptions}
+                showActionError={issues.includes("action_missing")}
+                showConditionErrors={issues.includes("condition_incomplete")}
+              />
             )}
             {activeTab === "schedule" && (
               <ScheduleTab

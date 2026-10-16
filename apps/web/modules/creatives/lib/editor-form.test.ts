@@ -168,6 +168,7 @@ describe("feedback button form", () => {
           customCss: null,
         },
       },
+      distribution: { showOn: "pageView", triggers: [], conditions: null, displayPercentage: null },
       schedule: { startAt: null, endAt: null },
     });
   });
@@ -261,6 +262,87 @@ describe("feedback button form", () => {
         "save"
       ).destination
     ).toEqual({ type: "link", url: "https://example.com/help" });
+  });
+});
+
+describe("settings form (Show on, Show when, Share of visitors)", () => {
+  const conditions = {
+    id: "clgroup00000000000000001",
+    connector: "or" as const,
+    conditions: [
+      {
+        id: "clcondition0000000000001",
+        leftOperand: { type: "page" as const, value: "currentUrl" as const },
+        operator: "startsWith" as const,
+        rightOperand: { type: "static" as const, value: "https://example.com/plans" },
+      },
+      {
+        id: "clsubgroup00000000000001",
+        connector: "and" as const,
+        conditions: [
+          {
+            id: "clcondition0000000000002",
+            leftOperand: { type: "device" as const, value: "deviceType" as const },
+            operator: "equals" as const,
+            rightOperand: { type: "static" as const, value: "phone" },
+          },
+        ],
+      },
+    ],
+  };
+
+  const onAction = zCreativeResource.parse({
+    ...feedbackButton,
+    distribution: {
+      showOn: "action",
+      triggers: [
+        { actionClassId: "clactionclass00000000001" },
+        { actionClassId: "clactionclass00000000002" },
+      ],
+      conditions,
+      displayPercentage: 25,
+    },
+  });
+
+  test("reads the stored actions, conditions and share, and sends them back unchanged", () => {
+    const form = toCreativeEditorForm(onAction);
+
+    expect(form.distribution).toEqual({
+      showOn: "action",
+      actionClassIds: ["clactionclass00000000001", "clactionclass00000000002"],
+      conditions,
+      displayPercentage: 25,
+    });
+    expect(buildCreativePatch(form, onAction, "save").distribution).toEqual(onAction.distribution);
+  });
+
+  test("Every page view sends no actions, and the form keeps them for switching back", () => {
+    const form = toCreativeEditorForm(onAction);
+    const everyPage: TCreativeEditorForm = {
+      ...form,
+      distribution: { ...form.distribution, showOn: "pageView" },
+    };
+
+    expect(buildCreativePatch(everyPage, onAction, "save").distribution).toMatchObject({
+      showOn: "pageView",
+      triggers: [],
+    });
+    expect(everyPage.distribution.actionClassIds).toHaveLength(2);
+  });
+
+  test("an edited Show when and Share of visitors go out as edited; everyone is no share", () => {
+    const form = toCreativeEditorForm(feedbackButton);
+    const edited: TCreativeEditorForm = {
+      ...form,
+      distribution: { ...form.distribution, conditions, displayPercentage: null },
+    };
+
+    expect(buildCreativePatch(edited, feedbackButton, "save").distribution).toEqual({
+      showOn: "pageView",
+      triggers: [],
+      conditions,
+      displayPercentage: null,
+    });
   });
 });
 
