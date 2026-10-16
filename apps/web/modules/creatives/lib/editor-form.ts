@@ -7,11 +7,12 @@ import type {
   zCreateCreativeRequest,
   zPatchCreativeRequest,
 } from "@formbricks/api-v3-schemas";
+import { type TCreativeStylingForm, toStylingBody, toStylingForm } from "./styling-form";
 
 /**
- * The editor's form and the v3 bodies it sends (ENG-3997). The form holds what the Content and Schedule
- * tabs edit, in the creative's default language; everything else (other languages, styling,
- * distribution) stays on the stored resource. A save sends only the groups the editor owns, each built
+ * The editor's form and the v3 bodies it sends (ENG-3997, ENG-4005). The form holds what the Content,
+ * Styling and Schedule tabs edit, texts in the creative's default language; everything else (other
+ * languages, distribution) stays on the stored resource. A save sends only the groups the editor owns, each built
  * from the stored one, so texts in other languages survive and the groups other tabs will own keep their
  * server values until those tabs save them.
  */
@@ -90,6 +91,7 @@ export interface TCreativeEditorForm {
   name: string;
   content: TFeedbackButtonForm | TBannerForm;
   destination: TCreativeDestinationForm;
+  styling: TCreativeStylingForm;
   schedule: { startAt: Date | null; endAt: Date | null };
 }
 
@@ -126,6 +128,7 @@ export const toCreativeEditorForm = (resource: TCreativeResource): TCreativeEdit
   name: resource.name,
   content: toContentForm(resource),
   destination: toDestinationForm(resource.destination),
+  styling: toStylingForm(resource),
   schedule: { startAt: toDate(resource.schedule.startAt), endAt: toDate(resource.schedule.endAt) },
 });
 
@@ -178,6 +181,7 @@ export const buildCreativePatch = (
   name: form.name.trim(),
   content: toContentBody(form.content, resource),
   destination: toDestinationBody(form),
+  styling: toStylingBody(form.styling),
   schedule: {
     startAt: form.schedule.startAt?.toISOString() ?? null,
     endAt: form.schedule.endAt?.toISOString() ?? null,
