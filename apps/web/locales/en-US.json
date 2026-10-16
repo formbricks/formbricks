@@ -4630,6 +4630,8 @@
         "locale": "Device Locale",
         "no_attachments_to_download": "These responses contain no attachments",
         "not_completed": "Not Completed ⏳",
+        "opened_by_creative": "Opened by creative",
+        "opened_by_creative_id": "Opened by creative ID",
         "os": "OS",
         "page_path": "Page Path",
         "page_referrer": "Page Referrer",

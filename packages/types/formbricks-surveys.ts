@@ -134,6 +134,12 @@ export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUploa
   overlay?: "none" | "light" | "dark";
   placement?: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
   action?: string;
+  /**
+   * The creative whose click opened the survey (ENG-4001): js-core for a popup Destination, the link
+   * page for a validated `?creativeId=`. Sent with the display and, as `meta.openedByCreativeId`, with
+   * the response; the server checks it and stamps the creative's name. An older server ignores both.
+   */
+  creativeId?: string;
   singleUseId?: string;
   singleUseResponseId?: string;
   pinAuthToken?: string;

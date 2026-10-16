@@ -7,6 +7,7 @@ import {
   FlagIcon,
   GlobeIcon,
   LanguagesIcon,
+  LayoutTemplateIcon,
   type LucideIcon,
   MegaphoneIcon,
   MonitorIcon,
@@ -77,6 +78,9 @@ const RESERVED_FIELD_LABELS: Record<string, (t: TFunction) => string> = {
   utmTerm: (t) => t("workspace.surveys.responses.utm_term"),
   viewportHeight: (t) => t("workspace.surveys.responses.viewport_height"),
   viewportWidth: (t) => t("workspace.surveys.responses.viewport_width"),
+  // Opened by creative (ENG-4001): the name is what an author reads; the id is for joins and exports.
+  openedByCreativeName: (t) => t("workspace.surveys.responses.opened_by_creative"),
+  openedByCreativeId: (t) => t("workspace.surveys.responses.opened_by_creative_id"),
   // The two `display: "none"` entries a picker offers but no column ever shows: `durationSeconds`
   // to the response filter (ENG-1848/ENG-2894), and `language` — the only `availability: "both"`
   // entry — to the mid-survey recall and logic pickers (ENG-1853). Both reuse a key that already
@@ -110,6 +114,9 @@ export const RESERVED_FIELD_ICONS: Record<string, LucideIcon> = {
   // The survey language the respondent is answering in, beside `locale`, the device's own setting.
   language: FlagIcon,
   locale: LanguagesIcon,
+  // The Creatives navigation icon, so the pair reads as "a creative" in the table and the filter.
+  openedByCreativeId: LayoutTemplateIcon,
+  openedByCreativeName: LayoutTemplateIcon,
   os: AirplayIcon,
   pagePath: FileTextIcon,
   pageReferrer: ArrowUpFromDotIcon,

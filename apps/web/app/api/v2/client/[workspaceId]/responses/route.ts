@@ -19,6 +19,7 @@ import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
+import { getOpenedByCreativeMeta } from "@/modules/creatives/lib/attribution";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateClientFileUploads } from "@/modules/storage/utils";
@@ -172,6 +173,14 @@ const createResponseForRequest = async ({
       },
       country,
       action: responseInputData?.meta?.action,
+      // Only the creative's id comes from the client; the server checks it and stamps the name.
+      ...(responseInputData.meta?.openedByCreativeId
+        ? await getOpenedByCreativeMeta({
+            creativeId: responseInputData.meta.openedByCreativeId,
+            workspaceId: survey.workspaceId,
+            surveyId: survey.id,
+          })
+        : {}),
     };
 
     if (survey.isCaptureIpEnabled && !survey.isAnonymizeResponsesEnabled) {

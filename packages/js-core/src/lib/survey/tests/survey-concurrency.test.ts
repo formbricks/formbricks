@@ -148,6 +148,22 @@ describe("survey concurrency guard", () => {
       expect(widget.getOpenSurveyIds()).toEqual([survey.id]);
     });
 
+    test("tells the renderer which creative opened it, so the display and response record it", async () => {
+      await widget.openSurveyForCreative(survey, "creative-1", []);
+      await vi.advanceTimersByTimeAsync(0);
+
+      const [[props]] = renderSurvey.mock.calls as [[{ creativeId?: string }]];
+      expect(props.creativeId).toBe("creative-1");
+    });
+
+    test("names no creative for a survey its own trigger opened", async () => {
+      await widget.renderWidget(survey, PAGE_VIEW_ACTION);
+      await vi.advanceTimersByTimeAsync(10);
+
+      const [[props]] = renderSurvey.mock.calls as [[{ creativeId?: string }]];
+      expect(props.creativeId).toBeUndefined();
+    });
+
     test("closes the survey on screen, then opens its own", async () => {
       await widget.renderWidget({ ...survey, id: "triggered" }, PAGE_VIEW_ACTION);
       await vi.advanceTimersByTimeAsync(10);

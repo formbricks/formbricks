@@ -38,7 +38,7 @@ let renderGeneration = 0;
 
 /** Who asked for a survey other than its own triggers. */
 interface TSurveyOpener {
-  /** The creative whose click opens it (ENG-3994; ENG-4001 sends it with the display). */
+  /** The creative whose click opens it (ENG-3994); the renderer sends it with the display (ENG-4001). */
   creativeId: string;
 }
 
@@ -229,6 +229,8 @@ export const renderWidget = async (
       workspaceId: config.get().workspaceId,
       contactId: config.get().user.data.contactId ?? undefined,
       action,
+      // Sent with the display and the response, so both record the creative (ENG-4001).
+      creativeId: opener?.creativeId,
       // A creative's click opens the survey until the visitor closes it: no auto-close.
       survey: opener ? { ...survey, autoClose: null } : survey,
       isBrandingEnabled,
