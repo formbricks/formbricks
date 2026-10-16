@@ -116,6 +116,16 @@ export const zLocaleCode = z.string().regex(/^[a-z]{2}(?:-[A-Z][a-z]{3})?-[A-Z]{
 export type LocaleCodeZodType = z.infer<typeof zLocaleCode>;
 
 /**
+ * Custom CSS **source** as a caller writes it (ENG-3641). Both keys are required. `light` is base CSS that applies in both appearances; `dark` adds overrides on top of it when the survey renders dark. `null`, an empty string or whitespace means "no CSS" for that field. Source only: compiled output and the processor version are computed by the server on every write, and a request that supplies either is rejected. The combined source is limited to 100 000 UTF-8 bytes for a workspace and 20 000 for a survey; larger CSS is a **422** with error code `source_too_large`.
+ */
+export const zCustomCssInput = z.strictObject({
+  light: z.string().nullable(),
+  dark: z.string().nullable(),
+});
+
+export type CustomCssInputZodType = z.infer<typeof zCustomCssInput>;
+
+/**
  * Receipt describing how `answers[]` and `embeddedData[]` labels were produced. It exists so a consumer can tell whether the labels it is reading are the wording the respondent actually saw.
  *
  */
@@ -1085,7 +1095,7 @@ export const zCreativePadding = z.strictObject({
 export type CreativePaddingZodType = z.infer<typeof zCreativePadding>;
 
 /**
- * The feedback button's custom styles. With `customStyles` off the button follows the workspace Look & Feel (the survey button) and the values below are kept but not applied. With it on, each value overrides the workspace one; `null` keeps the workspace value. Colours are `#rrggbb`.
+ * The feedback button's custom styles. With `customStyles` off the button follows the workspace Look & Feel (the survey button) and the values below are kept but not applied. With it on, each value overrides the workspace one; `null` keeps the workspace value. A colour set here applies in both appearances: when the background or the text colour is set, both keep their light values in dark appearance so their contrast holds, and a background set without a text colour gets readable text (`#0f172a` or `#ffffff`). Colours left to the workspace follow its dark palette when the visitor's appearance is dark. Colours are `#rrggbb`.
  *
  */
 export const zFeedbackButtonTheme = z.strictObject({
@@ -1107,6 +1117,8 @@ export const zFeedbackButtonTheme = z.strictObject({
   fontSize: zCreativeFontSize,
   paddingX: zCreativePadding,
   paddingY: zCreativePadding,
+  pageFont: z.boolean().nullish(),
+  customCss: zCustomCssInput.nullish(),
 });
 
 export type FeedbackButtonThemeZodType = z.infer<typeof zFeedbackButtonTheme>;
@@ -1235,7 +1247,7 @@ export const zBannerPlacement = z.discriminatedUnion("placement", [
 export type BannerPlacementZodType = z.infer<typeof zBannerPlacement>;
 
 /**
- * The banner's custom styles. With `customStyles` off the banner follows the workspace Look & Feel (the survey card, with the survey button inside) and the values below are kept but not applied. With it on, each value overrides the workspace one; `null` keeps the workspace value. Colours are `#rrggbb`.
+ * The banner's custom styles. With `customStyles` off the banner follows the workspace Look & Feel (the survey card, with the survey button inside) and the values below are kept but not applied. With it on, each value overrides the workspace one; `null` keeps the workspace value. A colour set here applies in both appearances: when the background or the text colour is set, both keep their light values in dark appearance so their contrast holds, and a background set without a text colour gets readable text (`#0f172a` or `#ffffff`). Colours left to the workspace follow its dark palette when the visitor's appearance is dark. The banner's button always looks like the survey button. Colours are `#rrggbb`.
  *
  */
 export const zBannerTheme = z.strictObject({
@@ -1256,6 +1268,8 @@ export const zBannerTheme = z.strictObject({
   fontSize: zCreativeFontSize,
   paddingX: zCreativePadding,
   paddingY: zCreativePadding,
+  pageFont: z.boolean().nullish(),
+  customCss: zCustomCssInput.nullish(),
 });
 
 export type BannerThemeZodType = z.infer<typeof zBannerTheme>;

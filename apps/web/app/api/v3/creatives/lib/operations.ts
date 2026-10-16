@@ -1,11 +1,15 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
+import { capCustomCssIssues, customCssErrorsToInvalidParams } from "@/app/api/v3/lib/custom-css";
+import { getV3CustomCssPrincipal } from "@/app/api/v3/lib/custom-css-rate-limit";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
   type InvalidParam,
   createdResponse,
   noContentResponse,
   problemBadRequest,
+  problemCustomCssInvalid,
+  problemCustomCssPlanRequired,
   problemForbidden,
   problemUnprocessableContent,
   successListResponse,
@@ -13,6 +17,8 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { authorizeCreative, authorizeCreativeWorkspace } from "@/modules/creatives/lib/authorization";
+import type { TCreativeState } from "@/modules/creatives/lib/creative";
+import { assertCreativeCustomCssWrite } from "@/modules/creatives/lib/custom-css-write";
 import { toCreativeState } from "@/modules/creatives/lib/record";
 import {
   type TCreativeRecord,
@@ -33,6 +39,7 @@ import {
   buildCreativeCreateState,
   validateCreativeState,
 } from "@/modules/creatives/lib/write-rules";
+import { CustomCssInvalidError, CustomCssPlanRequiredError } from "@/modules/custom-css/lib/service";
 import { parseV3CreativesListQuery } from "./list-query";
 import type { TV3CreateCreativeBody, TV3PatchCreativeBody } from "./schemas";
 import { type TV3CreativeResource, serializeV3Creative } from "./serializers";
@@ -57,6 +64,27 @@ type TOperationContext = {
 type TCreativeOperationParams = TOperationContext & { creativeId: string };
 
 const NO_STORE = "private, no-store";
+
+/** Where a creative's own Custom CSS sits in the body; processor errors are named after it. */
+const CUSTOM_CSS_FIELD = "styling.theme.customCss";
+
+/**
+ * The plan gate and the processor for the creative's own CSS (ENG-3998), before anything is written.
+ * Throws what `mapWriteError` turns into the 403 or 422.
+ */
+const assertCustomCssWrite = (
+  previous: TCreativeState | null,
+  next: TCreativeState,
+  organizationId: string,
+  authentication: TV3Authentication
+): Promise<void> =>
+  assertCreativeCustomCssWrite({
+    type: next.type,
+    previous: previous?.styling.theme.customCss,
+    next: next.styling.theme.customCss,
+    organizationId,
+    principal: getV3CustomCssPrincipal(authentication),
+  });
 
 const getCreatorId = (authentication: TV3Authentication): string | null =>
   authentication && "user" in authentication && authentication.user?.id ? authentication.user.id : null;
@@ -106,6 +134,18 @@ const mapWriteError = (
       "Creative references failed validation"
     );
     return problemInvalidCreative(requestId, instance, error.invalidParams);
+  }
+  if (error instanceof CustomCssPlanRequiredError) {
+    log.warn({ statusCode: 403 }, "Creative custom CSS needs the plan");
+    return problemCustomCssPlanRequired(requestId, error.message, instance);
+  }
+  if (error instanceof CustomCssInvalidError) {
+    log.warn({ statusCode: 422 }, "Creative custom CSS failed validation");
+    return problemCustomCssInvalid(requestId, {
+      invalid_params: customCssErrorsToInvalidParams(error.errors, CUSTOM_CSS_FIELD),
+      errors: capCustomCssIssues(error.errors),
+      instance,
+    });
   }
   return mapV3ThrownError(error, { log, requestId, instance, operation });
 };
@@ -209,6 +249,7 @@ export async function createV3Creative({
       log.warn({ statusCode: 422, invalidParams: problems }, "Creative failed validation");
       return problemInvalidCreative(requestId, instance, problems);
     }
+    await assertCustomCssWrite(null, state, authorized.organizationId, authentication);
 
     const record = await createCreative({
       workspaceId: authorized.workspaceId,
@@ -269,6 +310,7 @@ export async function patchV3Creative(
       log.warn({ statusCode: 422, invalidParams: problems }, "Creative failed validation");
       return problemInvalidCreative(requestId, instance, problems);
     }
+    await assertCustomCssWrite(previous, planned.state, organizationId, params.authentication);
 
     const updated = await updateCreative({
       creativeId: record.id,

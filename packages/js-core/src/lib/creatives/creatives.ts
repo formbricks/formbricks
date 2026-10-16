@@ -1,4 +1,5 @@
 import { type TCreativeView, createShareRolls, render, resolve, resolveClick } from "@formbricks/creatives";
+import { getAppearance } from "@/lib/common/appearance";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { getIsSetup } from "@/lib/common/status";
@@ -20,6 +21,22 @@ const MAX_BOUNDARY_WAIT_MS = 60_000;
 const shownCreatives = new Map<string, { host: HTMLElement; drawnFrom: string }>();
 let boundaryTimer: ReturnType<typeof setTimeout> | null = null;
 let getShareRoll: ((creativeId: string) => number) | null = null;
+/** The visitor's colour scheme, watched once the host asks for `system`. */
+let systemScheme: MediaQueryList | null = null;
+
+/**
+ * The appearance a creative draws in: the survey's (ENG-3998), which the host sets with
+ * `formbricks.setAppearance`. `system` follows the visitor's setting, and a change there redraws.
+ */
+const getCreativeAppearance = (): "light" | "dark" => {
+  const appearance = getAppearance();
+  if (appearance !== "system") return appearance;
+  if (!systemScheme && typeof window.matchMedia === "function") {
+    systemScheme = window.matchMedia("(prefers-color-scheme: dark)");
+    systemScheme.addEventListener("change", reconcileCreatives);
+  }
+  return systemScheme?.matches ? "dark" : "light";
+};
 
 const getBrowserStorage = (): Storage | null => {
   try {
@@ -50,19 +67,19 @@ const handleCreativeClick = (view: TCreativeView): void => {
   void openSurveyForCreative(survey, view.id, click.close);
 };
 
-const showCreatives = (views: readonly TCreativeView[]): void => {
+const showCreatives = (views: readonly TCreativeView[], appearance: "light" | "dark" = "light"): void => {
   const nonce = window.__formbricksNonce;
   const stillShown = new Set<string>();
 
   for (const view of views) {
     stillShown.add(view.id);
-    const drawnFrom = JSON.stringify([view, nonce]);
+    const drawnFrom = JSON.stringify([view, nonce, appearance]);
     const shown = shownCreatives.get(view.id);
     // A host the page removed (a framework re-rendering <body>) is drawn again.
     if (shown?.drawnFrom === drawnFrom && shown.host.isConnected) continue;
 
     shown?.host.remove();
-    const host = render(view, { nonce, onClick: () => handleCreativeClick(view) });
+    const host = render(view, { nonce, appearance, onClick: () => handleCreativeClick(view) });
     if (host) shownCreatives.set(view.id, { host, drawnFrom });
     else shownCreatives.delete(view.id);
   }
@@ -97,15 +114,17 @@ export const reconcileCreatives = (): void => {
       getShareRoll,
     });
 
-    showCreatives(creatives);
+    showCreatives(creatives, getCreativeAppearance());
     scheduleNextChange(nextChangeAt, now);
   } catch (error) {
     Logger.getInstance().error(`Could not show creatives: ${String(error)}`);
   }
 };
 
-/** Takes every creative off the page and stops their schedule timer. */
+/** Takes every creative off the page and stops their schedule timer and appearance watch. */
 export const removeCreatives = (): void => {
   showCreatives([]);
   scheduleNextChange(null, 0);
+  systemScheme?.removeEventListener("change", reconcileCreatives);
+  systemScheme = null;
 };

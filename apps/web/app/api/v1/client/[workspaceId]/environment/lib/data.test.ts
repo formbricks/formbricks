@@ -49,6 +49,11 @@ vi.mock("@/modules/survey/lib/utils", () => ({
   transformPrismaSurvey: vi.fn((survey) => survey),
 }));
 
+// A creative's CSS is compiled through the cache; here it is compiled on every call.
+vi.mock("@/lib/cache", () => ({
+  cache: { withCache: (fn: () => Promise<unknown>) => fn() },
+}));
+
 // No custom CSS unless a test says otherwise (ENG-3552).
 vi.mock("@/modules/survey/link/lib/respondent-custom-css", () => ({
   resolveRespondentCustomCss: vi.fn(async () => ({ surveys: new Map() })),
@@ -839,6 +844,12 @@ describe("creatives on the wire (ENG-3994)", () => {
         id: "creative-1",
         type: "feedbackButton",
         defaultLanguage: "en-US",
+        style: {
+          element: expect.objectContaining({ light: expect.any(Object), dark: expect.any(Object) }),
+          button: null,
+          pageFont: false,
+          customCss: null,
+        },
         content: { label: { "en-US": "Feedback" }, icon: null },
         position: { desktop: { edge: "right", offset: 50 }, phone: null },
         destination: { type: "survey", surveyId: "survey-1", opensAs: "popup" },
@@ -951,5 +962,70 @@ describe("creatives on the wire (ENG-3994)", () => {
     const result = await getWorkspaceStateData(workspaceId);
 
     expect(result.creatives).toEqual([]);
+  });
+
+  /** ENG-3998: the look arrives computed; the SDK only applies it. */
+  describe("look", () => {
+    const withCustomStyles = (theme: Record<string, unknown>) => ({
+      ...storedButton,
+      styling: {
+        ...storedButton.styling,
+        theme: { ...storedButton.styling.theme, customStyles: true, ...theme },
+      },
+    });
+
+    test("comes from the workspace Look & Feel, never from the survey's own styling", async () => {
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+        ...mockWorkspaceData,
+        styling: { allowStyleOverwrite: true, buttonBgColor: { light: "#0b5394" }, pageFont: true },
+        surveys: [
+          {
+            ...mockWorkspaceData.surveys[0],
+            styling: { overwriteThemeStyling: true, buttonBgColor: { light: "#ff0000" } },
+          },
+        ],
+        creatives: [storedButton],
+      } as never);
+
+      const [creative] = (await getWorkspaceStateData(workspaceId)).creatives;
+
+      expect(creative.style.element.light.backgroundColor).toBe("#0b5394");
+      expect(creative.style.pageFont).toBe(true);
+    });
+
+    test("carries the creative's own CSS compiled for its shadow root, and never the workspace CSS", async () => {
+      vi.mocked(resolveRespondentCustomCss).mockResolvedValue({
+        workspace: { light: "#fbjs .workspace-rule{color:red!important}" },
+        surveys: new Map(),
+      });
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+        ...mockWorkspaceData,
+        creatives: [withCustomStyles({ customCss: { light: "span { color: #ff0000; }", dark: null } })],
+      } as never);
+
+      const [creative] = (await getWorkspaceStateData(workspaceId)).creatives;
+
+      expect(creative.style.customCss?.light).toContain(".fb-creative-button span{");
+      expect(JSON.stringify(creative)).not.toMatch(/workspace-rule|#fbjs|span \{ color/);
+    });
+
+    test("leaves the CSS out while the creative's custom styles are off", async () => {
+      vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+        ...mockWorkspaceData,
+        creatives: [
+          {
+            ...storedButton,
+            styling: {
+              ...storedButton.styling,
+              theme: { ...storedButton.styling.theme, customCss: { light: "span{color:red}", dark: null } },
+            },
+          },
+        ],
+      } as never);
+
+      const [creative] = (await getWorkspaceStateData(workspaceId)).creatives;
+
+      expect(creative.style.customCss).toBeNull();
+    });
   });
 });

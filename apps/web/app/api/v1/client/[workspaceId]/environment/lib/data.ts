@@ -23,7 +23,7 @@ import {
   deliveredCreativeSelect,
   getDeliverableCreativesWhere,
   getPopupSurveyIds,
-  toCreativePayload,
+  toCreativePayloads,
 } from "@/modules/creatives/lib/delivery";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
@@ -223,10 +223,11 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
       throw new ResourceNotFoundError("workspace", workspaceId);
     }
 
-    const publicDomain = getPublicDomain();
-    const creatives = workspaceData.creatives
-      .map((creative) => toCreativePayload(creative, publicDomain))
-      .filter((creative) => creative !== null);
+    // Each creative's look is computed from the workspace Look & Feel, never its survey's (ENG-3998).
+    const creatives = await toCreativePayloads(workspaceData.creatives, {
+      publicDomain: getPublicDomain(),
+      workspaceStyling: workspaceData.styling,
+    });
 
     // A creative opens its survey as a popup from this payload alone, so every such survey has to be in
     // it — also one outside the 30 newest, and one with no trigger of its own (it is sent with

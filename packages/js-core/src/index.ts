@@ -180,7 +180,10 @@ const setAppearance = (appearance: Appearance.TAppearance): void => {
     console.warn(
       `🧱 Formbricks - Warning: Unknown appearance "${String(appearance)}", keeping the current one`
     );
+    return;
   }
+  // Creatives follow the survey's appearance (ENG-3998); a no-op before setup.
+  reconcileCreatives();
 };
 
 const formbricks = {

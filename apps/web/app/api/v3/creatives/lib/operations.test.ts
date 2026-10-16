@@ -10,6 +10,7 @@ import {
   insertCreativeRecord,
   replaceCreativeRecord,
 } from "@/modules/creatives/lib/repository";
+import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
 import {
   archiveV3Creative,
   createV3Creative,
@@ -31,6 +32,11 @@ import { ZV3CreateCreativeBody, ZV3PatchCreativeBody } from "./schemas";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: vi.fn() }));
+vi.mock("@/modules/custom-css/lib/access", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/custom-css/lib/access")>()),
+  getCustomCssPlanAllowed: vi.fn(),
+}));
+vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn() })) },
 }));
@@ -245,6 +251,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   store.clear();
   grantAccess();
+  vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(true);
 });
 
 describe("createV3Creative", () => {
@@ -748,6 +755,79 @@ describe("patchV3Creative", () => {
     const response = await patchV3Creative({ ...base, creativeId: id, body: patch({ name: "Renamed" }) });
 
     expect(response.status).toBe(403);
+    expect(replaceCreativeRecord).not.toHaveBeenCalled();
+  });
+});
+
+/** ENG-3998: a creative's own Custom CSS sits behind the survey CSS plan gate and the same processor. */
+describe("custom CSS", () => {
+  const theme = (overrides: Record<string, unknown>) => ({
+    position: { desktop: { edge: "right", offset: 50 }, phone: null },
+    theme: {
+      customStyles: true,
+      backgroundColor: null,
+      textColor: null,
+      borderColor: null,
+      borderRadius: null,
+      fontWeight: null,
+      fontSize: { desktop: null, phone: null },
+      paddingX: { desktop: null, phone: null },
+      paddingY: { desktop: null, phone: null },
+      ...overrides,
+    },
+  });
+  const CSS = { light: ".fb-creative-button { letter-spacing: 1px; }", dark: null };
+
+  test("is stored as written and comes back as source", async () => {
+    const data = await created(feedbackButton({ styling: theme({ customCss: CSS, pageFont: true }) }));
+
+    expect(data.styling.theme).toMatchObject({ customCss: CSS, pageFont: true });
+  });
+
+  test("adding or editing it needs the plan", async () => {
+    vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(false);
+
+    const response = await createV3Creative({
+      ...base,
+      body: feedbackButton({ styling: theme({ customCss: CSS }) }),
+    });
+
+    expect(response.status).toBe(403);
+    expect((await readBody(response)).code).toBe("custom_css_plan_required");
+    expect(insertCreativeRecord).not.toHaveBeenCalled();
+  });
+
+  test("removing it, or sending it back unchanged, needs no plan", async () => {
+    const { id } = await created(feedbackButton({ styling: theme({ customCss: CSS }) }));
+    vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(false);
+
+    const unchanged = await patchV3Creative({
+      ...base,
+      creativeId: id,
+      body: patch({ styling: theme({ customCss: CSS, fontWeight: 700 }) }),
+    });
+    const removed = await patchV3Creative({
+      ...base,
+      creativeId: id,
+      body: patch({ styling: theme({ customCss: null }) }),
+    });
+
+    expect(unchanged.status).toBe(200);
+    expect(removed.status).toBe(200);
+    expect((await readBody(removed)).data.styling.theme.customCss).toBeNull();
+  });
+
+  test("CSS the processor can't read answers 422 naming the field, and nothing is written", async () => {
+    const { id } = await created(feedbackButton());
+
+    const response = await patchV3Creative({
+      ...base,
+      creativeId: id,
+      body: patch({ styling: theme({ customCss: { light: "x".repeat(25_000), dark: null } }) }),
+    });
+
+    expect(response.status).toBe(422);
+    expect(await invalidParamNames(response)).toEqual(["styling.theme.customCss"]);
     expect(replaceCreativeRecord).not.toHaveBeenCalled();
   });
 });

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { DEFAULT_CREATIVE_STYLE } from "@formbricks/creatives";
 import { prisma } from "@formbricks/database";
 import { TActionClass } from "@formbricks/types/action-classes";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
@@ -227,6 +228,7 @@ describe("getWorkspaceState", () => {
       id: "creative-1",
       type: "feedbackButton",
       defaultLanguage: "en-US",
+      style: DEFAULT_CREATIVE_STYLE,
       content: { label: { "en-US": "Feedback" }, icon: null },
       position: { desktop: { edge: "right", offset: 50 }, phone: null },
       destination: { type: "link", url: "https://example.com" },

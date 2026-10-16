@@ -45,6 +45,7 @@ vi.mock("@/lib/common/utils", async (importOriginal) => {
     ...actual,
     filterSurveys: vi.fn(),
     getBrowserLanguageCodes: vi.fn(() => []),
+    getPageFont: vi.fn(() => false),
     getStyling: vi.fn(),
     shouldDisplayBasedOnPercentage: vi.fn(),
     wrapThrowsAsync: vi.fn(),
