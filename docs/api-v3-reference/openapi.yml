@@ -10985,9 +10985,11 @@ components:
       enum:
         - surveyNotActive
         - scheduleEnded
+        - destinationMissing
+        - actionMissing
         - null
       description: |
-        Why `displayStatus` differs from what `status` alone would give: `surveyNotActive` on a `paused` creative whose Destination survey isn't active ("Paused with its survey": it comes back by itself when the survey is active again), `scheduleEnded` on a `closed` creative whose `endAt` has passed. `null` otherwise. New values may be added.
+        Why `displayStatus` differs from what `status` alone would give: `surveyNotActive` on a `paused` creative whose Destination survey isn't active ("Paused with its survey": it comes back by itself when the survey is active again), `scheduleEnded` on a `closed` creative whose `endAt` has passed, `destinationMissing` on a `paused` creative that needs a Destination (a feedback button, or a banner with a button) and has none, and `actionMissing` on a `paused` creative that shows on an action and has none. Sites never show a creative paused for either of the last two until it gets what it lacks (see `warnings`). `null` otherwise. New values may be added.
     CreativeLanguage:
       type: object
       description: A language the creative's texts are written in.

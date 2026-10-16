@@ -5,6 +5,7 @@ import { logger } from "@formbricks/logger";
 import { ZShowConditions } from "@formbricks/types/show-conditions";
 import { needsDestination, parseCreativeTypedGroups } from "./creative";
 import { compileCreativeCustomCss } from "./custom-css";
+import { getCreativeDeliveryGap } from "./display-status";
 import { type TWorkspaceStylingInput, getAppliedCustomCssSource, getCreativeStyle } from "./style";
 import { getBannerLabels } from "./visitor-labels";
 
@@ -98,8 +99,13 @@ const toCreativePayload = async (
 
   const destination = getDestination(row, publicDomain);
   const triggers = row.triggers.map(({ actionClass }) => actionClass.name);
-  if (needsDestination(groups) && !destination) return null;
-  if (row.showOn === "action" && triggers.length === 0) return null;
+  const deliveryGap = getCreativeDeliveryGap({
+    needsDestination: needsDestination(groups),
+    hasDestination: destination !== null,
+    showOn: row.showOn,
+    triggerCount: triggers.length,
+  });
+  if (deliveryGap) return null;
 
   const customCssSource = getAppliedCustomCssSource(groups.styling.theme);
   const customCss = customCssSource ? await compileCreativeCustomCss(groups.type, customCssSource) : null;

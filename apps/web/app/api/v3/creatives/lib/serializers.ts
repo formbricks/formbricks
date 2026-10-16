@@ -1,7 +1,11 @@
 import "server-only";
 import type { CreativeDestinationZodType, CreativeResourceZodType } from "@formbricks/api-v3-schemas";
-import { getCreativeWarnings, toCreativeShowConditions } from "@/modules/creatives/lib/creative";
-import { getCreativeDisplayState } from "@/modules/creatives/lib/display-status";
+import {
+  getCreativeWarnings,
+  needsDestination,
+  toCreativeShowConditions,
+} from "@/modules/creatives/lib/creative";
+import { getCreativeDeliveryGap, getCreativeDisplayState } from "@/modules/creatives/lib/display-status";
 import { getDestinationSurveyIssue, toCreativeState } from "@/modules/creatives/lib/record";
 import type { TCreativeRecord } from "@/modules/creatives/lib/repository";
 
@@ -37,6 +41,12 @@ export const serializeV3Creative = (record: TCreativeRecord, now: Date): TV3Crea
       destinationSurvey: record.survey
         ? { status: record.survey.status, archivedAt: record.survey.archivedAt }
         : null,
+      deliveryGap: getCreativeDeliveryGap({
+        needsDestination: needsDestination(state),
+        hasDestination: state.destination !== null,
+        showOn: state.distribution.showOn,
+        triggerCount: state.distribution.triggers.length,
+      }),
     },
     now
   );

@@ -20,6 +20,7 @@ const live: TCreativeStatusInput = {
   startAt: null,
   endAt: null,
   destinationSurvey: ACTIVE_SURVEY,
+  deliveryGap: null,
 };
 
 export type TDisplayStatusCase = {
@@ -142,5 +143,45 @@ export const DISPLAY_STATUS_CASES: readonly TDisplayStatusCase[] = [
     name: "an archived survey still marked in progress pauses it with the reason",
     input: { ...live, destinationSurvey: { status: "inProgress", archivedAt: hoursFromNow(-2) } },
     expected: { status: "paused", reason: "surveyNotActive" },
+  },
+  // What the SDK is never sent (`toCreativePayloads`) reads Paused, never Active (review fix C3).
+  {
+    name: "a published creative with nothing to open is paused with the reason",
+    input: { ...live, destinationSurvey: null, deliveryGap: "destinationMissing" },
+    expected: { status: "paused", reason: "destinationMissing" },
+  },
+  {
+    name: "a published creative shown on an action it has none of is paused with the reason",
+    input: { ...live, deliveryGap: "actionMissing" },
+    expected: { status: "paused", reason: "actionMissing" },
+  },
+  {
+    name: "a draft with nothing to open is still a draft",
+    input: { ...live, status: "draft", destinationSurvey: null, deliveryGap: "destinationMissing" },
+    expected: { status: "draft", reason: null },
+  },
+  {
+    name: "the author's pause outranks a missing Destination, and keeps no reason",
+    input: { ...live, status: "paused", destinationSurvey: null, deliveryGap: "destinationMissing" },
+    expected: { status: "paused", reason: null },
+  },
+  {
+    name: "an ended schedule outranks a missing action",
+    input: { ...live, endAt: hoursFromNow(-1), deliveryGap: "actionMissing" },
+    expected: { status: "closed", reason: "scheduleEnded" },
+  },
+  {
+    name: "a missing action outranks a future start: it would never show",
+    input: { ...live, startAt: hoursFromNow(1), deliveryGap: "actionMissing" },
+    expected: { status: "paused", reason: "actionMissing" },
+  },
+  {
+    name: "a missing action outranks a paused survey: the creative's own fix comes first",
+    input: {
+      ...live,
+      destinationSurvey: { status: "paused", archivedAt: null },
+      deliveryGap: "actionMissing",
+    },
+    expected: { status: "paused", reason: "actionMissing" },
   },
 ];

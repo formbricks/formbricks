@@ -2460,6 +2460,8 @@
       "no_matches": "No creatives match these filters.",
       "restore": "Restore",
       "search_placeholder": "Search creatives",
+      "status_reason_action_missing": "Paused: it shows when an action fires, and it has no action. Pick one on its Settings tab to show it again.",
+      "status_reason_destination_missing": "Paused: it has nothing to open. Pick a survey or a link on its Content tab to show it again.",
       "status_reason_schedule_ended": "Its schedule has ended",
       "status_reason_survey_not_active": "Paused with its survey, which isn't active. It comes back by itself when the survey is active again.",
       "summary": {

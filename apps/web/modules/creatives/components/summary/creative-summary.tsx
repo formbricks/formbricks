@@ -105,6 +105,8 @@ export const CreativeSummary = ({
     closed: t("workspace.creatives.summary.toast_closed"),
     scheduleEnded: t("workspace.creatives.summary.toast_kept_closed"),
     surveyNotActive: t("workspace.creatives.summary.toast_waiting_for_survey"),
+    destinationMissing: t("workspace.creatives.status_reason_destination_missing"),
+    actionMissing: t("workspace.creatives.status_reason_action_missing"),
   };
 
   const changeStatus = (status: TSummaryStatus) =>

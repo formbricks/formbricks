@@ -34,6 +34,8 @@ const showsWithActiveSurvey = (creative: TSurveyLinkedCreative, now: Date): bool
       startAt: toDate(creative.schedule.startAt),
       endAt: toDate(creative.schedule.endAt),
       destinationSurvey: ACTIVE_SURVEY,
+      // A linked creative has its Destination; an action it lacks is what the server reported.
+      deliveryGap: creative.displayStatusReason === "actionMissing" ? "actionMissing" : null,
     },
     now
   );
