@@ -430,10 +430,10 @@ an existing installation, so add it yourself if you want it.
 
 <Warning>
   These labels need Traefik v3.6.15 or later. Before that version, the buffering middleware turns the empty
-  redirects that sign-in and SSO callbacks answer with into `500` errors, so nobody can sign in; Traefik v2.7 also
-  lets paths such as `/x/../api/auth/...` skip the cap. Check the `image: traefik:` line in
-  `formbricks/docker-compose.yml` and upgrade Traefik first (new installations use v3.6.25). From Traefik v2, follow
-  the [v2 to v3 migration guide](https://doc.traefik.io/traefik/migration/v2-to-v3/).
+  redirects that sign-in and SSO callbacks answer with into errors (a `500` or a timeout), so nobody can sign in;
+  Traefik v2.7 also lets paths such as `/x/../api/auth/...` skip the cap. Check the `image: traefik:` line in
+  `formbricks/docker-compose.yml` and upgrade Traefik first (new installations use v3.6.25). From Traefik v2,
+  follow the [v2 to v3 migration guide](https://doc.traefik.io/traefik/migration/v2-to-v3/).
 </Warning>
 
 Since v3.6.7, Traefik accepts encoded characters such as `%2F` in request paths, which would let a request reach

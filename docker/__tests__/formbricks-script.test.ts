@@ -1424,11 +1424,22 @@ describe("docker/formbricks.sh Traefik label injection", () => {
       middlewares?: string[];
       tls?: { certResolver?: string };
     };
+    type EntryPoint = {
+      http: EntryPointHttp;
+      transport: { respondingTimeouts: { readTimeout: string } };
+    };
     const config = load(readFileSync(configPath, "utf8")) as {
-      entryPoints: { web: { http: EntryPointHttp }; websecure: { http: EntryPointHttp } };
+      entryPoints: { web: EntryPoint; websecure: EntryPoint };
+      providers: { docker: { exposedByDefault: boolean }; file: { directory: string } };
       certificatesResolvers?: { default: { acme: { email: string } } };
     };
     const { web, websecure } = config.entryPoints;
+
+    // The read timeout is what bounds how long a slow sender can hold the auth routers' buffer.
+    expect(web.transport.respondingTimeouts.readTimeout).toBe("60s");
+    expect(websecure.transport.respondingTimeouts.readTimeout).toBe("60s");
+    expect(config.providers.docker.exposedByDefault).toBe(false);
+    expect(config.providers.file.directory).toBe("/");
 
     // Traefik refused all seven by default until v3.6.7; the installer keeps refusing them on both entry points.
     for (const entryPoint of [web.http, websecure.http]) {
