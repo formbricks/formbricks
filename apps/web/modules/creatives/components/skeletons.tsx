@@ -7,18 +7,6 @@ const Bone = ({ className }: Readonly<{ className?: string }>) => (
   <div className={cn("animate-pulse rounded-md bg-slate-200", className)} />
 );
 
-const HeaderSkeleton = ({ withActions = true }: Readonly<{ withActions?: boolean }>) => (
-  <div className="flex items-center justify-between border-b border-slate-200 pb-4">
-    <Bone className="h-9 w-44" />
-    {withActions && (
-      <div className="flex gap-2">
-        <Bone className="h-8 w-24 rounded-full" />
-        <Bone className="h-8 w-32" />
-      </div>
-    )}
-  </div>
-);
-
 const PanelSkeleton = ({ rows }: Readonly<{ rows: number }>) => (
   <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
     <Bone className="h-4 w-24" />
@@ -86,20 +74,64 @@ export const CreativeEditorSkeleton = () => (
   </div>
 );
 
-export const CreativeSummarySkeleton = () => (
-  <div className="space-y-6 p-6">
-    <HeaderSkeleton />
+/**
+ * Mirrors `CreativeSummaryStats`: the three KPI cards, the daily chart and the by-page table. The page
+ * shows it while a creative's first counts load; the route skeleton below wraps it with the header.
+ */
+export const CreativeSummaryStatsSkeleton = () => (
+  <div className="space-y-6">
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       {Array.from({ length: 3 }, (_, index) => (
-        <div key={index} className="space-y-3 rounded-xl border border-slate-200 bg-white p-5">
-          <Bone className="h-3 w-24" />
-          <Bone className="h-8 w-28" />
+        <div key={index} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4">
+          <Bone className="h-4 w-24" />
+          <Bone className="h-7 w-16" />
         </div>
       ))}
     </div>
-    <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-      <Bone className="h-80 rounded-xl" />
-      <Bone className="h-80 rounded-xl" />
+    <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
+      <Bone className="h-4 w-24" />
+      <Bone className="h-64 w-full" />
     </div>
+    <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
+      <div className="flex justify-between gap-4">
+        <Bone className="h-4 w-20" />
+        <Bone className="h-3 w-48" />
+      </div>
+      {Array.from({ length: 5 }, (_, index) => (
+        <div key={index} className="flex items-center gap-4">
+          <Bone className="h-4 flex-1" />
+          <Bone className="h-4 w-14" />
+          <Bone className="h-4 w-10" />
+          <Bone className="h-4 w-12" />
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+/**
+ * Mirrors `CreativeSummary`: the survey summary's header (title, status dropdown and icon bar, then the
+ * facts row where a survey has its tabs), the range picker with the freshness note, and the stats.
+ */
+export const CreativeSummarySkeleton = () => (
+  <div className="space-y-6 p-6">
+    <div className="border-b border-slate-200">
+      <div className="flex items-center justify-between gap-x-4 pb-4">
+        <Bone className="h-9 w-56" />
+        <div className="flex gap-x-1.5">
+          <Bone className="h-9 w-[170px] md:w-[200px]" />
+          <Bone className="h-9 w-[74px]" />
+        </div>
+      </div>
+      <div className="flex gap-x-5 pb-4">
+        <Bone className="h-5 w-32" />
+        <Bone className="h-5 w-44" />
+      </div>
+    </div>
+    <div className="flex items-center justify-between gap-3">
+      <Bone className="h-[38px] w-60" />
+      <Bone className="h-3 w-48" />
+    </div>
+    <CreativeSummaryStatsSkeleton />
   </div>
 );

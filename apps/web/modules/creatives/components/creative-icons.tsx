@@ -11,6 +11,12 @@ import {
 import { useTranslation } from "react-i18next";
 import type { TCreativeIcon, TCreativeType } from "../types";
 
+/**
+ * `CreativeTypeIndicator` still takes the mock's type names, which the editor's preview speaks; the list
+ * and the summary map the API's names through this.
+ */
+export const INDICATOR_TYPES = { feedbackButton: "feedback_button", banner: "banner" } as const;
+
 export const CREATIVE_TYPE_ICONS: Record<TCreativeType, LucideIcon> = {
   feedback_button: MessageSquareIcon,
   banner: PanelTopIcon,
