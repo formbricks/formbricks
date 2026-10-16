@@ -4,6 +4,12 @@ import type { TCreativeEditorForm } from "./editor-form";
 import { toPreviewView } from "./preview-view";
 
 const schedule = { startAt: null, endAt: null };
+const distribution = {
+  showOn: "pageView" as const,
+  actionClassIds: [],
+  conditions: null,
+  displayPercentage: null,
+};
 const theme = {
   customStyles: false,
   backgroundColor: null,
@@ -33,6 +39,7 @@ const bannerForm = (content: Partial<Extract<TCreativeEditorForm["content"], { t
       position: { desktop: { placement: "top", layout: "inPage" }, phone: null },
       theme,
     },
+    distribution,
     schedule,
   }) satisfies TCreativeEditorForm;
 
@@ -47,6 +54,7 @@ describe("preview view", () => {
         position: { desktop: { edge: "right", offset: 60 }, phone: { edge: "bottom", offset: 90 } },
         theme: { ...theme, borderRadius: null },
       },
+      distribution,
       schedule,
     };
 

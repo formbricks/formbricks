@@ -1,12 +1,22 @@
-import type { TShowConditionGroup } from "@formbricks/types/show-conditions";
+import {
+  type TShowConditionsContext,
+  evaluateShowConditions,
+} from "@formbricks/types/show-conditions-evaluate";
 import type { TCreativePayload, TCreativeText, TCreativeView } from "./types";
 
-/** What `resolve` knows about the page it decides for. Later tickets widen it (language, device…). */
+/** What `resolve` knows about the page it decides for. Later tickets widen it (language…). */
 export interface TCreativePage {
   /** Now, in epoch ms, on the server's clock: the device clock plus `getClockOffset`. */
   now: number;
   /** Actions tracked on this page, for creatives shown when an action fires. */
   firedActions?: ReadonlySet<string>;
+  /**
+   * The page, visit and device Show when is checked against, with the evaluator surveys use (ADR 0007).
+   * Its device type is the SDK's device detection, never the 768 px phone breakpoint. Without it, a
+   * creative that has conditions never shows: showing it on pages its conditions exclude would be worse
+   * than not showing it.
+   */
+  showConditionsContext?: TShowConditionsContext;
 }
 
 export interface TResolveInput {
@@ -16,11 +26,6 @@ export interface TResolveInput {
   page: TCreativePage;
   /** This visitor's share-of-visitors roll for a creative, in [0, 100) (see `createShareRolls`). */
   getShareRoll: (creativeId: string) => number;
-  /**
-   * Evaluates Show when. Without one, a creative that has conditions never shows: showing it on pages
-   * its conditions exclude would be worse than not showing it.
-   */
-  passesConditions?: (conditions: TShowConditionGroup) => boolean;
 }
 
 export interface TResolveResult {
@@ -68,13 +73,7 @@ const toTime = (iso: string | null): number | null => (iso === null ? null : Dat
  * the SDK calls it on every page view, action, schedule boundary and state refresh, and the editor
  * preview can call it with a page of its own.
  */
-export const resolve = ({
-  creatives,
-  surveys,
-  page,
-  getShareRoll,
-  passesConditions,
-}: TResolveInput): TResolveResult => {
+export const resolve = ({ creatives, surveys, page, getShareRoll }: TResolveInput): TResolveResult => {
   const surveyIds = new Set(surveys.map(({ id }) => id));
   const shown: TCreativeView[] = [];
   let nextChangeAt: number | null = null;
@@ -105,7 +104,11 @@ export const resolve = ({
       continue;
     }
 
-    if (creative.conditions && !passesConditions?.(creative.conditions)) continue;
+    // Show when applies to the whole creative, whatever shows it (a page view or an action).
+    const context = page.showConditionsContext;
+    if (creative.conditions && !(context && evaluateShowConditions(creative.conditions, context).passed)) {
+      continue;
+    }
 
     const view = toView(creative);
     if (!view) continue;

@@ -5,14 +5,12 @@ import {
   type CreativeWarningZodType,
   type FeedbackButtonContentZodType,
   type FeedbackButtonStylingZodType,
-  type ShowConditionGroupZodType,
   zBannerContent,
   zBannerStyling,
   zFeedbackButtonContent,
   zFeedbackButtonStyling,
 } from "@formbricks/api-v3-schemas";
-import type { TShowConditionSingle, TShowConditions } from "@formbricks/types/show-conditions";
-import { isShowConditionGroup } from "@formbricks/types/show-conditions-evaluate";
+import type { TShowConditions } from "@formbricks/types/show-conditions";
 import type { TCreativeStatus } from "./display-status";
 
 /**
@@ -102,28 +100,7 @@ export const DEFAULT_CREATIVE_DISTRIBUTION: TCreativeDistribution = {
   displayPercentage: null,
 };
 
-export type TCreativeShowConditions = ShowConditionGroupZodType | null;
-
-/**
- * Show when in the contract's two-level shape, which is also how it is stored. `ZShowConditions` allows
- * no deeper nesting, so the filter below only narrows the type; it drops nothing a valid value holds.
- */
-export const toCreativeShowConditions = (conditions: TShowConditions): TCreativeShowConditions =>
-  conditions && {
-    id: conditions.id,
-    connector: conditions.connector,
-    conditions: conditions.conditions.map((item) =>
-      isShowConditionGroup(item)
-        ? {
-            id: item.id,
-            connector: item.connector,
-            conditions: item.conditions.filter(
-              (nested): nested is TShowConditionSingle => !isShowConditionGroup(nested)
-            ),
-          }
-        : item
-    ),
-  };
+export { type TCreativeShowConditions, toCreativeShowConditions } from "./creative-show-conditions";
 
 /** A feedback button always opens something; a banner only when it has a button. */
 export const needsDestination = (groups: TCreativeTypedGroups): boolean =>
