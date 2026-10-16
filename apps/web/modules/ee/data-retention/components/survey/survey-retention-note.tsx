@@ -34,10 +34,10 @@ const SurveyRetentionNoteContent = ({
   const exemptLines = getSurveyRetentionExemptLines(retention, t, formatDate);
 
   // Both are statuses, not alerts: they are there on load, not news that should interrupt a screen reader.
+  // Both wrap instead of the small alert's truncation, so exemption lines and the due date stay readable.
   return (
     <div className="mb-4 space-y-2">
       <Alert variant="info" size="small" role="status">
-        {/* Wraps instead of the small alert's truncation, so the exemption lines at the end stay readable. */}
         <AlertDescription className="whitespace-normal">
           {[t("workspace.settings.data_retention.survey_note"), ...exemptLines].join(" ")}
         </AlertDescription>
@@ -49,7 +49,7 @@ const SurveyRetentionNoteContent = ({
       </Alert>
       {warning ? (
         <Alert variant="warning" size="small" role="status">
-          <AlertDescription>{warning}</AlertDescription>
+          <AlertDescription className="whitespace-normal">{warning}</AlertDescription>
         </Alert>
       ) : null}
     </div>
