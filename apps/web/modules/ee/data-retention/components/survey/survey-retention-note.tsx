@@ -37,7 +37,8 @@ const SurveyRetentionNoteContent = ({
   return (
     <div className="mb-4 space-y-2">
       <Alert variant="info" size="small" role="status">
-        <AlertDescription>
+        {/* Wraps instead of the small alert's truncation, so the exemption lines at the end stay readable. */}
+        <AlertDescription className="whitespace-normal">
           {[t("workspace.settings.data_retention.survey_note"), ...exemptLines].join(" ")}
         </AlertDescription>
         <AlertButton asChild>
