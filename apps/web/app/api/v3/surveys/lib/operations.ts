@@ -26,6 +26,7 @@ import {
   problemBadRequest,
   problemConflict,
   problemForbidden,
+  problemSurveyHasLinkedCreatives,
   problemUnprocessableContent,
   problemWorkspaceSurveyLimit,
   successListResponse,
@@ -39,6 +40,10 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { WorkspaceSurveyLimitError } from "@/lib/survey/visibility/limit";
 import { isAwaitingProjection } from "@/lib/survey/visibility/policy";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
+import {
+  SurveyLinkedCreativesError,
+  toUnlinkedCreativeAuditEvents,
+} from "@/modules/creatives/lib/linked-creatives";
 import { type TCustomCssPreview, previewCustomCss } from "@/modules/custom-css/lib/service";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
 import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/lib/survey";
@@ -657,10 +662,29 @@ export async function deleteV3Survey({
       auditLog.oldObject = survey;
     }
 
-    await deleteSurvey(surveyId);
+    await deleteSurvey(surveyId, {
+      // The archived creatives the delete unlinked: one event each, by the same caller (T6).
+      onCreativesUnlinked: async (creatives, { organizationId }) => {
+        if (!auditLog) return;
+        for (const event of toUnlinkedCreativeAuditEvents(
+          { ...auditLog, organizationId },
+          surveyId,
+          creatives
+        )) {
+          await queueV3AuditLog(event, requestId, log);
+        }
+      },
+    });
 
     return noContentResponse({ requestId });
   } catch (error) {
+    if (error instanceof SurveyLinkedCreativesError) {
+      log.warn(
+        { statusCode: 409, creativeCount: error.creatives.length },
+        "Survey delete blocked by creatives"
+      );
+      return problemSurveyHasLinkedCreatives(requestId, error.creatives, instance);
+    }
     return mapV3ThrownError(error, { log, requestId, instance, operation: "surveys.delete" });
   }
 }

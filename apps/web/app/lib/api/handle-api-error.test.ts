@@ -12,6 +12,7 @@ import {
   UnknownError,
   ValidationError,
 } from "@formbricks/types/errors";
+import { SurveyLinkedCreativesError } from "@/modules/creatives/lib/linked-creatives";
 import { GENERIC_API_ERROR_MESSAGE, handleApiError } from "./handle-api-error";
 
 const CORS_HEADER = "Access-Control-Allow-Origin";
@@ -78,6 +79,21 @@ describe("handleApiError", () => {
       const body = await result.response.json();
       expect(body.code).toBe("conflict");
       expect(body.message).toBe("already exists");
+    });
+
+    test("SurveyLinkedCreativesError -> 409 naming the creatives that open the survey", async () => {
+      const result = handleApiError(
+        new SurveyLinkedCreativesError("delete", [{ id: "clcr1234567890123456789012", name: "Feedback tab" }])
+      );
+
+      expect(result.response.status).toBe(409);
+      expect(result.error).toBeUndefined();
+
+      const body = await result.response.json();
+      expect(body.code).toBe("conflict");
+      expect(body.message).toBe(
+        `This survey can't be deleted while creatives open this survey: "Feedback tab" (clcr1234567890123456789012). Relink, archive or delete them first.`
+      );
     });
 
     test("ResourceNotFoundError -> 404 with resource details", async () => {
