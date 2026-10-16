@@ -295,6 +295,41 @@ migrate_legacy_valkey_image "$2"`,
   return validationLogPath;
 };
 
+const bindFormbricksPortToLoopback = (
+  composePath: string,
+  mode: "install" | "update",
+  validationResult: "success" | "failure" = "success"
+): string => {
+  const validationLogPath = join(createTempDir(), "validation.log");
+
+  execFileSync(
+    "bash",
+    [
+      "-lc",
+      `source "$1"
+sudo() {
+  printf '%s\\n' "$*" >> "$VALIDATION_LOG_PATH"
+  [[ "$VALIDATION_RESULT" == "success" ]]
+}
+bind_formbricks_port_to_loopback "$2" "$3"`,
+      "bash",
+      formbricksScriptPath,
+      composePath,
+      mode === "update" ? "validate" : "",
+    ],
+    {
+      encoding: "utf8",
+      env: { ...process.env, VALIDATION_LOG_PATH: validationLogPath, VALIDATION_RESULT: validationResult },
+    }
+  );
+
+  return validationLogPath;
+};
+
+const getPublishedPorts = (composeContents: string, serviceName: string): string[] =>
+  (load(composeContents) as { services: Record<string, { ports?: string[] }> }).services[serviceName]
+    ?.ports ?? [];
+
 const getServiceBlock = (composeContents: string, serviceName: string): string => {
   const lines = composeContents.split("\n");
   const startIndex = lines.findIndex((line) => line === `  ${serviceName}:`);
@@ -991,6 +1026,7 @@ describe("docker/formbricks.sh AuthZed setup", () => {
         "docker compose --profile authzed-ops run --rm --no-deps authzed-ops upgrade check",
         ...(checkExitCode === 0
           ? [
+              "docker version --format {{.Server.Version}}",
               "docker compose down",
               "docker compose up -d --wait postgres",
               "docker compose run --rm --no-deps formbricks-migrate",
@@ -1120,6 +1156,330 @@ volumes:
     expect(readFileSync(composePath, "utf8")).toBe(legacyCompose);
     expect(readFileSync(`${composePath}.before-valkey-8.1.9`, "utf8")).toBe(legacyCompose);
     expect(existsSync(`${composePath}.tmp`)).toBe(false);
+  });
+});
+
+describe("docker/formbricks.sh loopback-only app port (ENG-3983)", () => {
+  test("binds the formbricks service's published port to loopback and leaves the rest of the file alone", () => {
+    const composePath = writeDockerComposeTemplate();
+    const originalCompose = readFileSync(composePath, "utf8");
+    expect(getPublishedPorts(originalCompose, "formbricks")).toEqual(["3000:3000"]);
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    const updatedCompose = readFileSync(composePath, "utf8");
+    expect(getPublishedPorts(updatedCompose, "formbricks")).toEqual(["127.0.0.1:3000:3000"]);
+    expect(updatedCompose).toContain('      - "127.0.0.1:3000:3000"\n');
+    expect(updatedCompose.replace('"127.0.0.1:3000:3000"', "3000:3000")).toBe(originalCompose);
+    expect(existsSync(`${composePath}.before-loopback-port`)).toBe(false);
+  });
+
+  test.each([
+    ['"3000:3000"', '"127.0.0.1:3000:3000"'],
+    ["'3000:3000'", "'127.0.0.1:3000:3000'"],
+    ["3000:3000/tcp", '"127.0.0.1:3000:3000/tcp"'],
+  ])("rewrites %s, quoted as Compose recommends", (mapping, expected) => {
+    const composePath = writeDockerComposeTemplate();
+    writeFileSync(composePath, readFileSync(composePath, "utf8").replace("- 3000:3000", `- ${mapping}`));
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    expect(readFileSync(composePath, "utf8")).toContain(`      - ${expected}\n`);
+  });
+
+  test.each(["127.0.0.1:3000:3000", "0.0.0.0:3000:3000", "8080:3000", "10.0.0.5:3000:3000"])(
+    "leaves an operator's %s mapping untouched",
+    (mapping) => {
+      const composePath = writeDockerComposeTemplate();
+      const customCompose = readFileSync(composePath, "utf8").replace("- 3000:3000", `- ${mapping}`);
+      writeFileSync(composePath, customCompose);
+
+      const validationLogPath = bindFormbricksPortToLoopback(composePath, "update");
+
+      expect(readFileSync(composePath, "utf8")).toBe(customCompose);
+      expect(existsSync(`${composePath}.before-loopback-port`)).toBe(false);
+      expect(existsSync(validationLogPath)).toBe(false);
+    }
+  );
+
+  test("only touches the formbricks service, with any indentation", () => {
+    const tempDir = createTempDir();
+    const composePath = join(tempDir, "docker-compose.yml");
+    writeFileSync(
+      composePath,
+      `services:
+    other:
+        image: example
+        ports:
+            - 3000:3000
+    formbricks:
+        image: ghcr.io/formbricks/formbricks:latest
+        ports:
+            - 3000:3000
+        environment:
+            WEBAPP_URL: http://localhost:3000
+`
+    );
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    const updatedCompose = readFileSync(composePath, "utf8");
+    expect(getPublishedPorts(updatedCompose, "formbricks")).toEqual(["127.0.0.1:3000:3000"]);
+    expect(getPublishedPorts(updatedCompose, "other")).toEqual(["3000:3000"]);
+  });
+
+  test("on update, keeps a backup with the file's mode and validates the result", () => {
+    const composePath = writeDockerComposeTemplate();
+    const originalCompose = readFileSync(composePath, "utf8");
+    chmodSync(composePath, 0o600);
+
+    const validationLogPath = bindFormbricksPortToLoopback(composePath, "update");
+
+    expect(getPublishedPorts(readFileSync(composePath, "utf8"), "formbricks")).toEqual([
+      "127.0.0.1:3000:3000",
+    ]);
+    expect(readFileSync(`${composePath}.before-loopback-port`, "utf8")).toBe(originalCompose);
+    expect(statSync(composePath).mode & 0o777).toBe(0o600);
+    expect(statSync(`${composePath}.before-loopback-port`).mode & 0o777).toBe(0o600);
+    expect(readFileSync(validationLogPath, "utf8")).toBe(`docker compose -f ${composePath} config\n`);
+  });
+
+  test("on update, restores the original when the result does not validate", () => {
+    const composePath = writeDockerComposeTemplate();
+    const originalCompose = readFileSync(composePath, "utf8");
+
+    expect(() => bindFormbricksPortToLoopback(composePath, "update", "failure")).toThrow();
+
+    expect(readFileSync(composePath, "utf8")).toBe(originalCompose);
+    expect(existsSync(`${composePath}.tmp`)).toBe(false);
+  });
+
+  const runUpdate = ({
+    failPortValidation = false,
+    failUpgradeCheck = false,
+    withOverride = false,
+    engineVersion = "",
+  }: {
+    failPortValidation?: boolean;
+    failUpgradeCheck?: boolean;
+    withOverride?: boolean;
+    engineVersion?: string;
+  } = {}) => {
+    const tempDir = createTempDir();
+    const installationDir = join(tempDir, "formbricks");
+    const binDir = join(tempDir, "bin");
+    const commandLog = join(tempDir, "commands.log");
+    const composePath = join(installationDir, "docker-compose.yml");
+    const composeContents = `services:
+  authzed-ops:
+  spicedb:
+  hub-worker:
+  formbricks:
+    image: ghcr.io/formbricks/formbricks:latest
+    ports:
+      - 3000:3000
+`;
+    mkdirSync(installationDir, { recursive: true });
+    mkdirSync(binDir, { recursive: true });
+    writeFileSync(composePath, composeContents);
+    if (withOverride) writeFileSync(join(installationDir, "docker-compose.override.yml"), "services: {}\n");
+    writeFileSync(join(installationDir, ".env"), "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true\n");
+    writeFileSync(
+      join(binDir, "sudo"),
+      `#!/bin/sh
+printf "%s\\n" "$*" >> "$COMMAND_LOG"
+case "$*" in
+  *"config --services") printf "authzed-ops\\nspicedb\\nhub-worker\\nformbricks\\n" ;;
+  *"-f docker-compose.yml"*" config") [ "$FAIL_PORT_VALIDATION" = "1" ] && exit 1 ;;
+  *"upgrade check") [ "$FAIL_UPGRADE_CHECK" = "1" ] && exit 1 ;;
+  *"docker version"*) [ -n "$ENGINE_VERSION" ] && printf "%s\\n" "$ENGINE_VERSION" ;;
+esac
+exit 0
+`,
+      { mode: 0o700 }
+    );
+
+    const result = spawnSync("bash", ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath], {
+      cwd: tempDir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        COMMAND_LOG: commandLog,
+        FAIL_PORT_VALIDATION: failPortValidation ? "1" : "0",
+        FAIL_UPGRADE_CHECK: failUpgradeCheck ? "1" : "0",
+        ENGINE_VERSION: engineVersion,
+        PATH: `${binDir}:${process.env.PATH ?? ""}`,
+      },
+    });
+
+    return { result, composePath, composeContents, commands: readFileSync(commandLog, "utf8") };
+  };
+
+  test("the updater narrows an existing install's port after its last gate, before stopping the stack", () => {
+    const { result, composePath, composeContents, commands } = runUpdate();
+
+    expect(result.status).toBe(0);
+    expect(getPublishedPorts(readFileSync(composePath, "utf8"), "formbricks")).toEqual([
+      "127.0.0.1:3000:3000",
+    ]);
+    expect(readFileSync(`${composePath}.before-loopback-port`, "utf8")).toBe(composeContents);
+    const validation = commands.indexOf("docker compose -f docker-compose.yml config");
+    expect(validation).toBeGreaterThan(commands.indexOf("upgrade check"));
+    expect(validation).toBeLessThan(commands.indexOf("docker compose down"));
+  });
+
+  test("a gate that stops the update leaves the port and the file untouched", () => {
+    const { result, composePath, composeContents, commands } = runUpdate({ failUpgradeCheck: true });
+
+    expect(result.status).not.toBe(0);
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(existsSync(`${composePath}.before-loopback-port`)).toBe(false);
+    expect(commands).not.toContain("-f docker-compose.yml config");
+    expect(result.stdout).not.toContain("127.0.0.1 only");
+  });
+
+  test("the updater restores the file and still updates when the narrowed file does not validate", () => {
+    const { result, composePath, composeContents, commands } = runUpdate({ failPortValidation: true });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain(
+      "Restored docker-compose.yml from docker-compose.yml.before-loopback-port"
+    );
+    expect(result.stdout).toContain("Continuing the update with port 3000 published as before");
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(commands).toContain("docker compose up -d");
+  });
+
+  test("the updater validates the override file too, as `up` loads it", () => {
+    const { commands } = runUpdate({ withOverride: true });
+
+    expect(commands).toContain(
+      "docker compose -f docker-compose.yml -f ./docker-compose.override.yml config"
+    );
+  });
+
+  test.each([
+    ["27.5.1", true],
+    ["28.2.2", true],
+    ["28.3.3", false],
+    ["29.0.1", false],
+  ])("the updater warns about Docker Engine %s: %s", (engineVersion, warns) => {
+    const { result } = runUpdate({ engineVersion });
+
+    expect(result.stdout.includes("Upgrade Docker Engine to 28.3.3 or later")).toBe(warns);
+  });
+
+  test("the installer narrows the port after adding the Traefik labels and before starting anything", () => {
+    const script = readFileSync(formbricksScriptPath, "utf8");
+    const installFunction = script.slice(
+      script.indexOf("install_formbricks()"),
+      script.indexOf("uninstall_formbricks()")
+    );
+    const labels = installFunction.indexOf('add_formbricks_traefik_labels "docker-compose.yml"');
+    const narrowing = installFunction.indexOf('bind_formbricks_port_to_loopback "docker-compose.yml"');
+
+    expect(labels).toBeGreaterThanOrEqual(0);
+    expect(narrowing).toBeGreaterThan(labels);
+    expect(narrowing).toBeLessThan(installFunction.indexOf("docker compose up"));
+  });
+
+  test("a commented service header still scopes the rewrite to the formbricks service", () => {
+    const tempDir = createTempDir();
+    const composePath = join(tempDir, "docker-compose.yml");
+    writeFileSync(
+      composePath,
+      `services:
+  formbricks: # the app
+    ports:
+      - 3000:3000
+  hub: # the hub
+    ports:
+      - 3000:3000
+`
+    );
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    const updatedCompose = readFileSync(composePath, "utf8");
+    expect(getPublishedPorts(updatedCompose, "formbricks")).toEqual(["127.0.0.1:3000:3000"]);
+    expect(getPublishedPorts(updatedCompose, "hub")).toEqual(["3000:3000"]);
+  });
+
+  test("leaves a formbricks key outside the services section alone", () => {
+    const tempDir = createTempDir();
+    const composePath = join(tempDir, "docker-compose.yml");
+    const compose = `services:
+  web:
+    image: example
+volumes:
+  formbricks:
+    ports:
+      - 3000:3000
+`;
+    writeFileSync(composePath, compose);
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    expect(readFileSync(composePath, "utf8")).toBe(compose);
+  });
+
+  test("recognises quoted, anchored and dotted service headers", () => {
+    const tempDir = createTempDir();
+    const composePath = join(tempDir, "docker-compose.yml");
+    writeFileSync(
+      composePath,
+      `services:
+  "formbricks": &app
+    ports:
+      - 3000:3000
+  hub.v2:
+    ports:
+      - 3000:3000
+`
+    );
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    const updated = readFileSync(composePath, "utf8");
+    expect(updated).toContain('  "formbricks": &app\n    ports:\n      - "127.0.0.1:3000:3000"\n');
+    expect(updated).toContain("  hub.v2:\n    ports:\n      - 3000:3000\n");
+  });
+
+  test.each([
+    ["27.5.1", false],
+    ["28.0.0", true],
+    ["28.1.1", true],
+    ["28.2.0", false],
+    ["28.3.2", false],
+    ["28.3.3", true],
+    ["29.1.0-rc.1", true],
+    ["", true],
+    ["unknown", true],
+  ])("docker_engine_isolates_loopback_ports(%s) is %s", (version, isolates) => {
+    const result = spawnSync(
+      "bash",
+      [
+        "-c",
+        'source "$1"; set +e; docker_engine_isolates_loopback_ports "$2"',
+        "bash",
+        formbricksScriptPath,
+        version,
+      ],
+      { encoding: "utf8" }
+    );
+
+    expect(result.status === 0).toBe(isolates);
+  });
+
+  test("is idempotent", () => {
+    const composePath = writeDockerComposeTemplate();
+    bindFormbricksPortToLoopback(composePath, "install");
+    const onceCompose = readFileSync(composePath, "utf8");
+
+    bindFormbricksPortToLoopback(composePath, "update");
+
+    expect(readFileSync(composePath, "utf8")).toBe(onceCompose);
+    expect(existsSync(`${composePath}.before-loopback-port`)).toBe(false);
   });
 });
 

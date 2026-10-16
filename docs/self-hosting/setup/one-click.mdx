@@ -345,6 +345,13 @@ Otherwise it stops the stack, waits for PostgreSQL, completes application migrat
 new stack. A failed migration leaves the stack stopped for recovery; preparation is never run against a live
 installation by the updater.
 
+Once those checks pass, the update also publishes the Formbricks container's port `3000` on `127.0.0.1` only, if
+your `docker-compose.yml` still publishes it on every interface (`- 3000:3000`). Traefik reaches Formbricks over the
+Compose network and keeps serving it on ports `80` and `443`, so outside traffic always passes through Traefik. The
+original file is kept as `docker-compose.yml.before-loopback-port`. A mapping with an address you chose, such as
+`- 0.0.0.0:3000:3000`, is left as it is. On Docker Engine older than 28.3.3, other machines on your local network
+can still reach a port published on `127.0.0.1`, so the update warns you to upgrade Docker.
+
 Starting with v5.4, the updater also recognizes the old amd64-only bundled Valkey digest. It backs up your
 Compose file, replaces only that exact image reference with the native amd64/arm64 digest, and validates the
 result before pulling. An already-updated or custom Valkey image is left unchanged. The named `redis` volume
@@ -425,8 +432,9 @@ For upgrades, restoration, schema changes, and relationship repair, follow the c
 New installations cap request bodies on `/api/auth/*` at 1 MiB in Traefik. An oversized upload to a sign-in or
 OAuth endpoint is refused by Traefik, and a slow one is read in full by Traefik first, so it does not tie up
 Formbricks while it arrives. No legitimate request to these routes comes close to that size. The cap applies to
-requests that go through Traefik, not to ones sent straight to port `3000`. The update command does not add it to
-an existing installation, so add it yourself if you want it.
+requests that go through Traefik, which is every outside request once port `3000` is published on `127.0.0.1` only
+(see [Update](#update)). The update command does not add the cap to an existing installation, so add it yourself
+if you want it.
 
 <Warning>
   These labels need Traefik v3.6.15 or later. Before that version, the buffering middleware turns the empty
