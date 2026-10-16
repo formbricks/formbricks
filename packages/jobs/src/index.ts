@@ -22,12 +22,16 @@ export { processResponsePipelineJob } from "./processors/response-pipeline";
 export { processTestLogJob } from "./processors/test-log";
 export { processWebhookDeliveryJob } from "./processors/webhook-delivery";
 export { processWorkflowRunJob } from "./processors/workflow-run";
+export { openJobsUpgradeQueue } from "./upgrade";
+export type { JobsUpgradeQueue } from "./upgrade";
 export { startJobsRuntime } from "./runtime";
 export type { JobsQueueHandle, RecurringJobHandle } from "./queue";
 export type { TRecurringJobKey } from "./recurring";
 export type { JobsRuntimeHandle, JobsRuntimeOptions } from "./runtime";
 export type { TRecurringBackgroundJobSchedule } from "./schedules";
 export {
+  ZDataRetentionSweepJobData,
+  ZDeletionCleanupDrainJobData,
   ZGlobalScopeJobData,
   ZResponsePipelineEvent,
   ZResponsePipelineJobData,
@@ -41,6 +45,8 @@ export {
   ZWorkflowRunReconcileJobData,
 } from "./types";
 export type {
+  TDataRetentionSweepJobData,
+  TDeletionCleanupDrainJobData,
   TGlobalScopeJobData,
   TResponsePipelineEvent,
   TResponsePipelineJobData,

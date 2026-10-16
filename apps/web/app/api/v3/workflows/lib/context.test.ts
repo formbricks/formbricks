@@ -192,7 +192,12 @@ describe("verifyTriggerSurvey (validates a workflow trigger's referenced survey)
   });
 
   test("flags the trigger's ending-card ids that are missing from the survey", async () => {
-    surveyFindUnique.mockResolvedValue({ endings: [endScreen(endingId1), endScreen(endingId2)] });
+    surveyFindUnique.mockResolvedValue({
+      visibility: "workspace",
+      visibilityVersion: 0,
+      visibilityProjectedVersion: 0,
+      endings: [endScreen(endingId1), endScreen(endingId2)],
+    });
 
     const result = await verify({
       workspaceId: "ws_1",
@@ -208,7 +213,12 @@ describe("verifyTriggerSurvey (validates a workflow trigger's referenced survey)
   });
 
   test("accepts a workflow trigger whose survey and ending cards all exist", async () => {
-    surveyFindUnique.mockResolvedValue({ endings: [endScreen(endingId1)] });
+    surveyFindUnique.mockResolvedValue({
+      visibility: "workspace",
+      visibilityVersion: 0,
+      visibilityProjectedVersion: 0,
+      endings: [endScreen(endingId1)],
+    });
 
     const result = await verify({ workspaceId: "ws_1", surveyId: "s_1", endingCardIds: [endingId1] });
 

@@ -54,9 +54,9 @@ default, and all three services start as part of the baseline `docker compose up
   resolve to the same image. To pin to an immutable reference, set `HUB_IMAGE_REF` in `docker/.env` to either a
   tag (e.g. `:0.3.0`) or a digest (e.g. `@sha256:14db7b3d...`).
 - **Existing production installs**: Pulling new images does not replace an existing `docker-compose.yml`.
-  Merge the release-matched Hub runtime anchor and `hub-worker` service before running `formbricks.sh update`;
-  the updater stops before pulling or restarting when the worker is absent. See the
-  [migration guide](../docs/self-hosting/advanced/migration.mdx#hub-worker-required-for-docker). Also add
+  Merge the release-matched Hub runtime anchor and `hub-worker` service when you can — the updater warns and
+  continues when the worker is absent, and the next major release will require it. See the
+  [migration guide](../docs/self-hosting/advanced/migration.mdx#hub-worker-for-docker). Also add
   `CUBEJS_EXTERNAL_DEFAULT: ${CUBEJS_EXTERNAL_DEFAULT:-false}` to the Cube service's `environment` block when
   upgrading a Compose file that predates that default. The bundled Cube image is now `ghcr.io/formbricks/cube`
   (built from [`cube-image/`](cube-image/README.md)), which has no shell, so replace the whole `cube` service

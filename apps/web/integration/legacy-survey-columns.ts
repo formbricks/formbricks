@@ -6,8 +6,8 @@ import { prisma } from "@formbricks/database";
  * The migrations keep `variables` and `hiddenFields` until Formbricks 7, so on a database built from
  * them this is a no-op. A local integration database copied from a dev schema that once applied the
  * withdrawn ENG-2404 drop lacks them, and reading those columns is the backfills' whole job — so they
- * are restored with the same types and defaults. The Prisma client ignores the columns
- * (`@ignore`), so rows are seeded through raw SQL.
+ * are restored with the same types and defaults. Raw SQL seeds malformed legacy values that the
+ * typed Prisma client deliberately does not accept.
  */
 export const restoreLegacySurveyColumns = (): Promise<unknown> =>
   prisma.$executeRawUnsafe(

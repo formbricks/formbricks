@@ -48,6 +48,7 @@ const getUniqueValues = (values) => [...new Set(values.filter(Boolean))];
 /** @type {import('next').NextConfig} */
 
 const nextConfig = {
+  deploymentId: process.env.FORMBRICKS_DEPLOYMENT_ID || undefined,
   assetPrefix: process.env.ASSET_PREFIX_URL || undefined,
   allowedDevOrigins: process.env.NODE_ENV === "production" ? undefined : LOOPBACK_HOSTS,
   basePath: process.env.BASE_PATH || undefined,

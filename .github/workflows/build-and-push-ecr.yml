@@ -7,6 +7,11 @@ name: Build Cloud Deployment Images
 on:
   workflow_dispatch:
     inputs:
+      rebuild_application:
+        description: "Bypass application build and packaging caches for a repair candidate"
+        required: false
+        type: boolean
+        default: false
       version_override:
         description: "Override version (SemVer only, e.g., 1.2.3). Leave empty to auto-detect from branch."
         required: false
@@ -23,6 +28,11 @@ on:
         type: boolean
   workflow_call:
     inputs:
+      rebuild_application:
+        description: "Bypass application build and packaging caches for a repair candidate"
+        required: false
+        type: boolean
+        default: false
       image_tag:
         description: "Image tag to push (required for workflow_call)"
         required: true
@@ -95,6 +105,9 @@ jobs:
     timeout-minutes: 90
     outputs:
       IMAGE_TAG: ${{ steps.build.outputs.image_tag }}
+      IMAGE_REF: ${{ steps.build.outputs.image_ref }}
+      BUILD_IDENTITY: ${{ steps.build.outputs.build_identity }}
+      DEPOT_BUILD_ID: ${{ steps.build.outputs.depot_build_id }}
       TAGS: ${{ steps.build.outputs.registry_tags }}
     steps:
       - name: Harden the runner (Audit all outbound calls)
@@ -110,6 +123,7 @@ jobs:
         uses: ./.github/actions/build-and-push-docker
         with:
           registry_type: "ecr"
+          rebuild_application: ${{ inputs.rebuild_application }}
           ecr_registry: ${{ env.ECR_REGISTRY }}
           ecr_repository: ${{ env.ECR_REPOSITORY }}
           ecr_region: ${{ env.ECR_REGION }}
@@ -131,3 +145,57 @@ jobs:
           DUMMY_CUBEJS_API_SECRET: ${{ secrets.DUMMY_CUBEJS_API_SECRET }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
+
+  validate:
+    name: Image smoke (${{ matrix.platform }})
+    needs: build-and-push
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-24.04
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/test-release-image
+        with:
+          depot_build_id: ${{ needs.build-and-push.outputs.DEPOT_BUILD_ID }}
+          depot_token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          image_ref: ${{ needs.build-and-push.outputs.IMAGE_REF }}
+          build_identity: ${{ needs.build-and-push.outputs.BUILD_IDENTITY }}
+          registry_type: "ecr"
+          platform: ${{ matrix.platform }}
+
+  promote:
+    name: Promote verified image
+    needs: [build-and-push, validate]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/promote-verified-image
+        with:
+          depot_build_id: ${{ needs.build-and-push.outputs.DEPOT_BUILD_ID }}
+          depot_token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          image_ref: ${{ needs.build-and-push.outputs.IMAGE_REF }}
+          registry_type: "ecr"
+          release_tags: ${{ needs.build-and-push.outputs.TAGS }}
+          ecr_region: ${{ vars.ECR_REGION }}
+          aws_role_arn: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}

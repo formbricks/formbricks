@@ -51,7 +51,7 @@ const afterCursor = (cursor: ResponseScanCursor) => ({
  * paths: a survey-scoped key is bound to the survey it names, whatever answer it sits under, and a flat
  * pre-#8044 key only counts under a current file-upload element.
  *
- * `flatKeysOnly` is for survey delete, whose folder sweep (`deleteSurveyUploadFilesBestEffort`) already
+ * `flatKeysOnly` is for survey delete, whose folder delete (`deleteSurveyUploadFolder`, queued by `enqueueSurveyDeletionCleanups`) already
  * removes every key filed under the survey. It returns only the flat keys the sweep cannot reach, and
  * since those can only match a current upload element, it skips the scan when there is none rather than
  * reading every response for nothing.

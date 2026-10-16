@@ -1215,11 +1215,11 @@ paths:
           description: |-
             Unprocessable Content — the request cannot be processed against stored state. Five cases:
             1. The target survey is archived (soft-deleted) and therefore read-only; restore it before editing. The `invalid_params` entry reports `name: archivedAt` with the reason `This survey is archived. Restore it before editing.`
-            2. The patched document passed schema validation but failed a cross-reference check that requires stored state to detect: an undeclared locale key used in content, a duplicate stable id, an immutable element-id change on a published survey, a dangling logic/jump reference, an invalid media URL, a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters` entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an unsupported person identifier, or an unknown device value. The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`). A patch that newly *introduces* a forward reference — a recall of an answer not yet given, a logic condition reading a later block, or a `requireAnswer` target that is not in a later block — is refused with `code: misordered_reference`; a survey that already contains one stays patchable, only newly created violations are rejected.
+            2. The patched document passed schema validation but failed a cross-reference check that requires stored state to detect: an undeclared locale key used in content, a duplicate stable id, an immutable element-id change on a published survey, a dangling logic/jump reference, an invalid media URL, a `distribution.triggers[].actionClassId` referencing an action class that does not exist in the workspace (discover valid ids via `GET /api/v3/action-classes`), or a `targeting.filters` entry that cannot resolve in the workspace — an unknown contact-attribute key or segment, an unsupported person identifier, or an unknown device value. The `invalid_params` array pinpoints each issue (e.g. `code: invalid_reference` with the offending `identifier`). A patch that newly *introduces* a forward reference — a recall of an answer not yet given, a logic condition reading a later block, or a `requireAnswer` target that is not in a later block — is refused with `code: misordered_reference`; a survey that already contains one stays patchable, only newly created violations are rejected. A patch that newly *introduces* a loop in the conditional logic — jumps, fallbacks and next blocks leading back on themselves, so a respondent could never reach an ending — is refused the same way, reported at the `logic` of each block a new looping step leaves ("Cyclic logic detected in block N"). A survey that already loops stays patchable, and blocks that only lead into a loop are fine.
 
             3. A server-owned field was echoed back with a different value — `code: read_only_field`, with the submitted value in `identifier`. Sending the value `GET` returned is always a no-op.
 
-            4. The *stored* survey no longer satisfies the v3 document contract — `code: stored_survey_invalid`. The reported paths are into the survey, not into the request, so a patch that includes corrected values for those fields is the way out.
+            4. The *stored* survey cannot be read as a v3 document at all — `code: stored_survey_invalid`. The reported paths are into the survey, not into the request; repair it in the editor. A stored survey that reads fine but already fails validation (a missing translation, a dangling recall) stays patchable: only issues a patch newly introduces are refused. The exception is publishing: moving a `draft` out of `draft` still requires a survey that passes, and is refused as `stored_survey_invalid` while it does not.
 
             5. `customCss` could not be processed (a syntax error, the 20 000-byte survey budget, a complexity limit). `invalid_params` names `customCss.light` / `customCss.dark`; `details.errors` carries the processor's located errors. Nothing is written, so the saved CSS stays in effect.
           content:
@@ -1412,7 +1412,7 @@ paths:
           description: |
             The request is well-formed but could not be applied. `invalid_params[].name` points at the operation that failed — `ops.<i>.…` — including for problems found while validating the resulting document. The one exception is a block the request did not touch: those are reported at `blocks.<i>`, where `<i>` is the block's index in the stored survey — the same index `GET` returns, even when an earlier operation inserted or removed blocks before it — because the problem is in the stored survey rather than in any operation. A `stored_survey_invalid` response uses stored-survey paths throughout for the same reason.
 
-            Common codes: `dangling_reference` (an id that is not on the survey), `duplicate_identifier` (inserting an id that already exists), `missing_required_field` (an inserted block whose `id` is present but empty — omitting `id` entirely is fine, the server generates one), `immutable_identifier` (`block.id` contradicting the op's `id`), and `stored_survey_invalid` when the stored survey itself fails the document contract.
+            Common codes: `dangling_reference` (an id that is not on the survey), `duplicate_identifier` (inserting an id that already exists), `missing_required_field` (an inserted block whose `id` is present but empty — omitting `id` entirely is fine, the server generates one), `immutable_identifier` (`block.id` contradicting the op's `id`), and `stored_survey_invalid` when the stored survey itself fails the document contract. The edit is also refused when it newly *introduces* a loop in the conditional logic — jumps, fallbacks and next blocks leading back on themselves, so a respondent could never reach an ending — reported at the `logic` of each block a new looping step leaves. A survey that already loops stays editable.
           content:
             application/problem+json:
               schema:
@@ -1535,7 +1535,7 @@ paths:
           description: |
             The request is well-formed but could not be applied. Three distinct cases share this status; switch on the Problem-level `code`.
 
-            `unprocessable_content` — the order is not a permutation of the survey's blocks. Unknown ids (`dangling_reference`), repeated ids (`duplicate_identifier`) and omitted blocks (`missing_required_field`, reported at `order`) are returned together, capped at 50 with a final entry saying how many were left out. Also used when the new order would *introduce* a forward reference — a recall of an answer not yet given, or a logic condition reading a later block — reported as `misordered_reference` at the stored-document path. An order that already contains such a reference stays reorderable; only newly created ones are refused.
+            `unprocessable_content` — the order is not a permutation of the survey's blocks. Unknown ids (`dangling_reference`), repeated ids (`duplicate_identifier`) and omitted blocks (`missing_required_field`, reported at `order`) are returned together, capped at 50 with a final entry saying how many were left out. Also used when the new order would *introduce* a forward reference — a recall of an answer not yet given, or a logic condition reading a later block — reported as `misordered_reference` at the stored-document path. An order that already contains such a reference stays reorderable; only newly created ones are refused. Likewise when the new order would *introduce* a loop in the conditional logic — a jump that now points back at a block whose next step leads to it again, so a respondent could never reach an ending — reported at the `logic` of each block a new looping step leaves. Moving a block in front of an existing loop is fine; reordering blocks inside one changes the loop and is refused.
 
             `stored_survey_invalid` — the stored survey cannot be reordered by id: it is a legacy question-based survey, exposes no v3 block list, or a block id occurs more than once. The request was not evaluated; `invalid_params[].name` points into the stored survey.
 
@@ -2592,7 +2592,7 @@ paths:
 
         **It scope-filters rather than rejecting.** Ids belonging to another workspace, and ids that no longer exist, are ignored; the ids in the caller's own workspace are deleted and `deleted` reports how many that was. Rejecting the whole call on a foreign id would do two bad things at once: leak that the id exists somewhere, and break retries — after a partially-applied call, an already-deleted id is indistinguishable from a foreign one. Scope-filtering is idempotent and leaks nothing, so a client can safely retry the same batch.
 
-        Because `deleted` can therefore be lower than the number of ids sent — or zero — do not treat a shortfall as an error. Deletion cascades to uploaded files exactly as the single-response delete does — and, exactly as it does, leaves the Hub copy in place. See that operation for why.
+        Because `deleted` can therefore be lower than the number of ids sent — or zero — do not treat a shortfall as an error. Deletion also removes the responses' uploaded files and their Hub copies: both are queued in the delete's transaction and cleaned up after it commits, files at once and Hub feedback records within minutes, retried until done. This differs from the single-response delete, which does not yet remove the Hub copy (see that operation).
 
         **`workspaceId` is the scope, and it is required.** Unlike the single-response delete — which resolves the workspace *from* the response so a caller cannot pair someone else's id with a scope it happens to hold — a batch has no single response to resolve from, and scope-filtering is only meaningful against a known workspace. Supplying it is safe here because the same value is both what `manage` is checked against and what the delete is filtered by: the two cannot diverge, so a foreign id matches nothing rather than being deleted under a scope the caller does hold.
       tags:
@@ -4345,6 +4345,19 @@ paths:
         are **not** split. Filters on enrichment members (`sentiment`, `emotions`, `sentiment_score_*`)
         never match records that have not been enriched — use `has_sentiment=false` / `has_emotions=false`
         to find those.
+
+        **Incremental extraction.** To keep a copy of a dataset in sync, filter on `updated_since` and
+        page with `sort=updated_at&order=asc`, bounded by `updated_until`: every page is then one index
+        range, and a record that changes while you page normally comes back later in the run. Start each
+        run with a `limit=1` request and read its `Date` header: that value is this run's `updated_until`
+        and, minus a few minutes, the next run's `updated_since` — both bounds from the same value, or
+        records between them are never read. Do not use the newest `updated_at` received instead: it
+        skips a write that was still committing when you read past its timestamp.
+        Upsert by `id` and let the most recent fetch win. Deleted records leave nothing for
+        `updated_since` to match, so reconcile deletions separately: periodically list every record id
+        with no `updated_since`, and remove the local records that were not returned and were created
+        before that listing's start (its first response's `Date` header) minus the overlap. Run one
+        sync at a time.
       tags:
         - V3 Feedback Records
       parameters:
@@ -4483,6 +4496,18 @@ paths:
             format: date-time
           description: '`created_at <= created_until` (ISO 8601, inclusive).'
         - in: query
+          name: updated_since
+          schema:
+            type: string
+            format: date-time
+          description: '`updated_at >= updated_since` (ISO 8601, inclusive). `updated_at` is stamped when a record is created, corrected, or enriched (translation, sentiment, emotions), so this selects records created **or changed** since a point — the filter for incremental extraction. Deleted records are never returned; see "Incremental extraction" above for choosing the next value and for detecting deletions.'
+        - in: query
+          name: updated_until
+          schema:
+            type: string
+            format: date-time
+          description: '`updated_at <= updated_until` (ISO 8601, inclusive).'
+        - in: query
           name: value_number_min
           schema:
             type: number
@@ -4564,8 +4589,9 @@ paths:
             enum:
               - collected_at
               - created_at
+              - updated_at
             default: collected_at
-          description: 'Column to order by. Only columns that are non-null and immutable after insert are offered: a mutable sort key would let a row move across the cursor between pages and be skipped.'
+          description: 'Column to order by. `collected_at` and `created_at` never change. `updated_at` does, so it is accepted only with `order=asc`: a record that changes while you page then normally moves ahead of the cursor and is returned again (upsert it by `id`). Descending, or with no `order` (which defaults to `desc`), it answers **400**. Even ascending, a write that started before the cursor''s position and commits after it is missed by that run and picked up by the next, whose `updated_since` is the previous run''s start minus an overlap. Use `sort=updated_at&order=asc` with `updated_since` and `updated_until` for incremental extraction.'
         - in: query
           name: order
           schema:
@@ -6645,6 +6671,11 @@ components:
           minimum: 0
           default: null
           description: Seconds of inactivity after which the survey widget auto-closes. Null disables auto-close.
+        keepEndingCardOpen:
+          type: boolean
+          default: false
+          description: |
+            Keep the ending card on screen until the respondent closes the survey. When false, the survey widget closes 3 seconds after the ending card appears. Has no effect on a survey with no ending card (it closes immediately) or whose first ending redirects to a URL. Independent of `autoClose`.
         autoComplete:
           type:
             - integer
@@ -6672,6 +6703,7 @@ components:
         displayPercentage: null
         recontactDays: 7
         autoClose: null
+        keepEndingCardOpen: false
         autoComplete: null
         delay: 0
         triggers:

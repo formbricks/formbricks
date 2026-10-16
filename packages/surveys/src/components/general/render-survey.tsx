@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
+import { getEndingCloseDelay } from "@/lib/ending-close";
 import { getSurveyDisplayName, hasSurveyInstructions } from "@/lib/survey-page";
 import { getSurveyLanguageTag, isRTLLanguage } from "@/lib/utils";
 import { SurveyContainer } from "../wrappers/survey-container";
@@ -121,16 +122,9 @@ export function RenderSurvey(props: Readonly<SurveyContainerProps>) {
         onFinished={(responseId?: string) => {
           props.onFinished?.(responseId);
 
-          if (props.mode !== "inline") {
-            onFinishedTimeoutRef.current = setTimeout(
-              () => {
-                const firstEnabledEnding = props.survey.endings?.[0];
-                if (firstEnabledEnding?.type !== "redirectToUrl") {
-                  close();
-                }
-              },
-              props.survey.endings.length ? 3000 : 0 // close modal automatically after 3 seconds if no ending is enabled; otherwise, close immediately
-            );
+          const closeDelay = getEndingCloseDelay({ survey: props.survey, mode });
+          if (closeDelay !== null) {
+            onFinishedTimeoutRef.current = setTimeout(close, closeDelay);
           }
         }}
         dir={dir}

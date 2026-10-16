@@ -4,6 +4,7 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
+import { queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import { getV3AuthorizationActor, requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import {
   type TV3SurveyWriteReport,
@@ -673,7 +674,10 @@ async function runV3SurveyLifecycleMutation(
     mutate,
   }: {
     operation: "archive" | "restore";
-    mutate: (id: string) => Promise<{ id: string; status: string; archivedAt: Date | null }>;
+    mutate: (
+      id: string,
+      authentication: TV3Authentication
+    ) => Promise<{ id: string; status: string; archivedAt: Date | null }>;
   }
 ): Promise<Response> {
   const log = logger.withContext({ requestId, surveyId });
@@ -698,7 +702,7 @@ async function runV3SurveyLifecycleMutation(
       auditLog.oldObject = survey;
     }
 
-    const mutatedSurvey = await mutate(surveyId);
+    const mutatedSurvey = await mutate(surveyId, authentication);
 
     if (auditLog) {
       auditLog.newObject = mutatedSurvey;
@@ -719,11 +723,47 @@ async function runV3SurveyLifecycleMutation(
 }
 
 export async function archiveV3Survey(params: TV3SurveyMutationParams): Promise<Response> {
-  return runV3SurveyLifecycleMutation(params, { operation: "archive", mutate: archiveSurvey });
+  return runV3SurveyLifecycleMutation(params, { operation: "archive", mutate: (id) => archiveSurvey(id) });
 }
 
 export async function restoreV3Survey(params: TV3SurveyMutationParams): Promise<Response> {
-  return runV3SurveyLifecycleMutation(params, { operation: "restore", mutate: restoreSurvey });
+  // The restorer is recorded on any data retention exemption the restore makes; an API key has no user.
+  return runV3SurveyLifecycleMutation(params, {
+    operation: "restore",
+    mutate: async (id, authentication) => {
+      const restored = await restoreSurvey(id, { restoredById: getSessionUserId(authentication) });
+      if (restored.retentionExemptionId) {
+        await auditRestoreExemption(params, id, restored.retentionExemptionId);
+      }
+      return restored;
+    },
+  });
+}
+
+/**
+ * The exemption a restore made gets its own audit event, as one made through the exemptions API does
+ * (`created` on `retentionExemption`), so filtering the audit log by exemptions shows every hold. Same
+ * actor and organisation as the restore's own event, which `runV3SurveyLifecycleMutation` has set by now.
+ */
+async function auditRestoreExemption(
+  { auditLog, requestId }: TV3SurveyMutationParams,
+  surveyId: string,
+  exemptionId: string
+): Promise<void> {
+  if (!auditLog) return;
+  await queueV3AuditLog(
+    {
+      ...auditLog,
+      action: "created",
+      targetType: "retentionExemption",
+      targetId: exemptionId,
+      status: "success",
+      oldObject: undefined,
+      newObject: { surveyId, policy: "surveys", source: "restore" },
+    },
+    requestId,
+    logger.withContext({ requestId, surveyId })
+  );
 }
 
 /** The 422 for an archived survey, shared by the pre-write guard and the write's own `archivedAt` check. */

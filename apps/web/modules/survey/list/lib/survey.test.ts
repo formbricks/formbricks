@@ -97,6 +97,7 @@ vi.mock("@/lingodotdev/server", () => ({
 vi.mock("@formbricks/database", () => ({
   prisma: {
     survey: {
+      update: vi.fn(),
       findMany: vi.fn(),
       findUnique: vi.fn(),
       findFirst: vi.fn(),
@@ -139,6 +140,7 @@ vi.mock("@formbricks/database", () => ({
       updateMany: vi.fn(),
     },
     $transaction: vi.fn(),
+    $executeRaw: vi.fn(),
   },
 }));
 
@@ -416,6 +418,7 @@ describe("copySurveyToOtherWorkspace", () => {
       pin: "1234",
       autoComplete: 50,
       autoClose: 30,
+      keepEndingCardOpen: true,
       delay: 5,
       redirectUrl: "https://example.com/thanks",
       displayPercentage: 25,
@@ -570,6 +573,9 @@ describe("copySurveyToOtherWorkspace", () => {
     // That is the ENG-2144 bug, and #6802 before it. Adding a Survey column fails this test until
     // you decide which side it belongs on.
     const RESET_ON_COPY = new Set([
+      "variables",
+      "hiddenFields",
+      "ownershipInitialized",
       // Identity and ownership: the copy is a new row in a workspace the caller chose.
       "id",
       "createdAt",

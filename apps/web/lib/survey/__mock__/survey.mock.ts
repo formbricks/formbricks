@@ -194,6 +194,7 @@ const baseSurveyProperties = {
   id: mockId,
   name: "Mock Survey",
   autoClose: 10,
+  keepEndingCardOpen: false,
   delay: 0,
   autoComplete: 7,
   publishOn: null,
@@ -278,6 +279,8 @@ export const mockSyncSurveyOutput: SurveyMock = {
   customHeadScripts: null,
   customHeadScriptsMode: null,
   customCss: null,
+  ownershipInitialized: true,
+  variables: [],
 };
 
 export const mockSurveyOutput: SurveyMock = {
@@ -313,6 +316,8 @@ export const mockSurveyOutput: SurveyMock = {
   customHeadScripts: null,
   customHeadScriptsMode: null,
   customCss: null,
+  ownershipInitialized: true,
+  variables: [],
 };
 
 export const createSurveyInput: TSurveyCreateInput = {

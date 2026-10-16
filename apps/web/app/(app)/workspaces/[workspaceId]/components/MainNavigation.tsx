@@ -31,7 +31,10 @@ import { useLatestStableRelease } from "@/app/(app)/workspaces/[workspaceId]/lib
 import { cn } from "@/lib/cn";
 import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getAccessFlags } from "@/lib/membership/utils";
-import { SwitcherDropdownBody } from "@/modules/settings/components/switcher-dropdown-body";
+import {
+  SWITCHER_DROPDOWN_CONTENT_CLASS_NAME,
+  SwitcherDropdownBody,
+} from "@/modules/settings/components/switcher-dropdown-body";
 import { UserDropdown } from "@/modules/settings/components/user-dropdown";
 import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
 import { Badge } from "@/modules/ui/components/badge";
@@ -524,7 +527,12 @@ export const MainNavigation = ({
                         />
                       </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
+                    <DropdownMenuContent
+                      side="right"
+                      sideOffset={10}
+                      alignOffset={5}
+                      align="end"
+                      className={SWITCHER_DROPDOWN_CONTENT_CLASS_NAME}>
                       <SwitcherDropdownBody
                         type="workspace"
                         isLoading={workspaceSwitcher.isLoading || isInitialWorkspacesLoading}
@@ -566,7 +574,12 @@ export const MainNavigation = ({
                         />
                       </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
+                    <DropdownMenuContent
+                      side="right"
+                      sideOffset={10}
+                      alignOffset={5}
+                      align="end"
+                      className={SWITCHER_DROPDOWN_CONTENT_CLASS_NAME}>
                       <SwitcherDropdownBody
                         type="organization"
                         isLoading={organizationSwitcher.isLoading}

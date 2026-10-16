@@ -17,6 +17,19 @@
 /* NOSONAR */
 
 /*
+  Unitless line heights (ENG-3427). Without these, `leading-<n>` is `calc(var(--spacing) * n)`, and
+  rem→em plus `--spacing: .25em` make that an em length. iPhone WebKit scales an em line-height twice
+  under the iOS SDK's `-webkit-text-size-adjust` (Dynamic Type): once through the enlarged font size,
+  then again as a length. A ratio scales once. n / 4 is what the em length gave on the element itself,
+  so the default size is unchanged. Keep in sync with survey-ui's globals.css.
+*/
+@theme inline {
+  --leading-4: 1;
+  --leading-5: 1.25;
+  --leading-6: 1.5;
+}
+
+/*
   The default border color has changed to `currentcolor` in Tailwind CSS v4,
   so we've added these compatibility styles to make sure everything still
   looks the same as it did with Tailwind CSS v3.

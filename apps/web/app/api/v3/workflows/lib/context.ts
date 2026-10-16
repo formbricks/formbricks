@@ -10,7 +10,6 @@ import {
 import { getV3AuthorizationActor, requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
-import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { isSurveyOutboundAllowed, surveyOutboundVisibilitySelect } from "@/lib/survey/visibility/outbound";
@@ -60,7 +59,7 @@ const verifyTriggerSurvey: WorkflowApiContext["verifyTriggerSurvey"] = async ({
   return {
     surveyExists: true,
     // ENG-3283: a workflow forwards the survey's responses, so its survey must be workspace-visible.
-    surveyNotWorkspaceVisible: !isSurveyOutboundAllowed(survey, await isSurveyVisibilityReady()),
+    surveyNotWorkspaceVisible: !isSurveyOutboundAllowed(survey),
     missingEndingCardIds: endingCardIds.filter((endingCardId) => !endingIds.has(endingCardId)),
   };
 };

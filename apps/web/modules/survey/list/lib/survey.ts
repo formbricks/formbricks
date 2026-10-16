@@ -97,6 +97,7 @@ const getExistingSurvey = async (surveyId: string) => {
       redirectUrl: true,
       autoComplete: true,
       autoClose: true,
+      keepEndingCardOpen: true,
       delay: true,
       displayPercentage: true,
       showLanguageSwitch: true,
@@ -463,6 +464,7 @@ export const copySurveyToOtherWorkspace = async (
       },
       owner: { connect: { id: userId } },
       visibility: creationFacts.visibility,
+      ownershipInitialized: true,
       surveyClosedMessage: existingSurvey.surveyClosedMessage
         ? structuredClone(existingSurvey.surveyClosedMessage)
         : Prisma.JsonNull,

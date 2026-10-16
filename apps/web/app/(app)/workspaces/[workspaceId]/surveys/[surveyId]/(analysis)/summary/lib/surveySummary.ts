@@ -1,6 +1,5 @@
 import "server-only";
 import { cache as reactCache } from "react";
-import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
@@ -35,6 +34,7 @@ import { getQuotasSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[
 import { RESPONSES_PER_PAGE } from "@/lib/constants";
 import { getDisplayCountBySurveyId } from "@/lib/display/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
+import { TResponseCursor, ZResponseCursor, whereAfterResponseCursor } from "@/lib/response/pagination";
 import { buildWhereClause } from "@/lib/response/where-clause";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
@@ -52,6 +52,9 @@ interface TSurveySummaryResponse {
   ttc: TResponseTtc;
   finished: boolean;
 }
+
+/** A summary response as fetched, with the `createdAt` the batch loop continues after. */
+type TSurveySummaryResponseRow = TSurveySummaryResponse & { createdAt: Date };
 
 const getElementIdToBlockIdMap = (survey: TSurvey): Record<string, string> => {
   return survey.blocks.reduce<Record<string, string>>((acc, block) => {
@@ -1035,18 +1038,18 @@ export const getSurveySummary = reactCache(
 
       // Use cursor-based pagination instead of count + offset to avoid expensive queries
       const responses: TSurveySummaryResponse[] = [];
-      let cursor: string | undefined = undefined;
+      let cursor: TResponseCursor | undefined = undefined;
       let hasMore = true;
 
       while (hasMore) {
-        const batch = await getResponsesForSummary(surveyId, batchSize, 0, filterCriteria, cursor);
+        const batch = await getResponsesForSummary(surveyId, batchSize, filterCriteria, cursor);
         responses.push(...batch);
 
-        if (batch.length < batchSize) {
+        const lastResponse = batch.at(-1);
+        if (!lastResponse || batch.length < batchSize) {
           hasMore = false;
         } else {
-          // Use the last response's ID as cursor for next batch
-          cursor = batch[batch.length - 1].id;
+          cursor = { id: lastResponse.id, createdAt: lastResponse.createdAt };
         }
       }
 
@@ -1084,16 +1087,14 @@ export const getResponsesForSummary = reactCache(
   async (
     surveyId: string,
     limit: number,
-    offset: number,
     filterCriteria?: TResponseFilterCriteria,
-    cursor?: string
-  ): Promise<TSurveySummaryResponse[]> => {
+    cursor?: TResponseCursor
+  ): Promise<TSurveySummaryResponseRow[]> => {
     validateInputs(
       [surveyId, ZId],
       [limit, ZOptionalNumber],
-      [offset, ZOptionalNumber],
       [filterCriteria, ZResponseFilterCriteria.optional()],
-      [cursor, z.cuid2().optional()]
+      [cursor, ZResponseCursor.optional()]
     );
 
     const queryLimit = limit ?? RESPONSES_PER_PAGE;
@@ -1105,17 +1106,11 @@ export const getResponsesForSummary = reactCache(
         ...buildWhereClause(survey, filterCriteria),
       };
 
-      // Add cursor condition for cursor-based pagination
-      if (cursor) {
-        whereClause.id = {
-          lt: cursor, // Get responses with ID less than cursor (for desc order)
-        };
-      }
-
       const responses = await prisma.response.findMany({
-        where: whereClause,
+        where: whereAfterResponseCursor(whereClause, cursor),
         select: {
           id: true,
+          createdAt: true,
           data: true,
           updatedAt: true,
           contact: {
@@ -1140,11 +1135,11 @@ export const getResponsesForSummary = reactCache(
           },
         ],
         take: queryLimit,
-        skip: offset,
       });
 
-      const transformedResponses: TSurveySummaryResponse[] = responses.map((responsePrisma) => ({
+      const transformedResponses: TSurveySummaryResponseRow[] = responses.map((responsePrisma) => ({
         id: responsePrisma.id,
+        createdAt: responsePrisma.createdAt,
         data: (responsePrisma.data ?? {}) as TResponseData,
         updatedAt: responsePrisma.updatedAt,
         contact: responsePrisma.contact

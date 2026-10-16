@@ -543,14 +543,15 @@ formbricks-authzed backfill --scope=survey --apply --after-survey-id=<last-surve
   when activating it. See [Survey visibility](/surveys/general-features/visibility).
 </Note>
 
-Survey visibility is enforced only once the survey scope is marked ready. Marking it runs the repair, then
+Stored survey visibility is always enforced. Marking the survey scope ready runs the repair, then
 two further dry runs, and sets the marker only if both come back clean:
 
 ```bash
 formbricks-authzed backfill --scope=survey --apply --mark-ready
 ```
 
-To roll enforcement back to workspace permissions, clear the marker. This touches only PostgreSQL:
+To pause visibility mutations and use PostgreSQL policy plus workspace authorization while repairing the
+graph, clear the marker. Stored restrictions remain enforced:
 
 ```bash
 formbricks-authzed backfill --scope=survey --clear-ready
@@ -582,11 +583,9 @@ WHERE "deadLetteredAt" IS NOT NULL AND "processedAt" IS NULL GROUP BY 1, 2;
 Expect `survey` rows with `authzed_projection_invalid_event`; investigate anything else before replaying.
 
 <Warning>
-  Do not set `SURVEY_VISIBILITY_FORCE_DISABLED=1` as a workaround when PostgreSQL or SpiceDB is failing. It
-  makes every restricted survey, and its responses, visible to the whole workspace. An outage fails
-  closed, and it should: with PostgreSQL down every decision fails anyway, and the exposure begins as soon
-  as it recovers with the flag still set. Fix the dependency instead, and use the flag only for a deliberate
-  decision to switch survey visibility off.
+  `SURVEY_VISIBILITY_FORCE_DISABLED=1` suppresses visibility mutations. It never releases stored
+  restrictions or bypasses PostgreSQL or SpiceDB failures. Clearing survey readiness selects
+  PostgreSQL visibility policy plus workspace authorization until the graph is ready again.
 </Warning>
 
 ### Interpret drift categories

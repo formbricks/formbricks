@@ -34,13 +34,6 @@ export const APP_TRANSACTION_TIMEOUT_MS = 20_000;
  */
 export const TRANSACTION_MAX_WAIT_HEADROOM_MS = 1_000;
 
-/**
- * Server-side backstop for a transaction left open by a stalled process or a leaked connection: Postgres
- * ends the session and releases its locks. Nothing in the app idles inside a transaction for anywhere
- * near this long. App client only — migrations hold transactions open for minutes.
- */
-export const APP_IDLE_IN_TRANSACTION_SESSION_TIMEOUT_MS = 60_000;
-
 export const getAppTransactionOptions = (
   poolAcquireTimeoutMillis: number
 ): { maxWait: number; timeout: number } => ({
@@ -55,11 +48,15 @@ export const getAppTransactionOptions = (
 /**
  * Everything the app's PrismaClient is constructed with, shared with the integration harness so both
  * clients run with the same pool settings and transaction budgets.
+ *
+ * The idle-transaction backstop — Postgres ending a session left idle inside an open transaction, which
+ * releases its locks and the connection slot — is deliberately *not* set here. It travels as a startup
+ * parameter, and Postgres below 9.6 and poolers that do not list it in `ignore_startup_parameters` refuse
+ * the whole connection rather than ignore it, so an install that never asked for it must not receive it.
+ * An operator opts in through `DATABASE_URL`; see `resolveIdleInTransactionSessionTimeout`.
  */
 export const createAppPrismaClientOptions = (databaseUrl?: string) => {
-  const { adapter, poolAcquireTimeoutMillis } = createPrismaPgAdapter(databaseUrl, {
-    idleInTransactionSessionTimeoutMillis: APP_IDLE_IN_TRANSACTION_SESSION_TIMEOUT_MS,
-  });
+  const { adapter, poolAcquireTimeoutMillis } = createPrismaPgAdapter(databaseUrl);
 
   return {
     adapter,

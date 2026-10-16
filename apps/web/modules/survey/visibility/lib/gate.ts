@@ -1,7 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import type { TSurveyVisibility } from "@formbricks/types/surveys/types";
-import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { type TSurveyAccess, deriveSurveyAccess } from "@/lib/survey/visibility/access";
 import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { type TSurveyVisibilityGates, getSurveyVisibilityGates } from "@/lib/survey/visibility/gates";
@@ -16,7 +15,7 @@ type TSurveyVisibilityRow = Parameters<typeof deriveSurveyAccess>[0];
  * changing visibility needs the entitlement too. See `TSurveyVisibilityUiGate`.
  */
 const toSurveyVisibilityUiGate = (gates: TSurveyVisibilityGates): TSurveyVisibilityUiGate => ({
-  enforced: gates.ready,
+  enforced: true,
   manageable: gates.ready && gates.entitled,
 });
 
@@ -28,7 +27,7 @@ export const getSurveyVisibilityUiGate = async (organizationId: string): Promise
  * enforcement: they refuse a restricted survey for as long as the server does, which is as long as the
  * readiness marker is set — whether or not the organization can still change visibility.
  */
-export const isSurveyVisibilityEnforced = (): Promise<boolean> => isSurveyVisibilityReady();
+export const isSurveyVisibilityEnforced = (): Promise<boolean> => Promise.resolve(true);
 
 export type TSurveyVisibilityViewer = Readonly<{
   surveyVisibilityGate: TSurveyVisibilityUiGate;
@@ -45,14 +44,6 @@ export type TSurveyVisibilityViewer = Readonly<{
   ownerName: string | null;
 }>;
 
-const NOT_ENFORCED: TSurveyVisibilityViewer = {
-  surveyVisibilityGate: { enforced: false, manageable: false },
-  visibility: "workspace",
-  pendingVisibility: null,
-  surveyAccess: null,
-  ownerName: null,
-};
-
 /**
  * What a single-survey page (editor, summary, responses) needs to render the visibility UI for this
  * user. The editor's survey is the Prisma shape, not the v3 one, so the effective visibility, `access`
@@ -66,7 +57,6 @@ export const getSurveyVisibilityViewer = async (
 ): Promise<TSurveyVisibilityViewer> => {
   const gates = await getSurveyVisibilityGates(organizationId);
   const surveyVisibilityGate = toSurveyVisibilityUiGate(gates);
-  if (!surveyVisibilityGate.enforced) return NOT_ENFORCED;
 
   const [actorContext, owner] = await Promise.all([
     resolveSurveyActorContext({ id: userId, type: "user" }, organizationId),

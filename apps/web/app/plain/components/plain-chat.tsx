@@ -9,8 +9,11 @@ interface PlainChatProps {
   userEmail?: string | null;
   userName?: string | null;
   userId?: string | null;
-  /** HMAC-SHA256 of the user's email, computed server-side. Verifies the customer's identity. */
-  emailHash?: string | null;
+  /**
+   * HMAC-SHA256 over the user's email and external ID, computed server-side. Plain only links the
+   * external ID (and verifies the email) when this signature covers them.
+   */
+  customerDetailsSignature?: string | null;
   /**
    * Plain label type applied to every thread this user opens. The layout resolves
    * this to the paying-customer label id (or null) server-side, so it is attached
@@ -27,7 +30,6 @@ const BRAND_COLOR = "#00C4B8";
 
 interface PlainCustomerDetails {
   email: string;
-  emailHash?: string;
   fullName?: string;
   shortName?: string;
   externalId?: string;
@@ -44,13 +46,13 @@ interface PlainInitOptions {
     launcherIconColor?: string;
   };
   customerDetails?: PlainCustomerDetails;
+  customerDetailsSignature?: string;
   threadDetails?: { labelTypeIds?: string[] };
 }
 
 interface PlainInstance {
   init: (options: PlainInitOptions) => void;
   update: (options: Partial<PlainInitOptions>) => void;
-  setCustomerDetails: (details: PlainCustomerDetails) => void;
   open: () => void;
   close: () => void;
   isInitialized: () => boolean;
@@ -61,14 +63,12 @@ const getPlain = (): PlainInstance | null =>
 
 const buildCustomerDetails = (
   userEmail?: string | null,
-  emailHash?: string | null,
   userName?: string | null,
   userId?: string | null
 ): PlainCustomerDetails | undefined => {
   if (!userEmail) return undefined;
   return {
     email: userEmail,
-    emailHash: emailHash ?? undefined,
     fullName: userName ?? undefined,
     shortName: userName?.split(" ")[0] ?? undefined,
     externalId: userId ?? undefined,
@@ -80,7 +80,7 @@ export const PlainChat = ({
   userEmail,
   userName,
   userId,
-  emailHash,
+  customerDetailsSignature,
   activeCustomerLabelTypeId,
 }: Readonly<PlainChatProps>) => {
   const pathname = usePathname();
@@ -99,7 +99,8 @@ export const PlainChat = ({
         launcherBackgroundColor: BRAND_COLOR,
         launcherIconColor: "#FFFFFF",
       },
-      customerDetails: buildCustomerDetails(userEmail, emailHash, userName, userId),
+      customerDetails: buildCustomerDetails(userEmail, userName, userId),
+      customerDetailsSignature: customerDetailsSignature ?? undefined,
       threadDetails: activeCustomerLabelTypeId ? { labelTypeIds: [activeCustomerLabelTypeId] } : undefined,
     };
   });
@@ -131,15 +132,16 @@ export const PlainChat = ({
   }, []);
 
   // Push identity changes (login, account switch) into the already-initialized
-  // widget instead of re-initializing, preventing stale customer data.
+  // widget instead of re-initializing, preventing stale customer data. Uses update()
+  // rather than setCustomerDetails(), which has no way to carry the signature.
   useEffect(() => {
     const plain = getPlain();
     if (!plain?.isInitialized()) return;
-    const customerDetails = buildCustomerDetails(userEmail, emailHash, userName, userId);
+    const customerDetails = buildCustomerDetails(userEmail, userName, userId);
     if (customerDetails) {
-      plain.setCustomerDetails(customerDetails);
+      plain.update({ customerDetails, customerDetailsSignature: customerDetailsSignature ?? undefined });
     }
-  }, [userEmail, emailHash, userName, userId]);
+  }, [userEmail, customerDetailsSignature, userName, userId]);
 
   // Keep the active-customer label in sync once resolved.
   useEffect(() => {

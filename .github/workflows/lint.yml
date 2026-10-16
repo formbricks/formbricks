@@ -35,6 +35,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Restore test services after runner hardening
+        uses: ./.github/actions/restore-test-services
+        with:
+          postgres: ${{ job.services.postgres.id }}
+
       - uses: ./.github/actions/dangerous-git-checkout
 
       - name: Install pnpm

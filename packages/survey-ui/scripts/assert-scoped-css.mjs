@@ -10,9 +10,12 @@
  * instead: if any forbidden global pattern survives into dist/survey-ui.css, the
  * build fails — a dependency bump cannot silently reintroduce host-page pollution.
  *
+ * It also asserts the other way round: that utilities the components depend on were actually
+ * emitted. Both checks are about the real artifact, which is the only place either can be seen.
+ *
  * Run automatically after `vite build` (see the package build script).
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 
 const cssPath = resolve(import.meta.dirname, "../dist/survey-ui.css");
@@ -54,13 +57,62 @@ for (const chunk of css.split("}")) {
   }
 }
 
-if (violations.length > 0) {
-  console.error("[assert-scoped-css] dist/survey-ui.css leaks global styles to the host page:");
-  for (const violation of violations) console.error(`  - ${violation}`);
-  console.error(
-    "[assert-scoped-css] The postcss-scope-fbjs plugins no longer match Tailwind's output shape — update packages/vite-plugins/postcss-scope-fbjs.cjs."
-  );
+// Utilities the components depend on, asserted in BOTH built artifacts.
+//
+// Tailwind finds classes by scanning source text, so one that only ever exists as a string literal
+// in a .ts file is invisible to every test (`packages/surveys` even stubs this stylesheet to "" in
+// vitest). The stylesheet alone is not enough of a check: this package's `@config` bridge scans
+// `src/**`, unit tests included, so a test that merely mentions the class keeps it in the CSS after
+// the component has stopped emitting it. Requiring the literal in the shipped JS too closes that:
+// interpolating it (`dark:text-${tone}`) or moving it out of this package fails the JS check, and a
+// Tailwind upgrade that stops emitting it fails the CSS check.
+const requiredUtilities = [
+  {
+    className: "dark:text-slate-900",
+    reason: "smiley rating line-art ink on its own fill in dark mode (ENG-3937)",
+    declaredIn: "src/lib/smiley-colors.ts",
+  },
+];
+
+// Tailwind escapes the `:` when it writes the class into a selector.
+const escapeClass = (className) => className.replaceAll(":", String.raw`\:`);
+
+const jsPath = resolve(import.meta.dirname, "../dist");
+const js = readdirSync(jsPath, { recursive: true })
+  .filter((file) => typeof file === "string" && file.endsWith(".js"))
+  .map((file) => readFileSync(resolve(jsPath, file), "utf8"))
+  .join("\n");
+
+const missing = [];
+
+for (const utility of requiredUtilities) {
+  if (!css.includes(escapeClass(utility.className))) {
+    missing.push(
+      `\`${utility.className}\` missing from the stylesheet — ${utility.reason}. Tailwind no longer sees the literal in ${utility.declaredIn}; keep it a complete, unsplit string inside the @source globs in src/styles/globals.css.`
+    );
+  }
+  if (!js.includes(utility.className)) {
+    missing.push(
+      `\`${utility.className}\` missing from the built JS — ${utility.reason}. ${utility.declaredIn} no longer ships it as one literal, so whatever the stylesheet still contains is not what the component applies.`
+    );
+  }
+}
+
+if (violations.length > 0 || missing.length > 0) {
+  if (violations.length > 0) {
+    console.error("[assert-scoped-css] dist/survey-ui.css leaks global styles to the host page:");
+    for (const violation of violations) console.error(`  - ${violation}`);
+    console.error(
+      "[assert-scoped-css] The postcss-scope-fbjs plugins no longer match Tailwind's output shape — update packages/vite-plugins/postcss-scope-fbjs.cjs."
+    );
+  }
+  if (missing.length > 0) {
+    console.error("[assert-scoped-css] the build is missing utilities the components depend on:");
+    for (const utility of missing) console.error(`  - ${utility}`);
+  }
   process.exit(1);
 }
 
-console.log("[assert-scoped-css] dist/survey-ui.css is fully #fbjs-scoped ✔");
+console.log(
+  "[assert-scoped-css] dist/survey-ui.css is fully #fbjs-scoped and carries the utilities the components need ✔"
+);

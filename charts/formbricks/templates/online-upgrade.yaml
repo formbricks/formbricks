@@ -1,0 +1,184 @@
+{{- if not (has .Values.upgrade.mode (list "online" "maintenance")) }}{{ fail "upgrade.mode must be online or maintenance" }}{{ end }}
+{{- if eq .Values.upgrade.mode "online" }}
+{{- if not (has .Values.upgrade.online.controller (list "helm" "argo")) }}{{ fail "upgrade.online.controller must be helm or argo" }}{{ end }}
+{{- if not .Values.upgrade.online.existingInstallation }}{{ fail "Online mode requires an existing stable 6.0 installation; use maintenance mode for fresh installs" }}{{ end }}
+{{- if and .Release.IsInstall (eq .Values.upgrade.online.controller "helm") }}{{ fail "Online mode supports helm upgrade only; use maintenance mode for helm install" }}{{ end }}
+{{- if or (hasKey .Values.deployment.env "FORMBRICKS_UPGRADE_MODE") (hasKey .Values.deployment.env "SKIP_STARTUP_MIGRATION") }}{{ fail "Online mode owns FORMBRICKS_UPGRADE_MODE and SKIP_STARTUP_MIGRATION; remove deployment.env overrides" }}{{ end }}
+{{- if and (hasKey .Values.deployment.env "BULLMQ_WORKER_ENABLED") (ne (toString .Values.deployment.env.BULLMQ_WORKER_ENABLED) "1") }}{{ fail "Online mode requires target web workers enabled so surge replicas can consume queued work" }}{{ end }}
+{{- if not .Values.authzed.enabled }}{{ fail "Online mode requires authzed.enabled" }}{{ end }}
+{{- if not .Values.upgrade.online.sessionAffinity }}{{ fail "Online mode requires a session-affine MIGRATE_DATABASE_URL and upgrade.online.sessionAffinity=true" }}{{ end }}
+{{- if not (regexMatch "^sha256:[a-f0-9]{64}$" .Values.deployment.image.digest) }}{{ fail "Online mode requires deployment.image.digest" }}{{ end }}
+{{- if or .Values.autoscaling.enabled (lt (int .Values.deployment.replicas) 2) }}{{ fail "Online mode currently requires fixed deployment.replicas >= 2" }}{{ end }}
+{{- if lt (int .Values.deployment.terminationGracePeriodSeconds) 300 }}{{ fail "Online mode requires terminationGracePeriodSeconds >= 300" }}{{ end }}
+{{- if ne (dig "httpGet" "path" "" .Values.deployment.probes.readinessProbe) "/health/ready" }}{{ fail "Online mode requires the /health/ready readiness probe" }}{{ end }}
+{{- if or (not .Values.upgrade.online.ingress.selector) (not .Values.upgrade.online.ingress.cluster) }}{{ fail "Online mode requires an Envoy ingress inventory and cluster name" }}{{ end }}
+{{- if not .Values.upgrade.online.ingress.proxyResourceNames }}{{ fail "Online mode requires explicit ingress.proxyResourceNames (pod:admin-port)" }}{{ end }}
+{{- if not .Values.upgrade.online.dependencies }}{{ fail "Online mode requires pinned paired-service and datastore inventories" }}{{ end }}
+{{- if or (not (regexMatch "^sha256:[a-f0-9]{64}$" .Values.hub.image.digest)) (not (regexMatch "^sha256:[a-f0-9]{64}$" .Values.cube.image.digest)) }}{{ fail "Online mode requires pinned Hub and Cube digests" }}{{ end }}
+{{- /* Cube is exempt: it rolls out with maxUnavailable 0, and more than one replica needs Cube Store. */}}
+{{- if or .Values.hub.autoscaling.enabled (lt (int .Values.hub.replicas) 2) }}{{ fail "Online mode requires fixed hub.replicas >= 2" }}{{ end }}
+{{- $name := printf "%s-online" (include "formbricks.name" .) }}
+{{- $deployment := include "formbricks.webDeployment" . | fromYaml }}
+{{- $web := index $deployment.spec.template.spec.containers 0 }}
+{{- $workloads := prepend .Values.upgrade.online.workloads (dict "kind" "deployments" "name" (include "formbricks.name" .) "image" (include "formbricks.deploymentImage" .) "replicas" (int .Values.deployment.replicas)) }}
+{{- $dependencies := concat .Values.upgrade.online.dependencies (list (dict "kind" "deployments" "name" (include "formbricks.hubname" .) "image" (include "formbricks.hubImage" .)) (dict "kind" "deployments" "name" (include "formbricks.cubeName" .) "image" (include "formbricks.cubeImage" .))) }}
+{{- $config := merge (dict "namespace" .Release.Namespace "deployment" (include "formbricks.name" .) "service" (include "formbricks.name" .) "targetImage" (include "formbricks.deploymentImage" .) "applicationRepository" .Values.deployment.image.repository "workloads" $workloads "dependencies" $dependencies "sourceDigests" (list (printf "sha256:%s" (repeat 64 "0")))) (deepCopy .Values.upgrade.online) }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $name }}
+  labels:
+    formbricks.com/upgrade-owner: {{ include "formbricks.name" . | quote }}
+  annotations:
+    helm.sh/hook: pre-upgrade
+    helm.sh/hook-weight: "-30"
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/sync-wave: "-30"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $name }}
+  labels:
+    formbricks.com/upgrade-owner: {{ include "formbricks.name" . | quote }}
+  annotations:
+    helm.sh/hook: pre-upgrade
+    helm.sh/hook-weight: "-30"
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/sync-wave: "-30"
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list]
+  - apiGroups: [""]
+    resources: [pods/proxy]
+    resourceNames: {{ .Values.upgrade.online.ingress.proxyResourceNames | toJson }}
+    verbs: [get]
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [patch]
+  - apiGroups: [""]
+    resources: [services]
+    resourceNames: [{{ include "formbricks.name" . | quote }}]
+    verbs: [get, patch]
+  - apiGroups: [apps]
+    resources: [deployments, statefulsets, replicasets]
+    verbs: [get, list]
+  - apiGroups: [autoscaling]
+    resources: [horizontalpodautoscalers]
+    verbs: [get, list]
+  {{- range $workload := $workloads }}
+  - apiGroups: [apps]
+    resources: [{{ $workload.kind }}]
+    resourceNames: [{{ $workload.name | quote }}]
+    verbs: [patch]
+  {{- end }}
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: [create]
+  - apiGroups: [apps]
+    resources: [deployments]
+    resourceNames: [{{ printf "%s-online-surge" (include "formbricks.name" .) | quote }}]
+    verbs: [delete]
+  # Ownership metadata attaches temporary access to the successful finalization Job for garbage collection.
+  - apiGroups: [rbac.authorization.k8s.io]
+    resources: [roles, rolebindings]
+    resourceNames: [{{ $name | quote }}]
+    verbs: [get, patch]
+  - apiGroups: [""]
+    resources: [serviceaccounts, configmaps]
+    resourceNames: [{{ $name | quote }}]
+    verbs: [get, patch]
+  - apiGroups: [batch]
+    resources: [jobs, cronjobs]
+    verbs: [get, list]
+  - apiGroups: [discovery.k8s.io]
+    resources: [endpointslices]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $name }}
+  labels:
+    formbricks.com/upgrade-owner: {{ include "formbricks.name" . | quote }}
+  annotations:
+    helm.sh/hook: pre-upgrade
+    helm.sh/hook-weight: "-30"
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/sync-wave: "-30"
+roleRef: { apiGroup: rbac.authorization.k8s.io, kind: Role, name: {{ $name }} }
+subjects:
+  - { kind: ServiceAccount, name: {{ $name }}, namespace: {{ .Release.Namespace }} }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}
+  labels:
+    formbricks.com/upgrade-owner: {{ include "formbricks.name" . | quote }}
+  annotations:
+    helm.sh/hook: pre-upgrade
+    helm.sh/hook-weight: "-20"
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/sync-wave: "-20"
+data:
+  config.json: {{ $config | toJson | quote }}
+  deployment.json: {{ $deployment | toJson | quote }}
+{{- range $phase := list "prepare" "finalize" }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}-{{ $phase }}
+  annotations:
+    helm.sh/hook: {{ ternary "pre-upgrade" "post-upgrade" (eq $phase "prepare") }}
+    helm.sh/hook-weight: "-10"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    argocd.argoproj.io/hook: {{ ternary "PreSync" "PostSync" (eq $phase "prepare") }}
+    argocd.argoproj.io/sync-wave: "-10"
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+spec:
+  activeDeadlineSeconds: 3600
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        formbricks.com/upgrade-role: coordinator
+    spec:
+      serviceAccountName: {{ $name }}
+      restartPolicy: Never
+      securityContext: {{ merge (deepCopy (default dict $deployment.spec.template.spec.securityContext)) (dict "fsGroup" 1001) | toJson }}
+      {{- range $field := list "nodeSelector" "tolerations" "affinity" }}
+      {{- with index $deployment.spec.template.spec $field }}
+      {{ $field }}: {{ . | toJson }}
+      {{- end }}
+      {{- end }}
+      {{- with $deployment.spec.template.spec.imagePullSecrets }}
+      imagePullSecrets: {{ . | toJson }}
+      {{- end }}
+      containers:
+        - name: coordinator
+          image: {{ include "formbricks.deploymentImage" $ }}
+          securityContext: {{ merge (deepCopy (default dict $web.securityContext)) (dict "runAsNonRoot" true "runAsUser" 1001 "allowPrivilegeEscalation" false "capabilities" (dict "drop" (list "ALL")) "seccompProfile" (dict "type" "RuntimeDefault")) | toJson }}
+          resources: {{ $web.resources | toJson }}
+          command: [formbricks-authzed]
+          args: [upgrade, online, {{ $phase }}]
+          {{- with $web.envFrom }}
+          envFrom: {{ . | toJson }}
+          {{- end }}
+          env: {{ $web.env | toJson }}
+          volumeMounts:
+            - {name: migration-staging, mountPath: {{ include "formbricks.prismaMigrationsStagingPath" $ }}}
+            - {name: temporary, mountPath: /tmp}
+            - {name: config, mountPath: /etc/formbricks-online, readOnly: true}
+      volumes:
+        - name: migration-staging
+          emptyDir: {}
+        - name: temporary
+          emptyDir: {}
+        - name: config
+          configMap: {name: {{ $name }}}
+{{- end }}
+{{- end }}

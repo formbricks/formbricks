@@ -46,11 +46,11 @@ describe("isSurveyOutboundAllowed", () => {
       false,
     ],
   ])("%s", (_label, row, expected) => {
-    expect(isSurveyOutboundAllowed(row, true)).toBe(expected);
+    expect(isSurveyOutboundAllowed(row)).toBe(expected);
   });
 
-  test("allows everything while visibility is not enforced", () => {
-    expect(isSurveyOutboundAllowed({ ...settled, visibility: "restricted" }, false)).toBe(true);
+  test("always denies restricted outbound data", () => {
+    expect(isSurveyOutboundAllowed({ ...settled, visibility: "restricted" })).toBe(false);
   });
 });
 
@@ -71,12 +71,13 @@ describe("findNotWorkspaceVisibleSurveyIds", () => {
     });
   });
 
-  test("makes no query while enforcement is off or for no ids", async () => {
+  test("checks visibility with readiness cleared and skips an empty input", async () => {
     readiness.ready = false;
-    await expect(findNotWorkspaceVisibleSurveyIds(["s1"])).resolves.toEqual([]);
+    vi.mocked(prisma.survey.findMany).mockResolvedValue([{ id: "s1" }] as never);
+    await expect(findNotWorkspaceVisibleSurveyIds(["s1"])).resolves.toEqual(["s1"]);
     readiness.ready = true;
     await expect(findNotWorkspaceVisibleSurveyIds([])).resolves.toEqual([]);
-    expect(prisma.survey.findMany).not.toHaveBeenCalled();
+    expect(prisma.survey.findMany).toHaveBeenCalledOnce();
   });
 });
 

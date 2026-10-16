@@ -3,7 +3,6 @@ import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { type TAuthorizationAction, type TAuthorizationResourceForAction, can } from "@/lib/authorization";
-import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { type TSurveyActorContext, resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 
 /**
@@ -20,8 +19,6 @@ export async function refuseUnlessV3SurveyVisible<TAction extends TAuthorization
   requestId: string,
   instance?: string
 ): Promise<Response | null> {
-  if (!(await isSurveyVisibilityReady())) return null;
-
   const actor = getV3AuthorizationActor(authentication);
   if (actor && (await can(actor, action, resource))) return null;
   return problemForbidden(requestId, undefined, instance);

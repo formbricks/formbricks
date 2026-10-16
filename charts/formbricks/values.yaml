@@ -1086,7 +1086,8 @@ cube:
   # repository and tag back at an upstream "cubejs/cube" release is supported.
   image:
     repository: "ghcr.io/formbricks/cube"
-    tag: "1.7.47-3"
+    tag: "1.7.50-1"
+    digest: ""
     pullPolicy: IfNotPresent
 
   imagePullSecrets: []
@@ -1173,10 +1174,10 @@ hub:
     # Pinned by digest for immutable, reproducible deployments. When digest is set it takes
     # precedence over tag, and deployment, init container, and migration job all resolve to the
     # same immutable image. Update on each Hub release.
-    # Current digest corresponds to ghcr.io/formbricks/hub:0.8.5.
-    digest: "sha256:9f4c109e6589993ef15708f834d57241ed3a73e3246e3565620777a66a231b59"
+    # Current digest corresponds to ghcr.io/formbricks/hub:0.14.0.
+    digest: "sha256:967089f22585f3c3730e455b8b20885b0739f26b5ce5e034324658aa51d627f2"
     # Tag is a fallback for dev/non-prod when digest is cleared; keep aligned with the digest above.
-    tag: "0.8.5"
+    tag: "0.14.0"
     pullPolicy: IfNotPresent
 
   # Optional override for the secret Hub reads from.
@@ -1615,3 +1616,26 @@ postgresql:
       enabled: true
       runAsUser: 1001
       readOnlyRootFilesystem: false
+
+# Online upgrades remain opt-in until the release acceptance matrix is complete.
+upgrade:
+  mode: maintenance
+  online:
+    # Argo renders Helm charts as installs; select its explicit existing-installation path.
+    controller: helm
+    existingInstallation: false
+    sourceVersion: "6.0.2"
+    sessionAffinity: false
+    # Abort without source termination if active BullMQ jobs exceed this deadline.
+    jobDrainTimeoutSeconds: 180
+    timeoutSeconds: 900
+    # Exact immutable images for every app writer/worker. The web Deployment is added automatically.
+    workloads: []
+    # Paired Hub/Cube and datastores must already run these compatible immutable images.
+    dependencies: []
+    ingress:
+      selector: ""
+      adminPort: 19000
+      # Exact Kubernetes proxy resource names, e.g. envoy-abc-xyz:19000. No wildcard proxy access.
+      proxyResourceNames: []
+      cluster: ""

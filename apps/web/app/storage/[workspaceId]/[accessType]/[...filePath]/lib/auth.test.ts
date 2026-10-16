@@ -107,14 +107,14 @@ describe("authorizePrivateDownload survey scoping", () => {
     expect(result).toEqual({ ok: false, error: { unauthorized: true } });
   });
 
-  test("makes no survey check while visibility is not enforced", async () => {
+  test("denies a restricted file even before graph readiness", async () => {
     vi.mocked(isSurveyVisibilityReady).mockResolvedValue(false);
 
     const result = await authorizePrivateDownload(request, "ws-1", "GET", [
       "surveys%2Frestricted-survey%2Fa.png",
     ]);
 
-    expect(result.ok).toBe(true);
-    expect(surveyChecks()).toHaveLength(0);
+    expect(result.ok).toBe(false);
+    expect(surveyChecks()).toHaveLength(1);
   });
 });

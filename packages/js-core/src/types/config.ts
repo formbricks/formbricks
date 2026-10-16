@@ -81,6 +81,7 @@ export interface TWorkspaceStateSurvey {
   autoSelectLanguage?: boolean | null;
   endings: TJsonObject[];
   autoClose: number | null;
+  keepEndingCardOpen?: boolean;
   status: "draft" | "inProgress" | "paused" | "completed";
   // This variable should be called `cooldownPeriod`, not `recontactDays`. It is related to the
   // Survey Cooldown Period feature (across surveys) and not the Recontact Options (per survey).

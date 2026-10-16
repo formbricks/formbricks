@@ -77,17 +77,24 @@ describe("Better Auth two-factor (real Postgres)", () => {
     const secret = secretFromUri(totpURI);
     await auth.api.verifyTOTP({ body: { code: totp(secret) }, headers: { cookie: enrollCookie } });
     await prisma.session.deleteMany(); // clear the enrollment session
+    // ...and the activity it recorded, so the sign-in below starts from none.
+    await prisma.user.update({ where: { email: "login2fa@example.com" }, data: { lastActiveAt: null } });
+    const lastActiveAt = async () =>
+      (await prisma.user.findUniqueOrThrow({ where: { email: "login2fa@example.com" } })).lastActiveAt;
 
-    // password-only sign-in returns a 2FA challenge (a 200, not an error) — but no full session yet
+    // password-only sign-in returns a 2FA challenge (a 200, not an error) — but no full session yet,
+    // and no activity: the data retention members clock must not count a password alone (ENG-3612)
     const challenge = await auth.api.signInEmail({
       body: { email: "login2fa@example.com", password: "Passw0rd!" },
       asResponse: true,
     });
     expect(challenge.status).toBe(200);
     expect(await prisma.session.count()).toBe(0);
+    expect(await lastActiveAt()).toBeNull();
 
-    // completing the TOTP challenge issues the session
+    // completing the TOTP challenge issues the session, and records the activity
     await auth.api.verifyTOTP({ body: { code: totp(secret) }, headers: { cookie: allCookies(challenge) } });
     expect(await prisma.session.count()).toBe(1);
+    expect(Date.now() - (await lastActiveAt())!.getTime()).toBeLessThan(60_000);
   });
 });

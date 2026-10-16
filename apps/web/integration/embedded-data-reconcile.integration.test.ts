@@ -83,6 +83,30 @@ beforeEach(async () => {
 });
 
 describe("reconcileEmbeddedData (real Postgres)", () => {
+  test("retains legacy-only declarations for deferred recovery without resurrecting deleted fields", async () => {
+    const { surveyId, workspaceId } = await seedSurvey();
+    const legacy = { enabled: true, fieldIds: ["legacy_only"] };
+    await prisma.survey.update({ where: { id: surveyId }, data: { hiddenFields: legacy } });
+    await reconcile(surveyId, workspaceId, { variables: [], hiddenFields: { enabled: false, fieldIds: [] } });
+    expect((await prisma.survey.findUniqueOrThrow({ where: { id: surveyId } })).hiddenFields).toEqual(legacy);
+    expect(await readFields(surveyId)).toEqual([]);
+
+    await reconcile(surveyId, workspaceId, { hiddenFields: { enabled: true, fieldIds: ["new_field"] } });
+    const [backup] = await prisma.$queryRaw<{ value: { hiddenFields: unknown } }[]>`
+      SELECT "legacyEmbeddedDataBackup" AS value FROM "Survey" WHERE "id" = ${surveyId}
+    `;
+    expect(backup.value.hiddenFields).toEqual(legacy);
+    expect((await readFields(surveyId)).map((field) => field.storageKey)).toEqual(["new_field"]);
+
+    await reconcile(surveyId, workspaceId, { hiddenFields: { enabled: false, fieldIds: [] } });
+    await reconcile(surveyId, workspaceId, {});
+    expect(await readFields(surveyId)).toEqual([]);
+    expect((await prisma.survey.findUniqueOrThrow({ where: { id: surveyId } })).hiddenFields).toEqual({
+      enabled: false,
+      fieldIds: [],
+    });
+  });
+
   test("creates a row and a link for each variable and hidden field", async () => {
     const { surveyId, workspaceId } = await seedSurvey();
 

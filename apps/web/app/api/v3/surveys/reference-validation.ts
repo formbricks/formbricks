@@ -29,7 +29,7 @@ type TInvalidParamReferenceType = Exclude<InvalidParam["referenceType"], undefin
 /**
  * The response boundary for survey validation problems: every 422 the surveys API sends is built from
  * an instance of this, so the `invalid_params` cap lives here (ENG-3384). The validators themselves
- * return full lists — `deriveFailureOrigin` diffs the merged document's against the stored survey's,
+ * return full lists — `getIntroducedIssues` diffs the merged document's against the stored survey's,
  * and capping before that comparison would blame the stored survey for a new problem past the cap.
  */
 export class V3SurveyReferenceValidationError extends Error {
@@ -139,7 +139,7 @@ function addRecallReferenceIssues(
   if (typeof value === "string") {
     // One report per distinct id per field: a single label can repeat a `#recall:` token as often as
     // the 2 MB body allows, and every repeat was its own entry (ENG-3384). The list is returned in
-    // full — `deriveFailureOrigin` compares it with the stored survey's — and capped at the response.
+    // full — `getIntroducedIssues` compares it with the stored survey's — and capped at the response.
     const seen = new Set<string>();
 
     for (const match of value.matchAll(/#recall:([A-Za-z0-9_-]+)/g)) {

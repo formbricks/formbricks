@@ -25,8 +25,11 @@ import { prisma } from "@formbricks/database";
  * so it hangs off none of the three roots. Its CASCADE also clears `oauthClientResource`, whose
  * `resourceId` references it. Without this, a second test seeding the same resource identifier fails the
  * unique constraint rather than starting clean (ENG-2862).
+ *
+ * `DeletionCleanup` is the third, for the same reason as the outbox: it names deleted rows by value, so
+ * it has no foreign keys (ENG-3612).
  */
 export const resetDb = (): Promise<unknown> =>
   prisma.$executeRawUnsafe(
-    'TRUNCATE "User", "Organization", "Team", "AuthzedProjectionOutbox", "AuthzedProjectionScopeState", "oauthResource" RESTART IDENTITY CASCADE;'
+    'TRUNCATE "User", "Organization", "Team", "AuthzedProjectionOutbox", "AuthzedProjectionScopeState", "oauthResource", "DeletionCleanup" RESTART IDENTITY CASCADE;'
   );

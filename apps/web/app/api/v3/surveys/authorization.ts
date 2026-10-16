@@ -2,7 +2,6 @@ import { getV3AuthorizationActor, requireV3WorkspaceAccess } from "@/app/api/v3/
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { can } from "@/lib/authorization";
-import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { getSurveyWithCustomCss } from "@/lib/survey/service";
 import { resolveV3SurveyResourceVisibility } from "./visibility-context";
 
@@ -42,7 +41,7 @@ export async function getAuthorizedV3Survey(params: {
   // a restricted survey is its owner's and the administrators'. Same 403 body as an unknown id, so a
   // restricted survey's existence is not probeable. Skipped entirely while the marker is off, so a
   // deployment that has not opted in pays no second check.
-  if (await isSurveyVisibilityReady()) {
+  {
     const actor = getV3AuthorizationActor(authentication);
     const allowed =
       actor !== null &&

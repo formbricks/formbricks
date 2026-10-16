@@ -15,6 +15,9 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
 spec:
+  {{- if eq .Values.upgrade.mode "online" }}
+  strategy: { type: RollingUpdate, rollingUpdate: { maxUnavailable: 0, maxSurge: 1 } }
+  {{- end }}
   {{- if not .Values.hub.autoscaling.enabled }}
   replicas: {{ .Values.hub.replicas | default 1 }}
   {{- end }}
@@ -49,12 +52,12 @@ spec:
       imagePullSecrets:
         {{- toYaml .Values.deployment.imagePullSecrets | nindent 8 }}
       {{- end }}
-      {{- if and .Values.migration.enabled .Values.hub.migration.waitForFormbricksMigration.enabled }}
+      {{- if and (ne .Values.upgrade.mode "online") .Values.migration.enabled .Values.hub.migration.waitForFormbricksMigration.enabled }}
       serviceAccountName: {{ include "formbricks.hubMigrationWaitServiceAccountName" . }}
       automountServiceAccountToken: true
       {{- end }}
       initContainers:
-        {{- if and .Values.migration.enabled .Values.hub.migration.waitForFormbricksMigration.enabled }}
+        {{- if and (ne .Values.upgrade.mode "online") .Values.migration.enabled .Values.hub.migration.waitForFormbricksMigration.enabled }}
         - name: wait-for-formbricks-migration
           image: {{ include "formbricks.deploymentImage" . }}
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
@@ -69,6 +72,21 @@ spec:
               const { pathToFileURL } = require("url");
               const { Prisma, PrismaClient } = require("./packages/database/dist/src/prisma.cjs");
               const { createPrismaPgAdapter } = require("./packages/database/dist/src/prisma-adapter.cjs");
+
+              // The migration Job runs apply-migrations.js without --phase, which is the maintenance phase.
+              // Deferred migrations never run there, so their markers must not be expected here either.
+              const MIGRATION_PHASE = "maintenance";
+              const loadShouldRunMigration = () => {
+                try {
+                  return require("./packages/database/dist/scripts/migration-phases.cjs").shouldRunMigration;
+                } catch (error) {
+                  if (!error || error.code !== "MODULE_NOT_FOUND") throw error;
+                  // Images that predate migration phases ship no deferred migrations, so every marker is expected.
+                  console.log("Migration phases are not available in this image; expecting every migration marker.");
+                  return () => true;
+                }
+              };
+              const shouldRunMigration = loadShouldRunMigration();
 
               const parsePositiveInteger = (value, fallback) => {
                 const parsed = Number.parseInt(value || "", 10);
@@ -146,7 +164,7 @@ spec:
                   const migrationPath = path.join(migrationsDir, entry.name);
                   const files = await fsp.readdir(migrationPath);
 
-                  if (files.includes("migration.sql")) {
+                  if (files.includes("migration.sql") && shouldRunMigration(entry.name, MIGRATION_PHASE)) {
                     schemaMigrationNames.push(entry.name);
                   }
 
@@ -160,7 +178,8 @@ spec:
                         exportedValue &&
                         typeof exportedValue === "object" &&
                         exportedValue.type === "data" &&
-                        exportedValue.id
+                        exportedValue.id &&
+                        shouldRunMigration(exportedValue.name || entry.name, MIGRATION_PHASE)
                       ) {
                         dataMigrationIds.push(exportedValue.id);
                       }

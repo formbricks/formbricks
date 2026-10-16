@@ -145,6 +145,14 @@ Every client you authorize appears under **Settings → Account → Authorized A
 approved. Click **Revoke** to immediately cut off a client's access; it will need to be re-authorized
 to connect again.
 
+Approving a client again with fewer scopes replaces what it was granted. Every earlier grant that
+included a dropped scope stops refreshing, all of its tokens together, even ones the client had
+already narrowed to the new scopes (for grants made before Formbricks 5.4, only the tokens that still
+carry a dropped scope stop). The client gets `invalid_grant` and has to re-authorize, which issues
+tokens within the new scopes. An access token it already holds keeps working until it expires, at
+most 15 minutes later; one obtained with an authorization code issued before the change can start
+that 15 minutes up to 10 minutes after it.
+
 Tokens are short-lived by design: an access token lasts **15 minutes** and the client refreshes it
 silently in the background for up to **30 days** (the refresh window). After that — or after you
 revoke — the client re-runs the sign-in and consent flow. Approving the write scopes

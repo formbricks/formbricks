@@ -41,6 +41,11 @@ export const rateLimitConfigs = {
       allowedPerInterval: 5,
       namespace: "api:internal:feedback-datasets:purge",
     }, // 5 per hour — irreversible and dataset-wide; nobody legitimately purges more often than that
+    internalRetentionExport: {
+      interval: 3600,
+      allowedPerInterval: 10,
+      namespace: "api:internal:retention-runs:export",
+    }, // 10 per hour — each export streams an organisation's whole retention history (data retention)
     client: { interval: 60, allowedPerInterval: 100, namespace: "api:client" }, // 100 per minute (Client API)
     clientEnvironment: {
       interval: 60,

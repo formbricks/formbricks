@@ -107,6 +107,10 @@ relationships: |-
 
 assertions:
   assertTrue:
+    # Released 6.0 checks retain their workspace semantics during overlap.
+    - survey:draft#read@user:uma
+    - survey:draft#read@api_key:ci_reader
+    - response:r2#read@user:uma
     # ------------------------------------------------------------------
     # Scenario 1 — Owner and manager broad access.
     # Org owners and managers have full product access to every workspace
@@ -131,13 +135,13 @@ assertions:
     - workspace:main#manage@user:mark
     - workspace:other#read@user:olivia
     - workspace:other#manage@user:mark
-    - survey:onboarding#manage@user:olivia
-    - survey:onboarding#delete@user:olivia
-    - survey:onboarding#response_read@user:mark
-    - survey:onboarding#response_export@user:mark
-    - response:r1#write@user:olivia
-    - response:r1#manage@user:mark
-    - response:r1#export@user:olivia
+    - survey:onboarding#manage_v2@user:olivia
+    - survey:onboarding#delete_v2@user:olivia
+    - survey:onboarding#response_read_v2@user:mark
+    - survey:onboarding#response_export_v2@user:mark
+    - response:r1#write_v2@user:olivia
+    - response:r1#manage_v2@user:mark
+    - response:r1#export_v2@user:olivia
     - dashboard:insights#read@user:mark
     - dashboard:insights#write@user:mark
     - api_key:org_reader_key#manage@user:olivia
@@ -170,13 +174,13 @@ assertions:
     # ------------------------------------------------------------------
     - workspace:main#write@user:tina
     - workspace:main#read@user:tina
-    - survey:onboarding#read@user:tina
-    - survey:onboarding#write@user:tina
-    - survey:onboarding#delete@user:tina
-    - survey:onboarding#publish@user:tina
-    - survey:onboarding#response_read@user:tina
-    - survey:onboarding#response_export@user:tina
-    - response:r1#write@user:tina
+    - survey:onboarding#read_v2@user:tina
+    - survey:onboarding#write_v2@user:tina
+    - survey:onboarding#delete_v2@user:tina
+    - survey:onboarding#publish_v2@user:tina
+    - survey:onboarding#response_read_v2@user:tina
+    - survey:onboarding#response_export_v2@user:tina
+    - response:r1#write_v2@user:tina
     - dashboard:insights#read@user:tina
     - dashboard:insights#write@user:tina
     - team:product#manage@user:tom
@@ -190,11 +194,11 @@ assertions:
     # equals read (getResponsesDownloadUrlAction uses the read gate).
     # ------------------------------------------------------------------
     - workspace:main#read@user:uma
-    - survey:onboarding#read@user:uma
-    - survey:onboarding#response_read@user:uma
-    - survey:onboarding#response_export@user:uma
-    - response:r1#read@user:uma
-    - response:r1#export@user:uma
+    - survey:onboarding#read_v2@user:uma
+    - survey:onboarding#response_read_v2@user:uma
+    - survey:onboarding#response_export_v2@user:uma
+    - response:r1#read_v2@user:uma
+    - response:r1#export_v2@user:uma
 
     # ------------------------------------------------------------------
     # Scenario 5 — Dashboard read derives from workspace read.
@@ -212,9 +216,9 @@ assertions:
     # govern org access-control endpoints and grant no product access.
     # ------------------------------------------------------------------
     - workspace:main#read@api_key:ci_reader
-    - survey:onboarding#read@api_key:ci_reader
-    - survey:onboarding#response_read@api_key:ci_reader
-    - survey:onboarding#response_export@api_key:ci_reader
+    - survey:onboarding#read_v2@api_key:ci_reader
+    - survey:onboarding#response_read_v2@api_key:ci_reader
+    - survey:onboarding#response_export_v2@api_key:ci_reader
     - organization:acme#read@api_key:org_reader_key
     - organization:acme#read@api_key:org_writer_key
     - organization:acme#read_access@api_key:org_reader_key
@@ -225,61 +229,61 @@ assertions:
     - team:product#manage@api_key:org_writer_key
     - team:product#delete@api_key:org_writer_key
     - workspace:main#write@api_key:ci_writer
-    - survey:onboarding#write@api_key:ci_writer
-    - survey:onboarding#delete@api_key:ci_writer
+    - survey:onboarding#write_v2@api_key:ci_writer
+    - survey:onboarding#delete_v2@api_key:ci_writer
     - dashboard:insights#write@api_key:ci_writer
-    - response:r1#write@api_key:ci_writer
+    - response:r1#write_v2@api_key:ci_writer
     - workspace:main#manage@api_key:ci_manager
-    - survey:onboarding#manage@api_key:ci_manager
-    - survey:onboarding#delete@api_key:ci_manager
+    - survey:onboarding#manage_v2@api_key:ci_manager
+    - survey:onboarding#delete_v2@api_key:ci_manager
     - dashboard:insights#write@api_key:ci_manager
-    - response:r1#manage@api_key:ci_manager
+    - response:r1#manage_v2@api_key:ci_manager
 
     # Scenario 7 (ENG-3282) — a private survey is reachable by its owner, along the owner's own
     # workspace ladder, and by organization owners and managers.
-    - survey:draft#read@user:tina
-    - survey:draft#write@user:tina
-    - survey:draft#delete@user:tina
-    - survey:draft#publish@user:tina
-    - survey:draft#response_read@user:tina
-    - survey:draft#response_export@user:tina
+    - survey:draft#read_v2@user:tina
+    - survey:draft#write_v2@user:tina
+    - survey:draft#delete_v2@user:tina
+    - survey:draft#publish_v2@user:tina
+    - survey:draft#response_read_v2@user:tina
+    - survey:draft#response_export_v2@user:tina
     - survey:draft#change_visibility@user:tina
-    - response:r2#read@user:tina
-    - survey:draft#read@user:olivia
-    - survey:draft#manage@user:mark
+    - response:r2#read_v2@user:tina
+    - survey:draft#read_v2@user:olivia
+    - survey:draft#manage_v2@user:mark
     - survey:draft#change_visibility@user:mark
-    - response:r2#export@user:mark
+    - response:r2#export_v2@user:mark
     # An ownerless private survey stays recoverable by an administrator (Decision log #3).
-    - survey:orphaned#read@user:mark
+    - survey:orphaned#read_v2@user:mark
     - survey:orphaned#change_visibility@user:olivia
     # Administrators may change a workspace-visible survey's visibility too.
     - survey:onboarding#change_visibility@user:mark
     # The hazard the survey audit exists to catch: a forged `shared_workspace` edge naming another
     # organization's workspace grants that organization's members read on this survey.
-    - survey:leaky#read@user:gary
+    - survey:leaky#read_v2@user:gary
 
   assertFalse:
     # Scenario 7 (ENG-3282) — nobody else reaches a private survey, and change_visibility is never
     # workspace write, team-level manage, or an API key.
-    - survey:draft#read@user:uma
-    - survey:draft#read@user:tom
-    - survey:draft#read@user:mo
-    - survey:draft#read@user:bella
-    - survey:draft#read@user:mia
-    - survey:draft#read@api_key:ci_reader
-    - survey:draft#read@api_key:ci_manager
-    - survey:draft#response_read@api_key:ci_manager
-    - response:r2#read@user:uma
-    - response:r2#export@api_key:ci_manager
+    - survey:draft#read_v2@user:uma
+    - survey:draft#read_v2@user:tom
+    - survey:draft#read_v2@user:mo
+    - survey:draft#read_v2@user:bella
+    - survey:draft#read_v2@user:mia
+    - survey:draft#read_v2@api_key:ci_reader
+    - survey:draft#read_v2@api_key:ci_manager
+    - survey:draft#response_read_v2@api_key:ci_manager
+    - response:r2#read_v2@user:uma
+    - response:r2#export_v2@api_key:ci_manager
     # The owner's own ladder still applies: readWrite does not become manage by owning a survey.
-    - survey:draft#manage@user:tina
+    - survey:draft#manage_v2@user:tina
     - survey:draft#change_visibility@user:uma
     - survey:draft#change_visibility@api_key:ci_manager
-    - survey:orphaned#read@user:tina
-    - survey:orphaned#read@user:mo
+    - survey:orphaned#read_v2@user:tina
+    - survey:orphaned#read_v2@user:mo
     - survey:orphaned#change_visibility@user:mo
     # An owner who no longer holds workspace read loses the survey and the control (Decision 2).
-    - survey:stranded#read@user:mia
+    - survey:stranded#read_v2@user:mia
     - survey:stranded#change_visibility@user:mia
     # R-10: workspace write and team-level manage never change visibility, even on a visible survey.
     - survey:onboarding#change_visibility@user:tina
@@ -301,7 +305,7 @@ assertions:
     # as the read_access gap closed above.
     - organization:acme#manage_billing@user:mia
     - workspace:main#read@user:mia
-    - survey:onboarding#read@user:mia
+    - survey:onboarding#read_v2@user:mia
     - dashboard:insights#read@user:mia
     - api_key:org_reader_key#manage@user:mia
     - feedback_directory:customer_feedback#read@user:mia
@@ -331,12 +335,12 @@ assertions:
     # guarantee written in prose and asserted nowhere.
     - organization:acme#read_access@user:bella
     - workspace:main#read@user:bella
-    - survey:onboarding#read@user:bella
-    - survey:onboarding#response_read@user:bella
-    - response:r1#read@user:bella
-    - response:r1#write@user:bella
-    - response:r1#manage@user:bella
-    - response:r1#export@user:bella
+    - survey:onboarding#read_v2@user:bella
+    - survey:onboarding#response_read_v2@user:bella
+    - response:r1#read_v2@user:bella
+    - response:r1#write_v2@user:bella
+    - response:r1#manage_v2@user:bella
+    - response:r1#export_v2@user:bella
     - dashboard:insights#read@user:bella
     - dashboard:insights#write@user:bella
 
@@ -344,31 +348,31 @@ assertions:
     # legacy's `if (!orgMembership) return false;` ahead of the team ladder.
     - team:analysts#member@user:ghost
     - workspace:main#read@user:ghost
-    - survey:onboarding#read@user:ghost
-    - response:r1#export@user:ghost
+    - survey:onboarding#read_v2@user:ghost
+    - response:r1#export_v2@user:ghost
 
     # Scenario 3 — readWrite teams stop below manage; team scope does not
     # leak into other workspaces; contributors do not manage the team.
     - workspace:main#manage@user:tina
     - workspace:main#share@user:tina
     - workspace:other#read@user:tina
-    - survey:internal#read@user:tina
-    - response:r1#manage@user:tina
+    - survey:internal#read_v2@user:tina
+    - response:r1#manage_v2@user:tina
     - team:product#manage@user:tina
     - team:product#delete@user:tom
 
     # Scenario 4 — read-level access is view-only and stays inside the
     # granted workspace.
     - workspace:main#write@user:uma
-    - survey:onboarding#write@user:uma
-    - survey:onboarding#delete@user:uma
-    - survey:onboarding#publish@user:uma
-    - survey:onboarding#manage@user:uma
-    - response:r1#write@user:uma
-    - response:r1#manage@user:uma
+    - survey:onboarding#write_v2@user:uma
+    - survey:onboarding#delete_v2@user:uma
+    - survey:onboarding#publish_v2@user:uma
+    - survey:onboarding#manage_v2@user:uma
+    - response:r1#write_v2@user:uma
+    - response:r1#manage_v2@user:uma
     - dashboard:insights#write@user:uma
     - workspace:other#read@user:uma
-    - survey:internal#read@user:uma
+    - survey:internal#read_v2@user:uma
     - team:product#member@user:uma
 
     # Scenario 5 — no workspace read, no dashboard read (covered for bella
@@ -381,18 +385,18 @@ assertions:
     - workspace:main#write@api_key:ci_reader
     - workspace:main#manage@api_key:ci_reader
     - workspace:main#share@api_key:ci_reader
-    - survey:onboarding#delete@api_key:ci_reader
+    - survey:onboarding#delete_v2@api_key:ci_reader
     - dashboard:insights#write@api_key:ci_reader
-    - response:r1#write@api_key:ci_reader
-    - response:r1#manage@api_key:ci_reader
+    - response:r1#write_v2@api_key:ci_reader
+    - response:r1#manage_v2@api_key:ci_reader
     - workspace:main#manage@api_key:ci_writer
-    - survey:onboarding#manage@api_key:ci_writer
-    - response:r1#manage@api_key:ci_writer
+    - survey:onboarding#manage_v2@api_key:ci_writer
+    - response:r1#manage_v2@api_key:ci_writer
     - workspace:other#read@api_key:ci_reader
-    - survey:internal#read@api_key:ci_reader
+    - survey:internal#read_v2@api_key:ci_reader
     - workspace:main#read@api_key:org_writer_key
     - workspace:main#read@api_key:org_reader_key
-    - survey:onboarding#read@api_key:org_writer_key
+    - survey:onboarding#read_v2@api_key:org_writer_key
     - organization:acme#manage_access@api_key:org_reader_key
     - team:product#manage@api_key:org_reader_key
     - team:product#delete@api_key:org_reader_key
@@ -454,7 +458,7 @@ validation:
     - "[user:bella] is <organization:acme#billing>"
     - "[user:mark] is <organization:acme#manager>"
     - "[user:olivia] is <organization:acme#owner>"
-  response:r1#export:
+  response:r1#export_v2:
     - "[api_key:ci_reader] is <workspace:main#reader>"
     - "[api_key:ci_writer] is <workspace:main#writer>"
     - "[api_key:ci_manager] is <workspace:main#manager>"

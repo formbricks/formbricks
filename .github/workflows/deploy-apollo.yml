@@ -4,6 +4,12 @@ run-name: Deploy ${{ github.ref_name }} to Apollo
 on:
   # Select the source branch from the Run workflow branch dropdown.
   workflow_dispatch:
+    inputs:
+      rebuild_application:
+        description: "Bypass application build and packaging caches for a repair candidate"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -33,5 +39,6 @@ jobs:
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
     with:
+      rebuild_application: ${{ inputs.rebuild_application }}
       image_tag: 0.0.0-apollo-${{ github.sha }}
       deployment_tag: staging

@@ -20,6 +20,7 @@ export const ZJsWorkspaceStateSurvey = ZSurveyBase.pick({
   languages: true,
   endings: true,
   autoClose: true,
+  keepEndingCardOpen: true,
   styling: true,
   status: true,
   segment: true,

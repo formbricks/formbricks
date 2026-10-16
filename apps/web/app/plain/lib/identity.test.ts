@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { computePlainEmailHash } from "./identity";
+import { computePlainCustomerDetailsSignature } from "./identity";
 
 const mocks = vi.hoisted(() => ({
   env: { PLAIN_CHAT_HMAC_SECRET: undefined as string | undefined },
@@ -7,25 +7,36 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/env", () => ({ env: mocks.env }));
 
-describe("computePlainEmailHash", () => {
+// Test vectors from https://www.plain.com/docs/product/channels/chat-authentication
+describe("computePlainCustomerDetailsSignature", () => {
   beforeEach(() => {
     mocks.env.PLAIN_CHAT_HMAC_SECRET = undefined;
   });
 
   test("returns null when no secret is configured", () => {
-    expect(computePlainEmailHash("john@example.com")).toBeNull();
+    expect(
+      computePlainCustomerDetailsSignature({ email: "ada@example.com", externalId: "user_123" })
+    ).toBeNull();
   });
 
-  test("computes the HMAC-SHA256 hex of the email with the secret", () => {
-    mocks.env.PLAIN_CHAT_HMAC_SECRET = "test-secret";
-    expect(computePlainEmailHash("john@example.com")).toBe(
-      "831412b17524e7d41b2f9085360840f35558068db4efe31cebb6375fbd1ac0a8"
+  test("signs the raw email when there is no external ID", () => {
+    mocks.env.PLAIN_CHAT_HMAC_SECRET = "chat_secret_example";
+    expect(computePlainCustomerDetailsSignature({ email: "ada@example.com" })).toBe(
+      "ad990bba2bd71e79e79c042c6291344ae152fa267d6c15446b2e97b2892834df"
     );
   });
 
-  test("is deterministic and email-specific", () => {
-    mocks.env.PLAIN_CHAT_HMAC_SECRET = "test-secret";
-    expect(computePlainEmailHash("a@example.com")).toBe(computePlainEmailHash("a@example.com"));
-    expect(computePlainEmailHash("a@example.com")).not.toBe(computePlainEmailHash("b@example.com"));
+  test("signs the email and external ID together", () => {
+    mocks.env.PLAIN_CHAT_HMAC_SECRET = "chat_secret_example";
+    expect(computePlainCustomerDetailsSignature({ email: "ada@example.com", externalId: "user_123" })).toBe(
+      "07c1924d9865df9b1cefceedebd61dfd1b2b25ac790389ea56e5eb005fce660d"
+    );
+  });
+
+  test("changes when the external ID changes", () => {
+    mocks.env.PLAIN_CHAT_HMAC_SECRET = "chat_secret_example";
+    expect(
+      computePlainCustomerDetailsSignature({ email: "ada@example.com", externalId: "user_123" })
+    ).not.toBe(computePlainCustomerDetailsSignature({ email: "ada@example.com", externalId: "user_456" }));
   });
 });
