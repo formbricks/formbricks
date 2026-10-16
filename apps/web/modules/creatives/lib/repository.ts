@@ -169,8 +169,11 @@ export const runInCreativeTransaction = <T>(fn: (tx: TCreativeTx) => Promise<T>)
   prisma.$transaction(fn);
 
 /**
- * The survey a write links, under the survey's visibility lock (the one a Restrict takes), so linking and
- * restricting can't interleave (T6). `null` when no such survey is in the workspace.
+ * The survey a write links, under the survey's visibility lock (the one a Restrict and a save turning on
+ * single-use or a PIN take), so linking and those changes can't interleave (T6). The row is locked too,
+ * FOR KEY SHARE: a survey delete holds it FOR UPDATE while it checks for linked creatives, so a link
+ * waits for that delete and then finds no survey, instead of failing on the foreign key. `null` when no
+ * such survey is in the workspace.
  */
 export const lockDestinationSurvey = async (
   tx: TCreativeTx,
@@ -178,8 +181,24 @@ export const lockDestinationSurvey = async (
   workspaceId: string
 ): Promise<TDestinationSurveyFacts | null> => {
   await lockSurveyVisibility(tx, surveyId);
+  await tx.$queryRaw`SELECT 1 FROM "Survey" WHERE "id" = ${surveyId} FOR KEY SHARE`;
   return tx.survey.findFirst({ where: { id: surveyId, workspaceId }, select: destinationSurveySelect });
 };
+
+/** How many surveys the editor's On click picker lists, most recently updated first. */
+const DESTINATION_SURVEY_CANDIDATE_LIMIT = 500;
+
+/**
+ * The workspace's unarchived surveys with the facts the Destination rule reads, for the editor's picker
+ * (`destination-options.ts` decides which it offers). Served by the `(workspaceId, updatedAt)` index.
+ */
+export const findDestinationSurveyCandidates = (workspaceId: string): Promise<TDestinationSurveyFacts[]> =>
+  prisma.survey.findMany({
+    where: { workspaceId, archivedAt: null },
+    select: destinationSurveySelect,
+    orderBy: { updatedAt: "desc" },
+    take: DESTINATION_SURVEY_CANDIDATE_LIMIT,
+  });
 
 export const findWorkspaceActionClassIds = async (
   tx: TCreativeTx,

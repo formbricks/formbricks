@@ -92,7 +92,7 @@ export const getCreativeLanguageRequests = (
     .map(({ code, enabled }) => ({ code, default: false, enabled })),
 ];
 
-const isSingleUseEnabled = (singleUse: TDestinationSurveyFacts["singleUse"]): boolean =>
+export const isSingleUseEnabled = (singleUse: TDestinationSurveyFacts["singleUse"]): boolean =>
   typeof singleUse === "object" &&
   singleUse !== null &&
   !Array.isArray(singleUse) &&

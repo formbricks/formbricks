@@ -1,51 +1,107 @@
 import { validateDateTimeRange } from "@/modules/ui/components/date-time-picker/lib/date-time";
-import type { TCreative } from "../types";
-import { hasIncompleteConditions } from "./show-conditions-ui";
+import { type TCreativeEditorForm, formNeedsDestination } from "./editor-form";
 
-// What blocks Publish, and which editor tab owns the fix. A draft saves with gaps; only an issue that
-// would store a schedule that can never be valid (end before start) blocks Save as well.
+/**
+ * What blocks Save and Publish in the editor, and which tab owns the fix. These mirror the v3 rules
+ * (`write-rules.ts`) so the author is sent to the field before a request is made; the server stays the
+ * judge, and whatever it still refuses is routed to a tab by `getInvalidParamTab`.
+ *
+ * A draft saves with gaps: only what the API would refuse even for a draft blocks it (no name, a link
+ * that isn't one, an end before the start). Anything published must meet every publish rule on each save.
+ */
 
 export type TCreativeEditorTab = "content" | "styling" | "settings" | "schedule";
 
 export type TPublishIssue =
   | "name_missing"
+  | "label_missing"
   | "message_missing"
+  | "button_label_missing"
   | "survey_missing"
   | "link_invalid"
-  | "condition_empty"
   | "end_before_start";
 
+/** `null`: the name field in the header, outside the tabs. */
 export const PUBLISH_ISSUE_TABS: Record<TPublishIssue, TCreativeEditorTab | null> = {
   name_missing: null,
+  label_missing: "content",
   message_missing: "content",
+  button_label_missing: "content",
   survey_missing: "content",
   link_invalid: "content",
-  condition_empty: "settings",
   end_before_start: "schedule",
 };
 
-const SAVE_BLOCKING_ISSUES: readonly TPublishIssue[] = ["end_before_start"];
+/** The v3 link Destination rule (`CreativeLinkDestinationInput`), so the editor and the API agree. */
+const LINK_PATTERN = /^https?:\/\/\S+$/;
+const MAX_LINK_LENGTH = 2048;
 
-const isHttpUrl = (value: string): boolean => {
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" || url.protocol === "http:";
-  } catch {
-    return false;
-  }
+const isBlank = (value: string): boolean => value.trim() === "";
+
+const isValidLink = (url: string): boolean => {
+  const trimmed = url.trim();
+  return trimmed.length <= MAX_LINK_LENGTH && LINK_PATTERN.test(trimmed);
 };
 
-export const getPublishIssues = (creative: TCreative): TPublishIssue[] => {
+const getContentIssues = (content: TCreativeEditorForm["content"]): TPublishIssue[] => {
+  if (content.type === "feedbackButton") return isBlank(content.label) ? ["label_missing"] : [];
   const issues: TPublishIssue[] = [];
-  if (!creative.name.trim()) issues.push("name_missing");
-  if (creative.type === "banner" && !creative.content.message.trim()) issues.push("message_missing");
-  if (creative.action.kind === "survey" && !creative.action.surveyId) issues.push("survey_missing");
-  if (creative.action.kind === "link" && !isHttpUrl(creative.action.url.trim())) issues.push("link_invalid");
-  if (hasIncompleteConditions(creative.targeting.showConditions)) issues.push("condition_empty");
-  if (validateDateTimeRange(creative.startsAt, creative.endsAt)) issues.push("end_before_start");
+  if (content.message.every((run) => isBlank(run.text))) issues.push("message_missing");
+  if (content.hasButton && isBlank(content.buttonLabel)) issues.push("button_label_missing");
   return issues;
 };
 
-/** The subset of publish issues that also stops a draft from being saved. */
-export const getSaveIssues = (creative: TCreative): TPublishIssue[] =>
-  getPublishIssues(creative).filter((issue) => SAVE_BLOCKING_ISSUES.includes(issue));
+const getDestinationIssues = (form: TCreativeEditorForm): TPublishIssue[] => {
+  if (!formNeedsDestination(form.content)) return [];
+  const { destination } = form;
+  if (destination.type === "survey") return destination.surveyId ? [] : ["survey_missing"];
+  return isValidLink(destination.url) ? [] : ["link_invalid"];
+};
+
+const getScheduleIssues = ({ schedule }: TCreativeEditorForm): TPublishIssue[] =>
+  validateDateTimeRange(schedule.startAt, schedule.endAt) ? ["end_before_start"] : [];
+
+const getNameIssues = ({ name }: TCreativeEditorForm): TPublishIssue[] =>
+  isBlank(name) ? ["name_missing"] : [];
+
+export const getPublishIssues = (form: TCreativeEditorForm): TPublishIssue[] => [
+  ...getNameIssues(form),
+  ...getContentIssues(form.content),
+  ...getDestinationIssues(form),
+  ...getScheduleIssues(form),
+];
+
+/** What stops Save: everything Publish needs once published; for a draft, only what the API refuses. */
+export const getSaveIssues = (
+  form: TCreativeEditorForm,
+  { published }: { published: boolean }
+): TPublishIssue[] => {
+  if (published) return getPublishIssues(form);
+  const { destination } = form;
+  const hasBrokenLink =
+    formNeedsDestination(form.content) &&
+    destination.type === "link" &&
+    !isBlank(destination.url) &&
+    !isValidLink(destination.url);
+  return [
+    ...getNameIssues(form),
+    ...(hasBrokenLink ? (["link_invalid"] as const) : []),
+    ...getScheduleIssues(form),
+  ];
+};
+
+const PARAM_GROUP_TABS = new Map<string, TCreativeEditorTab>([
+  ["content", "content"],
+  ["destination", "content"],
+  ["defaultLanguage", "content"],
+  ["languages", "content"],
+  ["styling", "styling"],
+  ["distribution", "settings"],
+  ["schedule", "schedule"],
+]);
+
+/** The tab that edits a field a v3 write refused (its `invalid_params[].name`); `null` for the header. */
+export const getInvalidParamTab = (paramName: string): TCreativeEditorTab | null => {
+  const [group] = paramName.split(/[.[]/);
+  return PARAM_GROUP_TABS.get(group) ?? null;
+};

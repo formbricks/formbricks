@@ -9,6 +9,7 @@ import {
   problemBadRequest,
   problemConflict,
   problemForbidden,
+  problemSurveyHasLinkedCreatives,
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
@@ -574,6 +575,26 @@ describe("registerSurveyTools", () => {
       eventId: "req_tool",
     });
     expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
+  });
+
+  test("delete_survey relays the 409 naming the creatives that still open the survey", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+    const creatives = [{ id: "clcr1234567890123456789012", name: "Feedback tab" }];
+    vi.mocked(deleteV3Survey).mockResolvedValue(
+      problemSurveyHasLinkedCreatives("req_conflict", creatives, "/api/mcp")
+    );
+
+    const result = await tools
+      .get("delete_survey")!
+      .handler({ surveyId: "clxx1234567890123456789012" }, { http: { authInfo } });
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent.error).toMatchObject({
+      status: 409,
+      code: "survey_has_linked_creatives",
+      details: { creatives },
+    });
   });
 
   test("write tools return MCP errors for read-only OAuth scopes", async () => {

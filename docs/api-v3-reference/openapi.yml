@@ -1266,7 +1266,10 @@ paths:
     delete:
       operationId: deleteSurveyV3
       summary: Delete a survey
-      description: Deletes a survey by id. Session cookie, `x-api-key`, or a Bearer token.
+      description: |
+        Deletes a survey by id. Session cookie, `x-api-key`, or a Bearer token.
+
+        Refused with **409** (`survey_has_linked_creatives`) while non-archived creatives open the survey; `details.creatives` names them. Archived creatives don't block the delete: they are unlinked with it, and each unlink is audited as an update of that creative.
       tags:
         - V3 Surveys
       parameters:
@@ -1295,6 +1298,8 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
+        '409':
+          $ref: '#/components/responses/V3SurveyHasLinkedCreatives'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -1734,7 +1739,7 @@ paths:
       operationId: getSurveyVisibilityV3
       summary: Read a survey's visibility and the impact of changing it
       description: |
-        Returns the survey's enforced visibility, its owner, the caller's access, and what a change would do: `blockers[]` lists the outbound connections that currently make `restricted` refusable (webhooks, integrations, active feedback sources, and draft or enabled workflows), `impact` carries the numbers the confirmation dialogues show, `allowedTargets[]` the values a `POST` would act on right now, and `pending` / `version` describe a change still in flight. Read this before offering "Make restricted"; the `POST` answers **409** while `blockers[]` is non-empty.
+        Returns the survey's enforced visibility, its owner, the caller's access, and what a change would do: `blockers[]` lists the outbound connections that currently make `restricted` refusable (webhooks, integrations, active feedback sources, draft or enabled workflows, and non-archived creatives that open it), `impact` carries the numbers the confirmation dialogues show, `allowedTargets[]` the values a `POST` would act on right now, and `pending` / `version` describe a change still in flight. Read this before offering "Make restricted"; the `POST` answers **409** while `blockers[]` is non-empty.
 
         Requires `survey.change_visibility`, the same permission as the `POST`: the survey's owner while they still hold read access to the workspace, or an organisation owner/manager, with the feature enabled. Everyone else — read or write members, team-level managers, every API key, and anyone who cannot see the survey at all — answers **403** with the same body as an unknown id. Connection names and ids are configuration, not survey content, and only the people who may act on them get to read them.
 
@@ -1884,7 +1889,7 @@ paths:
 
         Allowed for the survey's owner (while they still hold read access to the workspace) and for the organisation's owners and managers. **Not** for workspace members with write or team-level manage rights, and never for API keys. Every successful change is audit-logged with the actor.
 
-        Going `workspace → restricted` is refused with **409** while any outbound connection depends on the survey; resolve them first. It is refused with **422** when the survey has no owner, because "restricted" would then mean "administrators only" — duplicate the survey for a restricted copy. Going `restricted → workspace` has no preconditions.
+        Going `workspace → restricted` is refused with **409** while any outbound connection depends on the survey; resolve them first. Archived creatives don't block it: a restriction unlinks them (each unlink is audited as an update of that creative), so restoring one later needs a new Destination. It is refused with **422** when the survey has no owner, because "restricted" would then mean "administrators only" — duplicate the survey for a restricted copy. Going `restricted → workspace` has no preconditions.
 
         This is the only way to change visibility: `PATCH /api/v3/surveys/{surveyId}` accepts `visibility`, `owner` and `access` only as the exact values `GET` returned (so a fetched survey round-trips), and rejects any other value as an unsupported field. Publishing does not change visibility; the publish dialogue chains this call before the status change.
       tags:
@@ -6135,6 +6140,7 @@ components:
             - projection_pending
             - service_unavailable
             - stored_survey_invalid
+            - survey_has_linked_creatives
             - survey_not_workspace_visible
             - too_many_requests
             - unprocessable_content
@@ -8571,6 +8577,34 @@ components:
           items:
             $ref: '#/components/schemas/CustomCssError'
       additionalProperties: false
+    LinkedCreativesProblem:
+      allOf:
+        - $ref: '#/components/schemas/Problem'
+        - type: object
+          required:
+            - details
+          properties:
+            details:
+              type: object
+              required:
+                - creatives
+              properties:
+                creatives:
+                  type: array
+                  minItems: 1
+                  description: The non-archived creatives whose Destination is this survey, by name.
+                  items:
+                    type: object
+                    required:
+                      - id
+                      - name
+                    properties:
+                      id:
+                        type: string
+                        description: Creative identifier.
+                      name:
+                        type: string
+                    additionalProperties: false
     SurveyBlockUpdateOperation:
       type: object
       additionalProperties: false
@@ -8725,7 +8759,10 @@ components:
             Optimistic-concurrency precondition: the survey's `updatedAt` from your last read. If the survey changed since, the write is rejected with **409**.
     SurveyVisibilityBlocker:
       type: object
-      description: An outbound connection that must be removed before the survey can become restricted.
+      description: |-
+        An outbound connection that must be removed before the survey can become restricted. A `creative` is a non-archived creative whose Destination is this survey: relink it, switch it to a link, archive it or delete it.
+
+        New `type` values may appear as Formbricks gains connection types (`creative` was added in 6.2). Treat a value you don't recognise as a generic connection: list it by `name`.
       required:
         - type
         - id
@@ -8739,6 +8776,7 @@ components:
             - feedbackSource
             - dashboard
             - workflow
+            - creative
         id:
           type: string
         name:
@@ -12615,6 +12653,31 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+    V3SurveyHasLinkedCreatives:
+      description: 'Conflict — non-archived creatives open this survey (code `survey_has_linked_creatives`). `details.creatives` lists them. Relink each one to another survey or a link, archive it, or delete it, then retry. Archived creatives never block: they are unlinked with the survey.'
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/LinkedCreativesProblem'
+          example:
+            title: Conflict
+            status: 409
+            detail: Relink, archive or delete the creatives that open this survey before deleting it
+            code: survey_has_linked_creatives
+            requestId: req_01j8z5
+            details:
+              creatives:
+                - id: clcr1234567890123456789012
+                  name: Feedback tab
     V3VisibilityForbidden:
       description: 'Forbidden, one of two codes. `forbidden`: the caller cannot see the survey, **or** sees it but may not change its visibility — workspace members without ownership, team-level managers, and every API key — with the same body as any unreadable survey. `visibility_not_enabled`: the organisation lacks the RBAC / access-control entitlement, or the deployment''s readiness marker for survey visibility is not set; this answer does not depend on the survey.'
       headers:

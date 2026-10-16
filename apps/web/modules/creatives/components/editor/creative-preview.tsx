@@ -5,7 +5,6 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { getTopLevelConditions } from "../../lib/show-conditions-ui";
-import { getMockLinkedSurvey } from "../../mock/data";
 import type { TCreative, TCreativeDevice } from "../../types";
 import { CreativeRender } from "../creative-render";
 import { Segmented } from "./editor-primitives";
@@ -65,18 +64,20 @@ export const CreativePreview = ({
   siteName,
   device,
   onDeviceChange,
+  linkedSurveyName,
 }: Readonly<{
   creative: TCreative;
   siteName: string;
   device: TCreativeDevice;
   onDeviceChange: (device: TCreativeDevice) => void;
+  /** The name of the survey picked on the Content tab, if any. */
+  linkedSurveyName: string | null;
 }>) => {
   const { t } = useTranslation();
 
   const activate = () => {
-    const survey = getMockLinkedSurvey(creative);
-    if (survey) {
-      toast(t("workspace.creatives.editor.preview_opens_survey", { name: survey.name }));
+    if (creative.action.kind === "survey" && linkedSurveyName) {
+      toast(t("workspace.creatives.editor.preview_opens_survey", { name: linkedSurveyName }));
     } else if (creative.action.kind === "link" && creative.action.url) {
       toast(t("workspace.creatives.editor.preview_opens_link", { url: creative.action.url }));
     } else {

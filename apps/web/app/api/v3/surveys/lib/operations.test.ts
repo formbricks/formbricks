@@ -15,6 +15,7 @@ import { filterReadableSurveyIds } from "@/lib/authorization/resource-list";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { SurveyLinkedCreativesError } from "@/modules/creatives/lib/linked-creatives";
 import { previewCustomCss } from "@/modules/custom-css/lib/service";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
 import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/lib/survey";
@@ -761,12 +762,54 @@ describe("deleteV3Survey", () => {
     });
 
     expect(response.status).toBe(204);
-    expect(vi.mocked(deleteSurvey)).toHaveBeenCalledWith("survey_1");
+    expect(vi.mocked(deleteSurvey)).toHaveBeenCalledWith("survey_1", {
+      onCreativesUnlinked: expect.any(Function),
+    });
     expect(auditLog).toMatchObject({
       organizationId: "org_1",
       targetId: "survey_1",
       oldObject: survey,
     });
+  });
+
+  test("409 survey_has_linked_creatives naming the creatives that still open the survey", async () => {
+    const creatives = [{ id: "clcr1234567890123456789012", name: "Feedback tab" }];
+    vi.mocked(deleteSurvey).mockRejectedValueOnce(new SurveyLinkedCreativesError("delete", creatives));
+
+    const response = await deleteV3Survey({ surveyId: "survey_1", authentication, requestId, instance });
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({
+      code: "survey_has_linked_creatives",
+      detail: "Relink, archive or delete the creatives that open this survey before deleting it",
+      details: { creatives },
+      requestId,
+    });
+  });
+
+  test("audits each archived creative the delete unlinked as an update by the same caller", async () => {
+    const auditLog = { userId: "user_1", userType: "user", apiUrl: instance, eventId: "evt" } as any;
+
+    await deleteV3Survey({ surveyId: "survey_1", authentication, requestId, instance, auditLog });
+    const [[, options]] = vi.mocked(deleteSurvey).mock.calls;
+    await options?.onCreativesUnlinked?.([{ id: "cr_1", name: "Old tab" }], { organizationId: "org_1" });
+
+    expect(queueV3AuditLog).toHaveBeenCalledWith(
+      {
+        userId: "user_1",
+        userType: "user",
+        apiUrl: instance,
+        organizationId: "org_1",
+        action: "updated",
+        targetType: "creative",
+        targetId: "cr_1",
+        status: "success",
+        oldObject: { surveyId: "survey_1" },
+        newObject: { surveyId: null },
+      },
+      requestId,
+      expect.anything()
+    );
   });
 
   test("returns authorization responses from survey access", async () => {
