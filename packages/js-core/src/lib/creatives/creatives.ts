@@ -1,9 +1,17 @@
-import { type TCreativeView, createShareRolls, render, resolve, resolveClick } from "@formbricks/creatives";
+import {
+  type TCreativeView,
+  createShareRolls,
+  getCountedPage,
+  render,
+  resolve,
+  resolveClick,
+} from "@formbricks/creatives";
 import { getAppearance } from "@/lib/common/appearance";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { getIsSetup } from "@/lib/common/status";
 import { countClick, countImpressions, stopCountingCreatives } from "@/lib/creatives/events";
+import { type TShownCreative, arrangeCreatives, stopArrangingCreatives } from "@/lib/creatives/layout";
 import { getOpenSurveyIds, openSurveyForCreative } from "@/lib/survey/widget";
 
 /**
@@ -24,6 +32,16 @@ let boundaryTimer: ReturnType<typeof setTimeout> | null = null;
 let getShareRoll: ((creativeId: string) => number) | null = null;
 /** The visitor's colour scheme, watched once the host asks for `system`. */
 let systemScheme: MediaQueryList | null = null;
+/**
+ * The banners the visitor closed on this page view (host + path, as Impressions count it), kept in
+ * memory only: the next page view, a single-page-app route change included, shows them again.
+ */
+const dismissed = { page: null as string | null, ids: new Set<string>() };
+
+const dismissBanner = (id: string): void => {
+  dismissed.ids.add(id);
+  reconcileCreatives();
+};
 
 /**
  * The appearance a creative draws in: the survey's (ENG-3998), which the host sets with
@@ -50,41 +68,52 @@ const getBrowserStorage = (): Storage | null => {
 /** The click path: never the survey trigger (ADR 0004). */
 const handleCreativeClick = (view: TCreativeView): void => {
   const click = resolveClick(view, getOpenSurveyIds());
+  if (click.kind === "none") return;
 
   if (click.kind === "openTab") {
     window.open(click.url, "_blank", "noopener");
-    countClick(view.id);
-    return;
-  }
-  if (click.kind === "none") return;
-
-  const survey = Config.getInstance()
-    .get()
-    .workspace.data.surveys.find(({ id }) => id === click.surveyId);
-  if (!survey) {
-    Logger.getInstance().debug(`Creative "${view.id}" opens survey "${click.surveyId}", which isn't loaded.`);
-    return;
+  } else {
+    const survey = Config.getInstance()
+      .get()
+      .workspace.data.surveys.find(({ id }) => id === click.surveyId);
+    if (!survey) {
+      Logger.getInstance().debug(
+        `Creative "${view.id}" opens survey "${click.surveyId}", which isn't loaded.`
+      );
+      return;
+    }
+    void openSurveyForCreative(survey, view.id, click.close);
   }
 
   countClick(view.id);
-  void openSurveyForCreative(survey, view.id, click.close);
+  // A banner whose button opened its Destination has done its job on this page (ENG-3576).
+  if (view.type === "banner") dismissBanner(view.id);
 };
 
 const showCreatives = (views: readonly TCreativeView[], appearance: "light" | "dark" = "light"): void => {
   const nonce = window.__formbricksNonce;
   const stillShown = new Set<string>();
+  const drawn: TShownCreative[] = [];
 
   for (const view of views) {
     stillShown.add(view.id);
     const drawnFrom = JSON.stringify([view, nonce, appearance]);
     const shown = shownCreatives.get(view.id);
     // A host the page removed (a framework re-rendering <body>) is drawn again.
-    if (shown?.drawnFrom === drawnFrom && shown.host.isConnected) continue;
+    if (shown?.drawnFrom === drawnFrom && shown.host.isConnected) {
+      drawn.push({ view, host: shown.host });
+      continue;
+    }
 
     shown?.host.remove();
-    const host = render(view, { nonce, appearance, onClick: () => handleCreativeClick(view) });
-    if (host) shownCreatives.set(view.id, { host, drawnFrom });
-    else shownCreatives.delete(view.id);
+    const host = render(view, {
+      nonce,
+      appearance,
+      onClick: () => handleCreativeClick(view),
+      onDismiss: () => dismissBanner(view.id),
+    });
+    shownCreatives.set(view.id, { host, drawnFrom });
+    drawn.push({ view, host });
   }
 
   for (const [id, { host }] of shownCreatives) {
@@ -93,7 +122,7 @@ const showCreatives = (views: readonly TCreativeView[], appearance: "light" | "d
     shownCreatives.delete(id);
   }
 
-  // Only what was drawn: a creative `render` can't draw yet showed nothing, so it isn't an Impression.
+  arrangeCreatives(drawn);
   if (shownCreatives.size > 0) countImpressions(shownCreatives.keys());
 };
 
@@ -120,16 +149,30 @@ export const reconcileCreatives = (): void => {
       getShareRoll,
     });
 
-    showCreatives(creatives, getCreativeAppearance());
+    const page = getCountedPage(window.location.href);
+    if (page !== dismissed.page) {
+      dismissed.page = page;
+      dismissed.ids.clear();
+    }
+
+    showCreatives(
+      creatives.filter(({ id }) => !dismissed.ids.has(id)),
+      getCreativeAppearance()
+    );
     scheduleNextChange(nextChangeAt, now);
   } catch (error) {
     Logger.getInstance().error(`Could not show creatives: ${String(error)}`);
   }
 };
 
-/** Takes every creative off the page and stops their schedule timer, appearance watch and counting. */
+/**
+ * Takes every creative off the page and stops their schedule timer, appearance and size watches and
+ * counting.
+ */
 export const removeCreatives = (): void => {
   showCreatives([]);
+  dismissed.ids.clear();
+  stopArrangingCreatives();
   scheduleNextChange(null, 0);
   systemScheme?.removeEventListener("change", reconcileCreatives);
   systemScheme = null;

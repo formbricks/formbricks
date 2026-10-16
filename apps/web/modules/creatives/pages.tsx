@@ -15,10 +15,9 @@ import { CreativeSummary } from "./components/summary/creative-summary";
 import { toDestinationSurveyOptions } from "./lib/destination-options";
 import { getCreativesPath } from "./lib/paths";
 import { findCreativeRecord, findDestinationSurveyCandidates } from "./lib/repository";
-import { getMockCreative } from "./mock/data";
 
 // Server entry points for the Creatives routes. Each runs the workspace auth check every product page
-// runs. The list and summary still show mock data; the editor reads and writes the real creative.
+// runs, then reads the real creative or leaves the reading to the page's API v3 calls.
 
 type TWorkspaceParams = Promise<{ workspaceId: string }>;
 type TCreativeParams = Promise<{ workspaceId: string; creativeId: string }>;
@@ -42,13 +41,23 @@ export const CreativesListPage = async ({ params }: Readonly<{ params: TWorkspac
   );
 };
 
+/**
+ * The summary on the stored creative, serialized as `GET /api/v3/creatives/{id}` returns it, so the
+ * header renders at once; the counts load in the browser from `/api/v3/creatives/{id}/stats`.
+ */
 export const CreativeSummaryPage = async ({ params }: Readonly<{ params: TCreativeParams }>) => {
   const { workspaceId, creativeId } = await params;
-  await getWorkspaceAuth(workspaceId);
-  const creative = getMockCreative(creativeId);
-  if (!creative) notFound();
+  const { isReadOnly } = await getWorkspaceAuth(workspaceId);
+  const record = await findCreativeRecord(creativeId, workspaceId);
+  if (!record) notFound();
 
-  return <CreativeSummary workspaceId={workspaceId} creative={creative} />;
+  return (
+    <CreativeSummary
+      workspaceId={workspaceId}
+      initialCreative={serializeV3Creative(record, new Date())}
+      isReadOnly={isReadOnly}
+    />
+  );
 };
 
 /**

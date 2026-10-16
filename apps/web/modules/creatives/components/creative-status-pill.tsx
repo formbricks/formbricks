@@ -8,7 +8,7 @@ import type { TCreativeDisplayState, TCreativeDisplayStatus } from "../lib/displ
 
 // Creatives reuse the surveys list's status pill: their statuses are the survey ones, plus
 // "Active" as the word for in progress.
-const PILL_STATES: Record<
+export const PILL_STATES: Record<
   TCreativeDisplayStatus,
   { status: TSurvey["status"]; isScheduled?: boolean; isArchived?: boolean }
 > = {

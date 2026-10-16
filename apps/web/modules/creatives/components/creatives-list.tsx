@@ -24,7 +24,7 @@ import {
 } from "../lib/list-filters";
 import { findCreativeOverlaps } from "../lib/overlap";
 import { getCreativeEditPath, getCreativeSummaryPath } from "../lib/paths";
-import { CreativeTypeIndicator } from "./creative-icons";
+import { CreativeTypeIndicator, INDICATOR_TYPES } from "./creative-icons";
 import { CreativeListActions } from "./creative-list-actions";
 import { CreativeRowWarnings } from "./creative-row-warnings";
 import { CreativeStatusPill } from "./creative-status-pill";
@@ -35,9 +35,6 @@ import { CreativesSortDropdown } from "./creatives-sort-dropdown";
 // where Responses becomes what the creative opens (counts live on the summary page only).
 const GRID = "grid-cols-8";
 const CREATIVES_PER_PAGE = 12;
-
-// `CreativeTypeIndicator` still speaks the mock's type names, shared with the editor and summary.
-const INDICATOR_TYPES = { feedbackButton: "feedback_button", banner: "banner" } as const;
 
 const getLinkPath = (url: string): string => {
   try {
