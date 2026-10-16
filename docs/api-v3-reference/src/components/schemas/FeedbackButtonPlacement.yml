@@ -1,0 +1,19 @@
+type: object
+description: >-
+  Where a feedback button sits: an edge of the page plus an offset along it, in percent. On the left
+  and right edges the offset runs from the top; on the bottom edge, from the left.
+required:
+  - edge
+  - offset
+properties:
+  edge:
+    type: string
+    enum:
+      - left
+      - right
+      - bottom
+  offset:
+    type: integer
+    minimum: 0
+    maximum: 100
+additionalProperties: false

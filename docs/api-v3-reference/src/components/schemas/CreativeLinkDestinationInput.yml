@@ -1,0 +1,15 @@
+type: object
+description: Open an `http` or `https` link in a new tab.
+required:
+  - type
+  - url
+properties:
+  type:
+    type: string
+    enum:
+      - link
+  url:
+    type: string
+    maxLength: 2048
+    pattern: ^https?://\S+$
+additionalProperties: false

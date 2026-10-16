@@ -28,6 +28,13 @@ info:
     /api/v3/responses/{responseId}**, and **DELETE /api/v3/responses/{responseId}**.
 
 
+    **Creatives**: **GET /api/v3/creatives**, **POST /api/v3/creatives**, **GET**, **PATCH** and
+    **DELETE /api/v3/creatives/{creativeId}**, and **POST /api/v3/creatives/{creativeId}/archive**,
+    **/restore** and **/duplicate**. A creative is a feedback button or a banner the web SDK renders
+    on the customer's site; pressing it opens its Destination, a survey or a link. Writes set the
+    author's `status`; reads add the derived `displayStatus`.
+
+
     **Workflows extension**: **GET /api/v3/workflows**, **POST
     /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH
     /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**,
@@ -370,6 +377,16 @@ paths:
     $ref: paths/api_v3_workflows_{workflowId}_unarchive.yml
   /api/v3/workflows/{workflowId}/test:
     $ref: paths/api_v3_workflows_{workflowId}_test.yml
+  /api/v3/creatives:
+    $ref: paths/api_v3_creatives.yml
+  /api/v3/creatives/{creativeId}:
+    $ref: paths/api_v3_creatives_{creativeId}.yml
+  /api/v3/creatives/{creativeId}/archive:
+    $ref: paths/api_v3_creatives_{creativeId}_archive.yml
+  /api/v3/creatives/{creativeId}/restore:
+    $ref: paths/api_v3_creatives_{creativeId}_restore.yml
+  /api/v3/creatives/{creativeId}/duplicate:
+    $ref: paths/api_v3_creatives_{creativeId}_duplicate.yml
   /api/v3/action-classes:
     $ref: paths/api_v3_action-classes.yml
   /api/v3/contact-attribute-keys:

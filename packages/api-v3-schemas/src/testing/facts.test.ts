@@ -43,6 +43,14 @@ describe("diffAgainstSpec", () => {
     expect(attrs(object, schema)).toContain(expected);
   });
 
+  test("reads a Zod regex's escaped slash as the contract's plain one, and still catches a changed pattern", () => {
+    const url: JsonObject = { type: "string", pattern: "^https?://\\S+$" };
+    expect(attrs(url, z.string().regex(/^https?:\/\/\S+$/))).toEqual([]);
+    expect(attrs(url, z.string().regex(/^https:\/\/\S+$/))).toEqual(["$ pattern"]);
+    // An escaped backslash before a slash is a literal backslash, not an escaped slash.
+    expect(attrs({ type: "string", pattern: "^\\\\/$" }, z.string().regex(/^\\\/$/))).toEqual([]);
+  });
+
   test("follows $refs and allOf on the spec side", () => {
     const schemas: JsonObject = {
       Base: { type: "object", required: ["id"], properties: { id: { type: "string" } } },

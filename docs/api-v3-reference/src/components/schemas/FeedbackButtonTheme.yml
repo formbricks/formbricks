@@ -1,0 +1,58 @@
+type: object
+description: >
+  The feedback button's custom styles. With `customStyles` off the button follows the workspace Look
+  & Feel (the survey button) and the values below are kept but not applied. With it on, each value
+  overrides the workspace one; `null` keeps the workspace value. Colours are `#rrggbb`.
+required:
+  - customStyles
+  - backgroundColor
+  - textColor
+  - borderColor
+  - borderRadius
+  - fontWeight
+  - fontSize
+  - paddingX
+  - paddingY
+properties:
+  customStyles:
+    type: boolean
+    description: The "Add custom styles" switch.
+  backgroundColor:
+    type:
+      - string
+      - "null"
+    pattern: ^#[0-9a-fA-F]{6}$
+  textColor:
+    type:
+      - string
+      - "null"
+    pattern: ^#[0-9a-fA-F]{6}$
+  borderColor:
+    type:
+      - string
+      - "null"
+    pattern: ^#[0-9a-fA-F]{6}$
+  borderRadius:
+    type:
+      - integer
+      - "null"
+    minimum: 0
+    maximum: 100
+    description: Corner radius in px.
+  fontWeight:
+    type:
+      - integer
+      - "null"
+    enum:
+      - 400
+      - 500
+      - 600
+      - 700
+      - null
+  fontSize:
+    $ref: ./CreativeFontSize.yml
+  paddingX:
+    $ref: ./CreativePadding.yml
+  paddingY:
+    $ref: ./CreativePadding.yml
+additionalProperties: false

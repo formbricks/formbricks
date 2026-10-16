@@ -1,0 +1,12 @@
+type:
+  - string
+  - "null"
+enum:
+  - surveyNotActive
+  - scheduleEnded
+  - null
+description: >
+  Why `displayStatus` differs from what `status` alone would give: `surveyNotActive` on a `paused`
+  creative whose Destination survey isn't active ("Paused with its survey": it comes back by itself
+  when the survey is active again), `scheduleEnded` on a `closed` creative whose `endAt` has passed.
+  `null` otherwise. New values may be added.
