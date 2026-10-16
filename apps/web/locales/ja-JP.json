@@ -3776,6 +3776,7 @@
         "duplicate_question": "質問を複製",
         "edit_link": "編集 リンク",
         "edit_recall": "リコールを編集",
+        "edit_survey_title": "{surveyName}を編集",
         "element_category_choice": "選択肢",
         "element_category_contact": "連絡先",
         "element_category_content": "コンテンツ",

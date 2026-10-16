@@ -3776,6 +3776,7 @@
         "duplicate_question": "复制问题",
         "edit_link": "编辑 链接",
         "edit_recall": "编辑 调用",
+        "edit_survey_title": "编辑 {surveyName}",
         "element_category_choice": "选择",
         "element_category_contact": "联系人",
         "element_category_content": "内容",

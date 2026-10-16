@@ -3776,6 +3776,7 @@
         "duplicate_question": "Soruyu çoğalt",
         "edit_link": "Bağlantıyı düzenle",
         "edit_recall": "Hatırlatmayı düzenle",
+        "edit_survey_title": "{surveyName} anketini düzenle",
         "element_category_choice": "Seçim",
         "element_category_contact": "İletişim",
         "element_category_content": "İçerik",

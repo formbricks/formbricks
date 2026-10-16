@@ -3776,6 +3776,7 @@
         "duplicate_question": "Dupliquer la question",
         "edit_link": "Modifier le lien",
         "edit_recall": "Modifier le rappel",
+        "edit_survey_title": "Modifier {surveyName}",
         "element_category_choice": "Choix",
         "element_category_contact": "Contact",
         "element_category_content": "Contenu",

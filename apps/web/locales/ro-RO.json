@@ -3776,6 +3776,7 @@
         "duplicate_question": "Duplică întrebarea",
         "edit_link": "Editare legătură",
         "edit_recall": "Editează Referințele",
+        "edit_survey_title": "Editează {surveyName}",
         "element_category_choice": "Alegere",
         "element_category_contact": "Contact",
         "element_category_content": "Conținut",
