@@ -4,11 +4,8 @@ import { getAuthzedClient } from "@/lib/authzed/client";
 import { processAuthzedOutboxBatch } from "@/lib/authzed/outbox-processor";
 import { getAuthzedOutboxStatus } from "@/lib/authzed/outbox-repository";
 import { readAllRelationships } from "@/lib/authzed/relationship-reads";
-import {
-  diffSurveyRelationships,
-  expectedSurveyRelationships,
-  reconcileSurveyRelationships,
-} from "@/lib/authzed/survey";
+import { reconcileSurveyRelationships } from "@/lib/authzed/survey";
+import { expectedSurveyRelationships, surveyRelationshipsMatch } from "@/lib/authzed/survey-relationships";
 import { ONLINE_UPGRADE_RELEASE } from "../compatibility";
 import { OnlineUpgradeBlocked } from "./coordinator";
 
@@ -74,7 +71,7 @@ export const verifyOnlineProjection = async (assertLock: () => Promise<void>): P
         resourceId: row.id,
         resourceType: "survey",
       });
-      if (diffSurveyRelationships(relationships, expectedSurveyRelationships(row)).length) {
+      if (!surveyRelationshipsMatch(relationships, expectedSurveyRelationships(row))) {
         const current = await prisma.survey.findUnique({ where: { id: row.id }, select });
         if (
           current &&
