@@ -161,6 +161,7 @@ const mockWorkspaceStateData: WorkspaceStateData = {
   // The fixtures are full surveys; the state carries the respondent shape (compiled custom CSS only).
   surveys: mockSurveys as unknown as TJsWorkspaceStateSurvey[],
   actionClasses: mockActionClasses,
+  creatives: [],
 };
 
 describe("getWorkspaceState", () => {
@@ -219,6 +220,32 @@ describe("getWorkspaceState", () => {
     // Old SDKs read `project` and know nothing of custom CSS; everything else in it is unchanged.
     expect(data.project).toEqual(mockWorkspace);
     expect(JSON.stringify(data).split(compiledCss)).toHaveLength(2);
+  });
+
+  test("adds creatives only when the workspace has deliverable ones (ENG-3994)", async () => {
+    const creative: WorkspaceStateData["creatives"][number] = {
+      id: "creative-1",
+      type: "feedbackButton",
+      defaultLanguage: "en-US",
+      content: { label: { "en-US": "Feedback" }, icon: null },
+      position: { desktop: { edge: "right", offset: 50 }, phone: null },
+      destination: { type: "link", url: "https://example.com" },
+      showOn: "pageView",
+      triggers: [],
+      conditions: null,
+      displayPercentage: null,
+      startAt: null,
+      endAt: null,
+    };
+    vi.mocked(getWorkspaceStateData).mockResolvedValue({ ...mockWorkspaceStateData, creatives: [creative] });
+
+    const withCreatives = await getWorkspaceState(workspaceId);
+    vi.mocked(getWorkspaceStateData).mockResolvedValue(mockWorkspaceStateData);
+    const withoutCreatives = await getWorkspaceState(workspaceId);
+
+    expect(withCreatives.data.creatives).toEqual([creative]);
+    // Old SDKs and cached states never see the key unless there is something to show.
+    expect(withoutCreatives.data).not.toHaveProperty("creatives");
   });
 
   test("should throw ResourceNotFoundError if workspace not found", async () => {
