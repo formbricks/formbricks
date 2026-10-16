@@ -3007,6 +3007,7 @@
         "plan_selection_description": "Hobby、Pro、Scaleプランを比較して、Formbricksから直接プランを切り替えられます。",
         "plan_selection_title": "プランを選択",
         "plan_unknown": "不明",
+        "responses_above_limit_billed_per_response": "{limit}を超える回答は、<dynamicPricing>こちらの料金</dynamicPricing>で回答ごとに課金されます。",
         "retry_setup": "セットアップを再試行",
         "select_plan_cta": "始める",
         "select_plan_feature_1": "AIネイティブの多言語アンケート",

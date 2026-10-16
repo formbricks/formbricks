@@ -3007,6 +3007,7 @@
         "plan_selection_description": "Vergelijk Hobby, Pro en Scale, en schakel direct vanuit Formbricks tussen abonnementen.",
         "plan_selection_title": "Kies je abonnement",
         "plan_unknown": "Onbekend",
+        "responses_above_limit_billed_per_response": "Voor reacties boven {limit} betaal je per reactie, volgens <dynamicPricing>deze tarieven</dynamicPricing>.",
         "retry_setup": "Opnieuw proberen",
         "select_plan_cta": "Aan de slag",
         "select_plan_feature_1": "AI-native meertalige enquêtes",

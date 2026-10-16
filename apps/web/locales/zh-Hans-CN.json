@@ -3007,6 +3007,7 @@
         "plan_selection_description": "比较 Hobby、Pro 和 Scale 套餐，然后直接从 Formbricks 切换套餐。",
         "plan_selection_title": "选择您的套餐",
         "plan_unknown": "未知",
+        "responses_above_limit_billed_per_response": "超出 {limit} 的回复将按每条回复计费，费率请见<dynamicPricing>此处</dynamicPricing>。",
         "retry_setup": "重试设置",
         "select_plan_cta": "开始使用",
         "select_plan_feature_1": "AI 原生多语言调查",

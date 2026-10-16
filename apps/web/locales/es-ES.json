@@ -3007,6 +3007,7 @@
         "plan_selection_description": "Compara Hobby, Pro y Scale, y cambia de plan directamente desde Formbricks.",
         "plan_selection_title": "Elige tu plan",
         "plan_unknown": "Desconocido",
+        "responses_above_limit_billed_per_response": "Las respuestas que superen {limit} se facturan por respuesta según <dynamicPricing>estas tarifas</dynamicPricing>.",
         "retry_setup": "Reintentar configuración",
         "select_plan_cta": "Comenzar",
         "select_plan_feature_1": "Encuestas multiidioma nativas con IA",

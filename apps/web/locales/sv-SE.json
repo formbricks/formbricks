@@ -3007,6 +3007,7 @@
         "plan_selection_description": "Jämför Hobby, Pro och Scale och byt sedan plan direkt från Formbricks.",
         "plan_selection_title": "Välj din plan",
         "plan_unknown": "Okänd",
+        "responses_above_limit_billed_per_response": "Svar utöver {limit} faktureras per svar enligt <dynamicPricing>dessa priser</dynamicPricing>.",
         "retry_setup": "Försök igen med inställningen",
         "select_plan_cta": "Kom igång",
         "select_plan_feature_1": "AI-drivna flerspråkiga enkäter",
