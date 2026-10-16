@@ -508,7 +508,8 @@ export const ZResponseMeta = ZAutoCapturedResponseMeta.extend({
    * name themselves — a client-sent name never reaches the database. The name is the one the creative
    * had when the response was created, so a later rename leaves stored responses as they were.
    */
-  openedByCreativeId: z.string().optional(),
+  // Anything but text is dropped rather than refusing the response (the routes check the id anyway).
+  openedByCreativeId: z.string().optional().catch(undefined),
   openedByCreativeName: z.string().optional(),
 });
 

@@ -25,7 +25,9 @@ export const ZDisplayCreateInput = z.object({
    * The creative whose click opened the survey (T4, ADR 0006). Kept only when the creative is in the
    * workspace and its Destination is this survey; otherwise the display is created without it.
    */
-  creativeId: ZId.optional(),
+  // A malformed one (another id format, a wrong type) is dropped, never a 400: attribution must not
+  // cost a display, whichever SDK sent it.
+  creativeId: ZId.optional().catch(undefined),
 });
 
 export type TDisplayCreateInput = z.infer<typeof ZDisplayCreateInput>;
