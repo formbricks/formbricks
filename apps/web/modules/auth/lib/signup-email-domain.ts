@@ -32,12 +32,22 @@ const blockedEmailDomains = new Set<string>([
   ...wildcardBlockedEmailDomains,
 ]);
 
-/** True when any parent domain of `domain` (`a.b.33mail.com` → `b.33mail.com`, `33mail.com`, …) is a wildcard entry. */
+/** Label count of the longest wildcard entry; no parent domain with more labels can match. */
+const MAX_WILDCARD_LABELS = Math.max(
+  ...Array.from(wildcardBlockedEmailDomains, (domain) => domain.split(".").length)
+);
+
+/**
+ * True when a parent domain of `domain` (`a.b.33mail.com` → `33mail.com`, `b.33mail.com`) is a wildcard
+ * entry. Walks from the right and stops after {@link MAX_WILDCARD_LABELS} labels, so the work stays
+ * linear in the domain length: Better Auth's sign-up route and the SSO email claim don't cap it.
+ */
 const isSubdomainOfWildcardDomain = (domain: string): boolean => {
-  let dotIndex = domain.indexOf(".");
-  while (dotIndex !== -1) {
+  let dotIndex = domain.length;
+  for (let labels = 1; labels <= MAX_WILDCARD_LABELS; labels++) {
+    dotIndex = domain.lastIndexOf(".", dotIndex - 1);
+    if (dotIndex === -1) return false;
     if (wildcardBlockedEmailDomains.has(domain.slice(dotIndex + 1))) return true;
-    dotIndex = domain.indexOf(".", dotIndex + 1);
   }
   return false;
 };

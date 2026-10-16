@@ -102,6 +102,20 @@ describe("isBlockedEmailDomain", () => {
     expect(isBlockedEmailDomain("test@not33mail.com")).toBe(false);
   });
 
+  test("does a bounded number of lookups for a domain with many labels", () => {
+    // Better Auth's sign-up route doesn't cap the email length, so one lookup per label would let a
+    // single request hash ~200k suffixes. Counting lookups keeps this deterministic, unlike a timer.
+    const longDomain = "a.".repeat(200_000);
+    const hasSpy = vi.spyOn(Set.prototype, "has");
+    try {
+      expect(isBlockedEmailDomain(`x@${longDomain}com`)).toBe(false);
+      expect(isBlockedEmailDomain(`x@${longDomain}33mail.com`)).toBe(true);
+      expect(hasSpy.mock.calls.length).toBeLessThan(20);
+    } finally {
+      hasSpy.mockRestore();
+    }
+  });
+
   test("returns false for company domains", () => {
     for (const email of [
       "alice@acme-corp.com",
