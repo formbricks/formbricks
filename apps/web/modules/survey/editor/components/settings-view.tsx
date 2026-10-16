@@ -5,6 +5,8 @@ import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { useSurveyLinkedCreatives } from "@/modules/creatives/hooks/use-survey-linked-creatives";
+import { getCreativeOpenedMode } from "@/modules/creatives/lib/survey-side";
 import { TargetingCard } from "@/modules/ee/contacts/segments/components/targeting-card";
 import { SurveyRetentionCard } from "@/modules/ee/data-retention/components/survey/survey-retention-card";
 import type { TSurveyDataRetentionContext } from "@/modules/ee/data-retention/types";
@@ -66,6 +68,10 @@ export const SettingsView = ({
   dataRetention = null,
 }: Readonly<SettingsViewProps>) => {
   const isAppSurvey = localSurvey.type === "app";
+  const linkedCreatives = useSurveyLinkedCreatives({
+    workspaceId: localSurvey.workspaceId,
+    surveyId: localSurvey.id,
+  });
 
   return (
     <div className="mt-12 space-y-3 p-5">
@@ -107,6 +113,7 @@ export const SettingsView = ({
         membershipRole={membershipRole}
         workspacePermission={workspacePermission}
         hasError={hasTriggerError}
+        openedByCreatives={linkedCreatives}
       />
       <QuotasCard
         localSurvey={localSurvey}
@@ -124,9 +131,17 @@ export const SettingsView = ({
         isSpamProtectionAllowed={isSpamProtectionAllowed}
         surveySchedulingConfig={surveySchedulingConfig}
         locale={locale}
+        linkedCreatives={linkedCreatives}
       />
 
-      <RecontactOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
+      <RecontactOptionsCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        creativeOpenedMode={getCreativeOpenedMode({
+          triggers: localSurvey.triggers,
+          creatives: linkedCreatives,
+        })}
+      />
 
       {dataRetention ? (
         <SurveyRetentionCard

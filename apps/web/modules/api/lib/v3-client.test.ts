@@ -31,6 +31,22 @@ describe("parseV3ApiError", () => {
     expect(error.invalid_params).toEqual([{ name: "surveyId", reason: "Invalid id" }]);
   });
 
+  test("keeps the problem's details for callers that explain a refusal", async () => {
+    const response = new Response(
+      JSON.stringify({
+        status: 409,
+        detail: "Relink, archive or delete the creatives that open this survey before deleting it",
+        code: "survey_has_linked_creatives",
+        details: { creatives: [{ id: "creative_1", name: "Feedback tab" }] },
+      }),
+      { status: 409, headers: { "Content-Type": "application/problem+json" } }
+    );
+
+    const error = await parseV3ApiError(response);
+
+    expect(error.details).toEqual({ creatives: [{ id: "creative_1", name: "Feedback tab" }] });
+  });
+
   test("falls back to a provided fallback message", () => {
     expect(getV3ApiErrorMessage(new Error("boom"), "fallback")).toBe("boom");
     expect(getV3ApiErrorMessage("bad", "fallback")).toBe("fallback");

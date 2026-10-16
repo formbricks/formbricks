@@ -8,6 +8,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
+import { type TSurveyLinkedCreative, isDestinationSettingLocked } from "@/modules/creatives/lib/survey-side";
 import {
   type TSurveySchedulingConfig,
   getSurveySchedulingTimeLabel,
@@ -30,7 +31,11 @@ interface ResponseOptionsCardProps {
   isSpamProtectionAllowed: boolean;
   surveySchedulingConfig: TSurveySchedulingConfig;
   locale: TUserLocale;
+  /** The linked creatives: a creative's Destination can't be PIN-protected (Δ11). */
+  linkedCreatives?: readonly TSurveyLinkedCreative[];
 }
+
+const NO_CREATIVES: readonly TSurveyLinkedCreative[] = [];
 
 export const ResponseOptionsCard = ({
   localSurvey,
@@ -39,6 +44,7 @@ export const ResponseOptionsCard = ({
   isSpamProtectionAllowed,
   surveySchedulingConfig,
   locale,
+  linkedCreatives = NO_CREATIVES,
 }: Readonly<ResponseOptionsCardProps>) => {
   const { t } = useTranslation();
   const { toCalendarDate, getMinimumSurveySchedulingCalendarDate } = useMemo(
@@ -83,6 +89,10 @@ export const ResponseOptionsCard = ({
   const isCloseOnDateEnabled = localSurvey.closeOn !== null;
 
   const isPinProtectionEnabled = localSurvey.pin !== null;
+  const isPinLocked = isDestinationSettingLocked({
+    creatives: linkedCreatives,
+    isOn: isPinProtectionEnabled,
+  });
 
   const [verifyProtectWithPinError, setVerifyProtectWithPinError] = useState<string | null>(null);
 
@@ -529,8 +539,15 @@ export const ResponseOptionsCard = ({
                 htmlId="protectSurveyWithPin"
                 isChecked={isPinProtectionEnabled}
                 onToggle={handleProtectSurveyWithPinToggle}
+                disabled={isPinLocked}
                 title={t("workspace.surveys.edit.protect_survey_with_pin")}
-                description={t("workspace.surveys.edit.protect_survey_with_pin_description")}
+                description={
+                  isPinLocked
+                    ? t("workspace.creatives.survey_side.pin_locked", {
+                        creatives: linkedCreatives.map(({ name }) => name).join(", "),
+                      })
+                    : t("workspace.surveys.edit.protect_survey_with_pin_description")
+                }
                 childBorder={true}>
                 <div className="p-4">
                   <Label htmlFor="headline" className="sr-only">

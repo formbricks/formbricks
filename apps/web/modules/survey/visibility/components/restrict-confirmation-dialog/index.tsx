@@ -53,6 +53,8 @@ export const RestrictConfirmationDialog = ({
     { label: t("common.integrations"), before: yes, after: no },
     { label: t("common.webhooks"), before: yes, after: no },
     { label: t("common.workflows"), before: yes, after: no },
+    // A creative can't open a Restricted survey (ENG-3868).
+    { label: t("common.creatives"), before: yes, after: no },
   ];
 
   return (

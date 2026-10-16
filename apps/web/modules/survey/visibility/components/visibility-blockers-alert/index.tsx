@@ -7,6 +7,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/ale
 
 interface VisibilityBlockersAlertProps {
   blockers: readonly TSurveyVisibilityBlocker[];
+  /** Defaults to the Restrict wording; another refused change (a delete) names its own. */
+  title?: string;
   className?: string;
 }
 
@@ -30,17 +32,21 @@ const BlockerTypeLabel = ({ type }: Readonly<{ type: TSurveyVisibilityBlocker["t
 
 /**
  * The outbound connections that stop a survey from being restricted, grouped by type. Shared by the
- * Restrict confirmation and the Collaborate modal so both explain the refusal the same way. Renders
- * nothing without blockers.
+ * Restrict confirmation and the Collaborate modal so both explain the refusal the same way, and by the
+ * survey delete that creatives refuse. Renders nothing without blockers.
  */
-export const VisibilityBlockersAlert = ({ blockers, className }: Readonly<VisibilityBlockersAlertProps>) => {
+export const VisibilityBlockersAlert = ({
+  blockers,
+  title,
+  className,
+}: Readonly<VisibilityBlockersAlertProps>) => {
   const { t } = useTranslation();
   const blockerGroups = groupBlockersByType(blockers);
   if (blockerGroups.length === 0) return null;
 
   return (
     <Alert variant="warning" size="default" role="status" className={className}>
-      <AlertTitle>{t("workspace.surveys.visibility.blocked_by_connections")}</AlertTitle>
+      <AlertTitle>{title ?? t("workspace.surveys.visibility.blocked_by_connections")}</AlertTitle>
       <AlertDescription>
         <ul className="list-disc space-y-0.5 pl-4">
           {blockerGroups.map((group) => (

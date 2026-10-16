@@ -11,6 +11,8 @@ import { updateSingleUseLinksAction } from "@/app/(app)/workspaces/[workspaceId]
 import { DisableLinkModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/disable-link-modal";
 import { DocumentationLinks } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
+import { useSurveyLinkedCreatives } from "@/modules/creatives/hooks/use-survey-linked-creatives";
+import { isDestinationSettingLocked } from "@/modules/creatives/lib/survey-side";
 import { generateSingleUseIdsAction } from "@/modules/survey/list/actions";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -42,6 +44,10 @@ export const AnonymousLinksTab = ({
   const [singleUseEncryption, setSingleUseEncryption] = useState(survey.singleUse?.isEncrypted ?? false);
   const [numberOfLinks, setNumberOfLinks] = useState<number | string>(1);
   const [customSingleUseId, setCustomSingleUseId] = useState("");
+  // A creative's Destination can't use single-use links (Δ11): while creatives open the survey, the
+  // switches that would turn them on stay locked.
+  const linkedCreatives = useSurveyLinkedCreatives({ workspaceId: survey.workspaceId, surveyId: survey.id });
+  const isSingleUseLocked = isDestinationSettingLocked({ creatives: linkedCreatives, isOn: isSingleUseLink });
 
   const [disableLinkModal, setDisableLinkModal] = useState<{
     open: boolean;
@@ -252,6 +258,7 @@ export const AnonymousLinksTab = ({
             htmlId="multi-use-link-switch"
             isChecked={isMultiUseLink}
             onToggle={handleMultiUseToggle}
+            disabled={isSingleUseLocked}
             title={t("workspace.surveys.share.anonymous_links.multi_use_link")}
             description={t("workspace.surveys.share.anonymous_links.multi_use_link_description")}
             customContainerClass="pl-1 pr-0 py-0"
@@ -283,8 +290,15 @@ export const AnonymousLinksTab = ({
             htmlId="single-use-link-switch"
             isChecked={isSingleUseLink}
             onToggle={handleSingleUseToggle}
+            disabled={isSingleUseLocked}
             title={t("workspace.surveys.share.anonymous_links.single_use_link")}
-            description={t("workspace.surveys.share.anonymous_links.single_use_link_description")}
+            description={
+              isSingleUseLocked
+                ? t("workspace.creatives.survey_side.single_use_locked", {
+                    creatives: linkedCreatives.map(({ name }) => name).join(", "),
+                  })
+                : t("workspace.surveys.share.anonymous_links.single_use_link_description")
+            }
             customContainerClass="pl-1 pr-0 py-0"
             childBorder>
             <div className="flex w-full flex-col gap-4 bg-white p-4">
