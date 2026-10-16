@@ -2,7 +2,8 @@ import { validateDateTimeRange } from "@/modules/ui/components/date-time-picker/
 import type { TCreative } from "../types";
 import { hasIncompleteConditions } from "./show-conditions-ui";
 
-// What blocks Publish, and which editor tab owns the fix. Draft saves are never blocked.
+// What blocks Publish, and which editor tab owns the fix. A draft saves with gaps; only an issue that
+// would store a schedule that can never be valid (end before start) blocks Save as well.
 
 export type TCreativeEditorTab = "content" | "styling" | "settings" | "schedule";
 
@@ -23,6 +24,8 @@ export const PUBLISH_ISSUE_TABS: Record<TPublishIssue, TCreativeEditorTab | null
   end_before_start: "schedule",
 };
 
+const SAVE_BLOCKING_ISSUES: readonly TPublishIssue[] = ["end_before_start"];
+
 const isHttpUrl = (value: string): boolean => {
   try {
     const url = new URL(value);
@@ -42,3 +45,7 @@ export const getPublishIssues = (creative: TCreative): TPublishIssue[] => {
   if (validateDateTimeRange(creative.startsAt, creative.endsAt)) issues.push("end_before_start");
   return issues;
 };
+
+/** The subset of publish issues that also stops a draft from being saved. */
+export const getSaveIssues = (creative: TCreative): TPublishIssue[] =>
+  getPublishIssues(creative).filter((issue) => SAVE_BLOCKING_ISSUES.includes(issue));

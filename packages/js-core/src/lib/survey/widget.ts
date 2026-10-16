@@ -426,6 +426,20 @@ const resolveDisplayLanguage = (
 
 let surveysLoadPromise: Promise<TFormbricksSurveys> | null = null;
 
+/**
+ * Content hash of the survey renderer this SDK was built against, inlined by the production build (see
+ * `vite.config.ts`). `/js/*` is served with a 30-day `s-maxage` (`apps/web/next.config.mjs`), so without
+ * a token that moves with the renderer a new SDK could be handed a month-old cached renderer, which
+ * silently drops anything newer — creative attribution, for one. Absent in dev builds and tests.
+ */
+declare const __FB_SURVEY_RENDERER_HASH__: string;
+
+/** The renderer URL, the same for the load and the prefetch so the load reuses the prefetched file. */
+const getSurveysScriptUrl = (appUrl: string): string => {
+  const version = typeof __FB_SURVEY_RENDERER_HASH__ === "string" ? __FB_SURVEY_RENDERER_HASH__ : "dev";
+  return `${appUrl}/js/surveys.umd.cjs?v=${version}`;
+};
+
 const waitForSurveysGlobal = (): Promise<TFormbricksSurveys> => {
   return new Promise((resolve, reject) => {
     const startTime = Date.now();
@@ -464,7 +478,7 @@ const loadFormbricksSurveysExternally = (): Promise<TFormbricksSurveys> => {
   surveysLoadPromise = new Promise<TFormbricksSurveys>((resolve, reject: (error: unknown) => void) => {
     const config = Config.getInstance();
     const script = document.createElement("script");
-    script.src = `${config.get().appUrl}/js/surveys.umd.cjs`;
+    script.src = getSurveysScriptUrl(config.get().appUrl);
     script.async = true;
     script.onload = () => {
       waitForSurveysGlobal()
@@ -505,6 +519,6 @@ export const prefetchSurveysScript = (appUrl: string): void => {
   isPrefetched = true;
   const link = document.createElement("link");
   link.rel = "prefetch";
-  link.href = `${appUrl}/js/surveys.umd.cjs`;
+  link.href = getSurveysScriptUrl(appUrl);
   document.head.appendChild(link);
 };

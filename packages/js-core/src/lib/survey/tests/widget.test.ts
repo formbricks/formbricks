@@ -51,6 +51,10 @@ vi.mock("@/lib/common/utils", async (importOriginal) => {
   };
 });
 
+// Stands in for the content hash of the survey renderer that a production build inlines.
+const RENDERER_HASH = "0123456789ab";
+vi.stubGlobal("__FB_SURVEY_RENDERER_HASH__", RENDERER_HASH);
+
 const mockUpdateQueue = {
   hasPendingWork: vi.fn().mockReturnValue(false),
   waitForPendingWork: vi.fn().mockResolvedValue(true),
@@ -1010,7 +1014,7 @@ describe("widget-file", () => {
 
       const scriptEl = getAppendedScript();
 
-      expect(scriptEl.src).toBe("https://fake.app/js/surveys.umd.cjs");
+      expect(scriptEl.src).toBe(`https://fake.app/js/surveys.umd.cjs?v=${RENDERER_HASH}`);
       expect(scriptEl.async).toBe(true);
 
       // Simulate network error
@@ -1144,7 +1148,8 @@ describe("widget-file", () => {
     const linkEl = createElementSpy.mock.results[0].value as Record<string, string>;
     expect(linkEl.rel).toBe("prefetch");
     expect(linkEl.as).toBeUndefined();
-    expect(linkEl.href).toBe("https://fake.app/js/surveys.umd.cjs");
+    // The same URL the script loads, so that load reuses this fetch from the HTTP cache.
+    expect(linkEl.href).toBe(`https://fake.app/js/surveys.umd.cjs?v=${RENDERER_HASH}`);
 
     // Second call should be a no-op (deduplication)
     widget.prefetchSurveysScript("https://fake.app");
