@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
-import { DEFAULT_CREATIVE_STYLE, type TCreativePayload } from "@formbricks/creatives";
+import { DEFAULT_CREATIVE_STYLE, type TBannerPayload, type TCreativePayload } from "@formbricks/creatives";
 import { setAppearance } from "@/lib/common/appearance";
 import { Config } from "@/lib/common/config";
 import { setIsSetup } from "@/lib/common/status";
@@ -45,13 +45,8 @@ const browserStorage = new Map<string, string>();
 
 beforeAll(() => {
   // vitest.setup.ts swaps window, document and localStorage for hand-rolled mocks; this suite draws
-  // into a real (jsdom) DOM. Node's own `localStorage` global shadows jsdom's, so storage is a stand-in.
+  // into a real (jsdom) DOM.
   vi.unstubAllGlobals();
-  vi.stubGlobal("localStorage", {
-    getItem: (key: string) => browserStorage.get(key) ?? null,
-    setItem: (key: string, value: string) => browserStorage.set(key, value),
-    clear: () => browserStorage.clear(),
-  });
 });
 
 const sendEvents = vi.fn((_url: string, _init: RequestInit) =>
@@ -72,6 +67,12 @@ beforeEach(() => {
   window.history.replaceState({}, "", "/");
   sendEvents.mockClear();
   vi.stubGlobal("fetch", sendEvents);
+  // Node's own `localStorage` global shadows jsdom's, so storage is a stand-in.
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => browserStorage.get(key) ?? null,
+    setItem: (key: string, value: string) => browserStorage.set(key, value),
+    clear: () => browserStorage.clear(),
+  });
   state = { creatives: [feedbackButton()], surveys: [mockSurvey] };
   vi.spyOn(Config, "getInstance").mockReturnValue({
     get: () =>
@@ -93,6 +94,7 @@ afterEach(() => {
   window.localStorage.clear();
   vi.useRealTimers();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("reconcileCreatives", () => {
@@ -248,6 +250,219 @@ describe("pressing a creative", () => {
 
     expect(open).toHaveBeenCalledWith("https://example.com/help", "_blank", "noopener");
     expect(openSurveyForCreative).not.toHaveBeenCalled();
+  });
+});
+
+describe("banners (ENG-3576)", () => {
+  const banner = (
+    id: string,
+    {
+      placement = "top",
+      layout = "inPage",
+      ...overrides
+    }: Partial<TBannerPayload> & {
+      placement?: "top" | "bottom";
+      layout?: "inPage" | "overlay";
+    } = {}
+  ): TCreativePayload =>
+    ({
+      ...feedbackButton(),
+      id,
+      type: "banner",
+      content: {
+        message: { "en-US": [{ text: `Notice ${id}` }] },
+        button: null,
+        dismissible: true,
+        accessibleName: null,
+      },
+      position: { desktop: { placement, layout }, phone: null },
+      destination: null,
+      ...overrides,
+    }) as TCreativePayload;
+
+  const bannerHosts = (): Element[] =>
+    Array.from(document.querySelectorAll("[data-formbricks-creative]")).filter((host) =>
+      host.shadowRoot?.querySelector(".fb-creative-banner")
+    );
+
+  const hostOf = (id: string): HTMLElement => {
+    const host = document.querySelector<HTMLElement>(`[data-formbricks-creative="${id}"]`);
+    if (!host) throw new Error(`${id} is not on the page`);
+    return host;
+  };
+
+  const controlOf = (id: string, selector: string): HTMLElement => {
+    const control = hostOf(id).shadowRoot?.querySelector<HTMLElement>(selector);
+    if (!control) throw new Error(`${id} has no ${selector}`);
+    return control;
+  };
+
+  beforeEach(() => {
+    document.body.replaceChildren(document.createElement("main"));
+  });
+
+  test("puts In page banners at the top of the page, newest on top, whatever order they arrive in", () => {
+    // The payload lists creatives newest first.
+    state.creatives = [banner("newer"), banner("older")];
+    reconcileCreatives();
+
+    expect(document.body.firstElementChild).toBe(hostOf("newer"));
+    expect(bannerHosts().map((host) => host.getAttribute("data-formbricks-creative"))).toEqual([
+      "newer",
+      "older",
+    ]);
+
+    state.creatives = [banner("newest"), banner("newer"), banner("middle"), banner("older")];
+    reconcileCreatives();
+
+    expect(bannerHosts().map((host) => host.getAttribute("data-formbricks-creative"))).toEqual([
+      "newest",
+      "newer",
+      "middle",
+      "older",
+    ]);
+    expect(bannerHosts()[3].nextElementSibling?.tagName).toBe("MAIN");
+  });
+
+  describe("Overlay banners", () => {
+    /** Bars as tall as their message says (jsdom lays nothing out): `Notice <id>` is 40 px, … */
+    let barHeights: Record<string, number>;
+
+    beforeEach(() => {
+      barHeights = {};
+      vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(function (
+        this: HTMLElement
+      ) {
+        const id = this.textContent.replace("Notice ", "");
+        return {
+          height: this.classList.contains("fb-creative-banner") ? (barHeights[id] ?? 40) : 0,
+        } as DOMRect;
+      });
+    });
+
+    const insetsOf = (id: string) => ({
+      top: hostOf(id).style.getPropertyValue("--fb-creative-top"),
+      bottom: hostOf(id).style.getPropertyValue("--fb-creative-bottom"),
+    });
+
+    test("stack below the newer ones on their edge, and feedback buttons keep clear of all of them", () => {
+      barHeights = { "top-new": 40, "top-old": 64, bottom: 52 };
+      state.creatives = [
+        banner("top-new", { layout: "overlay" }),
+        feedbackButton(),
+        banner("bottom", { placement: "bottom", layout: "overlay" }),
+        banner("in-page"),
+        banner("top-old", { layout: "overlay" }),
+      ];
+
+      reconcileCreatives();
+
+      expect(insetsOf("top-new").top).toBe("0px");
+      expect(insetsOf("top-old").top).toBe("40px");
+      expect(insetsOf("bottom").bottom).toBe("0px");
+      expect(insetsOf("creative-1")).toEqual({ top: "104px", bottom: "52px" });
+    });
+
+    test("restack when a banner's size changes, on the edge the viewport puts it", () => {
+      let onResize: (() => void) | undefined;
+      vi.stubGlobal(
+        "ResizeObserver",
+        class {
+          constructor(callback: () => void) {
+            onResize = callback;
+          }
+          observe = vi.fn();
+          disconnect = vi.fn();
+        }
+      );
+      const phone = { matches: false };
+      vi.stubGlobal(
+        "matchMedia",
+        vi.fn(() => phone)
+      );
+      state.creatives = [
+        banner("first", {
+          layout: "overlay",
+          position: {
+            desktop: { placement: "top", layout: "overlay" },
+            phone: { placement: "bottom", layout: "overlay" },
+          },
+        }),
+        feedbackButton(),
+      ];
+      reconcileCreatives();
+      expect(insetsOf("creative-1")).toEqual({ top: "40px", bottom: "0px" });
+
+      // The window narrows below 768 px: the bar wraps onto two lines and moves to the bottom.
+      phone.matches = true;
+      barHeights = { first: 80 };
+      onResize?.();
+
+      expect(insetsOf("first").bottom).toBe("0px");
+      expect(insetsOf("creative-1")).toEqual({ top: "0px", bottom: "80px" });
+    });
+  });
+
+  describe("Dismiss", () => {
+    const shownIds = (): (string | null)[] =>
+      bannerHosts().map((host) => host.getAttribute("data-formbricks-creative"));
+
+    test("closes the banner on that page only, and remembers nothing", () => {
+      state.creatives = [banner("notice"), banner("other")];
+      reconcileCreatives();
+
+      controlOf("notice", "[aria-label=Dismiss]").click();
+      expect(shownIds()).toEqual(["other"]);
+
+      // A state refresh, a schedule boundary or a same-page URL change keeps it closed…
+      window.history.replaceState({}, "", "/?tab=2#faq");
+      reconcileCreatives();
+      expect(shownIds()).toEqual(["other"]);
+      expect(window.localStorage.getItem("formbricks-creative-share")).toBeNull();
+
+      // …and the next page view, a single-page-app route change included, shows it again.
+      window.history.pushState({}, "", "/pricing");
+      reconcileCreatives();
+      expect(shownIds()).toEqual(["notice", "other"]);
+    });
+
+    test("is not a Click", async () => {
+      state.creatives = [banner("notice")];
+      reconcileCreatives();
+
+      controlOf("notice", "[aria-label=Dismiss]").click();
+      await vi.advanceTimersByTimeAsync(2_000);
+
+      expect(sentEvents()[0].body).toMatchObject({ events: [{ creativeId: "notice", type: "impression" }] });
+    });
+  });
+
+  test("its button opens the Destination, counts a Click, and closes the banner on that page", async () => {
+    const open = vi.spyOn(window, "open").mockReturnValue(null);
+    state.creatives = [
+      banner("notice", {
+        content: {
+          message: { "en-US": [{ text: "Open Enrollment ends Dec 15." }] },
+          button: { label: { "en-US": "See plans" } },
+          dismissible: false,
+          accessibleName: null,
+        },
+        destination: { type: "link", url: "https://example.com/plans" },
+      }),
+    ];
+    reconcileCreatives();
+
+    controlOf("notice", ".fb-creative-banner-button").click();
+
+    expect(open).toHaveBeenCalledWith("https://example.com/plans", "_blank", "noopener");
+    expect(bannerHosts()).toEqual([]);
+    await vi.advanceTimersByTimeAsync(2_000);
+    expect(sentEvents()[0].body).toMatchObject({
+      events: [
+        { creativeId: "notice", type: "impression" },
+        { creativeId: "notice", type: "click" },
+      ],
+    });
   });
 });
 

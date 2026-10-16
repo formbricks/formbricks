@@ -10,7 +10,13 @@ export {
   type TCreativeEventsBody,
   getCountedPage,
 } from "./events";
-export { CREATIVE_ROOT_CLASS, render, type TRenderOptions } from "./render";
+export {
+  CREATIVE_INSET_PROPERTY,
+  CREATIVE_PHONE_MEDIA,
+  CREATIVE_ROOT_CLASS,
+  render,
+  type TRenderOptions,
+} from "./render";
 export { resolve, type TCreativePage, type TResolveInput, type TResolveResult } from "./resolve";
 export { CREATIVE_SHARE_STORAGE_KEY, createShareRolls } from "./share";
 export { DEFAULT_CREATIVE_STYLE } from "./style";
