@@ -12,6 +12,7 @@ import {
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getTranslate } from "@/lingodotdev/server";
+import { isSurveyOpenedByCreative } from "@/modules/creatives/lib/survey-publish";
 import { getCustomCssSource } from "@/modules/custom-css/components/lib/draft";
 import { hasStylesInHeadScripts } from "@/modules/custom-css/components/lib/hints";
 import { type TSurveyCustomCssEditorConfig } from "@/modules/custom-css/components/types";
@@ -150,10 +151,12 @@ export const SurveyEditorPage = async (props: {
 
   const isCxMode = searchParams.mode === "cx";
   const publicDomain = getPublicDomain();
-  const [{ surveyVisibilityGate, visibility, surveyAccess, ownerName }, dataRetention] = await Promise.all([
-    getSurveyVisibilityViewer(survey, session.user.id, workspaceWithTeamIds.organizationId),
-    getSurveyDataRetentionContext(organization, session.user.id),
-  ]);
+  const [{ surveyVisibilityGate, visibility, surveyAccess, ownerName }, dataRetention, isOpenedByCreative] =
+    await Promise.all([
+      getSurveyVisibilityViewer(survey, session.user.id, workspaceWithTeamIds.organizationId),
+      getSurveyDataRetentionContext(organization, session.user.id),
+      isSurveyOpenedByCreative(survey.id),
+    ]);
 
   // The workspace row reaches the editor without its CSS columns (source, compiled output and the
   // previous revision); the editor gets only what the Custom CSS card shows, read here on the server.
@@ -202,6 +205,7 @@ export const SurveyEditorPage = async (props: {
       ownerName={ownerName}
       customCssEditor={customCssEditor}
       dataRetention={dataRetention}
+      isOpenedByCreative={isOpenedByCreative}
     />
   );
 };

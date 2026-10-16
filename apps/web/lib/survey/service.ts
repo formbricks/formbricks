@@ -50,6 +50,7 @@ import {
 } from "@/lib/organization/service";
 import type { TSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
+import { isAppSurveyBlockedFromPublishing } from "@/modules/creatives/lib/survey-publish";
 import {
   invalidateCustomCssCaches,
   parseStoredCustomCss,
@@ -66,11 +67,10 @@ import {
 import { getActionClasses } from "../actionClass/service";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
+import { APP_SURVEY_TRIGGER_REQUIRED_MESSAGE, isAppSurveyMissingTriggersToPublish } from "./publish-rule";
 import {
-  APP_SURVEY_TRIGGER_REQUIRED_MESSAGE,
   checkForInvalidImagesInQuestions,
   checkForInvalidMediaInBlocks,
-  isAppSurveyMissingTriggersToPublish,
   stripIsDraftFromBlocks,
   transformPrismaSurvey,
   validateMediaAndPrepareBlocks,
@@ -575,9 +575,11 @@ export const updateSurveyInternal = async (
     if (!skipValidation) {
       checkForInvalidImagesInQuestions(questions);
 
-      // An app survey can never be shown without a trigger, so block publishing (non-draft status)
-      // one with zero triggers. The editor enforces this client-side only; mirror it server-side.
-      if (isAppSurveyMissingTriggersToPublish(type, updatedSurvey.status, triggers)) {
+      // An app survey can never be shown without a trigger or a creative that opens it, so block
+      // publishing (non-draft status) one with neither. The editor runs the same rule before saving.
+      if (
+        await isAppSurveyBlockedFromPublishing({ surveyId, type, status: updatedSurvey.status, triggers })
+      ) {
         throw new InvalidInputError(APP_SURVEY_TRIGGER_REQUIRED_MESSAGE);
       }
     }
@@ -1142,13 +1144,15 @@ export const createSurvey = async (
     }
 
     // An app survey can never be shown without a trigger, so block creating one directly in a
-    // non-draft status with zero triggers (mirrors the editor's publish guard).
+    // non-draft status with zero triggers (mirrors the editor's publish guard). No creative can open a
+    // survey that doesn't exist yet.
     if (
-      isAppSurveyMissingTriggersToPublish(
-        restSurveyBody.type ?? "link",
-        restSurveyBody.status ?? "draft",
-        restSurveyBody.triggers
-      )
+      isAppSurveyMissingTriggersToPublish({
+        type: restSurveyBody.type ?? "link",
+        status: restSurveyBody.status ?? "draft",
+        triggers: restSurveyBody.triggers,
+        isOpenedByCreative: false,
+      })
     ) {
       throw new InvalidInputError(APP_SURVEY_TRIGGER_REQUIRED_MESSAGE);
     }
