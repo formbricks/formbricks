@@ -27,7 +27,7 @@ example:
   position:
     desktop:
       edge: right
-      offset: 50
+      offset: 60
     phone: null
   theme:
     customStyles: false

@@ -52,6 +52,7 @@ const buttonRule = (
 
 const PHONE = "(max-width: 767.98px)";
 const DARK = ".fb-creative-button[data-appearance=dark]";
+const ICON = ".fb-creative-button-icon";
 
 /** A look whose every value is distinct, so each assertion can only pass on the right field. */
 const STYLE: TCreativeStyle = {
@@ -241,6 +242,104 @@ describe("render", () => {
     const host = render(feedbackButton(), { onClick: vi.fn(), root });
 
     expect(host.parentElement).toBe(root);
+  });
+
+  describe("final look (ENG-3578)", () => {
+    test("is one real button in the page's tab order, named by its label, with no close control", () => {
+      const host = render(feedbackButton({ icon: "sparkles" }), { onClick: vi.fn() });
+      const controls = shadowOf(host).querySelectorAll("button, a, [tabindex], [role=button]");
+      const button = shadowOf(host).querySelector("button");
+
+      expect(controls).toHaveLength(1);
+      expect(button?.tabIndex).toBe(0);
+      expect(button?.disabled).toBe(false);
+      expect(button?.hasAttribute("aria-label")).toBe(false);
+      expect(button?.textContent).toBe("Feedback");
+      expect(host.hasAttribute("inert") || host.hasAttribute("aria-hidden")).toBe(false);
+    });
+
+    test("draws its icon before the label, hidden from screen readers so the label alone names it", () => {
+      const host = render(feedbackButton({ icon: "megaphone" }), { onClick: vi.fn() });
+      const button = shadowOf(host).querySelector("button");
+      const icon = button?.firstElementChild;
+
+      expect(icon?.tagName.toLowerCase()).toBe("svg");
+      expect(icon?.getAttribute("aria-hidden")).toBe("true");
+      // Drawn in the label's colour, so it follows the light and dark palettes and the author's CSS.
+      expect(icon?.getAttribute("stroke")).toBe("currentColor");
+      expect(button?.textContent).toBe("Feedback");
+    });
+
+    test("draws every icon of the editor's set, and none without one", () => {
+      for (const icon of ["messageSquare", "messageCircle", "megaphone", "sparkles"] as const) {
+        const host = render(feedbackButton({ icon }), { onClick: vi.fn() });
+        expect(shadowOf(host).querySelector("svg path")?.getAttribute("d")).toMatch(/^M/);
+      }
+
+      const plain = render(feedbackButton({ icon: null }), { onClick: vi.fn() });
+      expect(shadowOf(plain).querySelector("svg")).toBeNull();
+    });
+
+    test("sizes its icon from the label's font size on each device, as the survey button does", () => {
+      // The survey button draws a 16 px icon 8 px from a 14 px label.
+      const element = {
+        ...STYLE.element,
+        desktop: { ...STYLE.element.desktop, fontSize: 14 },
+        phone: { ...STYLE.element.phone, fontSize: 21 },
+      };
+      const host = render(feedbackButton({ icon: "megaphone", style: { ...STYLE, element } }), {
+        onClick: vi.fn(),
+      });
+
+      expect(buttonRule(host).display).toBe("flex");
+      expect(buttonRule(host).alignItems).toBe("center");
+      expect(buttonRule(host).gap).toBe("8px");
+      expect(buttonRule(host, undefined, ICON).width).toBe("16px");
+      expect(buttonRule(host, undefined, ICON).height).toBe("16px");
+      expect(buttonRule(host, PHONE).gap).toBe("12px");
+      expect(buttonRule(host, PHONE, ICON).width).toBe("24px");
+    });
+
+    test("reads bottom to top on a side edge, its icon turned with the label, and level on the bottom edge", () => {
+      const host = render(
+        feedbackButton({
+          icon: "megaphone",
+          position: { desktop: { edge: "left", offset: 60 }, phone: { edge: "bottom", offset: 50 } },
+        }),
+        { onClick: vi.fn() }
+      );
+
+      expect(buttonRule(host).writingMode).toBe("vertical-rl");
+      expect(buttonRule(host).transform).toBe("translateY(-60%) rotate(180deg)");
+      // Upright glyphs turn a quarter clockwise in vertical text; the icon turns with them.
+      expect(buttonRule(host, undefined, ICON).transform).toBe("rotate(90deg)");
+      expect(buttonRule(host, PHONE).writingMode).toBe("horizontal-tb");
+      expect(buttonRule(host, PHONE).transform).toBe("translateX(-50%)");
+      expect(buttonRule(host, PHONE, ICON).transform).toBe("none");
+    });
+
+    test("shows a focus ring in two of its own colours, so one of them stands out on any page", () => {
+      const host = render(feedbackButton({ style: STYLE }), { onClick: vi.fn() });
+      const focused = buttonRule(host, undefined, ".fb-creative-button:focus-visible");
+      const darkFocused = buttonRule(
+        host,
+        undefined,
+        ".fb-creative-button[data-appearance=dark]:focus-visible"
+      );
+
+      // The label colour hugs the button, its background colour rings that.
+      expect(focused.boxShadow).toBe("0 0 0 2px #ffffff,0 0 0 4px #0b5394");
+      expect(darkFocused.boxShadow).toBe("0 0 0 2px #0f172a,0 0 0 4px #93c5fd");
+      // Shadows drop in forced-colors mode, where the transparent outline takes the system colour.
+      expect(focused.outline).toBe("2px solid transparent");
+    });
+
+    test("fades a little on hover, like the survey button, and a little more while pressed", () => {
+      const host = render(feedbackButton(), { onClick: vi.fn() });
+
+      expect(buttonRule(host, undefined, ".fb-creative-button:hover").opacity).toBe("0.9");
+      expect(buttonRule(host, undefined, ".fb-creative-button:active").opacity).toBe("0.8");
+    });
   });
 });
 

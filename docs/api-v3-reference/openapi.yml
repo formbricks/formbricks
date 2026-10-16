@@ -11592,7 +11592,7 @@ components:
         position:
           desktop:
             edge: right
-            offset: 50
+            offset: 60
           phone: null
         theme:
           customStyles: false
@@ -12006,7 +12006,7 @@ components:
               $ref: '#/components/schemas/FeedbackButtonContent'
             styling:
               $ref: '#/components/schemas/FeedbackButtonStyling'
-              description: Omit for the right edge at 50 % on every device, with custom styles off (the workspace Look & Feel).
+              description: Omit for the right edge at 60 % from the top on every device, with custom styles off (the workspace Look & Feel).
       unevaluatedProperties: false
       description: Create a feedback button.
     CreateBannerCreativeRequest:
