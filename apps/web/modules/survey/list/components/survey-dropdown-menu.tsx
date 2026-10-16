@@ -110,8 +110,9 @@ export const SurveyDropDownMenu = ({
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [isCollaborateModalOpen, setIsCollaborateModalOpen] = useState(false);
-  /** The creatives that refused a delete (409), while their dialog is open. */
-  const [deleteBlockers, setDeleteBlockers] = useState<TSurveyVisibilityBlocker[] | null>(null);
+  const [isDeleteBlockedDialogOpen, setDeleteBlockedDialogOpen] = useState(false);
+  /** The creatives that refused the last delete (409). */
+  const [deleteBlockers, setDeleteBlockers] = useState<TSurveyVisibilityBlocker[]>([]);
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -183,6 +184,7 @@ export const SurveyDropDownMenu = ({
       if (linkedCreatives) {
         setDeleteDialogOpen(false);
         setDeleteBlockers(linkedCreatives);
+        setDeleteBlockedDialogOpen(true);
         return;
       }
       toast.error(getV3ApiErrorMessage(error, t("workspace.surveys.error_deleting_survey")));
@@ -522,12 +524,10 @@ export const SurveyDropDownMenu = ({
 
       {canManageSurvey && (
         <SurveyDeleteBlockedDialog
-          open={deleteBlockers !== null}
-          setOpen={(open) => {
-            if (!open) setDeleteBlockers(null);
-          }}
+          open={isDeleteBlockedDialogOpen}
+          setOpen={setDeleteBlockedDialogOpen}
           workspaceId={survey.workspaceId}
-          blockers={deleteBlockers ?? []}
+          blockers={deleteBlockers}
         />
       )}
 

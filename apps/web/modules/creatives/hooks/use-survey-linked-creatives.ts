@@ -5,7 +5,6 @@ import { type Dispatch, type SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TSurveyStatus } from "@formbricks/types/surveys/types";
-import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import {
   type TSurveyLinkedCreative,
   type TSurveyStatusChangePlan,
@@ -56,7 +55,9 @@ export const useSurveyStatusChangeWithCreatives = ({
 }) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  // The last change asked for stays after the dialog closes, so its copy doesn't change mid-fade.
   const [pending, setPending] = useState<TPendingStatusChange | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const refreshLinkedCreatives = () =>
@@ -83,6 +84,7 @@ export const useSurveyStatusChangeWithCreatives = ({
     });
     if (plan) {
       setPending({ to, plan, keepPaused: false });
+      setIsOpen(true);
       return;
     }
     await applyStatus(to);
@@ -94,13 +96,14 @@ export const useSurveyStatusChangeWithCreatives = ({
     setIsSubmitting(true);
     try {
       await Promise.all(getCreativesToKeepPaused(pending.plan, pending.keepPaused).map(pauseCreative));
-    } catch (error) {
-      toast.error(getV3ApiErrorMessage(error, t("workspace.creatives.survey_side.keep_paused_failed")));
+    } catch {
+      // The dialog stays open: the author can retry, or resume without keeping them paused.
+      toast.error(t("workspace.creatives.survey_side.keep_paused_failed"));
       setIsSubmitting(false);
       void refreshLinkedCreatives();
       return;
     }
-    setPending(null);
+    setIsOpen(false);
     await applyStatus(pending.to);
     setIsSubmitting(false);
     void refreshLinkedCreatives();
@@ -113,10 +116,10 @@ export const useSurveyStatusChangeWithCreatives = ({
       keepPaused: pending?.keepPaused ?? false,
       setKeepPaused: (keepPaused: boolean) =>
         setPending((current) => (current ? { ...current, keepPaused } : current)),
-      open: pending !== null,
+      open: isOpen,
       setOpen: ((value) => {
-        const open = typeof value === "function" ? value(pending !== null) : value;
-        if (!open && !isSubmitting) setPending(null);
+        const open = typeof value === "function" ? value(isOpen) : value;
+        if (!open && !isSubmitting) setIsOpen(false);
       }) satisfies Dispatch<SetStateAction<boolean>>,
       onConfirm: confirm,
       isSubmitting,
