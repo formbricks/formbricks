@@ -107,8 +107,8 @@ Supported scopes:
 
 | Scope | Use |
 | --- | --- |
-| `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css` |
-| `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css` |
+| `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats` |
+| `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative` |
 | `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow` |
 | `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, and the enable/disable/archive/unarchive mutations |
 | `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` |
@@ -225,6 +225,15 @@ API key permissions are enforced through the same workspace access checks as the
 | `delete_survey` | `write` or `manage` |
 | `get_workspace_custom_css` | `read` |
 | `patch_workspace_custom_css` | `manage` for an API key; an organization owner or manager for an OAuth user — stricter than `surveys:write` |
+| `list_creatives` | `read` |
+| `get_creative` | `read` |
+| `get_creative_stats` | `read` |
+| `create_creative` | `write` or `manage` |
+| `patch_creative` | `write` or `manage` |
+| `delete_creative` | `write` or `manage` |
+| `duplicate_creative` | `write` or `manage` |
+| `archive_creative` | `write` or `manage` |
+| `restore_creative` | `write` or `manage` |
 | `list_workflows` | `read` |
 | `get_workflow` | `read` |
 | `list_workflow_runs` | `read` |
@@ -1165,6 +1174,66 @@ so callers can correlate the audit trail:
 }
 ```
 
+### Creative tools
+
+Nine tools over the v3 Creatives API, one per documented operation: `list_creatives`, `get_creative`,
+`get_creative_stats`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`,
+`archive_creative` and `restore_creative`. A creative is a feedback button or banner the web SDK renders
+on a customer's site. Each tool is a thin adapter: it maps its input onto the operation in
+`app/api/v3/creatives/lib/operations.ts` and relays the answer, so validation, status rules and
+authorization are the REST API's, tested once there.
+
+**Scopes.** There is no `creatives:*` scope: reads declare `surveys:read` and writes `surveys:write`, so
+any client that can manage surveys can manage creatives and the consent screen offers nothing new (its
+`surveys:*` lines now say "surveys and creatives"). Splitting the scope later is additive — add
+`creatives:*` and grant it to every client already holding `surveys:*`, as for responses in ENG-3470.
+The workspace permission behind the operation is a separate gate, as for every tool.
+
+**`list_creatives`** takes a required `workspaceId`, `limit` (default 20, at most 50), an opaque `cursor`,
+`filter.name.contains`, `filter.type.in`, `filter.displayStatus.in`, `surveyId` (creatives whose
+Destination is that survey) and `sortBy`. Archived creatives are left out unless
+`filter.displayStatus.in` names `archived`. `meta` carries `limit` and `nextCursor` only: the creative
+list has no total.
+
+```json
+{
+  "workspaceId": "clxx1234567890123456789012",
+  "filter": { "displayStatus": { "in": ["active", "scheduled"] } }
+}
+```
+
+**`create_creative`** takes one flat object. `type` (`feedbackButton` or `banner`) selects the shape of
+`content` and `styling` and can never change (a union cannot be a tool's root, so the shapes are
+advertised side by side); the v3 create body validates the object behind the scenes, so a `content` that
+does not fit the `type` is refused before the operation runs. A creative is
+created as a draft unless `status` is `inProgress`, which publishes it and so needs its Destination and
+default-language text (a `422` names the field). Texts are keyed by locale code.
+
+```json
+{
+  "workspaceId": "clxx1234567890123456789012",
+  "name": "Pricing page feedback",
+  "type": "feedbackButton",
+  "content": { "label": { "en-US": "Feedback" }, "icon": "messageSquare" },
+  "destination": { "type": "survey", "surveyId": "clsv1234567890123456789012" },
+  "status": "inProgress"
+}
+```
+
+**`patch_creative`** takes `{ creativeId, data }`. Each group in `data` (`content`, `styling`,
+`destination`, `distribution`, `schedule`, or `defaultLanguage` with `languages`) replaces the stored group
+as a whole, which is why the tool is `destructiveHint: true`: read the creative with `get_creative` and
+send the complete group. Publish, pause, close and reopen by setting `status`. An archived creative is
+read-only (`422`): restore it first.
+
+**`delete_creative`** is permanent and takes the creative's counts with it; `archive_creative` takes one
+off the site and keeps its history, and `restore_creative` brings it back. Archiving and restoring are
+idempotent and not annotated destructive. `duplicate_creative` copies a creative into a new draft without
+its counts. `get_creative_stats` reads Impressions, Clicks and Click rate per UTC day, with an optional
+`from`/`to` range and `groupBy` of `page` or `device`.
+
+There is no `validate_creative` dry run yet.
+
 ### Workflow tools
 
 Workflow tools operate on the v3 Workflows API (trigger → condition → action automations). They reuse
@@ -1857,6 +1926,25 @@ framework-agnostic `@formbricks/workflows` handlers used by the v3 REST routes:
 | `archive_workflow`   | `POST /api/v3/workflows/{workflowId}/archive`   |
 | `unarchive_workflow` | `POST /api/v3/workflows/{workflowId}/unarchive` |
 
+## Relationship to V3 Creatives API
+
+The creative tools call the same operations as the REST routes (`app/api/v3/creatives/lib/operations.ts`):
+
+| MCP Tool | REST Contract |
+| --- | --- |
+| `list_creatives` | `GET /api/v3/creatives` |
+| `get_creative` | `GET /api/v3/creatives/{creativeId}` |
+| `get_creative_stats` | `GET /api/v3/creatives/{creativeId}/stats` |
+| `create_creative` | `POST /api/v3/creatives` |
+| `patch_creative` | `PATCH /api/v3/creatives/{creativeId}` |
+| `delete_creative` | `DELETE /api/v3/creatives/{creativeId}` |
+| `duplicate_creative` | `POST /api/v3/creatives/{creativeId}/duplicate` |
+| `archive_creative` | `POST /api/v3/creatives/{creativeId}/archive` |
+| `restore_creative` | `POST /api/v3/creatives/{creativeId}/restore` |
+
+The creative schemas are generated from the contract (`@formbricks/api-v3-schemas`), so the tools' input
+and output schemas follow it through `pnpm api:v3:sync` rather than by hand.
+
 ## Relationship to V3 Surveys API
 
 The MCP server does not run custom survey database queries. Each tool calls the shared server-only v3
@@ -1981,6 +2069,9 @@ query, like `create_feedback_record`.
 - `apps/web/modules/mcp/tools/schemas.ts`
 - `apps/web/modules/mcp/tools/workflows.ts`
 - `apps/web/modules/mcp/tools/workflow-schemas.ts`
+- `apps/web/modules/mcp/tools/creatives.ts`
+- `apps/web/modules/mcp/tools/creative-schemas.ts` and `creative-output-schemas.ts`
+- `apps/web/app/api/v3/creatives/lib/operations.ts`
 - `apps/web/app/api/v3/surveys/lib/operations.ts`
 - `apps/web/app/api/v3/workspaces/lib/custom-css.ts` (workspace custom CSS operations)
 - `apps/web/app/api/v3/surveys/blocks.ts` (pure block op-application and reorder logic)
