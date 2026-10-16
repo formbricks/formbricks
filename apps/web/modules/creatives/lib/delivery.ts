@@ -3,7 +3,7 @@ import type { TCreativeDestination, TCreativeLanguage, TCreativePayload } from "
 import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZShowConditions } from "@formbricks/types/show-conditions";
-import { CREATIVE_TYPE_SCHEMAS, type TCreativeTypedGroups, needsDestination } from "./creative";
+import { needsDestination, parseCreativeTypedGroups } from "./creative";
 import { compileCreativeCustomCss } from "./custom-css";
 import { type TWorkspaceStylingInput, getAppliedCustomCssSource, getCreativeStyle } from "./style";
 import { getBannerLabels } from "./visitor-labels";
@@ -54,21 +54,6 @@ export const getDeliverableCreativesWhere = (now: Date): Prisma.CreativeWhereInp
   ],
 });
 
-const parseTypedGroups = (row: TDeliveredCreativeRow): TCreativeTypedGroups | null => {
-  if (row.type === "feedbackButton") {
-    const content = CREATIVE_TYPE_SCHEMAS.feedbackButton.content.safeParse(row.content);
-    const styling = CREATIVE_TYPE_SCHEMAS.feedbackButton.styling.safeParse(row.styling);
-    return content.success && styling.success
-      ? { type: "feedbackButton", content: content.data, styling: styling.data }
-      : null;
-  }
-  const content = CREATIVE_TYPE_SCHEMAS.banner.content.safeParse(row.content);
-  const styling = CREATIVE_TYPE_SCHEMAS.banner.styling.safeParse(row.styling);
-  return content.success && styling.success
-    ? { type: "banner", content: content.data, styling: styling.data }
-    : null;
-};
-
 const getDestination = (row: TDeliveredCreativeRow, publicDomain: string): TCreativeDestination | null => {
   if (row.surveyId) {
     // A link survey opens its public link; the SDK adds `?creativeId=` when it opens it.
@@ -101,7 +86,7 @@ const toCreativePayload = async (
   row: TDeliveredCreativeRow,
   { publicDomain, workspaceStyling }: TCreativeDeliveryContext
 ): Promise<TCreativePayload | null> => {
-  const groups = parseTypedGroups(row);
+  const groups = parseCreativeTypedGroups(row);
   const conditions = ZShowConditions.safeParse(row.showConditions ?? null);
   if (!groups || !conditions.success) {
     logger.warn(

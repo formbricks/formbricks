@@ -9,6 +9,7 @@ import {
   validateDateTimeRange,
 } from "@/modules/ui/components/date-time-picker";
 import type { TCreativeEditorForm } from "../../lib/editor-form";
+import { getUiLocale } from "../../lib/ui-locale";
 import { EditorField, EditorPanel } from "./editor-primitives";
 
 type TSchedule = TCreativeEditorForm["schedule"];
@@ -20,7 +21,7 @@ export const ScheduleTab = ({
 }: Readonly<{ schedule: TSchedule; onChange: (schedule: TSchedule) => void }>) => {
   const { t, i18n } = useTranslation();
   const ids = useId();
-  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+  const locale = getUiLocale(i18n);
   const [today] = useState(() => {
     const date = new Date();
     date.setHours(0, 0, 0, 0);

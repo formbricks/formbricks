@@ -24,6 +24,7 @@ import {
 } from "../lib/list-filters";
 import { findCreativeOverlaps } from "../lib/overlap";
 import { getCreativeEditPath, getCreativeSummaryPath } from "../lib/paths";
+import { getUiLocale } from "../lib/ui-locale";
 import { CreativeTypeIndicator, INDICATOR_TYPES } from "./creative-icons";
 import { CreativeListActions } from "./creative-list-actions";
 import { CreativeRowWarnings } from "./creative-row-warnings";
@@ -65,7 +66,7 @@ interface CreativesListProps {
 
 export const CreativesList = ({ workspaceId, isReadOnly }: Readonly<CreativesListProps>) => {
   const { t, i18n } = useTranslation();
-  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+  const locale = getUiLocale(i18n);
   const [animationParent] = useAutoAnimate();
   const [filters, setFilters] = useState<TCreativeListFilters>(INITIAL_CREATIVE_FILTERS);
   const [isFilterInitialized, setIsFilterInitialized] = useState(false);

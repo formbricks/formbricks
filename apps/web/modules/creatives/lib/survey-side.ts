@@ -115,6 +115,10 @@ export const isDestinationSettingLocked = ({
 }: Readonly<{ creatives: readonly TSurveyLinkedCreative[]; isOn: boolean }>): boolean =>
   creatives.length > 0 && !isOn;
 
+/** The creatives' names as one run of text for the survey screens' copy ("{creatives}" placeholders). */
+export const joinCreativeNames = (creatives: readonly Readonly<{ name: string }>[]): string =>
+  creatives.map(({ name }) => name).join(", ");
+
 const LINKED_CREATIVES_PROBLEM_CODE = "survey_has_linked_creatives";
 
 // `LinkedCreativesProblem.yml`'s `details`; the problem schemas aren't generated, so it is read here.

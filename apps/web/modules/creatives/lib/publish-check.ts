@@ -1,4 +1,5 @@
 import { validateDateTimeRange } from "@/modules/ui/components/date-time-picker/lib/date-time";
+import { getCreativeFormTexts, isBlankCreativeText, readCreativeFormText } from "./creative-texts";
 import { type TCreativeEditorForm, formNeedsDestination } from "./editor-form";
 import { hasIncompleteConditions } from "./show-conditions-ui";
 
@@ -49,13 +50,10 @@ const isValidLink = (url: string): boolean => {
   return trimmed.length <= MAX_LINK_LENGTH && LINK_PATTERN.test(trimmed);
 };
 
-const getContentIssues = (content: TCreativeEditorForm["content"]): TPublishIssue[] => {
-  if (content.type === "feedbackButton") return isBlank(content.label) ? ["label_missing"] : [];
-  const issues: TPublishIssue[] = [];
-  if (content.message.every((run) => isBlank(run.text))) issues.push("message_missing");
-  if (content.hasButton && isBlank(content.buttonLabel)) issues.push("button_label_missing");
-  return issues;
-};
+const getContentIssues = (content: TCreativeEditorForm["content"]): TPublishIssue[] =>
+  getCreativeFormTexts(content).flatMap(({ field, publish }) =>
+    publish && isBlankCreativeText(readCreativeFormText(content, field)) ? [publish.issue] : []
+  );
 
 const getDestinationIssues = (form: TCreativeEditorForm): TPublishIssue[] => {
   if (!formNeedsDestination(form.content)) return [];

@@ -39,6 +39,7 @@ import {
   setCreativeLanguageEnabled,
   updateTranslation,
 } from "../../lib/languages-form";
+import { getUiLocale } from "../../lib/ui-locale";
 import { BANNER_EXCLUDED_TOOLBAR_ITEMS, MAX_TEXT_LENGTH } from "./content-tab";
 import { EditorField, EditorPanel } from "./editor-primitives";
 import { SurveyLanguageWarning } from "./survey-language-warning";
@@ -136,7 +137,7 @@ export const LanguageTab = ({
   survey: TDestinationSurveyOption | null;
 }>) => {
   const { t, i18n } = useTranslation();
-  const locale = i18n.resolvedLanguage ?? "en-US";
+  const locale = getUiLocale(i18n);
   const { languages } = form;
   const [editingCode, setEditingCode] = useState<string | null>(languages.others[0]?.code ?? null);
   const [removingCode, setRemovingCode] = useState<string | null>(null);

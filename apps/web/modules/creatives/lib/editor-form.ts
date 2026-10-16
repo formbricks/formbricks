@@ -9,6 +9,7 @@ import type {
 } from "@formbricks/api-v3-schemas";
 import type { TShowConditions } from "@formbricks/types/show-conditions";
 import { toCreativeShowConditions } from "./creative-show-conditions";
+import { CREATIVE_TEXTS, type TCreativeTextField, readCreativeTextMap } from "./creative-texts";
 import { type TCreativeStylingForm, toStylingBody, toStylingForm } from "./styling-form";
 
 /**
@@ -161,16 +162,18 @@ const toDestinationForm = (destination: TCreativeResource["destination"]): TCrea
 };
 
 const toTranslation = (resource: TCreativeResource, code: string): TCreativeTranslation => {
-  if (resource.type === "feedbackButton") {
-    return { label: resource.content.label[code] ?? "", message: [], buttonLabel: "", accessibleName: "" };
-  }
-  const { message, button, accessibleName } = resource.content;
-  return {
+  const translation: Record<TCreativeTextField, unknown> = {
     label: "",
-    message: message[code] ?? [],
-    buttonLabel: button?.label[code] ?? "",
-    accessibleName: accessibleName?.[code] ?? "",
+    message: [],
+    buttonLabel: "",
+    accessibleName: "",
   };
+  for (const text of CREATIVE_TEXTS[resource.type]) {
+    const value = readCreativeTextMap(resource.content, text)?.[code];
+    if (value !== undefined) translation[text.field] = value;
+  }
+  // Each map holds its own field's shape (a string, or a message's runs), as the v3 schema parsed it.
+  return translation as TCreativeTranslation;
 };
 
 const toLanguagesForm = (resource: TCreativeResource): TCreativeLanguagesForm => {

@@ -37,6 +37,26 @@ export const CREATIVE_TYPE_SCHEMAS = {
   banner: { content: zBannerContent, styling: zBannerStyling },
 } as const;
 
+/** A stored row's JSON groups parsed with its type's schemas, or `null` when either no longer fits. */
+export const parseCreativeTypedGroups = (row: {
+  type: TCreativeTypedGroups["type"];
+  content: unknown;
+  styling: unknown;
+}): TCreativeTypedGroups | null => {
+  if (row.type === "feedbackButton") {
+    const content = CREATIVE_TYPE_SCHEMAS.feedbackButton.content.safeParse(row.content);
+    const styling = CREATIVE_TYPE_SCHEMAS.feedbackButton.styling.safeParse(row.styling);
+    return content.success && styling.success
+      ? { type: "feedbackButton", content: content.data, styling: styling.data }
+      : null;
+  }
+  const content = CREATIVE_TYPE_SCHEMAS.banner.content.safeParse(row.content);
+  const styling = CREATIVE_TYPE_SCHEMAS.banner.styling.safeParse(row.styling);
+  return content.success && styling.success
+    ? { type: "banner", content: content.data, styling: styling.data }
+    : null;
+};
+
 /** What a creative opens. A survey's eligibility is checked against the database when it is linked. */
 export type TCreativeDestinationRef =
   | { type: "survey"; surveyId: string }

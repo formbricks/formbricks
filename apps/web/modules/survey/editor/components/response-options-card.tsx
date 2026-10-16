@@ -8,7 +8,11 @@ import { Trans, useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
-import { type TSurveyLinkedCreative, isDestinationSettingLocked } from "@/modules/creatives/lib/survey-side";
+import {
+  type TSurveyLinkedCreative,
+  isDestinationSettingLocked,
+  joinCreativeNames,
+} from "@/modules/creatives/lib/survey-side";
 import {
   type TSurveySchedulingConfig,
   getSurveySchedulingTimeLabel,
@@ -544,7 +548,7 @@ export const ResponseOptionsCard = ({
                 description={
                   isPinLocked
                     ? t("workspace.creatives.survey_side.pin_locked", {
-                        creatives: linkedCreatives.map(({ name }) => name).join(", "),
+                        creatives: joinCreativeNames(linkedCreatives),
                       })
                     : t("workspace.surveys.edit.protect_survey_with_pin_description")
                 }

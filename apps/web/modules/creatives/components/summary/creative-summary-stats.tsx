@@ -14,6 +14,7 @@ import {
 import { OTHER_PAGE } from "../../lib/stats";
 import { formatClickRate, formatCount, toDailyChartRows } from "../../lib/summary";
 import type { TCreativeStats } from "../../lib/summary-api";
+import { getUiLocale } from "../../lib/ui-locale";
 
 const SECTION = "rounded-xl border border-slate-200 bg-white shadow-xs";
 
@@ -23,7 +24,7 @@ export const CreativeSummaryStats = ({
   isUpdating,
 }: Readonly<{ stats: TCreativeStats; isUpdating: boolean }>) => {
   const { t, i18n } = useTranslation();
-  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+  const locale = getUiLocale(i18n);
   const { totals, days, pages = [] } = stats;
   const hasCounts = totals.impressions > 0 || totals.clicks > 0;
 

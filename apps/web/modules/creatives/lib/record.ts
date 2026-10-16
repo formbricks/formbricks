@@ -1,10 +1,10 @@
 import { ZShowConditions } from "@formbricks/types/show-conditions";
 import { getEffectiveVisibility } from "@/lib/survey/visibility/policy";
 import {
-  CREATIVE_TYPE_SCHEMAS,
   type TCreativeState,
   type TCreativeTypedGroups,
   type TDestinationSurveyIssue,
+  parseCreativeTypedGroups,
   toCreativeShowConditions,
 } from "./creative";
 import type { TCreativeRecord, TCreativeRowData, TDestinationSurveyFacts } from "./repository";
@@ -15,23 +15,10 @@ import type { TCreativeRecord, TCreativeRowData, TDestinationSurveyFacts } from 
  * client in a shape the contract doesn't promise.
  */
 
-const parseTypedGroups = (
-  record: Pick<TCreativeRecord, "type" | "content" | "styling">
-): TCreativeTypedGroups => {
-  if (record.type === "feedbackButton") {
-    const schemas = CREATIVE_TYPE_SCHEMAS.feedbackButton;
-    return {
-      type: "feedbackButton",
-      content: schemas.content.parse(record.content),
-      styling: schemas.styling.parse(record.styling),
-    };
-  }
-  const schemas = CREATIVE_TYPE_SCHEMAS.banner;
-  return {
-    type: "banner",
-    content: schemas.content.parse(record.content),
-    styling: schemas.styling.parse(record.styling),
-  };
+const parseTypedGroups = (record: TCreativeRecord): TCreativeTypedGroups => {
+  const groups = parseCreativeTypedGroups(record);
+  if (!groups) throw new Error(`Creative ${record.id} has content or styling that no longer fits its type`);
+  return groups;
 };
 
 const getDestination = (record: TCreativeRecord): TCreativeState["destination"] => {

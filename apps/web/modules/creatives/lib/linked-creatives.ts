@@ -27,7 +27,7 @@ export type TLinkedCreative = Readonly<{ id: string; name: string }>;
  */
 export const LINKED_CREATIVES_READ_LIMIT = 250;
 
-const BY_NAME = [{ name: "asc" }, { id: "asc" }] satisfies Prisma.CreativeOrderByWithRelationInput[];
+const BY_NAME = [{ name: "asc" as const }, { id: "asc" as const }];
 
 /** The survey's linked creatives, by name: the first `LINKED_CREATIVES_READ_LIMIT` of them. */
 export const findLinkedCreatives = (
