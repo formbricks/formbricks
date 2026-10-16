@@ -62,7 +62,10 @@ model Creative {
   dailyStats        CreativeDailyStat[]
   dailyPageStats    CreativeDailyPageStat[]
 
+  // One per list sort (updatedAt, createdAt, name); createdAt also serves the environment payload order.
   @@index([workspaceId, updatedAt])
+  @@index([workspaceId, createdAt])
+  @@index([workspaceId, name])
   @@index([surveyId])
 }
 
