@@ -13,7 +13,7 @@ allOf:
       styling:
         $ref: ./FeedbackButtonStyling.yml
         description: >-
-          Omit for the right edge at 50 % on every device, with custom styles off (the workspace Look &
-          Feel).
+          Omit for the right edge at 60 % from the top on every device, with custom styles off (the
+          workspace Look & Feel).
 unevaluatedProperties: false
 description: Create a feedback button.
