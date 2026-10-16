@@ -188,8 +188,12 @@ const bannerCss = ({ style, position }: TBannerView, device?: "desktop" | "phone
   );
 };
 
-/** What a banner region is called when its author set no Accessible name. */
+/**
+ * What a banner region and its Dismiss control are called when the view names neither: only in the
+ * editor preview, as `resolve` names both in the visitor's language from the payload's `labels`.
+ */
 const DEFAULT_BANNER_NAME = "Site notice";
+const DEFAULT_DISMISS_LABEL = "Dismiss";
 
 /** A site can reserve the In page banners' place with this element, so the page doesn't shift. */
 const BANNER_SLOT = "[data-formbricks-slot=banner-top]";
@@ -247,9 +251,9 @@ const setAttributes = (element: Element, attributes: Record<string, string>): vo
 };
 
 /** The dismiss control: an X drawn in the text colour, named "Dismiss" for screen readers. */
-const drawDismiss = (doc: Document, onDismiss: () => void): HTMLButtonElement => {
+const drawDismiss = (doc: Document, label: string, onDismiss: () => void): HTMLButtonElement => {
   const dismiss = drawButton(doc, "fb-creative-banner-dismiss", onDismiss);
-  dismiss.setAttribute("aria-label", "Dismiss");
+  dismiss.setAttribute("aria-label", label);
   const icon = doc.createElementNS(SVG_NS, "svg");
   setAttributes(icon, { viewBox: "0 0 24 24", width: "16", height: "16", "aria-hidden": "true" });
   const path = doc.createElementNS(SVG_NS, "path");
@@ -284,7 +288,7 @@ const drawBanner = (
     content.append(button);
   }
   bar.append(content);
-  if (view.dismissible) bar.append(drawDismiss(doc, onDismiss));
+  if (view.dismissible) bar.append(drawDismiss(doc, view.dismissLabel || DEFAULT_DISMISS_LABEL, onDismiss));
   return bar;
 };
 

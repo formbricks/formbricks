@@ -10,14 +10,21 @@ import { getAppearance } from "@/lib/common/appearance";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { getIsSetup } from "@/lib/common/status";
+import { getBrowserLanguageCodes } from "@/lib/common/utils";
 import { countClick, countImpressions, stopCountingCreatives } from "@/lib/creatives/events";
 import { type TShownCreative, arrangeCreatives, stopArrangingCreatives } from "@/lib/creatives/layout";
-import { getOpenSurveyIds, openSurveyForCreative } from "@/lib/survey/widget";
+import {
+  getLoadedLanguageResolver,
+  getOpenSurveyIds,
+  loadFormbricksSurveysExternally,
+  openSurveyForCreative,
+} from "@/lib/survey/widget";
 
 /**
  * Creatives on the page (ENG-3994). `reconcileCreatives` runs on every page view (`checkPageUrl`), on a
- * state refresh, when the CSP nonce changes and at the next schedule boundary, and makes the page show
- * exactly what `resolve` decides from the cached state: no network, no survey bundle.
+ * state refresh, when the CSP nonce, appearance or language changes and at the next schedule boundary,
+ * and makes the page show exactly what `resolve` decides from the cached state: no network, and no
+ * survey bundle unless a language needs its matcher (see `reconcileCreatives`).
  */
 
 /**
@@ -138,16 +145,27 @@ export const reconcileCreatives = (): void => {
   if (!getIsSetup()) return;
 
   try {
-    const { workspace } = Config.getInstance().get();
+    const { workspace, user } = Config.getInstance().get();
     const now = Date.now() + (workspace.clockOffset ?? 0);
     getShareRoll ??= createShareRolls(getBrowserStorage());
 
-    const { creatives, nextChangeAt } = resolve({
+    const { creatives, nextChangeAt, languagePending } = resolve({
       creatives: workspace.data.creatives ?? [],
       surveys: workspace.data.surveys,
-      page: { now },
+      // The inputs a survey's language is chosen from (`renderWidget`), so a creative follows its survey.
+      page: { now, language: { explicit: user.data.language, browser: getBrowserLanguageCodes() } },
       getShareRoll,
+      resolveLanguage: getLoadedLanguageResolver(),
     });
+    // The exact matcher couldn't settle a language (say `de-AT` against `de-DE`): the full one ships in
+    // the surveys bundle, which a click would load anyway. Decide again once it is here; until then a
+    // creative whose survey might be skipped stays hidden. A failed load retries on the next page view.
+    if (languagePending) {
+      void loadFormbricksSurveysExternally().then(
+        () => reconcileCreatives(),
+        () => undefined
+      );
+    }
 
     const page = getCountedPage(window.location.href);
     if (page !== dismissed.page) {

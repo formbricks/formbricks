@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
+import { zLocaleCode } from "@formbricks/api-v3-schemas";
 import { serializeV3Creative } from "@/app/api/v3/creatives/lib/serializers";
+import { resolveDefaultSurveyLanguage } from "@/lib/i18n/default-survey-language";
+import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
+import { getWorkspaceLanguages } from "@/modules/survey/editor/lib/workspace";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
@@ -25,14 +29,25 @@ export const creativesMetadata: Metadata = { title: "Creatives" };
 // The list reads `/api/v3/creatives` in the browser; the server only decides who may write.
 export const CreativesListPage = async ({ params }: Readonly<{ params: TWorkspaceParams }>) => {
   const { workspaceId } = await params;
-  const { isReadOnly } = await getWorkspaceAuth(workspaceId);
-  const t = await getTranslate();
+  const { workspace, session, isReadOnly } = await getWorkspaceAuth(workspaceId);
+  const [t, userLocale] = await Promise.all([getTranslate(), getUserLocale(session.user.id)]);
+  // A new creative starts in the language a new survey would (ENG-4003).
+  const defaultLanguage = resolveDefaultSurveyLanguage({
+    workspaceDefaultLanguage: workspace.config.defaultSurveyLanguage,
+    userLocale,
+  });
 
   return (
     <PageContentWrapper>
       <PageHeader
         pageTitle={t("common.creatives")}
-        cta={<CreativesHeaderActions workspaceId={workspaceId} isReadOnly={isReadOnly} />}
+        cta={
+          <CreativesHeaderActions
+            workspaceId={workspaceId}
+            isReadOnly={isReadOnly}
+            defaultLanguage={defaultLanguage}
+          />
+        }
       />
       <CreativesList workspaceId={workspaceId} isReadOnly={isReadOnly} />
     </PageContentWrapper>
@@ -68,9 +83,10 @@ export const CreativeEditorPage = async ({ params }: Readonly<{ params: TCreativ
   const { workspace, isReadOnly } = await getWorkspaceAuth(workspaceId);
   if (isReadOnly) redirect(getCreativesPath(workspaceId));
 
-  const [record, surveyCandidates] = await Promise.all([
+  const [record, surveyCandidates, workspaceLanguages] = await Promise.all([
     findCreativeRecord(creativeId, workspaceId),
     findDestinationSurveyCandidates(workspaceId),
+    getWorkspaceLanguages(workspaceId),
   ]);
   if (!record) notFound();
 
@@ -78,6 +94,10 @@ export const CreativeEditorPage = async ({ params }: Readonly<{ params: TCreativ
     record.survey ? [...surveyCandidates, record.survey] : surveyCandidates,
     record.surveyId
   );
+  // Creative texts are keyed by canonical codes only, as the v3 API takes them (ENG-4003).
+  const workspaceLanguageCodes = workspaceLanguages
+    .map(({ code }) => code)
+    .filter((code) => zLocaleCode.safeParse(code).success);
 
   return (
     <CreativeEditor
@@ -85,6 +105,7 @@ export const CreativeEditorPage = async ({ params }: Readonly<{ params: TCreativ
       siteName={workspace.name}
       initialCreative={serializeV3Creative(record, new Date())}
       surveyOptions={surveyOptions}
+      workspaceLanguageCodes={workspaceLanguageCodes}
     />
   );
 };

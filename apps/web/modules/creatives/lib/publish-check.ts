@@ -10,7 +10,7 @@ import { type TCreativeEditorForm, formNeedsDestination } from "./editor-form";
  * that isn't one, an end before the start). Anything published must meet every publish rule on each save.
  */
 
-export type TCreativeEditorTab = "content" | "styling" | "settings" | "schedule";
+export type TCreativeEditorTab = "content" | "language" | "styling" | "settings" | "schedule";
 
 export type TPublishIssue =
   | "name_missing"
@@ -93,8 +93,8 @@ export const getSaveIssues = (
 const PARAM_GROUP_TABS = new Map<string, TCreativeEditorTab>([
   ["content", "content"],
   ["destination", "content"],
-  ["defaultLanguage", "content"],
-  ["languages", "content"],
+  ["defaultLanguage", "language"],
+  ["languages", "language"],
   ["styling", "styling"],
   ["distribution", "settings"],
   ["schedule", "schedule"],

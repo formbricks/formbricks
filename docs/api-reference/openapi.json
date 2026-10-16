@@ -265,6 +265,10 @@
                           "description": "The creatives (feedback buttons and banners) the web SDK shows. Present only when the workspace has at least one deliverable creative: published and not paused, closed or archived, not past its end time, and opening an active survey if it opens one. The envelope next to `expiresAt` also carries `serverTime`, when the server built the response, which the SDK uses to run creative schedules on the server's clock. Source of truth for the item shape: `TCreativePayload` in `packages/creatives/src/types.ts`.",
                           "items": {
                             "properties": {
+                              "autoSelectLanguage": {
+                                "description": "Whether the browser's languages pick the language when the site set none with `setLanguage`: the Destination survey's \"Use browser language\" setting; false when it opens no survey.",
+                                "type": "boolean"
+                              },
                               "conditions": {
                                 "description": "Show when conditions, shared with surveys; null always passes.",
                                 "nullable": true,
@@ -280,7 +284,7 @@
                                 "type": "string"
                               },
                               "destination": {
-                                "description": "What pressing it opens: `{ type: survey, surveyId, opensAs: popup }` (an app survey in `surveys`, sent with `triggers: []` when only creatives open it), `{ type: survey, surveyId, opensAs: newTab, url }` (a link survey) or `{ type: link, url }`. Null for a banner without a button.",
+                                "description": "What pressing it opens: `{ type: survey, surveyId, opensAs: popup }` (an app survey in `surveys`, sent with `triggers: []` when only creatives open it), `{ type: survey, surveyId, opensAs: newTab, url }` (a link survey, opened with `lang=` set to the language the site set, if any) or `{ type: link, url }`. Null for a banner without a button. A creative whose popup survey the visitor's language would skip is not shown.",
                                 "nullable": true,
                                 "type": "object"
                               },
@@ -296,6 +300,17 @@
                               },
                               "id": {
                                 "type": "string"
+                              },
+                              "labels": {
+                                "description": "Banners only: the words the SDK draws that the author doesn't write, keyed by each language a visitor can get (the default and the enabled ones): `siteNotice`, the region's name when `content.accessibleName` is null, and `dismiss`, the Dismiss control's name.",
+                                "type": "object"
+                              },
+                              "languages": {
+                                "description": "Every language the texts are written in, the default first, shaped like a survey's languages: `default`, `enabled` and `language` (`code`, `alias`). A visitor whose language is missing or disabled, or whose translation of a text is empty, sees the default language.",
+                                "items": {
+                                  "type": "object"
+                                },
+                                "type": "array"
                               },
                               "position": {
                                 "description": "As in API v3 `styling.position`: `desktop`, and `phone` (below 768 px) or null.",

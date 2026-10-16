@@ -228,6 +228,8 @@ describe("getWorkspaceState", () => {
       id: "creative-1",
       type: "feedbackButton",
       defaultLanguage: "en-US",
+      languages: [{ default: true, enabled: true, language: { code: "en-US", alias: null } }],
+      autoSelectLanguage: false,
       style: DEFAULT_CREATIVE_STYLE,
       content: { label: { "en-US": "Feedback" }, icon: null },
       position: { desktop: { edge: "right", offset: 50 }, phone: null },

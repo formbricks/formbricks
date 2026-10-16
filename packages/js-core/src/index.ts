@@ -15,9 +15,16 @@ import { checkPageUrl } from "@/lib/survey/no-code-action";
 import * as Attribute from "@/lib/user/attribute";
 import * as User from "@/lib/user/user";
 import { type TConfigInput, type TLegacyConfigInput } from "@/types/config";
+import { type Result, okVoid } from "@/types/error";
 import { type TTrackProperties } from "@/types/survey";
 
 const queue = CommandQueue.getInstance();
+
+/** `reconcileCreatives` as a queued command, which must report a result. */
+const redrawCreatives = (): Result<void, never> => {
+  reconcileCreatives();
+  return okVoid();
+};
 
 const setup = async (setupConfigWithAppearance: TConfigInput): Promise<void> => {
   // Appearance is local, not part of the persisted setup config, and must be in place before the
@@ -77,6 +84,9 @@ const setAttributes = async (attributes: Record<string, string>): Promise<void> 
 
 const setLanguage = async (language: string): Promise<void> => {
   await queue.add(Attribute.setAttributes, CommandType.UserAction, true, { language });
+  // Creatives follow the visitor's language (ENG-4003). A general action runs only once the language
+  // update above has landed in the config.
+  await queue.add(redrawCreatives, CommandType.GeneralAction);
 };
 
 const logout = async (): Promise<void> => {

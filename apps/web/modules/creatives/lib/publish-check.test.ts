@@ -7,6 +7,7 @@ const readyButton: TCreativeEditorForm = {
   content: { type: "feedbackButton", label: "Feedback", icon: "messageSquare" },
   destination: { type: "survey", surveyId: "clsurvey0000000000000001" },
   schedule: { startAt: null, endAt: null },
+  languages: { defaultLanguage: "en-US", others: [], texts: {} },
 };
 
 const readyBanner: TCreativeEditorForm = {
@@ -21,6 +22,7 @@ const readyBanner: TCreativeEditorForm = {
   },
   destination: { type: "survey", surveyId: null },
   schedule: { startAt: null, endAt: null },
+  languages: { defaultLanguage: "en-US", others: [], texts: {} },
 };
 
 const withBanner = (patch: Partial<TBannerForm>): TCreativeEditorForm => ({
@@ -120,7 +122,8 @@ describe("getInvalidParamTab", () => {
   test("sends each refused field of a v3 write to the tab that edits it", () => {
     expect(getInvalidParamTab("content.label.en-US")).toBe("content");
     expect(getInvalidParamTab("destination.surveyId")).toBe("content");
-    expect(getInvalidParamTab("defaultLanguage")).toBe("content");
+    expect(getInvalidParamTab("defaultLanguage")).toBe("language");
+    expect(getInvalidParamTab("languages[0].code")).toBe("language");
     expect(getInvalidParamTab("styling.theme.fontSize.desktop")).toBe("styling");
     expect(getInvalidParamTab("distribution.triggers")).toBe("settings");
     expect(getInvalidParamTab("schedule.endAt")).toBe("schedule");

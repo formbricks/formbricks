@@ -1,3 +1,4 @@
+import { type TLanguageResolver, chooseLanguage, resolveLanguageExactly } from "@formbricks/creatives";
 import { getAppearance } from "@/lib/common/appearance";
 import { Config } from "@/lib/common/config";
 import { CONTAINER_ID, LIVE_REGION_ID } from "@/lib/common/constants";
@@ -436,62 +437,35 @@ const SURVEYS_POLL_INTERVAL_MS = 200;
 type TFormbricksSurveys = NonNullable<typeof globalThis.window.formbricksSurveys>;
 
 /**
- * The SDK's pre-ENG-3289 matcher: exact stored code, then alias, case-insensitive, no canonical table.
- * Only used while the instance still serves a cached surveys bundle without `resolveSurveyLanguage`
- * (`/js/*` is CDN-cached for up to 30 days), so explicit languages keep working as they did before
- * instead of every one of them being skipped; `resolveDisplayLanguage` also runs browser languages
- * through it when the survey opted in. Disabled languages (other than the default) are left out, so a disabled alias cannot shadow an
- * enabled code.
+ * The language matcher for an app survey once the surveys bundle is loaded: its `resolveSurveyLanguage`,
+ * which carries the canonical language table for the renderer (bundling it here would grow the SDK on
+ * every customer page). A surveys bundle that predates the resolver (`/js/*` is CDN-cached for up to 30
+ * days) gets the SDK's previous exact matcher, code then alias, as the final word, so explicit languages
+ * keep working as they did before instead of every one of them being skipped.
  */
-const matchLanguageExactly = (survey: TWorkspaceStateSurvey, language: string | undefined): string | null => {
-  const requested = language?.trim().toLowerCase();
-  if (!requested) return "default";
-  const candidates = survey.languages.filter(
-    (surveyLanguage) => surveyLanguage.default || surveyLanguage.enabled
-  );
-  const match =
-    candidates.find((surveyLanguage) => surveyLanguage.language.code.toLowerCase() === requested) ??
-    candidates.find((surveyLanguage) => surveyLanguage.language.alias?.toLowerCase() === requested);
-  if (!match) return null;
-  return match.default ? "default" : match.language.code;
-};
+const toLanguageResolver = (formbricksSurveys: TFormbricksSurveys): TLanguageResolver =>
+  formbricksSurveys.resolveSurveyLanguage ?? ((input) => resolveLanguageExactly(input).language);
+
+/** The full language matcher when the surveys bundle is on the page, `undefined` before (ENG-4003). */
+export const getLoadedLanguageResolver = (): TLanguageResolver | undefined =>
+  globalThis.window.formbricksSurveys && toLanguageResolver(globalThis.window.formbricksSurveys);
 
 /**
- * The language a survey renders in, or `null` to skip it.
- *
- * Matching runs in the surveys bundle (`resolveSurveyLanguage`), which already carries the canonical
- * language table for the renderer — bundling it here would grow the SDK on every customer page. An
- * explicit language (`setLanguage()`) that matches nothing skips the survey, as it always has; the
- * browser languages only apply when no explicit language is set.
- *
- * A surveys bundle that predates the resolver gets the SDK's previous matcher instead — see
- * `matchLanguageExactly`.
+ * The language a survey renders in, or `null` to skip it. An explicit language (`setLanguage()`) that
+ * matches nothing skips the survey, as it always has; the browser languages only apply when no explicit
+ * language is set and the survey uses browser language. Creatives hide by the same rule (ENG-4003).
  */
 const resolveDisplayLanguage = (
   survey: TWorkspaceStateSurvey,
   language: string | undefined,
   formbricksSurveys: TFormbricksSurveys
-): string | null => {
-  if (survey.languages.length <= 1) return "default";
-
-  if (!formbricksSurveys.resolveSurveyLanguage) {
-    if (language?.trim() || !survey.autoSelectLanguage) return matchLanguageExactly(survey, language);
-    // Exact-only, so a browser tag reaches a survey language only when the codes or alias agree.
-    for (const browserLanguage of getBrowserLanguageCodes()) {
-      const match = matchLanguageExactly(survey, browserLanguage);
-      if (match) return match;
-    }
-    return "default";
-  }
-
-  return formbricksSurveys.resolveSurveyLanguage({
-    languages: survey.languages,
-    explicitLanguage: language,
-    browserLanguages: survey.autoSelectLanguage ? getBrowserLanguageCodes() : [],
-    autoSelectLanguage: survey.autoSelectLanguage,
-    unmatchedExplicitLanguage: "skip",
-  });
-};
+): string | null =>
+  chooseLanguage(
+    survey,
+    { explicit: language, browser: survey.autoSelectLanguage ? getBrowserLanguageCodes() : [] },
+    "skip",
+    toLanguageResolver(formbricksSurveys)
+  ).language;
 
 let surveysLoadPromise: Promise<TFormbricksSurveys> | null = null;
 
@@ -535,7 +509,7 @@ const waitForSurveysGlobal = (): Promise<TFormbricksSurveys> => {
   });
 };
 
-const loadFormbricksSurveysExternally = (): Promise<TFormbricksSurveys> => {
+export const loadFormbricksSurveysExternally = (): Promise<TFormbricksSurveys> => {
   if (globalThis.window.formbricksSurveys) {
     return Promise.resolve(globalThis.window.formbricksSurveys);
   }

@@ -1,6 +1,12 @@
 import { describe, expect, test } from "vitest";
 import { zCreateCreativeRequest, zCreativeResource } from "@formbricks/api-v3-schemas";
 import { buildCreativePatch, buildNewCreativeRequest, toCreativeEditorForm } from "./editor-form";
+import {
+  addCreativeLanguage,
+  makeDefaultLanguage,
+  removeCreativeLanguage,
+  updateTranslation,
+} from "./languages-form";
 
 // Fixtures go through the contract's own schema, so they are resources a GET could return.
 const base = {
@@ -196,6 +202,86 @@ describe("feedback button form", () => {
   });
 });
 
+describe("languages (ENG-4003)", () => {
+  test("reads every other language's texts, and an untouched form sends no languages", () => {
+    const form = toCreativeEditorForm(banner);
+
+    expect(form.languages).toEqual({
+      defaultLanguage: "en-US",
+      others: [{ code: "de-DE", enabled: true }],
+      texts: {
+        "de-DE": {
+          label: "",
+          message: [{ text: "Heute Nacht offline." }],
+          buttonLabel: "Mehr",
+          accessibleName: "",
+        },
+      },
+    });
+    expect(buildCreativePatch(form, banner, "save")).not.toHaveProperty("languages");
+    expect(buildCreativePatch(form, banner, "save")).not.toHaveProperty("defaultLanguage");
+  });
+
+  test("a translation goes out under its language code; a blank one is left out, so visitors get the default", () => {
+    const form = toCreativeEditorForm(feedbackButton);
+    const blank = addCreativeLanguage(form.languages, "fr-FR");
+    const edited = {
+      ...form,
+      languages: updateTranslation(updateTranslation(blank, "de-DE", { label: "Ihre Meinung" }), "fr-FR", {
+        label: "  ",
+      }),
+    };
+
+    expect(buildCreativePatch(edited, feedbackButton, "save")).toMatchObject({
+      defaultLanguage: "en-US",
+      languages: [
+        { code: "de-DE", enabled: true },
+        { code: "fr-FR", enabled: true },
+      ],
+      content: { label: { "en-US": "Feedback", "de-DE": "Ihre Meinung" } },
+    });
+    expect(buildCreativePatch(edited, feedbackButton, "save").content).not.toHaveProperty("label.fr-FR");
+  });
+
+  test("a removed language takes its texts with it, so none is left undeclared", () => {
+    const form = toCreativeEditorForm(banner);
+    const removed = { ...form, languages: removeCreativeLanguage(form.languages, "de-DE") };
+
+    expect(buildCreativePatch(removed, banner, "save")).toMatchObject({
+      languages: [],
+      content: {
+        message: { "en-US": form.content.type === "banner" ? form.content.message : [] },
+        button: { label: { "en-US": "Learn more" } },
+      },
+    });
+    expect(buildCreativePatch(removed, banner, "save").content).not.toHaveProperty("message.de-DE");
+  });
+
+  test("a new default language holds every text, the old default kept as a translation", () => {
+    const form = makeDefaultLanguage(toCreativeEditorForm(feedbackButton), "de-DE");
+
+    expect(buildCreativePatch(form, feedbackButton, "save")).toMatchObject({
+      defaultLanguage: "de-DE",
+      languages: [{ code: "en-US", enabled: true }],
+      content: { label: { "de-DE": "Feedback geben", "en-US": "Feedback" } },
+    });
+  });
+
+  test("an Accessible name is translated only while the default language has one", () => {
+    const form = toCreativeEditorForm(banner);
+    const translated = {
+      ...form,
+      languages: updateTranslation(form.languages, "de-DE", { accessibleName: "Hinweis" }),
+    };
+    const named = { ...translated, content: { ...translated.content, accessibleName: "Service notice" } };
+
+    expect(buildCreativePatch(translated, banner, "save").content).toMatchObject({ accessibleName: null });
+    expect(buildCreativePatch(named, banner, "save").content).toMatchObject({
+      accessibleName: { "en-US": "Service notice", "de-DE": "Hinweis" },
+    });
+  });
+});
+
 describe("new creative", () => {
   test("a feedback button starts as a Draft with its label in the default language and the message icon", () => {
     const body = buildNewCreativeRequest({
@@ -203,13 +289,15 @@ describe("new creative", () => {
       type: "feedbackButton",
       name: "Untitled creative",
       label: "Feedback",
+      defaultLanguage: "de-DE",
     });
 
     expect(body).toEqual({
       workspaceId: "clworkspace0000000000001",
       name: "Untitled creative",
       type: "feedbackButton",
-      content: { label: { "en-US": "Feedback" }, icon: "messageSquare" },
+      defaultLanguage: "de-DE",
+      content: { label: { "de-DE": "Feedback" }, icon: "messageSquare" },
     });
     expect(zCreateCreativeRequest.safeParse(body).success).toBe(true);
   });
@@ -220,12 +308,14 @@ describe("new creative", () => {
       type: "banner",
       name: "Untitled creative",
       label: "Feedback",
+      defaultLanguage: "en-US",
     });
 
     expect(body).toEqual({
       workspaceId: "clworkspace0000000000001",
       name: "Untitled creative",
       type: "banner",
+      defaultLanguage: "en-US",
       content: { message: { "en-US": [] }, button: null, dismissible: true, accessibleName: null },
     });
     expect(zCreateCreativeRequest.safeParse(body).success).toBe(true);
