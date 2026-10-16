@@ -16,13 +16,16 @@ import {
   SHOW_CONDITION_BROWSERS,
   SHOW_CONDITION_DEVICE_TYPES,
   SHOW_CONDITION_OPERANDS,
+  type TShowConditionGroup,
   type TShowConditionOperand,
   type TShowConditionOperandType,
   type TShowConditionOperator,
   type TShowConditionSingle,
   type TShowConditions,
 } from "@formbricks/types/show-conditions";
+import { isShowConditionGroup } from "@formbricks/types/show-conditions-evaluate";
 import { cn } from "@/lib/cn";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import {
@@ -35,6 +38,8 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import {
+  type TConditionValueKind,
+  canEditInCard,
   createCondition,
   getOperators,
   getTopLevelConditions,
@@ -176,6 +181,48 @@ const ConditionValue = ({
   );
 };
 
+/** A condition as a line of text, for conditions the card shows but can't edit. */
+const useDescribeCondition = () => {
+  const labels = useConditionLabels();
+  return (condition: TShowConditionSingle): string => {
+    const operand = condition.leftOperand.value;
+    const key = operand === "queryParam" ? condition.leftOperand.meta?.key : undefined;
+    const value = condition.rightOperand?.value;
+    const kind = getValueKind(operand, condition.operator);
+    const optionLabels: Partial<Record<TConditionValueKind, Record<string, string>>> = {
+      deviceType: labels.devices,
+      browser: labels.browsers,
+    };
+    let valueText = "";
+    if (Array.isArray(value)) valueText = value.join(", ");
+    else if (kind !== "none") valueText = optionLabels[kind]?.[String(value)] ?? String(value ?? "");
+    return [labels.operands[operand], key ? `"${key}"` : "", labels.operators[condition.operator], valueText]
+      .filter(Boolean)
+      .join(" ");
+  };
+};
+
+const ReadOnlyConditionGroup = ({ group }: Readonly<{ group: TShowConditionGroup }>) => {
+  const { t } = useTranslation();
+  const describe = useDescribeCondition();
+  return (
+    <div className="space-y-1.5">
+      <p className="text-xs font-medium text-slate-500">
+        {group.connector === "and"
+          ? t("workspace.creatives.conditions.read_only_match_all")
+          : t("workspace.creatives.conditions.read_only_match_any")}
+      </p>
+      <ul className="space-y-1.5 border-l-2 border-slate-200 pl-3 text-sm text-slate-700">
+        {group.conditions.map((item) => (
+          <li key={item.id}>
+            {isShowConditionGroup(item) ? <ReadOnlyConditionGroup group={item} /> : describe(item)}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
 /**
  * Show when: the shared show conditions (ADR 0007), edited as one flat group. `children` sits at the
  * bottom of the card: creatives put Share of visitors there.
@@ -201,6 +248,22 @@ export const ShowConditionsCard = ({
   const write = (next: TShowConditionSingle[]) => onChange(setTopLevelConditions(value, next, createId()));
   const replace = (next: TShowConditionSingle) =>
     write(conditions.map((condition) => (condition.id === next.id ? next : condition)));
+
+  // A group inside a group (API or MCP) is more than this card edits: shown as it is, saved unchanged.
+  if (value && !canEditInCard(value)) {
+    return (
+      <EditorPanel
+        title={t("workspace.creatives.conditions.title")}
+        icon={FilterIcon}
+        description={t("workspace.creatives.conditions.description")}>
+        <Alert variant="info" size="small" role="status">
+          <AlertDescription>{t("workspace.creatives.conditions.read_only_note")}</AlertDescription>
+        </Alert>
+        <ReadOnlyConditionGroup group={value} />
+        {children}
+      </EditorPanel>
+    );
+  }
 
   return (
     <EditorPanel
