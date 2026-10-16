@@ -60,4 +60,7 @@ export const RESERVED_FIELD_NAMES: ReadonlySet<string> = new Set([
   "viewportheight",
   "timezone",
   "locale",
+  // Opened by creative, stamped by the ingest routes (ENG-4001).
+  "openedbycreativeid",
+  "openedbycreativename",
 ]);

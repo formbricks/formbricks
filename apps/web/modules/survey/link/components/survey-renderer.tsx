@@ -5,6 +5,7 @@ import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import {
+  APP_RELEASE_VERSION,
   IMPRINT_URL,
   IS_FORMBRICKS_CLOUD,
   IS_RECAPTCHA_CONFIGURED,
@@ -13,6 +14,7 @@ import {
   TERMS_URL,
 } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getCreativeAttribution } from "@/modules/creatives/lib/attribution";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { PinScreen } from "@/modules/survey/link/components/pin-screen";
 import { SurveyClientWrapper } from "@/modules/survey/link/components/survey-client-wrapper";
@@ -153,11 +155,21 @@ export const renderSurvey = async ({
   // Compute final styling based on workspace and survey settings
   const styling = computeStyling(workspace.styling, survey.styling);
   const publicDomain = getPublicDomain();
-  const [canReadUserIdFromUrl, customCss] = await Promise.all([
+  const [canReadUserIdFromUrl, customCss, openedBy] = await Promise.all([
     allowUrlUserIdLookup && !contactId && hasUserIdSearchParam(searchParams)
       ? getIsContactsEnabled(workspaceContext.organizationId)
       : false,
     getRendererCustomCss(survey, workspaceContext),
+    // A creative's link Destination opens this page with `?creativeId=` (ENG-4001). Checked here, so
+    // the renderer only ever carries a creative of this workspace that opens this survey; a preview
+    // records nothing, so it looks nothing up.
+    !isPreview && searchParams.creativeId
+      ? getCreativeAttribution({
+          creativeId: searchParams.creativeId,
+          workspaceId: survey.workspaceId,
+          surveyId: survey.id,
+        })
+      : null,
   ]);
 
   // Handle PIN-protected surveys
@@ -184,6 +196,7 @@ export const renderSurvey = async ({
         recaptchaSiteKey={RECAPTCHA_SITE_KEY}
         isSpamProtectionEnabled={isSpamProtectionEnabled}
         responseCount={responseCount}
+        rendererVersion={APP_RELEASE_VERSION}
       />
     );
   }
@@ -211,6 +224,8 @@ export const renderSurvey = async ({
       TERMS_URL={TERMS_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
       customCss={customCss}
+      creativeId={openedBy?.id}
+      rendererVersion={APP_RELEASE_VERSION}
     />
   );
 };

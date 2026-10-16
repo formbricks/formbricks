@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ZId } from "./common";
 
 export const ZDisplay = z.object({
   id: z.cuid2(),
@@ -20,6 +21,11 @@ export const ZDisplayCreateInput = z.object({
     })
     .optional(),
   responseId: z.cuid2().optional(),
+  /**
+   * The creative whose click opened the survey (T4, ADR 0006). Kept only when the creative is in the
+   * workspace and its Destination is this survey; otherwise the display is created without it.
+   */
+  creativeId: ZId.optional(),
 });
 
 export type TDisplayCreateInput = z.infer<typeof ZDisplayCreateInput>;

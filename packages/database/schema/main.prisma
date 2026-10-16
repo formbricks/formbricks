@@ -257,15 +257,17 @@ enum SurveyStatus {
 /// @property survey - The survey that was displayed
 /// @property contact - The contact who saw the survey
 /// @property response - The associated response if one exists
+/// @property creativeId - The creative that opened the survey (ADR 0006). No foreign key, so the record survives the creative's deletion.
 model Display {
-  id        String    @id @default(cuid())
-  createdAt DateTime  @default(now()) @map(name: "created_at")
-  updatedAt DateTime  @updatedAt @map(name: "updated_at")
-  survey    Survey    @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  surveyId  String
-  contact   Contact?  @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  contactId String?
-  response  Response?
+  id         String    @id @default(cuid())
+  createdAt  DateTime  @default(now()) @map(name: "created_at")
+  updatedAt  DateTime  @updatedAt @map(name: "updated_at")
+  survey     Survey    @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId   String
+  contact    Contact?  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId  String?
+  response   Response?
+  creativeId String?
 
   @@index([surveyId])
   @@index([contactId, createdAt])
