@@ -376,6 +376,80 @@ write_base_env_file() {
   write_generated_env_file "$env_file" "" "$hub_key" "$cube_secret" "$authzed_token" "$authzed_database_password"
 }
 
+# Writes Traefik's static configuration. Both entry points refuse every encoded character Traefik can screen
+# request paths for, which Traefik itself did by default until v3.6.7: the app and Hub decode these, so letting
+# them through would show a router one path and its backend another. An encoded slash, for one, would carry an
+# /api/auth request past the auth routers and their body cap (ENG-3977).
+write_traefik_config() {
+  local target_path="$1"
+  local hsts_enabled="$2"
+  local https_setup="$3"
+  local email_address="$4"
+  local http_redirection=""
+  local hsts_middlewares=""
+  local cert_resolver=""
+  local certificates_resolvers=""
+  local encoded_characters="encodedCharacters:
+        allowEncodedSlash: false
+        allowEncodedBackSlash: false
+        allowEncodedNullCharacter: false
+        allowEncodedSemicolon: false
+        allowEncodedPercent: false
+        allowEncodedQuestionMark: false
+        allowEncodedHash: false"
+
+  if [[ $hsts_enabled == "y" ]]; then
+    hsts_middlewares="middlewares:
+        - hstsHeader"
+    http_redirection="redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true"
+  fi
+
+  if [[ $https_setup == "y" ]]; then
+    cert_resolver="certResolver: default"
+    certificates_resolvers="certificatesResolvers:
+  default:
+    acme:
+      email: $email_address
+      storage: acme.json
+      caServer: "https://acme-v02.api.letsencrypt.org/directory"
+      tlsChallenge: {}"
+  fi
+
+  cat <<EOT >"$target_path"
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      $http_redirection
+      $encoded_characters
+    transport:
+      respondingTimeouts:
+        readTimeout: 60s
+  websecure:
+    address: ":443"
+    transport:
+      respondingTimeouts:
+        readTimeout: 60s
+    http:
+      tls:
+        $cert_resolver
+        options: default
+      $hsts_middlewares
+      $encoded_characters
+providers:
+  docker:
+    watch: true
+    exposedByDefault: false
+  file:
+    directory: /
+$certificates_resolvers
+EOT
+}
+
 add_formbricks_traefik_labels() {
   local compose_file="${1:-docker-compose.yml}"
   local formbricks_domain_name="$2"
@@ -621,60 +695,7 @@ install_formbricks() {
   # Installing Traefik
   echo "🚗 Configuring Traefik..."
 
-  if [[ $hsts_enabled == "y" ]]; then
-    hsts_middlewares="middlewares:
-        - hstsHeader"
-    http_redirection="http:
-      redirections:
-        entryPoint:
-          to: websecure
-          scheme: https
-          permanent: true"
-  else
-    hsts_middlewares=""
-    http_redirection=""
-  fi
-
-  if [[ $https_setup == "y" ]]; then
-    certResolver="certResolver: default"
-    certificates_resolvers="certificatesResolvers:
-  default:
-    acme:
-      email: $email_address
-      storage: acme.json
-      caServer: "https://acme-v02.api.letsencrypt.org/directory"
-      tlsChallenge: {}"
-  else
-    certResolver=""
-    certificates_resolvers=""
-  fi
-
-  cat <<EOT >traefik.yaml
-entryPoints:
-  web:
-    address: ":80"
-    $http_redirection
-    transport:
-      respondingTimeouts:
-        readTimeout: 60s
-  websecure:
-    address: ":443"
-    transport:
-      respondingTimeouts:
-        readTimeout: 60s
-    http:
-      tls:
-        $certResolver
-        options: default
-      $hsts_middlewares
-providers:
-  docker:
-    watch: true
-    exposedByDefault: false
-  file:
-    directory: /
-$certificates_resolvers
-EOT
+  write_traefik_config traefik.yaml "$hsts_enabled" "$https_setup" "$email_address"
 
   cat <<EOT >traefik-dynamic.yaml
 # configuring min TLS version

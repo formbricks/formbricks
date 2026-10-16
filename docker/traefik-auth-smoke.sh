@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Runs the one-click installer's Traefik image and auth-route labels in front of a stub app (ENG-3977) and checks
-# what label assertions cannot: the auth routers refuse a body over 1 MiB, and their buffering middleware leaves
-# the empty redirects that OAuth/SSO callbacks answer with intact instead of turning them into a 500
-# (traefik#11568). HSTS and HTTPS setup are off, so both entrypoints and both auth routers are exercised.
+# Runs the one-click installer's Traefik image, static configuration and auth-route labels in front of a stub app
+# (ENG-3977) and checks what label assertions cannot: the auth routers refuse a body over 1 MiB, their buffering
+# middleware leaves the empty redirects that OAuth/SSO callbacks answer with intact instead of turning them into a
+# 500 (traefik#11568), and encoded characters cannot route a request around them. HSTS and HTTPS setup are off, so
+# both entrypoints and both auth routers are exercised.
 
 set -euo pipefail
 
@@ -25,11 +26,13 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# The image and the labels come from the installer itself, so this checks exactly what a new install gets.
+# The image, the static configuration and the labels come from the installer itself, so this checks exactly what
+# a new install gets. traefik-dynamic.yaml is left out: its sniStrict would refuse the self-signed default
+# certificate, and it only carries TLS options.
 traefik_image="$(bash -c 'source "$1" >/dev/null; printf %s "$traefik_image"' bash "${SCRIPT_DIR}/formbricks.sh")"
 cp "${SCRIPT_DIR}/docker-compose.yml" "${SMOKE_TEMP_DIR}/installer-compose.yml"
-bash -c 'source "$1" >/dev/null; add_formbricks_traefik_labels "$2" "$3" n n' bash \
-  "${SCRIPT_DIR}/formbricks.sh" "${SMOKE_TEMP_DIR}/installer-compose.yml" "${DOMAIN}"
+bash -c 'source "$1" >/dev/null; add_formbricks_traefik_labels "$2" "$3" n n; write_traefik_config "$4" n n ""' bash \
+  "${SCRIPT_DIR}/formbricks.sh" "${SMOKE_TEMP_DIR}/installer-compose.yml" "${DOMAIN}" "${SMOKE_TEMP_DIR}/traefik.yaml"
 labels="$(awk '/^  formbricks:$/ { f = 1; next } f && /^  [A-Za-z0-9_-]+:/ { f = 0 } f && /^      - "traefik\./' \
   "${SMOKE_TEMP_DIR}/installer-compose.yml")"
 [[ -n "${labels}" ]] || { printf '%s\n' "No Traefik labels were generated for the formbricks service." >&2; exit 1; }
@@ -57,28 +60,14 @@ http
   .listen(3000);
 EOF
 
-cat >"${SMOKE_TEMP_DIR}/traefik.yaml" <<'EOF'
-entryPoints:
-  web:
-    address: ":80"
-  websecure:
-    address: ":443"
-    http:
-      tls: {}
-providers:
-  docker:
-    exposedByDefault: false
-log:
-  level: ERROR
-EOF
-
 {
   printf '%s\n' "services:" "  formbricks:" "    image: node:24-alpine" \
     '    command: ["node", "/app/stub.js"]' "    volumes:" "      - ./stub.js:/app/stub.js:ro" "    labels:"
   printf '%s\n' "${labels}"
-  printf '%s\n' "  traefik:" "    image: \"${traefik_image}\"" '    command: ["--configFile=/etc/traefik/traefik.yaml"]' \
+  # Mounted where the installer mounts it; Traefik finds /traefik.yaml on its own, as in a real install.
+  printf '%s\n' "  traefik:" "    image: \"${traefik_image}\"" \
     "    ports:" '      - "127.0.0.1::80"' '      - "127.0.0.1::443"' "    volumes:" \
-    "      - /var/run/docker.sock:/var/run/docker.sock:ro" "      - ./traefik.yaml:/etc/traefik/traefik.yaml:ro"
+    "      - /var/run/docker.sock:/var/run/docker.sock:ro" "      - ./traefik.yaml:/traefik.yaml:ro"
 } >"${SMOKE_TEMP_DIR}/compose.yml"
 
 head -c "${AUTH_BODY_LIMIT}" /dev/zero >"${SMOKE_TEMP_DIR}/at-limit.bin"
@@ -133,6 +122,10 @@ for base in "http://${DOMAIN}:${web_port}" "https://${DOMAIN}:${websecure_port}"
       --data-binary "@${SMOKE_TEMP_DIR}/two-limits.bin")"
   expect "2 MiB outside /api/auth is not capped" "200 " \
     "$(request "${base}/api/v1/client/env/responses" --data-binary "@${SMOKE_TEMP_DIR}/two-limits.bin")"
+  for encoded in 2F 5C 00 3B 25 3F 23; do
+    expect "encoded %${encoded} in a path is refused" "400 " \
+      "$(request "${base}/api%${encoded}auth/sign-in/email" --data-binary "@${SMOKE_TEMP_DIR}/two-limits.bin")"
+  done
 done
 
 if ((failures > 0)); then

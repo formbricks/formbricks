@@ -436,6 +436,22 @@ an existing installation, so add it yourself if you want it.
   the [v2 to v3 migration guide](https://doc.traefik.io/traefik/migration/v2-to-v3/).
 </Warning>
 
+Since v3.6.7, Traefik accepts encoded characters such as `%2F` in request paths, which would let a request reach
+`/api/auth/*` without passing through these routers. In `formbricks/traefik.yaml`, add this block under `http:` of
+both the `web` and the `websecure` entry point (create `http:` under `web` if it has none). New installations
+already have it.
+
+```yaml
+encodedCharacters:
+  allowEncodedSlash: false
+  allowEncodedBackSlash: false
+  allowEncodedNullCharacter: false
+  allowEncodedSemicolon: false
+  allowEncodedPercent: false
+  allowEncodedQuestionMark: false
+  allowEncodedHash: false
+```
+
 In `formbricks/docker-compose.yml`, add these lines to the `labels` of the `formbricks` service, replacing
 `your-domain.com` with your domain:
 
@@ -462,10 +478,12 @@ too, or plain-HTTP requests to `/api/auth/*` stay uncapped:
 - "traefik.http.routers.formbricks-auth-http.middlewares=auth-body-limit"
 ```
 
-Then apply the change from the `formbricks` directory:
+Then apply the changes from the `formbricks` directory. Traefik only reads `traefik.yaml` when it starts, hence the
+restart:
 
 ```bash
-docker compose up -d formbricks
+docker compose up -d formbricks traefik
+docker compose restart traefik
 ```
 
 A request to `/api/auth/*` with a body over 1 MiB now gets `413 Request Entity Too Large` from Traefik.

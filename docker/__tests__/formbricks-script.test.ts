@@ -1398,6 +1398,58 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(major * 1_000_000 + minor * 1_000 + patch).toBeGreaterThanOrEqual(3_006_015);
   });
 
+  test.each([
+    ["y", "y"],
+    ["y", "n"],
+    ["n", "y"],
+    ["n", "n"],
+  ])("writes a static config that refuses encoded path characters (HSTS %s, HTTPS %s)", (hsts, https) => {
+    const configPath = join(createTempDir(), "traefik.yaml");
+    execFileSync(
+      "bash",
+      [
+        "-c",
+        'source "$1"; write_traefik_config "$2" "$3" "$4" ops@example.com',
+        "bash",
+        formbricksScriptPath,
+        configPath,
+        hsts,
+        https,
+      ],
+      { encoding: "utf8" }
+    );
+    type EntryPointHttp = {
+      encodedCharacters?: Record<string, boolean>;
+      redirections?: { entryPoint: { to: string } };
+      middlewares?: string[];
+      tls?: { certResolver?: string };
+    };
+    const config = load(readFileSync(configPath, "utf8")) as {
+      entryPoints: { web: { http: EntryPointHttp }; websecure: { http: EntryPointHttp } };
+      certificatesResolvers?: { default: { acme: { email: string } } };
+    };
+    const { web, websecure } = config.entryPoints;
+
+    // Traefik refused all seven by default until v3.6.7; the installer keeps refusing them on both entry points.
+    for (const entryPoint of [web.http, websecure.http]) {
+      expect(entryPoint.encodedCharacters).toEqual({
+        allowEncodedSlash: false,
+        allowEncodedBackSlash: false,
+        allowEncodedNullCharacter: false,
+        allowEncodedSemicolon: false,
+        allowEncodedPercent: false,
+        allowEncodedQuestionMark: false,
+        allowEncodedHash: false,
+      });
+    }
+    expect(web.http.redirections?.entryPoint.to).toBe(hsts === "y" ? "websecure" : undefined);
+    expect(websecure.http.middlewares).toEqual(hsts === "y" ? ["hstsHeader"] : undefined);
+    expect(websecure.http.tls?.certResolver).toBe(https === "y" ? "default" : undefined);
+    expect(config.certificatesResolvers?.default.acme.email).toBe(
+      https === "y" ? "ops@example.com" : undefined
+    );
+  });
+
   test("adds HTTPS Traefik labels to the formbricks service only", () => {
     const composePath = writeDockerComposeTemplate();
 
