@@ -11,6 +11,9 @@ import type { TCreativeEditorForm, TCreativeLanguagesForm, TCreativeTranslation 
  * back to.
  */
 
+/** The part of the editor form this module reads: the texts, in every language. */
+type TTextsForm = Pick<TCreativeEditorForm, "content" | "languages">;
+
 export const EMPTY_TRANSLATION: TCreativeTranslation = {
   label: "",
   message: [],
@@ -74,7 +77,7 @@ const toDefaultTranslation = (content: TCreativeEditorForm["content"]): TCreativ
  * Makes `code` the language every other one falls back to: its translation becomes what the Content
  * tab edits, and the old default stays on as a visible language with its texts, in `code`'s place.
  */
-export const makeDefaultLanguage = (form: TCreativeEditorForm, code: string): TCreativeEditorForm => {
+export const makeDefaultLanguage = <TForm extends TTextsForm>(form: TForm, code: string): TForm => {
   const { content, languages } = form;
   if (code === languages.defaultLanguage || !languages.others.some((language) => language.code === code)) {
     return form;
@@ -126,7 +129,7 @@ const isTranslated = (translation: TCreativeTranslation, field: TTranslatableFie
 
 /** How many of the creative's texts a language has; the rest show visitors the default's. */
 export const getTranslationProgress = (
-  { content, languages }: TCreativeEditorForm,
+  { content, languages }: TTextsForm,
   code: string
 ): { translated: number; total: number } => {
   const fields = getTranslatableFields(content);

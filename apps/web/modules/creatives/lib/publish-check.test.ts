@@ -1,11 +1,37 @@
 import { describe, expect, test } from "vitest";
-import type { TBannerForm, TCreativeEditorForm } from "./editor-form";
-import { getInvalidParamTab, getPublishIssues, getSaveIssues } from "./publish-check";
+import type { TShowConditionSingle, TShowConditions } from "@formbricks/types/show-conditions";
+import type { TBannerForm, TCreativeDistributionForm, TCreativeEditorForm } from "./editor-form";
+import { PUBLISH_ISSUE_TABS, getInvalidParamTab, getPublishIssues, getSaveIssues } from "./publish-check";
+
+// Styling has no publish rules; the workspace look is a complete one.
+const workspaceTheme = {
+  customStyles: false,
+  backgroundColor: null,
+  textColor: null,
+  borderColor: null,
+  fontWeight: null,
+  fontSize: { desktop: null, phone: null },
+  paddingX: { desktop: null, phone: null },
+  paddingY: { desktop: null, phone: null },
+};
+
+const everyPageView: TCreativeDistributionForm = {
+  showOn: "pageView",
+  actionClassIds: [],
+  conditions: null,
+  displayPercentage: null,
+};
 
 const readyButton: TCreativeEditorForm = {
   name: "Site feedback",
   content: { type: "feedbackButton", label: "Feedback", icon: "messageSquare" },
   destination: { type: "survey", surveyId: "clsurvey0000000000000001" },
+  styling: {
+    type: "feedbackButton",
+    position: { desktop: { edge: "right", offset: 50 }, phone: null },
+    theme: { ...workspaceTheme, borderRadius: null },
+  },
+  distribution: everyPageView,
   schedule: { startAt: null, endAt: null },
   languages: { defaultLanguage: "en-US", others: [], texts: {} },
 };
@@ -21,9 +47,33 @@ const readyBanner: TCreativeEditorForm = {
     accessibleName: "",
   },
   destination: { type: "survey", surveyId: null },
+  styling: {
+    type: "banner",
+    position: { desktop: { placement: "top", layout: "inPage" }, phone: null },
+    theme: workspaceTheme,
+  },
+  distribution: everyPageView,
   schedule: { startAt: null, endAt: null },
   languages: { defaultLanguage: "en-US", others: [], texts: {} },
 };
+
+const withDistribution = (patch: Partial<TCreativeDistributionForm>): TCreativeEditorForm => ({
+  ...readyButton,
+  distribution: { ...everyPageView, ...patch },
+});
+
+const urlCondition = (value: string): TShowConditionSingle => ({
+  id: "clcondition0000000000001",
+  leftOperand: { type: "page", value: "currentUrl" },
+  operator: "contains",
+  rightOperand: { type: "static", value },
+});
+
+const showWhen = (...conditions: TShowConditionSingle[]): TShowConditions => ({
+  id: "clgroup00000000000000001",
+  connector: "and",
+  conditions,
+});
 
 const withBanner = (patch: Partial<TBannerForm>): TCreativeEditorForm => ({
   ...readyBanner,
@@ -78,6 +128,38 @@ describe("getPublishIssues", () => {
         schedule: { startAt: start, endAt: new Date("2026-11-01T04:00:00.000Z") },
       })
     ).toEqual([]);
+  });
+});
+
+describe("Settings checks", () => {
+  test("a creative shown on an action can't publish without one, and is sent to Settings", () => {
+    const noAction = withDistribution({ showOn: "action", actionClassIds: [] });
+
+    expect(getPublishIssues(noAction)).toEqual(["action_missing"]);
+    expect(PUBLISH_ISSUE_TABS.action_missing).toBe("settings");
+    expect(
+      getPublishIssues(withDistribution({ showOn: "action", actionClassIds: ["clactionclass00000000001"] }))
+    ).toEqual([]);
+  });
+
+  test("actions kept from an earlier switch don't count once Every page view is picked", () => {
+    expect(getPublishIssues(withDistribution({ showOn: "pageView", actionClassIds: [] }))).toEqual([]);
+  });
+
+  test("a draft shown on an action saves without one; a published one doesn't", () => {
+    const noAction = withDistribution({ showOn: "action", actionClassIds: [] });
+
+    expect(getSaveIssues(noAction, { published: false })).toEqual([]);
+    expect(getSaveIssues(noAction, { published: true })).toEqual(["action_missing"]);
+  });
+
+  test("a Show when condition without its value blocks even a draft's save, since the API refuses it", () => {
+    const blank = withDistribution({ conditions: showWhen(urlCondition("  ")) });
+
+    expect(getSaveIssues(blank, { published: false })).toEqual(["condition_incomplete"]);
+    expect(getPublishIssues(blank)).toEqual(["condition_incomplete"]);
+    expect(PUBLISH_ISSUE_TABS.condition_incomplete).toBe("settings");
+    expect(getPublishIssues(withDistribution({ conditions: showWhen(urlCondition("/plans")) }))).toEqual([]);
   });
 });
 

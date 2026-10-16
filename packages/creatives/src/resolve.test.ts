@@ -1,4 +1,10 @@
 import { describe, expect, test } from "vitest";
+import type {
+  TDeviceInfo,
+  TShowConditionGroup,
+  TShowConditionSingle,
+} from "@formbricks/types/show-conditions";
+import type { TShowConditionsContext } from "@formbricks/types/show-conditions-evaluate";
 import { type TResolveInput, resolve } from "./resolve";
 import { DEFAULT_CREATIVE_STYLE } from "./style";
 import type { TBannerPayload, TCreativeLanguage, TCreativeStyle, TFeedbackButtonPayload } from "./types";
@@ -179,41 +185,132 @@ describe("resolve", () => {
   });
 
   describe("show when", () => {
-    const conditions = {
-      id: "group",
-      connector: "and" as const,
-      conditions: [
-        {
-          id: "c1",
-          leftOperand: { type: "page" as const, value: "currentUrl" as const },
-          operator: "contains" as const,
-          rightOperand: { type: "static" as const, value: "/pricing" },
-        },
-      ],
-    };
+    const desktop: TDeviceInfo = { deviceType: "desktop", browser: "chrome", screenWidth: 1440 };
+    const phone: TDeviceInfo = { deviceType: "phone", browser: "safari", screenWidth: 390 };
 
-    test("hands the conditions to the evaluator and shows the creative only when they pass", () => {
-      const withConditions = button({ conditions });
-      const seen: unknown[] = [];
+    const context = (overrides: Partial<TShowConditionsContext> = {}): TShowConditionsContext => ({
+      url: "https://example.com/pricing?plan=pro",
+      pageReferrer: "",
+      visit: { pagesViewed: 3, uniquePagesViewed: 2, timeOnSite: 40, entryReferrer: "", visitedUrls: [] },
+      device: desktop,
+      ...overrides,
+    });
 
-      const passing = resolve(
+    const onPage = (showConditionsContext: TShowConditionsContext) => ({ now: NOW, showConditionsContext });
+
+    const when = (
+      connector: "and" | "or",
+      ...conditions: TShowConditionGroup["conditions"]
+    ): TShowConditionGroup => ({ id: "group", connector, conditions });
+
+    const urlContains = (value: string): TShowConditionSingle => ({
+      id: `url-${value}`,
+      leftOperand: { type: "page", value: "currentUrl" },
+      operator: "contains",
+      rightOperand: { type: "static", value },
+    });
+
+    const deviceIsNot = (value: string): TShowConditionSingle => ({
+      id: `device-${value}`,
+      leftOperand: { type: "device", value: "deviceType" },
+      operator: "doesNotEqual",
+      rightOperand: { type: "static", value },
+    });
+
+    const pagesViewedAtLeast = (value: number): TShowConditionSingle => ({
+      id: `pages-${value}`,
+      leftOperand: { type: "visit", value: "pagesViewed" },
+      operator: "isGreaterThanOrEqual",
+      rightOperand: { type: "static", value },
+    });
+
+    test("shows the creative on the pages its conditions match, and on no others", () => {
+      const onPricing = button({ conditions: when("and", urlContains("/pricing")) });
+
+      expect(shownIds(resolve(input({ creatives: [onPricing], page: onPage(context()) })))).toEqual([
+        "button-1",
+      ]);
+      expect(
+        shownIds(
+          resolve(
+            input({
+              creatives: [onPricing],
+              page: onPage(context({ url: "https://example.com/blog" })),
+            })
+          )
+        )
+      ).toEqual([]);
+    });
+
+    test("applies all or any of the conditions, as their group says", () => {
+      const all = button({
+        id: "all",
+        conditions: when("and", urlContains("/pricing"), urlContains("/blog")),
+      });
+      const any = button({
+        id: "any",
+        conditions: when("or", urlContains("/pricing"), urlContains("/blog")),
+      });
+
+      expect(shownIds(resolve(input({ creatives: [all, any], page: onPage(context()) })))).toEqual(["any"]);
+    });
+
+    test("narrows a creative shown on an action too: the action alone isn't enough", () => {
+      const onAction = button({
+        showOn: "action",
+        triggers: ["Checkout"],
+        conditions: when("and", urlContains("/checkout")),
+      });
+      const page = { ...onPage(context()), firedActions: new Set(["Checkout"]) };
+
+      expect(shownIds(resolve(input({ creatives: [onAction], page })))).toEqual([]);
+    });
+
+    test("checks the device type the SDK detected, not the window width", () => {
+      const notOnPhones = button({ conditions: when("and", deviceIsNot("phone")) });
+
+      // A desktop browser narrowed below the 768 px phone breakpoint is still a desktop.
+      const narrowDesktop = context({ device: { ...desktop, screenWidth: 500 } });
+      // A phone in landscape is wider than the breakpoint and still a phone.
+      const widePhone = context({ device: { ...phone, screenWidth: 900 } });
+
+      expect(shownIds(resolve(input({ creatives: [notOnPhones], page: onPage(narrowDesktop) })))).toEqual([
+        "button-1",
+      ]);
+      expect(shownIds(resolve(input({ creatives: [notOnPhones], page: onPage(widePhone) })))).toEqual([]);
+    });
+
+    test("checks the visit, and fails visit conditions when there is no visit to check", () => {
+      const returning = button({ conditions: when("and", pagesViewedAtLeast(3)) });
+
+      expect(shownIds(resolve(input({ creatives: [returning], page: onPage(context()) })))).toEqual([
+        "button-1",
+      ]);
+      expect(
+        shownIds(resolve(input({ creatives: [returning], page: onPage(context({ visit: null })) })))
+      ).toEqual([]);
+    });
+
+    test("never shows a creative with conditions when the page gives nothing to check them against", () => {
+      const onPricing = button({ conditions: when("and", urlContains("/pricing")) });
+
+      expect(shownIds(resolve(input({ creatives: [onPricing] })))).toEqual([]);
+    });
+
+    test("doesn't roll the share of visitors for a creative its conditions hide", () => {
+      const rolled: string[] = [];
+      resolve(
         input({
-          creatives: [withConditions],
-          passesConditions: (value) => {
-            seen.push(value);
-            return true;
+          creatives: [button({ displayPercentage: 50, conditions: when("and", urlContains("/blog")) })],
+          page: onPage(context()),
+          getShareRoll: (creativeId) => {
+            rolled.push(creativeId);
+            return 0;
           },
         })
       );
-      const failing = resolve(input({ creatives: [withConditions], passesConditions: () => false }));
 
-      expect(seen).toEqual([conditions]);
-      expect(shownIds(passing)).toEqual(["button-1"]);
-      expect(shownIds(failing)).toEqual([]);
-    });
-
-    test("never shows a creative with conditions when no evaluator is given", () => {
-      expect(shownIds(resolve(input({ creatives: [button({ conditions })] })))).toEqual([]);
+      expect(rolled).toEqual([]);
     });
   });
 

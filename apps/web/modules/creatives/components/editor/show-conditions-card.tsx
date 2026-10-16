@@ -1,5 +1,6 @@
 "use client";
 
+import { createId } from "@paralleldrive/cuid2";
 import {
   CheckCircle2Icon,
   CircleDashedIcon,
@@ -175,11 +176,21 @@ const ConditionValue = ({
   );
 };
 
+/**
+ * Show when: the shared show conditions (ADR 0007), edited as one flat group. `children` sits at the
+ * bottom of the card: creatives put Share of visitors there.
+ */
 export const ShowConditionsCard = ({
   value,
   onChange,
   showErrors,
-}: Readonly<{ value: TShowConditions; onChange: (value: TShowConditions) => void; showErrors: boolean }>) => {
+  children,
+}: Readonly<{
+  value: TShowConditions;
+  onChange: (value: TShowConditions) => void;
+  showErrors: boolean;
+  children?: React.ReactNode;
+}>) => {
   const { t } = useTranslation();
   const ids = useId();
   const labels = useConditionLabels();
@@ -187,8 +198,7 @@ export const ShowConditionsCard = ({
   const conditions = getTopLevelConditions(value);
   const test = testInput.trim() ? testUrl(value, testInput.trim()) : null;
 
-  const write = (next: TShowConditionSingle[]) =>
-    onChange(setTopLevelConditions(value, next, crypto.randomUUID()));
+  const write = (next: TShowConditionSingle[]) => onChange(setTopLevelConditions(value, next, createId()));
   const replace = (next: TShowConditionSingle) =>
     write(conditions.map((condition) => (condition.id === next.id ? next : condition)));
 
@@ -317,7 +327,7 @@ export const ShowConditionsCard = ({
         variant="ghost"
         size="sm"
         className="-ml-2"
-        onClick={() => write([...conditions, createCondition("currentUrl", crypto.randomUUID())])}>
+        onClick={() => write([...conditions, createCondition("currentUrl", createId())])}>
         <PlusIcon />
         {t("workspace.creatives.conditions.add")}
       </Button>
@@ -348,6 +358,7 @@ export const ShowConditionsCard = ({
           )}
         </div>
       )}
+      {children}
     </EditorPanel>
   );
 };

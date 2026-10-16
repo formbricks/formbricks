@@ -7,13 +7,15 @@ import type {
   zCreateCreativeRequest,
   zPatchCreativeRequest,
 } from "@formbricks/api-v3-schemas";
+import type { TShowConditions } from "@formbricks/types/show-conditions";
+import { toCreativeShowConditions } from "./creative-show-conditions";
+import { type TCreativeStylingForm, toStylingBody, toStylingForm } from "./styling-form";
 
 /**
- * The editor's form and the v3 bodies it sends (ENG-3997, ENG-4003). The form holds what the Content,
- * Language and Schedule tabs edit: the texts in the creative's default language, and every other
- * language with its translations; everything else (styling, distribution) stays on the stored resource.
- * A save sends only the groups the editor owns, so the groups other tabs will own keep their server
- * values until those tabs save them.
+ * The editor's form and the v3 bodies it sends (ENG-3997, ENG-4005, ENG-4002, ENG-4003). The form holds
+ * what the Content, Language, Styling, Settings and Schedule tabs edit: the texts in the creative's
+ * default language, and every other language with its translations. A save sends only the groups the
+ * editor owns.
  */
 
 export type TCreativeResource = CreativeResourceZodType;
@@ -105,10 +107,26 @@ export type TCreativeLanguagesForm = {
   texts: Record<string, TCreativeTranslation>;
 };
 
+/** The Settings tab: Show on, Show when and Share of visitors (the v3 `distribution` group). */
+export interface TCreativeDistributionForm {
+  showOn: "pageView" | "action";
+  /**
+   * The actions that show it, by action class id. Kept while Every page view is picked, so switching
+   * back restores them; sent only with When an action fires.
+   */
+  actionClassIds: string[];
+  /** Show when, as the card edits it; `null` shows it on every page. */
+  conditions: TShowConditions;
+  /** Share of visitors in percent; `null` is everyone who matches. */
+  displayPercentage: number | null;
+}
+
 export interface TCreativeEditorForm {
   name: string;
   content: TFeedbackButtonForm | TBannerForm;
   destination: TCreativeDestinationForm;
+  styling: TCreativeStylingForm;
+  distribution: TCreativeDistributionForm;
   schedule: { startAt: Date | null; endAt: Date | null };
   languages: TCreativeLanguagesForm;
 }
@@ -166,12 +184,39 @@ const toLanguagesForm = (resource: TCreativeResource): TCreativeLanguagesForm =>
   };
 };
 
+const toDistributionForm = ({
+  showOn,
+  triggers,
+  conditions,
+  displayPercentage,
+}: TCreativeResource["distribution"]): TCreativeDistributionForm => ({
+  showOn,
+  actionClassIds: triggers.map(({ actionClassId }) => actionClassId),
+  conditions,
+  displayPercentage,
+});
+
 export const toCreativeEditorForm = (resource: TCreativeResource): TCreativeEditorForm => ({
   name: resource.name,
   content: toContentForm(resource),
   destination: toDestinationForm(resource.destination),
+  styling: toStylingForm(resource),
+  distribution: toDistributionForm(resource.distribution),
   schedule: { startAt: toDate(resource.schedule.startAt), endAt: toDate(resource.schedule.endAt) },
   languages: toLanguagesForm(resource),
+});
+
+/** Actions go out only with When an action fires: the API refuses them with Every page view. */
+const toDistributionBody = ({
+  showOn,
+  actionClassIds,
+  conditions,
+  displayPercentage,
+}: TCreativeDistributionForm): NonNullable<TCreativePatchBody["distribution"]> => ({
+  showOn,
+  triggers: showOn === "action" ? actionClassIds.map((actionClassId) => ({ actionClassId })) : [],
+  conditions: toCreativeShowConditions(conditions),
+  displayPercentage,
 });
 
 /** A feedback button always opens something; a banner only when it has a button. */
@@ -261,6 +306,8 @@ export const buildCreativePatch = (
   ...toLanguagesBody(form.languages, resource),
   content: toContentBody(form, resource),
   destination: toDestinationBody(form),
+  styling: toStylingBody(form.styling),
+  distribution: toDistributionBody(form.distribution),
   schedule: {
     startAt: form.schedule.startAt?.toISOString() ?? null,
     endAt: form.schedule.endAt?.toISOString() ?? null,

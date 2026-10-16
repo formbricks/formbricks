@@ -1,4 +1,7 @@
-import type { TShowConditionGroup } from "@formbricks/types/show-conditions";
+import {
+  type TShowConditionsContext,
+  evaluateShowConditions,
+} from "@formbricks/types/show-conditions-evaluate";
 import {
   type TLanguageResolver,
   type TMatchableLanguage,
@@ -13,12 +16,19 @@ import type {
   TCreativeView,
 } from "./types";
 
-/** What `resolve` knows about the page it decides for. Later tickets widen it (device…). */
+/** What `resolve` knows about the page it decides for. */
 export interface TCreativePage {
   /** Now, in epoch ms, on the server's clock: the device clock plus `getClockOffset`. */
   now: number;
   /** Actions tracked on this page, for creatives shown when an action fires. */
   firedActions?: ReadonlySet<string>;
+  /**
+   * The page, visit and device Show when is checked against, with the evaluator surveys use (ADR 0007).
+   * Its device type is the SDK's device detection, never the 768 px phone breakpoint. Without it, a
+   * creative that has conditions never shows: showing it on pages its conditions exclude would be worse
+   * than not showing it.
+   */
+  showConditionsContext?: TShowConditionsContext;
   /** The visitor's language (ENG-4003). Without it, every creative shows in its default language. */
   language?: TVisitorLanguage;
 }
@@ -37,11 +47,6 @@ export interface TResolveInput {
   page: TCreativePage;
   /** This visitor's share-of-visitors roll for a creative, in [0, 100) (see `createShareRolls`). */
   getShareRoll: (creativeId: string) => number;
-  /**
-   * Evaluates Show when. Without one, a creative that has conditions never shows: showing it on pages
-   * its conditions exclude would be worse than not showing it.
-   */
-  passesConditions?: (conditions: TShowConditionGroup) => boolean;
   /**
    * The full language matcher: the surveys bundle's `resolveSurveyLanguage`, which carries the canonical
    * language table the SDK leaves out. Without it languages are matched exactly (code or alias), and
@@ -135,7 +140,6 @@ export const resolve = ({
   surveys,
   page,
   getShareRoll,
-  passesConditions,
   resolveLanguage,
 }: TResolveInput): TResolveResult => {
   const surveysById = new Map(surveys.map((survey) => [survey.id, survey]));
@@ -172,7 +176,11 @@ export const resolve = ({
       continue;
     }
 
-    if (creative.conditions && !passesConditions?.(creative.conditions)) continue;
+    // Show when applies to the whole creative, whatever shows it (a page view or an action).
+    const context = page.showConditionsContext;
+    if (creative.conditions && !(context && evaluateShowConditions(creative.conditions, context).passed)) {
+      continue;
+    }
 
     // Its click would open nothing: the SDK skips an app survey that lacks the language the site set
     // (ADR 0011). Decided after the other rules, so a creative hidden anyway never waits for the matcher.

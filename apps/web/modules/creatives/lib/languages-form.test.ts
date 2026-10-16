@@ -18,16 +18,15 @@ const englishGerman: TCreativeLanguagesForm = {
   texts: { "de-DE": { ...NO_TEXTS, label: "Feedback geben" } },
 };
 
-const buttonForm = (languages: TCreativeLanguagesForm = englishGerman): TCreativeEditorForm => ({
-  name: "Site feedback",
+/** The texts of the editor form, all the Language tab reads. */
+type TTextsForm = Pick<TCreativeEditorForm, "content" | "languages">;
+
+const buttonForm = (languages: TCreativeLanguagesForm = englishGerman): TTextsForm => ({
   content: { type: "feedbackButton", label: "Feedback", icon: null },
-  destination: { type: "survey", surveyId: "survey-1" },
-  schedule: { startAt: null, endAt: null },
   languages,
 });
 
-const bannerForm = (): TCreativeEditorForm => ({
-  name: "Maintenance",
+const bannerForm = (): TTextsForm => ({
   content: {
     type: "banner",
     message: [{ text: "Down tonight." }],
@@ -36,8 +35,6 @@ const bannerForm = (): TCreativeEditorForm => ({
     dismissible: true,
     accessibleName: "",
   },
-  destination: { type: "link", url: "https://example.com/status" },
-  schedule: { startAt: null, endAt: null },
   languages: {
     defaultLanguage: "en-US",
     others: [{ code: "de-DE", enabled: true }],

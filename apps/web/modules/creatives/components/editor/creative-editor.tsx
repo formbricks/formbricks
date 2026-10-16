@@ -14,8 +14,12 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import type { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
+import type { TStylingAppearance } from "@/lib/styling/dark-mode";
 import { V3ApiError, getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { useCustomCssValidation } from "@/modules/custom-css/components/hooks/use-custom-css-validation";
+import { toCustomCssDraft } from "@/modules/custom-css/components/lib/draft";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { useBeforeUnloadPrompt } from "@/modules/ui/hooks/use-before-unload-prompt";
@@ -29,6 +33,7 @@ import {
   toCreativeEditorForm,
 } from "../../lib/editor-form";
 import { getCreativesPath } from "../../lib/paths";
+import { toPreviewView } from "../../lib/preview-view";
 import {
   PUBLISH_ISSUE_TABS,
   type TCreativeEditorTab,
@@ -37,17 +42,16 @@ import {
   getPublishIssues,
   getSaveIssues,
 } from "../../lib/publish-check";
-import { createMockDraft } from "../../mock/data";
-import type { TCreativeDevice, TCreativeTargeting } from "../../types";
+import { CREATIVE_CSS_SCOPE, getCreativeStyle } from "../../lib/style";
+import { type TCreativeDevice, toStyleSource, withTheme } from "../../lib/styling-form";
 import { CreativeTypeIndicator } from "../creative-icons";
 import { CreativeStatusPill } from "../creative-status-pill";
-import { MockDataBadge } from "../mock-data-badge";
 import { ContentTab } from "./content-tab";
 import { CreativePreview } from "./creative-preview";
+import type { TCreativeCustomCssConfig } from "./custom-css-panel";
 import { LanguageTab } from "./language-tab";
-import { type TPreviewLook, toPreviewCreative } from "./preview-creative";
 import { ScheduleTab } from "./schedule-tab";
-import { SettingsTab } from "./settings-tab";
+import { SettingsTab, type TCreativeActionOption } from "./settings-tab";
 import { StylingTab } from "./styling-tab";
 
 const TAB_ICONS: Record<TCreativeEditorTab, LucideIcon> = {
@@ -58,15 +62,8 @@ const TAB_ICONS: Record<TCreativeEditorTab, LucideIcon> = {
   schedule: CalendarClockIcon,
 };
 
-/** Styling, Show on and Show when are still the prototype's local state (ENG-4005, ENG-4002). */
-const createMockState = (
-  type: TCreativeResource["type"]
-): { look: TPreviewLook; targeting: TCreativeTargeting } => {
-  const { styling, layout, targeting } = createMockDraft(
-    type === "feedbackButton" ? "feedback_button" : "banner"
-  );
-  return { look: { styling, layout }, targeting };
-};
+// `CreativeTypeIndicator` still speaks the mock's type names, like the list.
+const INDICATOR_TYPES = { feedbackButton: "feedback_button", banner: "banner" } as const;
 
 /** Whether the form would change the stored creative if saved now. */
 const hasUnsavedChanges = (form: TCreativeEditorForm, creative: TCreativeResource): boolean =>
@@ -78,12 +75,20 @@ export const CreativeEditor = ({
   siteName,
   initialCreative,
   surveyOptions,
+  actionOptions,
+  workspaceStyling,
+  customCss,
   workspaceLanguageCodes,
 }: Readonly<{
   workspaceId: string;
   siteName: string;
   initialCreative: TCreativeResource;
   surveyOptions: TDestinationSurveyOption[];
+  /** The workspace's actions, for Show on: When an action fires. */
+  actionOptions: TCreativeActionOption[];
+  /** The workspace Look & Feel a creative starts from (never the linked survey's own styling). */
+  workspaceStyling: TWorkspaceStyling;
+  customCss: TCreativeCustomCssConfig;
   /** The workspace's languages the Language tab offers (ENG-4003). */
   workspaceLanguageCodes: string[];
 }>) => {
@@ -92,9 +97,16 @@ export const CreativeEditor = ({
   const { data: creative } = useCreativeResource(initialCreative);
   const updateCreative = useUpdateCreative(initialCreative.id);
   const [form, setForm] = useState(() => toCreativeEditorForm(initialCreative));
-  const [mockState, setMockState] = useState(() => createMockState(initialCreative.type));
   const [activeTab, setActiveTab] = useState<TCreativeEditorTab>("content");
   const [device, setDevice] = useState<TCreativeDevice>("desktop");
+  const [appearance, setAppearance] = useState<TStylingAppearance>("light");
+  const cssValidation = useCustomCssValidation({
+    workspaceId,
+    scope: CREATIVE_CSS_SCOPE,
+    creativeType: form.styling.type,
+    draft: toCustomCssDraft(form.styling.theme.customCss),
+    enabled: form.styling.theme.customStyles,
+  });
   // The action that last flagged something, so the flags follow the edits that fix them.
   const [flaggedBy, setFlaggedBy] = useState<TCreativeSaveIntent | null>(null);
   // The tab holding a field the server refused, until the next attempt.
@@ -128,6 +140,8 @@ export const CreativeEditor = ({
     button_label_missing: t("workspace.creatives.editor.issue_button_label_missing"),
     survey_missing: t("workspace.creatives.editor.issue_survey_missing"),
     link_invalid: t("workspace.creatives.editor.issue_link_invalid"),
+    action_missing: t("workspace.creatives.editor.issue_action_missing"),
+    condition_incomplete: t("workspace.creatives.editor.issue_condition_incomplete"),
     end_before_start: t("workspace.creatives.editor.end_before_start"),
   };
 
@@ -183,7 +197,26 @@ export const CreativeEditor = ({
     });
   };
 
-  const previewCreative = toPreviewCreative({ creative, form, ...mockState });
+  // The look the visitor gets, computed as the server computes it for the environment payload.
+  const style = getCreativeStyle(toStyleSource(form.styling), workspaceStyling, cssValidation.previewCss);
+  const workspaceStyle = getCreativeStyle(
+    toStyleSource(withTheme(form.styling, { customStyles: false })),
+    workspaceStyling
+  );
+
+  // On a site a press opens the Destination; here it says what it would open.
+  const onPreviewActivate = () => {
+    const { destination } = form;
+    const url = destination.type === "link" ? destination.url.trim() : "";
+    if (destination.type === "survey" && pickedSurveyName) {
+      toast(t("workspace.creatives.editor.preview_opens_survey", { name: pickedSurveyName }));
+    } else if (url) {
+      toast(t("workspace.creatives.editor.preview_opens_link", { url }));
+    } else {
+      toast(t("workspace.creatives.editor.preview_no_action"));
+    }
+  };
+
   const isSaving = updateCreative.isPending;
 
   return (
@@ -205,7 +238,7 @@ export const CreativeEditor = ({
           className="h-9 w-56 min-w-0 rounded-md border border-transparent px-2 text-base font-semibold text-slate-900 transition-colors outline-none placeholder:font-normal placeholder:text-slate-400 hover:border-slate-200 focus:border-slate-300 aria-invalid:border-red-400 lg:w-72"
         />
         <span className="hidden sm:block">
-          <CreativeTypeIndicator type={previewCreative.type} />
+          <CreativeTypeIndicator type={INDICATOR_TYPES[creative.type]} />
         </span>
         <CreativeStatusPill
           state={{ status: creative.displayStatus, reason: creative.displayStatusReason }}
@@ -271,7 +304,6 @@ export const CreativeEditor = ({
                 <AlertDescription>{t("workspace.creatives.editor.archived_read_only")}</AlertDescription>
               </Alert>
             )}
-            {(activeTab === "styling" || activeTab === "settings") && <MockDataBadge />}
             {activeTab === "content" && (
               <ContentTab
                 form={form}
@@ -292,19 +324,24 @@ export const CreativeEditor = ({
             )}
             {activeTab === "styling" && (
               <StylingTab
-                creative={previewCreative}
-                onChange={({ styling, layout }) =>
-                  setMockState((current) => ({ ...current, look: { styling, layout } }))
-                }
+                styling={form.styling}
+                onChange={(styling) => setForm((current) => ({ ...current, styling }))}
+                style={style}
+                workspaceStyle={workspaceStyle}
                 device={device}
                 onDeviceChange={setDevice}
+                appearance={appearance}
+                onAppearanceChange={setAppearance}
+                customCss={{ config: customCss, validation: cssValidation }}
               />
             )}
             {activeTab === "settings" && (
               <SettingsTab
-                creative={previewCreative}
-                onChange={({ targeting }) => setMockState((current) => ({ ...current, targeting }))}
-                showErrors={false}
+                distribution={form.distribution}
+                onChange={(distribution) => setForm((current) => ({ ...current, distribution }))}
+                actionOptions={actionOptions}
+                showActionError={issues.includes("action_missing")}
+                showConditionErrors={issues.includes("condition_incomplete")}
               />
             )}
             {activeTab === "schedule" && (
@@ -318,11 +355,18 @@ export const CreativeEditor = ({
 
         <div className="hidden min-w-0 flex-1 bg-slate-100/70 lg:block">
           <CreativePreview
-            creative={previewCreative}
+            view={toPreviewView(creative.id, form, style)}
             siteName={siteName}
+            workspaceStyling={workspaceStyling}
             device={device}
             onDeviceChange={setDevice}
-            linkedSurveyName={pickedSurveyName}
+            appearance={appearance}
+            onAppearanceChange={setAppearance}
+            actions={{
+              onActivate: onPreviewActivate,
+              onDismiss: () => toast(t("workspace.creatives.editor.preview_dismiss")),
+              onLinkPress: (url) => toast(t("workspace.creatives.editor.preview_opens_link", { url })),
+            }}
           />
         </div>
       </div>

@@ -754,7 +754,7 @@ paths:
         Use `400` only for malformed validation envelopes, unsupported operations, invalid `surveyId`,
         or unsupported query parameters.
 
-        **Custom CSS.** A create or patch payload that carries `customCss` is also run through the custom CSS processor; the result adds the compiled `customCss` and `warnings`, or `errors` and `valid=false`. `operation: customCss` validates CSS alone for a live preview — with `scope: workspace | survey` and, optionally, an existing `surveyId` in `workspaceId` — and returns the compiled CSS and warnings. Validation never saves, versions, touches timestamps or invalidates caches, needs only read access, and grants nothing: the write itself checks permissions and the plan again. Requests that process custom CSS also count against a separate budget of 60 per minute per user or API key, shared with the workspace custom CSS endpoint, with survey creates and updates that add or edit custom CSS, and with the MCP tools; beyond it they return **429**.
+        **Custom CSS.** A create or patch payload that carries `customCss` is also run through the custom CSS processor; the result adds the compiled `customCss` and `warnings`, or `errors` and `valid=false`. `operation: customCss` validates CSS alone for a live preview — with `scope: workspace | survey` and, optionally, an existing `surveyId` in `workspaceId`, or a `creativeType` for a creative's own CSS — and returns the compiled CSS and warnings. Validation never saves, versions, touches timestamps or invalidates caches, needs only read access, and grants nothing: the write itself checks permissions and the plan again. Requests that process custom CSS also count against a separate budget of 60 per minute per user or API key, shared with the workspace custom CSS endpoint, with survey creates and updates that add or edit custom CSS, and with the MCP tools; beyond it they return **429**.
       tags:
         - V3 Surveys
       requestBody:
@@ -8540,6 +8540,12 @@ components:
           type: string
           format: cuid2
           description: 'Optional, `scope: survey` only. An existing survey, which must belong to `workspaceId`; omit it to validate an unsaved draft.'
+        creativeType:
+          type: string
+          enum:
+            - feedbackButton
+            - banner
+          description: 'Optional, `scope: survey` only and without `surveyId`. Validates a creative''s own Custom CSS (`styling.theme.customCss`) and compiles it for that creative type''s root element inside its shadow root, `.fb-creative-button` or `.fb-creative-banner`, instead of the survey root `#fbjs`: the CSS a visitor''s browser gets for the creative. Same budget and rules as survey CSS.'
         data:
           type: object
           required:
@@ -11586,7 +11592,7 @@ components:
         position:
           desktop:
             edge: right
-            offset: 50
+            offset: 60
           phone: null
         theme:
           customStyles: false
@@ -12000,7 +12006,7 @@ components:
               $ref: '#/components/schemas/FeedbackButtonContent'
             styling:
               $ref: '#/components/schemas/FeedbackButtonStyling'
-              description: Omit for the right edge at 50 % on every device, with custom styles off (the workspace Look & Feel).
+              description: Omit for the right edge at 60 % from the top on every device, with custom styles off (the workspace Look & Feel).
       unevaluatedProperties: false
       description: Create a feedback button.
     CreateBannerCreativeRequest:

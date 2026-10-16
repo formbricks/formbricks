@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { DEFAULT_CREATIVE_STYLE, type TBannerPayload, type TCreativePayload } from "@formbricks/creatives";
+import type { TShowConditionGroup, TShowConditionSingle } from "@formbricks/types/show-conditions";
 import { setAppearance } from "@/lib/common/appearance";
 import { Config } from "@/lib/common/config";
 import { setIsSetup } from "@/lib/common/status";
 import { reconcileCreatives, removeCreatives } from "@/lib/creatives/creatives";
+import { trackAction } from "@/lib/survey/action";
 import { mockSurvey } from "@/lib/survey/tests/__mocks__/widget.mock";
 import {
   getLoadedLanguageResolver,
@@ -12,6 +14,8 @@ import {
   loadFormbricksSurveysExternally,
   openSurveyForCreative,
 } from "@/lib/survey/widget";
+import { resetDeviceCache } from "@/lib/visit/device";
+import { recordNavigation, recordPageLoad } from "@/lib/visit/visit-store";
 import type { TConfig, TWorkspaceStateSurvey } from "@/types/config";
 
 vi.mock("@/lib/survey/widget", () => ({
@@ -197,6 +201,141 @@ describe("reconcileCreatives", () => {
   });
 });
 
+/** ENG-4002: Show on, and Show when checked against this page, this visit and this device. */
+describe("show on and show when", () => {
+  const IPHONE =
+    "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
+  const MAC_CHROME =
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+
+  const when = (condition: TShowConditionSingle): TShowConditionGroup => ({
+    id: "group",
+    connector: "and",
+    conditions: [condition],
+  });
+
+  const urlContains = (value: string): TShowConditionSingle => ({
+    id: "url",
+    leftOperand: { type: "page", value: "currentUrl" },
+    operator: "contains",
+    rightOperand: { type: "static", value },
+  });
+
+  const visitStorage = new Map<string, string>();
+
+  beforeEach(() => {
+    resetDeviceCache();
+    visitStorage.clear();
+    vi.stubGlobal("sessionStorage", {
+      getItem: (key: string) => visitStorage.get(key) ?? null,
+      setItem: (key: string, value: string) => visitStorage.set(key, value),
+    });
+  });
+
+  const onDevice = (userAgent: string): void => {
+    vi.stubGlobal("navigator", { userAgent, maxTouchPoints: 0 });
+  };
+
+  test("checks Show when on every page view, against the page's own URL", () => {
+    state.creatives = [feedbackButton({ conditions: when(urlContains("/pricing")) })];
+
+    reconcileCreatives();
+    expect(shownButtons()).toHaveLength(0);
+
+    window.history.pushState({}, "", "/pricing?plan=pro");
+    reconcileCreatives();
+    expect(shownButtons()).toHaveLength(1);
+
+    window.history.pushState({}, "", "/blog");
+    reconcileCreatives();
+    expect(shownButtons()).toHaveLength(0);
+  });
+
+  test("checks the device type the SDK detects, however wide the window is", () => {
+    state.creatives = [
+      feedbackButton({
+        conditions: when({
+          id: "device",
+          leftOperand: { type: "device", value: "deviceType" },
+          operator: "doesNotEqual",
+          rightOperand: { type: "static", value: "phone" },
+        }),
+      }),
+    ];
+    // jsdom's window is 1024 px wide: past the 768 px phone breakpoint either way.
+    onDevice(IPHONE);
+    reconcileCreatives();
+    expect(shownButtons()).toHaveLength(0);
+
+    resetDeviceCache();
+    onDevice(MAC_CHROME);
+    reconcileCreatives();
+    expect(shownButtons()).toHaveLength(1);
+  });
+
+  test("checks visit conditions against this tab's visit", () => {
+    state.creatives = [
+      feedbackButton({
+        conditions: when({
+          id: "pages",
+          leftOperand: { type: "visit", value: "pagesViewed" },
+          operator: "isGreaterThanOrEqual",
+          rightOperand: { type: "static", value: 2 },
+        }),
+      }),
+    ];
+    recordPageLoad("/", "");
+
+    reconcileCreatives();
+    expect(shownButtons()).toHaveLength(0);
+
+    window.history.pushState({}, "", "/plans");
+    recordNavigation("/plans");
+    reconcileCreatives();
+    expect(shownButtons()).toHaveLength(1);
+  });
+
+  test("shows a creative on an action once that action fires on the page, until the next page", async () => {
+    state.creatives = [feedbackButton({ showOn: "action", triggers: ["Started checkout"] })];
+
+    reconcileCreatives();
+    expect(shownButtons()).toHaveLength(0);
+
+    await trackAction("Opened pricing");
+    expect(shownButtons()).toHaveLength(0);
+
+    await trackAction("Started checkout");
+    expect(shownButtons()).toHaveLength(1);
+
+    // A query or hash change is the same page; a new path is the next page view.
+    window.history.pushState({}, "", "/?step=2#billing");
+    reconcileCreatives();
+    expect(shownButtons()).toHaveLength(1);
+
+    window.history.pushState({}, "", "/thank-you");
+    reconcileCreatives();
+    expect(shownButtons()).toHaveLength(0);
+  });
+
+  test("still applies Show when to a creative its action showed", async () => {
+    state.creatives = [
+      feedbackButton({
+        showOn: "action",
+        triggers: ["Started checkout"],
+        conditions: when(urlContains("/checkout")),
+      }),
+    ];
+
+    await trackAction("Started checkout");
+    expect(shownButtons()).toHaveLength(0);
+
+    window.history.pushState({}, "", "/checkout");
+    reconcileCreatives();
+    await trackAction("Started checkout");
+    expect(shownButtons()).toHaveLength(1);
+  });
+});
+
 /** ENG-3998: a creative follows the survey's appearance, which the host sets with setAppearance. */
 describe("appearance", () => {
   const appearanceOf = (): string | null => shownButtons()[0]?.getAttribute("data-appearance") ?? null;
@@ -293,6 +432,25 @@ describe("pressing a creative", () => {
     shownButtons()[0].click();
 
     expect(openSurveyForCreative).not.toHaveBeenCalled();
+  });
+
+  test("leaves a feedback button on the page after it opened its survey, through the answer and the next page view", () => {
+    vi.mocked(getOpenSurveyIds).mockReturnValue([]);
+    reconcileCreatives();
+    const host = document.querySelector("[data-formbricks-creative]");
+
+    shownButtons()[0].click();
+    // The survey is open, then answered and closed; the state refreshes, then the next page.
+    vi.mocked(getOpenSurveyIds).mockReturnValue([mockSurvey.id]);
+    reconcileCreatives();
+    vi.mocked(getOpenSurveyIds).mockReturnValue([]);
+    reconcileCreatives();
+    window.history.pushState({}, "", "/thanks");
+    reconcileCreatives();
+
+    expect(openSurveyForCreative).toHaveBeenCalledTimes(1);
+    expect(host?.isConnected).toBe(true);
+    expect(shownButtons()).toHaveLength(1);
   });
 
   test("opens a link Destination in a new tab", () => {

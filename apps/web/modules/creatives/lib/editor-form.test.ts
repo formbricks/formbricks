@@ -1,12 +1,18 @@
 import { describe, expect, test } from "vitest";
 import { zCreateCreativeRequest, zCreativeResource } from "@formbricks/api-v3-schemas";
-import { buildCreativePatch, buildNewCreativeRequest, toCreativeEditorForm } from "./editor-form";
+import {
+  type TCreativeEditorForm,
+  buildCreativePatch,
+  buildNewCreativeRequest,
+  toCreativeEditorForm,
+} from "./editor-form";
 import {
   addCreativeLanguage,
   makeDefaultLanguage,
   removeCreativeLanguage,
   updateTranslation,
 } from "./languages-form";
+import type { TCreativeStylingForm } from "./styling-form";
 
 // Fixtures go through the contract's own schema, so they are resources a GET could return.
 const base = {
@@ -101,6 +107,7 @@ describe("banner form", () => {
     expect(buildCreativePatch(form, banner, "save")).toMatchObject({
       content: banner.content,
       destination: { type: "link", url: "https://example.com/status" },
+      styling: { position: banner.styling.position, theme: banner.styling.theme },
     });
   });
 
@@ -151,7 +158,69 @@ describe("feedback button form", () => {
       name: "Site feedback",
       content: { label: { "en-US": "Feedback", "de-DE": "Feedback geben" }, icon: "messageSquare" },
       destination: { type: "survey", surveyId: "clsurvey0000000000000001" },
+      styling: {
+        position: { desktop: { edge: "right", offset: 50 }, phone: null },
+        theme: {
+          customStyles: false,
+          backgroundColor: null,
+          textColor: null,
+          borderColor: null,
+          borderRadius: null,
+          fontWeight: null,
+          fontSize: { desktop: null, phone: null },
+          paddingX: { desktop: null, phone: null },
+          paddingY: { desktop: null, phone: null },
+          pageFont: null,
+          customCss: null,
+        },
+      },
+      distribution: { showOn: "pageView", triggers: [], conditions: null, displayPercentage: null },
       schedule: { startAt: null, endAt: null },
+    });
+  });
+
+  test("custom styles go out whole, with the Custom CSS a field per appearance and blank fields as none", () => {
+    const styling: TCreativeStylingForm = {
+      type: "feedbackButton",
+      position: { desktop: { edge: "bottom", offset: 80 }, phone: { edge: "left", offset: 40 } },
+      theme: {
+        customStyles: true,
+        backgroundColor: "#f59e0b",
+        textColor: null,
+        borderColor: null,
+        borderRadius: 12,
+        fontWeight: 700,
+        fontSize: { desktop: 16, phone: 14 },
+        paddingX: { desktop: null, phone: null },
+        paddingY: { desktop: null, phone: 6 },
+        pageFont: false,
+        customCss: { light: "  ", dark: ".fb-creative-button { color: #fff; }" },
+      },
+    };
+    const styled: TCreativeEditorForm = { ...toCreativeEditorForm(feedbackButton), styling };
+    const cleared: TCreativeEditorForm = {
+      ...styled,
+      styling: { ...styling, theme: { ...styling.theme, customCss: { light: "", dark: " \n" } } },
+    };
+
+    expect(buildCreativePatch(styled, feedbackButton, "save").styling).toEqual({
+      position: { desktop: { edge: "bottom", offset: 80 }, phone: { edge: "left", offset: 40 } },
+      theme: {
+        customStyles: true,
+        backgroundColor: "#f59e0b",
+        textColor: null,
+        borderColor: null,
+        borderRadius: 12,
+        fontWeight: 700,
+        fontSize: { desktop: 16, phone: 14 },
+        paddingX: { desktop: null, phone: null },
+        paddingY: { desktop: null, phone: 6 },
+        pageFont: false,
+        customCss: { light: null, dark: ".fb-creative-button { color: #fff; }" },
+      },
+    });
+    expect(buildCreativePatch(cleared, feedbackButton, "save").styling?.theme).toMatchObject({
+      customCss: null,
     });
   });
 
@@ -278,6 +347,87 @@ describe("languages (ENG-4003)", () => {
     expect(buildCreativePatch(translated, banner, "save").content).toMatchObject({ accessibleName: null });
     expect(buildCreativePatch(named, banner, "save").content).toMatchObject({
       accessibleName: { "en-US": "Service notice", "de-DE": "Hinweis" },
+    });
+  });
+});
+
+describe("settings form (Show on, Show when, Share of visitors)", () => {
+  const conditions = {
+    id: "clgroup00000000000000001",
+    connector: "or" as const,
+    conditions: [
+      {
+        id: "clcondition0000000000001",
+        leftOperand: { type: "page" as const, value: "currentUrl" as const },
+        operator: "startsWith" as const,
+        rightOperand: { type: "static" as const, value: "https://example.com/plans" },
+      },
+      {
+        id: "clsubgroup00000000000001",
+        connector: "and" as const,
+        conditions: [
+          {
+            id: "clcondition0000000000002",
+            leftOperand: { type: "device" as const, value: "deviceType" as const },
+            operator: "equals" as const,
+            rightOperand: { type: "static" as const, value: "phone" },
+          },
+        ],
+      },
+    ],
+  };
+
+  const onAction = zCreativeResource.parse({
+    ...feedbackButton,
+    distribution: {
+      showOn: "action",
+      triggers: [
+        { actionClassId: "clactionclass00000000001" },
+        { actionClassId: "clactionclass00000000002" },
+      ],
+      conditions,
+      displayPercentage: 25,
+    },
+  });
+
+  test("reads the stored actions, conditions and share, and sends them back unchanged", () => {
+    const form = toCreativeEditorForm(onAction);
+
+    expect(form.distribution).toEqual({
+      showOn: "action",
+      actionClassIds: ["clactionclass00000000001", "clactionclass00000000002"],
+      conditions,
+      displayPercentage: 25,
+    });
+    expect(buildCreativePatch(form, onAction, "save").distribution).toEqual(onAction.distribution);
+  });
+
+  test("Every page view sends no actions, and the form keeps them for switching back", () => {
+    const form = toCreativeEditorForm(onAction);
+    const everyPage: TCreativeEditorForm = {
+      ...form,
+      distribution: { ...form.distribution, showOn: "pageView" },
+    };
+
+    expect(buildCreativePatch(everyPage, onAction, "save").distribution).toMatchObject({
+      showOn: "pageView",
+      triggers: [],
+    });
+    expect(everyPage.distribution.actionClassIds).toHaveLength(2);
+  });
+
+  test("an edited Show when and Share of visitors go out as edited; everyone is no share", () => {
+    const form = toCreativeEditorForm(feedbackButton);
+    const edited: TCreativeEditorForm = {
+      ...form,
+      distribution: { ...form.distribution, conditions, displayPercentage: null },
+    };
+
+    expect(buildCreativePatch(edited, feedbackButton, "save").distribution).toEqual({
+      showOn: "pageView",
+      triggers: [],
+      conditions,
+      displayPercentage: null,
     });
   });
 });

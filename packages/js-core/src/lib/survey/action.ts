@@ -1,6 +1,7 @@
 import { Config } from "@/lib/common/config";
 import { FORMBRICKS_EVENTS, emitFormbricksEvent } from "@/lib/common/events";
 import { Logger } from "@/lib/common/logger";
+import { recordCreativeAction } from "@/lib/creatives/creatives";
 import { triggerSurvey } from "@/lib/survey/widget";
 import { type InvalidCodeError, type NetworkError, type Result, err, okVoid } from "@/types/error";
 import { type TTrackProperties } from "@/types/survey";
@@ -27,6 +28,9 @@ export const trackAction = async (
   // The shared path under both code and no-code actions, so every tracked action reaches the host
   // exactly once — whether or not it triggers a survey (funnel analytics wants the misses too).
   emitFormbricksEvent(FORMBRICKS_EVENTS.actionTracked, { action: aliasName });
+
+  // Creatives that show when this action fires appear now, before any survey it triggers.
+  recordCreativeAction(name);
 
   // get a list of surveys that are collecting insights
   const activeSurveys = appConfig.get().filteredSurveys;
