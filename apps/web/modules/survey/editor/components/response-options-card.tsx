@@ -573,9 +573,9 @@ export const ResponseOptionsCard = ({
           {/*
            * Disabled while anonymizing, because anonymize overrides it: the ingest gate drops
            * `ipAddress` on a `privacy: "drop"` field regardless of `isCaptureIpEnabled`. Leaving the
-           * switch live would let an author turn IP capture "on" and see nothing captured. The stored
-           * value is left untouched rather than forced off, so turning anonymize back off restores
-           * whatever the author had chosen.
+           * switch live would let an author turn IP capture "on" and see nothing captured. It renders
+           * off, because that is what is in effect; the stored value is left untouched rather than
+           * forced off, so turning anonymize back off restores whatever the author had chosen.
            *
            * The description says so while it is disabled. Greying the switch out alone left the author
            * with no reason for it — two adjacent toggles that both decide whether the IP is stored, one
@@ -583,7 +583,7 @@ export const ResponseOptionsCard = ({
            */}
           <AdvancedOptionToggle
             htmlId="captureIp"
-            isChecked={captureIpToggle}
+            isChecked={captureIpToggle && !anonymizeResponsesToggle}
             onToggle={handleCaptureIpToggle}
             disabled={anonymizeResponsesToggle}
             title={t("workspace.surveys.edit.capture_ip_address")}
