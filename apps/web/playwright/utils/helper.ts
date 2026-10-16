@@ -1717,3 +1717,14 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#action-2-value-input").click();
   await page.locator("#action-2-value-input").fill("2");
 };
+
+/**
+ * Whether the page on screen is a feature's upgrade prompt rather than the feature, waiting until it shows
+ * one or the other. For specs of licence-gated features: the E2E stack's licence may not include them, and
+ * a spec that can't reach its feature should say so with a skip, not time out.
+ */
+export const isBehindUpgradePrompt = async (page: Page, feature: Locator): Promise<boolean> => {
+  const upgradePrompt = page.getByRole("heading", { name: /^Upgrade to unlock/ });
+  await expect(feature.or(upgradePrompt).first()).toBeVisible();
+  return upgradePrompt.isVisible();
+};

@@ -141,6 +141,7 @@ describe("API Key Management", () => {
           label: true,
           organizationAccess: true,
         },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       });
     });
 
@@ -580,8 +581,16 @@ describe("API Key Management", () => {
       const result = await updateApiKey(mockApiKey.id, { label: "Updated API Key" });
 
       expect(result).toEqual(updatedApiKey);
-      expect(prisma.apiKey.update).toHaveBeenCalled();
       expect(reconcileApiKeyRelationships).not.toHaveBeenCalled();
+      // Only the displayed fields come back: the stored hashes never leave the module.
+      const { select } = vi.mocked(prisma.apiKey.update).mock.calls[0][0];
+      expect(select).toEqual({
+        id: true,
+        label: true,
+        createdAt: true,
+        organizationAccess: true,
+        apiKeyWorkspaces: { select: { permission: true, workspaceId: true } },
+      });
     });
 
     test("throws DatabaseError on prisma error", async () => {

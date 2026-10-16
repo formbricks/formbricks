@@ -4,18 +4,18 @@ import type { TFunction } from "i18next";
 import { HelpCircleIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { TUser, TUserNotificationSettings } from "@formbricks/types/user";
+import { TUserNotificationSettings } from "@formbricks/types/user";
 import { organizationSettingsPath } from "@/modules/settings/lib/routes";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { useNotificationSettings } from "../hooks/use-notification-settings";
 import { type TAlertRow, getAlertRows } from "../lib/alert-rows";
 import { Membership } from "../types";
 import { NotificationSwitch } from "./NotificationSwitch";
 
 interface EditAlertsProps {
   memberships: Membership[];
-  user: TUser;
   autoDisableNotificationType: string;
   autoDisableNotificationElementId: string;
 }
@@ -88,19 +88,21 @@ const getAlertColumns = ({
 
 export const EditAlerts = ({
   memberships,
-  user,
   autoDisableNotificationType,
   autoDisableNotificationElementId,
 }: Readonly<EditAlertsProps>) => {
   const { t } = useTranslation();
+  // Filled on the server by the page, so this is never empty on first render.
+  const { data: notificationSettings } = useNotificationSettings();
 
+  if (!notificationSettings) return null;
   if (memberships.length === 0) {
     return <EmptyState text={t("common.no_surveys_found")} variant="simple" />;
   }
 
   const columns = getAlertColumns({
     t,
-    notificationSettings: user.notificationSettings!,
+    notificationSettings,
     autoDisableNotificationType,
     autoDisableNotificationElementId,
   });
@@ -126,7 +128,7 @@ export const EditAlerts = ({
                 </p>
                 <NotificationSwitch
                   surveyOrWorkspaceOrOrganizationId={membership.organization.id}
-                  notificationSettings={user.notificationSettings!}
+                  notificationSettings={notificationSettings}
                   notificationType={"unsubscribedOrganizationIds"}
                   autoDisableNotificationType={autoDisableNotificationType}
                   autoDisableNotificationElementId={autoDisableNotificationElementId}

@@ -5160,6 +5160,7 @@ components:
       description: |
         NextAuth session JWT cookie. **Development:** often `next-auth.session-token`.
         **Production (HTTPS):** often `__Secure-next-auth.session-token`. Send the cookie your browser receives after sign-in.
+        Session-authenticated writes (`POST`, `PUT`, `PATCH`, `DELETE`) are accepted only from the Formbricks app itself (a same-origin browser request) and get a `403` otherwise. Scripts and integrations should authenticate with an API key.
     apiKeyAuth:
       type: apiKey
       in: header

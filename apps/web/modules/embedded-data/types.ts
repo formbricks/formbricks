@@ -104,23 +104,6 @@ export const ZPromoteEmbeddedDataInput = z
 export type TPromoteEmbeddedDataInput = z.infer<typeof ZPromoteEmbeddedDataInput>;
 
 /**
- * What a library write answers with.
- *
- * The two refusals a caller has to *act* on travel in the success payload rather than as thrown
- * errors. `handleServerError` in the action client reduces every throw to `error.message`, a bare
- * string, so the surveys blocking a delete and the id of the row already holding a key would be lost
- * on the way out — and those are precisely what the refusal is for: naming the surveys instead of
- * sending the user to find them, and offering "use the library field" instead of asking for another
- * name. Everything else the service throws (a reserved key, a missing row) says all it has to say in
- * its message, so it stays a throw and reaches the caller as `serverError`.
- */
-export type TSharedEmbeddedDataWriteResult =
-  | { status: "ok"; field: TSharedEmbeddedData }
-  /** `existingId` is only ever set by promote; a plain create has no replacement to offer. */
-  | { status: "keyConflict"; existingId: string | null }
-  | { status: "inUse"; message: string; usage: TEmbeddedDataUsageItem[] };
-
-/**
  * A library key that is already taken in this workspace.
  *
  * Subclasses `InvalidInputError` rather than replacing it, so any handler that only knows the base

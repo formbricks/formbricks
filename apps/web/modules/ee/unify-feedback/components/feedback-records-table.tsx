@@ -8,9 +8,8 @@ import { useCallback, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TFeedbackSourceFieldMapping } from "@formbricks/types/feedback-source";
-import { getFeedbackRecordContactsAction, listFeedbackRecordsAction } from "@/lib/feedback-source/actions";
 import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { enrichmentStatusKeys } from "@/modules/ee/unify-feedback/enrichment-status/lib/query";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import { Badge } from "@/modules/ui/components/badge";
@@ -24,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
-import { deleteFeedbackRecordAction } from "../actions";
+import { deleteFeedbackRecord, listFeedbackRecords, lookupFeedbackRecordContacts } from "../lib/api-client";
 import { FieldTypeIcon } from "../lib/field-type-icons";
 import { formatFieldType, formatSourceType, resolveFeedbackDisplayText } from "../lib/utils";
 import { CsvImportModal } from "../sources/components/csv-import-modal";
@@ -33,7 +32,7 @@ import { FeedbackRecordsTableToolbarLeft } from "./feedback-records-table-toolba
 import { TranslatedBadge } from "./translated-badge";
 
 const RECORDS_PER_PAGE = 50;
-// Must not exceed the getFeedbackRecordContactsAction input cap (`userIds` is `.max(1000)`).
+// Must not exceed the contact lookup's input cap (`userIds` is `.max(1000)`).
 const CONTACT_RESOLVE_BATCH_SIZE = 1000;
 
 // resolvedText (translation-preferred) is computed once by the caller; null falls through to other types.
@@ -158,33 +157,30 @@ export const FeedbackRecordsTable = ({
       return { ok: true, records: [], newCursors: {} };
     }
 
-    const results = await Promise.all(
-      frdIdsToFetch.map((frdId) =>
-        listFeedbackRecordsAction({
-          workspaceId,
-          frdId,
-          limit: RECORDS_PER_PAGE,
-          ...(mode === "loadMore" && cursors[frdId] ? { cursor: cursors[frdId] } : {}),
-        })
-      )
-    );
-
-    const firstFailure = results.find((result) => !result?.data);
-    if (firstFailure) {
-      // getFormattedErrorMessage returns "" (not nullish) when the action failed without a
-      // serverError, so `??` never reached the fallback and the user got a blank error.
+    let results: Awaited<ReturnType<typeof listFeedbackRecords>>[];
+    try {
+      results = await Promise.all(
+        frdIdsToFetch.map((datasetId) =>
+          listFeedbackRecords({
+            workspaceId,
+            datasetId,
+            limit: RECORDS_PER_PAGE,
+            ...(mode === "loadMore" && cursors[datasetId] ? { cursor: cursors[datasetId] } : {}),
+          })
+        )
+      );
+    } catch (error) {
       return {
         ok: false,
-        errorMessage:
-          getFormattedErrorMessage(firstFailure) || t("workspace.unify.failed_to_load_feedback_records"),
+        errorMessage: getV3ApiErrorMessage(error, t("workspace.unify.failed_to_load_feedback_records")),
       };
     }
 
-    const fetchedRecords = results.flatMap((result) => result?.data?.data ?? []);
+    const fetchedRecords = results.flatMap((result) => result.data ?? []);
 
     const newCursors: Record<string, string> = {};
     for (let i = 0; i < frdIdsToFetch.length; i++) {
-      const nextCursor = results[i]?.data?.next_cursor;
+      const nextCursor = results[i]?.next_cursor;
       if (nextCursor) {
         newCursors[frdIdsToFetch[i]] = nextCursor;
       }
@@ -206,10 +202,8 @@ export const FeedbackRecordsTable = ({
       try {
         for (let i = 0; i < missing.length; i += CONTACT_RESOLVE_BATCH_SIZE) {
           const batch = missing.slice(i, i + CONTACT_RESOLVE_BATCH_SIZE);
-          const result = await getFeedbackRecordContactsAction({ workspaceId, userIds: batch });
-          if (result?.data) {
-            setContactIdByUserId((prev) => ({ ...prev, ...result.data }));
-          }
+          const contactIds = await lookupFeedbackRecordContacts(workspaceId, batch);
+          setContactIdByUserId((prev) => ({ ...prev, ...contactIds }));
         }
       } catch {
         // Ignore — contact deep-links are best-effort.
@@ -298,11 +292,14 @@ export const FeedbackRecordsTable = ({
         const results = await Promise.all(
           chunk.map(async (recordId) => ({
             recordId,
-            result: await deleteFeedbackRecordAction({ workspaceId, recordId }),
+            deleted: await deleteFeedbackRecord(recordId, workspaceId).then(
+              () => true,
+              () => false
+            ),
           }))
         );
-        results.forEach(({ recordId, result }) => {
-          if (!result?.data) failedIds.push(recordId);
+        results.forEach(({ recordId, deleted }) => {
+          if (!deleted) failedIds.push(recordId);
         });
       }
 

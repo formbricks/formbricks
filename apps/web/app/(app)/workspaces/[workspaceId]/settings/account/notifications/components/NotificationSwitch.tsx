@@ -1,13 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TUserNotificationSettings } from "@formbricks/types/user";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Switch } from "@/modules/ui/components/switch";
-import { updateNotificationSettingsAction } from "../actions";
+import { useUpdateNotificationSetting } from "../hooks/use-notification-settings";
 
 interface NotificationSwitchProps {
   surveyOrWorkspaceOrOrganizationId: string;
@@ -24,53 +23,34 @@ export const NotificationSwitch = ({
   autoDisableNotificationType,
   autoDisableNotificationElementId,
 }: NotificationSwitchProps) => {
-  const [isLoading, setIsLoading] = useState(false);
   const { t } = useTranslation();
-  const router = useRouter();
+  const updateSetting = useUpdateNotificationSetting();
   const isChecked =
     notificationType === "unsubscribedOrganizationIds"
       ? !notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrWorkspaceOrOrganizationId)
       : notificationSettings[notificationType]?.[surveyOrWorkspaceOrOrganizationId] === true;
 
   const handleSwitchChange = async () => {
-    setIsLoading(true);
+    // One switch, flipped from what is shown; the server applies it to the stored settings.
+    const toggle =
+      notificationType === "unsubscribedOrganizationIds"
+        ? {
+            type: "organizationEmails" as const,
+            organizationId: surveyOrWorkspaceOrOrganizationId,
+            subscribed: !isChecked,
+          }
+        : { type: "alert" as const, surveyId: surveyOrWorkspaceOrOrganizationId, enabled: !isChecked };
 
-    let updatedNotificationSettings = { ...notificationSettings };
-    if (notificationType === "unsubscribedOrganizationIds") {
-      const unsubscribedOrganizationIds = updatedNotificationSettings.unsubscribedOrganizationIds ?? [];
-      if (unsubscribedOrganizationIds.includes(surveyOrWorkspaceOrOrganizationId)) {
-        updatedNotificationSettings.unsubscribedOrganizationIds = unsubscribedOrganizationIds.filter(
-          (id) => id !== surveyOrWorkspaceOrOrganizationId
-        );
-      } else {
-        updatedNotificationSettings.unsubscribedOrganizationIds = [
-          ...unsubscribedOrganizationIds,
-          surveyOrWorkspaceOrOrganizationId,
-        ];
-      }
-    } else {
-      updatedNotificationSettings[notificationType] = {
-        ...updatedNotificationSettings[notificationType],
-        [surveyOrWorkspaceOrOrganizationId]:
-          !updatedNotificationSettings[notificationType]?.[surveyOrWorkspaceOrOrganizationId],
-      };
-    }
-
-    const updatedNotificationSettingsActionResponse = await updateNotificationSettingsAction({
-      notificationSettings: updatedNotificationSettings,
-    });
-    if (updatedNotificationSettingsActionResponse?.data) {
+    try {
+      await updateSetting.mutateAsync(toggle);
       toast.success(t("workspace.settings.notifications.notification_settings_updated"), {
         id: "notification-switch",
       });
-      router.refresh();
-    } else {
-      const errorMessage = getFormattedErrorMessage(updatedNotificationSettingsActionResponse);
-      toast.error(errorMessage, {
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")), {
         id: "notification-switch",
       });
     }
-    setIsLoading(false);
   };
 
   useEffect(() => {
@@ -122,7 +102,7 @@ export const NotificationSwitch = ({
       id="notification-switch"
       aria-label={`toggle notification settings for ${notificationType}`}
       checked={isChecked}
-      disabled={isLoading}
+      disabled={updateSetting.isPending}
       onCheckedChange={async () => {
         await handleSwitchChange();
       }}

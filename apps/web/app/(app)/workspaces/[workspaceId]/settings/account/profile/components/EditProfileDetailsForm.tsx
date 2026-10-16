@@ -7,10 +7,12 @@ import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
-import { TUser, TUserUpdateInput, ZUser, ZUserEmail } from "@formbricks/types/user";
+import { TUser, ZUser, ZUserEmail } from "@formbricks/types/user";
 import { PasswordConfirmationModal } from "@/app/(app)/workspaces/[workspaceId]/settings/account/profile/components/password-confirmation-modal";
+import type { TProfilePatchBody } from "@/app/api/internal/users/me/schemas";
 import { appLanguages, sortedAppLanguages } from "@/lib/i18n/utils";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { requestPasswordReset, updateProfile } from "@/modules/account/lib/api-client";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -23,7 +25,6 @@ import {
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { resetPasswordAction, updateUserAction } from "../actions";
 
 // Schema & types
 const ZEditProfileNameFormSchema = ZUser.pick({ name: true, locale: true, email: true }).extend({
@@ -72,7 +73,7 @@ export const EditProfileDetailsForm = ({
     const email = values.email.trim().toLowerCase();
     const locale = values.locale;
 
-    const data: TUserUpdateInput = {};
+    const data: TProfilePatchBody = {};
 
     if (emailChanged) {
       data.email = email;
@@ -85,25 +86,24 @@ export const EditProfileDetailsForm = ({
       data.locale = locale;
     }
 
-    const updatedUserResult = await updateUserAction(data);
+    try {
+      await updateProfile(data);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+      return;
+    }
 
-    if (updatedUserResult?.data) {
-      if (!emailVerificationDisabled) {
-        toast.success(t("auth.verification-requested.new_email_verification_success"));
-      } else {
-        toast.success(t("workspace.settings.profile.email_change_initiated"));
-        await signOutWithAudit({
-          reason: "email_change",
-          redirectUrl: "/email-change-without-verification-success",
-          redirect: true,
-          callbackUrl: "/email-change-without-verification-success",
-          clearWorkspaceId: true,
-        });
-        return;
-      }
+    if (!emailVerificationDisabled) {
+      toast.success(t("auth.verification-requested.new_email_verification_success"));
     } else {
-      const errorMessage = getFormattedErrorMessage(updatedUserResult);
-      toast.error(errorMessage);
+      toast.success(t("workspace.settings.profile.email_change_initiated"));
+      await signOutWithAudit({
+        reason: "email_change",
+        redirectUrl: "/email-change-without-verification-success",
+        redirect: true,
+        callbackUrl: "/email-change-without-verification-success",
+        clearWorkspaceId: true,
+      });
       return;
     }
 
@@ -116,19 +116,12 @@ export const EditProfileDetailsForm = ({
       setShowModal(true);
     } else {
       try {
-        const result = await updateUserAction({
-          ...data,
-          name: data.name.trim(),
-        });
-        if (result?.serverError) {
-          toast.error(getFormattedErrorMessage(result));
-          return;
-        }
+        await updateProfile({ ...data, name: data.name.trim() });
         toast.success(t("workspace.settings.profile.profile_updated_successfully"));
         window.location.reload();
         form.reset(data);
-      } catch (error: any) {
-        toast.error(`${t("common.error")}: ${error.message}`);
+      } catch (error) {
+        toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
       }
     }
   };
@@ -136,8 +129,8 @@ export const EditProfileDetailsForm = ({
   const handleResetPassword = async () => {
     setIsResettingPassword(true);
 
-    const result = await resetPasswordAction();
-    if (result?.data) {
+    try {
+      await requestPasswordReset();
       toast.success(t("auth.forgot-password.email-sent.heading"));
 
       await signOutWithAudit({
@@ -147,9 +140,8 @@ export const EditProfileDetailsForm = ({
         callbackUrl: "/auth/login",
         clearWorkspaceId: true,
       });
-    } else {
-      const errorMessage = getFormattedErrorMessage(result);
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
 
     setIsResettingPassword(false);

@@ -105,9 +105,10 @@ reviews:
           component detail (a
           label, a breadcrumb, an ARIA attribute, a keystroke inside one widget, a field's
           validation message) — that belongs in a `.ts` unit test or in manual QA.
-        - New client data flows go through an `/api/v3` route with TanStack Query, not a new Server
-          Action. Server data lives in the query cache only — flag it being mirrored into
-          `useState` or Jotai, and flag `router.refresh()` used as a data-refresh mechanism.
+        - New client data flows go through an HTTP route with TanStack Query, not a new Server
+          Action: `/api/internal/<resource>` for first-party callers, `/api/v3` for external ones.
+          Server data lives in the query cache only — flag it being mirrored into `useState` or
+          Jotai, and flag `router.refresh()` used as a data-refresh mechanism.
         - Component props must be `Readonly<>` (e.g. `({ children }: Readonly<Props>)`).
         - All user-facing strings must go through `t()` from `react-i18next` with lowercase
           dot-nested keys, never hardcoded text.
@@ -157,8 +158,10 @@ reviews:
     - path: "**/actions.ts"
       instructions: |
         A **newly added** exported action is itself the finding: Server Actions are legacy here and
-        no new ones should be added. New backend work belongs in an `/api/v3` route consumed from
-        the client with TanStack Query. Raise that first, then apply the checks below.
+        no new ones should be added, and `scripts/api-boundary/api-boundary.test.ts` caps their
+        count. New backend work belongs in an `/api/internal/<resource>` route (first-party callers)
+        or an `/api/v3` route (external callers), consumed from the client with TanStack Query.
+        Raise that first, then apply the checks below.
 
         Server actions are the repo's authorization boundary. For every existing exported action
         that this PR touches, check that:
@@ -265,7 +268,25 @@ reviews:
           exception until a shared query adapter exists (e.g. `parse-v3-responses-list-query.ts`). Elsewhere, a handler change
           with no spec change is a bug unless the shape is genuinely unchanged.
         - A `/v3` route with no public OpenAPI entry is internal by definition and belongs under
-          `apps/web/app/api/(internal)/`. Shipping an internal route as public v3 is a finding.
+          `apps/web/app/api/internal/`. Shipping an internal route as public v3 is a finding.
+
+    - path: "apps/web/app/api/internal/**"
+      instructions: |
+        The internal API: first-party HTTP endpoints that replace Server Actions (ENG-1668). No
+        OpenAPI entry and no compatibility promise, but every other v3 rule above applies.
+        - Handlers go through `withV3ApiWrapper` with `auth: "session"` (or `"none"` for a
+          pre-login flow). Accepting API keys here is a finding: that is a public route.
+        - Authorization uses the same `can()` / `assertCan` action string as the code it replaces,
+          against the resource's own workspace or organization — read off the row, never one the
+          caller names when the row says otherwise. A missing resource answers the same 403 as an
+          unreachable one.
+        - Writes keep their audit event (`action` + `targetType`) and their rate limit; an entitlement
+          check comes after authorization.
+        - Responses are serialized shapes from the route's own `serializers.ts` (no Prisma types,
+          no credentials), and refusals are `problem+json` with a machine-readable
+          `details.reason` where the client acts on them.
+        - Every route has a test for the cross-workspace or cross-organization denial, and
+          `apps/web/app/api/INTERNAL_ROUTES.md` is regenerated in the same change.
 
     - path: "apps/web/app/api/(internal)/**"
       instructions: |

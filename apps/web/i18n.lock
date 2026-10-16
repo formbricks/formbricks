@@ -3261,7 +3261,6 @@ checksums:
     workspace/settings/general/only_org_owner_can_perform_action: 0244ff3c6de787935e592eac4c5e4f0b
     workspace/settings/general/organization_created_successfully: 1ce874980bdd7d5de8402c276fb97a57
     workspace/settings/general/organization_deleted_successfully: e51fd7ee9efda04a373450ea21b242db
-    workspace/settings/general/organization_deletion_disabled: 6fb0e71c218ed4ab3be175f1094feada
     workspace/settings/general/organization_invite_link_ready: e54b37c4ec2e5a9ea9f6bc6e5b512b0b
     workspace/settings/general/organization_name: 73c9b31c9032a22bd84a07881942bb04
     workspace/settings/general/organization_name_description: ff517b4749a332b94a26110d7c7e771f

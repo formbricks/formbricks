@@ -3378,7 +3378,6 @@
         "only_org_owner_can_perform_action": "Только владельцы организации имеют доступ к этой настройке.",
         "organization_created_successfully": "Организация успешно создана!",
         "organization_deleted_successfully": "Организация успешно удалена.",
-        "organization_deletion_disabled": "Удаление организаций отключено.",
         "organization_invite_link_ready": "Ссылка для приглашения в организацию готова!",
         "organization_name": "Название организации",
         "organization_name_description": "Дайте вашей организации понятное название.",

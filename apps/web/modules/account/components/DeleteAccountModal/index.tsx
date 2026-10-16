@@ -6,16 +6,16 @@ import { Trans, useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { ACCOUNT_DELETION_SOLE_OWNER_BLOCK_MESSAGE } from "@/modules/account/constants";
+import { requestAccountDeletionEmail } from "@/modules/account/lib/api-client";
 import { getPostAccountDeletionRedirectUrl } from "@/modules/account/lib/post-account-deletion-redirect";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { authClient } from "@/modules/auth/lib/auth-client";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
-import { requestSsoAccountDeletionEmailAction } from "./actions";
 
 interface DeleteAccountModalProps {
   requiresPasswordConfirmation: boolean;
@@ -98,13 +98,12 @@ export const DeleteAccountModal = ({
   // when they click the emailed /api/auth/delete-user/callback link, so we keep the dialog open and show
   // an inline confirmation instead of signing out or redirecting.
   const requestSsoAccountDeletion = async () => {
-    const result = await requestSsoAccountDeletionEmailAction();
-
-    if (!result?.data?.emailSent) {
-      const fallbackErrorMessage = t("common.something_went_wrong_please_try_again");
-      const errorMessage = result ? getFormattedErrorMessage(result) : fallbackErrorMessage;
+    try {
+      await requestAccountDeletionEmail();
+    } catch (error) {
+      const errorMessage = getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"));
       logger.error({ errorMessage }, "Account deletion email request failed");
-      toast.error(errorMessage || fallbackErrorMessage);
+      toast.error(errorMessage);
       return;
     }
 

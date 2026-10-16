@@ -3378,7 +3378,6 @@
         "only_org_owner_can_perform_action": "Solo los propietarios de la organización pueden acceder a esta configuración.",
         "organization_created_successfully": "¡Organización creada correctamente!",
         "organization_deleted_successfully": "Organización eliminada correctamente.",
-        "organization_deletion_disabled": "La eliminación de organizaciones está deshabilitada.",
         "organization_invite_link_ready": "¡Tu enlace de invitación a la organización está listo!",
         "organization_name": "Nombre de la organización",
         "organization_name_description": "Dale a tu organización un nombre descriptivo.",

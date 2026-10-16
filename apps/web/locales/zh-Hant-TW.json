@@ -3378,7 +3378,6 @@
         "only_org_owner_can_perform_action": "只有組織擁有者才能存取此設定。",
         "organization_created_successfully": "組織已成功建立！",
         "organization_deleted_successfully": "組織已成功刪除。",
-        "organization_deletion_disabled": "組織刪除已停用。",
         "organization_invite_link_ready": "您的組織邀請連結已準備就緒！",
         "organization_name": "組織名稱",
         "organization_name_description": "為您的組織提供描述性名稱。",

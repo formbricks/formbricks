@@ -3378,7 +3378,6 @@
         "only_org_owner_can_perform_action": "Csak a szervezet tulajdonosai férhetnek hozzá ehhez a beállításhoz.",
         "organization_created_successfully": "A szervezet sikeresen létrehozva",
         "organization_deleted_successfully": "A szervezet sikeresen törölve",
-        "organization_deletion_disabled": "A szervezet törlése le van tiltva.",
         "organization_invite_link_ready": "A szervezete meghívási hivatkozása készen áll!",
         "organization_name": "Szervezet neve",
         "organization_name_description": "Adjon a szervezetének egy leíró nevet.",

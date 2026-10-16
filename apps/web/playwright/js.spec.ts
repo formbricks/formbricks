@@ -6,6 +6,7 @@ import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constan
 import { test } from "./lib/fixtures";
 import { gotoSurveyList, gotoSurveyTemplates } from "./lib/utils";
 import { activateSurvey, useSelectedTemplate } from "./utils/helper";
+import { SAME_ORIGIN_HEADERS } from "./utils/same-origin";
 
 const HTML_TEMPLATE = `<head>
   <script type="text/javascript" nonce="CSP_NONCE">
@@ -191,6 +192,7 @@ test.describe("JS Package Test", async () => {
     // assertion proves both arrive and that survey CSS outranks workspace CSS (M2.03).
     await test.step("save workspace and survey custom CSS", async () => {
       const workspaceCss = await page.request.patch(`/api/v3/workspaces/${workspaceId}/custom-css`, {
+        headers: SAME_ORIGIN_HEADERS,
         data: {
           customCss: {
             light: '[data-fb-part="headline"] { letter-spacing: 3px; color: rgb(10, 20, 30); }',
@@ -212,6 +214,7 @@ test.describe("JS Package Test", async () => {
       });
 
       const surveyCss = await page.request.patch(`/api/v3/surveys/${surveyId}`, {
+        headers: SAME_ORIGIN_HEADERS,
         data: { customCss: { light: '[data-fb-part="headline"] { color: rgb(40, 50, 60); }', dark: null } },
       });
       expect(surveyCss.ok()).toBe(true);

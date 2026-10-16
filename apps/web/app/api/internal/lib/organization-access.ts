@@ -7,10 +7,17 @@ import { can } from "@/lib/authorization";
 /**
  * What an internal organization route asks of the caller, in the app's authorization vocabulary:
  * - `read_access`: owners, managers and members (not billing)
+ * - `write`: the organization itself — its name, or deleting it (owners)
  * - `manage`: owners and managers
  * - `manage_access`: user management (owners and managers, per `USER_MANAGEMENT_MINIMUM_ROLE`)
+ * - `manage_api_keys`: minting and managing the organization's API keys (owners and managers)
  */
-export type TOrgAction = "organization.read_access" | "organization.manage" | "organization.manage_access";
+export type TOrgAction =
+  | "organization.read_access"
+  | "organization.write"
+  | "organization.manage"
+  | "organization.manage_access"
+  | "organization.manage_api_keys";
 
 /**
  * Authorize a request against one organization: a session user who may take `action` on it. No
