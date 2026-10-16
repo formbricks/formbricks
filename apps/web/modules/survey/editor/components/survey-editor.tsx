@@ -103,6 +103,8 @@ interface SurveyEditorProps {
   customCssEditor: TSurveyCustomCssEditorConfig;
   /** Null when the organisation isn't entitled to data retention. */
   dataRetention: TSurveyDataRetentionContext;
+  /** A non-archived creative opens this survey, so it publishes without a trigger of its own. */
+  isOpenedByCreative: boolean;
 }
 
 export const SurveyEditor = ({
@@ -141,6 +143,7 @@ export const SurveyEditor = ({
   ownerName,
   customCssEditor,
   dataRetention,
+  isOpenedByCreative,
 }: Readonly<SurveyEditorProps>) => {
   const isFollowUpsTabVisible = shouldShowFollowUpsTab({
     followUpCount: survey.followUps.length,
@@ -344,6 +347,7 @@ export const SurveyEditor = ({
         surveyAccess={surveyAccess}
         ownerName={ownerName}
         customCssValidationStatus={surveyCustomCssValidation.status}
+        isOpenedByCreative={isOpenedByCreative}
       />
       {showRestrictedBanner({
         enforced: visibilityGate.enforced,

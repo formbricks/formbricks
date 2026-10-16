@@ -31,6 +31,16 @@ export const findLinkedCreatives = (
     orderBy: [{ name: "asc" }, { id: "asc" }],
   });
 
+/** Whether the survey has any linked creative: what lets an app survey publish without a trigger. */
+export const hasLinkedCreatives = async (
+  client: TCreativeClient,
+  { surveyId, workspaceId }: TSurveyRef
+): Promise<boolean> =>
+  (await client.creative.findFirst({
+    where: { surveyId, workspaceId, archivedAt: null },
+    select: { id: true },
+  })) !== null;
+
 /**
  * Clears the Destination of the survey's archived creatives, or of all of them, and returns what it
  * unlinked so the caller can audit it once the transaction commits. Status is left alone: it records

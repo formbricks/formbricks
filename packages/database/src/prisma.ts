@@ -110,6 +110,8 @@ export namespace Prisma {
     S extends boolean | null | undefined | PrismaModelTypes.CreativeDefaultArgs,
   > = PrismaModelTypes.CreativeGetPayload<S>;
   export type CreativeInclude = PrismaModelTypes.CreativeInclude;
+  export type CreativeSelect = PrismaModelTypes.CreativeSelect;
+  export type CreativeWhereInput = PrismaModelTypes.CreativeWhereInput;
   export type DashboardFindManyArgs = PrismaModelTypes.DashboardFindManyArgs;
   export type DateTimeFilter = PrismaModelTypes.DateTimeFilter;
   export type DateTimeNullableFilter = PrismaModelTypes.DateTimeNullableFilter;

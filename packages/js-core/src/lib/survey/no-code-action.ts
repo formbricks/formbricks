@@ -3,6 +3,7 @@ import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
 import { TimeoutStack } from "@/lib/common/timeout-stack";
 import { evaluateNoCodeConfigClick, handleUrlFilters } from "@/lib/common/utils";
+import { reconcileCreatives } from "@/lib/creatives/creatives";
 import { trackNoCodeAction } from "@/lib/survey/action";
 import { setIsSurveyRunning } from "@/lib/survey/widget";
 import { type TWorkspaceStateActionClass } from "@/types/config";
@@ -140,6 +141,11 @@ export const checkPageUrl = async (): Promise<Result<void, unknown>> => {
   const logger = Logger.getInstance();
 
   logger.debug(`Checking page url: ${window.location.href}`);
+
+  // Every page view, the first one included (setup schedules this call), so creatives are decided before
+  // any page-view action is tracked.
+  reconcileCreatives();
+
   const actionClasses = appConfig.get().workspace.data.actionClasses;
 
   const noCodePageViewActionClasses = actionClasses.filter(

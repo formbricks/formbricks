@@ -31,7 +31,6 @@ import {
   validateCardFieldsForAllLanguages,
   validateQuestionLabels,
 } from "@formbricks/types/surveys/validation";
-import { isAppSurveyMissingTriggersToPublish } from "@/lib/survey/utils";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 import * as validation from "./validation";
 
@@ -1826,24 +1825,33 @@ describe("ZSurvey element issues reach the editor with a usable path", () => {
 });
 
 // ENG-2581: the editor stopped disabling Save / Save & Close / Publish for a missing trigger and
-// now blocks the click instead, so this predicate is what decides whether the click is refused.
+// now blocks the click instead, so this predicate is what decides whether the click is refused. It is
+// the server's publish rule itself (`lib/survey/publish-rule.ts`), so the two can't drift.
 describe("validation.isMissingRequiredTrigger", () => {
   const appSurveyWithoutTriggers = { type: "app", triggers: [] } as unknown as TSurvey;
 
   test.each(["inProgress", "paused", "completed"] as const)(
     "refuses an app survey with no trigger heading for %s",
     (targetStatus) => {
-      expect(validation.isMissingRequiredTrigger(appSurveyWithoutTriggers, targetStatus)).toBe(true);
+      expect(validation.isMissingRequiredTrigger(appSurveyWithoutTriggers, targetStatus, false)).toBe(true);
     }
   );
 
+  test("publishes an app survey with no trigger of its own when a creative opens it (ENG-3994)", () => {
+    expect(validation.isMissingRequiredTrigger(appSurveyWithoutTriggers, "inProgress", true)).toBe(false);
+  });
+
   test("lets an app survey with no trigger be saved as a draft", () => {
-    expect(validation.isMissingRequiredTrigger(appSurveyWithoutTriggers, "draft")).toBe(false);
+    expect(validation.isMissingRequiredTrigger(appSurveyWithoutTriggers, "draft", false)).toBe(false);
   });
 
   test("lets a link survey publish with no trigger", () => {
     expect(
-      validation.isMissingRequiredTrigger({ type: "link", triggers: [] } as unknown as TSurvey, "inProgress")
+      validation.isMissingRequiredTrigger(
+        { type: "link", triggers: [] } as unknown as TSurvey,
+        "inProgress",
+        false
+      )
     ).toBe(false);
   });
 
@@ -1853,7 +1861,7 @@ describe("validation.isMissingRequiredTrigger", () => {
       triggers: [{ actionClass: { id: "action1", name: "Click" } }],
     } as unknown as TSurvey;
 
-    expect(validation.isMissingRequiredTrigger(withTrigger, "inProgress")).toBe(false);
+    expect(validation.isMissingRequiredTrigger(withTrigger, "inProgress", false)).toBe(false);
   });
 
   test.each([
@@ -1862,24 +1870,11 @@ describe("validation.isMissingRequiredTrigger", () => {
     ["a hole left by a removed trigger", [undefined]],
   ])("treats %s as no trigger", (_case, triggers) => {
     expect(
-      validation.isMissingRequiredTrigger({ type: "app", triggers } as unknown as TSurvey, "inProgress")
+      validation.isMissingRequiredTrigger(
+        { type: "app", triggers } as unknown as TSurvey,
+        "inProgress",
+        false
+      )
     ).toBe(true);
-  });
-
-  // The client cannot import the server-only module that owns the same rule, so the two are separate
-  // code. This is what keeps them from drifting: the client must refuse exactly what the server
-  // rejects, or the editor promises a save the API then fails.
-  test("agrees with the server-side rule on every type/status/trigger combination", () => {
-    for (const type of ["app", "link"] as const) {
-      for (const status of ["draft", "inProgress", "paused", "completed"] as const) {
-        for (const triggers of [[], [{ actionClass: { id: "action1" } }]]) {
-          const survey = { type, triggers } as unknown as TSurvey;
-
-          expect(validation.isMissingRequiredTrigger(survey, status)).toBe(
-            isAppSurveyMissingTriggersToPublish(type, status, triggers)
-          );
-        }
-      }
-    }
   });
 });

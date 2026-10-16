@@ -27,9 +27,30 @@ let isSurveyRunning = false;
 // after every skip check — so a survey that was never shown never reports a close.
 const openSurveyIds = new Set<string>();
 
+// The survey a render is preparing while `isSurveyRunning` is held but nothing is on screen yet
+// (identification, renderer load, delay). A creative's click treats it as open (see `getOpenSurveyIds`).
+let surveyInFlight: string | null = null;
+
+// Bumped by every creative click (ADR 0004: the click wins). A render already on its way when the click
+// lands sees its generation go stale and stops before it shows anything or touches the shared flags.
+let renderGeneration = 0;
+
+/** Who asked for a survey other than its own triggers. */
+interface TSurveyOpener {
+  /** The creative whose click opens it (ENG-3994; ENG-4001 sends it with the display). */
+  creativeId: string;
+}
+
 export const setIsSurveyRunning = (value: boolean): void => {
   isSurveyRunning = value;
+  if (!value) surveyInFlight = null;
 };
+
+/** The surveys on screen, plus one on its way there. */
+export const getOpenSurveyIds = (): string[] =>
+  surveyInFlight === null || openSurveyIds.has(surveyInFlight)
+    ? [...openSurveyIds]
+    : [...openSurveyIds, surveyInFlight];
 
 type TInteractionSource = keyof NonNullable<TWorkspaceStateSurvey["interactionRefresh"]>;
 
@@ -87,33 +108,48 @@ export const triggerSurvey = async (
   await renderWidget(survey, action, properties?.hiddenFields);
 };
 
+/**
+ * Shows a survey. Its triggers call it with the `action` that fired; a creative's click calls it with an
+ * `opener` (through `openSurveyForCreative`), which skips everything that decides whether and when the
+ * survey shows: the one-survey-at-a-time guard, segment filters, the delay and auto-close (ADR 0004).
+ */
 export const renderWidget = async (
   survey: TWorkspaceStateSurvey,
   action?: string,
-  hiddenFieldsObject?: TTrackProperties["hiddenFields"]
+  hiddenFieldsObject?: TTrackProperties["hiddenFields"],
+  opener?: TSurveyOpener
 ): Promise<void> => {
   const logger = Logger.getInstance();
   const config = Config.getInstance();
   const timeoutStack = TimeoutStack.getInstance();
 
-  if (isSurveyRunning) {
+  if (isSurveyRunning && !opener) {
     logger.debug("A survey is already running. Skipping.");
     return;
   }
 
   setIsSurveyRunning(true);
+  surveyInFlight = survey.id;
+
+  const generation = renderGeneration;
+  const isSuperseded = (): boolean => generation !== renderGeneration;
+  // A superseded render leaves the guard alone: it belongs to the click that superseded it.
+  const release = (): void => {
+    if (!isSuperseded()) setIsSurveyRunning(false);
+  };
 
   // Wait for pending user identification to complete before rendering
   const updateQueue = UpdateQueue.getInstance();
   if (updateQueue.hasPendingWork()) {
     logger.debug("Waiting for pending user identification before rendering survey");
     const identificationSucceeded = await updateQueue.waitForPendingWork();
+    if (isSuperseded()) return;
     if (!identificationSucceeded) {
       const hasSegmentFilters = surveyHasSegmentFilters(survey);
 
-      if (hasSegmentFilters) {
+      if (hasSegmentFilters && !opener) {
         logger.debug("User identification failed. Skipping survey with segment filters.");
-        setIsSurveyRunning(false);
+        release();
         return;
       }
 
@@ -121,8 +157,9 @@ export const renderWidget = async (
     }
   }
 
-  if (survey.delay) {
-    logger.debug(`Delaying survey "${survey.id}" by ${survey.delay.toString()} seconds.`);
+  const delaySeconds = opener ? 0 : survey.delay;
+  if (delaySeconds) {
+    logger.debug(`Delaying survey "${survey.id}" by ${delaySeconds.toString()} seconds.`);
   }
 
   const { settings } = config.get().workspace.data;
@@ -139,16 +176,17 @@ export const renderWidget = async (
     formbricksSurveys = await loadFormbricksSurveysExternally();
   } catch (error) {
     logger.error(`Failed to load surveys library: ${String(error)}`);
-    setIsSurveyRunning(false);
+    release();
     return;
   }
+  if (isSuperseded()) return;
 
   // Resolved here, after the surveys bundle loads but before anything is scheduled, recorded or shown:
   // a skip below leaves no display, event or timeout behind, only the released `isSurveyRunning`.
   const languageCode = resolveDisplayLanguage(survey, language, formbricksSurveys);
   if (!languageCode) {
     logger.debug(`Survey "${survey.id}" is not available in specified language.`);
-    setIsSurveyRunning(false);
+    release();
     return;
   }
 
@@ -161,15 +199,19 @@ export const renderWidget = async (
 
   if (isSpamProtectionEnabled && recaptchaSiteKey) {
     await loadRecaptchaScript(recaptchaSiteKey);
+    if (isSuperseded()) return;
   }
 
   const timeoutId = setTimeout(() => {
+    if (isSuperseded()) return;
+
     // First, before anything below can throw: from here the survey is on screen, so its TimeoutStack
     // entry must stop looking like a cancellable schedule. `checkPageUrl` releases `isSurveyRunning`
     // for the entries it cancels, and doing that to a live survey lets the next trigger render a
     // second one over it (ENG-2849).
     timeoutStack.markFired(timeoutId as unknown as number);
 
+    surveyInFlight = null;
     openSurveyIds.add(survey.id);
 
     // Render-gated, paired with "formbricks_survey_closed" off the same set so a host counting opens
@@ -186,7 +228,8 @@ export const renderWidget = async (
       workspaceId: config.get().workspaceId,
       contactId: config.get().user.data.contactId ?? undefined,
       action,
-      survey,
+      // A creative's click opens the survey until the visitor closes it: no auto-close.
+      survey: opener ? { ...survey, autoClose: null } : survey,
       isBrandingEnabled,
       clickOutside,
       overlay,
@@ -289,11 +332,32 @@ export const renderWidget = async (
       },
       getSetIsResponseSendingFinished: (_f: (value: boolean) => void) => undefined,
     });
-  }, survey.delay * 1000);
+  }, delaySeconds * 1000);
 
   if (action) {
     timeoutStack.add(action, timeoutId as unknown as number);
   }
+};
+
+/**
+ * The click path (ADR 0004, decided 16 Oct): opens the survey a creative was pressed for, right away.
+ * `close` is what `resolveClick` says to close first — the surveys on screen, each reported as closed —
+ * and anything still on its way to the screen (a delay, a renderer load) is called off for good.
+ */
+export const openSurveyForCreative = async (
+  survey: TWorkspaceStateSurvey,
+  creativeId: string,
+  close: readonly string[]
+): Promise<void> => {
+  renderGeneration += 1;
+
+  const timeoutStack = TimeoutStack.getInstance();
+  for (const { timeoutId, fired } of [...timeoutStack.getTimeouts()]) {
+    if (!fired) timeoutStack.remove(timeoutId);
+  }
+  for (const surveyId of close) closeSurvey(surveyId);
+
+  await renderWidget(survey, undefined, undefined, { creativeId });
 };
 
 export const closeSurvey = (surveyId?: string): void => {

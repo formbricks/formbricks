@@ -1,3 +1,5 @@
+import type { TCreativePayload } from "@formbricks/creatives";
+
 type TJsonObject = Record<string, unknown>;
 
 /** Respondent-facing compiled custom CSS for one scope (mirrors `TCustomCssCompiled` in @formbricks/types). */
@@ -143,11 +145,20 @@ export interface TWorkspaceStateSettings {
 
 export interface TWorkspaceState {
   expiresAt: Date;
+  /** When the server built the response (ENG-3994). Absent from servers before creatives. */
+  serverTime?: string;
+  /**
+   * What to add to the device clock to read the server's, worked out by the SDK when the state arrived
+   * (`getClockOffset`) and kept with it, so creative schedules hold on every page of the hour.
+   */
+  clockOffset?: number;
   data: {
     surveys: TWorkspaceStateSurvey[];
     actionClasses: TWorkspaceStateActionClass[];
     settings: TWorkspaceStateSettings;
     recaptchaSiteKey?: string;
+    /** Present only when the workspace has deliverable creatives (`@formbricks/creatives` types). */
+    creatives?: TCreativePayload[];
   };
 }
 
