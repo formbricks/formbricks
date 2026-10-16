@@ -217,6 +217,8 @@ export interface TBaseStyling {
   accentBgColor?: TStylingColor | null;
   accentBgColorSelected?: TStylingColor | null;
   fontFamily?: string | null;
+  /** Page font (ENG-3864): the page's font instead of the survey font; absent means off. */
+  pageFont?: boolean | null;
 
   // Buttons
   buttonBgColor?: TStylingColor | null;

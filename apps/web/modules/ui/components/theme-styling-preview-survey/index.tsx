@@ -193,6 +193,7 @@ export const ThemeStylingPreviewSurvey = ({
           isRedirectDisabled={true}
           onFileUpload={async (file) => file.name}
           styling={styling}
+          pageFont={styling.pageFont === true}
           isCardBorderVisible={!highlightBorderColor}
           languageCode="default"
         />

@@ -309,6 +309,10 @@
                                 "nullable": true,
                                 "type": "string"
                               },
+                              "style": {
+                                "description": "The look, computed by the server from the workspace Look & Feel and the creative's custom styles; the SDK only applies it. `element` (the button, or the banner's bar) and `button` (the banner's button, null for a feedback button) each carry colours per appearance (`light`, `dark`: `backgroundColor`, `textColor`, `borderColor`), sizes per device (`desktop`, `phone` below 768 px: `fontSize`, `paddingX`, `paddingY`), `borderRadius` and `fontWeight`, in px and #rrggbb. `pageFont` is true when it renders in the host page's font. `customCss` is the creative's own CSS, compiled for its shadow root (`light`, `dark`), or null.",
+                                "type": "object"
+                              },
                               "triggers": {
                                 "description": "Names of the actions that show it when `showOn` is `action`.",
                                 "items": {

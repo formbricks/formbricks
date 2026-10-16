@@ -1,8 +1,11 @@
+import "server-only";
 import type { TCreativeDestination, TCreativePayload } from "@formbricks/creatives";
 import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZShowConditions } from "@formbricks/types/show-conditions";
 import { CREATIVE_TYPE_SCHEMAS, type TCreativeTypedGroups, needsDestination } from "./creative";
+import { compileCreativeCustomCss } from "./custom-css";
+import { type TWorkspaceStylingInput, getAppliedCustomCssSource, getCreativeStyle } from "./style";
 
 /**
  * Creatives in the environment payload (ENG-3994): which ones the SDK gets, and in what shape (the
@@ -78,14 +81,22 @@ const getDestination = (row: TDeliveredCreativeRow, publicDomain: string): TCrea
   return null;
 };
 
+/** What every creative of one workspace's payload is built with. */
+export interface TCreativeDeliveryContext {
+  publicDomain: string;
+  /** The workspace's stored Look & Feel: every creative's default look (ENG-3998). */
+  workspaceStyling: TWorkspaceStylingInput | null | undefined;
+}
+
 /**
  * One creative as the SDK gets it, or `null` when it could never show: nothing to open when it needs a
- * Destination, shown on an action but with none, or stored JSON that no longer fits its type.
+ * Destination, shown on an action but with none, or stored JSON that no longer fits its type. Its look
+ * arrives computed (`style`), with its own Custom CSS compiled for its shadow root.
  */
-export const toCreativePayload = (
+const toCreativePayload = async (
   row: TDeliveredCreativeRow,
-  publicDomain: string
-): TCreativePayload | null => {
+  { publicDomain, workspaceStyling }: TCreativeDeliveryContext
+): Promise<TCreativePayload | null> => {
   const groups = parseTypedGroups(row);
   const conditions = ZShowConditions.safeParse(row.showConditions ?? null);
   if (!groups || !conditions.success) {
@@ -101,9 +112,13 @@ export const toCreativePayload = (
   if (needsDestination(groups) && !destination) return null;
   if (row.showOn === "action" && triggers.length === 0) return null;
 
+  const customCssSource = getAppliedCustomCssSource(groups.styling.theme);
+  const customCss = customCssSource ? await compileCreativeCustomCss(groups.type, customCssSource) : null;
+
   const common = {
     id: row.id,
     defaultLanguage: row.languages[0]?.language.code ?? "en-US",
+    style: getCreativeStyle(groups, workspaceStyling, customCss),
     destination,
     showOn: row.showOn,
     triggers,
@@ -117,6 +132,15 @@ export const toCreativePayload = (
     ? { ...common, type: "feedbackButton", content: groups.content, position: groups.styling.position }
     : { ...common, type: "banner", content: groups.content, position: groups.styling.position };
 };
+
+/** The payload's `creatives`, in row order, without the ones that could never show. */
+export const toCreativePayloads = async (
+  rows: readonly TDeliveredCreativeRow[],
+  context: TCreativeDeliveryContext
+): Promise<TCreativePayload[]> =>
+  (await Promise.all(rows.map((row) => toCreativePayload(row, context)))).filter(
+    (creative): creative is TCreativePayload => creative !== null
+  );
 
 /** The app surveys the payload's creatives open as a popup, which the payload must therefore carry. */
 export const getPopupSurveyIds = (creatives: readonly TCreativePayload[]): string[] => [

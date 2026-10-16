@@ -193,6 +193,12 @@ post:
     **Languages.** Every text map must hold `defaultLanguage`, and any other locale key must be
     declared in `languages` (**422** `unsupported_locale` otherwise). A missing translation is fine:
     visitors see the default language.
+
+
+    **Custom CSS** (`styling.theme.customCss`). Adding it needs the Scale plan on Formbricks Cloud
+    (**403** `custom_css_plan_required`), and CSS that cannot be processed answers **422** naming
+    `styling.theme.customCss`. Processing counts against the custom CSS budget shared with surveys;
+    beyond it the request is a **429** and nothing is written.
   tags:
     - V3 Creatives
   requestBody:

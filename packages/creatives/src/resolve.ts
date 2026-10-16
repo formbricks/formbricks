@@ -1,5 +1,4 @@
 import type { TShowConditionGroup } from "@formbricks/types/show-conditions";
-import { DEFAULT_CREATIVE_STYLE } from "./style";
 import type { TCreativePayload, TCreativeText, TCreativeView } from "./types";
 
 /** What `resolve` knows about the page it decides for. Later tickets widen it (language, device…). */
@@ -42,7 +41,7 @@ const toView = (creative: TCreativePayload): TCreativeView | null => {
       label: pickText(creative.content.label, creative.defaultLanguage),
       icon: creative.content.icon,
       position: creative.position,
-      style: DEFAULT_CREATIVE_STYLE,
+      style: creative.style,
       destination: creative.destination,
     };
   }
@@ -57,7 +56,7 @@ const toView = (creative: TCreativePayload): TCreativeView | null => {
     dismissible,
     accessibleName: accessibleName && pickText(accessibleName, creative.defaultLanguage),
     position: creative.position,
-    style: DEFAULT_CREATIVE_STYLE,
+    style: creative.style,
     destination: creative.destination,
   };
 };

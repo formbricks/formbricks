@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
-import type { TCreativePayload } from "@formbricks/creatives";
+import { DEFAULT_CREATIVE_STYLE, type TCreativePayload } from "@formbricks/creatives";
+import { setAppearance } from "@/lib/common/appearance";
 import { Config } from "@/lib/common/config";
 import { setIsSetup } from "@/lib/common/status";
 import { reconcileCreatives, removeCreatives } from "@/lib/creatives/creatives";
@@ -20,6 +21,7 @@ const feedbackButton = (overrides: Partial<TCreativePayload> = {}): TCreativePay
     id: "creative-1",
     type: "feedbackButton",
     defaultLanguage: "en-US",
+    style: DEFAULT_CREATIVE_STYLE,
     content: { label: { "en-US": "Feedback" }, icon: null },
     position: { desktop: { edge: "right", offset: 50 }, phone: null },
     destination: { type: "survey", surveyId: mockSurvey.id, opensAs: "popup" },
@@ -69,6 +71,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  setAppearance("light");
   removeCreatives();
   window.localStorage.clear();
   vi.useRealTimers();
@@ -159,6 +162,44 @@ describe("reconcileCreatives", () => {
     >;
     expect(Object.keys(rolls)).toEqual(["creative-1"]);
     expect(shownButtons()).toHaveLength(rolls["creative-1"] < 50 ? 1 : 0);
+  });
+});
+
+/** ENG-3998: a creative follows the survey's appearance, which the host sets with setAppearance. */
+describe("appearance", () => {
+  const appearanceOf = (): string | null => shownButtons()[0]?.getAttribute("data-appearance") ?? null;
+
+  test("draws in the appearance the host set, and redraws when it changes", () => {
+    setAppearance("dark");
+    reconcileCreatives();
+    expect(appearanceOf()).toBe("dark");
+
+    setAppearance("light");
+    reconcileCreatives();
+    expect(appearanceOf()).toBe("light");
+  });
+
+  test("with system, follows the visitor's setting and switches with it", () => {
+    let listener: (() => void) | undefined;
+    const scheme = {
+      matches: true,
+      addEventListener: (_type: string, callback: () => void) => {
+        listener = callback;
+      },
+      removeEventListener: vi.fn(),
+    };
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => scheme)
+    );
+
+    setAppearance("system");
+    reconcileCreatives();
+    expect(appearanceOf()).toBe("dark");
+
+    scheme.matches = false;
+    listener?.();
+    expect(appearanceOf()).toBe("light");
   });
 });
 

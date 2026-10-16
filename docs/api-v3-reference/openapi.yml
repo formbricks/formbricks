@@ -3963,6 +3963,8 @@ paths:
         **Publish rules**, checked whenever the resulting `status` isn't `draft`: a feedback button, and a banner with a button, need a `destination`; a banner without a button can't have one; the default language's label or message can't be empty; `showOn: action` needs at least one trigger. A breach answers **422** with one `invalid_params` entry per problem.
 
         **Languages.** Every text map must hold `defaultLanguage`, and any other locale key must be declared in `languages` (**422** `unsupported_locale` otherwise). A missing translation is fine: visitors see the default language.
+
+        **Custom CSS** (`styling.theme.customCss`). Adding it needs the Scale plan on Formbricks Cloud (**403** `custom_css_plan_required`), and CSS that cannot be processed answers **422** naming `styling.theme.customCss`. Processing counts against the custom CSS budget shared with surveys; beyond it the request is a **429** and nothing is written.
       tags:
         - V3 Creatives
       requestBody:
@@ -4240,6 +4242,8 @@ paths:
         Changes a creative. Read/write access to its workspace; an unknown or inaccessible `creativeId` answers **403**. Each group sent replaces the stored one as a whole (see `PatchCreativeRequest`); an empty body changes nothing.
 
         **Status.** Publish with `status: inProgress`, pause with `paused`, close with `completed`, and reopen or resume with `inProgress`. A creative that was ever published can't go back to `draft`. Any status but `draft` must meet the publish rules of `POST /api/v3/creatives`, checked against the creative as it would be after the change.
+
+        **Custom CSS.** Adding or editing `styling.theme.customCss` follows the rules of `POST /api/v3/creatives`; removing it, or sending it back unchanged, needs no plan and is not processed again.
 
         An archived creative is read-only: restore it first, or the request answers **422**.
       tags:
@@ -11356,7 +11360,7 @@ components:
     FeedbackButtonTheme:
       type: object
       description: |
-        The feedback button's custom styles. With `customStyles` off the button follows the workspace Look & Feel (the survey button) and the values below are kept but not applied. With it on, each value overrides the workspace one; `null` keeps the workspace value. Colours are `#rrggbb`.
+        The feedback button's custom styles. With `customStyles` off the button follows the workspace Look & Feel (the survey button) and the values below are kept but not applied. With it on, each value overrides the workspace one; `null` keeps the workspace value. A colour set here applies in both appearances: when the background or the text colour is set, both keep their light values in dark appearance so their contrast holds, and a background set without a text colour gets readable text (`#0f172a` or `#ffffff`). Colours left to the workspace follow its dark palette when the visitor's appearance is dark. Colours are `#rrggbb`.
       required:
         - customStyles
         - backgroundColor
@@ -11409,6 +11413,16 @@ components:
           $ref: '#/components/schemas/CreativePadding'
         paddingY:
           $ref: '#/components/schemas/CreativePadding'
+        pageFont:
+          type:
+            - boolean
+            - 'null'
+          description: 'Page font: `true` renders in the host page''s font, `false` in the survey font, `null` (or absent) follows the workspace''s Page font setting. Applies only with `customStyles` on.'
+        customCss:
+          anyOf:
+            - $ref: '#/components/schemas/CustomCssInput'
+            - type: 'null'
+          description: The creative's own Custom CSS **source**, `null` (or absent) when it has none. It applies only with `customStyles` on, only to this creative, and is scoped to its element `.fb-creative-button` inside the creative's shadow root; the workspace Custom CSS never reaches a creative. The server processes it on every write that adds or edits it, silently removing `@import`, `@font-face` and external `url()`. Adding or editing it needs the Scale plan on Formbricks Cloud (403 `custom_css_plan_required`); CSS that cannot be processed is a 422 naming `styling.theme.customCss`. Removing it, or sending it back unchanged, needs no plan. Limited to 20 000 UTF-8 bytes.
       additionalProperties: false
     FeedbackButtonStyling:
       type: object
@@ -11597,7 +11611,7 @@ components:
     BannerTheme:
       type: object
       description: |
-        The banner's custom styles. With `customStyles` off the banner follows the workspace Look & Feel (the survey card, with the survey button inside) and the values below are kept but not applied. With it on, each value overrides the workspace one; `null` keeps the workspace value. Colours are `#rrggbb`.
+        The banner's custom styles. With `customStyles` off the banner follows the workspace Look & Feel (the survey card, with the survey button inside) and the values below are kept but not applied. With it on, each value overrides the workspace one; `null` keeps the workspace value. A colour set here applies in both appearances: when the background or the text colour is set, both keep their light values in dark appearance so their contrast holds, and a background set without a text colour gets readable text (`#0f172a` or `#ffffff`). Colours left to the workspace follow its dark palette when the visitor's appearance is dark. The banner's button always looks like the survey button. Colours are `#rrggbb`.
       required:
         - customStyles
         - backgroundColor
@@ -11642,6 +11656,16 @@ components:
           $ref: '#/components/schemas/CreativePadding'
         paddingY:
           $ref: '#/components/schemas/CreativePadding'
+        pageFont:
+          type:
+            - boolean
+            - 'null'
+          description: 'Page font: `true` renders in the host page''s font, `false` in the survey font, `null` (or absent) follows the workspace''s Page font setting. Applies only with `customStyles` on.'
+        customCss:
+          anyOf:
+            - $ref: '#/components/schemas/CustomCssInput'
+            - type: 'null'
+          description: The creative's own Custom CSS **source**, `null` (or absent) when it has none. It applies only with `customStyles` on, only to this creative, and is scoped to its element `.fb-creative-banner` inside the creative's shadow root; the workspace Custom CSS never reaches a creative. The server processes it on every write that adds or edits it, silently removing `@import`, `@font-face` and external `url()`. Adding or editing it needs the Scale plan on Formbricks Cloud (403 `custom_css_plan_required`); CSS that cannot be processed is a 422 naming `styling.theme.customCss`. Removing it, or sending it back unchanged, needs no plan. Limited to 20 000 UTF-8 bytes.
       additionalProperties: false
     BannerStyling:
       type: object

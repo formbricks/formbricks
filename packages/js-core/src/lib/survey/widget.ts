@@ -9,6 +9,7 @@ import {
   filterSurveys,
   getBrowserLanguageCodes,
   getCustomCss,
+  getPageFont,
   getStyling,
   shouldDisplayBasedOnPercentage,
   surveyHasSegmentFilters,
@@ -236,6 +237,8 @@ export const renderWidget = async (
       languageCode,
       placement,
       styling: getStyling(settings, survey),
+      // Only the web SDK passes it: an app survey on a web page is the one with a page font to take.
+      pageFont: getPageFont(settings, survey),
       // Both scopes from the cached workspace state; the renderer applies CSS from this prop only.
       customCss: getCustomCss(settings, survey),
       // The ambient Embedded Data bag (ENG-1844) under the per-trigger `track({ hiddenFields })`

@@ -140,6 +140,11 @@ patch:
     creative as it would be after the change.
 
 
+    **Custom CSS.** Adding or editing `styling.theme.customCss` follows the rules of
+    `POST /api/v3/creatives`; removing it, or sending it back unchanged, needs no plan and is not
+    processed again.
+
+
     An archived creative is read-only: restore it first, or the request answers **422**.
   tags:
     - V3 Creatives

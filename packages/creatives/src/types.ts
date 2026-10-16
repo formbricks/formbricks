@@ -63,6 +63,8 @@ interface TCreativePayloadBase {
   id: string;
   /** The locale code the texts fall back to. */
   defaultLanguage: string;
+  /** The look, computed by the server and only applied by the SDK (ENG-3998). */
+  style: TCreativeStyle;
   /** `null` only for a banner without a button. */
   destination: TCreativeDestination | null;
   showOn: "pageView" | "action";
@@ -97,20 +99,59 @@ export interface TBannerPayload extends TCreativePayloadBase {
 /** One entry of the environment payload's `data.creatives`. */
 export type TCreativePayload = TFeedbackButtonPayload | TBannerPayload;
 
-/**
- * The look one creative renders with, in px and `#rrggbb`. Workspace defaults, custom styles, phone
- * values and dark mode (ENG-3998) will arrive computed by the server; until then every creative uses
- * `DEFAULT_CREATIVE_STYLE`.
- */
-export interface TCreativeStyle {
+/** An element's colours in one appearance, `#rrggbb`. `borderColor: null` draws no border. */
+export interface TCreativeColors {
   backgroundColor: string;
   textColor: string;
   borderColor: string | null;
-  borderRadius: number;
+}
+
+/** An element's size on one device, in px. */
+export interface TCreativeSize {
   fontSize: number;
-  fontWeight: number;
   paddingX: number;
   paddingY: number;
+}
+
+/**
+ * How one element of a creative looks, ready to apply: colours per appearance (light, dark), sizes per
+ * device (desktop, and phone below 768 px viewport width). Everything is px or `#rrggbb`; nothing here
+ * needs the workspace styling or the creative's custom styles any more.
+ */
+export interface TCreativeElementStyle {
+  light: TCreativeColors;
+  dark: TCreativeColors;
+  desktop: TCreativeSize;
+  phone: TCreativeSize;
+  borderRadius: number;
+  fontWeight: number;
+}
+
+/**
+ * Compiled Custom CSS of one creative, scoped to its root element (`.fb-creative-button` or
+ * `.fb-creative-banner`), every declaration `!important`, wrapped in the `fb-survey` (light) and
+ * `fb-survey-dark` layers, dark rules keyed on the root's `data-appearance="dark"`. Third-party loads are
+ * already stripped. Absent keys mean no CSS for that appearance.
+ */
+export interface TCreativeCustomCss {
+  light?: string;
+  dark?: string;
+}
+
+/**
+ * A creative's look (ENG-3998), computed by the server from the workspace Look & Feel and the creative's
+ * custom styles: a feedback button starts from the survey button, a banner from the survey card with the
+ * survey button inside. The SDK only applies it.
+ */
+export interface TCreativeStyle {
+  /** The feedback button itself, or the banner's bar. */
+  element: TCreativeElementStyle;
+  /** The banner's button, which always looks like the survey button; `null` for a feedback button. */
+  button: TCreativeElementStyle | null;
+  /** `true`: the host page's font (Page font). `false`: the survey font. */
+  pageFont: boolean;
+  /** The creative's own CSS; `null` when it has none or its custom styles are off. */
+  customCss: TCreativeCustomCss | null;
 }
 
 /** A creative `resolve` decided to show, with its texts picked: what `render` draws. */

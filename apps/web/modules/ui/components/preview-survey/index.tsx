@@ -167,6 +167,9 @@ export const PreviewSurvey = ({
     return workspace.styling;
   }, [workspace.styling, survey.styling]);
 
+  // Page font (ENG-3864): the app survey takes the font of the page around it, here the editor's.
+  const pageFont = (styling.pageFont ?? workspace.styling.pageFont) === true;
+
   const isCardless = styling.cardArrangement?.linkSurveys === "cardless";
   // The mock modal paints its own card color around the survey, so it has to follow the dark palette.
   const modalBackground =
@@ -364,6 +367,7 @@ export const PreviewSurvey = ({
                       isRedirectDisabled={true}
                       languageCode={activeLanguageCode}
                       styling={styling}
+                      pageFont={pageFont}
                       isCardBorderVisible={!styling.highlightBorderColor?.light}
                       onClose={handlePreviewModalClose}
                       getSetBlockId={(f: (value: string) => void) => {
@@ -510,6 +514,7 @@ export const PreviewSurvey = ({
                       isRedirectDisabled={true}
                       languageCode={activeLanguageCode}
                       styling={styling}
+                      pageFont={pageFont}
                       isCardBorderVisible={!styling.highlightBorderColor?.light}
                       onClose={handlePreviewModalClose}
                       getSetBlockId={(f: (value: string) => void) => {

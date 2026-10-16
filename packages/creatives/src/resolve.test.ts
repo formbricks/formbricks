@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { type TResolveInput, resolve } from "./resolve";
-import type { TBannerPayload, TFeedbackButtonPayload } from "./types";
+import { DEFAULT_CREATIVE_STYLE } from "./style";
+import type { TBannerPayload, TCreativeStyle, TFeedbackButtonPayload } from "./types";
 
 const NOW = Date.parse("2026-10-20T02:00:00.000Z");
 
@@ -8,6 +9,7 @@ const button = (overrides: Partial<TFeedbackButtonPayload> = {}): TFeedbackButto
   id: "button-1",
   type: "feedbackButton",
   defaultLanguage: "en-US",
+  style: DEFAULT_CREATIVE_STYLE,
   content: { label: { "en-US": "Feedback", "de-DE": "Feedback geben" }, icon: null },
   position: { desktop: { edge: "right", offset: 50 }, phone: null },
   destination: { type: "survey", surveyId: "survey-1", opensAs: "popup" },
@@ -24,6 +26,7 @@ const banner = (overrides: Partial<TBannerPayload> = {}): TBannerPayload => ({
   id: "banner-1",
   type: "banner",
   defaultLanguage: "en-US",
+  style: DEFAULT_CREATIVE_STYLE,
   content: {
     message: { "en-US": [{ text: "Maintenance tonight. " }, { text: "Details", href: "/maintenance" }] },
     button: null,
@@ -79,6 +82,18 @@ describe("resolve", () => {
         destination: null,
       }),
     ]);
+  });
+
+  test("draws each creative with the style the server computed for it", () => {
+    const style: TCreativeStyle = {
+      ...DEFAULT_CREATIVE_STYLE,
+      element: { ...DEFAULT_CREATIVE_STYLE.element, borderRadius: 2, fontWeight: 400 },
+      pageFont: true,
+    };
+
+    const result = resolve(input({ creatives: [button({ style })] }));
+
+    expect(result.creatives[0]?.style).toEqual(style);
   });
 
   describe("schedule", () => {
