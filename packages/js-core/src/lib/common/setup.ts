@@ -8,6 +8,7 @@ import { filterSurveys, getIsDebug, isNowExpired, wrapThrows } from "@/lib/commo
 import { addLiveRegionContainer, closeSurvey, prefetchSurveysScript } from "@/lib/survey/widget";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
+import { startVisitTracking } from "@/lib/visit/visit-tracking";
 import { fetchWorkspaceState } from "@/lib/workspace/state";
 import {
   type TConfig,
@@ -137,6 +138,12 @@ export const setup = async (
     logger.debug("Already set up, skipping setup.");
     return okVoid();
   }
+
+  // Count this page before anything that can wait or bail out: counting needs no network, and a
+  // visitor who leaves before the workspace state arrives, or a page where Formbricks is in an error
+  // state, still saw the page. Also before `addEventListeners`, so no trigger on this page is ever
+  // checked against the previous page's visit.
+  startVisitTracking();
 
   let existingConfig: TConfig | undefined;
   try {

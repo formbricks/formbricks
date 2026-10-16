@@ -6,6 +6,7 @@ import {
   resolve,
   resolveClick,
 } from "@formbricks/creatives";
+import type { TShowConditionsContext } from "@formbricks/types/show-conditions-evaluate";
 import { getAppearance } from "@/lib/common/appearance";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
@@ -13,11 +14,14 @@ import { getIsSetup } from "@/lib/common/status";
 import { countClick, countImpressions, stopCountingCreatives } from "@/lib/creatives/events";
 import { type TShownCreative, arrangeCreatives, stopArrangingCreatives } from "@/lib/creatives/layout";
 import { getOpenSurveyIds, openSurveyForCreative } from "@/lib/survey/widget";
+import { getDeviceInfo } from "@/lib/visit/device";
+import { getVisitSnapshot } from "@/lib/visit/visit-store";
 
 /**
- * Creatives on the page (ENG-3994). `reconcileCreatives` runs on every page view (`checkPageUrl`), on a
- * state refresh, when the CSP nonce changes and at the next schedule boundary, and makes the page show
- * exactly what `resolve` decides from the cached state: no network, no survey bundle.
+ * Creatives on the page (ENG-3994). `reconcileCreatives` runs on every page view (`checkPageUrl`), on
+ * every tracked action, on a state refresh, when the CSP nonce changes and at the next schedule
+ * boundary, and makes the page show exactly what `resolve` decides from the cached state: no network,
+ * no survey bundle.
  */
 
 /**
@@ -33,15 +37,40 @@ let getShareRoll: ((creativeId: string) => number) | null = null;
 /** The visitor's colour scheme, watched once the host asks for `system`. */
 let systemScheme: MediaQueryList | null = null;
 /**
- * The banners the visitor closed on this page view (host + path, as Impressions count it), kept in
- * memory only: the next page view, a single-page-app route change included, shows them again.
+ * What happened on this page view (host + path, as Impressions count it), kept in memory only: the
+ * banners the visitor closed, and the actions tracked, which show the creatives that show on them. The
+ * next page view, a single-page-app route change included, starts over.
  */
-const dismissed = { page: null as string | null, ids: new Set<string>() };
+const pageView = {
+  page: null as string | null,
+  dismissed: new Set<string>(),
+  firedActions: new Set<string>(),
+};
+
+const syncPageView = (): void => {
+  const page = getCountedPage(window.location.href);
+  if (page === pageView.page) return;
+  pageView.page = page;
+  pageView.dismissed.clear();
+  pageView.firedActions.clear();
+};
 
 const dismissBanner = (id: string): void => {
-  dismissed.ids.add(id);
+  pageView.dismissed.add(id);
   reconcileCreatives();
 };
+
+/**
+ * The page, visit and device Show when is checked against: the context the survey SDK builds for its
+ * own show conditions (ENG-3926's `passesShowConditions`), from the same visit store and device
+ * detection.
+ */
+const getShowConditionsContext = (): TShowConditionsContext => ({
+  url: window.location.href,
+  pageReferrer: document.referrer,
+  visit: getVisitSnapshot(),
+  device: getDeviceInfo(),
+});
 
 /**
  * The appearance a creative draws in: the survey's (ENG-3998), which the host sets with
@@ -142,21 +171,17 @@ export const reconcileCreatives = (): void => {
     const now = Date.now() + (workspace.clockOffset ?? 0);
     getShareRoll ??= createShareRolls(getBrowserStorage());
 
+    syncPageView();
+
     const { creatives, nextChangeAt } = resolve({
       creatives: workspace.data.creatives ?? [],
       surveys: workspace.data.surveys,
-      page: { now },
+      page: { now, firedActions: pageView.firedActions, showConditionsContext: getShowConditionsContext() },
       getShareRoll,
     });
 
-    const page = getCountedPage(window.location.href);
-    if (page !== dismissed.page) {
-      dismissed.page = page;
-      dismissed.ids.clear();
-    }
-
     showCreatives(
-      creatives.filter(({ id }) => !dismissed.ids.has(id)),
+      creatives.filter(({ id }) => !pageView.dismissed.has(id)),
       getCreativeAppearance()
     );
     scheduleNextChange(nextChangeAt, now);
@@ -165,13 +190,21 @@ export const reconcileCreatives = (): void => {
   }
 };
 
+/** An action was tracked on this page (`trackAction`): shows the creatives that show on it. */
+export const recordCreativeAction = (actionName: string): void => {
+  syncPageView();
+  pageView.firedActions.add(actionName);
+  reconcileCreatives();
+};
+
 /**
  * Takes every creative off the page and stops their schedule timer, appearance and size watches and
  * counting.
  */
 export const removeCreatives = (): void => {
   showCreatives([]);
-  dismissed.ids.clear();
+  pageView.dismissed.clear();
+  pageView.firedActions.clear();
   stopArrangingCreatives();
   scheduleNextChange(null, 0);
   systemScheme?.removeEventListener("change", reconcileCreatives);
