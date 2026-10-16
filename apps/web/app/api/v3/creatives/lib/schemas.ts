@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   zCreateCreativeRequest,
+  zGetCreativeStatsV3Query,
   zGetCreativeV3Path,
   zPatchCreativeRequest,
 } from "@formbricks/api-v3-schemas";
@@ -23,6 +24,10 @@ import { ZShowConditions } from "@formbricks/types/show-conditions";
 
 export const ZV3CreativeIdParams = z.strictObject(zGetCreativeV3Path.shape);
 export type TV3CreativeIdParams = z.infer<typeof ZV3CreativeIdParams>;
+
+/** `GET /api/v3/creatives/{creativeId}/stats`; the range checks need "today" and live in the operation. */
+export const ZV3CreativeStatsQuery = z.strictObject(zGetCreativeStatsV3Query.shape);
+export type TV3CreativeStatsQuery = z.infer<typeof ZV3CreativeStatsQuery>;
 
 const CONDITIONS_PATH = ["distribution", "conditions"] as const;
 

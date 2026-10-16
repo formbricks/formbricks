@@ -20,6 +20,7 @@ export const ADOPTED_OPERATIONS: Readonly<Record<string, readonly string[]>> = {
     "archiveCreativeV3",
     "restoreCreativeV3",
     "duplicateCreativeV3",
+    "getCreativeStatsV3",
   ],
   "V3 Responses": [
     "getResponsesV3",

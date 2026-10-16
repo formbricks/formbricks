@@ -34,6 +34,11 @@ import {
   restoreCreative,
   updateCreative,
 } from "@/modules/creatives/lib/service";
+import { MAX_STATS_PAGES, buildCreativeStats, resolveStatsRange } from "@/modules/creatives/lib/stats";
+import {
+  findCreativeDayDeviceCounts,
+  findCreativePageCounts,
+} from "@/modules/creatives/lib/stats-repository";
 import {
   applyCreativePatch,
   buildCreativeCreateState,
@@ -41,7 +46,7 @@ import {
 } from "@/modules/creatives/lib/write-rules";
 import { CustomCssInvalidError, CustomCssPlanRequiredError } from "@/modules/custom-css/lib/service";
 import { parseV3CreativesListQuery } from "./list-query";
-import type { TV3CreateCreativeBody, TV3PatchCreativeBody } from "./schemas";
+import type { TV3CreateCreativeBody, TV3CreativeStatsQuery, TV3PatchCreativeBody } from "./schemas";
 import { type TV3CreativeResource, serializeV3Creative } from "./serializers";
 
 /**
@@ -398,5 +403,52 @@ export async function duplicateV3Creative(params: TCreativeOperationParams): Pro
     });
   } catch (error) {
     return mapWriteError(error, { log, requestId, instance, operation: "creatives.duplicate" });
+  }
+}
+
+/**
+ * A creative's Impressions and Clicks per UTC day, from the rollups the counter flush writes
+ * (ENG-4000). Read access, like `getV3Creative`; archived creatives keep their counts.
+ */
+export async function getV3CreativeStats(
+  params: Omit<TCreativeOperationParams, "auditLog"> & { query: TV3CreativeStatsQuery }
+): Promise<Response> {
+  const { creativeId, query, authentication, requestId, instance } = params;
+  const log = logger.withContext({ requestId, creativeId });
+
+  try {
+    const authorized = await authorizeCreative({
+      creativeId,
+      authentication,
+      access: "read",
+      requestId,
+      instance,
+    });
+    if (authorized instanceof Response) return authorized;
+
+    const resolved = resolveStatsRange(query, new Date());
+    if (!resolved.ok) {
+      return problemBadRequest(requestId, "Invalid query parameters", {
+        invalid_params: [resolved.invalidParam],
+        instance,
+      });
+    }
+
+    const { range } = resolved;
+    const groupBy = query.groupBy ?? null;
+    const { workspaceId } = authorized;
+    const [dayDeviceCounts, pageCounts] = await Promise.all([
+      findCreativeDayDeviceCounts(creativeId, workspaceId, range.from, range.to),
+      groupBy === "page"
+        ? findCreativePageCounts(creativeId, workspaceId, range.from, range.to, MAX_STATS_PAGES)
+        : [],
+    ]);
+
+    return successResponse(buildCreativeStats({ creativeId, range, groupBy, dayDeviceCounts, pageCounts }), {
+      requestId,
+      cache: NO_STORE,
+    });
+  } catch (error) {
+    return mapV3ThrownError(error, { log, requestId, instance, operation: "creatives.stats" });
   }
 }

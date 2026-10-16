@@ -12,7 +12,7 @@ info:
 
     **Responses**: **GET /api/v3/responses**, **GET /api/v3/responses/count**, **POST /api/v3/responses/validate**, **POST /api/v3/responses/batch-delete**, **GET /api/v3/responses/{responseId}**, **POST /api/v3/responses**, **PATCH /api/v3/responses/{responseId}**, and **DELETE /api/v3/responses/{responseId}**.
 
-    **Creatives**: **GET /api/v3/creatives**, **POST /api/v3/creatives**, **GET**, **PATCH** and **DELETE /api/v3/creatives/{creativeId}**, and **POST /api/v3/creatives/{creativeId}/archive**, **/restore** and **/duplicate**. A creative is a feedback button or a banner the web SDK renders on the customer's site; pressing it opens its Destination, a survey or a link. Writes set the author's `status`; reads add the derived `displayStatus`.
+    **Creatives**: **GET /api/v3/creatives**, **POST /api/v3/creatives**, **GET**, **PATCH** and **DELETE /api/v3/creatives/{creativeId}**, **POST /api/v3/creatives/{creativeId}/archive**, **/restore** and **/duplicate**, and **GET /api/v3/creatives/{creativeId}/stats**. A creative is a feedback button or a banner the web SDK renders on the customer's site; pressing it opens its Destination, a survey or a link. Writes set the author's `status`; reads add the derived `displayStatus`; `stats` returns its daily Impressions and Clicks.
 
     **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and **GET /api/v3/workflows/runs/{runId}**.
 
@@ -4456,6 +4456,140 @@ paths:
                 properties:
                   data:
                     $ref: '#/components/schemas/CreativeResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/creatives/{creativeId}/stats:
+    get:
+      operationId: getCreativeStatsV3
+      summary: Get a creative's counts
+      description: |
+        Returns a creative's Impressions and Clicks per UTC day from `from` to `to` (both inclusive), their totals and Click rate, and, with `groupBy`, the same counts by page or by device type. Read access to the creative's workspace; an unknown or inaccessible `creativeId` answers **403**.
+
+        Counts are kept per day, not per event. The web SDK reports what visitors see, and a background job adds it here about once a minute, so a count can lag by up to a minute. An instance running without its BullMQ worker never adds counts. Archived creatives keep their counts, deleting a creative deletes them, and a duplicate starts with none.
+
+        **400** when `from` is after `to`, or the range spans more than 366 days.
+      tags:
+        - V3 Creatives
+      parameters:
+        - $ref: '#/components/parameters/CreativeIdPath'
+        - in: query
+          name: from
+          schema:
+            type: string
+            format: date
+          description: First UTC day, inclusive (`YYYY-MM-DD`). Defaults to 29 days before `to`.
+        - in: query
+          name: to
+          schema:
+            type: string
+            format: date
+          description: Last UTC day, inclusive (`YYYY-MM-DD`). Defaults to today, in UTC.
+        - in: query
+          name: groupBy
+          schema:
+            type: string
+            enum:
+              - page
+              - device
+          description: 'Adds a breakdown: `page` adds `pages` (host + path), `device` adds `devices` (phone, tablet, desktop). Omit for totals and days only.'
+      responses:
+        '200':
+          description: Counts retrieved successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CreativeStats'
+              examples:
+                byPage:
+                  summary: Two days by page
+                  value:
+                    data:
+                      creativeId: clcr1234567890123456789012
+                      from: '2026-10-15'
+                      to: '2026-10-16'
+                      groupBy: page
+                      totals:
+                        impressions: 1200
+                        clicks: 30
+                        clickRate: 0.025
+                      days:
+                        - date: '2026-10-15'
+                          impressions: 500
+                          clicks: 10
+                          clickRate: 0.02
+                        - date: '2026-10-16'
+                          impressions: 700
+                          clicks: 20
+                          clickRate: 0.02857142857142857
+                      pages:
+                        - page: example.com/pricing
+                          impressions: 800
+                          clicks: 24
+                          clickRate: 0.03
+                        - page: example.com/
+                          impressions: 390
+                          clicks: 6
+                          clickRate: 0.015384615384615385
+                        - page: (other)
+                          impressions: 10
+                          clicks: 0
+                          clickRate: 0
+                byDevice:
+                  summary: One day by device type
+                  value:
+                    data:
+                      creativeId: clcr1234567890123456789012
+                      from: '2026-10-16'
+                      to: '2026-10-16'
+                      groupBy: device
+                      totals:
+                        impressions: 700
+                        clicks: 20
+                        clickRate: 0.02857142857142857
+                      days:
+                        - date: '2026-10-16'
+                          impressions: 700
+                          clicks: 20
+                          clickRate: 0.02857142857142857
+                      devices:
+                        - deviceType: phone
+                          impressions: 300
+                          clicks: 12
+                          clickRate: 0.04
+                        - deviceType: tablet
+                          impressions: 0
+                          clicks: 0
+                          clickRate: null
+                        - deviceType: desktop
+                          impressions: 400
+                          clicks: 8
+                          clickRate: 0.02
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -11933,6 +12067,156 @@ components:
           $ref: '#/components/schemas/CreativeDistribution'
         schedule:
           $ref: '#/components/schemas/CreativeSchedule'
+      additionalProperties: false
+    CreativeStatsCounts:
+      type: object
+      description: Impressions, Clicks and Click rate (Clicks divided by Impressions; `null` without Impressions).
+      required:
+        - impressions
+        - clicks
+        - clickRate
+      properties:
+        impressions:
+          type: integer
+          minimum: 0
+        clicks:
+          type: integer
+          minimum: 0
+        clickRate:
+          type:
+            - number
+            - 'null'
+          minimum: 0
+      additionalProperties: false
+    CreativeStatsDay:
+      type: object
+      description: One UTC day's counts.
+      required:
+        - date
+        - impressions
+        - clicks
+        - clickRate
+      properties:
+        date:
+          type: string
+          format: date
+        impressions:
+          type: integer
+          minimum: 0
+        clicks:
+          type: integer
+          minimum: 0
+        clickRate:
+          type:
+            - number
+            - 'null'
+          minimum: 0
+      additionalProperties: false
+    CreativeStatsPage:
+      type: object
+      description: One page's counts over the range.
+      required:
+        - page
+        - impressions
+        - clicks
+        - clickRate
+      properties:
+        page:
+          type: string
+          description: Host and path, without query string or hash (`example.com/pricing`), or `(other)` for every page not listed.
+          examples:
+            - example.com/pricing
+        impressions:
+          type: integer
+          minimum: 0
+        clicks:
+          type: integer
+          minimum: 0
+        clickRate:
+          type:
+            - number
+            - 'null'
+          minimum: 0
+      additionalProperties: false
+    CreativeStatsDevice:
+      type: object
+      description: One device type's counts over the range.
+      required:
+        - deviceType
+        - impressions
+        - clicks
+        - clickRate
+      properties:
+        deviceType:
+          type: string
+          enum:
+            - phone
+            - tablet
+            - desktop
+          description: The device type the SDK detected, as in the Show when `deviceType` condition.
+        impressions:
+          type: integer
+          minimum: 0
+        clicks:
+          type: integer
+          minimum: 0
+        clickRate:
+          type:
+            - number
+            - 'null'
+          minimum: 0
+      additionalProperties: false
+    CreativeStats:
+      type: object
+      description: |
+        A creative's Impressions and Clicks over a range of UTC days. An **Impression** is one page view on which the creative showed (showing it again on the same page adds none; a new page, a single-page-app route change included, does). A **Click** is one press that opened its Destination; dismissing a banner, or pressing while its survey is already open, isn't one. `clickRate` is Clicks divided by Impressions, as a fraction (`0.05` is 5 %), or `null` without Impressions.
+
+        `totals` and every breakdown count the same events, so `days`, `pages` and `devices` each add up to `totals`.
+      required:
+        - creativeId
+        - from
+        - to
+        - groupBy
+        - totals
+        - days
+      properties:
+        creativeId:
+          type: string
+          format: cuid2
+        from:
+          type: string
+          format: date
+          description: First UTC day counted, inclusive.
+        to:
+          type: string
+          format: date
+          description: Last UTC day counted, inclusive.
+        groupBy:
+          type:
+            - string
+            - 'null'
+          enum:
+            - page
+            - device
+            - null
+          description: The breakdown requested, which adds `pages` or `devices`; `null` for none.
+        totals:
+          $ref: '#/components/schemas/CreativeStatsCounts'
+        days:
+          type: array
+          description: One entry per UTC day from `from` to `to`, oldest first, days without counts included.
+          items:
+            $ref: '#/components/schemas/CreativeStatsDay'
+        pages:
+          type: array
+          description: Only with `groupBy=page`. Where the Impressions and Clicks happened, most Impressions first, at most 100 pages. `(other)` sums every page not listed, including pages beyond the 1000 a creative counts per day; it comes last and only when it has counts.
+          items:
+            $ref: '#/components/schemas/CreativeStatsPage'
+        devices:
+          type: array
+          description: Only with `groupBy=device`. The counts per device type, always `phone`, `tablet` and `desktop`, in that order.
+          items:
+            $ref: '#/components/schemas/CreativeStatsDevice'
       additionalProperties: false
     ActionClassResource:
       type: object
