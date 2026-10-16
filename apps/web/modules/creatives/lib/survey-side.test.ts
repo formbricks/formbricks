@@ -22,7 +22,7 @@ const creative = (overrides: Partial<TSurveyLinkedCreative> & { id: string }): T
 });
 
 describe("planSurveyStatusChange", () => {
-  test("pausing an active survey names the creatives that show with it", () => {
+  test("pausing an active survey names every creative that opens it, and which ones it takes down", () => {
     const shown = creative({ id: "shown", name: "Feedback tab" });
     const scheduled = creative({
       id: "scheduled",
@@ -46,7 +46,11 @@ describe("planSurveyStatusChange", () => {
       now: NOW,
     });
 
-    expect(plan).toEqual({ kind: "pause", creatives: [shown, scheduled] });
+    expect(plan).toEqual({
+      kind: "pause",
+      creatives: [shown, scheduled, draft, pausedByAuthor, closedByAuthor, ended],
+      affected: [shown, scheduled],
+    });
   });
 
   test("closing an active survey names them as a close", () => {
@@ -54,10 +58,10 @@ describe("planSurveyStatusChange", () => {
 
     expect(
       planSurveyStatusChange({ from: "inProgress", to: "completed", creatives: [shown], now: NOW })
-    ).toEqual({ kind: "close", creatives: [shown] });
+    ).toEqual({ kind: "close", creatives: [shown], affected: [shown] });
   });
 
-  test("resuming a paused or closed survey names the creatives that come back with it", () => {
+  test("resuming a paused or closed survey names every creative, and the ones that come back with it", () => {
     const pausedWithSurvey = creative({
       id: "back",
       displayStatus: "paused",
@@ -73,16 +77,23 @@ describe("planSurveyStatusChange", () => {
           creatives: [pausedWithSurvey, pausedByAuthor],
           now: NOW,
         })
-      ).toEqual({ kind: "resume", creatives: [pausedWithSurvey] });
+      ).toEqual({
+        kind: "resume",
+        creatives: [pausedWithSurvey, pausedByAuthor],
+        affected: [pausedWithSurvey],
+      });
     }
   });
 
-  test("asks nothing when no linked creative shows with the survey", () => {
+  test("names a draft too, though the change takes nothing down", () => {
     const draft = creative({ id: "draft", status: "draft", displayStatus: "draft" });
 
     expect(
       planSurveyStatusChange({ from: "inProgress", to: "paused", creatives: [draft], now: NOW })
-    ).toBeNull();
+    ).toEqual({ kind: "pause", creatives: [draft], affected: [] });
+  });
+
+  test("asks nothing when no creative opens the survey", () => {
     expect(planSurveyStatusChange({ from: "paused", to: "inProgress", creatives: [], now: NOW })).toBeNull();
   });
 
@@ -114,18 +125,23 @@ describe("getCreativesToKeepPaused", () => {
   });
 
   test("keeping them paused pauses every creative the resume would bring back", () => {
-    expect(getCreativesToKeepPaused({ kind: "resume", creatives: [back, alsoBack] }, true)).toEqual([
-      "back",
-      "also-back",
-    ]);
+    // A creative its author paused stays out of it: pausing it again would change nothing.
+    const stays = creative({ id: "stays", status: "paused", displayStatus: "paused" });
+    const plan = { kind: "resume" as const, creatives: [back, stays, alsoBack], affected: [back, alsoBack] };
+
+    expect(getCreativesToKeepPaused(plan, true)).toEqual(["back", "also-back"]);
   });
 
   test("letting them come back pauses nothing", () => {
-    expect(getCreativesToKeepPaused({ kind: "resume", creatives: [back] }, false)).toEqual([]);
+    expect(getCreativesToKeepPaused({ kind: "resume", creatives: [back], affected: [back] }, false)).toEqual(
+      []
+    );
   });
 
   test("only a resume offers the choice", () => {
-    expect(getCreativesToKeepPaused({ kind: "pause", creatives: [back] }, true)).toEqual([]);
+    expect(getCreativesToKeepPaused({ kind: "pause", creatives: [back], affected: [back] }, true)).toEqual(
+      []
+    );
   });
 });
 

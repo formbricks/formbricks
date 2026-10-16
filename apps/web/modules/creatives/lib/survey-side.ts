@@ -46,8 +46,10 @@ export type TSurveyStatusChangeKind = "pause" | "close" | "resume";
 
 export type TSurveyStatusChangePlan = Readonly<{
   kind: TSurveyStatusChangeKind;
-  /** The creatives the change pauses or brings back, in the order given. */
+  /** Every creative that opens the survey (drafts and paused ones too), in the order given. */
   creatives: TSurveyLinkedCreative[];
+  /** The ones the change pauses or brings back: those that show while the survey is Active. */
+  affected: TSurveyLinkedCreative[];
 }>;
 
 const getStatusChangeKind = (from: TSurveyStatus, to: TSurveyStatus): TSurveyStatusChangeKind | null => {
@@ -59,7 +61,8 @@ const getStatusChangeKind = (from: TSurveyStatus, to: TSurveyStatus): TSurveySta
 
 /**
  * The confirmation a survey status change needs, or `null` when it needs none: the change doesn't
- * stop or restart the survey, or no linked creative shows with it.
+ * stop or restart the survey, or no creative opens it. It names every creative that opens the survey,
+ * and which of them the change takes down or brings back.
  */
 export const planSurveyStatusChange = ({
   from,
@@ -73,18 +76,18 @@ export const planSurveyStatusChange = ({
   now: Date;
 }>): TSurveyStatusChangePlan | null => {
   const kind = getStatusChangeKind(from, to);
-  if (!kind) return null;
+  if (!kind || creatives.length === 0) return null;
   const affected = creatives.filter((creative) => showsWithActiveSurvey(creative, now));
-  return affected.length > 0 ? { kind, creatives: affected } : null;
+  return { kind, creatives: [...creatives], affected };
 };
 
 /**
- * The creatives to pause before the survey resumes, when the author chose "Keep these creatives
- * paused": the ones the resume would bring back. Pausing writes the creative's own status, so it
- * stays paused through later survey changes until its author resumes it.
+ * The creatives to pause before the survey resumes, when the author chose to keep them paused: the
+ * ones the resume would bring back (never a draft, which pausing would publish). Pausing writes the
+ * creative's own status, so it stays paused through later survey changes until its author resumes it.
  */
 export const getCreativesToKeepPaused = (plan: TSurveyStatusChangePlan, keepPaused: boolean): string[] =>
-  plan.kind === "resume" && keepPaused ? plan.creatives.map(({ id }) => id) : [];
+  plan.kind === "resume" && keepPaused ? plan.affected.map(({ id }) => id) : [];
 
 /**
  * How creatives open the survey, for the editor's Recontact & Visibility card. A click ignores the

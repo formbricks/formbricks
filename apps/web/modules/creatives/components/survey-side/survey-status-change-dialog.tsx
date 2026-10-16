@@ -6,6 +6,7 @@ import type { TSurveyStatusChangeKind, TSurveyStatusChangePlan } from "@/modules
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { Label } from "@/modules/ui/components/label";
+import { CreativeStatusPill } from "../creative-status-pill";
 
 interface SurveyStatusChangeDialogProps {
   plan: TSurveyStatusChangePlan | null;
@@ -18,9 +19,9 @@ interface SurveyStatusChangeDialogProps {
 }
 
 /**
- * Confirms pausing, closing or resuming a survey that creatives open, naming them: pausing or closing
- * the survey shows them as Paused with its survey, and resuming brings them back unless the author
- * keeps them paused (Δ4).
+ * Confirms pausing, closing or resuming a survey that creatives open, naming every one of them with its
+ * status: pausing or closing the survey shows the ones on the site as Paused with its survey, and
+ * resuming brings those back unless the author keeps them paused (Δ4).
  */
 export const SurveyStatusChangeDialog = ({
   plan,
@@ -60,12 +61,18 @@ export const SurveyStatusChangeDialog = ({
       description={copy[kind].intro}
       body={
         <div className="space-y-3 text-sm whitespace-normal text-slate-700">
-          <ul className="list-disc space-y-0.5 pl-5">
+          {/* Every creative that opens it, each with its status, so drafts and paused ones are named too. */}
+          <ul className="space-y-1">
             {plan?.creatives.map((creative) => (
-              <li key={creative.id}>{creative.name}</li>
+              <li key={creative.id} className="flex items-center justify-between gap-3">
+                <span className="min-w-0 truncate">{creative.name}</span>
+                <CreativeStatusPill
+                  state={{ status: creative.displayStatus, reason: creative.displayStatusReason }}
+                />
+              </li>
             ))}
           </ul>
-          {kind === "resume" && (
+          {kind === "resume" && (plan?.affected.length ?? 0) > 0 && (
             <div className="flex items-center gap-2 pt-1">
               <Checkbox
                 id={keepPausedId}
