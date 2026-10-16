@@ -27,6 +27,7 @@ export function surveyToV3Distribution(survey: TSurvey): TV3SurveyDistribution {
     displayLimit: nonNegativeOrNull(survey.displayLimit),
     recontactDays: nonNegativeOrNull(survey.recontactDays),
     autoClose: nonNegativeOrNull(survey.autoClose),
+    keepEndingCardOpen: survey.keepEndingCardOpen ?? false,
     autoComplete: responseLimitOrNull(survey.autoComplete),
     delay: nonNegativeOrNull(survey.delay) ?? 0,
     triggers: surveyTriggersToV3(survey.triggers),

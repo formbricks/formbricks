@@ -450,6 +450,7 @@ checksums:
     common/reload_page: 77740065847251933add64d7a50ccdd8
     common/remove: dba2fe5fe9f83f8078c687f28cba4b52
     common/remove_from_team: 69bcc7a1001c3017f9de578ee22cffd6
+    common/remove_item: 5e882910b55d90dfe0b2d96acb411602
     common/rename: 6f9413e4606e8d83a010685008fb2931
     common/reorder_and_hide_columns: a5e3d7c0c7ef879211d05a37be1c5069
     common/replace: 98b2268975b1a737b2e4ad837df96703
@@ -3786,6 +3787,8 @@ checksums:
     workspace/surveys/edit/italic: 555c60fb1d12ae305136202afa6deb3d
     workspace/surveys/edit/jump_to_block: 2fc00bd725c44f98861051c57bb2c392
     workspace/surveys/edit/keep_current_order: a7c944ad6b3515f2c4f83a2c81f8fc26
+    workspace/surveys/edit/keep_ending_card_open: bc20080e77f36366432eccc95548f9ec
+    workspace/surveys/edit/keep_ending_card_open_description: 0e09ebb1c324f16a5c73d42a3365f0e3
     workspace/surveys/edit/keep_showing_while_conditions_match: 2574802d87bd6da151c9145aacce7281
     workspace/surveys/edit/key: 3d1065ab98a1c2f1210507fd5c7bf515
     workspace/surveys/edit/last_name: 2c9a7de7738ca007ba9023c385149c26

@@ -25,6 +25,10 @@ enabled; the chart sets `BULLMQ_WORKER_ENABLED=1`. Autoscaling during handoff is
 could recreate source workers after retirement, so preflight rejects it. Source Pods must belong to an
 inventoried Deployment or StatefulSet.
 
+Hub also needs fixed replicas of at least two (`hub.replicas`, default `1`) and no Hub autoscaling. Cube can
+keep its default single replica and in-memory driver: it rolls out with `maxUnavailable: 0`, so it stays
+available during the upgrade. More Cube replicas need Cube Store, as they do outside online mode.
+
 Supply a session-affine `MIGRATE_DATABASE_URL`. Transaction-pooling connections are unsuitable for the
 coordinator's session advisory lock. Set `upgrade.online.sessionAffinity: true` only for a connection
 whose pool mode guarantees that property. The coordinator tests lock ownership throughout the run.
@@ -43,6 +47,36 @@ verifies EndpointSlice withdrawal, removal of old upstream hosts on every select
 active upstream requests. The upstream hosts must identify current pod endpoints; a Service virtual IP
 does not establish that old connections drained. Missing telemetry blocks handoff. Ingress discovery, all traffic paths, and
 removed-host accounting must be demonstrated in a real rehearsal before this adapter is supported.
+
+## Pin Hub and Cube by digest on the source release
+
+Preparation compares each dependency's running image string with the 6.1 values exactly, so the 6.0.x
+release and the 6.1 online values must name the **same** Hub digest and the **same** Cube digest. A stock
+6.0.x install is blocked with the non-retryable `dependency_image_changed` code for two reasons:
+
+- 6.0.x renders Cube as `repository:tag`, not as a digest reference.
+- 6.0.x pins Hub to 0.8.5, while 6.1 pins Hub 0.14.0.
+
+Roll the 6.0.x release to these images first and wait for the rollout to finish. Hub 0.14.0 and Cube
+1.7.47-1 are the pair verified to keep serving traffic through an upgrade from 6.0.2. 6.0.0 and 6.0.1 still
+run `cubejs/cube:v1.6.6`, so on them this step also switches to the Formbricks Cube image: check
+[Bundled Cube image](/self-hosting/advanced/migration#bundled-cube-image-action-required-for-some-deployments)
+before rolling it out.
+
+```yaml
+hub:
+  image:
+    digest: "sha256:967089f22585f3c3730e455b8b20885b0739f26b5ce5e034324658aa51d627f2" # hub:0.14.0
+cube:
+  image:
+    repository: ghcr.io/formbricks/cube@sha256
+    tag: "3859ec17f4e81fe5147cde8b6b81bccbed329023b803e4a315f0988e5c9372b8" # cube:1.7.47-1, hex without the sha256: prefix
+```
+
+Then put the same digests in the 6.1 online values (`hub.image.digest`, `cube.image.digest`). The chart adds
+Hub and Cube to the dependency inventory from them, so they need no `upgrade.online.dependencies` entry. The
+6.1 chart defaults Cube to 1.7.50-1 with no digest, so set `cube.image.digest` explicitly to the 1.7.47-1
+digest above.
 
 ## Start the upgrade
 
@@ -113,6 +147,17 @@ Status contains the phase, processed survey count, baseline completion, retryabi
 code, queue pause/deadline/resumption timestamps, and whether rollback to 6.0 is still allowed. Queue
 status reflects the durable coordinator checkpoint, not a separate Redis health probe. Repeating the same upgrade resumes durable checkpoints.
 Old admin tabs may require reload; preserving unsaved 6.0 editor state is outside the intended guarantee.
+
+The checkpoint does not keep a failed attempt's blocker, so status read afterwards reports `blockerCode: null`.
+The blocker is in the failed coordinator Job's output. When prepare or finalize stops on an unexpected error
+(`online_upgrade_failed` or `invalid_online_configuration`), that output also has a `cause` with the error's
+type and code, such as `{"name":"Error","code":"ENOENT"}`, and never its message. Read the Job of the phase
+that failed:
+
+```sh
+kubectl -n <namespace> logs job/<web-deployment>-online-prepare
+kubectl -n <namespace> logs job/<web-deployment>-online-finalize
+```
 
 ## Background job handoff
 

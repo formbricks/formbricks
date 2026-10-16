@@ -36,6 +36,29 @@ const toMatchResult = (surveyLanguage: TMatchableSurveyLanguage): string =>
   surveyLanguage.default ? DEFAULT_SURVEY_LANGUAGE_KEY : surveyLanguage.language.code;
 
 /**
+ * A stored code that is a legacy spelling (`de`, `zh-CN`) of another stored code (`de-DE`,
+ * `zh-Hans-CN`) is a duplicate, not a language of its own: the client environment endpoint appends
+ * such entries so SDKs that only match exactly keep matching (ENG-1067), but the survey's content is
+ * keyed by the canonical code. Resolve a match on a duplicate to its canonical sibling (ENG-3961), so
+ * `de` lands on `de-DE` rather than on a key no content lives under. A survey that stores only the
+ * legacy code (not yet migrated) has no sibling and keeps its own code.
+ */
+const preferCanonicalSibling = (
+  candidates: readonly TMatchableSurveyLanguage[],
+  match: TMatchableSurveyLanguage
+): TMatchableSurveyLanguage => {
+  const canonicalCode = normalizeLanguageCode(match.language.code);
+  if (!canonicalCode) return match;
+  const canonicalComparable = toComparableCode(canonicalCode);
+  if (toComparableCode(match.language.code) === canonicalComparable) return match;
+  return (
+    candidates.find(
+      (surveyLanguage) => toComparableCode(surveyLanguage.language.code) === canonicalComparable
+    ) ?? match
+  );
+};
+
+/**
  * Tier 4: a survey language that writes the same base language, script preserved. Works in both
  * directions — `ar` finds `ar-SA`, and `ar-SA` finds `ar-EG` — because both sides are reduced to their
  * language default tag (`ar-*` -> `ar-EG`, `zh-TW` -> `zh-Hant-TW`, never `zh-Hans-CN`).
@@ -74,7 +97,8 @@ const findSameBaseLanguage = (
  *   4. same base language, script preserved (`en-GB` -> `en-US`, `zh-TW` -> `zh-Hant-TW`)
  *
  * Disabled languages never match. The default language always does: it is the language the survey
- * was authored in, so its `enabled` flag carries no meaning and has never gated it.
+ * was authored in, so its `enabled` flag carries no meaning and has never gated it. A match on a legacy
+ * duplicate of another stored code resolves to that canonical code (see `preferCanonicalSibling`).
  *
  * @returns The survey's STORED code (so it lines up with the survey's content keys),
  *   `DEFAULT_SURVEY_LANGUAGE_KEY` when the match is the default language, or `null` for no match.
@@ -89,29 +113,31 @@ export const matchSurveyLanguage = (
 
   const candidates = languages.filter((surveyLanguage) => surveyLanguage.enabled || surveyLanguage.default);
   if (candidates.length === 0) return null;
+  const toResult = (match: TMatchableSurveyLanguage): string =>
+    toMatchResult(preferCanonicalSibling(candidates, match));
 
   const requestedComparable = toComparableCode(requested);
   const exactCodeMatch = candidates.find(
     (surveyLanguage) => toComparableCode(surveyLanguage.language.code) === requestedComparable
   );
-  if (exactCodeMatch) return toMatchResult(exactCodeMatch);
+  if (exactCodeMatch) return toResult(exactCodeMatch);
 
   const requestedLowerCase = requested.toLowerCase();
   const aliasMatch = candidates.find(
     (surveyLanguage) => surveyLanguage.language.alias?.trim().toLowerCase() === requestedLowerCase
   );
-  if (aliasMatch) return toMatchResult(aliasMatch);
+  if (aliasMatch) return toResult(aliasMatch);
 
   const requestedCanonical = normalizeLanguageCode(requested);
   if (requestedCanonical) {
     const canonicalMatch = candidates.find(
       (surveyLanguage) => normalizeLanguageCode(surveyLanguage.language.code) === requestedCanonical
     );
-    if (canonicalMatch) return toMatchResult(canonicalMatch);
+    if (canonicalMatch) return toResult(canonicalMatch);
   }
 
   const sameBaseMatch = findSameBaseLanguage(candidates, requested);
-  return sameBaseMatch ? toMatchResult(sameBaseMatch) : null;
+  return sameBaseMatch ? toResult(sameBaseMatch) : null;
 };
 
 /** Upper bound on browser languages tried, so a hostile header or navigator list costs bounded work. */

@@ -9,6 +9,7 @@ import {
   expectedSurveyRelationships,
   reconcileSurveyRelationships,
 } from "./survey";
+import { surveyRelationshipsMatch } from "./survey-relationships";
 
 const client = {
   deleteRelationships: vi.fn(),
@@ -108,6 +109,25 @@ describe("diffSurveyRelationships", () => {
       ...expected.map((relationship) => ({ operation: "touch", relationship })),
       { operation: "delete", relationship: edge("shared_workspace", "workspace", WORKSPACE_ID) },
     ]);
+  });
+});
+
+describe("surveyRelationshipsMatch", () => {
+  test("matches the same edges in any order, and nothing else", () => {
+    const expected = expectedSurveyRelationships(row());
+
+    expect(surveyRelationshipsMatch([...expected].reverse(), expected)).toBe(true);
+    expect(surveyRelationshipsMatch(expected.slice(1), expected)).toBe(false);
+    expect(surveyRelationshipsMatch([...expected, edge("private_owner", "user", "owner-id")], expected)).toBe(
+      false
+    );
+    const [first, ...rest] = expected;
+    expect(
+      surveyRelationshipsMatch(
+        [{ ...first, subject: { ...first.subject, relation: "member" } }, ...rest],
+        expected
+      )
+    ).toBe(false);
   });
 });
 

@@ -101,7 +101,7 @@ const config = ({ mode }) => {
       build: {
         emptyOutDir: false,
         lib: {
-          entry: resolve(__dirname, "src/index.ts"),
+          entry: resolve(__dirname, "src/umd.ts"),
           name: "formbricksSurveys",
           formats: ["umd"],
           fileName: () => "index.umd.cjs",

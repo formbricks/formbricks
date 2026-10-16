@@ -4,6 +4,7 @@ import { Command as CommandPrimitive } from "cmdk";
 import { X } from "lucide-react";
 import * as React from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { Command, CommandGroup, CommandItem, CommandList } from "@/modules/ui/components/command";
 import { Badge } from "@/modules/ui/components/multi-select/badge";
 import { cn } from "@/modules/ui/lib/utils";
@@ -35,6 +36,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
   props: Readonly<MultiSelectProps<T, K>>
 ) {
   const { options, value, onChange, disabled = false, placeholder, containerClassName } = props;
+  const { t } = useTranslation();
 
   const inputRef = React.useRef<HTMLInputElement>(null);
 
@@ -224,6 +226,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
               <span className="truncate">{option.label}</span>
               <button
                 type="button"
+                aria-label={t("common.remove_item", { item: option.label })}
                 className="ring-offset-background focus:ring-ring ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-offset-2"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {

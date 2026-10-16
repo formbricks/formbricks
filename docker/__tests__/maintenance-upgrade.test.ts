@@ -23,6 +23,7 @@ const execute = (args = acknowledgements, overrides: NodeJS.ProcessEnv = {}) => 
 printf '%s\\n' "$*" >> "$TRACE"
 printf '%s\\n' "$PRIVATE_VALUE"
 printf '%s\\n' "$PRIVATE_VALUE" >&2
+if [ -n "$STUB_OUTPUT" ]; then printf '%s\\n' "$STUB_OUTPUT" >&2; fi
 if [ "$*" = "$FAIL_STEP" ]; then exit 1; fi
 `,
       { mode: 0o700 }
@@ -40,6 +41,7 @@ if [ "$*" = "$FAIL_STEP" ]; then exit 1; fi
       AUTHZED_ENABLED: "true",
       AUTHZED_CONSISTENCY: "fully_consistent",
       FAIL_STEP: "",
+      STUB_OUTPUT: "",
       TIMEOUT_STEP: "",
       PATH: `${directory}:${process.env.PATH}`,
       PRIVATE_VALUE: "token-database-password-relationship-id",
@@ -86,14 +88,41 @@ describe("maintenance-only preparation", () => {
   );
 
   test.each([
-    { AUTHZED_ENABLED: "false" },
-    { AUTHZED_ENABLED: "" },
-    { AUTHZED_CONSISTENCY: "minimize_latency" },
-  ])("rejects incompatible authorization before migrations: %j", (env) => {
+    { env: { AUTHZED_ENABLED: "false" }, variable: "AUTHZED_ENABLED" },
+    { env: { AUTHZED_ENABLED: "" }, variable: "AUTHZED_ENABLED" },
+    { env: { AUTHZED_CONSISTENCY: "minimize_latency" }, variable: "AUTHZED_CONSISTENCY" },
+  ])("rejects incompatible authorization before migrations, naming $variable", ({ env, variable }) => {
     const result = execute(acknowledgements, env);
     expect(result.status).toBe(2);
     expect(result.trace).toEqual([]);
-    expect(result.output.code).toBe("upgrade_configuration_invalid");
+    expect(result.output).toEqual({
+      status: "blocked",
+      code: "upgrade_configuration_invalid",
+      variables: [variable],
+    });
+  });
+
+  test("names the variables the environment check rejects, and nothing else of its output", () => {
+    // The validator's real shape: one "  - NAME: message" line per variable, then the issues it threw.
+    const validatorOutput = [
+      "Invalid environment variables:",
+      "  - REDIS_URL: REDIS_URL is required for caching, rate limiting, and audit logging",
+      "  - ENCRYPTION_KEY: Invalid input",
+      "  issues: [ { path: 'ENCRYPTION_KEY', message: 'Invalid input' } ]",
+    ].join("\n");
+    const result = execute(acknowledgements, {
+      FAIL_STEP: "/home/nextjs/validate-env.mjs",
+      STUB_OUTPUT: validatorOutput,
+    });
+
+    expect(result.status).toBe(2);
+    expect(result.trace).toEqual(["/home/nextjs/validate-env.mjs"]);
+    expect(result.output).toEqual({
+      status: "blocked",
+      code: "upgrade_configuration_invalid",
+      variables: ["ENCRYPTION_KEY", "REDIS_URL"],
+    });
+    expect(result.stdout).not.toContain("Invalid input");
   });
 
   const steps = [
