@@ -1,52 +1,54 @@
-import type { TCreative, TCreativeType } from "../types";
-import type { TCreativeDisplayState, TCreativeDisplayStatus } from "./display-status";
+import { z } from "zod";
+import type { CreativeDisplayStatusZodType, CreativeTypeZodType } from "@formbricks/api-v3-schemas";
 
-// The list toolbar's filters and sort, shaped like the surveys list: archived rows stay out of the
-// default view and only show when the Archived status is picked.
+// The list toolbar's filters and sort, shaped like the surveys and workflows lists. The API does the
+// filtering: with no status picked it leaves archived creatives out, so Archived is just one more
+// status the author can pick.
 
 export type TCreativeSortBy = "updatedAt" | "createdAt" | "name";
 
 export interface TCreativeListFilters {
   name: string;
-  status: TCreativeDisplayStatus[];
-  type: TCreativeType[];
+  displayStatuses: CreativeDisplayStatusZodType[];
+  types: CreativeTypeZodType[];
   sortBy: TCreativeSortBy;
 }
 
 export const INITIAL_CREATIVE_FILTERS: TCreativeListFilters = {
   name: "",
-  status: [],
-  type: [],
+  displayStatuses: [],
+  types: [],
   sortBy: "updatedAt",
 };
 
-export interface TCreativeListRow {
-  creative: TCreative;
-  state: TCreativeDisplayState;
-}
+export const hasActiveCreativeFilters = ({ name, displayStatuses, types }: TCreativeListFilters): boolean =>
+  name.trim() !== "" || displayStatuses.length > 0 || types.length > 0;
 
-const matchesStatus = (status: TCreativeDisplayStatus, selected: TCreativeDisplayStatus[]): boolean =>
-  selected.length === 0 ? status !== "archived" : selected.includes(status);
+// Local enums rather than the generated schemas, which would pull the whole v3 schema module into the
+// client bundle; `satisfies` keeps them within the contract's values.
+const ZStoredCreativeFilters = z.object({
+  name: z.string(),
+  displayStatuses: z.array(
+    z.enum([
+      "draft",
+      "scheduled",
+      "active",
+      "paused",
+      "closed",
+      "archived",
+    ] as const satisfies readonly CreativeDisplayStatusZodType[])
+  ),
+  types: z.array(z.enum(["feedbackButton", "banner"] as const satisfies readonly CreativeTypeZodType[])),
+  sortBy: z.enum(["updatedAt", "createdAt", "name"] as const satisfies readonly TCreativeSortBy[]),
+});
 
-const compareRows = (sortBy: TCreativeSortBy) => (a: TCreativeListRow, b: TCreativeListRow) => {
-  if (sortBy === "name") return a.creative.name.localeCompare(b.creative.name);
-  return b.creative[sortBy].getTime() - a.creative[sortBy].getTime();
+/** Filters kept in localStorage between visits, like the surveys list. Anything unreadable reads as none. */
+export const parseStoredCreativeFilters = (raw: string | null): TCreativeListFilters | null => {
+  if (!raw) return null;
+  try {
+    const result = ZStoredCreativeFilters.safeParse(JSON.parse(raw));
+    return result.success ? result.data : null;
+  } catch {
+    return null;
+  }
 };
-
-export const filterCreativeRows = (
-  rows: TCreativeListRow[],
-  { name, status, type, sortBy }: TCreativeListFilters
-): TCreativeListRow[] => {
-  const query = name.trim().toLowerCase();
-  return rows
-    .filter(
-      (row) =>
-        matchesStatus(row.state.status, status) &&
-        (type.length === 0 || type.includes(row.creative.type)) &&
-        (!query || row.creative.name.toLowerCase().includes(query))
-    )
-    .sort(compareRows(sortBy));
-};
-
-export const hasActiveCreativeFilters = ({ name, status, type }: TCreativeListFilters): boolean =>
-  name.trim() !== "" || status.length > 0 || type.length > 0;
