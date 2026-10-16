@@ -178,11 +178,27 @@ describe("survey concurrency guard", () => {
     test("calls off a survey still waiting out its delay, which then never shows", async () => {
       await widget.renderWidget({ ...survey, id: "delayed", delay: 30 }, PAGE_VIEW_ACTION);
       await vi.advanceTimersByTimeAsync(10);
-      expect(widget.getOpenSurveyIds()).toEqual(["delayed"]);
+      // Waiting out its delay is not open: nothing is on screen yet.
+      expect(widget.getOpenSurveyIds()).toEqual([]);
 
       await widget.openSurveyForCreative(survey, "creative-1", widget.getOpenSurveyIds());
       await vi.advanceTimersByTimeAsync(60_000);
 
+      expect(renderedSurveyIds()).toEqual([survey.id]);
+    });
+
+    test("opens its own survey right away while that survey's trigger is still waiting out its delay", async () => {
+      await widget.renderWidget({ ...survey, delay: 30 }, PAGE_VIEW_ACTION);
+      await vi.advanceTimersByTimeAsync(10);
+      // Not open, so `resolveClick` opens it instead of treating the press as one on its open survey.
+      expect(widget.getOpenSurveyIds()).not.toContain(survey.id);
+
+      await widget.openSurveyForCreative(survey, "creative-1", widget.getOpenSurveyIds());
+      await vi.advanceTimersByTimeAsync(0);
+      expect(renderedSurveyIds()).toEqual([survey.id]);
+
+      // The delayed render was called off: the survey shows once, not again when the delay ends.
+      await vi.advanceTimersByTimeAsync(60_000);
       expect(renderedSurveyIds()).toEqual([survey.id]);
     });
 

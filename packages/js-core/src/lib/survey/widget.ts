@@ -29,8 +29,9 @@ let isSurveyRunning = false;
 // after every skip check — so a survey that was never shown never reports a close.
 const openSurveyIds = new Set<string>();
 
-// The survey a render is preparing while `isSurveyRunning` is held but nothing is on screen yet
-// (identification, renderer load, delay). A creative's click treats it as open (see `getOpenSurveyIds`).
+// The survey a creative's click is opening while nothing is on screen yet (identification, renderer
+// load). A second press treats it as open (see `getOpenSurveyIds`), so it is not opened twice. A survey
+// its own trigger is preparing, or delaying, is not open: a press opens it now (ADR 0004).
 let surveyInFlight: string | null = null;
 
 // Bumped by every creative click (ADR 0004: the click wins). A render already on its way when the click
@@ -48,7 +49,7 @@ export const setIsSurveyRunning = (value: boolean): void => {
   if (!value) surveyInFlight = null;
 };
 
-/** The surveys on screen, plus one on its way there. */
+/** The surveys on screen, plus one a creative's click has on its way there. */
 export const getOpenSurveyIds = (): string[] =>
   surveyInFlight === null || openSurveyIds.has(surveyInFlight)
     ? [...openSurveyIds]
@@ -131,7 +132,7 @@ export const renderWidget = async (
   }
 
   setIsSurveyRunning(true);
-  surveyInFlight = survey.id;
+  surveyInFlight = opener ? survey.id : null;
 
   const generation = renderGeneration;
   const isSuperseded = (): boolean => generation !== renderGeneration;
