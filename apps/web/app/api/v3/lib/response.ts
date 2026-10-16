@@ -74,6 +74,7 @@ export const V3_PROBLEM_CODES = [
   "projection_pending",
   "service_unavailable",
   "stored_survey_invalid",
+  "survey_has_linked_creatives",
   "survey_not_workspace_visible",
   "too_many_requests",
   "unprocessable_content",
@@ -358,6 +359,28 @@ export function problemVisibilityBlocked(
     "Remove the connections that use this survey before restricting it",
     requestId,
     { code: "visibility_blocked_by_connections", details: { blockers }, instance }
+  );
+}
+
+/**
+ * T6: a survey delete refused while non-archived creatives open the survey; lists them so the caller
+ * can relink, archive or delete each one.
+ */
+export function problemSurveyHasLinkedCreatives(
+  requestId: string,
+  creatives: ReadonlyArray<Readonly<{ id: string; name: string }>>,
+  instance?: string
+): Response {
+  return problemResponse(
+    409,
+    "Conflict",
+    "Relink, archive or delete the creatives that open this survey before deleting it",
+    requestId,
+    {
+      code: "survey_has_linked_creatives",
+      details: { creatives: creatives.map(({ id, name }) => ({ id, name })) },
+      instance,
+    }
   );
 }
 

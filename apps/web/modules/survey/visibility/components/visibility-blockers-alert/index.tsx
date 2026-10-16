@@ -21,6 +21,8 @@ const BlockerTypeLabel = ({ type }: Readonly<{ type: TSurveyVisibilityBlocker["t
       return <>{t("common.webhooks")}</>;
     case "workflow":
       return <>{t("common.workflows")}</>;
+    case "creative":
+      return <>{t("common.creatives")}</>;
     case "dashboard":
       return <>{t("workspace.surveys.visibility.dashboards")}</>;
   }
