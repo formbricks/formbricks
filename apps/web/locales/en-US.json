@@ -114,8 +114,8 @@
         "profile": "View your profile",
         "responses_read": "Read survey responses, including respondents' answers",
         "responses_write": "Create, update, and delete survey responses",
-        "surveys_read": "Read surveys",
-        "surveys_write": "Create, update, and delete surveys",
+        "surveys_read": "Read surveys and creatives",
+        "surveys_write": "Create, update, and delete surveys and creatives",
         "workflows_read": "Read workflows",
         "workflows_write": "Create, update, and delete workflows"
       },
