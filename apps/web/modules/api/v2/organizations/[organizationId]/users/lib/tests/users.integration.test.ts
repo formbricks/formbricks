@@ -72,3 +72,103 @@ describe("updateUser reactivating a user vs real Postgres (ENG-3612)", () => {
     );
   });
 });
+
+describe("updateUser on a user who belongs to several organizations vs real Postgres (ENG-3807)", () => {
+  /**
+   * `name` and `isActive` are the account's, not the membership's: one organization changing them changes
+   * them for every other organization the user is in, and deactivating locks the user out of all of them.
+   */
+  const setUp = async ({ isActive = true }: { isActive?: boolean } = {}) => {
+    const orgA = await prisma.organization.create({ data: { name: "Org A" } });
+    const orgB = await prisma.organization.create({ data: { name: "Org B" } });
+    const email = "shared@example.com";
+    const user = await prisma.user.create({ data: { name: "Original Name", email, isActive } });
+    await prisma.membership.createMany({
+      data: [
+        { userId: user.id, organizationId: orgA.id, role: "member", accepted: true },
+        { userId: user.id, organizationId: orgB.id, role: "owner", accepted: true },
+      ],
+    });
+    const team = await prisma.team.create({ data: { name: "A Team", organizationId: orgA.id } });
+    await prisma.teamUser.create({ data: { teamId: team.id, userId: user.id, role: "contributor" } });
+    return { orgA, orgB, email, user, team };
+  };
+
+  test("one organization cannot deactivate them, and nothing else in the request is applied", async () => {
+    const { orgA, email, user, team } = await setUp();
+
+    const result = await updateUser({ email, isActive: false, teams: [] }, orgA.id);
+
+    expect(result).toEqual({
+      ok: false,
+      error: {
+        type: "unprocessable_entity",
+        details: [
+          {
+            field: "isActive",
+            issue:
+              "cannot be changed from one organization while the user also belongs to other organizations",
+          },
+        ],
+      },
+    });
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).isActive).toBe(true);
+    // The team removal sent alongside is rolled back with it.
+    expect(await prisma.teamUser.count({ where: { teamId: team.id, userId: user.id } })).toBe(1);
+  });
+
+  test("one organization cannot reactivate them either", async () => {
+    const { orgA, email, user } = await setUp({ isActive: false });
+
+    const result = await updateUser({ email, isActive: true }, orgA.id);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.type).toBe("unprocessable_entity");
+    const after = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(after.isActive).toBe(false);
+    expect(after.reactivatedAt).toBeNull();
+  });
+
+  test("one organization cannot rename them", async () => {
+    const { orgA, email, user } = await setUp();
+
+    const result = await updateUser({ email, name: "Renamed By A" }, orgA.id);
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.type).toBe("unprocessable_entity");
+      expect(result.error.details?.map(({ field }) => field)).toEqual(["name"]);
+    }
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).name).toBe("Original Name");
+  });
+
+  test("sending the stored name and state back is no change, so the rest of the request applies", async () => {
+    const { orgA, email, user } = await setUp();
+
+    const result = await updateUser(
+      { email, name: "Original Name", isActive: true, role: "manager" },
+      orgA.id
+    );
+
+    expect(result.ok).toBe(true);
+    const membership = await prisma.membership.findUniqueOrThrow({
+      where: { userId_organizationId: { userId: user.id, organizationId: orgA.id } },
+    });
+    expect(membership.role).toBe("manager");
+  });
+
+  test("a user in this organization alone can still be renamed and deactivated", async () => {
+    const org = await prisma.organization.create({ data: { name: "Only Org" } });
+    const email = "solo@example.com";
+    const user = await prisma.user.create({ data: { name: "Solo", email, isActive: true } });
+    await prisma.membership.create({
+      data: { userId: user.id, organizationId: org.id, role: "member", accepted: true },
+    });
+
+    const result = await updateUser({ email, name: "Renamed", isActive: false }, org.id);
+
+    expect(result.ok).toBe(true);
+    const after = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+    expect(after).toMatchObject({ name: "Renamed", isActive: false });
+  });
+});
