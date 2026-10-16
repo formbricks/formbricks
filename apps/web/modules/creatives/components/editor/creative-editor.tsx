@@ -22,6 +22,7 @@ import {
   type TCreativeEditorTab,
   type TPublishIssue,
   getPublishIssues,
+  getSaveIssues,
 } from "../../lib/publish-check";
 import { getMockDisplayState } from "../../mock/data";
 import type { TCreative, TCreativeDevice } from "../../types";
@@ -52,12 +53,13 @@ export const CreativeEditor = ({
   const [creative, setCreative] = useState(initialCreative);
   const [activeTab, setActiveTab] = useState<TCreativeEditorTab>("content");
   const [device, setDevice] = useState<TCreativeDevice>("desktop");
-  const [shownIssues, setShownIssues] = useState<TPublishIssue[]>([]);
+  // The action that last flagged something, so the flags can follow the edits that fix them.
+  const [flaggedBy, setFlaggedBy] = useState<"save" | "publish" | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [now] = useState(() => new Date());
 
-  // Once Publish has flagged something, keep the flags in step with the edits that fix them.
-  const issues = shownIssues.length > 0 ? getPublishIssues(creative) : [];
+  const getIssues = { save: getSaveIssues, publish: getPublishIssues };
+  const issues: TPublishIssue[] = flaggedBy ? getIssues[flaggedBy](creative) : [];
   const tabsWithIssues = new Set(issues.map((issue) => PUBLISH_ISSUE_TABS[issue]));
   const displayState = getMockDisplayState(creative, now);
 
@@ -76,21 +78,25 @@ export const CreativeEditor = ({
     end_before_start: t("workspace.creatives.editor.end_before_start"),
   };
 
+  // Takes the author to the first problem; returns whether there was one.
+  const flag = (action: "save" | "publish", found: TPublishIssue[]): boolean => {
+    setFlaggedBy(found.length > 0 ? action : null);
+    if (found.length === 0) return false;
+    const [first] = found;
+    const tab = PUBLISH_ISSUE_TABS[first];
+    if (tab) setActiveTab(tab);
+    else nameRef.current?.focus();
+    toast.error(issueMessages[first]);
+    return true;
+  };
+
   const save = () => {
+    if (flag("save", getSaveIssues(creative))) return;
     toast.success(t("workspace.creatives.editor.toast_saved"));
   };
 
   const publish = () => {
-    const found = getPublishIssues(creative);
-    setShownIssues(found);
-    if (found.length > 0) {
-      const [first] = found;
-      const tab = PUBLISH_ISSUE_TABS[first];
-      if (tab) setActiveTab(tab);
-      else nameRef.current?.focus();
-      toast.error(issueMessages[first]);
-      return;
-    }
+    if (flag("publish", getPublishIssues(creative))) return;
     // Fake latency so the button's loading state can be reviewed.
     setIsPublishing(true);
     setTimeout(() => {
@@ -193,7 +199,11 @@ export const CreativeEditor = ({
               />
             )}
             {activeTab === "settings" && (
-              <SettingsTab creative={creative} onChange={setCreative} showErrors={issues.length > 0} />
+              <SettingsTab
+                creative={creative}
+                onChange={setCreative}
+                showErrors={issues.includes("condition_empty")}
+              />
             )}
             {activeTab === "schedule" && <ScheduleTab creative={creative} onChange={setCreative} />}
           </div>

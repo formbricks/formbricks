@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   DateTimePicker,
-  getEditorTimeZone,
+  useEditorTimeZone,
   validateDateTimeRange,
 } from "@/modules/ui/components/date-time-picker";
 import { NumberStepper } from "@/modules/ui/components/number-stepper";
@@ -62,7 +62,7 @@ const STATUS_STATES: TCreativeDisplayState[] = [
 export const CreativesKitPlayground = ({ workspaceId }: Readonly<{ workspaceId: string }>) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
-  const [timeZone] = useState(getEditorTimeZone);
+  const timeZone = useEditorTimeZone();
   const [single, setSingle] = useState<Date | null>(null);
   const [preset, setPreset] = useState<Date | null>(() => {
     const date = new Date();
@@ -76,7 +76,8 @@ export const CreativesKitPlayground = ({ workspaceId }: Readonly<{ workspaceId: 
   const [opacity, setOpacity] = useState(0.8);
   const [bounded, setBounded] = useState(2);
   const rangeError = validateDateTimeRange(start, end);
-  const describe = (date: Date | null) => (date ? date.toISOString() : "null");
+  // The browser's zone differs from the server's, so the instants are only written out after hydration.
+  const describe = (date: Date | null) => (timeZone ? (date ? date.toISOString() : "null") : "");
 
   return (
     <PageContentWrapper>
@@ -92,7 +93,7 @@ export const CreativesKitPlayground = ({ workspaceId }: Readonly<{ workspaceId: 
 
       <KitSection
         title={t("workspace.creatives.kit.date_time_picker")}
-        description={t("workspace.creatives.kit.date_time_picker_description", { timeZone })}>
+        description={t("workspace.creatives.kit.date_time_picker_description")}>
         <Demo label={t("workspace.creatives.kit.empty")} value={describe(single)}>
           <DateTimePicker
             locale={locale}
@@ -122,11 +123,8 @@ export const CreativesKitPlayground = ({ workspaceId }: Readonly<{ workspaceId: 
             onChange={setEnd}
             minDate={start ?? undefined}
             placeholder={t("workspace.creatives.editor.ends_placeholder")}
-            aria-invalid={!!rangeError}
+            error={rangeError ? t("workspace.creatives.editor.end_before_start") : undefined}
           />
-          {rangeError && (
-            <p className="text-sm text-red-600">{t("workspace.creatives.editor.end_before_start")}</p>
-          )}
         </Demo>
       </KitSection>
 
