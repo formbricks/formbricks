@@ -380,6 +380,25 @@ describe("pressing a creative", () => {
     expect(openSurveyForCreative).not.toHaveBeenCalled();
   });
 
+  test("leaves a feedback button on the page after it opened its survey, through the answer and the next page view", () => {
+    vi.mocked(getOpenSurveyIds).mockReturnValue([]);
+    reconcileCreatives();
+    const host = document.querySelector("[data-formbricks-creative]");
+
+    shownButtons()[0].click();
+    // The survey is open, then answered and closed; the state refreshes, then the next page.
+    vi.mocked(getOpenSurveyIds).mockReturnValue([mockSurvey.id]);
+    reconcileCreatives();
+    vi.mocked(getOpenSurveyIds).mockReturnValue([]);
+    reconcileCreatives();
+    window.history.pushState({}, "", "/thanks");
+    reconcileCreatives();
+
+    expect(openSurveyForCreative).toHaveBeenCalledTimes(1);
+    expect(host?.isConnected).toBe(true);
+    expect(shownButtons()).toHaveLength(1);
+  });
+
   test("opens a link Destination in a new tab", () => {
     const open = vi.spyOn(window, "open").mockReturnValue(null);
     state.creatives = [feedbackButton({ destination: { type: "link", url: "https://example.com/help" } })];
