@@ -6,7 +6,7 @@ import type {
   TCreativeStyle,
 } from "@formbricks/creatives";
 import { getContrastRatio, normalizeHex } from "@formbricks/types/colors";
-import type { TCustomCssInput } from "@formbricks/types/custom-css";
+import type { TCustomCssInput, TCustomCssScope } from "@formbricks/types/custom-css";
 import { resolveDarkColors } from "@formbricks/types/dark-palette";
 import type { TBaseStyling, TStylingColor } from "@formbricks/types/styling";
 import { sanitizeThemeStyling } from "@formbricks/types/styling-values";
@@ -27,6 +27,12 @@ import { STYLE_DEFAULTS } from "@/lib/styling/constants";
  *   values in dark so their contrast holds; a background set without a text colour gets readable text.
  * - Phone values apply below 768 px; a phone value left empty uses the desktop one.
  */
+
+/**
+ * The custom CSS processor scope a creative's own CSS runs under: the survey's 20 KB budget and layers
+ * (see `custom-css.ts`). Here, client-safe, so the editor budgets and checks it the same way.
+ */
+export const CREATIVE_CSS_SCOPE = "survey" as const satisfies TCustomCssScope;
 
 /** The workspace's Look & Feel as stored (`Workspace.styling`); only the survey theme tokens are read. */
 export type TWorkspaceStylingInput = TBaseStyling & { allowStyleOverwrite?: boolean | null };

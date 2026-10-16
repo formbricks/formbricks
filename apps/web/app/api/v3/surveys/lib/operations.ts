@@ -40,6 +40,7 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { WorkspaceSurveyLimitError } from "@/lib/survey/visibility/limit";
 import { isAwaitingProjection } from "@/lib/survey/visibility/policy";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
+import { getCreativeCssRoot } from "@/modules/creatives/lib/custom-css";
 import {
   SurveyLinkedCreativesError,
   toUnlinkedCreativeAuditEvents,
@@ -263,7 +264,11 @@ async function validateV3SurveyCustomCss({
     }
   }
 
-  const preview = previewCustomCss(body.scope, body.data.customCss);
+  const preview = previewCustomCss(
+    body.scope,
+    body.data.customCss,
+    body.creativeType ? getCreativeCssRoot(body.creativeType) : undefined
+  );
   return successResponse(
     preview.ok
       ? {

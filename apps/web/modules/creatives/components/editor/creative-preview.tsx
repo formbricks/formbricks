@@ -1,31 +1,22 @@
 "use client";
 
-import { LockIcon, MonitorIcon, SmartphoneIcon } from "lucide-react";
-import toast from "react-hot-toast";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { type TCreativeView, render } from "@formbricks/creatives";
+import type { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
-import { getTopLevelConditions } from "../../lib/show-conditions-ui";
-import type { TCreative, TCreativeDevice } from "../../types";
-import { CreativeRender } from "../creative-render";
-import { Segmented } from "./editor-primitives";
-
-const toHost = (siteName: string) =>
-  `${siteName.toLowerCase().replaceAll(/[^a-z0-9]+/g, "") || "yoursite"}.example`;
-
-/** The first page-URL condition that names a path, so the preview sits on a page it would show on. */
-const getPreviewPath = (creative: TCreative): string => {
-  for (const condition of getTopLevelConditions(creative.targeting.showConditions)) {
-    const value = condition.rightOperand?.value;
-    if (condition.leftOperand.value === "currentUrl" && typeof value === "string" && value.startsWith("/")) {
-      return value;
-    }
-  }
-  return "/";
-};
+import type { TStylingAppearance } from "@/lib/styling/dark-mode";
+import { MediaBackground } from "@/modules/ui/components/media-background";
+import {
+  PreviewModeSwitches,
+  PreviewWindowBar,
+} from "@/modules/ui/components/preview-survey/components/preview-frame";
+import { PREVIEW_BOUNDARY_CLASS_NAME } from "@/modules/ui/components/preview-survey/lib/containment";
+import type { TCreativeDevice } from "../../lib/styling-form";
 
 /** A neutral wireframe of a customer's site, so the creative is judged in context, not on a blank. */
-const SiteWireframe = ({ siteName, compact }: Readonly<{ siteName: string; compact?: boolean }>) => (
-  <div className="h-full bg-white" aria-hidden="true">
+const SiteWireframe = ({ siteName, compact }: Readonly<{ siteName: string; compact: boolean }>) => (
+  <div className="bg-white pb-24" aria-hidden="true">
     <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
       <div className="flex items-center gap-2">
         <span className="size-5 rounded-md bg-slate-800" />
@@ -48,7 +39,7 @@ const SiteWireframe = ({ siteName, compact }: Readonly<{ siteName: string; compa
       <span className="mt-5 block h-9 w-32 rounded-md bg-slate-300" />
     </div>
     <div className={cn("grid gap-4 px-6", compact ? "grid-cols-1" : "grid-cols-3")}>
-      {Array.from({ length: compact ? 2 : 3 }, (_, index) => (
+      {Array.from({ length: compact ? 4 : 6 }, (_, index) => (
         <div key={index} className="space-y-2 rounded-lg border border-slate-100 p-4">
           <span className="block h-3 w-1/2 rounded-full bg-slate-200" />
           <span className="block h-2 w-full rounded-full bg-slate-100" />
@@ -59,92 +50,139 @@ const SiteWireframe = ({ siteName, compact }: Readonly<{ siteName: string; compa
   </div>
 );
 
-export const CreativePreview = ({
-  creative,
-  siteName,
+/** The `href` of a link pressed inside the creative's shadow root, if the press was on one. */
+const getPressedLink = (event: MouseEvent): string | null => {
+  for (const target of event.composedPath()) {
+    if (target instanceof HTMLAnchorElement && target.href) return target.getAttribute("href");
+  }
+  return null;
+};
+
+/**
+ * Mounts the creative with `@formbricks/creatives`' own `render`, the code the SDK runs on a visitor's
+ * page (ADR 0003), into a page box that stands in for the site. The box is a containing block for
+ * fixed elements (`contain: layout paint`), so a feedback button or an Overlay banner sits at the
+ * box's edges instead of the editor's; an In page banner goes into the page flow above the site.
+ */
+const CreativeMount = ({
+  view,
   device,
-  onDeviceChange,
-  linkedSurveyName,
+  appearance,
+  siteName,
+  onActivate,
+  onLinkPress,
 }: Readonly<{
-  creative: TCreative;
-  siteName: string;
+  view: TCreativeView;
   device: TCreativeDevice;
-  onDeviceChange: (device: TCreativeDevice) => void;
-  /** The name of the survey picked on the Content tab, if any. */
-  linkedSurveyName: string | null;
+  appearance: TStylingAppearance;
+  siteName: string;
+  onActivate: () => void;
+  onLinkPress: (href: string) => void;
 }>) => {
-  const { t } = useTranslation();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const handlers = useRef({ onActivate, onLinkPress });
+  useEffect(() => {
+    handlers.current = { onActivate, onLinkPress };
+  });
 
-  const activate = () => {
-    if (creative.action.kind === "survey" && linkedSurveyName) {
-      toast(t("workspace.creatives.editor.preview_opens_survey", { name: linkedSurveyName }));
-    } else if (creative.action.kind === "link" && creative.action.url) {
-      toast(t("workspace.creatives.editor.preview_opens_link", { url: creative.action.url }));
-    } else {
-      toast(t("workspace.creatives.editor.preview_no_action"));
-    }
-  };
+  // Keyed on the view's content: the editor builds a new view object on every render.
+  const viewKey = JSON.stringify(view);
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const host = render(JSON.parse(viewKey) as TCreativeView, {
+      root,
+      device,
+      appearance,
+      onClick: () => handlers.current.onActivate(),
+    });
+    return () => host?.remove();
+  }, [viewKey, device, appearance]);
 
-  const render = <CreativeRender creative={creative} device={device} onActivate={activate} />;
+  // A link in a banner's text would leave the editor; it says where it goes instead.
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    const onClick = (event: MouseEvent) => {
+      const href = getPressedLink(event);
+      if (href === null) return;
+      event.preventDefault();
+      handlers.current.onLinkPress(href);
+    };
+    root.addEventListener("click", onClick, true);
+    return () => root.removeEventListener("click", onClick, true);
+  }, []);
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4 p-6">
-      <div className="flex items-center justify-between">
-        <span className="flex items-center gap-2 text-sm font-medium text-slate-700">
-          <span className="relative flex size-2">
-            <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-            <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
-          </span>
-          {t("workspace.creatives.editor.live_preview")}
-        </span>
-        <Segmented
-          ariaLabel={t("workspace.creatives.editor.preview_device")}
-          value={device}
-          onChange={onDeviceChange}
-          options={[
-            {
-              value: "desktop",
-              label: t("workspace.creatives.editor.desktop"),
-              icon: MonitorIcon,
-              hideLabel: true,
-            },
-            { value: "phone", label: t("common.phone"), icon: SmartphoneIcon, hideLabel: true },
-          ]}
-        />
+    <div className={cn("h-full w-full bg-white", PREVIEW_BOUNDARY_CLASS_NAME)}>
+      <div className="h-full overflow-y-auto">
+        <div ref={rootRef} />
+        <SiteWireframe siteName={siteName} compact={device === "phone"} />
       </div>
+    </div>
+  );
+};
 
-      {device === "desktop" ? (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex items-center gap-3 border-b border-slate-200 bg-slate-50 px-4 py-2.5">
-            <div className="flex gap-1.5" aria-hidden="true">
-              <span className="size-2.5 rounded-full bg-slate-300" />
-              <span className="size-2.5 rounded-full bg-slate-300" />
-              <span className="size-2.5 rounded-full bg-slate-300" />
-            </div>
-            <div className="flex min-w-0 flex-1 items-center gap-1.5 rounded-md bg-white px-3 py-1 text-xs text-slate-500 ring-1 ring-slate-200">
-              <LockIcon className="size-3 shrink-0" aria-hidden="true" />
-              <span className="truncate">
-                <span className="text-slate-700">{toHost(siteName)}</span>
-                {getPreviewPath(creative)}
-              </span>
-            </div>
+export const CreativePreview = ({
+  view,
+  siteName,
+  workspaceStyling,
+  device,
+  onDeviceChange,
+  appearance,
+  onAppearanceChange,
+  onActivate,
+  onLinkPress,
+}: Readonly<{
+  view: TCreativeView;
+  siteName: string;
+  /** The phone frame is the survey preview's, which reads the workspace look. */
+  workspaceStyling: TWorkspaceStyling;
+  device: TCreativeDevice;
+  onDeviceChange: (device: TCreativeDevice) => void;
+  appearance: TStylingAppearance;
+  onAppearanceChange: (appearance: TStylingAppearance) => void;
+  /** A press on the creative: on a site it opens its Destination. */
+  onActivate: () => void;
+  onLinkPress: (href: string) => void;
+}>) => {
+  const { t } = useTranslation();
+  const mount = (
+    <CreativeMount
+      view={view}
+      device={device}
+      appearance={appearance}
+      siteName={siteName}
+      onActivate={onActivate}
+      onLinkPress={onLinkPress}
+    />
+  );
+
+  return (
+    <div className="flex h-full w-full flex-col items-center p-2 py-4">
+      <div className="relative flex h-[95%] w-full items-center justify-center overflow-hidden rounded-lg border border-slate-300">
+        {device === "phone" ? (
+          <>
+            <p className="absolute top-0 left-0 m-2 rounded-sm bg-slate-100 px-2 py-1 text-xs text-slate-600">
+              {t("common.preview")}
+            </p>
+            <MediaBackground surveyType="app" styling={workspaceStyling} isMobilePreview>
+              {mount}
+            </MediaBackground>
+          </>
+        ) : (
+          <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
+            <PreviewWindowBar title={t("workspace.surveys.edit.your_web_app")} />
+            <div className="min-h-0 flex-1">{mount}</div>
           </div>
-          <div className="relative min-h-0 flex-1 overflow-hidden">
-            <SiteWireframe siteName={siteName} />
-            {render}
-          </div>
-        </div>
-      ) : (
-        <div className="flex min-h-0 flex-1 items-center justify-center">
-          <div className="relative h-[600px] max-h-full w-[300px] shrink-0 overflow-hidden rounded-[2.75rem] border-[10px] border-slate-900 bg-white shadow-xl">
-            <div className="absolute top-2 left-1/2 z-20 h-5 w-24 -translate-x-1/2 rounded-full bg-slate-900" />
-            <div className="relative h-full overflow-hidden pt-8">
-              <SiteWireframe siteName={siteName} compact />
-              {render}
-            </div>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
+      <PreviewModeSwitches
+        previewMode={device === "phone" ? "mobile" : "desktop"}
+        onPreviewModeChange={(mode) => onDeviceChange(mode === "mobile" ? "phone" : "desktop")}
+        appearance={appearance}
+        onAppearanceChange={onAppearanceChange}
+      />
     </div>
   );
 };
