@@ -37,7 +37,7 @@ overrides:
   # required. Pinned to the minimal patched version (2.0.1) to stay CJS-compatible with http-proxy-agent@4.
   "@tootallnate/once": 2.0.1
   # SAML and XML processing chains.
-  "@xmldom/xmldom": 0.9.10 # load-bearing: 0.8.x/0.9.8 vulnerable (GHSA-2v35-w6hq-6mfw + 4 more)
+  "@xmldom/xmldom": 0.9.12 # load-bearing: 0.8.x/0.9.8 vulnerable (GHSA-2v35-w6hq-6mfw + 4 more); 0.9.12 patches 9 further High advisories (ENG-3989)
   axios: 1.16.0
   lodash: 4.18.1
   node-forge: 1.4.0 # load-bearing: 1.3.3 still vulnerable (GHSA-2328-f5f3-gj25 + GHSA-5m6q-g25r-mvwx)
