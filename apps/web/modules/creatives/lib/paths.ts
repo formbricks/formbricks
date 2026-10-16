@@ -5,5 +5,3 @@ export const getCreativeSummaryPath = (workspaceId: string, creativeId: string) 
 
 export const getCreativeEditPath = (workspaceId: string, creativeId: string) =>
   `${getCreativesPath(workspaceId)}/${creativeId}/edit`;
-
-export const getCreativesKitPath = (workspaceId: string) => `${getCreativesPath(workspaceId)}/kit`;

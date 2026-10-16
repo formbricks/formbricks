@@ -15,7 +15,6 @@ import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { CreativesHeaderActions } from "./components/creatives-header-actions";
 import { CreativesList } from "./components/creatives-list";
 import { CreativeEditor } from "./components/editor/creative-editor";
-import { CreativesKitPlayground } from "./components/kit/creatives-kit-playground";
 import { CreativeSummary } from "./components/summary/creative-summary";
 import { toDestinationSurveyOptions } from "./lib/destination-options";
 import { getCreativesPath } from "./lib/paths";
@@ -120,10 +119,4 @@ export const CreativeEditorPage = async ({ params }: Readonly<{ params: TCreativ
       workspaceLanguageCodes={workspaceLanguageCodes}
     />
   );
-};
-
-export const CreativesKitPage = async ({ params }: Readonly<{ params: TWorkspaceParams }>) => {
-  const { workspaceId } = await params;
-  await getWorkspaceAuth(workspaceId);
-  return <CreativesKitPlayground workspaceId={workspaceId} />;
 };
