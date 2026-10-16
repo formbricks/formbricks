@@ -80,7 +80,8 @@ export type TWithV3ApiWrapperParams<S extends TV3Schemas | undefined, TProps = u
    * sent without a `Content-Length` header is cut off at the limit rather than buffered whole.
    *
    * Raise it only for a route that genuinely takes a file-sized body, and keep it below Next's
-   * `proxyClientMaxBodySize` (`next.config.mjs`): Next truncates a longer body before this reader sees
+   * `proxyClientMaxBodySize` (`next.config.mjs`). The patched Next (`patches/next@16.3.8.patch`) no longer
+   * clones bodies for the proxy, but without the patch Next truncates a longer body before this reader sees
    * it, so the caller would get a 400 for malformed JSON instead of a 413.
    */
   bodyLimitBytes?: number;

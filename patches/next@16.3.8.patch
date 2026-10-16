@@ -1,0 +1,62 @@
+diff --git a/dist/server/next-server.js b/dist/server/next-server.js
+--- a/dist/server/next-server.js
++++ b/dist/server/next-server.js
+@@ -1181,7 +1181,11 @@
+             },
+             url: url,
+             page,
+-            body: method !== 'GET' && method !== 'HEAD' ? (0, _requestmeta.getRequestMeta)(params.request, 'clonableBody') : undefined,
++            // Formbricks patch (ENG-3972): never hand the proxy a request body. Cloning it for the proxy reads
++            // the whole upload off the socket, buffers up to proxyClientMaxBodySize, and holds the route until
++            // the client sends its last byte, on every path the proxy matches. Formbricks proxy.ts never reads
++            // the body, so the route reads the original, unread stream instead.
++            body: undefined,
+             signal: (0, _nextrequest.signalFromNodeResponse)(params.response.originalResponse),
+             waitUntil: this.getWaitUntil()
+         };
+diff --git a/dist/esm/server/next-server.js b/dist/esm/server/next-server.js
+--- a/dist/esm/server/next-server.js
++++ b/dist/esm/server/next-server.js
+@@ -1112,7 +1112,11 @@
+             },
+             url: url,
+             page,
+-            body: method !== 'GET' && method !== 'HEAD' ? getRequestMeta(params.request, 'clonableBody') : undefined,
++            // Formbricks patch (ENG-3972): never hand the proxy a request body. Cloning it for the proxy reads
++            // the whole upload off the socket, buffers up to proxyClientMaxBodySize, and holds the route until
++            // the client sends its last byte, on every path the proxy matches. Formbricks proxy.ts never reads
++            // the body, so the route reads the original, unread stream instead.
++            body: undefined,
+             signal: signalFromNodeResponse(params.response.originalResponse),
+             waitUntil: this.getWaitUntil()
+         };
+diff --git a/dist/server/lib/router-server.js b/dist/server/lib/router-server.js
+--- a/dist/server/lib/router-server.js
++++ b/dist/server/lib/router-server.js
+@@ -414,7 +414,10 @@
+             }
+             if (finished && parsedUrl.protocol) {
+                 var _getRequestMeta;
+-                return await (0, _proxyrequest.proxyRequest)(req, res, parsedUrl, undefined, (_getRequestMeta = (0, _requestmeta.getRequestMeta)(req, 'clonableBody')) == null ? void 0 : _getRequestMeta.cloneBodyStream(), config.experimental.proxyTimeout);
++                // Formbricks patch (ENG-3972): stream an external rewrite's body instead of cloning it. The clone reads
++                // the whole upload regardless of backpressure and keeps up to proxyClientMaxBodySize in memory; with no
++                // buffer, httpxy pipes the untouched request straight to the target.
++                return await (0, _proxyrequest.proxyRequest)(req, res, parsedUrl, undefined, undefined, config.experimental.proxyTimeout);
+             }
+             if ((matchedOutput == null ? void 0 : matchedOutput.fsPath) && matchedOutput.itemPath) {
+                 if (opts.dev && (fsChecker.appFiles.has(matchedOutput.itemPath) || fsChecker.pageFiles.has(matchedOutput.itemPath))) {
+diff --git a/dist/esm/server/lib/router-server.js b/dist/esm/server/lib/router-server.js
+--- a/dist/esm/server/lib/router-server.js
++++ b/dist/esm/server/lib/router-server.js
+@@ -359,7 +359,10 @@
+             }
+             if (finished && parsedUrl.protocol) {
+                 var _getRequestMeta;
+-                return await proxyRequest(req, res, parsedUrl, undefined, (_getRequestMeta = getRequestMeta(req, 'clonableBody')) == null ? void 0 : _getRequestMeta.cloneBodyStream(), config.experimental.proxyTimeout);
++                // Formbricks patch (ENG-3972): stream an external rewrite's body instead of cloning it. The clone reads
++                // the whole upload regardless of backpressure and keeps up to proxyClientMaxBodySize in memory; with no
++                // buffer, httpxy pipes the untouched request straight to the target.
++                return await proxyRequest(req, res, parsedUrl, undefined, undefined, config.experimental.proxyTimeout);
+             }
+             if ((matchedOutput == null ? void 0 : matchedOutput.fsPath) && matchedOutput.itemPath) {
+                 if (opts.dev && (fsChecker.appFiles.has(matchedOutput.itemPath) || fsChecker.pageFiles.has(matchedOutput.itemPath))) {
