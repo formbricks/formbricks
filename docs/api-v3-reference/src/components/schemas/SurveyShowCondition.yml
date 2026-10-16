@@ -1,0 +1,111 @@
+type: object
+description: >
+  One check, read like a sentence: what to look at (`leftOperand`), how to compare (`operator`) and
+  what to compare with (`rightOperand`). Text comparisons ignore upper and lower case.
+
+
+  | `leftOperand.type` | `leftOperand.value` | Operators |
+
+  | --- | --- | --- |
+
+  | `page` | `currentUrl` (full URL, query included), `pageReferrer`, `entryReferrer` (first page of the visit) | `equals`, `doesNotEqual`, `contains`, `doesNotContain`, `startsWith`, `endsWith`, `containsAnyOf`, `containsNoneOf` |
+
+  | `page` | `queryParam` (name in `meta.key`) | `equals`, `doesNotEqual`, `contains`, `doesNotContain`, `startsWith`, `endsWith`, `isSet`, `isNotSet` |
+
+  | `visit` | `pagesViewed`, `uniquePagesViewed`, `timeOnSite` (seconds) | `equals`, `isGreaterThan`, `isLessThan`, `isGreaterThanOrEqual`, `isLessThanOrEqual` |
+
+  | `visit` | `visitedUrls` (paths seen earlier in this visit) | `includes`, `doesNotInclude` |
+
+  | `device` | `deviceType` (`phone`, `tablet`, `desktop`), `browser` (`chrome`, `safari`, `firefox`, `edge`, `opera`, `samsung`, `other`) | `equals`, `doesNotEqual` |
+
+  | `device` | `screenWidth` (browser window width, CSS px) | `equals`, `isGreaterThan`, `isLessThan`, `isGreaterThanOrEqual`, `isLessThanOrEqual` |
+
+
+  `containsAnyOf` / `containsNoneOf` take a list of fragments, each matched whole. `isSet` /
+  `isNotSet` take no `rightOperand`. A visit is one browser tab; if the browser blocks storage,
+  visit conditions fail.
+required:
+  - id
+  - leftOperand
+  - operator
+properties:
+  id:
+    type: string
+    description: Client-generated id (cuid2), unique within the survey's conditions.
+  leftOperand:
+    type: object
+    required:
+      - type
+      - value
+    properties:
+      type:
+        type: string
+        enum:
+          - page
+          - visit
+          - device
+      value:
+        type: string
+        enum:
+          - currentUrl
+          - pageReferrer
+          - entryReferrer
+          - queryParam
+          - pagesViewed
+          - uniquePagesViewed
+          - timeOnSite
+          - visitedUrls
+          - deviceType
+          - browser
+          - screenWidth
+      meta:
+        type: object
+        properties:
+          key:
+            type: string
+            description: The query parameter's name. Required for `queryParam`; matched ignoring case.
+        additionalProperties: false
+    additionalProperties: false
+  operator:
+    type: string
+    enum:
+      - equals
+      - doesNotEqual
+      - contains
+      - doesNotContain
+      - startsWith
+      - endsWith
+      - containsAnyOf
+      - containsNoneOf
+      - isGreaterThan
+      - isLessThan
+      - isGreaterThanOrEqual
+      - isLessThanOrEqual
+      - includes
+      - doesNotInclude
+      - isSet
+      - isNotSet
+  rightOperand:
+    type: object
+    required:
+      - type
+      - value
+    properties:
+      type:
+        type: string
+        enum:
+          - static
+      value:
+        anyOf:
+          - type: string
+            minLength: 1
+          - type: number
+            minimum: 0
+          - type: array
+            minItems: 1
+            maxItems: 200
+            items:
+              type: string
+              minLength: 1
+    additionalProperties: false
+additionalProperties: false

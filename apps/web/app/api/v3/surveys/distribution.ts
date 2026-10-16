@@ -30,6 +30,7 @@ export function surveyToV3Distribution(survey: TSurvey): TV3SurveyDistribution {
     keepEndingCardOpen: survey.keepEndingCardOpen ?? false,
     autoComplete: responseLimitOrNull(survey.autoComplete),
     delay: nonNegativeOrNull(survey.delay) ?? 0,
+    showConditions: survey.showConditions ?? null,
     triggers: surveyTriggersToV3(survey.triggers),
   };
 }

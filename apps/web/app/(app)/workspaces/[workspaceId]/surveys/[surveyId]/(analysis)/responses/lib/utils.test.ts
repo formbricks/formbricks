@@ -234,7 +234,9 @@ describe("utils", () => {
       // `locale` is the entry that proved it: it was added to the catalog by ENG-2472 and became a
       // column here with no edit beyond this count.
       expect(RESERVED_COLUMN_ENTRIES.map((entry) => entry.name)).toContain("locale");
-      expect(RESERVED_COLUMN_ENTRIES).toHaveLength(21);
+      // And the five visit fields (ENG-3926), the same way.
+      expect(RESERVED_COLUMN_ENTRIES.map((entry) => entry.name)).toContain("visitUrls");
+      expect(RESERVED_COLUMN_ENTRIES).toHaveLength(26);
     });
 
     test("today's six columns are still visible by default, and the new ones are not", () => {

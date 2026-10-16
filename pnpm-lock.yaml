@@ -1348,6 +1348,9 @@ importers:
       '@formbricks/config-typescript':
         specifier: workspace:*
         version: link:../config-typescript
+      '@formbricks/types':
+        specifier: workspace:*
+        version: link:../types
       '@formbricks/vite-plugins':
         specifier: workspace:*
         version: link:../vite-plugins

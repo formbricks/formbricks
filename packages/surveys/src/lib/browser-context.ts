@@ -1,4 +1,6 @@
 import type { TResponseUpdate } from "@formbricks/types/responses";
+import type { TVisitSnapshot } from "@formbricks/types/show-conditions";
+import { VISIT_URLS_SEPARATOR } from "@formbricks/types/visit";
 
 /**
  * The `meta` the renderer contributes to a response: the browser-runtime context it can observe,
@@ -38,6 +40,17 @@ const readDimension = (read: () => number | null | undefined): number | undefine
   try {
     const value = read();
     if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return undefined;
+    return Math.round(value);
+  } catch {
+    return undefined;
+  }
+};
+
+/** A count or a duration. Unlike a dimension, `0` is a real reading here (no time on site yet). */
+const readCount = (read: () => number | null | undefined): number | undefined => {
+  try {
+    const value = read();
+    if (typeof value !== "number" || !Number.isFinite(value) || value < 0) return undefined;
     return Math.round(value);
   } catch {
     return undefined;
@@ -110,6 +123,23 @@ export const readDeviceContextMeta = (): TWebSurveyMeta =>
   });
 
 /**
+ * The **visit** group (ENG-3926). Handed in by the web SDK instead of read here, because only js-core
+ * keeps the visit, in sessionStorage across page loads. Absent when nothing was handed in: a link
+ * survey, a mobile app, or an SDK that predates it. Read as defensively as the groups above, since
+ * the SDK and this renderer are cached separately and may not be the same version.
+ */
+const readVisitContextMeta = (visit: TVisitSnapshot | undefined): TWebSurveyMeta => {
+  if (!visit) return {};
+  return compact({
+    visitPagesViewed: readCount(() => visit.pagesViewed),
+    visitUniquePagesViewed: readCount(() => visit.uniquePagesViewed),
+    visitTimeOnSite: readCount(() => visit.timeOnSite),
+    visitEntryReferrer: readString(() => visit.entryReferrer),
+    visitUrls: readString(() => visit.visitedUrls.join(VISIT_URLS_SEPARATOR)),
+  });
+};
+
+/**
  * **Snapshot at display, then freeze.**
  *
  * Takes one reading of the runtime and hands back a getter that returns that same reading for the
@@ -134,10 +164,14 @@ export const readDeviceContextMeta = (): TWebSurveyMeta =>
  * Off the runtime entirely (SSR, a test harness with no `window`) every individual read is guarded
  * and yields an absent key, so the snapshot degrades to `{}` rather than throwing.
  */
-export const createWebSurveyMetaSnapshot = (isWebEnvironment: boolean): (() => TWebSurveyMeta) => {
+export const createWebSurveyMetaSnapshot = (
+  isWebEnvironment: boolean,
+  visit?: TVisitSnapshot
+): (() => TWebSurveyMeta) => {
   const snapshot: TWebSurveyMeta = {
     ...(isWebEnvironment ? readPageContextMeta() : {}),
     ...readDeviceContextMeta(),
+    ...readVisitContextMeta(visit),
   };
   return () => snapshot;
 };

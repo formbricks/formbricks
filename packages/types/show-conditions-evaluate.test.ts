@@ -170,6 +170,10 @@ describe("evaluateShowConditions", () => {
     ["a missing value", condition("currentUrl", "contains")],
     ["an unknown operator", condition("currentUrl", "matchesRegex", ".*")],
     ["an unknown operand", condition("ipAddress", "equals", "1.2.3.4")],
+    ["isSet on a URL, which is never absent", condition("currentUrl", "isSet")],
+    ["a query parameter without a name", condition("queryParam", "doesNotEqual", "x")],
+    ["isNotSet on a query parameter without a name", condition("queryParam", "isNotSet")],
+    ["isSet given a value", condition("queryParam", "isSet", "email", source)],
   ])("fails closed on %s", (_, invalidCondition) => {
     expect(passes(invalidCondition)).toBe(false);
   });
