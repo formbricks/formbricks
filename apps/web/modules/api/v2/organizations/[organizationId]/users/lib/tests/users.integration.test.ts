@@ -102,7 +102,7 @@ describe("updateUser on a user who belongs to several organizations vs real Post
     expect(result).toEqual({
       ok: false,
       error: {
-        type: "unprocessable_entity",
+        type: "conflict",
         details: [
           {
             field: "isActive",
@@ -123,7 +123,7 @@ describe("updateUser on a user who belongs to several organizations vs real Post
     const result = await updateUser({ email, isActive: true }, orgA.id);
 
     expect(result.ok).toBe(false);
-    if (!result.ok) expect(result.error.type).toBe("unprocessable_entity");
+    if (!result.ok) expect(result.error.type).toBe("conflict");
     const after = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
     expect(after.isActive).toBe(false);
     expect(after.reactivatedAt).toBeNull();
@@ -136,7 +136,7 @@ describe("updateUser on a user who belongs to several organizations vs real Post
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error.type).toBe("unprocessable_entity");
+      expect(result.error.type).toBe("conflict");
       expect(result.error.details?.map(({ field }) => field)).toEqual(["name"]);
     }
     expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).name).toBe("Original Name");
@@ -155,6 +155,44 @@ describe("updateUser on a user who belongs to several organizations vs real Post
       where: { userId_organizationId: { userId: user.id, organizationId: orgA.id } },
     });
     expect(membership.role).toBe("manager");
+  });
+
+  test("counts a membership another organization is adding at the same moment", async () => {
+    const org = await prisma.organization.create({ data: { name: "Only Org" } });
+    const other = await prisma.organization.create({ data: { name: "Joining Org" } });
+    const email = "joining@example.com";
+    const user = await prisma.user.create({ data: { name: "Joining", email, isActive: true } });
+    await prisma.membership.create({
+      data: { userId: user.id, organizationId: org.id, role: "member", accepted: true },
+    });
+
+    // Another organization adds the user in a transaction that stays open until released.
+    let inserted!: () => void;
+    let release!: () => void;
+    const insertedSignal = new Promise<void>((resolve) => (inserted = resolve));
+    const releaseSignal = new Promise<void>((resolve) => (release = resolve));
+    const joining = prisma.$transaction(
+      async (tx) => {
+        await tx.membership.create({
+          data: { userId: user.id, organizationId: other.id, role: "member", accepted: true },
+        });
+        inserted();
+        await releaseSignal;
+      },
+      { timeout: 10_000 }
+    );
+    await insertedSignal;
+
+    // The deactivation has to wait for that insert under the user row's lock, then sees it.
+    const deactivating = updateUser({ email, isActive: false }, org.id);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    release();
+    await joining;
+
+    const result = await deactivating;
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.type).toBe("conflict");
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).isActive).toBe(true);
   });
 
   test("a user in this organization alone can still be renamed and deactivated", async () => {

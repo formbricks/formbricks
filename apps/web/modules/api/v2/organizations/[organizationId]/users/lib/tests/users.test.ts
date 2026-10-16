@@ -304,6 +304,8 @@ describe("Users Lib", () => {
       expect(prisma.user.update).toHaveBeenCalledWith(
         expect.objectContaining({ where: { id: mockUser.id } })
       );
+      // The email it was found by is never written back: it is the account's, not this organization's.
+      expect(vi.mocked(prisma.user.update).mock.calls[0][0].data).not.toHaveProperty("email");
     });
 
     test("returns internal_server_error if update fails", async () => {
@@ -436,7 +438,7 @@ describe("Users Lib", () => {
       expect(result).toMatchObject({
         ok: false,
         error: {
-          type: "unprocessable_entity",
+          type: "conflict",
           details: [{ field: "isActive" }, { field: "name" }],
         },
       });

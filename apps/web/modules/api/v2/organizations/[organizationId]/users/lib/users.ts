@@ -176,7 +176,9 @@ export const createUser = async (
 class LastOwnerConflictError extends Error {}
 
 // Thrown inside updateUser's transaction when the request would change an account-wide field of a
-// user who also belongs to another organization; carried out as a 422, like LastOwnerConflictError.
+// user who also belongs to another organization; carried out as a 409, like LastOwnerConflictError:
+// the same request succeeds for a user in this organization alone, so it conflicts with the user's
+// current state rather than being malformed.
 class SharedAccountChangeError extends Error {
   constructor(readonly details: ApiErrorDetails) {
     super("Cannot change account-wide fields of a user who belongs to other organizations");
@@ -343,9 +345,10 @@ export const updateUser = async (
       }
     });
 
+    // `email` is how the user was found, so it is never written: another account-wide field this
+    // organization has no business changing.
     const prismaData: Prisma.UserUpdateInput = {
       name: name ?? undefined,
-      email: email ?? undefined,
       isActive: isActive ?? undefined,
       memberships: {
         updateMany: {
@@ -487,7 +490,7 @@ export const updateUser = async (
       });
     }
     if (error instanceof SharedAccountChangeError) {
-      return err({ type: "unprocessable_entity", details: error.details });
+      return err({ type: "conflict", details: error.details });
     }
 
     return err({
