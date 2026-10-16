@@ -50,6 +50,16 @@ const SiteWireframe = ({ siteName, compact }: Readonly<{ siteName: string; compa
   </div>
 );
 
+/** What a visitor's presses would do on a site; the editor says it instead of doing it. */
+export interface TPreviewActions {
+  /** A press on the feedback button or the banner's button: it opens the Destination. */
+  onActivate: () => void;
+  /** The banner's Dismiss. */
+  onDismiss: () => void;
+  /** A link in the banner's text. */
+  onLinkPress: (href: string) => void;
+}
+
 /** The `href` of a link pressed inside the creative's shadow root, if the press was on one. */
 const getPressedLink = (event: MouseEvent): string | null => {
   for (const target of event.composedPath()) {
@@ -69,20 +79,18 @@ const CreativeMount = ({
   device,
   appearance,
   siteName,
-  onActivate,
-  onLinkPress,
+  actions,
 }: Readonly<{
   view: TCreativeView;
   device: TCreativeDevice;
   appearance: TStylingAppearance;
   siteName: string;
-  onActivate: () => void;
-  onLinkPress: (href: string) => void;
+  actions: TPreviewActions;
 }>) => {
   const rootRef = useRef<HTMLDivElement>(null);
-  const handlers = useRef({ onActivate, onLinkPress });
+  const handlers = useRef(actions);
   useEffect(() => {
-    handlers.current = { onActivate, onLinkPress };
+    handlers.current = actions;
   });
 
   // Keyed on the view's content: the editor builds a new view object on every render.
@@ -95,8 +103,10 @@ const CreativeMount = ({
       device,
       appearance,
       onClick: () => handlers.current.onActivate(),
+      // The banner stays: the author is still styling it.
+      onDismiss: () => handlers.current.onDismiss(),
     });
-    return () => host?.remove();
+    return () => host.remove();
   }, [viewKey, device, appearance]);
 
   // A link in a banner's text would leave the editor; it says where it goes instead.
@@ -131,8 +141,7 @@ export const CreativePreview = ({
   onDeviceChange,
   appearance,
   onAppearanceChange,
-  onActivate,
-  onLinkPress,
+  actions,
 }: Readonly<{
   view: TCreativeView;
   siteName: string;
@@ -142,9 +151,7 @@ export const CreativePreview = ({
   onDeviceChange: (device: TCreativeDevice) => void;
   appearance: TStylingAppearance;
   onAppearanceChange: (appearance: TStylingAppearance) => void;
-  /** A press on the creative: on a site it opens its Destination. */
-  onActivate: () => void;
-  onLinkPress: (href: string) => void;
+  actions: TPreviewActions;
 }>) => {
   const { t } = useTranslation();
   const mount = (
@@ -153,8 +160,7 @@ export const CreativePreview = ({
       device={device}
       appearance={appearance}
       siteName={siteName}
-      onActivate={onActivate}
-      onLinkPress={onLinkPress}
+      actions={actions}
     />
   );
 

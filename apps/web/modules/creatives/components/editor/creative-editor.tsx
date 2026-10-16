@@ -343,8 +343,11 @@ export const CreativeEditor = ({
             onDeviceChange={setDevice}
             appearance={appearance}
             onAppearanceChange={setAppearance}
-            onActivate={onPreviewActivate}
-            onLinkPress={(url) => toast(t("workspace.creatives.editor.preview_opens_link", { url }))}
+            actions={{
+              onActivate: onPreviewActivate,
+              onDismiss: () => toast(t("workspace.creatives.editor.preview_dismiss")),
+              onLinkPress: (url) => toast(t("workspace.creatives.editor.preview_opens_link", { url })),
+            }}
           />
         </div>
       </div>

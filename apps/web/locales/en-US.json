@@ -2405,6 +2405,7 @@
         "padding_y": "Padding Y",
         "phone_values_note": "Phone values apply below 768 px wide. Phone fields left as they are use the desktop values.",
         "position": "Position",
+        "preview_dismiss": "On your site, this closes the banner until the visitor's next page.",
         "preview_no_action": "Pick what it opens on the Content tab.",
         "preview_opens_link": "On your site, this opens {url}",
         "preview_opens_survey": "On your site, this opens \"{name}\"",
