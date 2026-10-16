@@ -671,13 +671,8 @@ export async function deleteV3Survey({
       // The archived creatives the delete unlinked: one event each, by the same caller (T6).
       onCreativesUnlinked: async (creatives, { organizationId }) => {
         if (!auditLog) return;
-        for (const event of toUnlinkedCreativeAuditEvents(
-          { ...auditLog, organizationId },
-          surveyId,
-          creatives
-        )) {
-          await queueV3AuditLog(event, requestId, log);
-        }
+        const events = toUnlinkedCreativeAuditEvents({ ...auditLog, organizationId }, surveyId, creatives);
+        await Promise.all(events.map((event) => queueV3AuditLog(event, requestId, log)));
       },
     });
 

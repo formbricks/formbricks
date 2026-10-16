@@ -68,9 +68,7 @@ const purgeArchivedSurvey = async (
           survey.id,
           creatives
         );
-        for (const event of events) {
-          await queueAuditEventWithoutRequest(event);
-        }
+        await Promise.all(events.map((event) => queueAuditEventWithoutRequest(event)));
       },
     });
   } catch (error) {
