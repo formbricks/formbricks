@@ -18,9 +18,12 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
     const uniqueId = Date.now() + Math.random();
     const userName = "Security Test User";
     const userEmail = `security-test-${uniqueId}@example.com`;
+    // Cost 12 is production's: the sign-in endpoint hashes a dummy password at that cost for unknown
+    // emails, so a cheaper stored hash would make existing users look ~4x faster than unknown ones.
     await users.create({
       name: userName,
       email: userEmail,
+      passwordCost: 12,
     });
     testUser = {
       email: userEmail,
