@@ -21,7 +21,7 @@ jobs:
     # as `depot-ubuntu-24.04-8` — or rolled back without a code change; unset means GitHub's standard
     # runner. Pair a bigger runner with E2E_WORKERS (see playwright.config.ts). A runner label with no
     # runner behind it queues until the job timeout, so check the runner exists before setting it.
-    runs-on: ${{ vars.E2E_RUNNER || 'ubuntu-latest' }}
+    runs-on: ${{ vars.E2E_RUNNER || 'blacksmith-8vcpu-ubuntu-2404' }} # TEMPORARY Blacksmith trial (ENG-3763)
     # Chosen so the step timeouts below always fire FIRST, because a step timeout names
     # the culprit while a job timeout just says "exceeded the maximum execution time" —
     # the opaque symptom this workflow is being changed to eliminate.
@@ -420,7 +420,7 @@ jobs:
         env:
           CI: true
           # Empty when the variable is unset; playwright.config.ts then keeps its default of 4.
-          PW_WORKERS: ${{ vars.E2E_WORKERS }}
+          PW_WORKERS: ${{ vars.E2E_WORKERS || '8' }} # TEMPORARY Blacksmith trial
         run: |
           pnpm test:e2e
 
