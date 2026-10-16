@@ -314,8 +314,9 @@ export function FileUploadElement({
         }
       } finally {
         // On success the files are already in `latestValueRef`; on failure their slots free up.
+        // The indicator stays on while another overlapping upload is still running.
         uploadingFileCountRef.current -= filesToUpload.length;
-        setIsUploading(false);
+        setIsUploading(uploadingFileCountRef.current > 0);
       }
     },
     [element, surveyId, onChange, onFileUpload, t]
