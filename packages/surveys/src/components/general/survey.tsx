@@ -795,9 +795,10 @@ export function Survey({
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [history.length, isSurveyFinished, offlinePersistEnabled, responseQueue, pendingSyncCount]);
 
+  // Merges into the latest answers, not this render's copy: a file upload calls this when it
+  // finishes, seconds after the render it started in, and other answers may have changed since.
   const onChange = (responseDataUpdate: TResponseData) => {
-    const updatedResponseData = { ...responseData, ...responseDataUpdate };
-    setResponseData(updatedResponseData);
+    setResponseData((prev) => ({ ...prev, ...responseDataUpdate }));
   };
 
   const onChangeVariables = (variables: TResponseVariables) => {

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "preact/hooks";
+import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { FileUpload, type UploadedFile } from "@formbricks/survey-ui";
 import { FILE_UPLOAD_ERROR_NAMES } from "@formbricks/types/errors";
@@ -45,6 +45,13 @@ export function FileUploadElement({
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const { t } = useTranslation();
   const [fileNames, setFileNames] = useState<Record<string, string>>({});
+
+  // An upload calls `onChange` when it finishes, seconds after the render it started in. Reading
+  // the file list from here instead of that render's `value` keeps files added or removed since.
+  const latestValueRef = useRef(value);
+  useEffect(() => {
+    latestValueRef.current = value;
+  }, [value]);
 
   // Use centralized error message for required validation, file-specific errors for upload issues
   const errorMessage = centralizedErrorMessage || fileErrorMessage;
@@ -103,6 +110,7 @@ export function FileUploadElement({
     setFileNames((prev) => ({ ...prev, ...newFileNames }));
 
     const urls = convertToStringArray(files);
+    latestValueRef.current = urls;
     onChange({ [element.id]: urls });
   };
 
@@ -276,11 +284,12 @@ export function FileUploadElement({
 
         // Update value
         const newUrls = uploadedFiles.map((f) => f.url);
-        if (element.allowMultipleFiles) {
-          onChange({ [element.id]: [...(value || []), ...newUrls] });
-        } else {
-          onChange({ [element.id]: newUrls.slice(0, 1) });
-        }
+        const nextValue = element.allowMultipleFiles
+          ? [...(latestValueRef.current || []), ...newUrls]
+          : newUrls.slice(0, 1);
+        // Set before the parent re-renders, so an upload finishing right after this one sees it.
+        latestValueRef.current = nextValue;
+        onChange({ [element.id]: nextValue });
 
         // Clear error on success
         setFileErrorMessage(undefined);
@@ -302,7 +311,7 @@ export function FileUploadElement({
         setIsUploading(false);
       }
     },
-    [element, surveyId, value, onChange, onFileUpload, t]
+    [element, surveyId, onChange, onFileUpload, t]
   );
 
   /**
