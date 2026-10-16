@@ -200,7 +200,7 @@ test.describe("JS Package Test", async () => {
       });
       expect(workspaceCss.ok()).toBe(true);
 
-      // Survey CSS is delivered only while the survey's "Add custom styles" is on (ENG-3723). The v3 survey
+      // Survey CSS is delivered only while the survey uses custom styling (ENG-3723). The v3 survey
       // API has no styling field, so it is set directly, before the PATCH below invalidates the cache.
       const { styling } = await prisma.survey.findUniqueOrThrow({
         where: { id: surveyId },
