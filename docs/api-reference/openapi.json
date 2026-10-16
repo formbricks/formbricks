@@ -260,6 +260,71 @@
                           },
                           "type": "array"
                         },
+                        "creatives": {
+                          "description": "The creatives (feedback buttons and banners) the web SDK shows. Present only when the workspace has at least one deliverable creative: published and not paused, closed or archived, not past its end time, and opening an active survey if it opens one. The envelope next to `expiresAt` also carries `serverTime`, when the server built the response, which the SDK uses to run creative schedules on the server's clock. Source of truth for the item shape: `TCreativePayload` in `packages/creatives/src/types.ts`.",
+                          "items": {
+                            "properties": {
+                              "conditions": {
+                                "description": "Show when conditions, shared with surveys; null always passes.",
+                                "nullable": true,
+                                "type": "object"
+                              },
+                              "content": {
+                                "description": "As in API v3: a feedback button's `label` and `icon`, or a banner's `message`, `button`, `dismissible` and `accessibleName`. Texts are keyed by locale code.",
+                                "type": "object"
+                              },
+                              "defaultLanguage": {
+                                "description": "The locale code the texts fall back to.",
+                                "example": "en-US",
+                                "type": "string"
+                              },
+                              "destination": {
+                                "description": "What pressing it opens: `{ type: survey, surveyId, opensAs: popup }` (an app survey in `surveys`, sent with `triggers: []` when only creatives open it), `{ type: survey, surveyId, opensAs: newTab, url }` (a link survey) or `{ type: link, url }`. Null for a banner without a button.",
+                                "nullable": true,
+                                "type": "object"
+                              },
+                              "displayPercentage": {
+                                "description": "Share of visitors in percent; null shows it to everyone.",
+                                "nullable": true,
+                                "type": "number"
+                              },
+                              "endAt": {
+                                "format": "date-time",
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "position": {
+                                "description": "As in API v3 `styling.position`: `desktop`, and `phone` (below 768 px) or null.",
+                                "type": "object"
+                              },
+                              "showOn": {
+                                "enum": ["pageView", "action"],
+                                "type": "string"
+                              },
+                              "startAt": {
+                                "format": "date-time",
+                                "nullable": true,
+                                "type": "string"
+                              },
+                              "triggers": {
+                                "description": "Names of the actions that show it when `showOn` is `action`.",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "type": "array"
+                              },
+                              "type": {
+                                "enum": ["feedbackButton", "banner"],
+                                "type": "string"
+                              }
+                            },
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
                         "project": {
                           "properties": {
                             "clickOutsideClose": {

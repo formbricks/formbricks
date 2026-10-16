@@ -1,3 +1,4 @@
+import { removeCreatives } from "@/lib/creatives/creatives";
 import {
   addClickEventListener,
   addExitIntentListener,
@@ -55,6 +56,7 @@ export const removeCleanupEventListeners = (): void => {
 };
 
 export const removeAllEventListeners = (): void => {
+  removeCreatives();
   clearWorkspaceStateExpiryCheckListener();
   clearUserStateExpiryCheckListener();
   removePageUrlEventListeners();

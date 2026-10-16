@@ -8,6 +8,7 @@ import {
 } from "@/lib/common/events";
 import * as Setup from "@/lib/common/setup";
 import { getIsDebug } from "@/lib/common/utils";
+import { reconcileCreatives } from "@/lib/creatives/creatives";
 import * as Action from "@/lib/survey/action";
 import { EmbeddedDataStore, type TEmbeddedDataInput } from "@/lib/survey/embedded-data";
 import { checkPageUrl } from "@/lib/survey/no-code-action";
@@ -164,6 +165,9 @@ const setNonce = (nonce: string | undefined): void => {
   // Set nonce in surveys package if it's already loaded
 
   globalThis.window.formbricksSurveys?.setNonce?.(nonce);
+
+  // Creatives already on the page redraw with it: a style element without the nonce stays blocked.
+  reconcileCreatives();
 };
 
 /**

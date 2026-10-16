@@ -131,6 +131,7 @@ describe("environment state payload at the custom CSS limits", () => {
       customCss: workspaceCss,
       actionClasses: [],
       surveys: Array.from({ length: SURVEY_COUNT }, (_, index) => survey(index)),
+      creatives: [],
     } as never);
 
     const { data } = await getWorkspaceState("clworkspace000000000000001");
