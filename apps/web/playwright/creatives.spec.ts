@@ -70,7 +70,7 @@ test.describe("Creatives", () => {
           name: CREATIVE_NAME,
           type: "feedbackButton",
           status: "inProgress",
-          content: { label: { "en-US": BUTTON_LABEL }, icon: null },
+          content: { label: { "en-US": BUTTON_LABEL }, icon: "messageSquare" },
           destination: { type: "survey", surveyId: seeded.surveyId },
         },
       });
