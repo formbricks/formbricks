@@ -1,3 +1,4 @@
+import { CREATIVE_ICON_PATHS } from "./icons";
 import type {
   TBannerPlacement,
   TBannerView,
@@ -97,6 +98,25 @@ const placementCss = (
 };
 
 /**
+ * A two-colour focus ring, visible on any page: the label colour right around the button (it contrasts
+ * with the button), then the button colour around that (it contrasts with the label colour), so
+ * whatever the page behind looks like, one of the two stands out from it. Forced-colors mode drops
+ * shadows and paints the transparent outline in the system focus colour instead.
+ */
+const focusRingCss = ({ textColor, backgroundColor }: TCreativeColors): string =>
+  `box-shadow:0 0 0 2px ${textColor},0 0 0 4px ${backgroundColor}`;
+
+/**
+ * The icon in the label's proportions on the survey button (a 16 px icon 8 px from a 14 px label), in
+ * px. On a side edge it turns with the label: vertical text sets upright glyphs a quarter turn
+ * clockwise, and the whole tab is then turned half a turn.
+ */
+const iconCss = ({ edge }: TFeedbackButtonPlacement, { fontSize }: TCreativeSize): string => {
+  const iconSize = Math.round((fontSize * 8) / 7);
+  return `.fb-creative-button-icon{flex:none;width:${iconSize}px;height:${iconSize}px;transform:${edge === "bottom" ? "none" : "rotate(90deg)"}}`;
+};
+
+/**
  * Desktop values outside the phone media query and phone values inside it (only when they differ), both
  * appearances keyed on `data-appearance`. A forced `device` draws that device's values with no query.
  */
@@ -108,17 +128,21 @@ const feedbackButtonCss = (
   const isPhone = device === "phone";
   const size = isPhone ? element.phone : element.desktop;
   const phonePlacement = position.phone ?? position.desktop;
-  const sizeCss = (placement: TFeedbackButtonPlacement, deviceSize: TCreativeSize): string =>
-    `font-size:${deviceSize.fontSize}px;${placementCss(placement, deviceSize, element.borderRadius)}`;
+  const placement = isPhone ? phonePlacement : position.desktop;
+  const sizeCss = (devicePlacement: TFeedbackButtonPlacement, deviceSize: TCreativeSize): string =>
+    `font-size:${deviceSize.fontSize}px;gap:${Math.round((deviceSize.fontSize * 4) / 7)}px;${placementCss(devicePlacement, deviceSize, element.borderRadius)}`;
 
   return withSharedCss(
     style,
-    `.fb-creative-button{all:initial;box-sizing:border-box;position:fixed;z-index:${Z_INDEX};cursor:pointer;white-space:nowrap;font-family:${style.pageFont ? "inherit" : SURVEY_FONT};font-weight:${element.fontWeight};line-height:1.25;${colorsCss(element.light)};${sizeCss(isPhone ? phonePlacement : position.desktop, size)}}` +
+    `.fb-creative-button{all:initial;box-sizing:border-box;position:fixed;z-index:${Z_INDEX};display:flex;align-items:center;cursor:pointer;white-space:nowrap;font-family:${style.pageFont ? "inherit" : SURVEY_FONT};font-weight:${element.fontWeight};line-height:1.25;${colorsCss(element.light)};${sizeCss(placement, size)}}` +
+      iconCss(placement, size) +
       `.fb-creative-button[data-appearance=dark]{${colorsCss(element.dark)}}` +
-      `.fb-creative-button:focus-visible{outline:2px solid ${element.light.backgroundColor};outline-offset:2px}` +
+      `.fb-creative-button:hover{opacity:.9}.fb-creative-button:active{opacity:.8}` +
+      `.fb-creative-button:focus-visible{outline:2px solid transparent;outline-offset:2px;${focusRingCss(element.light)}}` +
+      `.fb-creative-button[data-appearance=dark]:focus-visible{${focusRingCss(element.dark)}}` +
       (device || (!position.phone && isSameSize(element.desktop, element.phone))
         ? ""
-        : `@media ${CREATIVE_PHONE_MEDIA}{.fb-creative-button{${sizeCss(phonePlacement, element.phone)}}}`)
+        : `@media ${CREATIVE_PHONE_MEDIA}{.fb-creative-button{${sizeCss(phonePlacement, element.phone)}}${iconCss(phonePlacement, element.phone)}}`)
   );
 };
 
@@ -246,21 +270,33 @@ const setAttributes = (element: Element, attributes: Record<string, string>): vo
   for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, value);
 };
 
+/**
+ * A 24 × 24 line icon drawn in the text colour. Decorative: the control it sits in is named by its
+ * text or its `aria-label`, never by the icon.
+ */
+const drawIcon = (doc: Document, d: string, attributes: Record<string, string>): SVGSVGElement => {
+  const icon = doc.createElementNS(SVG_NS, "svg");
+  setAttributes(icon, {
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    "stroke-width": "2",
+    "stroke-linecap": "round",
+    "stroke-linejoin": "round",
+    "aria-hidden": "true",
+    ...attributes,
+  });
+  const path = doc.createElementNS(SVG_NS, "path");
+  path.setAttribute("d", d);
+  icon.append(path);
+  return icon;
+};
+
 /** The dismiss control: an X drawn in the text colour, named "Dismiss" for screen readers. */
 const drawDismiss = (doc: Document, onDismiss: () => void): HTMLButtonElement => {
   const dismiss = drawButton(doc, "fb-creative-banner-dismiss", onDismiss);
   dismiss.setAttribute("aria-label", "Dismiss");
-  const icon = doc.createElementNS(SVG_NS, "svg");
-  setAttributes(icon, { viewBox: "0 0 24 24", width: "16", height: "16", "aria-hidden": "true" });
-  const path = doc.createElementNS(SVG_NS, "path");
-  setAttributes(path, {
-    d: "M18 6 6 18M6 6l12 12",
-    stroke: "currentColor",
-    "stroke-width": "2",
-    "stroke-linecap": "round",
-  });
-  icon.append(path);
-  dismiss.append(icon);
+  dismiss.append(drawIcon(doc, "M18 6 6 18M6 6l12 12", { width: "16", height: "16" }));
   return dismiss;
 };
 
@@ -288,9 +324,13 @@ const drawBanner = (
   return bar;
 };
 
+/** A real button whose accessible name is its label, with the optional icon before it. */
 const drawFeedbackButton = (doc: Document, view: TFeedbackButtonView, onClick: () => void): HTMLElement => {
   const button = drawButton(doc, CREATIVE_ROOT_CLASS.feedbackButton, onClick);
-  button.textContent = view.label;
+  if (view.icon) {
+    button.append(drawIcon(doc, CREATIVE_ICON_PATHS[view.icon], { class: "fb-creative-button-icon" }));
+  }
+  button.append(view.label);
   return button;
 };
 

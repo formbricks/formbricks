@@ -309,7 +309,7 @@ describe("createV3Creative", () => {
       languages: [{ code: "en-US", default: true, enabled: true }],
       destination: { type: "survey", surveyId: APP_SURVEY_ID, surveyName: "Site feedback", opensAs: "popup" },
       distribution: { showOn: "pageView", triggers: [], conditions: null, displayPercentage: null },
-      styling: { position: { desktop: { edge: "right", offset: 50 }, phone: null } },
+      styling: { position: { desktop: { edge: "right", offset: 60 }, phone: null } },
       warnings: [],
     });
   });

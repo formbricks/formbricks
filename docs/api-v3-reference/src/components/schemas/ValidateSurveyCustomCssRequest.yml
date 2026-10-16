@@ -29,6 +29,16 @@ properties:
     description: >-
       Optional, `scope: survey` only. An existing survey, which must belong to `workspaceId`; omit it
       to validate an unsaved draft.
+  creativeType:
+    type: string
+    enum:
+      - feedbackButton
+      - banner
+    description: >-
+      Optional, `scope: survey` only and without `surveyId`. Validates a creative's own Custom CSS
+      (`styling.theme.customCss`) and compiles it for that creative type's root element inside its
+      shadow root, `.fb-creative-button` or `.fb-creative-banner`, instead of the survey root `#fbjs`:
+      the CSS a visitor's browser gets for the creative. Same budget and rules as survey CSS.
   data:
     type: object
     required:

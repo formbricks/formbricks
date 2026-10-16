@@ -2,10 +2,27 @@ import { describe, expect, test } from "vitest";
 import type { TBannerForm, TCreativeEditorForm } from "./editor-form";
 import { getInvalidParamTab, getPublishIssues, getSaveIssues } from "./publish-check";
 
+// Styling has no publish rules; the workspace look is a complete one.
+const workspaceTheme = {
+  customStyles: false,
+  backgroundColor: null,
+  textColor: null,
+  borderColor: null,
+  fontWeight: null,
+  fontSize: { desktop: null, phone: null },
+  paddingX: { desktop: null, phone: null },
+  paddingY: { desktop: null, phone: null },
+};
+
 const readyButton: TCreativeEditorForm = {
   name: "Site feedback",
   content: { type: "feedbackButton", label: "Feedback", icon: "messageSquare" },
   destination: { type: "survey", surveyId: "clsurvey0000000000000001" },
+  styling: {
+    type: "feedbackButton",
+    position: { desktop: { edge: "right", offset: 50 }, phone: null },
+    theme: { ...workspaceTheme, borderRadius: null },
+  },
   schedule: { startAt: null, endAt: null },
 };
 
@@ -20,6 +37,11 @@ const readyBanner: TCreativeEditorForm = {
     accessibleName: "",
   },
   destination: { type: "survey", surveyId: null },
+  styling: {
+    type: "banner",
+    position: { desktop: { placement: "top", layout: "inPage" }, phone: null },
+    theme: workspaceTheme,
+  },
   schedule: { startAt: null, endAt: null },
 };
 
