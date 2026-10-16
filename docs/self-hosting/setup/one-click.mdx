@@ -338,6 +338,12 @@ chmod +x formbricks.sh
 ./formbricks.sh update
 ```
 
+The update also publishes the Formbricks container's port `3000` on `127.0.0.1` only, if your
+`docker-compose.yml` still publishes it on every interface (`- 3000:3000`). Traefik reaches Formbricks over the
+Compose network and keeps serving it on ports `80` and `443`, so outside traffic always passes through Traefik.
+The original file is kept as `docker-compose.yml.before-loopback-port`. Any other mapping you set yourself is left
+as it is.
+
 The script first validates the resolved Compose project and warns — without stopping — when the baseline
 `hub-worker` is missing, then pulls images and runs the read-only AuthZed upgrade check. A failed preflight leaves
 the existing application running.
@@ -425,8 +431,9 @@ For upgrades, restoration, schema changes, and relationship repair, follow the c
 New installations cap request bodies on `/api/auth/*` at 1 MiB in Traefik. An oversized upload to a sign-in or
 OAuth endpoint is refused by Traefik, and a slow one is read in full by Traefik first, so it does not tie up
 Formbricks while it arrives. No legitimate request to these routes comes close to that size. The cap applies to
-requests that go through Traefik, not to ones sent straight to port `3000`. The update command does not add it to
-an existing installation, so add it yourself if you want it.
+requests that go through Traefik, which is every outside request once port `3000` is published on `127.0.0.1` only
+(see [Update](#update)). The update command does not add the cap to an existing installation, so add it yourself
+if you want it.
 
 <Warning>
   These labels need Traefik v3.6.15 or later. Before that version, the buffering middleware turns the empty

@@ -939,6 +939,11 @@ EOT
     exit 1
   fi
 
+  # Step 1a: Traefik is now the only way in, so publish the app's own port on the host's loopback only.
+  if ! bind_formbricks_port_to_loopback "docker-compose.yml"; then
+    exit 1
+  fi
+
   # Step 1b: Add FeedbackRecords gateway labels to the Hub service.
   awk -v domain_name="$domain_name" -v hsts_enabled="$hsts_enabled" -v https_setup="$https_setup" '
 BEGIN { in_hub = 0; inserted = 0 }
@@ -1357,6 +1362,109 @@ migrate_legacy_valkey_image() {
   echo "✅ Updated bundled Valkey to the native amd64/arm64 image. Backup: $backup_file"
 }
 
+# Narrows the formbricks service's published port from `3000:3000` (every interface) to `127.0.0.1:3000:3000`
+# (ENG-3983). In the one-click setup Traefik reaches the app over the Compose network, so the published port is
+# only ever needed on the host itself; on any other interface it is a way around Traefik and everything it
+# enforces (TLS, request limits, the forwarding headers the app trusts). Docker-published ports also skip UFW.
+# Only the bare mapping is rewritten; a host IP or port the operator chose is theirs and is left alone. With
+# "validate" (the update path) the original is backed up and restored if the result does not render.
+bind_formbricks_port_to_loopback() {
+  local compose_file="${1:-docker-compose.yml}"
+  local mode="${2:-}"
+  local backup_file="${compose_file}.before-loopback-port"
+  local temp_file="${compose_file}.tmp"
+
+  if [[ ! -f "$compose_file" ]]; then
+    echo "❌ Cannot narrow the Formbricks port because $compose_file does not exist."
+    return 1
+  fi
+
+  # Prints the file with the formbricks service's bare 3000:3000 published port bound to loopback, and exits 0
+  # when it rewrote one, 2 when there was nothing to rewrite.
+  local rewrite_program='
+    function indentation(line) {
+      match(line, /[^ ]/)
+      return RSTART - 1
+    }
+    /^services:[[:space:]]*$/ {
+      in_services=1
+      service_indent=-1
+      print
+      next
+    }
+    in_services && /^[^[:space:]#]/ {
+      in_services=0
+      in_formbricks=0
+      in_ports=0
+    }
+    in_services && /^[ ]+[A-Za-z0-9_-]+:[[:space:]]*$/ {
+      line_indent=indentation($0)
+      if (service_indent < 0) service_indent=line_indent
+      if (line_indent == service_indent) {
+        in_formbricks=($0 ~ /^[ ]+formbricks:[[:space:]]*$/)
+        in_ports=0
+      }
+    }
+    in_formbricks && /^[ ]+ports:[[:space:]]*$/ {
+      in_ports=1
+      ports_indent=indentation($0)
+      print
+      next
+    }
+    in_ports && /[^[:space:]]/ && indentation($0) <= ports_indent && $0 !~ /^[ ]*-/ { in_ports=0 }
+    in_ports && /^[ ]*-[[:space:]]*/ {
+      match($0, /^[ ]*-[[:space:]]*/)
+      prefix=substr($0, 1, RLENGTH)
+      value=substr($0, RLENGTH + 1)
+      sub(/[[:space:]]+$/, "", value)
+      quote=""
+      if (value ~ /^".*"$/ || value ~ /^\047.*\047$/) {
+        quote=substr(value, 1, 1)
+        value=substr(value, 2, length(value) - 2)
+      }
+      if (value == "3000:3000" || value == "3000:3000/tcp") {
+        suffix=(value == "3000:3000/tcp") ? "/tcp" : ""
+        print prefix quote "127.0.0.1:3000:3000" suffix quote
+        replacements++
+        next
+      }
+    }
+    { print }
+    END { exit(replacements > 0 ? 0 : 2) }
+  '
+
+  # Written into a `cp -p` copy so the result keeps the original's mode: the file holds secrets.
+  local status=0
+  cp -p "$compose_file" "$temp_file"
+  awk "$rewrite_program" "$compose_file" >"$temp_file" || status=$?
+  if [[ $status -eq 2 ]]; then
+    rm -f "$temp_file"
+    return 0
+  fi
+  if [[ $status -ne 0 ]]; then
+    rm -f "$temp_file"
+    echo "❌ Could not narrow the Formbricks port. $compose_file is unchanged."
+    return 1
+  fi
+
+  if [[ "$mode" != "validate" ]]; then
+    mv "$temp_file" "$compose_file"
+    return 0
+  fi
+
+  cp -p "$compose_file" "$backup_file"
+  mv "$temp_file" "$compose_file"
+
+  if ! sudo docker compose -f "$compose_file" config >/dev/null; then
+    cp -p "$backup_file" "$compose_file"
+    echo "❌ The updated Compose file is invalid. Restored $compose_file from $backup_file."
+    return 1
+  fi
+
+  echo "🔒 Formbricks now publishes port 3000 on 127.0.0.1 only. Traefik still serves it on ports 80 and 443."
+  echo "   Backup: $backup_file. If you reach port 3000 from another machine on purpose, restore that line."
+}
+
 # The git ref holding the Cube model that matches the Formbricks image: its release tag when the image is pinned
 # to one, stable for latest. Prints nothing when the image names no single release, such as a digest pin.
 formbricks_release_ref() {
@@ -1507,6 +1615,10 @@ update_formbricks() {
   # Rewrites the operator's Compose file, so it runs only once every check that can stop the update has
   # passed: a failed gate must not leave them a modified file to reason about.
   migrate_legacy_valkey_image docker-compose.yml
+  # A failure here has already restored the original file, so it never holds back the update itself.
+  if ! bind_formbricks_port_to_loopback docker-compose.yml validate; then
+    echo "⚠️ Continuing the update with port 3000 published as before."
+  fi
 
   sudo docker compose pull
   # Preparation is an explicit maintenance operation. Never run target-version
