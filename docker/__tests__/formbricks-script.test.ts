@@ -1123,6 +1123,21 @@ volumes:
 });
 
 describe("docker/formbricks.sh Traefik label injection", () => {
+  test("pins a Traefik whose buffering middleware keeps empty auth redirects", () => {
+    // Before v3.6.15 the auth routers' buffering middleware turned an empty chunked 302, the answer to every
+    // OAuth/SSO callback, into a 500 (traefik#11568). docker/traefik-auth-smoke.sh proves it live.
+    const image = execFileSync(
+      "bash",
+      ["-c", 'source "$1"; printf %s "$traefik_image"', "bash", formbricksScriptPath],
+      { encoding: "utf8" }
+    );
+    const version = /^traefik:v(\d+)\.(\d+)\.(\d+)$/.exec(image);
+
+    expect(version).not.toBeNull();
+    const [major, minor, patch] = (version ?? []).slice(1).map(Number);
+    expect(major * 1_000_000 + minor * 1_000 + patch).toBeGreaterThanOrEqual(3_006_015);
+  });
+
   test("adds HTTPS Traefik labels to the formbricks service only", () => {
     const composePath = writeDockerComposeTemplate();
 

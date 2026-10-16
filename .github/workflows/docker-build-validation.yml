@@ -66,6 +66,9 @@ jobs:
       - name: Run AuthZed application and persistence smoke test
         run: bash docker/authzed-smoke.sh
 
+      - name: Run one-click Traefik auth-route smoke test
+        run: bash docker/traefik-auth-smoke.sh
+
   validate-docker-build:
     name: Validate Docker Build
     runs-on: ubuntu-latest

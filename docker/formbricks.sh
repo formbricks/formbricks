@@ -4,6 +4,10 @@ set -e
 ubuntu_version=$(lsb_release -a 2>/dev/null | grep -v "No LSB modules are available." | grep "Description:" | awk -F "Description:\t" '{print $2}')
 legacy_valkey_image="valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d"
 multi_arch_valkey_image="valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84"
+# v3.6.15 or later: before it, the buffering middleware on the auth routers turned an empty chunked response,
+# such as the redirect every OAuth/SSO callback answers with, into a 500 (traefik#11568, ENG-3977).
+# docker/traefik-auth-smoke.sh runs this image against the installer's labels.
+traefik_image="traefik:v3.6.25"
 
 write_rustfs_init_script() {
   local target_path="${1:-rustfs-init.sh}"
@@ -1086,7 +1090,7 @@ EOF
     if [[ $insert_traefik == "y" ]]; then
       cat >> "$services_snippet_file" << EOF
   traefik:
-    image: "traefik:v3.6.4"
+    image: "${traefik_image}"
     restart: always
     container_name: "traefik"
     depends_on:
@@ -1116,7 +1120,7 @@ EOF
       cat > "$services_snippet_file" << EOF
 
   traefik:
-    image: "traefik:v3.6.4"
+    image: "${traefik_image}"
     restart: always
     container_name: "traefik"
     depends_on:
