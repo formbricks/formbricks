@@ -82,7 +82,11 @@ describe("ensureDefaultOrganization — creating the organization", () => {
       name: "Ada's Organization",
     });
     // v5 needs a workspace: an organization without one drops the user into an unusable instance.
-    expect(createWorkspace).toHaveBeenCalledWith("default-org", { name: "My workspace" });
+    expect(createWorkspace).toHaveBeenCalledWith(
+      "default-org",
+      { name: "My workspace" },
+      { workspaceLimit: null }
+    );
   });
 
   test("owner wins over DEFAULT_ORGANIZATION_ROLE, so the first user can administer the new org", async () => {
