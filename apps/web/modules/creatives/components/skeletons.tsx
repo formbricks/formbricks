@@ -67,33 +67,54 @@ const PanelSkeleton = ({ rows }: Readonly<{ rows: number }>) => (
   </div>
 );
 
+/** The On click panel's two choices: a radio, a title and a line of description each. */
+const RadioCardSkeleton = () => (
+  <div className="flex gap-3 rounded-lg border border-slate-200 p-4">
+    <Bone className="size-4 rounded-full" />
+    <div className="flex-1 space-y-2">
+      <Bone className="h-4 w-28" />
+      <Bone className="h-3 w-48" />
+    </div>
+  </div>
+);
+
+/**
+ * Mirrors `CreativeEditor` on its Content tab: the header bar (back, name, type, status, Save and
+ * Publish), the side column at the editor's widths with its four tabs, the content panels, and the
+ * preview pane with its device toggle and frame.
+ */
 export const CreativeEditorSkeleton = () => (
-  <div className="flex h-full flex-col bg-slate-50">
+  <div className="flex h-full flex-col">
     <div className="flex h-14 shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4">
-      <Bone className="size-8" />
-      <Bone className="h-5 w-48" />
-      <Bone className="h-6 w-32 rounded-full" />
+      <Bone className="size-8 shrink-0" />
+      <Bone className="h-6 w-52 lg:w-64" />
+      <Bone className="hidden h-4 w-28 sm:block" />
+      <Bone className="h-6 w-20 rounded-full" />
       <div className="ml-auto flex gap-2">
         <Bone className="h-9 w-20" />
         <Bone className="h-9 w-28" />
       </div>
     </div>
     <div className="flex min-h-0 flex-1">
-      <div className="w-full shrink-0 border-r border-slate-200 bg-white lg:w-[30rem]">
-        <div className="flex h-12 items-center gap-6 border-b border-slate-200 px-5">
+      <div className="flex w-full shrink-0 flex-col border-r border-slate-200 bg-white lg:w-[30rem] xl:w-[34rem]">
+        <div className="flex h-12 shrink-0 items-center gap-7 border-b border-slate-200 px-6">
           {Array.from({ length: 4 }, (_, index) => (
             <Bone key={index} className="h-4 w-20" />
           ))}
         </div>
-        <div className="space-y-4 bg-slate-50 p-5">
+        <div className="min-h-0 flex-1 space-y-4 bg-slate-50 p-5">
           <PanelSkeleton rows={2} />
-          <PanelSkeleton rows={1} />
+          <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
+            <Bone className="h-4 w-20" />
+            <RadioCardSkeleton />
+            <RadioCardSkeleton />
+          </div>
         </div>
       </div>
-      <div className="hidden flex-1 flex-col gap-4 p-6 lg:flex">
-        <div className="flex justify-between">
+      <div className="hidden min-w-0 flex-1 flex-col gap-4 bg-slate-100/70 p-6 lg:flex">
+        <div className="flex items-center justify-between">
           <Bone className="h-5 w-28" />
-          <Bone className="h-8 w-20 rounded-lg" />
+          <Bone className="h-9 w-24 rounded-lg" />
         </div>
         <Bone className="flex-1 rounded-xl" />
       </div>

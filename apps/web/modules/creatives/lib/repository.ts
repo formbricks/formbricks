@@ -181,6 +181,21 @@ export const lockDestinationSurvey = async (
   return tx.survey.findFirst({ where: { id: surveyId, workspaceId }, select: destinationSurveySelect });
 };
 
+/** How many surveys the editor's On click picker lists, most recently updated first. */
+const DESTINATION_SURVEY_CANDIDATE_LIMIT = 500;
+
+/**
+ * The workspace's unarchived surveys with the facts the Destination rule reads, for the editor's picker
+ * (`destination-options.ts` decides which it offers). Served by the `(workspaceId, updatedAt)` index.
+ */
+export const findDestinationSurveyCandidates = (workspaceId: string): Promise<TDestinationSurveyFacts[]> =>
+  prisma.survey.findMany({
+    where: { workspaceId, archivedAt: null },
+    select: destinationSurveySelect,
+    orderBy: { updatedAt: "desc" },
+    take: DESTINATION_SURVEY_CANDIDATE_LIMIT,
+  });
+
 export const findWorkspaceActionClassIds = async (
   tx: TCreativeTx,
   workspaceId: string,
