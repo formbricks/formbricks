@@ -420,6 +420,74 @@ stores both Formbricks and SpiceDB data.
 For upgrades, restoration, schema changes, and relationship repair, follow the canonical
 [AuthZed Operations guide](/self-hosting/configuration/authzed-operations).
 
+### Limit request bodies on authentication routes
+
+New installations cap request bodies on `/api/auth/*` at 1 MiB in Traefik. An oversized upload to a sign-in or
+OAuth endpoint is refused by Traefik, and a slow one is read in full by Traefik first, so it does not tie up
+Formbricks while it arrives. No legitimate request to these routes comes close to that size. The cap applies to
+requests that go through Traefik, not to ones sent straight to port `3000`. The update command does not add it to
+an existing installation, so add it yourself if you want it.
+
+<Warning>
+  These labels need Traefik v3.6.15 or later. Before that version, the buffering middleware turns the empty
+  redirects that sign-in and SSO callbacks answer with into errors (a `500` or a timeout), so nobody can sign in;
+  Traefik v2.7 also lets paths such as `/x/../api/auth/...` skip the cap. Check the `image: traefik:` line in
+  `formbricks/docker-compose.yml` and upgrade Traefik first (new installations use v3.6.25). From Traefik v2,
+  follow the [v2 to v3 migration guide](https://doc.traefik.io/traefik/migration/v2-to-v3/).
+</Warning>
+
+Since v3.6.7, Traefik accepts encoded characters such as `%2F` in request paths, which would let a request reach
+`/api/auth/*` without passing through these routers. In `formbricks/traefik.yaml`, add this block under `http:` of
+both the `web` and the `websecure` entry point (create `http:` under `web` if it has none). New installations
+already have it.
+
+```yaml
+encodedCharacters:
+  allowEncodedSlash: false
+  allowEncodedBackSlash: false
+  allowEncodedNullCharacter: false
+  allowEncodedSemicolon: false
+  allowEncodedPercent: false
+  allowEncodedQuestionMark: false
+  allowEncodedHash: false
+```
+
+In `formbricks/docker-compose.yml`, add these lines to the `labels` of the `formbricks` service, replacing
+`your-domain.com` with your domain:
+
+```yaml
+- "traefik.http.middlewares.auth-body-limit.buffering.maxRequestBodyBytes=1048576"
+- "traefik.http.middlewares.auth-body-limit.buffering.memRequestBodyBytes=1048576"
+- "traefik.http.routers.formbricks-auth.rule=Host(`your-domain.com`) && PathPrefix(`/api/auth`)"
+- "traefik.http.routers.formbricks-auth.entrypoints=websecure"
+- "traefik.http.routers.formbricks-auth.tls=true"
+- "traefik.http.routers.formbricks-auth.service=formbricks"
+- "traefik.http.routers.formbricks-auth.priority=1000"
+- "traefik.http.routers.formbricks-auth.middlewares=auth-body-limit"
+```
+
+Copy the `tls.certresolver` line from your existing `formbricks` router as well, with the router name changed
+to `formbricks-auth`. If your installation also has a `formbricks_http` router (HSTS disabled), add these lines
+too, or plain-HTTP requests to `/api/auth/*` stay uncapped:
+
+```yaml
+- "traefik.http.routers.formbricks-auth-http.rule=Host(`your-domain.com`) && PathPrefix(`/api/auth`)"
+- "traefik.http.routers.formbricks-auth-http.entrypoints=web"
+- "traefik.http.routers.formbricks-auth-http.service=formbricks"
+- "traefik.http.routers.formbricks-auth-http.priority=1000"
+- "traefik.http.routers.formbricks-auth-http.middlewares=auth-body-limit"
+```
+
+Then apply the changes from the `formbricks` directory. Traefik only reads `traefik.yaml` when it starts, hence the
+restart:
+
+```bash
+docker compose up -d formbricks traefik
+docker compose restart traefik
+```
+
+A request to `/api/auth/*` with a body over 1 MiB now gets `413 Request Entity Too Large` from Traefik.
+
 ## Stop
 
 To stop Formbricks, simply run the following command:
