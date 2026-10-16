@@ -31,20 +31,6 @@ export const WorkspaceLookSettingsLoading = () => {
         <div className="flex animate-pulse">
           <div className="w-1/2">
             <div className="flex flex-col gap-4 pr-6">
-              <div className="flex flex-col gap-4 rounded-lg bg-slate-50 p-4">
-                <div className="flex items-center gap-6">
-                  <Switch />
-                  <div className="flex flex-col">
-                    <h3 className="text-sm font-semibold text-slate-700">
-                      {t("workspace.look.enable_custom_styling")}
-                    </h3>
-                    <p className="text-xs text-slate-500">
-                      {t("workspace.look.enable_custom_styling_description")}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
               <div className="flex flex-col gap-3 bg-slate-50 p-4">
                 <div className="w-full rounded-lg border border-slate-300 bg-white">
                   <div className="flex flex-col p-4">
@@ -78,6 +64,23 @@ export const WorkspaceLookSettingsLoading = () => {
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
                       {t("workspace.surveys.edit.change_the_background_to_a_color_image_or_animation")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 rounded-lg bg-slate-50 p-4">
+                <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                  {t("workspace.look.survey_overrides")}
+                </p>
+                <div className="flex items-start gap-3">
+                  <Switch className="mt-0.5" />
+                  <div className="flex flex-col">
+                    <h3 className="text-sm font-semibold text-slate-700">
+                      {t("workspace.look.allow_survey_level_styling")}
+                    </h3>
+                    <p className="mt-1 text-xs text-slate-500">
+                      {t("workspace.look.allow_survey_level_styling_description")}
                     </p>
                   </div>
                 </div>

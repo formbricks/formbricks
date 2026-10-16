@@ -427,6 +427,9 @@ model Survey {
   attributeFilters    SurveyAttributeFilter[]
   displays            Display[]
   autoClose           Int?
+  // Keep the ending card of an app survey open until the respondent closes it, instead of
+  // closing the widget 3 seconds after the ending card is shown (WCAG 2.2.1).
+  keepEndingCardOpen  Boolean                 @default(false)
   autoComplete        Int?
   delay               Int                     @default(0)
   publishOn           DateTime?

@@ -1383,6 +1383,84 @@ describe("docker/formbricks.sh Cube model refresh (ENG-3951)", () => {
 });
 
 describe("docker/formbricks.sh Traefik label injection", () => {
+  test("pins a Traefik whose buffering middleware keeps empty auth redirects", () => {
+    // Before v3.6.15 the auth routers' buffering middleware turned an empty chunked 302, the answer to every
+    // OAuth/SSO callback, into a 500 (traefik#11568). docker/traefik-auth-smoke.sh proves it live.
+    const image = execFileSync(
+      "bash",
+      ["-c", 'source "$1"; printf %s "$traefik_image"', "bash", formbricksScriptPath],
+      { encoding: "utf8" }
+    );
+    const version = /^traefik:v(\d+)\.(\d+)\.(\d+)$/.exec(image);
+
+    expect(version).not.toBeNull();
+    const [major, minor, patch] = (version ?? []).slice(1).map(Number);
+    expect(major * 1_000_000 + minor * 1_000 + patch).toBeGreaterThanOrEqual(3_006_015);
+  });
+
+  test.each([
+    ["y", "y"],
+    ["y", "n"],
+    ["n", "y"],
+    ["n", "n"],
+  ])("writes a static config that refuses encoded path characters (HSTS %s, HTTPS %s)", (hsts, https) => {
+    const configPath = join(createTempDir(), "traefik.yaml");
+    execFileSync(
+      "bash",
+      [
+        "-c",
+        'source "$1"; write_traefik_config "$2" "$3" "$4" ops@example.com',
+        "bash",
+        formbricksScriptPath,
+        configPath,
+        hsts,
+        https,
+      ],
+      { encoding: "utf8" }
+    );
+    type EntryPointHttp = {
+      encodedCharacters?: Record<string, boolean>;
+      redirections?: { entryPoint: { to: string } };
+      middlewares?: string[];
+      tls?: { certResolver?: string };
+    };
+    type EntryPoint = {
+      http: EntryPointHttp;
+      transport: { respondingTimeouts: { readTimeout: string } };
+    };
+    const config = load(readFileSync(configPath, "utf8")) as {
+      entryPoints: { web: EntryPoint; websecure: EntryPoint };
+      providers: { docker: { exposedByDefault: boolean }; file: { directory: string } };
+      certificatesResolvers?: { default: { acme: { email: string } } };
+    };
+    const { web, websecure } = config.entryPoints;
+
+    // The read timeout is what bounds how long a slow sender can hold the auth routers' buffer.
+    expect(web.transport.respondingTimeouts.readTimeout).toBe("60s");
+    expect(websecure.transport.respondingTimeouts.readTimeout).toBe("60s");
+    expect(config.providers.docker.exposedByDefault).toBe(false);
+    expect(config.providers.file.directory).toBe("/");
+
+    // Traefik refused all seven by default until v3.6.7; the installer keeps refusing them on both entry points.
+    for (const entryPoint of [web.http, websecure.http]) {
+      expect(entryPoint.encodedCharacters).toEqual({
+        allowEncodedSlash: false,
+        allowEncodedBackSlash: false,
+        allowEncodedNullCharacter: false,
+        allowEncodedSemicolon: false,
+        allowEncodedPercent: false,
+        allowEncodedQuestionMark: false,
+        allowEncodedHash: false,
+      });
+    }
+    expect(web.http.redirections?.entryPoint.to).toBe(hsts === "y" ? "websecure" : undefined);
+    expect(websecure.http.middlewares).toEqual(hsts === "y" ? ["hstsHeader"] : undefined);
+    expect(websecure.http.tls?.certResolver).toBe(https === "y" ? "default" : undefined);
+    expect(config.certificatesResolvers?.default.acme.email).toBe(
+      https === "y" ? "ops@example.com" : undefined
+    );
+  });
+
   test("adds HTTPS Traefik labels to the formbricks service only", () => {
     const composePath = writeDockerComposeTemplate();
 
@@ -1418,6 +1496,26 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(formbricksBlock).toContain("traefik.http.routers.feedback-records-token.tls.certresolver=default");
     expect(formbricksBlock).toContain("traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000");
     expect(formbricksBlock).not.toContain("traefik.http.routers.formbricks_http.entrypoints=web");
+    expect(formbricksBlock).toContain(
+      "traefik.http.middlewares.auth-body-limit.buffering.maxRequestBodyBytes=1048576"
+    );
+    expect(formbricksBlock).toContain(
+      "traefik.http.middlewares.auth-body-limit.buffering.memRequestBodyBytes=1048576"
+    );
+    expect(formbricksBlock).toContain(
+      "traefik.http.routers.formbricks-auth.rule=Host(`example.com`) && PathPrefix(`/api/auth`)"
+    );
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.priority=1000");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.entrypoints=websecure");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.tls.certresolver=default");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.service=formbricks");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.middlewares=auth-body-limit");
+    expect(formbricksBlock).not.toContain("formbricks-auth-http");
+
+    const compose = load(composeContents) as { services: { formbricks: { labels: string[] } } };
+    expect(compose.services.formbricks.labels).toContain(
+      "traefik.http.routers.formbricks-auth.rule=Host(`example.com`) && PathPrefix(`/api/auth`)"
+    );
   });
 
   test("omits ACME certresolver labels when HTTPS setup is disabled", () => {
@@ -1431,8 +1529,11 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks.entrypoints=websecure");
     expect(formbricksBlock).toContain("traefik.http.routers.formbricks.tls=true");
     expect(formbricksBlock).toContain("traefik.http.routers.feedback-records-token.tls=true");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.tls=true");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.middlewares=auth-body-limit");
     expect(formbricksBlock).toContain("traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000");
     expect(formbricksBlock).not.toContain("tls.certresolver=default");
+    expect(formbricksBlock).not.toContain("formbricks-auth-http");
   });
 
   test("adds HTTP fallback labels when HSTS is disabled", () => {
@@ -1451,8 +1552,35 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(formbricksBlock).toContain(
       "traefik.http.routers.feedback-records-token-http.rule=Host(`example.com`) && Path(`/api/v3/feedbackRecords/token`)"
     );
+    expect(formbricksBlock).toContain(
+      "traefik.http.routers.formbricks-auth-http.rule=Host(`example.com`) && PathPrefix(`/api/auth`)"
+    );
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth-http.entrypoints=web");
+    expect(formbricksBlock).toContain(
+      "traefik.http.routers.formbricks-auth-http.middlewares=auth-body-limit"
+    );
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth-http.priority=1000");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth-http.service=formbricks");
+    expect(formbricksBlock).not.toContain("formbricks-auth-http.tls");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.middlewares=auth-body-limit");
     expect(formbricksBlock).not.toContain("tls.certresolver=default");
     expect(formbricksBlock).not.toContain("traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000");
+  });
+
+  test("caps auth bodies on both entrypoints when HTTPS is on and HSTS is off", () => {
+    const composePath = writeDockerComposeTemplate();
+
+    addFormbricksTraefikLabels(composePath, "n", "y");
+
+    const formbricksBlock = getServiceBlock(readFileSync(composePath, "utf8"), "formbricks");
+
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.tls.certresolver=default");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth.middlewares=auth-body-limit");
+    expect(formbricksBlock).toContain("traefik.http.routers.formbricks-auth-http.entrypoints=web");
+    expect(formbricksBlock).toContain(
+      "traefik.http.routers.formbricks-auth-http.middlewares=auth-body-limit"
+    );
+    expect(formbricksBlock).not.toContain("formbricks-auth-http.tls");
   });
 
   test("fails when the formbricks service insertion point is missing", () => {

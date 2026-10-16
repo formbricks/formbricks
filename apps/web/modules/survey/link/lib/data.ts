@@ -37,6 +37,7 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
         recontactDays: true,
         displayLimit: true,
         autoClose: true,
+        keepEndingCardOpen: true,
         delay: true,
         displayPercentage: true,
         autoComplete: true,

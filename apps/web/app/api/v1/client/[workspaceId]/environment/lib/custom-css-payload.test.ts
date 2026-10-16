@@ -95,7 +95,7 @@ const survey = (index: number) => ({
   languages: [],
   endings: [],
   autoClose: null,
-  // "Add custom styles" on, so each survey's own CSS is delivered (ENG-3723).
+  // "Use custom styling for this survey" on, so each survey's own CSS is delivered (ENG-3723).
   styling: { overwriteThemeStyling: true },
   recaptcha: { enabled: false },
   segment: null,

@@ -35,7 +35,7 @@ import { rejectInactiveUserOnSessionCreate } from "./better-auth-active-user-gat
 import { runAfterEmailVerificationHooks } from "./better-auth-email-verification";
 import { hibpBreachCheckBeforeHandler } from "./better-auth-hibp";
 import { lastActivePlugin, recordActivityOnSessionUpdate } from "./better-auth-last-active";
-import { auditPasswordReset, betterAuthLogger, signInAuditDatabaseHook } from "./better-auth-observability";
+import { auditPasswordReset, betterAuthLogger, signInAuditPlugin } from "./better-auth-observability";
 import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
 import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
@@ -312,20 +312,17 @@ export const auth = betterAuth({
 
   // SSO sign-up flow — email-verification, identity denormalization, and JIT provisioning
   // (gate + writes) re-expressed as Better Auth database hooks (design doc §13). Verify-before-link
-  // recovery is the remaining Phase 5c work. The session hook composes the isActive gate (reject
+  // recovery is the remaining Phase 5c work. The session hook is the isActive gate (reject
   // deactivated users before a session is created — parity with authOptions, covers every sign-in
-  // path) with the Phase 7 `signedIn` success audit, and records every session renewal as the user's
-  // last activity (`User.lastActiveAt`, the data retention members clock; a completed sign-in is
-  // recorded by `lastActivePlugin`, below). Each `after` swallows its own failures, so neither can fail
-  // the other or the sign-in.
+  // path), and records every session renewal as the user's last activity (`User.lastActiveAt`, the data
+  // retention members clock). A completed sign-in is recorded by plugins below, not here: a session
+  // created here may still be withdrawn by the two-factor plugin (ENG-3271) — the `signedIn` audit by
+  // `signInAuditPlugin`, the activity by `lastActivePlugin`.
   databaseHooks: {
     ...ssoDatabaseHooks,
     session: {
       create: {
         before: rejectInactiveUserOnSessionCreate,
-        after: async (session, context) => {
-          await signInAuditDatabaseHook.create?.after?.(session, context);
-        },
       },
       update: {
         after: recordActivityOnSessionUpdate,
@@ -436,9 +433,12 @@ export const auth = betterAuth({
         audience: getMcpResourceUrl(),
       },
     }),
-    // Options extracted to mcp-oauth-provider-options.ts so the DCR/authorize scope semantics are
-    // integration-testable against a throwaway Better Auth instance.
-    oauthProvider(getMcpOauthProviderOptions()),
+    // twoFactor() MUST come before every plugin whose after hook acts on the session a request set:
+    // Better Auth runs plugin after hooks in list order (the root `hooks.after` runs before all of them,
+    // so it gets no such guarantee), and for a user with 2FA a correct password alone sets a session
+    // that twoFactor()'s after hook then withdraws until the second factor arrives. Ahead of it,
+    // oauthProvider() resumed a pending MCP authorization with that session and minted an authorization
+    // code for a password alone (ENG-3933).
     // TOTP + backup codes, matched to the current otplib setup (6 digits / 30s) and 10 encrypted
     // backup codes. Trusted-device is left off (never passed client-side) so 2FA is required every
     // login — strict parity. Cutover work (Phase 7): migrate secrets/backup codes out of
@@ -450,14 +450,21 @@ export const auth = betterAuth({
       totpOptions: { digits: 6, period: 30 },
       backupCodeOptions: { amount: 10, length: 10, storeBackupCodes: "encrypted" },
     }),
+    // Options extracted to mcp-oauth-provider-options.ts so the DCR/authorize scope semantics are
+    // integration-testable against a throwaway Better Auth instance.
+    oauthProvider(getMcpOauthProviderOptions()),
     // SSO via generic OAuth (Azure/OIDC + the BoxyHQ SAML bridge); empty config when no license or
     // providers are configured. The account-linking/provisioning hooks are a separate reviewed pass.
     genericOAuth({ config: ssoGenericOAuthConfig }),
     // SSO-recovery magic-link sign-in — the BA replacement for the "token" provider's sso_recovery
     // path (recovery-scoped, not a general magic-link). See better-auth-recovery-signin.ts.
     ssoRecoverySignInPlugin,
+    // The `signedIn` audit and `lastLoginAt`, from the session a sign-in really ends with. MUST come
+    // after twoFactor(), whose after hook withdraws the session a password alone created while 2FA is
+    // pending (ENG-3271).
+    signInAuditPlugin,
     // Records a completed sign-in as the user's last activity (the members retention clock). After
-    // twoFactor(), whose after hook drops the session a password alone created while 2FA is pending.
+    // twoFactor(), for the same reason.
     lastActivePlugin,
     // nextCookies MUST remain the last plugin so server-action sign-in/out can set cookies.
     nextCookies(),

@@ -4,6 +4,10 @@ set -e
 ubuntu_version=$(lsb_release -a 2>/dev/null | grep -v "No LSB modules are available." | grep "Description:" | awk -F "Description:\t" '{print $2}')
 legacy_valkey_image="valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d"
 multi_arch_valkey_image="valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84"
+# v3.6.15 or later: before it, the buffering middleware on the auth routers turned an empty chunked response,
+# such as the redirect every OAuth/SSO callback answers with, into a 500 (traefik#11568, ENG-3977).
+# docker/traefik-auth-smoke.sh runs this image with the installer's static config and labels.
+traefik_image="traefik:v3.6.25"
 stable_docker_files_url="https://raw.githubusercontent.com/formbricks/formbricks/stable/docker"
 # Cube reads its model from these files, bind-mounted out of the installation directory.
 bundled_cube_files=("cube/cube.js" "cube/schema/FeedbackRecords.js")
@@ -372,6 +376,80 @@ write_base_env_file() {
   write_generated_env_file "$env_file" "" "$hub_key" "$cube_secret" "$authzed_token" "$authzed_database_password"
 }
 
+# Writes Traefik's static configuration. Both entry points refuse every encoded character Traefik can screen
+# request paths for, as Traefik itself did by default until v3.6.7, and as its docs advise whenever a backend may
+# decode them: otherwise a router matches one path and the backend acts on another. An encoded slash, for one,
+# carried /api%2Fauth/... past the auth routers and their body cap (ENG-3977).
+write_traefik_config() {
+  local target_path="$1"
+  local hsts_enabled="$2"
+  local https_setup="$3"
+  local email_address="$4"
+  local http_redirection=""
+  local hsts_middlewares=""
+  local cert_resolver=""
+  local certificates_resolvers=""
+  local encoded_characters="encodedCharacters:
+        allowEncodedSlash: false
+        allowEncodedBackSlash: false
+        allowEncodedNullCharacter: false
+        allowEncodedSemicolon: false
+        allowEncodedPercent: false
+        allowEncodedQuestionMark: false
+        allowEncodedHash: false"
+
+  if [[ $hsts_enabled == "y" ]]; then
+    hsts_middlewares="middlewares:
+        - hstsHeader"
+    http_redirection="redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true"
+  fi
+
+  if [[ $https_setup == "y" ]]; then
+    cert_resolver="certResolver: default"
+    certificates_resolvers="certificatesResolvers:
+  default:
+    acme:
+      email: $email_address
+      storage: acme.json
+      caServer: "https://acme-v02.api.letsencrypt.org/directory"
+      tlsChallenge: {}"
+  fi
+
+  cat <<EOT >"$target_path"
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      $http_redirection
+      $encoded_characters
+    transport:
+      respondingTimeouts:
+        readTimeout: 60s
+  websecure:
+    address: ":443"
+    transport:
+      respondingTimeouts:
+        readTimeout: 60s
+    http:
+      tls:
+        $cert_resolver
+        options: default
+      $hsts_middlewares
+      $encoded_characters
+providers:
+  docker:
+    watch: true
+    exposedByDefault: false
+  file:
+    directory: /
+$certificates_resolvers
+EOT
+}
+
 add_formbricks_traefik_labels() {
   local compose_file="${1:-docker-compose.yml}"
   local formbricks_domain_name="$2"
@@ -402,6 +480,24 @@ in_formbricks && /^  [A-Za-z0-9_-]+:/ && !/^  formbricks:$/ { in_formbricks = 0 
         }
         print "      - \"traefik.http.routers.feedback-records-token.service=formbricks\""
         print "      - \"traefik.http.routers.feedback-records-token.priority=200\""
+        # Every /api/auth/* route answers anonymous callers, so Traefik refuses a request body over 1 MiB before it
+        # reaches the app (ENG-3977): an edge ceiling, set above the 256 KiB auth limit in the app (ENG-3846). The
+        # buffering middleware reads the whole request first (413 past maxRequestBodyBytes), so a slow sender ties
+        # up Traefik, bounded by the entrypoint readTimeout, instead of the app. The in-memory request threshold is
+        # pinned to the same 1 MiB, so no accepted request body spills to disk. Only auth routes get it (the imports
+        # take up to 16 MiB). Priority 1000 beats the catch-all, whose default priority is the length of its Host()
+        # rule: at most 261, for a 253-character domain.
+        print "      - \"traefik.http.middlewares.auth-body-limit.buffering.maxRequestBodyBytes=1048576\""
+        print "      - \"traefik.http.middlewares.auth-body-limit.buffering.memRequestBodyBytes=1048576\""
+        print "      - \"traefik.http.routers.formbricks-auth.rule=Host(`" domain_name "`) && PathPrefix(`/api/auth`)\""
+        print "      - \"traefik.http.routers.formbricks-auth.entrypoints=websecure\""
+        print "      - \"traefik.http.routers.formbricks-auth.tls=true\""
+        if (https_setup == "y") {
+            print "      - \"traefik.http.routers.formbricks-auth.tls.certresolver=default\""
+        }
+        print "      - \"traefik.http.routers.formbricks-auth.service=formbricks\""
+        print "      - \"traefik.http.routers.formbricks-auth.priority=1000\""
+        print "      - \"traefik.http.routers.formbricks-auth.middlewares=auth-body-limit\""
         if (hsts_enabled == "y") {
             print "      - \"traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000\""
             print "      - \"traefik.http.middlewares.hstsHeader.headers.forceSTSHeader=true\""
@@ -414,6 +510,11 @@ in_formbricks && /^  [A-Za-z0-9_-]+:/ && !/^  formbricks:$/ { in_formbricks = 0 
             print "      - \"traefik.http.routers.feedback-records-token-http.entrypoints=web\""
             print "      - \"traefik.http.routers.feedback-records-token-http.service=formbricks\""
             print "      - \"traefik.http.routers.feedback-records-token-http.priority=200\""
+            print "      - \"traefik.http.routers.formbricks-auth-http.rule=Host(`" domain_name "`) && PathPrefix(`/api/auth`)\""
+            print "      - \"traefik.http.routers.formbricks-auth-http.entrypoints=web\""
+            print "      - \"traefik.http.routers.formbricks-auth-http.service=formbricks\""
+            print "      - \"traefik.http.routers.formbricks-auth-http.priority=1000\""
+            print "      - \"traefik.http.routers.formbricks-auth-http.middlewares=auth-body-limit\""
         }
         inserted = 1
     }
@@ -594,60 +695,7 @@ install_formbricks() {
   # Installing Traefik
   echo "🚗 Configuring Traefik..."
 
-  if [[ $hsts_enabled == "y" ]]; then
-    hsts_middlewares="middlewares:
-        - hstsHeader"
-    http_redirection="http:
-      redirections:
-        entryPoint:
-          to: websecure
-          scheme: https
-          permanent: true"
-  else
-    hsts_middlewares=""
-    http_redirection=""
-  fi
-
-  if [[ $https_setup == "y" ]]; then
-    certResolver="certResolver: default"
-    certificates_resolvers="certificatesResolvers:
-  default:
-    acme:
-      email: $email_address
-      storage: acme.json
-      caServer: "https://acme-v02.api.letsencrypt.org/directory"
-      tlsChallenge: {}"
-  else
-    certResolver=""
-    certificates_resolvers=""
-  fi
-
-  cat <<EOT >traefik.yaml
-entryPoints:
-  web:
-    address: ":80"
-    $http_redirection
-    transport:
-      respondingTimeouts:
-        readTimeout: 60s
-  websecure:
-    address: ":443"
-    transport:
-      respondingTimeouts:
-        readTimeout: 60s
-    http:
-      tls:
-        $certResolver
-        options: default
-      $hsts_middlewares
-providers:
-  docker:
-    watch: true
-    exposedByDefault: false
-  file:
-    directory: /
-$certificates_resolvers
-EOT
+  write_traefik_config traefik.yaml "$hsts_enabled" "$https_setup" "$email_address"
 
   cat <<EOT >traefik-dynamic.yaml
 # configuring min TLS version
@@ -1067,7 +1115,7 @@ EOF
     if [[ $insert_traefik == "y" ]]; then
       cat >> "$services_snippet_file" << EOF
   traefik:
-    image: "traefik:v3.6.4"
+    image: "${traefik_image}"
     restart: always
     container_name: "traefik"
     depends_on:
@@ -1097,7 +1145,7 @@ EOF
       cat > "$services_snippet_file" << EOF
 
   traefik:
-    image: "traefik:v3.6.4"
+    image: "${traefik_image}"
     restart: always
     container_name: "traefik"
     depends_on:

@@ -21,15 +21,15 @@ vi.mock("@/modules/auth/lib/utils", async (importOriginal) => {
 
 /**
  * Integration coverage for the Phase 7 observability parity (ENG-1054) against real Postgres: a
- * successful Better Auth sign-in emits the same `signedIn` audit event the NextAuth route did, via the
- * session.create.after database hook (better-auth-observability.ts).
+ * successful Better Auth sign-in emits the same `signedIn` audit event the NextAuth route did, via
+ * `signInAuditPlugin` (better-auth-observability.ts).
  */
 beforeEach(async () => {
   await resetDb();
   vi.clearAllMocks();
 });
 
-describe("Observability — signedIn audit on session creation (real Postgres)", () => {
+describe("Observability — signedIn audit on a completed sign-in (real Postgres)", () => {
   test("a successful password sign-in emits a signedIn success audit event", async () => {
     const password = "Observe-Me1!";
     const user = await prisma.user.create({
