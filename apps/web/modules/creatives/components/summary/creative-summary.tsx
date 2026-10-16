@@ -18,11 +18,8 @@ import { Button } from "@/modules/ui/components/button";
 import { IconBar } from "@/modules/ui/components/iconbar";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import {
-  useChangeCreativeStatus,
-  useCreativeStats,
-  useSummaryCreative,
-} from "../../hooks/use-creative-summary";
+import { useCreativeResource, useUpdateCreative } from "../../hooks/use-creative-editor";
+import { useCreativeStats } from "../../hooks/use-creative-summary";
 import type { TCreativeResource } from "../../lib/editor-form";
 import { getCreativeEditPath } from "../../lib/paths";
 import {
@@ -34,6 +31,7 @@ import {
   getSummaryStatusControl,
   resolveCreativeStatsRange,
 } from "../../lib/summary";
+import { getUiLocale } from "../../lib/ui-locale";
 import { CreativeTypeIndicator, INDICATOR_TYPES } from "../creative-icons";
 import { CreativeStatusPill } from "../creative-status-pill";
 import { CreativeSummaryStatsSkeleton } from "../skeletons";
@@ -46,7 +44,7 @@ const SCHEDULE_OPTIONS: Intl.DateTimeFormatOptions = { dateStyle: "medium", time
 /** What it opens and when it shows, under the title where the survey summary has its tabs. */
 const CreativeFacts = ({ creative }: Readonly<{ creative: TCreativeResource }>) => {
   const { t, i18n } = useTranslation();
-  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+  const locale = getUiLocale(i18n);
   const { destination, schedule } = creative;
   const formatAt = (at: string) => formatDateTimeForDisplay(new Date(at), locale, SCHEDULE_OPTIONS);
 
@@ -90,13 +88,13 @@ export const CreativeSummary = ({
 }: Readonly<CreativeSummaryProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
-  const { data: creative, refetch: refetchCreative } = useSummaryCreative(initialCreative);
+  const { data: creative, refetch: refetchCreative } = useCreativeResource(initialCreative);
   const [selection, setSelection] = useState<TCreativeStatsRangeSelection>({ preset: "last 30 days" });
   // When "today" is: set on load and whenever a range is picked, so a rolling preset follows the UTC day.
   const [now, setNow] = useState(() => new Date());
   const range = resolveCreativeStatsRange(selection, now);
   const stats = useCreativeStats(creative.id, buildCreativeStatsSearchParams(selection, now).toString());
-  const statusChange = useChangeCreativeStatus(creative.id);
+  const statusChange = useUpdateCreative(creative.id);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const fallbackError = t("common.something_went_wrong_please_try_again");
 
@@ -110,14 +108,17 @@ export const CreativeSummary = ({
   };
 
   const changeStatus = (status: TSummaryStatus) =>
-    statusChange.mutate(status, {
-      onSuccess: (updated) => {
-        const outcome = getStatusChangeOutcome(status, updated);
-        if (outcome.kind === "success") toast.success(outcomeMessages[outcome.message]);
-        else toast(outcomeMessages[outcome.message], { duration: 6000 });
-      },
-      onError: (error) => toast.error(getV3ApiErrorMessage(error, fallbackError)),
-    });
+    statusChange.mutate(
+      { status },
+      {
+        onSuccess: (updated) => {
+          const outcome = getStatusChangeOutcome(status, updated);
+          if (outcome.kind === "success") toast.success(outcomeMessages[outcome.message]);
+          else toast(outcomeMessages[outcome.message], { duration: 6000 });
+        },
+        onError: (error) => toast.error(getV3ApiErrorMessage(error, fallbackError)),
+      }
+    );
 
   const refresh = async () => {
     setIsRefreshing(true);

@@ -17,18 +17,29 @@ const NO_CREATIVES: TSurveyLinkedCreative[] = [];
 
 type TSurveyRef = Readonly<{ workspaceId: string; surveyId: string }>;
 
+// How long creatives a page read on the server count as fresh: no second fetch on load, and a later
+// focus or remount still picks up creatives linked elsewhere since.
+const SERVER_LOADED_STALE_TIME_MS = 60_000;
+
 /**
  * The creatives that open the survey. Empty while loading or when they can't be read: every screen
- * using it only adds an explanation or locks a switch the server guards anyway.
+ * using it only adds an explanation or locks a switch the server guards anyway. A page that read them
+ * on the server (`getSurveyLinkedCreatives`) passes them as `initialData`.
  */
 export const useSurveyLinkedCreatives = ({
   workspaceId,
   surveyId,
   enabled = true,
+  initialData,
 }: TSurveyRef & {
   enabled?: boolean;
+  initialData?: TSurveyLinkedCreative[];
 }): TSurveyLinkedCreative[] => {
-  const { data } = useQuery({ ...surveyLinkedCreativesQuery({ workspaceId, surveyId }), enabled });
+  const { data } = useQuery({
+    ...surveyLinkedCreativesQuery({ workspaceId, surveyId }),
+    enabled,
+    ...(initialData && { initialData, staleTime: SERVER_LOADED_STALE_TIME_MS }),
+  });
   return data ?? NO_CREATIVES;
 };
 

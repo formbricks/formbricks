@@ -28,6 +28,8 @@ import { type TStylingAppearance } from "@/lib/styling/dark-mode";
 import type { TSurveyAccess } from "@/lib/survey/visibility/access";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { useDocumentVisibility } from "@/lib/useDocumentVisibility";
+import { useSurveyLinkedCreatives } from "@/modules/creatives/hooks/use-survey-linked-creatives";
+import type { TSurveyLinkedCreative } from "@/modules/creatives/lib/survey-side";
 import { useCustomCssValidation } from "@/modules/custom-css/components/hooks/use-custom-css-validation";
 import { useLiveWorkspaceCustomCss } from "@/modules/custom-css/components/hooks/use-live-workspace-custom-css";
 import { getCustomCssSource, toCustomCssDraft } from "@/modules/custom-css/components/lib/draft";
@@ -103,8 +105,8 @@ interface SurveyEditorProps {
   customCssEditor: TSurveyCustomCssEditorConfig;
   /** Null when the organisation isn't entitled to data retention. */
   dataRetention: TSurveyDataRetentionContext;
-  /** A non-archived creative opens this survey, so it publishes without a trigger of its own. */
-  isOpenedByCreative: boolean;
+  /** The creatives that open this survey, read on the server (a survey they open publishes without a trigger). */
+  linkedCreatives: TSurveyLinkedCreative[];
 }
 
 export const SurveyEditor = ({
@@ -143,8 +145,13 @@ export const SurveyEditor = ({
   ownerName,
   customCssEditor,
   dataRetention,
-  isOpenedByCreative,
+  linkedCreatives: initialLinkedCreatives,
 }: Readonly<SurveyEditorProps>) => {
+  const linkedCreatives = useSurveyLinkedCreatives({
+    workspaceId: survey.workspaceId,
+    surveyId: survey.id,
+    initialData: initialLinkedCreatives,
+  });
   const isFollowUpsTabVisible = shouldShowFollowUpsTab({
     followUpCount: survey.followUps.length,
     isSurveyFollowUpsAllowed,
@@ -347,7 +354,7 @@ export const SurveyEditor = ({
         surveyAccess={surveyAccess}
         ownerName={ownerName}
         customCssValidationStatus={surveyCustomCssValidation.status}
-        isOpenedByCreative={isOpenedByCreative}
+        isOpenedByCreative={linkedCreatives.length > 0}
       />
       {showRestrictedBanner({
         enforced: visibilityGate.enforced,
@@ -446,6 +453,7 @@ export const SurveyEditor = ({
               appSetupCompleted={localWorkspace.appSetupCompleted}
               enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
               hasTriggerError={hasTriggerError}
+              linkedCreatives={linkedCreatives}
             />
           )}
 

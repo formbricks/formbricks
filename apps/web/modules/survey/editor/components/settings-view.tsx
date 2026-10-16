@@ -5,7 +5,7 @@ import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { useSurveyLinkedCreatives } from "@/modules/creatives/hooks/use-survey-linked-creatives";
+import type { TSurveyLinkedCreative } from "@/modules/creatives/lib/survey-side";
 import { getCreativeOpenedMode } from "@/modules/creatives/lib/survey-side";
 import { TargetingCard } from "@/modules/ee/contacts/segments/components/targeting-card";
 import { SurveyRetentionCard } from "@/modules/ee/data-retention/components/survey/survey-retention-card";
@@ -43,6 +43,8 @@ interface SettingsViewProps {
   hasTriggerError?: boolean;
   /** Null when the organisation isn't entitled to data retention. */
   dataRetention?: TSurveyDataRetentionContext;
+  /** The creatives that open this survey (the editor reads them once for every card). */
+  linkedCreatives: TSurveyLinkedCreative[];
 }
 
 export const SettingsView = ({
@@ -66,12 +68,9 @@ export const SettingsView = ({
   enterpriseLicenseRequestFormUrl,
   hasTriggerError = false,
   dataRetention = null,
+  linkedCreatives,
 }: Readonly<SettingsViewProps>) => {
   const isAppSurvey = localSurvey.type === "app";
-  const linkedCreatives = useSurveyLinkedCreatives({
-    workspaceId: localSurvey.workspaceId,
-    surveyId: localSurvey.id,
-  });
 
   return (
     <div className="mt-12 space-y-3 p-5">

@@ -7,8 +7,10 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { creativeKeys } from "../lib/editor-api";
 import {
   ACTIVE_CREATIVES_LIMIT,
+  type TCreativeListItem,
   type TCreativeListPage,
   archiveCreative,
   creativeListKeys,
@@ -64,11 +66,18 @@ export const useActiveCreatives = (workspaceId: string) =>
 export const useCreativeRowActions = () => {
   const queryClient = useQueryClient();
   const onSettled = () => queryClient.invalidateQueries({ queryKey: creativeListKeys.all });
+  // The summary reads the creative under the same key, so it shows the archive or restore too.
+  const onChanged = (creative: TCreativeListItem) =>
+    queryClient.setQueryData(creativeKeys.detail(creative.id), creative);
 
   return {
     duplicate: useMutation({ mutationFn: duplicateCreative, onSettled }),
-    archive: useMutation({ mutationFn: archiveCreative, onSettled }),
-    restore: useMutation({ mutationFn: restoreCreative, onSettled }),
-    remove: useMutation({ mutationFn: deleteCreative, onSettled }),
+    archive: useMutation({ mutationFn: archiveCreative, onSuccess: onChanged, onSettled }),
+    restore: useMutation({ mutationFn: restoreCreative, onSuccess: onChanged, onSettled }),
+    remove: useMutation({
+      mutationFn: deleteCreative,
+      onSuccess: (_, creativeId) => queryClient.removeQueries({ queryKey: creativeKeys.detail(creativeId) }),
+      onSettled,
+    }),
   };
 };
