@@ -1,139 +1,203 @@
 "use client";
 
 import {
-  ArrowLeftIcon,
   CalendarClockIcon,
-  ChartColumnIcon,
   ClockIcon,
   LinkIcon,
   MessageCircleIcon,
-  PencilIcon,
+  RefreshCcwIcon,
+  SquarePenIcon,
 } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { type ReactNode, useState } from "react";
+import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
-import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
+import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
-import {
-  type ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/modules/ui/components/chart";
+import { IconBar } from "@/modules/ui/components/iconbar";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getCreativeEditPath, getCreativesPath } from "../../lib/paths";
-import { getMockDisplayState, getMockLinkedSurvey } from "../../mock/data";
-import type { TCreative } from "../../types";
-import { CreativeTypeIndicator } from "../creative-icons";
+import {
+  useChangeCreativeStatus,
+  useCreativeStats,
+  useSummaryCreative,
+} from "../../hooks/use-creative-summary";
+import type { TCreativeResource } from "../../lib/editor-form";
+import { getCreativeEditPath } from "../../lib/paths";
+import {
+  type TCreativeStatsRangeSelection,
+  type TStatusChangeOutcome,
+  type TSummaryStatus,
+  buildCreativeStatsSearchParams,
+  getStatusChangeOutcome,
+  getSummaryStatusControl,
+  resolveCreativeStatsRange,
+} from "../../lib/summary";
+import { CreativeTypeIndicator, INDICATOR_TYPES } from "../creative-icons";
 import { CreativeStatusPill } from "../creative-status-pill";
-import { Segmented } from "../editor/editor-primitives";
-import { MockDataBadge } from "../mock-data-badge";
+import { CreativeSummaryStatsSkeleton } from "../skeletons";
+import { CreativeStatusDropdown } from "./creative-status-dropdown";
+import { CreativeSummaryStats } from "./creative-summary-stats";
+import { StatsRangeFilter } from "./stats-range-filter";
 
-type TRange = "7" | "30";
+const SCHEDULE_OPTIONS: Intl.DateTimeFormatOptions = { dateStyle: "medium", timeStyle: "short" };
 
-const KpiCard = ({ label, value, hint }: Readonly<{ label: string; value: string; hint?: string }>) => (
-  <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
-    <p className="text-sm text-slate-500">{label}</p>
-    <p className="mt-1 text-3xl font-semibold tracking-tight text-slate-900 tabular-nums">{value}</p>
-    {hint && <p className="mt-1 text-xs text-slate-400">{hint}</p>}
-  </div>
-);
+/** What it opens and when it shows, under the title where the survey summary has its tabs. */
+const CreativeFacts = ({ creative }: Readonly<{ creative: TCreativeResource }>) => {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+  const { destination, schedule } = creative;
+  const formatAt = (at: string) => formatDateTimeForDisplay(new Date(at), locale, SCHEDULE_OPTIONS);
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pb-4 text-sm text-slate-600">
+      <CreativeTypeIndicator type={INDICATOR_TYPES[creative.type]} />
+      {destination?.type === "survey" && (
+        <span className="inline-flex items-center gap-1.5">
+          <MessageCircleIcon className="size-4 text-slate-400" aria-hidden="true" />
+          {t("workspace.creatives.summary.opens_survey", { name: destination.surveyName })}
+        </span>
+      )}
+      {destination?.type === "link" && (
+        <span className="inline-flex min-w-0 items-center gap-1.5">
+          <LinkIcon className="size-4 shrink-0 text-slate-400" aria-hidden="true" />
+          <span className="truncate">{destination.url}</span>
+        </span>
+      )}
+      {(schedule.startAt || schedule.endAt) && (
+        <span className="inline-flex items-center gap-1.5">
+          <CalendarClockIcon className="size-4 text-slate-400" aria-hidden="true" />
+          {schedule.startAt ? formatAt(schedule.startAt) : t("workspace.creatives.editor.starts_placeholder")}
+          {" – "}
+          {schedule.endAt ? formatAt(schedule.endAt) : t("workspace.creatives.editor.ends_placeholder")}
+        </span>
+      )}
+    </div>
+  );
+};
+
+interface CreativeSummaryProps {
+  workspaceId: string;
+  initialCreative: TCreativeResource;
+  isReadOnly: boolean;
+}
 
 export const CreativeSummary = ({
   workspaceId,
-  creative,
-}: Readonly<{ workspaceId: string; creative: TCreative }>) => {
-  const { t, i18n } = useTranslation();
-  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
-  const [now] = useState(() => new Date());
-  const [range, setRange] = useState<TRange>("30");
-  const state = getMockDisplayState(creative, now);
-  const survey = getMockLinkedSurvey(creative);
+  initialCreative,
+  isReadOnly,
+}: Readonly<CreativeSummaryProps>) => {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const { data: creative, refetch: refetchCreative } = useSummaryCreative(initialCreative);
+  const [selection, setSelection] = useState<TCreativeStatsRangeSelection>({ preset: "last 30 days" });
+  // When "today" is: set on load and whenever a range is picked, so a rolling preset follows the UTC day.
+  const [now, setNow] = useState(() => new Date());
+  const range = resolveCreativeStatsRange(selection, now);
+  const stats = useCreativeStats(creative.id, buildCreativeStatsSearchParams(selection, now).toString());
+  const statusChange = useChangeCreativeStatus(creative.id);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const fallbackError = t("common.something_went_wrong_please_try_again");
 
-  const numberFormat = new Intl.NumberFormat(locale);
-  const percentFormat = new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 1 });
-  const daily = creative.daily.slice(-Number(range));
-  const impressions = daily.reduce((sum, day) => sum + day.impressions, 0);
-  const clicks = daily.reduce((sum, day) => sum + day.clicks, 0);
-  const chartData = daily.map((day) => ({
-    day: formatDateForDisplay(day.day, locale, { month: "short", day: "numeric" }),
-    impressions: day.impressions,
-    clicks: day.clicks,
-  }));
-  const chartConfig: ChartConfig = {
-    impressions: { label: t("common.impressions"), color: "var(--color-slate-300)" },
-    clicks: { label: t("common.clicks"), color: "var(--color-slate-800)" },
+  const outcomeMessages: Record<TStatusChangeOutcome["message"], string> = {
+    active: t("workspace.creatives.summary.toast_active"),
+    scheduled: t("workspace.creatives.summary.toast_scheduled"),
+    paused: t("workspace.creatives.summary.toast_paused"),
+    closed: t("workspace.creatives.summary.toast_closed"),
+    scheduleEnded: t("workspace.creatives.summary.toast_kept_closed"),
+    surveyNotActive: t("workspace.creatives.summary.toast_waiting_for_survey"),
   };
-  const hasData = daily.length > 0;
+
+  const changeStatus = (status: TSummaryStatus) =>
+    statusChange.mutate(status, {
+      onSuccess: (updated) => {
+        const outcome = getStatusChangeOutcome(status, updated);
+        if (outcome.kind === "success") toast.success(outcomeMessages[outcome.message]);
+        else toast(outcomeMessages[outcome.message], { duration: 6000 });
+      },
+      onError: (error) => toast.error(getV3ApiErrorMessage(error, fallbackError)),
+    });
+
+  const refresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([refetchCreative({ throwOnError: true }), stats.refetch({ throwOnError: true })]);
+      toast.success(t("common.data_refreshed_successfully"));
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, fallbackError));
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const statusControl = getSummaryStatusControl(creative, isReadOnly);
+  const state = { status: creative.displayStatus, reason: creative.displayStatusReason };
+
+  let body: ReactNode;
+  if (stats.data) {
+    body = <CreativeSummaryStats stats={stats.data} isUpdating={stats.isPlaceholderData} />;
+  } else if (stats.isError) {
+    body = (
+      <div className="flex flex-col items-center gap-4 rounded-xl border border-slate-200 bg-white py-16 text-sm text-slate-600">
+        <p>{getV3ApiErrorMessage(stats.error, fallbackError)}</p>
+        <Button variant="secondary" size="sm" onClick={() => stats.refetch()}>
+          {t("common.try_again")}
+        </Button>
+      </div>
+    );
+  } else {
+    body = <CreativeSummaryStatsSkeleton />;
+  }
 
   return (
     <PageContentWrapper>
-      <Link
-        href={getCreativesPath(workspaceId)}
-        className="-mb-2 inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800">
-        <ArrowLeftIcon className="size-4" />
-        {t("common.creatives")}
-      </Link>
       <PageHeader
-        pageTitle={
-          <span className="flex items-center gap-3">
-            {creative.name}
-            <span className="text-base font-normal">
-              <CreativeStatusPill state={state} />
-            </span>
-          </span>
-        }
+        pageTitle={creative.name || t("workspace.creatives.untitled_creative")}
         cta={
-          <div className="flex items-center gap-2">
-            <MockDataBadge />
-            <Button variant="secondary" size="sm" asChild>
-              <Link href={getCreativeEditPath(workspaceId, creative.id)}>
-                <PencilIcon />
-                {t("common.edit")}
-              </Link>
-            </Button>
+          <div className="flex shrink-0 items-center gap-x-1.5">
+            {statusControl.kind === "select" ? (
+              <CreativeStatusDropdown
+                value={statusControl.value}
+                state={state}
+                disabled={statusChange.isPending}
+                onChange={changeStatus}
+              />
+            ) : (
+              <CreativeStatusPill state={state} />
+            )}
+            <IconBar
+              actions={[
+                {
+                  icon: RefreshCcwIcon,
+                  tooltip: t("common.refresh"),
+                  onClick: refresh,
+                  disabled: isRefreshing,
+                  isVisible: true,
+                },
+                {
+                  icon: SquarePenIcon,
+                  tooltip: t("common.edit"),
+                  onClick: () => router.push(getCreativeEditPath(workspaceId, creative.id)),
+                  // Read-only members can't open the editor; it sends them back to the list.
+                  isVisible: !isReadOnly,
+                },
+              ]}
+            />
           </div>
         }>
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pb-4 text-sm text-slate-600">
-          <CreativeTypeIndicator type={creative.type} />
-          {survey && (
-            <span className="inline-flex items-center gap-1.5">
-              <MessageCircleIcon className="size-4 text-slate-400" aria-hidden="true" />
-              {t("workspace.creatives.summary.opens_survey", { name: survey.name })}
-            </span>
-          )}
-          {creative.action.kind === "link" && creative.action.url && (
-            <span className="inline-flex min-w-0 items-center gap-1.5">
-              <LinkIcon className="size-4 shrink-0 text-slate-400" aria-hidden="true" />
-              <span className="truncate">{creative.action.url}</span>
-            </span>
-          )}
-          {(creative.startsAt || creative.endsAt) && (
-            <span className="inline-flex items-center gap-1.5">
-              <CalendarClockIcon className="size-4 text-slate-400" aria-hidden="true" />
-              {[creative.startsAt, creative.endsAt]
-                .map((date) =>
-                  date
-                    ? formatDateTimeForDisplay(date, locale, { dateStyle: "medium", timeStyle: "short" })
-                    : "…"
-                )
-                .join(" – ")}
-            </span>
-          )}
-        </div>
+        <CreativeFacts creative={creative} />
       </PageHeader>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Segmented
-          ariaLabel={t("workspace.creatives.summary.range")}
-          value={range}
-          onChange={setRange}
-          options={[
-            { value: "7", label: t("workspace.creatives.summary.last_days", { days: 7 }) },
-            { value: "30", label: t("workspace.creatives.summary.last_days", { days: 30 }) },
-          ]}
+        <StatsRangeFilter
+          selection={selection}
+          range={range}
+          now={now}
+          onChange={(next) => {
+            setNow(new Date());
+            setSelection(next);
+          }}
         />
         <span className="inline-flex items-center gap-1.5 text-xs text-slate-500">
           <ClockIcon className="size-3.5" aria-hidden="true" />
@@ -141,80 +205,7 @@ export const CreativeSummary = ({
         </span>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <KpiCard label={t("common.impressions")} value={numberFormat.format(impressions)} />
-        <KpiCard label={t("common.clicks")} value={numberFormat.format(clicks)} />
-        <KpiCard
-          label={t("workspace.creatives.summary.click_rate")}
-          value={impressions ? percentFormat.format(clicks / impressions) : "—"}
-          hint={t("workspace.creatives.summary.click_rate_hint")}
-        />
-      </div>
-
-      {hasData ? (
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
-            <h2 className="mb-4 text-sm font-semibold text-slate-900">
-              {t("workspace.creatives.summary.daily_totals")}
-            </h2>
-            <ChartContainer config={chartConfig} className="h-64 w-full">
-              <BarChart data={chartData} barGap={2}>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                <XAxis dataKey="day" tickLine={false} axisLine={false} tickMargin={8} minTickGap={16} />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  width={44}
-                  tickFormatter={(value) => numberFormat.format(value)}
-                />
-                <ChartTooltip cursor={{ fill: "var(--color-slate-100)" }} content={<ChartTooltipContent />} />
-                <Bar dataKey="impressions" fill="var(--color-impressions)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="clicks" fill="var(--color-clicks)" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ChartContainer>
-          </section>
-
-          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
-            <h2 className="mb-3 text-sm font-semibold text-slate-900">
-              {t("workspace.creatives.summary.top_pages")}
-            </h2>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs text-slate-500">
-                  <th className="pb-2 font-medium">{t("workspace.creatives.summary.page")}</th>
-                  <th className="pb-2 text-right font-medium">{t("common.impressions")}</th>
-                  <th className="pb-2 text-right font-medium">
-                    {t("workspace.creatives.summary.click_rate")}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {creative.pages.map((page) => (
-                  <tr key={page.path} className="border-t border-slate-100">
-                    <td className="py-2.5 font-medium text-slate-800">{page.path}</td>
-                    <td className="py-2.5 text-right text-slate-600 tabular-nums">
-                      {numberFormat.format(page.impressions)}
-                    </td>
-                    <td className="py-2.5 text-right text-slate-600 tabular-nums">
-                      {percentFormat.format(page.clicks / page.impressions)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </section>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-          <ChartColumnIcon className="size-6 text-slate-400" strokeWidth={1.5} />
-          <p className="text-sm font-medium text-slate-700">
-            {t("workspace.creatives.summary.no_data_title")}
-          </p>
-          <p className="max-w-sm text-sm text-slate-500">
-            {t("workspace.creatives.summary.no_data_description")}
-          </p>
-        </div>
-      )}
+      {body}
     </PageContentWrapper>
   );
 };
