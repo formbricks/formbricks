@@ -8,13 +8,16 @@ import {
   useEditorTimeZone,
   validateDateTimeRange,
 } from "@/modules/ui/components/date-time-picker";
-import type { TCreative } from "../../types";
+import type { TCreativeEditorForm } from "../../lib/editor-form";
 import { EditorField, EditorPanel } from "./editor-primitives";
 
+type TSchedule = TCreativeEditorForm["schedule"];
+
+/** Start and end to the minute, in the editor's time zone; the API stores them as instants. */
 export const ScheduleTab = ({
-  creative,
+  schedule,
   onChange,
-}: Readonly<{ creative: TCreative; onChange: (creative: TCreative) => void }>) => {
+}: Readonly<{ schedule: TSchedule; onChange: (schedule: TSchedule) => void }>) => {
   const { t, i18n } = useTranslation();
   const ids = useId();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
@@ -25,7 +28,7 @@ export const ScheduleTab = ({
   });
   const timeZone = useEditorTimeZone();
   const zoneNoteId = `${ids}-zone`;
-  const rangeError = validateDateTimeRange(creative.startsAt, creative.endsAt);
+  const rangeError = validateDateTimeRange(schedule.startAt, schedule.endAt);
 
   return (
     <EditorPanel
@@ -38,8 +41,8 @@ export const ScheduleTab = ({
             id={`${ids}-start`}
             label={t("workspace.creatives.editor.starts")}
             locale={locale}
-            value={creative.startsAt}
-            onChange={(startsAt) => onChange({ ...creative, startsAt })}
+            value={schedule.startAt}
+            onChange={(startAt) => onChange({ ...schedule, startAt })}
             minDate={today}
             placeholder={t("workspace.creatives.editor.starts_placeholder")}
             aria-describedby={zoneNoteId}
@@ -50,9 +53,9 @@ export const ScheduleTab = ({
             id={`${ids}-end`}
             label={t("workspace.creatives.editor.ends")}
             locale={locale}
-            value={creative.endsAt}
-            onChange={(endsAt) => onChange({ ...creative, endsAt })}
-            minDate={creative.startsAt ?? today}
+            value={schedule.endAt}
+            onChange={(endAt) => onChange({ ...schedule, endAt })}
+            minDate={schedule.startAt ?? today}
             placeholder={t("workspace.creatives.editor.ends_placeholder")}
             error={rangeError ? t("workspace.creatives.editor.end_before_start") : undefined}
             aria-describedby={zoneNoteId}
