@@ -464,7 +464,13 @@ patch:
 delete:
   operationId: deleteSurveyV3
   summary: Delete a survey
-  description: Deletes a survey by id. Session cookie, `x-api-key`, or a Bearer token.
+  description: >
+    Deletes a survey by id. Session cookie, `x-api-key`, or a Bearer token.
+
+
+    Refused with **409** (`survey_has_linked_creatives`) while non-archived creatives open the survey;
+    `details.creatives` names them. Archived creatives don't block the delete: they are unlinked with it, and
+    each unlink is audited as an update of that creative.
   tags:
     - V3 Surveys
   parameters:
@@ -493,6 +499,8 @@ delete:
       $ref: ../components/responses/V3Unauthorized.yml
     "403":
       $ref: ../components/responses/V3Forbidden.yml
+    "409":
+      $ref: ../components/responses/V3SurveyHasLinkedCreatives.yml
     "429":
       $ref: ../components/responses/V3TooManyRequests.yml
     "500":

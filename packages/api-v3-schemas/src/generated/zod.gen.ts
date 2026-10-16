@@ -90,6 +90,7 @@ export const zProblem = z.object({
       "projection_pending",
       "service_unavailable",
       "stored_survey_invalid",
+      "survey_has_linked_creatives",
       "survey_not_workspace_visible",
       "too_many_requests",
       "unprocessable_content",
