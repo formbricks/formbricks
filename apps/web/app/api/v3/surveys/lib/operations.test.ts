@@ -788,7 +788,12 @@ describe("deleteV3Survey", () => {
   });
 
   test("audits each archived creative the delete unlinked as an update by the same caller", async () => {
-    const auditLog = { userId: "user_1", userType: "user", apiUrl: instance, eventId: "evt" } as any;
+    const auditLog = {
+      userId: "user_1",
+      userType: "user",
+      apiUrl: instance,
+      eventId: "evt",
+    } as unknown as TV3AuditLog;
 
     await deleteV3Survey({ surveyId: "survey_1", authentication, requestId, instance, auditLog });
     const [[, options]] = vi.mocked(deleteSurvey).mock.calls;
