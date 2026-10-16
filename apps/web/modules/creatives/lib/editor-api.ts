@@ -3,16 +3,14 @@ import type { TCreateCreativeBody, TCreativePatchBody, TCreativeResource } from 
 
 /**
  * The editor's calls to API v3 Creatives and their query keys. Every creative query key starts with
- * `["creatives"]`; the list (ENG-3996) lives under `["creatives", "list"]`, so a write here invalidates
- * that prefix to refresh it.
+ * `["creatives"]`; the list's live under `creativeListKeys.all` (`list-api.ts`), which a write here
+ * invalidates to refresh it.
  */
 
 export const creativeEditorKeys = {
   all: ["creatives", "editor"] as const,
   detail: (creativeId: string) => [...creativeEditorKeys.all, creativeId] as const,
 };
-
-export const CREATIVES_LIST_QUERY_KEY = ["creatives", "list"] as const;
 
 const creativePath = (creativeId: string) => `/api/v3/creatives/${encodeURIComponent(creativeId)}`;
 

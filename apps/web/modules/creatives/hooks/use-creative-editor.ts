@@ -1,14 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CREATIVES_LIST_QUERY_KEY,
-  createCreative,
-  creativeEditorKeys,
-  getCreative,
-  patchCreative,
-} from "../lib/editor-api";
+import { createCreative, creativeEditorKeys, getCreative, patchCreative } from "../lib/editor-api";
 import type { TCreateCreativeBody, TCreativePatchBody, TCreativeResource } from "../lib/editor-form";
+import { creativeListKeys } from "../lib/list-api";
 
 /**
  * The stored creative behind the editor. The page loads it on the server, so the query starts with that
@@ -26,8 +21,9 @@ export const useCreateCreative = () => {
   const queryClient = useQueryClient();
   return useMutation<TCreativeResource, Error, TCreateCreativeBody>({
     mutationFn: createCreative,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: CREATIVES_LIST_QUERY_KEY });
+    // Not awaited: the dialog opens the editor right away, and the list refreshes behind it.
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: creativeListKeys.all });
     },
   });
 };
@@ -38,7 +34,7 @@ export const useUpdateCreative = (creativeId: string) => {
     mutationFn: (body) => patchCreative(creativeId, body),
     onSuccess: async (creative) => {
       queryClient.setQueryData(creativeEditorKeys.detail(creativeId), creative);
-      await queryClient.invalidateQueries({ queryKey: CREATIVES_LIST_QUERY_KEY });
+      await queryClient.invalidateQueries({ queryKey: creativeListKeys.all });
     },
   });
 };
