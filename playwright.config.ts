@@ -45,6 +45,18 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
       testMatch: "**/*.spec.ts",
+      grepInvert: /@timing/,
+    },
+
+    /* Latency-comparison tests (@timing) measure sub-100ms differences, so they must not share the
+       machine with the parallel suite: with 4 workers on the app's own vCPUs the measurement is
+       noise. Depending on "chromium" makes this project start only once that one has finished. */
+    {
+      name: "chromium-timing",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: "**/*.spec.ts",
+      grep: /@timing/,
+      dependencies: ["chromium"],
     },
 
     // {

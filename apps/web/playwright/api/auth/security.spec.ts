@@ -126,7 +126,9 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
   });
 
   test.describe("Timing Attack Prevention - User Enumeration Protection", () => {
-    test("should not reveal user existence through response timing differences", async ({ request }) => {
+    test("should not reveal user existence through response timing differences @timing", async ({
+      request,
+    }) => {
       // Helper functions for statistical analysis
       const calculateMedian = (values: number[]): number => {
         const sorted = [...values].sort((a, b) => a - b);
