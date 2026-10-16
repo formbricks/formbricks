@@ -79,6 +79,7 @@ export const CreativeEditor = ({
   workspaceStyling,
   customCss,
   workspaceLanguageCodes,
+  isReadOnly,
 }: Readonly<{
   workspaceId: string;
   siteName: string;
@@ -91,6 +92,8 @@ export const CreativeEditor = ({
   customCss: TCreativeCustomCssConfig;
   /** The workspace's languages the Language tab offers (ENG-4003). */
   workspaceLanguageCodes: string[];
+  /** A member who can only read: everything shows, nothing saves (as for an archived creative). */
+  isReadOnly: boolean;
 }>) => {
   const { t } = useTranslation();
   const nameRef = useRef<HTMLInputElement>(null);
@@ -115,6 +118,7 @@ export const CreativeEditor = ({
 
   const isDraft = creative.status === "draft";
   const isArchived = creative.archivedAt !== null;
+  const canSave = !isArchived && !isReadOnly;
   const getIssues = (intent: TCreativeSaveIntent): TPublishIssue[] =>
     intent === "publish" ? getPublishIssues(form) : getSaveIssues(form, { published: !isDraft });
   const issues = flaggedBy ? getIssues(flaggedBy) : [];
@@ -124,7 +128,7 @@ export const CreativeEditor = ({
   const pickedSurvey = surveyOptions.find((option) => option.id === pickedSurveyId) ?? null;
   const pickedSurveyName = pickedSurvey?.name ?? null;
 
-  useBeforeUnloadPrompt(() => hasUnsavedChanges(form, creative), { enabled: !isArchived });
+  useBeforeUnloadPrompt(() => hasUnsavedChanges(form, creative), { enabled: canSave });
 
   const tabLabels: Record<TCreativeEditorTab, string> = {
     content: t("workspace.creatives.editor.tab_content"),
@@ -249,20 +253,20 @@ export const CreativeEditor = ({
               <Button
                 variant="secondary"
                 onClick={() => submit("save")}
-                disabled={isArchived || isSaving}
+                disabled={!canSave || isSaving}
                 loading={pendingIntent === "save"}>
                 {t("common.save")}
               </Button>
               <Button
                 onClick={() => submit("publish")}
-                disabled={isArchived || isSaving}
+                disabled={!canSave || isSaving}
                 loading={pendingIntent === "publish"}>
                 <ZapIcon />
                 {t("workspace.creatives.editor.publish")}
               </Button>
             </>
           ) : (
-            <Button onClick={() => submit("save")} disabled={isArchived || isSaving} loading={isSaving}>
+            <Button onClick={() => submit("save")} disabled={!canSave || isSaving} loading={isSaving}>
               {t("common.save")}
             </Button>
           )}
@@ -299,9 +303,13 @@ export const CreativeEditor = ({
             })}
           </nav>
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-slate-50 p-5">
-            {isArchived && (
+            {(isArchived || isReadOnly) && (
               <Alert variant="info" size="small" role="status">
-                <AlertDescription>{t("workspace.creatives.editor.archived_read_only")}</AlertDescription>
+                <AlertDescription>
+                  {isArchived
+                    ? t("workspace.creatives.editor.archived_read_only")
+                    : t("workspace.creatives.editor.member_read_only")}
+                </AlertDescription>
               </Alert>
             )}
             {activeTab === "content" && (

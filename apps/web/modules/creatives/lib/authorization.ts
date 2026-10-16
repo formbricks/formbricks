@@ -3,6 +3,8 @@ import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
+import type { TWorkspaceAuth } from "@/modules/workspaces/types/workspace-auth";
 import { findCreativeWorkspaceId } from "./repository";
 
 /**
@@ -56,4 +58,24 @@ export const authorizeCreative = async ({
 
   const context = await authorizeCreativeWorkspace({ ...params, workspaceId });
   return context instanceof Response ? context : { ...context, creativeId };
+};
+
+export type TCreativePageAccess = TWorkspaceAuth & { access: TCreativeAccess };
+
+/**
+ * The same rule for the creative admin pages (summary and editor), for the signed-in member:
+ * `getWorkspaceAuth` refuses anyone without access to the workspace, and the creative must belong to
+ * it — `null` otherwise, a 404 for the page, so ids can't be probed across workspaces. A member who can
+ * only read gets `access: "read"` and sees both pages read-only.
+ */
+export const authorizeCreativePage = async ({
+  workspaceId,
+  creativeId,
+}: Readonly<{ workspaceId: string; creativeId: string }>): Promise<TCreativePageAccess | null> => {
+  const [auth, creativeWorkspaceId] = await Promise.all([
+    getWorkspaceAuth(workspaceId),
+    findCreativeWorkspaceId(creativeId),
+  ]);
+  if (creativeWorkspaceId !== workspaceId) return null;
+  return { ...auth, access: auth.isReadOnly ? "read" : "readWrite" };
 };

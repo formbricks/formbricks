@@ -2393,6 +2393,7 @@
         "layout_overlay_description": "Overlay: fixed on screen and always visible.",
         "left": "Left",
         "link_survey_opens_in_tab": "Link survey · opens in a new tab",
+        "member_read_only": "You can view this creative. Changing it needs edit access to this workspace.",
         "message": "Message",
         "message_placeholder": "e.g. Open Enrollment ends Dec 7",
         "message_text": "Text",

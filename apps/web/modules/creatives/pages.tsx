@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { zLocaleCode } from "@formbricks/api-v3-schemas";
 import { serializeV3Creative } from "@/app/api/v3/creatives/lib/serializers";
 import { getActionClasses } from "@/lib/actionClass/service";
@@ -16,8 +16,8 @@ import { CreativesHeaderActions } from "./components/creatives-header-actions";
 import { CreativesList } from "./components/creatives-list";
 import { CreativeEditor } from "./components/editor/creative-editor";
 import { CreativeSummary } from "./components/summary/creative-summary";
+import { authorizeCreativePage } from "./lib/authorization";
 import { toDestinationSurveyOptions } from "./lib/destination-options";
-import { getCreativesPath } from "./lib/paths";
 import { findCreativeRecord, findDestinationSurveyCandidates } from "./lib/repository";
 
 // Server entry points for the Creatives routes. Each runs the workspace auth check every product page
@@ -62,7 +62,8 @@ export const CreativesListPage = async ({ params }: Readonly<{ params: TWorkspac
  */
 export const CreativeSummaryPage = async ({ params }: Readonly<{ params: TCreativeParams }>) => {
   const { workspaceId, creativeId } = await params;
-  const { isReadOnly } = await getWorkspaceAuth(workspaceId);
+  const authorized = await authorizeCreativePage({ workspaceId, creativeId });
+  if (!authorized) notFound();
   const record = await findCreativeRecord(creativeId, workspaceId);
   if (!record) notFound();
 
@@ -70,20 +71,21 @@ export const CreativeSummaryPage = async ({ params }: Readonly<{ params: TCreati
     <CreativeSummary
       workspaceId={workspaceId}
       initialCreative={serializeV3Creative(record, new Date())}
-      isReadOnly={isReadOnly}
+      isReadOnly={authorized.access === "read"}
     />
   );
 };
 
 /**
  * The editor on the stored creative, serialized exactly as `GET /api/v3/creatives/{id}` returns it, so
- * the client starts from the resource its saves get back. Members who can only read have nothing to do
- * here and go to the list.
+ * the client starts from the resource its saves get back. Members who can only read see it read-only,
+ * as everyone sees an archived creative.
  */
 export const CreativeEditorPage = async ({ params }: Readonly<{ params: TCreativeParams }>) => {
   const { workspaceId, creativeId } = await params;
-  const { workspace, organization, isReadOnly } = await getWorkspaceAuth(workspaceId);
-  if (isReadOnly) redirect(getCreativesPath(workspaceId));
+  const authorized = await authorizeCreativePage({ workspaceId, creativeId });
+  if (!authorized) notFound();
+  const { workspace, organization } = authorized;
 
   const [record, surveyCandidates, actionClasses, isCustomCssPlanAllowed, workspaceLanguages] =
     await Promise.all([
@@ -117,6 +119,7 @@ export const CreativeEditorPage = async ({ params }: Readonly<{ params: TCreativ
         billingHref: IS_FORMBRICKS_CLOUD ? `/organizations/${organization.id}/settings/billing` : null,
       }}
       workspaceLanguageCodes={workspaceLanguageCodes}
+      isReadOnly={authorized.access === "read"}
     />
   );
 };
