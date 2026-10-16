@@ -10,7 +10,8 @@ import { NewCreativeDialog } from "./new-creative-dialog";
 export const CreativesHeaderActions = ({
   workspaceId,
   isReadOnly,
-}: Readonly<{ workspaceId: string; isReadOnly: boolean }>) => {
+  defaultLanguage,
+}: Readonly<{ workspaceId: string; isReadOnly: boolean; defaultLanguage: string }>) => {
   const { t } = useTranslation();
   return (
     <div className="flex items-center gap-2">
@@ -20,7 +21,7 @@ export const CreativesHeaderActions = ({
           {t("workspace.creatives.kit_title")}
         </Link>
       </Button>
-      {isReadOnly ? null : <NewCreativeDialog workspaceId={workspaceId} />}
+      {isReadOnly ? null : <NewCreativeDialog workspaceId={workspaceId} defaultLanguage={defaultLanguage} />}
     </div>
   );
 };

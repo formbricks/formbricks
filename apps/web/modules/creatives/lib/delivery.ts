@@ -1,11 +1,12 @@
 import "server-only";
-import type { TCreativeDestination, TCreativePayload } from "@formbricks/creatives";
+import type { TCreativeDestination, TCreativeLanguage, TCreativePayload } from "@formbricks/creatives";
 import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZShowConditions } from "@formbricks/types/show-conditions";
 import { CREATIVE_TYPE_SCHEMAS, type TCreativeTypedGroups, needsDestination } from "./creative";
 import { compileCreativeCustomCss } from "./custom-css";
 import { type TWorkspaceStylingInput, getAppliedCustomCssSource, getCreativeStyle } from "./style";
+import { getBannerLabels } from "./visitor-labels";
 
 /**
  * Creatives in the environment payload (ENG-3994): which ones the SDK gets, and in what shape (the
@@ -29,9 +30,12 @@ export const deliveredCreativeSelect = {
   displayPercentage: true,
   startAt: true,
   endAt: true,
-  survey: { select: { type: true } },
+  survey: { select: { type: true, autoSelectLanguage: true } },
   triggers: { select: { actionClass: { select: { name: true } } }, orderBy: { createdAt: "asc" } },
-  languages: { where: { default: true }, select: { language: { select: { code: true } } } },
+  languages: {
+    select: { default: true, enabled: true, language: { select: { code: true, alias: true } } },
+    orderBy: { default: "desc" },
+  },
 } satisfies Prisma.CreativeSelect;
 
 export type TDeliveredCreativeRow = Prisma.CreativeGetPayload<{ select: typeof deliveredCreativeSelect }>;
@@ -115,9 +119,16 @@ const toCreativePayload = async (
   const customCssSource = getAppliedCustomCssSource(groups.styling.theme);
   const customCss = customCssSource ? await compileCreativeCustomCss(groups.type, customCssSource) : null;
 
+  const languages: TCreativeLanguage[] = row.languages;
+  const defaultLanguage = languages.find((language) => language.default)?.language.code ?? "en-US";
+
   const common = {
     id: row.id,
-    defaultLanguage: row.languages[0]?.language.code ?? "en-US",
+    defaultLanguage,
+    languages,
+    // Its texts follow the language its survey would open in (ENG-4003); a link or no Destination has
+    // no such setting, so only the language the site set counts.
+    autoSelectLanguage: row.survey?.autoSelectLanguage ?? false,
     style: getCreativeStyle(groups, workspaceStyling, customCss),
     destination,
     showOn: row.showOn,
@@ -128,9 +139,18 @@ const toCreativePayload = async (
     endAt: row.endAt?.toISOString() ?? null,
   };
 
-  return groups.type === "feedbackButton"
-    ? { ...common, type: "feedbackButton", content: groups.content, position: groups.styling.position }
-    : { ...common, type: "banner", content: groups.content, position: groups.styling.position };
+  if (groups.type === "feedbackButton") {
+    return { ...common, type: "feedbackButton", content: groups.content, position: groups.styling.position };
+  }
+  // In every language a visitor can get: the default and the enabled ones.
+  const visitorLanguages = languages.filter((language) => language.default || language.enabled);
+  return {
+    ...common,
+    type: "banner",
+    content: groups.content,
+    labels: await getBannerLabels(visitorLanguages.map(({ language }) => language.code)),
+    position: groups.styling.position,
+  };
 };
 
 /** The payload's `creatives`, in row order, without the ones that could never show. */

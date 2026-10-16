@@ -480,6 +480,12 @@ describe("render a banner (ENG-3576)", () => {
     expect(host.isConnected).toBe(true);
   });
 
+  test("names the Dismiss control in the visitor's language when the view carries one", () => {
+    const host = render(banner({ dismissible: true, dismissLabel: "Schließen" }), { onClick: vi.fn() });
+
+    expect(barOf(host).querySelector("button")?.getAttribute("aria-label")).toBe("Schließen");
+  });
+
   test("never takes the focus from where the visitor is", () => {
     const input = document.createElement("input");
     document.body.append(input);

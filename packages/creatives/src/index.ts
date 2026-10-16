@@ -11,13 +11,28 @@ export {
   getCountedPage,
 } from "./events";
 export {
+  type TLanguageChoice,
+  type TLanguageResolver,
+  type TLanguageResolverInput,
+  type TMatchableLanguage,
+  type TVisitorLanguage,
+  chooseLanguage,
+  resolveLanguageExactly,
+} from "./language";
+export {
   CREATIVE_INSET_PROPERTY,
   CREATIVE_PHONE_MEDIA,
   CREATIVE_ROOT_CLASS,
   render,
   type TRenderOptions,
 } from "./render";
-export { resolve, type TCreativePage, type TResolveInput, type TResolveResult } from "./resolve";
+export {
+  resolve,
+  type TCreativePage,
+  type TResolveInput,
+  type TResolveResult,
+  type TResolveSurvey,
+} from "./resolve";
 export { CREATIVE_SHARE_STORAGE_KEY, createShareRolls } from "./share";
 export { DEFAULT_CREATIVE_STYLE } from "./style";
 export type * from "./types";

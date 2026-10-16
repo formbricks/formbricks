@@ -73,4 +73,14 @@ describe("toDestinationSurveyOptions", () => {
 
     expect(options.map(({ id }) => id)).toEqual(["ok", "linked"]);
   });
+
+  test("carries a survey's languages when they were read, for the editor's language check", () => {
+    const languages = [{ default: true, enabled: true, language: { code: "en-US", alias: null } }];
+    const options = toDestinationSurveyOptions(
+      [survey({ id: "translated", languages }), survey({ id: "unread" })],
+      null
+    );
+
+    expect(options.map((option) => option.languages)).toEqual([languages, undefined]);
+  });
 });

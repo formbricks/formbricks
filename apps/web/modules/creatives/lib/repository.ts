@@ -188,14 +188,26 @@ export const lockDestinationSurvey = async (
 /** How many surveys the editor's On click picker lists, most recently updated first. */
 const DESTINATION_SURVEY_CANDIDATE_LIMIT = 500;
 
+/** The picker's facts, plus the languages the editor compares the creative's with (ENG-4003). */
+const destinationSurveyCandidateSelect = {
+  ...destinationSurveySelect,
+  languages: { select: { default: true, enabled: true, language: { select: { code: true, alias: true } } } },
+} satisfies Prisma.SurveySelect;
+
+export type TDestinationSurveyCandidateRecord = Prisma.SurveyGetPayload<{
+  select: typeof destinationSurveyCandidateSelect;
+}>;
+
 /**
  * The workspace's unarchived surveys with the facts the Destination rule reads, for the editor's picker
  * (`destination-options.ts` decides which it offers). Served by the `(workspaceId, updatedAt)` index.
  */
-export const findDestinationSurveyCandidates = (workspaceId: string): Promise<TDestinationSurveyFacts[]> =>
+export const findDestinationSurveyCandidates = (
+  workspaceId: string
+): Promise<TDestinationSurveyCandidateRecord[]> =>
   prisma.survey.findMany({
     where: { workspaceId, archivedAt: null },
-    select: destinationSurveySelect,
+    select: destinationSurveyCandidateSelect,
     orderBy: { updatedAt: "desc" },
     take: DESTINATION_SURVEY_CANDIDATE_LIMIT,
   });

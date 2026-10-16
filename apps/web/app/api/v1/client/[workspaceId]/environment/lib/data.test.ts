@@ -815,9 +815,9 @@ describe("creatives on the wire (ENG-3994)", () => {
     displayPercentage: null,
     startAt: new Date("2026-10-20T02:00:00.000Z"),
     endAt: null,
-    survey: { type: "app" },
+    survey: { type: "app", autoSelectLanguage: false },
     triggers: [],
-    languages: [{ language: { code: "en-US" } }],
+    languages: [{ default: true, enabled: true, language: { code: "en-US", alias: null } }],
   };
 
   // Not among the 30 newest, and opened only by a creative: no trigger of its own.
@@ -844,6 +844,8 @@ describe("creatives on the wire (ENG-3994)", () => {
         id: "creative-1",
         type: "feedbackButton",
         defaultLanguage: "en-US",
+        languages: [{ default: true, enabled: true, language: { code: "en-US", alias: null } }],
+        autoSelectLanguage: false,
         style: {
           element: expect.objectContaining({ light: expect.any(Object), dark: expect.any(Object) }),
           button: null,
@@ -922,7 +924,9 @@ describe("creatives on the wire (ENG-3994)", () => {
   test("opens a link survey Destination at its public link, in a new tab", async () => {
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
       ...mockWorkspaceData,
-      creatives: [{ ...storedButton, surveyId: "link-survey", survey: { type: "link" } }],
+      creatives: [
+        { ...storedButton, surveyId: "link-survey", survey: { type: "link", autoSelectLanguage: false } },
+      ],
     } as never);
 
     const result = await getWorkspaceStateData(workspaceId);
@@ -946,6 +950,65 @@ describe("creatives on the wire (ENG-3994)", () => {
 
     expect(result.creatives[0]).toEqual(
       expect.objectContaining({ showOn: "action", triggers: ["Checkout"] })
+    );
+  });
+
+  /** ENG-4003: the SDK picks the language, with what the server knows filled in. */
+  test("sends the creative's languages, its survey's browser-language setting and a banner's own words in each", async () => {
+    const languages = [
+      { default: true, enabled: true, language: { code: "en-US", alias: null } },
+      { default: false, enabled: true, language: { code: "de-DE", alias: "de" } },
+      { default: false, enabled: false, language: { code: "it-IT", alias: null } },
+    ];
+    const storedBanner = {
+      ...storedButton,
+      id: "banner-1",
+      type: "banner",
+      content: {
+        message: { "en-US": [{ text: "Down tonight." }], "de-DE": [{ text: "Heute Nacht offline." }] },
+        button: null,
+        dismissible: true,
+        accessibleName: null,
+      },
+      styling: {
+        position: { desktop: { placement: "top", layout: "inPage" }, phone: null },
+        theme: {
+          customStyles: false,
+          backgroundColor: null,
+          textColor: null,
+          borderColor: null,
+          fontWeight: null,
+          fontSize: { desktop: null, phone: null },
+          paddingX: { desktop: null, phone: null },
+          paddingY: { desktop: null, phone: null },
+        },
+      },
+      surveyId: null,
+      survey: null,
+      languages,
+    };
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      creatives: [
+        { ...storedButton, survey: { type: "app", autoSelectLanguage: true }, languages },
+        storedBanner,
+      ],
+    } as never);
+
+    const [button, banner] = (await getWorkspaceStateData(workspaceId)).creatives;
+
+    expect(button).toEqual(
+      expect.objectContaining({ defaultLanguage: "en-US", languages, autoSelectLanguage: true })
+    );
+    expect(banner).toEqual(
+      expect.objectContaining({
+        autoSelectLanguage: false,
+        // Every language a visitor can get: the default and the enabled ones.
+        labels: {
+          siteNotice: { "en-US": "Site notice", "de-DE": expect.any(String) },
+          dismiss: { "en-US": "Dismiss", "de-DE": expect.any(String) },
+        },
+      })
     );
   });
 

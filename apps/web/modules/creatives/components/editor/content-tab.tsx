@@ -39,11 +39,12 @@ import type {
 import type { TPublishIssue } from "../../lib/publish-check";
 import { CREATIVE_TYPE_ICONS } from "../creative-icons";
 import { EditorField, EditorPanel } from "./editor-primitives";
+import { SurveyLanguageWarning } from "./survey-language-warning";
 
 type TSetForm = Dispatch<SetStateAction<TCreativeEditorForm>>;
 
 /** v3 text values hold at most 200 characters (`CreativeText`). */
-const MAX_TEXT_LENGTH = 200;
+export const MAX_TEXT_LENGTH = 200;
 
 const ICONS: Record<TFeedbackButtonIcon, LucideIcon> = {
   messageSquare: MessageSquareIcon,
@@ -54,7 +55,13 @@ const ICONS: Record<TFeedbackButtonIcon, LucideIcon> = {
 const ICON_OPTIONS = Object.keys(ICONS) as TFeedbackButtonIcon[];
 
 /** The toolbar the banner message keeps: bold, italic, underline and links (no lists, headings, recall). */
-const BANNER_EXCLUDED_TOOLBAR_ITEMS = ["blockType", "bulletList", "orderedList", "recall", "editRecall"];
+export const BANNER_EXCLUDED_TOOLBAR_ITEMS = [
+  "blockType",
+  "bulletList",
+  "orderedList",
+  "recall",
+  "editRecall",
+];
 
 const updateFeedbackButton =
   (patch: Partial<Omit<TFeedbackButtonForm, "type">>) =>
@@ -124,12 +131,14 @@ const SurveyPicker = ({
   surveyOptions,
   linkedSurveyId,
   isInvalid,
+  languages,
 }: Readonly<{
   surveyId: string | null;
   onChange: (surveyId: string) => void;
   surveyOptions: TDestinationSurveyOption[];
   linkedSurveyId: string | null;
   isInvalid: boolean;
+  languages: TCreativeEditorForm["languages"];
 }>) => {
   const { t } = useTranslation();
   const survey = surveyOptions.find((option) => option.id === surveyId);
@@ -190,12 +199,14 @@ const SurveyPicker = ({
           {t("workspace.creatives.editor.survey_not_running")}
         </p>
       )}
+      <SurveyLanguageWarning languages={languages} survey={survey ?? null} />
     </>
   );
 };
 
 type TOnClickPanelProps = {
   destination: TCreativeEditorForm["destination"];
+  languages: TCreativeEditorForm["languages"];
   setForm: TSetForm;
   surveyOptions: TDestinationSurveyOption[];
   linkedSurveyId: string | null;
@@ -204,6 +215,7 @@ type TOnClickPanelProps = {
 
 const OnClickPanel = ({
   destination,
+  languages,
   setForm,
   surveyOptions,
   linkedSurveyId,
@@ -246,6 +258,7 @@ const OnClickPanel = ({
                 surveyOptions={surveyOptions}
                 linkedSurveyId={linkedSurveyId}
                 isInvalid={issues.includes("survey_missing")}
+                languages={languages}
               />
             )}
           </div>
@@ -434,6 +447,7 @@ export const ContentTab = ({
   const onClick = (
     <OnClickPanel
       destination={form.destination}
+      languages={form.languages}
       setForm={setForm}
       surveyOptions={surveyOptions}
       linkedSurveyId={linkedSurveyId}

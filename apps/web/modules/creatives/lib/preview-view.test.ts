@@ -4,6 +4,7 @@ import type { TCreativeEditorForm } from "./editor-form";
 import { toPreviewView } from "./preview-view";
 
 const schedule = { startAt: null, endAt: null };
+const languages = { defaultLanguage: "en-US", others: [], texts: {} };
 const distribution = {
   showOn: "pageView" as const,
   actionClassIds: [],
@@ -41,6 +42,7 @@ const bannerForm = (content: Partial<Extract<TCreativeEditorForm["content"], { t
     },
     distribution,
     schedule,
+    languages,
   }) satisfies TCreativeEditorForm;
 
 describe("preview view", () => {
@@ -56,6 +58,7 @@ describe("preview view", () => {
       },
       distribution,
       schedule,
+      languages,
     };
 
     expect(toPreviewView("clcreative00000000000001", form, DEFAULT_CREATIVE_STYLE)).toMatchObject({

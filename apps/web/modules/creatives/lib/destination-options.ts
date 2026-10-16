@@ -1,5 +1,6 @@
 import type { TSurveyVisibility } from "@formbricks/types/surveys/types";
 import { getEffectiveVisibility } from "@/lib/survey/visibility/policy";
+import type { TLanguageCheckSurvey } from "./languages-form";
 import { isSingleUseEnabled } from "./record";
 import type { TDestinationSurveyFacts } from "./repository";
 
@@ -11,7 +12,10 @@ import type { TDestinationSurveyFacts } from "./repository";
  * show it whatever happened to it since.
  */
 
-export type TDestinationSurveyCandidate = TDestinationSurveyFacts;
+/** `languages` is absent for a survey read without them (the linked one, when not among the candidates). */
+export type TDestinationSurveyCandidate = TDestinationSurveyFacts & {
+  languages?: TLanguageCheckSurvey["languages"];
+};
 
 export type TDestinationSurveyOption = {
   id: string;
@@ -20,6 +24,8 @@ export type TDestinationSurveyOption = {
   status: TDestinationSurveyFacts["status"];
   /** Effective visibility: a pending change counts as Restricted, as the server counts it. */
   visibility: TSurveyVisibility;
+  /** Its languages, for the warning on creative languages it lacks (ENG-4003); absent when unknown. */
+  languages?: TLanguageCheckSurvey["languages"];
 };
 
 const isOffered = (candidate: TDestinationSurveyCandidate): boolean =>
@@ -41,6 +47,7 @@ export const toDestinationSurveyOptions = (
         type: candidate.type,
         status: candidate.status,
         visibility: getEffectiveVisibility(candidate),
+        ...(candidate.languages && { languages: candidate.languages }),
       },
     ];
   });

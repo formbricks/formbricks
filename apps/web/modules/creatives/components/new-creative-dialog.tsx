@@ -70,7 +70,10 @@ const TypeCard = ({
 };
 
 /** Picks a creative type, creates it as a Draft through API v3 and opens it in the editor. */
-export const NewCreativeDialog = ({ workspaceId }: Readonly<{ workspaceId: string }>) => {
+export const NewCreativeDialog = ({
+  workspaceId,
+  defaultLanguage,
+}: Readonly<{ workspaceId: string; defaultLanguage: string }>) => {
   const { t } = useTranslation();
   const router = useRouter();
   const [type, setType] = useState<TCreativeResourceType>("feedbackButton");
@@ -83,6 +86,7 @@ export const NewCreativeDialog = ({ workspaceId }: Readonly<{ workspaceId: strin
         type,
         name: t("workspace.creatives.untitled_creative"),
         label: t("workspace.creatives.editor.default_label"),
+        defaultLanguage,
       }),
       {
         onSuccess: (creative) => router.push(getCreativeEditPath(workspaceId, creative.id)),

@@ -3,6 +3,7 @@
 import {
   ArrowLeftIcon,
   CalendarClockIcon,
+  LanguagesIcon,
   type LucideIcon,
   PaletteIcon,
   Settings2Icon,
@@ -48,12 +49,14 @@ import { CreativeStatusPill } from "../creative-status-pill";
 import { ContentTab } from "./content-tab";
 import { CreativePreview } from "./creative-preview";
 import type { TCreativeCustomCssConfig } from "./custom-css-panel";
+import { LanguageTab } from "./language-tab";
 import { ScheduleTab } from "./schedule-tab";
 import { SettingsTab, type TCreativeActionOption } from "./settings-tab";
 import { StylingTab } from "./styling-tab";
 
 const TAB_ICONS: Record<TCreativeEditorTab, LucideIcon> = {
   content: TypeIcon,
+  language: LanguagesIcon,
   styling: PaletteIcon,
   settings: Settings2Icon,
   schedule: CalendarClockIcon,
@@ -75,6 +78,7 @@ export const CreativeEditor = ({
   actionOptions,
   workspaceStyling,
   customCss,
+  workspaceLanguageCodes,
 }: Readonly<{
   workspaceId: string;
   siteName: string;
@@ -85,6 +89,8 @@ export const CreativeEditor = ({
   /** The workspace Look & Feel a creative starts from (never the linked survey's own styling). */
   workspaceStyling: TWorkspaceStyling;
   customCss: TCreativeCustomCssConfig;
+  /** The workspace's languages the Language tab offers (ENG-4003). */
+  workspaceLanguageCodes: string[];
 }>) => {
   const { t } = useTranslation();
   const nameRef = useRef<HTMLInputElement>(null);
@@ -115,12 +121,14 @@ export const CreativeEditor = ({
   const tabsWithIssues = new Set([...issues.map((issue) => PUBLISH_ISSUE_TABS[issue]), serverIssueTab]);
   const linkedSurveyId = creative.destination?.type === "survey" ? creative.destination.surveyId : null;
   const pickedSurveyId = form.destination.type === "survey" ? form.destination.surveyId : null;
-  const pickedSurveyName = surveyOptions.find((option) => option.id === pickedSurveyId)?.name ?? null;
+  const pickedSurvey = surveyOptions.find((option) => option.id === pickedSurveyId) ?? null;
+  const pickedSurveyName = pickedSurvey?.name ?? null;
 
   useBeforeUnloadPrompt(() => hasUnsavedChanges(form, creative), { enabled: !isArchived });
 
   const tabLabels: Record<TCreativeEditorTab, string> = {
     content: t("workspace.creatives.editor.tab_content"),
+    language: t("common.language"),
     styling: t("common.styling"),
     settings: t("common.settings"),
     schedule: t("workspace.creatives.editor.schedule"),
@@ -303,6 +311,15 @@ export const CreativeEditor = ({
                 surveyOptions={surveyOptions}
                 linkedSurveyId={linkedSurveyId}
                 issues={issues}
+              />
+            )}
+            {activeTab === "language" && (
+              <LanguageTab
+                workspaceId={workspaceId}
+                form={form}
+                setForm={setForm}
+                workspaceLanguageCodes={workspaceLanguageCodes}
+                survey={pickedSurvey}
               />
             )}
             {activeTab === "styling" && (

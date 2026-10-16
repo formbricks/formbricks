@@ -19,6 +19,17 @@ export type TCreativeType = "feedbackButton" | "banner";
 /** Plain text per locale code. Always holds the creative's `defaultLanguage`. */
 export type TCreativeText = Record<string, string>;
 
+/**
+ * A language a creative's texts are written in (ENG-4003), in the shape survey languages have in the same
+ * payload, so one matcher reads both. `alias` is the workspace language's alias, matched like a code.
+ * A disabled language is never picked; its visitors get the default language.
+ */
+export interface TCreativeLanguage {
+  default: boolean;
+  enabled: boolean;
+  language: { code: string; alias: string | null };
+}
+
 /** One stretch of banner text with the same formatting. Never HTML. */
 export interface TCreativeTextRun {
   text: string;
@@ -51,7 +62,8 @@ export interface TCreativePosition<TPlacement> {
  * What pressing a creative opens.
  * - An app survey opens as a popup. It is always in the same payload's `data.surveys`, even when it is
  *   not among the 30 newest app surveys, and is sent with `triggers: []` when only creatives open it.
- * - A link survey opens its public link in a new tab, with `?creativeId=` added.
+ * - A link survey opens its public link in a new tab, with `?creativeId=` added, and `lang=` with the
+ *   language the site set (`setLanguage`), if any; the link page falls back as it always does.
  * - A link opens as given, in a new tab.
  */
 export type TCreativeDestination =
@@ -63,6 +75,17 @@ interface TCreativePayloadBase {
   id: string;
   /** The locale code the texts fall back to. */
   defaultLanguage: string;
+  /**
+   * Every language the texts are written in, the default first (ENG-4003). A visitor's language is
+   * matched against them as the SDK matches a survey's languages; a visitor whose language is missing
+   * or disabled, or whose translation of a text is empty, sees the default language.
+   */
+  languages: TCreativeLanguage[];
+  /**
+   * Whether the browser's languages pick the language when the site set none with `setLanguage`: the
+   * Destination survey's "Use browser language" setting. `false` when it opens no survey.
+   */
+  autoSelectLanguage: boolean;
   /** The look, computed by the server and only applied by the SDK (ENG-3998). */
   style: TCreativeStyle;
   /** `null` only for a banner without a button. */
@@ -93,6 +116,12 @@ export interface TBannerPayload extends TCreativePayloadBase {
     dismissible: boolean;
     accessibleName: TCreativeText | null;
   };
+  /**
+   * The texts the SDK draws that the author doesn't write (ENG-4003), in every language a visitor can
+   * get (the default and the enabled ones), filled in by the server: `siteNotice`, the region name when
+   * `accessibleName` is null, and `dismiss`, the Dismiss control's name.
+   */
+  labels: { siteNotice: TCreativeText; dismiss: TCreativeText };
   position: TCreativePosition<TBannerPlacement>;
 }
 
@@ -171,7 +200,10 @@ export interface TBannerView {
   message: TCreativeTextRun[];
   buttonLabel: string | null;
   dismissible: boolean;
+  /** The region's name; `null` draws "Site notice" in English (the editor preview). */
   accessibleName: string | null;
+  /** The Dismiss control's name; absent draws "Dismiss" in English (the editor preview). */
+  dismissLabel?: string;
   position: TCreativePosition<TBannerPlacement>;
   style: TCreativeStyle;
   destination: TCreativeDestination | null;

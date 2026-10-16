@@ -8,7 +8,12 @@ import { setIsSetup } from "@/lib/common/status";
 import { reconcileCreatives, removeCreatives } from "@/lib/creatives/creatives";
 import { trackAction } from "@/lib/survey/action";
 import { mockSurvey } from "@/lib/survey/tests/__mocks__/widget.mock";
-import { getOpenSurveyIds, openSurveyForCreative } from "@/lib/survey/widget";
+import {
+  getLoadedLanguageResolver,
+  getOpenSurveyIds,
+  loadFormbricksSurveysExternally,
+  openSurveyForCreative,
+} from "@/lib/survey/widget";
 import { resetDeviceCache } from "@/lib/visit/device";
 import { recordNavigation, recordPageLoad } from "@/lib/visit/visit-store";
 import type { TConfig, TWorkspaceStateSurvey } from "@/types/config";
@@ -16,6 +21,8 @@ import type { TConfig, TWorkspaceStateSurvey } from "@/types/config";
 vi.mock("@/lib/survey/widget", () => ({
   getOpenSurveyIds: vi.fn(() => []),
   openSurveyForCreative: vi.fn(() => Promise.resolve()),
+  getLoadedLanguageResolver: vi.fn(() => undefined),
+  loadFormbricksSurveysExternally: vi.fn(() => Promise.resolve({})),
 }));
 
 const NOW = Date.parse("2026-10-20T01:59:00.000Z");
@@ -38,7 +45,12 @@ const feedbackButton = (overrides: Partial<TCreativePayload> = {}): TCreativePay
     ...overrides,
   }) as TCreativePayload;
 
-let state: { creatives: TCreativePayload[]; surveys: TWorkspaceStateSurvey[]; clockOffset?: number };
+let state: {
+  creatives: TCreativePayload[];
+  surveys: TWorkspaceStateSurvey[];
+  clockOffset?: number;
+  language?: string;
+};
 
 const shownButtons = (): HTMLButtonElement[] =>
   Array.from(document.querySelectorAll("[data-formbricks-creative]")).flatMap((host) =>
@@ -88,6 +100,7 @@ beforeEach(() => {
           clockOffset: state.clockOffset,
           data: { surveys: state.surveys, actionClasses: [], creatives: state.creatives },
         },
+        user: { data: { language: state.language } },
       }) as unknown as TConfig,
   } as unknown as Config);
 });
@@ -361,6 +374,47 @@ describe("appearance", () => {
   });
 });
 
+describe("language (ENG-4003)", () => {
+  const english = { default: true, enabled: true, language: { code: "en-US", alias: null } };
+  const german = { default: false, enabled: true, language: { code: "de-DE", alias: null } };
+  const bilingualButton = feedbackButton({
+    languages: [english, german],
+    content: { label: { "en-US": "Feedback", "de-DE": "Feedback geben" }, icon: null },
+  });
+
+  beforeEach(() => {
+    vi.mocked(loadFormbricksSurveysExternally).mockClear();
+    vi.mocked(getLoadedLanguageResolver).mockReset();
+  });
+
+  test("labels a creative in the language the site set", () => {
+    state = { creatives: [bilingualButton], surveys: [mockSurvey], language: "de-DE" };
+
+    reconcileCreatives();
+
+    expect(shownButtons().map((button) => button.textContent)).toEqual(["Feedback geben"]);
+    expect(loadFormbricksSurveysExternally).not.toHaveBeenCalled();
+  });
+
+  test("loads the surveys bundle's matcher when the exact one can't decide, then decides again", async () => {
+    const bilingualSurvey = { ...mockSurvey, languages: [english, german] } as TWorkspaceStateSurvey;
+    state = { creatives: [bilingualButton], surveys: [bilingualSurvey], language: "de-AT" };
+
+    reconcileCreatives();
+
+    // Whether `de-AT` reaches the survey's `de-DE` is the full matcher's call: hidden until it is here.
+    expect(shownButtons()).toEqual([]);
+    expect(loadFormbricksSurveysExternally).toHaveBeenCalledTimes(1);
+
+    vi.mocked(getLoadedLanguageResolver).mockReturnValue(({ explicitLanguage }) =>
+      explicitLanguage === "de-AT" ? "de-DE" : "default"
+    );
+    await vi.runAllTimersAsync();
+
+    expect(shownButtons().map((button) => button.textContent)).toEqual(["Feedback geben"]);
+  });
+});
+
 describe("pressing a creative", () => {
   test("opens its popup survey through the click path, closing whatever survey is open", () => {
     vi.mocked(getOpenSurveyIds).mockReturnValue(["other-survey"]);
@@ -433,6 +487,7 @@ describe("banners (ENG-3576)", () => {
         dismissible: true,
         accessibleName: null,
       },
+      labels: { siteNotice: { "en-US": "Site notice" }, dismiss: { "en-US": "Dismiss" } },
       position: { desktop: { placement, layout }, phone: null },
       destination: null,
       ...overrides,
