@@ -74,6 +74,27 @@ describe("toDestinationSurveyOptions", () => {
     expect(options.map(({ id }) => id)).toEqual(["ok", "linked"]);
   });
 
+  test("flags the survey the creative already opens once it can no longer be a Destination", () => {
+    const options = toDestinationSurveyOptions(
+      [
+        survey({ id: "ok" }),
+        survey({ id: "now-restricted", visibility: "restricted" }),
+        survey({ id: "now-pin", type: "link", pin: "1234" }),
+      ],
+      "now-restricted"
+    );
+    const withPin = toDestinationSurveyOptions(
+      [survey({ id: "now-pin", type: "link", pin: "1234" })],
+      "now-pin"
+    );
+
+    expect(options.map(({ id, notAllowed }) => ({ id, notAllowed }))).toEqual([
+      { id: "ok", notAllowed: undefined },
+      { id: "now-restricted", notAllowed: true },
+    ]);
+    expect(withPin[0].notAllowed).toBe(true);
+  });
+
   test("carries a survey's languages when they were read, for the editor's language check", () => {
     const languages = [{ default: true, enabled: true, language: { code: "en-US", alias: null } }];
     const options = toDestinationSurveyOptions(

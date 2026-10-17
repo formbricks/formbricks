@@ -5,7 +5,7 @@ import { resetDb } from "@/integration/reset-db";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { purgeExpiredArchivedSurveys } from "@/modules/survey/archive/lib/process-survey-archive-purge-job";
 import { deleteSurvey } from "@/modules/survey/lib/surveys";
-import { SurveyLinkedCreativesError } from "./linked-creatives";
+import { LINKED_CREATIVES_READ_LIMIT, SurveyLinkedCreativesError } from "./linked-creatives";
 
 /**
  * The survey side of a creative's Destination (T6) against a real PostgreSQL: the queries behind the
@@ -108,6 +108,30 @@ describe("the 30-day archive purge", () => {
         })
       );
     }
+  });
+
+  test("unlinks and audits every creative even when more open the survey than one read returns", async () => {
+    const surveyId = await createSurvey({ archivedAt: new Date(Date.now() - 31 * DAY) });
+    const count = LINKED_CREATIVES_READ_LIMIT + 1;
+    await prisma.creative.createMany({
+      data: Array.from({ length: count }, (_, index) => ({
+        name: `Tab ${String(index).padStart(3, "0")}`,
+        type: "feedbackButton" as const,
+        status: "inProgress" as const,
+        workspaceId,
+        surveyId,
+        content: {},
+        styling: {},
+      })),
+    });
+
+    expect(await purgeExpiredArchivedSurveys()).toBe(1);
+
+    expect(await prisma.creative.count({ where: { workspaceId, surveyId: { not: null } } })).toBe(0);
+    const creativeAudits = vi
+      .mocked(queueAuditEventWithoutRequest)
+      .mock.calls.filter(([event]) => event.targetType === "creative");
+    expect(creativeAudits).toHaveLength(count);
   });
 });
 

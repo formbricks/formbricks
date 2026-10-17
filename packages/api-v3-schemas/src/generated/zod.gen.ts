@@ -845,10 +845,12 @@ export const zCreativeStatus = z.enum(["draft", "inProgress", "paused", "complet
 export type CreativeStatusZodType = z.infer<typeof zCreativeStatus>;
 
 /**
- * Why `displayStatus` differs from what `status` alone would give: `surveyNotActive` on a `paused` creative whose Destination survey isn't active ("Paused with its survey": it comes back by itself when the survey is active again), `scheduleEnded` on a `closed` creative whose `endAt` has passed. `null` otherwise. New values may be added.
+ * Why `displayStatus` differs from what `status` alone would give: `surveyNotActive` on a `paused` creative whose Destination survey isn't active ("Paused with its survey": it comes back by itself when the survey is active again), `scheduleEnded` on a `closed` creative whose `endAt` has passed, `destinationMissing` on a `paused` creative that needs a Destination (a feedback button, or a banner with a button) and has none, and `actionMissing` on a `paused` creative that shows on an action and has none. Sites never show a creative paused for either of the last two until it gets what it lacks (see `warnings`). `null` otherwise. New values may be added.
  *
  */
-export const zCreativeDisplayStatusReason = z.enum(["surveyNotActive", "scheduleEnded"]).nullable();
+export const zCreativeDisplayStatusReason = z
+  .enum(["surveyNotActive", "scheduleEnded", "destinationMissing", "actionMissing"])
+  .nullable();
 
 export type CreativeDisplayStatusReasonZodType = z.infer<typeof zCreativeDisplayStatusReason>;
 

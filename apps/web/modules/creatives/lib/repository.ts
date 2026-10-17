@@ -5,7 +5,7 @@ import { ensureV3WorkspaceLanguages } from "@/app/api/v3/surveys/languages";
 import { lockSurveyVisibility } from "@/lib/authzed/survey";
 import { surveyOutboundVisibilitySelect } from "@/lib/survey/visibility/outbound";
 import type { TCreativeDisplayStatus } from "./display-status";
-import { creativeDisplayStatusSql } from "./display-status-sql";
+import { creativeDeliveryGapSql, creativeDisplayStatusSql } from "./display-status-sql";
 
 /**
  * The creatives storage boundary: every Prisma call the creative service makes, and nothing else. The
@@ -121,6 +121,7 @@ export const findCreativeRecordsPage = async (query: TCreativePageQuery): Promis
       endAt: Prisma.raw('c."endAt"'),
       surveyStatus: Prisma.raw('s."status"'),
       surveyArchivedAt: Prisma.raw('s."archivedAt"'),
+      deliveryGap: creativeDeliveryGapSql("c"),
     },
     query.now
   );

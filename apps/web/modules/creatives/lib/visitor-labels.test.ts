@@ -3,6 +3,11 @@ import { getBannerLabels, toLabelLocale } from "./visitor-labels";
 
 vi.mock("server-only", () => ({}));
 
+// The dashboard's own translator, stubbed so each word says which locale and key it came from.
+vi.mock("@/lingodotdev/server", () => ({
+  getTranslate: vi.fn(async (locale: string) => (key: string) => `${locale}|${key}`),
+}));
+
 describe("toLabelLocale", () => {
   test("takes a dashboard locale as it is", () => {
     expect(toLabelLocale("de-DE")).toBe("de-DE");
@@ -22,11 +27,17 @@ describe("toLabelLocale", () => {
 
 describe("getBannerLabels", () => {
   test("names the region and its Dismiss control in each of the banner's languages", async () => {
-    const labels = await getBannerLabels(["en-US", "it-IT"]);
+    const labels = await getBannerLabels(["de-AT", "it-IT"]);
 
     expect(labels).toEqual({
-      siteNotice: { "en-US": "Site notice", "it-IT": "Site notice" },
-      dismiss: { "en-US": "Dismiss", "it-IT": "Dismiss" },
+      siteNotice: {
+        "de-AT": "de-DE|workspace.creatives.visitor_site_notice",
+        "it-IT": "en-US|workspace.creatives.visitor_site_notice",
+      },
+      dismiss: {
+        "de-AT": "de-DE|workspace.creatives.visitor_dismiss",
+        "it-IT": "en-US|workspace.creatives.visitor_dismiss",
+      },
     });
   });
 });

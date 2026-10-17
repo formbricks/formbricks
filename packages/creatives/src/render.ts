@@ -213,8 +213,8 @@ const bannerCss = ({ style, position }: TBannerView, device?: "desktop" | "phone
 };
 
 /**
- * What a banner region and its Dismiss control are called when the view names neither: only in the
- * editor preview, as `resolve` names both in the visitor's language from the payload's `labels`.
+ * What a banner region and its Dismiss control are called when the view names neither. `resolve` names
+ * both from the payload's `labels` and the editor preview from the dashboard's translations.
  */
 const DEFAULT_BANNER_NAME = "Site notice";
 const DEFAULT_DISMISS_LABEL = "Dismiss";

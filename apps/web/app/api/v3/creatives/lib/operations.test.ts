@@ -33,7 +33,10 @@ import { ZV3CreateCreativeBody, ZV3CreativeStatsQuery, ZV3PatchCreativeBody } fr
  */
 
 vi.mock("server-only", () => ({}));
-vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: vi.fn() }));
+vi.mock("@/app/api/v3/lib/auth", async (importOriginal) => ({
+  getV3SessionUserId: (await importOriginal<typeof import("@/app/api/v3/lib/auth")>()).getV3SessionUserId,
+  requireV3WorkspaceAccess: vi.fn(),
+}));
 vi.mock("@/modules/custom-css/lib/access", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/custom-css/lib/access")>()),
   getCustomCssPlanAllowed: vi.fn(),

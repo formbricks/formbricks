@@ -12,6 +12,8 @@ import { WorkspaceStateData, getWorkspaceStateData } from "./data";
 import { getWorkspaceState } from "./environmentState";
 
 vi.mock("server-only", () => ({}));
+// Banner words come from the dashboard translator (getTranslate); its session-locale lookup is unused here.
+vi.mock("@/lingodotdev/language", () => ({ getLocale: vi.fn() }));
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/utils/validate", () => ({ validateInputs: vi.fn() }));
@@ -229,6 +231,8 @@ describe("getWorkspaceState", () => {
       type: "feedbackButton",
       defaultLanguage: "en-US",
       languages: [{ default: true, enabled: true, language: { code: "en-US", alias: null } }],
+      languageMatch: { keys: {}, bases: {} },
+      surveyLanguageMatch: { keys: {}, bases: {} },
       autoSelectLanguage: false,
       style: DEFAULT_CREATIVE_STYLE,
       content: { label: { "en-US": "Feedback" }, icon: null },

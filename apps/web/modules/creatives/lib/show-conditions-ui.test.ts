@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  canEditInCard,
   createCondition,
   getValueKind,
   hasIncompleteConditions,
@@ -50,6 +51,26 @@ describe("setTopLevelConditions / hasIncompleteConditions", () => {
     expect(group).toMatchObject({ id: "g", connector: "and" });
     expect(hasIncompleteConditions(group)).toBe(true);
     expect(hasIncompleteConditions(null)).toBe(false);
+  });
+});
+
+describe("canEditInCard", () => {
+  test("no conditions, or one flat group of them, is edited in the card", () => {
+    expect(canEditInCard(null)).toBe(true);
+    expect(canEditInCard(setTopLevelConditions(null, [createCondition("currentUrl", "a")], "g"))).toBe(true);
+  });
+
+  test("a group nested inside (only the API and MCP make one) is shown read-only instead", () => {
+    const nested = {
+      id: "g",
+      connector: "or" as const,
+      conditions: [
+        createCondition("currentUrl", "a"),
+        { id: "sub", connector: "and" as const, conditions: [createCondition("deviceType", "b")] },
+      ],
+    };
+
+    expect(canEditInCard(nested)).toBe(false);
   });
 });
 

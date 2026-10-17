@@ -1,5 +1,6 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
+import { getV3SessionUserId } from "@/app/api/v3/lib/auth";
 import { capCustomCssIssues, customCssErrorsToInvalidParams } from "@/app/api/v3/lib/custom-css";
 import { getV3CustomCssPrincipal } from "@/app/api/v3/lib/custom-css-rate-limit";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
@@ -68,8 +69,6 @@ type TOperationContext = {
 
 type TCreativeOperationParams = TOperationContext & { creativeId: string };
 
-const NO_STORE = "private, no-store";
-
 /** Where a creative's own Custom CSS sits in the body; processor errors are named after it. */
 const CUSTOM_CSS_FIELD = "styling.theme.customCss";
 
@@ -90,9 +89,6 @@ const assertCustomCssWrite = (
     organizationId,
     principal: getV3CustomCssPrincipal(authentication),
   });
-
-const getCreatorId = (authentication: TV3Authentication): string | null =>
-  authentication && "user" in authentication && authentication.user?.id ? authentication.user.id : null;
 
 const creativeLocation = (creativeId: string): string => `/api/v3/creatives/${creativeId}`;
 
@@ -221,7 +217,7 @@ export async function listV3Creatives({
     return successListResponse(
       page.map((record) => serializeV3Creative(record, now)),
       { limit: query.limit, nextCursor: rows.length > query.limit && last ? query.nextCursor(last) : null },
-      { requestId, cache: NO_STORE }
+      { requestId }
     );
   } catch (error) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: "creatives.list" });
@@ -258,7 +254,7 @@ export async function createV3Creative({
 
     const record = await createCreative({
       workspaceId: authorized.workspaceId,
-      createdBy: getCreatorId(authentication),
+      createdBy: getV3SessionUserId(authentication),
       state,
     });
     const resource = serializeV3Creative(record, now);
@@ -267,7 +263,6 @@ export async function createV3Creative({
     return createdResponse(resource, {
       location: creativeLocation(record.id),
       requestId,
-      cache: NO_STORE,
     });
   } catch (error) {
     return mapWriteError(error, { log, requestId, instance, operation: "creatives.create" });
@@ -282,7 +277,7 @@ export async function getV3Creative(params: Omit<TCreativeOperationParams, "audi
     const loaded = await loadAuthorizedCreative(params, "read");
     if ("response" in loaded) return loaded.response;
 
-    return successResponse(serializeV3Creative(loaded.record, new Date()), { requestId, cache: NO_STORE });
+    return successResponse(serializeV3Creative(loaded.record, new Date()), { requestId });
   } catch (error) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: "creatives.get" });
   }
@@ -306,7 +301,7 @@ export async function patchV3Creative(
       return problemCreativeArchived(requestId, instance);
     }
     // An empty patch changes nothing, `updatedAt` included.
-    if (Object.keys(body).length === 0) return successResponse(before, { requestId, cache: NO_STORE });
+    if (Object.keys(body).length === 0) return successResponse(before, { requestId });
 
     const previous = toCreativeState(record);
     const planned = applyCreativePatch(previous, body, now);
@@ -326,7 +321,7 @@ export async function patchV3Creative(
     const resource = serializeV3Creative(updated, now);
     recordAudit(auditLog, organizationId, record.id, { oldObject: before, newObject: resource });
 
-    return successResponse(resource, { requestId, cache: NO_STORE });
+    return successResponse(resource, { requestId });
   } catch (error) {
     return mapWriteError(error, { log, requestId, instance, operation: "creatives.patch" });
   }
@@ -371,7 +366,7 @@ const runLifecycleOperation = async (
       newObject: resource,
     });
 
-    return successResponse(resource, { requestId, cache: NO_STORE });
+    return successResponse(resource, { requestId });
   } catch (error) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: `creatives.${operation}` });
   }
@@ -392,14 +387,13 @@ export async function duplicateV3Creative(params: TCreativeOperationParams): Pro
     if ("response" in loaded) return loaded.response;
     const { record, organizationId } = loaded;
 
-    const copy = await duplicateCreative({ record, createdBy: getCreatorId(authentication) });
+    const copy = await duplicateCreative({ record, createdBy: getV3SessionUserId(authentication) });
     const resource = serializeV3Creative(copy, new Date());
     recordAudit(auditLog, organizationId, copy.id, { newObject: resource });
 
     return createdResponse(resource, {
       location: creativeLocation(copy.id),
       requestId,
-      cache: NO_STORE,
     });
   } catch (error) {
     return mapWriteError(error, { log, requestId, instance, operation: "creatives.duplicate" });
@@ -446,7 +440,6 @@ export async function getV3CreativeStats(
 
     return successResponse(buildCreativeStats({ creativeId, range, groupBy, dayDeviceCounts, pageCounts }), {
       requestId,
-      cache: NO_STORE,
     });
   } catch (error) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: "creatives.stats" });

@@ -14,12 +14,7 @@ import { getIsSetup } from "@/lib/common/status";
 import { getBrowserLanguageCodes } from "@/lib/common/utils";
 import { countClick, countImpressions, stopCountingCreatives } from "@/lib/creatives/events";
 import { type TShownCreative, arrangeCreatives, stopArrangingCreatives } from "@/lib/creatives/layout";
-import {
-  getLoadedLanguageResolver,
-  getOpenSurveyIds,
-  loadFormbricksSurveysExternally,
-  openSurveyForCreative,
-} from "@/lib/survey/widget";
+import { getOpenSurveyIds, openSurveyForCreative } from "@/lib/survey/widget";
 import { getDeviceInfo } from "@/lib/visit/device";
 import { getVisitSnapshot } from "@/lib/visit/visit-store";
 
@@ -27,8 +22,7 @@ import { getVisitSnapshot } from "@/lib/visit/visit-store";
  * Creatives on the page (ENG-3994). `reconcileCreatives` runs on every page view (`checkPageUrl`), on
  * every tracked action, on a state refresh, when the CSP nonce, appearance or language changes and at
  * the next schedule boundary, and makes the page show exactly what `resolve` decides from the cached
- * state: no network, and no survey bundle unless a language needs its matcher (see
- * `reconcileCreatives`).
+ * state: no network and no survey bundle (languages arrive precomputed for the page).
  */
 
 /**
@@ -122,8 +116,9 @@ const handleCreativeClick = (view: TCreativeView): void => {
   }
 
   countClick(view.id);
-  // A banner whose button opened its Destination has done its job on this page (ENG-3576).
-  if (view.type === "banner") dismissBanner(view.id);
+  // A dismissible banner whose button opened its Destination has done its job on this page (ENG-3576);
+  // one that can't be dismissed stays, so a critical notice can't be clicked away (story 15).
+  if (view.type === "banner" && view.dismissible) dismissBanner(view.id);
 };
 
 const showCreatives = (views: readonly TCreativeView[], appearance: "light" | "dark" = "light"): void => {
@@ -170,9 +165,8 @@ const scheduleNextChange = (nextChangeAt: number | null, now: number): void => {
   boundaryTimer = setTimeout(reconcileCreatives, Math.min(nextChangeAt - now, MAX_BOUNDARY_WAIT_MS));
 };
 
-export const reconcileCreatives = (): void => {
-  if (!getIsSetup()) return;
-
+/** Makes the page show what `resolve` decides from the cached state, set up or not. */
+const drawCreatives = (): void => {
   try {
     const { workspace, user } = Config.getInstance().get();
     const now = Date.now() + (workspace.clockOffset ?? 0);
@@ -180,7 +174,7 @@ export const reconcileCreatives = (): void => {
 
     syncPageView();
 
-    const { creatives, nextChangeAt, languagePending } = resolve({
+    const { creatives, nextChangeAt } = resolve({
       creatives: workspace.data.creatives ?? [],
       surveys: workspace.data.surveys,
       page: {
@@ -191,17 +185,7 @@ export const reconcileCreatives = (): void => {
         language: { explicit: user.data.language, browser: getBrowserLanguageCodes() },
       },
       getShareRoll,
-      resolveLanguage: getLoadedLanguageResolver(),
     });
-    // The exact matcher couldn't settle a language (say `de-AT` against `de-DE`): the full one ships in
-    // the surveys bundle, which a click would load anyway. Decide again once it is here; until then a
-    // creative whose survey might be skipped stays hidden. A failed load retries on the next page view.
-    if (languagePending) {
-      void loadFormbricksSurveysExternally().then(
-        () => reconcileCreatives(),
-        () => undefined
-      );
-    }
 
     showCreatives(
       creatives.filter(({ id }) => !pageView.dismissed.has(id)),
@@ -212,6 +196,17 @@ export const reconcileCreatives = (): void => {
     Logger.getInstance().error(`Could not show creatives: ${String(error)}`);
   }
 };
+
+export const reconcileCreatives = (): void => {
+  if (getIsSetup()) drawCreatives();
+};
+
+/**
+ * At SDK start, the cached state's creatives before setup waits for its refresh, expired or not (review
+ * fix A3): an In page banner shows with the page instead of after the network. Setup reconciles again
+ * once the refreshed state is in; until then the schedule still applies on the server's clock.
+ */
+export const showCachedCreatives = drawCreatives;
 
 /** An action was tracked on this page (`trackAction`): shows the creatives that show on it. */
 export const recordCreativeAction = (actionName: string): void => {

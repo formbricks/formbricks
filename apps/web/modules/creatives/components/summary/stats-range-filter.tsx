@@ -23,6 +23,7 @@ import {
   formatStatsRange,
   getStatsToday,
 } from "../../lib/summary";
+import { getUiLocale } from "../../lib/ui-locale";
 
 // The survey summary's date presets and words (its `CustomFilter` is bound to the responses filter, so
 // it isn't reused as a whole). Literal `t()` calls keep the keys visible to the translation scanner.
@@ -52,7 +53,7 @@ interface StatsRangeFilterProps {
 /** A preset or a custom range of UTC days, the way the survey summary's date filter offers them. */
 export const StatsRangeFilter = ({ selection, range, now, onChange }: Readonly<StatsRangeFilterProps>) => {
   const { t, i18n } = useTranslation();
-  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+  const locale = getUiLocale(i18n);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   // The days being picked while the calendar is open; the query keeps the last complete range meanwhile.
   const [draft, setDraft] = useState<TDateRangeValue | null>(null);

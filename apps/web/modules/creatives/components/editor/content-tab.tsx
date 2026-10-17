@@ -175,6 +175,13 @@ const SurveyPicker = ({
                   )}
                   <span className="truncate">{option.name}</span>
                   {isRestricted && <Badge size="tiny" type="gray" text={restrictedLabel} />}
+                  {option.notAllowed && (
+                    <Badge
+                      size="tiny"
+                      type="warning"
+                      text={t("workspace.creatives.editor.survey_not_allowed")}
+                    />
+                  )}
                 </span>
               </SelectItem>
             );
@@ -191,6 +198,12 @@ const SurveyPicker = ({
           {survey.type === "app"
             ? t("workspace.creatives.editor.app_survey_opens_as_popup")
             : t("workspace.creatives.editor.link_survey_opens_in_tab")}
+        </p>
+      )}
+      {survey?.notAllowed && (
+        <p className="flex items-start gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
+          <AlertTriangleIcon className="mt-px size-3.5 shrink-0" aria-hidden="true" />
+          {t("workspace.creatives.editor.survey_not_allowed_note")}
         </p>
       )}
       {survey && survey.status !== "inProgress" && (
@@ -257,7 +270,7 @@ const OnClickPanel = ({
                 onChange={(surveyId) => setDestination({ type: "survey", surveyId })}
                 surveyOptions={surveyOptions}
                 linkedSurveyId={linkedSurveyId}
-                isInvalid={issues.includes("survey_missing")}
+                isInvalid={issues.includes("survey_missing") || issues.includes("survey_not_allowed")}
                 languages={languages}
               />
             )}

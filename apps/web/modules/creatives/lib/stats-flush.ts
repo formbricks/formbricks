@@ -32,8 +32,7 @@ const flushDay = async (day: string): Promise<number> => {
     if (creativeIds.length === 0) break;
 
     const { deviceRows, pageRows } = await readCreativeCounters(day, creativeIds);
-    await upsertCreativeDeviceCounts(deviceRows);
-    await upsertCreativePageCounts(pageRows);
+    await Promise.all([upsertCreativeDeviceCounts(deviceRows), upsertCreativePageCounts(pageRows)]);
     await releaseCountedCreatives(day, creativeIds);
 
     flushed += creativeIds.length;

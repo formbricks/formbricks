@@ -117,6 +117,14 @@ describe("getPublishIssues", () => {
     expect(getPublishIssues(link(" https://example.com/help "))).toEqual([]);
   });
 
+  test("a survey that can no longer be a Destination blocks Publish, on the Content tab", () => {
+    const notAllowed = { notAllowedSurveyIds: ["clsurvey0000000000000001"] };
+
+    expect(getPublishIssues(readyButton, notAllowed)).toEqual(["survey_not_allowed"]);
+    expect(PUBLISH_ISSUE_TABS.survey_not_allowed).toBe("content");
+    expect(getPublishIssues(readyButton, { notAllowedSurveyIds: ["clsurvey0000000000000002"] })).toEqual([]);
+  });
+
   test("an end at or before the start blocks Publish", () => {
     const start = new Date("2026-11-01T02:00:00.000Z");
     expect(getPublishIssues({ ...readyButton, schedule: { startAt: start, endAt: start } })).toEqual([

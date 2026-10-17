@@ -32,7 +32,7 @@ import {
   useSurveyLinkedCreatives,
   useSurveyStatusChangeWithCreatives,
 } from "@/modules/creatives/hooks/use-survey-linked-creatives";
-import { getLinkedCreativesBlockers } from "@/modules/creatives/lib/survey-side";
+import { getLinkedCreativesBlockers, joinCreativeNames } from "@/modules/creatives/lib/survey-side";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
 import { CopySurveyModal } from "@/modules/survey/list/components/copy-survey-modal";
@@ -506,7 +506,7 @@ export const SurveyDropDownMenu = ({
                   <AlertTitle>{t("workspace.creatives.survey_side.archive_note_title")}</AlertTitle>
                   <AlertDescription>
                     {t("workspace.creatives.survey_side.archive_note", {
-                      creatives: archiveLinkedCreatives.map(({ name }) => name).join(", "),
+                      creatives: joinCreativeNames(archiveLinkedCreatives),
                     })}
                   </AlertDescription>
                 </Alert>

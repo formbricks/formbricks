@@ -4,6 +4,7 @@ import { normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
 import { resolveSurveyLanguageDefaultTag } from "@formbricks/i18n-utils/survey-runtime-languages";
 import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
 import { DEFAULT_LOCALE } from "@/lib/constants";
+import { getTranslate } from "@/lingodotdev/server";
 
 /**
  * The words a banner shows visitors that its author doesn't write (ENG-4003): the region's default
@@ -26,25 +27,9 @@ export const toLabelLocale = (code: string): TUserLocale => {
   return DEFAULT_LOCALE;
 };
 
-/** One message from a locale file, by its dotted path; `undefined` while it is not translated yet. */
-const readMessage = (messages: unknown, path: string): string | undefined => {
-  let node = messages;
-  for (const key of path.split(".")) {
-    node = typeof node === "object" && node !== null ? (node as Record<string, unknown>)[key] : undefined;
-  }
-  return typeof node === "string" && node.trim() ? node : undefined;
-};
-
-const loadLocale = async (locale: TUserLocale): Promise<unknown> => {
-  const messages: { default: unknown } = await import(`../../../locales/${locale}.json`);
-  return messages.default;
-};
-
 const loadLabels = async (locale: TUserLocale): Promise<TLabels> => {
-  const [messages, english] = await Promise.all([loadLocale(locale), loadLocale(DEFAULT_LOCALE)]);
-  // A word Lingo.dev hasn't translated yet shows in English, as `getTranslate` would show it. Called `t`
-  // like every lookup, so the translation key scan (`pnpm scan-translations`) sees these keys in use.
-  const t = (key: string): string => readMessage(messages, key) ?? readMessage(english, key) ?? "";
+  // A word Lingo.dev hasn't translated yet shows in English (the translator's fallback locale).
+  const t = await getTranslate(locale);
   return {
     siteNotice: t("workspace.creatives.visitor_site_notice"),
     dismiss: t("workspace.creatives.visitor_dismiss"),

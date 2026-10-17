@@ -4,6 +4,7 @@ import {
   type TCreativeEditorForm,
   buildCreativePatch,
   buildNewCreativeRequest,
+  stopsOpeningSurvey,
   toCreativeEditorForm,
 } from "./editor-form";
 import {
@@ -147,6 +148,36 @@ describe("banner form", () => {
       },
       button: { label: { "en-US": "Status", "de-DE": "Mehr" } },
     });
+  });
+});
+
+describe("stopsOpeningSurvey", () => {
+  test("a save that keeps the survey keeps opening it", () => {
+    const form = toCreativeEditorForm(feedbackButton);
+
+    expect(stopsOpeningSurvey(feedbackButton, buildCreativePatch(form, feedbackButton, "save"))).toBe(false);
+  });
+
+  test("a save that picks a link or another survey stops opening the one it had", () => {
+    const form = toCreativeEditorForm(feedbackButton);
+    const relinked = (destination: TCreativeEditorForm["destination"]) =>
+      stopsOpeningSurvey(
+        feedbackButton,
+        buildCreativePatch({ ...form, destination }, feedbackButton, "save")
+      );
+
+    expect(relinked({ type: "link", url: "https://example.com/help" })).toBe(true);
+    expect(relinked({ type: "survey", surveyId: "clsurvey0000000000000002" })).toBe(true);
+  });
+
+  test("a creative that opens no survey has none to stop opening", () => {
+    const linkButton = zCreativeResource.parse({
+      ...feedbackButton,
+      destination: { type: "link", url: "https://example.com/help", opensAs: "newTab" },
+    });
+    const form = toCreativeEditorForm(linkButton);
+
+    expect(stopsOpeningSurvey(linkButton, buildCreativePatch(form, linkButton, "save"))).toBe(false);
   });
 });
 

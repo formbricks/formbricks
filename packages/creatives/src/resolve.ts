@@ -2,12 +2,7 @@ import {
   type TShowConditionsContext,
   evaluateShowConditions,
 } from "@formbricks/types/show-conditions-evaluate";
-import {
-  type TLanguageResolver,
-  type TMatchableLanguage,
-  type TVisitorLanguage,
-  chooseLanguage,
-} from "./language";
+import { type TVisitorLanguage, chooseLanguage } from "./language";
 import type {
   TCreativeDestination,
   TCreativePayload,
@@ -33,11 +28,9 @@ export interface TCreativePage {
   language?: TVisitorLanguage;
 }
 
-/** An app survey the SDK can open as a popup, with what decides whether the visitor's language skips it. */
+/** An app survey the SDK can open as a popup. */
 export interface TResolveSurvey {
   id: string;
-  languages?: readonly TMatchableLanguage[];
-  autoSelectLanguage?: boolean | null;
 }
 
 export interface TResolveInput {
@@ -47,12 +40,6 @@ export interface TResolveInput {
   page: TCreativePage;
   /** This visitor's share-of-visitors roll for a creative, in [0, 100) (see `createShareRolls`). */
   getShareRoll: (creativeId: string) => number;
-  /**
-   * The full language matcher: the surveys bundle's `resolveSurveyLanguage`, which carries the canonical
-   * language table the SDK leaves out. Without it languages are matched exactly (code or alias), and
-   * `languagePending` says when the full matcher could decide otherwise.
-   */
-  resolveLanguage?: TLanguageResolver;
 }
 
 export interface TResolveResult {
@@ -60,11 +47,6 @@ export interface TResolveResult {
   creatives: TCreativeView[];
   /** The next start or end time still ahead, in epoch ms on the server's clock, or `null`. */
   nextChangeAt: number | null;
-  /**
-   * A language was chosen without the full matcher and could change with it (a language the site set
-   * that matches no code or alias exactly, say `de-AT` for `de-DE`): resolve again once it is loaded.
-   */
-  languagePending: boolean;
 }
 
 /**
@@ -135,22 +117,10 @@ const toTime = (iso: string | null): number | null => (iso === null ? null : Dat
  * the SDK calls it on every page view, action, schedule boundary and state refresh, and the editor
  * preview can call it with a page of its own.
  */
-export const resolve = ({
-  creatives,
-  surveys,
-  page,
-  getShareRoll,
-  resolveLanguage,
-}: TResolveInput): TResolveResult => {
-  const surveysById = new Map(surveys.map((survey) => [survey.id, survey]));
+export const resolve = ({ creatives, surveys, page, getShareRoll }: TResolveInput): TResolveResult => {
+  const surveyIds = new Set(surveys.map(({ id }) => id));
   const shown: TCreativeView[] = [];
   let nextChangeAt: number | null = null;
-  let languagePending = false;
-  const choose = (item: TResolveSurvey | TCreativePayload, unmatched: "fallback" | "skip"): string | null => {
-    const { language, settled } = chooseLanguage(item, page.language, unmatched, resolveLanguage);
-    languagePending ||= !settled;
-    return language;
-  };
 
   for (const creative of creatives) {
     const startAt = toTime(creative.startAt);
@@ -166,11 +136,8 @@ export const resolve = ({
     if (endAt !== null && endAt <= page.now) continue;
 
     const { destination } = creative;
-    let popupSurvey: TResolveSurvey | undefined;
-    if (destination?.type === "survey" && destination.opensAs === "popup") {
-      popupSurvey = surveysById.get(destination.surveyId);
-      if (!popupSurvey) continue;
-    }
+    const opensPopup = destination?.type === "survey" && destination.opensAs === "popup";
+    if (opensPopup && !surveyIds.has(destination.surveyId)) continue;
 
     if (creative.showOn === "action" && !creative.triggers.some((name) => page.firedActions?.has(name))) {
       continue;
@@ -183,10 +150,17 @@ export const resolve = ({
     }
 
     // Its click would open nothing: the SDK skips an app survey that lacks the language the site set
-    // (ADR 0011). Decided after the other rules, so a creative hidden anyway never waits for the matcher.
-    if (popupSurvey && choose(popupSurvey, "skip") === null) continue;
+    // (ADR 0011).
+    const { autoSelectLanguage, surveyLanguageMatch } = creative;
+    if (
+      opensPopup &&
+      chooseLanguage(surveyLanguageMatch, autoSelectLanguage, page.language, "skip") === null
+    ) {
+      continue;
+    }
 
-    const view = toView(creative, choose(creative, "fallback"), page.language);
+    const language = chooseLanguage(creative.languageMatch, autoSelectLanguage, page.language, "fallback");
+    const view = toView(creative, language, page.language);
     if (!view) continue;
 
     // Last, so a visitor is only ever rolled for a creative that would otherwise show.
@@ -197,5 +171,5 @@ export const resolve = ({
     shown.push(view);
   }
 
-  return { creatives: shown, nextChangeAt, languagePending };
+  return { creatives: shown, nextChangeAt };
 };

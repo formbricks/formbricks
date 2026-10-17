@@ -7,6 +7,7 @@ import { handleErrorOnFirstSetup, setup, tearDown } from "@/lib/common/setup";
 import { setIsSetup } from "@/lib/common/status";
 import { filterSurveys, getIsDebug, isNowExpired } from "@/lib/common/utils";
 import type * as Utils from "@/lib/common/utils";
+import { showCachedCreatives } from "@/lib/creatives/creatives";
 import { addLiveRegionContainer } from "@/lib/survey/widget";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
@@ -75,6 +76,11 @@ vi.mock("@/lib/user/update", () => ({
 // 8) Mock checkPageUrl
 vi.mock("@/lib/survey/no-code-action", () => ({
   checkPageUrl: vi.fn(),
+}));
+
+// Creatives draw into the page; here only when setup asks for it matters.
+vi.mock("@/lib/creatives/creatives", () => ({
+  showCachedCreatives: vi.fn(),
 }));
 
 // 9) Mock survey widget
@@ -465,6 +471,35 @@ describe("setup.ts", () => {
           filteredSurveys: [{ name: "S1" }, { name: "S2" }],
         })
       );
+    });
+
+    test("shows the cached state's creatives before it waits for the refresh, even when that state expired", async () => {
+      const mockConfig = {
+        get: vi.fn().mockReturnValue({
+          workspaceId: "ws_123",
+          appUrl: "https://my.url",
+          workspace: { expiresAt: new Date(Date.now() - 5000), data: { actionClasses: [] } },
+          user: { data: { userId: null }, expiresAt: null },
+          status: { value: "success", expiresAt: null },
+        }),
+        update: vi.fn(),
+      };
+      getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+      (isNowExpired as unknown as Mock).mockReturnValue(true);
+      (fetchWorkspaceState as unknown as Mock).mockImplementationOnce(() => {
+        // The refresh is still on its way: the creatives are on the page already.
+        expect(showCachedCreatives).toHaveBeenCalledTimes(1);
+        return Promise.resolve({
+          ok: true,
+          data: { data: { surveys: [] }, expiresAt: new Date(Date.now() + 60_000) },
+        });
+      });
+      (filterSurveys as unknown as Mock).mockReturnValueOnce([]);
+
+      const result = await setup({ workspaceId: "ws_123", appUrl: "https://my.url" });
+
+      expect(result.ok).toBe(true);
+      expect(fetchWorkspaceState).toHaveBeenCalledTimes(1);
     });
 
     test("resets config if no valid config found, fetches workspace state, sets default user", async () => {

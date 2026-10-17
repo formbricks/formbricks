@@ -1,4 +1,3 @@
-import { type TLanguageResolver, chooseLanguage, resolveLanguageExactly } from "@formbricks/creatives";
 import { getAppearance } from "@/lib/common/appearance";
 import { Config } from "@/lib/common/config";
 import { CONTAINER_ID, LIVE_REGION_ID } from "@/lib/common/constants";
@@ -16,6 +15,7 @@ import {
   surveyHasSegmentFilters,
 } from "@/lib/common/utils";
 import { buildDisplayHiddenFields } from "@/lib/survey/embedded-data";
+import { type TLanguageResolver, chooseSurveyLanguage, resolveLanguageExactly } from "@/lib/survey/language";
 import { UpdateQueue } from "@/lib/user/update-queue";
 import { type TUserState, type TWorkspaceStateSurvey } from "@/types/config";
 import { type TTrackProperties } from "@/types/survey";
@@ -29,8 +29,9 @@ let isSurveyRunning = false;
 // after every skip check — so a survey that was never shown never reports a close.
 const openSurveyIds = new Set<string>();
 
-// The survey a render is preparing while `isSurveyRunning` is held but nothing is on screen yet
-// (identification, renderer load, delay). A creative's click treats it as open (see `getOpenSurveyIds`).
+// The survey a creative's click is opening while nothing is on screen yet (identification, renderer
+// load). A second press treats it as open (see `getOpenSurveyIds`), so it is not opened twice. A survey
+// its own trigger is preparing, or delaying, is not open: a press opens it now (ADR 0004).
 let surveyInFlight: string | null = null;
 
 // Bumped by every creative click (ADR 0004: the click wins). A render already on its way when the click
@@ -48,7 +49,7 @@ export const setIsSurveyRunning = (value: boolean): void => {
   if (!value) surveyInFlight = null;
 };
 
-/** The surveys on screen, plus one on its way there. */
+/** The surveys on screen, plus one a creative's click has on its way there. */
 export const getOpenSurveyIds = (): string[] =>
   surveyInFlight === null || openSurveyIds.has(surveyInFlight)
     ? [...openSurveyIds]
@@ -131,7 +132,7 @@ export const renderWidget = async (
   }
 
   setIsSurveyRunning(true);
-  surveyInFlight = survey.id;
+  surveyInFlight = opener ? survey.id : null;
 
   const generation = renderGeneration;
   const isSuperseded = (): boolean => generation !== renderGeneration;
@@ -444,28 +445,24 @@ type TFormbricksSurveys = NonNullable<typeof globalThis.window.formbricksSurveys
  * keep working as they did before instead of every one of them being skipped.
  */
 const toLanguageResolver = (formbricksSurveys: TFormbricksSurveys): TLanguageResolver =>
-  formbricksSurveys.resolveSurveyLanguage ?? ((input) => resolveLanguageExactly(input).language);
-
-/** The full language matcher when the surveys bundle is on the page, `undefined` before (ENG-4003). */
-export const getLoadedLanguageResolver = (): TLanguageResolver | undefined =>
-  globalThis.window.formbricksSurveys && toLanguageResolver(globalThis.window.formbricksSurveys);
+  formbricksSurveys.resolveSurveyLanguage ?? resolveLanguageExactly;
 
 /**
  * The language a survey renders in, or `null` to skip it. An explicit language (`setLanguage()`) that
  * matches nothing skips the survey, as it always has; the browser languages only apply when no explicit
- * language is set and the survey uses browser language. Creatives hide by the same rule (ENG-4003).
+ * language is set and the survey uses browser language. Creatives hide by the same rule (ENG-4003), from
+ * the survey languages the server precomputes for them.
  */
 const resolveDisplayLanguage = (
   survey: TWorkspaceStateSurvey,
   language: string | undefined,
   formbricksSurveys: TFormbricksSurveys
 ): string | null =>
-  chooseLanguage(
+  chooseSurveyLanguage(
     survey,
     { explicit: language, browser: survey.autoSelectLanguage ? getBrowserLanguageCodes() : [] },
-    "skip",
     toLanguageResolver(formbricksSurveys)
-  ).language;
+  );
 
 let surveysLoadPromise: Promise<TFormbricksSurveys> | null = null;
 

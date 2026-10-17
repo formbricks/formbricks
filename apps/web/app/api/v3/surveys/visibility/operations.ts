@@ -318,9 +318,8 @@ export async function changeV3SurveyVisibility(
       auditLog.organizationId = organizationId;
       auditLog.targetId = surveyId;
       // Committed with the restriction: one event per unlinked creative, by the same caller.
-      for (const event of toUnlinkedCreativeAuditEvents(auditLog, surveyId, unlinkedCreatives)) {
-        await queueV3AuditLog(event, requestId, log);
-      }
+      const events = toUnlinkedCreativeAuditEvents(auditLog, surveyId, unlinkedCreatives);
+      await Promise.all(events.map((event) => queueV3AuditLog(event, requestId, log)));
     }
 
     if (plan.kind === "noop") {

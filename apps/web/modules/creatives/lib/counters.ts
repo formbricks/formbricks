@@ -189,11 +189,13 @@ export const readCreativeCounters = async (
   if (!redis) return { deviceRows: [], pageRows: [] };
 
   const hashes = await Promise.all(
-    creativeIds.map(async (creativeId) => ({
-      creativeId,
-      devices: await redis.hGetAll(createCacheKey.creativeStats.devices(day, creativeId)),
-      pages: await redis.hGetAll(createCacheKey.creativeStats.pages(day, creativeId)),
-    }))
+    creativeIds.map(async (creativeId) => {
+      const [devices, pages] = await Promise.all([
+        redis.hGetAll(createCacheKey.creativeStats.devices(day, creativeId)),
+        redis.hGetAll(createCacheKey.creativeStats.pages(day, creativeId)),
+      ]);
+      return { creativeId, devices, pages };
+    })
   );
 
   const deviceRows: TCreativeDeviceCountRow[] = [];

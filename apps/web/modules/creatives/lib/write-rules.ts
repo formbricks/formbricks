@@ -14,6 +14,12 @@ import {
   type TDestinationSurveyIssue,
   needsDestination,
 } from "./creative";
+import {
+  CREATIVE_TEXTS,
+  getCreativeTextPath,
+  isBlankCreativeText,
+  readCreativeTextMap,
+} from "./creative-texts";
 
 /**
  * The rules every creative write follows, as pure functions over `TCreativeState`: what a create
@@ -147,17 +153,11 @@ export const applyCreativePatch = (
 
 type TTextMap = { path: string; keys: string[] };
 
-const getTextMaps = (groups: TCreativeTypedGroups): TTextMap[] => {
-  if (groups.type === "feedbackButton") {
-    return [{ path: "content.label", keys: Object.keys(groups.content.label) }];
-  }
-  const { message, button, accessibleName } = groups.content;
-  return [
-    { path: "content.message", keys: Object.keys(message) },
-    ...(button ? [{ path: "content.button.label", keys: Object.keys(button.label) }] : []),
-    ...(accessibleName ? [{ path: "content.accessibleName", keys: Object.keys(accessibleName) }] : []),
-  ];
-};
+const getTextMaps = (groups: TCreativeTypedGroups): TTextMap[] =>
+  CREATIVE_TEXTS[groups.type].flatMap((text) => {
+    const map = readCreativeTextMap(groups.content, text);
+    return map ? [{ path: `content.${getCreativeTextPath(text)}`, keys: Object.keys(map) }] : [];
+  });
 
 const getLanguageProblems = (state: TCreativeState): InvalidParam[] => {
   const problems: InvalidParam[] = [];
@@ -215,8 +215,6 @@ const getDistributionProblems = ({ showOn, triggers }: TCreativeDistribution): I
   return problems;
 };
 
-const isBlank = (value: string | undefined): boolean => (value ?? "").trim() === "";
-
 /** What publishing needs on top of a valid state: the rules any status but Draft must meet. */
 const getPublishProblems = (state: TCreativeState): InvalidParam[] => {
   const problems: InvalidParam[] = [];
@@ -230,24 +228,13 @@ const getPublishProblems = (state: TCreativeState): InvalidParam[] => {
   if (needsDestination(state) && state.destination === null) {
     problems.push(missing("destination", "Publishing needs a Destination: the survey or link this opens."));
   }
-  if (state.type === "feedbackButton") {
-    if (isBlank(state.content.label[language])) {
-      problems.push(
-        missing(`content.label.${language}`, "Publishing needs a label in the default language.")
-      );
-    }
-  } else {
-    const runs = state.content.message[language] ?? [];
-    if (runs.every((run) => isBlank(run.text))) {
-      problems.push(
-        missing(`content.message.${language}`, "Publishing needs a message in the default language.")
-      );
-    }
-    if (state.content.button && isBlank(state.content.button.label[language])) {
+  for (const text of CREATIVE_TEXTS[state.type]) {
+    const map = readCreativeTextMap(state.content, text);
+    if (text.publish && map && isBlankCreativeText(map[language])) {
       problems.push(
         missing(
-          `content.button.label.${language}`,
-          "Publishing needs a button label in the default language."
+          `content.${getCreativeTextPath(text)}.${language}`,
+          `Publishing needs a ${text.publish.name} in the default language.`
         )
       );
     }

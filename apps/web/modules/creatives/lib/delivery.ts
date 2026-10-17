@@ -3,8 +3,10 @@ import type { TCreativeDestination, TCreativeLanguage, TCreativePayload } from "
 import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZShowConditions } from "@formbricks/types/show-conditions";
-import { CREATIVE_TYPE_SCHEMAS, type TCreativeTypedGroups, needsDestination } from "./creative";
+import { needsDestination, parseCreativeTypedGroups } from "./creative";
 import { compileCreativeCustomCss } from "./custom-css";
+import { getCreativeDeliveryGap } from "./display-status";
+import { buildLanguageMatch } from "./language-match";
 import { type TWorkspaceStylingInput, getAppliedCustomCssSource, getCreativeStyle } from "./style";
 import { getBannerLabels } from "./visitor-labels";
 
@@ -30,7 +32,16 @@ export const deliveredCreativeSelect = {
   displayPercentage: true,
   startAt: true,
   endAt: true,
-  survey: { select: { type: true, autoSelectLanguage: true } },
+  survey: {
+    select: {
+      type: true,
+      autoSelectLanguage: true,
+      // For the popup survey's language skip, precomputed for the page (`surveyLanguageMatch`).
+      languages: {
+        select: { default: true, enabled: true, language: { select: { code: true, alias: true } } },
+      },
+    },
+  },
   triggers: { select: { actionClass: { select: { name: true } } }, orderBy: { createdAt: "asc" } },
   languages: {
     select: { default: true, enabled: true, language: { select: { code: true, alias: true } } },
@@ -53,21 +64,6 @@ export const getDeliverableCreativesWhere = (now: Date): Prisma.CreativeWhereInp
     { OR: [{ surveyId: null }, { survey: { is: { status: "inProgress", archivedAt: null } } }] },
   ],
 });
-
-const parseTypedGroups = (row: TDeliveredCreativeRow): TCreativeTypedGroups | null => {
-  if (row.type === "feedbackButton") {
-    const content = CREATIVE_TYPE_SCHEMAS.feedbackButton.content.safeParse(row.content);
-    const styling = CREATIVE_TYPE_SCHEMAS.feedbackButton.styling.safeParse(row.styling);
-    return content.success && styling.success
-      ? { type: "feedbackButton", content: content.data, styling: styling.data }
-      : null;
-  }
-  const content = CREATIVE_TYPE_SCHEMAS.banner.content.safeParse(row.content);
-  const styling = CREATIVE_TYPE_SCHEMAS.banner.styling.safeParse(row.styling);
-  return content.success && styling.success
-    ? { type: "banner", content: content.data, styling: styling.data }
-    : null;
-};
 
 const getDestination = (row: TDeliveredCreativeRow, publicDomain: string): TCreativeDestination | null => {
   if (row.surveyId) {
@@ -101,7 +97,7 @@ const toCreativePayload = async (
   row: TDeliveredCreativeRow,
   { publicDomain, workspaceStyling }: TCreativeDeliveryContext
 ): Promise<TCreativePayload | null> => {
-  const groups = parseTypedGroups(row);
+  const groups = parseCreativeTypedGroups(row);
   const conditions = ZShowConditions.safeParse(row.showConditions ?? null);
   if (!groups || !conditions.success) {
     logger.warn(
@@ -113,8 +109,13 @@ const toCreativePayload = async (
 
   const destination = getDestination(row, publicDomain);
   const triggers = row.triggers.map(({ actionClass }) => actionClass.name);
-  if (needsDestination(groups) && !destination) return null;
-  if (row.showOn === "action" && triggers.length === 0) return null;
+  const deliveryGap = getCreativeDeliveryGap({
+    needsDestination: needsDestination(groups),
+    hasDestination: destination !== null,
+    showOn: row.showOn,
+    triggerCount: triggers.length,
+  });
+  if (deliveryGap) return null;
 
   const customCssSource = getAppliedCustomCssSource(groups.styling.theme);
   const customCss = customCssSource ? await compileCreativeCustomCss(groups.type, customCssSource) : null;
@@ -126,6 +127,11 @@ const toCreativePayload = async (
     id: row.id,
     defaultLanguage,
     languages,
+    languageMatch: buildLanguageMatch(languages),
+    surveyLanguageMatch:
+      destination?.type === "survey" && destination.opensAs === "popup" && row.survey
+        ? buildLanguageMatch(row.survey.languages)
+        : null,
     // Its texts follow the language its survey would open in (ENG-4003); a link or no Destination has
     // no such setting, so only the language the site set counts.
     autoSelectLanguage: row.survey?.autoSelectLanguage ?? false,

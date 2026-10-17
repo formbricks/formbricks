@@ -68,7 +68,11 @@ describe("findCreativeRecordsPage", () => {
       destination: { type: "survey", surveyId: pausedSurvey.id },
     });
     await create(workspaceId, { name: "paused by its author", status: "paused" });
-    await create(workspaceId, { name: "scheduled", schedule: { startAt: hoursFromNow(2), endAt: null } });
+    await create(workspaceId, {
+      name: "scheduled",
+      destination: { type: "link", url: "https://example.com/help" },
+      schedule: { startAt: hoursFromNow(2), endAt: null },
+    });
     await create(workspaceId, { name: "ended", schedule: { startAt: null, endAt: hoursFromNow(-2) } });
     await create(workspaceId, { name: "draft", status: "draft", publishedAt: null });
     await create(workspaceId, { name: "archived", archivedAt: hoursFromNow(-1) });
@@ -84,6 +88,40 @@ describe("findCreativeRecordsPage", () => {
     expect(names(await page(workspaceId, { displayStatuses: ["archived"] }))).toEqual(["archived"]);
     expect(names(await page(workspaceId))).not.toContain("archived");
     expect(names(await page(workspaceId))).toHaveLength(6);
+  });
+
+  test("counts a published creative the SDK is never sent as paused, not active", async () => {
+    const { workspaceId } = await seedWorkspace("Gaps");
+    const link = { type: "link" as const, url: "https://example.com/help" };
+    await create(workspaceId, { name: "button with a link", destination: link });
+    await create(workspaceId, { name: "button with nothing to open" });
+    await create(workspaceId, {
+      name: "button on no action",
+      destination: link,
+      distribution: { ...DEFAULT_CREATIVE_DISTRIBUTION, showOn: "action", triggers: [] },
+    });
+    await create(workspaceId, {
+      name: "banner without a button",
+      ...({
+        type: "banner",
+        content: {
+          message: { "en-US": [{ text: "Down tonight" }] },
+          button: null,
+          dismissible: true,
+          accessibleName: null,
+        },
+        styling: DEFAULT_CREATIVE_STYLING.banner,
+      } as Partial<TCreativeState>),
+    });
+
+    expect(names(await page(workspaceId, { displayStatuses: ["active"] }))).toEqual([
+      "banner without a button",
+      "button with a link",
+    ]);
+    expect(names(await page(workspaceId, { displayStatuses: ["paused"] }))).toEqual([
+      "button on no action",
+      "button with nothing to open",
+    ]);
   });
 
   test("scopes to the workspace and narrows by name, type and survey", async () => {

@@ -10,6 +10,7 @@ import {
   V3_SURVEY_MAX_LANGUAGES,
   V3_SURVEY_MAX_VARIABLES,
 } from "@/app/api/v3/surveys/schemas";
+import { CREATIVE_TEXTS, type TCreativeTextSpec } from "@/modules/creatives/lib/creative-texts";
 import * as creativeSchemas from "./creative-schemas";
 import * as surveyAndFeedbackSchemas from "./schemas";
 import * as workflowSchemas from "./workflow-schemas";
@@ -148,13 +149,17 @@ const allSchemas = allExports.filter((entry): entry is [string, z.ZodType] => en
  */
 const SCHEMAS_WITH_OPEN_WORKFLOW_DEFINITION = ["ZMcpCreateWorkflowInput", "ZMcpPatchWorkflowInput"];
 
-/** The four locale-keyed text maps of a creative's `content`: a feedback button's label, a banner's message, its button label and its accessible name. */
-const creativeTextMapPaths = (content: string): string[] => [
-  `${content}.anyOf|0.label`,
-  `${content}.anyOf|1.message`,
-  `${content}.anyOf|1.button.anyOf|0.label`,
-  `${content}.anyOf|1.accessibleName.anyOf|0`,
-];
+/**
+ * The locale-keyed text maps of a creative's `content` (`CREATIVE_TEXTS`): `content` is `anyOf` the types'
+ * shapes in that list's order, and a step that can be null is itself an `anyOf` whose first branch it is.
+ */
+const creativeTextMapPaths = (content: string): string[] =>
+  Object.values(CREATIVE_TEXTS).flatMap((texts: readonly TCreativeTextSpec[], typeIndex) =>
+    texts.map(({ path }) => {
+      const steps = path.map(({ key, nullable }) => (nullable ? `${key}.anyOf|0` : key));
+      return `${content}.anyOf|${typeIndex}.${steps.join(".")}`;
+    })
+  );
 
 /**
  * Every field that may legitimately accept an arbitrary nested shape: the survey/workflow document payloads

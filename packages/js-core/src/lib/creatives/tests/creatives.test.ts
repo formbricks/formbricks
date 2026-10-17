@@ -5,11 +5,10 @@ import type { TShowConditionGroup, TShowConditionSingle } from "@formbricks/type
 import { setAppearance } from "@/lib/common/appearance";
 import { Config } from "@/lib/common/config";
 import { setIsSetup } from "@/lib/common/status";
-import { reconcileCreatives, removeCreatives } from "@/lib/creatives/creatives";
+import { reconcileCreatives, removeCreatives, showCachedCreatives } from "@/lib/creatives/creatives";
 import { trackAction } from "@/lib/survey/action";
 import { mockSurvey } from "@/lib/survey/tests/__mocks__/widget.mock";
 import {
-  getLoadedLanguageResolver,
   getOpenSurveyIds,
   loadFormbricksSurveysExternally,
   openSurveyForCreative,
@@ -21,7 +20,6 @@ import type { TConfig, TWorkspaceStateSurvey } from "@/types/config";
 vi.mock("@/lib/survey/widget", () => ({
   getOpenSurveyIds: vi.fn(() => []),
   openSurveyForCreative: vi.fn(() => Promise.resolve()),
-  getLoadedLanguageResolver: vi.fn(() => undefined),
   loadFormbricksSurveysExternally: vi.fn(() => Promise.resolve({})),
 }));
 
@@ -127,6 +125,19 @@ describe("reconcileCreatives", () => {
     reconcileCreatives();
 
     expect(shownButtons()).toEqual([]);
+  });
+
+  test("at SDK start, shows the cached state's creatives before setup has refreshed it, schedule applied", () => {
+    setIsSetup(false);
+    state.creatives = [
+      feedbackButton(),
+      feedbackButton({ id: "creative-later", startAt: new Date(NOW + 3_600_000).toISOString() }),
+    ];
+
+    showCachedCreatives();
+
+    expect(document.querySelectorAll("[data-formbricks-creative]")).toHaveLength(1);
+    expect(document.querySelector('[data-formbricks-creative="creative-1"]')).not.toBeNull();
   });
 
   test("leaves a creative that is still shown in place on the next page view", () => {
@@ -377,14 +388,20 @@ describe("appearance", () => {
 describe("language (ENG-4003)", () => {
   const english = { default: true, enabled: true, language: { code: "en-US", alias: null } };
   const german = { default: false, enabled: true, language: { code: "de-DE", alias: null } };
+  // As the server precomputes `en-US` (default) and `de-DE` for the page.
+  const englishAndGerman = {
+    keys: { "en-us": "default", en: "default", "de-de": "de-DE", de: "de-DE" },
+    bases: { en: "default", de: "de-DE" },
+  };
   const bilingualButton = feedbackButton({
     languages: [english, german],
+    languageMatch: englishAndGerman,
+    surveyLanguageMatch: englishAndGerman,
     content: { label: { "en-US": "Feedback", "de-DE": "Feedback geben" }, icon: null },
   });
 
   beforeEach(() => {
     vi.mocked(loadFormbricksSurveysExternally).mockClear();
-    vi.mocked(getLoadedLanguageResolver).mockReset();
   });
 
   test("labels a creative in the language the site set", () => {
@@ -396,22 +413,23 @@ describe("language (ENG-4003)", () => {
     expect(loadFormbricksSurveysExternally).not.toHaveBeenCalled();
   });
 
-  test("loads the surveys bundle's matcher when the exact one can't decide, then decides again", async () => {
-    const bilingualSurvey = { ...mockSurvey, languages: [english, german] } as TWorkspaceStateSurvey;
-    state = { creatives: [bilingualButton], surveys: [bilingualSurvey], language: "de-AT" };
+  test("decides a regional variant on the page at once, without loading the surveys bundle", () => {
+    state = { creatives: [bilingualButton], surveys: [mockSurvey], language: "de-AT" };
 
     reconcileCreatives();
 
-    // Whether `de-AT` reaches the survey's `de-DE` is the full matcher's call: hidden until it is here.
-    expect(shownButtons()).toEqual([]);
-    expect(loadFormbricksSurveysExternally).toHaveBeenCalledTimes(1);
-
-    vi.mocked(getLoadedLanguageResolver).mockReturnValue(({ explicitLanguage }) =>
-      explicitLanguage === "de-AT" ? "de-DE" : "default"
-    );
-    await vi.runAllTimersAsync();
-
+    // Drawn once, in German: `de-AT` reaches the creative's and its survey's `de-DE` with nothing to load.
     expect(shownButtons().map((button) => button.textContent)).toEqual(["Feedback geben"]);
+    expect(loadFormbricksSurveysExternally).not.toHaveBeenCalled();
+  });
+
+  test("hides a creative at once when its survey lacks the language the site set", () => {
+    state = { creatives: [bilingualButton], surveys: [mockSurvey], language: "fr-FR" };
+
+    reconcileCreatives();
+
+    expect(shownButtons()).toEqual([]);
+    expect(loadFormbricksSurveysExternally).not.toHaveBeenCalled();
   });
 });
 
@@ -650,19 +668,20 @@ describe("banners (ENG-3576)", () => {
     });
   });
 
-  test("its button opens the Destination, counts a Click, and closes the banner on that page", async () => {
+  const bannerWithButton = (dismissible: boolean) =>
+    banner("notice", {
+      content: {
+        message: { "en-US": [{ text: "Open Enrollment ends Dec 15." }] },
+        button: { label: { "en-US": "See plans" } },
+        dismissible,
+        accessibleName: null,
+      },
+      destination: { type: "link", url: "https://example.com/plans" },
+    });
+
+  test("its button opens the Destination, counts a Click, and closes a dismissible banner on that page", async () => {
     const open = vi.spyOn(window, "open").mockReturnValue(null);
-    state.creatives = [
-      banner("notice", {
-        content: {
-          message: { "en-US": [{ text: "Open Enrollment ends Dec 15." }] },
-          button: { label: { "en-US": "See plans" } },
-          dismissible: false,
-          accessibleName: null,
-        },
-        destination: { type: "link", url: "https://example.com/plans" },
-      }),
-    ];
+    state.creatives = [bannerWithButton(true)];
     reconcileCreatives();
 
     controlOf("notice", ".fb-creative-banner-button").click();
@@ -676,6 +695,18 @@ describe("banners (ENG-3576)", () => {
         { creativeId: "notice", type: "click" },
       ],
     });
+  });
+
+  test("its button leaves a banner that can't be dismissed in place, so a critical notice stays", () => {
+    const open = vi.spyOn(window, "open").mockReturnValue(null);
+    state.creatives = [bannerWithButton(false)];
+    reconcileCreatives();
+
+    controlOf("notice", ".fb-creative-banner-button").click();
+    reconcileCreatives();
+
+    expect(open).toHaveBeenCalledTimes(1);
+    expect(bannerHosts()).toHaveLength(1);
   });
 });
 

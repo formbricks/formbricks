@@ -10,6 +10,8 @@ import { resolveRespondentCustomCss } from "@/modules/survey/link/lib/respondent
 import { getWorkspaceStateData } from "./data";
 
 vi.mock("server-only", () => ({}));
+// Banner words come from the dashboard translator (getTranslate); its session-locale lookup is unused here.
+vi.mock("@/lingodotdev/language", () => ({ getLocale: vi.fn() }));
 
 // Mock dependencies
 vi.mock("@formbricks/database", () => ({
@@ -815,7 +817,7 @@ describe("creatives on the wire (ENG-3994)", () => {
     displayPercentage: null,
     startAt: new Date("2026-10-20T02:00:00.000Z"),
     endAt: null,
-    survey: { type: "app", autoSelectLanguage: false },
+    survey: { type: "app", autoSelectLanguage: false, languages: [] },
     triggers: [],
     languages: [{ default: true, enabled: true, language: { code: "en-US", alias: null } }],
   };
@@ -845,6 +847,9 @@ describe("creatives on the wire (ENG-3994)", () => {
         type: "feedbackButton",
         defaultLanguage: "en-US",
         languages: [{ default: true, enabled: true, language: { code: "en-US", alias: null } }],
+        // One language each: nothing to match on the page.
+        languageMatch: { keys: {}, bases: {} },
+        surveyLanguageMatch: { keys: {}, bases: {} },
         autoSelectLanguage: false,
         style: {
           element: expect.objectContaining({ light: expect.any(Object), dark: expect.any(Object) }),
@@ -925,7 +930,11 @@ describe("creatives on the wire (ENG-3994)", () => {
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
       ...mockWorkspaceData,
       creatives: [
-        { ...storedButton, surveyId: "link-survey", survey: { type: "link", autoSelectLanguage: false } },
+        {
+          ...storedButton,
+          surveyId: "link-survey",
+          survey: { type: "link", autoSelectLanguage: false, languages: [] },
+        },
       ],
     } as never);
 
@@ -960,6 +969,10 @@ describe("creatives on the wire (ENG-3994)", () => {
       { default: false, enabled: true, language: { code: "de-DE", alias: "de" } },
       { default: false, enabled: false, language: { code: "it-IT", alias: null } },
     ];
+    const surveyLanguages = [
+      { default: true, enabled: true, language: { code: "en-US", alias: null } },
+      { default: false, enabled: true, language: { code: "fr-FR", alias: null } },
+    ];
     const storedBanner = {
       ...storedButton,
       id: "banner-1",
@@ -990,7 +1003,11 @@ describe("creatives on the wire (ENG-3994)", () => {
     vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
       ...mockWorkspaceData,
       creatives: [
-        { ...storedButton, survey: { type: "app", autoSelectLanguage: true }, languages },
+        {
+          ...storedButton,
+          survey: { type: "app", autoSelectLanguage: true, languages: surveyLanguages },
+          languages,
+        },
         storedBanner,
       ],
     } as never);
@@ -1000,6 +1017,14 @@ describe("creatives on the wire (ENG-3994)", () => {
     expect(button).toEqual(
       expect.objectContaining({ defaultLanguage: "en-US", languages, autoSelectLanguage: true })
     );
+    // Precomputed for the page (C7): its own texts by code, alias or base language, its survey's skip
+    // by the survey's languages; the disabled Italian is never matched.
+    expect(button.languageMatch.keys).toMatchObject({ "de-de": "de-DE", de: "de-DE", "en-us": "default" });
+    expect(button.languageMatch.bases).toMatchObject({ de: "de-DE", en: "default" });
+    expect(button.languageMatch.keys).not.toHaveProperty("it-it");
+    expect(button.surveyLanguageMatch?.keys).toMatchObject({ "fr-fr": "fr-FR" });
+    expect(button.surveyLanguageMatch?.keys).not.toHaveProperty("de-de");
+    expect(banner.surveyLanguageMatch).toBeNull();
     expect(banner).toEqual(
       expect.objectContaining({
         autoSelectLanguage: false,

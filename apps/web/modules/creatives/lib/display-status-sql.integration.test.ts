@@ -23,7 +23,7 @@ describe("creativeDisplayStatusSql", () => {
           input.startAt
         )}, ${timestamp(input.endAt)}, ${input.destinationSurvey?.status ?? null}::text, ${timestamp(
           input.destinationSurvey?.archivedAt ?? null
-        )})`
+        )}, ${input.deliveryGap}::text)`
     );
 
     const derived = creativeDisplayStatusSql(
@@ -34,13 +34,14 @@ describe("creativeDisplayStatusSql", () => {
         endAt: Prisma.raw('c."endAt"'),
         surveyStatus: Prisma.raw('c."surveyStatus"'),
         surveyArchivedAt: Prisma.raw('c."surveyArchivedAt"'),
+        deliveryGap: Prisma.raw('c."deliveryGap"'),
       },
       DISPLAY_STATUS_NOW
     );
 
     const result = await prisma.$queryRaw<{ index: number; displayStatus: string }[]>`
       SELECT c."index", ${derived} AS "displayStatus"
-      FROM (VALUES ${Prisma.join(rows)}) AS c("index", "status", "archivedAt", "startAt", "endAt", "surveyStatus", "surveyArchivedAt")
+      FROM (VALUES ${Prisma.join(rows)}) AS c("index", "status", "archivedAt", "startAt", "endAt", "surveyStatus", "surveyArchivedAt", "deliveryGap")
       ORDER BY c."index"
     `;
 

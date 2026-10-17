@@ -21,6 +21,7 @@ import {
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
+import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { buildListCreativesSearchParams, registerCreativeTools } from "./creatives";
 
 vi.mock("@/app/api/v3/creatives/lib/operations", () => ({
@@ -101,18 +102,18 @@ const readOnlyOAuthAuthInfo = {
 
 const writeOnlyOAuthAuthInfo = { ...readOnlyOAuthAuthInfo, scopes: ["surveys:write"] };
 
+type TToolResult = { isError?: boolean; structuredContent: Record<string, unknown> };
+type TToolHandler = (input: unknown, extra: unknown) => Promise<TToolResult>;
+
 function createToolServer() {
-  const tools = new Map<
-    string,
-    { config: Record<string, unknown>; handler: (input: any, extra: any) => Promise<any> }
-  >();
+  const tools = new Map<string, { config: Record<string, unknown>; handler: TToolHandler }>();
   const server = {
-    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: any) => {
+    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: TToolHandler) => {
       tools.set(name, { config, handler });
     }),
   };
 
-  registerCreativeTools(server as any);
+  registerCreativeTools(server as unknown as McpServer);
   return { server, tools };
 }
 
@@ -307,7 +308,7 @@ describe("registerCreativeTools", () => {
     ] as const)("a refused %s is audited as a failed %s attempt", async (name, action, targetId) => {
       const { tools } = createToolServer();
       const auditLog = { status: "failure" } as { status: string; targetId?: string };
-      vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
+      vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as unknown as TV3AuditLog);
 
       await tools.get(name)!.handler(inputs[name], { http: { authInfo: readOnlyOAuthAuthInfo } });
 
@@ -402,7 +403,7 @@ describe("registerCreativeTools", () => {
     test("create_creative hands the body to the operation and audits a success", async () => {
       const { tools } = createToolServer();
       const auditLog = { status: "failure" };
-      vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
+      vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as unknown as TV3AuditLog);
       vi.mocked(createV3Creative).mockResolvedValue(
         createdResponse(
           { id: creativeId },
@@ -422,7 +423,7 @@ describe("registerCreativeTools", () => {
     test("patch_creative sends `data` as the body and the id on its own", async () => {
       const { tools } = createToolServer();
       const auditLog = { status: "failure" };
-      vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
+      vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as unknown as TV3AuditLog);
       vi.mocked(patchV3Creative).mockResolvedValue(
         successResponse({ id: creativeId }, { requestId: "req_tool" })
       );
@@ -444,7 +445,7 @@ describe("registerCreativeTools", () => {
     test("delete_creative relays the 204 as an acknowledgement and audits a success", async () => {
       const { tools } = createToolServer();
       const auditLog = { status: "failure" };
-      vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
+      vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as unknown as TV3AuditLog);
       vi.mocked(deleteV3Creative).mockResolvedValue(noContentResponse({ requestId: "req_tool" }));
 
       const result = await tools.get("delete_creative")!.handler({ creativeId }, { http: { authInfo } });
@@ -464,7 +465,7 @@ describe("registerCreativeTools", () => {
       async (name, operation, action) => {
         const { tools } = createToolServer();
         const auditLog = { status: "failure" };
-        vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
+        vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as unknown as TV3AuditLog);
         vi.mocked(operation).mockResolvedValue(
           successResponse({ id: creativeId }, { requestId: "req_tool" })
         );
@@ -501,7 +502,7 @@ describe("registerCreativeTools", () => {
     test("a failed write is audited as a failure and its 422 field list reaches the agent", async () => {
       const { tools } = createToolServer();
       const auditLog = { status: "failure" };
-      vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
+      vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as unknown as TV3AuditLog);
       vi.mocked(patchV3Creative).mockResolvedValue(
         problemUnprocessableContent("req_invalid", "The creative failed validation", {
           instance: "/api/mcp",

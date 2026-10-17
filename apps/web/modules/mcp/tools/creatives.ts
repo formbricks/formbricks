@@ -96,6 +96,10 @@ export function buildListCreativesSearchParams(input: TMcpListCreativesInput): U
   return searchParams;
 }
 
+/** The tool goes through anyway; the dashboard confirms first (review fix A1). */
+const LAST_OPENER_NOTE =
+  "If this was the last creative that opens a live app survey with no actions of its own, that survey then shows nowhere until a creative or an action opens it again.";
+
 export function registerCreativeTools(server: McpServer): void {
   registerScopedTool(
     server,
@@ -200,6 +204,7 @@ export function registerCreativeTools(server: McpServer): void {
         "Update a creative. Each group in `data` (content, styling, destination, distribution, schedule, or defaultLanguage with languages) replaces the stored group as a whole, so send it complete: read it with get_creative first.",
         "Publish, pause, close and reopen by setting `status`; a published creative cannot go back to draft.",
         "An archived creative is read-only: restore_creative first.",
+        `Changing or removing the destination: ${LAST_OPENER_NOTE}`,
       ].join(" "),
       inputSchema: ZMcpPatchCreativeInput,
       outputSchema: ZMcpCreativeOutput,
@@ -234,8 +239,7 @@ export function registerCreativeTools(server: McpServer): void {
     "delete_creative",
     {
       title: "Delete creative",
-      description:
-        "Permanently delete a creative and its counts. To take one off the site and keep its history, use archive_creative.",
+      description: `Permanently delete a creative and its counts. To take one off the site and keep its history, use archive_creative. ${LAST_OPENER_NOTE}`,
       inputSchema: ZMcpCreativeIdInput,
       outputSchema: ZMcpCreativeDeleteOutput,
       audit: { action: "deleted", targetType: "creative", targetIdArg: "creativeId" },
@@ -300,8 +304,7 @@ export function registerCreativeTools(server: McpServer): void {
     "archive_creative",
     {
       title: "Archive creative",
-      description:
-        "Set a creative aside: it stops showing, leaves the default list and becomes read-only, and keeps its status and counts. Reverse it with restore_creative.",
+      description: `Set a creative aside: it stops showing, leaves the default list and becomes read-only, and keeps its status and counts. Reverse it with restore_creative. ${LAST_OPENER_NOTE}`,
       inputSchema: ZMcpCreativeIdInput,
       outputSchema: ZMcpCreativeOutput,
       audit: { action: "archived", targetType: "creative", targetIdArg: "creativeId" },

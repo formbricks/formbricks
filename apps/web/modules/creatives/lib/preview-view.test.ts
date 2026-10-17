@@ -45,6 +45,9 @@ const bannerForm = (content: Partial<Extract<TCreativeEditorForm["content"], { t
     languages,
   }) satisfies TCreativeEditorForm;
 
+// The visitor words the editor passes, in the dashboard's language.
+const labels = { siteNotice: "Hinweis der Website", dismiss: "Schließen" };
+
 describe("preview view", () => {
   test("a feedback button shows the label being typed, at its position, in the computed look", () => {
     const form: TCreativeEditorForm = {
@@ -61,7 +64,7 @@ describe("preview view", () => {
       languages,
     };
 
-    expect(toPreviewView("clcreative00000000000001", form, DEFAULT_CREATIVE_STYLE)).toMatchObject({
+    expect(toPreviewView("clcreative00000000000001", form, DEFAULT_CREATIVE_STYLE, labels)).toMatchObject({
       id: "clcreative00000000000001",
       type: "feedbackButton",
       label: "Tell us",
@@ -71,13 +74,16 @@ describe("preview view", () => {
     });
   });
 
-  test("a banner shows its text runs and button, and a blank accessible name means the default", () => {
-    expect(toPreviewView("clcreative00000000000002", bannerForm({}), DEFAULT_CREATIVE_STYLE)).toMatchObject({
+  test("a banner shows its text runs and button, named in the visitor words it is given when the author named none", () => {
+    expect(
+      toPreviewView("clcreative00000000000002", bannerForm({}), DEFAULT_CREATIVE_STYLE, labels)
+    ).toMatchObject({
       type: "banner",
       message: [{ text: "Down tonight", bold: true }],
       buttonLabel: "Status",
       dismissible: true,
-      accessibleName: null,
+      accessibleName: "Hinweis der Website",
+      dismissLabel: "Schließen",
       position: { desktop: { placement: "top", layout: "inPage" }, phone: null },
     });
   });
@@ -86,7 +92,8 @@ describe("preview view", () => {
     const view = toPreviewView(
       "clcreative00000000000002",
       bannerForm({ hasButton: false, accessibleName: " Service notice " }),
-      DEFAULT_CREATIVE_STYLE
+      DEFAULT_CREATIVE_STYLE,
+      labels
     );
 
     expect(view).toMatchObject({ buttonLabel: null, destination: null, accessibleName: "Service notice" });

@@ -305,6 +305,10 @@
                                 "description": "Banners only: the words the SDK draws that the author doesn't write, keyed by each language a visitor can get (the default and the enabled ones): `siteNotice`, the region's name when `content.accessibleName` is null, and `dismiss`, the Dismiss control's name.",
                                 "type": "object"
                               },
+                              "languageMatch": {
+                                "description": "`languages` precomputed for matching a visitor's language on the page, with the same answers as the survey language matcher: `keys` maps a requested code (lowercase, `_` as `-`) to the matched code (`default` for the default language), covering every stored code, alias and canonical spelling; `bases` maps a base language (`de`, `zh-hant`) to the match for any other tag of it. Both are empty when there is one language.",
+                                "type": "object"
+                              },
                               "languages": {
                                 "description": "Every language the texts are written in, the default first, shaped like a survey's languages: `default`, `enabled` and `language` (`code`, `alias`). A visitor whose language is missing or disabled, or whose translation of a text is empty, sees the default language.",
                                 "items": {
@@ -327,6 +331,11 @@
                               },
                               "style": {
                                 "description": "The look, computed by the server from the workspace Look & Feel and the creative's custom styles; the SDK only applies it. `element` (the button, or the banner's bar) and `button` (the banner's button, null for a feedback button) each carry colours per appearance (`light`, `dark`: `backgroundColor`, `textColor`, `borderColor`), sizes per device (`desktop`, `phone` below 768 px: `fontSize`, `paddingX`, `paddingY`), `borderRadius` and `fontWeight`, in px and #rrggbb. `pageFont` is true when it renders in the host page's font. `customCss` is the creative's own CSS, compiled for its shadow root (`light`, `dark`), or null.",
+                                "type": "object"
+                              },
+                              "surveyLanguageMatch": {
+                                "description": "For a popup survey Destination, that survey's languages precomputed like `languageMatch`, so the SDK hides a creative whose survey the visitor's language would skip without loading the survey renderer. Null for any other Destination.",
+                                "nullable": true,
                                 "type": "object"
                               },
                               "triggers": {

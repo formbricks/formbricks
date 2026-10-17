@@ -2,6 +2,7 @@ import {
   type TMatchableSurveyLanguage,
   matchSurveyLanguage,
 } from "@formbricks/i18n-utils/survey-language-match";
+import { getCreativeFormTexts } from "./creative-texts";
 import type { TCreativeEditorForm, TCreativeLanguagesForm, TCreativeTranslation } from "./editor-form";
 
 /**
@@ -109,18 +110,11 @@ export const makeDefaultLanguage = <TForm extends TTextsForm>(form: TForm, code:
 export type TTranslatableField = keyof TCreativeTranslation;
 
 /**
- * The texts a creative has to translate: a feedback button's label; a banner's message, its button
- * label while it has a button, and its Accessible name while the default language has one (otherwise
- * visitors hear "Site notice", already in their language).
+ * The texts a creative has to translate: the ones its Content form has right now (a banner's button
+ * label while it has a button, its Accessible name while the default language has one).
  */
-export const getTranslatableFields = (content: TCreativeEditorForm["content"]): TTranslatableField[] => {
-  if (content.type === "feedbackButton") return ["label"];
-  return [
-    "message",
-    ...(content.hasButton ? (["buttonLabel"] as const) : []),
-    ...(content.accessibleName.trim() ? (["accessibleName"] as const) : []),
-  ];
-};
+export const getTranslatableFields = (content: TCreativeEditorForm["content"]): TTranslatableField[] =>
+  getCreativeFormTexts(content).map(({ field }) => field);
 
 const isTranslated = (translation: TCreativeTranslation, field: TTranslatableField): boolean =>
   field === "message"

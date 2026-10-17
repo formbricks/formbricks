@@ -13,6 +13,7 @@ import {
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
+import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import {
   createV3SurveyResponseFromRawInput,
   deleteV3Survey,
@@ -579,7 +580,7 @@ describe("registerSurveyTools", () => {
 
   test("delete_survey relays the 409 naming the creatives that still open the survey", async () => {
     const { tools } = createToolServer();
-    vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+    vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as unknown as TV3AuditLog);
     const creatives = [{ id: "clcr1234567890123456789012", name: "Feedback tab" }];
     vi.mocked(deleteV3Survey).mockResolvedValue(
       problemSurveyHasLinkedCreatives("req_conflict", creatives, "/api/mcp")

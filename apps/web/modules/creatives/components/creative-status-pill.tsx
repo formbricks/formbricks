@@ -25,6 +25,8 @@ export const CreativeStatusPill = ({ state }: Readonly<{ state: TCreativeDisplay
   const reasons: Record<NonNullable<TCreativeDisplayState["reason"]>, string> = {
     surveyNotActive: t("workspace.creatives.status_reason_survey_not_active"),
     scheduleEnded: t("workspace.creatives.status_reason_schedule_ended"),
+    destinationMissing: t("workspace.creatives.status_reason_destination_missing"),
+    actionMissing: t("workspace.creatives.status_reason_action_missing"),
   };
   const reason = state.reason ? reasons[state.reason] : null;
 

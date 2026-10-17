@@ -20,7 +20,16 @@ type TSurveyRef = Readonly<{ surveyId: string; workspaceId: string }>;
 
 export type TLinkedCreative = Readonly<{ id: string; name: string }>;
 
-/** The survey's linked creatives, by name. */
+/**
+ * The most creatives one read returns. Naming a survey's linked creatives (a 409, a blocker list) stops
+ * here: a refusal needs only one, and nobody acts on more names than this. The unlink reads in pages of
+ * this size until none are left, so it never stops short.
+ */
+export const LINKED_CREATIVES_READ_LIMIT = 250;
+
+const BY_NAME = [{ name: "asc" as const }, { id: "asc" as const }];
+
+/** The survey's linked creatives, by name: the first `LINKED_CREATIVES_READ_LIMIT` of them. */
 export const findLinkedCreatives = (
   client: TCreativeClient,
   { surveyId, workspaceId }: TSurveyRef
@@ -28,7 +37,8 @@ export const findLinkedCreatives = (
   client.creative.findMany({
     where: { surveyId, workspaceId, archivedAt: null },
     select: { id: true, name: true },
-    orderBy: [{ name: "asc" }, { id: "asc" }],
+    orderBy: BY_NAME,
+    take: LINKED_CREATIVES_READ_LIMIT,
   });
 
 /** Whether the survey has any linked creative: what lets an app survey publish without a trigger. */
@@ -51,18 +61,26 @@ export const unlinkSurveyCreatives = async (
   tx: TCreativeClient,
   { surveyId, workspaceId, include }: TSurveyRef & Readonly<{ include: "archived" | "all" }>
 ): Promise<TLinkedCreative[]> => {
-  const creatives = await tx.creative.findMany({
-    where: { surveyId, workspaceId, ...(include === "archived" && { archivedAt: { not: null } }) },
-    select: { id: true, name: true },
-    orderBy: [{ name: "asc" }, { id: "asc" }],
-  });
-  if (creatives.length === 0) return [];
+  const unlinked: TLinkedCreative[] = [];
+  // Each page is unlinked before the next read, so that read only finds the rest: the loop ends after
+  // ceil(linked / limit) passes with every creative unlinked, each returned for its audit entry.
+  for (;;) {
+    const page = await tx.creative.findMany({
+      where: { surveyId, workspaceId, ...(include === "archived" && { archivedAt: { not: null } }) },
+      select: { id: true, name: true },
+      orderBy: BY_NAME,
+      take: LINKED_CREATIVES_READ_LIMIT,
+    });
+    if (page.length === 0) break;
 
-  await tx.creative.updateMany({
-    where: { id: { in: creatives.map(({ id }) => id) }, surveyId },
-    data: { surveyId: null },
-  });
-  return creatives;
+    await tx.creative.updateMany({
+      where: { id: { in: page.map(({ id }) => id) }, surveyId },
+      data: { surveyId: null },
+    });
+    unlinked.push(...page);
+    if (page.length < LINKED_CREATIVES_READ_LIMIT) break;
+  }
+  return unlinked;
 };
 
 /** Who made the survey-side change: the request's own audit entry, or the system for the purge. */

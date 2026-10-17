@@ -1,6 +1,6 @@
 import type { InfiniteData } from "@tanstack/react-query";
 import type { CreativeListMetaZodType, CreativeResourceZodType } from "@formbricks/api-v3-schemas";
-import { parseV3ApiError } from "@/modules/api/lib/v3-client";
+import { readCreativesApiData, requestCreativesApi } from "./creatives-api-client";
 import type { TCreativeListFilters } from "./list-filters";
 
 // The Creatives list's calls to `/api/v3/creatives` and its TanStack Query keys. The editor keeps its
@@ -12,9 +12,6 @@ export interface TCreativeListPage {
   data: TCreativeListItem[];
   meta: CreativeListMetaZodType;
 }
-
-// Bounds a stalled row action so its pending state can't hang; the rejection shows the error toast.
-const MUTATION_TIMEOUT_MS = 15_000;
 
 /** The API's page-size ceiling, used to read every Active creative for the overlap warning in one call. */
 export const ACTIVE_CREATIVES_LIMIT = 250;
@@ -53,40 +50,28 @@ export const listCreatives = async (input: {
   filters: TCreativeListFilters;
   signal?: AbortSignal;
 }): Promise<TCreativeListPage> => {
-  const response = await fetch(`/api/v3/creatives?${buildCreativeListSearchParams(input).toString()}`, {
-    method: "GET",
-    cache: "no-store",
+  const response = await requestCreativesApi({
+    query: buildCreativeListSearchParams(input),
     signal: input.signal,
   });
-  if (!response.ok) throw await parseV3ApiError(response);
   return (await response.json()) as TCreativeListPage;
 };
 
 export const flattenCreativePages = (data?: InfiniteData<TCreativeListPage>): TCreativeListItem[] =>
   data?.pages.flatMap((page) => page.data) ?? [];
 
-const sendCreativeAction = async (path: string, method: "POST" | "DELETE"): Promise<Response> => {
-  const response = await fetch(`/api/v3/creatives/${path}`, {
-    method,
-    cache: "no-store",
-    signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
-  });
-  if (!response.ok) throw await parseV3ApiError(response);
-  return response;
-};
+const sendCreativeAction = async (
+  creativeId: string,
+  action: "duplicate" | "archive" | "restore"
+): Promise<TCreativeListItem> =>
+  readCreativesApiData(await requestCreativesApi({ path: [creativeId, action], method: "POST" }));
 
-const readCreative = async (response: Response): Promise<TCreativeListItem> =>
-  ((await response.json()) as { data: TCreativeListItem }).data;
+export const duplicateCreative = (creativeId: string) => sendCreativeAction(creativeId, "duplicate");
 
-export const duplicateCreative = async (creativeId: string) =>
-  readCreative(await sendCreativeAction(`${creativeId}/duplicate`, "POST"));
+export const archiveCreative = (creativeId: string) => sendCreativeAction(creativeId, "archive");
 
-export const archiveCreative = async (creativeId: string) =>
-  readCreative(await sendCreativeAction(`${creativeId}/archive`, "POST"));
-
-export const restoreCreative = async (creativeId: string) =>
-  readCreative(await sendCreativeAction(`${creativeId}/restore`, "POST"));
+export const restoreCreative = (creativeId: string) => sendCreativeAction(creativeId, "restore");
 
 export const deleteCreative = async (creativeId: string): Promise<void> => {
-  await sendCreativeAction(creativeId, "DELETE");
+  await requestCreativesApi({ path: [creativeId], method: "DELETE" });
 };

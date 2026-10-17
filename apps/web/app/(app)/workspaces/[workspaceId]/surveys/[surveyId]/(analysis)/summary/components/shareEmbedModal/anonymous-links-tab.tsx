@@ -12,7 +12,7 @@ import { DisableLinkModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[
 import { DocumentationLinks } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 import { useSurveyLinkedCreatives } from "@/modules/creatives/hooks/use-survey-linked-creatives";
-import { isDestinationSettingLocked } from "@/modules/creatives/lib/survey-side";
+import { isDestinationSettingLocked, joinCreativeNames } from "@/modules/creatives/lib/survey-side";
 import { generateSingleUseIdsAction } from "@/modules/survey/list/actions";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -295,7 +295,7 @@ export const AnonymousLinksTab = ({
             description={
               isSingleUseLocked
                 ? t("workspace.creatives.survey_side.single_use_locked", {
-                    creatives: linkedCreatives.map(({ name }) => name).join(", "),
+                    creatives: joinCreativeNames(linkedCreatives),
                   })
                 : t("workspace.surveys.share.anonymous_links.single_use_link_description")
             }

@@ -93,7 +93,14 @@ export const isConditionComplete = (condition: TShowConditionSingle): boolean =>
   return typeof value === "string" && value.trim() !== "";
 };
 
-/** The editor shows one flat group; nested groups (depth 2) are kept but not edited here. */
+/**
+ * Whether the card can edit these conditions: it edits one flat group. A group nested inside (depth 2,
+ * which only the API and MCP make) is shown read-only instead, and a save sends it back unchanged.
+ */
+export const canEditInCard = (conditions: TShowConditions): boolean =>
+  !conditions?.conditions.some(isShowConditionGroup);
+
+/** The top group's own conditions, the ones the card edits. */
 export const getTopLevelConditions = (conditions: TShowConditions): TShowConditionSingle[] =>
   conditions
     ? conditions.conditions.filter((item): item is TShowConditionSingle => !isShowConditionGroup(item))
