@@ -6,6 +6,7 @@ import {
   getCreativesToKeepPaused,
   getLinkedCreativesBlockers,
   isDestinationSettingLocked,
+  leavesSurveyUnopened,
   planSurveyStatusChange,
 } from "./survey-side";
 
@@ -216,5 +217,31 @@ describe("isDestinationSettingLocked", () => {
 
   test("a survey no creative opens is free to turn it on", () => {
     expect(isDestinationSettingLocked({ creatives: [], isOn: false })).toBe(false);
+  });
+});
+
+describe("leavesSurveyUnopened", () => {
+  const liveAppSurvey = { type: "app", status: "inProgress", triggers: [] } as const;
+  const last = [creative({ id: "tab" })];
+  const leaves = (survey: Parameters<typeof leavesSurveyUnopened>[0]["survey"]) =>
+    leavesSurveyUnopened({ survey, linkedCreatives: last, creativeId: "tab" });
+
+  test("taking the last creative off a live app survey with no action of its own leaves nothing to open it", () => {
+    expect(leaves(liveAppSurvey)).toBe(true);
+  });
+
+  test("another creative, a draft included, still opens it", () => {
+    const withDraft = [...last, creative({ id: "draft", status: "draft", displayStatus: "draft" })];
+
+    expect(
+      leavesSurveyUnopened({ survey: liveAppSurvey, linkedCreatives: withDraft, creativeId: "tab" })
+    ).toBe(false);
+  });
+
+  test("an action of its own, a link survey or a survey that isn't running needs no warning", () => {
+    expect(leaves({ ...liveAppSurvey, triggers: [{ actionClassId: "clicked-help" }] })).toBe(false);
+    expect(leaves({ ...liveAppSurvey, type: "link" })).toBe(false);
+    expect(leaves({ ...liveAppSurvey, status: "paused" })).toBe(false);
+    expect(leaves({ ...liveAppSurvey, status: "draft" })).toBe(false);
   });
 });

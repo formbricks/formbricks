@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { CreativeResourceBaseZodType } from "@formbricks/api-v3-schemas";
-import type { TSurveyStatus } from "@formbricks/types/surveys/types";
+import type { TSurveyStatus, TSurveyType } from "@formbricks/types/surveys/types";
+import { isAppSurveyMissingTriggersToPublish } from "@/lib/survey/publish-rule";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 import type { TSurveyVisibilityBlocker } from "@/modules/survey/visibility/types";
 import { type TCreativeDestinationSurveyState, getCreativeDisplayState } from "./display-status";
@@ -119,6 +120,36 @@ export const isDestinationSettingLocked = ({
   isOn,
 }: Readonly<{ creatives: readonly TSurveyLinkedCreative[]; isOn: boolean }>): boolean =>
   creatives.length > 0 && !isOn;
+
+/** What decides whether a survey shows without the creative about to stop opening it. */
+export type TOpenedSurveyFacts = Readonly<{
+  type: TSurveyType;
+  status: TSurveyStatus;
+  /** Its own actions (`distribution.triggers`). */
+  triggers: readonly unknown[];
+}>;
+
+/**
+ * Whether archiving, deleting or relinking `creativeId` leaves a live app survey that nothing opens: it
+ * is In progress, has no action of its own (the publish rule's case, `publish-rule.ts`), and no other
+ * non-archived creative opens it. The change still goes through; the admin screens confirm it first.
+ */
+export const leavesSurveyUnopened = ({
+  survey,
+  linkedCreatives,
+  creativeId,
+}: Readonly<{
+  survey: TOpenedSurveyFacts;
+  linkedCreatives: readonly TSurveyLinkedCreative[];
+  creativeId: string;
+}>): boolean =>
+  survey.status === "inProgress" &&
+  isAppSurveyMissingTriggersToPublish({
+    type: survey.type,
+    status: survey.status,
+    triggers: survey.triggers,
+    isOpenedByCreative: linkedCreatives.some(({ id }) => id !== creativeId),
+  });
 
 /** The creatives' names as one run of text for the survey screens' copy ("{creatives}" placeholders). */
 export const joinCreativeNames = (creatives: readonly Readonly<{ name: string }>[]): string =>

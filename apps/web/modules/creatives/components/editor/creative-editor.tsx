@@ -22,6 +22,7 @@ import { useCustomCssValidation } from "@/modules/custom-css/components/hooks/us
 import { toCustomCssDraft } from "@/modules/custom-css/components/lib/draft";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { useBeforeUnloadPrompt } from "@/modules/ui/hooks/use-before-unload-prompt";
 import { useCreativeResource, useUpdateCreative } from "../../hooks/use-creative-editor";
 import { useCreativeWarningText } from "../../hooks/use-creative-warning-text";
@@ -31,8 +32,10 @@ import {
   type TCreativeResource,
   type TCreativeSaveIntent,
   buildCreativePatch,
+  stopsOpeningSurvey,
   toCreativeEditorForm,
 } from "../../lib/editor-form";
+import { findSurveyLeftUnopened } from "../../lib/last-opener-check";
 import { getCreativesPath } from "../../lib/paths";
 import { toPreviewView } from "../../lib/preview-view";
 import {
@@ -117,6 +120,10 @@ export const CreativeEditor = ({
   // The tab holding a field the server refused, until the next attempt.
   const [serverIssueTab, setServerIssueTab] = useState<TCreativeEditorTab | null>(null);
   const [pendingIntent, setPendingIntent] = useState<TCreativeSaveIntent | null>(null);
+  // A save waiting for "Save anyway": it would leave this survey with nothing that opens it.
+  const [relinkWarning, setRelinkWarning] = useState<{ survey: string; intent: TCreativeSaveIntent } | null>(
+    null
+  );
 
   const isDraft = creative.status === "draft";
   const isArchived = creative.archivedAt !== null;
@@ -197,11 +204,23 @@ export const CreativeEditor = ({
     );
   };
 
-  const submit = (intent: TCreativeSaveIntent) => {
+  const submit = async (intent: TCreativeSaveIntent, { confirmed = false } = {}) => {
     if (flag(intent, getIssues(intent))) return;
+    const body = buildCreativePatch(form, creative, intent);
+    // A relink that leaves a live app survey nothing opens asks first (A1); the save is allowed anyway.
+    if (!confirmed && creative.archivedAt === null && stopsOpeningSurvey(creative, body)) {
+      setPendingIntent(intent);
+      const survey = await findSurveyLeftUnopened(workspaceId, creative);
+      setPendingIntent(null);
+      if (survey) {
+        setRelinkWarning({ survey, intent });
+        return;
+      }
+    }
+    setRelinkWarning(null);
     setServerIssueTab(null);
     setPendingIntent(intent);
-    updateCreative.mutate(buildCreativePatch(form, creative, intent), {
+    updateCreative.mutate(body, {
       onSuccess: (saved) => onSaved(intent, saved),
       onError: onSaveError,
       onSettled: () => setPendingIntent(null),
@@ -259,13 +278,13 @@ export const CreativeEditor = ({
             <>
               <Button
                 variant="secondary"
-                onClick={() => submit("save")}
+                onClick={() => void submit("save")}
                 disabled={!canSave || isSaving}
                 loading={pendingIntent === "save"}>
                 {t("common.save")}
               </Button>
               <Button
-                onClick={() => submit("publish")}
+                onClick={() => void submit("publish")}
                 disabled={!canSave || isSaving}
                 loading={pendingIntent === "publish"}>
                 <ZapIcon />
@@ -273,7 +292,7 @@ export const CreativeEditor = ({
               </Button>
             </>
           ) : (
-            <Button onClick={() => submit("save")} disabled={!canSave || isSaving} loading={isSaving}>
+            <Button onClick={() => void submit("save")} disabled={!canSave || isSaving} loading={isSaving}>
               {t("common.save")}
             </Button>
           )}
@@ -400,6 +419,25 @@ export const CreativeEditor = ({
           />
         </div>
       </div>
+
+      <ConfirmationModal
+        open={relinkWarning !== null}
+        setOpen={(open) => {
+          if (!open) setRelinkWarning(null);
+        }}
+        title={t("workspace.creatives.last_opener_title", { survey: relinkWarning?.survey ?? "" })}
+        body={
+          <p className="text-sm text-slate-700">
+            {t("workspace.creatives.last_opener_warning", { survey: relinkWarning?.survey ?? "" })}
+          </p>
+        }
+        buttonText={t("workspace.creatives.editor.save_anyway")}
+        buttonVariant="default"
+        buttonLoading={isSaving}
+        onConfirm={() => {
+          if (relinkWarning) void submit(relinkWarning.intent, { confirmed: true });
+        }}
+      />
     </div>
   );
 };

@@ -2270,6 +2270,7 @@
       "upload_contacts_success": "Contacts uploaded successfully"
     },
     "creatives": {
+      "archive_anyway": "Archive anyway",
       "column_opens": "Opens",
       "conditions": {
         "add": "Add condition",
@@ -2425,6 +2426,7 @@
         "restricted_surveys_note": "A creative can't open a Restricted survey: everyone in the workspace can see what it opens. Make the survey visible to the whole workspace to choose it.",
         "right": "Right",
         "same_as_desktop": "Same as desktop",
+        "save_anyway": "Save anyway",
         "schedule": "Schedule",
         "schedule_description": "Leave both empty to show it as soon as it's published, with no end.",
         "sections": "Editor sections",
@@ -2461,6 +2463,8 @@
       },
       "empty_description": "Add a feedback button or a banner to your site. It shows next to your surveys, with no code beyond the snippet.",
       "empty_title": "No creatives yet",
+      "last_opener_title": "“{survey}” won't show anywhere",
+      "last_opener_warning": "“{survey}” is a live app survey with no actions of its own, and this creative is the last one that opens it. After this change it won't show anywhere until a creative or an action opens it again.",
       "new_creative": "New creative",
       "new_creative_description": "Pick what visitors will see on your site.",
       "no_matches": "No creatives match these filters.",

@@ -146,6 +146,11 @@ patch:
 
 
     An archived creative is read-only: restore it first, or the request answers **422**.
+
+
+    **Its survey.** Changing or removing `destination` succeeds even when this creative is the last
+    one that opens a live (`inProgress`) app survey with no actions of its own; that survey then shows
+    nowhere until a creative or an action opens it again. Check before relinking.
   tags:
     - V3 Creatives
   parameters:
@@ -211,7 +216,8 @@ delete:
     Deletes a creative and its Impression and Click counts for good. Survey displays and responses it
     opened keep the creative they recorded. Read/write access to its workspace; an unknown or
     inaccessible `creativeId` answers **403**. To set a creative aside and keep its counts, archive it
-    instead.
+    instead. Deleting the last creative that opens a live app survey with no actions of its own
+    succeeds; that survey then shows nowhere until a creative or an action opens it again.
   tags:
     - V3 Creatives
   parameters:

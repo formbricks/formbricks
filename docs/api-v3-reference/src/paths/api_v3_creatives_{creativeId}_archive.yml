@@ -5,7 +5,9 @@ post:
     Sets a creative aside: it never shows, it no longer blocks changes to its survey, it leaves the
     default list, and it becomes read-only until restored. Its status and counts are kept. Archiving
     an archived creative changes nothing. Read/write access to its workspace; an unknown or
-    inaccessible `creativeId` answers **403**.
+    inaccessible `creativeId` answers **403**. Archiving the last creative that opens a live app
+    survey with no actions of its own succeeds; that survey then shows nowhere until a creative or an
+    action opens it again.
   tags:
     - V3 Creatives
   parameters:

@@ -4246,6 +4246,8 @@ paths:
         **Custom CSS.** Adding or editing `styling.theme.customCss` follows the rules of `POST /api/v3/creatives`; removing it, or sending it back unchanged, needs no plan and is not processed again.
 
         An archived creative is read-only: restore it first, or the request answers **422**.
+
+        **Its survey.** Changing or removing `destination` succeeds even when this creative is the last one that opens a live (`inProgress`) app survey with no actions of its own; that survey then shows nowhere until a creative or an action opens it again. Check before relinking.
       tags:
         - V3 Creatives
       parameters:
@@ -4307,7 +4309,7 @@ paths:
     delete:
       operationId: deleteCreativeV3
       summary: Delete a creative
-      description: Deletes a creative and its Impression and Click counts for good. Survey displays and responses it opened keep the creative they recorded. Read/write access to its workspace; an unknown or inaccessible `creativeId` answers **403**. To set a creative aside and keep its counts, archive it instead.
+      description: Deletes a creative and its Impression and Click counts for good. Survey displays and responses it opened keep the creative they recorded. Read/write access to its workspace; an unknown or inaccessible `creativeId` answers **403**. To set a creative aside and keep its counts, archive it instead. Deleting the last creative that opens a live app survey with no actions of its own succeeds; that survey then shows nowhere until a creative or an action opens it again.
       tags:
         - V3 Creatives
       parameters:
@@ -4338,7 +4340,7 @@ paths:
     post:
       operationId: archiveCreativeV3
       summary: Archive a creative
-      description: 'Sets a creative aside: it never shows, it no longer blocks changes to its survey, it leaves the default list, and it becomes read-only until restored. Its status and counts are kept. Archiving an archived creative changes nothing. Read/write access to its workspace; an unknown or inaccessible `creativeId` answers **403**.'
+      description: 'Sets a creative aside: it never shows, it no longer blocks changes to its survey, it leaves the default list, and it becomes read-only until restored. Its status and counts are kept. Archiving an archived creative changes nothing. Read/write access to its workspace; an unknown or inaccessible `creativeId` answers **403**. Archiving the last creative that opens a live app survey with no actions of its own succeeds; that survey then shows nowhere until a creative or an action opens it again.'
       tags:
         - V3 Creatives
       parameters:
