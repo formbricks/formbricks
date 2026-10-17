@@ -26,7 +26,6 @@ import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/works
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
-import { SurveyDeleteBlockedDialog } from "@/modules/creatives/components/survey-side/survey-delete-blocked-dialog";
 import { SurveyStatusChangeDialog } from "@/modules/creatives/components/survey-side/survey-status-change-dialog";
 import {
   useSurveyLinkedCreatives,
@@ -76,6 +75,11 @@ interface SurveyDropDownMenuProps {
   workspaceName: string;
   listQueryKey: ReturnType<typeof surveyKeys.list>;
   onVisibilityNotEnabled: () => void;
+  /**
+   * Shows why the delete was refused (409: creatives open the survey). The list owns that dialog: the
+   * optimistic removal unmounts this row before the answer arrives.
+   */
+  onDeleteBlocked: (blockers: TSurveyVisibilityBlocker[]) => void;
 }
 
 // Non-draft statuses that can be targeted by a status change from the list.
@@ -96,6 +100,7 @@ export const SurveyDropDownMenu = ({
   workspaceName,
   listQueryKey,
   onVisibilityNotEnabled,
+  onDeleteBlocked,
 }: Readonly<SurveyDropDownMenuProps>) => {
   const { workspace } = useWorkspace();
 
@@ -110,9 +115,6 @@ export const SurveyDropDownMenu = ({
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [isCollaborateModalOpen, setIsCollaborateModalOpen] = useState(false);
-  const [isDeleteBlockedDialogOpen, setDeleteBlockedDialogOpen] = useState(false);
-  /** The creatives that refused the last delete (409). */
-  const [deleteBlockers, setDeleteBlockers] = useState<TSurveyVisibilityBlocker[]>([]);
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -183,8 +185,7 @@ export const SurveyDropDownMenu = ({
       const linkedCreatives = getLinkedCreativesBlockers(error);
       if (linkedCreatives) {
         setDeleteDialogOpen(false);
-        setDeleteBlockers(linkedCreatives);
-        setDeleteBlockedDialogOpen(true);
+        onDeleteBlocked(linkedCreatives);
         return;
       }
       toast.error(getV3ApiErrorMessage(error, t("workspace.surveys.error_deleting_survey")));
@@ -502,7 +503,7 @@ export const SurveyDropDownMenu = ({
             <div className="space-y-3 whitespace-normal">
               <p>{t("workspace.surveys.archive_survey_warning")}</p>
               {archiveLinkedCreatives.length > 0 && (
-                <Alert variant="warning" size="small" role="status">
+                <Alert variant="warning" role="status">
                   <AlertTitle>{t("workspace.creatives.survey_side.archive_note_title")}</AlertTitle>
                   <AlertDescription>
                     {t("workspace.creatives.survey_side.archive_note", {
@@ -519,15 +520,6 @@ export const SurveyDropDownMenu = ({
           onConfirm={handleArchiveSurvey}
           hideCloseButton={isInProgress}
           closeOnOutsideClick={!isInProgress}
-        />
-      )}
-
-      {canManageSurvey && (
-        <SurveyDeleteBlockedDialog
-          open={isDeleteBlockedDialogOpen}
-          setOpen={setDeleteBlockedDialogOpen}
-          workspaceId={survey.workspaceId}
-          blockers={deleteBlockers}
         />
       )}
 

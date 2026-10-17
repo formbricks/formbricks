@@ -23,6 +23,7 @@ import { WorkspaceVisibilityMarker } from "@/modules/survey/visibility/component
 import { getRestrictedAuthor, getVisibilityErrorReaction } from "@/modules/survey/visibility/lib/collaborate";
 import { type TRowVisibilityMarker, getRowVisibilityMarker } from "@/modules/survey/visibility/lib/markers";
 import { type TSurveyVisibilityUiGate, showVisibilityControls } from "@/modules/survey/visibility/lib/state";
+import type { TSurveyVisibilityBlocker } from "@/modules/survey/visibility/types";
 import { SurveyStatusPill } from "@/modules/ui/components/survey-status-indicator";
 import { SurveyDropDownMenu } from "./survey-dropdown-menu";
 
@@ -42,6 +43,7 @@ interface SurveyCardProps {
   listQueryKey: ReturnType<typeof surveyKeys.list>;
   updateSurveyVisibility: (surveyId: string, visibility: TSurveyVisibility) => Promise<void>;
   onVisibilityNotEnabled: () => void;
+  onDeleteBlocked: (blockers: TSurveyVisibilityBlocker[]) => void;
 }
 type MakeVisibleStripProps = Pick<
   SurveyCardProps,
@@ -129,6 +131,7 @@ export const SurveyCard = ({
   listQueryKey,
   updateSurveyVisibility,
   onVisibilityNotEnabled,
+  onDeleteBlocked,
 }: Readonly<SurveyCardProps>) => {
   const { workspace } = useWorkspace();
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
@@ -237,6 +240,7 @@ export const SurveyCard = ({
           workspaceName={workspaceName}
           listQueryKey={listQueryKey}
           onVisibilityNotEnabled={onVisibilityNotEnabled}
+          onDeleteBlocked={onDeleteBlocked}
         />
       </div>
     </div>
