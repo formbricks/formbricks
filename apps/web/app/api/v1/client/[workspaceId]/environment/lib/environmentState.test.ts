@@ -231,6 +231,8 @@ describe("getWorkspaceState", () => {
       type: "feedbackButton",
       defaultLanguage: "en-US",
       languages: [{ default: true, enabled: true, language: { code: "en-US", alias: null } }],
+      languageMatch: { keys: {}, bases: {} },
+      surveyLanguageMatch: { keys: {}, bases: {} },
       autoSelectLanguage: false,
       style: DEFAULT_CREATIVE_STYLE,
       content: { label: { "en-US": "Feedback" }, icon: null },
