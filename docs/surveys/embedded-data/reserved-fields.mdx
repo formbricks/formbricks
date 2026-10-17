@@ -45,6 +45,8 @@ Reserved fields are the auto-captured half of [Embedded Data](/surveys/embedded-
 | `finishedAt`      | `date`    | Server          | When the response was last written, i.e. its submission when finished         |
 | `responseId`      | `string`  | Server          | The response id                                                               |
 | `surveyId`        | `string`  | Server          | The survey id                                                                 |
+| `openedByCreativeId` | `string` | Server | The creative whose click opened the survey, once Formbricks has checked that creative opens it |
+| `openedByCreativeName` | `string` | Server | That creative's name when the response was created, shown as **Opened by creative** |
 
 <Note>
   `locale` and `language` are different questions. `locale` is how the respondent's device is configured;
@@ -90,7 +92,7 @@ The **Anonymize responses** toggle in the survey editor's **Settings** tab, unde
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Not captured**           | `country`, `ipAddress`, `browser`, `os`, `deviceType`                                                                                                                                     |
 | **Query string stripped**  | `url`, `pageReferrer`                                                                                                                                                                     |
-| **Captured unchanged**     | `source`, `action`, `pagePath`, all five `utm*`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`, `locale`, `language`, `finished`, `durationSeconds`, `startedAt`, `finishedAt`, `responseId`, `surveyId` |
+| **Captured unchanged**     | `source`, `action`, `pagePath`, all five `utm*`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`, `locale`, `language`, `finished`, `durationSeconds`, `startedAt`, `finishedAt`, `responseId`, `surveyId`, `openedByCreativeId`, `openedByCreativeName` |
 
 A suppressed field resolves as **unset**, never as an empty string or a stale value, so `#recall:country/fallback:unknown#` shows `unknown` and a logic condition on it simply does not match.
 

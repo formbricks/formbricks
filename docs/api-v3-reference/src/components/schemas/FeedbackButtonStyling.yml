@@ -1,0 +1,47 @@
+type: object
+description: >-
+  A feedback button's position and custom styles. The position applies whether or not custom styles
+  are on.
+required:
+  - position
+  - theme
+properties:
+  position:
+    type: object
+    required:
+      - desktop
+      - phone
+    properties:
+      desktop:
+        $ref: ./FeedbackButtonPlacement.yml
+      phone:
+        anyOf:
+          - $ref: ./FeedbackButtonPlacement.yml
+          - type: "null"
+        description: Applies below 768 px viewport width. `null` uses the desktop position.
+    additionalProperties: false
+  theme:
+    $ref: ./FeedbackButtonTheme.yml
+additionalProperties: false
+example:
+  position:
+    desktop:
+      edge: right
+      offset: 60
+    phone: null
+  theme:
+    customStyles: false
+    backgroundColor: null
+    textColor: null
+    borderColor: null
+    borderRadius: null
+    fontWeight: null
+    fontSize:
+      desktop: null
+      phone: null
+    paddingX:
+      desktop: null
+      phone: null
+    paddingY:
+      desktop: null
+      phone: null

@@ -826,7 +826,39 @@ describe("RESERVED_FIELD_CATALOG", () => {
       },
       { name: "timezone", dataType: "string", availability: "client", privacy: "keep", display: "secondary" },
       { name: "locale", dataType: "string", availability: "client", privacy: "keep", display: "secondary" },
+      // Opened by creative (ENG-4001, ADR 0006). `server`: the ingest routes check the creative and
+      // stamp both, so no mid-survey picker offers them. `keep`: a creative's id and name are the
+      // workspace's own copy, nothing the respondent disclosed.
+      {
+        name: "openedByCreativeId",
+        dataType: "string",
+        availability: "server",
+        privacy: "keep",
+        display: "secondary",
+      },
+      {
+        name: "openedByCreativeName",
+        dataType: "string",
+        availability: "server",
+        privacy: "keep",
+        display: "secondary",
+      },
     ]);
+  });
+
+  test("reads the creative that opened the survey off its meta, and nothing when none did", () => {
+    const opened: TEmbeddedValueResponse = {
+      ...historicalResponse,
+      meta: { openedByCreativeId: "clh7m1qkx0000qwer1234abcd", openedByCreativeName: "Feedback tab" },
+    };
+
+    expect(projectCatalog(opened)).toEqual(
+      expect.objectContaining({
+        openedByCreativeId: "clh7m1qkx0000qwer1234abcd",
+        openedByCreativeName: "Feedback tab",
+      })
+    );
+    expect(projectCatalog(historicalResponse)).not.toHaveProperty("openedByCreativeName");
   });
 
   test("every entry resolves against a fully captured response", () => {
@@ -1758,6 +1790,8 @@ describe("listDisplayableReservedFields", () => {
       viewportHeight: 800,
       timezone: "Europe/Berlin",
       locale: "de-AT",
+      openedByCreativeId: "clh7m1qkx0000qwer1234abcd",
+      openedByCreativeName: "Feedback tab",
     },
   };
 
@@ -1779,7 +1813,7 @@ describe("listDisplayableReservedFields", () => {
     ]);
   });
 
-  test("secondary carries the browser-runtime context, plus ipAddress", () => {
+  test("secondary carries the browser-runtime context, plus ipAddress and the opening creative", () => {
     expect(names("secondary")).toStrictEqual([
       "ipAddress",
       "pagePath",
@@ -1795,6 +1829,8 @@ describe("listDisplayableReservedFields", () => {
       "viewportHeight",
       "timezone",
       "locale",
+      "openedByCreativeId",
+      "openedByCreativeName",
     ]);
   });
 

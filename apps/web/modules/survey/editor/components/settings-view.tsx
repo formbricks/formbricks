@@ -5,6 +5,8 @@ import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import type { TSurveyLinkedCreative } from "@/modules/creatives/lib/survey-side";
+import { getCreativeOpenedMode } from "@/modules/creatives/lib/survey-side";
 import { TargetingCard } from "@/modules/ee/contacts/segments/components/targeting-card";
 import { SurveyRetentionCard } from "@/modules/ee/data-retention/components/survey/survey-retention-card";
 import type { TSurveyDataRetentionContext } from "@/modules/ee/data-retention/types";
@@ -41,6 +43,8 @@ interface SettingsViewProps {
   hasTriggerError?: boolean;
   /** Null when the organisation isn't entitled to data retention. */
   dataRetention?: TSurveyDataRetentionContext;
+  /** The creatives that open this survey (the editor reads them once for every card). */
+  linkedCreatives: TSurveyLinkedCreative[];
 }
 
 export const SettingsView = ({
@@ -64,6 +68,7 @@ export const SettingsView = ({
   enterpriseLicenseRequestFormUrl,
   hasTriggerError = false,
   dataRetention = null,
+  linkedCreatives,
 }: Readonly<SettingsViewProps>) => {
   const isAppSurvey = localSurvey.type === "app";
 
@@ -107,6 +112,7 @@ export const SettingsView = ({
         membershipRole={membershipRole}
         workspacePermission={workspacePermission}
         hasError={hasTriggerError}
+        openedByCreatives={linkedCreatives}
       />
       <QuotasCard
         localSurvey={localSurvey}
@@ -124,9 +130,17 @@ export const SettingsView = ({
         isSpamProtectionAllowed={isSpamProtectionAllowed}
         surveySchedulingConfig={surveySchedulingConfig}
         locale={locale}
+        linkedCreatives={linkedCreatives}
       />
 
-      <RecontactOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
+      <RecontactOptionsCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        creativeOpenedMode={getCreativeOpenedMode({
+          triggers: localSurvey.triggers,
+          creatives: linkedCreatives,
+        })}
+      />
 
       {dataRetention ? (
         <SurveyRetentionCard

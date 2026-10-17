@@ -15,6 +15,8 @@ import { getWorkspaceState } from "./environmentState";
  */
 
 vi.mock("server-only", () => ({}));
+// Banner words come from the dashboard translator (getTranslate); its session-locale lookup is unused here.
+vi.mock("@/lingodotdev/language", () => ({ getLocale: vi.fn() }));
 vi.mock("@formbricks/database", () => ({
   prisma: { workspace: { findUnique: vi.fn(), update: vi.fn() }, segment: { findMany: vi.fn() } },
 }));
@@ -131,6 +133,7 @@ describe("environment state payload at the custom CSS limits", () => {
       customCss: workspaceCss,
       actionClasses: [],
       surveys: Array.from({ length: SURVEY_COUNT }, (_, index) => survey(index)),
+      creatives: [],
     } as never);
 
     const { data } = await getWorkspaceState("clworkspace000000000000001");

@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import type { JobHandler, TSurveyArchivePurgeJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { toUnlinkedCreativeAuditEvents } from "@/modules/creatives/lib/linked-creatives";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import {
   SURVEY_ARCHIVE_PURGE_BATCH_SIZE,
@@ -55,10 +56,20 @@ const purgeArchivedSurvey = async (
     // delete's transaction (so a refused or failed delete records nothing).
     const historyRunId = archivedByPolicy ? await history.runFor(survey.workspace.organizationId) : null;
     // Guarded delete: the survey is re-checked (locked) inside deleteSurvey's transaction so a survey
-    // restored or held after this batch was selected is skipped, not permanently deleted.
+    // restored or held after this batch was selected is skipped, not permanently deleted. The purge
+    // unlinks the creatives that open it in that transaction rather than being refused, so it never
+    // fails on them run after run; each unlink is audited as the system's (T6).
     await deleteSurvey(survey.id, {
       purgeCutoff: cutoff,
       ...(historyRunId ? { inTransaction: (tx) => history.recordDeletion(tx, historyRunId, survey.id) } : {}),
+      onCreativesUnlinked: async (creatives, { organizationId }) => {
+        const events = toUnlinkedCreativeAuditEvents(
+          { userId: "system", userType: "system", organizationId },
+          survey.id,
+          creatives
+        );
+        await Promise.all(events.map((event) => queueAuditEventWithoutRequest(event)));
+      },
     });
   } catch (error) {
     // Restored, held or already gone between selection and delete: no longer eligible.

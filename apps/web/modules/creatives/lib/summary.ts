@@ -1,0 +1,155 @@
+import { addDays, max, min } from "date-fns";
+import type { CreativeStatsDayZodType } from "@formbricks/api-v3-schemas";
+import {
+  DATE_RANGE_PRESETS,
+  type TDateRangePreset,
+  getCalendarDayInTimeZone,
+  isSubDayDateRangePreset,
+  resolveDateRangePreset,
+} from "@/lib/date-ranges";
+import { formatDateForDisplay, formatLocalDay, parseLocalDay } from "@/lib/utils/datetime";
+import type { TCreativeDisplayStatus, TCreativeDisplayStatusReason, TCreativeStatus } from "./display-status";
+import { MAX_STATS_RANGE_DAYS, type TStatsRange } from "./stats";
+
+// What the creative summary page derives from its state and the stats response. Counts are stored per
+// UTC day (the server's receive time), so every range here is cut in UTC days, whatever zone the viewer
+// or the organization is in: a day the page names is the day the API counted.
+
+const STATS_TIME_ZONE = "UTC";
+
+/** The shared date presets that span whole days; counts have no time of day, so "last 24 hours" can't apply. */
+export type TCreativeStatsPreset = Exclude<TDateRangePreset, "last 24 hours">;
+
+export const CREATIVE_STATS_PRESETS = DATE_RANGE_PRESETS.filter(
+  (preset): preset is TCreativeStatsPreset => !isSubDayDateRangePreset(preset)
+);
+
+/** A preset, or calendar days picked by hand (date-only values, as the calendar emits them). */
+export type TCreativeStatsRangeSelection =
+  | { preset: TCreativeStatsPreset }
+  | { preset: null; from: Date; to: Date };
+
+/** Today's UTC day as a date-only value: the last day anything can have been counted on. */
+export const getStatsToday = (now: Date): Date => getCalendarDayInTimeZone(now, STATS_TIME_ZONE);
+
+/**
+ * The UTC days the selection covers, as the API spells them. A hand-picked range ends today at the
+ * latest and keeps its latest `MAX_STATS_RANGE_DAYS` days, so it is always one the API accepts.
+ */
+export const resolveCreativeStatsRange = (
+  selection: TCreativeStatsRangeSelection,
+  now: Date
+): TStatsRange => {
+  const today = getStatsToday(now);
+  const [start, end] =
+    selection.preset === null
+      ? [selection.from, selection.to]
+      : (resolveDateRangePreset(selection.preset, STATS_TIME_ZONE, now) ?? [today, today]);
+  const to = min([end, today]);
+  const from = min([max([start, addDays(to, 1 - MAX_STATS_RANGE_DAYS)]), to]);
+  return { from: formatLocalDay(from), to: formatLocalDay(to) };
+};
+
+export const buildCreativeStatsSearchParams = (
+  selection: TCreativeStatsRangeSelection,
+  now: Date
+): URLSearchParams => {
+  const { from, to } = resolveCreativeStatsRange(selection, now);
+  return new URLSearchParams({ from, to, groupBy: "page" });
+};
+
+/** Where a rate is missing (no Impressions), as the survey summary's cards show an empty value. */
+export const NO_VALUE = "-";
+
+export const formatCount = (count: number, locale: string): string =>
+  new Intl.NumberFormat(locale).format(count);
+
+/**
+ * Click rate (a fraction from the API) as a percentage to one decimal. A rate that rounds to zero but
+ * isn't zero reads "<0.1%", so a few Clicks on many Impressions never look like none.
+ */
+export const formatClickRate = (rate: number | null, locale: string): string => {
+  if (rate === null) return NO_VALUE;
+  const percent = new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 1 });
+  const formatted = percent.format(rate);
+  return rate > 0 && formatted === percent.format(0) ? `<${percent.format(0.001)}` : formatted;
+};
+
+const DAY_LABEL_OPTIONS: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" };
+
+/**
+ * A `yyyy-MM-dd` day as the page shows it ("Oct 15"). Parsed to local midnight, so it reads as that day
+ * in any zone; `new Date(day)` would be UTC midnight and show the day before west of UTC.
+ */
+export const formatStatsDay = (day: string, locale: string): string =>
+  formatDateForDisplay(parseLocalDay(day), locale, DAY_LABEL_OPTIONS);
+
+/** The UTC days a range covers, shown next to the preset's name so the window behind the numbers is visible. */
+export const formatStatsRange = ({ from, to }: TStatsRange, locale: string): string =>
+  from === to
+    ? formatStatsDay(from, locale)
+    : `${formatStatsDay(from, locale)} – ${formatStatsDay(to, locale)}`;
+
+export interface TDailyChartRow {
+  date: string;
+  label: string;
+  impressions: number;
+  clicks: number;
+}
+
+export const toDailyChartRows = (days: CreativeStatsDayZodType[], locale: string): TDailyChartRow[] =>
+  days.map(({ date, impressions, clicks }) => ({
+    date,
+    label: formatStatsDay(date, locale),
+    impressions,
+    clicks,
+  }));
+
+/** The statuses an author picks on the summary: Active, Paused and Closed. */
+export type TSummaryStatus = Exclude<TCreativeStatus, "draft">;
+
+export type TSummaryStatusControl = { kind: "select"; value: TSummaryStatus } | { kind: "pill" };
+
+/**
+ * How the summary header shows the status. Writers switch a published creative between Active, Paused
+ * and Closed, like a survey's status dropdown; a draft is published from the editor (which checks it
+ * first), an archived creative can't change, and read-only members only see where it stands.
+ */
+export const getSummaryStatusControl = (
+  creative: { status: TCreativeStatus; archivedAt: string | null },
+  isReadOnly: boolean
+): TSummaryStatusControl => {
+  if (isReadOnly || creative.archivedAt !== null || creative.status === "draft") return { kind: "pill" };
+  return { kind: "select", value: creative.status };
+};
+
+/** What a published creative can show while its author's status is Active, Paused or Closed. */
+export type TSummaryDisplayStatus = Extract<
+  TCreativeDisplayStatus,
+  "active" | "scheduled" | "paused" | "closed"
+>;
+
+const SHOWN_AFTER: Record<TSummaryStatus, readonly TSummaryDisplayStatus[]> = {
+  inProgress: ["active", "scheduled"],
+  paused: ["paused"],
+  completed: ["closed"],
+};
+
+export type TStatusChangeOutcome =
+  | { kind: "success"; message: TSummaryDisplayStatus }
+  | { kind: "notice"; message: NonNullable<TCreativeDisplayStatusReason> };
+
+/**
+ * What to tell the author after a status change, from what the creative now shows. The schedule and the
+ * Destination survey still have their say: reopening a creative whose end has passed leaves it Closed,
+ * and resuming one whose survey isn't active leaves it Paused, so those get the reason, not a confirmation.
+ */
+export const getStatusChangeOutcome = (
+  requested: TSummaryStatus,
+  result: { displayStatus: TCreativeDisplayStatus; displayStatusReason: TCreativeDisplayStatusReason }
+): TStatusChangeOutcome => {
+  const shown = SHOWN_AFTER[requested].find((status) => status === result.displayStatus);
+  if (shown) return { kind: "success", message: shown };
+  if (result.displayStatusReason) return { kind: "notice", message: result.displayStatusReason };
+  return { kind: "success", message: SHOWN_AFTER[requested][0] };
+};

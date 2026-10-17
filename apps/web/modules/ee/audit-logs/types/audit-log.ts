@@ -34,6 +34,7 @@ export const ZAuditTarget = z.enum([
   "feedbackRecord",
   "feedbackSource",
   "embeddedData",
+  "creative",
   // Data retention (ENG-3615): an organisation's policies, its exemptions, and the History export.
   "retentionPolicy",
   "retentionExemption",

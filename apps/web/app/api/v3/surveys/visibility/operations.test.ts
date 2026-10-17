@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
+import { queueV3AuditLog, skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { can } from "@/lib/authorization";
 import { lockSurveyVisibility, reconcileSurveyRelationships } from "@/lib/authzed/survey";
+import { unlinkSurveyCreatives } from "@/modules/creatives/lib/linked-creatives";
 import { getAuthorizedV3Survey } from "../authorization";
-import { findSurveyOutboundBlockers } from "./blockers";
+import { findCreativeBlockers, findSurveyOutboundBlockers } from "./blockers";
 import { getSurveyVisibilityImpact } from "./impact";
 import { changeV3SurveyVisibility, getV3SurveyVisibility } from "./operations";
 
@@ -18,7 +19,11 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() })) },
 }));
-vi.mock("@/app/api/v3/lib/audit", () => ({ skipV3AuditLog: vi.fn() }));
+vi.mock("@/app/api/v3/lib/audit", () => ({ queueV3AuditLog: vi.fn(), skipV3AuditLog: vi.fn() }));
+vi.mock("@/modules/creatives/lib/linked-creatives", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/creatives/lib/linked-creatives")>()),
+  unlinkSurveyCreatives: vi.fn(),
+}));
 vi.mock("@/app/api/v3/lib/auth", () => ({
   getV3AuthorizationActor: (authentication: { apiKeyId?: string; user?: { id: string } } | null) =>
     authentication?.user ? { id: authentication.user.id, type: "user" } : { id: "key_1", type: "apiKey" },
@@ -29,7 +34,7 @@ vi.mock("@/lib/authzed/survey", () => ({
   reconcileSurveyRelationships: vi.fn(),
 }));
 vi.mock("../authorization", () => ({ getAuthorizedV3Survey: vi.fn() }));
-vi.mock("./blockers", () => ({ findSurveyOutboundBlockers: vi.fn() }));
+vi.mock("./blockers", () => ({ findCreativeBlockers: vi.fn(), findSurveyOutboundBlockers: vi.fn() }));
 vi.mock("./impact", () => ({ getSurveyVisibilityImpact: vi.fn() }));
 
 const SURVEY_ID = "clsv1234567890123456789012";
@@ -92,6 +97,8 @@ beforeEach(() => {
   authorize();
   vi.mocked(can).mockResolvedValue(true);
   vi.mocked(findSurveyOutboundBlockers).mockResolvedValue([]);
+  vi.mocked(findCreativeBlockers).mockResolvedValue([]);
+  vi.mocked(unlinkSurveyCreatives).mockResolvedValue([]);
   vi.mocked(getSurveyVisibilityImpact).mockResolvedValue({ memberCount: 3, responseCount: 7 });
   vi.mocked(reconcileSurveyRelationships).mockResolvedValue({ passes: 1, status: "projected" });
   vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "user_1", name: "Ada" } as never);
@@ -165,6 +172,73 @@ describe("POST …/visibility", () => {
       details: { blockers },
     });
     expect(tx.$executeRaw).not.toHaveBeenCalled();
+  });
+
+  test("409 names the creatives read under the lock a creative link takes, not those read before it", async () => {
+    // Before the lock: a webhook, and a creative relinked elsewhere since. Under it: a creative just linked.
+    vi.mocked(findSurveyOutboundBlockers).mockResolvedValue([
+      { id: "wh_1", name: "Zapier", type: "webhook" },
+      { id: "cr_old", name: "Relinked tab", type: "creative" },
+    ]);
+    vi.mocked(findCreativeBlockers).mockResolvedValue([{ id: "cr_new", name: "New tab", type: "creative" }]);
+    const tx = store(row());
+
+    const response = await post({ visibility: "restricted" });
+
+    expect(response.status).toBe(409);
+    expect((await json(response)).details.blockers).toEqual([
+      { id: "wh_1", name: "Zapier", type: "webhook" },
+      { id: "cr_new", name: "New tab", type: "creative" },
+    ]);
+    expect(lockSurveyVisibility).toHaveBeenCalledWith(tx, SURVEY_ID);
+    expect(findCreativeBlockers).toHaveBeenCalledWith(tx, SURVEY_ID, "ws_1");
+    expect(unlinkSurveyCreatives).not.toHaveBeenCalled();
+    expect(tx.$executeRaw).not.toHaveBeenCalled();
+  });
+
+  test("restricting unlinks the survey's archived creatives with it, and audits each as the same caller", async () => {
+    const after = row({ visibility: "restricted", visibilityChangedById: "user_1", visibilityVersion: 3 });
+    const tx = store(row(), after);
+    vi.mocked(prisma.survey.findUniqueOrThrow).mockResolvedValue({
+      ...after,
+      visibilityProjectedVersion: 3,
+    } as never);
+    vi.mocked(unlinkSurveyCreatives).mockResolvedValue([{ id: "cr_archived", name: "Old tab" }]);
+    const auditLog = { userId: "user_1", userType: "user", apiUrl: instance };
+
+    const response = await post({ visibility: "restricted" }, session, auditLog);
+
+    expect(response.status).toBe(200);
+    expect(unlinkSurveyCreatives).toHaveBeenCalledWith(tx, {
+      surveyId: SURVEY_ID,
+      workspaceId: "ws_1",
+      include: "archived",
+    });
+    expect(queueV3AuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user_1",
+        organizationId: "org_1",
+        action: "updated",
+        targetType: "creative",
+        targetId: "cr_archived",
+        status: "success",
+        oldObject: { surveyId: SURVEY_ID },
+        newObject: { surveyId: null },
+      }),
+      requestId,
+      expect.anything()
+    );
+  });
+
+  test("granting workspace visibility re-checks no creative and unlinks none", async () => {
+    store(row({ visibility: "restricted" }), row({ visibilityVersion: 3 }));
+    vi.mocked(prisma.survey.findUniqueOrThrow).mockResolvedValue(
+      row({ visibilityProjectedVersion: 3, visibilityVersion: 3 }) as never
+    );
+
+    expect((await post({ visibility: "workspace" })).status).toBe(200);
+    expect(findCreativeBlockers).not.toHaveBeenCalled();
+    expect(unlinkSurveyCreatives).not.toHaveBeenCalled();
   });
 
   test("422 for an ownerless survey, even with blockers", async () => {

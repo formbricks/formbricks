@@ -10,6 +10,7 @@ import {
   getCustomCss,
   getDefaultLanguageCode,
   getIsDebug,
+  getPageFont,
   getSecureRandom,
   getStyling,
   handleUrlFilters,
@@ -425,6 +426,38 @@ describe("utils.ts", () => {
 
       const result = getStyling(settings, survey);
       expect(result).toEqual(survey.styling);
+    });
+  });
+
+  // ENG-3864: Page font is a workspace setting a survey's own styling can override.
+  describe("getPageFont()", () => {
+    const settings = (pageFont?: boolean, allowStyleOverwrite = true) =>
+      ({ styling: { allowStyleOverwrite, pageFont } }) as TWorkspaceStateSettings;
+    const survey = (styling: Record<string, unknown> | null) =>
+      ({ styling }) as unknown as TWorkspaceStateSurvey;
+
+    test("follows the workspace setting, which is off when it was never set", () => {
+      expect(getPageFont(settings(true), survey(null))).toBe(true);
+      expect(getPageFont(settings(), survey(null))).toBe(false);
+    });
+
+    test("a survey with its own styling overrides it", () => {
+      expect(getPageFont(settings(true), survey({ overwriteThemeStyling: true, pageFont: false }))).toBe(
+        false
+      );
+      expect(getPageFont(settings(false), survey({ overwriteThemeStyling: true, pageFont: true }))).toBe(
+        true
+      );
+    });
+
+    test("a survey's styling that predates the setting, or isn't applied, keeps the workspace's", () => {
+      expect(getPageFont(settings(true), survey({ overwriteThemeStyling: true }))).toBe(true);
+      expect(getPageFont(settings(true), survey({ overwriteThemeStyling: false, pageFont: false }))).toBe(
+        true
+      );
+      expect(
+        getPageFont(settings(true, false), survey({ overwriteThemeStyling: true, pageFont: false }))
+      ).toBe(true);
     });
   });
 

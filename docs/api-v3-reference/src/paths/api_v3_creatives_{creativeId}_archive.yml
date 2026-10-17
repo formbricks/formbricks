@@ -1,0 +1,49 @@
+post:
+  operationId: archiveCreativeV3
+  summary: Archive a creative
+  description: >-
+    Sets a creative aside: it never shows, it no longer blocks changes to its survey, it leaves the
+    default list, and it becomes read-only until restored. Its status and counts are kept. Archiving
+    an archived creative changes nothing. Read/write access to its workspace; an unknown or
+    inaccessible `creativeId` answers **403**. Archiving the last creative that opens a live app
+    survey with no actions of its own succeeds; that survey then shows nowhere until a creative or an
+    action opens it again.
+  tags:
+    - V3 Creatives
+  parameters:
+    - $ref: ../components/parameters/CreativeIdPath.yml
+  responses:
+    "200":
+      description: Creative archived
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/CreativeResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

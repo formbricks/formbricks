@@ -1,0 +1,27 @@
+type: object
+description: One page's counts over the range.
+required:
+  - page
+  - impressions
+  - clicks
+  - clickRate
+properties:
+  page:
+    type: string
+    description: >-
+      Host and path, without query string or hash (`example.com/pricing`), or `(other)` for every page
+      not listed.
+    examples:
+      - example.com/pricing
+  impressions:
+    type: integer
+    minimum: 0
+  clicks:
+    type: integer
+    minimum: 0
+  clickRate:
+    type:
+      - number
+      - "null"
+    minimum: 0
+additionalProperties: false

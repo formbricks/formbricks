@@ -1,0 +1,81 @@
+type: object
+description: >
+  The feedback button's custom styles. With `customStyles` off the button follows the workspace Look
+  & Feel (the survey button) and the values below are kept but not applied. With it on, each value
+  overrides the workspace one; `null` keeps the workspace value. A colour set here applies in both
+  appearances: when the background or the text colour is set, both keep their light values in dark
+  appearance so their contrast holds, and a background set without a text colour gets readable text
+  (`#0f172a` or `#ffffff`). Colours left to the workspace follow its dark palette when the visitor's
+  appearance is dark. Colours are `#rrggbb`.
+required:
+  - customStyles
+  - backgroundColor
+  - textColor
+  - borderColor
+  - borderRadius
+  - fontWeight
+  - fontSize
+  - paddingX
+  - paddingY
+properties:
+  customStyles:
+    type: boolean
+    description: The "Add custom styles" switch.
+  backgroundColor:
+    type:
+      - string
+      - "null"
+    pattern: ^#[0-9a-fA-F]{6}$
+  textColor:
+    type:
+      - string
+      - "null"
+    pattern: ^#[0-9a-fA-F]{6}$
+  borderColor:
+    type:
+      - string
+      - "null"
+    pattern: ^#[0-9a-fA-F]{6}$
+  borderRadius:
+    type:
+      - integer
+      - "null"
+    minimum: 0
+    maximum: 100
+    description: Corner radius in px.
+  fontWeight:
+    type:
+      - integer
+      - "null"
+    enum:
+      - 400
+      - 500
+      - 600
+      - 700
+      - null
+  fontSize:
+    $ref: ./CreativeFontSize.yml
+  paddingX:
+    $ref: ./CreativePadding.yml
+  paddingY:
+    $ref: ./CreativePadding.yml
+  pageFont:
+    type:
+      - boolean
+      - "null"
+    description: >-
+      Page font: `true` renders in the host page's font, `false` in the survey font, `null` (or absent)
+      follows the workspace's Page font setting. Applies only with `customStyles` on.
+  customCss:
+    anyOf:
+      - $ref: ./CustomCssInput.yml
+      - type: "null"
+    description: >-
+      The creative's own Custom CSS **source**, `null` (or absent) when it has none. It applies only
+      with `customStyles` on, only to this creative, and is scoped to its element `.fb-creative-button`
+      inside the creative's shadow root; the workspace Custom CSS never reaches a creative. The server
+      processes it on every write that adds or edits it, silently removing `@import`, `@font-face` and
+      external `url()`. Adding or editing it needs the Scale plan on Formbricks Cloud (403
+      `custom_css_plan_required`); CSS that cannot be processed is a 422 naming `styling.theme.customCss`.
+      Removing it, or sending it back unchanged, needs no plan. Limited to 20 000 UTF-8 bytes.
+additionalProperties: false

@@ -1,0 +1,33 @@
+type: object
+description: What a banner shows.
+required:
+  - message
+  - button
+  - dismissible
+  - accessibleName
+properties:
+  message:
+    $ref: ./CreativeRichText.yml
+    description: >-
+      The banner text: bold, italic, underline and links; no images. Publishing needs a non-empty
+      default-language message.
+  button:
+    anyOf:
+      - $ref: ./BannerButton.yml
+      - type: "null"
+    description: >-
+      An optional button. A banner with a button needs a `destination` to publish; a banner without
+      one is a notice only and can't have a `destination`.
+  dismissible:
+    type: boolean
+    description: >-
+      Whether visitors can close the banner. A dismissed banner stays closed on that page only;
+      nothing about the dismiss is remembered.
+  accessibleName:
+    anyOf:
+      - $ref: ./CreativeText.yml
+      - type: "null"
+    description: >-
+      The name screen readers announce for the banner region. `null` uses "Site notice" in the
+      visitor's language. The creative's `name` is never announced.
+additionalProperties: false

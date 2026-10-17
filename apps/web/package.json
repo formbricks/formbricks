@@ -37,6 +37,7 @@
     "@formbricks/ai": "workspace:*",
     "@formbricks/api-v3-schemas": "workspace:*",
     "@formbricks/cache": "workspace:*",
+    "@formbricks/creatives": "workspace:*",
     "@formbricks/database": "workspace:*",
     "@formbricks/email": "workspace:*",
     "@formbricks/hub": "0.14.0",

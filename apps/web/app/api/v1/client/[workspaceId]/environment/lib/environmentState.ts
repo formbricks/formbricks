@@ -1,5 +1,6 @@
 import "server-only";
 import { createCacheKey } from "@formbricks/cache";
+import type { TCreativePayload } from "@formbricks/creatives";
 import { prisma } from "@formbricks/database";
 import { TJsWorkspaceState } from "@formbricks/types/js";
 import {
@@ -12,6 +13,9 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getWorkspaceStateData } from "./data";
 
+/** The environment payload's `data`: the survey state plus the creatives (`@formbricks/creatives`). */
+export type TWorkspaceStatePayload = TJsWorkspaceState["data"] & { creatives?: TCreativePayload[] };
+
 /**
  * Optimized environment state fetcher using new caching approach
  * Uses withCache for Redis-backed caching with graceful fallback
@@ -21,13 +25,11 @@ import { getWorkspaceStateData } from "./data";
  * @returns The environment state
  * @throws ResourceNotFoundError if workspace not found
  */
-export const getWorkspaceState = async (
-  workspaceId: string
-): Promise<{ data: TJsWorkspaceState["data"] }> => {
+export const getWorkspaceState = async (workspaceId: string): Promise<{ data: TWorkspaceStatePayload }> => {
   return cache.withCache(
     async () => {
       // Single optimized database call replacing multiple service calls
-      const { workspace, surveys, actionClasses } = await getWorkspaceStateData(workspaceId);
+      const { workspace, surveys, actionClasses, creatives } = await getWorkspaceStateData(workspaceId);
 
       // Handle app setup completion update if needed
       // This is a one-time setup flag that can tolerate TTL-based cache expiration
@@ -68,7 +70,10 @@ export const getWorkspaceState = async (
         workspace: workspace.workspaceSettings,
         project: legacyProjectSettings,
         ...(IS_RECAPTCHA_CONFIGURED ? { recaptchaSiteKey: RECAPTCHA_SITE_KEY } : {}),
-      } as TJsWorkspaceState["data"]);
+        // ENG-3994: only when there is something to show, so SDKs and cached states from before
+        // creatives never meet the key.
+        ...(creatives.length > 0 ? { creatives } : {}),
+      } as TWorkspaceStatePayload);
 
       return { data };
     },
