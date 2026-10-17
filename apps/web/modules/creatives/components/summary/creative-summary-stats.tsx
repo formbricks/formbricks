@@ -63,7 +63,16 @@ export const CreativeSummaryStats = ({
             <ChartContainer config={chartConfig} className="h-64 w-full">
               <BarChart data={toDailyChartRows(days, locale)} barGap={2}>
                 <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} minTickGap={16} />
+                {/* Every Nth day from the first, with N as small as the labels allow: evenly spaced, so
+                    no day reads as missing. */}
+                <XAxis
+                  dataKey="label"
+                  tickLine={false}
+                  axisLine={false}
+                  tickMargin={8}
+                  minTickGap={16}
+                  interval="equidistantPreserveStart"
+                />
                 <YAxis
                   tickLine={false}
                   axisLine={false}

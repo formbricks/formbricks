@@ -257,10 +257,12 @@ export const StylingTab = ({
               <OverridableField
                 key={key}
                 label={label}
+                htmlFor={`${ids}-${key}`}
                 hint={workspaceValue}
                 resetLabel={useWorkspaceValue}
                 onReset={isOn && theme[key] !== null ? () => setTheme({ [key]: null }) : undefined}>
                 <ColorPicker
+                  id={`${ids}-${key}`}
                   color={isOn ? (theme[key] ?? "") : ""}
                   placeholderColor={element.light[key] ?? undefined}
                   placeholder={
