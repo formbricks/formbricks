@@ -1801,6 +1801,8 @@
         "dimensions": "Dimensões",
         "dimensions_toggle_description": "Agrupe dados por sentimento, tipo de pergunta e outras dimensões.",
         "discard_chart_body": "Este gráfico ainda não foi salvo. Sair vai descartá-lo.",
+        "discard_chart_changes_body": "Você tem alterações não salvas. Se sair, elas serão descartadas.",
+        "discard_chart_changes_title": "Descartar alterações?",
         "discard_chart_title": "Descartar este gráfico?",
         "distribution_segment_label": "{label}: {value} ({percent})",
         "distribution_value_share": "{value} ({percent})",

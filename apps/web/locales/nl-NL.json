@@ -1801,6 +1801,8 @@
         "dimensions": "Dimensies",
         "dimensions_toggle_description": "Groepeer data op sentiment, vraagtype en andere dimensies.",
         "discard_chart_body": "Deze grafiek is nog niet opgeslagen. Weggaan zal deze verwijderen.",
+        "discard_chart_changes_body": "Je hebt niet-opgeslagen wijzigingen. Als je de pagina verlaat, gaan deze verloren.",
+        "discard_chart_changes_title": "Wijzigingen negeren?",
         "discard_chart_title": "Deze grafiek verwijderen?",
         "distribution_segment_label": "{label}: {value} ({percent})",
         "distribution_value_share": "{value} ({percent})",

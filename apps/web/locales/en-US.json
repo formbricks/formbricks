@@ -1801,6 +1801,8 @@
         "dimensions": "Dimensions",
         "dimensions_toggle_description": "Group data by sentiment, question type, and other dimensions.",
         "discard_chart_body": "This chart has not been saved yet. Leaving will discard it.",
+        "discard_chart_changes_body": "You have unsaved changes. Leaving will discard them.",
+        "discard_chart_changes_title": "Discard changes?",
         "discard_chart_title": "Discard this chart?",
         "distribution_segment_label": "{label}: {value} ({percent})",
         "distribution_value_share": "{value} ({percent})",

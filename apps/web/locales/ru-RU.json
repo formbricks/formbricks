@@ -1801,6 +1801,8 @@
         "dimensions": "Измерения",
         "dimensions_toggle_description": "Группируйте данные по настроению, типу вопроса и другим измерениям.",
         "discard_chart_body": "Эта диаграмма ещё не сохранена. При выходе она будет удалена.",
+        "discard_chart_changes_body": "У тебя есть несохранённые изменения. Если уйдёшь, они будут потеряны.",
+        "discard_chart_changes_title": "Отменить изменения?",
         "discard_chart_title": "Удалить эту диаграмму?",
         "distribution_segment_label": "{label}: {value} ({percent})",
         "distribution_value_share": "{value} ({percent})",

@@ -1801,6 +1801,8 @@
         "dimensions": "Dimensionen",
         "dimensions_toggle_description": "Gruppiere Daten nach Stimmung, Fragetyp und anderen Dimensionen.",
         "discard_chart_body": "Dieses Diagramm wurde noch nicht gespeichert. Beim Verlassen geht es verloren.",
+        "discard_chart_changes_body": "Du hast ungespeicherte Änderungen. Wenn Du die Seite verlässt, gehen sie verloren.",
+        "discard_chart_changes_title": "Änderungen verwerfen?",
         "discard_chart_title": "Dieses Diagramm verwerfen?",
         "distribution_segment_label": "{label}: {value} ({percent})",
         "distribution_value_share": "{value} ({percent})",
