@@ -15,6 +15,7 @@ import { CardTableHeader, CardTableRow } from "@/modules/ui/components/card-tabl
 import { FilterDropdown, type TFilterOption } from "@/modules/ui/components/filter-dropdown";
 import { SearchBar } from "@/modules/ui/components/search-bar";
 import { useActiveCreatives, useCreativesList } from "../hooks/use-creatives-list";
+import { getLinkTargetLabel } from "../lib/link-target";
 import type { TCreativeListItem } from "../lib/list-api";
 import {
   INITIAL_CREATIVE_FILTERS,
@@ -37,20 +38,14 @@ import { CreativesSortDropdown } from "./creatives-sort-dropdown";
 const GRID = "grid-cols-8";
 const CREATIVES_PER_PAGE = 12;
 
-const getLinkPath = (url: string): string => {
-  try {
-    return new URL(url).pathname;
-  } catch {
-    return url;
-  }
-};
-
 const OpensCell = ({ destination }: Readonly<{ destination: TCreativeListItem["destination"] }>) => {
   const { t } = useTranslation();
   if (!destination) return <span>-</span>;
   const isLink = destination.type === "link";
   const Icon = isLink ? LinkIcon : MessageCircleIcon;
-  const text = isLink ? `${t("common.link")} · ${getLinkPath(destination.url)}` : destination.surveyName;
+  const text = isLink
+    ? `${t("common.link")} · ${getLinkTargetLabel(destination.url)}`
+    : destination.surveyName;
   return (
     <span className="flex min-w-0 items-center gap-1.5" title={isLink ? destination.url : undefined}>
       <Icon className="size-4 shrink-0" />
