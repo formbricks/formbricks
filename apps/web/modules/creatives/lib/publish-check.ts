@@ -21,6 +21,7 @@ export type TPublishIssue =
   | "message_missing"
   | "button_label_missing"
   | "survey_missing"
+  | "survey_not_allowed"
   | "link_invalid"
   | "action_missing"
   | "condition_incomplete"
@@ -33,6 +34,7 @@ export const PUBLISH_ISSUE_TABS: Record<TPublishIssue, TCreativeEditorTab | null
   message_missing: "content",
   button_label_missing: "content",
   survey_missing: "content",
+  survey_not_allowed: "content",
   link_invalid: "content",
   action_missing: "settings",
   condition_incomplete: "settings",
@@ -55,10 +57,19 @@ const getContentIssues = (content: TCreativeEditorForm["content"]): TPublishIssu
     publish && isBlankCreativeText(readCreativeFormText(content, field)) ? [publish.issue] : []
   );
 
-const getDestinationIssues = (form: TCreativeEditorForm): TPublishIssue[] => {
+/** What publishing knows beyond the form: the picked surveys that can no longer be a Destination. */
+export type TPublishContext = Readonly<{ notAllowedSurveyIds?: readonly string[] }>;
+
+const getDestinationIssues = (
+  form: TCreativeEditorForm,
+  { notAllowedSurveyIds = [] }: TPublishContext
+): TPublishIssue[] => {
   if (!formNeedsDestination(form.content)) return [];
   const { destination } = form;
-  if (destination.type === "survey") return destination.surveyId ? [] : ["survey_missing"];
+  if (destination.type === "survey") {
+    if (!destination.surveyId) return ["survey_missing"];
+    return notAllowedSurveyIds.includes(destination.surveyId) ? ["survey_not_allowed"] : [];
+  }
   return isValidLink(destination.url) ? [] : ["link_invalid"];
 };
 
@@ -75,10 +86,13 @@ const getScheduleIssues = ({ schedule }: TCreativeEditorForm): TPublishIssue[] =
 const getNameIssues = ({ name }: TCreativeEditorForm): TPublishIssue[] =>
   isBlank(name) ? ["name_missing"] : [];
 
-export const getPublishIssues = (form: TCreativeEditorForm): TPublishIssue[] => [
+export const getPublishIssues = (
+  form: TCreativeEditorForm,
+  context: TPublishContext = {}
+): TPublishIssue[] => [
   ...getNameIssues(form),
   ...getContentIssues(form.content),
-  ...getDestinationIssues(form),
+  ...getDestinationIssues(form, context),
   ...getActionIssues(form),
   ...getConditionIssues(form),
   ...getScheduleIssues(form),

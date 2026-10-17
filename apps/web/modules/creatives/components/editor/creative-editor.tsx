@@ -24,6 +24,7 @@ import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { useBeforeUnloadPrompt } from "@/modules/ui/hooks/use-before-unload-prompt";
 import { useCreativeResource, useUpdateCreative } from "../../hooks/use-creative-editor";
+import { useCreativeWarningText } from "../../hooks/use-creative-warning-text";
 import type { TDestinationSurveyOption } from "../../lib/destination-options";
 import {
   type TCreativeEditorForm,
@@ -96,6 +97,7 @@ export const CreativeEditor = ({
   isReadOnly: boolean;
 }>) => {
   const { t } = useTranslation();
+  const toWarningText = useCreativeWarningText();
   const nameRef = useRef<HTMLInputElement>(null);
   const { data: creative } = useCreativeResource(initialCreative);
   const updateCreative = useUpdateCreative(initialCreative.id);
@@ -119,8 +121,12 @@ export const CreativeEditor = ({
   const isDraft = creative.status === "draft";
   const isArchived = creative.archivedAt !== null;
   const canSave = !isArchived && !isReadOnly;
+  // A linked survey that can no longer be a Destination stays picked but blocks Publish (it is flagged).
+  const notAllowedSurveyIds = surveyOptions.filter((option) => option.notAllowed).map(({ id }) => id);
   const getIssues = (intent: TCreativeSaveIntent): TPublishIssue[] =>
-    intent === "publish" ? getPublishIssues(form) : getSaveIssues(form, { published: !isDraft });
+    intent === "publish"
+      ? getPublishIssues(form, { notAllowedSurveyIds })
+      : getSaveIssues(form, { published: !isDraft });
   const issues = flaggedBy ? getIssues(flaggedBy) : [];
   const tabsWithIssues = new Set([...issues.map((issue) => PUBLISH_ISSUE_TABS[issue]), serverIssueTab]);
   const linkedSurveyId = creative.destination?.type === "survey" ? creative.destination.surveyId : null;
@@ -143,6 +149,7 @@ export const CreativeEditor = ({
     message_missing: t("workspace.creatives.editor.issue_message_missing"),
     button_label_missing: t("workspace.creatives.editor.issue_button_label_missing"),
     survey_missing: t("workspace.creatives.editor.issue_survey_missing"),
+    survey_not_allowed: t("workspace.creatives.editor.survey_not_allowed_note"),
     link_invalid: t("workspace.creatives.editor.issue_link_invalid"),
     action_missing: t("workspace.creatives.editor.issue_action_missing"),
     condition_incomplete: t("workspace.creatives.editor.issue_condition_incomplete"),
@@ -303,6 +310,18 @@ export const CreativeEditor = ({
             })}
           </nav>
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-slate-50 p-5">
+            {/* What the saved creative needs (`warnings[]`), whichever tab fixes it. */}
+            {creative.warnings.length > 0 && (
+              <Alert variant="warning" size="small" role="status">
+                <AlertDescription>
+                  <ul className="space-y-1">
+                    {creative.warnings.map((warning) => (
+                      <li key={warning.code}>{toWarningText(warning)}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
             {(isArchived || isReadOnly) && (
               <Alert variant="info" size="small" role="status">
                 <AlertDescription>

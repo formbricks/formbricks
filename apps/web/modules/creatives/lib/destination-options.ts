@@ -1,7 +1,7 @@
 import type { TSurveyVisibility } from "@formbricks/types/surveys/types";
 import { getEffectiveVisibility } from "@/lib/survey/visibility/policy";
 import type { TLanguageCheckSurvey } from "./languages-form";
-import { isSingleUseEnabled } from "./record";
+import { getDestinationSurveyIssue, isSingleUseEnabled } from "./record";
 import type { TDestinationSurveyFacts } from "./repository";
 
 /**
@@ -26,6 +26,11 @@ export type TDestinationSurveyOption = {
   visibility: TSurveyVisibility;
   /** Its languages, for the warning on creative languages it lacks (ENG-4003); absent when unknown. */
   languages?: TLanguageCheckSurvey["languages"];
+  /**
+   * The survey the creative already opens, which can no longer be a Destination (it became Restricted,
+   * single-use or PIN-protected): kept so the picker shows it, flagged so Publish waits for another.
+   */
+  notAllowed?: true;
 };
 
 const isOffered = (candidate: TDestinationSurveyCandidate): boolean =>
@@ -48,6 +53,8 @@ export const toDestinationSurveyOptions = (
         status: candidate.status,
         visibility: getEffectiveVisibility(candidate),
         ...(candidate.languages && { languages: candidate.languages }),
+        ...(candidate.id === linkedSurveyId &&
+          getDestinationSurveyIssue(candidate) && { notAllowed: true as const }),
       },
     ];
   });

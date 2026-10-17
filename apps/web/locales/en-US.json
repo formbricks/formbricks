@@ -2436,6 +2436,8 @@
         "starts_placeholder": "Starts immediately",
         "survey_language_missing_default": "“{survey}” isn't available in {languages}. It opens in its default language for visitors in these languages.",
         "survey_language_missing_hidden": "“{survey}” isn't available in {languages}. Visitors whose site is set to these languages won't see this creative, because the survey wouldn't open for them.",
+        "survey_not_allowed": "Not allowed",
+        "survey_not_allowed_note": "This survey can no longer be a Destination: it became Restricted, single-use or PIN-protected. Pick another survey to publish.",
         "survey_not_running": "This survey isn't running, so the creative stays paused until it is.",
         "tab_content": "Content",
         "text_color": "Text",

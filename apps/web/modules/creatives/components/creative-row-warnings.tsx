@@ -4,6 +4,7 @@ import { TriangleAlertIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { CreativeWarningZodType } from "@formbricks/api-v3-schemas";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { useCreativeWarningText } from "../hooks/use-creative-warning-text";
 
 interface CreativeRowWarningsProps {
   warnings: CreativeWarningZodType[];
@@ -14,13 +15,8 @@ interface CreativeRowWarningsProps {
 /** The warning icon on a list row that needs attention, with every reason in its tooltip. */
 export const CreativeRowWarnings = ({ warnings, overlapNames }: Readonly<CreativeRowWarningsProps>) => {
   const { t } = useTranslation();
-  // The API may add warning codes; an unknown one shows the API's own message.
-  const messages: Partial<Record<string, string>> = {
-    destinationMissing: t("workspace.creatives.warning_destination_missing"),
-    destinationNotAllowed: t("workspace.creatives.warning_destination_not_allowed"),
-    actionMissing: t("workspace.creatives.warning_action_missing"),
-  };
-  const lines = warnings.map((warning) => messages[warning.code] ?? warning.message);
+  const toText = useCreativeWarningText();
+  const lines = warnings.map(toText);
   if (overlapNames.length > 0) {
     lines.push(
       t("workspace.creatives.warning_overlap", { names: overlapNames.map((name) => `"${name}"`).join(", ") })
