@@ -70,7 +70,9 @@ const withSharedCss = ({ pageFont, customCss }: TCreativeStyle, rules: string, h
  * How a creative keeps clear of the Overlay banners on screen (ENG-3576): custom properties, in px, set
  * on its host by whoever lays the page out (the SDK). On a feedback button they are the space all
  * Overlay banners take at the top and at the bottom of the viewport; on an Overlay banner, the space the
- * newer ones on its edge take, so same-edge banners stack newest first. Unset (a preview) they are 0.
+ * newer ones on its edge take, so same-edge banners stack newest first; on the first In page banner, the
+ * space the top Overlay banners take, so at the top of the page it shows below them. Unset (a preview)
+ * they are 0.
  * Set with `host.style.setProperty`, which a CSP without `'unsafe-inline'` allows.
  */
 export const CREATIVE_INSET_PROPERTY = { top: "--fb-creative-top", bottom: "--fb-creative-bottom" } as const;
@@ -159,17 +161,18 @@ const barColorsCss = ({ backgroundColor, textColor, borderColor }: TCreativeColo
   `color:${textColor};background:${backgroundColor};border-color:${borderColor ?? "transparent"}`;
 
 /**
- * A banner's place on one device. In page sits in the page flow and scrolls away with it; an Overlay is
- * fixed to its edge, below the newer Overlay banners on that edge (`CREATIVE_INSET_PROPERTY`), and never
- * taller than a third of the viewport. Every box property is set, so a phone placement fully replaces
- * the desktop one.
+ * A banner's place on one device. In page sits in the page flow and scrolls away with it, starting below
+ * the top Overlay banners (the SDK sets their height as the first In page banner's top inset); an Overlay
+ * is fixed to its edge, below the newer Overlay banners on that edge (`CREATIVE_INSET_PROPERTY`), and
+ * never taller than a third of the viewport. Every box property is set, so a phone placement fully
+ * replaces the desktop one.
  */
 const bannerPlacementCss = ({ placement, layout }: TBannerPlacement): string => {
   const isTop = placement === "top";
   const edges =
     layout === "inPage"
-      ? "position:relative;top:auto;bottom:auto;z-index:auto;max-height:none;overflow:visible"
-      : `position:fixed;${isTop ? `top:${TOP_INSET};bottom:auto` : `top:auto;bottom:${BOTTOM_INSET}`};z-index:${Z_INDEX};max-height:33vh;overflow-y:auto`;
+      ? `position:relative;top:auto;bottom:auto;margin-top:${TOP_INSET};z-index:auto;max-height:none;overflow:visible`
+      : `position:fixed;${isTop ? `top:${TOP_INSET};bottom:auto` : `top:auto;bottom:${BOTTOM_INSET}`};margin-top:0;z-index:${Z_INDEX};max-height:33vh;overflow-y:auto`;
   return `${edges};left:0;right:0;border-width:${isTop ? "0 0 1px" : "1px 0 0"}`;
 };
 

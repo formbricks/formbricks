@@ -517,6 +517,13 @@ describe("render a banner (ENG-3576)", () => {
       expect(bar.display).toBe("flex");
     });
 
+    test("In page starts below the top Overlay banners, so at the top of the page both show", () => {
+      const bar = buttonRule(render(banner(), { onClick: vi.fn() }), undefined, BAR);
+
+      // The space the top Overlays take (`--fb-creative-top`), set by the SDK on the first In page banner.
+      expect(bar.marginTop).toBe("var(--fb-creative-top,0px)");
+    });
+
     test("Overlay at the top stays fixed at the top, below newer Overlay banners and under the survey popup", () => {
       const host = render(
         banner({ position: { desktop: { placement: "top", layout: "overlay" }, phone: null } }),
@@ -560,6 +567,7 @@ describe("render a banner (ENG-3576)", () => {
 
       expect(phone.position).toBe("fixed");
       expect(phone.bottom).toBe("var(--fb-creative-bottom,0px)");
+      expect(phone.marginTop).toBe("0px");
     });
 
     test("a preview can force the phone placement, with no media query", () => {

@@ -6,10 +6,11 @@ import {
 } from "@formbricks/creatives";
 
 /**
- * How the creatives on a page share it (ENG-3576): same-position banners stack newest on top, and
- * feedback buttons keep clear of Overlay banners. `render` draws each creative on its own; this module
- * places them relative to each other, and does it again whenever a banner's size changes (a wrap on a
- * narrower window, a late web font, crossing the phone breakpoint).
+ * How the creatives on a page share it (ENG-3576): same-position banners stack newest on top, In page
+ * banners start below the top Overlay banners, and feedback buttons keep clear of Overlay banners.
+ * `render` draws each creative on its own; this module places them relative to each other, and does it
+ * again whenever a banner's size changes (a wrap on a narrower window, a late web font, crossing the
+ * phone breakpoint).
  */
 
 export interface TShownCreative {
@@ -43,20 +44,28 @@ const setInset = (host: HTMLElement, edge: "top" | "bottom", px: number): void =
 
 /**
  * Each Overlay banner goes below the newer ones on its edge, and every feedback button gets the space
- * all of them take, so its offset runs along the rest of the edge. The placement that counts is the one
- * the viewport shows now: the phone one below 768 px.
+ * all of them take, so its offset runs along the rest of the edge. The In page banners start below the
+ * top Overlays, so at the top of the page every banner shows: the first one in the flow takes their
+ * space, and the rest follow it. The placement that counts is the one the viewport shows now: the phone
+ * one below 768 px.
  */
 const stackOverlays = (): void => {
   const isPhone = typeof window.matchMedia === "function" && window.matchMedia(CREATIVE_PHONE_MEDIA).matches;
   const taken = { top: 0, bottom: 0 };
+  const inPage: HTMLElement[] = [];
 
   for (const { view, host } of arranged) {
     if (view.type !== "banner") continue;
     const { placement, layout } = (isPhone ? view.position.phone : null) ?? view.position.desktop;
-    if (layout !== "overlay") continue;
+    if (layout !== "overlay") {
+      inPage.push(host);
+      continue;
+    }
     setInset(host, placement, taken[placement]);
     taken[placement] += barOf(host)?.getBoundingClientRect().height ?? 0;
   }
+
+  inPage.forEach((host, index) => setInset(host, "top", index === 0 ? taken.top : 0));
 
   for (const { view, host } of arranged) {
     if (view.type === "banner") continue;

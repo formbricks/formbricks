@@ -632,6 +632,44 @@ describe("banners (ENG-3576)", () => {
       expect(insetsOf("first").bottom).toBe("0px");
       expect(insetsOf("creative-1")).toEqual({ top: "0px", bottom: "80px" });
     });
+
+    test("push the In page banners below the top Overlays, so at the top of the page every banner shows", () => {
+      let onResize: (() => void) | undefined;
+      vi.stubGlobal(
+        "ResizeObserver",
+        class {
+          constructor(callback: () => void) {
+            onResize = callback;
+          }
+          observe = vi.fn();
+          disconnect = vi.fn();
+        }
+      );
+      barHeights = { "top-new": 40, "top-old": 29, bottom: 52 };
+      state.creatives = [
+        banner("in-page-new"),
+        banner("top-new", { layout: "overlay" }),
+        banner("bottom", { placement: "bottom", layout: "overlay" }),
+        banner("in-page-old"),
+        banner("top-old", { layout: "overlay" }),
+      ];
+
+      reconcileCreatives();
+
+      // The first In page banner in the flow starts below both top Overlays; the next follows it.
+      expect(insetsOf("in-page-new").top).toBe("69px");
+      expect(insetsOf("in-page-old").top).toBe("0px");
+
+      // A top Overlay wraps onto a second line: the In page banners move down with it.
+      barHeights = { "top-new": 80, "top-old": 29 };
+      onResize?.();
+      expect(insetsOf("in-page-new").top).toBe("109px");
+
+      // With no top Overlay left, the In page banner sits where it always did (a reserved slot holds it).
+      state.creatives = [banner("in-page-new"), banner("bottom", { placement: "bottom", layout: "overlay" })];
+      reconcileCreatives();
+      expect(insetsOf("in-page-new").top).toBe("0px");
+    });
   });
 
   describe("Dismiss", () => {
