@@ -5,7 +5,7 @@ import type { TShowConditionGroup, TShowConditionSingle } from "@formbricks/type
 import { setAppearance } from "@/lib/common/appearance";
 import { Config } from "@/lib/common/config";
 import { setIsSetup } from "@/lib/common/status";
-import { reconcileCreatives, removeCreatives } from "@/lib/creatives/creatives";
+import { reconcileCreatives, removeCreatives, showCachedCreatives } from "@/lib/creatives/creatives";
 import { trackAction } from "@/lib/survey/action";
 import { mockSurvey } from "@/lib/survey/tests/__mocks__/widget.mock";
 import {
@@ -125,6 +125,19 @@ describe("reconcileCreatives", () => {
     reconcileCreatives();
 
     expect(shownButtons()).toEqual([]);
+  });
+
+  test("at SDK start, shows the cached state's creatives before setup has refreshed it, schedule applied", () => {
+    setIsSetup(false);
+    state.creatives = [
+      feedbackButton(),
+      feedbackButton({ id: "creative-later", startAt: new Date(NOW + 3_600_000).toISOString() }),
+    ];
+
+    showCachedCreatives();
+
+    expect(document.querySelectorAll("[data-formbricks-creative]")).toHaveLength(1);
+    expect(document.querySelector('[data-formbricks-creative="creative-1"]')).not.toBeNull();
   });
 
   test("leaves a creative that is still shown in place on the next page view", () => {

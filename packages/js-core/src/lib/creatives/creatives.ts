@@ -165,9 +165,8 @@ const scheduleNextChange = (nextChangeAt: number | null, now: number): void => {
   boundaryTimer = setTimeout(reconcileCreatives, Math.min(nextChangeAt - now, MAX_BOUNDARY_WAIT_MS));
 };
 
-export const reconcileCreatives = (): void => {
-  if (!getIsSetup()) return;
-
+/** Makes the page show what `resolve` decides from the cached state, set up or not. */
+const drawCreatives = (): void => {
   try {
     const { workspace, user } = Config.getInstance().get();
     const now = Date.now() + (workspace.clockOffset ?? 0);
@@ -197,6 +196,17 @@ export const reconcileCreatives = (): void => {
     Logger.getInstance().error(`Could not show creatives: ${String(error)}`);
   }
 };
+
+export const reconcileCreatives = (): void => {
+  if (getIsSetup()) drawCreatives();
+};
+
+/**
+ * At SDK start, the cached state's creatives before setup waits for its refresh, expired or not (review
+ * fix A3): an In page banner shows with the page instead of after the network. Setup reconciles again
+ * once the refreshed state is in; until then the schedule still applies on the server's clock.
+ */
+export const showCachedCreatives = drawCreatives;
 
 /** An action was tracked on this page (`trackAction`): shows the creatives that show on it. */
 export const recordCreativeAction = (actionName: string): void => {
