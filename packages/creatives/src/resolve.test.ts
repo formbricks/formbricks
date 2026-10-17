@@ -7,18 +7,35 @@ import type {
 import type { TShowConditionsContext } from "@formbricks/types/show-conditions-evaluate";
 import { type TResolveInput, resolve } from "./resolve";
 import { DEFAULT_CREATIVE_STYLE } from "./style";
-import type { TBannerPayload, TCreativeLanguage, TCreativeStyle, TFeedbackButtonPayload } from "./types";
+import type {
+  TBannerPayload,
+  TCreativeLanguage,
+  TCreativeStyle,
+  TFeedbackButtonPayload,
+  TLanguageMatch,
+} from "./types";
 
 const NOW = Date.parse("2026-10-20T02:00:00.000Z");
 
 const language = (code: string, { isDefault = false, enabled = true, alias = null as string | null } = {}) =>
   ({ default: isDefault, enabled, language: { code, alias } }) satisfies TCreativeLanguage;
 
+/** One language: it is always the one shown. */
+const SINGLE: TLanguageMatch = { keys: {}, bases: {} };
+
+/** `en-US` (default) and `de-DE`, as the server precomputes them (`buildLanguageMatch` in apps/web). */
+const EN_DE: TLanguageMatch = {
+  keys: { "en-us": "default", en: "default", "de-de": "de-DE", de: "de-DE" },
+  bases: { en: "default", de: "de-DE" },
+};
+
 const button = (overrides: Partial<TFeedbackButtonPayload> = {}): TFeedbackButtonPayload => ({
   id: "button-1",
   type: "feedbackButton",
   defaultLanguage: "en-US",
   languages: [language("en-US", { isDefault: true }), language("de-DE")],
+  languageMatch: EN_DE,
+  surveyLanguageMatch: SINGLE,
   autoSelectLanguage: false,
   style: DEFAULT_CREATIVE_STYLE,
   content: { label: { "en-US": "Feedback", "de-DE": "Feedback geben" }, icon: null },
@@ -38,6 +55,8 @@ const banner = (overrides: Partial<TBannerPayload> = {}): TBannerPayload => ({
   type: "banner",
   defaultLanguage: "en-US",
   languages: [language("en-US", { isDefault: true })],
+  languageMatch: SINGLE,
+  surveyLanguageMatch: null,
   autoSelectLanguage: false,
   style: DEFAULT_CREATIVE_STYLE,
   content: {
@@ -355,15 +374,33 @@ describe("resolve", () => {
       expect(labels(resolve(input()))).toEqual(["Feedback"]);
     });
 
-    test("matches the language the site set by alias, ignoring case", () => {
+    test("matches the language the site set by alias or canonical spelling, ignoring case and separators", () => {
       const aliased = button({
-        languages: [language("en-US", { isDefault: true }), language("de-DE", { alias: "german" })],
+        languageMatch: { keys: { ...EN_DE.keys, german: "de-DE" }, bases: EN_DE.bases },
       });
 
       expect(labels(resolve(input({ creatives: [aliased], page: visitor("German") })))).toEqual([
         "Feedback geben",
       ]);
-      expect(labels(resolve(input({ page: visitor("DE-de") })))).toEqual(["Feedback geben"]);
+      expect(labels(resolve(input({ page: visitor("DE_de") })))).toEqual(["Feedback geben"]);
+      expect(labels(resolve(input({ page: visitor("de;q=0.8") })))).toEqual(["Feedback geben"]);
+    });
+
+    test("matches another tag of the same language on the page, with nothing to load (de-AT reaches de-DE)", () => {
+      expect(labels(resolve(input({ page: visitor("de-AT") })))).toEqual(["Feedback geben"]);
+    });
+
+    test("keeps Chinese scripts apart: Traditional never reaches Simplified", () => {
+      const chinese = button({
+        content: { label: { "en-US": "Feedback", "zh-Hans-CN": "反馈" }, icon: null },
+        languageMatch: {
+          keys: { "en-us": "default", "zh-hans-cn": "zh-Hans-CN", "zh-cn": "zh-Hans-CN" },
+          bases: { en: "default", "zh-hans": "zh-Hans-CN" },
+        },
+      });
+
+      expect(labels(resolve(input({ creatives: [chinese], page: visitor("zh-SG") })))).toEqual(["反馈"]);
+      expect(labels(resolve(input({ creatives: [chinese], page: visitor("zh-TW") })))).toEqual(["Feedback"]);
     });
 
     describe("falls back to the default language instead of hiding the creative", () => {
@@ -371,9 +408,9 @@ describe("resolve", () => {
         expect(labels(resolve(input({ page: visitor("fr-FR") })))).toEqual(["Feedback"]);
       });
 
-      test("when the visitor's language is disabled", () => {
+      test("when the visitor's language is one the server left out (disabled)", () => {
         const disabled = button({
-          languages: [language("en-US", { isDefault: true }), language("de-DE", { enabled: false })],
+          languageMatch: { keys: { "en-us": "default" }, bases: { en: "default" } },
         });
 
         expect(labels(resolve(input({ creatives: [disabled], page: visitor("de-DE") })))).toEqual([
@@ -384,6 +421,7 @@ describe("resolve", () => {
       test("text by text, when one translation is missing or empty", () => {
         const partlyTranslated = banner({
           languages: [language("en-US", { isDefault: true }), language("de-DE")],
+          languageMatch: EN_DE,
           content: {
             message: { "en-US": [{ text: "Down tonight." }], "de-DE": [{ text: " " }] },
             button: { label: { "en-US": "Status", "de-DE": "Statusseite" } },
@@ -400,6 +438,12 @@ describe("resolve", () => {
             accessibleName: "Service notice",
           }),
         ]);
+      });
+
+      test("when the payload predates precomputed languages (a state cached before the upgrade)", () => {
+        const cached = { ...button(), languageMatch: undefined } as unknown as TFeedbackButtonPayload;
+
+        expect(labels(resolve(input({ creatives: [cached], page: visitor("de-DE") })))).toEqual(["Feedback"]);
       });
     });
 
@@ -424,6 +468,7 @@ describe("resolve", () => {
     test("names the banner region and its Dismiss control in the visitor's language", () => {
       const german = banner({
         languages: [language("en-US", { isDefault: true }), language("de-DE")],
+        languageMatch: EN_DE,
         content: {
           message: { "en-US": [{ text: "Down tonight." }], "de-DE": [{ text: "Heute Nacht offline." }] },
           button: null,
@@ -445,33 +490,33 @@ describe("resolve", () => {
     });
 
     describe("hides a creative whose popup survey the visitor's language would skip", () => {
-      const multilingual = {
-        id: "survey-1",
-        languages: [language("en-US", { isDefault: true }), language("de-DE", { alias: "de" })],
-      };
+      const multilingualSurvey = button({ surveyLanguageMatch: EN_DE });
 
-      test("when the survey lacks the language the site set", () => {
-        const surveys = [multilingual];
-
-        expect(shownIds(resolve(input({ surveys, page: visitor("fr-FR") })))).toEqual([]);
-        expect(shownIds(resolve(input({ surveys, page: visitor("de") })))).toEqual(["button-1"]);
+      test("when the survey lacks the language the site set, decided at once", () => {
+        expect(shownIds(resolve(input({ creatives: [multilingualSurvey], page: visitor("fr-FR") })))).toEqual(
+          []
+        );
+        expect(shownIds(resolve(input({ creatives: [multilingualSurvey], page: visitor("de-AT") })))).toEqual(
+          ["button-1"]
+        );
       });
 
       test("but not when the survey has a single language, which the SDK never skips", () => {
-        const surveys = [{ id: "survey-1", languages: [language("en-US", { isDefault: true })] }];
-
-        expect(shownIds(resolve(input({ surveys, page: visitor("fr-FR") })))).toEqual(["button-1"]);
+        expect(shownIds(resolve(input({ page: visitor("fr-FR") })))).toEqual(["button-1"]);
       });
 
       test("but not for the browser's languages, which fall back to the survey's default", () => {
-        const surveys = [{ ...multilingual, autoSelectLanguage: true }];
+        const followsBrowser = button({ surveyLanguageMatch: EN_DE, autoSelectLanguage: true });
 
-        expect(shownIds(resolve(input({ surveys, page: visitor(null, ["fr-FR"]) })))).toEqual(["button-1"]);
+        expect(
+          shownIds(resolve(input({ creatives: [followsBrowser], page: visitor(null, ["fr-FR"]) })))
+        ).toEqual(["button-1"]);
       });
 
       test("but not for a link survey, whose link page falls back to its default", () => {
         const linkSurvey = button({
           destination: { type: "survey", surveyId: "s2", opensAs: "newTab", url: "https://app.test/s/s2" },
+          surveyLanguageMatch: null,
         });
 
         expect(
@@ -496,66 +541,6 @@ describe("resolve", () => {
       expect(destinations(visitor(null, ["fr-FR"]))[0]).toEqual(
         expect.objectContaining({ url: "https://app.test/s/s2" })
       );
-    });
-
-    describe("without the full matcher (the surveys bundle not loaded yet)", () => {
-      test("says the choice is pending when no code or alias matches exactly", () => {
-        const surveys = [
-          { id: "survey-1", languages: [language("en-US", { isDefault: true }), language("de-DE")] },
-        ];
-        const result = resolve(input({ surveys, page: visitor("de-AT") }));
-
-        // Hidden until the full matcher says whether `de-AT` reaches `de-DE`.
-        expect(shownIds(result)).toEqual([]);
-        expect(result.languagePending).toBe(true);
-      });
-
-      test("is settled when the language the site set matches exactly", () => {
-        expect(resolve(input({ page: visitor("de-DE") })).languagePending).toBe(false);
-      });
-
-      test("is settled when the first browser language matches exactly, pending when a later one does", () => {
-        const followsBrowser = button({ autoSelectLanguage: true });
-
-        expect(
-          resolve(input({ creatives: [followsBrowser], page: visitor(null, ["de-DE", "en-GB"]) }))
-            .languagePending
-        ).toBe(false);
-        expect(
-          resolve(input({ creatives: [followsBrowser], page: visitor(null, ["en-GB", "de-DE"]) }))
-            .languagePending
-        ).toBe(true);
-      });
-
-      test("is settled for a creative and survey with one language each", () => {
-        const surveys = [{ id: "survey-1", languages: [] }];
-        const singleLanguage = button({ languages: [language("en-US", { isDefault: true })] });
-
-        expect(
-          resolve(input({ creatives: [singleLanguage], surveys, page: visitor("de-AT") })).languagePending
-        ).toBe(false);
-      });
-    });
-
-    test("uses the full matcher when given, for the survey and the creative alike", () => {
-      const surveys = [
-        { id: "survey-1", languages: [language("en-US", { isDefault: true }), language("de-DE")] },
-      ];
-      const seen: unknown[] = [];
-      // Stands in for the surveys bundle's `resolveSurveyLanguage`: `de-AT` reaches `de-DE` by base language.
-      const resolveLanguage: TResolveInput["resolveLanguage"] = (request) => {
-        seen.push(request);
-        return request.explicitLanguage === "de-AT" ? "de-DE" : "default";
-      };
-
-      const result = resolve(input({ surveys, page: visitor("de-AT"), resolveLanguage }));
-
-      expect(labels(result)).toEqual(["Feedback geben"]);
-      expect(result.languagePending).toBe(false);
-      expect(seen).toEqual([
-        expect.objectContaining({ explicitLanguage: "de-AT", unmatchedExplicitLanguage: "skip" }),
-        expect.objectContaining({ explicitLanguage: "de-AT", unmatchedExplicitLanguage: "fallback" }),
-      ]);
     });
   });
 });

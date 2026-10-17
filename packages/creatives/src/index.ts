@@ -10,15 +10,7 @@ export {
   type TCreativeEventsBody,
   getCountedPage,
 } from "./events";
-export {
-  type TLanguageChoice,
-  type TLanguageResolver,
-  type TLanguageResolverInput,
-  type TMatchableLanguage,
-  type TVisitorLanguage,
-  chooseLanguage,
-  resolveLanguageExactly,
-} from "./language";
+export { type TVisitorLanguage, matchLanguage } from "./language";
 export {
   CREATIVE_INSET_PROPERTY,
   CREATIVE_PHONE_MEDIA,

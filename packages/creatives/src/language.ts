@@ -1,31 +1,12 @@
-/**
- * Which language a visitor gets (ENG-4003): the one rule the SDK applies to an app survey (is it shown,
- * and in which language) and to a creative's texts. The full matcher (`resolveSurveyLanguage` in
- * `@formbricks/i18n-utils`) carries the canonical language table, which the SDK leaves to the surveys
- * bundle; until that bundle is loaded, languages are matched exactly, the SDK's matcher from before it.
- */
-
-/** A language as the matcher reads it: survey languages and creative languages both fit. */
-export interface TMatchableLanguage {
-  default: boolean;
-  enabled: boolean;
-  language: { code: string; alias?: string | null };
-}
+import type { TLanguageMatch } from "./types";
 
 /**
- * The full matcher's input, hand-mirrored from `resolveSurveyLanguage` in `@formbricks/i18n-utils` (as
- * js-core's `vite-env.d.ts` does for the surveys bundle global): keep the two identical.
+ * Which language a visitor gets on a creative (ENG-4003, review fix C7), decided on the page with
+ * nothing to load: the server precomputes each language list (`TLanguageMatch`) with the full matcher
+ * (`resolveSurveyLanguage` in `@formbricks/i18n-utils`), so the SDK only looks the visitor's language up.
+ * The same order as that matcher: the language the site set, then the browser's when its survey uses
+ * browser language, then the default.
  */
-export interface TLanguageResolverInput {
-  languages: readonly TMatchableLanguage[];
-  explicitLanguage?: string | null;
-  browserLanguages?: readonly string[];
-  autoSelectLanguage?: boolean | null;
-  unmatchedExplicitLanguage: "fallback" | "skip";
-}
-
-/** Returns a stored code, `"default"`, or `null` to skip (only with `unmatchedExplicitLanguage: "skip"`). */
-export type TLanguageResolver = (input: TLanguageResolverInput) => string | null;
 
 /** What the SDK knows of the visitor's language. */
 export interface TVisitorLanguage {
@@ -35,80 +16,50 @@ export interface TVisitorLanguage {
   browser: readonly string[];
 }
 
-export interface TLanguageChoice {
-  /** A stored code, `"default"`, or `null`: skip. */
-  language: string | null;
-  /** `false` when the full matcher's looser tiers (canonical code, same base language) could choose otherwise. */
-  settled: boolean;
-}
+/** As many browser languages as the full matcher tries (`MAX_BROWSER_LANGUAGE_CANDIDATES`). */
+const MAX_BROWSER_LANGUAGES = 10;
 
-/** The SDK's matcher from before the shared one (ENG-3289): the exact code, then the alias, ignoring case. */
-export const matchLanguageExactly = (
-  languages: readonly TMatchableLanguage[],
-  requested: string | null | undefined
-): string | null => {
-  const wanted = requested?.trim().toLowerCase();
-  if (!wanted) return null;
-  // A disabled language (other than the default) never matches, so its alias can't shadow an enabled code.
-  const candidates = languages.filter((language) => language.default || language.enabled);
-  const match =
-    candidates.find(({ language }) => language.code.toLowerCase() === wanted) ??
-    candidates.find(({ language }) => language.alias?.toLowerCase() === wanted);
-  if (!match) return null;
-  return match.default ? "default" : match.language.code;
+/** `language` or `language-script`, lowercase; Chinese takes its likely script (`zh-TW` is `zh-hant`). */
+const toBase = (code: string): string | undefined => {
+  try {
+    const locale = new Intl.Locale(code);
+    const script = locale.script ?? (locale.language === "zh" ? locale.maximize().script : undefined);
+    return (script ? `${locale.language}-${script}` : locale.language).toLowerCase();
+  } catch {
+    return undefined;
+  }
+};
+
+/** One requested language against a precomputed list: a stored code, `"default"`, or `null`. */
+export const matchLanguage = (match: TLanguageMatch, requested: string): string | null => {
+  const code = requested.split(";")[0].trim().replaceAll("_", "-").toLowerCase();
+  // Looked up as own string values only: a code like `constructor` must not reach Object's prototype.
+  const own = (map: Record<string, string>, key: string | undefined) =>
+    key && Object.hasOwn(map, key) ? map[key] : null;
+  return code ? (own(match.keys, code) ?? own(match.bases, toBase(code))) : null;
 };
 
 /**
- * `resolveSurveyLanguage`'s order (the language the site set, then the browser's when the survey uses
- * browser language, then the default) with exact matching only. Only a match on the first language tried
- * is certain: the full matcher runs every tier on one language before it tries the next.
- */
-export const resolveLanguageExactly = ({
-  languages,
-  explicitLanguage,
-  browserLanguages = [],
-  autoSelectLanguage,
-  unmatchedExplicitLanguage,
-}: TLanguageResolverInput): TLanguageChoice => {
-  let settled = true;
-  if (explicitLanguage?.trim()) {
-    const match = matchLanguageExactly(languages, explicitLanguage);
-    if (match) return { language: match, settled };
-    settled = false;
-    // The SDK never shows an app survey that lacks the language the site set.
-    if (unmatchedExplicitLanguage === "skip") return { language: null, settled };
-  }
-  if (autoSelectLanguage) {
-    for (let index = 0; index < browserLanguages.length; index++) {
-      const match = matchLanguageExactly(languages, browserLanguages[index]);
-      if (match) return { language: match, settled: settled && index === 0 };
-    }
-    settled &&= browserLanguages.length === 0;
-  }
-  return { language: "default", settled };
-};
-
-/**
- * The language of an app survey (`"skip"`: `null` when the SDK skips it) or of a creative's texts
- * (`"fallback"`), for this visitor. One language needs no matching. `resolveLanguage` is the full
- * matcher when it is loaded; without it the choice is exact and may not be settled.
+ * The language of a creative's texts (`"fallback"`) or of its popup survey (`"skip"`: `null` when the SDK
+ * would skip that survey) for this visitor. One language (empty maps) is always the one shown; so is the
+ * default when the payload predates precomputed languages.
  */
 export const chooseLanguage = (
-  item: { languages?: readonly TMatchableLanguage[]; autoSelectLanguage?: boolean | null },
+  match: TLanguageMatch | null | undefined,
+  autoSelectLanguage: boolean,
   visitor: TVisitorLanguage | undefined,
-  unmatchedExplicitLanguage: "fallback" | "skip",
-  resolveLanguage?: TLanguageResolver
-): TLanguageChoice => {
-  const { languages = [], autoSelectLanguage } = item;
-  if (languages.length <= 1 || !visitor) return { language: "default", settled: true };
-  const input: TLanguageResolverInput = {
-    languages,
-    explicitLanguage: visitor.explicit,
-    browserLanguages: autoSelectLanguage ? visitor.browser : [],
-    autoSelectLanguage,
-    unmatchedExplicitLanguage,
-  };
-  return resolveLanguage
-    ? { language: resolveLanguage(input), settled: true }
-    : resolveLanguageExactly(input);
+  unmatched: "fallback" | "skip"
+): string | null => {
+  if (!match || !visitor || Object.keys(match.keys).length === 0) return "default";
+  if (visitor.explicit?.trim()) {
+    const explicit = matchLanguage(match, visitor.explicit);
+    if (explicit || unmatched === "skip") return explicit;
+  }
+  if (autoSelectLanguage) {
+    for (const browser of visitor.browser.slice(0, MAX_BROWSER_LANGUAGES)) {
+      const matched = matchLanguage(match, browser);
+      if (matched) return matched;
+    }
+  }
+  return "default";
 };

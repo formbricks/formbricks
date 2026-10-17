@@ -30,6 +30,25 @@ export interface TCreativeLanguage {
   language: { code: string; alias: string | null };
 }
 
+/**
+ * A list of languages precomputed by the server for matching a visitor's language on the page, so the SDK
+ * decides at once without the canonical language table the full matcher (`resolveSurveyLanguage` in
+ * `@formbricks/i18n-utils`) carries. Each value is what that matcher answers: a stored code, or
+ * `"default"` for the default language. Both maps are empty when there is one language: it is always
+ * the one shown.
+ *
+ * - `keys`: a requested code as the matcher compares it (lowercase, `_` as `-`, no `;q=`) → its match:
+ *   every stored code, alias and canonical-table spelling that matches one of the languages by code,
+ *   alias or canonical equivalence (the matcher's tiers 1–3).
+ * - `bases`: a base language, `language` or `language-script` lowercase as `Intl.Locale` reads a tag
+ *   (`de`, `zh-hant`; Chinese takes its likely script) → the match for any other tag of that language
+ *   (`de-AT` reaches `de-DE`: tier 4).
+ */
+export interface TLanguageMatch {
+  keys: Record<string, string>;
+  bases: Record<string, string>;
+}
+
 /** One stretch of banner text with the same formatting. Never HTML. */
 export interface TCreativeTextRun {
   text: string;
@@ -81,6 +100,13 @@ interface TCreativePayloadBase {
    * or disabled, or whose translation of a text is empty, sees the default language.
    */
   languages: TCreativeLanguage[];
+  /** `languages` precomputed for matching on the page (review fix C7): picks the texts' language. */
+  languageMatch: TLanguageMatch;
+  /**
+   * The popup Destination survey's languages, precomputed the same way: a creative whose survey the
+   * visitor's language would skip is hidden. `null` for any other Destination.
+   */
+  surveyLanguageMatch: TLanguageMatch | null;
   /**
    * Whether the browser's languages pick the language when the site set none with `setLanguage`: the
    * Destination survey's "Use browser language" setting. `false` when it opens no survey.

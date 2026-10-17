@@ -6,6 +6,7 @@ import { ZShowConditions } from "@formbricks/types/show-conditions";
 import { needsDestination, parseCreativeTypedGroups } from "./creative";
 import { compileCreativeCustomCss } from "./custom-css";
 import { getCreativeDeliveryGap } from "./display-status";
+import { buildLanguageMatch } from "./language-match";
 import { type TWorkspaceStylingInput, getAppliedCustomCssSource, getCreativeStyle } from "./style";
 import { getBannerLabels } from "./visitor-labels";
 
@@ -31,7 +32,16 @@ export const deliveredCreativeSelect = {
   displayPercentage: true,
   startAt: true,
   endAt: true,
-  survey: { select: { type: true, autoSelectLanguage: true } },
+  survey: {
+    select: {
+      type: true,
+      autoSelectLanguage: true,
+      // For the popup survey's language skip, precomputed for the page (`surveyLanguageMatch`).
+      languages: {
+        select: { default: true, enabled: true, language: { select: { code: true, alias: true } } },
+      },
+    },
+  },
   triggers: { select: { actionClass: { select: { name: true } } }, orderBy: { createdAt: "asc" } },
   languages: {
     select: { default: true, enabled: true, language: { select: { code: true, alias: true } } },
@@ -117,6 +127,11 @@ const toCreativePayload = async (
     id: row.id,
     defaultLanguage,
     languages,
+    languageMatch: buildLanguageMatch(languages),
+    surveyLanguageMatch:
+      destination?.type === "survey" && destination.opensAs === "popup" && row.survey
+        ? buildLanguageMatch(row.survey.languages)
+        : null,
     // Its texts follow the language its survey would open in (ENG-4003); a link or no Destination has
     // no such setting, so only the language the site set counts.
     autoSelectLanguage: row.survey?.autoSelectLanguage ?? false,

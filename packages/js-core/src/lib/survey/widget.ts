@@ -1,4 +1,3 @@
-import { type TLanguageResolver, chooseLanguage, resolveLanguageExactly } from "@formbricks/creatives";
 import { getAppearance } from "@/lib/common/appearance";
 import { Config } from "@/lib/common/config";
 import { CONTAINER_ID, LIVE_REGION_ID } from "@/lib/common/constants";
@@ -16,6 +15,7 @@ import {
   surveyHasSegmentFilters,
 } from "@/lib/common/utils";
 import { buildDisplayHiddenFields } from "@/lib/survey/embedded-data";
+import { type TLanguageResolver, chooseSurveyLanguage, resolveLanguageExactly } from "@/lib/survey/language";
 import { UpdateQueue } from "@/lib/user/update-queue";
 import { type TUserState, type TWorkspaceStateSurvey } from "@/types/config";
 import { type TTrackProperties } from "@/types/survey";
@@ -445,28 +445,24 @@ type TFormbricksSurveys = NonNullable<typeof globalThis.window.formbricksSurveys
  * keep working as they did before instead of every one of them being skipped.
  */
 const toLanguageResolver = (formbricksSurveys: TFormbricksSurveys): TLanguageResolver =>
-  formbricksSurveys.resolveSurveyLanguage ?? ((input) => resolveLanguageExactly(input).language);
-
-/** The full language matcher when the surveys bundle is on the page, `undefined` before (ENG-4003). */
-export const getLoadedLanguageResolver = (): TLanguageResolver | undefined =>
-  globalThis.window.formbricksSurveys && toLanguageResolver(globalThis.window.formbricksSurveys);
+  formbricksSurveys.resolveSurveyLanguage ?? resolveLanguageExactly;
 
 /**
  * The language a survey renders in, or `null` to skip it. An explicit language (`setLanguage()`) that
  * matches nothing skips the survey, as it always has; the browser languages only apply when no explicit
- * language is set and the survey uses browser language. Creatives hide by the same rule (ENG-4003).
+ * language is set and the survey uses browser language. Creatives hide by the same rule (ENG-4003), from
+ * the survey languages the server precomputes for them.
  */
 const resolveDisplayLanguage = (
   survey: TWorkspaceStateSurvey,
   language: string | undefined,
   formbricksSurveys: TFormbricksSurveys
 ): string | null =>
-  chooseLanguage(
+  chooseSurveyLanguage(
     survey,
     { explicit: language, browser: survey.autoSelectLanguage ? getBrowserLanguageCodes() : [] },
-    "skip",
     toLanguageResolver(formbricksSurveys)
-  ).language;
+  );
 
 let surveysLoadPromise: Promise<TFormbricksSurveys> | null = null;
 

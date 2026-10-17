@@ -14,12 +14,7 @@ import { getIsSetup } from "@/lib/common/status";
 import { getBrowserLanguageCodes } from "@/lib/common/utils";
 import { countClick, countImpressions, stopCountingCreatives } from "@/lib/creatives/events";
 import { type TShownCreative, arrangeCreatives, stopArrangingCreatives } from "@/lib/creatives/layout";
-import {
-  getLoadedLanguageResolver,
-  getOpenSurveyIds,
-  loadFormbricksSurveysExternally,
-  openSurveyForCreative,
-} from "@/lib/survey/widget";
+import { getOpenSurveyIds, openSurveyForCreative } from "@/lib/survey/widget";
 import { getDeviceInfo } from "@/lib/visit/device";
 import { getVisitSnapshot } from "@/lib/visit/visit-store";
 
@@ -27,8 +22,7 @@ import { getVisitSnapshot } from "@/lib/visit/visit-store";
  * Creatives on the page (ENG-3994). `reconcileCreatives` runs on every page view (`checkPageUrl`), on
  * every tracked action, on a state refresh, when the CSP nonce, appearance or language changes and at
  * the next schedule boundary, and makes the page show exactly what `resolve` decides from the cached
- * state: no network, and no survey bundle unless a language needs its matcher (see
- * `reconcileCreatives`).
+ * state: no network and no survey bundle (languages arrive precomputed for the page).
  */
 
 /**
@@ -181,7 +175,7 @@ export const reconcileCreatives = (): void => {
 
     syncPageView();
 
-    const { creatives, nextChangeAt, languagePending } = resolve({
+    const { creatives, nextChangeAt } = resolve({
       creatives: workspace.data.creatives ?? [],
       surveys: workspace.data.surveys,
       page: {
@@ -192,17 +186,7 @@ export const reconcileCreatives = (): void => {
         language: { explicit: user.data.language, browser: getBrowserLanguageCodes() },
       },
       getShareRoll,
-      resolveLanguage: getLoadedLanguageResolver(),
     });
-    // The exact matcher couldn't settle a language (say `de-AT` against `de-DE`): the full one ships in
-    // the surveys bundle, which a click would load anyway. Decide again once it is here; until then a
-    // creative whose survey might be skipped stays hidden. A failed load retries on the next page view.
-    if (languagePending) {
-      void loadFormbricksSurveysExternally().then(
-        () => reconcileCreatives(),
-        () => undefined
-      );
-    }
 
     showCreatives(
       creatives.filter(({ id }) => !pageView.dismissed.has(id)),
