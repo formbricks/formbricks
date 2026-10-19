@@ -70,7 +70,10 @@ export const normalizeUrlPath = (value: string): string => {
     // A stray "%" that is not an escape: keep the raw text.
   }
   if (!path.startsWith("/")) path = `/${path}`;
-  path = path.replace(/\/+$/, "") || "/";
+  // A loop, not `/\/+$/`: that regex backtracks on a long run of "/" that does not end the path.
+  let end = path.length;
+  while (end > 0 && path[end - 1] === "/") end--;
+  path = path.slice(0, end) || "/";
   return path.toLowerCase();
 };
 

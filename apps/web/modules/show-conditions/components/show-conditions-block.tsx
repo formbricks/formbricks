@@ -58,7 +58,8 @@ export const ShowConditionsBlock = ({
   const { t } = useTranslation();
 
   const edit = (change: (root: TShowConditionGroup) => TShowConditions) => {
-    if (value) onChange(change(value));
+    if (isReadOnly || !value) return;
+    onChange(change(value));
   };
   const updateCondition = (id: string, update: TShowConditionUpdate) =>
     edit((root) => updateShowCondition(root, id, update));
@@ -113,6 +114,7 @@ export const ShowConditionsBlock = ({
         <fieldset
           aria-label={t("workspace.surveys.edit.show_conditions.heading")}
           aria-disabled={isReadOnly || undefined}
+          disabled={isReadOnly}
           className={cn("min-w-0", isReadOnly && "pointer-events-none")}>
           <ConditionsEditor conditions={value} config={config} callbacks={callbacks} />
         </fieldset>
