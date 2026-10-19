@@ -73,7 +73,8 @@ export const INGEST_REQUEST_BODY_LIMIT_BYTES = 16 * 1024 * 1024;
  * so an accepted body cannot outgrow it.
  */
 const handleIngestBodyLimit = (request: NextRequest): NextResponse | null => {
-  const { pathname } = request.nextUrl;
+  // Next matches rewrites without regard to case (`caseSensitiveRoutes` is off), so `/INGEST/e` reaches PostHog too.
+  const pathname = request.nextUrl.pathname.toLowerCase();
   if (pathname !== "/ingest" && !pathname.startsWith("/ingest/")) return null;
 
   if (request.headers.has("transfer-encoding")) return new NextResponse(null, { status: 411 });

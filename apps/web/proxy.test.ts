@@ -305,11 +305,15 @@ describe("proxy", () => {
       expect(response.status).toBe(413);
     });
 
-    test("refuses a body of undeclared length with 411", async () => {
-      const response = await ingest("/ingest/e/", { "transfer-encoding": "chunked" });
+    test.each(["/ingest/e/", "/INGEST/e", "/InGeSt/batch", "/Ingest"])(
+      "refuses a body of undeclared length to %s with 411",
+      async (path) => {
+        // Next's rewrite matches any case of the path, so the bound has to as well.
+        const response = await ingest(path, { "transfer-encoding": "chunked" });
 
-      expect(response.status).toBe(411);
-    });
+        expect(response.status).toBe(411);
+      }
+    );
 
     test("forwards a body up to the limit", async () => {
       mockGetProxySession.mockResolvedValue(null);
