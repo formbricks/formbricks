@@ -1801,6 +1801,8 @@
         "dimensions": "Boyutlar",
         "dimensions_toggle_description": "Verileri duygu durumu, soru türü ve diğer boyutlara göre grupla.",
         "discard_chart_body": "Bu grafik henüz kaydedilmedi. Çıkarsan kaybolacak.",
+        "discard_chart_changes_body": "Kaydedilmemiş değişikliklerin var. Ayrılırsan bu değişiklikler kaybolacak.",
+        "discard_chart_changes_title": "Değişiklikler silinsin mi?",
         "discard_chart_title": "Bu grafik silinsin mi?",
         "distribution_segment_label": "{label}: {value} ({percent})",
         "distribution_value_share": "{value} ({percent})",

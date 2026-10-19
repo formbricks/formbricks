@@ -1801,6 +1801,8 @@
         "dimensions": "Dimensiuni",
         "dimensions_toggle_description": "Grupează datele după sentiment, tipul întrebării și alte dimensiuni.",
         "discard_chart_body": "Acest grafic nu a fost salvat încă. Părăsirea paginii îl va șterge.",
+        "discard_chart_changes_body": "Ai modificări nesalvate. Dacă pleci, vor fi pierdute.",
+        "discard_chart_changes_title": "Renunți la modificări?",
         "discard_chart_title": "Ștergi acest grafic?",
         "distribution_segment_label": "{label}: {value} ({percent})",
         "distribution_value_share": "{value} ({percent})",

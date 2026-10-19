@@ -1801,6 +1801,8 @@
         "dimensions": "Dimenziók",
         "dimensions_toggle_description": "Adatok csoportosítása hangulat, kérdéstípus és egyéb dimenziók szerint.",
         "discard_chart_body": "Ez a diagram még nem lett elmentve. A kilépés el fogja vetni azt.",
+        "discard_chart_changes_body": "Önnek nem mentett módosításai vannak. Amennyiben elhagyja az oldalt, a módosítások elvesznek.",
+        "discard_chart_changes_title": "Elveti a módosításokat?",
         "discard_chart_title": "Elveti ezt a diagramot?",
         "distribution_segment_label": "{label}: {value} ({percent})",
         "distribution_value_share": "{value} ({percent})",

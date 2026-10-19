@@ -1801,6 +1801,8 @@
         "dimensions": "維度",
         "dimensions_toggle_description": "依情感、問題類型及其他維度分組資料。",
         "discard_chart_body": "此圖表尚未儲存。離開將會捨棄此圖表。",
+        "discard_chart_changes_body": "你有尚未儲存的變更，離開後這些變更將會被捨棄。",
+        "discard_chart_changes_title": "要捨棄變更嗎？",
         "discard_chart_title": "捨棄此圖表?",
         "distribution_segment_label": "{label}：{value}（{percent}）",
         "distribution_value_share": "{value}（{percent}）",

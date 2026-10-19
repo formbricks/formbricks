@@ -1801,6 +1801,8 @@
         "dimensions": "ディメンション",
         "dimensions_toggle_description": "センチメント、質問タイプ、その他のディメンションでデータをグループ化します。",
         "discard_chart_body": "このチャートはまだ保存されていないよ。このまま離れると破棄されるよ。",
+        "discard_chart_changes_body": "保存されていない変更があります。このページを離れると、変更は破棄されます。",
+        "discard_chart_changes_title": "変更を破棄しますか?",
         "discard_chart_title": "このチャートを破棄する?",
         "distribution_segment_label": "{label}: {value} ({percent})",
         "distribution_value_share": "{value} ({percent})",

@@ -1801,6 +1801,8 @@
         "dimensions": "维度",
         "dimensions_toggle_description": "按情感、问题类型和其他维度对数据进行分组。",
         "discard_chart_body": "此图表尚未保存。离开将丢弃它。",
+        "discard_chart_changes_body": "你有未保存的更改，离开后这些更改将被丢弃。",
+        "discard_chart_changes_title": "放弃更改？",
         "discard_chart_title": "丢弃此图表？",
         "distribution_segment_label": "{label}:{value}({percent})",
         "distribution_value_share": "{value}({percent})",

@@ -1801,6 +1801,8 @@
         "dimensions": "Dimensions",
         "dimensions_toggle_description": "Groupe les données par sentiment, type de question et autres dimensions.",
         "discard_chart_body": "Ce graphique n'a pas encore été enregistré. Quitter va le supprimer.",
+        "discard_chart_changes_body": "Tu as des modifications non enregistrées. Si tu quittes cette page, elles seront perdues.",
+        "discard_chart_changes_title": "Abandonner les modifications ?",
         "discard_chart_title": "Supprimer ce graphique ?",
         "distribution_segment_label": "{label} : {value} ({percent})",
         "distribution_value_share": "{value} ({percent})",

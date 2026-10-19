@@ -1801,6 +1801,8 @@
         "dimensions": "Dimensioner",
         "dimensions_toggle_description": "Gruppera data efter sentiment, frågetyp och andra dimensioner.",
         "discard_chart_body": "Det här diagrammet har inte sparats ännu. Om du lämnar kommer det att förkastas.",
+        "discard_chart_changes_body": "Du har osparade ändringar. Om du lämnar sidan förkastas de.",
+        "discard_chart_changes_title": "Vill du förkasta ändringarna?",
         "discard_chart_title": "Förkasta det här diagrammet?",
         "distribution_segment_label": "{label}: {value} ({percent})",
         "distribution_value_share": "{value} ({percent})",
