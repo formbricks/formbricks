@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { logger } from "@formbricks/logger";
 import { verifySsoRelinkIntent } from "@/lib/jwt";
+import { withAuthRequestBodyLimit } from "@/modules/auth/lib/auth-request-body-limit";
 import { getSession } from "@/modules/auth/lib/session";
 import {
   BETTER_AUTH_SESSION_COOKIE_NAMES,
@@ -41,7 +42,7 @@ const buildFailedRecoveryResponse = async (request: Request, callbackUrl?: strin
   return response;
 };
 
-export const GET = async (request: Request) => {
+const handler = async (request: Request) => {
   const url = new URL(request.url);
   const intentToken = url.searchParams.get("intent");
 
@@ -68,3 +69,5 @@ export const GET = async (request: Request) => {
     }
   }
 };
+
+export const GET = withAuthRequestBodyLimit(handler);
