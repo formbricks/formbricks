@@ -1,4 +1,5 @@
 import { auth } from "@/modules/auth/lib/auth";
+import { withAuthRequestBodyLimit } from "@/modules/auth/lib/auth-request-body-limit";
 import {
   recordSsoCallbackOutcome,
   recordSsoCallbackThrow,
@@ -93,4 +94,8 @@ const handler = async (request: Request): Promise<Response> => {
   }
 };
 
-export { handler as GET, handler as POST };
+// Bounded before anything above reads the body: the DCR parse, Better Auth's own reads, and every
+// other `/api/auth/*` route (the SAML bridge, SSO recovery) go through the same guard (ENG-3846).
+const limitedHandler = withAuthRequestBodyLimit(handler);
+
+export { limitedHandler as GET, limitedHandler as POST };
