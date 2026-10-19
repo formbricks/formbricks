@@ -6,6 +6,7 @@ import {
   InvalidInputError,
   ResourceNotFoundError,
 } from "@formbricks/types/errors";
+import { RequestBodyTooLargeError, parseFormDataWithLimit } from "@/app/lib/api/request-body";
 import { CsvImportValidationError, importCsvFile } from "@/lib/feedback-source/csv-file-import";
 import { getUser } from "@/lib/user/service";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -62,10 +63,17 @@ export const POST = async (request: Request) => {
       throw new AuthorizationError("User not found");
     }
 
+    // Bounded while reading, not just by the header above: a chunked upload carries no Content-Length, and
+    // the patched Next no longer cuts any body off for us (ENG-3972).
     let formData: FormData;
     try {
-      formData = await request.formData();
-    } catch {
+      formData = await parseFormDataWithLimit(request, CSV_IMPORT_REQUEST_BODY_LIMIT);
+    } catch (error) {
+      if (error instanceof RequestBodyTooLargeError) {
+        return buildCsvImportErrorResponse(CSV_FILE_TOO_LARGE_ERROR_CODE, 413, {
+          max: MAX_CSV_VALUES.FILE_SIZE,
+        });
+      }
       throw new InvalidInputError("Malformed form data");
     }
 

@@ -34,17 +34,22 @@ const assertBodySize = (actualBytes: number, limitBytes: number): void => {
   }
 };
 
-export const readRequestBodyWithLimit = async (
+/**
+ * Buffers the request body as raw bytes, refusing it once it passes `limitBytes`. The `Content-Length`
+ * header is only a fast path for an honest client: the stream is counted as it arrives, so a body that
+ * lies about its length or carries none (chunked) is cut off at the limit instead of read whole.
+ */
+export const readRequestBytesWithLimit = async (
   request: Request,
   limitBytes: number = DEFAULT_REQUEST_BODY_LIMIT_BYTES
-): Promise<string> => {
+): Promise<Uint8Array> => {
   const contentLength = getContentLength(request.headers);
   if (contentLength !== null) {
     assertBodySize(contentLength, limitBytes);
   }
 
   if (!request.body) {
-    return "";
+    return new Uint8Array(0);
   }
 
   const reader = request.body.getReader();
@@ -66,12 +71,8 @@ export const readRequestBodyWithLimit = async (
     chunks.push(value);
   }
 
-  if (chunks.length === 0) {
-    return "";
-  }
-
   if (chunks.length === 1) {
-    return textDecoder.decode(chunks[0]);
+    return chunks[0];
   }
 
   const body = new Uint8Array(receivedBytes);
@@ -81,10 +82,31 @@ export const readRequestBodyWithLimit = async (
     offset += chunk.byteLength;
   }
 
-  return textDecoder.decode(body);
+  return body;
 };
+
+export const readRequestBodyWithLimit = async (
+  request: Request,
+  limitBytes: number = DEFAULT_REQUEST_BODY_LIMIT_BYTES
+): Promise<string> => textDecoder.decode(await readRequestBytesWithLimit(request, limitBytes));
 
 export const parseJsonBodyWithLimit = async <TJson = unknown>(
   request: Request,
   limitBytes: number = DEFAULT_REQUEST_BODY_LIMIT_BYTES
 ): Promise<TJson> => JSON.parse(await readRequestBodyWithLimit(request, limitBytes)) as TJson;
+
+/**
+ * `request.formData()`, but bounded: the body is read under `limitBytes` first, so a multipart upload
+ * with no `Content-Length` cannot be buffered whole. Parse failures surface exactly as `formData()`'s.
+ */
+export const parseFormDataWithLimit = async (
+  request: Request,
+  limitBytes: number = DEFAULT_REQUEST_BODY_LIMIT_BYTES
+): Promise<FormData> => {
+  const body = await readRequestBytesWithLimit(request, limitBytes);
+  const contentType = request.headers.get("content-type");
+  return new Response(
+    body as BodyInit,
+    contentType ? { headers: { "content-type": contentType } } : {}
+  ).formData();
+};
