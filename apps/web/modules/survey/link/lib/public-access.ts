@@ -2,15 +2,27 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 
 type TLinkSurveyAccessFields = Pick<TSurvey, "type" | "status" | "archivedAt">;
 
+// What each guard proves, in full: narrowing only `status` would let a caller whose `status` is already
+// narrowed collapse the false branch to `never` while the survey could still be an app or archived one.
+type TServableLinkSurvey = {
+  type: "link";
+  status: Exclude<TSurvey["status"], "draft">;
+  archivedAt: null | undefined;
+};
+
 /**
  * Whether the public link page serves this survey at all. A draft, an archived survey or a survey of
  * another type does not exist for an anonymous visitor, so every public entry point (page, metadata,
  * actions) must answer "not found" for it (ENG-4032). Paused and completed surveys are served, but only
  * as their inactive screen.
+ *
+ * Give it a survey loaded with `archivedAt` selected (`getSurveyWithMetadata` does). `TSurvey` types the
+ * field as optional, so a loader that leaves it out (`getSurvey`) reads as "not archived" without a type
+ * error.
  */
 export const isLinkSurveyServable = <T extends TLinkSurveyAccessFields>(
   survey: T
-): survey is T & { status: Exclude<TSurvey["status"], "draft"> } =>
+): survey is T & TServableLinkSurvey =>
   survey.type === "link" && survey.status !== "draft" && !survey.archivedAt;
 
 /**
@@ -20,4 +32,5 @@ export const isLinkSurveyServable = <T extends TLinkSurveyAccessFields>(
  */
 export const isLinkSurveyOpenForResponses = <T extends TLinkSurveyAccessFields>(
   survey: T
-): survey is T & { status: "inProgress" } => isLinkSurveyServable(survey) && survey.status === "inProgress";
+): survey is T & TServableLinkSurvey & { status: "inProgress" } =>
+  isLinkSurveyServable(survey) && survey.status === "inProgress";

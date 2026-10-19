@@ -14,6 +14,7 @@ import {
   getMetadataBrandColor,
   getSurveyOpenGraphMetadata,
 } from "@/modules/survey/link/lib/metadata-utils";
+import { isLinkSurveyServable } from "@/modules/survey/link/lib/public-access";
 import { resolveSingleUseIdForSurvey } from "@/modules/survey/link/lib/single-use-link";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
@@ -26,22 +27,34 @@ interface ContactSurveyPageProps {
   searchParams: Promise<TLinkSurveySearchParams>;
 }
 
+const GENERIC_CONTACT_SURVEY_METADATA: Metadata = {
+  title: "Survey",
+  description: "Please complete this survey.",
+};
+
 export const generateMetadata = async (props: ContactSurveyPageProps): Promise<Metadata> => {
   const { jwt } = await props.params;
   try {
     // Verify and decode the JWT token
     const result = verifyContactSurveyToken(jwt);
     if (!result.ok) {
-      return {
-        title: "Survey",
-        description: "Please complete this survey.",
-      };
+      return GENERIC_CONTACT_SURVEY_METADATA;
     }
     const { surveyId } = result.data;
+    // Loaded here rather than by getBasicSurveyMetadata's own getSurvey: this loader selects `archivedAt`,
+    // which the gate below needs, and it is the same request-cached call the page makes.
+    const surveyWithMetadata = await getSurveyWithMetadata(surveyId);
+
+    // The page 404s a survey that is no longer public (draft, archived, non-link) even with a valid token,
+    // so its name or welcome headline must not reach <title> / og:title either (ENG-4032).
+    if (!isLinkSurveyServable(surveyWithMetadata)) {
+      return GENERIC_CONTACT_SURVEY_METADATA;
+    }
+
     const { title, ogTitle, description, survey, ogImage } = await getBasicSurveyMetadata(
       surveyId,
       undefined,
-      undefined,
+      surveyWithMetadata,
       await getAcceptedLanguages()
     );
 
@@ -75,10 +88,7 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
     };
   } catch {
     // If the token is invalid, we'll return generic metadata
-    return {
-      title: "Survey",
-      description: "Please complete this survey.",
-    };
+    return GENERIC_CONTACT_SURVEY_METADATA;
   }
 };
 
