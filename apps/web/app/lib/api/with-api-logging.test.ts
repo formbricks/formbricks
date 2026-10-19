@@ -451,7 +451,9 @@ describe("withV1ApiWrapper", () => {
     expect(Sentry.captureException).not.toHaveBeenCalled();
   });
 
-  test("does not call audit if AUDIT_LOG_ENABLED is false", async () => {
+  // The gate is getIsAuditLogsEnabled inside queueAuditEvent (handler.test.ts). A second, env-only check
+  // here is how the licence came to be ignored (ENG-3374), so the wrapper must not make the call itself.
+  test("leaves the enablement decision to queueAuditEvent, even with AUDIT_LOG_ENABLED off", async () => {
     vi.doMock("@/lib/constants", () => ({
       AUDIT_LOG_ENABLED: false,
       IS_PRODUCTION: true,
@@ -483,7 +485,7 @@ describe("withV1ApiWrapper", () => {
     const wrapped = withV1ApiWrapper({ handler, action: "created", targetType: "survey" });
     await wrapped(req, undefined);
 
-    expect(mockedQueueAuditEvent).not.toHaveBeenCalled();
+    expect(mockedQueueAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "created" }));
   });
 
   test("handles client-side API routes without authentication", async () => {

@@ -762,5 +762,34 @@ describe("License Utils", () => {
 
       expect(result).toBe(false);
     });
+
+    test("returns false when there is no active licence, as after the grace period", async () => {
+      vi.mocked(constants).AUDIT_LOG_ENABLED = true;
+      vi.mocked(getLicenseFeatures).mockResolvedValue(null);
+
+      const result = await getIsAuditLogsEnabled();
+
+      expect(result).toBe(false);
+    });
+
+    test("returns true on Cloud from the env var alone, without consulting the licence", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(constants).AUDIT_LOG_ENABLED = true;
+      vi.mocked(getLicenseFeatures).mockResolvedValue(null);
+
+      const result = await getIsAuditLogsEnabled();
+
+      expect(result).toBe(true);
+      expect(getLicenseFeatures).not.toHaveBeenCalled();
+    });
+
+    test("returns false on Cloud when audit logs are globally disabled", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(constants).AUDIT_LOG_ENABLED = false;
+
+      const result = await getIsAuditLogsEnabled();
+
+      expect(result).toBe(false);
+    });
   });
 });

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { TActor, TAuditAction, TAuditStatus, TAuditTarget } from "../types/audit-log";
 // Import original module to access its original exports for the mock factory
 import * as OriginalHandler from "./handler";
@@ -8,22 +9,24 @@ import * as OriginalHandler from "./handler";
 var serviceLogAuditEventMockHandle: ReturnType<typeof vi.fn>; // NOSONAR / test code
 var loggerErrorMockHandle: ReturnType<typeof vi.fn>; // NOSONAR / test code
 
-// Use 'var' for mutableConstants due to hoisting issues with vi.mock factories
-var mutableConstants: { AUDIT_LOG_ENABLED: boolean }; // NOSONAR / test code
-// Initialize mutableConstants here, after its declaration, but before vi.mock calls if possible,
-// or ensure factories handle potential undefined state if initialization is further down.
-// For safety with hoisted mocks, initialize immediately.
-mutableConstants = { AUDIT_LOG_ENABLED: true };
+// The env var, the licence and Cloud are combined by getIsAuditLogsEnabled (tested in
+// license-check/lib/utils.test.ts). Here it is the only switch, so every entry point is held to it.
+const { auditGate } = vi.hoisted(() => ({ auditGate: { enabled: true } }));
+
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getIsAuditLogsEnabled: vi.fn(async () => auditGate.enabled),
+}));
+
+vi.mock("@/lib/utils/helper", () => ({
+  getOrganizationIdFromWorkspaceId: vi.fn().mockResolvedValue("org-from-workspace"),
+}));
 
 vi.mock("@/lib/constants", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/constants")>();
   return {
     ...actual,
-    // AUDIT_LOG_ENABLED will be controlled by mutableConstants
-    get AUDIT_LOG_ENABLED() {
-      // Guard against mutableConstants being undefined during early hoisting phases if not initialized above
-      return mutableConstants ? mutableConstants.AUDIT_LOG_ENABLED : true; // Default to true if somehow undefined
-    },
+    // Set, so a disabled gate is the only reason an event is skipped
+    AUDIT_LOG_ENABLED: true,
     AUDIT_LOG_GET_USER_IP: true,
   };
 });
@@ -135,10 +138,8 @@ function clearAllMockHandles() {
   if (serviceLogAuditEventMockHandle) serviceLogAuditEventMockHandle.mockClear().mockResolvedValue(undefined);
   if (loggerErrorMockHandle) loggerErrorMockHandle.mockClear();
   vi.mocked(getClientIpFromHeaders).mockClear();
-  if (mutableConstants) {
-    // Check because it's a var and could be re-assigned (though not in this code)
-    mutableConstants.AUDIT_LOG_ENABLED = true;
-  }
+  vi.mocked(getOrganizationIdFromWorkspaceId).mockClear();
+  auditGate.enabled = true;
 }
 
 describe("queueAuditEvent", () => {
@@ -171,6 +172,13 @@ describe("queueAuditEvent", () => {
     expect(loggerErrorMockHandle).toHaveBeenCalledWith(testError, "Failed to create audit log event");
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
   });
+
+  test("does nothing when audit logging is disabled, not even the IP read", async () => {
+    auditGate.enabled = false;
+    await OriginalHandler.queueAuditEvent(baseEventParams);
+    expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
+    expect(vi.mocked(getClientIpFromHeaders)).not.toHaveBeenCalled();
+  });
 });
 
 describe("queueAuditEventBackground", () => {
@@ -187,6 +195,14 @@ describe("queueAuditEventBackground", () => {
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
     const logCall = serviceLogAuditEventMockHandle.mock.calls[0][0];
     expect(logCall.action).toBe(baseEventParams.action);
+  });
+
+  test("does nothing when audit logging is disabled, not even the IP read", async () => {
+    auditGate.enabled = false;
+    await OriginalHandler.queueAuditEventBackground(baseEventParams);
+    await new Promise(setImmediate);
+    expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
+    expect(vi.mocked(getClientIpFromHeaders)).not.toHaveBeenCalled();
   });
 });
 
@@ -210,6 +226,12 @@ describe("queueAuditEventWithoutRequest", () => {
       })
     );
     expect(vi.mocked(getClientIpFromHeaders)).not.toHaveBeenCalled();
+  });
+
+  test("does nothing when audit logging is disabled", async () => {
+    auditGate.enabled = false;
+    await OriginalHandler.queueAuditEventWithoutRequest(baseEventParams);
+    expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
   });
 });
 
@@ -286,16 +308,36 @@ describe("withAuditLogging", () => {
     expect(serviceLogAuditEventMockHandle.mock.calls[0][0].status).toBe("failure");
   });
 
-  test("does not log if AUDIT_LOG_ENABLED is false", async () => {
-    if (mutableConstants) mutableConstants.AUDIT_LOG_ENABLED = false;
+  test("does not log, or look up the organisation, when audit logging is disabled", async () => {
+    auditGate.enabled = false;
     const handlerImpl = vi.fn().mockResolvedValue("ok");
     const wrapped = OriginalHandler.withAuditLogging("created", "survey", handlerImpl);
-    await wrapped({ ctx: mockCtxBase as any, parsedInput: mockParsedInput });
+    const ctx = { ...mockCtxBase, auditLoggingCtx: { ...mockCtxBase.auditLoggingCtx, organizationId: "" } };
+    await expect(wrapped({ ctx: ctx as any, parsedInput: { workspaceId: "ws1" } })).resolves.toBe("ok");
     await new Promise(setImmediate);
     expect(handlerImpl).toHaveBeenCalled();
     expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
-    // Reset for other tests; clearAllMockHandles will also do this in the next beforeEach
-    if (mutableConstants) mutableConstants.AUDIT_LOG_ENABLED = true;
+    expect(vi.mocked(getOrganizationIdFromWorkspaceId)).not.toHaveBeenCalled();
+  });
+
+  test("still rethrows a failed handler when audit logging is disabled", async () => {
+    auditGate.enabled = false;
+    const handlerImpl = vi.fn().mockRejectedValue(new Error("fail"));
+    const wrapped = OriginalHandler.withAuditLogging("created", "survey", handlerImpl);
+    await expect(wrapped({ ctx: mockCtxBase as any, parsedInput: mockParsedInput })).rejects.toThrow("fail");
+    await new Promise(setImmediate);
+    expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
+  });
+
+  test("rethrows a failed handler that has no audit logging context", async () => {
+    const handlerImpl = vi.fn().mockRejectedValue(new Error("fail"));
+    const wrapped = OriginalHandler.withAuditLogging("created", "survey", handlerImpl);
+    await expect(wrapped({ ctx: { user: fullUser } as any, parsedInput: mockParsedInput })).rejects.toThrow(
+      "fail"
+    );
+    await new Promise(setImmediate);
+    expect(loggerErrorMockHandle).toHaveBeenCalledWith("No audit logging context found");
+    expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
   });
 
   test("resolves targetId for chart target type", async () => {

@@ -1,5 +1,5 @@
 import { logger } from "@formbricks/logger";
-import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP } from "@/lib/constants";
+import { AUDIT_LOG_GET_USER_IP } from "@/lib/constants";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
@@ -36,8 +36,10 @@ type TBuildAuditEventInput = TAuditEventInput & {
 /**
  * Builds an audit event and logs it.
  * Redacts sensitive data from the old and new objects before logging.
+ * Ungated: every exported entry point checks `getIsAuditLogsEnabled` first, before it reads request
+ * headers or the database, so a disabled instance does no audit work at all.
  */
-export const buildAndLogAuditEvent = async ({
+const buildAndLogAuditEvent = async ({
   action,
   targetType,
   userId,
@@ -51,10 +53,6 @@ export const buildAndLogAuditEvent = async ({
   eventId,
   apiUrl,
 }: TBuildAuditEventInput) => {
-  if (!AUDIT_LOG_ENABLED && !(await getIsAuditLogsEnabled())) {
-    return;
-  }
-
   try {
     let changes;
 
@@ -104,6 +102,7 @@ export const queueAuditEventBackground = async ({
   apiUrl,
 }: TAuditEventInput) => {
   setImmediate(async () => {
+    if (!(await getIsAuditLogsEnabled())) return;
     const ipAddress = await getClientIpFromHeaders();
     await buildAndLogAuditEvent({
       action,
@@ -139,6 +138,7 @@ export const queueAuditEvent = async ({
   eventId,
   apiUrl,
 }: TAuditEventInput) => {
+  if (!(await getIsAuditLogsEnabled())) return;
   const ipAddress = await getClientIpFromHeaders();
 
   await buildAndLogAuditEvent({
@@ -175,6 +175,7 @@ export const queueAuditEventWithoutRequest = async ({
   apiUrl,
   ipAddress = UNKNOWN_DATA,
 }: TAuditEventInput & { ipAddress?: string }) => {
+  if (!(await getIsAuditLogsEnabled())) return;
   await buildAndLogAuditEvent({
     action,
     targetType,
@@ -223,25 +224,24 @@ export const withAuditLogging = <
       error = err;
     }
 
-    if (!AUDIT_LOG_ENABLED) {
-      if (status === "failure") throw error;
-      return result;
-    }
-
-    if (!auditLoggingCtx) {
-      logger.error("No audit logging context found");
-      return result;
-    }
-
     // The handler ran fine but reported that the audited thing did not actually happen, so `action`
     // here would be a false record (see AuditLoggingCtx.suppressEvent). Deliberately gated on success:
     // a failure is always audited, so this cannot be used to hide one.
-    if (status === "success" && auditLoggingCtx.suppressEvent) {
+    if (status === "success" && auditLoggingCtx?.suppressEvent) {
       return result;
     }
 
+    // The gate is checked off the request path, so a cold licence lookup never delays the action's
+    // response; the organisation lookup below only runs once it passes.
     setImmediate(async () => {
       try {
+        if (!(await getIsAuditLogsEnabled())) return;
+
+        if (!auditLoggingCtx) {
+          logger.error("No audit logging context found");
+          return;
+        }
+
         const userId: string = ctx?.user?.id ?? UNKNOWN_DATA;
         let organizationId =
           auditLoggingCtx?.organizationId || // NOSONAR // We want to use the organizationId from the auditLoggingCtx if it is present and not empty
