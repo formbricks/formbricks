@@ -237,6 +237,38 @@ describe("withAuthRequestBodyLimit", () => {
     ).rejects.toBe(boom);
   });
 
+  /** A POST whose body fails mid-read with `error`, as Node's does when the client disconnects. */
+  const failingRequest = (error: Error, signal?: AbortSignal) =>
+    new Request("http://localhost/api/auth/sign-in/email", {
+      method: "POST",
+      signal,
+      body: new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new Uint8Array(1024));
+          controller.error(error);
+        },
+      }),
+      duplex: "half",
+    } as RequestInit & { duplex: "half" });
+
+  test.each([
+    ["Node's ECONNRESET", Object.assign(new Error("aborted"), { code: "ECONNRESET" }), undefined],
+    ["an aborted request signal", new Error("terminated"), AbortSignal.abort()],
+  ])("answers a client that disconnects mid-upload (%s) with a bare 400", async (_name, error, signal) => {
+    const handler = vi.fn(ok);
+
+    const response = await withAuthRequestBodyLimit(handler)(failingRequest(error, signal));
+
+    expect(response.status).toBe(400);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("lets any other body read error propagate", async () => {
+    const boom = new Error("read failed");
+
+    await expect(withAuthRequestBodyLimit(vi.fn(ok))(failingRequest(boom))).rejects.toBe(boom);
+  });
+
   test("marks what it wraps, and only that", () => {
     expect(isAuthRequestBodyLimited(withAuthRequestBodyLimit(ok))).toBe(true);
     expect(isAuthRequestBodyLimited(ok)).toBe(false);

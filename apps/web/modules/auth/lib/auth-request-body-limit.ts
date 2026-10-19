@@ -65,13 +65,22 @@ const withBody = <R extends Request>(request: R, body: Uint8Array): R => {
 };
 
 /**
+ * Whether a failed body read means the client went away mid-upload. Node fails the read with `ECONNRESET`
+ * ("aborted"), and the request's signal fires, though not always before the read rejects, so either counts.
+ */
+const isClientAbort = (request: Request, error: unknown): boolean =>
+  request.signal.aborted || (error as { code?: unknown } | null)?.code === "ECONNRESET";
+
+/**
  * Wraps a route handler so the request body is read once, bounded, before the handler sees it.
  *
  * The handler receives the same bytes as a fresh request, so the limit costs nothing that the handler's
  * own read did not already cost, and nothing downstream (the DCR preprocessing, Better Auth, `formData()`)
  * can buffer more than {@link AUTH_REQUEST_BODY_LIMIT_BYTES}. A request with no body — every GET — is
  * handed over untouched, identity included. Anything over the limit is answered `413` and the stream is
- * cancelled, whether it declared its size, understated it, or carried no `Content-Length` at all.
+ * cancelled, whether it declared its size, understated it, or carried no `Content-Length` at all. A client
+ * that disconnects mid-upload gets a bare `400` nobody reads, rather than a route error for every abandoned
+ * anonymous request.
  */
 export const withAuthRequestBodyLimit = <Args extends unknown[], R extends Request>(
   handler: (request: R, ...args: Args) => Response | Promise<Response>
@@ -84,6 +93,7 @@ export const withAuthRequestBodyLimit = <Args extends unknown[], R extends Reque
       body = await readRequestBytesWithLimit(request, AUTH_REQUEST_BODY_LIMIT_BYTES);
     } catch (error) {
       if (error instanceof RequestBodyTooLargeError) return bodyTooLargeResponse(error.limitBytes);
+      if (isClientAbort(request, error)) return new Response(null, { status: 400 });
       throw error;
     }
 
