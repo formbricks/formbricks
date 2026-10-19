@@ -1,10 +1,9 @@
 "use client";
 
-import { HourglassIcon } from "lucide-react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { organizationSettingsPath } from "@/modules/settings/lib/routes";
-import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { Alert, AlertButton, AlertDescription } from "@/modules/ui/components/alert";
 import { useSurveyRetention } from "../../hooks/use-survey-retention";
 import {
   formatRetentionDate,
@@ -34,24 +33,23 @@ const SurveyRetentionNoteContent = ({
   const warning = getSurveyRetentionDueWarning(retention, t, locale, formatDate);
   const exemptLines = getSurveyRetentionExemptLines(retention, t, formatDate);
 
+  // Both are statuses, not alerts: they are there on load, not news that should interrupt a screen reader.
+  // Both wrap instead of the small alert's truncation, so exemption lines and the due date stay readable.
   return (
     <div className="mb-4 space-y-2">
-      {/* The icon in its own column; the text and its link wrap together, as one line of prose. */}
-      <div className="flex items-start gap-1.5 text-sm text-slate-500">
-        <HourglassIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-        <p>
-          {[t("workspace.settings.data_retention.survey_note"), ...exemptLines].join(" ")}{" "}
-          <Link
-            href={organizationSettingsPath(organizationId, "data-retention/policies")}
-            className="font-medium text-slate-700 underline-offset-2 hover:underline">
+      <Alert variant="info" size="small" role="status">
+        <AlertDescription className="whitespace-normal">
+          {[t("workspace.settings.data_retention.survey_note"), ...exemptLines].join(" ")}
+        </AlertDescription>
+        <AlertButton asChild>
+          <Link href={organizationSettingsPath(organizationId, "data-retention/policies")}>
             {t("workspace.settings.data_retention.view_policies")}
           </Link>
-        </p>
-      </div>
+        </AlertButton>
+      </Alert>
       {warning ? (
-        // A status, not an alert: it is there on load, not news that should interrupt a screen reader.
-        <Alert variant="warning" role="status">
-          <AlertDescription>{warning}</AlertDescription>
+        <Alert variant="warning" size="small" role="status">
+          <AlertDescription className="whitespace-normal">{warning}</AlertDescription>
         </Alert>
       ) : null}
     </div>
