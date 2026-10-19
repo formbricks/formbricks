@@ -4,7 +4,11 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getBasicSurveyMetadata, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
-import { getMetadataForLinkSurvey } from "./metadata";
+import {
+  GENERIC_CONTACT_SURVEY_METADATA,
+  getMetadataForContactSurvey,
+  getMetadataForLinkSurvey,
+} from "./metadata";
 
 vi.mock("@/modules/survey/link/lib/data", () => ({
   getSurveyWithMetadata: vi.fn(),
@@ -288,6 +292,48 @@ describe("getMetadataForLinkSurvey", () => {
           noimageindex: true,
         },
       },
+    });
+  });
+
+  describe("getMetadataForContactSurvey", () => {
+    const contactSurvey = (overrides: Record<string, unknown> = {}) =>
+      ({
+        id: mockSurveyId,
+        name: mockSurveyName,
+        workspaceId: "workspace-123",
+        type: "link",
+        status: "inProgress",
+        archivedAt: null,
+        ...overrides,
+      }) as never;
+
+    test.each([
+      ["a draft", { status: "draft" }],
+      ["an archived", { status: "completed", archivedAt: new Date("2026-10-01T00:00:00Z") }],
+      ["an app", { type: "app" }],
+    ])("gives %s survey generic metadata, never its name", async (_label, state) => {
+      vi.mocked(getSurveyWithMetadata).mockResolvedValue(contactSurvey(state));
+
+      expect(await getMetadataForContactSurvey(mockSurveyId)).toEqual(GENERIC_CONTACT_SURVEY_METADATA);
+      expect(getBasicSurveyMetadata).not.toHaveBeenCalled();
+    });
+
+    test("gives a survey that can't be loaded generic metadata", async () => {
+      vi.mocked(getSurveyWithMetadata).mockRejectedValue(new ResourceNotFoundError("Survey", mockSurveyId));
+
+      expect(await getMetadataForContactSurvey(mockSurveyId)).toEqual(GENERIC_CONTACT_SURVEY_METADATA);
+    });
+
+    test("names a public survey, without the /s canonical or robots rules", async () => {
+      const survey = contactSurvey();
+      vi.mocked(getSurveyWithMetadata).mockResolvedValue(survey);
+
+      const result = await getMetadataForContactSurvey(mockSurveyId, ["de"]);
+
+      expect(getBasicSurveyMetadata).toHaveBeenCalledWith(mockSurveyId, undefined, survey, ["de"]);
+      expect(result).toMatchObject({ title: mockSurveyName, description: mockDescription });
+      expect(result).not.toHaveProperty("alternates");
+      expect(result).not.toHaveProperty("robots");
     });
   });
 });

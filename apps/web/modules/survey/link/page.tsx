@@ -2,12 +2,15 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import { findMatchingLocale, getAcceptedLanguages } from "@/lib/utils/locale";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
-import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
+import {
+  type TLinkSurvey,
+  getResponseBySingleUseId,
+  getSurveyWithMetadata,
+} from "@/modules/survey/link/lib/data";
 import { isLinkSurveyServable } from "@/modules/survey/link/lib/public-access";
 import { resolveSingleUseIdForSurvey } from "@/modules/survey/link/lib/single-use-link";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
@@ -67,7 +70,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
    */
 
   // Stage 1: Fetch survey first (required for all subsequent logic)
-  let survey: TSurvey | null = null;
+  let survey: TLinkSurvey | null = null;
   try {
     survey = await getSurveyWithMetadata(params.surveyId);
   } catch (error) {

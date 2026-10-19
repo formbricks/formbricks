@@ -19,7 +19,8 @@ import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/work
 /**
  * Loads the survey behind one of the link page's public gate actions. Both run without a session, so a
  * survey respondents cannot take right now (a draft, archived, non-link, paused, scheduled or completed
- * one) is "not found" here, exactly as the page would show it, before anything else is checked (ENG-4032).
+ * one) is "not found" here, before anything else is checked, with the same error as an unknown id. The page
+ * shows these as a 404 or as their inactive screen, never their definition (ENG-4032).
  */
 const getSurveyOpenForResponses = async (surveyId: string) => {
   const survey = await getSurveyWithMetadata(surveyId);

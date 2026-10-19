@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
+import { type TLinkSurvey, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { isLinkSurveyServable } from "@/modules/survey/link/lib/public-access";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import {
@@ -10,27 +10,20 @@ import {
   getSurveyOpenGraphMetadata,
 } from "./lib/metadata-utils";
 
-export const getMetadataForLinkSurvey = async (
-  surveyId: string,
-  languageCode?: string,
-  acceptedLanguages: string[] = []
+/** What /c/<token> shows while it can't name the survey: a bad token, or a survey that isn't public. */
+export const GENERIC_CONTACT_SURVEY_METADATA: Metadata = {
+  title: "Survey",
+  description: "Please complete this survey.",
+};
+
+/** Title, description, social previews and favicon for a survey the link page serves. */
+const getServableSurveyMetadata = async (
+  survey: TLinkSurvey,
+  languageCode: string | undefined,
+  acceptedLanguages: string[]
 ): Promise<Metadata> => {
-  // An unknown id must end up exactly where a non-public one does, or the page title (empty vs the
-  // not-found title) tells the two apart (ENG-4032).
-  const survey = await getSurveyWithMetadata(surveyId).catch((error: unknown) => {
-    if (error instanceof ResourceNotFoundError) {
-      notFound();
-    }
-    throw error;
-  });
-
-  // Same gate as the page: an archived survey's name must not reach <title> or og:title on its 404.
-  if (!isLinkSurveyServable(survey)) {
-    notFound();
-  }
-
   const { title, ogTitle, description, ogImage } = await getBasicSurveyMetadata(
-    surveyId,
+    survey.id,
     languageCode,
     survey,
     acceptedLanguages
@@ -55,13 +48,37 @@ export const getMetadataForLinkSurvey = async (
     baseMetadata.twitter.description = description;
   }
 
-  const canonicalPath = `/s/${surveyId}`;
-
   return {
     title,
     description,
     ...baseMetadata,
     ...(customFaviconUrl && { icons: customFaviconUrl }),
+  };
+};
+
+export const getMetadataForLinkSurvey = async (
+  surveyId: string,
+  languageCode?: string,
+  acceptedLanguages: string[] = []
+): Promise<Metadata> => {
+  // An unknown id must end up exactly where a non-public one does, or the page title (empty vs the
+  // not-found title) tells the two apart (ENG-4032).
+  const survey = await getSurveyWithMetadata(surveyId).catch((error: unknown) => {
+    if (error instanceof ResourceNotFoundError) {
+      notFound();
+    }
+    throw error;
+  });
+
+  // Same gate as the page: an archived survey's name must not reach <title> or og:title on its 404.
+  if (!isLinkSurveyServable(survey)) {
+    notFound();
+  }
+
+  const canonicalPath = `/s/${surveyId}`;
+
+  return {
+    ...(await getServableSurveyMetadata(survey, languageCode, acceptedLanguages)),
     alternates: {
       canonical: canonicalPath,
     },
@@ -75,4 +92,20 @@ export const getMetadataForLinkSurvey = async (
       },
     },
   };
+};
+
+/**
+ * Metadata for /c/<token>, once the token has named a survey. The page 404s a survey that is no longer
+ * public (draft, archived, non-link) even with a valid token, so its name or welcome headline must not
+ * reach <title> / og:title either (ENG-4032). A survey that can't be loaded gets the same generic metadata.
+ */
+export const getMetadataForContactSurvey = async (
+  surveyId: string,
+  acceptedLanguages: string[] = []
+): Promise<Metadata> => {
+  const survey = await getSurveyWithMetadata(surveyId).catch(() => null);
+  if (!survey || !isLinkSurveyServable(survey)) {
+    return GENERIC_CONTACT_SURVEY_METADATA;
+  }
+  return getServableSurveyMetadata(survey, undefined, acceptedLanguages);
 };

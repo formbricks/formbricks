@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Response, Workspace } from "@formbricks/database/prisma-browser";
 import type { TRendererCustomCss } from "@formbricks/types/custom-css";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -99,28 +100,33 @@ export const PinScreen = (props: Readonly<PinScreenProps>) => {
       const isValidPin = validPinRegex.test(localPinEntry);
       if (isValidPin) {
         setLoading(true);
-        const response = await validateSurveyPinAction({ surveyId, pin: localPinEntry });
-        if (response?.data?.survey) {
-          setSurvey(response.data.survey);
-          setPinAuthToken(response.data.pinAuthToken ?? undefined);
-          setCustomCss(response.data.customCss);
-        } else {
-          const errorMessage = getFormattedErrorMessage(response);
-          setError(errorMessage);
-          // Anything but a wrong PIN can mean the survey stopped taking responses (closed, archived or
-          // gone) after this page loaded; the action then answers "not found" (ENG-4032). The PIN boxes
-          // only show an error as a red border, so re-render the page and let the server show what a
-          // fresh load would, instead of a PIN error the respondent can never clear.
-          if (response?.serverError !== "INVALID_PIN") {
-            router.refresh();
+        try {
+          const response = await validateSurveyPinAction({ surveyId, pin: localPinEntry });
+          if (response?.data?.survey) {
+            setSurvey(response.data.survey);
+            setPinAuthToken(response.data.pinAuthToken ?? undefined);
+            setCustomCss(response.data.customCss);
+          } else {
+            setError(getFormattedErrorMessage(response));
+            // "Not found" means the survey stopped taking responses (closed, archived or gone) after this
+            // page loaded (ENG-4032). The PIN boxes only show an error as a red border, so re-render the page
+            // and let the server show what a fresh load would, instead of a PIN error that can never clear.
+            if (response?.serverError === new ResourceNotFoundError("Survey", surveyId).message) {
+              router.refresh();
+            }
           }
+        } catch {
+          // A rejected call (offline, or an action id a newer deploy no longer serves) must still release the
+          // PIN boxes, or they stay disabled for good.
+          setError(t("common.something_went_wrong_please_try_again"));
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       }
     };
 
     void validateSurveyPin();
-  }, [localPinEntry, router, surveyId]);
+  }, [localPinEntry, router, surveyId, t]);
 
   if (!survey) {
     // The gate is nothing but translated chrome, so it waits for its locale instead of asking for the

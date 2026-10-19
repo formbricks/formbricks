@@ -1,24 +1,23 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { logger } from "@formbricks/logger";
-import type { TSurvey } from "@formbricks/types/surveys/types";
 import { findMatchingLocale, getAcceptedLanguages } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { verifyContactSurveyToken } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
-import { getExistingContactResponse, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import {
-  getBasicSurveyMetadata,
-  getMetadataBrandColor,
-  getSurveyOpenGraphMetadata,
-} from "@/modules/survey/link/lib/metadata-utils";
+  type TLinkSurvey,
+  getExistingContactResponse,
+  getSurveyWithMetadata,
+} from "@/modules/survey/link/lib/data";
 import { isLinkSurveyServable } from "@/modules/survey/link/lib/public-access";
 import { resolveSingleUseIdForSurvey } from "@/modules/survey/link/lib/single-use-link";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getWorkspaceById } from "@/modules/survey/link/lib/workspace";
+import { GENERIC_CONTACT_SURVEY_METADATA, getMetadataForContactSurvey } from "@/modules/survey/link/metadata";
 
 interface ContactSurveyPageProps {
   params: Promise<{
@@ -27,67 +26,16 @@ interface ContactSurveyPageProps {
   searchParams: Promise<TLinkSurveySearchParams>;
 }
 
-const GENERIC_CONTACT_SURVEY_METADATA: Metadata = {
-  title: "Survey",
-  description: "Please complete this survey.",
-};
-
 export const generateMetadata = async (props: ContactSurveyPageProps): Promise<Metadata> => {
   const { jwt } = await props.params;
   try {
-    // Verify and decode the JWT token
     const result = verifyContactSurveyToken(jwt);
     if (!result.ok) {
       return GENERIC_CONTACT_SURVEY_METADATA;
     }
-    const { surveyId } = result.data;
-    // Loaded here rather than by getBasicSurveyMetadata's own getSurvey: this loader selects `archivedAt`,
-    // which the gate below needs, and it is the same request-cached call the page makes.
-    const surveyWithMetadata = await getSurveyWithMetadata(surveyId);
-
-    // The page 404s a survey that is no longer public (draft, archived, non-link) even with a valid token,
-    // so its name or welcome headline must not reach <title> / og:title either (ENG-4032).
-    if (!isLinkSurveyServable(surveyWithMetadata)) {
-      return GENERIC_CONTACT_SURVEY_METADATA;
-    }
-
-    const { title, ogTitle, description, survey, ogImage } = await getBasicSurveyMetadata(
-      surveyId,
-      undefined,
-      surveyWithMetadata,
-      await getAcceptedLanguages()
-    );
-
-    if (!survey) {
-      return { title, description };
-    }
-
-    // Fetch organization whitelabel data for custom favicon
-    const workspaceContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
-    const customFaviconUrl = workspaceContext.organizationWhitelabel?.faviconUrl;
-
-    const brandColor = getMetadataBrandColor(workspaceContext.workspace.styling, survey.styling);
-    const baseMetadata = getSurveyOpenGraphMetadata(survey.id, ogTitle, brandColor);
-
-    // Override with the custom image URL
-    if (baseMetadata.openGraph) {
-      baseMetadata.openGraph.images = ogImage ?? baseMetadata.openGraph.images;
-      baseMetadata.openGraph.description = description;
-    }
-
-    if (baseMetadata.twitter) {
-      baseMetadata.twitter.images = ogImage ?? baseMetadata.twitter.images;
-      baseMetadata.twitter.description = description;
-    }
-
-    return {
-      title,
-      description,
-      ...baseMetadata,
-      ...(customFaviconUrl && { icons: customFaviconUrl }),
-    };
+    return await getMetadataForContactSurvey(result.data.surveyId, await getAcceptedLanguages());
   } catch {
-    // If the token is invalid, we'll return generic metadata
+    // A token or lookup failure still gets generic metadata rather than an error page.
     return GENERIC_CONTACT_SURVEY_METADATA;
   }
 };
@@ -121,7 +69,7 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   // v1 client environment use. It also blanks follow-ups and segment filters, which do not belong in
   // a respondent's page payload either. It throws where the authenticated loader returned null, so
   // both call sites below catch, mirroring `link/page.tsx`.
-  const loadSurvey = async (): Promise<TSurvey | null> => {
+  const loadSurvey = async (): Promise<TLinkSurvey | null> => {
     try {
       return await getSurveyWithMetadata(surveyId);
     } catch (error) {

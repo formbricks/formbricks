@@ -1,8 +1,9 @@
 import { describe, expect, test } from "vitest";
-import type { TSurvey } from "@formbricks/types/surveys/types";
-import { isLinkSurveyOpenForResponses, isLinkSurveyServable } from "./public-access";
-
-type TAccessFields = Pick<TSurvey, "type" | "status" | "archivedAt">;
+import {
+  type TLinkSurveyAccessFields as TAccessFields,
+  isLinkSurveyOpenForResponses,
+  isLinkSurveyServable,
+} from "./public-access";
 
 const survey = (overrides: Partial<TAccessFields> = {}): TAccessFields => ({
   type: "link",

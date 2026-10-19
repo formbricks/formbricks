@@ -19,6 +19,7 @@ import { SurveyClientWrapper } from "@/modules/survey/link/components/survey-cli
 import { SurveyCompletedMessage } from "@/modules/survey/link/components/survey-completed-message";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
+import type { TLinkSurvey } from "@/modules/survey/link/lib/data";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
 import { isLinkSurveyServable } from "@/modules/survey/link/lib/public-access";
 import { getLinkSurveyCustomCss, omitCustomCssSource } from "@/modules/survey/link/lib/respondent-custom-css";
@@ -28,7 +29,7 @@ import { getGateLocale, resolveLinkSurveyLanguage } from "@/modules/survey/link/
 import { TWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 
 interface SurveyRendererProps {
-  survey: TSurvey;
+  survey: TLinkSurvey;
   searchParams: TLinkSurveySearchParams;
   singleUseId?: string;
   singleUseResponse?: Pick<Response, "id" | "finished">;
