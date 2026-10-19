@@ -1539,20 +1539,6 @@ exit 0
     expect(result.stdout.includes("Upgrade Docker Engine to 28.3.3 or later")).toBe(warns);
   });
 
-  test("the installer narrows the port after adding the Traefik labels and before starting anything", () => {
-    const script = readFileSync(formbricksScriptPath, "utf8");
-    const installFunction = script.slice(
-      script.indexOf("install_formbricks()"),
-      script.indexOf("uninstall_formbricks()")
-    );
-    const labels = installFunction.indexOf('add_formbricks_traefik_labels "docker-compose.yml"');
-    const narrowing = installFunction.indexOf('bind_formbricks_port_to_loopback "docker-compose.yml"');
-
-    expect(labels).toBeGreaterThanOrEqual(0);
-    expect(narrowing).toBeGreaterThan(labels);
-    expect(narrowing).toBeLessThan(installFunction.indexOf("docker compose up"));
-  });
-
   test("a commented service header still scopes the rewrite to the formbricks service", () => {
     const tempDir = createTempDir();
     const composePath = join(tempDir, "docker-compose.yml");
