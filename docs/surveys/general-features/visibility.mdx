@@ -66,6 +66,7 @@ kubectl exec -n <namespace> deploy/<formbricks-deployment> -- formbricks-authzed
 ```
 
 The command copies every survey's owner and visibility into SpiceDB, checks the result twice, and only turns
-visibility on when both checks are clean. To turn it off again, run the same command with `--clear-ready`
-instead of `--apply --mark-ready`; surveys that are already restricted stay restricted. Details are in
+visibility on when both checks are clean. To go back to workspace permissions, for example while repairing SpiceDB, run the same command with
+`--clear-ready` instead of `--apply --mark-ready`. That stops new visibility changes; surveys that are already
+restricted stay restricted. Details are in
 [SpiceDB operations](/self-hosting/configuration/authzed-operations#audit-and-repair-surveys).

@@ -61,13 +61,20 @@ Run these from the folder that holds your `docker-compose.yml` (for one-click in
       --backup-confirmed --writers-stopped
     ```
 
-    Wait until it exits without an error. If it fails, do not continue: Formbricks is still stopped and
-    your data is unchanged, so you can start the old version again with `docker compose start`.
+    Wait until it exits without an error. If it fails, keep Formbricks stopped. The command may already
+    have run database migrations, so don't simply start the old version again: fix the cause and rerun
+    it, or restore both backups before going back. Each error code, including a SpiceDB schema that needs
+    review, is explained in
+    [results and recovery](/self-hosting/advanced/v6-maintenance-upgrade#results-and-recovery).
   </Step>
   <Step title="Start the new version">
-    One-click installs:
+    One-click installs: go to the folder that **contains** your `formbricks` folder, download the current
+    updater and run it:
 
     ```bash
+    cd ..
+    curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/formbricks.sh -o formbricks.sh
+    chmod +x formbricks.sh
     ./formbricks.sh update
     ```
 
@@ -85,8 +92,9 @@ Run these from the folder that holds your `docker-compose.yml` (for one-click in
 
 <Steps>
   <Step title="Stop Formbricks">
-    Pause anything that could restart it (Argo CD, Flux, autoscalers), then scale the Formbricks and Hub
-    deployments to zero. Leave PostgreSQL and SpiceDB running.
+    Pause anything that could restart it (Argo CD, Flux, autoscalers), suspend Formbricks CronJobs, then
+    scale the Formbricks and Hub deployments to zero. Wait until no Formbricks or Hub pod or Job is still
+    running, including Jobs that started before you suspended them. Leave PostgreSQL and SpiceDB running.
   </Step>
   <Step title="Back up">
     Back up the Formbricks database and the SpiceDB database, and keep your Helm values and Secrets.
@@ -95,7 +103,8 @@ Run these from the folder that holds your `docker-compose.yml` (for one-click in
     Run the preparation as a one-off Job, using the new image and your existing database and SpiceDB
     settings. A ready-to-adapt Job is in the
     [maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade#helm-and-gitops). Wait for it
-    to complete successfully.
+    to complete successfully. If it fails, keep everything stopped and follow
+    [results and recovery](/self-hosting/advanced/v6-maintenance-upgrade#results-and-recovery).
   </Step>
   <Step title="Upgrade">
     ```bash
@@ -107,8 +116,9 @@ Run these from the folder that holds your `docker-compose.yml` (for one-click in
 </Steps>
 
 <Tip>
-  The 6.0 → 6.1 upgrade on Kubernetes can also run without a maintenance window. See
-  [online upgrade](/self-hosting/configuration/online-upgrade). It is opt-in and still being validated.
+  For the 6.0 → 6.1 upgrade on Kubernetes, an opt-in [online upgrade](/self-hosting/configuration/online-upgrade)
+  mode exists. It is still being validated and is not yet a supported replacement for the maintenance window,
+  so keep using the steps above.
 </Tip>
 
 ## After the upgrade
