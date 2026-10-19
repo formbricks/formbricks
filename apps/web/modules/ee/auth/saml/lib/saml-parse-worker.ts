@@ -1,11 +1,11 @@
 import { DOMParser, MIME_TYPE } from "@xmldom/xmldom";
-import { parentPort } from "node:worker_threads";
+import { type MessagePort, workerData } from "node:worker_threads";
 
 /**
- * Worker side of the SAML parse budget (`saml-parse-budget.ts`, ENG-3973). It parses a decoded SAMLResponse
- * exactly as `@boxyhq/saml20` does before jackson trusts anything (an xmldom `DOMParser` whose error handler
- * lets recoverable errors through), so the time it takes here is the time jackson's own parse would block the
- * event loop for. The main thread times each job and terminates this worker when one runs past the budget.
+ * Worker side of the SAML parse budget (`saml-parse-budget.ts`, ENG-3973). It parses a decoded SAMLResponse exactly
+ * as `@boxyhq/saml20` does before jackson trusts anything (an xmldom `DOMParser` whose error handler lets recoverable
+ * errors through), so the time it takes here is the time one of jackson's parses takes. It times each parse itself
+ * and answers over the port it was given; the main thread terminates it when a job runs past the budget.
  *
  * It answers with the identifying fields only: the claimed issuer, the response ID and InResponseTo, cut to a
  * length a log line can carry. Nothing else of the response leaves the worker.
@@ -39,14 +39,29 @@ const readClaims = (xml: string) => {
   };
 };
 
-parentPort?.on("message", ({ id, xml }: { id: number; xml: string }) => {
-  let claims = {};
+const parse = (xml: string) => {
   try {
-    claims = readClaims(xml);
+    return readClaims(xml);
   } catch {
     // A fatal parse error is cheap, and jackson refuses the response on its own; the cost is what is measured.
+    return {};
   }
-  parentPort?.postMessage({ id, claims });
+};
+
+const port = (workerData as { port: MessagePort }).port;
+
+port.on("message", ({ id, xml }: { id: number; xml: string }) => {
+  const started = performance.now();
+  const claims = parse(xml);
+  port.postMessage({ id, ms: performance.now() - started, claims });
 });
 
-parentPort?.postMessage({ ready: true });
+// Warm xmldom up before the first real job, so a fresh worker does not charge its cold start to a real sign-in.
+const WARM_UP =
+  '<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="_w">' +
+  '<saml2:Issuer xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion">w</saml2:Issuer>' +
+  "<a><b c='d'/></a>".repeat(200) +
+  "</samlp:Response>";
+for (let i = 0; i < 20; i++) parse(WARM_UP);
+
+port.postMessage({ ready: true });

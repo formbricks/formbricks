@@ -1,13 +1,14 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
+import { WEBAPP_URL } from "@/lib/constants";
 import { hashString } from "@/lib/hash-string";
 import type { SamlParseProbe } from "@/modules/ee/auth/saml/lib/saml-parse-budget";
 import {
   SAML_RESPONSE_MARKUP_BUDGET,
   SAML_RESPONSE_MAX_LENGTH,
 } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
-import { POST } from "./route";
+import { POST, type SamlErrorCode, buildLoginErrorUrl } from "./route";
 
 const CLAIMS = { issuer: "https://idp.example.com", id: "_resp1", inResponseTo: "_req1" };
 const PARSED: SamlParseProbe = { outcome: "parsed", ms: 3, claims: CLAIMS };
@@ -40,9 +41,17 @@ const callback = (fields: Record<string, string>) =>
   });
 
 describe("SAML callback route", () => {
+  let clock = Date.now();
   beforeEach(() => {
     vi.clearAllMocks();
     probeMock.mockResolvedValue(PARSED);
+    // Cheap-path refusal logs are throttled per window: move past it so each test sees its own line.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    clock += 60_000;
+    vi.setSystemTime(clock);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   test("hands a response within the budget to jackson and redirects", async () => {
@@ -71,7 +80,13 @@ describe("SAML callback route", () => {
     expect(samlResponseMock).not.toHaveBeenCalled();
     // The refusal is logged by size only: no SAMLResponse content may reach the log.
     expect(warn).toHaveBeenCalledWith(
-      { reason: "markup", markup: expect.any(Number), depth: expect.any(Number), length: b64(flood).length },
+      {
+        reason: "markup",
+        markup: expect.any(Number),
+        depth: expect.any(Number),
+        length: b64(flood).length,
+        suppressedSinceLast: 0,
+      },
       "Refused a SAML response before parsing it"
     );
     expect(JSON.stringify(warn.mock.calls)).not.toContain(b64(flood).slice(0, 32));
@@ -140,9 +155,7 @@ describe("SAML callback route", () => {
           reason: "Issuer not found.",
           length: b64(ISSUER).length,
           relayState: hashString("s"),
-          claimedIssuer: CLAIMS.issuer,
-          responseId: CLAIMS.id,
-          inResponseTo: CLAIMS.inResponseTo,
+          claimed: { issuer: CLAIMS.issuer, responseId: CLAIMS.id, inResponseTo: CLAIMS.inResponseTo },
         },
         "jackson refused a SAML response"
       );
@@ -174,10 +187,10 @@ describe("SAML callback route", () => {
 
     await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "s" }));
 
-    const [fields] = warn.mock.calls[0] as [Record<string, string>];
+    const [fields] = warn.mock.calls[0] as [{ message: string; claimed: Record<string, string> }];
     expect(fields.message.length).toBeLessThanOrEqual(203);
-    expect(fields.responseId.length).toBeLessThanOrEqual(131);
-    expect(fields.claimedIssuer).toBe("https://idp.example.com??forged");
+    expect(fields.claimed.responseId.length).toBeLessThanOrEqual(131);
+    expect(fields.claimed.issuer).toBe("https://idp.example.com??forged");
   });
 
   test("never logs the response or the raw RelayState", async () => {
@@ -207,7 +220,7 @@ describe("SAML callback route", () => {
       expect.objectContaining({
         stage: "validation",
         error: "Invalid signature",
-        claimedIssuer: CLAIMS.issuer,
+        claimed: expect.objectContaining({ issuer: CLAIMS.issuer }),
       }),
       "SAML response failed validation"
     );
@@ -223,17 +236,36 @@ describe("SAML callback route", () => {
       );
     });
 
-    test("refuses a response that took too long to parse, without jackson", async () => {
+    test.each(["time", "memory"] as const)(
+      "refuses a response too costly to parse (%s), without jackson",
+      async (reason) => {
+        const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+        probeMock.mockResolvedValueOnce({ outcome: "too_costly", reason });
+
+        const response = await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "s" }));
+
+        expect(response.status).toBe(400);
+        expect(samlResponseMock).not.toHaveBeenCalled();
+        expect(warn).toHaveBeenCalledWith(
+          expect.objectContaining({ stage: "parse_budget", reason }),
+          "Refused a SAML response that was too costly to parse"
+        );
+      }
+    );
+
+    test("logs cheap-path refusals at most once per window, counting the rest", async () => {
       const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
-      probeMock.mockResolvedValueOnce({ outcome: "too_slow" });
+      const doctype = () => callback({ SAMLResponse: b64('<!DOCTYPE r SYSTEM "x"><r/>'), RelayState: "s" });
 
-      const response = await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "s" }));
+      for (let i = 0; i < 5; i++) expect((await POST(doctype())).status).toBe(400);
+      expect(warn).toHaveBeenCalledTimes(1);
 
-      expect(response.status).toBe(400);
-      expect(samlResponseMock).not.toHaveBeenCalled();
-      expect(warn).toHaveBeenCalledWith(
-        expect.objectContaining({ stage: "parse_budget" }),
-        "Refused a SAML response that took too long to parse"
+      clock += 60_000;
+      vi.setSystemTime(clock);
+      await POST(doctype());
+      expect(warn).toHaveBeenLastCalledWith(
+        expect.objectContaining({ reason: "declaration", suppressedSinceLast: 4 }),
+        "Refused a SAML response before parsing it"
       );
     });
 
@@ -274,31 +306,130 @@ describe("SAML callback route", () => {
       });
     const NAVIGATE = { "sec-fetch-mode": "navigate", accept: "text/html" };
 
-    test.each([
-      ["an empty SAMLResponse", { SAMLResponse: "", RelayState: "s" }, undefined, "saml_response_rejected"],
+    const VALID = { SAMLResponse: b64(ISSUER), RelayState: "s" };
+    const jacksonError = (message: string, statusCode: number, internalError?: string) =>
+      Object.assign(new Error(message), { statusCode, internalError });
+
+    // Every way the callback refuses a response, and the code the login page shows for it.
+    const REFUSALS: [string, Record<string, string> | null, () => unknown, SamlErrorCode][] = [
+      ["a body that is not a form", null, () => undefined, "saml_response_rejected"],
+      [
+        "an empty SAMLResponse",
+        { SAMLResponse: "", RelayState: "s" },
+        () => undefined,
+        "saml_response_rejected",
+      ],
+      [
+        "markup over the budget",
+        { SAMLResponse: b64(`<r>${"<a/>".repeat(SAML_RESPONSE_MARKUP_BUDGET)}</r>`), RelayState: "s" },
+        () => undefined,
+        "saml_response_rejected",
+      ],
+      [
+        "a DOCTYPE",
+        { SAMLResponse: b64('<!DOCTYPE r SYSTEM "x"><r/>'), RelayState: "s" },
+        () => undefined,
+        "saml_response_rejected",
+      ],
+      [
+        "the per-IP limit",
+        VALID,
+        () => applyIPRateLimitMock.mockRejectedValueOnce(new TooManyRequestsError("Maximum reached.", 30)),
+        "saml_unavailable",
+      ],
+      [
+        "a full parse queue",
+        VALID,
+        () => probeMock.mockResolvedValueOnce({ outcome: "busy" }),
+        "saml_unavailable",
+      ],
+      [
+        "a failed parse worker",
+        VALID,
+        () => probeMock.mockResolvedValueOnce({ outcome: "failed" }),
+        "saml_unavailable",
+      ],
+      [
+        "a parse past the budget",
+        VALID,
+        () => probeMock.mockResolvedValueOnce({ outcome: "too_costly", reason: "time" }),
+        "saml_response_rejected",
+      ],
       [
         "a connection jackson cannot find",
-        { SAMLResponse: b64(ISSUER), RelayState: "s" },
-        Object.assign(new Error("x"), { statusCode: 403, internalError: "SAML connection not found." }),
+        VALID,
+        () => samlResponseMock.mockRejectedValueOnce(jacksonError("x", 403, "SAML connection not found.")),
         "saml_connection_unavailable",
       ],
       [
-        "a RelayState jackson did not issue",
-        { SAMLResponse: b64(ISSUER), RelayState: "s" },
-        Object.assign(new Error("Unable to validate state from the origin request."), { statusCode: 403 }),
+        "a response that names no issuer",
+        VALID,
+        () => samlResponseMock.mockRejectedValueOnce(jacksonError("x", 403, "Issuer not found.")),
         "saml_response_rejected",
       ],
-    ])("is sent to the login page with a fixed code for %s", async (_name, fields, jacksonError, code) => {
-      vi.spyOn(logger, "warn").mockImplementation(() => undefined);
-      if (jacksonError) samlResponseMock.mockRejectedValueOnce(jacksonError);
+      [
+        "a RelayState jackson did not issue",
+        VALID,
+        () =>
+          samlResponseMock.mockRejectedValueOnce(
+            jacksonError("Unable to validate state from the origin request.", 403)
+          ),
+        "saml_response_rejected",
+      ],
+      [
+        "a response that fails validation",
+        VALID,
+        () =>
+          samlResponseMock.mockResolvedValueOnce({
+            redirect_url: "https://app.example.com/cb?error=access_denied&error_description=Bad%20signature",
+            error: "Bad signature",
+          } as never),
+        "saml_response_rejected",
+      ],
+      [
+        "SAML not being licensed",
+        VALID,
+        () => jacksonMock.mockResolvedValueOnce(undefined as never),
+        "saml_connection_unavailable",
+      ],
+    ];
 
-      const response = await POST(browserPost(fields, NAVIGATE));
+    test.each(REFUSALS)(
+      "is sent to the login page with a fixed code for %s",
+      async (_name, fields, arrange, code) => {
+        vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+        vi.spyOn(logger, "error").mockImplementation(() => undefined);
+        arrange();
+        const request = fields
+          ? browserPost(fields, NAVIGATE)
+          : new Request("http://localhost/api/auth/saml/callback", {
+              method: "POST",
+              headers: NAVIGATE,
+              body: "{}",
+            });
 
-      expect(response.status).toBe(303);
-      const location = new URL(response.headers.get("location") ?? "");
-      expect(location.pathname).toBe("/auth/login");
-      expect(location.searchParams.get("error")).toBe(code);
-      expect(response.headers.get("location")).not.toContain("SAML connection not found");
+        const response = await POST(request);
+
+        expect(response.status).toBe(303);
+        const location = response.headers.get("location") ?? "";
+        expect(location).toBe(buildLoginErrorUrl(WEBAPP_URL, code));
+        expect(location.startsWith(`${WEBAPP_URL.replace(/\/+$/, "")}/auth/login?`)).toBe(true);
+        expect(location).not.toMatch(/signature|connection not found/i);
+      }
+    );
+
+    test.each([
+      ["https://forms.example.com", "https://forms.example.com/auth/login?error=saml_unavailable"],
+      [
+        "https://example.com/custom-path",
+        "https://example.com/custom-path/auth/login?error=saml_unavailable",
+      ],
+      [
+        "https://example.com/custom-path/",
+        "https://example.com/custom-path/auth/login?error=saml_unavailable",
+      ],
+    ])("keeps the base path of %s in the login URL", (webappUrl, expected) => {
+      expect(buildLoginErrorUrl(webappUrl, "saml_unavailable")).toBe(expected);
     });
 
     test("falls back to Accept when the browser sends no Fetch Metadata", async () => {

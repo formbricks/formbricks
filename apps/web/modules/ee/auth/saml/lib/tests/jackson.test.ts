@@ -70,13 +70,23 @@ describe("SAML Jackson Initialization", () => {
 
     // jackson's own lines go through Formbricks' logger, capped and stripped like any untrusted text.
     const jacksonLogger = vi.mocked(controllers).mock.calls[0][0].logger!;
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
     const error = vi.spyOn(logger, "error").mockImplementation(() => undefined);
+
+    // A response that fails validation is the sender's fault: a warning, like the route's own line for it.
     jacksonLogger.error!(`SAMLResponse error: ${"x".repeat(1000)}\n`, new Error("inner\u202etext"));
-    expect(error).toHaveBeenCalledWith(
+    expect(warn).toHaveBeenCalledWith(
       { source: "saml-jackson", error: "inner?text" },
       expect.stringMatching(/^SAMLResponse error: x{480}/)
     );
-    expect((error.mock.calls[0][1] as string).length).toBeLessThanOrEqual(503);
+    expect((warn.mock.calls[0][1] as string).length).toBeLessThanOrEqual(503);
+
+    // Anything else jackson reports as an error stays one.
+    jacksonLogger.error!("Error connecting to the database");
+    expect(error).toHaveBeenCalledWith(
+      { source: "saml-jackson", error: undefined },
+      "Error connecting to the database"
+    );
 
     expect(global.oauthController).toBe(mockOAuthController);
     expect(global.connectionController).toBe(mockConnectionController);

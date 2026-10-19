@@ -37,7 +37,7 @@ describe("probeSamlResponseParse", () => {
     const slow = await probeSamlResponseParse(b64(SLOW));
     const elapsed = performance.now() - started;
 
-    expect(slow).toEqual({ outcome: "too_slow" });
+    expect(slow).toEqual({ outcome: "too_costly", reason: "time" });
     // Stopped at the budget, not after the ~0.8 s the parse would have taken.
     expect(elapsed).toBeLessThan(SAML_PARSE_TIME_BUDGET_MS + 400);
 

@@ -1,29 +1,46 @@
 import "server-only";
-import { Worker } from "node:worker_threads";
+import { MessageChannel, type MessagePort, Worker, receiveMessageOnPort } from "node:worker_threads";
 import { logger } from "@formbricks/logger";
 
 /**
  * Longest a SAMLResponse may take to parse before jackson sees it (ENG-3973).
  *
- * `checkSamlResponseBounds` is the cheap first gate, but it models xmldom from the outside, and every shape it
- * misreads is a way back to a slow parse. This gate does not model anything: a worker thread parses the response
- * the way `@boxyhq/saml20` does and is terminated if it runs past the budget, so whatever the shape, an
- * anonymous response costs this thread nothing and the worker at most the budget. A real response parses in
- * ~5-25 ms (1,000 verbose Okta groups ~11 ms), so 100 ms leaves room on a busy host.
+ * `checkSamlResponseBounds` is the cheap first gate, but it models xmldom from the outside, and a shape it misreads
+ * is a way back to a slow parse. This gate does not model anything: a worker thread parses the response the way
+ * `@boxyhq/saml20` does and is terminated if it runs past the budget. A response that passes is then parsed again by
+ * jackson on this thread, a few times on the signature path, so what this bounds is the cost per parse: no response
+ * slower than the budget reaches jackson, whatever its shape. The known shapes the byte bounds let through parse in
+ * ~10-30 ms and a real response in ~5-25 ms (1,000 verbose Okta groups ~11 ms), so 100 ms only catches what the
+ * bounds misread, with room for a busy host.
  */
 export const SAML_PARSE_TIME_BUDGET_MS = 100;
 
 /**
- * Jobs that may wait for the worker. One parse runs at a time, so a flood that fills the queue is refused at
- * once rather than queued behind itself; the per-IP limit in front of this keeps a single caller from doing so.
+ * Jobs that may wait for the worker. One parse runs at a time, so a flood that fills the queue is refused at once
+ * rather than queued behind itself. The per-IP limit in front of this keeps one caller from filling it, but only
+ * behind a trusted proxy: without one every caller shares an identity and the limit is skipped, so the queue bound is
+ * what remains.
  */
 export const SAML_PARSE_QUEUE_LIMIT = 16;
 
 /**
- * Heap for the worker. A response within the markup budget builds a DOM of a few MB; a parse that tries to
- * grow past this ends the worker, not the server.
+ * Heap for the worker. A response within the markup budget builds a DOM of a few MB; a parse that tries to grow past
+ * this ends the worker, not the server.
  */
 const WORKER_RESOURCE_LIMITS = { maxOldGenerationSizeMb: 64, maxYoungGenerationSizeMb: 16 };
+
+/** How long a new worker may take to load xmldom, warm up and report ready before it is treated as failed. */
+const WORKER_STARTUP_TIMEOUT_MS = 5_000;
+
+/**
+ * Main-thread parse time the SAML callback may spend per second, per process. A response that passes the budget is
+ * parsed again by jackson on this thread, `JACKSON_PARSES_PER_RESPONSE` times on the signature path (issuer, decrypt,
+ * xml2js, signature check), so each one is charged its worker-measured parse time times that. Past the allowance
+ * the callback answers 503 rather than let many sources together keep the event loop busy with SAML. A real
+ * sign-in costs ~10-25 ms x 4, so this is a dozen or more sign-ins a second per process.
+ */
+export const SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS = 300;
+const JACKSON_PARSES_PER_RESPONSE = 4;
 
 /** What the worker read from the response: identifiers only, for logging. All of it is unauthenticated. */
 export interface SamlResponseClaims {
@@ -34,11 +51,11 @@ export interface SamlResponseClaims {
 
 export type SamlParseProbe =
   | { outcome: "parsed"; ms: number; claims: SamlResponseClaims }
-  /** It ran past the budget; the worker was terminated. */
-  | { outcome: "too_slow" }
-  /** The queue was full; nothing was parsed. */
+  /** It ran past the time budget or the worker's heap limit. */
+  | { outcome: "too_costly"; reason: "time" | "memory" }
+  /** The queue was full, or this process has spent its parse allowance for now; nothing was parsed. */
   | { outcome: "busy" }
-  /** The worker died (out of memory, or a crash); nothing is known about the response. */
+  /** The worker could not start or died (out of memory, a crash); nothing is known about the response. */
   | { outcome: "failed" };
 
 interface Job {
@@ -47,19 +64,46 @@ interface Job {
   resolve: (probe: SamlParseProbe) => void;
 }
 
-interface Pool {
-  worker: Worker | null;
-  ready: Promise<Worker> | null;
-  /** The job holding the worker. Claimed before the worker is ready, so only one job is ever dispatched. */
-  running: (Job & { startedAt?: number; timer?: NodeJS.Timeout }) | null;
-  queue: Job[];
-  nextId: number;
+interface WorkerHandle {
+  worker: Worker;
+  /** Answers come over this port rather than the worker's own, so a stalled thread can still read them on time. */
+  port: MessagePort;
 }
 
-/** How long a new worker may take to load xmldom and report ready before it is treated as failed. */
-const WORKER_STARTUP_TIMEOUT_MS = 5_000;
+interface WorkerResult {
+  id: number;
+  /** How long the parse took, measured in the worker, so a busy main thread does not count against the response. */
+  ms: number;
+  claims: SamlResponseClaims;
+}
 
-const pool: Pool = { worker: null, ready: null, running: null, queue: [], nextId: 0 };
+interface Pool {
+  handle: WorkerHandle | null;
+  ready: Promise<WorkerHandle> | null;
+  /** The job holding the worker. Claimed before the worker is ready, so only one job is ever dispatched. */
+  running: (Job & { dispatched?: boolean; timer?: NodeJS.Timeout }) | null;
+  queue: Job[];
+  nextId: number;
+  /** Main-thread parse time left in the current allowance, and when it was last topped up. */
+  allowanceMs: number;
+  allowanceAt: number;
+}
+
+declare global {
+  // Kept on the global object so a `next dev` reload of this module reuses the pool instead of leaking a worker.
+  var samlParsePool: Pool | undefined;
+}
+
+globalThis.samlParsePool ??= {
+  handle: null,
+  ready: null,
+  running: null,
+  queue: [],
+  nextId: 0,
+  allowanceMs: SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS,
+  allowanceAt: 0,
+};
+const pool = globalThis.samlParsePool;
 
 const settleRunning = (probe: SamlParseProbe) => {
   const job = pool.running;
@@ -70,93 +114,148 @@ const settleRunning = (probe: SamlParseProbe) => {
   pump();
 };
 
-const discardWorker = (worker: Worker) => {
-  if (pool.worker !== worker) return;
-  pool.worker = null;
-  pool.ready = null;
-  void worker.terminate();
+/** Settle the running job with `result` if it is that job's answer; a stale answer from an older job is ignored. */
+const takeResult = (result: WorkerResult): boolean => {
+  const job = pool.running;
+  if (!job?.dispatched || result.id !== job.id) return false;
+  if (result.ms > SAML_PARSE_TIME_BUDGET_MS) {
+    settleRunning({ outcome: "too_costly", reason: "time" });
+  } else {
+    pool.allowanceMs -= result.ms * JACKSON_PARSES_PER_RESPONSE;
+    settleRunning({ outcome: "parsed", ms: result.ms, claims: result.claims });
+  }
+  return true;
 };
 
-const startWorker = (): Promise<Worker> => {
+const discardWorker = (handle: WorkerHandle) => {
+  if (pool.handle !== handle) return;
+  pool.handle = null;
+  pool.ready = null;
+  handle.port.close();
+  void handle.worker.terminate();
+};
+
+const startWorker = (): Promise<WorkerHandle> => {
+  const { port1, port2 } = new MessageChannel();
   const worker = new Worker(new URL("./saml-parse-worker.ts", import.meta.url), {
     resourceLimits: WORKER_RESOURCE_LIMITS,
+    workerData: { port: port2 },
+    transferList: [port2],
   });
   // A background thread must never keep the server process alive on its own.
   worker.unref();
-  pool.worker = worker;
+  port1.unref();
+  const handle: WorkerHandle = { worker, port: port1 };
+  pool.handle = handle;
 
-  return new Promise<Worker>((resolve, reject) => {
+  return new Promise<WorkerHandle>((resolve, reject) => {
+    let ready = false;
     const onFailure = (error: Error | number) => {
       clearTimeout(startup);
-      if (pool.worker !== worker) return;
-      pool.worker = null;
-      pool.ready = null;
-      logger.warn(
+      if (pool.handle !== handle) return;
+      discardWorker(handle);
+      // Running out of heap mid-job is the response's cost, not a fault of the server.
+      if ((error as { code?: unknown }).code === "ERR_WORKER_OUT_OF_MEMORY" && pool.running?.dispatched) {
+        reject(error as Error);
+        settleRunning({ outcome: "too_costly", reason: "memory" });
+        return;
+      }
+      logger.error(
         { error: error instanceof Error ? error.message : `exit ${error}` },
         "SAML parse worker stopped"
       );
       reject(error instanceof Error ? error : new Error(`SAML parse worker exited with ${error}`));
-      void worker.terminate();
+      // A worker that never became ready fails everything waiting for it, rather than each job starting another
+      // worker and waiting out the same startup in turn.
+      const waiting = ready ? [] : pool.queue.splice(0);
       settleRunning({ outcome: "failed" });
+      for (const queued of waiting) queued.resolve({ outcome: "failed" });
     };
     const startup = setTimeout(
       () => onFailure(new Error("SAML parse worker did not start")),
       WORKER_STARTUP_TIMEOUT_MS
     );
 
-    worker.on("message", (message: { ready?: true; id?: number; claims?: SamlResponseClaims }) => {
+    port1.on("message", (message: { ready?: true } & Partial<WorkerResult>) => {
       if (message.ready) {
         clearTimeout(startup);
-        resolve(worker);
+        ready = true;
+        resolve(handle);
         return;
       }
-      const job = pool.running;
-      if (job?.startedAt !== undefined && message.id === job.id) {
-        settleRunning({
-          outcome: "parsed",
-          ms: performance.now() - job.startedAt,
-          claims: message.claims ?? {},
-        });
-      }
+      takeResult(message as WorkerResult);
     });
     worker.on("error", onFailure);
     worker.on("exit", onFailure);
   });
 };
 
+/** Runs the next queued job, if the worker is free. Never throws: every failure settles the job as `failed`. */
 function pump(): void {
   if (pool.running) return;
   const job = pool.queue.shift();
   if (!job) return;
   pool.running = job;
 
-  pool.ready ??= startWorker();
+  try {
+    pool.ready ??= startWorker();
+  } catch (error) {
+    // The thread could not be created at all (ERR_WORKER_INIT_FAILED under thread or memory pressure).
+    logger.error(
+      { error: error instanceof Error ? error.message : String(error) },
+      "SAML parse worker could not start"
+    );
+    pool.handle = null;
+    pool.ready = null;
+    settleRunning({ outcome: "failed" });
+    return;
+  }
+
   pool.ready.then(
-    (worker) => {
+    (handle) => {
       if (pool.running !== job) return;
-      pool.running = {
-        ...job,
-        startedAt: performance.now(),
-        timer: setTimeout(() => {
-          // Terminating stops xmldom mid-parse: it is plain JavaScript, which V8 interrupts at once.
-          discardWorker(worker);
-          settleRunning({ outcome: "too_slow" });
-        }, SAML_PARSE_TIME_BUDGET_MS),
-      };
-      worker.postMessage({ id: job.id, xml: job.xml });
+      const timer = setTimeout(() => {
+        // The answer may already be waiting behind a busy main thread: read it before blaming the response.
+        for (
+          let pending = receiveMessageOnPort(handle.port);
+          pending;
+          pending = receiveMessageOnPort(handle.port)
+        ) {
+          if (takeResult(pending.message as WorkerResult)) return;
+        }
+        // Terminating stops xmldom mid-parse: it is plain JavaScript, which V8 interrupts at once.
+        discardWorker(handle);
+        settleRunning({ outcome: "too_costly", reason: "time" });
+      }, SAML_PARSE_TIME_BUDGET_MS);
+      pool.running = { ...job, dispatched: true, timer };
+      handle.port.postMessage({ id: job.id, xml: job.xml });
     },
     () => {
+      // Settled by the worker's failure handler already; this only guards a job left waiting on a failed start.
       if (pool.running === job) settleRunning({ outcome: "failed" });
     }
   );
 }
 
+/** Tops up the main-thread parse allowance for the time passed, up to one second's worth. */
+const refillAllowance = (now: number) => {
+  const elapsed = now - pool.allowanceAt;
+  pool.allowanceAt = now;
+  pool.allowanceMs = Math.min(
+    SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS,
+    pool.allowanceMs + (elapsed * SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS) / 1000
+  );
+};
+
 /**
- * Parse `samlResponseBase64` in the worker under `SAML_PARSE_TIME_BUDGET_MS`, decoded as jackson decodes it.
- * Never rejects: every way it can end is an outcome.
+ * Parse `samlResponseBase64` in the worker under `SAML_PARSE_TIME_BUDGET_MS`, decoded as jackson decodes it. Never
+ * rejects: every way it can end is an outcome.
  */
 export const probeSamlResponseParse = (samlResponseBase64: string): Promise<SamlParseProbe> => {
-  if (pool.queue.length >= SAML_PARSE_QUEUE_LIMIT) return Promise.resolve({ outcome: "busy" });
+  refillAllowance(performance.now());
+  if (pool.queue.length >= SAML_PARSE_QUEUE_LIMIT || pool.allowanceMs <= 0) {
+    return Promise.resolve({ outcome: "busy" });
+  }
 
   return new Promise<SamlParseProbe>((resolve) => {
     pool.queue.push({

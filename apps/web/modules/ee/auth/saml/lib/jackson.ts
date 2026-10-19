@@ -19,9 +19,16 @@ const g = global;
  */
 const JACKSON_LOG_TEXT_LIMIT = 500;
 
+/**
+ * jackson logs every response that fails validation as `SAMLResponse error: ...` at error level. That is the
+ * sender's fault, anyone can post one, and the callback route already logs it as a warning with its identifiers, so
+ * it is demoted here and error stays meaningful for alerts.
+ */
+const SENDER_FAULT_PREFIX = "SAMLResponse error:";
+
 /** jackson's log lines through Formbricks' logger instead of the console. The error object's message only. */
 const jacksonLogger = (level: "info" | "warn" | "error") => (message: string, error?: unknown) =>
-  logger[level](
+  logger[level === "error" && message.startsWith(SENDER_FAULT_PREFIX) ? "warn" : level](
     {
       source: "saml-jackson",
       error: error instanceof Error ? toLogText(error.message, JACKSON_LOG_TEXT_LIMIT) : undefined,

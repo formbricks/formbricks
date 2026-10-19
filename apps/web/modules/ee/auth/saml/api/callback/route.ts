@@ -22,6 +22,9 @@ import { checkSamlResponseBounds } from "@/modules/ee/auth/saml/lib/saml-respons
  */
 const LOGGED_TEXT_LIMIT = 200;
 
+/** jackson's `internalError` for a response with no issuer (`controller/oauth.js`), which is junk, not a misconfiguration. */
+const JACKSON_NO_ISSUER_REASON = "Issuer not found.";
+
 /** Longest response ID or InResponseTo that reaches the log; real ones are short random tokens. */
 const LOGGED_ID_LIMIT = 128;
 
@@ -29,7 +32,7 @@ const LOGGED_ID_LIMIT = 128;
  * The fixed codes a browser is sent to the login page with (`modules/auth/lib/oauth-error.ts` classifies them).
  * jackson's own wording never leaves the server log.
  */
-type SamlErrorCode = "saml_response_rejected" | "saml_unavailable" | "saml_connection_unavailable";
+export type SamlErrorCode = "saml_response_rejected" | "saml_unavailable" | "saml_connection_unavailable";
 
 /**
  * Whether the callback is a browser's form post from the IdP. SAML's POST binding (SAML Bindings 2.0, 3.5.6)
@@ -43,14 +46,22 @@ const isBrowserNavigation = (req: Request): boolean => {
   return req.headers.get("accept")?.includes("text/html") ?? false;
 };
 
+/**
+ * The login page with `code` as its error. Appended to `webappUrl` rather than resolved against it, which would drop
+ * a custom base path (`https://host/custom-path` + `/auth/login` must not become `https://host/auth/login`).
+ */
+export const buildLoginErrorUrl = (webappUrl: string, code: SamlErrorCode): string => {
+  const loginUrl = new URL(`${webappUrl.replace(/\/+$/, "")}/auth/login`);
+  loginUrl.searchParams.set("error", code);
+  return loginUrl.toString();
+};
+
 /** A browser goes to the login page with a fixed error code; any other caller gets `response` as it is. */
 const refuse = (req: Request, code: SamlErrorCode, response: Response): Response => {
   if (!isBrowserNavigation(req)) return response;
-  const loginUrl = new URL("/auth/login", WEBAPP_URL);
-  loginUrl.searchParams.set("error", code);
   return new Response(null, {
     status: 303,
-    headers: { Location: loginUrl.toString(), "Cache-Control": "private, no-store" },
+    headers: { Location: buildLoginErrorUrl(WEBAPP_URL, code), "Cache-Control": "private, no-store" },
   });
 };
 
@@ -91,10 +102,33 @@ const getJacksonClientErrorStatus = (error: unknown): number | null => {
 const failureContext = (samlResponse: string, relayState: string, claims?: SamlResponseClaims) => ({
   length: samlResponse.length,
   relayState: relayState ? hashString(relayState) : undefined,
-  claimedIssuer: toLogText(claims?.issuer, LOGGED_TEXT_LIMIT),
-  responseId: toLogText(claims?.id, LOGGED_ID_LIMIT),
-  inResponseTo: toLogText(claims?.inResponseTo, LOGGED_ID_LIMIT),
+  // Grouped so nobody reading the log takes them for checked values.
+  claimed: claims
+    ? {
+        issuer: toLogText(claims.issuer, LOGGED_TEXT_LIMIT),
+        responseId: toLogText(claims.id, LOGGED_ID_LIMIT),
+        inResponseTo: toLogText(claims.inResponseTo, LOGGED_ID_LIMIT),
+      }
+    : undefined,
 });
+
+/**
+ * Refusals on the cheap path (bounds) and of a full queue cost an anonymous caller one small request each, so they
+ * are logged at most once per window per kind, with how many were left out since.
+ */
+const REFUSAL_LOG_WINDOW_MS = 10_000;
+const refusalLogState = new Map<string, { loggedAt: number; suppressed: number }>();
+
+const warnThrottled = (kind: string, fields: object, message: string) => {
+  const now = Date.now();
+  const state = refusalLogState.get(kind);
+  if (state && now - state.loggedAt < REFUSAL_LOG_WINDOW_MS) {
+    state.suppressed++;
+    return;
+  }
+  logger.warn({ ...fields, suppressedSinceLast: state?.suppressed ?? 0 }, message);
+  refusalLogState.set(kind, { loggedAt: now, suppressed: 0 });
+};
 
 export const POST = async (req: Request) => {
   const jacksonInstance = await jackson();
@@ -135,7 +169,7 @@ export const POST = async (req: Request) => {
   const refusal = checkSamlResponseBounds(SAMLResponse);
   if (refusal) {
     // Sizes only, never content.
-    logger.warn(refusal, "Refused a SAML response before parsing it");
+    warnThrottled(`bounds:${refusal.reason}`, refusal, "Refused a SAML response before parsing it");
     return refuse(
       req,
       "saml_response_rejected",
@@ -164,7 +198,11 @@ export const POST = async (req: Request) => {
   // shape the bounds misread costs the worker at most the budget and never blocks this thread for long.
   const probe = await probeSamlResponseParse(SAMLResponse);
   if (probe.outcome === "busy") {
-    logger.warn(failureContext(SAMLResponse, RelayState), "SAML parse queue full; refused a SAML response");
+    warnThrottled(
+      "busy",
+      failureContext(SAMLResponse, RelayState),
+      "SAML parsing is saturated; refused a SAML response"
+    );
     return refuse(
       req,
       "saml_unavailable",
@@ -182,10 +220,10 @@ export const POST = async (req: Request) => {
       responses.serviceUnavailableResponse("The SAML response could not be processed; retry shortly", 1)
     );
   }
-  if (probe.outcome === "too_slow") {
+  if (probe.outcome === "too_costly") {
     logger.warn(
-      { stage: "parse_budget", ...failureContext(SAMLResponse, RelayState) },
-      "Refused a SAML response that took too long to parse"
+      { stage: "parse_budget", reason: probe.reason, ...failureContext(SAMLResponse, RelayState) },
+      "Refused a SAML response that was too costly to parse"
     );
     return refuse(
       req,
@@ -214,8 +252,13 @@ export const POST = async (req: Request) => {
       },
       "jackson refused a SAML response"
     );
-    // A missing, unknown or switched-off connection carries an `internalError`; retrying cannot clear it.
-    const code = internalError ? "saml_connection_unavailable" : "saml_response_rejected";
+    // A missing, unknown or switched-off connection carries an `internalError`; retrying cannot clear it. The one
+    // exception is jackson's "Issuer not found.", which means the response named no issuer at all: junk, not a
+    // connection problem.
+    const code =
+      internalError && internalError !== JACKSON_NO_ISSUER_REASON
+        ? "saml_connection_unavailable"
+        : "saml_response_rejected";
     return refuse(req, code, jacksonRefusalResponse(status));
   }
 
