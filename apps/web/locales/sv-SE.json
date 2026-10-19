@@ -4131,7 +4131,9 @@
           "unit_pages": "sidor",
           "unit_px": "px",
           "unit_seconds": "sekunder",
-          "value_placeholder": "Värde"
+          "value_placeholder": "Värde",
+          "visited_url_hint": "En exakt sida, sedd när som helst under det här besöket: /pricing täcker /pricing?ref=email men inte /pricing/compare.",
+          "visited_url_placeholder": "En sida, t.ex. /pricing"
         },
         "show_in_order": "Visa i ordning",
         "show_language_switch": "Visa språkväxlare",

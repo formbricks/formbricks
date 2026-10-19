@@ -4131,7 +4131,9 @@
           "unit_pages": "oldal",
           "unit_px": "px",
           "unit_seconds": "másodperc",
-          "value_placeholder": "Érték"
+          "value_placeholder": "Érték",
+          "visited_url_hint": "Egyetlen pontos oldal, amelyet a látogatás során bármikor megtekintettek: a /pricing lefedi a /pricing?ref=email címet, de nem fedi le a /pricing/compare címet.",
+          "visited_url_placeholder": "Egyetlen oldal, például /pricing"
         },
         "show_in_order": "Megjelenítés sorrendben",
         "show_language_switch": "Nyelvválasztó megjelenítése",

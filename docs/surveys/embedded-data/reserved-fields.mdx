@@ -34,10 +34,10 @@ Reserved fields are the auto-captured half of [Embedded Data](/surveys/embedded-
 | `timezone`        | `string`  | Browser         | The respondent's IANA time zone, e.g. `Europe/Berlin`                         |
 | `locale`          | `string`  | Browser         | How the device is configured, e.g. `de-AT`, from `navigator.language`         |
 | `visitPagesViewed`       | `number`  | Browser (website) | Pages loaded in this visit before the survey showed, reloads included |
-| `visitUniquePagesViewed` | `number`  | Browser (website) | Different pages in this visit |
+| `visitUniquePagesViewed` | `number`  | Browser (website) | Different pages in this visit, counted up to 200 |
 | `visitTimeOnSite`        | `number`  | Browser (website) | Seconds spent on your site's pages in this visit |
 | `visitEntryReferrer`     | `string`  | Browser (website) | Where the visit started. Read back without its query string |
-| `visitUrls`              | `string`  | Browser (website) | The paths taken in this visit, in order, joined by ` · ` (last 50, first page kept) |
+| `visitUrls`              | `string`  | Browser (website) | The paths taken in this visit, in order, joined by ` · ` (last 50, first page kept). Lowercase, without a trailing slash |
 | `language`        | `string`  | Browser, Server | The language the respondent is **answering in**                               |
 | `country`         | `string`  | Server          | Country from the CDN request header. Formbricks runs no GeoIP lookup          |
 | `browser`         | `string`  | Server          | Parsed from the `user-agent` request header                                   |

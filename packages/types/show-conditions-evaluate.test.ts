@@ -11,6 +11,7 @@ const context: TShowConditionsContext = {
     timeOnSite: 125,
     entryReferrer: "https://www.google.com/",
     visitedUrls: ["/", "/plan-compare", "/drug-coverage"],
+    uniquePaths: ["/", "/plan-compare", "/drug-coverage"],
   },
   device: { deviceType: "desktop", browser: "chrome", screenWidth: 1280 },
 };
@@ -122,12 +123,27 @@ describe("evaluateShowConditions", () => {
   });
 
   test.each([
-    ["includes", "/drug", true],
+    ["includes", "/drug-coverage", true],
+    ["includes", "/DRUG-coverage/", true],
+    ["includes", "https://www.medicare.gov/drug-coverage?ref=email", true],
+    ["includes", "/drug", false],
     ["includes", "/find-a-doctor", false],
     ["doesNotInclude", "/find-a-doctor", true],
+    ["doesNotInclude", "/drug", true],
     ["doesNotInclude", "/DRUG-coverage", false],
-  ])("visited URLs: %s %j → %s", (operator, value, expected) => {
+  ])("visited URLs, one exact page: %s %j → %s", (operator, value, expected) => {
     expect(passes(condition("visitedUrls", operator, value))).toBe(expected);
+  });
+
+  test("a visited page that fell out of the journey still counts", () => {
+    const visit = { ...context.visit!, visitedUrls: ["/", "/b"], uniquePaths: ["/", "/a", "/b"] };
+
+    expect(
+      evaluateShowConditions(group("and", [condition("visitedUrls", "includes", "/a")]), {
+        ...context,
+        visit,
+      }).passed
+    ).toBe(true);
   });
 
   test.each([
@@ -246,7 +262,7 @@ describe("evaluateShowConditions", () => {
   test("reports every condition in order, even after an ALL group has already failed", () => {
     const onPhone = condition("deviceType", "equals", "phone");
     const onPlanPages = condition("currentUrl", "contains", "/plan-compare");
-    const visited = condition("visitedUrls", "includes", "/drug");
+    const visited = condition("visitedUrls", "includes", "/drug-coverage");
 
     const evaluation = evaluateShowConditions(
       group("and", [onPhone, group("or", [onPlanPages, visited])]),
@@ -258,7 +274,7 @@ describe("evaluateShowConditions", () => {
       results: [
         { conditionId: onPhone.id, actual: "desktop", passed: false },
         { conditionId: onPlanPages.id, actual: context.url, passed: true },
-        { conditionId: visited.id, actual: context.visit?.visitedUrls, passed: true },
+        { conditionId: visited.id, actual: context.visit?.uniquePaths, passed: true },
       ],
     });
   });

@@ -50,6 +50,18 @@ describe("surveyToV3Distribution", () => {
     ).toEqual(showConditions);
   });
 
+  test("leaves out a condition a draft has not filled in yet", () => {
+    const showConditions = {
+      id: "grp1",
+      connector: "and",
+      conditions: [{ id: "cnd1", leftOperand: { type: "visit", value: "pagesViewed" }, operator: "equals" }],
+    };
+
+    expect(
+      surveyToV3Distribution({ ...appSurvey, showConditions } as unknown as TSurvey).showConditions
+    ).toBeNull();
+  });
+
   test("clamps legacy out-of-bounds values to schema-valid ones so reconstruction never fails", () => {
     const legacy = {
       ...appSurvey,

@@ -4131,7 +4131,9 @@
           "unit_pages": "个页面",
           "unit_px": "像素",
           "unit_seconds": "秒",
-          "value_placeholder": "值"
+          "value_placeholder": "值",
+          "visited_url_hint": "仅限某一个确切页面,且在本次访问期间的任意时间浏览过即可:/pricing 会匹配 /pricing?ref=email,但不会匹配 /pricing/compare。",
+          "visited_url_placeholder": "填写一个页面,例如 /pricing"
         },
         "show_in_order": "按顺序显示",
         "show_language_switch": "显示 语言 切换",

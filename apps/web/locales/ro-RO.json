@@ -4131,7 +4131,9 @@
           "unit_pages": "pagini",
           "unit_px": "px",
           "unit_seconds": "secunde",
-          "value_placeholder": "Valoare"
+          "value_placeholder": "Valoare",
+          "visited_url_hint": "O singură pagină exactă, vizualizată în orice moment al acestei vizite: /pricing acoperă /pricing?ref=email, dar nu și /pricing/compare.",
+          "visited_url_placeholder": "O singură pagină, de ex. /pricing"
         },
         "show_in_order": "Afișează în ordine",
         "show_language_switch": "Afișează comutatorul de limbă",

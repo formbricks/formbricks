@@ -4131,7 +4131,9 @@
           "unit_pages": "sayfa",
           "unit_px": "px",
           "unit_seconds": "saniye",
-          "value_placeholder": "Değer"
+          "value_placeholder": "Değer",
+          "visited_url_hint": "Tam olarak tek bir sayfa, bu ziyaret sırasında herhangi bir anda görüntülenmiş olmalı: /pricing, /pricing?ref=email sayfasını kapsar ama /pricing/compare sayfasını kapsamaz.",
+          "visited_url_placeholder": "Tek bir sayfa, ör. /pricing"
         },
         "show_in_order": "Sırayla göster",
         "show_language_switch": "Dil değiştiricisini göster",

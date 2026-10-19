@@ -48,9 +48,9 @@ Text comparisons ignore upper and lower case.
 | **Query parameter** | One parameter of the current URL, by name | is, is not, contains, does not contain, starts with, ends with, is set, is not set |
 | **Page referrer** | The page the visitor came from to this page | is, is not, contains, does not contain, starts with, ends with, contains any of, contains none of |
 | **Entry referrer (this visit)** | Where the visit started: the referrer of its first page | as Page referrer |
-| **Visited URL (this visit)** | The paths seen earlier in this visit | includes, does not include |
+| **Visited URL (this visit)** | The pages seen in this visit, the current one included. One exact page, compared like **path is any of** | includes, does not include |
 | **Pages viewed (this visit)** | Every page load in this visit, reloads included | is, is more than, is less than, is at least, is at most |
-| **Unique pages viewed (this visit)** | Different pages in this visit | as Pages viewed |
+| **Unique pages viewed (this visit)** | Different pages in this visit, counted up to 200 | as Pages viewed, up to 200 |
 | **Time on site (this visit)** | Seconds spent on your site's pages in this visit | as Pages viewed |
 | **Device** | Desktop, tablet or phone | is, is not |
 | **Browser** | Chrome, Safari, Firefox, Edge, Opera, Samsung Internet or other | is, is not |
@@ -67,15 +67,17 @@ Paste one entry per line. Blank lines are ignored, and a list can hold up to 200
 
 A visit is one browser tab. A new tab starts a new visit; reloading, going back, or leaving the site and coming back in the same tab continues it. Time on site counts only time on your own pages, so time spent on another site in between is left out. A change of only the URL's `#hash` is not a new page.
 
+Pages are told apart by their path, the same way **path is any of** compares them: `/plans`, `/plans/` and `/Plans` are one page. A visit remembers up to 200 different pages; past that, **Unique pages viewed** stops counting and **Visited URL** doesn't see the newer ones.
+
 <Note>
   If the visitor's browser blocks storage, the visit can't be recorded and every visit condition fails, so the survey doesn't show. Page and device conditions still work.
 </Note>
 
 ## When conditions are checked
 
-Conditions are checked when a trigger fires. If the survey has a **delay**, they are checked again when the delay ends, so time on site has grown and a visitor who moved to an excluded page in the meantime doesn't see it. Conditions never show a survey by themselves: a visitor who meets them but triggers nothing sees nothing.
+Conditions are checked when a trigger fires, and again right before the survey appears: after its **delay** if it has one, so time on site has grown and a visitor who moved to an excluded page in the meantime doesn't see it. Conditions never show a survey by themselves: a visitor who meets them but triggers nothing sees nothing.
 
-They apply on top of everything else that decides whether a survey shows: the action's own page filters, [Recontact Options](/surveys/website-app-surveys/recontact), the [Cooldown Period](/surveys/website-app-surveys/cooldown-period), [segment targeting](/surveys/website-app-surveys/attribute-based-targeting) and the [display percentage](/surveys/website-app-surveys/show-survey-to-percent-of-users). See [Survey Display Logic](/surveys/website-app-surveys/survey-display-logic) for the full order.
+They apply on top of everything else that decides whether a survey shows: the action's own page filters, [Recontact Options](/surveys/website-app-surveys/recontact), the [Cooldown Period](/surveys/website-app-surveys/cooldown-period) and [segment targeting](/surveys/website-app-surveys/attribute-based-targeting). The [display percentage](/surveys/website-app-surveys/show-survey-to-percent-of-users) comes after them, so it samples only visitors who meet the conditions. See [Survey Display Logic](/surveys/website-app-surveys/survey-display-logic) for the full order.
 
 <Warning>
   Show conditions are for websites only. The mobile SDKs (iOS, Android, React Native, Flutter) ignore them and show the survey on its trigger as before.
@@ -105,7 +107,7 @@ A new subscriber first receives everything that already happened on the page. Un
 
 ## What lands on each response
 
-Every response to a website survey records the visit at the moment the survey showed, as five [reserved fields](/surveys/embedded-data/reserved-fields): **Pages Viewed**, **Unique Pages Viewed**, **Time on Site**, **Entry Referrer** and **Visited URLs**. They appear on the response card, as table columns, in the response filter and in the CSV export, and you can use them in survey logic and recall.
+Every response to a website survey records the visit at the moment the survey showed, as five [reserved fields](/surveys/embedded-data/reserved-fields): **Pages Viewed**, **Unique Pages Viewed**, **Time on Site**, **Entry Referrer** and **Visited URLs**. They appear on the response card, as table columns, in the response filter and in the CSV export, and you can use them in survey logic and recall. **Visited URLs** is the journey in order: the first page and the last 49 steps.
 
 <Note>
   The **Device** shown on a response comes from the server, which can't tell an iPad from a Mac: iPads are recorded as desktop there. The **Device** show condition runs in the browser and detects them as tablets.

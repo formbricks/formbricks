@@ -18,6 +18,8 @@ export type TDebugSurveyExclusion =
 export type TDebugSurveyOutcome =
   | "excluded"
   | "conditionsFailed"
+  /** The stored conditions could not be read, so the survey stays hidden. */
+  | "conditionsUnreadable"
   | "conditionsPassed"
   | "notSampled"
   | "anotherSurveyOpen"
@@ -29,8 +31,8 @@ export interface TDebugSurveyEvent {
   surveyId: string;
   /** The trigger (action name) that fired. */
   action?: string;
-  /** `afterDelay` is the second condition check, when a survey's delay ends. */
-  stage: "trigger" | "afterDelay";
+  /** `beforeShow` is the second condition check, right before the survey appears (after any delay). */
+  stage: "trigger" | "beforeShow";
   outcome: TDebugSurveyOutcome;
   exclusion?: TDebugSurveyExclusion;
   /** The survey's conditions, so the panel can describe each result rather than show bare ids. */

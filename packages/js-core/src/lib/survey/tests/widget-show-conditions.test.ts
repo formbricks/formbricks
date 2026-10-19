@@ -1,6 +1,7 @@
 import { type Mock, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Config } from "@/lib/common/config";
 import type * as CommonUtils from "@/lib/common/utils";
+import { shouldDisplayBasedOnPercentage } from "@/lib/common/utils";
 import { passesShowConditions } from "@/lib/survey/show-conditions";
 import { mockSurvey } from "@/lib/survey/tests/__mocks__/widget.mock";
 import * as widget from "@/lib/survey/widget";
@@ -8,7 +9,8 @@ import { getVisitSnapshot } from "@/lib/visit/visit-store";
 
 /**
  * Where the show conditions sit in the display flow (ENG-3875): checked when a trigger fires, before
- * the survey takes the "a survey is running" lock, and again when its delay ends.
+ * the display percentage and before the survey takes the "a survey is running" lock, and again right
+ * before it shows.
  */
 
 vi.mock("@/lib/common/config", () => ({
@@ -54,6 +56,7 @@ const visit = {
   timeOnSite: 130,
   entryReferrer: "https://www.google.com/",
   visitedUrls: ["/", "/plans"],
+  uniquePaths: ["/", "/plans"],
 };
 
 describe("show conditions in the display flow", () => {
@@ -94,13 +97,24 @@ describe("show conditions in the display flow", () => {
     expect((renderSurvey.mock.calls[0][0] as { survey: { id: string } }).survey.id).toBe("passes");
   });
 
+  test("a survey that fails its conditions does not draw the display percentage", async () => {
+    (passesShowConditions as Mock).mockReturnValueOnce(false);
+
+    await widget.triggerSurvey({ ...mockSurvey, displayPercentage: 50 }, "New Session");
+
+    expect(shouldDisplayBasedOnPercentage).not.toHaveBeenCalled();
+  });
+
   test("a delayed survey is checked again when the delay ends, and stays hidden if it now fails", async () => {
     (passesShowConditions as Mock).mockReturnValueOnce(true).mockReturnValueOnce(false);
 
     await widget.triggerSurvey({ ...mockSurvey, delay: 5 }, "New Session");
-    vi.advanceTimersByTime(5000);
+    vi.advanceTimersByTime(4999);
+    expect(passesShowConditions).toHaveBeenCalledTimes(1);
 
-    expect(passesShowConditions).toHaveBeenLastCalledWith(expect.anything(), "New Session", "afterDelay");
+    vi.advanceTimersByTime(1);
+    expect(passesShowConditions).toHaveBeenCalledTimes(2);
+    expect(passesShowConditions).toHaveBeenLastCalledWith(expect.anything(), "New Session", "beforeShow");
     expect(renderSurvey).not.toHaveBeenCalled();
 
     // The lock is released, so a later trigger can still show a survey.
@@ -110,12 +124,14 @@ describe("show conditions in the display flow", () => {
     expect(renderSurvey).toHaveBeenCalledTimes(1);
   });
 
-  test("a survey without a delay is not checked twice", async () => {
+  test("a survey without a delay is still checked again before it shows", async () => {
+    (passesShowConditions as Mock).mockReturnValueOnce(true).mockReturnValueOnce(false);
+
     await widget.triggerSurvey({ ...mockSurvey, delay: 0 }, "New Session");
     vi.runAllTimers();
 
-    expect(passesShowConditions).toHaveBeenCalledTimes(1);
-    expect(renderSurvey).toHaveBeenCalledTimes(1);
+    expect(passesShowConditions).toHaveBeenLastCalledWith(expect.anything(), "New Session", "beforeShow");
+    expect(renderSurvey).not.toHaveBeenCalled();
   });
 
   test("hands the visit at display time to the renderer", async () => {

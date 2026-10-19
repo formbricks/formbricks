@@ -4131,7 +4131,9 @@
           "unit_pages": "頁",
           "unit_px": "px",
           "unit_seconds": "秒",
-          "value_placeholder": "值"
+          "value_placeholder": "值",
+          "visited_url_hint": "限單一確切頁面，只要在這次造訪期間任何時間點瀏覽過即可：/pricing 會涵蓋 /pricing?ref=email，但不包含 /pricing/compare。",
+          "visited_url_placeholder": "單一頁面，例如 /pricing"
         },
         "show_in_order": "依序顯示",
         "show_language_switch": "顯示語言切換",

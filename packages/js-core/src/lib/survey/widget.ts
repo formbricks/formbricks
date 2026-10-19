@@ -173,10 +173,10 @@ export const renderWidget = async (
   }
 
   const timeoutId = setTimeout(() => {
-    // A delayed survey is checked again before it shows: time on site has grown, and in an SPA the
-    // visitor may have moved to a page the conditions exclude (ENG-3875). With no delay nothing has
-    // changed since the check in `triggerSurvey`.
-    if (survey.delay > 0 && !passesShowConditions(survey, action, "afterDelay")) {
+    // Checked again right before it shows (ENG-3875). Time has passed since the check in
+    // `triggerSurvey`, even with no delay: identification, the surveys bundle and reCAPTCHA all load
+    // in between, and an SPA can move to a page the conditions exclude meanwhile.
+    if (!passesShowConditions(survey, action, "beforeShow")) {
       timeoutStack.remove(timeoutId as unknown as number);
       setIsSurveyRunning(false);
       return;

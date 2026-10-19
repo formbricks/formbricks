@@ -4131,7 +4131,9 @@
           "unit_pages": "стр.",
           "unit_px": "пикс.",
           "unit_seconds": "сек.",
-          "value_placeholder": "Значение"
+          "value_placeholder": "Значение",
+          "visited_url_hint": "Одна конкретная страница, которую посетитель открывал в любой момент во время этого визита: /pricing охватывает /pricing?ref=email, но не /pricing/compare.",
+          "visited_url_placeholder": "Одна страница, например /pricing"
         },
         "show_in_order": "Показать по порядку",
         "show_language_switch": "Показать переключатель языка",

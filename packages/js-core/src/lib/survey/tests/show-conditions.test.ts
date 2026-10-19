@@ -11,7 +11,7 @@ vi.mock("@/lib/common/debug", () => ({
 }));
 
 vi.mock("@/lib/common/logger", () => ({
-  Logger: { getInstance: vi.fn(() => ({ debug: vi.fn() })) },
+  Logger: { getInstance: vi.fn(() => ({ debug: vi.fn(), error: vi.fn() })) },
 }));
 
 vi.mock("@/lib/visit/device", () => ({
@@ -28,6 +28,7 @@ const visit: TVisitSnapshot = {
   timeOnSite: 90,
   entryReferrer: "https://www.google.com/",
   visitedUrls: ["/", "/plans"],
+  uniquePaths: ["/", "/plans"],
 };
 
 const rule = (...conditions: TShowConditionGroup["conditions"]): TShowConditionGroup => ({
@@ -88,12 +89,12 @@ describe("passesShowConditions", () => {
     vi.mocked(getVisitSnapshot).mockReturnValue({ ...visit, pagesViewed: 1 });
 
     const conditions = rule(onPlansPage, threePages);
-    passesShowConditions(survey(conditions), "New Session", "afterDelay");
+    passesShowConditions(survey(conditions), "New Session", "beforeShow");
 
     expect(emitDebugSurveyEvent).toHaveBeenCalledWith({
       surveyId: "survey_1",
       action: "New Session",
-      stage: "afterDelay",
+      stage: "beforeShow",
       outcome: "conditionsFailed",
       showConditions: conditions,
       conditions: {
@@ -104,5 +105,15 @@ describe("passesShowConditions", () => {
         ],
       },
     });
+  });
+
+  test("fails closed instead of throwing when the stored conditions are malformed", () => {
+    vi.mocked(isDebugEnabled).mockReturnValue(true);
+    const groupWithoutConditions = { id: "root", connector: "and" } as unknown as TShowConditionGroup;
+
+    expect(passesShowConditions(survey(groupWithoutConditions), "New Session", "trigger")).toBe(false);
+    expect(emitDebugSurveyEvent).toHaveBeenLastCalledWith(
+      expect.objectContaining({ surveyId: "survey_1", outcome: "conditionsUnreadable" })
+    );
   });
 });

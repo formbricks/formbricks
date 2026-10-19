@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TShowConditionSingle } from "@formbricks/types/show-conditions";
+import { MAX_UNIQUE_PAGES } from "@formbricks/types/show-conditions-evaluate";
 import type { TShowConditionUpdate } from "@/modules/show-conditions/lib/tree";
 import { parseListInput } from "@/modules/show-conditions/lib/value-input";
 import { Input } from "@/modules/ui/components/input";
@@ -68,6 +69,8 @@ const NumberValueInput = ({ condition, onUpdate, isReadOnly }: Readonly<ShowCond
   const { t } = useTranslation();
   const value = condition.rightOperand?.value;
   const unit = UNIT_LABEL_KEYS[condition.leftOperand.value as keyof typeof UNIT_LABEL_KEYS];
+  // The visit store remembers this many different pages, so a higher number could never be reached.
+  const max = condition.leftOperand.value === "uniquePagesViewed" ? MAX_UNIQUE_PAGES : Infinity;
   const unitLabel = {
     pages: t("workspace.surveys.edit.show_conditions.unit_pages"),
     seconds: t("workspace.surveys.edit.show_conditions.unit_seconds"),
@@ -79,6 +82,7 @@ const NumberValueInput = ({ condition, onUpdate, isReadOnly }: Readonly<ShowCond
       <Input
         type="number"
         min={0}
+        max={Number.isFinite(max) ? max : undefined}
         className="bg-white"
         disabled={isReadOnly}
         value={typeof value === "number" ? value : ""}
@@ -86,7 +90,9 @@ const NumberValueInput = ({ condition, onUpdate, isReadOnly }: Readonly<ShowCond
         onChange={(event) =>
           onUpdate({
             rightOperand:
-              event.target.value === "" ? undefined : { value: Math.max(0, Number(event.target.value)) },
+              event.target.value === ""
+                ? undefined
+                : { value: Math.min(max, Math.max(0, Number(event.target.value))) },
           })
         }
       />
@@ -95,7 +101,12 @@ const NumberValueInput = ({ condition, onUpdate, isReadOnly }: Readonly<ShowCond
   );
 };
 
-const TextValueInput = ({ condition, onUpdate, isReadOnly }: Readonly<ShowConditionValueInputProps>) => {
+const TextValueInput = ({
+  condition,
+  onUpdate,
+  isReadOnly,
+  placeholder,
+}: Readonly<ShowConditionValueInputProps & { placeholder?: string }>) => {
   const { t } = useTranslation();
   const value = condition.rightOperand?.value;
 
@@ -104,11 +115,26 @@ const TextValueInput = ({ condition, onUpdate, isReadOnly }: Readonly<ShowCondit
       className="bg-white"
       disabled={isReadOnly}
       value={typeof value === "string" ? value : ""}
-      placeholder={t("workspace.surveys.edit.show_conditions.value_placeholder")}
+      placeholder={placeholder ?? t("workspace.surveys.edit.show_conditions.value_placeholder")}
       onChange={(event) =>
         onUpdate({ rightOperand: event.target.value === "" ? undefined : { value: event.target.value } })
       }
     />
+  );
+};
+
+/** Visited URL is one exact page, like the path lists, which a bare text box would not tell the author. */
+const VisitedUrlValueInput = (props: Readonly<ShowConditionValueInputProps>) => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="flex flex-col gap-1">
+      <TextValueInput
+        {...props}
+        placeholder={t("workspace.surveys.edit.show_conditions.visited_url_placeholder")}
+      />
+      <p className="text-xs text-slate-500">{t("workspace.surveys.edit.show_conditions.visited_url_hint")}</p>
+    </div>
   );
 };
 
@@ -137,6 +163,7 @@ const QueryParamValueInput = (props: Readonly<ShowConditionValueInputProps>) => 
 export const ShowConditionValueInput = (props: Readonly<ShowConditionValueInputProps>) => {
   const { condition } = props;
   if (condition.leftOperand.value === "queryParam") return <QueryParamValueInput {...props} />;
+  if (condition.leftOperand.value === "visitedUrls") return <VisitedUrlValueInput {...props} />;
   if (LIST_OPERATORS.has(condition.operator)) return <ListValueInput {...props} />;
   if (typeof condition.rightOperand?.value === "number" || condition.leftOperand.value in UNIT_LABEL_KEYS) {
     return <NumberValueInput {...props} />;

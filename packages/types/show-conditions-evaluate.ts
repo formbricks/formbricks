@@ -37,14 +37,22 @@ type TResolvedOperand =
   | { kind: "text"; actual: string | string[]; values: string[] }
   | { kind: "queryParam"; actual: string[]; values: string[] }
   | { kind: "path"; actual: string }
+  | { kind: "visited"; actual: string[] }
   | { kind: "number"; actual: number }
   | { kind: "missing" };
+
+/**
+ * How many different pages the visit store remembers. Unique pages viewed stops counting here and
+ * Visited URL sees this many, so a condition cannot ask for more.
+ */
+export const MAX_UNIQUE_PAGES = 200;
 
 const PATH_OPERATORS: ReadonlySet<string> = new Set(["pathIsAnyOf", "pathIsNoneOf"]);
 
 /**
- * The page path an exact path list compares: lowercase, no trailing slash, no query string or #hash.
- * A full URL is reduced to its path, so a line pasted from the address bar matches its page too.
+ * The page path that exact comparisons use: lowercase, no trailing slash, no query string or #hash.
+ * A full URL is reduced to its path, so a line pasted from the address bar matches its page too. The
+ * visit store keeps its paths in this form, so `/plans/` and `/Plans` count as one page.
  */
 export const normalizeUrlPath = (value: string): string => {
   let path = value.trim();
@@ -69,7 +77,6 @@ export const normalizeUrlPath = (value: string): string => {
 const MISSING: TResolvedOperand = { kind: "missing" };
 
 const text = (value: string): TResolvedOperand => ({ kind: "text", actual: value, values: [value] });
-const textList = (values: string[]): TResolvedOperand => ({ kind: "text", actual: values, values });
 const numeric = (value: number): TResolvedOperand => ({ kind: "number", actual: value });
 
 const getQueryParamValues = (url: string, key: string): string[] => {
@@ -95,7 +102,7 @@ const resolveVisitOperand = (operand: string, visit: TVisitSnapshot | null): TRe
     case "entryReferrer":
       return text(visit.entryReferrer);
     case "visitedUrls":
-      return textList(visit.visitedUrls);
+      return { kind: "visited", actual: visit.uniquePaths };
     case "pagesViewed":
       return numeric(visit.pagesViewed);
     case "uniquePagesViewed":
@@ -139,7 +146,6 @@ const NEGATED_OPERATORS = new Map([
   ["doesNotEqual", "equals"],
   ["doesNotContain", "contains"],
   ["containsNoneOf", "containsAnyOf"],
-  ["doesNotInclude", "includes"],
 ]);
 
 const getTextMatcher = (operator: string, expected: unknown): ((value: string) => boolean) | undefined => {
@@ -154,7 +160,6 @@ const getTextMatcher = (operator: string, expected: unknown): ((value: string) =
     case "equals":
       return (value) => value === target;
     case "contains":
-    case "includes":
       return (value) => value.includes(target);
     case "startsWith":
       return (value) => value.startsWith(target);
@@ -165,9 +170,9 @@ const getTextMatcher = (operator: string, expected: unknown): ((value: string) =
   }
 };
 
-// Some text operands carry several values (a repeated query parameter, the visited URLs). A
-// positive operator passes when any value matches; a negated one passes when none does — so an
-// absent query parameter passes "does not equal" and fails "equals".
+// A repeated query parameter carries several values. A positive operator passes when any value
+// matches; a negated one passes when none does — so an absent query parameter passes "does not
+// equal" and fails "equals".
 const evaluateText = (values: string[], operator: string, expected: unknown): boolean => {
   const positiveOperator = NEGATED_OPERATORS.get(operator) ?? operator;
   const matches = getTextMatcher(positiveOperator, expected);
@@ -189,6 +194,15 @@ const evaluatePathList = (path: string, operator: string, expected: unknown): bo
   if (!Array.isArray(expected) || !expected.every((entry) => typeof entry === "string")) return false;
   const isListed = expected.some((entry: string) => normalizeUrlPath(entry) === path);
   return operator === "pathIsAnyOf" ? isListed : !isListed;
+};
+
+// One exact page, like the path lists: `/pricing` is not `/pricing/compare` or `/blog/pricing-tips`.
+const evaluateVisited = (paths: string[], operator: string, expected: unknown): boolean => {
+  if (typeof expected !== "string" || expected.trim() === "") return false;
+  const target = normalizeUrlPath(expected);
+  const visited = paths.some((path) => normalizeUrlPath(path) === target);
+  if (operator === "includes") return visited;
+  return operator === "doesNotInclude" ? !visited : false;
 };
 
 const evaluateNumber = (actual: number, operator: string, expected: unknown): boolean => {
@@ -223,6 +237,7 @@ const evaluateCondition = (
     passed = evaluateQueryParam(resolved.values, condition.operator, expected);
   }
   if (resolved.kind === "path") passed = evaluatePathList(resolved.actual, condition.operator, expected);
+  if (resolved.kind === "visited") passed = evaluateVisited(resolved.actual, condition.operator, expected);
   if (resolved.kind === "number") passed = evaluateNumber(resolved.actual, condition.operator, expected);
 
   results.push({

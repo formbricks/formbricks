@@ -24,10 +24,9 @@ describe("debug panel text", () => {
       "Not shown: this visitor is not in the survey's segment",
     ],
     [event({ outcome: "conditionsFailed" }), "Not shown: show conditions not met"],
-    [
-      event({ outcome: "conditionsFailed", stage: "afterDelay" }),
-      "Not shown: show conditions not met after the delay",
-    ],
+    [event({ outcome: "conditionsFailed", stage: "beforeShow" }), "Not shown: show conditions no longer met"],
+    [event({ outcome: "conditionsPassed", stage: "beforeShow" }), "Show conditions still met"],
+    [event({ outcome: "conditionsUnreadable" }), "Not shown: its show conditions could not be read"],
     [event({ outcome: "notSampled" }), "Not shown: outside the display percentage"],
     [event({ outcome: "anotherSurveyOpen" }), "Not shown: another survey is open"],
   ])("explains %j", (input, expected) => {

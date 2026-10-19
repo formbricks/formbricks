@@ -16,14 +16,16 @@ const EXCLUSION_TEXT: Record<NonNullable<TDebugSurveyEvent["exclusion"]>, string
 };
 
 export const describeOutcome = (event: TDebugSurveyEvent): string => {
-  const afterDelay = event.stage === "afterDelay" ? " after the delay" : "";
+  const isRecheck = event.stage === "beforeShow";
   switch (event.outcome) {
     case "excluded":
       return `Not shown: ${event.exclusion ? EXCLUSION_TEXT[event.exclusion] : "not eligible"}`;
     case "conditionsFailed":
-      return `Not shown: show conditions not met${afterDelay}`;
+      return isRecheck ? "Not shown: show conditions no longer met" : "Not shown: show conditions not met";
+    case "conditionsUnreadable":
+      return "Not shown: its show conditions could not be read";
     case "conditionsPassed":
-      return `Show conditions met${afterDelay}`;
+      return isRecheck ? "Show conditions still met" : "Show conditions met";
     case "notSampled":
       return "Not shown: outside the display percentage";
     case "anotherSurveyOpen":

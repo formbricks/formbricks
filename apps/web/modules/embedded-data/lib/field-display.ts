@@ -98,6 +98,17 @@ const RESERVED_FIELD_LABELS: Record<string, (t: TFunction) => string> = {
 
 export const getReservedFieldLabel = (name: string, t: TFunction): string =>
   RESERVED_FIELD_LABELS[name]?.(t) ?? formatFieldNameToTitleCase(name);
+
+/**
+ * A reserved value as the response card and table show it. Time on site is stored as bare seconds,
+ * which reads like a count, so it gets its unit in the viewer's locale. Exports keep the raw number.
+ */
+export const formatReservedFieldValue = (name: string, value: string, locale: string): string => {
+  if (name !== "visitTimeOnSite" || value.trim() === "" || !Number.isFinite(Number(value))) return value;
+  return new Intl.NumberFormat(locale, { style: "unit", unit: "second", unitDisplay: "short" }).format(
+    Number(value)
+  );
+};
 /**
  * Column and row icons, by catalog entry name. Deliberately sparse — the UTM family shares one icon
  * so a row of five reads as one group — and deliberately complete for every entry a surface can

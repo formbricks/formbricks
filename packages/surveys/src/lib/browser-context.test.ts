@@ -299,6 +299,7 @@ describe("createWebSurveyMetaSnapshot — the visit group", () => {
     timeOnSite: 125,
     entryReferrer: "https://www.google.com/",
     visitedUrls: ["/", "/plans", "/plans/compare", "/plans"],
+    uniquePaths: ["/", "/plans", "/plans/compare"],
   };
 
   test("adds the visit handed in by the web SDK, with the journey as one string", () => {

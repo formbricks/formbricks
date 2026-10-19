@@ -1,3 +1,4 @@
+import { dropUnfinishedShowConditions } from "@formbricks/types/show-conditions";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import type { TV3SurveyDistribution, TV3SurveyTargeting } from "./schemas";
 
@@ -29,7 +30,8 @@ export function surveyToV3Distribution(survey: TSurvey): TV3SurveyDistribution {
     autoClose: nonNegativeOrNull(survey.autoClose),
     autoComplete: responseLimitOrNull(survey.autoComplete),
     delay: nonNegativeOrNull(survey.delay) ?? 0,
-    showConditions: survey.showConditions ?? null,
+    // A draft can hold a row its author has not filled in yet; it never passes, so it is left out.
+    showConditions: dropUnfinishedShowConditions(survey.showConditions),
     triggers: surveyTriggersToV3(survey.triggers),
   };
 }

@@ -4131,7 +4131,9 @@
           "unit_pages": "pagina's",
           "unit_px": "px",
           "unit_seconds": "seconden",
-          "value_placeholder": "Waarde"
+          "value_placeholder": "Waarde",
+          "visited_url_hint": "Eén exacte pagina, op een willekeurig moment tijdens dit bezoek bekeken: /pricing omvat /pricing?ref=email, maar niet /pricing/compare.",
+          "visited_url_placeholder": "Eén pagina, bijv. /pricing"
         },
         "show_in_order": "Toon op volgorde",
         "show_language_switch": "Toon taalwissel",

@@ -33,6 +33,9 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, appSetupCompleted }
       ...prevSurvey,
       type,
       endings: endingsTemp,
+      // Show conditions belong to app surveys. Left on a link survey, an unfinished one would block
+      // publishing and point at a Survey Trigger card the link survey does not have.
+      ...(type === "app" ? {} : { showConditions: null }),
     }));
 
     // if the type is "app" and the local survey does not already have a segment, we create a new temporary segment

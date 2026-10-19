@@ -4131,7 +4131,9 @@
           "unit_pages": "ページ",
           "unit_px": "px",
           "unit_seconds": "秒",
-          "value_placeholder": "値"
+          "value_placeholder": "値",
+          "visited_url_hint": "完全一致する1ページが対象です。今回の訪問中にそのページを一度でも閲覧した場合に該当します。例:/pricing は /pricing?ref=email を含みますが、/pricing/compare は含みません。",
+          "visited_url_placeholder": "1ページを入力(例:/pricing)"
         },
         "show_in_order": "順番に表示",
         "show_language_switch": "言語切り替えを表示",

@@ -14,7 +14,7 @@ Formbricks decides a survey's eligibility from three gates, evaluated in this or
 
 A **Trigger** (a matching action) is the event that then shows an already-eligible survey — it is not a fourth gate, it is what starts a display attempt. The gates are computed up front (on load and whenever the user's data syncs); the trigger is checked against that result.
 
-When the trigger fires, the survey's [show conditions](/surveys/website-app-surveys/show-conditions) are checked last: the page, the visit so far and the device. They are covered in Level 5.
+When the trigger fires, the survey's [show conditions](/surveys/website-app-surveys/show-conditions) are checked: the page, the visit so far and the device. Only a survey that meets them goes on to the [display percentage](/surveys/website-app-surveys/show-survey-to-percent-of-users), so the percentage samples visitors who qualify. They are covered in Level 5.
 
 ## Level 0 — Always show
 
@@ -154,7 +154,7 @@ flowchart LR
 
 **Example:** an exit survey on the plan pages only, for visitors who have spent two minutes on the site or seen three pages. The trigger is exit intent; the conditions are *Current URL contains any of /plan-compare* and *Time on site is at least 120 seconds or Pages viewed is at least 3*.
 
-If the survey has a delay, the conditions are checked again when it ends.
+They are checked again right before the survey appears, after its delay if it has one.
 
 ## Recontact Options or Interaction-based Segments?
 

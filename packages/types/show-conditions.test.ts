@@ -4,6 +4,7 @@ import {
   type TShowConditionGroup,
   type TShowConditionSingle,
   ZShowConditions,
+  dropUnfinishedShowConditions,
 } from "./show-conditions";
 
 let idCounter = 0;
@@ -199,5 +200,52 @@ describe("ZShowConditions", () => {
     expect(
       issueMessages(group("and", [condition("page", "currentUrl", "containsAnyOf", longFragments)]))
     ).toEqual(["conditions can be at most 10240 characters"]);
+  });
+
+  test("caps unique pages viewed at the 200 different pages the visit store remembers", () => {
+    expect(
+      issueMessages(group("and", [condition("visit", "uniquePagesViewed", "isGreaterThanOrEqual", 200)]))
+    ).toEqual([]);
+    expect(
+      issueMessages(group("and", [condition("visit", "uniquePagesViewed", "isGreaterThanOrEqual", 201)]))
+    ).toEqual(["expected a number from 0 to 200"]);
+  });
+});
+
+describe("dropUnfinishedShowConditions", () => {
+  test("keeps finished conditions and drops a row that has no value yet", () => {
+    const finished = condition("page", "currentUrl", "pathIsAnyOf", ["/pricing"]);
+    const unfinished = condition("page", "currentUrl", "pathIsAnyOf");
+    const root = group("and", [finished, unfinished]);
+
+    expect(dropUnfinishedShowConditions(root)).toEqual({ ...root, conditions: [finished] });
+  });
+
+  test("drops a group left empty, and returns null when nothing is finished", () => {
+    const blank = condition("visit", "pagesViewed", "isGreaterThanOrEqual");
+    const finished = condition("visit", "timeOnSite", "isGreaterThanOrEqual", 30);
+    const root = group("and", [finished, group("or", [blank])]);
+
+    expect(dropUnfinishedShowConditions(root)).toEqual({ ...root, conditions: [finished] });
+    expect(dropUnfinishedShowConditions(group("and", [blank]))).toBeNull();
+  });
+
+  test("returns null for anything that is not a group of conditions", () => {
+    expect(dropUnfinishedShowConditions(null)).toBeNull();
+    expect(dropUnfinishedShowConditions("conditions")).toBeNull();
+    expect(dropUnfinishedShowConditions({ id: "root", connector: "and" })).toBeNull();
+  });
+
+  test("leaves the limits to the strict schema, so an over-limit draft is not silently emptied", () => {
+    const tooMany = group(
+      "and",
+      Array.from({ length: SHOW_CONDITIONS_LIMITS.maxConditions + 1 }, () =>
+        condition("visit", "timeOnSite", "isGreaterThanOrEqual", 30)
+      )
+    );
+
+    expect(dropUnfinishedShowConditions(tooMany)?.conditions).toHaveLength(
+      SHOW_CONDITIONS_LIMITS.maxConditions + 1
+    );
   });
 });

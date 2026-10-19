@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ZId } from "./common";
-import { isShowConditionGroup } from "./show-conditions-evaluate";
+import { MAX_UNIQUE_PAGES, isShowConditionGroup } from "./show-conditions-evaluate";
 
 export const SHOW_CONDITION_DEVICE_TYPES = ["phone", "tablet", "desktop"] as const;
 export type TShowConditionDeviceType = (typeof SHOW_CONDITION_DEVICE_TYPES)[number];
@@ -103,8 +103,13 @@ export interface TVisitSnapshot {
   /** Seconds. */
   timeOnSite: number;
   entryReferrer: string;
-  /** Paths only, no query string. */
+  /**
+   * The journey, for the response and the debug panel: paths in the order seen, a reload collapsed,
+   * the first page and the last 49 steps. Paths only, no query string.
+   */
   visitedUrls: string[];
+  /** Every different path of the visit, first seen first, up to `MAX_UNIQUE_PAGES`. Visited URL reads this. */
+  uniquePaths: string[];
 }
 
 export interface TDeviceInfo {
@@ -148,6 +153,11 @@ const getListValueIssue = (value: TRightOperandValue): string | undefined => {
 };
 
 const getSingleValueIssue = (operand: string, value: TRightOperandValue): string | undefined => {
+  if (operand === "uniquePagesViewed") {
+    return typeof value === "number" && value >= 0 && value <= MAX_UNIQUE_PAGES
+      ? undefined
+      : `expected a number from 0 to ${MAX_UNIQUE_PAGES}`;
+  }
   if (NUMBER_OPERANDS.has(operand)) {
     return typeof value === "number" && value >= 0 ? undefined : "expected a number of 0 or more";
   }
@@ -286,3 +296,27 @@ const pruneEmptyGroups = (group: TShowConditionGroup): TShowConditionGroup | nul
 export const ZShowConditions = ZShowConditionGroup.nullable()
   .superRefine(refineLimits)
   .transform((conditions): TShowConditions => (conditions ? pruneEmptyGroups(conditions) : null));
+
+const ZShowConditionGroupHeader = z.object({ id: ZId, connector: z.enum(["and", "or"]) });
+
+const keepFinished = (item: unknown): TShowConditionSingle | TShowConditionGroup | null => {
+  const single = ZShowConditionSingle.safeParse(item);
+  if (single.success) return single.data;
+
+  const header = ZShowConditionGroupHeader.safeParse(item);
+  const children = (item as { conditions?: unknown } | null)?.conditions;
+  if (!header.success || !Array.isArray(children)) return null;
+  return { ...header.data, conditions: children.flatMap((child) => keepFinished(child) ?? []) };
+};
+
+/**
+ * The finished part of stored conditions. A condition that is not filled in (or not readable) is
+ * dropped, and so is any group left empty; it could never pass anyway. Draft saves store conditions
+ * loosely on purpose, since autosave sends the row an author is still filling in, so a reader that
+ * parses the stored copy strictly (the v3 API) reads it through this first. Limits are not checked:
+ * a draft over them still gets a clear error rather than silently losing its conditions.
+ */
+export const dropUnfinishedShowConditions = (value: unknown): TShowConditions => {
+  const kept = keepFinished(value);
+  return kept && isShowConditionGroup(kept) ? pruneEmptyGroups(kept) : null;
+};

@@ -4131,7 +4131,9 @@
           "unit_pages": "páginas",
           "unit_px": "px",
           "unit_seconds": "segundos",
-          "value_placeholder": "Valor"
+          "value_placeholder": "Valor",
+          "visited_url_hint": "Uma página exata, vista em qualquer momento durante esta visita: /pricing abrange /pricing?ref=email, mas não /pricing/compare.",
+          "visited_url_placeholder": "Uma página, por exemplo: /pricing"
         },
         "show_in_order": "Mostrar em ordem",
         "show_language_switch": "Mostrar troca de idioma",
