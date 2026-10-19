@@ -1,4 +1,4 @@
-import { type TShowConditions, dropUnfinishedShowConditions } from "@formbricks/types/show-conditions";
+import { dropUnfinishedShowConditions } from "@formbricks/types/show-conditions";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import type { TV3SurveyDistribution, TV3SurveyTargeting } from "./schemas";
 
@@ -34,15 +34,6 @@ export function surveyToV3Distribution(survey: TSurvey): TV3SurveyDistribution {
     showConditions: dropUnfinishedShowConditions(survey.showConditions),
     triggers: surveyTriggersToV3(survey.triggers),
   };
-}
-
-/**
- * Whether a patched document changes the survey's show conditions. The document's copy was read
- * without a draft's unfinished rows (above), so writing it back unchanged would delete those rows.
- * Both sides come out of the same zod schemas, keys in the same order, so comparing JSON is enough.
- */
-export function haveV3ShowConditionsChanged(survey: TSurvey, next: TShowConditions): boolean {
-  return JSON.stringify(dropUnfinishedShowConditions(survey.showConditions)) !== JSON.stringify(next);
 }
 
 /** Build the public `targeting` block from a stored survey's segment (empty filters = "show everyone"). */

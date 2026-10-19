@@ -29,7 +29,7 @@ import {
   normalizeSurveyScheduling,
   reconcileDueSurveySchedules,
 } from "@/modules/survey/scheduling/lib/survey-scheduling";
-import { haveV3ShowConditionsChanged, v3DistributionToScalars } from "./distribution";
+import { v3DistributionToScalars } from "./distribution";
 import { type TV3SurveyLanguageRequest, ensureV3WorkspaceLanguages } from "./languages";
 import { type TV3SurveyReportedVisibility, prepareV3SurveyPatchInput } from "./prepare";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
@@ -148,8 +148,9 @@ async function buildV3AppSurveyPatchWrites(params: {
   document: TV3SurveyDocument;
   data: Prisma.SurveyUpdateInput;
   visibleSurveyWhere: Prisma.SurveyWhereInput;
+  replacesDistribution: boolean;
 }): Promise<TV3SegmentFilterWrite | null> {
-  const { currentSurvey, document, data, visibleSurveyWhere } = params;
+  const { currentSurvey, document, data, visibleSurveyWhere, replacesDistribution } = params;
   const distribution = document.distribution;
   if (!distribution) {
     return null;
@@ -160,9 +161,11 @@ async function buildV3AppSurveyPatchWrites(params: {
 
   const { showConditions, ...scalars } = v3DistributionToScalars(distribution);
   Object.assign(data, scalars);
-  // Written only when the patch changes them, so a draft's unfinished rows survive a patch of anything
-  // else. A nullable JSON column takes `Prisma.DbNull`, not `null`, to store "no conditions".
-  if (haveV3ShowConditionsChanged(currentSurvey, showConditions)) {
+  // The stored conditions were read without a draft's unfinished rows. A patch that does not send
+  // `distribution` keeps them while the survey stays a draft. One that sends it, or that takes the
+  // survey live, writes what was validated: a live survey must not keep a row that can never pass.
+  // A nullable JSON column takes `Prisma.DbNull`, not `null`, to store "no conditions".
+  if (replacesDistribution || document.status !== "draft") {
     data.showConditions = showConditions ?? Prisma.DbNull;
   }
   data.triggers = handleTriggerUpdates(resolvedTriggers, currentSurvey.triggers, actionClasses);
@@ -289,6 +292,8 @@ export async function executeV3SurveyPatch(params: {
    * when the CSS actually changed; absent leaves the column untouched.
    */
   customCss?: { stored: TCustomCssStored | null };
+  /** Whether the request sent `distribution`, which replaces the stored one whole. */
+  replacesDistribution?: boolean;
 }): Promise<TSurvey> {
   const {
     currentSurvey,
@@ -298,6 +303,7 @@ export async function executeV3SurveyPatch(params: {
     precondition,
     visibleSurveyWhere = NO_VISIBLE_SURVEYS,
     customCss,
+    replacesDistribution = false,
   } = params;
   // Same rule as prepare's validation (ENG-3975): media the stored survey already had does not block a
   // patch that leaves it untouched.
@@ -362,7 +368,13 @@ export async function executeV3SurveyPatch(params: {
   // targeting write to perform, if any.
   const segmentFilterWrite =
     currentSurvey.type === "app"
-      ? await buildV3AppSurveyPatchWrites({ currentSurvey, document, data, visibleSurveyWhere })
+      ? await buildV3AppSurveyPatchWrites({
+          currentSurvey,
+          document,
+          data,
+          visibleSurveyWhere,
+          replacesDistribution,
+        })
       : null;
 
   const runSurveyUpdate = (client: Prisma.TransactionClient) =>
@@ -556,6 +568,7 @@ export async function patchV3Survey(
     precondition: effectivePrecondition,
     visibleSurveyWhere,
     ...(customCss.changed ? { customCss: { stored: customCss.stored } } : {}),
+    replacesDistribution: typeof input === "object" && input !== null && "distribution" in input,
   });
 
   if (report && customCss.changed) {
