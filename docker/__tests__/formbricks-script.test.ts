@@ -274,7 +274,7 @@ const migrateLegacyValkeyImage = (composePath: string, validationResult: "succes
       "-lc",
       `source "$1"
 sudo() {
-  printf '%s\\n' "$*" >> "$VALIDATION_LOG_PATH"
+  printf '[%s] %s\\n' "$PWD" "$*" >> "$VALIDATION_LOG_PATH"
   [[ "$VALIDATION_RESULT" == "success" ]]
 }
 migrate_legacy_valkey_image "$2"`,
@@ -308,7 +308,7 @@ const bindFormbricksPortToLoopback = (
       "-lc",
       `source "$1"
 sudo() {
-  printf '%s\\n' "$*" >> "$VALIDATION_LOG_PATH"
+  printf '[%s] %s\\n' "$PWD" "$*" >> "$VALIDATION_LOG_PATH"
   [[ "$VALIDATION_RESULT" == "success" ]]
 }
 bind_formbricks_port_to_loopback "$2" "$3"`,
@@ -1106,7 +1106,7 @@ describe("docker/formbricks.sh Valkey image migration", () => {
     expect(readFileSync(`${composePath}.before-valkey-8.1.9`, "utf8")).toContain(legacyValkeyImage);
     expect(statSync(composePath).mode & 0o777).toBe(0o600);
     expect(statSync(`${composePath}.before-valkey-8.1.9`).mode & 0o777).toBe(0o600);
-    expect(readFileSync(validationLogPath, "utf8")).toBe(`docker compose -f ${composePath} config\n`);
+    expect(readFileSync(validationLogPath, "utf8")).toBe(`[${dirname(composePath)}] docker compose config\n`);
   });
 
   test("updates the live redis service when Compose uses four-space indentation", () => {
@@ -1129,7 +1129,7 @@ volumes:
 
     expect(readFileSync(composePath, "utf8")).toContain(multiArchValkeyImage);
     expect(readFileSync(`${composePath}.before-valkey-8.1.9`, "utf8")).toContain(legacyValkeyImage);
-    expect(readFileSync(validationLogPath, "utf8")).toBe(`docker compose -f ${composePath} config\n`);
+    expect(readFileSync(validationLogPath, "utf8")).toBe(`[${dirname(composePath)}] docker compose config\n`);
   });
 
   test.each([multiArchValkeyImage, "example.com/custom-valkey@sha256:custom"])(
@@ -1242,7 +1242,7 @@ describe("docker/formbricks.sh loopback-only app port (ENG-3983)", () => {
     expect(statSync(composePath).mode & 0o777).toBe(0o600);
     expect(statSync(`${composePath}.before-loopback-port`).mode & 0o777).toBe(0o600);
     expect(readFileSync(validationLogPath, "utf8")).toBe(
-      `docker compose -f ${composePath} config\ndocker compose -f ${composePath} config --format json formbricks\n`
+      `[${dirname(composePath)}] docker compose config\n[${dirname(composePath)}] docker compose config --format json formbricks\n`
     );
   });
 
@@ -1343,7 +1343,7 @@ describe("docker/formbricks.sh loopback-only app port (ENG-3983)", () => {
 printf "%s\\n" "$*" >> "$COMMAND_LOG"
 case "$*" in
   *"config --services") printf "authzed-ops\\nspicedb\\nhub-worker\\nformbricks\\n" ;;
-  *"-f docker-compose.yml"*" config") [ "$FAIL_PORT_VALIDATION" = "1" ] && exit 1 ;;
+  "docker compose config") [ "$FAIL_PORT_VALIDATION" = "1" ] && exit 1 ;;
   *"upgrade check") [ "$FAIL_UPGRADE_CHECK" = "1" ] && exit 1 ;;
   *"docker version"*) [ -n "$ENGINE_VERSION" ] && printf "%s\\n" "$ENGINE_VERSION" ;;
   *"--format json formbricks") cat "$RENDERED_JSON" ;;
@@ -1378,7 +1378,7 @@ exit 0
       "127.0.0.1:3000:3000",
     ]);
     expect(readFileSync(`${composePath}.before-loopback-port`, "utf8")).toBe(composeContents);
-    const validation = commands.indexOf("docker compose -f docker-compose.yml config");
+    const validation = commands.indexOf("docker compose config\n");
     expect(validation).toBeGreaterThan(commands.indexOf("upgrade check"));
     expect(validation).toBeLessThan(commands.indexOf("docker compose down"));
   });
@@ -1389,7 +1389,7 @@ exit 0
     expect(result.status).not.toBe(0);
     expect(readFileSync(composePath, "utf8")).toBe(composeContents);
     expect(existsSync(`${composePath}.before-loopback-port`)).toBe(false);
-    expect(commands).not.toContain("-f docker-compose.yml config");
+    expect(commands).not.toContain("docker compose config\n");
     expect(result.stdout).not.toContain("127.0.0.1 only");
   });
 
@@ -1405,10 +1405,11 @@ exit 0
     expect(commands).toContain("docker compose up -d");
   });
 
-  test("the updater validates the override file too, as `up` loads it", () => {
+  test("the updater validates the project the way its own `up` loads it, with no -f", () => {
     const { commands } = runUpdate({ withOverride: true });
 
-    expect(commands).toContain("docker compose -f docker-compose.yml -f docker-compose.override.yml config");
+    expect(commands).toContain("docker compose config\n");
+    expect(commands).not.toMatch(/docker compose -f .* config/);
   });
 
   test("the updater narrows the override's bare mapping in the same transaction", () => {
@@ -1465,13 +1466,12 @@ exit 0
   });
 
   test("the updater narrows the override Compose loads first, in Compose's order", () => {
-    const { result, composePath, commands } = runUpdate({
+    const { result, composePath } = runUpdate({
       extraFiles: { "compose.override.yml": bareOverride, "docker-compose.override.yml": bareOverride },
     });
     const installationDir = dirname(composePath);
 
     expect(result.status).toBe(0);
-    expect(commands).toContain("docker compose -f docker-compose.yml -f compose.override.yml config");
     expect(
       getPublishedPorts(readFileSync(join(installationDir, "compose.override.yml"), "utf8"), "formbricks")
     ).toEqual(["127.0.0.1:3000:3000"]);
@@ -1492,10 +1492,12 @@ exit 0
     ).toEqual(["127.0.0.1:3000:3000"]);
   });
 
-  test("the updater leaves the port alone when .env sets COMPOSE_FILE", () => {
-    const { result, composePath, composeContents, commands } = runUpdate({
-      envExtra: "COMPOSE_FILE=docker-compose.yml:extra.yml\n",
-    });
+  test.each([
+    "COMPOSE_FILE=docker-compose.yml:extra.yml",
+    "COMPOSE_FILE: docker-compose.yml:extra.yml",
+    "export COMPOSE_FILE=docker-compose.yml:extra.yml",
+  ])("the updater leaves the port alone when .env has %s", (setting) => {
+    const { result, composePath, composeContents, commands } = runUpdate({ envExtra: `${setting}\n` });
 
     expect(result.status).toBe(0);
     expect(result.stdout).toContain(".env sets COMPOSE_FILE");

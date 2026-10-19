@@ -1300,18 +1300,14 @@ compose_override_file() {
   done
 }
 
-# Renders the Compose project the way `docker compose up` loads it: the file plus, when there is one, the
-# override file beside it. Extra arguments go to `config` (e.g. `--format json formbricks`).
+# Renders the Compose project exactly as the update's own `docker compose` commands load it: from the file's
+# directory with no -f, so Compose itself picks the files (an override, or COMPOSE_FILE from .env). Extra
+# arguments go to `config` (e.g. `--format json formbricks`).
 render_compose_project() {
-  local compose_file="$1"
+  local compose_dir
+  compose_dir="$(dirname "$1")"
   shift
-  local override_file
-  override_file="$(compose_override_file "$compose_file")"
-  local file_args=(-f "$compose_file")
-  if [[ -n "$override_file" ]]; then
-    file_args+=(-f "$override_file")
-  fi
-  sudo docker compose "${file_args[@]}" config "$@"
+  (cd "$compose_dir" && sudo docker compose config "$@")
 }
 
 # Puts rewritten Compose files in place as one transaction: each original is backed up before it is replaced, and
@@ -1578,11 +1574,12 @@ bind_formbricks_port_to_loopback() {
     return 1
   fi
 
-  # COMPOSE_FILE in .env changes which files `docker compose` loads, so the result could not be checked.
+  # COMPOSE_FILE in .env changes which files `docker compose` loads, so the files to narrow are unknown. Compose
+  # accepts both `=` and `:` there.
   local env_file
   env_file="$(dirname "$compose_file")/.env"
   if [[ "$mode" == "validate" && -f "$env_file" ]] &&
-    grep -qE '^[[:space:]]*(export[[:space:]]+)?COMPOSE_FILE[[:space:]]*=' "$env_file"; then
+    grep -qE '^[[:space:]]*(export[[:space:]]+)?COMPOSE_FILE[[:space:]]*[=:]' "$env_file"; then
     echo "⚠️ .env sets COMPOSE_FILE, so the update cannot tell which files Docker Compose loads."
     return 1
   fi
