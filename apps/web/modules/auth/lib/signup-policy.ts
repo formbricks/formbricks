@@ -19,8 +19,8 @@ import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 
 /**
  * Whether an UNINVITED sign-up is allowed by instance policy. Callers that can carry an invite must
- * check that themselves — a valid invite is an independent grant, and the raw Better Auth endpoint has
- * no invite to present.
+ * check that themselves — a valid invite is an independent grant, and a call to Better Auth's sign-up
+ * endpoint from outside `createUserAction` has no invite to present.
  *
  * Two legitimate ways to be allowed: public sign-up is genuinely open (Cloud / dev / E2E *and* the
  * license permits multiple organizations), or the instance is still fresh, which is the initial

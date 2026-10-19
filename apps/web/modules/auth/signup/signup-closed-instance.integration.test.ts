@@ -11,7 +11,8 @@ import { runWithSsoRequestContext } from "@/modules/ee/sso/lib/sso-request-conte
  *
  * ENG-2293 was reported against the raw HTTP route, where the closed-instance policy existed only in the
  * server action. Since ENG-3988 that route is closed outright (`disabledPaths`), so a raw POST now gets a
- * 404 before any hook runs; the first test pins that for a closed instance.
+ * 404 before any hook runs. The first test pins that on a fresh instance, where the gate would have
+ * admitted the sign-up, so only `disabledPaths` can make it pass.
  *
  * The policy gate (`signupPolicyBeforeHandler`) still runs on every in-process `auth.api.signUpEmail`
  * call, and it stays as defence in depth for any caller other than the action. The rest of this suite
