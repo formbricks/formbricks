@@ -38,7 +38,9 @@ Run these from the folder that holds your `docker-compose.yml` (for one-click in
     ```
 
     This only downloads. Formbricks keeps running. If your `docker-compose.yml` pins a version instead of
-    `latest`, change the Formbricks image tags to the target version first.
+    `latest`, first set the same target image on all four services that use it: `formbricks`,
+    `formbricks-migrate`, `authzed-ops` and `authzed-initialize`. Preparation runs in `authzed-ops`, so an
+    old image there would prepare for the old release.
   </Step>
   <Step title="Stop Formbricks">
     Stop everything that writes to the database, and leave the databases running:
@@ -51,6 +53,7 @@ Run these from the folder that holds your `docker-compose.yml` (for one-click in
   </Step>
   <Step title="Back up both databases">
     ```bash
+    umask 077  # the dumps hold all your data: keep them readable only by you
     docker compose exec -T postgres pg_dump -Fc -U postgres -d formbricks > formbricks_$(date +%Y%m%d_%H%M%S).dump
     docker compose exec -T postgres pg_dump -Fc -U postgres -d spicedb > spicedb_$(date +%Y%m%d_%H%M%S).dump
     ```
@@ -125,11 +128,13 @@ Run these from the folder that holds your `docker-compose.yml` (for one-click in
   </Step>
   <Step title="Upgrade">
     ```bash
-    helm upgrade <release> <chart> -n <namespace> -f values.yaml --set authzed.migrationAcknowledged=true --wait
+    helm upgrade <release> <chart> -n <namespace> -f values.yaml --wait
     ```
 
-    The chart refuses to upgrade without `authzed.migrationAcknowledged=true`. Installs that came from v5
-    already have it in their values; installs that started on v6 need it once, after a successful preparation.
+    The chart refuses to upgrade unless `authzed.migrationAcknowledged: true` is in your values. Installs
+    that came from v5 already have it; installs that started on v6 add it once, after a successful
+    preparation. Put it in the values file Argo CD or Flux reconciles from, not only on the command line, so
+    the next sync doesn't drop it.
 
     Then resume Argo CD, Flux or your autoscalers.
   </Step>
