@@ -1,0 +1,117 @@
+---
+title: "Upgrade Formbricks"
+description: "The steps to follow for every self-hosted upgrade, whatever the version."
+icon: "arrow-up-right-dots"
+---
+
+Every self-hosted upgrade follows the same steps. They take a short maintenance window: Formbricks is
+unavailable from the moment you stop it until the new version is running, usually a few minutes.
+
+Since v6, Formbricks keeps its permissions in SpiceDB. Every new version can change how those permissions
+are stored, so each upgrade includes one **preparation** command that brings SpiceDB up to date before the
+new version starts. It is safe to run even when nothing changed.
+
+<Note>
+  Upgrading from v5? Follow the [v6 maintenance upgrade](/self-hosting/advanced/v6-maintenance-upgrade)
+  instead. It covers setting up SpiceDB for the first time.
+</Note>
+
+## Before you start
+
+1. **Read what changed.** Check the [release notes](https://github.com/formbricks/formbricks/releases) and the [migration guide](/self-hosting/advanced/migration)
+   for every version between yours and the target. Most releases need nothing extra; the ones that do say
+   so there.
+2. **Use a supported path.** Upgrade one major version at a time (for example 6.x → 7.x, never 5.x → 7.x).
+   Each release lists the upgrade pair it was tested with.
+3. **Plan a short maintenance window** and let your users know.
+
+## Docker and one-click
+
+Run these from the folder that holds your `docker-compose.yml` (for one-click installs, `formbricks`):
+
+<Steps>
+  <Step title="Download the new images">
+    ```bash
+    docker compose pull
+    ```
+
+    This only downloads. Formbricks keeps running.
+  </Step>
+  <Step title="Stop Formbricks">
+    Stop everything that writes to the database, and leave the databases running:
+
+    ```bash
+    docker compose stop formbricks hub hub-worker
+    ```
+
+    If you enabled the taxonomy service, add `taxonomy` to that command.
+  </Step>
+  <Step title="Back up both databases">
+    ```bash
+    docker compose exec postgres pg_dump -Fc -U postgres -d formbricks > formbricks_$(date +%Y%m%d_%H%M%S).dump
+    docker compose exec postgres pg_dump -Fc -U postgres -d spicedb > spicedb_$(date +%Y%m%d_%H%M%S).dump
+    ```
+
+    Keep a copy of your `.env` file as well. If you use a managed database, take a snapshot there instead.
+  </Step>
+  <Step title="Prepare SpiceDB with the new version">
+    ```bash
+    docker compose --profile authzed-ops run --rm --no-deps \
+      --entrypoint formbricks-authzed-prepare authzed-ops \
+      --backup-confirmed --writers-stopped
+    ```
+
+    Wait until it exits without an error. If it fails, do not continue: Formbricks is still stopped and
+    your data is unchanged, so you can start the old version again with `docker compose start`.
+  </Step>
+  <Step title="Start the new version">
+    One-click installs:
+
+    ```bash
+    ./formbricks.sh update
+    ```
+
+    Other Docker installs:
+
+    ```bash
+    docker compose up -d
+    ```
+
+    Database migrations run automatically on start.
+  </Step>
+</Steps>
+
+## Kubernetes (Helm)
+
+<Steps>
+  <Step title="Stop Formbricks">
+    Pause anything that could restart it (Argo CD, Flux, autoscalers), then scale the Formbricks and Hub
+    deployments to zero. Leave PostgreSQL and SpiceDB running.
+  </Step>
+  <Step title="Back up">
+    Back up the Formbricks database and the SpiceDB database, and keep your Helm values and Secrets.
+  </Step>
+  <Step title="Prepare SpiceDB with the new version">
+    Run the preparation as a one-off Job, using the new image and your existing database and SpiceDB
+    settings. A ready-to-adapt Job is in the
+    [maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade#helm-and-gitops). Wait for it
+    to complete successfully.
+  </Step>
+  <Step title="Upgrade">
+    ```bash
+    helm upgrade <release> <chart> -n <namespace> -f values.yaml --wait
+    ```
+
+    Then resume Argo CD, Flux or your autoscalers.
+  </Step>
+</Steps>
+
+<Tip>
+  The 6.0 → 6.1 upgrade on Kubernetes can also run without a maintenance window. See
+  [online upgrade](/self-hosting/configuration/online-upgrade). It is opt-in and still being validated.
+</Tip>
+
+## After the upgrade
+
+Sign in, open a survey and submit a test response. If something is wrong, restore both database backups
+and start the previous version again. Downgrading in place, without restoring the backups, is not supported.
