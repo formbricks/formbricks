@@ -1,4 +1,5 @@
 import { auth } from "@/modules/auth/lib/auth";
+import { withAuthRequestBodyLimit } from "@/modules/auth/lib/auth-request-body-limit";
 import { runWithSsoRequestContext } from "@/modules/ee/sso/lib/sso-request-context";
 
 // Force-no-store so Better Auth's outbound SSO fetches (token exchange, userinfo, JWKS) are never
@@ -24,4 +25,8 @@ export const fetchCache = "force-no-store";
 const handler = (request: Request): Promise<Response> =>
   runWithSsoRequestContext(() => auth.handler(request));
 
-export { handler as GET, handler as POST };
+// Bounded before Better Auth reads the body; every other `/api/auth/*` route (the SAML bridge, SSO
+// recovery) goes through the same guard (ENG-3846).
+const limitedHandler = withAuthRequestBodyLimit(handler);
+
+export { limitedHandler as GET, limitedHandler as POST };
