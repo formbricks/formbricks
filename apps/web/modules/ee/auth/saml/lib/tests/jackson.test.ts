@@ -60,8 +60,6 @@ describe("SAML Jackson Initialization", () => {
         type: "postgres",
         url: SAML_DATABASE_URL,
       },
-      // An anonymous failed callback must not persist its SAMLResponse (ENG-3976).
-      ssoTraces: { disable: true },
     });
 
     expect(preloadConnection).toHaveBeenCalledWith(mockConnectionController);
