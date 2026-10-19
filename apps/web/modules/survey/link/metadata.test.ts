@@ -5,7 +5,7 @@ import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getBasicSurveyMetadata, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
 import {
-  GENERIC_CONTACT_SURVEY_METADATA,
+  getGenericContactSurveyMetadata,
   getMetadataForContactSurvey,
   getMetadataForLinkSurvey,
 } from "./metadata";
@@ -31,7 +31,8 @@ vi.mock("./lib/metadata-utils", async (importOriginal) => {
   };
 });
 
-describe("getMetadataForLinkSurvey", () => {
+// One shared setup for the /s and /c metadata builders, which share the survey-metadata helper.
+describe("link-survey metadata", () => {
   const mockSurveyId = "survey-123";
   const mockSurveyName = "Test Survey";
   // Distinct from the page title so the tests can tell which one reaches the social previews.
@@ -314,14 +315,14 @@ describe("getMetadataForLinkSurvey", () => {
     ])("gives %s survey generic metadata, never its name", async (_label, state) => {
       vi.mocked(getSurveyWithMetadata).mockResolvedValue(contactSurvey(state));
 
-      expect(await getMetadataForContactSurvey(mockSurveyId)).toEqual(GENERIC_CONTACT_SURVEY_METADATA);
+      expect(await getMetadataForContactSurvey(mockSurveyId)).toEqual(getGenericContactSurveyMetadata());
       expect(getBasicSurveyMetadata).not.toHaveBeenCalled();
     });
 
     test("gives a survey that can't be loaded generic metadata", async () => {
       vi.mocked(getSurveyWithMetadata).mockRejectedValue(new ResourceNotFoundError("Survey", mockSurveyId));
 
-      expect(await getMetadataForContactSurvey(mockSurveyId)).toEqual(GENERIC_CONTACT_SURVEY_METADATA);
+      expect(await getMetadataForContactSurvey(mockSurveyId)).toEqual(getGenericContactSurveyMetadata());
     });
 
     test("names a public survey, without the /s canonical or robots rules", async () => {
@@ -331,9 +332,20 @@ describe("getMetadataForLinkSurvey", () => {
       const result = await getMetadataForContactSurvey(mockSurveyId, ["de"]);
 
       expect(getBasicSurveyMetadata).toHaveBeenCalledWith(mockSurveyId, undefined, survey, ["de"]);
-      expect(result).toMatchObject({ title: mockSurveyName, description: mockDescription });
-      expect(result).not.toHaveProperty("alternates");
-      expect(result).not.toHaveProperty("robots");
+      expect(result).toEqual({
+        title: mockSurveyName,
+        description: mockDescription,
+        openGraph: {
+          title: mockSurveyName,
+          description: mockDescription,
+          images: ["/api/v1/client/og?brandColor=%2364748b&name=Test%20Survey"],
+        },
+        twitter: {
+          title: mockSurveyName,
+          description: mockDescription,
+          images: ["/api/v1/client/og?brandColor=%2364748b&name=Test%20Survey"],
+        },
+      });
     });
   });
 });

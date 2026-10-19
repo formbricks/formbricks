@@ -1,23 +1,18 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { logger } from "@formbricks/logger";
 import { findMatchingLocale, getAcceptedLanguages } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { verifyContactSurveyToken } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
-import {
-  type TLinkSurvey,
-  getExistingContactResponse,
-  getSurveyWithMetadata,
-} from "@/modules/survey/link/lib/data";
-import { isLinkSurveyServable } from "@/modules/survey/link/lib/public-access";
+import { getExistingContactResponse } from "@/modules/survey/link/lib/data";
+import { getServableLinkSurvey } from "@/modules/survey/link/lib/servable-survey";
 import { resolveSingleUseIdForSurvey } from "@/modules/survey/link/lib/single-use-link";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getWorkspaceById } from "@/modules/survey/link/lib/workspace";
-import { GENERIC_CONTACT_SURVEY_METADATA, getMetadataForContactSurvey } from "@/modules/survey/link/metadata";
+import { getGenericContactSurveyMetadata, getMetadataForContactSurvey } from "@/modules/survey/link/metadata";
 
 interface ContactSurveyPageProps {
   params: Promise<{
@@ -31,12 +26,12 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
   try {
     const result = verifyContactSurveyToken(jwt);
     if (!result.ok) {
-      return GENERIC_CONTACT_SURVEY_METADATA;
+      return getGenericContactSurveyMetadata();
     }
     return await getMetadataForContactSurvey(result.data.surveyId, await getAcceptedLanguages());
   } catch {
     // A token or lookup failure still gets generic metadata rather than an error page.
-    return GENERIC_CONTACT_SURVEY_METADATA;
+    return getGenericContactSurveyMetadata();
   }
 };
 
@@ -63,45 +58,22 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
 
   const { surveyId, contactId } = result.data;
 
-  // ENG-3228: the link-survey loader, not the authenticated one. This page renders the survey into a
-  // client component for whoever opens the contact link, so it is a respondent-facing reader and must
-  // take the selector that omits the workspace-library row id — the same one `/s/<surveyId>` and the
-  // v1 client environment use. It also blanks follow-ups and segment filters, which do not belong in
-  // a respondent's page payload either. It throws where the authenticated loader returned null, so
-  // both call sites below catch, mirroring `link/page.tsx`.
-  const loadSurvey = async (): Promise<TLinkSurvey | null> => {
-    try {
-      return await getSurveyWithMetadata(surveyId);
-    } catch (error) {
-      // Logged rather than rethrown, and logged rather than swallowed silently: this loader turns a
-      // Prisma failure into `DatabaseError`, which is indistinguishable here from the survey simply
-      // being gone, and a respondent gets the same 404 either way. `link/page.tsx` treats its own
-      // load the same way, so the two pages fail alike; the log is what tells an outage apart.
-      logger.error(error, "Error fetching survey for contact link");
-      return null;
-    }
-  };
-
+  // ENG-3228: the link-survey loader, not the authenticated one: this page renders the survey into a client
+  // component for whoever opens the contact link. Only a survey this page may serve comes back, so neither
+  // early return below can confirm that a non-public one exists (ENG-4032).
   const existingResponse = await getExistingContactResponse(surveyId, contactId)();
   if (existingResponse) {
-    const survey = await loadSurvey();
-    // Same gate as below: a survey that is no longer public 404s instead of confirming it exists (ENG-4032).
-    if (survey && !isLinkSurveyServable(survey)) {
+    const survey = await getServableLinkSurvey(surveyId);
+    if (!survey) {
       notFound();
     }
-    if (survey) {
-      const workspace = await getWorkspaceById(survey.workspaceId);
-      return <SurveyInactive status="response submitted" workspace={workspace || undefined} />;
-    }
-    return <SurveyInactive status="response submitted" />;
+    const workspace = await getWorkspaceById(survey.workspaceId);
+    return <SurveyInactive status="response submitted" workspace={workspace || undefined} />;
   }
 
   const isPreview = preview === "true";
-  const survey = await loadSurvey();
-
-  // Gate before the single-use early return, which would otherwise tell the token holder that a draft,
-  // archived or non-link survey exists (ENG-4032). renderSurvey checks again.
-  if (!survey || !isLinkSurveyServable(survey)) {
+  const survey = await getServableLinkSurvey(surveyId);
+  if (!survey) {
     notFound();
   }
 

@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Response, Workspace } from "@formbricks/database/prisma-browser";
 import type { TRendererCustomCss } from "@formbricks/types/custom-css";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -15,6 +14,7 @@ import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { validateSurveyPinAction } from "@/modules/survey/link/actions";
 import { SurveyClientWrapper } from "@/modules/survey/link/components/survey-client-wrapper";
 import { useAppLocale } from "@/modules/survey/link/hooks/use-app-locale";
+import { isLinkSurveyGoneError } from "@/modules/survey/link/lib/public-access";
 import { OTPInput } from "@/modules/ui/components/otp-input";
 
 interface PinScreenProps {
@@ -111,14 +111,15 @@ export const PinScreen = (props: Readonly<PinScreenProps>) => {
             // "Not found" means the survey stopped taking responses (closed, archived or gone) after this
             // page loaded (ENG-4032). The PIN boxes only show an error as a red border, so re-render the page
             // and let the server show what a fresh load would, instead of a PIN error that can never clear.
-            if (response?.serverError === new ResourceNotFoundError("Survey", surveyId).message) {
+            if (isLinkSurveyGoneError(response?.serverError, surveyId)) {
               router.refresh();
             }
           }
         } catch {
           // A rejected call (offline, or an action id a newer deploy no longer serves) must still release the
           // PIN boxes, or they stay disabled for good.
-          setError(t("common.something_went_wrong_please_try_again"));
+          // Only its presence is shown (a red border), so the text is never rendered.
+          setError("UNEXPECTED_ERROR");
         } finally {
           setLoading(false);
         }
@@ -126,7 +127,7 @@ export const PinScreen = (props: Readonly<PinScreenProps>) => {
     };
 
     void validateSurveyPin();
-  }, [localPinEntry, router, surveyId, t]);
+  }, [localPinEntry, router, surveyId]);
 
   if (!survey) {
     // The gate is nothing but translated chrome, so it waits for its locale instead of asking for the

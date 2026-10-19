@@ -1,17 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { findMatchingLocale, getAcceptedLanguages } from "@/lib/utils/locale";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
-import {
-  type TLinkSurvey,
-  getResponseBySingleUseId,
-  getSurveyWithMetadata,
-} from "@/modules/survey/link/lib/data";
-import { isLinkSurveyServable } from "@/modules/survey/link/lib/public-access";
+import { getResponseBySingleUseId } from "@/modules/survey/link/lib/data";
+import { getServableLinkSurvey } from "@/modules/survey/link/lib/servable-survey";
 import { resolveSingleUseIdForSurvey } from "@/modules/survey/link/lib/single-use-link";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
@@ -69,18 +64,10 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
    * generateMetadata and this page component are automatically deduplicated.
    */
 
-  // Stage 1: Fetch survey first (required for all subsequent logic)
-  let survey: TLinkSurvey | null = null;
-  try {
-    survey = await getSurveyWithMetadata(params.surveyId);
-  } catch (error) {
-    logger.error(error, "Error fetching survey");
-    return notFound();
-  }
-
-  // Gate before any early return below: the single-use screen would otherwise tell a visitor that a draft,
-  // archived or non-link survey exists, and what state it is in (ENG-4032). renderSurvey checks again.
-  if (!survey || !isLinkSurveyServable(survey)) {
+  // Stage 1: Fetch survey first (required for all subsequent logic). Only a survey this page may serve
+  // comes back, so the single-use screen below can't confirm a non-public one exists (ENG-4032).
+  const survey = await getServableLinkSurvey(params.surveyId);
+  if (!survey) {
     return notFound();
   }
 

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   type TLinkSurveyAccessFields as TAccessFields,
+  isLinkSurveyGoneError,
   isLinkSurveyOpenForResponses,
   isLinkSurveyServable,
 } from "./public-access";
@@ -36,5 +37,23 @@ describe("isLinkSurveyOpenForResponses", () => {
     ["an app survey in progress", survey({ type: "app" }), false],
   ])("%s → %s", (_label, input, expected) => {
     expect(isLinkSurveyOpenForResponses(input)).toBe(expected);
+  });
+});
+
+describe("isLinkSurveyGoneError", () => {
+  const surveyId = "clsurvey00000000000000000";
+
+  test("is true for the action's not-found answer for this survey", () => {
+    expect(isLinkSurveyGoneError(`Survey with ID ${surveyId} not found`, surveyId)).toBe(true);
+  });
+
+  test.each([
+    ["a wrong PIN", "INVALID_PIN"],
+    ["a rate limit", "Maximum number of requests reached. Please try again later."],
+    ["a generic server error", "Something went wrong while executing the operation."],
+    ["another survey's not-found", "Survey with ID clother000000000000000000 not found"],
+    ["no error at all", undefined],
+  ])("is false for %s", (_label, serverError) => {
+    expect(isLinkSurveyGoneError(serverError, surveyId)).toBe(false);
   });
 });

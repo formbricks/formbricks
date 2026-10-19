@@ -1,3 +1,4 @@
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 
 // `archivedAt` is required, not optional as on `TSurvey`: a survey from a loader that doesn't select it
@@ -32,3 +33,11 @@ export const isLinkSurveyOpenForResponses = <T extends TLinkSurveyAccessFields>(
   survey: T
 ): survey is T & TServableLinkSurvey & { status: "inProgress" } =>
   isLinkSurveyServable(survey) && survey.status === "inProgress";
+
+/**
+ * Whether a link-survey action's `serverError` is its "not found" answer for this survey: the survey stopped
+ * taking responses (closed, archived or gone) after the page loaded, so the page should be re-rendered rather
+ * than shown as a failed attempt. Matched against the error the server builds, not a hand-written string.
+ */
+export const isLinkSurveyGoneError = (serverError: string | undefined, surveyId: string): boolean =>
+  serverError === new ResourceNotFoundError("Survey", surveyId).message;

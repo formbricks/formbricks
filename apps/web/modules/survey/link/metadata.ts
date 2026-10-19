@@ -10,11 +10,14 @@ import {
   getSurveyOpenGraphMetadata,
 } from "./lib/metadata-utils";
 
-/** What /c/<token> shows while it can't name the survey: a bad token, or a survey that isn't public. */
-export const GENERIC_CONTACT_SURVEY_METADATA: Metadata = {
+/**
+ * What /c/<token> shows while it can't name the survey: a bad token, or a survey that isn't public. A fresh
+ * object per call, since Next receives it by reference.
+ */
+export const getGenericContactSurveyMetadata = (): Metadata => ({
   title: "Survey",
   description: "Please complete this survey.",
-};
+});
 
 /** Title, description, social previews and favicon for a survey the link page serves. */
 const getServableSurveyMetadata = async (
@@ -61,8 +64,8 @@ export const getMetadataForLinkSurvey = async (
   languageCode?: string,
   acceptedLanguages: string[] = []
 ): Promise<Metadata> => {
-  // An unknown id must end up exactly where a non-public one does, or the page title (empty vs the
-  // not-found title) tells the two apart (ENG-4032).
+  // An unknown id takes the same notFound() path as a non-public one, so both get the same page title
+  // (ENG-4032). Their responses can still differ in size and timing, since a missing row loads faster.
   const survey = await getSurveyWithMetadata(surveyId).catch((error: unknown) => {
     if (error instanceof ResourceNotFoundError) {
       notFound();
@@ -105,7 +108,7 @@ export const getMetadataForContactSurvey = async (
 ): Promise<Metadata> => {
   const survey = await getSurveyWithMetadata(surveyId).catch(() => null);
   if (!survey || !isLinkSurveyServable(survey)) {
-    return GENERIC_CONTACT_SURVEY_METADATA;
+    return getGenericContactSurveyMetadata();
   }
   return getServableSurveyMetadata(survey, undefined, acceptedLanguages);
 };
