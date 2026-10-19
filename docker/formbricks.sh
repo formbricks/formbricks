@@ -1284,38 +1284,79 @@ stop_formbricks() {
   echo "🎉 Formbricks instance stopped successfully!"
 }
 
-# Puts a rewritten Compose file in place, keeping the original as a backup, and restores it if Compose can no
-# longer render the result. The override file is rendered too when there is one, as `docker compose up` loads it.
-replace_compose_file_validated() {
+# The docker-compose.override.yml that `docker compose` loads next to a Compose file.
+compose_override_file() {
+  local dir
+  dir="$(dirname "$1")"
+  if [[ "$dir" == "." ]]; then
+    echo "docker-compose.override.yml"
+  else
+    echo "$dir/docker-compose.override.yml"
+  fi
+}
+
+# Renders the Compose project the way `docker compose up` loads it: the file plus, when there is one, the
+# docker-compose.override.yml beside it. Extra arguments go to `config` (e.g. `--format json formbricks`).
+render_compose_project() {
   local compose_file="$1"
-  local temp_file="$2"
-  local backup_file="$3"
+  shift
   local override_file
-  override_file="$(dirname "$compose_file")/docker-compose.override.yml"
-  local config_args=(-f "$compose_file")
+  override_file="$(compose_override_file "$compose_file")"
+  local file_args=(-f "$compose_file")
   if [[ -f "$override_file" ]]; then
-    config_args+=(-f "$override_file")
+    file_args+=(-f "$override_file")
   fi
+  sudo docker compose "${file_args[@]}" config "$@"
+}
 
-  if ! cp -p "$compose_file" "$backup_file"; then
-    rm -f "$temp_file"
-    echo "❌ Could not back up $compose_file. It is unchanged."
-    return 1
-  fi
-  if ! mv "$temp_file" "$compose_file"; then
-    rm -f "$temp_file"
-    echo "❌ Could not write $compose_file. It is unchanged."
-    return 1
-  fi
+# Puts rewritten Compose files in place as one transaction: each original is backed up, and all of them are
+# restored if the project no longer renders or `check` (a function given the compose file) rejects the result.
+# Arguments: <compose file> <check> then one <target> <temp> <backup> triple per rewritten file.
+replace_compose_files_validated() {
+  local compose_file="$1"
+  local check="$2"
+  shift 2
+  local triples=("$@")
+  local i placed=()
 
-  if ! sudo docker compose "${config_args[@]}" config >/dev/null; then
-    if cp -p "$backup_file" "$compose_file"; then
-      echo "❌ The updated Compose file is invalid. Restored $compose_file from $backup_file."
-    else
-      echo "❌ The updated Compose file is invalid and could not be restored. Restore it from $backup_file."
+  for ((i = 0; i < ${#triples[@]}; i += 3)); do
+    if ! cp -p "${triples[i]}" "${triples[i + 2]}"; then
+      echo "❌ Could not back up ${triples[i]}. Nothing was changed."
+      restore_compose_files "${placed[@]}"
+      for ((i = 0; i < ${#triples[@]}; i += 3)); do rm -f "${triples[i + 1]}"; done
+      return 1
     fi
+    if ! mv "${triples[i + 1]}" "${triples[i]}"; then
+      echo "❌ Could not write ${triples[i]}. Nothing was changed."
+      restore_compose_files "${placed[@]}"
+      for ((i = 0; i < ${#triples[@]}; i += 3)); do rm -f "${triples[i + 1]}"; done
+      return 1
+    fi
+    placed+=("${triples[i]}" "${triples[i + 2]}")
+  done
+
+  if ! render_compose_project "$compose_file" >/dev/null; then
+    echo "❌ The updated Compose files are invalid."
+    restore_compose_files "${placed[@]}"
     return 1
   fi
+  if ! "$check" "$compose_file"; then
+    restore_compose_files "${placed[@]}"
+    return 1
+  fi
+}
+
+# Restores each <target> <backup> pair, saying which it restored and which it could not.
+restore_compose_files() {
+  local pairs=("$@")
+  local i
+  for ((i = 0; i < ${#pairs[@]}; i += 2)); do
+    if cp -p "${pairs[i + 1]}" "${pairs[i]}"; then
+      echo "   Restored ${pairs[i]} from ${pairs[i + 1]}."
+    else
+      echo "❌ Could not restore ${pairs[i]}. Restore it from ${pairs[i + 1]} by hand."
+    fi
+  done
 }
 
 migrate_legacy_valkey_image() {
@@ -1385,38 +1426,26 @@ migrate_legacy_valkey_image() {
     return 1
   fi
 
-  if ! replace_compose_file_validated "$compose_file" "$temp_file" "$backup_file"; then
+  if ! replace_compose_files_validated "$compose_file" true "$compose_file" "$temp_file" "$backup_file"; then
     return 1
   fi
 
   echo "✅ Updated bundled Valkey to the native amd64/arm64 image. Backup: $backup_file"
 }
 
-# Narrows the formbricks service's published port from `3000:3000` (every interface) to `127.0.0.1:3000:3000`
-# (ENG-3983). In the one-click setup Traefik reaches the app over the Compose network, so the published port is
-# only ever needed on the host itself; on any other interface it is a way around Traefik and everything it
-# enforces (TLS, request limits, the forwarding headers the app trusts). Docker-published ports also skip UFW.
-# Only the bare mapping is rewritten; a host IP or port the operator chose is theirs and is left alone. With
-# "validate" (the update path) the original is backed up and restored if the result does not render.
-bind_formbricks_port_to_loopback() {
-  local compose_file="${1:-docker-compose.yml}"
-  local mode="${2:-}"
-  local backup_file="${compose_file}.before-loopback-port"
-  local temp_file="${compose_file}.tmp"
+# Writes <file> to <output> with the formbricks service's bare published `3000:3000` bound to `127.0.0.1`.
+# Returns 0 when it rewrote one, 3 when there was nothing to rewrite, anything else on failure (<output> removed).
+# Only the bare mapping is rewritten, keeping a trailing comment; a host IP or port the operator chose is theirs.
+rewrite_formbricks_port_to_loopback() {
+  local file="$1"
+  local output="$2"
 
-  if [[ ! -f "$compose_file" ]]; then
-    echo "❌ Cannot narrow the Formbricks port because $compose_file does not exist."
-    return 1
-  fi
-
-  # Prints the file with the formbricks service's bare 3000:3000 published port bound to loopback, and exits 0
-  # when it rewrote one, 3 when there was nothing to rewrite (awk itself exits 2 on a fatal error).
   local rewrite_program='
     function indentation(line) {
       match(line, /[^ ]/)
       return RSTART - 1
     }
-    /^services:[[:space:]]*$/ {
+    /^services:[[:space:]]*(#.*)?$/ {
       in_services=1
       service_indent=-1
       print
@@ -1435,7 +1464,7 @@ bind_formbricks_port_to_loopback() {
         in_ports=0
       }
     }
-    in_formbricks && /^[ ]+ports:[[:space:]]*$/ {
+    in_formbricks && /^[ ]+ports:[[:space:]]*(#.*)?$/ {
       in_ports=1
       ports_indent=indentation($0)
       print
@@ -1447,16 +1476,26 @@ bind_formbricks_port_to_loopback() {
       prefix=substr($0, 1, RLENGTH)
       value=substr($0, RLENGTH + 1)
       sub(/[[:space:]]+$/, "", value)
+      # Split off a trailing YAML comment: after the closing quote, or after whitespace in a plain scalar.
+      rest=""
       quote=""
-      if (value ~ /^".*"$/ || value ~ /^\047.*\047$/) {
-        quote=substr(value, 1, 1)
-        value=substr(value, 2, length(value) - 2)
+      first=substr(value, 1, 1)
+      if (first == "\"" || first == "\047") {
+        close_at=index(substr(value, 2), first)
+        if (close_at > 0) {
+          quote=first
+          rest=substr(value, close_at + 2)
+          value=substr(value, 2, close_at - 1)
+        }
+      } else if (match(value, /[[:space:]]+#/)) {
+        rest=substr(value, RSTART)
+        value=substr(value, 1, RSTART - 1)
       }
-      if (value == "3000:3000" || value == "3000:3000/tcp") {
+      if (rest ~ /^([[:space:]]+#.*)?$/ && (value == "3000:3000" || value == "3000:3000/tcp")) {
         suffix=(value == "3000:3000/tcp") ? "/tcp" : ""
         # Compose recommends quoting port mappings; an unquoted one gets double quotes.
         if (quote == "") quote="\""
-        print prefix quote "127.0.0.1:3000:3000" suffix quote
+        print prefix quote "127.0.0.1:3000:3000" suffix quote rest
         replacements++
         next
       }
@@ -1465,32 +1504,89 @@ bind_formbricks_port_to_loopback() {
     END { exit(replacements > 0 ? 0 : 3) }
   '
 
-  # Written into a `cp -p` copy so the result keeps the original's mode: the file holds secrets.
-  local status=0
-  cp -p "$compose_file" "$temp_file"
-  awk "$rewrite_program" "$compose_file" >"$temp_file" || status=$?
-  if [[ $status -eq 3 ]]; then
-    rm -f "$temp_file"
-    return 0
+  # Written into a `cp -p` copy so the result keeps the original's mode: the file holds secrets. If that copy
+  # fails, awk would create the output with the default umask, so stop before writing anything.
+  if ! cp -p "$file" "$output"; then
+    rm -f "$output"
+    return 1
   fi
+  local status=0
+  awk "$rewrite_program" "$file" >"$output" || status=$?
   if [[ $status -ne 0 ]]; then
-    rm -f "$temp_file"
-    echo "❌ Could not narrow the Formbricks port. $compose_file is unchanged."
+    rm -f "$output"
+  fi
+  return "$status"
+}
+
+# Rejects a rendered project where the formbricks service publishes host port 3000 more than once: two
+# bindings on one host port (say, loopback from one file and every interface from another) cannot both
+# start, and the update would only find out after stopping the stack.
+formbricks_port_published_once() {
+  local rendered
+  rendered=$(render_compose_project "$1" --format json formbricks) || return 1
+  local count
+  count=$(printf '%s\n' "$rendered" | grep -cE '"published": ?"?3000"?[,}]?[[:space:]]*$' || true)
+  if [[ "$count" -gt 1 ]]; then
+    echo "❌ The formbricks service would publish port 3000 more than once, which Docker rejects."
+    return 1
+  fi
+}
+
+# Narrows the formbricks service's published port from `3000:3000` (every interface) to `127.0.0.1:3000:3000`
+# (ENG-3983). In the one-click setup Traefik reaches the app over the Compose network, so the published port is
+# only ever needed on the host itself; on any other interface it is a way around Traefik and everything it
+# enforces (TLS, request limits, the forwarding headers the app trusts). Docker-published ports also skip UFW.
+# With "validate" (the update path) the override file is narrowed too, both are backed up, and both are restored
+# if the merged project does not render or would publish the port twice.
+bind_formbricks_port_to_loopback() {
+  local compose_file="${1:-docker-compose.yml}"
+  local mode="${2:-}"
+
+  if [[ ! -f "$compose_file" ]]; then
+    echo "❌ Cannot narrow the Formbricks port because $compose_file does not exist."
     return 1
   fi
 
-  if [[ "$mode" != "validate" ]]; then
-    mv "$temp_file" "$compose_file"
+  local files=("$compose_file")
+  local override_file
+  override_file="$(compose_override_file "$compose_file")"
+  if [[ "$mode" == "validate" && -f "$override_file" ]]; then
+    files+=("$override_file")
+  fi
+
+  local file status i triples=() rewritten=()
+  for file in "${files[@]}"; do
+    status=0
+    rewrite_formbricks_port_to_loopback "$file" "${file}.tmp" || status=$?
+    if [[ $status -eq 0 ]]; then
+      triples+=("$file" "${file}.tmp" "${file}.before-loopback-port")
+      rewritten+=("$file")
+    elif [[ $status -ne 3 ]]; then
+      echo "❌ Could not narrow the Formbricks port in $file. Nothing was changed."
+      for ((i = 0; i < ${#triples[@]}; i += 3)); do rm -f "${triples[i + 1]}"; done
+      return 1
+    fi
+  done
+  if [[ ${#triples[@]} -eq 0 ]]; then
     return 0
   fi
 
-  if ! replace_compose_file_validated "$compose_file" "$temp_file" "$backup_file"; then
+  if [[ "$mode" != "validate" ]]; then
+    if ! mv "${triples[1]}" "${triples[0]}"; then
+      rm -f "${triples[1]}"
+      echo "❌ Could not write ${triples[0]}. It is unchanged."
+      return 1
+    fi
+    return 0
+  fi
+
+  if ! replace_compose_files_validated "$compose_file" formbricks_port_published_once "${triples[@]}"; then
     return 1
   fi
 
   echo "🔒 From this update on, Formbricks publishes port 3000 on 127.0.0.1 only. Traefik still serves it on 80/443."
-  echo "   Backup: $backup_file. To reach port 3000 from other machines on purpose, publish it on an explicit"
-  echo "   address instead, such as - 0.0.0.0:3000:3000 (updates leave an explicit address alone)."
+  echo "   Changed: ${rewritten[*]} (each kept as <file>.before-loopback-port). To reach port 3000 from"
+  echo "   other machines on purpose, publish it on an explicit address instead, such as - 0.0.0.0:3000:3000."
 }
 
 # Whether this Docker Engine keeps a port published on 127.0.0.1 off the local network. Before 28.0, hosts on the

@@ -1241,7 +1241,9 @@ describe("docker/formbricks.sh loopback-only app port (ENG-3983)", () => {
     expect(readFileSync(`${composePath}.before-loopback-port`, "utf8")).toBe(originalCompose);
     expect(statSync(composePath).mode & 0o777).toBe(0o600);
     expect(statSync(`${composePath}.before-loopback-port`).mode & 0o777).toBe(0o600);
-    expect(readFileSync(validationLogPath, "utf8")).toBe(`docker compose -f ${composePath} config\n`);
+    expect(readFileSync(validationLogPath, "utf8")).toBe(
+      `docker compose -f ${composePath} config\ndocker compose -f ${composePath} config --format json formbricks\n`
+    );
   });
 
   test("on update, restores the original when the result does not validate", () => {
@@ -1258,11 +1260,15 @@ describe("docker/formbricks.sh loopback-only app port (ENG-3983)", () => {
     failPortValidation = false,
     failUpgradeCheck = false,
     withOverride = false,
+    overrideContents = "services: {}\n",
+    renderedFormbricks = "",
     engineVersion = "",
   }: {
     failPortValidation?: boolean;
     failUpgradeCheck?: boolean;
     withOverride?: boolean;
+    overrideContents?: string;
+    renderedFormbricks?: string;
     engineVersion?: string;
   } = {}) => {
     const tempDir = createTempDir();
@@ -1282,7 +1288,8 @@ describe("docker/formbricks.sh loopback-only app port (ENG-3983)", () => {
     mkdirSync(installationDir, { recursive: true });
     mkdirSync(binDir, { recursive: true });
     writeFileSync(composePath, composeContents);
-    if (withOverride) writeFileSync(join(installationDir, "docker-compose.override.yml"), "services: {}\n");
+    if (withOverride) writeFileSync(join(installationDir, "docker-compose.override.yml"), overrideContents);
+    writeFileSync(join(tempDir, "rendered.json"), renderedFormbricks);
     writeFileSync(join(installationDir, ".env"), "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true\n");
     writeFileSync(
       join(binDir, "sudo"),
@@ -1293,6 +1300,7 @@ case "$*" in
   *"-f docker-compose.yml"*" config") [ "$FAIL_PORT_VALIDATION" = "1" ] && exit 1 ;;
   *"upgrade check") [ "$FAIL_UPGRADE_CHECK" = "1" ] && exit 1 ;;
   *"docker version"*) [ -n "$ENGINE_VERSION" ] && printf "%s\\n" "$ENGINE_VERSION" ;;
+  *"--format json formbricks") cat "$RENDERED_JSON" ;;
 esac
 exit 0
 `,
@@ -1308,6 +1316,7 @@ exit 0
         FAIL_PORT_VALIDATION: failPortValidation ? "1" : "0",
         FAIL_UPGRADE_CHECK: failUpgradeCheck ? "1" : "0",
         ENGINE_VERSION: engineVersion,
+        RENDERED_JSON: join(tempDir, "rendered.json"),
         PATH: `${binDir}:${process.env.PATH ?? ""}`,
       },
     });
@@ -1353,9 +1362,61 @@ exit 0
   test("the updater validates the override file too, as `up` loads it", () => {
     const { commands } = runUpdate({ withOverride: true });
 
-    expect(commands).toContain(
-      "docker compose -f docker-compose.yml -f ./docker-compose.override.yml config"
+    expect(commands).toContain("docker compose -f docker-compose.yml -f docker-compose.override.yml config");
+  });
+
+  test("the updater narrows the override's bare mapping in the same transaction", () => {
+    const overrideContents = `services:
+  formbricks:
+    ports:
+      - 3000:3000 # from an older guide
+`;
+    const { result, composePath } = runUpdate({ withOverride: true, overrideContents });
+    const overridePath = composePath.replace("docker-compose.yml", "docker-compose.override.yml");
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Changed: docker-compose.yml docker-compose.override.yml (");
+    expect(readFileSync(overridePath, "utf8")).toContain(
+      '      - "127.0.0.1:3000:3000" # from an older guide\n'
     );
+    expect(readFileSync(`${overridePath}.before-loopback-port`, "utf8")).toBe(overrideContents);
+    expect(getPublishedPorts(readFileSync(composePath, "utf8"), "formbricks")).toEqual([
+      "127.0.0.1:3000:3000",
+    ]);
+  });
+
+  test("the updater restores every file and keeps going when the port would be published twice", () => {
+    const renderedFormbricks = `{
+  "services": {
+    "formbricks": {
+      "ports": [
+        {
+          "host_ip": "127.0.0.1",
+          "target": 3000,
+          "published": "3000",
+          "protocol": "tcp"
+        },
+        {
+          "host_ip": "0.0.0.0",
+          "target": 3000,
+          "published": "3000",
+          "protocol": "tcp"
+        }
+      ]
+    }
+  }
+}
+`;
+    const { result, composePath, composeContents, commands } = runUpdate({ renderedFormbricks });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("would publish port 3000 more than once");
+    expect(result.stdout).toContain(
+      "Restored docker-compose.yml from docker-compose.yml.before-loopback-port"
+    );
+    expect(result.stdout).not.toContain("127.0.0.1 only");
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(commands).toContain("docker compose up -d");
   });
 
   test.each([
@@ -1469,6 +1530,80 @@ volumes:
     );
 
     expect(result.status === 0).toBe(isolates);
+  });
+
+  test.each([
+    ["- 3000:3000 # app port", '- "127.0.0.1:3000:3000" # app port'],
+    ['- "3000:3000" # app port', '- "127.0.0.1:3000:3000" # app port'],
+    ["- '3000:3000'   # app", "- '127.0.0.1:3000:3000'   # app"],
+  ])("keeps the trailing comment on %s", (mapping, expected) => {
+    const composePath = writeDockerComposeTemplate();
+    writeFileSync(composePath, readFileSync(composePath, "utf8").replace("- 3000:3000", mapping));
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    expect(readFileSync(composePath, "utf8")).toContain(`      ${expected}\n`);
+  });
+
+  test("recognises comments after services: and ports:", () => {
+    const tempDir = createTempDir();
+    const composePath = join(tempDir, "docker-compose.yml");
+    writeFileSync(
+      composePath,
+      `services: # the stack
+  formbricks:
+    ports: # published for local checks
+      - 3000:3000
+`
+    );
+
+    bindFormbricksPortToLoopback(composePath, "install");
+
+    expect(getPublishedPorts(readFileSync(composePath, "utf8"), "formbricks")).toEqual([
+      "127.0.0.1:3000:3000",
+    ]);
+  });
+
+  test.each(["- 3000:3000:3000 # odd", '- "3000:3000"x', "- '3000:3000' :tcp"])(
+    "leaves %s alone",
+    (mapping) => {
+      const composePath = writeDockerComposeTemplate();
+      const custom = readFileSync(composePath, "utf8").replace("- 3000:3000", mapping);
+      writeFileSync(composePath, custom);
+
+      bindFormbricksPortToLoopback(composePath, "install");
+
+      expect(readFileSync(composePath, "utf8")).toBe(custom);
+    }
+  );
+
+  test("stops before writing when the mode-preserving copy fails", () => {
+    const composePath = writeDockerComposeTemplate();
+    const originalCompose = readFileSync(composePath, "utf8");
+    chmodSync(composePath, 0o600);
+    const binDir = join(createTempDir(), "bin");
+    mkdirSync(binDir, { recursive: true });
+    writeFileSync(join(binDir, "cp"), '#!/bin/sh\ncase "$*" in *.tmp) exit 1 ;; esac\nexec /bin/cp "$@"\n', {
+      mode: 0o700,
+    });
+
+    const result = spawnSync(
+      "bash",
+      [
+        "-c",
+        'source "$1"; set +e; bind_formbricks_port_to_loopback "$2"',
+        "bash",
+        formbricksScriptPath,
+        composePath,
+      ],
+      { encoding: "utf8", env: { ...process.env, PATH: `${binDir}:${process.env.PATH ?? ""}` } }
+    );
+
+    expect(result.status).not.toBe(0);
+    expect(readFileSync(composePath, "utf8")).toBe(originalCompose);
+    expect(statSync(composePath).mode & 0o777).toBe(0o600);
+    expect(existsSync(`${composePath}.tmp`)).toBe(false);
+    expect(existsSync(`${composePath}.before-loopback-port`)).toBe(false);
   });
 
   test("is idempotent", () => {
