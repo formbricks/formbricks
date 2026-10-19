@@ -1,10 +1,12 @@
+import type { ClientConfig } from "pg";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ONLINE_INDEXES, ensureOnlineIndexes } from "./online-indexes";
 
-const { connect, query, end } = vi.hoisted(() => ({
+const { connect, query, end, createClient } = vi.hoisted(() => ({
   connect: vi.fn(),
   query: vi.fn(),
   end: vi.fn(),
+  createClient: vi.fn<(config: ClientConfig) => void>(),
 }));
 
 vi.mock("pg", () => ({
@@ -12,12 +14,31 @@ vi.mock("pg", () => ({
     connect = connect;
     query = query;
     end = end;
+    constructor(config: ClientConfig) {
+      createClient(config);
+    }
   },
 }));
 
 describe("online index builds", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+  });
+
+  test("honors sslaccept on the dedicated index connection", async () => {
+    const failure = new Error("stop after connection configuration");
+    connect.mockRejectedValueOnce(failure);
+
+    await expect(
+      ensureOnlineIndexes("postgresql://app:secret@database/formbricks?sslaccept=accept_invalid_certs")
+    ).rejects.toBe(failure);
+
+    expect(createClient).toHaveBeenCalledWith({
+      connectionString: "postgresql://app:secret@database/formbricks",
+      ssl: { rejectUnauthorized: false },
+      connectionTimeoutMillis: 10_000,
+    });
+    expect(end).toHaveBeenCalledOnce();
   });
 
   test("allows older transactions to drain without a short lock timeout and validates each build", async () => {
