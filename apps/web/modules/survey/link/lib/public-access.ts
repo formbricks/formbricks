@@ -8,7 +8,9 @@ type TLinkSurveyAccessFields = Pick<TSurvey, "type" | "status" | "archivedAt">;
  * actions) must answer "not found" for it (ENG-4032). Paused and completed surveys are served, but only
  * as their inactive screen.
  */
-export const isLinkSurveyServable = (survey: TLinkSurveyAccessFields): boolean =>
+export const isLinkSurveyServable = <T extends TLinkSurveyAccessFields>(
+  survey: T
+): survey is T & { status: Exclude<TSurvey["status"], "draft"> } =>
   survey.type === "link" && survey.status !== "draft" && !survey.archivedAt;
 
 /**
@@ -16,5 +18,6 @@ export const isLinkSurveyServable = (survey: TLinkSurveyAccessFields): boolean =
  * PIN or email-verification gate, so it is the only state in which their public actions may act on the
  * survey. A paused, scheduled or completed survey shows its inactive screen and never its definition.
  */
-export const isLinkSurveyOpenForResponses = (survey: TLinkSurveyAccessFields): boolean =>
-  isLinkSurveyServable(survey) && survey.status === "inProgress";
+export const isLinkSurveyOpenForResponses = <T extends TLinkSurveyAccessFields>(
+  survey: T
+): survey is T & { status: "inProgress" } => isLinkSurveyServable(survey) && survey.status === "inProgress";

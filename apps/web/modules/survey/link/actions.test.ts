@@ -57,12 +57,12 @@ const sendEmail = () =>
 
 // Every way a survey can exist without respondents being able to take it from its public link.
 const notOpen = [
-  ["draft", { status: "draft" }],
-  ["archived", { archivedAt: new Date("2026-10-01T00:00:00Z") }],
+  ["a draft survey", { status: "draft" }],
+  ["an archived survey", { archivedAt: new Date("2026-10-01T00:00:00Z") }],
   ["an app survey", { type: "app" }],
-  ["paused", { status: "paused" }],
-  ["scheduled", { status: "paused", publishOn: new Date("2099-01-01T00:00:00Z") }],
-  ["completed", { status: "completed" }],
+  ["a paused survey", { status: "paused" }],
+  ["a scheduled survey", { status: "paused", publishOn: new Date("2099-01-01T00:00:00Z") }],
+  ["a completed survey", { status: "completed" }],
 ] as const;
 
 beforeEach(() => {
@@ -75,7 +75,7 @@ beforeEach(() => {
 });
 
 describe("validateSurveyPinAction", () => {
-  test.each(notOpen)("a %s survey is not found and its definition is not returned", async (_label, state) => {
+  test.each(notOpen)("%s is not found and its definition is not returned", async (_label, state) => {
     mockSurvey(state);
 
     await expect(validatePin()).rejects.toBeInstanceOf(ResourceNotFoundError);
@@ -106,7 +106,7 @@ describe("validateSurveyPinAction", () => {
 });
 
 describe("sendLinkSurveyEmailAction", () => {
-  test.each(notOpen)("a %s survey is not found and no email is sent", async (_label, state) => {
+  test.each(notOpen)("%s is not found and no email is sent", async (_label, state) => {
     mockSurvey(state);
 
     await expect(sendEmail()).rejects.toBeInstanceOf(ResourceNotFoundError);
