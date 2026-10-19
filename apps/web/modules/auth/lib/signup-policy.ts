@@ -48,7 +48,10 @@ export const resolveUninvitedSignupAdmission = async (): Promise<TUninvitedSignu
 export const isUninvitedSignupAllowed = async (): Promise<boolean> =>
   (await resolveUninvitedSignupAdmission()) !== "denied";
 
-/** Better Auth's native credential sign-up route — the one that bypasses `createUserAction`. */
+/**
+ * Better Auth's native credential sign-up endpoint. Closed over HTTP since ENG-3988 (`disabledPaths`),
+ * but hooks still see it on every in-process `auth.api.signUpEmail` call.
+ */
 const CREDENTIAL_SIGNUP_PATH = "/sign-up/email";
 
 /**
@@ -85,7 +88,10 @@ export const signupDisabledError = (): APIError =>
  *
  * Action-routed sign-ups are exempt: `createUserAction` has already applied the full policy (including
  * the invite exemption this hook cannot see) and marks the request scope before calling
- * `auth.api.signUpEmail`. The absence of that mark is what identifies a raw POST.
+ * `auth.api.signUpEmail`. The absence of that mark is what identifies a sign-up from anywhere else.
+ *
+ * Since ENG-3988 the HTTP route is closed in `disabledPaths`, so a raw POST gets a 404 before any hook
+ * runs. This stays as defence in depth for an in-process caller other than the action.
  */
 export const signupPolicyBeforeHandler = async (ctx: AuthHookContext): Promise<void> => {
   if (ctx.path !== CREDENTIAL_SIGNUP_PATH) return;

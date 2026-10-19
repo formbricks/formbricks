@@ -407,8 +407,8 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     }
 
     // The domain policy passed, so mark the request scope: user.create.before uses this to tell a
-    // sign-up that went through this action apart from a direct POST to Better Auth's native
-    // /sign-up/email endpoint (which bypasses the action and is re-checked in the hook).
+    // sign-up that went through this action apart from any other caller of Better Auth's native
+    // /sign-up/email endpoint, which the hook re-checks. That endpoint is closed over HTTP (ENG-3988).
     const outcome = await runWithSignupRequestContext(() => {
       markSignupDomainAllowed();
       // ENG-2247: carried into user.create.before, which stamps the marker on the row it inserts. The
