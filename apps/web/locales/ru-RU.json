@@ -3011,6 +3011,7 @@
         "plan_selection_description": "Сравни планы Hobby, Pro и Scale, а затем переключайся между ними прямо в Formbricks.",
         "plan_selection_title": "Выбери свой план",
         "plan_unknown": "Неизвестно",
+        "responses_above_limit_billed_per_response": "Ответы сверх лимита в {limit} оплачиваются отдельно за каждый ответ по <dynamicPricing>этим тарифам</dynamicPricing>.",
         "retry_setup": "Повторить настройку",
         "select_plan_cta": "Начать",
         "select_plan_feature_1": "Многоязычные опросы с поддержкой ИИ",

@@ -3011,6 +3011,7 @@
         "plan_selection_description": "Compare les formules Hobby, Pro et Scale, puis change de formule directement depuis Formbricks.",
         "plan_selection_title": "Choisis ta formule",
         "plan_unknown": "Inconnu",
+        "responses_above_limit_billed_per_response": "Les réponses au-delà de {limit} sont facturées à l'unité selon <dynamicPricing>ces tarifs</dynamicPricing>.",
         "retry_setup": "Réessayer la configuration",
         "select_plan_cta": "Commencer",
         "select_plan_feature_1": "Enquêtes multilingues pilotées par IA",
