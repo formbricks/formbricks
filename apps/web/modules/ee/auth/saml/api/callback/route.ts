@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { responses } from "@/app/lib/api/response";
-import { UNTRUSTED_CLIENT_IP, getClientIpFromHeaders } from "@/lib/utils/client-ip";
+import { truncateText } from "@/lib/utils/strings";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import jackson from "@/modules/ee/auth/saml/lib/jackson";
@@ -13,6 +13,13 @@ import { checkSamlResponseBounds } from "@/modules/ee/auth/saml/lib/saml-respons
  * RelayState it did not issue) by throwing an error with a 4xx `statusCode`. It does not export the class, and the
  * production build renames it, so the status is the one reliable mark.
  */
+/**
+ * Longest jackson message or reason that reaches the log. They are fixed strings on this path today, but
+ * nothing in jackson guarantees it (its OIDC path builds 4xx errors from provider text), and this endpoint is
+ * anonymous, so the cap keeps a future version from writing attacker-sized lines.
+ */
+const LOGGED_TEXT_LIMIT = 200;
+
 const getJacksonClientErrorStatus = (error: unknown): number | null => {
   const statusCode = error instanceof Error ? (error as { statusCode?: unknown }).statusCode : undefined;
   return typeof statusCode === "number" && statusCode >= 400 && statusCode < 500 ? statusCode : null;
@@ -24,23 +31,6 @@ export const POST = async (req: Request) => {
     return responses.forbiddenResponse("SAML SSO is not enabled in your Formbricks license");
   }
   const { oauthController } = jacksonInstance;
-
-  // jackson parses the whole response before it checks who sent it (ENG-3973), so both bounds run first:
-  // how often one IP can make it parse, and how much markup it may parse.
-  //
-  // Without a trusted forwarding chain every caller resolves to the same shared identity, and a per-IP
-  // limit there would let one caller lock SAML sign-in for the whole instance. Skip it then: the markup
-  // budget still bounds what each request costs.
-  if ((await getClientIpFromHeaders()) !== UNTRUSTED_CLIENT_IP) {
-    try {
-      await applyIPRateLimit(rateLimitConfigs.auth.samlCallback);
-    } catch (error) {
-      if (!(error instanceof TooManyRequestsError)) throw error;
-      const response = responses.tooManyRequestsResponse(error.message);
-      if (error.retryAfter !== undefined) response.headers.set("Retry-After", String(error.retryAfter));
-      return response;
-    }
-  }
 
   let formData: FormData;
   try {
@@ -71,6 +61,19 @@ export const POST = async (req: Request) => {
     );
   }
 
+  // Only a request that is about to make jackson parse counts against the per-IP limit: the checks above cost
+  // ~1-4 ms each behind the 256 KiB body limit, and counting them would let anyone behind the same NAT as a
+  // tenant spend that tenant's sign-ins on junk. Without a trusted forwarding chain every caller shares one
+  // identity, so the limit is skipped there and the bounds above are what each request costs.
+  try {
+    await applyIPRateLimit(rateLimitConfigs.auth.samlCallback, { skipUntrustedClient: true });
+  } catch (error) {
+    if (!(error instanceof TooManyRequestsError)) throw error;
+    const response = responses.tooManyRequestsResponse(error.message);
+    if (error.retryAfter !== undefined) response.headers.set("Retry-After", String(error.retryAfter));
+    return response;
+  }
+
   let redirect_url: string | undefined;
   try {
     ({ redirect_url } = await oauthController.samlResponse({ RelayState, SAMLResponse }));
@@ -78,11 +81,16 @@ export const POST = async (req: Request) => {
     const status = getJacksonClientErrorStatus(error);
     if (status === null) throw error;
     // A response jackson refused is the sender's problem, not ours: answer it as such instead of a bare 500 that
-    // reaches Sentry for every anonymous probe. On this path jackson's message and reason are fixed strings, never
-    // the response, and with traces off this line is the only record of why a login failed.
+    // reaches Sentry for every anonymous probe. Both texts are capped (see LOGGED_TEXT_LIMIT); with traces off this line
+    // is the only record of why a login failed.
     const { message, internalError } = error as Error & { internalError?: unknown };
     logger.warn(
-      { status, message, reason: typeof internalError === "string" ? internalError : undefined },
+      {
+        status,
+        message: truncateText(message, LOGGED_TEXT_LIMIT),
+        reason:
+          typeof internalError === "string" ? truncateText(internalError, LOGGED_TEXT_LIMIT) : undefined,
+      },
       "jackson refused a SAML response"
     );
     return status === 403

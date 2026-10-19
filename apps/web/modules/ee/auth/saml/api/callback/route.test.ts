@@ -7,26 +7,21 @@ import {
 } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
 import { POST } from "./route";
 
-const { samlResponseMock, jacksonMock, applyIPRateLimitMock, redirectMock, clientIpMock } = vi.hoisted(() => {
+const { samlResponseMock, jacksonMock, applyIPRateLimitMock, redirectMock } = vi.hoisted(() => {
   const samlResponseMock = vi.fn(async (_body: { RelayState: string; SAMLResponse: string }) => ({
     redirect_url: "https://app.example.com/api/auth/saml/authorize?code=c",
   }));
   return {
     samlResponseMock,
     jacksonMock: vi.fn(async () => ({ oauthController: { samlResponse: samlResponseMock } })),
-    applyIPRateLimitMock: vi.fn(async (_config: unknown) => ({ allowed: true })),
+    applyIPRateLimitMock: vi.fn(async (_config: unknown, _options?: unknown) => ({ allowed: true })),
     redirectMock: vi.fn((url: string) => new Response(null, { status: 307, headers: { location: url } })),
-    clientIpMock: vi.fn(async () => "203.0.113.7"),
   };
 });
 
 vi.mock("@/modules/ee/auth/saml/lib/jackson", () => ({ default: jacksonMock }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyIPRateLimit: applyIPRateLimitMock }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
-vi.mock("@/lib/utils/client-ip", () => ({
-  UNTRUSTED_CLIENT_IP: "untrusted-client-ip",
-  getClientIpFromHeaders: clientIpMock,
-}));
 
 const b64 = (xml: string) => Buffer.from(xml).toString("base64");
 const ISSUER = "<samlp:Response><saml2:Issuer>https://idp.example.com</saml2:Issuer></samlp:Response>";
@@ -40,7 +35,6 @@ const callback = (fields: Record<string, string>) =>
 describe("SAML callback route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    clientIpMock.mockResolvedValue("203.0.113.7");
   });
 
   test("hands a response within the budget to jackson and redirects", async () => {
@@ -51,8 +45,10 @@ describe("SAML callback route", () => {
       RelayState: "boxyhq_jackson_state",
       SAMLResponse: b64(ISSUER),
     });
+    // The shared untrusted identity is skipped by the limiter itself (helpers.test.ts covers that half).
     expect(applyIPRateLimitMock).toHaveBeenCalledWith(
-      expect.objectContaining({ namespace: "auth:saml-callback" })
+      expect.objectContaining({ namespace: "auth:saml-callback" }),
+      { skipUntrustedClient: true }
     );
   });
 
@@ -166,28 +162,33 @@ describe("SAML callback route", () => {
     applyIPRateLimitMock.mockRejectedValueOnce(
       new TooManyRequestsError("Maximum number of requests reached.", 42)
     );
-    const request = callback({ SAMLResponse: b64(ISSUER), RelayState: "s" });
-    const formData = vi.spyOn(request, "formData");
 
-    const response = await POST(request);
+    const response = await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "s" }));
 
     expect(response.status).toBe(429);
     expect(response.headers.get("Retry-After")).toBe("42");
-    expect(formData).not.toHaveBeenCalled();
     expect(samlResponseMock).not.toHaveBeenCalled();
   });
 
-  test("skips the per-IP limit when every caller shares the untrusted identity", async () => {
-    // A shared bucket would let one caller lock SAML sign-in for the whole instance; the budget still applies.
-    clientIpMock.mockResolvedValue("untrusted-client-ip");
-    const flood = `<samlp:Response>${"<a/>".repeat(SAML_RESPONSE_MARKUP_BUDGET)}</samlp:Response>`;
+  test.each([
+    ["a body that is not a form", () => new Request("http://localhost/x", { method: "POST", body: "{}" })],
+    ["an empty SAMLResponse", () => callback({ SAMLResponse: "", RelayState: "s" })],
+    [
+      "a response over the markup budget",
+      () =>
+        callback({
+          SAMLResponse: b64(`<r>${"<a/>".repeat(SAML_RESPONSE_MARKUP_BUDGET)}</r>`),
+          RelayState: "s",
+        }),
+    ],
+  ])("does not count %s against the per-IP limit", async (_name, request) => {
+    // Junk refused by the cheap checks must not spend the sign-ins of a tenant behind the same NAT.
+    vi.spyOn(logger, "warn").mockImplementation(() => undefined);
 
-    const ok = await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "s" }));
-    const refused = await POST(callback({ SAMLResponse: b64(flood), RelayState: "s" }));
+    const response = await POST(request());
 
+    expect(response.status).toBe(400);
     expect(applyIPRateLimitMock).not.toHaveBeenCalled();
-    expect(ok.status).toBe(307);
-    expect(refused.status).toBe(400);
   });
 
   test("lets any other rate-limiter error propagate", async () => {
