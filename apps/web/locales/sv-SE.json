@@ -3776,6 +3776,7 @@
         "duplicate_question": "Duplicera fråga",
         "edit_link": "Redigera länk",
         "edit_recall": "Redigera återkallning",
+        "edit_survey_title": "Redigera {surveyName}",
         "element_category_choice": "Val",
         "element_category_contact": "Kontakt",
         "element_category_content": "Innehåll",

@@ -3776,6 +3776,7 @@
         "duplicate_question": "複製問題",
         "edit_link": "編輯連結",
         "edit_recall": "編輯回憶",
+        "edit_survey_title": "編輯 {surveyName}",
         "element_category_choice": "選擇題",
         "element_category_contact": "聯絡資訊",
         "element_category_content": "內容",

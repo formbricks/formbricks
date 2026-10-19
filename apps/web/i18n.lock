@@ -3645,6 +3645,7 @@ checksums:
     workspace/surveys/edit/duplicate_question: 910751de01fdd327165968214717711b
     workspace/surveys/edit/edit_link: 40ba9e15beac77a46c5baf30be84ac54
     workspace/surveys/edit/edit_recall: 38a4a7378d02453e35d06f2532eef318
+    workspace/surveys/edit/edit_survey_title: 884ab78e78ceb10a7189db4dd75cf654
     workspace/surveys/edit/element_category_choice: 307101bb385166b538e9370428963461
     workspace/surveys/edit/element_category_contact: 9afa39bc47019ee6dec6c74b6273967c
     workspace/surveys/edit/element_category_content: 669b337031ef165af577f04f2b7fd54f
