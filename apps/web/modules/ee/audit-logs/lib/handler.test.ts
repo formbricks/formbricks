@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import type { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { TActor, TAuditAction, TAuditStatus, TAuditTarget } from "../types/audit-log";
@@ -132,6 +133,9 @@ const mockCtxBase = {
     eventId: "event-1",
   },
 };
+
+// The fixtures carry only the fields withAuditLogging reads, not a full action context
+const asActionCtx = (ctx: object) => ctx as unknown as ActionClientCtx;
 
 // Helper to clear all mock handles
 function clearAllMockHandles() {
@@ -313,7 +317,7 @@ describe("withAuditLogging", () => {
     const handlerImpl = vi.fn().mockResolvedValue("ok");
     const wrapped = OriginalHandler.withAuditLogging("created", "survey", handlerImpl);
     const ctx = { ...mockCtxBase, auditLoggingCtx: { ...mockCtxBase.auditLoggingCtx, organizationId: "" } };
-    await expect(wrapped({ ctx: ctx as any, parsedInput: { workspaceId: "ws1" } })).resolves.toBe("ok");
+    await expect(wrapped({ ctx: asActionCtx(ctx), parsedInput: { workspaceId: "ws1" } })).resolves.toBe("ok");
     await new Promise(setImmediate);
     expect(handlerImpl).toHaveBeenCalled();
     expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
@@ -324,7 +328,9 @@ describe("withAuditLogging", () => {
     auditGate.enabled = false;
     const handlerImpl = vi.fn().mockRejectedValue(new Error("fail"));
     const wrapped = OriginalHandler.withAuditLogging("created", "survey", handlerImpl);
-    await expect(wrapped({ ctx: mockCtxBase as any, parsedInput: mockParsedInput })).rejects.toThrow("fail");
+    await expect(wrapped({ ctx: asActionCtx(mockCtxBase), parsedInput: mockParsedInput })).rejects.toThrow(
+      "fail"
+    );
     await new Promise(setImmediate);
     expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
   });
@@ -332,9 +338,9 @@ describe("withAuditLogging", () => {
   test("rethrows a failed handler that has no audit logging context", async () => {
     const handlerImpl = vi.fn().mockRejectedValue(new Error("fail"));
     const wrapped = OriginalHandler.withAuditLogging("created", "survey", handlerImpl);
-    await expect(wrapped({ ctx: { user: fullUser } as any, parsedInput: mockParsedInput })).rejects.toThrow(
-      "fail"
-    );
+    await expect(
+      wrapped({ ctx: asActionCtx({ user: fullUser }), parsedInput: mockParsedInput })
+    ).rejects.toThrow("fail");
     await new Promise(setImmediate);
     expect(loggerErrorMockHandle).toHaveBeenCalledWith("No audit logging context found");
     expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
