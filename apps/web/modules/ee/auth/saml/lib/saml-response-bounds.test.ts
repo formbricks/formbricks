@@ -206,7 +206,28 @@ describe("the budget", () => {
   });
 });
 
+/** A signed response and an encrypted assertion as ADFS writes them: the deepest shapes a real IdP sends. */
+const SIGNATURE = `<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:SignedInfo><ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/><ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/><ds:Reference URI="#_abc"><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/><ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"><ec:InclusiveNamespaces xmlns:ec="http://www.w3.org/2001/10/xml-exc-c14n#" PrefixList="xs"/></ds:Transform></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>abc=</ds:DigestValue></ds:Reference></ds:SignedInfo><ds:SignatureValue>
+abc=</ds:SignatureValue><KeyInfo xmlns="http://www.w3.org/2000/09/xmldsig#"><ds:X509Data><ds:X509Certificate>MIIC</ds:X509Certificate></ds:X509Data></KeyInfo></ds:Signature>`;
+const ENCRYPTED_ASSERTION = `<EncryptedAssertion><xenc:EncryptedData Type="http://www.w3.org/2001/04/xmlenc#Element" xmlns:xenc="http://www.w3.org/2001/04/xmlenc#"><xenc:EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#aes256-cbc" /><KeyInfo xmlns="http://www.w3.org/2000/09/xmldsig#"><e:EncryptedKey xmlns:e="http://www.w3.org/2001/04/xmlenc#"><e:EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p"><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1" /></e:EncryptionMethod><KeyInfo><ds:X509Data xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:X509IssuerSerial><ds:X509IssuerName>CN=x</ds:X509IssuerName><ds:X509SerialNumber>1</ds:X509SerialNumber></ds:X509IssuerSerial></ds:X509Data></KeyInfo><e:CipherData><e:CipherValue>abc</e:CipherValue></e:CipherData></e:EncryptedKey></KeyInfo><xenc:CipherData><xenc:CipherValue>abc</xenc:CipherValue></xenc:CipherData></xenc:EncryptedData></EncryptedAssertion>`;
+const SIGNED_ASSERTION = `<Assertion ID="_abc" IssueInstant="2026-01-01T00:00:00Z" Version="2.0" xmlns="urn:oasis:names:tc:SAML:2.0:assertion"><Issuer>http://adfs/</Issuer>${SIGNATURE}<Subject><NameID Format="urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress">a@b</NameID><SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:bearer"><SubjectConfirmationData InResponseTo="_x" NotOnOrAfter="2026" Recipient="https://x/api/auth/saml/callback" /></SubjectConfirmation></Subject><Conditions NotBefore="a" NotOnOrAfter="b"><AudienceRestriction><Audience>https://saml.formbricks.com</Audience></AudienceRestriction></Conditions><AttributeStatement><Attribute Name="email"><AttributeValue>a@b</AttributeValue></Attribute></AttributeStatement><AuthnStatement AuthnInstant="x" SessionIndex="_y"><AuthnContext><AuthnContextClassRef>urn:federation:authentication:windows</AuthnContextClassRef></AuthnContext></AuthnStatement></Assertion>`;
+const SIGNED_RESPONSE_HEAD = `<?xml version="1.0" encoding="UTF-8"?><samlp:Response ID="_r" Version="2.0" IssueInstant="x" Destination="https://x" Consent="urn:oasis:names:tc:SAML:2.0:consent:unspecified" InResponseTo="_x" xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"><Issuer xmlns="urn:oasis:names:tc:SAML:2.0:assertion">http://adfs/</Issuer>${SIGNATURE}<samlp:Status><samlp:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success" /></samlp:Status>`;
+
 describe("checkSamlResponseBounds", () => {
+  test.each([
+    [
+      "a signed response with a signed assertion",
+      SIGNED_RESPONSE_HEAD + SIGNED_ASSERTION + "</samlp:Response>",
+    ],
+    [
+      "a signed response with an encrypted assertion",
+      SIGNED_RESPONSE_HEAD + ENCRYPTED_ASSERTION + "</samlp:Response>",
+    ],
+  ])("lets through %s, nested well under the depth cap", (_name, xml) => {
+    expect(depth(xml)).toBeLessThanOrEqual(10);
+    expect(checkSamlResponseBounds(b64(xml))).toBeNull();
+  });
+
   test("refuses a response longer than the cap before reading it, whatever it holds", () => {
     const text = "a".repeat(SAML_RESPONSE_MAX_LENGTH);
     expect(checkSamlResponseBounds(text)).toBeNull();
