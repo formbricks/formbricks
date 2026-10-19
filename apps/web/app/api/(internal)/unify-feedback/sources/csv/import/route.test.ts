@@ -7,6 +7,7 @@ import { importCsvFile } from "@/lib/feedback-source/csv-file-import";
 import { getFeedbackSourceWithMappingsById } from "@/lib/feedback-source/service";
 import { getUser } from "@/lib/user/service";
 import { getSession } from "@/modules/auth/lib/session";
+import { CSV_FILE_TOO_LARGE_ERROR_CODE } from "@/modules/ee/unify-feedback/sources/types";
 import { POST } from "./route";
 
 vi.mock("@formbricks/logger", () => ({
@@ -90,5 +91,34 @@ describe("CSV feedback source import authorization", () => {
     expect(logOutput).not.toContain(feedbackDirectoryId);
     expect(logOutput).not.toContain(feedbackSourceId);
     expect(logOutput).not.toContain("evaluator failed");
+  });
+
+  test("refuses a chunked upload past the limit without buffering it whole", async () => {
+    let pulled = 0;
+    let cancelled = false;
+    const request = new Request("http://localhost/api/unify-feedback/sources/csv/import", {
+      method: "POST",
+      headers: { "content-type": "multipart/form-data; boundary=x" },
+      body: new ReadableStream<Uint8Array>({
+        pull(controller) {
+          if (pulled >= 32 * 1024 * 1024) return controller.close();
+          pulled += 1024 * 1024;
+          controller.enqueue(new Uint8Array(1024 * 1024));
+        },
+        cancel() {
+          cancelled = true;
+        },
+      }),
+      duplex: "half",
+    } as RequestInit & { duplex: "half" });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(413);
+    expect(await response.json()).toMatchObject({ error: CSV_FILE_TOO_LARGE_ERROR_CODE });
+    expect(cancelled).toBe(true);
+    // The limit is 16 MiB; an unbounded formData() would read all 32 MiB and answer 400 for the garbage.
+    expect(pulled).toBeLessThanOrEqual(18 * 1024 * 1024);
+    expect(importCsvFile).not.toHaveBeenCalled();
   });
 });
