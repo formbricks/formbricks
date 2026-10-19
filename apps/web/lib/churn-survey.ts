@@ -35,35 +35,25 @@ export const markChurnSurveyPending = (storage: TMarkerStorage | undefined, user
 };
 
 /**
- * Send the deferred event if the marker names `userId`, then clear it.
+ * Send the deferred event if the marker names `userId`.
  *
- * - `inFlight` guards a second run (the setup effect's deps changing mid-flight) from reading and
- *   tracking the same marker before the first run has cleared it.
- * - The marker is cleared only after `track` resolves, so a rejection leaves it for the next run.
- * - Clearing is compare-and-delete: a newer cancellation may have overwritten the marker while
- *   `track` was pending, and that one is not consumed yet.
+ * The marker is cleared before `track` runs. Nothing is awaited between the read and the clear, so a
+ * second run (the setup effect's deps changing mid-flight) cannot see the same marker.
+ *
+ * There is no retry. `track` only queues the action and never rejects, so a delivery that fails
+ * later (unknown code action, SDK not set up) reaches the console only and cannot be detected here.
  */
 export const consumeChurnSurveyMarker = async ({
   storage,
   userId,
   track,
-  inFlight,
 }: {
   storage: TMarkerStorage | undefined;
   userId: string;
   track: TTrack;
-  inFlight: { current: boolean };
 }): Promise<void> => {
-  const pendingFor = storage?.getItem(CHURN_SURVEY_PENDING_KEY);
-  if (pendingFor !== userId || inFlight.current) return;
+  if (storage?.getItem(CHURN_SURVEY_PENDING_KEY) !== userId) return;
 
-  inFlight.current = true;
-  try {
-    await track(SUBSCRIPTION_CANCELLED_EVENT);
-    if (storage?.getItem(CHURN_SURVEY_PENDING_KEY) === pendingFor) {
-      storage.removeItem(CHURN_SURVEY_PENDING_KEY);
-    }
-  } finally {
-    inFlight.current = false;
-  }
+  storage.removeItem(CHURN_SURVEY_PENDING_KEY);
+  await track(SUBSCRIPTION_CANCELLED_EVENT);
 };
