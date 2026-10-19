@@ -17,7 +17,11 @@ import {
 import { runChunked } from "./projection-chunks";
 import { packRelationshipUpdateGroups } from "./relationship-batches";
 import { readAllRelationships } from "./relationship-reads";
-import { type TSurveyProjectionRow, expectedSurveyRelationships } from "./survey-relationships";
+import {
+  type TSurveyProjectionRow,
+  expectedSurveyRelationships,
+  surveyRelationshipKey,
+} from "./survey-relationships";
 
 export { expectedSurveyRelationships, type TSurveyProjectionRow } from "./survey-relationships";
 
@@ -52,16 +56,6 @@ const surveyProjectionSelect = {
   workspaceId: true,
 } as const satisfies Prisma.SurveySelect;
 
-const relationshipKey = ({ relation, resource, subject }: TAuthzedRelationship): string =>
-  JSON.stringify([
-    relation,
-    resource.objectType,
-    resource.objectId,
-    subject.objectType,
-    subject.objectId,
-    subject.relation ?? "",
-  ]);
-
 /**
  * Updates that turn `current` into exactly `expected`: touch everything expected, delete everything
  * else observed on the survey. Pure so the diff is testable without a graph.
@@ -70,12 +64,12 @@ export const diffSurveyRelationships = (
   current: ReadonlyArray<TAuthzedRelationship>,
   expected: ReadonlyArray<TAuthzedRelationship>
 ): TAuthzedRelationshipUpdate[] => {
-  const expectedKeys = new Set(expected.map(relationshipKey));
+  const expectedKeys = new Set(expected.map(surveyRelationshipKey));
 
   return [
     ...expected.map((relationship): TAuthzedRelationshipUpdate => ({ operation: "touch", relationship })),
     ...current
-      .filter((relationship) => !expectedKeys.has(relationshipKey(relationship)))
+      .filter((relationship) => !expectedKeys.has(surveyRelationshipKey(relationship)))
       .map((relationship): TAuthzedRelationshipUpdate => ({ operation: "delete", relationship })),
   ];
 };
