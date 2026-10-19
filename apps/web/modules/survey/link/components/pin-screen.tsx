@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Response, Workspace } from "@formbricks/database/prisma-browser";
@@ -66,6 +67,7 @@ export const PinScreen = (props: Readonly<PinScreenProps>) => {
   const [localPinEntry, setLocalPinEntry] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const { t } = useTranslation();
+  const router = useRouter();
   const isLocaleReady = useAppLocale(locale);
   const [error, setError] = useState("");
   const [survey, setSurvey] = useState<TSurvey>();
@@ -105,13 +107,20 @@ export const PinScreen = (props: Readonly<PinScreenProps>) => {
         } else {
           const errorMessage = getFormattedErrorMessage(response);
           setError(errorMessage);
+          // Anything but a wrong PIN can mean the survey stopped taking responses (closed, archived or
+          // gone) after this page loaded; the action then answers "not found" (ENG-4032). The PIN boxes
+          // only show an error as a red border, so re-render the page and let the server show what a
+          // fresh load would, instead of a PIN error the respondent can never clear.
+          if (response?.serverError !== "INVALID_PIN") {
+            router.refresh();
+          }
         }
         setLoading(false);
       }
     };
 
     void validateSurveyPin();
-  }, [localPinEntry, surveyId]);
+  }, [localPinEntry, router, surveyId]);
 
   if (!survey) {
     // The gate is nothing but translated chrome, so it waits for its locale instead of asking for the

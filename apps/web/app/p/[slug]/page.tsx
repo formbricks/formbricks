@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getSurveyBySlug } from "@/modules/survey/lib/slug";
+import { isLinkSurveyServable } from "@/modules/survey/link/lib/public-access";
 
 interface PrettyUrlPageProps {
   params: Promise<{ slug: string }>;
@@ -16,7 +17,9 @@ export default async function PrettyUrlPage(props: PrettyUrlPageProps) {
   }
 
   const survey = await getSurveyBySlug(slug);
-  if (!survey) {
+  // A survey /s/<id> would 404 (draft, archived, non-link) 404s here too, so the slug doesn't give away its
+  // id (ENG-4032).
+  if (!survey || !isLinkSurveyServable(survey)) {
     return notFound();
   }
 
