@@ -48,15 +48,16 @@ beforeEach(async () => {
 });
 
 describe("native Better Auth sign-up endpoint (real Postgres + Better Auth)", () => {
-  // The canonical path, plus the spellings that resolve to it: the router trims a trailing slash and
-  // `Request` collapses dot segments, so each of these reaches `auth.handler` as the same endpoint.
-  // The last two never matched the route at all; they are here so a matcher change cannot open them.
+  // The canonical path, plus spellings that reach the same endpoint: a query string, and dot segments,
+  // which `Request` collapses before `auth.handler` sees the URL. The last three never matched the
+  // route (the router 404s a trailing slash and matches case- and encoding-exactly); they are here so
+  // a Better Auth or router change cannot quietly open them.
   test.each([
     "/api/auth/sign-up/email",
-    "/api/auth/sign-up/email/",
     "/api/auth/sign-up/email?callbackURL=%2F",
     "/api/auth/x/../sign-up/email",
     "/api/auth/x/%2e%2e/sign-up/email",
+    "/api/auth/sign-up/email/",
     "/api/auth/Sign-Up/Email",
     "/api/auth/sign%2Dup/email",
   ])("POST %s is a 404 and creates nothing", async (path) => {
