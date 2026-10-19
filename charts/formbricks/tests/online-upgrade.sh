@@ -33,12 +33,10 @@ hub:
   replicas: 2
   image:
     digest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+# Cube keeps the chart default: one replica with the in-memory driver (ENG-3955).
 cube:
-  replicas: 2
   image:
     digest: sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-  env:
-    CUBEJS_CACHE_AND_QUEUE_DRIVER: cubestore
 VALUES
 # Argo renders Helm as an install. Assert its phases independently from Helm's upgrade hooks.
 for controller in helm argo; do
