@@ -152,3 +152,12 @@ minimumReleaseAgeExclude:
   # a fresh hub bump isn't blocked. Version-pinned scoped entries (e.g. '@formbricks/hub@0.9.0') are not
   # reliably matched by the exclude, so match by name.
   - '@formbricks/hub'
+
+patchedDependencies:
+  # ENG-3972 / ENG-3248: for every non-GET request the proxy matches, and for every external rewrite (the
+  # PostHog /ingest proxy), Next clones the body. The clone reads the whole upload off the socket, keeps up
+  # to proxyClientMaxBodySize in memory and holds the request until the client's last byte, so any
+  # anonymous caller can pin 16 MB per connection on any path. proxy.ts never reads the body, so the patch
+  # stops handing it one and the route reads the unread stream itself; a rewrite now streams the request to
+  # its target. Re-check on every Next upgrade; drop it if Next makes the clone lazy or opt-out.
+  "next@16.2.11": patches/next@16.2.11.patch
