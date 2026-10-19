@@ -12,15 +12,29 @@ import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customizat
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
 import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { createLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
+import { isLinkSurveyOpenForResponses } from "@/modules/survey/link/lib/public-access";
 import { getLinkSurveyCustomCss, omitCustomCssSource } from "@/modules/survey/link/lib/respondent-custom-css";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
+
+/**
+ * Loads the survey behind one of the link page's public gate actions. Both run without a session, so a
+ * survey respondents cannot take right now (a draft, archived, non-link, paused, scheduled or completed
+ * one) is "not found" here, exactly as the page would show it, before anything else is checked (ENG-4032).
+ */
+const getSurveyOpenForResponses = async (surveyId: string) => {
+  const survey = await getSurveyWithMetadata(surveyId);
+  if (!isLinkSurveyOpenForResponses(survey)) {
+    throw new ResourceNotFoundError("Survey", surveyId);
+  }
+  return survey;
+};
 
 export const sendLinkSurveyEmailAction = actionClient
   .inputSchema(ZLinkSurveyEmailData)
   .action(async ({ parsedInput }) => {
     await applyIPRateLimit(rateLimitConfigs.actions.sendLinkSurveyEmail);
 
-    const survey = await getSurveyWithMetadata(parsedInput.surveyId);
+    const survey = await getSurveyOpenForResponses(parsedInput.surveyId);
 
     if (!survey.isVerifyEmailEnabled) {
       throw new InvalidInputError("EMAIL_VERIFICATION_NOT_ENABLED");
@@ -57,11 +71,8 @@ export const validateSurveyPinAction = actionClient
   .action(async ({ parsedInput }) => {
     await applyIPRateLimit(rateLimitConfigs.actions.validateSurveyPin);
 
-    // Get survey data which includes pin information
-    const survey = await getSurveyWithMetadata(parsedInput.surveyId);
-    if (!survey) {
-      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
-    }
+    // Gated before the PIN comparison, so a survey that is not public can't be probed for its PIN either.
+    const survey = await getSurveyOpenForResponses(parsedInput.surveyId);
 
     const surveyPin = survey.pin;
     const originalPin = surveyPin?.toString();

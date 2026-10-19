@@ -20,6 +20,7 @@ import { SurveyCompletedMessage } from "@/modules/survey/link/components/survey-
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
+import { isLinkSurveyServable } from "@/modules/survey/link/lib/public-access";
 import { getLinkSurveyCustomCss, omitCustomCssSource } from "@/modules/survey/link/lib/respondent-custom-css";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { hasUserIdSearchParam } from "@/modules/survey/link/lib/user-id";
@@ -80,7 +81,7 @@ export const renderSurvey = async ({
 
   // Archived surveys are absent from the workspace for respondents — treat the public link as a
   // missing survey (same as a draft or non-link survey) rather than showing an inactive/scheduled state.
-  if (survey.status === "draft" || survey.type !== "link" || survey.archivedAt) {
+  if (!isLinkSurveyServable(survey)) {
     notFound();
   }
 

@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
+import { isLinkSurveyServable } from "@/modules/survey/link/lib/public-access";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import {
   getBasicSurveyMetadata,
@@ -15,7 +16,8 @@ export const getMetadataForLinkSurvey = async (
 ): Promise<Metadata> => {
   const survey = await getSurveyWithMetadata(surveyId);
 
-  if (!survey || survey?.type !== "link" || survey?.status === "draft") {
+  // Same gate as the page: an archived survey's name must not reach <title> or og:title on its 404.
+  if (!isLinkSurveyServable(survey)) {
     notFound();
   }
 
