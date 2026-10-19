@@ -8,6 +8,7 @@ import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
+import { isLinkSurveyServable } from "@/modules/survey/link/lib/public-access";
 import { resolveSingleUseIdForSurvey } from "@/modules/survey/link/lib/single-use-link";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
@@ -74,7 +75,9 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
     return notFound();
   }
 
-  if (!survey) {
+  // Gate before any early return below: the single-use screen would otherwise tell a visitor that a draft,
+  // archived or non-link survey exists, and what state it is in (ENG-4032). renderSurvey checks again.
+  if (!survey || !isLinkSurveyServable(survey)) {
     return notFound();
   }
 

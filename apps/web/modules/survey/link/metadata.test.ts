@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getBasicSurveyMetadata, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
@@ -187,6 +188,23 @@ describe("getMetadataForLinkSurvey", () => {
     await getMetadataForLinkSurvey(mockSurveyId);
 
     expect(notFound).toHaveBeenCalled();
+  });
+
+  test("calls notFound for an unknown id, the same way as for a survey that isn't public", async () => {
+    vi.mocked(notFound).mockImplementation(() => {
+      throw new Error("NEXT_HTTP_ERROR_FALLBACK;404");
+    });
+    vi.mocked(getSurveyWithMetadata).mockRejectedValue(new ResourceNotFoundError("Survey", mockSurveyId));
+
+    await expect(getMetadataForLinkSurvey(mockSurveyId)).rejects.toThrow("NEXT_HTTP_ERROR_FALLBACK;404");
+    expect(notFound).toHaveBeenCalled();
+  });
+
+  test("rethrows a loader failure that is not a missing survey", async () => {
+    vi.mocked(getSurveyWithMetadata).mockRejectedValue(new DatabaseError("connection lost"));
+
+    await expect(getMetadataForLinkSurvey(mockSurveyId)).rejects.toBeInstanceOf(DatabaseError);
+    expect(notFound).not.toHaveBeenCalled();
   });
 
   test("handles metadata without openGraph property", async () => {

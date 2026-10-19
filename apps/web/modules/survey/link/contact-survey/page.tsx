@@ -137,6 +137,10 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   const existingResponse = await getExistingContactResponse(surveyId, contactId)();
   if (existingResponse) {
     const survey = await loadSurvey();
+    // Same gate as below: a survey that is no longer public 404s instead of confirming it exists (ENG-4032).
+    if (survey && !isLinkSurveyServable(survey)) {
+      notFound();
+    }
     if (survey) {
       const workspace = await getWorkspaceById(survey.workspaceId);
       return <SurveyInactive status="response submitted" workspace={workspace || undefined} />;
@@ -147,7 +151,9 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   const isPreview = preview === "true";
   const survey = await loadSurvey();
 
-  if (!survey) {
+  // Gate before the single-use early return, which would otherwise tell the token holder that a draft,
+  // archived or non-link survey exists (ENG-4032). renderSurvey checks again.
+  if (!survey || !isLinkSurveyServable(survey)) {
     notFound();
   }
 

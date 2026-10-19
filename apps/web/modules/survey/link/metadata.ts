@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { isLinkSurveyServable } from "@/modules/survey/link/lib/public-access";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
@@ -14,7 +15,14 @@ export const getMetadataForLinkSurvey = async (
   languageCode?: string,
   acceptedLanguages: string[] = []
 ): Promise<Metadata> => {
-  const survey = await getSurveyWithMetadata(surveyId);
+  // An unknown id must end up exactly where a non-public one does, or the page title (empty vs the
+  // not-found title) tells the two apart (ENG-4032).
+  const survey = await getSurveyWithMetadata(surveyId).catch((error: unknown) => {
+    if (error instanceof ResourceNotFoundError) {
+      notFound();
+    }
+    throw error;
+  });
 
   // Same gate as the page: an archived survey's name must not reach <title> or og:title on its 404.
   if (!isLinkSurveyServable(survey)) {
