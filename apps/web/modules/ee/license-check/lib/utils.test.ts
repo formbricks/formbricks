@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import * as constants from "@/lib/constants";
 import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
 import type { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/types/enterprise-license";
@@ -38,6 +39,10 @@ vi.mock("@/lib/constants", async (importOriginal) => {
     AUDIT_LOG_ENABLED: true,
   };
 });
+
+vi.mock("@formbricks/logger", () => ({
+  logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn(), debug: vi.fn() },
+}));
 
 vi.mock("@/modules/entitlements/lib/checks", () => ({
   hasOrganizationEntitlementWithLicenseGuard: vi.fn(),
@@ -781,6 +786,23 @@ describe("License Utils", () => {
 
       expect(result).toBe(true);
       expect(getLicenseFeatures).not.toHaveBeenCalled();
+    });
+
+    test("warns once each time the licence starts withholding audit logging", async () => {
+      vi.mocked(constants).AUDIT_LOG_ENABLED = true;
+      const licensed = { ...defaultFeatures, auditLogs: true };
+      vi.mocked(getLicenseFeatures)
+        .mockResolvedValueOnce(licensed)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(licensed)
+        .mockResolvedValueOnce({ ...defaultFeatures, auditLogs: false });
+
+      const results = [];
+      for (let i = 0; i < 5; i++) results.push(await getIsAuditLogsEnabled());
+
+      expect(results).toEqual([true, false, false, true, false]);
+      expect(logger.warn).toHaveBeenCalledTimes(2);
     });
 
     test("returns false on Cloud when audit logs are globally disabled", async () => {

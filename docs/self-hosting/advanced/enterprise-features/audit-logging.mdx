@@ -38,9 +38,10 @@ TRUSTED_PROXY_HOP_COUNT=1
    active and includes audit logs.
 
 <Warning>
-  Audit logging follows the license like every other Enterprise feature. If the license expires, or your instance
-  cannot reach the license server for longer than the 3-day grace period, Formbricks stops writing audit events
-  until the license is active again. Monitor your log pipeline for gaps.
+  Audit logging follows the license like every other Enterprise feature. If a license check fails or reports the
+  key as expired, audit events keep flowing for up to 3 days from the last successful check, then stop until the
+  license is active again. A key the license server rejects as invalid, or as bound to another instance, stops
+  them right away. Formbricks logs a warning when this happens; monitor your log pipeline for it and for gaps.
 </Warning>
 
 Audit logs are written to **stdout** as JSON Lines. Configure your container platform or logging agent to forward
