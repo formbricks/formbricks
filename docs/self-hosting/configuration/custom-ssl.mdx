@@ -46,7 +46,9 @@ sudo chmod 600 certs/*
 
 ### Step 5: Update `traefik.yaml`
 
-Modify the file to define HTTP and HTTPS settings:
+Modify the file to define HTTP and HTTPS settings. Keep the `encodedCharacters` blocks: they refuse encoded
+characters such as `%2F` in request paths, which Traefik accepts by default since v3.6.7 and which would let a
+request skip the routes that cap authentication request bodies.
 
 <CodeGroup>
   ```yaml traefik.yaml
@@ -59,8 +61,25 @@ Modify the file to define HTTP and HTTPS settings:
             to: websecure
             scheme: https
             permanent: true
+        encodedCharacters:
+          allowEncodedSlash: false
+          allowEncodedBackSlash: false
+          allowEncodedNullCharacter: false
+          allowEncodedSemicolon: false
+          allowEncodedPercent: false
+          allowEncodedQuestionMark: false
+          allowEncodedHash: false
     websecure:
       address: ":443"
+      http:
+        encodedCharacters:
+          allowEncodedSlash: false
+          allowEncodedBackSlash: false
+          allowEncodedNullCharacter: false
+          allowEncodedSemicolon: false
+          allowEncodedPercent: false
+          allowEncodedQuestionMark: false
+          allowEncodedHash: false
 
   providers:
     docker:
@@ -109,7 +128,7 @@ Modify the configuration to enforce SSL. The rest of the configuration should re
       <<: *environment
 
     traefik:
-      image: "traefik:v3.6.4"
+      image: "traefik:v3.6.25"
       restart: always
       container_name: "traefik"
       depends_on:

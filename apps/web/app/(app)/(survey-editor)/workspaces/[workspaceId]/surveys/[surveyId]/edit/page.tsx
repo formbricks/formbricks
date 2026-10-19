@@ -1,3 +1,5 @@
-import { SurveyEditorPage } from "@/modules/survey/editor/page";
+import { SurveyEditorPage, generateSurveyEditorMetadata } from "@/modules/survey/editor/page";
+
+export const generateMetadata = generateSurveyEditorMetadata;
 
 export default SurveyEditorPage;

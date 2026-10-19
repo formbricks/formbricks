@@ -48,22 +48,29 @@ describe("Fresh-instance sign-up exception (real Postgres)", () => {
     expect(SIGNUP_ENABLED).toBe(false);
     expect(await prisma.user.count()).toBe(0);
 
-    // Genuinely concurrent: both reach the policy check, which is a database round trip, before either
-    // has inserted anything — so both read zero users, exactly as two racing HTTP requests would.
+    // Genuinely concurrent: both are in flight before either has inserted anything, so both can read zero
+    // users at the policy check, exactly as two racing HTTP requests would.
     const outcomes = await Promise.allSettled([signUp("first@example.com"), signUp("second@example.com")]);
 
     expect(await prisma.user.count()).toBe(1);
-    expect(
-      await prisma.user.count({ where: { isBootstrapAdmin: BootstrapAdminMarker.bootstrapAdmin } })
-    ).toBe(1);
+    const markedUsers = await prisma.user.findMany({
+      where: { isBootstrapAdmin: BootstrapAdminMarker.bootstrapAdmin },
+      select: { id: true },
+    });
+    expect(markedUsers).toHaveLength(1);
 
-    // One of the two loses, and which one is genuinely undetermined — the assertion is on the count,
-    // not on the winner. The loser's error is Better Auth's generic create failure rather than the
-    // policy rejection: a unique-violation out of the adapter is not an APIError, so the sign-up route
-    // maps it to FAILED_TO_CREATE_USER. Deliberately not asserted — it is incidental to this fix and
-    // would pin an upstream detail. The clean 403 still covers every non-racing rejection, below.
-    expect(outcomes.filter((outcome) => outcome.status === "fulfilled")).toHaveLength(1);
-    expect(outcomes.filter((outcome) => outcome.status === "rejected")).toHaveLength(1);
+    // One of the two loses, and which one is genuinely undetermined — the assertion is on the account
+    // that exists, not on the winner. How the loser loses is timing too, so it is deliberately not
+    // asserted: it rejects when the unique index refuses its insert (FAILED_TO_CREATE_USER) or when the
+    // before-hook's count already sees the winner (the policy 403). But when only the backstop's later
+    // count sees the winner, its 403 comes out of `createUser`, and with `autoSignIn: false` Better Auth
+    // answers that with its generic-duplicate 200 — a fulfilled result carrying a user that was never
+    // inserted (ENG-2812). So count the fulfilled result that carries the persisted id, not every one.
+    // Once ENG-2812 is fixed, the loser always rejects: assert that the other outcome is rejected again.
+    const [admin] = markedUsers;
+    expect(
+      outcomes.filter((outcome) => outcome.status === "fulfilled" && outcome.value.user.id === admin.id)
+    ).toHaveLength(1);
   });
 
   test("the exception is single-use: the next uninvited sign-up is rejected by policy", async () => {

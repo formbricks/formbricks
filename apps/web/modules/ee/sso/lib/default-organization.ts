@@ -79,7 +79,8 @@ export const ensureDefaultOrganization = async (
       });
     }
 
-    await createWorkspace(organization.id, { name: DEFAULT_WORKSPACE_NAME });
+    // The organization was created just above and owns no workspaces, so there is no cap to enforce.
+    await createWorkspace(organization.id, { name: DEFAULT_WORKSPACE_NAME }, { workspaceLimit: null });
 
     return { organizationId: organization.id, role: "owner" };
   } catch (error) {

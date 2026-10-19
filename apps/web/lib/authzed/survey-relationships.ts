@@ -57,3 +57,27 @@ export const expectedSurveyRelationships = (row: TSurveyProjectionRow): TAuthzed
 
   return relationships;
 };
+
+/** An edge's identity for set comparisons: relation, resource and subject, including a subject relation. */
+export const surveyRelationshipKey = ({ relation, resource, subject }: TAuthzedRelationship): string =>
+  JSON.stringify([
+    relation,
+    resource.objectType,
+    resource.objectId,
+    subject.objectType,
+    subject.objectId,
+    subject.relation ?? "",
+  ]);
+
+/**
+ * Whether the graph holds exactly the edges a survey row implies, in any order: none of them missing and
+ * nothing else present. A reconcile write set cannot answer this, because it touches every expected edge.
+ */
+export const surveyRelationshipsMatch = (
+  current: ReadonlyArray<TAuthzedRelationship>,
+  expected: ReadonlyArray<TAuthzedRelationship>
+): boolean => {
+  const currentKeys = new Set(current.map(surveyRelationshipKey));
+  const expectedKeys = new Set(expected.map(surveyRelationshipKey));
+  return currentKeys.size === expectedKeys.size && [...expectedKeys].every((key) => currentKeys.has(key));
+};

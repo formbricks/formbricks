@@ -164,6 +164,45 @@ export function extractKeysFromContent(content: string): string[] {
 }
 
 /**
+ * Source files read at once. The reads are independent (each only adds to a set), so reading them one
+ * after another left the scan waiting on each in turn; a bounded pool overlaps them without opening
+ * thousands of files at once (`EMFILE`).
+ */
+const FILE_READ_CONCURRENCY = 32;
+
+/**
+ * Run `task` over `items` with at most `concurrency` (a positive integer) in flight, settling once every
+ * task has finished. A task that rejects does not stop the others: every item still runs, and the run
+ * then rejects with an `AggregateError` of each failure, so nothing is left in flight when it settles.
+ */
+export async function forEachConcurrently<T>(
+  items: readonly T[],
+  concurrency: number,
+  task: (item: T) => Promise<void>
+): Promise<void> {
+  if (!Number.isSafeInteger(concurrency) || concurrency <= 0) {
+    throw new Error(`forEachConcurrently: concurrency must be a positive integer, got ${concurrency}`);
+  }
+  let next = 0;
+  const failures: unknown[] = [];
+  const worker = async (): Promise<void> => {
+    while (next < items.length) {
+      const item = items[next];
+      next += 1;
+      try {
+        await task(item);
+      } catch (error) {
+        failures.push(error);
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));
+  if (failures.length > 0) {
+    throw new AggregateError(failures, `forEachConcurrently: ${failures.length.toString()} task(s) failed`);
+  }
+}
+
+/**
  * Scan source files for translation keys
  */
 async function scanSourceFiles(sourceDirs: string | string[], packageName: string): Promise<Set<string>> {
@@ -184,7 +223,7 @@ async function scanSourceFiles(sourceDirs: string | string[], packageName: strin
       `   Found ${files.length.toString()} files to scan in ${path.relative(path.join(__dirname, "..", "..", ".."), dir)}`
     );
 
-    for (const file of files) {
+    await forEachConcurrently(files, FILE_READ_CONCURRENCY, async (file) => {
       try {
         const content = await fs.promises.readFile(file, "utf-8");
         const keys = extractKeysFromContent(content);
@@ -192,7 +231,7 @@ async function scanSourceFiles(sourceDirs: string | string[], packageName: strin
       } catch (error) {
         console.error(`❌ Error: Could not read file ${file}:`, error);
       }
-    }
+    });
   }
 
   console.log(`   ✅ Found ${usedKeys.size.toString()} unique translation keys\n`);

@@ -91,6 +91,31 @@ describe("isBlockedEmailDomain", () => {
     }
   });
 
+  test("blocks any subdomain of a wildcard disposable provider", () => {
+    // 33mail and similar give each user their own subdomain, so the root alone is not enough.
+    expect(isBlockedEmailDomain("jerry90@jerrygroup.33mail.com")).toBe(true);
+    expect(isBlockedEmailDomain("a@deep.nested.33mail.com")).toBe(true);
+    expect(isBlockedEmailDomain("A@JerryGroup.33Mail.com.")).toBe(true);
+    // Wildcard roots missing from the exact list are still blocked themselves.
+    expect(isBlockedEmailDomain("test@anonaddy.com")).toBe(true);
+    // A lookalike that only ends in the same characters is not a subdomain.
+    expect(isBlockedEmailDomain("test@not33mail.com")).toBe(false);
+  });
+
+  test("does a bounded number of lookups for a domain with many labels", () => {
+    // Better Auth's sign-up route doesn't cap the email length, so one lookup per label would let a
+    // single request hash ~200k suffixes. Counting lookups keeps this deterministic, unlike a timer.
+    const longDomain = "a.".repeat(200_000);
+    const hasSpy = vi.spyOn(Set.prototype, "has");
+    try {
+      expect(isBlockedEmailDomain(`x@${longDomain}com`)).toBe(false);
+      expect(isBlockedEmailDomain(`x@${longDomain}33mail.com`)).toBe(true);
+      expect(hasSpy.mock.calls.length).toBeLessThan(20);
+    } finally {
+      hasSpy.mockRestore();
+    }
+  });
+
   test("returns false for company domains", () => {
     for (const email of [
       "alice@acme-corp.com",
@@ -109,7 +134,7 @@ describe("isBlockedEmailDomain", () => {
   });
 
   test("matches on the domain after the last @", () => {
-    // Only an exact domain match counts; a subdomain of a blocked domain is intentionally NOT blocked.
+    // Outside the wildcard providers, only an exact domain match counts: a subdomain is NOT blocked.
     expect(isBlockedEmailDomain("user@mail.acme-corp.com")).toBe(false);
     expect(isBlockedEmailDomain("user@sub.gmail.com")).toBe(false);
   });

@@ -63,7 +63,7 @@ export const resolveRespondentCustomCss = async ({
   surveys,
 }: {
   workspaceCustomCss: TStoredCustomCss;
-  /** The workspace's "Enable custom styling". */
+  /** The workspace's "Allow survey-level styling". */
   allowStyleOverwrite: boolean | null | undefined;
   surveys: ReadonlyArray<TRespondentSurvey>;
 }): Promise<TRespondentCustomCss> => {

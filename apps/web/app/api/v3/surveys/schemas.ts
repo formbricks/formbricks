@@ -431,6 +431,7 @@ export const V3_DISTRIBUTION_SCALAR_KEYS = [
   "displayLimit",
   "recontactDays",
   "autoClose",
+  "keepEndingCardOpen",
   "autoComplete",
   "delay",
 ] as const;
@@ -1177,6 +1178,7 @@ const createZV3SurveyDistribution = (bound: boolean) =>
       displayLimit: z.number().int().nonnegative().nullable().prefault(null),
       recontactDays: z.number().int().nonnegative().nullable().prefault(null),
       autoClose: z.number().int().nonnegative().nullable().prefault(null),
+      keepEndingCardOpen: z.boolean().prefault(false),
       autoComplete: z
         .number()
         .int()

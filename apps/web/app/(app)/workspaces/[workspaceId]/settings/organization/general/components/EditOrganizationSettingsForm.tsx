@@ -95,8 +95,6 @@ export const EditOrganizationSettingsForm = ({
   const handleUpdateOrganizationSettings: SubmitHandler<TEditOrganizationSettingsForm> = async (data) => {
     // Only persist the fields the user changed and is allowed to change. They have different permissions,
     // so each goes on its own and reports on its own.
-    let saved = false;
-
     if (dirtyFields.name && isOwner) {
       const settings = await saveField(
         { name: data.name.trim() },
@@ -104,7 +102,8 @@ export const EditOrganizationSettingsForm = ({
       );
       if (settings) {
         form.resetField("name", { defaultValue: settings.name });
-        saved = true;
+        // Re-render the server layouts so the breadcrumb and sidebar pick up the new name.
+        router.refresh();
       }
     }
 
@@ -113,14 +112,8 @@ export const EditOrganizationSettingsForm = ({
         { displayTimeZone: data.displayTimeZone ?? null },
         t("workspace.settings.general.display_time_zone_updated_successfully")
       );
-      if (settings) {
-        form.resetField("displayTimeZone", { defaultValue: settings.displayTimeZone });
-        saved = true;
-      }
+      if (settings) form.resetField("displayTimeZone", { defaultValue: settings.displayTimeZone });
     }
-
-    // The organization name also shows in the server-rendered shell (breadcrumb, organization switcher).
-    if (saved) router.refresh();
   };
 
   return (

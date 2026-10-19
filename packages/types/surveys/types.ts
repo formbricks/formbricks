@@ -935,6 +935,10 @@ export const ZSurveyBase = z.object({
   status: ZSurveyStatus,
   displayOption: ZSurveyDisplayOption,
   autoClose: z.number().nullable(),
+  // App surveys close 3 seconds after the ending card unless this is on, in which case the ending card
+  // stays until the respondent closes it (WCAG 2.2.1). Not the inactivity `autoClose` above. Optional so
+  // surveys built in memory (templates, previews) read as off, matching the column default.
+  keepEndingCardOpen: z.boolean().optional(),
   triggers: z.array(z.object({ actionClass: ZActionClass })),
   // This variable should be called `cooldownPeriod`, not `recontactDays`. It is related to the
   // Survey Cooldown Period feature (across surveys) and not the Recontact Options (per survey).

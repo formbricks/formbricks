@@ -41,7 +41,7 @@ interface CustomCssCardProps {
   footer?: ReactNode;
   /** Replaces the fields entirely, e.g. the upgrade prompt when the plan has no CSS to show. */
   lockedContent?: ReactNode;
-  /** Greyed out and closed, like the survey editor's other styling cards without "Add custom styles". */
+  /** Greyed out and closed, like the survey editor's other styling cards without custom styling. */
   disabled?: boolean;
   open: boolean;
   setOpen: (open: boolean) => void;

@@ -237,6 +237,93 @@ const getOptionalSinglePrice = (
   return matches[0] ?? null;
 };
 
+// Rank for picking the responses price when several active candidates match (ENG-1971). Lower wins.
+// Graduated beats the tag: the plan card's overage tooltip and our billing semantics only work with a
+// graduated price (toOverageDisplay returns null for anything else), so a volume price must never win
+// just because it carries the explicit tag — Stripe copies metadata when a price is duplicated in the
+// dashboard, so a legacy price can easily still be tagged "responses". Among prices with the same
+// tiers_mode, an explicit formbricks_price_kind tag beats an untagged metered price that only the
+// usage_type fallback in getPriceKind classified as responses.
+const getResponsePriceRank = (price: TStripeCatalogPrice): [number, number] => [
+  price.tiers_mode === "graduated" ? 0 : 1,
+  price.metadata?.formbricks_price_kind === "responses" ? 0 : 1,
+];
+
+// Deterministic replacement for getSinglePrice on the responses kind. A product can legitimately carry
+// a legacy metered price next to the current graduated one (getPriceKind classifies ANY untagged
+// metered price as "responses"), and failing the whole catalog on that took the billing page down
+// (ENG-1971). Ranking: graduated, then explicitly tagged, then most recent `created`. Still throws when
+// nothing matches — a plan without a responses price is a real catalog outage — and logs a warning
+// naming the chosen and ignored ids so duplicates stay visible instead of being silently absorbed.
+const resolveResponsePrice = (
+  prices: TStripeCatalogPrice[],
+  plan: TStandardCloudPlan,
+  interval: TCloudBillingInterval
+): TStripeCatalogPrice => {
+  const matches = prices.filter(
+    (price) =>
+      getPricePlan(price) === plan &&
+      getPriceKind(price) === "responses" &&
+      getPriceInterval(price) === interval
+  );
+
+  if (matches.length === 0) {
+    throw new Error(`Expected a Stripe price for ${plan}/responses/${interval}, but found 0`);
+  }
+
+  // The usage_type fallback in getPriceKind also catches untagged metered prices of OTHER meters. When a
+  // tagged responses price names its meter, only that meter's untagged prices stay in the running, so a
+  // foreign-meter price can never outrank it and be attached to checkouts. Without a tagged meter there
+  // is nothing to verify against, and ranking alone decides.
+  const isResponsesTagged = (price: TStripeCatalogPrice) =>
+    price.metadata?.formbricks_price_kind === "responses";
+  const getMeter = (price: TStripeCatalogPrice) => price.recurring?.meter ?? null;
+  const responseMeters = new Set(
+    matches.filter(isResponsesTagged).flatMap((price) => {
+      const meter = getMeter(price);
+      return meter ? [meter] : [];
+    })
+  );
+  const candidates =
+    responseMeters.size === 0
+      ? matches
+      : matches.filter((price) => isResponsesTagged(price) || responseMeters.has(getMeter(price) ?? ""));
+  const foreignMeterIds = matches.filter((price) => !candidates.includes(price)).map((price) => price.id);
+  if (foreignMeterIds.length > 0) {
+    logger.warn(
+      { plan, interval, excludedPriceIds: foreignMeterIds },
+      "Excluded untagged metered prices on a different meter from the responses price"
+    );
+  }
+
+  const [chosen, ...ignored] = [...candidates].sort((a, b) => {
+    const [aMode, aTag] = getResponsePriceRank(a);
+    const [bMode, bTag] = getResponsePriceRank(b);
+    return aMode - bMode || aTag - bTag || b.created - a.created;
+  });
+
+  if (ignored.length > 0) {
+    // An untagged winner over a skipped tagged price means a metered price we never labelled (possibly a
+    // foreign meter) is now billed as responses — escalate so it gets looked at.
+    const untaggedBeatTagged = !isResponsesTagged(chosen) && ignored.some(isResponsesTagged);
+    const payload = {
+      plan,
+      interval,
+      chosenPriceId: chosen.id,
+      chosenTiersMode: chosen.tiers_mode,
+      ignoredPriceIds: ignored.map((price) => price.id),
+    };
+    const message = "Multiple active Stripe responses prices match; using the highest-ranked one";
+    if (untaggedBeatTagged) {
+      logger.error(payload, message);
+    } else {
+      logger.warn(payload, message);
+    }
+  }
+
+  return chosen;
+};
+
 // Resolve the included (free) workflow-run allowance from the price's OWN tier structure, and fail
 // closed if the price can't honor an "included volume" claim. A graduated price whose first tier is
 // free (unit_amount 0, flat_amount 0) up to a finite boundary grants exactly that many free runs —
@@ -307,12 +394,24 @@ const fetchStripeBillingCatalog = async (): Promise<TStripeBillingCatalog> => {
     }
   };
 
+  // Resolved in the original lookup order (base before responses, so an empty plan still reports its
+  // missing base price first). The responses price is resolved once per plan: monthly and yearly items
+  // share the same monthly-billed price, and display and checkout both read these items, so they can
+  // never pick different prices.
+  const hobbyMonthlyBase = getSinglePrice(prices, "hobby", "base", "monthly");
+  const proMonthlyBase = getSinglePrice(prices, "pro", "base", "monthly");
+  const proResponsePrice = resolveResponsePrice(prices, "pro", "monthly");
+  const proYearlyBase = getSinglePrice(prices, "pro", "base", "yearly");
+  const scaleMonthlyBase = getSinglePrice(prices, "scale", "base", "monthly");
+  const scaleResponsePrice = resolveResponsePrice(prices, "scale", "monthly");
+  const scaleYearlyBase = getSinglePrice(prices, "scale", "base", "yearly");
+
   return {
     hobby: {
       monthly: {
         plan: "hobby",
         interval: "monthly",
-        basePrice: getSinglePrice(prices, "hobby", "base", "monthly"),
+        basePrice: hobbyMonthlyBase,
         responsePrice: null,
         ...workflowRuns("hobby"),
       },
@@ -321,15 +420,15 @@ const fetchStripeBillingCatalog = async (): Promise<TStripeBillingCatalog> => {
       monthly: {
         plan: "pro",
         interval: "monthly",
-        basePrice: getSinglePrice(prices, "pro", "base", "monthly"),
-        responsePrice: getSinglePrice(prices, "pro", "responses", "monthly"),
+        basePrice: proMonthlyBase,
+        responsePrice: proResponsePrice,
         ...workflowRuns("pro"),
       },
       yearly: {
         plan: "pro",
         interval: "yearly",
-        basePrice: getSinglePrice(prices, "pro", "base", "yearly"),
-        responsePrice: getSinglePrice(prices, "pro", "responses", "monthly"),
+        basePrice: proYearlyBase,
+        responsePrice: proResponsePrice,
         ...workflowRuns("pro"),
       },
     },
@@ -337,15 +436,15 @@ const fetchStripeBillingCatalog = async (): Promise<TStripeBillingCatalog> => {
       monthly: {
         plan: "scale",
         interval: "monthly",
-        basePrice: getSinglePrice(prices, "scale", "base", "monthly"),
-        responsePrice: getSinglePrice(prices, "scale", "responses", "monthly"),
+        basePrice: scaleMonthlyBase,
+        responsePrice: scaleResponsePrice,
         ...workflowRuns("scale"),
       },
       yearly: {
         plan: "scale",
         interval: "yearly",
-        basePrice: getSinglePrice(prices, "scale", "base", "yearly"),
-        responsePrice: getSinglePrice(prices, "scale", "responses", "monthly"),
+        basePrice: scaleYearlyBase,
+        responsePrice: scaleResponsePrice,
         ...workflowRuns("scale"),
       },
     },
