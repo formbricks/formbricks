@@ -77,22 +77,16 @@ const STRAY_LESS_THAN_WEIGHT = 16;
  * from the count, and each byte is read at most once per tag. A quote that never closes before `end` is stepped
  * over rather than ending the scan, so the names after it still count: xmldom happens to reject that shape
  * before reading them today, but the count does not rely on it.
- *
- * The tag opens a scope unless it ends in `/>`, the one shape xmldom closes. A tag with a quote that never closes,
- * or with no `>` before `end`, is taken as open: xmldom stops at it (an unescaped `<` in a value is fatal), so
- * counting it open only over-counts the depth, the safe direction.
  */
-const scanTag = (xml: Buffer, from: number, end: number): { attributes: number; opens: boolean } => {
+const countAttributes = (xml: Buffer, from: number, end: number): number => {
   let attributes = 0;
   let afterSeparator = false;
-  let unclosedQuote = false;
   let j = from;
   while (j < end && xml[j] !== GREATER_THAN) {
     const byte = xml[j];
     if (byte === DOUBLE_QUOTE || byte === SINGLE_QUOTE) {
       const close = xml.indexOf(byte, j + 1);
       const closed = close !== -1 && close < end;
-      unclosedQuote ||= !closed;
       j = closed ? close + 1 : j + 1;
       afterSeparator = closed;
       continue;
@@ -101,8 +95,60 @@ const scanTag = (xml: Buffer, from: number, end: number): { attributes: number; 
     afterSeparator = isSeparator(byte);
     j++;
   }
-  const selfClosing = j < end && xml[j - 1] === SLASH && !unclosedQuote;
-  return { attributes, opens: !selfClosing };
+  return attributes;
+};
+
+const isXmlSpace = (byte: number) => byte === 0x20 || byte === 0x09 || byte === 0x0a || byte === 0x0d;
+
+const isNameByte = (byte: number) =>
+  !isSeparator(byte) &&
+  byte !== SLASH &&
+  byte !== GREATER_THAN &&
+  byte !== EQUALS &&
+  byte !== DOUBLE_QUOTE &&
+  byte !== SINGLE_QUOTE &&
+  byte !== LESS_THAN;
+
+/**
+ * Whether the tag whose name starts at `from` closes itself: a name, then only quoted `name="value"` attributes,
+ * then `/>`. Anything else counts as opening a scope, even where xmldom would close it, because the
+ * other way round is how scopes hide: xmldom ends an unquoted value at a quote, so `<a b=x">"/>` opens an element
+ * that a looser reading takes as closed. Counting an odd tag open only over-counts the depth, the safe side, and
+ * every IdP writes its self-closing tags in this shape.
+ */
+const closesItself = (xml: Buffer, from: number, end: number): boolean => {
+  let j = from;
+  while (j < end && isNameByte(xml[j])) j++;
+  for (;;) {
+    while (j < end && isXmlSpace(xml[j])) j++;
+    if (j < end && xml[j] === SLASH) return j + 1 < end && xml[j + 1] === GREATER_THAN;
+    const nameStart = j;
+    while (j < end && isNameByte(xml[j])) j++;
+    if (j === nameStart) return false;
+    while (j < end && isXmlSpace(xml[j])) j++;
+    if (j >= end || xml[j] !== EQUALS) return false;
+    j++;
+    while (j < end && isXmlSpace(xml[j])) j++;
+    const quote = xml[j];
+    if (j >= end || (quote !== DOUBLE_QUOTE && quote !== SINGLE_QUOTE)) return false;
+    const close = xml.indexOf(quote, j + 1);
+    if (close === -1 || close >= end) return false;
+    j = close + 1;
+  }
+};
+
+/**
+ * Where the comment, CDATA section or processing instruction starting at `lt` ends, as xmldom reads it: at the
+ * first `-->`, `]]>` or `?>` (a comment that holds `--` earlier, or a CDATA section outside an element, is fatal
+ * to xmldom anyway). xmldom does not parse what is inside, so a `</` there closes nothing. A DOCTYPE is fatal
+ * anywhere but before the root element, where the depth is already zero, so it needs no skipping.
+ */
+const opaqueEnd = (xml: Buffer, lt: number): number => {
+  const terminator =
+    xml[lt + 1] === QUESTION ? "?>" : xml[lt + 2] === 0x2d ? "-->" : xml[lt + 2] === 0x5b ? "]]>" : null;
+  if (terminator === null) return lt;
+  const at = xml.indexOf(terminator, lt + 2);
+  return at === -1 ? xml.length : at + terminator.length;
 };
 
 /** What a response holds, read up to the point where it passed a bound. */
@@ -120,30 +166,34 @@ export interface SamlResponseMarkup {
  * each one into a node or into an error it raises and recovers from; one that cannot start anything costs more,
  * so it weighs more. Following XML structure instead lets malformed input hide markup, which is exactly what an
  * attacker sends. A `<` inside a comment or CDATA section is counted too; over-counting that rarity is the safe
- * direction. Depth rises on every tag that does not close itself and falls on every `</`: a `</` that does not
- * match the open element is fatal to xmldom, so it cannot hide a scope.
+ * direction. Depth rises on every tag that does not strictly close itself and falls on every `</`, both only
+ * outside comments, CDATA sections and processing instructions: a `</` that does not match the open element is
+ * fatal to xmldom, so it cannot hide a scope.
  */
 export const measureSamlResponseMarkup = (samlResponseBase64: string): SamlResponseMarkup => {
   const xml = Buffer.from(samlResponseBase64, "base64");
   let markup = 0;
   let depth = 0;
   let maxDepth = 0;
+  // Just past the comment, CDATA section or processing instruction `lt` sits in; nothing there moves the depth.
+  let opaqueUntil = 0;
   let lt = xml.indexOf(LESS_THAN);
 
   while (lt !== -1 && markup <= SAML_RESPONSE_MARKUP_BUDGET && maxDepth <= SAML_RESPONSE_MAX_DEPTH) {
     const next = xml.indexOf(LESS_THAN, lt + 1);
     const end = next === -1 ? xml.length : next;
     const kind = xml[lt + 1];
+    const structural = lt >= opaqueUntil;
     if (kind === SLASH) {
       markup++;
-      depth = Math.max(0, depth - 1);
+      if (structural) depth = Math.max(0, depth - 1);
     } else if (kind === BANG || kind === QUESTION) {
       // `<!…` and `<?…` carry no attributes and open nothing; malformed ones are fatal to xmldom, so cheap.
       markup++;
+      if (structural) opaqueUntil = opaqueEnd(xml, lt);
     } else if (isNameStart(kind)) {
-      const tag = scanTag(xml, lt + 1, end);
-      markup += 1 + tag.attributes;
-      if (tag.opens) maxDepth = Math.max(maxDepth, ++depth);
+      markup += 1 + countAttributes(xml, lt + 1, end);
+      if (structural && !closesItself(xml, lt + 1, end)) maxDepth = Math.max(maxDepth, ++depth);
     } else {
       markup += STRAY_LESS_THAN_WEIGHT;
     }

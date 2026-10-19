@@ -105,7 +105,7 @@ describe("SAML callback route", () => {
     [403, 403],
     [400, 400],
   ])(
-    "answers a response jackson refuses with %i as %i, logging only its fixed reason",
+    "answers a response jackson refuses with %i as %i, logging only its fixed message and reason",
     async (statusCode, status) => {
       const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
       samlResponseMock.mockRejectedValueOnce(
@@ -120,11 +120,26 @@ describe("SAML callback route", () => {
       expect(response.status).toBe(status);
       expect(await response.json()).not.toHaveProperty("details.internalError");
       expect(warn).toHaveBeenCalledWith(
-        { status, reason: "Issuer not found." },
+        { status, message: "Something wrong happened.", reason: "Issuer not found." },
         "jackson refused a SAML response"
       );
     }
   );
+
+  test("logs jackson's message when a refusal carries no separate reason", async () => {
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+    samlResponseMock.mockRejectedValueOnce(
+      Object.assign(new Error("Redirect URL is not allowed."), { statusCode: 403 })
+    );
+
+    const response = await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "s" }));
+
+    expect(response.status).toBe(403);
+    expect(warn).toHaveBeenCalledWith(
+      { status: 403, message: "Redirect URL is not allowed.", reason: undefined },
+      "jackson refused a SAML response"
+    );
+  });
 
   test.each([
     ["a jackson error with a 5xx status", Object.assign(new Error("db down"), { statusCode: 500 })],

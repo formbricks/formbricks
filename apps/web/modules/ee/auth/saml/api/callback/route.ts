@@ -73,10 +73,11 @@ export const POST = async (req: Request) => {
     const status = getJacksonClientErrorStatus(error);
     if (status === null) throw error;
     // A response jackson refused is the sender's problem, not ours: answer it as such instead of a bare 500 that
-    // reaches Sentry for every anonymous probe. The reason is one of jackson's fixed strings, never the response.
-    const reason = (error as { internalError?: unknown }).internalError;
+    // reaches Sentry for every anonymous probe. On this path jackson's message and reason are fixed strings, never
+    // the response, and with traces off this line is the only record of why a login failed.
+    const { message, internalError } = error as Error & { internalError?: unknown };
     logger.warn(
-      { status, reason: typeof reason === "string" ? reason : undefined },
+      { status, message, reason: typeof internalError === "string" ? internalError : undefined },
       "jackson refused a SAML response"
     );
     return status === 403

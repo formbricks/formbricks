@@ -109,6 +109,16 @@ describe("measureSamlResponseMarkup", () => {
     expect(depth("<r><a '/><b '/>")).toBe(3);
     // A tag with no > before the next < is open too.
     expect(depth("<r><a<b/>")).toBe(2);
+    // Only a strictly written self-closing tag closes: unquoted values, a space before />, or a stray quote do not.
+    expect(depth('<r><a b=c/><a b /><a b="c"/ ></r>')).toBe(4);
+  });
+
+  test("moves the depth for nothing inside comments, CDATA sections or processing instructions", () => {
+    expect(depth("<r><!-- <a><b><c> --></r>")).toBe(1);
+    expect(depth("<r><![CDATA[<a><b>]]></r>")).toBe(1);
+    expect(depth("<?pi <a><b>?><r/>")).toBe(0);
+    // Every < inside them still counts toward the markup.
+    expect(count("<r><!-- <a><b> --></r>")).toBe(5);
   });
 
   test("does not let a stray or unmatched </ take the depth below zero", () => {
@@ -225,7 +235,25 @@ describe("checkSamlResponseBounds", () => {
     const xml = opening + (close ? "</a>".repeat(levels) : "");
 
     expect(b64(xml).length).toBeLessThan(SAML_RESPONSE_MAX_LENGTH);
-    expect(count(xml)).toBeLessThanOrEqual(SAML_RESPONSE_MARKUP_BUDGET);
+    // Each level is one tag and one attribute, plus its closing tag when closed: within the markup budget, so only
+    // the depth cap refuses it (the measure stops at the cap, so its count cannot show this).
+    expect(levels * (close ? 3 : 2)).toBeLessThanOrEqual(SAML_RESPONSE_MARKUP_BUDGET);
+    expect(checkSamlResponseBounds(b64(xml))).toMatchObject({ reason: "depth" });
+  });
+
+  // Shapes xmldom nests that a looser reading of the markup took as flat. Each opened 3,000-6,000 namespace scopes
+  // within the budget and cost 100-230 ms to parse before the depth cap read them as xmldom does.
+  const scopes = (levels: number) => '<a xmlns:p="x">'.repeat(levels);
+  test.each([
+    ["an unquoted value ended by a quote, so the /> sits in a value", '<a xmlns:p=x">"/>'.repeat(5999)],
+    ["closing tags inside comments", (scopes(60) + "<!--" + "</a>".repeat(60) + "-->").repeat(66)],
+    ["closing tags inside CDATA sections", (scopes(60) + "<![CDATA[" + "</a>".repeat(60) + "]]>").repeat(66)],
+    [
+      "closing tags inside processing instructions",
+      (scopes(60) + "<?pi " + "</a>".repeat(60) + "?>").repeat(66),
+    ],
+  ])("refuses nesting hidden behind %s", (_name, xml) => {
+    expect(b64(xml).length).toBeLessThan(SAML_RESPONSE_MAX_LENGTH);
     expect(checkSamlResponseBounds(b64(xml))).toMatchObject({ reason: "depth" });
   });
 
