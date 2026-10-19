@@ -1077,6 +1077,65 @@ describe("patchV3Survey", () => {
       );
     });
 
+    describe("show conditions", () => {
+      const finished = {
+        id: "cnd1",
+        leftOperand: { type: "visit", value: "timeOnSite" },
+        operator: "isGreaterThanOrEqual",
+        rightOperand: { type: "static", value: 30 },
+      };
+      const unfinished = {
+        id: "cnd2",
+        leftOperand: { type: "page", value: "currentUrl" },
+        operator: "pathIsAnyOf",
+      };
+      const surveyWithDraftRow = {
+        ...appCurrentSurvey,
+        showConditions: { id: "grp1", connector: "and", conditions: [finished, unfinished] },
+      } as unknown as TSurvey;
+
+      test("a patch that leaves them alone keeps a draft's unfinished row", async () => {
+        // The patch reads the survey without that row; writing its copy back would delete the row.
+        await patchV3Survey(surveyWithDraftRow, { name: "Renamed" }, "req_app_patch_sc1", "org_1");
+
+        const { data } = vi.mocked(prisma.survey.update).mock.calls[0][0];
+        expect(data.name).toBe("Renamed");
+        expect(data).not.toHaveProperty("showConditions");
+      });
+
+      test("a patch that changes them writes them, and null clears them", async () => {
+        vi.mocked(getActionClasses).mockResolvedValue([]);
+        const onPricing = {
+          id: "grp2",
+          connector: "and",
+          conditions: [
+            {
+              id: "cnd3",
+              leftOperand: { type: "page", value: "currentUrl" },
+              operator: "pathIsAnyOf",
+              rightOperand: { type: "static", value: ["/pricing"] },
+            },
+          ],
+        };
+
+        await patchV3Survey(
+          surveyWithDraftRow,
+          { distribution: { triggers: [], showConditions: onPricing } },
+          "req_app_patch_sc2",
+          "org_1"
+        );
+        await patchV3Survey(
+          surveyWithDraftRow,
+          { distribution: { triggers: [], showConditions: null } },
+          "req_app_patch_sc3",
+          "org_1"
+        );
+
+        const writes = vi.mocked(prisma.survey.update).mock.calls.map(([args]) => args.data.showConditions);
+        expect(writes).toEqual([onPricing, Prisma.DbNull]);
+      });
+    });
+
     test("updates segment filters when targeting changes and contacts are enabled", async () => {
       vi.mocked(areV3SurveyTargetingFiltersEqual).mockReturnValue(false);
       // Run the interactive transaction with a DISTINCT tx client so the assertions prove both writes

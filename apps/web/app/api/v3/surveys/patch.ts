@@ -29,7 +29,7 @@ import {
   normalizeSurveyScheduling,
   reconcileDueSurveySchedules,
 } from "@/modules/survey/scheduling/lib/survey-scheduling";
-import { v3DistributionToScalars } from "./distribution";
+import { haveV3ShowConditionsChanged, v3DistributionToScalars } from "./distribution";
 import { type TV3SurveyLanguageRequest, ensureV3WorkspaceLanguages } from "./languages";
 import { type TV3SurveyReportedVisibility, prepareV3SurveyPatchInput } from "./prepare";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
@@ -158,9 +158,13 @@ async function buildV3AppSurveyPatchWrites(params: {
   const actionClasses = await getActionClasses(currentSurvey.workspaceId);
   const resolvedTriggers = resolveV3SurveyTriggers(distribution.triggers, actionClasses);
 
-  Object.assign(data, v3DistributionToScalars(distribution));
-  // A nullable JSON column takes `Prisma.DbNull`, not `null`, to store "no conditions".
-  if (distribution.showConditions === null) data.showConditions = Prisma.DbNull;
+  const { showConditions, ...scalars } = v3DistributionToScalars(distribution);
+  Object.assign(data, scalars);
+  // Written only when the patch changes them, so a draft's unfinished rows survive a patch of anything
+  // else. A nullable JSON column takes `Prisma.DbNull`, not `null`, to store "no conditions".
+  if (haveV3ShowConditionsChanged(currentSurvey, showConditions)) {
+    data.showConditions = showConditions ?? Prisma.DbNull;
+  }
   data.triggers = handleTriggerUpdates(resolvedTriggers, currentSurvey.triggers, actionClasses);
 
   const nextFilters = document.targeting?.filters ?? [];
