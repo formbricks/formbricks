@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
-import { SAML_RESPONSE_MARKUP_BUDGET } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
+import {
+  SAML_RESPONSE_MARKUP_BUDGET,
+  SAML_RESPONSE_MAX_LENGTH,
+} from "@/modules/ee/auth/saml/lib/saml-response-bounds";
 import { POST } from "./route";
 
 const { samlResponseMock, jacksonMock, applyIPRateLimitMock, redirectMock, clientIpMock } = vi.hoisted(() => {
@@ -64,10 +67,72 @@ describe("SAML callback route", () => {
     expect(samlResponseMock).not.toHaveBeenCalled();
     // The refusal is logged by size only: no SAMLResponse content may reach the log.
     expect(warn).toHaveBeenCalledWith(
-      { markup: expect.any(Number), length: b64(flood).length },
-      "Refused a SAML response over the markup budget"
+      { reason: "markup", markup: expect.any(Number), depth: expect.any(Number), length: b64(flood).length },
+      "Refused a SAML response before parsing it"
     );
     expect(JSON.stringify(warn.mock.calls)).not.toContain(b64(flood).slice(0, 32));
+  });
+
+  test.each([
+    ["longer than the cap, however little markup it holds", "a".repeat(SAML_RESPONSE_MAX_LENGTH + 1)],
+    [
+      "nested deeper than the cap",
+      b64(Array.from({ length: 4000 }, (_, i) => `<a xmlns:p${i}="u">`).join("")),
+    ],
+  ])("refuses a response %s before jackson parses it", async (_name, SAMLResponse) => {
+    vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+
+    const response = await POST(callback({ SAMLResponse, RelayState: "s" }));
+
+    expect(response.status).toBe(400);
+    expect(samlResponseMock).not.toHaveBeenCalled();
+  });
+
+  test("answers 400 to a body that is not a form", async () => {
+    const response = await POST(
+      new Request("http://localhost/api/auth/saml/callback", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ SAMLResponse: b64(ISSUER) }),
+      })
+    );
+
+    expect(response.status).toBe(400);
+    expect(samlResponseMock).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    [403, 403],
+    [400, 400],
+  ])(
+    "answers a response jackson refuses with %i as %i, logging only its fixed reason",
+    async (statusCode, status) => {
+      const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+      samlResponseMock.mockRejectedValueOnce(
+        Object.assign(new Error("Something wrong happened."), {
+          statusCode,
+          internalError: "Issuer not found.",
+        })
+      );
+
+      const response = await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "s" }));
+
+      expect(response.status).toBe(status);
+      expect(await response.json()).not.toHaveProperty("details.internalError");
+      expect(warn).toHaveBeenCalledWith(
+        { status, reason: "Issuer not found." },
+        "jackson refused a SAML response"
+      );
+    }
+  );
+
+  test.each([
+    ["a jackson error with a 5xx status", Object.assign(new Error("db down"), { statusCode: 500 })],
+    ["any other error", new Error("boom")],
+  ])("lets %s propagate", async (_name, error) => {
+    samlResponseMock.mockRejectedValueOnce(error);
+
+    await expect(POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "s" }))).rejects.toBe(error);
   });
 
   test("answers 429 with Retry-After once the caller's IP is over its limit, before jackson parses anything", async () => {

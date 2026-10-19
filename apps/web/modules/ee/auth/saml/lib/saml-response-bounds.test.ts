@@ -1,9 +1,16 @@
 import { describe, expect, test } from "vitest";
-import { SAML_RESPONSE_MARKUP_BUDGET, countSamlResponseMarkup } from "./saml-response-bounds";
+import {
+  SAML_RESPONSE_MARKUP_BUDGET,
+  SAML_RESPONSE_MAX_DEPTH,
+  SAML_RESPONSE_MAX_LENGTH,
+  checkSamlResponseBounds,
+  measureSamlResponseMarkup,
+} from "./saml-response-bounds";
 
 const b64 = (xml: string) => Buffer.from(xml).toString("base64");
-const count = (xml: string) => countSamlResponseMarkup(b64(xml));
-const withinBudget = (xml: string) => count(xml) <= SAML_RESPONSE_MARKUP_BUDGET;
+const count = (xml: string) => measureSamlResponseMarkup(b64(xml)).markup;
+const depth = (xml: string) => measureSamlResponseMarkup(b64(xml)).depth;
+const withinBudget = (xml: string) => checkSamlResponseBounds(b64(xml)) === null;
 
 const RESPONSE_HEAD =
   '<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion">';
@@ -32,10 +39,10 @@ const distinguishedNameGroups = (times: number) =>
 const tinyGroups = (times: number) =>
   groups("groups", "<saml2:AttributeValue>g</saml2:AttributeValue>", times);
 
-/** The /api/auth body limit, as base64 characters: what a response has to fit in to reach the parser. */
-const BODY_LIMIT = 256 * 1024;
+/** What a response has to fit in to reach the parser, as base64 characters. */
+const BODY_LIMIT = SAML_RESPONSE_MAX_LENGTH;
 
-describe("countSamlResponseMarkup", () => {
+describe("measureSamlResponseMarkup", () => {
   test("counts every tag and every attribute", () => {
     // 3 tags (<r, <a, </r) and 2 attributes.
     expect(count('<r><a x="1" y="2"/></r>')).toBe(5);
@@ -44,7 +51,7 @@ describe("countSamlResponseMarkup", () => {
   test("never counts text, however many = it holds", () => {
     expect(count("<v>CN=G1,OU=Grp,DC=corp,DC=ex,DC=com</v>")).toBe(2);
     expect(count("just text")).toBe(0);
-    expect(countSamlResponseMarkup("")).toBe(0);
+    expect(measureSamlResponseMarkup("").markup).toBe(0);
   });
 
   test("counts attributes with no value and attributes with no space between them", () => {
@@ -56,6 +63,8 @@ describe("countSamlResponseMarkup", () => {
   test("separates attributes on any control byte, as xmldom does", () => {
     // Form feed, vertical tab and NUL separate attributes for xmldom; each becomes an attribute node.
     expect(count("<a\fb\vc\u0000d/>")).toBe(4);
+    // U+0080 (C2 80) too: xmldom reads it as a space, so each name after it is another attribute.
+    expect(count("<a\u0080b\u0080c/>")).toBe(3);
   });
 
   test("weighs a < that cannot start an element far above an element", () => {
@@ -67,9 +76,9 @@ describe("countSamlResponseMarkup", () => {
     expect(count("<r><:a/></r>")).toBe(18);
     expect(count("<r><\u00d7/></r>")).toBe(18);
     expect(
-      countSamlResponseMarkup(
+      measureSamlResponseMarkup(
         Buffer.from([0x3c, 0x72, 0x3e, 0x3c, 0xff, 0x30, 0x3c, 0x2f, 0x72, 0x3e]).toString("base64")
-      )
+      ).markup
     ).toBe(18);
     // A closing tag, comment or processing instruction is still one.
     expect(count("<r></r><!---->")).toBe(3);
@@ -82,6 +91,34 @@ describe("countSamlResponseMarkup", () => {
   test("keeps counting attributes after a quote that never closes", () => {
     expect(count("<a ' b c d/>")).toBe(4);
     expect(count('<a e="1 b c d/>')).toBe(5);
+    // A matching quote in a later tag does not end the value early: the scan stops at the next <.
+    expect(count("<b ' a1 a2 a3><c '/>")).toBe(5);
+  });
+
+  test("tracks how deep elements nest, as xmldom closes them", () => {
+    expect(depth("<r><a><b/></a><c></c></r>")).toBe(2);
+    // Only `/>` closes a tag, with or without attributes or a quoted value before it.
+    expect(depth('<r><a x="1"/><b y="/"/></r>')).toBe(1);
+    expect(depth("<r/><r/>")).toBe(0);
+    // Prologue, comments and processing instructions open nothing.
+    expect(depth('<?xml version="1.0"?><!-- c --><r/>')).toBe(0);
+  });
+
+  test("takes a tag it cannot read to its end as open, never as closed", () => {
+    // xmldom stops at a quote that never closes, so this only ever over-counts the depth.
+    expect(depth("<r><a '/><b '/>")).toBe(3);
+    // A tag with no > before the next < is open too.
+    expect(depth("<r><a<b/>")).toBe(2);
+  });
+
+  test("does not let a stray or unmatched </ take the depth below zero", () => {
+    expect(depth("</x></x><r><a></a></r>")).toBe(2);
+  });
+
+  test("stops reading once a bound is passed", () => {
+    const flood = "<a/>".repeat(SAML_RESPONSE_MARKUP_BUDGET * 10);
+    expect(count(flood)).toBe(SAML_RESPONSE_MARKUP_BUDGET + 1);
+    expect(depth("<a>".repeat(SAML_RESPONSE_MAX_DEPTH * 10))).toBe(SAML_RESPONSE_MAX_DEPTH + 1);
   });
 
   test("counts every < inside a comment, CDATA section or processing instruction", () => {
@@ -93,7 +130,7 @@ describe("countSamlResponseMarkup", () => {
 
   test("does not throw on input that is not base64", () => {
     // Buffer's decoder skips what it cannot read, exactly as jackson's does; jackson then rejects it as before.
-    expect(() => countSamlResponseMarkup("%%% not base64 %%%")).not.toThrow();
+    expect(() => measureSamlResponseMarkup("%%% not base64 %%%")).not.toThrow();
   });
 });
 
@@ -151,5 +188,54 @@ describe("the budget", () => {
     ],
   ])("refuses %s", (_name, xml) => {
     expect(withinBudget(xml)).toBe(false);
+  });
+  test("refuses attributes separated by U+0080", () => {
+    const attributes = Array.from({ length: SAML_RESPONSE_MARKUP_BUDGET }, (_, i) => `a${i}`).join("\u0080");
+
+    expect(withinBudget(`<r\u0080${attributes}></r>`)).toBe(false);
+  });
+});
+
+describe("checkSamlResponseBounds", () => {
+  test("refuses a response longer than the cap before reading it, whatever it holds", () => {
+    const text = "a".repeat(SAML_RESPONSE_MAX_LENGTH);
+    expect(checkSamlResponseBounds(text)).toBeNull();
+    expect(checkSamlResponseBounds(text + "a")).toEqual({
+      reason: "length",
+      length: SAML_RESPONSE_MAX_LENGTH + 1,
+    });
+  });
+
+  test("allows the depth cap and refuses one level more", () => {
+    const nested = (levels: number) => "<a>".repeat(levels) + "</a>".repeat(levels);
+
+    expect(withinBudget(nested(SAML_RESPONSE_MAX_DEPTH))).toBe(true);
+    expect(checkSamlResponseBounds(b64(nested(SAML_RESPONSE_MAX_DEPTH + 1)))).toMatchObject({
+      reason: "depth",
+    });
+  });
+
+  // xmldom chains every element that declares a namespace onto its parent's map, so these cost the square of their
+  // depth: each fits the markup budget in under 150 KiB and blocked the event loop for 0.5-0.8 s before the cap.
+  test.each([
+    ["5,995 nested namespace declarations, never closed", 5995, false],
+    ["3,996 nested namespace declarations, closed", 3996, true],
+  ])("refuses %s", (_name, levels, close) => {
+    const opening = Array.from({ length: levels }, (_, i) => `<a xmlns:p${i}="u">`).join("");
+    const xml = opening + (close ? "</a>".repeat(levels) : "");
+
+    expect(b64(xml).length).toBeLessThan(SAML_RESPONSE_MAX_LENGTH);
+    expect(count(xml)).toBeLessThanOrEqual(SAML_RESPONSE_MARKUP_BUDGET);
+    expect(checkSamlResponseBounds(b64(xml))).toMatchObject({ reason: "depth" });
+  });
+
+  test("names only sizes in a refusal, never content", () => {
+    const refusal = checkSamlResponseBounds(b64("<a/>".repeat(SAML_RESPONSE_MARKUP_BUDGET + 1)));
+    expect(refusal).toEqual({
+      reason: "markup",
+      length: expect.any(Number),
+      markup: expect.any(Number),
+      depth: 0,
+    });
   });
 });

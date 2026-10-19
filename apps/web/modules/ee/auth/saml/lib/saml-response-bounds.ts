@@ -5,7 +5,7 @@ import "server-only";
  *
  * jackson decodes the response and builds its whole DOM (`saml20.parseIssuer`) before it checks the issuer,
  * the connection or RelayState, so an anonymous caller chooses how much parsing the callback does. Parse cost
- * follows the markup, not the bytes: inside the 256 KiB `/api/auth` body limit, a response that is nothing but
+ * follows the markup, not the bytes: inside the 256 KiB length cap below, a response that is nothing but
  * ~49,000 empty elements holds a ~52 MB DOM and blocks the event loop for 60-200 ms, and ~97,000 stray `<0`
  * cost ~300 ms because xmldom raises and recovers from an error for each. A real signed assertion carrying 150
  * groups costs ~1 MB and ~5 ms.
@@ -13,15 +13,31 @@ import "server-only";
  * The budget counts every `<` byte and every attribute name inside a tag. Text is never counted, so group values
  * such as AD distinguished names (`CN=…,OU=…,DC=…`) cost nothing however many `=` they hold. A real response
  * written as verbosely as Okta writes one (`xmlns:xs`, `xmlns:xsi` and `xsi:type` on every group) reaches about
- * 5,000 only at 1,000 groups, where it already fills the whole 256 KiB body limit; one with the shortest
+ * 5,000 only at 1,000 groups, where it already fills the whole length cap; one with the shortest
  * possible group names tops out near 8,000.
  *
  * Costs above and below were measured on Node 26.4 (arm64 laptop), warm, as the median of five single
- * `parseIssuer` calls; read them as ratios. At the budget, the costliest shape found (a valueless attribute
- * followed by a stray quote, repeated) costs about four times as much as the same budget of empty elements,
- * against roughly sixty times for the uncapped attack.
+ * `parseIssuer` calls; read them as ratios. Within the length cap and the depth cap below, the costliest shape
+ * found (a valueless attribute followed by a stray quote, repeated) costs about four times as much as the same
+ * budget of empty elements, against roughly sixty times for the uncapped attack.
  */
 export const SAML_RESPONSE_MARKUP_BUDGET = 12_000;
+
+/**
+ * Longest `SAMLResponse` (base64 characters) the callback parses. The budget only holds inside a byte bound:
+ * past it, text alone costs parse time however little markup it carries (16 MB of `&lt;` scores 8 and costs
+ * jackson's signature path seconds). It matches the 256 KiB limit on `/api/auth` request bodies (ENG-3846), and
+ * the largest real responses the budget is sized for fit in it (1,000 verbose Okta groups are ~247 KiB).
+ */
+export const SAML_RESPONSE_MAX_LENGTH = 256 * 1024;
+
+/**
+ * Deepest element nesting the callback parses. xmldom chains each element that declares a namespace onto its
+ * parent's map, and every element then looks names up through that chain, so nested declarations cost the square
+ * of their depth: ~6,000 of them fit in 150 KiB under the budget and block the event loop for ~0.5-0.8 s. A real
+ * response nests about ten deep (an encrypted assertion's key info is the deepest part), so 64 leaves room.
+ */
+export const SAML_RESPONSE_MAX_DEPTH = 64;
 
 const LESS_THAN = 0x3c;
 const GREATER_THAN = 0x3e;
@@ -61,52 +77,94 @@ const STRAY_LESS_THAN_WEIGHT = 16;
  * from the count, and each byte is read at most once per tag. A quote that never closes before `end` is stepped
  * over rather than ending the scan, so the names after it still count: xmldom happens to reject that shape
  * before reading them today, but the count does not rely on it.
+ *
+ * The tag opens a scope unless it ends in `/>`, the one shape xmldom closes. A tag with a quote that never closes,
+ * or with no `>` before `end`, is taken as open: xmldom stops at it (an unescaped `<` in a value is fatal), so
+ * counting it open only over-counts the depth, the safe direction.
  */
-const countAttributes = (xml: Buffer, from: number, end: number): number => {
+const scanTag = (xml: Buffer, from: number, end: number): { attributes: number; opens: boolean } => {
   let attributes = 0;
   let afterSeparator = false;
+  let unclosedQuote = false;
   let j = from;
   while (j < end && xml[j] !== GREATER_THAN) {
     const byte = xml[j];
     if (byte === DOUBLE_QUOTE || byte === SINGLE_QUOTE) {
-      const close = xml.subarray(j + 1, end).indexOf(byte);
-      j += close === -1 ? 1 : close + 2;
-      afterSeparator = close !== -1;
+      const close = xml.indexOf(byte, j + 1);
+      const closed = close !== -1 && close < end;
+      unclosedQuote ||= !closed;
+      j = closed ? close + 1 : j + 1;
+      afterSeparator = closed;
       continue;
     }
     if (afterSeparator && !isSeparator(byte) && byte !== EQUALS && byte !== SLASH) attributes++;
     afterSeparator = isSeparator(byte);
     j++;
   }
-  return attributes;
+  const selfClosing = j < end && xml[j - 1] === SLASH && !unclosedQuote;
+  return { attributes, opens: !selfClosing };
 };
 
+/** What a response holds, read up to the point where it passed a bound. */
+export interface SamlResponseMarkup {
+  /** Tags and attribute names, as the budget weighs them. */
+  markup: number;
+  /** Deepest nesting of open elements. */
+  depth: number;
+}
+
 /**
- * Counts the markup in the decoded response in one pass over its bytes, without building a string or a tree
- * (~1 ms at the body limit). Every `<` counts wherever it sits, because xmldom turns each one into a node or
- * into an error it raises and recovers from; one that cannot start anything costs more, so it weighs more.
- * Following XML structure instead lets malformed input hide markup, which is exactly what an attacker sends. A
- * `<` inside a comment or CDATA section is counted too; over-counting that rarity is the safe direction.
+ * Measures the markup in the decoded response in one pass over its bytes, without building a string or a tree
+ * (~1 ms at the length cap), and stops as soon as the markup passes the budget or the nesting passes the depth
+ * cap, so a refused flood costs nothing past that point. Every `<` counts wherever it sits, because xmldom turns
+ * each one into a node or into an error it raises and recovers from; one that cannot start anything costs more,
+ * so it weighs more. Following XML structure instead lets malformed input hide markup, which is exactly what an
+ * attacker sends. A `<` inside a comment or CDATA section is counted too; over-counting that rarity is the safe
+ * direction. Depth rises on every tag that does not close itself and falls on every `</`: a `</` that does not
+ * match the open element is fatal to xmldom, so it cannot hide a scope.
  */
-export const countSamlResponseMarkup = (samlResponseBase64: string): number => {
+export const measureSamlResponseMarkup = (samlResponseBase64: string): SamlResponseMarkup => {
   const xml = Buffer.from(samlResponseBase64, "base64");
-  let count = 0;
+  let markup = 0;
+  let depth = 0;
+  let maxDepth = 0;
   let lt = xml.indexOf(LESS_THAN);
 
-  while (lt !== -1) {
+  while (lt !== -1 && markup <= SAML_RESPONSE_MARKUP_BUDGET && maxDepth <= SAML_RESPONSE_MAX_DEPTH) {
     const next = xml.indexOf(LESS_THAN, lt + 1);
     const end = next === -1 ? xml.length : next;
     const kind = xml[lt + 1];
-    if (kind === SLASH || kind === BANG || kind === QUESTION) {
-      // `</…`, `<!…` and `<?…` carry no attributes; malformed ones are fatal to xmldom, so cheap.
-      count++;
+    if (kind === SLASH) {
+      markup++;
+      depth = Math.max(0, depth - 1);
+    } else if (kind === BANG || kind === QUESTION) {
+      // `<!…` and `<?…` carry no attributes and open nothing; malformed ones are fatal to xmldom, so cheap.
+      markup++;
     } else if (isNameStart(kind)) {
-      count += 1 + countAttributes(xml, lt + 1, end);
+      const tag = scanTag(xml, lt + 1, end);
+      markup += 1 + tag.attributes;
+      if (tag.opens) maxDepth = Math.max(maxDepth, ++depth);
     } else {
-      count += STRAY_LESS_THAN_WEIGHT;
+      markup += STRAY_LESS_THAN_WEIGHT;
     }
     lt = next;
   }
 
-  return count;
+  return { markup, depth: maxDepth };
+};
+
+/** Why a response is refused before jackson parses it; only sizes, never content, so it is safe to log. */
+export type SamlResponseRefusal =
+  | { reason: "length"; length: number }
+  | ({ reason: "markup" | "depth"; length: number } & SamlResponseMarkup);
+
+/** The refusal for a response past any bound, or `null` when jackson may parse it. Length is checked first. */
+export const checkSamlResponseBounds = (samlResponseBase64: string): SamlResponseRefusal | null => {
+  const length = samlResponseBase64.length;
+  if (length > SAML_RESPONSE_MAX_LENGTH) return { reason: "length", length };
+
+  const measured = measureSamlResponseMarkup(samlResponseBase64);
+  if (measured.markup > SAML_RESPONSE_MARKUP_BUDGET) return { reason: "markup", length, ...measured };
+  if (measured.depth > SAML_RESPONSE_MAX_DEPTH) return { reason: "depth", length, ...measured };
+  return null;
 };
