@@ -57,10 +57,10 @@ export const ShowConditionsUrlTester = ({ conditions }: Readonly<ShowConditionsU
             setTestedUrl(null);
           }}
           onKeyDown={(event) => {
-            if (event.key === "Enter") {
-              event.preventDefault();
-              runTest();
-            }
+            // Enter also confirms an IME candidate; testing then would run on a half-typed URL.
+            if (event.key !== "Enter" || event.nativeEvent.isComposing) return;
+            event.preventDefault();
+            runTest();
           }}
         />
         <Button type="button" variant="secondary" disabled={url.trim() === ""} onClick={runTest}>

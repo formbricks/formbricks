@@ -95,33 +95,43 @@ const renderVisit = (): HTMLElement => {
   return section;
 };
 
+/** One line per condition of a check, with what each one read. */
+const renderConditionResults = (check: TDebugSurveyEvent | undefined): HTMLElement[] => {
+  if (!check?.conditions) return [];
+  const { results } = check.conditions;
+  if (results.length === 0) return [element("div", "row muted", "No show conditions.")];
+
+  return results.map((result) => {
+    const condition = findCondition(check.showConditions, result.conditionId);
+    const label = condition ? describeCondition(condition) : result.conditionId;
+    return element(
+      "div",
+      `row ${result.passed ? "ok" : "fail"}`,
+      `${result.passed ? "✓" : "✗"} ${label} — read: ${describeActual(result.actual)}`
+    );
+  });
+};
+
 const renderSurvey = (surveyId: string, events: TDebugSurveyEvent[]): HTMLElement => {
-  const latest = events[events.length - 1];
   const block = element("div", "survey");
   block.appendChild(element("div", "row title", `Survey ${surveyId}`));
-  block.appendChild(
-    element("div", "row muted", `${formatTime(latest.at)} · trigger: ${latest.action ?? "unknown"}`)
-  );
+  const latest = events.at(-1);
+  if (latest) {
+    block.appendChild(
+      element("div", "row muted", `${formatTime(latest.at)} · trigger: ${latest.action ?? "unknown"}`)
+    );
+  }
 
-  // The last condition check, even if a later event (shown, another survey open) came after it.
-  const lastCheck = [...events].reverse().find((event) => event.conditions);
-  for (const event of events.slice().reverse()) {
+  const newestFirst = events.slice().reverse();
+  for (const event of newestFirst) {
     block.appendChild(element("div", `row ${event.outcome === "shown" ? "ok" : ""}`, describeOutcome(event)));
   }
-
-  if (lastCheck?.conditions) {
-    if (lastCheck.conditions.results.length === 0) {
-      block.appendChild(element("div", "row muted", "No show conditions."));
-    }
-    for (const result of lastCheck.conditions.results) {
-      const condition = findCondition(lastCheck.showConditions, result.conditionId);
-      const line = element("div", `row ${result.passed ? "ok" : "fail"}`);
-      line.textContent = `${result.passed ? "✓" : "✗"} ${condition ? describeCondition(condition) : result.conditionId} — read: ${describeActual(result.actual)}`;
-      block.appendChild(line);
-    }
-  }
+  // The last condition check, even if a later event (shown, another survey open) came after it.
+  block.append(...renderConditionResults(newestFirst.find((event) => event.conditions)));
   return block;
 };
+
+const lastEventAt = (events: TDebugSurveyEvent[]): number => events.at(-1)?.at ?? 0;
 
 const renderSurveys = (): HTMLElement => {
   const section = element("div", "section");
@@ -130,9 +140,7 @@ const renderSurveys = (): HTMLElement => {
     section.appendChild(element("div", "row muted", "No trigger has fired yet."));
     return section;
   }
-  const newestFirst = [...state.surveys.entries()].sort(
-    ([, a], [, b]) => b[b.length - 1].at - a[a.length - 1].at
-  );
+  const newestFirst = [...state.surveys.entries()].sort(([, a], [, b]) => lastEventAt(b) - lastEventAt(a));
   for (const [surveyId, events] of newestFirst) section.appendChild(renderSurvey(surveyId, events));
   return section;
 };

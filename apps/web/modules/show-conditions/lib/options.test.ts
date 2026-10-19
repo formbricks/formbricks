@@ -7,6 +7,7 @@ import {
   SHOW_CONDITION_OPERATORS,
   type TShowConditionOperand,
 } from "@formbricks/types/show-conditions";
+import enUS from "@/locales/en-US.json";
 import {
   getShowConditionOperandLabel,
   getShowConditionOperandOptions,
@@ -15,10 +16,20 @@ import {
   getShowConditionValueOptions,
 } from "./options";
 
-// Returns the key, so a label that points at no key (or at the wrong namespace) shows up as such.
-const t = ((key: string) => key) as unknown as TFunction;
+// Resolves against the real English strings, so a label pointing at a missing key comes back
+// undefined and fails `expectLabel`.
+const t = ((key: string) =>
+  key
+    .split(".")
+    .reduce<unknown>(
+      (node, part) => (node as Record<string, unknown> | undefined)?.[part],
+      enUS
+    )) as unknown as TFunction;
 const ALL_OPERANDS = Object.values(SHOW_CONDITION_OPERANDS).flat() as TShowConditionOperand[];
-const LABEL_KEY = /^workspace\.surveys\.edit\.show_conditions\.[a-z_]+$/;
+const expectLabel = (label: unknown) => {
+  expect(typeof label).toBe("string");
+  expect(label).not.toBe("");
+};
 
 describe("getShowConditionOperandOptions", () => {
   test("groups the fields as Page, This visit, Device, in the mock's order", () => {
@@ -45,9 +56,9 @@ describe("getShowConditionOperandOptions", () => {
           option.value
         );
         expect(option.meta).toEqual({ type: group.value });
-        expect(option.label).toMatch(LABEL_KEY);
+        expectLabel(option.label);
       }
-      expect(group.label).toMatch(LABEL_KEY);
+      expectLabel(group.label);
     }
   });
 });
@@ -58,7 +69,7 @@ describe("getShowConditionOperatorOptions", () => {
     const options = getShowConditionOperatorOptions(operand, t);
 
     expect(options.map((option) => option.value)).toEqual([...SHOW_CONDITION_OPERATORS[operand]]);
-    for (const option of options) expect(option.label).toMatch(LABEL_KEY);
+    for (const option of options) expectLabel(option.label);
   });
 });
 
@@ -67,14 +78,14 @@ describe("getShowConditionValueOptions", () => {
     const [group] = getShowConditionValueOptions("deviceType", t) ?? [];
 
     expect(group.options.map((option) => option.value)).toEqual([...SHOW_CONDITION_DEVICE_TYPES]);
-    for (const option of group.options) expect(option.label).toMatch(LABEL_KEY);
+    for (const option of group.options) expectLabel(option.label);
   });
 
   test("browser offers every browser the SDK can detect, other included", () => {
     const [group] = getShowConditionValueOptions("browser", t) ?? [];
 
     expect(group.options.map((option) => option.value)).toEqual([...SHOW_CONDITION_BROWSERS]);
-    for (const option of group.options) expect(option.label).toMatch(LABEL_KEY);
+    for (const option of group.options) expectLabel(option.label);
   });
 
   test("free-entry fields have no fixed values", () => {
@@ -90,7 +101,7 @@ describe("labels", () => {
     const operators = [...new Set(Object.values(SHOW_CONDITION_OPERATORS).flat())];
     const operatorLabels = operators.map((operator) => getShowConditionOperatorLabel(operator, t));
 
-    for (const label of [...operandLabels, ...operatorLabels]) expect(label).toMatch(LABEL_KEY);
+    for (const label of [...operandLabels, ...operatorLabels]) expectLabel(label);
     expect(new Set(operandLabels).size).toBe(ALL_OPERANDS.length);
     expect(new Set(operatorLabels).size).toBe(operators.length);
   });

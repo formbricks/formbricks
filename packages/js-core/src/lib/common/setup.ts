@@ -145,7 +145,6 @@ export const setup = async (
   // state, still saw the page. Also before `addEventListeners`, so no trigger on this page is ever
   // checked against the previous page's visit.
   startVisitTracking();
-  if (isDebug) startDebugSession(configInput.appUrl);
 
   let existingConfig: TConfig | undefined;
   try {
@@ -203,6 +202,9 @@ export const setup = async (
       field: "appUrl",
     });
   }
+
+  // After the checks: the panel script comes from `appUrl`, and it is only ever injected once a page.
+  if (isDebug) startDebugSession(configInput.appUrl);
 
   if (
     existingConfig?.workspace &&

@@ -169,7 +169,8 @@ const applyUpdate = (condition: TShowConditionSingle, update: TShowConditionUpda
   }
 
   if (update.leftOperand?.meta && condition.leftOperand.value === "queryParam") {
-    next.leftOperand = { ...condition.leftOperand, meta: { key: String(update.leftOperand.meta.key ?? "") } };
+    const { key } = update.leftOperand.meta;
+    next.leftOperand = { ...condition.leftOperand, meta: { key: typeof key === "string" ? key : "" } };
   }
 
   if (

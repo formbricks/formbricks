@@ -46,7 +46,7 @@ export const getBrowser = (userAgent: string): TShowConditionBrowser =>
 const readNavigator = (): TNavigatorInfo => ({
   userAgent: navigator.userAgent,
   maxTouchPoints: navigator.maxTouchPoints,
-  userAgentData: (navigator as Navigator & { userAgentData?: TNavigatorInfo["userAgentData"] }).userAgentData,
+  userAgentData: (navigator as Navigator & Pick<TNavigatorInfo, "userAgentData">).userAgentData,
 });
 
 let cachedDevice: { deviceType: TShowConditionDeviceType; browser: TShowConditionBrowser } | undefined;

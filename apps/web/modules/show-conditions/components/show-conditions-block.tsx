@@ -7,6 +7,7 @@ import type {
   TShowConditionSingle,
   TShowConditions,
 } from "@formbricks/types/show-conditions";
+import { cn } from "@/lib/cn";
 import { ShowConditionValueInput } from "@/modules/show-conditions/components/show-condition-value-input";
 import { ShowConditionsUrlTester } from "@/modules/show-conditions/components/show-conditions-url-tester";
 import {
@@ -109,13 +110,12 @@ export const ShowConditionsBlock = ({
       </div>
 
       {value && (
-        <div
-          role="group"
+        <fieldset
           aria-label={t("workspace.surveys.edit.show_conditions.heading")}
           aria-disabled={isReadOnly || undefined}
-          className={isReadOnly ? "pointer-events-none" : undefined}>
+          className={cn("min-w-0", isReadOnly && "pointer-events-none")}>
           <ConditionsEditor conditions={value} config={config} callbacks={callbacks} />
-        </div>
+        </fieldset>
       )}
 
       {!isReadOnly && (
