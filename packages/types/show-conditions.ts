@@ -33,6 +33,11 @@ const TEXT_OPERATORS = [
   "endsWith",
 ] as const;
 const LIST_OPERATORS = ["containsAnyOf", "containsNoneOf"] as const;
+/**
+ * Pasted lists of exact page paths, for the current URL only: a line matches one page, not every page
+ * whose URL contains it. Case, a trailing slash, the query string and the #hash are ignored.
+ */
+const PATH_LIST_OPERATORS = ["pathIsAnyOf", "pathIsNoneOf"] as const;
 const NUMBER_OPERATORS = [
   "equals",
   "isGreaterThan",
@@ -47,7 +52,8 @@ const PRESENCE_OPERATORS = ["isSet", "isNotSet"] as const;
 
 /** Which operators each operand accepts. The editor builds its operator list from this too. */
 export const SHOW_CONDITION_OPERATORS = {
-  currentUrl: [...TEXT_OPERATORS, ...LIST_OPERATORS],
+  // Exact paths first: the editor offers operators in this order.
+  currentUrl: [...PATH_LIST_OPERATORS, ...LIST_OPERATORS, ...TEXT_OPERATORS],
   pageReferrer: [...TEXT_OPERATORS, ...LIST_OPERATORS],
   entryReferrer: [...TEXT_OPERATORS, ...LIST_OPERATORS],
   queryParam: [...TEXT_OPERATORS, ...PRESENCE_OPERATORS],
@@ -116,7 +122,7 @@ const OPERAND_TYPE_BY_OPERAND = new Map<string, TShowConditionOperandType>(
 const OPERATORS_BY_OPERAND = new Map<string, ReadonlySet<string>>(
   Object.entries(SHOW_CONDITION_OPERATORS).map(([operand, operators]) => [operand, new Set(operators)])
 );
-const LIST_OPERATOR_SET: ReadonlySet<string> = new Set(LIST_OPERATORS);
+const LIST_OPERATOR_SET: ReadonlySet<string> = new Set([...LIST_OPERATORS, ...PATH_LIST_OPERATORS]);
 const PRESENCE_OPERATOR_SET: ReadonlySet<string> = new Set(PRESENCE_OPERATORS);
 const NUMBER_OPERANDS: ReadonlySet<string> = new Set([
   "pagesViewed",
@@ -218,6 +224,7 @@ const ZShowConditionSingle = z
     operator: z.enum([
       ...TEXT_OPERATORS,
       ...LIST_OPERATORS,
+      ...PATH_LIST_OPERATORS,
       ...NUMBER_OPERATORS,
       ...VISITED_URL_OPERATORS,
       ...PRESENCE_OPERATORS,

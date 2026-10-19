@@ -36,8 +36,35 @@ export const isShowConditionGroup = (
 type TResolvedOperand =
   | { kind: "text"; actual: string | string[]; values: string[] }
   | { kind: "queryParam"; actual: string[]; values: string[] }
+  | { kind: "path"; actual: string }
   | { kind: "number"; actual: number }
   | { kind: "missing" };
+
+const PATH_OPERATORS: ReadonlySet<string> = new Set(["pathIsAnyOf", "pathIsNoneOf"]);
+
+/**
+ * The page path an exact path list compares: lowercase, no trailing slash, no query string or #hash.
+ * A full URL is reduced to its path, so a line pasted from the address bar matches its page too.
+ */
+export const normalizeUrlPath = (value: string): string => {
+  let path = value.trim();
+  if (/^[a-z][a-z\d+.-]*:\/\//i.test(path)) {
+    try {
+      path = new URL(path).pathname;
+    } catch {
+      // Not a parseable URL: compare what was typed.
+    }
+  }
+  path = path.split(/[?#]/, 1)[0];
+  try {
+    path = decodeURI(path);
+  } catch {
+    // A stray "%" that is not an escape: keep the raw text.
+  }
+  if (!path.startsWith("/")) path = `/${path}`;
+  path = path.replace(/\/+$/, "") || "/";
+  return path.toLowerCase();
+};
 
 const MISSING: TResolvedOperand = { kind: "missing" };
 
@@ -86,7 +113,9 @@ const resolveOperand = (
 ): TResolvedOperand => {
   switch (condition.leftOperand.value) {
     case "currentUrl":
-      return text(context.url);
+      return PATH_OPERATORS.has(condition.operator)
+        ? { kind: "path", actual: normalizeUrlPath(context.url) }
+        : text(context.url);
     case "pageReferrer":
       return text(context.pageReferrer);
     case "queryParam": {
@@ -155,6 +184,13 @@ const evaluateQueryParam = (values: string[], operator: string, expected: unknow
   return operator === "isSet" ? values.length > 0 : values.length === 0;
 };
 
+// Exact page paths: `/blog/planning` matches only that page, not `/blog/planning-for-retirement`.
+const evaluatePathList = (path: string, operator: string, expected: unknown): boolean => {
+  if (!Array.isArray(expected) || !expected.every((entry) => typeof entry === "string")) return false;
+  const isListed = expected.some((entry: string) => normalizeUrlPath(entry) === path);
+  return operator === "pathIsAnyOf" ? isListed : !isListed;
+};
+
 const evaluateNumber = (actual: number, operator: string, expected: unknown): boolean => {
   if (typeof expected !== "number") return false;
   switch (operator) {
@@ -186,6 +222,7 @@ const evaluateCondition = (
   if (resolved.kind === "queryParam") {
     passed = evaluateQueryParam(resolved.values, condition.operator, expected);
   }
+  if (resolved.kind === "path") passed = evaluatePathList(resolved.actual, condition.operator, expected);
   if (resolved.kind === "number") passed = evaluateNumber(resolved.actual, condition.operator, expected);
 
   results.push({

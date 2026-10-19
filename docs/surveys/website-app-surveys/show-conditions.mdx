@@ -44,10 +44,10 @@ Text comparisons ignore upper and lower case.
 
 | Condition | What it reads | Comparisons |
 | --- | --- | --- |
-| **Current URL** | The full URL of the page, query string included | is, is not, contains, does not contain, starts with, ends with, contains any of, contains none of |
+| **Current URL** | The full URL of the page, query string included | path is any of, path is none of, contains any of, contains none of, is, is not, contains, does not contain, starts with, ends with |
 | **Query parameter** | One parameter of the current URL, by name | is, is not, contains, does not contain, starts with, ends with, is set, is not set |
-| **Page referrer** | The page the visitor came from to this page | as Current URL |
-| **Entry referrer (this visit)** | Where the visit started: the referrer of its first page | as Current URL |
+| **Page referrer** | The page the visitor came from to this page | is, is not, contains, does not contain, starts with, ends with, contains any of, contains none of |
+| **Entry referrer (this visit)** | Where the visit started: the referrer of its first page | as Page referrer |
 | **Visited URL (this visit)** | The paths seen earlier in this visit | includes, does not include |
 | **Pages viewed (this visit)** | Every page load in this visit, reloads included | is, is more than, is less than, is at least, is at most |
 | **Unique pages viewed (this visit)** | Different pages in this visit | as Pages viewed |
@@ -58,7 +58,10 @@ Text comparisons ignore upper and lower case.
 
 ### Pasting a list of pages
 
-**Contains any of** and **contains none of** take a list: paste one URL fragment per line. Each line is matched as a whole and never split, so `/plan-compare` matches `https://www.medicare.gov/plan-compare/results`. Blank lines are ignored. A list can hold up to 200 entries.
+Paste one entry per line. Blank lines are ignored, and a list can hold up to 200 entries. A line is always one entry: `/plans, /pricing` is never split into two. The two kinds of list match differently:
+
+- **Path is any of** and **path is none of** (Current URL only) compare each line with the page's path, exactly. `/plans` matches `https://www.medicare.gov/plans` and `/plans?ref=email`, but not `/plans/compare`. Case, a trailing slash, the query string and the `#hash` don't count, and a full URL pasted from the address bar is reduced to its path. A new Current URL condition starts with **path is any of**.
+- **Contains any of** and **contains none of** pass when the URL contains a line anywhere, so one line covers a whole section: `/plans` also matches `/plans/compare`. Keep fragments specific, because `/blog/planning` also matches `/blog/planning-for-retirement`.
 
 ### What counts as a visit
 

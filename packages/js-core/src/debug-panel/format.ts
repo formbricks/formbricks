@@ -58,6 +58,8 @@ const OPERATOR_TEXT: Record<string, string> = {
   endsWith: "ends with",
   containsAnyOf: "contains any of",
   containsNoneOf: "contains none of",
+  pathIsAnyOf: "path is any of",
+  pathIsNoneOf: "path is none of",
   isGreaterThan: ">",
   isLessThan: "<",
   isGreaterThanOrEqual: "≥",

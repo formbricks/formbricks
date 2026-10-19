@@ -14,7 +14,8 @@ interface ShowConditionValueInputProps {
   isReadOnly: boolean;
 }
 
-const LIST_OPERATORS = new Set(["containsAnyOf", "containsNoneOf"]);
+const LIST_OPERATORS = new Set(["containsAnyOf", "containsNoneOf", "pathIsAnyOf", "pathIsNoneOf"]);
+const PATH_LIST_OPERATORS = new Set(["pathIsAnyOf", "pathIsNoneOf"]);
 const PRESENCE_OPERATORS = new Set(["isSet", "isNotSet"]);
 
 /**
@@ -26,6 +27,11 @@ const ListValueInput = ({ condition, onUpdate, isReadOnly }: Readonly<ShowCondit
   const { t } = useTranslation();
   const stored = condition.rightOperand?.value;
   const [text, setText] = useState(Array.isArray(stored) ? stored.join("\n") : "");
+  // Say what a line matches: an exact list and a "contains" list look the same but match differently.
+  const isPathList = PATH_LIST_OPERATORS.has(condition.operator);
+  const hint = isPathList
+    ? t("workspace.surveys.edit.show_conditions.list_hint_path")
+    : t("workspace.surveys.edit.show_conditions.list_hint_contains");
 
   return (
     <div className="flex flex-col gap-1">
@@ -34,15 +40,19 @@ const ListValueInput = ({ condition, onUpdate, isReadOnly }: Readonly<ShowCondit
         value={text}
         disabled={isReadOnly}
         className="min-h-24 resize-y bg-white font-mono text-xs"
-        placeholder={t("workspace.surveys.edit.show_conditions.list_placeholder")}
-        aria-label={t("workspace.surveys.edit.show_conditions.list_hint")}
+        placeholder={
+          isPathList
+            ? t("workspace.surveys.edit.show_conditions.list_placeholder_path")
+            : t("workspace.surveys.edit.show_conditions.list_placeholder")
+        }
+        aria-label={hint}
         onChange={(event) => {
           setText(event.target.value);
           const entries = parseListInput(event.target.value);
           onUpdate({ rightOperand: entries.length > 0 ? { value: entries } : undefined });
         }}
       />
-      <p className="text-xs text-slate-500">{t("workspace.surveys.edit.show_conditions.list_hint")}</p>
+      <p className="text-xs text-slate-500">{hint}</p>
     </div>
   );
 };

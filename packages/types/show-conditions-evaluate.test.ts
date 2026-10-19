@@ -162,10 +162,58 @@ describe("evaluateShowConditions", () => {
     ]);
   });
 
+  // The context page's path is /plan-compare/results.
+  test.each([
+    ["the exact path", ["/plan-compare/results"], true],
+    [
+      "ignoring case, a trailing slash, the query string and the hash",
+      ["/PLAN-COMPARE/Results/?x=1#top"],
+      true,
+    ],
+    ["a full URL pasted from the address bar", ["https://www.medicare.gov/plan-compare/results"], true],
+    ["a path typed without its leading slash", ["plan-compare/results"], true],
+    ["only the start of the path", ["/plan-compare"], false],
+    ["a longer path that starts with it", ["/plan-compare/results/print"], false],
+  ])("exact path: is any of %s → %s", (_, paths, expected) => {
+    expect(passes(condition("currentUrl", "pathIsAnyOf", paths))).toBe(expected);
+  });
+
+  test("exact path: /blog/planning does not hide /blog/planning-for-retirement, unlike contains", () => {
+    const ctx = { ...context, url: "https://www.medicare.gov/blog/planning-for-retirement" };
+    const exceptions = ["/checkout", "/blog/planning"];
+
+    expect(passes(condition("currentUrl", "pathIsNoneOf", exceptions), ctx)).toBe(true);
+    expect(passes(condition("currentUrl", "containsNoneOf", exceptions), ctx)).toBe(false);
+  });
+
+  test("exact path: is none of fails on a listed page and reports the path it compared", () => {
+    const listed = condition("currentUrl", "pathIsNoneOf", ["/plan-compare/results"]);
+    expect(evaluateShowConditions(group("and", [listed]), context).results).toEqual([
+      { conditionId: listed.id, actual: "/plan-compare/results", passed: false },
+    ]);
+  });
+
+  test("exact path: the site root is / and encoded characters match their plain form", () => {
+    expect(
+      passes(condition("currentUrl", "pathIsAnyOf", ["/"]), { ...context, url: "https://x.gov/?a=1" })
+    ).toBe(true);
+    expect(
+      passes(condition("currentUrl", "pathIsAnyOf", ["https://x.gov"]), { ...context, url: "https://x.gov/" })
+    ).toBe(true);
+    expect(
+      passes(condition("currentUrl", "pathIsAnyOf", ["/café"]), {
+        ...context,
+        url: "https://x.gov/caf%C3%A9",
+      })
+    ).toBe(true);
+  });
+
   test.each([
     ["a text operator on a number", condition("pagesViewed", "contains", "3")],
     ["a number operator on text", condition("currentUrl", "isGreaterThan", 3)],
     ["a list operator given text", condition("currentUrl", "containsAnyOf", "/plan-compare")],
+    ["an exact path list given text", condition("currentUrl", "pathIsAnyOf", "/plan-compare/results")],
+    ["an exact path list on a referrer", condition("pageReferrer", "pathIsAnyOf", ["/"])],
     ["a text operator given a list", condition("currentUrl", "contains", ["/plan-compare"])],
     ["a missing value", condition("currentUrl", "contains")],
     ["an unknown operator", condition("currentUrl", "matchesRegex", ".*")],

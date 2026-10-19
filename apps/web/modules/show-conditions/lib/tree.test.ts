@@ -50,6 +50,13 @@ describe("show-conditions tree", () => {
     expect(createShowCondition("deviceType").leftOperand.type).toBe("device");
   });
 
+  // Product, 19 Oct: a new URL condition is an exact list of paths, not "contains", so a line like
+  // /blog/planning cannot quietly cover /blog/planning-for-retirement.
+  test("a new Current URL condition starts as an exact path list", () => {
+    expect(createShowCondition("currentUrl").operator).toBe("pathIsAnyOf");
+    expect(createShowCondition().operator).toBe("pathIsAnyOf");
+  });
+
   test("adds a condition below the one it was asked for, inside a group too", () => {
     const tree = root([condition("a"), { id: "g", connector: "or", conditions: [condition("b")] }]);
 

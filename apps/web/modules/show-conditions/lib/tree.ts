@@ -22,7 +22,7 @@ type TItem = TShowConditionSingle | TShowConditionGroup;
 
 /** What a new condition on each operand starts with: the comparison people reach for first. */
 export const DEFAULT_OPERATOR_BY_OPERAND: Record<TShowConditionOperand, TShowConditionOperator> = {
-  currentUrl: "containsAnyOf",
+  currentUrl: "pathIsAnyOf",
   pageReferrer: "contains",
   entryReferrer: "contains",
   queryParam: "equals",

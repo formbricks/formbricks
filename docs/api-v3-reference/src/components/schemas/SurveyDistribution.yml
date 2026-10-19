@@ -103,7 +103,7 @@ example:
         leftOperand:
           type: page
           value: currentUrl
-        operator: containsAnyOf
+        operator: pathIsAnyOf
         rightOperand:
           type: static
           value:

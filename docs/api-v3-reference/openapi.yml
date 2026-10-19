@@ -6619,14 +6619,15 @@ components:
 
         | `leftOperand.type` | `leftOperand.value` | Operators |
         | --- | --- | --- |
-        | `page` | `currentUrl` (full URL, query included), `pageReferrer`, `entryReferrer` (first page of the visit) | `equals`, `doesNotEqual`, `contains`, `doesNotContain`, `startsWith`, `endsWith`, `containsAnyOf`, `containsNoneOf` |
+        | `page` | `currentUrl` (full URL, query included) | `pathIsAnyOf`, `pathIsNoneOf`, `containsAnyOf`, `containsNoneOf`, `equals`, `doesNotEqual`, `contains`, `doesNotContain`, `startsWith`, `endsWith` |
+        | `page` | `pageReferrer`, `entryReferrer` (first page of the visit) | `equals`, `doesNotEqual`, `contains`, `doesNotContain`, `startsWith`, `endsWith`, `containsAnyOf`, `containsNoneOf` |
         | `page` | `queryParam` (name in `meta.key`) | `equals`, `doesNotEqual`, `contains`, `doesNotContain`, `startsWith`, `endsWith`, `isSet`, `isNotSet` |
         | `visit` | `pagesViewed`, `uniquePagesViewed`, `timeOnSite` (seconds) | `equals`, `isGreaterThan`, `isLessThan`, `isGreaterThanOrEqual`, `isLessThanOrEqual` |
         | `visit` | `visitedUrls` (paths seen earlier in this visit) | `includes`, `doesNotInclude` |
         | `device` | `deviceType` (`phone`, `tablet`, `desktop`), `browser` (`chrome`, `safari`, `firefox`, `edge`, `opera`, `samsung`, `other`) | `equals`, `doesNotEqual` |
         | `device` | `screenWidth` (browser window width, CSS px) | `equals`, `isGreaterThan`, `isLessThan`, `isGreaterThanOrEqual`, `isLessThanOrEqual` |
 
-        `containsAnyOf` / `containsNoneOf` take a list of fragments, each matched whole. `isSet` / `isNotSet` take no `rightOperand`. A visit is one browser tab; if the browser blocks storage, visit conditions fail.
+        `pathIsAnyOf` / `pathIsNoneOf` take a list of page paths, each compared exactly with the URL's path: case, a trailing slash, the query string and the `#hash` are ignored, and a full URL is reduced to its path. `/plans` matches `/plans?ref=email` but not `/plans/compare`. `containsAnyOf` / `containsNoneOf` take a list of fragments; a line passes when the URL contains it anywhere, so `/plans` also matches `/plans/compare`. `isSet` / `isNotSet` take no `rightOperand`. A visit is one browser tab; if the browser blocks storage, visit conditions fail.
       required:
         - id
         - leftOperand
@@ -6680,6 +6681,8 @@ components:
             - endsWith
             - containsAnyOf
             - containsNoneOf
+            - pathIsAnyOf
+            - pathIsNoneOf
             - isGreaterThan
             - isLessThan
             - isGreaterThanOrEqual
@@ -6839,7 +6842,7 @@ components:
               leftOperand:
                 type: page
                 value: currentUrl
-              operator: containsAnyOf
+              operator: pathIsAnyOf
               rightOperand:
                 type: static
                 value:
