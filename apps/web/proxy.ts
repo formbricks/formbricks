@@ -74,6 +74,9 @@ export const INGEST_REQUEST_BODY_LIMIT_BYTES = 16 * 1024 * 1024;
  */
 const handleIngestBodyLimit = (request: NextRequest): NextResponse | null => {
   // Next matches rewrites without regard to case (`caseSensitiveRoutes` is off), so `/INGEST/e` reaches PostHog too.
+  // Proxy's own matcher is case-sensitive, though, so under a `BASE_PATH` a request spelling the base path in
+  // another case (`/FB/ingest/e` for `/fb`) skips Proxy and this bound while the rewrite still matches. Only
+  // builds with `POSTHOG_KEY` have the rewrite, and none of those set `BASE_PATH`.
   const pathname = request.nextUrl.pathname.toLowerCase();
   if (pathname !== "/ingest" && !pathname.startsWith("/ingest/")) return null;
 

@@ -245,7 +245,10 @@ describe("withAuthRequestBodyLimit", () => {
       body: new ReadableStream<Uint8Array>({
         start(controller) {
           controller.enqueue(new Uint8Array(1024));
-          controller.error(error);
+        },
+        pull(controller) {
+          // Only after the first chunk has been read, so the failure lands mid-upload.
+          if (controller.desiredSize !== null && controller.desiredSize > 0) controller.error(error);
         },
       }),
       duplex: "half",
