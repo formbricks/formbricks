@@ -120,10 +120,10 @@ describe("native Better Auth sign-up on a closed instance (real Postgres)", () =
    * Better Auth looks the address up before it creates anything, and answers an address that already
    * has an account with a synthetic 200 without writing a row — so no create hook ever runs for it
    * (see signup-duplicate-email.integration.test.ts, which pins that contract). A gate placed in the
-   * create hook is therefore reachable only for addresses that do NOT exist, and its rejection becomes
-   * an account-existence oracle: 403 for an unregistered address, 200 for a registered one. `autoSignIn:
-   * false` makes that branch unconditional and auth.ts calls it "enumeration-safe", so this test exists
-   * to keep it that way.
+   * create hook is therefore reachable only for addresses that do NOT exist, and Better Auth turns a
+   * 403 from that hook into the same synthetic 200, so the rejection would be a fake success. The gate
+   * has to refuse both addresses visibly and identically, which is what this asserts: both 403, same
+   * body.
    */
   test("answers a registered and an unregistered address identically", async () => {
     await inProcessSignUp(ADMIN);
