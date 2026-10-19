@@ -3011,6 +3011,7 @@
         "plan_selection_description": "Hobby, Pro ve Scale planlarını karşılaştır, ardından doğrudan Formbricks'ten plan değiştir.",
         "plan_selection_title": "Planını seç",
         "plan_unknown": "Bilinmeyen",
+        "responses_above_limit_billed_per_response": "{limit} sınırını aşan yanıtlar, yanıt başına <dynamicPricing>bu ücretler</dynamicPricing> üzerinden faturalandırılır.",
         "retry_setup": "Kurulumu yeniden dene",
         "select_plan_cta": "Başlayın",
         "select_plan_feature_1": "Yapay zeka destekli çok dilli anketler",

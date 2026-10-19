@@ -3011,6 +3011,7 @@
         "plan_selection_description": "Compară Hobby, Pro și Scale, apoi schimbă planurile direct din Formbricks.",
         "plan_selection_title": "Alege-ți planul",
         "plan_unknown": "Necunoscut",
+        "responses_above_limit_billed_per_response": "Răspunsurile care depășesc {limit} sunt facturate per răspuns la <dynamicPricing>aceste tarife</dynamicPricing>.",
         "retry_setup": "Încearcă din nou configurarea",
         "select_plan_cta": "Începe acum",
         "select_plan_feature_1": "Chestionare multi-limbă cu AI nativ",

@@ -1,6 +1,10 @@
 import type Stripe from "stripe";
 import { describe, expect, test } from "vitest";
-import { mapStripeTiersToResponsePricingTiers } from "./response-pricing-tiers";
+import {
+  type TResponsePricingTier,
+  isResponseOverageBilledAboveLimit,
+  mapStripeTiersToResponsePricingTiers,
+} from "./response-pricing-tiers";
 
 const tier = (overrides: Partial<Stripe.Price.Tier>): Stripe.Price.Tier => ({
   flat_amount: null,
@@ -56,5 +60,34 @@ describe("mapStripeTiersToResponsePricingTiers", () => {
     expect(
       mapStripeTiersToResponsePricingTiers([tier({ up_to: 2_000, unit_amount: 0 }), tier({ up_to: null })])
     ).toBeNull();
+  });
+});
+
+describe("isResponseOverageBilledAboveLimit", () => {
+  const tiers: TResponsePricingTier[] = [
+    { firstUnit: 0, lastUnit: 5_000, perUnitCents: 0 },
+    { firstUnit: 5_001, lastUnit: null, perUnitCents: 4 },
+  ];
+
+  test("is true when the free first tier ends at the limit", () => {
+    expect(isResponseOverageBilledAboveLimit(5_000, tiers)).toBe(true);
+  });
+
+  test("is false for unlimited responses", () => {
+    expect(isResponseOverageBilledAboveLimit(null, tiers)).toBe(false);
+  });
+
+  test("is false when the free tier ends somewhere other than the limit", () => {
+    expect(isResponseOverageBilledAboveLimit(10_000, tiers)).toBe(false);
+  });
+
+  test("is false when the first tier is not free", () => {
+    expect(
+      isResponseOverageBilledAboveLimit(5_000, [{ firstUnit: 0, lastUnit: 5_000, perUnitCents: 2 }])
+    ).toBe(false);
+  });
+
+  test("is false when there are no tiers", () => {
+    expect(isResponseOverageBilledAboveLimit(5_000, [])).toBe(false);
   });
 });
