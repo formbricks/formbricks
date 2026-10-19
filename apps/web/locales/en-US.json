@@ -3027,6 +3027,7 @@
         "subscription_description": "Manage your subscription plan and monitor your usage",
         "switch_at_period_end": "Switch at period end",
         "switch_plan_now": "Switch plan now",
+        "tax_location_required": "We couldn't determine your tax location from your billing address. Please update your billing address via “Manage card details & invoices” and try again.",
         "this_includes": "This includes",
         "trial_alert_description": "Some features like follow-ups and custom links stay locked during the trial. Upgrade now to unlock everything.",
         "trial_already_used": "A free trial has already been used for this email address. Please upgrade to a paid plan instead.",

@@ -212,6 +212,12 @@ const getActionErrorMessage = (serverError: string, t: (key: string) => string) 
     return t("workspace.settings.billing.card_payment_method_required");
   }
 
+  // Stripe can't place the customer for VAT, so a paid change is refused until the billing address
+  // is fixed (ENG-4033).
+  if (serverError === "tax_location_required") {
+    return t("workspace.settings.billing.tax_location_required");
+  }
+
   return t("common.something_went_wrong_please_try_again");
 };
 
