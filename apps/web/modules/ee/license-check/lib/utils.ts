@@ -144,10 +144,10 @@ let isAuditLogWithheldByLicense = false;
 
 /**
  * The single gate for emitting audit events: every audit entry point asks this, and nothing else
- * reads `AUDIT_LOG_ENABLED` to decide whether an event is written. Self-hosted needs the env var and an active licence with `auditLogs`,
- * so a licence that lapses past its grace period turns logging off like any other Enterprise feature.
- * On Cloud the stream is Formbricks' own operational trail rather than a per-plan feature, so the env
- * var alone decides.
+ * reads `AUDIT_LOG_ENABLED` to decide whether an event is written. Self-hosted needs the env var and
+ * an active licence with `auditLogs`, so a licence that lapses past its grace period turns logging off
+ * like any other Enterprise feature. On Cloud the stream is Formbricks' own operational trail rather
+ * than a per-plan feature, so the env var alone decides.
  */
 export const getIsAuditLogsEnabled = async (): Promise<boolean> => {
   if (!AUDIT_LOG_ENABLED) return false;
