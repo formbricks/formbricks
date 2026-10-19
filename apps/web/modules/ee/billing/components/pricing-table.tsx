@@ -42,6 +42,7 @@ import {
   waitForBillingPaymentMethodAction,
   waitForBillingPlanAction,
 } from "../actions";
+import { isResponseOverageBilledAboveLimit } from "../lib/response-pricing-tiers";
 import { runSetupCheckoutUpgrade } from "../lib/setup-checkout-upgrade";
 import type {
   TStripeBillingCatalogDisplay,
@@ -1546,9 +1547,10 @@ export const PricingTable = ({
                 isUnlimited={responsesUnlimitedCheck}
                 unlimitedLabel={t("workspace.settings.billing.unlimited_responses")}
               />
-              {!responsesUnlimitedCheck && responsesLimit && responseOverage && (
-                <ResponseOverageNote limit={responsesLimit} locale={locale} overage={responseOverage} />
-              )}
+              {responseOverage &&
+                isResponseOverageBilledAboveLimit(responsesLimit, responseOverage.tiers) && (
+                  <ResponseOverageNote limit={responsesLimit} locale={locale} overage={responseOverage} />
+                )}
               <p className="text-sm text-slate-500">
                 {t("workspace.settings.billing.usage_cycle")}: {usageCycleLabel}
               </p>
