@@ -67,23 +67,23 @@ export const signupDisabledError = (): APIError =>
   });
 
 /**
- * Better Auth `before` hook: enforce the closed-sign-up policy on `POST /api/auth/sign-up/email`
+ * Better Auth `before` hook: enforce the closed-sign-up policy on Better Auth's `/sign-up/email` endpoint
  * BEFORE the endpoint handler runs (ENG-2293).
  *
- * `apps/web/app/api/auth/[...all]/route.ts` mounts `auth.handler` raw, so Better Auth serves its own
- * credential sign-up route beside ours. `createUserAction` gates correctly but nothing forced that
- * route to, so an unauthenticated POST created an account on an instance the operator had closed.
+ * ENG-2293 was the raw HTTP route: `apps/web/app/api/auth/[...all]/route.ts` mounts `auth.handler` raw,
+ * so Better Auth served its own credential sign-up route beside ours, and an unauthenticated POST
+ * created an account on an instance the operator had closed.
  *
- * WHY here rather than only in `databaseHooks.user.create.before`: the route handler looks the email up
+ * WHY here rather than only in `databaseHooks.user.create.before`: the endpoint looks the email up
  * *before* it creates anything (`api/routes/sign-up.mjs` — `findUserByEmail`, then the
  * `shouldReturnGenericDuplicateResponse` branch returns a synthetic 200 for an address that already
  * has an account, without writing a row, so no create hook ever runs). A gate that lives in the create
- * hook is therefore only reachable for addresses that do NOT exist, which turns the rejection into an
- * account-existence oracle: 200 for a registered address, 403 for an unregistered one. `autoSignIn:
+ * hook is therefore only reachable for addresses that do NOT exist, and Better Auth turns a 403 from
+ * that hook into the same synthetic 200 (the `statusCode === 403` branch around `createUser`), so the
+ * rejection would be swallowed into a fake success the caller cannot tell from a real one. `autoSignIn:
  * false` in auth.ts makes that duplicate branch unconditional, and its comment calls the behaviour
- * "enumeration-safe" — so gating in the create hook would have quietly spent a property the sign-up
- * flow works hard to hold (ENG-2091 / ENG-2099). Running before the handler rejects every request
- * identically, whatever the address. Same reasoning and the same slot as
+ * "enumeration-safe" (ENG-2091 / ENG-2099). Running before the handler refuses every request
+ * identically and visibly, whatever the address. Same reasoning and the same slot as
  * `hibpBreachCheckBeforeHandler`, which sits here so a reset token isn't consumed before rejection.
  *
  * Action-routed sign-ups are exempt: `createUserAction` has already applied the full policy (including

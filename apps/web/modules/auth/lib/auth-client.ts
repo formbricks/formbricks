@@ -15,4 +15,6 @@ export const authClient = createAuthClient({
   plugins: [twoFactorClient(), oauthProviderClient()],
 });
 
-export const { signIn, signUp, signOut, useSession } = authClient;
+// No `signUp`: credential sign-up goes through `createUserAction` only, and Better Auth's
+// `/sign-up/email` is closed over HTTP (ENG-3988).
+export const { signIn, signOut, useSession } = authClient;
