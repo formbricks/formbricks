@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
-import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { TActor, TAuditAction, TAuditStatus, TAuditTarget } from "../types/audit-log";
 // Import original module to access its original exports for the mock factory
 import * as OriginalHandler from "./handler";
@@ -16,10 +15,6 @@ const { auditGate } = vi.hoisted(() => ({ auditGate: { enabled: true } }));
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsAuditLogsEnabled: vi.fn(async () => auditGate.enabled),
-}));
-
-vi.mock("@/lib/utils/helper", () => ({
-  getOrganizationIdFromWorkspaceId: vi.fn().mockResolvedValue("org-from-workspace"),
 }));
 
 vi.mock("@/lib/constants", async (importOriginal) => {
@@ -142,7 +137,6 @@ function clearAllMockHandles() {
   if (serviceLogAuditEventMockHandle) serviceLogAuditEventMockHandle.mockClear().mockResolvedValue(undefined);
   if (loggerErrorMockHandle) loggerErrorMockHandle.mockClear();
   vi.mocked(getClientIpFromHeaders).mockClear();
-  vi.mocked(getOrganizationIdFromWorkspaceId).mockClear();
   auditGate.enabled = true;
 }
 
@@ -156,11 +150,9 @@ describe("queueAuditEvent", () => {
 
   test("correctly processes event and its dependencies are called", async () => {
     await OriginalHandler.queueAuditEvent(baseEventParams);
-    // Now, OriginalHandler.queueAuditEvent will call the REAL OriginalHandler.buildAndLogAuditEvent
-    // We expect the MOCKED dependencies of buildAndLogAuditEvent to be called.
+    // queueAuditEvent runs the module's real event builder; only its dependencies are mocked.
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
     // Add more specific assertions on what serviceLogAuditEventMockHandle was called with if necessary
-    // This would be similar to the direct tests for buildAndLogAuditEvent
     const logCall = serviceLogAuditEventMockHandle.mock.calls[0][0];
     expect(logCall.action).toBe(baseEventParams.action);
   });
@@ -312,16 +304,16 @@ describe("withAuditLogging", () => {
     expect(serviceLogAuditEventMockHandle.mock.calls[0][0].status).toBe("failure");
   });
 
-  test("does not log, or look up the organisation, when audit logging is disabled", async () => {
+  test("does not log when audit logging is disabled", async () => {
     auditGate.enabled = false;
     const handlerImpl = vi.fn().mockResolvedValue("ok");
     const wrapped = OriginalHandler.withAuditLogging("created", "survey", handlerImpl);
-    const ctx = { ...mockCtxBase, auditLoggingCtx: { ...mockCtxBase.auditLoggingCtx, organizationId: "" } };
-    await expect(wrapped({ ctx: asActionCtx(ctx), parsedInput: { workspaceId: "ws1" } })).resolves.toBe("ok");
+    await expect(wrapped({ ctx: asActionCtx(mockCtxBase), parsedInput: mockParsedInput })).resolves.toBe(
+      "ok"
+    );
     await new Promise(setImmediate);
     expect(handlerImpl).toHaveBeenCalled();
     expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
-    expect(vi.mocked(getOrganizationIdFromWorkspaceId)).not.toHaveBeenCalled();
   });
 
   test("still rethrows a failed handler when audit logging is disabled", async () => {

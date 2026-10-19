@@ -232,7 +232,7 @@ export const withAuditLogging = <
     }
 
     // The gate is checked off the request path, so a cold licence lookup never delays the action's
-    // response; the organisation lookup below only runs once it passes.
+    // response.
     setImmediate(async () => {
       try {
         if (!(await getIsAuditLogsEnabled())) return;

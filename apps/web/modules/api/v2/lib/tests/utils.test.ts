@@ -2,7 +2,9 @@ import * as Sentry from "@sentry/nextjs";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ZodError } from "zod";
 import { logger } from "@formbricks/logger";
+import { TApiAuditLog } from "@/app/lib/api/with-api-logging";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
+import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { formatZodError, handleApiError, logApiError, logApiRequest } from "../utils";
 
 const mockRequest = new Request("http://localhost/api/v2/test");
@@ -22,11 +24,26 @@ vi.mock("@/lib/constants", async (importOriginal) => {
     ...actual,
     SENTRY_DSN: "mocked-sentry-dsn",
     IS_PRODUCTION: true,
-    AUDIT_LOG_ENABLED: true,
+    // Off: the audit hand-off below must not depend on it (getIsAuditLogsEnabled decides, in the handler)
+    AUDIT_LOG_ENABLED: false,
     ENCRYPTION_KEY: "mocked-encryption-key",
     REDIS_URL: undefined,
   };
 });
+
+vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
+  queueAuditEvent: vi.fn(),
+}));
+
+const auditLog: TApiAuditLog = {
+  action: "created",
+  targetType: "webhook",
+  userId: "api-key-1",
+  userType: "api",
+  targetId: "webhook-1",
+  organizationId: "org-1",
+  status: "success",
+};
 
 describe("utils", () => {
   beforeEach(() => {
@@ -419,6 +436,29 @@ describe("utils", () => {
       expect(errorMock).toHaveBeenCalledWith("API V2 Error Details");
 
       logger.withContext = originalWithContext;
+    });
+  });
+
+  // The gate is getIsAuditLogsEnabled inside queueAuditEvent (handler.test.ts). An env-only check here
+  // is how the licence came to be ignored (ENG-3374), so the v2 helpers must not make the call themselves.
+  describe("audit hand-off", () => {
+    beforeEach(() => {
+      vi.mocked(queueAuditEvent).mockResolvedValue(undefined);
+    });
+
+    test("logApiRequest passes the audit log to queueAuditEvent even with AUDIT_LOG_ENABLED off", () => {
+      logApiRequest(mockRequest, 201, auditLog);
+      expect(queueAuditEvent).toHaveBeenCalledWith({ ...auditLog, eventId: "123" });
+    });
+
+    test("logApiError passes the audit log to queueAuditEvent even with AUDIT_LOG_ENABLED off", () => {
+      logApiError(mockRequest, { type: "forbidden" }, { ...auditLog, status: "failure" });
+      expect(queueAuditEvent).toHaveBeenCalledWith({ ...auditLog, status: "failure", eventId: "123" });
+    });
+
+    test("queues nothing when the route has no audit log", () => {
+      logApiRequest(mockRequest, 200);
+      expect(queueAuditEvent).not.toHaveBeenCalled();
     });
   });
 });
