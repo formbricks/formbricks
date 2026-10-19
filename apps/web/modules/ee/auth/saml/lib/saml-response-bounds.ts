@@ -26,8 +26,10 @@ export const SAML_RESPONSE_MARKUP_BUDGET = 12_000;
 /**
  * Longest `SAMLResponse` (base64 characters) the callback parses. The budget only holds inside a byte bound:
  * past it, text alone costs parse time however little markup it carries (16 MB of `&lt;` scores 8 and costs
- * jackson's signature path seconds). It matches the 256 KiB limit on `/api/auth` request bodies (ENG-3846), and
- * the largest real responses the budget is sized for fit in it (1,000 verbose Okta groups are ~247 KiB).
+ * jackson's signature path seconds). It matches the 256 KiB limit on `/api/auth` request bodies (ENG-3846), so
+ * behind `withAuthRequestBodyLimit` it cannot be reached; it keeps the scan bounded if that limit grows or this
+ * handler is mounted elsewhere. The largest real responses the budget is sized for fit (1,000 verbose Okta groups
+ * are ~247 KiB).
  */
 export const SAML_RESPONSE_MAX_LENGTH = 256 * 1024;
 
@@ -137,18 +139,27 @@ const closesItself = (xml: Buffer, from: number, end: number): boolean => {
   }
 };
 
+/** What `<!` and `<?` open, as xmldom reads them, with the opener's length and its terminator. */
+const OPAQUE_OPENERS = [
+  { opener: "<!--", terminator: "-->" },
+  { opener: "<![CDATA[", terminator: "]]>" },
+  { opener: "<?", terminator: "?>" },
+] as const;
+
 /**
  * Where the comment, CDATA section or processing instruction starting at `lt` ends, as xmldom reads it: at the
- * first `-->`, `]]>` or `?>` (a comment that holds `--` earlier, or a CDATA section outside an element, is fatal
- * to xmldom anyway). xmldom does not parse what is inside, so a `</` there closes nothing. A DOCTYPE is fatal
- * anywhere but before the root element, where the depth is already zero, so it needs no skipping.
+ * first `-->`, `]]>` or `?>` after its whole opener, so `<!-->` does not end where it starts. xmldom does not
+ * parse what is inside, so a `</` there closes nothing. Returns `null` for any other `<!`: a DOCTYPE, an entity
+ * declaration or a malformed CDATA start. xmldom skips markup inside a DOCTYPE's quoted literals and internal
+ * subset, which a byte scan cannot follow, and no SAML response carries one, so the response is refused instead.
  */
-const opaqueEnd = (xml: Buffer, lt: number): number => {
-  const terminator =
-    xml[lt + 1] === QUESTION ? "?>" : xml[lt + 2] === 0x2d ? "-->" : xml[lt + 2] === 0x5b ? "]]>" : null;
-  if (terminator === null) return lt;
-  const at = xml.indexOf(terminator, lt + 2);
-  return at === -1 ? xml.length : at + terminator.length;
+const opaqueEnd = (xml: Buffer, lt: number): number | null => {
+  for (const { opener, terminator } of OPAQUE_OPENERS) {
+    if (xml.toString("latin1", lt, lt + opener.length) !== opener) continue;
+    const at = xml.indexOf(terminator, lt + opener.length);
+    return at === -1 ? xml.length : at + terminator.length;
+  }
+  return null;
 };
 
 /** What a response holds, read up to the point where it passed a bound. */
@@ -157,6 +168,8 @@ export interface SamlResponseMarkup {
   markup: number;
   /** Deepest nesting of open elements. */
   depth: number;
+  /** Whether a DOCTYPE or other `<!` declaration was found; the measure stops there. */
+  declaration: boolean;
 }
 
 /**
@@ -190,7 +203,11 @@ export const measureSamlResponseMarkup = (samlResponseBase64: string): SamlRespo
     } else if (kind === BANG || kind === QUESTION) {
       // `<!…` and `<?…` carry no attributes and open nothing; malformed ones are fatal to xmldom, so cheap.
       markup++;
-      if (structural) opaqueUntil = opaqueEnd(xml, lt);
+      if (structural) {
+        const until = opaqueEnd(xml, lt);
+        if (until === null) return { markup, depth: maxDepth, declaration: true };
+        opaqueUntil = until;
+      }
     } else if (isNameStart(kind)) {
       markup += 1 + countAttributes(xml, lt + 1, end);
       if (structural && !closesItself(xml, lt + 1, end)) maxDepth = Math.max(maxDepth, ++depth);
@@ -200,21 +217,22 @@ export const measureSamlResponseMarkup = (samlResponseBase64: string): SamlRespo
     lt = next;
   }
 
-  return { markup, depth: maxDepth };
+  return { markup, depth: maxDepth, declaration: false };
 };
 
 /** Why a response is refused before jackson parses it; only sizes, never content, so it is safe to log. */
 export type SamlResponseRefusal =
-  | { reason: "length"; length: number }
-  | ({ reason: "markup" | "depth"; length: number } & SamlResponseMarkup);
+  | { reason: "length" | "declaration"; length: number }
+  | { reason: "markup" | "depth"; length: number; markup: number; depth: number };
 
 /** The refusal for a response past any bound, or `null` when jackson may parse it. Length is checked first. */
 export const checkSamlResponseBounds = (samlResponseBase64: string): SamlResponseRefusal | null => {
   const length = samlResponseBase64.length;
   if (length > SAML_RESPONSE_MAX_LENGTH) return { reason: "length", length };
 
-  const measured = measureSamlResponseMarkup(samlResponseBase64);
-  if (measured.markup > SAML_RESPONSE_MARKUP_BUDGET) return { reason: "markup", length, ...measured };
-  if (measured.depth > SAML_RESPONSE_MAX_DEPTH) return { reason: "depth", length, ...measured };
+  const { markup, depth, declaration } = measureSamlResponseMarkup(samlResponseBase64);
+  if (declaration) return { reason: "declaration", length };
+  if (markup > SAML_RESPONSE_MARKUP_BUDGET) return { reason: "markup", length, markup, depth };
+  if (depth > SAML_RESPONSE_MAX_DEPTH) return { reason: "depth", length, markup, depth };
   return null;
 };

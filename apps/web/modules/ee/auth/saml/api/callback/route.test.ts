@@ -88,6 +88,18 @@ describe("SAML callback route", () => {
     expect(samlResponseMock).not.toHaveBeenCalled();
   });
 
+  test("refuses a response with a DOCTYPE before jackson parses it, naming the reason", async () => {
+    vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+
+    const response = await POST(
+      callback({ SAMLResponse: b64('<!DOCTYPE r SYSTEM "x">' + ISSUER), RelayState: "s" })
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ message: expect.stringContaining("DOCTYPE") });
+    expect(samlResponseMock).not.toHaveBeenCalled();
+  });
+
   test("answers 400 to a body that is not a form", async () => {
     const response = await POST(
       new Request("http://localhost/api/auth/saml/callback", {
@@ -205,6 +217,7 @@ describe("SAML callback route", () => {
 
   test.each([
     ["no SAMLResponse", { RelayState: "s" }],
+    ["an empty SAMLResponse", { SAMLResponse: "", RelayState: "s" }],
     ["SAMLResponse as a file part", { SAMLResponse: new File([b64(ISSUER)], "r.xml"), RelayState: "s" }],
     ["RelayState as a file part", { SAMLResponse: b64(ISSUER), RelayState: new File(["s"], "s.txt") }],
   ])("answers 400 to %s without handing it to jackson", async (_name, fields) => {

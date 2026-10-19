@@ -113,6 +113,21 @@ describe("measureSamlResponseMarkup", () => {
     expect(depth('<r><a b=c/><a b /><a b="c"/ ></r>')).toBe(4);
   });
 
+  test("ends a comment only after its whole opener, as xmldom does", () => {
+    expect(depth("<r><a><!--></a>--></r>")).toBe(2);
+    expect(depth("<r><a><!---></a>--></r>")).toBe(2);
+    expect(depth("<r><a><![CDATA[]]></a>]]></r>")).toBe(2);
+  });
+
+  test("stops at a DOCTYPE or any other declaration and reports it", () => {
+    for (const declaration of ['<!DOCTYPE r SYSTEM "x">', '<!ENTITY e "x">', "<![IGNORE[", "<!x>"]) {
+      expect(measureSamlResponseMarkup(b64(declaration + "<r/>")).declaration).toBe(true);
+    }
+    expect(
+      measureSamlResponseMarkup(b64('<?xml version="1.0"?><!-- c --><r><![CDATA[x]]></r>')).declaration
+    ).toBe(false);
+  });
+
   test("moves the depth for nothing inside comments, CDATA sections or processing instructions", () => {
     expect(depth("<r><!-- <a><b><c> --></r>")).toBe(1);
     expect(depth("<r><![CDATA[<a><b>]]></r>")).toBe(1);
@@ -268,6 +283,15 @@ describe("checkSamlResponseBounds", () => {
   test.each([
     ["an unquoted value ended by a quote, so the /> sits in a value", '<a xmlns:p=x">"/>'.repeat(5999)],
     ["closing tags inside comments", (scopes(60) + "<!--" + "</a>".repeat(60) + "-->").repeat(66)],
+    // xmldom's comment runs from after the whole `<!--`, so `<!-->` and `<!--->` open a comment rather than end one.
+    [
+      "closing tags inside comments opened as <!-->",
+      (scopes(60) + "<!-->" + "</a>".repeat(60) + "-->").repeat(66),
+    ],
+    [
+      "closing tags inside comments opened as <!--->",
+      (scopes(60) + "<!--->" + "</a>".repeat(60) + "-->").repeat(66),
+    ],
     ["closing tags inside CDATA sections", (scopes(60) + "<![CDATA[" + "</a>".repeat(60) + "]]>").repeat(66)],
     [
       "closing tags inside processing instructions",
@@ -276,6 +300,18 @@ describe("checkSamlResponseBounds", () => {
   ])("refuses nesting hidden behind %s", (_name, xml) => {
     expect(b64(xml).length).toBeLessThan(SAML_RESPONSE_MAX_LENGTH);
     expect(checkSamlResponseBounds(b64(xml))).toMatchObject({ reason: "depth" });
+  });
+
+  // xmldom skips markup inside a DOCTYPE's quoted literals and internal subset, which a byte scan cannot follow:
+  // a `<!--` there would hide the depth of everything after it.
+  test.each([
+    ["a DOCTYPE whose literal opens a comment", '<!DOCTYPE r SYSTEM "<!--">'],
+    ["a DOCTYPE with an entity whose value opens a comment", '<!DOCTYPE r [<!ENTITY e "<!--">]>'],
+    ["a DOCTYPE whose literal opens a processing instruction", '<!DOCTYPE r SYSTEM "<?">'],
+  ])("refuses %s, whatever follows", (_name, doctype) => {
+    const xml = doctype + Array.from({ length: 5995 }, (_, i) => `<a xmlns:p${i}="u">`).join("");
+
+    expect(checkSamlResponseBounds(b64(xml))).toEqual({ reason: "declaration", length: b64(xml).length });
   });
 
   test("names only sizes in a refusal, never content", () => {

@@ -53,8 +53,9 @@ export const POST = async (req: Request) => {
   // An IdP-initiated sign-in carries no RelayState; jackson reads a missing one as "".
   const RelayState = formData.get("RelayState") ?? "";
 
-  // A file part, or no SAMLResponse at all, is not a SAML response; jackson would throw on it and answer 500.
-  if (typeof SAMLResponse !== "string" || typeof RelayState !== "string") {
+  // A file part, an empty SAMLResponse or none at all is not a SAML response; jackson would throw on it and
+  // answer 500.
+  if (typeof SAMLResponse !== "string" || SAMLResponse === "" || typeof RelayState !== "string") {
     return responses.badRequestResponse("SAMLResponse and RelayState must be text fields");
   }
 
@@ -63,7 +64,11 @@ export const POST = async (req: Request) => {
     // Sizes only, never content: with jackson's traces off (ENG-3976) this line is the one record a real IdP
     // response refused here would leave.
     logger.warn(refusal, "Refused a SAML response before parsing it");
-    return responses.badRequestResponse("SAMLResponse is too large to process");
+    return responses.badRequestResponse(
+      refusal.reason === "declaration"
+        ? "SAMLResponse must not contain a DOCTYPE or other declaration"
+        : "SAMLResponse is too large to process"
+    );
   }
 
   let redirect_url: string | undefined;
