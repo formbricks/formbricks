@@ -349,12 +349,12 @@ Once those checks pass, the update also publishes the Formbricks container's por
 your `docker-compose.yml` or your Compose override file (such as `docker-compose.override.yml`) still publishes it on
 every interface (`- 3000:3000`). Traefik reaches Formbricks over the Compose network and keeps serving it on ports
 `80` and `443`, so outside traffic always passes through Traefik. Each file it changes is kept as
-`<file>.before-loopback-port`. Before stopping anything, it checks that the merged Compose files still render and
-publish port `3000` only once; if not, it restores the files it changed and continues the update with the port as it
-was. A mapping with an address you chose, such as `- 0.0.0.0:3000:3000`, is left as it is, and so is everything when
-`.env` sets `COMPOSE_FILE`. On Docker Engine before 28.0, and on 28.2.0 to 28.3.2, other machines on your local
-network can still reach a port published on `127.0.0.1`, so the installer and the update warn you to upgrade
-Docker.
+`<file>.before-loopback-port`. Before stopping anything, it renders the Compose files exactly as Docker Compose will
+load them and checks that they publish port `3000` once, on `127.0.0.1`; if not, it restores the files it changed and
+continues the update with the port as it was. A mapping with an address you chose, such as `- 0.0.0.0:3000:3000`, is
+left as it is, and so is everything when `.env` sets `COMPOSE_FILE`. On Docker Engine before 28.0, and on 28.2.0 to
+28.3.2, other machines on your local network can still reach a port published on `127.0.0.1`, so the installer and
+the update warn you to upgrade Docker.
 
 Starting with v5.4, the updater also recognizes the old amd64-only bundled Valkey digest. It backs up your
 Compose file, replaces only that exact image reference with the native amd64/arm64 digest, and validates the

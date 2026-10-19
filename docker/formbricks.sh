@@ -1543,17 +1543,28 @@ rewrite_formbricks_port_to_loopback() {
   return "$status"
 }
 
-# Rejects a rendered project where the formbricks service publishes host port 3000 more than once. Two such
-# bindings, say loopback from one file and every interface from another, cannot both start, and the update
-# would only find out after stopping the stack. The rare pairs that could (TCP and UDP, two distinct addresses)
-# are rejected too, which only means the port stays as it was.
-formbricks_port_published_once() {
+# Accepts the rendered project only when the formbricks service publishes host port 3000 exactly once, on
+# 127.0.0.1: the outcome the narrowing is for. Anything else means it did not take effect in the files Compose
+# actually loads (say, a compose.yaml it prefers over docker-compose.yml), or that two bindings would collide,
+# which the update would only find out after stopping the stack. The rare pairs that could coexist (TCP and
+# UDP, two addresses) are rejected too, which only means the port stays as it was.
+formbricks_port_on_loopback_only() {
   local rendered
   rendered=$(render_compose_project "$1" --format json formbricks) || return 1
-  local count
-  count=$(printf '%s' "$rendered" | tr -d '[:space:]' | grep -oE '"published":"?3000"?[,}]' | wc -l)
+  # Each port is a flat JSON object, so with whitespace dropped (whatever Compose's formatting), an innermost
+  # {...} holding "published":"3000" is one binding of host port 3000.
+  local bindings
+  bindings=$(printf '%s' "$rendered" | tr -d '[:space:]' | grep -oE '\{[^{}]*\}' |
+    grep -E '"published":"?3000"?[,}]' || true)
+  local count loopback
+  count=$(printf '%s' "$bindings" | grep -c . || true)
+  loopback=$(printf '%s' "$bindings" | grep -c '"host_ip":"127\.0\.0\.1"' || true)
   if [[ "$count" -gt 1 ]]; then
     echo "❌ The formbricks service would publish port 3000 more than once."
+    return 1
+  fi
+  if [[ "$count" -ne 1 || "$loopback" -ne 1 ]]; then
+    echo "❌ The Compose files Docker Compose loads would not publish port 3000 on 127.0.0.1 only."
     return 1
   fi
 }
@@ -1564,7 +1575,7 @@ formbricks_port_published_once() {
 # enforces (TLS, request limits, the forwarding headers the app trusts). Docker-published ports also skip UFW.
 # An override file beside it is narrowed too, so the merged project does not publish the port twice. With
 # "validate" (the update path) every changed file is backed up, and all are restored if the merged project does
-# not render or would still publish the port twice. Returns 2 when a restore failed and the files are unsafe.
+# not render or would not publish the port on 127.0.0.1 only. Returns 2 when a restore failed and the files are unsafe.
 bind_formbricks_port_to_loopback() {
   local compose_file="${1:-docker-compose.yml}"
   local mode="${2:-}"
@@ -1624,7 +1635,7 @@ bind_formbricks_port_to_loopback() {
     return 0
   fi
 
-  replace_compose_files_validated "$compose_file" formbricks_port_published_once "${triples[@]}" || return $?
+  replace_compose_files_validated "$compose_file" formbricks_port_on_loopback_only "${triples[@]}" || return $?
 
   echo "🔒 From this update on, Formbricks publishes port 3000 on 127.0.0.1 only. Traefik still serves it on 80/443."
   echo "   Changed: ${rewritten[*]} (each kept as <file>.before-loopback-port). To reach port 3000 from"

@@ -295,6 +295,18 @@ migrate_legacy_valkey_image "$2"`,
   return validationLogPath;
 };
 
+// What `docker compose config --format json formbricks` prints for the formbricks service's port bindings.
+const renderFormbricksPorts = (...ports: Record<string, unknown>[]): string =>
+  `${JSON.stringify({ services: { formbricks: { ports } } }, null, 2)}\n`;
+const loopbackPort = {
+  mode: "ingress",
+  host_ip: "127.0.0.1",
+  target: 3000,
+  published: "3000",
+  protocol: "tcp",
+};
+const everyInterfacePort = { mode: "ingress", target: 3000, published: "3000", protocol: "tcp" };
+
 const bindFormbricksPortToLoopback = (
   composePath: string,
   mode: "install" | "update",
@@ -309,6 +321,7 @@ const bindFormbricksPortToLoopback = (
       `source "$1"
 sudo() {
   printf '[%s] %s\\n' "$PWD" "$*" >> "$VALIDATION_LOG_PATH"
+  [[ "$*" == *"--format json formbricks" ]] && printf '%s' "$RENDERED_JSON"
   [[ "$VALIDATION_RESULT" == "success" ]]
 }
 bind_formbricks_port_to_loopback "$2" "$3"`,
@@ -319,7 +332,12 @@ bind_formbricks_port_to_loopback "$2" "$3"`,
     ],
     {
       encoding: "utf8",
-      env: { ...process.env, VALIDATION_LOG_PATH: validationLogPath, VALIDATION_RESULT: validationResult },
+      env: {
+        ...process.env,
+        VALIDATION_LOG_PATH: validationLogPath,
+        VALIDATION_RESULT: validationResult,
+        RENDERED_JSON: renderFormbricksPorts(loopbackPort),
+      },
     }
   );
 
@@ -1256,27 +1274,7 @@ describe("docker/formbricks.sh loopback-only app port (ENG-3983)", () => {
     expect(existsSync(`${composePath}.tmp`)).toBe(false);
   });
 
-  const duplicateRender = `{
-  "services": {
-    "formbricks": {
-      "ports": [
-        {
-          "host_ip": "127.0.0.1",
-          "target": 3000,
-          "published": "3000",
-          "protocol": "tcp"
-        },
-        {
-          "host_ip": "0.0.0.0",
-          "target": 3000,
-          "published": "3000",
-          "protocol": "tcp"
-        }
-      ]
-    }
-  }
-}
-`;
+  const duplicateRender = renderFormbricksPorts(loopbackPort, { ...loopbackPort, host_ip: "0.0.0.0" });
 
   const bareOverride = `services:
   formbricks:
@@ -1289,7 +1287,7 @@ describe("docker/formbricks.sh loopback-only app port (ENG-3983)", () => {
     failUpgradeCheck = false,
     withOverride = false,
     overrideContents = "services: {}\n",
-    renderedFormbricks = "",
+    renderedFormbricks = renderFormbricksPorts(loopbackPort),
     engineVersion = "",
     extraFiles = {},
     envExtra = "",
@@ -1455,6 +1453,67 @@ exit 0
     expect(commands).toContain("docker compose up -d");
   });
 
+  const runBindWithRealCompose = (files: Record<string, string>) => {
+    const installationDir = createTempDir();
+    for (const [name, contents] of Object.entries(files))
+      writeFileSync(join(installationDir, name), contents);
+    const result = spawnSync(
+      "bash",
+      [
+        "-c",
+        'source "$1"; sudo() { "$@"; }; cd "$2"; bind_formbricks_port_to_loopback docker-compose.yml validate',
+        "bash",
+        formbricksScriptPath,
+        installationDir,
+      ],
+      { encoding: "utf8", env: getDockerComposeProcessEnv() }
+    );
+    const rendered = runDockerCompose([
+      "--project-directory",
+      installationDir,
+      "config",
+      "--format",
+      "json",
+      "formbricks",
+    ]);
+    return { result, installationDir, rendered: JSON.parse(rendered) as RenderedDockerComposeConfig };
+  };
+
+  const realComposeFile = `services:
+  formbricks:
+    image: ghcr.io/formbricks/formbricks:latest
+    ports:
+      - 3000:3000
+`;
+
+  dockerComposeTest("with real Compose, the narrowed project publishes the port on loopback only", () => {
+    const { result, installationDir, rendered } = runBindWithRealCompose({
+      "docker-compose.yml": realComposeFile,
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("publishes port 3000 on 127.0.0.1 only");
+    expect(existsSync(join(installationDir, "docker-compose.yml.before-loopback-port"))).toBe(true);
+    expect(rendered.services.formbricks.ports).toEqual([
+      expect.objectContaining({ host_ip: "127.0.0.1", published: "3000", target: 3000 }),
+    ]);
+  });
+
+  dockerComposeTest(
+    "with real Compose, a compose.yaml it prefers keeps the update from claiming the port is narrowed",
+    () => {
+      const { result, installationDir } = runBindWithRealCompose({
+        "docker-compose.yml": realComposeFile,
+        "compose.yaml": realComposeFile,
+      });
+
+      expect(result.status).toBe(1);
+      expect(result.stdout).toContain("would not publish port 3000 on 127.0.0.1 only");
+      expect(result.stdout).not.toContain("127.0.0.1 only. Traefik");
+      expect(readFileSync(join(installationDir, "docker-compose.yml"), "utf8")).toBe(realComposeFile);
+    }
+  );
+
   test("the updater stops before stopping the stack when a restore fails", () => {
     const { result, commands } = runUpdate({ failPortValidation: true, failRestore: true });
 
@@ -1504,6 +1563,30 @@ exit 0
     expect(result.stdout).toContain("Continuing the update with port 3000 published as before");
     expect(readFileSync(composePath, "utf8")).toBe(composeContents);
     expect(existsSync(`${composePath}.before-loopback-port`)).toBe(false);
+    expect(commands).toContain("docker compose up -d");
+  });
+
+  test.each([
+    [
+      "a compose.yaml Compose prefers still publishes it on every interface",
+      renderFormbricksPorts(everyInterfacePort),
+    ],
+    ["the project Compose loads publishes no port 3000", renderFormbricksPorts()],
+    ["the binding is on another address", renderFormbricksPorts({ ...loopbackPort, host_ip: "::1" })],
+  ])("the updater restores the file and keeps going when %s", (_case, renderedFormbricks) => {
+    const { result, composePath, composeContents, commands } = runUpdate({
+      extraFiles: { "compose.yaml": bareOverride },
+      renderedFormbricks,
+    });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("would not publish port 3000 on 127.0.0.1 only");
+    expect(result.stdout).toContain(
+      "Restored docker-compose.yml from docker-compose.yml.before-loopback-port"
+    );
+    expect(result.stdout).not.toContain("127.0.0.1 only. Traefik");
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(readFileSync(join(dirname(composePath), "compose.yaml"), "utf8")).toBe(bareOverride);
     expect(commands).toContain("docker compose up -d");
   });
 
