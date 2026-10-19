@@ -1,13 +1,14 @@
 import { randomUUID } from "node:crypto";
 import { Client } from "pg";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { getPgConnectionConfig } from "../pg-connection-config";
 import { ONLINE_INDEXES, ensureOnlineIndexes } from "./online-indexes";
 
-// eslint-disable-next-line turbo/no-undeclared-env-vars -- Opt-in test against an isolated database, never a cached production task.
+// Opt-in test against an isolated database, never a cached production task.
 const databaseUrl = process.env.ONLINE_UPGRADE_TEST_DATABASE_URL;
 describe.runIf(databaseUrl)("online indexes against PostgreSQL", () => {
   const schema = `index_test_${randomUUID().replaceAll("-", "")}`;
-  const client = new Client({ connectionString: databaseUrl });
+  const client = new Client(databaseUrl ? getPgConnectionConfig(databaseUrl) : undefined);
   let scopedUrl: string;
   beforeAll(async () => {
     await client.connect();

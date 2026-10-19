@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { Client } from "pg";
 import { afterAll, beforeAll, expect, test } from "vitest";
+import { getPgConnectionConfig } from "../pg-connection-config";
 import { ensureOnlineIndexes } from "./online-indexes";
 import {
   applyOnlineSchemaMigrations,
@@ -19,7 +20,7 @@ beforeAll(async () => {
   const parsed = new URL(connection);
   parsed.searchParams.set("options", `-c search_path=${schema}`);
   url = parsed.toString();
-  client = new Client({ connectionString: url });
+  client = new Client(getPgConnectionConfig(url));
   await client.connect();
   await client.query(`CREATE SCHEMA "${schema}"`);
   await client.query(`CREATE TABLE "Response" (id text, created_at timestamp, "surveyId" text, "contactId" text);
