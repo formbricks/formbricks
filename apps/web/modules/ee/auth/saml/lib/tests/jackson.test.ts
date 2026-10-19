@@ -1,5 +1,6 @@
 import { controllers } from "@boxyhq/saml-jackson";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import { SAML_AUDIENCE, SAML_DATABASE_URL, SAML_PATH, WEBAPP_URL } from "@/lib/constants";
 import { preloadConnection } from "@/modules/ee/auth/saml/lib/preload-connection";
 import { getIsSamlSsoEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -62,9 +63,20 @@ describe("SAML Jackson Initialization", () => {
       },
       // An anonymous failed callback must not persist its SAMLResponse (ENG-3976).
       ssoTraces: { disable: true },
+      logger: { info: expect.any(Function), warn: expect.any(Function), error: expect.any(Function) },
     });
 
     expect(preloadConnection).toHaveBeenCalledWith(mockConnectionController);
+
+    // jackson's own lines go through Formbricks' logger, capped and stripped like any untrusted text.
+    const jacksonLogger = vi.mocked(controllers).mock.calls[0][0].logger!;
+    const error = vi.spyOn(logger, "error").mockImplementation(() => undefined);
+    jacksonLogger.error!(`SAMLResponse error: ${"x".repeat(1000)}\n`, new Error("inner\u202etext"));
+    expect(error).toHaveBeenCalledWith(
+      { source: "saml-jackson", error: "inner?text" },
+      expect.stringMatching(/^SAMLResponse error: x{480}/)
+    );
+    expect((error.mock.calls[0][1] as string).length).toBeLessThanOrEqual(503);
 
     expect(global.oauthController).toBe(mockOAuthController);
     expect(global.connectionController).toBe(mockConnectionController);

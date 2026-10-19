@@ -4,6 +4,7 @@ import {
   isStringMatch,
   sanitizeString,
   startsWithVowel,
+  toLogText,
   truncate,
   truncateText,
 } from "./strings";
@@ -141,5 +142,20 @@ describe("isStringMatch", () => {
 
   test("returns false for non-matches", () => {
     expect(isStringMatch("test", "other")).toBe(false);
+  });
+
+  describe("toLogText", () => {
+    test("replaces control and bidi-override characters, which could fake a log line", () => {
+      expect(toLogText("a\nb\r\u0000c\u0085d\u202ee\u2066f", 100)).toBe("a?b??c?d?e?f");
+    });
+
+    test("caps the text at the limit", () => {
+      expect(toLogText("x".repeat(10), 4)).toBe("xxxx...");
+    });
+
+    test("leaves out anything that is not a string", () => {
+      expect(toLogText(undefined, 10)).toBeUndefined();
+      expect(toLogText({ toString: () => "x" }, 10)).toBeUndefined();
+    });
   });
 });
