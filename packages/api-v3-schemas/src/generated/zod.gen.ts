@@ -1077,6 +1077,19 @@ export const zFeedbackButtonPlacement = z.strictObject({
 export type FeedbackButtonPlacementZodType = z.infer<typeof zFeedbackButtonPlacement>;
 
 /**
+ * A custom colour per appearance, `#rrggbb`, as the survey styling stores its colours. `light` applies in light appearance. `dark` applies when the visitor's appearance is dark; `null` (or absent) derives it as the theme describes.
+ */
+export const zCreativeColor = z.strictObject({
+  light: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  dark: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .nullish(),
+});
+
+export type CreativeColorZodType = z.infer<typeof zCreativeColor>;
+
+/**
  * Font size in px, per device. `phone` applies below 768 px viewport width; `null` there uses the `desktop` value, and `null` on `desktop` uses the workspace Look & Feel.
  */
 export const zCreativeFontSize = z.strictObject({
@@ -1097,23 +1110,14 @@ export const zCreativePadding = z.strictObject({
 export type CreativePaddingZodType = z.infer<typeof zCreativePadding>;
 
 /**
- * The feedback button's custom styles. With `customStyles` off the button follows the workspace Look & Feel (the survey button) and the values below are kept but not applied. With it on, each value overrides the workspace one; `null` keeps the workspace value. A colour set here applies in both appearances: when the background or the text colour is set, both keep their light values in dark appearance so their contrast holds, and a background set without a text colour gets readable text (`#0f172a` or `#ffffff`). Colours left to the workspace follow its dark palette when the visitor's appearance is dark. Colours are `#rrggbb`.
+ * The feedback button's custom styles. With `customStyles` off the button follows the workspace Look & Feel (the survey button) and the values below are kept but not applied. With it on, each value overrides the workspace one; `null` keeps the workspace value. A colour has a `light` value and an optional `dark` one for the visitor's dark appearance. Without a `dark` value: when the background or the text colour is set, both keep their light values in dark appearance so their contrast holds, a background set without a text colour gets readable text (`#0f172a` or `#ffffff`) in each appearance, and a border keeps its light value. Colours left to the workspace follow its dark palette when the visitor's appearance is dark. Sizes and the position apply in both appearances.
  *
  */
 export const zFeedbackButtonTheme = z.strictObject({
   customStyles: z.boolean(),
-  backgroundColor: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/)
-    .nullable(),
-  textColor: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/)
-    .nullable(),
-  borderColor: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/)
-    .nullable(),
+  backgroundColor: zCreativeColor.nullable(),
+  textColor: zCreativeColor.nullable(),
+  borderColor: zCreativeColor.nullable(),
   borderRadius: z.int().gte(0).lte(100).nullable(),
   fontWeight: z.union([z.literal(400), z.literal(500), z.literal(600), z.literal(700)]).nullable(),
   fontSize: zCreativeFontSize,
@@ -1249,23 +1253,14 @@ export const zBannerPlacement = z.discriminatedUnion("placement", [
 export type BannerPlacementZodType = z.infer<typeof zBannerPlacement>;
 
 /**
- * The banner's custom styles. With `customStyles` off the banner follows the workspace Look & Feel (the survey card, with the survey button inside) and the values below are kept but not applied. With it on, each value overrides the workspace one; `null` keeps the workspace value. A colour set here applies in both appearances: when the background or the text colour is set, both keep their light values in dark appearance so their contrast holds, and a background set without a text colour gets readable text (`#0f172a` or `#ffffff`). Colours left to the workspace follow its dark palette when the visitor's appearance is dark. The banner's button always looks like the survey button. Colours are `#rrggbb`.
+ * The banner's custom styles. With `customStyles` off the banner follows the workspace Look & Feel (the survey card, with the survey button inside) and the values below are kept but not applied. With it on, each value overrides the workspace one; `null` keeps the workspace value. A colour has a `light` value and an optional `dark` one for the visitor's dark appearance. Without a `dark` value: when the background or the text colour is set, both keep their light values in dark appearance so their contrast holds, a background set without a text colour gets readable text (`#0f172a` or `#ffffff`) in each appearance, and a border keeps its light value. Colours left to the workspace follow its dark palette when the visitor's appearance is dark. Sizes and the position apply in both appearances. The banner's button always looks like the survey button.
  *
  */
 export const zBannerTheme = z.strictObject({
   customStyles: z.boolean(),
-  backgroundColor: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/)
-    .nullable(),
-  textColor: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/)
-    .nullable(),
-  borderColor: z
-    .string()
-    .regex(/^#[0-9a-fA-F]{6}$/)
-    .nullable(),
+  backgroundColor: zCreativeColor.nullable(),
+  textColor: zCreativeColor.nullable(),
+  borderColor: zCreativeColor.nullable(),
   fontWeight: z.union([z.literal(400), z.literal(500), z.literal(600), z.literal(700)]).nullable(),
   fontSize: zCreativeFontSize,
   paddingX: zCreativePadding,

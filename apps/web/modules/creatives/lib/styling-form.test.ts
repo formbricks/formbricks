@@ -1,5 +1,66 @@
 import { describe, expect, test } from "vitest";
-import { getDevicePlacement, toBannerPlacement, withDevicePlacement } from "./styling-form";
+import type { BannerThemeZodType } from "@formbricks/api-v3-schemas";
+import { DEFAULT_CREATIVE_STYLING } from "./creative";
+import {
+  getDevicePlacement,
+  getOwnColor,
+  toBannerPlacement,
+  withColorValue,
+  withDevicePlacement,
+} from "./styling-form";
+
+const theme = (colors: Partial<BannerThemeZodType> = {}): BannerThemeZodType => ({
+  ...DEFAULT_CREATIVE_STYLING.banner.theme,
+  customStyles: true,
+  ...colors,
+});
+
+describe("colours per appearance", () => {
+  const set = { backgroundColor: { light: "#fef3c7", dark: "#1e293b" } };
+
+  test("each appearance reads its own value; an unset one is null", () => {
+    expect(getOwnColor(theme(set), "backgroundColor", "light")).toBe("#fef3c7");
+    expect(getOwnColor(theme(set), "backgroundColor", "dark")).toBe("#1e293b");
+    expect(
+      getOwnColor(theme({ backgroundColor: { light: "#fef3c7" } }), "backgroundColor", "dark")
+    ).toBeNull();
+    expect(getOwnColor(theme(), "textColor", "light")).toBeNull();
+  });
+
+  test("a light edit keeps the dark value, and always writes both keys", () => {
+    expect(withColorValue(theme(set), "backgroundColor", "light", "#fde68a", null)).toEqual({
+      backgroundColor: { light: "#fde68a", dark: "#1e293b" },
+    });
+    expect(withColorValue(theme(), "textColor", "light", "#78350f", null)).toEqual({
+      textColor: { light: "#78350f", dark: null },
+    });
+  });
+
+  test("a dark edit keeps the light value", () => {
+    expect(withColorValue(theme(set), "backgroundColor", "dark", "#0f172a", null)).toEqual({
+      backgroundColor: { light: "#fef3c7", dark: "#0f172a" },
+    });
+  });
+
+  test("a dark edit on a colour left to the workspace keeps light as it shows by setting it", () => {
+    expect(withColorValue(theme(), "backgroundColor", "dark", "#0f172a", "#ffffff")).toEqual({
+      backgroundColor: { light: "#ffffff", dark: "#0f172a" },
+    });
+  });
+
+  test("without a light colour to keep (no border in light), a dark one can't be set", () => {
+    expect(withColorValue(theme(), "borderColor", "dark", "#93c5fd", null)).toBeNull();
+  });
+
+  test("resetting dark goes back to the derived colour; resetting light hands the colour back", () => {
+    expect(withColorValue(theme(set), "backgroundColor", "dark", null, null)).toEqual({
+      backgroundColor: { light: "#fef3c7", dark: null },
+    });
+    expect(withColorValue(theme(set), "backgroundColor", "light", null, null)).toEqual({
+      backgroundColor: null,
+    });
+  });
+});
 
 describe("banner layout", () => {
   test("a bottom banner is always an overlay, whatever layout was asked for", () => {

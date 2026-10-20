@@ -4182,8 +4182,12 @@ paths:
                             offset: 90
                         theme:
                           customStyles: true
-                          backgroundColor: '#112e51'
-                          textColor: '#ffffff'
+                          backgroundColor:
+                            light: '#112e51'
+                            dark: '#bfdbfe'
+                          textColor:
+                            light: '#ffffff'
+                            dark: '#0f172a'
                           borderColor: null
                           borderRadius: 4
                           fontWeight: 600
@@ -11461,6 +11465,21 @@ components:
           minimum: 0
           maximum: 100
       additionalProperties: false
+    CreativeColor:
+      type: object
+      description: A custom colour per appearance, `#rrggbb`, as the survey styling stores its colours. `light` applies in light appearance. `dark` applies when the visitor's appearance is dark; `null` (or absent) derives it as the theme describes.
+      required:
+        - light
+      properties:
+        light:
+          type: string
+          pattern: ^#[0-9a-fA-F]{6}$
+        dark:
+          type:
+            - string
+            - 'null'
+          pattern: ^#[0-9a-fA-F]{6}$
+      additionalProperties: false
     CreativeFontSize:
       type: object
       description: Font size in px, per device. `phone` applies below 768 px viewport width; `null` there uses the `desktop` value, and `null` on `desktop` uses the workspace Look & Feel.
@@ -11504,7 +11523,7 @@ components:
     FeedbackButtonTheme:
       type: object
       description: |
-        The feedback button's custom styles. With `customStyles` off the button follows the workspace Look & Feel (the survey button) and the values below are kept but not applied. With it on, each value overrides the workspace one; `null` keeps the workspace value. A colour set here applies in both appearances: when the background or the text colour is set, both keep their light values in dark appearance so their contrast holds, and a background set without a text colour gets readable text (`#0f172a` or `#ffffff`). Colours left to the workspace follow its dark palette when the visitor's appearance is dark. Colours are `#rrggbb`.
+        The feedback button's custom styles. With `customStyles` off the button follows the workspace Look & Feel (the survey button) and the values below are kept but not applied. With it on, each value overrides the workspace one; `null` keeps the workspace value. A colour has a `light` value and an optional `dark` one for the visitor's dark appearance. Without a `dark` value: when the background or the text colour is set, both keep their light values in dark appearance so their contrast holds, a background set without a text colour gets readable text (`#0f172a` or `#ffffff`) in each appearance, and a border keeps its light value. Colours left to the workspace follow its dark palette when the visitor's appearance is dark. Sizes and the position apply in both appearances.
       required:
         - customStyles
         - backgroundColor
@@ -11520,20 +11539,17 @@ components:
           type: boolean
           description: The "Add custom styles" switch.
         backgroundColor:
-          type:
-            - string
-            - 'null'
-          pattern: ^#[0-9a-fA-F]{6}$
+          anyOf:
+            - $ref: '#/components/schemas/CreativeColor'
+            - type: 'null'
         textColor:
-          type:
-            - string
-            - 'null'
-          pattern: ^#[0-9a-fA-F]{6}$
+          anyOf:
+            - $ref: '#/components/schemas/CreativeColor'
+            - type: 'null'
         borderColor:
-          type:
-            - string
-            - 'null'
-          pattern: ^#[0-9a-fA-F]{6}$
+          anyOf:
+            - $ref: '#/components/schemas/CreativeColor'
+            - type: 'null'
         borderRadius:
           type:
             - integer
@@ -11755,7 +11771,7 @@ components:
     BannerTheme:
       type: object
       description: |
-        The banner's custom styles. With `customStyles` off the banner follows the workspace Look & Feel (the survey card, with the survey button inside) and the values below are kept but not applied. With it on, each value overrides the workspace one; `null` keeps the workspace value. A colour set here applies in both appearances: when the background or the text colour is set, both keep their light values in dark appearance so their contrast holds, and a background set without a text colour gets readable text (`#0f172a` or `#ffffff`). Colours left to the workspace follow its dark palette when the visitor's appearance is dark. The banner's button always looks like the survey button. Colours are `#rrggbb`.
+        The banner's custom styles. With `customStyles` off the banner follows the workspace Look & Feel (the survey card, with the survey button inside) and the values below are kept but not applied. With it on, each value overrides the workspace one; `null` keeps the workspace value. A colour has a `light` value and an optional `dark` one for the visitor's dark appearance. Without a `dark` value: when the background or the text colour is set, both keep their light values in dark appearance so their contrast holds, a background set without a text colour gets readable text (`#0f172a` or `#ffffff`) in each appearance, and a border keeps its light value. Colours left to the workspace follow its dark palette when the visitor's appearance is dark. Sizes and the position apply in both appearances. The banner's button always looks like the survey button.
       required:
         - customStyles
         - backgroundColor
@@ -11770,20 +11786,17 @@ components:
           type: boolean
           description: The "Add custom styles" switch.
         backgroundColor:
-          type:
-            - string
-            - 'null'
-          pattern: ^#[0-9a-fA-F]{6}$
+          anyOf:
+            - $ref: '#/components/schemas/CreativeColor'
+            - type: 'null'
         textColor:
-          type:
-            - string
-            - 'null'
-          pattern: ^#[0-9a-fA-F]{6}$
+          anyOf:
+            - $ref: '#/components/schemas/CreativeColor'
+            - type: 'null'
         borderColor:
-          type:
-            - string
-            - 'null'
-          pattern: ^#[0-9a-fA-F]{6}$
+          anyOf:
+            - $ref: '#/components/schemas/CreativeColor'
+            - type: 'null'
         fontWeight:
           type:
             - integer

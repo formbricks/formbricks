@@ -6,6 +6,7 @@ import type {
   FeedbackButtonStylingZodType,
   FeedbackButtonThemeZodType,
 } from "@formbricks/api-v3-schemas";
+import type { TStylingAppearance } from "@/lib/styling/dark-mode";
 import { normalizeCustomCssInput } from "@/modules/custom-css/components/lib/draft";
 import type { TCreativeResource } from "./editor-form";
 import type { TCreativeStyleSource } from "./style";
@@ -75,6 +76,42 @@ export const withTheme = <TStyling extends TCreativeStylingForm>(
   styling: TStyling,
   patch: TSharedThemePatch
 ): TStyling => ({ ...styling, theme: { ...styling.theme, ...patch } });
+
+/** The theme's colours, each `{ light, dark? }` like the survey styling's, or `null` for the workspace's. */
+export type TCreativeColorKey = "backgroundColor" | "textColor" | "borderColor";
+
+/** The colour the author set for one appearance; `null` follows the workspace (light) or is derived (dark). */
+export const getOwnColor = (
+  theme: TCreativeTheme,
+  key: TCreativeColorKey,
+  appearance: TStylingAppearance
+): string | null => theme[key]?.[appearance] ?? null;
+
+/**
+ * Sets one appearance's colour. Light: `null` hands the colour back to the workspace, its dark value with
+ * it (a dark value needs a light one, as in the survey styling). Dark: `null` goes back to the derived
+ * colour. A dark value on a colour left to the workspace takes `shownLight`, the light colour on screen,
+ * as its light value so light looks as before (the survey's colour fields fill a missing light value the
+ * same way); with nothing to take, a light that shows no border, it can't be set and this returns `null`.
+ */
+export const withColorValue = (
+  theme: TCreativeTheme,
+  key: TCreativeColorKey,
+  appearance: TStylingAppearance,
+  value: string | null,
+  shownLight: string | null
+): TSharedThemePatch | null => {
+  const current = theme[key];
+  const patch: TSharedThemePatch = {};
+  if (appearance === "light") {
+    patch[key] = value === null ? null : { light: value, dark: current?.dark ?? null };
+    return patch;
+  }
+  const light = current?.light ?? shownLight;
+  if (light === null) return null;
+  patch[key] = { light, dark: value };
+  return patch;
+};
 
 /** Sets one device's size value; `null` goes back to the desktop value (phone) or the workspace one. */
 export const withSizeValue = (

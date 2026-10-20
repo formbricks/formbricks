@@ -81,6 +81,35 @@ describe("create_creative input", () => {
     expect(result.error?.issues.some((issue) => issue.path[0] === "content")).toBe(true);
   });
 
+  test("takes theme colours per appearance, as the v3 contract does, and refuses the old plain string", () => {
+    const withBackground = (backgroundColor: unknown) => ({
+      ...feedbackButtonBody,
+      styling: {
+        position: { desktop: { edge: "right", offset: 50 }, phone: null },
+        theme: {
+          customStyles: true,
+          backgroundColor,
+          textColor: { light: "#ffffff" },
+          borderColor: null,
+          borderRadius: null,
+          fontWeight: null,
+          fontSize: { desktop: null, phone: null },
+          paddingX: { desktop: null, phone: null },
+          paddingY: { desktop: null, phone: null },
+        },
+      },
+    });
+
+    const parsed = ZMcpCreateCreativeInput.parse(withBackground({ light: "#112e51", dark: "#bfdbfe" }));
+    expect(parsed.styling?.theme.backgroundColor).toEqual({ light: "#112e51", dark: "#bfdbfe" });
+
+    const legacy = ZMcpCreateCreativeInput.safeParse(withBackground("#112e51"));
+    expect(legacy.success).toBe(false);
+    expect(legacy.error?.issues.some((issue) => issue.path[0] === "styling")).toBe(true);
+    // The advertised JSON schema carries the same shape, so an agent is told to send it.
+    expect(JSON.stringify(z.toJSONSchema(ZMcpCreateCreativeInput, { io: "input" }))).toContain('"dark"');
+  });
+
   test("refuses an undeclared field", () => {
     expect(
       ZMcpCreateCreativeInput.safeParse({ ...feedbackButtonBody, displayStatus: "active" }).success

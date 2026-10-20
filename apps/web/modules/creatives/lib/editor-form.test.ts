@@ -216,7 +216,7 @@ describe("feedback button form", () => {
       position: { desktop: { edge: "bottom", offset: 80 }, phone: { edge: "left", offset: 40 } },
       theme: {
         customStyles: true,
-        backgroundColor: "#f59e0b",
+        backgroundColor: { light: "#f59e0b", dark: "#78350f" },
         textColor: null,
         borderColor: null,
         borderRadius: 12,
@@ -238,7 +238,7 @@ describe("feedback button form", () => {
       position: { desktop: { edge: "bottom", offset: 80 }, phone: { edge: "left", offset: 40 } },
       theme: {
         customStyles: true,
-        backgroundColor: "#f59e0b",
+        backgroundColor: { light: "#f59e0b", dark: "#78350f" },
         textColor: null,
         borderColor: null,
         borderRadius: 12,

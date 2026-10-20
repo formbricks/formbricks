@@ -72,8 +72,12 @@ get:
                         offset: 90
                     theme:
                       customStyles: true
-                      backgroundColor: "#112e51"
-                      textColor: "#ffffff"
+                      backgroundColor:
+                        light: "#112e51"
+                        dark: "#bfdbfe"
+                      textColor:
+                        light: "#ffffff"
+                        dark: "#0f172a"
                       borderColor: null
                       borderRadius: 4
                       fontWeight: 600

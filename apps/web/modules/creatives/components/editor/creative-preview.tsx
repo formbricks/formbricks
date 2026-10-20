@@ -3,16 +3,15 @@
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { type TCreativeView, render } from "@formbricks/creatives";
-import type { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import type { TStylingAppearance } from "@/lib/styling/dark-mode";
-import { MediaBackground } from "@/modules/ui/components/media-background";
 import {
   PreviewModeSwitches,
   PreviewWindowBar,
 } from "@/modules/ui/components/preview-survey/components/preview-frame";
 import { PREVIEW_BOUNDARY_CLASS_NAME } from "@/modules/ui/components/preview-survey/lib/containment";
 import type { TCreativeDevice } from "../../lib/styling-form";
+import { PhoneViewport } from "./phone-viewport";
 
 /** A neutral wireframe of a customer's site, so the creative is judged in context, not on a blank. */
 const SiteWireframe = ({ siteName, compact }: Readonly<{ siteName: string; compact: boolean }>) => (
@@ -136,7 +135,6 @@ const CreativeMount = ({
 export const CreativePreview = ({
   view,
   siteName,
-  workspaceStyling,
   device,
   onDeviceChange,
   appearance,
@@ -145,8 +143,6 @@ export const CreativePreview = ({
 }: Readonly<{
   view: TCreativeView;
   siteName: string;
-  /** The phone frame is the survey preview's, which reads the workspace look. */
-  workspaceStyling: TWorkspaceStyling;
   device: TCreativeDevice;
   onDeviceChange: (device: TCreativeDevice) => void;
   appearance: TStylingAppearance;
@@ -172,9 +168,7 @@ export const CreativePreview = ({
             <p className="absolute top-0 left-0 m-2 rounded-sm bg-slate-100 px-2 py-1 text-xs text-slate-600">
               {t("common.preview")}
             </p>
-            <MediaBackground surveyType="app" styling={workspaceStyling} isMobilePreview>
-              {mount}
-            </MediaBackground>
+            <PhoneViewport>{mount}</PhoneViewport>
           </>
         ) : (
           <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">

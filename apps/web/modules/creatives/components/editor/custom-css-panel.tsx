@@ -4,7 +4,6 @@ import { CodeIcon } from "lucide-react";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import type { TCustomCssInput } from "@formbricks/types/custom-css";
-import type { TStylingAppearance } from "@/lib/styling/dark-mode";
 import { CssCodeField } from "@/modules/custom-css/components/css-code-field";
 import { CustomCssIssues } from "@/modules/custom-css/components/custom-css-issues";
 import { CustomCssPlanNotice } from "@/modules/custom-css/components/custom-css-plan-notice";
@@ -19,8 +18,9 @@ import {
 import { getCustomCssEditMode } from "@/modules/custom-css/components/lib/edit-mode";
 import type { TCustomCssValidationState } from "@/modules/custom-css/components/lib/validation";
 import { Button } from "@/modules/ui/components/button";
+import { useStylingAppearance } from "@/modules/ui/components/styling-appearance";
 import { CREATIVE_CSS_SCOPE } from "../../lib/style";
-import { EditorPanel, Segmented } from "./editor-primitives";
+import { EditorPanel } from "./editor-primitives";
 
 export interface TCreativeCustomCssConfig {
   /** Cloud: the Scale `custom-css` entitlement. Self-hosted: always true. */
@@ -29,10 +29,10 @@ export interface TCreativeCustomCssConfig {
 }
 
 /**
- * The creative's own Custom CSS (ENG-3865, ADR 0012): one field per appearance, checked live and
+ * The creative's own Custom CSS (ENG-3865, ADR 0012): a base field and a dark one, checked live and
  * compiled for the creative's root element, with the survey CSS plan gate. It doesn't offer the survey
- * CSS hints, which name the survey card's parts. Light / Dark also switches the preview, so dark rules
- * are written against the dark creative.
+ * CSS hints, which name the survey card's parts. The Styling tab's Light / Dark picks the field, and
+ * the preview shows the same appearance, so dark rules are written against the dark creative.
  */
 export const CustomCssPanel = ({
   className,
@@ -40,8 +40,6 @@ export const CustomCssPanel = ({
   onChange,
   validation,
   config,
-  appearance,
-  onAppearanceChange,
   disabled,
 }: Readonly<{
   /** The CSS a feedback button or a banner targets. */
@@ -50,11 +48,10 @@ export const CustomCssPanel = ({
   onChange: (source: TCustomCssInput) => void;
   validation: TCustomCssValidationState;
   config: TCreativeCustomCssConfig;
-  appearance: TStylingAppearance;
-  onAppearanceChange: (appearance: TStylingAppearance) => void;
   disabled: boolean;
 }>) => {
   const { t } = useTranslation();
+  const appearance = useStylingAppearance();
   const id = useId();
   const fieldId = `${id}-field`;
   const helpId = `${id}-help`;
@@ -86,15 +83,11 @@ export const CustomCssPanel = ({
       ) : (
         <div className="space-y-3">
           {mode === "clear-only" && <CustomCssPlanNotice billingHref={config.billingHref} hasSavedCss />}
-          <Segmented
-            ariaLabel={t("workspace.creatives.editor.custom_css_appearance")}
-            value={appearance}
-            onChange={onAppearanceChange}
-            options={[
-              { value: "light", label: t("workspace.custom_css.base_css_label") },
-              { value: "dark", label: t("workspace.custom_css.dark_css_label") },
-            ]}
-          />
+          <label htmlFor={fieldId} className="block text-sm font-medium text-slate-700">
+            {appearance === "dark"
+              ? t("workspace.custom_css.dark_css_label")
+              : t("workspace.custom_css.base_css_label")}
+          </label>
           <p id={helpId} className="text-xs text-slate-500">
             {appearance === "dark"
               ? t("workspace.custom_css.dark_css_help")

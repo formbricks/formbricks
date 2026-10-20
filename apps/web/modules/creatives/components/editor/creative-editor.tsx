@@ -406,7 +406,6 @@ export const CreativeEditor = ({
               dismiss: t("workspace.creatives.visitor_dismiss"),
             })}
             siteName={siteName}
-            workspaceStyling={workspaceStyling}
             device={device}
             onDeviceChange={setDevice}
             appearance={appearance}
