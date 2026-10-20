@@ -1,0 +1,152 @@
+---
+title: "Upgrade Formbricks"
+description: "The steps to follow for every self-hosted upgrade, whatever the version."
+icon: "arrow-up-right-dots"
+---
+
+Every self-hosted upgrade follows the same steps. They take a short maintenance window: Formbricks is
+unavailable from the moment you stop it until the new version is running, usually a few minutes.
+
+Since v6, Formbricks keeps its permissions in SpiceDB. A new version can change how those permissions are
+stored, so each upgrade includes one **preparation** command that brings SpiceDB up to date before the new
+version starts. When a release leaves the SpiceDB schema unchanged, the command finds nothing to rewrite and
+finishes quickly. When the schema changes, as from 6.0 to 6.1, it also asks you to confirm the current schema
+first (see the preparation step below).
+
+<Note>
+  Upgrading from v5? Follow the [v6 maintenance upgrade](/self-hosting/advanced/v6-maintenance-upgrade)
+  instead. It covers setting up SpiceDB for the first time.
+</Note>
+
+## Before you start
+
+1. **Read what changed.** Check the [release notes](https://github.com/formbricks/formbricks/releases) and the [migration guide](/self-hosting/advanced/migration)
+   for every version between yours and the target. Most releases need nothing extra; the ones that do say
+   so there.
+2. **Use a supported path.** Upgrade one major version at a time (for example 6.x → 7.x, never 5.x → 7.x).
+   Each release lists the upgrade pair it was tested with.
+3. **Plan a short maintenance window** and let your users know.
+
+## Docker and one-click
+
+Run these from the folder that holds your `docker-compose.yml` (for one-click installs, `formbricks`):
+
+<Steps>
+  <Step title="Download the new images">
+    ```bash
+    docker compose pull
+    ```
+
+    This only downloads. Formbricks keeps running. If your `docker-compose.yml` pins a version instead of
+    `latest`, first set the same target image on all four services that use it: `formbricks`,
+    `formbricks-migrate`, `authzed-ops` and `authzed-initialize`. Preparation runs in `authzed-ops`, so an
+    old image there would prepare for the old release.
+  </Step>
+  <Step title="Stop Formbricks">
+    Stop everything that writes to the database, and leave the databases running:
+
+    ```bash
+    docker compose stop formbricks hub hub-worker
+    ```
+
+    If you enabled the taxonomy service, add `taxonomy` to that command.
+  </Step>
+  <Step title="Back up both databases">
+    ```bash
+    umask 077  # the dumps hold all your data: keep them readable only by you
+    docker compose exec -T postgres pg_dump -Fc -U postgres -d formbricks > formbricks_$(date +%Y%m%d_%H%M%S).dump
+    docker compose exec -T postgres pg_dump -Fc -U postgres -d spicedb > spicedb_$(date +%Y%m%d_%H%M%S).dump
+    ```
+
+    Keep a copy of your `.env` file as well. If you use a managed database, take a snapshot there instead.
+  </Step>
+  <Step title="Prepare SpiceDB with the new version">
+    ```bash
+    docker compose --profile authzed-ops run --rm --no-deps \
+      --entrypoint formbricks-authzed-prepare authzed-ops \
+      --backup-confirmed --writers-stopped
+    ```
+
+    If the release changes the SpiceDB schema, this first run stops with `upgrade_graph_not_ready`: it never
+    overwrites a schema you have not confirmed. Read the current schema's digest, check the release notes for
+    the schema change, then rerun with that digest:
+
+    ```bash
+    docker compose --profile authzed-ops run --rm --no-deps authzed-ops upgrade check
+    # copy "remoteDigest" from the "schema" section of the output
+    docker compose --profile authzed-ops run --rm --no-deps \
+      --entrypoint formbricks-authzed-prepare authzed-ops \
+      --backup-confirmed --writers-stopped --expected-current-digest sha256:<remoteDigest>
+    ```
+
+    Wait until it exits without an error. If it fails, keep Formbricks stopped. The command may already
+    have run database migrations, so don't simply start the old version again: fix the cause and rerun
+    it, or restore both backups before going back. Each error code, including a SpiceDB schema that needs
+    review, is explained in
+    [results and recovery](/self-hosting/advanced/v6-maintenance-upgrade#results-and-recovery).
+  </Step>
+  <Step title="Start the new version">
+    One-click installs: go to the folder that **contains** your `formbricks` folder, download the current
+    updater and run it:
+
+    ```bash
+    cd ..
+    curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/formbricks.sh -o formbricks.sh
+    chmod +x formbricks.sh
+    ./formbricks.sh update
+    ```
+
+    Other Docker installs:
+
+    ```bash
+    docker compose up -d
+    ```
+
+    Database migrations run automatically on start.
+  </Step>
+</Steps>
+
+## Kubernetes (Helm)
+
+<Steps>
+  <Step title="Stop Formbricks">
+    Pause anything that could restart it (Argo CD, Flux, autoscalers), suspend Formbricks CronJobs, then
+    scale the Formbricks and Hub deployments to zero. Wait until no Formbricks or Hub pod or Job is still
+    running, including Jobs that started before you suspended them. Leave PostgreSQL and SpiceDB running.
+  </Step>
+  <Step title="Back up">
+    Back up the Formbricks database and the SpiceDB database, and keep your Helm values and Secrets.
+  </Step>
+  <Step title="Prepare SpiceDB with the new version">
+    Run the preparation as a one-off Job, using the new image and your existing database and SpiceDB
+    settings. A ready-to-adapt Job is in the
+    [maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade#helm-and-gitops). Wait for it
+    to complete successfully. If the release changes the SpiceDB schema, add
+    `--expected-current-digest sha256:<remoteDigest>` to the Job's arguments, with the digest that
+    `formbricks-authzed upgrade check` reports for the current schema. If it fails, keep everything stopped and follow
+    [results and recovery](/self-hosting/advanced/v6-maintenance-upgrade#results-and-recovery).
+  </Step>
+  <Step title="Upgrade">
+    ```bash
+    helm upgrade <release> <chart> -n <namespace> -f values.yaml --wait
+    ```
+
+    The chart refuses to upgrade unless `authzed.migrationAcknowledged: true` is in your values. Installs
+    that came from v5 already have it; installs that started on v6 add it once, after a successful
+    preparation. Put it in the values file Argo CD or Flux reconciles from, not only on the command line, so
+    the next sync doesn't drop it.
+
+    Then resume Argo CD, Flux or your autoscalers.
+  </Step>
+</Steps>
+
+<Tip>
+  For the 6.0 → 6.1 upgrade on Kubernetes, an opt-in [online upgrade](/self-hosting/configuration/online-upgrade)
+  mode exists. It is still being validated and is not yet a supported replacement for the maintenance window,
+  so keep using the steps above.
+</Tip>
+
+## After the upgrade
+
+Sign in, open a survey and submit a test response. If something is wrong, restore both database backups
+and start the previous version again. Downgrading in place, without restoring the backups, is not supported.

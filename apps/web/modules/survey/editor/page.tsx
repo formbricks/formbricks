@@ -1,3 +1,4 @@
+import { Metadata } from "next";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import {
@@ -39,7 +40,7 @@ import {
   getResponseCountBySurveyId,
 } from "@/modules/survey/lib/response";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
-import { getSurveyAuth } from "@/modules/survey/lib/survey-auth";
+import { canReadSurveyInWorkspace, getSurveyAuth } from "@/modules/survey/lib/survey-auth";
 import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
 import { SURVEY_SCHEDULING_CONFIG } from "@/modules/survey/scheduling/lib/constants";
 import { getSurveyVisibilityViewer } from "@/modules/survey/visibility/lib/gate";
@@ -47,12 +48,22 @@ import { ErrorComponent } from "@/modules/ui/components/error-component";
 import { SurveyEditor } from "./components/survey-editor";
 import { getUserLocale } from "./lib/user";
 
-// No `generateMetadata` here on purpose: Next only reads metadata from the exports of the route
-// segment's own module, and the /edit route file re-exports the default alone
-// (app/(app)/(survey-editor)/workspaces/[workspaceId]/surveys/[surveyId]/edit/page.tsx). A
-// `generateMetadata` exported from this module would never run, so the editor has no title of its
-// own and no survey name to protect. Wiring one up is a UI change, not part of this fix — see
-// ENG-2372.
+type TSurveyEditorPageParams = { params: Promise<{ workspaceId: string; surveyId: string }> };
+
+// Re-exported by the /edit route file — Next only reads metadata from the route segment's own module.
+export const generateSurveyEditorMetadata = async (props: TSurveyEditorPageParams): Promise<Metadata> => {
+  const params = await props.params;
+  const t = await getTranslate();
+
+  // Metadata resolves independently of the page's own access check, so the survey name only goes
+  // into the title once the caller may read this survey through this workspace.
+  if (!(await canReadSurveyInWorkspace(params.workspaceId, params.surveyId))) {
+    return { title: t("common.survey") };
+  }
+
+  const survey = await getSurvey(params.surveyId);
+  return { title: t("workspace.surveys.edit.edit_survey_title", { surveyName: survey.name }) };
+};
 
 export const SurveyEditorPage = async (props: {
   params: Promise<{ workspaceId: string; surveyId: string }>;

@@ -1,4 +1,4 @@
-import { useCallback, useState } from "preact/hooks";
+import { useCallback, useEffect, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { FileUpload, type UploadedFile } from "@formbricks/survey-ui";
 import { FILE_UPLOAD_ERROR_NAMES } from "@formbricks/types/errors";
@@ -45,6 +45,16 @@ export function FileUploadElement({
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   const { t } = useTranslation();
   const [fileNames, setFileNames] = useState<Record<string, string>>({});
+
+  // An upload calls `onChange` when it finishes, seconds after the render it started in. Reading
+  // the file list from here instead of that render's `value` keeps files added or removed since.
+  const latestValueRef = useRef(value);
+  useEffect(() => {
+    latestValueRef.current = value;
+  }, [value]);
+  // Files picked but still uploading. Overlapping uploads all land in the answer, so the file
+  // limit has to count these too, or two picks at 24 files would end at 26.
+  const uploadingFileCountRef = useRef(0);
 
   // Use centralized error message for required validation, file-specific errors for upload issues
   const errorMessage = centralizedErrorMessage || fileErrorMessage;
@@ -103,6 +113,7 @@ export function FileUploadElement({
     setFileNames((prev) => ({ ...prev, ...newFileNames }));
 
     const urls = convertToStringArray(files);
+    latestValueRef.current = urls;
     onChange({ [element.id]: urls });
   };
 
@@ -194,14 +205,15 @@ export function FileUploadElement({
         return false;
       }
 
-      if (element.allowMultipleFiles && (value?.length || 0) + fileArray.length > FILE_LIMIT) {
+      const fileCount = (latestValueRef.current?.length || 0) + uploadingFileCountRef.current;
+      if (element.allowMultipleFiles && fileCount + fileArray.length > FILE_LIMIT) {
         setFileErrorMessage(t("errors.file_input.you_can_only_upload_a_maximum_of_files", { FILE_LIMIT }));
         return false;
       }
 
       return true;
     },
-    [element.allowMultipleFiles, value, t]
+    [element.allowMultipleFiles, t]
   );
 
   /**
@@ -245,6 +257,7 @@ export function FileUploadElement({
   const uploadFiles = useCallback(
     async (filesToUpload: File[]): Promise<void> => {
       setIsUploading(true);
+      uploadingFileCountRef.current += filesToUpload.length;
 
       try {
         // Convert files to base64 and upload
@@ -276,11 +289,12 @@ export function FileUploadElement({
 
         // Update value
         const newUrls = uploadedFiles.map((f) => f.url);
-        if (element.allowMultipleFiles) {
-          onChange({ [element.id]: [...(value || []), ...newUrls] });
-        } else {
-          onChange({ [element.id]: newUrls.slice(0, 1) });
-        }
+        const nextValue = element.allowMultipleFiles
+          ? [...(latestValueRef.current || []), ...newUrls]
+          : newUrls.slice(0, 1);
+        // Set before the parent re-renders, so an upload finishing right after this one sees it.
+        latestValueRef.current = nextValue;
+        onChange({ [element.id]: nextValue });
 
         // Clear error on success
         setFileErrorMessage(undefined);
@@ -299,10 +313,13 @@ export function FileUploadElement({
           setFileErrorMessage(t("errors.file_input.upload_failed"));
         }
       } finally {
-        setIsUploading(false);
+        // On success the files are already in `latestValueRef`; on failure their slots free up.
+        // The indicator stays on while another overlapping upload is still running.
+        uploadingFileCountRef.current -= filesToUpload.length;
+        setIsUploading(uploadingFileCountRef.current > 0);
       }
     },
-    [element, surveyId, value, onChange, onFileUpload, t]
+    [element, surveyId, onChange, onFileUpload, t]
   );
 
   /**

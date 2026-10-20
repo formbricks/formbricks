@@ -40,7 +40,7 @@ There is no feature flag, so stopping Custom CSS everywhere takes a deploy.
 
 | Problem | Action | Saved CSS |
 | --- | --- | --- |
-| Custom CSS misbehaves in one survey | Turn off the survey's **Add custom styles**: its CSS stops applying, the workspace CSS stays | Kept |
+| Custom CSS misbehaves in one survey | Turn off the survey's **Use custom styling for this survey**: its CSS stops applying, the workspace CSS stays | Kept |
 | Custom CSS misbehaves for one organization | With the customer, restore the previous workspace CSS or clear it in **Appearance** or through the API | Previous revision kept |
 | Renderer bug | Roll back the server deploy, then purge the CDN again | Kept |
 | Processor policy must change | Change the processor and bump `CUSTOM_CSS_PROCESSOR_VERSION` | Kept as source |
@@ -57,7 +57,7 @@ Run before each step above:
 1. Existing surveys look exactly the same, in light mode, with no Custom CSS saved.
 2. Old SDK with the new renderer: a survey opens and answers save, on web, iOS and Android. Mobile shows no Custom CSS.
 3. New SDK with an old self-hosted server: surveys stay light, with no errors.
-4. A survey with saved CSS and **Add custom styles** off: respondents get the workspace CSS only; turning it back on brings the survey's CSS back.
+4. A survey with saved CSS and **Use custom styling for this survey** off: respondents get the workspace CSS only; turning it back on brings the survey's CSS back.
 5. Self-hosted: existing Custom Head Scripts still run.
 6. A CMS-style stylesheet (synthetic, never a customer's file) shows one removed-import warning, and its ported hooks style the preview and the live survey in light and dark.
 
