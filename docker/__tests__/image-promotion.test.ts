@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
-import { buildIdentity } from "../../.github/actions/build-and-push-docker/build-identity.mjs";
+import { buildIdentity } from "../../.github/actions/prepare-docker-image/build-identity.mjs";
 
 type Step = {
   name?: string;
@@ -19,7 +19,7 @@ type Step = {
 };
 const action = load(
   readFileSync(
-    fileURLToPath(new URL("../../.github/actions/build-and-push-docker/action.yml", import.meta.url)),
+    fileURLToPath(new URL("../../.github/actions/prepare-docker-image/action.yml", import.meta.url)),
     "utf8"
   )
 ) as { runs: { steps: Step[] } };
@@ -88,6 +88,8 @@ type Job = {
   needs?: string | string[];
   if?: string;
   "runs-on"?: string;
+  env?: Record<string, string>;
+  outputs?: Record<string, string>;
   strategy?: { matrix: { include: { platform: string; runner: string }[] } };
   steps: Step[];
 };
@@ -97,6 +99,7 @@ const workflow = (name: string) =>
   ) as {
     jobs: Record<string, Job>;
     permissions?: Record<string, string>;
+    env?: Record<string, string>;
     on?: { workflow_dispatch?: { inputs?: Record<string, { default?: boolean }> } };
   };
 const composite = (name: string) =>
@@ -127,12 +130,24 @@ describe("release promotion boundary", () => {
   });
 
   test("saves candidates privately without writing release registry tags", () => {
-    const build = steps.find((step) => step.id === "build");
-    expect(build?.with?.tags).toBeUndefined();
-    expect(build?.with?.push).toBe(false);
-    expect(build?.with?.save).toBe(true);
-    expect(build?.with?.outputs).toBeUndefined();
-    expect(steps.some((step) => step.run?.includes("depot push"))).toBe(false);
+    const candidate = workflow("build-docker-candidate");
+    const build = candidate.jobs.build.steps.find((step) => step.name === "Build private native candidate");
+    expect(candidate.env?.CANDIDATE_REPOSITORY).toBe(
+      "${{ vars.ECR_REGISTRY }}/${{ vars.ECR_CANDIDATE_REPOSITORY }}"
+    );
+    expect(build?.with?.tags).toBe(
+      "${{ env.CANDIDATE_REPOSITORY }}:${{ env.CANDIDATE_TAG }}-${{ matrix.arch }}"
+    );
+    expect(build?.with?.push).toBe(true);
+    expect(candidate.jobs.merge.needs).toContain("build");
+    expect(steps.some((step) => step.uses?.includes("build-push-action"))).toBe(false);
+  });
+
+  test("rerunning a failed architecture retains the original preparation's candidate tags", () => {
+    const { jobs } = workflow("build-docker-candidate");
+    expect(jobs.build.env?.CANDIDATE_TAG).toBe("${{ needs.prepare.outputs.candidate_tag }}");
+    expect(jobs.merge.env?.CANDIDATE_TAG).toBe(jobs.build.env?.CANDIDATE_TAG);
+    expect(jobs.prepare.outputs?.candidate_tag).toBe("${{ steps.candidate.outputs.tag }}");
   });
 
   test.each(["build-and-push-ecr", "release-docker-github", "release-docker-github-experimental"])(
@@ -153,7 +168,7 @@ describe("release promotion boundary", () => {
       const promote = promotion.steps.find((step) => step.uses?.endsWith("/promote-verified-image"));
       expect(smoke?.with?.image_ref).toBe(promote?.with?.image_ref);
       expect(smoke?.with?.image_ref).toContain("outputs.IMAGE_REF");
-      expect(smoke?.with?.depot_build_id).toBe(promote?.with?.depot_build_id);
+      expect(smoke?.with?.aws_role_arn).toBe(promote?.with?.aws_role_arn);
       expect(smoke?.with?.platform).toBe("${{ matrix.platform }}");
       expect(smoke?.["continue-on-error"]).not.toBe(true);
     }
@@ -166,29 +181,30 @@ describe("release promotion boundary", () => {
       const trace = join(directory, "copies");
       try {
         const script = composite("promote-verified-image").runs.steps.find((step) =>
-          step.run?.includes("depot push")
+          step.run?.includes("skopeo copy")
         )?.run;
         const boundaries = String.raw`
           docker() {
             for arg in "$@"; do last_arg="$arg"; done
-            if [[ "$last_arg" == registry.depot.dev/* ]]; then
+            if [[ "$last_arg" == registry.example/candidates@* ]]; then
               printf '{"digest":"%s"}\n' "$SOURCE_DIGEST"
             else
               printf '{"digest":"%s"}\n' "$DESTINATION_DIGEST"
             fi
           }
-          depot() { printf '%s\n' "$*" >> "$TRACE"; }
+          skopeo() { printf '%s\n' "$*" >> "$TRACE"; }
         `;
+        const digest = `sha256:${"ab".repeat(32)}`;
         const result = spawnSync("/bin/bash", ["-c", boundaries + script], {
           encoding: "utf8",
           env: {
             PATH: process.env.PATH,
+            HOME: directory,
             TRACE: trace,
-            IMAGE: "registry.depot.dev/tw0fqmsx3c@sha256:verified",
-            BUILD_ID: "saved-build",
+            IMAGE: `registry.example/candidates@${digest}`,
             RELEASE_TAGS: "registry.example/app:6.1.0",
-            SOURCE_DIGEST: scenario === "source changed" ? "sha256:wrong" : "sha256:verified",
-            DESTINATION_DIGEST: scenario === "destination changed" ? "sha256:wrong" : "sha256:verified",
+            SOURCE_DIGEST: scenario === "source changed" ? "sha256:wrong" : digest,
+            DESTINATION_DIGEST: scenario === "destination changed" ? "sha256:wrong" : digest,
           },
         });
         expect(result.status).toBe(scenario === "success" ? 0 : 1);
@@ -196,7 +212,7 @@ describe("release promotion boundary", () => {
           expect(existsSync(trace)).toBe(false);
         } else {
           expect(readFileSync(trace, "utf8").trim()).toBe(
-            "push --project tw0fqmsx3c --tag registry.example/app:6.1.0 saved-build"
+            `copy --all --preserve-digests --authfile ${directory}/.docker/config.json docker://registry.example/candidates@${digest} docker://registry.example/app:6.1.0`
           );
         }
         if (scenario !== "success") expect(result.stderr).toContain("resume with the verified digest");
@@ -208,14 +224,61 @@ describe("release promotion boundary", () => {
 
   test("checks promoted tags against the tested digest and keeps explicit repair cache bypass", () => {
     const promotion = composite("promote-verified-image").runs.steps;
-    const publish = promotion.find((step) => step.run?.includes("depot push"));
+    const publish = promotion.find((step) => step.run?.includes("skopeo copy"));
     expect(publish?.run).toContain('test "$saved" = "${IMAGE##*@}"');
-    expect(publish?.run).toContain('test "${#args[@]}" -gt 0');
-    expect(publish?.run).toContain('depot push --project tw0fqmsx3c "${args[@]}" "$BUILD_ID"');
+    expect(publish?.run).toContain('test "${#tags[@]}" -gt 0');
+    expect(publish?.run).toContain("skopeo copy --all --preserve-digests");
     expect(publish?.run).toContain('test "$actual" = "${IMAGE##*@}"');
-    expect(steps.find((step) => step.id === "build")?.with?.["no-cache-filters"]).toBe(
-      "${{ inputs.rebuild_application == 'true' && 'installer,runner' || '' }}"
+    const build = workflow("build-docker-candidate").jobs.build.steps.find(
+      (step) => step.name === "Build private native candidate"
     );
+    expect(build?.with?.["no-cache-filters"]).toBe(
+      "${{ inputs.rebuild_application == true && 'installer,runner' || '' }}"
+    );
+  });
+
+  test.each([
+    "valid",
+    "release repository",
+    "wrong URI",
+    "long retention",
+    "tagged only",
+    "multiple rules",
+    "missing policy",
+  ])("requires bounded retention on a separate candidate repository (%s)", (scenario) => {
+    const script = readFileSync(
+      fileURLToPath(new URL("../verify-candidate-repository.sh", import.meta.url)),
+      "utf8"
+    );
+    const policy = JSON.parse(
+      readFileSync(fileURLToPath(new URL("../blacksmith-candidate-lifecycle.json", import.meta.url)), "utf8")
+    );
+    if (scenario === "long retention") policy.rules[0].selection.countNumber = 30;
+    if (scenario === "tagged only") policy.rules[0].selection.tagStatus = "tagged";
+    if (scenario === "multiple rules") policy.rules.push(policy.rules[0]);
+    const boundaries = String.raw`
+        aws() {
+          case "$2" in
+            describe-repositories) printf '%s\n' "$ACTUAL_URI" ;;
+            get-lifecycle-policy) test "$HAS_POLICY" = true || return 1; printf '%s\n' "$POLICY" ;;
+            *) return 1 ;;
+          esac
+        }
+      `;
+    const result = spawnSync("/bin/bash", ["-c", boundaries + script], {
+      encoding: "utf8",
+      env: {
+        PATH: process.env.PATH,
+        STAGING_REPOSITORY: scenario === "release repository" ? "release" : "candidates",
+        RELEASE_REPOSITORY: "release",
+        CANDIDATE_REPOSITORY: "registry.example/candidates",
+        ACTUAL_URI: scenario === "wrong URI" ? "registry.example/wrong" : "registry.example/candidates",
+        HAS_POLICY: String(scenario !== "missing policy"),
+        POLICY: JSON.stringify({ lifecyclePolicyText: JSON.stringify(policy) }),
+      },
+    });
+    if (scenario === "valid") expect(result.status).toBe(0);
+    else expect(result.status).not.toBe(0);
   });
 });
 

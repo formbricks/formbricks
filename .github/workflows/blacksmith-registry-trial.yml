@@ -23,14 +23,17 @@ jobs:
     timeout-minutes: 15
     env:
       PUBLIC_FIXTURE: ghcr.io/${{ github.repository_owner }}/blacksmith-registry-trial
-      PRIVATE_CANDIDATE: ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY }}
-      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+      PRIVATE_CANDIDATE: ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_CANDIDATE_REPOSITORY }}
+      ECR_REPOSITORY: ${{ vars.ECR_CANDIDATE_REPOSITORY }}
       TRIAL_TAG: blacksmith-registry-trial-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
@@ -50,11 +53,11 @@ jobs:
       - uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
 
       - name: Verify private staging repository
-        run: |
-          set -euo pipefail
-          test -n "$ECR_REPOSITORY"
-          actual="$(aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" --query 'repositories[0].repositoryUri' --output text)"
-          test "$actual" = "$PRIVATE_CANDIDATE"
+        env:
+          STAGING_REPOSITORY: ${{ vars.ECR_CANDIDATE_REPOSITORY }}
+          RELEASE_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+          CANDIDATE_REPOSITORY: ${{ env.PRIVATE_CANDIDATE }}
+        run: bash docker/verify-candidate-repository.sh
 
       - name: Install registry copy tool
         run: |
@@ -124,11 +127,7 @@ jobs:
             "$RUNNER_TEMP/verification.json"
           echo "Multi-platform copy preserved $DIGEST; keyless signing and verification passed." >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Remove temporary ECR tag
-        if: ${{ always() && steps.aws.outcome == 'success' }}
+      - name: Report fixture retention
         run: |
-          set -euo pipefail
-          aws ecr batch-delete-image --repository-name "$ECR_REPOSITORY" \
-            --image-ids "imageTag=$TRIAL_TAG" > "$RUNNER_TEMP/ecr-cleanup.json"
-          jq -e 'all(.failures[]; .failureCode == "ImageNotFound")' "$RUNNER_TEMP/ecr-cleanup.json"
-          echo "Temporary ECR tag removed. Public fixture/signatures remain in $PUBLIC_FIXTURE for inspection." >> "$GITHUB_STEP_SUMMARY"
+          echo "ECR fixture expires under the verified candidate lifecycle policy." >> "$GITHUB_STEP_SUMMARY"
+          echo "Public fixture/signatures remain in $PUBLIC_FIXTURE for inspection." >> "$GITHUB_STEP_SUMMARY"

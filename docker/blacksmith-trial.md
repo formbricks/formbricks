@@ -1,90 +1,128 @@
-# Blacksmith Docker release trial
+# Blacksmith Docker migration and validation
 
-This experiment measures whether Blacksmith can replace the release builder. It
-uses the production Dockerfile and existing release smoke checks, but does not
-publish images or change the release workflows' default builder.
+Release builds use native AMD64 and ARM64 Blacksmith runners, save candidates in
+private ECR, and validate both architectures before copying the tested index to
+release tags. PR builds use a separate AMD64 cache; fork PRs retain an isolated
+GitHub runner. These changes take effect when the migration PR is merged.
 
-## Run
+## AWS setup before merging
 
-From a branch containing the trial workflow:
+Create a **dedicated private ECR repository** in the existing `ECR_REGION` and
+`ECR_REGISTRY` account, for example `formbricks/formbricks-build-candidates`.
+Do not reuse `ECR_REPOSITORY`: lifecycle expiration deletes image versions,
+including any release tags pointing at those versions.
+
+With an AWS administrator identity, create the repository and apply the committed
+retention policy (substitute the region and repository if necessary):
+
+```sh
+aws ecr create-repository --region eu-central-1 \
+  --repository-name formbricks/formbricks-build-candidates
+aws ecr put-lifecycle-policy --region eu-central-1 \
+  --repository-name formbricks/formbricks-build-candidates \
+  --lifecycle-policy-text file://docker/blacksmith-candidate-lifecycle.json
+```
+
+Grant the existing role referenced by `AWS_ECR_PUSH_ROLE_ARN` these actions on
+**only the new repository ARN**:
+
+```json
+{
+  "Action": [
+    "ecr:BatchCheckLayerAvailability",
+    "ecr:GetDownloadUrlForLayer",
+    "ecr:BatchGetImage",
+    "ecr:InitiateLayerUpload",
+    "ecr:UploadLayerPart",
+    "ecr:CompleteLayerUpload",
+    "ecr:PutImage",
+    "ecr:DescribeRepositories",
+    "ecr:GetLifecyclePolicy"
+  ],
+  "Effect": "Allow",
+  "Resource": "arn:aws:ecr:REGION:ACCOUNT_ID:repository/formbricks/formbricks-build-candidates"
+}
+```
+
+Retain the role's existing `ecr:GetAuthorizationToken` permission on `*` and
+release-repository permissions. No image deletion permission is needed by CI.
+The role's GitHub OIDC trust must cover the existing release workflow contexts.
+Set the GitHub repository variable:
+
+```sh
+gh variable set ECR_CANDIDATE_REPOSITORY \
+  --repo formbricks/formbricks --body formbricks/formbricks-build-candidates
+```
+
+Preparation checks the repository URI, separation from the release repository,
+and a single lifecycle rule expiring every image after one to seven days. A
+missing or incompatible policy fails before any compilation or publication.
+Candidate images remain available for failed-job retries until expiration;
+retrying later requires a new build and validation. ECR applies expiration
+asynchronously, so the seven-day rule is not an exact deletion deadline.
+
+## Native build trial
+
+From a branch containing these workflows:
 
 ```sh
 gh workflow run release-docker-github-experimental.yml \
   --ref <trial-branch> -f blacksmith_trial=true
 ```
 
-The trial runs AMD64 and ARM64 on native 16-vCPU Blacksmith runners. It fails if
-Blacksmith's persistent builder cannot be configured; a local-builder fallback
-would invalidate the comparison.
+This opt-in path does not publish images. It builds the production Dockerfile
+on native 16-vCPU runners, loads each image locally, and runs the existing runtime,
+migration, startup and Chromium smoke checks. It fails if Blacksmith's persistent
+builder is unavailable. ARM64 uses 16 compiler workers; AMD64 retains four.
 
-ARM64 sets the Dockerfile's existing `NODE_BUILD_JOBS` argument to 16: the default
-four-worker source compilation substantially underuses that runner. AMD64 keeps
-the default four workers. This argument only controls compiler parallelism.
+Run twice sequentially. A successful first run commits the cache. Each trial
+uses a new application identity, so a warm run still compiles and packages the
+application while reusing Node and dependencies. Avoid overlapping trials on the
+same cache keys: concurrent cache writers can obscure reuse.
 
-Run it twice sequentially. The first successful run populates the persistent
-cache. Each trial uses a new application build identity, so the second run reuses
-compiled Node and dependency layers but still compiles and packages the
-application, as a new release would. Do not overlap runs using the same cache
-keys: concurrent writers can obscure whether the cache was reused.
+Release builds retain the trial cache keys to reuse the expensive initial Node
+compilation. PR builds use `apps/web/Dockerfile-pr-amd64`, isolated from release
+caches. Successful production and PR builds prune reclaimable BuildKit cache to
+30 GB per builder. This is not a hard billing limit: snapshots, active records,
+and Docker storage can differ from BuildKit's logical size. Monitor actual
+storage in Blacksmith's dashboard, particularly after failed jobs.
 
-The native smoke script checks the assembled runtime, starts disposable Postgres
-and Redis containers, boots the image with migrations, loads fixtures, and
-exercises the application in Chromium.
+## Registry transport trial
 
-The independent registry trial uses a small, public multi-platform Alpine image:
+After configuring the dedicated candidate repository:
 
 ```sh
 gh workflow run release-docker-github-experimental.yml \
   --ref <trial-branch> -f blacksmith_registry_trial=true
 ```
 
-It stages the immutable fixture under a unique temporary tag in the configured
-private ECR repository, checks denied anonymous access, copies it unchanged to
-`ghcr.io/formbricks/blacksmith-registry-trial`, and signs and verifies the exact
-digest. The ECR tag is removed afterward; the public fixture and signatures
-remain available for inspection. This requires the existing ECR variables and
-`AWS_ECR_PUSH_ROLE_ARN`, including permission to delete the temporary tag.
-It does not publish a Formbricks release or implement production candidate retention.
-
-## Read the results
-
-Each job summary records build duration (including export to the local Docker
-daemon), image size, and `docker buildx du` cache usage. Logs identify reused
-layers. Record the complete job duration too: runner billing also includes
-checkout, builder setup, browser installation, validation, and cache commit.
-
-BuildKit's logical cache size is diagnostic, not a billing measurement. Confirm
-actual stored GB and compute charges in Blacksmith's Usage & Billing page. The
-trial's two cache keys are separate from E2E caches.
-
-Compare a warm application rebuild with a recent Depot build of the same source,
-platforms, and application configuration. A fully cached image, a cold source
-compilation, and a different cloud/community variant are different workloads.
-The trial omits telemetry credentials, so telemetry upload and cloud-specific
-build configuration still need validation before cutover.
+This stages a public multi-platform Alpine fixture in private ECR, verifies
+anonymous access is denied, copies it unchanged to
+`ghcr.io/formbricks/blacksmith-registry-trial`, and signs and verifies the digest.
+The private fixture expires under the candidate policy. The public fixture and
+signatures remain for inspection. No Formbricks release tags are written.
 
 ## Cutover gate
 
-Proceed only after both native builds and smoke checks pass, the warm run
-demonstrates cache reuse, and projected monthly compute plus cache and registry
-costs justify moving.
+Keep the migration PR draft until both native builds and warm-cache smoke tests
+pass, registry transport passes against the configured candidate repository,
+and the full cloud/community candidate pipelines pass their existing native
+validation gates. The builder trial omits telemetry credentials; it does not
+prove Sentry upload, the cloud build profile, or Kubernetes deployment.
 
-The following release behaviors must also be implemented and exercised before
-switching the defaults:
+Record build and complete job durations, cache size, and actual billed usage.
+Compare like workloads: warm application rebuilds, cold Node compilation, and
+fully cached images are different measurements. Include Blacksmith compute,
+cache storage, and temporary ECR storage when estimating monthly cost.
 
-- Save candidates in a private staging registry, with bounded retention and
-  access for subsequent validation jobs.
-- Assemble the multi-platform index, test both architectures by its immutable
-  digest, and prevent promotion if either validation fails.
-- Copy the tested image to GHCR/ECR without rebuilding or changing its digest,
-  preserve signing, and only then update the intended release tags.
-
-Depot remains required by stable releases and PR Docker validation until those
-consumers are migrated. A successful builder trial alone does not justify
-canceling the Depot subscription.
+After merging, validate a community experimental release and a staging cloud
+deployment before removing Depot credentials or canceling its subscription.
+If promotion partially changes tags, follow the forward-recovery procedure in
+[Image validation](IMAGE-VALIDATION.md); do not automatically roll back workloads.
 
 ## References
 
-- [Blacksmith Docker caching and multi-platform builds](https://docs.blacksmith.sh/blacksmith-caching/docker-builds)
+- [Blacksmith Docker caching](https://docs.blacksmith.sh/blacksmith-caching/docker-builds)
 - [Blacksmith runner sizes](https://docs.blacksmith.sh/blacksmith-runners/overview)
 - [Blacksmith pricing](https://www.blacksmith.sh/pricing)
+- [ECR lifecycle policies](https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html)

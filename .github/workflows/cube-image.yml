@@ -240,7 +240,7 @@ jobs:
         if: steps.existing.outputs.exists == 'false'
         uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
 
-      # Mirrors .github/actions/build-and-push-docker: sign every pushed tag by the digest it points at.
+      # Mirrors .github/actions/promote-verified-image: sign every pushed tag by the digest it points at.
       - name: Sign the image
         if: steps.existing.outputs.exists == 'false'
         shell: bash

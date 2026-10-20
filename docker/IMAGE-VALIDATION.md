@@ -17,13 +17,16 @@ not runtime configuration or secrets. Local Docker builds need neither argument;
 they receive a local identity during compilation. Do not override deployment identity
 when starting an already-built image.
 
-Release workflows save candidates in Depot's private build registry. They publish no candidate
-tags or unverified digests to GHCR/ECR. After validation, `depot push` copies the saved build
-to explicit release tags and the workflow checks every destination digest against the tested
-private digest. The saved build ID is also checked against that digest before copying.
-Do not use multi-platform `push-by-digest` with Depot here: its merge step can create an
-implicit `latest` tag. Do not delete GHCR package versions to clean up temporary tags;
-a version may also carry published release tags.
+Release workflows build AMD64 and ARM64 candidates on native Blacksmith runners and
+assemble their index in a dedicated private ECR repository. The repository must differ
+from the release repository and have a verified lifecycle policy expiring all candidates
+after at most seven days. No release tags are written before validation. See
+[Blacksmith setup and trials](blacksmith-trial.md) for the required AWS configuration.
+
+After validation, `skopeo copy --all --preserve-digests` copies the immutable candidate
+to explicit release tags. The workflow checks every destination against the tested index
+digest and signs GHCR images. Never apply candidate retention to a release repository:
+expiring an image can also remove its release tags.
 
 Separate AMD64 and ARM64 jobs validate the exact index digest in parallel on matching native
 runners. They do not install QEMU or pull different architectures into the same Docker image
@@ -74,9 +77,10 @@ repeat with warm caches, and run the same verifier/browser checks on each digest
 the release Sentry configuration, since PR builds intentionally omit upload credentials.
 
 Failed candidate validation leaves deployment tags unchanged. Keep its digest and failed-check
-output and private build ID for diagnosis, then rerun validation of that digest.
-Private pulls require the existing Depot project credential and a build-scoped pull token. Use the explicit repair option
-when the application needs to be rebuilt.
+output for diagnosis, then rerun validation of that digest before its seven-day retention
+window expires. Private pulls use the existing AWS OIDC role and ECR authentication.
+After expiration, start a new build and validate its new digest. Use the explicit repair
+option when the application needs to be rebuilt.
 
 Registry writes to multiple tags are not transactional. A failure after promotion begins
 can leave only some tags updated, including a tag already consumed by a deployment controller.

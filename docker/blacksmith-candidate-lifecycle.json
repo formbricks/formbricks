@@ -1,0 +1,17 @@
+{
+  "rules": [
+    {
+      "action": {
+        "type": "expire"
+      },
+      "description": "Expire temporary build candidates after seven days",
+      "rulePriority": 1,
+      "selection": {
+        "countNumber": 7,
+        "countType": "sinceImagePushed",
+        "countUnit": "days",
+        "tagStatus": "any"
+      }
+    }
+  ]
+}

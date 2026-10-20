@@ -45,46 +45,17 @@ jobs:
 
   build-community-testing:
     if: ${{ !inputs.blacksmith_trial && !inputs.blacksmith_registry_trial }}
-    name: Build Community Testing Image
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-
-    outputs:
-      IMAGE_REF: ${{ steps.build.outputs.image_ref }}
-      BUILD_IDENTITY: ${{ steps.build.outputs.build_identity }}
-      DEPOT_BUILD_ID: ${{ steps.build.outputs.depot_build_id }}
-      TAGS: ${{ steps.build.outputs.registry_tags }}
-
-    steps:
-      - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
-        with:
-          egress-policy: audit
-
-      - name: Checkout repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-
-      - name: Build and push community testing image
-        id: build
-        uses: ./.github/actions/build-and-push-docker
-        with:
-          registry_type: "ghcr"
-          ghcr_image_name: "${{ github.repository }}-experimental"
-          experimental_mode: "true"
-          version: ${{ inputs.version_override }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEPOT_PROJECT_TOKEN: ${{ secrets.DEPOT_PROJECT_TOKEN }}
-          DUMMY_DATABASE_URL: ${{ secrets.DUMMY_DATABASE_URL }}
-          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
-          DUMMY_REDIS_URL: ${{ secrets.DUMMY_REDIS_URL }}
-          DUMMY_HUB_API_URL: ${{ secrets.DUMMY_HUB_API_URL }}
-          DUMMY_HUB_API_KEY: ${{ secrets.DUMMY_HUB_API_KEY }}
-          DUMMY_CUBEJS_API_URL: ${{ secrets.DUMMY_CUBEJS_API_URL }}
-          DUMMY_CUBEJS_API_SECRET: ${{ secrets.DUMMY_CUBEJS_API_SECRET }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+    name: Build private community testing candidate
+    uses: ./.github/workflows/build-docker-candidate.yml
+    permissions:
+      contents: read
+      id-token: write
+    with:
+      registry_type: ghcr
+      ghcr_image_name: ${{ format('{0}-experimental', github.repository) }}
+      experimental_mode: true
+      version: ${{ inputs.version_override || '' }}
+    secrets: inherit
 
   validate:
     name: Image smoke (${{ matrix.platform }})
@@ -101,6 +72,7 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
+      id-token: write
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -109,8 +81,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/test-release-image
         with:
-          depot_build_id: ${{ needs.build-community-testing.outputs.DEPOT_BUILD_ID }}
-          depot_token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          aws_role_arn: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
+          ecr_region: ${{ vars.ECR_REGION }}
           image_ref: ${{ needs.build-community-testing.outputs.IMAGE_REF }}
           build_identity: ${{ needs.build-community-testing.outputs.BUILD_IDENTITY }}
           registry_type: "ghcr"
@@ -133,8 +105,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/promote-verified-image
         with:
-          depot_build_id: ${{ needs.build-community-testing.outputs.DEPOT_BUILD_ID }}
-          depot_token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          aws_role_arn: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
+          ecr_region: ${{ vars.ECR_REGION }}
           image_ref: ${{ needs.build-community-testing.outputs.IMAGE_REF }}
           registry_type: "ghcr"
           release_tags: ${{ needs.build-community-testing.outputs.TAGS }}
