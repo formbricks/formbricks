@@ -3027,6 +3027,7 @@
         "subscription_description": "Verwalte deinen Abonnement-Tarif und überwache deine Nutzung",
         "switch_at_period_end": "Am Ende der Periode wechseln",
         "switch_plan_now": "Jetzt Tarif wechseln",
+        "tax_location_required": "Wir konnten Deinen Steuerstandort anhand Deiner Rechnungsadresse nicht ermitteln. Bitte aktualisiere Deine Rechnungsadresse über „Kartendetails & Rechnungen verwalten“ und versuche es noch einmal.",
         "this_includes": "Das beinhaltet",
         "trial_alert_description": "Einige Features wie Follow-ups und benutzerdefinierte Links bleiben während der Testphase gesperrt. Upgrade jetzt, um alles freizuschalten.",
         "trial_already_used": "Für diese E-Mail-Adresse wurde bereits eine kostenlose Testphase genutzt. Bitte wechsle stattdessen zu einem kostenpflichtigen Tarif.",

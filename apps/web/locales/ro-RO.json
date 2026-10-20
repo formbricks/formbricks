@@ -3027,6 +3027,7 @@
         "subscription_description": "Gestionează-ți abonamentul și monitorizează-ți consumul",
         "switch_at_period_end": "Schimbă la sfârșitul perioadei",
         "switch_plan_now": "Schimbă planul acum",
+        "tax_location_required": "Nu am putut stabili locația ta fiscală pe baza adresei de facturare. Actualizează adresa de facturare din „Gestionează detaliile cardului și facturile” și încearcă din nou.",
         "this_includes": "Aceasta include",
         "trial_alert_description": "Unele funcții precum follow-up-urile și link-urile personalizate rămân blocate pe durata perioadei de probă. Treci la un abonament acum pentru a debloca totul.",
         "trial_already_used": "O perioadă de probă gratuită a fost deja utilizată pentru această adresă de email. Te rugăm să treci la un plan plătit în schimb.",

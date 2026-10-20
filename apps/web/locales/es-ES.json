@@ -3027,6 +3027,7 @@
         "subscription_description": "Gestiona tu plan de suscripción y monitorea tu uso",
         "switch_at_period_end": "Cambiar al final del período",
         "switch_plan_now": "Cambiar de plan ahora",
+        "tax_location_required": "No hemos podido determinar tu ubicación fiscal a partir de tu dirección de facturación. Actualiza tu dirección de facturación en «Gestionar datos de tarjeta y facturas» e inténtalo de nuevo.",
         "this_includes": "Esto incluye",
         "trial_alert_description": "Algunas funciones como seguimientos y enlaces personalizados permanecen bloqueadas durante la prueba. Actualiza ahora para desbloquear todo.",
         "trial_already_used": "Ya se ha utilizado una prueba gratuita para esta dirección de correo electrónico. Por favor, actualiza a un plan de pago.",

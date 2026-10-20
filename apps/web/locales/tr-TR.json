@@ -3027,6 +3027,7 @@
         "subscription_description": "Abonelik planını yönet ve kullanımını izle",
         "switch_at_period_end": "Dönem sonunda geçiş yap",
         "switch_plan_now": "Şimdi plan değiştir",
+        "tax_location_required": "Fatura adresine göre vergi konumunu belirleyemedik. Lütfen “Kart bilgilerini ve faturaları yönet” bölümünden fatura adresini güncelleyip tekrar dene.",
         "this_includes": "Bu şunları içerir",
         "trial_alert_description": "Takipler ve özel linkler gibi bazı özellikler deneme süresi boyunca kilitli kalır. Her şeyin kilidini açmak için şimdi yükselt.",
         "trial_already_used": "Bu e-posta adresi için ücretsiz deneme zaten kullanılmış. Lütfen bunun yerine ücretli bir plana yükselt.",

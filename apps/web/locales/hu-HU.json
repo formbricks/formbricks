@@ -3027,6 +3027,7 @@
         "subscription_description": "Az előfizetési csomag kezelése és a használat felügyelete",
         "switch_at_period_end": "Váltás az időszak végén",
         "switch_plan_now": "Csomag váltása most",
+        "tax_location_required": "Számlázási címe alapján nem tudtuk megállapítani az Ön adózási helyét. Kérjük, frissítse számlázási címét a „Kártyaadatok és számlák kezelése” menüpontban, majd próbálja meg újra.",
         "this_includes": "Ezeket tartalmazza",
         "trial_alert_description": "Néhány funkció, mint például az utókövetés és az egyéni hivatkozások, zárolva maradnak a próbaidőszak során. Frissítsen most, hogy mindent feloldjon.",
         "trial_already_used": "Ehhez az e-mail-címhez már használatban van egy ingyenes próbaidőszak. Váltson inkább fizetős csomagra.",
