@@ -135,6 +135,19 @@ describe("evaluateShowConditions", () => {
     expect(passes(condition("visitedUrls", operator, value))).toBe(expected);
   });
 
+  test("a visited path with an encoded % matches the page as the visit store recorded it", () => {
+    // The store records `/b%2541` already normalized as `/b%41`; normalizing it again would read `/ba`.
+    const visit = { ...context.visit!, visitedUrls: ["/b%41"], uniquePaths: ["/b%41"] };
+    const visited = (value: string) =>
+      evaluateShowConditions(group("and", [condition("visitedUrls", "includes", value)]), {
+        ...context,
+        visit,
+      }).passed;
+
+    expect(visited("/b%2541")).toBe(true);
+    expect(visited("/ba")).toBe(false);
+  });
+
   test("a visited page that fell out of the journey still counts", () => {
     const visit = { ...context.visit!, visitedUrls: ["/", "/b"], uniquePaths: ["/", "/a", "/b"] };
 

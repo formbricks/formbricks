@@ -320,3 +320,21 @@ export const dropUnfinishedShowConditions = (value: unknown): TShowConditions =>
   const kept = keepFinished(value);
   return kept && isShowConditionGroup(kept) ? pruneEmptyGroups(kept) : null;
 };
+
+/** Leaf conditions in a stored value, read loosely: anything that is not a group counts as one. */
+const countStoredConditions = (value: unknown): number => {
+  if (!value || typeof value !== "object") return 0;
+  const children = (value as { conditions?: unknown }).conditions;
+  if (!Array.isArray(children)) return 1;
+  return children.reduce<number>((count, child) => count + countStoredConditions(child), 0);
+};
+
+/**
+ * Whether stored conditions hold a row {@link dropUnfinishedShowConditions} would drop. Dropping a row
+ * from an AND group widens who sees the target, and dropping the only row shows it to everyone, so a
+ * writer that takes a survey live must refuse this rather than write the cleaned copy.
+ */
+export const hasUnfinishedShowConditions = (value: unknown): boolean => {
+  const kept = dropUnfinishedShowConditions(value);
+  return countStoredConditions(value) !== (kept ? countConditions(kept) : 0);
+};

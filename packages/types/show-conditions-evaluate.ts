@@ -203,7 +203,8 @@ const evaluatePathList = (path: string, operator: string, expected: unknown): bo
 const evaluateVisited = (paths: string[], operator: string, expected: unknown): boolean => {
   if (typeof expected !== "string" || expected.trim() === "") return false;
   const target = normalizeUrlPath(expected);
-  const visited = paths.some((path) => normalizeUrlPath(path) === target);
+  // The visit store records paths already normalized; normalizing again would decode `%25` twice.
+  const visited = paths.includes(target);
   if (operator === "includes") return visited;
   return operator === "doesNotInclude" ? !visited : false;
 };

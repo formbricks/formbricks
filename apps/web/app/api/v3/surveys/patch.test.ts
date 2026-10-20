@@ -1152,17 +1152,57 @@ describe("patchV3Survey", () => {
         expect(vi.mocked(prisma.survey.update).mock.calls[0][0].data.showConditions).toBe(Prisma.DbNull);
       });
 
-      test("taking the draft live writes the conditions that were validated, without the unfinished row", async () => {
+      test("taking a draft live with an unfinished row is refused, not published wider", async () => {
+        // Dropping the row would turn "AND[time ≥ 30, unfinished]" into just "time ≥ 30".
         vi.mocked(getActionClasses).mockResolvedValue([actionClass]);
         const draftWithTrigger = { ...surveyWithDraftRow, triggers: [{ actionClass }] } as unknown as TSurvey;
 
-        await patchV3Survey(draftWithTrigger, { status: "inProgress" }, "req_app_patch_sc5", "org_1");
+        const error = await patchV3Survey(
+          draftWithTrigger,
+          { status: "inProgress" },
+          "req_app_patch_sc5",
+          "org_1"
+        ).catch((e: unknown) => e);
+
+        expect(error).toBeInstanceOf(V3SurveyReferenceValidationError);
+        expect((error as V3SurveyReferenceValidationError).invalidParams[0].name).toBe(
+          "distribution.showConditions"
+        );
+        expect(prisma.survey.update).not.toHaveBeenCalled();
+      });
+
+      test("taking a draft live with only finished rows writes them", async () => {
+        vi.mocked(getActionClasses).mockResolvedValue([actionClass]);
+        const finishedDraft = {
+          ...appCurrentSurvey,
+          triggers: [{ actionClass }],
+          showConditions: { id: "grp1", connector: "and", conditions: [finished] },
+        } as unknown as TSurvey;
+
+        await patchV3Survey(finishedDraft, { status: "inProgress" }, "req_app_patch_sc6", "org_1");
 
         expect(vi.mocked(prisma.survey.update).mock.calls[0][0].data.showConditions).toEqual({
           id: "grp1",
           connector: "and",
           conditions: [finished],
         });
+      });
+
+      test("sending distribution with the publish replaces the unfinished row instead", async () => {
+        vi.mocked(getActionClasses).mockResolvedValue([actionClass]);
+        const draftWithTrigger = { ...surveyWithDraftRow, triggers: [{ actionClass }] } as unknown as TSurvey;
+
+        await patchV3Survey(
+          draftWithTrigger,
+          {
+            status: "inProgress",
+            distribution: { triggers: [{ actionClassId: actionClass.id }], showConditions: null },
+          },
+          "req_app_patch_sc7",
+          "org_1"
+        );
+
+        expect(vi.mocked(prisma.survey.update).mock.calls[0][0].data.showConditions).toBe(Prisma.DbNull);
       });
     });
 

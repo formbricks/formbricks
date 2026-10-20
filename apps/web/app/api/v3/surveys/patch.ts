@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import type { TCustomCssStored } from "@formbricks/types/custom-css";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { hasUnfinishedShowConditions } from "@formbricks/types/show-conditions";
 import {
   collectDeclaredFieldNames,
   describeDeclaredFieldNameError,
@@ -166,6 +167,17 @@ async function buildV3AppSurveyPatchWrites(params: {
   // survey live, writes what was validated: a live survey must not keep a row that can never pass.
   // A nullable JSON column takes `Prisma.DbNull`, not `null`, to store "no conditions".
   if (replacesDistribution || document.status !== "draft") {
+    // Going live without sending `distribution` would write the cleaned copy: an AND group would lose
+    // a row and show to more visitors, and a lone unfinished row would show to everyone. The editor
+    // refuses to publish in this state, so the API does too.
+    if (!replacesDistribution && hasUnfinishedShowConditions(currentSurvey.showConditions)) {
+      throw new V3SurveyReferenceValidationError([
+        {
+          name: "distribution.showConditions",
+          reason: "Finish or remove the unfinished show conditions before publishing",
+        },
+      ]);
+    }
     data.showConditions = showConditions ?? Prisma.DbNull;
   }
   data.triggers = handleTriggerUpdates(resolvedTriggers, currentSurvey.triggers, actionClasses);

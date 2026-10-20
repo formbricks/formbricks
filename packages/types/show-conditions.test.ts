@@ -5,6 +5,7 @@ import {
   type TShowConditionSingle,
   ZShowConditions,
   dropUnfinishedShowConditions,
+  hasUnfinishedShowConditions,
 } from "./show-conditions";
 
 let idCounter = 0;
@@ -209,6 +210,22 @@ describe("ZShowConditions", () => {
     expect(
       issueMessages(group("and", [condition("visit", "uniquePagesViewed", "isGreaterThanOrEqual", 201)]))
     ).toEqual(["expected a number from 0 to 200"]);
+  });
+});
+
+describe("hasUnfinishedShowConditions", () => {
+  const finished = condition("visit", "timeOnSite", "isGreaterThanOrEqual", 30);
+  const unfinished = condition("page", "currentUrl", "pathIsAnyOf");
+
+  test.each([
+    ["no conditions", null, false],
+    ["only finished rows", group("and", [finished]), false],
+    ["an unfinished row next to a finished one", group("and", [finished, unfinished]), true],
+    ["a lone unfinished row", group("and", [unfinished]), true],
+    ["an unfinished row in a nested group", group("and", [finished, group("or", [unfinished])]), true],
+    ["a group with no conditions list", { connector: "and" }, true],
+  ])("%s → %s", (_label, value, expected) => {
+    expect(hasUnfinishedShowConditions(value)).toBe(expected);
   });
 });
 
