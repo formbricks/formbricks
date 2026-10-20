@@ -30,6 +30,7 @@ export type TSurveyGenerationStreamEvent =
    * silently buffers would be indistinguishable from a slow model.
    */
   | { type: "start"; requestId: string }
+  | { type: "heartbeat" }
   | { type: "partial"; seq: number; draft: TSurveyGenerationDraftSnapshot }
   /** Mirrors the public endpoint's result shape, so the client reuses its existing create path. */
   | {
