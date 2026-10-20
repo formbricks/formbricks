@@ -26,7 +26,7 @@ import {
 import { findCreativeOverlaps } from "../lib/overlap";
 import { getCreativeEditPath, getCreativeSummaryPath } from "../lib/paths";
 import { getUiLocale } from "../lib/ui-locale";
-import { CreativeTypeIndicator, INDICATOR_TYPES } from "./creative-icons";
+import { CreativeTypeIcon } from "./creative-icons";
 import { CreativeListActions } from "./creative-list-actions";
 import { CreativeRowWarnings } from "./creative-row-warnings";
 import { CreativeStatusPill } from "./creative-status-pill";
@@ -34,7 +34,8 @@ import { CreativesListBodySkeleton } from "./creatives-list-skeleton";
 import { CreativesSortDropdown } from "./creatives-sort-dropdown";
 
 // Same layout as the surveys list: toolbar, then a card table with the columns of the surveys list,
-// where Responses becomes what the creative opens (counts live on the summary page only).
+// where Responses becomes what the creative opens (counts live on the summary page only). The type is
+// the icon before the name, so the name takes the Type column's room.
 const GRID = "grid-cols-8";
 const CREATIVES_PER_PAGE = 12;
 
@@ -162,9 +163,8 @@ export const CreativesList = ({ workspaceId, isReadOnly }: Readonly<CreativesLis
       <div>
         <div ref={animationParent} className="space-y-3">
           <CardTableHeader className={GRID}>
-            <div className="col-span-2 place-self-start">{t("common.name")}</div>
+            <div className="col-span-3 place-self-start">{t("common.name")}</div>
             <div className="col-span-1">{t("common.status")}</div>
-            <div className="col-span-1">{t("common.type")}</div>
             <div className="col-span-1">{t("workspace.creatives.column_opens")}</div>
             <div className="col-span-1">{t("common.created_at")}</div>
             <div className="col-span-1">{t("common.updated_at")}</div>
@@ -182,7 +182,8 @@ export const CreativesList = ({ workspaceId, isReadOnly }: Readonly<CreativesLis
                     <CreativeListActions workspaceId={workspaceId} creative={creative} />
                   )
                 }>
-                <div className="col-span-2 flex max-w-full items-center gap-2 justify-self-start text-sm font-medium text-slate-900">
+                <div className="col-span-3 flex max-w-full items-center gap-2 justify-self-start text-sm font-medium text-slate-900">
+                  <CreativeTypeIcon type={creative.type} />
                   <div className="min-w-0 truncate">
                     {creative.name || t("workspace.creatives.untitled_creative")}
                   </div>
@@ -191,9 +192,6 @@ export const CreativesList = ({ workspaceId, isReadOnly }: Readonly<CreativesLis
                 <CreativeStatusPill
                   state={{ status: creative.displayStatus, reason: creative.displayStatusReason }}
                 />
-                <div className="col-span-1">
-                  <CreativeTypeIndicator type={INDICATOR_TYPES[creative.type]} />
-                </div>
                 <div className="col-span-1 max-w-full overflow-hidden text-sm text-slate-600">
                   <OpensCell destination={creative.destination} />
                 </div>

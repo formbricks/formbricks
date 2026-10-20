@@ -72,6 +72,8 @@ describe("toDestinationSurveyOptions", () => {
     const options = toDestinationSurveyOptions([survey({ id: "ok" }), linked, linked], "linked");
 
     expect(options.map(({ id }) => id)).toEqual(["ok", "linked"]);
+    // Archived, it isn't Active whatever its status, which the editor's Save rule needs to know.
+    expect(options.map(({ archivedAt }) => archivedAt)).toEqual([undefined, linked.archivedAt]);
   });
 
   test("flags the survey the creative already opens once it can no longer be a Destination", () => {

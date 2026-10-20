@@ -111,9 +111,10 @@ export type TSummaryStatus = Exclude<TCreativeStatus, "draft">;
 export type TSummaryStatusControl = { kind: "select"; value: TSummaryStatus } | { kind: "pill" };
 
 /**
- * How the summary header shows the status. Writers switch a published creative between Active, Paused
- * and Closed, like a survey's status dropdown; a draft is published from the editor (which checks it
- * first), an archived creative can't change, and read-only members only see where it stands.
+ * How the summary and editor headers show the status. Writers switch a published creative between
+ * Active, Paused and Closed, like a survey's status dropdown; a draft is published with the editor's
+ * Publish (which checks it first), an archived creative can't change, and read-only members only see
+ * where it stands.
  */
 export const getSummaryStatusControl = (
   creative: { status: TCreativeStatus; archivedAt: string | null },
@@ -121,6 +122,33 @@ export const getSummaryStatusControl = (
 ): TSummaryStatusControl => {
   if (isReadOnly || creative.archivedAt !== null || creative.status === "draft") return { kind: "pill" };
   return { kind: "select", value: creative.status };
+};
+
+export type TRowStatusAction =
+  | { action: "publish" }
+  | { action: "pause" | "close"; status: Exclude<TSummaryStatus, "inProgress"> }
+  | { action: "resume" | "reopen"; status: "inProgress" };
+
+/**
+ * The status items of a list row's menu, from the author's status. A draft's Publish opens the editor,
+ * since publishing checks it first; an archived creative has none. Read-only members get no menu at all.
+ */
+export const getRowStatusActions = (creative: {
+  status: TCreativeStatus;
+  archivedAt: string | null;
+}): TRowStatusAction[] => {
+  if (creative.archivedAt !== null) return [];
+  const close = { action: "close", status: "completed" } as const;
+  switch (creative.status) {
+    case "draft":
+      return [{ action: "publish" }];
+    case "inProgress":
+      return [{ action: "pause", status: "paused" }, close];
+    case "paused":
+      return [{ action: "resume", status: "inProgress" }, close];
+    case "completed":
+      return [{ action: "reopen", status: "inProgress" }];
+  }
 };
 
 /** What a published creative can show while its author's status is Active, Paused or Closed. */

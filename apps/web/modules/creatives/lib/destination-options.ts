@@ -22,6 +22,8 @@ export type TDestinationSurveyOption = {
   name: string;
   type: TDestinationSurveyFacts["type"];
   status: TDestinationSurveyFacts["status"];
+  /** Set only on the survey the creative already opens, once archived: it isn't Active, whatever its status. */
+  archivedAt?: Date;
   /** Effective visibility: a pending change counts as Restricted, as the server counts it. */
   visibility: TSurveyVisibility;
   /** Its languages, for the warning on creative languages it lacks (ENG-4003); absent when unknown. */
@@ -51,6 +53,7 @@ export const toDestinationSurveyOptions = (
         name: candidate.name,
         type: candidate.type,
         status: candidate.status,
+        ...(candidate.archivedAt && { archivedAt: candidate.archivedAt }),
         visibility: getEffectiveVisibility(candidate),
         ...(candidate.languages && { languages: candidate.languages }),
         ...(candidate.id === linkedSurveyId &&

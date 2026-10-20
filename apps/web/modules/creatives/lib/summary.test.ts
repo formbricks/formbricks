@@ -3,6 +3,7 @@ import {
   buildCreativeStatsSearchParams,
   formatClickRate,
   formatStatsRange,
+  getRowStatusActions,
   getStatusChangeOutcome,
   getSummaryStatusControl,
   toDailyChartRows,
@@ -121,6 +122,38 @@ describe("getSummaryStatusControl", () => {
     ["a member who can only read", { status: "inProgress", archivedAt: null }, true],
   ] as const)("only shows the status for %s", (_case, creative, isReadOnly) => {
     expect(getSummaryStatusControl(creative, isReadOnly)).toEqual({ kind: "pill" });
+  });
+});
+
+describe("getRowStatusActions", () => {
+  test.each([
+    [
+      "Active",
+      "inProgress",
+      [
+        { action: "pause", status: "paused" },
+        { action: "close", status: "completed" },
+      ],
+    ],
+    [
+      "Paused",
+      "paused",
+      [
+        { action: "resume", status: "inProgress" },
+        { action: "close", status: "completed" },
+      ],
+    ],
+    ["Closed", "completed", [{ action: "reopen", status: "inProgress" }]],
+  ] as const)("offers what an author's %s creative can become", (_case, status, actions) => {
+    expect(getRowStatusActions({ status, archivedAt: null })).toEqual(actions);
+  });
+
+  test("sends a draft to the editor to publish, since Publish checks it first", () => {
+    expect(getRowStatusActions({ status: "draft", archivedAt: null })).toEqual([{ action: "publish" }]);
+  });
+
+  test("offers nothing for an archived creative", () => {
+    expect(getRowStatusActions({ status: "paused", archivedAt: "2026-10-01T00:00:00.000Z" })).toEqual([]);
   });
 });
 

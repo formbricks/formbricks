@@ -15,7 +15,8 @@ import { TabOption } from "./tab-option";
 export type TPreviewMode = "mobile" | "desktop";
 
 interface PreviewWindowBarProps {
-  title: string;
+  /** The page name after the dots; the creative editor's frame shows none. */
+  title?: string;
   /** Makes the green dot the expand / shrink button, as in the survey editor. */
   expand?: { isExpanded: boolean; onToggle: () => void; label: string };
   /** Controls on the right, such as the language selector. */
@@ -38,8 +39,8 @@ export const PreviewWindowBar = ({ title, expand, children }: Readonly<PreviewWi
       )}
     </div>
     <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-      <p className="text-slate-600">{title}</p>
-      <div className="flex items-center">{children}</div>
+      {title && <p className="text-slate-600">{title}</p>}
+      <div className="ml-auto flex items-center">{children}</div>
     </div>
   </div>
 );
