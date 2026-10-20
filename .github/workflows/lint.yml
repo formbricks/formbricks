@@ -137,6 +137,9 @@ jobs:
           printf 'Linting migration: %s\n' "${migration_files[@]}"
           pnpm --filter @formbricks/database lint:migrations -- "${absolute_migration_files[@]}"
 
+      - name: Build migration drift check dependencies
+        run: pnpm build --filter=@formbricks/logger
+
       - name: Check database migration drift
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/postgres?schema=public

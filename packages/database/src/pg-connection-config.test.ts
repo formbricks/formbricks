@@ -44,6 +44,19 @@ describe("PostgreSQL connection TLS configuration", () => {
     expect(new Client(config).ssl).toBe(false);
   });
 
+  test.each(["socket://fixture:test@/var/run/postgresql?db=formbricks", "/var/run/postgresql formbricks"])(
+    "preserves the native pg socket connection string %s",
+    (connectionString) => {
+      const config = getPgConnectionConfig(connectionString);
+      const client = new Client(config);
+
+      expect(config).toEqual({ connectionString });
+      expect(client.host).toBe("/var/run/postgresql");
+      expect(client.database).toBe("formbricks");
+      expect(client.ssl).toBe(false);
+    }
+  );
+
   test.each([
     ["disable", false],
     ["no-verify", { rejectUnauthorized: false }],

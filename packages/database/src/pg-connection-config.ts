@@ -23,6 +23,12 @@ const sslConfigFromSslAccept = (value: string | null): ClientConfig["ssl"] | und
 export const getPgConnectionConfig = (
   databaseUrl: string
 ): { connectionString: string; ssl?: ClientConfig["ssl"] } => {
+  // pg also accepts socket strings that WHATWG URL cannot parse.
+  const query = databaseUrl.match(/^[^#?]*\?([^#]*)/)?.[1] ?? "";
+  if (!new URLSearchParams(query).has("sslaccept")) {
+    return { connectionString: databaseUrl };
+  }
+
   const url = new URL(databaseUrl);
   const ssl = sslConfigFromSslAccept(url.searchParams.get("sslaccept"));
   url.searchParams.delete("sslaccept");
