@@ -134,11 +134,10 @@ export const queueAuditEventBackground = async ({
 /**
  * Logs an audit event once the response has been sent, so neither the gate's licence lookup nor the
  * IP read delays it. `after()` keeps the work alive until it finishes and keeps `headers()` readable,
- * so call this from a Route Handler or Server Function, not a Server Component. It stays `async` on
- * purpose: outside a request scope `after()` throws, and `async` turns that into a rejection the caller's
- * `.catch` handles instead of a throw into the caller.
+ * so call this from a Route Handler or Server Function, not a Server Component. Outside a request scope
+ * `after()` throws; `Promise.try` turns that into a rejection for the caller's `.catch` instead.
  */
-export const queueAuditEvent = async ({
+export const queueAuditEvent = ({
   action,
   targetType,
   userId,
@@ -150,31 +149,33 @@ export const queueAuditEvent = async ({
   status,
   eventId,
   apiUrl,
-}: TAuditEventInput) => {
+}: TAuditEventInput): Promise<void> => {
   const timestamp = new Date().toISOString();
-  after(async () => {
-    try {
-      if (!(await getIsAuditLogsEnabled())) return;
-      const ipAddress = await getClientIpFromHeaders();
-      await buildAndLogAuditEvent({
-        action,
-        targetType,
-        userId,
-        userType,
-        targetId,
-        organizationId,
-        ipAddress,
-        status,
-        oldObject,
-        newObject,
-        eventId,
-        apiUrl,
-        timestamp,
-      });
-    } catch (error) {
-      logger.error({ err: error, action, targetType, targetId, eventId }, "Failed to queue audit event");
-    }
-  });
+  return Promise.try(() =>
+    after(async () => {
+      try {
+        if (!(await getIsAuditLogsEnabled())) return;
+        const ipAddress = await getClientIpFromHeaders();
+        await buildAndLogAuditEvent({
+          action,
+          targetType,
+          userId,
+          userType,
+          targetId,
+          organizationId,
+          ipAddress,
+          status,
+          oldObject,
+          newObject,
+          eventId,
+          apiUrl,
+          timestamp,
+        });
+      } catch (error) {
+        logger.error({ err: error, action, targetType, targetId, eventId }, "Failed to queue audit event");
+      }
+    })
+  );
 };
 
 /**

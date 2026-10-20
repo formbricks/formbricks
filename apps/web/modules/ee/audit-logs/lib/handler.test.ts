@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
@@ -217,6 +218,18 @@ describe("queueAuditEvent", () => {
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalledWith(
       expect.objectContaining({ timestamp: "2026-10-20T10:00:00.000Z" })
     );
+  });
+
+  test("rejects, rather than throws, when after() is called outside a request scope", async () => {
+    const scopeError = new Error("after() was called outside a request scope");
+    vi.mocked(after).mockImplementationOnce(() => {
+      throw scopeError;
+    });
+    let pending: Promise<void> | undefined;
+    expect(() => {
+      pending = OriginalHandler.queueAuditEvent(baseEventParams);
+    }).not.toThrow();
+    await expect(pending).rejects.toBe(scopeError);
   });
 
   test("logs, rather than throws, when the deferred IP read fails", async () => {
