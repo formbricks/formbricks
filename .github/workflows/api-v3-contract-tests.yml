@@ -54,7 +54,7 @@ jobs:
           - 6379:6379
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -89,7 +89,7 @@ jobs:
 
       - name: Setup Node.js (version from .nvmrc)
         if: steps.harness.outputs.present == 'true'
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: ".nvmrc"
           cache: pnpm
@@ -301,7 +301,7 @@ jobs:
 
       - name: Upload contract test report
         if: always() && steps.harness.outputs.present == 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: api-v3-contract-report
           if-no-files-found: ignore
@@ -311,7 +311,7 @@ jobs:
       # and an application log is the wrong thing to ship as an artifact on every green PR.
       - name: Upload app logs
         if: failure() && steps.harness.outputs.present == 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: api-v3-contract-app-logs
           if-no-files-found: ignore
