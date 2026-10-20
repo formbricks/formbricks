@@ -103,6 +103,11 @@ updates:
     directory: "/apps/web"
     schedule:
       interval: daily
+    # Keep the build-stage Node major aligned with .nvmrc and the compiled runtime.
+    ignore:
+      - dependency-name: node
+        update-types:
+          - version-update:semver-major
     labels:
       - dependencies
     commit-message:

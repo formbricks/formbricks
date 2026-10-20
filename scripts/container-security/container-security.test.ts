@@ -1,3 +1,7 @@
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { collectImages, composeDefault, inventory } from "./inventory.mjs";
 import { imageRepository, normalizeReport, selectPlatforms } from "./scan.mjs";
@@ -143,5 +147,93 @@ describe("Linear reconciliation", () => {
   it("keeps a ticket open when severity drops but the vulnerability is still present", () => {
     const lower = result("example/server:1", [{ ...vulnerability, Severity: "MEDIUM" }]);
     expect(reconciliation(repo, expected, [lower], existing).close).toEqual([]);
+  });
+
+  it("closes a healthy repository's ticket despite an unrelated failure, but retains unscoped tickets", () => {
+    const broken = { ...result("bitnami/redis:missing", []), errors: ["manifest not found"], scans: [] };
+    const scoped = {
+      ...existing[0],
+      description: "Image repository: `docker.io/example/server`",
+    };
+    const unscoped = { ...existing[0], id: "legacy" };
+    const malformed = { ...existing[0], id: "edited", description: "Image repository: " };
+    const plan = reconciliation(
+      repo,
+      [...expected, { image: broken.image }],
+      [result("example/server:1", []), broken],
+      [scoped, unscoped, malformed]
+    );
+    expect(plan.complete).toBe(false);
+    expect(plan.close).toEqual([scoped]);
+    expect([...plan.current.values()][0]).toMatchObject({ scope: { image: broken.image }, priority: 2 });
+  });
+
+  it("requires every tag and architecture of a vulnerability's repository to scan successfully", () => {
+    const issue = {
+      ...existing[0],
+      description: "Image repository: `docker.io/example/server`",
+    };
+    const healthy = result("example/server:1", []);
+    const other = result("example/server:2", []);
+    const inventory = [...expected, { image: other.image }];
+    for (const partial of [
+      [healthy],
+      [healthy, { ...other, errors: ["registry unavailable"] }],
+      [healthy, { ...other, expectedPlatforms: ["linux/amd64", "linux/arm64"] }],
+      [healthy, other, other],
+    ]) {
+      expect(reconciliation(repo, inventory, partial, [issue]).close).toEqual([]);
+    }
+    expect(reconciliation(repo, inventory, [healthy, other], [issue]).close).toEqual([issue]);
+  });
+
+  it("closes recovered scan failures and removed dependencies without requiring unrelated scans", () => {
+    const broken = { ...result("bitnami/redis:missing", []), errors: ["manifest not found"], scans: [] };
+    const recovered = {
+      id: "recovered",
+      title: "[Container formbricks/formbricks old-error] Cannot scan example/server:1",
+      description: "Scan image: `example/server:1`",
+      state: { type: "started" },
+    };
+    const removed = {
+      ...existing[0],
+      description: "Image repository: `docker.io/removed/server`",
+    };
+    const inventory = [...expected, { image: broken.image }];
+    expect(
+      reconciliation(repo, inventory, [result("example/server:1", []), broken], [recovered, removed]).close
+    ).toEqual([recovered, removed]);
+    expect(reconciliation(repo, [], [], [recovered, removed]).close).toEqual([]);
+  });
+
+  it("reports missing scan artifacts when the downloaded reports directory does not exist", () => {
+    const directory = mkdtempSync(join(tmpdir(), "container-sync-"));
+    try {
+      const inventoryPath = join(directory, "inventory.json");
+      writeFileSync(
+        inventoryPath,
+        JSON.stringify([{ image: "example/server:1", sources: ["compose#server"] }])
+      );
+      const sync = spawnSync(
+        process.execPath,
+        [
+          "scripts/container-security/sync.mjs",
+          inventoryPath,
+          join(directory, "missing-reports"),
+          "--dry-run",
+        ],
+        {
+          encoding: "utf8",
+          env: { ...process.env, GITHUB_REPOSITORY: repo, LINEAR_API_KEY: "", LINEAR_ACCESS_KEY: "" },
+        }
+      );
+      expect(sync.status).toBe(1);
+      expect(sync.stdout).toContain("create [Container formbricks/formbricks");
+      expect(sync.stdout).toContain("Cannot scan example/server:1");
+      expect(sync.stderr).toContain("Incomplete image scan");
+      expect(sync.stderr).not.toContain("ENOENT");
+    } finally {
+      rmSync(directory, { recursive: true });
+    }
   });
 });

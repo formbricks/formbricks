@@ -36,10 +36,15 @@ this stack-wide sync reads JSON directly, not Dependabot alerts or the Code scan
 Critical/high findings (including those without a fix) enter the existing Engineering triage queue
 with the vulnerability label. Identity includes repository, image repository, package ecosystem,
 package and CVE; tags, digests and architectures are occurrences in the same ticket. A finding at a
-lower severity keeps its existing ticket open. Successful complete scans close absent findings;
-missing/failed scans create high-priority scan-failure tickets, permit creating tickets from successful
-results, and prohibit all closure. Images with no packages recognized by Trivy are reported with an
-explicit warning; scanning is limited to Trivy-supported package types.
+lower severity keeps its existing ticket open. A vulnerability ticket closes only when every current
+tag and published architecture of its image repository scans successfully and no longer reports it.
+Scan-failure tickets close when their exact image scans successfully or leaves the inventory.
+Missing/failed scans create high-priority scan-failure tickets, permit creating tickets from successful
+results, and block closure for the affected repository, without blocking unrelated successful scans.
+The workflow still fails on incomplete scans so coverage gaps remain visible. Ticket descriptions carry
+scope metadata; old or edited tickets without valid metadata require a complete inventory scan before
+closing. Images with no packages recognized by Trivy are reported with an explicit warning; scanning
+is limited to Trivy-supported package types.
 Closing means the finding is absent from main's current image inventory, not that customers upgraded.
 Suppression is deliberately not applied to this monitoring scan; temporary build-gate exceptions do
 not hide findings from triage. The sync reopens manually closed tickets if the finding is still present.
@@ -63,6 +68,7 @@ The first complete run may create many tickets for old dependencies. Use a manua
   version changes need reviewed native checksums. Existing CI catches these mismatches. Web runtime
   Node is compiled from a separate version/checksum in its Dockerfile, which also needs review.
 
-A removed dependency resolves its monitoring tickets only after a complete inventory scan. There is
+A dependency absent from a successfully discovered, nonempty inventory resolves its scoped monitoring
+tickets even if an unrelated image fails to scan. An empty inventory never closes tickets. There is
 no release-branch support window, automatic merge, or automatic deployment. A fix reaches self-hosters
 through a published chart/image release and their upgrade.

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import {
   LINEAR_TEAM_ID,
@@ -20,6 +20,7 @@ export function findings(repo, results) {
       groups.set(prefix, {
         title: `${prefix} Cannot scan ${result.image}`,
         priority: 2,
+        scope: { image: result.image },
         occurrences: new Set(
           result.errors.map((error) => `- Scan failure: ${error}. Sources: ${result.sources.join(", ")}`)
         ),
@@ -40,6 +41,7 @@ export function findings(repo, results) {
             groups.set(prefix, {
               title: `${prefix} ${vuln.VulnerabilityID} in ${vuln.PkgName}`,
               priority,
+              scope: { repository: image },
               occurrences: new Set(),
             });
           const group = groups.get(prefix);
@@ -55,34 +57,51 @@ export function findings(repo, results) {
 }
 
 export function reconciliation(repo, inventory, results, existing) {
-  // Missing artifacts, duplicate artifacts, failed scans and malformed reports cannot close tickets.
-  const complete =
-    inventory.length > 0 &&
-    results.length === inventory.length &&
-    new Set(results.map((r) => r.image)).size === inventory.length &&
-    inventory.every((entry) =>
-      results.some(
-        (r) =>
-          r.image === entry.image &&
+  const validInventory =
+    inventory.length > 0 && new Set(inventory.map((e) => e.image)).size === inventory.length;
+  // A repository-level CVE can occur in several tags; every current tag and architecture must succeed.
+  const completeImages = new Set(
+    inventory
+      .filter((entry) => {
+        const matches = results.filter((r) => r.image === entry.image);
+        if (matches.length !== 1) return false;
+        const [r] = matches;
+        return (
           !r.errors.length &&
           r.expectedPlatforms?.length > 0 &&
           r.scans.length === r.expectedPlatforms.length &&
           r.expectedPlatforms.every((platform) => r.scans.some((scan) => scan.platform === platform))
-      )
-    );
+        );
+      })
+      .map((entry) => entry.image)
+  );
+  const complete =
+    validInventory && results.length === inventory.length && completeImages.size === inventory.length;
+  const canClose = (issue) => {
+    if (!validInventory) return false;
+    const repository = issue.description?.match(/^Image repository: `([^`\r\n]+)`$/m)?.[1];
+    if (repository) {
+      return inventory
+        .filter((entry) => imageRepository(entry.image) === repository)
+        .every((entry) => completeImages.has(entry.image));
+    }
+    const image = issue.description?.match(/^Scan image: `([^`\r\n]+)`$/m)?.[1];
+    if (image) return !inventory.some((entry) => entry.image === image) || completeImages.has(image);
+    // Old or edited tickets without scope metadata need a complete scan of the entire inventory.
+    return complete;
+  };
   const current = findings(repo, results);
   const activePrefixes = new Set(current.keys());
   const prefixOf = (title) => title.slice(0, title.indexOf("]") + 1);
   return {
     complete,
     current,
-    close: complete
-      ? existing.filter(
-          (issue) =>
-            !activePrefixes.has(prefixOf(issue.title)) &&
-            !["completed", "canceled"].includes(issue.state.type)
-        )
-      : [],
+    close: existing.filter(
+      (issue) =>
+        !activePrefixes.has(prefixOf(issue.title)) &&
+        !["completed", "canceled"].includes(issue.state.type) &&
+        canClose(issue)
+    ),
   };
 }
 
@@ -120,7 +139,7 @@ async function main() {
   if (!apiKey && !dryRun) throw new Error("LINEAR_API_KEY is required");
   const inventory = JSON.parse(readFileSync(process.argv[2], "utf8"));
   const directory = process.argv[3];
-  const results = readdirSync(directory, { recursive: true })
+  const results = (existsSync(directory) ? readdirSync(directory, { recursive: true }) : [])
     .filter((name) => name.endsWith("/result.json") || name === "result.json")
     .map((name) => JSON.parse(readFileSync(`${directory}/${name}`, "utf8")));
   for (const entry of inventory) {
@@ -137,7 +156,10 @@ async function main() {
   for (const [prefix, finding] of plan.current) {
     const issue = existing.find((i) => i.title.startsWith(prefix));
     if (!issue && finding.priority > 2) continue;
-    const description = `Container vulnerability on main.\n\n${[...finding.occurrences].sort().join("\n")}\n\nDaily scan: https://github.com/${repo}/actions/workflows/container-security.yml\n\nA merge is not a customer deployment; publish and communicate the patched chart/image.`;
+    const scope = finding.scope.repository
+      ? `Image repository: \`${finding.scope.repository}\``
+      : `Scan image: \`${finding.scope.image}\``;
+    const description = `Container vulnerability on main.\n\n${scope}\n\n${[...finding.occurrences].sort().join("\n")}\n\nDaily scan: https://github.com/${repo}/actions/workflows/container-security.yml\n\nA merge is not a customer deployment; publish and communicate the patched chart/image.`;
     if (dryRun) {
       console.log(`${issue ? "update" : "create"} ${finding.title}`);
       continue;
@@ -168,7 +190,9 @@ async function main() {
     await setIssueState(apiKey, issue.id, done);
   }
   if (!plan.complete)
-    throw new Error("Incomplete image scan: existing tickets were not closed; inspect failed jobs/artifacts");
+    throw new Error(
+      `Incomplete image scan: ${plan.close.length} tickets resolved in successful or removed scopes; other tickets retained. Inspect failed jobs/artifacts.`
+    );
   console.log(
     `Complete inventory: ${inventory.length} images. ${plan.current.size} vulnerability groups; ${plan.close.length} resolved tickets.`
   );
