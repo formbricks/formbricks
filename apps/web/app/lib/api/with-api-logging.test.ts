@@ -16,7 +16,8 @@ const AuthMethod = {
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   __esModule: true,
-  queueAuditEvent: vi.fn(),
+  // Resolves like the real one: the wrapper chains .catch onto it
+  queueAuditEvent: vi.fn(async () => undefined),
 }));
 
 vi.mock("@sentry/nextjs", () => ({

@@ -243,7 +243,7 @@ const processResponse = async (
 
   // queueAuditEvent decides whether audit logging is enabled
   if (auditLog) {
-    queueAuditEvent(auditLog);
+    queueAuditEvent(auditLog).catch((error) => logger.error(error, "Failed to queue audit event"));
   }
 };
 

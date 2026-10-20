@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
+import { getIsAuditLogsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { TActor, TAuditAction, TAuditStatus, TAuditTarget } from "../types/audit-log";
 // Import original module to access its original exports for the mock factory
 import * as OriginalHandler from "./handler";
@@ -12,6 +13,19 @@ var loggerErrorMockHandle: ReturnType<typeof vi.fn>; // NOSONAR / test code
 // The env var, the licence and Cloud are combined by getIsAuditLogsEnabled (tested in
 // license-check/lib/utils.test.ts). Here it is the only switch, so every entry point is held to it.
 const { auditGate } = vi.hoisted(() => ({ auditGate: { enabled: true } }));
+
+// next/server's after() runs its callback once the response is sent; collect them so a test can flush.
+const { afterCallbacks } = vi.hoisted(() => ({ afterCallbacks: [] as Promise<unknown>[] }));
+
+vi.mock("next/server", () => ({
+  after: vi.fn((callback: () => Promise<unknown>) => {
+    afterCallbacks.push(Promise.resolve().then(callback));
+  }),
+}));
+
+const flushAfter = async () => {
+  await Promise.all(afterCallbacks.splice(0));
+};
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsAuditLogsEnabled: vi.fn(async () => auditGate.enabled),
@@ -150,6 +164,7 @@ describe("queueAuditEvent", () => {
 
   test("correctly processes event and its dependencies are called", async () => {
     await OriginalHandler.queueAuditEvent(baseEventParams);
+    await flushAfter();
     // queueAuditEvent runs the module's real event builder; only its dependencies are mocked.
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
     // Add more specific assertions on what serviceLogAuditEventMockHandle was called with if necessary
@@ -163,6 +178,7 @@ describe("queueAuditEvent", () => {
       throw testError;
     });
     await OriginalHandler.queueAuditEvent(baseEventParams);
+    await flushAfter();
     // queueAuditEvent should catch errors from buildAndLogAuditEvent and log them
     // buildAndLogAuditEvent in turn logs errors from its dependencies
     expect(loggerErrorMockHandle).toHaveBeenCalledWith(testError, "Failed to create audit log event");
@@ -172,8 +188,36 @@ describe("queueAuditEvent", () => {
   test("does nothing when audit logging is disabled, not even the IP read", async () => {
     auditGate.enabled = false;
     await OriginalHandler.queueAuditEvent(baseEventParams);
+    await flushAfter();
     expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
     expect(vi.mocked(getClientIpFromHeaders)).not.toHaveBeenCalled();
+  });
+
+  test("returns before the licence check settles, then still logs", async () => {
+    let settleGate!: (enabled: boolean) => void;
+    vi.mocked(getIsAuditLogsEnabled).mockImplementationOnce(
+      () => new Promise<boolean>((resolve) => (settleGate = resolve))
+    );
+
+    const outcome = await Promise.race([
+      OriginalHandler.queueAuditEvent(baseEventParams).then(() => "returned"),
+      new Promise((resolve) => setTimeout(() => resolve("still waiting on the licence"), 50)),
+    ]);
+    expect(outcome).toBe("returned");
+    expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
+
+    settleGate(true);
+    await flushAfter();
+    expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
+  });
+
+  test("logs, rather than throws, when the deferred IP read fails", async () => {
+    const ipError = new Error("headers unavailable");
+    vi.mocked(getClientIpFromHeaders).mockRejectedValueOnce(ipError);
+    await OriginalHandler.queueAuditEvent(baseEventParams);
+    await flushAfter();
+    expect(loggerErrorMockHandle).toHaveBeenCalledWith(ipError, "Failed to queue audit event");
+    expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
   });
 });
 
@@ -199,6 +243,15 @@ describe("queueAuditEventBackground", () => {
     await new Promise(setImmediate);
     expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
     expect(vi.mocked(getClientIpFromHeaders)).not.toHaveBeenCalled();
+  });
+
+  test("logs, rather than throws, when the IP read fails", async () => {
+    const ipError = new Error("headers unavailable");
+    vi.mocked(getClientIpFromHeaders).mockRejectedValueOnce(ipError);
+    await OriginalHandler.queueAuditEventBackground(baseEventParams);
+    await new Promise(setImmediate);
+    expect(loggerErrorMockHandle).toHaveBeenCalledWith(ipError, "Failed to queue audit event");
+    expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
   });
 });
 

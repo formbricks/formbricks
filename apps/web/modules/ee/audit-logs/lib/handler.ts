@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { logger } from "@formbricks/logger";
 import { AUDIT_LOG_GET_USER_IP } from "@/lib/constants";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -102,28 +103,33 @@ export const queueAuditEventBackground = async ({
   apiUrl,
 }: TAuditEventInput) => {
   setImmediate(async () => {
-    if (!(await getIsAuditLogsEnabled())) return;
-    const ipAddress = await getClientIpFromHeaders();
-    await buildAndLogAuditEvent({
-      action,
-      targetType,
-      userId,
-      userType,
-      targetId,
-      organizationId,
-      ipAddress,
-      status,
-      oldObject,
-      newObject,
-      eventId,
-      apiUrl,
-    });
+    try {
+      if (!(await getIsAuditLogsEnabled())) return;
+      const ipAddress = await getClientIpFromHeaders();
+      await buildAndLogAuditEvent({
+        action,
+        targetType,
+        userId,
+        userType,
+        targetId,
+        organizationId,
+        ipAddress,
+        status,
+        oldObject,
+        newObject,
+        eventId,
+        apiUrl,
+      });
+    } catch (error) {
+      logger.error(error, "Failed to queue audit event");
+    }
   });
 };
 
 /**
- * Logs an audit event.
- * This function will block the main request. Use it only in edge runtime functions, like api routes.
+ * Logs an audit event once the response has been sent, so neither the gate's licence lookup nor the
+ * IP read delays it. `after()` keeps the work alive until it finishes and keeps `headers()` readable,
+ * so call this from a Route Handler or Server Function, not a Server Component.
  */
 export const queueAuditEvent = async ({
   action,
@@ -138,22 +144,27 @@ export const queueAuditEvent = async ({
   eventId,
   apiUrl,
 }: TAuditEventInput) => {
-  if (!(await getIsAuditLogsEnabled())) return;
-  const ipAddress = await getClientIpFromHeaders();
-
-  await buildAndLogAuditEvent({
-    action,
-    targetType,
-    userId,
-    userType,
-    targetId,
-    organizationId,
-    ipAddress,
-    status,
-    oldObject,
-    newObject,
-    eventId,
-    apiUrl,
+  after(async () => {
+    try {
+      if (!(await getIsAuditLogsEnabled())) return;
+      const ipAddress = await getClientIpFromHeaders();
+      await buildAndLogAuditEvent({
+        action,
+        targetType,
+        userId,
+        userType,
+        targetId,
+        organizationId,
+        ipAddress,
+        status,
+        oldObject,
+        newObject,
+        eventId,
+        apiUrl,
+      });
+    } catch (error) {
+      logger.error(error, "Failed to queue audit event");
+    }
   });
 };
 
