@@ -1,113 +1,28 @@
-name: Blacksmith Docker Trial
-
-# Invoked explicitly from the experimental workflow on the trial branch.
-# No registry credentials or publishing permissions: this measures the builder first.
+name: Inspect Blacksmith release cache
 on:
   workflow_call:
-
 permissions:
   contents: read
-
 jobs:
-  build:
-    name: Build and smoke (${{ matrix.arch }})
+  inspect:
     strategy:
       fail-fast: false
       matrix:
         include:
           - arch: amd64
             runner: blacksmith-16vcpu-ubuntu-2404
-            machine: x86_64
-            node_build_jobs: 4
           - arch: arm64
             runner: blacksmith-16vcpu-ubuntu-2404-arm
-            machine: aarch64
-            # Node's conservative four-worker default leaves this native builder idle.
-            node_build_jobs: 16
     runs-on: ${{ matrix.runner }}
-    # Cold builds compile Node from source; subsequent runs reuse that layer.
-    timeout-minutes: 120
-    env:
-      # Rebuild the application on every trial, while retaining dependency/Node layers.
-      # Otherwise a rerun measures an unchanged-image cache hit rather than a new release.
-      BUILD_IDENTITY: ${{ github.sha }}-blacksmith-trial-${{ github.run_id }}-${{ github.run_attempt }}
-      IMAGE: formbricks-blacksmith-trial:${{ github.sha }}
-      PLATFORM: linux/${{ matrix.arch }}
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-
-      - name: Verify native architecture
-        env:
-          EXPECTED_MACHINE: ${{ matrix.machine }}
-        run: test "$(uname -m)" = "$EXPECTED_MACHINE"
-
-      - name: Set up persistent Docker builder
-        uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184 # v2
+      - uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184 # v2
         with:
           cache-key: apps/web/Dockerfile-blacksmith-trial-${{ matrix.arch }}
           nofallback: true
-
-      - name: Record build start
-        run: date +%s > "$RUNNER_TEMP/build-start"
-
-      - name: Build release Dockerfile
-        id: build
-        uses: useblacksmith/build-push-action@9b0579bbec7a6cad2f171596c57e7ac1e7658850 # v2
-        with:
-          context: .
-          file: apps/web/Dockerfile
-          platforms: ${{ env.PLATFORM }}
-          pull: true
-          push: false
-          load: true
-          tags: ${{ env.IMAGE }}
-          build-args: |
-            NODE_BUILD_JOBS=${{ matrix.node_build_jobs }}
-            FORMBRICKS_DEPLOYMENT_ID=${{ env.BUILD_IDENTITY }}
-            FORMBRICKS_BUILD_VARIANT=ghcr
-          secrets: |
-            database_url=postgresql://test:test@127.0.0.1:5432/formbricks
-            encryption_key=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-            redis_url=redis://127.0.0.1:6379
-            hub_api_url=http://127.0.0.1:4000
-            hub_api_key=build-time-placeholder
-            cubejs_api_url=http://127.0.0.1:4000
-            cubejs_api_secret=build-time-placeholder
-
-      - name: Record build measurements
-        env:
-          IMAGE_ID: ${{ steps.build.outputs.imageid }}
+      - name: Inspect restored cache without committing a new snapshot
         run: |
-          set -euo pipefail
-          elapsed=$(( $(date +%s) - $(cat "$RUNNER_TEMP/build-start") ))
-          {
-            echo "### Blacksmith $PLATFORM"
-            echo "- Revision: $GITHUB_SHA"
-            echo "- Build including local image export: ${elapsed}s"
-            echo "- Image ID: $IMAGE_ID"
-            echo "- Image bytes: $(docker image inspect --format '{{.Size}}' "$IMAGE")"
-            echo
-            echo 'BuildKit cache (logical usage; confirm billed storage in Blacksmith):'
-            echo '```text'
-            docker buildx du
-            echo '```'
-          } | tee -a "$GITHUB_STEP_SUMMARY"
-
-      - uses: ./.github/actions/setup-image-smoke
-
-      - name: Run release image checks
-        run: bash docker/smoke-release-image.sh "$IMAGE" "$BUILD_IDENTITY" ghcr "$PLATFORM"
-
-      - name: Record validation result
-        run: echo "Native release smoke checks passed for $PLATFORM." >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Remove trial image
-        if: ${{ always() && steps.build.outcome == 'success' }}
-        run: docker image rm "$IMAGE"
-
-      - name: Bound persistent build cache
-        run: |
-          docker buildx prune --force --max-used-space 30gb
-          docker buildx du >> "$GITHUB_STEP_SUMMARY"
+          docker buildx du
+          sudo du -sb /var/lib/buildkit
+          echo 'Diagnostic job intentionally fails to prevent cache commit; no build or pruning was performed.'
+          exit 1
