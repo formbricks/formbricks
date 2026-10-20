@@ -85,5 +85,15 @@ test.describe("Survey Follow-Up deprecation", async () => {
 
       await expect(page.getByText("Updated Follow-Up")).toBeVisible();
     });
+
+    await test.step("Reopening uses the saved name and discards cancelled edits", async () => {
+      await page.getByText("Updated Follow-Up").click();
+      const nameInput = page.getByPlaceholder("Name your follow-up");
+      await expect(nameInput).toHaveValue("Updated Follow-Up");
+      await nameInput.fill("Discard this edit");
+      await page.getByRole("button", { name: "Cancel", exact: true }).click();
+      await page.getByText("Updated Follow-Up").click();
+      await expect(nameInput).toHaveValue("Updated Follow-Up");
+    });
   });
 });
