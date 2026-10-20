@@ -17,6 +17,10 @@ The trial runs AMD64 and ARM64 on native 16-vCPU Blacksmith runners. It fails if
 Blacksmith's persistent builder cannot be configured; a local-builder fallback
 would invalidate the comparison.
 
+ARM64 sets the Dockerfile's existing `NODE_BUILD_JOBS` argument to 16: the default
+four-worker source compilation substantially underuses that runner. AMD64 keeps
+the default four workers. This argument only controls compiler parallelism.
+
 Run it twice sequentially. The first successful run populates the persistent
 cache. Each trial uses a new application build identity, so the second run reuses
 compiled Node and dependency layers but still compiles and packages the

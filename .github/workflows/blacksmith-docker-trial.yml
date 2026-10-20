@@ -18,9 +18,12 @@ jobs:
           - arch: amd64
             runner: blacksmith-16vcpu-ubuntu-2404
             machine: x86_64
+            node_build_jobs: 4
           - arch: arm64
             runner: blacksmith-16vcpu-ubuntu-2404-arm
             machine: aarch64
+            # Node's conservative four-worker default leaves this native builder idle.
+            node_build_jobs: 16
     runs-on: ${{ matrix.runner }}
     # Cold builds compile Node from source; subsequent runs reuse that layer.
     timeout-minutes: 120
@@ -61,6 +64,7 @@ jobs:
           load: true
           tags: ${{ env.IMAGE }}
           build-args: |
+            NODE_BUILD_JOBS=${{ matrix.node_build_jobs }}
             FORMBRICKS_DEPLOYMENT_ID=${{ env.BUILD_IDENTITY }}
             FORMBRICKS_BUILD_VARIANT=ghcr
           secrets: |
