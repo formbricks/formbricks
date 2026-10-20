@@ -44,8 +44,8 @@ beforeEach(() => {
  * over-eager marker is an instance-wide sign-up outage, not a cosmetic difference.
  */
 describe("enforceCredentialSignupBackstop", () => {
-  test("blocks a sign-up that bypassed the action (raw /sign-up/email) with a blocked domain", async () => {
-    vi.mocked(isSignupDomainAllowed).mockReturnValue(false); // no action mark → direct native-endpoint POST
+  test("blocks a sign-up outside the action (no action mark) with a blocked domain", async () => {
+    vi.mocked(isSignupDomainAllowed).mockReturnValue(false); // no action mark → a sign-up outside the action
     vi.mocked(isSignupEmailDomainBlocked).mockResolvedValue(true);
 
     expect(await enforceCredentialSignupBackstop("spammer@gmail.com")).toBe(false);
@@ -59,26 +59,26 @@ describe("enforceCredentialSignupBackstop", () => {
     expect(isSignupEmailDomainBlocked).not.toHaveBeenCalled();
   });
 
-  test("allows an allowed domain on the raw endpoint", async () => {
+  test("allows an allowed domain on a sign-up outside the action", async () => {
     vi.mocked(isSignupDomainAllowed).mockReturnValue(false);
     vi.mocked(isSignupEmailDomainBlocked).mockResolvedValue(false);
 
     expect(await enforceCredentialSignupBackstop("person@acme-corp.com")).toBeUndefined();
   });
 
-  // ENG-2293: on a closed instance (SIGNUP_ENABLED=false, not fresh, multi-org disabled), a direct POST
-  // to Better Auth's native /sign-up/email must be blocked — this is the last line of defense, since
-  // the page and the server action both gate correctly.
+  // ENG-2293: on a closed instance (SIGNUP_ENABLED=false, not fresh, multi-org disabled), a credential
+  // sign-up that did not come through the action must be blocked. The native HTTP route is closed
+  // (ENG-3988), so this covers in-process callers and any future plugin that creates users.
   describe("closed-instance policy", () => {
     beforeEach(() => {
       constantsOverrides.SIGNUP_ENABLED = false;
       vi.mocked(getIsFreshInstance).mockResolvedValue(false);
       vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
-      vi.mocked(isSignupDomainAllowed).mockReturnValue(false); // raw endpoint, not through the action
+      vi.mocked(isSignupDomainAllowed).mockReturnValue(false); // not through the action
       vi.mocked(isSignupEmailDomainBlocked).mockResolvedValue(false); // self-hosted: domain block is a no-op
     });
 
-    test("blocks a raw sign-up on a closed instance", async () => {
+    test("blocks a sign-up outside the action on a closed instance", async () => {
       // The stable code is the contract callers localize against; the message is display copy, so a
       // reworded message must not fail this test and a dropped code must.
       await expect(enforceCredentialSignupBackstop("intruder@example.com")).rejects.toMatchObject({

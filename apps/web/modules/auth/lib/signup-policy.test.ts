@@ -22,7 +22,8 @@ const closeTheInstance = (): void => {
   vi.mocked(getIsFreshInstance).mockResolvedValue(false);
 };
 
-const rawSignup = { path: "/sign-up/email" } as never;
+// A sign-up that did not come through createUserAction (no action mark in the request scope).
+const unmarkedSignup = { path: "/sign-up/email" } as never;
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -68,9 +69,9 @@ describe("isUninvitedSignupAllowed", () => {
 });
 
 describe("signupPolicyBeforeHandler", () => {
-  test("rejects a raw credential sign-up on a closed instance", async () => {
+  test("rejects a credential sign-up outside the action on a closed instance", async () => {
     closeTheInstance();
-    await expect(signupPolicyBeforeHandler(rawSignup)).rejects.toMatchObject({
+    await expect(signupPolicyBeforeHandler(unmarkedSignup)).rejects.toMatchObject({
       status: "FORBIDDEN",
       body: { code: SIGNUP_DISABLED_ERROR_CODE },
     });
@@ -88,17 +89,17 @@ describe("signupPolicyBeforeHandler", () => {
   test("exempts a sign-up routed through createUserAction", async () => {
     closeTheInstance();
     vi.mocked(isSignupDomainAllowed).mockReturnValue(true);
-    await expect(signupPolicyBeforeHandler(rawSignup)).resolves.toBeUndefined();
+    await expect(signupPolicyBeforeHandler(unmarkedSignup)).resolves.toBeUndefined();
     expect(getIsFreshInstance).not.toHaveBeenCalled();
   });
 
-  test("allows a raw credential sign-up while the instance is still fresh", async () => {
+  test("allows a credential sign-up outside the action while the instance is still fresh", async () => {
     closeTheInstance();
     vi.mocked(getIsFreshInstance).mockResolvedValue(true);
-    await expect(signupPolicyBeforeHandler(rawSignup)).resolves.toBeUndefined();
+    await expect(signupPolicyBeforeHandler(unmarkedSignup)).resolves.toBeUndefined();
   });
 
-  test("allows a raw credential sign-up when public sign-up is open", async () => {
-    await expect(signupPolicyBeforeHandler(rawSignup)).resolves.toBeUndefined();
+  test("allows a credential sign-up outside the action when public sign-up is open", async () => {
+    await expect(signupPolicyBeforeHandler(unmarkedSignup)).resolves.toBeUndefined();
   });
 });
