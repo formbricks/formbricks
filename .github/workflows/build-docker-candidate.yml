@@ -151,8 +151,8 @@ jobs:
             node_build_jobs: 4
           - arch: arm64
             machine: aarch64
-            runner: blacksmith-16vcpu-ubuntu-2404-arm
-            node_build_jobs: 16
+            runner: blacksmith-32vcpu-ubuntu-2404-arm
+            node_build_jobs: 32
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 120
     steps:

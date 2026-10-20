@@ -89,11 +89,11 @@ jobs:
 
   validate-docker-build:
     name: Validate Docker Build
-    runs-on: ${{ (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'blacksmith-16vcpu-ubuntu-2404' || 'ubuntu-latest' }}
+    runs-on: ${{ !github.event.repository.fork && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'blacksmith-16vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     # Forks use an isolated GitHub runner without access to the shared Blacksmith cache.
     timeout-minutes: 180
     env:
-      BLACKSMITH_BUILD: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+      BLACKSMITH_BUILD: ${{ !github.event.repository.fork && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     permissions:
       contents: read
 

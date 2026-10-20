@@ -71,9 +71,9 @@ gh workflow run release-docker-github-experimental.yml \
 ```
 
 This opt-in path does not publish images. It builds the production Dockerfile
-on native 16-vCPU runners, loads each image locally, and runs the existing runtime,
+on native 16-vCPU AMD64 and 32-vCPU ARM64 runners, loads each image locally, and runs the existing runtime,
 migration, startup and Chromium smoke checks. It fails if Blacksmith's persistent
-builder is unavailable. ARM64 uses 16 compiler workers; AMD64 retains four.
+builder is unavailable. ARM64 uses 32 compiler workers; AMD64 retains four.
 
 Run twice sequentially. A successful first run commits the cache. Each trial
 uses a new application identity, so a warm run still compiles and packages the
@@ -137,7 +137,7 @@ prove Sentry upload, the cloud build profile, or Kubernetes deployment.
 Record build and complete job durations, cache size, and actual billed usage.
 Compare like workloads: warm application rebuilds, cold Node compilation, and
 fully cached images are different measurements. Include Blacksmith compute,
-cache storage, and temporary ECR storage when estimating monthly cost.
+cache storage, and ECR storage and transfer when estimating monthly cost.
 
 After merging, validate a community experimental release and a staging cloud
 deployment before removing Depot credentials or canceling its subscription.
@@ -166,4 +166,5 @@ gate; a successful AMD64 cache trial is not evidence for ARM64 persistence.
 - [Blacksmith Docker caching](https://docs.blacksmith.sh/blacksmith-caching/docker-builds)
 - [Blacksmith runner sizes](https://docs.blacksmith.sh/blacksmith-runners/overview)
 - [Blacksmith pricing](https://www.blacksmith.sh/pricing)
+- [ECR storage and transfer pricing](https://aws.amazon.com/ecr/pricing/)
 - [ECR lifecycle policies](https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html)

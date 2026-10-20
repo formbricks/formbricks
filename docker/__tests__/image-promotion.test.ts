@@ -4,6 +4,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { runInNewContext } from "node:vm";
 import { describe, expect, test } from "vitest";
 import { buildIdentity } from "../../.github/actions/prepare-docker-image/build-identity.mjs";
 
@@ -29,7 +30,35 @@ const validation = load(
     fileURLToPath(new URL("../../.github/workflows/docker-build-validation.yml", import.meta.url)),
     "utf8"
   )
-) as { jobs: { "validate-docker-build": { steps: Step[] } } };
+) as { jobs: { "validate-docker-build": Job } };
+
+describe("PR builder isolation", () => {
+  test.each([
+    { event: "pull_request", fork: false, head: "formbricks/formbricks", blacksmith: true },
+    { event: "pull_request", fork: false, head: "contributor/formbricks", blacksmith: false },
+    { event: "pull_request", fork: true, head: "formbricks/formbricks", blacksmith: false },
+    { event: "workflow_dispatch", fork: false, blacksmith: true },
+    { event: "workflow_dispatch", fork: true, blacksmith: false },
+    { event: "merge_group", fork: false, blacksmith: true },
+  ])("routes $event with fork=$fork and head=$head", ({ event, fork, head, blacksmith }) => {
+    const job = validation.jobs["validate-docker-build"];
+    const github = {
+      event_name: event,
+      repository: "formbricks/formbricks",
+      event: {
+        repository: { fork },
+        ...(head ? { pull_request: { head: { repo: { full_name: head } } } } : {}),
+      },
+    };
+    // These workflow expressions use boolean/string operators shared with JavaScript.
+    // Execute the actual routing expressions so runner choice and builder setup stay aligned.
+    const evaluate = (expression: string) => runInNewContext(expression.slice(3, -2), { github });
+    expect(evaluate(job.env?.BLACKSMITH_BUILD ?? "")).toBe(blacksmith);
+    expect(evaluate(job["runs-on"] ?? "")).toBe(
+      blacksmith ? "blacksmith-16vcpu-ubuntu-2404" : "ubuntu-latest"
+    );
+  });
+});
 
 describe("image startup validation", () => {
   test.each([true, false])(
