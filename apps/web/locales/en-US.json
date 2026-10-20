@@ -2271,6 +2271,7 @@
     },
     "creatives": {
       "archive_anyway": "Archive anyway",
+      "archive_restore_note": "You can restore it from the list later. It comes back as a Draft.",
       "column_opens": "Opens",
       "conditions": {
         "add": "Add condition",
@@ -2524,8 +2525,8 @@
       "toast_archived": "{name} is archived",
       "toast_deleted": "Creative deleted",
       "toast_duplicated": "Creative duplicated as a draft",
-      "toast_restored": "{name} is back in the list",
-      "toast_restored_as_draft": "{name} is back as a draft, since it has nothing to open. Pick what it opens before you publish it again.",
+      "toast_restored": "{name} is back as a Draft",
+      "toast_restored_without_destination": "{name} is back as a Draft, with nothing to open. Pick what it opens before you publish it again.",
       "type_banner": "Banner",
       "type_banner_description": "A bar across the top or bottom of the page.",
       "type_feedback_button": "Feedback button",

@@ -304,7 +304,7 @@ export function registerCreativeTools(server: McpServer): void {
     "archive_creative",
     {
       title: "Archive creative",
-      description: `Set a creative aside: it stops showing, leaves the default list and becomes read-only, and keeps its status and counts. Reverse it with restore_creative. ${LAST_OPENER_NOTE}`,
+      description: `Set a creative aside: it stops showing, leaves the default list and becomes read-only, and keeps its counts. restore_creative brings it back as a draft, to publish again. ${LAST_OPENER_NOTE}`,
       inputSchema: ZMcpCreativeIdInput,
       outputSchema: ZMcpCreativeOutput,
       audit: { action: "archived", targetType: "creative", targetIdArg: "creativeId" },
@@ -338,7 +338,7 @@ export function registerCreativeTools(server: McpServer): void {
     {
       title: "Restore creative",
       description:
-        "Bring an archived creative back with its status. One left without a usable Destination comes back as a draft, and a survey that can no longer be its Destination is unlinked.",
+        "Bring an archived creative back, always as a draft whatever status it had: to show it again, publish it with patch_creative (status). A survey that can no longer be its Destination is unlinked.",
       inputSchema: ZMcpCreativeIdInput,
       outputSchema: ZMcpCreativeOutput,
       audit: { action: "restored", targetType: "creative", targetIdArg: "creativeId" },
