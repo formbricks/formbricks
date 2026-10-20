@@ -28,6 +28,8 @@ interface ResponsePageProps {
   isQuotasAllowed: boolean;
   quotas: TSurveyQuota[];
   initialResponses?: TResponseWithQuotas[];
+  /** Creatives open this survey: its table then shows "Opened by creative" by default. */
+  isOpenedByCreatives: boolean;
 }
 
 export const ResponsePage = ({
@@ -41,6 +43,7 @@ export const ResponsePage = ({
   isQuotasAllowed,
   quotas,
   initialResponses = [],
+  isOpenedByCreatives,
 }: ResponsePageProps) => {
   const [responses, setResponses] = useState<TResponseWithQuotas[]>(initialResponses);
   const [page, setPage] = useState<number | null>(null);
@@ -197,6 +200,7 @@ export const ResponsePage = ({
         locale={locale}
         isQuotasAllowed={isQuotasAllowed}
         quotas={quotas}
+        isOpenedByCreatives={isOpenedByCreatives}
       />
     </>
   );

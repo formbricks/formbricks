@@ -16,6 +16,7 @@ import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context
 import { getTagsByWorkspaceId } from "@/lib/tag/service";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
+import { isSurveyOpenedByCreatives } from "@/modules/creatives/lib/survey-linked-creatives";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
@@ -36,12 +37,13 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string; sur
     params.surveyId
   );
 
-  const [survey, user, tags, isContactsEnabled, responseCount] = await Promise.all([
+  const [survey, user, tags, isContactsEnabled, responseCount, isOpenedByCreatives] = await Promise.all([
     getSurvey(params.surveyId),
     getUser(session.user.id),
     getTagsByWorkspaceId(workspace.id),
     getIsContactsEnabled(organization.id),
     getResponseCountBySurveyId(params.surveyId),
+    isSurveyOpenedByCreatives({ surveyId: params.surveyId, workspaceId: workspace.id }),
   ]);
 
   if (!survey) {
@@ -119,6 +121,7 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string; sur
         isQuotasAllowed={isQuotasAllowed}
         quotas={quotas}
         initialResponses={initialResponses}
+        isOpenedByCreatives={isOpenedByCreatives}
       />
     </PageContentWrapper>
   );
