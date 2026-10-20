@@ -89,7 +89,7 @@ jobs:
             echo '```text'
             docker buildx du
             echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
 
       - uses: ./.github/actions/setup-image-smoke
 
