@@ -76,13 +76,13 @@ export const CreativeListActions = ({ workspaceId, creative }: Readonly<Creative
     setUnopenedSurvey(await findSurveyLeftUnopened(workspaceId, creative));
   };
 
-  // Restoring brings a creative back as a Draft when its Destination was unlinked while it was archived.
+  // Restoring always brings a creative back as a Draft; one whose survey was unlinked has nothing to open.
   const handleRestore = () =>
     restore.mutate(creative.id, {
       onSuccess: (restored) =>
         toast.success(
-          restored.status === "draft" && creative.status !== "draft"
-            ? t("workspace.creatives.toast_restored_as_draft", { name })
+          restored.warnings.some(({ code }) => code === "destinationMissing")
+            ? t("workspace.creatives.toast_restored_without_destination", { name })
             : t("workspace.creatives.toast_restored", { name })
         ),
       onError,
@@ -171,6 +171,8 @@ export const CreativeListActions = ({ workspaceId, creative }: Readonly<Creative
         open={isArchiveWarningOpen}
         setOpen={setIsArchiveWarningOpen}
         title={t("workspace.creatives.last_opener_title", { survey: unopenedSurvey ?? "" })}
+        // Archiving can be undone: the modal's default says it can't.
+        description={t("workspace.creatives.archive_restore_note")}
         body={
           <p className="text-sm text-slate-700">
             {t("workspace.creatives.last_opener_warning", { survey: unopenedSurvey ?? "" })}

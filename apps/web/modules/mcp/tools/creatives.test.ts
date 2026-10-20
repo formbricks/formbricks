@@ -232,14 +232,19 @@ describe("registerCreativeTools", () => {
     for (const name of ["patch_creative", "delete_creative"]) {
       expect(annotationsOf(name), name).toMatchObject({ readOnlyHint: false, destructiveHint: true });
     }
-    // Reversible, and a second call finds nothing left to change.
-    for (const name of ["archive_creative", "restore_creative"]) {
-      expect(annotationsOf(name), name).toMatchObject({
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: true,
-      });
-    }
+    // Archiving takes a creative off the site and out of the default list, like archive_workflow; a
+    // second call finds nothing left to change.
+    expect(annotationsOf("archive_creative")).toMatchObject({
+      readOnlyHint: false,
+      destructiveHint: true,
+      idempotentHint: true,
+    });
+    // Restoring brings it back as a Draft, which shows nowhere until it is published.
+    expect(annotationsOf("restore_creative")).toMatchObject({
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: true,
+    });
   });
 
   test("every tool declares an output schema", () => {

@@ -1227,8 +1227,9 @@ send the complete group. Publish, pause, close and reopen by setting `status`. A
 read-only (`422`): restore it first.
 
 **`delete_creative`** is permanent and takes the creative's counts with it; `archive_creative` takes one
-off the site and keeps its history, and `restore_creative` brings it back. Archiving and restoring are
-idempotent and not annotated destructive. `duplicate_creative` copies a creative into a new draft without
+off the site and keeps its history, and `restore_creative` brings it back, always as a draft to publish
+again. Archiving and restoring are idempotent; archiving is annotated destructive, like `archive_workflow`:
+it takes the creative off the site, and its status doesn't come back with it. Restoring is not. `duplicate_creative` copies a creative into a new draft without
 its counts. `get_creative_stats` reads Impressions, Clicks and Click rate per UTC day, with an optional
 `from`/`to` range and `groupBy` of `page` or `device`.
 

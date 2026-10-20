@@ -2,12 +2,13 @@ post:
   operationId: restoreCreativeV3
   summary: Restore a creative
   description: >-
-    Brings an archived creative back with the status it had. It comes back as a **draft** instead when
-    it needs a Destination and no longer has a usable one: its survey was unlinked while it was
-    archived, or can no longer be a Destination (it became Restricted, single-use or PIN-protected, in
-    which case it is unlinked now). It never reappears on a site by surprise. Restoring a creative that
-    isn't archived changes nothing. Read/write access to its workspace; an unknown or inaccessible
-    `creativeId` answers **403**.
+    Brings an archived creative back, always as a **draft**, whatever status it had: it never
+    reappears on a site by surprise, and showing it again means publishing it again. Its content,
+    styling and counts come back as they were, and so does its Destination, unless its survey can no
+    longer be one (it became Restricted, single-use or PIN-protected), in which case it is unlinked
+    now. `publishedAt` keeps when it was first published. Restoring a creative that isn't archived
+    changes nothing. Read/write access to its workspace; an unknown or inaccessible `creativeId`
+    answers **403**.
   tags:
     - V3 Creatives
   parameters:

@@ -4340,7 +4340,7 @@ paths:
     post:
       operationId: archiveCreativeV3
       summary: Archive a creative
-      description: 'Sets a creative aside: it never shows, it no longer blocks changes to its survey, it leaves the default list, and it becomes read-only until restored. Its status and counts are kept. Archiving an archived creative changes nothing. Read/write access to its workspace; an unknown or inaccessible `creativeId` answers **403**. Archiving the last creative that opens a live app survey with no actions of its own succeeds; that survey then shows nowhere until a creative or an action opens it again.'
+      description: 'Sets a creative aside: it never shows, it no longer blocks changes to its survey, it leaves the default list, and it becomes read-only until restored. Its status and counts are kept while it is archived; restoring it brings it back as a draft. Archiving an archived creative changes nothing. Read/write access to its workspace; an unknown or inaccessible `creativeId` answers **403**. Archiving the last creative that opens a live app survey with no actions of its own succeeds; that survey then shows nowhere until a creative or an action opens it again.'
       tags:
         - V3 Creatives
       parameters:
@@ -4384,7 +4384,7 @@ paths:
     post:
       operationId: restoreCreativeV3
       summary: Restore a creative
-      description: 'Brings an archived creative back with the status it had. It comes back as a **draft** instead when it needs a Destination and no longer has a usable one: its survey was unlinked while it was archived, or can no longer be a Destination (it became Restricted, single-use or PIN-protected, in which case it is unlinked now). It never reappears on a site by surprise. Restoring a creative that isn''t archived changes nothing. Read/write access to its workspace; an unknown or inaccessible `creativeId` answers **403**.'
+      description: 'Brings an archived creative back, always as a **draft**, whatever status it had: it never reappears on a site by surprise, and showing it again means publishing it again. Its content, styling and counts come back as they were, and so does its Destination, unless its survey can no longer be one (it became Restricted, single-use or PIN-protected), in which case it is unlinked now. `publishedAt` keeps when it was first published. Restoring a creative that isn''t archived changes nothing. Read/write access to its workspace; an unknown or inaccessible `creativeId` answers **403**.'
       tags:
         - V3 Creatives
       parameters:
@@ -11445,7 +11445,7 @@ components:
       additionalProperties: false
     FeedbackButtonPlacement:
       type: object
-      description: 'Where a feedback button sits: an edge of the page plus an offset along it, in percent. On the left and right edges the offset runs from the top; on the bottom edge, from the left.'
+      description: 'Where a feedback button sits: an edge of the page plus an offset along it, in percent, that places the button''s centre. On the left and right edges the offset runs from the top; on the bottom edge, from the left. 50 centres the button on its edge. Near either end the button stops at the end of the edge instead, so it stays fully on screen: 0 puts its top (or left) end at the start of the edge and 100 its bottom (or right) end at the end.'
       required:
         - edge
         - offset
@@ -11596,7 +11596,7 @@ components:
         position:
           desktop:
             edge: right
-            offset: 60
+            offset: 50
           phone: null
         theme:
           customStyles: false
@@ -12010,7 +12010,7 @@ components:
               $ref: '#/components/schemas/FeedbackButtonContent'
             styling:
               $ref: '#/components/schemas/FeedbackButtonStyling'
-              description: Omit for the right edge at 60 % from the top on every device, with custom styles off (the workspace Look & Feel).
+              description: Omit for the right edge at 50 % (centred top to bottom) on every device, with custom styles off (the workspace Look & Feel).
       unevaluatedProperties: false
       description: Create a feedback button.
     CreateBannerCreativeRequest:

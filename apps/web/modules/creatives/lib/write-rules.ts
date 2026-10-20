@@ -309,18 +309,19 @@ export const getCreativeReferenceProblems = ({
 };
 
 /**
- * An archived creative coming back. A survey that can no longer be a Destination is unlinked, and a
- * creative that needs a Destination and has none comes back as Draft, so it never reappears on a site
- * by surprise. Otherwise it keeps the status it had.
+ * An archived creative coming back, always as a Draft (decided 20 Oct), so it never reappears on a site
+ * by surprise: its author publishes it again. A survey that can no longer be a Destination is unlinked.
+ * `publishedAt` stays: it records when the creative was first published.
  */
 export const planCreativeRestore = (
   state: TCreativeState,
   destinationIssue: TDestinationSurveyIssue | null
-): TCreativeState => {
-  const destination = state.destination?.type === "survey" && destinationIssue ? null : state.destination;
-  const restored: TCreativeState = { ...state, archivedAt: null, destination };
-  return needsDestination(restored) && destination === null ? { ...restored, status: "draft" } : restored;
-};
+): TCreativeState => ({
+  ...state,
+  status: "draft",
+  archivedAt: null,
+  destination: state.destination?.type === "survey" && destinationIssue ? null : state.destination,
+});
 
 /** A copy as a new Draft, never archived; a survey that can no longer be a Destination is left out. */
 export const planCreativeDuplicate = (

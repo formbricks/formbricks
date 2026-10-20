@@ -312,7 +312,7 @@ describe("createV3Creative", () => {
       languages: [{ code: "en-US", default: true, enabled: true }],
       destination: { type: "survey", surveyId: APP_SURVEY_ID, surveyName: "Site feedback", opensAs: "popup" },
       distribution: { showOn: "pageView", triggers: [], conditions: null, displayPercentage: null },
-      styling: { position: { desktop: { edge: "right", offset: 60 }, phone: null } },
+      styling: { position: { desktop: { edge: "right", offset: 50 }, phone: null } },
       warnings: [],
     });
   });
@@ -872,15 +872,46 @@ describe("custom CSS", () => {
 });
 
 describe("archiveV3Creative and restoreV3Creative", () => {
-  test("archiving keeps the status; restoring brings it back as it was", async () => {
-    const { id } = await created(feedbackButton({ status: "inProgress" }));
+  test("archiving keeps the status; restoring brings it back as a Draft, with its Destination", async () => {
+    const { id, publishedAt } = await created(feedbackButton({ status: "inProgress" }));
 
     const archived = (await readBody(await archiveV3Creative({ ...base, creativeId: id }))).data;
     const restored = (await readBody(await restoreV3Creative({ ...base, creativeId: id }))).data;
 
     expect(archived).toMatchObject({ status: "inProgress", displayStatus: "archived" });
     expect(archived.archivedAt).not.toBeNull();
-    expect(restored).toMatchObject({ status: "inProgress", displayStatus: "active", archivedAt: null });
+    expect(restored).toMatchObject({
+      status: "draft",
+      displayStatus: "draft",
+      archivedAt: null,
+      publishedAt,
+      destination: { type: "survey", surveyId: APP_SURVEY_ID },
+      warnings: [],
+    });
+  });
+
+  test.each(["paused", "completed"] as const)(
+    "a %s creative comes back as a Draft too, so it never reappears on a site by surprise",
+    async (status) => {
+      const { id } = await created(feedbackButton({ status: "inProgress" }));
+      await patchV3Creative({ ...base, creativeId: id, body: { status } });
+      await archiveV3Creative({ ...base, creativeId: id });
+
+      const restored = (await readBody(await restoreV3Creative({ ...base, creativeId: id }))).data;
+
+      expect(restored).toMatchObject({ status: "draft", displayStatus: "draft" });
+    }
+  );
+
+  test("a restored Draft can be published again", async () => {
+    const { id } = await created(feedbackButton({ status: "inProgress" }));
+    await archiveV3Creative({ ...base, creativeId: id });
+    await restoreV3Creative({ ...base, creativeId: id });
+
+    const response = await patchV3Creative({ ...base, creativeId: id, body: { status: "inProgress" } });
+
+    expect(response.status).toBe(200);
+    expect((await readBody(response)).data).toMatchObject({ status: "inProgress", displayStatus: "active" });
   });
 
   test("a creative whose survey was unlinked while archived comes back as a Draft", async () => {
@@ -908,13 +939,13 @@ describe("archiveV3Creative and restoreV3Creative", () => {
     expect(restored).toMatchObject({ status: "draft", destination: null });
   });
 
-  test("a notice-only banner needs no Destination and keeps its status", async () => {
+  test("a notice-only banner, which needs no Destination, comes back as a Draft too", async () => {
     const { id } = await created(banner({ status: "inProgress" }));
     await archiveV3Creative({ ...base, creativeId: id });
 
     const restored = (await readBody(await restoreV3Creative({ ...base, creativeId: id }))).data;
 
-    expect(restored).toMatchObject({ status: "inProgress", displayStatus: "active" });
+    expect(restored).toMatchObject({ status: "draft", displayStatus: "draft" });
   });
 });
 
