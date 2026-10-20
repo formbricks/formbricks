@@ -86,6 +86,8 @@ caches. Successful production and PR builds prune reclaimable BuildKit cache to
 30 GB per builder. This is not a hard billing limit: snapshots, active records,
 and Docker storage can differ from BuildKit's logical size. Monitor actual
 storage in Blacksmith's dashboard, particularly after failed jobs.
+Blacksmith also evicts builder caches after seven days of inactivity. Infrequent
+release builds may therefore compile Node from scratch again.
 
 ## Registry transport trial
 
@@ -101,6 +103,28 @@ anonymous access is denied, copies it unchanged to
 `ghcr.io/formbricks/blacksmith-registry-trial`, and signs and verifies the digest.
 The private fixture expires under the candidate policy. The public fixture and
 signatures remain for inspection. No Formbricks release tags are written.
+
+## Full candidate pipeline checks
+
+Once the native and registry trials pass, exercise the community and cloud
+profiles from the draft branch. These commands publish explicitly named test
+versions after validation. The community workflow also updates its branch tag
+in the experimental package; the cloud command leaves deployment tags unchanged.
+
+```sh
+trial_version="$(node -p "require('./apps/web/package.json').version.split('-')[0]")-blacksmith.$(date -u +%Y%m%d%H%M%S)"
+gh workflow run release-docker-github-experimental.yml \
+  --ref <trial-branch> -f version_override="$trial_version"
+gh workflow run build-and-push-ecr.yml \
+  --ref <trial-branch> -f version_override="$trial_version" \
+  -f deploy_production=false -f deploy_staging=false
+```
+
+Verify that both native validation jobs and promotion succeed in each run, that
+every destination tag matches its tested index digest, and that the community
+signature verifies. Record the runs in the migration PR. These checks exercise
+the actual release secrets, private candidate access, index assembly and
+promotion actions, beyond the isolated builder and Alpine transport trials.
 
 ## Cutover gate
 
@@ -119,6 +143,23 @@ After merging, validate a community experimental release and a staging cloud
 deployment before removing Depot credentials or canceling its subscription.
 If promotion partially changes tags, follow the forward-recovery procedure in
 [Image validation](IMAGE-VALIDATION.md); do not automatically roll back workloads.
+
+## Migration trial evidence
+
+[PR #9715](https://github.com/formbricks/formbricks/pull/9715) tracks current
+results and unresolved cutover gates. On October 20, 2026:
+
+| Workload                                       | Build duration  | Result                                               |
+| ---------------------------------------------- | --------------- | ---------------------------------------------------- |
+| AMD64 release trial, cold                      | 42m49s          | Native runtime and browser smoke passed              |
+| AMD64 release trial, warm                      | 3m00s and 3m37s | Real application rebuilds; Node cached; smoke passed |
+| ARM64 release trial, cold, 16 compiler workers | 60m36s          | Native runtime and browser smoke passed              |
+| AMD64 PR workflow, cold, 12 compiler workers   | 20m20s          | Complete Docker validation passed                    |
+
+The attempted ARM64 warm run restored an older cache snapshot and compiled Node
+again. The cold job logged a successful commit request, but that alone did not
+prove the next job could reuse it. Keep ARM64 warm-cache validation as a blocking
+gate; a successful AMD64 cache trial is not evidence for ARM64 persistence.
 
 ## References
 
