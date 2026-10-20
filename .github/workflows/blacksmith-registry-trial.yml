@@ -1,9 +1,12 @@
 name: Private candidate registry trial
 
 # Exercise registry transport independently of compilation. Only a public Alpine
-# fixture is copied into this dedicated private package; no release tags are used.
+# fixture is used. The temporary ECR tag and dedicated GHCR package are not releases.
 on:
   workflow_call:
+    secrets:
+      AWS_ECR_PUSH_ROLE_ARN:
+        required: true
 
 permissions:
   contents: read
@@ -19,8 +22,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
-      CANDIDATE: ghcr.io/${{ github.repository_owner }}/blacksmith-registry-trial
-      GH_TOKEN: ${{ github.token }}
+      PUBLIC_FIXTURE: ghcr.io/${{ github.repository_owner }}/blacksmith-registry-trial
+      PRIVATE_CANDIDATE: ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_REPOSITORY }}
+      ECR_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
+      TRIAL_TAG: blacksmith-registry-trial-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -35,6 +40,22 @@ jobs:
 
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        id: aws
+        with:
+          role-to-assume: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
+          aws-region: ${{ vars.ECR_REGION }}
+          mask-aws-account-id: true
+
+      - uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+
+      - name: Verify private staging repository
+        run: |
+          set -euo pipefail
+          test -n "$ECR_REPOSITORY"
+          actual="$(aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" --query 'repositories[0].repositoryUri' --output text)"
+          test "$actual" = "$PRIVATE_CANDIDATE"
+
       - name: Install registry copy tool
         run: |
           sudo apt-get update -qq
@@ -48,17 +69,16 @@ jobs:
           source="docker.io/library/alpine:3.23"
           digest="$(docker buildx imagetools inspect --format '{{json .Manifest}}' "$source" | jq -er '.digest')"
           [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
-          tag="trial-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          # Explicit temporary tag only: never latest, staging, or production.
           skopeo copy --all --preserve-digests --authfile "$HOME/.docker/config.json" \
-            "docker://docker.io/library/alpine@$digest" "docker://$CANDIDATE:$tag"
-          actual="$(docker buildx imagetools inspect --format '{{json .Manifest}}' "$CANDIDATE:$tag" | jq -er '.digest')"
+            "docker://docker.io/library/alpine@$digest" "docker://$PRIVATE_CANDIDATE:$TRIAL_TAG"
+          actual="$(docker buildx imagetools inspect --format '{{json .Manifest}}' "$PRIVATE_CANDIDATE:$TRIAL_TAG" | jq -er '.digest')"
           test "$actual" = "$digest"
-          docker buildx imagetools inspect --raw "$CANDIDATE@$digest" | jq -e '
+          docker buildx imagetools inspect --raw "$PRIVATE_CANDIDATE@$digest" | jq -e '
             any(.manifests[]; .platform.os == "linux" and .platform.architecture == "amd64") and
             any(.manifests[]; .platform.os == "linux" and .platform.architecture == "arm64")
           '
           echo "digest=$digest" >> "$GITHUB_OUTPUT"
-          echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
       - name: Verify candidate is private
         env:
@@ -66,14 +86,25 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          visibility="$(gh api "orgs/$GITHUB_REPOSITORY_OWNER/packages/container/blacksmith-registry-trial" --jq .visibility)"
-          test "$visibility" = private
-          if skopeo inspect --no-creds --raw "docker://$CANDIDATE@$DIGEST" > "$RUNNER_TEMP/anonymous-output" 2> "$RUNNER_TEMP/anonymous-error"; then
+          if skopeo inspect --no-creds --raw "docker://$PRIVATE_CANDIDATE@$DIGEST" > "$RUNNER_TEMP/anonymous-output" 2> "$RUNNER_TEMP/anonymous-error"; then
             echo "Candidate unexpectedly accessible without authentication" >&2
             exit 1
           fi
-          grep -Eiq 'unauthorized|denied|authentication required|forbidden' "$RUNNER_TEMP/anonymous-error"
-          echo "Package metadata confirms private visibility; anonymous access denied." >> "$GITHUB_STEP_SUMMARY"
+          if ! grep -Eiq 'unauthorized|denied|authentication required|forbidden|no basic auth credentials' "$RUNNER_TEMP/anonymous-error"; then
+            cat "$RUNNER_TEMP/anonymous-error" >&2
+            exit 1
+          fi
+          echo "Private ECR repository confirmed; anonymous access denied." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Promote fixture to GHCR without rebuilding
+        env:
+          DIGEST: ${{ steps.copy.outputs.digest }}
+        run: |
+          set -euo pipefail
+          skopeo copy --all --preserve-digests --authfile "$HOME/.docker/config.json" \
+            "docker://$PRIVATE_CANDIDATE@$DIGEST" "docker://$PUBLIC_FIXTURE:$TRIAL_TAG"
+          actual="$(docker buildx imagetools inspect --format '{{json .Manifest}}' "$PUBLIC_FIXTURE:$TRIAL_TAG" | jq -er '.digest')"
+          test "$actual" = "$DIGEST"
 
       - uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
 
@@ -83,7 +114,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          image="$CANDIDATE@$DIGEST"
+          image="$PUBLIC_FIXTURE@$DIGEST"
           cosign sign --yes "$image"
           cosign verify \
             --certificate-identity "https://github.com/$GITHUB_REPOSITORY/.github/workflows/blacksmith-registry-trial.yml@$GITHUB_REF" \
@@ -93,8 +124,11 @@ jobs:
             "$RUNNER_TEMP/verification.json"
           echo "Multi-platform copy preserved $DIGEST; keyless signing and verification passed." >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Report fixture retention
-        if: always()
+      - name: Remove temporary ECR tag
+        if: ${{ always() && steps.aws.outcome == 'success' }}
         run: |
-          echo "Dedicated test package: $CANDIDATE. It contains only the public Alpine fixture and test signatures." >> "$GITHUB_STEP_SUMMARY"
-          echo "Production candidate retention and ECR promotion are separate cutover requirements." >> "$GITHUB_STEP_SUMMARY"
+          set -euo pipefail
+          aws ecr batch-delete-image --repository-name "$ECR_REPOSITORY" \
+            --image-ids "imageTag=$TRIAL_TAG" > "$RUNNER_TEMP/ecr-cleanup.json"
+          jq -e 'all(.failures[]; .failureCode == "ImageNotFound")' "$RUNNER_TEMP/ecr-cleanup.json"
+          echo "Temporary ECR tag removed. Public fixture/signatures remain in $PUBLIC_FIXTURE for inspection." >> "$GITHUB_STEP_SUMMARY"

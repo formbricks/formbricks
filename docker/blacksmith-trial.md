@@ -38,11 +38,13 @@ gh workflow run release-docker-github-experimental.yml \
   --ref <trial-branch> -f blacksmith_registry_trial=true
 ```
 
-It copies the immutable fixture into the dedicated
-`ghcr.io/formbricks/blacksmith-registry-trial` package, verifies private visibility
-and denied anonymous access, then signs and verifies the exact digest. The
-fixture and signatures remain available for inspection. It does not publish a
-Formbricks release, exercise ECR, or implement production candidate retention.
+It stages the immutable fixture under a unique temporary tag in the configured
+private ECR repository, checks denied anonymous access, copies it unchanged to
+`ghcr.io/formbricks/blacksmith-registry-trial`, and signs and verifies the exact
+digest. The ECR tag is removed afterward; the public fixture and signatures
+remain available for inspection. This requires the existing ECR variables and
+`AWS_ECR_PUSH_ROLE_ARN`, including permission to delete the temporary tag.
+It does not publish a Formbricks release or implement production candidate retention.
 
 ## Read the results
 

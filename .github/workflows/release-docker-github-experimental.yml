@@ -13,7 +13,7 @@ on:
         type: boolean
         default: false
       blacksmith_registry_trial:
-        description: "Validate private GHCR staging, digest-preserving copy and signing in a dedicated test package"
+        description: "Validate private ECR staging, digest-preserving copy to a dedicated GHCR test package, and signing"
         required: false
         type: boolean
         default: false
@@ -31,6 +31,7 @@ jobs:
   blacksmith-registry-trial:
     if: inputs.blacksmith_registry_trial
     uses: ./.github/workflows/blacksmith-registry-trial.yml
+    secrets: inherit
     permissions:
       contents: read
       packages: write
