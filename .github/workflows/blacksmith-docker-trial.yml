@@ -5,17 +5,29 @@ permissions:
   contents: read
 jobs:
   prune:
-    runs-on: blacksmith-16vcpu-ubuntu-2404
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: blacksmith-16vcpu-ubuntu-2404
+            limit: 15gb
+          - arch: arm64
+            runner: blacksmith-16vcpu-ubuntu-2404-arm
+            limit: 3gb
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 10
     steps:
       - uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184 # v2
         with:
-          cache-key: apps/web/Dockerfile-blacksmith-trial-amd64
+          cache-key: apps/web/Dockerfile-blacksmith-trial-${{ matrix.arch }}
           nofallback: true
       - name: Reclaim real cache entries and check disk usage
+        env:
+          CACHE_LIMIT: ${{ matrix.limit }}
         run: |
           docker buildx du
-          docker buildx prune --force --max-used-space 15gb
+          docker buildx prune --force --max-used-space "$CACHE_LIMIT"
           docker buildx du
           echo 'Cache reclamation and post-prune disk usage succeeded.'
       - name: Discard this diagnostic clone
