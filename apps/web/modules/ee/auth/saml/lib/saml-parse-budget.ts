@@ -36,7 +36,8 @@ const WORKER_STARTUP_TIMEOUT_MS = 5_000;
  * Main-thread parse time the SAML callback may spend per second, per process. A response that passes the budget is
  * parsed again by jackson on this thread, `JACKSON_PARSES_PER_RESPONSE` times on the signature path (issuer, decrypt,
  * xml2js, signature check), so each one is charged its worker-measured parse time times that. Past the allowance
- * the callback answers 503 rather than let many sources together keep the event loop busy with SAML. A real
+ * the callback answers 503 rather than let many sources together keep the event loop busy with SAML. It is checked
+ * when a response is queued and again when its parse finishes, so a burst can overdraw it by one response at most. A real
  * sign-in costs ~10-25 ms x 4, so this is a dozen or more sign-ins a second per process.
  */
 export const SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS = 300;
@@ -53,7 +54,10 @@ export type SamlParseProbe =
   | { outcome: "parsed"; ms: number; claims: SamlResponseClaims }
   /** It ran past the time budget or the worker's heap limit. */
   | { outcome: "too_costly"; reason: "time" | "memory" }
-  /** The queue was full, or this process has spent its parse allowance for now; nothing was parsed. */
+  /**
+   * The queue was full, or this process has spent its parse allowance for now, either before the job was queued or
+   * by the time the worker answered; the response does not reach jackson.
+   */
   | { outcome: "busy" }
   /** The worker could not start or died (out of memory, a crash); nothing is known about the response. */
   | { outcome: "failed" };
@@ -114,16 +118,36 @@ const settleRunning = (probe: SamlParseProbe) => {
   pump();
 };
 
-/** Settle the running job with `result` if it is that job's answer; a stale answer from an older job is ignored. */
+/** Tops up the main-thread parse allowance for the time passed, up to one second's worth. */
+const refillAllowance = (now: number) => {
+  const elapsed = now - pool.allowanceAt;
+  pool.allowanceAt = now;
+  pool.allowanceMs = Math.min(
+    SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS,
+    pool.allowanceMs + (elapsed * SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS) / 1000
+  );
+};
+
+/**
+ * Settle the running job with `result` if it is that job's answer; a stale answer from an older job is ignored. The
+ * allowance is checked again here, not only when the job was queued: every job in a full queue was accepted while
+ * the allowance was still positive, so a burst would otherwise all reach jackson at once. Here only the job that
+ * spends the allowance does, and the rest answer busy.
+ */
 const takeResult = (result: WorkerResult): boolean => {
   const job = pool.running;
   if (!job?.dispatched || result.id !== job.id) return false;
   if (result.ms > SAML_PARSE_TIME_BUDGET_MS) {
     settleRunning({ outcome: "too_costly", reason: "time" });
-  } else {
-    pool.allowanceMs -= result.ms * JACKSON_PARSES_PER_RESPONSE;
-    settleRunning({ outcome: "parsed", ms: result.ms, claims: result.claims });
+    return true;
   }
+  refillAllowance(performance.now());
+  if (pool.allowanceMs <= 0) {
+    settleRunning({ outcome: "busy" });
+    return true;
+  }
+  pool.allowanceMs -= result.ms * JACKSON_PARSES_PER_RESPONSE;
+  settleRunning({ outcome: "parsed", ms: result.ms, claims: result.claims });
   return true;
 };
 
@@ -247,16 +271,6 @@ function pump(): void {
     }
   );
 }
-
-/** Tops up the main-thread parse allowance for the time passed, up to one second's worth. */
-const refillAllowance = (now: number) => {
-  const elapsed = now - pool.allowanceAt;
-  pool.allowanceAt = now;
-  pool.allowanceMs = Math.min(
-    SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS,
-    pool.allowanceMs + (elapsed * SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS) / 1000
-  );
-};
 
 /**
  * Parse `samlResponseBase64` in the worker under `SAML_PARSE_TIME_BUDGET_MS`, decoded as jackson decodes it. Never

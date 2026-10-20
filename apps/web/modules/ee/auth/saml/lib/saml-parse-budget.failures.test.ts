@@ -213,6 +213,26 @@ describe("probeSamlResponseParse failure paths", () => {
     await expect(later).resolves.toMatchObject({ outcome: "parsed" });
   });
 
+  test("answers busy for a job queued before the allowance ran out, once the job ahead of it spends it", async () => {
+    const { probeSamlResponseParse, SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS } = await load();
+    // Both are accepted while the whole allowance is left.
+    const first = probeSamlResponseParse("PHIvPg==");
+    const second = probeSamlResponseParse("PHIvPg==");
+    await settle();
+    state.workers[0].ready();
+    mainPort(state.workers[0]).flush();
+    await settle();
+    state.workers[0].answer(SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS / 4);
+    mainPort(state.workers[0]).flush();
+    await expect(first).resolves.toMatchObject({ outcome: "parsed" });
+
+    await settle();
+    state.workers[0].answer(5);
+    mainPort(state.workers[0]).flush();
+
+    await expect(second).resolves.toEqual({ outcome: "busy" });
+  });
+
   test("ignores a stale answer for a job it no longer runs", async () => {
     const { probeSamlResponseParse } = await load();
     const probe = probeSamlResponseParse("PHIvPg==");
