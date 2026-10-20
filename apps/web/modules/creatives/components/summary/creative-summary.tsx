@@ -18,21 +18,19 @@ import { Button } from "@/modules/ui/components/button";
 import { IconBar } from "@/modules/ui/components/iconbar";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { useCreativeResource, useUpdateCreative } from "../../hooks/use-creative-editor";
+import { useCreativeResource } from "../../hooks/use-creative-editor";
+import { useCreativeStatusChange } from "../../hooks/use-creative-status-change";
 import { useCreativeStats } from "../../hooks/use-creative-summary";
 import type { TCreativeResource } from "../../lib/editor-form";
 import { getCreativeEditPath } from "../../lib/paths";
 import {
   type TCreativeStatsRangeSelection,
-  type TStatusChangeOutcome,
-  type TSummaryStatus,
   buildCreativeStatsSearchParams,
-  getStatusChangeOutcome,
   getSummaryStatusControl,
   resolveCreativeStatsRange,
 } from "../../lib/summary";
 import { getUiLocale } from "../../lib/ui-locale";
-import { CreativeTypeIndicator, INDICATOR_TYPES } from "../creative-icons";
+import { CreativeTypeIcon } from "../creative-icons";
 import { CreativeStatusPill } from "../creative-status-pill";
 import { CreativeSummaryStatsSkeleton } from "../skeletons";
 import { CreativeStatusDropdown } from "./creative-status-dropdown";
@@ -50,7 +48,6 @@ const CreativeFacts = ({ creative }: Readonly<{ creative: TCreativeResource }>) 
 
   return (
     <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pb-4 text-sm text-slate-600">
-      <CreativeTypeIndicator type={INDICATOR_TYPES[creative.type]} />
       {destination?.type === "survey" && (
         <span className="inline-flex items-center gap-1.5">
           <MessageCircleIcon className="size-4 text-slate-400" aria-hidden="true" />
@@ -94,33 +91,9 @@ export const CreativeSummary = ({
   const [now, setNow] = useState(() => new Date());
   const range = resolveCreativeStatsRange(selection, now);
   const stats = useCreativeStats(creative.id, buildCreativeStatsSearchParams(selection, now).toString());
-  const statusChange = useUpdateCreative(creative.id);
+  const statusChange = useCreativeStatusChange(creative.id);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const fallbackError = t("common.something_went_wrong_please_try_again");
-
-  const outcomeMessages: Record<TStatusChangeOutcome["message"], string> = {
-    active: t("workspace.creatives.summary.toast_active"),
-    scheduled: t("workspace.creatives.summary.toast_scheduled"),
-    paused: t("workspace.creatives.summary.toast_paused"),
-    closed: t("workspace.creatives.summary.toast_closed"),
-    scheduleEnded: t("workspace.creatives.summary.toast_kept_closed"),
-    surveyNotActive: t("workspace.creatives.summary.toast_waiting_for_survey"),
-    destinationMissing: t("workspace.creatives.status_reason_destination_missing"),
-    actionMissing: t("workspace.creatives.status_reason_action_missing"),
-  };
-
-  const changeStatus = (status: TSummaryStatus) =>
-    statusChange.mutate(
-      { status },
-      {
-        onSuccess: (updated) => {
-          const outcome = getStatusChangeOutcome(status, updated);
-          if (outcome.kind === "success") toast.success(outcomeMessages[outcome.message]);
-          else toast(outcomeMessages[outcome.message], { duration: 6000 });
-        },
-        onError: (error) => toast.error(getV3ApiErrorMessage(error, fallbackError)),
-      }
-    );
 
   const refresh = async () => {
     setIsRefreshing(true);
@@ -156,7 +129,14 @@ export const CreativeSummary = ({
   return (
     <PageContentWrapper>
       <PageHeader
-        pageTitle={creative.name || t("workspace.creatives.untitled_creative")}
+        pageTitle={
+          <span className="flex min-w-0 items-center gap-3">
+            <CreativeTypeIcon type={creative.type} className="size-7" />
+            <span className="min-w-0 truncate">
+              {creative.name || t("workspace.creatives.untitled_creative")}
+            </span>
+          </span>
+        }
         cta={
           <div className="flex shrink-0 items-center gap-x-1.5">
             {statusControl.kind === "select" ? (
@@ -164,7 +144,7 @@ export const CreativeSummary = ({
                 value={statusControl.value}
                 state={state}
                 disabled={statusChange.isPending}
-                onChange={changeStatus}
+                onChange={statusChange.changeStatus}
               />
             ) : (
               <CreativeStatusPill state={state} />

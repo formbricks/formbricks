@@ -31,18 +31,20 @@ const RadioCardSkeleton = () => (
 );
 
 /**
- * Mirrors `CreativeEditor` on its Content tab: the header bar (back, name, type, status, Save and
- * Publish), the side column at the editor's widths with its four tabs, the content panels, and the
- * preview pane with its device toggle and frame.
+ * Mirrors `CreativeEditor` on its Content tab: the header bar (back, type icon and name, then status,
+ * Save and Publish), the side column at the editor's widths with its four tabs, the content panels, and
+ * the preview pane with its device toggle and frame.
  */
 export const CreativeEditorSkeleton = () => (
   <div className="flex h-full flex-col">
     <div className="flex h-14 shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4">
       <Bone className="size-8 shrink-0" />
-      <Bone className="h-6 w-52 lg:w-64" />
-      <Bone className="hidden h-4 w-28 sm:block" />
-      <Bone className="h-6 w-20 rounded-full" />
-      <div className="ml-auto flex gap-2">
+      <div className="flex items-center gap-3">
+        <Bone className="size-4 shrink-0" />
+        <Bone className="h-6 w-52 lg:w-64" />
+      </div>
+      <div className="ml-auto flex items-center gap-2">
+        <Bone className="h-6 w-20 rounded-full" />
         <Bone className="h-9 w-20" />
         <Bone className="h-9 w-28" />
       </div>
@@ -110,14 +112,17 @@ export const CreativeSummaryStatsSkeleton = () => (
 );
 
 /**
- * Mirrors `CreativeSummary`: the survey summary's header (title, status dropdown and icon bar, then the
+ * Mirrors `CreativeSummary`: the survey summary's header (type icon and title, status dropdown and icon bar, then the
  * facts row where a survey has its tabs), the range picker with the freshness note, and the stats.
  */
 export const CreativeSummarySkeleton = () => (
   <div className="space-y-6 p-6">
     <div className="border-b border-slate-200">
       <div className="flex items-center justify-between gap-x-4 pb-4">
-        <Bone className="h-9 w-56" />
+        <div className="flex items-center gap-3">
+          <Bone className="size-7 shrink-0" />
+          <Bone className="h-9 w-56" />
+        </div>
         <div className="flex gap-x-1.5">
           <Bone className="h-9 w-[170px] md:w-[200px]" />
           <Bone className="h-9 w-[74px]" />

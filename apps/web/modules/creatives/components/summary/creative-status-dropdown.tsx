@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/cn";
 import {
   Select,
   SelectContent,
@@ -21,18 +22,21 @@ interface CreativeStatusDropdownProps {
   state: TCreativeDisplayState;
   disabled?: boolean;
   onChange: (status: TSummaryStatus) => void;
+  /** The trigger's width; the summary's by default. */
+  className?: string;
 }
 
 /**
  * The survey summary's status dropdown in creative words: Active · Paused · Closed. The trigger shows
  * the derived status (Scheduled, or Paused with its survey, with the reason on hover), as the survey's
- * shows Scheduled for a paused survey with a publish date.
+ * shows Scheduled for a paused survey with a publish date. The editor's header has it too.
  */
 export const CreativeStatusDropdown = ({
   value,
   state,
   disabled,
   onChange,
+  className = "w-[170px] md:w-[200px]",
 }: Readonly<CreativeStatusDropdownProps>) => {
   const { t } = useTranslation();
   // Every status has a word, though only a published, unarchived creative gets this control.
@@ -56,7 +60,7 @@ export const CreativeStatusDropdown = ({
   return (
     <TooltipRenderer shouldRender={!!reason} tooltipContent={reason} triggerClass="inline-flex">
       <Select value={value} disabled={disabled} onValueChange={(next: TSummaryStatus) => onChange(next)}>
-        <SelectTrigger className="w-[170px] bg-white md:w-[200px]" aria-label={t("common.status")}>
+        <SelectTrigger className={cn("bg-white", className)} aria-label={t("common.status")}>
           <SelectValue>
             <span className="flex items-center">
               <SurveyStatusIndicator status={indicator.status} isScheduled={indicator.isScheduled} />

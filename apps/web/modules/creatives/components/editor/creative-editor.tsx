@@ -24,6 +24,7 @@ import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { useBeforeUnloadPrompt } from "@/modules/ui/hooks/use-before-unload-prompt";
 import { useCreativeResource, useUpdateCreative } from "../../hooks/use-creative-editor";
+import { useCreativeStatusChange } from "../../hooks/use-creative-status-change";
 import { useCreativeWarningText } from "../../hooks/use-creative-warning-text";
 import type { TDestinationSurveyOption } from "../../lib/destination-options";
 import {
@@ -45,10 +46,13 @@ import {
   getPublishIssues,
   getSaveIssues,
 } from "../../lib/publish-check";
+import { keepSaveFromGoingLive, toSurveyStates } from "../../lib/save-status";
 import { CREATIVE_CSS_SCOPE, getCreativeStyle } from "../../lib/style";
 import { type TCreativeDevice, toStyleSource, withTheme } from "../../lib/styling-form";
-import { CreativeTypeIndicator } from "../creative-icons";
+import { getSummaryStatusControl } from "../../lib/summary";
+import { CreativeTypeIcon } from "../creative-icons";
 import { CreativeStatusPill } from "../creative-status-pill";
+import { CreativeStatusDropdown } from "../summary/creative-status-dropdown";
 import { ContentTab } from "./content-tab";
 import { CreativePreview } from "./creative-preview";
 import type { TCreativeCustomCssConfig } from "./custom-css-panel";
@@ -62,9 +66,6 @@ const TAB_ICONS: Record<TCreativeEditorTab, LucideIcon> = {
   styling: PaletteIcon,
   settings: Settings2Icon,
 };
-
-// `CreativeTypeIndicator` still speaks the mock's type names, like the list.
-const INDICATOR_TYPES = { feedbackButton: "feedback_button", banner: "banner" } as const;
 
 /** Whether the form would change the stored creative if saved now. */
 const hasUnsavedChanges = (form: TCreativeEditorForm, creative: TCreativeResource): boolean =>
@@ -101,6 +102,7 @@ export const CreativeEditor = ({
   const nameRef = useRef<HTMLInputElement>(null);
   const { data: creative } = useCreativeResource(initialCreative);
   const updateCreative = useUpdateCreative(initialCreative.id);
+  const statusChange = useCreativeStatusChange(initialCreative.id);
   const [form, setForm] = useState(() => toCreativeEditorForm(initialCreative));
   const [activeTab, setActiveTab] = useState<TCreativeEditorTab>("content");
   const [device, setDevice] = useState<TCreativeDevice>("desktop");
@@ -186,7 +188,31 @@ export const CreativeEditor = ({
     );
   };
 
-  const onSaved = (intent: TCreativeSaveIntent, saved: TCreativeResource) => {
+  // The save paused it rather than take it live; going live is the author's own step.
+  const toastKeptPaused = () =>
+    toast.success(
+      (item) => (
+        <span className="flex items-center gap-3">
+          <span>{t("workspace.creatives.editor.toast_saved_kept_paused")}</span>
+          <button
+            type="button"
+            className="shrink-0 text-sm font-medium text-slate-900 underline hover:text-slate-700"
+            onClick={() => {
+              toast.dismiss(item.id);
+              statusChange.changeStatus("inProgress");
+            }}>
+            {t("workspace.creatives.status_action_resume")}
+          </button>
+        </span>
+      ),
+      { duration: 10000 }
+    );
+
+  const onSaved = (intent: TCreativeSaveIntent, saved: TCreativeResource, keptPaused: boolean) => {
+    if (keptPaused) {
+      toastKeptPaused();
+      return;
+    }
     if (intent === "save") {
       toast.success(t("workspace.creatives.editor.toast_saved"));
       return;
@@ -202,7 +228,11 @@ export const CreativeEditor = ({
 
   const submit = async (intent: TCreativeSaveIntent, { confirmed = false } = {}) => {
     if (flag(intent, getIssues(intent))) return;
-    const body = buildCreativePatch(form, creative, intent);
+    // A Save never takes it live by itself (`save-status.ts`); Publish is the author going live.
+    const { body, keptPaused } = keepSaveFromGoingLive(creative, buildCreativePatch(form, creative, intent), {
+      surveys: toSurveyStates(surveyOptions),
+      now: new Date(),
+    });
     // A relink that leaves a live app survey nothing opens asks first (A1); the save is allowed anyway.
     if (!confirmed && creative.archivedAt === null && stopsOpeningSurvey(creative, body)) {
       setPendingIntent(intent);
@@ -217,7 +247,7 @@ export const CreativeEditor = ({
     setServerIssueTab(null);
     setPendingIntent(intent);
     updateCreative.mutate(body, {
-      onSuccess: (saved) => onSaved(intent, saved),
+      onSuccess: (saved) => onSaved(intent, saved, keptPaused),
       onError: onSaveError,
       onSettled: () => setPendingIntent(null),
     });
@@ -244,6 +274,11 @@ export const CreativeEditor = ({
   };
 
   const isSaving = updateCreative.isPending;
+  // One write at a time: a save decides on the status the menu may be changing.
+  const isBusy = isSaving || statusChange.isPending;
+  // Like the summary: a published creative's menu (Active · Paused · Closed); a Draft goes live with Publish.
+  const statusControl = getSummaryStatusControl(creative, isReadOnly);
+  const displayState = { status: creative.displayStatus, reason: creative.displayStatusReason };
 
   return (
     <div className="flex h-full flex-col">
@@ -253,42 +288,50 @@ export const CreativeEditor = ({
             <ArrowLeftIcon />
           </Link>
         </Button>
-        <input
-          ref={nameRef}
-          value={form.name}
-          onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
-          placeholder={t("workspace.creatives.untitled_creative")}
-          aria-label={t("workspace.creatives.editor.name_label")}
-          aria-invalid={issues.includes("name_missing") || undefined}
-          maxLength={255}
-          className="h-9 w-56 min-w-0 rounded-md border border-transparent px-2 text-base font-semibold text-slate-900 transition-colors outline-none placeholder:font-normal placeholder:text-slate-400 hover:border-slate-200 focus:border-slate-300 aria-invalid:border-red-400 lg:w-72"
-        />
-        <span className="hidden sm:block">
-          <CreativeTypeIndicator type={INDICATOR_TYPES[creative.type]} />
-        </span>
-        <CreativeStatusPill
-          state={{ status: creative.displayStatus, reason: creative.displayStatusReason }}
-        />
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-1">
+          <CreativeTypeIcon type={creative.type} />
+          <input
+            ref={nameRef}
+            value={form.name}
+            onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+            placeholder={t("workspace.creatives.untitled_creative")}
+            aria-label={t("workspace.creatives.editor.name_label")}
+            aria-invalid={issues.includes("name_missing") || undefined}
+            maxLength={255}
+            className="h-9 w-56 min-w-0 rounded-md border border-transparent px-2 text-base font-semibold text-slate-900 transition-colors outline-none placeholder:font-normal placeholder:text-slate-400 hover:border-slate-200 focus:border-slate-300 aria-invalid:border-red-400 lg:w-72"
+          />
+        </div>
+        <div className="ml-auto flex shrink-0 items-center gap-2">
+          {statusControl.kind === "select" ? (
+            <CreativeStatusDropdown
+              value={statusControl.value}
+              state={displayState}
+              disabled={isBusy}
+              onChange={statusChange.changeStatus}
+              className="w-36"
+            />
+          ) : (
+            <CreativeStatusPill state={displayState} />
+          )}
           {isDraft ? (
             <>
               <Button
                 variant="secondary"
                 onClick={() => void submit("save")}
-                disabled={!canSave || isSaving}
+                disabled={!canSave || isBusy}
                 loading={pendingIntent === "save"}>
                 {t("common.save")}
               </Button>
               <Button
                 onClick={() => void submit("publish")}
-                disabled={!canSave || isSaving}
+                disabled={!canSave || isBusy}
                 loading={pendingIntent === "publish"}>
                 <ZapIcon />
                 {t("workspace.creatives.editor.publish")}
               </Button>
             </>
           ) : (
-            <Button onClick={() => void submit("save")} disabled={!canSave || isSaving} loading={isSaving}>
+            <Button onClick={() => void submit("save")} disabled={!canSave || isBusy} loading={isSaving}>
               {t("common.save")}
             </Button>
           )}

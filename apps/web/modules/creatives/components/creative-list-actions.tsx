@@ -3,10 +3,15 @@
 import {
   ArchiveIcon,
   ArchiveRestoreIcon,
+  CircleCheckIcon,
   CopyPlusIcon,
+  type LucideIcon,
   MoreVertical,
+  PauseIcon,
+  PlayIcon,
   SquarePenIcon,
   TrashIcon,
+  ZapIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -23,10 +28,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { useCreativeStatusChange } from "../hooks/use-creative-status-change";
 import { useCreativeRowActions } from "../hooks/use-creatives-list";
 import { findSurveyLeftUnopened } from "../lib/last-opener-check";
 import type { TCreativeListItem } from "../lib/list-api";
 import { getCreativeEditPath } from "../lib/paths";
+import { type TRowStatusAction, getRowStatusActions } from "../lib/summary";
+
+const STATUS_ACTION_ICONS: Record<TRowStatusAction["action"], LucideIcon> = {
+  publish: ZapIcon,
+  pause: PauseIcon,
+  resume: PlayIcon,
+  close: CircleCheckIcon,
+  reopen: PlayIcon,
+};
 
 interface CreativeListActionsProps {
   workspaceId: string;
@@ -43,10 +58,24 @@ export const CreativeListActions = ({ workspaceId, creative }: Readonly<Creative
   const [unopenedSurvey, setUnopenedSurvey] = useState<string | null>(null);
   const [isArchiveWarningOpen, setIsArchiveWarningOpen] = useState(false);
   const { duplicate, archive, restore, remove } = useCreativeRowActions();
+  const statusChange = useCreativeStatusChange(creative.id);
   const isArchived = creative.displayStatus === "archived";
   const name = creative.name || t("workspace.creatives.untitled_creative");
   const fallbackError = t("common.something_went_wrong_please_try_again");
   const onError = (error: Error) => toast.error(getV3ApiErrorMessage(error, fallbackError));
+  const editPath = getCreativeEditPath(workspaceId, creative.id);
+  const statusActionLabels: Record<TRowStatusAction["action"], string> = {
+    publish: t("workspace.creatives.editor.publish"),
+    pause: t("workspace.creatives.status_action_pause"),
+    resume: t("workspace.creatives.status_action_resume"),
+    close: t("workspace.creatives.status_action_close"),
+    reopen: t("workspace.creatives.status_action_reopen"),
+  };
+  // A draft's Publish opens the editor, which checks it before it goes live.
+  const runStatusAction = (item: TRowStatusAction) => {
+    if (item.action === "publish") router.push(editPath);
+    else statusChange.changeStatus(item.status);
+  };
 
   const handleDuplicate = () =>
     duplicate.mutate(creative.id, {
@@ -113,9 +142,21 @@ export const CreativeListActions = ({ workspaceId, creative }: Readonly<Creative
           <DropdownMenuGroup>
             <DropdownMenuItem
               icon={<SquarePenIcon className="size-4" />}
-              onSelect={() => router.push(getCreativeEditPath(workspaceId, creative.id))}>
+              onSelect={() => router.push(editPath)}>
               {t("common.edit")}
             </DropdownMenuItem>
+            {getRowStatusActions(creative).map((item) => {
+              const Icon = STATUS_ACTION_ICONS[item.action];
+              return (
+                <DropdownMenuItem
+                  key={item.action}
+                  icon={<Icon className="size-4" />}
+                  disabled={statusChange.isPending}
+                  onSelect={() => runStatusAction(item)}>
+                  {statusActionLabels[item.action]}
+                </DropdownMenuItem>
+              );
+            })}
             <DropdownMenuItem
               icon={<CopyPlusIcon className="size-4" />}
               disabled={duplicate.isPending}
