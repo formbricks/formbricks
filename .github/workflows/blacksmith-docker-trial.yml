@@ -25,7 +25,9 @@ jobs:
     # Cold builds compile Node from source; subsequent runs reuse that layer.
     timeout-minutes: 120
     env:
-      BUILD_IDENTITY: ${{ github.sha }}-blacksmith-trial
+      # Rebuild the application on every trial, while retaining dependency/Node layers.
+      # Otherwise a rerun measures an unchanged-image cache hit rather than a new release.
+      BUILD_IDENTITY: ${{ github.sha }}-blacksmith-trial-${{ github.run_id }}-${{ github.run_attempt }}
       IMAGE: formbricks-blacksmith-trial:${{ github.sha }}
       PLATFORM: linux/${{ matrix.arch }}
     steps:
