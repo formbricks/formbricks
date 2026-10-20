@@ -193,6 +193,18 @@ describe("maintenance-only preparation", () => {
     expect(result.output).toMatchObject({ code: "upgrade_spicedb_unhealthy", reason: "timeout" });
   });
 
+  test("reports an environment check that ran out its time as a timeout, not as invalid variables", () => {
+    const result = execute(acknowledgements, { TIMEOUT_STEP: "/home/nextjs/validate-env.mjs" });
+    expect(result.status).toBe(2);
+    expect(result.trace).toEqual([steps[0][0]]);
+    expect(result.output).toEqual({
+      status: "blocked",
+      code: "upgrade_configuration_invalid",
+      reason: "timeout",
+      timeoutSeconds: 5400,
+    });
+  });
+
   test("applies the configured limit to every step", () => {
     expect(execute().limits).toEqual(Array(steps.length).fill("5400"));
     const result = execute(acknowledgements, { FORMBRICKS_AUTHZED_PREPARE_STEP_TIMEOUT_SECONDS: "7200" });

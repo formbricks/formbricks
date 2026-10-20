@@ -65,6 +65,15 @@ if ! printf '%s\n' "$step_timeout" | grep -Eq '^[1-9][0-9]{0,4}$' ||
   exit 2
 fi
 
+# BusyBox `timeout` stops a step with SIGTERM, so a timed-out step exits 143, or with whatever its own
+# SIGTERM handler chooses. Neither identifies a timeout; the elapsed time since `started` does.
+exit_if_timed_out() {
+  if [ $(($(date +%s) - started)) -ge "$step_timeout" ]; then
+    result blocked "$1" "" ",\"reason\":\"timeout\",\"timeoutSeconds\":$step_timeout"
+    exit 2
+  fi
+}
+
 # Do not copy raw migration/SDK output into automation logs. Operators can run
 # individual commands in a restricted session to diagnose a stable step failure.
 run_step() {
@@ -74,12 +83,7 @@ run_step() {
   if output=$(timeout "$step_timeout" "$@" 2>/dev/null); then
     return 0
   fi
-  # BusyBox `timeout` stops a step with SIGTERM, so a timed-out step exits 143, or with whatever its own
-  # SIGTERM handler chooses. Neither identifies a timeout; the elapsed time does.
-  if [ $(($(date +%s) - started)) -ge "$step_timeout" ]; then
-    result blocked "$code" "" ",\"reason\":\"timeout\",\"timeoutSeconds\":$step_timeout"
-    exit 2
-  fi
+  exit_if_timed_out "$code"
   # A formbricks-authzed command ends with its own sanitized JSON line. Only its error code and retryable
   # flag are copied, each matched against a closed pattern, so nothing else of the output reaches the logs.
   last=$(printf '%s\n' "$output" | grep '^{' | tail -n 1)
@@ -94,7 +98,9 @@ run_step() {
 
 # The validator lists each invalid variable as "  - NAME: message". Only the names are reported: they say
 # what to fix, and nothing else of the output is copied, as for every other step.
+started=$(date +%s)
 if ! validation=$(timeout "$step_timeout" node /home/nextjs/validate-env.mjs 2>&1); then
+  exit_if_timed_out upgrade_configuration_invalid
   invalid=$(printf '%s\n' "$validation" | sed -n 's/^ *- \([A-Z][A-Z0-9_]*\):.*/"\1"/p' | sort -u | tr '\n' , | sed 's/,$//')
   result blocked upgrade_configuration_invalid "$invalid"
   exit 2
