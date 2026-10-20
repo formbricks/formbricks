@@ -310,8 +310,9 @@ export function registerCreativeTools(server: McpServer): void {
       audit: { action: "archived", targetType: "creative", targetIdArg: "creativeId" },
       annotations: {
         readOnlyHint: false,
-        // Restorable, and archiving an archived creative changes nothing.
-        destructiveHint: false,
+        // It takes the creative off the site, like archive_workflow, and its status doesn't come back:
+        // restore_creative gives a Draft. Archiving an archived creative changes nothing.
+        destructiveHint: true,
         idempotentHint: true,
         openWorldHint: true,
       },
