@@ -51,8 +51,8 @@ terminal; `docker compose logs --tail=200 formbricks-migrate` has it only when t
 chart deletes the Job 300 seconds after it fails). A first failure prints `Schema migration batch failed:` with
 every migration in that batch; the error names the failed one as `Migration name:`, or as `migration_name="…"`
 when the real error was hidden. Every run after that stops with `P3009` and names it again. If you have no log,
-including with `formbricks-authzed-prepare`, which prints only `upgrade_database_migration_failed`, the database
-always knows:
+including with `formbricks-authzed-prepare`, which prints only `upgrade_database_migration_failed` (plus
+`"reason":"timeout"` when the step ran out its time limit rather than failing), the database always knows:
 
 ```sql
 SELECT migration_name, started_at FROM "_prisma_migrations"
