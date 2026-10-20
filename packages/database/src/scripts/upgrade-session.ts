@@ -1,4 +1,5 @@
 import { Client, type QueryResultRow } from "pg";
+import { getPgConnectionConfig } from "../pg-connection-config";
 
 const LOCK_NAMESPACE = 19062026;
 const LOCK_ID = 61;
@@ -12,7 +13,7 @@ export type UpgradeSession = {
 };
 
 export const openUpgradeSession = async (connectionString: string): Promise<UpgradeSession> => {
-  const client = new Client({ connectionString, connectionTimeoutMillis: 10_000 });
+  const client = new Client({ ...getPgConnectionConfig(connectionString), connectionTimeoutMillis: 10_000 });
   const controller = new AbortController();
   const loseLock = () => controller.abort(new Error("upgrade_lock_lost"));
   client.on("error", loseLock);
@@ -103,7 +104,11 @@ export const readOnlineUpgradeCheckpoint = async <T extends QueryResultRow>(
   connectionString: string,
   release: string
 ): Promise<T | null> => {
-  const client = new Client({ connectionString, connectionTimeoutMillis: 10_000, statement_timeout: 10_000 });
+  const client = new Client({
+    ...getPgConnectionConfig(connectionString),
+    connectionTimeoutMillis: 10_000,
+    statement_timeout: 10_000,
+  });
   try {
     await client.connect();
     const table = await client.query<{ exists: boolean }>(
