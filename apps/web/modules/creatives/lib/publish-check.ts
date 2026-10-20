@@ -13,7 +13,7 @@ import { hasIncompleteConditions } from "./show-conditions-ui";
  * must meet every publish rule on each save.
  */
 
-export type TCreativeEditorTab = "content" | "language" | "styling" | "settings" | "schedule";
+export type TCreativeEditorTab = "content" | "language" | "styling" | "settings";
 
 export type TPublishIssue =
   | "name_missing"
@@ -38,7 +38,8 @@ export const PUBLISH_ISSUE_TABS: Record<TPublishIssue, TCreativeEditorTab | null
   link_invalid: "content",
   action_missing: "settings",
   condition_incomplete: "settings",
-  end_before_start: "schedule",
+  // The schedule is a card on the Settings tab.
+  end_before_start: "settings",
 };
 
 /** The v3 link Destination rule (`CreativeLinkDestinationInput`), so the editor and the API agree. */
@@ -125,7 +126,7 @@ const PARAM_GROUP_TABS = new Map<string, TCreativeEditorTab>([
   ["languages", "language"],
   ["styling", "styling"],
   ["distribution", "settings"],
-  ["schedule", "schedule"],
+  ["schedule", "settings"],
 ]);
 
 /** The tab that edits a field a v3 write refused (its `invalid_params[].name`); `null` for the header. */

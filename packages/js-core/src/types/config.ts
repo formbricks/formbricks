@@ -201,7 +201,7 @@ export interface TConfigInput {
   environmentId?: string;
   workspaceId?: string;
   appUrl: string;
-  /** How surveys render. Defaults to light; can be changed later with `setAppearance`. */
+  /** How surveys and creatives render. Defaults to light; can be changed later with `setAppearance`. */
   appearance?: "light" | "dark" | "system";
 }
 

@@ -2340,7 +2340,7 @@
         "add_button_description": "It opens a survey or a link. Without one, the banner is a notice only.",
         "add_language": "Add language",
         "app_survey_opens_as_popup": "App survey · opens as a popup",
-        "appearance_dark_description": "Shown when your app or the visitor's device asks for dark mode. Colors you leave empty here keep your light colors, or follow the workspace's dark colors. Font, size and position are the same in light and dark.",
+        "appearance_dark_description": "Shown when your app or the visitor's device asks for dark mode. Only colors and Custom CSS differ from light. Colors you leave empty here keep your light colors, or follow the workspace's dark colors.",
         "archived_read_only": "This creative is archived, so it can't be changed. Restore it from the list to edit it.",
         "automatic_value": "Automatic",
         "background_color": "Background",

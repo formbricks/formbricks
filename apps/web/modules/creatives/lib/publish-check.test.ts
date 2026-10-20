@@ -125,11 +125,12 @@ describe("getPublishIssues", () => {
     expect(getPublishIssues(readyButton, { notAllowedSurveyIds: ["clsurvey0000000000000002"] })).toEqual([]);
   });
 
-  test("an end at or before the start blocks Publish", () => {
+  test("an end at or before the start blocks Publish, and is sent to Settings, where Schedule is", () => {
     const start = new Date("2026-11-01T02:00:00.000Z");
     expect(getPublishIssues({ ...readyButton, schedule: { startAt: start, endAt: start } })).toEqual([
       "end_before_start",
     ]);
+    expect(PUBLISH_ISSUE_TABS.end_before_start).toBe("settings");
     expect(
       getPublishIssues({
         ...readyButton,
@@ -216,7 +217,7 @@ describe("getInvalidParamTab", () => {
     expect(getInvalidParamTab("languages[0].code")).toBe("language");
     expect(getInvalidParamTab("styling.theme.fontSize.desktop")).toBe("styling");
     expect(getInvalidParamTab("distribution.triggers")).toBe("settings");
-    expect(getInvalidParamTab("schedule.endAt")).toBe("schedule");
+    expect(getInvalidParamTab("schedule.endAt")).toBe("settings");
     expect(getInvalidParamTab("name")).toBeNull();
     expect(getInvalidParamTab("status")).toBeNull();
   });

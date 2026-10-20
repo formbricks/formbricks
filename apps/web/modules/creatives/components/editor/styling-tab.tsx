@@ -3,11 +3,13 @@
 import {
   AlertTriangleIcon,
   MonitorIcon,
+  MoonIcon,
   MoveIcon,
   PaletteIcon,
   RotateCcwIcon,
   ScalingIcon,
   SmartphoneIcon,
+  SunIcon,
 } from "lucide-react";
 import { type ReactNode, useId } from "react";
 import { useTranslation } from "react-i18next";
@@ -15,6 +17,7 @@ import { CREATIVE_ROOT_CLASS, type TCreativeStyle } from "@formbricks/creatives"
 import type { TStylingAppearance } from "@/lib/styling/dark-mode";
 import { useDebouncedValue } from "@/lib/use-debounced-value";
 import type { TCustomCssValidationState } from "@/modules/custom-css/components/lib/validation";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { ColorPicker } from "@/modules/ui/components/color-picker";
 import { NumberStepper } from "@/modules/ui/components/number-stepper";
@@ -25,10 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import {
-  StylingAppearanceProvider,
-  StylingAppearanceToggle,
-} from "@/modules/ui/components/styling-appearance";
+import { StylingAppearanceProvider } from "@/modules/ui/components/styling-appearance";
 import { Switch } from "@/modules/ui/components/switch";
 import { type TCreativeContrastWarning, getCreativeContrastWarning } from "../../lib/contrast";
 import {
@@ -141,6 +141,28 @@ const DeviceSwitch = ({
 };
 
 /**
+ * Light / Dark, in the header of each card that differs by appearance (Colors, Custom CSS). Every copy
+ * drives the one appearance the preview's sun / moon switch drives too.
+ */
+const AppearanceSwitch = ({
+  appearance,
+  onChange,
+}: Readonly<{ appearance: TStylingAppearance; onChange: (appearance: TStylingAppearance) => void }>) => {
+  const { t } = useTranslation();
+  return (
+    <Segmented
+      ariaLabel={t("common.appearance")}
+      value={appearance}
+      onChange={onChange}
+      options={[
+        { value: "light", label: t("workspace.look.appearance_light"), icon: SunIcon },
+        { value: "dark", label: t("workspace.look.appearance_dark"), icon: MoonIcon },
+      ]}
+    />
+  );
+};
+
+/**
  * The contrast of the appearance being edited, like the survey's dark contrast warnings. Shown once the
  * colours stop changing, so a warning doesn't flicker mid-drag.
  */
@@ -176,9 +198,9 @@ const ContrastWarning = ({
  * The Styling tab (ENG-3580, ENG-4005): "Add custom styles" over the cards Colors · Shape & size ·
  * Position · Custom CSS. A creative starts from the workspace Look & Feel; with custom styles on, each
  * field set here overrides it, and a reset hands it back. Position is edited with custom styles off too.
- * Light / Dark at the top, as in the survey styling, picks which colours and which Custom CSS field are
- * edited, and which appearance the preview shows. Size and position have Desktop and Phone values,
- * shared by both appearances; the device switch also turns the preview.
+ * Only colours and Custom CSS differ by appearance, so Light / Dark sits in those two cards' headers (one
+ * state, also the preview's); Shape & size and Position are shared by both appearances and have Desktop
+ * and Phone values instead, where the device switch also turns the preview.
  */
 export const StylingTab = ({
   styling,
@@ -243,14 +265,10 @@ export const StylingTab = ({
   const canSetColor = (key: TCreativeColorKey) =>
     !isDark || theme[key] !== null || element.light[key] !== null;
 
+  const appearanceSwitch = <AppearanceSwitch appearance={appearance} onChange={onAppearanceChange} />;
+
   return (
     <StylingAppearanceProvider appearance={appearance}>
-      <StylingAppearanceToggle
-        appearance={appearance}
-        onChange={onAppearanceChange}
-        darkDescription={t("workspace.creatives.editor.appearance_dark_description")}
-      />
-
       <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-5 shadow-xs">
         <div className="flex items-center justify-between gap-4">
           <label htmlFor={`${ids}-custom`} className="space-y-0.5">
@@ -269,42 +287,52 @@ export const StylingTab = ({
             onCheckedChange={(customStyles) => setTheme({ customStyles })}
           />
         </div>
-        <ContrastWarning style={style} appearance={appearance} />
       </section>
 
-      <fieldset disabled={!isOn} className="min-w-0 space-y-4 disabled:opacity-60">
-        <EditorPanel title={t("workspace.creatives.editor.colors")} icon={PaletteIcon}>
-          <div className="space-y-3">
-            {colorFields.map(({ key, label }) => {
-              const own = getOwnColor(theme, key, appearance);
-              const shown = element[appearance][key];
-              const canSet = canSetColor(key);
-              return (
-                <OverridableField
-                  key={key}
-                  label={label}
-                  htmlFor={`${ids}-${key}`}
-                  hint={canSet ? colorHint : t("workspace.creatives.editor.set_in_light_first")}
-                  resetLabel={colorResetLabel}
-                  onReset={isOn && own !== null ? () => setColor(key, null) : undefined}>
-                  <ColorPicker
-                    id={`${ids}-${key}`}
-                    color={isOn ? (own ?? "") : ""}
-                    placeholderColor={shown ?? undefined}
-                    placeholder={shown === null ? t("workspace.creatives.editor.no_border") : undefined}
-                    onChange={(value) => {
-                      // The picker reports partial input too; only a full `#rrggbb` is a colour the API takes.
-                      if (HEX_COLOR.test(value)) setColor(key, value.toLowerCase());
-                    }}
-                    disabled={!isOn || !canSet}
-                  />
-                </OverridableField>
-              );
-            })}
-          </div>
-        </EditorPanel>
+      <EditorPanel
+        title={t("workspace.creatives.editor.colors")}
+        icon={PaletteIcon}
+        action={appearanceSwitch}>
+        {isDark && (
+          <Alert variant="info" size="small">
+            <AlertDescription className="whitespace-normal">
+              {t("workspace.creatives.editor.appearance_dark_description")}
+            </AlertDescription>
+          </Alert>
+        )}
+        <fieldset disabled={!isOn} className="min-w-0 space-y-3 disabled:opacity-60">
+          {colorFields.map(({ key, label }) => {
+            const own = getOwnColor(theme, key, appearance);
+            const shown = element[appearance][key];
+            const canSet = canSetColor(key);
+            return (
+              <OverridableField
+                key={key}
+                label={label}
+                htmlFor={`${ids}-${key}`}
+                hint={canSet ? colorHint : t("workspace.creatives.editor.set_in_light_first")}
+                resetLabel={colorResetLabel}
+                onReset={isOn && own !== null ? () => setColor(key, null) : undefined}>
+                <ColorPicker
+                  id={`${ids}-${key}`}
+                  color={isOn ? (own ?? "") : ""}
+                  placeholderColor={shown ?? undefined}
+                  placeholder={shown === null ? t("workspace.creatives.editor.no_border") : undefined}
+                  onChange={(value) => {
+                    // The picker reports partial input too; only a full `#rrggbb` is a colour the API takes.
+                    if (HEX_COLOR.test(value)) setColor(key, value.toLowerCase());
+                  }}
+                  disabled={!isOn || !canSet}
+                />
+              </OverridableField>
+            );
+          })}
+        </fieldset>
+        <ContrastWarning style={style} appearance={appearance} />
+      </EditorPanel>
 
-        <EditorPanel title={t("workspace.creatives.editor.shape_and_size")} icon={ScalingIcon}>
+      <EditorPanel title={t("workspace.creatives.editor.shape_and_size")} icon={ScalingIcon}>
+        <fieldset disabled={!isOn} className="min-w-0 space-y-4 disabled:opacity-60">
           <div className="space-y-3">
             <EditorField label={t("workspace.look.font")} htmlFor={`${ids}-font`}>
               <Select
@@ -412,21 +440,20 @@ export const StylingTab = ({
             </div>
             <p className="text-xs text-slate-500">{t("workspace.creatives.editor.phone_values_note")}</p>
           </div>
-        </EditorPanel>
-      </fieldset>
+        </fieldset>
+      </EditorPanel>
 
       <PositionPanel styling={styling} onChange={onChange} device={device} onDeviceChange={onDeviceChange} />
 
-      <fieldset disabled={!isOn} className="min-w-0 disabled:opacity-60">
-        <CustomCssPanel
-          className={CREATIVE_ROOT_CLASS[styling.type]}
-          source={theme.customCss}
-          onChange={(source) => setTheme({ customCss: source })}
-          validation={customCss.validation}
-          config={customCss.config}
-          disabled={!isOn}
-        />
-      </fieldset>
+      <CustomCssPanel
+        className={CREATIVE_ROOT_CLASS[styling.type]}
+        source={theme.customCss}
+        onChange={(source) => setTheme({ customCss: source })}
+        validation={customCss.validation}
+        config={customCss.config}
+        disabled={!isOn}
+        action={appearanceSwitch}
+      />
     </StylingAppearanceProvider>
   );
 };
