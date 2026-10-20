@@ -96,6 +96,8 @@ const workflow = (name: string) =>
     readFileSync(fileURLToPath(new URL(`../../.github/workflows/${name}.yml`, import.meta.url)), "utf8")
   ) as {
     jobs: Record<string, Job>;
+    permissions?: Record<string, string>;
+    on?: { workflow_dispatch?: { inputs?: Record<string, { default?: boolean }> } };
   };
 const composite = (name: string) =>
   load(
@@ -105,6 +107,21 @@ const composite = (name: string) =>
   };
 
 describe("release promotion boundary", () => {
+  test("keeps the Blacksmith trial opt-in and outside the publishing path", () => {
+    const experimental = workflow("release-docker-github-experimental");
+    expect(experimental.on?.workflow_dispatch?.inputs?.blacksmith_trial.default).toBe(false);
+    expect(experimental.jobs["blacksmith-trial"].if).toBe("inputs.blacksmith_trial");
+    expect(experimental.jobs["build-community-testing"].if).toBe("${{ !inputs.blacksmith_trial }}");
+    expect(experimental.jobs.validate.needs).toBe("build-community-testing");
+    expect(experimental.jobs.promote.needs).toContain("build-community-testing");
+
+    const trial = workflow("blacksmith-docker-trial");
+    expect(trial.permissions).toEqual({ contents: "read" });
+    const build = trial.jobs.build.steps.find((step) => step.id === "build");
+    expect(build?.with?.push).toBe(false);
+    expect(build?.with?.load).toBe(true);
+  });
+
   test("saves candidates privately without writing release registry tags", () => {
     const build = steps.find((step) => step.id === "build");
     expect(build?.with?.tags).toBeUndefined();

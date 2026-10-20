@@ -7,6 +7,11 @@ name: Build Community Testing Images
 on:
   workflow_dispatch:
     inputs:
+      blacksmith_trial:
+        description: "Benchmark and smoke-test Blacksmith on both architectures without publishing release images"
+        required: false
+        type: boolean
+        default: false
       version_override:
         description: "Override version (SemVer only, e.g., 1.2.3-beta). Leave empty for auto-generated experimental version."
         required: false
@@ -18,7 +23,14 @@ permissions:
   id-token: write
 
 jobs:
+  blacksmith-trial:
+    if: inputs.blacksmith_trial
+    uses: ./.github/workflows/blacksmith-docker-trial.yml
+    permissions:
+      contents: read
+
   build-community-testing:
+    if: ${{ !inputs.blacksmith_trial }}
     name: Build Community Testing Image
     runs-on: ubuntu-latest
     timeout-minutes: 90
