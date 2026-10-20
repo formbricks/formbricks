@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
-import { type PlainInstance, logoutPlain, logoutPlainBeforeNavigation } from "./plain-sdk";
+import {
+  PLAIN_SESSION_STORAGE_KEY,
+  type PlainInstance,
+  logoutPlain,
+  logoutPlainBeforeNavigation,
+} from "./plain-sdk";
 
 vi.mock("@formbricks/logger", () => ({ logger: { warn: vi.fn() } }));
 
@@ -17,6 +22,10 @@ const createFakePlain = (overrides: Partial<PlainInstance> = {}): PlainInstance 
 describe("logoutPlain", () => {
   beforeEach(() => {
     vi.mocked(logger.warn).mockClear();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   test("closes the widget, hides the launcher, and clears the customer", async () => {
@@ -44,12 +53,41 @@ describe("logoutPlain", () => {
     expect(logger.warn).toHaveBeenCalledTimes(2);
   });
 
-  test("clears the customer even when an earlier SDK call never settles", async () => {
-    const plain = createFakePlain({ update: vi.fn(() => new Promise(() => undefined)) });
+  test("waits for the clear to settle before refreshing the session through update", async () => {
+    let resolveClear!: () => void;
+    const plain = createFakePlain({
+      setCustomerDetails: vi.fn(() => new Promise<void>((resolve) => (resolveClear = resolve))),
+    });
 
-    void logoutPlain(plain);
+    const pending = logoutPlain(plain);
+    await Promise.resolve();
 
     expect(plain.setCustomerDetails).toHaveBeenCalledWith(null);
+    expect(plain.update).not.toHaveBeenCalled();
+    expect(plain.close).not.toHaveBeenCalled();
+
+    resolveClear();
+    await pending;
+
+    expect(plain.update).toHaveBeenCalledWith({ hideLauncher: true });
+    expect(plain.close).toHaveBeenCalledTimes(1);
+  });
+
+  test("drops the persisted session only after the other steps have written it", async () => {
+    const store = new Map([[PLAIN_SESSION_STORAGE_KEY, "previous-user-session"]]);
+    vi.stubGlobal("localStorage", {
+      setItem: (key: string, value: string) => store.set(key, value),
+      removeItem: (key: string) => store.delete(key),
+    });
+    const plain = createFakePlain({
+      update: vi.fn(() => {
+        store.set(PLAIN_SESSION_STORAGE_KEY, "refreshed-session");
+      }),
+    });
+
+    await logoutPlain(plain);
+
+    expect(store.has(PLAIN_SESSION_STORAGE_KEY)).toBe(false);
   });
 
   test("swallows a rejected logout without logging identity data", async () => {

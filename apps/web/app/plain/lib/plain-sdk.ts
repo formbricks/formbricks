@@ -54,18 +54,26 @@ export const runPlainStep = async (step: string, call: () => unknown): Promise<v
   }
 };
 
+/** Where the widget persists its session (token + customer details). Read from the shipped SDK. */
+export const PLAIN_SESSION_STORAGE_KEY = "plain:session";
+
 /**
- * Drop the customer identity, close the widget, and hide its launcher. All three calls are issued
- * synchronously — identity first — so a slow or hanging earlier step can never delay the clear
- * past a sign-out's navigation, and a remount's identity calls are always issued after them. Each
- * step is isolated, so a broken or changed SDK never breaks the caller (e.g. sign-out).
+ * Drop the customer identity, close the widget, hide its launcher, and forget the session.
+ *
+ * The clear must settle before anything else runs: in the shipped SDK `setCustomerDetails` waits on
+ * init, while `update` refreshes the session straight away from the *stored* identity. Issued
+ * together, both write `plain:session` and the last one wins — often writing the previous user's
+ * email and signature back. Removing the stored session last (after `update` has written) also
+ * drops the session token the previous user's identity was bound to, which `setCustomerDetails(null)`
+ * keeps. Each step is isolated, so a broken or changed SDK never breaks the caller (e.g. sign-out).
  */
 export const logoutPlain = async (plain: PlainInstance): Promise<void> => {
+  await runPlainStep("clearCustomer", () => plain.setCustomerDetails(null));
   await Promise.all([
-    runPlainStep("clearCustomer", () => plain.setCustomerDetails(null)),
     runPlainStep("close", () => plain.close()),
     runPlainStep("hideLauncher", () => plain.update({ hideLauncher: true })),
   ]);
+  await runPlainStep("dropSession", () => globalThis.localStorage?.removeItem(PLAIN_SESSION_STORAGE_KEY));
 };
 
 /**
