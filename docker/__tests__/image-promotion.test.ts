@@ -111,7 +111,11 @@ describe("release promotion boundary", () => {
     const experimental = workflow("release-docker-github-experimental");
     expect(experimental.on?.workflow_dispatch?.inputs?.blacksmith_trial.default).toBe(false);
     expect(experimental.jobs["blacksmith-trial"].if).toBe("inputs.blacksmith_trial");
-    expect(experimental.jobs["build-community-testing"].if).toBe("${{ !inputs.blacksmith_trial }}");
+    expect(experimental.on?.workflow_dispatch?.inputs?.blacksmith_registry_trial.default).toBe(false);
+    expect(experimental.jobs["blacksmith-registry-trial"].if).toBe("inputs.blacksmith_registry_trial");
+    expect(experimental.jobs["build-community-testing"].if).toBe(
+      "${{ !inputs.blacksmith_trial && !inputs.blacksmith_registry_trial }}"
+    );
     expect(experimental.jobs.validate.needs).toBe("build-community-testing");
     expect(experimental.jobs.promote.needs).toContain("build-community-testing");
 

@@ -12,6 +12,11 @@ on:
         required: false
         type: boolean
         default: false
+      blacksmith_registry_trial:
+        description: "Validate private GHCR staging, digest-preserving copy and signing in a dedicated test package"
+        required: false
+        type: boolean
+        default: false
       version_override:
         description: "Override version (SemVer only, e.g., 1.2.3-beta). Leave empty for auto-generated experimental version."
         required: false
@@ -23,6 +28,14 @@ permissions:
   id-token: write
 
 jobs:
+  blacksmith-registry-trial:
+    if: inputs.blacksmith_registry_trial
+    uses: ./.github/workflows/blacksmith-registry-trial.yml
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
   blacksmith-trial:
     if: inputs.blacksmith_trial
     uses: ./.github/workflows/blacksmith-docker-trial.yml
@@ -30,7 +43,7 @@ jobs:
       contents: read
 
   build-community-testing:
-    if: ${{ !inputs.blacksmith_trial }}
+    if: ${{ !inputs.blacksmith_trial && !inputs.blacksmith_registry_trial }}
     name: Build Community Testing Image
     runs-on: ubuntu-latest
     timeout-minutes: 90

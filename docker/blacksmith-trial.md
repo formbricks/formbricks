@@ -31,6 +31,19 @@ The native smoke script checks the assembled runtime, starts disposable Postgres
 and Redis containers, boots the image with migrations, loads fixtures, and
 exercises the application in Chromium.
 
+The independent registry trial uses a small, public multi-platform Alpine image:
+
+```sh
+gh workflow run release-docker-github-experimental.yml \
+  --ref <trial-branch> -f blacksmith_registry_trial=true
+```
+
+It copies the immutable fixture into the dedicated
+`ghcr.io/formbricks/blacksmith-registry-trial` package, verifies private visibility
+and denied anonymous access, then signs and verifies the exact digest. The
+fixture and signatures remain available for inspection. It does not publish a
+Formbricks release, exercise ECR, or implement production candidate retention.
+
 ## Read the results
 
 Each job summary records build duration (including export to the local Docker

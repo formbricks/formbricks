@@ -1,0 +1,100 @@
+name: Private candidate registry trial
+
+# Exercise registry transport independently of compilation. Only a public Alpine
+# fixture is copied into this dedicated private package; no release tags are used.
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+concurrency:
+  group: blacksmith-registry-trial
+  cancel-in-progress: false
+
+jobs:
+  registry:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      CANDIDATE: ghcr.io/${{ github.repository_owner }}/blacksmith-registry-trial
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Install registry copy tool
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends skopeo
+
+      - name: Copy an immutable multi-platform fixture
+        id: copy
+        shell: bash
+        run: |
+          set -euo pipefail
+          source="docker.io/library/alpine:3.23"
+          digest="$(docker buildx imagetools inspect --format '{{json .Manifest}}' "$source" | jq -er '.digest')"
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          tag="trial-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          skopeo copy --all --preserve-digests --authfile "$HOME/.docker/config.json" \
+            "docker://docker.io/library/alpine@$digest" "docker://$CANDIDATE:$tag"
+          actual="$(docker buildx imagetools inspect --format '{{json .Manifest}}' "$CANDIDATE:$tag" | jq -er '.digest')"
+          test "$actual" = "$digest"
+          docker buildx imagetools inspect --raw "$CANDIDATE@$digest" | jq -e '
+            any(.manifests[]; .platform.os == "linux" and .platform.architecture == "amd64") and
+            any(.manifests[]; .platform.os == "linux" and .platform.architecture == "arm64")
+          '
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Verify candidate is private
+        env:
+          DIGEST: ${{ steps.copy.outputs.digest }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          visibility="$(gh api "orgs/$GITHUB_REPOSITORY_OWNER/packages/container/blacksmith-registry-trial" --jq .visibility)"
+          test "$visibility" = private
+          if skopeo inspect --no-creds --raw "docker://$CANDIDATE@$DIGEST" > "$RUNNER_TEMP/anonymous-output" 2> "$RUNNER_TEMP/anonymous-error"; then
+            echo "Candidate unexpectedly accessible without authentication" >&2
+            exit 1
+          fi
+          grep -Eiq 'unauthorized|denied|authentication required|forbidden' "$RUNNER_TEMP/anonymous-error"
+          echo "Package metadata confirms private visibility; anonymous access denied." >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
+
+      - name: Sign and verify the copied digest
+        env:
+          DIGEST: ${{ steps.copy.outputs.digest }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="$CANDIDATE@$DIGEST"
+          cosign sign --yes "$image"
+          cosign verify \
+            --certificate-identity "https://github.com/$GITHUB_REPOSITORY/.github/workflows/blacksmith-registry-trial.yml@$GITHUB_REF" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            "$image" > "$RUNNER_TEMP/verification.json"
+          jq -e --arg digest "$DIGEST" 'length > 0 and all(.[]; .critical.image."docker-manifest-digest" == $digest)' \
+            "$RUNNER_TEMP/verification.json"
+          echo "Multi-platform copy preserved $DIGEST; keyless signing and verification passed." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Report fixture retention
+        if: always()
+        run: |
+          echo "Dedicated test package: $CANDIDATE. It contains only the public Alpine fixture and test signatures." >> "$GITHUB_STEP_SUMMARY"
+          echo "Production candidate retention and ECR promotion are separate cutover requirements." >> "$GITHUB_STEP_SUMMARY"
