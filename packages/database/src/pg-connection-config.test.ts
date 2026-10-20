@@ -58,6 +58,23 @@ describe("PostgreSQL connection TLS configuration", () => {
   );
 
   test.each([
+    ["postgres://fixture:test@/formbricks?host=database&sslaccept=strict", "database"],
+    ["socket://fixture:test@/var/run/postgresql?db=formbricks&sslaccept=strict", "/var/run/postgresql"],
+  ])(
+    "translates TLS without requiring a WHATWG-compatible connection string %s",
+    (connectionString, host) => {
+      const config = getPgConnectionConfig(connectionString);
+      const client = new Client(config);
+
+      expect(config.connectionString).toBe(connectionString.replace("&sslaccept=strict", ""));
+      expect(client.host).toBe(host);
+      expect(client.database).toBe("formbricks");
+      expect(client.user).toBe("fixture");
+      expect(client.ssl).toEqual({ rejectUnauthorized: true });
+    }
+  );
+
+  test.each([
     ["disable", false],
     ["no-verify", { rejectUnauthorized: false }],
     ["verify-full", {}],
@@ -89,6 +106,15 @@ describe("PostgreSQL connection TLS configuration", () => {
     const config = getPgConnectionConfig(`${databaseUrl}?sslaccept=${sslaccept}&sslmode=${sslmode}`);
 
     expect(new Client(config).ssl).toEqual(expected);
+  });
+
+  test("preserves the fragment when sslaccept is the only query parameter", () => {
+    const config = getPgConnectionConfig(`${databaseUrl}?sslaccept=strict#keep`);
+
+    expect(config).toEqual({
+      connectionString: `${databaseUrl}#keep`,
+      ssl: { rejectUnauthorized: true },
+    });
   });
 
   test("preserves credentials and every other URL parameter", () => {
