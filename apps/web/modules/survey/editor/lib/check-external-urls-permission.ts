@@ -1,5 +1,6 @@
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { isDefaultEndingCardButtonLink } from "@/lib/survey/default-ending-card";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
@@ -37,7 +38,11 @@ export const checkExternalUrlsPermission = async (
   for (const newEnding of newSurvey.endings) {
     const oldEnding = oldSurvey?.endings.find((e) => e.id === newEnding.id);
 
-    if (newEnding.type === "endScreen" && newEnding.buttonLink) {
+    if (
+      newEnding.type === "endScreen" &&
+      newEnding.buttonLink &&
+      !isDefaultEndingCardButtonLink(newEnding.buttonLink)
+    ) {
       if (!oldEnding || oldEnding.type !== "endScreen" || oldEnding.buttonLink !== newEnding.buttonLink) {
         throw new OperationNotAllowedError(
           "External URLs are not enabled for this organization. Upgrade to use external button links."
