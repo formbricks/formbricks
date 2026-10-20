@@ -104,7 +104,7 @@ const NO_THEME_OVERRIDES = {
 /** Styling a create starts from when it sends none: the workspace Look & Feel, default positions. */
 export const DEFAULT_CREATIVE_STYLING = {
   feedbackButton: {
-    position: { desktop: { edge: "right", offset: 60 }, phone: null },
+    position: { desktop: { edge: "right", offset: 50 }, phone: null },
     theme: { ...NO_THEME_OVERRIDES, borderRadius: null },
   } satisfies TFeedbackButtonStyling,
   banner: {

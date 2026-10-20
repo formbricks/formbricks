@@ -1067,7 +1067,7 @@ export const zFeedbackButtonContent = z.strictObject({
 export type FeedbackButtonContentZodType = z.infer<typeof zFeedbackButtonContent>;
 
 /**
- * Where a feedback button sits: an edge of the page plus an offset along it, in percent. On the left and right edges the offset runs from the top; on the bottom edge, from the left.
+ * Where a feedback button sits: an edge of the page plus an offset along it, in percent, that places the button's centre. On the left and right edges the offset runs from the top; on the bottom edge, from the left. 50 centres the button on its edge. Near either end the button stops at the end of the edge instead, so it stays fully on screen: 0 puts its top (or left) end at the start of the edge and 100 its bottom (or right) end at the end.
  */
 export const zFeedbackButtonPlacement = z.strictObject({
   edge: z.enum(["left", "right", "bottom"]),

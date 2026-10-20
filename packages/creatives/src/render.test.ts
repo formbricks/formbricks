@@ -42,17 +42,25 @@ const buttonRule = (
         )?.cssRules ?? []
       )
     : rules;
-  const rule = scope.find(
+  const matching = scope.filter(
     (candidate): candidate is CSSStyleRule =>
       candidate instanceof CSSStyleRule && candidate.selectorText === selector
   );
-  if (!rule) throw new Error(`no ${selector} rule${media ? ` in ${media}` : ""}`);
-  return rule.style;
+  if (matching.length === 0) throw new Error(`no ${selector} rule${media ? ` in ${media}` : ""}`);
+  // Every rule for the selector in that scope, later ones winning, as the cascade reads them.
+  const declarations = document.createElement("div").style;
+  declarations.cssText = matching.map(({ style }) => style.cssText).join(";");
+  return declarations;
 };
 
 const PHONE = "(max-width: 767.98px)";
 const DARK = ".fb-creative-button[data-appearance=dark]";
 const ICON = ".fb-creative-button-icon";
+const AREA = ".fb-creative-button-area";
+const BEFORE = `${AREA}:before`;
+const AFTER = `${AREA}:after`;
+const TOP = "var(--fb-creative-top,0px)";
+const BOTTOM = "var(--fb-creative-bottom,0px)";
 
 /** A look whose every value is distinct, so each assertion can only pass on the right field. */
 const STYLE: TCreativeStyle = {
@@ -123,33 +131,98 @@ describe("render", () => {
     expect(shadowOf(host).querySelector("style")?.getAttribute("nonce")).toBe("abc123");
   });
 
-  test("sits on its edge at its offset, along the part of the edge Overlay banners leave free", () => {
-    const host = render(feedbackButton(), { onClick: vi.fn() });
-    const rule = buttonRule(host);
+  /**
+   * Its place (decided 20 Oct): the offset puts the button's centre that far along its edge, and near
+   * either end the button stops at the end of the edge, so it stays fully on screen. jsdom lays nothing
+   * out, so these read the flex area the button sits in, along the whole free edge, and the two spacers
+   * around it. Both spacers grow equally; the one that starts from `|2 × offset − 100|` % of the edge
+   * puts the button's centre at the offset (at 30 %: 0 + g before it, 40 % + g after it, so its centre
+   * is at 30 %), and is the only one that can shrink, so a button that doesn't fit stops at that end.
+   */
+  describe("position", () => {
+    const placedAt = (
+      edge: "left" | "right" | "bottom",
+      offset: number
+    ): { area: CSSStyleDeclaration; spacers: string[] } => {
+      const host = render(feedbackButton({ position: { desktop: { edge, offset }, phone: null } }), {
+        onClick: vi.fn(),
+      });
+      return {
+        area: buttonRule(host, undefined, AREA),
+        spacers: [
+          buttonRule(host, undefined, BEFORE).flexBasis,
+          buttonRule(host, undefined, AFTER).flexBasis,
+        ],
+      };
+    };
 
-    expect(rule.position).toBe("fixed");
-    expect(rule.right).toBe("0px");
-    expect(rule.left).toBe("auto");
-    // 30 % of the way between the top Overlay banners (`--fb-creative-top`) and the bottom ones.
-    expect(rule.top).toBe(
-      "calc(var(--fb-creative-top,0px) + (100% - var(--fb-creative-top,0px) - var(--fb-creative-bottom,0px)) * 0.3)"
-    );
-  });
+    test("is centred on its edge at 50 %, along the part of the edge Overlay banners leave free", () => {
+      const { area, spacers } = placedAt("right", 50);
 
-  test("moves to its phone position below 768 px", () => {
-    const host = render(
-      feedbackButton({
-        position: { desktop: { edge: "right", offset: 30 }, phone: { edge: "bottom", offset: 80 } },
-      }),
-      { onClick: vi.fn() }
-    );
-    const phone = buttonRule(host, "(max-width: 767.98px)");
+      expect(area.position).toBe("fixed");
+      expect(area.right).toBe("0px");
+      expect(area.left).toBe("auto");
+      // From below the top Overlay banners (`--fb-creative-top`) to above the bottom ones.
+      expect(area.top).toBe(TOP);
+      expect(area.bottom).toBe(BOTTOM);
+      expect(area.display).toBe("flex");
+      expect(area.flexDirection).toBe("column");
+      expect(spacers).toEqual(["0%", "0%"]);
+    });
 
-    // Above the bottom Overlay banners.
-    expect(phone.bottom).toBe("var(--fb-creative-bottom,0px)");
-    expect(phone.left).toBe("80%");
-    expect(phone.right).toBe("auto");
-    expect(phone.top).toBe("auto");
+    test("puts its centre at its offset along the edge", () => {
+      expect(placedAt("left", 30).spacers).toEqual(["0%", "40%"]);
+      expect(placedAt("right", 80).spacers).toEqual(["60%", "0%"]);
+    });
+
+    test("stays fully on screen at 0 % and 100 %: its ends sit at the ends of the edge", () => {
+      // All the room is after it at 0 % and before it at 100 %; a full-length spacer can only shrink.
+      expect(placedAt("right", 0).spacers).toEqual(["0%", "100%"]);
+      expect(placedAt("right", 100).spacers).toEqual(["100%", "0%"]);
+    });
+
+    test("spacers grow equally and take the room the button leaves", () => {
+      const host = render(feedbackButton(), { onClick: vi.fn() });
+
+      for (const spacer of [BEFORE, AFTER]) {
+        expect(buttonRule(host, undefined, spacer).content).toBe('""');
+        expect(buttonRule(host, undefined, spacer).flexGrow).toBe("1");
+      }
+    });
+
+    test("on the bottom edge, centres along it from the left, above the bottom Overlay banners", () => {
+      const { area, spacers } = placedAt("bottom", 20);
+
+      expect(area.top).toBe("auto");
+      expect(area.bottom).toBe(BOTTOM);
+      expect([area.left, area.right]).toEqual(["0px", "0px"]);
+      expect(area.flexDirection).toBe("row");
+      expect(spacers).toEqual(["0%", "60%"]);
+    });
+
+    test("leaves the page around the button clickable", () => {
+      expect(placedAt("right", 50).area.pointerEvents).toBe("none");
+      // The button gets clicks back from its reset (`pointer-events` is initially `auto`).
+      expect(styleText(render(feedbackButton(), { onClick: vi.fn() }))).toMatch(
+        /\.fb-creative-button\{all:initial;/
+      );
+    });
+
+    test("moves to its phone position below 768 px", () => {
+      const host = render(
+        feedbackButton({
+          position: { desktop: { edge: "right", offset: 30 }, phone: { edge: "bottom", offset: 80 } },
+        }),
+        { onClick: vi.fn() }
+      );
+      const phone = buttonRule(host, PHONE, AREA);
+
+      // Along the bottom edge above the bottom Overlay banners, centred on 80 % of the width.
+      expect(phone.bottom).toBe(BOTTOM);
+      expect(phone.top).toBe("auto");
+      expect([phone.left, phone.right, phone.flexDirection]).toEqual(["0px", "0px", "row"]);
+      expect(buttonRule(host, PHONE, BEFORE).flexBasis).toBe("60%");
+    });
   });
 
   test("keeps its desktop position on phones when it has no phone position", () => {
@@ -205,7 +278,9 @@ describe("render", () => {
 
       expect(styleText(host)).not.toContain("@media");
       expect(rule.fontSize).toBe("13px");
-      expect(rule.left).toBe("80%");
+      // Centred on 80 % of the bottom edge.
+      expect(buttonRule(host, undefined, AREA).flexDirection).toBe("row");
+      expect(buttonRule(host, undefined, BEFORE).flexBasis).toBe("60%");
     });
 
     test("renders in the survey font unless Page font is on", () => {
@@ -310,11 +385,11 @@ describe("render", () => {
       );
 
       expect(buttonRule(host).writingMode).toBe("vertical-rl");
-      expect(buttonRule(host).transform).toBe("translateY(-60%) rotate(180deg)");
+      expect(buttonRule(host).transform).toBe("rotate(180deg)");
       // Upright glyphs turn a quarter clockwise in vertical text; the icon turns with them.
       expect(buttonRule(host, undefined, ICON).transform).toBe("rotate(90deg)");
       expect(buttonRule(host, PHONE).writingMode).toBe("horizontal-tb");
-      expect(buttonRule(host, PHONE).transform).toBe("translateX(-50%)");
+      expect(buttonRule(host, PHONE).transform).toBe("none");
       expect(buttonRule(host, PHONE, ICON).transform).toBe("none");
     });
 

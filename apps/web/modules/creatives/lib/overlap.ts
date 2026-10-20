@@ -36,9 +36,10 @@ export type TOverlapCreative = {
 /** How close, in percent of the page edge, two feedback buttons may sit before they could cover each other. */
 export const BUTTON_OVERLAP_DISTANCE = 15;
 
-// A button as a point on the page's border, in percent: the left edge is x 0, the right edge x 100 and
-// the bottom edge y 100. Side offsets run from the top, bottom offsets from the left, so two buttons
-// near the same corner end up close even when they sit on different edges.
+// A button as its centre on the page's border, in percent: the left edge is x 0, the right edge x 100
+// and the bottom edge y 100. The offset places the button's centre, side offsets from the top and bottom
+// offsets from the left, so two buttons near the same corner end up close even when they sit on
+// different edges.
 const toBorderPoint = ({ edge, offset }: FeedbackButtonPlacementZodType): { x: number; y: number } => {
   if (edge === "bottom") return { x: offset, y: 100 };
   return { x: edge === "left" ? 0 : 100, y: offset };

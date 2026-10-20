@@ -54,9 +54,6 @@ const SURVEY_FONT = "Inter,Helvetica,Arial,sans-serif";
 const colorsCss = ({ backgroundColor, textColor, borderColor }: TCreativeColors): string =>
   `color:${textColor};background:${backgroundColor};border:${borderColor ? `1px solid ${borderColor}` : "0"}`;
 
-const isSameSize = (a: TCreativeSize, b: TCreativeSize): boolean =>
-  a.fontSize === b.fontSize && a.paddingX === b.paddingX && a.paddingY === b.paddingY;
-
 /**
  * What every creative's stylesheet shares around its own rules: the reset (with the page's font let in
  * only when Page font is on), and the creative's own CSS last. The order statement makes its dark layer
@@ -81,22 +78,43 @@ const TOP_INSET = `var(${CREATIVE_INSET_PROPERTY.top},0px)`;
 const BOTTOM_INSET = `var(${CREATIVE_INSET_PROPERTY.bottom},0px)`;
 
 /**
- * Every box property is set, so a phone placement fully replaces a desktop one on another edge. Side
- * tabs run their label bottom to top and round the corners that face the page. A button keeps clear
- * of Overlay banners: a bottom tab sits above them, and a side tab's offset runs along the part of the
- * edge they leave free.
+ * A feedback button's look on one device: its place, its size and its icon.
+ *
+ * Its place (decided 20 Oct): the offset puts the button's centre that far along its edge, and near
+ * either end the button stops at the end of the edge instead, so it is always fully on screen. CSS
+ * can't clamp a box by its own size, so the button sits in a flex area along the whole edge between two
+ * empty spacers that share the free space equally. One spacer starts from `|2 × offset − 100|` % of the
+ * edge and the other from none, which puts the button's centre at the offset; when the button doesn't
+ * fit there, only the spacer with a start can shrink, so the button stops at that end. The area takes
+ * no clicks (the button gets them back from its `all:initial`).
+ *
+ * A button keeps clear of Overlay banners: a bottom tab sits above them, and a side tab's area runs
+ * along the part of the edge they leave free. Every box property is set, so a phone placement fully
+ * replaces a desktop one on another edge. Side tabs run their label bottom to top and round the corners
+ * that face the page.
+ *
+ * The icon takes the label's proportions on the survey button (a 16 px icon 8 px from a 14 px label),
+ * in px. On a side edge it turns with the label: vertical text sets upright glyphs a quarter turn
+ * clockwise, and the whole tab is then turned half a turn.
  */
-const placementCss = (
+const deviceCss = (
   { edge, offset }: TFeedbackButtonPlacement,
-  { paddingX, paddingY }: TCreativeSize,
+  { fontSize, paddingX, paddingY }: TCreativeSize,
   radius: number
 ): string => {
-  if (edge === "bottom") {
-    return `top:auto;right:auto;bottom:${BOTTOM_INSET};left:${offset}%;transform:translateX(-${offset}%);writing-mode:horizontal-tb;padding:${paddingY}px ${paddingX}px;border-radius:${radius}px ${radius}px 0 0`;
-  }
-  // `rotate(180deg)` turns the box's own right corners to face the page on the right edge.
-  const corners = edge === "right" ? `0 ${radius}px ${radius}px 0` : `${radius}px 0 0 ${radius}px`;
-  return `top:calc(${TOP_INSET} + (100% - ${TOP_INSET} - ${BOTTOM_INSET}) * ${offset / 100});right:${edge === "right" ? "0" : "auto"};bottom:auto;left:${edge === "left" ? "0" : "auto"};transform:translateY(-${offset}%) rotate(180deg);writing-mode:vertical-rl;padding:${paddingX}px ${paddingY}px;border-radius:${corners}`;
+  const iconSize = Math.round((fontSize * 8) / 7);
+  const isBottom = edge === "bottom";
+  return (
+    `.fb-creative-button-area{top:${isBottom ? "auto" : TOP_INSET};right:${edge === "left" ? "auto" : 0};bottom:${BOTTOM_INSET};left:${edge === "right" ? "auto" : 0};flex-direction:${isBottom ? "row" : "column"}}` +
+    `.fb-creative-button-area:before{content:"";flex:1 ${Math.max(0, 2 * offset - 100)}%}.fb-creative-button-area:after{content:"";flex:1 ${Math.max(0, 100 - 2 * offset)}%}` +
+    `.fb-creative-button{font-size:${fontSize}px;gap:${Math.round((fontSize * 4) / 7)}px;${
+      isBottom
+        ? `transform:none;writing-mode:horizontal-tb;padding:${paddingY}px ${paddingX}px;border-radius:${radius}px ${radius}px 0 0`
+        : // `rotate(180deg)` turns the box's own right corners to face the page on the right edge.
+          `transform:rotate(180deg);writing-mode:vertical-rl;padding:${paddingX}px ${paddingY}px;border-radius:${edge === "right" ? `0 ${radius}px ${radius}px 0` : `${radius}px 0 0 ${radius}px`}`
+    }}` +
+    `.fb-creative-button-icon{flex:none;width:${iconSize}px;height:${iconSize}px;transform:${isBottom ? "none" : "rotate(90deg)"}}`
+  );
 };
 
 /**
@@ -109,16 +127,6 @@ const focusRingCss = ({ textColor, backgroundColor }: TCreativeColors): string =
   `box-shadow:0 0 0 2px ${textColor},0 0 0 4px ${backgroundColor}`;
 
 /**
- * The icon in the label's proportions on the survey button (a 16 px icon 8 px from a 14 px label), in
- * px. On a side edge it turns with the label: vertical text sets upright glyphs a quarter turn
- * clockwise, and the whole tab is then turned half a turn.
- */
-const iconCss = ({ edge }: TFeedbackButtonPlacement, { fontSize }: TCreativeSize): string => {
-  const iconSize = Math.round((fontSize * 8) / 7);
-  return `.fb-creative-button-icon{flex:none;width:${iconSize}px;height:${iconSize}px;transform:${edge === "bottom" ? "none" : "rotate(90deg)"}}`;
-};
-
-/**
  * Desktop values outside the phone media query and phone values inside it (only when they differ), both
  * appearances keyed on `data-appearance`. A forced `device` draws that device's values with no query.
  */
@@ -127,24 +135,19 @@ const feedbackButtonCss = (
   device?: "desktop" | "phone"
 ): string => {
   const { element } = style;
-  const isPhone = device === "phone";
-  const size = isPhone ? element.phone : element.desktop;
-  const phonePlacement = position.phone ?? position.desktop;
-  const placement = isPhone ? phonePlacement : position.desktop;
-  const sizeCss = (devicePlacement: TFeedbackButtonPlacement, deviceSize: TCreativeSize): string =>
-    `font-size:${deviceSize.fontSize}px;gap:${Math.round((deviceSize.fontSize * 4) / 7)}px;${placementCss(devicePlacement, deviceSize, element.borderRadius)}`;
+  const desktopCss = deviceCss(position.desktop, element.desktop, element.borderRadius);
+  const phoneCss = deviceCss(position.phone ?? position.desktop, element.phone, element.borderRadius);
 
   return withSharedCss(
     style,
-    `.fb-creative-button{all:initial;box-sizing:border-box;position:fixed;z-index:${Z_INDEX};display:flex;align-items:center;cursor:pointer;white-space:nowrap;font-family:${style.pageFont ? "inherit" : SURVEY_FONT};font-weight:${element.fontWeight};line-height:1.25;${colorsCss(element.light)};${sizeCss(placement, size)}}` +
-      iconCss(placement, size) +
+    `.fb-creative-button-area{position:fixed;z-index:${Z_INDEX};display:flex;pointer-events:none}` +
+      `.fb-creative-button{all:initial;box-sizing:border-box;display:flex;align-items:center;cursor:pointer;white-space:nowrap;font-family:${style.pageFont ? "inherit" : SURVEY_FONT};font-weight:${element.fontWeight};line-height:1.25;${colorsCss(element.light)}}` +
+      (device === "phone" ? phoneCss : desktopCss) +
       `.fb-creative-button[data-appearance=dark]{${colorsCss(element.dark)}}` +
       `.fb-creative-button:hover{opacity:.9}.fb-creative-button:active{opacity:.8}` +
       `.fb-creative-button:focus-visible{outline:2px solid transparent;outline-offset:2px;${focusRingCss(element.light)}}` +
       `.fb-creative-button[data-appearance=dark]:focus-visible{${focusRingCss(element.dark)}}` +
-      (device || (!position.phone && isSameSize(element.desktop, element.phone))
-        ? ""
-        : `@media ${CREATIVE_PHONE_MEDIA}{.fb-creative-button{${sizeCss(phonePlacement, element.phone)}}${iconCss(phonePlacement, element.phone)}}`)
+      (device || phoneCss === desktopCss ? "" : `@media ${CREATIVE_PHONE_MEDIA}{${phoneCss}}`)
   );
 };
 
@@ -374,7 +377,15 @@ export const render = (
   // The dark palette and the creative's dark CSS key on it (`[data-appearance=dark]`), as on `#fbjs`.
   element.setAttribute("data-appearance", appearance);
 
-  shadow.append(style, element);
+  if (isBanner) {
+    shadow.append(style, element);
+  } else {
+    // The flex area along the button's edge that places it (`deviceCss`).
+    const area = doc.createElement("div");
+    area.className = "fb-creative-button-area";
+    area.append(element);
+    shadow.append(style, area);
+  }
   if (isBanner) parent.prepend(host);
   else parent.append(host);
   return host;
