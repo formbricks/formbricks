@@ -82,6 +82,15 @@ defaults without a code change:
 | `E2E_RUNNER`  | The `runs-on` label for the E2E job.                                    | `blacksmith-8vcpu-ubuntu-2404` |
 | `E2E_WORKERS` | Playwright worker count. Unset, it is one worker per CPU on the runner. | one per CPU                    |
 
+The `@timing` test (`security.spec.ts`) runs in its own `chromium-timing` Playwright project, after the main
+suite, so it has the machine to itself. Playwright runs a project's dependencies first and ignores CLI
+filters for them, so `pnpm test:e2e security.spec.ts` or `--project=chromium-timing` runs the whole
+`chromium` project before it; add `--no-deps` to run only the timing test.
+
+`step-security/harden-runner` audits outbound calls only on GitHub-hosted runners. On Blacksmith its agent is
+skipped, so that job's egress is not audited (the step is audit-only and blocks nothing). Fork PRs run on
+`ubuntu-latest` and are still audited.
+
 To roll back to GitHub's runner, set `E2E_RUNNER=ubuntu-latest`; the worker count follows its 4 CPUs. Check
 that a runner exists before setting `E2E_RUNNER` to another label: one with no runner behind it leaves the
 job queued until its 30-minute timeout.
