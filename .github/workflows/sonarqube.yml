@@ -49,7 +49,11 @@ jobs:
         run: |
           sed -i "s|REDIS_URL=.*|REDIS_URL=|" .env
 
+      # Backport PRs (base `release/*`) deliberately don't carry tests, so skip the coverage run and
+      # tell Sonar to ignore coverage for them (see the scan args). `github.base_ref` is empty on
+      # `push` and `merge_group`, so `main` is analysed as before.
       - name: Run tests with coverage
+        if: ${{ !startsWith(github.base_ref, 'release/') }}
         run: |
           pnpm test:coverage
       - name: SonarQube Scan
@@ -57,6 +61,7 @@ jobs:
         with:
           args: >
             -Dsonar.verbose=true
+            ${{ startsWith(github.base_ref, 'release/') && '-Dsonar.coverage.exclusions=**/*' || '' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

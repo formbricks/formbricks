@@ -51,8 +51,8 @@ terminal; `docker compose logs --tail=200 formbricks-migrate` has it only when t
 chart deletes the Job 300 seconds after it fails). A first failure prints `Schema migration batch failed:` with
 every migration in that batch; the error names the failed one as `Migration name:`, or as `migration_name="…"`
 when the real error was hidden. Every run after that stops with `P3009` and names it again. If you have no log,
-including with `formbricks-authzed-prepare`, which prints only `upgrade_database_migration_failed`, the database
-always knows:
+including with `formbricks-authzed-prepare`, which prints only `upgrade_database_migration_failed` (plus
+`"reason":"timeout"` when the step ran out its time limit rather than failing), the database always knows:
 
 ```sql
 SELECT migration_name, started_at FROM "_prisma_migrations"
@@ -300,6 +300,23 @@ longest a migration leaves a transaction idle, or leave the parameter out.
   safeguard does not apply either way. If `DATABASE_URL` carries both the parameter and `pgbouncer=true`,
   Formbricks sends it and logs a warning.
 </Warning>
+
+### One-click: port 3000 is published on the host only
+
+The one-click installer now publishes the Formbricks container's port `3000` on `127.0.0.1` instead of every
+interface, and `./formbricks.sh update` changes an existing one-click installation the same way, in
+`docker-compose.yml` and in your Compose override file if you have one, keeping each original as
+`<file>.before-loopback-port`. Traefik keeps serving Formbricks on ports `80` and `443`, so the app is only reachable
+from outside through Traefik and its TLS and request limits. For that to hold against other machines on the same
+local network, Docker Engine must be 28.0 or later and not 28.2.0 to 28.3.2; the installer and the update warn on
+those versions.
+
+If you reach port `3000` from other machines on purpose, publish it on an explicit address after updating, such as
+`- 0.0.0.0:3000:3000` (add `- "[::]:3000:3000"` for IPv6). The update only rewrites the bare `- 3000:3000`
+mapping, so it leaves an address you chose alone; putting the bare mapping back would be narrowed again next time.
+
+Compose setups that don't use the one-click script are not changed. If yours publishes `3000:3000` and a reverse
+proxy on the same host is the intended way in, bind it to `127.0.0.1:3000:3000` as well.
 
 ### Changes in Environment Variables
 

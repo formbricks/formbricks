@@ -113,8 +113,7 @@ test.describe("Response export columns @slow", () => {
     await page.getByTestId("fb__custom-filter-download-all-csv").click();
     const download = await downloadPromise;
 
-    // saveAs, not download.path(): CI runs this suite against Azure's remote browsers
-    // (playwright.service.config.ts), where path() throws — saveAs transfers the artifact.
+    // saveAs into the test's output dir keeps the CSV beside the failure artifacts.
     const csvPath = testInfo.outputPath(download.suggestedFilename());
     await download.saveAs(csvPath);
     const csv = await readFile(csvPath, "utf-8");

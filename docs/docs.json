@@ -55,7 +55,8 @@
               "platform/introduction",
               "platform/what-is-formbricks",
               "platform/open-source",
-              "platform/accessibility"
+              "platform/accessibility",
+              "platform/changelog"
             ]
           },
           {
@@ -372,6 +373,7 @@
             "group": "Advanced",
             "pages": [
               "self-hosting/advanced/release-maintenance-policy",
+              "self-hosting/advanced/upgrade",
               "self-hosting/advanced/migration",
               "self-hosting/advanced/v6-maintenance-upgrade",
               "self-hosting/advanced/migrating-surveys",
