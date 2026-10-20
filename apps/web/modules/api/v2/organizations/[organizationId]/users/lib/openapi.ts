@@ -66,7 +66,7 @@ export const createUserEndpoint: ZodOpenApiOperationObject = {
 export const updateUserEndpoint: ZodOpenApiOperationObject = {
   operationId: "updateUser",
   summary: "Update a user",
-  description: `Updates an existing user in the database.<br />Only available for self-hosted Formbricks.<br />\`name\` and \`isActive\` apply to the whole account, so they can only be changed for a user who belongs to this organization alone. For a user who also belongs to other organizations, a request that changes either is rejected with 409 and nothing in it is applied.`,
+  description: `Updates an existing user in the database.<br />Only available for self-hosted Formbricks.<br />\`name\` and \`isActive\` apply to the whole account, so they can only be changed for a user who belongs to this organization alone. For a user who also belongs to other organizations, a request that changes either is rejected with 409 and nothing in it is applied. An owner's role change and a change to their \`name\` or \`isActive\` must also be sent as separate requests.`,
   requestParams: {
     path: z.object({
       organizationId: ZOrganizationIdSchema,

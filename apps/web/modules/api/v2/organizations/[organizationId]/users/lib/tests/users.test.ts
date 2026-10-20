@@ -458,6 +458,22 @@ describe("Users Lib", () => {
       expect(reconcileOrganizationMembership).not.toHaveBeenCalled();
     });
 
+    test("refuses an owner's demotion together with a change to their account fields, before counting owners", async () => {
+      runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({
+        ...mockUser,
+        memberships: [{ organizationId: "org456", role: "owner" }],
+        teamUsers: [],
+      } as never);
+      lockedAccount();
+
+      const result = await updateUser({ email: mockUser.email, role: "member", name: "Renamed" }, "org456");
+
+      expect(result).toMatchObject({ ok: false, error: { type: "conflict", details: [{ field: "role" }] } });
+      expect(prisma.membership.count).not.toHaveBeenCalled();
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
     test("lets the stored values through unchanged", async () => {
       runInTransaction();
       vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({ ...mockUser, teamUsers: [] } as never);

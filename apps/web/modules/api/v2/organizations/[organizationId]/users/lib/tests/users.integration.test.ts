@@ -195,6 +195,38 @@ describe("updateUser on a user who belongs to several organizations vs real Post
     expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).isActive).toBe(true);
   });
 
+  test("an owner's demotion and a change to their name or state go in separate requests", async () => {
+    const org = await prisma.organization.create({ data: { name: "Two Owners" } });
+    const email = "owner@example.com";
+    const user = await prisma.user.create({ data: { name: "Owner", email, isActive: true } });
+    const otherOwner = await prisma.user.create({
+      data: { name: "Other Owner", email: "other-owner@example.com", isActive: true },
+    });
+    await prisma.membership.createMany({
+      data: [
+        { userId: user.id, organizationId: org.id, role: "owner", accepted: true },
+        { userId: otherOwner.id, organizationId: org.id, role: "owner", accepted: true },
+      ],
+    });
+    const role = async () =>
+      (
+        await prisma.membership.findUniqueOrThrow({
+          where: { userId_organizationId: { userId: user.id, organizationId: org.id } },
+        })
+      ).role;
+
+    const combined = await updateUser({ email, role: "member", isActive: false }, org.id);
+
+    expect(combined).toMatchObject({ ok: false, error: { type: "conflict", details: [{ field: "role" }] } });
+    expect(await role()).toBe("owner");
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).isActive).toBe(true);
+
+    // Echoing the stored values changes nothing, so the demotion alone goes through.
+    const echoed = await updateUser({ email, role: "member", name: "Owner", isActive: true }, org.id);
+    expect(echoed.ok).toBe(true);
+    expect(await role()).toBe("member");
+  });
+
   test("a user in this organization alone can still be renamed and deactivated", async () => {
     const org = await prisma.organization.create({ data: { name: "Only Org" } });
     const email = "solo@example.com";
