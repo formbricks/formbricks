@@ -1,7 +1,7 @@
 "use client";
 
 import { CodeIcon } from "lucide-react";
-import { useId } from "react";
+import { type ReactNode, useId } from "react";
 import { useTranslation } from "react-i18next";
 import type { TCustomCssInput } from "@formbricks/types/custom-css";
 import { CssCodeField } from "@/modules/custom-css/components/css-code-field";
@@ -31,8 +31,8 @@ export interface TCreativeCustomCssConfig {
 /**
  * The creative's own Custom CSS (ENG-3865, ADR 0012): a base field and a dark one, checked live and
  * compiled for the creative's root element, with the survey CSS plan gate. It doesn't offer the survey
- * CSS hints, which name the survey card's parts. The Styling tab's Light / Dark picks the field, and
- * the preview shows the same appearance, so dark rules are written against the dark creative.
+ * CSS hints, which name the survey card's parts. The Light / Dark in its header (`action`, shared with
+ * the Colors card and the preview) picks the field, so dark rules are written against the dark creative.
  */
 export const CustomCssPanel = ({
   className,
@@ -41,6 +41,7 @@ export const CustomCssPanel = ({
   validation,
   config,
   disabled,
+  action,
 }: Readonly<{
   /** The CSS a feedback button or a banner targets. */
   className: string;
@@ -48,7 +49,9 @@ export const CustomCssPanel = ({
   onChange: (source: TCustomCssInput) => void;
   validation: TCustomCssValidationState;
   config: TCreativeCustomCssConfig;
+  /** Custom styles off: the field dims and locks; the header's `action` stays usable. */
   disabled: boolean;
+  action?: ReactNode;
 }>) => {
   const { t } = useTranslation();
   const appearance = useStylingAppearance();
@@ -77,59 +80,62 @@ export const CustomCssPanel = ({
     <EditorPanel
       title={t("workspace.custom_css.title")}
       icon={CodeIcon}
-      description={t("workspace.creatives.editor.custom_css_description", { className })}>
-      {mode === "clear-only" && !hasCss ? (
-        <CustomCssPlanNotice billingHref={config.billingHref} hasSavedCss={false} />
-      ) : (
-        <div className="space-y-3">
-          {mode === "clear-only" && <CustomCssPlanNotice billingHref={config.billingHref} hasSavedCss />}
-          <label htmlFor={fieldId} className="block text-sm font-medium text-slate-700">
-            {appearance === "dark"
-              ? t("workspace.custom_css.dark_css_label")
-              : t("workspace.custom_css.base_css_label")}
-          </label>
-          <p id={helpId} className="text-xs text-slate-500">
-            {appearance === "dark"
-              ? t("workspace.custom_css.dark_css_help")
-              : t("workspace.custom_css.base_css_help")}
-          </p>
-          <CssCodeField
-            id={fieldId}
-            value={draft[appearance]}
-            onChange={canType ? (next) => onChange({ ...draft, [appearance]: next }) : undefined}
-            offersSuggestions={false}
-            keyboardHint={{ id: keyboardHintId, text: t("workspace.custom_css.keyboard_hint") }}
-            marks={getCodeLineMarks(appearance, validation.errors, validation.warnings)}
-            invalid={hasFieldError || byteSize > byteLimit}
-            placeholder={canType ? `.${className} { border-width: 2px; }` : undefined}
-            rows={8}
-            aria-label={
-              appearance === "dark"
+      description={t("workspace.creatives.editor.custom_css_description", { className })}
+      action={action}>
+      <fieldset disabled={disabled} className="min-w-0 disabled:opacity-60">
+        {mode === "clear-only" && !hasCss ? (
+          <CustomCssPlanNotice billingHref={config.billingHref} hasSavedCss={false} />
+        ) : (
+          <div className="space-y-3">
+            {mode === "clear-only" && <CustomCssPlanNotice billingHref={config.billingHref} hasSavedCss />}
+            <label htmlFor={fieldId} className="block text-sm font-medium text-slate-700">
+              {appearance === "dark"
                 ? t("workspace.custom_css.dark_css_label")
-                : t("workspace.custom_css.base_css_label")
-            }
-            aria-describedby={describedBy}
-          />
-          <CustomCssIssues
-            statusId={statusId}
-            issuesId={issuesId}
-            validation={validation}
-            byteSize={byteSize}
-            byteLimit={byteLimit}
-          />
-          {mode === "clear-only" && (
-            // Without the plan the field can't be typed in, so this is the only way to remove the CSS.
-            <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              disabled={disabled || !hasCss}
-              onClick={() => onChange({ light: "", dark: "" })}>
-              {t("workspace.custom_css.clear_all")}
-            </Button>
-          )}
-        </div>
-      )}
+                : t("workspace.custom_css.base_css_label")}
+            </label>
+            <p id={helpId} className="text-xs text-slate-500">
+              {appearance === "dark"
+                ? t("workspace.custom_css.dark_css_help")
+                : t("workspace.custom_css.base_css_help")}
+            </p>
+            <CssCodeField
+              id={fieldId}
+              value={draft[appearance]}
+              onChange={canType ? (next) => onChange({ ...draft, [appearance]: next }) : undefined}
+              offersSuggestions={false}
+              keyboardHint={{ id: keyboardHintId, text: t("workspace.custom_css.keyboard_hint") }}
+              marks={getCodeLineMarks(appearance, validation.errors, validation.warnings)}
+              invalid={hasFieldError || byteSize > byteLimit}
+              placeholder={canType ? `.${className} { border-width: 2px; }` : undefined}
+              rows={8}
+              aria-label={
+                appearance === "dark"
+                  ? t("workspace.custom_css.dark_css_label")
+                  : t("workspace.custom_css.base_css_label")
+              }
+              aria-describedby={describedBy}
+            />
+            <CustomCssIssues
+              statusId={statusId}
+              issuesId={issuesId}
+              validation={validation}
+              byteSize={byteSize}
+              byteLimit={byteLimit}
+            />
+            {mode === "clear-only" && (
+              // Without the plan the field can't be typed in, so this is the only way to remove the CSS.
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                disabled={disabled || !hasCss}
+                onClick={() => onChange({ light: "", dark: "" })}>
+                {t("workspace.custom_css.clear_all")}
+              </Button>
+            )}
+          </div>
+        )}
+      </fieldset>
     </EditorPanel>
   );
 };

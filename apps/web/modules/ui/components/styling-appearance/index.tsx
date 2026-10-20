@@ -30,14 +30,9 @@ interface StylingAppearanceToggleProps {
 
 /**
  * The Light / Dark selector at the top of the styling editor (D14). Dark switches every color picker
- * to its dark slot and the preview to the dark app survey. `darkDescription` replaces the survey's note
- * shown in Dark, for an editor whose dark colors work differently (a creative's).
+ * to its dark slot and the preview to the dark app survey.
  */
-export const StylingAppearanceToggle = ({
-  appearance,
-  onChange,
-  darkDescription,
-}: Readonly<StylingAppearanceToggleProps & { darkDescription?: string }>) => {
+export const StylingAppearanceToggle = ({ appearance, onChange }: Readonly<StylingAppearanceToggleProps>) => {
   const { t } = useTranslation();
 
   return (
@@ -54,7 +49,7 @@ export const StylingAppearanceToggle = ({
       {appearance === "dark" && (
         <Alert variant="info" size="small">
           <AlertDescription className="whitespace-normal">
-            {darkDescription ?? t("workspace.look.appearance_dark_description")}
+            {t("workspace.look.appearance_dark_description")}
           </AlertDescription>
         </Alert>
       )}

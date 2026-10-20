@@ -8,21 +8,27 @@ export const EditorPanel = ({
   title,
   icon: Icon,
   description,
+  action,
   children,
   className,
 }: Readonly<{
   title: string;
   icon?: LucideIcon;
   description?: string;
+  /** A control at the header's end that scopes the whole card, e.g. Light / Dark. */
+  action?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
 }>) => (
   <section className={cn("space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-xs", className)}>
     <header className="space-y-1">
-      <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-        {Icon && <Icon className="size-4 text-slate-500" aria-hidden="true" />}
-        {title}
-      </h3>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+          {Icon && <Icon className="size-4 text-slate-500" aria-hidden="true" />}
+          {title}
+        </h3>
+        {action}
+      </div>
       {description && <p className="text-xs text-slate-500">{description}</p>}
     </header>
     {children}

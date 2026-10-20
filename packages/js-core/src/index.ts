@@ -181,8 +181,8 @@ const setNonce = (nonce: string | undefined): void => {
 };
 
 /**
- * Set how surveys render: "light" (default), "dark", or "system" to follow the browser setting.
- * Not queued, so it works before setup(), and an open survey switches in place.
+ * Set how surveys and creatives render: "light" (default), "dark", or "system" to follow the browser
+ * setting. Not queued, so it works before setup(), and an open survey or a shown creative switches in place.
  * @param appearance - "light" | "dark" | "system"
  */
 const setAppearance = (appearance: Appearance.TAppearance): void => {

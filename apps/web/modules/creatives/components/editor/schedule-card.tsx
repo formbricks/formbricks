@@ -14,8 +14,11 @@ import { EditorField, EditorPanel } from "./editor-primitives";
 
 type TSchedule = TCreativeEditorForm["schedule"];
 
-/** Start and end to the minute, in the editor's time zone; the API stores them as instants. */
-export const ScheduleTab = ({
+/**
+ * The Schedule card on the Settings tab: start and end to the minute, in the editor's time zone; the API
+ * stores them as instants.
+ */
+export const ScheduleCard = ({
   schedule,
   onChange,
 }: Readonly<{ schedule: TSchedule; onChange: (schedule: TSchedule) => void }>) => {

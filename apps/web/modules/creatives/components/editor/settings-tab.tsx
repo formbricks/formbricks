@@ -14,8 +14,9 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
-import type { TCreativeDistributionForm } from "../../lib/editor-form";
+import type { TCreativeDistributionForm, TCreativeEditorForm } from "../../lib/editor-form";
 import { EditorField, EditorPanel, Segmented } from "./editor-primitives";
+import { ScheduleCard } from "./schedule-card";
 import { ShowConditionsCard } from "./show-conditions-card";
 
 const DEFAULT_SHARE = 50;
@@ -151,22 +152,27 @@ const ShareOfVisitors = ({
   );
 };
 
-/** Show on, then Show when with Share of visitors inside it (ENG-4002). */
+/** Show on, then Show when with Share of visitors inside it (ENG-4002), then Schedule. */
 export const SettingsTab = ({
   distribution,
-  onChange,
+  onDistributionChange,
+  schedule,
+  onScheduleChange,
   actionOptions,
   showActionError,
   showConditionErrors,
 }: Readonly<{
   distribution: TCreativeDistributionForm;
-  onChange: (distribution: TCreativeDistributionForm) => void;
+  onDistributionChange: (distribution: TCreativeDistributionForm) => void;
+  schedule: TCreativeEditorForm["schedule"];
+  onScheduleChange: (schedule: TCreativeEditorForm["schedule"]) => void;
   actionOptions: TCreativeActionOption[];
   showActionError: boolean;
   showConditionErrors: boolean;
 }>) => {
   const { t } = useTranslation();
-  const update = (patch: Partial<TCreativeDistributionForm>) => onChange({ ...distribution, ...patch });
+  const update = (patch: Partial<TCreativeDistributionForm>) =>
+    onDistributionChange({ ...distribution, ...patch });
 
   return (
     <>
@@ -200,6 +206,8 @@ export const SettingsTab = ({
           onChange={(displayPercentage) => update({ displayPercentage })}
         />
       </ShowConditionsCard>
+
+      <ScheduleCard schedule={schedule} onChange={onScheduleChange} />
     </>
   );
 };

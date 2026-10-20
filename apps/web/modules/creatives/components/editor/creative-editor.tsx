@@ -2,7 +2,6 @@
 
 import {
   ArrowLeftIcon,
-  CalendarClockIcon,
   LanguagesIcon,
   type LucideIcon,
   PaletteIcon,
@@ -54,7 +53,6 @@ import { ContentTab } from "./content-tab";
 import { CreativePreview } from "./creative-preview";
 import type { TCreativeCustomCssConfig } from "./custom-css-panel";
 import { LanguageTab } from "./language-tab";
-import { ScheduleTab } from "./schedule-tab";
 import { SettingsTab, type TCreativeActionOption } from "./settings-tab";
 import { StylingTab } from "./styling-tab";
 
@@ -63,7 +61,6 @@ const TAB_ICONS: Record<TCreativeEditorTab, LucideIcon> = {
   language: LanguagesIcon,
   styling: PaletteIcon,
   settings: Settings2Icon,
-  schedule: CalendarClockIcon,
 };
 
 // `CreativeTypeIndicator` still speaks the mock's type names, like the list.
@@ -148,7 +145,6 @@ export const CreativeEditor = ({
     language: t("common.language"),
     styling: t("common.styling"),
     settings: t("common.settings"),
-    schedule: t("workspace.creatives.editor.schedule"),
   };
   const issueMessages: Record<TPublishIssue, string> = {
     name_missing: t("workspace.creatives.editor.issue_name_missing"),
@@ -384,16 +380,12 @@ export const CreativeEditor = ({
             {activeTab === "settings" && (
               <SettingsTab
                 distribution={form.distribution}
-                onChange={(distribution) => setForm((current) => ({ ...current, distribution }))}
+                onDistributionChange={(distribution) => setForm((current) => ({ ...current, distribution }))}
+                schedule={form.schedule}
+                onScheduleChange={(schedule) => setForm((current) => ({ ...current, schedule }))}
                 actionOptions={actionOptions}
                 showActionError={issues.includes("action_missing")}
                 showConditionErrors={issues.includes("condition_incomplete")}
-              />
-            )}
-            {activeTab === "schedule" && (
-              <ScheduleTab
-                schedule={form.schedule}
-                onChange={(schedule) => setForm((current) => ({ ...current, schedule }))}
               />
             )}
           </div>
