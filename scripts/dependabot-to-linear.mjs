@@ -26,6 +26,7 @@
 //                            Generated at Settings → API → Personal API keys.
 // Flags:
 //   --dry-run  log what would be created without writing to Linear
+import { pathToFileURL } from "node:url";
 
 const DRY_RUN = process.argv.includes("--dry-run");
 
@@ -323,7 +324,19 @@ async function main() {
   if (failed > 0) process.exit(1);
 }
 
-main().catch((err) => {
-  console.error(err.message ?? err);
-  process.exit(1);
-});
+// Shared by the container scanner; importing this module must never start a sync.
+export {
+  linearRequest,
+  createIssue,
+  setIssueState,
+  resolveDoneStateId,
+  LINEAR_TEAM_ID,
+  LINEAR_TRIAGE_STATE_ID,
+};
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => {
+    console.error(err.message ?? err);
+    process.exit(1);
+  });
+}
