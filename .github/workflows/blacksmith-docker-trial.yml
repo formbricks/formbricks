@@ -1,28 +1,50 @@
-name: Inspect Blacksmith release cache
+name: Verify ARM64 cache persistence
 on:
   workflow_call:
 permissions:
   contents: read
 jobs:
-  inspect:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: amd64
-            runner: blacksmith-16vcpu-ubuntu-2404
-          - arch: arm64
-            runner: blacksmith-16vcpu-ubuntu-2404-arm
-    runs-on: ${{ matrix.runner }}
+  populate:
+    runs-on: blacksmith-16vcpu-ubuntu-2404-arm
+    timeout-minutes: 5
+    outputs:
+      proof: ${{ steps.proof.outputs.value }}
+    steps:
+      - uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184 # v2
+        with:
+          cache-key: blacksmith-arm64-cache-persistence-probe
+          nofallback: true
+      - name: Build a layer with a random proof
+        run: |
+          mkdir -p /tmp/cache-probe
+          cat > /tmp/cache-probe/Dockerfile <<'DOCKERFILE'
+          FROM alpine:3.23@sha256:85fe1e81d6758c208f3e1eed4338a1997e19d4be002d4dd32d3100c9a8c010a0
+          RUN head -c 32 /dev/urandom | base64 > /cache-proof
+          DOCKERFILE
+          docker buildx build --progress plain --load --tag cache-probe /tmp/cache-probe
+      - id: proof
+        run: echo "value=$(docker run --rm cache-probe cat /cache-proof)" >> "$GITHUB_OUTPUT"
+  verify:
+    needs: populate
+    runs-on: blacksmith-16vcpu-ubuntu-2404-arm
     timeout-minutes: 5
     steps:
       - uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184 # v2
         with:
-          cache-key: apps/web/Dockerfile-blacksmith-trial-${{ matrix.arch }}
+          cache-key: blacksmith-arm64-cache-persistence-probe
           nofallback: true
-      - name: Inspect restored cache without committing a new snapshot
+      - name: Rebuild identical inputs on a new runner
         run: |
-          docker buildx du
-          sudo du -sb /var/lib/buildkit
-          echo 'Diagnostic job intentionally fails to prevent cache commit; no build or pruning was performed.'
-          exit 1
+          mkdir -p /tmp/cache-probe
+          cat > /tmp/cache-probe/Dockerfile <<'DOCKERFILE'
+          FROM alpine:3.23@sha256:85fe1e81d6758c208f3e1eed4338a1997e19d4be002d4dd32d3100c9a8c010a0
+          RUN head -c 32 /dev/urandom | base64 > /cache-proof
+          DOCKERFILE
+          docker buildx build --progress plain --load --tag cache-probe /tmp/cache-probe
+      - name: Require the previous runner's cached proof
+        env:
+          EXPECTED_PROOF: ${{ needs.populate.outputs.proof }}
+        run: |
+          actual="$(docker run --rm cache-probe cat /cache-proof)"
+          test "$actual" = "$EXPECTED_PROOF"
+          echo 'ARM64 build cache persisted across sequential successful jobs.' >> "$GITHUB_STEP_SUMMARY"
