@@ -96,7 +96,7 @@ describe("getCreativeStyle", () => {
 
     test("ignores the custom style values while the switch is off", () => {
       const { element } = getCreativeStyle(
-        feedbackButton({ customStyles: false, backgroundColor: "#ff0000", borderRadius: 20 }),
+        feedbackButton({ customStyles: false, backgroundColor: { light: "#ff0000" }, borderRadius: 20 }),
         WORKSPACE
       );
 
@@ -150,7 +150,7 @@ describe("getCreativeStyle", () => {
       const { element } = getCreativeStyle(
         feedbackButton({
           customStyles: true,
-          borderColor: "#000000",
+          borderColor: { light: "#000000" },
           borderRadius: 0,
           fontWeight: 700,
           fontSize: { desktop: 18, phone: null },
@@ -173,7 +173,7 @@ describe("getCreativeStyle", () => {
 
     test("a background without a text colour gets readable text", () => {
       const { element } = getCreativeStyle(
-        banner({ customStyles: true, backgroundColor: "#7f1d1d" }),
+        banner({ customStyles: true, backgroundColor: { light: "#7f1d1d" } }),
         WORKSPACE
       );
 
@@ -182,7 +182,11 @@ describe("getCreativeStyle", () => {
 
     test("a background or text colour the author set keeps its pair in dark", () => {
       const { element } = getCreativeStyle(
-        banner({ customStyles: true, backgroundColor: "#fef3c7", textColor: "#78350f" }),
+        banner({
+          customStyles: true,
+          backgroundColor: { light: "#fef3c7" },
+          textColor: { light: "#78350f" },
+        }),
         { ...WORKSPACE, cardBackgroundColor: { light: "#fafafa", dark: "#111827" } }
       );
 
@@ -191,19 +195,99 @@ describe("getCreativeStyle", () => {
     });
 
     test("a border colour the author set applies in dark too, while untouched colours follow the dark card", () => {
-      const { element } = getCreativeStyle(banner({ customStyles: true, borderColor: "#b91c1c" }), {
-        ...WORKSPACE,
-        cardBackgroundColor: { light: "#fafafa", dark: "#111827" },
-      });
+      const { element } = getCreativeStyle(
+        banner({ customStyles: true, borderColor: { light: "#b91c1c" } }),
+        {
+          ...WORKSPACE,
+          cardBackgroundColor: { light: "#fafafa", dark: "#111827" },
+        }
+      );
 
       expect(element.dark).toEqual(
         expect.objectContaining({ backgroundColor: "#111827", borderColor: "#b91c1c" })
       );
     });
 
+    test("a dark value the author set applies in dark, and only there", () => {
+      const { element } = getCreativeStyle(
+        feedbackButton({
+          customStyles: true,
+          backgroundColor: { light: "#1e3a8a", dark: "#bfdbfe" },
+          textColor: { light: "#ffffff", dark: "#0f172a" },
+          borderColor: { light: "#000000", dark: "#93c5fd" },
+        }),
+        WORKSPACE
+      );
+
+      expect(element.light).toEqual({
+        backgroundColor: "#1e3a8a",
+        textColor: "#ffffff",
+        borderColor: "#000000",
+      });
+      expect(element.dark).toEqual({
+        backgroundColor: "#bfdbfe",
+        textColor: "#0f172a",
+        borderColor: "#93c5fd",
+      });
+    });
+
+    test("a dark background without any text colour gets readable text on the dark background", () => {
+      const { element } = getCreativeStyle(
+        banner({ customStyles: true, backgroundColor: { light: "#fef3c7", dark: "#1e293b" } }),
+        WORKSPACE
+      );
+
+      expect(element.light.textColor).toBe("#0f172a");
+      expect(element.dark).toEqual(
+        expect.objectContaining({ backgroundColor: "#1e293b", textColor: "#ffffff" })
+      );
+    });
+
+    test("a text colour without a dark value keeps its light value on a dark background", () => {
+      const { element } = getCreativeStyle(
+        banner({
+          customStyles: true,
+          backgroundColor: { light: "#ffffff", dark: "#1e293b" },
+          textColor: { light: "#334155" },
+        }),
+        WORKSPACE
+      );
+
+      expect(element.dark.textColor).toBe("#334155");
+    });
+
+    test("an explicit `dark: null` derives dark as if it were absent", () => {
+      const absent = getCreativeStyle(
+        banner({ customStyles: true, backgroundColor: { light: "#7f1d1d" } }),
+        WORKSPACE
+      );
+      const cleared = getCreativeStyle(
+        banner({ customStyles: true, backgroundColor: { light: "#7f1d1d", dark: null } }),
+        WORKSPACE
+      );
+
+      expect(cleared.element.dark).toEqual(absent.element.dark);
+      expect(cleared.element.dark.backgroundColor).toBe("#7f1d1d");
+    });
+
+    test("a dark text colour over a background left to the workspace keeps the light background", () => {
+      const { element } = getCreativeStyle(
+        feedbackButton({ customStyles: true, textColor: { light: "#ffffff", dark: "#fde047" } }),
+        { ...WORKSPACE, buttonBgColor: { light: "#0b5394", dark: "#93c5fd" } }
+      );
+
+      expect(element.dark).toEqual(
+        expect.objectContaining({ backgroundColor: "#0b5394", textColor: "#fde047" })
+      );
+    });
+
     test("never restyles the banner's button", () => {
       const { button } = getCreativeStyle(
-        banner({ customStyles: true, backgroundColor: "#000000", fontSize: { desktop: 30, phone: null } }),
+        banner({
+          customStyles: true,
+          backgroundColor: { light: "#000000" },
+          fontSize: { desktop: 30, phone: null },
+        }),
         WORKSPACE
       );
 

@@ -22,9 +22,10 @@ import { STYLE_DEFAULTS } from "@/lib/styling/constants";
  *   Feel page shows for it and what the survey renderer's CSS defaults are.
  * - Dark follows the survey's dark palette (`resolveDarkColors`): explicit dark values, then the brand
  *   colours kept as typed, then values derived from the brand.
- * - "Add custom styles" (`theme.customStyles`) overrides the workspace value field by field. A colour set
- *   there applies in both appearances; when the background or text colour is set, both keep their light
- *   values in dark so their contrast holds; a background set without a text colour gets readable text.
+ * - "Add custom styles" (`theme.customStyles`) overrides the workspace value field by field. A colour is
+ *   `{ light, dark? }`, as in the survey styling: its dark value applies in dark; without one, when the
+ *   background or text colour is set both keep their light values in dark so their contrast holds, and a
+ *   background set without a text colour gets readable text.
  * - Phone values apply below 768 px; a phone value left empty uses the desktop one.
  */
 
@@ -148,6 +149,44 @@ const getSurveyCardStyle = (
   };
 };
 
+/**
+ * The creative's own colours over the workspace ones. Light: what the author set, with readable text on a
+ * background set without a text colour. Dark: the author's dark value where set; otherwise a background
+ * or text colour set here keeps its light pair (so its contrast holds), a border keeps its light value,
+ * and a colour left to the workspace follows the workspace dark palette.
+ */
+const applyCustomColors = (
+  base: TCreativeElementStyle,
+  theme: TCreativeStyleSource["styling"]["theme"]
+): Pick<TCreativeElementStyle, "light" | "dark"> => {
+  const { backgroundColor, textColor, borderColor } = theme;
+  const lightBackground = backgroundColor?.light ?? base.light.backgroundColor;
+  const light: TCreativeColors = {
+    backgroundColor: lightBackground,
+    textColor: textColor?.light ?? (backgroundColor ? readableTextOn(lightBackground) : base.light.textColor),
+    borderColor: borderColor?.light ?? base.light.borderColor,
+  };
+
+  const keepsLightPair = backgroundColor !== null || textColor !== null;
+  const darkBackground =
+    backgroundColor?.dark ?? (keepsLightPair ? light.backgroundColor : base.dark.backgroundColor);
+  const derivedDarkText = keepsLightPair ? light.textColor : base.dark.textColor;
+  const darkText =
+    textColor?.dark ??
+    textColor?.light ??
+    // Same rule as light: a background without a text colour gets readable text on it.
+    (backgroundColor ? readableTextOn(darkBackground) : derivedDarkText);
+
+  return {
+    light,
+    dark: {
+      backgroundColor: darkBackground,
+      textColor: darkText,
+      borderColor: borderColor?.dark ?? borderColor?.light ?? base.dark.borderColor,
+    },
+  };
+};
+
 /** The workspace look with the creative's custom styles over it. */
 const applyCustomStyles = (
   base: TCreativeElementStyle,
@@ -156,14 +195,6 @@ const applyCustomStyles = (
   const { theme } = source.styling;
   if (!theme.customStyles) return base;
 
-  const textColor =
-    theme.textColor ?? (theme.backgroundColor ? readableTextOn(theme.backgroundColor) : base.light.textColor);
-  const light: TCreativeColors = {
-    backgroundColor: theme.backgroundColor ?? base.light.backgroundColor,
-    textColor,
-    borderColor: theme.borderColor ?? base.light.borderColor,
-  };
-  const keepsLightPair = theme.backgroundColor !== null || theme.textColor !== null;
   const desktop = {
     fontSize: theme.fontSize.desktop ?? base.desktop.fontSize,
     paddingX: theme.paddingX.desktop ?? base.desktop.paddingX,
@@ -171,12 +202,7 @@ const applyCustomStyles = (
   };
 
   return {
-    light,
-    dark: {
-      backgroundColor: keepsLightPair ? light.backgroundColor : base.dark.backgroundColor,
-      textColor: keepsLightPair ? light.textColor : base.dark.textColor,
-      borderColor: theme.borderColor ?? base.dark.borderColor,
-    },
+    ...applyCustomColors(base, theme),
     desktop,
     phone: {
       fontSize: theme.fontSize.phone ?? desktop.fontSize,

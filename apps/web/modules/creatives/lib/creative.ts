@@ -37,21 +37,42 @@ export const CREATIVE_TYPE_SCHEMAS = {
   banner: { content: zBannerContent, styling: zBannerStyling },
 } as const;
 
+const THEME_COLOR_KEYS = ["backgroundColor", "textColor", "borderColor"] as const;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+/**
+ * Stored styling in today's shape. Theme colours were plain `#rrggbb` strings before they had a dark
+ * value; such a row (unreleased, dev data only) reads as `{ light }`. Every write stores the new shape,
+ * so this only ever widens what a read accepts.
+ */
+const withPerAppearanceColors = (styling: unknown): unknown => {
+  if (!isRecord(styling) || !isRecord(styling.theme)) return styling;
+  const theme: Record<string, unknown> = { ...styling.theme };
+  for (const key of THEME_COLOR_KEYS) {
+    const color = theme[key];
+    if (typeof color === "string") theme[key] = { light: color };
+  }
+  return { ...styling, theme };
+};
+
 /** A stored row's JSON groups parsed with its type's schemas, or `null` when either no longer fits. */
 export const parseCreativeTypedGroups = (row: {
   type: TCreativeTypedGroups["type"];
   content: unknown;
   styling: unknown;
 }): TCreativeTypedGroups | null => {
+  const storedStyling = withPerAppearanceColors(row.styling);
   if (row.type === "feedbackButton") {
     const content = CREATIVE_TYPE_SCHEMAS.feedbackButton.content.safeParse(row.content);
-    const styling = CREATIVE_TYPE_SCHEMAS.feedbackButton.styling.safeParse(row.styling);
+    const styling = CREATIVE_TYPE_SCHEMAS.feedbackButton.styling.safeParse(storedStyling);
     return content.success && styling.success
       ? { type: "feedbackButton", content: content.data, styling: styling.data }
       : null;
   }
   const content = CREATIVE_TYPE_SCHEMAS.banner.content.safeParse(row.content);
-  const styling = CREATIVE_TYPE_SCHEMAS.banner.styling.safeParse(row.styling);
+  const styling = CREATIVE_TYPE_SCHEMAS.banner.styling.safeParse(storedStyling);
   return content.success && styling.success
     ? { type: "banner", content: content.data, styling: styling.data }
     : null;

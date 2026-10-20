@@ -2,12 +2,13 @@ type: object
 description: >
   The banner's custom styles. With `customStyles` off the banner follows the workspace Look & Feel
   (the survey card, with the survey button inside) and the values below are kept but not applied.
-  With it on, each value overrides the workspace one; `null` keeps the workspace value. A colour set
-  here applies in both appearances: when the background or the text colour is set, both keep their
-  light values in dark appearance so their contrast holds, and a background set without a text colour
-  gets readable text (`#0f172a` or `#ffffff`). Colours left to the workspace follow its dark palette
-  when the visitor's appearance is dark. The banner's button always looks like the survey button.
-  Colours are `#rrggbb`.
+  With it on, each value overrides the workspace one; `null` keeps the workspace value. A colour has a
+  `light` value and an optional `dark` one for the visitor's dark appearance. Without a `dark` value:
+  when the background or the text colour is set, both keep their light values in dark appearance so
+  their contrast holds, a background set without a text colour gets readable text (`#0f172a` or
+  `#ffffff`) in each appearance, and a border keeps its light value. Colours left to the workspace
+  follow its dark palette when the visitor's appearance is dark. Sizes and the position apply in both
+  appearances. The banner's button always looks like the survey button.
 required:
   - customStyles
   - backgroundColor
@@ -22,20 +23,17 @@ properties:
     type: boolean
     description: The "Add custom styles" switch.
   backgroundColor:
-    type:
-      - string
-      - "null"
-    pattern: ^#[0-9a-fA-F]{6}$
+    anyOf:
+      - $ref: ./CreativeColor.yml
+      - type: "null"
   textColor:
-    type:
-      - string
-      - "null"
-    pattern: ^#[0-9a-fA-F]{6}$
+    anyOf:
+      - $ref: ./CreativeColor.yml
+      - type: "null"
   borderColor:
-    type:
-      - string
-      - "null"
-    pattern: ^#[0-9a-fA-F]{6}$
+    anyOf:
+      - $ref: ./CreativeColor.yml
+      - type: "null"
   fontWeight:
     type:
       - integer
