@@ -1,4 +1,5 @@
 import { logger } from "@formbricks/logger";
+import { logoutPlainBeforeNavigation } from "@/app/plain/lib/plain-sdk";
 import { FORMBRICKS_ENVIRONMENT_ID_LS, FORMBRICKS_WORKSPACE_ID_LS } from "@/lib/localStorage";
 import { logSignOutAction } from "@/modules/auth/actions/sign-out";
 import { authClient } from "@/modules/auth/lib/auth-client";
@@ -59,6 +60,11 @@ export const useSignOut = (sessionUser?: SessionUser | null) => {
       localStorage.removeItem(FORMBRICKS_WORKSPACE_ID_LS);
       localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
     }
+
+    // The full page load below never unmounts PlainChat, and Plain persists its session in
+    // localStorage, so log the support chat out explicitly or the next person at this browser
+    // could open it as this user. Bounded and failure-tolerant: never blocks sign-out.
+    await logoutPlainBeforeNavigation();
 
     // Better Auth sign-out clears the BA session; the redirect is manual (BA's signOut doesn't take
     // redirect/callbackUrl like NextAuth's did). Mirror NextAuth's contract: navigate by default, or

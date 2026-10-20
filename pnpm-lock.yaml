@@ -257,6 +257,7 @@ overrides:
 patchedDependencies:
   '@better-auth/oauth-provider@1.7.0': c902485a86bcc6e01946ff9b5339866f3dcd2bbf84369e1c10cc4608e8e2ebd4
   better-auth@1.7.0: 1e1eb950e3163ebedbeeb9823f5951a9b9b12cf542ec6b15784bd06ddfb1582e
+  next@16.3.8: 89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041
   pg-pool@3.13.0: d923cc722d868672d07c34b01ac29017b42f3e77f4f52a9e6a2a1e225e7690c7
 
 importers:
@@ -266,9 +267,6 @@ importers:
       '@axe-core/playwright':
         specifier: 4.11.3
         version: 4.11.3(playwright-core@1.58.2)
-      '@azure/playwright':
-        specifier: 1.1.5
-        version: 1.1.5(@playwright/test@1.58.2)
       '@formbricks/config-eslint':
         specifier: workspace:*
         version: link:packages/config-eslint
@@ -379,7 +377,7 @@ importers:
         version: 1.7.0(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.0)(better-call@1.4.0(zod@4.3.6))(jose@6.2.2)(kysely@0.29.2)(nanostores@1.3.0)
       '@better-auth/oauth-provider':
         specifier: 1.7.0
-        version: 1.7.0(patch_hash=c902485a86bcc6e01946ff9b5339866f3dcd2bbf84369e1c10cc4608e8e2ebd4)(0cced179bd3a3af2be67120fdf222eab)
+        version: 1.7.0(patch_hash=c902485a86bcc6e01946ff9b5339866f3dcd2bbf84369e1c10cc4608e8e2ebd4)(f7763cb13096cb00b8588464b84f74b4)
       '@better-auth/utils':
         specifier: 0.4.2
         version: 0.4.2
@@ -592,7 +590,7 @@ importers:
         version: 1.2.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@sentry/nextjs':
         specifier: 10.43.0
-        version: 10.43.0(@opentelemetry/context-async-hooks@2.7.1(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.8.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.3.8(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(webpack@5.105.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.23))
+        version: 10.43.0(@opentelemetry/context-async-hooks@2.7.1(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.8.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.3.8(patch_hash=89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041)(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(webpack@5.105.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.23))
       '@stripe/stripe-js':
         specifier: 5.6.0
         version: 5.6.0
@@ -628,7 +626,7 @@ importers:
         version: 3.0.3
       better-auth:
         specifier: 1.7.0
-        version: 1.7.0(patch_hash=1e1eb950e3163ebedbeeb9823f5951a9b9b12cf542ec6b15784bd06ddfb1582e)(@opentelemetry/api@1.9.0)(@prisma/client@7.10.0(prisma@7.10.0(@types/node@25.4.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(typescript@5.9.3))(better-sqlite3@12.8.0)(mongodb@7.1.0(@aws-sdk/credential-providers@3.1013.0)(socks@2.8.7))(mysql2@3.23.1(@types/node@25.4.0))(next@16.3.8(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.20.0)(prisma@7.10.0(@types/node@25.4.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.11)
+        version: 1.7.0(patch_hash=1e1eb950e3163ebedbeeb9823f5951a9b9b12cf542ec6b15784bd06ddfb1582e)(@opentelemetry/api@1.9.0)(@prisma/client@7.10.0(prisma@7.10.0(@types/node@25.4.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(typescript@5.9.3))(better-sqlite3@12.8.0)(mongodb@7.1.0(@aws-sdk/credential-providers@3.1013.0)(socks@2.8.7))(mysql2@3.23.1(@types/node@25.4.0))(next@16.3.8(patch_hash=89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041)(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.20.0)(prisma@7.10.0(@types/node@25.4.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.11)
       boring-avatars:
         specifier: 2.0.4
         version: 2.0.4(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -706,13 +704,13 @@ importers:
         version: 14.3.1
       mcp-handler:
         specifier: 2.1.1
-        version: 2.1.1(@modelcontextprotocol/server@2.0.0)(next@16.3.8(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
+        version: 2.1.1(@modelcontextprotocol/server@2.0.0)(next@16.3.8(patch_hash=89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041)(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
       next:
         specifier: 16.3.8
-        version: 16.3.8(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        version: 16.3.8(patch_hash=89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041)(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       next-safe-action:
         specifier: 8.1.10
-        version: 8.1.10(next@16.3.8(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+        version: 8.1.10(next@16.3.8(patch_hash=89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041)(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       nodemailer:
         specifier: 10.0.9
         version: 10.0.9
@@ -2139,10 +2137,6 @@ packages:
     resolution: {integrity: sha512-XPArKLzsvl0Hf0CaGyKHUyVgF7oDnhKoP85Xv6M4StF/1AhfORhZudHtOyf2s+FcbuQ9dPRAjB8J2KvRRMUK2A==}
     engines: {node: '>=20.0.0'}
 
-  '@azure/core-xml@1.5.0':
-    resolution: {integrity: sha512-D/sdlJBMJfx7gqoj66PKVmhDDaU6TKA49ptcolxdas29X7AfvLTmfAGLjAcIMBK7UZ2o4lygHIqVckOlQU3xWw==}
-    engines: {node: '>=20.0.0'}
-
   '@azure/identity@4.13.0':
     resolution: {integrity: sha512-uWC0fssc+hs1TGGVkkghiaFkkS7NkTxfnCH+Hdg+yTehTpMcehpok4PgUKKdyCH+9ldu6FhiHRv84Ntqj1vVcw==}
     engines: {node: '>=20.0.0'}
@@ -2170,20 +2164,6 @@ packages:
   '@azure/msal-node@3.8.4':
     resolution: {integrity: sha512-lvuAwsDpPDE/jSuVQOBMpLbXuVuLsPNRwWCyK3/6bPlBk0fGWegqoZ0qjZclMWyQ2JNvIY3vHY7hoFmFmFQcOw==}
     engines: {node: '>=16'}
-
-  '@azure/playwright@1.1.5':
-    resolution: {integrity: sha512-Zgc12kmrtbXM1JEsmLm5tuhChrpvQ1AtPLWxPXQqpyMI5e9vOgJThXurR1i+x2Mf+a+qSTzfPMHOYtdbwPdroQ==}
-    engines: {node: '>=20.0.0'}
-    peerDependencies:
-      '@playwright/test': ^1.47.0
-
-  '@azure/storage-blob@12.31.0':
-    resolution: {integrity: sha512-DBgNv10aCSxopt92DkTDD0o9xScXeBqPKGmR50FPZQaEcH4JLQ+GEOGEDv19V5BMkB7kxr+m4h6il/cCDPvmHg==}
-    engines: {node: '>=20.0.0'}
-
-  '@azure/storage-common@12.3.0':
-    resolution: {integrity: sha512-/OFHhy86aG5Pe8dP5tsp+BuJ25JOAl9yaMU3WZbkeoiFMHFtJ7tu5ili7qEdBXNW9G5lDB19trwyI6V49F/8iQ==}
-    engines: {node: '>=20.0.0'}
 
   '@babel/code-frame@7.29.7':
     resolution: {integrity: sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==}
@@ -13046,11 +13026,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@azure/core-xml@1.5.0':
-    dependencies:
-      fast-xml-parser: 5.7.2
-      tslib: 2.8.1
-
   '@azure/identity@4.13.0':
     dependencies:
       '@azure/abort-controller': 2.1.2
@@ -13115,50 +13090,6 @@ snapshots:
       '@azure/msal-common': 15.13.3
       jsonwebtoken: 9.0.3
       uuid: 11.1.1
-
-  '@azure/playwright@1.1.5(@playwright/test@1.58.2)':
-    dependencies:
-      '@azure/core-auth': 1.10.1
-      '@azure/core-rest-pipeline': 1.22.2
-      '@azure/logger': 1.3.0
-      '@azure/storage-blob': 12.31.0
-      '@playwright/test': 1.58.2
-      tslib: 2.8.1
-    transitivePeerDependencies:
-      - supports-color
-
-  '@azure/storage-blob@12.31.0':
-    dependencies:
-      '@azure/abort-controller': 2.1.2
-      '@azure/core-auth': 1.10.1
-      '@azure/core-client': 1.10.1
-      '@azure/core-http-compat': 2.3.1
-      '@azure/core-lro': 2.7.2
-      '@azure/core-paging': 1.6.2
-      '@azure/core-rest-pipeline': 1.22.2
-      '@azure/core-tracing': 1.3.1
-      '@azure/core-util': 1.13.1
-      '@azure/core-xml': 1.5.0
-      '@azure/logger': 1.3.0
-      '@azure/storage-common': 12.3.0
-      events: 3.3.0
-      tslib: 2.8.1
-    transitivePeerDependencies:
-      - supports-color
-
-  '@azure/storage-common@12.3.0':
-    dependencies:
-      '@azure/abort-controller': 2.1.2
-      '@azure/core-auth': 1.10.1
-      '@azure/core-http-compat': 2.3.1
-      '@azure/core-rest-pipeline': 1.22.2
-      '@azure/core-tracing': 1.3.1
-      '@azure/core-util': 1.13.1
-      '@azure/logger': 1.3.0
-      events: 3.3.0
-      tslib: 2.8.1
-    transitivePeerDependencies:
-      - supports-color
 
   '@babel/code-frame@7.29.7':
     dependencies:
@@ -13359,12 +13290,12 @@ snapshots:
     optionalDependencies:
       mongodb: 7.1.0(@aws-sdk/credential-providers@3.1013.0)(socks@2.8.7)
 
-  '@better-auth/oauth-provider@1.7.0(patch_hash=c902485a86bcc6e01946ff9b5339866f3dcd2bbf84369e1c10cc4608e8e2ebd4)(0cced179bd3a3af2be67120fdf222eab)':
+  '@better-auth/oauth-provider@1.7.0(patch_hash=c902485a86bcc6e01946ff9b5339866f3dcd2bbf84369e1c10cc4608e8e2ebd4)(f7763cb13096cb00b8588464b84f74b4)':
     dependencies:
       '@better-auth/core': 1.7.0(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.0)(better-call@1.4.0(zod@4.3.6))(jose@6.2.2)(kysely@0.29.2)(nanostores@1.3.0)
       '@better-auth/utils': 0.4.2
       '@better-fetch/fetch': 1.3.1
-      better-auth: 1.7.0(patch_hash=1e1eb950e3163ebedbeeb9823f5951a9b9b12cf542ec6b15784bd06ddfb1582e)(@opentelemetry/api@1.9.0)(@prisma/client@7.10.0(prisma@7.10.0(@types/node@25.4.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(typescript@5.9.3))(better-sqlite3@12.8.0)(mongodb@7.1.0(@aws-sdk/credential-providers@3.1013.0)(socks@2.8.7))(mysql2@3.23.1(@types/node@25.4.0))(next@16.3.8(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.20.0)(prisma@7.10.0(@types/node@25.4.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.11)
+      better-auth: 1.7.0(patch_hash=1e1eb950e3163ebedbeeb9823f5951a9b9b12cf542ec6b15784bd06ddfb1582e)(@opentelemetry/api@1.9.0)(@prisma/client@7.10.0(prisma@7.10.0(@types/node@25.4.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(typescript@5.9.3))(better-sqlite3@12.8.0)(mongodb@7.1.0(@aws-sdk/credential-providers@3.1013.0)(socks@2.8.7))(mysql2@3.23.1(@types/node@25.4.0))(next@16.3.8(patch_hash=89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041)(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.20.0)(prisma@7.10.0(@types/node@25.4.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.11)
       better-call: 1.4.0(zod@4.3.6)
       jose: 6.2.9
       zod: 4.3.6
@@ -16721,7 +16652,7 @@ snapshots:
 
   '@sentry/core@10.43.0': {}
 
-  '@sentry/nextjs@10.43.0(@opentelemetry/context-async-hooks@2.7.1(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.8.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.3.8(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(webpack@5.105.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.23))':
+  '@sentry/nextjs@10.43.0(@opentelemetry/context-async-hooks@2.7.1(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.8.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.3.8(patch_hash=89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041)(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(webpack@5.105.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.23))':
     dependencies:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/semantic-conventions': 1.40.0
@@ -16734,7 +16665,7 @@ snapshots:
       '@sentry/react': 10.43.0(react@19.2.6)
       '@sentry/vercel-edge': 10.43.0
       '@sentry/webpack-plugin': 5.1.1(encoding@0.1.13)(webpack@5.105.4(esbuild@0.28.1)(lightningcss@1.32.0)(postcss@8.5.23))
-      next: 16.3.8(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      next: 16.3.8(patch_hash=89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041)(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       rollup: 4.59.0
       stacktrace-parser: 0.1.11
     transitivePeerDependencies:
@@ -18681,7 +18612,7 @@ snapshots:
       jsonpointer: 5.0.1
       leven: 3.1.0
 
-  better-auth@1.7.0(patch_hash=1e1eb950e3163ebedbeeb9823f5951a9b9b12cf542ec6b15784bd06ddfb1582e)(@opentelemetry/api@1.9.0)(@prisma/client@7.10.0(prisma@7.10.0(@types/node@25.4.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(typescript@5.9.3))(better-sqlite3@12.8.0)(mongodb@7.1.0(@aws-sdk/credential-providers@3.1013.0)(socks@2.8.7))(mysql2@3.23.1(@types/node@25.4.0))(next@16.3.8(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.20.0)(prisma@7.10.0(@types/node@25.4.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.11):
+  better-auth@1.7.0(patch_hash=1e1eb950e3163ebedbeeb9823f5951a9b9b12cf542ec6b15784bd06ddfb1582e)(@opentelemetry/api@1.9.0)(@prisma/client@7.10.0(prisma@7.10.0(@types/node@25.4.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(typescript@5.9.3))(better-sqlite3@12.8.0)(mongodb@7.1.0(@aws-sdk/credential-providers@3.1013.0)(socks@2.8.7))(mysql2@3.23.1(@types/node@25.4.0))(next@16.3.8(patch_hash=89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041)(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.20.0)(prisma@7.10.0(@types/node@25.4.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(vitest@4.1.11):
     dependencies:
       '@better-auth/core': 1.7.0(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.0)(better-call@1.4.0(zod@4.3.6))(jose@6.2.9)(kysely@0.29.2)(nanostores@1.3.0)
       '@better-auth/drizzle-adapter': 1.7.0(@better-auth/core@1.7.0(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@opentelemetry/api@1.9.0)(better-call@1.4.0(zod@4.3.6))(jose@6.2.2)(kysely@0.29.2)(nanostores@1.3.0))(@better-auth/utils@0.4.2)
@@ -18705,7 +18636,7 @@ snapshots:
       better-sqlite3: 12.8.0
       mongodb: 7.1.0(@aws-sdk/credential-providers@3.1013.0)(socks@2.8.7)
       mysql2: 3.23.1(@types/node@25.4.0)
-      next: 16.3.8(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      next: 16.3.8(patch_hash=89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041)(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       pg: 8.20.0
       prisma: 7.10.0(@types/node@25.4.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
       react: 19.2.6
@@ -21234,13 +21165,13 @@ snapshots:
 
   math-intrinsics@1.1.0: {}
 
-  mcp-handler@2.1.1(@modelcontextprotocol/server@2.0.0)(next@16.3.8(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)):
+  mcp-handler@2.1.1(@modelcontextprotocol/server@2.0.0)(next@16.3.8(patch_hash=89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041)(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)):
     dependencies:
       '@modelcontextprotocol/server': 2.0.0
       chalk: 5.6.2
       commander: 11.1.0
     optionalDependencies:
-      next: 16.3.8(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      next: 16.3.8(patch_hash=89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041)(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
 
   mdn-data@2.0.14: {}
 
@@ -21487,14 +21418,14 @@ snapshots:
 
   neo-async@2.6.2: {}
 
-  next-safe-action@8.1.10(next@16.3.8(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
+  next-safe-action@8.1.10(next@16.3.8(patch_hash=89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041)(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
     dependencies:
       deepmerge-ts: 8.0.1
-      next: 16.3.8(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      next: 16.3.8(patch_hash=89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041)(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
 
-  next@16.3.8(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
+  next@16.3.8(patch_hash=89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041)(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6):
     dependencies:
       '@next/env': 16.3.8
       '@swc/helpers': 0.5.23

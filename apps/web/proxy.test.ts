@@ -2,7 +2,7 @@ import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { FORMBRICKS_CLIENT_IP_HEADER } from "@/lib/utils/client-ip";
-import { config, proxy } from "./proxy";
+import { INGEST_REQUEST_BODY_LIMIT_BYTES, config, proxy } from "./proxy";
 
 const { mockGetProxySession, mockIsPublicDomainConfigured, mockIsRequestFromPublicDomain } = vi.hoisted(
   () => ({
@@ -285,6 +285,54 @@ describe("proxy", () => {
       FORMBRICKS_CLIENT_IP_HEADER
     );
     expect(response.headers.get(FORMBRICKS_CLIENT_IP_HEADER)).toBeNull();
+  });
+
+  describe("PostHog /ingest body limit", () => {
+    const ingest = (path: string, headers: Record<string, string>) =>
+      proxy(new NextRequest(`http://localhost:3000${path}`, { method: "POST", headers }));
+
+    test("refuses a declared body over the limit with 413", async () => {
+      const response = await ingest("/ingest/s/", {
+        "content-length": String(INGEST_REQUEST_BODY_LIMIT_BYTES + 1),
+      });
+
+      expect(response.status).toBe(413);
+    });
+
+    test("refuses a Content-Length that does not parse with 413", async () => {
+      const response = await ingest("/ingest/e/", { "content-length": "lots" });
+
+      expect(response.status).toBe(413);
+    });
+
+    test.each(["/ingest/e/", "/INGEST/e", "/InGeSt/batch", "/Ingest"])(
+      "refuses a body of undeclared length to %s with 411",
+      async (path) => {
+        // Next's rewrite matches any case of the path, so the bound has to as well.
+        const response = await ingest(path, { "transfer-encoding": "chunked" });
+
+        expect(response.status).toBe(411);
+      }
+    );
+
+    test("forwards a body up to the limit", async () => {
+      mockGetProxySession.mockResolvedValue(null);
+      const response = await ingest("/ingest/e/", {
+        "content-length": String(INGEST_REQUEST_BODY_LIMIT_BYTES),
+      });
+
+      expect(response.headers.get("x-middleware-next")).toBe("1");
+    });
+
+    test.each(["/ingestion", "/api/v1/management/responses"])(
+      "leaves %s to its own route's limits",
+      async (path) => {
+        mockGetProxySession.mockResolvedValue(null);
+        const response = await ingest(path, { "transfer-encoding": "chunked" });
+
+        expect(response.headers.get("x-middleware-next")).toBe("1");
+      }
+    );
   });
 });
 

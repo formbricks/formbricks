@@ -10,7 +10,9 @@ import { env } from "@/lib/env";
  *
  * The signature is a bearer credential, so it must only ever be computed server-side with the
  * secret from Plain's Chat settings and passed to the client already signed.
- * Returns null when no secret is configured, in which case the chat runs unverified.
+ * Returns null when no secret is configured. The chat is never mounted in that case
+ * (`IS_PLAIN_CHAT_CONFIGURED` requires the secret), and the client refuses to send an
+ * email without its signature, so a null here means no identity reaches Plain at all.
  */
 export const computePlainCustomerDetailsSignature = ({
   email,

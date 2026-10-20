@@ -2,9 +2,9 @@ import { describe, expect, test } from "vitest";
 import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { applyAutoSelectLanguageRule } from "./auto-select-language";
 
-const surveyLanguage = (code: string, isDefault = false): TSurveyLanguage => ({
+const surveyLanguage = (code: string, isDefault = false, enabled = true): TSurveyLanguage => ({
   default: isDefault,
-  enabled: true,
+  enabled,
   language: {
     id: `lang-${code}`,
     code,
@@ -32,6 +32,29 @@ describe("applyAutoSelectLanguageRule", () => {
   test("turns it off when multi-language is deactivated", () => {
     const previous = survey([surveyLanguage("en-US", true), surveyLanguage("de-DE")], true);
     expect(applyAutoSelectLanguageRule(previous, survey([], true)).autoSelectLanguage).toBe(false);
+  });
+
+  test("turns it on when an unset survey starts offering a second language", () => {
+    const previous = survey([surveyLanguage("en-US", true)], null);
+    const next = survey([surveyLanguage("en-US", true), surveyLanguage("de-DE")], null);
+    expect(applyAutoSelectLanguageRule(previous, next)).toEqual({ ...next, autoSelectLanguage: true });
+    // Re-enabling a disabled second language is the same transition.
+    const withDisabled = survey([surveyLanguage("en-US", true), surveyLanguage("de-DE", false, false)], null);
+    expect(applyAutoSelectLanguageRule(withDisabled, next).autoSelectLanguage).toBe(true);
+  });
+
+  test("keeps an explicit choice when a second language is added", () => {
+    const previous = survey([surveyLanguage("en-US", true)], false);
+    const next = survey([surveyLanguage("en-US", true), surveyLanguage("de-DE")], false);
+    expect(applyAutoSelectLanguageRule(previous, next)).toBe(next);
+    const nextOn = { ...next, autoSelectLanguage: true };
+    expect(applyAutoSelectLanguageRule({ ...previous, autoSelectLanguage: true }, nextOn)).toBe(nextOn);
+  });
+
+  test("does not count a disabled language as offered", () => {
+    const previous = survey([surveyLanguage("en-US", true)], null);
+    const next = survey([surveyLanguage("en-US", true), surveyLanguage("de-DE", false, false)], null);
+    expect(applyAutoSelectLanguageRule(previous, next)).toBe(next);
   });
 
   test("leaves the creator's choice alone while multi-language stays active", () => {

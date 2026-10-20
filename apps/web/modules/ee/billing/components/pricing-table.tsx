@@ -42,13 +42,18 @@ import {
   waitForBillingPaymentMethodAction,
   waitForBillingPlanAction,
 } from "../actions";
+import { isResponseOverageBilledAboveLimit } from "../lib/response-pricing-tiers";
 import { runSetupCheckoutUpgrade } from "../lib/setup-checkout-upgrade";
 import type {
   TStripeBillingCatalogDisplay,
   TStripeBillingCatalogDisplayItem,
 } from "../lib/stripe-billing-catalog";
 import { PlanComparisonTable, type TPlanColumn } from "./plan-comparison";
-import { PlanResponseFeature, PlanWorkflowRunsFeature } from "./response-pricing-tooltip";
+import {
+  PlanResponseFeature,
+  PlanWorkflowRunsFeature,
+  ResponseOverageNote,
+} from "./response-pricing-tooltip";
 import { TrialAlert } from "./trial-alert";
 import { UsageCard } from "./usage-card";
 
@@ -401,6 +406,8 @@ export const PricingTable = ({
     currentBillingInterval ?? "monthly"
   );
   const workflowRunsLimit = currentPlanCatalogItem?.workflowRunsIncluded ?? null;
+  const responsesLimit = organization.billing.limits.monthly.responses;
+  const responseOverage = currentPlanCatalogItem?.responseOverage ?? null;
   const trialEndDate = organization.billing.stripe?.trialEnd
     ? new Date(organization.billing.stripe.trialEnd)
     : null;
@@ -1536,10 +1543,14 @@ export const PricingTable = ({
               <UsageCard
                 metric={t("common.responses")}
                 currentCount={responseCount}
-                limit={organization.billing.limits.monthly.responses}
+                limit={responsesLimit}
                 isUnlimited={responsesUnlimitedCheck}
                 unlimitedLabel={t("workspace.settings.billing.unlimited_responses")}
               />
+              {responseOverage &&
+                isResponseOverageBilledAboveLimit(responsesLimit, responseOverage.tiers) && (
+                  <ResponseOverageNote limit={responsesLimit} locale={locale} overage={responseOverage} />
+                )}
               <p className="text-sm text-slate-500">
                 {t("workspace.settings.billing.usage_cycle")}: {usageCycleLabel}
               </p>

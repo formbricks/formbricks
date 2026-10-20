@@ -19,8 +19,9 @@ import { sendVerificationLinkEmail } from "@/modules/email";
  * the closed-instance policy. These calls are deliberately NOT action-scoped, so on a closed instance
  * the second sign-up below would be rejected outright and the duplicate branch would never run. The
  * contract still matters exactly as asserted: `signUpUserSafely` reaches it through `createUserAction`,
- * which is exempt from that gate, on open and closed instances alike. Closed-instance behaviour of the
- * raw route is covered by signup-closed-instance.integration.test.ts.
+ * which is exempt from that gate, on open and closed instances alike. The gate's closed-instance
+ * behaviour is covered by signup-closed-instance.integration.test.ts; the HTTP route itself is closed
+ * (ENG-3988, signup-native-endpoint.integration.test.ts).
  */
 vi.mock("@/lib/constants", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/constants")>()),
