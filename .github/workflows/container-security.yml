@@ -22,7 +22,7 @@ jobs:
   inventory:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     outputs:
       matrix: ${{ steps.inventory.outputs.matrix }}
     steps:
@@ -59,6 +59,22 @@ jobs:
           name: image-inventory
           path: image-inventory.json
           retention-days: 14
+      - uses: aquasecurity/setup-trivy@3fb12ec12f41e471780db15c232d5dd185dcb514 # v0.2.6
+        with:
+          version: v0.71.2
+          cache: true
+      - name: Download one database snapshot for all image scans
+        env:
+          TRIVY_CACHE_DIR: ${{ runner.temp }}/trivy-databases
+        run: |
+          trivy image --download-db-only --no-progress
+          trivy image --download-java-db-only --no-progress
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: trivy-databases
+          path: ${{ runner.temp }}/trivy-databases
+          if-no-files-found: error
+          retention-days: 1
 
   scan:
     needs: inventory
@@ -92,9 +108,16 @@ jobs:
         with:
           version: v0.71.2
           cache: true
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: trivy-databases
+          path: ${{ runner.temp }}/trivy-databases
       - name: Scan immutable manifests for available amd64 and arm64 variants
         env:
           SCAN_ENTRY: ${{ toJSON(matrix.entry) }}
+          TRIVY_CACHE_DIR: ${{ runner.temp }}/trivy-databases
+          TRIVY_SKIP_DB_UPDATE: "true"
+          TRIVY_SKIP_JAVA_DB_UPDATE: "true"
         run: node scripts/container-security/scan.mjs reports
       - name: Preserve results even when an image is unavailable
         if: always()

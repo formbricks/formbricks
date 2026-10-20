@@ -59,7 +59,11 @@ describe("image inventory", () => {
     expect(profiles).toHaveLength(2);
     expect(profiles[1]).toContain("scripts/container-security/profiles.yaml");
     expect(entries.some((e: { image: string }) => e.image === "test/optional@" + digest)).toBe(true);
-    expect(entries.some((e: { image: string }) => e.image === "vllm/vllm-openai:v0.14.0")).toBe(true);
+    for (const file of ["docker/docker-compose.yml", "docker-compose.dev.yml"]) {
+      expect(
+        entries.some((e: { sources: string[] }) => e.sources.some((source) => source.startsWith(`${file}#`)))
+      ).toBe(true);
+    }
   });
 });
 

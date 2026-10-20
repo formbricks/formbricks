@@ -26,7 +26,10 @@ or manual workflow may write; no PR workflow receives Linear credentials.
 
 Each image gets an isolated runner. The scanner resolves the registry index once, scans immutable
 linux/amd64 and linux/arm64 manifests with Trivy, and records architectures that upstream does not
-publish. Registry and scanner errors fail the job. Reports remain available as workflow artifacts for
+publish. The inventory job downloads the vulnerability and Java index databases once and shares them
+with every scan job; database updates are disabled in those jobs so the full run uses one snapshot.
+A database preparation failure stops the workflow before scanning or changing Linear tickets.
+Registry and scanner errors fail the job. Reports remain available as workflow artifacts for
 14 days. The existing Docker Security Scan continues publishing its app/Cube SARIF to Code scanning;
 this stack-wide sync reads JSON directly, not Dependabot alerts or the Code scanning API.
 
