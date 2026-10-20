@@ -489,6 +489,46 @@ describe("withV1ApiWrapper", () => {
     expect(mockedQueueAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "created" }));
   });
 
+  test("logs, and still responds, when queueing the audit event fails", async () => {
+    vi.doMock("@/lib/constants", () => ({
+      AUDIT_LOG_ENABLED: true,
+      IS_PRODUCTION: true,
+      SENTRY_DSN: "dsn",
+      ENCRYPTION_KEY: "test-key",
+      REDIS_URL: "redis://localhost:6379",
+    }));
+
+    const { queueAuditEvent: mockedQueueAuditEvent } =
+      (await import("@/modules/ee/audit-logs/lib/handler")) as unknown as { queueAuditEvent: Mock };
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
+      await import("@/app/middleware/endpoint-validator");
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+
+    vi.mocked(authenticateRequest).mockResolvedValue(mockApiAuthentication);
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: true,
+      authenticationMethod: AuthMethod.ApiKey,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+
+    const handler = vi.fn().mockResolvedValue({
+      response: responses.internalServerErrorResponse("fail"),
+    });
+
+    const queueError = new Error("after() outside a request scope");
+    mockedQueueAuditEvent.mockRejectedValueOnce(queueError);
+
+    const req = createMockRequest({ url: V1_MANAGEMENT_SURVEYS_URL });
+    const wrapped = withV1ApiWrapper({ handler, action: "created", targetType: "survey" });
+    const res = await wrapped(req, undefined);
+
+    expect(res.status).toBe(500);
+    await new Promise(setImmediate);
+    expect(logger.error).toHaveBeenCalledWith(queueError, "Failed to queue audit event");
+  });
+
   test("handles client-side API routes without authentication", async () => {
     const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
       await import("@/app/middleware/endpoint-validator");

@@ -32,6 +32,8 @@ export type TAuditEventInput = {
 
 type TBuildAuditEventInput = TAuditEventInput & {
   ipAddress: string;
+  // When the audited action happened. Taken by the entry point, since the write itself is deferred.
+  timestamp: string;
 };
 
 /**
@@ -53,6 +55,7 @@ const buildAndLogAuditEvent = async ({
   newObject,
   eventId,
   apiUrl,
+  timestamp,
 }: TBuildAuditEventInput) => {
   try {
     let changes;
@@ -70,7 +73,7 @@ const buildAndLogAuditEvent = async ({
       actor: { id: userId, type: userType },
       action,
       target: { id: targetId, type: targetType },
-      timestamp: new Date().toISOString(),
+      timestamp,
       organizationId,
       status,
       ipAddress: AUDIT_LOG_GET_USER_IP ? ipAddress : UNKNOWN_DATA,
@@ -102,6 +105,7 @@ export const queueAuditEventBackground = async ({
   eventId,
   apiUrl,
 }: TAuditEventInput) => {
+  const timestamp = new Date().toISOString();
   setImmediate(async () => {
     try {
       if (!(await getIsAuditLogsEnabled())) return;
@@ -119,9 +123,10 @@ export const queueAuditEventBackground = async ({
         newObject,
         eventId,
         apiUrl,
+        timestamp,
       });
     } catch (error) {
-      logger.error(error, "Failed to queue audit event");
+      logger.error({ err: error, action, targetType, targetId, eventId }, "Failed to queue audit event");
     }
   });
 };
@@ -129,7 +134,9 @@ export const queueAuditEventBackground = async ({
 /**
  * Logs an audit event once the response has been sent, so neither the gate's licence lookup nor the
  * IP read delays it. `after()` keeps the work alive until it finishes and keeps `headers()` readable,
- * so call this from a Route Handler or Server Function, not a Server Component.
+ * so call this from a Route Handler or Server Function, not a Server Component. It stays `async` on
+ * purpose: outside a request scope `after()` throws, and `async` turns that into a rejection the caller's
+ * `.catch` handles instead of a throw into the caller.
  */
 export const queueAuditEvent = async ({
   action,
@@ -144,6 +151,7 @@ export const queueAuditEvent = async ({
   eventId,
   apiUrl,
 }: TAuditEventInput) => {
+  const timestamp = new Date().toISOString();
   after(async () => {
     try {
       if (!(await getIsAuditLogsEnabled())) return;
@@ -161,9 +169,10 @@ export const queueAuditEvent = async ({
         newObject,
         eventId,
         apiUrl,
+        timestamp,
       });
     } catch (error) {
-      logger.error(error, "Failed to queue audit event");
+      logger.error({ err: error, action, targetType, targetId, eventId }, "Failed to queue audit event");
     }
   });
 };
@@ -186,6 +195,7 @@ export const queueAuditEventWithoutRequest = async ({
   apiUrl,
   ipAddress = UNKNOWN_DATA,
 }: TAuditEventInput & { ipAddress?: string }) => {
+  const timestamp = new Date().toISOString();
   if (!(await getIsAuditLogsEnabled())) return;
   await buildAndLogAuditEvent({
     action,
@@ -200,6 +210,7 @@ export const queueAuditEventWithoutRequest = async ({
     newObject,
     eventId,
     apiUrl,
+    timestamp,
   });
 };
 
@@ -244,6 +255,7 @@ export const withAuditLogging = <
 
     // The gate is checked off the request path, so a cold licence lookup never delays the action's
     // response.
+    const timestamp = new Date().toISOString();
     setImmediate(async () => {
       try {
         if (!(await getIsAuditLogsEnabled())) return;
@@ -360,6 +372,7 @@ export const withAuditLogging = <
           organizationId,
           ipAddress: AUDIT_LOG_GET_USER_IP ? auditLoggingCtx.ipAddress : UNKNOWN_DATA,
           status,
+          timestamp,
           oldObject: auditLoggingCtx.oldObject,
           newObject: auditLoggingCtx.newObject,
           eventId: auditLoggingCtx.eventId,

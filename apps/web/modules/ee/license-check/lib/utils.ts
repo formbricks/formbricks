@@ -139,7 +139,8 @@ export const getIsAISmartToolsEnabled = async (organizationId: string): Promise<
   return getCustomPlanFeaturePermission(organizationId, "aiSmartTools");
 };
 
-// Per process: whether the last check found the licence withholding audit logging (see below).
+// Per module instance (Next can load more than one per process): whether the last check found the
+// licence withholding audit logging (see below).
 let isAuditLogWithheldByLicense = false;
 
 /**

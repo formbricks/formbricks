@@ -193,22 +193,30 @@ describe("queueAuditEvent", () => {
     expect(vi.mocked(getClientIpFromHeaders)).not.toHaveBeenCalled();
   });
 
-  test("returns before the licence check settles, then still logs", async () => {
+  test("returns before the licence check settles, then logs with the time of the call", async () => {
     let settleGate!: (enabled: boolean) => void;
     vi.mocked(getIsAuditLogsEnabled).mockImplementationOnce(
       () => new Promise<boolean>((resolve) => (settleGate = resolve))
     );
+    vi.useFakeTimers({ toFake: ["Date"] });
+    try {
+      vi.setSystemTime(new Date("2026-10-20T10:00:00.000Z"));
+      const outcome = await Promise.race([
+        OriginalHandler.queueAuditEvent(baseEventParams).then(() => "returned"),
+        new Promise((resolve) => setTimeout(() => resolve("still waiting on the licence"), 50)),
+      ]);
+      expect(outcome).toBe("returned");
+      expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
 
-    const outcome = await Promise.race([
-      OriginalHandler.queueAuditEvent(baseEventParams).then(() => "returned"),
-      new Promise((resolve) => setTimeout(() => resolve("still waiting on the licence"), 50)),
-    ]);
-    expect(outcome).toBe("returned");
-    expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
-
-    settleGate(true);
-    await flushAfter();
-    expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
+      vi.setSystemTime(new Date("2026-10-20T10:00:30.000Z"));
+      settleGate(true);
+      await flushAfter();
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(serviceLogAuditEventMockHandle).toHaveBeenCalledWith(
+      expect.objectContaining({ timestamp: "2026-10-20T10:00:00.000Z" })
+    );
   });
 
   test("logs, rather than throws, when the deferred IP read fails", async () => {
@@ -216,7 +224,10 @@ describe("queueAuditEvent", () => {
     vi.mocked(getClientIpFromHeaders).mockRejectedValueOnce(ipError);
     await OriginalHandler.queueAuditEvent(baseEventParams);
     await flushAfter();
-    expect(loggerErrorMockHandle).toHaveBeenCalledWith(ipError, "Failed to queue audit event");
+    expect(loggerErrorMockHandle).toHaveBeenCalledWith(
+      expect.objectContaining({ err: ipError, action: "created", targetId: "t1" }),
+      "Failed to queue audit event"
+    );
     expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
   });
 });
@@ -250,7 +261,10 @@ describe("queueAuditEventBackground", () => {
     vi.mocked(getClientIpFromHeaders).mockRejectedValueOnce(ipError);
     await OriginalHandler.queueAuditEventBackground(baseEventParams);
     await new Promise(setImmediate);
-    expect(loggerErrorMockHandle).toHaveBeenCalledWith(ipError, "Failed to queue audit event");
+    expect(loggerErrorMockHandle).toHaveBeenCalledWith(
+      expect.objectContaining({ err: ipError, action: "created", targetId: "t1" }),
+      "Failed to queue audit event"
+    );
     expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
   });
 });
