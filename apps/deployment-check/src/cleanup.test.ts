@@ -15,11 +15,18 @@ const reply = (status: number, json?: unknown): TApiResponse => ({
 const fakeApi = (handlers: {
   delete?: (path: string) => TApiResponse | Promise<TApiResponse>;
   listed?: unknown;
+  listStatus?: number;
 }) => {
   const remove = vi.fn((path: string) =>
     Promise.resolve(handlers.delete ? handlers.delete(path) : reply(204))
   );
-  const get = vi.fn((_path: string) => Promise.resolve(reply(200, { data: handlers.listed ?? [] })));
+  const get = vi.fn((_path: string) =>
+    Promise.resolve(
+      handlers.listStatus
+        ? reply(handlers.listStatus, { title: "Service Unavailable" })
+        : reply(200, { data: handlers.listed ?? [] })
+    )
+  );
   return { api: { delete: remove, get } as unknown as TApiClient, remove, get };
 };
 
@@ -103,5 +110,14 @@ describe("cleanup", () => {
     expect(await cleanup({ api: broken, surveyIds: [], workspaceId: "ws", now: NOW })).toEqual([
       "sweep: boom",
     ]);
+  });
+
+  test("reports an unsuccessful sweep list instead of treating it as empty", async () => {
+    const { api, remove } = fakeApi({ listStatus: 503 });
+
+    const problems = await cleanup({ api, surveyIds: ["a"], workspaceId: "ws", now: NOW });
+
+    expect(problems).toEqual(["sweep: listing leftover surveys returned HTTP 503"]);
+    expect(remove).toHaveBeenCalledTimes(1);
   });
 });

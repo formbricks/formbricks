@@ -17,8 +17,8 @@ RUN node -e ' \
   for (const line of fs.readFileSync("/tmp/pnpm-workspace.yaml", "utf8").split("\n")) { \
     if (/^catalog:/.test(line)) { inCatalog = true; continue; } \
     if (inCatalog && /^\S/.test(line)) break; \
-    const m = line.match(/^  "?([^":\s]+(?:\/[^":\s]+)?)"?:\s*(\S+)\s*$/); \
-    if (inCatalog && m) catalog[m[1]] = m[2]; \
+    const m = line.match(/^  "?([^":\s]+(?:\/[^":\s]+)?)"?:\s*(?:"([^"]+)"|(\S+))\s*$/); \
+    if (inCatalog && m) catalog[m[1]] = m[2] ?? m[3]; \
   } \
   const pkg = JSON.parse(fs.readFileSync("package.json", "utf8")); \
   for (const [name, range] of Object.entries(pkg.dependencies)) { \
@@ -38,11 +38,12 @@ FROM mcr.microsoft.com/playwright:v1.58.2-noble
 
 WORKDIR /app
 COPY --from=deps /app/ /app/
+COPY --chmod=755 apps/deployment-check/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN mkdir /report && chown pwuser:pwuser /report
 
 ENV REPORT_DIR=/report \
     CI=1
 
-USER pwuser
+# Starts as root only to fix the report mount's ownership; the entrypoint drops to pwuser before the checks run.
 VOLUME ["/report"]
-ENTRYPOINT ["node_modules/.bin/playwright", "test"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

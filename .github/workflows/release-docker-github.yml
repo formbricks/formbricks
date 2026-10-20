@@ -136,6 +136,10 @@ jobs:
         with:
           persist-credentials: false
 
+      # Self-hosters run on arm64 too, so the image ships the same architectures as the app image.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
 
@@ -169,5 +173,6 @@ jobs:
         with:
           context: .
           file: ./apps/deployment-check/Dockerfile
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.tags.outputs.tags }}

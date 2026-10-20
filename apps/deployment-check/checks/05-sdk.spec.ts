@@ -1,6 +1,7 @@
 import { CheckFailure } from "../src/diagnostics.ts";
 import { tierTest } from "../src/fixtures.ts";
 import { readState } from "../src/run-state.ts";
+import { describeSdkBundleProblem } from "../src/sdk.ts";
 
 const test = tierTest("sdk");
 
@@ -24,10 +25,11 @@ test("SDK environment endpoint answers", async ({ api }) => {
 test("SDK bundle is served", async ({ api }) => {
   const response = await api.get("/js/formbricks.umd.cjs", { authenticated: false, origin: "publicUrl" });
 
-  if (response.status !== 200 || response.text.length < 1_000) {
+  const problem = describeSdkBundleProblem(response);
+  if (problem) {
     throw new CheckFailure(
       "SDK bundle",
-      `GET /js/formbricks.umd.cjs returned HTTP ${response.status} with ${response.text.length} bytes`,
+      `GET /js/formbricks.umd.cjs ${problem}`,
       "the image was built without the survey bundle, or the proxy blocks /js/*"
     );
   }

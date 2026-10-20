@@ -38,6 +38,11 @@ export const cleanup = async ({ api, surveyIds, workspaceId, now }: TCleanupInpu
         "filter[name][contains]": CHECK_PREFIX,
       });
       const listed = await api.get(`/api/v3/surveys?${query.toString()}`);
+      // A failed list would read as "nothing left over" and hide the leftovers it never inspected.
+      if (!listed.ok) {
+        problems.push(`sweep: listing leftover surveys returned HTTP ${listed.status}`);
+        return problems;
+      }
       const data = (listed.json as { data?: { id: string; name: string; createdAt: string }[] } | undefined)
         ?.data;
       await Promise.all(selectStaleSurveyIds(data ?? [], now, surveyIds).map(remove));
