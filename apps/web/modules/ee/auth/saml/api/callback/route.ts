@@ -9,6 +9,7 @@ import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import jackson from "@/modules/ee/auth/saml/lib/jackson";
 import {
+  type SamlParseProbe,
   type SamlResponseClaims,
   probeSamlResponseParse,
 } from "@/modules/ee/auth/saml/lib/saml-parse-budget";
@@ -48,10 +49,14 @@ const isBrowserNavigation = (req: Request): boolean => {
 
 /**
  * The login page with `code` as its error. Appended to `webappUrl` rather than resolved against it, which would drop
- * a custom base path (`https://host/custom-path` + `/auth/login` must not become `https://host/auth/login`).
+ * a custom base path (`https://host/custom-path` + `/auth/login` must not become `https://host/auth/login`). The
+ * trailing slashes are trimmed by a reverse scan, not `replace(/\/+$/, "")`, which backtracks quadratically on a run
+ * of slashes (as in `modules/auth/lib/oauth-urls.ts`).
  */
 export const buildLoginErrorUrl = (webappUrl: string, code: SamlErrorCode): string => {
-  const loginUrl = new URL(`${webappUrl.replace(/\/+$/, "")}/auth/login`);
+  let end = webappUrl.length;
+  while (end > 0 && webappUrl[end - 1] === "/") end--;
+  const loginUrl = new URL(`${webappUrl.slice(0, end)}/auth/login`);
   loginUrl.searchParams.set("error", code);
   return loginUrl.toString();
 };
@@ -130,17 +135,10 @@ const warnThrottled = (kind: string, fields: object, message: string) => {
   refusalLogState.set(kind, { loggedAt: now, suppressed: 0 });
 };
 
-export const POST = async (req: Request) => {
-  const jacksonInstance = await jackson();
-  if (!jacksonInstance) {
-    return refuse(
-      req,
-      "saml_connection_unavailable",
-      responses.forbiddenResponse("SAML SSO is not enabled in your Formbricks license")
-    );
-  }
-  const { oauthController } = jacksonInstance;
-
+/** The callback's two form fields, or the refusal for a body that does not carry them as text. */
+const readCallbackForm = async (
+  req: Request
+): Promise<{ SAMLResponse: string; RelayState: string } | Response> => {
   let formData: FormData;
   try {
     formData = await req.formData();
@@ -165,7 +163,11 @@ export const POST = async (req: Request) => {
       responses.badRequestResponse("SAMLResponse and RelayState must be text fields")
     );
   }
+  return { SAMLResponse, RelayState };
+};
 
+/** The refusal for a response past the byte bounds or the caller's rate limit, or `null` when it may be parsed. */
+const refuseBeforeParsing = async (req: Request, SAMLResponse: string): Promise<Response | null> => {
   const refusal = checkSamlResponseBounds(SAMLResponse);
   if (refusal) {
     // Sizes only, never content.
@@ -193,73 +195,111 @@ export const POST = async (req: Request) => {
     if (error.retryAfter !== undefined) response.headers.set("Retry-After", String(error.retryAfter));
     return refuse(req, "saml_unavailable", response);
   }
+  return null;
+};
 
-  // The bounds above model xmldom; this measures it. A worker parses the response under a time budget first, so a
-  // shape the bounds misread costs the worker at most the budget and never blocks this thread for long.
+/** The refusal for a response the worker did not parse within its budget, or could not parse at all. */
+const refuseUnparsed = (
+  req: Request,
+  probe: Exclude<SamlParseProbe, { outcome: "parsed" }>,
+  SAMLResponse: string,
+  RelayState: string
+): Response => {
+  switch (probe.outcome) {
+    case "busy":
+      warnThrottled(
+        "busy",
+        failureContext(SAMLResponse, RelayState),
+        "SAML parsing is saturated; refused a SAML response"
+      );
+      return refuse(
+        req,
+        "saml_unavailable",
+        responses.serviceUnavailableResponse("Too many SAML responses are being processed; retry shortly", 1)
+      );
+    case "failed":
+      logger.error(
+        failureContext(SAMLResponse, RelayState),
+        "SAML parse worker failed; refused a SAML response"
+      );
+      return refuse(
+        req,
+        "saml_unavailable",
+        responses.serviceUnavailableResponse("The SAML response could not be processed; retry shortly", 1)
+      );
+    case "too_costly":
+      logger.warn(
+        { stage: "parse_budget", reason: probe.reason, ...failureContext(SAMLResponse, RelayState) },
+        "Refused a SAML response that was too costly to parse"
+      );
+      return refuse(
+        req,
+        "saml_response_rejected",
+        responses.badRequestResponse("SAMLResponse is too costly to process")
+      );
+  }
+};
+
+/** The answer to a response jackson threw on; anything but a jackson 4xx is rethrown. */
+const refuseJacksonError = (
+  req: Request,
+  error: unknown,
+  context: ReturnType<typeof failureContext>
+): Response => {
+  const status = getJacksonClientErrorStatus(error);
+  if (status === null) throw error;
+  // A response jackson refused is the sender's problem, not ours: answer it as such instead of a bare 500 that
+  // reaches Sentry for every anonymous probe. With traces off this line is the only record of why it failed.
+  const { message, internalError } = error as Error & { internalError?: unknown };
+  logger.warn(
+    {
+      stage: "jackson",
+      status,
+      message: toLogText(message, LOGGED_TEXT_LIMIT),
+      reason: toLogText(internalError, LOGGED_TEXT_LIMIT),
+      ...context,
+    },
+    "jackson refused a SAML response"
+  );
+  // A missing, unknown or switched-off connection carries an `internalError`; retrying cannot clear it. The one
+  // exception is jackson's "Issuer not found.", which means the response named no issuer at all: junk, not a
+  // connection problem.
+  const code =
+    internalError && internalError !== JACKSON_NO_ISSUER_REASON
+      ? "saml_connection_unavailable"
+      : "saml_response_rejected";
+  return refuse(req, code, jacksonRefusalResponse(status));
+};
+
+export const POST = async (req: Request) => {
+  const jacksonInstance = await jackson();
+  if (!jacksonInstance) {
+    return refuse(
+      req,
+      "saml_connection_unavailable",
+      responses.forbiddenResponse("SAML SSO is not enabled in your Formbricks license")
+    );
+  }
+  const { oauthController } = jacksonInstance;
+
+  const form = await readCallbackForm(req);
+  if (form instanceof Response) return form;
+  const { SAMLResponse, RelayState } = form;
+
+  const refusal = await refuseBeforeParsing(req, SAMLResponse);
+  if (refusal) return refusal;
+
+  // The bounds model xmldom; this measures it. A worker parses the response under a time budget first, so a shape
+  // the bounds misread costs the worker at most the budget and never blocks this thread for long.
   const probe = await probeSamlResponseParse(SAMLResponse);
-  if (probe.outcome === "busy") {
-    warnThrottled(
-      "busy",
-      failureContext(SAMLResponse, RelayState),
-      "SAML parsing is saturated; refused a SAML response"
-    );
-    return refuse(
-      req,
-      "saml_unavailable",
-      responses.serviceUnavailableResponse("Too many SAML responses are being processed; retry shortly", 1)
-    );
-  }
-  if (probe.outcome === "failed") {
-    logger.error(
-      failureContext(SAMLResponse, RelayState),
-      "SAML parse worker failed; refused a SAML response"
-    );
-    return refuse(
-      req,
-      "saml_unavailable",
-      responses.serviceUnavailableResponse("The SAML response could not be processed; retry shortly", 1)
-    );
-  }
-  if (probe.outcome === "too_costly") {
-    logger.warn(
-      { stage: "parse_budget", reason: probe.reason, ...failureContext(SAMLResponse, RelayState) },
-      "Refused a SAML response that was too costly to parse"
-    );
-    return refuse(
-      req,
-      "saml_response_rejected",
-      responses.badRequestResponse("SAMLResponse is too costly to process")
-    );
-  }
+  if (probe.outcome !== "parsed") return refuseUnparsed(req, probe, SAMLResponse, RelayState);
   const context = failureContext(SAMLResponse, RelayState, probe.claims);
 
   let result: Awaited<ReturnType<typeof oauthController.samlResponse>>;
   try {
     result = await oauthController.samlResponse({ RelayState, SAMLResponse });
   } catch (error) {
-    const status = getJacksonClientErrorStatus(error);
-    if (status === null) throw error;
-    // A response jackson refused is the sender's problem, not ours: answer it as such instead of a bare 500 that
-    // reaches Sentry for every anonymous probe. With traces off this line is the only record of why it failed.
-    const { message, internalError } = error as Error & { internalError?: unknown };
-    logger.warn(
-      {
-        stage: "jackson",
-        status,
-        message: toLogText(message, LOGGED_TEXT_LIMIT),
-        reason: toLogText(internalError, LOGGED_TEXT_LIMIT),
-        ...context,
-      },
-      "jackson refused a SAML response"
-    );
-    // A missing, unknown or switched-off connection carries an `internalError`; retrying cannot clear it. The one
-    // exception is jackson's "Issuer not found.", which means the response named no issuer at all: junk, not a
-    // connection problem.
-    const code =
-      internalError && internalError !== JACKSON_NO_ISSUER_REASON
-        ? "saml_connection_unavailable"
-        : "saml_response_rejected";
-    return refuse(req, code, jacksonRefusalResponse(status));
+    return refuseJacksonError(req, error, context);
   }
 
   // A response that fails validation (signature, audience, expiry, decryption) does not throw: jackson returns a

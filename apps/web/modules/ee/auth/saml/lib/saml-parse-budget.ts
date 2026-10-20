@@ -135,19 +135,34 @@ const discardWorker = (handle: WorkerHandle) => {
   void handle.worker.terminate();
 };
 
-const startWorker = (): Promise<WorkerHandle> => {
-  const { port1, port2 } = new MessageChannel();
-  const worker = new Worker(new URL("./saml-parse-worker.ts", import.meta.url), {
-    resourceLimits: WORKER_RESOURCE_LIMITS,
-    workerData: { port: port2 },
-    transferList: [port2],
-  });
-  // A background thread must never keep the server process alive on its own.
-  worker.unref();
-  port1.unref();
-  const handle: WorkerHandle = { worker, port: port1 };
-  pool.handle = handle;
+/**
+ * A new worker thread, or `null` when it could not be created at all (ERR_WORKER_INIT_FAILED under thread or memory
+ * pressure), which is logged here.
+ */
+const createWorker = (): WorkerHandle | null => {
+  try {
+    const { port1, port2 } = new MessageChannel();
+    const worker = new Worker(new URL("./saml-parse-worker.ts", import.meta.url), {
+      resourceLimits: WORKER_RESOURCE_LIMITS,
+      workerData: { port: port2 },
+      transferList: [port2],
+    });
+    // A background thread must never keep the server process alive on its own.
+    worker.unref();
+    port1.unref();
+    return { worker, port: port1 };
+  } catch (error) {
+    logger.error(
+      { error: error instanceof Error ? error.message : String(error) },
+      "SAML parse worker could not start"
+    );
+    return null;
+  }
+};
 
+/** Resolves once `handle`'s worker has warmed up and reported ready; rejects if it fails first. */
+const whenReady = (handle: WorkerHandle): Promise<WorkerHandle> => {
+  const { worker, port } = handle;
   return new Promise<WorkerHandle>((resolve, reject) => {
     let ready = false;
     const onFailure = (error: Error | number) => {
@@ -176,7 +191,7 @@ const startWorker = (): Promise<WorkerHandle> => {
       WORKER_STARTUP_TIMEOUT_MS
     );
 
-    port1.on("message", (message: { ready?: true } & Partial<WorkerResult>) => {
+    port.on("message", (message: { ready?: true } & Partial<WorkerResult>) => {
       if (message.ready) {
         clearTimeout(startup);
         ready = true;
@@ -197,18 +212,14 @@ function pump(): void {
   if (!job) return;
   pool.running = job;
 
-  try {
-    pool.ready ??= startWorker();
-  } catch (error) {
-    // The thread could not be created at all (ERR_WORKER_INIT_FAILED under thread or memory pressure).
-    logger.error(
-      { error: error instanceof Error ? error.message : String(error) },
-      "SAML parse worker could not start"
-    );
-    pool.handle = null;
-    pool.ready = null;
-    settleRunning({ outcome: "failed" });
-    return;
+  if (!pool.ready) {
+    const handle = createWorker();
+    if (!handle) {
+      settleRunning({ outcome: "failed" });
+      return;
+    }
+    pool.handle = handle;
+    pool.ready = whenReady(handle);
   }
 
   pool.ready.then(

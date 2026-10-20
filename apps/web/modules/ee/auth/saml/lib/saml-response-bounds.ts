@@ -111,6 +111,29 @@ const isNameByte = (byte: number) =>
   byte !== SINGLE_QUOTE &&
   byte !== LESS_THAN;
 
+/** The first index from `from` on, short of `end`, whose byte fails `test`; `end` if none does. */
+const skipWhile = (xml: Buffer, from: number, end: number, test: (byte: number) => boolean): number => {
+  let j = from;
+  while (j < end && test(xml[j])) j++;
+  return j;
+};
+
+/**
+ * Just past the quoted `name="value"` attribute (spaces allowed around the `=`) starting at `from`, or `null` when
+ * what starts there is anything else, an unquoted or unterminated value included.
+ */
+const quotedAttributeEnd = (xml: Buffer, from: number, end: number): number | null => {
+  let j = skipWhile(xml, from, end, isNameByte);
+  if (j === from) return null;
+  j = skipWhile(xml, j, end, isXmlSpace);
+  if (j >= end || xml[j] !== EQUALS) return null;
+  j = skipWhile(xml, j + 1, end, isXmlSpace);
+  const quote = xml[j];
+  if (j >= end || (quote !== DOUBLE_QUOTE && quote !== SINGLE_QUOTE)) return null;
+  const close = xml.indexOf(quote, j + 1);
+  return close === -1 || close >= end ? null : close + 1;
+};
+
 /**
  * Whether the tag whose name starts at `from` closes itself: a name, then only quoted `name="value"` attributes,
  * then `/>`. Anything else counts as opening a scope, even where xmldom would close it, because the
@@ -119,23 +142,13 @@ const isNameByte = (byte: number) =>
  * every IdP writes its self-closing tags in this shape.
  */
 const closesItself = (xml: Buffer, from: number, end: number): boolean => {
-  let j = from;
-  while (j < end && isNameByte(xml[j])) j++;
+  let j = skipWhile(xml, from, end, isNameByte);
   for (;;) {
-    while (j < end && isXmlSpace(xml[j])) j++;
+    j = skipWhile(xml, j, end, isXmlSpace);
     if (j < end && xml[j] === SLASH) return j + 1 < end && xml[j + 1] === GREATER_THAN;
-    const nameStart = j;
-    while (j < end && isNameByte(xml[j])) j++;
-    if (j === nameStart) return false;
-    while (j < end && isXmlSpace(xml[j])) j++;
-    if (j >= end || xml[j] !== EQUALS) return false;
-    j++;
-    while (j < end && isXmlSpace(xml[j])) j++;
-    const quote = xml[j];
-    if (j >= end || (quote !== DOUBLE_QUOTE && quote !== SINGLE_QUOTE)) return false;
-    const close = xml.indexOf(quote, j + 1);
-    if (close === -1 || close >= end) return false;
-    j = close + 1;
+    const after = quotedAttributeEnd(xml, j, end);
+    if (after === null) return false;
+    j = after;
   }
 };
 
@@ -172,6 +185,46 @@ export interface SamlResponseMarkup {
   declaration: boolean;
 }
 
+/** The running totals of one measure. */
+interface MarkupScan {
+  markup: number;
+  /** Elements open at this point. */
+  depth: number;
+  maxDepth: number;
+  /** Just past the comment, CDATA section or processing instruction a `<` sits in; nothing there moves the depth. */
+  opaqueUntil: number;
+}
+
+/**
+ * Adds the `<` at `lt`, whose tag runs to `end` (the next `<`), to `scan`. Returns `false` when it starts a DOCTYPE
+ * or other declaration, where the measure stops.
+ */
+const measureTag = (xml: Buffer, lt: number, end: number, scan: MarkupScan): boolean => {
+  const kind = xml[lt + 1];
+  const structural = lt >= scan.opaqueUntil;
+  if (kind === SLASH) {
+    scan.markup++;
+    if (structural) scan.depth = Math.max(0, scan.depth - 1);
+    return true;
+  }
+  if (kind === BANG || kind === QUESTION) {
+    // `<!…` and `<?…` carry no attributes and open nothing; malformed ones are fatal to xmldom, so cheap.
+    scan.markup++;
+    if (!structural) return true;
+    const until = opaqueEnd(xml, lt);
+    if (until === null) return false;
+    scan.opaqueUntil = until;
+    return true;
+  }
+  if (!isNameStart(kind)) {
+    scan.markup += STRAY_LESS_THAN_WEIGHT;
+    return true;
+  }
+  scan.markup += 1 + countAttributes(xml, lt + 1, end);
+  if (structural && !closesItself(xml, lt + 1, end)) scan.maxDepth = Math.max(scan.maxDepth, ++scan.depth);
+  return true;
+};
+
 /**
  * Measures the markup in the decoded response in one pass over its bytes, without building a string or a tree
  * (~1 ms at the length cap), and stops as soon as the markup passes the budget or the nesting passes the depth
@@ -185,39 +238,22 @@ export interface SamlResponseMarkup {
  */
 export const measureSamlResponseMarkup = (samlResponseBase64: string): SamlResponseMarkup => {
   const xml = Buffer.from(samlResponseBase64, "base64");
-  let markup = 0;
-  let depth = 0;
-  let maxDepth = 0;
-  // Just past the comment, CDATA section or processing instruction `lt` sits in; nothing there moves the depth.
-  let opaqueUntil = 0;
+  const scan: MarkupScan = { markup: 0, depth: 0, maxDepth: 0, opaqueUntil: 0 };
   let lt = xml.indexOf(LESS_THAN);
 
-  while (lt !== -1 && markup <= SAML_RESPONSE_MARKUP_BUDGET && maxDepth <= SAML_RESPONSE_MAX_DEPTH) {
+  while (
+    lt !== -1 &&
+    scan.markup <= SAML_RESPONSE_MARKUP_BUDGET &&
+    scan.maxDepth <= SAML_RESPONSE_MAX_DEPTH
+  ) {
     const next = xml.indexOf(LESS_THAN, lt + 1);
-    const end = next === -1 ? xml.length : next;
-    const kind = xml[lt + 1];
-    const structural = lt >= opaqueUntil;
-    if (kind === SLASH) {
-      markup++;
-      if (structural) depth = Math.max(0, depth - 1);
-    } else if (kind === BANG || kind === QUESTION) {
-      // `<!…` and `<?…` carry no attributes and open nothing; malformed ones are fatal to xmldom, so cheap.
-      markup++;
-      if (structural) {
-        const until = opaqueEnd(xml, lt);
-        if (until === null) return { markup, depth: maxDepth, declaration: true };
-        opaqueUntil = until;
-      }
-    } else if (isNameStart(kind)) {
-      markup += 1 + countAttributes(xml, lt + 1, end);
-      if (structural && !closesItself(xml, lt + 1, end)) maxDepth = Math.max(maxDepth, ++depth);
-    } else {
-      markup += STRAY_LESS_THAN_WEIGHT;
+    if (!measureTag(xml, lt, next === -1 ? xml.length : next, scan)) {
+      return { markup: scan.markup, depth: scan.maxDepth, declaration: true };
     }
     lt = next;
   }
 
-  return { markup, depth: maxDepth, declaration: false };
+  return { markup: scan.markup, depth: scan.maxDepth, declaration: false };
 };
 
 /** Why a response is refused before jackson parses it; only sizes, never content, so it is safe to log. */
