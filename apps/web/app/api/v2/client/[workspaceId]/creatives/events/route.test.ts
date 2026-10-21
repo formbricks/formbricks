@@ -121,9 +121,48 @@ describe("POST /api/v2/client/[workspaceId]/creatives/events", () => {
     expect(counted()[0].creatives).toEqual([{ creativeId: BUTTON_ID, impressions: 0, clicks: 1 }]);
     expect(mocks.findCreatives).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { workspaceId: WORKSPACE_ID, archivedAt: null, publishedAt: { not: null } },
+        where: { workspaceId: WORKSPACE_ID, archivedAt: null, status: { not: "draft" } },
       })
     );
+  });
+
+  test("drops a restored Draft's events, though it keeps the date it was first published", async () => {
+    const RESTORED_ID = "clcd1234567890123456789012";
+    const stored: Record<string, unknown>[] = [
+      {
+        id: BUTTON_ID,
+        workspaceId: WORKSPACE_ID,
+        status: "inProgress",
+        publishedAt: new Date(),
+        archivedAt: null,
+      },
+      {
+        id: RESTORED_ID,
+        workspaceId: WORKSPACE_ID,
+        status: "draft",
+        publishedAt: new Date(),
+        archivedAt: null,
+      },
+    ];
+    // Prisma's `where` on these fields: equality, `null`, or `{ not }`.
+    mocks.findCreatives.mockImplementation(async ({ where }: { where: Record<string, unknown> }) =>
+      stored.filter((row) =>
+        Object.entries(where).every(([field, condition]) =>
+          condition !== null && typeof condition === "object" && "not" in condition
+            ? row[field] !== condition.not
+            : row[field] === condition
+        )
+      )
+    );
+
+    await send(
+      pageView([
+        { creativeId: RESTORED_ID, type: "click" },
+        { creativeId: BUTTON_ID, type: "click" },
+      ])
+    );
+
+    expect(counted()[0].creatives).toEqual([{ creativeId: BUTTON_ID, impressions: 0, clicks: 1 }]);
   });
 
   test("counts nothing for an unknown workspace or when no event names a known creative", async () => {
