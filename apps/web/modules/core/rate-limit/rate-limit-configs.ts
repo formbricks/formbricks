@@ -8,6 +8,10 @@ export const rateLimitConfigs = {
     resetPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:reset-password" }, // 5 per hour
     verifyEmail: { interval: 3600, allowedPerInterval: 10, namespace: "auth:verify" }, // 10 per hour
     emailToken: { interval: 3600, allowedPerInterval: 10, namespace: "auth:email-token" }, // 10 per hour — unauthenticated, tells the caller whether an email is registered
+    // The SAML callback parses the posted XML before it can tell an IdP from a stranger (ENG-3973), so this caps
+    // how often one IP can make it parse. Generous on purpose: every SAML sign-in at a company behind one NAT
+    // address lands here, often in a burst at the start of the day. The markup budget is the real bound.
+    samlCallback: { interval: 60, allowedPerInterval: 120, namespace: "auth:saml-callback" }, // 120 per minute
   },
 
   // API endpoints - higher limits for legitimate usage
