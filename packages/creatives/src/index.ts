@@ -10,7 +10,7 @@ export {
   type TCreativeEventsBody,
   getCountedPage,
 } from "./events";
-export { type TVisitorLanguage, matchLanguage } from "./language";
+export { type TVisitorLanguage, matchLanguage, toLanguageBase, toLanguageKey } from "./language";
 export {
   CREATIVE_INSET_PROPERTY,
   CREATIVE_PHONE_MEDIA,

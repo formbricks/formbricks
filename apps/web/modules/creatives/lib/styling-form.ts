@@ -8,6 +8,7 @@ import type {
 } from "@formbricks/api-v3-schemas";
 import type { TStylingAppearance } from "@/lib/styling/dark-mode";
 import { normalizeCustomCssInput } from "@/modules/custom-css/components/lib/draft";
+import type { TCreativeColorKey } from "./creative";
 import type { TCreativeResource } from "./editor-form";
 import type { TCreativeStyleSource } from "./style";
 
@@ -76,9 +77,6 @@ export const withTheme = <TStyling extends TCreativeStylingForm>(
   styling: TStyling,
   patch: TSharedThemePatch
 ): TStyling => ({ ...styling, theme: { ...styling.theme, ...patch } });
-
-/** The theme's colours, each `{ light, dark? }` like the survey styling's, or `null` for the workspace's. */
-export type TCreativeColorKey = "backgroundColor" | "textColor" | "borderColor";
 
 /** The colour the author set for one appearance; `null` follows the workspace (light) or is derived (dark). */
 export const getOwnColor = (

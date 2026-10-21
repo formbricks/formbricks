@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { type TStatusChangeOutcome, type TSummaryStatus, getStatusChangeOutcome } from "../lib/summary";
 import { useUpdateCreative } from "./use-creative-editor";
+import { useCreativeStatusReasonText } from "./use-creative-status-reason-text";
 
 /**
  * An author's manual status change (the summary's and the editor's status menu, the list's row menu, the
@@ -14,6 +15,7 @@ import { useUpdateCreative } from "./use-creative-editor";
 export const useCreativeStatusChange = (creativeId: string) => {
   const { t } = useTranslation();
   const update = useUpdateCreative(creativeId);
+  const reasons = useCreativeStatusReasonText();
 
   const outcomeMessages: Record<TStatusChangeOutcome["message"], string> = {
     active: t("workspace.creatives.summary.toast_active"),
@@ -22,8 +24,8 @@ export const useCreativeStatusChange = (creativeId: string) => {
     closed: t("workspace.creatives.summary.toast_closed"),
     scheduleEnded: t("workspace.creatives.summary.toast_kept_closed"),
     surveyNotActive: t("workspace.creatives.summary.toast_waiting_for_survey"),
-    destinationMissing: t("workspace.creatives.status_reason_destination_missing"),
-    actionMissing: t("workspace.creatives.status_reason_action_missing"),
+    destinationMissing: reasons.destinationMissing,
+    actionMissing: reasons.actionMissing,
   };
 
   const changeStatus = (status: TSummaryStatus) =>

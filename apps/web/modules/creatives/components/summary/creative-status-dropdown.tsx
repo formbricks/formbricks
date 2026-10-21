@@ -12,6 +12,7 @@ import {
 } from "@/modules/ui/components/select";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { useCreativeStatusReasonText } from "../../hooks/use-creative-status-reason-text";
 import type { TCreativeDisplayState, TCreativeDisplayStatus } from "../../lib/display-status";
 import type { TSummaryStatus } from "../../lib/summary";
 import { PILL_STATES } from "../creative-status-pill";
@@ -58,12 +59,7 @@ export const CreativeStatusDropdown = ({
     closed: t("common.closed"),
     archived: t("common.archived"),
   };
-  const reasons: Record<NonNullable<TCreativeDisplayState["reason"]>, string> = {
-    surveyNotActive: t("workspace.creatives.status_reason_survey_not_active"),
-    scheduleEnded: t("workspace.creatives.status_reason_schedule_ended"),
-    destinationMissing: t("workspace.creatives.status_reason_destination_missing"),
-    actionMissing: t("workspace.creatives.status_reason_action_missing"),
-  };
+  const reasons = useCreativeStatusReasonText();
   const indicator = PILL_STATES[state.status];
   const reason = state.reason ? reasons[state.reason] : null;
 

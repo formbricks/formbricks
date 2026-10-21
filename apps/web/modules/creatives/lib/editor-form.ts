@@ -296,15 +296,15 @@ const toLanguagesBody = (
   return isUnchanged ? {} : { defaultLanguage, languages: others };
 };
 
-/**
- * The PATCH body for Save or Publish: the groups the editor owns, in full. Publish also sets the author's
- * status to `inProgress`; the server derives what that shows as (Active, Scheduled, Paused with its survey).
- */
 /** Whether saving `body` takes the creative off the survey it opens now (a relink, or no Destination). */
 export const stopsOpeningSurvey = (resource: TCreativeResource, body: TCreativePatchBody): boolean =>
   resource.destination?.type === "survey" &&
   !(body.destination?.type === "survey" && body.destination.surveyId === resource.destination.surveyId);
 
+/**
+ * The PATCH body for Save or Publish: the groups the editor owns, in full. Publish also sets the author's
+ * status to `inProgress`; the server derives what that shows as (Active, Scheduled, Paused with its survey).
+ */
 export const buildCreativePatch = (
   form: TCreativeEditorForm,
   resource: TCreativeResource,

@@ -37,7 +37,9 @@ export const CREATIVE_TYPE_SCHEMAS = {
   banner: { content: zBannerContent, styling: zBannerStyling },
 } as const;
 
-const THEME_COLOR_KEYS = ["backgroundColor", "textColor", "borderColor"] as const;
+/** The theme's colours, each `{ light, dark? }` like the survey styling's, or `null` for the workspace's. */
+export const CREATIVE_THEME_COLOR_KEYS = ["backgroundColor", "textColor", "borderColor"] as const;
+export type TCreativeColorKey = (typeof CREATIVE_THEME_COLOR_KEYS)[number];
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -50,7 +52,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const withPerAppearanceColors = (styling: unknown): unknown => {
   if (!isRecord(styling) || !isRecord(styling.theme)) return styling;
   const theme: Record<string, unknown> = { ...styling.theme };
-  for (const key of THEME_COLOR_KEYS) {
+  for (const key of CREATIVE_THEME_COLOR_KEYS) {
     const color = theme[key];
     if (typeof color === "string") theme[key] = { light: color };
   }

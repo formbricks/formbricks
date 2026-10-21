@@ -1,11 +1,12 @@
 import type { TLanguageMatch } from "./types";
 
 /**
- * Which language a visitor gets on a creative (ENG-4003, review fix C7), decided on the page with
- * nothing to load: the server precomputes each language list (`TLanguageMatch`) with the full matcher
- * (`resolveSurveyLanguage` in `@formbricks/i18n-utils`), so the SDK only looks the visitor's language up.
- * The same order as that matcher: the language the site set, then the browser's when its survey uses
- * browser language, then the default.
+ * Which language a visitor gets on a creative (ENG-4003), decided on the page with nothing to load: the
+ * server precomputes each language list (`TLanguageMatch`) with the full matcher (`resolveSurveyLanguage`
+ * in `@formbricks/i18n-utils`), so the SDK only looks the visitor's language up. The same order as that
+ * matcher: the language the site set, then the browser's when its survey uses browser language, then the
+ * default. The server builds the list's keys with `toLanguageKey` and `toLanguageBase` from here, so both
+ * sides normalize a code the same way.
  */
 
 /** What the SDK knows of the visitor's language. */
@@ -19,8 +20,12 @@ export interface TVisitorLanguage {
 /** As many browser languages as the full matcher tries (`MAX_BROWSER_LANGUAGE_CANDIDATES`). */
 const MAX_BROWSER_LANGUAGES = 10;
 
+/** A requested code as a `TLanguageMatch` key: no `;q=` weight, `-` separators, lowercase. */
+export const toLanguageKey = (code: string): string =>
+  code.split(";")[0].trim().replaceAll("_", "-").toLowerCase();
+
 /** `language` or `language-script`, lowercase; Chinese takes its likely script (`zh-TW` is `zh-hant`). */
-const toBase = (code: string): string | undefined => {
+export const toLanguageBase = (code: string): string | undefined => {
   try {
     const locale = new Intl.Locale(code);
     const script = locale.script ?? (locale.language === "zh" ? locale.maximize().script : undefined);
@@ -32,11 +37,11 @@ const toBase = (code: string): string | undefined => {
 
 /** One requested language against a precomputed list: a stored code, `"default"`, or `null`. */
 export const matchLanguage = (match: TLanguageMatch, requested: string): string | null => {
-  const code = requested.split(";")[0].trim().replaceAll("_", "-").toLowerCase();
+  const code = toLanguageKey(requested);
   // Looked up as own string values only: a code like `constructor` must not reach Object's prototype.
   const own = (map: Record<string, string>, key: string | undefined) =>
     key && Object.hasOwn(map, key) ? map[key] : null;
-  return code ? (own(match.keys, code) ?? own(match.bases, toBase(code))) : null;
+  return code ? (own(match.keys, code) ?? own(match.bases, toLanguageBase(code))) : null;
 };
 
 /**

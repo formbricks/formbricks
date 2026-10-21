@@ -31,9 +31,9 @@ import {
 import { StylingAppearanceProvider } from "@/modules/ui/components/styling-appearance";
 import { Switch } from "@/modules/ui/components/switch";
 import { type TCreativeContrastWarning, getCreativeContrastWarning } from "../../lib/contrast";
+import type { TCreativeColorKey } from "../../lib/creative";
 import {
   type TBannerPlacement,
-  type TCreativeColorKey,
   type TCreativeDevice,
   type TCreativeSizeKey,
   type TCreativeStylingForm,

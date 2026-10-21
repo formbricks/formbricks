@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { SurveyStatusPill } from "@/modules/ui/components/survey-status-indicator";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+import { useCreativeStatusReasonText } from "../hooks/use-creative-status-reason-text";
 import type { TCreativeDisplayState, TCreativeDisplayStatus } from "../lib/display-status";
 
 // Creatives reuse the surveys list's status pill: their statuses are the survey ones, plus
@@ -22,12 +23,7 @@ export const PILL_STATES: Record<
 
 export const CreativeStatusPill = ({ state }: Readonly<{ state: TCreativeDisplayState }>) => {
   const { t } = useTranslation();
-  const reasons: Record<NonNullable<TCreativeDisplayState["reason"]>, string> = {
-    surveyNotActive: t("workspace.creatives.status_reason_survey_not_active"),
-    scheduleEnded: t("workspace.creatives.status_reason_schedule_ended"),
-    destinationMissing: t("workspace.creatives.status_reason_destination_missing"),
-    actionMissing: t("workspace.creatives.status_reason_action_missing"),
-  };
+  const reasons = useCreativeStatusReasonText();
   const reason = state.reason ? reasons[state.reason] : null;
 
   return (

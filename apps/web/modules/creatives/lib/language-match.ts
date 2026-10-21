@@ -1,4 +1,4 @@
-import type { TLanguageMatch } from "@formbricks/creatives";
+import { type TLanguageMatch, toLanguageBase, toLanguageKey } from "@formbricks/creatives";
 import { LANGUAGE_CANONICAL_MAP, normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
 import {
   type TMatchableSurveyLanguage,
@@ -6,25 +6,12 @@ import {
 } from "@formbricks/i18n-utils/survey-language-match";
 
 /**
- * A creative's (or its popup survey's) languages precomputed for the SDK (review fix C7, the
- * `TLanguageMatch` contract in `@formbricks/creatives`): every answer comes from the full matcher
- * (`matchSurveyLanguage`), so the page decides at once with the same result and never loads the surveys
- * bundle for it. `language-match.test.ts` holds the two to the same answers over a corpus of requests.
+ * A creative's (or its popup survey's) languages precomputed for the SDK (the `TLanguageMatch`
+ * contract in `@formbricks/creatives`), so the page decides without loading the surveys bundle: every
+ * answer comes from the full matcher (`matchSurveyLanguage`), keyed with the SDK's own `toLanguageKey`
+ * and `toLanguageBase`, so a code the page looks up normalizes exactly as it was stored.
+ * `language-match.test.ts` holds the two to the same answers over a corpus of requests.
  */
-
-/** A requested code as the matcher compares it, and as the SDK looks it up. */
-const toKey = (code: string): string => code.split(";")[0].trim().replaceAll("_", "-").toLowerCase();
-
-/** The SDK's reduction of a tag to its base language (`matchLanguage` in `@formbricks/creatives`). */
-const toBase = (code: string): string | null => {
-  try {
-    const locale = new Intl.Locale(code);
-    const script = locale.script ?? (locale.language === "zh" ? locale.maximize().script : undefined);
-    return (script ? `${locale.language}-${script}` : locale.language).toLowerCase();
-  } catch {
-    return null;
-  }
-};
 
 /**
  * A tag of `base` that no stored code, alias or canonical spelling can match (`ZZ` is CLDR's unknown
@@ -45,14 +32,14 @@ export const buildLanguageMatch = (languages: readonly TMatchableSurveyLanguage[
     ...Object.keys(LANGUAGE_CANONICAL_MAP).filter((code) => canonicalCodes.has(LANGUAGE_CANONICAL_MAP[code])),
   ];
   for (const request of requests) {
-    const key = toKey(request);
+    const key = toLanguageKey(request);
     if (!key || Object.hasOwn(match.keys, key)) continue;
     const answer = matchSurveyLanguage(languages, request);
     if (answer) match.keys[key] = answer;
   }
 
   for (const { language } of candidates) {
-    const base = toBase(language.code);
+    const base = toLanguageBase(language.code);
     if (!base || Object.hasOwn(match.bases, base)) continue;
     const answer = matchSurveyLanguage(languages, toBaseProbe(base));
     if (answer) match.bases[base] = answer;
