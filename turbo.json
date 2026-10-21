@@ -126,7 +126,11 @@
     },
     "@formbricks/js-core#build": {
       "dependsOn": ["^build", "@formbricks/surveys#build"],
-      "outputs": ["dist/**", "$TURBO_ROOT$/apps/web/public/js/formbricks.*"]
+      "outputs": [
+        "dist/**",
+        "$TURBO_ROOT$/apps/web/public/js/formbricks.*",
+        "$TURBO_ROOT$/apps/web/public/js/formbricks-debug.*"
+      ]
     },
     "@formbricks/js-core#go": {
       "cache": false,

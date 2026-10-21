@@ -5,9 +5,10 @@ description: >
   `entryReferrer`, `queryParam`; `visit`: `pagesViewed`, `uniquePagesViewed`, `timeOnSite`,
   `visitedUrls`; `device`: `deviceType`, `browser`, `screenWidth`), and each operand accepts only its
   own operators. `queryParam` names its parameter in `leftOperand.meta.key`. `isSet` and `isNotSet`
-  take no `rightOperand`; list operators (`containsAnyOf`, `containsNoneOf`) take a non-empty list;
-  numeric operands take a number of 0 or more; `deviceType` takes `phone`, `tablet` or `desktop`.
-  A condition that breaks one of these rules answers **400**. Matching is case-insensitive.
+  take no `rightOperand`; list operators (`containsAnyOf`, `containsNoneOf`, and the `currentUrl`-only
+  `pathIsAnyOf`, `pathIsNoneOf`, which compare exact page paths) take a non-empty list; numeric operands
+  take a number of 0 or more (`uniquePagesViewed` at most 200); `deviceType` takes `phone`, `tablet` or
+  `desktop`. A condition that breaks one of these rules answers **400**. Matching is case-insensitive.
 required:
   - id
   - leftOperand
@@ -64,6 +65,8 @@ properties:
       - endsWith
       - containsAnyOf
       - containsNoneOf
+      - pathIsAnyOf
+      - pathIsNoneOf
       - isGreaterThan
       - isLessThan
       - isGreaterThanOrEqual

@@ -60,6 +60,12 @@ export const RESERVED_FIELD_NAMES: ReadonlySet<string> = new Set([
   "viewportheight",
   "timezone",
   "locale",
+  // The visit, recorded by the web SDK and frozen at display (ENG-3926).
+  "visitpagesviewed",
+  "visituniquepagesviewed",
+  "visittimeonsite",
+  "visitentryreferrer",
+  "visiturls",
   // Opened by creative, stamped by the ingest routes (ENG-4001).
   "openedbycreativeid",
   "openedbycreativename",

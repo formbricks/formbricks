@@ -11,11 +11,12 @@ import {
 
 describe("createCondition", () => {
   test("starts on the operand's first operator with a value of the right kind", () => {
+    // The current URL starts on its exact-path list (ENG-3926), so its value is a list.
     expect(createCondition("currentUrl", "a")).toEqual({
       id: "a",
       leftOperand: { type: "page", value: "currentUrl" },
-      operator: "equals",
-      rightOperand: { type: "static", value: "" },
+      operator: "pathIsAnyOf",
+      rightOperand: { type: "static", value: [] },
     });
     expect(createCondition("screenWidth", "b").rightOperand).toEqual({ type: "static", value: 0 });
     expect(createCondition("queryParam", "c").leftOperand.meta).toEqual({ key: "" });
@@ -27,10 +28,12 @@ describe("withOperator", () => {
   test("keeps a value of the same kind and resets one that no longer fits", () => {
     const condition = {
       ...createCondition("currentUrl", "a"),
+      operator: "equals" as const,
       rightOperand: { type: "static" as const, value: "/plans" },
     };
     expect(withOperator(condition, "contains").rightOperand?.value).toBe("/plans");
     expect(withOperator(condition, "containsAnyOf").rightOperand?.value).toEqual([]);
+    expect(withOperator(condition, "pathIsAnyOf").rightOperand?.value).toEqual([]);
     expect(withOperator(createCondition("queryParam", "q"), "isSet").rightOperand).toBeUndefined();
   });
 });

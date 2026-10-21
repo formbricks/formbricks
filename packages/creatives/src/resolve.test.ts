@@ -210,7 +210,14 @@ describe("resolve", () => {
     const context = (overrides: Partial<TShowConditionsContext> = {}): TShowConditionsContext => ({
       url: "https://example.com/pricing?plan=pro",
       pageReferrer: "",
-      visit: { pagesViewed: 3, uniquePagesViewed: 2, timeOnSite: 40, entryReferrer: "", visitedUrls: [] },
+      visit: {
+        pagesViewed: 3,
+        uniquePagesViewed: 2,
+        timeOnSite: 40,
+        entryReferrer: "",
+        visitedUrls: [],
+        uniquePaths: [],
+      },
       device: desktop,
       ...overrides,
     });

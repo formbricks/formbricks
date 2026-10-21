@@ -1,8 +1,11 @@
 import { expect } from "@playwright/test";
+import http from "http";
+import type { AddressInfo } from "net";
 import { prisma } from "@formbricks/database";
 import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constants";
 import { test } from "./lib/fixtures";
 import { gotoSurveyList, gotoSurveyTemplates } from "./lib/utils";
+import { seedAppSurvey } from "./utils/app-survey";
 import { activateSurvey, useSelectedTemplate } from "./utils/helper";
 import {
   type SdkHostPage,
@@ -284,6 +287,138 @@ test.describe("JS Package Test", async () => {
       await page.goto(`/s/${surveyId}`);
       await expect(page.locator("#questionCard-0")).toBeVisible();
       await expectNoCspViolations(page, cspConsoleMessages);
+    });
+  });
+});
+
+// The workspace is injected with `addInitScript`, so the same page can be served at any path and
+// a test can walk through several pages of one visit in one tab.
+const VISIT_HOST_PAGE = `<!doctype html>
+<html>
+  <head>
+    <script type="text/javascript">
+      !(function () {
+        var t = document.createElement("script");
+        (t.type = "text/javascript"), (t.async = !0), (t.src = "http://localhost:3000/js/formbricks.umd.cjs");
+        t.onload = function () {
+          window.formbricks.setup({ workspaceId: window.__workspaceId, appUrl: "http://localhost:3000" });
+        };
+        var e = document.getElementsByTagName("script")[0];
+        e.parentNode.insertBefore(t, e);
+      })();
+    </script>
+  </head>
+  <body style="background-color: #fff">
+    <p>A page of a site that runs the Formbricks SDK</p>
+  </body>
+</html>`;
+
+const trackAction = (key: string) => {
+  const sdk = (window as unknown as { formbricks?: { track: (actionKey: string) => Promise<unknown> } })
+    .formbricks;
+  if (!sdk) throw new Error("Formbricks SDK is not loaded");
+  return sdk.track(key);
+};
+
+test.describe("Show conditions and the visit (ENG-3926)", () => {
+  let server: http.Server;
+  let hostUrl: string;
+
+  test.beforeAll(async () => {
+    server = http.createServer((_, res) => {
+      res.writeHead(200, { "Content-Type": "text/html" });
+      res.end(VISIT_HOST_PAGE);
+    });
+    await new Promise<void>((resolve) => {
+      server.listen(0, () => {
+        hostUrl = `http://localhost:${(server.address() as AddressInfo).port.toString()}`;
+        resolve();
+      });
+    });
+  });
+
+  test.afterAll(async () => {
+    await new Promise((resolve) => server.close(resolve));
+  });
+
+  test("a survey waits for its show conditions, then saves the visit on the response", async ({
+    page,
+    users,
+  }) => {
+    const seeded = await seedAppSurvey(users, {
+      showConditions: {
+        id: "e2erule",
+        connector: "and",
+        conditions: [
+          {
+            id: "e2epages",
+            leftOperand: { type: "visit", value: "pagesViewed" },
+            operator: "isGreaterThanOrEqual",
+            rightOperand: { type: "static", value: 2 },
+          },
+        ],
+      },
+    });
+    await page.addInitScript((workspaceId) => {
+      (window as unknown as { __workspaceId: string }).__workspaceId = workspaceId;
+    }, seeded.workspaceId);
+    const widget = page.locator("#formbricks-modal-container");
+
+    await test.step("on the first page the trigger fires, and the debug panel says why nothing shows", async () => {
+      await page.goto(`${hostUrl}/plans?formbricksDebug=true`);
+      await page.waitForFunction(
+        () => Boolean((window as unknown as { formbricks?: unknown }).formbricks),
+        null,
+        {
+          timeout: 120000,
+        }
+      );
+      await page.evaluate(trackAction, seeded.actionKey);
+
+      // The panel is a separate bundle the SDK loads only with the flag; it renders into an open
+      // shadow root, which Playwright locators pierce.
+      await expect(page.getByText("Not shown: show conditions not met")).toBeVisible();
+      await expect(page.getByText("✗ Pages viewed ≥ 2 — read: 1")).toBeVisible();
+      await expect(widget).toHaveCount(0);
+    });
+
+    await test.step("on the second page of the same visit, the trigger shows the survey", async () => {
+      // No flag in this URL: debug mode stays on for the tab, so the panel explains this page too.
+      await page.goto(`${hostUrl}/plans/compare`);
+      await page.waitForFunction(
+        () => Boolean((window as unknown as { formbricks?: unknown }).formbricks),
+        null,
+        {
+          timeout: 120000,
+        }
+      );
+      await page.evaluate(trackAction, seeded.actionKey);
+
+      await expect(widget.getByRole("dialog")).toBeVisible();
+      await expect(page.getByText("Show conditions met")).toBeVisible();
+    });
+
+    await test.step("the response records the visit as it was when the survey showed", async () => {
+      await widget.getByRole("textbox").fill("Comparing plans");
+      await widget.getByRole("button", { name: "Finish" }).click();
+
+      await expect
+        .poll(
+          async () =>
+            (
+              await prisma.response.findFirst({
+                where: { surveyId: seeded.surveyId },
+                select: { meta: true },
+              })
+            )?.meta,
+          { timeout: 15000 }
+        )
+        .toMatchObject({
+          visitPagesViewed: 2,
+          visitUniquePagesViewed: 2,
+          visitUrls: "/plans · /plans/compare",
+          visitTimeOnSite: expect.any(Number),
+        });
     });
   });
 });

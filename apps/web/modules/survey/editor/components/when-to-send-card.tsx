@@ -13,6 +13,7 @@ import { OpenedByCreatives } from "@/modules/creatives/components/survey-side/op
 import type { TSurveyLinkedCreative } from "@/modules/creatives/lib/survey-side";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
+import { ShowConditionsBlock } from "@/modules/show-conditions/components/show-conditions-block";
 import { AddActionModal } from "@/modules/survey/editor/components/add-action-modal";
 import { ActionClassInfo } from "@/modules/ui/components/action-class-info";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -306,6 +307,13 @@ export const WhenToSendCard = ({
                   {t("common.add_action")}
                 </Button>
               </div>
+
+              {/* Inside the trigger box, so it reads as one rule: trigger AND conditions (ENG-3687). */}
+              <ShowConditionsBlock
+                value={localSurvey.showConditions ?? null}
+                onChange={(showConditions) => setLocalSurvey((survey) => ({ ...survey, showConditions }))}
+                isReadOnly={isReadOnly}
+              />
             </div>
 
             {/* Survey Display Settings */}

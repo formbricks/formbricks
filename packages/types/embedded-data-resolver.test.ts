@@ -826,6 +826,41 @@ describe("RESERVED_FIELD_CATALOG", () => {
       },
       { name: "timezone", dataType: "string", availability: "client", privacy: "keep", display: "secondary" },
       { name: "locale", dataType: "string", availability: "client", privacy: "keep", display: "secondary" },
+      {
+        name: "visitPagesViewed",
+        dataType: "number",
+        availability: "client",
+        privacy: "keep",
+        display: "secondary",
+      },
+      {
+        name: "visitUniquePagesViewed",
+        dataType: "number",
+        availability: "client",
+        privacy: "keep",
+        display: "secondary",
+      },
+      {
+        name: "visitTimeOnSite",
+        dataType: "number",
+        availability: "client",
+        privacy: "keep",
+        display: "secondary",
+      },
+      {
+        name: "visitEntryReferrer",
+        dataType: "string",
+        availability: "client",
+        privacy: "redactQuery",
+        display: "secondary",
+      },
+      {
+        name: "visitUrls",
+        dataType: "string",
+        availability: "client",
+        privacy: "keep",
+        display: "secondary",
+      },
       // Opened by creative (ENG-4001, ADR 0006). `server`: the ingest routes check the creative and
       // stamp both, so no mid-survey picker offers them. `keep`: a creative's id and name are the
       // workspace's own copy, nothing the respondent disclosed.
@@ -1790,6 +1825,11 @@ describe("listDisplayableReservedFields", () => {
       viewportHeight: 800,
       timezone: "Europe/Berlin",
       locale: "de-AT",
+      visitPagesViewed: 4,
+      visitUniquePagesViewed: 3,
+      visitTimeOnSite: 125,
+      visitEntryReferrer: "https://www.google.com/",
+      visitUrls: "/ · /pricing · /plans · /pricing",
       openedByCreativeId: "clh7m1qkx0000qwer1234abcd",
       openedByCreativeName: "Feedback tab",
     },
@@ -1813,7 +1853,7 @@ describe("listDisplayableReservedFields", () => {
     ]);
   });
 
-  test("secondary carries the browser-runtime context, plus ipAddress and the opening creative", () => {
+  test("secondary carries the browser-runtime context and the visit, plus ipAddress and the opening creative", () => {
     expect(names("secondary")).toStrictEqual([
       "ipAddress",
       "pagePath",
@@ -1829,6 +1869,11 @@ describe("listDisplayableReservedFields", () => {
       "viewportHeight",
       "timezone",
       "locale",
+      "visitPagesViewed",
+      "visitUniquePagesViewed",
+      "visitTimeOnSite",
+      "visitEntryReferrer",
+      "visitUrls",
       "openedByCreativeId",
       "openedByCreativeName",
     ]);

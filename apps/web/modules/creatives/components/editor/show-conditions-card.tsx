@@ -90,6 +90,9 @@ const useConditionLabels = () => {
     endsWith: t("workspace.creatives.conditions.operator_ends_with"),
     containsAnyOf: t("workspace.creatives.conditions.operator_contains_any_of"),
     containsNoneOf: t("workspace.creatives.conditions.operator_contains_none_of"),
+    // The survey editor's copy (ENG-3926): the same operator, so the same words.
+    pathIsAnyOf: t("workspace.surveys.edit.show_conditions.operator_path_is_any_of"),
+    pathIsNoneOf: t("workspace.surveys.edit.show_conditions.operator_path_is_none_of"),
     isGreaterThan: t("workspace.creatives.conditions.operator_greater_than"),
     isLessThan: t("workspace.creatives.conditions.operator_less_than"),
     isGreaterThanOrEqual: t("workspace.creatives.conditions.operator_at_least"),

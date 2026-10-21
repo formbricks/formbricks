@@ -1,5 +1,6 @@
 import { Config } from "@/lib/common/config";
 import { JS_LOCAL_STORAGE_KEY } from "@/lib/common/constants";
+import { startDebugSession } from "@/lib/common/debug";
 import { addCleanupEventListeners, addEventListeners } from "@/lib/common/event-listeners";
 import { FORMBRICKS_EVENTS, emitFormbricksEvent } from "@/lib/common/events";
 import { Logger } from "@/lib/common/logger";
@@ -202,6 +203,9 @@ export const setup = async (
       field: "appUrl",
     });
   }
+
+  // After the checks: the panel script comes from `appUrl`, and it is only ever injected once a page.
+  if (isDebug) startDebugSession(configInput.appUrl);
 
   if (
     existingConfig?.workspace &&

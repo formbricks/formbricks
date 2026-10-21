@@ -398,8 +398,8 @@ export type ResponseAnswerZodType = z.infer<typeof zResponseAnswer>;
  * responses" enabled the field is never captured, so it is absent from the response for every
  * consumer. With anonymization off it is captured and appears here normally.
  *
- * - `redactQuery` is applied on **every** read, anonymization or not — `url` and `pageReferrer` carry
- * their query string stripped.
+ * - `redactQuery` is applied on **every** read, anonymization or not — `url`, `pageReferrer` and
+ * `visitEntryReferrer` carry their query string stripped.
  *
  * - `ipAddress` is **never** projected by this API, in any view. That is a v3 rule rather than a
  * catalog behaviour: the catalog reads the field, and the dashboard shows it. Do not infer the same
@@ -908,7 +908,7 @@ export const zCreativeTrigger = z.strictObject({
 export type CreativeTriggerZodType = z.infer<typeof zCreativeTrigger>;
 
 /**
- * One condition on the page, the visit or the device: `leftOperand` `operator` `rightOperand`. The operand names its family in `leftOperand.type` (`page`: `currentUrl`, `pageReferrer`, `entryReferrer`, `queryParam`; `visit`: `pagesViewed`, `uniquePagesViewed`, `timeOnSite`, `visitedUrls`; `device`: `deviceType`, `browser`, `screenWidth`), and each operand accepts only its own operators. `queryParam` names its parameter in `leftOperand.meta.key`. `isSet` and `isNotSet` take no `rightOperand`; list operators (`containsAnyOf`, `containsNoneOf`) take a non-empty list; numeric operands take a number of 0 or more; `deviceType` takes `phone`, `tablet` or `desktop`. A condition that breaks one of these rules answers **400**. Matching is case-insensitive.
+ * One condition on the page, the visit or the device: `leftOperand` `operator` `rightOperand`. The operand names its family in `leftOperand.type` (`page`: `currentUrl`, `pageReferrer`, `entryReferrer`, `queryParam`; `visit`: `pagesViewed`, `uniquePagesViewed`, `timeOnSite`, `visitedUrls`; `device`: `deviceType`, `browser`, `screenWidth`), and each operand accepts only its own operators. `queryParam` names its parameter in `leftOperand.meta.key`. `isSet` and `isNotSet` take no `rightOperand`; list operators (`containsAnyOf`, `containsNoneOf`, and the `currentUrl`-only `pathIsAnyOf`, `pathIsNoneOf`, which compare exact page paths) take a non-empty list; numeric operands take a number of 0 or more (`uniquePagesViewed` at most 200); `deviceType` takes `phone`, `tablet` or `desktop`. A condition that breaks one of these rules answers **400**. Matching is case-insensitive.
  *
  */
 export const zShowCondition = z.strictObject({
@@ -943,6 +943,8 @@ export const zShowCondition = z.strictObject({
     "endsWith",
     "containsAnyOf",
     "containsNoneOf",
+    "pathIsAnyOf",
+    "pathIsNoneOf",
     "isGreaterThan",
     "isLessThan",
     "isGreaterThanOrEqual",

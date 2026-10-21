@@ -15,7 +15,12 @@ import { evaluateShowConditions, isShowConditionGroup } from "@formbricks/types/
 
 export type TConditionValueKind = "none" | "text" | "list" | "number" | "deviceType" | "browser";
 
-const LIST_OPERATORS = new Set<TShowConditionOperator>(["containsAnyOf", "containsNoneOf"]);
+const LIST_OPERATORS = new Set<TShowConditionOperator>([
+  "containsAnyOf",
+  "containsNoneOf",
+  "pathIsAnyOf",
+  "pathIsNoneOf",
+]);
 const PRESENCE_OPERATORS = new Set<TShowConditionOperator>(["isSet", "isNotSet"]);
 const NUMBER_OPERANDS = new Set<TShowConditionOperand>([
   "pagesViewed",

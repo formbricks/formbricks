@@ -1,11 +1,22 @@
-// A copy of PR #9655's file (ENG-3926) without its debug-panel reporting, which isn't on this branch:
-// creatives check visit conditions before that PR lands (ENG-4002). Take that PR's version on merge.
-import { recordNavigation, recordPageHide, recordPageLoad, recordPathReplace } from "@/lib/visit/visit-store";
+import { emitDebugVisitEvent, isDebugEnabled } from "@/lib/common/debug";
+import { getDeviceInfo } from "@/lib/visit/device";
+import {
+  getVisitSnapshot,
+  recordNavigation,
+  recordPageHide,
+  recordPageLoad,
+  recordPathReplace,
+} from "@/lib/visit/visit-store";
 
 let isTrackingVisit = false;
 
+const reportVisit = (): void => {
+  if (isDebugEnabled()) emitDebugVisitEvent({ visit: getVisitSnapshot(), device: getDeviceInfo() });
+};
+
 const onNavigation = (): void => {
   recordNavigation(window.location.pathname);
+  reportVisit();
 };
 
 const onPathReplace = (): void => {
@@ -17,6 +28,7 @@ const onPageShow = (event: PageTransitionEvent): void => {
   // place it gets counted. A normal load also fires `pageshow`, with `persisted: false`.
   if (!event.persisted) return;
   recordPageLoad(window.location.pathname, document.referrer);
+  reportVisit();
 };
 
 const onPageHide = (): void => {
@@ -38,6 +50,7 @@ export const startVisitTracking = (): void => {
   isTrackingVisit = true;
 
   recordPageLoad(window.location.pathname, document.referrer);
+  reportVisit();
 
   // `pushstate` / `replacestate` are dispatched by js-core's own history patch (no-code-action.ts).
   window.addEventListener("pushstate", onNavigation);

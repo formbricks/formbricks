@@ -9,6 +9,15 @@ vi.mock("@/lib/visit/visit-store", () => ({
   getVisitSnapshot: vi.fn(() => null),
 }));
 
+vi.mock("@/lib/common/debug", () => ({
+  isDebugEnabled: vi.fn(() => false),
+  emitDebugVisitEvent: vi.fn(),
+}));
+
+vi.mock("@/lib/visit/device", () => ({
+  getDeviceInfo: vi.fn(() => ({ deviceType: "desktop", browser: "chrome", screenWidth: 1280 })),
+}));
+
 type TListener = (event?: unknown) => void;
 
 describe("startVisitTracking", () => {

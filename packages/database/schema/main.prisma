@@ -491,6 +491,10 @@ model Survey {
   /// Creatives whose Destination is this survey (ENG-3993).
   creatives Creative[]
 
+  /// [SurveyShowConditions] App surveys: conditions checked in the browser when a trigger fires
+  /// (ENG-3873). null = no conditions, which is what every existing survey keeps.
+  showConditions Json?
+
   @@unique([id, workspaceId])
   @@index([workspaceId, updatedAt])
   @@index([workspaceId, ownerId])
