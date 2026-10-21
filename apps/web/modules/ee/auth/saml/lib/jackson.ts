@@ -36,6 +36,17 @@ const jacksonLogger = (level: "info" | "warn" | "error") => (message: string, er
     toLogText(message, JACKSON_LOG_TEXT_LIMIT) ?? ""
   );
 
+/**
+ * The private key jackson decrypts encrypted assertions with: its default SP certificate, which it generates and
+ * stores on first start (ENG-4051). It is read through the module jackson itself uses, so it is the key jackson would
+ * decrypt with, and the SAML parse worker can decrypt a response under the parse budget before jackson does. Call it
+ * only once `init` has returned an instance: jackson sets up the certificate store there.
+ */
+export const getSamlDecryptionKey = async (): Promise<string> => {
+  const { getDefaultCertificate } = await import("@boxyhq/saml-jackson/dist/saml/x509");
+  return (await getDefaultCertificate()).privateKey;
+};
+
 export default async function init() {
   if (!g.oauthController || !g.connectionController) {
     const isSamlSsoEnabled = await getIsSamlSsoEnabled();

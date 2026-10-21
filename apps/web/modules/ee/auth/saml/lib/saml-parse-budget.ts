@@ -12,6 +12,12 @@ import { logger } from "@formbricks/logger";
  * slower than the budget reaches jackson, whatever its shape. The known shapes the byte bounds let through parse in
  * ~10-30 ms and a real response in ~5-25 ms (1,000 verbose Okta groups ~11 ms), so 100 ms only catches what the
  * bounds misread, with room for a busy host.
+ *
+ * An encrypted assertion is ciphertext to the byte bounds, and jackson decrypts it and parses the plaintext before it
+ * checks any signature (ENG-4051). Given the SP key, the worker does the same within the same budget: the outer parse,
+ * the decryption and the plaintext's parse all count. A plaintext of nested namespace scopes that would block jackson
+ * for ~1-3 s is cut off here, and a real one (500 groups) takes ~10 ms. Without a key, an encrypted response is timed
+ * as ciphertext only.
  */
 export const SAML_PARSE_TIME_BUDGET_MS = 100;
 
@@ -35,7 +41,9 @@ const WORKER_STARTUP_TIMEOUT_MS = 5_000;
 /**
  * Main-thread parse time the SAML callback may spend per second, per process. A response that passes the budget is
  * parsed again by jackson on this thread, `JACKSON_PARSES_PER_RESPONSE` times on the signature path (issuer, decrypt,
- * xml2js, signature check), so each one is charged its worker-measured parse time times that. Past the allowance
+ * xml2js, signature check), so each one is charged its worker-measured parse time times that. For an encrypted
+ * response the measured time covers decrypting it and parsing the plaintext once, and jackson's whole validation
+ * measured 1.3-3 times that, so the same factor still covers it. Past the allowance
  * the callback answers 503 rather than let many sources together keep the event loop busy with SAML. It is checked
  * when a response is queued and again when its parse finishes, so a burst can overdraw it by one response at most. A real
  * sign-in costs ~10-25 ms x 4, so this is a dozen or more sign-ins a second per process.
@@ -65,6 +73,8 @@ export type SamlParseProbe =
 interface Job {
   id: number;
   xml: string;
+  /** The SP private key, so the worker can decrypt an encrypted assertion as jackson will. */
+  decryptionKey?: string;
   resolve: (probe: SamlParseProbe) => void;
 }
 
@@ -263,7 +273,7 @@ function pump(): void {
         settleRunning({ outcome: "too_costly", reason: "time" });
       }, SAML_PARSE_TIME_BUDGET_MS);
       pool.running = { ...job, dispatched: true, timer };
-      handle.port.postMessage({ id: job.id, xml: job.xml });
+      handle.port.postMessage({ id: job.id, xml: job.xml, decryptionKey: job.decryptionKey });
     },
     () => {
       // Settled by the worker's failure handler already; this only guards a job left waiting on a failed start.
@@ -273,10 +283,14 @@ function pump(): void {
 }
 
 /**
- * Parse `samlResponseBase64` in the worker under `SAML_PARSE_TIME_BUDGET_MS`, decoded as jackson decodes it. Never
- * rejects: every way it can end is an outcome.
+ * Parse `samlResponseBase64` in the worker under `SAML_PARSE_TIME_BUDGET_MS`, decoded as jackson decodes it, and
+ * decrypt and parse its encrypted assertion with `decryptionKey` within the same budget. Never rejects: every way it
+ * can end is an outcome.
  */
-export const probeSamlResponseParse = (samlResponseBase64: string): Promise<SamlParseProbe> => {
+export const probeSamlResponseParse = (
+  samlResponseBase64: string,
+  decryptionKey?: string
+): Promise<SamlParseProbe> => {
   refillAllowance(performance.now());
   if (pool.queue.length >= SAML_PARSE_QUEUE_LIMIT || pool.allowanceMs <= 0) {
     return Promise.resolve({ outcome: "busy" });
@@ -286,6 +300,7 @@ export const probeSamlResponseParse = (samlResponseBase64: string): Promise<Saml
     pool.queue.push({
       id: pool.nextId++,
       xml: Buffer.from(samlResponseBase64, "base64").toString(),
+      decryptionKey,
       resolve,
     });
     pump();

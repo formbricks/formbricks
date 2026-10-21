@@ -4,6 +4,15 @@ import {
   SAML_PARSE_TIME_BUDGET_MS,
   probeSamlResponseParse,
 } from "./saml-parse-budget";
+import { checkSamlResponseBounds } from "./saml-response-bounds";
+import {
+  ENCRYPTED_RESPONSE_ISSUER,
+  createSpKeyPair,
+  encryptAssertion,
+  nestedNamespaceAssertion,
+  samlResponseWith,
+  signedAssertionWithGroups,
+} from "./tests/encrypted-saml-response";
 
 // A real worker thread runs here, not a mock: what is under test is that a slow parse is cut off and the pool
 // recovers, which only the real worker can show.
@@ -61,5 +70,42 @@ describe("probeSamlResponseParse", () => {
 
     expect(overflow).toEqual({ outcome: "busy" });
     for (const probe of await Promise.all(accepted)) expect(probe.outcome).toBe("parsed");
+  });
+
+  describe("encrypted assertions (ENG-4051)", () => {
+    const sp = createSpKeyPair();
+    const encrypted = (assertion: string, publicKey = sp.publicKey) =>
+      b64(samlResponseWith(encryptAssertion(assertion, publicKey)));
+
+    test("decrypts and parses a signed assertion of 150 groups within the budget", async () => {
+      await expect(
+        probeSamlResponseParse(encrypted(signedAssertionWithGroups(150)), sp.privateKey)
+      ).resolves.toEqual({
+        outcome: "parsed",
+        ms: expect.any(Number),
+        claims: { issuer: ENCRYPTED_RESPONSE_ISSUER, id: "_resp1", inResponseTo: "_req1" },
+      });
+    });
+
+    test("cuts off a plaintext too costly to parse, which the byte bounds pass as ciphertext", async () => {
+      const response = encrypted(nestedNamespaceAssertion(4000));
+      // The gap this closes: the bounds see only base64 ciphertext, and the outer document is cheap.
+      expect(checkSamlResponseBounds(response)).toBeNull();
+      await expect(probeSamlResponseParse(response)).resolves.toMatchObject({ outcome: "parsed" });
+
+      const started = performance.now();
+      const probe = await probeSamlResponseParse(response, sp.privateKey);
+
+      expect(probe).toEqual({ outcome: "too_costly", reason: "time" });
+      expect(performance.now() - started).toBeLessThan(SAML_PARSE_TIME_BUDGET_MS + 400);
+    });
+
+    test("answers an assertion encrypted to another key cheaply, with the response's claims", async () => {
+      const other = createSpKeyPair();
+
+      await expect(
+        probeSamlResponseParse(encrypted(nestedNamespaceAssertion(4000), other.publicKey), sp.privateKey)
+      ).resolves.toMatchObject({ outcome: "parsed", claims: { issuer: ENCRYPTED_RESPONSE_ISSUER } });
+    });
   });
 });

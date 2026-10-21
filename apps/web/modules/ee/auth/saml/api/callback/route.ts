@@ -7,7 +7,7 @@ import { hashString } from "@/lib/hash-string";
 import { toLogText } from "@/lib/utils/strings";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import jackson from "@/modules/ee/auth/saml/lib/jackson";
+import jackson, { getSamlDecryptionKey } from "@/modules/ee/auth/saml/lib/jackson";
 import {
   type SamlParseProbe,
   type SamlResponseClaims,
@@ -290,8 +290,9 @@ export const POST = async (req: Request) => {
   if (refusal) return refusal;
 
   // The bounds model xmldom; this measures it. A worker parses the response under a time budget first, so a shape
-  // the bounds misread costs the worker at most the budget and never blocks this thread for long.
-  const probe = await probeSamlResponseParse(SAMLResponse);
+  // the bounds misread costs the worker at most the budget and never blocks this thread for long. It decrypts an
+  // encrypted assertion with jackson's key and parses that too, because the bounds only ever see its ciphertext.
+  const probe = await probeSamlResponseParse(SAMLResponse, await getSamlDecryptionKey());
   if (probe.outcome !== "parsed") return refuseUnparsed(req, probe, SAMLResponse, RelayState);
   const context = failureContext(SAMLResponse, RelayState, probe.claims);
 

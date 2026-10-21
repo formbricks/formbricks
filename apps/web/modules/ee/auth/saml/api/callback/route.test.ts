@@ -22,11 +22,16 @@ const { samlResponseMock, jacksonMock, applyIPRateLimitMock, redirectMock, probe
     jacksonMock: vi.fn(async () => ({ oauthController: { samlResponse: samlResponseMock } })),
     applyIPRateLimitMock: vi.fn(async (_config: unknown, _options?: unknown) => ({ allowed: true })),
     redirectMock: vi.fn((url: string) => new Response(null, { status: 307, headers: { location: url } })),
-    probeMock: vi.fn(async (_samlResponse: string): Promise<SamlParseProbe> => PARSED),
+    probeMock: vi.fn(
+      async (_samlResponse: string, _decryptionKey?: string): Promise<SamlParseProbe> => PARSED
+    ),
   };
 });
 
-vi.mock("@/modules/ee/auth/saml/lib/jackson", () => ({ default: jacksonMock }));
+vi.mock("@/modules/ee/auth/saml/lib/jackson", () => ({
+  default: jacksonMock,
+  getSamlDecryptionKey: vi.fn(async () => "sp-private-key"),
+}));
 vi.mock("@/modules/ee/auth/saml/lib/saml-parse-budget", () => ({ probeSamlResponseParse: probeMock }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyIPRateLimit: applyIPRateLimitMock }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
@@ -230,7 +235,8 @@ describe("SAML callback route", () => {
     test("parses within the budget before jackson sees the response", async () => {
       await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "s" }));
 
-      expect(probeMock).toHaveBeenCalledWith(b64(ISSUER));
+      // With jackson's key, so an encrypted assertion is decrypted and timed before jackson does it (ENG-4051).
+      expect(probeMock).toHaveBeenCalledWith(b64(ISSUER), "sp-private-key");
       expect(probeMock.mock.invocationCallOrder[0]).toBeLessThan(
         samlResponseMock.mock.invocationCallOrder[0]
       );
