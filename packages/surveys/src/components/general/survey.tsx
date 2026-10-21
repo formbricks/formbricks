@@ -1482,6 +1482,7 @@ export function Survey({
       shouldResetBlockId={shouldResetQuestionId}
       fullSizeCards={fullSizeCards}
       placement={placement}
+      hasError={showError}
     />
   );
 
