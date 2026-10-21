@@ -44,9 +44,11 @@ export const ZCreativeEventsBody = z.object({
 }) satisfies z.ZodType<TCreativeEventsBody>;
 
 /**
- * The creatives an events request may count for: published and not archived, in the workspace the SDK
- * names (by workspace id or, for SDKs set up with one, legacy environment id). Cached like the SDK's
- * workspace state, so counting costs no database query per page view.
+ * The creatives an events request may count for: neither a Draft nor archived, in the workspace the SDK
+ * names (by workspace id or, for SDKs set up with one, legacy environment id). The stored status decides,
+ * not `publishedAt`: a restored creative keeps the date it was first published but is a Draft again, and
+ * any status but Draft was published. Cached like the SDK's workspace state (no write invalidates it), so
+ * counting costs no database query per page view and follows a publish, restore or archive within the TTL.
  */
 const getCountableCreativeIds = (workspaceIdParam: string): Promise<string[]> =>
   cache.withCache(
@@ -54,7 +56,7 @@ const getCountableCreativeIds = (workspaceIdParam: string): Promise<string[]> =>
       const workspace = await findWorkspaceByIdOrLegacyEnvId(workspaceIdParam);
       if (!workspace) return [];
       const creatives = await prisma.creative.findMany({
-        where: { workspaceId: workspace.id, archivedAt: null, publishedAt: { not: null } },
+        where: { workspaceId: workspace.id, archivedAt: null, status: { not: "draft" } },
         select: { id: true },
         orderBy: { updatedAt: "desc" },
         take: MAX_COUNTABLE_CREATIVES,
