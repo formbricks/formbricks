@@ -29,13 +29,11 @@ export const SurveyLanguageWarning = ({
   const values = { survey: survey.name, languages: names };
 
   return (
-    <p
-      role="status"
-      className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+    <output className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
       <AlertTriangleIcon className="mt-px size-3.5 shrink-0" aria-hidden="true" />
       {missing.effect === "hidden"
         ? t("workspace.creatives.editor.survey_language_missing_hidden", values)
         : t("workspace.creatives.editor.survey_language_missing_default", values)}
-    </p>
+    </output>
   );
 };

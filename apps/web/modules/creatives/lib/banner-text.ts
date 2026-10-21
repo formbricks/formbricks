@@ -37,11 +37,15 @@ const toRunHtml = (run: TCreativeTextRun, text: string): string => {
 
 /** The runs as markup the editor imports: one paragraph per line. */
 export const bannerRunsToHtml = (runs: TCreativeTextRun[]): string => {
-  const paragraphs: string[][] = [[]];
+  let paragraph: string[] = [];
+  const paragraphs = [paragraph];
   for (const run of runs) {
     run.text.split("\n").forEach((part, index) => {
-      if (index > 0) paragraphs.push([]);
-      if (part) paragraphs[paragraphs.length - 1].push(toRunHtml(run, part));
+      if (index > 0) {
+        paragraph = [];
+        paragraphs.push(paragraph);
+      }
+      if (part) paragraph.push(toRunHtml(run, part));
     });
   }
   return paragraphs.map((parts) => `<p>${parts.join("")}</p>`).join("");
@@ -96,12 +100,19 @@ const mergeRuns = (runs: TCreativeTextRun[]): TCreativeTextRun[] =>
     return merged;
   }, []);
 
+/** `text` without the line breaks it ends with: `/\n+$/`, walked from the end so it can't backtrack. */
+const trimTrailingLineBreaks = (text: string): string => {
+  let end = text.length;
+  while (end > 0 && text[end - 1] === "\n") end -= 1;
+  return text.slice(0, end);
+};
+
 /** Line breaks at either end carry nothing a visitor sees; a run must keep at least one character. */
 const trimLineBreaks = (runs: TCreativeTextRun[]): TCreativeTextRun[] => {
   const trimmed = runs.map((run, index) => {
     let { text } = run;
     if (index === 0) text = text.replace(/^\n+/, "");
-    if (index === runs.length - 1) text = text.replace(/\n+$/, "");
+    if (index === runs.length - 1) text = trimTrailingLineBreaks(text);
     return { ...run, text };
   });
   const kept = trimmed.filter((run) => run.text.length > 0);

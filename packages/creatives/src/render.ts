@@ -52,7 +52,7 @@ const Z_INDEX = 999998;
 const SURVEY_FONT = "Inter,Helvetica,Arial,sans-serif";
 
 const colorsCss = ({ backgroundColor, textColor, borderColor }: TCreativeColors): string =>
-  `color:${textColor};background:${backgroundColor};border:${borderColor ? `1px solid ${borderColor}` : "0"}`;
+  `color:${textColor};background:${backgroundColor};border:${borderColor ? "1px solid " + borderColor : "0"}`;
 
 /**
  * What every creative's stylesheet shares around its own rules: the reset (with the page's font let in
@@ -104,14 +104,15 @@ const deviceCss = (
 ): string => {
   const iconSize = Math.round((fontSize * 8) / 7);
   const isBottom = edge === "bottom";
+  // `rotate(180deg)` turns the box's own right corners to face the page on the right edge.
+  const sideRadius = edge === "right" ? `0 ${radius}px ${radius}px 0` : `${radius}px 0 0 ${radius}px`;
   return (
     `.fb-creative-button-area{top:${isBottom ? "auto" : TOP_INSET};right:${edge === "left" ? "auto" : 0};bottom:${BOTTOM_INSET};left:${edge === "right" ? "auto" : 0};flex-direction:${isBottom ? "row" : "column"}}` +
     `.fb-creative-button-area:before{content:"";flex:1 ${Math.max(0, 2 * offset - 100)}%}.fb-creative-button-area:after{content:"";flex:1 ${Math.max(0, 100 - 2 * offset)}%}` +
     `.fb-creative-button{font-size:${fontSize}px;gap:${Math.round((fontSize * 4) / 7)}px;${
       isBottom
         ? `transform:none;writing-mode:horizontal-tb;padding:${paddingY}px ${paddingX}px;border-radius:${radius}px ${radius}px 0 0`
-        : // `rotate(180deg)` turns the box's own right corners to face the page on the right edge.
-          `transform:rotate(180deg);writing-mode:vertical-rl;padding:${paddingX}px ${paddingY}px;border-radius:${edge === "right" ? `0 ${radius}px ${radius}px 0` : `${radius}px 0 0 ${radius}px`}`
+        : `transform:rotate(180deg);writing-mode:vertical-rl;padding:${paddingX}px ${paddingY}px;border-radius:${sideRadius}`
     }}` +
     `.fb-creative-button-icon{flex:none;width:${iconSize}px;height:${iconSize}px;transform:${isBottom ? "none" : "rotate(90deg)"}}`
   );
@@ -172,10 +173,11 @@ const barColorsCss = ({ backgroundColor, textColor, borderColor }: TCreativeColo
  */
 const bannerPlacementCss = ({ placement, layout }: TBannerPlacement): string => {
   const isTop = placement === "top";
+  const overlayEdge = isTop ? `top:${TOP_INSET};bottom:auto` : `top:auto;bottom:${BOTTOM_INSET}`;
   const edges =
     layout === "inPage"
       ? `position:relative;top:auto;bottom:auto;margin-top:${TOP_INSET};z-index:auto;max-height:none;overflow:visible`
-      : `position:fixed;${isTop ? `top:${TOP_INSET};bottom:auto` : `top:auto;bottom:${BOTTOM_INSET}`};margin-top:0;z-index:${Z_INDEX};max-height:33vh;overflow-y:auto`;
+      : `position:fixed;${overlayEdge};margin-top:0;z-index:${Z_INDEX};max-height:33vh;overflow-y:auto`;
   return `${edges};left:0;right:0;border-width:${isTop ? "0 0 1px" : "1px 0 0"}`;
 };
 
@@ -364,7 +366,7 @@ export const render = (
     root ?? (isBanner ? document.querySelector<HTMLElement>(BANNER_SLOT) : null) ?? document.body;
   const doc = parent.ownerDocument;
   const host = doc.createElement("div");
-  host.setAttribute("data-formbricks-creative", view.id);
+  host.dataset.formbricksCreative = view.id;
   const shadow = host.attachShadow({ mode: "open" });
 
   const style = doc.createElement("style");
@@ -375,7 +377,7 @@ export const render = (
     ? drawBanner(doc, view, onClick, onDismiss)
     : drawFeedbackButton(doc, view, onClick);
   // The dark palette and the creative's dark CSS key on it (`[data-appearance=dark]`), as on `#fbjs`.
-  element.setAttribute("data-appearance", appearance);
+  element.dataset.appearance = appearance;
 
   if (isBanner) {
     shadow.append(style, element);

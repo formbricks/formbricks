@@ -30,16 +30,24 @@ export const stepValue = (value: number, direction: number, bounds: TStepperBoun
   return clamp(roundToPrecision(value + direction * step, step), bounds);
 };
 
+const NUMERIC_CHARACTER = /[\d.+-]/;
+
+/**
+ * `text` without the unit it ends with: the trailing run of characters that can't be part of a number
+ * (`/[^\d.+-]+$/`, walked from the end so it can't backtrack).
+ */
+const stripTrailingUnit = (text: string): string => {
+  let end = text.length;
+  while (end > 0 && !NUMERIC_CHARACTER.test(text[end - 1])) end -= 1;
+  return text.slice(0, end);
+};
+
 /**
  * Parses what the user typed. Tolerates a trailing unit ("12px", "60 %") and a comma decimal
  * separator; returns null when nothing numeric is left, so the caller can revert.
  */
 export const parseStepperInput = (raw: string): number | null => {
-  const cleaned = raw
-    .trim()
-    .replace(",", ".")
-    .replace(/[^\d.+-]+$/, "")
-    .trim();
+  const cleaned = stripTrailingUnit(raw.trim().replace(",", ".")).trim();
   if (cleaned === "" || cleaned === "-" || cleaned === "+") return null;
   const value = Number(cleaned);
   return Number.isFinite(value) ? value : null;

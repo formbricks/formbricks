@@ -1,7 +1,7 @@
 import { type Page, expect } from "@playwright/test";
-import { randomBytes } from "crypto";
-import http from "http";
-import { type AddressInfo } from "net";
+import { randomBytes } from "node:crypto";
+import http from "node:http";
+import { type AddressInfo } from "node:net";
 
 /**
  * The customer-style host page the JS SDK journeys load: the SDK snippet, a per-response CSP nonce, and

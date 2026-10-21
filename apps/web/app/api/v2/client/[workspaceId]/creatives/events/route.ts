@@ -15,7 +15,7 @@ interface Context {
   params: Promise<{ workspaceId: string }>;
 }
 
-export const OPTIONS = async (): Promise<Response> =>
+export const OPTIONS = (): Response =>
   responses.successResponse({}, true, "public, s-maxage=3600, max-age=3600");
 
 export const POST = async (request: Request, context: Context): Promise<Response> => {

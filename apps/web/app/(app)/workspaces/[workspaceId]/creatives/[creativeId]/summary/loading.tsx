@@ -1,3 +1,1 @@
-import { CreativeSummarySkeleton } from "@/modules/creatives/components/skeletons";
-
-export default CreativeSummarySkeleton;
+export { CreativeSummarySkeleton as default } from "@/modules/creatives/components/skeletons";

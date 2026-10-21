@@ -102,8 +102,9 @@ export interface TReservedColumnDefaultsContext {
  */
 export const isReservedColumnVisibleByDefault = (
   { name, display }: { name: string; display: TReservedFieldDisplay },
-  { isOpenedByCreatives }: TReservedColumnDefaultsContext = { isOpenedByCreatives: false }
-): boolean => display === "primary" || (isOpenedByCreatives && name === "openedByCreativeName");
+  context?: TReservedColumnDefaultsContext
+): boolean =>
+  display === "primary" || (context?.isOpenedByCreatives === true && name === "openedByCreativeName");
 
 /** The label a reserved column's header shows: the product's own wording, or one derived from the name. */
 export const getReservedColumnLabel = (name: string, t: TFunction): string => getReservedFieldLabel(name, t);

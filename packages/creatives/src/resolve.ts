@@ -133,7 +133,7 @@ const opensNothing = (
   );
 };
 
-/** Whether this page shows it: one of its actions fired when it shows on an action, and its Show when holds. */
+/** This page shows it: on a page view or on one of its actions the page tracked, if its Show when holds. */
 const matchesPage = (creative: TCreativePayload, page: TCreativePage): boolean => {
   if (creative.showOn === "action" && !creative.triggers.some((name) => page.firedActions?.has(name))) {
     return false;
