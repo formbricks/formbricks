@@ -101,13 +101,14 @@ describe("probeSamlResponseParse", () => {
       expect(performance.now() - started).toBeLessThan(SAML_PARSE_TIME_BUDGET_MS + 400);
     });
 
-    test("refuses a decrypted assertion carrying more markup than the bounds allow, though it parses in time", async () => {
+    test("refuses a decrypted assertion carrying more markup than the bounds allow", async () => {
       const response = encrypted(flatAssertion(SAML_RESPONSE_MARKUP_BUDGET + 1_000));
       expect(checkSamlResponseBounds(response)).toBeNull();
 
-      await expect(probeSamlResponseParse(response, sp.privateKey)).resolves.toEqual({
+      // It parses in ~15 ms, so the markup bound refuses it; on a loaded machine the time budget may get there
+      // first. Which refusal wins is staged exactly in saml-parse-budget.failures.test.ts.
+      await expect(probeSamlResponseParse(response, sp.privateKey)).resolves.toMatchObject({
         outcome: "too_costly",
-        reason: "markup",
       });
     });
 

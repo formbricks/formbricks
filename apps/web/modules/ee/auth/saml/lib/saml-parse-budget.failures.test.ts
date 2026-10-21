@@ -37,9 +37,9 @@ class FakeWorker extends EventEmitter {
   ready() {
     this.port.postMessage({ ready: true });
   }
-  answer(ms = 5) {
+  answer(ms = 5, decryptedXml?: string) {
     const job = this.port.inbox.shift() as { id: number };
-    this.port.postMessage({ id: job.id, ms, claims: { issuer: "https://idp.example.com" } });
+    this.port.postMessage({ id: job.id, ms, claims: { issuer: "https://idp.example.com" }, decryptedXml });
   }
 }
 
@@ -83,6 +83,39 @@ describe("probeSamlResponseParse failure paths", () => {
   });
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  test.each([
+    ["more markup than the budget", `<r>${"<a/>".repeat(13_000)}</r>`, "markup"],
+    ["nesting past the depth cap", "<a>".repeat(65) + "</a>".repeat(65), "depth"],
+    ["a DOCTYPE", '<!DOCTYPE r SYSTEM "x"><r/>', "declaration"],
+  ])(
+    "refuses a decrypted assertion carrying %s, however fast it parsed (ENG-4051)",
+    async (_name, decryptedXml, reason) => {
+      const { probeSamlResponseParse } = await load();
+      const probe = probeSamlResponseParse("PHIvPg==", "sp-private-key");
+      await settle();
+      state.workers[0].ready();
+      mainPort(state.workers[0]).flush();
+      await settle();
+      state.workers[0].answer(5, decryptedXml);
+      mainPort(state.workers[0]).flush();
+
+      await expect(probe).resolves.toEqual({ outcome: "too_costly", reason });
+    }
+  );
+
+  test("passes a decrypted assertion within the bounds on to jackson (ENG-4051)", async () => {
+    const { probeSamlResponseParse } = await load();
+    const probe = probeSamlResponseParse("PHIvPg==", "sp-private-key");
+    await settle();
+    state.workers[0].ready();
+    mainPort(state.workers[0]).flush();
+    await settle();
+    state.workers[0].answer(5, `<r>${"<a/>".repeat(100)}</r>`);
+    mainPort(state.workers[0]).flush();
+
+    await expect(probe).resolves.toMatchObject({ outcome: "parsed" });
   });
 
   test("answers failed, and keeps serving, when the thread cannot be created", async () => {

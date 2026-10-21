@@ -76,8 +76,9 @@ describe("SAML callback with an encrypted assertion", () => {
 
     expect(response.status).toBe(400);
     expect(samlResponseMock).not.toHaveBeenCalled();
+    // The markup bound refuses it, or on a loaded machine the time budget gets there first; either way before jackson.
     expect(warn).toHaveBeenCalledWith(
-      expect.objectContaining({ stage: "parse_budget", reason: "markup" }),
+      expect.objectContaining({ stage: "parse_budget", reason: expect.stringMatching(/^(markup|time)$/) }),
       "Refused a SAML response that was too costly to parse"
     );
   });
