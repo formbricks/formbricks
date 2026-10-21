@@ -109,8 +109,8 @@ export const PinScreen = (props: Readonly<PinScreenProps>) => {
           } else {
             setError(getFormattedErrorMessage(response));
             // "Not found" means the survey stopped taking responses (closed, archived or gone) after this
-            // page loaded (ENG-4032). The PIN boxes only show an error as a red border, so re-render the page
-            // and let the server show what a fresh load would, instead of a PIN error that can never clear.
+            // page loaded (ENG-4032), so no PIN can ever be accepted here. The boxes only show an error as a
+            // red border, so re-render the page and let the server show what a fresh load would.
             if (isLinkSurveyGoneError(response?.serverError, surveyId)) {
               router.refresh();
             }

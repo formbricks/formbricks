@@ -1,9 +1,9 @@
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import type { TLinkSurvey } from "@/modules/survey/link/lib/data";
 
-// `archivedAt` is required, not optional as on `TSurvey`: a survey from a loader that doesn't select it
-// (`getSurvey`) would otherwise read as "not archived". Load through `getSurveyWithMetadata`.
-export type TLinkSurveyAccessFields = Pick<TSurvey, "type" | "status"> & { archivedAt: Date | null };
+// From `TLinkSurvey`, so `archivedAt` is required: see there for why a loader must select it.
+export type TLinkSurveyAccessFields = Pick<TLinkSurvey, "type" | "status" | "archivedAt">;
 
 // What each guard proves, in full: narrowing only `status` would let a caller whose `status` is already
 // narrowed collapse the false branch to `never` while the survey could still be an app or archived one.
@@ -15,9 +15,9 @@ type TServableLinkSurvey = {
 
 /**
  * Whether the public link page serves this survey at all. A draft, an archived survey or a survey of
- * another type does not exist for an anonymous visitor, so the link page, its metadata, its `/c` and `/p`
- * routes and its public actions answer "not found" for it (ENG-4032). Paused and completed surveys are
- * served, but only as their inactive screen.
+ * another type does not exist for an anonymous visitor (ENG-4032): `/s`, `/c` and `/p` 404 it, the `/s`
+ * metadata 404s, the `/c` metadata stays generic, and the public actions answer "not found". Paused and
+ * completed surveys are served, but only as their inactive screen.
  */
 export const isLinkSurveyServable = <T extends TLinkSurveyAccessFields>(
   survey: T

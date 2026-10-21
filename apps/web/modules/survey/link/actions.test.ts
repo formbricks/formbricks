@@ -4,6 +4,7 @@ import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
 import { sendLinkSurveyEmailAction, validateSurveyPinAction } from "./actions";
 import { getSurveyWithMetadata } from "./lib/data";
 import { createLinkSurveyPinToken } from "./lib/pin-token";
+import { isLinkSurveyGoneError } from "./lib/public-access";
 import { getWorkspaceContextForLinkSurvey } from "./lib/workspace";
 
 vi.mock("@/lib/utils/action-client", () => ({
@@ -65,6 +66,17 @@ const notOpen = [
   ["a completed survey", { status: "completed" }],
 ] as const;
 
+// The PIN and verify-email screens re-render the page only when the action's error matches what
+// `isLinkSurveyGoneError` expects, so pin the exact error, not just its type.
+const expectSurveyGone = async (call: Promise<unknown>) => {
+  const error = await call.then(
+    () => undefined,
+    (thrown: unknown) => thrown
+  );
+  expect(error).toBeInstanceOf(ResourceNotFoundError);
+  expect(isLinkSurveyGoneError((error as Error).message, surveyId)).toBe(true);
+};
+
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(getWorkspaceContextForLinkSurvey).mockResolvedValue({
@@ -78,15 +90,15 @@ describe("validateSurveyPinAction", () => {
   test.each(notOpen)("%s is not found and its definition is not returned", async (_label, state) => {
     mockSurvey(state);
 
-    await expect(validatePin()).rejects.toBeInstanceOf(ResourceNotFoundError);
+    await expectSurveyGone(validatePin());
     expect(getWorkspaceContextForLinkSurvey).not.toHaveBeenCalled();
   });
 
   test("a PIN-protected draft is not found rather than answering whether the PIN is right", async () => {
     mockSurvey({ status: "draft", pin: "1234" });
 
-    await expect(validatePin("0000")).rejects.toBeInstanceOf(ResourceNotFoundError);
-    await expect(validatePin("1234")).rejects.toBeInstanceOf(ResourceNotFoundError);
+    await expectSurveyGone(validatePin("0000"));
+    await expectSurveyGone(validatePin("1234"));
     expect(createLinkSurveyPinToken).not.toHaveBeenCalled();
   });
 
@@ -109,7 +121,7 @@ describe("sendLinkSurveyEmailAction", () => {
   test.each(notOpen)("%s is not found and no email is sent", async (_label, state) => {
     mockSurvey(state);
 
-    await expect(sendEmail()).rejects.toBeInstanceOf(ResourceNotFoundError);
+    await expectSurveyGone(sendEmail());
     expect(sendLinkSurveyToVerifiedEmail).not.toHaveBeenCalled();
   });
 
