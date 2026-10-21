@@ -4,6 +4,8 @@ import {
   type TShowConditionGroup,
   type TShowConditionSingle,
   ZShowConditions,
+  dropUnfinishedShowConditions,
+  hasUnfinishedShowConditions,
 } from "./show-conditions";
 
 let idCounter = 0;
@@ -89,6 +91,8 @@ describe("ZShowConditions", () => {
     ["page", "currentUrl", "endsWith", "/compare"],
     ["page", "currentUrl", "containsAnyOf", ["/a", "/b"]],
     ["page", "currentUrl", "containsNoneOf", ["/a", "/b"]],
+    ["page", "currentUrl", "pathIsAnyOf", ["/a", "https://example.com/b"]],
+    ["page", "currentUrl", "pathIsNoneOf", ["/a"]],
     ["page", "pageReferrer", "contains", "google"],
     ["page", "entryReferrer", "containsNoneOf", ["ads.example.com"]],
     ["page", "queryParam", "equals", "email", { key: "source" }],
@@ -137,6 +141,13 @@ describe("ZShowConditions", () => {
       '"isSet" takes no value',
     ],
     ["isNotSet on a URL", condition("page", "currentUrl", "isNotSet"), "is not allowed"],
+    [
+      "an exact path list on a referrer, whose pages are another site's",
+      condition("page", "pageReferrer", "pathIsAnyOf", ["/"]),
+      "is not allowed",
+    ],
+    ["text for an exact path list", condition("page", "currentUrl", "pathIsAnyOf", "/a"), "expected a list"],
+    ["a blank exact path", condition("page", "currentUrl", "pathIsNoneOf", ["/a", " "]), "cannot be empty"],
     ["a missing value", condition("page", "currentUrl", "contains"), "a value is required"],
     ["text for a number", condition("visit", "timeOnSite", "isGreaterThan", "120"), "expected a number"],
     ["a negative number", condition("device", "screenWidth", "isLessThan", -1), "expected a number"],
@@ -190,5 +201,68 @@ describe("ZShowConditions", () => {
     expect(
       issueMessages(group("and", [condition("page", "currentUrl", "containsAnyOf", longFragments)]))
     ).toEqual(["conditions can be at most 10240 characters"]);
+  });
+
+  test("caps unique pages viewed at the 200 different pages the visit store remembers", () => {
+    expect(
+      issueMessages(group("and", [condition("visit", "uniquePagesViewed", "isGreaterThanOrEqual", 200)]))
+    ).toEqual([]);
+    expect(
+      issueMessages(group("and", [condition("visit", "uniquePagesViewed", "isGreaterThanOrEqual", 201)]))
+    ).toEqual(["expected a number from 0 to 200"]);
+  });
+});
+
+describe("hasUnfinishedShowConditions", () => {
+  const finished = condition("visit", "timeOnSite", "isGreaterThanOrEqual", 30);
+  const unfinished = condition("page", "currentUrl", "pathIsAnyOf");
+
+  test.each([
+    ["no conditions", null, false],
+    ["only finished rows", group("and", [finished]), false],
+    ["an unfinished row next to a finished one", group("and", [finished, unfinished]), true],
+    ["a lone unfinished row", group("and", [unfinished]), true],
+    ["an unfinished row in a nested group", group("and", [finished, group("or", [unfinished])]), true],
+    ["a group with no conditions list", { connector: "and" }, true],
+  ])("%s → %s", (_label, value, expected) => {
+    expect(hasUnfinishedShowConditions(value)).toBe(expected);
+  });
+});
+
+describe("dropUnfinishedShowConditions", () => {
+  test("keeps finished conditions and drops a row that has no value yet", () => {
+    const finished = condition("page", "currentUrl", "pathIsAnyOf", ["/pricing"]);
+    const unfinished = condition("page", "currentUrl", "pathIsAnyOf");
+    const root = group("and", [finished, unfinished]);
+
+    expect(dropUnfinishedShowConditions(root)).toEqual({ ...root, conditions: [finished] });
+  });
+
+  test("drops a group left empty, and returns null when nothing is finished", () => {
+    const blank = condition("visit", "pagesViewed", "isGreaterThanOrEqual");
+    const finished = condition("visit", "timeOnSite", "isGreaterThanOrEqual", 30);
+    const root = group("and", [finished, group("or", [blank])]);
+
+    expect(dropUnfinishedShowConditions(root)).toEqual({ ...root, conditions: [finished] });
+    expect(dropUnfinishedShowConditions(group("and", [blank]))).toBeNull();
+  });
+
+  test("returns null for anything that is not a group of conditions", () => {
+    expect(dropUnfinishedShowConditions(null)).toBeNull();
+    expect(dropUnfinishedShowConditions("conditions")).toBeNull();
+    expect(dropUnfinishedShowConditions({ id: "root", connector: "and" })).toBeNull();
+  });
+
+  test("leaves the limits to the strict schema, so an over-limit draft is not silently emptied", () => {
+    const tooMany = group(
+      "and",
+      Array.from({ length: SHOW_CONDITIONS_LIMITS.maxConditions + 1 }, () =>
+        condition("visit", "timeOnSite", "isGreaterThanOrEqual", 30)
+      )
+    );
+
+    expect(dropUnfinishedShowConditions(tooMany)?.conditions).toHaveLength(
+      SHOW_CONDITIONS_LIMITS.maxConditions + 1
+    );
   });
 });

@@ -85,7 +85,8 @@ const extractResponseData = (response: TResponseWithQuotas, survey: TSurvey): Re
 const mapResponsesToTableData = (
   responses: TResponseWithQuotas[],
   survey: TSurvey,
-  t: TFunction
+  t: TFunction,
+  locale: TUserLocale
 ): TResponseTableData[] => {
   return responses.map((response) => ({
     responseData: extractResponseData(response, survey),
@@ -109,7 +110,7 @@ const mapResponsesToTableData = (
     contactAttributes: response.contactAttributes,
     meta: response.meta,
     // Resolved here, where the whole response is in hand, so the cells stay dumb lookups.
-    reservedValues: getReservedColumnValues(response),
+    reservedValues: getReservedColumnValues(response, locale),
     quotas: response.quotas?.map((quota) => quota.name),
   }));
 };
@@ -134,7 +135,7 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   const setSelectedResponseIdTransition = React.useCallback((id: string | null) => {
     React.startTransition(() => setSelectedResponseId(id));
   }, []);
-  const data = mapResponsesToTableData(responses, survey, t);
+  const data = mapResponsesToTableData(responses, survey, t, locale);
 
   return (
     <div className="w-full">
