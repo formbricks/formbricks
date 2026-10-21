@@ -477,7 +477,10 @@ const PositionPanel = ({
   const resetLabel = t("workspace.creatives.editor.use_desktop_position");
 
   return (
-    <EditorPanel title={t("workspace.creatives.editor.position")} icon={MoveIcon}>
+    <EditorPanel
+      title={t("workspace.creatives.editor.position")}
+      icon={MoveIcon}
+      description={t("workspace.creatives.editor.position_description")}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-xs text-slate-500">
           {followsDesktop && t("workspace.creatives.editor.same_as_desktop")}

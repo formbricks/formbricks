@@ -1,6 +1,6 @@
 "use client";
 
-import { CodeIcon } from "lucide-react";
+import { CodeIcon, LockIcon } from "lucide-react";
 import { type ReactNode, useId } from "react";
 import { useTranslation } from "react-i18next";
 import type { TCustomCssInput } from "@formbricks/types/custom-css";
@@ -89,6 +89,13 @@ export const CustomCssPanel = ({
       icon={CodeIcon}
       description={t("workspace.creatives.editor.custom_css_description", { className })}
       action={action}>
+      {/* Outside the dimmed fieldset, so it reads as the way to unlock the card rather than part of it. */}
+      {disabled && (
+        <p className="flex items-start gap-1.5 rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-600">
+          <LockIcon className="mt-px size-3.5 shrink-0 text-slate-500" aria-hidden="true" />
+          {t("workspace.creatives.editor.custom_css_off_hint")}
+        </p>
+      )}
       <fieldset disabled={disabled} className="min-w-0 disabled:opacity-60">
         {mode === "clear-only" && !hasCss ? (
           <CustomCssPlanNotice billingHref={config.billingHref} hasSavedCss={false} />
