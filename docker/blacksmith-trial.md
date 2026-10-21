@@ -1,60 +1,20 @@
 # Blacksmith Docker migration and validation
 
-Release builds use native AMD64 and ARM64 Blacksmith runners, save candidates in
-private ECR, and validate both architectures before copying the tested index to
-release tags. PR builds use a separate AMD64 cache; fork PRs retain an isolated
-GitHub runner. These changes take effect when the migration PR is merged.
+Release builds use native AMD64 and ARM64 Blacksmith runners and publish run-specific
+candidate tags directly to the existing destination repository: cloud images to ECR,
+community images to GHCR, and experimental images to the existing experimental GHCR
+package. Both architectures are tested by immutable digest before applying the
+version, `latest`, or deployment tags. GHCR candidates have the package's normal
+visibility and can be pulled before validation.
 
-## AWS setup before merging
+The existing registry settings and credentials are sufficient. This migration requires
+no new repository, lifecycle policy, IAM grant, or GitHub variable. Cloud jobs use the
+existing AWS OIDC role; community jobs use `GITHUB_TOKEN` package permissions.
+Candidate tags remain for retries and diagnosis under the registry's existing retention
+settings. The workflow does not delete images or install a new expiry policy.
 
-Create a **dedicated private ECR repository** in the existing `ECR_REGION` and
-`ECR_REGISTRY` account, for example `formbricks/formbricks-build-candidates`.
-Do not reuse `ECR_REPOSITORY`: lifecycle expiration deletes image versions,
-including any release tags pointing at those versions.
-
-Provision the repository through the existing infrastructure-as-code workflow,
-with the account's KMS encryption and image-scanning settings, and apply the
-seven-day retention policy in `docker/blacksmith-candidate-lifecycle.json`.
-Review the infrastructure plan before applying it. Do not create a second,
-unmanaged repository with manual AWS commands.
-
-Grant the existing role referenced by `AWS_ECR_PUSH_ROLE_ARN` these actions on
-**only the new repository ARN**:
-
-```json
-{
-  "Action": [
-    "ecr:BatchCheckLayerAvailability",
-    "ecr:GetDownloadUrlForLayer",
-    "ecr:BatchGetImage",
-    "ecr:InitiateLayerUpload",
-    "ecr:UploadLayerPart",
-    "ecr:CompleteLayerUpload",
-    "ecr:PutImage",
-    "ecr:DescribeRepositories",
-    "ecr:GetLifecyclePolicy"
-  ],
-  "Effect": "Allow",
-  "Resource": "arn:aws:ecr:REGION:ACCOUNT_ID:repository/formbricks/formbricks-build-candidates"
-}
-```
-
-Retain the role's existing `ecr:GetAuthorizationToken` permission on `*` and
-release-repository permissions. No image deletion permission is needed by CI.
-The role's GitHub OIDC trust must cover the existing release workflow contexts.
-Set the GitHub repository variable:
-
-```sh
-gh variable set ECR_CANDIDATE_REPOSITORY \
-  --repo formbricks/formbricks --body formbricks/formbricks-build-candidates
-```
-
-Preparation checks the repository URI, separation from the release repository,
-and a single lifecycle rule expiring every image after one to seven days. A
-missing or incompatible policy fails before any compilation or publication.
-Candidate images remain available for failed-job retries until expiration;
-retrying later requires a new build and validation. ECR applies expiration
-asynchronously, so the seven-day rule is not an exact deletion deadline.
+PR builds use a separate AMD64 cache; fork PRs retain an isolated GitHub runner.
+These changes take effect when the migration PR is merged.
 
 ## Native build trial
 
@@ -86,25 +46,10 @@ storage in Blacksmith's dashboard, particularly after failed jobs.
 Blacksmith also evicts builder caches after seven days of inactivity. Infrequent
 release builds may therefore compile Node from scratch again.
 
-## Registry transport trial
-
-After configuring the dedicated candidate repository:
-
-```sh
-gh workflow run release-docker-github-experimental.yml \
-  --ref <trial-branch> -f blacksmith_registry_trial=true
-```
-
-This stages a public multi-platform Alpine fixture in private ECR, verifies
-anonymous access is denied, copies it unchanged to
-`ghcr.io/formbricks/blacksmith-registry-trial`, and signs and verifies the digest.
-The private fixture expires under the candidate policy. The public fixture and
-signatures remain for inspection. No Formbricks release tags are written.
-
 ## Full candidate pipeline checks
 
-Once the native and registry trials pass, exercise the community and cloud
-profiles from the draft branch. These commands publish explicitly named test
+After the native trial passes, exercise the community and cloud profiles from
+the draft branch. These commands publish explicitly named test
 versions after validation. The community workflow also updates its branch tag
 in the experimental package; the cloud command leaves deployment tags unchanged.
 
@@ -120,15 +65,14 @@ gh workflow run build-and-push-ecr.yml \
 Verify that both native validation jobs and promotion succeed in each run, that
 every destination tag matches its tested index digest, and that the community
 signature verifies. Record the runs in the migration PR. These checks exercise
-the actual release secrets, private candidate access, index assembly and
-promotion actions, beyond the isolated builder and Alpine transport trials.
+the actual release secrets, destination-registry authentication, index assembly,
+native validation and promotion actions, beyond the isolated builder trials.
 
 ## Cutover gate
 
 Keep the migration PR draft until both native builds and warm-cache smoke tests
-pass, registry transport passes against the configured candidate repository,
-and the full cloud/community candidate pipelines pass their existing native
-validation gates. The builder trial omits telemetry credentials; it does not
+pass and the full cloud/community pipelines pass their native validation and
+release-tag promotion gates using the existing repositories. The builder trial omits telemetry credentials; it does not
 prove Sentry upload, the cloud build profile, or Kubernetes deployment.
 
 Record build and complete job durations, cache size, and actual billed usage.
@@ -146,20 +90,23 @@ If promotion partially changes tags, follow the forward-recovery procedure in
 [PR #9715](https://github.com/formbricks/formbricks/pull/9715) tracks current
 results and unresolved cutover gates. On October 20, 2026:
 
-| Workload                                       | Build duration  | Result                                                |
-| ---------------------------------------------- | --------------- | ----------------------------------------------------- |
-| AMD64 release trial, cold                      | 42m49s          | Native runtime and browser smoke passed               |
-| AMD64 release trial, warm                      | 3m00s and 3m37s | Real application rebuilds; Node cached; smoke passed  |
-| ARM64 release trial, cold, 16 compiler workers | 60m36s          | Native runtime and browser smoke passed               |
-| ARM64 release trial, cold, 32 compiler workers | 39m28s          | Native runtime and browser smoke passed               |
-| AMD64 PR workflow, cold, 12 compiler workers   | 20m20s          | Complete Docker validation passed                     |
-| AMD64 PR workflow, warm                        | 2m49s and 3m34s | Real application rebuilds; complete validation passed |
+| Workload                                       | Build duration  | Result                                                   |
+| ---------------------------------------------- | --------------- | -------------------------------------------------------- |
+| AMD64 release trial, cold                      | 42m49s          | Native runtime and browser smoke passed                  |
+| AMD64 release trial, warm                      | 3m00s and 3m37s | Real application rebuilds; Node cached; smoke passed     |
+| ARM64 release trial, cold, 16 compiler workers | 60m36s          | Native runtime and browser smoke passed                  |
+| ARM64 release trial, cold, 32 compiler workers | 39m28s          | Native runtime and browser smoke passed                  |
+| ARM64 release trial, warm, 32 compiler workers | 18m51s          | Node cached; application rebuild and native smoke passed |
+| AMD64 PR workflow, cold, 12 compiler workers   | 20m20s          | Complete Docker validation passed                        |
+| AMD64 PR workflow, warm                        | 2m49s and 3m34s | Real application rebuilds; complete validation passed    |
 
 The first attempted ARM64 warm run restored an older cache snapshot and compiled
 Node again. A later 32-vCPU cold build passed; a fresh diagnostic runner started
 about eight minutes after completion restored matching cache database hashes
-and the completed Node layer. The initial miss remains unexplained, so do not
-assume a cache commit request means the next runner can immediately reuse it.
+and the completed Node layer. The subsequent warm build passed with Node cached;
+the application rebuild alone took 969.9 seconds. The initial miss remains
+unexplained, so do not assume a cache commit request means the next runner can
+immediately reuse it. Release speed and monthly cost improvements are not established.
 
 ## References
 
@@ -167,4 +114,3 @@ assume a cache commit request means the next runner can immediately reuse it.
 - [Blacksmith runner sizes](https://docs.blacksmith.sh/blacksmith-runners/overview)
 - [Blacksmith pricing](https://www.blacksmith.sh/pricing)
 - [ECR storage and transfer pricing](https://aws.amazon.com/ecr/pricing/)
-- [ECR lifecycle policies](https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html)

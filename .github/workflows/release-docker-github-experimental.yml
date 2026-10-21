@@ -12,11 +12,6 @@ on:
         required: false
         type: boolean
         default: false
-      blacksmith_registry_trial:
-        description: "Validate private ECR staging, digest-preserving copy to a dedicated GHCR test package, and signing"
-        required: false
-        type: boolean
-        default: false
       version_override:
         description: "Override version (SemVer only, e.g., 1.2.3-beta). Leave empty for auto-generated experimental version."
         required: false
@@ -28,15 +23,6 @@ permissions:
   id-token: write
 
 jobs:
-  blacksmith-registry-trial:
-    if: inputs.blacksmith_registry_trial
-    uses: ./.github/workflows/blacksmith-registry-trial.yml
-    secrets: inherit
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-
   blacksmith-trial:
     if: inputs.blacksmith_trial
     uses: ./.github/workflows/blacksmith-docker-trial.yml
@@ -44,12 +30,12 @@ jobs:
       contents: read
 
   build-community-testing:
-    if: ${{ !inputs.blacksmith_trial && !inputs.blacksmith_registry_trial }}
-    name: Build private community testing candidate
+    if: ${{ !inputs.blacksmith_trial }}
+    name: Build community testing candidate
     uses: ./.github/workflows/build-docker-candidate.yml
     permissions:
       contents: read
-      id-token: write
+      packages: write
     with:
       registry_type: ghcr
       ghcr_image_name: ${{ format('{0}-experimental', github.repository) }}
@@ -72,7 +58,7 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
-      id-token: write
+      packages: read
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -81,8 +67,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/test-release-image
         with:
-          aws_role_arn: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
-          ecr_region: ${{ vars.ECR_REGION }}
           image_ref: ${{ needs.build-community-testing.outputs.IMAGE_REF }}
           build_identity: ${{ needs.build-community-testing.outputs.BUILD_IDENTITY }}
           registry_type: "ghcr"
@@ -105,8 +89,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/promote-verified-image
         with:
-          aws_role_arn: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
-          ecr_region: ${{ vars.ECR_REGION }}
           image_ref: ${{ needs.build-community-testing.outputs.IMAGE_REF }}
           registry_type: "ghcr"
           release_tags: ${{ needs.build-community-testing.outputs.TAGS }}

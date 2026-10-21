@@ -92,7 +92,7 @@ concurrency:
 
 jobs:
   build-and-push:
-    name: Build private cloud candidate
+    name: Build cloud candidate
     uses: ./.github/workflows/build-docker-candidate.yml
     permissions:
       contents: read

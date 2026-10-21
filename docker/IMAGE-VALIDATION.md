@@ -18,15 +18,16 @@ they receive a local identity during compilation. Do not override deployment ide
 when starting an already-built image.
 
 Release workflows build AMD64 and ARM64 candidates on native Blacksmith runners and
-assemble their index in a dedicated private ECR repository. The repository must differ
-from the release repository and have a verified lifecycle policy expiring all candidates
-after at most seven days. No release tags are written before validation. See
-[Blacksmith setup and trials](blacksmith-trial.md) for the required AWS configuration.
+assemble their index under run-specific tags in the existing destination repository.
+Cloud builds use ECR; community and experimental builds use their respective GHCR
+packages. Candidates have the destination repository's normal visibility. Version,
+`latest`, and deployment tags are assigned only after validation. See
+[Blacksmith setup and trials](blacksmith-trial.md) for validation commands.
 
-After validation, `skopeo copy --all --preserve-digests` copies the immutable candidate
-to explicit release tags. The workflow checks every destination against the tested index
-digest and signs GHCR images. Never apply candidate retention to a release repository:
-expiring an image can also remove its release tags.
+After validation, `skopeo copy --all --preserve-digests` applies the explicit release
+tags within that same repository. The workflow checks every destination against the
+tested index digest and signs GHCR images. Authentication is specific to the chosen
+registry; community builds do not need AWS access.
 
 Separate AMD64 and ARM64 jobs validate the exact index digest in parallel on matching native
 runners. They do not install QEMU or pull different architectures into the same Docker image
@@ -77,10 +78,11 @@ repeat with warm caches, and run the same verifier/browser checks on each digest
 the release Sentry configuration, since PR builds intentionally omit upload credentials.
 
 Failed candidate validation leaves deployment tags unchanged. Keep its digest and failed-check
-output for diagnosis, then rerun validation of that digest before its seven-day retention
-window expires. Private pulls use the existing AWS OIDC role and ECR authentication.
-After expiration, start a new build and validate its new digest. Use the explicit repair
-option when the application needs to be rebuilt.
+output for diagnosis, then rerun validation of that digest while it remains available
+under the registry's existing retention settings. ECR pulls use the existing AWS OIDC
+role; GHCR pulls use the workflow's package permissions. If an image has been removed,
+start a new build and validate its digest. Use the explicit repair option when the
+application needs to be rebuilt.
 
 Registry writes to multiple tags are not transactional. A failure after promotion begins
 can leave only some tags updated, including a tag already consumed by a deployment controller.

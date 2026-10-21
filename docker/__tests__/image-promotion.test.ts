@@ -114,6 +114,7 @@ describe("image startup validation", () => {
 });
 
 type Job = {
+  permissions?: Record<string, string>;
   needs?: string | string[];
   if?: string;
   "runs-on"?: string;
@@ -143,11 +144,7 @@ describe("release promotion boundary", () => {
     const experimental = workflow("release-docker-github-experimental");
     expect(experimental.on?.workflow_dispatch?.inputs?.blacksmith_trial.default).toBe(false);
     expect(experimental.jobs["blacksmith-trial"].if).toBe("inputs.blacksmith_trial");
-    expect(experimental.on?.workflow_dispatch?.inputs?.blacksmith_registry_trial.default).toBe(false);
-    expect(experimental.jobs["blacksmith-registry-trial"].if).toBe("inputs.blacksmith_registry_trial");
-    expect(experimental.jobs["build-community-testing"].if).toBe(
-      "${{ !inputs.blacksmith_trial && !inputs.blacksmith_registry_trial }}"
-    );
+    expect(experimental.jobs["build-community-testing"].if).toBe("${{ !inputs.blacksmith_trial }}");
     expect(experimental.jobs.validate.needs).toBe("build-community-testing");
     expect(experimental.jobs.promote.needs).toContain("build-community-testing");
 
@@ -158,11 +155,14 @@ describe("release promotion boundary", () => {
     expect(build?.with?.load).toBe(true);
   });
 
-  test("saves candidates privately without writing release registry tags", () => {
+  test("uses run-specific tags in the selected release repository until validation", () => {
     const candidate = workflow("build-docker-candidate");
-    const build = candidate.jobs.build.steps.find((step) => step.name === "Build private native candidate");
-    expect(candidate.env?.CANDIDATE_REPOSITORY).toBe(
-      "${{ vars.ECR_REGISTRY }}/${{ vars.ECR_CANDIDATE_REPOSITORY }}"
+    const build = candidate.jobs.build.steps.find((step) => step.name === "Build native candidate");
+    expect(candidate.jobs.build.env?.CANDIDATE_REPOSITORY).toBe(
+      "${{ needs.prepare.outputs.candidate_repository }}"
+    );
+    expect(candidate.jobs.merge.env?.CANDIDATE_REPOSITORY).toBe(
+      candidate.jobs.build.env?.CANDIDATE_REPOSITORY
     );
     expect(build?.with?.tags).toBe(
       "${{ env.CANDIDATE_REPOSITORY }}:${{ env.CANDIDATE_TAG }}-${{ matrix.arch }}"
@@ -203,7 +203,7 @@ describe("release promotion boundary", () => {
     }
   );
 
-  test.each(["success", "source changed", "destination changed"])(
+  test.each(["success", "source changed", "destination changed", "wrong repository"])(
     "binds publication to the validated digest (%s)",
     (scenario) => {
       const directory = mkdtempSync(join(tmpdir(), "image-promotion-"));
@@ -215,7 +215,7 @@ describe("release promotion boundary", () => {
         const boundaries = String.raw`
           docker() {
             for arg in "$@"; do last_arg="$arg"; done
-            if [[ "$last_arg" == registry.example/candidates@* ]]; then
+            if [[ "$last_arg" == registry.example/app@* ]]; then
               printf '{"digest":"%s"}\n' "$SOURCE_DIGEST"
             else
               printf '{"digest":"%s"}\n' "$DESTINATION_DIGEST"
@@ -230,18 +230,21 @@ describe("release promotion boundary", () => {
             PATH: process.env.PATH,
             HOME: directory,
             TRACE: trace,
-            IMAGE: `registry.example/candidates@${digest}`,
-            RELEASE_TAGS: "registry.example/app:6.1.0",
+            IMAGE: `registry.example/app@${digest}`,
+            RELEASE_TAGS:
+              scenario === "wrong repository"
+                ? "registry.example/app:6.1.0\nregistry.example/other:latest"
+                : "registry.example/app:6.1.0",
             SOURCE_DIGEST: scenario === "source changed" ? "sha256:wrong" : digest,
             DESTINATION_DIGEST: scenario === "destination changed" ? "sha256:wrong" : digest,
           },
         });
         expect(result.status).toBe(scenario === "success" ? 0 : 1);
-        if (scenario === "source changed") {
+        if (scenario === "source changed" || scenario === "wrong repository") {
           expect(existsSync(trace)).toBe(false);
         } else {
           expect(readFileSync(trace, "utf8").trim()).toBe(
-            `copy --all --preserve-digests --authfile ${directory}/.docker/config.json docker://registry.example/candidates@${digest} docker://registry.example/app:6.1.0`
+            `copy --all --preserve-digests --authfile ${directory}/.docker/config.json docker://registry.example/app@${digest} docker://registry.example/app:6.1.0`
           );
         }
         if (scenario !== "success") expect(result.stderr).toContain("resume with the verified digest");
@@ -259,7 +262,7 @@ describe("release promotion boundary", () => {
     expect(publish?.run).toContain("skopeo copy --all --preserve-digests");
     expect(publish?.run).toContain('test "$actual" = "${IMAGE##*@}"');
     const build = workflow("build-docker-candidate").jobs.build.steps.find(
-      (step) => step.name === "Build private native candidate"
+      (step) => step.name === "Build native candidate"
     );
     expect(build?.with?.["no-cache-filters"]).toBe(
       "${{ inputs.rebuild_application == true && 'installer,runner' || '' }}"
@@ -267,47 +270,69 @@ describe("release promotion boundary", () => {
   });
 
   test.each([
-    "valid",
-    "release repository",
-    "wrong URI",
-    "long retention",
-    "tagged only",
-    "multiple rules",
-    "missing policy",
-  ])("requires bounded retention on a separate candidate repository (%s)", (scenario) => {
-    const script = readFileSync(
-      fileURLToPath(new URL("../verify-candidate-repository.sh", import.meta.url)),
-      "utf8"
-    );
-    const policy = JSON.parse(
-      readFileSync(fileURLToPath(new URL("../blacksmith-candidate-lifecycle.json", import.meta.url)), "utf8")
-    );
-    if (scenario === "long retention") policy.rules[0].selection.countNumber = 30;
-    if (scenario === "tagged only") policy.rules[0].selection.tagStatus = "tagged";
-    if (scenario === "multiple rules") policy.rules.push(policy.rules[0]);
-    const boundaries = String.raw`
-        aws() {
-          case "$2" in
-            describe-repositories) printf '%s\n' "$ACTUAL_URI" ;;
-            get-lifecycle-policy) test "$HAS_POLICY" = true || return 1; printf '%s\n' "$POLICY" ;;
-            *) return 1 ;;
-          esac
-        }
-      `;
-    const result = spawnSync("/bin/bash", ["-c", boundaries + script], {
-      encoding: "utf8",
-      env: {
-        PATH: process.env.PATH,
-        STAGING_REPOSITORY: scenario === "release repository" ? "release" : "candidates",
-        RELEASE_REPOSITORY: "release",
-        CANDIDATE_REPOSITORY: "registry.example/candidates",
-        ACTUAL_URI: scenario === "wrong URI" ? "registry.example/wrong" : "registry.example/candidates",
-        HAS_POLICY: String(scenario !== "missing policy"),
-        POLICY: JSON.stringify({ lifecyclePolicyText: JSON.stringify(policy) }),
-      },
+    ["registry.example:5000/app:6.1.0\nregistry.example:5000/app:production", "registry.example:5000/app"],
+    [
+      "ghcr.io/formbricks/formbricks:6.1.0\nghcr.io/formbricks/formbricks:latest",
+      "ghcr.io/formbricks/formbricks",
+    ],
+    ["ghcr.io/formbricks/formbricks-experimental:6.1.0-test", "ghcr.io/formbricks/formbricks-experimental"],
+    ["", null],
+    ["registry.example/app", null],
+  ])("derives the candidate repository from intended release tags: %s", (tags, repository) => {
+    const directory = mkdtempSync(join(tmpdir(), "candidate-repository-"));
+    const output = join(directory, "output");
+    try {
+      const script = workflow("build-docker-candidate").jobs.prepare.steps.find(
+        (step) => step.id === "candidate"
+      )?.run;
+      expect(script).toBeTruthy();
+      const result = spawnSync("/bin/bash", ["-c", script!], {
+        encoding: "utf8",
+        env: {
+          PATH: process.env.PATH,
+          RELEASE_TAGS: tags!,
+          CANDIDATE_TAG: "blacksmith-candidate-ghcr-123-1",
+          GITHUB_OUTPUT: output,
+        },
+      });
+      expect(result.status).toBe(repository ? 0 : 1);
+      if (repository)
+        expect(readFileSync(output, "utf8")).toBe(
+          `repository=${repository}\ntag=blacksmith-candidate-ghcr-123-1\n`
+        );
+      else expect(existsSync(output)).toBe(false);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
+  test("authenticates each stage against the selected registry with caller-scoped permissions", () => {
+    const candidate = workflow("build-docker-candidate");
+    for (const job of [candidate.jobs.build, candidate.jobs.merge]) {
+      const login = job.steps.find((step) => step.uses?.endsWith("/image-registry-login"));
+      expect(login?.with?.registry_type).toBe("${{ inputs.registry_type }}");
+    }
+    for (const name of ["test-release-image", "promote-verified-image"]) {
+      const logins = composite(name).runs.steps.filter((step) =>
+        step.uses?.endsWith("/image-registry-login")
+      );
+      expect(logins).toHaveLength(1);
+      expect(logins[0].with?.registry_type).toBe("${{ inputs.registry_type }}");
+    }
+    for (const name of ["release-docker-github", "release-docker-github-experimental"]) {
+      const jobs = workflow(name).jobs;
+      expect((jobs.build ?? jobs["build-community-testing"]).permissions).toEqual({
+        contents: "read",
+        packages: "write",
+      });
+      expect(jobs.validate.permissions).toEqual({ contents: "read", packages: "read" });
+      const smoke = jobs.validate.steps.find((step) => step.uses?.endsWith("/test-release-image"));
+      expect(smoke?.with?.aws_role_arn).toBeUndefined();
+    }
+    expect(workflow("build-and-push-ecr").jobs["build-and-push"].permissions).toEqual({
+      contents: "read",
+      "id-token": "write",
     });
-    if (scenario === "valid") expect(result.status).toBe(0);
-    else expect(result.status).not.toBe(0);
   });
 });
 

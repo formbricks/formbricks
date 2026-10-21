@@ -8,11 +8,11 @@ inputs:
     description: "ecr or ghcr"
     required: true
   ecr_region:
-    description: "AWS region for private ECR staging"
-    required: true
+    description: "AWS region (ECR only)"
+    required: false
   aws_role_arn:
-    description: "AWS role for private ECR staging"
-    required: true
+    description: "AWS role (ECR only)"
+    required: false
   release_tags:
     description: "Intended release tags"
     required: true
@@ -20,12 +20,6 @@ runs:
   using: composite
   steps:
     - uses: ./.github/actions/image-registry-login
-      with:
-        registry_type: ecr
-        ecr_region: ${{ inputs.ecr_region }}
-        aws_role_arn: ${{ inputs.aws_role_arn }}
-    - uses: ./.github/actions/image-registry-login
-      if: inputs.registry_type == 'ghcr'
       with:
         registry_type: ${{ inputs.registry_type }}
         ecr_region: ${{ inputs.ecr_region }}
@@ -56,6 +50,10 @@ runs:
           if [ -n "$tag" ]; then tags+=("$tag"); fi
         done <<< "$RELEASE_TAGS"
         test "${#tags[@]}" -gt 0
+        # Candidates and release tags must stay in the same existing repository.
+        for tag in "${tags[@]}"; do
+          test "${tag%:*}" = "${IMAGE%@*}"
+        done
         for tag in "${tags[@]}"; do
           skopeo copy --all --preserve-digests --authfile "$HOME/.docker/config.json" \
             "docker://$IMAGE" "docker://$tag"

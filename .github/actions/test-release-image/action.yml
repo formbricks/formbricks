@@ -2,11 +2,11 @@ name: Test release image
 description: Exercise one candidate architecture on its native runner
 inputs:
   aws_role_arn:
-    description: "AWS role for private ECR candidate access"
-    required: true
+    description: "AWS role (ECR only)"
+    required: false
   ecr_region:
-    description: "Private ECR candidate region"
-    required: true
+    description: "AWS region (ECR only)"
+    required: false
   image_ref:
     description: "Immutable candidate image digest"
     required: true
@@ -24,7 +24,7 @@ runs:
   steps:
     - uses: ./.github/actions/image-registry-login
       with:
-        registry_type: ecr
+        registry_type: ${{ inputs.registry_type }}
         aws_role_arn: ${{ inputs.aws_role_arn }}
         ecr_region: ${{ inputs.ecr_region }}
     - uses: ./.github/actions/setup-image-smoke

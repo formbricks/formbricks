@@ -1,4 +1,4 @@
-name: Build private Docker candidate
+name: Build Docker candidate in release registry
 
 on:
   workflow_call:
@@ -35,7 +35,7 @@ on:
         default: false
     secrets:
       AWS_ECR_PUSH_ROLE_ARN:
-        required: true
+        required: false
       DUMMY_DATABASE_URL:
         required: false
       DUMMY_ENCRYPTION_KEY:
@@ -66,12 +66,10 @@ on:
       IMAGE_REF:
         value: ${{ jobs.merge.outputs.image }}
 
-permissions:
-  contents: read
-  id-token: write
+# Build and merge inherit the caller's scoped permissions: ECR needs id-token: write,
+# GHCR needs packages: write. Preparation only needs repository reads.
 
 env:
-  CANDIDATE_REPOSITORY: ${{ vars.ECR_REGISTRY }}/${{ vars.ECR_CANDIDATE_REPOSITORY }}
   CANDIDATE_TAG: blacksmith-candidate-${{ inputs.registry_type }}-${{ github.run_id }}-${{ github.run_attempt }}
 
 jobs:
@@ -80,13 +78,13 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
-      id-token: write
     outputs:
       version: ${{ steps.prepare.outputs.image_tag }}
       identity: ${{ steps.prepare.outputs.build_identity }}
       tags: ${{ steps.prepare.outputs.registry_tags }}
       labels: ${{ steps.prepare.outputs.image_labels }}
       candidate_tag: ${{ steps.candidate.outputs.tag }}
+      candidate_repository: ${{ steps.candidate.outputs.repository }}
     steps:
       - uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
@@ -95,25 +93,6 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Require a dedicated private staging repository
-        env:
-          STAGING_REPOSITORY: ${{ vars.ECR_CANDIDATE_REPOSITORY }}
-          RELEASE_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
-        run: |
-          test -n "$STAGING_REPOSITORY"
-          test "$STAGING_REPOSITORY" != "$RELEASE_REPOSITORY"
-      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
-        with:
-          role-to-assume: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
-          aws-region: ${{ vars.ECR_REGION }}
-      - name: Verify candidate repository retention
-        env:
-          STAGING_REPOSITORY: ${{ vars.ECR_CANDIDATE_REPOSITORY }}
-          RELEASE_REPOSITORY: ${{ vars.ECR_REPOSITORY }}
-        run: bash docker/verify-candidate-repository.sh
-      - name: Identify candidate tags
-        id: candidate
-        run: echo "tag=$CANDIDATE_TAG" >> "$GITHUB_OUTPUT"
       - uses: ./.github/actions/prepare-docker-image
         id: prepare
         with:
@@ -136,11 +115,28 @@ jobs:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           POSTHOG_KEY: ${{ inputs.registry_type == 'ecr' && secrets.POSTHOG_KEY || '' }}
 
+      - name: Identify candidate repository and tags
+        id: candidate
+        env:
+          RELEASE_TAGS: ${{ steps.prepare.outputs.registry_tags }}
+        run: |
+          set -euo pipefail
+          # Use the same repository as the metadata action's intended release tags.
+          first_tag="${RELEASE_TAGS%%$'\n'*}"
+          repository="${first_tag%:*}"
+          test -n "$repository"
+          test "$repository" != "$first_tag"
+          {
+            echo "repository=$repository"
+            echo "tag=$CANDIDATE_TAG"
+          } >> "$GITHUB_OUTPUT"
+
   build:
     needs: prepare
     env:
       # Keep the original preparation's tags when rerunning only failed matrix jobs.
       CANDIDATE_TAG: ${{ needs.prepare.outputs.candidate_tag }}
+      CANDIDATE_REPOSITORY: ${{ needs.prepare.outputs.candidate_repository }}
     strategy:
       fail-fast: false
       matrix:
@@ -168,7 +164,7 @@ jobs:
           version: ${{ needs.prepare.outputs.version }}
       - uses: ./.github/actions/image-registry-login
         with:
-          registry_type: ecr
+          registry_type: ${{ inputs.registry_type }}
           ecr_region: ${{ vars.ECR_REGION }}
           aws_role_arn: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
       - uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184 # v2
@@ -176,7 +172,7 @@ jobs:
           # Preserve the validated trial caches at cutover. PR builds use separate keys.
           cache-key: apps/web/Dockerfile-blacksmith-trial-${{ matrix.arch }}
           nofallback: true
-      - name: Build private native candidate
+      - name: Build native candidate
         uses: useblacksmith/build-push-action@9b0579bbec7a6cad2f171596c57e7ac1e7658850 # v2
         with:
           context: .
@@ -210,6 +206,7 @@ jobs:
     needs: [prepare, build]
     env:
       CANDIDATE_TAG: ${{ needs.prepare.outputs.candidate_tag }}
+      CANDIDATE_REPOSITORY: ${{ needs.prepare.outputs.candidate_repository }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     outputs:
@@ -224,11 +221,11 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/image-registry-login
         with:
-          registry_type: ecr
+          registry_type: ${{ inputs.registry_type }}
           ecr_region: ${{ vars.ECR_REGION }}
           aws_role_arn: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-      - name: Assemble private multi-platform candidate
+      - name: Assemble multi-platform candidate
         id: merge
         run: |
           set -euo pipefail
