@@ -273,7 +273,7 @@ const migrateLegacyValkeyImage = (composePath: string, validationResult: "succes
       "-lc",
       `source "$1"
 sudo() {
-  printf '%s\\n' "$*" >> "$VALIDATION_LOG_PATH"
+  printf '[%s] %s\\n' "$PWD" "$*" >> "$VALIDATION_LOG_PATH"
   [[ "$VALIDATION_RESULT" == "success" ]]
 }
 migrate_legacy_valkey_image "$2"`,
@@ -990,6 +990,7 @@ describe("docker/formbricks.sh AuthZed setup", () => {
         "docker compose --profile authzed-ops run --rm --no-deps authzed-ops upgrade check",
         ...(checkExitCode === 0
           ? [
+              "docker version --format {{.Server.Version}}",
               "docker compose down",
               "docker compose up -d --wait postgres",
               "docker compose run --rm --no-deps formbricks-migrate",
@@ -1069,7 +1070,7 @@ describe("docker/formbricks.sh Valkey image migration", () => {
     expect(readFileSync(`${composePath}.before-valkey-8.1.9`, "utf8")).toContain(legacyValkeyImage);
     expect(statSync(composePath).mode & 0o777).toBe(0o600);
     expect(statSync(`${composePath}.before-valkey-8.1.9`).mode & 0o777).toBe(0o600);
-    expect(readFileSync(validationLogPath, "utf8")).toBe(`docker compose -f ${composePath} config\n`);
+    expect(readFileSync(validationLogPath, "utf8")).toBe(`[${dirname(composePath)}] docker compose config\n`);
   });
 
   test("updates the live redis service when Compose uses four-space indentation", () => {
@@ -1092,7 +1093,7 @@ volumes:
 
     expect(readFileSync(composePath, "utf8")).toContain(multiArchValkeyImage);
     expect(readFileSync(`${composePath}.before-valkey-8.1.9`, "utf8")).toContain(legacyValkeyImage);
-    expect(readFileSync(validationLogPath, "utf8")).toBe(`docker compose -f ${composePath} config\n`);
+    expect(readFileSync(validationLogPath, "utf8")).toBe(`[${dirname(composePath)}] docker compose config\n`);
   });
 
   test.each([multiArchValkeyImage, "example.com/custom-valkey@sha256:custom"])(
