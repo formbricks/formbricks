@@ -99,3 +99,14 @@ export const nestedNamespaceAssertion = (levels: number): string =>
   Array.from({ length: levels }, (_, i) => `<a xmlns:p${i}="u">`).join("") +
   "</a>".repeat(levels) +
   "</saml2:Assertion>";
+
+/**
+ * An assertion holding `elements` empty elements: cheap for xmldom (~30 ms for 30,000), but jackson's later passes
+ * over the decrypted document (xml2js, the signature check's XPath scans) cost several times that. Past the markup
+ * budget, an unencrypted response like it is refused before jackson.
+ */
+export const flatAssertion = (elements: number): string =>
+  `<saml2:Assertion xmlns:saml2="${ASSERTION_NS}" ID="_assert1" Version="2.0">` +
+  `<saml2:Issuer>${ENCRYPTED_RESPONSE_ISSUER}</saml2:Issuer>` +
+  "<a/>".repeat(elements) +
+  "</saml2:Assertion>";

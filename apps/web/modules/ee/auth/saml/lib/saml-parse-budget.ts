@@ -1,6 +1,7 @@
 import "server-only";
 import { MessageChannel, type MessagePort, Worker, receiveMessageOnPort } from "node:worker_threads";
 import { logger } from "@formbricks/logger";
+import { checkDecryptedSamlResponseBounds } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
 
 /**
  * Longest a SAMLResponse may take to parse before jackson sees it (ENG-3973).
@@ -16,8 +17,9 @@ import { logger } from "@formbricks/logger";
  * An encrypted assertion is ciphertext to the byte bounds, and jackson decrypts it and parses the plaintext before it
  * checks any signature (ENG-4051). Given the SP key, the worker does the same within the same budget: the outer parse,
  * the decryption and the plaintext's parse all count. A plaintext of nested namespace scopes that would block jackson
- * for ~1-3 s is cut off here, and a real one (500 groups) takes ~10 ms. Without a key, an encrypted response is timed
- * as ciphertext only.
+ * for ~1-3 s is cut off here, and a real one (500 groups) takes ~5-20 ms. The decrypted document then has to pass the
+ * same byte bounds as an unencrypted response (`checkDecryptedSamlResponseBounds`): a flood of cheap elements parses
+ * well within the budget, but jackson's later passes over it cost several times as much.
  */
 export const SAML_PARSE_TIME_BUDGET_MS = 100;
 
@@ -41,9 +43,11 @@ const WORKER_STARTUP_TIMEOUT_MS = 5_000;
 /**
  * Main-thread parse time the SAML callback may spend per second, per process. A response that passes the budget is
  * parsed again by jackson on this thread, `JACKSON_PARSES_PER_RESPONSE` times on the signature path (issuer, decrypt,
- * xml2js, signature check), so each one is charged its worker-measured parse time times that. For an encrypted
- * response the measured time covers decrypting it and parsing the plaintext once, and jackson's whole validation
- * measured 1.3-3 times that, so the same factor still covers it. Past the allowance
+ * xml2js, signature check), so each one is charged its worker-measured parse time times that; for an encrypted
+ * response, that time includes decrypting it and parsing the plaintext. The factor fits real responses (jackson took
+ * 1.6-2.5 times the worker's time on signed, encrypted ones), not floods: an unencrypted one of ~12,000 empty
+ * elements inside the bounds costs jackson ~60-85 ms, 8-13 times the worker's time, and an encrypted one 5-8 times.
+ * The bounds are what cap that per response. Past the allowance
  * the callback answers 503 rather than let many sources together keep the event loop busy with SAML. It is checked
  * when a response is queued and again when its parse finishes, so a burst can overdraw it by one response at most. A real
  * sign-in costs ~10-25 ms x 4, so this is a dozen or more sign-ins a second per process.
@@ -61,7 +65,7 @@ export interface SamlResponseClaims {
 export type SamlParseProbe =
   | { outcome: "parsed"; ms: number; claims: SamlResponseClaims }
   /** It ran past the time budget or the worker's heap limit. */
-  | { outcome: "too_costly"; reason: "time" | "memory" }
+  | { outcome: "too_costly"; reason: "time" | "memory" | "markup" | "depth" | "declaration" }
   /**
    * The queue was full, or this process has spent its parse allowance for now, either before the job was queued or
    * by the time the worker answered; the response does not reach jackson.
@@ -89,6 +93,8 @@ interface WorkerResult {
   /** How long the parse took, measured in the worker, so a busy main thread does not count against the response. */
   ms: number;
   claims: SamlResponseClaims;
+  /** The response with its encrypted assertion decrypted, when the worker decrypted one; measured here, then dropped. */
+  decryptedXml?: string;
 }
 
 interface Pool {
@@ -149,6 +155,14 @@ const takeResult = (result: WorkerResult): boolean => {
   if (!job?.dispatched || result.id !== job.id) return false;
   if (result.ms > SAML_PARSE_TIME_BUDGET_MS) {
     settleRunning({ outcome: "too_costly", reason: "time" });
+    return true;
+  }
+  // A decrypted assertion parsed in time can still carry more markup than jackson's later passes over it should
+  // meet (~1 ms to measure at the length cap).
+  const refusal =
+    result.decryptedXml === undefined ? null : checkDecryptedSamlResponseBounds(result.decryptedXml);
+  if (refusal) {
+    settleRunning({ outcome: "too_costly", reason: refusal.reason });
     return true;
   }
   refillAllowance(performance.now());

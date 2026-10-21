@@ -4,11 +4,12 @@ import {
   SAML_PARSE_TIME_BUDGET_MS,
   probeSamlResponseParse,
 } from "./saml-parse-budget";
-import { checkSamlResponseBounds } from "./saml-response-bounds";
+import { SAML_RESPONSE_MARKUP_BUDGET, checkSamlResponseBounds } from "./saml-response-bounds";
 import {
   ENCRYPTED_RESPONSE_ISSUER,
   createSpKeyPair,
   encryptAssertion,
+  flatAssertion,
   nestedNamespaceAssertion,
   samlResponseWith,
   signedAssertionWithGroups,
@@ -98,6 +99,16 @@ describe("probeSamlResponseParse", () => {
 
       expect(probe).toEqual({ outcome: "too_costly", reason: "time" });
       expect(performance.now() - started).toBeLessThan(SAML_PARSE_TIME_BUDGET_MS + 400);
+    });
+
+    test("refuses a decrypted assertion carrying more markup than the bounds allow, though it parses in time", async () => {
+      const response = encrypted(flatAssertion(SAML_RESPONSE_MARKUP_BUDGET + 1_000));
+      expect(checkSamlResponseBounds(response)).toBeNull();
+
+      await expect(probeSamlResponseParse(response, sp.privateKey)).resolves.toEqual({
+        outcome: "too_costly",
+        reason: "markup",
+      });
     });
 
     test("answers an assertion encrypted to another key cheaply, with the response's claims", async () => {

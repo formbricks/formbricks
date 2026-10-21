@@ -236,8 +236,7 @@ const measureTag = (xml: Buffer, lt: number, end: number, scan: MarkupScan): boo
  * outside comments, CDATA sections and processing instructions: a `</` that does not match the open element is
  * fatal to xmldom, so it cannot hide a scope.
  */
-export const measureSamlResponseMarkup = (samlResponseBase64: string): SamlResponseMarkup => {
-  const xml = Buffer.from(samlResponseBase64, "base64");
+const measureMarkup = (xml: Buffer): SamlResponseMarkup => {
   const scan: MarkupScan = { markup: 0, depth: 0, maxDepth: 0, opaqueUntil: 0 };
   let lt = xml.indexOf(LESS_THAN);
 
@@ -256,19 +255,42 @@ export const measureSamlResponseMarkup = (samlResponseBase64: string): SamlRespo
   return { markup: scan.markup, depth: scan.maxDepth, declaration: false };
 };
 
-/** Why a response is refused before jackson parses it; only sizes, never content, so it is safe to log. */
-export type SamlResponseRefusal =
-  | { reason: "length" | "declaration"; length: number }
+/** `measureMarkup` on a response as the callback receives it, decoded as jackson decodes it. */
+export const measureSamlResponseMarkup = (samlResponseBase64: string): SamlResponseMarkup =>
+  measureMarkup(Buffer.from(samlResponseBase64, "base64"));
+
+/** A refusal by what the markup holds. */
+type SamlMarkupRefusal =
+  | { reason: "declaration"; length: number }
   | { reason: "markup" | "depth"; length: number; markup: number; depth: number };
+
+/** Why a response is refused before jackson parses it; only sizes, never content, so it is safe to log. */
+export type SamlResponseRefusal = { reason: "length"; length: number } | SamlMarkupRefusal;
+
+const refusalFor = (
+  length: number,
+  { markup, depth, declaration }: SamlResponseMarkup
+): SamlMarkupRefusal | null => {
+  if (declaration) return { reason: "declaration", length };
+  if (markup > SAML_RESPONSE_MARKUP_BUDGET) return { reason: "markup", length, markup, depth };
+  if (depth > SAML_RESPONSE_MAX_DEPTH) return { reason: "depth", length, markup, depth };
+  return null;
+};
 
 /** The refusal for a response past any bound, or `null` when jackson may parse it. Length is checked first. */
 export const checkSamlResponseBounds = (samlResponseBase64: string): SamlResponseRefusal | null => {
   const length = samlResponseBase64.length;
   if (length > SAML_RESPONSE_MAX_LENGTH) return { reason: "length", length };
 
-  const { markup, depth, declaration } = measureSamlResponseMarkup(samlResponseBase64);
-  if (declaration) return { reason: "declaration", length };
-  if (markup > SAML_RESPONSE_MARKUP_BUDGET) return { reason: "markup", length, markup, depth };
-  if (depth > SAML_RESPONSE_MAX_DEPTH) return { reason: "depth", length, markup, depth };
-  return null;
+  return refusalFor(length, measureSamlResponseMarkup(samlResponseBase64));
 };
+
+/**
+ * The same markup, depth and declaration bounds on a response whose encrypted assertion has been decrypted and put
+ * in place (ENG-4051): the document jackson validates from then on. The bounds above only ever see the assertion's
+ * ciphertext, and jackson's later passes over this document (xml2js, the signature check's XPath scans) cost
+ * several times one parse, so it is held to what an unencrypted response may carry. `length` is its length in
+ * characters; it cannot exceed the response's, since ciphertext is longer than what it encrypts.
+ */
+export const checkDecryptedSamlResponseBounds = (decryptedXml: string): SamlMarkupRefusal | null =>
+  refusalFor(decryptedXml.length, measureMarkup(Buffer.from(decryptedXml)));

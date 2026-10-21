@@ -4,6 +4,7 @@ import { checkSamlResponseBounds } from "@/modules/ee/auth/saml/lib/saml-respons
 import {
   createSpKeyPair,
   encryptAssertion,
+  flatAssertion,
   nestedNamespaceAssertion,
   samlResponseWith,
   signedAssertionWithGroups,
@@ -62,6 +63,21 @@ describe("SAML callback with an encrypted assertion", () => {
     expect(samlResponseMock).not.toHaveBeenCalled();
     expect(warn).toHaveBeenCalledWith(
       expect.objectContaining({ stage: "parse_budget", reason: "time" }),
+      "Refused a SAML response that was too costly to parse"
+    );
+  });
+
+  test("refuses one whose decrypted document carries more markup than the bounds allow", async () => {
+    const SAMLResponse = encryptedResponse(flatAssertion(13_000));
+    expect(checkSamlResponseBounds(SAMLResponse)).toBeNull();
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+
+    const response = await POST(callback(SAMLResponse));
+
+    expect(response.status).toBe(400);
+    expect(samlResponseMock).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith(
+      expect.objectContaining({ stage: "parse_budget", reason: "markup" }),
       "Refused a SAML response that was too costly to parse"
     );
   });

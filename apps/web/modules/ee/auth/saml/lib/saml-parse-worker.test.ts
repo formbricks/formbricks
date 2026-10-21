@@ -1,5 +1,5 @@
 import { createRequire } from "node:module";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import { parseSamlResponse } from "./saml-parse-worker";
 import {
   ENCRYPTED_RESPONSE_ISSUER,
@@ -9,47 +9,39 @@ import {
   signedAssertionWithGroups,
 } from "./tests/encrypted-saml-response";
 
-// The worker's job in this thread, so each decision is checked directly; saml-parse-budget.test.ts runs it as a
-// real worker against the time budget. jackson's `decryptXml` is real here too, only watched.
-const { decryptXmlSpy } = vi.hoisted(() => ({ decryptXmlSpy: vi.fn() }));
-vi.mock("@boxyhq/saml20/dist/decrypt.js", () => ({ decryptXml: decryptXmlSpy }));
+// The worker's job in this thread, so each outcome is checked directly; saml-parse-budget.test.ts runs it as a real
+// worker against the time budget.
 
 const CLAIMS = { issuer: ENCRYPTED_RESPONSE_ISSUER, id: "_resp1", inResponseTo: "_req1" };
 const sp = createSpKeyPair();
-const encrypted = samlResponseWith(encryptAssertion(signedAssertionWithGroups(3), sp.publicKey));
+const assertion = signedAssertionWithGroups(150);
+const encrypted = samlResponseWith(encryptAssertion(assertion, sp.publicKey));
 
 describe("parseSamlResponse", () => {
-  beforeEach(async () => {
-    const original = await vi.importActual<typeof import("@boxyhq/saml20/dist/decrypt.js")>(
-      "@boxyhq/saml20/dist/decrypt.js"
-    );
-    decryptXmlSpy.mockReset().mockImplementation(original.decryptXml);
-  });
+  test("decrypts a signed assertion of 150 groups as jackson will, returning the document jackson validates", () => {
+    const { claims, decryptedXml } = parseSamlResponse(encrypted, sp.privateKey);
 
-  test("decrypts an encrypted assertion with the key, as jackson will, and reads the response's claims", () => {
-    expect(parseSamlResponse(encrypted, sp.privateKey)).toEqual(CLAIMS);
-    expect(decryptXmlSpy).toHaveBeenCalledWith(encrypted, { privateKey: sp.privateKey });
-    expect(decryptXmlSpy.mock.results[0]).toMatchObject({ type: "return", value: { decrypted: true } });
+    expect(claims).toEqual(CLAIMS);
+    expect(decryptedXml).toContain('<saml2:Assertion xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion"');
+    expect(decryptedXml).toContain("CN=Group 149 Engineering");
+    expect(decryptedXml).not.toContain("EncryptedAssertion");
   });
 
   test.each([
     ["without a key", encrypted, undefined],
-    ["with no encrypted assertion", samlResponseWith(signedAssertionWithGroups(3)), sp.privateKey],
+    ["with no encrypted assertion", samlResponseWith(assertion), sp.privateKey],
     // saml20 only decrypts an EncryptedAssertion directly under a root whose name contains "Response".
     [
       "when the root is not a Response",
       encrypted.replaceAll("saml2p:Response", "saml2p:Other"),
       sp.privateKey,
     ],
-  ])("does not decrypt %s", (_name, xml, key) => {
-    parseSamlResponse(xml, key);
-
-    expect(decryptXmlSpy).not.toHaveBeenCalled();
+  ])("decrypts nothing %s", (_name, xml, key) => {
+    expect(parseSamlResponse(xml, key).decryptedXml).toBeUndefined();
   });
 
   test("keeps the claims when the assertion was encrypted to another key", () => {
-    expect(parseSamlResponse(encrypted, createSpKeyPair().privateKey)).toEqual(CLAIMS);
-    expect(decryptXmlSpy.mock.results[0]).toMatchObject({ type: "throw" });
+    expect(parseSamlResponse(encrypted, createSpKeyPair().privateKey)).toEqual({ claims: CLAIMS });
   });
 
   test("decrypts with the saml20 release jackson validates with", () => {
@@ -66,6 +58,6 @@ describe("parseSamlResponse", () => {
   });
 
   test("returns no claims for a document without a root", () => {
-    expect(parseSamlResponse("", sp.privateKey)).toEqual({});
+    expect(parseSamlResponse("", sp.privateKey)).toEqual({ claims: {} });
   });
 });

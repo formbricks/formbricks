@@ -13,8 +13,9 @@ import type { SamlResponseClaims } from "./saml-parse-budget";
  * Given the SP key, it also does what jackson does with an encrypted assertion before checking any signature, so the
  * plaintext, which no byte bound sees, is timed too (ENG-4051).
  *
- * It answers with the identifying fields only: the claimed issuer, the response ID and InResponseTo, cut to a
- * length a log line can carry. Nothing else of the response leaves the worker, the decrypted assertion included.
+ * It answers with the identifying fields only (the claimed issuer, the response ID and InResponseTo, cut to a length a
+ * log line can carry) and, for an encrypted assertion it decrypted, the decrypted document, which the pool measures
+ * and drops. Nothing else of the response leaves the worker.
  */
 
 const MAX_FIELD_LENGTH = 1024;
@@ -54,25 +55,36 @@ const hasEncryptedAssertion = (root: Element): boolean => {
   return false;
 };
 
+export interface ParsedSamlResponse {
+  claims: SamlResponseClaims;
+  /**
+   * The response with its encrypted assertion decrypted and put in place, when there was one to decrypt: the
+   * document jackson validates from then on. The pool holds it to the byte bounds, which only saw ciphertext.
+   */
+  decryptedXml?: string;
+}
+
 /**
- * One job: parse `xml`, decrypt its encrypted assertion with `decryptionKey` as jackson will, and return the claims.
- * Never throws.
+ * One job: parse `xml`, decrypt its encrypted assertion with `decryptionKey` as jackson will, and return the claims
+ * and the decrypted document. Never throws.
  */
-export const parseSamlResponse = (xml: string, decryptionKey: string | undefined): SamlResponseClaims => {
-  let claims: SamlResponseClaims = {};
+export const parseSamlResponse = (xml: string, decryptionKey: string | undefined): ParsedSamlResponse => {
+  const parsed: ParsedSamlResponse = { claims: {} };
   try {
     const root = parseXml(xml).documentElement;
-    if (!root) return claims;
-    claims = readClaims(root);
+    if (!root) return parsed;
+    parsed.claims = readClaims(root);
     // What jackson does first with an encrypted assertion, before it checks any signature (saml20's
-    // `validateInternal`): decrypt it, parse the plaintext and serialize the document with it in place. The
-    // plaintext is the part no byte bound sees; jackson's later parses of the decrypted document go on the allowance.
-    if (decryptionKey && hasEncryptedAssertion(root)) decryptXml(xml, { privateKey: decryptionKey });
+    // `validateInternal`): decrypt it, parse the plaintext and serialize the document with it in place.
+    if (decryptionKey && hasEncryptedAssertion(root)) {
+      const { assertion, decrypted } = decryptXml(xml, { privateKey: decryptionKey });
+      if (decrypted) parsed.decryptedXml = assertion;
+    }
   } catch {
     // A fatal parse error or a failed decryption is cheap, and jackson refuses the response on its own; the cost is
     // what is measured.
   }
-  return claims;
+  return parsed;
 };
 
 // Warm xmldom up before the first real job, so a fresh worker does not charge its cold start to a real sign-in.
@@ -83,10 +95,14 @@ const WARM_UP =
   "</samlp:Response>";
 
 const serve = (port: MessagePort) => {
+  // xml-encryption warns on stderr when a response declares an insecure algorithm (RSA 1.5, Triple DES). Here that is
+  // whatever an anonymous sender chose, before jackson has checked who sent it, so the worker keeps quiet; jackson
+  // still warns when it decrypts a response it accepted.
+  console.warn = () => undefined;
   port.on("message", ({ id, xml, decryptionKey }: { id: number; xml: string; decryptionKey?: string }) => {
     const started = performance.now();
-    const claims = parseSamlResponse(xml, decryptionKey);
-    port.postMessage({ id, ms: performance.now() - started, claims });
+    const { claims, decryptedXml } = parseSamlResponse(xml, decryptionKey);
+    port.postMessage({ id, ms: performance.now() - started, claims, decryptedXml });
   });
   for (let i = 0; i < 20; i++) parseSamlResponse(WARM_UP, undefined);
   port.postMessage({ ready: true });
