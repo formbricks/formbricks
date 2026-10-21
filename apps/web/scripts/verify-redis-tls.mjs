@@ -32,7 +32,7 @@ const freePort = async () => {
   return address.port;
 };
 const stop = async (child) => {
-  if (child.exitCode !== null) return;
+  if (!child.pid || child.exitCode !== null) return;
   const exit = once(child, "exit");
   const timer = setTimeout(() => child.kill("SIGKILL"), 3000);
   child.kill("SIGTERM");
@@ -127,6 +127,7 @@ const rejectsBothClients = async (url, ca, code, wrongName) => {
   }
 };
 try {
+  execFileSync(redisServer, ["--version"], { stdio: "pipe" });
   run([
     "req",
     "-x509",
