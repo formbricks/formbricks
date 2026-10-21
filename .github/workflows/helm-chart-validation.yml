@@ -41,6 +41,7 @@ jobs:
           test -n "$parser_version"
           npm install --ignore-scripts --no-audit --no-fund --prefix "$RUNNER_TEMP/online-chart-deps" "js-yaml@$parser_version"
           NODE_PATH="$RUNNER_TEMP/online-chart-deps/node_modules" bash charts/formbricks/tests/online-upgrade.sh
+          NODE_PATH="$RUNNER_TEMP/online-chart-deps/node_modules" node scripts/container-security/inventory.mjs "$RUNNER_TEMP/image-inventory.json"
 
       - name: Validate chart renders
         shell: bash
