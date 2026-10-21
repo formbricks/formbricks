@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClockIcon, GlobeIcon } from "lucide-react";
+import { CalendarClockIcon, GlobeIcon, InfoIcon } from "lucide-react";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -8,6 +8,7 @@ import {
   useEditorTimeZone,
   validateDateTimeRange,
 } from "@/modules/ui/components/date-time-picker";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import type { TCreativeEditorForm } from "../../lib/editor-form";
 import { getUiLocale } from "../../lib/ui-locale";
 import { EditorField, EditorPanel } from "./editor-primitives";
@@ -15,8 +16,9 @@ import { EditorField, EditorPanel } from "./editor-primitives";
 type TSchedule = TCreativeEditorForm["schedule"];
 
 /**
- * The Schedule card on the Settings tab: start and end to the minute, in the editor's time zone; the API
- * stores them as instants.
+ * The Schedule card on the Settings tab: start and end to the minute, in the editor's (browser's) time
+ * zone; the API stores them as instants, and the SDK compares those with the visitor's clock (corrected
+ * to the server's when it is off), so the zone only changes how the times read here.
  */
 export const ScheduleCard = ({
   schedule,
@@ -67,12 +69,25 @@ export const ScheduleCard = ({
         </EditorField>
       </div>
       {timeZone && (
-        <p
-          id={zoneNoteId}
-          className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
-          <GlobeIcon className="size-3.5" aria-hidden="true" />
-          {t("common.times_in", { timeZone })}
-        </p>
+        // The zone is this browser's, not the visitors': the schedule is a pair of instants, so the
+        // creative switches at the same moment everywhere. The chip says whose zone it is; the tooltip why.
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                id={zoneNoteId}
+                className="inline-flex cursor-help items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600 focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:outline-hidden">
+                <GlobeIcon className="size-3.5" aria-hidden="true" />
+                {t("workspace.creatives.editor.times_in_browser_zone", { timeZone })}
+                <InfoIcon className="size-3.5 text-slate-400" aria-hidden="true" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              {t("workspace.creatives.editor.times_in_browser_zone_tooltip")}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       )}
     </EditorPanel>
   );
