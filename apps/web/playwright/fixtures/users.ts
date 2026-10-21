@@ -9,7 +9,7 @@ import { waitForAuthzedProjection } from "@/playwright/utils/authzed";
 export const login = async (user: Prisma.UserGetPayload<{ include: { memberships: true } }>, page: Page) => {
   // The fixture and the spec seed authorization rows through Prisma; let SpiceDB catch up before the
   // first authorized page load, or it redirects to organization setup (ENG-4101).
-  await waitForAuthzedProjection();
+  await waitForAuthzedProjection(user.id);
 
   // Better Auth sign-in (replaces the NextAuth csrf + credentials-callback flow; ENG-1054). The
   // fixture's plaintext password is the user name (createUsersFixture hashes `name` into the bcrypt
