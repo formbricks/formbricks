@@ -231,6 +231,14 @@ describe("probeSamlResponseParse failure paths", () => {
     mainPort(state.workers[0]).flush();
 
     await expect(second).resolves.toEqual({ outcome: "busy" });
+
+    // A response refused as busy costs nothing: 10 ms of refill is enough for the next one.
+    await vi.advanceTimersByTimeAsync(10);
+    const third = probeSamlResponseParse("PHIvPg==");
+    await settle();
+    state.workers[0].answer(1);
+    mainPort(state.workers[0]).flush();
+    await expect(third).resolves.toMatchObject({ outcome: "parsed" });
   });
 
   test("ignores a stale answer for a job it no longer runs", async () => {
