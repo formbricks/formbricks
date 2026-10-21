@@ -137,4 +137,16 @@ describe("SAML Jackson Initialization", () => {
       getDecryptionKey: decryptionKey,
     });
   });
+
+  test("initializes again when the controllers are kept but the decryption key is not", async () => {
+    // A `next dev` reload keeps globals an older version of this module set, without the key's getter.
+    vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
+    global.oauthController = mockOAuthController as any;
+    global.connectionController = mockConnectionController as any;
+
+    const result = await init();
+
+    expect(controllers).toHaveBeenCalledTimes(1);
+    expect(result?.getDecryptionKey).toEqual(expect.any(Function));
+  });
 });
