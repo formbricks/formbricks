@@ -82,7 +82,7 @@ services:
         condition: service_healthy
 
   spicedb-migrate:
-    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.52.0}
+    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.56.2}
     restart: "no"
     command: datastore migrate head
     environment:
@@ -93,7 +93,7 @@ services:
         condition: service_completed_successfully
 
   spicedb:
-    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.52.0}
+    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.56.2}
     restart: unless-stopped
     command: serve
     mem_limit: 512m
