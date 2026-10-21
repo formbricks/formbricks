@@ -1,3 +1,4 @@
+import { rootCertificates } from "node:tls";
 import { createClient } from "redis";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { redisSecondaryStorage } from "./secondary-storage";
@@ -13,7 +14,11 @@ const mockClient = {
 };
 
 vi.mock("redis", () => ({ createClient: vi.fn(() => mockClient) }));
-vi.mock("@/lib/env", () => ({ env: { REDIS_URL: "redis://localhost:6379" } }));
+const mockEnv = vi.hoisted(() => ({
+  REDIS_URL: "redis://localhost:6379" as string | undefined,
+  REDIS_TLS_CA: undefined as string | undefined,
+}));
+vi.mock("@/lib/env", () => ({ env: mockEnv }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn() } }));
 
 describe("redisSecondaryStorage", () => {
@@ -90,6 +95,42 @@ describe("redisSecondaryStorage", () => {
   test("increment coerces the Lua reply to a number", async () => {
     mockClient.eval.mockResolvedValue("5");
     expect(await redisSecondaryStorage.increment("k", 90)).toBe(5);
+  });
+
+  test("rejects a missing Redis URL before opening an authentication connection", async () => {
+    vi.resetModules();
+    mockEnv.REDIS_URL = undefined;
+    try {
+      const { redisSecondaryStorage: freshStorage } = await import("./secondary-storage");
+      await expect(freshStorage.get("k")).rejects.toThrow("REDIS_URL is required for authentication storage");
+      expect(createClient).not.toHaveBeenCalled();
+    } finally {
+      mockEnv.REDIS_URL = "redis://localhost:6379";
+    }
+  });
+
+  test("uses private CA verification for the separate authentication connection", async () => {
+    vi.resetModules();
+    mockEnv.REDIS_URL = "rediss://127.0.0.1:6378";
+    mockEnv.REDIS_TLS_CA = rootCertificates[0];
+    try {
+      const { redisSecondaryStorage: freshStorage } = await import("./secondary-storage");
+      mockClient.get.mockResolvedValue("value");
+      expect(await freshStorage.get("k")).toBe("value");
+      expect(createClient).toHaveBeenCalledWith(
+        expect.objectContaining({
+          socket: {
+            tls: true,
+            ca: [rootCertificates[0].trim()],
+            rejectUnauthorized: true,
+            connectTimeout: 3000,
+          },
+        })
+      );
+    } finally {
+      mockEnv.REDIS_URL = "redis://localhost:6379";
+      mockEnv.REDIS_TLS_CA = undefined;
+    }
   });
 
   test("creates the client with a heartbeat", async () => {

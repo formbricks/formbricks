@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "redis";
 import { logger } from "@formbricks/logger";
+import { getRedisTlsOptions } from "@formbricks/redis-config";
 import { env } from "@/lib/env";
 
 /**
@@ -30,9 +31,12 @@ const isGetDelUnsupportedError = (error: unknown): boolean => {
 
 const getClient = (): Promise<RedisClient> => {
   if (!clientPromise) {
+    const redisUrl = env.REDIS_URL;
+    if (!redisUrl) throw new Error("REDIS_URL is required for authentication storage");
+    const tls = getRedisTlsOptions(redisUrl, env.REDIS_TLS_CA);
     const client = createClient({
-      url: env.REDIS_URL,
-      socket: { connectTimeout: 3000 },
+      url: redisUrl,
+      socket: { ...(tls && { tls: true as const, ...tls }), connectTimeout: 3000 },
       // Managed Redis services and their network paths can reap idle connections (for example,
       // Azure Cache for Redis documents a 10-minute idle timeout). Ping well inside that limit.
       pingInterval: 300_000,
