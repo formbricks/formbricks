@@ -19,6 +19,10 @@ export const shouldRenderEndSlot = ({
   hasError,
 }: TEndSlotInput): boolean => endingCount > 0 || (blockIdx >= blockCount && hasError);
 
+/** Whether the card stack draws the card at `slotIdx`: every block, plus the end slot when it has something to show. */
+export const isSlotRendered = (slotIdx: number, input: TEndSlotInput): boolean =>
+  slotIdx < input.blockCount || (slotIdx === input.blockCount && shouldRenderEndSlot(input));
+
 /** True once a survey without an ending card is finished and has no error to show. */
 export const isEndSlotEmpty = (input: TEndSlotInput): boolean =>
   input.blockIdx >= input.blockCount && !shouldRenderEndSlot(input);

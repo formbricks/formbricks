@@ -6,7 +6,7 @@ import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { type TWorkspaceStyling } from "@formbricks/types/workspace";
-import { isEndSlotEmpty, shouldRenderEndSlot } from "@/lib/end-slot";
+import { isEndSlotEmpty, isSlotRendered } from "@/lib/end-slot";
 import { cn } from "@/lib/utils";
 import { StackedCard } from "./stacked-card";
 
@@ -69,7 +69,6 @@ export function StackedCardsContainer({
   };
   // A finished survey without an ending card collapses instead of leaving a blank card (ENG-4069)
   const endSlotEmpty = isEndSlotEmpty(endSlotInput);
-  const renderEndSlot = shouldRenderEndSlot(endSlotInput);
 
   const [prevBlockIdx, setPrevBlockIdx] = useState(blockIdxTemp - 1);
   const [currentBlockIdx, setCurrentBlockIdx] = useState(blockIdxTemp);
@@ -192,11 +191,9 @@ export function StackedCardsContainer({
               {getCardContent(blockIdxTemp, 0)}
             </div>
           )
-        : blockIdxTemp !== undefined &&
-          [prevBlockIdx, currentBlockIdx, nextBlockIdx, nextBlockIdx + 1].map((dynamicBlockIndex, index) => {
+        : [prevBlockIdx, currentBlockIdx, nextBlockIdx, nextBlockIdx + 1].map((dynamicBlockIndex, index) => {
             // Check for hiding extra card
-            if (dynamicBlockIndex > survey.blocks.length) return;
-            if (dynamicBlockIndex === survey.blocks.length && !renderEndSlot) return;
+            if (!isSlotRendered(dynamicBlockIndex, endSlotInput)) return;
             const offset = index - 1;
             return (
               <StackedCard

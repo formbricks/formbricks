@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { isEndSlotEmpty, shouldRenderEndSlot } from "./end-slot";
+import { isEndSlotEmpty, isSlotRendered, shouldRenderEndSlot } from "./end-slot";
 
 const blockCount = 3;
 
@@ -34,5 +34,19 @@ describe("end slot", () => {
 
   test("an error mid-survey does not pull in the end slot of a survey without an ending card", () => {
     expect(shouldRenderEndSlot({ blockCount, endingCount: 0, blockIdx: 1, hasError: true })).toBe(false);
+  });
+
+  test("the stack draws every block and never a slot past the end slot", () => {
+    const input = { blockCount, endingCount: 1, blockIdx: blockCount, hasError: false };
+    expect(isSlotRendered(-1, input)).toBe(true);
+    expect(isSlotRendered(blockCount - 1, input)).toBe(true);
+    expect(isSlotRendered(blockCount, input)).toBe(true);
+    expect(isSlotRendered(blockCount + 1, input)).toBe(false);
+  });
+
+  test("the stack skips the end slot of a survey without an ending card unless it shows an error", () => {
+    const input = { blockCount, endingCount: 0, blockIdx: blockCount, hasError: false };
+    expect(isSlotRendered(blockCount, input)).toBe(false);
+    expect(isSlotRendered(blockCount, { ...input, hasError: true })).toBe(true);
   });
 });
