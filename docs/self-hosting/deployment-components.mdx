@@ -169,7 +169,8 @@ docker.io/envoyproxy/ratelimit:8fe6ea42@sha256:a61547259607d40aff153050c2a87873c
   `bitnami/redis:7.4.2-debian-12-r4`, `bitnami/redis-sentinel:7.4.2-debian-12-r4` and
   `bitnami/kubectl:1.32.2-debian-12-r2`. Their digests cannot be resolved. Use external Redis/Valkey:
   keep `envoyRedis.enabled=false` and set `envoy.config.envoyGateway.rateLimit.backend.redis.url`
-  to its address, including any required authentication/TLS settings. See the
+  to its address. Set the backend's `maxmemory-policy` to `noeviction` and configure authentication/TLS
+  as needed. See the
   [gateway setup](/self-hosting/setup/kubernetes#envoy-bundle-modes).
 </Warning>
 

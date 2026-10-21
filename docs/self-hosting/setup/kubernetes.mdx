@@ -208,7 +208,8 @@ envoyRedis:
   enabled: false
 ```
 
-Replace the address with your dedicated backend and configure its authentication/TLS settings as needed.
+Replace the address with your dedicated backend. Set its `maxmemory-policy` to `noeviction` and configure
+authentication/TLS as needed.
 This installs Envoy Gateway 1.8.4 with Gateway API 1.5.1; the backend keeps rate-limiting state separate from
 the application's own Redis traffic.
 
