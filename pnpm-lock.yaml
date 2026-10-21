@@ -493,8 +493,8 @@ importers:
         specifier: 0.41.0
         version: 0.41.0
       '@modelcontextprotocol/server':
-        specifier: 2.0.0
-        version: 2.0.0
+        specifier: 2.3.0
+        version: 2.3.0
       '@opentelemetry/api':
         specifier: 1.9.0
         version: 1.9.0
@@ -533,7 +533,7 @@ importers:
         version: 8.5.0(@ai-sdk/provider@3.0.12)(@opentelemetry/api@1.9.0)(@opentelemetry/exporter-trace-otlp-http@0.217.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.7.1(@opentelemetry/api@1.9.0))(posthog-node@5.28.11(rxjs@7.8.2))
       '@posthog/mcp':
         specifier: 0.11.6
-        version: 0.11.6(@modelcontextprotocol/server@2.0.0)(posthog-node@5.28.11(rxjs@7.8.2))
+        version: 0.11.6(@modelcontextprotocol/server@2.3.0)(posthog-node@5.28.11(rxjs@7.8.2))
       '@prisma/client':
         specifier: 'catalog:'
         version: 7.10.0(prisma@7.10.0(@types/node@25.4.0)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(better-sqlite3@12.8.0)(magicast@0.5.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3))(typescript@5.9.3)
@@ -704,7 +704,7 @@ importers:
         version: 14.3.1
       mcp-handler:
         specifier: 2.1.1
-        version: 2.1.1(@modelcontextprotocol/server@2.0.0)(next@16.3.8(patch_hash=89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041)(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
+        version: 2.1.1(@modelcontextprotocol/server@2.3.0)(next@16.3.8(patch_hash=89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041)(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
       next:
         specifier: 16.3.8
         version: 16.3.8(patch_hash=89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041)(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -3185,12 +3185,12 @@ packages:
   '@microsoft/tsdoc@0.16.0':
     resolution: {integrity: sha512-xgAyonlVVS+q7Vc7qLW0UrJU7rSFcETRWsqdXZtjzRU8dF+6CkozTK4V4y1LwOX7j8r/vHphjDeMeGI4tNGeGA==}
 
-  '@modelcontextprotocol/core@2.0.0':
-    resolution: {integrity: sha512-pJCEwGG7Lfr/+PQp9ZTwKXNeO5wzbfKL7H3MYpCorM4oFBoQrdjnBgEoqG+RjhsvS1FKrDbKux+M1HhlnGWqcA==}
+  '@modelcontextprotocol/core@2.3.0':
+    resolution: {integrity: sha512-09BHFaNVBe5pB2AhzCfLj0cqmsKLERvZQ4FblzP90UMGLaXVqdZPByFjURwsUYCmxonUW2yAwgTTvle+8O2/8w==}
     engines: {node: '>=20'}
 
-  '@modelcontextprotocol/server@2.0.0':
-    resolution: {integrity: sha512-YhHWdHfpFMQfd0prsEnxKeS3Qz3ytIGmsS0sth4KDjnacIT7hxk6hXHkJ9KysxlkvTM+WZAtQbbcUhdoP4Hvtw==}
+  '@modelcontextprotocol/server@2.3.0':
+    resolution: {integrity: sha512-+6b0LdsQLmHsvS7J6sQJ4weTpzUn61fU1JKS+321/+IyDYoHW5CR2Tgqcs6GgAAQvlesCo6yX3xttgmx+XGtJw==}
     engines: {node: '>=20'}
 
   '@mongodb-js/saslprep@1.4.4':
@@ -14225,13 +14225,13 @@ snapshots:
 
   '@microsoft/tsdoc@0.16.0': {}
 
-  '@modelcontextprotocol/core@2.0.0':
+  '@modelcontextprotocol/core@2.3.0':
     dependencies:
       zod: 4.3.6
 
-  '@modelcontextprotocol/server@2.0.0':
+  '@modelcontextprotocol/server@2.3.0':
     dependencies:
-      '@modelcontextprotocol/core': 2.0.0
+      '@modelcontextprotocol/core': 2.3.0
       zod: 4.3.6
 
   '@mongodb-js/saslprep@1.4.4':
@@ -15498,12 +15498,12 @@ snapshots:
     dependencies:
       '@posthog/types': 1.404.0
 
-  '@posthog/mcp@0.11.6(@modelcontextprotocol/server@2.0.0)(posthog-node@5.28.11(rxjs@7.8.2))':
+  '@posthog/mcp@0.11.6(@modelcontextprotocol/server@2.3.0)(posthog-node@5.28.11(rxjs@7.8.2))':
     dependencies:
       '@posthog/core': 1.48.0
       posthog-node: 5.28.11(rxjs@7.8.2)
     optionalDependencies:
-      '@modelcontextprotocol/server': 2.0.0
+      '@modelcontextprotocol/server': 2.3.0
 
   '@posthog/types@1.369.5': {}
 
@@ -21167,9 +21167,9 @@ snapshots:
 
   math-intrinsics@1.1.0: {}
 
-  mcp-handler@2.1.1(@modelcontextprotocol/server@2.0.0)(next@16.3.8(patch_hash=89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041)(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)):
+  mcp-handler@2.1.1(@modelcontextprotocol/server@2.3.0)(next@16.3.8(patch_hash=89e9fae3addb1aa7c2a412e907df3119d574931452e0de0366c2e7d07ef6e041)(@babel/core@7.29.6)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(@types/node@25.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)):
     dependencies:
-      '@modelcontextprotocol/server': 2.0.0
+      '@modelcontextprotocol/server': 2.3.0
       chalk: 5.6.2
       commander: 11.1.0
     optionalDependencies:
