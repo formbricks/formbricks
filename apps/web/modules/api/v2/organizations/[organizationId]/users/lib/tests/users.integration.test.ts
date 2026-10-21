@@ -167,27 +167,41 @@ describe("updateUser on a user who belongs to several organizations vs real Post
     });
 
     // Another organization adds the user in a transaction that stays open until released.
-    let inserted!: () => void;
+    let inserted!: (pid: number) => void;
     let release!: () => void;
-    const insertedSignal = new Promise<void>((resolve) => (inserted = resolve));
+    const insertedSignal = new Promise<number>((resolve) => (inserted = resolve));
     const releaseSignal = new Promise<void>((resolve) => (release = resolve));
     const joining = prisma.$transaction(
       async (tx) => {
         await tx.membership.create({
           data: { userId: user.id, organizationId: other.id, role: "member", accepted: true },
         });
-        inserted();
+        const [{ pid }] = await tx.$queryRaw<{ pid: number }[]>`SELECT pg_backend_pid() AS pid`;
+        inserted(pid);
         await releaseSignal;
       },
       { timeout: 10_000 }
     );
-    await insertedSignal;
+    const joiningPid = await insertedSignal;
 
-    // The deactivation has to wait for that insert under the user row's lock, then sees it.
+    // The deactivation has to wait for that insert under the user row's lock, then sees it. Wait until
+    // Postgres reports it blocked by the joining transaction rather than sleeping: with no lock it never
+    // blocks, and this fails instead of passing by timing.
     const deactivating = updateUser({ email, isActive: false }, org.id);
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    release();
+    let blocked = false;
+    try {
+      for (let attempt = 0; attempt < 250 && !blocked; attempt++) {
+        const [{ waiting }] = await prisma.$queryRaw<{ waiting: bigint }[]>`
+          SELECT count(*) AS waiting FROM pg_stat_activity WHERE ${joiningPid}::int = ANY(pg_blocking_pids(pid))
+        `;
+        blocked = waiting > 0n;
+        if (!blocked) await new Promise((resolve) => setTimeout(resolve, 20));
+      }
+    } finally {
+      release();
+    }
     await joining;
+    expect(blocked).toBe(true);
 
     const result = await deactivating;
     expect(result.ok).toBe(false);
