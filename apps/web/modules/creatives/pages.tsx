@@ -18,7 +18,7 @@ import { CreativeEditor } from "./components/editor/creative-editor";
 import { CreativeSummary } from "./components/summary/creative-summary";
 import { authorizeCreativePage } from "./lib/authorization";
 import { toDestinationSurveyOptions } from "./lib/destination-options";
-import { findCreativeRecord, findDestinationSurveyCandidates } from "./lib/repository";
+import { findDestinationSurveyCandidates } from "./lib/repository";
 
 // Server entry points for the Creatives routes. Each runs the workspace auth check every product page
 // runs, then reads the real creative or leaves the reading to the page's API v3 calls.
@@ -64,13 +64,11 @@ export const CreativeSummaryPage = async ({ params }: Readonly<{ params: TCreati
   const { workspaceId, creativeId } = await params;
   const authorized = await authorizeCreativePage({ workspaceId, creativeId });
   if (!authorized) notFound();
-  const record = await findCreativeRecord(creativeId, workspaceId);
-  if (!record) notFound();
 
   return (
     <CreativeSummary
       workspaceId={workspaceId}
-      initialCreative={serializeV3Creative(record, new Date())}
+      initialCreative={serializeV3Creative(authorized.record, new Date())}
       isReadOnly={authorized.access === "read"}
     />
   );
@@ -85,17 +83,14 @@ export const CreativeEditorPage = async ({ params }: Readonly<{ params: TCreativ
   const { workspaceId, creativeId } = await params;
   const authorized = await authorizeCreativePage({ workspaceId, creativeId });
   if (!authorized) notFound();
-  const { workspace, organization } = authorized;
+  const { workspace, organization, record } = authorized;
 
-  const [record, surveyCandidates, actionClasses, isCustomCssPlanAllowed, workspaceLanguages] =
-    await Promise.all([
-      findCreativeRecord(creativeId, workspaceId),
-      findDestinationSurveyCandidates(workspaceId),
-      getActionClasses(workspaceId),
-      getCustomCssPlanAllowed(organization.id),
-      getWorkspaceLanguages(workspaceId),
-    ]);
-  if (!record) notFound();
+  const [surveyCandidates, actionClasses, isCustomCssPlanAllowed, workspaceLanguages] = await Promise.all([
+    findDestinationSurveyCandidates(workspaceId),
+    getActionClasses(workspaceId),
+    getCustomCssPlanAllowed(organization.id),
+    getWorkspaceLanguages(workspaceId),
+  ]);
 
   const surveyOptions = toDestinationSurveyOptions(
     record.survey ? [...surveyCandidates, record.survey] : surveyCandidates,
