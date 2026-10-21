@@ -155,21 +155,12 @@ export const renderSurvey = async ({
   // Compute final styling based on workspace and survey settings
   const styling = computeStyling(workspace.styling, survey.styling);
   const publicDomain = getPublicDomain();
-  const [canReadUserIdFromUrl, customCss, openedBy] = await Promise.all([
+  const [canReadUserIdFromUrl, customCss, creativeId] = await Promise.all([
     allowUrlUserIdLookup && !contactId && hasUserIdSearchParam(searchParams)
       ? getIsContactsEnabled(workspaceContext.organizationId)
       : false,
     getRendererCustomCss(survey, workspaceContext),
-    // A creative's link Destination opens this page with `?creativeId=` (ENG-4001). Checked here, so
-    // the renderer only ever carries a creative of this workspace that opens this survey; a preview
-    // records nothing, so it looks nothing up.
-    !isPreview && searchParams.creativeId
-      ? getCreativeAttribution({
-          creativeId: searchParams.creativeId,
-          workspaceId: survey.workspaceId,
-          surveyId: survey.id,
-        })
-      : null,
+    getOpeningCreativeId(survey, searchParams.creativeId, isPreview),
   ]);
 
   // Handle PIN-protected surveys
@@ -224,7 +215,7 @@ export const renderSurvey = async ({
       TERMS_URL={TERMS_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
       customCss={customCss}
-      creativeId={openedBy?.id}
+      creativeId={creativeId}
       rendererVersion={APP_RELEASE_VERSION}
     />
   );
@@ -246,6 +237,27 @@ async function getRendererCustomCss(
     allowStyleOverwrite: workspaceContext.workspace.styling?.allowStyleOverwrite,
     survey,
   });
+}
+
+/**
+ * The creative whose link Destination opened this page with `?creativeId=` (ENG-4001). Checked here, so
+ * the renderer only ever carries a creative of this workspace that opens this survey; a preview records
+ * nothing, so it looks nothing up.
+ */
+async function getOpeningCreativeId(
+  survey: TSurvey,
+  creativeIdParam: string | undefined,
+  isPreview: boolean
+): Promise<string | undefined> {
+  if (isPreview || !creativeIdParam) {
+    return undefined;
+  }
+  const openedBy = await getCreativeAttribution({
+    creativeId: creativeIdParam,
+    workspaceId: survey.workspaceId,
+    surveyId: survey.id,
+  });
+  return openedBy?.id;
 }
 
 /**
