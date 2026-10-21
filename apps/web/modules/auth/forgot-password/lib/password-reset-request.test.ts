@@ -46,7 +46,11 @@ const foundUser = (identityProvider: TFoundUser["identityProvider"]): TFoundUser
 
 const requestHeaders = new Headers({ "user-agent": "vitest" });
 const process = () =>
-  processPasswordResetRequest({ email: "Stored@Example.com", requestHeaders, ipAddress: "203.0.113.7" });
+  processPasswordResetRequest({
+    email: "Stored@Example.com",
+    requestHeaders,
+    requestMetadata: { ipAddress: "203.0.113.7", userAgent: "reset-test-agent" },
+  });
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -203,7 +207,7 @@ describe("processPasswordResetRequest", () => {
         targetId: "user123",
         organizationId: "unknown",
         status: "success",
-        ipAddress: "203.0.113.7",
+        requestMetadata: { ipAddress: "203.0.113.7", userAgent: "reset-test-agent" },
       });
     });
 

@@ -2,8 +2,14 @@ import { createCubeTransport } from "./__mocks__/cube-transport.mock";
 import type * as CubeClient from "@cubejs-client/core";
 import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { getAuditRequestMetadata } from "@/modules/ee/audit-logs/lib/request-metadata";
 
 vi.mock("server-only", () => ({}));
+vi.mock("@/modules/ee/audit-logs/lib/request-metadata", () => ({
+  getAuditRequestMetadata: vi
+    .fn()
+    .mockResolvedValue({ ipAddress: "203.0.113.7", userAgent: "cube-test-agent" }),
+}));
 
 const {
   mockGetOrganization,
@@ -75,6 +81,10 @@ describe("executeTenantScopedQuery", () => {
     vi.stubEnv("CUBEJS_API_SECRET", "cube-secret");
     vi.stubEnv("CUBEJS_JWT_AUDIENCE", "formbricks-cube-test");
     vi.stubEnv("CUBEJS_JWT_ISSUER", "formbricks-web-test");
+    vi.mocked(getAuditRequestMetadata).mockResolvedValue({
+      ipAddress: "203.0.113.7",
+      userAgent: "cube-test-agent",
+    });
     mockLoad.mockResolvedValue({ tablePivot: mockTablePivot });
     mockGetOrganization.mockResolvedValue({ displayTimeZone: null });
     mockQueueAuditEventWithoutRequest.mockResolvedValue(undefined);
@@ -564,6 +574,7 @@ describe("executeTenantScopedQuery", () => {
       expect.objectContaining({
         action: "queried",
         targetType: "cubeQuery",
+        requestMetadata: { ipAddress: "203.0.113.7", userAgent: "cube-test-agent" },
         status: "failure",
         newObject: expect.objectContaining({
           tenantId: "frd-1",
@@ -628,6 +639,7 @@ describe("executeTenantScopedQuery", () => {
       expect.objectContaining({
         action: "queried",
         targetType: "cubeQuery",
+        requestMetadata: { ipAddress: "203.0.113.7", userAgent: "cube-test-agent" },
         newObject: expect.objectContaining({
           query: expect.objectContaining({
             filterMembers: ["FeedbackRecords.sourceType"],

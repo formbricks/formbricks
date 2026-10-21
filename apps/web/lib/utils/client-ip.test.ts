@@ -110,6 +110,16 @@ describe("resolveClientIp", () => {
 });
 
 describe("getClientIpFromHeaders", () => {
+  test("uses a supplied snapshot without accessing request scope", async () => {
+    vi.mocked(nextHeaders.headers).mockRejectedValue(new Error("request has ended"));
+    await expect(
+      getClientIpFromHeaders(
+        buildHeaders({
+          [FORMBRICKS_CLIENT_IP_HEADER]: "203.0.113.7",
+        })
+      )
+    ).resolves.toBe("203.0.113.7");
+  });
   beforeEach(() => {
     vi.clearAllMocks();
   });
