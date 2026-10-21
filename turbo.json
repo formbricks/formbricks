@@ -29,23 +29,23 @@
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/cache#build": {
-      "dependsOn": ["@formbricks/logger#build"],
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"],
       "outputs": ["dist/**"]
     },
     "@formbricks/cache#go": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"]
     },
     "@formbricks/cache#lint": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"]
     },
     "@formbricks/cache#test": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"]
     },
     "@formbricks/cache#test:coverage": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"]
     },
     "@formbricks/cache#typecheck": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"]
     },
     "@formbricks/database#build": {
       "dependsOn": ["^build", "@formbricks/database#generate"],
@@ -80,20 +80,22 @@
       "dependsOn": ["@formbricks/i18n-utils#build"]
     },
     "@formbricks/jobs#build": {
-      "dependsOn": ["@formbricks/logger#build"],
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"],
       "outputs": ["dist/**"]
     },
     "@formbricks/jobs#lint": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"]
     },
     "@formbricks/jobs#test": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"],
+      "passThroughEnv": ["REDIS_TLS_TEST_URL", "REDIS_TLS_CA", "NODE_TLS_REJECT_UNAUTHORIZED"]
     },
     "@formbricks/jobs#test:coverage": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"],
+      "passThroughEnv": ["REDIS_TLS_TEST_URL", "REDIS_TLS_CA", "NODE_TLS_REJECT_UNAUTHORIZED"]
     },
     "@formbricks/jobs#typecheck": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"]
     },
     "@formbricks/js-core#build": {
       "dependsOn": ["^build"],
@@ -172,7 +174,8 @@
         "@formbricks/database#build",
         "@formbricks/jobs#build",
         "@formbricks/logger#build",
-        "@formbricks/storage#build"
+        "@formbricks/storage#build",
+        "@formbricks/redis-config#build"
       ],
       "persistent": true
     },
@@ -185,7 +188,8 @@
         "@formbricks/database#db:setup",
         "@formbricks/jobs#build",
         "@formbricks/logger#build",
-        "@formbricks/storage#build"
+        "@formbricks/storage#build",
+        "@formbricks/redis-config#build"
       ],
       "persistent": true
     },
@@ -197,8 +201,10 @@
         "@formbricks/storage#build",
         "@formbricks/cache#build",
         "@formbricks/jobs#build",
-        "@formbricks/surveys#build"
-      ]
+        "@formbricks/surveys#build",
+        "@formbricks/redis-config#build"
+      ],
+      "passThroughEnv": ["REDIS_TLS_TEST_URL", "REDIS_TLS_CA", "NODE_TLS_REJECT_UNAUTHORIZED"]
     },
     "@formbricks/web#test:coverage": {
       "dependsOn": [
@@ -208,8 +214,10 @@
         "@formbricks/storage#build",
         "@formbricks/cache#build",
         "@formbricks/jobs#build",
-        "@formbricks/surveys#build"
-      ]
+        "@formbricks/surveys#build",
+        "@formbricks/redis-config#build"
+      ],
+      "passThroughEnv": ["REDIS_TLS_TEST_URL", "REDIS_TLS_CA", "NODE_TLS_REJECT_UNAUTHORIZED"]
     },
     "@formbricks/web#typecheck": {
       "dependsOn": [
@@ -219,7 +227,8 @@
         "@formbricks/jobs#build",
         "@formbricks/logger#build",
         "@formbricks/storage#build",
-        "@formbricks/surveys#build"
+        "@formbricks/surveys#build",
+        "@formbricks/redis-config#build"
       ]
     },
     "@formbricks/workflows#build": {
@@ -278,6 +287,7 @@
         "PROMETHEUS_ENABLED",
         "PROMETHEUS_EXPORTER_PORT",
         "REDIS_URL",
+        "REDIS_TLS_CA",
         "S3_ACCESS_KEY",
         "S3_BUCKET_NAME",
         "S3_FORCE_PATH_STYLE",

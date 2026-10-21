@@ -409,6 +409,7 @@ const parsedEnv = createEnv({
     OIDC_DISPLAY_NAME: z.string().optional(),
     OIDC_ISSUER: z.string().optional(),
     OIDC_SIGNING_ALGORITHM: z.string().optional(),
+    REDIS_TLS_CA: z.string().min(1).optional(),
     REDIS_URL:
       process.env.NODE_ENV === "test"
         ? z.string().optional()
@@ -603,6 +604,7 @@ const parsedEnv = createEnv({
     OIDC_DISPLAY_NAME: process.env.OIDC_DISPLAY_NAME,
     OIDC_ISSUER: process.env.OIDC_ISSUER,
     OIDC_SIGNING_ALGORITHM: process.env.OIDC_SIGNING_ALGORITHM,
+    REDIS_TLS_CA: process.env.REDIS_TLS_CA,
     REDIS_URL: process.env.REDIS_URL,
     PASSWORD_HIBP_CHECK_DISABLED: process.env.PASSWORD_HIBP_CHECK_DISABLED,
     PASSWORD_RESET_DISABLED: process.env.PASSWORD_RESET_DISABLED,

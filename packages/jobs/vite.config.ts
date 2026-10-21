@@ -17,7 +17,7 @@ export default defineConfig({
       formats: ["es", "cjs"],
     },
     rollupOptions: {
-      external: ["@formbricks/logger", "bullmq", "ioredis", "zod"],
+      external: ["@formbricks/redis-config", "@formbricks/logger", "bullmq", "ioredis", "zod"],
     },
   },
   test: {

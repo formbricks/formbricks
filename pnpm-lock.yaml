@@ -423,6 +423,9 @@ importers:
       '@formbricks/logger':
         specifier: workspace:*
         version: link:../../packages/logger
+      '@formbricks/redis-config':
+        specifier: workspace:*
+        version: link:../../packages/redis-config
       '@formbricks/storage':
         specifier: workspace:*
         version: link:../../packages/storage
@@ -977,6 +980,9 @@ importers:
       '@formbricks/logger':
         specifier: workspace:*
         version: link:../logger
+      '@formbricks/redis-config':
+        specifier: workspace:*
+        version: link:../redis-config
       redis:
         specifier: 'catalog:'
         version: 5.11.0
@@ -1251,6 +1257,9 @@ importers:
       '@formbricks/logger':
         specifier: workspace:*
         version: link:../logger
+      '@formbricks/redis-config':
+        specifier: workspace:*
+        version: link:../redis-config
       '@formbricks/types':
         specifier: workspace:*
         version: link:../types
@@ -1343,6 +1352,30 @@ importers:
       rimraf:
         specifier: 'catalog:'
         version: 6.1.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vite:
+        specifier: 'catalog:'
+        version: 7.3.5(@types/node@25.4.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.9.0)
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.11(@opentelemetry/api@1.9.0)(@types/node@25.4.0)(@vitest/coverage-v8@4.1.11)(happy-dom@20.8.9)(jsdom@29.1.1(@noble/hashes@2.3.0))(vite@7.3.5(@types/node@25.4.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1)(tsx@4.21.0)(yaml@2.9.0))
+
+  packages/redis-config:
+    devDependencies:
+      '@formbricks/config-eslint':
+        specifier: workspace:*
+        version: link:../config-eslint
+      '@formbricks/config-typescript':
+        specifier: workspace:*
+        version: link:../config-typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.4.0
+      '@vitest/coverage-v8':
+        specifier: 'catalog:'
+        version: 4.1.11(vitest@4.1.11)
       typescript:
         specifier: 'catalog:'
         version: 5.9.3

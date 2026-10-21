@@ -42,7 +42,8 @@
   "dependencies": {
     "@formbricks/logger": "workspace:*",
     "redis": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@formbricks/redis-config": "workspace:*"
   },
   "devDependencies": {
     "@formbricks/config-eslint": "workspace:*",
