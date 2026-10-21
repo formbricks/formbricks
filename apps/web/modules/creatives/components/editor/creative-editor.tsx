@@ -20,6 +20,7 @@ import type { TStylingAppearance } from "@/lib/styling/dark-mode";
 import { V3ApiError, getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { useCustomCssValidation } from "@/modules/custom-css/components/hooks/use-custom-css-validation";
 import { toCustomCssDraft } from "@/modules/custom-css/components/lib/draft";
+import { workspaceSettingsPath } from "@/modules/settings/lib/routes";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { useBeforeUnloadPrompt } from "@/modules/ui/hooks/use-before-unload-prompt";
@@ -436,6 +437,7 @@ export const CreativeEditor = ({
                 schedule={form.schedule}
                 onScheduleChange={(schedule) => setForm((current) => ({ ...current, schedule }))}
                 actionOptions={actionOptions}
+                userActionsHref={workspaceSettingsPath(workspaceId, "user-actions")}
                 showActionError={issues.includes("action_missing")}
                 showConditionErrors={issues.includes("condition_incomplete")}
               />

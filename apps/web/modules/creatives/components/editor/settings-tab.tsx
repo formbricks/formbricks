@@ -1,6 +1,7 @@
 "use client";
 
-import { EyeIcon, UsersIcon, XIcon, ZapIcon } from "lucide-react";
+import { ExternalLinkIcon, EyeIcon, UsersIcon, XIcon, ZapIcon } from "lucide-react";
+import Link from "next/link";
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
@@ -32,11 +33,14 @@ const ActionPicker = ({
   onChange,
   actionOptions,
   isInvalid,
+  userActionsHref,
 }: Readonly<{
   actionClassIds: string[];
   onChange: (actionClassIds: string[]) => void;
   actionOptions: TCreativeActionOption[];
   isInvalid: boolean;
+  /** Where the workspace's actions are created, for the empty state. */
+  userActionsHref: string;
 }>) => {
   const { t } = useTranslation();
   const ids = useId();
@@ -44,7 +48,18 @@ const ActionPicker = ({
   const available = actionOptions.filter(({ id }) => !actionClassIds.includes(id));
 
   if (actionOptions.length === 0) {
-    return <p className="text-sm text-slate-500">{t("common.no_actions_found")}</p>;
+    // A new tab, so the edits made here survive; the picker reads the actions when the editor loads.
+    return (
+      <div className="space-y-2 rounded-lg border border-dashed border-slate-300 px-4 py-3">
+        <p className="text-sm text-slate-600">{t("workspace.creatives.editor.no_actions_yet")}</p>
+        <Button variant="secondary" size="sm" asChild>
+          <Link href={userActionsHref} target="_blank" rel="noopener">
+            {t("workspace.creatives.editor.open_user_actions")}
+            <ExternalLinkIcon aria-hidden="true" />
+          </Link>
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -159,6 +174,7 @@ export const SettingsTab = ({
   schedule,
   onScheduleChange,
   actionOptions,
+  userActionsHref,
   showActionError,
   showConditionErrors,
 }: Readonly<{
@@ -167,6 +183,7 @@ export const SettingsTab = ({
   schedule: TCreativeEditorForm["schedule"];
   onScheduleChange: (schedule: TCreativeEditorForm["schedule"]) => void;
   actionOptions: TCreativeActionOption[];
+  userActionsHref: string;
   showActionError: boolean;
   showConditionErrors: boolean;
 }>) => {
@@ -193,6 +210,7 @@ export const SettingsTab = ({
             onChange={(actionClassIds) => update({ actionClassIds })}
             actionOptions={actionOptions}
             isInvalid={showActionError}
+            userActionsHref={userActionsHref}
           />
         )}
       </EditorPanel>
