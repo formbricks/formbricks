@@ -370,7 +370,13 @@ export const CreativeEditor = ({
               );
             })}
           </nav>
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-slate-50 p-5">
+          {/*
+            `relative`: the scroll box must be the containing block of absolutely positioned content
+            (`sr-only` text, hidden form inputs). Otherwise that content is placed against the page
+            instead, below the fold, and makes the document itself scroll: the editor then slid up
+            out of view while the form was scrolled.
+          */}
+          <div className="relative min-h-0 flex-1 space-y-4 overflow-y-auto bg-slate-50 p-5">
             {/* What the saved creative needs (`warnings[]`), whichever tab fixes it. */}
             {creative.warnings.length > 0 && (
               <Alert variant="warning" size="small" role="status">
