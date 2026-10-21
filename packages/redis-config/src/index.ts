@@ -35,17 +35,14 @@ export const getRedisTlsOptions = (redisUrl: string, caPem?: string): RedisTlsOp
   try {
     // Literal splitting consumes each block once; repeated malformed headers must not trigger backtracking.
     const blocks = caPem.split(CERTIFICATE_END);
-    if (blocks.pop()?.trim() || blocks.length === 0) throw new Error();
+    if (blocks.pop()?.trim() || blocks.length === 0) throw new Error("Incomplete PEM CA bundle");
     certificates = blocks.map((block) => {
       const body = block.trim();
-      if (
-        !body.startsWith(CERTIFICATE_START) ||
-        body.indexOf(CERTIFICATE_START, CERTIFICATE_START.length) !== -1
-      ) {
-        throw new Error();
+      if (!body.startsWith(CERTIFICATE_START) || body.includes(CERTIFICATE_START, CERTIFICATE_START.length)) {
+        throw new Error("Invalid PEM certificate boundaries");
       }
       const certificate = `${body}\n${CERTIFICATE_END}`;
-      if (!new X509Certificate(certificate).ca) throw new Error();
+      if (!new X509Certificate(certificate).ca) throw new Error("Certificate is not a CA");
       return certificate;
     });
   } catch {

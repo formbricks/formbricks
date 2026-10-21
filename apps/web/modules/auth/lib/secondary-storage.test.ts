@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { redisSecondaryStorage } from "./secondary-storage";
 
 const mockClient = {
+  isOpen: true,
   on: vi.fn(),
   connect: vi.fn().mockResolvedValue(undefined),
   get: vi.fn(),
@@ -24,6 +25,7 @@ vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn() } }));
 describe("redisSecondaryStorage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockClient.isOpen = true;
     // The unit config resets mock implementations between tests; re-establish the lazy connect so
     // getClient()'s `client.connect().then(...)` resolves (it's memoized after the first call).
     mockClient.connect.mockResolvedValue(undefined);
@@ -124,6 +126,7 @@ describe("redisSecondaryStorage", () => {
             ca: [rootCertificates[0].trim()],
             rejectUnauthorized: true,
             connectTimeout: 3000,
+            reconnectStrategy: expect.any(Function),
           },
         })
       );
@@ -141,7 +144,7 @@ describe("redisSecondaryStorage", () => {
     expect(await freshStorage.get("k")).toBe("value");
     expect(createClient).toHaveBeenCalledWith({
       url: "redis://localhost:6379",
-      socket: { connectTimeout: 3000 },
+      socket: { connectTimeout: 3000, reconnectStrategy: expect.any(Function) },
       pingInterval: 300_000,
     });
   });
@@ -155,6 +158,20 @@ describe("redisSecondaryStorage", () => {
 
     await expect(freshStorage.get("k")).rejects.toBe(connectionError);
     await expect(freshStorage.get("k")).resolves.toBe("value");
+    expect(mockClient.connect).toHaveBeenCalledTimes(2);
+  });
+
+  test("recreates a previously established connection after reconnection is exhausted", async () => {
+    vi.resetModules();
+    const { redisSecondaryStorage: freshStorage } = await import("./secondary-storage");
+    mockClient.get.mockResolvedValue("value");
+    await expect(freshStorage.get("k")).resolves.toBe("value");
+    mockClient.isOpen = false;
+    mockClient.connect.mockImplementationOnce(async () => {
+      mockClient.isOpen = true;
+    });
+    await expect(freshStorage.get("k")).resolves.toBe("value");
+    expect(createClient).toHaveBeenCalledTimes(2);
     expect(mockClient.connect).toHaveBeenCalledTimes(2);
   });
 });

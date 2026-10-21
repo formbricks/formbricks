@@ -1,12 +1,15 @@
 import { randomUUID } from "node:crypto";
+import { rootCertificates } from "node:tls";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { redisSecondaryStorage } from "./secondary-storage";
 
 // Run only against the disposable loopback Redis started by verify-redis-tls.mjs.
 const connections = vi.hoisted(() => [] as Array<{ isOpen: boolean; destroy: () => void }>);
-vi.mock("@/lib/env", () => ({
-  env: { REDIS_URL: process.env.REDIS_TLS_TEST_URL, REDIS_TLS_CA: process.env.REDIS_TLS_CA },
+const redisEnv = vi.hoisted(() => ({
+  REDIS_URL: process.env.REDIS_TLS_TEST_URL,
+  REDIS_TLS_CA: process.env.REDIS_TLS_CA,
 }));
+vi.mock("@/lib/env", () => ({ env: redisEnv }));
 vi.mock("redis", async (importOriginal) => {
   const redis = await importOriginal<typeof import("redis")>();
   return {
@@ -49,5 +52,23 @@ describe.skipIf(!process.env.REDIS_TLS_TEST_URL)("authentication storage over ve
   test("increments authentication rate-limit counters", async () => {
     expect(await redisSecondaryStorage.increment(key, 60)).toBe(1);
     expect(await redisSecondaryStorage.increment(key, 60)).toBe(2);
+  });
+
+  test("rejects incorrect trust promptly and retries after the CA is corrected", async () => {
+    vi.resetModules();
+    const { redisSecondaryStorage: freshStorage } = await import("./secondary-storage");
+    const ca = redisEnv.REDIS_TLS_CA;
+    redisEnv.REDIS_TLS_CA = rootCertificates[0];
+    try {
+      await expect(freshStorage.get(key)).rejects.toMatchObject({
+        code: expect.stringMatching(
+          /SELF_SIGNED_CERT_IN_CHAIN|UNABLE_TO_VERIFY_LEAF_SIGNATURE|UNABLE_TO_GET_ISSUER_CERT_LOCALLY/
+        ),
+      });
+    } finally {
+      redisEnv.REDIS_TLS_CA = ca;
+    }
+    await freshStorage.set(key, "recovered", 60);
+    expect(await freshStorage.get(key)).toBe("recovered");
   });
 });

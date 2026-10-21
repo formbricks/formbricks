@@ -4,14 +4,17 @@ import { execFileSync, spawn } from "node:child_process";
 import { once } from "node:events";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createServer as createHttpsServer, get as httpsGet } from "node:https";
+import { createRequire } from "node:module";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { rootCertificates } from "node:tls";
+import { fileURLToPath } from "node:url";
 import { createClient } from "redis";
 import { getCacheService } from "@formbricks/cache";
 import { getRedisTlsOptions } from "@formbricks/redis-config";
 import { createProducerConnection, createWorkerConnection } from "../../../packages/jobs/src/connection.ts";
+import { waitForRedisReady, waitForSuccessfulExit } from "./redis-tls-processes.mjs";
 
 // All Redis writes below target a disposable loopback-only server. No deployed credentials are read.
 const directory = mkdtempSync(join(tmpdir(), "formbricks-redis-tls-"));
@@ -19,6 +22,7 @@ const openssl = process.env.OPENSSL_BIN ?? "openssl";
 const redisServer = process.env.REDIS_SERVER_BIN ?? "redis-server";
 const caPath = join(directory, "ca.pem");
 const caKeyPath = join(directory, "ca.key");
+const vitest = join(dirname(createRequire(import.meta.url).resolve("vitest/package.json")), "vitest.mjs");
 const run = (args) => execFileSync(openssl, args, { stdio: "pipe" });
 delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
 process.env.LOG_LEVEL = "fatal";
@@ -73,20 +77,7 @@ const withRedis = async (certificate, exercise) => {
     { stdio: ["ignore", "pipe", "pipe"] }
   );
   try {
-    await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error("Disposable Redis did not start")), 10000);
-      child.once("error", reject);
-      child.once("exit", () => {
-        clearTimeout(timer);
-        reject(new Error("Disposable Redis exited before ready"));
-      });
-      child.stdout.on("data", (data) => {
-        if (data.toString().includes("Ready to accept connections")) {
-          clearTimeout(timer);
-          resolve();
-        }
-      });
-    });
+    await waitForRedisReady(child);
     await exercise(`rediss://:local-test-password@127.0.0.1:${port}`);
   } finally {
     await stop(child);
@@ -217,32 +208,21 @@ try {
       blocking.disconnect();
     }
     const child = spawn(
-      "pnpm",
-      [
-        "--filter",
-        "@formbricks/web",
-        "exec",
-        "vitest",
-        "run",
-        "modules/auth/lib/secondary-storage.redis-tls.test.ts",
-      ],
+      process.execPath,
+      [vitest, "run", "modules/auth/lib/secondary-storage.redis-tls.test.ts"],
       {
+        cwd: fileURLToPath(new URL("../", import.meta.url)),
         stdio: "inherit",
         env: { ...process.env, REDIS_TLS_TEST_URL: url },
       }
     );
-    const [exitCode] = await once(child, "exit");
-    assert.equal(exitCode, 0, "Authentication storage must work over verified TLS");
-    const jobs = spawn(
-      "pnpm",
-      ["--filter", "@formbricks/jobs", "exec", "vitest", "run", "src/upgrade.integration.test.ts"],
-      {
-        stdio: "inherit",
-        env: { ...process.env, ONLINE_UPGRADE_TEST_REDIS_URL: url },
-      }
-    );
-    const [jobsExit] = await once(jobs, "exit");
-    assert.equal(jobsExit, 0, "BullMQ must process work over verified TLS");
+    await waitForSuccessfulExit(child, "Authentication storage must work over verified TLS");
+    const jobs = spawn(process.execPath, [vitest, "run", "src/upgrade.integration.test.ts"], {
+      cwd: fileURLToPath(new URL("../../../packages/jobs/", import.meta.url)),
+      stdio: "inherit",
+      env: { ...process.env, ONLINE_UPGRADE_TEST_REDIS_URL: url },
+    });
+    await waitForSuccessfulExit(jobs, "BullMQ must process work over verified TLS");
     console.log(
       "PASS cache, authentication records/rate limits, BullMQ producer, worker and blocking connections"
     );
