@@ -44,6 +44,16 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
       testMatch: "**/*.spec.ts",
+      grepInvert: /@timing/,
+    },
+    // Measure latency only after the parallel suite is idle, matching main's timing project.
+    // Use --no-deps with --project=chromium-timing for a focused timing-only run.
+    {
+      name: "chromium-timing",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: "**/*.spec.ts",
+      grep: /@timing/,
+      dependencies: ["chromium"],
     },
 
     // {
