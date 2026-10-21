@@ -1,4 +1,5 @@
 import type IORedis from "ioredis";
+import { rootCertificates } from "node:tls";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { createMockLogger, createMockRedisConnection } from "../test/boundary-mocks";
 import {
@@ -41,8 +42,32 @@ describe("@formbricks/jobs connection helpers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     delete process.env.REDIS_URL;
+    delete process.env.REDIS_TLS_CA;
     mockRedisConnection.status = "ready";
   });
+
+  test.each([createProducerConnection, createWorkerConnection])(
+    "configures private CA verification on each BullMQ connection factory",
+    (createConnection) => {
+      process.env.REDIS_TLS_CA = rootCertificates[0];
+      createConnection({ redisUrl: "rediss://127.0.0.1:6378" });
+      expect(MockIORedis).toHaveBeenCalledWith(
+        "rediss://127.0.0.1:6378",
+        expect.objectContaining({ tls: { ca: [rootCertificates[0].trim()], rejectUnauthorized: true } })
+      );
+    }
+  );
+
+  test.each([createProducerConnection, createWorkerConnection])(
+    "rejects a plaintext downgrade before opening a BullMQ connection",
+    (createConnection) => {
+      process.env.REDIS_TLS_CA = rootCertificates[0];
+      expect(() => createConnection({ redisUrl: "redis://localhost:6379" })).toThrow(
+        "REDIS_TLS_CA requires a rediss:// REDIS_URL"
+      );
+      expect(MockIORedis).not.toHaveBeenCalled();
+    }
+  );
 
   test("creates producer connections with fail-fast options", () => {
     createProducerConnection({ redisUrl: "redis://localhost:6379" });
