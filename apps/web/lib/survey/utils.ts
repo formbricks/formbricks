@@ -11,7 +11,7 @@ import {
   TSurveyElementTypeEnum,
   TSurveyPictureChoice,
 } from "@formbricks/types/surveys/elements";
-import { TSurvey, TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurvey } from "@formbricks/types/surveys/types";
 import { withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { isValidVideoUrl } from "@/lib/utils/video-upload";
 import { isValidImageFile } from "@/modules/storage/utils";
@@ -62,7 +62,7 @@ export const anySurveyHasFilters = (surveys: TSurvey[]): boolean => {
   });
 };
 
-export const checkForInvalidImagesInQuestions = (questions: TSurveyQuestion[]) => {
+export const checkForInvalidImagesInQuestions = (questions: TSurvey["questions"]) => {
   questions.forEach((question, qIndex) => {
     if (question.imageUrl && !isValidImageFile(question.imageUrl)) {
       throw new InvalidInputError(
@@ -70,7 +70,7 @@ export const checkForInvalidImagesInQuestions = (questions: TSurveyQuestion[]) =
       );
     }
 
-    if (question.type === TSurveyQuestionTypeEnum.PictureSelection) {
+    if (question.type === "pictureSelection") {
       if (!Array.isArray(question.choices)) {
         throw new InvalidInputError(`Choices missing for question ${String(qIndex + 1)}`);
       }

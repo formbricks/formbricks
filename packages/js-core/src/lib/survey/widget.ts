@@ -112,9 +112,26 @@ export const triggerSurvey = async (
 };
 
 /**
+ * Whether a failed user identification skips the survey: it does when the survey has segment filters,
+ * which need the user, unless a creative's click opens it (ADR 0004).
+ */
+const skipsWithoutIdentification = (
+  survey: TWorkspaceStateSurvey,
+  opener: TSurveyOpener | undefined
+): boolean => {
+  const logger = Logger.getInstance();
+  if (surveyHasSegmentFilters(survey) && !opener) {
+    logger.debug("User identification failed. Skipping survey with segment filters.");
+    return true;
+  }
+  logger.debug("User identification failed but survey has no segment filters. Proceeding.");
+  return false;
+};
+
+/**
  * Shows a survey. Its triggers call it with the `action` that fired; a creative's click calls it with an
- * `opener` (through `openSurveyForCreative`), which skips everything that decides whether and when the
- * survey shows: the one-survey-at-a-time guard, segment filters, the delay and auto-close (ADR 0004).
+ * `opener` (through `openSurveyForCreative`), which skips the one-survey-at-a-time guard and segment
+ * filters; the click path also takes away the survey's delay and auto-close (ADR 0004).
  */
 export const renderWidget = async (
   survey: TWorkspaceStateSurvey,
@@ -132,7 +149,6 @@ export const renderWidget = async (
   }
 
   setIsSurveyRunning(true);
-  surveyInFlight = opener ? survey.id : null;
 
   const generation = renderGeneration;
   const isSuperseded = (): boolean => generation !== renderGeneration;
@@ -141,28 +157,22 @@ export const renderWidget = async (
     if (!isSuperseded()) setIsSurveyRunning(false);
   };
 
-  // Wait for pending user identification to complete before rendering
+  // Wait for pending user identification to complete before rendering. Only a pending one is awaited:
+  // without it this runs straight on, as before, and `isSuperseded()` below is still false.
   const updateQueue = UpdateQueue.getInstance();
-  if (updateQueue.hasPendingWork()) {
+  const hasPendingIdentification = updateQueue.hasPendingWork();
+  if (hasPendingIdentification) {
     logger.debug("Waiting for pending user identification before rendering survey");
-    const identificationSucceeded = await updateQueue.waitForPendingWork();
-    if (isSuperseded()) return;
-    if (!identificationSucceeded) {
-      const hasSegmentFilters = surveyHasSegmentFilters(survey);
-
-      if (hasSegmentFilters && !opener) {
-        logger.debug("User identification failed. Skipping survey with segment filters.");
-        release();
-        return;
-      }
-
-      logger.debug("User identification failed but survey has no segment filters. Proceeding.");
-    }
+  }
+  const identificationSucceeded = !hasPendingIdentification || (await updateQueue.waitForPendingWork());
+  if (isSuperseded()) return;
+  if (!identificationSucceeded && skipsWithoutIdentification(survey, opener)) {
+    release();
+    return;
   }
 
-  const delaySeconds = opener ? 0 : survey.delay;
-  if (delaySeconds) {
-    logger.debug(`Delaying survey "${survey.id}" by ${delaySeconds.toString()} seconds.`);
+  if (survey.delay) {
+    logger.debug(`Delaying survey "${survey.id}" by ${survey.delay.toString()} seconds.`);
   }
 
   const { settings } = config.get().workspace.data;
@@ -200,10 +210,9 @@ export const renderWidget = async (
     return executeRecaptcha(recaptchaSiteKey);
   };
 
-  if (isSpamProtectionEnabled && recaptchaSiteKey) {
-    await loadRecaptchaScript(recaptchaSiteKey);
-    if (isSuperseded()) return;
-  }
+  if (isSpamProtectionEnabled) await loadRecaptchaScript(recaptchaSiteKey);
+  // Without spam protection nothing was awaited since the check above, so this one is false then.
+  if (isSuperseded()) return;
 
   const timeoutId = setTimeout(() => {
     if (isSuperseded()) return;
@@ -233,8 +242,7 @@ export const renderWidget = async (
       action,
       // Sent with the display and the response, so both record the creative (ENG-4001).
       creativeId: opener?.creativeId,
-      // A creative's click opens the survey until the visitor closes it: no auto-close.
-      survey: opener ? { ...survey, autoClose: null } : survey,
+      survey,
       isBrandingEnabled,
       clickOutside,
       overlay,
@@ -256,7 +264,7 @@ export const renderWidget = async (
       onDisplayCreated: () => {
         const existingDisplays = config.get().user.data.displays;
         const newDisplay = { surveyId: survey.id, createdAt: new Date() };
-        const displays = existingDisplays.length ? [...existingDisplays, newDisplay] : [newDisplay];
+        const displays = [...existingDisplays, newDisplay];
         const previousConfig = config.get();
 
         const updatedUserState: TUserState = {
@@ -272,7 +280,6 @@ export const renderWidget = async (
 
         config.update({
           ...previousConfig,
-          workspace: previousConfig.workspace,
           user: updatedUserState,
           filteredSurveys,
         });
@@ -289,7 +296,7 @@ export const renderWidget = async (
           ...config.get().user,
           data: {
             ...config.get().user.data,
-            responses: responses.length ? [...responses, survey.id] : [survey.id],
+            responses: [...responses, survey.id],
           },
         };
 
@@ -297,7 +304,6 @@ export const renderWidget = async (
 
         config.update({
           ...config.get(),
-          workspace: config.get().workspace,
           user: newPersonState,
           filteredSurveys,
         });
@@ -339,7 +345,7 @@ export const renderWidget = async (
       },
       getSetIsResponseSendingFinished: (_f: (value: boolean) => void) => undefined,
     });
-  }, delaySeconds * 1000);
+  }, survey.delay * 1000);
 
   if (action) {
     timeoutStack.add(action, timeoutId as unknown as number);
@@ -359,12 +365,16 @@ export const openSurveyForCreative = async (
   renderGeneration += 1;
 
   const timeoutStack = TimeoutStack.getInstance();
-  for (const { timeoutId, fired } of [...timeoutStack.getTimeouts()]) {
+  // `remove` replaces the stack's array rather than changing it, so walking this one is safe.
+  for (const { timeoutId, fired } of timeoutStack.getTimeouts()) {
     if (!fired) timeoutStack.remove(timeoutId);
   }
   for (const surveyId of close) closeSurvey(surveyId);
 
-  await renderWidget(survey, undefined, undefined, { creativeId });
+  // After the closes above, which clear it: the survey is on its way to the screen.
+  surveyInFlight = survey.id;
+  // Shown right away, and until the visitor closes it: no delay, no auto-close.
+  await renderWidget({ ...survey, delay: 0, autoClose: null }, undefined, undefined, { creativeId });
 };
 
 export const closeSurvey = (surveyId?: string): void => {

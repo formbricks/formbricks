@@ -112,6 +112,37 @@ const toView = (
 
 const toTime = (iso: string | null): number | null => (iso === null ? null : Date.parse(iso));
 
+/** Not before its start time and not at or after its end time; either may be unset. */
+const isWithinSchedule = (startAt: number | null, endAt: number | null, now: number): boolean =>
+  !(startAt !== null && startAt > now) && !(endAt !== null && endAt <= now);
+
+/**
+ * Its click would open nothing: it opens an app survey as a popup that the SDK can't open, or that the
+ * SDK skips because the survey lacks the language the site set (ADR 0011).
+ */
+const opensNothing = (
+  creative: TCreativePayload,
+  surveyIds: ReadonlySet<string>,
+  language: TVisitorLanguage | undefined
+): boolean => {
+  const { destination } = creative;
+  if (destination?.type !== "survey" || destination.opensAs !== "popup") return false;
+  return (
+    !surveyIds.has(destination.surveyId) ||
+    chooseLanguage(creative.surveyLanguageMatch, creative.autoSelectLanguage, language, "skip") === null
+  );
+};
+
+/** This page shows it: on a page view or on one of its actions the page tracked, if its Show when holds. */
+const matchesPage = (creative: TCreativePayload, page: TCreativePage): boolean => {
+  if (creative.showOn === "action" && !creative.triggers.some((name) => page.firedActions?.has(name))) {
+    return false;
+  }
+  // Show when applies to the whole creative, whatever shows it (a page view or an action).
+  const context = page.showConditionsContext;
+  return !creative.conditions || (!!context && evaluateShowConditions(creative.conditions, context).passed);
+};
+
 /**
  * Decides which creatives the page shows right now, and when that can next change on its own. Pure:
  * the SDK calls it on every page view, action, schedule boundary and state refresh, and the editor
@@ -125,41 +156,26 @@ export const resolve = ({ creatives, surveys, page, getShareRoll }: TResolveInpu
   for (const creative of creatives) {
     const startAt = toTime(creative.startAt);
     const endAt = toTime(creative.endAt);
+    // `nextChangeAt` is itself still ahead, so this keeps the earliest boundary of every creative.
+    const ahead: number[] = [nextChangeAt, startAt, endAt].filter(
+      (time): time is number => time !== null && time > page.now
+    );
+    nextChangeAt = ahead.length > 0 ? Math.min(...ahead) : null;
 
-    for (const boundary of [startAt, endAt]) {
-      if (boundary !== null && boundary > page.now && (nextChangeAt === null || boundary < nextChangeAt)) {
-        nextChangeAt = boundary;
-      }
-    }
-
-    if (startAt !== null && startAt > page.now) continue;
-    if (endAt !== null && endAt <= page.now) continue;
-
-    const { destination } = creative;
-    const opensPopup = destination?.type === "survey" && destination.opensAs === "popup";
-    if (opensPopup && !surveyIds.has(destination.surveyId)) continue;
-
-    if (creative.showOn === "action" && !creative.triggers.some((name) => page.firedActions?.has(name))) {
-      continue;
-    }
-
-    // Show when applies to the whole creative, whatever shows it (a page view or an action).
-    const context = page.showConditionsContext;
-    if (creative.conditions && !(context && evaluateShowConditions(creative.conditions, context).passed)) {
-      continue;
-    }
-
-    // Its click would open nothing: the SDK skips an app survey that lacks the language the site set
-    // (ADR 0011).
-    const { autoSelectLanguage, surveyLanguageMatch } = creative;
     if (
-      opensPopup &&
-      chooseLanguage(surveyLanguageMatch, autoSelectLanguage, page.language, "skip") === null
+      !isWithinSchedule(startAt, endAt, page.now) ||
+      opensNothing(creative, surveyIds, page.language) ||
+      !matchesPage(creative, page)
     ) {
       continue;
     }
 
-    const language = chooseLanguage(creative.languageMatch, autoSelectLanguage, page.language, "fallback");
+    const language = chooseLanguage(
+      creative.languageMatch,
+      creative.autoSelectLanguage,
+      page.language,
+      "fallback"
+    );
     const view = toView(creative, language, page.language);
     if (!view) continue;
 

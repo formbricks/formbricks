@@ -76,7 +76,7 @@ const saveState = (state: TVisitState): void => {
 };
 
 const appendPath = (path: string[], pathname: string): void => {
-  if (path[path.length - 1] === pathname) return;
+  if (path.at(-1) === pathname) return;
   path.push(pathname);
   if (path.length > MAX_PATH_ENTRIES) path.splice(1, 1);
 };
@@ -114,7 +114,7 @@ export const recordPageLoad = (pathname: string, referrer: string, now: number =
 /** Counts an SPA navigation (`pushState` / `popstate`) as a new page only when the path changes. */
 export const recordNavigation = (pathname: string, now: number = Date.now()): void => {
   const state = loadState();
-  if (!state || state.path[state.path.length - 1] === pathname) return;
+  if (!state || state.path.at(-1) === pathname) return;
 
   bankPageTime(state, now);
   state.pageViews += 1;
@@ -126,7 +126,7 @@ export const recordNavigation = (pathname: string, now: number = Date.now()): vo
 /** `replaceState` corrects the current page's path without counting a new page. */
 export const recordPathReplace = (pathname: string): void => {
   const state = loadState();
-  if (!state || state.path.length === 0 || state.path[state.path.length - 1] === pathname) return;
+  if (!state || state.path.length === 0 || state.path.at(-1) === pathname) return;
 
   state.path[state.path.length - 1] = pathname;
   saveState(state);

@@ -128,7 +128,8 @@ export const findCreativeRecordsPage = async (query: TCreativePageQuery): Promis
 
   const conditions: Prisma.Sql[] = [Prisma.sql`c."workspaceId" = ${query.workspaceId}`];
   if (query.name) {
-    conditions.push(Prisma.sql`c."name" ILIKE ${`%${escapeLikePattern(query.name)}%`}`);
+    const namePattern = `%${escapeLikePattern(query.name)}%`;
+    conditions.push(Prisma.sql`c."name" ILIKE ${namePattern}`);
   }
   if (query.types?.length) {
     conditions.push(Prisma.sql`c."type"::text IN (${Prisma.join(query.types)})`);

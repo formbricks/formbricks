@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { zCreativeListMeta, zCreativeResource, zCreativeStats } from "@formbricks/api-v3-schemas";
-import { ZMcpAcknowledgement, mcpToolOutput } from "./output-schemas";
+import { mcpToolOutput } from "./output-schemas";
 
 /**
  * What the creative tools answer with, built from the generated v3 resource schemas and never retyped: a
@@ -22,4 +22,4 @@ export const ZMcpCreativeListOutput = mcpToolOutput(z.array(zCreativeResource)).
 export const ZMcpCreativeStatsOutput = mcpToolOutput(zCreativeStats);
 
 /** A delete answers 204: no `data`, just the request id. */
-export const ZMcpCreativeDeleteOutput = ZMcpAcknowledgement;
+export { ZMcpAcknowledgement as ZMcpCreativeDeleteOutput } from "./output-schemas";

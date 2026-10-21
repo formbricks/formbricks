@@ -29,6 +29,13 @@ describe("bannerHtmlToRuns", () => {
     expect(bannerHtmlToRuns("<p><em>Soon</em><i>!</i></p>")).toEqual([{ text: "Soon!", italic: true }]);
   });
 
+  test("drops the line breaks the message starts or ends with, however many, and keeps the inner ones", () => {
+    expect(bannerHtmlToRuns("<p><br></p><p>Hello</p><p><br></p><p><br></p>")).toEqual([{ text: "Hello" }]);
+    expect(bannerHtmlToRuns("<p><strong>Hi</strong></p><p><br></p>")).toEqual([{ text: "Hi", bold: true }]);
+    expect(bannerHtmlToRuns("<p>One</p><p><br></p><p>Two</p><p><br></p>")).toEqual([{ text: "One\n\nTwo" }]);
+    expect(bannerHtmlToRuns(`<p>Long</p>${"<br>".repeat(5_000)}`)).toEqual([{ text: "Long" }]);
+  });
+
   test("keeps only links the banner may carry, and the text of any other", () => {
     expect(
       bannerHtmlToRuns(
@@ -59,6 +66,12 @@ describe("bannerRunsToHtml", () => {
       { text: "\n" },
       { text: "Status", underline: true, href: "https://example.com/status?a=1&b=2" },
     ]);
+  });
+
+  test("starts a paragraph at every line break, empty ones included", () => {
+    expect(bannerRunsToHtml([{ text: "A\n" }, { text: "\nB", bold: true }])).toBe(
+      "<p>A</p><p></p><p><strong>B</strong></p>"
+    );
   });
 });
 

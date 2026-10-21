@@ -1,4 +1,1 @@
-import { CreativesListPage, creativesMetadata } from "@/modules/creatives/pages";
-
-export const metadata = creativesMetadata;
-export default CreativesListPage;
+export { CreativesListPage as default, creativesMetadata as metadata } from "@/modules/creatives/pages";

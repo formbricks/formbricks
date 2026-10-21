@@ -42,6 +42,17 @@ describe("parseStepperInput", () => {
     expect(parseStepperInput("-")).toBeNull();
     expect(parseStepperInput("abc")).toBeNull();
   });
+
+  test("strips only the unit the value ends with: its trailing run of characters no number holds", () => {
+    expect(parseStepperInput("1.5em")).toBe(1.5);
+    expect(parseStepperInput("12 px")).toBe(12);
+    expect(parseStepperInput("12\u{1F600}")).toBe(12);
+    // A character a number can hold ends the unit, so what is left is no number.
+    expect(parseStepperInput("12px3")).toBeNull();
+    expect(parseStepperInput("4px-")).toBeNull();
+    // However long the unit, it goes in one pass from the end.
+    expect(parseStepperInput(`7${"x".repeat(100_000)}`)).toBe(7);
+  });
 });
 
 describe("commitStepperInput", () => {

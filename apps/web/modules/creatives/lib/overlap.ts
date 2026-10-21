@@ -196,8 +196,8 @@ const rulesOut = (a: TCondition, b: TCondition): boolean => {
 
 const couldShareUrl = (term: TTerm): boolean => {
   const urlConditions = term.filter((condition) => condition.leftOperand.value === "currentUrl");
-  return !urlConditions.some((a, index) =>
-    urlConditions.slice(index + 1).some((b) => rulesOut(a, b) || rulesOut(b, a))
+  return !urlConditions.some((first, index) =>
+    urlConditions.slice(index + 1).some((second) => rulesOut(first, second) || rulesOut(second, first))
   );
 };
 

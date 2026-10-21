@@ -462,12 +462,8 @@ export function Survey({
   const createDisplay = useCallback(async () => {
     // Skip display creation in preview mode but still trigger the onDisplayCreated callback
     if (isPreviewMode) {
-      if (onDisplayCreated) {
-        onDisplayCreated();
-      }
-      if (onDisplay) {
-        onDisplay();
-      }
+      onDisplayCreated?.();
+      onDisplay?.();
       return;
     }
 

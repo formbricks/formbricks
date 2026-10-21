@@ -75,6 +75,13 @@ export const CustomCssPanel = ({
   const describedBy = [helpId, canType && keyboardHintId, statusId, hasIssues && issuesId]
     .filter(Boolean)
     .join(" ");
+  const isDark = appearance === "dark";
+  const fieldLabel = isDark
+    ? t("workspace.custom_css.dark_css_label")
+    : t("workspace.custom_css.base_css_label");
+  const fieldHelp = isDark
+    ? t("workspace.custom_css.dark_css_help")
+    : t("workspace.custom_css.base_css_help");
 
   return (
     <EditorPanel
@@ -89,14 +96,10 @@ export const CustomCssPanel = ({
           <div className="space-y-3">
             {mode === "clear-only" && <CustomCssPlanNotice billingHref={config.billingHref} hasSavedCss />}
             <label htmlFor={fieldId} className="block text-sm font-medium text-slate-700">
-              {appearance === "dark"
-                ? t("workspace.custom_css.dark_css_label")
-                : t("workspace.custom_css.base_css_label")}
+              {fieldLabel}
             </label>
             <p id={helpId} className="text-xs text-slate-500">
-              {appearance === "dark"
-                ? t("workspace.custom_css.dark_css_help")
-                : t("workspace.custom_css.base_css_help")}
+              {fieldHelp}
             </p>
             <CssCodeField
               id={fieldId}
@@ -108,11 +111,7 @@ export const CustomCssPanel = ({
               invalid={hasFieldError || byteSize > byteLimit}
               placeholder={canType ? `.${className} { border-width: 2px; }` : undefined}
               rows={8}
-              aria-label={
-                appearance === "dark"
-                  ? t("workspace.custom_css.dark_css_label")
-                  : t("workspace.custom_css.base_css_label")
-              }
+              aria-label={fieldLabel}
               aria-describedby={describedBy}
             />
             <CustomCssIssues

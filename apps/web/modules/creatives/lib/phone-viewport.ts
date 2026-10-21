@@ -25,5 +25,5 @@ export const PHONE_FRAME = {
 /** How much to shrink the device so it fits `available` (CSS px); never above life size. */
 export const getPhoneScale = (available: { width: number; height: number }): number => {
   const scale = Math.min(available.width / PHONE_FRAME.width, available.height / PHONE_FRAME.height, 1);
-  return scale > 0 ? scale : 0;
+  return Math.max(scale, 0);
 };
