@@ -1,6 +1,6 @@
 image:
   repository: ghcr.io/authzed/spicedb-operator
-  tag: v1.25.1
+  tag: 1.27.0
   digest: sha256:798037034302a60182e601f5399c476c6dc8bb18c253ba1b3f7431bdeda3bafe
   pullPolicy: IfNotPresent
 
