@@ -16,12 +16,17 @@ import { build } from "vite";
  * (ENG-3926) use the same two, so that work adds no second copy. Raised from 19 000 for languages
  * (ENG-4003; ~19.4 KB): the language rule creatives share with `renderWidget` (which now uses it instead
  * of its own copy), picking each text's language and hiding a creative whose survey would be skipped
- * (~0.5 KB). The canonical language table stays in the surveys bundle.
+ * (~0.5 KB). The canonical language table stays in the surveys bundle. Raised from 19 500 when surveys'
+ * show conditions landed (ENG-3926/3927; ~20.6 KB): their newer evaluator and visit store replaced the
+ * copy above (~0.5 KB), plus the SDK debug reporting (~0.4 KB) and the per-survey check (~0.3 KB).
  */
-const JS_CORE_MAX_GZIP_BYTES = 19_500;
+const JS_CORE_MAX_GZIP_BYTES = 21_000;
 
-/** The creatives renderer on its own: `resolve`, `render` and their helpers (ADR 0003: about 6 KB gz). */
-const CREATIVES_MAX_GZIP_BYTES = 6_000;
+/**
+ * The creatives renderer on its own: `resolve`, `render` and their helpers (ADR 0003: about 6 KB gz).
+ * Raised from 6 000 for the ENG-3926 evaluator it shares with surveys (~0.3 KB; ~6.15 KB).
+ */
+const CREATIVES_MAX_GZIP_BYTES = 6_250;
 
 const gzippedSize = async (entry: string): Promise<number> => {
   const output = await build({
