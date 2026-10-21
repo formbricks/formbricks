@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 
-// Guards patches/next@16.3.6.patch (ENG-3972). For every non-GET request the proxy matches, and for every
+// Guards patches/next@16.3.8.patch (ENG-3972). For every non-GET request the proxy matches, and for every
 // external rewrite (the PostHog /ingest proxy), an unpatched Next clones the body: it reads the whole upload
 // off the socket, keeps up to `proxyClientMaxBodySize` in memory, and holds the request until the client's
 // last byte, so any anonymous caller can pin 16 MB per connection on any path. The patch hands the proxy no
@@ -28,7 +28,7 @@ const readProxyRequestBody = (file: string): string => {
   return body[1];
 };
 
-describe("Next proxy request body (patches/next@16.3.6.patch)", () => {
+describe("Next proxy request body (patches/next@16.3.8.patch)", () => {
   test.each(["next/dist/server/next-server.js", "next/dist/esm/server/next-server.js"])(
     "%s hands the proxy no body to clone",
     (file) => {
