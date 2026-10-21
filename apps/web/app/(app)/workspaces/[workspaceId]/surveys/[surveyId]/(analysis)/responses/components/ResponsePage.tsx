@@ -44,7 +44,7 @@ export const ResponsePage = ({
   quotas,
   initialResponses = [],
   isOpenedByCreatives,
-}: ResponsePageProps) => {
+}: Readonly<ResponsePageProps>) => {
   const [responses, setResponses] = useState<TResponseWithQuotas[]>(initialResponses);
   const [page, setPage] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(initialResponses.length >= responsesPerPage);

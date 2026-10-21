@@ -117,7 +117,7 @@ const mapResponsesToTableData = (
   }));
 };
 
-export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
+export const ResponseDataView: React.FC<Readonly<ResponseDataViewProps>> = ({
   survey,
   responses,
   user,

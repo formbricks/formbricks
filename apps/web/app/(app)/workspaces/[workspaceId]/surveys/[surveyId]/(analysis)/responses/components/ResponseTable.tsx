@@ -85,7 +85,7 @@ export const ResponseTable = ({
   selectedResponseId,
   setSelectedResponseId,
   isOpenedByCreatives,
-}: ResponseTableProps) => {
+}: Readonly<ResponseTableProps>) => {
   const { t } = useTranslation();
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});

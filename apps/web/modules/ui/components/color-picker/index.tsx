@@ -26,7 +26,7 @@ export const ColorPicker = ({
   placeholder,
   placeholderColor,
   id,
-}: ColorPickerProps) => {
+}: Readonly<ColorPickerProps>) => {
   return (
     <div className={cn(containerClass)}>
       <div className="flex h-10 w-full items-center gap-2 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-400">
