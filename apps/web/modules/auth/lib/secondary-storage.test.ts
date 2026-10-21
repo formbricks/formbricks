@@ -164,14 +164,26 @@ describe("redisSecondaryStorage", () => {
   test("recreates a previously established connection after reconnection is exhausted", async () => {
     vi.resetModules();
     const { redisSecondaryStorage: freshStorage } = await import("./secondary-storage");
-    mockClient.get.mockResolvedValue("value");
-    await expect(freshStorage.get("k")).resolves.toBe("value");
-    mockClient.isOpen = false;
-    mockClient.connect.mockImplementationOnce(async () => {
-      mockClient.isOpen = true;
-    });
-    await expect(freshStorage.get("k")).resolves.toBe("value");
+    const firstClient = {
+      ...mockClient,
+      connect: vi.fn().mockResolvedValue(undefined),
+      get: vi.fn().mockResolvedValue("original"),
+    };
+    const replacementClient = {
+      ...mockClient,
+      connect: vi.fn().mockResolvedValue(undefined),
+      get: vi.fn().mockResolvedValue("replacement"),
+    };
+    vi.mocked(createClient)
+      .mockReturnValueOnce(firstClient as unknown as ReturnType<typeof createClient>)
+      .mockReturnValueOnce(replacementClient as unknown as ReturnType<typeof createClient>);
+    await expect(freshStorage.get("k")).resolves.toBe("original");
+    firstClient.isOpen = false;
+    await expect(freshStorage.get("k")).resolves.toBe("replacement");
     expect(createClient).toHaveBeenCalledTimes(2);
-    expect(mockClient.connect).toHaveBeenCalledTimes(2);
+    expect(firstClient.connect).toHaveBeenCalledTimes(1);
+    expect(replacementClient.connect).toHaveBeenCalledTimes(1);
+    expect(firstClient.get).toHaveBeenCalledTimes(1);
+    expect(replacementClient.get).toHaveBeenCalledTimes(1);
   });
 });
