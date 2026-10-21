@@ -21,7 +21,9 @@ export const login = async (user: Prisma.UserGetPayload<{ include: { memberships
   await expect(async () => {
     await page.goto("/");
     if (user.memberships.length > 0) {
-      await expect(page).not.toHaveURL(/\/setup\/organization\/create(?:[?#]|$)/, { timeout: 1000 });
+      await expect(page).toHaveURL(/\/(?:organizations|workspaces)\/[^/?#]+(?:[/?#]|$)/, {
+        timeout: 1000,
+      });
     }
   }).toPass({ timeout: 30_000 });
 };
