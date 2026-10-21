@@ -5,7 +5,8 @@ export interface RedisTlsOptions {
   ca?: string[];
 }
 
-const CERTIFICATE_PATTERN = /-----BEGIN CERTIFICATE-----[\s\S]+?-----END CERTIFICATE-----/g;
+const CERTIFICATE_START = "-----BEGIN CERTIFICATE-----";
+const CERTIFICATE_END = "-----END CERTIFICATE-----";
 
 /** Redis private CAs must never change trust or verification for unrelated HTTPS clients. */
 export const getRedisTlsOptions = (redisUrl: string, caPem?: string): RedisTlsOptions | undefined => {
@@ -30,12 +31,23 @@ export const getRedisTlsOptions = (redisUrl: string, caPem?: string): RedisTlsOp
   // Explicit true also protects Redis while a deployment is retiring a global TLS bypass.
   if (caPem === undefined) return { rejectUnauthorized: true };
 
-  const certificates = caPem.match(CERTIFICATE_PATTERN);
+  let certificates: string[];
   try {
-    if (!certificates?.length || caPem.replace(CERTIFICATE_PATTERN, "").trim()) throw new Error();
-    for (const certificate of certificates) {
+    // Literal splitting consumes each block once; repeated malformed headers must not trigger backtracking.
+    const blocks = caPem.split(CERTIFICATE_END);
+    if (blocks.pop()?.trim() || blocks.length === 0) throw new Error();
+    certificates = blocks.map((block) => {
+      const body = block.trim();
+      if (
+        !body.startsWith(CERTIFICATE_START) ||
+        body.indexOf(CERTIFICATE_START, CERTIFICATE_START.length) !== -1
+      ) {
+        throw new Error();
+      }
+      const certificate = `${body}\n${CERTIFICATE_END}`;
       if (!new X509Certificate(certificate).ca) throw new Error();
-    }
+      return certificate;
+    });
   } catch {
     throw new Error("REDIS_TLS_CA must contain only valid PEM CA certificates");
   }
