@@ -7,6 +7,7 @@ import {
   readRequestBodyWithLimit,
 } from "@/app/lib/api/request-body";
 import { handleAuthenticatedMcpRequest } from "@/modules/mcp/auth";
+import { getMcpRequestBudgetError } from "@/modules/mcp/request-budget";
 import { mcpHandler } from "@/modules/mcp/server";
 
 export const runtime = "nodejs";
@@ -82,6 +83,18 @@ async function handleBoundedMcpRequest(request: Request): Promise<Response> {
     message = JSON.parse(bodyText);
   } catch {
     message = undefined;
+  }
+
+  const budgetError = getMcpRequestBudgetError(message);
+  if (budgetError) {
+    return Response.json(
+      {
+        jsonrpc: "2.0",
+        id: typeof message === "object" && message !== null && "id" in message ? message.id : null,
+        error: { code: -32602, message: budgetError },
+      },
+      { status: 400 }
+    );
   }
 
   const violation = message === undefined ? null : findArrayBudgetViolation(message);
