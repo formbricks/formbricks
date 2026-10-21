@@ -6,7 +6,6 @@ import { logger } from "@formbricks/logger";
 import { instrumentMcpServerWithTracing } from "@/lib/posthog/mcp-tracing";
 import { getMcpAuthentication } from "./auth";
 import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./constants";
-import { MCP_REQUEST_MAX_ELEMENTS } from "./request-budget";
 import { registerFeedbackRecordTools } from "./tools/feedback-records";
 import { registerSurveyTools } from "./tools/surveys";
 import { registerWorkflowTools } from "./tools/workflows";
@@ -75,9 +74,6 @@ export const MCP_HANDLER_OPTIONS = {
     version: MCP_SERVER_VERSION,
   },
   verboseLogs: false,
-  // GHSA-46jr-4wx8-v453: bound array elements and object keys before SDK schema validation.
-  // The SDK leaves this unlimited unless explicitly enabled; allow large survey documents.
-  maxToolInputElements: MCP_REQUEST_MAX_ELEMENTS,
   // Refuse `subscriptions/listen` outright. Protocol 2026-07-28 replaced the GET SSE endpoint and
   // `resources/subscribe` with a long-lived POST-response stream, which this POST route now serves -
   // under the v1 `disableSse: true` there was no long-lived path at all, so the migration would
