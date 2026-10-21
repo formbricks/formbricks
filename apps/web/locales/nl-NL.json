@@ -2467,7 +2467,7 @@
         "delete_blocked_list_title": "Koppel deze eerst opnieuw, archiveer of verwijder ze:",
         "delete_blocked_title": "Deze vragenlijst kan niet worden verwijderd",
         "go_to_creatives": "Naar Creatives",
-        "keep_paused": "Creatives die met deze vragenlijst zijn gepauzeerd, gepauzeerd houden",
+        "keep_paused": "Houd deze creatives gepauzeerd",
         "keep_paused_failed": "De creatives konden niet worden gepauzeerd, dus de vragenlijst is niet hervat.",
         "open_creative": "Creative openen",
         "opened_by": "Geopend door: {creative}",

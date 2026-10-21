@@ -2467,7 +2467,7 @@
         "delete_blocked_list_title": "Länka om, arkivera eller radera de här först:",
         "delete_blocked_title": "Den här enkäten kan inte raderas",
         "go_to_creatives": "Gå till Kreativ",
-        "keep_paused": "Behåll de som pausades med den här enkäten som pausade",
+        "keep_paused": "Behåll dessa annonsmaterial pausade",
         "keep_paused_failed": "Kreativen kunde inte pausas, så enkäten återupptogs inte.",
         "open_creative": "Öppna kreativet",
         "opened_by": "Öppnas av: {creative}",

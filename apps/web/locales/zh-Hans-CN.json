@@ -2467,7 +2467,7 @@
         "delete_blocked_list_title": "请先重新关联、归档或删除以下创意:",
         "delete_blocked_title": "无法删除此调查",
         "go_to_creatives": "前往“创意”",
-        "keep_paused": "让随此调查暂停的创意保持暂停",
+        "keep_paused": "保持这些创意处于暂停状态",
         "keep_paused_failed": "无法暂停这些创意,因此调查未恢复。",
         "open_creative": "打开创意",
         "opened_by": "打开方:{creative}",

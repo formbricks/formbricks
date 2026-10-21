@@ -2467,7 +2467,7 @@
         "delete_blocked_list_title": "Relink, archive or delete these first:",
         "delete_blocked_title": "This survey can't be deleted",
         "go_to_creatives": "Go to Creatives",
-        "keep_paused": "Keep the ones paused with this survey paused",
+        "keep_paused": "Keep these creatives paused",
         "keep_paused_failed": "The creatives couldn't be paused, so the survey wasn't resumed.",
         "open_creative": "Open creative",
         "opened_by": "Opened by: {creative}",

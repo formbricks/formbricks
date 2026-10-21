@@ -2467,7 +2467,7 @@
         "delete_blocked_list_title": "先に、次のクリエイティブのリンクを付け替えるか、アーカイブまたは削除してください:",
         "delete_blocked_title": "このアンケートは削除できません",
         "go_to_creatives": "クリエイティブへ移動",
-        "keep_paused": "このアンケートで一時停止されたものは一時停止のままにする",
+        "keep_paused": "これらのクリエイティブを一時停止のままにする",
         "keep_paused_failed": "クリエイティブを一時停止できなかったため、アンケートは再開されませんでした。",
         "open_creative": "クリエイティブを開く",
         "opened_by": "開く元: {creative}",

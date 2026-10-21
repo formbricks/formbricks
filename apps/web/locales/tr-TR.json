@@ -2467,7 +2467,7 @@
         "delete_blocked_list_title": "Önce bunların bağlantısını değiştir, arşivle veya sil:",
         "delete_blocked_title": "Bu anket silinemiyor",
         "go_to_creatives": "Kreatiflere git",
-        "keep_paused": "Bu anketle duraklatılanları duraklatılmış halde tut",
+        "keep_paused": "Bu kreatifleri duraklatılmış halde tut",
         "keep_paused_failed": "Kreatifler duraklatılamadığı için anket devam ettirilmedi.",
         "open_creative": "Kreatifi aç",
         "opened_by": "Açan: {creative}",

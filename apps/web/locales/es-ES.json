@@ -2467,7 +2467,7 @@
         "delete_blocked_list_title": "Vuelve a vincular, archiva o elimina primero estos:",
         "delete_blocked_title": "No se puede eliminar esta encuesta",
         "go_to_creatives": "Ir a Creativos",
-        "keep_paused": "Mantener en pausa los que están en pausa con esta encuesta",
+        "keep_paused": "Mantener en pausa estos creativos",
         "keep_paused_failed": "No se han podido poner en pausa los creativos, por lo que la encuesta no se ha reanudado.",
         "open_creative": "Abrir creativo",
         "opened_by": "Abierta por: {creative}",

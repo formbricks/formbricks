@@ -2467,7 +2467,7 @@
         "delete_blocked_list_title": "Verknüpfe diese zuerst neu, archiviere oder lösche sie:",
         "delete_blocked_title": "Diese Umfrage kann nicht gelöscht werden",
         "go_to_creatives": "Zu Creatives",
-        "keep_paused": "Die mit dieser Umfrage pausierten Creatives pausiert lassen",
+        "keep_paused": "Diese Creatives pausiert lassen",
         "keep_paused_failed": "Die Creatives konnten nicht pausiert werden, daher wurde die Umfrage nicht fortgesetzt.",
         "open_creative": "Creative öffnen",
         "opened_by": "Geöffnet von: {creative}",

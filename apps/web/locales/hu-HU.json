@@ -2467,7 +2467,7 @@
         "delete_blocked_list_title": "Először kérjük, kapcsolja át, archiválja vagy törölje ezeket:",
         "delete_blocked_title": "Ez a felmérés nem törölhető",
         "go_to_creatives": "Ugrás a Kreatívokhoz",
-        "keep_paused": "A felmérés miatt szüneteltetett kreatívok maradjanak szüneteltetve",
+        "keep_paused": "Kérjük, tartsa szüneteltetve ezeket a kreatívokat",
         "keep_paused_failed": "A kreatívokat nem sikerült szüneteltetni, ezért a felmérés újraindítása nem történt meg.",
         "open_creative": "Kreatív megnyitása",
         "opened_by": "Megnyitja: {creative}",

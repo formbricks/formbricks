@@ -2467,7 +2467,7 @@
         "delete_blocked_list_title": "Commence par réassocier, archiver ou supprimer celles-ci :",
         "delete_blocked_title": "Ce sondage ne peut pas être supprimé",
         "go_to_creatives": "Aller aux Créas",
-        "keep_paused": "Garder en pause celles qui ont été mises en pause avec ce sondage",
+        "keep_paused": "Garder ces créas en pause",
         "keep_paused_failed": "Impossible de mettre les créas en pause, le sondage n'a donc pas été relancé.",
         "open_creative": "Ouvrir la créa",
         "opened_by": "Ouvert par : {creative}",

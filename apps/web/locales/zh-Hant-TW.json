@@ -2467,7 +2467,7 @@
         "delete_blocked_list_title": "請先重新連結、封存或刪除以下項目：",
         "delete_blocked_title": "無法刪除這份問卷",
         "go_to_creatives": "前往創意素材",
-        "keep_paused": "讓已隨此問卷暫停的素材維持暫停",
+        "keep_paused": "讓這些廣告素材維持暫停狀態",
         "keep_paused_failed": "無法暫停這些創意素材，因此問卷未恢復。",
         "open_creative": "開啟創意素材",
         "opened_by": "開啟來源:{creative}",

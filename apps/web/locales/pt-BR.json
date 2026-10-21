@@ -2467,7 +2467,7 @@
         "delete_blocked_list_title": "Antes, vincule a outra pesquisa, arquive ou exclua estes:",
         "delete_blocked_title": "Não é possível excluir esta pesquisa",
         "go_to_creatives": "Ir para Criativos",
-        "keep_paused": "Manter pausados os que foram pausados com esta pesquisa",
+        "keep_paused": "Manter esses criativos pausados",
         "keep_paused_failed": "Não foi possível pausar os criativos, então a pesquisa não foi retomada.",
         "open_creative": "Abrir criativo",
         "opened_by": "Aberta por: {creative}",

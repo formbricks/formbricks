@@ -2467,7 +2467,7 @@
         "delete_blocked_list_title": "Mai întâi relegă, arhivează sau șterge:",
         "delete_blocked_title": "Acest sondaj nu poate fi șters",
         "go_to_creatives": "Mergi la Materiale creative",
-        "keep_paused": "Păstrează în pauză materialele puse în pauză odată cu acest sondaj",
+        "keep_paused": "Păstrează aceste materiale creative în pauză",
         "keep_paused_failed": "Materialele creative nu au putut fi puse în pauză, așa că sondajul nu a fost reluat.",
         "open_creative": "Deschide materialul creativ",
         "opened_by": "Deschis de: {creative}",

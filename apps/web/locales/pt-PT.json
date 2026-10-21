@@ -2467,7 +2467,7 @@
         "delete_blocked_list_title": "Primeiro, volta a associar, arquiva ou elimina estes:",
         "delete_blocked_title": "Não é possível eliminar este inquérito",
         "go_to_creatives": "Ir para Criativos",
-        "keep_paused": "Manter em pausa os que estão em pausa com este inquérito",
+        "keep_paused": "Manter estes criativos em pausa",
         "keep_paused_failed": "Não foi possível colocar os criativos em pausa, por isso o inquérito não foi retomado.",
         "open_creative": "Abrir criativo",
         "opened_by": "Aberto por: {creative}",
