@@ -1,6 +1,8 @@
 import { decryptXml } from "@boxyhq/saml20/dist/decrypt.js";
 import { DOMParser, type Element, MIME_TYPE } from "@xmldom/xmldom";
 import { type MessagePort, workerData } from "node:worker_threads";
+// Type-only, so erased: the worker never loads the pool's module.
+import type { SamlResponseClaims } from "./saml-parse-budget";
 
 /**
  * Worker side of the SAML parse budget (`saml-parse-budget.ts`, ENG-3973). It parses a decoded SAMLResponse exactly
@@ -25,7 +27,7 @@ const field = (value: string | null | undefined): string | undefined =>
 const parseXml = (xml: string) =>
   new DOMParser({ onError: () => undefined }).parseFromString(xml, MIME_TYPE.XML_APPLICATION);
 
-const readClaims = (root: Element) => {
+const readClaims = (root: Element): SamlResponseClaims => {
   let issuer: string | undefined;
   for (let node = root.firstChild; node; node = node.nextSibling) {
     if (node.namespaceURI === SAML_ASSERTION_NS && node.localName === "Issuer") {
@@ -52,8 +54,12 @@ const hasEncryptedAssertion = (root: Element): boolean => {
   return false;
 };
 
-const parse = (xml: string, decryptionKey: string | undefined) => {
-  let claims = {};
+/**
+ * One job: parse `xml`, decrypt its encrypted assertion with `decryptionKey` as jackson will, and return the claims.
+ * Never throws.
+ */
+export const parseSamlResponse = (xml: string, decryptionKey: string | undefined): SamlResponseClaims => {
+  let claims: SamlResponseClaims = {};
   try {
     const root = parseXml(xml).documentElement;
     if (!root) return claims;
@@ -69,20 +75,24 @@ const parse = (xml: string, decryptionKey: string | undefined) => {
   return claims;
 };
 
-const port = (workerData as { port: MessagePort }).port;
-
-port.on("message", ({ id, xml, decryptionKey }: { id: number; xml: string; decryptionKey?: string }) => {
-  const started = performance.now();
-  const claims = parse(xml, decryptionKey);
-  port.postMessage({ id, ms: performance.now() - started, claims });
-});
-
 // Warm xmldom up before the first real job, so a fresh worker does not charge its cold start to a real sign-in.
 const WARM_UP =
   '<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="_w">' +
   '<saml2:Issuer xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion">w</saml2:Issuer>' +
   "<a><b c='d'/></a>".repeat(200) +
   "</samlp:Response>";
-for (let i = 0; i < 20; i++) parse(WARM_UP, undefined);
 
-port.postMessage({ ready: true });
+const serve = (port: MessagePort) => {
+  port.on("message", ({ id, xml, decryptionKey }: { id: number; xml: string; decryptionKey?: string }) => {
+    const started = performance.now();
+    const claims = parseSamlResponse(xml, decryptionKey);
+    port.postMessage({ id, ms: performance.now() - started, claims });
+  });
+  for (let i = 0; i < 20; i++) parseSamlResponse(WARM_UP, undefined);
+  port.postMessage({ ready: true });
+};
+
+// Started as the pool's worker, it serves the port it was given. Imported anywhere else (its unit test), there is no
+// port, and it only exports `parseSamlResponse`.
+const workerPort = (workerData as { port?: MessagePort } | null)?.port;
+if (workerPort) serve(workerPort);

@@ -17,14 +17,16 @@ export const createSpKeyPair = () =>
   });
 
 /**
- * `plaintext` encrypted as ADFS and Okta encrypt an assertion (XML Encryption: AES-256-CBC content, its key wrapped
+ * `plaintext` encrypted as an IdP encrypts an assertion (XML Encryption 1.1: AES-256-GCM content, its key wrapped
  * with RSA-OAEP for `spPublicKey`).
  */
 export const encryptAssertion = (plaintext: string, spPublicKey: string): string => {
   const key = randomBytes(32);
-  const iv = randomBytes(16);
-  const cipher = createCipheriv("aes-256-cbc", key, iv);
-  const content = Buffer.concat([iv, cipher.update(plaintext, "utf8"), cipher.final()]).toString("base64");
+  const iv = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", key, iv);
+  const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
+  // XML Encryption 1.1 carries GCM as the IV, the ciphertext, then the tag.
+  const content = Buffer.concat([iv, encrypted, cipher.getAuthTag()]).toString("base64");
   const wrappedKey = publicEncrypt(
     { key: spPublicKey, padding: constants.RSA_PKCS1_OAEP_PADDING, oaepHash: "sha1" },
     key
@@ -32,7 +34,7 @@ export const encryptAssertion = (plaintext: string, spPublicKey: string): string
   return (
     `<saml2:EncryptedAssertion xmlns:saml2="${ASSERTION_NS}">` +
     '<xenc:EncryptedData xmlns:xenc="http://www.w3.org/2001/04/xmlenc#" Type="http://www.w3.org/2001/04/xmlenc#Element">' +
-    '<xenc:EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#aes256-cbc"/>' +
+    '<xenc:EncryptionMethod Algorithm="http://www.w3.org/2009/xmlenc11#aes256-gcm"/>' +
     '<ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><xenc:EncryptedKey>' +
     '<xenc:EncryptionMethod Algorithm="http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p">' +
     '<ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"/></xenc:EncryptionMethod>' +
