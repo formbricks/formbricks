@@ -464,7 +464,7 @@ export function Survey({
     if (isPreviewMode) {
       // Fire and forget, as before: a preview has no display to wait for.
       void onDisplayCreated?.();
-      onDisplay?.();
+      void onDisplay?.();
       return;
     }
 
