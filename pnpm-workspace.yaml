@@ -40,11 +40,9 @@ catalog:
   # exclusively plus three new peers), while vite-prerender-plugin — pulled in by
   # @preact/preset-vite for packages/surveys — caps at 7.x. Moving the repo to Vite 8
   # is its own migration, tracked separately; see ENG-1689's follow-ups.
-  # Note: the lockfile still resolves a vite 8 for `@vitest/eslint-plugin`, which declares
-  # `vitest` as an OPTIONAL peer with range `*`; `autoInstallPeers` then materialises the
-  # newest vitest, whose own vite peer picks 8. That predates this catalog, no importer
-  # references it, and nothing builds with it — every workspace resolves 7.3.5.
-  vite: 7.3.5
+  # The root also declares vite: catalog: so optional Vitest peers resolve this patched
+  # version instead of pulling in an unrelated Vite major.
+  vite: 7.3.7
   vitest: 4.1.11
   "@vitest/coverage-v8": 4.1.11
   vite-plugin-dts: 4.5.4
@@ -127,6 +125,14 @@ catalog:
 # The `load-bearing:` notes record the consumer that keeps the vulnerable version in the
 # tree, so the next cleanup can check that single upstream instead of re-deriving it.
 overrides:
+  # GHSA-ch52-4w7c-c8xp: pin the affected transitive dependency to a patched release.
+  "http-cache-semantics": 4.3.0
+  # GHSA-pqg4-j6r4-53mv: pin the affected transitive dependency to a patched release.
+  "shell-quote": 1.12.0
+  # GHSA-xw65-4hp5-5hc7, GHSA-8r5x-fm3f-whwj, GHSA-p8wg-vrv2-v86f: pin the affected transitive dependency to a patched release.
+  "handlebars": 4.7.10
+  # GHSA-q3jh-wrc6-jgq8, GHSA-8r9p-f939-6h3c: pin the affected transitive dependency to a patched release.
+  "follow-redirects": 1.16.1
   # GHSA-2gc4-cqfq-p2gv: reject transport upgrades with mismatched protocol revisions.
   # load-bearing: @formbricks/email > react-email > socket.io.
   engine.io@6: 6.6.10
@@ -172,7 +178,7 @@ overrides:
   # still write generated files outside its configured output directory. All three patched in 4.13.5.
   # load-bearing: @hono/node-server resolves 4.x via @modelcontextprotocol/sdk and @prisma/dev (dev/MCP-only).
   # GHSA-hxh3-vqpv-xpqv: boundary components render unescaped strings; patched in 4.13.7.
-  hono: 4.13.7
+  hono: 4.13.11
   # OpenTelemetry / protobuf chains.
   # ENG-1962 / GHSA-j3f2-48v5-ccww (CVE-2026-59877): protobufjs .proto option-parsing infinite-loop DoS,
   # patched in 8.6.6. ENG-1963 / GHSA-jfj6-75fj-8934 (CVE-2026-59876): text-format map prototype
