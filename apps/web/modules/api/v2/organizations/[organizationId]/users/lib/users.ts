@@ -175,9 +175,10 @@ export const createUser = async (
 // generic catch block below without it being reported as an internal_server_error.
 class LastOwnerConflictError extends Error {}
 
-// Thrown inside updateUser's transaction when the request may not change the account-wide fields it
-// asks to change; carried out as a 409, like LastOwnerConflictError: whether the change is allowed
-// depends on the user's current state (other memberships, owner role), not on the request's shape.
+// Thrown inside updateUser's transaction when the request would change an account-wide field of a
+// user who also belongs to another organization; carried out as a 409, like LastOwnerConflictError:
+// the same request succeeds for a user in this organization alone, so it conflicts with the user's
+// current state rather than being malformed.
 class AccountFieldsConflictError extends Error {
   constructor(readonly details: ApiErrorDetails) {
     super("Cannot change the account-wide fields of this user from this organization");
@@ -186,8 +187,6 @@ class AccountFieldsConflictError extends Error {
 
 const OTHER_ORGANIZATIONS_ISSUE =
   "cannot be changed from one organization while the user also belongs to other organizations";
-const OWNER_DEMOTION_ISSUE =
-  "an owner's role cannot be changed in the same request as their name or isActive; send them separately";
 
 /**
  * `name` and `isActive` belong to the account, not to this organization's membership: changing them here
@@ -197,15 +196,14 @@ const OWNER_DEMOTION_ISSUE =
  * change and stays allowed, so a client that echoes the whole user back keeps working.
  *
  * Decided under the user row's lock (`lockUserActiveState`), which a membership being added in another
- * organization waits on, so one added meanwhile is counted. Returns whether the account was active and
- * which fields the request actually changes.
+ * organization waits on, so one added meanwhile is counted. Returns whether the account was active.
  */
 const lockAndCheckAccountFields = async (
   tx: Prisma.TransactionClient,
   userId: string,
   organizationId: string,
   { name, isActive }: Pick<TUserInputPatch, "name" | "isActive">
-): Promise<{ wasActive: boolean; changedFields: ("isActive" | "name")[] }> => {
+): Promise<{ wasActive: boolean }> => {
   await lockUserActiveState(tx, userId);
   const account = await tx.user.findUniqueOrThrow({
     where: { id: userId },
@@ -230,7 +228,7 @@ const lockAndCheckAccountFields = async (
     );
   }
 
-  return { wasActive: account.isActive, changedFields };
+  return { wasActive: account.isActive };
 };
 
 export const updateUser = async (
@@ -387,13 +385,11 @@ export const updateUser = async (
             ? await lockAndCheckAccountFields(tx, existingUser.id, organizationId, { name, isActive })
             : null;
           const reactivating = isActive === true && account?.wasActive === false;
-          // Demoting an owner runs Serializable for the owner count below, so the membership read in
-          // lockAndCheckAccountFields uses the snapshot taken before the row lock was granted, and a
-          // membership another organization adds while we wait can be missed. Rather than weaken either
-          // guarantee, an owner's demotion and a change to their account fields go in separate requests.
-          if (isDemotingOwner && account && account.changedFields.length > 0) {
-            throw new AccountFieldsConflictError([{ field: "role", issue: OWNER_DEMOTION_ISSUE }]);
-          }
+          // When an owner is also being demoted this transaction is Serializable, so the membership
+          // read in lockAndCheckAccountFields uses the snapshot taken before the row lock was granted:
+          // a membership another organization was adding while we waited is not seen. That ends the
+          // same as this change landing just before the membership did, which this organization was
+          // entitled to do, so it is accepted rather than splitting the request across transactions.
           if (isDemotingOwner) {
             const ownerCount = await getOrganizationOwnerCount(organizationId, tx);
             if (ownerCount <= 1) {

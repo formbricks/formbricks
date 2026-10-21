@@ -195,36 +195,54 @@ describe("updateUser on a user who belongs to several organizations vs real Post
     expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).isActive).toBe(true);
   });
 
-  test("an owner's demotion and a change to their name or state go in separate requests", async () => {
-    const org = await prisma.organization.create({ data: { name: "Two Owners" } });
-    const email = "owner@example.com";
-    const user = await prisma.user.create({ data: { name: "Owner", email, isActive: true } });
-    const otherOwner = await prisma.user.create({
-      data: { name: "Other Owner", email: "other-owner@example.com", isActive: true },
+  test("an owner can be demoted and renamed or deactivated in one request, all or nothing", async () => {
+    const owners = async (orgName: string, emails: string[]) => {
+      const org = await prisma.organization.create({ data: { name: orgName } });
+      const users = await Promise.all(
+        emails.map((email) => prisma.user.create({ data: { name: "Owner", email, isActive: true } }))
+      );
+      await prisma.membership.createMany({
+        data: users.map((user) => ({
+          userId: user.id,
+          organizationId: org.id,
+          role: "owner",
+          accepted: true,
+        })),
+      });
+      return { org, user: users[0] };
+    };
+    const state = async (userId: string, organizationId: string) => {
+      const user = await prisma.user.findUniqueOrThrow({
+        where: { id: userId },
+        include: { memberships: { where: { organizationId } } },
+      });
+      return { name: user.name, isActive: user.isActive, role: user.memberships[0].role };
+    };
+
+    const twoOwners = await owners("Two Owners", ["owner@example.com", "other-owner@example.com"]);
+    const combined = await updateUser(
+      { email: "owner@example.com", role: "member", name: "Renamed", isActive: false },
+      twoOwners.org.id
+    );
+    expect(combined.ok).toBe(true);
+    expect(await state(twoOwners.user.id, twoOwners.org.id)).toEqual({
+      name: "Renamed",
+      isActive: false,
+      role: "member",
     });
-    await prisma.membership.createMany({
-      data: [
-        { userId: user.id, organizationId: org.id, role: "owner", accepted: true },
-        { userId: otherOwner.id, organizationId: org.id, role: "owner", accepted: true },
-      ],
+
+    // The last owner can't be demoted, and the rename sent with it is rolled back too.
+    const oneOwner = await owners("One Owner", ["last-owner@example.com"]);
+    const refused = await updateUser(
+      { email: "last-owner@example.com", role: "member", name: "Renamed" },
+      oneOwner.org.id
+    );
+    expect(refused).toMatchObject({ ok: false, error: { type: "conflict", details: [{ field: "role" }] } });
+    expect(await state(oneOwner.user.id, oneOwner.org.id)).toEqual({
+      name: "Owner",
+      isActive: true,
+      role: "owner",
     });
-    const role = async () =>
-      (
-        await prisma.membership.findUniqueOrThrow({
-          where: { userId_organizationId: { userId: user.id, organizationId: org.id } },
-        })
-      ).role;
-
-    const combined = await updateUser({ email, role: "member", isActive: false }, org.id);
-
-    expect(combined).toMatchObject({ ok: false, error: { type: "conflict", details: [{ field: "role" }] } });
-    expect(await role()).toBe("owner");
-    expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).isActive).toBe(true);
-
-    // Echoing the stored values changes nothing, so the demotion alone goes through.
-    const echoed = await updateUser({ email, role: "member", name: "Owner", isActive: true }, org.id);
-    expect(echoed.ok).toBe(true);
-    expect(await role()).toBe("member");
   });
 
   test("a user in this organization alone can still be renamed and deactivated", async () => {
