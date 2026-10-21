@@ -34,7 +34,8 @@ export const ShowConditionsCard = ({
           <AlertDescription>{t("workspace.creatives.editor.issue_condition_incomplete")}</AlertDescription>
         </Alert>
       )}
-      <ShowConditionsBlock value={value} onChange={onChange} showHeading={false} />
+      {/* Creatives only show on websites, so the surveys' note about mobile apps doesn't apply. */}
+      <ShowConditionsBlock value={value} onChange={onChange} showHeading={false} showMobileNote={false} />
       {children}
     </EditorPanel>
   );

@@ -41,6 +41,8 @@ interface ShowConditionsBlockProps {
   isReadOnly?: boolean;
   /** Off when the host card already titles the conditions, as Creatives' Show when card does. */
   showHeading?: boolean;
+  /** Off where only websites apply the conditions, as for Creatives: the note is about mobile apps. */
+  showMobileNote?: boolean;
 }
 
 const ENUM_OPERANDS = new Set(["deviceType", "browser"]);
@@ -57,6 +59,7 @@ export const ShowConditionsBlock = ({
   onChange,
   isReadOnly = false,
   showHeading = true,
+  showMobileNote = true,
 }: Readonly<ShowConditionsBlockProps>) => {
   const { t } = useTranslation();
 
@@ -136,9 +139,11 @@ export const ShowConditionsBlock = ({
 
       <ShowConditionsUrlTester conditions={value} />
 
-      <Alert variant="info" size="small">
-        <AlertDescription>{t("workspace.surveys.edit.show_conditions.mobile_note")}</AlertDescription>
-      </Alert>
+      {showMobileNote && (
+        <Alert variant="info" size="small">
+          <AlertDescription>{t("workspace.surveys.edit.show_conditions.mobile_note")}</AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 };
