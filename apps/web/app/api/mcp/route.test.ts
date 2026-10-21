@@ -116,7 +116,10 @@ const apiKeyAuth = {
   ],
 };
 
-function createMcpRequest(body: Record<string, unknown>, headers: Record<string, string> = {}): NextRequest {
+function createMcpRequest(
+  body: Record<string, unknown> | Record<string, unknown>[],
+  headers: Record<string, string> = {}
+): NextRequest {
   return new NextRequest("http://localhost/api/mcp", {
     method: "POST",
     headers: {
@@ -209,6 +212,112 @@ describe("POST /api/mcp", () => {
       code: -32603,
       message: expect.stringContaining("Subscription limit"),
     });
+  });
+
+  test.each([
+    [
+      "array entries",
+      { workspaceId: "clxx1234567890123456789012", filter: { status: { in: Array(20_000).fill(0) } } },
+    ],
+    ["object members", Object.fromEntries(Array.from({ length: 20_000 }, (_, index) => [`key${index}`, 0]))],
+  ])("bounds %s across a legacy batch", async (_shape, argumentsForCall) => {
+    const batch = Array.from({ length: 4 }, (_, id) => ({
+      jsonrpc: "2.0",
+      id,
+      method: "tools/call",
+      params: {
+        name: "list_surveys",
+        arguments: argumentsForCall,
+      },
+    }));
+    const response = await POST(createMcpRequest(batch));
+
+    expect(response.status).toBe(400);
+    const text = await response.text();
+    expect(text.length).toBeLessThan(1000);
+    expect(JSON.parse(text).error).toMatchObject({
+      code: -32602,
+      message: expect.stringContaining("50000 object members and array elements"),
+    });
+    expect(listV3Surveys).not.toHaveBeenCalled();
+  });
+
+  test("rejects excessive nesting before SDK validation", async () => {
+    let nested: Record<string, unknown> = {};
+    for (let depth = 0; depth < 260; depth += 1) nested = { child: nested };
+    const response = await POST(
+      createMcpRequest({
+        jsonrpc: "2.0",
+        id: 32,
+        method: "tools/call",
+        params: { name: "list_surveys", arguments: nested },
+      })
+    );
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      id: 32,
+      error: { code: -32602, message: expect.stringContaining("256 levels") },
+    });
+    expect(listV3Surveys).not.toHaveBeenCalled();
+  });
+
+  test("preserves valid legacy batches", async () => {
+    const response = await POST(
+      createMcpRequest([1, 2].map((id) => ({ jsonrpc: "2.0", id, method: "tools/list", params: {} })))
+    );
+    expect(response.status).toBe(200);
+    const text = await response.text();
+    expect(text).toContain('"id":1');
+    expect(text).toContain('"id":2');
+    expect(text).toContain('"tools"');
+  });
+
+  test("rejects excessive object members before SDK schema validation", async () => {
+    // Object keys can amplify validation work even in bodies below the byte limit.
+    const argumentsWithTooManyKeys = Object.fromEntries(
+      Array.from({ length: 50_001 }, (_, index) => [`key${index}`, 0])
+    );
+    const response = await POST(
+      createMcpRequest({
+        jsonrpc: "2.0",
+        id: 31,
+        method: "tools/call",
+        params: { name: "list_surveys", arguments: argumentsWithTooManyKeys },
+      })
+    );
+    const message = await readMcpResponse(response);
+
+    expect(response.status).toBe(400);
+    expect(message.error).toMatchObject({
+      code: -32602,
+      message: expect.stringContaining("50000 object members and array elements"),
+    });
+    expect(listV3Surveys).not.toHaveBeenCalled();
+  });
+
+  test.each([undefined, "1"])("bounds the actual body when content-length is %s", async (contentLength) => {
+    const headers: Record<string, string> = {
+      accept: "application/json, text/event-stream",
+      "content-type": "application/json",
+      "x-api-key": "fbk_test",
+    };
+    if (contentLength !== undefined) headers["content-length"] = contentLength;
+    const request = new NextRequest("http://localhost/api/mcp", {
+      method: "POST",
+      headers,
+      body: new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode(" ".repeat(DEFAULT_REQUEST_BODY_LIMIT_BYTES + 1)));
+          controller.close();
+        },
+      }),
+      duplex: "half",
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(413);
+    expect(listV3Surveys).not.toHaveBeenCalled();
   });
 
   test("returns 401 before MCP handling when authentication fails", async () => {

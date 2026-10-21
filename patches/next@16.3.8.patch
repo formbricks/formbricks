@@ -1,7 +1,7 @@
 diff --git a/dist/server/next-server.js b/dist/server/next-server.js
 --- a/dist/server/next-server.js
 +++ b/dist/server/next-server.js
-@@ -1177,7 +1177,11 @@
+@@ -1181,7 +1181,11 @@
              },
              url: url,
              page,
@@ -17,7 +17,7 @@ diff --git a/dist/server/next-server.js b/dist/server/next-server.js
 diff --git a/dist/esm/server/next-server.js b/dist/esm/server/next-server.js
 --- a/dist/esm/server/next-server.js
 +++ b/dist/esm/server/next-server.js
-@@ -1108,7 +1108,11 @@
+@@ -1112,7 +1112,11 @@
              },
              url: url,
              page,

@@ -40,13 +40,11 @@ catalog:
   # exclusively plus three new peers), while vite-prerender-plugin — pulled in by
   # @preact/preset-vite for packages/surveys — caps at 7.x. Moving the repo to Vite 8
   # is its own migration, tracked separately; see ENG-1689's follow-ups.
-  # Note: the lockfile still resolves a vite 8 for `@vitest/eslint-plugin`, which declares
-  # `vitest` as an OPTIONAL peer with range `*`; `autoInstallPeers` then materialises the
-  # newest vitest, whose own vite peer picks 8. That predates this catalog, no importer
-  # references it, and nothing builds with it — every workspace resolves 7.3.5.
-  vite: 7.3.5
-  vitest: 4.1.6
-  "@vitest/coverage-v8": 4.1.6
+  # The root also declares vite: catalog: so optional Vitest peers resolve this patched
+  # version instead of pulling in an unrelated Vite major.
+  vite: 7.3.7
+  vitest: 4.1.11
+  "@vitest/coverage-v8": 4.1.11
   vite-plugin-dts: 4.5.4
   vite-tsconfig-paths: 6.1.1
   "@vitejs/plugin-react": 5.1.4
@@ -59,7 +57,7 @@ catalog:
   cross-env: 10.1.0
   glob: 13.0.6
   # Read by scripts/check-catalog.mjs; also a packages/workflows dev dep.
-  js-yaml: 4.3.1
+  js-yaml: 4.3.2
   "@playwright/test": 1.58.2
   "@testing-library/react": 16.3.2
   # --- lint & format ---
@@ -127,10 +125,64 @@ catalog:
 # The `load-bearing:` notes record the consumer that keeps the vulnerable version in the
 # tree, so the next cleanup can check that single upstream instead of re-deriving it.
 overrides:
+  # GHSA-ch52-4w7c-c8xp: pin the affected transitive dependency to a patched release.
+  "http-cache-semantics": 4.3.0
+  # GHSA-mh99-v99m-4gvg and related advisories: pin the affected transitive dependency to a patched release.
+  "brace-expansion@5": 5.0.12
+  # GHSA-mh99-v99m-4gvg and related advisories: pin the affected transitive dependency to a patched release.
+  "brace-expansion@2": 2.1.7
+  # GHSA-mh99-v99m-4gvg and related advisories: pin the affected transitive dependency to a patched release.
+  "brace-expansion@1": 1.1.21
+  # GHSA-2gc4-cqfq-p2gv: pin the affected transitive dependency to a patched release.
+  "engine.io@6": 6.6.10
+  # GHSA-866g-f22w-33x8: pin the affected transitive dependency to a patched release.
+  "@ai-sdk/provider-utils": 4.0.33
+  # GHSA-w5vr-8v7q-w6rv: pin the affected transitive dependency to a patched release.
+  "baseline-browser-mapping": 2.11.20
+  # GHSA-px8p-9vwx-vf98: pin the affected transitive dependency to a patched release.
+  "fflate": 0.4.9
+  # GHSA-qxc2-j82w-r537: pin the affected transitive dependency to a patched release.
+  "@faker-js/faker": 10.5.0
+  # GHSA-x5fp-wj9c-mxmx, GHSA-4mjr-xmp4-gh2g: pin the affected transitive dependency to a patched release.
+  "qs": 6.16.0
+  # GHSA-c83g-rgw3-j3cx, GHSA-73wf-gq98-2v4g: pin the affected transitive dependency to a patched release.
+  "browserslist": 4.28.7
+  # GHSA-3f6p-5ww8-9rcr, GHSA-rgwj-5xj2-c3m3: pin the affected transitive dependency to a patched release.
+  "mysql2": 3.23.1
+  # GHSA-pqg4-j6r4-53mv: pin the affected transitive dependency to a patched release.
+  "shell-quote": 1.12.0
+  # GHSA-xw65-4hp5-5hc7, GHSA-8r5x-fm3f-whwj, GHSA-p8wg-vrv2-v86f: pin the affected transitive dependency to a patched release.
+  "handlebars": 4.7.10
+  # GHSA-68fv-2mgg-jv7q: pin the affected transitive dependency to a patched release.
+  "source-map-js": 1.2.2
+  # GHSA-jggr-w7fw-pc2j: pin the affected transitive dependency to a patched release.
+  "fast-copy": 4.1.0
+  # GHSA-rj75-hqrm-r3gf: pin the affected transitive dependency to a patched release.
+  "postcss-selector-parser": 7.1.6
+  # GHSA-6qxp-vccf-f47h and related advisories: pin the affected transitive dependency to a patched release.
+  "@modelcontextprotocol/sdk@1": 1.32.0
+  # GHSA-qqmp-wf37-98f9: pin the affected transitive dependency to a patched release.
+  "@opentelemetry/instrumentation-tedious": 0.40.0
+  # GHSA-qqmp-wf37-98f9: pin the affected transitive dependency to a patched release.
+  "@opentelemetry/instrumentation-pg": 0.73.0
+  # GHSA-qqmp-wf37-98f9: pin the affected transitive dependency to a patched release.
+  "@opentelemetry/instrumentation-oracledb": 0.46.0
+  # GHSA-qqmp-wf37-98f9: pin the affected transitive dependency to a patched release.
+  "@opentelemetry/instrumentation-mysql2": 0.67.0
+  # GHSA-qqmp-wf37-98f9: pin the affected transitive dependency to a patched release.
+  "@opentelemetry/instrumentation-mysql": 0.67.0
+  # GHSA-qqmp-wf37-98f9: pin the affected transitive dependency to a patched release.
+  "@opentelemetry/instrumentation-mongoose": 0.67.0
+  # GHSA-qqmp-wf37-98f9: pin the affected transitive dependency to a patched release.
+  "@opentelemetry/instrumentation-knex": 0.65.0
+  # GHSA-qqmp-wf37-98f9: pin the affected transitive dependency to a patched release.
+  "@opentelemetry/instrumentation-cassandra-driver": 0.66.0
+  # GHSA-q3jh-wrc6-jgq8, GHSA-8r9p-f939-6h3c: pin the affected transitive dependency to a patched release.
+  "follow-redirects": 1.16.1
   # ENG-1324 / GHSA-5375-pq7m-f5r2, ENG-1325 / GHSA-99f4-grh7-6pcq:
   # @grpc/grpc-js is patched in 1.14.4 against malformed-request and malformed-compressed-message crashes.
   # load-bearing: @boxyhq/metrics resolves 1.14.3.
-  "@grpc/grpc-js": 1.14.4
+  "@grpc/grpc-js": 1.14.5
   # Prisma dev tooling and @modelcontextprotocol/sdk chains.
   # ENG-1998 / GHSA-frvp-7c67-39w9: @hono/node-server <2.0.5 serve-static path traversal on Windows via
   # encoded backslash; patched in 2.0.5 (major bump, only peer is hono ^4; node >=20 is already required).
@@ -147,7 +199,7 @@ overrides:
   # ENG-2320 / GHSA-79qm-7rj5-m7r9 (CVE-2026-71849): Proxy Helper forwards response headers named in
   # the origin's Connection header instead of stripping them. All four patched in 4.12.34.
   # load-bearing: @hono/node-server resolves 4.x via @modelcontextprotocol/sdk and @prisma/dev (dev/MCP-only).
-  hono: 4.12.34
+  hono: 4.13.11
   # OpenTelemetry / protobuf chains.
   # ENG-1962 / GHSA-j3f2-48v5-ccww (CVE-2026-59877): protobufjs .proto option-parsing infinite-loop DoS,
   # patched in 8.6.6. ENG-1963 / GHSA-jfj6-75fj-8934 (CVE-2026-59876): text-format map prototype
@@ -165,7 +217,7 @@ overrides:
   "@tootallnate/once": 2.0.1
   # SAML and XML processing chains.
   "@xmldom/xmldom": 0.9.12 # load-bearing: xml-crypto/xml-encryption resolve 0.8.13 and @boxyhq/saml20 resolves 0.9.8, both vulnerable (GHSA-2v35-w6hq-6mfw + 4 more); 0.9.12 patches 9 further High advisories (ENG-3989)
-  axios: 1.18.0 # ENG-1958 / GHSA-gcfj-64vw-6mp9: <1.18.0 Node HTTP adapter can use an inherited proxy after interceptor config cloning; patched in 1.18.0. load-bearing: @boxyhq/saml-jackson pins 1.13.5.
+  axios: 1.20.0 # ENG-1958 / GHSA-gcfj-64vw-6mp9: <1.18.0 Node HTTP adapter can use an inherited proxy after interceptor config cloning; patched in 1.18.0. load-bearing: @boxyhq/saml-jackson pins 1.13.5.
   lodash: 4.18.1 # GHSA-r5fr-rjxr-66jc + GHSA-f23m-r3pf-42rh: <=4.17.23 vulnerable, patched in 4.17.24. load-bearing: @boxyhq/saml-jackson and @microsoft/api-extractor resolve 4.17.23.
   node-forge: 1.4.0 # load-bearing: @boxyhq/saml-jackson resolves 1.3.3, still vulnerable (GHSA-2328-f5f3-gj25 + GHSA-5m6q-g25r-mvwx)
   # Webpack / linting / schema validation chains.
@@ -177,12 +229,12 @@ overrides:
   # SDK and runtime transitive security pins.
   # GHSA-55q2-fjhq-7xh7: DOMPurify <=3.4.12 can be bypassed with crafted HTML; patched in 3.4.13.
   # load-bearing: isomorphic-dompurify, posthog-js and redoc resolve vulnerable 3.x versions.
-  dompurify: 3.4.13
+  dompurify: 3.4.16
   fast-xml-parser: 5.7.0 # load-bearing: @aws-sdk/xml-builder pins 5.4.1 / 5.5.8, both <5.7.0 and vulnerable (GHSA-gh4j-gqv2-49f6 + GHSA-jp2q-39xq-3w4g)
   # GHSA-22jq-vg5j-6vgg, GHSA-4xrf-jv44-h6hh and GHSA-mwp4-54f8-5fhr: ip-address parsing
   # vulnerabilities are all patched in 10.3.1.
   # load-bearing: socks and express-rate-limit resolve vulnerable 10.x versions.
-  ip-address@10: 10.3.1
+  ip-address@10: 10.7.1
   # ENG-2403 / GHSA-2v37-7h3g-55p8 (CVE-2026-67213): nanoid <3.3.18 customAlphabet/customRandom loop
   # indefinitely when called with size 0 (DoS). Raises the 3.x pin from 3.3.17 to 3.3.18 (still <4).
   # load-bearing: postcss resolves 3.3.17.
@@ -220,18 +272,18 @@ overrides:
   # CPU resolving a large !!omap (linear indexOf scan per entry); patched in 4.3.1. Raises the 4.x pin
   # from 4.3.0 to 4.3.1 (still <5).
   # load-bearing: @redocly/openapi-core and @redocly/respect-core pin 4.2.0.
-  js-yaml@4: 4.3.1
+  js-yaml@4: 4.3.2
   # GHSA-4cwx-7wf7-3272, GHSA-8xcm-r25x-g524, GHSA-jr45-8vmc-qm54,
   # GHSA-m8rv-5g2x-5cg5 and GHSA-v3r7-h72x-cjcm: undici request handling findings are patched
   # in 6.28.0 and 7.29.0 respectively.
   # load-bearing: @redocly resolves the vulnerable 6.x line; apps/web uses the 7.x line directly.
-  undici@6: 6.28.0
-  undici@7: 7.29.0
+  undici@6: 6.28.1
+  undici@7: 7.29.1
   # === Dependabot security batch (ENG-1988..ENG-1999) ===
   # ENG-1999 / ENG-1989 / GHSA-f88m-g3jw-g9cj: sharp <0.35.0 inherits libvips vulnerabilities
   # (CVE-2026-33327/33328/35590/35591). apps/web pins 0.35.0 directly; this override also coerces the
   # sharp 0.34.5 that next@16 declares as an optional peer, which otherwise keeps the alert open.
-  sharp: 0.35.0
+  sharp: 0.35.5
   # ENG-1992 / GHSA-45rx-2jwx-cxfr (CVE-2026-59892): @opentelemetry/propagator-jaeger <2.9.0 DoS via an
   # unhandled decodeURIComponent() error on a malformed header; patched in 2.9.0. Coerces the transitive
   # 1.26.0 line up to 2.9.0 (core is already pinned to 2.x above).
@@ -251,7 +303,7 @@ overrides:
   # ENG-2205 / GHSA-7p8r-x3mc-p8w7 (CVE-2026-18446): fast-uri >=3.0.0 <3.1.5 host confusion via a
   # backslash authority introducer; patched in 3.1.5. Previously self-resolved, reopened by the new
   # advisory. load-bearing: @redocly/ajv and ajv pull 3.1.4 (dev-only, API-docs tooling).
-  fast-uri@3: 3.1.5
+  fast-uri@3: 3.1.8
   # ENG-2433 / ENG-2430 / GHSA-ggr8-5vv4-36mx (CVE-2026-40345): deepmerge-ts <8.0.0 has no cycle
   # detection in its recursive record-merge routine, so two recursive object graphs sharing a
   # property path exhaust the call stack (DoS); patched in 8.0.0. Pinned to 8.0.1 (lowest patched
@@ -270,36 +322,10 @@ overrides:
   # @better-auth/prisma-adapter > @prisma/client > prisma > @prisma/config resolves 7.1.5.
   deepmerge-ts@7: 8.0.1
   # === Removed once upstream caught up (kept as a record of what no longer needs a pin) ===
-  # ajv@6, @babel/core, body-parser, engine.io@6, linkify-it, protobufjs@7 and uuid@11
+  # ajv@6, @babel/core, body-parser, linkify-it, protobufjs@7 and uuid@11
   # all resolve to the patched version on their own now.
-  # js-cookie, shell-quote and form-data@4 were retired by bumping react-use to 17.6.1 (js-cookie ^3),
-  # concurrently to 9.2.4 (shell-quote 1.9.0) and @redocly/cli to 1.34.17 (form-data 4.0.6) instead.
-  # === Fixable, deferred to its own PR (ENG-2234) — brace-expansion ===
-  # NOT in the list above: every brace-expansion line we resolve (1.1.16, 2.1.2, 5.0.8) is still
-  # vulnerable, and all three are closable by re-pinning. Re-verified 2026-08-05. Two advisories now:
-  # - GHSA-mh99-v99m-4gvg (unbounded expansion length → OOM), re-split upstream into per-major ranges:
-  #   `<1.1.17` and `>=2.0.0 <2.1.3`. The 5.x line is clear of this one.
-  # - GHSA-rgw5-rvv9-x895 (unbounded intermediate arrays, bypassing the CVE-2026-14257 mitigation) covers
-  #   all three: `<1.1.18`, `>=2.0.0 <2.1.4` and `>=4.0.0 <5.0.9`.
-  # Pinning the current maintenance releases — 1.1.18 / 2.1.4 / 5.0.9, all published 2026-07-30 and all
-  # past the `minimumReleaseAge` cooldown below — closes both advisories on all three lines. That is a
-  # dependency change needing its own lockfile and test run, so it is deferred to ENG-2234 rather than
-  # folded into an audit-comment sweep; the note here goes away with that PR. (An earlier version of this
-  # note claimed no patch was coming and that a pin could not close it. Both stopped being true on
-  # 2026-07-28.)
-  # Until then the residual risk stays acceptable — but NOT for the "devDependency-only" reason this note
-  # used to give, which was wrong. Every line reaches brace-expansion via minimatch, and they are rooted
-  # in production chains, not only dev ones: the 2.x line through `googleapis` and `@boxyhq/saml-jackson`
-  # (both apps/web `dependencies`, via gaxios>rimraf>glob and typeorm>glob) and `@ai-sdk/google-vertex`
-  # (a packages/ai `dependency`); the 1.x line through node-gyp under that same saml-jackson's
-  # typeorm>sqlite3. `pnpm audit` marks these findings `dev: false`. By contributor, the 1.x line is
-  # dominated by the eslint plugin graph (typescript-eslint, @vitest/eslint-plugin, eslint-config-next,
-  # eslint-plugin-storybook) and the 2.x line by vite-plugin-dts>@vue/language-core across six workspace
-  # packages, plus both prettier plugins. Two roots sit on both lines: @redocly/cli (mostly 2.x) and
-  # @boxyhq/saml-jackson (mostly 1.x, via the node-gyp chain above).
-  # What makes it tolerable is the input, not the dependency type: every one of these call sites expands
-  # glob patterns supplied by library code or developer config (gaxios' cache cleanup, typeorm's entity
-  # discovery, build and lint globs), never by request data.
+  # js-cookie and form-data@4 were retired by bumping react-use to 17.6.1 (js-cookie ^3),
+  # and @redocly/cli to 1.34.17 (form-data 4.0.6) instead.
   # === Closed by ENG-2343 (kept as a record, like the section above) ===
   # GHSA-p2fr-6hmx-4528 (@better-auth/oauth-provider RFC 8707 resource-indicator confusion) was carried
   # here as an accepted risk for as long as the only patched line was a pre-release. It is fixed as of
@@ -360,4 +386,4 @@ patchedDependencies:
   # anonymous caller can pin 16 MB per connection on any path. proxy.ts never reads the body, so the patch
   # stops handing it one and the route reads the unread stream itself; a rewrite now streams the request to
   # its target. Re-check on every Next upgrade; drop it if Next makes the clone lazy or opt-out.
-  "next@16.3.6": patches/next@16.3.6.patch
+  "next@16.3.8": patches/next@16.3.8.patch
