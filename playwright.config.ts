@@ -19,10 +19,7 @@ export default defineConfig({
   timeout: 120000,
   /* Fail the test run after the first failure */
   maxFailures: process.env.CI ? undefined : 1, // Allow more failures in CI to avoid cascading shutdowns
-  /* Pin worker count on CI. The GitHub runner has ~4 vCPUs; Playwright's default
-     is only ~50% of cores (≈2 workers). Running 4 in parallel roughly halves the
-     test-execution portion of the run. Tune down if CPU contention with the app
-     server starts causing timeout-driven flakiness. */
+  /* Keep four CI workers so browsers and the app can share the runner. */
   workers: process.env.CI ? 4 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [["html", { outputFolder: "playwright-report", open: "never" }]],
@@ -44,6 +41,21 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
       testMatch: "**/*.spec.ts",
+      grepInvert: /@timing/,
+    },
+
+    /* Latency-comparison tests (@timing) measure sub-100ms differences, so they must not share the
+       machine with the parallel suite: with 4 workers on the app's own vCPUs the measurement is
+       noise. Depending on "chromium" makes this project start only once that one has finished.
+       Dependency projects ignore CLI file and grep filters, so `pnpm test:e2e security.spec.ts` or
+       `--project=chromium-timing` runs the whole chromium project first; add `--no-deps` to run only
+       the timing test. */
+    {
+      name: "chromium-timing",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: "**/*.spec.ts",
+      grep: /@timing/,
+      dependencies: ["chromium"],
     },
 
     // {
