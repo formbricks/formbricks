@@ -3,7 +3,7 @@ import type { Prisma } from "@formbricks/database/prisma";
 import type { TAuditEventInput } from "@/modules/ee/audit-logs/lib/handler";
 
 /**
- * The survey side of a creative's Destination (T6, ENG-3868). A survey's **linked creatives** — the
+ * The survey side of a creative's Destination (ENG-3868). A survey's **linked creatives** — the
  * non-archived creatives whose Destination it is — hold it: while one exists, the survey can't be
  * deleted, restricted, or turned single-use or PIN-protected. Archived creatives never hold a survey;
  * a change that needs the survey gone or restricted unlinks them, and the 30-day archive purge unlinks
@@ -26,6 +26,13 @@ export type TLinkedCreative = Readonly<{ id: string; name: string }>;
  * this size until none are left, so it never stops short.
  */
 export const LINKED_CREATIVES_READ_LIMIT = 250;
+
+/**
+ * The most pages one unlink clears: 40 × 250 = 10 000 creatives on one survey, orders of magnitude past
+ * any real workspace. A survey with more makes the unlink throw, rolling back the caller's transaction,
+ * rather than loop on unbounded or leave creatives pointing at a survey that is going away.
+ */
+export const MAX_UNLINK_PAGES = 40;
 
 const BY_NAME = [{ name: "asc" as const }, { id: "asc" as const }];
 
@@ -63,24 +70,28 @@ export const unlinkSurveyCreatives = async (
 ): Promise<TLinkedCreative[]> => {
   const unlinked: TLinkedCreative[] = [];
   // Each page is unlinked before the next read, so that read only finds the rest: the loop ends after
-  // ceil(linked / limit) passes with every creative unlinked, each returned for its audit entry.
-  for (;;) {
+  // ceil(linked / limit) passes with every creative unlinked, each returned for its audit entry. One read
+  // past the ceiling tells a survey with exactly that many apart from one with more.
+  for (let pageIndex = 0; pageIndex <= MAX_UNLINK_PAGES; pageIndex++) {
     const page = await tx.creative.findMany({
       where: { surveyId, workspaceId, ...(include === "archived" && { archivedAt: { not: null } }) },
       select: { id: true, name: true },
       orderBy: BY_NAME,
       take: LINKED_CREATIVES_READ_LIMIT,
     });
-    if (page.length === 0) break;
+    if (page.length === 0) return unlinked;
+    if (pageIndex === MAX_UNLINK_PAGES) break;
 
     await tx.creative.updateMany({
       where: { id: { in: page.map(({ id }) => id) }, surveyId },
       data: { surveyId: null },
     });
     unlinked.push(...page);
-    if (page.length < LINKED_CREATIVES_READ_LIMIT) break;
+    if (page.length < LINKED_CREATIVES_READ_LIMIT) return unlinked;
   }
-  return unlinked;
+  throw new Error(
+    `Survey ${surveyId} has more than ${MAX_UNLINK_PAGES * LINKED_CREATIVES_READ_LIMIT} creatives to unlink`
+  );
 };
 
 /** Who made the survey-side change: the request's own audit entry, or the system for the purge. */

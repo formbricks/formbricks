@@ -1,15 +1,8 @@
 import "server-only";
-import { prisma } from "@formbricks/database";
 import { serializeV3Creative } from "@/app/api/v3/creatives/lib/serializers";
-import { hasLinkedCreatives } from "./linked-creatives";
 import { ACTIVE_CREATIVES_LIMIT } from "./list-api";
 import { findCreativeRecordsPage } from "./repository";
 import type { TSurveyLinkedCreative } from "./survey-side";
-
-/** Whether creatives open the survey: any non-archived creative has it as its Destination. */
-export const isSurveyOpenedByCreatives = (
-  survey: Readonly<{ surveyId: string; workspaceId: string }>
-): Promise<boolean> => hasLinkedCreatives(prisma, survey);
 
 /**
  * The survey's linked creatives exactly as the survey screens read them from

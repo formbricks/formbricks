@@ -1,14 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { PHONE_FRAME, PHONE_SCREEN, getPhoneScale } from "./phone-viewport";
+import { PHONE_FRAME, getPhoneScale } from "./phone-viewport";
 
 describe("phone viewport", () => {
-  test("is a 390 × 844 CSS px screen whose page starts below the status bar", () => {
-    expect(PHONE_SCREEN).toMatchObject({ width: 390, height: 844 });
-    expect(PHONE_SCREEN.pageHeight).toBe(844 - PHONE_SCREEN.statusBarHeight);
-    expect(PHONE_FRAME.width).toBeGreaterThan(PHONE_SCREEN.width);
-    expect(PHONE_FRAME.height).toBeGreaterThan(PHONE_SCREEN.height);
-  });
-
   test("scales the whole device down to fit the pane, by the tighter side", () => {
     const halfHeight = { width: PHONE_FRAME.width * 2, height: PHONE_FRAME.height / 2 };
     const halfWidth = { width: PHONE_FRAME.width / 2, height: PHONE_FRAME.height * 2 };

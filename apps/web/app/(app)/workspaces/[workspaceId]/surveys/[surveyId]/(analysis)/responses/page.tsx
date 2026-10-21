@@ -1,3 +1,4 @@
+import { prisma } from "@formbricks/database";
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { SurveyAnalysisNavigation } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { ResponsePage } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
@@ -16,7 +17,7 @@ import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context
 import { getTagsByWorkspaceId } from "@/lib/tag/service";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { isSurveyOpenedByCreatives } from "@/modules/creatives/lib/survey-linked-creatives";
+import { hasLinkedCreatives } from "@/modules/creatives/lib/linked-creatives";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
@@ -43,7 +44,7 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string; sur
     getTagsByWorkspaceId(workspace.id),
     getIsContactsEnabled(organization.id),
     getResponseCountBySurveyId(params.surveyId),
-    isSurveyOpenedByCreatives({ surveyId: params.surveyId, workspaceId: workspace.id }),
+    hasLinkedCreatives(prisma, { surveyId: params.surveyId, workspaceId: workspace.id }),
   ]);
 
   if (!survey) {
