@@ -2373,6 +2373,7 @@
         "preview_opens_link": "No seu site, isso abre {url}",
         "preview_opens_survey": "No seu site, isso abre \"{name}\"",
         "publish": "Publicar",
+        "relink_undo_note": "Você pode vincular este criativo à pesquisa novamente a qualquer momento.",
         "remove_action": "Remover ação",
         "remove_language_body": "A tradução dele será excluída. Os visitantes neste idioma verão o idioma padrão.",
         "remove_language_title": "Remover {language}?",

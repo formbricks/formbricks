@@ -2373,6 +2373,7 @@
         "preview_opens_link": "Az Ön webhelyén ez megnyitja a következőt: {url}",
         "preview_opens_survey": "Az Ön webhelyén ez megnyitja a következőt: \"{name}\"",
         "publish": "Közzététel",
+        "relink_undo_note": "Ezt a kreatívot bármikor ismételten összekapcsolhatja a felméréssel.",
         "remove_action": "Művelet eltávolítása",
         "remove_language_body": "A hozzá tartozó fordítás törlésre kerül. Az ezen a nyelven érkező látogatók az alapértelmezett nyelvet fogják látni.",
         "remove_language_title": "Kívánja eltávolítani a következőt: {language}?",

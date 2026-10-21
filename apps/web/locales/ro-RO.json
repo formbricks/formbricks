@@ -2373,6 +2373,7 @@
         "preview_opens_link": "Pe site-ul tău, aceasta deschide {url}",
         "preview_opens_survey": "Pe site-ul tău, aceasta deschide „{name}”",
         "publish": "Publică",
+        "relink_undo_note": "Poți asocia această creație din nou cu sondajul oricând.",
         "remove_action": "Elimină acțiunea",
         "remove_language_body": "Traducerea ei este ștearsă. Vizitatorii care folosesc această limbă vor vedea limba implicită.",
         "remove_language_title": "Elimini {language}?",

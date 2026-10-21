@@ -1,6 +1,5 @@
 import { queryOptions } from "@tanstack/react-query";
 import type { CreativeResourceZodType } from "@formbricks/api-v3-schemas";
-import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 import { readCreativesApiData, requestCreativesApi } from "./creatives-api-client";
 import { ACTIVE_CREATIVES_LIMIT } from "./list-api";
 import type { TOpenedSurveyFacts, TSurveyLinkedCreative } from "./survey-side";
@@ -44,15 +43,21 @@ export const surveyLinkedCreativesQuery = ({
     queryFn: ({ signal }) => listSurveyLinkedCreatives({ workspaceId, surveyId, signal }),
   });
 
-/** The survey a creative opens, as the last-creative warning reads it (`GET /api/v3/surveys/{id}`). */
-export const getOpenedSurveyFacts = async (surveyId: string): Promise<TOpenedSurveyFacts> => {
-  const response = await fetch(`/api/v3/surveys/${encodeURIComponent(surveyId)}`, { cache: "no-store" });
-  if (!response.ok) throw await parseV3ApiError(response);
-  const { data } = (await response.json()) as {
-    data: Pick<TOpenedSurveyFacts, "type" | "status"> & { distribution?: { triggers?: unknown[] } };
-  };
-  return { type: data.type, status: data.status, triggers: data.distribution?.triggers ?? [] };
+type TOpenedSurveyResource = Pick<TOpenedSurveyFacts, "type" | "status"> & {
+  distribution?: { triggers?: unknown[] };
 };
+
+/** The survey a creative opens, as the last-creative warning reads it (`GET /api/v3/surveys/{id}`). */
+export const openedSurveyFactsQuery = (surveyId: string) =>
+  queryOptions({
+    queryKey: ["creatives", "openedSurvey", surveyId] as const,
+    queryFn: async ({ signal }): Promise<TOpenedSurveyFacts> => {
+      const data = await readCreativesApiData<TOpenedSurveyResource>(
+        await requestCreativesApi({ resource: "surveys", path: [surveyId], signal })
+      );
+      return { type: data.type, status: data.status, triggers: data.distribution?.triggers ?? [] };
+    },
+  });
 
 /** Pauses the creative by its author's hand, so it stays paused whatever its survey does. */
 export const pauseCreative = async (creativeId: string): Promise<void> => {

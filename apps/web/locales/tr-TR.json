@@ -2373,6 +2373,7 @@
         "preview_opens_link": "Sitende bu, {url} adresini açar",
         "preview_opens_survey": "Sitende bu, \"{name}\" anketini açar",
         "publish": "Yayınla",
+        "relink_undo_note": "Bu kreatifi istediğin zaman tekrar ankete bağlayabilirsin.",
         "remove_action": "Eylemi kaldır",
         "remove_language_body": "Bu dilin çevirisi silinir. Bu dili kullanan ziyaretçiler varsayılan dili görür.",
         "remove_language_title": "{language} kaldırılsın mı?",

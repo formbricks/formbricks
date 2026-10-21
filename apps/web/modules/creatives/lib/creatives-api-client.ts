@@ -1,16 +1,18 @@
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 
 /**
- * The one way the Creatives screens call `/api/v3/creatives` from the browser: every list, editor,
- * summary and survey-side call goes through `requestCreativesApi`, so paths are encoded, caching is off,
- * writes can't hang and a refusal arrives as the parsed `V3ApiError` everywhere.
+ * The one way the Creatives screens call API v3 from the browser: every list, editor, summary and
+ * survey-side call goes through `requestCreativesApi`, so paths are encoded, caching is off, writes
+ * can't hang and a refusal arrives as the parsed `V3ApiError` everywhere.
  */
 
 // Bounds a stalled write so its pending state can't hang; the rejection shows the error toast.
 const MUTATION_TIMEOUT_MS = 15_000;
 
 export type TCreativesApiRequest = Readonly<{
-  /** Path segments below `/api/v3/creatives` (a creative id, then an action such as `archive`). */
+  /** The v3 resource called: the creatives, or a survey one opens. */
+  resource?: "creatives" | "surveys";
+  /** Path segments below the resource (a creative id, then an action such as `archive`). */
   path?: readonly string[];
   query?: URLSearchParams;
   method?: "GET" | "POST" | "PATCH" | "DELETE";
@@ -21,6 +23,7 @@ export type TCreativesApiRequest = Readonly<{
 }>;
 
 export const requestCreativesApi = async ({
+  resource = "creatives",
   path = [],
   query,
   method = "GET",
@@ -30,7 +33,7 @@ export const requestCreativesApi = async ({
   const segments = path.map((segment) => `/${encodeURIComponent(segment)}`).join("");
   const queryString = query?.toString();
   const search = queryString ? `?${queryString}` : "";
-  const response = await fetch(`/api/v3/creatives${segments}${search}`, {
+  const response = await fetch(`/api/v3/${resource}${segments}${search}`, {
     method,
     cache: "no-store",
     ...(body !== undefined && {

@@ -2373,6 +2373,7 @@
         "preview_opens_link": "在你的網站上,點擊後會開啟 {url}",
         "preview_opens_survey": "在你的網站上,點擊後會開啟「{name}」",
         "publish": "發佈",
+        "relink_undo_note": "你隨時都可以再次將這個素材連結到問卷。",
         "remove_action": "移除動作",
         "remove_language_body": "該語言的翻譯將會被刪除,使用此語言的訪客將會看到預設語言。",
         "remove_language_title": "要移除{language}嗎?",

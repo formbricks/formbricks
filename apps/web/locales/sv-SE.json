@@ -2373,6 +2373,7 @@
         "preview_opens_link": "På din webbplats öppnar det här {url}",
         "preview_opens_survey": "På din webbplats öppnar det här \"{name}\"",
         "publish": "Publicera",
+        "relink_undo_note": "Du kan koppla den här kreativen till enkäten igen när som helst.",
         "remove_action": "Ta bort åtgärd",
         "remove_language_body": "Översättningen tas bort. Besökare på det här språket får se standardspråket.",
         "remove_language_title": "Ta bort {language}?",

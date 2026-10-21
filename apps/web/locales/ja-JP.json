@@ -2373,6 +2373,7 @@
         "preview_opens_link": "サイトでは、これをクリックすると {url} が開きます",
         "preview_opens_survey": "サイトでは、これをクリックすると「{name}」が開きます",
         "publish": "公開",
+        "relink_undo_note": "このクリエイティブは、いつでもまたアンケートにリンクできます。",
         "remove_action": "アクションを削除",
         "remove_language_body": "この言語の翻訳は削除されます。この言語の訪問者には、デフォルト言語が表示されます。",
         "remove_language_title": "{language}を削除しますか?",

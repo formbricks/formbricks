@@ -2373,6 +2373,7 @@
         "preview_opens_link": "On your site, this opens {url}",
         "preview_opens_survey": "On your site, this opens \"{name}\"",
         "publish": "Publish",
+        "relink_undo_note": "You can link this creative to the survey again at any time.",
         "remove_action": "Remove action",
         "remove_language_body": "Its translation is deleted. Visitors in this language will see the default language.",
         "remove_language_title": "Remove {language}?",

@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArchiveIcon,
   ArchiveRestoreIcon,
@@ -18,7 +19,6 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
-import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
   DropdownMenu,
@@ -30,10 +30,11 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { useCreativeStatusChange } from "../hooks/use-creative-status-change";
 import { useCreativeRowActions } from "../hooks/use-creatives-list";
-import { findSurveyLeftUnopened } from "../lib/last-opener-check";
+import { getOpenedSurveyName, surveyLeftUnopenedQuery } from "../lib/last-opener-check";
 import type { TCreativeListItem } from "../lib/list-api";
 import { getCreativeEditPath } from "../lib/paths";
 import { type TRowStatusAction, getRowStatusActions } from "../lib/summary";
+import { LastOpenerConfirmationModal } from "./last-opener-confirmation-modal";
 
 const STATUS_ACTION_ICONS: Record<TRowStatusAction["action"], LucideIcon> = {
   publish: ZapIcon,
@@ -55,9 +56,14 @@ export const CreativeListActions = ({ workspaceId, creative }: Readonly<Creative
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  // The survey this creative is the last to open, while archiving or deleting it asks first (A1).
-  const [unopenedSurvey, setUnopenedSurvey] = useState<string | null>(null);
   const [isArchiveWarningOpen, setIsArchiveWarningOpen] = useState(false);
+  const queryClient = useQueryClient();
+  // Deleting the last creative that opens a live app survey says so in the delete dialog.
+  const { data: deleteLeavesSurveyUnopened = false } = useQuery({
+    ...surveyLeftUnopenedQuery(workspaceId, creative),
+    enabled: isDeleteDialogOpen,
+  });
+  const surveyName = getOpenedSurveyName(creative);
   const { duplicate, archive, restore, remove } = useCreativeRowActions();
   const statusChange = useCreativeStatusChange(creative.id);
   const isArchived = creative.displayStatus === "archived";
@@ -94,17 +100,13 @@ export const CreativeListActions = ({ workspaceId, creative }: Readonly<Creative
       onError,
     });
 
+  // Archiving the last creative that opens a live app survey asks first.
   const handleArchive = async () => {
-    const survey = await findSurveyLeftUnopened(workspaceId, creative);
-    setUnopenedSurvey(survey);
-    if (survey) setIsArchiveWarningOpen(true);
-    else archiveNow();
-  };
-
-  const openDeleteDialog = async () => {
-    setUnopenedSurvey(null);
-    setIsDeleteDialogOpen(true);
-    setUnopenedSurvey(await findSurveyLeftUnopened(workspaceId, creative));
+    if (await queryClient.fetchQuery(surveyLeftUnopenedQuery(workspaceId, creative))) {
+      setIsArchiveWarningOpen(true);
+    } else {
+      archiveNow();
+    }
   };
 
   // Restoring always brings a creative back as a Draft; one whose survey was unlinked has nothing to open.
@@ -188,7 +190,7 @@ export const CreativeListActions = ({ workspaceId, creative }: Readonly<Creative
                 // menu's focus return doesn't fight the dialog's.
                 event.preventDefault();
                 setIsMenuOpen(false);
-                void openDeleteDialog();
+                setIsDeleteDialogOpen(true);
               }}>
               {t("common.delete")}
             </DropdownMenuItem>
@@ -203,27 +205,20 @@ export const CreativeListActions = ({ workspaceId, creative }: Readonly<Creative
         text={t("workspace.creatives.delete_confirmation", { name })}
         onDelete={handleDelete}
         isDeleting={remove.isPending}>
-        {unopenedSurvey && (
+        {deleteLeavesSurveyUnopened && (
           <p className="text-sm text-amber-700">
-            {t("workspace.creatives.last_opener_warning", { survey: unopenedSurvey })}
+            {t("workspace.creatives.last_opener_warning", { survey: surveyName })}
           </p>
         )}
       </DeleteDialog>
 
-      <ConfirmationModal
+      <LastOpenerConfirmationModal
         open={isArchiveWarningOpen}
-        setOpen={setIsArchiveWarningOpen}
-        title={t("workspace.creatives.last_opener_title", { survey: unopenedSurvey ?? "" })}
-        // Archiving can be undone: the modal's default says it can't.
+        onClose={() => setIsArchiveWarningOpen(false)}
+        surveyName={surveyName}
         description={t("workspace.creatives.archive_restore_note")}
-        body={
-          <p className="text-sm text-slate-700">
-            {t("workspace.creatives.last_opener_warning", { survey: unopenedSurvey ?? "" })}
-          </p>
-        }
-        buttonText={t("workspace.creatives.archive_anyway")}
-        buttonVariant="default"
-        buttonLoading={archive.isPending}
+        confirmText={t("workspace.creatives.archive_anyway")}
+        isConfirming={archive.isPending}
         onConfirm={archiveNow}
       />
     </>

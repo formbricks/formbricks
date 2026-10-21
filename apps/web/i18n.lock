@@ -2290,6 +2290,7 @@ checksums:
     workspace/creatives/editor/preview_opens_link: 9a2d0421d2cd6080d823fd83c5b1b07d
     workspace/creatives/editor/preview_opens_survey: 2aa27d0ed3bd1feec3c7be8c67e12106
     workspace/creatives/editor/publish: 4aa95ba4793bb293e771bd73b4f87c0f
+    workspace/creatives/editor/relink_undo_note: 497179488d4f5f53511845cd865febca
     workspace/creatives/editor/remove_action: 5ca819469bb04d91407572765eadd5d2
     workspace/creatives/editor/remove_language_body: 61c47115c99967e2583e609537f7e4a4
     workspace/creatives/editor/remove_language_title: e1166502585c7577e81fb32f6615b69e

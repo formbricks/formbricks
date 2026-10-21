@@ -2373,6 +2373,7 @@
         "preview_opens_link": "Auf deiner Website öffnet dies {url}",
         "preview_opens_survey": "Auf deiner Website öffnet dies „{name}“",
         "publish": "Veröffentlichen",
+        "relink_undo_note": "Du kannst dieses Creative jederzeit wieder mit der Umfrage verknüpfen.",
         "remove_action": "Aktion entfernen",
         "remove_language_body": "Die zugehörige Übersetzung wird gelöscht. Besucher in dieser Sprache sehen die Standardsprache.",
         "remove_language_title": "{language} entfernen?",

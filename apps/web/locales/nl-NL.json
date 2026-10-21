@@ -2373,6 +2373,7 @@
         "preview_opens_link": "Op je site opent dit {url}",
         "preview_opens_survey": "Op je site opent dit \"{name}\"",
         "publish": "Publiceren",
+        "relink_undo_note": "Je kunt deze creative op elk moment weer aan de enquête koppelen.",
         "remove_action": "Actie verwijderen",
         "remove_language_body": "De vertaling wordt verwijderd. Bezoekers in deze taal zien dan de standaardtaal.",
         "remove_language_title": "{language} verwijderen?",

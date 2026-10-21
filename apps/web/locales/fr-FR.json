@@ -2373,6 +2373,7 @@
         "preview_opens_link": "Sur ton site, cela ouvre {url}",
         "preview_opens_survey": "Sur ton site, cela ouvre « {name} »",
         "publish": "Publier",
+        "relink_undo_note": "Tu peux à tout moment relier ce visuel à l'enquête.",
         "remove_action": "Supprimer l'action",
         "remove_language_body": "Sa traduction est supprimée. Les visiteurs dans cette langue verront la langue par défaut.",
         "remove_language_title": "Supprimer {language} ?",

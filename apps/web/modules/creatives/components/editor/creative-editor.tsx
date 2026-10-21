@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
   LanguagesIcon,
@@ -21,7 +22,6 @@ import { useCustomCssValidation } from "@/modules/custom-css/components/hooks/us
 import { toCustomCssDraft } from "@/modules/custom-css/components/lib/draft";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
-import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { useBeforeUnloadPrompt } from "@/modules/ui/hooks/use-before-unload-prompt";
 import { useCreativeResource, useUpdateCreative } from "../../hooks/use-creative-editor";
 import { useCreativeStatusChange } from "../../hooks/use-creative-status-change";
@@ -35,7 +35,7 @@ import {
   stopsOpeningSurvey,
   toCreativeEditorForm,
 } from "../../lib/editor-form";
-import { findSurveyLeftUnopened } from "../../lib/last-opener-check";
+import { getOpenedSurveyName, surveyLeftUnopenedQuery } from "../../lib/last-opener-check";
 import { getCreativesPath } from "../../lib/paths";
 import { toPreviewView } from "../../lib/preview-view";
 import {
@@ -52,6 +52,7 @@ import { type TCreativeDevice, toStyleSource, withTheme } from "../../lib/stylin
 import { getSummaryStatusControl, isWaitingForStart } from "../../lib/summary";
 import { CreativeTypeIcon } from "../creative-icons";
 import { CreativeStatusPill } from "../creative-status-pill";
+import { LastOpenerConfirmationModal } from "../last-opener-confirmation-modal";
 import { CreativeStatusDropdown } from "../summary/creative-status-dropdown";
 import { ContentTab } from "./content-tab";
 import { CreativePreview } from "./creative-preview";
@@ -98,6 +99,7 @@ export const CreativeEditor = ({
   isReadOnly: boolean;
 }>) => {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const toWarningText = useCreativeWarningText();
   const nameRef = useRef<HTMLInputElement>(null);
   const { data: creative } = useCreativeResource(initialCreative);
@@ -119,10 +121,8 @@ export const CreativeEditor = ({
   // The tab holding a field the server refused, until the next attempt.
   const [serverIssueTab, setServerIssueTab] = useState<TCreativeEditorTab | null>(null);
   const [pendingIntent, setPendingIntent] = useState<TCreativeSaveIntent | null>(null);
-  // A save waiting for "Save anyway": it would leave this survey with nothing that opens it.
-  const [relinkWarning, setRelinkWarning] = useState<{ survey: string; intent: TCreativeSaveIntent } | null>(
-    null
-  );
+  // A save waiting for "Save anyway": it would leave the linked survey with nothing that opens it.
+  const [relinkWarningIntent, setRelinkWarningIntent] = useState<TCreativeSaveIntent | null>(null);
 
   const isDraft = creative.status === "draft";
   const isArchived = creative.archivedAt !== null;
@@ -233,17 +233,19 @@ export const CreativeEditor = ({
       surveys: toSurveyStates(surveyOptions),
       now: new Date(),
     });
-    // A relink that leaves a live app survey nothing opens asks first (A1); the save is allowed anyway.
+    // A relink that leaves a live app survey nothing opens asks first; the save is allowed anyway.
     if (!confirmed && creative.archivedAt === null && stopsOpeningSurvey(creative, body)) {
       setPendingIntent(intent);
-      const survey = await findSurveyLeftUnopened(workspaceId, creative);
+      const leavesSurveyUnopened = await queryClient.fetchQuery(
+        surveyLeftUnopenedQuery(workspaceId, creative)
+      );
       setPendingIntent(null);
-      if (survey) {
-        setRelinkWarning({ survey, intent });
+      if (leavesSurveyUnopened) {
+        setRelinkWarningIntent(intent);
         return;
       }
     }
-    setRelinkWarning(null);
+    setRelinkWarningIntent(null);
     setServerIssueTab(null);
     setPendingIntent(intent);
     updateCreative.mutate(body, {
@@ -455,22 +457,15 @@ export const CreativeEditor = ({
         </div>
       </div>
 
-      <ConfirmationModal
-        open={relinkWarning !== null}
-        setOpen={(open) => {
-          if (!open) setRelinkWarning(null);
-        }}
-        title={t("workspace.creatives.last_opener_title", { survey: relinkWarning?.survey ?? "" })}
-        body={
-          <p className="text-sm text-slate-700">
-            {t("workspace.creatives.last_opener_warning", { survey: relinkWarning?.survey ?? "" })}
-          </p>
-        }
-        buttonText={t("workspace.creatives.editor.save_anyway")}
-        buttonVariant="default"
-        buttonLoading={isSaving}
+      <LastOpenerConfirmationModal
+        open={relinkWarningIntent !== null}
+        onClose={() => setRelinkWarningIntent(null)}
+        surveyName={getOpenedSurveyName(creative)}
+        description={t("workspace.creatives.editor.relink_undo_note")}
+        confirmText={t("workspace.creatives.editor.save_anyway")}
+        isConfirming={isSaving}
         onConfirm={() => {
-          if (relinkWarning) void submit(relinkWarning.intent, { confirmed: true });
+          if (relinkWarningIntent) void submit(relinkWarningIntent, { confirmed: true });
         }}
       />
     </div>
