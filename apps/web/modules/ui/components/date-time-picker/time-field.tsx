@@ -3,7 +3,13 @@
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/modules/ui/components/input";
-import { type TTimeParts, formatTimeText, getDayPeriodMarkers, parseTimeText } from "./lib/date-time";
+import {
+  type TTimeParts,
+  formatTimeText,
+  getDayPeriodMarkers,
+  getTimeTextState,
+  parseTimeText,
+} from "./lib/date-time";
 
 interface TimeFieldProps {
   /** The committed value; its local time is what the field shows once typing has settled. */
@@ -19,22 +25,26 @@ const EXAMPLE_TIME = new Date(2000, 0, 1, 14, 30);
 /**
  * The popover's time field: one text box that takes the time as typed ("23:59", "11:59 PM") and shows
  * it back in the app locale. A native time input would follow the browser's clock format instead of the
- * app's language.
+ * app's language, so the field names its format instead: an example in the app locale is its placeholder
+ * and its hint. Text no typing can turn into a time is flagged as it is typed; a time left half-typed
+ * ("9:3") is flagged when the field is left.
  */
 export const TimeField = ({ value, locale, onTimeChange }: Readonly<TimeFieldProps>) => {
   const { t } = useTranslation();
   const id = useId();
-  const errorId = `${id}-error`;
+  const hintId = `${id}-hint`;
+  const example = formatTimeText(EXAMPLE_TIME, locale);
   // What is being typed. Null means "show the committed value", which is also how a settled entry is
   // normalised ("2pm" comes back as "2:00 PM").
   const [draft, setDraft] = useState<string | null>(null);
   const [isInvalid, setIsInvalid] = useState(false);
 
-  const read = (text: string) => parseTimeText(text, getDayPeriodMarkers(locale));
+  const markers = getDayPeriodMarkers(locale);
+  const read = (text: string) => parseTimeText(text, markers);
 
   const handleChange = (text: string) => {
     setDraft(text);
-    setIsInvalid(false);
+    setIsInvalid(getTimeTextState(text, markers) === "invalid");
     const time = read(text);
     if (time) onTimeChange(time);
   };
@@ -61,9 +71,10 @@ export const TimeField = ({ value, locale, onTimeChange }: Readonly<TimeFieldPro
         spellCheck={false}
         className="h-9"
         value={draft ?? (value ? formatTimeText(value, locale) : "")}
+        placeholder={example}
         isInvalid={isInvalid}
         aria-invalid={isInvalid || undefined}
-        aria-describedby={isInvalid ? errorId : undefined}
+        aria-describedby={hintId}
         onChange={(event) => handleChange(event.target.value)}
         onBlur={settle}
         onKeyDown={(event) => {
@@ -73,11 +84,13 @@ export const TimeField = ({ value, locale, onTimeChange }: Readonly<TimeFieldPro
           settle();
         }}
       />
-      {isInvalid && (
-        <p id={errorId} role="alert" className="text-xs text-error">
-          {t("common.enter_a_time_like", { example: formatTimeText(EXAMPLE_TIME, locale) })}
-        </p>
-      )}
+      {/* The format up front, and the error once the text can't be a time: the same words, in red. */}
+      <p
+        id={hintId}
+        aria-live="polite"
+        className={isInvalid ? "text-xs text-error" : "text-xs text-slate-500"}>
+        {t("common.enter_a_time_like", { example })}
+      </p>
     </div>
   );
 };

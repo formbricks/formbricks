@@ -5,6 +5,7 @@ import {
   getDayPeriodMarkers,
   getEditorTimeZone,
   getTimeParts,
+  getTimeTextState,
   isBeforeDay,
   parseTimeText,
   resolveDefaultDay,
@@ -102,6 +103,36 @@ describe("formatTimeText and parseTimeText", () => {
   test("shows the time the way the app locale writes it", () => {
     expect(formatTimeText(new Date(2026, 11, 7, 23, 59), "en-US").replace(/\s/g, " ")).toBe("11:59 PM");
     expect(formatTimeText(new Date(2026, 11, 7, 23, 59), "de-DE")).toBe("23:59");
+  });
+});
+
+describe("getTimeTextState", () => {
+  const markers = getDayPeriodMarkers("en-US");
+
+  test.each(["9:30", "11:59 PM", "2pm", "930", "23:59"])("%s is valid", (text) => {
+    expect(getTimeTextState(text, markers)).toBe("valid");
+  });
+
+  test.each(["", "  ", "9:", "9:3", "12:", "p", "a.", "11:30 a."])("%s is still being typed", (text) => {
+    expect(getTimeTextState(text, markers)).not.toBe("invalid");
+  });
+
+  test.each(["qewqeqweqw", "8:00 AMqwe", "12345", "9:75", "24:00", "13:00 pm", "9:30x", "x9"])(
+    "%s can't become a time",
+    (text) => {
+      expect(getTimeTextState(text, markers)).toBe("invalid");
+    }
+  );
+
+  test.each(APP_LOCALES)("%s: no keystroke of a time the picker shows reads as an error", (locale) => {
+    const localeMarkers = getDayPeriodMarkers(locale);
+    for (const hours of [0, 9, 12, 14, 23]) {
+      const shown = formatTimeText(new Date(2026, 9, 15, hours, 30), locale);
+      for (let length = 0; length <= shown.length; length++) {
+        const typed = shown.slice(0, length);
+        expect(getTimeTextState(typed, localeMarkers), `${locale} typing "${typed}"`).not.toBe("invalid");
+      }
+    }
   });
 });
 

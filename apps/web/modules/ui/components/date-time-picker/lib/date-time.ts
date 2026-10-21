@@ -89,6 +89,37 @@ export const parseTimeText = (text: string, markers: TDayPeriodMarkers): TTimePa
   return { hours: (hours % 12) + (period === "pm" ? 12 : 0), minutes };
 };
 
+/**
+ * Where typed text stands, keystroke by keystroke: a `valid` time; `incomplete`, a time still being typed
+ * ("9:", "9:3", "11:30 p" on the way to "p.m.", "午" on the way to "午後") that only becomes an error if
+ * the field is left that way; or `invalid`, text no further typing can turn into a time ("qwe",
+ * "12345", "9:75"), which the field flags at once. Empty text is `incomplete`: an empty field is no error.
+ */
+export type TTimeTextState = "valid" | "incomplete" | "invalid";
+
+// What a time still being typed may lack at its end: a minute digit or two.
+const MINUTE_FILLS = ["0", "00"];
+
+export const getTimeTextState = (text: string, markers: TDayPeriodMarkers): TTimeTextState => {
+  if (parseTimeText(text, markers)) return "valid";
+  const typed = normalizeTimeText(text);
+  const allMarkers = [...markers.am, ...markers.pm];
+  // Nothing yet, or only the start of a day period typed before the clock ("午", "a").
+  if (allMarkers.some((marker) => marker.startsWith(typed))) return "incomplete";
+
+  // The clock may be missing minute digits, and a trailing day period may be only partly typed: the text
+  // is incomplete if some completion of both reads as a time.
+  const canComplete = ["", ...allMarkers].some((marker) =>
+    Array.from({ length: marker.length + 1 }, (_, typedLength) => marker.slice(0, typedLength))
+      .filter((typedMarker) => typed.endsWith(typedMarker))
+      .some((typedMarker) => {
+        const clock = typed.slice(0, typed.length - typedMarker.length);
+        return ["", ...MINUTE_FILLS].some((fill) => parseTimeText(`${clock}${fill}${marker}`, markers));
+      })
+  );
+  return canComplete ? "incomplete" : "invalid";
+};
+
 /** A date's local time as the app locale writes it ("11:59 PM", "23:59"); what the time field shows. */
 export const formatTimeText = (date: Date, locale?: string): string =>
   formatDateTimeForDisplay(date, locale, { hour: "numeric", minute: "2-digit" });
