@@ -1,7 +1,7 @@
 import { createLocalAccountIssuer } from "@better-auth/core/db";
 import bcrypt from "bcryptjs";
 import { Page } from "playwright";
-import { TestInfo } from "playwright/test";
+import { TestInfo, expect } from "playwright/test";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 
@@ -11,11 +11,21 @@ export const login = async (user: Prisma.UserGetPayload<{ include: { memberships
   // credential account below). Better Auth sets the signed session cookie on the response, which is
   // shared with the browser through Playwright's request/context cookie jar — so the subsequent
   // page.goto sends it.
-  await page.context().request.post("/api/auth/sign-in/email", {
+  const response = await page.context().request.post("/api/auth/sign-in/email", {
     data: { email: user.email, password: user.name },
   });
+  expect(response.ok(), "Fixture sign-in must create a session").toBe(true);
 
-  await page.goto("/");
+  // Prisma seeds memberships before the AuthZed outbox projects their grants. Revisit the root
+  // until the seeded membership is visible, instead of leaving the browser on organization setup.
+  await expect(async () => {
+    await page.goto("/");
+    if (user.memberships.length > 0) {
+      await expect(page).toHaveURL(/\/(?:organizations|workspaces)\/[^/?#]+(?:[/?#]|$)/, {
+        timeout: 1000,
+      });
+    }
+  }).toPass({ timeout: 30_000 });
 };
 
 export const createUserFixture = (

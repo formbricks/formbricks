@@ -1,8 +1,11 @@
+import { rootCertificates } from "node:tls";
 import { createClient } from "redis";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { getAuthRedisReconnectDelay } from "./redis-reconnect";
 import { redisSecondaryStorage } from "./secondary-storage";
 
 const mockClient = {
+  isOpen: true,
   on: vi.fn(),
   connect: vi.fn().mockResolvedValue(undefined),
   get: vi.fn(),
@@ -13,12 +16,17 @@ const mockClient = {
 };
 
 vi.mock("redis", () => ({ createClient: vi.fn(() => mockClient) }));
-vi.mock("@/lib/env", () => ({ env: { REDIS_URL: "redis://localhost:6379" } }));
+const mockEnv = vi.hoisted(() => ({
+  REDIS_URL: "redis://localhost:6379" as string | undefined,
+  REDIS_TLS_CA: undefined as string | undefined,
+}));
+vi.mock("@/lib/env", () => ({ env: mockEnv }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn() } }));
 
 describe("redisSecondaryStorage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockClient.isOpen = true;
     // The unit config resets mock implementations between tests; re-establish the lazy connect so
     // getClient()'s `client.connect().then(...)` resolves (it's memoized after the first call).
     mockClient.connect.mockResolvedValue(undefined);
@@ -92,6 +100,43 @@ describe("redisSecondaryStorage", () => {
     expect(await redisSecondaryStorage.increment("k", 90)).toBe(5);
   });
 
+  test("rejects a missing Redis URL before opening an authentication connection", async () => {
+    vi.resetModules();
+    mockEnv.REDIS_URL = undefined;
+    try {
+      const { redisSecondaryStorage: freshStorage } = await import("./secondary-storage");
+      await expect(freshStorage.get("k")).rejects.toThrow("REDIS_URL is required for authentication storage");
+      expect(createClient).not.toHaveBeenCalled();
+    } finally {
+      mockEnv.REDIS_URL = "redis://localhost:6379";
+    }
+  });
+
+  test("uses private CA verification for the separate authentication connection", async () => {
+    vi.resetModules();
+    mockEnv.REDIS_URL = "rediss://127.0.0.1:6378";
+    mockEnv.REDIS_TLS_CA = rootCertificates[0];
+    try {
+      const { redisSecondaryStorage: freshStorage } = await import("./secondary-storage");
+      mockClient.get.mockResolvedValue("value");
+      expect(await freshStorage.get("k")).toBe("value");
+      expect(createClient).toHaveBeenCalledWith(
+        expect.objectContaining({
+          socket: {
+            tls: true,
+            ca: [rootCertificates[0].trim()],
+            rejectUnauthorized: true,
+            connectTimeout: 3000,
+            reconnectStrategy: expect.any(Function),
+          },
+        })
+      );
+    } finally {
+      mockEnv.REDIS_URL = "redis://localhost:6379";
+      mockEnv.REDIS_TLS_CA = undefined;
+    }
+  });
+
   test("creates the client with a heartbeat", async () => {
     vi.resetModules();
     const { redisSecondaryStorage: freshStorage } = await import("./secondary-storage");
@@ -100,7 +145,7 @@ describe("redisSecondaryStorage", () => {
     expect(await freshStorage.get("k")).toBe("value");
     expect(createClient).toHaveBeenCalledWith({
       url: "redis://localhost:6379",
-      socket: { connectTimeout: 3000 },
+      socket: { connectTimeout: 3000, reconnectStrategy: expect.any(Function) },
       pingInterval: 300_000,
     });
   });
@@ -115,5 +160,63 @@ describe("redisSecondaryStorage", () => {
     await expect(freshStorage.get("k")).rejects.toBe(connectionError);
     await expect(freshStorage.get("k")).resolves.toBe("value");
     expect(mockClient.connect).toHaveBeenCalledTimes(2);
+  });
+
+  test("recreates a previously established connection after reconnection is exhausted", async () => {
+    vi.resetModules();
+    const { redisSecondaryStorage: freshStorage } = await import("./secondary-storage");
+    const firstClient = {
+      ...mockClient,
+      connect: vi.fn().mockResolvedValue(undefined),
+      get: vi.fn().mockResolvedValue("original"),
+    };
+    const replacementClient = {
+      ...mockClient,
+      connect: vi.fn().mockResolvedValue(undefined),
+      get: vi.fn().mockResolvedValue("replacement"),
+    };
+    vi.mocked(createClient)
+      .mockReturnValueOnce(firstClient as unknown as ReturnType<typeof createClient>)
+      .mockReturnValueOnce(replacementClient as unknown as ReturnType<typeof createClient>);
+    await expect(freshStorage.get("k")).resolves.toBe("original");
+    firstClient.isOpen = false;
+    await expect(freshStorage.get("k")).resolves.toBe("replacement");
+    expect(createClient).toHaveBeenCalledTimes(2);
+    expect(firstClient.connect).toHaveBeenCalledTimes(1);
+    expect(replacementClient.connect).toHaveBeenCalledTimes(1);
+    expect(firstClient.get).toHaveBeenCalledTimes(1);
+    expect(replacementClient.get).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("authentication Redis reconnection", () => {
+  test.each([
+    "UNABLE_TO_VERIFY_LEAF_SIGNATURE",
+    "SELF_SIGNED_CERT_IN_CHAIN",
+    "UNABLE_TO_GET_ISSUER_CERT_LOCALLY",
+    "ERR_TLS_CERT_ALTNAME_INVALID",
+    "CERT_HAS_EXPIRED",
+    "CERT_REVOKED",
+    "INVALID_CA",
+  ])("does not retry certificate verification failure %s", (code) => {
+    expect(getAuthRedisReconnectDelay(0, Object.assign(new Error("Invalid certificate"), { code }))).toBe(
+      false
+    );
+  });
+
+  test("backs off for transient network failures and stops after three retries", () => {
+    const error = Object.assign(new Error("Connection reset"), { code: "ECONNRESET" });
+    expect([0, 1, 2, 3, 4].map((retry) => getAuthRedisReconnectDelay(retry, error))).toEqual([
+      50,
+      100,
+      200,
+      false,
+      false,
+    ]);
+  });
+
+  test("also bounds errors without a system code", () => {
+    expect(getAuthRedisReconnectDelay(0, new Error("Socket closed"))).toBe(50);
+    expect(getAuthRedisReconnectDelay(3, new Error("Socket closed"))).toBe(false);
   });
 });
