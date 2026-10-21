@@ -55,7 +55,8 @@
               "platform/introduction",
               "platform/what-is-formbricks",
               "platform/open-source",
-              "platform/accessibility"
+              "platform/accessibility",
+              "platform/changelog"
             ]
           },
           {
@@ -190,6 +191,7 @@
                       "surveys/website-app-surveys/actions",
                       "surveys/website-app-surveys/user-identification",
                       "surveys/website-app-surveys/attribute-based-targeting",
+                      "surveys/website-app-surveys/show-conditions",
                       "surveys/website-app-surveys/recontact",
                       "surveys/website-app-surveys/cooldown-period",
                       "surveys/website-app-surveys/survey-display-logic",
@@ -372,6 +374,7 @@
             "group": "Advanced",
             "pages": [
               "self-hosting/advanced/release-maintenance-policy",
+              "self-hosting/advanced/upgrade",
               "self-hosting/advanced/migration",
               "self-hosting/advanced/v6-maintenance-upgrade",
               "self-hosting/advanced/migrating-surveys",

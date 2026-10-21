@@ -12,7 +12,6 @@ import {
   isManagementApiRoute,
 } from "@/app/middleware/endpoint-validator";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
-import { AUDIT_LOG_ENABLED } from "@/lib/constants";
 import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getSession } from "@/modules/auth/lib/session";
 import {
@@ -242,9 +241,9 @@ const processResponse = async (
     logErrorDetails(res, req, error);
   }
 
-  // Queue audit event if enabled and audit log exists
-  if (AUDIT_LOG_ENABLED && auditLog) {
-    queueAuditEvent(auditLog);
+  // queueAuditEvent decides whether audit logging is enabled
+  if (auditLog) {
+    queueAuditEvent(auditLog).catch((error) => logger.error(error, "Failed to queue audit event"));
   }
 };
 

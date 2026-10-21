@@ -79,7 +79,8 @@ const PUBLIC_JS_DIR = "$TURBO_ROOT$/apps/web/public/js";
 // The tasks that own files in apps/web/public/js. `build:dev` is deliberately absent: it copies
 // through the same plugin, so declaring its paths would make it a second writer of the same files.
 const BUNDLE_OUTPUTS: Record<string, string[]> = {
-  "@formbricks/js-core#build": [`${PUBLIC_JS_DIR}/formbricks.*`],
+  // The debug panel (`?formbricksDebug=true`) is a second bundle of js-core's own build.
+  "@formbricks/js-core#build": [`${PUBLIC_JS_DIR}/formbricks.*`, `${PUBLIC_JS_DIR}/formbricks-debug.*`],
   "@formbricks/surveys#build": [
     `${PUBLIC_JS_DIR}/surveys.*`,
     `${PUBLIC_JS_DIR}/validation.*`,

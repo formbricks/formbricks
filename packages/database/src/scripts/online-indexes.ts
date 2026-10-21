@@ -1,5 +1,6 @@
 import { setTimeout as delay } from "node:timers/promises";
 import { Client } from "pg";
+import { getPgConnectionConfig } from "../pg-connection-config";
 
 export type OnlineIndex = Readonly<{
   name: string;
@@ -75,7 +76,7 @@ const readIndex = async (client: Client, index: OnlineIndex) => {
 
 /** Autocommit statements on one connection: never CREATE/DROP CONCURRENTLY inside a transaction. */
 export const ensureOnlineIndexes = async (databaseUrl: string): Promise<void> => {
-  const client = new Client({ connectionString: databaseUrl, connectionTimeoutMillis: 10_000 });
+  const client = new Client({ ...getPgConnectionConfig(databaseUrl), connectionTimeoutMillis: 10_000 });
   try {
     await client.connect();
     // Concurrent builds also wait for older writers and snapshots. A short DDL lock timeout

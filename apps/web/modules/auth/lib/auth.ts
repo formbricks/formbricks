@@ -119,7 +119,14 @@ export const auth = betterAuth({
   // write and SMTP send, so its response time told password accounts from everything else, and it
   // skipped the forgot-password flow's per-account mail limit (ENG-3640). Nothing calls it over HTTP:
   // forgotPasswordAction and the profile action both use `auth.api.requestPasswordReset` in-process.
-  disabledPaths: ["/token", "/update-user", "/request-password-reset"],
+  //
+  // `/sign-up/email` (ENG-3988) too. Every check a credential sign-up has to pass lives in
+  // `createUserAction`: Turnstile on Cloud, the invite and domain policy, `ZUserEmail`/`ZUserPassword`,
+  // the app-level IP limit, org provisioning and the audit entry. A raw POST skipped all of them and
+  // still created the account. The form, `/setup` included, calls `auth.api.signUpEmail` in-process, so
+  // closing the route leaves the action as the only way in. `signupPolicyBeforeHandler` and the
+  // `user.create.before` backstop stay as defence in depth for any other in-process caller.
+  disabledPaths: ["/token", "/update-user", "/request-password-reset", "/sign-up/email"],
   trustedOrigins: AUTH_TRUSTED_ORIGINS,
   telemetry: { enabled: false },
 
@@ -345,10 +352,11 @@ export const auth = betterAuth({
       // ENG-2105: reject password-reset requests at the native Better Auth layer when the operator
       // has disabled password resets (PASSWORD_RESET_DISABLED=1). See better-auth-password-reset-gate.ts.
       await requirePasswordResetEnabledBeforeHandler(ctx, PASSWORD_RESET_DISABLED);
-      // ENG-2293: enforce the closed-sign-up policy on Better Auth's native /sign-up/email, which is
-      // served beside createUserAction and used to bypass it entirely. Runs BEFORE the endpoint so the
-      // rejection can't double as an account-existence oracle (the handler looks the address up first,
-      // and an address that already has one never reaches a create hook). See signup-policy.ts.
+      // ENG-2293: enforce the closed-sign-up policy on Better Auth's native /sign-up/email, which used
+      // to be served beside createUserAction and bypassed it entirely. The HTTP route is now closed
+      // (`disabledPaths`, ENG-3988), so this guards in-process callers other than the action. Runs
+      // BEFORE the endpoint because a rejection from the create hook would be swallowed into Better
+      // Auth's synthetic duplicate-email 200, a fake success. See signup-policy.ts.
       // Ordered ahead of the breach check so a sign-up on a closed instance costs no outbound HIBP call.
       // Path-disjoint from the reset gate above, so their relative order is not load-bearing.
       await signupPolicyBeforeHandler(ctx);
@@ -377,7 +385,6 @@ export const auth = betterAuth({
     storage: "secondary-storage",
     customRules: {
       "/sign-in/email": { window: 60, max: 5 },
-      "/sign-up/email": { window: 60, max: 3 },
       "/reset-password": { window: 60, max: 5 },
       // ENG-2562: the two verification endpoints, deliberately asymmetric because their risk is.
       //

@@ -33,6 +33,11 @@ Reserved fields are the auto-captured half of [Embedded Data](/surveys/embedded-
 | `viewportHeight`  | `number`  | Browser         | Height of that window                                                         |
 | `timezone`        | `string`  | Browser         | The respondent's IANA time zone, e.g. `Europe/Berlin`                         |
 | `locale`          | `string`  | Browser         | How the device is configured, e.g. `de-AT`, from `navigator.language`         |
+| `visitPagesViewed`       | `number`  | Browser (website) | Pages loaded in this visit before the survey showed, reloads included |
+| `visitUniquePagesViewed` | `number`  | Browser (website) | Different pages in this visit, counted up to 200 |
+| `visitTimeOnSite`        | `number`  | Browser (website) | Seconds spent on your site's pages in this visit |
+| `visitEntryReferrer`     | `string`  | Browser (website) | Where the visit started. Read back without its query string |
+| `visitUrls`              | `string`  | Browser (website) | The paths taken in this visit, in order, joined by ` · ` (the first page and the last 49 steps). Lowercase, without a trailing slash |
 | `language`        | `string`  | Browser, Server | The language the respondent is **answering in**                               |
 | `country`         | `string`  | Server          | Country from the CDN request header. Formbricks runs no GeoIP lookup          |
 | `browser`         | `string`  | Server          | Parsed from the `user-agent` request header                                   |
@@ -62,6 +67,8 @@ Reserved fields are the auto-captured half of [Embedded Data](/surveys/embedded-
 
 Link surveys and website & app surveys render through the same component, so both capture the full browser set. What those fields *describe* differs: on a link survey `url`, `pagePath`, `pageReferrer` and `utm*` are about the Formbricks-hosted survey page and how the respondent reached it; on an app survey they are about the host page the survey was triggered on.
 
+The five `visit*` fields come from the website SDK, which counts the visit in the browser tab across page loads: a visit is one tab, and time on site leaves out time spent on other sites. Only website & app surveys on a website carry them; link surveys and mobile apps leave them unset. They are what [show conditions](/surveys/website-app-surveys/show-conditions) check, recorded as they were when the survey showed. To get `visitUrls` as a list, split it on ` · `: a browser always encodes spaces inside a path, so the separator never occurs in one.
+
 Mobile SDKs render the survey in a WebView with no host page, so the page and campaign fields are absent there while the device fields (`screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`, `locale`) and every server-derived field are captured normally.
 
 <Note>
@@ -89,8 +96,8 @@ The **Anonymize responses** toggle in the survey editor's **Settings** tab, unde
 | With the toggle on         | Fields                                                                                                                                                                                    |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Not captured**           | `country`, `ipAddress`, `browser`, `os`, `deviceType`                                                                                                                                     |
-| **Query string stripped**  | `url`, `pageReferrer`                                                                                                                                                                     |
-| **Captured unchanged**     | `source`, `action`, `pagePath`, all five `utm*`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`, `locale`, `language`, `finished`, `durationSeconds`, `startedAt`, `finishedAt`, `responseId`, `surveyId` |
+| **Query string stripped**  | `url`, `pageReferrer`, `visitEntryReferrer`                                                                                                                                               |
+| **Captured unchanged**     | `source`, `action`, `pagePath`, all five `utm*`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`, `locale`, `visitPagesViewed`, `visitUniquePagesViewed`, `visitTimeOnSite`, `visitUrls`, `language`, `finished`, `durationSeconds`, `startedAt`, `finishedAt`, `responseId`, `surveyId` |
 
 A suppressed field resolves as **unset**, never as an empty string or a stale value, so `#recall:country/fallback:unknown#` shows `unknown` and a logic condition on it simply does not match.
 
@@ -110,7 +117,7 @@ Turning the toggle on also disables **Capture IP address** for that survey, beca
 
 ### Query Stripping Is Not Only for Anonymized Surveys
 
-`url` and `pageReferrer` are **always** stripped of their query string and fragment before recall, logic or an export can read them, on every survey, whether or not the toggle is on. Only the stored value keeps the full URL, and only while anonymize is off.
+`url`, `pageReferrer` and `visitEntryReferrer` are **always** stripped of their query string and fragment before recall, logic or an export can read them, on every survey, whether or not the toggle is on. Only the stored value keeps the full URL, and only while anonymize is off.
 
 That is deliberate: a recall token can end up interpolated into a redirect URL or a follow-up email, and a survey URL's query string can carry a single-use token or an email address. The campaign parameters you actually want are already available as `utmSource` and friends.
 
