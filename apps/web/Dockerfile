@@ -86,7 +86,10 @@ FROM base AS runner
 
 # Upgrade Alpine system packages, remove build-only npm tooling from the runtime image, then create user.
 # The application and startup migrations run directly with Node.js; npm and npx are only needed in the installer.
+# Node reads this CA bundle through --use-openssl-ca, which start.sh sets (ENG-4065). The pin is a security
+# control: 20261020-r0 is the first Alpine release that distrusts the compromised eMudhra root.
 RUN apk update && apk upgrade --no-cache \
+    && apk add --no-cache "ca-certificates-bundle>=20261020-r0" \
     && rm -rf /usr/local/lib/node_modules/npm \
     && rm -f /usr/local/bin/npm /usr/local/bin/npx \
     && addgroup -S nextjs \

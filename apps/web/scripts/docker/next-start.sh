@@ -3,6 +3,12 @@
 set -eu
 export NODE_ENV=production
 
+# Stock Node trusts a CA list compiled into its binary, so the patched OS bundle never reaches it (ENG-4065).
+# Read the OS bundle instead. Append to the deployment's own NODE_OPTIONS and drop the two flags Node refuses
+# to combine with --use-openssl-ca: it covers what they were for.
+NODE_OPTIONS="$(printf '%s' "${NODE_OPTIONS:-}" | sed -e 's/--use-system-ca//g' -e 's/--use-bundled-ca//g')"
+export NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--use-openssl-ca"
+
 echo "Validating environment variables..."
 node /home/nextjs/validate-env.mjs
 
