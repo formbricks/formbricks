@@ -105,7 +105,9 @@ The SAML callback accepts sign-ins from anyone, so Formbricks bounds what it doe
 - is larger than 256 KiB, the size limit for every `/api/auth` request;
 - carries more than 12,000 tags and attribute names, or nests elements more than 64 levels deep;
 - contains a `DOCTYPE` or another XML declaration other than the usual `<?xml ...?>` line;
-- takes longer than 100 ms to parse, or more memory than a parse of a real response needs.
+- takes longer than 100 ms to parse, or more memory than a parse of a real response needs. For an encrypted assertion, this includes decrypting it and parsing what it holds.
+
+The tag, depth and `DOCTYPE` checks see an encrypted assertion only as ciphertext, so its decrypted content is bounded by the time and memory limits alone.
 
 Real responses stay within these limits. A response carrying 1,000 group memberships written as verbosely as Okta writes them is about 247 KiB and 5,000 tags and attribute names; a signed or encrypted assertion nests about 10 levels deep. If users with very many groups are refused, have your IdP send only the groups Formbricks needs, for example with a group filter on the SAML app, rather than every group the user belongs to.
 
