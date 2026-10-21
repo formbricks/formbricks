@@ -34,6 +34,7 @@ describe("SAML Jackson Initialization", () => {
 
     global.oauthController = undefined;
     global.connectionController = undefined;
+    global.samlDecryptionKey = undefined;
 
     vi.mocked(controllers).mockResolvedValue({
       oauthController: mockOAuthController,
@@ -94,7 +95,9 @@ describe("SAML Jackson Initialization", () => {
     expect(result).toEqual({
       oauthController: mockOAuthController,
       connectionController: mockConnectionController,
+      getDecryptionKey: global.samlDecryptionKey,
     });
+    expect(global.samlDecryptionKey).toEqual(expect.any(Function));
   });
 
   test("return early when SAML SSO is disabled", async () => {
@@ -117,6 +120,8 @@ describe("SAML Jackson Initialization", () => {
   test("reuse existing controllers if already initialized", async () => {
     global.oauthController = mockOAuthController as any;
     global.connectionController = mockConnectionController as any;
+    const decryptionKey = async () => "sp-private-key";
+    global.samlDecryptionKey = decryptionKey;
 
     const result = await init();
 
@@ -129,6 +134,7 @@ describe("SAML Jackson Initialization", () => {
     expect(result).toEqual({
       oauthController: mockOAuthController,
       connectionController: mockConnectionController,
+      getDecryptionKey: decryptionKey,
     });
   });
 });

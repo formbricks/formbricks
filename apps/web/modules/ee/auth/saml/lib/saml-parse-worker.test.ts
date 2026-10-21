@@ -1,3 +1,4 @@
+import { createRequire } from "node:module";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { parseSamlResponse } from "./saml-parse-worker";
 import {
@@ -49,6 +50,19 @@ describe("parseSamlResponse", () => {
   test("keeps the claims when the assertion was encrypted to another key", () => {
     expect(parseSamlResponse(encrypted, createSpKeyPair().privateKey)).toEqual(CLAIMS);
     expect(decryptXmlSpy.mock.results[0]).toMatchObject({ type: "throw" });
+  });
+
+  test("decrypts with the saml20 release jackson validates with", () => {
+    // The worker times saml20's `decryptXml` as jackson's stand-in, so they must be the same release: bump the
+    // direct dependency in apps/web/package.json whenever a jackson upgrade moves its saml20.
+    const require = createRequire(import.meta.url);
+    const jacksonManifest = require("@boxyhq/saml-jackson/package.json") as {
+      dependencies: Record<string, string>;
+    };
+
+    expect(require("@boxyhq/saml20/package.json").version).toBe(
+      jacksonManifest.dependencies["@boxyhq/saml20"]
+    );
   });
 
   test("returns no claims for a document without a root", () => {

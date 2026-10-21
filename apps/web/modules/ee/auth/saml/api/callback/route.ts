@@ -7,7 +7,7 @@ import { hashString } from "@/lib/hash-string";
 import { toLogText } from "@/lib/utils/strings";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import jackson, { getSamlDecryptionKey } from "@/modules/ee/auth/saml/lib/jackson";
+import jackson from "@/modules/ee/auth/saml/lib/jackson";
 import {
   type SamlParseProbe,
   type SamlResponseClaims,
@@ -280,7 +280,7 @@ export const POST = async (req: Request) => {
       responses.forbiddenResponse("SAML SSO is not enabled in your Formbricks license")
     );
   }
-  const { oauthController } = jacksonInstance;
+  const { oauthController, getDecryptionKey } = jacksonInstance;
 
   const form = await readCallbackForm(req);
   if (form instanceof Response) return form;
@@ -289,10 +289,30 @@ export const POST = async (req: Request) => {
   const refusal = await refuseBeforeParsing(req, SAMLResponse);
   if (refusal) return refusal;
 
+  // The worker needs jackson's key to decrypt an encrypted assertion, which the bounds only ever see as ciphertext.
+  // Without it nothing can be measured, so the response is refused rather than handed to jackson unmeasured.
+  let decryptionKey: string;
+  try {
+    decryptionKey = await getDecryptionKey();
+  } catch (error) {
+    logger.error(
+      {
+        error: toLogText(error instanceof Error ? error.message : String(error), LOGGED_TEXT_LIMIT),
+        ...failureContext(SAMLResponse, RelayState),
+      },
+      "SAML decryption key could not be read; refused a SAML response"
+    );
+    return refuse(
+      req,
+      "saml_unavailable",
+      responses.serviceUnavailableResponse("The SAML response could not be processed; retry shortly", 1)
+    );
+  }
+
   // The bounds model xmldom; this measures it. A worker parses the response under a time budget first, so a shape
   // the bounds misread costs the worker at most the budget and never blocks this thread for long. It decrypts an
-  // encrypted assertion with jackson's key and parses that too, because the bounds only ever see its ciphertext.
-  const probe = await probeSamlResponseParse(SAMLResponse, await getSamlDecryptionKey());
+  // encrypted assertion with jackson's key and parses that too.
+  const probe = await probeSamlResponseParse(SAMLResponse, decryptionKey);
   if (probe.outcome !== "parsed") return refuseUnparsed(req, probe, SAMLResponse, RelayState);
   const context = failureContext(SAMLResponse, RelayState, probe.claims);
 

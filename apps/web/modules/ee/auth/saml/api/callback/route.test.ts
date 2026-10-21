@@ -13,25 +13,28 @@ import { POST, type SamlErrorCode, buildLoginErrorUrl } from "./route";
 const CLAIMS = { issuer: "https://idp.example.com", id: "_resp1", inResponseTo: "_req1" };
 const PARSED: SamlParseProbe = { outcome: "parsed", ms: 3, claims: CLAIMS };
 
-const { samlResponseMock, jacksonMock, applyIPRateLimitMock, redirectMock, probeMock } = vi.hoisted(() => {
-  const samlResponseMock = vi.fn(async (_body: { RelayState: string; SAMLResponse: string }) => ({
-    redirect_url: "https://app.example.com/api/auth/saml/authorize?code=c",
-  }));
-  return {
-    samlResponseMock,
-    jacksonMock: vi.fn(async () => ({ oauthController: { samlResponse: samlResponseMock } })),
-    applyIPRateLimitMock: vi.fn(async (_config: unknown, _options?: unknown) => ({ allowed: true })),
-    redirectMock: vi.fn((url: string) => new Response(null, { status: 307, headers: { location: url } })),
-    probeMock: vi.fn(
-      async (_samlResponse: string, _decryptionKey?: string): Promise<SamlParseProbe> => PARSED
-    ),
-  };
-});
+const { samlResponseMock, decryptionKeyMock, jacksonMock, applyIPRateLimitMock, redirectMock, probeMock } =
+  vi.hoisted(() => {
+    const samlResponseMock = vi.fn(async (_body: { RelayState: string; SAMLResponse: string }) => ({
+      redirect_url: "https://app.example.com/api/auth/saml/authorize?code=c",
+    }));
+    const decryptionKeyMock = vi.fn(async () => "sp-private-key");
+    return {
+      samlResponseMock,
+      decryptionKeyMock,
+      jacksonMock: vi.fn(async () => ({
+        oauthController: { samlResponse: samlResponseMock },
+        getDecryptionKey: decryptionKeyMock,
+      })),
+      applyIPRateLimitMock: vi.fn(async (_config: unknown, _options?: unknown) => ({ allowed: true })),
+      redirectMock: vi.fn((url: string) => new Response(null, { status: 307, headers: { location: url } })),
+      probeMock: vi.fn(
+        async (_samlResponse: string, _decryptionKey?: string): Promise<SamlParseProbe> => PARSED
+      ),
+    };
+  });
 
-vi.mock("@/modules/ee/auth/saml/lib/jackson", () => ({
-  default: jacksonMock,
-  getSamlDecryptionKey: vi.fn(async () => "sp-private-key"),
-}));
+vi.mock("@/modules/ee/auth/saml/lib/jackson", () => ({ default: jacksonMock }));
 vi.mock("@/modules/ee/auth/saml/lib/saml-parse-budget", () => ({ probeSamlResponseParse: probeMock }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyIPRateLimit: applyIPRateLimitMock }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
@@ -242,6 +245,22 @@ describe("SAML callback route", () => {
       );
     });
 
+    test("refuses rather than parse without jackson's key, which an encrypted assertion would need", async () => {
+      const error = vi.spyOn(logger, "error").mockImplementation(() => undefined);
+      decryptionKeyMock.mockRejectedValueOnce(new Error("Certificate store not initialized"));
+
+      const response = await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "s" }));
+
+      expect(response.status).toBe(503);
+      expect(response.headers.get("Retry-After")).toBe("1");
+      expect(probeMock).not.toHaveBeenCalled();
+      expect(samlResponseMock).not.toHaveBeenCalled();
+      expect(error).toHaveBeenCalledWith(
+        expect.objectContaining({ error: "Certificate store not initialized", length: b64(ISSUER).length }),
+        "SAML decryption key could not be read; refused a SAML response"
+      );
+    });
+
     test.each(["time", "memory"] as const)(
       "refuses a response too costly to parse (%s), without jackson",
       async (reason) => {
@@ -397,6 +416,12 @@ describe("SAML callback route", () => {
         VALID,
         () => jacksonMock.mockResolvedValueOnce(undefined as never),
         "saml_connection_unavailable",
+      ],
+      [
+        "jackson's decryption key being unreadable",
+        VALID,
+        () => decryptionKeyMock.mockRejectedValueOnce(new Error("Certificate store not initialized")),
+        "saml_unavailable",
       ],
     ];
 

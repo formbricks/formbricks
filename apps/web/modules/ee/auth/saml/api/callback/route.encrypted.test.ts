@@ -23,8 +23,10 @@ const { samlResponseMock } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/modules/ee/auth/saml/lib/jackson", () => ({
-  default: vi.fn(async () => ({ oauthController: { samlResponse: samlResponseMock } })),
-  getSamlDecryptionKey: vi.fn(async () => sp.privateKey),
+  default: vi.fn(async () => ({
+    oauthController: { samlResponse: samlResponseMock },
+    getDecryptionKey: async () => sp.privateKey,
+  })),
 }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
   applyIPRateLimit: vi.fn(async () => ({ allowed: true })),

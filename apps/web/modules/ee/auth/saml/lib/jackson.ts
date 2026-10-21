@@ -9,6 +9,7 @@ import { getIsSamlSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 declare global {
   var oauthController: IOAuthController | undefined;
   var connectionController: IConnectionAPIController | undefined;
+  var samlDecryptionKey: (() => Promise<string>) | undefined;
 }
 
 const g = global;
@@ -36,19 +37,8 @@ const jacksonLogger = (level: "info" | "warn" | "error") => (message: string, er
     toLogText(message, JACKSON_LOG_TEXT_LIMIT) ?? ""
   );
 
-/**
- * The private key jackson decrypts encrypted assertions with: its default SP certificate, which it generates and
- * stores on first start (ENG-4051). It is read through the module jackson itself uses, so it is the key jackson would
- * decrypt with, and the SAML parse worker can decrypt a response under the parse budget before jackson does. Call it
- * only once `init` has returned an instance: jackson sets up the certificate store there.
- */
-export const getSamlDecryptionKey = async (): Promise<string> => {
-  const { getDefaultCertificate } = await import("@boxyhq/saml-jackson/dist/saml/x509");
-  return (await getDefaultCertificate()).privateKey;
-};
-
 export default async function init() {
-  if (!g.oauthController || !g.connectionController) {
+  if (!g.oauthController || !g.connectionController || !g.samlDecryptionKey) {
     const isSamlSsoEnabled = await getIsSamlSsoEnabled();
     if (!isSamlSsoEnabled) return;
 
@@ -70,16 +60,28 @@ export default async function init() {
       logger: { info: jacksonLogger("info"), warn: jacksonLogger("warn"), error: jacksonLogger("error") },
     };
 
-    const ret = await (await import("@boxyhq/saml-jackson")).controllers(opts);
+    const [{ controllers }, x509] = await Promise.all([
+      import("@boxyhq/saml-jackson"),
+      import("@boxyhq/saml-jackson/dist/saml/x509"),
+    ]);
+    const ret = await controllers(opts);
 
     await preloadConnection(ret.connectionAPIController);
 
     g.oauthController = ret.oauthController;
     g.connectionController = ret.connectionAPIController;
+    // The private key jackson decrypts encrypted assertions with: its default SP certificate, which `controllers`
+    // generated or loaded just now (ENG-4051). The SAML parse worker needs it to decrypt a response under the parse
+    // budget before jackson does. It has to be read through this `x509`, the copy `controllers` set up: the build
+    // bundles jackson once per server runtime, so a page and a route can each hold their own copy, and only the one
+    // whose runtime ran `init` has a certificate store. Kept on the global object with the controllers, so every
+    // runtime reads it from that copy.
+    g.samlDecryptionKey = async () => (await x509.getDefaultCertificate()).privateKey;
   }
 
   return {
     oauthController: g.oauthController,
     connectionController: g.connectionController,
+    getDecryptionKey: g.samlDecryptionKey,
   };
 }
