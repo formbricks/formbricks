@@ -61,7 +61,7 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
       workspaceName?: string;
       withoutWorkspace?: boolean;
       skipSurveySeed?: boolean;
-      // Match production cost in timing tests while keeping other fixture logins cheap.
+      // bcrypt cost of the stored password. Defaults to 10 to keep logins cheap; production hashes at 12.
       passwordCost?: number;
     }) => {
       const uname = params?.name ?? `user-${workerInfo.workerIndex}-${Date.now()}`;

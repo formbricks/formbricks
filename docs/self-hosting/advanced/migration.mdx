@@ -301,6 +301,23 @@ longest a migration leaves a transaction idle, or leave the parameter out.
   Formbricks sends it and logs a warning.
 </Warning>
 
+### One-click: port 3000 is published on the host only
+
+The one-click installer now publishes the Formbricks container's port `3000` on `127.0.0.1` instead of every
+interface, and `./formbricks.sh update` changes an existing one-click installation the same way, in
+`docker-compose.yml` and in your Compose override file if you have one, keeping each original as
+`<file>.before-loopback-port`. Traefik keeps serving Formbricks on ports `80` and `443`, so the app is only reachable
+from outside through Traefik and its TLS and request limits. For that to hold against other machines on the same
+local network, Docker Engine must be 28.0 or later and not 28.2.0 to 28.3.2; the installer and the update warn on
+those versions.
+
+If you reach port `3000` from other machines on purpose, publish it on an explicit address after updating, such as
+`- 0.0.0.0:3000:3000` (add `- "[::]:3000:3000"` for IPv6). The update only rewrites the bare `- 3000:3000`
+mapping, so it leaves an address you chose alone; putting the bare mapping back would be narrowed again next time.
+
+Compose setups that don't use the one-click script are not changed. If yours publishes `3000:3000` and a reverse
+proxy on the same host is the intended way in, bind it to `127.0.0.1:3000:3000` as well.
+
 ### Changes in Environment Variables
 
 <Note>
