@@ -103,7 +103,7 @@ Modify the configuration to enforce SSL. The rest of the configuration should re
         - "traefik.http.routers.formbricks.tls=true"  # Enable TLS
         - "traefik.http.services.formbricks.loadbalancer.server.port=3000"  # Forward traffic to Formbricks on port 3000
       ports:
-        - 3000:3000
+        - 127.0.0.1:3000:3000  # Host-only: outside traffic goes through Traefik
       volumes:
         - uploads:/home/nextjs/apps/web/uploads/
       <<: *environment
