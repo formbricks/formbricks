@@ -18,9 +18,11 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
     const uniqueId = Date.now() + Math.random();
     const userName = "Security Test User";
     const userEmail = `security-test-${uniqueId}@example.com`;
+    // Unknown users hash at production cost 12, so use the same cost for the known-user path.
     await users.create({
       name: userName,
       email: userEmail,
+      passwordCost: 12,
     });
     testUser = {
       email: userEmail,
