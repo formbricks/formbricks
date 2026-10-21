@@ -1,3 +1,4 @@
+import { rootCertificates } from "node:tls";
 import { createClient } from "redis";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { RedisClient } from "@/types/client";
@@ -59,10 +60,41 @@ describe("@formbricks/cache factory", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     delete process.env.REDIS_URL;
+    delete process.env.REDIS_TLS_CA;
     resetCacheFactory();
   });
 
   describe("createRedisClientFromEnv", () => {
+    test("passes private trust and strict verification to the cache connection", async () => {
+      process.env.REDIS_URL = "rediss://127.0.0.1:6378";
+      process.env.REDIS_TLS_CA = rootCertificates[0];
+      const client = { on: vi.fn(), connect: vi.fn().mockResolvedValue(undefined) };
+      mockCreateClient.mockReturnValue(client as unknown as ReturnType<typeof createClient>);
+
+      expect((await createRedisClientFromEnv()).ok).toBe(true);
+      expect(mockCreateClient).toHaveBeenCalledWith(
+        expect.objectContaining({
+          socket: {
+            tls: true,
+            ca: [rootCertificates[0].trim()],
+            rejectUnauthorized: true,
+            connectTimeout: 3000,
+          },
+        })
+      );
+    });
+
+    test("fails configuration before opening a connection when a CA is supplied for plaintext", async () => {
+      process.env.REDIS_URL = "redis://localhost:6379";
+      process.env.REDIS_TLS_CA = rootCertificates[0];
+
+      expect(await createRedisClientFromEnv()).toEqual({
+        ok: false,
+        error: { code: ErrorCode.RedisConfigurationError },
+      });
+      expect(mockCreateClient).not.toHaveBeenCalled();
+    });
+
     test("should return error when REDIS_URL is not set", async () => {
       const result = await createRedisClientFromEnv();
 
