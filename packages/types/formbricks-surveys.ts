@@ -1,6 +1,7 @@
 import type { TRendererCustomCss } from "./custom-css";
 import type { TJsFileUploadParams, TJsWorkspaceStateSurvey } from "./js";
 import type { TResponseData, TResponseHiddenFieldValue, TResponseUpdate } from "./responses";
+import type { TVisitSnapshot } from "./show-conditions";
 import type { TUploadFileConfig } from "./storage";
 import type { TSurveyStyling } from "./surveys/types";
 import type { TWorkspaceStyling } from "./workspace";
@@ -127,6 +128,8 @@ export interface SurveyContainerProps extends Omit<SurveyBaseProps, "onFileUploa
   overlay?: "none" | "light" | "dark";
   placement?: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
   action?: string;
+  /** The visit when the survey shows, from the web SDK (ENG-3926); saved as the `visit*` meta fields. */
+  visit?: TVisitSnapshot;
   singleUseId?: string;
   singleUseResponseId?: string;
   pinAuthToken?: string;

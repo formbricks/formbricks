@@ -47,6 +47,11 @@ export const RESERVED_FILTER_LOCATORS: Record<string, TReservedFilterLocator> = 
   viewportHeight: { kind: "meta", path: ["viewportHeight"] },
   timezone: { kind: "meta", path: ["timezone"] },
   locale: { kind: "meta", path: ["locale"] },
+  visitPagesViewed: { kind: "meta", path: ["visitPagesViewed"] },
+  visitUniquePagesViewed: { kind: "meta", path: ["visitUniquePagesViewed"] },
+  visitTimeOnSite: { kind: "meta", path: ["visitTimeOnSite"] },
+  visitEntryReferrer: { kind: "meta", path: ["visitEntryReferrer"] },
+  visitUrls: { kind: "meta", path: ["visitUrls"] },
   durationSeconds: { kind: "ttcTotalMs" },
 };
 

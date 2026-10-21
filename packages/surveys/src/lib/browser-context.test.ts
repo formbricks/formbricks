@@ -291,3 +291,62 @@ describe("createWebSurveyMetaSnapshot", () => {
     expect(meta.locale).toBe("en-GB");
   });
 });
+
+describe("createWebSurveyMetaSnapshot — the visit group", () => {
+  const visit = {
+    pagesViewed: 4,
+    uniquePagesViewed: 3,
+    timeOnSite: 125,
+    entryReferrer: "https://www.google.com/",
+    visitedUrls: ["/", "/plans", "/plans/compare", "/plans"],
+    uniquePaths: ["/", "/plans", "/plans/compare"],
+  };
+
+  test("adds the visit handed in by the web SDK, with the journey as one string", () => {
+    const meta = createWebSurveyMetaSnapshot(true, visit)();
+
+    expect(meta).toMatchObject({
+      visitPagesViewed: 4,
+      visitUniquePagesViewed: 3,
+      visitTimeOnSite: 125,
+      visitEntryReferrer: "https://www.google.com/",
+      visitUrls: "/ · /plans · /plans/compare · /plans",
+    });
+  });
+
+  test("keeps 0 seconds on site, and leaves out an empty entry referrer", () => {
+    const meta = createWebSurveyMetaSnapshot(true, { ...visit, timeOnSite: 0, entryReferrer: "" })();
+
+    expect(meta.visitTimeOnSite).toBe(0);
+    expect(meta).not.toHaveProperty("visitEntryReferrer");
+  });
+
+  test("adds no visit field when no visit is handed in", () => {
+    const meta = createWebSurveyMetaSnapshot(true)();
+
+    for (const key of [
+      "visitPagesViewed",
+      "visitUniquePagesViewed",
+      "visitTimeOnSite",
+      "visitEntryReferrer",
+      "visitUrls",
+    ]) {
+      expect(meta).not.toHaveProperty(key);
+    }
+  });
+
+  test("drops a malformed visit field instead of breaking the survey", () => {
+    // The SDK and this renderer are cached separately, so a visit from another version must not throw.
+    const malformed = {
+      ...visit,
+      visitedUrls: "not a list",
+      pagesViewed: Number.NaN,
+    } as unknown as Parameters<typeof createWebSurveyMetaSnapshot>[1];
+
+    const meta = createWebSurveyMetaSnapshot(true, malformed)();
+
+    expect(meta).not.toHaveProperty("visitUrls");
+    expect(meta).not.toHaveProperty("visitPagesViewed");
+    expect(meta.visitTimeOnSite).toBe(125);
+  });
+});

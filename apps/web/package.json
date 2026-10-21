@@ -171,7 +171,8 @@
     "xlsx": "file:vendor/xlsx-0.20.3.tgz",
     "yaml": "2.9.0",
     "zod": "catalog:",
-    "zod-openapi": "catalog:"
+    "zod-openapi": "catalog:",
+    "@formbricks/redis-config": "workspace:*"
   },
   "devDependencies": {
     "@formbricks/config-eslint": "workspace:*",

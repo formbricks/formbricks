@@ -234,7 +234,9 @@ describe("utils", () => {
       // `locale` is the entry that proved it: it was added to the catalog by ENG-2472 and became a
       // column here with no edit beyond this count.
       expect(RESERVED_COLUMN_ENTRIES.map((entry) => entry.name)).toContain("locale");
-      expect(RESERVED_COLUMN_ENTRIES).toHaveLength(21);
+      // And the five visit fields (ENG-3926), the same way.
+      expect(RESERVED_COLUMN_ENTRIES.map((entry) => entry.name)).toContain("visitUrls");
+      expect(RESERVED_COLUMN_ENTRIES).toHaveLength(26);
     });
 
     test("today's six columns are still visible by default, and the new ones are not", () => {
@@ -266,11 +268,12 @@ describe("utils", () => {
         pagePath: "/pricing",
         utmSource: "news",
         viewportWidth: 1280,
+        visitTimeOnSite: 146,
       },
     } as unknown as TResponse;
 
     test("keys values by column id, resolving where the field actually lives", () => {
-      const values = getReservedColumnValues(response);
+      const values = getReservedColumnValues(response, "en-US");
 
       // `deviceType` is stored at `meta.userAgent.device`, which is exactly what the old per-column
       // switch existed to know. The catalog's accessor knows it instead.
@@ -281,17 +284,23 @@ describe("utils", () => {
     });
 
     test("numbers arrive as strings a cell can render directly", () => {
-      expect(getReservedColumnValues(response)[reservedColumnId("viewportWidth")]).toBe("1280");
+      expect(getReservedColumnValues(response, "en-US")[reservedColumnId("viewportWidth")]).toBe("1280");
+    });
+
+    test("time on site carries its unit, so it does not read like a count", () => {
+      expect(getReservedColumnValues(response, "en-US")[reservedColumnId("visitTimeOnSite")]).toBe("146 sec");
     });
 
     test("inherits the projection's redaction rather than reading meta again", () => {
       // `url` is `privacy: "redactQuery"`. Reading `meta.url` directly — which the old switch did —
       // would put the respondent's `?email=` into a visible column and every clipboard copy.
-      expect(getReservedColumnValues(response)[reservedColumnId("url")]).toBe("https://example.com/pricing");
+      expect(getReservedColumnValues(response, "en-US")[reservedColumnId("url")]).toBe(
+        "https://example.com/pricing"
+      );
     });
 
     test("omits what the response does not carry, so a cell stays empty", () => {
-      const values = getReservedColumnValues(response);
+      const values = getReservedColumnValues(response, "en-US");
 
       expect(values).not.toHaveProperty(reservedColumnId("timezone"));
       expect(values).not.toHaveProperty(reservedColumnId("ipAddress"));

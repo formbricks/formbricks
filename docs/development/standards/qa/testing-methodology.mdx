@@ -66,6 +66,35 @@ source of truth for when one is warranted; the short version:
    of the PR gate and its wall clock can never drop below its slowest single test, so a new spec has to
    buy risk coverage that nothing cheaper can.
 
+#### How E2E Runs in CI
+
+The suite runs entirely on the runner that executes `.github/workflows/e2e.yml`: the app, Postgres, Valkey,
+AuthZed and RustFS start on the runner, and Playwright drives a locally installed Chromium. There is no
+remote browser service. The runner is an 8 vCPU Blacksmith runner (`blacksmith-8vcpu-ubuntu-2404`). Fork
+PRs run on GitHub's free `ubuntu-latest` instead. Failure artifacts (`playwright-report/`, with traces,
+screenshots and videos, plus `app.log`) are uploaded from the same job.
+
+Two optional repository variables (Settings → Secrets and variables → Actions → Variables) override the
+defaults without a code change:
+
+| Variable      | Effect                                                                  | Default                        |
+| ------------- | ----------------------------------------------------------------------- | ------------------------------ |
+| `E2E_RUNNER`  | The `runs-on` label for the E2E job.                                    | `blacksmith-8vcpu-ubuntu-2404` |
+| `E2E_WORKERS` | Playwright worker count. Unset, it is one worker per CPU on the runner. | one per CPU                    |
+
+The `@timing` test (`security.spec.ts`) runs in its own `chromium-timing` Playwright project, after the main
+suite, so it has the machine to itself. Playwright runs a project's dependencies first and ignores CLI
+filters for them, so `pnpm test:e2e security.spec.ts` or `--project=chromium-timing` runs the whole
+`chromium` project before it; add `--no-deps` to run only the timing test.
+
+`step-security/harden-runner` audits outbound calls only on GitHub-hosted runners. On Blacksmith its agent is
+skipped, so that job's egress is not audited (the step is audit-only and blocks nothing). Fork PRs run on
+`ubuntu-latest` and are still audited.
+
+To roll back to GitHub's runner, set `E2E_RUNNER=ubuntu-latest`; the worker count follows its 4 CPUs. Check
+that a runner exists before setting `E2E_RUNNER` to another label: one with no runner behind it leaves the
+job queued until its 30-minute timeout.
+
 ## Testing Setup
 
 ### Configuration

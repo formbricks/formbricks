@@ -2,9 +2,10 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon, LinkIcon, MonitorIcon } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSegment } from "@formbricks/types/segment";
+import type { TShowConditions } from "@formbricks/types/show-conditions";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
 import { getDefaultEndingCard } from "@/app/lib/survey-builder";
 import { cn } from "@/lib/cn";
@@ -23,16 +24,27 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, appSetupCompleted }
   const workspaceBasePath = `/workspaces/${localSurvey.workspaceId}`;
   const [open, setOpen] = useState(false);
   const { t } = useTranslation();
+  // The conditions a switch to link set aside, so switching back to app in the same session brings
+  // them back instead of losing them to a mis-click.
+  const setAsideShowConditions = useRef<TShowConditions>(null);
 
   const setSurveyType = (type: TSurveyType) => {
     const endingsTemp = localSurvey.endings;
     if (type === "link" && localSurvey.endings.length === 0) {
       endingsTemp.push(getDefaultEndingCard(localSurvey.languages, t));
     }
+    if (type !== "app" && localSurvey.showConditions) {
+      setAsideShowConditions.current = localSurvey.showConditions;
+    }
+    const restoredShowConditions = setAsideShowConditions.current;
+    if (type === "app") setAsideShowConditions.current = null;
     setLocalSurvey((prevSurvey) => ({
       ...prevSurvey,
       type,
       endings: endingsTemp,
+      // Show conditions belong to app surveys. Left on a link survey, an unfinished one would block
+      // publishing and point at a Survey Trigger card the link survey does not have.
+      showConditions: type === "app" ? (prevSurvey.showConditions ?? restoredShowConditions) : null,
     }));
 
     // if the type is "app" and the local survey does not already have a segment, we create a new temporary segment

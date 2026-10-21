@@ -55,18 +55,20 @@ release and the 6.1 online values must name the **same** Hub digest and the **sa
 6.0.x install is blocked with the non-retryable `dependency_image_changed` code for two reasons:
 
 - 6.0.x renders Cube as `repository:tag`, not as a digest reference.
-- 6.0.x pins Hub to 0.8.5, while 6.1 pins Hub 0.14.0.
+- 6.0.x pins Hub to 0.8.5, while 6.1 pins Hub 0.14.1.
 
-Roll the 6.0.x release to these images first and wait for the rollout to finish. Hub 0.14.0 and Cube
-1.7.47-1 are the pair verified to keep serving traffic through an upgrade from 6.0.2. 6.0.0 and 6.0.1 still
-run `cubejs/cube:v1.6.6`, so on them this step also switches to the Formbricks Cube image: check
+Roll the 6.0.x release to Hub 0.14.1 and Cube 1.7.47-1 first and wait for the rollout to finish. Serving
+traffic through an upgrade from 6.0.2 was verified with Hub 0.14.0 and Cube 1.7.47-1. Hub 0.14.1 adds the TLS
+fix for the October 2026 eMudhra certificate compromise and request-size limits, and no database migrations.
+6.0.0 and 6.0.1 still run `cubejs/cube:v1.6.6`, so on them this step also switches to the Formbricks Cube
+image: check
 [Bundled Cube image](/self-hosting/advanced/migration#bundled-cube-image-action-required-for-some-deployments)
 before rolling it out.
 
 ```yaml
 hub:
   image:
-    digest: "sha256:967089f22585f3c3730e455b8b20885b0739f26b5ce5e034324658aa51d627f2" # hub:0.14.0
+    digest: "sha256:3407fff46303c3c24091f2d0d0a3dbc94b8539ebd84a258575bcbf52bedda745" # hub:0.14.1
 cube:
   image:
     repository: ghcr.io/formbricks/cube@sha256

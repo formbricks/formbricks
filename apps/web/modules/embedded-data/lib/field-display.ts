@@ -4,13 +4,18 @@ import {
   ArrowUpFromDotIcon,
   ClockIcon,
   FileTextIcon,
+  FilesIcon,
   FlagIcon,
   GlobeIcon,
+  HourglassIcon,
   LanguagesIcon,
+  LayersIcon,
+  LogInIcon,
   type LucideIcon,
   MegaphoneIcon,
   MonitorIcon,
   MousePointerClickIcon,
+  RouteIcon,
   ShieldIcon,
   SmartphoneIcon,
   TimerIcon,
@@ -31,7 +36,7 @@ import { DATA_TYPE_ICONS } from "@/modules/ui/components/data-type-badge/lib/dat
  * response table that said `URL`, `OS` and `Action` for the same field.
  *
  * **Every field either surface displays today has its own key, and so does the one filter-only
- * entry.** All twenty-one `display !== "none"` catalog entries are listed below, plus
+ * entry.** All twenty-six `display !== "none"` catalog entries are listed below, plus
  * `durationSeconds`, which no column shows but the response filter offers (ENG-1848), and
  * `language`, which no column shows but the mid-survey pickers offer. So `Page Path`,
  * `UTM Source` and `Duration (seconds)` are translated in every locale rather than rendered as
@@ -62,7 +67,7 @@ const RESERVED_FIELD_LABELS: Record<string, (t: TFunction) => string> = {
   os: (t) => t("workspace.surveys.responses.os"),
   source: (t) => t("workspace.surveys.responses.source"),
   url: (t) => t("common.url"),
-  // The fourteen `secondary` fields. `ipAddress` is the only one with copy older than ENG-1841.
+  // The nineteen `secondary` fields. `ipAddress` is the only one with copy older than ENG-1841.
   ipAddress: (t) => t("workspace.surveys.responses.ip_address"),
   locale: (t) => t("workspace.surveys.responses.locale"),
   pagePath: (t) => t("workspace.surveys.responses.page_path"),
@@ -77,6 +82,12 @@ const RESERVED_FIELD_LABELS: Record<string, (t: TFunction) => string> = {
   utmTerm: (t) => t("workspace.surveys.responses.utm_term"),
   viewportHeight: (t) => t("workspace.surveys.responses.viewport_height"),
   viewportWidth: (t) => t("workspace.surveys.responses.viewport_width"),
+  // The visit, from the web SDK (ENG-3926).
+  visitEntryReferrer: (t) => t("workspace.surveys.responses.visit_entry_referrer"),
+  visitPagesViewed: (t) => t("workspace.surveys.responses.visit_pages_viewed"),
+  visitTimeOnSite: (t) => t("workspace.surveys.responses.visit_time_on_site"),
+  visitUniquePagesViewed: (t) => t("workspace.surveys.responses.visit_unique_pages_viewed"),
+  visitUrls: (t) => t("workspace.surveys.responses.visit_urls"),
   // The two `display: "none"` entries a picker offers but no column ever shows: `durationSeconds`
   // to the response filter (ENG-1848/ENG-2894), and `language` — the only `availability: "both"`
   // entry — to the mid-survey recall and logic pickers (ENG-1853). Both reuse a key that already
@@ -87,6 +98,17 @@ const RESERVED_FIELD_LABELS: Record<string, (t: TFunction) => string> = {
 
 export const getReservedFieldLabel = (name: string, t: TFunction): string =>
   RESERVED_FIELD_LABELS[name]?.(t) ?? formatFieldNameToTitleCase(name);
+
+/**
+ * A reserved value as the response card and table show it. Time on site is stored as bare seconds,
+ * which reads like a count, so it gets its unit in the viewer's locale. Exports keep the raw number.
+ */
+export const formatReservedFieldValue = (name: string, value: string, locale: string): string => {
+  if (name !== "visitTimeOnSite" || value.trim() === "" || !Number.isFinite(Number(value))) return value;
+  return new Intl.NumberFormat(locale, { style: "unit", unit: "second", unitDisplay: "short" }).format(
+    Number(value)
+  );
+};
 /**
  * Column and row icons, by catalog entry name. Deliberately sparse — the UTM family shares one icon
  * so a row of five reads as one group — and deliberately complete for every entry a surface can
@@ -125,6 +147,11 @@ export const RESERVED_FIELD_ICONS: Record<string, LucideIcon> = {
   utmTerm: MegaphoneIcon,
   viewportHeight: MonitorIcon,
   viewportWidth: MonitorIcon,
+  visitEntryReferrer: LogInIcon,
+  visitPagesViewed: FilesIcon,
+  visitTimeOnSite: HourglassIcon,
+  visitUniquePagesViewed: LayersIcon,
+  visitUrls: RouteIcon,
 };
 
 /**

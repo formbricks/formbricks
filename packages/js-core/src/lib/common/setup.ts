@@ -1,5 +1,6 @@
 import { Config } from "@/lib/common/config";
 import { JS_LOCAL_STORAGE_KEY } from "@/lib/common/constants";
+import { startDebugSession } from "@/lib/common/debug";
 import { addCleanupEventListeners, addEventListeners } from "@/lib/common/event-listeners";
 import { FORMBRICKS_EVENTS, emitFormbricksEvent } from "@/lib/common/events";
 import { Logger } from "@/lib/common/logger";
@@ -8,6 +9,7 @@ import { filterSurveys, getIsDebug, isNowExpired, wrapThrows } from "@/lib/commo
 import { addLiveRegionContainer, closeSurvey, prefetchSurveysScript } from "@/lib/survey/widget";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
+import { startVisitTracking } from "@/lib/visit/visit-tracking";
 import { fetchWorkspaceState } from "@/lib/workspace/state";
 import {
   type TConfig,
@@ -138,6 +140,12 @@ export const setup = async (
     return okVoid();
   }
 
+  // Count this page before anything that can wait or bail out: counting needs no network, and a
+  // visitor who leaves before the workspace state arrives, or a page where Formbricks is in an error
+  // state, still saw the page. Also before `addEventListeners`, so no trigger on this page is ever
+  // checked against the previous page's visit.
+  startVisitTracking();
+
   let existingConfig: TConfig | undefined;
   try {
     existingConfig = config.get();
@@ -194,6 +202,9 @@ export const setup = async (
       field: "appUrl",
     });
   }
+
+  // After the checks: the panel script comes from `appUrl`, and it is only ever injected once a page.
+  if (isDebug) startDebugSession(configInput.appUrl);
 
   if (
     existingConfig?.workspace &&

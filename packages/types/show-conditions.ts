@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ZId } from "./common";
-import { isShowConditionGroup } from "./show-conditions-evaluate";
+import { MAX_UNIQUE_PAGES, isShowConditionGroup } from "./show-conditions-evaluate";
 
 export const SHOW_CONDITION_DEVICE_TYPES = ["phone", "tablet", "desktop"] as const;
 export type TShowConditionDeviceType = (typeof SHOW_CONDITION_DEVICE_TYPES)[number];
@@ -33,6 +33,11 @@ const TEXT_OPERATORS = [
   "endsWith",
 ] as const;
 const LIST_OPERATORS = ["containsAnyOf", "containsNoneOf"] as const;
+/**
+ * Pasted lists of exact page paths, for the current URL only: a line matches one page, not every page
+ * whose URL contains it. Case, a trailing slash, the query string and the #hash are ignored.
+ */
+const PATH_LIST_OPERATORS = ["pathIsAnyOf", "pathIsNoneOf"] as const;
 const NUMBER_OPERATORS = [
   "equals",
   "isGreaterThan",
@@ -47,7 +52,8 @@ const PRESENCE_OPERATORS = ["isSet", "isNotSet"] as const;
 
 /** Which operators each operand accepts. The editor builds its operator list from this too. */
 export const SHOW_CONDITION_OPERATORS = {
-  currentUrl: [...TEXT_OPERATORS, ...LIST_OPERATORS],
+  // Exact paths first: the editor offers operators in this order.
+  currentUrl: [...PATH_LIST_OPERATORS, ...LIST_OPERATORS, ...TEXT_OPERATORS],
   pageReferrer: [...TEXT_OPERATORS, ...LIST_OPERATORS],
   entryReferrer: [...TEXT_OPERATORS, ...LIST_OPERATORS],
   queryParam: [...TEXT_OPERATORS, ...PRESENCE_OPERATORS],
@@ -97,8 +103,13 @@ export interface TVisitSnapshot {
   /** Seconds. */
   timeOnSite: number;
   entryReferrer: string;
-  /** Paths only, no query string. */
+  /**
+   * The journey, for the response and the debug panel: paths in the order seen, a reload collapsed,
+   * the first page and the last 49 steps. Paths only, no query string.
+   */
   visitedUrls: string[];
+  /** Every different path of the visit, first seen first, up to `MAX_UNIQUE_PAGES`. Visited URL reads this. */
+  uniquePaths: string[];
 }
 
 export interface TDeviceInfo {
@@ -116,7 +127,7 @@ const OPERAND_TYPE_BY_OPERAND = new Map<string, TShowConditionOperandType>(
 const OPERATORS_BY_OPERAND = new Map<string, ReadonlySet<string>>(
   Object.entries(SHOW_CONDITION_OPERATORS).map(([operand, operators]) => [operand, new Set(operators)])
 );
-const LIST_OPERATOR_SET: ReadonlySet<string> = new Set(LIST_OPERATORS);
+const LIST_OPERATOR_SET: ReadonlySet<string> = new Set([...LIST_OPERATORS, ...PATH_LIST_OPERATORS]);
 const PRESENCE_OPERATOR_SET: ReadonlySet<string> = new Set(PRESENCE_OPERATORS);
 const NUMBER_OPERANDS: ReadonlySet<string> = new Set([
   "pagesViewed",
@@ -142,6 +153,11 @@ const getListValueIssue = (value: TRightOperandValue): string | undefined => {
 };
 
 const getSingleValueIssue = (operand: string, value: TRightOperandValue): string | undefined => {
+  if (operand === "uniquePagesViewed") {
+    return typeof value === "number" && value >= 0 && value <= MAX_UNIQUE_PAGES
+      ? undefined
+      : `expected a number from 0 to ${MAX_UNIQUE_PAGES}`;
+  }
   if (NUMBER_OPERANDS.has(operand)) {
     return typeof value === "number" && value >= 0 ? undefined : "expected a number of 0 or more";
   }
@@ -218,6 +234,7 @@ const ZShowConditionSingle = z
     operator: z.enum([
       ...TEXT_OPERATORS,
       ...LIST_OPERATORS,
+      ...PATH_LIST_OPERATORS,
       ...NUMBER_OPERATORS,
       ...VISITED_URL_OPERATORS,
       ...PRESENCE_OPERATORS,
@@ -279,3 +296,45 @@ const pruneEmptyGroups = (group: TShowConditionGroup): TShowConditionGroup | nul
 export const ZShowConditions = ZShowConditionGroup.nullable()
   .superRefine(refineLimits)
   .transform((conditions): TShowConditions => (conditions ? pruneEmptyGroups(conditions) : null));
+
+const ZShowConditionGroupHeader = z.object({ id: ZId, connector: z.enum(["and", "or"]) });
+
+const keepFinished = (item: unknown): TShowConditionSingle | TShowConditionGroup | null => {
+  const single = ZShowConditionSingle.safeParse(item);
+  if (single.success) return single.data;
+
+  const header = ZShowConditionGroupHeader.safeParse(item);
+  const children = (item as { conditions?: unknown } | null)?.conditions;
+  if (!header.success || !Array.isArray(children)) return null;
+  return { ...header.data, conditions: children.flatMap((child) => keepFinished(child) ?? []) };
+};
+
+/**
+ * The finished part of stored conditions. A condition that is not filled in (or not readable) is
+ * dropped, and so is any group left empty; it could never pass anyway. Draft saves store conditions
+ * loosely on purpose, since autosave sends the row an author is still filling in, so a reader that
+ * parses the stored copy strictly (the v3 API) reads it through this first. Limits are not checked:
+ * a draft over them still gets a clear error rather than silently losing its conditions.
+ */
+export const dropUnfinishedShowConditions = (value: unknown): TShowConditions => {
+  const kept = keepFinished(value);
+  return kept && isShowConditionGroup(kept) ? pruneEmptyGroups(kept) : null;
+};
+
+/** Leaf conditions in a stored value, read loosely: anything that is not a group counts as one. */
+const countStoredConditions = (value: unknown): number => {
+  if (!value || typeof value !== "object") return 0;
+  const children = (value as { conditions?: unknown }).conditions;
+  if (!Array.isArray(children)) return 1;
+  return children.reduce<number>((count, child) => count + countStoredConditions(child), 0);
+};
+
+/**
+ * Whether stored conditions hold a row {@link dropUnfinishedShowConditions} would drop. Dropping a row
+ * from an AND group widens who sees the target, and dropping the only row shows it to everyone, so a
+ * writer that takes a survey live must refuse this rather than write the cleaned copy.
+ */
+export const hasUnfinishedShowConditions = (value: unknown): boolean => {
+  const kept = dropUnfinishedShowConditions(value);
+  return countStoredConditions(value) !== (kept ? countConditions(kept) : 0);
+};

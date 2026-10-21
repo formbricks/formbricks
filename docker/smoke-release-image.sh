@@ -22,6 +22,8 @@ case "$image" in
 esac
 docker run --rm --platform "$platform" --network none --entrypoint node "$image" \
   verify-next-runtime.mjs "$identity" "$variant"
+# Node is compiled per architecture, so each one needs its own proof that it trusts the OS CA bundle.
+DOCKER_DEFAULT_PLATFORM="$platform" bash "$(dirname "${BASH_SOURCE[0]}")/../apps/web/scripts/docker/verify-tls-image.sh" "$image"
 docker network create "$prefix" >/dev/null
 docker run -d --name "$prefix-pg" --network "$prefix" --network-alias postgres \
   -e POSTGRES_USER=test -e POSTGRES_PASSWORD=test -e POSTGRES_DB=formbricks \

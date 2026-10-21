@@ -134,6 +134,7 @@ export function Survey({
   fullSizeCards = false,
   autoFocus,
   action,
+  visit,
   singleUseId,
   singleUseResponseId,
   pinAuthToken,
@@ -884,7 +885,7 @@ export function Survey({
    * the survey, not when some earlier action queued it.
    */
   const webSurveyMetaRef = useRef<(() => TWebSurveyMeta) | null>(null);
-  webSurveyMetaRef.current ??= createWebSurveyMetaSnapshot(isWebEnvironment);
+  webSurveyMetaRef.current ??= createWebSurveyMetaSnapshot(isWebEnvironment, visit);
 
   const getWebSurveyMeta = useCallback((): TWebSurveyMeta => webSurveyMetaRef.current?.() ?? {}, []);
 
