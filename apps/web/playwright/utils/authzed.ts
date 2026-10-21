@@ -26,7 +26,7 @@ export const waitForAuthzedProjection = async (): Promise<void> => {
     if (Date.now() >= deadline) {
       throw new Error(
         `${pending} AuthZed projection outbox rows are still undelivered after ${TIMEOUT_MS / 1000}s. ` +
-          "Is the outbox worker running? CI starts scripts/authzed-ci-outbox-worker.ts (see ENG-2958)."
+          "Is the outbox worker running? CI starts apps/web/scripts/authzed-ci-outbox-worker.ts (see ENG-2958)."
       );
     }
     await delay(POLL_INTERVAL_MS);
