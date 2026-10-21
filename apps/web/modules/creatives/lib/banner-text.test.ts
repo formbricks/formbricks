@@ -40,13 +40,14 @@ describe("bannerHtmlToRuns", () => {
     expect(
       bannerHtmlToRuns(
         '<p><a href="javascript:alert(1)">Bad</a> <a href="/open-enrollment">Enroll</a> ' +
-          '<a href="mailto:help@example.com">Mail</a></p>'
+          '<a href="mailto:help@example.com">Mail</a> <a href="https://asdasd.">Dot</a></p>'
       )
     ).toEqual([
       { text: "Bad " },
       { text: "Enroll", href: "/open-enrollment" },
       { text: " " },
       { text: "Mail", href: "mailto:help@example.com" },
+      { text: " Dot" },
     ]);
   });
 });

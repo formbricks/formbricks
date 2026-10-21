@@ -114,6 +114,9 @@ describe("getPublishIssues", () => {
     expect(getPublishIssues(link(""))).toEqual(["link_invalid"]);
     expect(getPublishIssues(link("javascript:alert(1)"))).toEqual(["link_invalid"]);
     expect(getPublishIssues(link("www.example.com"))).toEqual(["link_invalid"]);
+    // A host the browser can't open (review finding: these were accepted).
+    expect(getPublishIssues(link("https://asdasd."))).toEqual(["link_invalid"]);
+    expect(getPublishIssues(link("https://asd"))).toEqual(["link_invalid"]);
     expect(getPublishIssues(link(" https://example.com/help "))).toEqual([]);
   });
 

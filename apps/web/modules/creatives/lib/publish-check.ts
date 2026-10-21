@@ -1,3 +1,4 @@
+import { isWebUrl } from "@formbricks/types/web-url";
 import { validateDateTimeRange } from "@/modules/ui/components/date-time-picker/lib/date-time";
 import { hasIncompleteConditions } from "./creative-show-conditions";
 import { getCreativeFormTexts, isBlankCreativeText, readCreativeFormText } from "./creative-texts";
@@ -42,15 +43,14 @@ export const PUBLISH_ISSUE_TABS: Record<TPublishIssue, TCreativeEditorTab | null
   end_before_start: "settings",
 };
 
-/** The v3 link Destination rule (`CreativeLinkDestinationInput`), so the editor and the API agree. */
-const LINK_PATTERN = /^https?:\/\/\S+$/;
 const MAX_LINK_LENGTH = 2048;
 
 const isBlank = (value: string): boolean => value.trim() === "";
 
-const isValidLink = (url: string): boolean => {
+/** The v3 link Destination rule (`CreativeLinkDestinationInput`, `isWebUrl`), so the editor and the API agree. */
+export const isValidLink = (url: string): boolean => {
   const trimmed = url.trim();
-  return trimmed.length <= MAX_LINK_LENGTH && LINK_PATTERN.test(trimmed);
+  return trimmed.length <= MAX_LINK_LENGTH && isWebUrl(trimmed);
 };
 
 const getContentIssues = (content: TCreativeEditorForm["content"]): TPublishIssue[] =>

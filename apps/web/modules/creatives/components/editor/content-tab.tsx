@@ -36,7 +36,7 @@ import type {
   TFeedbackButtonForm,
   TFeedbackButtonIcon,
 } from "../../lib/editor-form";
-import type { TPublishIssue } from "../../lib/publish-check";
+import { type TPublishIssue, isValidLink } from "../../lib/publish-check";
 import { CREATIVE_TYPE_ICONS } from "../creative-icons";
 import { EditorField, EditorPanel } from "./editor-primitives";
 import { SurveyLanguageWarning } from "./survey-language-warning";
@@ -217,6 +217,42 @@ const SurveyPicker = ({
   );
 };
 
+/**
+ * The link Destination field. A typed link is checked as it changes, so a host that can't be opened
+ * (`https://example.`) shows its error before Save; an empty one is only flagged by Save/Publish.
+ */
+const LinkInput = ({
+  url,
+  isFlagged,
+  onChange,
+}: Readonly<{ url: string; isFlagged: boolean; onChange: (url: string) => void }>) => {
+  const { t } = useTranslation();
+  const errorId = useId();
+  const showError = isFlagged || (url.trim() !== "" && !isValidLink(url));
+  return (
+    <div className="space-y-1.5">
+      <Input
+        type="url"
+        inputMode="url"
+        className="bg-white"
+        aria-label={t("common.url")}
+        isInvalid={showError}
+        aria-invalid={showError || undefined}
+        aria-describedby={showError ? errorId : undefined}
+        placeholder="https://example.com"
+        maxLength={2048}
+        value={url}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      {showError && (
+        <p id={errorId} className="text-xs text-error">
+          {t("workspace.creatives.editor.issue_link_invalid")}
+        </p>
+      )}
+    </div>
+  );
+};
+
 type TOnClickPanelProps = {
   destination: TCreativeEditorForm["destination"];
   languages: TCreativeEditorForm["languages"];
@@ -289,17 +325,10 @@ const OnClickPanel = ({
               </span>
             </label>
             {destination.type === "link" && (
-              <Input
-                type="url"
-                inputMode="url"
-                className="bg-white"
-                aria-label={t("common.url")}
-                isInvalid={issues.includes("link_invalid")}
-                aria-invalid={issues.includes("link_invalid") || undefined}
-                placeholder="https://"
-                maxLength={2048}
-                value={destination.url}
-                onChange={(event) => setDestination({ type: "link", url: event.target.value })}
+              <LinkInput
+                url={destination.url}
+                isFlagged={issues.includes("link_invalid")}
+                onChange={(url) => setDestination({ type: "link", url })}
               />
             )}
           </div>

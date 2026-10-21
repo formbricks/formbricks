@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import * as generated from "@formbricks/api-v3-schemas";
 import {
+  EXPECTED_UNENFORCED,
   collectOperationExamples,
   diffAgainstSpec,
   parametersAsObjectSchema,
@@ -19,17 +20,23 @@ vi.mock("server-only", () => ({}));
 
 /**
  * The creative route schemas against the contract. They wrap the generated ones with refinements only
- * (Show when rules, NULL bytes), which JSON Schema can't show, so a wrapper that weakened a field would
- * surface here as a difference.
+ * (Show when rules, NULL bytes, web link hosts), which JSON Schema can't show, so a wrapper that weakened
+ * a field would surface here as a difference. The one expected difference is the `web-url` format the
+ * generator can't carry, pinned in `EXPECTED_UNENFORCED` and enforced by the refinement.
  */
 describe("the creative route schemas match the contract", () => {
   const bundle = readBundle();
+  const pinned = (schema: string) =>
+    EXPECTED_UNENFORCED.filter((pin) => pin.schema === schema)
+      .map((pin) => `${pin.path} ${pin.keyword}`)
+      .sort();
 
   test.each([
     ["CreateCreativeRequest", ZV3CreateCreativeBody],
     ["PatchCreativeRequest", ZV3PatchCreativeBody],
-  ])("%s has no difference from its contract schema", (name, schema) => {
-    expect(diffAgainstSpec(bundle, { $ref: `#/components/schemas/${name}` }, schema)).toEqual([]);
+  ])("%s differs from its contract schema only by its pinned constraints", (name, schema) => {
+    const diffs = diffAgainstSpec(bundle, { $ref: `#/components/schemas/${name}` }, schema);
+    expect(diffs.map((diff) => `${diff.path} ${diff.attr}`).sort()).toEqual(pinned(name));
   });
 
   /** OpenAPI can't close a parameter list; the routes refuse unknown ones, which is the only difference. */

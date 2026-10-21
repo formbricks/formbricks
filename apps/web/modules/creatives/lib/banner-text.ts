@@ -1,3 +1,4 @@
+import { isWebUrl } from "@formbricks/types/web-url";
 import type { TCreativeTextRun } from "./editor-form";
 
 /**
@@ -10,8 +11,12 @@ import type { TCreativeTextRun } from "./editor-form";
 
 type TRunFormat = Omit<TCreativeTextRun, "text">;
 
-/** The v3 rule for a run's `href`: http(s), mailto:, tel: or a root-relative path. */
-const HREF_PATTERN = /^(?:https?:\/\/|mailto:|tel:|\/(?!\/))\S*$/;
+/**
+ * The v3 rule for a run's `href` (`CreativeTextRun`): an http(s) link with a real host (`isWebUrl`, the
+ * rule a link Destination follows too), or a mailto:, tel: or root-relative one.
+ */
+const WEB_HREF = /^https?:/;
+const OTHER_HREF_PATTERN = /^(?:mailto:|tel:|\/(?!\/))\S*$/;
 const MAX_HREF_LENGTH = 2048;
 
 const BLOCK_TAGS = new Set(["P", "DIV", "H1", "H2", "H3", "H4", "H5", "H6", "LI", "BLOCKQUOTE", "PRE"]);
@@ -51,7 +56,8 @@ export const bannerRunsToHtml = (runs: TCreativeTextRun[]): string => {
   return paragraphs.map((parts) => `<p>${parts.join("")}</p>`).join("");
 };
 
-const isAllowedHref = (href: string): boolean => href.length <= MAX_HREF_LENGTH && HREF_PATTERN.test(href);
+const isAllowedHref = (href: string): boolean =>
+  href.length <= MAX_HREF_LENGTH && (WEB_HREF.test(href) ? isWebUrl(href) : OTHER_HREF_PATTERN.test(href));
 
 const getElementFormat = (element: Element, inherited: TRunFormat): TRunFormat => {
   const { tagName, classList } = element;

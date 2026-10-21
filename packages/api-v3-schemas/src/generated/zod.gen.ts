@@ -1179,7 +1179,7 @@ export type FeedbackButtonCreativeZodType = z.infer<typeof zFeedbackButtonCreati
 /**
  * One stretch of banner text with the same formatting. Banner text is stored and delivered as runs, never as HTML, so it can't carry markup, scripts or images.
  *
- * `href` makes the run a link. Allowed: `https://` and `http://` URLs, `mailto:` and `tel:` links, and root-relative paths (`/open-enrollment`), which resolve on whichever site shows the banner.
+ * `href` makes the run a link. Allowed: `https://` and `http://` URLs with a real host (the same rule as a link Destination's `url`, so `https://example.` is refused), `mailto:` and `tel:` links, and root-relative paths (`/open-enrollment`), which resolve on whichever site shows the banner.
  *
  */
 export const zCreativeTextRun = z.strictObject({
@@ -1190,7 +1190,9 @@ export const zCreativeTextRun = z.strictObject({
   href: z
     .string()
     .max(2048)
-    .regex(/^(?:https?:\/\/|mailto:|tel:|\/(?!\/))\S*$/)
+    .regex(
+      /^(?:https?:\/\/(?:[^\s\/?#@]+@)?(?:localhost|\d{1,3}(?:\.\d{1,3}){3}|\[[0-9A-Fa-f:.]+\]|(?:[^\s\/\\?#@:.\[\]]+\.)+[^\s\/\\?#@:.\[\]\d][^\s\/\\?#@:.\[\]]+)(?::\d{1,5})?(?:[\/?#]\S*)?|(?:mailto:|tel:|\/(?!\/))\S*)$/
+    )
     .optional(),
 });
 
@@ -1369,7 +1371,9 @@ export const zCreativeLinkDestinationInput = z.strictObject({
   url: z
     .string()
     .max(2048)
-    .regex(/^https?:\/\/\S+$/),
+    .regex(
+      /^https?:\/\/(?:[^\s\/?#@]+@)?(?:localhost|\d{1,3}(?:\.\d{1,3}){3}|\[[0-9A-Fa-f:.]+\]|(?:[^\s\/\\?#@:.\[\]]+\.)+[^\s\/\\?#@:.\[\]\d][^\s\/\\?#@:.\[\]]+)(?::\d{1,5})?(?:[\/?#]\S*)?$/
+    ),
 });
 
 export type CreativeLinkDestinationInputZodType = z.infer<typeof zCreativeLinkDestinationInput>;

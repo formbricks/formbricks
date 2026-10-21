@@ -11811,7 +11811,7 @@ components:
       description: |
         One stretch of banner text with the same formatting. Banner text is stored and delivered as runs, never as HTML, so it can't carry markup, scripts or images.
 
-        `href` makes the run a link. Allowed: `https://` and `http://` URLs, `mailto:` and `tel:` links, and root-relative paths (`/open-enrollment`), which resolve on whichever site shows the banner.
+        `href` makes the run a link. Allowed: `https://` and `http://` URLs with a real host (the same rule as a link Destination's `url`, so `https://example.` is refused), `mailto:` and `tel:` links, and root-relative paths (`/open-enrollment`), which resolve on whichever site shows the banner.
       required:
         - text
       properties:
@@ -11828,7 +11828,7 @@ components:
         href:
           type: string
           maxLength: 2048
-          pattern: ^(?:https?://|mailto:|tel:|/(?!/))\S*$
+          pattern: ^(?:https?://(?:[^\s/?#@]+@)?(?:localhost|\d{1,3}(?:\.\d{1,3}){3}|\[[0-9A-Fa-f:.]+\]|(?:[^\s/\\?#@:.\[\]]+\.)+[^\s/\\?#@:.\[\]\d][^\s/\\?#@:.\[\]]+)(?::\d{1,5})?(?:[/?#]\S*)?|(?:mailto:|tel:|/(?!/))\S*)$
       additionalProperties: false
     CreativeRichText:
       type: object
@@ -12104,8 +12104,10 @@ components:
             - link
         url:
           type: string
+          description: 'An absolute `http://` or `https://` URL with a real host: `localhost`, an IP address, or a domain whose labels are letters, digits and hyphens and whose top-level domain has at least two letters (punycode allowed). `https://example.` and `https://example` are refused. `web-url` names this rule; `pattern` states the part of it a regular expression can.'
           maxLength: 2048
-          pattern: ^https?://\S+$
+          format: web-url
+          pattern: ^https?://(?:[^\s/?#@]+@)?(?:localhost|\d{1,3}(?:\.\d{1,3}){3}|\[[0-9A-Fa-f:.]+\]|(?:[^\s/\\?#@:.\[\]]+\.)+[^\s/\\?#@:.\[\]\d][^\s/\\?#@:.\[\]]+)(?::\d{1,5})?(?:[/?#]\S*)?$
       additionalProperties: false
     CreativeDestinationInput:
       oneOf:
