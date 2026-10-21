@@ -35,6 +35,7 @@ export const selectSurvey = {
   keepEndingCardOpen: true,
   delay: true,
   displayPercentage: true,
+  showConditions: true,
   autoComplete: true,
   publishOn: true,
   closeOn: true,

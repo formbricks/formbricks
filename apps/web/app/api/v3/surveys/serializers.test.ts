@@ -146,6 +146,7 @@ describe("serializeV3SurveyResource", () => {
       keepEndingCardOpen: true,
       autoComplete: 100,
       delay: 5,
+      showConditions: null,
       triggers: [{ actionClassId: "claa1234567890123456789012" }],
     });
     expect(resource.targeting).toEqual({

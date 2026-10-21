@@ -432,6 +432,14 @@ export const SurveyMenuBar = ({
 
       const firstError = issues[0];
 
+      // A show condition still missing its value: the schema's own message is technical English, so
+      // say where to look instead, and open the tab that holds the Survey Trigger card.
+      if (firstError.path[0] === "showConditions") {
+        toast.error(t("workspace.surveys.edit.show_conditions.invalid"));
+        setActiveId("settings");
+        return false;
+      }
+
       // The schema can only say "Block name is required"; it has no idea which block. Name it,
       // so the message matches the card that just turned red.
       if (firstError.path[0] === "blocks" && firstError.path[2] === "name") {

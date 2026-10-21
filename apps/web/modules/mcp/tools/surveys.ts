@@ -237,6 +237,7 @@ export function registerSurveyTools(server: McpServer): void {
         "For block changes prefer edit_survey_blocks (update, insert, remove) or set_survey_block_order (reorder): they address blocks by id, cost a fraction of the tokens, and cannot drop a block by omission.",
         "Provided top-level arrays and objects replace that whole subtree, so a partial `blocks` array deletes every block it leaves out.",
         "The full get_survey output can be sent back unchanged; `updatedAt` is then an optimistic-concurrency precondition and a mismatch returns 409.",
+        "App surveys: `distribution.showConditions` limits when a triggered survey shows (page URL lists, referrer, query parameter, pages viewed, time on site, visited URLs, device, browser, window width); `distribution` replaces as a whole, so send the full object from get_survey.",
       ].join(" "),
       inputSchema: ZMcpPatchSurveyInput,
       audit: { action: "updated", targetType: "survey", targetIdArg: "surveyId" },

@@ -260,7 +260,7 @@ export function ConditionsEditor({
                 icon={<CopyIcon className="size-4" />}>
                 {t("common.duplicate")}
               </DropdownMenuItem>
-              {onCreateGroup && (
+              {onCreateGroup && (config.canCreateGroup?.(depth) ?? true) && (
                 <DropdownMenuItem
                   onClick={() => onCreateGroup(condition.id)}
                   icon={<WorkflowIcon className="size-4" />}

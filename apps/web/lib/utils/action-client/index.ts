@@ -39,6 +39,8 @@ export const actionClient = createSafeActionClient({
   const eventId = uuidv4();
   const ctx: ActionClientCtx = { auditLoggingCtx: { eventId, ipAddress: UNKNOWN_DATA } };
 
+  // Only decides whether the IP is worth reading; getIsAuditLogsEnabled decides whether anything is
+  // written. A licence lookup here would sit on every action's request path.
   if (AUDIT_LOG_ENABLED && AUDIT_LOG_GET_USER_IP) {
     try {
       const ipAddress = await getClientIpFromHeaders();

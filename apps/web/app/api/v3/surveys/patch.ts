@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import type { TCustomCssStored } from "@formbricks/types/custom-css";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { hasUnfinishedShowConditions } from "@formbricks/types/show-conditions";
 import {
   collectDeclaredFieldNames,
   describeDeclaredFieldNameError,
@@ -148,8 +149,9 @@ async function buildV3AppSurveyPatchWrites(params: {
   document: TV3SurveyDocument;
   data: Prisma.SurveyUpdateInput;
   visibleSurveyWhere: Prisma.SurveyWhereInput;
+  replacesDistribution: boolean;
 }): Promise<TV3SegmentFilterWrite | null> {
-  const { currentSurvey, document, data, visibleSurveyWhere } = params;
+  const { currentSurvey, document, data, visibleSurveyWhere, replacesDistribution } = params;
   const distribution = document.distribution;
   if (!distribution) {
     return null;
@@ -158,7 +160,26 @@ async function buildV3AppSurveyPatchWrites(params: {
   const actionClasses = await getActionClasses(currentSurvey.workspaceId);
   const resolvedTriggers = resolveV3SurveyTriggers(distribution.triggers, actionClasses);
 
-  Object.assign(data, v3DistributionToScalars(distribution));
+  const { showConditions, ...scalars } = v3DistributionToScalars(distribution);
+  Object.assign(data, scalars);
+  // The stored conditions were read without a draft's unfinished rows. A patch that does not send
+  // `distribution` keeps them while the survey stays a draft. One that sends it, or that takes the
+  // survey live, writes what was validated: a live survey must not keep a row that can never pass.
+  // A nullable JSON column takes `Prisma.DbNull`, not `null`, to store "no conditions".
+  if (replacesDistribution || document.status !== "draft") {
+    // Going live without sending `distribution` would write the cleaned copy: an AND group would lose
+    // a row and show to more visitors, and a lone unfinished row would show to everyone. The editor
+    // refuses to publish in this state, so the API does too.
+    if (!replacesDistribution && hasUnfinishedShowConditions(currentSurvey.showConditions)) {
+      throw new V3SurveyReferenceValidationError([
+        {
+          name: "distribution.showConditions",
+          reason: "Finish or remove the unfinished show conditions before publishing",
+        },
+      ]);
+    }
+    data.showConditions = showConditions ?? Prisma.DbNull;
+  }
   data.triggers = handleTriggerUpdates(resolvedTriggers, currentSurvey.triggers, actionClasses);
 
   const nextFilters = document.targeting?.filters ?? [];
@@ -283,6 +304,8 @@ export async function executeV3SurveyPatch(params: {
    * when the CSS actually changed; absent leaves the column untouched.
    */
   customCss?: { stored: TCustomCssStored | null };
+  /** Whether the request sent `distribution`, which replaces the stored one whole. */
+  replacesDistribution?: boolean;
 }): Promise<TSurvey> {
   const {
     currentSurvey,
@@ -292,6 +315,7 @@ export async function executeV3SurveyPatch(params: {
     precondition,
     visibleSurveyWhere = NO_VISIBLE_SURVEYS,
     customCss,
+    replacesDistribution = false,
   } = params;
   // Same rule as prepare's validation (ENG-3975): media the stored survey already had does not block a
   // patch that leaves it untouched.
@@ -356,7 +380,13 @@ export async function executeV3SurveyPatch(params: {
   // targeting write to perform, if any.
   const segmentFilterWrite =
     currentSurvey.type === "app"
-      ? await buildV3AppSurveyPatchWrites({ currentSurvey, document, data, visibleSurveyWhere })
+      ? await buildV3AppSurveyPatchWrites({
+          currentSurvey,
+          document,
+          data,
+          visibleSurveyWhere,
+          replacesDistribution,
+        })
       : null;
 
   const runSurveyUpdate = (client: Prisma.TransactionClient) =>
@@ -550,6 +580,7 @@ export async function patchV3Survey(
     precondition: effectivePrecondition,
     visibleSurveyWhere,
     ...(customCss.changed ? { customCss: { stored: customCss.stored } } : {}),
+    replacesDistribution: typeof input === "object" && input !== null && "distribution" in input,
   });
 
   if (report && customCss.changed) {

@@ -78,8 +78,9 @@ const grantSessionToSignupBrowser = async (
  *
  * - **A mail scanner prefetching the link** lands on the withheld path, which is exactly why the
  *   non-destructive shape was chosen: it costs a session, not somebody's password.
- * - **Sign-ups through Better Auth's native `/sign-up/email`** never get an intent cookie, so their
- *   verification withholds the session too. Fail-closed, and a deliberate behaviour change.
+ * - **Sign-ups that skip `createUserAction`** never get an intent cookie, so their verification
+ *   withholds the session too. Fail-closed, and a deliberate behaviour change. (Better Auth's native
+ *   `/sign-up/email` was the HTTP way to do that; it is closed since ENG-3988.)
  * - **`EMAIL_VERIFICATION_DISABLED=1`** (the shipped self-host default) lets a user sign in before
  *   verifying, so a verification can arrive on an already-authenticated request. Better Auth used to
  *   reuse that session; we must not sign such a user out, which is what the early return covers.

@@ -43,6 +43,7 @@ export type UsersFixture = {
     workspaceName?: string;
     withoutWorkspace?: boolean;
     skipSurveySeed?: boolean;
+    passwordCost?: number;
   }) => Promise<UserFixture>;
   get: () => UserFixture[];
 };
@@ -60,10 +61,12 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
       workspaceName?: string;
       withoutWorkspace?: boolean;
       skipSurveySeed?: boolean;
+      // bcrypt cost of the stored password. Defaults to 10 to keep logins cheap; production hashes at 12.
+      passwordCost?: number;
     }) => {
       const uname = params?.name ?? `user-${workerInfo.workerIndex}-${Date.now()}`;
       const userEmail = params?.email ?? `${uname}@example.com`;
-      const hashedPassword = await bcrypt.hash(uname, 10);
+      const hashedPassword = await bcrypt.hash(uname, params?.passwordCost ?? 10);
 
       const user = await prisma.user.create({
         data: {

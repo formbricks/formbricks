@@ -13,6 +13,10 @@ vi.mock("@/modules/auth/lib/auth-client", () => ({
   authClient: { signOut: (...args: unknown[]) => baSignOut(...args) },
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: loggerError } }));
+const { logoutPlainBeforeNavigation } = vi.hoisted(() => ({
+  logoutPlainBeforeNavigation: vi.fn(),
+}));
+vi.mock("@/app/plain/lib/plain-sdk", () => ({ logoutPlainBeforeNavigation }));
 
 const mockedLogSignOut = vi.mocked(logSignOutAction);
 // The hook reads a bare `localStorage` global, which vitest's jsdom doesn't expose on globalThis.
@@ -51,6 +55,29 @@ describe("useSignOut", () => {
       redirectUrl: undefined,
       organizationId: "org-1",
     });
+    expect(baSignOut).toHaveBeenCalledTimes(1);
+    expect(window.location.href).toBe("/auth/login");
+  });
+
+  test("logs the Plain support chat out before signing out and redirecting", async () => {
+    let finishPlainLogout: () => void = () => undefined;
+    logoutPlainBeforeNavigation.mockReturnValue(
+      new Promise<void>((resolve) => {
+        finishPlainLogout = resolve;
+      })
+    );
+    const { signOut } = useSignOut({ id: "user-1", email: "ada@example.com" });
+
+    const pending = signOut();
+    await vi.waitFor(() => expect(logoutPlainBeforeNavigation).toHaveBeenCalledTimes(1));
+
+    // While Plain's logout is still pending, neither Better Auth nor the redirect has run.
+    expect(baSignOut).not.toHaveBeenCalled();
+    expect(window.location.href).toBe("");
+
+    finishPlainLogout();
+    await pending;
+
     expect(baSignOut).toHaveBeenCalledTimes(1);
     expect(window.location.href).toBe("/auth/login");
   });
