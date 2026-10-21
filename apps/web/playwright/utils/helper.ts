@@ -473,11 +473,13 @@ export const fillRichTextEditor = async (page: Page, labelText: string, content:
   // `fill` on the contenteditable, not `pressSequentially`. One `insertText` replaces the whole
   // value, where per-key typing raced Lexical's own re-render and truncated the text ("Picture
   // Select Question" landing as "Picture S") unless every keystroke was paced by `slowMo`.
-  await editor.fill(content);
-  // Confirms the editor settled before the caller's next action — this assertion, not a delay, is
-  // what keeps the following interactions off a mid-render tree.
-  await expect(editor).toHaveText(content);
-  await flushRender(page);
+  // Lexical's initial load can overwrite a fill made before hydration finishes.
+  // Assert after rendering, and repeat the same fill until the value survives.
+  await expect(async () => {
+    await editor.fill(content);
+    await flushRender(page);
+    await expect(editor).toHaveText(content, { timeout: 1000 });
+  }).toPass({ timeout: 20_000 });
 };
 
 /**

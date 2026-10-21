@@ -87,12 +87,10 @@
       "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"]
     },
     "@formbricks/jobs#test": {
-      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"],
-      "passThroughEnv": ["REDIS_TLS_TEST_URL", "REDIS_TLS_CA", "NODE_TLS_REJECT_UNAUTHORIZED"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"]
     },
     "@formbricks/jobs#test:coverage": {
-      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"],
-      "passThroughEnv": ["REDIS_TLS_TEST_URL", "REDIS_TLS_CA", "NODE_TLS_REJECT_UNAUTHORIZED"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"]
     },
     "@formbricks/jobs#typecheck": {
       "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"]
@@ -203,8 +201,7 @@
         "@formbricks/jobs#build",
         "@formbricks/surveys#build",
         "@formbricks/redis-config#build"
-      ],
-      "passThroughEnv": ["REDIS_TLS_TEST_URL", "REDIS_TLS_CA", "NODE_TLS_REJECT_UNAUTHORIZED"]
+      ]
     },
     "@formbricks/web#test:coverage": {
       "dependsOn": [
@@ -216,8 +213,7 @@
         "@formbricks/jobs#build",
         "@formbricks/surveys#build",
         "@formbricks/redis-config#build"
-      ],
-      "passThroughEnv": ["REDIS_TLS_TEST_URL", "REDIS_TLS_CA", "NODE_TLS_REJECT_UNAUTHORIZED"]
+      ]
     },
     "@formbricks/web#typecheck": {
       "dependsOn": [
