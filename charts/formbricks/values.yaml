@@ -722,7 +722,7 @@ authzed:
   # PostgreSQL dependency is enabled and no datastore secret is supplied.
   bundledPostgresqlBootstrap:
     enabled: true
-    image: postgres:17-alpine
+    image: postgres:18
     backoffLimit: 10
     # The administrative role the bootstrap Job connects as to create the
     # dedicated `spicedb` role and database. It needs CREATEROLE and CREATEDB,
@@ -756,7 +756,7 @@ authzed:
   # Its URL must explicitly set sslmode=require, verify-ca, or verify-full.
   externalPostgresqlBootstrap:
     enabled: false
-    image: postgres:17-alpine
+    image: postgres:18
     backoffLimit: 10
     adminSecretName: ""
     adminUrlKey: DATABASE_URL
