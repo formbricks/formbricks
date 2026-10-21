@@ -1,5 +1,13 @@
 import assert from "node:assert/strict";
-import { createCipheriv, createDecipheriv, generateKeyPairSync, sign, verify } from "node:crypto";
+import { execFileSync } from "node:child_process";
+import {
+  X509Certificate,
+  createCipheriv,
+  createDecipheriv,
+  generateKeyPairSync,
+  sign,
+  verify,
+} from "node:crypto";
 import { readFileSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
@@ -26,6 +34,36 @@ assert.ok(atLeast(process.versions.undici, "7.29.1"), "Node's built-in fetch mus
 assert.equal(process.versions.modules, "137", "Native addons must retain the Node 24 ABI");
 assert.deepEqual(Intl.DateTimeFormat.supportedLocalesOf(["de", "es", "ja"]), ["de", "es", "ja"]);
 
+// The compromised eMudhra intermediates (ENG-4065) chain to this root. Alpine's ca-certificates 20261020-r0
+// removes it from the OS bundle, but Node only honours that if it reads the OS bundle instead of the list
+// compiled into its binary (--openssl-use-def-ca-store, see the Dockerfile). Check both halves here;
+// verify-tls.mjs then proves the behaviour with real handshakes.
+const EMSIGN_ECC_ROOT_G3_SHA256 = "86a1ecba089c4a8d3bbe2734c612ba341d813e043cf9e8a862cd5c57a36bbe6b";
+const apkEntries = readFileSync("/lib/apk/db/installed", "utf8").split("\n\n");
+for (const name of ["ca-certificates", "ca-certificates-bundle"]) {
+  const entry = apkEntries.find((candidate) => candidate.split("\n").includes(`P:${name}`));
+  const version = entry?.match(/^V:(.+)$/m)?.[1];
+  assert.ok(version, `${name} must be installed`);
+  // Alpine versions this package by date: YYYYMMDD-rN.
+  assert.ok(Number(version.split("-")[0]) >= 20261020, `${name}@${version} predates the eMudhra distrust`);
+}
+const osRoots = readFileSync("/etc/ssl/certs/ca-certificates.crt", "utf8").match(
+  /-----BEGIN CERTIFICATE-----[^-]+-----END CERTIFICATE-----/g
+);
+assert.ok(osRoots?.length > 100, "OS CA bundle must be present");
+assert.ok(
+  !osRoots.some(
+    (pem) =>
+      new X509Certificate(pem).fingerprint256.replaceAll(":", "").toLowerCase() === EMSIGN_ECC_ROOT_G3_SHA256
+  ),
+  "OS CA bundle must not trust the compromised eMudhra root"
+);
+assert.match(
+  execFileSync(process.execPath, ["--help"], { encoding: "utf8" }),
+  /--use-openssl-ca\s+use OpenSSL's default CA store\s+\(default\)/,
+  "Node must default to the OS CA bundle"
+);
+
 const message = Buffer.from("Formbricks runtime smoke");
 assert.deepEqual(inflateSync(deflateSync(message)), message);
 
@@ -39,7 +77,7 @@ const encrypted = Buffer.concat([cipher.update(message), cipher.final()]);
 const decipher = createDecipheriv("aes-256-gcm", key, iv);
 decipher.setAuthTag(cipher.getAuthTag());
 assert.deepEqual(Buffer.concat([decipher.update(encrypted), decipher.final()]), message);
-console.log("Runtime crypto, compression, locales and patched dependency versions verified");
+console.log("Runtime crypto, compression, locales, CA trust and patched dependency versions verified");
 
 if (process.argv.includes("--dependencies")) {
   const require = createRequire(join(process.cwd(), "apps/web/package.json"));
