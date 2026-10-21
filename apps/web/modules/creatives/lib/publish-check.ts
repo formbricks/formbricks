@@ -1,7 +1,7 @@
 import { validateDateTimeRange } from "@/modules/ui/components/date-time-picker/lib/date-time";
+import { hasIncompleteConditions } from "./creative-show-conditions";
 import { getCreativeFormTexts, isBlankCreativeText, readCreativeFormText } from "./creative-texts";
 import { type TCreativeEditorForm, formNeedsDestination } from "./editor-form";
-import { hasIncompleteConditions } from "./show-conditions-ui";
 
 /**
  * What blocks Save and Publish in the editor, and which tab owns the fix. These mirror the v3 rules

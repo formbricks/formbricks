@@ -2196,59 +2196,8 @@ checksums:
     workspace/creatives/archive_anyway: f23cd2cb1b43dc57db0372fcd25b83e4
     workspace/creatives/archive_restore_note: 77199b341133485f27a1a8832345c0c0
     workspace/creatives/column_opens: d98ae456c40ebe03f78cce7d091cccc4
-    workspace/creatives/conditions/add: 4de5e43cd5e98efde6fa3b66ac4bdb71
-    workspace/creatives/conditions/all: 05c25ba8cbadcd4299de12f1ec0090dc
-    workspace/creatives/conditions/always: 12142cd694a8222e8475fba6f1086bfd
-    workspace/creatives/conditions/any: e9663b9613549270fdbcaeffb67fe169
     workspace/creatives/conditions/description: ce81eec2ae51be259ce92b531636004e
-    workspace/creatives/conditions/device_tablet: e8759eecba6182212396f27e033fc8e1
-    workspace/creatives/conditions/group_device: c009f849d689c745de9e38ad17644c7a
-    workspace/creatives/conditions/group_page: 6f2da0f76738dbfc35d203a825df1218
-    workspace/creatives/conditions/group_visit: 654d6dc335d93b0d9ac26f296bbf53cc
-    workspace/creatives/conditions/list_placeholder: 2aac92e507dd0d04fd8fd36886b94cef
-    workspace/creatives/conditions/match_prefix: a8070915367d99f25af2136e7f3a57c2
-    workspace/creatives/conditions/match_suffix: 86764815ab0de622e28c24574756f467
-    workspace/creatives/conditions/operand: 43f52743edaba7d0aed59f17fb6f7160
-    workspace/creatives/conditions/operand_browser: e58e554eb7b0761ede25f2425173d31f
-    workspace/creatives/conditions/operand_current_url: be321bd63cf738d3fa413cb66b8106d0
-    workspace/creatives/conditions/operand_device_type: 6a29bc30b5ff3d467229194e697f3199
-    workspace/creatives/conditions/operand_entry_referrer: d3d124ff5ca1770f8aad50fcc98e6897
-    workspace/creatives/conditions/operand_page_referrer: e3abbe1b6b2881a70e2b1389019b9847
-    workspace/creatives/conditions/operand_pages_viewed: bba0c517cb2408fbd37add2e00866f46
-    workspace/creatives/conditions/operand_query_param: b939ba742f0659124a9a4a05248261d7
-    workspace/creatives/conditions/operand_time_on_site: 54e4a1bd3b32076b97e07873e15f443d
-    workspace/creatives/conditions/operand_unique_pages_viewed: 59115299af29592f21cd6c836da9dce7
-    workspace/creatives/conditions/operand_visited_urls: 2f3877dc750cda0982992ff22279acee
-    workspace/creatives/conditions/operand_window_width: c8334d137aa5a795facc9efefcb74a11
-    workspace/creatives/conditions/operator: c8e105116d65a17dcf68f6026a5e35fc
-    workspace/creatives/conditions/operator_at_least: 128c2c123b28c3c8f056fee02dea3d0b
-    workspace/creatives/conditions/operator_at_most: f2ccfd65a5fadd733c6d1111425f969b
-    workspace/creatives/conditions/operator_contains: 06dd606c0a8f81f9a03b414e9ae89440
-    workspace/creatives/conditions/operator_contains_any_of: f53f11cae293d96e4395529bb6775c1b
-    workspace/creatives/conditions/operator_contains_none_of: 7a7ed0e5f63eb1c4a441fe8f10f47006
-    workspace/creatives/conditions/operator_does_not_contain: 854da2bdf10613ce62fb454bab16c58b
-    workspace/creatives/conditions/operator_does_not_equal: a59746bb7a7590c4dc5e57092a5fc138
-    workspace/creatives/conditions/operator_does_not_include: 561a6b7dfdf0d3ec50290e5c92c7b4da
-    workspace/creatives/conditions/operator_ends_with: 2bd866369766c6a2ef74bb9fa74b1d7e
-    workspace/creatives/conditions/operator_equals: 6e18221b26a14df86537e89f50dcec16
-    workspace/creatives/conditions/operator_greater_than: b23a9203a2ad1157b74dbd7163b380f6
-    workspace/creatives/conditions/operator_includes: 5bdab805ee32706717d99c2e24996ab7
-    workspace/creatives/conditions/operator_is_not_set: 906801489132487ef457652af4835142
-    workspace/creatives/conditions/operator_is_set: 9850468156356f95884bbaf56b6687aa
-    workspace/creatives/conditions/operator_less_than: 5d497aca78681c793f32afd82fa85311
-    workspace/creatives/conditions/operator_starts_with: 37e55e9080c84a1855956161e7885c21
-    workspace/creatives/conditions/param_key: c7e847f06eaf0f46e894c45e7c39accb
-    workspace/creatives/conditions/param_key_placeholder: 61c7e60aa7a90ddd4f92d2296dbc8f07
-    workspace/creatives/conditions/read_only_match_all: afbeeebc15d4f034884661168f90d82d
-    workspace/creatives/conditions/read_only_match_any: 2824c86a8a9ef775f3e7a3a3fb7b0562
-    workspace/creatives/conditions/read_only_note: e6862f7b7983d8fc310aef3bd4b631b8
-    workspace/creatives/conditions/remove: 4f34638686a7d72c50cb6f8c6560f4f9
-    workspace/creatives/conditions/test_failed: 9f5da6b65a5784a97f052bc8bcf3aabb
-    workspace/creatives/conditions/test_passed: 81ecb9ce2165b59c73a9dacc14cfa583
-    workspace/creatives/conditions/test_title: 4c35b97b614d4f20f92aa449cc748e8d
-    workspace/creatives/conditions/text_placeholder: 3f1e0d1b93a5fd8a1f3c88356769ce59
     workspace/creatives/conditions/title: fe5eb6f64b7ffcce1d8a102dccb02099
-    workspace/creatives/conditions/value: 34b0eaa85808b15cbc4be94c64d0146b
     workspace/creatives/creative: 82d3f0afe694b9064b6932fc969160e9
     workspace/creatives/delete_confirmation: b70ce45d7fe27ba8f48a4a2c7756b18a
     workspace/creatives/editor/accessible_name: dc7bc56a80b59d60b9bb71f64c1d7fe1
