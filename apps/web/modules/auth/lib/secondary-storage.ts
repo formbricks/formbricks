@@ -3,6 +3,7 @@ import { createClient } from "redis";
 import { logger } from "@formbricks/logger";
 import { getRedisTlsOptions } from "@formbricks/redis-config";
 import { env } from "@/lib/env";
+import { getAuthRedisReconnectDelay } from "./redis-reconnect";
 
 /**
  * Better Auth `secondaryStorage` backed by Redis (ENG-1054).
@@ -17,6 +18,7 @@ import { env } from "@/lib/env";
 type RedisClient = ReturnType<typeof createClient>;
 
 let clientPromise: Promise<RedisClient> | undefined;
+let activeClient: RedisClient | undefined;
 let supportsGetDel = true;
 
 const GET_AND_DELETE_SCRIPT = `local value = redis.call('GET', KEYS[1])
@@ -30,17 +32,24 @@ const isGetDelUnsupportedError = (error: unknown): boolean => {
 };
 
 const getClient = (): Promise<RedisClient> => {
+  // A connection that exhausts its retries closes after the initial connect promise has resolved.
+  if (activeClient && !activeClient.isOpen) clientPromise = undefined;
   if (!clientPromise) {
     const redisUrl = env.REDIS_URL;
     if (!redisUrl) throw new Error("REDIS_URL is required for authentication storage");
     const tls = getRedisTlsOptions(redisUrl, env.REDIS_TLS_CA);
     const client = createClient({
       url: redisUrl,
-      socket: { ...(tls && { tls: true as const, ...tls }), connectTimeout: 3000 },
+      socket: {
+        ...(tls && { tls: true as const, ...tls }),
+        connectTimeout: 3000,
+        reconnectStrategy: getAuthRedisReconnectDelay,
+      },
       // Managed Redis services and their network paths can reap idle connections (for example,
       // Azure Cache for Redis documents a 10-minute idle timeout). Ping well inside that limit.
       pingInterval: 300_000,
     });
+    activeClient = client;
     client.on("error", (error) => logger.error(error, "Better Auth Redis secondary storage error"));
     clientPromise = client
       .connect()
