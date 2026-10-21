@@ -35,6 +35,18 @@ describe("Redis TLS policy", () => {
     );
   });
 
+  test("rejects repeated unterminated PEM headers", () => {
+    expect(() =>
+      getRedisTlsOptions("rediss://localhost", "-----BEGIN CERTIFICATE-----".repeat(10_000))
+    ).toThrow("REDIS_TLS_CA must contain only valid PEM CA certificates");
+  });
+
+  test("rejects nested PEM headers before a valid certificate", () => {
+    expect(() =>
+      getRedisTlsOptions("rediss://localhost", `-----BEGIN CERTIFICATE-----${rootCertificates[0]}`)
+    ).toThrow("REDIS_TLS_CA must contain only valid PEM CA certificates");
+  });
+
   test("rejects a valid CA followed by unparsed content", () => {
     expect(() =>
       getRedisTlsOptions("rediss://localhost", `${rootCertificates[0]}\nprivate material`)
