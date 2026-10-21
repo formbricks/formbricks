@@ -239,6 +239,25 @@ const validateSingleSelectOtherValue = (
 };
 
 /**
+ * Every value a legitimate client can submit for these choices: each id, plus each label in any of
+ * its stored languages. Not just the response's language: the renderer shows the default language
+ * through the `default` key but reports the response language as the default's real code, so a stale
+ * non-empty value under that code (e.g. left over from a language switch) would otherwise reject the
+ * label the respondent actually saw (ENG-4103).
+ */
+const getKnownChoiceValues = (choices: { id: string; label?: Record<string, unknown> }[]): Set<string> => {
+  const knownValues = new Set<string>();
+  for (const choice of choices) {
+    knownValues.add(choice.id);
+    const labels = Object.values(choice.label ?? {}).filter(
+      (label): label is string => typeof label === "string" && label !== ""
+    );
+    labels.forEach((label) => knownValues.add(label));
+  }
+  return knownValues;
+};
+
+/**
  * Reject answer values that are not among a choice element's configured options.
  *
  * Choice elements that expose an "Other" option intentionally accept free text, so this
@@ -270,20 +289,7 @@ const validateChoiceMembership = (
     return null;
   }
 
-  // Accept a choice's label in any of its stored languages, not just `languageCode`. The renderer
-  // shows the default language through the `default` key but reports the response language as the
-  // default's real code, so a stale non-empty value under that code (e.g. left over from a language
-  // switch) would otherwise reject the label the respondent actually saw (ENG-4103). Membership stays
-  // strict: the value must still be a configured choice id or label.
-  const knownValues = new Set<string>();
-  for (const choice of element.choices) {
-    knownValues.add(choice.id);
-    for (const label of Object.values(choice.label ?? {})) {
-      if (typeof label === "string" && label !== "") {
-        knownValues.add(label);
-      }
-    }
-  }
+  const knownValues = getKnownChoiceValues(element.choices);
 
   const submittedValues = Array.isArray(value) ? value : [value];
   for (const submitted of submittedValues) {
