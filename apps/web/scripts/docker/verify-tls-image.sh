@@ -36,7 +36,8 @@ EOF
 # One request config per subject: LibreSSL ignores -subj when the config sets prompt = no, and it does
 # not expand environment variables in the config.
 request_config() {
-  { printf '[req]\ndistinguished_name = dn\nprompt = no\n[dn]\nCN = %s\n' "$1"; cat ext.cnf; } > "$2"
+  local common_name="$1" output="$2"
+  { printf '[req]\ndistinguished_name = dn\nprompt = no\n[dn]\nCN = %s\n' "$common_name"; cat ext.cnf; } > "$output"
 }
 
 # openssl is chatty on success; show its output only when a step fails.

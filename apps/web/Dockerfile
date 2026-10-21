@@ -33,7 +33,7 @@ RUN install -D -m 644 LICENSE /usr/local/share/doc/node/LICENSE
 FROM alpine:3.23 AS runtime-base
 RUN apk update && apk upgrade --no-cache \
     && apk add --no-cache "ca-certificates>=20261020-r0" "ca-certificates-bundle>=20261020-r0" \
-      libgcc libstdc++ "libssl3>=3.5.9-r0" "libcrypto3>=3.5.9-r0" "zlib>=1.3.2-r1"
+      "libcrypto3>=3.5.9-r0" libgcc "libssl3>=3.5.9-r0" libstdc++ "zlib>=1.3.2-r1"
 COPY --from=node-runtime-builder /usr/local/bin/node /usr/local/bin/node
 COPY --from=node-runtime-builder /usr/local/share/doc/node/LICENSE /usr/local/share/doc/node/LICENSE
 COPY apps/web/scripts/docker/verify-runtime.mjs /tmp/verify-runtime.mjs

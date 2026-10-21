@@ -27,6 +27,8 @@ const VERIFY_FAILURES = new Set([
   "DEPTH_ZERO_SELF_SIGNED_CERT",
   "SELF_SIGNED_CERT_IN_CHAIN",
   "CERT_UNTRUSTED",
+  // What a blocked or revoked chain returns, as in Node's upstream blocklist for these intermediates.
+  "CERT_REVOKED",
 ]);
 
 const failure = (error) =>
