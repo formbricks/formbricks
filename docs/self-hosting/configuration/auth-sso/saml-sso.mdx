@@ -97,3 +97,16 @@ To configure SAML SSO in Formbricks, follow these steps:
   We don't support multiple SAML connections yet. You can only have one SAML connection at a time. If you
   change the `connection.xml` file, your existing SAML connection will be overwritten.
 </Note>
+
+## Limits on SAML Responses
+
+The SAML callback accepts sign-ins from anyone, so Formbricks bounds what it does with each response before checking who sent it. A response is refused, and the user is sent back to the login page, when it:
+
+- is larger than 256 KiB, the size limit for every `/api/auth` request;
+- carries more than 12,000 tags and attribute names, or nests elements more than 64 levels deep;
+- contains a `DOCTYPE` or another XML declaration other than the usual `<?xml ...?>` line;
+- takes longer than 100 ms to parse, or more memory than a parse of a real response needs.
+
+Real responses stay within these limits. A response carrying 1,000 group memberships written as verbosely as Okta writes them is about 247 KiB and 5,000 tags and attribute names; a signed or encrypted assertion nests about 10 levels deep. If users with very many groups are refused, have your IdP send only the groups Formbricks needs, for example with a group filter on the SAML app, rather than every group the user belongs to.
+
+When many sign-ins arrive at once, a server may also answer some with "try again" rather than fall behind on everything else. Each client IP may send 120 SAML responses a minute. That limit only applies when Formbricks can tell client IPs apart, which takes a trusted proxy in front of it: see [Configure Trusted Proxy Hops](/self-hosting/advanced/enterprise-features/audit-logging#configure-trusted-proxy-hops) for `TRUSTED_PROXY_HOP_COUNT`. A response that is refused after it was parsed is logged with its claimed issuer, response ID and `InResponseTo`; refusals before that are logged by size. The content is never logged.

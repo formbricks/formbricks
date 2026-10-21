@@ -19,6 +19,7 @@ interface ApiErrorResponse {
     | "too_many_requests"
     | "conflict"
     | "payload_too_large"
+    | "service_unavailable"
     | "workspace_survey_limit_reached";
   message: string;
   details: {
@@ -322,6 +323,23 @@ const tooManyRequestsResponse = (
   );
 };
 
+/** The server cannot take the request right now; `retryAfterSeconds` tells the caller when to try again. */
+const serviceUnavailableResponse = (message: string, retryAfterSeconds?: number) =>
+  Response.json(
+    {
+      code: "service_unavailable",
+      message,
+      details: {},
+    } as ApiErrorResponse,
+    {
+      status: 503,
+      headers: {
+        "Cache-Control": "private, no-store",
+        ...(retryAfterSeconds === undefined ? {} : { "Retry-After": String(retryAfterSeconds) }),
+      },
+    }
+  );
+
 export const responses = {
   goneResponse,
   badRequestResponse,
@@ -333,6 +351,7 @@ export const responses = {
   successResponse,
   payloadTooLargeResponse,
   tooManyRequestsResponse,
+  serviceUnavailableResponse,
   forbiddenResponse,
   conflictResponse,
   workspaceSurveyLimitResponse,
