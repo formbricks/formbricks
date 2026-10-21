@@ -13,41 +13,76 @@ import { PREVIEW_BOUNDARY_CLASS_NAME } from "@/modules/ui/components/preview-sur
 import type { TCreativeDevice } from "../../lib/styling-form";
 import { PhoneViewport } from "./phone-viewport";
 
+/** The wireframe's colours per appearance: a Dark preview shows the creative on a dark site. */
+const SITE_TONES = {
+  light: {
+    page: "bg-white",
+    logo: "bg-slate-800",
+    name: "text-slate-800",
+    rule: "border-slate-100",
+    strong: "bg-slate-200",
+    soft: "bg-slate-100",
+    button: "bg-slate-300",
+    menu: "border-slate-300",
+  },
+  dark: {
+    page: "bg-slate-950",
+    logo: "bg-slate-200",
+    name: "text-slate-200",
+    rule: "border-slate-800",
+    strong: "bg-slate-700",
+    soft: "bg-slate-800",
+    button: "bg-slate-600",
+    menu: "border-slate-600",
+  },
+} as const;
+
 /** A neutral wireframe of a customer's site, so the creative is judged in context, not on a blank. */
-const SiteWireframe = ({ siteName, compact }: Readonly<{ siteName: string; compact: boolean }>) => (
-  <div className="bg-white pb-24" aria-hidden="true">
-    <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-      <div className="flex items-center gap-2">
-        <span className="size-5 rounded-md bg-slate-800" />
-        <span className="text-sm font-semibold text-slate-800">{siteName}</span>
+const SiteWireframe = ({
+  siteName,
+  compact,
+  appearance,
+}: Readonly<{ siteName: string; compact: boolean; appearance: TStylingAppearance }>) => {
+  const tone = SITE_TONES[appearance];
+  return (
+    <div className={cn(tone.page, "pb-24")} aria-hidden="true">
+      <div className={cn("flex items-center justify-between border-b px-6 py-4", tone.rule)}>
+        <div className="flex items-center gap-2">
+          <span className={cn("size-5 rounded-md", tone.logo)} />
+          <span className={cn("text-sm font-semibold", tone.name)}>{siteName}</span>
+        </div>
+        {compact ? (
+          <span className={cn("h-3 w-5 rounded-sm border-y-2", tone.menu)} />
+        ) : (
+          <div className="flex gap-5">
+            {[14, 18, 12, 10].map((width) => (
+              <span
+                key={width}
+                className={cn("h-2 rounded-full", tone.strong)}
+                style={{ width: `${width * 4}px` }}
+              />
+            ))}
+          </div>
+        )}
       </div>
-      {compact ? (
-        <span className="h-3 w-5 rounded-sm border-y-2 border-slate-300" />
-      ) : (
-        <div className="flex gap-5">
-          {[14, 18, 12, 10].map((width) => (
-            <span key={width} className="h-2 rounded-full bg-slate-200" style={{ width: `${width * 4}px` }} />
-          ))}
-        </div>
-      )}
+      <div className={cn("space-y-3 px-6", compact ? "py-8" : "py-14")}>
+        <span className={cn("block h-6 w-3/4 max-w-md rounded-md", tone.strong)} />
+        <span className={cn("block h-6 w-1/2 max-w-xs rounded-md", tone.strong)} />
+        <span className={cn("block h-2.5 w-2/3 max-w-sm rounded-full", tone.soft)} />
+        <span className={cn("mt-5 block h-9 w-32 rounded-md", tone.button)} />
+      </div>
+      <div className={cn("grid gap-4 px-6", compact ? "grid-cols-1" : "grid-cols-3")}>
+        {Array.from({ length: compact ? 4 : 6 }, (_, index) => (
+          <div key={index} className={cn("space-y-2 rounded-lg border p-4", tone.rule)}>
+            <span className={cn("block h-3 w-1/2 rounded-full", tone.strong)} />
+            <span className={cn("block h-2 w-full rounded-full", tone.soft)} />
+            <span className={cn("block h-2 w-2/3 rounded-full", tone.soft)} />
+          </div>
+        ))}
+      </div>
     </div>
-    <div className={cn("space-y-3 px-6", compact ? "py-8" : "py-14")}>
-      <span className="block h-6 w-3/4 max-w-md rounded-md bg-slate-200" />
-      <span className="block h-6 w-1/2 max-w-xs rounded-md bg-slate-200" />
-      <span className="block h-2.5 w-2/3 max-w-sm rounded-full bg-slate-100" />
-      <span className="mt-5 block h-9 w-32 rounded-md bg-slate-300" />
-    </div>
-    <div className={cn("grid gap-4 px-6", compact ? "grid-cols-1" : "grid-cols-3")}>
-      {Array.from({ length: compact ? 4 : 6 }, (_, index) => (
-        <div key={index} className="space-y-2 rounded-lg border border-slate-100 p-4">
-          <span className="block h-3 w-1/2 rounded-full bg-slate-200" />
-          <span className="block h-2 w-full rounded-full bg-slate-100" />
-          <span className="block h-2 w-2/3 rounded-full bg-slate-100" />
-        </div>
-      ))}
-    </div>
-  </div>
-);
+  );
+};
 
 /** What a visitor's presses would do on a site; the editor says it instead of doing it. */
 export interface TPreviewActions {
@@ -123,10 +158,10 @@ const CreativeMount = ({
   }, []);
 
   return (
-    <div className={cn("h-full w-full bg-white", PREVIEW_BOUNDARY_CLASS_NAME)}>
+    <div className={cn("h-full w-full", SITE_TONES[appearance].page, PREVIEW_BOUNDARY_CLASS_NAME)}>
       <div className="h-full overflow-y-auto">
         <div ref={rootRef} />
-        <SiteWireframe siteName={siteName} compact={device === "phone"} />
+        <SiteWireframe siteName={siteName} compact={device === "phone"} appearance={appearance} />
       </div>
     </div>
   );
@@ -168,7 +203,7 @@ export const CreativePreview = ({
             <p className="absolute top-0 left-0 m-2 rounded-sm bg-slate-100 px-2 py-1 text-xs text-slate-600">
               {t("common.preview")}
             </p>
-            <PhoneViewport>{mount}</PhoneViewport>
+            <PhoneViewport isDark={appearance === "dark"}>{mount}</PhoneViewport>
           </>
         ) : (
           <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">

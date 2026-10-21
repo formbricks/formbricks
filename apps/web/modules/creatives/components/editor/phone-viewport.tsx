@@ -5,10 +5,13 @@ import { type ReactNode, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/cn";
 import { PHONE_FRAME, PHONE_SCREEN, getPhoneScale } from "../../lib/phone-viewport";
 
-/** The strip under the notch: the page starts below it, as in a phone browser. */
-const StatusBar = () => (
+/** The strip under the notch: the page starts below it, as in a phone browser; dark in a Dark preview. */
+const StatusBar = ({ isDark }: Readonly<{ isDark: boolean }>) => (
   <div
-    className="relative flex shrink-0 items-center justify-between bg-white px-8 text-slate-900"
+    className={cn(
+      "relative flex shrink-0 items-center justify-between px-8",
+      isDark ? "bg-slate-950 text-slate-100" : "bg-white text-slate-900"
+    )}
     style={{ height: PHONE_SCREEN.statusBarHeight }}
     aria-hidden="true">
     <span className="text-[15px] font-semibold">9:41</span>
@@ -27,7 +30,7 @@ const StatusBar = () => (
  * the creative lays out as it would on a phone. `children` fill the page area below the status bar; a
  * preview boundary there keeps fixed creatives on the screen.
  */
-export const PhoneViewport = ({ children }: Readonly<{ children: ReactNode }>) => {
+export const PhoneViewport = ({ children, isDark }: Readonly<{ children: ReactNode; isDark: boolean }>) => {
   const areaRef = useRef<HTMLDivElement>(null);
   // Unknown until measured: the phone stays hidden rather than flash at the wrong size.
   const [scale, setScale] = useState<number | null>(null);
@@ -60,13 +63,13 @@ export const PhoneViewport = ({ children }: Readonly<{ children: ReactNode }>) =
               transform: `scale(${shown})`,
             }}>
             <div
-              className="flex flex-col overflow-hidden bg-white"
+              className={cn("flex flex-col overflow-hidden", isDark ? "bg-slate-950" : "bg-white")}
               style={{
                 width: PHONE_SCREEN.width,
                 height: PHONE_SCREEN.height,
                 borderRadius: PHONE_SCREEN.cornerRadius,
               }}>
-              <StatusBar />
+              <StatusBar isDark={isDark} />
               <div className="min-h-0 flex-1">{children}</div>
             </div>
           </div>
