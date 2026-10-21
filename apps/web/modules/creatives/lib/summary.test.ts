@@ -6,6 +6,7 @@ import {
   getRowStatusActions,
   getStatusChangeOutcome,
   getSummaryStatusControl,
+  isWaitingForStart,
   toDailyChartRows,
 } from "./summary";
 
@@ -145,15 +146,42 @@ describe("getRowStatusActions", () => {
     ],
     ["Closed", "completed", [{ action: "reopen", status: "inProgress" }]],
   ] as const)("offers what an author's %s creative can become", (_case, status, actions) => {
-    expect(getRowStatusActions({ status, archivedAt: null })).toEqual(actions);
+    const displayStatus = status === "completed" ? "closed" : status === "paused" ? "paused" : "active";
+    expect(getRowStatusActions({ status, displayStatus, archivedAt: null })).toEqual(actions);
+  });
+
+  test("offers to keep paused a creative that shows Paused only because of its survey", () => {
+    expect(getRowStatusActions({ status: "inProgress", displayStatus: "paused", archivedAt: null })).toEqual([
+      { action: "keepPaused", status: "paused" },
+      { action: "close", status: "completed" },
+    ]);
   });
 
   test("sends a draft to the editor to publish, since Publish checks it first", () => {
-    expect(getRowStatusActions({ status: "draft", archivedAt: null })).toEqual([{ action: "publish" }]);
+    expect(getRowStatusActions({ status: "draft", displayStatus: "draft", archivedAt: null })).toEqual([
+      { action: "publish" },
+    ]);
   });
 
   test("offers nothing for an archived creative", () => {
-    expect(getRowStatusActions({ status: "paused", archivedAt: "2026-10-01T00:00:00.000Z" })).toEqual([]);
+    expect(
+      getRowStatusActions({
+        status: "paused",
+        displayStatus: "archived",
+        archivedAt: "2026-10-01T00:00:00.000Z",
+      })
+    ).toEqual([]);
+  });
+});
+
+describe("isWaitingForStart", () => {
+  test("is true while the start is still ahead, so turning it on only schedules it", () => {
+    expect(isWaitingForStart({ startAt: "2026-10-17T02:00:00.000Z" }, NOW)).toBe(true);
+  });
+
+  test("is false once the start has passed, or with no start", () => {
+    expect(isWaitingForStart({ startAt: "2026-10-16T02:00:00.000Z" }, NOW)).toBe(false);
+    expect(isWaitingForStart({ startAt: null }, NOW)).toBe(false);
   });
 });
 

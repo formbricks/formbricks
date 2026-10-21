@@ -124,17 +124,25 @@ export const getSummaryStatusControl = (
   return { kind: "select", value: creative.status };
 };
 
+/** Whether turning the creative on would only schedule it: its start is still ahead. */
+export const isWaitingForStart = (schedule: { startAt: string | null }, now: Date): boolean =>
+  schedule.startAt !== null && new Date(schedule.startAt).getTime() > now.getTime();
+
 export type TRowStatusAction =
   | { action: "publish" }
-  | { action: "pause" | "close"; status: Exclude<TSummaryStatus, "inProgress"> }
+  | { action: "pause" | "keepPaused" | "close"; status: Exclude<TSummaryStatus, "inProgress"> }
   | { action: "resume" | "reopen"; status: "inProgress" };
 
 /**
  * The status items of a list row's menu, from the author's status. A draft's Publish opens the editor,
  * since publishing checks it first; an archived creative has none. Read-only members get no menu at all.
+ * A live creative that shows Paused only because of its survey (or a missing Destination or action) is
+ * offered "Keep paused": the same pause, worded for a row that already reads Paused, so it stays paused
+ * when the reason goes away.
  */
 export const getRowStatusActions = (creative: {
   status: TCreativeStatus;
+  displayStatus: TCreativeDisplayStatus;
   archivedAt: string | null;
 }): TRowStatusAction[] => {
   if (creative.archivedAt !== null) return [];
@@ -143,7 +151,10 @@ export const getRowStatusActions = (creative: {
     case "draft":
       return [{ action: "publish" }];
     case "inProgress":
-      return [{ action: "pause", status: "paused" }, close];
+      return [
+        { action: creative.displayStatus === "paused" ? "keepPaused" : "pause", status: "paused" },
+        close,
+      ];
     case "paused":
       return [{ action: "resume", status: "inProgress" }, close];
     case "completed":

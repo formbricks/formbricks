@@ -27,6 +27,7 @@ import {
   type TCreativeStatsRangeSelection,
   buildCreativeStatsSearchParams,
   getSummaryStatusControl,
+  isWaitingForStart,
   resolveCreativeStatsRange,
 } from "../../lib/summary";
 import { getUiLocale } from "../../lib/ui-locale";
@@ -143,6 +144,7 @@ export const CreativeSummary = ({
               <CreativeStatusDropdown
                 value={statusControl.value}
                 state={state}
+                isWaitingForStart={isWaitingForStart(creative.schedule, new Date())}
                 disabled={statusChange.isPending}
                 onChange={statusChange.changeStatus}
               />

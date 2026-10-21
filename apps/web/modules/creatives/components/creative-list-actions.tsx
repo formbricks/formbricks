@@ -38,6 +38,7 @@ import { type TRowStatusAction, getRowStatusActions } from "../lib/summary";
 const STATUS_ACTION_ICONS: Record<TRowStatusAction["action"], LucideIcon> = {
   publish: ZapIcon,
   pause: PauseIcon,
+  keepPaused: PauseIcon,
   resume: PlayIcon,
   close: CircleCheckIcon,
   reopen: PlayIcon,
@@ -67,6 +68,7 @@ export const CreativeListActions = ({ workspaceId, creative }: Readonly<Creative
   const statusActionLabels: Record<TRowStatusAction["action"], string> = {
     publish: t("workspace.creatives.editor.publish"),
     pause: t("workspace.creatives.status_action_pause"),
+    keepPaused: t("workspace.creatives.status_action_keep_paused"),
     resume: t("workspace.creatives.status_action_resume"),
     close: t("workspace.creatives.status_action_close"),
     reopen: t("workspace.creatives.status_action_reopen"),

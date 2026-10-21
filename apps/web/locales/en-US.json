@@ -2476,6 +2476,7 @@
       "restore": "Restore",
       "search_placeholder": "Search creatives",
       "status_action_close": "Close",
+      "status_action_keep_paused": "Keep paused",
       "status_action_pause": "Pause",
       "status_action_reopen": "Reopen",
       "status_action_resume": "Resume",

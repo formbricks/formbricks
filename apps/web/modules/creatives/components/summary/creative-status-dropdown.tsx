@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import {
@@ -24,10 +25,18 @@ interface CreativeStatusDropdownProps {
   onChange: (status: TSummaryStatus) => void;
   /** The trigger's width; the summary's by default. */
   className?: string;
+  /** The start is still ahead, so turning it on only schedules it: the option reads Scheduled. */
+  isWaitingForStart?: boolean;
 }
 
+/** One fixed slot per status icon, so the green dot lines up with the round icons. */
+const IndicatorSlot = ({ children }: Readonly<{ children: ReactNode }>) => (
+  <span className="flex size-5 shrink-0 items-center justify-center">{children}</span>
+);
+
 /**
- * The survey summary's status dropdown in creative words: Active · Paused · Closed. The trigger shows
+ * The survey summary's status dropdown in creative words: Active (Scheduled while its start is ahead) ·
+ * Paused · Closed. The trigger shows
  * the derived status (Scheduled, or Paused with its survey, with the reason on hover), as the survey's
  * shows Scheduled for a paused survey with a publish date. The editor's header has it too.
  */
@@ -37,6 +46,7 @@ export const CreativeStatusDropdown = ({
   disabled,
   onChange,
   className = "w-[170px] md:w-[200px]",
+  isWaitingForStart = false,
 }: Readonly<CreativeStatusDropdownProps>) => {
   const { t } = useTranslation();
   // Every status has a word, though only a published, unarchived creative gets this control.
@@ -63,7 +73,9 @@ export const CreativeStatusDropdown = ({
         <SelectTrigger className={cn("bg-white", className)} aria-label={t("common.status")}>
           <SelectValue>
             <span className="flex items-center">
-              <SurveyStatusIndicator status={indicator.status} isScheduled={indicator.isScheduled} />
+              <IndicatorSlot>
+                <SurveyStatusIndicator status={indicator.status} isScheduled={indicator.isScheduled} />
+              </IndicatorSlot>
               <span className="ml-2 text-sm text-slate-700">{words[state.status]}</span>
               {reason && <span className="sr-only">{reason}</span>}
             </span>
@@ -72,19 +84,29 @@ export const CreativeStatusDropdown = ({
         <SelectContent className="bg-white">
           <SelectItem className="group font-normal hover:text-slate-900" value="inProgress">
             <span className="flex w-full items-center gap-2">
-              <SurveyStatusIndicator status="inProgress" />
-              {t("common.active")}
+              <IndicatorSlot>
+                {isWaitingForStart ? (
+                  <SurveyStatusIndicator status="paused" isScheduled />
+                ) : (
+                  <SurveyStatusIndicator status="inProgress" />
+                )}
+              </IndicatorSlot>
+              {isWaitingForStart ? t("common.scheduled") : t("common.active")}
             </span>
           </SelectItem>
           <SelectItem className="group font-normal hover:text-slate-900" value="paused">
             <span className="flex w-full items-center gap-2">
-              <SurveyStatusIndicator status="paused" />
+              <IndicatorSlot>
+                <SurveyStatusIndicator status="paused" />
+              </IndicatorSlot>
               {t("common.paused")}
             </span>
           </SelectItem>
           <SelectItem className="group font-normal hover:text-slate-900" value="completed">
             <span className="flex w-full items-center gap-2">
-              <SurveyStatusIndicator status="completed" />
+              <IndicatorSlot>
+                <SurveyStatusIndicator status="completed" />
+              </IndicatorSlot>
               {t("common.closed")}
             </span>
           </SelectItem>

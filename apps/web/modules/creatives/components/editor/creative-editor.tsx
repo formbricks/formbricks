@@ -49,7 +49,7 @@ import {
 import { keepSaveFromGoingLive, toSurveyStates } from "../../lib/save-status";
 import { CREATIVE_CSS_SCOPE, getCreativeStyle } from "../../lib/style";
 import { type TCreativeDevice, toStyleSource, withTheme } from "../../lib/styling-form";
-import { getSummaryStatusControl } from "../../lib/summary";
+import { getSummaryStatusControl, isWaitingForStart } from "../../lib/summary";
 import { CreativeTypeIcon } from "../creative-icons";
 import { CreativeStatusPill } from "../creative-status-pill";
 import { CreativeStatusDropdown } from "../summary/creative-status-dropdown";
@@ -306,6 +306,7 @@ export const CreativeEditor = ({
             <CreativeStatusDropdown
               value={statusControl.value}
               state={displayState}
+              isWaitingForStart={isWaitingForStart(creative.schedule, new Date())}
               disabled={isBusy}
               onChange={statusChange.changeStatus}
               className="w-36"
