@@ -250,7 +250,6 @@ const validateSingleSelectOtherValue = (
 const validateChoiceMembership = (
   element: TSurveyElement,
   value: TResponseDataValue,
-  languageCode: string,
   t: TFunction
 ): TValidationError | null => {
   if (
@@ -271,12 +270,18 @@ const validateChoiceMembership = (
     return null;
   }
 
+  // Accept a choice's label in any of its stored languages, not just `languageCode`. The renderer
+  // shows the default language through the `default` key but reports the response language as the
+  // default's real code, so a stale non-empty value under that code (e.g. left over from a language
+  // switch) would otherwise reject the label the respondent actually saw (ENG-4103). Membership stays
+  // strict: the value must still be a configured choice id or label.
   const knownValues = new Set<string>();
   for (const choice of element.choices) {
     knownValues.add(choice.id);
-    const label = getLocalizedValue(choice.label, languageCode);
-    if (label) {
-      knownValues.add(label);
+    for (const label of Object.values(choice.label ?? {})) {
+      if (typeof label === "string" && label !== "") {
+        knownValues.add(label);
+      }
     }
   }
 
@@ -551,7 +556,7 @@ export const validateElementResponse = (
     errors.push(rankingOtherError);
   }
 
-  const invalidOptionError = validateChoiceMembership(element, value, languageCode, t);
+  const invalidOptionError = validateChoiceMembership(element, value, t);
   if (invalidOptionError) {
     errors.push(invalidOptionError);
   }
