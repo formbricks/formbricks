@@ -21,6 +21,7 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
     await users.create({
       name: userName,
       email: userEmail,
+      passwordCost: 12,
     });
     testUser = {
       email: userEmail,
@@ -126,7 +127,9 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
   });
 
   test.describe("Timing Attack Prevention - User Enumeration Protection", () => {
-    test("should not reveal user existence through response timing differences", async ({ request }) => {
+    test("should not reveal user existence through response timing differences @timing", async ({
+      request,
+    }) => {
       // Sub-100ms enumeration-timing differences can't be measured meaningfully through Playwright
       // service mode's remote-browser tunnel — tunnel network jitter dwarfs the signal and makes the
       // assertion flaky. Keep it running in local mode, where the measurement is valid.

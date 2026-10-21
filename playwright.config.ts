@@ -44,6 +44,15 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
       testMatch: "**/*.spec.ts",
+      grepInvert: /@timing/,
+    },
+    // Measure latency after the parallel browser suite, as in newer releases.
+    {
+      name: "chromium-timing",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: "**/*.spec.ts",
+      grep: /@timing/,
+      dependencies: ["chromium"],
     },
 
     // {
