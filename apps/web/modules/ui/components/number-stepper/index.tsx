@@ -1,7 +1,7 @@
 "use client";
 
 import { MinusIcon, PlusIcon } from "lucide-react";
-import { type KeyboardEvent, useState } from "react";
+import { type KeyboardEvent, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
@@ -43,6 +43,7 @@ export const NumberStepper = ({
   // Typed text only exists while the user is editing; otherwise the field shows `value`, so
   // outside changes (buttons, parent updates) need no syncing.
   const [editing, setEditing] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const draft = editing ?? String(value);
 
   const commit = (next: number) => {
@@ -83,8 +84,22 @@ export const NumberStepper = ({
         className="h-full w-10 shrink-0 rounded-none border-r border-slate-200 bg-slate-50 px-0 text-slate-600">
         <MinusIcon />
       </Button>
-      <div className="flex min-w-0 flex-1 items-center justify-center gap-1 px-2">
+      {/*
+        A press anywhere between the buttons focuses the input, not only one on its few digits. Not a
+        wrapping <label>: the field's own label points at the input, and a second one would add the
+        digits and unit to its accessible name.
+      */}
+      <div
+        role="presentation"
+        className="flex min-w-0 flex-1 cursor-text items-center justify-center gap-1 px-2"
+        onMouseDown={(event) => {
+          if (disabled || event.target === inputRef.current) return;
+          // Keeps the press from blurring the input again once it has focus.
+          event.preventDefault();
+          inputRef.current?.focus();
+        }}>
         <input
+          ref={inputRef}
           id={id}
           role="spinbutton"
           inputMode="decimal"
