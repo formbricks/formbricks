@@ -15,7 +15,7 @@ import type { TCreativeType } from "./creative";
 import { CREATIVE_CSS_SCOPE } from "./style";
 
 /**
- * A creative's own Custom CSS (ENG-3865, ADR 0012). It is stored as source in the creative's styling (the
+ * A creative's own Custom CSS (ENG-3865). It is stored as source in the creative's styling (the
  * stored JSON is the API JSON) and compiled by the survey CSS processor, scoped to the creative's root
  * element inside its shadow root instead of `#fbjs`. It runs under the processor's `survey` scope: the
  * same 20 KB budget and the same `fb-survey` layers, which inside a shadow root order nothing but the

@@ -29,7 +29,7 @@ export interface TCreativeCustomCssConfig {
 }
 
 /**
- * The creative's own Custom CSS (ENG-3865, ADR 0012): a base field and a dark one, checked live and
+ * The creative's own Custom CSS (ENG-3865): a base field and a dark one, checked live and
  * compiled for the creative's root element, with the survey CSS plan gate. It doesn't offer the survey
  * CSS hints, which name the survey card's parts. The Light / Dark in its header (`action`, shared with
  * the Colors card and the preview) picks the field, so dark rules are written against the dark creative.

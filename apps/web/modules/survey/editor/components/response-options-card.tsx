@@ -35,7 +35,7 @@ interface ResponseOptionsCardProps {
   isSpamProtectionAllowed: boolean;
   surveySchedulingConfig: TSurveySchedulingConfig;
   locale: TUserLocale;
-  /** The linked creatives: a creative's Destination can't be PIN-protected (Δ11). */
+  /** The linked creatives: a creative's Destination can't be PIN-protected. */
   linkedCreatives?: readonly TSurveyLinkedCreative[];
 }
 

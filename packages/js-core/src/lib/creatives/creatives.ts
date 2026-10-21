@@ -95,7 +95,7 @@ const getBrowserStorage = (): Storage | null => {
   }
 };
 
-/** The click path: never the survey trigger (ADR 0004). */
+/** The click path: never the survey trigger. */
 const handleCreativeClick = (view: TCreativeView): void => {
   const click = resolveClick(view, getOpenSurveyIds());
   if (click.kind === "none") return;
@@ -117,7 +117,7 @@ const handleCreativeClick = (view: TCreativeView): void => {
 
   countClick(view.id);
   // A dismissible banner whose button opened its Destination has done its job on this page (ENG-3576);
-  // one that can't be dismissed stays, so a critical notice can't be clicked away (story 15).
+  // one that can't be dismissed stays, so a critical notice can't be clicked away.
   if (view.type === "banner" && view.dismissible) dismissBanner(view.id);
 };
 
@@ -202,8 +202,8 @@ export const reconcileCreatives = (): void => {
 };
 
 /**
- * At SDK start, the cached state's creatives before setup waits for its refresh, expired or not (review
- * fix A3): an In page banner shows with the page instead of after the network. Setup reconciles again
+ * At SDK start, the cached state's creatives before setup waits for its refresh, expired or not:
+ * an In page banner shows with the page instead of after the network. Setup reconciles again
  * once the refreshed state is in; until then the schedule still applies on the server's clock.
  */
 export const showCachedCreatives = drawCreatives;

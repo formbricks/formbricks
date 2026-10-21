@@ -87,7 +87,7 @@ export const isSingleUseEnabled = (singleUse: TDestinationSurveyFacts["singleUse
   singleUse.enabled === true;
 
 /**
- * Whether a survey can be a creative's Destination (ENG-3868, T6): in the creative's workspace (a missing
+ * Whether a survey can be a creative's Destination (ENG-3868): in the creative's workspace (a missing
  * row means it isn't), visible to the whole workspace now (a pending change counts as Restricted), and
  * neither single-use nor PIN-protected. Email verification is fine.
  */

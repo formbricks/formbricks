@@ -12,7 +12,7 @@ import { flushCreativeCounters } from "./stats-flush";
 import { findCreativeDayDeviceCounts, findCreativePageCounts } from "./stats-repository";
 
 /**
- * Seam 4 · the counting pipeline against a real Redis and PostgreSQL (ENG-4000, ADR 0005): the Lua
+ * The counting pipeline against a real Redis and PostgreSQL (ENG-4000): the Lua
  * counters, the flush with `GREATEST(stored, counted)`, the page cap and the rollup reads. Neither the
  * Lua script nor the upsert can be faked without testing the fake instead.
  */

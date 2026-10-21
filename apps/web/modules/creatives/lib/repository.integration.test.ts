@@ -7,7 +7,7 @@ import { CreativeReferenceError, createCreative } from "./service";
 
 /**
  * The creatives storage against a real PostgreSQL: the list query (the derived-status filter, the
- * keyset walk) and the Destination foreign key (ADR 0010), which a mocked repository can't show.
+ * keyset walk) and the Destination foreign key, which a mocked repository can't show.
  */
 
 vi.mock("node:crypto", async (importOriginal) => await importOriginal<typeof import("node:crypto")>());

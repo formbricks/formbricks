@@ -69,7 +69,7 @@ const getPressedLink = (event: MouseEvent): string | null => {
 
 /**
  * Mounts the creative with `@formbricks/creatives`' own `render`, the code the SDK runs on a visitor's
- * page (ADR 0003), into a page box that stands in for the site. The box is a containing block for
+ * page, into a page box that stands in for the site. The box is a containing block for
  * fixed elements (`contain: layout paint`), so a feedback button or an Overlay banner sits at the
  * box's edges instead of the editor's; an In page banner goes into the page flow above the site.
  */

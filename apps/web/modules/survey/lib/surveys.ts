@@ -35,7 +35,7 @@ import { restartSurveyRetention } from "@/modules/survey/archive/lib/retention-r
  * storage part is drained straight after commit; the Hub part a few minutes later, once any record still
  * on its way has landed.
  *
- * Creatives (T6): while linked creatives open the survey, the delete is refused with
+ * Creatives: while linked creatives open the survey, the delete is refused with
  * `SurveyLinkedCreativesError` (409), checked under the row lock, which a creative write linking the
  * survey also takes. Archived creatives don't hold it: they are unlinked in the same transaction. The
  * archive purge unlinks every creative instead of refusing, so a survey archived 30 days ago can't fail
@@ -93,7 +93,7 @@ export const deleteSurvey = async (
           throw new SurveyLinkedCreativesError("delete", linkedCreatives);
         }
       }
-      // The Destination foreign key is NO ACTION (ADR 0010): every creative still pointing here must go
+      // The Destination foreign key is NO ACTION: every creative still pointing here must go
       // first, or the delete below fails.
       const unlinkedCreatives = await unlinkSurveyCreatives(tx, {
         ...survey,

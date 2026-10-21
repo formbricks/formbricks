@@ -9,7 +9,7 @@ import { Logger } from "@/lib/common/logger";
 import { getDeviceInfo } from "@/lib/visit/device";
 
 /**
- * Counting creatives (ENG-4000, ADR 0005): the Impressions and Clicks of a page view travel together in
+ * Counting creatives (ENG-4000): the Impressions and Clicks of a page view travel together in
  * one request (`TCreativeEventsBody`), sent 2 s after the first of them or when the page is hidden. The
  * server answers 204 whatever happens, so nothing here waits for, reads or retries an answer.
  */

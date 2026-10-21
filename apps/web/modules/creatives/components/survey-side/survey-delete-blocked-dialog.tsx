@@ -18,7 +18,7 @@ interface SurveyDeleteBlockedDialogProps {
 }
 
 /**
- * Why a survey can't be deleted: non-archived creatives open it (Δ5). Lists them with the visibility
+ * Why a survey can't be deleted: non-archived creatives open it. Lists them with the visibility
  * blockers UI the Restrict dialog uses; relinking, archiving or deleting them clears the block.
  */
 export const SurveyDeleteBlockedDialog = ({

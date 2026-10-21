@@ -41,7 +41,7 @@ import { runMcpMutation } from "./run-mcp-mutation";
  * agent can do here is exactly what an API key can do over HTTP, and validation, status rules and
  * tenancy are tested once, at `app/api/v3/creatives/lib/operations.test.ts`.
  *
- * **There is no `creatives:*` scope** (ADR 0009). Reads gate on `surveys:read` and writes on
+ * **There is no `creatives:*` scope**. Reads gate on `surveys:read` and writes on
  * `surveys:write`, so any client already allowed to manage surveys can manage creatives and nothing new
  * is asked at consent; the workspace permission behind the operation is a separate gate. Splitting the
  * scope later is additive.
@@ -96,7 +96,7 @@ export function buildListCreativesSearchParams(input: TMcpListCreativesInput): U
   return searchParams;
 }
 
-/** The tool goes through anyway; the dashboard confirms first (review fix A1). */
+/** The tool goes through anyway; the dashboard confirms first. */
 const LAST_OPENER_NOTE =
   "If this was the last creative that opens a live app survey with no actions of its own, that survey then shows nowhere until a creative or an action opens it again.";
 

@@ -25,7 +25,7 @@ export const createCacheKey = {
     creativeIds: (workspaceId: string): CacheKey => makeCacheKey("env", workspaceId, "creative-ids"),
   },
 
-  // Creative counters (ENG-4000, ADR 0005): one UTC day's running totals, which the flush job copies to
+  // Creative counters (ENG-4000): one UTC day's running totals, which the flush job copies to
   // Postgres, and the sets of creatives with totals not yet copied. Counters, not a cache: they carry a
   // TTL of about two days and are never invalidated.
   creativeStats: {

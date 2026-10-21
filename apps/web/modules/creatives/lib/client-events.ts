@@ -19,7 +19,7 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { type TCreativeEventCounts, incrementCreativeCounters } from "./counters";
 
 /**
- * The client events endpoint's work (ENG-4000, T4): `POST /api/v2/client/{workspaceId}/creatives/events`
+ * The client events endpoint's work (ENG-4000): `POST /api/v2/client/{workspaceId}/creatives/events`
  * from the web SDK, in the shape of `TCreativeEventsBody` (`@formbricks/creatives`). The endpoint
  * answers 204 whatever happens here, so a visitor's page never learns, waits on or retries anything.
  */

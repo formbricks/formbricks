@@ -4,7 +4,7 @@ import { countCreativeEvents } from "@/modules/creatives/lib/client-events";
 
 /**
  * POST /api/v2/client/{workspaceId}/creatives/events — the web SDK's Impressions and Clicks of one page
- * view (ENG-4000, ADR 0005; body: `TCreativeEventsBody` in `@formbricks/creatives`).
+ * view (ENG-4000; body: `TCreativeEventsBody` in `@formbricks/creatives`).
  *
  * Always 204, with nothing to read: the SDK sends it as a `keepalive` beacon while the page may be
  * closing, so an error, a rate limit or a dropped event changes nothing for the visitor. The IP rate

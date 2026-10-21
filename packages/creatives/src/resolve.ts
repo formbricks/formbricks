@@ -18,7 +18,7 @@ export interface TCreativePage {
   /** Actions tracked on this page, for creatives shown when an action fires. */
   firedActions?: ReadonlySet<string>;
   /**
-   * The page, visit and device Show when is checked against, with the evaluator surveys use (ADR 0007).
+   * The page, visit and device Show when is checked against, with the evaluator surveys use.
    * Its device type is the SDK's device detection, never the 768 px phone breakpoint. Without it, a
    * creative that has conditions never shows: showing it on pages its conditions exclude would be worse
    * than not showing it.
@@ -66,7 +66,7 @@ const withVisitorLanguage = (
 
 /**
  * The creative's texts in `chosen` (a stored code, or `"default"`). A missing, disabled or empty
- * translation falls back to the default language, text by text (ADR 0011).
+ * translation falls back to the default language, text by text.
  */
 const toView = (
   creative: TCreativePayload,
@@ -118,7 +118,7 @@ const isWithinSchedule = (startAt: number | null, endAt: number | null, now: num
 
 /**
  * Its click would open nothing: it opens an app survey as a popup that the SDK can't open, or that the
- * SDK skips because the survey lacks the language the site set (ADR 0011).
+ * SDK skips because the survey lacks the language the site set.
  */
 const opensNothing = (
   creative: TCreativePayload,

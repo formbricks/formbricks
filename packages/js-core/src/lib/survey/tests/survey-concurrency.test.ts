@@ -129,7 +129,7 @@ describe("survey concurrency guard", () => {
     expect(renderSurvey).toHaveBeenCalledTimes(1);
   });
 
-  describe("a creative's click (ADR 0004: the click wins)", () => {
+  describe("a creative's click (the click wins)", () => {
     beforeEach(() => {
       // The widget module keeps the surveys on screen across tests; start from none.
       widget.closeSurvey();

@@ -195,7 +195,7 @@ type TStoredChange = Readonly<{
  * The row is re-read under the lock: the plan is made against what is stored now, not what the
  * authorization read saw.
  *
- * Creatives (T6): a creative write that links a survey takes this same lock and refuses a restricted one
+ * Creatives: a creative write that links a survey takes this same lock and refuses a restricted one
  * (a pending change counts as restricted), so a restriction re-reads the creative blockers here, after
  * the lock, and the two can't interleave. A restriction also unlinks the survey's archived creatives,
  * which never block it.

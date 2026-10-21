@@ -257,7 +257,7 @@ enum SurveyStatus {
 /// @property survey - The survey that was displayed
 /// @property contact - The contact who saw the survey
 /// @property response - The associated response if one exists
-/// @property creativeId - The creative that opened the survey (ADR 0006). No foreign key, so the record survives the creative's deletion.
+/// @property creativeId - The creative that opened the survey. No foreign key, so the record survives the creative's deletion.
 model Display {
   id         String    @id @default(cuid())
   createdAt  DateTime  @default(now()) @map(name: "created_at")

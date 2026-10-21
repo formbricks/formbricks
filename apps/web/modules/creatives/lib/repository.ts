@@ -172,7 +172,7 @@ export const runInCreativeTransaction = <T>(fn: (tx: TCreativeTx) => Promise<T>)
 
 /**
  * The survey a write links, under the survey's visibility lock (the one a Restrict and a save turning on
- * single-use or a PIN take), so linking and those changes can't interleave (T6). The row is locked too,
+ * single-use or a PIN take), so linking and those changes can't interleave. The row is locked too,
  * FOR KEY SHARE: a survey delete holds it FOR UPDATE while it checks for linked creatives, so a link
  * waits for that delete and then finds no survey, instead of failing on the foreign key. `null` when no
  * such survey is in the workspace.

@@ -4,7 +4,7 @@ import { toUtcDay } from "./stats";
 import { upsertCreativeDeviceCounts, upsertCreativePageCounts } from "./stats-repository";
 
 /**
- * The counter flush (ENG-4000, ADR 0005): copies the running day totals of every creative counted since
+ * The counter flush (ENG-4000): copies the running day totals of every creative counted since
  * the last flush from Redis to `CreativeDailyStat` and `CreativeDailyPageStat`. Run every minute by the
  * `creative-stats.flush` job, so counts reach the v3 `stats` operation within about a minute.
  *

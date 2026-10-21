@@ -1,4 +1,4 @@
-/// Creatives (ENG-3993, ADR 0001): page elements the web SDK renders next to surveys. Every type lives in
+/// Creatives (ENG-3993): page elements the web SDK renders next to surveys. Every type lives in
 /// `Creative`; `content` and `styling` are JSON validated per type by the API v3 schemas, so a new type is
 /// a new payload variant, not new columns.
 enum CreativeType {
@@ -6,7 +6,7 @@ enum CreativeType {
   banner
 }
 
-/// The author's intent only (ADR 0002). Scheduled, Active, "Paused with its survey" and Closed after the
+/// The author's intent only. Scheduled, Active, "Paused with its survey" and Closed after the
 /// end time are derived (`apps/web/modules/creatives/lib/display-status.ts` and its SQL twin); nothing
 /// writes this column when a schedule ends or a survey pauses.
 enum CreativeStatus {
@@ -47,7 +47,7 @@ model Creative {
   content           Json
   styling           Json
   surveyId          String?
-  // Same-workspace Destination (T6, ADR 0010). NoAction, not Restrict: it is checked at the end of the
+  // Same-workspace Destination. NoAction, not Restrict: it is checked at the end of the
   // statement, so a workspace or organization delete removes the creative through its own cascade first,
   // while deleting the survey on its own still fails until the creative is unlinked.
   survey            Survey?                 @relation(fields: [surveyId, workspaceId], references: [id, workspaceId], onDelete: NoAction, onUpdate: NoAction)
@@ -69,14 +69,14 @@ model Creative {
   @@index([surveyId])
 }
 
-/// The device type counts are split by (T9): the values of the Show when `deviceType` operand.
+/// The device type counts are split by: the values of the Show when `deviceType` operand.
 enum CreativeDeviceType {
   phone
   tablet
   desktop
 }
 
-/// A creative's Impressions and Clicks on one UTC day on one device type (ENG-4000, ADR 0005). Written
+/// A creative's Impressions and Clicks on one UTC day on one device type (ENG-4000). Written
 /// only by the counter flush job as `GREATEST(stored, counted)`, from Redis counters that hold the day's
 /// running totals, so a repeated flush changes nothing. At most 3 rows per creative per day. Deleting
 /// the creative deletes its counts.

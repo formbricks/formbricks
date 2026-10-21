@@ -5,12 +5,12 @@ import { build } from "vite";
 
 /**
  * The SDK loads on every page of every customer site, so its size is held here rather than noticed in
- * review (ENG-3994, T3 · ENG-3911). Both bundles are built the way the production build minifies them
+ * review (ENG-3994, ENG-3911). Both bundles are built the way the production build minifies them
  * (UMD, esbuild) and measured gzipped. Raising a budget is a decision: say why in the PR.
  */
 
 /**
- * js-core was ~11.4 KB gz before creatives; creatives may add ~6 KB (ADR 0003). Raised from 17 500 for
+ * js-core was ~11.4 KB gz before creatives; creatives may add ~6 KB. Raised from 17 500 for
  * Show when (ENG-4002; ~18.9 KB with the feedback button icons): the shared show-conditions evaluator
  * (~0.9 KB) and the visit store (~0.6 KB) that its visit conditions read. Surveys' own show conditions
  * (ENG-3926) use the same two, so that work adds no second copy. Raised from 19 000 for languages
@@ -23,7 +23,7 @@ import { build } from "vite";
 const JS_CORE_MAX_GZIP_BYTES = 21_000;
 
 /**
- * The creatives renderer on its own: `resolve`, `render` and their helpers (ADR 0003: about 6 KB gz).
+ * The creatives renderer on its own: `resolve`, `render` and their helpers (about 6 KB gz).
  * Raised from 6 000 for the ENG-3926 evaluator it shares with surveys (~0.3 KB; ~6.15 KB).
  */
 const CREATIVES_MAX_GZIP_BYTES = 6_250;

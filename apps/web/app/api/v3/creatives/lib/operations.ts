@@ -55,7 +55,7 @@ import { type TV3CreativeResource, serializeV3Creative } from "./serializers";
  * tools both call. Each takes parsed input and the caller's authentication and returns a `Response`
  * (success, or RFC 9457 problem), so an MCP tool is a thin adapter over the same behaviour.
  *
- * Access goes through `authorizeCreative` / `authorizeCreativeWorkspace` only (T8). Writes validate the
+ * Access goes through `authorizeCreative` / `authorizeCreativeWorkspace` only. Writes validate the
  * whole resulting state with `validateCreativeState` (422 on a semantic problem) before the service
  * checks the references only the database can answer, inside the write's transaction.
  */

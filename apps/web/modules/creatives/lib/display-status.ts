@@ -4,7 +4,7 @@ import type {
   CreativeStatusZodType,
 } from "@formbricks/api-v3-schemas";
 
-// The status a creative shows is derived, never stored (ADR 0002): the author's own status, narrowed by
+// The status a creative shows is derived, never stored: the author's own status, narrowed by
 // archiving, its schedule, what delivery needs (a Destination, an action) and the survey it opens. Nothing writes a status when a schedule ends or a
 // survey pauses, so the list, the editor, the API and the SDK can't disagree. `creativeDisplayStatusSql`
 // (display-status-sql.ts) is the SQL twin the list filter uses; `display-status-cases.ts` holds both to

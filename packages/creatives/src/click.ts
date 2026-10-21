@@ -7,7 +7,7 @@ export type TCreativeClick =
   | { kind: "openTab"; url: string };
 
 /**
- * What pressing a creative does, given the surveys on screen (ADR 0004, decided 16 Oct). The click wins
+ * What pressing a creative does, given the surveys on screen. The click wins
  * over every rule of the survey it opens, except one: pressing it while its own survey is open does
  * nothing, so a second press can't stack the survey on itself (and is not a Click).
  */

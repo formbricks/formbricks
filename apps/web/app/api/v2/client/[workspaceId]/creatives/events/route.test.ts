@@ -3,7 +3,7 @@ import { TooManyRequestsError } from "@formbricks/types/errors";
 import { POST } from "./route";
 
 /**
- * Seam 4 · the client events endpoint (ENG-4000). Its boundaries are replaced: the IP rate limiter, the
+ * The client events endpoint (ENG-4000). Its boundaries are replaced: the IP rate limiter, the
  * workspace's creatives (the database behind the 60 s cache) and the Redis counters. Every request
  * answers 204; what a test checks is what reached the counters.
  */

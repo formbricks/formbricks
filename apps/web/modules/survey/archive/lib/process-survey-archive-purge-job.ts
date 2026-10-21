@@ -58,7 +58,7 @@ const purgeArchivedSurvey = async (
     // Guarded delete: the survey is re-checked (locked) inside deleteSurvey's transaction so a survey
     // restored or held after this batch was selected is skipped, not permanently deleted. The purge
     // unlinks the creatives that open it in that transaction rather than being refused, so it never
-    // fails on them run after run; each unlink is audited as the system's (T6).
+    // fails on them run after run; each unlink is audited as the system's.
     await deleteSurvey(survey.id, {
       purgeCutoff: cutoff,
       ...(historyRunId ? { inTransaction: (tx) => history.recordDeletion(tx, historyRunId, survey.id) } : {}),

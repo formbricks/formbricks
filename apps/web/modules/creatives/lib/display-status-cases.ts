@@ -144,7 +144,7 @@ export const DISPLAY_STATUS_CASES: readonly TDisplayStatusCase[] = [
     input: { ...live, destinationSurvey: { status: "inProgress", archivedAt: hoursFromNow(-2) } },
     expected: { status: "paused", reason: "surveyNotActive" },
   },
-  // What the SDK is never sent (`toCreativePayloads`) reads Paused, never Active (review fix C3).
+  // What the SDK is never sent (`toCreativePayloads`) reads Paused, never Active.
   {
     name: "a published creative with nothing to open is paused with the reason",
     input: { ...live, destinationSurvey: null, deliveryGap: "destinationMissing" },

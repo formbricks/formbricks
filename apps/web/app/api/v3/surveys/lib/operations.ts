@@ -668,7 +668,7 @@ export async function deleteV3Survey({
     }
 
     await deleteSurvey(surveyId, {
-      // The archived creatives the delete unlinked: one event each, by the same caller (T6).
+      // The archived creatives the delete unlinked: one event each, by the same caller.
       onCreativesUnlinked: async (creatives, { organizationId }) => {
         if (!auditLog) return;
         const events = toUnlinkedCreativeAuditEvents({ ...auditLog, organizationId }, surveyId, creatives);

@@ -272,7 +272,7 @@ describe("deleteSurvey", () => {
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
-  describe("creatives that open the survey (T6)", () => {
+  describe("creatives that open the survey", () => {
     const linked = [
       { id: "clcr1234567890123456789012", name: "Feedback tab" },
       { id: "clcr1234567890123456789013", name: "Promo banner" },

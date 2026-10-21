@@ -1,4 +1,4 @@
-// The creatives renderer (ADR 0003): `resolve` decides what a page shows, `render` draws it. Bundled into
+// The creatives renderer: `resolve` decides what a page shows, `render` draws it. Bundled into
 // js-core, so keep it small, zod-free and free of runtime dependencies (`import type` only).
 export { resolveClick, type TCreativeClick } from "./click";
 export { getClockOffset } from "./clock";

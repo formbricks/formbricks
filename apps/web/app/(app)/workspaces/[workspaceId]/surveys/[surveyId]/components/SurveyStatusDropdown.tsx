@@ -49,7 +49,7 @@ export const SurveyStatusDropdown = () => {
     }
   };
 
-  // Pausing, closing or resuming names the creatives that open the survey first (T6).
+  // Pausing, closing or resuming names the creatives that open the survey first.
   const statusChange = useSurveyStatusChangeWithCreatives({
     workspaceId: survey.workspaceId,
     surveyId: survey.id,

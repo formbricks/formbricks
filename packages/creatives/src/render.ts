@@ -80,7 +80,7 @@ const BOTTOM_INSET = `var(${CREATIVE_INSET_PROPERTY.bottom},0px)`;
 /**
  * A feedback button's look on one device: its place, its size and its icon.
  *
- * Its place (decided 20 Oct): the offset puts the button's centre that far along its edge, and near
+ * Its place: the offset puts the button's centre that far along its edge, and near
  * either end the button stops at the end of the edge instead, so it is always fully on screen. CSS
  * can't clamp a box by its own size, so the button sits in a flex area along the whole edge between two
  * empty spacers that share the free space equally. One spacer starts from `|2 × offset − 100|` % of the
@@ -347,7 +347,7 @@ const drawFeedbackButton = (doc: Document, view: TFeedbackButtonView, onClick: (
 };
 
 /**
- * Draws a creative into its own shadow root (ADR 0003): `:host { all: initial }` keeps the page's
+ * Draws a creative into its own shadow root: `:host { all: initial }` keeps the page's
  * inherited styles out, sizes are px so the page's root font size can't scale them, and only the
  * creative's own CSS enters. Returns the host element it added; remove it to take the creative off the
  * page. Nothing is focused, animated or announced: a creative never takes the visitor's focus.

@@ -363,7 +363,7 @@ export function problemVisibilityBlocked(
 }
 
 /**
- * T6: a survey delete refused while non-archived creatives open the survey; lists them so the caller
+ * A survey delete refused while non-archived creatives open the survey; lists them so the caller
  * can relink, archive or delete each one.
  */
 export function problemSurveyHasLinkedCreatives(

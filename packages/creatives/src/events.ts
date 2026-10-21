@@ -1,7 +1,7 @@
 import type { TShowConditionDeviceType } from "@formbricks/types/show-conditions";
 
 /**
- * The counting contract (ENG-4000, ADR 0005): what the web SDK sends to
+ * The counting contract (ENG-4000): what the web SDK sends to
  * `POST /api/v2/client/{workspaceId}/creatives/events`.
  *
  * - The SDK sends the body as `text/plain` with `keepalive` (a CORS-simple request: no preflight, and it

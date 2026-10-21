@@ -34,10 +34,10 @@ const openSurveyIds = new Set<string>();
 
 // The survey a creative's click is opening while nothing is on screen yet (identification, renderer
 // load). A second press treats it as open (see `getOpenSurveyIds`), so it is not opened twice. A survey
-// its own trigger is preparing, or delaying, is not open: a press opens it now (ADR 0004).
+// its own trigger is preparing, or delaying, is not open: a press opens it now.
 let surveyInFlight: string | null = null;
 
-// Bumped by every creative click (ADR 0004: the click wins). A render already on its way when the click
+// Bumped by every creative click (the click wins). A render already on its way when the click
 // lands sees its generation go stale and stops before it shows anything or touches the shared flags.
 let renderGeneration = 0;
 
@@ -121,7 +121,7 @@ export const triggerSurvey = async (
 
 /**
  * Whether a failed user identification skips the survey: it does when the survey has segment filters,
- * which need the user, unless a creative's click opens it (ADR 0004).
+ * which need the user, unless a creative's click opens it.
  */
 const skipsWithoutIdentification = (
   survey: TWorkspaceStateSurvey,
@@ -139,7 +139,7 @@ const skipsWithoutIdentification = (
 /**
  * Shows a survey. Its triggers call it with the `action` that fired; a creative's click calls it with an
  * `opener` (through `openSurveyForCreative`), which skips the one-survey-at-a-time guard and segment
- * filters; the click path also takes away the survey's delay and auto-close (ADR 0004).
+ * filters; the click path also takes away the survey's delay and auto-close.
  */
 export const renderWidget = async (
   survey: TWorkspaceStateSurvey,
@@ -375,7 +375,7 @@ export const renderWidget = async (
 };
 
 /**
- * The click path (ADR 0004, decided 16 Oct): opens the survey a creative was pressed for, right away.
+ * The click path: opens the survey a creative was pressed for, right away.
  * `close` is what `resolveClick` says to close first — the surveys on screen, each reported as closed —
  * and anything still on its way to the screen (a delay, a renderer load) is called off for good.
  */

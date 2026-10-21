@@ -12,7 +12,7 @@ const PREVIEW_DESTINATION: TCreativeDestination = { type: "link", url: "about:bl
 export type TPreviewVisitorLabels = Readonly<{ siteNotice: string; dismiss: string }>;
 
 /**
- * What the editor preview hands to `@formbricks/creatives`' `render` (ADR 0003): the unsaved form, with
+ * What the editor preview hands to `@formbricks/creatives`' `render`: the unsaved form, with
  * the look `getCreativeStyle` computed from it, in the shape `resolve` builds for a visitor. Texts are the
  * default language's, as the form edits them; the visitor words come translated from the editor, as the
  * payload's `labels` do for a visitor.

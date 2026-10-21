@@ -22,7 +22,7 @@ export const ZDisplayCreateInput = z.object({
     .optional(),
   responseId: z.cuid2().optional(),
   /**
-   * The creative whose click opened the survey (T4, ADR 0006). Kept only when the creative is in the
+   * The creative whose click opened the survey. Kept only when the creative is in the
    * workspace and its Destination is this survey; otherwise the display is created without it.
    */
   // A malformed one (another id format, a wrong type) is dropped, never a 400: attribution must not

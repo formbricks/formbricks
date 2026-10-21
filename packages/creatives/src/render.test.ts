@@ -132,7 +132,7 @@ describe("render", () => {
   });
 
   /**
-   * Its place (decided 20 Oct): the offset puts the button's centre that far along its edge, and near
+   * Its place: the offset puts the button's centre that far along its edge, and near
    * either end the button stops at the end of the edge, so it stays fully on screen. jsdom lays nothing
    * out, so these read the flex area the button sits in, along the whole free edge, and the two spacers
    * around it. Both spacers grow equally; the one that starts from `|2 × offset − 100|` % of the edge

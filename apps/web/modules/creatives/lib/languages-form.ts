@@ -144,7 +144,7 @@ export type TLanguageCheckSurvey = {
  * The creative's languages (the default and the visible ones) that its Destination survey can't open
  * in, matched as the SDK and the link page match a visitor's language, and what that does:
  * - `hidden`: an app survey in several languages is skipped for a visitor whose site language it lacks,
- *   so the creative is hidden for them too (ADR 0011);
+ *   so the creative is hidden for them too;
  * - `defaultLanguage`: a link survey, or an app survey in one language, opens in its default language.
  * `null` when nothing is missing, or the survey was never translated, so its language is unknown.
  */

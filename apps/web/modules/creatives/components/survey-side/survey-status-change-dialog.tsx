@@ -21,7 +21,7 @@ interface SurveyStatusChangeDialogProps {
 /**
  * Confirms pausing, closing or resuming a survey that creatives open, naming every one of them with its
  * status: pausing or closing the survey shows the ones on the site as Paused with its survey, and
- * resuming brings those back unless the author keeps them paused (Δ4).
+ * resuming brings those back unless the author keeps them paused.
  */
 export const SurveyStatusChangeDialog = ({
   plan,

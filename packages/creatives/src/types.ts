@@ -100,7 +100,7 @@ interface TCreativePayloadBase {
    * or disabled, or whose translation of a text is empty, sees the default language.
    */
   languages: TCreativeLanguage[];
-  /** `languages` precomputed for matching on the page (review fix C7): picks the texts' language. */
+  /** `languages` precomputed for matching on the page: picks the texts' language. */
   languageMatch: TLanguageMatch;
   /**
    * The popup Destination survey's languages, precomputed the same way: a creative whose survey the

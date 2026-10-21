@@ -583,7 +583,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     read: (r) => r.meta.visitUrls,
   },
   /**
-   * **Opened by creative (ENG-4001, ADR 0006).** The creative whose click opened the survey, stamped by
+   * **Opened by creative (ENG-4001).** The creative whose click opened the survey, stamped by
    * the ingest routes once they have checked it is in the workspace and opens this survey — which is
    * why both are `server` even though the renderer knows the id: an unchecked id is not a fact yet.
    * The name is the one the creative had when the response was created. `keep`: both are the

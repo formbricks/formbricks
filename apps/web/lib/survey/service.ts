@@ -564,7 +564,7 @@ export const updateSurveyInternal = async (
     // everything this survey already declares, and any name — or clash — in it passes untouched.
     assertValidNewDeclaredFields({ existing: currentSurvey, incoming: updatedSurvey });
 
-    // T6: a creative's Destination can't be single-use or PIN-protected, so turning either on is refused
+    // A creative's Destination can't be single-use or PIN-protected, so turning either on is refused
     // (409) while linked creatives open the survey. Checked here, before the segment writes below, and
     // again in the transaction under the lock a creative write takes to link a survey.
     const creativeBlockedChange = getDestinationSettingTurnedOn(currentSurvey, updatedSurvey);

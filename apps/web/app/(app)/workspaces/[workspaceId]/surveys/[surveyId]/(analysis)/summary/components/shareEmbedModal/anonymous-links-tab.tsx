@@ -44,7 +44,7 @@ export const AnonymousLinksTab = ({
   const [singleUseEncryption, setSingleUseEncryption] = useState(survey.singleUse?.isEncrypted ?? false);
   const [numberOfLinks, setNumberOfLinks] = useState<number | string>(1);
   const [customSingleUseId, setCustomSingleUseId] = useState("");
-  // A creative's Destination can't use single-use links (Δ11): while creatives open the survey, the
+  // A creative's Destination can't use single-use links: while creatives open the survey, the
   // switches that would turn them on stay locked.
   const linkedCreatives = useSurveyLinkedCreatives({ workspaceId: survey.workspaceId, surveyId: survey.id });
   const isSingleUseLocked = isDestinationSettingLocked({ creatives: linkedCreatives, isOn: isSingleUseLink });

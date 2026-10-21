@@ -10,7 +10,7 @@ import { OTHER_PAGE, toUtcDay } from "./stats";
 import type { TCreativeDeviceCountRow, TCreativePageCountRow } from "./stats-repository";
 
 /**
- * The Redis half of creative counting (ENG-4000, ADR 0005). Each UTC day of each creative has two hashes
+ * The Redis half of creative counting (ENG-4000). Each UTC day of each creative has two hashes
  * of running totals: per device type and per page. One Lua call per events request increments them all,
  * so concurrent requests never lose an update and the page cap holds exactly. A per-day `pending` set
  * names the creatives with totals the flush job hasn't copied to Postgres yet.

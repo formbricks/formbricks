@@ -21,7 +21,7 @@ const nonEmpty = (name: string | null | undefined, fallback: string): string =>
   name && name.trim() !== "" ? name : fallback;
 
 /**
- * The survey's linked creatives (T6, ENG-3868): a creative is visible to the whole workspace, so its
+ * The survey's linked creatives (ENG-3868): a creative is visible to the whole workspace, so its
  * Destination can't be restricted. Archived ones don't block; a restriction unlinks them. Takes the
  * client so the visibility change can re-read them under the lock a creative link also takes.
  */

@@ -7,7 +7,7 @@ import {
 import type { TCreativePatchBody, TCreativeResource } from "./editor-form";
 
 /**
- * A save never takes a creative live by itself (Javier, 21 Oct): an author going live does it on purpose,
+ * A save never takes a creative live by itself: an author going live does it on purpose,
  * with Publish, Resume or the status menu. When the editor's Save would turn a creative that isn't Active
  * now into an Active one (a link instead of its paused survey, the Destination or action it lacked, a
  * schedule that would show it right away), the save pauses it instead, as its author, and the editor

@@ -14,7 +14,7 @@ import type { TShowConditions } from "@formbricks/types/show-conditions";
 import type { TCreativeStatus } from "./display-status";
 
 /**
- * The creative domain (ENG-3993): one shape for every type (ADR 0001), whose `content` and `styling`
+ * The creative domain (ENG-3993): one shape for every type, whose `content` and `styling`
  * are validated per type by the schemas generated from the v3 spec. The stored JSON is the API JSON, so
  * the per-type schemas below are the only definition of either.
  */
@@ -149,7 +149,7 @@ export { type TCreativeShowConditions, toCreativeShowConditions } from "./creati
 export const needsDestination = (groups: TCreativeTypedGroups): boolean =>
   groups.type === "feedbackButton" || groups.content.button !== null;
 
-/** Why a linked survey can't be a Destination (ENG-3868, T6), or `null` when it can. */
+/** Why a linked survey can't be a Destination (ENG-3868), or `null` when it can. */
 export type TDestinationSurveyIssue = "notFound" | "restricted" | "singleUse" | "pin";
 
 export const DESTINATION_SURVEY_ISSUE_REASONS: Record<TDestinationSurveyIssue, string> = {

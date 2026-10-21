@@ -1017,7 +1017,7 @@ describe("creatives on the wire (ENG-3994)", () => {
     expect(button).toEqual(
       expect.objectContaining({ defaultLanguage: "en-US", languages, autoSelectLanguage: true })
     );
-    // Precomputed for the page (C7): its own texts by code, alias or base language, its survey's skip
+    // Precomputed for the page: its own texts by code, alias or base language, its survey's skip
     // by the survey's languages; the disabled Italian is never matched.
     expect(button.languageMatch.keys).toMatchObject({ "de-de": "de-DE", de: "de-DE", "en-us": "default" });
     expect(button.languageMatch.bases).toMatchObject({ de: "de-DE", en: "default" });

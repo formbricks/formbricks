@@ -861,7 +861,7 @@ describe("RESERVED_FIELD_CATALOG", () => {
         privacy: "keep",
         display: "secondary",
       },
-      // Opened by creative (ENG-4001, ADR 0006). `server`: the ingest routes check the creative and
+      // Opened by creative (ENG-4001). `server`: the ingest routes check the creative and
       // stamp both, so no mid-survey picker offers them. `keep`: a creative's id and name are the
       // workspace's own copy, nothing the respondent disclosed.
       {

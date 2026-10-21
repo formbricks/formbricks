@@ -5,7 +5,7 @@ import { getDestinationSurveyIssue, isSingleUseEnabled } from "./record";
 import type { TDestinationSurveyFacts } from "./repository";
 
 /**
- * The surveys the On click picker offers (ENG-3868, T6). Single-use and PIN-protected surveys can never
+ * The surveys the On click picker offers (ENG-3868). Single-use and PIN-protected surveys can never
  * be a Destination, so they are left out; Restricted ones are listed so the author sees why a survey is
  * missing, and the picker shows them disabled with their badge. Archived surveys are left out too: they
  * never run again unless restored. The survey a creative already opens always stays, so the picker can

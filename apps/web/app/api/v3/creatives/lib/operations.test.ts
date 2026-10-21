@@ -27,7 +27,7 @@ import type { TV3CreateCreativeBody, TV3PatchCreativeBody } from "./schemas";
 import { ZV3CreateCreativeBody, ZV3CreativeStatsQuery, ZV3PatchCreativeBody } from "./schemas";
 
 /**
- * Seam 1 · the v3 creative operations, which the API routes and the MCP tools both call. Storage is
+ * The v3 creative operations, which the API routes and the MCP tools both call. Storage is
  * replaced by an in-memory fake of the repository (the one boundary the rules talk to), so every
  * assertion is on what a caller sees: the status code and the resource or problem it gets back.
  */

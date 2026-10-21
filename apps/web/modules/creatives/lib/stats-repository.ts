@@ -4,7 +4,7 @@ import type { CreativeDeviceType } from "@formbricks/database/prisma";
 import { OTHER_PAGE } from "./stats";
 
 /**
- * The storage boundary of creative counts (ENG-4000, ADR 0005): the daily rollup tables, which only the
+ * The storage boundary of creative counts (ENG-4000): the daily rollup tables, which only the
  * counter flush writes and the v3 `stats` operation reads. Days are `YYYY-MM-DD` strings in UTC
  * throughout, never `Date`s, so no caller can shift one through a local time zone.
  */

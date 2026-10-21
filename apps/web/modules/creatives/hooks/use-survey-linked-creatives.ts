@@ -50,7 +50,7 @@ type TPendingStatusChange = Readonly<{
 }>;
 
 /**
- * A survey status change that first names the creatives it pauses or brings back (T6, Δ4): it applies
+ * A survey status change that first names the creatives it pauses or brings back: it applies
  * at once when none are affected, and otherwise waits for the dialog. A resume that keeps them paused
  * pauses those creatives before the survey goes live, so none of them shows in between.
  */

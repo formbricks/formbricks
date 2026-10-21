@@ -24,8 +24,8 @@ import { getCreativeReferenceProblems, planCreativeDuplicate, planCreativeRestor
 
 /**
  * Creative writes (ENG-3993). Each one runs the pure rules in `write-rules.ts` against the stored facts
- * they need, inside the write's transaction: a survey being linked is locked the way a Restrict locks it
- * (T6), so the two can't interleave. Callers authorize first (`authorization.ts`) and validate the state
+ * they need, inside the write's transaction: a survey being linked is locked the way a Restrict locks it,
+ * so the two can't interleave. Callers authorize first (`authorization.ts`) and validate the state
  * (`validateCreativeState`); what only the database can answer surfaces as `CreativeReferenceError`.
  */
 

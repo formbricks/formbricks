@@ -8,8 +8,8 @@ import { deleteSurvey } from "@/modules/survey/lib/surveys";
 import { LINKED_CREATIVES_READ_LIMIT, SurveyLinkedCreativesError } from "./linked-creatives";
 
 /**
- * The survey side of a creative's Destination (T6) against a real PostgreSQL: the queries behind the
- * delete guard, the unlink before a delete (the Destination foreign key is NO ACTION, ADR 0010), the
+ * The survey side of a creative's Destination against a real PostgreSQL: the queries behind the
+ * delete guard, the unlink before a delete (the Destination foreign key is NO ACTION), the
  * purge, and the creative visibility blockers.
  */
 

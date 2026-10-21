@@ -9,7 +9,7 @@ import { mockActionClass, mockSurveyOutput, updateSurveyInput } from "./__mock__
 import { updateSurvey } from "./service";
 
 /**
- * T6: single-use and PIN-protected surveys can't be a creative's Destination, so turning either on for
+ * Single-use and PIN-protected surveys can't be a creative's Destination, so turning either on for
  * a survey that linked creatives open is refused (409) — before anything is written, and again under the
  * lock a creative link takes, inside the write's transaction.
  */

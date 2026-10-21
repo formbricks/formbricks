@@ -4,7 +4,7 @@ import { ZId } from "@formbricks/types/common";
 import type { TResponseMeta } from "@formbricks/types/responses";
 
 /**
- * Opened by creative (T4, ADR 0006): which creative opened a survey, as recorded on its display and
+ * Opened by creative: which creative opened a survey, as recorded on its display and
  * response. A client names the creative by id — the renderer for a creative's click, the link page for
  * `?creativeId=` — and nothing it says is trusted: the creative counts only when it is in the survey's
  * workspace and its Destination is that survey. Its status does not matter, so a response finished

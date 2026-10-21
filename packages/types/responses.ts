@@ -515,7 +515,7 @@ export const ZResponseMeta = ZAutoCapturedResponseMeta.extend({
   action: z.string().optional(),
   ipAddress: z.string().optional(),
   /**
-   * The creative that opened the survey (T4, ADR 0006). A client asks with the id; the ingest routes
+   * The creative that opened the survey. A client asks with the id; the ingest routes
    * keep it only after checking the creative is in the workspace and opens this survey, and stamp the
    * name themselves — a client-sent name never reaches the database. The name is the one the creative
    * had when the response was created, so a later rename leaves stored responses as they were.

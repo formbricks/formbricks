@@ -309,7 +309,7 @@ export const getCreativeReferenceProblems = ({
 };
 
 /**
- * An archived creative coming back, always as a Draft (decided 20 Oct), so it never reappears on a site
+ * An archived creative coming back, always as a Draft, so it never reappears on a site
  * by surprise: its author publishes it again. A survey that can no longer be a Destination is unlinked.
  * `publishedAt` stays: it records when the creative was first published.
  */

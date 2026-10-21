@@ -7,7 +7,7 @@ import type { TSurveyVisibilityBlocker } from "@/modules/survey/visibility/types
 import { type TCreativeDestinationSurveyState, getCreativeDisplayState } from "./display-status";
 
 /**
- * What the survey screens show about the creatives that open a survey (T6, ENG-3579, ENG-3868): who
+ * What the survey screens show about the creatives that open a survey (ENG-3579, ENG-3868): who
  * a status change affects, what the editor's cards say, and why a change is refused. Pure functions
  * over the creatives `GET /api/v3/creatives?surveyId=` returns; the screens fetch, these decide.
  */
@@ -112,7 +112,7 @@ export const getCreativeOpenedMode = ({
 
 /**
  * Whether the switch for single-use links or a PIN is locked: a creative's Destination can't have
- * either (Δ11), so a survey creatives open can't turn one on. The server refuses only turning one on
+ * either, so a survey creatives open can't turn one on. The server refuses only turning one on
  * (409), so a setting already on stays free to turn off.
  */
 export const isDestinationSettingLocked = ({

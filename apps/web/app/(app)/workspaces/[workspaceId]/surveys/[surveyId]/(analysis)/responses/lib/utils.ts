@@ -99,7 +99,7 @@ export interface TReservedColumnDefaultsContext {
  * `primary` ones — exactly the fields the table already showed, so the default view is unchanged.
  * The `secondary` ones exist as columns and appear in the settings modal, but unchecked: a survey's
  * table must not silently grow thirteen columns, several of which are empty for every response
- * collected before ENG-1841. One exception (decided 20 Oct): on a survey that creatives open, the
+ * collected before ENG-1841. One exception: on a survey that creatives open, the
  * "Opened by creative" column (the creative's name) starts visible too, since it says which of them
  * brought each response; its ID column stays hidden. The catalog's `display` is unchanged, so every
  * other survey keeps it hidden.
