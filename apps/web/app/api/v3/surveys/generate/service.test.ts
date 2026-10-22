@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { prepareV3SurveyCreateInput } from "../prepare";
-import { V3_SURVEY_GENERATE_ALLOWED_LOCALES, ZGeneratedSurveyDraftForAI } from "./schemas";
+import {
+  V3_SURVEY_GENERATE_ALLOWED_LANGUAGES,
+  ZGeneratedSurveyDraftForAI,
+  type getGeneratedSurveyDraftForAISchema,
+} from "./schemas";
 import {
   V3SurveyGeneratePromptError,
   V3SurveyGeneratedPayloadValidationError,
@@ -166,11 +170,11 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
     );
     const generationOptions = vi.mocked(generateOrganizationAIObject).mock.calls[0][0];
     expect(generationOptions.system).toContain(
-      `Allowed survey languages: ${V3_SURVEY_GENERATE_ALLOWED_LOCALES.join(", ")}`
+      `Allowed survey languages: ${V3_SURVEY_GENERATE_ALLOWED_LANGUAGES.join(", ")}`
     );
     expect(generationOptions.system).toContain("link survey draft");
     expect(generationOptions.prompt).toContain(
-      `Allowed survey languages: ${V3_SURVEY_GENERATE_ALLOWED_LOCALES.join(", ")}`
+      `Allowed survey languages: ${V3_SURVEY_GENERATE_ALLOWED_LANGUAGES.join(", ")}`
     );
     expect(generationOptions.prompt).toContain("Create a draft link survey");
     expect(result.payload).toMatchObject({
@@ -753,7 +757,8 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
   test("rejects generated survey languages outside the allowlist", async () => {
     vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
       object: {
-        language: "it-IT",
+        // A valid tag, but one the survey runtime ships no strings for.
+        language: "fa-IR",
         name: "Survey non supportato",
         description: null,
         welcomeCard: null,
@@ -788,6 +793,83 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
         input: generateInput,
       })
     ).rejects.toThrow(V3SurveyGeneratedPayloadValidationError);
+  });
+
+  const koreanDraft = (language: string) => ({
+    language,
+    name: "배송 만족도 설문조사",
+    description: null,
+    welcomeCard: { enabled: true, headline: null, subheader: null, buttonLabel: "시작하기" },
+    blocks: [
+      {
+        name: "배송",
+        questions: [
+          generatedElement({
+            type: "openText",
+            headline: "배송에서 무엇을 개선해야 할까요?",
+            longAnswer: true,
+          }),
+        ],
+      },
+    ],
+    ending: { headline: "소중한 의견 감사합니다", subheader: null },
+  });
+
+  test("writes the draft in a required survey language outside the dashboard locales", async () => {
+    vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
+      object: koreanDraft("ko-KR"),
+    } as Awaited<ReturnType<typeof generateOrganizationAIObject>>);
+
+    const result = await generateV3SurveyCreatePayloadFromPrompt({
+      organizationId: "org_1",
+      workspaceId,
+      input: {
+        ...generateInput,
+        language: "en-US",
+        surveyLanguage: "ko-KR",
+        prompt: "Ask customers in Seoul how satisfied they are with delivery times.",
+      },
+    });
+
+    expect(result.language).toBe("ko-KR");
+    expect(result.payload.defaultLanguage).toBe("ko-KR");
+    expect(result.payload.languages).toEqual([{ code: "ko-KR", default: true, enabled: true }]);
+    expect(result.payload.metadata.title).toEqual({ "ko-KR": "배송 만족도 설문조사" });
+    expect(result.payload.welcomeCard).toMatchObject({ buttonLabel: { "ko-KR": "시작하기" } });
+    expect(result.payload.blocks[0].elements[0].headline).toEqual({
+      "ko-KR": "배송에서 무엇을 개선해야 할까요?",
+    });
+    expect(result.validation.languages).toEqual([{ code: "ko-KR", default: true, enabled: true }]);
+
+    // The English prompt must not win over the explicit choice, and the provider schema only offers
+    // the one code — so a structured-output provider cannot return anything else.
+    const request = vi.mocked(generateOrganizationAIObject).mock.calls[0][0];
+    expect(request.system).toContain("in ko-KR, even when the user's request is written in another language");
+    expect(request.system).not.toContain("same language as the user's request");
+    expect(request.prompt).toContain("Required survey language: ko-KR");
+    expect(request.prompt).not.toContain("Preferred survey language");
+    const schema = request.schema as ReturnType<typeof getGeneratedSurveyDraftForAISchema>;
+    expect(schema.safeParse(koreanDraft("ko-KR")).success).toBe(true);
+    expect(schema.safeParse(koreanDraft("en-US")).success).toBe(false);
+  });
+
+  test("rejects a draft returned in another language than the required one", async () => {
+    // A model without structured output can ignore the narrowed enum; relabelling its English text
+    // as Korean would ship the wrong language under the right code.
+    vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
+      object: koreanDraft("en-US"),
+    } as Awaited<ReturnType<typeof generateOrganizationAIObject>>);
+
+    const generation = generateV3SurveyCreatePayloadFromPrompt({
+      organizationId: "org_1",
+      workspaceId,
+      input: { ...generateInput, surveyLanguage: "ko-KR" },
+    });
+
+    await expect(generation).rejects.toThrow(V3SurveyGeneratedPayloadValidationError);
+    await expect(generation).rejects.toMatchObject({
+      invalidParams: [expect.objectContaining({ name: "generatedSurvey.language" })],
+    });
   });
 
   test("surfaces invalid generated objects as validation failures", async () => {

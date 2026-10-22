@@ -3569,6 +3569,8 @@
         "status_writing_questions": "Skriver fråga {count}…",
         "status_writing_title": "Namnger din enkät…",
         "stop": "Stoppa",
+        "survey_language": "Enkätens språk",
+        "survey_language_match_prompt": "Matcha min prompt",
         "too_many_requests": "Du genererar för snabbt. Vänta ett ögonblick och försök igen.",
         "try_prompt": "Se exempelprompt",
         "your_prompt": "Din prompt"

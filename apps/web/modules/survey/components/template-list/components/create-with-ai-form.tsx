@@ -3,7 +3,9 @@
 import { ArrowLeftIcon } from "lucide-react";
 import { type KeyboardEvent, type ReactNode, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import type { TUserLocale } from "@formbricks/types/user";
+import { V3_SURVEY_GENERATE_ALLOWED_LANGUAGES } from "@/app/api/v3/surveys/generate/schemas";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { AIUnavailableAlert } from "@/modules/ai/components/ai-unavailable-alert";
 import { DraftReviewPanel } from "@/modules/survey/components/template-list/components/draft-review-panel";
@@ -16,6 +18,17 @@ import {
 import { AiIcon, AiStatusLine } from "@/modules/ui/components/ai";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
+import { Label } from "@/modules/ui/components/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
+
+// Radix Select cannot hold an empty value, so "match my prompt" needs a sentinel of its own.
+const MATCH_PROMPT_LANGUAGE = "match-prompt";
 
 type CreateWithAIFormProps = {
   workspaceId: string;
@@ -59,6 +72,8 @@ export const CreateWithAIForm = ({
   const {
     prompt,
     setPrompt,
+    surveyLanguage,
+    setSurveyLanguage,
     submittedPrompt,
     status,
     draft,
@@ -109,6 +124,15 @@ export const CreateWithAIForm = ({
   }, [status]);
 
   const helperPrompts = useMemo(() => getHelperPrompts(t), [t]);
+
+  const surveyLanguageOptions = useMemo(
+    () =>
+      V3_SURVEY_GENERATE_ALLOWED_LANGUAGES.map((code) => ({
+        code,
+        label: getLanguageLabel(code, language) ?? code,
+      })).sort((left, right) => left.label.localeCompare(right.label, language)),
+    [language]
+  );
 
   const handlePromptKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
@@ -253,6 +277,27 @@ export const CreateWithAIForm = ({
               </span>
               <span>{t("workspace.surveys.ai_create.shortcut_hint")}</span>
             </div>
+          </div>
+
+          <div className="flex flex-col gap-y-2">
+            <Label htmlFor="ai-survey-language">{t("workspace.surveys.ai_create.survey_language")}</Label>
+            <Select
+              value={surveyLanguage ?? MATCH_PROMPT_LANGUAGE}
+              onValueChange={(value) => setSurveyLanguage(value === MATCH_PROMPT_LANGUAGE ? null : value)}>
+              <SelectTrigger id="ai-survey-language" className="w-full bg-white sm:w-64">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={MATCH_PROMPT_LANGUAGE}>
+                  {t("workspace.surveys.ai_create.survey_language_match_prompt")}
+                </SelectItem>
+                {surveyLanguageOptions.map(({ code, label }) => (
+                  <SelectItem key={code} value={code}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
+import { SURVEY_RUNTIME_LANGUAGE_CODES } from "@formbricks/i18n-utils/survey-runtime-languages";
 import { ZUserLocale } from "@formbricks/types/user";
 import {
   GENERATED_SURVEY_ELEMENT_TYPES,
@@ -11,22 +12,32 @@ import {
   V3_SURVEY_GENERATE_PROMPT_MIN_LENGTH,
 } from "./constants";
 
-export const V3_SURVEY_GENERATE_ALLOWED_LOCALES = ZUserLocale.options;
-export const ZV3SurveyGenerateAllowedLocale = z.enum(V3_SURVEY_GENERATE_ALLOWED_LOCALES);
-export type TV3SurveyGenerateAllowedLocale = z.infer<typeof ZV3SurveyGenerateAllowedLocale>;
+/**
+ * The languages AI survey creation can write a draft in: every language the survey runtime ships
+ * strings for, plus the dashboard locales (`pt-PT` is one the runtime serves from `pt-BR`).
+ *
+ * Not the dashboard locales alone. Which language the survey is authored in is about the respondents,
+ * not about the language the author's dashboard happens to be in — capping it to `ZUserLocale` is what
+ * made a Korean draft impossible (ENG-3882). Not every BCP-47 tag either: outside this set the runtime
+ * has no button or validation strings, so the draft would ship English chrome (ENG-2325).
+ */
+export const V3_SURVEY_GENERATE_ALLOWED_LANGUAGES = [
+  ...new Set<string>([...SURVEY_RUNTIME_LANGUAGE_CODES, ...ZUserLocale.options]),
+].sort((left, right) => left.localeCompare(right)) as [string, ...string[]];
+export const ZV3SurveyGenerateAllowedLanguage = z.enum(V3_SURVEY_GENERATE_ALLOWED_LANGUAGES);
 
-const ALLOWED_GENERATE_LOCALE_LOOKUP = new Map<string, TV3SurveyGenerateAllowedLocale>(
-  V3_SURVEY_GENERATE_ALLOWED_LOCALES.map((locale) => [locale.toLowerCase(), locale] as const)
+const ALLOWED_GENERATE_LANGUAGE_LOOKUP = new Map<string, string>(
+  V3_SURVEY_GENERATE_ALLOWED_LANGUAGES.map((language) => [language.toLowerCase(), language] as const)
 );
 
-export function normalizeV3SurveyGenerateLocale(value: string): TV3SurveyGenerateAllowedLocale | null {
+export function normalizeV3SurveyGenerateLanguage(value: string): string | null {
   const normalizedLanguage = normalizeLanguageCode(value);
 
   if (!normalizedLanguage) {
     return null;
   }
 
-  return ALLOWED_GENERATE_LOCALE_LOOKUP.get(normalizedLanguage.toLowerCase()) ?? null;
+  return ALLOWED_GENERATE_LANGUAGE_LOOKUP.get(normalizedLanguage.toLowerCase()) ?? null;
 }
 
 const ZV3SurveyGenerateLanguage = z
@@ -34,7 +45,7 @@ const ZV3SurveyGenerateLanguage = z
   .trim()
   .min(1, "Language code is required")
   .transform((value, ctx) => {
-    const normalizedLanguage = normalizeV3SurveyGenerateLocale(value);
+    const normalizedLanguage = normalizeV3SurveyGenerateLanguage(value);
 
     if (!normalizedLanguage) {
       ctx.addIssue({
@@ -62,7 +73,10 @@ export const ZV3SurveyGenerateBody = z
         `Prompt must be ${V3_SURVEY_GENERATE_PROMPT_MAX_LENGTH} characters or less`
       ),
     type: z.enum(["link", "app"]).prefault("link"),
+    /** Preferred language: used only when the language of the prompt itself is unclear. */
     language: ZV3SurveyGenerateLanguage.optional(),
+    /** Required language: the draft is written in it whatever language the prompt is in. */
+    surveyLanguage: ZV3SurveyGenerateLanguage.optional(),
   })
   .strict();
 
@@ -193,7 +207,7 @@ const ZGeneratedSurveyBlock = z
   .strict();
 
 const generatedSurveyDraftShape = {
-  language: ZV3SurveyGenerateAllowedLocale,
+  language: ZV3SurveyGenerateAllowedLanguage,
   name: ZGeneratedText,
   description: ZGeneratedDescription.nullable(),
   welcomeCard: z
@@ -214,15 +228,29 @@ const generatedSurveyDraftShape = {
     .nullable(),
 } as const;
 
-export const ZGeneratedSurveyDraftForAI = z
-  .object({
-    ...generatedSurveyDraftShape,
-    blocks: z
-      .array(ZGeneratedSurveyBlockForAI)
-      .min(GENERATED_SURVEY_MIN_BLOCKS)
-      .max(GENERATED_SURVEY_MAX_BLOCKS),
-  })
-  .strict();
+const createGeneratedSurveyDraftForAISchema = (languages: readonly [string, ...string[]]) =>
+  z
+    .object({
+      ...generatedSurveyDraftShape,
+      language: z.enum(languages),
+      blocks: z
+        .array(ZGeneratedSurveyBlockForAI)
+        .min(GENERATED_SURVEY_MIN_BLOCKS)
+        .max(GENERATED_SURVEY_MAX_BLOCKS),
+    })
+    .strict();
+
+export const ZGeneratedSurveyDraftForAI = createGeneratedSurveyDraftForAISchema(
+  V3_SURVEY_GENERATE_ALLOWED_LANGUAGES
+);
+
+/**
+ * The provider-facing schema for one request. A required `surveyLanguage` narrows the language enum to
+ * that one code, so a provider with structured output cannot return anything else; a model without it
+ * is still caught afterwards by `buildV3SurveyCreatePayloadFromDraft`.
+ */
+export const getGeneratedSurveyDraftForAISchema = (surveyLanguage?: string) =>
+  surveyLanguage ? createGeneratedSurveyDraftForAISchema([surveyLanguage]) : ZGeneratedSurveyDraftForAI;
 
 export const ZGeneratedSurveyDraft = z
   .object({

@@ -3569,6 +3569,8 @@
         "status_writing_questions": "Soru {count} yazılıyor…",
         "status_writing_title": "Anketin adı belirleniyor…",
         "stop": "Durdur",
+        "survey_language": "Anket dili",
+        "survey_language_match_prompt": "İsteğimle eşleşsin",
         "too_many_requests": "Çok hızlı oluşturuyorsun. Bir süre bekleyip tekrar dene.",
         "try_prompt": "Örnek komutu gör",
         "your_prompt": "İstemin"

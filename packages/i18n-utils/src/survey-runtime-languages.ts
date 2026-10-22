@@ -35,6 +35,7 @@ export const SURVEY_RUNTIME_LANGUAGE_CODES = [
   "it-IT",
   "ja-JP",
   "km-KH",
+  "ko-KR",
   "lt-LT",
   "lv-LV",
   "nb-NO",

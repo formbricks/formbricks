@@ -3569,6 +3569,8 @@
         "status_writing_questions": "Escribiendo la pregunta {count}…",
         "status_writing_title": "Nombrando tu encuesta…",
         "stop": "Detener",
+        "survey_language": "Idioma de la encuesta",
+        "survey_language_match_prompt": "Igual que mi petición",
         "too_many_requests": "Estás generando demasiado rápido. Espera un momento e inténtalo de nuevo.",
         "try_prompt": "Ver ejemplo de instrucción",
         "your_prompt": "Tu indicación"

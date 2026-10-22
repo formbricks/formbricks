@@ -4,7 +4,13 @@ import {
   GENERATED_SURVEY_MAX_QUESTIONS_PER_BLOCK,
   V3_SURVEY_GENERATE_PROMPT_MIN_LENGTH,
 } from "./constants";
-import { ZGeneratedSurveyDraft, ZGeneratedSurveyDraftForAI, ZV3SurveyGenerateBody } from "./schemas";
+import {
+  V3_SURVEY_GENERATE_ALLOWED_LANGUAGES,
+  ZGeneratedSurveyDraft,
+  ZGeneratedSurveyDraftForAI,
+  ZV3SurveyGenerateBody,
+  getGeneratedSurveyDraftForAISchema,
+} from "./schemas";
 
 function generatedQuestion(index: number) {
   return {
@@ -267,6 +273,31 @@ describe("ZGeneratedSurveyDraft", () => {
   });
 });
 
+describe("getGeneratedSurveyDraftForAISchema", () => {
+  const draft = (language: string) => ({
+    language,
+    name: "Generated survey",
+    description: null,
+    welcomeCard: null,
+    blocks: [generatedBlock(1)],
+    ending: null,
+  });
+
+  test("offers every allowed language when no survey language is required", () => {
+    const schema = getGeneratedSurveyDraftForAISchema();
+
+    expect(schema.safeParse(draft("ko-KR")).success).toBe(true);
+    expect(schema.safeParse(draft("en-US")).success).toBe(true);
+  });
+
+  test("narrows the language to the required one", () => {
+    const schema = getGeneratedSurveyDraftForAISchema("ko-KR");
+
+    expect(schema.safeParse(draft("ko-KR")).success).toBe(true);
+    expect(schema.safeParse(draft("en-US")).success).toBe(false);
+  });
+});
+
 describe("ZGeneratedSurveyDraftForAI", () => {
   test("uses string rating ranges in the provider-facing schema", () => {
     const result = ZGeneratedSurveyDraftForAI.safeParse({
@@ -373,14 +404,46 @@ describe("ZV3SurveyGenerateBody", () => {
     }
   });
 
-  test("rejects requested locales outside the AI generation allowlist", () => {
-    const result = ZV3SurveyGenerateBody.safeParse({
-      workspaceId: "clxx1234567890123456789012",
-      prompt: "Measure onboarding completion for new users.",
-      language: "it-IT",
-    });
+  test("accepts survey languages the dashboard is not translated into (ENG-3882)", () => {
+    const cases = [
+      { input: "ko", expected: "ko-KR" },
+      { input: "ko_kr", expected: "ko-KR" },
+      { input: "it-IT", expected: "it-IT" },
+      { input: "nl-BE", expected: "nl-BE" },
+    ];
 
-    expect(result.success).toBe(false);
+    for (const { input, expected } of cases) {
+      const result = ZV3SurveyGenerateBody.safeParse({
+        workspaceId: "clxx1234567890123456789012",
+        prompt: "Measure onboarding completion for new users.",
+        language: input,
+        surveyLanguage: input,
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.language).toBe(expected);
+        expect(result.data.surveyLanguage).toBe(expected);
+      }
+    }
+  });
+
+  test("still accepts every dashboard locale, so existing session clients keep working", () => {
+    expect(V3_SURVEY_GENERATE_ALLOWED_LANGUAGES).toEqual(expect.arrayContaining(["pt-PT", "en-US", "de-DE"]));
+  });
+
+  test("rejects languages the survey runtime has no strings for, and codes that are not languages", () => {
+    for (const input of ["fa-IR", "tlh", "not a language", ""]) {
+      for (const field of ["language", "surveyLanguage"]) {
+        const result = ZV3SurveyGenerateBody.safeParse({
+          workspaceId: "clxx1234567890123456789012",
+          prompt: "Measure onboarding completion for new users.",
+          [field]: input,
+        });
+
+        expect(result.success).toBe(false);
+      }
+    }
   });
 
   test("normalizes an incomplete script tag to its allowed canonical locale", () => {

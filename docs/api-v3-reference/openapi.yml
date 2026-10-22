@@ -546,6 +546,13 @@ paths:
                   type: link
                   language: en-US
                   prompt: Understand why new users stop during onboarding and what would help them finish setup.
+              requiredLanguage:
+                summary: Create a Korean survey draft from an English prompt
+                value:
+                  workspaceId: clxx1234567890123456789012
+                  type: link
+                  surveyLanguage: ko-KR
+                  prompt: Ask customers in Seoul how satisfied they are with delivery times and what we should improve.
       responses:
         '200':
           description: Survey create payload generated successfully. The survey has not been created yet.
@@ -7554,22 +7561,49 @@ components:
     AISurveyGenerationLocaleCode:
       type: string
       enum:
+        - ar-EG
+        - bg-BG
+        - cs-CZ
+        - da-DK
         - de-DE
+        - el-GR
         - en-US
         - es-ES
+        - et-EE
+        - fi-FI
         - fr-FR
+        - hi-IN
+        - hr-HR
         - hu-HU
+        - id-ID
+        - it-CH
+        - it-IT
         - ja-JP
+        - km-KH
+        - ko-KR
+        - lt-LT
+        - lv-LV
+        - nb-NO
+        - ne-NP
+        - nl-BE
         - nl-NL
+        - no-NO
+        - pl-PL
         - pt-BR
         - pt-PT
         - ro-RO
         - ru-RU
+        - sk-SK
+        - sl-SI
         - sv-SE
         - tr-TR
+        - uk-UA
+        - ur-PK
+        - uz-UZ
+        - vi-VN
         - zh-Hans-CN
         - zh-Hant-TW
-      description: Supported app locale code that AI survey creation can return.
+      description: 'Survey language code AI survey creation can write a draft in: every language the survey runtime ships button and validation strings for, plus the dashboard locales.'
       example: en-US
     GenerateSurveyRequest:
       type: object
@@ -7603,8 +7637,12 @@ components:
           $ref: '#/components/schemas/AISurveyGenerationLocaleCode'
           description: |
             Preferred survey language. Session clients should send the logged-in user's language.
-            The generator uses it when the prompt language is ambiguous or cannot be confidently
-            matched to a supported app locale.
+            The generator writes the draft in the language of the prompt, and uses this one only when the prompt language is ambiguous or cannot be confidently matched to a supported survey language.
+        surveyLanguage:
+          $ref: '#/components/schemas/AISurveyGenerationLocaleCode'
+          description: |
+            Required survey language. When set, the draft is written in this language whatever language the prompt is in, and it takes precedence over `language`.
+            A draft the model returns in any other language is rejected as an invalid generated payload rather than relabelled.
       additionalProperties: false
     GeneratedSurveyValidationLanguage:
       type: object
@@ -7650,7 +7688,7 @@ components:
       properties:
         language:
           $ref: '#/components/schemas/AISurveyGenerationLocaleCode'
-          description: Supported app locale used for the AI-created survey content and create payload language maps.
+          description: Survey language used for the AI-created survey content and create payload language maps.
         payload:
           allOf:
             - $ref: '#/components/schemas/CreateSurveyRequest'

@@ -7,7 +7,7 @@ properties:
   language:
     $ref: ./AISurveyGenerationLocaleCode.yml
     description: >-
-      Supported app locale used for the AI-created survey content and create
+      Survey language used for the AI-created survey content and create
       payload language maps.
   payload:
     allOf:

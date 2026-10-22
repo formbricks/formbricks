@@ -3569,6 +3569,8 @@
         "status_writing_questions": "Vraag {count} schrijven…",
         "status_writing_title": "Je enquête een naam geven…",
         "stop": "Stop",
+        "survey_language": "Taal van de enquête",
+        "survey_language_match_prompt": "Gebruik de taal van mijn prompt",
         "too_many_requests": "Je genereert te snel. Wacht even en probeer het opnieuw.",
         "try_prompt": "Bekijk voorbeeldprompt",
         "your_prompt": "Jouw prompt"
