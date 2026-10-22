@@ -2372,7 +2372,7 @@
         "phone_values_note": "A telefonos értékek 768 px szélesség alatt érvényesek. Az érintetlenül hagyott telefonos mezők az asztali értékeket használják.",
         "position": "Pozíció",
         "position_description": "Az egyéni stílusok bekapcsolt vagy kikapcsolt állapotától függetlenül érvényes.",
-        "preview_dismiss": "Az Ön webhelyén ez bezárja a bannert a látogató következő oldalmegtekintéséig.",
+        "preview_dismiss": "Az Ön webhelyén ez bezárja a bannert a látogatás hátralévő részére, mindaddig, amíg a látogató új lapon meg nem nyitja az Ön webhelyét.",
         "preview_no_action": "A Tartalom lapon válassza ki, hogy mit nyisson meg.",
         "preview_opens_link": "Az Ön webhelyén ez megnyitja a következőt: {url}",
         "preview_opens_survey": "Az Ön webhelyén ez megnyitja a következőt: \"{name}\"",

@@ -2372,7 +2372,7 @@
         "phone_values_note": "Telefon değerleri 768 px'den dar ekranlarda geçerlidir. Olduğu gibi bıraktığın telefon alanları masaüstü değerlerini kullanır.",
         "position": "Konum",
         "position_description": "Özel stiller açık da olsa kapalı da olsa geçerlidir.",
-        "preview_dismiss": "Sitende bu, banner'ı ziyaretçinin bir sonraki sayfasına kadar kapatır.",
+        "preview_dismiss": "Sitenizde bu, banner'ı ziyaretçi siteyi yeni bir sekmede açana kadar ziyaretin geri kalanı boyunca kapatır.",
         "preview_no_action": "İçerik sekmesinden neyi açacağını seç.",
         "preview_opens_link": "Sitende bu, {url} adresini açar",
         "preview_opens_survey": "Sitende bu, \"{name}\" anketini açar",

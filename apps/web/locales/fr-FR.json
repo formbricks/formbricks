@@ -2372,7 +2372,7 @@
         "phone_values_note": "Les valeurs pour mobile s'appliquent en dessous de 768 px de large. Les champs mobiles laissés tels quels utilisent les valeurs du bureau.",
         "position": "Position",
         "position_description": "S'applique que les styles personnalisés soient activés ou non.",
-        "preview_dismiss": "Sur ton site, cela ferme la bannière jusqu'à la prochaine page du visiteur.",
+        "preview_dismiss": "Sur votre site, cela ferme la bannière pour le reste de la visite, jusqu'à ce que le visiteur ouvre votre site dans un nouvel onglet.",
         "preview_no_action": "Choisis ce qu'elle ouvre dans l'onglet Contenu.",
         "preview_opens_link": "Sur ton site, cela ouvre {url}",
         "preview_opens_survey": "Sur ton site, cela ouvre « {name} »",

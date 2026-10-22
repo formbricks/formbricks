@@ -2372,7 +2372,7 @@
         "phone_values_note": "Os valores para telemóvel aplicam-se abaixo de 768 px de largura. Os campos de telemóvel que deixares como estão usam os valores do computador.",
         "position": "Posição",
         "position_description": "Aplica-se quer os estilos personalizados estejam ativados ou não.",
-        "preview_dismiss": "No teu site, isto fecha o banner até à próxima página do visitante.",
+        "preview_dismiss": "No seu site, isto fecha o banner durante o resto da visita, até o visitante abrir o seu site num novo separador.",
         "preview_no_action": "Escolhe o que abre no separador Conteúdo.",
         "preview_opens_link": "No teu site, isto abre {url}",
         "preview_opens_survey": "No teu site, isto abre \"{name}\"",

@@ -2372,7 +2372,7 @@
         "phone_values_note": "手机端数值适用于宽度低于 768 px 的屏幕。未单独设置的手机端字段将沿用桌面端的数值。",
         "position": "位置",
         "position_description": "无论是否开启自定义样式,此设置都会生效。",
-        "preview_dismiss": "在你的网站上,点击后会关闭横幅,直到访客访问下一个页面。",
+        "preview_dismiss": "在你的网站上，点击后会关闭横幅，在本次访问期间不再显示，直到访客在新标签页中打开你的网站。",
         "preview_no_action": "请在“内容”标签页中选择点击后要打开的内容。",
         "preview_opens_link": "在你的网站上,点击后会打开 {url}",
         "preview_opens_survey": "在你的网站上,点击后会打开“{name}”",

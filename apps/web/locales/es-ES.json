@@ -2372,7 +2372,7 @@
         "phone_values_note": "Los valores para móvil se aplican por debajo de 768 px de ancho. Los campos de móvil que dejes como están usan los valores de escritorio.",
         "position": "Posición",
         "position_description": "Se aplica tanto si los estilos personalizados están activados como si no.",
-        "preview_dismiss": "En tu sitio, esto cierra el banner hasta la siguiente página del visitante.",
+        "preview_dismiss": "En tu sitio, esto cierra el banner durante el resto de la visita, hasta que el visitante abra tu sitio en una pestaña nueva.",
         "preview_no_action": "Elige qué abre en la pestaña Contenido.",
         "preview_opens_link": "En tu sitio, esto abre {url}",
         "preview_opens_survey": "En tu sitio, esto abre \"{name}\"",

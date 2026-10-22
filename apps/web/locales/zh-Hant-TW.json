@@ -2372,7 +2372,7 @@
         "phone_values_note": "手機設定值適用於寬度小於 768 px 的畫面。未調整的手機欄位會沿用桌機的設定值。",
         "position": "位置",
         "position_description": "無論是否開啟自訂樣式,都會套用。",
-        "preview_dismiss": "在你的網站上,點擊後會關閉橫幅,直到訪客瀏覽下一個頁面為止。",
+        "preview_dismiss": "在你的網站上,這會在訪客本次瀏覽期間關閉橫幅,直到訪客在新分頁中開啟你的網站為止。",
         "preview_no_action": "請在「內容」分頁中選擇要開啟的項目。",
         "preview_opens_link": "在你的網站上,點擊後會開啟 {url}",
         "preview_opens_survey": "在你的網站上,點擊後會開啟「{name}」",

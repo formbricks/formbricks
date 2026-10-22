@@ -2372,7 +2372,7 @@
         "phone_values_note": "Mobilvärden gäller under 768 px bredd. Mobilfält som lämnas som de är använder skrivbordsvärdena.",
         "position": "Position",
         "position_description": "Gäller oavsett om egna stilar är aktiverade eller inte.",
-        "preview_dismiss": "På din webbplats stänger det här bannern tills besökaren kommer till nästa sida.",
+        "preview_dismiss": "På din webbplats stänger det här bannern under resten av besöket, tills besökaren öppnar din webbplats i en ny flik.",
         "preview_no_action": "Välj vad den öppnar på fliken Innehåll.",
         "preview_opens_link": "På din webbplats öppnar det här {url}",
         "preview_opens_survey": "På din webbplats öppnar det här \"{name}\"",

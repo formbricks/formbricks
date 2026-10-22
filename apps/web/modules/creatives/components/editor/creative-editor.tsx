@@ -5,8 +5,8 @@ import {
   ArrowLeftIcon,
   LanguagesIcon,
   type LucideIcon,
-  PaletteIcon,
-  Settings2Icon,
+  PaintbrushIcon,
+  SettingsIcon,
   TypeIcon,
   ZapIcon,
 } from "lucide-react";
@@ -62,11 +62,12 @@ import { LanguageTab } from "./language-tab";
 import { SettingsTab, type TCreativeActionOption } from "./settings-tab";
 import { StylingTab } from "./styling-tab";
 
+/** The survey editor's icons for the tabs both editors have (Language, Styling, Settings). */
 const TAB_ICONS: Record<TCreativeEditorTab, LucideIcon> = {
   content: TypeIcon,
   language: LanguagesIcon,
-  styling: PaletteIcon,
-  settings: Settings2Icon,
+  styling: PaintbrushIcon,
+  settings: SettingsIcon,
 };
 
 /** Whether the form would change the stored creative if saved now. */

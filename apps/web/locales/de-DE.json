@@ -2372,7 +2372,7 @@
         "phone_values_note": "Die Smartphone-Werte gelten bei einer Breite unter 768 px. Smartphone-Felder, die du unverändert lässt, verwenden die Desktop-Werte.",
         "position": "Position",
         "position_description": "Gilt unabhängig davon, ob eigene Stile aktiviert sind.",
-        "preview_dismiss": "Auf deiner Website schließt dies das Banner bis zur nächsten Seite des Besuchers.",
+        "preview_dismiss": "Auf Deiner Website wird das Banner dadurch für den Rest des Besuchs geschlossen, bis der Besucher Deine Website in einem neuen Tab öffnet.",
         "preview_no_action": "Wähle auf dem Tab „Inhalt“ aus, was sich öffnen soll.",
         "preview_opens_link": "Auf deiner Website öffnet dies {url}",
         "preview_opens_survey": "Auf deiner Website öffnet dies „{name}“",

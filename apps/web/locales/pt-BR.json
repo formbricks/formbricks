@@ -2372,7 +2372,7 @@
         "phone_values_note": "Os valores para celular se aplicam a larguras abaixo de 768 px. Os campos de celular que você deixar como estão usam os valores do desktop.",
         "position": "Posição",
         "position_description": "Vale independentemente de os estilos personalizados estarem ativados ou não.",
-        "preview_dismiss": "No seu site, isso fecha o banner até a próxima página do visitante.",
+        "preview_dismiss": "No seu site, isso fecha o banner pelo restante da visita, até que o visitante abra o seu site em uma nova aba.",
         "preview_no_action": "Escolha o que ele abre na aba Conteúdo.",
         "preview_opens_link": "No seu site, isso abre {url}",
         "preview_opens_survey": "No seu site, isso abre \"{name}\"",
