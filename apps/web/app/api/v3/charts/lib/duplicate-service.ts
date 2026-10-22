@@ -2,7 +2,12 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import type { TWidgetLayout } from "@formbricks/types/analysis";
-import { planNewWidget, siblingsOf, touchDashboard } from "@/app/api/v3/dashboards/lib/widget-service";
+import {
+  lockDashboard,
+  planNewWidget,
+  siblingsOf,
+  touchDashboard,
+} from "@/app/api/v3/dashboards/lib/widget-service";
 import { retryOnTransactionConflict } from "@/lib/utils/prisma-error";
 import { copyNamePrefix, nextCopyName } from "@/modules/ee/analysis/lib/copy-name";
 import { type TChartResourceRow, selectChartResource } from "./service";
@@ -16,7 +21,8 @@ export type TChartDuplicateResult =
 
 /**
  * Copy a chart — same Feedback Dataset, type, query and display settings — and, given a `dashboardId`,
- * put the copy on that dashboard, all in one transaction: if placing it fails, there is no copy. Without
+ * put the copy on that dashboard, all in one transaction: if placing it fails, there is no copy. Placement
+ * takes the dashboard's lock, like every widget write. Without
  * a `name`, the copy takes the first free "(copy)" name, read in the same transaction.
  */
 export const duplicateChartRow = ({
@@ -33,66 +39,65 @@ export const duplicateChartRow = ({
   layout?: TWidgetLayout;
 }): Promise<TChartDuplicateResult> =>
   retryOnTransactionConflict(() =>
-    prisma.$transaction(
-      async (tx): Promise<TChartDuplicateResult> => {
-        const source = await tx.chart.findUnique({
-          where: { id: sourceId },
-          select: {
-            name: true,
-            type: true,
-            query: true,
-            config: true,
-            workspaceId: true,
-            feedbackDirectoryId: true,
-          },
-        });
-        if (!source) return { kind: "gone" };
+    prisma.$transaction(async (tx): Promise<TChartDuplicateResult> => {
+      const source = await tx.chart.findUnique({
+        where: { id: sourceId },
+        select: {
+          name: true,
+          type: true,
+          query: true,
+          config: true,
+          workspaceId: true,
+          feedbackDirectoryId: true,
+        },
+      });
+      if (!source) return { kind: "gone" };
 
-        let placement: { layout: TWidgetLayout; order: number } | null = null;
-        if (dashboardId) {
-          const plan = planNewWidget(await siblingsOf(tx, dashboardId), source.type, layout);
-          if (plan.kind !== "ok") return plan;
-          if (!(await touchDashboard(tx, dashboardId))) return { kind: "gone" };
-          placement = plan;
-        }
+      let placement: { layout: TWidgetLayout; order: number } | null = null;
+      if (dashboardId) {
+        // The same lock every widget write takes, so the copy's slot is chosen against the latest widgets.
+        if (!(await lockDashboard(tx, dashboardId))) return { kind: "gone" };
+        const plan = planNewWidget(await siblingsOf(tx, dashboardId), source.type, layout);
+        if (plan.kind !== "ok") return plan;
+        if (!(await touchDashboard(tx, dashboardId))) return { kind: "gone" };
+        placement = plan;
+      }
 
-        const resolvedName =
-          name ??
-          nextCopyName(
-            source.name,
-            (
-              await tx.chart.findMany({
-                where: { workspaceId: source.workspaceId, name: { startsWith: copyNamePrefix(source.name) } },
-                select: { name: true },
-              })
-            ).map((chart) => chart.name)
-          );
+      const resolvedName =
+        name ??
+        nextCopyName(
+          source.name,
+          (
+            await tx.chart.findMany({
+              where: { workspaceId: source.workspaceId, name: { startsWith: copyNamePrefix(source.name) } },
+              select: { name: true },
+            })
+          ).map((chart) => chart.name)
+        );
 
-        const copy = await tx.chart.create({
-          data: {
-            name: resolvedName,
-            type: source.type,
-            query: source.query as Prisma.InputJsonValue,
-            config: (source.config ?? {}) as Prisma.InputJsonValue,
-            workspaceId: source.workspaceId,
-            feedbackDirectoryId: source.feedbackDirectoryId,
-            createdBy,
-          },
-          select: { id: true },
-        });
+      const copy = await tx.chart.create({
+        data: {
+          name: resolvedName,
+          type: source.type,
+          query: source.query as Prisma.InputJsonValue,
+          config: (source.config ?? {}) as Prisma.InputJsonValue,
+          workspaceId: source.workspaceId,
+          feedbackDirectoryId: source.feedbackDirectoryId,
+          createdBy,
+        },
+        select: { id: true },
+      });
 
-        const widget =
-          dashboardId && placement
-            ? await tx.dashboardWidget.create({
-                data: { dashboardId, chartId: copy.id, layout: placement.layout, order: placement.order },
-                select: { id: true },
-              })
-            : null;
+      const widget =
+        dashboardId && placement
+          ? await tx.dashboardWidget.create({
+              data: { dashboardId, chartId: copy.id, layout: placement.layout, order: placement.order },
+              select: { id: true },
+            })
+          : null;
 
-        // Read back last, so the copy's embedded `dashboards` already includes the one it was put on.
-        const row = await tx.chart.findUniqueOrThrow({ where: { id: copy.id }, select: selectChartResource });
-        return { kind: "ok", row, ...(widget ? { widgetId: widget.id } : {}) };
-      },
-      { isolationLevel: "Serializable" }
-    )
+      // Read back last, so the copy's embedded `dashboards` already includes the one it was put on.
+      const row = await tx.chart.findUniqueOrThrow({ where: { id: copy.id }, select: selectChartResource });
+      return { kind: "ok", row, ...(widget ? { widgetId: widget.id } : {}) };
+    })
   );

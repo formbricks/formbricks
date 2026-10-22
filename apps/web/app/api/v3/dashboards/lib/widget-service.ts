@@ -17,10 +17,13 @@ import {
 } from "./service";
 
 /**
- * Persistence for a dashboard's widgets. Every write runs in one serializable transaction that reads the
- * dashboard's widgets, checks the rules against that read — a chart at most once, no overlaps — writes,
- * and moves the dashboard's `updatedAt`, so an editor holding the dashboard from before is told on save.
- * Two concurrent writes cannot both pass their checks against the same stale read: one is retried.
+ * Persistence for a dashboard's widgets. Every write runs in one transaction that first locks the dashboard
+ * row, then reads its widgets, checks the rules against that read — a chart at most once, no overlaps —
+ * writes, and moves the dashboard's `updatedAt`, so an editor holding the dashboard from before is told on
+ * save. The lock queues concurrent writes to one dashboard instead of letting them race: each reads the
+ * widgets only after the one before it committed, so adding several charts at once places every one of
+ * them. (Serializable isolation failed the losers instead, and a handful of parallel adds ran out of
+ * retries.)
  */
 
 export type TWidgetWriteResult =
@@ -40,10 +43,23 @@ export const getChartTypeInWorkspace = async (
   (await prisma.chart.findFirst({ where: { id: chartId, workspaceId }, select: { type: true } }))?.type ??
   null;
 
+/**
+ * Lock a dashboard's row until the transaction ends. Every write to its widgets takes this lock first, and
+ * under read committed each later statement sees what the previous lock holder committed. `false` when the
+ * dashboard no longer exists.
+ */
+export const lockDashboard = async (tx: Prisma.TransactionClient, dashboardId: string): Promise<boolean> =>
+  (await tx.$queryRaw<{ id: string }[]>`SELECT id FROM "Dashboard" WHERE id = ${dashboardId} FOR UPDATE`)
+    .length > 0;
+
 const writeWidgets = (
+  dashboardId: string,
   run: (tx: Prisma.TransactionClient) => Promise<TWidgetWriteResult>
 ): Promise<TWidgetWriteResult> =>
-  retryOnTransactionConflict(() => prisma.$transaction(run, { isolationLevel: "Serializable" }));
+  // Retried only for a deadlock, which the lock makes unlikely but cannot rule out.
+  retryOnTransactionConflict(() =>
+    prisma.$transaction(async (tx) => ((await lockDashboard(tx, dashboardId)) ? run(tx) : { kind: "gone" }))
+  );
 
 export const siblingsOf = (tx: Prisma.TransactionClient, dashboardId: string) =>
   tx.dashboardWidget.findMany({
@@ -88,7 +104,7 @@ export const addWidgetRow = ({
   chartType: TChartType;
   layout?: TWidgetLayout;
 }): Promise<TWidgetWriteResult> =>
-  writeWidgets(async (tx) => {
+  writeWidgets(dashboardId, async (tx) => {
     const siblings = await siblingsOf(tx, dashboardId);
     if (siblings.some((widget) => widget.chartId === chartId)) return { kind: "duplicate" };
 
@@ -115,7 +131,7 @@ export const updateWidgetRow = ({
   layout?: TWidgetLayout;
   chartId?: string;
 }): Promise<TWidgetWriteResult> =>
-  writeWidgets(async (tx) => {
+  writeWidgets(dashboardId, async (tx) => {
     const siblings = await siblingsOf(tx, dashboardId);
     const current = siblings.find((widget) => widget.id === widgetId);
     if (!current) return { kind: "gone" };
@@ -142,6 +158,7 @@ export const deleteWidgetRow = (
   widgetId: string
 ): Promise<{ chartId: string; layout: unknown } | null> =>
   prisma.$transaction(async (tx) => {
+    if (!(await lockDashboard(tx, dashboardId))) return null;
     const widget = await tx.dashboardWidget.findFirst({
       where: { id: widgetId, dashboardId },
       select: { chartId: true, layout: true },
@@ -193,52 +210,50 @@ export const replaceDashboardRow = ({
   requireEveryWidget?: boolean;
 }): Promise<TDashboardReplaceResult> =>
   retryOnTransactionConflict(() =>
-    prisma.$transaction(
-      async (tx): Promise<TDashboardReplaceResult> => {
-        const current = await tx.dashboard.findUnique({
-          where: { id: dashboardId },
-          select: {
-            name: true,
-            updatedAt: true,
-            widgets: { select: { id: true, layout: true, order: true } },
-          },
+    prisma.$transaction(async (tx): Promise<TDashboardReplaceResult> => {
+      if (!(await lockDashboard(tx, dashboardId))) return { kind: "gone" };
+      const current = await tx.dashboard.findUnique({
+        where: { id: dashboardId },
+        select: {
+          name: true,
+          updatedAt: true,
+          widgets: { select: { id: true, layout: true, order: true } },
+        },
+      });
+      if (!current) return { kind: "gone" };
+      if (current.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
+        return { kind: "stale", currentUpdatedAt: current.updatedAt };
+      }
+
+      const currentIds = new Set(current.widgets.map((widget) => widget.id));
+      const sentIds = new Set(widgets.map((widget) => widget.widgetId));
+      const unknown = [...sentIds].filter((id) => !currentIds.has(id));
+      if (unknown.length > 0) return { kind: "unknownWidgets", widgetIds: unknown };
+      const omitted = [...currentIds].filter((id) => !sentIds.has(id));
+      if (requireEveryWidget && omitted.length > 0) return { kind: "missingWidgets", widgetIds: omitted };
+
+      const placed: { id: string; layout: TWidgetLayout }[] = [];
+      for (const widget of widgets) {
+        const clash = findOverlappingWidget(widget.layout, placed);
+        if (clash) return { kind: "overlap", widgetIds: [widget.widgetId, clash.id] };
+        placed.push({ id: widget.widgetId, layout: widget.layout });
+      }
+
+      if (omitted.length > 0) {
+        await tx.dashboardWidget.deleteMany({ where: { dashboardId, id: { in: omitted } } });
+      }
+      for (const widget of widgets) {
+        await tx.dashboardWidget.update({
+          where: { id: widget.widgetId },
+          data: { layout: widget.layout, ...(widget.order === undefined ? {} : { order: widget.order }) },
         });
-        if (!current) return { kind: "gone" };
-        if (current.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
-          return { kind: "stale", currentUpdatedAt: current.updatedAt };
-        }
+      }
+      const row = await tx.dashboard.update({
+        where: { id: dashboardId },
+        data: { ...(name === undefined ? {} : { name }), updatedAt: new Date() },
+        select: selectDashboardResource,
+      });
 
-        const currentIds = new Set(current.widgets.map((widget) => widget.id));
-        const sentIds = new Set(widgets.map((widget) => widget.widgetId));
-        const unknown = [...sentIds].filter((id) => !currentIds.has(id));
-        if (unknown.length > 0) return { kind: "unknownWidgets", widgetIds: unknown };
-        const omitted = [...currentIds].filter((id) => !sentIds.has(id));
-        if (requireEveryWidget && omitted.length > 0) return { kind: "missingWidgets", widgetIds: omitted };
-
-        const placed: { id: string; layout: TWidgetLayout }[] = [];
-        for (const widget of widgets) {
-          const clash = findOverlappingWidget(widget.layout, placed);
-          if (clash) return { kind: "overlap", widgetIds: [widget.widgetId, clash.id] };
-          placed.push({ id: widget.widgetId, layout: widget.layout });
-        }
-
-        if (omitted.length > 0) {
-          await tx.dashboardWidget.deleteMany({ where: { dashboardId, id: { in: omitted } } });
-        }
-        for (const widget of widgets) {
-          await tx.dashboardWidget.update({
-            where: { id: widget.widgetId },
-            data: { layout: widget.layout, ...(widget.order === undefined ? {} : { order: widget.order }) },
-          });
-        }
-        const row = await tx.dashboard.update({
-          where: { id: dashboardId },
-          data: { ...(name === undefined ? {} : { name }), updatedAt: new Date() },
-          select: selectDashboardResource,
-        });
-
-        return { kind: "ok", row, previous: { name: current.name, widgets: current.widgets } };
-      },
-      { isolationLevel: "Serializable" }
-    )
+      return { kind: "ok", row, previous: { name: current.name, widgets: current.widgets } };
+    })
   );

@@ -134,6 +134,46 @@ describe("POST /api/v3/dashboards/{dashboardId}/widgets", () => {
   });
 });
 
+describe("concurrent widget writes", () => {
+  test("adding many charts to one dashboard at once places every one, without overlaps", async () => {
+    const board = await prisma.dashboard.create({
+      data: { name: "Parallel adds", workspaceId: fixture.workspaceId },
+    });
+    const parallelCharts = await Promise.all(
+      Array.from({ length: 8 }, (_unused, index) =>
+        prisma.chart.create({
+          data: {
+            name: `Parallel ${index}`,
+            type: "bar",
+            workspaceId: fixture.workspaceId,
+            feedbackDirectoryId: fixture.datasetId,
+            query: { measures: ["FeedbackRecords.count"] },
+            config: {},
+          },
+        })
+      )
+    );
+
+    const responses = await Promise.all(
+      parallelCharts.map((chart) =>
+        addV3DashboardWidget({ dashboardId: board.id, body: { chartId: chart.id }, ...context(editor()) })
+      )
+    );
+    expect(responses.map((response) => response.status)).toEqual(Array(8).fill(201));
+
+    const layouts = (await prisma.dashboardWidget.findMany({ where: { dashboardId: board.id } })).map(
+      (widget) => widget.layout as { x: number; y: number; w: number; h: number }
+    );
+    const overlapping = layouts.some((a, i) =>
+      layouts
+        .slice(i + 1)
+        .some((b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y)
+    );
+    expect(layouts).toHaveLength(8);
+    expect(overlapping).toBe(false);
+  });
+});
+
 describe("layout bounds", () => {
   test("hold a layout to the 12-column grid and the grid's own size limits", () => {
     const valid = { x: 8, y: 0, w: 4, h: 8 };

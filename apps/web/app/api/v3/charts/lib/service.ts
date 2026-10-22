@@ -115,26 +115,30 @@ export type TChartDeleteResult =
   | { kind: "inUse"; dashboards: { id: string; name: string }[] };
 
 /**
- * Delete a chart that sits on no dashboard. The check and the delete run in one serializable transaction:
- * deleting a chart cascades to its widgets, so a widget added between a separate check and the delete
- * would vanish from its dashboard. Here a concurrent add makes one of the two retry instead.
+ * Delete a chart that sits on no dashboard. Deleting a chart cascades to its widgets, so a widget added
+ * between the check and the delete would vanish from its dashboard. The chart row is locked first: a
+ * widget insert needs a key-share lock on the chart it points at, so an add either commits before the
+ * lock — and the check below, a fresh read under read committed, sees its widget — or waits for the delete
+ * and then fails on the missing chart.
  */
 export const deleteChartRow = (chartId: string): Promise<TChartDeleteResult> =>
   retryOnTransactionConflict(() =>
-    prisma.$transaction(
-      async (tx): Promise<TChartDeleteResult> => {
-        const widgets = await tx.dashboardWidget.findMany({
-          where: { chartId },
-          orderBy: { dashboard: { name: "asc" } },
-          select: { dashboard: { select: { id: true, name: true } } },
-        });
-        if (widgets.length > 0) {
-          return { kind: "inUse", dashboards: widgets.map((widget) => widget.dashboard) };
-        }
+    prisma.$transaction(async (tx): Promise<TChartDeleteResult> => {
+      const locked = await tx.$queryRaw<
+        { id: string }[]
+      >`SELECT id FROM "Chart" WHERE id = ${chartId} FOR UPDATE`;
+      if (locked.length === 0) return { kind: "gone" };
 
-        const { count } = await tx.chart.deleteMany({ where: { id: chartId } });
-        return count === 0 ? { kind: "gone" } : { kind: "deleted" };
-      },
-      { isolationLevel: "Serializable" }
-    )
+      const widgets = await tx.dashboardWidget.findMany({
+        where: { chartId },
+        orderBy: { dashboard: { name: "asc" } },
+        select: { dashboard: { select: { id: true, name: true } } },
+      });
+      if (widgets.length > 0) {
+        return { kind: "inUse", dashboards: widgets.map((widget) => widget.dashboard) };
+      }
+
+      await tx.chart.delete({ where: { id: chartId } });
+      return { kind: "deleted" };
+    })
   );
