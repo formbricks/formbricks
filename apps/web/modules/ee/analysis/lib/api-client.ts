@@ -198,3 +198,26 @@ export const getChartData = async ({
   const path = `${CHARTS_PATH}/${encodeURIComponent(chartId)}/data${search ? `?${search}` : ""}`;
   return toAppChartData(await readData<TV3ChartData>(await fetch(path, { cache: "no-store", signal })));
 };
+
+/** A field's stored value, with the question type when the field is the question label. */
+export type TChartFieldValue = { value: string; fieldType?: string };
+
+/** Up to 100 distinct stored values of a lookup field, optionally narrowed by `search`. */
+export const listChartFieldValues = async ({
+  workspaceId,
+  datasetId,
+  field,
+  search,
+  signal,
+}: {
+  workspaceId: string;
+  datasetId: string;
+  field: string;
+  search?: string;
+  signal?: AbortSignal;
+}): Promise<TChartFieldValue[]> => {
+  const params = new URLSearchParams({ workspaceId, datasetId });
+  if (search) params.set("search", search);
+  const path = `${CHARTS_PATH}/fields/${encodeURIComponent(field)}/values?${params.toString()}`;
+  return readData<TChartFieldValue[]>(await fetch(path, { cache: "no-store", signal }));
+};

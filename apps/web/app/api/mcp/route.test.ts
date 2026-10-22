@@ -420,6 +420,7 @@ describe("POST /api/mcp", () => {
       "create_chart",
       "update_chart",
       "get_chart_data",
+      "list_chart_field_values",
     ]);
     const tools = new Map(message.result.tools.map((tool: { name: string }) => [tool.name, tool]));
     expect(Object.keys((tools.get("create_survey") as any).inputSchema.properties)).toEqual(

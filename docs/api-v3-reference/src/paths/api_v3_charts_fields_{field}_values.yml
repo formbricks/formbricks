@@ -1,0 +1,83 @@
+get:
+  operationId: listChartFieldValuesV3
+  summary: List a field's values
+  description: |
+    Returns up to 100 distinct stored values of a field, so a filter can use a value that really
+    occurs — an `equals` filter on a picked value cannot miss on casing or spacing. Only fields the
+    catalog marks `valueLookup: true` qualify; any other field, or one outside the catalog, answers
+    422. Narrow a field with more values using `search`. The list is not paged.
+
+    Needs read access to the workspace and the Feedback Dataset. Counts against the chart-query
+    budget (600 per minute per user or API key), not the v3 default.
+  tags:
+    - V3 Charts
+  parameters:
+    - in: path
+      name: field
+      required: true
+      schema:
+        type: string
+        maxLength: 128
+      description: A field name from the catalog, prefix included.
+      example: FeedbackRecords.sourceName
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/DatasetIdQuery.yml
+    - in: query
+      name: search
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 255
+      description: Only values containing this text, ignoring case.
+  responses:
+    "200":
+      description: The field's values, in ascending order
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                type: array
+                maxItems: 100
+                items:
+                  type: object
+                  required:
+                    - value
+                  properties:
+                    value:
+                      type: string
+                    fieldType:
+                      type: string
+                      description: >-
+                        The question type, present when the field is `FeedbackRecords.fieldLabel`.
+                  additionalProperties: false
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3ChartQueryTooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+    "502":
+      $ref: ../components/responses/V3ChartQueryFailed.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

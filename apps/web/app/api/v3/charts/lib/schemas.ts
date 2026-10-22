@@ -143,3 +143,14 @@ export const ZV3ChartDataQuery = z
   })
   .strict();
 export type TV3ChartDataQuery = z.infer<typeof ZV3ChartDataQuery>;
+
+/** `GET /api/v3/charts/fields/{field}/values`. */
+export const ZV3ChartFieldValuesParams = z.object({ field: z.string().min(1).max(128) }).strict();
+
+export const ZV3ChartFieldValuesQuery = z
+  .object({
+    ...datasetScope,
+    search: z.string().trim().min(1).max(V3_NAME_MAX_LENGTH).optional(),
+  })
+  .strict();
+export type TV3ChartFieldValuesQuery = z.infer<typeof ZV3ChartFieldValuesQuery>;

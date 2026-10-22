@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import { getV3ChartData, previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
-import { getV3ChartFieldCatalog } from "@/app/api/v3/charts/lib/field-operations";
+import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "@/app/api/v3/charts/lib/field-operations";
 import { createV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "@/app/api/v3/charts/lib/operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import type { TMcpToolContext } from "../auth";
@@ -9,17 +9,20 @@ import {
   type TMcpChartIdInput,
   type TMcpCreateChartInput,
   type TMcpGetChartDataInput,
+  type TMcpListChartFieldValuesInput,
   type TMcpListChartFieldsInput,
   type TMcpListChartsInput,
   type TMcpPreviewChartInput,
   type TMcpUpdateChartInput,
   ZMcpChartDataOutput,
   ZMcpChartFieldCatalogOutput,
+  ZMcpChartFieldValuesOutput,
   ZMcpChartIdInput,
   ZMcpChartListOutput,
   ZMcpChartOutput,
   ZMcpCreateChartInput,
   ZMcpGetChartDataInput,
+  ZMcpListChartFieldValuesInput,
   ZMcpListChartFieldsInput,
   ZMcpListChartsInput,
   ZMcpPreviewChartInput,
@@ -206,6 +209,28 @@ export function registerDashboardTools(server: McpServer): void {
       const query = typeof dateRange === "string" ? { dateRange } : (dateRange ?? {});
       return await responseToMcpToolResult(
         await getV3ChartData({ chartId, query, ...context }),
+        context.requestId
+      );
+    }
+  );
+
+  registerScopedTool(
+    server,
+    "list_chart_field_values",
+    {
+      title: "List chart field values",
+      description:
+        "List up to 100 distinct stored values of a field marked valueLookup in list_chart_fields, optionally narrowed by a search term, so a filter uses a value that really occurs.",
+      inputSchema: ZMcpListChartFieldValuesInput,
+      outputSchema: ZMcpChartFieldValuesOutput,
+      annotations: READ_ANNOTATIONS,
+    },
+    // The values are what respondents answered, so looking them up also needs feedback-record access.
+    ["dashboards:read", "feedbackRecords:read"],
+    async ({ field, ...query }: TMcpListChartFieldValuesInput, ctx) => {
+      const context = toolContext(ctx);
+      return await responseToMcpToolResult(
+        await listV3ChartFieldValues({ field, query, ...context }),
         context.requestId
       );
     }

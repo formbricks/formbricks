@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { ZV3ChartData, ZV3ChartFieldCatalog, ZV3ChartResource } from "@/app/api/v3/charts/lib/resources";
+import {
+  ZV3ChartData,
+  ZV3ChartFieldCatalog,
+  ZV3ChartFieldValue,
+  ZV3ChartResource,
+} from "@/app/api/v3/charts/lib/resources";
 import { V3_NAME_MAX_LENGTH, ZV3ChartConfig, ZV3ChartName } from "@/app/api/v3/charts/lib/schemas";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 import { mcpToolOutput } from "./output-schemas";
@@ -135,3 +140,24 @@ export const ZMcpGetChartDataInput = z
   })
   .strict();
 export type TMcpGetChartDataInput = z.infer<typeof ZMcpGetChartDataInput>;
+
+export const ZMcpListChartFieldValuesInput = z
+  .object({
+    ...datasetScope,
+    field: z
+      .string()
+      .min(1)
+      .max(128)
+      .describe("A field from list_chart_fields with valueLookup: true, e.g. FeedbackRecords.sourceName."),
+    search: z
+      .string()
+      .trim()
+      .min(1)
+      .max(V3_NAME_MAX_LENGTH)
+      .optional()
+      .describe("Only values containing this text. Use it when a field has more than 100 values."),
+  })
+  .strict();
+export type TMcpListChartFieldValuesInput = z.infer<typeof ZMcpListChartFieldValuesInput>;
+
+export const ZMcpChartFieldValuesOutput = mcpToolOutput(z.array(ZV3ChartFieldValue));

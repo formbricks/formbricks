@@ -1,19 +1,25 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
-import { previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
-import { getV3ChartFieldCatalog } from "@/app/api/v3/charts/lib/field-operations";
+import { getV3ChartData, previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
+import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "@/app/api/v3/charts/lib/field-operations";
 import { createV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "@/app/api/v3/charts/lib/operations";
 import { successResponse } from "@/app/api/v3/lib/response";
 import { registerDashboardTools } from "./dashboards";
 
-vi.mock("@/app/api/v3/charts/lib/field-operations", () => ({ getV3ChartFieldCatalog: vi.fn() }));
+vi.mock("@/app/api/v3/charts/lib/field-operations", () => ({
+  getV3ChartFieldCatalog: vi.fn(),
+  listV3ChartFieldValues: vi.fn(),
+}));
 vi.mock("@/app/api/v3/charts/lib/operations", () => ({
   createV3Chart: vi.fn(),
   getV3Chart: vi.fn(),
   listV3Charts: vi.fn(),
   updateV3Chart: vi.fn(),
 }));
-vi.mock("@/app/api/v3/charts/lib/data-operations", () => ({ previewV3Chart: vi.fn() }));
+vi.mock("@/app/api/v3/charts/lib/data-operations", () => ({
+  getV3ChartData: vi.fn(),
+  previewV3Chart: vi.fn(),
+}));
 vi.mock("@/app/api/v3/lib/audit", () => ({
   buildV3AuditLog: vi.fn(),
   queueV3AuditLog: vi.fn().mockResolvedValue(undefined),
@@ -181,5 +187,35 @@ describe("chart and dashboard MCP tools", () => {
   test("update_chart warns that an edit shows on every dashboard holding the chart", () => {
     const description = String(createToolServer().get("update_chart")?.config.description);
     expect(description).toMatch(/every one of them/);
+  });
+
+  test("every tool that returns respondent data needs feedbackRecords:read on top of dashboards:read", async () => {
+    vi.mocked(getV3ChartData).mockResolvedValue(successResponse({}, { requestId: "req" }));
+    vi.mocked(listV3ChartFieldValues).mockResolvedValue(successResponse([], { requestId: "req" }));
+    const dataTools = [
+      ["get_chart_data", { chartId: CHART_ID, dateRange: { from: "2026-01-01", to: "2026-01-31" } }],
+      [
+        "list_chart_field_values",
+        { workspaceId: WORKSPACE_ID, datasetId: DATASET_ID, field: "FeedbackRecords.sourceName" },
+      ],
+    ] as const;
+
+    for (const [name, input] of dataTools) {
+      expect((await call(name, input, ["dashboards:read"])).isError).toBe(true);
+    }
+    expect(getV3ChartData).not.toHaveBeenCalled();
+    expect(listV3ChartFieldValues).not.toHaveBeenCalled();
+
+    for (const [name, input] of dataTools)
+      await call(name, input, ["dashboards:read", "feedbackRecords:read"]);
+    expect(getV3ChartData).toHaveBeenCalledWith(
+      expect.objectContaining({ chartId: CHART_ID, query: { from: "2026-01-01", to: "2026-01-31" } })
+    );
+    expect(listV3ChartFieldValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        field: "FeedbackRecords.sourceName",
+        query: { workspaceId: WORKSPACE_ID, datasetId: DATASET_ID },
+      })
+    );
   });
 });

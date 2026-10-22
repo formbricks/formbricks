@@ -1,4 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
+import { cubeFake, resetCubeFake } from "@/integration/cube-fake";
 import {
   type TDashboardsFixture,
   apiKeyOf,
@@ -6,14 +7,19 @@ import {
   seedDashboardsFixture,
   sessionOf,
 } from "@/integration/dashboards-fixture";
-import { getV3ChartFieldCatalog } from "./field-operations";
+import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "./field-operations";
 import { ZV3ChartFieldCatalog } from "./resources";
+import { ZV3ChartFieldValuesQuery } from "./schemas";
 
 /**
  * ENG-6584 against real PostgreSQL and SpiceDB: the field catalog, and the access check every later chart
  * and dashboard operation reuses — workspace access first, the Dashboards entitlement second, then the
  * Feedback Dataset.
  */
+
+vi.mock("@cubejs-client/core", async (importOriginal) =>
+  (await import("@/integration/cube-fake")).fakeCubeModule(await importOriginal())
+);
 
 const entitlement = vi.hoisted(() => ({ dashboards: true }));
 vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
@@ -42,6 +48,7 @@ beforeAll(async () => {
 
 beforeEach(() => {
   entitlement.dashboards = true;
+  resetCubeFake();
 });
 
 describe("GET /api/v3/charts/fields", () => {
@@ -100,5 +107,72 @@ describe("GET /api/v3/charts/fields", () => {
       status: 403,
       code: "forbidden",
     });
+  });
+});
+
+describe("GET /api/v3/charts/fields/{field}/values", () => {
+  const lookup = (
+    authentication: ReturnType<typeof sessionOf>,
+    field: string,
+    query: Record<string, string> = {}
+  ) =>
+    listV3ChartFieldValues({
+      field,
+      query: ZV3ChartFieldValuesQuery.parse({
+        workspaceId: fixture.workspaceId,
+        datasetId: fixture.datasetId,
+        ...query,
+      }),
+      authentication,
+      requestId: "req",
+      instance: "/api/v3/charts/fields/values",
+    });
+
+  test("returns the distinct, trimmed values of a lookup field, narrowed by search on Cube's side", async () => {
+    cubeFake.rows = [
+      { "FeedbackRecords.sourceName": " Web " },
+      { "FeedbackRecords.sourceName": "Web" },
+      { "FeedbackRecords.sourceName": "Webinar" },
+    ];
+
+    const response = await lookup(apiKeyOf(fixture, "readKey"), "FeedbackRecords.sourceName", {
+      search: "web",
+    });
+
+    expect(response.status).toBe(200);
+    expect(((await response.json()) as { data: unknown }).data).toEqual([
+      { value: "Web" },
+      { value: "Webinar" },
+    ]);
+    expect(cubeFake.calls[0].claims).toMatchObject({
+      apiKeyId: fixture.apiKeys.readKey,
+      source: "v3.charts.fieldValues",
+    });
+    expect(cubeFake.calls[0].query).toMatchObject({
+      dimensions: ["FeedbackRecords.sourceName"],
+      limit: 100,
+      filters: [{ member: "FeedbackRecords.sourceName", operator: "contains", values: ["web"] }],
+    });
+  });
+
+  test("refuses a field outside the catalog, or one that is not a pick-list, with 422", async () => {
+    for (const field of ["FeedbackRecords.tenantId", "FeedbackRecords.valueText", "FeedbackRecords.count"]) {
+      expect(await outcomeOf(await lookup(sessionOf(fixture.users.viewer), field))).toEqual({
+        status: 422,
+        code: "unprocessable_content",
+      });
+    }
+    expect(cubeFake.calls).toHaveLength(0);
+  });
+
+  test("needs read access to the dataset from the workspace", async () => {
+    expect(
+      await outcomeOf(
+        await lookup(sessionOf(fixture.users.owner), "FeedbackRecords.sourceName", {
+          datasetId: fixture.unassignedDatasetId,
+        })
+      )
+    ).toEqual({ status: 403, code: "forbidden" });
+    expect(cubeFake.calls).toHaveLength(0);
   });
 });

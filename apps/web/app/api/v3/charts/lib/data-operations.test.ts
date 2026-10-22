@@ -4,6 +4,7 @@ import { requireDashboardsAccess } from "@/app/api/v3/lib/dashboards-access";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getV3ChartData, previewV3Chart } from "./data-operations";
+import { listV3ChartFieldValues } from "./field-operations";
 
 /**
  * The chart-query budget (ENG-6586): preview and data spend from one 600/min bucket per user or API
@@ -32,7 +33,7 @@ beforeEach(() => {
 });
 
 describe("chart query budget", () => {
-  test("preview and data both spend from the chart-query bucket, per key, and stop at 429", async () => {
+  test("preview, data and field values all spend from the chart-query bucket, per key, and stop at 429", async () => {
     const responses = [
       await previewV3Chart({
         body: {
@@ -44,6 +45,11 @@ describe("chart query budget", () => {
         ...context,
       }),
       await getV3ChartData({ chartId: "clch000000000000000000001", query: {}, ...context }),
+      await listV3ChartFieldValues({
+        field: "FeedbackRecords.sourceName",
+        query: { workspaceId: "clws000000000000000000001", datasetId: "clds000000000000000000001" },
+        ...context,
+      }),
     ];
 
     for (const response of responses) {
@@ -51,6 +57,7 @@ describe("chart query budget", () => {
       expect(response.headers.get("Retry-After")).toBe("30");
     }
     expect(vi.mocked(applyRateLimit).mock.calls).toEqual([
+      [rateLimitConfigs.api.v3ChartQueries, "key_1"],
       [rateLimitConfigs.api.v3ChartQueries, "key_1"],
       [rateLimitConfigs.api.v3ChartQueries, "key_1"],
     ]);

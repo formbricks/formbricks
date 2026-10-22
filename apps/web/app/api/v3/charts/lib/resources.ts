@@ -61,3 +61,6 @@ export const ZV3ChartData = z
   .strict();
 
 export type TV3ChartData = z.infer<typeof ZV3ChartData>;
+
+/** One stored value of a field, with the field type when the field is the question label. */
+export const ZV3ChartFieldValue = z.object({ value: z.string(), fieldType: z.string().optional() }).strict();
