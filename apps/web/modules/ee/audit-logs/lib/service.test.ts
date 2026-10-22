@@ -19,6 +19,8 @@ const validEvent = {
   status: "success" as const,
   timestamp: new Date().toISOString(),
   organizationId: "org-1",
+  ipAddress: "203.0.113.7",
+  userAgent: "test-agent",
 };
 
 describe("logAuditEvent", () => {
@@ -31,10 +33,15 @@ describe("logAuditEvent", () => {
     logger = (await import("@formbricks/logger")).logger;
   });
 
+  test("derives scalar actor search fields from the authenticated actor", async () => {
+    await logAuditEvent(validEvent);
+    expect(logger.audit).toHaveBeenCalledWith({ ...validEvent, actorId: "user-1", actorType: "user" });
+  });
+
   test("logs event if access is granted and event is valid", async () => {
     getIsAuditLogsEnabled.mockResolvedValue(true);
     await logAuditEvent(validEvent);
-    expect(logger.audit).toHaveBeenCalledWith(validEvent);
+    expect(logger.audit).toHaveBeenCalledWith(expect.objectContaining(validEvent));
     expect(logger.error).not.toHaveBeenCalled();
   });
 
@@ -50,7 +57,7 @@ describe("logAuditEvent", () => {
     getIsAuditLogsEnabled.mockResolvedValue(true);
     const event = { ...validEvent, organizationId: UNKNOWN_DATA };
     await logAuditEvent(event);
-    expect(logger.audit).toHaveBeenCalledWith(event);
+    expect(logger.audit).toHaveBeenCalledWith(expect.objectContaining(event));
   });
 
   test("does not throw if logger.audit throws", async () => {
@@ -79,13 +86,13 @@ describe("logAuditEvent", () => {
     test("logs the event when apiUrl is absolute", async () => {
       const event = { ...validEvent, apiUrl: "http://localhost:3000/api/mcp" };
       await logAuditEvent(event);
-      expect(logger.audit).toHaveBeenCalledWith(event);
+      expect(logger.audit).toHaveBeenCalledWith(expect.objectContaining(event));
       expect(logger.error).not.toHaveBeenCalled();
     });
 
     test("logs the event when apiUrl is omitted (optional, unlike a malformed one)", async () => {
       await logAuditEvent(validEvent);
-      expect(logger.audit).toHaveBeenCalledWith(validEvent);
+      expect(logger.audit).toHaveBeenCalledWith(expect.objectContaining(validEvent));
       expect(logger.error).not.toHaveBeenCalled();
     });
 

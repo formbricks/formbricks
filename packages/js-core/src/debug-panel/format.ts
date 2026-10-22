@@ -1,5 +1,13 @@
-import type { TShowConditionSingle, TShowConditions } from "@formbricks/types/show-conditions";
-import { isShowConditionGroup } from "@formbricks/types/show-conditions-evaluate";
+import type {
+  TShowConditionGroup,
+  TShowConditionSingle,
+  TShowConditions,
+} from "@formbricks/types/show-conditions";
+import {
+  type TShowConditionGroupResult,
+  type TShowConditionResult,
+  isShowConditionGroup,
+} from "@formbricks/types/show-conditions-evaluate";
 import type { TDebugSurveyEvent } from "@/types/debug";
 
 /**
@@ -115,4 +123,53 @@ export const findCondition = (
     }
   }
   return undefined;
+};
+
+export interface TConditionRow {
+  /** 0 for the outermost group, one more for each level inside it. */
+  depth: number;
+  passed: boolean;
+  text: string;
+}
+
+/**
+ * The checked conditions laid out as the editor shows them: each group's "all of" / "any of" with its
+ * own ✓ or ✗, and its conditions indented under it (ENG-4070). Without the groups, a ✗ inside an
+ * "any of" group that passed reads like the reason a survey did not show.
+ *
+ * `undefined` when the event carries no group outcomes: an SDK older than the panel sends only
+ * `results`, and the panel then lists the conditions flat.
+ */
+export const describeConditionTree = (
+  showConditions: TShowConditions | undefined,
+  evaluation: { results: TShowConditionResult[]; groups?: TShowConditionGroupResult[] }
+): TConditionRow[] | undefined => {
+  if (!showConditions || !evaluation.groups) return undefined;
+
+  const groupPassed = new Map(evaluation.groups.map((group) => [group.groupId, group.passed]));
+  const results = new Map(evaluation.results.map((result) => [result.conditionId, result]));
+  const rows: TConditionRow[] = [];
+
+  const addGroup = (group: TShowConditionGroup, depth: number): void => {
+    rows.push({
+      depth,
+      passed: groupPassed.get(group.id) ?? false,
+      text: group.connector === "or" ? "Any of:" : "All of:",
+    });
+    for (const item of group.conditions) {
+      if (isShowConditionGroup(item)) {
+        addGroup(item, depth + 1);
+        continue;
+      }
+      const result = results.get(item.id);
+      rows.push({
+        depth: depth + 1,
+        passed: result?.passed ?? false,
+        text: `${describeCondition(item)} — read: ${describeActual(result?.actual)}`,
+      });
+    }
+  };
+
+  addGroup(showConditions, 0);
+  return rows;
 };

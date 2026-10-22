@@ -37,8 +37,9 @@ export const forgotPasswordAction = actionClient.inputSchema(ZForgotPasswordActi
 
     // Copied while the request is live: Better Auth's hooks read them after the response has gone.
     const requestHeaders = new Headers(await headers());
-    const { ipAddress } = ctx.auditLoggingCtx;
-    after(() => processPasswordResetRequest({ email: parsedInput.email, requestHeaders, ipAddress }));
+    const { ipAddress, userAgent } = ctx.auditLoggingCtx;
+    const requestMetadata = { ipAddress, userAgent };
+    after(() => processPasswordResetRequest({ email: parsedInput.email, requestHeaders, requestMetadata }));
 
     return { success: true };
   })

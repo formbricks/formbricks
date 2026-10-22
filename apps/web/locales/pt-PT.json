@@ -3028,6 +3028,7 @@
         "subscription_description": "Gere o teu plano de subscrição e acompanha a tua utilização",
         "switch_at_period_end": "Mudar no fim do período",
         "switch_plan_now": "Mudar de plano agora",
+        "tax_location_required": "Não conseguimos determinar a tua localização fiscal a partir da tua morada de faturação. Atualiza a tua morada de faturação em “Gerir dados do cartão e faturas” e tenta novamente.",
         "this_includes": "Isto inclui",
         "trial_alert_description": "Algumas funcionalidades como follow-ups e ligações personalizadas permanecem bloqueadas durante o período de teste. Faz upgrade agora para desbloquear tudo.",
         "trial_already_used": "Já foi utilizado um período de teste gratuito para este endereço de email. Por favor, atualiza para um plano pago.",

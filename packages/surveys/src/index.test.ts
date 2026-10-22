@@ -176,6 +176,29 @@ describe("renderSurvey custom CSS teardown", () => {
   });
 });
 
+describe("renderSurvey inline onClose", () => {
+  test("an inline app survey tells the host it closed (the editor preview reopens on it)", () => {
+    document.body.innerHTML = '<div id="survey-container"></div>';
+    const hostOnClose = vi.fn();
+
+    renderInline({
+      survey: { id: "survey-1", type: "app", languages: [] },
+      onClose: hostOnClose,
+    } as unknown as Partial<SurveyContainerProps>);
+    seen.onClose?.();
+
+    expect(hostOnClose).toHaveBeenCalledTimes(1);
+  });
+
+  test("an inline link survey still gets no onClose", () => {
+    document.body.innerHTML = '<div id="survey-container"></div>';
+
+    renderInline({ onClose: vi.fn() });
+
+    expect(seen.onClose).toBeUndefined();
+  });
+});
+
 describe("renderSurvey dropdown portal container", () => {
   test("a dashboard preview mounts dropdowns in its contained boundary", () => {
     document.body.innerHTML =

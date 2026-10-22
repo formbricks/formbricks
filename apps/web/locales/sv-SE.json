@@ -3028,6 +3028,7 @@
         "subscription_description": "Hantera din abonnemangsplan och följ din användning",
         "switch_at_period_end": "Byt vid periodens slut",
         "switch_plan_now": "Byt plan nu",
+        "tax_location_required": "Vi kunde inte fastställa din skatteplats utifrån din faktureringsadress. Uppdatera din faktureringsadress via ”Hantera kortuppgifter och fakturor” och försök igen.",
         "this_includes": "Detta inkluderar",
         "trial_alert_description": "Vissa funktioner som uppföljningar och anpassade länkar förblir låsta under provperioden. Uppgradera nu för att låsa upp allt.",
         "trial_already_used": "En gratis provperiod har redan använts för denna e-postadress. Uppgradera till en betald plan istället.",

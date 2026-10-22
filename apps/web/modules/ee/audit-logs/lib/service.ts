@@ -11,7 +11,8 @@ const validateEvent = (event: TAuditLogEvent): void => {
 export const logAuditEvent = async (event: TAuditLogEvent): Promise<void> => {
   try {
     validateEvent(event);
-    logger.audit(event);
+    // Scalar aliases remain directly searchable across log transports without flattening `actor`.
+    logger.audit({ ...event, actorId: event.actor.id, actorType: event.actor.type });
   } catch (error) {
     // Log error to application logger but don't throw
     // This ensures audit logging failures don't break the application

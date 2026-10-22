@@ -1,5 +1,6 @@
 import { createClient } from "redis";
 import { logger } from "@formbricks/logger";
+import { getRedisTlsOptions } from "@formbricks/redis-config";
 import type { RedisClient } from "@/types/client";
 import { type CacheError, ErrorCode, type Result, err, ok } from "@/types/error";
 import { CacheService } from "./service";
@@ -17,9 +18,18 @@ export async function createRedisClientFromEnv(): Promise<Result<RedisClient, Ca
     });
   }
 
+  let tls: ReturnType<typeof getRedisTlsOptions>;
+  try {
+    tls = getRedisTlsOptions(url, process.env.REDIS_TLS_CA);
+  } catch (error) {
+    logger.error(error, "Invalid Redis TLS configuration");
+    return err({ code: ErrorCode.RedisConfigurationError });
+  }
+
   const client = createClient({
     url,
     socket: {
+      ...(tls && { tls: true as const, ...tls }),
       connectTimeout: 3000,
     },
     // Managed Redis services and their network paths can reap idle connections (for example,
