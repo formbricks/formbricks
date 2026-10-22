@@ -14,7 +14,7 @@ import {
 } from "@/app/api/v3/dashboards/lib/resources";
 import { ZV3DashboardName, ZV3WidgetLayoutInput } from "@/app/api/v3/dashboards/lib/schemas";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
-import { mcpToolOutput } from "./output-schemas";
+import { ZMcpCursorListMeta, mcpToolOutput } from "./output-schemas";
 
 /**
  * Input and output schemas for the chart and dashboard tools. Every input is `.strict()`, so an argument
@@ -70,7 +70,7 @@ export const ZMcpChartIdInput = z.object({ chartId: ZId.describe("The chart's id
 export type TMcpChartIdInput = z.infer<typeof ZMcpChartIdInput>;
 
 export const ZMcpChartOutput = mcpToolOutput(ZV3ChartResource);
-export const ZMcpChartListOutput = mcpToolOutput(z.array(ZV3ChartResource));
+export const ZMcpChartListOutput = mcpToolOutput(z.array(ZV3ChartResource), ZMcpCursorListMeta);
 
 export const ZMcpChartType = ZChartType.describe(
   "Chart type: area, bar, pie, big_number or matrix. A big_number shows one value, so its grouping is dropped."
@@ -180,7 +180,7 @@ export type TMcpListDashboardsInput = z.infer<typeof ZMcpListDashboardsInput>;
 export const ZMcpDashboardIdInput = z.object({ dashboardId: ZId.describe("The dashboard's id.") }).strict();
 export type TMcpDashboardIdInput = z.infer<typeof ZMcpDashboardIdInput>;
 
-export const ZMcpDashboardListOutput = mcpToolOutput(z.array(ZV3DashboardListItem));
+export const ZMcpDashboardListOutput = mcpToolOutput(z.array(ZV3DashboardListItem), ZMcpCursorListMeta);
 export const ZMcpDashboardOutput = mcpToolOutput(ZV3DashboardResource);
 
 export const ZMcpCreateDashboardInput = z

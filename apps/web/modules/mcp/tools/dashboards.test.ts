@@ -17,7 +17,7 @@ import {
   removeV3DashboardWidget,
   updateV3DashboardWidget,
 } from "@/app/api/v3/dashboards/lib/widget-operations";
-import { successResponse } from "@/app/api/v3/lib/response";
+import { successListResponse, successResponse } from "@/app/api/v3/lib/response";
 import { registerDashboardTools } from "./dashboards";
 
 vi.mock("@/app/api/v3/charts/lib/field-operations", () => ({
@@ -382,5 +382,26 @@ describe("chart and dashboard MCP tools", () => {
         body: { dashboardId: DASHBOARD_ID, layout: input.layout },
       })
     );
+  });
+
+  test("list_charts and list_dashboards answer what their own output schema accepts", async () => {
+    // The list operations answer v3's cursor envelope ({ limit, nextCursor }, no totals). The SDK
+    // validates structured content against `outputSchema`, so a schema that wants more fails every call.
+    const page = () => successListResponse([], { limit: 5, nextCursor: null }, { requestId: "req" });
+    vi.mocked(listV3Charts).mockResolvedValue(page());
+    vi.mocked(listV3Dashboards).mockResolvedValue(page());
+    const tools = createToolServer();
+
+    for (const [name, input] of [
+      ["list_charts", { workspaceId: WORKSPACE_ID, limit: 5 }],
+      ["list_dashboards", { workspaceId: WORKSPACE_ID, limit: 5 }],
+    ] as const) {
+      const result = await call(name, input, ["dashboards:read"]);
+      const outputSchema = tools.get(name)?.config.outputSchema as {
+        safeParse: (value: unknown) => { success: boolean };
+      };
+      expect(result.isError).toBeUndefined();
+      expect(outputSchema.safeParse(result.structuredContent).success).toBe(true);
+    }
   });
 });
