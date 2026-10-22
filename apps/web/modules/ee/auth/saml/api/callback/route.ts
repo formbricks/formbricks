@@ -230,29 +230,14 @@ const refuseUnparsed = (
         responses.serviceUnavailableResponse("The SAML response could not be processed; retry shortly", 1)
       );
     case "refused":
-      // The same bounds as on the response itself, so refused the same way: throttled, by size only.
+      // Logged like the bounds on the response itself: throttled, by size only. Answered as jackson answers a response
+      // it rejects, though, so the answer says nothing about what the encrypted assertion held.
       warnThrottled(
         `decrypted:${probe.refusal.reason}`,
         probe.refusal,
         "Refused a SAML response whose decrypted assertion is past the bounds"
       );
-      return refuse(
-        req,
-        "saml_response_rejected",
-        responses.badRequestResponse(boundsRefusalMessage(probe.refusal.reason))
-      );
-    case "undecryptable":
-      // Anyone can send ciphertext that does not decrypt, so this is throttled like the other cheap refusals.
-      warnThrottled(
-        "undecryptable",
-        failureContext(SAMLResponse, RelayState),
-        "Refused a SAML response whose encrypted assertion did not decrypt"
-      );
-      return refuse(
-        req,
-        "saml_response_rejected",
-        responses.badRequestResponse("The SAMLResponse's encrypted assertion could not be decrypted")
-      );
+      return refuse(req, "saml_response_rejected", jacksonRefusalResponse(400));
     case "too_costly":
       logger.warn(
         { stage: "parse_budget", reason: probe.reason, ...failureContext(SAMLResponse, RelayState) },

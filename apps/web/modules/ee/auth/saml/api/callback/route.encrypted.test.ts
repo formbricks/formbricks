@@ -85,19 +85,15 @@ describe("SAML callback with an encrypted assertion", () => {
     );
   });
 
-  test("refuses one encrypted to another key, whose plaintext cannot be measured", async () => {
+  test("hands one encrypted to another key to jackson like any other, so its answer never says whether it decrypted", async () => {
     const SAMLResponse = Buffer.from(
       samlResponseWith(encryptAssertion(signedAssertionWithGroups(150), createSpKeyPair().publicKey))
     ).toString("base64");
-    vi.spyOn(logger, "warn").mockImplementation(() => undefined);
 
     const response = await POST(callback(SAMLResponse));
 
-    expect(response.status).toBe(400);
-    expect(await response.json()).toMatchObject({
-      message: expect.stringContaining("could not be decrypted"),
-    });
-    expect(samlResponseMock).not.toHaveBeenCalled();
+    expect(response.status).toBe(307);
+    expect(samlResponseMock).toHaveBeenCalledWith({ RelayState: "boxyhq_jackson_state", SAMLResponse });
   });
 
   test("hands a signed one of 150 groups to jackson", async () => {

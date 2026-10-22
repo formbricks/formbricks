@@ -111,8 +111,9 @@ describe("probeSamlResponseParse failure paths", () => {
     });
   });
 
-  test("refuses a response whose encrypted assertion did not decrypt, rather than let jackson try (ENG-4051)", async () => {
-    await expect(probeAnswered({ decrypted: false })).resolves.toEqual({ outcome: "undecryptable" });
+  test("passes a response whose encrypted assertion did not decrypt on to jackson, to fail there alike (ENG-4051)", async () => {
+    // A refusal of its own would tell the sender which ciphertexts decrypt.
+    await expect(probeAnswered({ decrypted: false })).resolves.toMatchObject({ outcome: "parsed" });
   });
 
   test("passes a decrypted assertion within the bounds on to jackson (ENG-4051)", async () => {

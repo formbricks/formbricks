@@ -65,8 +65,8 @@ const hasEncryptedAssertion = (root: Element): boolean => {
 export type SamlDecryption =
   | { decrypted: true; refusal: SamlDecryptedRefusal | null }
   /**
-   * With jackson's key, a sound encrypted assertion decrypts here exactly as it will in jackson. One that does not
-   * would leave its plaintext unmeasured, and jackson would try again on the main thread, so it is refused (ENG-4051).
+   * With jackson's key, an encrypted assertion decrypts here exactly as it will in jackson, so one that does not will
+   * fail in jackson too; the pool lets jackson give its usual answer (see its `takeResult`).
    */
   | { decrypted: false };
 
@@ -120,8 +120,8 @@ const WARM_UP =
 /**
  * xml-encryption's warning when a response declares an insecure algorithm (RSA 1.5, Triple DES), which saml20 gives it
  * no option to turn off. Here that is whatever an anonymous sender chose, before jackson has checked who sent it, so
- * the worker drops that one message; jackson still warns when it decrypts a response it accepted, and every other
- * warning goes through.
+ * the worker drops that one message; jackson still warns when it decrypts a response naming a configured issuer, and
+ * every other warning goes through.
  */
 const INSECURE_ALGORITHM_WARNING = "is no longer recommended due to security reasons";
 

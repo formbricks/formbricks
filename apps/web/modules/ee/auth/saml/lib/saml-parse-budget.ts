@@ -21,7 +21,7 @@ import type { SamlDecryptedRefusal } from "@/modules/ee/auth/saml/lib/saml-respo
  * for ~1-3 s is cut off here, and a real one (500 groups) takes ~5-20 ms. The worker then holds the decrypted document
  * to the same byte bounds as an unencrypted response (`checkDecryptedSamlResponseBounds`): a flood of cheap elements
  * parses well within the budget, but jackson's later passes over it cost several times as much. An encrypted assertion
- * that will not decrypt with jackson's key is refused, since nothing about its plaintext is known.
+ * that will not decrypt goes on to jackson, which fails it the same way (see `takeResult`).
  */
 export const SAML_PARSE_TIME_BUDGET_MS = 100;
 
@@ -70,11 +70,6 @@ export type SamlParseProbe =
   | { outcome: "too_costly"; reason: "time" | "memory" }
   /** Its decrypted assertion, put in place, is past the byte bounds jackson's later passes are sized for. */
   | { outcome: "refused"; refusal: SamlDecryptedRefusal }
-  /**
-   * It holds an encrypted assertion jackson would decrypt, and it did not decrypt with jackson's key, so its plaintext
-   * could not be measured.
-   */
-  | { outcome: "undecryptable" }
   /**
    * The queue was full, or this process has spent its parse allowance for now, either before the job was queued or
    * by the time the worker answered; the response does not reach jackson.
@@ -166,11 +161,12 @@ const takeResult = (result: WorkerResult): boolean => {
     settleRunning({ outcome: "too_costly", reason: "time" });
     return true;
   }
-  if (result.decryption?.decrypted === false) {
-    settleRunning({ outcome: "undecryptable" });
-    return true;
-  }
-  if (result.decryption?.refusal) {
+  // An encrypted assertion that did not decrypt is not refused here. jackson decrypts with the same saml20 and the same
+  // key (read from the x509 copy it initialised), so it fails the response the same way, and the failed attempt it
+  // repeats is what the worker just timed and is charged for below. Refusing it with an answer of its own would tell
+  // an anonymous sender which ciphertexts decrypt, the signal attacks on XML Encryption rely on; failed decryptions
+  // and failed signature checks have to look alike from outside.
+  if (result.decryption?.decrypted && result.decryption.refusal) {
     settleRunning({ outcome: "refused", refusal: result.decryption.refusal });
     return true;
   }

@@ -279,22 +279,23 @@ describe("SAML callback route", () => {
     );
 
     test.each([
-      [
-        "past the markup budget",
-        { reason: "markup", markup: 13_002, depth: 2, decryptedBytes: 52_400 },
-        "SAMLResponse is too large to process",
-      ],
-      ["carrying a DOCTYPE", { reason: "declaration", decryptedBytes: 900 }, "DOCTYPE"],
+      ["past the markup budget", { reason: "markup", markup: 13_002, depth: 2, decryptedBytes: 52_400 }],
+      ["carrying a DOCTYPE", { reason: "declaration", decryptedBytes: 900 }],
     ] as const)(
-      "refuses a response whose decrypted assertion is %s like the bounds do, logged by size",
-      async (_name, refusal, message) => {
+      "refuses a response whose decrypted assertion is %s as jackson refuses one, logged by size",
+      async (_name, refusal) => {
         const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
         probeMock.mockResolvedValueOnce({ outcome: "refused", refusal });
 
         const response = await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "s" }));
 
+        // jackson's own answer to a response it rejects, so it says nothing about what the assertion held.
         expect(response.status).toBe(400);
-        expect(await response.json()).toMatchObject({ message: expect.stringContaining(message) });
+        expect(await response.json()).toEqual({
+          code: "bad_request",
+          message: "The SAML response was not accepted",
+          details: {},
+        });
         expect(samlResponseMock).not.toHaveBeenCalled();
         expect(warn).toHaveBeenCalledWith(
           { ...refusal, suppressedSinceLast: 0 },
@@ -302,23 +303,6 @@ describe("SAML callback route", () => {
         );
       }
     );
-
-    test("refuses a response whose encrypted assertion did not decrypt, without jackson", async () => {
-      const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
-      probeMock.mockResolvedValueOnce({ outcome: "undecryptable" });
-
-      const response = await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "s" }));
-
-      expect(response.status).toBe(400);
-      expect(await response.json()).toMatchObject({
-        message: expect.stringContaining("could not be decrypted"),
-      });
-      expect(samlResponseMock).not.toHaveBeenCalled();
-      expect(warn).toHaveBeenCalledWith(
-        expect.objectContaining({ length: b64(ISSUER).length, suppressedSinceLast: 0 }),
-        "Refused a SAML response whose encrypted assertion did not decrypt"
-      );
-    });
 
     test("logs cheap-path refusals at most once per window, counting the rest", async () => {
       const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
@@ -461,12 +445,6 @@ describe("SAML callback route", () => {
             outcome: "refused",
             refusal: { reason: "depth", markup: 80, depth: 70, decryptedBytes: 4_000 },
           }),
-        "saml_response_rejected",
-      ],
-      [
-        "an encrypted assertion that did not decrypt",
-        VALID,
-        () => probeMock.mockResolvedValueOnce({ outcome: "undecryptable" }),
         "saml_response_rejected",
       ],
       [

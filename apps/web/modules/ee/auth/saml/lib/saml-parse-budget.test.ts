@@ -115,12 +115,12 @@ describe("probeSamlResponseParse", () => {
       expect(["refused", "too_costly"]).toContain(probe.outcome);
     });
 
-    test("refuses an assertion encrypted to another key, whose plaintext cannot be measured", async () => {
+    test("hands an assertion encrypted to another key on to jackson, which fails it alike", async () => {
       const other = createSpKeyPair();
 
       await expect(
         probeSamlResponseParse(encrypted(nestedNamespaceAssertion(4000), other.publicKey), sp.privateKey)
-      ).resolves.toEqual({ outcome: "undecryptable" });
+      ).resolves.toMatchObject({ outcome: "parsed", claims: { issuer: ENCRYPTED_RESPONSE_ISSUER } });
     });
   });
 });
