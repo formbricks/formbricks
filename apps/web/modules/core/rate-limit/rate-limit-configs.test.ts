@@ -72,6 +72,7 @@ describe("rateLimitConfigs", () => {
         "resetPassword",
         "verifyEmail",
         "emailToken",
+        "samlCallback",
       ]);
       expect(rateLimitConfigs.auth.resetPassword).toEqual({
         interval: 3600,
@@ -90,6 +91,12 @@ describe("rateLimitConfigs", () => {
         interval: 3600,
         allowedPerInterval: 10,
         namespace: "auth:email-token",
+      });
+      // How often one IP can make the SAML callback parse an anonymous XML document (ENG-3973).
+      expect(rateLimitConfigs.auth.samlCallback).toEqual({
+        interval: 60,
+        allowedPerInterval: 120,
+        namespace: "auth:saml-callback",
       });
     });
 
