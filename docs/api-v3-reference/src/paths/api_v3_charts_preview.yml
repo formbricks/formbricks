@@ -1,0 +1,58 @@
+post:
+  operationId: previewChartV3
+  summary: Preview a chart
+  description: |
+    Runs an unsaved chart and returns its rows, so a caller can check it shows what was meant before
+    saving it. Saves nothing. The chart query is checked by the chart query validator first: a field
+    outside the catalog, a refused Cube option, a `timezone`, a bound exceeded or an invalid date
+    range answers 422 naming each problem in `invalid_params`.
+
+    Needs read access to the workspace and the Feedback Dataset. Counts against the chart-query
+    budget (600 per minute per user or API key), not the v3 default.
+  tags:
+    - V3 Charts
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/ChartPreviewRequest.yml
+  responses:
+    "200":
+      description: The chart's rows
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/ChartData.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3ChartQueryTooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+    "502":
+      $ref: ../components/responses/V3ChartQueryFailed.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

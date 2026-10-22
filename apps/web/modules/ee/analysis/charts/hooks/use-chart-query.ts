@@ -3,9 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TChartQuery } from "@formbricks/types/analysis";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { executeQueryAction } from "@/modules/ee/analysis/charts/actions";
-import type { TChartDataRow, TChartLabelMaps } from "@/modules/ee/analysis/types/analysis";
+import { getChartApiErrorMessage, previewChart } from "@/modules/ee/analysis/lib/api-client";
+import type { TChartDataRow, TChartLabelMaps, TChartType } from "@/modules/ee/analysis/types/analysis";
 
 export interface QueryResult extends TChartLabelMaps {
   /** The effective (server-rewritten) query used by Cube. May differ from the query the user
@@ -15,6 +14,13 @@ export interface QueryResult extends TChartLabelMaps {
   data: TChartDataRow[];
 }
 
+/** Only non-empty label maps reach a renderer, as they always have. */
+const labelMaps = (optionLabels: Record<string, string>, fieldLabels: Record<string, string>) => ({
+  ...(Object.keys(optionLabels).length > 0 ? { optionLabels } : {}),
+  ...(Object.keys(fieldLabels).length > 0 ? { fieldLabels } : {}),
+});
+
+/** The chart builder's live preview, through `POST /api/v3/charts/preview`. */
 export function useChartQuery(
   workspaceId: string,
   feedbackDirectoryId: string | null,
@@ -25,54 +31,53 @@ export function useChartQuery(
   const [query, setQuery] = useState<TChartQuery | null>(initialQuery ?? null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Queries run reactively while the user edits the config; only the latest response may win.
+  // Queries run reactively while the user edits the config; only the latest response may win, and the
+  // superseded request is aborted rather than left to finish.
   const runSeqRef = useRef(0);
+  const inFlightRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     runSeqRef.current++;
+    inFlightRef.current?.abort();
   }, [workspaceId, feedbackDirectoryId]);
 
-  const runQuery = async (cubeQuery: TChartQuery): Promise<QueryResult | null> => {
+  useEffect(() => () => inFlightRef.current?.abort(), []);
+
+  const runQuery = async (cubeQuery: TChartQuery, chartType: TChartType): Promise<QueryResult | null> => {
     if (!feedbackDirectoryId) {
       setError(t("workspace.analysis.charts.select_data_source_first"));
       return null;
     }
 
     const seq = ++runSeqRef.current;
+    inFlightRef.current?.abort();
+    const controller = new AbortController();
+    inFlightRef.current = controller;
     setIsLoading(true);
     setError(null);
 
     try {
-      const result = await executeQueryAction({
+      const result = await previewChart({
         workspaceId,
+        datasetId: feedbackDirectoryId,
+        type: chartType,
         query: cubeQuery,
-        feedbackDirectoryId,
+        signal: controller.signal,
       });
       if (seq !== runSeqRef.current) return null;
 
-      if (result?.serverError) {
-        setError(getFormattedErrorMessage(result));
-        return null;
-      }
-
-      const rows = result?.data;
-      const data = Array.isArray(rows?.rows) ? rows.rows : [];
-      const optionLabels = rows?.optionLabels;
-      const fieldLabels = rows?.fieldLabels;
-      // Use the server-rewritten effective query so the renderer's xAxisKey matches the
-      // actual data columns (e.g. valueText → valueId after single-select rewrite).
-      const effectiveQuery = rows?.effectiveQuery ?? cubeQuery;
-      setChartData(data);
-      setQuery(effectiveQuery);
+      // The server-rewritten effective query, so the renderer's xAxisKey matches the actual data
+      // columns (e.g. valueText → valueId after a single-select rewrite).
+      setChartData(result.rows);
+      setQuery(result.query);
       return {
-        query: effectiveQuery,
-        data,
-        ...(optionLabels ? { optionLabels } : {}),
-        ...(fieldLabels ? { fieldLabels } : {}),
+        query: result.query,
+        data: result.rows,
+        ...labelMaps(result.optionLabels, result.fieldLabels),
       };
     } catch (err: unknown) {
       if (seq !== runSeqRef.current) return null;
-      setError(err instanceof Error ? err.message : t("workspace.analysis.charts.failed_to_execute_query"));
+      setError(getChartApiErrorMessage(err, t("workspace.analysis.charts.failed_to_execute_query")));
       return null;
     } finally {
       if (seq === runSeqRef.current) {

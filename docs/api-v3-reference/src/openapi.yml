@@ -374,6 +374,8 @@ paths:
     $ref: paths/api_v3_charts.yml
   /api/v3/charts/fields:
     $ref: paths/api_v3_charts_fields.yml
+  /api/v3/charts/preview:
+    $ref: paths/api_v3_charts_preview.yml
   /api/v3/charts/{chartId}:
     $ref: paths/api_v3_charts_{chartId}.yml
   /api/v3/action-classes:

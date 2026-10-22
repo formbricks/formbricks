@@ -48,3 +48,16 @@ export const ZV3ChartResource = z
   .strict();
 
 export type TV3ChartResource = z.infer<typeof ZV3ChartResource>;
+
+/** What a chart query returns: the rows a renderer draws, the label maps it reads them with, and the
+ * query as it ran (after option grouping and the requested date range). */
+export const ZV3ChartData = z
+  .object({
+    rows: z.array(z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()]))),
+    optionLabels: z.record(z.string(), z.string()),
+    fieldLabels: z.record(z.string(), z.string()),
+    query: z.record(z.string(), z.unknown()),
+  })
+  .strict();
+
+export type TV3ChartData = z.infer<typeof ZV3ChartData>;

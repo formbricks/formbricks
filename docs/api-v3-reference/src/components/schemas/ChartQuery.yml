@@ -10,7 +10,7 @@ description: >-
   Cube options the app does not use (`ungrouped`, `segments`, `renewQuery`, `joinHints`, `total`,
   `compareDateRange`); a `timezone` (every range is read in the organization's display time zone);
   more than 15 fields across `measures`, `dimensions` and `timeDimensions`; more than 25 filter
-  conditions or groups nested deeper than 3; a date range that is not a preset, `all-time` or two
+  conditions or filters nested deeper than three levels; a date range that is not a preset, `all-time` or two
   ISO calendar dates.
 properties:
   measures:

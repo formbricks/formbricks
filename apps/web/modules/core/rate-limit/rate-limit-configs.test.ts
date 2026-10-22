@@ -110,11 +110,18 @@ describe("rateLimitConfigs", () => {
         "v3SurveyGenerate",
         "v3SurveyVisibility",
         "v3CustomCss",
+        "v3ChartQueries",
         "internalDatasetPurge",
         "internalRetentionExport",
         "client",
         "clientEnvironment",
       ]);
+      // Chart data, preview and field values share one bucket sized for dashboards (ENG-6586).
+      expect(rateLimitConfigs.api.v3ChartQueries).toEqual({
+        interval: 60,
+        allowedPerInterval: 600,
+        namespace: "api:v3:charts:queries",
+      });
       // The values, not just the key: each export streams an organisation's whole retention history,
       // names people, and runs a pre-flight count, so a loosened quota is a load and privacy regression.
       expect(rateLimitConfigs.api.internalRetentionExport).toEqual({

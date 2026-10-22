@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { V3_LIST_DEFAULT_LIMIT, V3_LIST_MAX_LIMIT } from "@/app/api/v3/lib/cursor-pagination";
+import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 
 /**
  * Request schemas for the chart operations. Every object is strict, so an argument the operation does
@@ -38,3 +39,20 @@ export const ZV3ChartListQuery = z
 export type TV3ChartListQuery = z.infer<typeof ZV3ChartListQuery>;
 
 export const ZV3ChartIdParams = z.object({ chartId: z.cuid2() }).strict();
+
+/**
+ * A chart query as a request carries it. Only "is an object" is checked here: everything about its
+ * content is the chart query validator's, which answers 422 naming each problem rather than a 400.
+ */
+export const ZV3ChartQueryInput = z.record(z.string(), z.unknown());
+
+/** `POST /api/v3/charts/preview`. `dateRange` is checked by the operation, like the query, so it is 422. */
+export const ZV3ChartPreviewBody = z
+  .object({
+    ...datasetScope,
+    type: ZChartType,
+    query: ZV3ChartQueryInput,
+    dateRange: z.unknown().optional(),
+  })
+  .strict();
+export type TV3ChartPreviewBody = z.infer<typeof ZV3ChartPreviewBody>;

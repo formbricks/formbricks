@@ -19,10 +19,7 @@ import {
   getCharts,
   updateChart,
 } from "@/modules/ee/analysis/charts/lib/charts";
-import {
-  dropEmptyMeasureRows,
-  withOptionIdFilter,
-} from "@/modules/ee/analysis/charts/lib/empty-measure-rows";
+import { withOptionIdFilter } from "@/modules/ee/analysis/charts/lib/empty-measure-rows";
 import { pruneChartLabels, resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
 import { checkFeedbackDirectoryAccess, checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
 import {
@@ -30,6 +27,7 @@ import {
   buildDimensionValueQuery,
   collectDimensionValues,
 } from "@/modules/ee/analysis/lib/dimension-value-lookup";
+import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
 import { isSelectableValueDimension } from "@/modules/ee/analysis/lib/schema-definition";
 import { ZChartCreateInput, ZChartUpdateInput } from "@/modules/ee/analysis/types/analysis";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -292,22 +290,14 @@ export const executeQueryAction = authenticatedActionClient
         source: "charts.executeQueryAction",
       });
 
-      const grouping = await resolveOptionGrouping(parsedInput.query, workspaceId, feedbackDirectoryId);
-      const { rewrittenQuery } = grouping;
-
-      const rawRows = await executeTenantScopedQuery({
-        query: withOptionIdFilter(rewrittenQuery),
-        feedbackDirectoryId,
+      return runChartQuery({
+        query: parsedInput.query,
+        datasetId: feedbackDirectoryId,
         workspaceId,
         organizationId,
         actor: { type: "user", id: ctx.user.id },
         source: "charts.executeQueryAction",
       });
-
-      // Cube emits a row per group present in the source, including groups no selected measure can
-      // answer for — they render as blank bars and empty Chart Data rows (ENG-3150).
-      const rows = dropEmptyMeasureRows(Array.isArray(rawRows) ? rawRows : [], rewrittenQuery);
-      return { rows, ...pruneChartLabels(grouping, rows), effectiveQuery: rewrittenQuery };
     }
   );
 

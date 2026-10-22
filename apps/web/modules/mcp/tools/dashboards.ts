@@ -1,4 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/server";
+import { previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
 import { getV3ChartFieldCatalog } from "@/app/api/v3/charts/lib/field-operations";
 import { getV3Chart, listV3Charts } from "@/app/api/v3/charts/lib/operations";
 import { responseToMcpToolResult } from "../errors";
@@ -6,12 +7,15 @@ import {
   type TMcpChartIdInput,
   type TMcpListChartFieldsInput,
   type TMcpListChartsInput,
+  type TMcpPreviewChartInput,
+  ZMcpChartDataOutput,
   ZMcpChartFieldCatalogOutput,
   ZMcpChartIdInput,
   ZMcpChartListOutput,
   ZMcpChartOutput,
   ZMcpListChartFieldsInput,
   ZMcpListChartsInput,
+  ZMcpPreviewChartInput,
 } from "./dashboard-schemas";
 import { registerScopedTool } from "./guard-scopes";
 import { READ_ANNOTATIONS, toolContext } from "./tool-context";
@@ -93,6 +97,28 @@ export function registerDashboardTools(server: McpServer): void {
       const context = toolContext(ctx);
       return await responseToMcpToolResult(
         await getV3Chart({ chartId: input.chartId, ...context }),
+        context.requestId
+      );
+    }
+  );
+
+  registerScopedTool(
+    server,
+    "preview_chart",
+    {
+      title: "Preview chart",
+      description:
+        "Run an unsaved chart and return its rows, to check it shows what was meant before create_chart saves it. Saves nothing. The query is checked against the field catalog; a refused query names each problem.",
+      inputSchema: ZMcpPreviewChartInput,
+      outputSchema: ZMcpChartDataOutput,
+      annotations: READ_ANNOTATIONS,
+    },
+    // The rows are respondents' answers in aggregate, so reading them also needs feedback-record access.
+    ["dashboards:read", "feedbackRecords:read"],
+    async (input: TMcpPreviewChartInput, ctx) => {
+      const context = toolContext(ctx);
+      return await responseToMcpToolResult(
+        await previewV3Chart({ body: input, ...context }),
         context.requestId
       );
     }

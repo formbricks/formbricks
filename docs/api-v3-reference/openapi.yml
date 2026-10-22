@@ -3908,6 +3908,65 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+  /api/v3/charts/preview:
+    post:
+      operationId: previewChartV3
+      summary: Preview a chart
+      description: |
+        Runs an unsaved chart and returns its rows, so a caller can check it shows what was meant before
+        saving it. Saves nothing. The chart query is checked by the chart query validator first: a field
+        outside the catalog, a refused Cube option, a `timezone`, a bound exceeded or an invalid date
+        range answers 422 naming each problem in `invalid_params`.
+
+        Needs read access to the workspace and the Feedback Dataset. Counts against the chart-query
+        budget (600 per minute per user or API key), not the v3 default.
+      tags:
+        - V3 Charts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChartPreviewRequest'
+      responses:
+        '200':
+          description: The chart's rows
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ChartData'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3ChartQueryTooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+        '502':
+          $ref: '#/components/responses/V3ChartQueryFailed'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/charts/{chartId}:
     get:
       operationId: getChartV3
@@ -10435,7 +10494,7 @@ components:
             - '2026-01-01'
             - '2026-03-31'
     ChartQueryFilter:
-      description: 'A filter: either one condition on a field, or an `and` / `or` group of filters. Groups may nest at most 3 deep, and a chart query holds at most 25 conditions in all.'
+      description: 'A filter: either one condition on a field, or an `and` / `or` group of filters. Filters nest at most three levels: a group, a group inside it, and conditions inside that. A chart query holds at most 25 conditions in all.'
       oneOf:
         - type: object
           title: Condition
@@ -10496,7 +10555,7 @@ components:
       description: |-
         What a chart computes, in Cube's query format (ADR 0001): measures, dimensions, time dimensions, filters, order and limit over its Feedback Dataset's fields. Every field must come from the field catalog (`GET /api/v3/charts/fields`), named with its data-source prefix. Display settings are separate (`config`).
 
-        Refused with **422** (`invalid_params` names each problem): a field that is not in the catalog; Cube options the app does not use (`ungrouped`, `segments`, `renewQuery`, `joinHints`, `total`, `compareDateRange`); a `timezone` (every range is read in the organization's display time zone); more than 15 fields across `measures`, `dimensions` and `timeDimensions`; more than 25 filter conditions or groups nested deeper than 3; a date range that is not a preset, `all-time` or two ISO calendar dates.
+        Refused with **422** (`invalid_params` names each problem): a field that is not in the catalog; Cube options the app does not use (`ungrouped`, `segments`, `renewQuery`, `joinHints`, `total`, `compareDateRange`); a `timezone` (every range is read in the organization's display time zone); more than 15 fields across `measures`, `dimensions` and `timeDimensions`; more than 25 filter conditions or filters nested deeper than three levels; a date range that is not a preset, `all-time` or two ISO calendar dates.
       properties:
         measures:
           type: array
@@ -10816,6 +10875,86 @@ components:
             - last 7 days
             - this month
             - all-time
+      additionalProperties: false
+    ChartPreviewRequest:
+      type: object
+      required:
+        - workspaceId
+        - datasetId
+        - type
+        - query
+      properties:
+        workspaceId:
+          type: string
+          format: cuid2
+        datasetId:
+          type: string
+          format: cuid2
+          description: The Feedback Dataset to read; needs read access to it from `workspaceId`.
+        type:
+          type: string
+          enum:
+            - area
+            - bar
+            - pie
+            - big_number
+            - matrix
+          description: The chart type. A `big_number` shows one value, so its grouping is dropped.
+        query:
+          $ref: '#/components/schemas/ChartQuery'
+        dateRange:
+          description: 'Replaces the query''s date range on `FeedbackRecords.collectedAt`: a preset, `all-time` to remove it, or `{ from, to }` ISO calendar dates. Read in the organization''s display time zone.'
+          oneOf:
+            - type: string
+              example: last 7 days
+            - type: object
+              required:
+                - from
+                - to
+              properties:
+                from:
+                  type: string
+                  format: date
+                to:
+                  type: string
+                  format: date
+              additionalProperties: false
+      additionalProperties: false
+    ChartData:
+      type: object
+      description: 'What a chart query returns: one row per group, keyed by field name, the label maps to display stored ids with, and the query as it ran.'
+      required:
+        - rows
+        - optionLabels
+        - fieldLabels
+        - query
+      properties:
+        rows:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type:
+                - string
+                - number
+                - boolean
+                - 'null'
+          example:
+            - FeedbackRecords.sourceName: Web
+              FeedbackRecords.count: 42
+        optionLabels:
+          type: object
+          description: Choice option ids to their labels in the survey's default language, in survey order. Filled when the rows group by `FeedbackRecords.valueId` (or a `valueText` grouping the server rewrote to it); empty otherwise.
+          additionalProperties:
+            type: string
+        fieldLabels:
+          type: object
+          description: Matrix row field ids (`<elementId>__<rowId>`) to their statements, in survey order. Filled when the rows group by `FeedbackRecords.fieldId` over matrix questions; empty otherwise.
+          additionalProperties:
+            type: string
+        query:
+          type: object
+          description: 'The query as it ran: after the requested date range replaced the saved one, and after a `valueText` grouping on a single-choice question was rewritten to `valueId`. The row keys follow this query.'
       additionalProperties: false
     ActionClassResource:
       type: object
@@ -11715,6 +11854,36 @@ components:
             $ref: '#/components/schemas/Problem'
     V3DashboardsForbidden:
       description: 'Forbidden. `code: forbidden` when the caller has no access to the workspace, the Feedback Dataset or the resource (which may also not exist; 404 is not used, to avoid leaking existence). `code: dashboards_plan_required` when the caller is authorized but the organization does not have the Dashboards add-on or a license that includes it — checked after authorization, so a caller without access never learns the organization''s plan.'
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3ChartQueryTooManyRequests:
+      description: 'Too Many Requests (`code: too_many_requests`). Chart data, preview and field-value lookups share one budget of 600 requests per minute per user or API key, separate from the 100 per minute of the rest of v3, so a dashboard can load every widget''s data. `Retry-After` says when to retry.'
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds until the budget refills.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3ChartQueryFailed:
+      description: 'Bad Gateway (`code: bad_gateway`) — the chart query could not be run: the analytics engine was unreachable, refused it, or it ran longer than the one-minute limit and was stopped. The engine''s own error is never returned. Retrying later is safe; a query that timed out needs a narrower date range or grouping.'
       headers:
         X-Request-Id:
           schema:

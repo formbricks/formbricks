@@ -6,16 +6,11 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getAISmartToolsUnavailableReason, getOrganizationAIConfig } from "@/lib/ai/service";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
-import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
-import {
-  dropEmptyMeasureRows,
-  withOptionIdFilter,
-} from "@/modules/ee/analysis/charts/lib/empty-measure-rows";
-import { pruneChartLabels, resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
 import { checkFeedbackDirectoryAccess } from "@/modules/ee/analysis/lib/access";
+import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
 import type { TChartDataRow, TChartLabelMaps } from "@/modules/ee/analysis/types/analysis";
 import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getAuthorizedWorkspaceFeedbackDirectories } from "@/modules/ee/unify-feedback/lib/access";
@@ -56,24 +51,16 @@ async function executeWidgetQuery(
       source: "dashboards.widget",
     });
 
-    // Mirror the chart builder (executeQueryAction): resolve option labels so value_id slices
-    // display human-readable option names. Without this the dashboard renders raw value_ids.
-    const grouping = await resolveOptionGrouping(query, workspaceId, tenant.feedbackDirectoryId);
-    const { rewrittenQuery } = grouping;
-
-    const data = await executeTenantScopedQuery({
-      query: withOptionIdFilter(rewrittenQuery),
-      feedbackDirectoryId: tenant.feedbackDirectoryId,
+    // The same run as the chart builder's, so a widget and its chart cannot disagree on a number.
+    const { rows, effectiveQuery, ...labels } = await runChartQuery({
+      query,
+      datasetId: tenant.feedbackDirectoryId,
       workspaceId,
       organizationId,
       actor: { type: "user", id: userId },
       source: "dashboards.widget",
     });
-
-    // Mirror the chart builder again: groups that no selected measure can answer for are dropped
-    // rather than rendered as blank bars and empty Chart Data rows (ENG-3150).
-    const rows = dropEmptyMeasureRows(Array.isArray(data) ? data : [], rewrittenQuery);
-    return { data: rows, query: rewrittenQuery, ...pruneChartLabels(grouping, rows) };
+    return { data: rows, query: effectiveQuery, ...labels };
   } catch (error) {
     logger.error(error, "Failed to load dashboard widget data");
     return { error: DASHBOARD_WIDGET_LOAD_ERROR };

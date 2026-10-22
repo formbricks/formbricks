@@ -1,6 +1,7 @@
 description: >-
-  A filter: either one condition on a field, or an `and` / `or` group of filters. Groups may nest
-  at most 3 deep, and a chart query holds at most 25 conditions in all.
+  A filter: either one condition on a field, or an `and` / `or` group of filters. Filters nest at
+  most three levels: a group, a group inside it, and conditions inside that. A chart query holds at
+  most 25 conditions in all.
 oneOf:
   - type: object
     title: Condition

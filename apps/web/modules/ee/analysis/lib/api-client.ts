@@ -1,6 +1,7 @@
-import type { TV3ChartResource } from "@/app/api/v3/charts/lib/resources";
-import { parseV3ApiError } from "@/modules/api/lib/v3-client";
-import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
+import type { TChartQuery } from "@formbricks/types/analysis";
+import type { TV3ChartData, TV3ChartResource } from "@/app/api/v3/charts/lib/resources";
+import { V3ApiError, parseV3ApiError } from "@/modules/api/lib/v3-client";
+import type { TChartDataRow, TChartType, TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 
 /**
  * The app's client for the public chart and dashboard API (ADR 0002: the app goes through the same
@@ -9,6 +10,7 @@ import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
  */
 
 const CHARTS_PATH = "/api/v3/charts";
+const JSON_HEADERS = { "Content-Type": "application/json" };
 
 /** Bounds a write so a stalled request cannot leave a dialog's spinner running forever. */
 export const MUTATION_TIMEOUT_MS = 15_000;
@@ -85,3 +87,57 @@ export const getChart = async (chartId: string, signal?: AbortSignal): Promise<T
       await fetch(`${CHARTS_PATH}/${encodeURIComponent(chartId)}`, { cache: "no-store", signal })
     )
   );
+
+/** A chart query's result as the renderers take it. */
+export type TAppChartData = {
+  rows: TChartDataRow[];
+  optionLabels: Record<string, string>;
+  fieldLabels: Record<string, string>;
+  /** The query as it ran, after option grouping: what the rows' keys follow. */
+  query: TChartQuery;
+};
+
+const toAppChartData = (data: TV3ChartData): TAppChartData => ({
+  rows: data.rows,
+  optionLabels: data.optionLabels,
+  fieldLabels: data.fieldLabels,
+  query: data.query as TChartQuery,
+});
+
+/** A date range to read a chart for: a preset, `all-time`, or two ISO calendar dates. */
+export type TChartDateRangeInput = string | { from: string; to: string };
+
+/** Run an unsaved chart. Not a mutation — it saves nothing — so it takes the caller's abort signal. */
+export const previewChart = async ({
+  signal,
+  ...body
+}: {
+  workspaceId: string;
+  datasetId: string;
+  type: TChartType;
+  query: TChartQuery;
+  dateRange?: TChartDateRangeInput;
+  signal?: AbortSignal;
+}): Promise<TAppChartData> =>
+  toAppChartData(
+    await readData<TV3ChartData>(
+      await fetch(`${CHARTS_PATH}/preview`, {
+        method: "POST",
+        cache: "no-store",
+        headers: JSON_HEADERS,
+        body: JSON.stringify(body),
+        signal,
+      })
+    )
+  );
+
+/**
+ * The message to show for a failed chart call: the problem's own detail, followed by the first problem
+ * it names when the query was refused — "The chart query is not valid" alone tells a user nothing.
+ */
+export const getChartApiErrorMessage = (error: unknown, fallback: string): string => {
+  if (!(error instanceof V3ApiError))
+    return error instanceof Error && error.message ? error.message : fallback;
+  const firstReason = error.invalid_params?.[0]?.reason;
+  return firstReason ? `${error.detail} ${firstReason}` : error.detail || fallback;
+};

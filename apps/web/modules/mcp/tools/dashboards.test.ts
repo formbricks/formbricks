@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
+import { previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
 import { getV3ChartFieldCatalog } from "@/app/api/v3/charts/lib/field-operations";
 import { getV3Chart, listV3Charts } from "@/app/api/v3/charts/lib/operations";
 import { successResponse } from "@/app/api/v3/lib/response";
@@ -7,6 +8,7 @@ import { registerDashboardTools } from "./dashboards";
 
 vi.mock("@/app/api/v3/charts/lib/field-operations", () => ({ getV3ChartFieldCatalog: vi.fn() }));
 vi.mock("@/app/api/v3/charts/lib/operations", () => ({ getV3Chart: vi.fn(), listV3Charts: vi.fn() }));
+vi.mock("@/app/api/v3/charts/lib/data-operations", () => ({ previewV3Chart: vi.fn() }));
 vi.mock("@/app/api/v3/lib/audit", () => ({
   buildV3AuditLog: vi.fn(),
   queueV3AuditLog: vi.fn().mockResolvedValue(undefined),
@@ -69,6 +71,7 @@ beforeEach(() => {
   );
   vi.mocked(listV3Charts).mockResolvedValue(successResponse([], { requestId: "req" }));
   vi.mocked(getV3Chart).mockResolvedValue(successResponse({}, { requestId: "req" }));
+  vi.mocked(previewV3Chart).mockResolvedValue(successResponse({}, { requestId: "req" }));
 });
 
 describe("chart and dashboard MCP tools", () => {
@@ -126,5 +129,22 @@ describe("chart and dashboard MCP tools", () => {
     const refused = await call("get_chart", { chartId: CHART_ID }, ["dashboards:write"]);
     expect(refused.isError).toBe(true);
     expect(getV3Chart).not.toHaveBeenCalled();
+  });
+
+  test("preview_chart needs feedbackRecords:read on top of dashboards:read, because it returns data", async () => {
+    const input = {
+      workspaceId: WORKSPACE_ID,
+      datasetId: DATASET_ID,
+      type: "bar",
+      query: { measures: ["FeedbackRecords.count"] },
+      dateRange: "last 7 days",
+    };
+
+    const refused = await call("preview_chart", input, ["dashboards:read"]);
+    expect(refused.isError).toBe(true);
+    expect(previewV3Chart).not.toHaveBeenCalled();
+
+    await call("preview_chart", input, ["dashboards:read", "feedbackRecords:read"]);
+    expect(previewV3Chart).toHaveBeenCalledWith(expect.objectContaining({ body: input }));
   });
 });

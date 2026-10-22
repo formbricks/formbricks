@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { ZV3ChartFieldCatalog, ZV3ChartResource } from "@/app/api/v3/charts/lib/resources";
+import { ZV3ChartData, ZV3ChartFieldCatalog, ZV3ChartResource } from "@/app/api/v3/charts/lib/resources";
 import { V3_NAME_MAX_LENGTH } from "@/app/api/v3/charts/lib/schemas";
+import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 import { mcpToolOutput } from "./output-schemas";
 
 /**
@@ -59,3 +60,44 @@ export type TMcpChartIdInput = z.infer<typeof ZMcpChartIdInput>;
 
 export const ZMcpChartOutput = mcpToolOutput(ZV3ChartResource);
 export const ZMcpChartListOutput = mcpToolOutput(z.array(ZV3ChartResource));
+
+export const ZMcpChartType = ZChartType.describe(
+  "Chart type: area, bar, pie, big_number or matrix. A big_number shows one value, so its grouping is dropped."
+);
+
+export const ZMcpChartQuery = z
+  .record(z.string(), z.unknown())
+  .describe(
+    "The chart query in Cube's query format: measures, dimensions, timeDimensions ({ dimension, granularity?, dateRange? }), filters ({ member, operator, values } or { and: [...] } / { or: [...] }), order, limit. Use only field names from list_chart_fields. No timezone: ranges are read in the organization's time zone."
+  );
+
+/**
+ * A date range the read is for. It replaces the chart's own range on collectedAt, the way the dashboard
+ * date filter does.
+ */
+export const ZMcpChartDateRange = z
+  .union([
+    z.string().describe("A date preset from list_chart_fields, or 'all-time' to remove the range."),
+    z
+      .object({
+        from: z.string().describe("First day, YYYY-MM-DD, inclusive."),
+        to: z.string().describe("Last day, YYYY-MM-DD, inclusive."),
+      })
+      .strict(),
+  ])
+  .optional()
+  .describe(
+    "Replaces the chart's date range on FeedbackRecords.collectedAt. Read in the organization's time zone."
+  );
+
+export const ZMcpPreviewChartInput = z
+  .object({
+    ...datasetScope,
+    type: ZMcpChartType,
+    query: ZMcpChartQuery,
+    dateRange: ZMcpChartDateRange,
+  })
+  .strict();
+export type TMcpPreviewChartInput = z.infer<typeof ZMcpPreviewChartInput>;
+
+export const ZMcpChartDataOutput = mcpToolOutput(ZV3ChartData);
