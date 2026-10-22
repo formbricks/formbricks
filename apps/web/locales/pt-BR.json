@@ -2503,7 +2503,9 @@
       "warning_action_missing": "Ele aparece quando uma ação é disparada, mas nenhuma ação foi definida, então nunca aparece.",
       "warning_destination_missing": "Ele não tem nada para abrir. Escolha uma pesquisa ou um link na aba Conteúdo.",
       "warning_destination_not_allowed": "A pesquisa dele não pode mais ser aberta por um criativo: ela é Restrita, de uso único ou protegida por PIN. Escolha outra pesquisa ou um link.",
-      "warning_overlap": "Ele pode se sobrepor a {names} na mesma página."
+      "warning_overlap": "Ele pode se sobrepor a {names} na mesma página.",
+      "wind_down_description": "Seus criativos estão ocultos nos seus sites. Você ainda pode pausá-los, encerrá-los ou excluí-los. Quando sua licença voltar a incluir Criativos, os que você não pausou, encerrou ou excluiu voltarão a aparecer automaticamente.",
+      "wind_down_title": "Sua licença não inclui Criativos"
     },
     "custom_css": {
       "base_css_help": "Este CSS se aplica nos modos claro e escuro.",
@@ -3459,6 +3461,7 @@
         "audit_logs": "Registros de Auditoria",
         "coming_soon": "Em breve",
         "contacts_and_segments": "Gerenciamento de contatos e segmentos",
+        "creatives": "Criativos",
         "custom_workspace_count": "Contagem personalizada de 'Workspace'",
         "data_retention": "Retenção de dados",
         "enterprise_features": "Recursos Empresariais",

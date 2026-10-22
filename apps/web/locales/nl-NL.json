@@ -2503,7 +2503,9 @@
       "warning_action_missing": "Wordt getoond wanneer een actie wordt geactiveerd, maar er is geen actie ingesteld, dus wordt hij nooit getoond.",
       "warning_destination_missing": "Er is niets om te openen. Kies een enquête of een link op het tabblad Inhoud.",
       "warning_destination_not_allowed": "Deze creative kan de bijbehorende survey niet meer openen: de survey is beperkt, voor eenmalig gebruik of beveiligd met een pincode. Kies een andere survey of een link.",
-      "warning_overlap": "Het kan {names} op dezelfde pagina overlappen."
+      "warning_overlap": "Het kan {names} op dezelfde pagina overlappen.",
+      "wind_down_description": "Je creatives worden niet meer getoond op je sites. Je kunt ze nog steeds pauzeren, sluiten of verwijderen. Zodra je licentie weer Creatives bevat, worden de creatives die je niet hebt gepauzeerd, gesloten of verwijderd vanzelf weer getoond.",
+      "wind_down_title": "Je licentie bevat geen Creatives"
     },
     "custom_css": {
       "base_css_help": "Deze CSS wordt toegepast in zowel de lichte als de donkere modus.",
@@ -3459,6 +3461,7 @@
         "audit_logs": "Auditlogboeken",
         "coming_soon": "Binnenkort beschikbaar",
         "contacts_and_segments": "Contactbeheer & segmenten",
+        "creatives": "Creatives",
         "custom_workspace_count": "Aangepast aantal 'Workspaces'",
         "data_retention": "Gegevensbewaring",
         "enterprise_features": "Enterprise-functies",

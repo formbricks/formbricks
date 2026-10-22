@@ -3,6 +3,8 @@
 import { ArrowUpRightIcon, ShieldIcon } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 import { useTranslation } from "react-i18next";
+import { useCreativesAccess } from "@/modules/ee/creatives/components/creatives-access-provider";
+import { isCreativesVisible } from "@/modules/ee/creatives/lib/access-rules";
 import { VisibilityBlockersAlert } from "@/modules/survey/visibility/components/visibility-blockers-alert";
 import { useVisibilityCopy } from "@/modules/survey/visibility/hooks/use-visibility-copy";
 import { type TRestrictedAuthor, groupBlockersByType } from "@/modules/survey/visibility/lib/collaborate";
@@ -41,6 +43,7 @@ export const RestrictConfirmationDialog = ({
   const blockerGroups = groupBlockersByType(blockers);
   const yes = t("common.yes");
   const no = t("common.no");
+  const showsCreatives = isCreativesVisible(useCreativesAccess());
 
   const rows = [
     {
@@ -53,8 +56,9 @@ export const RestrictConfirmationDialog = ({
     { label: t("common.integrations"), before: yes, after: no },
     { label: t("common.webhooks"), before: yes, after: no },
     { label: t("common.workflows"), before: yes, after: no },
-    // A creative can't open a Restricted survey (ENG-3868).
-    { label: t("common.creatives"), before: yes, after: no },
+    // A creative can't open a Restricted survey (ENG-3868). Left out where Creatives doesn't exist
+    // for the workspace (ENG-6602).
+    ...(showsCreatives ? [{ label: t("common.creatives"), before: yes, after: no }] : []),
   ];
 
   return (

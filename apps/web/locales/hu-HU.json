@@ -2503,7 +2503,9 @@
       "warning_action_missing": "Egy művelet kiváltásakor jelenik meg, azonban nincs művelet beállítva, ezért soha nem jelenik meg.",
       "warning_destination_missing": "Nincs megnyitandó tartalma. Kérjük, válasszon egy felmérést vagy egy hivatkozást a Tartalom lapon.",
       "warning_destination_not_allowed": "A hozzá tartozó felmérést a kreatív már nem nyithatja meg, mert a felmérés Korlátozott, egyszer használatos vagy PIN-kóddal védett. Kérjük, válasszon másik felmérést vagy hivatkozást.",
-      "warning_overlap": "Ugyanazon az oldalon átfedésbe kerülhet a következőkkel: {names}."
+      "warning_overlap": "Ugyanazon az oldalon átfedésbe kerülhet a következőkkel: {names}.",
+      "wind_down_description": "Az Ön kreatívjai nem jelennek meg az Ön webhelyein. A kreatívokat továbbra is szüneteltetheti, lezárhatja vagy törölheti. Amint az Ön licence ismét tartalmazza a Kreatívokat, azok a kreatívok, amelyeket Ön nem szüneteltetett, nem zárt le és nem törölt, ismét automatikusan megjelennek.",
+      "wind_down_title": "Az Ön licence nem tartalmazza a Kreatívokat"
     },
     "custom_css": {
       "base_css_help": "Ez a CSS világos és sötét módban egyaránt érvényesül.",
@@ -3459,6 +3461,7 @@
         "audit_logs": "Auditálási naplók",
         "coming_soon": "Hamarosan",
         "contacts_and_segments": "Partnerkezelés és szegmensek",
+        "creatives": "Kreatívok",
         "custom_workspace_count": "Egyéni „munkaterület” darabszám",
         "data_retention": "Adatmegőrzés",
         "enterprise_features": "Vállalati funkciók",

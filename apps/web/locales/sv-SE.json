@@ -2503,7 +2503,9 @@
       "warning_action_missing": "Den visas när en åtgärd utlöses, men ingen åtgärd är angiven, så den visas aldrig.",
       "warning_destination_missing": "Den har inget att öppna. Välj en enkät eller en länk på fliken Innehåll.",
       "warning_destination_not_allowed": "Enkäten kan inte längre öppnas av en kreativ: den är begränsad, för engångsbruk eller PIN-skyddad. Välj en annan enkät eller en länk.",
-      "warning_overlap": "Den kan överlappa {names} på samma sida."
+      "warning_overlap": "Den kan överlappa {names} på samma sida.",
+      "wind_down_description": "Dina kreativ är dolda på dina webbplatser. Du kan fortfarande pausa, stänga eller ta bort dem. När din licens inkluderar Kreativ igen visas de som du inte har pausat, stängt eller tagit bort automatiskt igen.",
+      "wind_down_title": "Din licens inkluderar inte Kreativ"
     },
     "custom_css": {
       "base_css_help": "Den här CSS-koden gäller i både ljust och mörkt läge.",
@@ -3459,6 +3461,7 @@
         "audit_logs": "Granskningsloggar",
         "coming_soon": "Kommer snart",
         "contacts_and_segments": "Kontakthantering och segment",
+        "creatives": "Kreativ",
         "custom_workspace_count": "Anpassat antal 'Arbetsytor'",
         "data_retention": "Datalagring",
         "enterprise_features": "Enterprise-funktioner",

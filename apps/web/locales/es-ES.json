@@ -2503,7 +2503,9 @@
       "warning_action_missing": "Se muestra cuando se activa una acción, pero no hay ninguna acción configurada, así que nunca se muestra.",
       "warning_destination_missing": "No tiene nada que abrir. Elige una encuesta o un enlace en su pestaña Contenido.",
       "warning_destination_not_allowed": "Una creatividad ya no puede abrir su encuesta: es Restringida, de un solo uso o está protegida con PIN. Elige otra encuesta o un enlace.",
-      "warning_overlap": "Podría solaparse con {names} en la misma página."
+      "warning_overlap": "Podría solaparse con {names} en la misma página.",
+      "wind_down_description": "Tus creatividades están ocultas en tus sitios. Aún puedes pausarlas, cerrarlas o eliminarlas. Cuando tu licencia vuelva a incluir Creatividades, las que no hayas pausado, cerrado o eliminado volverán a mostrarse automáticamente.",
+      "wind_down_title": "Tu licencia no incluye Creatividades"
     },
     "custom_css": {
       "base_css_help": "Este CSS se aplica tanto en modo claro como en modo oscuro.",
@@ -3459,6 +3461,7 @@
         "audit_logs": "Registros de auditoría",
         "coming_soon": "Próximamente",
         "contacts_and_segments": "Gestión de contactos y segmentos",
+        "creatives": "Creatividades",
         "custom_workspace_count": "Contador de 'Workspace' personalizado",
         "data_retention": "Retención de datos",
         "enterprise_features": "Características empresariales",

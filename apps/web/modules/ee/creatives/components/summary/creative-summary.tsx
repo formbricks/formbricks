@@ -21,6 +21,7 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { useCreativeResource } from "../../hooks/use-creative-editor";
 import { useCreativeStatusChange } from "../../hooks/use-creative-status-change";
 import { useCreativeStats } from "../../hooks/use-creative-summary";
+import { type TCreativesAccess, canWriteCreatives } from "../../lib/access-rules";
 import type { TCreativeResource } from "../../lib/editor-form";
 import { getCreativeEditPath } from "../../lib/paths";
 import {
@@ -33,6 +34,7 @@ import {
 import { getUiLocale } from "../../lib/ui-locale";
 import { CreativeTypeIcon } from "../creative-icons";
 import { CreativeStatusPill } from "../creative-status-pill";
+import { CreativesWindDownNotice } from "../creatives-wind-down-notice";
 import { CreativeSummaryStatsSkeleton } from "../skeletons";
 import { CreativeStatusDropdown } from "./creative-status-dropdown";
 import { CreativeSummaryStats } from "./creative-summary-stats";
@@ -77,12 +79,15 @@ interface CreativeSummaryProps {
   workspaceId: string;
   initialCreative: TCreativeResource;
   isReadOnly: boolean;
+  /** `full` or `windDown`: in wind-down there is no editor, and the status menu only pauses or closes. */
+  creativesAccess: TCreativesAccess;
 }
 
 export const CreativeSummary = ({
   workspaceId,
   initialCreative,
   isReadOnly,
+  creativesAccess,
 }: Readonly<CreativeSummaryProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -108,7 +113,7 @@ export const CreativeSummary = ({
     }
   };
 
-  const statusControl = getSummaryStatusControl(creative, isReadOnly);
+  const statusControl = getSummaryStatusControl(creative, isReadOnly, creativesAccess);
   const state = { status: creative.displayStatus, reason: creative.displayStatusReason };
 
   let body: ReactNode;
@@ -143,6 +148,7 @@ export const CreativeSummary = ({
             {statusControl.kind === "select" ? (
               <CreativeStatusDropdown
                 value={statusControl.value}
+                options={statusControl.options}
                 state={state}
                 isWaitingForStart={isWaitingForStart(creative.schedule, new Date())}
                 disabled={statusChange.isPending}
@@ -164,8 +170,9 @@ export const CreativeSummary = ({
                   icon: SquarePenIcon,
                   tooltip: t("common.edit"),
                   onClick: () => router.push(getCreativeEditPath(workspaceId, creative.id)),
-                  // Read-only members can't open the editor; it sends them back to the list.
-                  isVisible: !isReadOnly,
+                  // Read-only members can't open the editor; it sends them back to the list. In
+                  // wind-down there is nothing it could save.
+                  isVisible: !isReadOnly && canWriteCreatives(creativesAccess),
                 },
               ]}
             />
@@ -173,6 +180,8 @@ export const CreativeSummary = ({
         }>
         <CreativeFacts creative={creative} />
       </PageHeader>
+
+      {creativesAccess === "windDown" && <CreativesWindDownNotice />}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <StatsRangeFilter

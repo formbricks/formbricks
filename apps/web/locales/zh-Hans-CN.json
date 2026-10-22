@@ -2503,7 +2503,9 @@
       "warning_action_missing": "它会在触发某个操作时显示,但目前未设置任何操作,因此永远不会显示。",
       "warning_destination_missing": "它没有可打开的内容。请在“内容”选项卡中选择一份问卷或一个链接。",
       "warning_destination_not_allowed": "创意素材无法再打开它的问卷:该问卷已设为“受限”、一次性使用或受 PIN 码保护。请选择其他问卷或链接。",
-      "warning_overlap": "它可能会在同一页面上与 {names} 重叠。"
+      "warning_overlap": "它可能会在同一页面上与 {names} 重叠。",
+      "wind_down_description": "你的创意内容已从你的网站上隐藏。你仍然可以暂停、关闭或删除它们。当你的许可证再次包含“创意”功能后，你没有暂停、关闭或删除的创意内容会自动重新显示。",
+      "wind_down_title": "你的许可证不包含“创意”功能"
     },
     "custom_css": {
       "base_css_help": "此 CSS 在浅色和深色模式下均适用。",
@@ -3459,6 +3461,7 @@
         "audit_logs": "审计日志",
         "coming_soon": "即将推出",
         "contacts_and_segments": "联系人管理 & 分段",
+        "creatives": "创意",
         "custom_workspace_count": "自定义\"工作空间\"数量",
         "data_retention": "数据保留",
         "enterprise_features": "企业 功能",

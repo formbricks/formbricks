@@ -20,6 +20,8 @@ import { PILL_STATES } from "../creative-status-pill";
 interface CreativeStatusDropdownProps {
   /** The author's status, which the options set. */
   value: TSummaryStatus;
+  /** The statuses it may be set to (`getSummaryStatusControl`): only Paused and Closed in wind-down. */
+  options: readonly TSummaryStatus[];
   /** What the creative shows now, which the trigger names: the schedule and its survey have a say. */
   state: TCreativeDisplayState;
   disabled?: boolean;
@@ -43,6 +45,7 @@ const IndicatorSlot = ({ children }: Readonly<{ children: ReactNode }>) => (
  */
 export const CreativeStatusDropdown = ({
   value,
+  options,
   state,
   disabled,
   onChange,
@@ -78,34 +81,40 @@ export const CreativeStatusDropdown = ({
           </SelectValue>
         </SelectTrigger>
         <SelectContent className="bg-white">
-          <SelectItem className="group font-normal hover:text-slate-900" value="inProgress">
-            <span className="flex w-full items-center gap-2">
-              <IndicatorSlot>
-                {isWaitingForStart ? (
-                  <SurveyStatusIndicator status="paused" isScheduled />
-                ) : (
-                  <SurveyStatusIndicator status="inProgress" />
-                )}
-              </IndicatorSlot>
-              {isWaitingForStart ? t("common.scheduled") : t("common.active")}
-            </span>
-          </SelectItem>
-          <SelectItem className="group font-normal hover:text-slate-900" value="paused">
-            <span className="flex w-full items-center gap-2">
-              <IndicatorSlot>
-                <SurveyStatusIndicator status="paused" />
-              </IndicatorSlot>
-              {t("common.paused")}
-            </span>
-          </SelectItem>
-          <SelectItem className="group font-normal hover:text-slate-900" value="completed">
-            <span className="flex w-full items-center gap-2">
-              <IndicatorSlot>
-                <SurveyStatusIndicator status="completed" />
-              </IndicatorSlot>
-              {t("common.closed")}
-            </span>
-          </SelectItem>
+          {options.includes("inProgress") && (
+            <SelectItem className="group font-normal hover:text-slate-900" value="inProgress">
+              <span className="flex w-full items-center gap-2">
+                <IndicatorSlot>
+                  {isWaitingForStart ? (
+                    <SurveyStatusIndicator status="paused" isScheduled />
+                  ) : (
+                    <SurveyStatusIndicator status="inProgress" />
+                  )}
+                </IndicatorSlot>
+                {isWaitingForStart ? t("common.scheduled") : t("common.active")}
+              </span>
+            </SelectItem>
+          )}
+          {options.includes("paused") && (
+            <SelectItem className="group font-normal hover:text-slate-900" value="paused">
+              <span className="flex w-full items-center gap-2">
+                <IndicatorSlot>
+                  <SurveyStatusIndicator status="paused" />
+                </IndicatorSlot>
+                {t("common.paused")}
+              </span>
+            </SelectItem>
+          )}
+          {options.includes("completed") && (
+            <SelectItem className="group font-normal hover:text-slate-900" value="completed">
+              <span className="flex w-full items-center gap-2">
+                <IndicatorSlot>
+                  <SurveyStatusIndicator status="completed" />
+                </IndicatorSlot>
+                {t("common.closed")}
+              </span>
+            </SelectItem>
+          )}
         </SelectContent>
       </Select>
     </TooltipRenderer>

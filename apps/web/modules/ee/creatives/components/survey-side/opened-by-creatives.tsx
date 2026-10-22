@@ -4,7 +4,9 @@ import { ArrowUpRightIcon, MousePointerClickIcon } from "lucide-react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { CreativeStatusPill } from "@/modules/ee/creatives/components/creative-status-pill";
-import { getCreativeEditPath } from "@/modules/ee/creatives/lib/paths";
+import { useCreativesAccess } from "@/modules/ee/creatives/components/creatives-access-provider";
+import { canWriteCreatives } from "@/modules/ee/creatives/lib/access-rules";
+import { getCreativeEditPath, getCreativeSummaryPath } from "@/modules/ee/creatives/lib/paths";
 import type { TSurveyLinkedCreative } from "@/modules/ee/creatives/lib/survey-side";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
@@ -17,10 +19,13 @@ interface OpenedByCreativesProps {
 /**
  * The Survey Trigger card's read-only "Opened by: <creative>" rows, one per linked creative, Draft
  * included (ENG-3579). The creative is edited in its own editor, opened in a new tab so the survey's
- * unsaved changes stay.
+ * unsaved changes stay; in wind-down, where there is no editor, the link opens its summary (ENG-6602).
  */
 export const OpenedByCreatives = ({ workspaceId, creatives }: Readonly<OpenedByCreativesProps>) => {
   const { t } = useTranslation();
+  const getCreativePath = canWriteCreatives(useCreativesAccess())
+    ? getCreativeEditPath
+    : getCreativeSummaryPath;
   if (creatives.length === 0) return null;
 
   return (
@@ -42,7 +47,7 @@ export const OpenedByCreatives = ({ workspaceId, creatives }: Readonly<OpenedByC
             <TooltipRenderer tooltipContent={t("workspace.creatives.survey_side.open_creative")}>
               <Button variant="secondary" size="icon" asChild>
                 <Link
-                  href={getCreativeEditPath(workspaceId, creative.id)}
+                  href={getCreativePath(workspaceId, creative.id)}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={t("workspace.creatives.survey_side.open_creative")}>

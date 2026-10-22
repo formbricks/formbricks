@@ -2503,7 +2503,9 @@
       "warning_action_missing": "アクションの実行時に表示される設定ですが、アクションが未設定のため、表示されることはありません。",
       "warning_destination_missing": "開く先がありません。「コンテンツ」タブでアンケートまたはリンクを選んでください。",
       "warning_destination_not_allowed": "このクリエイティブからはアンケートを開けなくなりました。アンケートが「制限付き」、1回限り、またはPIN保護に設定されています。別のアンケートかリンクを選んでください。",
-      "warning_overlap": "同じページで{names}と重なる可能性があります。"
+      "warning_overlap": "同じページで{names}と重なる可能性があります。",
+      "wind_down_description": "クリエイティブはサイトに表示されなくなっています。一時停止、終了、削除は引き続き可能です。ライセンスに再びクリエイティブが含まれると、一時停止・終了・削除していないものは自動的に再表示されます。",
+      "wind_down_title": "ご利用のライセンスにはクリエイティブが含まれていません"
     },
     "custom_css": {
       "base_css_help": "このCSSはライトモードとダークモードの両方に適用されます。",
@@ -3459,6 +3461,7 @@
         "audit_logs": "監査ログ",
         "coming_soon": "近日公開",
         "contacts_and_segments": "連絡先管理＆セグメント",
+        "creatives": "クリエイティブ",
         "custom_workspace_count": "カスタム「ワークスペース」数",
         "data_retention": "データ保持",
         "enterprise_features": "エンタープライズ機能",

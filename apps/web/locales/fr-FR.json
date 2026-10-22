@@ -2503,7 +2503,9 @@
       "warning_action_missing": "Elle s'affiche quand une action se déclenche, mais aucune action n'est définie : elle ne s'affiche donc jamais.",
       "warning_destination_missing": "Elle n'a rien à ouvrir. Choisis une enquête ou un lien dans son onglet Contenu.",
       "warning_destination_not_allowed": "Son sondage ne peut plus être ouvert par une création : il est restreint, à usage unique ou protégé par un code PIN. Choisis un autre sondage ou un lien.",
-      "warning_overlap": "Elle pourrait chevaucher {names} sur la même page."
+      "warning_overlap": "Elle pourrait chevaucher {names} sur la même page.",
+      "wind_down_description": "Tes créatifs sont masqués sur tes sites. Tu peux toujours les mettre en pause, les fermer ou les supprimer. Quand ta licence inclura de nouveau Creatives, ceux que tu n'auras pas mis en pause, fermés ou supprimés réapparaîtront automatiquement.",
+      "wind_down_title": "Ta licence n'inclut pas Creatives"
     },
     "custom_css": {
       "base_css_help": "Ce CSS s'applique en mode clair et en mode sombre.",
@@ -3459,6 +3461,7 @@
         "audit_logs": "Journaux d'audit",
         "coming_soon": "À venir bientôt",
         "contacts_and_segments": "Gestion des contacts et des segments",
+        "creatives": "Creatives",
         "custom_workspace_count": "Nombre de « Workspace » personnalisé",
         "data_retention": "Conservation des données",
         "enterprise_features": "Fonctionnalités d'entreprise",

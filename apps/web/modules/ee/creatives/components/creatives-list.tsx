@@ -15,6 +15,7 @@ import { CardTableHeader, CardTableRow } from "@/modules/ui/components/card-tabl
 import { FilterDropdown, type TFilterOption } from "@/modules/ui/components/filter-dropdown";
 import { SearchBar } from "@/modules/ui/components/search-bar";
 import { useActiveCreatives, useCreativesList } from "../hooks/use-creatives-list";
+import { type TCreativesAccess, canWriteCreatives } from "../lib/access-rules";
 import { getLinkTargetLabel } from "../lib/link-target";
 import type { TCreativeListItem } from "../lib/list-api";
 import {
@@ -58,9 +59,11 @@ const OpensCell = ({ destination }: Readonly<{ destination: TCreativeListItem["d
 interface CreativesListProps {
   workspaceId: string;
   isReadOnly: boolean;
+  /** `full` or `windDown`: in wind-down rows open the summary and their menu only takes creatives down. */
+  creativesAccess: TCreativesAccess;
 }
 
-export const CreativesList = ({ workspaceId, isReadOnly }: Readonly<CreativesListProps>) => {
+export const CreativesList = ({ workspaceId, isReadOnly, creativesAccess }: Readonly<CreativesListProps>) => {
   const { t, i18n } = useTranslation();
   const locale = getUiLocale(i18n);
   const [animationParent] = useAutoAnimate();
@@ -124,8 +127,9 @@ export const CreativesList = ({ workspaceId, isReadOnly }: Readonly<CreativesLis
     });
 
   const hasFilters = hasActiveCreativeFilters(filters);
+  // A draft has nothing to count yet, so it opens in the editor, unless the editor is out of reach.
   const getRowHref = (creative: TCreativeListItem) =>
-    creative.displayStatus === "draft"
+    creative.displayStatus === "draft" && canWriteCreatives(creativesAccess)
       ? getCreativeEditPath(workspaceId, creative.id)
       : getCreativeSummaryPath(workspaceId, creative.id);
 
@@ -179,7 +183,11 @@ export const CreativesList = ({ workspaceId, isReadOnly }: Readonly<CreativesLis
                 className={GRID}
                 actions={
                   isReadOnly ? undefined : (
-                    <CreativeListActions workspaceId={workspaceId} creative={creative} />
+                    <CreativeListActions
+                      workspaceId={workspaceId}
+                      creative={creative}
+                      creativesAccess={creativesAccess}
+                    />
                   )
                 }>
                 <div className="col-span-3 flex max-w-full items-center gap-2 justify-self-start text-sm font-medium text-slate-900">

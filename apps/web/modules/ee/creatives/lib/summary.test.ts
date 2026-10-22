@@ -107,9 +107,10 @@ describe("formatStatsRange", () => {
 
 describe("getSummaryStatusControl", () => {
   test("lets a writer switch a published creative between Active, Paused and Closed", () => {
-    expect(getSummaryStatusControl({ status: "paused", archivedAt: null }, false)).toEqual({
+    expect(getSummaryStatusControl({ status: "paused", archivedAt: null }, false, "full")).toEqual({
       kind: "select",
       value: "paused",
+      options: ["inProgress", "paused", "completed"],
     });
   });
 
@@ -122,8 +123,20 @@ describe("getSummaryStatusControl", () => {
     ],
     ["a member who can only read", { status: "inProgress", archivedAt: null }, true],
   ] as const)("only shows the status for %s", (_case, creative, isReadOnly) => {
-    expect(getSummaryStatusControl(creative, isReadOnly)).toEqual({ kind: "pill" });
+    expect(getSummaryStatusControl(creative, isReadOnly, "full")).toEqual({ kind: "pill" });
+    expect(getSummaryStatusControl(creative, isReadOnly, "windDown")).toEqual({ kind: "pill" });
   });
+
+  test.each(["inProgress", "paused", "completed"] as const)(
+    "in wind-down, only pauses or closes a %s creative: it can't be turned back on",
+    (status) => {
+      expect(getSummaryStatusControl({ status, archivedAt: null }, false, "windDown")).toEqual({
+        kind: "select",
+        value: status,
+        options: ["paused", "completed"],
+      });
+    }
+  );
 });
 
 describe("getRowStatusActions", () => {
@@ -147,29 +160,70 @@ describe("getRowStatusActions", () => {
     ["Closed", "completed", [{ action: "reopen", status: "inProgress" }]],
   ] as const)("offers what an author's %s creative can become", (_case, status, actions) => {
     const displayStatus = status === "completed" ? "closed" : status === "paused" ? "paused" : "active";
-    expect(getRowStatusActions({ status, displayStatus, archivedAt: null })).toEqual(actions);
+    expect(getRowStatusActions({ status, displayStatus, archivedAt: null }, "full")).toEqual(actions);
   });
 
   test("offers to keep paused a creative that shows Paused only because of its survey", () => {
-    expect(getRowStatusActions({ status: "inProgress", displayStatus: "paused", archivedAt: null })).toEqual([
+    expect(
+      getRowStatusActions({ status: "inProgress", displayStatus: "paused", archivedAt: null }, "full")
+    ).toEqual([
       { action: "keepPaused", status: "paused" },
       { action: "close", status: "completed" },
     ]);
   });
 
   test("sends a draft to the editor to publish, since Publish checks it first", () => {
-    expect(getRowStatusActions({ status: "draft", displayStatus: "draft", archivedAt: null })).toEqual([
-      { action: "publish" },
-    ]);
+    expect(
+      getRowStatusActions({ status: "draft", displayStatus: "draft", archivedAt: null }, "full")
+    ).toEqual([{ action: "publish" }]);
   });
 
   test("offers nothing for an archived creative", () => {
     expect(
-      getRowStatusActions({
-        status: "paused",
-        displayStatus: "archived",
-        archivedAt: "2026-10-01T00:00:00.000Z",
-      })
+      getRowStatusActions(
+        {
+          status: "paused",
+          displayStatus: "archived",
+          archivedAt: "2026-10-01T00:00:00.000Z",
+        },
+        "full"
+      )
+    ).toEqual([]);
+  });
+
+  describe("in wind-down", () => {
+    test.each([
+      [
+        "an Active creative can still be paused or closed",
+        { status: "inProgress", displayStatus: "active" },
+        [
+          { action: "pause", status: "paused" },
+          { action: "close", status: "completed" },
+        ],
+      ],
+      [
+        "a creative Paused by its survey can still be kept paused or closed",
+        { status: "inProgress", displayStatus: "paused" },
+        [
+          { action: "keepPaused", status: "paused" },
+          { action: "close", status: "completed" },
+        ],
+      ],
+      [
+        "a Paused creative can be closed but not resumed",
+        { status: "paused", displayStatus: "paused" },
+        [{ action: "close", status: "completed" }],
+      ],
+      ["a Closed creative can't be reopened", { status: "completed", displayStatus: "closed" }, []],
+      ["a draft can't be published", { status: "draft", displayStatus: "draft" }, []],
+    ] as const)("%s", (_case, creative, actions) => {
+      expect(getRowStatusActions({ ...creative, archivedAt: null }, "windDown")).toEqual(actions);
+    });
+  });
+
+  test("offers nothing when the workspace has no Creatives access", () => {
+    expect(
+      getRowStatusActions({ status: "inProgress", displayStatus: "active", archivedAt: null }, "none")
     ).toEqual([]);
   });
 });

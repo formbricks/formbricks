@@ -5,6 +5,8 @@ import { type Dispatch, type SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TSurveyStatus } from "@formbricks/types/surveys/types";
+import { useCreativesAccess } from "../components/creatives-access-provider";
+import { isCreativesVisible } from "../lib/access-rules";
 import {
   type TSurveyLinkedCreative,
   type TSurveyStatusChangePlan,
@@ -24,7 +26,8 @@ const SERVER_LOADED_STALE_TIME_MS = 60_000;
 /**
  * The creatives that open the survey. Empty while loading or when they can't be read: every screen
  * using it only adds an explanation or locks a switch the server guards anyway. A page that read them
- * on the server (`getSurveyLinkedCreatives`) passes them as `initialData`.
+ * on the server (`getSurveyLinkedCreatives`) passes them as `initialData`. Also empty, and never read,
+ * when the workspace has no Creatives access (ENG-6602): the survey screens show no creative UI then.
  */
 export const useSurveyLinkedCreatives = ({
   workspaceId,
@@ -35,12 +38,13 @@ export const useSurveyLinkedCreatives = ({
   enabled?: boolean;
   initialData?: TSurveyLinkedCreative[];
 }): TSurveyLinkedCreative[] => {
+  const isVisible = isCreativesVisible(useCreativesAccess());
   const { data } = useQuery({
     ...surveyLinkedCreativesQuery({ workspaceId, surveyId }),
-    enabled,
+    enabled: enabled && isVisible,
     ...(initialData && { initialData, staleTime: SERVER_LOADED_STALE_TIME_MS }),
   });
-  return data ?? NO_CREATIVES;
+  return isVisible ? (data ?? NO_CREATIVES) : NO_CREATIVES;
 };
 
 type TPendingStatusChange = Readonly<{
@@ -52,7 +56,8 @@ type TPendingStatusChange = Readonly<{
 /**
  * A survey status change that first names the creatives it pauses or brings back: it applies
  * at once when none are affected, and otherwise waits for the dialog. A resume that keeps them paused
- * pauses those creatives before the survey goes live, so none of them shows in between.
+ * pauses those creatives before the survey goes live, so none of them shows in between. Without
+ * Creatives access there are none to name, so it applies at once.
  */
 export const useSurveyStatusChangeWithCreatives = ({
   workspaceId,
@@ -66,6 +71,7 @@ export const useSurveyStatusChangeWithCreatives = ({
 }) => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const isVisible = isCreativesVisible(useCreativesAccess());
   // The last change asked for stays after the dialog closes, so its copy doesn't change mid-fade.
   const [pending, setPending] = useState<TPendingStatusChange | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -75,6 +81,7 @@ export const useSurveyStatusChangeWithCreatives = ({
     queryClient.invalidateQueries({ queryKey: surveyLinkedCreativesKeys.survey(surveyId) });
 
   const loadLinkedCreatives = async (): Promise<TSurveyLinkedCreative[]> => {
+    if (!isVisible) return NO_CREATIVES;
     try {
       return await queryClient.fetchQuery({
         ...surveyLinkedCreativesQuery({ workspaceId, surveyId }),

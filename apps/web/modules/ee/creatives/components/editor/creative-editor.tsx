@@ -281,7 +281,8 @@ export const CreativeEditor = ({
   // One write at a time: a save decides on the status the menu may be changing.
   const isBusy = isSaving || statusChange.isPending;
   // Like the summary: a published creative's menu (Active · Paused · Closed); a Draft goes live with Publish.
-  const statusControl = getSummaryStatusControl(creative, isReadOnly);
+  // The editor only opens with full access: its page sends wind-down to the summary.
+  const statusControl = getSummaryStatusControl(creative, isReadOnly, "full");
   const displayState = { status: creative.displayStatus, reason: creative.displayStatusReason };
 
   return (
@@ -309,6 +310,7 @@ export const CreativeEditor = ({
           {statusControl.kind === "select" ? (
             <CreativeStatusDropdown
               value={statusControl.value}
+              options={statusControl.options}
               state={displayState}
               isWaitingForStart={isWaitingForStart(creative.schedule, new Date())}
               disabled={isBusy}

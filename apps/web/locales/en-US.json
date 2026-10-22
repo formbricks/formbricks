@@ -2503,7 +2503,9 @@
       "warning_action_missing": "It shows when an action fires, but no action is set, so it never shows.",
       "warning_destination_missing": "It has nothing to open. Pick a survey or a link on its Content tab.",
       "warning_destination_not_allowed": "Its survey can't be opened by a creative anymore: it's Restricted, single-use or PIN-protected. Pick another survey or a link.",
-      "warning_overlap": "It could overlap {names} on the same page."
+      "warning_overlap": "It could overlap {names} on the same page.",
+      "wind_down_description": "Your creatives are hidden from your sites. You can still pause, close or delete them. When your license includes Creatives again, the ones you didn't pause, close or delete show again on their own.",
+      "wind_down_title": "Your license doesn't include Creatives"
     },
     "custom_css": {
       "base_css_help": "This CSS applies in light and dark mode.",
@@ -3459,6 +3461,7 @@
         "audit_logs": "Audit Logs",
         "coming_soon": "Coming soon",
         "contacts_and_segments": "Contact management & segments",
+        "creatives": "Creatives",
         "custom_workspace_count": "Custom “Workspace” count",
         "data_retention": "Data retention",
         "enterprise_features": "Enterprise Features",

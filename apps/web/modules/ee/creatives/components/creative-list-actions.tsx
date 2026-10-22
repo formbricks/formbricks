@@ -30,6 +30,7 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { useCreativeStatusChange } from "../hooks/use-creative-status-change";
 import { useCreativeRowActions } from "../hooks/use-creatives-list";
+import { type TCreativesAccess, canWriteCreatives } from "../lib/access-rules";
 import { getOpenedSurveyName, surveyLeftUnopenedQuery } from "../lib/last-opener-check";
 import type { TCreativeListItem } from "../lib/list-api";
 import { getCreativeEditPath } from "../lib/paths";
@@ -48,10 +49,18 @@ const STATUS_ACTION_ICONS: Record<TRowStatusAction["action"], LucideIcon> = {
 interface CreativeListActionsProps {
   workspaceId: string;
   creative: TCreativeListItem;
+  creativesAccess: TCreativesAccess;
 }
 
-/** The row menu, built like the surveys and workflows lists' options menu. Writers only. */
-export const CreativeListActions = ({ workspaceId, creative }: Readonly<CreativeListActionsProps>) => {
+/**
+ * The row menu, built like the surveys and workflows lists' options menu. Writers only. In wind-down
+ * (ENG-6602) it only takes the creative down: Pause (or Keep paused), Close and Delete.
+ */
+export const CreativeListActions = ({
+  workspaceId,
+  creative,
+  creativesAccess,
+}: Readonly<CreativeListActionsProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -67,6 +76,8 @@ export const CreativeListActions = ({ workspaceId, creative }: Readonly<Creative
   const { duplicate, archive, restore, remove } = useCreativeRowActions();
   const statusChange = useCreativeStatusChange(creative.id);
   const isArchived = creative.displayStatus === "archived";
+  const canWrite = canWriteCreatives(creativesAccess);
+  const statusActions = getRowStatusActions(creative, creativesAccess);
   const name = creative.name || t("workspace.creatives.untitled_creative");
   const fallbackError = t("common.something_went_wrong_please_try_again");
   const onError = (error: Error) => toast.error(getV3ApiErrorMessage(error, fallbackError));
@@ -144,12 +155,14 @@ export const CreativeListActions = ({ workspaceId, creative }: Readonly<Creative
         </DropdownMenuTrigger>
         <DropdownMenuContent className="inline-block w-auto min-w-max" align="end">
           <DropdownMenuGroup>
-            <DropdownMenuItem
-              icon={<SquarePenIcon className="size-4" />}
-              onSelect={() => router.push(editPath)}>
-              {t("common.edit")}
-            </DropdownMenuItem>
-            {getRowStatusActions(creative).map((item) => {
+            {canWrite && (
+              <DropdownMenuItem
+                icon={<SquarePenIcon className="size-4" />}
+                onSelect={() => router.push(editPath)}>
+                {t("common.edit")}
+              </DropdownMenuItem>
+            )}
+            {statusActions.map((item) => {
               const Icon = STATUS_ACTION_ICONS[item.action];
               return (
                 <DropdownMenuItem
@@ -161,28 +174,32 @@ export const CreativeListActions = ({ workspaceId, creative }: Readonly<Creative
                 </DropdownMenuItem>
               );
             })}
-            <DropdownMenuItem
-              icon={<CopyPlusIcon className="size-4" />}
-              disabled={duplicate.isPending}
-              onSelect={handleDuplicate}>
-              {t("common.duplicate")}
-            </DropdownMenuItem>
-            {isArchived ? (
-              <DropdownMenuItem
-                icon={<ArchiveRestoreIcon className="size-4" />}
-                disabled={restore.isPending}
-                onSelect={handleRestore}>
-                {t("workspace.creatives.restore")}
-              </DropdownMenuItem>
-            ) : (
-              <DropdownMenuItem
-                icon={<ArchiveIcon className="size-4" />}
-                disabled={archive.isPending}
-                onSelect={() => void handleArchive()}>
-                {t("common.archive")}
-              </DropdownMenuItem>
+            {canWrite && (
+              <>
+                <DropdownMenuItem
+                  icon={<CopyPlusIcon className="size-4" />}
+                  disabled={duplicate.isPending}
+                  onSelect={handleDuplicate}>
+                  {t("common.duplicate")}
+                </DropdownMenuItem>
+                {isArchived ? (
+                  <DropdownMenuItem
+                    icon={<ArchiveRestoreIcon className="size-4" />}
+                    disabled={restore.isPending}
+                    onSelect={handleRestore}>
+                    {t("workspace.creatives.restore")}
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem
+                    icon={<ArchiveIcon className="size-4" />}
+                    disabled={archive.isPending}
+                    onSelect={() => void handleArchive()}>
+                    {t("common.archive")}
+                  </DropdownMenuItem>
+                )}
+              </>
             )}
-            <DropdownMenuSeparator />
+            {(canWrite || statusActions.length > 0) && <DropdownMenuSeparator />}
             <DropdownMenuItem
               icon={<TrashIcon className="size-4" />}
               onSelect={(event) => {

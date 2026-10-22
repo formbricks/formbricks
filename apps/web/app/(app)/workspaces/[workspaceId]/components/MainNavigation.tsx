@@ -67,6 +67,9 @@ interface NavigationProps {
   // server layout: deriving it here would mean reading `Date.now()` during render, which diverges
   // between the server pass and hydration and then goes stale as the tab sits open (ENG-2366).
   trialDaysRemaining: number | null;
+  // The workspace's Creatives access is `full` or `windDown` (ENG-6602). Hidden otherwise, with no
+  // upgrade notice: Creatives doesn't exist for that workspace.
+  isCreativesVisible: boolean;
 }
 
 /**
@@ -140,6 +143,7 @@ export const MainNavigation = ({
   responseCount,
   isFormbricksSurveysConfigured,
   trialDaysRemaining,
+  isCreativesVisible,
 }: Readonly<NavigationProps>) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -196,6 +200,7 @@ export const MainNavigation = ({
             href: `/workspaces/${workspace.id}/creatives`,
             icon: LayoutTemplateIcon,
             isActive: pathname?.includes("/creatives"),
+            isHidden: !isCreativesVisible,
             disabled: isMembershipPending || isBilling,
           },
           {
@@ -253,7 +258,7 @@ export const MainNavigation = ({
         ],
       },
     ],
-    [t, workspace.id, pathname, isMembershipPending, isBilling]
+    [t, workspace.id, pathname, isMembershipPending, isBilling, isCreativesVisible]
   );
 
   const settingsNavigationItem = useMemo(

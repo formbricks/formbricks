@@ -2503,7 +2503,9 @@
       "warning_action_missing": "這個素材會在觸發某個動作時顯示,但目前尚未設定動作,所以永遠不會顯示。",
       "warning_destination_missing": "這個素材沒有可開啟的內容。請到「內容」分頁選擇問卷或連結。",
       "warning_destination_not_allowed": "創意素材已無法再開啟這份問卷,因為它是「受限」、單次使用或有 PIN 碼保護。請改選其他問卷或連結。",
-      "warning_overlap": "它可能會與 {names} 在同一頁面上重疊。"
+      "warning_overlap": "它可能會與 {names} 在同一頁面上重疊。",
+      "wind_down_description": "你的創意素材已從你的網站上隱藏，但你仍然可以暫停、關閉或刪除它們。等你的授權再次包含「創意素材」後，你沒有暫停、關閉或刪除的項目就會自動重新顯示。",
+      "wind_down_title": "你的授權不包含「創意素材」"
     },
     "custom_css": {
       "base_css_help": "此 CSS 會同時套用於淺色和深色模式。",
@@ -3459,6 +3461,7 @@
         "audit_logs": "稽核記錄",
         "coming_soon": "即將推出",
         "contacts_and_segments": "聯絡人管理和區隔",
+        "creatives": "創意素材",
         "custom_workspace_count": "自訂「工作區」數量",
         "data_retention": "資料保留",
         "enterprise_features": "企業版功能",

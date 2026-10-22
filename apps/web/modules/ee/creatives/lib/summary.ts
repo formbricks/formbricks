@@ -8,6 +8,7 @@ import {
   resolveDateRangePreset,
 } from "@/lib/date-ranges";
 import { formatDateForDisplay, formatLocalDay, parseLocalDay } from "@/lib/utils/datetime";
+import { type TCreativesAccess, type TCreativesOperation, isCreativesOperationAllowed } from "./access-rules";
 import type { TCreativeDisplayStatus, TCreativeDisplayStatusReason, TCreativeStatus } from "./display-status";
 import { MAX_STATS_RANGE_DAYS, type TStatsRange } from "./stats";
 
@@ -108,20 +109,36 @@ export const toDailyChartRows = (days: CreativeStatsDayZodType[], locale: string
 /** The statuses an author picks on the summary: Active, Paused and Closed. */
 export type TSummaryStatus = Exclude<TCreativeStatus, "draft">;
 
-export type TSummaryStatusControl = { kind: "select"; value: TSummaryStatus } | { kind: "pill" };
+export type TSummaryStatusControl =
+  | { kind: "select"; value: TSummaryStatus; options: readonly TSummaryStatus[] }
+  | { kind: "pill" };
+
+// Setting a status is a pause or a close, which wind-down allows, or turning the creative back on.
+const STATUS_OPERATION: Record<TSummaryStatus, TCreativesOperation> = {
+  inProgress: "update",
+  paused: "pause",
+  completed: "close",
+};
+
+const SUMMARY_STATUSES: readonly TSummaryStatus[] = ["inProgress", "paused", "completed"];
 
 /**
  * How the summary and editor headers show the status. Writers switch a published creative between
  * Active, Paused and Closed, like a survey's status dropdown; a draft is published with the editor's
  * Publish (which checks it first), an archived creative can't change, and read-only members only see
- * where it stands.
+ * where it stands. In wind-down the menu only pauses or closes it (ENG-6602).
  */
 export const getSummaryStatusControl = (
   creative: { status: TCreativeStatus; archivedAt: string | null },
-  isReadOnly: boolean
+  isReadOnly: boolean,
+  access: TCreativesAccess
 ): TSummaryStatusControl => {
   if (isReadOnly || creative.archivedAt !== null || creative.status === "draft") return { kind: "pill" };
-  return { kind: "select", value: creative.status };
+  const options = SUMMARY_STATUSES.filter((status) =>
+    isCreativesOperationAllowed(access, STATUS_OPERATION[status])
+  );
+  if (options.length === 0) return { kind: "pill" };
+  return { kind: "select", value: creative.status, options };
 };
 
 /** Whether turning the creative on would only schedule it: its start is still ahead. */
@@ -133,14 +150,16 @@ export type TRowStatusAction =
   | { action: "pause" | "keepPaused" | "close"; status: Exclude<TSummaryStatus, "inProgress"> }
   | { action: "resume" | "reopen"; status: "inProgress" };
 
-/**
- * The status items of a list row's menu, from the author's status. A draft's Publish opens the editor,
- * since publishing checks it first; an archived creative has none. Read-only members get no menu at all.
- * A live creative that shows Paused only because of its survey (or a missing Destination or action) is
- * offered "Keep paused": the same pause, worded for a row that already reads Paused, so it stays paused
- * when the reason goes away.
- */
-export const getRowStatusActions = (creative: {
+const ROW_ACTION_OPERATION: Record<TRowStatusAction["action"], TCreativesOperation> = {
+  publish: "update",
+  pause: "pause",
+  keepPaused: "pause",
+  close: "close",
+  resume: "update",
+  reopen: "update",
+};
+
+const getAuthorRowStatusActions = (creative: {
   status: TCreativeStatus;
   displayStatus: TCreativeDisplayStatus;
   archivedAt: string | null;
@@ -161,6 +180,25 @@ export const getRowStatusActions = (creative: {
       return [{ action: "reopen", status: "inProgress" }];
   }
 };
+
+/**
+ * The status items of a list row's menu, from the author's status. A draft's Publish opens the editor,
+ * since publishing checks it first; an archived creative has none. Read-only members get no menu at all.
+ * A live creative that shows Paused only because of its survey (or a missing Destination or action) is
+ * offered "Keep paused": the same pause, worded for a row that already reads Paused, so it stays paused
+ * when the reason goes away. In wind-down only the pause and the close are left (ENG-6602).
+ */
+export const getRowStatusActions = (
+  creative: {
+    status: TCreativeStatus;
+    displayStatus: TCreativeDisplayStatus;
+    archivedAt: string | null;
+  },
+  access: TCreativesAccess
+): TRowStatusAction[] =>
+  getAuthorRowStatusActions(creative).filter((item) =>
+    isCreativesOperationAllowed(access, ROW_ACTION_OPERATION[item.action])
+  );
 
 /** What a published creative can show while its author's status is Active, Paused or Closed. */
 export type TSummaryDisplayStatus = Extract<

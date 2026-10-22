@@ -2503,7 +2503,9 @@
       "warning_action_missing": "Es wird angezeigt, wenn eine Aktion ausgelöst wird, aber es ist keine Aktion festgelegt, daher wird es nie angezeigt.",
       "warning_destination_missing": "Es gibt nichts zu öffnen. Wähle auf dem Tab „Inhalt“ eine Umfrage oder einen Link aus.",
       "warning_destination_not_allowed": "Die zugehörige Umfrage kann nicht mehr von einem Creative geöffnet werden: Sie ist eingeschränkt, nur einmal verwendbar oder PIN-geschützt. Wähle eine andere Umfrage oder einen Link.",
-      "warning_overlap": "Es könnte sich auf derselben Seite mit {names} überschneiden."
+      "warning_overlap": "Es könnte sich auf derselben Seite mit {names} überschneiden.",
+      "wind_down_description": "Deine Creatives werden auf deinen Websites nicht mehr angezeigt. Du kannst sie weiterhin pausieren, beenden oder löschen. Sobald deine Lizenz wieder Creatives enthält, werden die Creatives, die du nicht pausiert, beendet oder gelöscht hast, automatisch wieder angezeigt.",
+      "wind_down_title": "Deine Lizenz enthält keine Creatives"
     },
     "custom_css": {
       "base_css_help": "Dieses CSS gilt sowohl im hellen als auch im dunklen Modus.",
@@ -3459,6 +3461,7 @@
         "audit_logs": "Audit-Logs",
         "coming_soon": "Demnächst verfügbar",
         "contacts_and_segments": "Kontaktverwaltung & Segmente",
+        "creatives": "Creatives",
         "custom_workspace_count": "Benutzerdefinierte 'Workspace'-Anzahl",
         "data_retention": "Datenaufbewahrung",
         "enterprise_features": "Enterprise-Funktionen",

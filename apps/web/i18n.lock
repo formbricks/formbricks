@@ -2416,6 +2416,8 @@ checksums:
     workspace/creatives/warning_destination_missing: 59741af2a63e1600509657fdd0bee7bf
     workspace/creatives/warning_destination_not_allowed: 2857e15f83aec1adddb350cba1d37eb5
     workspace/creatives/warning_overlap: 22b8a28ac94c16b70f7eda7266ecb44e
+    workspace/creatives/wind_down_description: 30b3f890c3487d82666979550e2f9042
+    workspace/creatives/wind_down_title: 682efce1865f14a026a21d22adbff736
     workspace/custom_css/base_css_help: 2ddd170c93b555fb039820b01c4cf735
     workspace/custom_css/base_css_label: 6aadf2927353b0194a7a652cd5c56023
     workspace/custom_css/clear_all: 0ad9f3ff199c1c4fed9e08203c3e65f3
@@ -3336,6 +3338,7 @@ checksums:
     workspace/settings/enterprise/audit_logs: c7efb33d09676938d07651774b067bf6
     workspace/settings/enterprise/coming_soon: ee2b0671e00972773210c5be5a9ccb89
     workspace/settings/enterprise/contacts_and_segments: 5795d9e89c0c10e1ddbbc6fc65b8d90f
+    workspace/settings/enterprise/creatives: e94aee9424bcb3e5fb5884184f510639
     workspace/settings/enterprise/custom_workspace_count: 69e985897d139e816cefe4b949a9f763
     workspace/settings/enterprise/data_retention: 29b770f21d46ffce51b70c417a34a609
     workspace/settings/enterprise/enterprise_features: 3271476140733924b2a2477c4fdf3d12

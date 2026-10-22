@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { zLocaleCode } from "@formbricks/api-v3-schemas";
 import { serializeV3Creative } from "@/app/api/v3/creatives/lib/serializers";
 import { getActionClasses } from "@/lib/actionClass/service";
@@ -11,17 +11,22 @@ import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
 import { getWorkspaceLanguages } from "@/modules/survey/editor/lib/workspace";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { CreativesHeaderActions } from "./components/creatives-header-actions";
 import { CreativesList } from "./components/creatives-list";
+import { CreativesWindDownNotice } from "./components/creatives-wind-down-notice";
 import { CreativeEditor } from "./components/editor/creative-editor";
 import { CreativeSummary } from "./components/summary/creative-summary";
+import { canWriteCreatives } from "./lib/access-rules";
 import { authorizeCreativePage } from "./lib/authorization";
 import { toDestinationSurveyOptions } from "./lib/destination-options";
+import { getCreativeSummaryPath } from "./lib/paths";
 import { findDestinationSurveyCandidates } from "./lib/repository";
+import { getCreativesRouteAuth } from "./lib/route-auth";
 
-// Server entry points for the Creatives routes. Each runs the workspace auth check every product page
-// runs, then reads the real creative or leaves the reading to the page's API v3 calls.
+// Server entry points for the Creatives routes. Each runs the Creatives route gate (the workspace auth
+// check every product page runs, then a 404 when the workspace has no Creatives access), then reads the
+// real creative or leaves the reading to the page's API v3 calls. In wind-down (ENG-6602) the list and
+// the summary are read-only and the editor sends authors to the summary.
 
 type TWorkspaceParams = Promise<{ workspaceId: string }>;
 type TCreativeParams = Promise<{ workspaceId: string; creativeId: string }>;
@@ -31,7 +36,7 @@ export const creativesMetadata: Metadata = { title: "Creatives" };
 // The list reads `/api/v3/creatives` in the browser; the server only decides who may write.
 export const CreativesListPage = async ({ params }: Readonly<{ params: TWorkspaceParams }>) => {
   const { workspaceId } = await params;
-  const { workspace, session, isReadOnly } = await getWorkspaceAuth(workspaceId);
+  const { workspace, session, isReadOnly, creativesAccess } = await getCreativesRouteAuth(workspaceId);
   const [t, userLocale] = await Promise.all([getTranslate(), getUserLocale(session.user.id)]);
   // A new creative starts in the language a new survey would (ENG-4003).
   const defaultLanguage = resolveDefaultSurveyLanguage({
@@ -44,14 +49,17 @@ export const CreativesListPage = async ({ params }: Readonly<{ params: TWorkspac
       <PageHeader
         pageTitle={t("common.creatives")}
         cta={
-          <CreativesHeaderActions
-            workspaceId={workspaceId}
-            isReadOnly={isReadOnly}
-            defaultLanguage={defaultLanguage}
-          />
+          canWriteCreatives(creativesAccess) ? (
+            <CreativesHeaderActions
+              workspaceId={workspaceId}
+              isReadOnly={isReadOnly}
+              defaultLanguage={defaultLanguage}
+            />
+          ) : undefined
         }
       />
-      <CreativesList workspaceId={workspaceId} isReadOnly={isReadOnly} />
+      {creativesAccess === "windDown" && <CreativesWindDownNotice />}
+      <CreativesList workspaceId={workspaceId} isReadOnly={isReadOnly} creativesAccess={creativesAccess} />
     </PageContentWrapper>
   );
 };
@@ -62,7 +70,10 @@ export const CreativesListPage = async ({ params }: Readonly<{ params: TWorkspac
  */
 export const CreativeSummaryPage = async ({ params }: Readonly<{ params: TCreativeParams }>) => {
   const { workspaceId, creativeId } = await params;
-  const authorized = await authorizeCreativePage({ workspaceId, creativeId });
+  const [{ creativesAccess }, authorized] = await Promise.all([
+    getCreativesRouteAuth(workspaceId),
+    authorizeCreativePage({ workspaceId, creativeId }),
+  ]);
   if (!authorized) notFound();
 
   return (
@@ -70,6 +81,7 @@ export const CreativeSummaryPage = async ({ params }: Readonly<{ params: TCreati
       workspaceId={workspaceId}
       initialCreative={serializeV3Creative(authorized.record, new Date())}
       isReadOnly={authorized.access === "read"}
+      creativesAccess={creativesAccess}
     />
   );
 };
@@ -77,12 +89,17 @@ export const CreativeSummaryPage = async ({ params }: Readonly<{ params: TCreati
 /**
  * The editor on the stored creative, serialized exactly as `GET /api/v3/creatives/{id}` returns it, so
  * the client starts from the resource its saves get back. Members who can only read see it read-only,
- * as everyone sees an archived creative.
+ * as everyone sees an archived creative. In wind-down nothing it edits can be saved, so it sends
+ * everyone to the creative's summary, where pausing, closing and deleting stay available.
  */
 export const CreativeEditorPage = async ({ params }: Readonly<{ params: TCreativeParams }>) => {
   const { workspaceId, creativeId } = await params;
-  const authorized = await authorizeCreativePage({ workspaceId, creativeId });
+  const [{ creativesAccess }, authorized] = await Promise.all([
+    getCreativesRouteAuth(workspaceId),
+    authorizeCreativePage({ workspaceId, creativeId }),
+  ]);
   if (!authorized) notFound();
+  if (!canWriteCreatives(creativesAccess)) redirect(getCreativeSummaryPath(workspaceId, creativeId));
   const { workspace, organization, record } = authorized;
 
   const [surveyCandidates, actionClasses, isCustomCssPlanAllowed, workspaceLanguages] = await Promise.all([

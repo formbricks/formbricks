@@ -2503,7 +2503,9 @@
       "warning_action_missing": "Se afișează când se declanșează o acțiune, dar nu este setată nicio acțiune, așa că nu se afișează niciodată.",
       "warning_destination_missing": "Nu are nimic de deschis. Alege un sondaj sau un link în fila Conținut.",
       "warning_destination_not_allowed": "Chestionarul asociat nu mai poate fi deschis de un material creativ: este Restricționat, de unică folosință sau protejat prin PIN. Alege alt chestionar sau un link.",
-      "warning_overlap": "S-ar putea suprapune cu {names} pe aceeași pagină."
+      "warning_overlap": "S-ar putea suprapune cu {names} pe aceeași pagină.",
+      "wind_down_description": "Materialele tale creative sunt ascunse de pe site-urile tale. Le poți totuși pune în pauză, închide sau șterge. Când licența ta va include din nou Materiale creative, cele pe care nu le-ai pus în pauză, nu le-ai închis și nu le-ai șters vor reapărea automat.",
+      "wind_down_title": "Licența ta nu include Materiale creative"
     },
     "custom_css": {
       "base_css_help": "Acest CSS se aplică atât în modul luminos, cât și în cel întunecat.",
@@ -3459,6 +3461,7 @@
         "audit_logs": "Jurnale de audit",
         "coming_soon": "În curând",
         "contacts_and_segments": "Gestionare contacte & segmente",
+        "creatives": "Materiale creative",
         "custom_workspace_count": "Număr personalizat de 'Workspace'",
         "data_retention": "Păstrarea datelor",
         "enterprise_features": "Funcții Enterprise",

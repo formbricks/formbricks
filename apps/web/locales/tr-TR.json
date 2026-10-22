@@ -2503,7 +2503,9 @@
       "warning_action_missing": "Bir eylem tetiklendiğinde gösterilir, ancak hiç eylem ayarlanmadığı için asla gösterilmez.",
       "warning_destination_missing": "Açacak bir şey yok. İçerik sekmesinden bir anket veya bağlantı seç.",
       "warning_destination_not_allowed": "Anketi artık bir kreatif tarafından açılamıyor: Kısıtlı, tek kullanımlık veya PIN korumalı. Başka bir anket ya da bağlantı seç.",
-      "warning_overlap": "Aynı sayfada {names} ile çakışabilir."
+      "warning_overlap": "Aynı sayfada {names} ile çakışabilir.",
+      "wind_down_description": "Kreatifleriniz sitelerinizde gizlendi. Yine de bunları duraklatabilir, kapatabilir veya silebilirsiniz. Lisansınız tekrar Kreatifler'i içerdiğinde, duraklatmadığınız, kapatmadığınız veya silmediğiniz kreatifler kendiliğinden yeniden görünür.",
+      "wind_down_title": "Lisansınız Kreatifler'i içermiyor"
     },
     "custom_css": {
       "base_css_help": "Bu CSS, hem açık hem de koyu modda geçerlidir.",
@@ -3459,6 +3461,7 @@
         "audit_logs": "Denetim Kayıtları",
         "coming_soon": "Yakında",
         "contacts_and_segments": "Kişi yönetimi ve segmentler",
+        "creatives": "Kreatifler",
         "custom_workspace_count": "Özel 'Çalışma Alanı' sayısı",
         "data_retention": "Veri saklama",
         "enterprise_features": "Kurumsal Özellikler",
