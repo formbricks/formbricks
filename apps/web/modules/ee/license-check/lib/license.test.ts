@@ -1613,6 +1613,54 @@ describe("License Core Logic", () => {
         })
       );
     });
+
+    // The decision itself is proven in license-server-url.test.ts; these pin that the check uses it.
+    // crypto is mocked globally, so a readable stand-in shows what the cache identifier is built from.
+    const REAL_SERVER_STATUS_KEY = "fb:license:hash(test-license-key):status";
+    const importLicenseWithEnv = async (env: Record<string, string | undefined>) => {
+      vi.resetModules();
+      vi.doMock("@/lib/env", () => ({
+        env: { ENTERPRISE_LICENSE_KEY: "test-license-key", ENVIRONMENT: "production", ...env },
+      }));
+      vi.doMock("@/lib/hash-string", () => ({ hashString: (value: string) => `hash(${value})` }));
+      (global.fetch as Mock).mockResolvedValueOnce({ ok: false, status: 500 });
+      return import("./license");
+    };
+
+    test("checks against a loopback ENTERPRISE_LICENSE_SERVER_URL in development, in its own cache slots", async () => {
+      const { fetchLicense, getCacheKeys } = await importLicenseWithEnv({
+        NODE_ENV: "development",
+        ENTERPRISE_LICENSE_SERVER_URL: "http://localhost:8080",
+      });
+
+      await fetchLicense();
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        "http://localhost:8080/api/licenses/check",
+        expect.objectContaining({ method: "POST" })
+      );
+      expect(getCacheKeys().FETCH_LICENSE_CACHE_KEY).toBe(
+        "fb:license:hash(test-license-key@http://localhost:8080):status"
+      );
+    });
+
+    test("ignores ENTERPRISE_LICENSE_SERVER_URL in production and warns about it", async () => {
+      const { fetchLicense, getCacheKeys } = await importLicenseWithEnv({
+        NODE_ENV: "production",
+        ENTERPRISE_LICENSE_SERVER_URL: "http://localhost:8080",
+      });
+
+      await fetchLicense();
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        "https://ee.formbricks.com/api/licenses/check",
+        expect.objectContaining({ method: "POST" })
+      );
+      expect(getCacheKeys().FETCH_LICENSE_CACHE_KEY).toBe(REAL_SERVER_STATUS_KEY);
+      expect(mockLogger.warn).toHaveBeenCalledWith(
+        expect.stringContaining("ENTERPRISE_LICENSE_SERVER_URL is ignored")
+      );
+    });
   });
 });
 
