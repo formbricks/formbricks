@@ -1,6 +1,6 @@
 # Issue tracker: Linear
 
-Issues and specs live as Linear issues in the Engineering team (`ENG`). Use the Linear MCP tools.
+Work items live as Linear issues in the Engineering team (`ENG`); specs and PRDs live as Linear project documents (see below). Use the Linear MCP tools.
 
 ## Conventions
 
@@ -33,6 +33,6 @@ A spec or PRD (for example from `/to-spec`) is not a unit of work: publish it as
 - **Map**: one parent issue holding the Notes / Decisions-so-far / Fog body.
 - **Child ticket**: a sub-issue of the map. Its type goes in a title prefix (`Research:`, `Prototype:`, `Grill:`, `Task:`), not a label.
 - **Blocking**: Linear `blockedBy` relations. A ticket is unblocked when every blocker is Done or Canceled.
-- **Frontier**: open children with no open blocker and no assignee; first in map order wins.
+- **Frontier**: children in Todo with no open blocker and no assignee; first in map order wins. Children waiting on information stay in Backlog, so they are never picked.
 - **Claim**: assign to yourself, as the session's first write.
 - **Resolve**: comment the answer, set Done, and append a gist plus link to the map's Decisions-so-far.

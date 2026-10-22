@@ -10,5 +10,5 @@ The Dashboard & Chart API (ENG-3928) exposes a chart's query in the same Cube.js
 
 ## Consequences
 
-- The query is tightened for public callers: members are checked against the field catalog, Cube options the app never uses are rejected, and filter depth, counts and `limit` are bounded.
+- The query must be tightened before it goes public (ENG-6586): members checked against the field catalog, Cube options the app never uses rejected, and filter depth, counts and `limit` bounded. Today's stored-query schema does none of this; it is not strict and only checks that `limit` is a positive integer and `offset` a non-negative one.
 - Renaming or splitting the `FeedbackRecords` Cube model is now a breaking API change.
