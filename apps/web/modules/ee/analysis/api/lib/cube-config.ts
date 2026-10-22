@@ -14,6 +14,7 @@ export type TCubeQuerySource =
   | "charts.generateAIChartAction"
   | "charts.getDimensionValuesAction"
   | "dashboards.widget"
+  | "internal.charts.generate"
   | "v3.charts.data"
   | "v3.charts.preview"
   | "v3.charts.fieldValues";

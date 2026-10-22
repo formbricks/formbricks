@@ -1,11 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { TooManyRequestsError } from "@formbricks/types/errors";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import {
-  createChartAction,
-  executeQueryAction as executeQueryActionExport,
-  generateAIChartAction,
-} from "./actions";
+import { createChartAction, executeQueryAction as executeQueryActionExport } from "./actions";
 
 // The action-client mock below turns `.inputSchema(...).action(fn)` into the identity, so the
 // export IS the raw handler at runtime — re-type it accordingly (the SafeActionResult type on the
@@ -18,15 +13,6 @@ const executeQueryAction = executeQueryActionExport as unknown as (args: {
   optionLabels?: Record<string, string>;
   effectiveQuery: unknown;
 }>;
-
-const generateAIChartActionHandler = generateAIChartAction as unknown as (args: {
-  ctx: unknown;
-  parsedInput: {
-    workspaceId: string;
-    prompt: string;
-    feedbackDirectoryId: string;
-  };
-}) => Promise<unknown>;
 
 const mocks = vi.hoisted(() => {
   const actionClientAction = vi.fn((fn) => fn);
@@ -210,116 +196,6 @@ describe("chart Cube actions", () => {
 
     expect(mocks.executeTenantScopedQuery).not.toHaveBeenCalled();
     expect(mocks.checkFeedbackDirectoryAccess).not.toHaveBeenCalled();
-  });
-
-  test("generateAIChartAction passes the generated query through to the tenant-scoped Cube helper", async () => {
-    mocks.generateAIChartQuery.mockResolvedValueOnce({
-      chartType: "bar",
-      query: {
-        measures: ["FeedbackRecords.count"],
-        dimensions: ["FeedbackRecords.sourceType"],
-      },
-      name: "Responses by Source Type",
-    });
-
-    const result = await generateAIChartActionHandler({
-      ctx,
-      parsedInput: {
-        workspaceId: "workspace-1",
-        prompt: "responses by sentiment",
-        feedbackDirectoryId: "frd-1",
-      },
-    });
-
-    expect(mocks.generateAIChartQuery).toHaveBeenCalledWith({
-      organizationId: "organization-1",
-      workspaceId: "workspace-1",
-      // The generator profiles this directory for the system prompt, so it has to arrive here —
-      // without it the model is back to guessing filter values off the schema alone.
-      feedbackDirectoryId: "frd-1",
-      userId: "user-1",
-      prompt: "responses by sentiment",
-    });
-    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.actions.aiChartGeneration, "user-1");
-    expect(mocks.applyRateLimit.mock.invocationCallOrder[0]).toBeLessThan(
-      mocks.generateAIChartQuery.mock.invocationCallOrder[0]
-    );
-    expect(result).toMatchObject({
-      chartType: "bar",
-      query: {
-        measures: ["FeedbackRecords.count"],
-        dimensions: ["FeedbackRecords.sourceType"],
-      },
-      data: [{ "FeedbackRecords.count": 1 }],
-      suggestedName: "Responses by Source Type",
-    });
-    expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith({
-      query: {
-        measures: ["FeedbackRecords.count"],
-        dimensions: ["FeedbackRecords.sourceType"],
-      },
-      feedbackDirectoryId: "frd-1",
-      workspaceId: "workspace-1",
-      organizationId: "organization-1",
-      actor: { type: "user", id: "user-1" },
-      source: "charts.generateAIChartAction",
-    });
-  });
-
-  test("generateAIChartAction does not call the AI lib before access checks succeed", async () => {
-    mocks.checkFeedbackDirectoryAccess.mockRejectedValueOnce(new Error("no access"));
-
-    await expect(
-      generateAIChartActionHandler({
-        ctx,
-        parsedInput: {
-          workspaceId: "workspace-1",
-          prompt: "responses by sentiment",
-          feedbackDirectoryId: "frd-1",
-        },
-      })
-    ).rejects.toThrow("no access");
-
-    expect(mocks.generateAIChartQuery).not.toHaveBeenCalled();
-    expect(mocks.executeTenantScopedQuery).not.toHaveBeenCalled();
-  });
-
-  test("generateAIChartAction does not call the AI lib when the rate limit is exceeded", async () => {
-    mocks.applyRateLimit.mockRejectedValueOnce(
-      new TooManyRequestsError("Maximum number of requests reached. Please try again later.")
-    );
-
-    await expect(
-      generateAIChartActionHandler({
-        ctx,
-        parsedInput: {
-          workspaceId: "workspace-1",
-          prompt: "responses by sentiment",
-          feedbackDirectoryId: "frd-1",
-        },
-      })
-    ).rejects.toThrow(TooManyRequestsError);
-
-    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.actions.aiChartGeneration, "user-1");
-    expect(mocks.generateAIChartQuery).not.toHaveBeenCalled();
-    expect(mocks.executeTenantScopedQuery).not.toHaveBeenCalled();
-  });
-
-  test("generateAIChartAction does not execute a Cube query when AI generation fails", async () => {
-    mocks.generateAIChartQuery.mockRejectedValueOnce(new Error("AI failed"));
-
-    await expect(
-      generateAIChartActionHandler({
-        ctx,
-        parsedInput: {
-          workspaceId: "workspace-1",
-          prompt: "responses by sentiment",
-          feedbackDirectoryId: "frd-1",
-        },
-      })
-    ).rejects.toThrow("AI failed");
-
-    expect(mocks.executeTenantScopedQuery).not.toHaveBeenCalled();
   });
 
   // ── Multi-select (MultipleChoiceMulti) detection and splitting ──────────────

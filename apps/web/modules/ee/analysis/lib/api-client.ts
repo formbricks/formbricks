@@ -7,6 +7,7 @@ import type {
 } from "@/app/api/v3/dashboards/lib/resources";
 import { V3ApiError, parseV3ApiError } from "@/modules/api/lib/v3-client";
 import type {
+  AnalyticsResponse,
   TChartDataRow,
   TChartType,
   TChartWithCreator,
@@ -438,4 +439,29 @@ export const chartInUseDashboards = (error: unknown): { id: string; name: string
           typeof dashboard?.id === "string" && typeof dashboard?.name === "string"
       )
     : [];
+};
+
+/**
+ * An unsaved chart for a prompt, from the app-only generation route. `signal` lets Stop abandon the
+ * request as well as its result.
+ */
+export const generateChart = async ({
+  workspaceId,
+  datasetId,
+  prompt,
+  signal,
+}: {
+  workspaceId: string;
+  datasetId: string;
+  prompt: string;
+  signal?: AbortSignal;
+}): Promise<AnalyticsResponse> => {
+  const response = await fetch("/api/internal/charts/generate", {
+    method: "POST",
+    cache: "no-store",
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ workspaceId, datasetId, prompt }),
+    signal,
+  });
+  return readData<AnalyticsResponse>(response);
 };

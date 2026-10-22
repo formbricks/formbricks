@@ -10,10 +10,7 @@ import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/co
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
-import { generateAIChartQuery } from "@/modules/ee/analysis/charts/lib/ai-chart-query.server";
 import { createChart, getChart, getCharts, updateChart } from "@/modules/ee/analysis/charts/lib/charts";
-import { withOptionIdFilter } from "@/modules/ee/analysis/charts/lib/empty-measure-rows";
-import { pruneChartLabels, resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
 import { checkFeedbackDirectoryAccess, checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
 import {
   type TDimensionValue,
@@ -223,75 +220,6 @@ export const executeQueryAction = authenticatedActionClient
         actor: { type: "user", id: ctx.user.id },
         source: "charts.executeQueryAction",
       });
-    }
-  );
-
-const ZGenerateAIChartAction = z.object({
-  workspaceId: ZId,
-  prompt: z.string().min(1).max(2000),
-  feedbackDirectoryId: ZId,
-});
-
-export const generateAIChartAction = authenticatedActionClient
-  .inputSchema(ZGenerateAIChartAction)
-  .action(
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZGenerateAIChartAction>;
-    }) => {
-      const { organizationId, workspaceId } = await checkWorkspaceAccess(
-        ctx.user.id,
-        parsedInput.workspaceId,
-        "read"
-      );
-
-      await checkDashboardsEnabled(organizationId);
-
-      const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
-        feedbackDirectoryId: parsedInput.feedbackDirectoryId,
-        workspaceId,
-        userId: ctx.user.id,
-        minPermission: "read",
-        source: "charts.generateAIChartAction",
-      });
-
-      await applyRateLimit(rateLimitConfigs.actions.aiChartGeneration, ctx.user.id);
-
-      const { chartType, query, name } = await generateAIChartQuery({
-        organizationId,
-        workspaceId,
-        feedbackDirectoryId,
-        userId: ctx.user.id,
-        prompt: parsedInput.prompt,
-      });
-
-      const validatedQuery = ZChartQuery.parse(query);
-      // Resolved like a builder query, so an AI chart grouped by option or matrix-row ids renders
-      // survey labels (and a matrix its survey order) from the first paint, not bare ids.
-      const [grouping, data] = await Promise.all([
-        resolveOptionGrouping(validatedQuery, workspaceId, feedbackDirectoryId),
-        executeTenantScopedQuery({
-          query: withOptionIdFilter(validatedQuery),
-          feedbackDirectoryId,
-          workspaceId,
-          organizationId,
-          actor: { type: "user", id: ctx.user.id },
-          source: "charts.generateAIChartAction",
-        }),
-      ]);
-      const rows = Array.isArray(data) ? data : [];
-
-      return {
-        query: validatedQuery,
-        chartType,
-        data: rows,
-        ...pruneChartLabels(grouping, rows),
-        // Prefills the chart-name input (only when the user hasn't typed a name).
-        suggestedName: name,
-      };
     }
   );
 
