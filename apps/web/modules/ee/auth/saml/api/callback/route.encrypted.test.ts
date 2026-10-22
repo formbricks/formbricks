@@ -94,6 +94,9 @@ describe("SAML callback with an encrypted assertion", () => {
     const response = await POST(callback(SAMLResponse));
 
     expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      message: expect.stringContaining("could not be decrypted"),
+    });
     expect(samlResponseMock).not.toHaveBeenCalled();
   });
 
