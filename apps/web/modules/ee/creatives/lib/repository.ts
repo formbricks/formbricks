@@ -75,6 +75,12 @@ export const findCreativeWorkspaceId = async (creativeId: string): Promise<strin
   return creative?.workspaceId ?? null;
 };
 
+/** Whether the workspace holds any creative, archived ones included. */
+export const workspaceHasCreatives = async (workspaceId: string): Promise<boolean> => {
+  const creative = await prisma.creative.findFirst({ where: { workspaceId }, select: { id: true } });
+  return creative !== null;
+};
+
 export const findCreativeRecord = (
   creativeId: string,
   workspaceId: string

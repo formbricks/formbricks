@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { DEFAULT_CREATIVE_DISTRIBUTION, DEFAULT_CREATIVE_STYLING, type TCreativeState } from "./creative";
-import { type TCreativeRecord, findCreativeRecordsPage } from "./repository";
+import { type TCreativeRecord, findCreativeRecordsPage, workspaceHasCreatives } from "./repository";
 import { CreativeReferenceError, createCreative } from "./service";
 
 /**
@@ -57,6 +57,20 @@ const names = (records: TCreativeRecord[]) => records.map(({ name }) => name);
 
 beforeEach(async () => {
   await resetDb();
+});
+
+// Decides Creatives wind-down access (ENG-6602): an archived creative still counts, so its author can
+// delete it once the licence no longer includes Creatives.
+describe("workspaceHasCreatives", () => {
+  test("counts an archived creative, and only the workspace's own", async () => {
+    const [{ workspaceId }, other] = await Promise.all([seedWorkspace("Archived"), seedWorkspace("Other")]);
+    expect(await workspaceHasCreatives(workspaceId)).toBe(false);
+
+    await create(workspaceId, { name: "archived", archivedAt: hoursFromNow(-1) });
+
+    expect(await workspaceHasCreatives(workspaceId)).toBe(true);
+    expect(await workspaceHasCreatives(other.workspaceId)).toBe(false);
+  });
 });
 
 describe("findCreativeRecordsPage", () => {
