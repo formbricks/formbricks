@@ -300,7 +300,7 @@ export const executeQueryAction = authenticatedActionClient
         feedbackDirectoryId,
         workspaceId,
         organizationId,
-        userId: ctx.user.id,
+        actor: { type: "user", id: ctx.user.id },
         source: "charts.executeQueryAction",
       });
 
@@ -363,7 +363,7 @@ export const generateAIChartAction = authenticatedActionClient
           feedbackDirectoryId,
           workspaceId,
           organizationId,
-          userId: ctx.user.id,
+          actor: { type: "user", id: ctx.user.id },
           source: "charts.generateAIChartAction",
         }),
       ]);
@@ -432,7 +432,7 @@ export const getDimensionValuesAction = authenticatedActionClient
         feedbackDirectoryId,
         workspaceId,
         organizationId,
-        userId: ctx.user.id,
+        actor: { type: "user", id: ctx.user.id },
         source: "charts.getDimensionValuesAction",
       });
 

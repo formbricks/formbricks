@@ -63,7 +63,7 @@ const scopedInput = {
   feedbackDirectoryId: "frd-1",
   workspaceId: "workspace-1",
   organizationId: "organization-1",
-  userId: "user-1",
+  actor: { type: "user" as const, id: "user-1" },
   source: "charts.executeQueryAction" as const,
 };
 
@@ -134,6 +134,7 @@ describe("executeTenantScopedQuery", () => {
 
     expect(cubejs).toHaveBeenCalledWith(expect.any(String), {
       apiUrl: "https://cube.example.com/cubejs-api/v1",
+      signal: expect.any(AbortSignal),
     });
     expect(payload).toMatchObject({
       tenantId: "frd-1",
@@ -620,7 +621,10 @@ describe("executeTenantScopedQuery", () => {
     await executeTenantScopedQuery(scopedInput);
 
     const cubejs = await getCubeJsMock();
-    expect(cubejs).toHaveBeenCalledWith(expect.any(String), { apiUrl: fullUrl });
+    expect(cubejs).toHaveBeenCalledWith(expect.any(String), {
+      apiUrl: fullUrl,
+      signal: expect.any(AbortSignal),
+    });
   });
 
   test("fails at env validation when Cube env is missing", async () => {
@@ -638,12 +642,60 @@ describe("executeTenantScopedQuery", () => {
 
   test("logs Cube runtime failures and returns a generic query execution error", async () => {
     mockLoad.mockRejectedValueOnce(new Error("connect ECONNREFUSED"));
-    const { executeTenantScopedQuery } = await import("./cube-client");
+    const { CubeQueryError, executeTenantScopedQuery } = await import("./cube-client");
 
-    await expect(executeTenantScopedQuery(scopedInput)).rejects.toThrow(
+    const failure = executeTenantScopedQuery(scopedInput);
+    await expect(failure).rejects.toThrow(
       "Cube query failed. Verify CUBEJS_API_URL and CUBEJS_API_SECRET, and ensure the Cube service is running."
     );
-    expect(mockLoggerError).toHaveBeenCalledWith(expect.any(Error), "Cube query failed");
+    await expect(failure).rejects.toBeInstanceOf(CubeQueryError);
+    await expect(failure).rejects.toMatchObject({ timedOut: false });
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({ err: expect.any(Error), timedOut: false }),
+      "Cube query failed"
+    );
+  });
+
+  // ENG-6582: one deadline covers the whole load, every "Continue wait" poll included, and running out
+  // of it surfaces as the same generic failure — never Cube's own error.
+  test("gives every query one shared deadline and reports running out of it as a timeout", async () => {
+    // Fake timers do not drive `AbortSignal.timeout`, so the deadline is handed a controller to fire.
+    const deadline = new AbortController();
+    const timeoutSpy = vi.spyOn(AbortSignal, "timeout").mockReturnValue(deadline.signal);
+    const { CUBE_QUERY_TIMEOUT_MS, executeTenantScopedQuery } = await import("./cube-client");
+    const cubejs = await getCubeJsMock();
+    mockLoad.mockImplementationOnce(() => {
+      const { signal } = cubejs.mock.calls[0][1] as unknown as { signal: AbortSignal };
+      return new Promise((_resolve, reject) => {
+        signal.addEventListener("abort", () => reject(new Error("Cube said: SELECT … timed out")));
+      });
+    });
+
+    const failure = executeTenantScopedQuery(scopedInput);
+    await vi.waitFor(() => expect(mockLoad).toHaveBeenCalled());
+    deadline.abort(new DOMException("timed out", "TimeoutError"));
+
+    await expect(failure).rejects.toMatchObject({ name: "CubeQueryError", timedOut: true });
+    await expect(failure).rejects.not.toThrow(/SELECT/);
+    expect(timeoutSpy).toHaveBeenCalledWith(CUBE_QUERY_TIMEOUT_MS);
+  });
+
+  test("attributes an API-key query to the key in the token and the audit event", async () => {
+    const { executeTenantScopedQuery } = await import("./cube-client");
+
+    await executeTenantScopedQuery({ ...scopedInput, actor: { type: "apiKey", id: "key-1" } });
+
+    const cubejs = await getCubeJsMock();
+    const payload = jwt.decode(cubejs.mock.calls[0][0]) as jwt.JwtPayload;
+    expect(payload).toMatchObject({ apiKeyId: "key-1" });
+    expect(payload).not.toHaveProperty("userId");
+    expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "key-1",
+        userType: "api",
+        newObject: expect.objectContaining({ actor: { type: "apiKey", id: "key-1" } }),
+      })
+    );
   });
 
   test("records sanitized audit metadata without raw filter values", async () => {

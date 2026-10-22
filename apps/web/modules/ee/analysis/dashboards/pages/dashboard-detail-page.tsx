@@ -66,7 +66,7 @@ async function executeWidgetQuery(
       feedbackDirectoryId: tenant.feedbackDirectoryId,
       workspaceId,
       organizationId,
-      userId,
+      actor: { type: "user", id: userId },
       source: "dashboards.widget",
     });
 

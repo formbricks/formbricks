@@ -170,7 +170,7 @@ describe("chart Cube actions", () => {
       feedbackDirectoryId: "frd-1",
       workspaceId: "workspace-1",
       organizationId: "organization-1",
-      userId: "user-1",
+      actor: { type: "user", id: "user-1" },
       source: "charts.executeQueryAction",
     });
   });
@@ -261,7 +261,7 @@ describe("chart Cube actions", () => {
       feedbackDirectoryId: "frd-1",
       workspaceId: "workspace-1",
       organizationId: "organization-1",
-      userId: "user-1",
+      actor: { type: "user", id: "user-1" },
       source: "charts.generateAIChartAction",
     });
   });

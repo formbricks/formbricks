@@ -16,18 +16,43 @@ import {
   getAuditRequestMetadata,
 } from "@/modules/ee/audit-logs/lib/request-metadata";
 import type { TAuditRequestMetadata } from "@/modules/ee/audit-logs/types/request-metadata";
-import { type TCubeQuerySource, getCubeApiConfig } from "./cube-config";
+import { type TCubeQueryActor, type TCubeQuerySource, getCubeApiConfig } from "./cube-config";
 import { applyValueBandNullGuard, getCubeQueryAuditSummary, validateCubeQueryMembers } from "./cube-query";
 
 const CUBE_QUERY_ERROR_MESSAGE =
   "Cube query failed. Verify CUBEJS_API_URL and CUBEJS_API_SECRET, and ensure the Cube service is running.";
+
+/**
+ * The longest one chart query may hold a request open, across every round trip it makes. Cube answers a
+ * slow query with "Continue wait" and the client polls again, so a per-fetch timeout would never fire on
+ * a query that keeps Cube busy; one signal shared by the whole load is a deadline for the query.
+ *
+ * A minute leaves room for a cold, unaggregated query on a large directory, while an agent looping on an
+ * expensive query can no longer hold requests open indefinitely (ENG-6582).
+ */
+export const CUBE_QUERY_TIMEOUT_MS = 60_000;
+
+/**
+ * Any failure of a chart query that is not the caller's own input: Cube unreachable, rejected, or out of
+ * time. Callers see a generic message — Cube's own error can name members, SQL or infrastructure — and
+ * `timedOut` lets them say which of the two it was without exposing anything more.
+ */
+export class CubeQueryError extends Error {
+  readonly timedOut: boolean;
+
+  constructor(timedOut: boolean) {
+    super(CUBE_QUERY_ERROR_MESSAGE);
+    this.name = "CubeQueryError";
+    this.timedOut = timedOut;
+  }
+}
 
 type TScopedCubeQueryInput = {
   query: TChartQuery;
   feedbackDirectoryId: string;
   workspaceId: string;
   organizationId: string;
-  userId: string;
+  actor: TCubeQueryActor;
   source: TCubeQuerySource;
 };
 
@@ -49,8 +74,8 @@ const queueCubeQueryAuditEvent = ({
   void queueAuditEventWithoutRequest({
     action: "queried",
     targetType: "cubeQuery",
-    userId: input.userId,
-    userType: "user",
+    userId: input.actor.id,
+    userType: input.actor.type === "user" ? "user" : "api",
     targetId: requestId,
     organizationId: input.organizationId,
     status,
@@ -61,7 +86,7 @@ const queueCubeQueryAuditEvent = ({
       feedbackDirectoryId: input.feedbackDirectoryId,
       workspaceId: input.workspaceId,
       organizationId: input.organizationId,
-      userId: input.userId,
+      actor: input.actor,
       source: input.source,
       query: getCubeQueryAuditSummary(input.query),
       ...(errorName ? { errorName } : {}),
@@ -150,7 +175,7 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
     feedbackDirectoryId: input.feedbackDirectoryId,
     workspaceId: input.workspaceId,
     organizationId: input.organizationId,
-    userId: input.userId,
+    actor: input.actor,
     source: input.source,
   };
   let apiUrl: string;
@@ -177,8 +202,9 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
     throw error;
   }
 
+  const deadline = AbortSignal.timeout(CUBE_QUERY_TIMEOUT_MS);
   try {
-    const client = cubejs(token, { apiUrl });
+    const client = cubejs(token, { apiUrl, signal: deadline });
     // What Cube runs can differ from what the caller asked for: the response base count rides along
     // (charts show "Based on N answers" without a second round trip) and the NULL value band is
     // dropped. The audit event and the granular time dimension still come from `input.query`,
@@ -228,9 +254,10 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
     queueCubeQueryAuditEvent({ input, requestMetadata, requestId, status: "success" });
     return result;
   } catch (error) {
+    const timedOut = deadline.aborted;
     queueCubeQueryAuditEvent({ error, input, requestMetadata, requestId, status: "failure" });
-    logger.error(error, "Cube query failed");
+    logger.error({ err: error, timedOut, source: input.source }, "Cube query failed");
 
-    throw new Error(CUBE_QUERY_ERROR_MESSAGE);
+    throw new CubeQueryError(timedOut);
   }
 }

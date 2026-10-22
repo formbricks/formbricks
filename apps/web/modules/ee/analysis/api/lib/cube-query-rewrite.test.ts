@@ -89,6 +89,53 @@ describe("cube queryRewrite", () => {
     ).toThrow(/invalid Cube query scope/);
   });
 
+  // ENG-6582: a query runs for a user or for an API key, never both and never nobody, and the audit line
+  // names which — so a key's query is never attributed to a person.
+  test("attributes a query carrying an apiKeyId to that API key", () => {
+    const { userId: _userId, ...withoutUser } = securityContext;
+
+    queryRewrite(
+      { measures: ["FeedbackRecords.count"] },
+      { securityContext: { ...withoutUser, apiKeyId: "key-1" } }
+    );
+
+    const parsed = JSON.parse(vi.mocked(console.log).mock.calls[0][0]);
+    expect(parsed).toMatchObject({ status: "success", actor: { type: "apiKey", id: "key-1" } });
+    expect(parsed).not.toHaveProperty("userId");
+  });
+
+  test("rejects a token naming both a user and an API key", () => {
+    expect(() =>
+      queryRewrite(
+        { measures: ["FeedbackRecords.count"] },
+        { securityContext: { ...securityContext, apiKeyId: "key-1" } }
+      )
+    ).toThrow(/userId and apiKeyId security context are mutually exclusive/);
+  });
+
+  test("rejects a token naming neither a user nor an API key", () => {
+    const { userId: _userId, ...withoutUser } = securityContext;
+
+    expect(() =>
+      queryRewrite({ measures: ["FeedbackRecords.count"] }, { securityContext: withoutUser })
+    ).toThrow(/missing userId or apiKeyId security context/);
+  });
+
+  test("rejects a blank actor claim rather than falling back to the other one", () => {
+    expect(() =>
+      queryRewrite(
+        { measures: ["FeedbackRecords.count"] },
+        { securityContext: { ...securityContext, userId: "  ", apiKeyId: "key-1" } }
+      )
+    ).toThrow(/mutually exclusive/);
+    expect(() =>
+      queryRewrite(
+        { measures: ["FeedbackRecords.count"] },
+        { securityContext: { ...securityContext, userId: "  " } }
+      )
+    ).toThrow(/missing userId security context/);
+  });
+
   test("rejects mismatched tenant and feedback directory claims", () => {
     expect(() =>
       queryRewrite(
@@ -131,7 +178,7 @@ describe("cube queryRewrite", () => {
       feedbackDirectoryId: "frd-1",
       workspaceId: "workspace-1",
       organizationId: "organization-1",
-      userId: "user-1",
+      actor: { type: "user", id: "user-1" },
       requestId: "request-1",
       source: "charts.executeQueryAction",
       errorName: "Error",
@@ -367,7 +414,7 @@ describe("cube queryRewrite", () => {
       feedbackDirectoryId: "frd-1",
       workspaceId: "workspace-1",
       organizationId: "organization-1",
-      userId: "user-1",
+      actor: { type: "user", id: "user-1" },
       requestId: "request-1",
       source: "charts.executeQueryAction",
     });

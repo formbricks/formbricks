@@ -39,7 +39,7 @@ describe("cube-config", () => {
       feedbackDirectoryId: "frd-1",
       workspaceId: "workspace-1",
       organizationId: "organization-1",
-      userId: "user-1",
+      actor: { type: "user", id: "user-1" },
       source: "charts.executeQueryAction",
     });
 
@@ -62,6 +62,29 @@ describe("cube-config", () => {
       jti: config.requestId,
     });
     expect(payload.exp! - payload.iat!).toBe(CUBE_API_TOKEN_TTL_SECONDS);
+    expect(payload).not.toHaveProperty("apiKeyId");
+  });
+
+  // ENG-6582: an API key has no user, so its token names the key — and only the key.
+  test("signs an API-key query with apiKeyId and no userId", async () => {
+    setTestEnv();
+
+    const { getCubeApiConfig } = await import("./cube-config");
+    const config = getCubeApiConfig({
+      feedbackDirectoryId: "frd-1",
+      workspaceId: "workspace-1",
+      organizationId: "organization-1",
+      actor: { type: "apiKey", id: "key-1" },
+      source: "v3.charts.data",
+    });
+
+    const payload = jwt.verify(config.token, "cube-secret", {
+      audience: "formbricks-cube-test",
+      issuer: "formbricks-web-test",
+    }) as jwt.JwtPayload;
+
+    expect(payload).toMatchObject({ apiKeyId: "key-1", source: "v3.charts.data" });
+    expect(payload).not.toHaveProperty("userId");
   });
 
   test("uses feedbackDirectoryId as the Cube tenant ID without accepting a tenantId input", async () => {
@@ -73,7 +96,7 @@ describe("cube-config", () => {
       feedbackDirectoryId: "frd-1",
       workspaceId: "workspace-1",
       organizationId: "organization-1",
-      userId: "user-1",
+      actor: { type: "user", id: "user-1" },
       source: "charts.executeQueryAction",
     } as unknown as Parameters<typeof getCubeApiConfig>[0]);
 

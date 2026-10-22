@@ -13,15 +13,29 @@ export type TCubeQuerySource =
   | "charts.executeQueryAction"
   | "charts.generateAIChartAction"
   | "charts.getDimensionValuesAction"
-  | "dashboards.widget";
+  | "dashboards.widget"
+  | "v3.charts.data"
+  | "v3.charts.preview"
+  | "v3.charts.fieldValues";
+
+/**
+ * Who a chart query runs for (ENG-6582). A session or OAuth caller is a user; an API key has no user
+ * behind it, so it is named by its own id rather than borrowing one. Exactly one of the two reaches the
+ * signed token, so Cube's audit line can never attribute a key's query to a person.
+ */
+export type TCubeQueryActor = { type: "user"; id: string } | { type: "apiKey"; id: string };
 
 export type TCubeTenantScope = {
   feedbackDirectoryId: string;
   workspaceId: string;
   organizationId: string;
-  userId: string;
+  actor: TCubeQueryActor;
   source: TCubeQuerySource;
 };
+
+/** The one actor claim the token carries: `userId` for a user, `apiKeyId` for an API key. */
+const getActorClaim = (actor: TCubeQueryActor): { userId: string } | { apiKeyId: string } =>
+  actor.type === "user" ? { userId: actor.id } : { apiKeyId: actor.id };
 
 export type TCubeApiToken = {
   token: string;
@@ -65,7 +79,7 @@ export const createCubeApiToken = (
         feedbackDirectoryId: tenantScope.feedbackDirectoryId,
         workspaceId: tenantScope.workspaceId,
         organizationId: tenantScope.organizationId,
-        userId: tenantScope.userId,
+        ...getActorClaim(tenantScope.actor),
         scope: CUBE_QUERY_SCOPE,
         source: tenantScope.source,
       },
