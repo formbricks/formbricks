@@ -1,2 +1,3 @@
-# Architecture decision records: internal engineering notes, not product docs
+# Engineering records and agent configuration, not product docs
 adr/
+agents/
