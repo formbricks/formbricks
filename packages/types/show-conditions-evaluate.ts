@@ -24,9 +24,20 @@ export interface TShowConditionResult {
   passed: boolean;
 }
 
+export interface TShowConditionGroupResult {
+  groupId: string;
+  connector: TShowConditionGroup["connector"];
+  passed: boolean;
+}
+
 export interface TShowConditionsEvaluation {
   passed: boolean;
   results: TShowConditionResult[];
+  /**
+   * Each group's own outcome, the outermost last. A condition that failed inside an "any" group
+   * that passed decided nothing, and only the group's outcome says so (ENG-4070).
+   */
+  groups: TShowConditionGroupResult[];
 }
 
 export const isShowConditionGroup = (
@@ -255,18 +266,20 @@ const evaluateCondition = (
 const evaluateGroup = (
   group: TShowConditionGroup,
   context: TShowConditionsContext,
-  results: TShowConditionResult[]
+  results: TShowConditionResult[],
+  groups: TShowConditionGroupResult[]
 ): boolean => {
-  // Same as `null`: an empty group restricts nothing. The schema already prunes these.
-  if (group.conditions.length === 0) return true;
-
   // `map`, not `some`/`every`: every condition runs, so the caller gets a result for each one.
   const outcomes = group.conditions.map((item) =>
     isShowConditionGroup(item)
-      ? evaluateGroup(item, context, results)
+      ? evaluateGroup(item, context, results, groups)
       : evaluateCondition(item, context, results)
   );
-  return group.connector === "or" ? outcomes.some(Boolean) : outcomes.every(Boolean);
+  // An empty group restricts nothing, the same as `null`. The schema already prunes these.
+  const passed =
+    outcomes.length === 0 || (group.connector === "or" ? outcomes.some(Boolean) : outcomes.every(Boolean));
+  groups.push({ groupId: group.id, connector: group.connector, passed });
+  return passed;
 };
 
 /**
@@ -281,9 +294,10 @@ export const evaluateShowConditions = (
   conditions: TShowConditions,
   context: TShowConditionsContext
 ): TShowConditionsEvaluation => {
-  if (!conditions) return { passed: true, results: [] };
+  if (!conditions) return { passed: true, results: [], groups: [] };
 
   const results: TShowConditionResult[] = [];
-  const passed = evaluateGroup(conditions, context, results);
-  return { passed, results };
+  const groups: TShowConditionGroupResult[] = [];
+  const passed = evaluateGroup(conditions, context, results, groups);
+  return { passed, results, groups };
 };

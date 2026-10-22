@@ -44,11 +44,17 @@ const source = { key: "source" };
 
 describe("evaluateShowConditions", () => {
   test("passes with no conditions and reports nothing", () => {
-    expect(evaluateShowConditions(null, context)).toEqual({ passed: true, results: [] });
+    expect(evaluateShowConditions(null, context)).toEqual({ passed: true, results: [], groups: [] });
   });
 
   test("passes an empty group, the same as no conditions", () => {
-    expect(evaluateShowConditions(group("or", []), context)).toEqual({ passed: true, results: [] });
+    const empty = group("or", []);
+
+    expect(evaluateShowConditions(empty, context)).toEqual({
+      passed: true,
+      results: [],
+      groups: [{ groupId: empty.id, connector: "or", passed: true }],
+    });
   });
 
   test.each([
@@ -276,11 +282,10 @@ describe("evaluateShowConditions", () => {
     const onPhone = condition("deviceType", "equals", "phone");
     const onPlanPages = condition("currentUrl", "contains", "/plan-compare");
     const visited = condition("visitedUrls", "includes", "/drug-coverage");
+    const anyOf = group("or", [onPlanPages, visited]);
+    const root = group("and", [onPhone, anyOf]);
 
-    const evaluation = evaluateShowConditions(
-      group("and", [onPhone, group("or", [onPlanPages, visited])]),
-      context
-    );
+    const evaluation = evaluateShowConditions(root, context);
 
     expect(evaluation).toEqual({
       passed: false,
@@ -289,6 +294,27 @@ describe("evaluateShowConditions", () => {
         { conditionId: onPlanPages.id, actual: context.url, passed: true },
         { conditionId: visited.id, actual: context.visit?.uniquePaths, passed: true },
       ],
+      groups: [
+        { groupId: anyOf.id, connector: "or", passed: true },
+        { groupId: root.id, connector: "and", passed: false },
+      ],
     });
+  });
+
+  test("records each group's own outcome: an ANY group passes with a failing branch", () => {
+    const onPlanPages = condition("currentUrl", "contains", "/plan-compare");
+    const onPhone = condition("deviceType", "equals", "phone");
+    const longVisit = condition("timeOnSite", "isGreaterThanOrEqual", 60);
+    const anyOf = group("or", [onPhone, longVisit]);
+    const root = group("and", [onPlanPages, anyOf]);
+
+    const { passed, results, groups } = evaluateShowConditions(root, context);
+
+    expect(passed).toBe(true);
+    expect(results.find((result) => result.conditionId === onPhone.id)?.passed).toBe(false);
+    expect(groups).toEqual([
+      { groupId: anyOf.id, connector: "or", passed: true },
+      { groupId: root.id, connector: "and", passed: true },
+    ]);
   });
 });

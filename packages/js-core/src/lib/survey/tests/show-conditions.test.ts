@@ -103,6 +103,7 @@ describe("passesShowConditions", () => {
           { conditionId: "url", actual: "https://www.medicare.gov/plans/compare", passed: true },
           { conditionId: "pages", actual: 1, passed: false },
         ],
+        groups: [{ groupId: "root", connector: "and", passed: false }],
       },
     });
   });
