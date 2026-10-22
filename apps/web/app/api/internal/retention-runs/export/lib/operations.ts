@@ -2,8 +2,8 @@ import "server-only";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { problemUnprocessableContent } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
-import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
+import { getAuditRequestMetadata } from "@/modules/ee/audit-logs/lib/request-metadata";
 import { requireRetentionOrgAccess } from "@/modules/ee/data-retention/lib/api-access";
 import {
   countRetentionExportRows,
@@ -73,7 +73,7 @@ export async function exportRetentionRunsOperation({
   }
 
   // Captured now: the stream outlives the request scope, and reading headers after it has ended fails.
-  const ipAddress = await getClientIpFromHeaders();
+  const requestMetadata = await getAuditRequestMetadata(req.headers);
   const auditBase = auditLog ? { ...auditLog } : null;
   skipV3AuditLog(auditLog);
 
@@ -86,7 +86,7 @@ export async function exportRetentionRunsOperation({
         ...auditBase,
         status: outcome.status,
         eventId: requestId,
-        ipAddress,
+        requestMetadata,
         newObject: {
           rows: outcome.rows,
           from: query.from?.toISOString() ?? null,

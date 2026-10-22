@@ -3,6 +3,7 @@ import cubejs, { type Query, type ResultSet } from "@cubejs-client/core";
 import { randomUUID } from "node:crypto";
 import { logger } from "@formbricks/logger";
 import type { TChartQuery } from "@formbricks/types/analysis";
+import { AUDIT_LOG_ENABLED } from "@/lib/constants";
 import { getReportingTimeZone } from "@/lib/date-ranges";
 import { getOrganization } from "@/lib/organization/service";
 import { withResponseBaseMeasure } from "@/modules/ee/analysis/charts/lib/response-base";
@@ -10,7 +11,11 @@ import { expandPresetDateRanges } from "@/modules/ee/analysis/lib/date-presets";
 import { isRatioMeasure } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
-import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import {
+  UNKNOWN_AUDIT_REQUEST_METADATA,
+  getAuditRequestMetadata,
+} from "@/modules/ee/audit-logs/lib/request-metadata";
+import type { TAuditRequestMetadata } from "@/modules/ee/audit-logs/types/request-metadata";
 import { type TCubeQuerySource, getCubeApiConfig } from "./cube-config";
 import { applyValueBandNullGuard, getCubeQueryAuditSummary, validateCubeQueryMembers } from "./cube-query";
 
@@ -30,11 +35,13 @@ const queueCubeQueryAuditEvent = ({
   error,
   input,
   requestId,
+  requestMetadata,
   status,
 }: {
   error?: unknown;
   input: TScopedCubeQueryInput;
   requestId: string;
+  requestMetadata: TAuditRequestMetadata;
   status: "success" | "failure";
 }) => {
   const errorName = error instanceof Error ? error.name : undefined;
@@ -59,7 +66,7 @@ const queueCubeQueryAuditEvent = ({
       query: getCubeQueryAuditSummary(input.query),
       ...(errorName ? { errorName } : {}),
     },
-    ipAddress: UNKNOWN_DATA,
+    requestMetadata,
   }).catch((auditError) => {
     logger.error(auditError, "Failed to queue Cube query audit event");
   });
@@ -127,10 +134,14 @@ const isInjectedMemberRejection = (error: unknown, executed: TChartQuery, plain:
 };
 
 export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
+  // Read before Cube/network work so every outcome retains the request that initiated the query.
+  const requestMetadata = AUDIT_LOG_ENABLED
+    ? await getAuditRequestMetadata()
+    : UNKNOWN_AUDIT_REQUEST_METADATA;
   try {
     validateCubeQueryMembers(input.query);
   } catch (error) {
-    queueCubeQueryAuditEvent({ error, input, requestId: randomUUID(), status: "failure" });
+    queueCubeQueryAuditEvent({ error, input, requestMetadata, requestId: randomUUID(), status: "failure" });
     logger.warn(error, "Cube query validation failed");
     throw error;
   }
@@ -149,7 +160,7 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
   try {
     ({ apiUrl, requestId, token } = getCubeApiConfig(tenantScope));
   } catch (error) {
-    queueCubeQueryAuditEvent({ error, input, requestId: randomUUID(), status: "failure" });
+    queueCubeQueryAuditEvent({ error, input, requestMetadata, requestId: randomUUID(), status: "failure" });
     logger.error(error, "Cube query configuration failed");
     throw error;
   }
@@ -161,7 +172,7 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
     const organization = await getOrganization(input.organizationId);
     timeZone = getReportingTimeZone(organization?.displayTimeZone);
   } catch (error) {
-    queueCubeQueryAuditEvent({ error, input, requestId, status: "failure" });
+    queueCubeQueryAuditEvent({ error, input, requestMetadata, requestId, status: "failure" });
     logger.error(error, "Cube query time zone lookup failed");
     throw error;
   }
@@ -214,10 +225,10 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
     } else {
       result = restoreNullMeasures(filled, measures);
     }
-    queueCubeQueryAuditEvent({ input, requestId, status: "success" });
+    queueCubeQueryAuditEvent({ input, requestMetadata, requestId, status: "success" });
     return result;
   } catch (error) {
-    queueCubeQueryAuditEvent({ error, input, requestId, status: "failure" });
+    queueCubeQueryAuditEvent({ error, input, requestMetadata, requestId, status: "failure" });
     logger.error(error, "Cube query failed");
 
     throw new Error(CUBE_QUERY_ERROR_MESSAGE);
