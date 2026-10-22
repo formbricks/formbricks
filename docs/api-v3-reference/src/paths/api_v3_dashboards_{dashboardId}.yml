@@ -1,0 +1,47 @@
+get:
+  operationId: getDashboardV3
+  summary: Get a dashboard
+  description: |
+    Returns a dashboard with every widget and its full chart, so one call tells a caller what is on
+    it. Read each widget's numbers from `GET /api/v3/charts/{chartId}/data`. The workspace is resolved
+    from the dashboard, so the operation takes no query parameters. Needs read access to the
+    dashboard's workspace; a dashboard the caller cannot see, or that does not exist, answers 403.
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/DashboardIdPath.yml
+  responses:
+    "200":
+      description: The dashboard
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/DashboardResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

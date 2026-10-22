@@ -24,7 +24,7 @@ const previewOf = (
   rows: unknown[],
   query: TChartQuery = sampleQuery,
   labels: { optionLabels?: Record<string, string>; fieldLabels?: Record<string, string> } = {}
-) => ({ rows, query, optionLabels: labels.optionLabels ?? {}, fieldLabels: labels.fieldLabels ?? {} });
+) => ({ rows, query, ...labels });
 
 const WORKSPACE_ID = "ws-123";
 const DIRECTORY_ID = "frd-1";

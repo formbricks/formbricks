@@ -2,16 +2,19 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import { getV3ChartData, previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
 import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "@/app/api/v3/charts/lib/field-operations";
 import { createV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "@/app/api/v3/charts/lib/operations";
+import { getV3Dashboard, listV3Dashboards } from "@/app/api/v3/dashboards/lib/operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import type { TMcpToolContext } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import {
   type TMcpChartIdInput,
   type TMcpCreateChartInput,
+  type TMcpDashboardIdInput,
   type TMcpGetChartDataInput,
   type TMcpListChartFieldValuesInput,
   type TMcpListChartFieldsInput,
   type TMcpListChartsInput,
+  type TMcpListDashboardsInput,
   type TMcpPreviewChartInput,
   type TMcpUpdateChartInput,
   ZMcpChartDataOutput,
@@ -21,10 +24,14 @@ import {
   ZMcpChartListOutput,
   ZMcpChartOutput,
   ZMcpCreateChartInput,
+  ZMcpDashboardIdInput,
+  ZMcpDashboardListOutput,
+  ZMcpDashboardOutput,
   ZMcpGetChartDataInput,
   ZMcpListChartFieldValuesInput,
   ZMcpListChartFieldsInput,
   ZMcpListChartsInput,
+  ZMcpListDashboardsInput,
   ZMcpPreviewChartInput,
   ZMcpUpdateChartInput,
 } from "./dashboard-schemas";
@@ -231,6 +238,55 @@ export function registerDashboardTools(server: McpServer): void {
       const context = toolContext(ctx);
       return await responseToMcpToolResult(
         await listV3ChartFieldValues({ field, query, ...context }),
+        context.requestId
+      );
+    }
+  );
+
+  registerScopedTool(
+    server,
+    "list_dashboards",
+    {
+      title: "List dashboards",
+      description:
+        "List the dashboards in a Formbricks workspace, newest first, page by page, each with its widget count. Pass chartId to find the dashboards that hold a chart.",
+      inputSchema: ZMcpListDashboardsInput,
+      outputSchema: ZMcpDashboardListOutput,
+      annotations: READ_ANNOTATIONS,
+    },
+    ["dashboards:read"],
+    async (input: TMcpListDashboardsInput, ctx) => {
+      const context = toolContext(ctx);
+      const response = await listV3Dashboards({
+        query: {
+          workspaceId: input.workspaceId,
+          limit: input.limit,
+          cursor: input.cursor,
+          "filter[name][contains]": input.nameContains,
+          "filter[chartId][eq]": input.chartId,
+        },
+        ...context,
+      });
+      return await responseToMcpToolResult(response, context.requestId);
+    }
+  );
+
+  registerScopedTool(
+    server,
+    "get_dashboard",
+    {
+      title: "Get dashboard",
+      description:
+        "Get one dashboard with every widget: its position and size on the 12-column grid, its order, and its full chart. Read each chart's numbers with get_chart_data.",
+      inputSchema: ZMcpDashboardIdInput,
+      outputSchema: ZMcpDashboardOutput,
+      annotations: READ_ANNOTATIONS,
+    },
+    ["dashboards:read"],
+    async ({ dashboardId }: TMcpDashboardIdInput, ctx) => {
+      const context = toolContext(ctx);
+      return await responseToMcpToolResult(
+        await getV3Dashboard({ dashboardId, ...context }),
         context.requestId
       );
     }

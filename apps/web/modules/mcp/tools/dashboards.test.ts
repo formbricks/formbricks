@@ -3,6 +3,7 @@ import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { getV3ChartData, previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
 import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "@/app/api/v3/charts/lib/field-operations";
 import { createV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "@/app/api/v3/charts/lib/operations";
+import { getV3Dashboard, listV3Dashboards } from "@/app/api/v3/dashboards/lib/operations";
 import { successResponse } from "@/app/api/v3/lib/response";
 import { registerDashboardTools } from "./dashboards";
 
@@ -19,6 +20,10 @@ vi.mock("@/app/api/v3/charts/lib/operations", () => ({
 vi.mock("@/app/api/v3/charts/lib/data-operations", () => ({
   getV3ChartData: vi.fn(),
   previewV3Chart: vi.fn(),
+}));
+vi.mock("@/app/api/v3/dashboards/lib/operations", () => ({
+  getV3Dashboard: vi.fn(),
+  listV3Dashboards: vi.fn(),
 }));
 vi.mock("@/app/api/v3/lib/audit", () => ({
   buildV3AuditLog: vi.fn(),
@@ -216,6 +221,33 @@ describe("chart and dashboard MCP tools", () => {
         field: "FeedbackRecords.sourceName",
         query: { workspaceId: WORKSPACE_ID, datasetId: DATASET_ID },
       })
+    );
+  });
+
+  test("list_dashboards maps its filters and get_dashboard reads one, both under dashboards:read", async () => {
+    vi.mocked(listV3Dashboards).mockResolvedValue(successResponse([], { requestId: "req" }));
+    vi.mocked(getV3Dashboard).mockResolvedValue(successResponse({}, { requestId: "req" }));
+
+    await call(
+      "list_dashboards",
+      { workspaceId: WORKSPACE_ID, limit: 20, chartId: CHART_ID, nameContains: "Event" },
+      ["dashboards:read"]
+    );
+    expect(listV3Dashboards).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: {
+          workspaceId: WORKSPACE_ID,
+          limit: 20,
+          cursor: undefined,
+          "filter[name][contains]": "Event",
+          "filter[chartId][eq]": CHART_ID,
+        },
+      })
+    );
+
+    await call("get_dashboard", { dashboardId: "cldb000000000000000000001" }, ["dashboards:read"]);
+    expect(getV3Dashboard).toHaveBeenCalledWith(
+      expect.objectContaining({ dashboardId: "cldb000000000000000000001" })
     );
   });
 });

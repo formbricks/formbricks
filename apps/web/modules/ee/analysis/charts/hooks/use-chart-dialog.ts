@@ -124,7 +124,11 @@ export function useChartDialog({
         // The saved chart's own data. The server shapes the query for the chart type, so a big number
         // saved while its query still carried groups shows the measure over the whole range.
         const chartType = resolveChartType(chart.type);
-        const result = await getChartData({ chartId: chart.id });
+        const result = await getChartData({ chartId: chart.id }).catch((error: unknown) => {
+          throw new Error(
+            getChartApiErrorMessage(error, t("workspace.analysis.charts.failed_to_load_chart_data"))
+          );
+        });
         if (cancelled) return;
 
         // The server-rewritten effective query, so the renderer's xAxisKey matches the returned data
@@ -133,8 +137,8 @@ export function useChartDialog({
           query: result.query,
           chartType,
           data: result.rows,
-          ...(Object.keys(result.optionLabels).length > 0 ? { optionLabels: result.optionLabels } : {}),
-          ...(Object.keys(result.fieldLabels).length > 0 ? { fieldLabels: result.fieldLabels } : {}),
+          ...(result.optionLabels ? { optionLabels: result.optionLabels } : {}),
+          ...(result.fieldLabels ? { fieldLabels: result.fieldLabels } : {}),
         });
       } catch (error: unknown) {
         if (cancelled) return;

@@ -1,11 +1,13 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { CopyIcon, MoreVertical, SquarePenIcon, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { dashboardKeys } from "@/modules/ee/analysis/lib/query";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
@@ -30,6 +32,7 @@ export const DashboardDropdownMenu = ({
 }: Readonly<DashboardDropdownMenuProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
@@ -41,7 +44,7 @@ export const DashboardDropdownMenu = ({
       const result = await duplicateDashboardAction({ workspaceId, dashboardId });
       if (result?.data) {
         toast.success(t("workspace.analysis.dashboards.duplicate_success"));
-        router.refresh();
+        void queryClient.invalidateQueries({ queryKey: dashboardKeys.lists() });
       } else {
         const errorMessage = getFormattedErrorMessage(result);
         toast.error(errorMessage);
@@ -60,7 +63,7 @@ export const DashboardDropdownMenu = ({
       if (result?.data) {
         setIsDeleteDialogOpen(false);
         toast.success(t("workspace.analysis.dashboards.delete_success"));
-        router.refresh();
+        void queryClient.invalidateQueries({ queryKey: dashboardKeys.lists() });
       } else {
         const errorMessage = getFormattedErrorMessage(result);
         toast.error(errorMessage);

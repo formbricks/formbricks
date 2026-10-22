@@ -2,7 +2,7 @@
 
 import { CheckIcon, PencilIcon, PlusIcon, RefreshCwIcon, TrashIcon, XIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
@@ -54,7 +54,6 @@ export const DashboardControlBar = ({
 }: Readonly<DashboardControlBarProps>) => {
   const router = useRouter();
   const { t } = useTranslation();
-  const [, startTransition] = useTransition();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAddExistingDialogOpen, setIsAddExistingDialogOpen] = useState(false);
@@ -152,9 +151,7 @@ export const DashboardControlBar = ({
         existingChartIds={existingChartIds}
         onSuccess={() => {
           setIsAddExistingDialogOpen(false);
-          startTransition(() => {
-            router.refresh();
-          });
+          onRefresh();
         }}
         isAIAvailable={isAIAvailable}
         aiUnavailableReason={aiUnavailableReason}

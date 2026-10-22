@@ -7,6 +7,7 @@ import {
   ZV3ChartResource,
 } from "@/app/api/v3/charts/lib/resources";
 import { V3_NAME_MAX_LENGTH, ZV3ChartConfig, ZV3ChartName } from "@/app/api/v3/charts/lib/schemas";
+import { ZV3DashboardListItem, ZV3DashboardResource } from "@/app/api/v3/dashboards/lib/resources";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 import { mcpToolOutput } from "./output-schemas";
 
@@ -161,3 +162,18 @@ export const ZMcpListChartFieldValuesInput = z
 export type TMcpListChartFieldValuesInput = z.infer<typeof ZMcpListChartFieldValuesInput>;
 
 export const ZMcpChartFieldValuesOutput = mcpToolOutput(z.array(ZV3ChartFieldValue));
+
+export const ZMcpListDashboardsInput = z
+  .object({
+    workspaceId: ZId.describe("Workspace whose dashboards to list, from list_workspaces."),
+    ...listPaging,
+    chartId: ZId.optional().describe("Only the dashboards that hold this chart."),
+  })
+  .strict();
+export type TMcpListDashboardsInput = z.infer<typeof ZMcpListDashboardsInput>;
+
+export const ZMcpDashboardIdInput = z.object({ dashboardId: ZId.describe("The dashboard's id.") }).strict();
+export type TMcpDashboardIdInput = z.infer<typeof ZMcpDashboardIdInput>;
+
+export const ZMcpDashboardListOutput = mcpToolOutput(z.array(ZV3DashboardListItem));
+export const ZMcpDashboardOutput = mcpToolOutput(ZV3DashboardResource);

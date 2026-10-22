@@ -1,0 +1,23 @@
+type: object
+description: One chart's placement on the dashboard. `chart` is exactly what reading the chart returns.
+required:
+  - id
+  - chartId
+  - layout
+  - order
+  - chart
+properties:
+  id:
+    type: string
+    format: cuid2
+  chartId:
+    type: string
+    format: cuid2
+  layout:
+    $ref: ./WidgetLayout.yml
+  order:
+    type: integer
+    minimum: 0
+  chart:
+    $ref: ./ChartResource.yml
+additionalProperties: false

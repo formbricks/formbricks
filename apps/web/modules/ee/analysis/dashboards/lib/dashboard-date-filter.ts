@@ -189,3 +189,16 @@ export const writeStoredDateFilter = (dashboardId: string, filter: TDashboardDat
     document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`;
   }
 };
+
+/**
+ * The dashboard filter as the chart data API takes it, or `null` when the charts keep their own ranges.
+ * Both read a range the same way: it replaces the chart's range on collectedAt.
+ */
+export const toChartDateRange = (
+  filter: TDashboardDateFilter | null
+): string | { from: string; to: string } | null => {
+  if (!filter) return null;
+  if (filter.type === "all-time") return "all-time";
+  if (filter.type === "preset") return filter.value;
+  return { from: filter.range[0], to: filter.range[1] };
+};

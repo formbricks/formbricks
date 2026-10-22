@@ -382,6 +382,10 @@ paths:
     $ref: paths/api_v3_charts_{chartId}.yml
   /api/v3/charts/{chartId}/data:
     $ref: paths/api_v3_charts_{chartId}_data.yml
+  /api/v3/dashboards:
+    $ref: paths/api_v3_dashboards.yml
+  /api/v3/dashboards/{dashboardId}:
+    $ref: paths/api_v3_dashboards_{dashboardId}.yml
   /api/v3/action-classes:
     $ref: paths/api_v3_action-classes.yml
   /api/v3/contact-attribute-keys:

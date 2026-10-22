@@ -4289,6 +4289,127 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+  /api/v3/dashboards:
+    get:
+      operationId: listDashboardsV3
+      summary: List dashboards
+      description: |
+        Lists a workspace's dashboards, newest first, page by page, each with its widget count.
+        `filter[chartId][eq]` lists the dashboards that hold a chart. Needs read access to the workspace.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 250
+            default: 50
+          description: Page size (max 250). Treat `meta.nextCursor` as the only end-of-collection signal.
+        - $ref: '#/components/parameters/CursorQuery'
+        - in: query
+          name: filter[name][contains]
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+          description: Only dashboards whose name contains this text, ignoring case.
+        - in: query
+          name: filter[chartId][eq]
+          schema:
+            type: string
+            format: cuid2
+          description: Only dashboards that hold this chart.
+      responses:
+        '200':
+          description: A page of dashboards
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DashboardListItem'
+                  meta:
+                    $ref: '#/components/schemas/CursorPaginationMeta'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/dashboards/{dashboardId}:
+    get:
+      operationId: getDashboardV3
+      summary: Get a dashboard
+      description: |
+        Returns a dashboard with every widget and its full chart, so one call tells a caller what is on
+        it. Read each widget's numbers from `GET /api/v3/charts/{chartId}/data`. The workspace is resolved
+        from the dashboard, so the operation takes no query parameters. Needs read access to the
+        dashboard's workspace; a dashboard the caller cannot see, or that does not exist, answers 403.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+      responses:
+        '200':
+          description: The dashboard
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/action-classes:
     get:
       operationId: listActionClassesV3
@@ -11288,6 +11409,136 @@ components:
         config:
           $ref: '#/components/schemas/ChartConfig'
       additionalProperties: false
+    DashboardCreator:
+      description: Who created the dashboard, for display only; `null` once that user is gone.
+      oneOf:
+        - type: object
+          required:
+            - name
+          properties:
+            name:
+              type: string
+          additionalProperties: false
+        - type: 'null'
+    DashboardListItem:
+      type: object
+      description: A dashboard as a list shows it — its widgets counted, not loaded.
+      required:
+        - id
+        - workspaceId
+        - name
+        - creator
+        - widgetCount
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: cuid2
+        workspaceId:
+          type: string
+          format: cuid2
+        name:
+          type: string
+        creator:
+          $ref: '#/components/schemas/DashboardCreator'
+        widgetCount:
+          type: integer
+          minimum: 0
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          description: Changes on every rename, save and widget change. Send it back on a full update (`PUT /api/v3/dashboards/{dashboardId}`) to be told if the dashboard changed in between.
+      additionalProperties: false
+    WidgetLayout:
+      type: object
+      description: 'A widget''s position and size on the dashboard''s 12-column grid, in whole grid units: `1 ≤ w ≤ 12`, `x + w ≤ 12`, `1 ≤ h ≤ 24`, `0 ≤ y ≤ 1000`. Widgets may not overlap; gaps are allowed and close upward when the dashboard is drawn.'
+      required:
+        - x
+        - 'y'
+        - w
+        - h
+      properties:
+        x:
+          type: integer
+          minimum: 0
+          maximum: 11
+        'y':
+          type: integer
+          minimum: 0
+          maximum: 1000
+        w:
+          type: integer
+          minimum: 1
+          maximum: 12
+        h:
+          type: integer
+          minimum: 1
+          maximum: 24
+      additionalProperties: false
+    DashboardWidget:
+      type: object
+      description: One chart's placement on the dashboard. `chart` is exactly what reading the chart returns.
+      required:
+        - id
+        - chartId
+        - layout
+        - order
+        - chart
+      properties:
+        id:
+          type: string
+          format: cuid2
+        chartId:
+          type: string
+          format: cuid2
+        layout:
+          $ref: '#/components/schemas/WidgetLayout'
+        order:
+          type: integer
+          minimum: 0
+        chart:
+          $ref: '#/components/schemas/ChartResource'
+      additionalProperties: false
+    DashboardResource:
+      type: object
+      description: 'A dashboard: a named grid of widgets in a workspace. Its charts can come from different Feedback Datasets. Each widget''s data is read separately, from `GET /api/v3/charts/{chartId}/data`.'
+      required:
+        - id
+        - workspaceId
+        - name
+        - creator
+        - widgets
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: cuid2
+        workspaceId:
+          type: string
+          format: cuid2
+        name:
+          type: string
+          description: Unique within the workspace.
+        creator:
+          $ref: '#/components/schemas/DashboardCreator'
+        widgets:
+          type: array
+          description: In display order.
+          items:
+            $ref: '#/components/schemas/DashboardWidget'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+          description: Changes on every rename, save and widget change. Send it back on a full update to be told if the dashboard changed in between.
+      additionalProperties: false
     ActionClassResource:
       type: object
       description: A workspace action class that can be referenced from an app-survey trigger.
@@ -12442,6 +12693,14 @@ components:
         type: string
         format: cuid2
       description: Chart identifier.
+    DashboardIdPath:
+      in: path
+      name: dashboardId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Dashboard identifier.
     WorkspaceIdPath:
       in: path
       name: workspaceId

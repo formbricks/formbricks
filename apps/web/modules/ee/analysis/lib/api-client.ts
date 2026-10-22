@@ -1,7 +1,17 @@
 import type { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
 import type { TV3ChartData, TV3ChartResource } from "@/app/api/v3/charts/lib/resources";
+import type {
+  TV3DashboardListItem,
+  TV3DashboardResource,
+  TV3DashboardWidget,
+} from "@/app/api/v3/dashboards/lib/resources";
 import { V3ApiError, parseV3ApiError } from "@/modules/api/lib/v3-client";
-import type { TChartDataRow, TChartType, TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
+import type {
+  TChartDataRow,
+  TChartType,
+  TChartWithCreator,
+  TDashboardWidget,
+} from "@/modules/ee/analysis/types/analysis";
 
 /**
  * The app's client for the public chart and dashboard API (ADR 0002: the app goes through the same
@@ -10,6 +20,7 @@ import type { TChartDataRow, TChartType, TChartWithCreator } from "@/modules/ee/
  */
 
 const CHARTS_PATH = "/api/v3/charts";
+const DASHBOARDS_PATH = "/api/v3/dashboards";
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
 /** Bounds a write so a stalled request cannot leave a dialog's spinner running forever. */
@@ -91,16 +102,20 @@ export const getChart = async (chartId: string, signal?: AbortSignal): Promise<T
 /** A chart query's result as the renderers take it. */
 export type TAppChartData = {
   rows: TChartDataRow[];
-  optionLabels: Record<string, string>;
-  fieldLabels: Record<string, string>;
+  /** Absent rather than empty, as the renderers expect: an empty map would still read as "present". */
+  optionLabels?: Record<string, string>;
+  fieldLabels?: Record<string, string>;
   /** The query as it ran, after option grouping: what the rows' keys follow. */
   query: TChartQuery;
 };
 
+const presentOrUndefined = (labels: Record<string, string>) =>
+  Object.keys(labels).length > 0 ? labels : undefined;
+
 const toAppChartData = (data: TV3ChartData): TAppChartData => ({
   rows: data.rows,
-  optionLabels: data.optionLabels,
-  fieldLabels: data.fieldLabels,
+  optionLabels: presentOrUndefined(data.optionLabels),
+  fieldLabels: presentOrUndefined(data.fieldLabels),
   query: data.query as TChartQuery,
 });
 
@@ -221,3 +236,75 @@ export const listChartFieldValues = async ({
   const path = `${CHARTS_PATH}/fields/${encodeURIComponent(field)}/values?${params.toString()}`;
   return readData<TChartFieldValue[]>(await fetch(path, { cache: "no-store", signal }));
 };
+
+/** A dashboard row as the list shows it. */
+export type TAppDashboardListItem = Omit<TV3DashboardListItem, "createdAt" | "updatedAt"> & {
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+const toAppDashboardListItem = (item: TV3DashboardListItem): TAppDashboardListItem => ({
+  ...item,
+  createdAt: new Date(item.createdAt),
+  updatedAt: new Date(item.updatedAt),
+});
+
+/**
+ * A dashboard as the page renders it. `updatedAt` stays the server's ISO string: it is what a full save
+ * sends back for the stale-check, and a round trip through `Date` would be one more place to lose it.
+ */
+export type TAppDashboard = Pick<TV3DashboardResource, "id" | "workspaceId" | "name" | "updatedAt"> & {
+  widgets: TDashboardWidget[];
+};
+
+const toAppDashboardWidget = (dashboardId: string, widget: TV3DashboardWidget): TDashboardWidget => ({
+  id: widget.id,
+  dashboardId,
+  chartId: widget.chartId,
+  layout: widget.layout,
+  order: widget.order,
+  chart: toAppChart(widget.chart),
+});
+
+export const toAppDashboard = (resource: TV3DashboardResource): TAppDashboard => ({
+  id: resource.id,
+  workspaceId: resource.workspaceId,
+  name: resource.name,
+  updatedAt: resource.updatedAt,
+  widgets: resource.widgets.map((widget) => toAppDashboardWidget(resource.id, widget)),
+});
+
+export type TDashboardListFilters = { nameContains?: string; chartId?: string };
+
+export const listDashboards = async ({
+  workspaceId,
+  limit,
+  cursor,
+  filters,
+  signal,
+}: {
+  workspaceId: string;
+  limit: number;
+  cursor?: string | null;
+  filters?: TDashboardListFilters;
+  signal?: AbortSignal;
+}): Promise<TV3ListPage<TAppDashboardListItem>> => {
+  const params = new URLSearchParams({ workspaceId, limit: String(limit) });
+  if (cursor) params.set("cursor", cursor);
+  const nameContains = filters?.nameContains?.trim();
+  if (nameContains) params.set("filter[name][contains]", nameContains);
+  if (filters?.chartId) params.set("filter[chartId][eq]", filters.chartId);
+
+  const response = await fetch(`${DASHBOARDS_PATH}?${params.toString()}`, { cache: "no-store", signal });
+  if (!response.ok) throw await parseV3ApiError(response);
+
+  const page = (await response.json()) as TV3ListPage<TV3DashboardListItem>;
+  return { data: page.data.map(toAppDashboardListItem), meta: page.meta };
+};
+
+export const getDashboard = async (dashboardId: string, signal?: AbortSignal): Promise<TAppDashboard> =>
+  toAppDashboard(
+    await readData<TV3DashboardResource>(
+      await fetch(`${DASHBOARDS_PATH}/${encodeURIComponent(dashboardId)}`, { cache: "no-store", signal })
+    )
+  );

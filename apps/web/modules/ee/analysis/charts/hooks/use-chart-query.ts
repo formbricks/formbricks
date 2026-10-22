@@ -14,12 +14,6 @@ export interface QueryResult extends TChartLabelMaps {
   data: TChartDataRow[];
 }
 
-/** Only non-empty label maps reach a renderer, as they always have. */
-const labelMaps = (optionLabels: Record<string, string>, fieldLabels: Record<string, string>) => ({
-  ...(Object.keys(optionLabels).length > 0 ? { optionLabels } : {}),
-  ...(Object.keys(fieldLabels).length > 0 ? { fieldLabels } : {}),
-});
-
 /** The chart builder's live preview, through `POST /api/v3/charts/preview`. */
 export function useChartQuery(
   workspaceId: string,
@@ -73,7 +67,8 @@ export function useChartQuery(
       return {
         query: result.query,
         data: result.rows,
-        ...labelMaps(result.optionLabels, result.fieldLabels),
+        ...(result.optionLabels ? { optionLabels: result.optionLabels } : {}),
+        ...(result.fieldLabels ? { fieldLabels: result.fieldLabels } : {}),
       };
     } catch (err: unknown) {
       if (seq !== runSeqRef.current) return null;
