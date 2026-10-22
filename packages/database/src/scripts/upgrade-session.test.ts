@@ -1,4 +1,5 @@
 import { EventEmitter } from "node:events";
+import type { ClientConfig } from "pg";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   applyOnlineSchemaMigrations,
@@ -6,19 +7,21 @@ import {
   readOnlineUpgradeCheckpoint,
 } from "./upgrade-session";
 
-const { connect, query, end, clients } = vi.hoisted(() => ({
+const { connect, query, end, clients, createClient } = vi.hoisted(() => ({
   connect: vi.fn(),
   query: vi.fn<(sql: string, values?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>>(),
   end: vi.fn(),
   clients: [] as EventEmitter[],
+  createClient: vi.fn<(config: ClientConfig) => void>(),
 }));
 vi.mock("pg", () => ({
   Client: class extends EventEmitter {
     connect = connect;
     query = query;
     end = end;
-    constructor() {
+    constructor(config: ClientConfig) {
       super();
+      createClient(config);
       clients.push(this);
     }
   },
@@ -44,6 +47,18 @@ const acquire = async () => {
 };
 
 describe("dedicated coordinator session", () => {
+  test("honors sslaccept on the coordinator connection", async () => {
+    query.mockResolvedValueOnce({ rows: [{ pid: 42, locked: true }] });
+    const session = await openUpgradeSession(`${url}?sslaccept=accept_invalid_certs`);
+
+    expect(createClient).toHaveBeenCalledWith({
+      connectionString: url,
+      ssl: { rejectUnauthorized: false },
+      connectionTimeoutMillis: 10_000,
+    });
+    await session.close();
+  });
+
   test("refuses a competing coordinator and closes its connection", async () => {
     query.mockResolvedValueOnce({ rows: [{ pid: 42, locked: false }] });
     await expect(openUpgradeSession(url)).rejects.toThrow("upgrade_already_running");
@@ -157,6 +172,21 @@ describe("transactional schema checkpoints", () => {
 });
 
 describe("read-only status connection", () => {
+  test("honors sslaccept on the status connection without changing its timeouts", async () => {
+    query.mockResolvedValueOnce({ rows: [{ exists: false }] });
+    await expect(
+      readOnlineUpgradeCheckpoint(`${url}?sslaccept=accept_invalid_certs`, "6.1")
+    ).resolves.toBeNull();
+
+    expect(createClient).toHaveBeenCalledWith({
+      connectionString: url,
+      ssl: { rejectUnauthorized: false },
+      connectionTimeoutMillis: 10_000,
+      statement_timeout: 10_000,
+    });
+    expect(end).toHaveBeenCalledOnce();
+  });
+
   test("returns an absent checkpoint before installation without taking the coordinator lock", async () => {
     query.mockResolvedValueOnce({ rows: [{ exists: false }] });
     await expect(readOnlineUpgradeCheckpoint(url, "6.1")).resolves.toBeNull();

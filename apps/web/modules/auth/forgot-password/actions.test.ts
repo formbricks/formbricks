@@ -63,7 +63,7 @@ vi.mock("@/lib/utils/action-client", () => ({
 /** Fresh audit context per call — the action writes `suppressEvent` onto it. */
 let auditLoggingCtx: Record<string, unknown>;
 const callAction = (email = "test@example.com") => {
-  auditLoggingCtx = { ipAddress: "203.0.113.7" };
+  auditLoggingCtx = { ipAddress: "203.0.113.7", userAgent: "reset-test-agent" };
   return forgotPasswordAction({ ctx: { auditLoggingCtx }, parsedInput: { email } } as never);
 };
 
@@ -93,7 +93,7 @@ describe("forgotPasswordAction", () => {
     expect(processPasswordResetRequest).toHaveBeenCalledExactlyOnceWith({
       email: "someone@example.com",
       requestHeaders: expect.any(Headers),
-      ipAddress: "203.0.113.7",
+      requestMetadata: { ipAddress: "203.0.113.7", userAgent: "reset-test-agent" },
     });
   });
 

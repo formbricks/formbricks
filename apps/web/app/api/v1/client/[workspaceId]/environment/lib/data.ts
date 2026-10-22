@@ -191,6 +191,8 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
             },
             displayPercentage: true,
             delay: true,
+            // Checked in the browser when a trigger fires (ENG-3926). Public: the payload is.
+            showConditions: true,
             workspaceOverwrites: true,
             // Stored survey custom CSS — see the workspace field above. Replaced by compiled output.
             customCss: true,

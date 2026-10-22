@@ -14,6 +14,7 @@ export type AuditLoggingCtx = {
   suppressEvent?: boolean;
   organizationId?: string;
   ipAddress: string;
+  userAgent: string;
   segmentId?: string;
   oldObject?: Record<string, unknown> | null;
   newObject?: Record<string, unknown> | null;

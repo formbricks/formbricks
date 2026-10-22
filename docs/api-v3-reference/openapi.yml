@@ -6539,7 +6539,7 @@ components:
       description: |
         Hidden fields, sometimes called embedded data in other survey products. Field ids are stable public identifiers and may be referenced by logic, recall, quotas, integrations, and response data.
 
-        **Naming rule for new field ids** — the same rule the survey editor applies (ENG-2539): a new id must start with a lowercase letter and then contain only lowercase letters, numbers and underscores (`^[a-z][a-z0-9_]*$`), and must not take a reserved name. Reserved are the link-survey system params and internal ids — `userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport` (matched case-insensitively) — and the names of auto-captured system fields, which every survey can already read without declaring them: `source`, `url`, `country`, `action`, `browser`, `os`, `deviceType`, `ipAddress`, `finished`, `language`, `locale`, `responseId`, `surveyId`, `durationSeconds`, `startedAt`, `finishedAt`, `pagePath`, `pageReferrer`, `utmSource`, `utmMedium`, `utmCampaign`, `utmTerm`, `utmContent`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`.
+        **Naming rule for new field ids** — the same rule the survey editor applies (ENG-2539): a new id must start with a lowercase letter and then contain only lowercase letters, numbers and underscores (`^[a-z][a-z0-9_]*$`), and must not take a reserved name. Reserved are the link-survey system params and internal ids — `userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport` (matched case-insensitively) — and the names of auto-captured system fields, which every survey can already read without declaring them: `source`, `url`, `country`, `action`, `browser`, `os`, `deviceType`, `ipAddress`, `finished`, `language`, `locale`, `responseId`, `surveyId`, `durationSeconds`, `startedAt`, `finishedAt`, `pagePath`, `pageReferrer`, `utmSource`, `utmMedium`, `utmCampaign`, `utmTerm`, `utmContent`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`, `visitPagesViewed`, `visitUniquePagesViewed`, `visitTimeOnSite`, `visitEntryReferrer`, `visitUrls`.
 
         **Ids a survey already declares are grandfathered**: they always load, and re-sending the survey unchanged never fails validation — only *adding* such a name as a new field is refused. Deleting a grandfathered field spends the reprieve: once it is gone from the saved survey, the name can no longer be re-added. Note this means re-creating a survey from an exported document can fail with a 400 when the export declares a name the rule refuses; rename the field in the payload before importing. The `pattern` below describes what stored surveys may hold (the pre-existing lenient charset), not what a new id may look like.
       required:
@@ -6572,7 +6572,7 @@ components:
           type: string
           pattern: ^[a-z][a-z0-9_]*$
           description: |
-            Unique variable name. Must start with a lowercase letter, then lowercase letters, numbers and underscores only — the same rule as new hidden-field ids (this schema is create-only, so no grandfathered name validates against it). Reserved names are refused: `userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`, and the auto-captured system field names `source`, `url`, `country`, `action`, `browser`, `os`, `deviceType`, `ipAddress`, `finished`, `language`, `locale`, `responseId`, `surveyId`, `durationSeconds`, `startedAt`, `finishedAt`, `pagePath`, `pageReferrer`, `utmSource`, `utmMedium`, `utmCampaign`, `utmTerm`, `utmContent`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`.
+            Unique variable name. Must start with a lowercase letter, then lowercase letters, numbers and underscores only — the same rule as new hidden-field ids (this schema is create-only, so no grandfathered name validates against it). Reserved names are refused: `userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`, and the auto-captured system field names `source`, `url`, `country`, `action`, `browser`, `os`, `deviceType`, `ipAddress`, `finished`, `language`, `locale`, `responseId`, `surveyId`, `durationSeconds`, `startedAt`, `finishedAt`, `pagePath`, `pageReferrer`, `utmSource`, `utmMedium`, `utmCampaign`, `utmTerm`, `utmContent`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`, `visitPagesViewed`, `visitUniquePagesViewed`, `visitTimeOnSite`, `visitEntryReferrer`, `visitUrls`.
         type:
           type: string
           enum:
@@ -6596,7 +6596,7 @@ components:
           type: string
           pattern: ^[a-z][a-z0-9_]*$
           description: |
-            Unique variable name. Must start with a lowercase letter, then lowercase letters, numbers and underscores only — the same rule as new hidden-field ids (this schema is create-only, so no grandfathered name validates against it). Reserved names are refused: `userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`, and the auto-captured system field names `source`, `url`, `country`, `action`, `browser`, `os`, `deviceType`, `ipAddress`, `finished`, `language`, `locale`, `responseId`, `surveyId`, `durationSeconds`, `startedAt`, `finishedAt`, `pagePath`, `pageReferrer`, `utmSource`, `utmMedium`, `utmCampaign`, `utmTerm`, `utmContent`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`.
+            Unique variable name. Must start with a lowercase letter, then lowercase letters, numbers and underscores only — the same rule as new hidden-field ids (this schema is create-only, so no grandfathered name validates against it). Reserved names are refused: `userId`, `source`, `suid`, `end`, `start`, `welcomeCard`, `hidden`, `verifiedEmail`, `multiLanguage`, `embed`, `verify`, `suToken`, `lang`, `preview`, `startAt`, `skipPrefilled`, `offlineSupport`, and the auto-captured system field names `source`, `url`, `country`, `action`, `browser`, `os`, `deviceType`, `ipAddress`, `finished`, `language`, `locale`, `responseId`, `surveyId`, `durationSeconds`, `startedAt`, `finishedAt`, `pagePath`, `pageReferrer`, `utmSource`, `utmMedium`, `utmCampaign`, `utmTerm`, `utmContent`, `screenWidth`, `screenHeight`, `viewportWidth`, `viewportHeight`, `timezone`, `visitPagesViewed`, `visitUniquePagesViewed`, `visitTimeOnSite`, `visitEntryReferrer`, `visitUrls`.
         type:
           type: string
           enum:
@@ -6613,6 +6613,133 @@ components:
         Survey variable accepted by `POST /api/v3/surveys`. `id` may be omitted and will be
         generated by the server. Provide an explicit cuid2 id when logic in the same request needs
         to reference this variable.
+    SurveyShowCondition:
+      type: object
+      description: |
+        One check, read like a sentence: what to look at (`leftOperand`), how to compare (`operator`) and what to compare with (`rightOperand`). Text comparisons ignore upper and lower case.
+
+        | `leftOperand.type` | `leftOperand.value` | Operators |
+        | --- | --- | --- |
+        | `page` | `currentUrl` (full URL, query included) | `pathIsAnyOf`, `pathIsNoneOf`, `containsAnyOf`, `containsNoneOf`, `equals`, `doesNotEqual`, `contains`, `doesNotContain`, `startsWith`, `endsWith` |
+        | `page` | `pageReferrer`, `entryReferrer` (first page of the visit) | `equals`, `doesNotEqual`, `contains`, `doesNotContain`, `startsWith`, `endsWith`, `containsAnyOf`, `containsNoneOf` |
+        | `page` | `queryParam` (name in `meta.key`) | `equals`, `doesNotEqual`, `contains`, `doesNotContain`, `startsWith`, `endsWith`, `isSet`, `isNotSet` |
+        | `visit` | `pagesViewed`, `uniquePagesViewed`, `timeOnSite` (seconds) | `equals`, `isGreaterThan`, `isLessThan`, `isGreaterThanOrEqual`, `isLessThanOrEqual` |
+        | `visit` | `visitedUrls` (pages seen in this visit, the current one included) | `includes`, `doesNotInclude` |
+        | `device` | `deviceType` (`phone`, `tablet`, `desktop`), `browser` (`chrome`, `safari`, `firefox`, `edge`, `opera`, `samsung`, `other`) | `equals`, `doesNotEqual` |
+        | `device` | `screenWidth` (browser window width, CSS px) | `equals`, `isGreaterThan`, `isLessThan`, `isGreaterThanOrEqual`, `isLessThanOrEqual` |
+
+        `pathIsAnyOf` / `pathIsNoneOf` take a list of page paths, each compared exactly with the URL's path: case, a trailing slash, the query string and the `#hash` are ignored, and a full URL is reduced to its path. `/plans` matches `/plans?ref=email` but not `/plans/compare`. `containsAnyOf` / `containsNoneOf` take a list of fragments; a line passes when the URL contains it anywhere, so `/plans` also matches `/plans/compare`. `visitedUrls` takes one page path, compared exactly like a `pathIsAnyOf` line. `uniquePagesViewed` takes at most 200, the number of different pages a visit remembers. `isSet` / `isNotSet` take no `rightOperand`. A visit is one browser tab; if the browser blocks storage, visit conditions fail.
+      required:
+        - id
+        - leftOperand
+        - operator
+      properties:
+        id:
+          type: string
+          description: Client-generated id (cuid2), unique within the survey's conditions.
+        leftOperand:
+          type: object
+          required:
+            - type
+            - value
+          properties:
+            type:
+              type: string
+              enum:
+                - page
+                - visit
+                - device
+            value:
+              type: string
+              enum:
+                - currentUrl
+                - pageReferrer
+                - entryReferrer
+                - queryParam
+                - pagesViewed
+                - uniquePagesViewed
+                - timeOnSite
+                - visitedUrls
+                - deviceType
+                - browser
+                - screenWidth
+            meta:
+              type: object
+              properties:
+                key:
+                  type: string
+                  description: The query parameter's name. Required for `queryParam`; matched ignoring case.
+              additionalProperties: false
+          additionalProperties: false
+        operator:
+          type: string
+          enum:
+            - equals
+            - doesNotEqual
+            - contains
+            - doesNotContain
+            - startsWith
+            - endsWith
+            - containsAnyOf
+            - containsNoneOf
+            - pathIsAnyOf
+            - pathIsNoneOf
+            - isGreaterThan
+            - isLessThan
+            - isGreaterThanOrEqual
+            - isLessThanOrEqual
+            - includes
+            - doesNotInclude
+            - isSet
+            - isNotSet
+        rightOperand:
+          type: object
+          required:
+            - type
+            - value
+          properties:
+            type:
+              type: string
+              enum:
+                - static
+            value:
+              anyOf:
+                - type: string
+                  minLength: 1
+                - type: number
+                  minimum: 0
+                - type: array
+                  minItems: 1
+                  maxItems: 200
+                  items:
+                    type: string
+                    minLength: 1
+          additionalProperties: false
+      additionalProperties: false
+    SurveyShowConditionGroup:
+      type: object
+      description: |
+        A group of show conditions. `and` means every condition must hold; `or` means one is enough. A group can hold one more group, no deeper. An empty group is stored as `null`.
+      required:
+        - id
+        - connector
+        - conditions
+      properties:
+        id:
+          type: string
+          description: Client-generated id (cuid2), unique within the survey's conditions.
+        connector:
+          type: string
+          enum:
+            - and
+            - or
+        conditions:
+          type: array
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/SurveyShowCondition'
+              - $ref: '#/components/schemas/SurveyShowConditionGroup'
+      additionalProperties: false
     SurveyTrigger:
       type: object
       description: |
@@ -6689,6 +6816,13 @@ components:
           minimum: 0
           default: 0
           description: Seconds to wait after a trigger fires before showing the survey.
+        showConditions:
+          anyOf:
+            - $ref: '#/components/schemas/SurveyShowConditionGroup'
+            - type: 'null'
+          default: null
+          description: |
+            Conditions on the page, the visit and the device, checked in the visitor's browser when a trigger fires and again when `delay` ends. The survey shows only if they hold. `null` (or an empty group) means no conditions. Available on every plan. At most 20 conditions, one nested group, 200 entries per list and 10 KB in total. Mobile SDKs ignore them.
         triggers:
           type: array
           default: []
@@ -6707,6 +6841,28 @@ components:
         keepEndingCardOpen: false
         autoComplete: null
         delay: 0
+        showConditions:
+          id: grp1
+          connector: and
+          conditions:
+            - id: cnd1
+              leftOperand:
+                type: page
+                value: currentUrl
+              operator: pathIsAnyOf
+              rightOperand:
+                type: static
+                value:
+                  - /plan-compare
+                  - /drug-coverage
+            - id: cnd2
+              leftOperand:
+                type: visit
+                value: pagesViewed
+              operator: isGreaterThanOrEqual
+              rightOperand:
+                type: static
+                value: 3
         triggers:
           - actionClassId: clyy1234567890123456789012
     SegmentFilterValue:
@@ -8653,8 +8809,8 @@ components:
           responses" enabled the field is never captured, so it is absent from the response for every
           consumer. With anonymization off it is captured and appears here normally.
 
-        - `redactQuery` is applied on **every** read, anonymization or not — `url` and `pageReferrer` carry
-          their query string stripped.
+        - `redactQuery` is applied on **every** read, anonymization or not — `url`, `pageReferrer` and
+          `visitEntryReferrer` carry their query string stripped.
 
         - `ipAddress` is **never** projected by this API, in any view. That is a v3 rule rather than a
           catalog behaviour: the catalog reads the field, and the dashboard shows it. Do not infer the same

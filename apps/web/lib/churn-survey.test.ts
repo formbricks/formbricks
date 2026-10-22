@@ -54,24 +54,17 @@ describe("consumeChurnSurveyMarker", () => {
   test("sends the event once for the marked user and clears the marker", async () => {
     const storage = createStorage({ [CHURN_SURVEY_PENDING_KEY]: "user-1" });
     const track = vi.fn().mockResolvedValue(undefined);
-    const inFlight = { current: false };
 
-    await consumeChurnSurveyMarker({ storage, userId: "user-1", track, inFlight });
-    await consumeChurnSurveyMarker({ storage, userId: "user-1", track, inFlight });
+    await consumeChurnSurveyMarker({ storage, userId: "user-1", track });
+    await consumeChurnSurveyMarker({ storage, userId: "user-1", track });
 
     expect(track).toHaveBeenCalledExactlyOnceWith(SUBSCRIPTION_CANCELLED_EVENT);
     expect(storage.getItem(CHURN_SURVEY_PENDING_KEY)).toBeNull();
-    expect(inFlight.current).toBe(false);
   });
 
   test("does nothing when there is no marker", async () => {
     const track = vi.fn();
-    await consumeChurnSurveyMarker({
-      storage: createStorage(),
-      userId: "user-1",
-      track,
-      inFlight: { current: false },
-    });
+    await consumeChurnSurveyMarker({ storage: createStorage(), userId: "user-1", track });
     expect(track).not.toHaveBeenCalled();
   });
 
@@ -79,7 +72,7 @@ describe("consumeChurnSurveyMarker", () => {
     const storage = createStorage({ [CHURN_SURVEY_PENDING_KEY]: "user-1" });
     const track = vi.fn();
 
-    await consumeChurnSurveyMarker({ storage, userId: "user-2", track, inFlight: { current: false } });
+    await consumeChurnSurveyMarker({ storage, userId: "user-2", track });
 
     expect(track).not.toHaveBeenCalled();
     expect(storage.getItem(CHURN_SURVEY_PENDING_KEY)).toBe("user-1");
@@ -89,10 +82,9 @@ describe("consumeChurnSurveyMarker", () => {
     const storage = createStorage({ [CHURN_SURVEY_PENDING_KEY]: "user-1" });
     let release: () => void = () => undefined;
     const track = vi.fn(() => new Promise<void>((resolve) => (release = resolve)));
-    const inFlight = { current: false };
 
-    const first = consumeChurnSurveyMarker({ storage, userId: "user-1", track, inFlight });
-    await consumeChurnSurveyMarker({ storage, userId: "user-1", track, inFlight });
+    const first = consumeChurnSurveyMarker({ storage, userId: "user-1", track });
+    await consumeChurnSurveyMarker({ storage, userId: "user-1", track });
     release();
     await first;
 
@@ -100,38 +92,29 @@ describe("consumeChurnSurveyMarker", () => {
     expect(storage.getItem(CHURN_SURVEY_PENDING_KEY)).toBeNull();
   });
 
-  test("keeps the marker, and frees the guard, when tracking rejects", async () => {
+  test("does not retry: the marker is gone once the event is handed to the SDK, even if tracking rejects", async () => {
     const storage = createStorage({ [CHURN_SURVEY_PENDING_KEY]: "user-1" });
     const track = vi.fn().mockRejectedValue(new Error("offline"));
-    const inFlight = { current: false };
 
-    await expect(consumeChurnSurveyMarker({ storage, userId: "user-1", track, inFlight })).rejects.toThrow(
-      "offline"
-    );
+    await expect(consumeChurnSurveyMarker({ storage, userId: "user-1", track })).rejects.toThrow("offline");
 
-    expect(storage.getItem(CHURN_SURVEY_PENDING_KEY)).toBe("user-1");
-    expect(inFlight.current).toBe(false);
+    expect(storage.getItem(CHURN_SURVEY_PENDING_KEY)).toBeNull();
   });
 
-  test("does not delete a newer cancellation that overwrote the marker mid-flight", async () => {
+  test("keeps a newer cancellation that is marked while the event is being sent", async () => {
     const storage = createStorage({ [CHURN_SURVEY_PENDING_KEY]: "user-1" });
     const track = vi.fn(async () => {
       storage.setItem(CHURN_SURVEY_PENDING_KEY, "user-2");
     });
 
-    await consumeChurnSurveyMarker({ storage, userId: "user-1", track, inFlight: { current: false } });
+    await consumeChurnSurveyMarker({ storage, userId: "user-1", track });
 
     expect(storage.getItem(CHURN_SURVEY_PENDING_KEY)).toBe("user-2");
   });
 
   test("is a no-op without storage", async () => {
     const track = vi.fn();
-    await consumeChurnSurveyMarker({
-      storage: undefined,
-      userId: "user-1",
-      track,
-      inFlight: { current: false },
-    });
+    await consumeChurnSurveyMarker({ storage: undefined, userId: "user-1", track });
     expect(track).not.toHaveBeenCalled();
   });
 });

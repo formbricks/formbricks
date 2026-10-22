@@ -244,9 +244,19 @@ including when arguments were rejected before any work ran. The code identifies 
 | `upgrade_graph_not_ready` | Inspect `schema check`, outbox status, and aggregate `upgrade check`; investigate invalid/orphaned data. |
 | `upgrade_verification_failed` | Keep maintenance active and resolve remaining graph or outbox drift. |
 
-Each subprocess has a 30-minute limit. If the rehearsal exceeds it, budget a longer maintenance window
-and run the existing migration and operational commands individually under a reviewed Job deadline.
-Interrupted containers can exit with a signal code rather than JSON; any nonzero exit remains blocked.
+A blocked result can carry more fields, never values from your data:
+
+- `"reason":"timeout"` and `timeoutSeconds`: the step ran out its time limit. It did not report a failure, so
+  the code names the step, not a problem in it. Raise the limit and run preparation again.
+- `cause` and `retryable`: the step's own error code, such as `authzed_unavailable`, and whether that error is
+  transient. Retry a `"retryable":true` result once its cause, such as SpiceDB availability, has recovered.
+
+Each step has a 90-minute limit. Set `FORMBRICKS_AUTHZED_PREPARE_STEP_TIMEOUT_SECONDS` (60 to 86400) to change
+it. The graph step rewrites every organization's relationships and then audits them all, so its runtime grows
+with the number of organizations: an instance with about 50,000 organizations needed about 35 minutes. Time the
+rehearsal, and keep the Job's `activeDeadlineSeconds` above the sum of its steps: a Job deadline stops the
+container before the wrapper can print a result. Interrupted containers can exit with a signal code rather
+than JSON; any nonzero exit remains blocked.
 
 The command never restarts a workload on success, failure, or interruption. Retry preparation with the
 same image after correcting the cause, provided the interrupted migration is safe to rerun. Never mark

@@ -43,7 +43,7 @@ catalog:
   # Note: the workspace root declares `vite` alongside `vitest`. Without it, the root's vitest
   # (and `@vitest/eslint-plugin`'s optional `vitest` peer, and packages/types' vitest) resolved
   # their vite peer to the newest 8.x instead of this catalog's 7.3.5.
-  vite: 7.3.5
+  vite: 7.3.7
   vitest: 4.1.11
   "@vitest/coverage-v8": 4.1.11
   vite-plugin-dts: 4.5.4
@@ -126,6 +126,11 @@ catalog:
 # The `load-bearing:` notes record the consumer that keeps the vulnerable version in the
 # tree, so the next cleanup can check that single upstream instead of re-deriving it.
 overrides:
+  # GHSA-q3jh-wrc6-jgq8, GHSA-8r9p-f939-6h3c (ENG-4090, ENG-4091): follow-redirects before 1.16.1 leaks
+  # credential headers across origins (array-form headers, sensitiveHeaders regex escaping); 1.16.1 is the
+  # lowest release closing both.
+  # load-bearing: axios and other HTTP clients resolve follow-redirects 1.16.0 transitively.
+  "follow-redirects": 1.16.1
   # ENG-1324 / GHSA-5375-pq7m-f5r2, ENG-1325 / GHSA-99f4-grh7-6pcq:
   # @grpc/grpc-js 1.14.5 also fixes unauthorized certificate acceptance and error-message disclosure
   # (CVE-2026-101916 / CVE-2026-101915), alongside the malformed-message crash fixes in 1.14.4.
@@ -515,6 +520,13 @@ patchedDependencies:
   # ENG-2559: a failed secondary-storage session read bypasses Better Auth's configured database
   # fallback. Remove this version-pinned patch once upstream handles Redis read failures here.
   "better-auth@1.7.0": patches/better-auth@1.7.0.patch
+  # ENG-3972 / ENG-3248: for every non-GET request the proxy matches, and for every external rewrite (the
+  # PostHog /ingest proxy), Next clones the body. The clone reads the whole upload off the socket, keeps up
+  # to proxyClientMaxBodySize in memory and holds the request until the client's last byte, so any
+  # anonymous caller can pin 16 MB per connection on any path. proxy.ts never reads the body, so the patch
+  # stops handing it one and the route reads the unread stream itself; a rewrite now streams the request to
+  # its target. Re-check on every Next upgrade; drop it if Next makes the clone lazy or opt-out.
+  "next@16.3.8": patches/next@16.3.8.patch
   # ENG-2780 / node-postgres#3543: pg-pool can retain a connection that finishes establishing after
   # connectionTimeoutMillis, leaking capacity and poisoning the pool. Remove this version-pinned patch
   # once node-postgres#3711 is released in pg-pool and the dependency is upgraded to that version.

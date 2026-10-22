@@ -18,9 +18,12 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
     const uniqueId = Date.now() + Math.random();
     const userName = "Security Test User";
     const userEmail = `security-test-${uniqueId}@example.com`;
+    // Cost 12 is production's: the sign-in endpoint hashes a dummy password at that cost for unknown
+    // emails, so a cheaper stored hash would make existing users look ~4x faster than unknown ones.
     await users.create({
       name: userName,
       email: userEmail,
+      passwordCost: 12,
     });
     testUser = {
       email: userEmail,
@@ -126,15 +129,9 @@ test.describe("Authentication Security Tests - Vulnerability Prevention", () => 
   });
 
   test.describe("Timing Attack Prevention - User Enumeration Protection", () => {
-    test("should not reveal user existence through response timing differences", async ({ request }) => {
-      // Sub-100ms enumeration-timing differences can't be measured meaningfully through Playwright
-      // service mode's remote-browser tunnel — tunnel network jitter dwarfs the signal and makes the
-      // assertion flaky. Keep it running in local mode, where the measurement is valid.
-      // (PLAYWRIGHT_SERVICE_URL is the Azure Playwright service endpoint — present only in service mode.)
-      test.skip(
-        Boolean(process.env.PLAYWRIGHT_SERVICE_URL),
-        "Timing-attack measurement is unreliable through the service-mode remote-browser tunnel."
-      );
+    test("should not reveal user existence through response timing differences @timing", async ({
+      request,
+    }) => {
       // Helper functions for statistical analysis
       const calculateMedian = (values: number[]): number => {
         const sorted = [...values].sort((a, b) => a - b);

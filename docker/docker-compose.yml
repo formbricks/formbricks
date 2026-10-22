@@ -235,7 +235,7 @@ x-environment: &environment
 
     ########################################## OPTIONAL (AUDIT LOGGING) ###########################################
 
-    # Set the below to 1 to enable audit logging.
+    # Set the below to 1 to enable audit logging (requires an Enterprise license that includes audit logs).
     # AUDIT_LOG_ENABLED: 1
 
     # Set the below to get the ip address of the user from the request headers

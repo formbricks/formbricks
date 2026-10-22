@@ -444,6 +444,28 @@ describe("copySurveyToOtherWorkspace", () => {
     );
   });
 
+  test("carries the show conditions onto the copy, as their own object", async () => {
+    const showConditions = {
+      id: "grp1",
+      connector: "and",
+      conditions: [
+        {
+          id: "cnd1",
+          leftOperand: { type: "page", value: "currentUrl" },
+          operator: "pathIsAnyOf",
+          rightOperand: { type: "static", value: ["/pricing"] },
+        },
+      ],
+    };
+    mockSourceSurvey({ showConditions });
+
+    await copySurveyToOtherWorkspace(sourceWorkspaceId, surveyId, targetWorkspaceId, userId);
+
+    const { data } = vi.mocked(prisma.survey.create).mock.calls[0][0];
+    expect(data.showConditions).toEqual(showConditions);
+    expect(data.showConditions).not.toBe(showConditions);
+  });
+
   test("does not carry the scheduling dates onto the copy", async () => {
     // The scheduler closes an `inProgress` survey whose `closeOn` has passed, so a copy that
     // inherited a past date would complete itself on the first tick after the user publishes it.

@@ -25,8 +25,8 @@ import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
  * Better Auth *consumes the reset token before hashing* (api/routes/password.ts). Rejecting at hash
  * time would burn the token, so a valid retry would fail with "link already used" (ENG-1587 review).
  * Running before the endpoint handler rejects a breached password without consuming the token (and
- * without creating the user on signup), and it covers the raw `/api/auth/*` endpoints as well as the
- * server actions.
+ * without creating the user on signup), and it covers the raw `/api/auth/reset-password` endpoint as
+ * well as the server actions' in-process calls. (Raw `/api/auth/sign-up/email` is closed, ENG-3988.)
  */
 
 // The two Better Auth paths that set a password in Formbricks. Signup carries `password`; reset

@@ -28,7 +28,8 @@
     "@formbricks/types": "workspace:*",
     "bullmq": "5.61.0",
     "ioredis": "5.8.1",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@formbricks/redis-config": "workspace:*"
   },
   "devDependencies": {
     "@formbricks/config-eslint": "workspace:*",

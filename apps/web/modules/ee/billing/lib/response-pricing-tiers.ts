@@ -44,3 +44,15 @@ export const mapStripeTiersToResponsePricingTiers = (
 
   return mapped;
 };
+
+// The note under the Responses usage bar claims everything up to `limit` is included and the rest is
+// billed at the tier rates. That only holds when Stripe's first tier is free and ends exactly at the
+// entitlement limit; if the two drift, the note would contradict the tier table it links to, so it
+// stays hidden. A null limit means unlimited responses, where there is no overage to explain.
+export const isResponseOverageBilledAboveLimit = (
+  limit: number | null,
+  tiers: TResponsePricingTier[]
+): limit is number => {
+  const firstTier = tiers[0];
+  return limit !== null && firstTier?.perUnitCents === 0 && firstTier.lastUnit === limit;
+};

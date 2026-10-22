@@ -50,4 +50,23 @@ describe("ZSurveyDraft", () => {
   ])("refuses %s", (_case, embeddedFields) => {
     expect(ZSurveyDraft.safeParse(draft({ embeddedFields })).success).toBe(false);
   });
+
+  // Autosave sends whatever the editor holds, so a condition added but not filled in yet must not
+  // refuse the whole draft. Publishing checks it in full through `ZSurvey`.
+  test("accepts show conditions that are still being filled in", () => {
+    const showConditions = {
+      id: "root",
+      connector: "and",
+      conditions: [{ id: "c1", leftOperand: { type: "page", value: "queryParam" }, operator: "equals" }],
+    };
+
+    expect(ZSurveyDraft.safeParse(draft({ showConditions })).success).toBe(true);
+  });
+
+  test.each([
+    ["a string", "nope"],
+    ["a list", []],
+  ])("refuses show conditions that are %s", (_case, showConditions) => {
+    expect(ZSurveyDraft.safeParse(draft({ showConditions })).success).toBe(false);
+  });
 });
