@@ -15,9 +15,9 @@ import {
   type TGeneratedSurveyDraft,
   type TGeneratedSurveyElement,
   type TV3SurveyGenerateBody,
-  V3_SURVEY_GENERATE_ALLOWED_LANGUAGES,
   ZGeneratedSurveyDraft,
   getGeneratedSurveyDraftForAISchema,
+  getV3SurveyGenerateDraftLanguages,
 } from "./schemas";
 
 export type TV3SurveyGenerateValidation = {
@@ -396,23 +396,21 @@ export function assertV3SurveyGeneratePrompt(prompt: string): void {
  * hand-copied temperature.
  */
 export function buildV3SurveyGenerationRequest(input: TV3SurveyGenerateBody) {
+  const draftLanguages = getV3SurveyGenerateDraftLanguages(input);
+
   return {
     // Deliberately the *ForAI* schema (string ranges), not ZGeneratedSurveyDraft, which
     // z.preprocess-coerces them to numbers. z.preprocess does not survive JSON-Schema conversion,
     // so swapping the two here breaks provider structured output.
-    schema: getGeneratedSurveyDraftForAISchema(input.surveyLanguage),
+    schema: getGeneratedSurveyDraftForAISchema(draftLanguages),
     schemaName: "FormbricksSurveyDraft",
     schemaDescription: "A concise Formbricks survey draft that can be converted to a v3 create payload.",
-    system: buildV3SurveyGenerationSystemPrompt(
-      V3_SURVEY_GENERATE_ALLOWED_LANGUAGES,
-      input.type,
-      input.surveyLanguage
-    ),
+    system: buildV3SurveyGenerationSystemPrompt(draftLanguages, input.type, input.surveyLanguage),
     prompt: buildV3SurveyGenerationPrompt(
       input.prompt,
       input.type,
       input.language ?? DEFAULT_V3_SURVEY_LANGUAGE,
-      V3_SURVEY_GENERATE_ALLOWED_LANGUAGES,
+      draftLanguages,
       input.surveyLanguage
     ),
     temperature: 0.2,
@@ -453,12 +451,15 @@ export function buildV3SurveyCreatePayloadFromDraft(
   }
 
   // The narrowed schema only binds a provider that enforces structured output; a local model may
-  // ignore it, and a draft in the wrong language must not be relabelled as the requested one.
-  if (input.surveyLanguage && generatedSurvey.data.language !== input.surveyLanguage) {
+  // ignore it, and a draft in a language the request did not allow must not be relabelled or passed on.
+  const draftLanguages = getV3SurveyGenerateDraftLanguages(input);
+  if (!draftLanguages.includes(generatedSurvey.data.language)) {
     throw new V3SurveyGeneratedPayloadValidationError([
       {
         name: "generatedSurvey.language",
-        reason: `Expected the requested survey language '${input.surveyLanguage}', got '${generatedSurvey.data.language}'`,
+        reason: input.surveyLanguage
+          ? `Expected the requested survey language '${input.surveyLanguage}', got '${generatedSurvey.data.language}'`
+          : `Language '${generatedSurvey.data.language}' was not requested; pass it as language or surveyLanguage`,
       },
     ]);
   }

@@ -43,9 +43,11 @@ properties:
       Preferred survey language. Session clients should send the logged-in
       user's language.
 
-      The generator writes the draft in the language of the prompt, and uses
-      this one only when the prompt language is ambiguous or cannot be
-      confidently matched to a supported survey language.
+      The generator writes the draft in the language of the prompt, detected
+      among the dashboard locales plus this language, and uses this one only
+      when the prompt language is ambiguous or not one of those. To get a
+      draft in any other supported survey language, name it here or in
+      `surveyLanguage`.
   surveyLanguage:
     $ref: ./AISurveyGenerationLocaleCode.yml
     description: >

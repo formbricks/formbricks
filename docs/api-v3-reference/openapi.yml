@@ -7638,7 +7638,7 @@ components:
           $ref: '#/components/schemas/AISurveyGenerationLocaleCode'
           description: |
             Preferred survey language. Session clients should send the logged-in user's language.
-            The generator writes the draft in the language of the prompt, and uses this one only when the prompt language is ambiguous or cannot be confidently matched to a supported survey language.
+            The generator writes the draft in the language of the prompt, detected among the dashboard locales plus this language, and uses this one only when the prompt language is ambiguous or not one of those. To get a draft in any other supported survey language, name it here or in `surveyLanguage`.
         surveyLanguage:
           $ref: '#/components/schemas/AISurveyGenerationLocaleCode'
           description: |
@@ -7689,7 +7689,7 @@ components:
       properties:
         language:
           $ref: '#/components/schemas/AISurveyGenerationLocaleCode'
-          description: Survey language used for the AI-created survey content and create payload language maps.
+          description: Survey language used for the AI-created survey content and create payload language maps. Always one of the dashboard locales (`de-DE`, `en-US`, `es-ES`, `fr-FR`, `hu-HU`, `ja-JP`, `nl-NL`, `pt-BR`, `pt-PT`, `ro-RO`, `ru-RU`, `sv-SE`, `tr-TR`, `zh-Hans-CN`, `zh-Hant-TW`) unless the request named another code in `language` or `surveyLanguage`, so existing callers never receive a code they did not ask for.
         payload:
           allOf:
             - $ref: '#/components/schemas/CreateSurveyRequest'

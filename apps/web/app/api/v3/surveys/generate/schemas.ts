@@ -245,12 +245,32 @@ export const ZGeneratedSurveyDraftForAI = createGeneratedSurveyDraftForAISchema(
 );
 
 /**
- * The provider-facing schema for one request. A required `surveyLanguage` narrows the language enum to
- * that one code, so a provider with structured output cannot return anything else; a model without it
- * is still caught afterwards by `buildV3SurveyCreatePayloadFromDraft`.
+ * The languages one request's draft may come back in. A required `surveyLanguage` is the only one. Without
+ * it, the request's own language is detected among the dashboard locales — the set this endpoint has
+ * always returned — plus the preferred `language` when the caller named one. So a code outside the
+ * dashboard locales only ever appears in a response that asked for it: an Italian prompt from a client
+ * that predates `surveyLanguage` still gets the draft it got before, not a new `it-IT` value.
  */
-export const getGeneratedSurveyDraftForAISchema = (surveyLanguage?: string) =>
-  surveyLanguage ? createGeneratedSurveyDraftForAISchema([surveyLanguage]) : ZGeneratedSurveyDraftForAI;
+export function getV3SurveyGenerateDraftLanguages(
+  input: Pick<TV3SurveyGenerateBody, "language" | "surveyLanguage">
+): [string, ...string[]] {
+  if (input.surveyLanguage) {
+    return [input.surveyLanguage];
+  }
+
+  return [...new Set<string>([...ZUserLocale.options, ...(input.language ? [input.language] : [])])] as [
+    string,
+    ...string[],
+  ];
+}
+
+/**
+ * The provider-facing schema for one request: the language enum is narrowed to
+ * `getV3SurveyGenerateDraftLanguages`, so a provider with structured output cannot return anything else.
+ * A model without it is still caught afterwards by `buildV3SurveyCreatePayloadFromDraft`.
+ */
+export const getGeneratedSurveyDraftForAISchema = (languages: readonly [string, ...string[]]) =>
+  createGeneratedSurveyDraftForAISchema(languages);
 
 export const ZGeneratedSurveyDraft = z
   .object({

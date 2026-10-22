@@ -8,7 +8,11 @@ properties:
     $ref: ./AISurveyGenerationLocaleCode.yml
     description: >-
       Survey language used for the AI-created survey content and create
-      payload language maps.
+      payload language maps. Always one of the dashboard locales (`de-DE`,
+      `en-US`, `es-ES`, `fr-FR`, `hu-HU`, `ja-JP`, `nl-NL`, `pt-BR`, `pt-PT`,
+      `ro-RO`, `ru-RU`, `sv-SE`, `tr-TR`, `zh-Hans-CN`, `zh-Hant-TW`) unless
+      the request named another code in `language` or `surveyLanguage`, so
+      existing callers never receive a code they did not ask for.
   payload:
     allOf:
       - $ref: ./CreateSurveyRequest.yml

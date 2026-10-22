@@ -1,11 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { ZUserLocale } from "@formbricks/types/user";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { prepareV3SurveyCreateInput } from "../prepare";
-import {
-  V3_SURVEY_GENERATE_ALLOWED_LANGUAGES,
-  ZGeneratedSurveyDraftForAI,
-  type getGeneratedSurveyDraftForAISchema,
-} from "./schemas";
+import { type getGeneratedSurveyDraftForAISchema } from "./schemas";
 import {
   V3SurveyGeneratePromptError,
   V3SurveyGeneratedPayloadValidationError,
@@ -161,7 +158,7 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
     expect(generateOrganizationAIObject).toHaveBeenCalledWith(
       expect.objectContaining({
         organizationId: "org_1",
-        schema: ZGeneratedSurveyDraftForAI,
+        schema: expect.anything(),
         schemaName: "FormbricksSurveyDraft",
         temperature: 0.2,
         maxOutputTokens: 8192,
@@ -170,11 +167,11 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
     );
     const generationOptions = vi.mocked(generateOrganizationAIObject).mock.calls[0][0];
     expect(generationOptions.system).toContain(
-      `Allowed survey languages: ${V3_SURVEY_GENERATE_ALLOWED_LANGUAGES.join(", ")}`
+      `Allowed survey languages: ${ZUserLocale.options.join(", ")}.`
     );
     expect(generationOptions.system).toContain("link survey draft");
     expect(generationOptions.prompt).toContain(
-      `Allowed survey languages: ${V3_SURVEY_GENERATE_ALLOWED_LANGUAGES.join(", ")}`
+      `Allowed survey languages: ${ZUserLocale.options.join(", ")}.`
     );
     expect(generationOptions.prompt).toContain("Create a draft link survey");
     expect(result.payload).toMatchObject({
@@ -870,6 +867,40 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
     await expect(generation).rejects.toMatchObject({
       invalidParams: [expect.objectContaining({ name: "generatedSurvey.language" })],
     });
+  });
+
+  test("only returns a language outside the dashboard locales when the caller named it", async () => {
+    // A client that predates `surveyLanguage` and sends an Italian prompt must not start receiving
+    // `it-IT`, a value this endpoint never emitted before. Naming it as the preferred language opts in.
+    const italianDraft = { ...koreanDraft("it-IT"), name: "Sondaggio sulle consegne" };
+
+    vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
+      object: italianDraft,
+    } as Awaited<ReturnType<typeof generateOrganizationAIObject>>);
+    await expect(
+      generateV3SurveyCreatePayloadFromPrompt({
+        organizationId: "org_1",
+        workspaceId,
+        input: { ...generateInput, language: "en-US" },
+      })
+    ).rejects.toMatchObject({
+      invalidParams: [expect.objectContaining({ name: "generatedSurvey.language" })],
+    });
+
+    vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
+      object: italianDraft,
+    } as Awaited<ReturnType<typeof generateOrganizationAIObject>>);
+    const result = await generateV3SurveyCreatePayloadFromPrompt({
+      organizationId: "org_1",
+      workspaceId,
+      input: { ...generateInput, language: "it-IT" },
+    });
+
+    expect(result.language).toBe("it-IT");
+    const request = vi.mocked(generateOrganizationAIObject).mock.calls[1][0];
+    expect(request.system).toContain(
+      `Allowed survey languages: ${[...ZUserLocale.options, "it-IT"].join(", ")}.`
+    );
   });
 
   test("surfaces invalid generated objects as validation failures", async () => {

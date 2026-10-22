@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { ZUserLocale } from "@formbricks/types/user";
 import {
   GENERATED_SURVEY_MAX_BLOCKS,
   GENERATED_SURVEY_MAX_QUESTIONS_PER_BLOCK,
@@ -10,6 +11,7 @@ import {
   ZGeneratedSurveyDraftForAI,
   ZV3SurveyGenerateBody,
   getGeneratedSurveyDraftForAISchema,
+  getV3SurveyGenerateDraftLanguages,
 } from "./schemas";
 
 function generatedQuestion(index: number) {
@@ -283,18 +285,28 @@ describe("getGeneratedSurveyDraftForAISchema", () => {
     ending: null,
   });
 
-  test("offers every allowed language when no survey language is required", () => {
-    const schema = getGeneratedSurveyDraftForAISchema();
-
-    expect(schema.safeParse(draft("ko-KR")).success).toBe(true);
-    expect(schema.safeParse(draft("en-US")).success).toBe(true);
-  });
-
-  test("narrows the language to the required one", () => {
-    const schema = getGeneratedSurveyDraftForAISchema("ko-KR");
+  test("narrows the language enum to the languages it is given", () => {
+    const schema = getGeneratedSurveyDraftForAISchema(["ko-KR"]);
 
     expect(schema.safeParse(draft("ko-KR")).success).toBe(true);
     expect(schema.safeParse(draft("en-US")).success).toBe(false);
+  });
+});
+
+describe("getV3SurveyGenerateDraftLanguages", () => {
+  test("is only the required survey language when one is set", () => {
+    expect(getV3SurveyGenerateDraftLanguages({ language: "en-US", surveyLanguage: "ko-KR" })).toEqual([
+      "ko-KR",
+    ]);
+  });
+
+  test("keeps detection to the dashboard locales unless the caller named another language", () => {
+    expect(getV3SurveyGenerateDraftLanguages({})).toEqual(ZUserLocale.options);
+    expect(getV3SurveyGenerateDraftLanguages({ language: "de-DE" })).toEqual(ZUserLocale.options);
+    expect(getV3SurveyGenerateDraftLanguages({ language: "it-IT" })).toEqual([
+      ...ZUserLocale.options,
+      "it-IT",
+    ]);
   });
 });
 
