@@ -382,7 +382,13 @@ describe("createV3Survey", () => {
     await createV3Survey(body, null, "req_default_cta");
 
     expect(getExternalUrlsPermission).not.toHaveBeenCalled();
-    expect(createSurvey).toHaveBeenCalled();
+    expect(createSurvey).toHaveBeenCalledWith(
+      workspaceId,
+      expect.objectContaining({
+        endings: [expect.objectContaining({ buttonLink: DEFAULT_ENDING_CARD_BUTTON_LINK })],
+      }),
+      expect.anything()
+    );
   });
 
   // ENG-2587. Driven through the real `ZSurveyCreateInput`/`surveyRefinement` rather than a
