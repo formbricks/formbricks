@@ -3,8 +3,8 @@ import { prisma } from "@formbricks/database";
 import type { JobHandler, TSurveyArchivePurgeJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { toUnlinkedCreativeAuditEvents } from "@/modules/creatives/lib/linked-creatives";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
+import { toUnlinkedCreativeAuditEvents } from "@/modules/ee/creatives/lib/linked-creatives";
 import {
   SURVEY_ARCHIVE_PURGE_BATCH_SIZE,
   SURVEY_ARCHIVE_RETENTION_DAYS,

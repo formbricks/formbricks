@@ -17,15 +17,16 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
-import { authorizeCreative, authorizeCreativeWorkspace } from "@/modules/creatives/lib/authorization";
-import type { TCreativeState } from "@/modules/creatives/lib/creative";
-import { assertCreativeCustomCssWrite } from "@/modules/creatives/lib/custom-css-write";
-import { toCreativeState } from "@/modules/creatives/lib/record";
+import { CustomCssInvalidError, CustomCssPlanRequiredError } from "@/modules/custom-css/lib/service";
+import { authorizeCreative, authorizeCreativeWorkspace } from "@/modules/ee/creatives/lib/authorization";
+import type { TCreativeState } from "@/modules/ee/creatives/lib/creative";
+import { assertCreativeCustomCssWrite } from "@/modules/ee/creatives/lib/custom-css-write";
+import { toCreativeState } from "@/modules/ee/creatives/lib/record";
 import {
   type TCreativeRecord,
   findCreativeRecord,
   findCreativeRecordsPage,
-} from "@/modules/creatives/lib/repository";
+} from "@/modules/ee/creatives/lib/repository";
 import {
   CreativeReferenceError,
   archiveCreative,
@@ -34,18 +35,17 @@ import {
   duplicateCreative,
   restoreCreative,
   updateCreative,
-} from "@/modules/creatives/lib/service";
-import { MAX_STATS_PAGES, buildCreativeStats, resolveStatsRange } from "@/modules/creatives/lib/stats";
+} from "@/modules/ee/creatives/lib/service";
+import { MAX_STATS_PAGES, buildCreativeStats, resolveStatsRange } from "@/modules/ee/creatives/lib/stats";
 import {
   findCreativeDayDeviceCounts,
   findCreativePageCounts,
-} from "@/modules/creatives/lib/stats-repository";
+} from "@/modules/ee/creatives/lib/stats-repository";
 import {
   applyCreativePatch,
   buildCreativeCreateState,
   validateCreativeState,
-} from "@/modules/creatives/lib/write-rules";
-import { CustomCssInvalidError, CustomCssPlanRequiredError } from "@/modules/custom-css/lib/service";
+} from "@/modules/ee/creatives/lib/write-rules";
 import { parseV3CreativesListQuery } from "./list-query";
 import type { TV3CreateCreativeBody, TV3CreativeStatsQuery, TV3PatchCreativeBody } from "./schemas";
 import { type TV3CreativeResource, serializeV3Creative } from "./serializers";

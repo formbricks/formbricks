@@ -40,12 +40,12 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { WorkspaceSurveyLimitError } from "@/lib/survey/visibility/limit";
 import { isAwaitingProjection } from "@/lib/survey/visibility/policy";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
-import { getCreativeCssRoot } from "@/modules/creatives/lib/custom-css";
+import { type TCustomCssPreview, previewCustomCss } from "@/modules/custom-css/lib/service";
+import { getCreativeCssRoot } from "@/modules/ee/creatives/lib/custom-css";
 import {
   SurveyLinkedCreativesError,
   toUnlinkedCreativeAuditEvents,
-} from "@/modules/creatives/lib/linked-creatives";
-import { type TCustomCssPreview, previewCustomCss } from "@/modules/custom-css/lib/service";
+} from "@/modules/ee/creatives/lib/linked-creatives";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "@/modules/survey/lib/surveys";
 import { getSurveyCount, getWorkspaceSurveyCount } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";

@@ -13,7 +13,7 @@ import { CUSTOM_SURVEY_TEMPLATE_ID } from "@/app/lib/templates";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
-import { SurveyDeleteBlockedDialog } from "@/modules/creatives/components/survey-side/survey-delete-blocked-dialog";
+import { SurveyDeleteBlockedDialog } from "@/modules/ee/creatives/components/survey-side/survey-delete-blocked-dialog";
 import { CreateWithAIDialog } from "@/modules/survey/components/template-list/components/create-with-ai-dialog";
 import { useCreateSurveyFromTemplate } from "@/modules/survey/components/template-list/hooks/use-create-survey-from-template";
 import { ImportSurveyDialog } from "@/modules/survey/import/components/import-survey-dialog";

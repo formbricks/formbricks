@@ -19,8 +19,8 @@ import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { APP_SURVEY_TRIGGER_REQUIRED_MESSAGE } from "@/lib/survey/publish-rule";
 import { selectSurveyWithCustomCss } from "@/lib/survey/service";
 import { stripIsDraftFromBlocks, transformPrismaSurvey } from "@/lib/survey/utils";
-import { isAppSurveyBlockedFromPublishing } from "@/modules/creatives/lib/survey-publish";
 import { invalidateCustomCssCaches, resolveCustomCssWrite } from "@/modules/custom-css/lib/service";
+import { isAppSurveyBlockedFromPublishing } from "@/modules/ee/creatives/lib/survey-publish";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   isSurveySchedulingDue,

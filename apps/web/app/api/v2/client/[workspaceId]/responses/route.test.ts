@@ -67,7 +67,7 @@ vi.mock("@/modules/api/v2/lib/element", () => ({
   validateOtherOptionLengthForMultipleChoice: mocks.validateOtherOptionLengthForMultipleChoice,
 }));
 
-vi.mock("@/modules/creatives/lib/attribution", () => ({
+vi.mock("@/modules/ee/creatives/lib/attribution", () => ({
   getOpenedByCreativeMeta: mocks.getOpenedByCreativeMeta,
 }));
 

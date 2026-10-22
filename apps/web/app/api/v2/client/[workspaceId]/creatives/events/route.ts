@@ -1,6 +1,6 @@
 import { logger } from "@formbricks/logger";
 import { responses } from "@/app/lib/api/response";
-import { countCreativeEvents } from "@/modules/creatives/lib/client-events";
+import { countCreativeEvents } from "@/modules/ee/creatives/lib/client-events";
 
 /**
  * POST /api/v2/client/{workspaceId}/creatives/events — the web SDK's Impressions and Clicks of one page

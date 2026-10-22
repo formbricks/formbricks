@@ -12,7 +12,7 @@ import {
   UnknownError,
   ValidationError,
 } from "@formbricks/types/errors";
-import { SurveyLinkedCreativesError } from "@/modules/creatives/lib/linked-creatives";
+import { SurveyLinkedCreativesError } from "@/modules/ee/creatives/lib/linked-creatives";
 import { GENERIC_API_ERROR_MESSAGE, handleApiError } from "./handle-api-error";
 
 const CORS_HEADER = "Access-Control-Allow-Origin";

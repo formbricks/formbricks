@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
-import { findLinkedCreatives } from "@/modules/creatives/lib/linked-creatives";
+import { findLinkedCreatives } from "@/modules/ee/creatives/lib/linked-creatives";
 
 /** An outbound connection that makes `restricted` refusable (contract §3, Decision 13). */
 export type TSurveyVisibilityBlocker = Readonly<{

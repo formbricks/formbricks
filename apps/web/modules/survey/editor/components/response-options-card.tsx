@@ -12,7 +12,7 @@ import {
   type TSurveyLinkedCreative,
   isDestinationSettingLocked,
   joinCreativeNames,
-} from "@/modules/creatives/lib/survey-side";
+} from "@/modules/ee/creatives/lib/survey-side";
 import {
   type TSurveySchedulingConfig,
   getSurveySchedulingTimeLabel,

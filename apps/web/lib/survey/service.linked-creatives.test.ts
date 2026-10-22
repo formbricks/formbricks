@@ -4,7 +4,7 @@ import type { TActionClass } from "@formbricks/types/action-classes";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { lockSurveyVisibility } from "@/lib/authzed/survey";
-import { SurveyLinkedCreativesError } from "@/modules/creatives/lib/linked-creatives";
+import { SurveyLinkedCreativesError } from "@/modules/ee/creatives/lib/linked-creatives";
 import { mockActionClass, mockSurveyOutput, updateSurveyInput } from "./__mock__/survey.mock";
 import { updateSurvey } from "./service";
 

@@ -24,7 +24,7 @@ vi.mock("@formbricks/database", () => ({ prisma: { creative: { findMany: mocks.f
 vi.mock("@/lib/cache", () => ({
   cache: { withCache: async <T>(fn: () => Promise<T>) => fn() },
 }));
-vi.mock("@/modules/creatives/lib/counters", () => ({
+vi.mock("@/modules/ee/creatives/lib/counters", () => ({
   incrementCreativeCounters: mocks.incrementCreativeCounters,
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { warn: mocks.warn, error: vi.fn(), debug: vi.fn() } }));

@@ -3,7 +3,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { TDisplayCreateInput, ZDisplayCreateInput } from "@formbricks/types/displays";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
-import { getCreativeAttribution } from "@/modules/creatives/lib/attribution";
+import { getCreativeAttribution } from "@/modules/ee/creatives/lib/attribution";
 import { getContactByUserId } from "./contact";
 
 export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<{ id: string }> => {

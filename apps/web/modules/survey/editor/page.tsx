@@ -13,7 +13,6 @@ import {
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context";
 import { getTranslate } from "@/lingodotdev/server";
-import { getSurveyLinkedCreatives } from "@/modules/creatives/lib/survey-linked-creatives";
 import { getCustomCssSource } from "@/modules/custom-css/components/lib/draft";
 import { hasStylesInHeadScripts } from "@/modules/custom-css/components/lib/hints";
 import { type TSurveyCustomCssEditorConfig } from "@/modules/custom-css/components/types";
@@ -22,6 +21,7 @@ import { getCustomCssHealth, toDeliveredCustomCss } from "@/modules/custom-css/l
 import { getWorkspaceCustomCssRecord, parseStoredCustomCss } from "@/modules/custom-css/lib/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
+import { getSurveyLinkedCreatives } from "@/modules/ee/creatives/lib/survey-linked-creatives";
 import { getSurveyDataRetentionContext } from "@/modules/ee/data-retention/lib/survey-context";
 import {
   getIsContactsEnabled,

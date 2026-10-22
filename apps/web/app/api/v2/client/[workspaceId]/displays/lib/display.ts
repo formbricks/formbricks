@@ -6,7 +6,7 @@ import {
   ZDisplayCreateInputV2,
 } from "@/app/api/v2/client/[workspaceId]/displays/types/display";
 import { validateInputs } from "@/lib/utils/validate";
-import { getCreativeAttribution } from "@/modules/creatives/lib/attribution";
+import { getCreativeAttribution } from "@/modules/ee/creatives/lib/attribution";
 import { doesContactExistInWorkspace } from "./contact";
 
 export const createDisplay = async (displayInput: TDisplayCreateInputV2): Promise<{ id: string }> => {

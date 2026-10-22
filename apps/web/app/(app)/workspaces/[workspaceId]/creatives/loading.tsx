@@ -1,1 +1,1 @@
-export { CreativesListSkeleton as default } from "@/modules/creatives/components/creatives-list-skeleton";
+export { CreativesListSkeleton as default } from "@/modules/ee/creatives/components/creatives-list-skeleton";

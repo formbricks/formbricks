@@ -4,7 +4,7 @@ import { LinkIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { Dispatch, SetStateAction } from "react";
 import { useTranslation } from "react-i18next";
-import { getCreativesPath } from "@/modules/creatives/lib/paths";
+import { getCreativesPath } from "@/modules/ee/creatives/lib/paths";
 import { VisibilityBlockersAlert } from "@/modules/survey/visibility/components/visibility-blockers-alert";
 import type { TSurveyVisibilityBlocker } from "@/modules/survey/visibility/types";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";

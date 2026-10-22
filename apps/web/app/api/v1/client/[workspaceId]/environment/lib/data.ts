@@ -24,7 +24,7 @@ import {
   getDeliverableCreativesWhere,
   getPopupSurveyIds,
   toCreativePayloads,
-} from "@/modules/creatives/lib/delivery";
+} from "@/modules/ee/creatives/lib/delivery";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import { resolveRespondentCustomCss } from "@/modules/survey/link/lib/respondent-custom-css";

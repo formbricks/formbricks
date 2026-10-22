@@ -22,7 +22,7 @@ import {
   type TLinkedCreative,
   toUnlinkedCreativeAuditEvents,
   unlinkSurveyCreatives,
-} from "@/modules/creatives/lib/linked-creatives";
+} from "@/modules/ee/creatives/lib/linked-creatives";
 import { getAuthorizedV3Survey } from "../authorization";
 import { type TV3SurveyResourceVisibility, serializeV3SurveyVisibilityFields } from "../serializers";
 import { type TSurveyVisibilityBlocker, findCreativeBlockers, findSurveyOutboundBlockers } from "./blockers";

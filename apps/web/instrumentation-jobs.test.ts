@@ -172,7 +172,7 @@ vi.mock("@/modules/ee/data-retention/sweep/process-data-retention-sweep-job", ()
   processDataRetentionSweepJob: mockProcessDataRetentionSweepJob,
 }));
 
-vi.mock("@/modules/creatives/lib/process-creative-stats-flush-job", () => ({
+vi.mock("@/modules/ee/creatives/lib/process-creative-stats-flush-job", () => ({
   CREATIVE_STATS_FLUSH_INTERVAL_MS: 60_000,
   processCreativeStatsFlushJob: mockProcessCreativeStatsFlushJob,
 }));

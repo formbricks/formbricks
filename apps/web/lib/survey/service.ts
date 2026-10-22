@@ -52,17 +52,17 @@ import {
 import type { TSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import {
-  assertNoLinkedCreatives,
-  getDestinationSettingTurnedOn,
-} from "@/modules/creatives/lib/linked-creatives";
-import { isAppSurveyBlockedFromPublishing } from "@/modules/creatives/lib/survey-publish";
-import {
   invalidateCustomCssCaches,
   parseStoredCustomCss,
   readCustomCssPayloadSource,
   resolveCustomCssWriteOrThrow,
 } from "@/modules/custom-css/lib/service";
 import { getSurveyWorkspaceIdMap } from "@/modules/ee/contacts/segments/lib/segments";
+import {
+  assertNoLinkedCreatives,
+  getDestinationSettingTurnedOn,
+} from "@/modules/ee/creatives/lib/linked-creatives";
+import { isAppSurveyBlockedFromPublishing } from "@/modules/ee/creatives/lib/survey-publish";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   isSurveySchedulingDue,

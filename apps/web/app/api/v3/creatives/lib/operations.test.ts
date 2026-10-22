@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { zCreativeResource, zCreativeStats } from "@formbricks/api-v3-schemas";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
 import {
   type TCreativeRecord,
   type TCreativeWriteData,
@@ -9,9 +10,11 @@ import {
   findCreativeRecordsPage,
   insertCreativeRecord,
   replaceCreativeRecord,
-} from "@/modules/creatives/lib/repository";
-import type { TCreativeDayDeviceCount, TCreativePageCount } from "@/modules/creatives/lib/stats-repository";
-import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
+} from "@/modules/ee/creatives/lib/repository";
+import type {
+  TCreativeDayDeviceCount,
+  TCreativePageCount,
+} from "@/modules/ee/creatives/lib/stats-repository";
 import {
   archiveV3Creative,
   createV3Creative,
@@ -116,7 +119,7 @@ const withRelations = (record: TCreativeRecord): TCreativeRecord => {
   return { ...record, survey: null };
 };
 
-vi.mock("@/modules/creatives/lib/repository", () => ({
+vi.mock("@/modules/ee/creatives/lib/repository", () => ({
   findCreativeWorkspaceId: vi.fn(async (id: string) => store.get(id)?.workspaceId ?? null),
   findCreativeRecord: vi.fn(async (id: string, workspaceId: string) => {
     const record = store.get(id);
@@ -199,7 +202,7 @@ type TStoredPageCount = TCreativePageCount & { creativeId: string; date: string 
 const storedDeviceCounts: TStoredDeviceCount[] = [];
 const storedPageCounts: TStoredPageCount[] = [];
 
-vi.mock("@/modules/creatives/lib/stats-repository", () => ({
+vi.mock("@/modules/ee/creatives/lib/stats-repository", () => ({
   findCreativeDayDeviceCounts: vi.fn(
     async (creativeId: string, _workspaceId: string, from: string, to: string) =>
       storedDeviceCounts

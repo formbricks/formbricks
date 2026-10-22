@@ -26,12 +26,12 @@ import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/works
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
-import { SurveyStatusChangeDialog } from "@/modules/creatives/components/survey-side/survey-status-change-dialog";
+import { SurveyStatusChangeDialog } from "@/modules/ee/creatives/components/survey-side/survey-status-change-dialog";
 import {
   useSurveyLinkedCreatives,
   useSurveyStatusChangeWithCreatives,
-} from "@/modules/creatives/hooks/use-survey-linked-creatives";
-import { getLinkedCreativesBlockers, joinCreativeNames } from "@/modules/creatives/lib/survey-side";
+} from "@/modules/ee/creatives/hooks/use-survey-linked-creatives";
+import { getLinkedCreativesBlockers, joinCreativeNames } from "@/modules/ee/creatives/lib/survey-side";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
 import { CopySurveyModal } from "@/modules/survey/list/components/copy-survey-modal";

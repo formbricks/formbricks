@@ -31,7 +31,7 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   ContactAttribute: "parent_derived_or_data_integrity",
   ContactAttributeKey: "workspace_inherited_resource",
   // Creatives are authorized at the workspace level with no SpiceDB definition of their own
-  // (`modules/creatives/lib/authorization.ts`); their triggers, languages and counts follow the creative.
+  // (`modules/ee/creatives/lib/authorization.ts`); their triggers, languages and counts follow the creative.
   Creative: "workspace_inherited_resource",
   CreativeDailyPageStat: "parent_derived_or_data_integrity",
   CreativeDailyStat: "parent_derived_or_data_integrity",

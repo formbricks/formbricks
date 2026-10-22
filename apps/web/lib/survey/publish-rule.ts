@@ -8,7 +8,7 @@ import type { TSurveyStatus, TSurveyType } from "@formbricks/types/surveys/types
  * A live (non-draft) app survey needs something that can show it: a trigger of its own, or a
  * non-archived creative that opens it (ENG-3914, ENG-3994). When the last creative stops opening a live
  * survey, the change still goes through and the survey then never shows, like deleting its last action:
- * the dashboard confirms it first (`leavesSurveyUnopened` in `modules/creatives/lib/survey-side.ts`), and
+ * the dashboard confirms it first (`leavesSurveyUnopened` in `modules/ee/creatives/lib/survey-side.ts`), and
  * the API and MCP describe it on archive, delete and relink.
  */
 

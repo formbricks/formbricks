@@ -8,7 +8,7 @@ import {
   ValidationError,
 } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
-import { getCreativeAttribution } from "@/modules/creatives/lib/attribution";
+import { getCreativeAttribution } from "@/modules/ee/creatives/lib/attribution";
 import { TDisplayCreateInputV2 } from "../types/display";
 import { doesContactExistInWorkspace } from "./contact";
 import { createDisplay } from "./display";
@@ -34,7 +34,7 @@ vi.mock("./contact", () => ({
   doesContactExistInWorkspace: vi.fn(),
 }));
 
-vi.mock("@/modules/creatives/lib/attribution", () => ({
+vi.mock("@/modules/ee/creatives/lib/attribution", () => ({
   getCreativeAttribution: vi.fn(),
 }));
 

@@ -5,9 +5,9 @@ import { computeFilterFingerprint } from "@/app/api/v3/lib/keyset-cursor";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { collectMultiValueQueryParam } from "@/app/api/v3/surveys/parse-v3-surveys-list-query";
 import { zPostgresText } from "@/lib/utils/postgres-text";
-import type { TCreativeType } from "@/modules/creatives/lib/creative";
-import type { TCreativeDisplayStatus } from "@/modules/creatives/lib/display-status";
-import type { TCreativeListSortBy } from "@/modules/creatives/lib/repository";
+import type { TCreativeType } from "@/modules/ee/creatives/lib/creative";
+import type { TCreativeDisplayStatus } from "@/modules/ee/creatives/lib/display-status";
+import type { TCreativeListSortBy } from "@/modules/ee/creatives/lib/repository";
 
 /**
  * `GET /api/v3/creatives` query parsing. A query string arrives as strings, some repeated or

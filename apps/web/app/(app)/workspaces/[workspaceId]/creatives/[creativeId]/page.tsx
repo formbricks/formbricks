@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { getCreativeSummaryPath } from "@/modules/creatives/lib/paths";
+import { getCreativeSummaryPath } from "@/modules/ee/creatives/lib/paths";
 
 const CreativePage = async (
   props: Readonly<{ params: Promise<{ workspaceId: string; creativeId: string }> }>

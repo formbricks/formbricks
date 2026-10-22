@@ -3,7 +3,7 @@ import { prisma } from "@formbricks/database";
 import { queueV3AuditLog, skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { can } from "@/lib/authorization";
 import { lockSurveyVisibility, reconcileSurveyRelationships } from "@/lib/authzed/survey";
-import { unlinkSurveyCreatives } from "@/modules/creatives/lib/linked-creatives";
+import { unlinkSurveyCreatives } from "@/modules/ee/creatives/lib/linked-creatives";
 import { getAuthorizedV3Survey } from "../authorization";
 import { findCreativeBlockers, findSurveyOutboundBlockers } from "./blockers";
 import { getSurveyVisibilityImpact } from "./impact";
@@ -20,8 +20,8 @@ vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => ({ error: vi.fn(), info: vi.fn(), warn: vi.fn() })) },
 }));
 vi.mock("@/app/api/v3/lib/audit", () => ({ queueV3AuditLog: vi.fn(), skipV3AuditLog: vi.fn() }));
-vi.mock("@/modules/creatives/lib/linked-creatives", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/modules/creatives/lib/linked-creatives")>()),
+vi.mock("@/modules/ee/creatives/lib/linked-creatives", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/creatives/lib/linked-creatives")>()),
   unlinkSurveyCreatives: vi.fn(),
 }));
 vi.mock("@/app/api/v3/lib/auth", () => ({

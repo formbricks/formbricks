@@ -4,10 +4,10 @@ import {
   getCreativeWarnings,
   needsDestination,
   toCreativeShowConditions,
-} from "@/modules/creatives/lib/creative";
-import { getCreativeDeliveryGap, getCreativeDisplayState } from "@/modules/creatives/lib/display-status";
-import { getDestinationSurveyIssue, toCreativeState } from "@/modules/creatives/lib/record";
-import type { TCreativeRecord } from "@/modules/creatives/lib/repository";
+} from "@/modules/ee/creatives/lib/creative";
+import { getCreativeDeliveryGap, getCreativeDisplayState } from "@/modules/ee/creatives/lib/display-status";
+import { getDestinationSurveyIssue, toCreativeState } from "@/modules/ee/creatives/lib/record";
+import type { TCreativeRecord } from "@/modules/ee/creatives/lib/repository";
 
 /**
  * A stored creative as the v3 `CreativeResource`. The read-only fields are derived here and only here:

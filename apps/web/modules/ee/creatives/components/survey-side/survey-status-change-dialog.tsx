@@ -2,7 +2,10 @@
 
 import { type Dispatch, type SetStateAction, useId } from "react";
 import { useTranslation } from "react-i18next";
-import type { TSurveyStatusChangeKind, TSurveyStatusChangePlan } from "@/modules/creatives/lib/survey-side";
+import type {
+  TSurveyStatusChangeKind,
+  TSurveyStatusChangePlan,
+} from "@/modules/ee/creatives/lib/survey-side";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { Label } from "@/modules/ui/components/label";

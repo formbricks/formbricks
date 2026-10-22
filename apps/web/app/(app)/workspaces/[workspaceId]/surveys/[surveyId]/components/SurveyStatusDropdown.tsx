@@ -7,8 +7,8 @@ import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { SurveyStatusChangeDialog } from "@/modules/creatives/components/survey-side/survey-status-change-dialog";
-import { useSurveyStatusChangeWithCreatives } from "@/modules/creatives/hooks/use-survey-linked-creatives";
+import { SurveyStatusChangeDialog } from "@/modules/ee/creatives/components/survey-side/survey-status-change-dialog";
+import { useSurveyStatusChangeWithCreatives } from "@/modules/ee/creatives/hooks/use-survey-linked-creatives";
 import { updateSurveyAction } from "@/modules/survey/editor/actions";
 import {
   Select,

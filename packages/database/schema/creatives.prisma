@@ -7,7 +7,7 @@ enum CreativeType {
 }
 
 /// The author's intent only. Scheduled, Active, "Paused with its survey" and Closed after the
-/// end time are derived (`apps/web/modules/creatives/lib/display-status.ts` and its SQL twin); nothing
+/// end time are derived (`apps/web/modules/ee/creatives/lib/display-status.ts` and its SQL twin); nothing
 /// writes this column when a schedule ends or a survey pauses.
 enum CreativeStatus {
   draft

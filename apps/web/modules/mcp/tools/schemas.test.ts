@@ -10,7 +10,7 @@ import {
   V3_SURVEY_MAX_LANGUAGES,
   V3_SURVEY_MAX_VARIABLES,
 } from "@/app/api/v3/surveys/schemas";
-import { CREATIVE_TEXTS, type TCreativeTextSpec } from "@/modules/creatives/lib/creative-texts";
+import { CREATIVE_TEXTS, type TCreativeTextSpec } from "@/modules/ee/creatives/lib/creative-texts";
 import * as creativeSchemas from "./creative-schemas";
 import * as surveyAndFeedbackSchemas from "./schemas";
 import * as workflowSchemas from "./workflow-schemas";

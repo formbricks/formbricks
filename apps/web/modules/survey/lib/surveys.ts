@@ -6,14 +6,14 @@ import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
+import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
+import { enqueueSurveyDeletionCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
 import {
   SurveyLinkedCreativesError,
   type TLinkedCreative,
   findLinkedCreatives,
   unlinkSurveyCreatives,
-} from "@/modules/creatives/lib/linked-creatives";
-import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
-import { enqueueSurveyDeletionCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
+} from "@/modules/ee/creatives/lib/linked-creatives";
 import { collectSurveyResponseFileUrls } from "@/modules/storage/lib/survey-response-files";
 import { getSurveyPurgeEligibleWhere } from "@/modules/survey/archive/lib/purge-eligibility";
 import { restartSurveyRetention } from "@/modules/survey/archive/lib/retention-restart";

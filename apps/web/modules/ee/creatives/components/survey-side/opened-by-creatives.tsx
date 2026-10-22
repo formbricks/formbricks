@@ -3,9 +3,9 @@
 import { ArrowUpRightIcon, MousePointerClickIcon } from "lucide-react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { CreativeStatusPill } from "@/modules/creatives/components/creative-status-pill";
-import { getCreativeEditPath } from "@/modules/creatives/lib/paths";
-import type { TSurveyLinkedCreative } from "@/modules/creatives/lib/survey-side";
+import { CreativeStatusPill } from "@/modules/ee/creatives/components/creative-status-pill";
+import { getCreativeEditPath } from "@/modules/ee/creatives/lib/paths";
+import type { TSurveyLinkedCreative } from "@/modules/ee/creatives/lib/survey-side";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 

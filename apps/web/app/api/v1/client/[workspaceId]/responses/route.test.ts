@@ -74,7 +74,7 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsContactsEnabled: mocks.getIsContactsEnabled,
 }));
 
-vi.mock("@/modules/creatives/lib/attribution", () => ({
+vi.mock("@/modules/ee/creatives/lib/attribution", () => ({
   getOpenedByCreativeMeta: mocks.getOpenedByCreativeMeta,
 }));
 

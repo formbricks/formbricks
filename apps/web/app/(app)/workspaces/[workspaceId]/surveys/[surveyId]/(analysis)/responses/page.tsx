@@ -17,8 +17,8 @@ import { getUserVisibleSurveyWhere } from "@/lib/survey/visibility/actor-context
 import { getTagsByWorkspaceId } from "@/lib/tag/service";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { hasLinkedCreatives } from "@/modules/creatives/lib/linked-creatives";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
+import { hasLinkedCreatives } from "@/modules/ee/creatives/lib/linked-creatives";
 import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";

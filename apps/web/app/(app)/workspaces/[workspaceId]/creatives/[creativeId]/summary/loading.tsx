@@ -1,1 +1,1 @@
-export { CreativeSummarySkeleton as default } from "@/modules/creatives/components/skeletons";
+export { CreativeSummarySkeleton as default } from "@/modules/ee/creatives/components/skeletons";

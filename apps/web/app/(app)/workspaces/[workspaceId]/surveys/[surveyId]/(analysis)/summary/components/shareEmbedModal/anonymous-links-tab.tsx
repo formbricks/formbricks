@@ -11,8 +11,8 @@ import { updateSingleUseLinksAction } from "@/app/(app)/workspaces/[workspaceId]
 import { DisableLinkModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/disable-link-modal";
 import { DocumentationLinks } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
-import { useSurveyLinkedCreatives } from "@/modules/creatives/hooks/use-survey-linked-creatives";
-import { isDestinationSettingLocked, joinCreativeNames } from "@/modules/creatives/lib/survey-side";
+import { useSurveyLinkedCreatives } from "@/modules/ee/creatives/hooks/use-survey-linked-creatives";
+import { isDestinationSettingLocked, joinCreativeNames } from "@/modules/ee/creatives/lib/survey-side";
 import { generateSingleUseIdsAction } from "@/modules/survey/list/actions";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";

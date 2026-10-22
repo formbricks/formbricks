@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
-import type { TCreativeOpenedMode } from "@/modules/creatives/lib/survey-side";
+import type { TCreativeOpenedMode } from "@/modules/ee/creatives/lib/survey-side";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";

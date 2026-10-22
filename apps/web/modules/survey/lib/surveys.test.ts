@@ -7,13 +7,13 @@ import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getSurvey } from "@/lib/survey/service";
 import { validateInputs } from "@/lib/utils/validate";
+import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
+import { enqueueSurveyDeletionCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
 import {
   SurveyLinkedCreativesError,
   findLinkedCreatives,
   unlinkSurveyCreatives,
-} from "@/modules/creatives/lib/linked-creatives";
-import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
-import { enqueueSurveyDeletionCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
+} from "@/modules/ee/creatives/lib/linked-creatives";
 import { getSurveyPurgeEligibleWhere } from "@/modules/survey/archive/lib/purge-eligibility";
 import { restartSurveyRetention } from "@/modules/survey/archive/lib/retention-restart";
 import { archiveSurvey, deleteSurvey, restoreSurvey } from "./surveys";
@@ -51,8 +51,8 @@ vi.mock("@/modules/survey/archive/lib/retention-restart", () => ({
   restartSurveyRetention: vi.fn(),
 }));
 
-vi.mock("@/modules/creatives/lib/linked-creatives", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/modules/creatives/lib/linked-creatives")>()),
+vi.mock("@/modules/ee/creatives/lib/linked-creatives", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/creatives/lib/linked-creatives")>()),
   findLinkedCreatives: vi.fn(),
   unlinkSurveyCreatives: vi.fn(),
 }));
