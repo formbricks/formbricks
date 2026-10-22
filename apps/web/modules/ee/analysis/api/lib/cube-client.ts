@@ -9,6 +9,12 @@ import { getOrganization } from "@/lib/organization/service";
 import { withResponseBaseMeasure } from "@/modules/ee/analysis/charts/lib/response-base";
 import { expandPresetDateRanges } from "@/modules/ee/analysis/lib/date-presets";
 import { isRatioMeasure } from "@/modules/ee/analysis/lib/schema-definition";
+import {
+  MAX_TIME_BUCKETS,
+  countTimeBuckets,
+  countTimeBucketsSpanning,
+  isTimeBucketGranularity,
+} from "@/modules/ee/analysis/lib/time-buckets";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import {
@@ -113,6 +119,32 @@ const queueCubeQueryAuditEvent = ({
  * lists the buckets that are real, which is enough to tell the two apart.
  */
 const NULL_FILL_SENTINEL = "__formbricks_null__";
+
+/**
+ * How many date buckets `tablePivot` would invent rows for. The client fills the first time dimension
+ * when it has a granularity, over the date range Cube echoes back — or, without one, over the span of
+ * the rows — and it builds every bucket synchronously, whatever the data holds. Counting first keeps
+ * one query from allocating millions of rows in this process (ENG-6603).
+ */
+const countFilledTimeBuckets = (resultSet: ResultSet): number => {
+  const timeDimension = resultSet.query().timeDimensions?.[0];
+  const granularity = timeDimension?.granularity;
+  if (!timeDimension || !granularity) return 0;
+  // A custom granularity cannot be counted here, so its buckets are never filled.
+  if (!isTimeBucketGranularity(granularity)) return Number.POSITIVE_INFINITY;
+
+  const { dateRange } = timeDimension;
+  if (Array.isArray(dateRange) && dateRange.length === 2) {
+    return countTimeBuckets(dateRange[0], dateRange[1], granularity);
+  }
+
+  const bucketKey = `${timeDimension.dimension}.${granularity}`;
+  const rows = resultSet.rawData() as Record<string, unknown>[];
+  return countTimeBucketsSpanning(
+    rows.map((row) => row[bucketKey]),
+    granularity
+  );
+};
 
 const restoreNullMeasures = (
   rows: TChartDataRow[],
@@ -235,12 +267,25 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
     // The injected count is a measure too: an invented date bucket must read 0 answers, not NULL.
     const measures = executedQuery.measures ?? [];
     const granular = (input.query.timeDimensions ?? []).filter((td) => Boolean(td.granularity));
-    const filled = resultSet.tablePivot({ fillWithValue: NULL_FILL_SENTINEL });
+    // Past the cap the chart gets its real rows only, with gaps where buckets are empty, rather than
+    // a row for every bucket in the range.
+    const fillMissingDates = countFilledTimeBuckets(resultSet) <= MAX_TIME_BUCKETS;
+    if (!fillMissingDates) {
+      logger.warn(
+        { source: input.source, maxTimeBuckets: MAX_TIME_BUCKETS },
+        "Chart query spans more time buckets than the cap; empty buckets are not filled"
+      );
+    }
+    const filled = resultSet.tablePivot(
+      fillMissingDates
+        ? { fillWithValue: NULL_FILL_SENTINEL }
+        : { fillMissingDates: false, fillWithValue: NULL_FILL_SENTINEL }
+    );
 
     // The pivot only invents rows for empty buckets when there is exactly one granular time
     // dimension (see NULL_FILL_SENTINEL); with none, or several, every row it returns is real.
     let result: TChartDataRow[];
-    if (granular.length === 1) {
+    if (fillMissingDates && granular.length === 1) {
       const bucketKey = `${granular[0].dimension}.${granular[0].granularity}`;
       const realBuckets = new Set(
         resultSet

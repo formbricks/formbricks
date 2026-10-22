@@ -67,6 +67,9 @@ const scopedInput = {
   source: "v3.charts.data" as const,
 };
 
+/** A stand-in Cube result: `tablePivot` is the mock, and it echoes a query with no time dimension. */
+const stubResultSet = () => ({ tablePivot: mockTablePivot, query: () => ({}), rawData: () => [] });
+
 type TCubeJsMock = {
   mock: { calls: [string, { apiUrl: string }][] };
   (...args: [string, { apiUrl: string }]): unknown;
@@ -96,7 +99,7 @@ describe("executeTenantScopedQuery", () => {
       ipAddress: "203.0.113.7",
       userAgent: "cube-test-agent",
     });
-    mockLoad.mockResolvedValue({ tablePivot: mockTablePivot });
+    mockLoad.mockResolvedValue(stubResultSet());
     mockGetOrganization.mockResolvedValue({ displayTimeZone: null });
     mockQueueAuditEventWithoutRequest.mockResolvedValue(undefined);
     mockTablePivot.mockReturnValue([{ id: "1", count: 42 }]);
@@ -475,7 +478,7 @@ describe("executeTenantScopedQuery", () => {
     // A self-hosted Cube running an older schema has no npsCount.
     mockLoad
       .mockRejectedValueOnce(new Error("Error: 'npsCount' not found for path 'FeedbackRecords.npsCount'"))
-      .mockResolvedValueOnce({ tablePivot: mockTablePivot });
+      .mockResolvedValueOnce(stubResultSet());
     mockTablePivot.mockReturnValue([{ "FeedbackRecords.npsScore": "40" }]);
 
     const { executeTenantScopedQuery } = await import("./cube-client");
@@ -736,6 +739,100 @@ describe("executeTenantScopedQuery", () => {
         expect.any(Error),
         "Failed to queue Cube query audit event"
       );
+    });
+  });
+
+  describe("time-bucket cap (ENG-6603)", () => {
+    const hourly = "FeedbackRecords.collectedAt.hour";
+
+    /** A real Cube result for an hourly count, echoing `dateRange` as Cube normalizes it. */
+    const hourlyLoadResponse = (dateRange: [string, string] | undefined, hours: string[]) => {
+      const query = {
+        measures: ["FeedbackRecords.count"],
+        timeDimensions: [
+          {
+            dimension: "FeedbackRecords.collectedAt",
+            granularity: "hour",
+            ...(dateRange ? { dateRange } : {}),
+          },
+        ],
+      };
+      return {
+        queryType: "regularQuery",
+        pivotQuery: { ...query, queryType: "regularQuery" },
+        results: [
+          {
+            query,
+            annotation: {
+              measures: { "FeedbackRecords.count": { type: "number" } },
+              dimensions: {},
+              segments: {},
+              timeDimensions: { [hourly]: { type: "time" } },
+            },
+            data: hours.map((hour) => ({
+              [hourly]: hour,
+              "FeedbackRecords.collectedAt": hour,
+              "FeedbackRecords.count": "1",
+            })),
+          },
+        ],
+      };
+    };
+
+    const runHourly = async (loadResponse: unknown) => {
+      const transport = createCubeTransport(loadResponse);
+      const { CubeApi } = await vi.importActual<typeof CubeClient>("@cubejs-client/core");
+      mockLoad.mockImplementationOnce((query: CubeClient.Query, options?: CubeClient.LoadMethodOptions) =>
+        new CubeApi("token", { apiUrl: "https://cube.example.com/cubejs-api/v1", transport }).load(
+          query,
+          options
+        )
+      );
+      const { executeTenantScopedQuery } = await import("./cube-client");
+      return executeTenantScopedQuery({
+        ...scopedInput,
+        query: {
+          measures: ["FeedbackRecords.count"],
+          timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", granularity: "hour" }],
+        },
+      });
+    };
+
+    test("fills every empty bucket of a range within the cap", async () => {
+      const rows = await runHourly(
+        hourlyLoadResponse(
+          ["2024-01-01T00:00:00.000", "2024-01-02T23:59:59.999"],
+          ["2024-01-01T05:00:00.000"]
+        )
+      );
+
+      expect(rows).toHaveLength(48);
+      expect(mockLoggerWarn).not.toHaveBeenCalled();
+    });
+
+    test("returns only the real rows when the requested range spans more buckets than the cap", async () => {
+      // 50 years by the hour is ~438,000 buckets; filled, it would build a row for each of them.
+      const rows = await runHourly(
+        hourlyLoadResponse(
+          ["2000-01-01T00:00:00.000", "2049-12-31T23:59:59.999"],
+          ["2024-01-01T05:00:00.000"]
+        )
+      );
+
+      expect(rows).toEqual([{ [hourly]: "2024-01-01T05:00:00.000", "FeedbackRecords.count": 1 }]);
+      expect(mockLoggerWarn).toHaveBeenCalledWith(
+        expect.objectContaining({ maxTimeBuckets: 10_000 }),
+        "Chart query spans more time buckets than the cap; empty buckets are not filled"
+      );
+    });
+
+    test("caps an all-time chart by the span of its rows", async () => {
+      // No date range: the pivot fills from the earliest row to the latest, ~1.1 million hours here.
+      const rows = await runHourly(
+        hourlyLoadResponse(undefined, ["1900-01-01T00:00:00.000", "2024-01-01T05:00:00.000"])
+      );
+
+      expect(rows).toHaveLength(2);
     });
   });
 });
