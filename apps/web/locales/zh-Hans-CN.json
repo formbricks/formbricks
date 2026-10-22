@@ -185,7 +185,6 @@
     "activity": "活动",
     "add": "添加",
     "add_action": "添加 操作",
-    "add_chart": "添加图表",
     "add_charts": "添加图表",
     "add_existing_chart_description": "搜索并选择要添加到此仪表板的图表。",
     "add_filter": "添加 过滤器",
@@ -2026,6 +2025,7 @@
       },
       "dashboards": {
         "add_count_charts": "添加 {count} 个图表",
+        "already_on_this_dashboard": "已在此仪表板中",
         "chart_duplicate_failed": "图表复制失败",
         "chart_duplicated": "图表已复制并添加到仪表板",
         "chart_remove_failed": "删除图表失败",
@@ -2059,6 +2059,7 @@
         "failed_to_load_chart_data": "加载图表数据失败",
         "failed_to_load_dashboard": "无法加载此仪表板",
         "new_dashboard": "新建仪表板",
+        "no_charts_match_search": "没有与搜索匹配的图表",
         "no_dashboards_found": "还没有仪表板",
         "no_dashboards_found_description": "创建你的第一个仪表板，将图表整理在一起，集中监控反馈洞察。",
         "no_data_message": "暂无数据。当前没有可显示的信息。请添加图表来构建你的仪表板。",

@@ -185,7 +185,6 @@
     "activity": "活動",
     "add": "新增",
     "add_action": "新增操作",
-    "add_chart": "新增圖表",
     "add_charts": "新增圖表",
     "add_existing_chart_description": "搜尋並選擇要新增至此儀表板的圖表。",
     "add_filter": "新增篩選器",
@@ -2026,6 +2025,7 @@
       },
       "dashboards": {
         "add_count_charts": "新增 {count} 個圖表",
+        "already_on_this_dashboard": "已在此儀表板中",
         "chart_duplicate_failed": "圖表複製失敗",
         "chart_duplicated": "圖表已複製並新增至儀表板",
         "chart_remove_failed": "移除圖表失敗",
@@ -2059,6 +2059,7 @@
         "failed_to_load_chart_data": "載入圖表資料失敗",
         "failed_to_load_dashboard": "無法載入此儀表板",
         "new_dashboard": "新儀表板",
+        "no_charts_match_search": "找不到符合搜尋條件的圖表",
         "no_dashboards_found": "尚無儀表板",
         "no_dashboards_found_description": "建立你的第一個儀表板，以便在同一處整理圖表並監控回饋洞察。",
         "no_data_message": "無資料。目前沒有可顯示的資訊。請新增圖表來建立你的儀表板。",

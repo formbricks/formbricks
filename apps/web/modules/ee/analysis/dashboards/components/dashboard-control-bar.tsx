@@ -18,7 +18,6 @@ interface DashboardControlBarProps {
   workspaceId: string;
   dashboardId: string;
   directories: { id: string; name: string }[];
-  existingChartIds: string[];
   isEditing: boolean;
   isSaving: boolean;
   hasChanges: boolean;
@@ -40,7 +39,6 @@ export const DashboardControlBar = ({
   workspaceId,
   dashboardId,
   directories,
-  existingChartIds,
   isEditing,
   isSaving,
   hasChanges,
@@ -148,7 +146,6 @@ export const DashboardControlBar = ({
         workspaceId={workspaceId}
         dashboardId={dashboardId}
         directories={directories}
-        existingChartIds={existingChartIds}
         onSuccess={() => {
           setIsAddExistingDialogOpen(false);
           onRefresh();

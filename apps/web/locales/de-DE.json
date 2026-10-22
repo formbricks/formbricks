@@ -185,7 +185,6 @@
     "activity": "Aktivität",
     "add": "Hinzufügen",
     "add_action": "Aktion hinzufügen",
-    "add_chart": "Diagramm hinzufügen",
     "add_charts": "Diagramme hinzufügen",
     "add_existing_chart_description": "Suche und wähle Diagramme aus, um sie zu diesem Dashboard hinzuzufügen.",
     "add_filter": "Filter hinzufügen",
@@ -2026,6 +2025,7 @@
       },
       "dashboards": {
         "add_count_charts": "{count} Diagramm(e) hinzufügen",
+        "already_on_this_dashboard": "bereits in diesem Dashboard",
         "chart_duplicate_failed": "Diagramm konnte nicht dupliziert werden",
         "chart_duplicated": "Diagramm wurde dupliziert und zum Dashboard hinzugefügt",
         "chart_remove_failed": "Diagramm konnte nicht entfernt werden",
@@ -2059,6 +2059,7 @@
         "failed_to_load_chart_data": "Diagrammdaten konnten nicht geladen werden",
         "failed_to_load_dashboard": "Dieses Dashboard konnte nicht geladen werden",
         "new_dashboard": "Neues Dashboard",
+        "no_charts_match_search": "Keine Diagramme entsprechen Deiner Suche",
         "no_dashboards_found": "Noch keine Dashboards",
         "no_dashboards_found_description": "Erstelle dein erstes Dashboard, um Diagramme zu organisieren und deine Feedback-Insights an einem Ort zu überwachen.",
         "no_data_message": "Keine Daten. Es gibt derzeit keine Informationen zum Anzeigen. Füge Diagramme hinzu, um dein Dashboard zu erstellen.",

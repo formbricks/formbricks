@@ -10,6 +10,11 @@ import {
   listV3Dashboards,
   renameV3Dashboard,
 } from "@/app/api/v3/dashboards/lib/operations";
+import {
+  addV3DashboardWidget,
+  removeV3DashboardWidget,
+  updateV3DashboardWidget,
+} from "@/app/api/v3/dashboards/lib/widget-operations";
 import { successResponse } from "@/app/api/v3/lib/response";
 import { registerDashboardTools } from "./dashboards";
 
@@ -34,6 +39,11 @@ vi.mock("@/app/api/v3/dashboards/lib/operations", () => ({
   listV3Dashboards: vi.fn(),
   renameV3Dashboard: vi.fn(),
 }));
+vi.mock("@/app/api/v3/dashboards/lib/widget-operations", () => ({
+  addV3DashboardWidget: vi.fn(),
+  removeV3DashboardWidget: vi.fn(),
+  updateV3DashboardWidget: vi.fn(),
+}));
 vi.mock("@/app/api/v3/lib/audit", () => ({
   buildV3AuditLog: vi.fn(),
   queueV3AuditLog: vi.fn().mockResolvedValue(undefined),
@@ -46,6 +56,7 @@ const WORKSPACE_ID = "clws000000000000000000001";
 const DATASET_ID = "clds000000000000000000001";
 const CHART_ID = "clch000000000000000000001";
 const DASHBOARD_ID = "cldb000000000000000000001";
+const WIDGET_ID = "clwg000000000000000000001";
 
 const authInfoWith = (scopes: string[]) => ({
   token: "key_1",
@@ -296,5 +307,40 @@ describe("chart and dashboard MCP tools", () => {
       /shares the original's charts/
     );
     expect([...tools.keys()].filter((name) => /delete/.test(name))).toEqual([]);
+  });
+
+  test("the widget tools need dashboards:write and map their arguments onto the operations", async () => {
+    vi.mocked(addV3DashboardWidget).mockResolvedValue(successResponse({}, { requestId: "req" }));
+    vi.mocked(updateV3DashboardWidget).mockResolvedValue(successResponse({}, { requestId: "req" }));
+    vi.mocked(removeV3DashboardWidget).mockResolvedValue(new Response(null, { status: 204 }));
+    const layout = { x: 0, y: 0, w: 6, h: 4 };
+    const writes = [
+      ["add_chart_to_dashboard", { dashboardId: DASHBOARD_ID, chartId: CHART_ID, layout }],
+      ["update_widget", { dashboardId: DASHBOARD_ID, widgetId: WIDGET_ID, chartId: CHART_ID }],
+      ["remove_chart_from_dashboard", { dashboardId: DASHBOARD_ID, widgetId: WIDGET_ID }],
+    ] as const;
+
+    for (const [name, input] of writes) {
+      expect((await call(name, input, ["dashboards:read"])).isError).toBe(true);
+    }
+    expect(addV3DashboardWidget).not.toHaveBeenCalled();
+
+    const results = [];
+    for (const [name, input] of writes) results.push(await call(name, input, ["dashboards:write"]));
+    expect(results.map((result) => result.isError)).toEqual([undefined, undefined, undefined]);
+    expect(addV3DashboardWidget).toHaveBeenCalledWith(
+      expect.objectContaining({ dashboardId: DASHBOARD_ID, body: { chartId: CHART_ID, layout } })
+    );
+    expect(updateV3DashboardWidget).toHaveBeenCalledWith(
+      expect.objectContaining({ dashboardId: DASHBOARD_ID, widgetId: WIDGET_ID, body: { chartId: CHART_ID } })
+    );
+    expect(removeV3DashboardWidget).toHaveBeenCalledWith(
+      expect.objectContaining({ dashboardId: DASHBOARD_ID, widgetId: WIDGET_ID })
+    );
+  });
+
+  test("remove_chart_from_dashboard says the chart is kept", () => {
+    const description = String(createToolServer().get("remove_chart_from_dashboard")?.config.description);
+    expect(description).toMatch(/chart itself is kept/);
   });
 });

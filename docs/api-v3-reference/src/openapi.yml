@@ -388,6 +388,10 @@ paths:
     $ref: paths/api_v3_dashboards_{dashboardId}.yml
   /api/v3/dashboards/{dashboardId}/duplicate:
     $ref: paths/api_v3_dashboards_{dashboardId}_duplicate.yml
+  /api/v3/dashboards/{dashboardId}/widgets:
+    $ref: paths/api_v3_dashboards_{dashboardId}_widgets.yml
+  /api/v3/dashboards/{dashboardId}/widgets/{widgetId}:
+    $ref: paths/api_v3_dashboards_{dashboardId}_widgets_{widgetId}.yml
   /api/v3/action-classes:
     $ref: paths/api_v3_action-classes.yml
   /api/v3/contact-attribute-keys:

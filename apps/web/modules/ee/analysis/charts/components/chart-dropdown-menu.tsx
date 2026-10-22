@@ -8,8 +8,9 @@ import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { deleteChartAction, duplicateChartAction } from "@/modules/ee/analysis/charts/actions";
 import { AddToDashboardDialog } from "@/modules/ee/analysis/charts/components/add-to-dashboard-dialog";
-import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
-import { chartKeys } from "@/modules/ee/analysis/lib/query";
+import { getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
+import { addDashboardWidget, getChartApiErrorMessage } from "@/modules/ee/analysis/lib/api-client";
+import { chartKeys, dashboardKeys } from "@/modules/ee/analysis/lib/query";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -129,29 +130,16 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
     setIsAddingToDashboard(true);
 
     try {
-      const result = await addChartToDashboardAction({
-        workspaceId,
-        chartId: chart.id,
-        dashboardId: selectedDashboardId,
-      });
-
-      if (!result?.data) {
-        toast.error(
-          getFormattedErrorMessage(result) || t("workspace.analysis.charts.failed_to_add_chart_to_dashboard")
-        );
-        return;
-      }
-
+      await addDashboardWidget(selectedDashboardId, { chartId: chart.id });
       toast.success(t("workspace.analysis.charts.chart_added_to_dashboard"));
       setIsAddToDashboardDialogOpen(false);
       setSelectedDashboardId(undefined);
       void queryClient.invalidateQueries({ queryKey: chartKeys.all });
+      void queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : t("workspace.analysis.charts.failed_to_add_chart_to_dashboard");
-      toast.error(message);
+      toast.error(
+        getChartApiErrorMessage(error, t("workspace.analysis.charts.failed_to_add_chart_to_dashboard"))
+      );
     } finally {
       setIsAddingToDashboard(false);
     }

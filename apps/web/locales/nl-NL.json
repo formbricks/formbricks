@@ -185,7 +185,6 @@
     "activity": "Activiteit",
     "add": "Toevoegen",
     "add_action": "Actie toevoegen",
-    "add_chart": "Diagram toevoegen",
     "add_charts": "Grafieken toevoegen",
     "add_existing_chart_description": "Zoek en selecteer grafieken om toe te voegen aan dit dashboard.",
     "add_filter": "Filter toevoegen",
@@ -2026,6 +2025,7 @@
       },
       "dashboards": {
         "add_count_charts": "{count} grafiek(en) toevoegen",
+        "already_on_this_dashboard": "staat al op dit dashboard",
         "chart_duplicate_failed": "Dupliceren van grafiek mislukt",
         "chart_duplicated": "Grafiek gedupliceerd en toegevoegd aan dashboard",
         "chart_remove_failed": "Grafiek verwijderen mislukt",
@@ -2059,6 +2059,7 @@
         "failed_to_load_chart_data": "Grafiekgegevens laden mislukt",
         "failed_to_load_dashboard": "Dit dashboard kan niet worden geladen",
         "new_dashboard": "Nieuw dashboard",
+        "no_charts_match_search": "Geen grafieken gevonden voor je zoekopdracht",
         "no_dashboards_found": "Nog geen dashboards",
         "no_dashboards_found_description": "Maak je eerste dashboard om grafieken te organiseren en je feedback-inzichten op één plek te monitoren.",
         "no_data_message": "Geen gegevens. Er is momenteel geen informatie om weer te geven. Voeg grafieken toe om je dashboard op te bouwen.",

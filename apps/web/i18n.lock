@@ -154,7 +154,6 @@ checksums:
     common/activity: 1948763de8e531483a798b68195e297e
     common/add: 87c4a663507f2bcbbf79934af8164e13
     common/add_action: 66fefc4dd6a7b939c2224272cf0d2669
-    common/add_chart: 0c8539d3ccc83fce87bb1e0dc3e30005
     common/add_charts: c377a42e165e8ab67bfbb8ad72026dd8
     common/add_existing_chart_description: b1292a1d6df2e03ad7b399689312c37f
     common/add_filter: ed5d8e9bfcb05cd1e10e4c403befbae6
@@ -1955,6 +1954,7 @@ checksums:
     workspace/analysis/charts/value_band_satisfied: 4d542ba354b85e644acbca5691d2ce45
     workspace/analysis/charts/vertical_bars: 408174fe449ea6f5457988dd218183be
     workspace/analysis/dashboards/add_count_charts: b4ee1f29efce0bb380a060e0bc5d64fa
+    workspace/analysis/dashboards/already_on_this_dashboard: a4668a6a887b0bcd312cf30ebb1a89ad
     workspace/analysis/dashboards/chart_duplicate_failed: 90d7166c85188b52f821c9d9f53ff8c4
     workspace/analysis/dashboards/chart_duplicated: 52765f173bd6fd5382731f8e06e436e0
     workspace/analysis/dashboards/chart_remove_failed: 198f5c3bdd522b40b80cb7479d3051a1
@@ -1988,6 +1988,7 @@ checksums:
     workspace/analysis/dashboards/failed_to_load_chart_data: ea980a6d12b1b1efed90d991dd0dd0fd
     workspace/analysis/dashboards/failed_to_load_dashboard: 6fb0efd73e55a235e75ece8c35aa2ebe
     workspace/analysis/dashboards/new_dashboard: 994b8a982af4c22385861d26e373a949
+    workspace/analysis/dashboards/no_charts_match_search: 7ef6b1e501080e8a50d9997234a51fca
     workspace/analysis/dashboards/no_dashboards_found: b4d9dce52bf5f83d074306980b505477
     workspace/analysis/dashboards/no_dashboards_found_description: d5b83ba325d50cf69d8f0258981357ce
     workspace/analysis/dashboards/no_data_message: 464d50cf30281a5b6af2726846eb14b4

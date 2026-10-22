@@ -2,7 +2,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TChartConfig } from "@formbricks/types/analysis";
@@ -10,15 +10,16 @@ import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { deleteChartAction } from "@/modules/ee/analysis/charts/actions";
 import { sanitizeChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
-import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
+import { getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
 import {
+  addDashboardWidget,
   createChart,
   getChart,
   getChartApiErrorMessage,
   getChartData,
   updateChart,
 } from "@/modules/ee/analysis/lib/api-client";
-import { chartKeys } from "@/modules/ee/analysis/lib/query";
+import { chartKeys, dashboardKeys } from "@/modules/ee/analysis/lib/query";
 import type {
   AnalyticsResponse,
   TChart,
@@ -52,7 +53,6 @@ export function useChartDialog({
   const router = useRouter();
   const queryClient = useQueryClient();
   const pathname = usePathname();
-  const [, startTransition] = useTransition();
   const [selectedChartType, setSelectedChartType] = useState<TChartType | undefined>();
   const [chartData, setChartData] = useState<AnalyticsResponse | null>(null);
   // Display settings saved alongside the chart (display type, bar direction).
@@ -212,16 +212,11 @@ export function useChartDialog({
       }
 
       if (autoAddToDashboardId && savedChartId) {
-        const addResult = await addChartToDashboardAction({
-          workspaceId,
-          chartId: savedChartId,
-          dashboardId: autoAddToDashboardId,
-        });
-
-        if (!addResult?.data) {
+        try {
+          await addDashboardWidget(autoAddToDashboardId, { chartId: savedChartId });
+        } catch (error) {
           toast.error(
-            getFormattedErrorMessage(addResult) ||
-              t("workspace.analysis.charts.failed_to_add_chart_to_dashboard")
+            getChartApiErrorMessage(error, t("workspace.analysis.charts.failed_to_add_chart_to_dashboard"))
           );
           if (newlyCreatedChartId) await cleanupOrphanChart(newlyCreatedChartId);
           return;
@@ -238,9 +233,7 @@ export function useChartDialog({
         }
       }
       void queryClient.invalidateQueries({ queryKey: chartKeys.all });
-      startTransition(() => {
-        router.refresh();
-      });
+      void queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
       onSuccess?.();
     } catch (error: unknown) {
       toast.error(getChartApiErrorMessage(error, t("workspace.analysis.charts.failed_to_save_chart")));
@@ -299,16 +292,11 @@ export function useChartDialog({
       if (!chartIdToUse) return;
       if (!currentChartId) newlyCreatedChartId = chartIdToUse;
 
-      const widgetResult = await addChartToDashboardAction({
-        workspaceId,
-        chartId: chartIdToUse,
-        dashboardId: selectedDashboardId,
-      });
-
-      if (!widgetResult?.data) {
+      try {
+        await addDashboardWidget(selectedDashboardId, { chartId: chartIdToUse });
+      } catch (error) {
         toast.error(
-          (widgetResult && getFormattedErrorMessage(widgetResult)) ||
-            t("workspace.analysis.charts.failed_to_add_chart_to_dashboard")
+          getChartApiErrorMessage(error, t("workspace.analysis.charts.failed_to_add_chart_to_dashboard"))
         );
         if (newlyCreatedChartId) await cleanupOrphanChart(newlyCreatedChartId);
         return;
@@ -318,9 +306,7 @@ export function useChartDialog({
       setIsAddToDashboardDialogOpen(false);
       closeDialog();
       void queryClient.invalidateQueries({ queryKey: chartKeys.all });
-      startTransition(() => {
-        router.refresh();
-      });
+      void queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
       onSuccess?.();
     } catch (error: unknown) {
       const message =

@@ -185,7 +185,6 @@
     "activity": "Activity",
     "add": "Add",
     "add_action": "Add action",
-    "add_chart": "Add chart",
     "add_charts": "Add charts",
     "add_existing_chart_description": "Search and select charts to add to this dashboard.",
     "add_filter": "Add filter",
@@ -2026,6 +2025,7 @@
       },
       "dashboards": {
         "add_count_charts": "Add {count} chart(s)",
+        "already_on_this_dashboard": "already on this dashboard",
         "chart_duplicate_failed": "Failed to duplicate chart",
         "chart_duplicated": "Chart duplicated and added to dashboard",
         "chart_remove_failed": "Failed to remove chart",
@@ -2059,6 +2059,7 @@
         "failed_to_load_chart_data": "Failed to load chart data",
         "failed_to_load_dashboard": "Failed to load this dashboard",
         "new_dashboard": "New dashboard",
+        "no_charts_match_search": "No charts match your search",
         "no_dashboards_found": "No dashboards yet",
         "no_dashboards_found_description": "Create your first dashboard to organize charts and monitor your feedback insights in one place.",
         "no_data_message": "No Data. There is currently no information to display. Add charts to build your dashboard.",

@@ -335,12 +335,48 @@ export const duplicateDashboard = async (dashboardId: string, name?: string): Pr
     )
   );
 
-/** Deletes the dashboard and its widgets; the charts stay. */
-export const deleteDashboard = async (dashboardId: string): Promise<void> => {
-  const response = await fetch(dashboardPath(dashboardId), {
+const sendDelete = async (path: string): Promise<void> => {
+  const response = await fetch(path, {
     method: "DELETE",
     cache: "no-store",
     signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
   });
   if (!response.ok) throw await parseV3ApiError(response);
+};
+
+/** Deletes the dashboard and its widgets; the charts stay. */
+export const deleteDashboard = (dashboardId: string): Promise<void> => sendDelete(dashboardPath(dashboardId));
+
+const widgetsPath = (dashboardId: string) => `${dashboardPath(dashboardId)}/widgets`;
+
+/** Puts a chart on a dashboard; without a `layout` it lands in the first open slot. */
+export const addDashboardWidget = async (
+  dashboardId: string,
+  widget: { chartId: string; layout?: TDashboardWidget["layout"] }
+): Promise<TDashboardWidget> =>
+  toAppDashboardWidget(
+    dashboardId,
+    await readData<TV3DashboardWidget>(await sendJson("POST", widgetsPath(dashboardId), widget))
+  );
+
+/** Takes a widget off its dashboard; the chart stays. */
+export const removeDashboardWidget = (dashboardId: string, widgetId: string): Promise<void> =>
+  sendDelete(`${widgetsPath(dashboardId)}/${encodeURIComponent(widgetId)}`);
+
+/**
+ * Puts a removed widget's chart back where it was. If something has taken that spot since, the chart
+ * goes to the first open slot instead: getting it back matters more than the exact position.
+ */
+export const restoreDashboardWidget = async (
+  dashboardId: string,
+  widget: Pick<TDashboardWidget, "chartId" | "layout">
+): Promise<TDashboardWidget> => {
+  try {
+    return await addDashboardWidget(dashboardId, { chartId: widget.chartId, layout: widget.layout });
+  } catch (error) {
+    if (error instanceof V3ApiError && error.status === 422) {
+      return addDashboardWidget(dashboardId, { chartId: widget.chartId });
+    }
+    throw error;
+  }
 };

@@ -9,10 +9,16 @@ import {
   listV3Dashboards,
   renameV3Dashboard,
 } from "@/app/api/v3/dashboards/lib/operations";
+import {
+  addV3DashboardWidget,
+  removeV3DashboardWidget,
+  updateV3DashboardWidget,
+} from "@/app/api/v3/dashboards/lib/widget-operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import type { TMcpToolContext } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import {
+  type TMcpAddChartToDashboardInput,
   type TMcpChartIdInput,
   type TMcpCreateChartInput,
   type TMcpCreateDashboardInput,
@@ -24,8 +30,11 @@ import {
   type TMcpListChartsInput,
   type TMcpListDashboardsInput,
   type TMcpPreviewChartInput,
+  type TMcpRemoveChartFromDashboardInput,
   type TMcpUpdateChartInput,
   type TMcpUpdateDashboardInput,
+  type TMcpUpdateWidgetInput,
+  ZMcpAddChartToDashboardInput,
   ZMcpChartDataOutput,
   ZMcpChartFieldCatalogOutput,
   ZMcpChartFieldValuesOutput,
@@ -44,10 +53,14 @@ import {
   ZMcpListChartsInput,
   ZMcpListDashboardsInput,
   ZMcpPreviewChartInput,
+  ZMcpRemoveChartFromDashboardInput,
   ZMcpUpdateChartInput,
   ZMcpUpdateDashboardInput,
+  ZMcpUpdateWidgetInput,
+  ZMcpWidgetOutput,
 } from "./dashboard-schemas";
 import { registerScopedTool } from "./guard-scopes";
+import { ZMcpAcknowledgement } from "./output-schemas";
 import { runMcpMutation } from "./run-mcp-mutation";
 import { READ_ANNOTATIONS, WRITE_ANNOTATIONS, toolContext } from "./tool-context";
 
@@ -356,6 +369,63 @@ export function registerDashboardTools(server: McpServer): void {
     async ({ dashboardId, ...body }: TMcpDuplicateDashboardInput, ctx) =>
       runMutation(ctx, "created", "dashboard", (context) =>
         duplicateV3Dashboard({ dashboardId, body, ...context })
+      )
+  );
+
+  registerScopedTool(
+    server,
+    "add_chart_to_dashboard",
+    {
+      title: "Add chart to dashboard",
+      description:
+        "Put an existing chart on a dashboard. Without a layout it lands in the first open slot at its type's default size; with one, exactly there, provided no other widget is. A chart appears at most once per dashboard, and the same chart can sit on several dashboards.",
+      inputSchema: ZMcpAddChartToDashboardInput,
+      outputSchema: ZMcpWidgetOutput,
+      audit: { action: "created", targetType: "dashboardWidget" },
+      annotations: WRITE_ANNOTATIONS,
+    },
+    ["dashboards:write"],
+    async ({ dashboardId, ...body }: TMcpAddChartToDashboardInput, ctx) =>
+      runMutation(ctx, "created", "dashboardWidget", (context) =>
+        addV3DashboardWidget({ dashboardId, body, ...context })
+      )
+  );
+
+  registerScopedTool(
+    server,
+    "update_widget",
+    {
+      title: "Update widget",
+      description:
+        "Move or resize a widget, or show another chart in its place, or both. Repointing is how one dashboard gets its own version of a shared chart: duplicate_chart, then point this widget at the copy.",
+      inputSchema: ZMcpUpdateWidgetInput,
+      outputSchema: ZMcpWidgetOutput,
+      audit: { action: "updated", targetType: "dashboardWidget", targetIdArg: "widgetId" },
+      annotations: WRITE_ANNOTATIONS,
+    },
+    ["dashboards:write"],
+    async ({ dashboardId, widgetId, ...body }: TMcpUpdateWidgetInput, ctx) =>
+      runMutation(ctx, "updated", "dashboardWidget", (context) =>
+        updateV3DashboardWidget({ dashboardId, widgetId, body, ...context })
+      )
+  );
+
+  registerScopedTool(
+    server,
+    "remove_chart_from_dashboard",
+    {
+      title: "Remove chart from dashboard",
+      description:
+        "Take a chart off a dashboard by removing its widget. The chart itself is kept, with every other dashboard it sits on; add it back with add_chart_to_dashboard.",
+      inputSchema: ZMcpRemoveChartFromDashboardInput,
+      outputSchema: ZMcpAcknowledgement,
+      audit: { action: "deleted", targetType: "dashboardWidget", targetIdArg: "widgetId" },
+      annotations: WRITE_ANNOTATIONS,
+    },
+    ["dashboards:write"],
+    async ({ dashboardId, widgetId }: TMcpRemoveChartFromDashboardInput, ctx) =>
+      runMutation(ctx, "deleted", "dashboardWidget", (context) =>
+        removeV3DashboardWidget({ dashboardId, widgetId, ...context })
       )
   );
 }

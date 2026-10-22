@@ -185,7 +185,6 @@
     "activity": "Tevékenység",
     "add": "Hozzáadás",
     "add_action": "Művelet hozzáadása",
-    "add_chart": "Diagram hozzáadása",
     "add_charts": "Diagramok hozzáadása",
     "add_existing_chart_description": "Diagramok keresése és kiválasztása a vezérlőpulthoz való hozzáadáshoz.",
     "add_filter": "Szűrő hozzáadása",
@@ -2026,6 +2025,7 @@
       },
       "dashboards": {
         "add_count_charts": "{count} diagram hozzáadása",
+        "already_on_this_dashboard": "már szerepel ezen az irányítópulton",
         "chart_duplicate_failed": "Nem sikerült kettőzni a diagramot",
         "chart_duplicated": "Diagram kettőzve és hozzáadva a vezérlőpulthoz",
         "chart_remove_failed": "Nem sikerült eltávolítani a diagramot",
@@ -2059,6 +2059,7 @@
         "failed_to_load_chart_data": "Nem sikerült betölteni a diagram adatait",
         "failed_to_load_dashboard": "Az irányítópult betöltése sikertelen volt",
         "new_dashboard": "Új vezérlőpult",
+        "no_charts_match_search": "Egyetlen diagram sem felel meg az Ön keresésének",
         "no_dashboards_found": "Még nincsenek vezérlőpultok",
         "no_dashboards_found_description": "Hozza létre az első vezérlőpultját, hogy egy helyen rendszerezhesse a diagramokat és figyelhesse meg a visszajelzésekből nyert tapasztalatokat.",
         "no_data_message": "Nincsenek adatok. Jelenleg nincsenek megjelenítendő információk. Adjon hozzá diagramokat a vezérlőpultja összeállításához.",

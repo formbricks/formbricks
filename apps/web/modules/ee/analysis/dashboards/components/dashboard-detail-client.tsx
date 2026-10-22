@@ -47,19 +47,16 @@ import {
   type TAppDashboard,
   type TChartDateRangeInput,
   getChartApiErrorMessage,
+  removeDashboardWidget,
   renameDashboard,
+  restoreDashboardWidget,
 } from "@/modules/ee/analysis/lib/api-client";
 import { chartKeys, dashboardKeys } from "@/modules/ee/analysis/lib/query";
 import type { TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
-import {
-  addChartToDashboardAction,
-  duplicateChartAndAddWidgetAction,
-  removeWidgetFromDashboardAction,
-  updateWidgetLayoutsAction,
-} from "../actions";
+import { duplicateChartAndAddWidgetAction, updateWidgetLayoutsAction } from "../actions";
 import { useDashboard } from "../hooks/use-dashboard";
 
 const ROW_HEIGHT = 80;
@@ -343,24 +340,14 @@ function DashboardDetailView({
   const handleUndoRemoveWidget = useCallback(
     async (snapshot: TDashboardWidget) => {
       try {
-        const result = await addChartToDashboardAction({
-          workspaceId,
-          dashboardId: dashboard.id,
-          chartId: snapshot.chartId,
-          layout: snapshot.layout,
-          respectY: true,
-        });
-        if (!result?.data) {
-          toast.error(getFormattedErrorMessage(result));
-          return;
-        }
+        await restoreDashboardWidget(dashboard.id, snapshot);
         toast.success(t("workspace.analysis.dashboards.chart_restored"));
         refreshDashboard();
-      } catch {
-        toast.error(t("workspace.analysis.dashboards.chart_restore_failed"));
+      } catch (error) {
+        toast.error(getChartApiErrorMessage(error, t("workspace.analysis.dashboards.chart_restore_failed")));
       }
     },
-    [workspaceId, dashboard.id, refreshDashboard, t]
+    [dashboard.id, refreshDashboard, t]
   );
 
   const handleRemoveWidgetFromMenu = useCallback(
@@ -375,15 +362,7 @@ function DashboardDetailView({
       if (!snapshot) return;
 
       try {
-        const result = await removeWidgetFromDashboardAction({
-          workspaceId,
-          dashboardId: dashboard.id,
-          widgetId,
-        });
-        if (!result?.data) {
-          toast.error(getFormattedErrorMessage(result));
-          return;
-        }
+        await removeDashboardWidget(dashboard.id, widgetId);
 
         toast.success(
           (toastInstance) => (
@@ -403,8 +382,8 @@ function DashboardDetailView({
           { duration: 6000 }
         );
         refreshDashboard();
-      } catch {
-        toast.error(t("workspace.analysis.dashboards.chart_remove_failed"));
+      } catch (error) {
+        toast.error(getChartApiErrorMessage(error, t("workspace.analysis.dashboards.chart_remove_failed")));
       }
     },
     [
@@ -416,7 +395,6 @@ function DashboardDetailView({
       isEditing,
       refreshDashboard,
       t,
-      workspaceId,
     ]
   );
 
@@ -556,7 +534,6 @@ function DashboardDetailView({
             workspaceId={workspaceId}
             dashboardId={dashboard.id}
             directories={directories}
-            existingChartIds={widgets.map((w) => w.chartId)}
             isEditing={isEditing}
             isSaving={isSaving}
             hasChanges={hasChanges}

@@ -16,40 +16,7 @@ import {
   TDashboardWithCount,
   ZAddWidgetInput,
 } from "@/modules/ee/analysis/types/analysis";
-import { findNextOpenSlot, parseWidgetLayouts } from "./widget-placement";
-
-const getDefaultWidgetLayout = (chartType: TChartType): TWidgetLayout => {
-  if (chartType === "big_number") return { x: 0, y: 0, w: 3, h: 2 };
-  // A grid of statements needs the width for its labels and the height for its rows.
-  if (chartType === "matrix") return { x: 0, y: 0, w: 6, h: 5 };
-  return { x: 0, y: 0, w: 4, h: 4 };
-};
-
-/**
- * The `x`/`y` a new widget takes on a dashboard that already holds `existingWidgets`: the first gap
- * it fits in, so a new or duplicated chart fills the space beside a narrower widget instead of
- * opening a new row below everything.
- *
- * A gap can only be trusted when every stored layout is readable: `layout` is a JSON column, and a
- * row that does not parse is a widget whose occupancy is unknown, so a "free" slot may be sitting
- * under it. Placement then falls back to keeping the requested `x` and starting the row below every
- * readable widget.
- */
-const resolveWidgetPosition = (
-  existingWidgets: { layout: unknown }[],
-  baseLayout: TWidgetLayout
-): Pick<TWidgetLayout, "x" | "y"> => {
-  const layouts = parseWidgetLayouts(existingWidgets);
-
-  if (layouts.length === existingWidgets.length) {
-    return findNextOpenSlot(layouts, baseLayout);
-  }
-
-  return {
-    x: baseLayout.x,
-    y: layouts.reduce((max, layout) => Math.max(max, layout.y + layout.h), 0),
-  };
-};
+import { getDefaultWidgetLayout, resolveWidgetPosition } from "./widget-placement";
 
 const selectDashboard = {
   id: true,
@@ -182,31 +149,6 @@ export const updateWidgetLayouts = async (
     if (error instanceof ResourceNotFoundError || error instanceof InvalidInputError) {
       throw error;
     }
-    if (isPrismaKnownRequestError(error)) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-};
-
-export const removeWidgetFromDashboard = async (
-  dashboardId: string,
-  workspaceId: string,
-  widgetId: string
-) => {
-  validateInputs([dashboardId, ZId], [workspaceId, ZId], [widgetId, ZId]);
-
-  try {
-    const widget = await prisma.dashboardWidget.findFirst({
-      where: { id: widgetId, dashboard: { id: dashboardId, workspaceId } },
-    });
-
-    if (!widget) {
-      throw new ResourceNotFoundError("DashboardWidget", widgetId);
-    }
-
-    return await prisma.dashboardWidget.delete({ where: { id: widgetId } });
-  } catch (error) {
     if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }

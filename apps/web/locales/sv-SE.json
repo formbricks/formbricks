@@ -185,7 +185,6 @@
     "activity": "Aktivitet",
     "add": "Lägg till",
     "add_action": "Lägg till åtgärd",
-    "add_chart": "Lägg till diagram",
     "add_charts": "Lägg till diagram",
     "add_existing_chart_description": "Sök och välj diagram att lägga till i den här instrumentpanelen.",
     "add_filter": "Lägg till filter",
@@ -2026,6 +2025,7 @@
       },
       "dashboards": {
         "add_count_charts": "Lägg till {count} diagram",
+        "already_on_this_dashboard": "finns redan på den här instrumentpanelen",
         "chart_duplicate_failed": "Misslyckades med att duplicera diagram",
         "chart_duplicated": "Diagram duplicerat och tillagt på instrumentpanelen",
         "chart_remove_failed": "Misslyckades med att ta bort diagram",
@@ -2059,6 +2059,7 @@
         "failed_to_load_chart_data": "Det gick inte att ladda diagramdata",
         "failed_to_load_dashboard": "Det gick inte att läsa in den här instrumentpanelen",
         "new_dashboard": "Ny instrumentpanel",
+        "no_charts_match_search": "Inga diagram matchar din sökning",
         "no_dashboards_found": "Inga instrumentpaneler ännu",
         "no_dashboards_found_description": "Skapa din första instrumentpanel för att organisera diagram och övervaka dina feedbackinsikter på ett ställe.",
         "no_data_message": "Ingen data. Det finns för närvarande ingen information att visa. Lägg till diagram för att bygga din instrumentpanel.",

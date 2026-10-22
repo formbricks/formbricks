@@ -10,13 +10,7 @@ import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/co
 import { checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
-import {
-  addChartToDashboard,
-  getDashboard,
-  getDashboards,
-  removeWidgetFromDashboard,
-  updateWidgetLayouts,
-} from "./lib/dashboards";
+import { getDashboard, getDashboards, updateWidgetLayouts } from "./lib/dashboards";
 import { duplicateChartAndAddWidget } from "./lib/duplicate-chart-and-add-widget";
 
 const checkDashboardsEnabled = async (organizationId: string) => {
@@ -94,80 +88,6 @@ export const getDashboardsAction = authenticatedActionClient
     return getDashboards(workspaceId, parsedInput.chartId);
   });
 
-const ZGetDashboardAction = z.object({
-  workspaceId: ZId,
-  dashboardId: ZId,
-});
-
-export const getDashboardAction = authenticatedActionClient
-  .inputSchema(ZGetDashboardAction)
-  .action(
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZGetDashboardAction>;
-    }) => {
-      const { organizationId, workspaceId } = await checkWorkspaceAccess(
-        ctx.user.id,
-        parsedInput.workspaceId,
-        "read"
-      );
-      await checkDashboardsEnabled(organizationId);
-
-      return getDashboard(parsedInput.dashboardId, workspaceId);
-    }
-  );
-
-const ZAddChartToDashboardAction = z.object({
-  workspaceId: ZId,
-  dashboardId: ZId,
-  chartId: ZId,
-  layout: ZWidgetLayout.optional(),
-  respectY: z.boolean().optional(),
-});
-
-export const addChartToDashboardAction = authenticatedActionClient
-  .inputSchema(ZAddChartToDashboardAction)
-  .action(
-    withAuditLogging(
-      "created",
-      "dashboardWidget",
-      async ({
-        ctx,
-        parsedInput,
-      }: {
-        ctx: AuthenticatedActionClientCtx;
-        parsedInput: z.infer<typeof ZAddChartToDashboardAction>;
-      }) => {
-        const { organizationId, workspaceId } = await checkWorkspaceAccess(
-          ctx.user.id,
-          parsedInput.workspaceId,
-          "readWrite"
-        );
-        await checkDashboardsEnabled(organizationId);
-
-        const widget = await addChartToDashboard({
-          dashboardId: parsedInput.dashboardId,
-          chartId: parsedInput.chartId,
-          workspaceId,
-          layout: parsedInput.layout,
-          respectY: parsedInput.respectY,
-        });
-
-        revalidatePath(`/workspaces/${workspaceId}/dashboards/${parsedInput.dashboardId}`);
-        revalidatePath(`/workspaces/${workspaceId}/dashboards`);
-
-        ctx.auditLoggingCtx.organizationId = organizationId;
-        ctx.auditLoggingCtx.workspaceId = workspaceId;
-        ctx.auditLoggingCtx.dashboardWidgetId = widget.id;
-        ctx.auditLoggingCtx.newObject = widget;
-        return widget;
-      }
-    )
-  );
-
 const ZDuplicateChartAndAddWidgetAction = z.object({
   workspaceId: ZId,
   dashboardId: ZId,
@@ -214,38 +134,4 @@ export const duplicateChartAndAddWidgetAction = authenticatedActionClient
         return widget;
       }
     )
-  );
-
-const ZRemoveWidgetFromDashboardAction = z.object({
-  workspaceId: ZId,
-  dashboardId: ZId,
-  widgetId: ZId,
-});
-
-export const removeWidgetFromDashboardAction = authenticatedActionClient
-  .inputSchema(ZRemoveWidgetFromDashboardAction)
-  .action(
-    withAuditLogging("deleted", "dashboardWidget", async ({ ctx, parsedInput }) => {
-      const { organizationId, workspaceId } = await checkWorkspaceAccess(
-        ctx.user.id,
-        parsedInput.workspaceId,
-        "readWrite"
-      );
-      await checkDashboardsEnabled(organizationId);
-
-      const widget = await removeWidgetFromDashboard(
-        parsedInput.dashboardId,
-        workspaceId,
-        parsedInput.widgetId
-      );
-
-      revalidatePath(`/workspaces/${workspaceId}/dashboards/${parsedInput.dashboardId}`);
-      revalidatePath(`/workspaces/${workspaceId}/dashboards`);
-
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.workspaceId = workspaceId;
-      ctx.auditLoggingCtx.dashboardWidgetId = widget.id;
-      ctx.auditLoggingCtx.oldObject = widget;
-      return { success: true };
-    })
   );

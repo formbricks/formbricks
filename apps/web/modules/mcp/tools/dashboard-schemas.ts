@@ -7,8 +7,12 @@ import {
   ZV3ChartResource,
 } from "@/app/api/v3/charts/lib/resources";
 import { V3_NAME_MAX_LENGTH, ZV3ChartConfig, ZV3ChartName } from "@/app/api/v3/charts/lib/schemas";
-import { ZV3DashboardListItem, ZV3DashboardResource } from "@/app/api/v3/dashboards/lib/resources";
-import { ZV3DashboardName } from "@/app/api/v3/dashboards/lib/schemas";
+import {
+  ZV3DashboardListItem,
+  ZV3DashboardResource,
+  ZV3DashboardWidget,
+} from "@/app/api/v3/dashboards/lib/resources";
+import { ZV3DashboardName, ZV3WidgetLayoutInput } from "@/app/api/v3/dashboards/lib/schemas";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 import { mcpToolOutput } from "./output-schemas";
 
@@ -204,3 +208,40 @@ export const ZMcpDuplicateDashboardInput = z
   })
   .strict();
 export type TMcpDuplicateDashboardInput = z.infer<typeof ZMcpDuplicateDashboardInput>;
+
+const ZMcpWidgetLayout = ZV3WidgetLayoutInput.describe(
+  "Position and size on the 12-column grid in whole units: x 0-11, w 1-12 with x + w <= 12, y 0-1000, h 1-8. Widgets may leave gaps but not overlap; get_dashboard shows where the others are."
+);
+
+export const ZMcpAddChartToDashboardInput = z
+  .object({
+    dashboardId: ZId.describe("The dashboard to add the chart to."),
+    chartId: ZId.describe("A chart in the same workspace. A chart appears at most once per dashboard."),
+    layout: ZMcpWidgetLayout.optional().describe(
+      "Where to put it. Leave it out to place the chart in the first open slot at its type's default size."
+    ),
+  })
+  .strict();
+export type TMcpAddChartToDashboardInput = z.infer<typeof ZMcpAddChartToDashboardInput>;
+
+export const ZMcpUpdateWidgetInput = z
+  .object({
+    dashboardId: ZId.describe("The dashboard the widget is on."),
+    widgetId: ZId.describe("The widget to change, from get_dashboard."),
+    layout: ZMcpWidgetLayout.optional(),
+    chartId: ZId.optional().describe(
+      "Show another chart in this widget's place, e.g. a copy made with duplicate_chart. It must not already be on the dashboard."
+    ),
+  })
+  .strict();
+export type TMcpUpdateWidgetInput = z.infer<typeof ZMcpUpdateWidgetInput>;
+
+export const ZMcpRemoveChartFromDashboardInput = z
+  .object({
+    dashboardId: ZId.describe("The dashboard to take the chart off."),
+    widgetId: ZId.describe("The widget showing the chart, from get_dashboard."),
+  })
+  .strict();
+export type TMcpRemoveChartFromDashboardInput = z.infer<typeof ZMcpRemoveChartFromDashboardInput>;
+
+export const ZMcpWidgetOutput = mcpToolOutput(ZV3DashboardWidget);

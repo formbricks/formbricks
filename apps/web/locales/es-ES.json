@@ -185,7 +185,6 @@
     "activity": "Actividad",
     "add": "Añadir",
     "add_action": "Añadir acción",
-    "add_chart": "Agregar gráfico",
     "add_charts": "Añadir gráficos",
     "add_existing_chart_description": "Busca y selecciona gráficos para añadir a este panel.",
     "add_filter": "Añadir filtro",
@@ -2026,6 +2025,7 @@
       },
       "dashboards": {
         "add_count_charts": "Añadir {count} gráfico(s)",
+        "already_on_this_dashboard": "ya está en este panel",
         "chart_duplicate_failed": "No se pudo duplicar el gráfico",
         "chart_duplicated": "Gráfico duplicado y añadido al panel",
         "chart_remove_failed": "No se pudo eliminar el gráfico",
@@ -2059,6 +2059,7 @@
         "failed_to_load_chart_data": "Error al cargar los datos del gráfico",
         "failed_to_load_dashboard": "No se ha podido cargar este panel",
         "new_dashboard": "Nuevo panel",
+        "no_charts_match_search": "Ningún gráfico coincide con tu búsqueda",
         "no_dashboards_found": "Aún no hay paneles",
         "no_dashboards_found_description": "Crea tu primer panel para organizar gráficos y supervisar tus insights de comentarios en un solo lugar.",
         "no_data_message": "Sin datos. Actualmente no hay información que mostrar. Añade gráficos para crear tu panel.",

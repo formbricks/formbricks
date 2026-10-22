@@ -185,7 +185,6 @@
     "activity": "Atividade",
     "add": "Adicionar",
     "add_action": "Adicionar ação",
-    "add_chart": "Adicionar gráfico",
     "add_charts": "Adicionar gráficos",
     "add_existing_chart_description": "Pesquisa e seleciona gráficos para adicionar a este painel.",
     "add_filter": "Adicionar filtro",
@@ -2026,6 +2025,7 @@
       },
       "dashboards": {
         "add_count_charts": "Adicionar {count} gráfico(s)",
+        "already_on_this_dashboard": "já está neste painel",
         "chart_duplicate_failed": "Falha ao duplicar gráfico",
         "chart_duplicated": "Gráfico duplicado e adicionado ao painel",
         "chart_remove_failed": "Falha ao remover gráfico",
@@ -2059,6 +2059,7 @@
         "failed_to_load_chart_data": "Falha ao carregar os dados do gráfico",
         "failed_to_load_dashboard": "Não foi possível carregar este painel",
         "new_dashboard": "Novo dashboard",
+        "no_charts_match_search": "Nenhum gráfico corresponde à sua pesquisa",
         "no_dashboards_found": "Ainda sem dashboards",
         "no_dashboards_found_description": "Cria o teu primeiro dashboard para organizar gráficos e monitorizar as tuas análises de feedback num só lugar.",
         "no_data_message": "Sem Dados. Atualmente não há informação para apresentar. Adiciona gráficos para construir o teu painel.",

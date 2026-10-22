@@ -31,18 +31,32 @@ export type TDashboardListRow = Prisma.DashboardGetPayload<{ select: typeof sele
  * A dashboard with every widget and the widget's full chart, in one query: the charts, and the
  * dashboards each of them sits on, are batched relation reads rather than a query per widget.
  */
+/** A widget with its full chart — what a dashboard read embeds and a widget write answers with. */
+export const selectWidgetResource = {
+  id: true,
+  chartId: true,
+  layout: true,
+  order: true,
+  chart: { select: selectChartResource },
+} satisfies Prisma.DashboardWidgetSelect;
+
+export type TWidgetResourceRow = Prisma.DashboardWidgetGetPayload<{ select: typeof selectWidgetResource }>;
+
 export const selectDashboardResource = {
   ...selectDashboardBase,
-  widgets: {
-    orderBy: [{ order: "asc" }, { createdAt: "asc" }],
-    select: { id: true, chartId: true, layout: true, order: true, chart: { select: selectChartResource } },
-  },
+  widgets: { orderBy: [{ order: "asc" }, { createdAt: "asc" }], select: selectWidgetResource },
 } satisfies Prisma.DashboardSelect;
 
 export type TDashboardResourceRow = Prisma.DashboardGetPayload<{ select: typeof selectDashboardResource }>;
 
 export const getDashboardResourceRow = (dashboardId: string): Promise<TDashboardResourceRow | null> =>
   prisma.dashboard.findUnique({ where: { id: dashboardId }, select: selectDashboardResource });
+
+/** Just enough of a dashboard to authorize a write to its widgets. */
+export const getDashboardWorkspaceRow = (
+  dashboardId: string
+): Promise<{ id: string; workspaceId: string } | null> =>
+  prisma.dashboard.findUnique({ where: { id: dashboardId }, select: { id: true, workspaceId: true } });
 
 export type TDashboardListFilter = {
   workspaceId: string;

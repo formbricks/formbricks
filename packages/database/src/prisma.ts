@@ -111,6 +111,10 @@ export namespace Prisma {
     S extends boolean | null | undefined | PrismaModelTypes.DashboardDefaultArgs,
   > = PrismaModelTypes.DashboardGetPayload<S>;
   export type DashboardSelect = PrismaModelTypes.DashboardSelect;
+  export type DashboardWidgetGetPayload<
+    S extends boolean | null | undefined | PrismaModelTypes.DashboardWidgetDefaultArgs,
+  > = PrismaModelTypes.DashboardWidgetGetPayload<S>;
+  export type DashboardWidgetSelect = PrismaModelTypes.DashboardWidgetSelect;
   export type DateTimeFilter = PrismaModelTypes.DateTimeFilter;
   export type DateTimeNullableFilter = PrismaModelTypes.DateTimeNullableFilter;
   export type DisplaySelect = PrismaModelTypes.DisplaySelect;

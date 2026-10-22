@@ -4607,6 +4607,155 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+  /api/v3/dashboards/{dashboardId}/widgets:
+    post:
+      operationId: addDashboardWidgetV3
+      summary: Add a chart to a dashboard
+      description: |
+        Puts an existing chart on a dashboard. Without a `layout` the chart lands in the first open slot
+        at its chart type's default size; with one, exactly there. Widgets may leave gaps but not overlap:
+        a layout covering another widget answers 422 naming it. A chart appears at most once per
+        dashboard (409), and must live in the dashboard's workspace. Moves the dashboard's `updatedAt`.
+        Needs write access to the dashboard's workspace.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WidgetCreateRequest'
+      responses:
+        '201':
+          description: The new widget
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+            Location:
+              schema:
+                type: string
+              example: /api/v3/dashboards/cldash00000000000000000001/widgets/clwidget000000000000000001
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardWidget'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          $ref: '#/components/responses/V3DashboardsConflict'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/dashboards/{dashboardId}/widgets/{widgetId}:
+    patch:
+      operationId: updateDashboardWidgetV3
+      summary: Move a widget or show another chart in it
+      description: |
+        Moves or resizes a widget, points it at another chart, or both. A layout covering another widget
+        answers 422 naming it; a chart already on the dashboard answers 409. Moves the dashboard's
+        `updatedAt`. Needs write access to the dashboard's workspace.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+        - $ref: '#/components/parameters/WidgetIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WidgetUpdateRequest'
+      responses:
+        '200':
+          description: The updated widget
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardWidget'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          $ref: '#/components/responses/V3DashboardsConflict'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    delete:
+      operationId: removeDashboardWidgetV3
+      summary: Remove a chart from a dashboard
+      description: |
+        Takes a widget off its dashboard. The chart is kept, with every other dashboard it sits on. Moves
+        the dashboard's `updatedAt`. Needs write access to the dashboard's workspace.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+        - $ref: '#/components/parameters/WidgetIdPath'
+      responses:
+        '204':
+          description: Widget removed; the chart is kept
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/action-classes:
     get:
       operationId: listActionClassesV3
@@ -11668,7 +11817,7 @@ components:
       additionalProperties: false
     WidgetLayout:
       type: object
-      description: 'A widget''s position and size on the dashboard''s 12-column grid, in whole grid units: `1 ≤ w ≤ 12`, `x + w ≤ 12`, `1 ≤ h ≤ 24`, `0 ≤ y ≤ 1000`. Widgets may not overlap; gaps are allowed and close upward when the dashboard is drawn.'
+      description: 'A widget''s position and size on the dashboard''s 12-column grid, in whole grid units: `1 ≤ w ≤ 12`, `x + w ≤ 12`, `1 ≤ h ≤ 8`, `0 ≤ y ≤ 1000`. Widgets may not overlap; gaps are allowed and close upward when the dashboard is drawn.'
       required:
         - x
         - 'y'
@@ -11690,7 +11839,7 @@ components:
         h:
           type: integer
           minimum: 1
-          maximum: 24
+          maximum: 8
       additionalProperties: false
     DashboardWidget:
       type: object
@@ -11772,6 +11921,31 @@ components:
           minLength: 1
           maxLength: 255
           description: Name for the copy, unique within the workspace. Without one the copy is named "<original> (copy)", then "(copy 2)" and so on — never "(copy) (copy)".
+      additionalProperties: false
+    WidgetCreateRequest:
+      type: object
+      required:
+        - chartId
+      properties:
+        chartId:
+          type: string
+          format: cuid2
+          description: A chart in the dashboard's workspace. A chart appears at most once per dashboard.
+        layout:
+          $ref: '#/components/schemas/WidgetLayout'
+          description: Where to put the chart. Without one it lands in the first open slot at its chart type's default size.
+      additionalProperties: false
+    WidgetUpdateRequest:
+      type: object
+      description: Send a `layout`, a `chartId`, or both. Repointing shows another chart in the widget's place — the way to give one dashboard its own copy of a shared chart.
+      minProperties: 1
+      properties:
+        layout:
+          $ref: '#/components/schemas/WidgetLayout'
+        chartId:
+          type: string
+          format: cuid2
+          description: A chart in the dashboard's workspace that is not already on the dashboard.
       additionalProperties: false
     ActionClassResource:
       type: object
@@ -12935,6 +13109,14 @@ components:
         type: string
         format: cuid2
       description: Dashboard identifier.
+    WidgetIdPath:
+      in: path
+      name: widgetId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: The widget's id, from the dashboard's `widgets`.
     WorkspaceIdPath:
       in: path
       name: workspaceId
