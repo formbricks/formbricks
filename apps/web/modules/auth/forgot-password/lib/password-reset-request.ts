@@ -11,6 +11,7 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import type { TAuditRequestMetadata } from "@/modules/ee/audit-logs/types/request-metadata";
 
 /**
  * Whether this user has a password to reset. Pure SSO users do not: they get a mail naming their identity
@@ -87,13 +88,13 @@ const consumeAccountMailBudget = async (userId: string): Promise<boolean> => {
 export const processPasswordResetRequest = async ({
   email,
   requestHeaders,
-  ipAddress,
+  requestMetadata,
 }: {
   email: string;
   /** A copy of the request's headers: Better Auth's hooks read them, and the request has ended. */
   requestHeaders: Headers;
   /** For the audit record, captured while the request was live. */
-  ipAddress: string;
+  requestMetadata: TAuditRequestMetadata;
 }): Promise<void> => {
   try {
     const user = await getUserByEmail(email);
@@ -133,7 +134,7 @@ export const processPasswordResetRequest = async ({
       targetId: user.id,
       organizationId: UNKNOWN_DATA,
       status: "success",
-      ipAddress,
+      requestMetadata,
     });
   } catch (error) {
     // `err`, not `error`: pino serializes an Error's message and stack only under `err`.

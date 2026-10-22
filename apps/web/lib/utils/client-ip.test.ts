@@ -112,6 +112,19 @@ describe("resolveClientIp", () => {
 describe("getClientIpFromHeaders", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(nextHeaders.headers).mockReset();
+  });
+
+  test("uses a supplied snapshot without accessing request scope", async () => {
+    vi.mocked(nextHeaders.headers).mockRejectedValueOnce(new Error("request has ended"));
+    await expect(
+      getClientIpFromHeaders(
+        buildHeaders({
+          [FORMBRICKS_CLIENT_IP_HEADER]: "203.0.113.7",
+        })
+      )
+    ).resolves.toBe("203.0.113.7");
+    expect(nextHeaders.headers).not.toHaveBeenCalled();
   });
 
   test("returns the canonical identity from the private Proxy header", async () => {
