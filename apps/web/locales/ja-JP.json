@@ -1763,6 +1763,8 @@
         "chart_deletion_error": "チャートの削除に失敗しました",
         "chart_duplicated_successfully": "チャートを複製しました",
         "chart_duplication_error": "チャートの複製に失敗しました",
+        "chart_in_use_description": "このチャートは{count}個のダッシュボードで使用されています。削除する前に、それらのダッシュボードから外してください:",
+        "chart_in_use_title": "このチャートはまだ使用中です",
         "chart_name": "チャート名",
         "chart_name_placeholder": "チャート名",
         "chart_render_error": "このチャートの表示中に問題が発生しました。",

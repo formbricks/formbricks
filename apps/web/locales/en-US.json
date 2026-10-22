@@ -1763,6 +1763,8 @@
         "chart_deletion_error": "Failed to delete chart",
         "chart_duplicated_successfully": "Chart duplicated successfully",
         "chart_duplication_error": "Failed to duplicate chart",
+        "chart_in_use_description": "It is on {count} dashboard(s). Remove it from them before deleting it:",
+        "chart_in_use_title": "This chart is still in use",
         "chart_name": "Chart name",
         "chart_name_placeholder": "Chart name",
         "chart_render_error": "Something went wrong while rendering this chart.",

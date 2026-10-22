@@ -63,6 +63,7 @@ export const V3_PROBLEM_CODES = [
   "ai_smart_tools_disabled",
   "bad_gateway",
   "bad_request",
+  "chart_in_use",
   "conflict",
   "custom_css_plan_required",
   "dashboards_plan_required",
@@ -422,6 +423,25 @@ export function problemWorkspaceSurveyLimit(
       details: { count, limit },
       instance,
     }
+  );
+}
+
+/**
+ * ENG-6590: a chart still on a dashboard cannot be deleted — deleting it would break every dashboard that
+ * shows it. `details.dashboards` names them, so the caller can take the chart off first. There is no force
+ * option.
+ */
+export function problemChartInUse(
+  requestId: string,
+  dashboards: { id: string; name: string }[],
+  instance?: string
+): Response {
+  return problemResponse(
+    409,
+    "Conflict",
+    `This chart is on ${dashboards.length} dashboard(s), so it was not deleted. Remove it from them first.`,
+    requestId,
+    { code: "chart_in_use", instance, details: { dashboards } }
   );
 }
 

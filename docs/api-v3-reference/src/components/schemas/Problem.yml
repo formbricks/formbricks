@@ -42,6 +42,7 @@ properties:
       - ai_smart_tools_disabled
       - bad_gateway
       - bad_request
+      - chart_in_use
       - conflict
       - custom_css_plan_required
       - dashboards_plan_required

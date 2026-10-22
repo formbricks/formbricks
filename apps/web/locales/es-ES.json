@@ -1763,6 +1763,8 @@
         "chart_deletion_error": "Error al eliminar el gráfico",
         "chart_duplicated_successfully": "Gráfico duplicado correctamente",
         "chart_duplication_error": "Error al duplicar el gráfico",
+        "chart_in_use_description": "Está en {count} panel(es). Quítalo de ellos antes de eliminarlo:",
+        "chart_in_use_title": "Este gráfico todavía está en uso",
         "chart_name": "Nombre del gráfico",
         "chart_name_placeholder": "Nombre del gráfico",
         "chart_render_error": "Algo salió mal al renderizar este gráfico.",

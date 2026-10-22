@@ -6,18 +6,19 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { deleteChartAction } from "@/modules/ee/analysis/charts/actions";
 import { AddToDashboardDialog } from "@/modules/ee/analysis/charts/components/add-to-dashboard-dialog";
+import { DeleteChartDialog } from "@/modules/ee/analysis/charts/components/delete-chart-dialog";
 import { getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
 import {
+  type TAppChart,
   addDashboardWidget,
+  chartInUseDashboards,
+  deleteChart,
   duplicateChart,
   getChartApiErrorMessage,
 } from "@/modules/ee/analysis/lib/api-client";
 import { chartKeys, dashboardKeys } from "@/modules/ee/analysis/lib/query";
-import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 import { Button } from "@/modules/ui/components/button";
-import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,7 +29,7 @@ import {
 
 interface ChartDropdownMenuProps {
   workspaceId: string;
-  chart: TChartWithCreator;
+  chart: TAppChart;
   onEdit?: () => void;
 }
 
@@ -36,6 +37,8 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  // The dashboards a delete was refused for, when the list's copy of the chart was out of date.
+  const [refusedOnDashboards, setRefusedOnDashboards] = useState<{ id: string; name: string }[] | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
@@ -90,17 +93,19 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
   const handleDeleteChart = async () => {
     setIsDeleting(true);
     try {
-      const result = await deleteChartAction({ workspaceId, chartId: chart.id });
-      if (result?.data) {
-        toast.success(t("workspace.analysis.charts.chart_deleted_successfully"));
-        setIsDeleteDialogOpen(false);
-        void queryClient.invalidateQueries({ queryKey: chartKeys.all });
+      await deleteChart(chart.id);
+      toast.success(t("workspace.analysis.charts.chart_deleted_successfully"));
+      setIsDeleteDialogOpen(false);
+      void queryClient.invalidateQueries({ queryKey: chartKeys.all });
+    } catch (error) {
+      // Someone put the chart on a dashboard after this list was read: show where, as for any chart in use.
+      const dashboards = chartInUseDashboards(error);
+      if (dashboards) {
+        setRefusedOnDashboards(dashboards);
+        void queryClient.invalidateQueries({ queryKey: chartKeys.lists() });
       } else {
-        const msg = getFormattedErrorMessage(result) || t("workspace.analysis.charts.chart_deletion_error");
-        toast.error(msg);
+        toast.error(getChartApiErrorMessage(error, t("workspace.analysis.charts.chart_deletion_error")));
       }
-    } catch {
-      toast.error(t("common.something_went_wrong_please_try_again"));
     } finally {
       setIsDeleting(false);
     }
@@ -197,13 +202,16 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <DeleteDialog
-        deleteWhat={t("common.chart")}
+      <DeleteChartDialog
         open={isDeleteDialogOpen}
-        setOpen={setIsDeleteDialogOpen}
-        onDelete={handleDeleteChart}
-        text={t("workspace.analysis.charts.delete_chart_confirmation")}
+        setOpen={(open) => {
+          setIsDeleteDialogOpen(open);
+          if (!open) setRefusedOnDashboards(null);
+        }}
+        workspaceId={workspaceId}
+        dashboards={refusedOnDashboards ?? chart.dashboards}
         isDeleting={isDeleting}
+        onDelete={handleDeleteChart}
       />
       <AddToDashboardDialog
         isOpen={isAddToDashboardDialogOpen}

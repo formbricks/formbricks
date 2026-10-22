@@ -1763,6 +1763,8 @@
         "chart_deletion_error": "Échec de la suppression du graphique",
         "chart_duplicated_successfully": "Graphique dupliqué avec succès",
         "chart_duplication_error": "Échec de la duplication du graphique",
+        "chart_in_use_description": "Il figure sur {count} tableau(x) de bord. Retire-le de ces tableaux de bord avant de le supprimer :",
+        "chart_in_use_title": "Ce graphique est encore utilisé",
         "chart_name": "Nom du graphique",
         "chart_name_placeholder": "Nom du graphique",
         "chart_render_error": "Une erreur s'est produite lors du rendu de ce graphique.",

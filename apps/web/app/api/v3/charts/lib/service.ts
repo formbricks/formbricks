@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import { escapeLikePattern } from "@/lib/utils/like-pattern";
+import { retryOnTransactionConflict } from "@/lib/utils/prisma-error";
 
 /**
  * Persistence for the v3 chart operations. Every read is scoped by the caller's authorized workspace or
@@ -106,3 +107,34 @@ export const createChartRow = (
 /** Update an authorized chart in place. Its workspace and Feedback Dataset never change. */
 export const updateChartRow = (chartId: string, data: Partial<TChartWrite>): Promise<TChartResourceRow> =>
   prisma.chart.update({ where: { id: chartId }, data, select: selectChartResource });
+
+export type TChartDeleteResult =
+  | { kind: "deleted" }
+  | { kind: "gone" }
+  /** The chart is on these dashboards, so it was not deleted. */
+  | { kind: "inUse"; dashboards: { id: string; name: string }[] };
+
+/**
+ * Delete a chart that sits on no dashboard. The check and the delete run in one serializable transaction:
+ * deleting a chart cascades to its widgets, so a widget added between a separate check and the delete
+ * would vanish from its dashboard. Here a concurrent add makes one of the two retry instead.
+ */
+export const deleteChartRow = (chartId: string): Promise<TChartDeleteResult> =>
+  retryOnTransactionConflict(() =>
+    prisma.$transaction(
+      async (tx): Promise<TChartDeleteResult> => {
+        const widgets = await tx.dashboardWidget.findMany({
+          where: { chartId },
+          orderBy: { dashboard: { name: "asc" } },
+          select: { dashboard: { select: { id: true, name: true } } },
+        });
+        if (widgets.length > 0) {
+          return { kind: "inUse", dashboards: widgets.map((widget) => widget.dashboard) };
+        }
+
+        const { count } = await tx.chart.deleteMany({ where: { id: chartId } });
+        return count === 0 ? { kind: "gone" } : { kind: "deleted" };
+      },
+      { isolationLevel: "Serializable" }
+    )
+  );

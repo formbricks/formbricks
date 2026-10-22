@@ -1,4 +1,5 @@
 import "server-only";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
@@ -10,7 +11,7 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
-import { isUniqueConstraintError } from "@/lib/utils/prisma-error";
+import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { type TV3DashboardOperationContext, authorizeLoadedDashboard } from "./access";
 import type { TV3WidgetCreateBody, TV3WidgetUpdateBody } from "./schemas";
 import { serializeV3DashboardWidget } from "./serializers";
@@ -64,12 +65,17 @@ const refuseWidgetWrite = (
   }
 };
 
-/** Runs a widget write, answering a concurrent add of the same chart as the 409 it is. */
+/**
+ * Runs a widget write, answering a concurrent add of the same chart as the 409 it is, and a chart deleted
+ * between its check and the write as the 403 a missing chart gets.
+ */
 const runWidgetWrite = async (write: () => Promise<TWidgetWriteResult>): Promise<TWidgetWriteResult> => {
   try {
     return await write();
   } catch (error) {
     if (isUniqueConstraintError(error)) return { kind: "duplicate" };
+    if (isPrismaKnownRequestError(error, PrismaErrorType.ForeignKeyConstraintViolation))
+      return { kind: "gone" };
     throw error;
   }
 };

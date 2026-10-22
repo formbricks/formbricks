@@ -11,13 +11,7 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import { generateAIChartQuery } from "@/modules/ee/analysis/charts/lib/ai-chart-query.server";
-import {
-  createChart,
-  deleteChart,
-  getChart,
-  getCharts,
-  updateChart,
-} from "@/modules/ee/analysis/charts/lib/charts";
+import { createChart, getChart, getCharts, updateChart } from "@/modules/ee/analysis/charts/lib/charts";
 import { withOptionIdFilter } from "@/modules/ee/analysis/charts/lib/empty-measure-rows";
 import { pruneChartLabels, resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
 import { checkFeedbackDirectoryAccess, checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
@@ -132,40 +126,6 @@ export const updateChartAction = authenticatedActionClient.inputSchema(ZUpdateCh
       ctx.auditLoggingCtx.oldObject = chart;
       ctx.auditLoggingCtx.newObject = updatedChart;
       return updatedChart;
-    }
-  )
-);
-
-const ZDeleteChartAction = z.object({
-  workspaceId: ZId,
-  chartId: ZId,
-});
-
-export const deleteChartAction = authenticatedActionClient.inputSchema(ZDeleteChartAction).action(
-  withAuditLogging(
-    "deleted",
-    "chart",
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZDeleteChartAction>;
-    }) => {
-      const { organizationId, workspaceId } = await checkWorkspaceAccess(
-        ctx.user.id,
-        parsedInput.workspaceId,
-        "readWrite"
-      );
-      await checkDashboardsEnabled(organizationId);
-
-      const chart = await deleteChart(parsedInput.chartId, workspaceId);
-
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.workspaceId = workspaceId;
-      ctx.auditLoggingCtx.chartId = parsedInput.chartId;
-      ctx.auditLoggingCtx.oldObject = chart;
-      return { success: true };
     }
   )
 );

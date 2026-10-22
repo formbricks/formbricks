@@ -104,37 +104,6 @@ export const updateChart = async (
   }
 };
 
-export const deleteChart = async (chartId: string, workspaceId: string): Promise<TChart> => {
-  validateInputs([chartId, ZId], [workspaceId, ZId]);
-
-  try {
-    return await prisma.$transaction(async (tx) => {
-      const chart = await tx.chart.findFirst({
-        where: { id: chartId, workspaceId },
-        select: selectChart,
-      });
-
-      if (!chart) {
-        throw new ResourceNotFoundError("Chart", chartId);
-      }
-
-      await tx.chart.delete({
-        where: { id: chartId },
-      });
-
-      return chart;
-    });
-  } catch (error) {
-    if (error instanceof ResourceNotFoundError) {
-      throw error;
-    }
-    if (isPrismaKnownRequestError(error)) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-};
-
 export const getChart = async (chartId: string, workspaceId: string): Promise<TChart> => {
   validateInputs([chartId, ZId], [workspaceId, ZId]);
 

@@ -423,3 +423,19 @@ export const duplicateChart = async (
     send({ dashboardId: placement.dashboardId, ...(layout ? { layout } : {}) })
   );
 };
+
+/** Deletes a chart on no dashboard. A chart still on one is refused: see `chartInUseDashboards`. */
+export const deleteChart = (chartId: string): Promise<void> =>
+  sendDelete(`${CHARTS_PATH}/${encodeURIComponent(chartId)}`);
+
+/** The dashboards a refused chart delete names, or `null` when the error is anything else. */
+export const chartInUseDashboards = (error: unknown): { id: string; name: string }[] | null => {
+  if (!(error instanceof V3ApiError) || error.code !== "chart_in_use") return null;
+  const dashboards = error.details?.dashboards;
+  return Array.isArray(dashboards)
+    ? dashboards.filter(
+        (dashboard): dashboard is { id: string; name: string } =>
+          typeof dashboard?.id === "string" && typeof dashboard?.name === "string"
+      )
+    : [];
+};

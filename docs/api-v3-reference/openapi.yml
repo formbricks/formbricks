@@ -4213,6 +4213,61 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+    delete:
+      operationId: deleteChartV3
+      summary: Delete a chart
+      description: |
+        Deletes a chart that sits on no dashboard. A chart still on one is refused with 409
+        `chart_in_use`, naming those dashboards in `details.dashboards` — remove it from them first
+        (`DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}`); there is no force option. The
+        check and the delete are one transaction, so a widget added at the same moment is never removed
+        with the chart. Needs write access to the chart's workspace.
+      tags:
+        - V3 Charts
+      parameters:
+        - $ref: '#/components/parameters/ChartIdPath'
+      responses:
+        '204':
+          description: Chart deleted
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          description: 'Conflict (`code: chart_in_use`) — the chart is on at least one dashboard, so nothing was deleted. `details.dashboards` lists them as `{ id, name }`.'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                title: Conflict
+                status: 409
+                detail: This chart is on 1 dashboard(s), so it was not deleted. Remove it from them first.
+                code: chart_in_use
+                requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                details:
+                  dashboards:
+                    - id: cldash00000000000000000001
+                      name: Matchday 1
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/charts/{chartId}/data:
     get:
       operationId: getChartDataV3
@@ -6561,6 +6616,7 @@ components:
             - ai_smart_tools_disabled
             - bad_gateway
             - bad_request
+            - chart_in_use
             - conflict
             - custom_css_plan_required
             - dashboards_plan_required

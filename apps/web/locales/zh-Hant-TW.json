@@ -1763,6 +1763,8 @@
         "chart_deletion_error": "刪除圖表失敗",
         "chart_duplicated_successfully": "圖表已成功複製",
         "chart_duplication_error": "圖表複製失敗",
+        "chart_in_use_description": "這個圖表目前出現在 {count} 個儀表板中。請先將它從這些儀表板移除,再進行刪除:",
+        "chart_in_use_title": "這個圖表仍在使用中",
         "chart_name": "圖表名稱",
         "chart_name_placeholder": "圖表名稱",
         "chart_render_error": "這個圖表在顯示時發生錯誤。",

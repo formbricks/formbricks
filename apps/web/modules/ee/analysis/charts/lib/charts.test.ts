@@ -267,53 +267,6 @@ describe("Chart Service", () => {
     });
   });
 
-  describe("deleteChart", () => {
-    test("deletes a chart successfully", async () => {
-      mockTxChart.findFirst.mockResolvedValue(mockChart);
-      mockTxChart.delete.mockResolvedValue(undefined);
-      const { deleteChart } = await import("./charts");
-
-      const result = await deleteChart(mockChartId, mockWorkspaceId);
-
-      expect(result).toEqual(mockChart);
-      expect(mockTxChart.findFirst).toHaveBeenCalledWith({
-        where: { id: mockChartId, workspaceId: mockWorkspaceId },
-        select: selectChart,
-      });
-      expect(mockTxChart.delete).toHaveBeenCalledWith({ where: { id: mockChartId } });
-    });
-
-    test("throws ResourceNotFoundError when chart does not exist", async () => {
-      mockTxChart.findFirst.mockResolvedValue(null);
-      const { deleteChart } = await import("./charts");
-
-      await expect(deleteChart(mockChartId, mockWorkspaceId)).rejects.toMatchObject({
-        name: "ResourceNotFoundError",
-        resourceType: "Chart",
-        resourceId: mockChartId,
-      });
-      expect(mockTxChart.delete).not.toHaveBeenCalled();
-    });
-
-    test("throws DatabaseError on Prisma errors", async () => {
-      mockTxChart.findFirst.mockRejectedValue(makePrismaError("P9999"));
-      vi.mocked(prisma.$transaction).mockImplementation((cb: any) => cb({ chart: mockTxChart }));
-      const { deleteChart } = await import("./charts");
-
-      await expect(deleteChart(mockChartId, mockWorkspaceId)).rejects.toMatchObject({
-        name: "DatabaseError",
-      });
-    });
-
-    test("rethrows non-Prisma errors unchanged", async () => {
-      mockTxChart.findFirst.mockRejectedValue(new Error("boom"));
-      vi.mocked(prisma.$transaction).mockImplementation((cb: any) => cb({ chart: mockTxChart }));
-      const { deleteChart } = await import("./charts");
-
-      await expect(deleteChart(mockChartId, mockWorkspaceId)).rejects.toThrow("boom");
-    });
-  });
-
   describe("getChart", () => {
     test("returns a chart successfully", async () => {
       vi.mocked(prisma.chart.findFirst).mockResolvedValue(mockChart as any);

@@ -1763,6 +1763,8 @@
         "chart_deletion_error": "Det gick inte att ta bort diagrammet",
         "chart_duplicated_successfully": "Diagrammet har duplicerats",
         "chart_duplication_error": "Det gick inte att duplicera diagrammet",
+        "chart_in_use_description": "Det finns på {count} instrumentpanel(er). Ta bort det från dem innan du raderar det:",
+        "chart_in_use_title": "Det här diagrammet används fortfarande",
         "chart_name": "Diagramnamn",
         "chart_name_placeholder": "Diagramnamn",
         "chart_render_error": "Något gick fel när diagrammet skulle visas.",

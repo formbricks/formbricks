@@ -14,7 +14,9 @@ import {
 } from "@/app/api/v3/lib/keyset-cursor";
 import {
   createdResponse,
+  noContentResponse,
   problemBadRequest,
+  problemChartInUse,
   problemForbidden,
   successListResponse,
   successResponse,
@@ -31,6 +33,7 @@ import {
   type TChartResourceRow,
   type TChartWrite,
   createChartRow,
+  deleteChartRow,
   listChartResourceRows,
   updateChartRow,
 } from "./service";
@@ -264,5 +267,38 @@ export async function updateV3Chart({
     return successResponse(chart, { requestId });
   } catch (error) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: "charts.update" });
+  }
+}
+
+/**
+ * `DELETE /api/v3/charts/{chartId}` → 204 for a chart on no dashboard. A chart still on one answers 409
+ * `chart_in_use` naming them in `details.dashboards`; there is no force option. Needs write access to the
+ * chart's workspace.
+ */
+export async function deleteV3Chart({
+  chartId,
+  auditLog,
+  ...context
+}: TV3ChartWriteContext & { chartId: string }): Promise<Response> {
+  const { requestId, instance } = context;
+  const log = logger.withContext({ requestId, chartId });
+
+  try {
+    const loaded = await loadAuthorizedChart(chartId, "readWrite", context);
+    if (loaded instanceof Response) return loaded;
+
+    const result = await deleteChartRow(chartId);
+    if (result.kind === "inUse") return problemChartInUse(requestId, result.dashboards, instance);
+    if (result.kind === "gone") return problemForbidden(requestId, undefined, instance);
+
+    if (auditLog) {
+      auditLog.targetId = chartId;
+      auditLog.organizationId = loaded.access.organizationId;
+      auditLog.oldObject = serializeV3Chart(loaded.row);
+    }
+
+    return noContentResponse({ requestId });
+  } catch (error) {
+    return mapV3ThrownError(error, { log, requestId, instance, operation: "charts.delete" });
   }
 }

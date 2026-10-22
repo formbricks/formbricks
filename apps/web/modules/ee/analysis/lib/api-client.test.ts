@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 import {
   buildChartListSearchParams,
+  chartInUseDashboards,
   getChart,
   isStaleDashboardError,
   listCharts,
@@ -120,5 +121,19 @@ describe("analysis api client", () => {
     expect(restored.layout).toEqual({ x: 4, y: 0, w: 4, h: 4 });
     const bodies = fetchMock.mock.calls.map(([, init]) => JSON.parse((init as RequestInit).body as string));
     expect(bodies).toEqual([{ chartId: resource.id, layout: widget.layout }, { chartId: resource.id }]);
+  });
+
+  test("reads the dashboards a refused chart delete names, and nothing from any other error", () => {
+    const inUse = new V3ApiError({
+      status: 409,
+      detail: "In use",
+      code: "chart_in_use",
+      details: { dashboards: [{ id: "d1", name: "Matchday" }, { id: 7 }] },
+    });
+    expect(chartInUseDashboards(inUse)).toEqual([{ id: "d1", name: "Matchday" }]);
+    expect(
+      chartInUseDashboards(new V3ApiError({ status: 409, detail: "Taken", code: "conflict" }))
+    ).toBeNull();
+    expect(chartInUseDashboards(new Error("network"))).toBeNull();
   });
 });

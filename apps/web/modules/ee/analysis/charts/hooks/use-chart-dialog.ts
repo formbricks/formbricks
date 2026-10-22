@@ -7,13 +7,13 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TChartConfig } from "@formbricks/types/analysis";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { deleteChartAction } from "@/modules/ee/analysis/charts/actions";
 import { sanitizeChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
 import {
   addDashboardWidget,
   createChart,
+  deleteChart,
   getChart,
   getChartApiErrorMessage,
   getChartData,
@@ -244,7 +244,7 @@ export function useChartDialog({
   };
 
   const cleanupOrphanChart = async (orphanChartId: string) => {
-    await deleteChartAction({ workspaceId, chartId: orphanChartId }).catch(() => {});
+    await deleteChart(orphanChartId).catch(() => {});
     setCurrentChartId(undefined);
   };
 

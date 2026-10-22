@@ -1763,6 +1763,8 @@
         "chart_deletion_error": "Verwijderen van grafiek mislukt",
         "chart_duplicated_successfully": "Grafiek succesvol gedupliceerd",
         "chart_duplication_error": "Dupliceren van grafiek mislukt",
+        "chart_in_use_description": "Hij staat op {count} dashboard(s). Haal hem daar eerst van af voordat je hem verwijdert:",
+        "chart_in_use_title": "Deze grafiek wordt nog gebruikt",
         "chart_name": "Grafieknaam",
         "chart_name_placeholder": "Grafieknaam",
         "chart_render_error": "Er is iets misgegaan bij het weergeven van deze grafiek.",

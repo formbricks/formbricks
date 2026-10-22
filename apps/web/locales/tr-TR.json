@@ -1763,6 +1763,8 @@
         "chart_deletion_error": "Grafik silinemedi",
         "chart_duplicated_successfully": "Grafik başarıyla çoğaltıldı",
         "chart_duplication_error": "Grafik çoğaltılamadı",
+        "chart_in_use_description": "Bu grafik {count} panoda yer alıyor. Silmeden önce grafiği bu panolardan kaldır:",
+        "chart_in_use_title": "Bu grafik hâlâ kullanımda",
         "chart_name": "Grafik adı",
         "chart_name_placeholder": "Grafik adı",
         "chart_render_error": "Bu grafik görüntülenirken bir sorun oluştu.",
