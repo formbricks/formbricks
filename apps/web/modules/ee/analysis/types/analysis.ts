@@ -1,11 +1,5 @@
 import { z } from "zod";
-import {
-  type TChartConfig,
-  TWidgetLayout,
-  ZChartConfig,
-  ZChartQuery,
-  ZWidgetLayout,
-} from "@formbricks/types/analysis";
+import { type TChartConfig, TWidgetLayout, ZChartConfig, ZChartQuery } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 
 export const CHART_TYPE_IDS = ["area", "bar", "pie", "big_number", "matrix"] as const;
@@ -76,17 +70,6 @@ export type TDashboardWithCount = TDashboard & {
   _count: { widgets: number };
   containsChart?: boolean;
 };
-
-// ── Widget input schema ─────────────────────────────────────────────────────
-
-export const ZAddWidgetInput = z.object({
-  dashboardId: ZId,
-  chartId: ZId,
-  workspaceId: ZId,
-  layout: ZWidgetLayout.optional(),
-  respectY: z.boolean().optional(),
-});
-export type TAddWidgetInput = z.infer<typeof ZAddWidgetInput>;
 
 // ── Widget output type (matches getDashboard widget include) ────────────────
 

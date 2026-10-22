@@ -267,3 +267,19 @@ export const ZMcpUpdateDashboardLayoutInput = z
   })
   .strict();
 export type TMcpUpdateDashboardLayoutInput = z.infer<typeof ZMcpUpdateDashboardLayoutInput>;
+
+export const ZMcpDuplicateChartInput = z
+  .object({
+    chartId: ZId.describe("The chart to copy."),
+    name: ZV3ChartName.optional().describe(
+      'Name for the copy, unique within the workspace. Without one it is named "<original> (copy)".'
+    ),
+    dashboardId: ZId.optional().describe(
+      "Also put the copy on this dashboard, in the same step: if that fails, no copy is left behind."
+    ),
+    layout: ZMcpWidgetLayout.optional().describe(
+      "Where to put the copy on dashboardId. Leave it out for the first open slot."
+    ),
+  })
+  .strict();
+export type TMcpDuplicateChartInput = z.infer<typeof ZMcpDuplicateChartInput>;

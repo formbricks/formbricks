@@ -14,7 +14,6 @@ import { generateAIChartQuery } from "@/modules/ee/analysis/charts/lib/ai-chart-
 import {
   createChart,
   deleteChart,
-  duplicateChart,
   getChart,
   getCharts,
   updateChart,
@@ -133,40 +132,6 @@ export const updateChartAction = authenticatedActionClient.inputSchema(ZUpdateCh
       ctx.auditLoggingCtx.oldObject = chart;
       ctx.auditLoggingCtx.newObject = updatedChart;
       return updatedChart;
-    }
-  )
-);
-
-const ZDuplicateChartAction = z.object({
-  workspaceId: ZId,
-  chartId: ZId,
-});
-
-export const duplicateChartAction = authenticatedActionClient.inputSchema(ZDuplicateChartAction).action(
-  withAuditLogging(
-    "created",
-    "chart",
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZDuplicateChartAction>;
-    }) => {
-      const { organizationId, workspaceId } = await checkWorkspaceAccess(
-        ctx.user.id,
-        parsedInput.workspaceId,
-        "readWrite"
-      );
-      await checkDashboardsEnabled(organizationId);
-
-      const duplicatedChart = await duplicateChart(parsedInput.chartId, workspaceId, ctx.user.id);
-
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.workspaceId = workspaceId;
-      ctx.auditLoggingCtx.chartId = duplicatedChart.id;
-      ctx.auditLoggingCtx.newObject = duplicatedChart;
-      return duplicatedChart;
     }
   )
 );

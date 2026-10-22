@@ -10,7 +10,6 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import "react-resizable/css/styles.css";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/create-chart-dialog";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { ListLoadError } from "@/modules/ee/analysis/components/list-load-error";
@@ -47,6 +46,7 @@ import {
 import {
   type TAppDashboard,
   type TChartDateRangeInput,
+  duplicateChart,
   getChartApiErrorMessage,
   getDashboard,
   isStaleDashboardError,
@@ -59,9 +59,9 @@ import type { TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
-import { duplicateChartAndAddWidgetAction } from "../actions";
 import { useDashboard } from "../hooks/use-dashboard";
 import { draftOverLatest, toSavedWidgets, widgetsRemovedByOverwrite } from "../lib/stale-save";
+import { findNextOpenSlot } from "../lib/widget-placement";
 
 const ROW_HEIGHT = 80;
 
@@ -327,24 +327,26 @@ function DashboardDetailView({
 
   const handleDuplicateWidget = useCallback(
     async (widget: TDashboardWidget) => {
+      // The copy keeps the original's size and takes the first gap it fits, so it never lands on top of
+      // the original.
+      const slot = findNextOpenSlot(
+        dashboard.widgets.map((current) => current.layout),
+        widget.layout
+      );
       try {
-        const result = await duplicateChartAndAddWidgetAction({
-          workspaceId,
+        await duplicateChart(widget.chartId, {
           dashboardId: dashboard.id,
-          chartId: widget.chartId,
-          layout: widget.layout,
+          layout: { ...widget.layout, ...slot },
         });
-        if (!result?.data) {
-          toast.error(getFormattedErrorMessage(result));
-          return;
-        }
         toast.success(t("workspace.analysis.dashboards.chart_duplicated"));
         refreshDashboard();
-      } catch {
-        toast.error(t("workspace.analysis.dashboards.chart_duplicate_failed"));
+      } catch (error) {
+        toast.error(
+          getChartApiErrorMessage(error, t("workspace.analysis.dashboards.chart_duplicate_failed"))
+        );
       }
     },
-    [workspaceId, dashboard.id, refreshDashboard, t]
+    [dashboard.id, dashboard.widgets, refreshDashboard, t]
   );
 
   const handleUndoRemoveWidget = useCallback(

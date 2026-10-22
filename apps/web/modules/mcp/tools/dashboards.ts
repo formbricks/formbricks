@@ -1,5 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import { getV3ChartData, previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
+import { duplicateV3Chart } from "@/app/api/v3/charts/lib/duplicate-operations";
 import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "@/app/api/v3/charts/lib/field-operations";
 import { createV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "@/app/api/v3/charts/lib/operations";
 import {
@@ -24,6 +25,7 @@ import {
   type TMcpCreateChartInput,
   type TMcpCreateDashboardInput,
   type TMcpDashboardIdInput,
+  type TMcpDuplicateChartInput,
   type TMcpDuplicateDashboardInput,
   type TMcpGetChartDataInput,
   type TMcpListChartFieldValuesInput,
@@ -48,6 +50,7 @@ import {
   ZMcpDashboardIdInput,
   ZMcpDashboardListOutput,
   ZMcpDashboardOutput,
+  ZMcpDuplicateChartInput,
   ZMcpDuplicateDashboardInput,
   ZMcpGetChartDataInput,
   ZMcpListChartFieldValuesInput,
@@ -449,5 +452,22 @@ export function registerDashboardTools(server: McpServer): void {
       runMutation(ctx, "updated", "dashboard", (context) =>
         updateV3DashboardLayout({ dashboardId, body, ...context })
       )
+  );
+
+  registerScopedTool(
+    server,
+    "duplicate_chart",
+    {
+      title: "Duplicate chart",
+      description:
+        "Copy a chart so the copy can be changed without touching the dashboards that show the original. Pass dashboardId to put the copy on a dashboard in the same step. To give one dashboard its own version of a shared chart, duplicate it, then point that dashboard's widget at the copy with update_widget.",
+      inputSchema: ZMcpDuplicateChartInput,
+      outputSchema: ZMcpChartOutput,
+      audit: { action: "created", targetType: "chart" },
+      annotations: WRITE_ANNOTATIONS,
+    },
+    ["dashboards:write"],
+    async ({ chartId, ...body }: TMcpDuplicateChartInput, ctx) =>
+      runMutation(ctx, "created", "chart", (context) => duplicateV3Chart({ chartId, body, ...context }))
   );
 }

@@ -19,11 +19,11 @@ import {
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateChartQuery } from "@/modules/ee/analysis/lib/chart-query-validator";
-import { type TV3ChartOperationContext, loadAuthorizedChart } from "./access";
+import { type TV3ChartOperationContext, getSessionUserId, loadAuthorizedChart } from "./access";
 import { chartNameTaken, refuseChartQuery, refuseMatrixUntilUpgraded } from "./problems";
 import type { TV3ChartCreateBody, TV3ChartListQuery, TV3ChartUpdateBody } from "./schemas";
 import { serializeV3Chart } from "./serializers";
@@ -36,9 +36,6 @@ import {
 } from "./service";
 
 type TV3ChartWriteContext = TV3ChartOperationContext & { auditLog?: TV3AuditLog };
-
-const getSessionUserId = (authentication: TV3Authentication): string | null =>
-  authentication && "user" in authentication && authentication.user?.id ? authentication.user.id : null;
 
 const CHARTS_CURSOR_KIND = "charts";
 const CHARTS_SORT = "-createdAt";

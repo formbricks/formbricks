@@ -4289,6 +4289,69 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+  /api/v3/charts/{chartId}/duplicate:
+    post:
+      operationId: duplicateChartV3
+      summary: Duplicate a chart
+      description: |
+        Copies a chart — same Feedback Dataset, type, chart query and display settings — so the copy can
+        change without touching the dashboards that show the original. With `dashboardId`, the copy is
+        also put on that dashboard (first open slot, or `layout`) in the same transaction, and the
+        dashboard's `updatedAt` moves. Needs write access to the chart's workspace and to its Feedback
+        Dataset.
+      tags:
+        - V3 Charts
+      parameters:
+        - $ref: '#/components/parameters/ChartIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChartDuplicateRequest'
+      responses:
+        '201':
+          description: The copy
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+            Location:
+              schema:
+                type: string
+              example: /api/v3/charts/clchart000000000000000002
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ChartResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          $ref: '#/components/responses/V3DashboardsConflict'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/dashboards:
     get:
       operationId: listDashboardsV3
@@ -11834,6 +11897,48 @@ components:
         config:
           $ref: '#/components/schemas/ChartConfig'
       additionalProperties: false
+    WidgetLayout:
+      type: object
+      description: 'A widget''s position and size on the dashboard''s 12-column grid, in whole grid units: `1 ≤ w ≤ 12`, `x + w ≤ 12`, `1 ≤ h ≤ 8`, `0 ≤ y ≤ 1000`. Widgets may not overlap; gaps are allowed and close upward when the dashboard is drawn.'
+      required:
+        - x
+        - 'y'
+        - w
+        - h
+      properties:
+        x:
+          type: integer
+          minimum: 0
+          maximum: 11
+        'y':
+          type: integer
+          minimum: 0
+          maximum: 1000
+        w:
+          type: integer
+          minimum: 1
+          maximum: 12
+        h:
+          type: integer
+          minimum: 1
+          maximum: 8
+      additionalProperties: false
+    ChartDuplicateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Name for the copy, unique within the workspace. Without one the copy is named "<original> (copy)", then "(copy 2)" and so on.
+        dashboardId:
+          type: string
+          format: cuid2
+          description: 'Also put the copy on this dashboard, in the same transaction: if placing it fails, no copy is left behind. Must be in the chart''s workspace.'
+        layout:
+          $ref: '#/components/schemas/WidgetLayout'
+          description: Where to put the copy on `dashboardId`. Without one, the first open slot.
+      additionalProperties: false
     DashboardCreator:
       description: Who created the dashboard, for display only; `null` once that user is gone.
       oneOf:
@@ -11893,32 +11998,6 @@ components:
           minLength: 1
           maxLength: 255
           description: Unique within the workspace; leading and trailing whitespace is trimmed.
-      additionalProperties: false
-    WidgetLayout:
-      type: object
-      description: 'A widget''s position and size on the dashboard''s 12-column grid, in whole grid units: `1 ≤ w ≤ 12`, `x + w ≤ 12`, `1 ≤ h ≤ 8`, `0 ≤ y ≤ 1000`. Widgets may not overlap; gaps are allowed and close upward when the dashboard is drawn.'
-      required:
-        - x
-        - 'y'
-        - w
-        - h
-      properties:
-        x:
-          type: integer
-          minimum: 0
-          maximum: 11
-        'y':
-          type: integer
-          minimum: 0
-          maximum: 1000
-        w:
-          type: integer
-          minimum: 1
-          maximum: 12
-        h:
-          type: integer
-          minimum: 1
-          maximum: 8
       additionalProperties: false
     DashboardWidget:
       type: object

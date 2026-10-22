@@ -6,10 +6,14 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { deleteChartAction, duplicateChartAction } from "@/modules/ee/analysis/charts/actions";
+import { deleteChartAction } from "@/modules/ee/analysis/charts/actions";
 import { AddToDashboardDialog } from "@/modules/ee/analysis/charts/components/add-to-dashboard-dialog";
 import { getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
-import { addDashboardWidget, getChartApiErrorMessage } from "@/modules/ee/analysis/lib/api-client";
+import {
+  addDashboardWidget,
+  duplicateChart,
+  getChartApiErrorMessage,
+} from "@/modules/ee/analysis/lib/api-client";
 import { chartKeys, dashboardKeys } from "@/modules/ee/analysis/lib/query";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 import { Button } from "@/modules/ui/components/button";
@@ -105,17 +109,11 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
   const handleDuplicateChart = async () => {
     setIsDuplicating(true);
     try {
-      const result = await duplicateChartAction({ workspaceId, chartId: chart.id });
-      if (result?.data) {
-        toast.success(t("workspace.analysis.charts.chart_duplicated_successfully"));
-        void queryClient.invalidateQueries({ queryKey: chartKeys.all });
-      } else {
-        toast.error(
-          getFormattedErrorMessage(result) || t("workspace.analysis.charts.chart_duplication_error")
-        );
-      }
-    } catch {
-      toast.error(t("workspace.analysis.charts.chart_duplication_error"));
+      await duplicateChart(chart.id);
+      toast.success(t("workspace.analysis.charts.chart_duplicated_successfully"));
+      void queryClient.invalidateQueries({ queryKey: chartKeys.all });
+    } catch (error) {
+      toast.error(getChartApiErrorMessage(error, t("workspace.analysis.charts.chart_duplication_error")));
     } finally {
       setIsDuplicating(false);
     }

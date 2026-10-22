@@ -1,17 +1,12 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { ZWidgetLayout } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
-import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getDashboards } from "./lib/dashboards";
-import { duplicateChartAndAddWidget } from "./lib/duplicate-chart-and-add-widget";
 
 const checkDashboardsEnabled = async (organizationId: string) => {
   const isAllowed = await getIsDashboardsEnabled(organizationId);
@@ -37,51 +32,3 @@ export const getDashboardsAction = authenticatedActionClient
 
     return getDashboards(workspaceId, parsedInput.chartId);
   });
-
-const ZDuplicateChartAndAddWidgetAction = z.object({
-  workspaceId: ZId,
-  dashboardId: ZId,
-  chartId: ZId,
-  layout: ZWidgetLayout.optional(),
-});
-
-export const duplicateChartAndAddWidgetAction = authenticatedActionClient
-  .inputSchema(ZDuplicateChartAndAddWidgetAction)
-  .action(
-    withAuditLogging(
-      "created",
-      "dashboardWidget",
-      async ({
-        ctx,
-        parsedInput,
-      }: {
-        ctx: AuthenticatedActionClientCtx;
-        parsedInput: z.infer<typeof ZDuplicateChartAndAddWidgetAction>;
-      }) => {
-        const { organizationId, workspaceId } = await checkWorkspaceAccess(
-          ctx.user.id,
-          parsedInput.workspaceId,
-          "readWrite"
-        );
-        await checkDashboardsEnabled(organizationId);
-
-        const { chart, widget } = await duplicateChartAndAddWidget({
-          dashboardId: parsedInput.dashboardId,
-          workspaceId,
-          chartId: parsedInput.chartId,
-          createdBy: ctx.user.id,
-          layout: parsedInput.layout,
-        });
-
-        revalidatePath(`/workspaces/${workspaceId}/dashboards/${parsedInput.dashboardId}`);
-        revalidatePath(`/workspaces/${workspaceId}/dashboards`);
-
-        ctx.auditLoggingCtx.organizationId = organizationId;
-        ctx.auditLoggingCtx.workspaceId = workspaceId;
-        ctx.auditLoggingCtx.chartId = chart.id;
-        ctx.auditLoggingCtx.dashboardWidgetId = widget.id;
-        ctx.auditLoggingCtx.newObject = { chart, widget };
-        return widget;
-      }
-    )
-  );

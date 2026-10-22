@@ -45,15 +45,33 @@ const writeWidgets = (
 ): Promise<TWidgetWriteResult> =>
   retryOnTransactionConflict(() => prisma.$transaction(run, { isolationLevel: "Serializable" }));
 
-const siblingsOf = (tx: Prisma.TransactionClient, dashboardId: string) =>
+export const siblingsOf = (tx: Prisma.TransactionClient, dashboardId: string) =>
   tx.dashboardWidget.findMany({
     where: { dashboardId },
     select: { id: true, chartId: true, layout: true, order: true },
   });
 
 /** Moves `updatedAt`; false when the dashboard no longer exists. */
-const touchDashboard = async (tx: Prisma.TransactionClient, dashboardId: string): Promise<boolean> =>
+export const touchDashboard = async (tx: Prisma.TransactionClient, dashboardId: string): Promise<boolean> =>
   (await tx.dashboard.updateMany({ where: { id: dashboardId }, data: { updatedAt: new Date() } })).count > 0;
+
+/**
+ * Where a new widget goes among `siblings`: exactly at `layout` when one is given and nothing is there,
+ * otherwise the first open slot at the chart type's default size. Also the next `order`.
+ */
+export const planNewWidget = (
+  siblings: { id: string; layout: unknown; order: number }[],
+  chartType: TChartType,
+  layout?: TWidgetLayout
+): { kind: "ok"; layout: TWidgetLayout; order: number } | { kind: "overlap"; widgetId: string } => {
+  const order = siblings.reduce((max, widget) => Math.max(max, widget.order), -1) + 1;
+  if (layout) {
+    const clash = findOverlappingWidget(layout, siblings);
+    return clash ? { kind: "overlap", widgetId: clash.id } : { kind: "ok", layout, order };
+  }
+  const size = getDefaultWidgetLayout(chartType);
+  return { kind: "ok", layout: { ...size, ...resolveWidgetPosition(siblings, size) }, order };
+};
 
 /**
  * Put a chart on a dashboard. Without a `layout` it lands in the first open slot at its type's default
@@ -74,24 +92,12 @@ export const addWidgetRow = ({
     const siblings = await siblingsOf(tx, dashboardId);
     if (siblings.some((widget) => widget.chartId === chartId)) return { kind: "duplicate" };
 
-    let placed: TWidgetLayout;
-    if (layout) {
-      const clash = findOverlappingWidget(layout, siblings);
-      if (clash) return { kind: "overlap", widgetId: clash.id };
-      placed = layout;
-    } else {
-      const size = getDefaultWidgetLayout(chartType);
-      placed = { ...size, ...resolveWidgetPosition(siblings, size) };
-    }
+    const plan = planNewWidget(siblings, chartType, layout);
+    if (plan.kind !== "ok") return plan;
 
     if (!(await touchDashboard(tx, dashboardId))) return { kind: "gone" };
     const widget = await tx.dashboardWidget.create({
-      data: {
-        dashboardId,
-        chartId,
-        layout: placed,
-        order: siblings.reduce((max, widget) => Math.max(max, widget.order), -1) + 1,
-      },
+      data: { dashboardId, chartId, layout: plan.layout, order: plan.order },
       select: selectWidgetResource,
     });
     return { kind: "ok", widget };

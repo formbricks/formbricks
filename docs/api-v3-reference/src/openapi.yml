@@ -382,6 +382,8 @@ paths:
     $ref: paths/api_v3_charts_{chartId}.yml
   /api/v3/charts/{chartId}/data:
     $ref: paths/api_v3_charts_{chartId}_data.yml
+  /api/v3/charts/{chartId}/duplicate:
+    $ref: paths/api_v3_charts_{chartId}_duplicate.yml
   /api/v3/dashboards:
     $ref: paths/api_v3_dashboards.yml
   /api/v3/dashboards/{dashboardId}:

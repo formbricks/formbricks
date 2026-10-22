@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { getV3ChartData, previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
+import { duplicateV3Chart } from "@/app/api/v3/charts/lib/duplicate-operations";
 import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "@/app/api/v3/charts/lib/field-operations";
 import { createV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "@/app/api/v3/charts/lib/operations";
 import {
@@ -29,6 +30,7 @@ vi.mock("@/app/api/v3/charts/lib/operations", () => ({
   listV3Charts: vi.fn(),
   updateV3Chart: vi.fn(),
 }));
+vi.mock("@/app/api/v3/charts/lib/duplicate-operations", () => ({ duplicateV3Chart: vi.fn() }));
 vi.mock("@/app/api/v3/charts/lib/data-operations", () => ({
   getV3ChartData: vi.fn(),
   previewV3Chart: vi.fn(),
@@ -362,6 +364,22 @@ describe("chart and dashboard MCP tools", () => {
       expect.objectContaining({
         dashboardId: DASHBOARD_ID,
         body: { updatedAt: input.updatedAt, widgets: input.widgets },
+      })
+    );
+  });
+
+  test("duplicate_chart needs dashboards:write and can place the copy in the same call", async () => {
+    vi.mocked(duplicateV3Chart).mockResolvedValue(successResponse({}, { requestId: "req" }));
+    const input = { chartId: CHART_ID, dashboardId: DASHBOARD_ID, layout: { x: 0, y: 4, w: 6, h: 4 } };
+
+    expect((await call("duplicate_chart", input, ["dashboards:read"])).isError).toBe(true);
+    expect(duplicateV3Chart).not.toHaveBeenCalled();
+
+    await call("duplicate_chart", input, ["dashboards:write"]);
+    expect(duplicateV3Chart).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chartId: CHART_ID,
+        body: { dashboardId: DASHBOARD_ID, layout: input.layout },
       })
     );
   });

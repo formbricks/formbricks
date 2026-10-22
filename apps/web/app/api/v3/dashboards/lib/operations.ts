@@ -2,6 +2,7 @@ import "server-only";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
+import { getSessionUserId } from "@/app/api/v3/charts/lib/access";
 import { requireDashboardsAccess } from "@/app/api/v3/lib/dashboards-access";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
@@ -19,7 +20,7 @@ import {
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { type TV3DashboardOperationContext, authorizeLoadedDashboard } from "./access";
@@ -45,9 +46,6 @@ import {
 import { type TDashboardReplaceResult, replaceDashboardRow } from "./widget-service";
 
 type TV3DashboardWriteContext = TV3DashboardOperationContext & { auditLog?: TV3AuditLog };
-
-const getSessionUserId = (authentication: TV3Authentication): string | null =>
-  authentication && "user" in authentication && authentication.user?.id ? authentication.user.id : null;
 
 /** 409 for a name another dashboard in the workspace already has. */
 export const dashboardNameTaken = ({ requestId, instance }: TV3DashboardOperationContext): Response =>

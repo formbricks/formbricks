@@ -1,6 +1,5 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { ZChartConfig, ZChartQuery } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { assertNewReleaseWorkEnabled } from "@/lib/upgrade/compatibility";
@@ -13,7 +12,6 @@ import {
   TChartUpdateInput,
   TChartWithCreator,
   ZChartCreateInput,
-  ZChartType,
   ZChartUpdateInput,
 } from "@/modules/ee/analysis/types/analysis";
 
@@ -98,77 +96,6 @@ export const updateChart = async (
     }
     if (isUniqueConstraintError(error)) {
       throw new InvalidInputError("A chart with this name already exists");
-    }
-    if (isPrismaKnownRequestError(error)) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-};
-
-const getUniqueCopyName = async (baseName: string, workspaceId: string): Promise<string> => {
-  const stripped = baseName.replace(/ \(copy(?: \d+)?\)$/, "");
-
-  try {
-    const existing = await prisma.chart.findMany({
-      where: {
-        workspaceId,
-        name: { startsWith: `${stripped} (copy` },
-      },
-      select: { name: true },
-    });
-
-    const existingNames = new Set(existing.map((c) => c.name));
-
-    const firstCandidate = `${stripped} (copy)`;
-    if (!existingNames.has(firstCandidate)) {
-      return firstCandidate;
-    }
-
-    let n = 2;
-    while (existingNames.has(`${stripped} (copy ${n})`)) {
-      n++;
-    }
-    return `${stripped} (copy ${n})`;
-  } catch (error) {
-    if (isPrismaKnownRequestError(error)) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-};
-
-export const duplicateChart = async (
-  chartId: string,
-  workspaceId: string,
-  createdBy: string
-): Promise<TChart> => {
-  validateInputs([chartId, ZId], [workspaceId, ZId], [createdBy, ZId]);
-
-  try {
-    const sourceChart = await prisma.chart.findFirst({
-      where: { id: chartId, workspaceId },
-      select: selectChart,
-    });
-
-    if (!sourceChart) {
-      throw new ResourceNotFoundError("Chart", chartId);
-    }
-
-    const uniqueName = await getUniqueCopyName(sourceChart.name, workspaceId);
-
-    return await createChart({
-      workspaceId,
-      name: uniqueName,
-      type: ZChartType.parse(sourceChart.type),
-      query: ZChartQuery.parse(sourceChart.query),
-      config: ZChartConfig.parse(sourceChart.config ?? {}),
-      feedbackDirectoryId: sourceChart.feedbackDirectoryId,
-      createdBy,
-    });
-  } catch (error) {
-    if (error instanceof ResourceNotFoundError || error instanceof InvalidInputError) {
-      throw error;
     }
     if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);

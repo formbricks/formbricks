@@ -6,6 +6,10 @@ import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { type TChartResourceRow, getChartResourceRow } from "./service";
 
+/** The signed-in user behind a session request; `null` for an API key, which has no user. */
+export const getSessionUserId = (authentication: TV3Authentication): string | null =>
+  authentication && "user" in authentication && authentication.user?.id ? authentication.user.id : null;
+
 export type TV3ChartOperationContext = {
   authentication: TV3Authentication;
   requestId: string;

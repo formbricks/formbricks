@@ -380,19 +380,46 @@ export const removeDashboardWidget = (dashboardId: string, widgetId: string): Pr
   sendDelete(`${widgetsPath(dashboardId)}/${encodeURIComponent(widgetId)}`);
 
 /**
- * Puts a removed widget's chart back where it was. If something has taken that spot since, the chart
- * goes to the first open slot instead: getting it back matters more than the exact position.
+ * Places something at `layout`, or in the first open slot if that spot was taken meanwhile (the server
+ * refuses an overlap with 422): getting it onto the dashboard matters more than the exact position.
  */
-export const restoreDashboardWidget = async (
-  dashboardId: string,
-  widget: Pick<TDashboardWidget, "chartId" | "layout">
-): Promise<TDashboardWidget> => {
+const placeOrFirstOpenSlot = async <T>(
+  layout: TDashboardWidget["layout"],
+  place: (layout?: TDashboardWidget["layout"]) => Promise<T>
+): Promise<T> => {
   try {
-    return await addDashboardWidget(dashboardId, { chartId: widget.chartId, layout: widget.layout });
+    return await place(layout);
   } catch (error) {
-    if (error instanceof V3ApiError && error.status === 422) {
-      return addDashboardWidget(dashboardId, { chartId: widget.chartId });
-    }
+    if (error instanceof V3ApiError && error.status === 422) return place();
     throw error;
   }
+};
+
+/** Puts a removed widget's chart back where it was, or in the first open slot if that was taken. */
+export const restoreDashboardWidget = (
+  dashboardId: string,
+  widget: Pick<TDashboardWidget, "chartId" | "layout">
+): Promise<TDashboardWidget> =>
+  placeOrFirstOpenSlot(widget.layout, (layout) =>
+    addDashboardWidget(dashboardId, { chartId: widget.chartId, layout })
+  );
+
+/**
+ * Copies a chart. With a `dashboardId` the copy goes on that dashboard in the same call — at `layout`,
+ * or in the first open slot if that was taken meanwhile — so a failure never leaves a stray copy.
+ */
+export const duplicateChart = async (
+  chartId: string,
+  placement?: { dashboardId: string; layout: TDashboardWidget["layout"] }
+): Promise<TAppChart> => {
+  const send = async (body: Record<string, unknown>) =>
+    toAppChart(
+      await readData<TV3ChartResource>(
+        await sendJson("POST", `${CHARTS_PATH}/${encodeURIComponent(chartId)}/duplicate`, body)
+      )
+    );
+  if (!placement) return send({});
+  return placeOrFirstOpenSlot(placement.layout, (layout) =>
+    send({ dashboardId: placement.dashboardId, ...(layout ? { layout } : {}) })
+  );
 };
