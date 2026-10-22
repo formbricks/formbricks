@@ -223,6 +223,55 @@ describe("validateChartQuery", () => {
       expect(validateChartQuery({ measures: [COUNT], limit: MAX_LIMIT, offset: MAX_OFFSET }).ok).toBe(true);
     });
 
+    test("refuses an explicit range wider than the time-bucket limit, naming the fix (ENG-6603)", () => {
+      const hourly = (dateRange: [string, string]) => ({
+        measures: [COUNT],
+        timeDimensions: [{ dimension: COLLECTED_AT, granularity: "hour", dateRange }],
+      });
+
+      // 1 Jan 2026 to 22 Feb 2027 is 418 days, 10,032 hours; one day less is 10,008. The limit is 10,000.
+      expect(issuesOf(hourly(["2026-01-01", "2027-02-22"]))).toEqual([
+        {
+          name: "query.timeDimensions[0].dateRange",
+          reason:
+            "Spans 10032 hour buckets; at most 10000 are allowed. Use a coarser granularity or a shorter date range.",
+          code: "limit_exceeded",
+        },
+      ]);
+      expect(validateChartQuery(hourly(["2026-01-01", "2027-02-15"])).ok).toBe(true);
+      expect(namesOf(hourly(["0100-01-01", "9999-12-31"]))).toEqual(["query.timeDimensions[0].dateRange"]);
+    });
+
+    test("limits only a chart grouped by time alone: any other grouping returns real rows only", () => {
+      const wide = { dimension: COLLECTED_AT, granularity: "hour", dateRange: ["2020-01-01", "2026-12-31"] };
+
+      expect(validateChartQuery({ measures: [COUNT], dimensions: [SOURCE], timeDimensions: [wide] }).ok).toBe(
+        true
+      );
+      expect(
+        validateChartQuery({
+          measures: [COUNT],
+          timeDimensions: [wide, { dimension: COLLECTED_AT, granularity: "day" }],
+        }).ok
+      ).toBe(true);
+      expect(
+        validateChartQuery({ measures: [COUNT], timeDimensions: [wide] }, { timeBuckets: false }).ok
+      ).toBe(true);
+    });
+
+    test("leaves wide ranges alone where nothing fills buckets: a coarse granularity, none, or a preset", () => {
+      const query = (timeDimension: Record<string, unknown>) => ({
+        measures: [COUNT],
+        timeDimensions: [{ dimension: COLLECTED_AT, ...timeDimension }],
+      });
+
+      expect(
+        validateChartQuery(query({ granularity: "day", dateRange: ["2000-01-01", "2026-12-31"] })).ok
+      ).toBe(true);
+      expect(validateChartQuery(query({ dateRange: ["0100-01-01", "9999-12-31"] })).ok).toBe(true);
+      expect(validateChartQuery(query({ granularity: "hour", dateRange: "last year" })).ok).toBe(true);
+    });
+
     test("refuses a granularity the app does not offer", () => {
       expect(
         namesOf({ measures: [COUNT], timeDimensions: [{ dimension: COLLECTED_AT, granularity: "second" }] })

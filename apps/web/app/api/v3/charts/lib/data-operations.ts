@@ -18,9 +18,13 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { CubeQueryError } from "@/modules/ee/analysis/api/lib/cube-client";
 import type { TCubeQuerySource } from "@/modules/ee/analysis/api/lib/cube-config";
 import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
-import { applyDashboardDateFilter } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
+import {
+  COLLECTED_AT_DIMENSION,
+  applyDashboardDateFilter,
+} from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
 import {
   DATE_RANGE_REASON,
+  checkTimeBucketLimit,
   parseRequestedDateRange,
   validateChartQuery,
 } from "@/modules/ee/analysis/lib/chart-query-validator";
@@ -57,7 +61,9 @@ const cubeFailure = (error: CubeQueryError, { requestId, instance }: TV3ChartOpe
  * Validate, apply the requested date range, shape for the chart type, and run — the part preview and
  * data share once the caller is authorized for the dataset. `query` is caller input for a preview and
  * the stored query for a saved chart; both go through the validator, so a stored query that no longer
- * passes it answers 422 rather than reaching Cube.
+ * passes it answers 422 rather than reaching Cube. The time-bucket limit is checked once, on the query
+ * that will run: a requested range replaces the saved one, so a saved range it replaces cannot refuse
+ * the read, and a requested range too wide for the chart's granularity is named as `dateRange`.
  */
 export async function runV3ChartQuery({
   access,
@@ -76,7 +82,7 @@ export async function runV3ChartQuery({
   source: TCubeQuerySource;
   context: TV3ChartOperationContext;
 }): Promise<Response> {
-  const validated = validateChartQuery(query);
+  const validated = validateChartQuery(query, { timeBuckets: false });
   const requested = parseRequestedDateRange(dateRange);
   const invalidParams: InvalidParam[] = validated.ok ? [] : [...validated.issues];
   if (!requested.ok) invalidParams.push({ name: "dateRange", reason: DATE_RANGE_REASON });
@@ -85,9 +91,20 @@ export async function runV3ChartQuery({
   const actor = getV3AuthorizationActor(context.authentication);
   if (!actor) return problemUnauthorized(context.requestId, "Not authenticated", context.instance);
 
+  const runnable = prepareQueryForChartType(
+    applyDashboardDateFilter(validated.query, requested.filter),
+    type
+  );
+  const bucketIssue = checkTimeBucketLimit(runnable, (index) =>
+    requested.filter && runnable.timeDimensions?.[index]?.dimension === COLLECTED_AT_DIMENSION
+      ? "dateRange"
+      : `query.timeDimensions[${index}].dateRange`
+  );
+  if (bucketIssue) return refuseChartQuery([bucketIssue], context);
+
   try {
     const run = await runChartQuery({
-      query: prepareQueryForChartType(applyDashboardDateFilter(validated.query, requested.filter), type),
+      query: runnable,
       datasetId,
       workspaceId: access.workspaceId,
       organizationId: access.organizationId,

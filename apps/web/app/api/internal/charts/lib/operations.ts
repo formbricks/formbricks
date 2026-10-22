@@ -1,6 +1,5 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
-import { ZChartQuery } from "@formbricks/types/analysis";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { type TV3ChartOperationContext, getSessionUserId } from "@/app/api/v3/charts/lib/access";
 import { loggableAIError, mapV3AIError } from "@/app/api/v3/lib/ai-errors";
@@ -19,6 +18,7 @@ import { CubeQueryError } from "@/modules/ee/analysis/api/lib/cube-client";
 import { AI_CHART_PROMPT_ERROR_CODE } from "@/modules/ee/analysis/charts/lib/ai-chart-errors";
 import { generateAIChartQuery } from "@/modules/ee/analysis/charts/lib/ai-chart-query.server";
 import { getMatrixQuestions } from "@/modules/ee/analysis/charts/lib/matrix-questions";
+import { validateChartQuery } from "@/modules/ee/analysis/lib/chart-query-validator";
 import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
 import type { TInternalChartGenerateBody, TInternalMatrixQuestionsQuery } from "./schemas";
 
@@ -28,6 +28,23 @@ import type { TInternalChartGenerateBody, TInternalMatrixQuestionsQuery } from "
  * `/api/v3/charts` — but held to the same authorization as it: read access to the workspace and to the
  * Feedback Dataset, with the Dashboards add-on.
  */
+
+const PROMPT_NOT_CHARTABLE_REASON =
+  "Name a metric, a grouping or a date range from this dataset, then try again.";
+const PROMPT_TOO_FINE_REASON =
+  "That period is too long to show at this level of detail. Ask for a shorter period, or for it by day, week or month.";
+
+/** 422 for a prompt the model could not turn into a chart query the validator accepts. */
+const promptNotChartable = (
+  requestId: string,
+  instance: string | undefined,
+  reason = PROMPT_NOT_CHARTABLE_REASON
+): Response =>
+  problemUnprocessableContent(requestId, "The prompt could not be turned into a chart.", {
+    instance,
+    code: "ai_generated_payload_invalid",
+    invalid_params: [{ name: "prompt", reason }],
+  });
 
 /**
  * `POST /api/internal/charts/generate` → 200 `{ data }`: an unsaved chart for a prompt — its type, query,
@@ -73,7 +90,14 @@ export async function generateInternalChart({
       userId,
       prompt: body.prompt,
     });
-    const validatedQuery = ZChartQuery.parse(query);
+    // The model's query goes through the same validator as one a person or agent writes, so it is
+    // held to the same bounds (including the time-bucket limit) and can be saved as it is shown.
+    const validated = validateChartQuery(query);
+    if (!validated.ok) {
+      const tooFine = validated.issues.some((issue) => issue.code === "limit_exceeded");
+      return promptNotChartable(requestId, instance, tooFine ? PROMPT_TOO_FINE_REASON : undefined);
+    }
+    const validatedQuery = validated.query;
 
     const run = await runChartQuery({
       query: validatedQuery,
@@ -98,16 +122,7 @@ export async function generateInternalChart({
     );
   } catch (error) {
     if (error instanceof InvalidInputError && error.message === AI_CHART_PROMPT_ERROR_CODE) {
-      return problemUnprocessableContent(requestId, "The prompt could not be turned into a chart.", {
-        instance,
-        code: "ai_generated_payload_invalid",
-        invalid_params: [
-          {
-            name: "prompt",
-            reason: "Name a metric, a grouping or a date range from this dataset, then try again.",
-          },
-        ],
-      });
+      return promptNotChartable(requestId, instance);
     }
     if (error instanceof CubeQueryError) {
       return problemBadGateway(

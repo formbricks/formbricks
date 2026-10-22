@@ -6,6 +6,7 @@ import {
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
 import { ALL_TIME_DATE_RANGE, type TChartField, type TChartFieldKind, getChartField } from "./field-catalog";
 import { TIME_GRANULARITIES } from "./schema-definition";
+import { MAX_TIME_BUCKETS, countTimeBuckets } from "./time-buckets";
 
 /**
  * The chart query validator (ADR 0001). The public chart query is the Cube query, so before one is
@@ -17,7 +18,8 @@ import { TIME_GRANULARITIES } from "./schema-definition";
  *   `renewQuery`, `joinHints`, `total`, `compareDateRange`), and so is `timezone`: every date range is
  *   read in the organization's display time zone;
  * - field, filter and order counts, filter nesting, `limit`/`offset` and string lengths are bounded;
- * - a date range is a preset, `all-time`, or two ISO calendar dates.
+ * - a date range is a preset, `all-time`, or two ISO calendar dates, and with a granularity it spans at
+ *   most `MAX_TIME_BUCKETS` buckets.
  *
  * Pure input → output, so it is unit-tested exhaustively and reused by every write and data read. It
  * returns the query in the shape the app runs and stores — `all-time` becomes "no date range" — or every
@@ -75,7 +77,7 @@ const DATE_PRESETS = new Set<string>(DATE_RANGE_PRESETS);
 export type TChartQueryIssue = {
   name: string;
   reason: string;
-  code?: "invalid_reference" | "unsupported_field";
+  code?: "invalid_reference" | "limit_exceeded" | "unsupported_field";
 };
 
 export type TChartQueryValidation =
@@ -132,6 +134,36 @@ export const parseRequestedDateRange = (
     return { ok: true, filter: { type: "custom", range: [value.from, value.to] } };
   }
   return { ok: false };
+};
+
+/**
+ * The time-bucket limit (ENG-6603). A chart grouped by time alone gets a row for every bucket in its
+ * date range, empty or not — the Cube client fills them when the query's only grouping is one granular
+ * time dimension, the first — so that range may span at most `MAX_TIME_BUCKETS` buckets. A chart with
+ * any other grouping only ever returns its real rows and is not limited. Presets need no check: the
+ * widest, a year, is 8,784 hours. `nameOf` names the problem for a time dimension's index; `null` when
+ * the query is within the limit.
+ */
+export const checkTimeBucketLimit = (
+  query: TChartQuery,
+  nameOf: (index: number) => string
+): TChartQueryIssue | null => {
+  const timeDimensions = query.timeDimensions ?? [];
+  const granular = timeDimensions.filter((timeDimension) => Boolean(timeDimension.granularity));
+  if ((query.dimensions ?? []).length > 0 || granular.length !== 1 || granular[0] !== timeDimensions[0]) {
+    return null;
+  }
+
+  const { granularity, dateRange } = timeDimensions[0];
+  if (!granularity || !Array.isArray(dateRange)) return null;
+
+  const buckets = countTimeBuckets(dateRange[0], dateRange[1], granularity);
+  if (buckets <= MAX_TIME_BUCKETS) return null;
+  return {
+    name: nameOf(0),
+    reason: `Spans ${buckets} ${granularity} buckets; at most ${MAX_TIME_BUCKETS} are allowed. Use a coarser granularity or a shorter date range.`,
+    code: "limit_exceeded",
+  };
 };
 
 export const DATE_RANGE_REASON =
@@ -436,8 +468,15 @@ const checkInteger = (
   return value;
 };
 
-/** Validate a caller-supplied chart query against the field catalog and the bounds above. */
-export const validateChartQuery = (input: unknown, path = "query"): TChartQueryValidation => {
+/**
+ * Validate a caller-supplied chart query against the field catalog and the bounds above. The
+ * time-bucket limit is part of it unless `timeBuckets` is off — for a query whose date range is about
+ * to be replaced, which is checked once the replacement is in (`runV3ChartQuery`).
+ */
+export const validateChartQuery = (
+  input: unknown,
+  { path = "query", timeBuckets = true }: { path?: string; timeBuckets?: boolean } = {}
+): TChartQueryValidation => {
   const issues = new IssueCollector();
 
   if (!isRecord(input)) {
@@ -481,16 +520,19 @@ export const validateChartQuery = (input: unknown, path = "query"): TChartQueryV
 
   if (issues.issues.length > 0) return { ok: false, issues: issues.issues };
 
-  return {
-    ok: true,
-    query: {
-      ...(measures ? { measures } : {}),
-      ...(dimensions ? { dimensions } : {}),
-      ...(timeDimensions ? { timeDimensions } : {}),
-      ...(filters ? { filters } : {}),
-      ...(order ? { order } : {}),
-      ...(limit === undefined ? {} : { limit }),
-      ...(offset === undefined ? {} : { offset }),
-    },
+  const query: TChartQuery = {
+    ...(measures ? { measures } : {}),
+    ...(dimensions ? { dimensions } : {}),
+    ...(timeDimensions ? { timeDimensions } : {}),
+    ...(filters ? { filters } : {}),
+    ...(order ? { order } : {}),
+    ...(limit === undefined ? {} : { limit }),
+    ...(offset === undefined ? {} : { offset }),
   };
+  const bucketIssue = timeBuckets
+    ? checkTimeBucketLimit(query, (index) => `${path}.timeDimensions[${index}].dateRange`)
+    : null;
+  if (bucketIssue) return { ok: false, issues: [bucketIssue] };
+
+  return { ok: true, query };
 };

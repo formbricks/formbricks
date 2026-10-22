@@ -118,6 +118,31 @@ describe("POST /api/internal/charts/generate", () => {
     });
     expect(cubeFake.calls).toHaveLength(0);
   });
+
+  test("holds the model's query to the chart query validator, so an hourly range over years runs nothing and says why", async () => {
+    ai.generate.mockResolvedValueOnce({
+      chartType: "line",
+      name: "Every hour since 2000",
+      query: {
+        measures: ["FeedbackRecords.count"],
+        timeDimensions: [
+          {
+            dimension: "FeedbackRecords.collectedAt",
+            granularity: "hour",
+            dateRange: ["2000-01-01", "2026-12-31"],
+          },
+        ],
+      },
+    });
+
+    const response = await generate();
+    expect(response.status).toBe(422);
+    expect(await response.json()).toMatchObject({
+      code: "ai_generated_payload_invalid",
+      invalid_params: [{ name: "prompt", reason: expect.stringContaining("Ask for a shorter period") }],
+    });
+    expect(cubeFake.calls).toHaveLength(0);
+  });
 });
 
 describe("GET /api/internal/matrix-questions", () => {

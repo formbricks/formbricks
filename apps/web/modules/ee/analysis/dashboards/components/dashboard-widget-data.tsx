@@ -2,6 +2,7 @@
 
 import { useTranslation } from "react-i18next";
 import type { TChartConfig } from "@formbricks/types/analysis";
+import { V3ApiError } from "@/modules/api/lib/v3-client";
 import { ChartRenderer } from "@/modules/ee/analysis/charts/components/chart-renderer";
 import { DataViewer } from "@/modules/ee/analysis/charts/components/data-viewer";
 import { DEFAULT_WIDGET_VIEW, type TWidgetView } from "@/modules/ee/analysis/dashboards/lib/widget-view";
@@ -32,14 +33,17 @@ export function DashboardWidgetData({
   view = DEFAULT_WIDGET_VIEW,
 }: Readonly<DashboardWidgetDataProps>) {
   const { t } = useTranslation();
-  const { data: result, isPending, isError } = useChartData({ chartId, dateRange });
+  const { data: result, isPending, isError, error } = useChartData({ chartId, dateRange });
 
   if (isPending) return <DashboardWidgetSkeleton />;
 
   if (isError) {
+    // A refused query says what to change (e.g. a date range too wide for an hourly chart); show it.
+    const reason = error instanceof V3ApiError ? error.invalid_params?.[0]?.reason : undefined;
     return (
-      <div className="flex h-full items-center justify-center text-center text-sm text-red-500">
-        {t("workspace.analysis.dashboards.failed_to_load_chart_data")}
+      <div className="flex h-full flex-col items-center justify-center gap-1 px-4 text-center text-sm">
+        <p className="text-red-500">{t("workspace.analysis.dashboards.failed_to_load_chart_data")}</p>
+        {reason && <p className="text-xs text-slate-500">{reason}</p>}
       </div>
     );
   }

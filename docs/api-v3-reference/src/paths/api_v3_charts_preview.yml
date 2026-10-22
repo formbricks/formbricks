@@ -5,7 +5,9 @@ post:
     Runs an unsaved chart and returns its rows, so a caller can check it shows what was meant before
     saving it. Saves nothing. The chart query is checked by the chart query validator first: a field
     outside the catalog, a refused Cube option, a `timezone`, a bound exceeded or an invalid date
-    range answers 422 naming each problem in `invalid_params`.
+    range answers 422 naming each problem in `invalid_params`. On a chart grouped by time
+    alone, a date range wider than 10,000 buckets of its granularity is one such bound
+    (`limit_exceeded`).
 
     Needs read access to the workspace and the Feedback Dataset. Counts against the chart-query
     budget (600 per minute per user or API key), not the v3 default.

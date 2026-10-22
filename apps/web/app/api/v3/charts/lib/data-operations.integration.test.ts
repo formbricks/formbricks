@@ -47,7 +47,11 @@ const preview = (
   });
 
 const problemOf = async (response: Response) =>
-  (await response.json()) as { code: string; detail: string; invalid_params?: { name: string }[] };
+  (await response.json()) as {
+    code: string;
+    detail: string;
+    invalid_params?: { name: string; code?: string }[];
+  };
 
 beforeAll(async () => {
   fixture = await seedDashboardsFixture();
@@ -155,6 +159,43 @@ describe("POST /api/v3/charts/preview", () => {
     expect(cubeFake.calls).toHaveLength(0);
   });
 
+  test("refuses a range wider than the time-bucket limit with 422 limit_exceeded, before reaching Cube", async () => {
+    const response = await preview(sessionOf(fixture.users.viewer), {
+      query: {
+        measures: ["FeedbackRecords.count"],
+        timeDimensions: [
+          {
+            dimension: "FeedbackRecords.collectedAt",
+            granularity: "hour",
+            dateRange: ["2020-01-01", "2026-12-31"],
+          },
+        ],
+      },
+    });
+
+    expect(response.status).toBe(422);
+    expect((await problemOf(response)).invalid_params).toEqual([
+      expect.objectContaining({ name: "query.timeDimensions[0].dateRange", code: "limit_exceeded" }),
+    ]);
+    expect(cubeFake.calls).toHaveLength(0);
+
+    // Split by a dimension, the same range returns real rows only, so it is not limited.
+    const split = await preview(sessionOf(fixture.users.viewer), {
+      query: {
+        measures: ["FeedbackRecords.count"],
+        dimensions: ["FeedbackRecords.sourceName"],
+        timeDimensions: [
+          {
+            dimension: "FeedbackRecords.collectedAt",
+            granularity: "hour",
+            dateRange: ["2020-01-01", "2026-12-31"],
+          },
+        ],
+      },
+    });
+    expect(split.status).toBe(200);
+  });
+
   test("needs read access to the dataset from this workspace", async () => {
     for (const datasetId of [fixture.unassignedDatasetId, fixture.foreignDatasetId]) {
       expect(await outcomeOf(await preview(sessionOf(fixture.users.owner), { datasetId }))).toEqual({
@@ -183,10 +224,12 @@ describe("POST /api/v3/charts/preview", () => {
 
 describe("GET /api/v3/charts/{chartId}/data", () => {
   const COLLECTED_AT = "FeedbackRecords.collectedAt";
-  const charts: Record<"ranged" | "unranged" | "unassigned", string> = {
+  const charts: Record<"ranged" | "unranged" | "unassigned" | "hourly" | "wideHourly", string> = {
     ranged: "",
     unranged: "",
     unassigned: "",
+    hourly: "",
+    wideHourly: "",
   };
 
   const read = (
@@ -227,6 +270,21 @@ describe("GET /api/v3/charts/{chartId}/data", () => {
       })
     ).id;
     charts.unranged = (await create("Unranged", { measures: ["FeedbackRecords.count"] })).id;
+    charts.hourly = (
+      await create("Hourly", {
+        measures: ["FeedbackRecords.count"],
+        timeDimensions: [{ dimension: COLLECTED_AT, granularity: "hour", dateRange: "last 7 days" }],
+      })
+    ).id;
+    // Saved before the time-bucket limit existed: two years by the hour.
+    charts.wideHourly = (
+      await create("Wide hourly", {
+        measures: ["FeedbackRecords.count"],
+        timeDimensions: [
+          { dimension: COLLECTED_AT, granularity: "hour", dateRange: ["2024-01-01", "2025-12-31"] },
+        ],
+      })
+    ).id;
     charts.unassigned = (
       await create("Elsewhere", { measures: ["FeedbackRecords.count"] }, fixture.unassignedDatasetId)
     ).id;
@@ -270,6 +328,36 @@ describe("GET /api/v3/charts/{chartId}/data", () => {
     }
     expect(ZV3ChartDataQuery.safeParse({ timezone: "UTC" }).success).toBe(false);
     expect(cubeFake.calls).toHaveLength(0);
+  });
+
+  test("refuses a requested range too wide for the chart's granularity with 422 limit_exceeded, before reaching Cube", async () => {
+    // Valid on its own, but two years by the hour is ~17,500 buckets — the limit is 10,000.
+    const response = await read(sessionOf(fixture.users.viewer), charts.hourly, {
+      from: "2025-01-01",
+      to: "2026-12-31",
+    });
+
+    expect(response.status).toBe(422);
+    expect((await problemOf(response)).invalid_params).toEqual([
+      expect.objectContaining({ name: "dateRange", code: "limit_exceeded" }),
+    ]);
+    expect(cubeFake.calls).toHaveLength(0);
+
+    // A saved range too wide for the limit does not block a read whose requested range replaces it,
+    // and is named as the saved query's when nothing replaces it.
+    expect(await timeDimensionsSent(charts.wideHourly, { dateRange: "last 7 days" })).toEqual([
+      { dimension: COLLECTED_AT, granularity: "hour", dateRange: ["2026-03-04", "2026-03-10"] },
+    ]);
+    const unreplaced = await read(sessionOf(fixture.users.viewer), charts.wideHourly);
+    expect(unreplaced.status).toBe(422);
+    expect((await problemOf(unreplaced)).invalid_params).toEqual([
+      expect.objectContaining({ name: "query.timeDimensions[0].dateRange", code: "limit_exceeded" }),
+    ]);
+
+    // The same range is fine for a chart grouped by the week.
+    expect(await timeDimensionsSent(charts.ranged, { from: "2025-01-01", to: "2026-12-31" })).toEqual([
+      { dimension: COLLECTED_AT, granularity: "week", dateRange: ["2025-01-01", "2026-12-31"] },
+    ]);
   });
 
   test("attributes the read to the API key and labels it as a v3 data read", async () => {

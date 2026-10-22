@@ -4084,7 +4084,9 @@ paths:
         Runs an unsaved chart and returns its rows, so a caller can check it shows what was meant before
         saving it. Saves nothing. The chart query is checked by the chart query validator first: a field
         outside the catalog, a refused Cube option, a `timezone`, a bound exceeded or an invalid date
-        range answers 422 naming each problem in `invalid_params`.
+        range answers 422 naming each problem in `invalid_params`. On a chart grouped by time
+        alone, a date range wider than 10,000 buckets of its granularity is one such bound
+        (`limit_exceeded`).
 
         Needs read access to the workspace and the Feedback Dataset. Counts against the chart-query
         budget (600 per minute per user or API key), not the v3 default.
@@ -4304,7 +4306,9 @@ paths:
         exactly as a dashboard's date filter does, so the numbers match what a person sees on a
         dashboard filtered the same way. `dateRange=all-time` removes the range; without a date range
         the chart's saved range applies. Every range is read in the organization's display time zone;
-        a `timezone` parameter is refused with 400.
+        a `timezone` parameter is refused with 400. For a chart grouped by time alone, a requested
+        range that spans more than 10,000 buckets of its granularity answers 422 `limit_exceeded` on
+        `dateRange`: request a shorter range, or use a chart with a coarser granularity.
 
         Needs read access to the chart's workspace and to its Feedback Dataset. Counts against the
         chart-query budget (600 per minute per user or API key), not the v3 default.
@@ -6567,6 +6571,7 @@ components:
             - immutable_identifier
             - invalid_locale
             - invalid_reference
+            - limit_exceeded
             - missing_required_field
             - misordered_reference
             - missing_translation
@@ -6579,6 +6584,8 @@ components:
             Machine-readable validation category, when available.
 
             This is the shared error shape every v3 operation returns, so it lists what the API can emit today and nothing more — `INVALID_PARAM_CODES` in `app/api/v3/lib/response.ts` is the registry, and a code absent from it is dropped before the response is built. Categories for operations that do not exist yet are added with the code that emits them, not ahead of it.
+
+            `limit_exceeded`: the field is well formed but past a limit the operation states, which `reason` names together with what to change. Chart queries use it for a date range that spans more time buckets than its granularity allows.
 
             `qsf_not_recognized` and `qsf_limit_exceeded` come from the Qualtrics import (an internal, session-only route sharing this shape): the file is not a Qualtrics export it can read, or it is one past an import limit, which `identifier` names.
         identifier:
@@ -11445,7 +11452,10 @@ components:
                 type: string
                 description: Human-readable explanation of the problem.
     ChartDateRange:
-      description: 'A date range on a time dimension: a named preset from the field catalog''s `datePresets` (`last 7 days`, `this month`, …), `all-time` (no range), or a pair of ISO calendar dates `[from, to]`, both inclusive, `from` not after `to`. Every range is read in the organization''s display time zone; a `timezone` cannot be supplied.'
+      description: |-
+        A date range on a time dimension: a named preset from the field catalog's `datePresets` (`last 7 days`, `this month`, …), `all-time` (no range), or a pair of ISO calendar dates `[from, to]`, both inclusive, `from` not after `to`. Every range is read in the organization's display time zone; a `timezone` cannot be supplied.
+
+        A chart grouped by time alone (one time dimension with a `granularity`, no other dimensions) gets one row per bucket in its range, empty or not, so its range may span at most 10,000 buckets: about 13 months by the hour, or 27 years by the day. A wider explicit range is refused with **422** `limit_exceeded`; use a coarser granularity or a shorter range. Every preset fits at every granularity, and a chart with other dimensions returns only its real rows, so it is not limited.
       oneOf:
         - type: string
           description: A preset name from `datePresets`, or `all-time`.
@@ -11521,7 +11531,7 @@ components:
       description: |-
         What a chart computes, in Cube's query format (ADR 0001): measures, dimensions, time dimensions, filters, order and limit over its Feedback Dataset's fields. Every field must come from the field catalog (`GET /api/v3/charts/fields`), named with its data-source prefix. Display settings are separate (`config`).
 
-        Refused with **422** (`invalid_params` names each problem): a field that is not in the catalog; Cube options the app does not use (`ungrouped`, `segments`, `renewQuery`, `joinHints`, `total`, `compareDateRange`); a `timezone` (every range is read in the organization's display time zone); more than 15 fields across `measures`, `dimensions` and `timeDimensions`; more than 25 filter conditions or filters nested deeper than three levels; a date range that is not a preset, `all-time` or two ISO calendar dates.
+        Refused with **422** (`invalid_params` names each problem): a field that is not in the catalog; Cube options the app does not use (`ungrouped`, `segments`, `renewQuery`, `joinHints`, `total`, `compareDateRange`); a `timezone` (every range is read in the organization's display time zone); more than 15 fields across `measures`, `dimensions` and `timeDimensions`; more than 25 filter conditions or filters nested deeper than three levels; a date range that is not a preset, `all-time` or two ISO calendar dates; on a chart grouped by time alone, a date range that spans more than 10,000 buckets of its `granularity` (code `limit_exceeded`).
       properties:
         measures:
           type: array

@@ -235,7 +235,7 @@ export function registerDashboardTools(server: McpServer): void {
     {
       title: "Get chart data",
       description:
-        "Read a saved chart's rows. A dateRange (a preset, 'all-time', or { from, to }) replaces the chart's own range on collectedAt, so the numbers match a dashboard filtered the same way; without one the chart's saved range applies. Ranges are read in the organization's time zone.",
+        "Read a saved chart's rows. A dateRange (a preset, 'all-time', or { from, to }) replaces the chart's own range on collectedAt, so the numbers match a dashboard filtered the same way; without one the chart's saved range applies. Ranges are read in the organization's time zone. For a chart grouped by time alone, a range wider than 10,000 buckets of its granularity (about 13 months by the hour) is refused with limit_exceeded.",
       inputSchema: ZMcpGetChartDataInput,
       outputSchema: ZMcpChartDataOutput,
       annotations: READ_ANNOTATIONS,

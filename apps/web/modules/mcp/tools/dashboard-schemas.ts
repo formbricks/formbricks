@@ -79,7 +79,7 @@ export const ZMcpChartType = ZChartType.describe(
 export const ZMcpChartQuery = z
   .record(z.string(), z.unknown())
   .describe(
-    "The chart query in Cube's query format: measures, dimensions, timeDimensions ({ dimension, granularity?, dateRange? }), filters ({ member, operator, values } or { and: [...] } / { or: [...] }), order, limit. Use only field names from list_chart_fields. No timezone: ranges are read in the organization's time zone."
+    "The chart query in Cube's query format: measures, dimensions, timeDimensions ({ dimension, granularity?, dateRange? }), filters ({ member, operator, values } or { and: [...] } / { or: [...] }), order, limit. Use only field names from list_chart_fields. No timezone: ranges are read in the organization's time zone. Grouped by time alone, a dateRange may span at most 10,000 buckets of its granularity (about 13 months by the hour); use a coarser granularity for longer ranges."
   );
 
 /**
