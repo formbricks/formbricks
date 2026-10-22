@@ -3028,6 +3028,7 @@
         "subscription_description": "Gère ton abonnement et surveille ta consommation",
         "switch_at_period_end": "Changer à la fin de la période",
         "switch_plan_now": "Changer de formule maintenant",
+        "tax_location_required": "Nous n'avons pas pu déterminer votre lieu d'imposition à partir de votre adresse de facturation. Veuillez mettre à jour votre adresse de facturation via « Gérer les informations de carte et les factures » puis réessayer.",
         "this_includes": "Cela inclut",
         "trial_alert_description": "Certaines fonctionnalités comme les relances et les liens personnalisés restent verrouillées pendant l'essai. Passe à la version supérieure maintenant pour tout débloquer.",
         "trial_already_used": "Un essai gratuit a déjà été utilisé pour cette adresse e-mail. Passe plutôt à un plan payant.",
