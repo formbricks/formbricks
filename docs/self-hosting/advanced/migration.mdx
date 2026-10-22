@@ -220,6 +220,25 @@ backups rather than running `helm rollback`. Pin explicit releases and digests, 
 The Helm chart and Formbricks image are versioned independently. A chart-only patch can retain the same
 `appVersion`; review both pins and the rendered image rather than assuming their version numbers match.
 
+### Charts and dashboards API
+
+Charts and dashboards are now part of API v3 and the MCP server, and the app uses the same API. Three things
+change for an existing installation:
+
+- **Every write API key can manage charts and dashboards.** An API key with `write` or `manage` on a workspace
+  can now create, change and delete its charts and dashboards through `/api/v3` and the MCP server. Reading a
+  chart's numbers also needs access to its feedback dataset. Review your keys if that is broader than you want.
+- **OAuth apps ask again.** Two data migrations add the `dashboards:read` and `dashboards:write` scopes to the
+  MCP resource and to every registered OAuth client. Users see a consent screen naming them the next time an
+  MCP client signs in; until they approve, the client keeps its current access and has no dashboard tools.
+- **Deleting a chart that is on a dashboard is refused**, in the app and in the API, naming the dashboards that
+  hold it. Remove the chart from them first. Deleting a dashboard still keeps its charts.
+
+The Cube configuration file `cube/cube.js` changed too: it now accepts queries made with an API key, which the
+previous file rejects. Refresh it the way [Cube model files for Docker](#cube-model-files-for-docker) describes
+(one-click `./formbricks.sh update`, the Compose refresh step, or `helm upgrade`). Until then, chart data read
+with an API key or over MCP fails with `502`; the app keeps working. There are no new environment variables.
+
 ### Survey visibility (opt-in)
 
 Surveys can now be restricted to their owner and the organization's owners and managers. New columns on the

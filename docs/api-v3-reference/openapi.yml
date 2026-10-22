@@ -14,6 +14,32 @@ info:
 
     **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and **GET /api/v3/workflows/runs/{runId}**.
 
+    **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**; **GET**, **PATCH**, **DELETE /api/v3/charts/{chartId}**; **POST /api/v3/charts/{chartId}/duplicate**), their numbers (**GET /api/v3/charts/{chartId}/data**, **POST /api/v3/charts/preview**), the field catalog (**GET /api/v3/charts/fields**, **GET /api/v3/charts/fields/{field}/values**), and dashboards (**GET**, **POST /api/v3/dashboards**; **GET**, **PATCH**, **PUT**, **DELETE /api/v3/dashboards/{dashboardId}**; **POST /api/v3/dashboards/{dashboardId}/duplicate**; **POST /api/v3/dashboards/{dashboardId}/widgets**; **PATCH**, **DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**).
+    - **Field catalog.** A chart query names fields exactly as `GET /api/v3/charts/fields` lists
+      them; the validator refuses anything else, and Cube options (`timezone`, `segments`, `ungrouped`,
+      …), with **422** naming each problem. Counts, filter depth, `limit` and `offset` are bounded.
+    - **Date ranges.** A preset from the catalog's `datePresets`, `all-time`, or two ISO dates, both
+      inclusive, read in the organization's time zone. On the data operation a requested range
+      replaces the chart's own range on `collectedAt`, the way a dashboard's date filter does.
+    - **Data needs the dataset.** Reading a chart's rows, previewing one and looking up field values
+      need read access to its Feedback Dataset as well as the workspace. They share one budget of
+      **600 per minute** per user or key, sized for dashboards that load one query per widget.
+    - **Plan.** Every operation answers **403 `dashboards_plan_required`** for an organization without
+      the Dashboards feature, after authorization.
+    - **Shared charts.** A chart can sit on several dashboards; each chart says which in `dashboards`.
+      Editing it changes all of them — duplicate it and repoint one dashboard's widget to change it
+      there only. A chart still on a dashboard cannot be deleted: **409 `chart_in_use`** lists them in
+      `details.dashboards`.
+    - **Grid.** Widgets sit on a 12-column grid in whole units (`1 ≤ w ≤ 12`, `x + w ≤ 12`,
+      `1 ≤ h ≤ 8`, `0 ≤ y ≤ 1000`). Gaps are allowed, overlaps answer **422** naming the widget, and a
+      chart appears at most once per dashboard (**409**). A widget added without a layout takes the
+      first open slot at its chart type's default size.
+    - **Stale-check.** `PUT /api/v3/dashboards/{dashboardId}` saves the name and every widget at once
+      and removes widgets left out. Send the `updatedAt` you read: if the dashboard changed since,
+      nothing is saved and **409** carries `expectedUpdatedAt` and `currentUpdatedAt` in `details`.
+      Every widget change moves `updatedAt`.
+
+
     Authenticate all management endpoints with **session cookie** or **`x-api-key`** (management key with access to the workspace).
 
     **Spec location:** source of truth is the multi-file tree at `docs/api-v3-reference/src/` (root `openapi.yml` plus one file per path and component); `docs/api-v3-reference/openapi.yml` is the generated single-file bundle (alongside v2 at `docs/api-v2-reference/openapi.yml`).

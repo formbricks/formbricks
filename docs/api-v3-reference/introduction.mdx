@@ -11,8 +11,8 @@ hidden: true
 </Warning>
 
 API v3 is the management API the [MCP server](/platform/mcp/overview) is built on, and the one the Formbricks app
-is moving onto. It covers surveys, workflows, action classes, contact attribute keys and — the reason most beta
-users are here — **Feedback Records**, the normalized store behind Unify Feedback.
+is moving onto. It covers surveys, workflows, charts and dashboards, action classes, contact attribute keys and — the reason
+most beta users are here — **Feedback Records**, the normalized store behind Unify Feedback.
 
 Every operation is listed in the sidebar of this section. This page covers what is not obvious from the
 operation pages.
@@ -175,6 +175,31 @@ compiles it on every write and never accepts compiled output.
   `custom_css_plan_required`). Clearing it never does, and a `PATCH` that sends the stored CSS back unchanged is
   not an edit.
 - **Undo.** The workspace resource keeps one `previous` revision; send its source back to restore it.
+
+## Charts and Dashboards
+
+A **chart** is a saved query on one [Feedback Dataset](/unify-feedback/feedback-datasets); a **dashboard** lays
+charts out on a 12-column grid. The same chart can sit on several dashboards.
+
+- **Write the query against the field catalog.** `GET /api/v3/charts/fields` lists every field a query may use,
+  with its operators, granularities and the date presets. Anything else is refused with a `422` that names each
+  problem. Check a query with `POST /api/v3/charts/preview` before saving it.
+- **Reading numbers needs the dataset.** Chart data, previews and field values need read access to the Feedback
+  Dataset as well as the workspace. They share a budget of 600 requests per minute per key.
+- **Date ranges.** A preset, `all-time`, or two ISO dates (both inclusive), read in your organization's time
+  zone. Passing one to `GET /api/v3/charts/{chartId}/data` replaces the chart's own range, as a dashboard's date
+  filter does.
+- **Editing a shared chart changes every dashboard that shows it.** Each chart lists those in `dashboards`. To
+  change it for one dashboard only, duplicate it (`POST /api/v3/charts/{chartId}/duplicate`, optionally with
+  `dashboardId` to place the copy in the same call) and point that dashboard's widget at the copy.
+- **Deleting.** A chart still on a dashboard is refused with `409` `chart_in_use`, listing the dashboards in
+  `details.dashboards`; remove it from them first. Deleting a dashboard keeps its charts.
+- **The grid.** Widgets use whole units: `1 ≤ w ≤ 12`, `x + w ≤ 12`, `1 ≤ h ≤ 8`. Gaps are fine; overlaps are a
+  `422` naming the other widget. Leave out the layout and the chart takes the first open slot.
+- **Saving a whole dashboard.** `PUT /api/v3/dashboards/{dashboardId}` replaces the name and every widget's place
+  at once, and removes widgets you leave out. Send the `updatedAt` you read: if someone changed the dashboard
+  since, nothing is saved and the `409` carries `currentUpdatedAt` in `details`.
+- **Plan.** Organizations without the Dashboards feature get `403` `dashboards_plan_required`.
 
 ## Feedback
 
