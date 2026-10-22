@@ -9,6 +9,7 @@ import {
   createdResponse,
   noContentResponse,
   problemBadRequest,
+  problemCreativesNotEntitled,
   problemCustomCssInvalid,
   problemCustomCssPlanRequired,
   problemForbidden,
@@ -17,8 +18,20 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { CustomCssInvalidError, CustomCssPlanRequiredError } from "@/modules/custom-css/lib/service";
-import { authorizeCreative, authorizeCreativeWorkspace } from "@/modules/ee/creatives/lib/authorization";
+import { getCreativesAccess } from "@/modules/ee/creatives/lib/access";
+import {
+  type TCreativesOperation,
+  getCreativePatchOperation,
+  isCreativesOperationAllowed,
+} from "@/modules/ee/creatives/lib/access-rules";
+import {
+  type TAuthorizedCreative,
+  type TCreativeAccess,
+  authorizeCreative,
+  authorizeCreativeWorkspace,
+} from "@/modules/ee/creatives/lib/authorization";
 import type { TCreativeState } from "@/modules/ee/creatives/lib/creative";
 import { assertCreativeCustomCssWrite } from "@/modules/ee/creatives/lib/custom-css-write";
 import { toCreativeState } from "@/modules/ee/creatives/lib/record";
@@ -55,9 +68,10 @@ import { type TV3CreativeResource, serializeV3Creative } from "./serializers";
  * tools both call. Each takes parsed input and the caller's authentication and returns a `Response`
  * (success, or RFC 9457 problem), so an MCP tool is a thin adapter over the same behaviour.
  *
- * Access goes through `authorizeCreative` / `authorizeCreativeWorkspace` only. Writes validate the
- * whole resulting state with `validateCreativeState` (422 on a semantic problem) before the service
- * checks the references only the database can answer, inside the write's transaction.
+ * Access goes through `authorizeWorkspaceOperation` / `authorizeCreativeOperation` only: the caller's
+ * workspace permission first, then the instance's licence (ENG-6602). Writes validate the whole
+ * resulting state with `validateCreativeState` (422 on a semantic problem) before the service checks the
+ * references only the database can answer, inside the write's transaction.
  */
 
 type TOperationContext = {
@@ -151,15 +165,71 @@ const mapWriteError = (
   return mapV3ThrownError(error, { log, requestId, instance, operation });
 };
 
+type TAuthorizeParams = Pick<TOperationContext, "authentication" | "requestId" | "instance">;
+
+/** Reading creatives needs `read` on their workspace; everything else changes them and needs `readWrite`. */
+const getMemberAccess = (operation: TCreativesOperation): TCreativeAccess =>
+  operation === "list" || operation === "get" || operation === "stats" ? "read" : "readWrite";
+
 /**
- * Authorizes the caller for one creative and loads it, scoped by `{ creativeId, workspaceId }`. A
- * creative deleted in between answers the same 403 as an unknown one.
+ * The licence gate (ENG-6602), applied once the caller's own access to the workspace is settled, so it
+ * only ever speaks about a workspace the caller can see: `none` refuses every operation, `windDown` all
+ * but listing, reading, pausing, closing and deleting (`isCreativesOperationAllowed`).
+ */
+const refuseUnentitledOperation = async (
+  authorized: V3WorkspaceContext,
+  operation: TCreativesOperation,
+  { requestId, instance }: TAuthorizeParams
+): Promise<Response | null> => {
+  const access = await getCreativesAccess({
+    organizationId: authorized.organizationId,
+    workspaceId: authorized.workspaceId,
+  });
+  if (isCreativesOperationAllowed(access, operation)) return null;
+
+  logger.withContext({ requestId }).warn({ statusCode: 403, access, operation }, "Creatives not entitled");
+  return problemCreativesNotEntitled(requestId, { windDown: access === "windDown", instance });
+};
+
+/** May the caller run `operation` on a workspace's creatives as a whole (list, create)? */
+const authorizeWorkspaceOperation = async (
+  workspaceId: string,
+  operation: TCreativesOperation,
+  params: TAuthorizeParams
+): Promise<Response | V3WorkspaceContext> => {
+  const authorized = await authorizeCreativeWorkspace({
+    ...params,
+    workspaceId,
+    access: getMemberAccess(operation),
+  });
+  if (authorized instanceof Response) return authorized;
+  return (await refuseUnentitledOperation(authorized, operation, params)) ?? authorized;
+};
+
+/** May the caller run `operation` on one creative? The workspace is resolved from the creative. */
+const authorizeCreativeOperation = async (
+  creativeId: string,
+  operation: TCreativesOperation,
+  params: TAuthorizeParams
+): Promise<Response | TAuthorizedCreative> => {
+  const authorized = await authorizeCreative({ ...params, creativeId, access: getMemberAccess(operation) });
+  if (authorized instanceof Response) return authorized;
+  return (await refuseUnentitledOperation(authorized, operation, params)) ?? authorized;
+};
+
+/**
+ * Authorizes the caller for `operation` on one creative and loads it, scoped by
+ * `{ creativeId, workspaceId }`. A creative deleted in between answers the same 403 as an unknown one.
  */
 const loadAuthorizedCreative = async (
   { creativeId, authentication, requestId, instance }: TCreativeOperationParams,
-  access: "read" | "readWrite"
+  operation: TCreativesOperation
 ): Promise<{ response: Response } | { record: TCreativeRecord; organizationId: string }> => {
-  const authorized = await authorizeCreative({ creativeId, authentication, access, requestId, instance });
+  const authorized = await authorizeCreativeOperation(creativeId, operation, {
+    authentication,
+    requestId,
+    instance,
+  });
   if (authorized instanceof Response) return { response: authorized };
 
   const record = await findCreativeRecord(authorized.creativeId, authorized.workspaceId);
@@ -190,10 +260,8 @@ export async function listV3Creatives({
     }
     const { query } = parsed;
 
-    const authorized = await authorizeCreativeWorkspace({
-      workspaceId: query.workspaceId,
+    const authorized = await authorizeWorkspaceOperation(query.workspaceId, "list", {
       authentication,
-      access: "read",
       requestId,
       instance,
     });
@@ -234,10 +302,8 @@ export async function createV3Creative({
   const log = logger.withContext({ requestId, workspaceId: body.workspaceId });
 
   try {
-    const authorized = await authorizeCreativeWorkspace({
-      workspaceId: body.workspaceId,
+    const authorized = await authorizeWorkspaceOperation(body.workspaceId, "create", {
       authentication,
-      access: "readWrite",
       requestId,
       instance,
     });
@@ -274,7 +340,7 @@ export async function getV3Creative(params: Omit<TCreativeOperationParams, "audi
   const log = logger.withContext({ requestId, creativeId });
 
   try {
-    const loaded = await loadAuthorizedCreative(params, "read");
+    const loaded = await loadAuthorizedCreative(params, "get");
     if ("response" in loaded) return loaded.response;
 
     return successResponse(serializeV3Creative(loaded.record, new Date()), { requestId });
@@ -290,7 +356,9 @@ export async function patchV3Creative(
   const log = logger.withContext({ requestId, creativeId });
 
   try {
-    const loaded = await loadAuthorizedCreative(params, "readWrite");
+    // Pausing and closing (a body that sets only `status`) stay allowed in wind-down; any other change
+    // needs the full licence.
+    const loaded = await loadAuthorizedCreative(params, getCreativePatchOperation(body));
     if ("response" in loaded) return loaded.response;
     const { record, organizationId } = loaded;
 
@@ -332,7 +400,7 @@ export async function deleteV3Creative(params: TCreativeOperationParams): Promis
   const log = logger.withContext({ requestId, creativeId });
 
   try {
-    const loaded = await loadAuthorizedCreative(params, "readWrite");
+    const loaded = await loadAuthorizedCreative(params, "delete");
     if ("response" in loaded) return loaded.response;
     const { record, organizationId } = loaded;
 
@@ -355,7 +423,7 @@ const runLifecycleOperation = async (
   const log = logger.withContext({ requestId, creativeId });
 
   try {
-    const loaded = await loadAuthorizedCreative(params, "readWrite");
+    const loaded = await loadAuthorizedCreative(params, operation);
     if ("response" in loaded) return loaded.response;
     const { record, organizationId } = loaded;
 
@@ -383,7 +451,7 @@ export async function duplicateV3Creative(params: TCreativeOperationParams): Pro
   const log = logger.withContext({ requestId, creativeId });
 
   try {
-    const loaded = await loadAuthorizedCreative(params, "readWrite");
+    const loaded = await loadAuthorizedCreative(params, "duplicate");
     if ("response" in loaded) return loaded.response;
     const { record, organizationId } = loaded;
 
@@ -411,10 +479,8 @@ export async function getV3CreativeStats(
   const log = logger.withContext({ requestId, creativeId });
 
   try {
-    const authorized = await authorizeCreative({
-      creativeId,
+    const authorized = await authorizeCreativeOperation(creativeId, "stats", {
       authentication,
-      access: "read",
       requestId,
       instance,
     });

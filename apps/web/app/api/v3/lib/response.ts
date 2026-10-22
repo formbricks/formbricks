@@ -64,6 +64,7 @@ export const V3_PROBLEM_CODES = [
   "bad_gateway",
   "bad_request",
   "conflict",
+  "creatives_not_entitled",
   "custom_css_plan_required",
   "forbidden",
   "internal_server_error",
@@ -309,6 +310,26 @@ export function problemCustomCssPlanRequired(requestId: string, detail: string, 
   return problemResponse(403, "Forbidden", detail, requestId, {
     code: "custom_css_plan_required",
     instance,
+  });
+}
+
+/**
+ * ENG-6602: the instance's license doesn't include Creatives. In wind-down (the workspace still has
+ * creatives) only reading them and taking them down stay allowed, and the detail says so; otherwise
+ * every creatives operation answers this. Only ever answered after the caller's own access to the
+ * workspace, so it reveals nothing about a workspace the caller can't see.
+ */
+export function problemCreativesNotEntitled(
+  requestId: string,
+  options: { windDown: boolean; instance?: string }
+): Response {
+  const detail = options.windDown
+    ? "Creatives is not included in this instance's license: existing creatives can only be listed, read, paused, closed or deleted"
+    : "Creatives is not included in this instance's license";
+
+  return problemResponse(403, "Forbidden", detail, requestId, {
+    code: "creatives_not_entitled",
+    instance: options.instance,
   });
 }
 

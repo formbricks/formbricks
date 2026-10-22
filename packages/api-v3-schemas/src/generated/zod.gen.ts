@@ -80,6 +80,7 @@ export const zProblem = z.object({
       "bad_gateway",
       "bad_request",
       "conflict",
+      "creatives_not_entitled",
       "custom_css_plan_required",
       "forbidden",
       "internal_server_error",

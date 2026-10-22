@@ -14,6 +14,8 @@ info:
 
     **Creatives**: **GET /api/v3/creatives**, **POST /api/v3/creatives**, **GET**, **PATCH** and **DELETE /api/v3/creatives/{creativeId}**, **POST /api/v3/creatives/{creativeId}/archive**, **/restore** and **/duplicate**, and **GET /api/v3/creatives/{creativeId}/stats**. A creative is a feedback button or a banner the web SDK renders on the customer's site; pressing it opens its Destination, a survey or a link. Writes set the author's `status`; reads add the derived `displayStatus`; `stats` returns its daily Impressions and Clicks.
 
+    Creatives needs a self-hosted license that includes it; Formbricks Cloud does not offer it. With one, every operation is available. Without one, a workspace that still has creatives is in **wind-down**: its creatives are no longer shown on sites, and they can only be listed, read (stats included), paused, closed (a PATCH that sets nothing but `status`) or deleted. A workspace with no creatives has no access at all. Anything not allowed answers **403** `creatives_not_entitled`.
+
     **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and **GET /api/v3/workflows/runs/{runId}**.
 
     Authenticate all management endpoints with **session cookie** or **`x-api-key`** (management key with access to the workspace).
@@ -3943,7 +3945,7 @@ paths:
         '401':
           $ref: '#/components/responses/V3Unauthorized'
         '403':
-          $ref: '#/components/responses/V3Forbidden'
+          $ref: '#/components/responses/V3CreativesForbidden'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -4100,7 +4102,7 @@ paths:
         '401':
           $ref: '#/components/responses/V3Unauthorized'
         '403':
-          $ref: '#/components/responses/V3Forbidden'
+          $ref: '#/components/responses/V3CreativesForbidden'
         '422':
           $ref: '#/components/responses/V3UnprocessableContent'
         '429':
@@ -4230,7 +4232,7 @@ paths:
         '401':
           $ref: '#/components/responses/V3Unauthorized'
         '403':
-          $ref: '#/components/responses/V3Forbidden'
+          $ref: '#/components/responses/V3CreativesForbidden'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -4245,7 +4247,7 @@ paths:
       description: |
         Changes a creative. Read/write access to its workspace; an unknown or inaccessible `creativeId` answers **403**. Each group sent replaces the stored one as a whole (see `PatchCreativeRequest`); an empty body changes nothing.
 
-        **Status.** Publish with `status: inProgress`, pause with `paused`, close with `completed`, and reopen or resume with `inProgress`. A creative that was ever published can't go back to `draft`. Any status but `draft` must meet the publish rules of `POST /api/v3/creatives`, checked against the creative as it would be after the change.
+        **Status.** Publish with `status: inProgress`, pause with `paused`, close with `completed`, and reopen or resume with `inProgress`. A creative that was ever published can't go back to `draft`. Any status but `draft` must meet the publish rules of `POST /api/v3/creatives`, checked against the creative as it would be after the change. In wind-down (the license does not include Creatives), only a body that sets nothing but `status` to `paused` or `completed` is accepted; any other body, an empty one included, answers **403** `creatives_not_entitled`.
 
         **Custom CSS.** Adding or editing `styling.theme.customCss` follows the rules of `POST /api/v3/creatives`; removing it, or sending it back unchanged, needs no plan and is not processed again.
 
@@ -4299,7 +4301,7 @@ paths:
         '401':
           $ref: '#/components/responses/V3Unauthorized'
         '403':
-          $ref: '#/components/responses/V3Forbidden'
+          $ref: '#/components/responses/V3CreativesForbidden'
         '422':
           $ref: '#/components/responses/V3UnprocessableContent'
         '429':
@@ -4331,7 +4333,7 @@ paths:
         '401':
           $ref: '#/components/responses/V3Unauthorized'
         '403':
-          $ref: '#/components/responses/V3Forbidden'
+          $ref: '#/components/responses/V3CreativesForbidden'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -4375,7 +4377,7 @@ paths:
         '401':
           $ref: '#/components/responses/V3Unauthorized'
         '403':
-          $ref: '#/components/responses/V3Forbidden'
+          $ref: '#/components/responses/V3CreativesForbidden'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -4419,7 +4421,7 @@ paths:
         '401':
           $ref: '#/components/responses/V3Unauthorized'
         '403':
-          $ref: '#/components/responses/V3Forbidden'
+          $ref: '#/components/responses/V3CreativesForbidden'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -4467,7 +4469,7 @@ paths:
         '401':
           $ref: '#/components/responses/V3Unauthorized'
         '403':
-          $ref: '#/components/responses/V3Forbidden'
+          $ref: '#/components/responses/V3CreativesForbidden'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -4601,7 +4603,7 @@ paths:
         '401':
           $ref: '#/components/responses/V3Unauthorized'
         '403':
-          $ref: '#/components/responses/V3Forbidden'
+          $ref: '#/components/responses/V3CreativesForbidden'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -6274,6 +6276,7 @@ components:
             - bad_gateway
             - bad_request
             - conflict
+            - creatives_not_entitled
             - custom_css_plan_required
             - forbidden
             - internal_server_error
@@ -13322,6 +13325,46 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+    V3CreativesForbidden:
+      description: 'Forbidden, one of two codes. `forbidden`: the caller lacks the workspace access the operation needs, or the creative does not exist (404 is not used, so creative ids cannot be probed for existence). `creatives_not_entitled`: this instance''s license does not include Creatives. It is checked only after the caller''s own access, so it says nothing about a workspace the caller cannot see. A workspace that still has creatives is in wind-down: listing, reading, stats, a PATCH that sets nothing but `status` to `paused` or `completed`, and DELETE keep working, and everything else answers this. A workspace without creatives answers it on every operation.'
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            notAllowed:
+              summary: No access to the workspace, or an unknown creative
+              value:
+                title: Forbidden
+                status: 403
+                detail: You are not authorized to access this resource
+                code: forbidden
+                requestId: req_01j8z3
+            notEntitled:
+              summary: The license does not include Creatives, and the workspace has none
+              value:
+                title: Forbidden
+                status: 403
+                detail: Creatives is not included in this instance's license
+                code: creatives_not_entitled
+                requestId: req_01j8z4
+            windDown:
+              summary: The license does not include Creatives, and the operation is not one wind-down allows
+              value:
+                title: Forbidden
+                status: 403
+                detail: 'Creatives is not included in this instance''s license: existing creatives can only be listed, read, paused, closed or deleted'
+                code: creatives_not_entitled
+                requestId: req_01j8z5
     V3UnauthorizedSession:
       description: Not authenticated (no valid session).
       headers:

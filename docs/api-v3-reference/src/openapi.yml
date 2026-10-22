@@ -36,6 +36,14 @@ info:
     `displayStatus`; `stats` returns its daily Impressions and Clicks.
 
 
+    Creatives needs a self-hosted license that includes it; Formbricks Cloud does not offer it. With
+    one, every operation is available. Without one, a workspace that still has creatives is in
+    **wind-down**: its creatives are no longer shown on sites, and they can only be listed, read
+    (stats included), paused, closed (a PATCH that sets nothing but `status`) or deleted. A workspace
+    with no creatives has no access at all. Anything not allowed answers **403**
+    `creatives_not_entitled`.
+
+
     **Workflows extension**: **GET /api/v3/workflows**, **POST
     /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH
     /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**,

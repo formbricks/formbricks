@@ -3,6 +3,8 @@ import { zCreativeResource, zCreativeStats } from "@formbricks/api-v3-schemas";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
+import { getCreativesAccess } from "@/modules/ee/creatives/lib/access";
+import type { TCreativesAccess, TCreativesOperation } from "@/modules/ee/creatives/lib/access-rules";
 import {
   type TCreativeRecord,
   type TCreativeWriteData,
@@ -45,6 +47,8 @@ vi.mock("@/modules/custom-css/lib/access", async (importOriginal) => ({
   getCustomCssPlanAllowed: vi.fn(),
 }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
+// The instance's licence (ENG-6602): `full` unless a test says otherwise.
+vi.mock("@/modules/ee/creatives/lib/access", () => ({ getCreativesAccess: vi.fn() }));
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn() })) },
 }));
@@ -294,6 +298,7 @@ beforeEach(() => {
   storedPageCounts.length = 0;
   grantAccess();
   vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(true);
+  vi.mocked(getCreativesAccess).mockResolvedValue("full");
 });
 
 describe("createV3Creative", () => {
@@ -1233,5 +1238,143 @@ describe("getV3CreativeStats", () => {
 
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(Response.json({}, { status: 403 }));
     expect((await stats(id)).status).toBe(403);
+  });
+});
+
+describe("the licence gate (ENG-6602)", () => {
+  /** Every operation, on one published creative of the workspace (list and create on the workspace). */
+  const runOperation: Record<TCreativesOperation, (id: string) => Promise<Response>> = {
+    list: () =>
+      listV3Creatives({ ...base, searchParams: new URLSearchParams(`workspaceId=${WORKSPACE_ID}`) }),
+    get: (id) => getV3Creative({ ...base, creativeId: id }),
+    stats: (id) => getV3CreativeStats({ ...base, creativeId: id, query: ZV3CreativeStatsQuery.parse({}) }),
+    create: () => createV3Creative({ ...base, body: feedbackButton() }),
+    update: (id) => patchV3Creative({ ...base, creativeId: id, body: patch({ name: "Renamed" }) }),
+    pause: (id) => patchV3Creative({ ...base, creativeId: id, body: patch({ status: "paused" }) }),
+    close: (id) => patchV3Creative({ ...base, creativeId: id, body: patch({ status: "completed" }) }),
+    delete: (id) => deleteV3Creative({ ...base, creativeId: id }),
+    archive: (id) => archiveV3Creative({ ...base, creativeId: id }),
+    restore: (id) => restoreV3Creative({ ...base, creativeId: id }),
+    duplicate: (id) => duplicateV3Creative({ ...base, creativeId: id }),
+  };
+  const SUCCESS_STATUS: Record<TCreativesOperation, number> = {
+    list: 200,
+    get: 200,
+    stats: 200,
+    create: 201,
+    update: 200,
+    pause: 200,
+    close: 200,
+    delete: 204,
+    archive: 200,
+    restore: 200,
+    duplicate: 201,
+  };
+  const OPERATIONS = Object.keys(SUCCESS_STATUS) as TCreativesOperation[];
+  const WIND_DOWN_ALLOWED: TCreativesOperation[] = ["list", "get", "stats", "pause", "close", "delete"];
+
+  const publishedCreative = async (): Promise<string> =>
+    (await created(feedbackButton({ status: "inProgress" }))).id;
+
+  const withAccess = (access: TCreativesAccess) => vi.mocked(getCreativesAccess).mockResolvedValue(access);
+
+  const expectNotEntitled = async (response: Response, detail: RegExp) => {
+    expect(response.status).toBe(403);
+    expect(await readBody(response)).toMatchObject({
+      title: "Forbidden",
+      status: 403,
+      code: "creatives_not_entitled",
+      detail: expect.stringMatching(detail),
+    });
+  };
+
+  test("with the licence, every operation works as before", async () => {
+    for (const operation of OPERATIONS) {
+      const id = await publishedCreative();
+      const response = await runOperation[operation](id);
+      expect({ operation, status: response.status }).toEqual({
+        operation,
+        status: SUCCESS_STATUS[operation],
+      });
+    }
+  });
+
+  test("without it and nothing to wind down, every operation is refused and nothing is written", async () => {
+    for (const operation of OPERATIONS) {
+      const id = await publishedCreative();
+      const before = structuredClone(store.get(id));
+      withAccess("none");
+
+      await expectNotEntitled(
+        await runOperation[operation](id),
+        /^Creatives is not included in this instance's license$/
+      );
+      expect(store.get(id)).toEqual(before);
+      withAccess("full");
+    }
+    expect(store.size).toBe(OPERATIONS.length);
+  });
+
+  test("in wind-down, creatives can be listed, read, paused, closed and deleted, and nothing else", async () => {
+    for (const operation of OPERATIONS) {
+      const id = await publishedCreative();
+      withAccess("windDown");
+
+      const response = await runOperation[operation](id);
+      if (WIND_DOWN_ALLOWED.includes(operation)) {
+        expect({ operation, status: response.status }).toEqual({
+          operation,
+          status: SUCCESS_STATUS[operation],
+        });
+      } else {
+        await expectNotEntitled(response, /only be listed, read, paused, closed or deleted$/);
+      }
+      withAccess("full");
+    }
+  });
+
+  test("in wind-down, a PATCH may set nothing but `status`, and only to paused or completed", async () => {
+    const id = await publishedCreative();
+    withAccess("windDown");
+
+    for (const body of [{ status: "inProgress" }, { status: "paused", name: "Renamed" }, {}]) {
+      await expectNotEntitled(
+        await patchV3Creative({ ...base, creativeId: id, body: patch(body) }),
+        /paused, closed or deleted$/
+      );
+    }
+    expect(replaceCreativeRecord).not.toHaveBeenCalled();
+  });
+
+  test("is decided for the creative's own workspace and organization", async () => {
+    const id = await publishedCreative();
+    vi.mocked(getCreativesAccess).mockClear();
+
+    await getV3Creative({ ...base, creativeId: id });
+
+    expect(getCreativesAccess).toHaveBeenCalledWith({
+      organizationId: ORGANIZATION_ID,
+      workspaceId: WORKSPACE_ID,
+    });
+  });
+
+  test("comes after the caller's own access, so it says nothing about creatives the caller can't see", async () => {
+    const id = await publishedCreative();
+    withAccess("none");
+    vi.mocked(getCreativesAccess).mockClear();
+
+    const unknown = await getV3Creative({ ...base, creativeId: UNKNOWN_ID });
+    expect(unknown.status).toBe(403);
+    expect((await readBody(unknown)).code).toBe("forbidden");
+
+    vi.mocked(requireV3WorkspaceAccess).mockImplementation(async () =>
+      Response.json({ code: "forbidden" }, { status: 403 })
+    );
+    for (const operation of ["get", "list", "create"] as const) {
+      const response = await runOperation[operation](id);
+      expect(response.status).toBe(403);
+      expect((await readBody(response)).code).toBe("forbidden");
+    }
+    expect(getCreativesAccess).not.toHaveBeenCalled();
   });
 });
