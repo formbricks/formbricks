@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    // For one import only: the SAML parse worker (modules/ee/auth/saml/lib/saml-parse-worker.ts) also runs as a plain
+    // Node worker thread in unit tests, where a relative import needs its .ts extension. Elsewhere, import without it.
     "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "jsx": "preserve",

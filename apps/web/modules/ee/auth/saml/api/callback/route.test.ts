@@ -1,3 +1,4 @@
+import { createRequire } from "node:module";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
@@ -8,7 +9,7 @@ import {
   SAML_RESPONSE_MARKUP_BUDGET,
   SAML_RESPONSE_MAX_LENGTH,
 } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
-import { POST, type SamlErrorCode, buildLoginErrorUrl } from "./route";
+import { JACKSON_RELAY_STATE_PREFIX, POST, type SamlErrorCode, buildLoginErrorUrl } from "./route";
 
 const CLAIMS = { issuer: "https://idp.example.com", id: "_resp1", inResponseTo: "_req1" };
 const PARSED: SamlParseProbe = { outcome: "parsed", ms: 3, claims: CLAIMS };
@@ -236,7 +237,7 @@ describe("SAML callback route", () => {
 
   describe("parse budget", () => {
     test("parses within the budget before jackson sees the response", async () => {
-      await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "s" }));
+      await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "boxyhq_jackson_s" }));
 
       // With jackson's key, so an encrypted assertion is decrypted and timed before jackson does it (ENG-4051).
       expect(probeMock).toHaveBeenCalledWith(b64(ISSUER), "sp-private-key");
@@ -245,11 +246,31 @@ describe("SAML callback route", () => {
       );
     });
 
+    test.each(["", "s", "BOXYHQ_JACKSON_s"])(
+      "reads no key for a response jackson would not decrypt (RelayState %j), so the worker decrypts nothing",
+      async (RelayState) => {
+        await POST(callback({ SAMLResponse: b64(ISSUER), RelayState }));
+
+        expect(decryptionKeyMock).not.toHaveBeenCalled();
+        expect(probeMock).toHaveBeenCalledWith(b64(ISSUER), null);
+        expect(samlResponseMock).toHaveBeenCalled();
+      }
+    );
+
+    test("knows jackson's RelayState prefix", () => {
+      // jackson decrypts only for responses carrying it, so the worker's decision has to follow the same mark.
+      const jacksonUtils = createRequire(import.meta.url)("@boxyhq/saml-jackson/dist/controller/utils") as {
+        relayStatePrefix: string;
+      };
+
+      expect(JACKSON_RELAY_STATE_PREFIX).toBe(jacksonUtils.relayStatePrefix);
+    });
+
     test("refuses rather than parse without jackson's key, which an encrypted assertion would need", async () => {
       const error = vi.spyOn(logger, "error").mockImplementation(() => undefined);
       decryptionKeyMock.mockRejectedValueOnce(new Error("Certificate store not initialized"));
 
-      const response = await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "s" }));
+      const response = await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "boxyhq_jackson_s" }));
 
       expect(response.status).toBe(503);
       expect(response.headers.get("Retry-After")).toBe("1");
@@ -455,7 +476,7 @@ describe("SAML callback route", () => {
       ],
       [
         "jackson's decryption key being unreadable",
-        VALID,
+        { ...VALID, RelayState: "boxyhq_jackson_s" },
         () => decryptionKeyMock.mockRejectedValueOnce(new Error("Certificate store not initialized")),
         "saml_unavailable",
       ],

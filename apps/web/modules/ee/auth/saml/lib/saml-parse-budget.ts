@@ -81,8 +81,8 @@ export type SamlParseProbe =
 interface Job {
   id: number;
   xml: string;
-  /** The SP private key, so the worker can decrypt an encrypted assertion as jackson will. */
-  decryptionKey: string;
+  /** The SP private key, so the worker can decrypt an encrypted assertion as jackson will; `null` when jackson won't. */
+  decryptionKey: string | null;
   resolve: (probe: SamlParseProbe) => void;
 }
 
@@ -302,13 +302,13 @@ function pump(): void {
 }
 
 /**
- * Parse `samlResponseBase64` in the worker under `SAML_PARSE_TIME_BUDGET_MS`, decoded as jackson decodes it, and
- * decrypt its encrypted assertion with `decryptionKey` within the same budget and hold the result to the byte bounds. Never rejects: every way it
- * can end is an outcome.
+ * Parse `samlResponseBase64` in the worker under `SAML_PARSE_TIME_BUDGET_MS`, decoded as jackson decodes it, and with
+ * `decryptionKey` (`null` for a response jackson would not decrypt) decrypt its encrypted assertion within the same
+ * budget and hold the result to the byte bounds. Never rejects: every way it can end is an outcome.
  */
 export const probeSamlResponseParse = (
   samlResponseBase64: string,
-  decryptionKey: string
+  decryptionKey: string | null
 ): Promise<SamlParseProbe> => {
   refillAllowance(performance.now());
   if (pool.queue.length >= SAML_PARSE_QUEUE_LIMIT || pool.allowanceMs <= 0) {

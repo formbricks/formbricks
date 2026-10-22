@@ -51,7 +51,7 @@ describe("parseSamlResponse", () => {
   });
 
   test.each([
-    ["without a key", encrypted, undefined],
+    ["without a key", encrypted, null],
     ["encrypted to another key", encrypted, createSpKeyPair().privateKey],
     // saml20 parses the plaintext strictly and gives up on a DOCTYPE, as jackson will.
     ["holding a DOCTYPE", encryptedWith(`<!DOCTYPE r SYSTEM "x">${assertion}`), sp.privateKey],

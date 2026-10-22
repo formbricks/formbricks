@@ -80,7 +80,7 @@ export interface ParsedSamlResponse {
  * What jackson does first with an encrypted assertion, before it checks any signature (saml20's `validateInternal`):
  * decrypt it, parse the plaintext and serialize the document with it in place. Then the bounds on that document.
  */
-const decryptAsJackson = (xml: string, decryptionKey: string | undefined): SamlDecryption => {
+const decryptAsJackson = (xml: string, decryptionKey: string | null): SamlDecryption => {
   if (!decryptionKey) return { decrypted: false };
   try {
     const { assertion, decrypted } = decryptXml(xml, { privateKey: decryptionKey });
@@ -95,7 +95,7 @@ const decryptAsJackson = (xml: string, decryptionKey: string | undefined): SamlD
  * One job: parse `xml`, and decrypt and measure its encrypted assertion with `decryptionKey` as jackson will. Never
  * throws.
  */
-export const parseSamlResponse = (xml: string, decryptionKey: string | undefined): ParsedSamlResponse => {
+export const parseSamlResponse = (xml: string, decryptionKey: string | null): ParsedSamlResponse => {
   let root: Element | null;
   try {
     root = parseXml(xml).documentElement;
@@ -134,12 +134,15 @@ export const dropInsecureAlgorithmWarnings =
 
 const serve = (port: MessagePort) => {
   console.warn = dropInsecureAlgorithmWarnings(console.warn.bind(console));
-  port.on("message", ({ id, xml, decryptionKey }: { id: number; xml: string; decryptionKey: string }) => {
-    const started = performance.now();
-    const { claims, decryption } = parseSamlResponse(xml, decryptionKey);
-    port.postMessage({ id, ms: performance.now() - started, claims, decryption });
-  });
-  for (let i = 0; i < 20; i++) parseSamlResponse(WARM_UP, undefined);
+  port.on(
+    "message",
+    ({ id, xml, decryptionKey }: { id: number; xml: string; decryptionKey: string | null }) => {
+      const started = performance.now();
+      const { claims, decryption } = parseSamlResponse(xml, decryptionKey);
+      port.postMessage({ id, ms: performance.now() - started, claims, decryption });
+    }
+  );
+  for (let i = 0; i < 20; i++) parseSamlResponse(WARM_UP, null);
   port.postMessage({ ready: true });
 };
 

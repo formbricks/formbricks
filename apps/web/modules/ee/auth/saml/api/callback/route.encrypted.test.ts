@@ -96,6 +96,21 @@ describe("SAML callback with an encrypted assertion", () => {
     expect(samlResponseMock).toHaveBeenCalledWith({ RelayState: "boxyhq_jackson_state", SAMLResponse });
   });
 
+  test("leaves one jackson would not decrypt (no RelayState of its own) undecrypted, for jackson to refuse", async () => {
+    // A plaintext that would blow the budget if decrypted: the worker does not decrypt it, so it parses quickly.
+    const SAMLResponse = encryptedResponse(nestedNamespaceAssertion(4000));
+
+    const response = await POST(
+      new Request("http://localhost/api/auth/saml/callback", {
+        method: "POST",
+        body: new URLSearchParams({ SAMLResponse, RelayState: "" }),
+      })
+    );
+
+    expect(response.status).toBe(307);
+    expect(samlResponseMock).toHaveBeenCalledWith({ RelayState: "", SAMLResponse });
+  });
+
   test("hands a signed one of 150 groups to jackson", async () => {
     const SAMLResponse = encryptedResponse(signedAssertionWithGroups(150));
 
