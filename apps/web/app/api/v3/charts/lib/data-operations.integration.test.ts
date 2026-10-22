@@ -8,9 +8,9 @@ import {
   seedDashboardsFixture,
   sessionOf,
 } from "@/integration/dashboards-fixture";
-import { previewV3Chart } from "./data-operations";
+import { getV3ChartData, previewV3Chart } from "./data-operations";
 import { ZV3ChartData } from "./resources";
-import { type TV3ChartPreviewBody, ZV3ChartPreviewBody } from "./schemas";
+import { type TV3ChartPreviewBody, ZV3ChartDataQuery, ZV3ChartPreviewBody } from "./schemas";
 
 /**
  * ENG-6586 against real PostgreSQL and SpiceDB, with Cube faked at its client boundary: what reaches Cube
@@ -178,5 +178,117 @@ describe("POST /api/v3/charts/preview", () => {
     const problem = await problemOf(response);
     expect(problem.code).toBe("bad_gateway");
     expect(JSON.stringify(problem)).not.toContain("secret_table");
+  });
+});
+
+describe("GET /api/v3/charts/{chartId}/data", () => {
+  const COLLECTED_AT = "FeedbackRecords.collectedAt";
+  const charts: Record<"ranged" | "unranged" | "unassigned", string> = {
+    ranged: "",
+    unranged: "",
+    unassigned: "",
+  };
+
+  const read = (
+    authentication: ReturnType<typeof sessionOf>,
+    chartId: string,
+    query: Record<string, string> = {}
+  ) =>
+    getV3ChartData({
+      chartId,
+      query: ZV3ChartDataQuery.parse(query),
+      authentication,
+      requestId: "req",
+      instance: "/api/v3/charts/data",
+    });
+
+  /** The time dimensions Cube received, at a fixed instant so presets resolve to known days. */
+  const timeDimensionsSent = async (chartId: string, query: Record<string, string> = {}) => {
+    vi.useFakeTimers({ now: new Date("2026-03-10T12:00:00Z"), toFake: ["Date"] });
+    try {
+      const response = await read(sessionOf(fixture.users.viewer), chartId, query);
+      expect(response.status).toBe(200);
+    } finally {
+      vi.useRealTimers();
+    }
+    return cubeFake.calls.at(-1)?.query.timeDimensions;
+  };
+
+  beforeAll(async () => {
+    const create = (name: string, query: object, feedbackDirectoryId = fixture.datasetId) =>
+      prisma.chart.create({
+        data: { name, type: "bar", workspaceId: fixture.workspaceId, feedbackDirectoryId, query, config: {} },
+      });
+
+    charts.ranged = (
+      await create("Ranged", {
+        measures: ["FeedbackRecords.count"],
+        timeDimensions: [{ dimension: COLLECTED_AT, granularity: "week", dateRange: "last 90 days" }],
+      })
+    ).id;
+    charts.unranged = (await create("Unranged", { measures: ["FeedbackRecords.count"] })).id;
+    charts.unassigned = (
+      await create("Elsewhere", { measures: ["FeedbackRecords.count"] }, fixture.unassignedDatasetId)
+    ).id;
+  });
+
+  test("without a range, runs the chart with its own saved range", async () => {
+    expect(await timeDimensionsSent(charts.ranged)).toEqual([
+      { dimension: COLLECTED_AT, granularity: "week", dateRange: ["2025-12-11", "2026-03-10"] },
+    ]);
+  });
+
+  test("a requested preset replaces the saved range on collectedAt, keeping the granularity", async () => {
+    expect(await timeDimensionsSent(charts.ranged, { dateRange: "last 7 days" })).toEqual([
+      { dimension: COLLECTED_AT, granularity: "week", dateRange: ["2026-03-04", "2026-03-10"] },
+    ]);
+  });
+
+  test("a requested pair of dates is added as a filter-only collectedAt range when the chart has none", async () => {
+    expect(await timeDimensionsSent(charts.unranged, { from: "2026-01-01", to: "2026-01-31" })).toEqual([
+      { dimension: COLLECTED_AT, dateRange: ["2026-01-01", "2026-01-31"] },
+    ]);
+  });
+
+  test("all-time removes the saved range", async () => {
+    expect(await timeDimensionsSent(charts.ranged, { dateRange: "all-time" })).toEqual([
+      { dimension: COLLECTED_AT, granularity: "week" },
+    ]);
+  });
+
+  test("refuses an invalid or half-given range with 422 and a timezone with 400, before reaching Cube", async () => {
+    const invalidRanges: Record<string, string>[] = [
+      { dateRange: "yesterday-ish" },
+      { from: "2026-01-01" },
+      { dateRange: "today", from: "2026-01-01", to: "2026-01-02" },
+    ];
+    for (const query of invalidRanges) {
+      expect(await outcomeOf(await read(sessionOf(fixture.users.viewer), charts.ranged, query))).toEqual({
+        status: 422,
+        code: "unprocessable_content",
+      });
+    }
+    expect(ZV3ChartDataQuery.safeParse({ timezone: "UTC" }).success).toBe(false);
+    expect(cubeFake.calls).toHaveLength(0);
+  });
+
+  test("attributes the read to the API key and labels it as a v3 data read", async () => {
+    expect((await read(apiKeyOf(fixture, "readKey"), charts.unranged)).status).toBe(200);
+    expect(cubeFake.calls[0].claims).toMatchObject({
+      apiKeyId: fixture.apiKeys.readKey,
+      source: "v3.charts.data",
+    });
+  });
+
+  test("needs read access to the chart's dataset as well as its workspace", async () => {
+    expect(await outcomeOf(await read(sessionOf(fixture.users.owner), charts.unassigned))).toEqual({
+      status: 403,
+      code: "forbidden",
+    });
+    expect(await outcomeOf(await read(sessionOf(fixture.users.outsider), charts.unranged))).toEqual({
+      status: 403,
+      code: "forbidden",
+    });
+    expect(cubeFake.calls).toHaveLength(0);
   });
 });

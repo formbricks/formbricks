@@ -8,7 +8,6 @@ import { useTranslation } from "react-i18next";
 import type { TChartConfig } from "@formbricks/types/analysis";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { deleteChartAction } from "@/modules/ee/analysis/charts/actions";
-import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
 import { sanitizeChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
@@ -16,7 +15,7 @@ import {
   createChart,
   getChart,
   getChartApiErrorMessage,
-  previewChart,
+  getChartData,
   updateChart,
 } from "@/modules/ee/analysis/lib/api-client";
 import { chartKeys } from "@/modules/ee/analysis/lib/query";
@@ -122,16 +121,10 @@ export function useChartDialog({
         setChartConfig(chart.config ?? {});
         setSelectedDirectoryId(chart.feedbackDirectoryId);
 
-        // Charts saved before a big number's query stopped carrying groups can still hold a
-        // granularity or a dimension; normalize on read so the value shown is the measure over the
-        // whole range, not a fold of per-group values.
+        // The saved chart's own data. The server shapes the query for the chart type, so a big number
+        // saved while its query still carried groups shows the measure over the whole range.
         const chartType = resolveChartType(chart.type);
-        const result = await previewChart({
-          workspaceId,
-          datasetId: chart.feedbackDirectoryId,
-          type: chartType,
-          query: prepareQueryForChartType(chart.query, chartType),
-        });
+        const result = await getChartData({ chartId: chart.id });
         if (cancelled) return;
 
         // The server-rewritten effective query, so the renderer's xAxisKey matches the returned data

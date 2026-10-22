@@ -378,6 +378,8 @@ paths:
     $ref: paths/api_v3_charts_preview.yml
   /api/v3/charts/{chartId}:
     $ref: paths/api_v3_charts_{chartId}.yml
+  /api/v3/charts/{chartId}/data:
+    $ref: paths/api_v3_charts_{chartId}_data.yml
   /api/v3/action-classes:
     $ref: paths/api_v3_action-classes.yml
   /api/v3/contact-attribute-keys:

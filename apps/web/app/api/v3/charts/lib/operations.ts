@@ -15,97 +15,33 @@ import {
 import {
   createdResponse,
   problemBadRequest,
-  problemConflict,
   problemForbidden,
-  problemUnprocessableContent,
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
-import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { capturePostHogEvent } from "@/lib/posthog";
-import { isNewReleaseWorkEnabled } from "@/lib/upgrade/compatibility";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateChartQuery } from "@/modules/ee/analysis/lib/chart-query-validator";
-import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
-import { refuseChartQuery } from "./data-operations";
+import { type TV3ChartOperationContext, loadAuthorizedChart } from "./access";
+import { chartNameTaken, refuseChartQuery, refuseMatrixUntilUpgraded } from "./problems";
 import type { TV3ChartCreateBody, TV3ChartListQuery, TV3ChartUpdateBody } from "./schemas";
 import { serializeV3Chart } from "./serializers";
 import {
   type TChartResourceRow,
   type TChartWrite,
   createChartRow,
-  getChartResourceRow,
   listChartResourceRows,
   updateChartRow,
 } from "./service";
-
-export type TV3ChartOperationContext = {
-  authentication: TV3Authentication;
-  requestId: string;
-  instance: string;
-};
 
 type TV3ChartWriteContext = TV3ChartOperationContext & { auditLog?: TV3AuditLog };
 
 const getSessionUserId = (authentication: TV3Authentication): string | null =>
   authentication && "user" in authentication && authentication.user?.id ? authentication.user.id : null;
 
-/** 409 for a name another chart in the workspace already has; names are how people find charts. */
-export const chartNameTaken = ({ requestId, instance }: TV3ChartOperationContext): Response =>
-  problemConflict(requestId, "A chart with this name already exists in this workspace.", instance);
-
-/**
- * Matrix charts read data the 6.1 online upgrade migrates, so none may be created or switched to until
- * it has finished. Checked per request: activation only moves forward, and a running pod sees it from
- * the database without a redeploy.
- */
-export const refuseMatrixUntilUpgraded = async (
-  type: TChartResourceRow["type"] | undefined,
-  { requestId, instance }: TV3ChartOperationContext
-): Promise<Response | null> => {
-  if (type !== "matrix" || (await isNewReleaseWorkEnabled())) return null;
-  return problemUnprocessableContent(requestId, "Matrix charts are not available yet", {
-    instance,
-    invalid_params: [
-      {
-        name: "type",
-        reason:
-          "Matrix charts become available once this instance finishes its online upgrade to 6.1. Use another chart type until then.",
-      },
-    ],
-  });
-};
-
 const CHARTS_CURSOR_KIND = "charts";
 const CHARTS_SORT = "-createdAt";
-
-/**
- * Load a chart and authorize the caller against the workspace it lives in — never a workspace the caller
- * names, so a chart id cannot be paired with a workspace the caller happens to reach. A chart that does
- * not exist answers the same 403 as one the caller may not see.
- */
-export async function loadAuthorizedChart(
-  chartId: string,
-  minPermission: TTeamPermission,
-  { authentication, requestId, instance }: TV3ChartOperationContext
-): Promise<Response | { row: TChartResourceRow; access: V3WorkspaceContext }> {
-  const row = await getChartResourceRow(chartId);
-  if (!row) {
-    return problemForbidden(requestId, undefined, instance);
-  }
-
-  const access = await requireDashboardsAccess(
-    authentication,
-    row.workspaceId,
-    minPermission,
-    requestId,
-    instance
-  );
-  if (access instanceof Response) return access;
-
-  return { row, access };
-}
 
 /**
  * `GET /api/v3/charts` → 200 `{ data, meta: { limit, nextCursor } }`, newest first.

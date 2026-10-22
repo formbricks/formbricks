@@ -11,7 +11,6 @@ import {
   type InvalidParam,
   problemBadGateway,
   problemUnauthorized,
-  problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
@@ -27,9 +26,10 @@ import {
 } from "@/modules/ee/analysis/lib/chart-query-validator";
 import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
 import type { TChartType } from "@/modules/ee/analysis/types/analysis";
-import type { TV3ChartOperationContext } from "./operations";
+import { type TV3ChartOperationContext, loadAuthorizedChart } from "./access";
+import { refuseChartQuery } from "./problems";
 import type { TV3ChartData } from "./resources";
-import type { TV3ChartPreviewBody } from "./schemas";
+import type { TV3ChartDataQuery, TV3ChartPreviewBody } from "./schemas";
 
 /**
  * The chart query operations — preview, data and (in field-operations) field values. They share one
@@ -39,15 +39,6 @@ import type { TV3ChartPreviewBody } from "./schemas";
  */
 export const applyChartQueryRateLimit = (context: TV3ChartOperationContext): Promise<Response | null> =>
   applyV3OperationRateLimit({ config: rateLimitConfigs.api.v3ChartQueries, ...context });
-
-export const refuseChartQuery = (
-  invalidParams: InvalidParam[],
-  { requestId, instance }: TV3ChartOperationContext
-): Response =>
-  problemUnprocessableContent(requestId, "The chart query is not valid", {
-    instance,
-    invalid_params: invalidParams,
-  });
 
 /**
  * A chart query that could not run: Cube unreachable, rejected, or out of time. Cube's own error never
@@ -166,6 +157,68 @@ export async function previewV3Chart({
       requestId: context.requestId,
       instance: context.instance,
       operation: "charts.preview",
+    });
+  }
+}
+
+/**
+ * The requested date range from the data route's query parameters: `dateRange`, or `from` and `to`
+ * together. Mixing the two, or sending one of the pair, is refused like any other invalid range.
+ */
+const requestedDateRangeOf = (query: TV3ChartDataQuery): unknown => {
+  const hasPair = query.from !== undefined || query.to !== undefined;
+  if (!hasPair) return query.dateRange;
+  if (query.dateRange !== undefined) return { dateRange: query.dateRange, from: query.from, to: query.to };
+  return { from: query.from, to: query.to };
+};
+
+/**
+ * `GET /api/v3/charts/{chartId}/data` → 200 `{ data: { rows, optionLabels, fieldLabels, query } }`.
+ *
+ * A requested date range replaces the chart's own on `collectedAt` — the dashboard date filter's rule — so
+ * the numbers match what a person sees on a dashboard filtered the same way; `all-time` removes it, and
+ * without one the saved range applies. Needs read access to the chart's workspace and to its Feedback
+ * Dataset: a dashboards grant alone never reaches respondents' answers.
+ */
+export async function getV3ChartData({
+  chartId,
+  query,
+  ...context
+}: TV3ChartOperationContext & { chartId: string; query: TV3ChartDataQuery }): Promise<Response> {
+  const log = logger.withContext({ requestId: context.requestId, chartId });
+
+  try {
+    const limited = await applyChartQueryRateLimit(context);
+    if (limited) return limited;
+
+    const loaded = await loadAuthorizedChart(chartId, "read", context);
+    if (loaded instanceof Response) return loaded;
+
+    const refused = await refuseUnlessFeedbackDatasetAccess(
+      context.authentication,
+      loaded.access,
+      loaded.row.feedbackDirectoryId,
+      "read",
+      context.requestId,
+      context.instance
+    );
+    if (refused) return refused;
+
+    return await runV3ChartQuery({
+      access: loaded.access,
+      datasetId: loaded.row.feedbackDirectoryId,
+      type: loaded.row.type,
+      query: loaded.row.query,
+      dateRange: requestedDateRangeOf(query),
+      source: "v3.charts.data",
+      context,
+    });
+  } catch (error) {
+    return mapV3ThrownError(error, {
+      log,
+      requestId: context.requestId,
+      instance: context.instance,
+      operation: "charts.data",
     });
   }
 }

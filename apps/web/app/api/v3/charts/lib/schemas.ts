@@ -126,3 +126,20 @@ export const ZV3ChartUpdateBody = z
     { message: "Send at least one of name, type, query or config." }
   );
 export type TV3ChartUpdateBody = z.infer<typeof ZV3ChartUpdateBody>;
+
+/**
+ * `GET /api/v3/charts/{chartId}/data`. The date range is either `dateRange` (a preset or `all-time`) or
+ * the `from`/`to` pair of ISO calendar dates; the operation checks the values (422). A `timezone` is
+ * refused by name: every range is read in the organization's display time zone.
+ */
+export const ZV3ChartDataQuery = z
+  .object({
+    dateRange: z.string().min(1).max(64).optional(),
+    from: z.string().min(1).max(32).optional(),
+    to: z.string().min(1).max(32).optional(),
+    timezone: fixedKey(
+      "A time zone cannot be supplied: every date range is read in the organization's display time zone."
+    ),
+  })
+  .strict();
+export type TV3ChartDataQuery = z.infer<typeof ZV3ChartDataQuery>;

@@ -127,3 +127,11 @@ export const ZMcpUpdateChartInput = z
   })
   .strict();
 export type TMcpUpdateChartInput = z.infer<typeof ZMcpUpdateChartInput>;
+
+export const ZMcpGetChartDataInput = z
+  .object({
+    chartId: ZId.describe("The chart to read."),
+    dateRange: ZMcpChartDateRange,
+  })
+  .strict();
+export type TMcpGetChartDataInput = z.infer<typeof ZMcpGetChartDataInput>;

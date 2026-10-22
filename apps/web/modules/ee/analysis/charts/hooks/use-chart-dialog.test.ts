@@ -19,7 +19,7 @@ const mockCreateChart = vi.fn();
 const mockUpdateChart = vi.fn();
 const mockDeleteChartAction = vi.fn();
 const mockGetChart = vi.fn();
-const mockPreviewChart = vi.fn();
+const mockGetChartData = vi.fn();
 const mockAddChartToDashboardAction = vi.fn();
 const mockGetDashboardsAction = vi.fn();
 
@@ -39,7 +39,7 @@ vi.mock("@/modules/ee/analysis/lib/api-client", async (importOriginal) => ({
   createChart: (...args: any[]) => mockCreateChart(...args),
   updateChart: (...args: any[]) => mockUpdateChart(...args),
   getChart: (...args: any[]) => mockGetChart(...args),
-  previewChart: (...args: any[]) => mockPreviewChart(...args),
+  getChartData: (...args: any[]) => mockGetChartData(...args),
 }));
 
 vi.mock("@/modules/ee/analysis/dashboards/actions", () => ({
@@ -547,7 +547,7 @@ describe("useChartDialog", () => {
         query: sampleChartData.query,
         feedbackDirectoryId: DIRECTORY_ID,
       });
-      mockPreviewChart.mockResolvedValue({
+      mockGetChartData.mockResolvedValue({
         rows: [],
         optionLabels: {},
         fieldLabels: {},
@@ -577,7 +577,7 @@ describe("useChartDialog", () => {
         query: sampleChartData.query,
         feedbackDirectoryId: DIRECTORY_ID,
       });
-      mockPreviewChart.mockResolvedValue({
+      mockGetChartData.mockResolvedValue({
         rows: [],
         optionLabels: {},
         fieldLabels: {},

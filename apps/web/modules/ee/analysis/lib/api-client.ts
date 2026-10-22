@@ -175,3 +175,26 @@ export const updateChart = async (chartId: string, update: Partial<TChartWriteIn
       await sendJson("PATCH", `${CHARTS_PATH}/${encodeURIComponent(chartId)}`, update)
     )
   );
+
+/** A date range as the data route's query string spells it. */
+const dateRangeSearchParams = (dateRange?: TChartDateRangeInput): URLSearchParams => {
+  if (dateRange === undefined) return new URLSearchParams();
+  return typeof dateRange === "string"
+    ? new URLSearchParams({ dateRange })
+    : new URLSearchParams({ from: dateRange.from, to: dateRange.to });
+};
+
+/** A saved chart's rows, for its own date range or a requested one that replaces it. */
+export const getChartData = async ({
+  chartId,
+  dateRange,
+  signal,
+}: {
+  chartId: string;
+  dateRange?: TChartDateRangeInput;
+  signal?: AbortSignal;
+}): Promise<TAppChartData> => {
+  const search = dateRangeSearchParams(dateRange).toString();
+  const path = `${CHARTS_PATH}/${encodeURIComponent(chartId)}/data${search ? `?${search}` : ""}`;
+  return toAppChartData(await readData<TV3ChartData>(await fetch(path, { cache: "no-store", signal })));
+};

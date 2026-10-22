@@ -1,5 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/server";
-import { previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
+import { getV3ChartData, previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
 import { getV3ChartFieldCatalog } from "@/app/api/v3/charts/lib/field-operations";
 import { createV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "@/app/api/v3/charts/lib/operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
@@ -8,6 +8,7 @@ import { responseToMcpToolResult } from "../errors";
 import {
   type TMcpChartIdInput,
   type TMcpCreateChartInput,
+  type TMcpGetChartDataInput,
   type TMcpListChartFieldsInput,
   type TMcpListChartsInput,
   type TMcpPreviewChartInput,
@@ -18,6 +19,7 @@ import {
   ZMcpChartListOutput,
   ZMcpChartOutput,
   ZMcpCreateChartInput,
+  ZMcpGetChartDataInput,
   ZMcpListChartFieldsInput,
   ZMcpListChartsInput,
   ZMcpPreviewChartInput,
@@ -184,5 +186,28 @@ export function registerDashboardTools(server: McpServer): void {
     ["dashboards:write"],
     async ({ chartId, ...body }: TMcpUpdateChartInput, ctx) =>
       runMutation(ctx, "updated", "chart", (context) => updateV3Chart({ chartId, body, ...context }))
+  );
+
+  registerScopedTool(
+    server,
+    "get_chart_data",
+    {
+      title: "Get chart data",
+      description:
+        "Read a saved chart's rows. A dateRange (a preset, 'all-time', or { from, to }) replaces the chart's own range on collectedAt, so the numbers match a dashboard filtered the same way; without one the chart's saved range applies. Ranges are read in the organization's time zone.",
+      inputSchema: ZMcpGetChartDataInput,
+      outputSchema: ZMcpChartDataOutput,
+      annotations: READ_ANNOTATIONS,
+    },
+    // The rows are respondents' answers in aggregate, so reading them also needs feedback-record access.
+    ["dashboards:read", "feedbackRecords:read"],
+    async ({ chartId, dateRange }: TMcpGetChartDataInput, ctx) => {
+      const context = toolContext(ctx);
+      const query = typeof dateRange === "string" ? { dateRange } : (dateRange ?? {});
+      return await responseToMcpToolResult(
+        await getV3ChartData({ chartId, query, ...context }),
+        context.requestId
+      );
+    }
   );
 }
