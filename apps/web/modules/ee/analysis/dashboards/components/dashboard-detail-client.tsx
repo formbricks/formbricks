@@ -43,7 +43,12 @@ import {
   readStoredWidgetView,
   writeStoredWidgetView,
 } from "@/modules/ee/analysis/dashboards/lib/widget-view";
-import type { TAppDashboard, TChartDateRangeInput } from "@/modules/ee/analysis/lib/api-client";
+import {
+  type TAppDashboard,
+  type TChartDateRangeInput,
+  getChartApiErrorMessage,
+  renameDashboard,
+} from "@/modules/ee/analysis/lib/api-client";
 import { chartKeys, dashboardKeys } from "@/modules/ee/analysis/lib/query";
 import type { TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
 import { EmptyState } from "@/modules/ui/components/empty-state";
@@ -53,7 +58,6 @@ import {
   addChartToDashboardAction,
   duplicateChartAndAddWidgetAction,
   removeWidgetFromDashboardAction,
-  updateDashboardAction,
   updateWidgetLayoutsAction,
 } from "../actions";
 import { useDashboard } from "../hooks/use-dashboard";
@@ -432,16 +436,12 @@ function DashboardDetailView({
 
     try {
       if (name !== dashboard.name) {
-        const dashboardResult = await updateDashboardAction({
-          workspaceId,
-          dashboardId: dashboard.id,
-          name: name.trim(),
-        });
-
-        if (!dashboardResult?.data) {
-          const errorMessage = getFormattedErrorMessage(dashboardResult);
-          toast.error(errorMessage);
-          setIsSaving(false);
+        try {
+          await renameDashboard(dashboard.id, name.trim());
+        } catch (error) {
+          toast.error(
+            getChartApiErrorMessage(error, t("workspace.analysis.dashboards.dashboard_save_failed"))
+          );
           return;
         }
       }

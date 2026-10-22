@@ -5,22 +5,16 @@ import { z } from "zod";
 import { ZWidgetLayout } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { ZDashboardUpdateInput } from "../types/analysis";
 import {
   addChartToDashboard,
-  createDashboard,
-  deleteDashboard,
-  duplicateDashboard,
   getDashboard,
   getDashboards,
   removeWidgetFromDashboard,
-  updateDashboard,
   updateWidgetLayouts,
 } from "./lib/dashboards";
 import { duplicateChartAndAddWidget } from "./lib/duplicate-chart-and-add-widget";
@@ -31,91 +25,6 @@ const checkDashboardsEnabled = async (organizationId: string) => {
     throw new OperationNotAllowedError("Dashboards are not enabled for this organization");
   }
 };
-
-const ZCreateDashboardAction = z.object({
-  workspaceId: ZId,
-  name: z.string().min(1),
-});
-
-export const createDashboardAction = authenticatedActionClient.inputSchema(ZCreateDashboardAction).action(
-  withAuditLogging(
-    "created",
-    "dashboard",
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZCreateDashboardAction>;
-    }) => {
-      const { organizationId, workspaceId } = await checkWorkspaceAccess(
-        ctx.user.id,
-        parsedInput.workspaceId,
-        "readWrite"
-      );
-      await checkDashboardsEnabled(organizationId);
-
-      const dashboard = await createDashboard({
-        workspaceId,
-        name: parsedInput.name,
-        createdBy: ctx.user.id,
-      });
-
-      revalidatePath(`/workspaces/${workspaceId}/dashboards`);
-
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.workspaceId = workspaceId;
-      ctx.auditLoggingCtx.dashboardId = dashboard.id;
-      ctx.auditLoggingCtx.newObject = dashboard;
-      capturePostHogEvent(
-        ctx.user.id,
-        "dashboard_created",
-        { dashboard_id: dashboard.id },
-        { organizationId, workspaceId }
-      );
-      return dashboard;
-    }
-  )
-);
-
-const ZUpdateDashboardAction = z
-  .object({
-    workspaceId: ZId,
-    dashboardId: ZId,
-  })
-  .merge(ZDashboardUpdateInput);
-
-export const updateDashboardAction = authenticatedActionClient.inputSchema(ZUpdateDashboardAction).action(
-  withAuditLogging(
-    "updated",
-    "dashboard",
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZUpdateDashboardAction>;
-    }) => {
-      const { organizationId, workspaceId } = await checkWorkspaceAccess(
-        ctx.user.id,
-        parsedInput.workspaceId,
-        "readWrite"
-      );
-      await checkDashboardsEnabled(organizationId);
-
-      const { dashboard, updatedDashboard } = await updateDashboard(parsedInput.dashboardId, workspaceId, {
-        name: parsedInput.name,
-      });
-
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.workspaceId = workspaceId;
-      ctx.auditLoggingCtx.dashboardId = parsedInput.dashboardId;
-      ctx.auditLoggingCtx.oldObject = dashboard;
-      ctx.auditLoggingCtx.newObject = updatedDashboard;
-      return updatedDashboard;
-    }
-  )
-);
 
 const ZUpdateWidgetLayoutsAction = z.object({
   workspaceId: ZId,
@@ -163,80 +72,6 @@ export const updateWidgetLayoutsAction = authenticatedActionClient
         ctx.auditLoggingCtx.oldObject = dashboard;
         ctx.auditLoggingCtx.newObject = updatedDashboard;
         return { ok: true };
-      }
-    )
-  );
-
-const ZDeleteDashboardAction = z.object({
-  workspaceId: ZId,
-  dashboardId: ZId,
-});
-
-export const deleteDashboardAction = authenticatedActionClient.inputSchema(ZDeleteDashboardAction).action(
-  withAuditLogging(
-    "deleted",
-    "dashboard",
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZDeleteDashboardAction>;
-    }) => {
-      const { organizationId, workspaceId } = await checkWorkspaceAccess(
-        ctx.user.id,
-        parsedInput.workspaceId,
-        "readWrite"
-      );
-      await checkDashboardsEnabled(organizationId);
-
-      const dashboard = await deleteDashboard(parsedInput.dashboardId, workspaceId);
-
-      revalidatePath(`/workspaces/${workspaceId}/dashboards`);
-
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.workspaceId = workspaceId;
-      ctx.auditLoggingCtx.dashboardId = parsedInput.dashboardId;
-      ctx.auditLoggingCtx.oldObject = dashboard;
-      return { success: true };
-    }
-  )
-);
-
-const ZDuplicateDashboardAction = z.object({
-  workspaceId: ZId,
-  dashboardId: ZId,
-});
-
-export const duplicateDashboardAction = authenticatedActionClient
-  .inputSchema(ZDuplicateDashboardAction)
-  .action(
-    withAuditLogging(
-      "created",
-      "dashboard",
-      async ({
-        ctx,
-        parsedInput,
-      }: {
-        ctx: AuthenticatedActionClientCtx;
-        parsedInput: z.infer<typeof ZDuplicateDashboardAction>;
-      }) => {
-        const { organizationId, workspaceId } = await checkWorkspaceAccess(
-          ctx.user.id,
-          parsedInput.workspaceId,
-          "readWrite"
-        );
-        await checkDashboardsEnabled(organizationId);
-
-        const dashboard = await duplicateDashboard(parsedInput.dashboardId, workspaceId, ctx.user.id);
-
-        revalidatePath(`/workspaces/${workspaceId}/dashboards`);
-
-        ctx.auditLoggingCtx.organizationId = organizationId;
-        ctx.auditLoggingCtx.workspaceId = workspaceId;
-        ctx.auditLoggingCtx.dashboardId = dashboard.id;
-        ctx.auditLoggingCtx.newObject = dashboard;
-        return dashboard;
       }
     )
   );

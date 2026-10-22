@@ -70,3 +70,58 @@ get:
     - sessionAuth: []
     - apiKeyAuth: []
     - bearerAuth: []
+post:
+  operationId: createDashboardV3
+  summary: Create a dashboard
+  description: |
+    Creates an empty dashboard in a workspace. Needs write access to the workspace. A name already
+    used in the workspace answers 409.
+  tags:
+    - V3 Dashboards
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/DashboardCreateRequest.yml
+  responses:
+    "201":
+      description: Dashboard created
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+        Location:
+          schema:
+            type: string
+          example: /api/v3/dashboards/cldash00000000000000000001
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/DashboardResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "409":
+      $ref: ../components/responses/V3DashboardsConflict.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

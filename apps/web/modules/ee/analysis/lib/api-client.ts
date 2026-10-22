@@ -308,3 +308,39 @@ export const getDashboard = async (dashboardId: string, signal?: AbortSignal): P
       await fetch(`${DASHBOARDS_PATH}/${encodeURIComponent(dashboardId)}`, { cache: "no-store", signal })
     )
   );
+
+const dashboardPath = (dashboardId: string) => `${DASHBOARDS_PATH}/${encodeURIComponent(dashboardId)}`;
+
+export const createDashboard = async ({
+  workspaceId,
+  name,
+}: {
+  workspaceId: string;
+  name: string;
+}): Promise<TAppDashboard> =>
+  toAppDashboard(
+    await readData<TV3DashboardResource>(await sendJson("POST", DASHBOARDS_PATH, { workspaceId, name }))
+  );
+
+export const renameDashboard = async (dashboardId: string, name: string): Promise<TAppDashboard> =>
+  toAppDashboard(
+    await readData<TV3DashboardResource>(await sendJson("PATCH", dashboardPath(dashboardId), { name }))
+  );
+
+/** A copy whose widgets point at the same charts; without a `name` the server picks the "(copy)" one. */
+export const duplicateDashboard = async (dashboardId: string, name?: string): Promise<TAppDashboard> =>
+  toAppDashboard(
+    await readData<TV3DashboardResource>(
+      await sendJson("POST", `${dashboardPath(dashboardId)}/duplicate`, name === undefined ? {} : { name })
+    )
+  );
+
+/** Deletes the dashboard and its widgets; the charts stay. */
+export const deleteDashboard = async (dashboardId: string): Promise<void> => {
+  const response = await fetch(dashboardPath(dashboardId), {
+    method: "DELETE",
+    cache: "no-store",
+    signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
+  });
+  if (!response.ok) throw await parseV3ApiError(response);
+};

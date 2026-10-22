@@ -8,6 +8,7 @@ import {
 } from "@/app/api/v3/charts/lib/resources";
 import { V3_NAME_MAX_LENGTH, ZV3ChartConfig, ZV3ChartName } from "@/app/api/v3/charts/lib/schemas";
 import { ZV3DashboardListItem, ZV3DashboardResource } from "@/app/api/v3/dashboards/lib/resources";
+import { ZV3DashboardName } from "@/app/api/v3/dashboards/lib/schemas";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 import { mcpToolOutput } from "./output-schemas";
 
@@ -177,3 +178,29 @@ export type TMcpDashboardIdInput = z.infer<typeof ZMcpDashboardIdInput>;
 
 export const ZMcpDashboardListOutput = mcpToolOutput(z.array(ZV3DashboardListItem));
 export const ZMcpDashboardOutput = mcpToolOutput(ZV3DashboardResource);
+
+export const ZMcpCreateDashboardInput = z
+  .object({
+    workspaceId: ZId.describe("Workspace to create the dashboard in, from list_workspaces."),
+    name: ZV3DashboardName.describe("Dashboard name, unique within the workspace."),
+  })
+  .strict();
+export type TMcpCreateDashboardInput = z.infer<typeof ZMcpCreateDashboardInput>;
+
+export const ZMcpUpdateDashboardInput = z
+  .object({
+    dashboardId: ZId.describe("The dashboard to rename."),
+    name: ZV3DashboardName.describe("New name, unique within the workspace."),
+  })
+  .strict();
+export type TMcpUpdateDashboardInput = z.infer<typeof ZMcpUpdateDashboardInput>;
+
+export const ZMcpDuplicateDashboardInput = z
+  .object({
+    dashboardId: ZId.describe("The dashboard to copy."),
+    name: ZV3DashboardName.optional().describe(
+      'Name for the copy, unique within the workspace. Without one it is named "<original> (copy)".'
+    ),
+  })
+  .strict();
+export type TMcpDuplicateDashboardInput = z.infer<typeof ZMcpDuplicateDashboardInput>;

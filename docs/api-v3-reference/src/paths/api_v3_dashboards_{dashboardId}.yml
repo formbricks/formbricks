@@ -45,3 +45,85 @@ get:
     - sessionAuth: []
     - apiKeyAuth: []
     - bearerAuth: []
+patch:
+  operationId: renameDashboardV3
+  summary: Rename a dashboard
+  description: |
+    Renames a dashboard and moves its `updatedAt`, so an editor holding the dashboard from before is
+    told when saving. Needs write access to the dashboard's workspace. A name already used in the
+    workspace answers 409.
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/DashboardIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/DashboardRenameRequest.yml
+  responses:
+    "200":
+      description: The renamed dashboard
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/DashboardResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "409":
+      $ref: ../components/responses/V3DashboardsConflict.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+delete:
+  operationId: deleteDashboardV3
+  summary: Delete a dashboard
+  description: |
+    Deletes a dashboard and its widgets. Every chart stays, including charts no other dashboard
+    holds; delete those with `DELETE /api/v3/charts/{chartId}`. Needs write access to the
+    dashboard's workspace.
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/DashboardIdPath.yml
+  responses:
+    "204":
+      description: Dashboard deleted
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

@@ -3,7 +3,13 @@ import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { getV3ChartData, previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
 import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "@/app/api/v3/charts/lib/field-operations";
 import { createV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "@/app/api/v3/charts/lib/operations";
-import { getV3Dashboard, listV3Dashboards } from "@/app/api/v3/dashboards/lib/operations";
+import {
+  createV3Dashboard,
+  duplicateV3Dashboard,
+  getV3Dashboard,
+  listV3Dashboards,
+  renameV3Dashboard,
+} from "@/app/api/v3/dashboards/lib/operations";
 import { successResponse } from "@/app/api/v3/lib/response";
 import { registerDashboardTools } from "./dashboards";
 
@@ -22,8 +28,11 @@ vi.mock("@/app/api/v3/charts/lib/data-operations", () => ({
   previewV3Chart: vi.fn(),
 }));
 vi.mock("@/app/api/v3/dashboards/lib/operations", () => ({
+  createV3Dashboard: vi.fn(),
+  duplicateV3Dashboard: vi.fn(),
   getV3Dashboard: vi.fn(),
   listV3Dashboards: vi.fn(),
+  renameV3Dashboard: vi.fn(),
 }));
 vi.mock("@/app/api/v3/lib/audit", () => ({
   buildV3AuditLog: vi.fn(),
@@ -36,6 +45,7 @@ vi.mock("@formbricks/logger", () => ({
 const WORKSPACE_ID = "clws000000000000000000001";
 const DATASET_ID = "clds000000000000000000001";
 const CHART_ID = "clch000000000000000000001";
+const DASHBOARD_ID = "cldb000000000000000000001";
 
 const authInfoWith = (scopes: string[]) => ({
   token: "key_1",
@@ -249,5 +259,42 @@ describe("chart and dashboard MCP tools", () => {
     expect(getV3Dashboard).toHaveBeenCalledWith(
       expect.objectContaining({ dashboardId: "cldb000000000000000000001" })
     );
+  });
+
+  test("create_dashboard, update_dashboard and duplicate_dashboard need dashboards:write", async () => {
+    for (const operation of [createV3Dashboard, renameV3Dashboard, duplicateV3Dashboard]) {
+      vi.mocked(operation).mockResolvedValue(successResponse({}, { requestId: "req" }));
+    }
+    const writes = [
+      ["create_dashboard", { workspaceId: WORKSPACE_ID, name: "Matchday" }],
+      ["update_dashboard", { dashboardId: DASHBOARD_ID, name: "Matchday 2" }],
+      ["duplicate_dashboard", { dashboardId: DASHBOARD_ID }],
+    ] as const;
+
+    for (const [name, input] of writes) {
+      expect((await call(name, input, ["dashboards:read"])).isError).toBe(true);
+    }
+    expect(createV3Dashboard).not.toHaveBeenCalled();
+    expect(renameV3Dashboard).not.toHaveBeenCalled();
+    expect(duplicateV3Dashboard).not.toHaveBeenCalled();
+
+    for (const [name, input] of writes) await call(name, input, ["dashboards:write"]);
+    expect(createV3Dashboard).toHaveBeenCalledWith(
+      expect.objectContaining({ body: { workspaceId: WORKSPACE_ID, name: "Matchday" }, instance: "/api/mcp" })
+    );
+    expect(renameV3Dashboard).toHaveBeenCalledWith(
+      expect.objectContaining({ dashboardId: DASHBOARD_ID, body: { name: "Matchday 2" } })
+    );
+    expect(duplicateV3Dashboard).toHaveBeenCalledWith(
+      expect.objectContaining({ dashboardId: DASHBOARD_ID, body: {} })
+    );
+  });
+
+  test("duplicate_dashboard warns the copy shares its charts, and no tool deletes anything", () => {
+    const tools = createToolServer();
+    expect(String(tools.get("duplicate_dashboard")?.config.description)).toMatch(
+      /shares the original's charts/
+    );
+    expect([...tools.keys()].filter((name) => /delete/.test(name))).toEqual([]);
   });
 });

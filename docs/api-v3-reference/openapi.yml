@@ -4362,6 +4362,61 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+    post:
+      operationId: createDashboardV3
+      summary: Create a dashboard
+      description: |
+        Creates an empty dashboard in a workspace. Needs write access to the workspace. A name already
+        used in the workspace answers 409.
+      tags:
+        - V3 Dashboards
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardCreateRequest'
+      responses:
+        '201':
+          description: Dashboard created
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+            Location:
+              schema:
+                type: string
+              example: /api/v3/dashboards/cldash00000000000000000001
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          $ref: '#/components/responses/V3DashboardsConflict'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/dashboards/{dashboardId}:
     get:
       operationId: getDashboardV3
@@ -4402,6 +4457,148 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3DashboardsForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    patch:
+      operationId: renameDashboardV3
+      summary: Rename a dashboard
+      description: |
+        Renames a dashboard and moves its `updatedAt`, so an editor holding the dashboard from before is
+        told when saving. Needs write access to the dashboard's workspace. A name already used in the
+        workspace answers 409.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardRenameRequest'
+      responses:
+        '200':
+          description: The renamed dashboard
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          $ref: '#/components/responses/V3DashboardsConflict'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    delete:
+      operationId: deleteDashboardV3
+      summary: Delete a dashboard
+      description: |
+        Deletes a dashboard and its widgets. Every chart stays, including charts no other dashboard
+        holds; delete those with `DELETE /api/v3/charts/{chartId}`. Needs write access to the
+        dashboard's workspace.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+      responses:
+        '204':
+          description: Dashboard deleted
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/dashboards/{dashboardId}/duplicate:
+    post:
+      operationId: duplicateDashboardV3
+      summary: Duplicate a dashboard
+      description: |
+        Copies a dashboard, in one transaction, with its layout. The copy **shares** the original's
+        charts: its widgets point at the same charts, so editing one of them changes both dashboards. To
+        change a chart on the copy only, duplicate the chart and repoint the copy's widget. Needs write
+        access to the dashboard's workspace. A `name` already used in the workspace answers 409.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardDuplicateRequest'
+      responses:
+        '201':
+          description: The copy
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+            Location:
+              schema:
+                type: string
+              example: /api/v3/dashboards/cldash00000000000000000002
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          $ref: '#/components/responses/V3DashboardsConflict'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -11453,6 +11650,22 @@ components:
           format: date-time
           description: Changes on every rename, save and widget change. Send it back on a full update (`PUT /api/v3/dashboards/{dashboardId}`) to be told if the dashboard changed in between.
       additionalProperties: false
+    DashboardCreateRequest:
+      type: object
+      description: A new, empty dashboard. Put charts on it with `POST /api/v3/dashboards/{dashboardId}/widgets`.
+      required:
+        - workspaceId
+        - name
+      properties:
+        workspaceId:
+          type: string
+          format: cuid2
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Unique within the workspace; leading and trailing whitespace is trimmed.
+      additionalProperties: false
     WidgetLayout:
       type: object
       description: 'A widget''s position and size on the dashboard''s 12-column grid, in whole grid units: `1 ≤ w ≤ 12`, `x + w ≤ 12`, `1 ≤ h ≤ 24`, `0 ≤ y ≤ 1000`. Widgets may not overlap; gaps are allowed and close upward when the dashboard is drawn.'
@@ -11538,6 +11751,27 @@ components:
           type: string
           format: date-time
           description: Changes on every rename, save and widget change. Send it back on a full update to be told if the dashboard changed in between.
+      additionalProperties: false
+    DashboardRenameRequest:
+      type: object
+      description: A rename. Only the name changes; the layout is saved with `PUT /api/v3/dashboards/{dashboardId}`.
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Unique within the workspace; leading and trailing whitespace is trimmed.
+      additionalProperties: false
+    DashboardDuplicateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Name for the copy, unique within the workspace. Without one the copy is named "<original> (copy)", then "(copy 2)" and so on — never "(copy) (copy)".
       additionalProperties: false
     ActionClassResource:
       type: object

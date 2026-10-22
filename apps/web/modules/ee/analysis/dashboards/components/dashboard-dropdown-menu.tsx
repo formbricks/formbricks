@@ -1,12 +1,16 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CopyIcon, MoreVertical, SquarePenIcon, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import {
+  deleteDashboard,
+  duplicateDashboard,
+  getChartApiErrorMessage,
+} from "@/modules/ee/analysis/lib/api-client";
 import { dashboardKeys } from "@/modules/ee/analysis/lib/query";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -17,7 +21,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { deleteDashboardAction, duplicateDashboardAction } from "../actions";
 
 interface DashboardDropdownMenuProps {
   workspaceId: string;
@@ -34,46 +37,33 @@ export const DashboardDropdownMenu = ({
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isDuplicating, setIsDuplicating] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
+  const invalidateLists = () => queryClient.invalidateQueries({ queryKey: dashboardKeys.lists() });
+  const duplicateMutation = useMutation({
+    mutationFn: () => duplicateDashboard(dashboardId),
+    onSettled: invalidateLists,
+  });
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteDashboard(dashboardId),
+    onSettled: invalidateLists,
+  });
 
-  const handleDuplicateDashboard = async () => {
-    setIsDuplicating(true);
-    try {
-      const result = await duplicateDashboardAction({ workspaceId, dashboardId });
-      if (result?.data) {
-        toast.success(t("workspace.analysis.dashboards.duplicate_success"));
-        void queryClient.invalidateQueries({ queryKey: dashboardKeys.lists() });
-      } else {
-        const errorMessage = getFormattedErrorMessage(result);
-        toast.error(errorMessage);
-      }
-    } catch {
-      toast.error(t("workspace.analysis.dashboards.duplicate_failed"));
-    } finally {
-      setIsDuplicating(false);
-    }
-  };
+  const handleDuplicateDashboard = () =>
+    duplicateMutation.mutate(undefined, {
+      onSuccess: () => toast.success(t("workspace.analysis.dashboards.duplicate_success")),
+      onError: (error) =>
+        toast.error(getChartApiErrorMessage(error, t("workspace.analysis.dashboards.duplicate_failed"))),
+    });
 
-  const handleDeleteDashboard = async () => {
-    setIsDeleting(true);
-    try {
-      const result = await deleteDashboardAction({ workspaceId, dashboardId });
-      if (result?.data) {
+  const handleDeleteDashboard = () =>
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => {
         setIsDeleteDialogOpen(false);
         toast.success(t("workspace.analysis.dashboards.delete_success"));
-        void queryClient.invalidateQueries({ queryKey: dashboardKeys.lists() });
-      } else {
-        const errorMessage = getFormattedErrorMessage(result);
-        toast.error(errorMessage);
-      }
-    } catch {
-      toast.error(t("workspace.analysis.dashboards.delete_failed"));
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+      },
+      onError: (error) =>
+        toast.error(getChartApiErrorMessage(error, t("workspace.analysis.dashboards.delete_failed"))),
+    });
 
   return (
     <div data-testid={`${dashboardName.toLowerCase().split(" ").join("-")}-dashboard-actions`}>
@@ -97,7 +87,7 @@ export const DashboardDropdownMenu = ({
 
             <DropdownMenuItem
               icon={<CopyIcon className="size-4" />}
-              disabled={isDuplicating}
+              disabled={duplicateMutation.isPending}
               onClick={() => {
                 setIsDropDownOpen(false);
                 handleDuplicateDashboard();
@@ -123,7 +113,7 @@ export const DashboardDropdownMenu = ({
         setOpen={setIsDeleteDialogOpen}
         onDelete={handleDeleteDashboard}
         text={t("workspace.analysis.dashboards.delete_confirmation")}
-        isDeleting={isDeleting}
+        isDeleting={deleteMutation.isPending}
       />
     </div>
   );

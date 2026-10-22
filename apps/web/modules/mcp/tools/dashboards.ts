@@ -2,14 +2,22 @@ import type { McpServer } from "@modelcontextprotocol/server";
 import { getV3ChartData, previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
 import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "@/app/api/v3/charts/lib/field-operations";
 import { createV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "@/app/api/v3/charts/lib/operations";
-import { getV3Dashboard, listV3Dashboards } from "@/app/api/v3/dashboards/lib/operations";
+import {
+  createV3Dashboard,
+  duplicateV3Dashboard,
+  getV3Dashboard,
+  listV3Dashboards,
+  renameV3Dashboard,
+} from "@/app/api/v3/dashboards/lib/operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import type { TMcpToolContext } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import {
   type TMcpChartIdInput,
   type TMcpCreateChartInput,
+  type TMcpCreateDashboardInput,
   type TMcpDashboardIdInput,
+  type TMcpDuplicateDashboardInput,
   type TMcpGetChartDataInput,
   type TMcpListChartFieldValuesInput,
   type TMcpListChartFieldsInput,
@@ -17,6 +25,7 @@ import {
   type TMcpListDashboardsInput,
   type TMcpPreviewChartInput,
   type TMcpUpdateChartInput,
+  type TMcpUpdateDashboardInput,
   ZMcpChartDataOutput,
   ZMcpChartFieldCatalogOutput,
   ZMcpChartFieldValuesOutput,
@@ -24,9 +33,11 @@ import {
   ZMcpChartListOutput,
   ZMcpChartOutput,
   ZMcpCreateChartInput,
+  ZMcpCreateDashboardInput,
   ZMcpDashboardIdInput,
   ZMcpDashboardListOutput,
   ZMcpDashboardOutput,
+  ZMcpDuplicateDashboardInput,
   ZMcpGetChartDataInput,
   ZMcpListChartFieldValuesInput,
   ZMcpListChartFieldsInput,
@@ -34,6 +45,7 @@ import {
   ZMcpListDashboardsInput,
   ZMcpPreviewChartInput,
   ZMcpUpdateChartInput,
+  ZMcpUpdateDashboardInput,
 } from "./dashboard-schemas";
 import { registerScopedTool } from "./guard-scopes";
 import { runMcpMutation } from "./run-mcp-mutation";
@@ -290,5 +302,60 @@ export function registerDashboardTools(server: McpServer): void {
         context.requestId
       );
     }
+  );
+
+  registerScopedTool(
+    server,
+    "create_dashboard",
+    {
+      title: "Create dashboard",
+      description:
+        "Create an empty dashboard in a workspace. Put charts on it with add_chart_to_dashboard; a chart can sit on several dashboards at once.",
+      inputSchema: ZMcpCreateDashboardInput,
+      outputSchema: ZMcpDashboardOutput,
+      audit: { action: "created", targetType: "dashboard" },
+      annotations: WRITE_ANNOTATIONS,
+    },
+    ["dashboards:write"],
+    async (input: TMcpCreateDashboardInput, ctx) =>
+      runMutation(ctx, "created", "dashboard", (context) => createV3Dashboard({ body: input, ...context }))
+  );
+
+  registerScopedTool(
+    server,
+    "update_dashboard",
+    {
+      title: "Rename dashboard",
+      description:
+        "Rename a dashboard. Only the name changes; move, resize or remove its widgets with update_widget and remove_chart_from_dashboard.",
+      inputSchema: ZMcpUpdateDashboardInput,
+      outputSchema: ZMcpDashboardOutput,
+      audit: { action: "updated", targetType: "dashboard", targetIdArg: "dashboardId" },
+      annotations: WRITE_ANNOTATIONS,
+    },
+    ["dashboards:write"],
+    async ({ dashboardId, ...body }: TMcpUpdateDashboardInput, ctx) =>
+      runMutation(ctx, "updated", "dashboard", (context) =>
+        renameV3Dashboard({ dashboardId, body, ...context })
+      )
+  );
+
+  registerScopedTool(
+    server,
+    "duplicate_dashboard",
+    {
+      title: "Duplicate dashboard",
+      description:
+        "Copy a dashboard with its layout. The copy shares the original's charts — it does not copy them — so editing one of those charts with update_chart changes both dashboards. To change a chart on the copy only, duplicate_chart and repoint the copy's widget with update_widget.",
+      inputSchema: ZMcpDuplicateDashboardInput,
+      outputSchema: ZMcpDashboardOutput,
+      audit: { action: "created", targetType: "dashboard" },
+      annotations: WRITE_ANNOTATIONS,
+    },
+    ["dashboards:write"],
+    async ({ dashboardId, ...body }: TMcpDuplicateDashboardInput, ctx) =>
+      runMutation(ctx, "created", "dashboard", (context) =>
+        duplicateV3Dashboard({ dashboardId, body, ...context })
+      )
   );
 }

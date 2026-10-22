@@ -13,17 +13,10 @@ import { selectChart } from "@/modules/ee/analysis/charts/lib/charts";
 import {
   TAddWidgetInput,
   TChartType,
-  TDashboard,
-  TDashboardCreateInput,
-  TDashboardUpdateInput,
   TDashboardWithCount,
   ZAddWidgetInput,
-  ZDashboardCreateInput,
-  ZDashboardUpdateInput,
 } from "@/modules/ee/analysis/types/analysis";
 import { findNextOpenSlot, parseWidgetLayouts } from "./widget-placement";
-
-const MAX_NAME_ATTEMPTS = 5;
 
 const getDefaultWidgetLayout = (chartType: TChartType): TWidgetLayout => {
   if (chartType === "big_number") return { x: 0, y: 0, w: 3, h: 2 };
@@ -65,102 +58,6 @@ const selectDashboard = {
   updatedAt: true,
   createdBy: true,
 } as const;
-
-export const createDashboard = async (data: TDashboardCreateInput): Promise<TDashboard> => {
-  validateInputs([data, ZDashboardCreateInput]);
-
-  try {
-    return await prisma.dashboard.create({
-      data: {
-        name: data.name,
-        workspaceId: data.workspaceId,
-        createdBy: data.createdBy,
-      },
-      select: selectDashboard,
-    });
-  } catch (error) {
-    if (isUniqueConstraintError(error)) {
-      throw new InvalidInputError("A dashboard with this name already exists");
-    }
-    if (isPrismaKnownRequestError(error)) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-};
-
-export const updateDashboard = async (
-  dashboardId: string,
-  workspaceId: string,
-  data: TDashboardUpdateInput
-): Promise<{ dashboard: TDashboard; updatedDashboard: TDashboard }> => {
-  validateInputs([dashboardId, ZId], [workspaceId, ZId], [data, ZDashboardUpdateInput]);
-
-  try {
-    return await prisma.$transaction(async (tx) => {
-      const dashboard = await tx.dashboard.findFirst({
-        where: { id: dashboardId, workspaceId },
-        select: selectDashboard,
-      });
-
-      if (!dashboard) {
-        throw new ResourceNotFoundError("Dashboard", dashboardId);
-      }
-
-      const updatedDashboard = await tx.dashboard.update({
-        where: { id: dashboardId },
-        data: {
-          name: data.name,
-        },
-        select: selectDashboard,
-      });
-
-      return { dashboard, updatedDashboard };
-    });
-  } catch (error) {
-    if (error instanceof ResourceNotFoundError) {
-      throw error;
-    }
-    if (isUniqueConstraintError(error)) {
-      throw new InvalidInputError("A dashboard with this name already exists");
-    }
-    if (isPrismaKnownRequestError(error)) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-};
-
-export const deleteDashboard = async (dashboardId: string, workspaceId: string): Promise<TDashboard> => {
-  validateInputs([dashboardId, ZId], [workspaceId, ZId]);
-
-  try {
-    return await prisma.$transaction(async (tx) => {
-      const dashboard = await tx.dashboard.findFirst({
-        where: { id: dashboardId, workspaceId },
-        select: selectDashboard,
-      });
-
-      if (!dashboard) {
-        throw new ResourceNotFoundError("Dashboard", dashboardId);
-      }
-
-      await tx.dashboard.delete({
-        where: { id: dashboardId },
-      });
-
-      return dashboard;
-    });
-  } catch (error) {
-    if (error instanceof ResourceNotFoundError) {
-      throw error;
-    }
-    if (isPrismaKnownRequestError(error)) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-};
 
 export const getDashboard = async (dashboardId: string, workspaceId: string) => {
   validateInputs([dashboardId, ZId], [workspaceId, ZId]);
@@ -225,68 +122,6 @@ export const getDashboards = async (
       containsChart: (widgets?.length ?? 0) > 0,
     }));
   } catch (error) {
-    if (isPrismaKnownRequestError(error)) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-};
-
-export const duplicateDashboard = async (
-  dashboardId: string,
-  workspaceId: string,
-  createdBy: string
-): Promise<TDashboard> => {
-  validateInputs([dashboardId, ZId], [workspaceId, ZId], [createdBy, ZId]);
-
-  try {
-    return await prisma.$transaction(async (tx) => {
-      const source = await tx.dashboard.findFirst({
-        where: { id: dashboardId, workspaceId },
-        include: {
-          widgets: { orderBy: { order: "asc" } },
-        },
-      });
-
-      if (!source) {
-        throw new ResourceNotFoundError("Dashboard", dashboardId);
-      }
-
-      const baseName = `${source.name} (copy)`;
-      let name = baseName;
-      let suffix = 1;
-
-      while (await tx.dashboard.findFirst({ where: { workspaceId, name } })) {
-        suffix++;
-        if (suffix > MAX_NAME_ATTEMPTS) {
-          name = `${baseName} ${suffix}`;
-          break;
-        }
-        name = `${baseName} ${suffix}`;
-      }
-
-      const newDashboard = await tx.dashboard.create({
-        data: {
-          name,
-          workspaceId,
-          createdBy,
-          widgets: {
-            create: source.widgets.map((widget) => ({
-              chartId: widget.chartId,
-              layout: widget.layout ?? { x: 0, y: 0, w: 4, h: 4 },
-              order: widget.order,
-            })),
-          },
-        },
-        select: selectDashboard,
-      });
-
-      return newDashboard;
-    });
-  } catch (error) {
-    if (error instanceof ResourceNotFoundError) {
-      throw error;
-    }
     if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }

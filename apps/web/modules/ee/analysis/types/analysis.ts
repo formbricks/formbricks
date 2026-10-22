@@ -61,20 +61,6 @@ export const ZChartWithWidgets = ZChart.extend({
 });
 export type TChartWithWidgets = z.infer<typeof ZChartWithWidgets>;
 
-// ── Dashboard input schemas ─────────────────────────────────────────────────
-
-export const ZDashboardCreateInput = z.object({
-  workspaceId: ZId,
-  name: z.string().min(1),
-  createdBy: ZId,
-});
-export type TDashboardCreateInput = z.infer<typeof ZDashboardCreateInput>;
-
-export const ZDashboardUpdateInput = z.object({
-  name: z.string().min(1).optional(),
-});
-export type TDashboardUpdateInput = z.infer<typeof ZDashboardUpdateInput>;
-
 // ── Dashboard output type (matches selectDashboard) ─────────────────────────
 
 export type TDashboard = {

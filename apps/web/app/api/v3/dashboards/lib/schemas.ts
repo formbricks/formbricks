@@ -20,3 +20,17 @@ export const ZV3DashboardListQuery = z
 export type TV3DashboardListQuery = z.infer<typeof ZV3DashboardListQuery>;
 
 export const ZV3DashboardIdParams = z.object({ dashboardId: z.cuid2() }).strict();
+
+/** A dashboard's name: unique within its workspace, trimmed, never empty. */
+export const ZV3DashboardName = z.string().trim().min(1).max(V3_NAME_MAX_LENGTH);
+
+export const ZV3DashboardCreateBody = z.object({ workspaceId: z.cuid2(), name: ZV3DashboardName }).strict();
+export type TV3DashboardCreateBody = z.infer<typeof ZV3DashboardCreateBody>;
+
+/** `PATCH /api/v3/dashboards/{dashboardId}` renames; the layout is saved with `PUT`. */
+export const ZV3DashboardRenameBody = z.object({ name: ZV3DashboardName }).strict();
+export type TV3DashboardRenameBody = z.infer<typeof ZV3DashboardRenameBody>;
+
+/** `POST /api/v3/dashboards/{dashboardId}/duplicate`, optionally naming the copy. */
+export const ZV3DashboardDuplicateBody = z.object({ name: ZV3DashboardName.optional() }).strict();
+export type TV3DashboardDuplicateBody = z.infer<typeof ZV3DashboardDuplicateBody>;
