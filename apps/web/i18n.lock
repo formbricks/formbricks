@@ -3157,6 +3157,7 @@ checksums:
     workspace/settings/billing/subscription_description: b03618508e576666198d4adf3c2cb9a9
     workspace/settings/billing/switch_at_period_end: 9c91b2287886e077a0571efab8908623
     workspace/settings/billing/switch_plan_now: dad56622a1916fe5d1a2bda5b0393194
+    workspace/settings/billing/tax_location_required: 7545ddae9ecfe61b6d4962826b0f3961
     workspace/settings/billing/this_includes: 127e0fe104f47886b54106a057a6b26f
     workspace/settings/billing/trial_alert_description: bd1374047e8bde3771cec7a8cfc45c42
     workspace/settings/billing/trial_already_used: 5433347ff7647fe0aba0fe91a44560ba

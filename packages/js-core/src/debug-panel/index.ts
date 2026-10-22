@@ -1,6 +1,12 @@
 import { DEBUG_SESSION_STORAGE_KEY } from "@/lib/common/constants";
 import type { TDebugSurveyEvent, TDebugVisitEvent } from "@/types/debug";
-import { describeActual, describeCondition, describeOutcome, findCondition } from "./format";
+import {
+  describeActual,
+  describeCondition,
+  describeConditionTree,
+  describeOutcome,
+  findCondition,
+} from "./format";
 
 /**
  * The debug panel (`formbricks-debug.js`), loaded by the SDK only when the page URL carries
@@ -100,6 +106,15 @@ const renderConditionResults = (check: TDebugSurveyEvent | undefined): HTMLEleme
   if (!check?.conditions) return [];
   const { results } = check.conditions;
   if (results.length === 0) return [element("div", "row muted", "No show conditions.")];
+
+  const tree = describeConditionTree(check.showConditions, check.conditions);
+  if (tree) {
+    return tree.map(({ depth, passed, text }) => {
+      const row = element("div", `row ${passed ? "ok" : "fail"}`, `${passed ? "✓" : "✗"} ${text}`);
+      row.style.paddingLeft = `${(depth * 14).toString()}px`;
+      return row;
+    });
+  }
 
   return results.map((result) => {
     const condition = findCondition(check.showConditions, result.conditionId);

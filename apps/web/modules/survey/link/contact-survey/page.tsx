@@ -1,23 +1,18 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { logger } from "@formbricks/logger";
-import type { TSurvey } from "@formbricks/types/surveys/types";
 import { findMatchingLocale, getAcceptedLanguages } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { verifyContactSurveyToken } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
-import { getExistingContactResponse, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
-import {
-  getBasicSurveyMetadata,
-  getMetadataBrandColor,
-  getSurveyOpenGraphMetadata,
-} from "@/modules/survey/link/lib/metadata-utils";
+import { getExistingContactResponse } from "@/modules/survey/link/lib/data";
+import { getServableLinkSurvey } from "@/modules/survey/link/lib/servable-survey";
 import { resolveSingleUseIdForSurvey } from "@/modules/survey/link/lib/single-use-link";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getWorkspaceById } from "@/modules/survey/link/lib/workspace";
+import { getGenericContactSurveyMetadata, getMetadataForContactSurvey } from "@/modules/survey/link/metadata";
 
 interface ContactSurveyPageProps {
   params: Promise<{
@@ -29,56 +24,14 @@ interface ContactSurveyPageProps {
 export const generateMetadata = async (props: ContactSurveyPageProps): Promise<Metadata> => {
   const { jwt } = await props.params;
   try {
-    // Verify and decode the JWT token
     const result = verifyContactSurveyToken(jwt);
     if (!result.ok) {
-      return {
-        title: "Survey",
-        description: "Please complete this survey.",
-      };
+      return getGenericContactSurveyMetadata();
     }
-    const { surveyId } = result.data;
-    const { title, ogTitle, description, survey, ogImage } = await getBasicSurveyMetadata(
-      surveyId,
-      undefined,
-      undefined,
-      await getAcceptedLanguages()
-    );
-
-    if (!survey) {
-      return { title, description };
-    }
-
-    // Fetch organization whitelabel data for custom favicon
-    const workspaceContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
-    const customFaviconUrl = workspaceContext.organizationWhitelabel?.faviconUrl;
-
-    const brandColor = getMetadataBrandColor(workspaceContext.workspace.styling, survey.styling);
-    const baseMetadata = getSurveyOpenGraphMetadata(survey.id, ogTitle, brandColor);
-
-    // Override with the custom image URL
-    if (baseMetadata.openGraph) {
-      baseMetadata.openGraph.images = ogImage ?? baseMetadata.openGraph.images;
-      baseMetadata.openGraph.description = description;
-    }
-
-    if (baseMetadata.twitter) {
-      baseMetadata.twitter.images = ogImage ?? baseMetadata.twitter.images;
-      baseMetadata.twitter.description = description;
-    }
-
-    return {
-      title,
-      description,
-      ...baseMetadata,
-      ...(customFaviconUrl && { icons: customFaviconUrl }),
-    };
+    return await getMetadataForContactSurvey(result.data.surveyId, await getAcceptedLanguages());
   } catch {
-    // If the token is invalid, we'll return generic metadata
-    return {
-      title: "Survey",
-      description: "Please complete this survey.",
-    };
+    // A token or lookup failure still gets generic metadata rather than an error page.
+    return getGenericContactSurveyMetadata();
   }
 };
 
@@ -105,38 +58,21 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
 
   const { surveyId, contactId } = result.data;
 
-  // ENG-3228: the link-survey loader, not the authenticated one. This page renders the survey into a
-  // client component for whoever opens the contact link, so it is a respondent-facing reader and must
-  // take the selector that omits the workspace-library row id — the same one `/s/<surveyId>` and the
-  // v1 client environment use. It also blanks follow-ups and segment filters, which do not belong in
-  // a respondent's page payload either. It throws where the authenticated loader returned null, so
-  // both call sites below catch, mirroring `link/page.tsx`.
-  const loadSurvey = async (): Promise<TSurvey | null> => {
-    try {
-      return await getSurveyWithMetadata(surveyId);
-    } catch (error) {
-      // Logged rather than rethrown, and logged rather than swallowed silently: this loader turns a
-      // Prisma failure into `DatabaseError`, which is indistinguishable here from the survey simply
-      // being gone, and a respondent gets the same 404 either way. `link/page.tsx` treats its own
-      // load the same way, so the two pages fail alike; the log is what tells an outage apart.
-      logger.error(error, "Error fetching survey for contact link");
-      return null;
-    }
-  };
-
+  // ENG-3228: the link-survey loader, not the authenticated one: this page renders the survey into a client
+  // component for whoever opens the contact link. Only a survey this page may serve comes back, so neither
+  // early return below can confirm that a non-public one exists (ENG-4032).
   const existingResponse = await getExistingContactResponse(surveyId, contactId)();
   if (existingResponse) {
-    const survey = await loadSurvey();
-    if (survey) {
-      const workspace = await getWorkspaceById(survey.workspaceId);
-      return <SurveyInactive status="response submitted" workspace={workspace || undefined} />;
+    const survey = await getServableLinkSurvey(surveyId);
+    if (!survey) {
+      notFound();
     }
-    return <SurveyInactive status="response submitted" />;
+    const workspace = await getWorkspaceById(survey.workspaceId);
+    return <SurveyInactive status="response submitted" workspace={workspace || undefined} />;
   }
 
   const isPreview = preview === "true";
-  const survey = await loadSurvey();
-
+  const survey = await getServableLinkSurvey(surveyId);
   if (!survey) {
     notFound();
   }

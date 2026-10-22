@@ -3274,6 +3274,7 @@
         "subscription_description": "管理您的訂閱方案並監控用量",
         "switch_at_period_end": "週期結束時切換",
         "switch_plan_now": "立即切換方案",
+        "tax_location_required": "我們無法根據你的帳單地址判斷你的稅務所在地。請透過「管理信用卡資料與發票」更新帳單地址,然後再試一次。",
         "this_includes": "包含內容",
         "trial_alert_description": "試用期間部分功能(如追蹤功能和自訂連結)仍處於鎖定狀態。立即升級以解鎖所有功能。",
         "trial_already_used": "此電子郵件地址已使用過免費試用。請改為升級至付費方案。",

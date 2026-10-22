@@ -3274,6 +3274,7 @@
         "subscription_description": "管理你的订阅套餐并监控用量",
         "switch_at_period_end": "在周期结束时切换",
         "switch_plan_now": "立即切换套餐",
+        "tax_location_required": "我们无法根据您的账单地址确定您的纳税所在地。请通过“管理银行卡详情和发票”更新您的账单地址,然后重试。",
         "this_includes": "包含以下内容",
         "trial_alert_description": "试用期间，后续跟进和自定义链接等部分功能仍处于锁定状态。立即升级即可解锁所有功能。",
         "trial_already_used": "该邮箱地址已使用过免费试用。请升级至付费计划。",

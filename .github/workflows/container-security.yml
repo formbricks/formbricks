@@ -1,0 +1,163 @@
+name: Container Security
+
+on:
+  schedule:
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Scan and report without changing Linear tickets"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+# Serialize full inventories so an older scan cannot resolve a newer finding.
+concurrency:
+  group: container-security-main
+  cancel-in-progress: false
+
+jobs:
+  inventory:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      matrix: ${{ steps.inventory.outputs.matrix }}
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+        with:
+          version: v3.15.4
+      - name: Discover committed image dependencies
+        id: inventory
+        run: |
+          set -euo pipefail
+          parser_version=$(awk '/^  js-yaml: / { print $2 }' pnpm-workspace.yaml)
+          test -n "$parser_version"
+          npm install --ignore-scripts --no-audit --no-fund --prefix "$RUNNER_TEMP/image-deps" "js-yaml@$parser_version"
+          NODE_PATH="$RUNNER_TEMP/image-deps/node_modules" node scripts/container-security/inventory.mjs image-inventory.json
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const entries = JSON.parse(fs.readFileSync('image-inventory.json', 'utf8'));
+          if (!entries.length || entries.length > 256) throw new Error('Invalid image matrix size');
+          const include = entries.map((entry, id) => ({ id, entry }));
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `matrix=${JSON.stringify({include})}\n`);
+          JS
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: image-inventory
+          path: image-inventory.json
+          retention-days: 14
+      - uses: aquasecurity/setup-trivy@3fb12ec12f41e471780db15c232d5dd185dcb514 # v0.2.6
+        with:
+          version: v0.71.2
+          cache: true
+      - name: Download one database snapshot for all image scans
+        env:
+          TRIVY_CACHE_DIR: ${{ runner.temp }}/trivy-databases
+        run: |
+          trivy image --download-db-only --no-progress
+          trivy image --download-java-db-only --no-progress
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: trivy-databases
+          path: ${{ runner.temp }}/trivy-databases
+          if-no-files-found: error
+          retention-days: 1
+
+  scan:
+    needs: inventory
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    permissions:
+      contents: read
+      packages: read
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJSON(needs.inventory.outputs.matrix) }}
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: aquasecurity/setup-trivy@3fb12ec12f41e471780db15c232d5dd185dcb514 # v0.2.6
+        with:
+          version: v0.71.2
+          cache: true
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: trivy-databases
+          path: ${{ runner.temp }}/trivy-databases
+      - name: Scan immutable manifests for available amd64 and arm64 variants
+        env:
+          SCAN_ENTRY: ${{ toJSON(matrix.entry) }}
+          TRIVY_CACHE_DIR: ${{ runner.temp }}/trivy-databases
+          TRIVY_SKIP_DB_UPDATE: "true"
+          TRIVY_SKIP_JAVA_DB_UPDATE: "true"
+        run: node scripts/container-security/scan.mjs reports
+      - name: Preserve results even when an image is unavailable
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: container-scan-${{ matrix.id }}
+          path: reports/result.json
+          if-no-files-found: error
+          retention-days: 14
+
+  sync:
+    needs: [inventory, scan]
+    if: always() && needs.inventory.result == 'success' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Harden runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: image-inventory
+          path: inventory
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          pattern: container-scan-*
+          path: reports
+      - name: Reconcile critical/high vulnerabilities with Linear
+        env:
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+          LINEAR_ACCESS_KEY: ${{ secrets.LINEAR_ACCESS_KEY }}
+          DRY_RUN: ${{ inputs.dry_run || false }}
+        run: |
+          args=()
+          if [[ "$DRY_RUN" == "true" ]]; then args+=(--dry-run); fi
+          node scripts/container-security/sync.mjs inventory/image-inventory.json reports "${args[@]}"

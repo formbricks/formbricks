@@ -3274,6 +3274,7 @@
         "subscription_description": "Beheer je abonnement en houd je gebruik bij",
         "switch_at_period_end": "Schakel aan het einde van de periode",
         "switch_plan_now": "Schakel nu van abonnement",
+        "tax_location_required": "We konden je belastinglocatie niet bepalen aan de hand van je factuuradres. Werk je factuuradres bij via “Kaartgegevens en facturen beheren” en probeer het opnieuw.",
         "this_includes": "Dit omvat",
         "trial_alert_description": "Sommige functies zoals opvolgingen en aangepaste links blijven vergrendeld tijdens de proefperiode. Upgrade nu om alles te ontgrendelen.",
         "trial_already_used": "Er is al een gratis proefperiode gebruikt voor dit e-mailadres. Upgrade in plaats daarvan naar een betaald abonnement.",
