@@ -21,8 +21,8 @@ properties:
   dismissible:
     type: boolean
     description: >-
-      Whether visitors can close the banner. A dismissed banner stays closed on that page only;
-      nothing about the dismiss is remembered.
+      Whether visitors can close the banner. A dismissed banner stays closed for the rest of the
+      visit, in that browser tab; a new tab shows it again.
   accessibleName:
     anyOf:
       - $ref: ./CreativeText.yml

@@ -11876,7 +11876,7 @@ components:
           description: An optional button. A banner with a button needs a `destination` to publish; a banner without one is a notice only and can't have a `destination`.
         dismissible:
           type: boolean
-          description: Whether visitors can close the banner. A dismissed banner stays closed on that page only; nothing about the dismiss is remembered.
+          description: Whether visitors can close the banner. A dismissed banner stays closed for the rest of the visit, in that browser tab; a new tab shows it again.
         accessibleName:
           anyOf:
             - $ref: '#/components/schemas/CreativeText'

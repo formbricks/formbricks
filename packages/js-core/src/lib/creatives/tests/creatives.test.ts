@@ -56,6 +56,7 @@ const shownButtons = (): HTMLButtonElement[] =>
   );
 
 const browserStorage = new Map<string, string>();
+const tabStorage = new Map<string, string>();
 
 beforeAll(() => {
   // vitest.setup.ts swaps window, document and localStorage for hand-rolled mocks; this suite draws
@@ -86,6 +87,11 @@ beforeEach(() => {
     getItem: (key: string) => browserStorage.get(key) ?? null,
     setItem: (key: string, value: string) => browserStorage.set(key, value),
     clear: () => browserStorage.clear(),
+  });
+  tabStorage.clear();
+  vi.stubGlobal("sessionStorage", {
+    getItem: (key: string) => tabStorage.get(key) ?? null,
+    setItem: (key: string, value: string) => tabStorage.set(key, value),
   });
   state = { creatives: [feedbackButton()], surveys: [mockSurvey] };
   vi.spyOn(Config, "getInstance").mockReturnValue({
@@ -676,23 +682,54 @@ describe("banners (ENG-3576)", () => {
     const shownIds = (): (string | null)[] =>
       bannerHosts().map((host) => host.getAttribute("data-formbricks-creative"));
 
-    test("closes the banner on that page only, and remembers nothing", () => {
+    test("closes the banner for the rest of the visit, across pages and page loads", () => {
       state.creatives = [banner("notice"), banner("other")];
       reconcileCreatives();
 
       controlOf("notice", "[aria-label=Dismiss]").click();
       expect(shownIds()).toEqual(["other"]);
 
-      // A state refresh, a schedule boundary or a same-page URL change keeps it closed…
+      // A state refresh or a same-page URL change keeps it closed…
       window.history.replaceState({}, "", "/?tab=2#faq");
       reconcileCreatives();
       expect(shownIds()).toEqual(["other"]);
-      expect(window.localStorage.getItem("formbricks-creative-share")).toBeNull();
 
-      // …and the next page view, a single-page-app route change included, shows it again.
+      // …so does the next page view, a single-page-app route change…
       window.history.pushState({}, "", "/pricing");
       reconcileCreatives();
-      expect(shownIds()).toEqual(["notice", "other"]);
+      expect(shownIds()).toEqual(["other"]);
+
+      // …and a multi-page site's next page load, where the SDK starts with fresh memory.
+      removeCreatives();
+      reconcileCreatives();
+      expect(shownIds()).toEqual(["other"]);
+    });
+
+    test("starts over in a new tab, and lasts for this document when storage is blocked", () => {
+      state.creatives = [banner("notice")];
+      reconcileCreatives();
+      controlOf("notice", "[aria-label=Dismiss]").click();
+
+      // A new tab has its own, empty sessionStorage.
+      removeCreatives();
+      tabStorage.clear();
+      reconcileCreatives();
+      expect(shownIds()).toEqual(["notice"]);
+
+      vi.stubGlobal("sessionStorage", {
+        getItem: () => {
+          throw new Error("blocked");
+        },
+        setItem: () => {
+          throw new Error("blocked");
+        },
+      });
+      removeCreatives();
+      reconcileCreatives();
+      controlOf("notice", "[aria-label=Dismiss]").click();
+      window.history.pushState({}, "", "/pricing");
+      reconcileCreatives();
+      expect(shownIds()).toEqual([]);
     });
 
     test("is not a Click", async () => {

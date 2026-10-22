@@ -39,12 +39,11 @@ let getShareRoll: ((creativeId: string) => number) | null = null;
 let systemScheme: MediaQueryList | null = null;
 /**
  * What happened on this page view (host + path, as Impressions count it), kept in memory only: the
- * banners the visitor closed, and the actions tracked, which show the creatives that show on them. The
- * next page view, a single-page-app route change included, starts over.
+ * actions tracked, which show the creatives that show on them. The next page view, a single-page-app
+ * route change included, starts over.
  */
 const pageView = {
   page: null as string | null,
-  dismissed: new Set<string>(),
   firedActions: new Set<string>(),
 };
 
@@ -52,12 +51,37 @@ const syncPageView = (): void => {
   const page = getCountedPage(window.location.href);
   if (page === pageView.page) return;
   pageView.page = page;
-  pageView.dismissed.clear();
   pageView.firedActions.clear();
 };
 
+/**
+ * The banners the visitor closed stay closed for the rest of the visit: sessionStorage, like the visit
+ * store, so they survive the next page of a multi-page site (a fresh `setup()`) and a reload, and a new
+ * tab starts over. With storage blocked a dismiss lasts as long as this document.
+ */
+const DISMISSED_STORAGE_KEY = "formbricks-dismissed-creatives";
+let dismissed: Set<string> | null = null;
+
+const getDismissed = (): Set<string> => {
+  if (dismissed) return dismissed;
+  dismissed = new Set();
+  try {
+    const stored: unknown = JSON.parse(sessionStorage.getItem(DISMISSED_STORAGE_KEY) ?? "[]");
+    if (Array.isArray(stored)) for (const id of stored) if (typeof id === "string") dismissed.add(id);
+  } catch {
+    // Blocked or unreadable storage: nothing was dismissed yet.
+  }
+  return dismissed;
+};
+
 const dismissBanner = (id: string): void => {
-  pageView.dismissed.add(id);
+  const ids = getDismissed();
+  ids.add(id);
+  try {
+    sessionStorage.setItem(DISMISSED_STORAGE_KEY, JSON.stringify([...ids]));
+  } catch {
+    // Blocked storage: the dismiss lasts as long as this document.
+  }
   reconcileCreatives();
 };
 
@@ -116,7 +140,7 @@ const handleCreativeClick = (view: TCreativeView): void => {
   }
 
   countClick(view.id);
-  // A dismissible banner whose button opened its Destination has done its job on this page (ENG-3576);
+  // A dismissible banner whose button opened its Destination has done its job for this visit (ENG-3576);
   // one that can't be dismissed stays, so a critical notice can't be clicked away.
   if (view.type === "banner" && view.dismissible) dismissBanner(view.id);
 };
@@ -188,7 +212,7 @@ const drawCreatives = (): void => {
     });
 
     showCreatives(
-      creatives.filter(({ id }) => !pageView.dismissed.has(id)),
+      creatives.filter(({ id }) => !getDismissed().has(id)),
       getCreativeAppearance()
     );
     scheduleNextChange(nextChangeAt, now);
@@ -221,7 +245,7 @@ export const recordCreativeAction = (actionName: string): void => {
  */
 export const removeCreatives = (): void => {
   showCreatives([]);
-  pageView.dismissed.clear();
+  dismissed = null;
   pageView.firedActions.clear();
   stopArrangingCreatives();
   scheduleNextChange(null, 0);
