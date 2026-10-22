@@ -27,3 +27,24 @@ export const ZV3ChartFieldCatalog = z
   .strict();
 
 export type TV3ChartFieldCatalog = z.infer<typeof ZV3ChartFieldCatalog>;
+
+/** A dashboard holding a chart, as a chart embeds it. */
+export const ZV3ChartDashboardRef = z.object({ id: z.string(), name: z.string() }).strict();
+
+export const ZV3ChartResource = z
+  .object({
+    id: z.string(),
+    workspaceId: z.string(),
+    datasetId: z.string(),
+    name: z.string(),
+    type: z.enum(["area", "bar", "pie", "big_number", "matrix"]),
+    query: z.record(z.string(), z.unknown()),
+    config: z.record(z.string(), z.unknown()),
+    creator: z.object({ name: z.string() }).strict().nullable(),
+    dashboards: z.array(ZV3ChartDashboardRef),
+    createdAt: z.iso.datetime(),
+    updatedAt: z.iso.datetime(),
+  })
+  .strict();
+
+export type TV3ChartResource = z.infer<typeof ZV3ChartResource>;

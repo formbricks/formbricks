@@ -551,42 +551,4 @@ describe("Chart Service", () => {
       await expect(getCharts(mockWorkspaceId)).rejects.toThrow("boom");
     });
   });
-
-  describe("getChartsWithCreator", () => {
-    test("returns charts with creator info", async () => {
-      const chartsWithCreator = [
-        { ...mockChart, creator: { name: "Alice" } },
-        { ...mockChart, id: "chart-2", name: "Chart 2", creator: null },
-      ];
-      vi.mocked(prisma.chart.findMany).mockResolvedValue(chartsWithCreator as any);
-      const { getChartsWithCreator } = await import("./charts");
-
-      const result = await getChartsWithCreator(mockWorkspaceId);
-
-      expect(result).toEqual(chartsWithCreator);
-      expect(prisma.chart.findMany).toHaveBeenCalledWith({
-        where: { workspaceId: mockWorkspaceId },
-        orderBy: { createdAt: "desc" },
-        select: expect.objectContaining({
-          creator: { select: { name: true } },
-        }),
-      });
-    });
-
-    test("throws DatabaseError on Prisma errors", async () => {
-      vi.mocked(prisma.chart.findMany).mockRejectedValue(makePrismaError("P9999"));
-      const { getChartsWithCreator } = await import("./charts");
-
-      await expect(getChartsWithCreator(mockWorkspaceId)).rejects.toMatchObject({
-        name: "DatabaseError",
-      });
-    });
-
-    test("rethrows non-Prisma errors unchanged", async () => {
-      vi.mocked(prisma.chart.findMany).mockRejectedValue(new Error("boom"));
-      const { getChartsWithCreator } = await import("./charts");
-
-      await expect(getChartsWithCreator(mockWorkspaceId)).rejects.toThrow("boom");
-    });
-  });
 });

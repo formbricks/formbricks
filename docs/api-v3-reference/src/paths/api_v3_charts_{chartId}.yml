@@ -1,0 +1,46 @@
+get:
+  operationId: getChartV3
+  summary: Get a chart
+  description: |
+    Returns one chart with the dashboards that hold it. The workspace is resolved from the chart, so
+    the operation takes no query parameters — a `workspaceId` is refused with 400. Needs read access
+    to the chart's workspace; a chart the caller cannot see, or that does not exist, answers 403.
+  tags:
+    - V3 Charts
+  parameters:
+    - $ref: ../components/parameters/ChartIdPath.yml
+  responses:
+    "200":
+      description: The chart
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/ChartResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

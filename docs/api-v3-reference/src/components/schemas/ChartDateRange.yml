@@ -1,0 +1,18 @@
+description: >-
+  A date range on a time dimension: a named preset from the field catalog's `datePresets`
+  (`last 7 days`, `this month`, …), `all-time` (no range), or a pair of ISO calendar dates
+  `[from, to]`, both inclusive, `from` not after `to`. Every range is read in the organization's
+  display time zone; a `timezone` cannot be supplied.
+oneOf:
+  - type: string
+    description: A preset name from `datePresets`, or `all-time`.
+    example: last 30 days
+  - type: array
+    minItems: 2
+    maxItems: 2
+    items:
+      type: string
+      format: date
+    example:
+      - "2026-01-01"
+      - "2026-03-31"

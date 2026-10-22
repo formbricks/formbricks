@@ -1,9 +1,19 @@
 /**
  * @vitest-environment jsdom
  */
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, renderHook as renderHookBase, waitFor } from "@testing-library/react";
+import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
+
+/** The dialog invalidates the chart queries after a save, so it renders inside a query client. */
+const renderHook = <T>(callback: () => T) => {
+  const queryClient = new QueryClient();
+  const wrapper = ({ children }: { children: ReactNode }) =>
+    createElement(QueryClientProvider, { client: queryClient }, children);
+  return renderHookBase(callback, { wrapper });
+};
 
 const mockCreateChartAction = vi.fn();
 const mockUpdateChartAction = vi.fn();

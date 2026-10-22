@@ -1,0 +1,60 @@
+description: >-
+  A filter: either one condition on a field, or an `and` / `or` group of filters. Groups may nest
+  at most 3 deep, and a chart query holds at most 25 conditions in all.
+oneOf:
+  - type: object
+    title: Condition
+    required:
+      - member
+      - operator
+    properties:
+      member:
+        type: string
+        description: A field name from the field catalog.
+        example: FeedbackRecords.sourceType
+      operator:
+        type: string
+        description: One of the field's `filterOperators` in the catalog.
+        enum:
+          - equals
+          - notEquals
+          - contains
+          - notContains
+          - set
+          - notSet
+          - gt
+          - gte
+          - lt
+          - lte
+      values:
+        type: array
+        description: >-
+          The values to compare against. Required by every operator except `set` and `notSet`,
+          which take none.
+        maxItems: 100
+        items:
+          type: string
+          maxLength: 1000
+    additionalProperties: false
+  - type: object
+    title: And group
+    required:
+      - and
+    properties:
+      and:
+        type: array
+        minItems: 1
+        items:
+          $ref: ./ChartQueryFilter.yml
+    additionalProperties: false
+  - type: object
+    title: Or group
+    required:
+      - or
+    properties:
+      or:
+        type: array
+        minItems: 1
+        items:
+          $ref: ./ChartQueryFilter.yml
+    additionalProperties: false

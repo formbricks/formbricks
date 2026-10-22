@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import toast from "react-hot-toast";
@@ -17,6 +18,7 @@ import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-n
 import { sanitizeChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
+import { chartKeys } from "@/modules/ee/analysis/lib/query";
 import type {
   AnalyticsResponse,
   TChart,
@@ -48,6 +50,7 @@ export function useChartDialog({
 }: Readonly<UseChartDialogProps>) {
   const { t } = useTranslation();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const pathname = usePathname();
   const [, startTransition] = useTransition();
   const [selectedChartType, setSelectedChartType] = useState<TChartType | undefined>();
@@ -288,6 +291,7 @@ export function useChartDialog({
           router.push(dashboardPath);
         }
       }
+      void queryClient.invalidateQueries({ queryKey: chartKeys.all });
       startTransition(() => {
         router.refresh();
       });
@@ -375,6 +379,7 @@ export function useChartDialog({
       toast.success(t("workspace.analysis.charts.chart_added_to_dashboard"));
       setIsAddToDashboardDialogOpen(false);
       closeDialog();
+      void queryClient.invalidateQueries({ queryKey: chartKeys.all });
       startTransition(() => {
         router.refresh();
       });

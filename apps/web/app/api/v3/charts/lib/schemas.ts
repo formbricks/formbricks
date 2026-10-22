@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { V3_LIST_DEFAULT_LIMIT, V3_LIST_MAX_LIMIT } from "@/app/api/v3/lib/cursor-pagination";
 
 /**
  * Request schemas for the chart operations. Every object is strict, so an argument the operation does
@@ -17,3 +18,23 @@ const datasetScope = {
 
 export const ZV3ChartFieldCatalogQuery = z.object(datasetScope).strict();
 export type TV3ChartFieldCatalogQuery = z.infer<typeof ZV3ChartFieldCatalogQuery>;
+
+/** Longest name a chart or a dashboard may have, and so the longest search term worth sending. */
+export const V3_NAME_MAX_LENGTH = 255;
+
+/**
+ * `GET /api/v3/charts`. Filters use v3's `filter[field][operator]` spelling, as on every other v3
+ * collection, so a client builds them the same way everywhere.
+ */
+export const ZV3ChartListQuery = z
+  .object({
+    workspaceId: z.cuid2(),
+    limit: z.coerce.number().int().min(1).max(V3_LIST_MAX_LIMIT).default(V3_LIST_DEFAULT_LIMIT),
+    cursor: z.string().min(1).optional(),
+    "filter[name][contains]": z.string().trim().min(1).max(V3_NAME_MAX_LENGTH).optional(),
+    "filter[datasetId][eq]": z.cuid2().optional(),
+  })
+  .strict();
+export type TV3ChartListQuery = z.infer<typeof ZV3ChartListQuery>;
+
+export const ZV3ChartIdParams = z.object({ chartId: z.cuid2() }).strict();

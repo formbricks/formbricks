@@ -1,7 +1,7 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { CopyIcon, MoreVertical, PlusIcon, SquarePenIcon, TrashIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -9,6 +9,7 @@ import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { deleteChartAction, duplicateChartAction } from "@/modules/ee/analysis/charts/actions";
 import { AddToDashboardDialog } from "@/modules/ee/analysis/charts/components/add-to-dashboard-dialog";
 import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
+import { chartKeys } from "@/modules/ee/analysis/lib/query";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -28,7 +29,7 @@ interface ChartDropdownMenuProps {
 
 export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<ChartDropdownMenuProps>) {
   const { t } = useTranslation();
-  const router = useRouter();
+  const queryClient = useQueryClient();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
@@ -88,7 +89,7 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
       if (result?.data) {
         toast.success(t("workspace.analysis.charts.chart_deleted_successfully"));
         setIsDeleteDialogOpen(false);
-        router.refresh();
+        void queryClient.invalidateQueries({ queryKey: chartKeys.all });
       } else {
         const msg = getFormattedErrorMessage(result) || t("workspace.analysis.charts.chart_deletion_error");
         toast.error(msg);
@@ -106,7 +107,7 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
       const result = await duplicateChartAction({ workspaceId, chartId: chart.id });
       if (result?.data) {
         toast.success(t("workspace.analysis.charts.chart_duplicated_successfully"));
-        router.refresh();
+        void queryClient.invalidateQueries({ queryKey: chartKeys.all });
       } else {
         toast.error(
           getFormattedErrorMessage(result) || t("workspace.analysis.charts.chart_duplication_error")
@@ -144,7 +145,7 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
       toast.success(t("workspace.analysis.charts.chart_added_to_dashboard"));
       setIsAddToDashboardDialogOpen(false);
       setSelectedDashboardId(undefined);
-      router.refresh();
+      void queryClient.invalidateQueries({ queryKey: chartKeys.all });
     } catch (error) {
       const message =
         error instanceof Error

@@ -3783,6 +3783,79 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+  /api/v3/charts:
+    get:
+      operationId: listChartsV3
+      summary: List charts
+      description: |
+        Lists a workspace's charts, newest first, page by page. Each chart embeds the dashboards that
+        hold it. Needs read access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+      tags:
+        - V3 Charts
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 250
+            default: 50
+          description: Page size (max 250). Treat `meta.nextCursor` as the only end-of-collection signal.
+        - $ref: '#/components/parameters/CursorQuery'
+        - in: query
+          name: filter[name][contains]
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+          description: Only charts whose name contains this text, ignoring case. `%` and `_` match themselves.
+        - in: query
+          name: filter[datasetId][eq]
+          schema:
+            type: string
+            format: cuid2
+          description: Only charts reading this Feedback Dataset.
+      responses:
+        '200':
+          description: A page of charts
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                  - meta
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ChartResource'
+                  meta:
+                    $ref: '#/components/schemas/CursorPaginationMeta'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/charts/fields:
     get:
       operationId: listChartFieldsV3
@@ -3821,6 +3894,53 @@ paths:
                 properties:
                   data:
                     $ref: '#/components/schemas/ChartFieldCatalog'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/charts/{chartId}:
+    get:
+      operationId: getChartV3
+      summary: Get a chart
+      description: |
+        Returns one chart with the dashboards that hold it. The workspace is resolved from the chart, so
+        the operation takes no query parameters — a `workspaceId` is refused with 400. Needs read access
+        to the chart's workspace; a chart the caller cannot see, or that does not exist, answers 403.
+      tags:
+        - V3 Charts
+      parameters:
+        - $ref: '#/components/parameters/ChartIdPath'
+      responses:
+        '200':
+          description: The chart
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ChartResource'
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -10299,6 +10419,313 @@ components:
               message:
                 type: string
                 description: Human-readable explanation of the problem.
+    ChartDateRange:
+      description: 'A date range on a time dimension: a named preset from the field catalog''s `datePresets` (`last 7 days`, `this month`, …), `all-time` (no range), or a pair of ISO calendar dates `[from, to]`, both inclusive, `from` not after `to`. Every range is read in the organization''s display time zone; a `timezone` cannot be supplied.'
+      oneOf:
+        - type: string
+          description: A preset name from `datePresets`, or `all-time`.
+          example: last 30 days
+        - type: array
+          minItems: 2
+          maxItems: 2
+          items:
+            type: string
+            format: date
+          example:
+            - '2026-01-01'
+            - '2026-03-31'
+    ChartQueryFilter:
+      description: 'A filter: either one condition on a field, or an `and` / `or` group of filters. Groups may nest at most 3 deep, and a chart query holds at most 25 conditions in all.'
+      oneOf:
+        - type: object
+          title: Condition
+          required:
+            - member
+            - operator
+          properties:
+            member:
+              type: string
+              description: A field name from the field catalog.
+              example: FeedbackRecords.sourceType
+            operator:
+              type: string
+              description: One of the field's `filterOperators` in the catalog.
+              enum:
+                - equals
+                - notEquals
+                - contains
+                - notContains
+                - set
+                - notSet
+                - gt
+                - gte
+                - lt
+                - lte
+            values:
+              type: array
+              description: The values to compare against. Required by every operator except `set` and `notSet`, which take none.
+              maxItems: 100
+              items:
+                type: string
+                maxLength: 1000
+          additionalProperties: false
+        - type: object
+          title: And group
+          required:
+            - and
+          properties:
+            and:
+              type: array
+              minItems: 1
+              items:
+                $ref: '#/components/schemas/ChartQueryFilter'
+          additionalProperties: false
+        - type: object
+          title: Or group
+          required:
+            - or
+          properties:
+            or:
+              type: array
+              minItems: 1
+              items:
+                $ref: '#/components/schemas/ChartQueryFilter'
+          additionalProperties: false
+    ChartQuery:
+      type: object
+      description: |-
+        What a chart computes, in Cube's query format (ADR 0001): measures, dimensions, time dimensions, filters, order and limit over its Feedback Dataset's fields. Every field must come from the field catalog (`GET /api/v3/charts/fields`), named with its data-source prefix. Display settings are separate (`config`).
+
+        Refused with **422** (`invalid_params` names each problem): a field that is not in the catalog; Cube options the app does not use (`ungrouped`, `segments`, `renewQuery`, `joinHints`, `total`, `compareDateRange`); a `timezone` (every range is read in the organization's display time zone); more than 15 fields across `measures`, `dimensions` and `timeDimensions`; more than 25 filter conditions or groups nested deeper than 3; a date range that is not a preset, `all-time` or two ISO calendar dates.
+      properties:
+        measures:
+          type: array
+          maxItems: 10
+          items:
+            type: string
+            description: A field of kind `measure`.
+          example:
+            - FeedbackRecords.npsScore
+        dimensions:
+          type: array
+          maxItems: 5
+          items:
+            type: string
+            description: A field of kind `dimension` or `timeDimension`.
+          example:
+            - FeedbackRecords.sourceName
+        timeDimensions:
+          type: array
+          maxItems: 2
+          items:
+            type: object
+            required:
+              - dimension
+            properties:
+              dimension:
+                type: string
+                description: A field of kind `timeDimension`.
+                example: FeedbackRecords.collectedAt
+              granularity:
+                type: string
+                enum:
+                  - hour
+                  - day
+                  - week
+                  - month
+                  - quarter
+                  - year
+              dateRange:
+                $ref: '#/components/schemas/ChartDateRange'
+            additionalProperties: false
+        filters:
+          type: array
+          maxItems: 25
+          items:
+            $ref: '#/components/schemas/ChartQueryFilter'
+        order:
+          description: 'Sort order: `[field, direction]` pairs, or an object mapping a field to its direction. At most 10 entries.'
+          oneOf:
+            - type: array
+              maxItems: 10
+              items:
+                type: array
+                minItems: 2
+                maxItems: 2
+                prefixItems:
+                  - type: string
+                  - type: string
+                    enum:
+                      - asc
+                      - desc
+            - type: object
+              maxProperties: 10
+              additionalProperties:
+                type: string
+                enum:
+                  - asc
+                  - desc
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 5000
+        offset:
+          type: integer
+          minimum: 0
+          maximum: 10000
+      additionalProperties: false
+    ChartConfig:
+      type: object
+      description: Display settings, kept apart from the chart query. Every key is optional; each applies to the chart types named in its description and is ignored by the others.
+      properties:
+        barOrientation:
+          type: string
+          enum:
+            - vertical
+            - horizontal
+          description: Bar charts. Defaults to `vertical`.
+        pieDisplay:
+          type: string
+          enum:
+            - pie
+            - breakdown
+          description: Pie charts. Defaults to `pie`.
+        areaDisplay:
+          type: string
+          enum:
+            - filled
+            - line
+          description: Area charts. Defaults to `filled`.
+        matrixCellValue:
+          type: string
+          enum:
+            - percent
+            - count
+            - both
+          description: Matrix charts. Defaults to `percent`.
+        matrixColorScale:
+          type: boolean
+          description: Matrix charts. Defaults to `true`.
+        matrixShowTotals:
+          type: boolean
+          description: Matrix charts. Defaults to `false`.
+        matrixTranspose:
+          type: boolean
+          description: Matrix charts. Swaps rows and columns on screen; the query is unchanged.
+        colors:
+          type: array
+          maxItems: 50
+          items:
+            type: string
+            maxLength: 64
+        xAxisLabel:
+          type: string
+          maxLength: 255
+        yAxisLabel:
+          type: string
+          maxLength: 255
+        showLegend:
+          type: boolean
+        legendPosition:
+          type: string
+          enum:
+            - top
+            - bottom
+            - left
+            - right
+        stacked:
+          type: boolean
+        showGrid:
+          type: boolean
+        showValues:
+          type: boolean
+        numberFormat:
+          type: string
+          maxLength: 64
+        dateFormat:
+          type: string
+          maxLength: 64
+        prefix:
+          type: string
+          maxLength: 32
+        suffix:
+          type: string
+          maxLength: 32
+      additionalProperties: false
+    ChartResource:
+      type: object
+      description: 'A chart: one saved visualisation of one Feedback Dataset. It belongs to a workspace and can sit on any number of dashboards — `dashboards` lists them, so a caller can see what an edit or a delete would affect.'
+      required:
+        - id
+        - workspaceId
+        - datasetId
+        - name
+        - type
+        - query
+        - config
+        - creator
+        - dashboards
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          type: string
+          format: cuid2
+        workspaceId:
+          type: string
+          format: cuid2
+        datasetId:
+          type: string
+          format: cuid2
+          description: The Feedback Dataset the chart reads. Fixed when the chart is created.
+        name:
+          type: string
+          description: Unique within the workspace.
+        type:
+          type: string
+          enum:
+            - area
+            - bar
+            - pie
+            - big_number
+            - matrix
+        query:
+          $ref: '#/components/schemas/ChartQuery'
+        config:
+          $ref: '#/components/schemas/ChartConfig'
+        creator:
+          description: Who created the chart, for display only; `null` once that user is gone.
+          oneOf:
+            - type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+              additionalProperties: false
+            - type: 'null'
+        dashboards:
+          type: array
+          description: The dashboards that hold the chart, by name.
+          items:
+            type: object
+            required:
+              - id
+              - name
+            properties:
+              id:
+                type: string
+                format: cuid2
+              name:
+                type: string
+            additionalProperties: false
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
     ChartField:
       type: object
       description: One field a chart query may use. Use `name` exactly as given, data-source prefix included (`FeedbackRecords.npsScore`); a field that is not in the catalog is refused.
@@ -11491,6 +11918,14 @@ components:
         type: string
         format: cuid2
       description: 'The Feedback Dataset the chart reads. Access to a dataset is granted per workspace it is assigned to, so it is always authorized together with `workspaceId`: a dataset that is not assigned to the workspace, or that the caller may not use, answers 403.'
+    ChartIdPath:
+      in: path
+      name: chartId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: Chart identifier.
     WorkspaceIdPath:
       in: path
       name: workspaceId

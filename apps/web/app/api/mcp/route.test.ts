@@ -414,6 +414,8 @@ describe("POST /api/mcp", () => {
       "delete_response",
       "batch_delete_responses",
       "list_chart_fields",
+      "list_charts",
+      "get_chart",
     ]);
     const tools = new Map(message.result.tools.map((tool: { name: string }) => [tool.name, tool]));
     expect(Object.keys((tools.get("create_survey") as any).inputSchema.properties)).toEqual(

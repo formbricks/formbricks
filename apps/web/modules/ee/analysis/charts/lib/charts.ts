@@ -256,25 +256,3 @@ export const getCharts = async (workspaceId: string): Promise<TChartWithCreator[
     throw error;
   }
 };
-
-export const getChartsWithCreator = async (workspaceId: string): Promise<TChartWithCreator[]> => {
-  validateInputs([workspaceId, ZId]);
-
-  try {
-    return await prisma.chart.findMany({
-      where: { workspaceId },
-      orderBy: { createdAt: "desc" },
-      select: {
-        ...selectChart,
-        creator: {
-          select: { name: true },
-        },
-      },
-    });
-  } catch (error) {
-    if (isPrismaKnownRequestError(error)) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-};

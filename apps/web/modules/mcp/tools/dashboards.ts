@@ -1,10 +1,17 @@
 import type { McpServer } from "@modelcontextprotocol/server";
 import { getV3ChartFieldCatalog } from "@/app/api/v3/charts/lib/field-operations";
+import { getV3Chart, listV3Charts } from "@/app/api/v3/charts/lib/operations";
 import { responseToMcpToolResult } from "../errors";
 import {
+  type TMcpChartIdInput,
   type TMcpListChartFieldsInput,
+  type TMcpListChartsInput,
   ZMcpChartFieldCatalogOutput,
+  ZMcpChartIdInput,
+  ZMcpChartListOutput,
+  ZMcpChartOutput,
   ZMcpListChartFieldsInput,
+  ZMcpListChartsInput,
 } from "./dashboard-schemas";
 import { registerScopedTool } from "./guard-scopes";
 import { READ_ANNOTATIONS, toolContext } from "./tool-context";
@@ -12,7 +19,8 @@ import { READ_ANNOTATIONS, toolContext } from "./tool-context";
 /**
  * MCP tools over the v3 chart and dashboard operations — one tool per operation, so an agent can do
  * exactly what an API key can do over HTTP, minus deletion: there is no delete tool, so a vague prompt
- * like "clean up old charts" cannot remove anything permanently.
+ * like "clean up old charts" cannot remove anything permanently. There is no generate tool either; AI
+ * chart generation is the app's, not the API's.
  *
  * Definitions and the field catalog need `dashboards:read`. Reading a chart's numbers also needs
  * `feedbackRecords:read`, so a dashboards grant never becomes a way into respondents' answers.
@@ -36,6 +44,55 @@ export function registerDashboardTools(server: McpServer): void {
       const context = toolContext(ctx);
       return await responseToMcpToolResult(
         await getV3ChartFieldCatalog({ ...input, ...context }),
+        context.requestId
+      );
+    }
+  );
+
+  registerScopedTool(
+    server,
+    "list_charts",
+    {
+      title: "List charts",
+      description:
+        "List the charts in a Formbricks workspace, newest first, page by page. Each chart carries its chart query, display settings and the dashboards that hold it.",
+      inputSchema: ZMcpListChartsInput,
+      outputSchema: ZMcpChartListOutput,
+      annotations: READ_ANNOTATIONS,
+    },
+    ["dashboards:read"],
+    async (input: TMcpListChartsInput, ctx) => {
+      const context = toolContext(ctx);
+      const response = await listV3Charts({
+        query: {
+          workspaceId: input.workspaceId,
+          limit: input.limit,
+          cursor: input.cursor,
+          "filter[name][contains]": input.nameContains,
+          "filter[datasetId][eq]": input.datasetId,
+        },
+        ...context,
+      });
+      return await responseToMcpToolResult(response, context.requestId);
+    }
+  );
+
+  registerScopedTool(
+    server,
+    "get_chart",
+    {
+      title: "Get chart",
+      description:
+        "Get one chart: its Feedback Dataset, type, chart query, display settings, and the dashboards that hold it. Check those before editing — an edit shows on every one of them.",
+      inputSchema: ZMcpChartIdInput,
+      outputSchema: ZMcpChartOutput,
+      annotations: READ_ANNOTATIONS,
+    },
+    ["dashboards:read"],
+    async (input: TMcpChartIdInput, ctx) => {
+      const context = toolContext(ctx);
+      return await responseToMcpToolResult(
+        await getV3Chart({ chartId: input.chartId, ...context }),
         context.requestId
       );
     }
