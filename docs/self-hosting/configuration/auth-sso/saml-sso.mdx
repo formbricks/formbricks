@@ -107,7 +107,7 @@ The SAML callback accepts sign-ins from anyone, so Formbricks bounds what it doe
 - contains a `DOCTYPE` or another XML declaration other than the usual `<?xml ...?>` line;
 - takes longer than 100 ms to parse, or more memory than a parse of a real response needs. For an encrypted assertion, this includes decrypting it and parsing what it holds.
 
-An encrypted assertion is decrypted before it reaches the SAML bridge, and the response with the decrypted assertion in place must pass the tag, depth and `DOCTYPE` checks above too.
+An encrypted assertion is decrypted before it reaches the SAML bridge, and the response with the decrypted assertion in place must pass the tag, depth and `DOCTYPE` checks above too. An encrypted assertion that does not decrypt with this instance's SAML certificate is refused.
 
 Real responses stay within these limits. A response carrying 1,000 group memberships written as verbosely as Okta writes them is about 247 KiB and 5,000 tags and attribute names; a signed or encrypted assertion nests about 10 levels deep. If users with very many groups are refused, have your IdP send only the groups Formbricks needs, for example with a group filter on the SAML app, rather than every group the user belongs to.
 

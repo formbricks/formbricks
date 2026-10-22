@@ -278,6 +278,48 @@ describe("SAML callback route", () => {
       }
     );
 
+    test.each([
+      [
+        "past the markup budget",
+        { reason: "markup", markup: 13_002, depth: 2, decryptedBytes: 52_400 },
+        "SAMLResponse is too large to process",
+      ],
+      ["carrying a DOCTYPE", { reason: "declaration", decryptedBytes: 900 }, "DOCTYPE"],
+    ] as const)(
+      "refuses a response whose decrypted assertion is %s like the bounds do, logged by size",
+      async (_name, refusal, message) => {
+        const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+        probeMock.mockResolvedValueOnce({ outcome: "refused", refusal });
+
+        const response = await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "s" }));
+
+        expect(response.status).toBe(400);
+        expect(await response.json()).toMatchObject({ message: expect.stringContaining(message) });
+        expect(samlResponseMock).not.toHaveBeenCalled();
+        expect(warn).toHaveBeenCalledWith(
+          { ...refusal, suppressedSinceLast: 0 },
+          "Refused a SAML response whose decrypted assertion is past the bounds"
+        );
+      }
+    );
+
+    test("refuses a response whose encrypted assertion did not decrypt, without jackson", async () => {
+      const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+      probeMock.mockResolvedValueOnce({ outcome: "undecryptable" });
+
+      const response = await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "s" }));
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({
+        message: expect.stringContaining("could not be decrypted"),
+      });
+      expect(samlResponseMock).not.toHaveBeenCalled();
+      expect(warn).toHaveBeenCalledWith(
+        expect.objectContaining({ length: b64(ISSUER).length, suppressedSinceLast: 0 }),
+        "Refused a SAML response whose encrypted assertion did not decrypt"
+      );
+    });
+
     test("logs cheap-path refusals at most once per window, counting the rest", async () => {
       const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
       const doctype = () => callback({ SAMLResponse: b64('<!DOCTYPE r SYSTEM "x"><r/>'), RelayState: "s" });
@@ -409,6 +451,22 @@ describe("SAML callback route", () => {
             redirect_url: "https://app.example.com/cb?error=access_denied&error_description=Bad%20signature",
             error: "Bad signature",
           } as never),
+        "saml_response_rejected",
+      ],
+      [
+        "a decrypted assertion past the bounds",
+        VALID,
+        () =>
+          probeMock.mockResolvedValueOnce({
+            outcome: "refused",
+            refusal: { reason: "depth", markup: 80, depth: 70, decryptedBytes: 4_000 },
+          }),
+        "saml_response_rejected",
+      ],
+      [
+        "an encrypted assertion that did not decrypt",
+        VALID,
+        () => probeMock.mockResolvedValueOnce({ outcome: "undecryptable" }),
         "saml_response_rejected",
       ],
       [

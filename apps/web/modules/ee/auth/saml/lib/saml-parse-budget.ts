@@ -1,7 +1,8 @@
 import "server-only";
 import { MessageChannel, type MessagePort, Worker, receiveMessageOnPort } from "node:worker_threads";
 import { logger } from "@formbricks/logger";
-import { checkDecryptedSamlResponseBounds } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
+import type { SamlDecryption } from "@/modules/ee/auth/saml/lib/saml-parse-worker";
+import type { SamlDecryptedRefusal } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
 
 /**
  * Longest a SAMLResponse may take to parse before jackson sees it (ENG-3973).
@@ -17,9 +18,10 @@ import { checkDecryptedSamlResponseBounds } from "@/modules/ee/auth/saml/lib/sam
  * An encrypted assertion is ciphertext to the byte bounds, and jackson decrypts it and parses the plaintext before it
  * checks any signature (ENG-4051). Given the SP key, the worker does the same within the same budget: the outer parse,
  * the decryption and the plaintext's parse all count. A plaintext of nested namespace scopes that would block jackson
- * for ~1-3 s is cut off here, and a real one (500 groups) takes ~5-20 ms. The decrypted document then has to pass the
- * same byte bounds as an unencrypted response (`checkDecryptedSamlResponseBounds`): a flood of cheap elements parses
- * well within the budget, but jackson's later passes over it cost several times as much.
+ * for ~1-3 s is cut off here, and a real one (500 groups) takes ~5-20 ms. The worker then holds the decrypted document
+ * to the same byte bounds as an unencrypted response (`checkDecryptedSamlResponseBounds`): a flood of cheap elements
+ * parses well within the budget, but jackson's later passes over it cost several times as much. An encrypted assertion
+ * that will not decrypt with jackson's key is refused, since nothing about its plaintext is known.
  */
 export const SAML_PARSE_TIME_BUDGET_MS = 100;
 
@@ -65,7 +67,14 @@ export interface SamlResponseClaims {
 export type SamlParseProbe =
   | { outcome: "parsed"; ms: number; claims: SamlResponseClaims }
   /** It ran past the time budget or the worker's heap limit. */
-  | { outcome: "too_costly"; reason: "time" | "memory" | "markup" | "depth" | "declaration" }
+  | { outcome: "too_costly"; reason: "time" | "memory" }
+  /** Its decrypted assertion, put in place, is past the byte bounds jackson's later passes are sized for. */
+  | { outcome: "refused"; refusal: SamlDecryptedRefusal }
+  /**
+   * It holds an encrypted assertion jackson would decrypt, and it did not decrypt with jackson's key, so its plaintext
+   * could not be measured.
+   */
+  | { outcome: "undecryptable" }
   /**
    * The queue was full, or this process has spent its parse allowance for now, either before the job was queued or
    * by the time the worker answered; the response does not reach jackson.
@@ -78,7 +87,7 @@ interface Job {
   id: number;
   xml: string;
   /** The SP private key, so the worker can decrypt an encrypted assertion as jackson will. */
-  decryptionKey?: string;
+  decryptionKey: string;
   resolve: (probe: SamlParseProbe) => void;
 }
 
@@ -93,8 +102,8 @@ interface WorkerResult {
   /** How long the parse took, measured in the worker, so a busy main thread does not count against the response. */
   ms: number;
   claims: SamlResponseClaims;
-  /** The response with its encrypted assertion decrypted, when the worker decrypted one; measured here, then dropped. */
-  decryptedXml?: string;
+  /** How its encrypted assertion fared, when it holds one jackson would decrypt. */
+  decryption?: SamlDecryption;
 }
 
 interface Pool {
@@ -157,12 +166,12 @@ const takeResult = (result: WorkerResult): boolean => {
     settleRunning({ outcome: "too_costly", reason: "time" });
     return true;
   }
-  // A decrypted assertion parsed in time can still carry more markup than jackson's later passes over it should
-  // meet (~1 ms to measure at the length cap).
-  const refusal =
-    result.decryptedXml === undefined ? null : checkDecryptedSamlResponseBounds(result.decryptedXml);
-  if (refusal) {
-    settleRunning({ outcome: "too_costly", reason: refusal.reason });
+  if (result.decryption?.decrypted === false) {
+    settleRunning({ outcome: "undecryptable" });
+    return true;
+  }
+  if (result.decryption?.refusal) {
+    settleRunning({ outcome: "refused", refusal: result.decryption.refusal });
     return true;
   }
   refillAllowance(performance.now());
@@ -298,12 +307,12 @@ function pump(): void {
 
 /**
  * Parse `samlResponseBase64` in the worker under `SAML_PARSE_TIME_BUDGET_MS`, decoded as jackson decodes it, and
- * decrypt and parse its encrypted assertion with `decryptionKey` within the same budget. Never rejects: every way it
+ * decrypt its encrypted assertion with `decryptionKey` within the same budget and hold the result to the byte bounds. Never rejects: every way it
  * can end is an outcome.
  */
 export const probeSamlResponseParse = (
   samlResponseBase64: string,
-  decryptionKey?: string
+  decryptionKey: string
 ): Promise<SamlParseProbe> => {
   refillAllowance(performance.now());
   if (pool.queue.length >= SAML_PARSE_QUEUE_LIMIT || pool.allowanceMs <= 0) {

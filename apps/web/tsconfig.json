@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "jsx": "preserve",
     "jsxImportSource": "react",

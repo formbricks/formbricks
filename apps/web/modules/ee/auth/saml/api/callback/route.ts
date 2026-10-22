@@ -166,6 +166,12 @@ const readCallbackForm = async (
   return { SAMLResponse, RelayState };
 };
 
+/** What a response past the byte bounds is told: the kind of bound, never the counts. */
+const boundsRefusalMessage = (reason: string): string =>
+  reason === "declaration"
+    ? "SAMLResponse must not contain a DOCTYPE or other declaration"
+    : "SAMLResponse is too large to process";
+
 /** The refusal for a response past the byte bounds or the caller's rate limit, or `null` when it may be parsed. */
 const refuseBeforeParsing = async (req: Request, SAMLResponse: string): Promise<Response | null> => {
   const refusal = checkSamlResponseBounds(SAMLResponse);
@@ -175,11 +181,7 @@ const refuseBeforeParsing = async (req: Request, SAMLResponse: string): Promise<
     return refuse(
       req,
       "saml_response_rejected",
-      responses.badRequestResponse(
-        refusal.reason === "declaration"
-          ? "SAMLResponse must not contain a DOCTYPE or other declaration"
-          : "SAMLResponse is too large to process"
-      )
+      responses.badRequestResponse(boundsRefusalMessage(refusal.reason))
     );
   }
 
@@ -226,6 +228,30 @@ const refuseUnparsed = (
         req,
         "saml_unavailable",
         responses.serviceUnavailableResponse("The SAML response could not be processed; retry shortly", 1)
+      );
+    case "refused":
+      // The same bounds as on the response itself, so refused the same way: throttled, by size only.
+      warnThrottled(
+        `decrypted:${probe.refusal.reason}`,
+        probe.refusal,
+        "Refused a SAML response whose decrypted assertion is past the bounds"
+      );
+      return refuse(
+        req,
+        "saml_response_rejected",
+        responses.badRequestResponse(boundsRefusalMessage(probe.refusal.reason))
+      );
+    case "undecryptable":
+      // Anyone can send ciphertext that does not decrypt, so this is throttled like the other cheap refusals.
+      warnThrottled(
+        "undecryptable",
+        failureContext(SAMLResponse, RelayState),
+        "Refused a SAML response whose encrypted assertion did not decrypt"
+      );
+      return refuse(
+        req,
+        "saml_response_rejected",
+        responses.badRequestResponse("The SAMLResponse's encrypted assertion could not be decrypted")
       );
     case "too_costly":
       logger.warn(

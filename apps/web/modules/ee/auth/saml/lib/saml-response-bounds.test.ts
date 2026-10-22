@@ -3,6 +3,7 @@ import {
   SAML_RESPONSE_MARKUP_BUDGET,
   SAML_RESPONSE_MAX_DEPTH,
   SAML_RESPONSE_MAX_LENGTH,
+  checkDecryptedSamlResponseBounds,
   checkSamlResponseBounds,
   measureSamlResponseMarkup,
 } from "./saml-response-bounds";
@@ -321,6 +322,32 @@ describe("checkSamlResponseBounds", () => {
       length: expect.any(Number),
       markup: expect.any(Number),
       depth: 0,
+    });
+  });
+});
+
+describe("checkDecryptedSamlResponseBounds", () => {
+  test("lets a real decrypted response through", () => {
+    expect(checkDecryptedSamlResponseBounds(`<r>${verboseGroups(150)}</r>`)).toBeNull();
+  });
+
+  test("refuses one past the budget, the depth cap or with a DOCTYPE, by size only, in bytes", () => {
+    // Multibyte text, so a character count would come out short.
+    const flood = `<r t="ü">${"<a/>".repeat(SAML_RESPONSE_MARKUP_BUDGET)}</r>`;
+
+    expect(checkDecryptedSamlResponseBounds(flood)).toEqual({
+      reason: "markup",
+      markup: expect.any(Number),
+      depth: expect.any(Number),
+      decryptedBytes: Buffer.byteLength(flood),
+    });
+    expect(checkDecryptedSamlResponseBounds("<a>".repeat(SAML_RESPONSE_MAX_DEPTH + 1))).toMatchObject({
+      reason: "depth",
+    });
+    const doctype = '<!DOCTYPE r SYSTEM "x"><r/>';
+    expect(checkDecryptedSamlResponseBounds(doctype)).toEqual({
+      reason: "declaration",
+      decryptedBytes: Buffer.byteLength(doctype),
     });
   });
 });

@@ -3,6 +3,8 @@ import { DOMParser, type Element, MIME_TYPE } from "@xmldom/xmldom";
 import { type MessagePort, workerData } from "node:worker_threads";
 // Type-only, so erased: the worker never loads the pool's module.
 import type { SamlResponseClaims } from "./saml-parse-budget";
+// With its extension: the worker also runs as a plain Node worker thread (in unit tests), which resolves no other way.
+import { type SamlDecryptedRefusal, checkDecryptedSamlResponseBounds } from "./saml-response-bounds.ts";
 
 /**
  * Worker side of the SAML parse budget (`saml-parse-budget.ts`, ENG-3973). It parses a decoded SAMLResponse exactly
@@ -10,12 +12,13 @@ import type { SamlResponseClaims } from "./saml-parse-budget";
  * errors through), so the time it takes here is the time one of jackson's parses takes. It times each parse itself
  * and answers over the port it was given; the main thread terminates it when a job runs past the budget.
  *
- * Given the SP key, it also does what jackson does with an encrypted assertion before checking any signature, so the
- * plaintext, which no byte bound sees, is timed too (ENG-4051).
+ * Given the SP key, it also does what jackson does with an encrypted assertion before checking any signature, and
+ * holds the decrypted document to the byte bounds, so the plaintext, which the bounds on the response only see as
+ * ciphertext, is timed and measured too (ENG-4051).
  *
  * It answers with the identifying fields only (the claimed issuer, the response ID and InResponseTo, cut to a length a
- * log line can carry) and, for an encrypted assertion it decrypted, the decrypted document, which the pool measures
- * and drops. Nothing else of the response leaves the worker.
+ * log line can carry) and how decryption went, with sizes for a refusal. Nothing else of the response leaves the
+ * worker, the decrypted assertion included.
  */
 
 const MAX_FIELD_LENGTH = 1024;
@@ -55,36 +58,56 @@ const hasEncryptedAssertion = (root: Element): boolean => {
   return false;
 };
 
+/**
+ * What came of an encrypted assertion jackson would decrypt: it decrypted, and the document with it in place passed
+ * the byte bounds or was refused by them; or it did not decrypt at all.
+ */
+export type SamlDecryption =
+  | { decrypted: true; refusal: SamlDecryptedRefusal | null }
+  /**
+   * With jackson's key, a sound encrypted assertion decrypts here exactly as it will in jackson. One that does not
+   * would leave its plaintext unmeasured, and jackson would try again on the main thread, so it is refused (ENG-4051).
+   */
+  | { decrypted: false };
+
 export interface ParsedSamlResponse {
   claims: SamlResponseClaims;
-  /**
-   * The response with its encrypted assertion decrypted and put in place, when there was one to decrypt: the
-   * document jackson validates from then on. The pool holds it to the byte bounds, which only saw ciphertext.
-   */
-  decryptedXml?: string;
+  /** Only when the response holds an encrypted assertion jackson would decrypt. */
+  decryption?: SamlDecryption;
 }
 
 /**
- * One job: parse `xml`, decrypt its encrypted assertion with `decryptionKey` as jackson will, and return the claims
- * and the decrypted document. Never throws.
+ * What jackson does first with an encrypted assertion, before it checks any signature (saml20's `validateInternal`):
+ * decrypt it, parse the plaintext and serialize the document with it in place. Then the bounds on that document.
+ */
+const decryptAsJackson = (xml: string, decryptionKey: string | undefined): SamlDecryption => {
+  if (!decryptionKey) return { decrypted: false };
+  try {
+    const { assertion, decrypted } = decryptXml(xml, { privateKey: decryptionKey });
+    if (!decrypted) return { decrypted: false };
+    return { decrypted: true, refusal: checkDecryptedSamlResponseBounds(assertion) };
+  } catch {
+    return { decrypted: false };
+  }
+};
+
+/**
+ * One job: parse `xml`, and decrypt and measure its encrypted assertion with `decryptionKey` as jackson will. Never
+ * throws.
  */
 export const parseSamlResponse = (xml: string, decryptionKey: string | undefined): ParsedSamlResponse => {
-  const parsed: ParsedSamlResponse = { claims: {} };
+  let root: Element | null;
   try {
-    const root = parseXml(xml).documentElement;
-    if (!root) return parsed;
-    parsed.claims = readClaims(root);
-    // What jackson does first with an encrypted assertion, before it checks any signature (saml20's
-    // `validateInternal`): decrypt it, parse the plaintext and serialize the document with it in place.
-    if (decryptionKey && hasEncryptedAssertion(root)) {
-      const { assertion, decrypted } = decryptXml(xml, { privateKey: decryptionKey });
-      if (decrypted) parsed.decryptedXml = assertion;
-    }
+    root = parseXml(xml).documentElement;
   } catch {
-    // A fatal parse error or a failed decryption is cheap, and jackson refuses the response on its own; the cost is
-    // what is measured.
+    // A fatal parse error is cheap, and jackson refuses the response on its own; the cost is what is measured.
+    return { claims: {} };
   }
-  return parsed;
+  if (!root) return { claims: {} };
+  const claims = readClaims(root);
+  return hasEncryptedAssertion(root)
+    ? { claims, decryption: decryptAsJackson(xml, decryptionKey) }
+    : { claims };
 };
 
 // Warm xmldom up before the first real job, so a fresh worker does not charge its cold start to a real sign-in.
@@ -94,15 +117,27 @@ const WARM_UP =
   "<a><b c='d'/></a>".repeat(200) +
   "</samlp:Response>";
 
+/**
+ * xml-encryption's warning when a response declares an insecure algorithm (RSA 1.5, Triple DES), which saml20 gives it
+ * no option to turn off. Here that is whatever an anonymous sender chose, before jackson has checked who sent it, so
+ * the worker drops that one message; jackson still warns when it decrypts a response it accepted, and every other
+ * warning goes through.
+ */
+const INSECURE_ALGORITHM_WARNING = "is no longer recommended due to security reasons";
+
+export const dropInsecureAlgorithmWarnings =
+  (warn: (...args: unknown[]) => void) =>
+  (...args: unknown[]) => {
+    if (typeof args[0] === "string" && args[0].includes(INSECURE_ALGORITHM_WARNING)) return;
+    warn(...args);
+  };
+
 const serve = (port: MessagePort) => {
-  // xml-encryption warns on stderr when a response declares an insecure algorithm (RSA 1.5, Triple DES). Here that is
-  // whatever an anonymous sender chose, before jackson has checked who sent it, so the worker keeps quiet; jackson
-  // still warns when it decrypts a response it accepted.
-  console.warn = () => undefined;
-  port.on("message", ({ id, xml, decryptionKey }: { id: number; xml: string; decryptionKey?: string }) => {
+  console.warn = dropInsecureAlgorithmWarnings(console.warn.bind(console));
+  port.on("message", ({ id, xml, decryptionKey }: { id: number; xml: string; decryptionKey: string }) => {
     const started = performance.now();
-    const { claims, decryptedXml } = parseSamlResponse(xml, decryptionKey);
-    port.postMessage({ id, ms: performance.now() - started, claims, decryptedXml });
+    const { claims, decryption } = parseSamlResponse(xml, decryptionKey);
+    port.postMessage({ id, ms: performance.now() - started, claims, decryption });
   });
   for (let i = 0; i < 20; i++) parseSamlResponse(WARM_UP, undefined);
   port.postMessage({ ready: true });

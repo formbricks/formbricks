@@ -78,9 +78,23 @@ describe("SAML callback with an encrypted assertion", () => {
     expect(samlResponseMock).not.toHaveBeenCalled();
     // The markup bound refuses it, or on a loaded machine the time budget gets there first; either way before jackson.
     expect(warn).toHaveBeenCalledWith(
-      expect.objectContaining({ stage: "parse_budget", reason: expect.stringMatching(/^(markup|time)$/) }),
-      "Refused a SAML response that was too costly to parse"
+      expect.objectContaining({ reason: expect.stringMatching(/^(markup|time)$/) }),
+      expect.stringMatching(
+        /^Refused a SAML response (whose decrypted assertion is past the bounds|that was too costly)/
+      )
     );
+  });
+
+  test("refuses one encrypted to another key, whose plaintext cannot be measured", async () => {
+    const SAMLResponse = Buffer.from(
+      samlResponseWith(encryptAssertion(signedAssertionWithGroups(150), createSpKeyPair().publicKey))
+    ).toString("base64");
+    vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+
+    const response = await POST(callback(SAMLResponse));
+
+    expect(response.status).toBe(400);
+    expect(samlResponseMock).not.toHaveBeenCalled();
   });
 
   test("hands a signed one of 150 groups to jackson", async () => {

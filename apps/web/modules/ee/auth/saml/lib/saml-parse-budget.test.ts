@@ -20,6 +20,9 @@ import {
 
 const b64 = (xml: string) => Buffer.from(xml).toString("base64");
 
+/** For the unencrypted responses, which never need it; the encrypted ones below use a real key pair. */
+const KEY = "unused-sp-key";
+
 const RESPONSE =
   '<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="_resp1" InResponseTo="_req1">' +
   '<saml2:Issuer xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion">https://idp.example.com</saml2:Issuer>' +
@@ -33,7 +36,7 @@ const SLOW = Array.from({ length: 8000 }, (_, i) => `<a xmlns:p${i}="u">`).join(
 
 describe("probeSamlResponseParse", () => {
   test("parses a real response within the budget and reads only its identifiers", async () => {
-    const probe = await probeSamlResponseParse(b64(RESPONSE));
+    const probe = await probeSamlResponseParse(b64(RESPONSE), KEY);
 
     expect(probe).toEqual({
       outcome: "parsed",
@@ -44,30 +47,32 @@ describe("probeSamlResponseParse", () => {
 
   test("cuts off a parse that runs past the budget, then parses the next response on a fresh worker", async () => {
     const started = performance.now();
-    const slow = await probeSamlResponseParse(b64(SLOW));
+    const slow = await probeSamlResponseParse(b64(SLOW), KEY);
     const elapsed = performance.now() - started;
 
     expect(slow).toEqual({ outcome: "too_costly", reason: "time" });
     // Stopped at the budget, not after the ~0.8 s the parse would have taken.
     expect(elapsed).toBeLessThan(SAML_PARSE_TIME_BUDGET_MS + 400);
 
-    await expect(probeSamlResponseParse(b64(RESPONSE))).resolves.toMatchObject({ outcome: "parsed" });
+    await expect(probeSamlResponseParse(b64(RESPONSE), KEY)).resolves.toMatchObject({ outcome: "parsed" });
   });
 
   test("returns no claims for malformed input, without failing", async () => {
-    await expect(probeSamlResponseParse(b64("<a><b></a>"))).resolves.toMatchObject({
+    await expect(probeSamlResponseParse(b64("<a><b></a>"), KEY)).resolves.toMatchObject({
       outcome: "parsed",
       claims: {},
     });
-    await expect(probeSamlResponseParse("%%% not base64 %%%")).resolves.toMatchObject({ outcome: "parsed" });
+    await expect(probeSamlResponseParse("%%% not base64 %%%", KEY)).resolves.toMatchObject({
+      outcome: "parsed",
+    });
   });
 
   test("refuses at once when the queue is full, and serves everything it accepted", async () => {
     // One job runs while the rest wait; the queue holds SAML_PARSE_QUEUE_LIMIT more.
     const accepted = Array.from({ length: SAML_PARSE_QUEUE_LIMIT + 1 }, () =>
-      probeSamlResponseParse(b64(RESPONSE))
+      probeSamlResponseParse(b64(RESPONSE), KEY)
     );
-    const overflow = await probeSamlResponseParse(b64(RESPONSE));
+    const overflow = await probeSamlResponseParse(b64(RESPONSE), KEY);
 
     expect(overflow).toEqual({ outcome: "busy" });
     for (const probe of await Promise.all(accepted)) expect(probe.outcome).toBe("parsed");
@@ -92,7 +97,6 @@ describe("probeSamlResponseParse", () => {
       const response = encrypted(nestedNamespaceAssertion(4000));
       // The gap this closes: the bounds see only base64 ciphertext, and the outer document is cheap.
       expect(checkSamlResponseBounds(response)).toBeNull();
-      await expect(probeSamlResponseParse(response)).resolves.toMatchObject({ outcome: "parsed" });
 
       const started = performance.now();
       const probe = await probeSamlResponseParse(response, sp.privateKey);
@@ -106,18 +110,17 @@ describe("probeSamlResponseParse", () => {
       expect(checkSamlResponseBounds(response)).toBeNull();
 
       // It parses in ~15 ms, so the markup bound refuses it; on a loaded machine the time budget may get there
-      // first. Which refusal wins is staged exactly in saml-parse-budget.failures.test.ts.
-      await expect(probeSamlResponseParse(response, sp.privateKey)).resolves.toMatchObject({
-        outcome: "too_costly",
-      });
+      // first. The worker's measure is checked exactly in saml-parse-worker.test.ts.
+      const probe = await probeSamlResponseParse(response, sp.privateKey);
+      expect(["refused", "too_costly"]).toContain(probe.outcome);
     });
 
-    test("answers an assertion encrypted to another key cheaply, with the response's claims", async () => {
+    test("refuses an assertion encrypted to another key, whose plaintext cannot be measured", async () => {
       const other = createSpKeyPair();
 
       await expect(
         probeSamlResponseParse(encrypted(nestedNamespaceAssertion(4000), other.publicKey), sp.privateKey)
-      ).resolves.toMatchObject({ outcome: "parsed", claims: { issuer: ENCRYPTED_RESPONSE_ISSUER } });
+      ).resolves.toEqual({ outcome: "undecryptable" });
     });
   });
 });
