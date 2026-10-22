@@ -24,11 +24,6 @@ const validEvent = {
 };
 
 describe("logAuditEvent", () => {
-  test("derives scalar actor search fields from the authenticated actor", async () => {
-    const { logger } = await import("@formbricks/logger");
-    await logAuditEvent(validEvent);
-    expect(logger.audit).toHaveBeenCalledWith({ ...validEvent, actorId: "user-1", actorType: "user" });
-  });
   let getIsAuditLogsEnabled: any;
   let logger: any;
 
@@ -36,6 +31,11 @@ describe("logAuditEvent", () => {
     vi.clearAllMocks();
     getIsAuditLogsEnabled = (await import("@/modules/ee/license-check/lib/utils")).getIsAuditLogsEnabled;
     logger = (await import("@formbricks/logger")).logger;
+  });
+
+  test("derives scalar actor search fields from the authenticated actor", async () => {
+    await logAuditEvent(validEvent);
+    expect(logger.audit).toHaveBeenCalledWith({ ...validEvent, actorId: "user-1", actorType: "user" });
   });
 
   test("logs event if access is granted and event is valid", async () => {

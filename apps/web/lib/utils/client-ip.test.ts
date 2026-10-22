@@ -110,8 +110,13 @@ describe("resolveClientIp", () => {
 });
 
 describe("getClientIpFromHeaders", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(nextHeaders.headers).mockReset();
+  });
+
   test("uses a supplied snapshot without accessing request scope", async () => {
-    vi.mocked(nextHeaders.headers).mockRejectedValue(new Error("request has ended"));
+    vi.mocked(nextHeaders.headers).mockRejectedValueOnce(new Error("request has ended"));
     await expect(
       getClientIpFromHeaders(
         buildHeaders({
@@ -119,9 +124,7 @@ describe("getClientIpFromHeaders", () => {
         })
       )
     ).resolves.toBe("203.0.113.7");
-  });
-  beforeEach(() => {
-    vi.clearAllMocks();
+    expect(nextHeaders.headers).not.toHaveBeenCalled();
   });
 
   test("returns the canonical identity from the private Proxy header", async () => {

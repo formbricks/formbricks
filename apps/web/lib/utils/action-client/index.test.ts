@@ -331,7 +331,7 @@ describe("audit request metadata context", () => {
     auditFlags.enabled = false;
   });
 
-  test("captures user agent even when IP capture is disabled", async () => {
+  test("spreads the request metadata snapshot into the audit context", async () => {
     auditFlags.enabled = true;
     vi.mocked(getAuditRequestMetadata).mockResolvedValue({ ipAddress: "unknown", userAgent: "Agent/1" });
     const { actionClient } = await import("./index");
