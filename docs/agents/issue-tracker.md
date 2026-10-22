@@ -20,7 +20,9 @@ PRs link to issues through the template's ticket line (`Fixes ENG-1234` / `Ref E
 
 ## When a skill says "publish to the issue tracker"
 
-Create a Linear issue in `ENG`, in the project the work belongs to.
+Create a Linear issue in `ENG`, in the project the work belongs to. Issues are for units of work.
+
+A spec or PRD (for example from `/to-spec`) is not a unit of work: publish it as a Linear document in the project the work belongs to, numbered after the project's existing documents (`5. Engineering spec`). Tickets are cut from it.
 
 ## When a skill says "fetch the relevant ticket"
 
