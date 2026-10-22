@@ -1,0 +1,23 @@
+import { MCP_API_ROUTE } from "@/modules/mcp/constants";
+import { type TMcpToolContext, getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
+
+/**
+ * Pieces every tool module needs, kept in one place so a module cannot invent its own request id or
+ * annotate a read differently from the rest.
+ */
+
+/** Read tools: no side effects, safe to repeat, reaching data this server does not itself own. */
+export const READ_ANNOTATIONS = {
+  readOnlyHint: true,
+  destructiveHint: false,
+  idempotentHint: true,
+  openWorldHint: true,
+} as const;
+
+/** The context every tool derives the same way, so no tool invents its own request id. */
+export const toolContext = (ctx: TMcpToolContext) => {
+  const authInfo = getMcpToolAuthInfo(ctx);
+  const requestId = getMcpRequestId(authInfo);
+
+  return { authentication: getMcpAuthentication(authInfo), requestId, instance: MCP_API_ROUTE };
+};

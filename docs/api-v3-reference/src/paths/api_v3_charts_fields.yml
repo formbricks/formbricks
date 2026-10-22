@@ -1,0 +1,51 @@
+get:
+  operationId: listChartFieldsV3
+  summary: List chart fields
+  description: |
+    Returns the field catalog for a Feedback Dataset: every field a chart query may use, with its
+    kind, type, label, description, filter operators and granularities, plus the date presets.
+    Write chart queries against this list — the chart query validator refuses any field that is not
+    in it, so the catalog cannot drift from what the API accepts.
+
+    Needs read access to the workspace and to the Feedback Dataset. Session cookie, `x-api-key`, or
+    a Bearer token.
+  tags:
+    - V3 Charts
+  parameters:
+    - $ref: ../components/parameters/WorkspaceIdQuery.yml
+    - $ref: ../components/parameters/DatasetIdQuery.yml
+  responses:
+    "200":
+      description: Field catalog
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/ChartFieldCatalog.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

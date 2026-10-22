@@ -3783,6 +3783,58 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+  /api/v3/charts/fields:
+    get:
+      operationId: listChartFieldsV3
+      summary: List chart fields
+      description: |
+        Returns the field catalog for a Feedback Dataset: every field a chart query may use, with its
+        kind, type, label, description, filter operators and granularities, plus the date presets.
+        Write chart queries against this list — the chart query validator refuses any field that is not
+        in it, so the catalog cannot drift from what the API accepts.
+
+        Needs read access to the workspace and to the Feedback Dataset. Session cookie, `x-api-key`, or
+        a Bearer token.
+      tags:
+        - V3 Charts
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+        - $ref: '#/components/parameters/DatasetIdQuery'
+      responses:
+        '200':
+          description: Field catalog
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ChartFieldCatalog'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/action-classes:
     get:
       operationId: listActionClassesV3
@@ -5448,6 +5500,7 @@ components:
             - bad_request
             - conflict
             - custom_css_plan_required
+            - dashboards_plan_required
             - forbidden
             - internal_server_error
             - invalid_workflow_state
@@ -10246,6 +10299,97 @@ components:
               message:
                 type: string
                 description: Human-readable explanation of the problem.
+    ChartField:
+      type: object
+      description: One field a chart query may use. Use `name` exactly as given, data-source prefix included (`FeedbackRecords.npsScore`); a field that is not in the catalog is refused.
+      required:
+        - name
+        - kind
+        - type
+        - label
+        - description
+        - filterOperators
+        - granularities
+        - valueLookup
+      properties:
+        name:
+          type: string
+          example: FeedbackRecords.npsScore
+        kind:
+          type: string
+          enum:
+            - measure
+            - dimension
+            - timeDimension
+          description: 'Where the field may appear: a `measure` in `measures`, a `dimension` in `dimensions`, a `timeDimension` in `timeDimensions` (or `dimensions`). Any kind may be filtered.'
+        type:
+          type: string
+          enum:
+            - number
+            - string
+            - time
+            - boolean
+        label:
+          type: string
+          example: 'NPS: Score'
+        description:
+          type:
+            - string
+            - 'null'
+        filterOperators:
+          type: array
+          description: The operators a filter on this field may use.
+          items:
+            type: string
+            enum:
+              - equals
+              - notEquals
+              - contains
+              - notContains
+              - set
+              - notSet
+              - gt
+              - gte
+              - lt
+              - lte
+        granularities:
+          type: array
+          description: The granularities a time dimension may be grouped by; empty for other kinds.
+          items:
+            type: string
+            enum:
+              - hour
+              - day
+              - week
+              - month
+              - quarter
+              - year
+        valueLookup:
+          type: boolean
+          description: Whether `GET /api/v3/charts/fields/{field}/values` lists this field's stored values, for filters that need an exact value.
+      additionalProperties: false
+    ChartFieldCatalog:
+      type: object
+      description: 'The field catalog: the fields a chart query may use, and the named date ranges it may use on `FeedbackRecords.collectedAt` and other time dimensions. The chart query validator checks against this same list, so the catalog is the contract.'
+      required:
+        - fields
+        - datePresets
+      properties:
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChartField'
+        datePresets:
+          type: array
+          description: Named date ranges, resolved in the organization's display time zone. `all-time` means no range at all. A date range may also be a pair of ISO calendar dates.
+          items:
+            type: string
+          example:
+            - today
+            - last 7 days
+            - this month
+            - all-time
+      additionalProperties: false
     ActionClassResource:
       type: object
       description: A workspace action class that can be referenced from an app-survey trigger.
@@ -11142,6 +11286,21 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+    V3DashboardsForbidden:
+      description: 'Forbidden. `code: forbidden` when the caller has no access to the workspace, the Feedback Dataset or the resource (which may also not exist; 404 is not used, to avoid leaking existence). `code: dashboards_plan_required` when the caller is authorized but the organization does not have the Dashboards add-on or a license that includes it — checked after authorization, so a caller without access never learns the organization''s plan.'
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
     V3UnauthorizedSession:
       description: Not authenticated (no valid session).
       headers:
@@ -11324,6 +11483,14 @@ components:
         type: string
         format: cuid2
       description: Workflow identifier.
+    DatasetIdQuery:
+      in: query
+      name: datasetId
+      required: true
+      schema:
+        type: string
+        format: cuid2
+      description: 'The Feedback Dataset the chart reads. Access to a dataset is granted per workspace it is assigned to, so it is always authorized together with `workspaceId`: a dataset that is not assigned to the workspace, or that the caller may not use, answers 403.'
     WorkspaceIdPath:
       in: path
       name: workspaceId

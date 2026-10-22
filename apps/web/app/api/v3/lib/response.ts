@@ -65,6 +65,7 @@ export const V3_PROBLEM_CODES = [
   "bad_request",
   "conflict",
   "custom_css_plan_required",
+  "dashboards_plan_required",
   "forbidden",
   "internal_server_error",
   "invalid_workflow_state",
@@ -309,6 +310,21 @@ export function problemCustomCssPlanRequired(requestId: string, detail: string, 
     code: "custom_css_plan_required",
     instance,
   });
+}
+
+/**
+ * ENG-6584: charts and dashboards need the Dashboards add-on on Formbricks Cloud or a license that
+ * includes it. Checked after authorization, so it reveals nothing to a caller without access, and
+ * independent of any one resource.
+ */
+export function problemDashboardsPlanRequired(requestId: string, instance?: string): Response {
+  return problemResponse(
+    403,
+    "Forbidden",
+    "Dashboards are not enabled for this organization. They require the Dashboards add-on or an Enterprise license that includes it — an organization owner can enable them from the organization's billing or license settings.",
+    requestId,
+    { code: "dashboards_plan_required", instance }
+  );
 }
 
 /**
