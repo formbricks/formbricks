@@ -284,16 +284,19 @@ function DashboardDetailView({
     void queryClient.invalidateQueries({ queryKey: chartKeys.lists() });
   }, [queryClient, dashboard.id]);
 
-  const [name, setName] = useState(dashboard.name);
+  // The name as the user typed it in edit mode, or `null` while they have not: the header otherwise shows the
+  // dashboard's current name, so a rename made elsewhere shows on refetch and is never saved back over.
+  const [draftName, setDraftName] = useState<string | null>(null);
+  const name = draftName ?? dashboard.name;
   const [draftWidgets, setDraftWidgets] = useState<TDashboardWidget[] | null>(null);
 
   const widgets = draftWidgets ?? dashboard.widgets;
 
   const hasChanges = useMemo(() => {
-    if (name !== dashboard.name) return true;
+    if (draftName !== null && draftName !== dashboard.name) return true;
     if (!draftWidgets) return false;
     return widgetLayoutsChanged(draftWidgets, dashboard.widgets);
-  }, [name, draftWidgets, dashboard]);
+  }, [draftName, draftWidgets, dashboard]);
 
   const layout = useMemo(() => widgetsToLayout(widgets), [widgets]);
 
@@ -411,11 +414,11 @@ function DashboardDetailView({
   );
 
   const handleCancel = useCallback(() => {
-    setName(dashboard.name);
+    setDraftName(null);
     setDraftWidgets(null);
     setEditBaseUpdatedAt(null);
     setIsEditing(false);
-  }, [dashboard]);
+  }, []);
 
   /**
    * One call saves the name and every widget's place, carrying the `updatedAt` the edit started from.
@@ -423,11 +426,11 @@ function DashboardDetailView({
    * and their own.
    */
   const saveDashboard = useCallback(
-    async (baseUpdatedAt: string, savedWidgets: TDashboardWidget[]) => {
+    async (baseUpdatedAt: string, savedName: string, savedWidgets: TDashboardWidget[]) => {
       setIsSaving(true);
       try {
         const saved = await replaceDashboard(dashboard.id, {
-          name: name.trim(),
+          name: savedName.trim(),
           updatedAt: baseUpdatedAt,
           widgets: toSavedWidgets(savedWidgets),
         });
@@ -436,6 +439,7 @@ function DashboardDetailView({
         void queryClient.invalidateQueries({ queryKey: chartKeys.lists() });
         toast.success(t("workspace.analysis.dashboards.dashboard_saved"));
         setStaleLatest(null);
+        setDraftName(null);
         setDraftWidgets(null);
         setEditBaseUpdatedAt(null);
         setIsEditing(false);
@@ -455,7 +459,7 @@ function DashboardDetailView({
         setIsSaving(false);
       }
     },
-    [dashboard.id, name, queryClient, t]
+    [dashboard.id, queryClient, t]
   );
 
   const handleSave = useCallback(async () => {
@@ -463,14 +467,14 @@ function DashboardDetailView({
       toast.error(t("workspace.analysis.dashboards.dashboard_name_required"));
       return;
     }
-    await saveDashboard(editBaseUpdatedAt ?? dashboard.updatedAt, widgets);
+    await saveDashboard(editBaseUpdatedAt ?? dashboard.updatedAt, name, widgets);
   }, [name, saveDashboard, editBaseUpdatedAt, dashboard.updatedAt, widgets, t]);
 
   /** Discard the edit and show the dashboard as it now is. */
   const handleReloadLatest = useCallback(() => {
     if (!staleLatest) return;
     queryClient.setQueryData(dashboardKeys.detail(dashboard.id), staleLatest);
-    setName(staleLatest.name);
+    setDraftName(null);
     setStaleLatest(null);
     setDraftWidgets(null);
     setEditBaseUpdatedAt(null);
@@ -481,8 +485,13 @@ function DashboardDetailView({
   /** Save the edit over the latest version, knowing what it removes. */
   const handleSaveAnyway = useCallback(() => {
     if (!staleLatest) return;
-    void saveDashboard(staleLatest.updatedAt, draftOverLatest(staleLatest.widgets, widgets));
-  }, [staleLatest, saveDashboard, widgets]);
+    // A name this editor did not touch is the latest one, so someone else's rename survives the overwrite.
+    void saveDashboard(
+      staleLatest.updatedAt,
+      draftName ?? staleLatest.name,
+      draftOverLatest(staleLatest.widgets, widgets)
+    );
+  }, [staleLatest, saveDashboard, draftName, widgets]);
 
   const removedByOverwrite = useMemo(
     () =>
@@ -563,7 +572,7 @@ function DashboardDetailView({
       <DashboardPageHeader
         name={name}
         isEditing={isEditing}
-        onNameChange={setName}
+        onNameChange={setDraftName}
         cta={
           <DashboardControlBar
             workspaceId={workspaceId}
