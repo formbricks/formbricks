@@ -294,7 +294,7 @@ services:
         condition: service_healthy
 
   spicedb-migrate:
-    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.52.0}
+    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.56.2}
     restart: "no"
     command: datastore migrate head
     environment:
@@ -305,7 +305,7 @@ services:
         condition: service_completed_successfully
 
   spicedb:
-    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.52.0}
+    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.56.2}
     restart: always
     command: serve
     mem_limit: 512m
@@ -588,7 +588,7 @@ services:
   # "CUBEJS_API_SECRET is required to run Cube" when the secret is empty.
   cube:
     restart: always
-    image: ghcr.io/formbricks/cube:1.7.50-1
+    image: ghcr.io/formbricks/cube:1.8.8-1
     depends_on:
       hub-migrate:
         condition: service_completed_successfully
