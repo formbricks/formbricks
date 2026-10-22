@@ -2064,6 +2064,11 @@
         "no_dashboards_found_description": "Grafikleri düzenlemek ve geri bildirim içgörülerini tek bir yerde izlemek için ilk panonu oluştur.",
         "no_data_message": "Veri Yok. Şu anda görüntülenecek bilgi bulunmuyor. Gösterge panelini oluşturmak için grafik ekle.",
         "please_enter_name": "Lütfen bir gösterge paneli adı gir",
+        "stale_description": "Siz düzenleme yaparken biri bu panoda değişiklikleri kaydetti. Onların sürümünü görmek ve kendi değişikliklerinizi silmek için sayfayı yeniden yükleyin ya da kendi sürümünüzü onun üzerine kaydedin.",
+        "stale_overwrite_removes": "Sizin sürümünüzü kaydetmek, bu arada eklenen şu grafikleri kaldırır:",
+        "stale_reload": "Yeniden yükle",
+        "stale_save_anyway": "Yine de benimkini kaydet",
+        "stale_title": "Bu pano, düzenlemeye başlamanızdan sonra değiştirildi",
         "upgrade_prompt_description": "Geri bildirim verilerinizden içgörü panoları oluşturun.",
         "upgrade_prompt_title": "Panoların Kilidini Açmak İçin Yükseltin",
         "widget_view": "Widget görünümü"

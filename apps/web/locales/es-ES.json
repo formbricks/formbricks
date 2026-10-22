@@ -2064,6 +2064,11 @@
         "no_dashboards_found_description": "Crea tu primer panel para organizar gráficos y supervisar tus insights de comentarios en un solo lugar.",
         "no_data_message": "Sin datos. Actualmente no hay información que mostrar. Añade gráficos para crear tu panel.",
         "please_enter_name": "Por favor, introduce un nombre para el panel de control",
+        "stale_description": "Alguien ha guardado cambios en este panel mientras lo editabas. Recarga para ver su versión y descartar tus cambios, o guarda la tuya sobrescribiéndola.",
+        "stale_overwrite_removes": "Si guardas tu versión, se eliminarán estos gráficos, que se han añadido entretanto:",
+        "stale_reload": "Recargar",
+        "stale_save_anyway": "Guardar la mía igualmente",
+        "stale_title": "Este panel ha cambiado desde que empezaste a editarlo",
         "upgrade_prompt_description": "Crea paneles de información a partir de tus datos de opiniones.",
         "upgrade_prompt_title": "Mejora tu plan para desbloquear los Paneles",
         "widget_view": "Vista de widget"

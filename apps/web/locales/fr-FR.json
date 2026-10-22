@@ -2064,6 +2064,11 @@
         "no_dashboards_found_description": "Crée ton premier tableau de bord pour organiser tes graphiques et suivre tes insights de retours en un seul endroit.",
         "no_data_message": "Aucune donnée. Il n'y a actuellement aucune information à afficher. Ajoute des graphiques pour construire ton tableau de bord.",
         "please_enter_name": "Veuillez saisir un nom de tableau de bord",
+        "stale_description": "Quelqu'un a enregistré des modifications sur ce tableau de bord pendant que tu le modifiais. Recharge la page pour voir sa version et abandonner tes changements, ou enregistre la tienne par-dessus.",
+        "stale_overwrite_removes": "Enregistrer ta version supprimera ces graphiques, qui ont été ajoutés entre-temps :",
+        "stale_reload": "Recharger",
+        "stale_save_anyway": "Enregistrer ma version quand même",
+        "stale_title": "Ce tableau de bord a été modifié depuis que tu as commencé à le modifier",
         "upgrade_prompt_description": "Créez des tableaux de bord analytiques à partir de vos données de retours clients.",
         "upgrade_prompt_title": "Passez à un forfait supérieur pour débloquer les Tableaux de bord",
         "widget_view": "Vue du widget"

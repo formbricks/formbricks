@@ -2064,6 +2064,11 @@
         "no_dashboards_found_description": "建立你的第一個儀表板，以便在同一處整理圖表並監控回饋洞察。",
         "no_data_message": "無資料。目前沒有可顯示的資訊。請新增圖表來建立你的儀表板。",
         "please_enter_name": "請輸入儀表板名稱",
+        "stale_description": "在你編輯這個儀表板時，有人儲存了變更。你可以重新載入以查看對方的版本並捨棄你的變更，或是用你的版本覆蓋過去。",
+        "stale_overwrite_removes": "儲存你的版本會移除這段期間新增的以下圖表：",
+        "stale_reload": "重新載入",
+        "stale_save_anyway": "仍要儲存我的版本",
+        "stale_title": "自你開始編輯後，這個儀表板已被變更",
         "upgrade_prompt_description": "從您的回饋資料建立洞察儀表板。",
         "upgrade_prompt_title": "升級以解鎖儀表板功能",
         "widget_view": "小工具檢視"

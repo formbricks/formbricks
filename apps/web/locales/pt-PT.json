@@ -2064,6 +2064,11 @@
         "no_dashboards_found_description": "Cria o teu primeiro dashboard para organizar gráficos e monitorizar as tuas análises de feedback num só lugar.",
         "no_data_message": "Sem Dados. Atualmente não há informação para apresentar. Adiciona gráficos para construir o teu painel.",
         "please_enter_name": "Por favor, introduza um nome para o painel",
+        "stale_description": "Alguém guardou alterações neste painel enquanto o estavas a editar. Recarrega para veres a versão dessa pessoa e descartares as tuas alterações, ou guarda a tua por cima.",
+        "stale_overwrite_removes": "Se guardares a tua versão, serão removidos estes gráficos, que foram adicionados entretanto:",
+        "stale_reload": "Recarregar",
+        "stale_save_anyway": "Guardar a minha mesmo assim",
+        "stale_title": "Este painel foi alterado desde que começaste a editar",
         "upgrade_prompt_description": "Cria dashboards de insights a partir dos teus dados de feedback.",
         "upgrade_prompt_title": "Faz upgrade para desbloquear Dashboards",
         "widget_view": "Vista de widget"

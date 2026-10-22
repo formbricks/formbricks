@@ -1,6 +1,13 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
-import { buildChartListSearchParams, getChart, listCharts, toAppChart } from "./api-client";
+import {
+  buildChartListSearchParams,
+  getChart,
+  isStaleDashboardError,
+  listCharts,
+  restoreDashboardWidget,
+  toAppChart,
+} from "./api-client";
 
 const resource = {
   id: "clch000000000000000000001",
@@ -79,5 +86,39 @@ describe("analysis api client", () => {
       status: 403,
       code: "dashboards_plan_required",
     });
+  });
+
+  test("tells a stale save apart from a name clash, though both answer 409", () => {
+    const conflict = (details?: Record<string, unknown>) =>
+      new V3ApiError({ status: 409, detail: "Conflict", code: "conflict", details });
+
+    expect(isStaleDashboardError(conflict({ currentUpdatedAt: "2026-10-22T11:30:00.000Z" }))).toBe(true);
+    expect(isStaleDashboardError(conflict())).toBe(false);
+    expect(isStaleDashboardError(new Error("network"))).toBe(false);
+  });
+
+  test("restores a removed widget at its old place, or in the first open slot once that is taken", async () => {
+    const widget = {
+      id: "clwidget00000000000000001",
+      chartId: resource.id,
+      layout: { x: 0, y: 0, w: 4, h: 4 },
+      order: 0,
+      chart: resource,
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        Response.json(
+          { status: 422, title: "Unprocessable", detail: "Overlaps", code: "unprocessable_content" },
+          { status: 422 }
+        )
+      )
+      .mockResolvedValueOnce(Response.json({ data: { ...widget, layout: { x: 4, y: 0, w: 4, h: 4 } } }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const restored = await restoreDashboardWidget("cldash0000000000000000001", widget);
+    expect(restored.layout).toEqual({ x: 4, y: 0, w: 4, h: 4 });
+    const bodies = fetchMock.mock.calls.map(([, init]) => JSON.parse((init as RequestInit).body as string));
+    expect(bodies).toEqual([{ chartId: resource.id, layout: widget.layout }, { chartId: resource.id }]);
   });
 });

@@ -20,6 +20,7 @@ import { DashboardPageHeader } from "@/modules/ee/analysis/dashboards/components
 import { DashboardWidget } from "@/modules/ee/analysis/dashboards/components/dashboard-widget";
 import { DashboardWidgetData } from "@/modules/ee/analysis/dashboards/components/dashboard-widget-data";
 import { DashboardWidgetSkeleton } from "@/modules/ee/analysis/dashboards/components/dashboard-widget-skeleton";
+import { StaleDashboardDialog } from "@/modules/ee/analysis/dashboards/components/stale-dashboard-dialog";
 import {
   ALL_TIME_VALUE,
   CUSTOM_VALUE,
@@ -47,8 +48,10 @@ import {
   type TAppDashboard,
   type TChartDateRangeInput,
   getChartApiErrorMessage,
+  getDashboard,
+  isStaleDashboardError,
   removeDashboardWidget,
-  renameDashboard,
+  replaceDashboard,
   restoreDashboardWidget,
 } from "@/modules/ee/analysis/lib/api-client";
 import { chartKeys, dashboardKeys } from "@/modules/ee/analysis/lib/query";
@@ -56,8 +59,9 @@ import type { TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
-import { duplicateChartAndAddWidgetAction, updateWidgetLayoutsAction } from "../actions";
+import { duplicateChartAndAddWidgetAction } from "../actions";
 import { useDashboard } from "../hooks/use-dashboard";
+import { draftOverLatest, toSavedWidgets, widgetsRemovedByOverwrite } from "../lib/stale-save";
 
 const ROW_HEIGHT = 80;
 
@@ -254,6 +258,11 @@ function DashboardDetailView({
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  // The version the edit started from: what the save sends as its precondition, so a refetch while
+  // editing can never make a save silently overwrite someone else's change.
+  const [editBaseUpdatedAt, setEditBaseUpdatedAt] = useState<string | null>(null);
+  // Set when a save was refused because the dashboard changed meanwhile: its latest version.
+  const [staleLatest, setStaleLatest] = useState<TAppDashboard | null>(null);
   const [editingChartId, setEditingChartId] = useState<string | null>(null);
 
   // A filter pinned in the URL (a shared link, back/forward) wins; otherwise the one this viewer last
@@ -308,8 +317,9 @@ function DashboardDetailView({
     }
 
     setDraftWidgets((current) => current ?? dashboard.widgets);
+    setEditBaseUpdatedAt(dashboard.updatedAt);
     setIsEditing(true);
-  }, [dashboard.widgets, isEditing]);
+  }, [dashboard.widgets, dashboard.updatedAt, isEditing]);
 
   const handleEditChart = useCallback((chartId: string) => {
     setEditingChartId(chartId);
@@ -401,61 +411,84 @@ function DashboardDetailView({
   const handleCancel = useCallback(() => {
     setName(dashboard.name);
     setDraftWidgets(null);
+    setEditBaseUpdatedAt(null);
     setIsEditing(false);
   }, [dashboard]);
+
+  /**
+   * One call saves the name and every widget's place, carrying the `updatedAt` the edit started from.
+   * If the dashboard changed since, nothing is saved and the editor chooses between the latest version
+   * and their own.
+   */
+  const saveDashboard = useCallback(
+    async (baseUpdatedAt: string, savedWidgets: TDashboardWidget[]) => {
+      setIsSaving(true);
+      try {
+        const saved = await replaceDashboard(dashboard.id, {
+          name: name.trim(),
+          updatedAt: baseUpdatedAt,
+          widgets: toSavedWidgets(savedWidgets),
+        });
+        queryClient.setQueryData(dashboardKeys.detail(dashboard.id), saved);
+        void queryClient.invalidateQueries({ queryKey: dashboardKeys.lists() });
+        void queryClient.invalidateQueries({ queryKey: chartKeys.lists() });
+        toast.success(t("workspace.analysis.dashboards.dashboard_saved"));
+        setStaleLatest(null);
+        setDraftWidgets(null);
+        setEditBaseUpdatedAt(null);
+        setIsEditing(false);
+      } catch (error) {
+        if (isStaleDashboardError(error)) {
+          try {
+            setStaleLatest(await getDashboard(dashboard.id));
+          } catch (readError) {
+            toast.error(
+              getChartApiErrorMessage(readError, t("workspace.analysis.dashboards.dashboard_save_failed"))
+            );
+          }
+          return;
+        }
+        toast.error(getChartApiErrorMessage(error, t("workspace.analysis.dashboards.dashboard_save_failed")));
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [dashboard.id, name, queryClient, t]
+  );
 
   const handleSave = useCallback(async () => {
     if (!name.trim()) {
       toast.error(t("workspace.analysis.dashboards.dashboard_name_required"));
       return;
     }
+    await saveDashboard(editBaseUpdatedAt ?? dashboard.updatedAt, widgets);
+  }, [name, saveDashboard, editBaseUpdatedAt, dashboard.updatedAt, widgets, t]);
 
-    setIsSaving(true);
+  /** Discard the edit and show the dashboard as it now is. */
+  const handleReloadLatest = useCallback(() => {
+    if (!staleLatest) return;
+    queryClient.setQueryData(dashboardKeys.detail(dashboard.id), staleLatest);
+    setName(staleLatest.name);
+    setStaleLatest(null);
+    setDraftWidgets(null);
+    setEditBaseUpdatedAt(null);
+    setIsEditing(false);
+    refreshDashboard();
+  }, [staleLatest, queryClient, dashboard.id, refreshDashboard]);
 
-    try {
-      if (name !== dashboard.name) {
-        try {
-          await renameDashboard(dashboard.id, name.trim());
-        } catch (error) {
-          toast.error(
-            getChartApiErrorMessage(error, t("workspace.analysis.dashboards.dashboard_save_failed"))
-          );
-          return;
-        }
-      }
+  /** Save the edit over the latest version, knowing what it removes. */
+  const handleSaveAnyway = useCallback(() => {
+    if (!staleLatest) return;
+    void saveDashboard(staleLatest.updatedAt, draftOverLatest(staleLatest.widgets, widgets));
+  }, [staleLatest, saveDashboard, widgets]);
 
-      if (widgetLayoutsChanged(widgets, dashboard.widgets)) {
-        const widgetUpdates = widgets.map((widget, i) => ({
-          id: widget.id,
-          layout: widget.layout,
-          order: i,
-        }));
-
-        const widgetsResult = await updateWidgetLayoutsAction({
-          workspaceId,
-          dashboardId: dashboard.id,
-          widgets: widgetUpdates,
-        });
-
-        if (!widgetsResult?.data) {
-          const errorMessage = getFormattedErrorMessage(widgetsResult);
-          toast.error(errorMessage);
-          setIsSaving(false);
-          return;
-        }
-      }
-
-      toast.success(t("workspace.analysis.dashboards.dashboard_saved"));
-      await queryClient.invalidateQueries({ queryKey: dashboardKeys.detail(dashboard.id) });
-      void queryClient.invalidateQueries({ queryKey: dashboardKeys.lists() });
-      setDraftWidgets(null);
-      setIsEditing(false);
-    } catch {
-      toast.error(t("workspace.analysis.dashboards.dashboard_save_failed"));
-    } finally {
-      setIsSaving(false);
-    }
-  }, [name, widgets, dashboard, workspaceId, queryClient, t]);
+  const removedByOverwrite = useMemo(
+    () =>
+      staleLatest
+        ? widgetsRemovedByOverwrite(staleLatest.widgets, widgets).map((widget) => widget.chart.name)
+        : [],
+    [staleLatest, widgets]
+  );
 
   // `E` toggles edit mode: it enters from view mode, and inside edit mode it saves when there is
   // something to save and cancels otherwise - the same button the key cap sits on in the control bar.
@@ -550,6 +583,17 @@ function DashboardDetailView({
             onCancel={handleCancel}
           />
         }
+      />
+
+      <StaleDashboardDialog
+        open={staleLatest !== null}
+        removedChartNames={removedByOverwrite}
+        isSaving={isSaving}
+        onReload={handleReloadLatest}
+        onSaveAnyway={handleSaveAnyway}
+        onOpenChange={(open) => {
+          if (!open) setStaleLatest(null);
+        }}
       />
 
       {/* The date range only filters existing charts, so hide it on an empty dashboard where it

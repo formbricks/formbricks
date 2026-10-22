@@ -77,3 +77,58 @@ export const ZV3WidgetUpdateBody = z
     message: "Send a layout, a chartId, or both.",
   });
 export type TV3WidgetUpdateBody = z.infer<typeof ZV3WidgetUpdateBody>;
+
+/** The most widgets a whole-dashboard write carries; far past what a dashboard can show. */
+export const MAX_DASHBOARD_WIDGETS = 250;
+
+/** The dashboard's `updatedAt` from the caller's read: the write is refused with 409 if it changed since. */
+const ZV3ExpectedDashboardUpdatedAt = z.iso.datetime({ offset: true });
+
+const refuseRepeatedWidgets = (widgets: { widgetId: string }[], ctx: z.RefinementCtx) => {
+  const seen = new Set<string>();
+  widgets.forEach(({ widgetId }, index) => {
+    if (seen.has(widgetId)) {
+      ctx.addIssue({ code: "custom", message: "Each widget may appear once.", path: ["widgets", index] });
+    }
+    seen.add(widgetId);
+  });
+};
+
+/**
+ * `PUT /api/v3/dashboards/{dashboardId}`: the name and every widget's place, in one write. A widget left
+ * out of `widgets` is removed — this is the app's save, which sends the whole edited dashboard.
+ */
+export const ZV3DashboardReplaceBody = z
+  .object({
+    name: ZV3DashboardName,
+    updatedAt: ZV3ExpectedDashboardUpdatedAt,
+    widgets: z
+      .array(
+        z
+          .object({
+            widgetId: z.cuid2(),
+            layout: ZV3WidgetLayoutInput,
+            order: z.number().int().min(0).max(MAX_DASHBOARD_WIDGETS),
+          })
+          .strict()
+      )
+      .max(MAX_DASHBOARD_WIDGETS),
+  })
+  .strict()
+  .superRefine((body, ctx) => refuseRepeatedWidgets(body.widgets, ctx));
+export type TV3DashboardReplaceBody = z.infer<typeof ZV3DashboardReplaceBody>;
+
+/**
+ * The MCP rearrange: every current widget's layout, and nothing else. Listing exactly the current
+ * widgets is the rule, so a rearrange can never remove a widget by leaving it out.
+ */
+export const ZV3DashboardLayoutBody = z
+  .object({
+    updatedAt: ZV3ExpectedDashboardUpdatedAt,
+    widgets: z
+      .array(z.object({ widgetId: z.cuid2(), layout: ZV3WidgetLayoutInput }).strict())
+      .max(MAX_DASHBOARD_WIDGETS),
+  })
+  .strict()
+  .superRefine((body, ctx) => refuseRepeatedWidgets(body.widgets, ctx));
+export type TV3DashboardLayoutBody = z.infer<typeof ZV3DashboardLayoutBody>;

@@ -429,6 +429,7 @@ describe("POST /api/mcp", () => {
       "add_chart_to_dashboard",
       "update_widget",
       "remove_chart_from_dashboard",
+      "update_dashboard_layout",
     ]);
     const tools = new Map(message.result.tools.map((tool: { name: string }) => [tool.name, tool]));
     expect(Object.keys((tools.get("create_survey") as any).inputSchema.properties)).toEqual(

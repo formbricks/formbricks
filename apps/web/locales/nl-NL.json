@@ -2064,6 +2064,11 @@
         "no_dashboards_found_description": "Maak je eerste dashboard om grafieken te organiseren en je feedback-inzichten op één plek te monitoren.",
         "no_data_message": "Geen gegevens. Er is momenteel geen informatie om weer te geven. Voeg grafieken toe om je dashboard op te bouwen.",
         "please_enter_name": "Voer een dashboardnaam in",
+        "stale_description": "Iemand heeft wijzigingen in dit dashboard opgeslagen terwijl jij het aan het bewerken was. Laad opnieuw om hun versie te zien en jouw wijzigingen te negeren, of sla jouw versie er overheen op.",
+        "stale_overwrite_removes": "Als je jouw versie opslaat, worden deze grafieken verwijderd die intussen zijn toegevoegd:",
+        "stale_reload": "Opnieuw laden",
+        "stale_save_anyway": "Toch mijn versie opslaan",
+        "stale_title": "Dit dashboard is gewijzigd sinds je begon met bewerken",
         "upgrade_prompt_description": "Bouw inzichtendashboards op basis van je feedbackgegevens.",
         "upgrade_prompt_title": "Upgrade om Dashboards te ontgrendelen",
         "widget_view": "Widgetweergave"

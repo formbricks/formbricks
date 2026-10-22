@@ -2064,6 +2064,11 @@
         "no_dashboards_found_description": "Erstelle dein erstes Dashboard, um Diagramme zu organisieren und deine Feedback-Insights an einem Ort zu überwachen.",
         "no_data_message": "Keine Daten. Es gibt derzeit keine Informationen zum Anzeigen. Füge Diagramme hinzu, um dein Dashboard zu erstellen.",
         "please_enter_name": "Bitte gib einen Dashboard-Namen ein",
+        "stale_description": "Jemand hat Änderungen an diesem Dashboard gespeichert, während Du es bearbeitet hast. Lade neu, um die andere Version zu sehen und Deine Änderungen zu verwerfen, oder speichere Deine Version und überschreibe damit die andere.",
+        "stale_overwrite_removes": "Wenn Du Deine Version speicherst, werden diese Diagramme entfernt, die in der Zwischenzeit hinzugefügt wurden:",
+        "stale_reload": "Neu laden",
+        "stale_save_anyway": "Trotzdem meine Version speichern",
+        "stale_title": "Dieses Dashboard wurde geändert, seit Du mit der Bearbeitung begonnen hast",
         "upgrade_prompt_description": "Erstelle Insights-Dashboards aus deinen Feedback-Daten.",
         "upgrade_prompt_title": "Upgrade durchführen, um Dashboards freizuschalten",
         "widget_view": "Widget-Ansicht"

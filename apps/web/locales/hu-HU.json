@@ -2064,6 +2064,11 @@
         "no_dashboards_found_description": "Hozza létre az első vezérlőpultját, hogy egy helyen rendszerezhesse a diagramokat és figyelhesse meg a visszajelzésekből nyert tapasztalatokat.",
         "no_data_message": "Nincsenek adatok. Jelenleg nincsenek megjelenítendő információk. Adjon hozzá diagramokat a vezérlőpultja összeállításához.",
         "please_enter_name": "Adjon meg egy vezérlőpultnevet",
+        "stale_description": "Valaki módosításokat mentett ezen az irányítópulton, miközben Ön szerkesztette azt. Az újratöltéssel megtekintheti az ő változatát, és elvetheti a saját módosításait, vagy felülírhatja azt a saját változatával.",
+        "stale_overwrite_removes": "Az Ön változatának mentése eltávolítja az alábbi diagramokat, amelyeket időközben hozzáadtak:",
+        "stale_reload": "Újratöltés",
+        "stale_save_anyway": "Saját változat mentése mindenképpen",
+        "stale_title": "Ezt az irányítópultot módosították, mióta Ön megkezdte a szerkesztést",
         "upgrade_prompt_description": "Tapasztalati vezérlőpultok összeállítása a visszajelzések adataiból.",
         "upgrade_prompt_title": "Magasabb csomagra váltás a vezérlőpultok feloldásához",
         "widget_view": "Felületi elem nézet"

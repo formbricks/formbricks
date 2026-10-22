@@ -8,6 +8,7 @@ import {
   getV3Dashboard,
   listV3Dashboards,
   renameV3Dashboard,
+  updateV3DashboardLayout,
 } from "@/app/api/v3/dashboards/lib/operations";
 import {
   addV3DashboardWidget,
@@ -33,6 +34,7 @@ import {
   type TMcpRemoveChartFromDashboardInput,
   type TMcpUpdateChartInput,
   type TMcpUpdateDashboardInput,
+  type TMcpUpdateDashboardLayoutInput,
   type TMcpUpdateWidgetInput,
   ZMcpAddChartToDashboardInput,
   ZMcpChartDataOutput,
@@ -56,6 +58,7 @@ import {
   ZMcpRemoveChartFromDashboardInput,
   ZMcpUpdateChartInput,
   ZMcpUpdateDashboardInput,
+  ZMcpUpdateDashboardLayoutInput,
   ZMcpUpdateWidgetInput,
   ZMcpWidgetOutput,
 } from "./dashboard-schemas";
@@ -426,6 +429,25 @@ export function registerDashboardTools(server: McpServer): void {
     async ({ dashboardId, widgetId }: TMcpRemoveChartFromDashboardInput, ctx) =>
       runMutation(ctx, "deleted", "dashboardWidget", (context) =>
         removeV3DashboardWidget({ dashboardId, widgetId, ...context })
+      )
+  );
+
+  registerScopedTool(
+    server,
+    "update_dashboard_layout",
+    {
+      title: "Rearrange dashboard",
+      description:
+        "Move and resize every widget on a dashboard at once, as one change. List every current widget exactly once — a rearrange never removes a widget, and a list that leaves one out is refused. Pass the updatedAt from get_dashboard; if the dashboard changed since, nothing is saved.",
+      inputSchema: ZMcpUpdateDashboardLayoutInput,
+      outputSchema: ZMcpDashboardOutput,
+      audit: { action: "updated", targetType: "dashboard", targetIdArg: "dashboardId" },
+      annotations: WRITE_ANNOTATIONS,
+    },
+    ["dashboards:write"],
+    async ({ dashboardId, ...body }: TMcpUpdateDashboardLayoutInput, ctx) =>
+      runMutation(ctx, "updated", "dashboard", (context) =>
+        updateV3DashboardLayout({ dashboardId, body, ...context })
       )
   );
 }

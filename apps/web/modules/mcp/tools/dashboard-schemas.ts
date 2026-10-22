@@ -245,3 +245,25 @@ export const ZMcpRemoveChartFromDashboardInput = z
 export type TMcpRemoveChartFromDashboardInput = z.infer<typeof ZMcpRemoveChartFromDashboardInput>;
 
 export const ZMcpWidgetOutput = mcpToolOutput(ZV3DashboardWidget);
+
+export const ZMcpUpdateDashboardLayoutInput = z
+  .object({
+    dashboardId: ZId.describe("The dashboard to rearrange."),
+    updatedAt: z.iso
+      .datetime({ offset: true })
+      .describe(
+        "The dashboard's updatedAt from your get_dashboard read. If it changed since, nothing is saved: read it again and retry."
+      ),
+    widgets: z
+      .array(
+        z
+          .object({
+            widgetId: ZId.describe("A widget from get_dashboard."),
+            layout: ZMcpWidgetLayout,
+          })
+          .strict()
+      )
+      .describe("Every widget on the dashboard, each exactly once, with its new layout."),
+  })
+  .strict();
+export type TMcpUpdateDashboardLayoutInput = z.infer<typeof ZMcpUpdateDashboardLayoutInput>;

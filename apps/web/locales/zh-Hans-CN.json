@@ -2064,6 +2064,11 @@
         "no_dashboards_found_description": "创建你的第一个仪表板，将图表整理在一起，集中监控反馈洞察。",
         "no_data_message": "暂无数据。当前没有可显示的信息。请添加图表来构建你的仪表板。",
         "please_enter_name": "请输入 Dashboard 名称",
+        "stale_description": "在你编辑期间，有人保存了对此看板的更改。你可以重新加载以查看对方的版本并放弃你的更改，也可以直接用你的版本覆盖。",
+        "stale_overwrite_removes": "保存你的版本将移除以下期间新增的图表：",
+        "stale_reload": "重新加载",
+        "stale_save_anyway": "仍然保存我的版本",
+        "stale_title": "自你开始编辑后，此看板已被更改",
         "upgrade_prompt_description": "从您的反馈数据构建洞察仪表板。",
         "upgrade_prompt_title": "升级以解锁仪表板",
         "widget_view": "小部件视图"

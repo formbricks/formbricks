@@ -4519,6 +4519,85 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+    put:
+      operationId: replaceDashboardV3
+      summary: Save a whole dashboard
+      description: |
+        Replaces a dashboard's name and every widget's place in one transaction — all of it or none of
+        it. A widget left out is removed; its chart is kept. Widgets may leave gaps but not overlap (422).
+        Send the `updatedAt` from your read: if the dashboard changed since, the save is refused with 409
+        and nothing is written. Needs write access to the dashboard's workspace.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardReplaceRequest'
+      responses:
+        '200':
+          description: The saved dashboard
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          description: 'Conflict — the dashboard changed since your read, or the name is already used in the workspace. Nothing was written. For a changed dashboard, `details` carries `expectedUpdatedAt` and the live `currentUpdatedAt`: read it again and retry.'
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                title: Conflict
+                status: 409
+                detail: The dashboard changed since your read, so nothing was saved. Read it again, then retry.
+                code: conflict
+                requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                details:
+                  expectedUpdatedAt: '2026-10-22T10:00:00.000Z'
+                  currentUpdatedAt: '2026-10-22T11:30:00.000Z'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
     delete:
       operationId: deleteDashboardV3
       summary: Delete a dashboard
@@ -11900,6 +11979,42 @@ components:
           type: string
           format: date-time
           description: Changes on every rename, save and widget change. Send it back on a full update to be told if the dashboard changed in between.
+      additionalProperties: false
+    DashboardReplaceRequest:
+      type: object
+      description: 'The whole edited dashboard: its name and every widget''s place. A widget left out of `widgets` is removed (its chart is kept). `updatedAt` is the dashboard''s `updatedAt` from your read; if it changed since, nothing is saved.'
+      required:
+        - name
+        - updatedAt
+        - widgets
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        updatedAt:
+          type: string
+          format: date-time
+        widgets:
+          type: array
+          maxItems: 250
+          items:
+            type: object
+            required:
+              - widgetId
+              - layout
+              - order
+            properties:
+              widgetId:
+                type: string
+                format: cuid2
+              layout:
+                $ref: '#/components/schemas/WidgetLayout'
+              order:
+                type: integer
+                minimum: 0
+                maximum: 250
+            additionalProperties: false
       additionalProperties: false
     DashboardRenameRequest:
       type: object

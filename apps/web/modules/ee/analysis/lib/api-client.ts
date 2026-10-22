@@ -322,10 +322,26 @@ export const createDashboard = async ({
     await readData<TV3DashboardResource>(await sendJson("POST", DASHBOARDS_PATH, { workspaceId, name }))
   );
 
-export const renameDashboard = async (dashboardId: string, name: string): Promise<TAppDashboard> =>
+/**
+ * Saves the whole edited dashboard — its name and every widget's place — in one call. `updatedAt` is the
+ * version the edit started from; if the dashboard changed since, nothing is saved and the call throws
+ * the 409 `isStaleDashboardError` recognises. A widget left out is removed.
+ */
+export const replaceDashboard = async (
+  dashboardId: string,
+  dashboard: {
+    name: string;
+    updatedAt: string;
+    widgets: { widgetId: string; layout: TDashboardWidget["layout"]; order: number }[];
+  }
+): Promise<TAppDashboard> =>
   toAppDashboard(
-    await readData<TV3DashboardResource>(await sendJson("PATCH", dashboardPath(dashboardId), { name }))
+    await readData<TV3DashboardResource>(await sendJson("PUT", dashboardPath(dashboardId), dashboard))
   );
+
+/** The dashboard changed after the caller read it, so a save carrying the old `updatedAt` was refused. */
+export const isStaleDashboardError = (error: unknown): boolean =>
+  error instanceof V3ApiError && error.status === 409 && typeof error.details?.currentUpdatedAt === "string";
 
 /** A copy whose widgets point at the same charts; without a `name` the server picks the "(copy)" one. */
 export const duplicateDashboard = async (dashboardId: string, name?: string): Promise<TAppDashboard> =>

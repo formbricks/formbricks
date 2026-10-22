@@ -1,6 +1,5 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { TWidgetLayout } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
@@ -9,7 +8,6 @@ import {
   retryOnTransactionConflict,
 } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
-import { selectChart } from "@/modules/ee/analysis/charts/lib/charts";
 import {
   TAddWidgetInput,
   TChartType,
@@ -25,40 +23,6 @@ const selectDashboard = {
   updatedAt: true,
   createdBy: true,
 } as const;
-
-export const getDashboard = async (dashboardId: string, workspaceId: string) => {
-  validateInputs([dashboardId, ZId], [workspaceId, ZId]);
-
-  try {
-    const dashboard = await prisma.dashboard.findFirst({
-      where: { id: dashboardId, workspaceId },
-      include: {
-        widgets: {
-          orderBy: { order: "asc" },
-          include: {
-            chart: {
-              select: selectChart,
-            },
-          },
-        },
-      },
-    });
-
-    if (!dashboard) {
-      throw new ResourceNotFoundError("Dashboard", dashboardId);
-    }
-
-    return dashboard;
-  } catch (error) {
-    if (error instanceof ResourceNotFoundError) {
-      throw error;
-    }
-    if (isPrismaKnownRequestError(error)) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-};
 
 export const getDashboards = async (
   workspaceId: string,
@@ -89,66 +53,6 @@ export const getDashboards = async (
       containsChart: (widgets?.length ?? 0) > 0,
     }));
   } catch (error) {
-    if (isPrismaKnownRequestError(error)) {
-      throw new DatabaseError(error.message);
-    }
-    throw error;
-  }
-};
-
-export const updateWidgetLayouts = async (
-  dashboardId: string,
-  workspaceId: string,
-  widgets: { id: string; layout: TWidgetLayout; order: number }[]
-): Promise<{ widgetCount: number }> => {
-  validateInputs([dashboardId, ZId], [workspaceId, ZId]);
-
-  try {
-    return await prisma.$transaction(
-      async (tx) => {
-        const dashboard = await tx.dashboard.findFirst({
-          where: { id: dashboardId, workspaceId },
-          include: { widgets: { select: { id: true } } },
-        });
-
-        if (!dashboard) {
-          throw new ResourceNotFoundError("Dashboard", dashboardId);
-        }
-
-        const existingWidgetIds = new Set(dashboard.widgets.map((w) => w.id));
-        const updatedWidgetIds = new Set(widgets.map((w) => w.id));
-        const invalidIds = widgets.filter((w) => !existingWidgetIds.has(w.id)).map((w) => w.id);
-        if (invalidIds.length > 0) {
-          throw new InvalidInputError(`Invalid widget IDs: ${invalidIds.join(", ")}`);
-        }
-
-        const removedWidgetIds = dashboard.widgets
-          .filter((w) => !updatedWidgetIds.has(w.id))
-          .map((w) => w.id);
-
-        await Promise.all([
-          ...widgets.map((widget) =>
-            tx.dashboardWidget.update({
-              where: { id: widget.id },
-              data: {
-                layout: widget.layout,
-                order: widget.order,
-              },
-            })
-          ),
-          ...(removedWidgetIds.length > 0
-            ? [tx.dashboardWidget.deleteMany({ where: { id: { in: removedWidgetIds } } })]
-            : []),
-        ]);
-
-        return { widgetCount: widgets.length };
-      },
-      { isolationLevel: "Serializable" }
-    );
-  } catch (error) {
-    if (error instanceof ResourceNotFoundError || error instanceof InvalidInputError) {
-      throw error;
-    }
     if (isPrismaKnownRequestError(error)) {
       throw new DatabaseError(error.message);
     }

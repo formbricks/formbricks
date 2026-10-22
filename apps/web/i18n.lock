@@ -1993,6 +1993,11 @@ checksums:
     workspace/analysis/dashboards/no_dashboards_found_description: d5b83ba325d50cf69d8f0258981357ce
     workspace/analysis/dashboards/no_data_message: 464d50cf30281a5b6af2726846eb14b4
     workspace/analysis/dashboards/please_enter_name: b9211ed8a0882c0e0109beba48685d68
+    workspace/analysis/dashboards/stale_description: 1121ce6eb8eceb3151f3dc2596cd68c5
+    workspace/analysis/dashboards/stale_overwrite_removes: eebe816783653c081af3f5f799e0cdfc
+    workspace/analysis/dashboards/stale_reload: b2ade3e814cfd4cf6bcce526e70bcb34
+    workspace/analysis/dashboards/stale_save_anyway: bee56f4b85457c1c692851b8a5c49c01
+    workspace/analysis/dashboards/stale_title: 3225dec0fef3d3d84e61f3d7f92dcd70
     workspace/analysis/dashboards/upgrade_prompt_description: 738cf2e2aa5365b1199d11b683505050
     workspace/analysis/dashboards/upgrade_prompt_title: eef434745b5ef7ecc7f49a16e67e5a7a
     workspace/analysis/dashboards/widget_view: 3104ba698f31ac027f53195f44427f28

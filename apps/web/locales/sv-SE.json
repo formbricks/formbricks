@@ -2064,6 +2064,11 @@
         "no_dashboards_found_description": "Skapa din första instrumentpanel för att organisera diagram och övervaka dina feedbackinsikter på ett ställe.",
         "no_data_message": "Ingen data. Det finns för närvarande ingen information att visa. Lägg till diagram för att bygga din instrumentpanel.",
         "please_enter_name": "Ange ett namn på instrumentpanelen",
+        "stale_description": "Någon har sparat ändringar i den här instrumentpanelen medan du redigerade den. Ladda om för att se deras version och förkasta dina ändringar, eller spara din version över den.",
+        "stale_overwrite_removes": "Om du sparar din version tas de här diagrammen bort, eftersom de lades till under tiden:",
+        "stale_reload": "Ladda om",
+        "stale_save_anyway": "Spara min version ändå",
+        "stale_title": "Den här instrumentpanelen har ändrats sedan du började redigera",
         "upgrade_prompt_description": "Bygg insikter med dashboards från din feedbackdata.",
         "upgrade_prompt_title": "Uppgradera för att låsa upp Dashboards",
         "widget_view": "Widgetvy"

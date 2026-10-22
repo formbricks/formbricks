@@ -2064,6 +2064,11 @@
         "no_dashboards_found_description": "Creează primul tău panou pentru a organiza graficele și a monitoriza informațiile despre feedback într-un singur loc.",
         "no_data_message": "Fără date. În prezent nu există informații de afișat. Adaugă grafice pentru a-ți construi tabloul de bord.",
         "please_enter_name": "Te rugăm să introduci un nume pentru tablou de bord",
+        "stale_description": "Cineva a salvat modificări în acest tablou de bord în timp ce îl editai. Reîncarcă pagina pentru a vedea versiunea lor și a renunța la modificările tale sau salvează-le pe ale tale peste ea.",
+        "stale_overwrite_removes": "Dacă salvezi versiunea ta, vor fi eliminate aceste grafice, adăugate între timp:",
+        "stale_reload": "Reîncarcă",
+        "stale_save_anyway": "Salvează-le pe ale mele oricum",
+        "stale_title": "Acest tablou de bord a fost modificat de când ai început să-l editezi",
         "upgrade_prompt_description": "Creează tablouri de bord cu informații utile din datele tale de feedback.",
         "upgrade_prompt_title": "Actualizează pentru a debloca Dashboardurile",
         "widget_view": "Vizualizare widget"

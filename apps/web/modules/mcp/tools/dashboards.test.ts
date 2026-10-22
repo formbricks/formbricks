@@ -9,6 +9,7 @@ import {
   getV3Dashboard,
   listV3Dashboards,
   renameV3Dashboard,
+  updateV3DashboardLayout,
 } from "@/app/api/v3/dashboards/lib/operations";
 import {
   addV3DashboardWidget,
@@ -38,6 +39,7 @@ vi.mock("@/app/api/v3/dashboards/lib/operations", () => ({
   getV3Dashboard: vi.fn(),
   listV3Dashboards: vi.fn(),
   renameV3Dashboard: vi.fn(),
+  updateV3DashboardLayout: vi.fn(),
 }));
 vi.mock("@/app/api/v3/dashboards/lib/widget-operations", () => ({
   addV3DashboardWidget: vi.fn(),
@@ -342,5 +344,25 @@ describe("chart and dashboard MCP tools", () => {
   test("remove_chart_from_dashboard says the chart is kept", () => {
     const description = String(createToolServer().get("remove_chart_from_dashboard")?.config.description);
     expect(description).toMatch(/chart itself is kept/);
+  });
+
+  test("update_dashboard_layout needs dashboards:write and passes the precondition through", async () => {
+    vi.mocked(updateV3DashboardLayout).mockResolvedValue(successResponse({}, { requestId: "req" }));
+    const input = {
+      dashboardId: DASHBOARD_ID,
+      updatedAt: "2026-10-22T10:00:00.000Z",
+      widgets: [{ widgetId: WIDGET_ID, layout: { x: 0, y: 0, w: 12, h: 4 } }],
+    };
+
+    expect((await call("update_dashboard_layout", input, ["dashboards:read"])).isError).toBe(true);
+    expect(updateV3DashboardLayout).not.toHaveBeenCalled();
+
+    await call("update_dashboard_layout", input, ["dashboards:write"]);
+    expect(updateV3DashboardLayout).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dashboardId: DASHBOARD_ID,
+        body: { updatedAt: input.updatedAt, widgets: input.widgets },
+      })
+    );
   });
 });

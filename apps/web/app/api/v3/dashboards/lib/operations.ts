@@ -15,6 +15,7 @@ import {
   problemBadRequest,
   problemConflict,
   problemForbidden,
+  problemUnprocessableContent,
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
@@ -25,8 +26,10 @@ import { type TV3DashboardOperationContext, authorizeLoadedDashboard } from "./a
 import type {
   TV3DashboardCreateBody,
   TV3DashboardDuplicateBody,
+  TV3DashboardLayoutBody,
   TV3DashboardListQuery,
   TV3DashboardRenameBody,
+  TV3DashboardReplaceBody,
 } from "./schemas";
 import { serializeV3Dashboard, serializeV3DashboardListItem } from "./serializers";
 import {
@@ -35,9 +38,11 @@ import {
   deleteDashboardRow,
   duplicateDashboardRow,
   getDashboardResourceRow,
+  getDashboardWorkspaceRow,
   listDashboardRows,
   renameDashboardRow,
 } from "./service";
+import { type TDashboardReplaceResult, replaceDashboardRow } from "./widget-service";
 
 type TV3DashboardWriteContext = TV3DashboardOperationContext & { auditLog?: TV3AuditLog };
 
@@ -351,5 +356,150 @@ export async function deleteV3Dashboard({
     return noContentResponse({ requestId });
   } catch (error) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: "dashboards.delete" });
+  }
+}
+
+/** A whole-dashboard write that did not happen, as the response that says why. */
+const refuseDashboardReplace = (
+  result: Exclude<TDashboardReplaceResult, { kind: "ok" }>,
+  expectedUpdatedAt: string,
+  { requestId, instance }: TV3DashboardOperationContext
+): Response => {
+  const widgetsProblem = (reason: string) =>
+    problemUnprocessableContent(requestId, "The widgets do not match the dashboard", {
+      instance,
+      invalid_params: [{ name: "widgets", reason }],
+    });
+
+  switch (result.kind) {
+    case "gone":
+      return problemForbidden(requestId, undefined, instance);
+    case "stale":
+      return problemConflict(
+        requestId,
+        "The dashboard changed since your read, so nothing was saved. Read it again, then retry.",
+        instance,
+        { details: { expectedUpdatedAt, currentUpdatedAt: result.currentUpdatedAt.toISOString() } }
+      );
+    case "unknownWidgets":
+      return widgetsProblem(`Not on this dashboard: ${result.widgetIds.join(", ")}.`);
+    case "missingWidgets":
+      return widgetsProblem(
+        `List every widget on the dashboard; missing: ${result.widgetIds.join(", ")}. A rearrange never removes a widget — take a chart off the dashboard by removing its widget.`
+      );
+    case "overlap":
+      return problemUnprocessableContent(requestId, "Two widgets overlap", {
+        instance,
+        invalid_params: [
+          {
+            name: "widgets",
+            reason: `Widgets ${result.widgetIds[0]} and ${result.widgetIds[1]} overlap. Widgets may leave gaps but not overlap.`,
+          },
+        ],
+      });
+  }
+};
+
+/** Runs a whole-dashboard write and answers with the dashboard, or with why it was refused. */
+const runDashboardReplace = async (
+  {
+    dashboardId,
+    expectedUpdatedAt,
+    auditLog,
+    context,
+  }: {
+    dashboardId: string;
+    expectedUpdatedAt: string;
+    auditLog?: TV3AuditLog;
+    context: TV3DashboardOperationContext;
+  },
+  write: () => Promise<TDashboardReplaceResult>
+): Promise<Response> => {
+  const loaded = await authorizeLoadedDashboard(
+    await getDashboardWorkspaceRow(dashboardId),
+    "readWrite",
+    context
+  );
+  if (loaded instanceof Response) return loaded;
+
+  let result: TDashboardReplaceResult;
+  try {
+    result = await write();
+  } catch (error) {
+    if (isUniqueConstraintError(error)) return dashboardNameTaken(context);
+    throw error;
+  }
+  if (result.kind !== "ok") return refuseDashboardReplace(result, expectedUpdatedAt, context);
+
+  const dashboard = serializeV3Dashboard(result.row);
+  if (auditLog) {
+    auditLog.targetId = dashboard.id;
+    auditLog.organizationId = loaded.access.organizationId;
+    auditLog.oldObject = result.previous;
+    auditLog.newObject = {
+      name: dashboard.name,
+      widgets: dashboard.widgets.map(({ id, layout, order }) => ({ id, layout, order })),
+    };
+  }
+
+  return successResponse(dashboard, { requestId: context.requestId });
+};
+
+/**
+ * `PUT /api/v3/dashboards/{dashboardId}` → 200 `{ data }`: the name and every widget's place in one
+ * transaction, or nothing. Widgets left out are removed. A stale `updatedAt` answers 409 with the
+ * current one in `details`.
+ */
+export async function replaceV3Dashboard({
+  dashboardId,
+  body,
+  auditLog,
+  ...context
+}: TV3DashboardWriteContext & { dashboardId: string; body: TV3DashboardReplaceBody }): Promise<Response> {
+  const { requestId, instance } = context;
+  const log = logger.withContext({ requestId, dashboardId });
+
+  try {
+    return await runDashboardReplace(
+      { dashboardId, expectedUpdatedAt: body.updatedAt, auditLog, context },
+      () =>
+        replaceDashboardRow({
+          dashboardId,
+          expectedUpdatedAt: new Date(body.updatedAt),
+          name: body.name,
+          widgets: body.widgets,
+        })
+    );
+  } catch (error) {
+    return mapV3ThrownError(error, { log, requestId, instance, operation: "dashboards.replace" });
+  }
+}
+
+/**
+ * The MCP rearrange: moves and resizes every widget at once, keeping the name and the order. Refused
+ * unless it lists exactly the current widgets, so it never removes one by leaving it out.
+ */
+export async function updateV3DashboardLayout({
+  dashboardId,
+  body,
+  auditLog,
+  ...context
+}: TV3DashboardWriteContext & { dashboardId: string; body: TV3DashboardLayoutBody }): Promise<Response> {
+  const { requestId, instance } = context;
+  const log = logger.withContext({ requestId, dashboardId });
+
+  try {
+    return await runDashboardReplace(
+      { dashboardId, expectedUpdatedAt: body.updatedAt, auditLog, context },
+      () =>
+        replaceDashboardRow({
+          dashboardId,
+          expectedUpdatedAt: new Date(body.updatedAt),
+          widgets: body.widgets,
+          requireEveryWidget: true,
+        })
+    );
+  } catch (error) {
+    return mapV3ThrownError(error, { log, requestId, instance, operation: "dashboards.layout" });
   }
 }
