@@ -1,7 +1,7 @@
 "use client";
 
 import { MinusIcon, PlusIcon } from "lucide-react";
-import { type KeyboardEvent, useRef, useState } from "react";
+import { type KeyboardEvent, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
@@ -43,7 +43,8 @@ export const NumberStepper = ({
   // Typed text only exists while the user is editing; otherwise the field shows `value`, so
   // outside changes (buttons, parent updates) need no syncing.
   const [editing, setEditing] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const fallbackId = useId();
+  const inputId = id ?? fallbackId;
   const draft = editing ?? String(value);
 
   const commit = (next: number) => {
@@ -85,22 +86,13 @@ export const NumberStepper = ({
         <MinusIcon />
       </Button>
       {/*
-        A press anywhere between the buttons focuses the input, not only one on its few digits. Not a
-        wrapping <label>: the field's own label points at the input, and a second one would add the
-        digits and unit to its accessible name.
+        A press anywhere between the buttons lands on the input: it fills the space up to the unit,
+        and the unit is a label for it. That label adds only the unit to the field's name; a label
+        wrapping the input would add its digits too.
       */}
-      <div
-        role="presentation"
-        className="flex min-w-0 flex-1 cursor-text items-center justify-center gap-1 px-2"
-        onMouseDown={(event) => {
-          if (disabled || event.target === inputRef.current) return;
-          // Keeps the press from blurring the input again once it has focus.
-          event.preventDefault();
-          inputRef.current?.focus();
-        }}>
+      <div className="flex min-w-0 flex-1 items-stretch">
         <input
-          ref={inputRef}
-          id={id}
+          id={inputId}
           role="spinbutton"
           inputMode="decimal"
           aria-valuenow={value}
@@ -114,11 +106,23 @@ export const NumberStepper = ({
           onChange={(event) => setEditing(event.target.value)}
           onBlur={() => commit(commitStepperInput(draft, value, bounds))}
           onKeyDown={onKeyDown}
-          // `border-0 p-0`: the forms plugin's input padding would leave no room for the digits.
-          className="w-full min-w-0 border-0 bg-transparent p-0 text-right text-sm font-medium text-slate-800 tabular-nums shadow-none outline-hidden focus:ring-0 disabled:cursor-not-allowed"
-          style={{ maxWidth: `${Math.max(draft.length, 1) + 1}ch` }}
+          // `border-0 py-0`: the forms plugin's input padding would leave no room for the digits. With a
+          // unit, the digits end at the middle and the unit starts there, so the pair stays centred.
+          className={cn(
+            "min-w-0 flex-1 basis-0 border-0 bg-transparent py-0 pl-2 text-sm font-medium text-slate-800 tabular-nums shadow-none outline-hidden focus:ring-0 disabled:cursor-not-allowed",
+            unit ? "pr-0 text-right" : "pr-2 text-center"
+          )}
         />
-        {unit && <span className="text-sm text-slate-500">{unit}</span>}
+        {unit && (
+          <label
+            htmlFor={inputId}
+            className={cn(
+              "flex flex-1 basis-0 items-center pr-2 pl-1 text-sm text-slate-500",
+              disabled ? "cursor-not-allowed" : "cursor-text"
+            )}>
+            {unit}
+          </label>
+        )}
       </div>
       <Button
         type="button"
