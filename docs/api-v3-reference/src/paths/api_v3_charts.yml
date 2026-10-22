@@ -70,3 +70,62 @@ get:
     - sessionAuth: []
     - apiKeyAuth: []
     - bearerAuth: []
+post:
+  operationId: createChartV3
+  summary: Create a chart
+  description: |
+    Creates a chart on a Feedback Dataset. The chart query goes through the chart query validator
+    (422 naming each problem); write it against `GET /api/v3/charts/fields` and check it with
+    `POST /api/v3/charts/preview` first. Needs write access to the workspace and to the Feedback
+    Dataset. A name already used in the workspace answers 409.
+  tags:
+    - V3 Charts
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/ChartCreateRequest.yml
+  responses:
+    "201":
+      description: Chart created
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+        Location:
+          schema:
+            type: string
+          example: /api/v3/charts/clchart000000000000000001
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/ChartResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "409":
+      $ref: ../components/responses/V3DashboardsConflict.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

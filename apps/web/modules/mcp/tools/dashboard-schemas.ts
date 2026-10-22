@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZV3ChartData, ZV3ChartFieldCatalog, ZV3ChartResource } from "@/app/api/v3/charts/lib/resources";
-import { V3_NAME_MAX_LENGTH } from "@/app/api/v3/charts/lib/schemas";
+import { V3_NAME_MAX_LENGTH, ZV3ChartConfig, ZV3ChartName } from "@/app/api/v3/charts/lib/schemas";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 import { mcpToolOutput } from "./output-schemas";
 
@@ -101,3 +101,29 @@ export const ZMcpPreviewChartInput = z
 export type TMcpPreviewChartInput = z.infer<typeof ZMcpPreviewChartInput>;
 
 export const ZMcpChartDataOutput = mcpToolOutput(ZV3ChartData);
+
+const ZMcpChartConfig = ZV3ChartConfig.describe(
+  "Display settings, separate from the query: e.g. showLegend, stacked, barOrientation (vertical|horizontal), pieDisplay (pie|breakdown), areaDisplay (filled|line), colors, axis labels."
+);
+
+export const ZMcpCreateChartInput = z
+  .object({
+    ...datasetScope,
+    name: ZV3ChartName.describe("Chart name, unique within the workspace."),
+    type: ZMcpChartType,
+    query: ZMcpChartQuery,
+    config: ZMcpChartConfig.optional(),
+  })
+  .strict();
+export type TMcpCreateChartInput = z.infer<typeof ZMcpCreateChartInput>;
+
+export const ZMcpUpdateChartInput = z
+  .object({
+    chartId: ZId.describe("The chart to edit."),
+    name: ZV3ChartName.optional().describe("New name, unique within the workspace."),
+    type: ZMcpChartType.optional(),
+    query: ZMcpChartQuery.optional(),
+    config: ZMcpChartConfig.optional().describe("Replaces the display settings whole."),
+  })
+  .strict();
+export type TMcpUpdateChartInput = z.infer<typeof ZMcpUpdateChartInput>;

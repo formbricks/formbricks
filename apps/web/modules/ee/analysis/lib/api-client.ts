@@ -1,4 +1,4 @@
-import type { TChartQuery } from "@formbricks/types/analysis";
+import type { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
 import type { TV3ChartData, TV3ChartResource } from "@/app/api/v3/charts/lib/resources";
 import { V3ApiError, parseV3ApiError } from "@/modules/api/lib/v3-client";
 import type { TChartDataRow, TChartType, TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
@@ -141,3 +141,37 @@ export const getChartApiErrorMessage = (error: unknown, fallback: string): strin
   const firstReason = error.invalid_params?.[0]?.reason;
   return firstReason ? `${error.detail} ${firstReason}` : error.detail || fallback;
 };
+
+const sendJson = (method: "POST" | "PATCH" | "PUT", path: string, body: unknown): Promise<Response> =>
+  fetch(path, {
+    method,
+    cache: "no-store",
+    headers: JSON_HEADERS,
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
+  });
+
+export type TChartWriteInput = {
+  name: string;
+  type: TChartType;
+  query: TChartQuery;
+  config: TChartConfig;
+};
+
+export const createChart = async ({
+  workspaceId,
+  datasetId,
+  ...chart
+}: TChartWriteInput & { workspaceId: string; datasetId: string }): Promise<TAppChart> =>
+  toAppChart(
+    await readData<TV3ChartResource>(
+      await sendJson("POST", CHARTS_PATH, { workspaceId, datasetId, ...chart })
+    )
+  );
+
+export const updateChart = async (chartId: string, update: Partial<TChartWriteInput>): Promise<TAppChart> =>
+  toAppChart(
+    await readData<TV3ChartResource>(
+      await sendJson("PATCH", `${CHARTS_PATH}/${encodeURIComponent(chartId)}`, update)
+    )
+  );

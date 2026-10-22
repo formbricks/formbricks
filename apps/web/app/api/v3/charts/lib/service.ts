@@ -78,3 +78,31 @@ export const listChartResourceRows = ({
     select: selectChartResource,
   });
 };
+
+export type TChartWrite = {
+  name: string;
+  type: TChartResourceRow["type"];
+  query: Prisma.InputJsonValue;
+  config: Prisma.InputJsonValue;
+};
+
+/** Create a chart; a name already used in the workspace surfaces as Prisma's unique-constraint error. */
+export const createChartRow = (
+  data: TChartWrite & { workspaceId: string; datasetId: string; createdBy: string | null }
+): Promise<TChartResourceRow> =>
+  prisma.chart.create({
+    data: {
+      name: data.name,
+      type: data.type,
+      query: data.query,
+      config: data.config,
+      workspaceId: data.workspaceId,
+      feedbackDirectoryId: data.datasetId,
+      createdBy: data.createdBy,
+    },
+    select: selectChartResource,
+  });
+
+/** Update an authorized chart in place. Its workspace and Feedback Dataset never change. */
+export const updateChartRow = (chartId: string, data: Partial<TChartWrite>): Promise<TChartResourceRow> =>
+  prisma.chart.update({ where: { id: chartId }, data, select: selectChartResource });

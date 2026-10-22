@@ -14,6 +14,14 @@ export const READ_ANNOTATIONS = {
   openWorldHint: true,
 } as const;
 
+/** Write tools that create or change something, never delete it, and are not safe to repeat blindly. */
+export const WRITE_ANNOTATIONS = {
+  readOnlyHint: false,
+  destructiveHint: false,
+  idempotentHint: false,
+  openWorldHint: true,
+} as const;
+
 /** The context every tool derives the same way, so no tool invents its own request id. */
 export const toolContext = (ctx: TMcpToolContext) => {
   const authInfo = getMcpToolAuthInfo(ctx);

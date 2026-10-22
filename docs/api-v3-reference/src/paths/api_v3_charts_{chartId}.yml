@@ -44,3 +44,60 @@ get:
     - sessionAuth: []
     - apiKeyAuth: []
     - bearerAuth: []
+patch:
+  operationId: updateChartV3
+  summary: Update a chart
+  description: |
+    Edits a chart's name, type, chart query or display settings. The chart may sit on several
+    dashboards (`dashboards` in the response), and the edit shows on every one of them — duplicate
+    the chart and repoint one dashboard's widget to change it there only. A chart's Feedback Dataset
+    cannot change. Needs write access to the chart's workspace.
+  tags:
+    - V3 Charts
+  parameters:
+    - $ref: ../components/parameters/ChartIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/ChartUpdateRequest.yml
+  responses:
+    "200":
+      description: The updated chart
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/ChartResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "409":
+      $ref: ../components/responses/V3DashboardsConflict.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

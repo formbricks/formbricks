@@ -3856,6 +3856,65 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+    post:
+      operationId: createChartV3
+      summary: Create a chart
+      description: |
+        Creates a chart on a Feedback Dataset. The chart query goes through the chart query validator
+        (422 naming each problem); write it against `GET /api/v3/charts/fields` and check it with
+        `POST /api/v3/charts/preview` first. Needs write access to the workspace and to the Feedback
+        Dataset. A name already used in the workspace answers 409.
+      tags:
+        - V3 Charts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChartCreateRequest'
+      responses:
+        '201':
+          description: Chart created
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+            Location:
+              schema:
+                type: string
+              example: /api/v3/charts/clchart000000000000000001
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ChartResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          $ref: '#/components/responses/V3DashboardsConflict'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/charts/fields:
     get:
       operationId: listChartFieldsV3
@@ -4006,6 +4065,63 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3DashboardsForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+    patch:
+      operationId: updateChartV3
+      summary: Update a chart
+      description: |
+        Edits a chart's name, type, chart query or display settings. The chart may sit on several
+        dashboards (`dashboards` in the response), and the edit shows on every one of them — duplicate
+        the chart and repoint one dashboard's widget to change it there only. A chart's Feedback Dataset
+        cannot change. Needs write access to the chart's workspace.
+      tags:
+        - V3 Charts
+      parameters:
+        - $ref: '#/components/parameters/ChartIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChartUpdateRequest'
+      responses:
+        '200':
+          description: The updated chart
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ChartResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '409':
+          $ref: '#/components/responses/V3DashboardsConflict'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
         '429':
           $ref: '#/components/responses/V3TooManyRequests'
         '500':
@@ -10785,6 +10901,41 @@ components:
           type: string
           format: date-time
       additionalProperties: false
+    ChartCreateRequest:
+      type: object
+      required:
+        - workspaceId
+        - datasetId
+        - name
+        - type
+        - query
+      properties:
+        workspaceId:
+          type: string
+          format: cuid2
+        datasetId:
+          type: string
+          format: cuid2
+          description: The Feedback Dataset the chart reads. Needs write access to it from `workspaceId`. Fixed once the chart exists.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+          description: Unique within the workspace; leading and trailing spaces are trimmed.
+        type:
+          type: string
+          enum:
+            - area
+            - bar
+            - pie
+            - big_number
+            - matrix
+          description: '`matrix` is refused with 422 while an instance''s online upgrade to 6.1 is unfinished.'
+        query:
+          $ref: '#/components/schemas/ChartQuery'
+        config:
+          $ref: '#/components/schemas/ChartConfig'
+      additionalProperties: false
     ChartField:
       type: object
       description: One field a chart query may use. Use `name` exactly as given, data-source prefix included (`FeedbackRecords.npsScore`); a field that is not in the catalog is refused.
@@ -10955,6 +11106,28 @@ components:
         query:
           type: object
           description: 'The query as it ran: after the requested date range replaced the saved one, and after a `valueText` grouping on a single-choice question was rewritten to `valueId`. The row keys follow this query.'
+      additionalProperties: false
+    ChartUpdateRequest:
+      type: object
+      description: 'Send at least one field. `config` replaces the display settings whole. A chart''s Feedback Dataset and workspace are fixed: `datasetId` or `workspaceId` in the body is refused with 400 (`read_only_field`) — create a new chart to chart another dataset.'
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        type:
+          type: string
+          enum:
+            - area
+            - bar
+            - pie
+            - big_number
+            - matrix
+        query:
+          $ref: '#/components/schemas/ChartQuery'
+        config:
+          $ref: '#/components/schemas/ChartConfig'
       additionalProperties: false
     ActionClassResource:
       type: object
@@ -11854,6 +12027,21 @@ components:
             $ref: '#/components/schemas/Problem'
     V3DashboardsForbidden:
       description: 'Forbidden. `code: forbidden` when the caller has no access to the workspace, the Feedback Dataset or the resource (which may also not exist; 404 is not used, to avoid leaking existence). `code: dashboards_plan_required` when the caller is authorized but the organization does not have the Dashboards add-on or a license that includes it — checked after authorization, so a caller without access never learns the organization''s plan.'
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    V3DashboardsConflict:
+      description: 'Conflict (`code: conflict`) — the request clashes with the current state: a chart or dashboard name already used in the workspace, a chart already on the dashboard, or a dashboard changed since the `updatedAt` the caller sent.'
       headers:
         X-Request-Id:
           schema:

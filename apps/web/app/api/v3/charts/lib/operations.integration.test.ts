@@ -7,9 +7,9 @@ import {
   seedDashboardsFixture,
   sessionOf,
 } from "@/integration/dashboards-fixture";
-import { getV3Chart, listV3Charts } from "./operations";
+import { createV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "./operations";
 import { type TV3ChartResource, ZV3ChartResource } from "./resources";
-import { ZV3ChartListQuery } from "./schemas";
+import { ZV3ChartCreateBody, ZV3ChartListQuery, ZV3ChartUpdateBody } from "./schemas";
 
 /**
  * Chart operations against real PostgreSQL and SpiceDB, called the way the route and the MCP tools call
@@ -20,6 +20,12 @@ const entitlement = vi.hoisted(() => ({ dashboards: true }));
 vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/license-check/lib/utils")>()),
   getIsDashboardsEnabled: vi.fn(async () => entitlement.dashboards),
+}));
+
+const upgrade = vi.hoisted(() => ({ finished: true }));
+vi.mock("@/lib/upgrade/compatibility", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/upgrade/compatibility")>()),
+  isNewReleaseWorkEnabled: vi.fn(async () => upgrade.finished),
 }));
 
 let fixture: TDashboardsFixture;
@@ -78,6 +84,7 @@ beforeAll(async () => {
 
 beforeEach(() => {
   entitlement.dashboards = true;
+  upgrade.finished = true;
 });
 
 describe("GET /api/v3/charts", () => {
@@ -217,5 +224,205 @@ describe("GET /api/v3/charts/{chartId}", () => {
         await getV3Chart({ chartId: "clzzzzzzzzzzzzzzzzzzzzzzz", ...context(sessionOf(fixture.users.owner)) })
       )
     ).toEqual({ status: 403, code: "forbidden" });
+  });
+});
+
+const auditLog = () => ({}) as Record<string, unknown>;
+
+describe("POST /api/v3/charts", () => {
+  const create = (
+    authentication: ReturnType<typeof sessionOf>,
+    overrides: Record<string, unknown> = {},
+    log: Record<string, unknown> = auditLog()
+  ) =>
+    createV3Chart({
+      body: ZV3ChartCreateBody.parse({
+        workspaceId: fixture.workspaceId,
+        datasetId: fixture.datasetId,
+        name: `Chart ${crypto.randomUUID()}`,
+        type: "bar",
+        query: { measures: ["FeedbackRecords.count"], dimensions: ["FeedbackRecords.sourceName"] },
+        ...overrides,
+      }),
+      auditLog: log as never,
+      ...context(authentication),
+    });
+
+  test("creates a chart with 201 and Location, stored as validated, and fills the audit entry", async () => {
+    const log = auditLog();
+    const response = await create(
+      sessionOf(fixture.users.editor),
+      {
+        name: "Weekly NPS",
+        config: { showLegend: false },
+        query: {
+          measures: ["FeedbackRecords.npsScore"],
+          timeDimensions: [
+            { dimension: "FeedbackRecords.collectedAt", granularity: "week", dateRange: "all-time" },
+          ],
+        },
+      },
+      log
+    );
+
+    expect(response.status).toBe(201);
+    const { data } = await bodyOf<{ data: TV3ChartResource }>(response);
+    expect(response.headers.get("Location")).toBe(`/api/v3/charts/${data.id}`);
+    expect(ZV3ChartResource.parse(data)).toMatchObject({
+      name: "Weekly NPS",
+      datasetId: fixture.datasetId,
+      config: { showLegend: false },
+      dashboards: [],
+      creator: { name: "editor" },
+      // `all-time` is no range at all, which is how it is stored.
+      query: {
+        measures: ["FeedbackRecords.npsScore"],
+        timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", granularity: "week" }],
+      },
+    });
+    expect(log).toMatchObject({ targetId: data.id, organizationId: fixture.organizationId, newObject: data });
+  });
+
+  test("needs write access to the workspace and to the dataset", async () => {
+    expect((await create(apiKeyOf(fixture, "writeKey"))).status).toBe(201);
+    expect((await create(apiKeyOf(fixture, "manageKey"))).status).toBe(201);
+
+    for (const authentication of [sessionOf(fixture.users.viewer), apiKeyOf(fixture, "readKey")]) {
+      expect(await outcomeOf(await create(authentication))).toEqual({ status: 403, code: "forbidden" });
+    }
+    expect(
+      await outcomeOf(
+        await create(sessionOf(fixture.users.owner), { datasetId: fixture.unassignedDatasetId })
+      )
+    ).toEqual({ status: 403, code: "forbidden" });
+  });
+
+  test("answers 409 for a name already used in the workspace", async () => {
+    expect((await create(sessionOf(fixture.users.editor), { name: "Taken" })).status).toBe(201);
+    expect(await outcomeOf(await create(sessionOf(fixture.users.editor), { name: "Taken" }))).toEqual({
+      status: 409,
+      code: "conflict",
+    });
+  });
+
+  test("runs the chart query validator and stores nothing it refuses", async () => {
+    const before = await prisma.chart.count();
+    const response = await create(sessionOf(fixture.users.editor), {
+      query: { measures: ["FeedbackRecords.tenantId"], segments: ["x"] },
+    });
+
+    expect(response.status).toBe(422);
+    expect(await prisma.chart.count()).toBe(before);
+  });
+
+  test("refuses a matrix chart while the online upgrade is unfinished, and allows it afterwards", async () => {
+    const matrix = {
+      type: "matrix",
+      query: {
+        measures: ["FeedbackRecords.count"],
+        dimensions: ["FeedbackRecords.fieldId", "FeedbackRecords.valueId"],
+      },
+    };
+
+    upgrade.finished = false;
+    expect(await outcomeOf(await create(sessionOf(fixture.users.editor), matrix))).toEqual({
+      status: 422,
+      code: "unprocessable_content",
+    });
+
+    upgrade.finished = true;
+    expect((await create(sessionOf(fixture.users.editor), matrix)).status).toBe(201);
+  });
+});
+
+describe("PATCH /api/v3/charts/{chartId}", () => {
+  const update = (
+    authentication: ReturnType<typeof sessionOf>,
+    chartId: string,
+    body: Record<string, unknown>,
+    log: Record<string, unknown> = auditLog()
+  ) =>
+    updateV3Chart({
+      chartId,
+      body: ZV3ChartUpdateBody.parse(body),
+      auditLog: log as never,
+      ...context(authentication),
+    });
+
+  test("edits name, type, query and display settings, and audits old and new", async () => {
+    const created = await prisma.chart.create({
+      data: {
+        name: "Before",
+        type: "bar",
+        workspaceId: fixture.workspaceId,
+        feedbackDirectoryId: fixture.datasetId,
+        query: { measures: ["FeedbackRecords.count"] },
+        config: {},
+      },
+    });
+    const log = auditLog();
+
+    const response = await update(
+      sessionOf(fixture.users.editor),
+      created.id,
+      {
+        name: "After",
+        type: "pie",
+        query: { measures: ["FeedbackRecords.count"], dimensions: ["FeedbackRecords.sentiment"] },
+        config: { pieDisplay: "breakdown" },
+      },
+      log
+    );
+
+    expect(response.status).toBe(200);
+    const { data } = await bodyOf<{ data: TV3ChartResource }>(response);
+    expect(data).toMatchObject({
+      name: "After",
+      type: "pie",
+      config: { pieDisplay: "breakdown" },
+      query: { dimensions: ["FeedbackRecords.sentiment"] },
+    });
+    expect(log).toMatchObject({
+      targetId: created.id,
+      oldObject: expect.objectContaining({ name: "Before" }),
+      newObject: expect.objectContaining({ name: "After" }),
+    });
+  });
+
+  test("needs write access to the chart's workspace; reading it is not enough", async () => {
+    for (const authentication of [sessionOf(fixture.users.viewer), apiKeyOf(fixture, "readKey")]) {
+      expect(await outcomeOf(await update(authentication, charts.newer, { name: "Nope" }))).toEqual({
+        status: 403,
+        code: "forbidden",
+      });
+    }
+    expect((await prisma.chart.findUniqueOrThrow({ where: { id: charts.newer } })).name).toBe(
+      "Sentiment split"
+    );
+  });
+
+  test("answers 409 for a taken name and 422 for an invalid query", async () => {
+    expect(
+      await outcomeOf(await update(sessionOf(fixture.users.editor), charts.newer, { name: "NPS by month" }))
+    ).toEqual({
+      status: 409,
+      code: "conflict",
+    });
+    expect(
+      (
+        await update(sessionOf(fixture.users.editor), charts.newer, {
+          query: { measures: ["FeedbackRecords.nope"] },
+        })
+      ).status
+    ).toBe(422);
+  });
+
+  test("refuses a datasetId in the body: a chart's Feedback Dataset is fixed", () => {
+    const parsed = ZV3ChartUpdateBody.safeParse({ name: "x", datasetId: fixture.unassignedDatasetId });
+    expect(parsed.success).toBe(false);
+    expect(parsed.error?.issues[0]).toMatchObject({
+      path: ["datasetId"],
+      params: { code: "read_only_field" },
+    });
   });
 });

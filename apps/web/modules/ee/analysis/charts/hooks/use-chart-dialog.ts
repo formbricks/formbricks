@@ -7,17 +7,18 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TChartConfig } from "@formbricks/types/analysis";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import {
-  createChartAction,
-  deleteChartAction,
-  executeQueryAction,
-  getChartAction,
-  updateChartAction,
-} from "@/modules/ee/analysis/charts/actions";
+import { deleteChartAction } from "@/modules/ee/analysis/charts/actions";
 import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
 import { sanitizeChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
+import {
+  createChart,
+  getChart,
+  getChartApiErrorMessage,
+  previewChart,
+  updateChart,
+} from "@/modules/ee/analysis/lib/api-client";
 import { chartKeys } from "@/modules/ee/analysis/lib/query";
 import type {
   AnalyticsResponse,
@@ -32,7 +33,7 @@ export interface UseChartDialogProps {
   workspaceId: string;
   chartId?: string;
   autoAddToDashboardId?: string;
-  /** Pre-loaded chart metadata; when provided for edit, skips getChartAction */
+  /** Pre-loaded chart metadata; when provided for edit, skips the chart read */
   initialChart?: TChartWithCreator;
   onSuccess?: () => void;
   directories?: { id: string; name: string }[];
@@ -106,22 +107,12 @@ export function useChartDialog({
       return;
     }
 
-    const fetchChartById = async (id: string): Promise<TChart> => {
-      const result = await getChartAction({ workspaceId, chartId: id });
-      if (!result?.data) {
-        throw new Error(
-          getFormattedErrorMessage(result) || t("workspace.analysis.charts.failed_to_load_chart")
-        );
-      }
-      return result.data;
-    };
-
     const load = async () => {
       setIsLoadingChart(true);
       setChartLoadError(null);
 
       try {
-        const chart = initialChart?.id === chartId ? initialChart : await fetchChartById(chartId);
+        const chart: TChart = initialChart?.id === chartId ? initialChart : await getChart(chartId);
         if (cancelled) return;
 
         setChartName(chart.name);
@@ -134,43 +125,27 @@ export function useChartDialog({
         // Charts saved before a big number's query stopped carrying groups can still hold a
         // granularity or a dimension; normalize on read so the value shown is the measure over the
         // whole range, not a fold of per-group values.
-        const queryResult = await executeQueryAction({
+        const chartType = resolveChartType(chart.type);
+        const result = await previewChart({
           workspaceId,
-          query: prepareQueryForChartType(chart.query, resolveChartType(chart.type)),
-          feedbackDirectoryId: chart.feedbackDirectoryId,
+          datasetId: chart.feedbackDirectoryId,
+          type: chartType,
+          query: prepareQueryForChartType(chart.query, chartType),
         });
         if (cancelled) return;
 
-        if (queryResult?.serverError) {
-          const errorMsg =
-            getFormattedErrorMessage(queryResult) || t("workspace.analysis.charts.failed_to_load_chart_data");
-          toast.error(errorMsg);
-          setChartLoadError(errorMsg);
-          return;
-        }
-
-        const queryRows = queryResult?.data;
-        if (!Array.isArray(queryRows?.rows)) {
-          const errorMsg = t("workspace.analysis.charts.no_data_returned_for_chart");
-          toast.error(errorMsg);
-          setChartLoadError(errorMsg);
-          return;
-        }
-
-        // Use the server-rewritten effective query so the renderer's xAxisKey matches
-        // the returned data columns (e.g. valueText → valueId for single-select).
-        const effectiveQuery = queryRows.effectiveQuery ?? chart.query;
+        // The server-rewritten effective query, so the renderer's xAxisKey matches the returned data
+        // columns (e.g. valueText → valueId for single-select).
         setChartData({
-          query: effectiveQuery,
-          chartType: resolveChartType(chart.type),
-          data: queryRows.rows,
-          ...(queryRows.optionLabels ? { optionLabels: queryRows.optionLabels } : {}),
-          ...(queryRows.fieldLabels ? { fieldLabels: queryRows.fieldLabels } : {}),
+          query: result.query,
+          chartType,
+          data: result.rows,
+          ...(Object.keys(result.optionLabels).length > 0 ? { optionLabels: result.optionLabels } : {}),
+          ...(Object.keys(result.fieldLabels).length > 0 ? { fieldLabels: result.fieldLabels } : {}),
         });
       } catch (error: unknown) {
         if (cancelled) return;
-        const message =
-          error instanceof Error ? error.message : t("workspace.analysis.charts.failed_to_load_chart");
+        const message = getChartApiErrorMessage(error, t("workspace.analysis.charts.failed_to_load_chart"));
         toast.error(message);
         setChartLoadError(message);
       } finally {
@@ -182,10 +157,9 @@ export function useChartDialog({
     return () => {
       cancelled = true;
     };
-    // Key on initialChart?.id, NOT the object reference. Every authenticated action here
-    // (getChartAction / executeQueryAction) re-sets the Better Auth session cookie → Next.js route
-    // refresh → new `initialChart` reference; depending on the object would re-fire executeQueryAction on
-    // every refresh → infinite loop. The id is the stable identity; content is unchanged across refreshes.
+    // Key on initialChart?.id, NOT the object reference: a parent re-render hands over a new
+    // `initialChart` reference with the same content, and depending on the object would re-run the
+    // preview on every one of them. The id is the stable identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, chartId, workspaceId, initialChart?.id]);
 
@@ -222,46 +196,21 @@ export function useChartDialog({
     try {
       let savedChartId = currentChartId;
 
+      const chartToSave = {
+        name: chartName.trim(),
+        type: chartData.chartType,
+        query: chartData.query,
+        config: configToSave,
+      };
+
       if (currentChartId) {
-        const result = await updateChartAction({
-          workspaceId,
-          chartId: currentChartId,
-          chartUpdateInput: {
-            name: chartName.trim(),
-            type: chartData.chartType,
-            query: chartData.query,
-            config: configToSave,
-          },
-        });
-
-        if (!result?.data) {
-          const errorMessage = getFormattedErrorMessage(result);
-          toast.error(errorMessage);
-          return;
-        }
-
+        await updateChart(currentChartId, chartToSave);
         toast.success(t("workspace.analysis.charts.chart_updated_successfully"));
       } else {
-        const result = await createChartAction({
-          workspaceId,
-          chartInput: {
-            name: chartName.trim(),
-            type: chartData.chartType,
-            query: chartData.query,
-            config: configToSave,
-            feedbackDirectoryId: selectedDirectoryId,
-          },
-        });
-
-        if (!result?.data) {
-          const errorMessage = getFormattedErrorMessage(result);
-          toast.error(errorMessage);
-          return;
-        }
-
-        setCurrentChartId(result.data.id);
-        savedChartId = result.data.id;
-        newlyCreatedChartId = result.data.id;
+        const created = await createChart({ workspaceId, datasetId: selectedDirectoryId, ...chartToSave });
+        setCurrentChartId(created.id);
+        savedChartId = created.id;
+        newlyCreatedChartId = created.id;
         toast.success(t("workspace.analysis.charts.chart_saved_successfully"));
       }
 
@@ -297,9 +246,7 @@ export function useChartDialog({
       });
       onSuccess?.();
     } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : t("workspace.analysis.charts.failed_to_save_chart");
-      toast.error(message);
+      toast.error(getChartApiErrorMessage(error, t("workspace.analysis.charts.failed_to_save_chart")));
       if (autoAddToDashboardId && newlyCreatedChartId) await cleanupOrphanChart(newlyCreatedChartId);
     } finally {
       setIsSaving(false);
@@ -320,27 +267,21 @@ export function useChartDialog({
       return null;
     }
 
-    const chartResult = await createChartAction({
-      workspaceId,
-      chartInput: {
+    try {
+      const created = await createChart({
+        workspaceId,
+        datasetId: selectedDirectoryId,
         name: chartName.trim(),
         type: data.chartType,
         query: data.query,
         config: sanitizeChartDisplay(chartConfig, data.chartType),
-        feedbackDirectoryId: selectedDirectoryId,
-      },
-    });
-
-    if (!chartResult?.data) {
-      toast.error(
-        (chartResult && getFormattedErrorMessage(chartResult)) ||
-          t("workspace.analysis.charts.failed_to_save_chart")
-      );
+      });
+      setCurrentChartId(created.id);
+      return created.id;
+    } catch (error) {
+      toast.error(getChartApiErrorMessage(error, t("workspace.analysis.charts.failed_to_save_chart")));
       return null;
     }
-
-    setCurrentChartId(chartResult.data.id);
-    return chartResult.data.id;
   };
 
   const handleAddToDashboard = async () => {

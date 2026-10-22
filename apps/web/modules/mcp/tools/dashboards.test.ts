@@ -2,12 +2,17 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { previewV3Chart } from "@/app/api/v3/charts/lib/data-operations";
 import { getV3ChartFieldCatalog } from "@/app/api/v3/charts/lib/field-operations";
-import { getV3Chart, listV3Charts } from "@/app/api/v3/charts/lib/operations";
+import { createV3Chart, getV3Chart, listV3Charts, updateV3Chart } from "@/app/api/v3/charts/lib/operations";
 import { successResponse } from "@/app/api/v3/lib/response";
 import { registerDashboardTools } from "./dashboards";
 
 vi.mock("@/app/api/v3/charts/lib/field-operations", () => ({ getV3ChartFieldCatalog: vi.fn() }));
-vi.mock("@/app/api/v3/charts/lib/operations", () => ({ getV3Chart: vi.fn(), listV3Charts: vi.fn() }));
+vi.mock("@/app/api/v3/charts/lib/operations", () => ({
+  createV3Chart: vi.fn(),
+  getV3Chart: vi.fn(),
+  listV3Charts: vi.fn(),
+  updateV3Chart: vi.fn(),
+}));
 vi.mock("@/app/api/v3/charts/lib/data-operations", () => ({ previewV3Chart: vi.fn() }));
 vi.mock("@/app/api/v3/lib/audit", () => ({
   buildV3AuditLog: vi.fn(),
@@ -72,6 +77,8 @@ beforeEach(() => {
   vi.mocked(listV3Charts).mockResolvedValue(successResponse([], { requestId: "req" }));
   vi.mocked(getV3Chart).mockResolvedValue(successResponse({}, { requestId: "req" }));
   vi.mocked(previewV3Chart).mockResolvedValue(successResponse({}, { requestId: "req" }));
+  vi.mocked(createV3Chart).mockResolvedValue(successResponse({}, { requestId: "req" }));
+  vi.mocked(updateV3Chart).mockResolvedValue(successResponse({}, { requestId: "req" }));
 });
 
 describe("chart and dashboard MCP tools", () => {
@@ -146,5 +153,33 @@ describe("chart and dashboard MCP tools", () => {
 
     await call("preview_chart", input, ["dashboards:read", "feedbackRecords:read"]);
     expect(previewV3Chart).toHaveBeenCalledWith(expect.objectContaining({ body: input }));
+  });
+
+  test("create_chart and update_chart need dashboards:write and reach the operations with an audit log", async () => {
+    const chart = {
+      workspaceId: WORKSPACE_ID,
+      datasetId: DATASET_ID,
+      name: "NPS",
+      type: "bar",
+      query: { measures: ["FeedbackRecords.npsScore"] },
+    };
+
+    expect((await call("create_chart", chart, ["dashboards:read"])).isError).toBe(true);
+    expect(createV3Chart).not.toHaveBeenCalled();
+
+    await call("create_chart", chart, ["dashboards:write"]);
+    expect(createV3Chart).toHaveBeenCalledWith(
+      expect.objectContaining({ body: chart, instance: "/api/mcp", requestId: "req_tool" })
+    );
+
+    await call("update_chart", { chartId: CHART_ID, name: "Renamed" }, ["dashboards:write"]);
+    expect(updateV3Chart).toHaveBeenCalledWith(
+      expect.objectContaining({ chartId: CHART_ID, body: { name: "Renamed" } })
+    );
+  });
+
+  test("update_chart warns that an edit shows on every dashboard holding the chart", () => {
+    const description = String(createToolServer().get("update_chart")?.config.description);
+    expect(description).toMatch(/every one of them/);
   });
 });
