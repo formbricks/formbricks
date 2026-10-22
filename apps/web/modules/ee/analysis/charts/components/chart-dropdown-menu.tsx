@@ -2,13 +2,12 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { CopyIcon, MoreVertical, PlusIcon, SquarePenIcon, TrashIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { AddToDashboardDialog } from "@/modules/ee/analysis/charts/components/add-to-dashboard-dialog";
 import { DeleteChartDialog } from "@/modules/ee/analysis/charts/components/delete-chart-dialog";
-import { getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
+import { useDashboardOptions } from "@/modules/ee/analysis/dashboards/hooks/use-dashboard-options";
 import {
   type TAppChart,
   addDashboardWidget,
@@ -44,51 +43,28 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isAddToDashboardDialogOpen, setIsAddToDashboardDialogOpen] = useState(false);
   const [isAddingToDashboard, setIsAddingToDashboard] = useState(false);
-  const [dashboards, setDashboards] = useState<Array<{ id: string; name: string; containsChart?: boolean }>>(
-    []
-  );
   const [selectedDashboardId, setSelectedDashboardId] = useState<string>();
+  const dashboardOptions = useDashboardOptions({ workspaceId, enabled: isAddToDashboardDialogOpen });
+  // Whether a dashboard already holds this chart comes from the chart itself, not another read.
+  const dashboards = useMemo(
+    () =>
+      (dashboardOptions.data ?? []).map((dashboard) => ({
+        ...dashboard,
+        containsChart: chart.dashboards.some((holder) => holder.id === dashboard.id),
+      })),
+    [dashboardOptions.data, chart.dashboards]
+  );
 
   useEffect(() => {
-    let cancelled = false;
-
-    if (!isAddToDashboardDialogOpen) {
-      return () => {
-        cancelled = true;
-      };
+    if (dashboardOptions.error) {
+      toast.error(
+        getChartApiErrorMessage(
+          dashboardOptions.error,
+          t("workspace.analysis.charts.failed_to_load_dashboards")
+        )
+      );
     }
-
-    void getDashboardsAction({ workspaceId, chartId: chart.id })
-      .then((result) => {
-        if (cancelled) {
-          return;
-        }
-
-        if (result?.data) {
-          setDashboards(
-            result.data.map((dashboard) => ({
-              id: dashboard.id,
-              name: dashboard.name,
-              containsChart: dashboard.containsChart,
-            }))
-          );
-        } else {
-          toast.error(getFormattedErrorMessage(result));
-        }
-      })
-      .catch((error) => {
-        if (cancelled) {
-          return;
-        }
-        const message =
-          error instanceof Error ? error.message : t("workspace.analysis.charts.failed_to_load_dashboards");
-        toast.error(message);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isAddToDashboardDialogOpen, workspaceId, chart.id, t]);
+  }, [dashboardOptions.error, t]);
 
   const handleDeleteChart = async () => {
     setIsDeleting(true);
@@ -99,9 +75,9 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
       void queryClient.invalidateQueries({ queryKey: chartKeys.all });
     } catch (error) {
       // Someone put the chart on a dashboard after this list was read: show where, as for any chart in use.
-      const dashboards = chartInUseDashboards(error);
-      if (dashboards) {
-        setRefusedOnDashboards(dashboards);
+      const holders = chartInUseDashboards(error);
+      if (holders) {
+        setRefusedOnDashboards(holders);
         void queryClient.invalidateQueries({ queryKey: chartKeys.lists() });
       } else {
         toast.error(getChartApiErrorMessage(error, t("workspace.analysis.charts.chart_deletion_error")));

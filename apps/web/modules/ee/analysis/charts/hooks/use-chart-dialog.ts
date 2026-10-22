@@ -6,10 +6,9 @@ import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TChartConfig } from "@formbricks/types/analysis";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { sanitizeChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
-import { getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
+import { useDashboardOptions } from "@/modules/ee/analysis/dashboards/hooks/use-dashboard-options";
 import {
   addDashboardWidget,
   createChart,
@@ -26,6 +25,8 @@ import type {
   TChartType,
   TChartWithCreator,
 } from "@/modules/ee/analysis/types/analysis";
+
+const NO_DASHBOARDS: { id: string; name: string }[] = [];
 
 export interface UseChartDialogProps {
   open: boolean;
@@ -61,7 +62,6 @@ export function useChartDialog({
   const [chartName, setChartName] = useState("");
   // Saved name of the chart being edited; unlike chartName it stays stable while the user types.
   const [savedChartName, setSavedChartName] = useState("");
-  const [dashboards, setDashboards] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedDashboardId, setSelectedDashboardId] = useState<string | undefined>();
   const [isSaving, setIsSaving] = useState(false);
   const [isLoadingChart, setIsLoadingChart] = useState(false);
@@ -72,22 +72,18 @@ export function useChartDialog({
   // stale suggestion without ever clobbering a name the user typed.
   const lastSuggestedNameRef = useRef<string | null>(null);
 
+  const dashboardOptions = useDashboardOptions({ workspaceId, enabled: isAddToDashboardDialogOpen });
+  const dashboards = dashboardOptions.data ?? NO_DASHBOARDS;
   useEffect(() => {
-    let cancelled = false;
-    if (isAddToDashboardDialogOpen) {
-      getDashboardsAction({ workspaceId }).then((result) => {
-        if (cancelled) return;
-        if (result?.data) {
-          setDashboards(result.data.map((d) => ({ id: d.id, name: d.name })));
-        } else if (result?.serverError) {
-          toast.error(getFormattedErrorMessage(result));
-        }
-      });
+    if (dashboardOptions.error) {
+      toast.error(
+        getChartApiErrorMessage(
+          dashboardOptions.error,
+          t("workspace.analysis.charts.failed_to_load_dashboards")
+        )
+      );
     }
-    return () => {
-      cancelled = true;
-    };
-  }, [isAddToDashboardDialogOpen, workspaceId]);
+  }, [dashboardOptions.error, t]);
 
   useEffect(() => {
     let cancelled = false;

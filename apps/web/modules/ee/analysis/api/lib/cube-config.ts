@@ -10,10 +10,6 @@ export const DEFAULT_CUBE_JWT_ISSUER = "formbricks-web";
 
 export type TCubeQuerySource =
   | "charts.aiDataProfile"
-  | "charts.executeQueryAction"
-  | "charts.generateAIChartAction"
-  | "charts.getDimensionValuesAction"
-  | "dashboards.widget"
   | "internal.charts.generate"
   | "v3.charts.data"
   | "v3.charts.preview"

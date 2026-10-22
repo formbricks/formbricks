@@ -27,6 +27,8 @@ export const dashboardKeys = {
   lists: () => [...dashboardKeys.all, "list"] as const,
   list: (input: { workspaceId: string; limit: number } & TDashboardListFilters) =>
     [...dashboardKeys.lists(), input] as const,
+  /** The workspace's dashboards as a picker offers them: one plain page, not an infinite list. */
+  options: (workspaceId: string) => [...dashboardKeys.lists(), "options", workspaceId] as const,
   details: () => [...dashboardKeys.all, "detail"] as const,
   detail: (dashboardId: string) => [...dashboardKeys.details(), dashboardId] as const,
 };

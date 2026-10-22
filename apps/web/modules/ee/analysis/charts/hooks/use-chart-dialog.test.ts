@@ -21,7 +21,6 @@ const mockDeleteChart = vi.fn();
 const mockGetChart = vi.fn();
 const mockGetChartData = vi.fn();
 const mockAddDashboardWidget = vi.fn();
-const mockGetDashboardsAction = vi.fn();
 
 const mockToastSuccess = vi.fn();
 const mockToastError = vi.fn();
@@ -38,10 +37,6 @@ vi.mock("@/modules/ee/analysis/lib/api-client", async (importOriginal) => ({
   getChartData: (...args: any[]) => mockGetChartData(...args),
   addDashboardWidget: (...args: any[]) => mockAddDashboardWidget(...args),
   deleteChart: (...args: any[]) => mockDeleteChart(...args),
-}));
-
-vi.mock("@/modules/ee/analysis/dashboards/actions", () => ({
-  getDashboardsAction: (...args: any[]) => mockGetDashboardsAction(...args),
 }));
 
 vi.mock("@/modules/ee/analysis/charts/lib/chart-utils", () => ({

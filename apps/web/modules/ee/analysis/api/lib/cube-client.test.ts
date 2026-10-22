@@ -64,7 +64,7 @@ const scopedInput = {
   workspaceId: "workspace-1",
   organizationId: "organization-1",
   actor: { type: "user" as const, id: "user-1" },
-  source: "charts.executeQueryAction" as const,
+  source: "v3.charts.data" as const,
 };
 
 type TCubeJsMock = {
@@ -143,7 +143,7 @@ describe("executeTenantScopedQuery", () => {
       organizationId: "organization-1",
       userId: "user-1",
       scope: "xm:cube:query",
-      source: "charts.executeQueryAction",
+      source: "v3.charts.data",
     });
     expect(typeof payload.jti).toBe("string");
   });
