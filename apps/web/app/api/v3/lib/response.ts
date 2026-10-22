@@ -325,7 +325,8 @@ export function problemCreativesNotEntitled(
 ): Response {
   const detail = options.windDown
     ? "Creatives is not included in this instance's license: existing creatives can only be listed, read, paused, closed or deleted"
-    : "Creatives is not included in this instance's license";
+    : // Not "license": Formbricks Cloud has none, and Creatives isn't offered there.
+      "Creatives is not available on this instance";
 
   return problemResponse(403, "Forbidden", detail, requestId, {
     code: "creatives_not_entitled",

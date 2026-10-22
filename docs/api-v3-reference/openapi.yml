@@ -13326,7 +13326,7 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     V3CreativesForbidden:
-      description: 'Forbidden, one of two codes. `forbidden`: the caller lacks the workspace access the operation needs, or the creative does not exist (404 is not used, so creative ids cannot be probed for existence). `creatives_not_entitled`: this instance''s license does not include Creatives. It is checked only after the caller''s own access, so it says nothing about a workspace the caller cannot see. A workspace that still has creatives is in wind-down: listing, reading, stats, a PATCH that sets nothing but `status` to `paused` or `completed`, and DELETE keep working, and everything else answers this. A workspace without creatives answers it on every operation.'
+      description: 'Forbidden, one of two codes. `forbidden`: the caller lacks the workspace access the operation needs, or the creative does not exist (404 is not used, so creative ids cannot be probed for existence). `creatives_not_entitled`: Creatives is not available on this instance (Formbricks Cloud, or a self-hosted license that does not include it). It is checked only after the caller''s own access, so it says nothing about a workspace the caller cannot see. A workspace that still has creatives is in wind-down: listing, reading, stats, a PATCH that sets nothing but `status` to `paused` or `completed`, and DELETE keep working, and everything else answers this. A workspace without creatives answers it on every operation.'
       headers:
         X-Request-Id:
           schema:
@@ -13350,11 +13350,11 @@ components:
                 code: forbidden
                 requestId: req_01j8z3
             notEntitled:
-              summary: The license does not include Creatives, and the workspace has none
+              summary: Creatives is not available (Cloud, or no license with Creatives and no creatives)
               value:
                 title: Forbidden
                 status: 403
-                detail: Creatives is not included in this instance's license
+                detail: Creatives is not available on this instance
                 code: creatives_not_entitled
                 requestId: req_01j8z4
             windDown:

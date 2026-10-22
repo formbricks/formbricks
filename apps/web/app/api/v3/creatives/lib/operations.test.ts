@@ -1307,7 +1307,7 @@ describe("the licence gate (ENG-6602)", () => {
 
       await expectNotEntitled(
         await runOperation[operation](id),
-        /^Creatives is not included in this instance's license$/
+        /^Creatives is not available on this instance$/
       );
       expect(store.get(id)).toEqual(before);
       withAccess("full");
