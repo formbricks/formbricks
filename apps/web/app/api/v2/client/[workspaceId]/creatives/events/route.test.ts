@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   applyIPRateLimit: vi.fn(),
   findWorkspaceByIdOrLegacyEnvId: vi.fn(),
   findCreatives: vi.fn(),
+  getIsCreativesEnabled: vi.fn(),
   incrementCreativeCounters: vi.fn(),
   warn: vi.fn(),
 }));
@@ -23,6 +24,9 @@ vi.mock("@/lib/utils/resolve-client-id", () => ({
 vi.mock("@formbricks/database", () => ({ prisma: { creative: { findMany: mocks.findCreatives } } }));
 vi.mock("@/lib/cache", () => ({
   cache: { withCache: async <T>(fn: () => Promise<T>) => fn() },
+}));
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getIsCreativesEnabled: mocks.getIsCreativesEnabled,
 }));
 vi.mock("@/modules/ee/creatives/lib/counters", () => ({
   incrementCreativeCounters: mocks.incrementCreativeCounters,
@@ -70,6 +74,7 @@ beforeEach(() => {
   mocks.applyIPRateLimit.mockResolvedValue({ allowed: true });
   mocks.findWorkspaceByIdOrLegacyEnvId.mockResolvedValue({ id: WORKSPACE_ID, organizationId: "clorg" });
   mocks.findCreatives.mockResolvedValue([{ id: BUTTON_ID }, { id: BANNER_ID }]);
+  mocks.getIsCreativesEnabled.mockResolvedValue(true);
   mocks.incrementCreativeCounters.mockResolvedValue(true);
 });
 
@@ -171,6 +176,17 @@ describe("POST /api/v2/client/[workspaceId]/creatives/events", () => {
 
     expect((await send(pageView([{ creativeId: FOREIGN_ID, type: "impression" }]))).status).toBe(204);
 
+    expect(mocks.incrementCreativeCounters).not.toHaveBeenCalled();
+  });
+
+  test("counts nothing while the licence doesn't include Creatives, still answering 204", async () => {
+    mocks.getIsCreativesEnabled.mockResolvedValue(false);
+
+    const response = await send(pageView([{ creativeId: BUTTON_ID, type: "impression" }]));
+
+    expect(response.status).toBe(204);
+    expect(mocks.getIsCreativesEnabled).toHaveBeenCalledWith("clorg");
+    expect(mocks.findCreatives).not.toHaveBeenCalled();
     expect(mocks.incrementCreativeCounters).not.toHaveBeenCalled();
   });
 

@@ -25,6 +25,7 @@ import {
   getPopupSurveyIds,
   toCreativePayloads,
 } from "@/modules/ee/creatives/lib/delivery";
+import { getIsCreativesEnabled } from "@/modules/ee/license-check/lib/utils";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import { resolveRespondentCustomCss } from "@/modules/survey/link/lib/respondent-custom-css";
@@ -225,11 +226,16 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
       throw new ResourceNotFoundError("workspace", workspaceId);
     }
 
-    // Each creative's look is computed from the workspace Look & Feel, never its survey's (ENG-3998).
-    const creatives = await toCreativePayloads(workspaceData.creatives, {
-      publicDomain: getPublicDomain(),
-      workspaceStyling: workspaceData.styling,
-    });
+    // Creatives reach sites only while the licence includes them (ENG-6602); nothing is written either
+    // way, so ones that were Active show again by themselves once it does. The licence read is cached,
+    // and this payload's own 60 s cache adds at most a minute to the licence's refresh. Each creative's
+    // look is computed from the workspace Look & Feel, never its survey's (ENG-3998).
+    const creatives = (await getIsCreativesEnabled(workspaceData.organizationId))
+      ? await toCreativePayloads(workspaceData.creatives, {
+          publicDomain: getPublicDomain(),
+          workspaceStyling: workspaceData.styling,
+        })
+      : [];
 
     // A creative opens its survey as a popup from this payload alone, so every such survey has to be in
     // it — also one outside the 30 newest, and one with no trigger of its own (it is sent with

@@ -26,6 +26,7 @@ vi.mock("@/lib/constants", () => ({ IS_RECAPTCHA_CONFIGURED: false, POSTHOG_KEY:
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
 vi.mock("@/lib/utils/helper", () => ({ getOrganizationIdFromWorkspaceId: vi.fn() }));
 vi.mock("@/lib/utils/validate", () => ({ validateInputs: vi.fn() }));
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsCreativesEnabled: vi.fn(async () => true) }));
 vi.mock("@/modules/storage/utils", () => ({ resolveStorageUrlsInObject: vi.fn((value: unknown) => value) }));
 vi.mock("@/modules/survey/lib/utils", () => ({ transformPrismaSurvey: vi.fn((survey: unknown) => survey) }));
 // Stored output at the current processor version is delivered as stored.

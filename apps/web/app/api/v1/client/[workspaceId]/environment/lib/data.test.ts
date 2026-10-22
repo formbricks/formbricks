@@ -5,6 +5,7 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { PUBLIC_API_SURVEY_NAME_PLACEHOLDER } from "@formbricks/types/js-constants";
 import { selectPublicSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
+import { getIsCreativesEnabled } from "@/modules/ee/license-check/lib/utils";
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 import { resolveRespondentCustomCss } from "@/modules/survey/link/lib/respondent-custom-css";
 import { getWorkspaceStateData } from "./data";
@@ -55,6 +56,9 @@ vi.mock("@/modules/survey/lib/utils", () => ({
 vi.mock("@/lib/cache", () => ({
   cache: { withCache: (fn: () => Promise<unknown>) => fn() },
 }));
+
+// The licence includes Creatives unless a test says otherwise (ENG-6602).
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsCreativesEnabled: vi.fn(async () => true) }));
 
 // No custom CSS unless a test says otherwise (ENG-3552).
 vi.mock("@/modules/survey/link/lib/respondent-custom-css", () => ({
@@ -924,6 +928,22 @@ describe("creatives on the wire (ENG-3994)", () => {
         name: PUBLIC_API_SURVEY_NAME_PLACEHOLDER,
       })
     );
+  });
+
+  test("leaves creatives, and the surveys only they open, out while the licence doesn't include Creatives", async () => {
+    vi.mocked(getIsCreativesEnabled).mockResolvedValue(false);
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue({
+      ...mockWorkspaceData,
+      organizationId: "org-1",
+      creatives: [storedButton, { ...storedButton, id: "creative-2", surveyId: "older-survey" }],
+    } as never);
+
+    const result = await getWorkspaceStateData(workspaceId);
+
+    expect(getIsCreativesEnabled).toHaveBeenCalledWith("org-1");
+    expect(result.creatives).toEqual([]);
+    expect(result.surveys.map((survey) => survey.id)).toEqual(["survey-1"]);
+    expect(prisma.survey.findMany).not.toHaveBeenCalled();
   });
 
   test("opens a link survey Destination at its public link, in a new tab", async () => {

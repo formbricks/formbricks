@@ -43,8 +43,10 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 vi.mock("./data");
-// `./data` is auto-mocked, which still loads its imports; keep the custom CSS delivery chain out of it.
+// `./data` is auto-mocked, which still loads its imports; keep the custom CSS delivery chain and the
+// licence check out of it.
 vi.mock("@/modules/survey/link/lib/respondent-custom-css", () => ({ resolveRespondentCustomCss: vi.fn() }));
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsCreativesEnabled: vi.fn() }));
 vi.mock("@/app/lib/api/api-backwards-compat", () => ({
   addLegacyProjectOverwritesToList: vi.fn((surveys: unknown[]) =>
     surveys.map((survey) => {

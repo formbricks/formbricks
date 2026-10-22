@@ -16,6 +16,7 @@ import { cache } from "@/lib/cache";
 import { findWorkspaceByIdOrLegacyEnvId } from "@/lib/utils/resolve-client-id";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { getIsCreativesEnabled } from "@/modules/ee/license-check/lib/utils";
 import { type TCreativeEventCounts, incrementCreativeCounters } from "./counters";
 
 /**
@@ -47,14 +48,16 @@ export const ZCreativeEventsBody = z.object({
  * The creatives an events request may count for: neither a Draft nor archived, in the workspace the SDK
  * names (by workspace id or, for SDKs set up with one, legacy environment id). The stored status decides,
  * not `publishedAt`: a restored creative keeps the date it was first published but is a Draft again, and
- * any status but Draft was published. Cached like the SDK's workspace state (no write invalidates it), so
- * counting costs no database query per page view and follows a publish, restore or archive within the TTL.
+ * any status but Draft was published. None while the licence doesn't include Creatives (ENG-6602): sites
+ * aren't sent any then, so nothing is counted. Cached like the SDK's workspace state (no write invalidates
+ * it), so counting costs no database query per page view and follows a publish, restore or archive, and
+ * a licence change the instance has read, within the TTL.
  */
 const getCountableCreativeIds = (workspaceIdParam: string): Promise<string[]> =>
   cache.withCache(
     async () => {
       const workspace = await findWorkspaceByIdOrLegacyEnvId(workspaceIdParam);
-      if (!workspace) return [];
+      if (!workspace || !(await getIsCreativesEnabled(workspace.organizationId))) return [];
       const creatives = await prisma.creative.findMany({
         where: { workspaceId: workspace.id, archivedAt: null, status: { not: "draft" } },
         select: { id: true },
