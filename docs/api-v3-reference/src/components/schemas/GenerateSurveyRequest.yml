@@ -55,6 +55,8 @@ properties:
       language whatever language the prompt is in, and it takes precedence
       over `language`.
 
-      A draft the model returns in any other language is rejected as an
-      invalid generated payload rather than relabelled.
+      A draft the model returns under any other language code is rejected as
+      an invalid generated payload rather than relabelled. The code is what is
+      checked: the generated text itself is not language-verified, so review
+      the draft before creating the survey.
 additionalProperties: false

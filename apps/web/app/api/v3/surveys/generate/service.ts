@@ -451,7 +451,9 @@ export function buildV3SurveyCreatePayloadFromDraft(
   }
 
   // The narrowed schema only binds a provider that enforces structured output; a local model may
-  // ignore it, and a draft in a language the request did not allow must not be relabelled or passed on.
+  // ignore it, and a draft under a language code the request did not allow must not be relabelled or
+  // passed on. This checks the declared code only — the text itself is not language-detected, which is
+  // what the review step before "Save and continue" is for.
   const draftLanguages = getV3SurveyGenerateDraftLanguages(input);
   if (!draftLanguages.includes(generatedSurvey.data.language)) {
     throw new V3SurveyGeneratedPayloadValidationError([

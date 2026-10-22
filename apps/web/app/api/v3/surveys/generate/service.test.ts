@@ -872,7 +872,25 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
   test("only returns a language outside the dashboard locales when the caller named it", async () => {
     // A client that predates `surveyLanguage` and sends an Italian prompt must not start receiving
     // `it-IT`, a value this endpoint never emitted before. Naming it as the preferred language opts in.
-    const italianDraft = { ...koreanDraft("it-IT"), name: "Sondaggio sulle consegne" };
+    const italianDraft = {
+      language: "it-IT",
+      name: "Sondaggio sulle consegne",
+      description: null,
+      welcomeCard: null,
+      blocks: [
+        {
+          name: "Consegne",
+          questions: [
+            generatedElement({
+              type: "openText",
+              headline: "Cosa dovremmo migliorare nelle consegne?",
+              longAnswer: true,
+            }),
+          ],
+        },
+      ],
+      ending: null,
+    };
 
     vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
       object: italianDraft,
