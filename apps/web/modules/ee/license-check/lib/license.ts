@@ -102,6 +102,8 @@ const LicenseFeaturesSchema = z.object({
   dashboards: z.boolean().default(false),
   workflows: z.boolean().default(false),
   dataRetention: z.boolean().default(false),
+  // A licence server that predates the flag omits it, which keeps Creatives off (ENG-6602).
+  creatives: z.boolean().default(false),
 });
 
 const LicenseDetailsSchema = z.object({
@@ -173,6 +175,7 @@ const DEFAULT_FEATURES: TEnterpriseLicenseFeatures = {
   dashboards: false,
   workflows: false,
   dataRetention: false,
+  creatives: false,
 };
 
 // Helper functions

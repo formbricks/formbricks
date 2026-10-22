@@ -161,6 +161,7 @@ describe("License Core Logic", () => {
       dashboards: false,
       workflows: false,
       dataRetention: false,
+      creatives: false,
     };
     const mockFetchedLicenseDetails: TEnterpriseLicenseDetails = {
       status: "active",
@@ -256,6 +257,32 @@ describe("License Core Logic", () => {
 
       expect(license.active).toBe(true);
       expect(license.features?.dataRetention).toBe(false);
+    });
+
+    // Same rule for Creatives (ENG-6602): a licence server that predates the flag keeps Creatives off.
+    test.each([
+      ["omits creatives", undefined, false],
+      ["sends creatives: true", true, true],
+    ])("parses the creatives flag when the license server %s", async (_case, creatives, expected) => {
+      const { getEnterpriseLicense } = await import("./license");
+      const fetch = global.fetch as Mock;
+      const { creatives: _omitted, ...featuresWithoutCreatives } = mockFetchedLicenseDetailsFeatures;
+
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          data: {
+            ...mockFetchedLicenseDetails,
+            features:
+              creatives === undefined ? featuresWithoutCreatives : { ...featuresWithoutCreatives, creatives },
+          },
+        }),
+      });
+
+      const license = await getEnterpriseLicense();
+
+      expect(license.active).toBe(true);
+      expect(license.features?.creatives).toBe(expected);
     });
 
     // Tripwire for the `NODE_ENV: "test"` key in the `@/lib/env` mock at the top of this file.
@@ -431,6 +458,7 @@ describe("License Core Logic", () => {
             dashboards: false,
             workflows: false,
             dataRetention: false,
+            creatives: false,
           },
           lastChecked: expect.any(Date),
         },
@@ -456,6 +484,7 @@ describe("License Core Logic", () => {
           dashboards: false,
           workflows: false,
           dataRetention: false,
+          creatives: false,
         },
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
@@ -490,6 +519,7 @@ describe("License Core Logic", () => {
         dashboards: false,
         workflows: false,
         dataRetention: false,
+        creatives: false,
       };
       expect(mockCache.set).toHaveBeenCalledWith(
         expect.stringContaining("fb:license:"),
@@ -683,6 +713,7 @@ describe("License Core Logic", () => {
           dashboards: false,
           workflows: false,
           dataRetention: false,
+          creatives: false,
         },
       };
 
@@ -751,6 +782,7 @@ describe("License Core Logic", () => {
           dashboards: false,
           workflows: false,
           dataRetention: false,
+          creatives: false,
         },
       };
 
@@ -810,6 +842,7 @@ describe("License Core Logic", () => {
           dashboards: false,
           workflows: false,
           dataRetention: false,
+          creatives: false,
         },
       };
 
@@ -1014,6 +1047,7 @@ describe("License Core Logic", () => {
                   dashboards: false,
                   workflows: false,
                   dataRetention: false,
+                  creatives: false,
                 },
               },
             },
@@ -1196,6 +1230,7 @@ describe("License Core Logic", () => {
           dashboards: false,
           workflows: false,
           dataRetention: false,
+          creatives: false,
         },
       };
 
@@ -1326,6 +1361,7 @@ describe("License Core Logic", () => {
         dashboards: false,
         workflows: false,
         dataRetention: false,
+        creatives: false,
       },
     };
 
