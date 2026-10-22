@@ -106,6 +106,8 @@
       "revoke": "Revocă",
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
       "scopes": {
+        "dashboards_read": "Vizualizează diagrame și tablouri de bord",
+        "dashboards_write": "Creează și editează diagrame și tablouri de bord",
         "email": "Vizualizează adresa ta de email",
         "feedback_records_read": "Citește înregistrările de feedback",
         "feedback_records_write": "Creează, actualizează și șterge înregistrările de feedback",

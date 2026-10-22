@@ -106,6 +106,8 @@
       "revoke": "撤销",
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
       "scopes": {
+        "dashboards_read": "读取图表和仪表板",
+        "dashboards_write": "创建和编辑图表和仪表板",
         "email": "查看你的邮箱地址",
         "feedback_records_read": "读取反馈记录",
         "feedback_records_write": "创建、更新和删除反馈记录",

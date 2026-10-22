@@ -106,6 +106,8 @@
       "revoke": "Återkalla",
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
       "scopes": {
+        "dashboards_read": "Läsa diagram och instrumentpaneler",
+        "dashboards_write": "Skapa och redigera diagram och instrumentpaneler",
         "email": "Se din e-postadress",
         "feedback_records_read": "Läs feedbackposter",
         "feedback_records_write": "Skapa, uppdatera och ta bort återkopplingsposter",

@@ -89,6 +89,8 @@ checksums:
     auth/oauth/requested_permissions: 7cd285529a4e57f46975b2623ec87681
     auth/oauth/revoke: be57685a85b6dfeaeb6eab4e9560b520
     auth/oauth/revoke_confirmation: 04bce52d76968647a8c2ba8c8db4c7a9
+    auth/oauth/scopes/dashboards_read: 523d6321fd81f3cc4d9fa16b29110ada
+    auth/oauth/scopes/dashboards_write: 562ea89a51ebd328e6cc0ad4bb51fa38
     auth/oauth/scopes/email: c28cf6b6c6221b0045539a5f7712230f
     auth/oauth/scopes/feedback_records_read: 720898c950af227bb3be529a64e3bc38
     auth/oauth/scopes/feedback_records_write: a929a6212367549f904d78362e56006c

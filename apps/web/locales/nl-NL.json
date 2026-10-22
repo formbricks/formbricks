@@ -106,6 +106,8 @@
       "revoke": "Intrekken",
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
       "scopes": {
+        "dashboards_read": "Grafieken en dashboards bekijken",
+        "dashboards_write": "Grafieken en dashboards maken en bewerken",
         "email": "Je e-mailadres bekijken",
         "feedback_records_read": "Feedbackrecords lezen",
         "feedback_records_write": "Feedbackrecords aanmaken, bijwerken en verwijderen",
