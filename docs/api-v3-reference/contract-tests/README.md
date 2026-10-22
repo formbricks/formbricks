@@ -57,6 +57,12 @@ Three things to know before reading the result:
   operations shallowly. A licence is necessary but not sufficient: it also has to _grant_ the
   feature. CI's key grants `contacts` and not `workflows` (ENG-2553), so the 13 workflow operations
   are shallow there too — the job's post-boot probe says which state you are in on every run.
+- **Chart and dashboard endpoints need the Dashboards feature.** `db:seed:contract` seeds a Feedback
+  Dataset assigned to the seed workspace, charts, dashboards and widgets — one disposable victim per
+  mutating operation, with layouts and the save's `updatedAt` pinned so each answers its success code.
+  Where the licence does not grant Dashboards, every one of them answers the documented 403
+  `dashboards_plan_required` instead. The chart data and preview operations answer a documented 502
+  either way: the job runs no Cube.
 - **The four `/tags` operations are session-only** (`auth: "session"`, and the spec declares only
   `sessionAuth`), so an API key gets a documented 401 before any handler runs. They are checked
   against that 401, which is a real assertion that they stay session-only — but no tag fixtures

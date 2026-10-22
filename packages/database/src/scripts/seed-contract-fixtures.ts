@@ -52,6 +52,23 @@ const CONTRACT_IDS = {
   WORKFLOW_TEST: "clctworkflowtest00000001",
   ACTION_CLASS_READ: "clctactionclassread00001",
   RESPONSE_READ: "clctresponseread00000001",
+  DATASET: "clctdataset0000000000001",
+  CHART_READ: "clctchartread00000000001",
+  CHART_PATCH: "clctchartpatch0000000001",
+  CHART_DELETE: "clctchartdelete000000001",
+  CHART_DUPLICATE: "clctchartduplicate000001",
+  CHART_WIDGET_ADD: "clctchartwidgetadd000001",
+  CHART_REPOINT: "clctchartrepoint00000001",
+  DASHBOARD_READ: "clctdashboardread0000001",
+  DASHBOARD_RENAME: "clctdashboardrename00001",
+  DASHBOARD_DELETE: "clctdashboarddelete00001",
+  DASHBOARD_DUPLICATE: "clctdashboarddupl0000001",
+  DASHBOARD_REPLACE: "clctdashboardreplace0001",
+  DASHBOARD_WIDGETS: "clctdashboardwidgets0001",
+  WIDGET_READ: "clctwidgetread0000000001",
+  WIDGET_REPLACE: "clctwidgetreplace0000001",
+  WIDGET_PATCH: "clctwidgetpatch000000001",
+  WIDGET_DELETE: "clctwidgetdelete00000001",
 } as const;
 
 /**
@@ -296,6 +313,92 @@ async function seedWorkflow(
   await prisma.workflow.upsert({ where: { id }, update: fields, create: { id, ...fields } });
 }
 
+/**
+ * ENG-6596: a Feedback Dataset the seed workspace uses, with charts and dashboards on it, so the chart
+ * and dashboard operations answer from real rows instead of their documented 403. The backfill the job
+ * runs after seeding projects the dataset assignment into SpiceDB, which is what lets the seed API key
+ * reach the dataset. Every mutating operation gets its own victim, as with surveys.
+ *
+ * The data and preview operations still answer 502: the job runs no Cube, so they are checked against
+ * that documented response. And all of them answer `dashboards_plan_required` where the instance's
+ * license does not grant Dashboards.
+ */
+async function seedDashboards(organizationId: string): Promise<void> {
+  await prisma.feedbackDirectory.upsert({
+    where: { id: CONTRACT_IDS.DATASET },
+    update: {},
+    create: {
+      id: CONTRACT_IDS.DATASET,
+      name: "Contract fixture — dataset",
+      organizationId,
+      workspaces: { create: { workspaceId: SEED_IDS.WORKSPACE } },
+    },
+  });
+
+  const charts = [
+    [CONTRACT_IDS.CHART_READ, "Contract fixture — chart read"],
+    [CONTRACT_IDS.CHART_PATCH, "Contract fixture — chart patch"],
+    [CONTRACT_IDS.CHART_DELETE, "Contract fixture — chart delete"],
+    [CONTRACT_IDS.CHART_DUPLICATE, "Contract fixture — chart duplicate"],
+    [CONTRACT_IDS.CHART_WIDGET_ADD, "Contract fixture — chart widget add"],
+    [CONTRACT_IDS.CHART_REPOINT, "Contract fixture — chart repoint"],
+  ] as const;
+  for (const [id, name] of charts) {
+    const fields = {
+      name,
+      type: "bar" as const,
+      query: { measures: ["FeedbackRecords.count"], dimensions: ["FeedbackRecords.sourceType"] },
+      config: {},
+      workspaceId: SEED_IDS.WORKSPACE,
+      feedbackDirectoryId: CONTRACT_IDS.DATASET,
+      createdBy: SEED_IDS.USER_ADMIN,
+    };
+    await prisma.chart.upsert({ where: { id }, update: fields, create: { id, ...fields } });
+  }
+
+  const dashboards: [string, string, [string, string][]][] = [
+    [
+      CONTRACT_IDS.DASHBOARD_READ,
+      "Contract fixture — dashboard read",
+      [[CONTRACT_IDS.WIDGET_READ, CONTRACT_IDS.CHART_READ]],
+    ],
+    [CONTRACT_IDS.DASHBOARD_RENAME, "Contract fixture — dashboard rename", []],
+    [CONTRACT_IDS.DASHBOARD_DELETE, "Contract fixture — dashboard delete", []],
+    [CONTRACT_IDS.DASHBOARD_DUPLICATE, "Contract fixture — dashboard duplicate", []],
+    [
+      CONTRACT_IDS.DASHBOARD_REPLACE,
+      "Contract fixture — dashboard replace",
+      [[CONTRACT_IDS.WIDGET_REPLACE, CONTRACT_IDS.CHART_READ]],
+    ],
+    [
+      CONTRACT_IDS.DASHBOARD_WIDGETS,
+      "Contract fixture — dashboard widgets",
+      [
+        [CONTRACT_IDS.WIDGET_PATCH, CONTRACT_IDS.CHART_READ],
+        [CONTRACT_IDS.WIDGET_DELETE, CONTRACT_IDS.CHART_PATCH],
+      ],
+    ],
+  ];
+  for (const [id, name, widgets] of dashboards) {
+    // Re-seeding resets the widgets too, so a second run starts from the same layout as the first.
+    await prisma.dashboardWidget.deleteMany({ where: { dashboardId: id } });
+    const fields = {
+      name,
+      workspaceId: SEED_IDS.WORKSPACE,
+      createdBy: SEED_IDS.USER_ADMIN,
+      updatedAt: CONTRACT_FIXTURE_UPDATED_AT,
+    };
+    await prisma.dashboard.upsert({ where: { id }, update: fields, create: { id, ...fields } });
+    for (const [order, [widgetId, chartId]] of widgets.entries()) {
+      await prisma.dashboardWidget.create({
+        data: { id: widgetId, dashboardId: id, chartId, layout: { x: order * 4, y: 0, w: 4, h: 4 }, order },
+      });
+    }
+    // Adding the widgets moved nothing, but pin it again so the replace precondition below holds.
+    await prisma.dashboard.update({ where: { id }, data: { updatedAt: CONTRACT_FIXTURE_UPDATED_AT } });
+  }
+}
+
 async function main(): Promise<void> {
   const outPath = getOutPath();
 
@@ -366,6 +469,8 @@ async function main(): Promise<void> {
     },
   });
 
+  await seedDashboards(workspace.organizationId);
+
   // No tag fixtures: every /api/v3/tags operation is `auth: "session"`, so an API key is rejected
   // with a documented 401 before a handler ever looks for a row. Seeding them would read as coverage
   // that does not exist. Add them here if tags ever accept an API key.
@@ -387,6 +492,10 @@ async function main(): Promise<void> {
       surveyId: CONTRACT_IDS.SURVEY_READ,
       workflowId: SEED_IDS.WORKFLOW_RESPONSE_FOLLOW_UP,
       ...(workflowRun ? { runId: workflowRun.id } : {}),
+      datasetId: CONTRACT_IDS.DATASET,
+      chartId: CONTRACT_IDS.CHART_READ,
+      dashboardId: CONTRACT_IDS.DASHBOARD_READ,
+      widgetId: CONTRACT_IDS.WIDGET_READ,
     },
     operations: {
       getResponseV3: { path: { responseId: CONTRACT_IDS.RESPONSE_READ } },
@@ -426,6 +535,38 @@ async function main(): Promise<void> {
       archiveWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_ARCHIVE } },
       unarchiveWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_UNARCHIVE } },
       testWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_TEST } },
+      // Charts and dashboards (ENG-6596). Layouts are pinned to free grid cells: a generated one is as
+      // likely to overlap a seeded widget, which only ever exercises the documented 422.
+      updateChartV3: { path: { chartId: CONTRACT_IDS.CHART_PATCH } },
+      deleteChartV3: { path: { chartId: CONTRACT_IDS.CHART_DELETE } },
+      duplicateChartV3: {
+        path: { chartId: CONTRACT_IDS.CHART_DUPLICATE },
+        body: { dashboardId: CONTRACT_IDS.DASHBOARD_DUPLICATE, layout: { x: 0, y: 20, w: 4, h: 4 } },
+      },
+      renameDashboardV3: { path: { dashboardId: CONTRACT_IDS.DASHBOARD_RENAME } },
+      deleteDashboardV3: { path: { dashboardId: CONTRACT_IDS.DASHBOARD_DELETE } },
+      duplicateDashboardV3: { path: { dashboardId: CONTRACT_IDS.DASHBOARD_DUPLICATE } },
+      // The whole dashboard, so the save answers its 200: the precondition is the pinned `updatedAt`,
+      // and the widget list names the one widget the dashboard holds.
+      replaceDashboardV3: {
+        path: { dashboardId: CONTRACT_IDS.DASHBOARD_REPLACE },
+        body: {
+          name: "Contract fixture — dashboard replaced",
+          updatedAt: CONTRACT_FIXTURE_UPDATED_AT.toISOString(),
+          widgets: [{ widgetId: CONTRACT_IDS.WIDGET_REPLACE, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0 }],
+        },
+      },
+      addDashboardWidgetV3: {
+        path: { dashboardId: CONTRACT_IDS.DASHBOARD_WIDGETS },
+        body: { chartId: CONTRACT_IDS.CHART_WIDGET_ADD, layout: { x: 0, y: 20, w: 4, h: 4 } },
+      },
+      updateDashboardWidgetV3: {
+        path: { dashboardId: CONTRACT_IDS.DASHBOARD_WIDGETS, widgetId: CONTRACT_IDS.WIDGET_PATCH },
+        body: { chartId: CONTRACT_IDS.CHART_REPOINT, layout: { x: 0, y: 30, w: 4, h: 4 } },
+      },
+      removeDashboardWidgetV3: {
+        path: { dashboardId: CONTRACT_IDS.DASHBOARD_WIDGETS, widgetId: CONTRACT_IDS.WIDGET_DELETE },
+      },
     },
   };
 
