@@ -4,14 +4,16 @@ import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TSurveyStatus } from "@formbricks/types/surveys/types";
+import { TSurveyStatus, TSurveyType } from "@formbricks/types/surveys/types";
 import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 
 export interface TSurveyBySlug {
   id: string;
   workspaceId: string;
-  status: string;
+  type: TSurveyType;
+  status: TSurveyStatus;
+  archivedAt: Date | null;
 }
 
 export interface TSurveyWithSlug {
@@ -32,7 +34,7 @@ export const getSurveyBySlug = reactCache(async (slug: string): Promise<TSurveyB
   try {
     const survey = await prisma.survey.findUnique({
       where: { slug },
-      select: { id: true, workspaceId: true, status: true },
+      select: { id: true, workspaceId: true, type: true, status: true, archivedAt: true },
     });
     return survey;
   } catch (error) {
