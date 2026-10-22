@@ -1,5 +1,7 @@
+import { headers } from "next/headers";
 import { after } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import type { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getIsAuditLogsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -17,6 +19,8 @@ const { auditGate } = vi.hoisted(() => ({ auditGate: { enabled: true } }));
 
 // next/server's after() runs its callback once the response is sent; collect them so a test can flush.
 const { afterCallbacks } = vi.hoisted(() => ({ afterCallbacks: [] as Promise<unknown>[] }));
+
+vi.mock("@/app/lib/api/with-api-logging", () => ({ buildAuditLogBaseObject: vi.fn() }));
 
 vi.mock("next/server", () => ({
   after: vi.fn((callback: () => Promise<unknown>) => {
@@ -41,8 +45,13 @@ vi.mock("@/lib/constants", async (importOriginal) => {
     AUDIT_LOG_GET_USER_IP: true,
   };
 });
+vi.mock("next/headers", () => ({
+  headers: vi.fn().mockResolvedValue(new Headers({ "user-agent": "audit-test-agent" })),
+}));
+
 vi.mock("@/lib/utils/client-ip", () => ({
   getClientIpFromHeaders: vi.fn().mockResolvedValue("127.0.0.1"),
+  UNTRUSTED_CLIENT_IP: "untrusted-client-ip",
 }));
 
 vi.mock("@/modules/ee/audit-logs/lib/service", () => {
@@ -136,6 +145,7 @@ const mockCtxBase = {
   user: fullUser,
   auditLoggingCtx: {
     ipAddress: "127.0.0.1",
+    userAgent: "action-test-agent",
     organizationId: "org1",
     surveyId: "t1",
     oldObject: { foo: "bar" },
@@ -151,7 +161,8 @@ const asActionCtx = (ctx: object) => ctx as unknown as ActionClientCtx;
 function clearAllMockHandles() {
   if (serviceLogAuditEventMockHandle) serviceLogAuditEventMockHandle.mockClear().mockResolvedValue(undefined);
   if (loggerErrorMockHandle) loggerErrorMockHandle.mockClear();
-  vi.mocked(getClientIpFromHeaders).mockClear();
+  vi.mocked(getClientIpFromHeaders).mockResolvedValue("127.0.0.1");
+  vi.mocked(headers).mockResolvedValue(new Headers({ "user-agent": "audit-test-agent" }) as never);
   auditGate.enabled = true;
 }
 
@@ -232,16 +243,14 @@ describe("queueAuditEvent", () => {
     await expect(pending).rejects.toBe(scopeError);
   });
 
-  test("logs, rather than throws, when the deferred IP read fails", async () => {
+  test("preserves the audit event when the deferred IP read fails", async () => {
     const ipError = new Error("headers unavailable");
     vi.mocked(getClientIpFromHeaders).mockRejectedValueOnce(ipError);
     await OriginalHandler.queueAuditEvent(baseEventParams);
     await flushAfter();
-    expect(loggerErrorMockHandle).toHaveBeenCalledWith(
-      expect.objectContaining({ err: ipError, action: "created", targetId: "t1" }),
-      "Failed to queue audit event"
+    expect(serviceLogAuditEventMockHandle).toHaveBeenCalledWith(
+      expect.objectContaining({ ipAddress: "untrusted-client-ip", userAgent: "audit-test-agent" })
     );
-    expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
   });
 });
 
@@ -261,24 +270,34 @@ describe("queueAuditEventBackground", () => {
     expect(logCall.action).toBe(baseEventParams.action);
   });
 
-  test("does nothing when audit logging is disabled, not even the IP read", async () => {
+  test("retains its snapshot after request headers stop being readable", async () => {
+    await OriginalHandler.queueAuditEventBackground(baseEventParams);
+    vi.mocked(headers).mockRejectedValue(new Error("request has ended"));
+    await new Promise(setImmediate);
+    expect(serviceLogAuditEventMockHandle).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ipAddress: "127.0.0.1",
+        userAgent: "audit-test-agent",
+      })
+    );
+    expect(headers).toHaveBeenCalledTimes(1);
+  });
+
+  test("does not write when the licence gate disables audit logging", async () => {
     auditGate.enabled = false;
     await OriginalHandler.queueAuditEventBackground(baseEventParams);
     await new Promise(setImmediate);
     expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
-    expect(vi.mocked(getClientIpFromHeaders)).not.toHaveBeenCalled();
   });
 
-  test("logs, rather than throws, when the IP read fails", async () => {
+  test("preserves the audit event when the IP read fails", async () => {
     const ipError = new Error("headers unavailable");
     vi.mocked(getClientIpFromHeaders).mockRejectedValueOnce(ipError);
     await OriginalHandler.queueAuditEventBackground(baseEventParams);
     await new Promise(setImmediate);
-    expect(loggerErrorMockHandle).toHaveBeenCalledWith(
-      expect.objectContaining({ err: ipError, action: "created", targetId: "t1" }),
-      "Failed to queue audit event"
+    expect(serviceLogAuditEventMockHandle).toHaveBeenCalledWith(
+      expect.objectContaining({ ipAddress: "untrusted-client-ip", userAgent: "audit-test-agent" })
     );
-    expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
   });
 });
 
@@ -293,15 +312,25 @@ describe("queueAuditEventWithoutRequest", () => {
   test("logs audit events without reading request headers", async () => {
     await OriginalHandler.queueAuditEventWithoutRequest({
       ...baseEventParams,
-      ipAddress: "worker-ip",
+      requestMetadata: { ipAddress: "203.0.113.7", userAgent: "deferred-agent" },
     });
 
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalledWith(
-      expect.objectContaining({
-        ipAddress: "worker-ip",
-      })
+      expect.objectContaining({ ipAddress: "203.0.113.7", userAgent: "deferred-agent" })
     );
     expect(vi.mocked(getClientIpFromHeaders)).not.toHaveBeenCalled();
+  });
+
+  test("system events carry explicit unknown metadata without reading headers", async () => {
+    await OriginalHandler.queueAuditEventWithoutRequest({ ...baseEventParams, userType: "system" });
+    expect(serviceLogAuditEventMockHandle).toHaveBeenCalledWith(
+      expect.objectContaining({
+        actor: { id: "u1", type: "system" },
+        ipAddress: "unknown",
+        userAgent: "unknown",
+      })
+    );
+    expect(getClientIpFromHeaders).not.toHaveBeenCalled();
   });
 
   test("does nothing when audit logging is disabled", async () => {
@@ -492,4 +521,36 @@ describe("withAuditLogging", () => {
     expect(callArgs.target.type).toBe("dashboardWidget");
     expect(callArgs.target.id).toBe("widget-1");
   });
+});
+
+describe("v3 and MCP audit emission", () => {
+  beforeEach(clearAllMockHandles);
+
+  test.each(["success", "failure"] as const)(
+    "retains metadata for %s API-key and MCP events",
+    async (status) => {
+      const { logger } = await import("@formbricks/logger");
+      await queueV3AuditLog(
+        {
+          ...baseEventParams,
+          userId: "api-key-1",
+          userType: "api",
+          status,
+          apiUrl: "https://app.example.com/api/mcp",
+        },
+        "request-1",
+        logger.withContext({})
+      );
+      await flushAfter();
+      expect(serviceLogAuditEventMockHandle).toHaveBeenCalledWith(
+        expect.objectContaining({
+          actor: { id: "api-key-1", type: "api" },
+          status,
+          ipAddress: "127.0.0.1",
+          userAgent: "audit-test-agent",
+          ...(status === "failure" ? { eventId: "request-1" } : {}),
+        })
+      );
+    }
+  );
 });

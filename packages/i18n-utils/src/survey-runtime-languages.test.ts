@@ -97,6 +97,8 @@ describe("isSurveyRuntimeLanguage", () => {
     expect(isSurveyRuntimeLanguage("pt-PT")).toBe(true);
     expect(isSurveyRuntimeLanguage("km-KH")).toBe(true);
     expect(isSurveyRuntimeLanguage("ne-NP")).toBe(true);
+    expect(isSurveyRuntimeLanguage("ms-MY")).toBe(true);
+    expect(isSurveyRuntimeLanguage("ms")).toBe(true);
   });
 
   test("Korean ships a bundle of its own, so a bare `ko` resolves to it (ENG-3882)", () => {

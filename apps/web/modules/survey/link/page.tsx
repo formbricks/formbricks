@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import { findMatchingLocale, getAcceptedLanguages } from "@/lib/utils/locale";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
-import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
+import { getResponseBySingleUseId } from "@/modules/survey/link/lib/data";
+import { getServableLinkSurvey } from "@/modules/survey/link/lib/servable-survey";
 import { resolveSingleUseIdForSurvey } from "@/modules/survey/link/lib/single-use-link";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
@@ -65,15 +64,9 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
    * generateMetadata and this page component are automatically deduplicated.
    */
 
-  // Stage 1: Fetch survey first (required for all subsequent logic)
-  let survey: TSurvey | null = null;
-  try {
-    survey = await getSurveyWithMetadata(params.surveyId);
-  } catch (error) {
-    logger.error(error, "Error fetching survey");
-    return notFound();
-  }
-
+  // Stage 1: Fetch survey first (required for all subsequent logic). Only a survey this page may serve
+  // comes back, so the single-use screen below can't confirm a non-public one exists (ENG-4032).
+  const survey = await getServableLinkSurvey(params.surveyId);
   if (!survey) {
     return notFound();
   }

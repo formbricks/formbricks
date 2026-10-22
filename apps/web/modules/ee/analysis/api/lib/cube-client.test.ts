@@ -2,10 +2,18 @@ import { createCubeTransport } from "./__mocks__/cube-transport.mock";
 import type * as CubeClient from "@cubejs-client/core";
 import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { getAuditRequestMetadata } from "@/modules/ee/audit-logs/lib/request-metadata";
 
 vi.mock("server-only", () => ({}));
+vi.mock("@/modules/ee/audit-logs/lib/request-metadata", () => ({
+  UNKNOWN_AUDIT_REQUEST_METADATA: { ipAddress: "unknown", userAgent: "unknown" },
+  getAuditRequestMetadata: vi
+    .fn()
+    .mockResolvedValue({ ipAddress: "203.0.113.7", userAgent: "cube-test-agent" }),
+}));
 
 const {
+  auditFlags,
   mockGetOrganization,
   mockLoad,
   mockLoggerError,
@@ -13,12 +21,20 @@ const {
   mockQueueAuditEventWithoutRequest,
   mockTablePivot,
 } = vi.hoisted(() => ({
+  auditFlags: { enabled: true },
   mockGetOrganization: vi.fn(),
   mockLoad: vi.fn(),
   mockLoggerError: vi.fn(),
   mockLoggerWarn: vi.fn(),
   mockQueueAuditEventWithoutRequest: vi.fn(),
   mockTablePivot: vi.fn(),
+}));
+
+vi.mock("@/lib/constants", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/constants")>()),
+  get AUDIT_LOG_ENABLED() {
+    return auditFlags.enabled;
+  },
 }));
 
 vi.mock("@cubejs-client/core", () => ({
@@ -66,6 +82,7 @@ describe("executeTenantScopedQuery", () => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
     vi.resetModules();
+    auditFlags.enabled = true;
     vi.stubEnv("NODE_ENV", "test");
     vi.stubEnv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public");
     vi.stubEnv("ENCRYPTION_KEY", "12345678901234567890123456789012");
@@ -75,6 +92,10 @@ describe("executeTenantScopedQuery", () => {
     vi.stubEnv("CUBEJS_API_SECRET", "cube-secret");
     vi.stubEnv("CUBEJS_JWT_AUDIENCE", "formbricks-cube-test");
     vi.stubEnv("CUBEJS_JWT_ISSUER", "formbricks-web-test");
+    vi.mocked(getAuditRequestMetadata).mockResolvedValue({
+      ipAddress: "203.0.113.7",
+      userAgent: "cube-test-agent",
+    });
     mockLoad.mockResolvedValue({ tablePivot: mockTablePivot });
     mockGetOrganization.mockResolvedValue({ displayTimeZone: null });
     mockQueueAuditEventWithoutRequest.mockResolvedValue(undefined);
@@ -83,6 +104,17 @@ describe("executeTenantScopedQuery", () => {
 
   afterEach(() => {
     vi.unstubAllEnvs();
+  });
+
+  test("returns query results without reading request metadata when auditing is disabled", async () => {
+    auditFlags.enabled = false;
+    const { executeTenantScopedQuery } = await import("./cube-client");
+
+    await expect(executeTenantScopedQuery(scopedInput)).resolves.toEqual([{ id: "1", count: 42 }]);
+    expect(getAuditRequestMetadata).not.toHaveBeenCalled();
+    expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledWith(
+      expect.objectContaining({ requestMetadata: { ipAddress: "unknown", userAgent: "unknown" } })
+    );
   });
 
   test("loads query with a per-request tenant scoped token and returns tablePivot result", async () => {
@@ -564,6 +596,7 @@ describe("executeTenantScopedQuery", () => {
       expect.objectContaining({
         action: "queried",
         targetType: "cubeQuery",
+        requestMetadata: { ipAddress: "203.0.113.7", userAgent: "cube-test-agent" },
         status: "failure",
         newObject: expect.objectContaining({
           tenantId: "frd-1",
@@ -628,6 +661,7 @@ describe("executeTenantScopedQuery", () => {
       expect.objectContaining({
         action: "queried",
         targetType: "cubeQuery",
+        requestMetadata: { ipAddress: "203.0.113.7", userAgent: "cube-test-agent" },
         newObject: expect.objectContaining({
           query: expect.objectContaining({
             filterMembers: ["FeedbackRecords.sourceType"],

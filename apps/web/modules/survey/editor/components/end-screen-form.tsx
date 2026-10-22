@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
+import { DEFAULT_ENDING_CARD_BUTTON_LINK } from "@/lib/survey/default-ending-card";
 import { headlineToRecall, recallToHeadline } from "@/lib/utils/recall";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { RecallWrapper } from "@/modules/survey/components/element-form-input/components/recall-wrapper";
@@ -144,8 +145,7 @@ export const EndScreenForm = ({
               } else {
                 updateSurvey({
                   buttonLabel: { default: t("workspace.surveys.edit.create_your_own_survey") },
-                  buttonLink:
-                    "https://formbricks.com?utm_source=formbricks-app&utm_medium=survey&utm_campaign=default_ending_cta",
+                  buttonLink: DEFAULT_ENDING_CARD_BUTTON_LINK,
                 });
               }
               setshowEndingCardCTA(!showEndingCardCTA);

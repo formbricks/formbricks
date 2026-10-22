@@ -9,6 +9,7 @@ import {
 } from "@/app/api/v3/lib/custom-css";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
+import { DEFAULT_ENDING_CARD_BUTTON_LINK } from "@/lib/survey/default-ending-card";
 import { createSurvey, getSurveyWithCustomCss } from "@/lib/survey/service";
 import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
@@ -361,6 +362,33 @@ describe("createV3Survey", () => {
 
     await expect(createV3Survey(body, null, "req_3")).rejects.toThrow(V3SurveyCreatePermissionError);
     expect(createSurvey).not.toHaveBeenCalled();
+  });
+
+  test("creates a survey with the default ending-card CTA without external URL permission", async () => {
+    vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
+    const body = ZV3CreateSurveyBody.parse({
+      ...rawCreateBody,
+      endings: [
+        {
+          id: "clen1234567890123456789012",
+          type: "endScreen",
+          headline: { "en-US": "Thanks", "de-DE": "Danke" },
+          buttonLabel: { "en-US": "Create your own survey", "de-DE": "Eigene Umfrage erstellen" },
+          buttonLink: DEFAULT_ENDING_CARD_BUTTON_LINK,
+        },
+      ],
+    });
+
+    await createV3Survey(body, null, "req_default_cta");
+
+    expect(getExternalUrlsPermission).not.toHaveBeenCalled();
+    expect(createSurvey).toHaveBeenCalledWith(
+      workspaceId,
+      expect.objectContaining({
+        endings: [expect.objectContaining({ buttonLink: DEFAULT_ENDING_CARD_BUTTON_LINK })],
+      }),
+      expect.anything()
+    );
   });
 
   // ENG-2587. Driven through the real `ZSurveyCreateInput`/`surveyRefinement` rather than a
