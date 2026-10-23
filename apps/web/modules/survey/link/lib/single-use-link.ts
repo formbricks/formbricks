@@ -26,7 +26,7 @@ const fingerprintSuToken = (suToken: string): string =>
   createHash("sha256").update(suToken).digest("hex").slice(0, 12);
 
 /** A single-use link value as it arrives from the URL: repeated parameters come back as an array. */
-export type TSingleUseSearchParam = string | string[] | null | undefined;
+export type TSingleUseSearchParam = string | string[] | null;
 
 /**
  * Next's App Router hands back `string[]` for a repeated query parameter, and the page surfaces read
@@ -37,7 +37,7 @@ export type TSingleUseSearchParam = string | string[] | null | undefined;
  * ERR_INVALID_ARG_TYPE, which would turn `?suToken=a&suToken=b` into a 500 plus a Sentry event that any
  * anonymous caller could repeat at will.
  */
-export const singleSearchParamValue = (value: TSingleUseSearchParam): string | undefined =>
+export const singleSearchParamValue = (value?: TSingleUseSearchParam): string | undefined =>
   typeof value === "string" ? value : undefined;
 
 /**
