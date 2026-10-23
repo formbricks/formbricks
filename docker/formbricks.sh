@@ -1711,8 +1711,8 @@ can_enable_compose_ipv6() {
   fi
 }
 
-# Whether a Compose file has a top-level networks.default of its own. A networks: written inline (flow style)
-# counts too: the operator owns it, and the rewrite below only handles the block style.
+# Whether a Compose file has a top-level networks.default of its own: 0 when it does, 1 when it does not. Returns 2
+# for a networks: written inline (flow style) without a default, which the rewrite below cannot add one to.
 compose_file_sets_default_network() {
   awk '
     function indentation(line) {
@@ -1722,15 +1722,18 @@ compose_file_sets_default_network() {
     /^networks:/ {
       in_networks=1
       child_indent=-1
-      if ($0 !~ /^networks:[[:space:]]*(#.*)?\r?$/) found=1
+      flow=($0 !~ /^networks:[[:space:]]*(#.*)?\r?$/)
+      if (flow && $0 ~ /[{,][[:space:]]*["\047]?default["\047]?[[:space:]]*:/) found=1
       next
     }
     in_networks && /^[^[:space:]#]/ { in_networks=0 }
-    in_networks && /^[ ]+[^[:space:]#]/ {
+    # A flow mapping can continue on the lines below its key.
+    in_networks && flow && /(^|[{,])[[:space:]]*["\047]?default["\047]?[[:space:]]*:/ { found=1 }
+    in_networks && !flow && /^[ ]+[^[:space:]#]/ {
       if (child_indent < 0) child_indent=indentation($0)
       if (indentation($0) == child_indent && $0 ~ /^[ ]+["\047]?default["\047]?:/) found=1
     }
-    END { exit(found ? 0 : 1) }
+    END { exit(found ? 0 : (flow ? 2 : 1)) }
   ' "$1"
 }
 
@@ -1827,11 +1830,17 @@ enable_compose_ipv6() {
     return 1
   fi
 
-  local file override_file
+  local file override_file network_status
   override_file="$(compose_override_file "$compose_file")"
   for file in "$compose_file" ${override_file:+"$override_file"}; do
-    if compose_file_sets_default_network "$file"; then
+    network_status=0
+    compose_file_sets_default_network "$file" || network_status=$?
+    if [[ $network_status -eq 0 ]]; then
       return 3
+    elif [[ $network_status -eq 2 ]]; then
+      echo "⚠️ $file writes networks: inline, so IPv6 cannot be turned on for you. Add enable_ipv6: true"
+      echo "   under networks.default by hand: $compose_ipv6_docs_url"
+      return 1
     fi
   done
 

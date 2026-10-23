@@ -2539,7 +2539,11 @@ volumes:
   test.each([
     ["a block default", "networks:\n  default:\n    name: my-network\n"],
     ["a quoted default", 'networks:\n  "default":\n    driver: bridge\n'],
-    ["an inline networks:", "networks: {default: {name: my-network}}\n"],
+    ["an inline default", "networks: {default: {name: my-network}}\n"],
+    [
+      "an inline default on a later line",
+      "networks: {\n  proxy: {external: true},\n  default: {name: my-network}\n}\n",
+    ],
   ])("leaves %s the operator set untouched", (_name, networks) => {
     const tempDir = createTempDir();
     const composePath = join(tempDir, "docker-compose.yml");
@@ -2547,6 +2551,20 @@ volumes:
     writeFileSync(composePath, composeContents);
 
     expect(enableComposeIpv6(composePath, "update").status).toBe(3);
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+  });
+
+  test("says IPv6 stays off when an inline networks: has no default", () => {
+    const tempDir = createTempDir();
+    const composePath = join(tempDir, "docker-compose.yml");
+    const composeContents =
+      "services:\n  formbricks:\n    image: example\nnetworks: {proxy: {external: true}}\n";
+    writeFileSync(composePath, composeContents);
+
+    const result = enableComposeIpv6(composePath, "update");
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("writes networks: inline, so IPv6 cannot be turned on for you");
     expect(readFileSync(composePath, "utf8")).toBe(composeContents);
   });
 
