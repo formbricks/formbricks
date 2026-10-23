@@ -4,6 +4,7 @@ import type { Prisma } from "@formbricks/database/prisma";
 import type { TWidgetLayout } from "@formbricks/types/analysis";
 import { lockDashboard } from "@/app/api/v3/dashboards/lib/dashboard-lock";
 import { planNewWidget, siblingsOf, touchDashboard } from "@/app/api/v3/dashboards/lib/widget-service";
+import { escapeLikePattern } from "@/lib/utils/like-pattern";
 import { retryOnTransactionConflict } from "@/lib/utils/prisma-error";
 import { copyNamePrefix, nextCopyName } from "@/modules/ee/analysis/lib/copy-name";
 import { type TChartResourceRow, selectChartResource } from "./service";
@@ -66,7 +67,10 @@ export const duplicateChartRow = ({
           source.name,
           (
             await tx.chart.findMany({
-              where: { workspaceId: source.workspaceId, name: { startsWith: copyNamePrefix(source.name) } },
+              where: {
+                workspaceId: source.workspaceId,
+                name: { startsWith: escapeLikePattern(copyNamePrefix(source.name)) },
+              },
               select: { name: true },
             })
           ).map((chart) => chart.name)

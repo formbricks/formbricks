@@ -154,7 +154,10 @@ export const duplicateDashboardRow = ({
         source.name,
         (
           await tx.dashboard.findMany({
-            where: { workspaceId: source.workspaceId, name: { startsWith: copyNamePrefix(source.name) } },
+            where: {
+              workspaceId: source.workspaceId,
+              name: { startsWith: escapeLikePattern(copyNamePrefix(source.name)) },
+            },
             select: { name: true },
           })
         ).map((dashboard) => dashboard.name)
