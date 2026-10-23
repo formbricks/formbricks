@@ -1,7 +1,7 @@
 # SpiceDB Operator Helm Chart
 
 This first-party wrapper installs the AuthZed SpiceDB Operator with namespace-scoped RBAC. It vendors the CRD and
-update graph from [`authzed/spicedb-operator` v1.25.1](https://github.com/authzed/spicedb-operator/releases/tag/v1.25.1)
+update graph from [`authzed/spicedb-operator` v1.27.0](https://github.com/authzed/spicedb-operator/releases/tag/v1.27.0)
 and pins the operator's multi-architecture image digest.
 
 ```yaml

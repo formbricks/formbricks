@@ -2268,7 +2268,7 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(formbricksMigrateBlock).not.toContain("traefik.enable=true");
     expect(authzedBootstrapBlock).toContain("authzed-postgres-bootstrap.sh");
     expect(authzedBootstrapBlock).not.toContain("traefik.enable=true");
-    expect(spicedbBlock).toContain("authzed/spicedb:v1.52.0");
+    expect(spicedbBlock).toContain("authzed/spicedb:v1.56.2");
     expect(spicedbBlock).not.toContain("traefik.enable=true");
     expect(authzedOpsBlock).toContain('profiles: ["authzed-ops"]');
     expect(authzedOpsBlock).not.toContain("traefik.enable=true");

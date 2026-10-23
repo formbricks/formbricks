@@ -3,7 +3,7 @@
 set -euo pipefail
 
 readonly CONTAINER_NAME="formbricks-authzed-ci"
-readonly SPICEDB_IMAGE="${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.52.0}"
+readonly SPICEDB_IMAGE="${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.56.2}"
 readonly ZED_IMAGE="${ZED_IMAGE_REF:-authzed/zed:v1.1.1}"
 
 AUTHZED_TOKEN="${AUTHZED_TOKEN:-}"
