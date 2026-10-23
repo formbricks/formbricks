@@ -38,7 +38,7 @@ const isDomainLike = (piece: string): boolean => {
   return (
     labels.length >= 2 &&
     labels.every((label) => DOMAIN_LABEL.test(label)) &&
-    TOP_LEVEL_DOMAIN.test(labels[labels.length - 1])
+    TOP_LEVEL_DOMAIN.test(labels.at(-1) ?? "")
   );
 };
 
