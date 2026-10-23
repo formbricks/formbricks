@@ -212,7 +212,7 @@ const MemoizedWidgetItem = memo(function WidgetItem({
  */
 export function DashboardDetailClient(props: Readonly<DashboardDetailClientProps>) {
   const { t } = useTranslation();
-  const { data: dashboard, isPending, isError, error, refetch } = useDashboard(props.dashboardId);
+  const { data: dashboard, isPending, error, refetch } = useDashboard(props.dashboardId);
 
   if (isPending) {
     return (
@@ -225,7 +225,9 @@ export function DashboardDetailClient(props: Readonly<DashboardDetailClientProps
     );
   }
 
-  if (isError) {
+  // A failed background refetch keeps the last dashboard (TanStack Query holds `data` on error), so the
+  // full-page error is only for a dashboard that never loaded; replacing the view would drop an open edit.
+  if (!dashboard) {
     return (
       <PageContentWrapper>
         <GoBackButton url={`/workspaces/${props.workspaceId}/dashboards`} />
