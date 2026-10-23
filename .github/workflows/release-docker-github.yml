@@ -21,39 +21,22 @@ on:
     outputs:
       VERSION:
         description: release version
-        value: ${{ jobs.build.outputs.VERSION }}
+        value: ${{ jobs.build.outputs.IMAGE_TAG }}
       IMAGE_DIGEST:
         description: digest of the pushed community image
         value: ${{ jobs.build.outputs.IMAGE_DIGEST }}
-
-env:
-  # Use docker.io for Docker Hub if empty
-  REGISTRY: ghcr.io
-  # github.repository as <account>/<repo>
-  IMAGE_NAME: ${{ github.repository }}
 
 permissions:
   contents: read
 
 jobs:
-  build:
+  resolve-version:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 10
     permissions:
       contents: read
-      packages: write
-      id-token: write
-      # This is used to complete the identity challenge
-      # with sigstore/fulcio when running outside of PRs.
-
     outputs:
       VERSION: ${{ steps.extract_release_tag.outputs.VERSION }}
-      IMAGE_DIGEST: ${{ steps.build.outputs.image_digest }}
-      TAGS: ${{ steps.build.outputs.registry_tags }}
-      IMAGE_REF: ${{ steps.build.outputs.image_ref }}
-      BUILD_IDENTITY: ${{ steps.build.outputs.build_identity }}
-      DEPOT_BUILD_ID: ${{ steps.build.outputs.depot_build_id }}
-
     steps:
       - name: Harden the runner (Audit all outbound calls)
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -98,26 +81,19 @@ jobs:
           echo "VERSION=$TAG" >> $GITHUB_OUTPUT
           echo "Using version: $TAG"
 
-      - name: Build and push community release image
-        id: build
-        uses: ./.github/actions/build-and-push-docker
-        with:
-          registry_type: "ghcr"
-          ghcr_image_name: ${{ env.IMAGE_NAME }}
-          version: ${{ steps.extract_release_tag.outputs.VERSION }}
-          is_prerelease: ${{ inputs.IS_PRERELEASE }}
-          make_latest: ${{ inputs.MAKE_LATEST }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEPOT_PROJECT_TOKEN: ${{ secrets.DEPOT_PROJECT_TOKEN }}
-          DUMMY_DATABASE_URL: ${{ secrets.DUMMY_DATABASE_URL }}
-          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
-          DUMMY_REDIS_URL: ${{ secrets.DUMMY_REDIS_URL }}
-          DUMMY_HUB_API_URL: ${{ secrets.DUMMY_HUB_API_URL }}
-          DUMMY_HUB_API_KEY: ${{ secrets.DUMMY_HUB_API_KEY }}
-          DUMMY_CUBEJS_API_URL: ${{ secrets.DUMMY_CUBEJS_API_URL }}
-          DUMMY_CUBEJS_API_SECRET: ${{ secrets.DUMMY_CUBEJS_API_SECRET }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+  build:
+    needs: resolve-version
+    uses: ./.github/workflows/build-docker-candidate.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      registry_type: ghcr
+      ghcr_image_name: ${{ github.repository }}
+      version: ${{ needs.resolve-version.outputs.VERSION }}
+      is_prerelease: ${{ inputs.IS_PRERELEASE }}
+      make_latest: ${{ inputs.MAKE_LATEST }}
+    secrets: inherit
 
   validate:
     name: Image smoke (${{ matrix.platform }})
@@ -134,6 +110,7 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
+      packages: read
     steps:
       - name: Harden runner
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
@@ -142,8 +119,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/test-release-image
         with:
-          depot_build_id: ${{ needs.build.outputs.DEPOT_BUILD_ID }}
-          depot_token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
           image_ref: ${{ needs.build.outputs.IMAGE_REF }}
           build_identity: ${{ needs.build.outputs.BUILD_IDENTITY }}
           registry_type: "ghcr"
@@ -166,8 +141,6 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/promote-verified-image
         with:
-          depot_build_id: ${{ needs.build.outputs.DEPOT_BUILD_ID }}
-          depot_token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
           image_ref: ${{ needs.build.outputs.IMAGE_REF }}
           registry_type: "ghcr"
           release_tags: ${{ needs.build.outputs.TAGS }}

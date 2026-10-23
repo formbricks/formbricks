@@ -1,12 +1,6 @@
 name: Promote verified image
 description: Sign and tag an image after every native validation job succeeds
 inputs:
-  depot_build_id:
-    description: "Saved build ID"
-    required: true
-  depot_token:
-    description: "Depot project credential"
-    required: true
   image_ref:
     description: "Immutable candidate image digest"
     required: true
@@ -14,10 +8,10 @@ inputs:
     description: "ecr or ghcr"
     required: true
   ecr_region:
-    description: "AWS region for ECR"
+    description: "AWS region (ECR only)"
     required: false
   aws_role_arn:
-    description: "AWS role for ECR"
+    description: "AWS role (ECR only)"
     required: false
   release_tags:
     description: "Intended release tags"
@@ -25,43 +19,47 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: ./.github/actions/depot-registry-login
-      with:
-        depot_build_id: ${{ inputs.depot_build_id }}
-        depot_token: ${{ inputs.depot_token }}
     - uses: ./.github/actions/image-registry-login
       with:
         registry_type: ${{ inputs.registry_type }}
         ecr_region: ${{ inputs.ecr_region }}
         aws_role_arn: ${{ inputs.aws_role_arn }}
     - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+    - name: Install registry copy tool
+      shell: bash
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y --no-install-recommends skopeo
     - uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
       if: inputs.registry_type == 'ghcr'
     - name: Promote verified digest without rebuilding
       env:
         IMAGE: ${{ inputs.image_ref }}
         RELEASE_TAGS: ${{ inputs.release_tags }}
-        BUILD_ID: ${{ inputs.depot_build_id }}
-        DEPOT_TOKEN: ${{ inputs.depot_token }}
       shell: bash
       run: |
         set -euo pipefail
         # A deployer may already have consumed a changed tag; recovery must move forward.
         trap 'echo "Tag promotion failed; inspect release tags and resume with the verified digest. Do not automatically roll back deployed workloads." >&2' ERR
-        args=()
-        while IFS= read -r tag; do
-          if [ -n "$tag" ]; then args+=(--tag "$tag"); fi
-        done <<< "$RELEASE_TAGS"
-        test "${#args[@]}" -gt 0
-        # Bind Depot's build-ID copy to the exact private digest exercised by both native jobs.
-        saved="$(docker buildx imagetools inspect --format '{{json .Manifest}}' "registry.depot.dev/tw0fqmsx3c:$BUILD_ID" | jq -r .digest)"
+        [[ "$IMAGE" =~ @sha256:[0-9a-f]{64}$ ]]
+        # Inspect the immutable source before writing any destination tags.
+        saved="$(docker buildx imagetools inspect --format '{{json .Manifest}}' "$IMAGE" | jq -er .digest)"
         test "$saved" = "${IMAGE##*@}"
-        depot push --project tw0fqmsx3c "${args[@]}" "$BUILD_ID"
+        tags=()
         while IFS= read -r tag; do
-          if [ -z "$tag" ]; then continue; fi
-          actual="$(docker buildx imagetools inspect --format '{{json .Manifest}}' "$tag" | jq -r .digest)"
-          test "$actual" = "${IMAGE##*@}"
+          if [ -n "$tag" ]; then tags+=("$tag"); fi
         done <<< "$RELEASE_TAGS"
+        test "${#tags[@]}" -gt 0
+        # Candidates and release tags must stay in the same existing repository.
+        for tag in "${tags[@]}"; do
+          test "${tag%:*}" = "${IMAGE%@*}"
+        done
+        for tag in "${tags[@]}"; do
+          skopeo copy --all --preserve-digests --authfile "$HOME/.docker/config.json" \
+            "docker://$IMAGE" "docker://$tag"
+          actual="$(docker buildx imagetools inspect --format '{{json .Manifest}}' "$tag" | jq -er .digest)"
+          test "$actual" = "${IMAGE##*@}"
+        done
     - name: Sign verified community image
       if: inputs.registry_type == 'ghcr'
       env:

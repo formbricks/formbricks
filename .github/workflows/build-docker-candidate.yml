@@ -1,0 +1,244 @@
+name: Build Docker candidate in release registry
+
+on:
+  workflow_call:
+    inputs:
+      registry_type:
+        required: true
+        type: string
+      version:
+        type: string
+        default: ""
+      ghcr_image_name:
+        type: string
+        default: ""
+      experimental_mode:
+        type: boolean
+        default: false
+      rebuild_application:
+        type: boolean
+        default: false
+      deploy_production:
+        type: boolean
+        default: false
+      deploy_staging:
+        type: boolean
+        default: false
+      deployment_tag:
+        type: string
+        default: ""
+      is_prerelease:
+        type: boolean
+        default: false
+      make_latest:
+        type: boolean
+        default: false
+    secrets:
+      AWS_ECR_PUSH_ROLE_ARN:
+        required: false
+      DUMMY_DATABASE_URL:
+        required: false
+      DUMMY_ENCRYPTION_KEY:
+        required: false
+      DUMMY_REDIS_URL:
+        required: false
+      DUMMY_HUB_API_URL:
+        required: false
+      DUMMY_HUB_API_KEY:
+        required: false
+      DUMMY_CUBEJS_API_URL:
+        required: false
+      DUMMY_CUBEJS_API_SECRET:
+        required: false
+      SENTRY_AUTH_TOKEN:
+        required: false
+      POSTHOG_KEY:
+        required: false
+    outputs:
+      IMAGE_TAG:
+        value: ${{ jobs.prepare.outputs.version }}
+      BUILD_IDENTITY:
+        value: ${{ jobs.prepare.outputs.identity }}
+      TAGS:
+        value: ${{ jobs.prepare.outputs.tags }}
+      IMAGE_DIGEST:
+        value: ${{ jobs.merge.outputs.digest }}
+      IMAGE_REF:
+        value: ${{ jobs.merge.outputs.image }}
+
+# Build and merge inherit the caller's scoped permissions: ECR needs id-token: write,
+# GHCR needs packages: write. Preparation only needs repository reads.
+
+env:
+  CANDIDATE_TAG: blacksmith-candidate-${{ inputs.registry_type }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.prepare.outputs.image_tag }}
+      identity: ${{ steps.prepare.outputs.build_identity }}
+      tags: ${{ steps.prepare.outputs.registry_tags }}
+      labels: ${{ steps.prepare.outputs.image_labels }}
+      candidate_tag: ${{ steps.candidate.outputs.tag }}
+      candidate_repository: ${{ steps.candidate.outputs.repository }}
+    steps:
+      - uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/prepare-docker-image
+        id: prepare
+        with:
+          registry_type: ${{ inputs.registry_type }}
+          version: ${{ inputs.version }}
+          ghcr_image_name: ${{ inputs.ghcr_image_name }}
+          experimental_mode: ${{ inputs.experimental_mode }}
+          rebuild_application: ${{ inputs.rebuild_application }}
+          deploy_production: ${{ inputs.deploy_production }}
+          deploy_staging: ${{ inputs.deploy_staging }}
+          deployment_tag: ${{ inputs.deployment_tag }}
+          is_prerelease: ${{ inputs.is_prerelease }}
+          make_latest: ${{ inputs.make_latest }}
+          ecr_registry: ${{ vars.ECR_REGISTRY }}
+          ecr_repository: ${{ vars.ECR_REPOSITORY }}
+          ecr_region: ${{ vars.ECR_REGION }}
+          aws_role_arn: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          POSTHOG_KEY: ${{ inputs.registry_type == 'ecr' && secrets.POSTHOG_KEY || '' }}
+
+      - name: Identify candidate repository and tags
+        id: candidate
+        env:
+          RELEASE_TAGS: ${{ steps.prepare.outputs.registry_tags }}
+        run: |
+          set -euo pipefail
+          # Use the same repository as the metadata action's intended release tags.
+          first_tag="${RELEASE_TAGS%%$'\n'*}"
+          repository="${first_tag%:*}"
+          test -n "$repository"
+          test "$repository" != "$first_tag"
+          {
+            echo "repository=$repository"
+            echo "tag=$CANDIDATE_TAG"
+          } >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: prepare
+    env:
+      # Keep the original preparation's tags when rerunning only failed matrix jobs.
+      CANDIDATE_TAG: ${{ needs.prepare.outputs.candidate_tag }}
+      CANDIDATE_REPOSITORY: ${{ needs.prepare.outputs.candidate_repository }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            machine: x86_64
+            runner: blacksmith-16vcpu-ubuntu-2404
+            node_build_jobs: 4
+          - arch: arm64
+            machine: aarch64
+            runner: blacksmith-32vcpu-ubuntu-2404-arm
+            node_build_jobs: 32
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verify native architecture
+        env:
+          EXPECTED_MACHINE: ${{ matrix.machine }}
+        run: test "$(uname -m)" = "$EXPECTED_MACHINE"
+      - uses: ./.github/actions/update-package-version
+        with:
+          version: ${{ needs.prepare.outputs.version }}
+      - uses: ./.github/actions/image-registry-login
+        with:
+          registry_type: ${{ inputs.registry_type }}
+          ecr_region: ${{ vars.ECR_REGION }}
+          aws_role_arn: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
+      - uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184 # v2
+        with:
+          # Preserve the validated trial caches at cutover. PR builds use separate keys.
+          cache-key: apps/web/Dockerfile-blacksmith-trial-${{ matrix.arch }}
+          nofallback: true
+      - name: Build native candidate
+        uses: useblacksmith/build-push-action@9b0579bbec7a6cad2f171596c57e7ac1e7658850 # v2
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          platforms: linux/${{ matrix.arch }}
+          pull: true
+          push: true
+          tags: ${{ env.CANDIDATE_REPOSITORY }}:${{ env.CANDIDATE_TAG }}-${{ matrix.arch }}
+          labels: ${{ needs.prepare.outputs.labels }}
+          build-args: |
+            NODE_BUILD_JOBS=${{ matrix.node_build_jobs }}
+            FORMBRICKS_DEPLOYMENT_ID=${{ needs.prepare.outputs.identity }}
+            FORMBRICKS_BUILD_VARIANT=${{ inputs.registry_type }}
+          no-cache-filters: ${{ inputs.rebuild_application == true && 'installer,runner' || '' }}
+          secrets: |
+            database_url=${{ secrets.DUMMY_DATABASE_URL }}
+            encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
+            redis_url=${{ secrets.DUMMY_REDIS_URL }}
+            hub_api_url=${{ secrets.DUMMY_HUB_API_URL }}
+            hub_api_key=${{ secrets.DUMMY_HUB_API_KEY }}
+            cubejs_api_url=${{ secrets.DUMMY_CUBEJS_API_URL }}
+            cubejs_api_secret=${{ secrets.DUMMY_CUBEJS_API_SECRET }}
+            sentry_auth_token=${{ secrets.SENTRY_AUTH_TOKEN }}
+            posthog_key=${{ inputs.registry_type == 'ecr' && secrets.POSTHOG_KEY || '' }}
+      - name: Bound persistent build cache
+        run: |
+          docker buildx prune --force --max-used-space 30gb
+          docker buildx du >> "$GITHUB_STEP_SUMMARY"
+
+  merge:
+    needs: [prepare, build]
+    env:
+      CANDIDATE_TAG: ${{ needs.prepare.outputs.candidate_tag }}
+      CANDIDATE_REPOSITORY: ${{ needs.prepare.outputs.candidate_repository }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      image: ${{ steps.merge.outputs.image }}
+      digest: ${{ steps.merge.outputs.digest }}
+    steps:
+      - uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/image-registry-login
+        with:
+          registry_type: ${{ inputs.registry_type }}
+          ecr_region: ${{ vars.ECR_REGION }}
+          aws_role_arn: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Assemble multi-platform candidate
+        id: merge
+        run: |
+          set -euo pipefail
+          image="$CANDIDATE_REPOSITORY:$CANDIDATE_TAG"
+          docker buildx imagetools create --tag "$image" \
+            "$CANDIDATE_REPOSITORY:$CANDIDATE_TAG-amd64" \
+            "$CANDIDATE_REPOSITORY:$CANDIDATE_TAG-arm64"
+          digest="$(docker buildx imagetools inspect --format '{{json .Manifest}}' "$image" | jq -er .digest)"
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          docker buildx imagetools inspect --raw "$CANDIDATE_REPOSITORY@$digest" | jq -e '
+            [.manifests[] | select(.platform.os == "linux") | .platform.architecture] | sort == ["amd64", "arm64"]
+          '
+          {
+            echo "image=$CANDIDATE_REPOSITORY@$digest"
+            echo "digest=$digest"
+          } >> "$GITHUB_OUTPUT"
