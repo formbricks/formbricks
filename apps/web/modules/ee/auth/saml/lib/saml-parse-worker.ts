@@ -1,4 +1,5 @@
 import { decryptXml } from "@boxyhq/saml20/dist/decrypt.js";
+import { parseIssuer } from "@boxyhq/saml20/dist/response.js";
 import { validateSignature } from "@boxyhq/saml20/dist/validateSignature.js";
 import { DOMParser, type Element, MIME_TYPE } from "@xmldom/xmldom";
 import { type MessagePort, workerData } from "node:worker_threads";
@@ -15,8 +16,9 @@ import { type SamlDecryptedRefusal, checkDecryptedSamlResponseBounds } from "./s
  *
  * Given the SP key, it also does what jackson does with an encrypted assertion before checking any signature, and
  * holds the decrypted document to the byte bounds, so the plaintext, which the bounds on the response only see as
- * ciphertext, is timed and measured too (ENG-4051). Then it runs saml20's signature check as jackson will, with the
- * connection's own IdP certificates, so that step's cost is timed as well (ENG-4108).
+ * ciphertext, is timed and measured too (ENG-4051). It runs saml20's `parseIssuer`, jackson's first use of the
+ * response, so that call's cost is timed as well (ENG-6648), then saml20's signature check with the connection's own
+ * IdP certificates, so that step's cost is timed too (ENG-4108).
  *
  * It answers with the identifying fields only (the claimed issuer, the response ID and InResponseTo, cut to a length a
  * log line can carry) and how decryption went, with sizes for a refusal. Nothing else of the response leaves the
@@ -25,27 +27,25 @@ import { type SamlDecryptedRefusal, checkDecryptedSamlResponseBounds } from "./s
 
 const MAX_FIELD_LENGTH = 1024;
 
-const SAML_ASSERTION_NS = "urn:oasis:names:tc:SAML:2.0:assertion";
-
 const field = (value: string | null | undefined): string | undefined =>
   value ? value.slice(0, MAX_FIELD_LENGTH) : undefined;
 
 const parseXml = (xml: string) =>
   new DOMParser({ onError: () => undefined }).parseFromString(xml, MIME_TYPE.XML_APPLICATION);
 
-const readClaims = (root: Element): SamlResponseClaims => {
-  let issuer: string | undefined;
-  for (let node = root.firstChild; node; node = node.nextSibling) {
-    if (node.namespaceURI === SAML_ASSERTION_NS && node.localName === "Issuer") {
-      issuer = field(node.textContent);
-      break;
-    }
+/**
+ * jackson's first use of the response (saml20's `parseIssuer`): it parses the whole response and selects the `Issuer`
+ * children of its root, on every callback, before any issuer, connection or RelayState check. The select's cost grows
+ * with the square of the elements it matches, so the byte bounds cap its names (ENG-6648); calling it here puts
+ * jackson's actual call inside the budget too, so a shape the bounds misread is still cut off. Returns `undefined` for
+ * a response saml20 cannot parse, which jackson refuses on its own.
+ */
+const issuerAsJackson = (xml: string): string | undefined => {
+  try {
+    return parseIssuer(xml);
+  } catch {
+    return undefined;
   }
-  return {
-    issuer,
-    id: field(root.getAttribute("ID")),
-    inResponseTo: field(root.getAttribute("InResponseTo")),
-  };
 };
 
 /**
@@ -136,7 +136,7 @@ const checkSignatureAsJackson = (
 };
 
 /**
- * One job: parse `xml`, decrypt and measure its encrypted assertion with `decryptionKey` as jackson will, then run
+ * One job: parse `xml` as jackson does, decrypt and measure its encrypted assertion with `decryptionKey`, then run
  * jackson's signature check on it with `idpVerification` (`null` when no connection is configured, where jackson
  * refuses before validating). Never throws.
  */
@@ -145,6 +145,8 @@ export const parseSamlResponse = (
   decryptionKey: string | null,
   idpVerification: SamlIdpVerification | null
 ): ParsedSamlResponse => {
+  // jackson's first call on the response, timed here before anything else as jackson does it (ENG-6648).
+  const issuer = issuerAsJackson(xml);
   let root: Element | null;
   try {
     root = parseXml(xml).documentElement;
@@ -153,7 +155,11 @@ export const parseSamlResponse = (
     return { claims: {} };
   }
   if (!root) return { claims: {} };
-  const claims = readClaims(root);
+  const claims: SamlResponseClaims = {
+    issuer: field(issuer),
+    id: field(root.getAttribute("ID")),
+    inResponseTo: field(root.getAttribute("InResponseTo")),
+  };
   if (!hasEncryptedAssertion(root)) {
     if (idpVerification) checkSignatureAsJackson(xml, undefined, idpVerification);
     return { claims };

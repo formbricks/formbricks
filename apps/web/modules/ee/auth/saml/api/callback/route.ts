@@ -176,7 +176,7 @@ const readCallbackForm = async (
 /** What a response past the byte bounds is told: the kind of bound, never the counts. */
 const BOUNDS_REFUSAL_MESSAGES: Record<string, string> = {
   declaration: "SAMLResponse must not contain a DOCTYPE or other declaration",
-  signatures: "SAMLResponse carries more signatures than a SAML response does",
+  elements: "SAMLResponse carries more elements than a SAML response does",
 };
 
 const boundsRefusalMessage = (reason: string): string =>

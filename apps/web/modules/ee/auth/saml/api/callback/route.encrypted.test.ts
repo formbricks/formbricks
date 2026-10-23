@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import {
-  SAML_RESPONSE_MAX_SIGNATURES,
+  SAML_RESPONSE_MAX_ELEMENTS,
   checkSamlResponseBounds,
 } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
 import {
@@ -92,7 +92,7 @@ describe("SAML callback with an encrypted assertion", () => {
   });
 
   test("refuses one whose decrypted document carries more Signature elements than the cap, as jackson refuses", async () => {
-    const SAMLResponse = encryptedResponse(assertionWithSignatures(SAML_RESPONSE_MAX_SIGNATURES + 1));
+    const SAMLResponse = encryptedResponse(assertionWithSignatures(SAML_RESPONSE_MAX_ELEMENTS.Signature + 1));
     expect(checkSamlResponseBounds(SAMLResponse)).toBeNull();
     const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
 
@@ -107,7 +107,11 @@ describe("SAML callback with an encrypted assertion", () => {
     });
     expect(samlResponseMock).not.toHaveBeenCalled();
     expect(warn).toHaveBeenCalledWith(
-      expect.objectContaining({ reason: "signatures", signatures: SAML_RESPONSE_MAX_SIGNATURES + 1 }),
+      expect.objectContaining({
+        reason: "elements",
+        localName: "Signature",
+        count: SAML_RESPONSE_MAX_ELEMENTS.Signature + 1,
+      }),
       "Refused a SAML response whose decrypted assertion is past the bounds"
     );
   });

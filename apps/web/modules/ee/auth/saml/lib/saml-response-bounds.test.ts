@@ -2,8 +2,8 @@ import { describe, expect, test } from "vitest";
 import {
   SAML_RESPONSE_MARKUP_BUDGET,
   SAML_RESPONSE_MAX_DEPTH,
+  SAML_RESPONSE_MAX_ELEMENTS,
   SAML_RESPONSE_MAX_LENGTH,
-  SAML_RESPONSE_MAX_SIGNATURES,
   checkDecryptedSamlResponseBounds,
   checkSamlResponseBounds,
   measureSamlResponseMarkup,
@@ -12,7 +12,7 @@ import {
 const b64 = (xml: string) => Buffer.from(xml).toString("base64");
 const count = (xml: string) => measureSamlResponseMarkup(b64(xml)).markup;
 const depth = (xml: string) => measureSamlResponseMarkup(b64(xml)).depth;
-const signatures = (xml: string) => measureSamlResponseMarkup(b64(xml)).signatures;
+const elementCounts = (xml: string) => measureSamlResponseMarkup(b64(xml)).elements;
 const withinBudget = (xml: string) => checkSamlResponseBounds(b64(xml)) === null;
 
 const RESPONSE_HEAD =
@@ -143,32 +143,61 @@ describe("measureSamlResponseMarkup", () => {
     expect(depth("</x></x><r><a></a></r>")).toBe(2);
   });
 
-  test("counts elements named Signature by local name, in any namespace or none", () => {
-    // xpath's local-name() is what follows the prefix, so all three are what saml20's fallback select matches.
-    expect(signatures('<r><Signature/><ds:Signature x="1"></ds:Signature><x:Signature\n/></r>')).toBe(3);
-    // Neighbouring names, other cases, closing tags and text are not Signature elements: local-name() is exact.
-    expect(
-      signatures(
-        "<r><ds:SignatureValue/><SignatureMethod/><xSignature/><Signatures/><ds:SigNature/></r>Signature</Signature>"
-      )
-    ).toBe(0);
+  test("counts each locally capped element by local name, in any namespace or none", () => {
+    const xml =
+      '<r><Issuer/><ds:Issuer/><x:Signature y="1"></x:Signature><SignedInfo/><ds:SignedInfo/>' +
+      "<SignatureMethod/><CanonicalizationMethod/><SignatureValue/><Reference/><KeyInfo/>" +
+      "<X509Certificate/><ds:X509Certificate>c</ds:X509Certificate></r>";
+
+    expect(elementCounts(xml)).toEqual({
+      Issuer: 2,
+      Signature: 1,
+      SignedInfo: 2,
+      SignatureMethod: 1,
+      CanonicalizationMethod: 1,
+      SignatureValue: 1,
+      Reference: 1,
+      KeyInfo: 1,
+      X509Certificate: 2,
+    });
+    // Neighbouring names, other cases, closing tags and text are not these elements: local-name() is exact.
+    expect(elementCounts("<r><SignatureValues/><Signatures/><issuer/><SignatureMethodX/></r>")).toEqual({});
     // A prefix that starts with a non-ASCII letter is still a prefix to xmldom and xpath.
-    expect(signatures('<r xmlns:\u00e9="http://www.w3.org/2000/09/xmldsig#"><\u00e9:Signature/></r>')).toBe(
-      1
-    );
-    // xmldom ends a name at U+0080, so the name here is `Signature`.
-    expect(signatures("<r><Signature\u0080/></r>")).toBe(1);
+    expect(elementCounts('<r xmlns:\u00e9="u"><\u00e9:Issuer/></r>')).toEqual({ Issuer: 1 });
+    // xmldom ends a name at U+0080, so the name here is `KeyInfo`.
+    expect(elementCounts("<r><KeyInfo\u0080/></r>")).toEqual({ KeyInfo: 1 });
     // xmldom refuses a name with two colons, so counting one costs nothing.
-    expect(signatures("<a:b:Signature/>")).toBe(1);
+    expect(elementCounts("<a:b:Issuer/>")).toEqual({ Issuer: 1 });
+  });
+
+  test("counts a Signature behind a non-ASCII prefix or ending at U+0080, as xmldom reads the name", () => {
+    // A prefix that starts with a non-ASCII letter is still a prefix to xmldom and xpath.
+    expect(
+      elementCounts('<r xmlns:\u00e9="http://www.w3.org/2000/09/xmldsig#"><\u00e9:Signature/></r>')
+    ).toEqual({ Signature: 1 });
+    // xmldom ends a name at U+0080, so the name here is `Signature`.
+    expect(elementCounts("<r><Signature\u0080/></r>")).toEqual({ Signature: 1 });
+    // xmldom refuses a name with two colons, so counting one costs nothing.
+    expect(elementCounts("<a:b:Signature/>")).toEqual({ Signature: 1 });
+  });
+
+  test("counts only the exact local name, case-sensitively", () => {
+    expect(
+      elementCounts("<r><ds:SigNature/><ds:SIGNATURE/><ds:Signature/><xSignature/><Signatures/></r>")
+    ).toEqual({ Signature: 1 });
+  });
+
+  test("counts a Signature inside a comment or CDATA section too, on the safe side, like every other <", () => {
+    expect(elementCounts("<r><!--<Signature/>--><![CDATA[<ds:Signature/>]]></r>")).toEqual({ Signature: 2 });
   });
 
   test("stops reading once a bound is passed", () => {
     const flood = "<a/>".repeat(SAML_RESPONSE_MARKUP_BUDGET * 10);
     expect(count(flood)).toBe(SAML_RESPONSE_MARKUP_BUDGET + 1);
     expect(depth("<a>".repeat(SAML_RESPONSE_MAX_DEPTH * 10))).toBe(SAML_RESPONSE_MAX_DEPTH + 1);
-    expect(signatures("<Signature/>".repeat(SAML_RESPONSE_MAX_SIGNATURES * 10))).toBe(
-      SAML_RESPONSE_MAX_SIGNATURES + 1
-    );
+    expect(elementCounts("<Issuer/>".repeat(1_000))).toEqual({
+      Issuer: SAML_RESPONSE_MAX_ELEMENTS.Issuer + 1,
+    });
   });
 
   test("counts every < inside a comment, CDATA section or processing instruction", () => {
@@ -258,16 +287,16 @@ describe("checkSamlResponseBounds", () => {
     [
       "a signed response with a signed assertion",
       SIGNED_RESPONSE_HEAD + SIGNED_ASSERTION + "</samlp:Response>",
-      2,
+      { Issuer: 2, Signature: 2, SignedInfo: 2, Reference: 2, KeyInfo: 2, X509Certificate: 2 },
     ],
     [
       "a signed response with an encrypted assertion",
       SIGNED_RESPONSE_HEAD + ENCRYPTED_ASSERTION + "</samlp:Response>",
-      1,
+      { Issuer: 1, Signature: 1, SignedInfo: 1, Reference: 1, KeyInfo: 3, X509Certificate: 1 },
     ],
-  ])("lets through %s, nested well under the depth cap", (_name, xml, expected) => {
+  ])("lets through %s, nested well under the depth cap", (_name, xml, expectedElements) => {
     expect(depth(xml)).toBeLessThanOrEqual(10);
-    expect(signatures(xml)).toBe(expected);
+    expect(elementCounts(xml)).toMatchObject(expectedElements);
     expect(checkSamlResponseBounds(b64(xml))).toBeNull();
   });
 
@@ -277,19 +306,6 @@ describe("checkSamlResponseBounds", () => {
     expect(checkSamlResponseBounds(text + "a")).toEqual({
       reason: "length",
       length: SAML_RESPONSE_MAX_LENGTH + 1,
-    });
-  });
-
-  test("allows the Signature cap and refuses one Signature more, by count only", () => {
-    const withSignatures = (n: number) =>
-      SIGNED_RESPONSE_HEAD.replace(SIGNATURE, "") + SIGNATURE.repeat(n) + "</samlp:Response>";
-
-    expect(checkSamlResponseBounds(b64(withSignatures(SAML_RESPONSE_MAX_SIGNATURES)))).toBeNull();
-    const over = b64(withSignatures(SAML_RESPONSE_MAX_SIGNATURES + 1));
-    expect(checkSamlResponseBounds(over)).toEqual({
-      reason: "signatures",
-      signatures: SAML_RESPONSE_MAX_SIGNATURES + 1,
-      length: over.length,
     });
   });
 
@@ -366,19 +382,59 @@ describe("checkSamlResponseBounds", () => {
   });
 });
 
-describe("signature elements (ENG-4108)", () => {
-  const signatures = (xml: string) => measureSamlResponseMarkup(b64(xml)).signatures;
+describe("per-local-name element caps (ENG-6648)", () => {
+  const element = (localName: string, times: number) => `<r>${`<${localName}/>`.repeat(times)}</r>`;
 
-  test("counts a Signature inside a comment or CDATA section too, on the safe side, like every other <", () => {
-    expect(signatures("<r><!--<Signature/>--><![CDATA[<ds:Signature/>]]></r>")).toBe(2);
+  test.each(Object.entries(SAML_RESPONSE_MAX_ELEMENTS))(
+    "%s is capped at %i elements, and one more is refused",
+    (localName, limit) => {
+      expect(checkSamlResponseBounds(b64(element(localName, limit)))).toBeNull();
+
+      const over = b64(element(localName, limit + 1));
+      expect(checkSamlResponseBounds(over)).toEqual({
+        reason: "elements",
+        localName,
+        count: limit + 1,
+        length: over.length,
+      });
+    }
+  );
+
+  // saml20's parseIssuer selects every Issuer child of the root through xpath's quadratic node-set add: 4,000 of
+  // them (72 KiB) cost its select ~1.9 s on the main thread, inside the markup budget and the length cap.
+  test("refuses a flood of Issuer elements, which saml20's parseIssuer selects one by one", () => {
+    const xml = `<samlp:Response>${"<Issuer>x</Issuer>".repeat(4_000)}</samlp:Response>`;
+    expect(b64(xml).length).toBeLessThan(SAML_RESPONSE_MAX_LENGTH);
+    // 8,002 counted tags: inside the markup budget, so only the Issuer cap refuses this shape.
+    expect(8_002).toBeLessThanOrEqual(SAML_RESPONSE_MARKUP_BUDGET);
+
+    const started = performance.now();
+    expect(checkSamlResponseBounds(b64(xml))).toMatchObject({
+      reason: "elements",
+      localName: "Issuer",
+      count: SAML_RESPONSE_MAX_ELEMENTS.Issuer + 1,
+    });
+    expect(performance.now() - started).toBeLessThan(100);
   });
 
-  // Each tag's name is read on its own: a search for a prefix's colon that ran on into the document before it would
-  // rescan the whole response once per tag, ~0.7 s for this one on the main thread before any other check.
-  test("measures a colon-free flood at the length cap in linear time", () => {
-    // Names as long as "Signature", so each one is looked at, after colon-free text.
+  // Each tag's name is read on its own, and the local name is the bytes after its last colon: a search that ran on
+  // into the document before it would rescan the whole response once per tag, ~0.7 s for this one.
+  test("measures a flood of long, unmatched names at the length cap in linear time", () => {
+    const xml = "x".repeat(40_000) + "<CanonicalizationMethodx/>".repeat(5_000);
+    expect(b64(xml).length).toBeLessThan(SAML_RESPONSE_MAX_LENGTH);
+    expect(elementCounts(xml)).toEqual({});
+
+    const started = performance.now();
+    expect(checkSamlResponseBounds(b64(xml))).toBeNull();
+    expect(performance.now() - started).toBeLessThan(100);
+  });
+
+  // The same guard for a colon-free flood: names as long as a capped one, after text with no `<` at all, so a colon
+  // search that ran on into the document before it would rescan the whole response once per tag, ~0.7 s for this one.
+  test("measures a colon-free flood of Signature-length names at the length cap in linear time", () => {
     const xml = "x".repeat(40_000) + "<aaaaaaaaa/>".repeat(11_990);
     expect(b64(xml).length).toBeLessThan(SAML_RESPONSE_MAX_LENGTH);
+    expect(elementCounts(xml)).toEqual({});
 
     const started = performance.now();
     expect(checkSamlResponseBounds(b64(xml))).toBeNull();
@@ -391,7 +447,7 @@ describe("checkDecryptedSamlResponseBounds", () => {
     expect(checkDecryptedSamlResponseBounds(`<r>${verboseGroups(150)}</r>`)).toBeNull();
   });
 
-  test("refuses one past the budget, the depth cap, the Signature cap or with a DOCTYPE, by size only, in bytes", () => {
+  test("refuses one past the budget, the depth cap, an element cap or with a DOCTYPE, by size only, in bytes", () => {
     // Multibyte text, so a character count would come out short.
     const flood = `<r t="ü">${"<a/>".repeat(SAML_RESPONSE_MARKUP_BUDGET)}</r>`;
 
@@ -404,16 +460,17 @@ describe("checkDecryptedSamlResponseBounds", () => {
     expect(checkDecryptedSamlResponseBounds("<a>".repeat(SAML_RESPONSE_MAX_DEPTH + 1))).toMatchObject({
       reason: "depth",
     });
-    const signed = `<r>${"<ds:Signature/>".repeat(SAML_RESPONSE_MAX_SIGNATURES + 1)}</r>`;
-    expect(checkDecryptedSamlResponseBounds(signed)).toEqual({
-      reason: "signatures",
-      signatures: SAML_RESPONSE_MAX_SIGNATURES + 1,
-      decryptedBytes: Buffer.byteLength(signed),
-    });
     const doctype = '<!DOCTYPE r SYSTEM "x"><r/>';
     expect(checkDecryptedSamlResponseBounds(doctype)).toEqual({
       reason: "declaration",
       decryptedBytes: Buffer.byteLength(doctype),
+    });
+    const signatures = `<r>${"<ds:Signature/>".repeat(SAML_RESPONSE_MAX_ELEMENTS.Signature + 1)}</r>`;
+    expect(checkDecryptedSamlResponseBounds(signatures)).toEqual({
+      reason: "elements",
+      localName: "Signature",
+      count: SAML_RESPONSE_MAX_ELEMENTS.Signature + 1,
+      decryptedBytes: Buffer.byteLength(signatures),
     });
   });
 });

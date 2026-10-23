@@ -9,9 +9,9 @@ import type { SamlDecryptedRefusal } from "@/modules/ee/auth/saml/lib/saml-respo
  *
  * `checkSamlResponseBounds` is the cheap first gate, but it models xmldom from the outside, and a shape it misreads
  * is a way back to a slow parse. This gate does not model anything: a worker thread parses the response the way
- * `@boxyhq/saml20` does and is terminated if it runs past the budget. A response that passes is then processed again by
- * jackson on this thread, so what this bounds is jackson's cost per response: no response slower than the budget
- * reaches jackson, whatever its shape.
+ * `@boxyhq/saml20` does, runs saml20's `parseIssuer` as jackson does first, and is terminated if it runs past the
+ * budget. A response that passes is then processed again by jackson on this thread, so what this bounds is jackson's
+ * cost per response: no response slower than the budget reaches jackson, whatever its shape.
  *
  * The worker also runs saml20's signature check (ENG-4108), with the configured connection's IdP certificates, as
  * jackson will: saml20 tries them one by one, the whole check each time, so a connection with several (a rollover)

@@ -451,12 +451,29 @@ rollback procedure in [AuthZed Operations](/self-hosting/configuration/authzed-o
    ```
 
 <Warning>
-  **Security (existing installs):** these steps — and the [one-click setup script](/self-hosting/setup/one-click)
-  updater — do **not** rewrite your existing
-  `docker-compose.yml`. If your bundled `redis` (Valkey) service still publishes `ports: - "6379:6379"`, it
-  stays exposed to the host after updating. See [Debug](#debug) for how to remove the mapping and, if the port
+  **Security (existing installs):** these steps do **not** rewrite your existing `docker-compose.yml`, and the
+  [one-click setup script](/self-hosting/setup/one-click#update) updater only makes the narrow edits listed in its
+  Update section (such as the IPv6 network setting). Neither removes a published Redis port: if your bundled `redis`
+  (Valkey) service still publishes `ports: - "6379:6379"`, it stays exposed to the host after updating. See [Debug](#debug) for how to remove the mapping and, if the port
   was reachable from an untrusted network, invalidate existing sessions.
 </Warning>
+
+## IPv6 visitors
+
+If a container in this Compose project publishes the ports visitors connect to over IPv6, such as a reverse proxy
+you added, give the network IPv6. Otherwise Docker hands those connections to the container from its bridge
+gateway, and Formbricks sees every IPv6 visitor as that one address, for rate limiting and in logs. With Docker
+Engine 27.0 or later and IPv6 on the host, add this to `docker-compose.yml`:
+
+```yaml
+networks:
+  default:
+    enable_ipv6: true
+```
+
+Then recreate the network with `docker compose down` and `docker compose up -d`. The
+[one-click setup](/self-hosting/setup/one-click#ipv6-visitors) adds this for you. A reverse proxy that runs on the
+host itself and forwards to `127.0.0.1:3000` does not need it.
 
 ## Optional: Add RustFS for File Storage
 
