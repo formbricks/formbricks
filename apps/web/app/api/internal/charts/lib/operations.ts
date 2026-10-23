@@ -62,6 +62,9 @@ export async function generateInternalChart({
   if (!userId) return problemForbidden(requestId, undefined, instance);
 
   let organizationId = "";
+  // Only a failure inside the model call is the AI provider's; anything before it (an access check, the
+  // database) is mapped like any other v3 failure rather than blamed on the provider.
+  let callingModel = false;
   try {
     const access = await requireDashboardsAccess(
       authentication,
@@ -83,6 +86,7 @@ export async function generateInternalChart({
     );
     if (refused) return refused;
 
+    callingModel = true;
     const { chartType, query, name } = await generateAIChartQuery({
       organizationId,
       workspaceId: access.workspaceId,
@@ -90,6 +94,7 @@ export async function generateInternalChart({
       userId,
       prompt: body.prompt,
     });
+    callingModel = false;
     // The model's query goes through the same validator as one a person or agent writes, so it is
     // held to the same bounds (including the time-bucket limit) and can be saved as it is shown.
     const validated = validateChartQuery(query);
@@ -140,6 +145,10 @@ export async function generateInternalChart({
       operation: "charts.generate",
     });
     if (aiResponse) return aiResponse;
+
+    if (!callingModel) {
+      return mapV3ThrownError(error, { log, requestId, instance, operation: "charts.generate" });
+    }
 
     // Name, frames and provider status only: the message can repeat the prompt or the model's output.
     log.error({ ...loggableAIError(error) }, "Failed to generate a chart from a prompt");
