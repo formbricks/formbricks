@@ -347,7 +347,7 @@ services:
 
   # Optional bundled Qwen/vLLM OpenAI-compatible runtime. Enable with COMPOSE_PROFILES=qwen.
   vllm:
-    image: ${QWEN_VLLM_IMAGE:-vllm/vllm-openai:v0.14.0}
+    image: ${QWEN_VLLM_IMAGE:-vllm/vllm-openai:v0.32.0}
     profiles: ["qwen"]
     deploy:
       resources:
