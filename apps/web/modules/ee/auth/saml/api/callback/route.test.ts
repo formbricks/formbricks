@@ -56,6 +56,7 @@ const {
 
 vi.mock("@/modules/ee/auth/saml/lib/jackson", () => ({ default: jacksonMock }));
 vi.mock("@/modules/ee/auth/saml/lib/saml-parse-budget", () => ({
+  SAML_PARSE_TIME_BUDGET_MS: 250,
   probeSamlResponseParse: probeMock,
   chargeMainThreadParse: chargeMock,
 }));
@@ -332,7 +333,9 @@ describe("SAML callback route", () => {
         await POST(callback({ SAMLResponse: b64(ISSUER), RelayState }));
 
         expect(decryptionKeyMock).not.toHaveBeenCalled();
-        expect(probeMock).toHaveBeenCalledWith(b64(ISSUER), null, IDP_VERIFICATION);
+        // No key and no certificates: jackson rejects an IdP-initiated flow before it validates, so the worker is
+        // given nothing to spend jackson's decrypt or signature-check time on (an anonymous DoS lever otherwise).
+        expect(probeMock).toHaveBeenCalledWith(b64(ISSUER), null, null);
         expect(samlResponseMock).toHaveBeenCalled();
       }
     );

@@ -13,6 +13,11 @@ import {
 } from "./tests/encrypted-saml-response";
 import { createTestIdp } from "./tests/saml-test-idp";
 
+// Spy on the signature check (ENG-4108): it discards its result, so its running is observable only here. jackson
+// validates nothing without an issuer, so the worker must not spend the check's cost on a response that has none.
+const { validateSignatureSpy } = vi.hoisted(() => ({ validateSignatureSpy: vi.fn(() => null) }));
+vi.mock("@boxyhq/saml20/dist/validateSignature.js", () => ({ validateSignature: validateSignatureSpy }));
+
 // The worker's job in this thread, so each outcome is checked directly and without timing; saml-parse-budget.test.ts
 // runs it as a real worker against the time budget.
 
@@ -119,6 +124,17 @@ describe("parseSamlResponse", () => {
 
     expect(onDecrypting).not.toHaveBeenCalled();
     expect(parsed.decryption?.decrypted ?? false).toBe(false);
+  });
+
+  test("runs jackson's signature check for a response with an issuer, and not for one without", () => {
+    validateSignatureSpy.mockClear();
+    parseSamlResponse(samlResponseWith(assertion), null, IDP);
+    expect(validateSignatureSpy).toHaveBeenCalled();
+
+    validateSignatureSpy.mockClear();
+    // No issuer: jackson throws "Issuer not found" before it validates, so the check's cost is never spent.
+    parseSamlResponse(samlResponseWith(assertion, ""), null, IDP);
+    expect(validateSignatureSpy).not.toHaveBeenCalled();
   });
 
   test("returns no claims for a document without a root", () => {

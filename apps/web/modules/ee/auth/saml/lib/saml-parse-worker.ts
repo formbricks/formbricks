@@ -164,8 +164,10 @@ export const parseSamlResponse = (
     id: field(root.getAttribute("ID")),
     inResponseTo: field(root.getAttribute("InResponseTo")),
   };
+  // jackson refuses a response with no issuer before it validates anything (ENG-6648), so the worker, which only
+  // times what jackson spends, runs no signature check without one.
   if (!hasEncryptedAssertion(root)) {
-    if (idpVerification) checkSignatureAsJackson(xml, undefined, idpVerification);
+    if (idpVerification && issuer) checkSignatureAsJackson(xml, undefined, idpVerification);
     return { claims };
   }
   // jackson refuses a response with no issuer, or one saml20 cannot parse, before it decrypts anything, so the worker
@@ -173,14 +175,15 @@ export const parseSamlResponse = (
   const key = issuer ? decryptionKey : null;
   if (key && issuer) onDecrypting(issuer);
   const { decryption, decryptedXml, checksSignature } = decryptAsJackson(xml, key);
-  if (idpVerification && checksSignature) checkSignatureAsJackson(xml, decryptedXml, idpVerification);
+  if (idpVerification && issuer && checksSignature)
+    checkSignatureAsJackson(xml, decryptedXml, idpVerification);
   return { claims, decryption };
 };
 
 /**
  * Warms xmldom and the signature check (xml-crypto's canonicalization and digest) up before the first real job, so a
- * fresh worker does not charge its cold start to a real sign-in. The signature is not valid, and the certificate is not
- * one: the check does its work and then fails on the key, which is all the warm-up needs.
+ * fresh worker does not charge its cold start to a real sign-in. The digest does not match, so the check canonicalizes
+ * and digests the reference (its costly work) and then fails before the key, which is all the warm-up needs.
  */
 const WARM_UP =
   '<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="_w">' +

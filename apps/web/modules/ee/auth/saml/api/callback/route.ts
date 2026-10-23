@@ -10,6 +10,7 @@ import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import jackson from "@/modules/ee/auth/saml/lib/jackson";
 import {
+  SAML_PARSE_TIME_BUDGET_MS,
   type SamlParseProbe,
   type SamlResponseClaims,
   chargeMainThreadParse,
@@ -385,7 +386,9 @@ const refuseOpenedAssertion = async (
     { RelayState, SAMLResponse: samlResponseWithoutAssertion(probe.issuer) },
     context
   );
-  chargeMainThreadParse(performance.now() - started);
+  // Wall time, so it includes jackson's awaited store lookups and errs high; capped at one parse budget so a slow
+  // lookup cannot drain more than a single response's worth of the allowance.
+  chargeMainThreadParse(Math.min(performance.now() - started, SAML_PARSE_TIME_BUDGET_MS));
   if (result instanceof Response) return result;
   // With no assertion it cannot pass validation; were jackson ever to accept it, it is refused all the same.
   if (!result.error)
@@ -417,8 +420,13 @@ export const POST = async (req: Request) => {
   // The bounds model xmldom; this measures it. A worker parses the response under a time budget first, so a shape
   // the bounds misread costs the worker at most the budget and never blocks this thread for long. It decrypts an
   // encrypted assertion with jackson's key and parses that too, then runs jackson's signature check with the
-  // connection's IdP certificates (ENG-4108).
-  const probe = await probeSamlResponseParse(SAMLResponse, decryptionKey, idpVerification);
+  // connection's IdP certificates (ENG-4108) — both only for an sp-initiated flow (`decryptionKey` is set), which is
+  // the only flow jackson validates here, so a response it rejects before validating is never charged that cost.
+  const probe = await probeSamlResponseParse(
+    SAMLResponse,
+    decryptionKey,
+    decryptionKey === null ? null : idpVerification
+  );
   if (probe.outcome === "refused_encrypted") {
     return refuseOpenedAssertion(req, oauthController, probe, SAMLResponse, RelayState);
   }
