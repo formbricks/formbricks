@@ -232,9 +232,9 @@ describe("probeSamlResponseParse failure paths", () => {
    * Worker times that spend the whole allowance in two responses: one at the time budget, then the rest. No single
    * response can, since one within the budget costs jackson at most the budget times `JACKSON_COST_PER_WORKER_MS`.
    */
-  const spendingTheAllowance = (module: Awaited<ReturnType<typeof load>>) => {
+  const spendingTheAllowance = (budget: Awaited<ReturnType<typeof load>>) => {
     const { SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS, SAML_PARSE_TIME_BUDGET_MS, JACKSON_COST_PER_WORKER_MS } =
-      module;
+      budget;
     const rest =
       (SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS - SAML_PARSE_TIME_BUDGET_MS * JACKSON_COST_PER_WORKER_MS) /
       JACKSON_COST_PER_WORKER_MS;
@@ -244,13 +244,13 @@ describe("probeSamlResponseParse failure paths", () => {
   };
 
   test("answers busy once this process has spent its main-thread parse allowance, and recovers with time", async () => {
-    const module = await load();
-    const { probeSamlResponseParse } = module;
+    const budget = await load();
+    const { probeSamlResponseParse } = budget;
     const probes = [probeSamlResponseParse("PHIvPg==", KEY), probeSamlResponseParse("PHIvPg==", KEY)];
     await settle();
     state.workers[0].ready();
     mainPort(state.workers[0]).flush();
-    for (const ms of spendingTheAllowance(module)) {
+    for (const ms of spendingTheAllowance(budget)) {
       await settle();
       state.workers[0].answer(ms);
       mainPort(state.workers[0]).flush();
@@ -268,15 +268,15 @@ describe("probeSamlResponseParse failure paths", () => {
   });
 
   test("answers busy for a job queued before the allowance ran out, once the job ahead of it spends it", async () => {
-    const module = await load();
-    const { probeSamlResponseParse } = module;
+    const budget = await load();
+    const { probeSamlResponseParse } = budget;
     // All are accepted while the whole allowance is left.
     const spenders = [probeSamlResponseParse("PHIvPg==", KEY), probeSamlResponseParse("PHIvPg==", KEY)];
     const last = probeSamlResponseParse("PHIvPg==", KEY);
     await settle();
     state.workers[0].ready();
     mainPort(state.workers[0]).flush();
-    for (const ms of spendingTheAllowance(module)) {
+    for (const ms of spendingTheAllowance(budget)) {
       await settle();
       state.workers[0].answer(ms);
       mainPort(state.workers[0]).flush();
