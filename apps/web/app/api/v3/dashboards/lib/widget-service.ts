@@ -9,6 +9,7 @@ import {
   resolveWidgetPosition,
 } from "@/modules/ee/analysis/dashboards/lib/widget-placement";
 import type { TChartType } from "@/modules/ee/analysis/types/analysis";
+import { type TLockedDashboard, lockDashboard, nextDashboardUpdatedAt } from "./dashboard-lock";
 import {
   type TDashboardResourceRow,
   type TWidgetResourceRow,
@@ -43,22 +44,16 @@ export const getChartTypeInWorkspace = async (
   (await prisma.chart.findFirst({ where: { id: chartId, workspaceId }, select: { type: true } }))?.type ??
   null;
 
-/**
- * Lock a dashboard's row until the transaction ends. Every write to its widgets takes this lock first, and
- * under read committed each later statement sees what the previous lock holder committed. `false` when the
- * dashboard no longer exists.
- */
-export const lockDashboard = async (tx: Prisma.TransactionClient, dashboardId: string): Promise<boolean> =>
-  (await tx.$queryRaw<{ id: string }[]>`SELECT id FROM "Dashboard" WHERE id = ${dashboardId} FOR UPDATE`)
-    .length > 0;
-
 const writeWidgets = (
   dashboardId: string,
-  run: (tx: Prisma.TransactionClient) => Promise<TWidgetWriteResult>
+  run: (tx: Prisma.TransactionClient, locked: TLockedDashboard) => Promise<TWidgetWriteResult>
 ): Promise<TWidgetWriteResult> =>
   // Retried only for a deadlock, which the lock makes unlikely but cannot rule out.
   retryOnTransactionConflict(() =>
-    prisma.$transaction(async (tx) => ((await lockDashboard(tx, dashboardId)) ? run(tx) : { kind: "gone" }))
+    prisma.$transaction(async (tx) => {
+      const locked = await lockDashboard(tx, dashboardId);
+      return locked ? run(tx, locked) : { kind: "gone" };
+    })
   );
 
 export const siblingsOf = (tx: Prisma.TransactionClient, dashboardId: string) =>
@@ -67,9 +62,18 @@ export const siblingsOf = (tx: Prisma.TransactionClient, dashboardId: string) =>
     select: { id: true, chartId: true, layout: true, order: true },
   });
 
-/** Moves `updatedAt`; false when the dashboard no longer exists. */
-export const touchDashboard = async (tx: Prisma.TransactionClient, dashboardId: string): Promise<boolean> =>
-  (await tx.dashboard.updateMany({ where: { id: dashboardId }, data: { updatedAt: new Date() } })).count > 0;
+/** Moves the locked dashboard's `updatedAt` (`nextDashboardUpdatedAt`); false when it no longer exists. */
+export const touchDashboard = async (
+  tx: Prisma.TransactionClient,
+  dashboardId: string,
+  locked: TLockedDashboard
+): Promise<boolean> =>
+  (
+    await tx.dashboard.updateMany({
+      where: { id: dashboardId },
+      data: { updatedAt: nextDashboardUpdatedAt(locked) },
+    })
+  ).count > 0;
 
 /**
  * Where a new widget goes among `siblings`: exactly at `layout` when one is given and nothing is there,
@@ -104,14 +108,14 @@ export const addWidgetRow = ({
   chartType: TChartType;
   layout?: TWidgetLayout;
 }): Promise<TWidgetWriteResult> =>
-  writeWidgets(dashboardId, async (tx) => {
+  writeWidgets(dashboardId, async (tx, locked) => {
     const siblings = await siblingsOf(tx, dashboardId);
     if (siblings.some((widget) => widget.chartId === chartId)) return { kind: "duplicate" };
 
     const plan = planNewWidget(siblings, chartType, layout);
     if (plan.kind !== "ok") return plan;
 
-    if (!(await touchDashboard(tx, dashboardId))) return { kind: "gone" };
+    if (!(await touchDashboard(tx, dashboardId, locked))) return { kind: "gone" };
     const widget = await tx.dashboardWidget.create({
       data: { dashboardId, chartId, layout: plan.layout, order: plan.order },
       select: selectWidgetResource,
@@ -131,7 +135,7 @@ export const updateWidgetRow = ({
   layout?: TWidgetLayout;
   chartId?: string;
 }): Promise<TWidgetWriteResult> =>
-  writeWidgets(dashboardId, async (tx) => {
+  writeWidgets(dashboardId, async (tx, locked) => {
     const siblings = await siblingsOf(tx, dashboardId);
     const current = siblings.find((widget) => widget.id === widgetId);
     if (!current) return { kind: "gone" };
@@ -143,7 +147,7 @@ export const updateWidgetRow = ({
       if (clash) return { kind: "overlap", widgetId: clash.id };
     }
 
-    if (!(await touchDashboard(tx, dashboardId))) return { kind: "gone" };
+    if (!(await touchDashboard(tx, dashboardId, locked))) return { kind: "gone" };
     const widget = await tx.dashboardWidget.update({
       where: { id: widgetId },
       data: { ...(layout ? { layout } : {}), ...(chartId ? { chartId } : {}) },
@@ -158,7 +162,8 @@ export const deleteWidgetRow = (
   widgetId: string
 ): Promise<{ chartId: string; layout: unknown } | null> =>
   prisma.$transaction(async (tx) => {
-    if (!(await lockDashboard(tx, dashboardId))) return null;
+    const locked = await lockDashboard(tx, dashboardId);
+    if (!locked) return null;
     const widget = await tx.dashboardWidget.findFirst({
       where: { id: widgetId, dashboardId },
       select: { chartId: true, layout: true },
@@ -167,7 +172,7 @@ export const deleteWidgetRow = (
 
     const { count } = await tx.dashboardWidget.deleteMany({ where: { id: widgetId, dashboardId } });
     if (count === 0) return null;
-    await touchDashboard(tx, dashboardId);
+    await touchDashboard(tx, dashboardId, locked);
     return widget;
   });
 
@@ -211,7 +216,8 @@ export const replaceDashboardRow = ({
 }): Promise<TDashboardReplaceResult> =>
   retryOnTransactionConflict(() =>
     prisma.$transaction(async (tx): Promise<TDashboardReplaceResult> => {
-      if (!(await lockDashboard(tx, dashboardId))) return { kind: "gone" };
+      const locked = await lockDashboard(tx, dashboardId);
+      if (!locked) return { kind: "gone" };
       const current = await tx.dashboard.findUnique({
         where: { id: dashboardId },
         select: {
@@ -250,7 +256,7 @@ export const replaceDashboardRow = ({
       }
       const row = await tx.dashboard.update({
         where: { id: dashboardId },
-        data: { ...(name === undefined ? {} : { name }), updatedAt: new Date() },
+        data: { ...(name === undefined ? {} : { name }), updatedAt: nextDashboardUpdatedAt(locked) },
         select: selectDashboardResource,
       });
 

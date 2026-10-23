@@ -2,12 +2,8 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import type { TWidgetLayout } from "@formbricks/types/analysis";
-import {
-  lockDashboard,
-  planNewWidget,
-  siblingsOf,
-  touchDashboard,
-} from "@/app/api/v3/dashboards/lib/widget-service";
+import { lockDashboard } from "@/app/api/v3/dashboards/lib/dashboard-lock";
+import { planNewWidget, siblingsOf, touchDashboard } from "@/app/api/v3/dashboards/lib/widget-service";
 import { retryOnTransactionConflict } from "@/lib/utils/prisma-error";
 import { copyNamePrefix, nextCopyName } from "@/modules/ee/analysis/lib/copy-name";
 import { type TChartResourceRow, selectChartResource } from "./service";
@@ -56,10 +52,11 @@ export const duplicateChartRow = ({
       let placement: { layout: TWidgetLayout; order: number } | null = null;
       if (dashboardId) {
         // The same lock every widget write takes, so the copy's slot is chosen against the latest widgets.
-        if (!(await lockDashboard(tx, dashboardId))) return { kind: "gone" };
+        const locked = await lockDashboard(tx, dashboardId);
+        if (!locked) return { kind: "gone" };
         const plan = planNewWidget(await siblingsOf(tx, dashboardId), source.type, layout);
         if (plan.kind !== "ok") return plan;
-        if (!(await touchDashboard(tx, dashboardId))) return { kind: "gone" };
+        if (!(await touchDashboard(tx, dashboardId, locked))) return { kind: "gone" };
         placement = plan;
       }
 

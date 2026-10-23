@@ -4,6 +4,7 @@ import type { Prisma } from "@formbricks/database/prisma";
 import { selectChartResource } from "@/app/api/v3/charts/lib/service";
 import { escapeLikePattern } from "@/lib/utils/like-pattern";
 import { copyNamePrefix, nextCopyName } from "@/modules/ee/analysis/lib/copy-name";
+import { lockDashboard, nextDashboardUpdatedAt } from "./dashboard-lock";
 
 /**
  * Persistence for the v3 dashboard operations. Like the chart service, every read is scoped by the
@@ -103,9 +104,20 @@ export const createDashboardRow = (data: {
   createdBy: string | null;
 }): Promise<TDashboardResourceRow> => prisma.dashboard.create({ data, select: selectDashboardResource });
 
-/** Rename an authorized dashboard; `@updatedAt` moves, so an editor holding the old one sees the change. */
+/**
+ * Rename an authorized dashboard under its row lock, moving `updatedAt` like every other write so an editor
+ * holding the old one is told on save. A dashboard deleted meanwhile throws Prisma's not-found error, as
+ * an update would.
+ */
 export const renameDashboardRow = (dashboardId: string, name: string): Promise<TDashboardResourceRow> =>
-  prisma.dashboard.update({ where: { id: dashboardId }, data: { name }, select: selectDashboardResource });
+  prisma.$transaction(async (tx) => {
+    const locked = await lockDashboard(tx, dashboardId);
+    return tx.dashboard.update({
+      where: { id: dashboardId },
+      data: { name, ...(locked ? { updatedAt: nextDashboardUpdatedAt(locked) } : {}) },
+      select: selectDashboardResource,
+    });
+  });
 
 /** Delete an authorized dashboard. Its widgets go with it; the charts they showed stay. */
 export const deleteDashboardRow = (dashboardId: string): Promise<unknown> =>

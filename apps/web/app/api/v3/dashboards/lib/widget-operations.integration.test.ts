@@ -9,7 +9,9 @@ import {
 } from "@/integration/dashboards-fixture";
 import type { TV3DashboardWidget } from "./resources";
 import { ZV3WidgetLayoutInput } from "./schemas";
+import { renameDashboardRow } from "./service";
 import { addV3DashboardWidget, removeV3DashboardWidget, updateV3DashboardWidget } from "./widget-operations";
+import { replaceDashboardRow } from "./widget-service";
 
 /**
  * Widget operations against real PostgreSQL and SpiceDB (ENG-6593): placement, the no-overlap and
@@ -171,6 +173,56 @@ describe("concurrent widget writes", () => {
     );
     expect(layouts).toHaveLength(8);
     expect(overlapping).toBe(false);
+  });
+
+  test("every write moves updatedAt, even within one millisecond, so a stale save is still refused", async () => {
+    const instant = new Date("2026-06-01T12:00:00.000Z");
+    const board = await prisma.dashboard.create({
+      data: { name: "Same millisecond", workspaceId: fixture.workspaceId, updatedAt: instant },
+    });
+    const [first, second] = await Promise.all(
+      ["Same ms A", "Same ms B"].map((name) =>
+        prisma.chart.create({
+          data: {
+            name,
+            type: "bar",
+            workspaceId: fixture.workspaceId,
+            feedbackDirectoryId: fixture.datasetId,
+            query: { measures: ["FeedbackRecords.count"] },
+            config: {},
+          },
+        })
+      )
+    );
+    const tokenOf = async () =>
+      (await prisma.dashboard.findUniqueOrThrow({ where: { id: board.id } })).updatedAt.getTime();
+    const addTo = (chartId: string) =>
+      addV3DashboardWidget({ dashboardId: board.id, body: { chartId }, ...context(editor()) });
+
+    // The app's clock stands still: every write below happens in the same millisecond.
+    vi.useFakeTimers({ now: instant, toFake: ["Date"] });
+    try {
+      expect((await addTo(first.id)).status).toBe(201);
+      const editorsToken = await tokenOf();
+      expect((await addTo(second.id)).status).toBe(201);
+      const afterSecondAdd = await tokenOf();
+      await renameDashboardRow(board.id, "Same millisecond, renamed");
+      const afterRename = await tokenOf();
+
+      expect(editorsToken).toBe(instant.getTime() + 1);
+      expect(afterSecondAdd).toBe(editorsToken + 1);
+      expect(afterRename).toBe(afterSecondAdd + 1);
+
+      // An editor who read the dashboard after the first add saves over it: refused, not a silent overwrite.
+      const save = await replaceDashboardRow({
+        dashboardId: board.id,
+        expectedUpdatedAt: new Date(editorsToken),
+        widgets: [],
+      });
+      expect(save).toEqual({ kind: "stale", currentUpdatedAt: new Date(afterRename) });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 
