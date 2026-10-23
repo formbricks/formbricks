@@ -24,14 +24,20 @@ describe("Slug Library Tests", () => {
 
   describe("getSurveyBySlug", () => {
     test("should return survey when found", async () => {
-      const mockSurvey = { id: "survey_123", workspaceId: "workspace_123", status: "inProgress" };
+      const mockSurvey = {
+        id: "survey_123",
+        workspaceId: "workspace_123",
+        type: "link",
+        status: "inProgress",
+        archivedAt: null,
+      };
       vi.mocked(prisma.survey.findUnique).mockResolvedValueOnce(mockSurvey as never);
 
       const result = await getSurveyBySlug("test-slug");
       expect(result).toEqual(mockSurvey);
       expect(prisma.survey.findUnique).toHaveBeenCalledWith({
         where: { slug: "test-slug" },
-        select: { id: true, workspaceId: true, status: true },
+        select: { id: true, workspaceId: true, type: true, status: true, archivedAt: true },
       });
     });
 
