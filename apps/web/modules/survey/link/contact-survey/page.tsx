@@ -8,11 +8,11 @@ import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getExistingContactResponse } from "@/modules/survey/link/lib/data";
 import { getServableLinkSurvey } from "@/modules/survey/link/lib/servable-survey";
-import { resolveSingleUseIdForSurvey } from "@/modules/survey/link/lib/single-use-link";
+import { getLinkSurveySingleUseAccess } from "@/modules/survey/link/lib/single-use-link";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getWorkspaceById } from "@/modules/survey/link/lib/workspace";
-import { getGenericContactSurveyMetadata, getMetadataForContactSurvey } from "@/modules/survey/link/metadata";
+import { getGenericSurveyMetadata, getMetadataForContactSurvey } from "@/modules/survey/link/metadata";
 
 interface ContactSurveyPageProps {
   params: Promise<{
@@ -26,12 +26,12 @@ export const generateMetadata = async (props: ContactSurveyPageProps): Promise<M
   try {
     const result = verifyContactSurveyToken(jwt);
     if (!result.ok) {
-      return getGenericContactSurveyMetadata();
+      return getGenericSurveyMetadata();
     }
     return await getMetadataForContactSurvey(result.data.surveyId, await getAcceptedLanguages());
   } catch {
     // A token or lookup failure still gets generic metadata rather than an error page.
-    return getGenericContactSurveyMetadata();
+    return getGenericSurveyMetadata();
   }
 };
 
@@ -77,26 +77,12 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     notFound();
   }
 
-  const isSingleUseSurvey = survey?.singleUse?.enabled;
-  const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
-
-  let singleUseId: string | undefined = undefined;
-
-  if (isSingleUseSurvey) {
-    const validatedSingleUseId = resolveSingleUseIdForSurvey({
-      surveyId: survey.id,
-      isEncrypted: Boolean(isSingleUseSurveyEncrypted),
-      suId,
-      suToken,
-      surface: "contact_link_page",
-    });
-    if (!validatedSingleUseId) {
-      const workspaceContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
-      return <SurveyInactive status="link invalid" workspace={workspaceContext.workspace} />;
-    }
-
-    singleUseId = validatedSingleUseId;
+  const singleUse = getLinkSurveySingleUseAccess({ survey, suId, suToken, surface: "contact_link_page" });
+  if (!singleUse.allowed) {
+    const workspaceContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
+    return <SurveyInactive status="link invalid" workspace={workspaceContext.workspace} />;
   }
+  const { singleUseId } = singleUse;
 
   // Parallel fetch of workspace context, locale and the respondent's browser languages
   const [workspaceContext, locale, acceptedLanguages, singleUseResponse] = await Promise.all([
