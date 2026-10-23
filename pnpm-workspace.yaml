@@ -44,8 +44,8 @@ catalog:
   # (and `@vitest/eslint-plugin`'s optional `vitest` peer, and packages/types' vitest) resolved
   # their vite peer to the newest 8.x instead of this catalog's 7.3.5.
   vite: 7.3.7
-  vitest: 4.1.11
-  "@vitest/coverage-v8": 4.1.11
+  vitest: 4.1.12
+  "@vitest/coverage-v8": 4.1.12
   vite-plugin-dts: 4.5.4
   vite-tsconfig-paths: 6.1.1
   "@vitejs/plugin-react": 5.1.4
@@ -76,9 +76,9 @@ catalog:
   "@types/react": 19.2.14
   "@types/react-dom": 19.2.3
   # --- storybook ---
-  storybook: 10.3.6
-  "@storybook/react": 10.3.6
-  "@storybook/react-vite": 10.3.6
+  storybook: 10.6.2
+  "@storybook/react": 10.6.2
+  "@storybook/react-vite": 10.6.2
   # --- ui runtime shared by apps/web, survey-ui, surveys and email ---
   react: 19.2.6
   react-dom: 19.2.6
