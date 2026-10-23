@@ -2586,6 +2586,8 @@ volumes:
     engineVersion = "29.0.0",
     failValidation = false,
     networkInUse = false,
+    postgresFailsOnce = false,
+    networkAfterFailedUp = false,
   } = {}) => {
     const tempDir = createTempDir();
     const installationDir = join(tempDir, "formbricks");
@@ -2613,7 +2615,15 @@ case "$*" in
   *"config --services") printf "authzed-ops\\nspicedb\\nhub-worker\\nformbricks\\n" ;;
   *"docker version"*) printf "%s\\n" "$ENGINE_VERSION" ;;
   *"config --format json") [ "$FAIL_VALIDATION" = "1" ] || printf '{"networks":{"default":{"name":"formbricks_default","ipam":{},"enable_ipv6":true}}}' ;;
-  *"network inspect formbricks_default") [ "$NETWORK_IN_USE" = "1" ] || exit 1 ;;
+  *"up -d --wait postgres")
+    if [ "$POSTGRES_FAILS_ONCE" = "1" ] && [ ! -f "$STATE_DIR/postgres-failed" ]; then
+      touch "$STATE_DIR/postgres-failed"
+      exit 1
+    fi ;;
+  *"network inspect formbricks_default")
+    [ "$NETWORK_IN_USE" = "1" ] && exit 0
+    [ "$NETWORK_AFTER_FAILED_UP" = "1" ] && [ -f "$STATE_DIR/postgres-failed" ] && exit 0
+    exit 1 ;;
 esac
 exit 0
 `,
@@ -2638,6 +2648,9 @@ exit 0
           FAIL_VALIDATION: failValidation ? "1" : "0",
           HOST_HAS_IPV6: hostHasIpv6 ? "1" : "0",
           NETWORK_IN_USE: networkInUse ? "1" : "0",
+          POSTGRES_FAILS_ONCE: postgresFailsOnce ? "1" : "0",
+          NETWORK_AFTER_FAILED_UP: networkAfterFailedUp ? "1" : "0",
+          STATE_DIR: tempDir,
           PATH: `${binDir}:${process.env.PATH ?? ""}`,
         },
       }
@@ -2667,6 +2680,28 @@ exit 0
     expect(inspect).toBeGreaterThan(commands.indexOf("docker compose down"));
     expect(inspect).toBeLessThan(commands.indexOf("docker compose up -d"));
     expect(commands).toContain("docker compose up -d\n");
+  });
+
+  test("the updater starts again without IPv6 when Docker cannot create the network", () => {
+    const { result, composePath, composeContents, commands } = runUpdate({ postgresFailsOnce: true });
+
+    expect(result.status).toBe(0);
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(result.stdout).toContain("Docker could not create the Compose network with IPv6");
+    expect(commands.split("docker compose up -d --wait postgres").length - 1).toBe(2);
+    expect(commands).toContain("docker compose up -d\n");
+  });
+
+  test("the updater stops on a failed start that left the network in place, keeping IPv6", () => {
+    const { result, composePath, composeContents, commands } = runUpdate({
+      postgresFailsOnce: true,
+      networkAfterFailedUp: true,
+    });
+
+    expect(result.status).not.toBe(0);
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents + ipv6Block);
+    expect(commands.split("docker compose up -d --wait postgres").length - 1).toBe(1);
+    expect(commands).not.toContain("formbricks-migrate");
   });
 
   test("the updater only looks for a leftover network when it changed the file", () => {

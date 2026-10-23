@@ -2074,7 +2074,19 @@ update_formbricks() {
   # Past every gate and with Cube stopped, so the next start serves the release's model. A failed refresh leaves
   # the previous model, which Cube still starts with, so it never stops the update.
   refresh_bundled_cube_files || true
-  sudo docker compose up -d --wait postgres
+  if ! sudo docker compose up -d --wait postgres; then
+    # With IPv6 just added and no network left behind, Docker could not create the network with it (no IPv6 subnet
+    # free, say). Start once more from the previous file; any other failure stops the update as before.
+    if [[ $ipv6_status -ne 0 ]] || compose_default_network_in_use docker-compose.yml >/dev/null; then
+      exit 1
+    fi
+    if ! restore_compose_files docker-compose.yml docker-compose.yml.before-ipv6-network; then
+      echo "❌ The stack is stopped. Restore docker-compose.yml as above, then run 'sudo docker compose up -d'."
+      exit 1
+    fi
+    echo "⚠️ Docker could not create the Compose network with IPv6. Continuing the update without it."
+    sudo docker compose up -d --wait postgres
+  fi
   sudo docker compose run --rm --no-deps formbricks-migrate
   sudo docker compose up -d
   echo "🎉 Formbricks updated successfully!"
