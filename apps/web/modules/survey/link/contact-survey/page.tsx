@@ -6,7 +6,7 @@ import { verifyContactSurveyToken } from "@/modules/ee/contacts/lib/contact-surv
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
-import { getExistingContactResponse } from "@/modules/survey/link/lib/data";
+import { getExistingContactResponse, getResponseBySingleUseId } from "@/modules/survey/link/lib/data";
 import { getServableLinkSurvey } from "@/modules/survey/link/lib/servable-survey";
 import { getLinkSurveySingleUseAccess } from "@/modules/survey/link/lib/single-use-link";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
@@ -91,13 +91,18 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   const { singleUseId } = singleUse;
 
   // Parallel fetch of workspace context, locale and the respondent's browser languages
-  const [workspaceContext, locale, acceptedLanguages, singleUseResponse] = await Promise.all([
-    getWorkspaceContextForLinkSurvey(survey.workspaceId),
-    findMatchingLocale(),
-    getAcceptedLanguages(),
-    // Fetch existing response for this contact
-    getExistingContactResponse(survey.id, contactId)(),
-  ]);
+  const [workspaceContext, locale, acceptedLanguages, contactResponse, singleUseLinkResponse] =
+    await Promise.all([
+      getWorkspaceContextForLinkSurvey(survey.workspaceId),
+      findMatchingLocale(),
+      getAcceptedLanguages(),
+      // Fetch existing response for this contact
+      getExistingContactResponse(survey.id, contactId)(),
+      // The single-use link's own response, whoever gave it. Once finished, the link is "already answered"
+      // here as on /s, which is also what the PIN and verify-email actions answer for it (ENG-4041).
+      singleUseId ? getResponseBySingleUseId(survey.id, singleUseId)() : Promise.resolve(null),
+    ]);
+  const singleUseResponse = singleUseLinkResponse?.finished ? singleUseLinkResponse : contactResponse;
 
   // Fetch responseCount only if needed
   const responseCount = survey.welcomeCard.showResponseCount
