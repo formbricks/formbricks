@@ -4,17 +4,30 @@ const ASSERTION_NS = "urn:oasis:names:tc:SAML:2.0:assertion";
 /**
  * The characters whose literal form does not parse back to themselves, written as numeric references instead: the
  * markup characters; CR, NEL, LINE SEPARATOR and PARAGRAPH SEPARATOR, which a parser turns into line feeds; U+FFFD and
- * the C0 controls, which saml20 refuses literally; and lone surrogates, which UTF-8 cannot carry. Each of these can
- * only have reached the issuer through a reference or CDATA at least as long as the reference written here, and every
- * other character is written as it is, so the stand-in's issuer is never longer than the original's: jackson's parse
- * of it costs no more than its parse of the response it stands in for.
+ * the C0 controls but tab and line feed, which saml20 refuses literally; and lone surrogates, which UTF-8 cannot carry.
+ * Each of these can only have reached the issuer through a reference or CDATA at least as long as the reference written
+ * here, and every other character is written as it is, so the stand-in's issuer is never longer than the original's:
+ * jackson's parse of it costs no more than its parse of the response it stands in for.
  */
-const NEEDS_REFERENCE =
-  /[&<>\r\u0085\u2028\u2029\uFFFD\x00-\x08\x0B\x0C\x0E-\x1F]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
+const REFERENCED = new Set([0x26, 0x3c, 0x3e, 0x85, 0x2028, 0x2029, 0xfffd]);
 
-/** `text` as XML character data that parses back to exactly `text`. */
-const escapeText = (text: string): string =>
-  text.replaceAll(NEEDS_REFERENCE, (char) => `&#x${(char.codePointAt(0) ?? 0).toString(16)};`);
+const needsReference = (codePoint: number): boolean =>
+  codePoint < 0x20
+    ? codePoint !== 0x09 && codePoint !== 0x0a
+    : REFERENCED.has(codePoint) || (codePoint >= 0xd800 && codePoint <= 0xdfff);
+
+/**
+ * `text` as XML character data that parses back to exactly `text`. Iterated by code point, so a surrogate pair stays
+ * one character and only a lone surrogate is referenced.
+ */
+const escapeText = (text: string): string => {
+  let escaped = "";
+  for (const char of text) {
+    const codePoint = char.codePointAt(0) ?? 0;
+    escaped += needsReference(codePoint) ? `&#x${codePoint.toString(16)};` : char;
+  }
+  return escaped;
+};
 
 /**
  * A SAMLResponse holding nothing but `issuer`, base64 as the POST binding carries it, for jackson to judge in place of a
