@@ -36,6 +36,7 @@ export const Uploader = ({
 }: UploaderProps) => {
   const { t } = useTranslation();
   return (
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- see NOSONAR below
     <label // NOSONAR - This is a label for a file input, we need the onClick to trigger storage not configured toast
       htmlFor={`${id}-${name}`}
       data-testid="upload-file-label"

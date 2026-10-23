@@ -191,6 +191,7 @@ export const AiDraftPreview = ({
         // the WCAG 2.1.1 failure this exists to fix — so the tabIndex stays on a non-interactive
         // element on purpose. `<section>` with an accessible name is a region natively, which is why
         // there is no `role` here.
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- see above
         tabIndex={0} // NOSONAR
         aria-label={t("workspace.surveys.ai_create.draft_survey")}
         aria-busy={isGenerating}

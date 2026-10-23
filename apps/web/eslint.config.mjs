@@ -116,6 +116,24 @@ const config = [
       // Kept as a warning (not off): exhaustive-deps is the main guard against stale closures, and the
       // web lint script has no `--max-warnings 0`, so it surfaces violations without blocking.
       "react-hooks/exhaustive-deps": "warn",
+
+      /*
+       * jsx-a11y's recommended set, which the `next` tier turns on at "error", on the same per-rule
+       * ratchet. Rules at zero stay at the tier's "error" and are deliberately not listed here. Five
+       * of them reach zero only through six inline disables, each on a site that already carries a
+       * NOSONAR for the same deliberate pattern (a `Trans` link whose text is injected, a
+       * stopPropagation wrapper, a focusable scroll region).
+       *
+       * The two below are counted with `--no-inline-config` and have no ratchet ticket yet; promote
+       * each to "error" once its count reaches zero.
+       */
+      // 61 violations across 37 files, nearly all `autoFocus` on the first field of a dialog or form.
+      "jsx-a11y/no-autofocus": "warn",
+      // Not in the recommended set; added because Sonar (S6819) reported a `role="presentation"`
+      // only after push. 109 violations across 78 files, 86 of them `role="status"` that wants
+      // `<output>`.
+      "jsx-a11y/prefer-tag-over-role": "warn",
+
       "no-restricted-syntax": ["error", ...noDirectProcessEnv],
     },
   },
