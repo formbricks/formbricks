@@ -7,6 +7,7 @@ import { logger } from "@formbricks/logger";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
+import { ZUserEmail } from "@formbricks/types/user";
 import { assertCan, can } from "@/lib/authorization";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { createInviteToken } from "@/lib/jwt";
@@ -283,7 +284,9 @@ const assertInviterMayInvite = async ({
 
 const ZInviteUserAction = z.object({
   organizationId: ZId,
-  email: z.string(),
+  // One address: anything else would let one invite, and one unit of the invite budget, reach several
+  // inboxes (ENG-6658). Bulk and onboarding invites already validate the same way.
+  email: ZUserEmail,
   name: z.string().trim().min(1, "Name is required"),
   role: ZOrganizationRole,
   // Bounded because a team admin's authorization is now decided per named team: without a cap the

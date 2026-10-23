@@ -35,6 +35,7 @@ const email = {
 
 describe("sendEmail SES event publishing", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     mocks.createTransport.mockReturnValue({ sendMail: mocks.sendMail });
     mocks.sendMail.mockResolvedValue({ messageId: "smtp-message-id" });
     mocks.constants.IS_SMTP_CONFIGURED = true;
@@ -121,6 +122,18 @@ describe("sendEmail SES event publishing", () => {
     expect(message).toMatch(/^X-SES-CONFIGURATION-SET: formbricks-email-config\r?$/im);
     expect(message).toMatch(/^X-SES-MESSAGE-TAGS: email_type=invite, environment=staging\r?$/im);
     expect(message).toContain("To: recipient@example.com");
+  });
+
+  test.each([
+    "a@example.com, b@example.com",
+    "a@example.com; b@example.com",
+    '"Bob" <b@example.com>',
+    "group: a@example.com, b@example.com;",
+    "not-an-address",
+  ])("refuses %j as a recipient before opening an SMTP connection", async (to) => {
+    await expect(sendEmail({ ...email, to })).rejects.toThrow("exactly one valid recipient");
+    expect(mocks.createTransport).not.toHaveBeenCalled();
+    expect(mocks.sendMail).not.toHaveBeenCalled();
   });
 
   test("skips unconfigured SMTP", async () => {

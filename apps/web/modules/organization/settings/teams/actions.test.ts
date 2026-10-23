@@ -1,6 +1,14 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { ZodType } from "zod";
 import { InvalidInputError } from "@formbricks/types/errors";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { bulkInviteUsersAction, inviteUserAction, resendInviteAction } from "./actions";
+
+// The action client is mocked, so the schemas each action registers are read off the mock. Captured at
+// load, before any `clearAllMocks`.
+const actionSchemas = vi
+  .mocked(authenticatedActionClient.inputSchema)
+  .mock.calls.map(([schema]) => schema as unknown as ZodType);
 
 const mocks = vi.hoisted(() => ({
   applyRateLimit: vi.fn(),
@@ -121,6 +129,31 @@ vi.mock("./lib/invite-rate-limit", () => ({
   reserveInviteRateLimit: mocks.reserveInviteRateLimit,
   settleInviteRateLimit: mocks.settleInviteRateLimit,
 }));
+
+describe("single invite input", () => {
+  const validInvite = {
+    organizationId: "clxyz1234567890abcdefghij",
+    email: "invitee@example.com",
+    name: "Invitee",
+    role: "member",
+    teamIds: [],
+  };
+  const inviteSchema = actionSchemas.find((schema) => schema.safeParse(validInvite).success);
+
+  test("accepts one address", () => {
+    expect(inviteSchema).toBeDefined();
+  });
+
+  // ENG-6658: one invite, and one unit of the invite budget, must not reach several inboxes.
+  test.each([
+    "a@example.com, b@example.com",
+    "a@example.com; b@example.com",
+    '"Bob" <b@example.com>',
+    "nobody",
+  ])("rejects %j as the invitee address", (email) => {
+    expect(inviteSchema?.safeParse({ ...validInvite, email }).success).toBe(false);
+  });
+});
 
 describe("invite rate-limit settlement", () => {
   const organizationId = "org-1";

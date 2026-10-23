@@ -17,6 +17,7 @@ import {
   SMTP_SECURE_ENABLED,
   SMTP_USER,
 } from "@/lib/constants";
+import { isValidEmail } from "@/lib/utils/email";
 
 // Fixed categories keep CloudWatch cardinality independent of users and surveys.
 export type TEmailType =
@@ -51,6 +52,11 @@ interface SendEmailDataProps {
 }
 
 export const sendEmail = async ({ emailType, ...emailData }: SendEmailDataProps): Promise<boolean> => {
+  // nodemailer reads `to` as an address list, so "a@x, b@y" would reach both. Every email goes to one
+  // person, and every limit on email counts one recipient per send (ENG-6658).
+  if (!isValidEmail(emailData.to)) {
+    throw new InvalidInputError("An email must have exactly one valid recipient address");
+  }
   if (!IS_SMTP_CONFIGURED) {
     logger.info("SMTP is not configured, skipping email sending");
     return false;
