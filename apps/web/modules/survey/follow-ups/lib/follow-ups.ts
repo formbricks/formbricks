@@ -30,6 +30,9 @@ const evaluateFollowUp = async (
     const { to, replyTo } = properties;
     const toValueFromResponse = response.data[to];
     const logoUrl = organization.whitelabel?.logoUrl ?? "";
+    // The respondent is anonymous, so the survey's organization and owner carry the limits. Not
+    // `createdBy`: an API caller can set that to anyone, and the owner only the server sets.
+    const rateLimit = { organizationId: organization.id, actorUserId: survey.ownerId ?? null };
 
     // Check if 'to' is a direct email address (team member or user email)
     const parsedEmailTo = z.email().safeParse(to);
@@ -46,6 +49,7 @@ const evaluateFollowUp = async (
         includeHiddenFields: properties.includeHiddenFields,
         logoUrl,
         locale,
+        rateLimit: { ...rateLimit, recipientFromResponse: false },
       });
 
       return {
@@ -79,6 +83,7 @@ const evaluateFollowUp = async (
           includeVariables: properties.includeVariables,
           includeHiddenFields: properties.includeHiddenFields,
           locale,
+          rateLimit: { ...rateLimit, recipientFromResponse: true },
         });
 
         return {
@@ -115,6 +120,7 @@ const evaluateFollowUp = async (
           includeVariables: properties.includeVariables,
           includeHiddenFields: properties.includeHiddenFields,
           locale,
+          rateLimit: { ...rateLimit, recipientFromResponse: true },
         });
 
         return {

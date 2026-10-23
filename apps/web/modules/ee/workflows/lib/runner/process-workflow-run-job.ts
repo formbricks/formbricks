@@ -61,7 +61,8 @@ const workflowRunSelect = {
   triggerType: true,
   triggerPayload: true,
   workflowVersion: { select: { definition: true } },
-  workflow: { select: { definition: true } },
+  // `createdBy` carries the per-user email limit: the respondent who triggers a run is anonymous.
+  workflow: { select: { definition: true, createdBy: true } },
 } as const;
 
 /** Thrown when the run cannot be executed at all (definition missing/invalid). Marks the run failed. */
@@ -161,6 +162,8 @@ interface RunEmailContext {
    * rejected.
    */
   allowedRecipientEmails: Set<string>;
+  /** The organization and workflow creator the run's emails are rate-limited by (ENG-3823). */
+  rateLimit: { organizationId?: string; actorUserId: string | null };
 }
 
 /**
@@ -223,6 +226,7 @@ const sendResolvedEmail = async (
       subject,
       html,
       messageId,
+      rateLimit: { ...emailContext.rateLimit, recipientFromResponse: !isLiteralEmailRecipient(config.to) },
     });
 
     if (sent) {
@@ -459,7 +463,8 @@ const claimRun = async (
 const loadRunEmailContext = async (
   triggerPayload: TWorkflowTriggerRunPayload,
   workspaceId: string,
-  steps: TWorkflowExecutableStep[]
+  steps: TWorkflowExecutableStep[],
+  actorUserId: string | null
 ): Promise<RunEmailContext> => {
   const [response, survey] = await Promise.all([
     getResponse(triggerPayload.responseId),
@@ -508,7 +513,13 @@ const loadRunEmailContext = async (
     ? await getWorkspaceMemberEmails(workspaceId)
     : new Set<string>();
 
-  return { survey, response, logoUrl, allowedRecipientEmails };
+  return {
+    survey,
+    response,
+    logoUrl,
+    allowedRecipientEmails,
+    rateLimit: { organizationId: organization?.id, actorUserId },
+  };
 };
 
 /**
@@ -544,7 +555,11 @@ const runSteps = async (
 
 /** Walks the claimed run to completion, throwing `WorkflowStepFailedError` (with the trace) on a failed step. */
 const executeClaimedRun = async (
-  run: { id: string; workflowVersion: { definition: unknown } | null; workflow: { definition: unknown } },
+  run: {
+    id: string;
+    workflowVersion: { definition: unknown } | null;
+    workflow: { definition: unknown; createdBy: string | null };
+  },
   workspaceId: string,
   triggerPayload: TWorkflowTriggerRunPayload,
   logContext: ReturnType<typeof getWorkflowRunLogContext>
@@ -552,7 +567,7 @@ const executeClaimedRun = async (
   const definition = resolveExecutableDefinition(run);
   const steps = planExecutableSteps(definition);
 
-  const emailContext = await loadRunEmailContext(triggerPayload, workspaceId, steps);
+  const emailContext = await loadRunEmailContext(triggerPayload, workspaceId, steps, run.workflow.createdBy);
   const outcome = await runSteps(steps, run.id, emailContext, logContext);
 
   if (outcome.bail) {

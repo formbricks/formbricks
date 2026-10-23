@@ -199,7 +199,8 @@ export const resendInviteAction = authenticatedActionClient.inputSchema(ZResendI
       parsedInput.inviteId,
       updatedInvite.email,
       invite?.creator?.name ?? "",
-      updatedInvite.name ?? ""
+      updatedInvite.name ?? "",
+      parsedInput.organizationId
     );
 
     return updatedInvite;
@@ -384,7 +385,13 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
       // link, so a failing/misconfigured SMTP must not fail the whole action — otherwise the created
       // invite is stranded behind an "Invite already exists" error on the user's next attempt.
       try {
-        await sendInviteMemberEmail(inviteId, parsedInput.email, ctx.user.name ?? "", parsedInput.name ?? "");
+        await sendInviteMemberEmail(
+          inviteId,
+          parsedInput.email,
+          ctx.user.name ?? "",
+          parsedInput.name ?? "",
+          parsedInput.organizationId
+        );
       } catch (error) {
         logger.error(error, "Failed to send invite email");
       }
@@ -476,7 +483,13 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
             // Best-effort email (see inviteUserAction): a failed send must not flip a created invite
             // to "failed" — the invitee exists and can be reached via the invite link.
             try {
-              await sendInviteMemberEmail(inviteId, email, ctx.user.name ?? "", invitee.name ?? "");
+              await sendInviteMemberEmail(
+                inviteId,
+                email,
+                ctx.user.name ?? "",
+                invitee.name ?? "",
+                organizationId
+              );
             } catch (error) {
               logger.error(error, "Failed to send bulk invite email");
             }

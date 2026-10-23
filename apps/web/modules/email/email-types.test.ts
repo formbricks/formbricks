@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TResponse } from "@formbricks/types/responses";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import { applyEmailRateLimits } from "@/modules/email/lib/email-rate-limits";
 import { sendFollowUpEmail } from "@/modules/survey/follow-ups/lib/email";
 import {
   sendDeleteAccountConfirmationEmail,
@@ -23,6 +24,12 @@ import {
 
 const { sendEmail } = vi.hoisted(() => ({ sendEmail: vi.fn() }));
 vi.mock("@/modules/email/lib/send-email", () => ({ sendEmail }));
+// The real limits module, with the limiter off: it still checks each sender passed the context its type
+// needs, without touching Redis.
+vi.mock("@/lib/constants", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/constants")>()),
+  RATE_LIMITING_DISABLED: true,
+}));
 vi.mock("@/lingodotdev/server", () => ({ getTranslate: async () => (key: string) => key }));
 vi.mock("@/lib/jwt", () => ({
   createToken: () => "token",
@@ -41,7 +48,7 @@ vi.mock("@formbricks/email", () => ({
   renderEmailCustomizationPreviewEmail: async () => "html",
   renderEmbedSurveyPreviewEmail: async () => "html",
   renderForgotPasswordEmail: async () => "html",
-  renderInviteAcceptedEmail: async () => "html",
+  renderInviteAcceptedEmail: vi.fn(async () => "html"),
   renderInviteEmail: async () => "html",
   renderLinkSurveyEmail: async () => "html",
   renderNewEmailVerification: async () => "html",
@@ -67,7 +74,7 @@ const survey = {
 const response = { id: "response", data: {} } as unknown as TResponse;
 
 const senders: [string, () => Promise<unknown>][] = [
-  ["invite", () => sendInviteMemberEmail("invite", email, "Inviter", "Invitee")],
+  ["invite", () => sendInviteMemberEmail("invite", email, "Inviter", "Invitee", "organization")],
   ["invite_accepted", () => sendInviteAcceptedEmail("Inviter", "Invitee", email, locale)],
   ["email_change_verification", () => sendVerificationNewEmail("user", email, locale)],
   ["email_verification", () => sendVerificationLinkEmail({ email, locale, verifyLink: link })],
@@ -115,16 +122,21 @@ const senders: [string, () => Promise<unknown>][] = [
       }),
   ],
   ["response_notification", () => sendResponseFinishedEmail(email, locale, "workspace", survey, response, 1)],
-  ["survey_preview", () => sendEmbedSurveyPreviewEmail(email, "html", "workspace", locale)],
-  ["customization_preview", () => sendEmailCustomizationPreviewEmail(email, "User", locale)],
+  ["survey_preview", () => sendEmbedSurveyPreviewEmail(email, "html", "workspace", locale, "user")],
+  ["customization_preview", () => sendEmailCustomizationPreviewEmail(email, "User", locale, "user")],
   [
     "verified_survey_link",
-    () => sendLinkSurveyToVerifiedEmail({ email, locale, surveyId: "survey", surveyName: "Survey" }),
+    () =>
+      sendLinkSurveyToVerifiedEmail(
+        { email, locale, surveyId: "survey", surveyName: "Survey" },
+        { organizationId: "organization", actorUserId: "creator" }
+      ),
   ],
 ];
 
 describe("email source attribution", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     sendEmail.mockResolvedValue(true);
   });
 
@@ -132,6 +144,33 @@ describe("email source attribution", () => {
     await send();
     expect(sendEmail).toHaveBeenCalledOnce();
     expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({ emailType, to: email }));
+  });
+
+  // A sender that drops its organization or actor would skip the limits that matter most (ENG-3823).
+  test.each(senders)("passes the context %s's rate limits need", async (_emailType, send) => {
+    await send();
+    const [{ emailType, to, rateLimit }] = sendEmail.mock.calls[0];
+    await expect(applyEmailRateLimits(emailType, to, rateLimit)).resolves.toBeUndefined();
+  });
+
+  test.each([
+    ["invite", { organizationId: "organization" }],
+    ["response_notification", { organizationId: "org" }],
+    ["survey_preview", { actorUserId: "user" }],
+    ["customization_preview", { actorUserId: "user" }],
+    ["verified_survey_link", { organizationId: "organization", actorUserId: "creator" }],
+  ] as const)("rate-limits %s by who it is sent for", async (emailType, rateLimit) => {
+    const [, send] = senders.find(([type]) => type === emailType)!;
+    await send();
+    expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({ emailType, rateLimit }));
+  });
+
+  test("shows only bounded, link-free names in the invite-accepted email", async () => {
+    const { renderInviteAcceptedEmail } = await import("@formbricks/email");
+    await sendInviteAcceptedEmail("Inviter https://spam.example", "Win at spam.example", email, locale);
+    expect(renderInviteAcceptedEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ inviterName: "Inviter", inviteeName: "Win at" })
+    );
   });
 
   test.each([
@@ -152,6 +191,7 @@ describe("email source attribution", () => {
       survey,
       response,
       attachResponseData: false,
+      rateLimit: { organizationId: "organization", actorUserId: null, recipientFromResponse: true },
     });
     expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({ emailType: "survey_follow_up" }));
   });

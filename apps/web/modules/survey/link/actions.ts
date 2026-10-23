@@ -10,7 +10,7 @@ import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
-import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
+import { getSurveyOwnerId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { createLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
 import { isLinkSurveyOpenForResponses } from "@/modules/survey/link/lib/public-access";
 import { getLinkSurveyCustomCss, omitCustomCssSource } from "@/modules/survey/link/lib/respondent-custom-css";
@@ -54,11 +54,16 @@ export const sendLinkSurveyEmailAction = actionClient
         unmatchedExplicitLanguage: "fallback",
       }) ?? "default";
 
-    await sendLinkSurveyToVerifiedEmail({
-      ...parsedInput,
-      surveyLanguageCode,
-      logoUrl: organizationLogoUrl || "",
-    });
+    await sendLinkSurveyToVerifiedEmail(
+      {
+        ...parsedInput,
+        surveyLanguageCode,
+        logoUrl: organizationLogoUrl || "",
+      },
+      // The visitor is anonymous, so the survey's organization and owner carry the limits: a fresh
+      // survey or organization does not reset them.
+      { organizationId, actorUserId: await getSurveyOwnerId(parsedInput.surveyId) }
+    );
     return { success: true };
   });
 

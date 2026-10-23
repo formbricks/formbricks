@@ -187,7 +187,7 @@ const baseRun = {
   triggerType: "response.completed",
   triggerPayload,
   workflowVersion: { definition: executableDefinition },
-  workflow: { definition: executableDefinition },
+  workflow: { definition: executableDefinition, createdBy: "creator-1" },
 };
 
 const mockResponse = {
@@ -349,12 +349,19 @@ describe("processWorkflowRunJob", () => {
     mockWorkflowRunFindFirst.mockResolvedValue({
       ...baseRun,
       workflowVersion: { definition: makeDefinition("teammate@example.com") },
-      workflow: { definition: makeDefinition("teammate@example.com") },
+      workflow: { createdBy: "creator-1", definition: makeDefinition("teammate@example.com") },
     });
 
     await processWorkflowRunJob(data, baseContext);
 
-    expect(mockSendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: "teammate@example.com" }));
+    // Rate-limited by the organization and the workflow's creator. The author chose the address, so
+    // there is no per-recipient cap (ENG-3823).
+    expect(mockSendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "teammate@example.com",
+        rateLimit: { organizationId: "org1", actorUserId: "creator-1", recipientFromResponse: false },
+      })
+    );
   });
 
   test("does not send to a literal recipient outside the workspace allowlist (ENG-2029)", async () => {
@@ -364,7 +371,7 @@ describe("processWorkflowRunJob", () => {
     mockWorkflowRunFindFirst.mockResolvedValue({
       ...baseRun,
       workflowVersion: { definition: makeDefinition("attacker@external-evil.example") },
-      workflow: { definition: makeDefinition("attacker@external-evil.example") },
+      workflow: { createdBy: "creator-1", definition: makeDefinition("attacker@external-evil.example") },
     });
 
     await processWorkflowRunJob(data, finalAttemptContext);
@@ -388,7 +395,7 @@ describe("processWorkflowRunJob", () => {
     mockWorkflowRunFindFirst.mockResolvedValue({
       ...baseRun,
       workflowVersion: { definition: makeDefinition("revoked-member@example.com") },
-      workflow: { definition: makeDefinition("revoked-member@example.com") },
+      workflow: { createdBy: "creator-1", definition: makeDefinition("revoked-member@example.com") },
     });
 
     await processWorkflowRunJob(data, finalAttemptContext);
@@ -411,7 +418,7 @@ describe("processWorkflowRunJob", () => {
     mockWorkflowRunFindFirst.mockResolvedValue({
       ...baseRun,
       workflowVersion: { definition: makeDefinition("Teammate@Example.com") },
-      workflow: { definition: makeDefinition("Teammate@Example.com") },
+      workflow: { createdBy: "creator-1", definition: makeDefinition("Teammate@Example.com") },
     });
 
     await processWorkflowRunJob(data, baseContext);
@@ -425,7 +432,7 @@ describe("processWorkflowRunJob", () => {
     mockWorkflowRunFindFirst.mockResolvedValue({
       ...baseRun,
       workflowVersion: { definition: makeDefinition("teammate@example.com") },
-      workflow: { definition: makeDefinition("teammate@example.com") },
+      workflow: { createdBy: "creator-1", definition: makeDefinition("teammate@example.com") },
     });
 
     await processWorkflowRunJob(data, finalAttemptContext);
@@ -452,12 +459,18 @@ describe("processWorkflowRunJob", () => {
     mockWorkflowRunFindFirst.mockResolvedValue({
       ...baseRun,
       workflowVersion: { definition: makeDefinition("contact") },
-      workflow: { definition: makeDefinition("contact") },
+      workflow: { createdBy: "creator-1", definition: makeDefinition("contact") },
     });
 
     await processWorkflowRunJob(data, baseContext);
 
-    expect(mockSendEmail).toHaveBeenCalledWith(expect.objectContaining({ to: "jane@example.com" }));
+    // A respondent typed this address in, so it is also capped per recipient (ENG-3823).
+    expect(mockSendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "jane@example.com",
+        rateLimit: { organizationId: "org1", actorUserId: "creator-1", recipientFromResponse: true },
+      })
+    );
   });
 
   test("does not query the member allowlist when no step has a literal recipient", async () => {
@@ -470,7 +483,7 @@ describe("processWorkflowRunJob", () => {
     mockWorkflowRunFindFirst.mockResolvedValue({
       ...baseRun,
       workflowVersion: { definition: makeDefinition("contact") },
-      workflow: { definition: makeDefinition("contact") },
+      workflow: { createdBy: "creator-1", definition: makeDefinition("contact") },
     });
 
     await processWorkflowRunJob(data, baseContext);
@@ -484,7 +497,7 @@ describe("processWorkflowRunJob", () => {
     mockWorkflowRunFindFirst.mockResolvedValue({
       ...baseRun,
       workflowVersion: { definition: makeDefinition("teammate@example.com") },
-      workflow: { definition: makeDefinition("teammate@example.com") },
+      workflow: { createdBy: "creator-1", definition: makeDefinition("teammate@example.com") },
     });
 
     await processWorkflowRunJob(data, baseContext);
@@ -501,7 +514,7 @@ describe("processWorkflowRunJob", () => {
     mockWorkflowRunFindFirst.mockResolvedValue({
       ...baseRun,
       workflowVersion: { definition: makeDefinition("contact") },
-      workflow: { definition: makeDefinition("contact") },
+      workflow: { createdBy: "creator-1", definition: makeDefinition("contact") },
     });
 
     await processWorkflowRunJob(data, baseContext);
@@ -850,7 +863,10 @@ describe("processWorkflowRunJob", () => {
     mockWorkflowRunFindFirst.mockResolvedValue({
       ...baseRun,
       workflowVersion: { definition: makeDefinition("email", { subject: "Hi\r\nBcc: evil@example.com" }) },
-      workflow: { definition: makeDefinition("email", { subject: "Hi\r\nBcc: evil@example.com" }) },
+      workflow: {
+        createdBy: "creator-1",
+        definition: makeDefinition("email", { subject: "Hi\r\nBcc: evil@example.com" }),
+      },
     });
 
     await processWorkflowRunJob(data, baseContext);

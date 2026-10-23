@@ -29,6 +29,7 @@ Rate limits are scoped by identifier, depending on the endpoint and enforcement 
 - API key ID (for Envoy-managed and app-managed authenticated API calls)
 - User ID (for authenticated session-based calls and server actions)
 - Organization ID (for follow-up email dispatch and invitation budgets)
+- Email type, organization, sender and recipient address (for every outgoing email; see [Email Limits](#email-limits))
 
 When a limit is exceeded, the API returns `429 Too Many Requests`.
 
@@ -100,6 +101,54 @@ not consume the daily budget. Self-hosters can change the limit with `INVITE_RAT
 Formbricks Cloud organizations with the `bulk-invite` entitlement receive a limit of 500 recipients.
 The same allowance also applies to each inviting user across all of their organizations, so creating another
 organization does not reset it.
+
+## Email Limits
+
+Every email the application sends is also counted by type, however it was triggered, against the limits below.
+"Per sender" means the user who acted or, for email a survey or workflow sends, the survey's owner or the
+workflow's creator, counted across all of their organizations. "Per recipient" counts one address from one
+organization, except for account email, which an address only ever gets from its own account. The address is
+stored only as a keyed hash.
+
+| **Email type**                | **Per organization** | **Per sender**     | **Per recipient**                     | **Per deployment** |
+| ----------------------------- | -------------------- | ------------------ | ------------------------------------- | ------------------ |
+| `invite`                      | see invite limits    | see invite limits  | 3 per day                             | 5000 per day       |
+| `email_verification`          | —                    | —                  | 5 per hour                            | —                  |
+| `sso_recovery_verification`   | —                    | —                  | 5 per hour                            | —                  |
+| `email_change_verification`   | —                    | 3 per hour         | —                                     | 1000 per hour      |
+| `password_reset`              | —                    | 3 per hour per account | 5 per hour                        | —                  |
+| `sso_sign_in_hint`            | —                    | 3 per hour per account | 3 per hour                        | —                  |
+| `response_notification`       | 2000 per hour        | —                  | —                                     | —                  |
+| `survey_preview`              | —                    | 10 per hour        | —                                     | —                  |
+| `customization_preview`       | —                    | 10 per hour        | —                                     | —                  |
+| `verified_survey_link`        | 200 per hour         | 200 per hour       | 3 per hour                            | 3000 per hour      |
+| `survey_follow_up`            | 200 per hour         | 200 per hour       | 5 per hour, respondent-typed only     | 5000 per hour      |
+| `workflow_email`              | 200 per hour         | 200 per hour       | 5 per hour, respondent-typed only     | 5000 per hour      |
+
+`invite_accepted`, `password_reset_notification`, `account_deletion`, `sso_recovery_notification` and
+`data_retention_notice` go to an account or an organization's own members and are bounded by the flow that sends
+them.
+
+A per-deployment cap is shared by every organization, so anyone who can reach it stops that email for everyone.
+Only email that can reach an address someone else typed in has one, set far above what a few accounts can send.
+Sign-in and account-security email has none.
+
+What happens when an email is capped depends on the flow:
+
+- **Previews, invite resends, the verified survey link and the signed-in password reset** show a "too many
+  requests" error.
+- **New invites** are still created, and the action reports success; the invite can be resent or shared by link.
+- **Sign-up and resent verification, forgot password, email changes and the SSO sign-in hint** look the same as a
+  sent email, so a capped email cannot reveal whether an account or address exists.
+- **Follow-ups, workflow emails, response notifications and the invite-accepted notice** are skipped. A workflow
+  step is recorded as failed. A data retention notice stays unsent and goes out on a later night.
+
+Every capped email is logged as `Outbound email suppressed: rate limit reached` with the email type and the limit
+that was spent, never the address.
+
+If your instance legitimately sends more, raise the per-organization, per-sender and per-deployment caps at once with
+`EMAIL_RATE_LIMIT_MULTIPLIER` (for example `EMAIL_RATE_LIMIT_MULTIPLIER=5`). Per-recipient caps do not change: they
+protect a person's inbox.
 
 ## Explicit Envoy Exclusions
 

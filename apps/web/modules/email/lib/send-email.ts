@@ -18,6 +18,7 @@ import {
   SMTP_USER,
 } from "@/lib/constants";
 import { isValidEmail } from "@/lib/utils/email";
+import { type TEmailRateLimitContext, applyEmailRateLimits } from "./email-rate-limits";
 
 // Fixed categories keep CloudWatch cardinality independent of users and surveys.
 export type TEmailType =
@@ -49,9 +50,15 @@ interface SendEmailDataProps {
   html: string;
   /** Optional RFC 5322 Message-ID; nodemailer emits it as the `Message-ID` header. */
   messageId?: string;
+  /** Who the email is sent for; `emailRateLimits` says which fields each type needs. */
+  rateLimit?: TEmailRateLimitContext;
 }
 
-export const sendEmail = async ({ emailType, ...emailData }: SendEmailDataProps): Promise<boolean> => {
+export const sendEmail = async ({
+  emailType,
+  rateLimit,
+  ...emailData
+}: SendEmailDataProps): Promise<boolean> => {
   // nodemailer reads `to` as an address list, so "a@x, b@y" would reach both. Every email goes to one
   // person, and every limit on email counts one recipient per send (ENG-6658).
   if (!isValidEmail(emailData.to)) {
@@ -61,6 +68,9 @@ export const sendEmail = async ({ emailType, ...emailData }: SendEmailDataProps)
     logger.info("SMTP is not configured, skipping email sending");
     return false;
   }
+  // Outside the try below, so a capped email reaches the caller as `TooManyRequestsError`, not as an SMTP
+  // failure, and never opens a connection.
+  await applyEmailRateLimits(emailType, emailData.to, rateLimit);
   try {
     const transportOptions: SMTPTransport.Options = {
       host: SMTP_HOST,

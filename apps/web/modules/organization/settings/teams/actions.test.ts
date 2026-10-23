@@ -219,6 +219,14 @@ describe("invite rate-limit settlement", () => {
     ).resolves.toBe("invite-1");
 
     expect(mocks.settleInviteRateLimit).toHaveBeenCalledWith(reservation, 1);
+    // The organization carries the email's per-recipient cap (ENG-3823).
+    expect(mocks.sendInviteMemberEmail).toHaveBeenCalledWith(
+      "invite-1",
+      "invitee@example.com",
+      "Inviter",
+      "Invitee",
+      organizationId
+    );
   });
 
   test("settles a bulk reservation to the number of created invites", async () => {

@@ -50,6 +50,9 @@ describe("Follow-ups", () => {
   const mockSurvey = {
     id: "survey1",
     workspaceId: "ws1",
+    // The owner carries the per-sender limit; `createdBy` is attribution an API caller may set (ENG-3823).
+    ownerId: "owner-1",
+    createdBy: "someone-else",
     followUps: [
       {
         id: "followup1",
@@ -119,6 +122,8 @@ describe("Follow-ups", () => {
           response: mockResponse,
           attachResponseData: true,
           logoUrl: "https://example.com/logo.png",
+          // The respondent typed this address in, so it is also capped per recipient (ENG-3823).
+          rateLimit: { organizationId: "org1", actorUserId: "owner-1", recipientFromResponse: true },
         });
       }
     });
@@ -242,6 +247,8 @@ describe("Follow-ups", () => {
           response: mockResponse,
           attachResponseData: true,
           logoUrl: "https://example.com/logo.png",
+          // The author chose this address: no per-recipient cap.
+          rateLimit: { organizationId: "org1", actorUserId: "owner-1", recipientFromResponse: false },
         });
       }
     });

@@ -1,0 +1,97 @@
+---
+title: "Email Sending"
+description: "Every email Formbricks sends, the limits on each, and what a new email feature needs"
+icon: "envelope"
+---
+
+Every email the application sends goes through one function, `sendEmail` in
+`apps/web/modules/email/lib/send-email.ts`. Each call names an email type (`TEmailType`), which tags the message
+in SES metrics and decides which limits apply, and goes to exactly one address: `sendEmail` refuses a list.
+
+Emails sent by other systems (Stripe, identity providers, marketing tools) are not covered here.
+
+## How email is limited
+
+`emailRateLimits` (`modules/email/lib/email-rate-limits.ts`) gives every type its limits, and `sendEmail` charges
+them before it opens an SMTP connection. The caller says who the email is sent for in `rateLimit`:
+
+- `organizationId`: the organization it is sent for.
+- `actorUserId`: the signed-in user who acted, or the owner of the survey or creator of the workflow that sent it.
+  It is counted across all of their organizations, so a fresh organization does not reset it. That reset is how
+  INC-5 sent about 13,000 invites through throwaway organizations. Take it only from a field the server sets: a
+  survey's `createdBy` can be named in an API request, its `ownerId` cannot.
+- `recipientFromResponse`: the address came from a respondent's answer.
+
+A type's limits can count per organization, per actor, per recipient and per deployment. All of them are charged together, and a refused email hands the others back. A refusal throws
+`TooManyRequestsError`. The values, and what each flow does with a refusal, are listed in
+[Rate Limiting](/self-hosting/configuration/rate-limiting#email-limits).
+
+Two rules shape those limits:
+
+- **A per-deployment cap is shared by every tenant**, so anyone who can reach it stops that email for everyone. Only
+  email that can reach an address someone else typed in has one, as a backstop for spam spread over many accounts,
+  set far above what a few accounts can send. Sign-in and account-security email has none.
+- **A per-recipient cap must not let one sender block someone.** It counts one address from one organization. Only
+  account email, which an address gets from its own account alone, is counted across everyone.
+
+Some flows also limit where they start, before any email exists: invites count recipients per organization and
+per inviting user, and forgot-password counts per IP and per account.
+
+## Inventory
+
+"Who picks the recipient" is the question that matters most. An address a user or visitor typed in can be
+anyone's.
+
+| Email type | Sent when | Who picks the recipient | Who it is limited by |
+| --- | --- | --- | --- |
+| `invite` | Single, bulk, onboarding and resend invites | The inviting user | Inviting user and organization (where the invite is created); recipient |
+| `invite_accepted` | An invite is accepted | Server (the inviter) | Bounded by invites |
+| `email_verification` | Sign-up, resend, sign-in to an unverified account | Whoever signs up | IP (where it starts); recipient |
+| `sso_recovery_verification` | SSO account recovery | Server (the account) | Recipient; the SSO callback itself is unmetered (ENG-2558) |
+| `email_change_verification` | A user changes their email | The user | User (where it starts); deployment |
+| `password_reset` | Forgot password; reset from profile settings | Whoever asks, or the user | IP and account (where it starts); recipient |
+| `password_reset_notification` | A password was reset | Server (the account) | Only a valid reset token sends it |
+| `account_deletion` | An SSO user deletes their account | Server (the account) | User (where it starts) |
+| `sso_recovery_notification` | SSO recovery removed local sign-in factors | Server (the account) | Follows the recovery flow |
+| `sso_sign_in_hint` | Forgot password on an SSO-only account | Whoever asks | Account (where it starts); recipient |
+| `data_retention_notice` | Nightly data retention sweep | Server (organization members) | Bounded by the sweep |
+| `response_notification` | A response is completed | Server (subscribed members) | Organization |
+| `survey_preview` | "Send preview" from the embed tab | Server (the user) | User |
+| `customization_preview` | Test email from email customization | Server (the user) | User |
+| `verified_survey_link` | A visitor asks for a verified survey link | The visitor | IP (where it starts); organization and survey owner; recipient; deployment |
+| `survey_follow_up` | A response is completed and the survey has follow-ups | The survey author, or a respondent's answer | Organization (also 50 an hour where it starts) and survey owner; recipient, when a respondent typed it; deployment |
+| `workflow_email` | A workflow runs its "send email" step | The workflow author (workspace members only), or a respondent's answer | Organization and workflow creator; recipient, when a respondent typed it; deployment |
+
+## Checklist for a new email feature
+
+<Steps>
+  <Step title="Add an email type and its limits">
+    Add the type to `TEmailType` and an entry to `emailRateLimits`; the `Record` type does not compile without
+    one. Limit the organization and the actor. Add a recipient cap if someone other than the server picks the
+    address, and a per-deployment cap only if the email can reach an address someone else typed in.
+  </Step>
+  <Step title="Pass who the email is sent for">
+    Set `rateLimit` on the `sendEmail` call. For email a visitor triggers, the actor is the owner of the survey or
+    the creator of the workflow, so they cannot use visitors to reach any address. Use only values the server
+    set. `sendEmail` throws if a field the type needs is missing.
+  </Step>
+  <Step title="Test it with fresh resources">
+    Show that the actor's limit still holds after they create a new organization, survey or workflow.
+  </Step>
+  <Step title="Send what the server knows, not what the client sent">
+    Read names and other display values from the database. Bound free text that appears in the email, and do not
+    let identity fields (names, survey names) carry links. `toInviteDisplayName` does both for a name.
+  </Step>
+  <Step title="Handle a refused send">
+    In an interactive action, let `TooManyRequestsError` reach the user, unless the response must look the same
+    whether or not an account or address exists. If the email follows a record you already saved, treat it as
+    best-effort. In a background job, do not record the email as delivered.
+  </Step>
+  <Step title="Keep the address out of logs">
+    Log the email type and ids, never the recipient address.
+  </Step>
+  <Step title="Update this page and the rate-limit docs">
+    Add the type to the inventory above and to
+    [Rate Limiting](/self-hosting/configuration/rate-limiting#email-limits).
+  </Step>
+</Steps>

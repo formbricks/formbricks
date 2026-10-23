@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import { sendEmail } from "./send-email";
 
 const mocks = vi.hoisted(() => ({
   sendMail: vi.fn(),
   createTransport: vi.fn(),
+  applyEmailRateLimits: vi.fn(),
   constants: {
     DEBUG: false,
     IS_SMTP_CONFIGURED: true,
@@ -25,6 +27,7 @@ vi.mock("@/lib/constants", () => mocks.constants);
 vi.mock("nodemailer", () => ({
   createTransport: mocks.createTransport,
 }));
+vi.mock("./email-rate-limits", () => ({ applyEmailRateLimits: mocks.applyEmailRateLimits }));
 
 const email = {
   emailType: "invite" as const,
@@ -36,6 +39,7 @@ const email = {
 describe("sendEmail SES event publishing", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.applyEmailRateLimits.mockResolvedValue(undefined);
     mocks.createTransport.mockReturnValue({ sendMail: mocks.sendMail });
     mocks.sendMail.mockResolvedValue({ messageId: "smtp-message-id" });
     mocks.constants.IS_SMTP_CONFIGURED = true;
@@ -136,9 +140,26 @@ describe("sendEmail SES event publishing", () => {
     expect(mocks.sendMail).not.toHaveBeenCalled();
   });
 
-  test("skips unconfigured SMTP", async () => {
+  test("skips unconfigured SMTP without spending any email budget", async () => {
     mocks.constants.IS_SMTP_CONFIGURED = false;
     expect(await sendEmail(email)).toBe(false);
+    expect(mocks.sendMail).not.toHaveBeenCalled();
+    expect(mocks.applyEmailRateLimits).not.toHaveBeenCalled();
+  });
+
+  test("charges the email's type, recipient and sender context, and keeps the context out of the message", async () => {
+    const rateLimit = { organizationId: "org-1" };
+    await sendEmail({ ...email, rateLimit });
+
+    expect(mocks.applyEmailRateLimits).toHaveBeenCalledWith("invite", "recipient@example.com", rateLimit);
+    expect(mocks.sendMail.mock.calls[0][0]).not.toHaveProperty("rateLimit");
+  });
+
+  test("refuses a capped email as rate limited, before opening an SMTP connection", async () => {
+    mocks.applyEmailRateLimits.mockRejectedValue(new TooManyRequestsError("Maximum number of requests"));
+
+    await expect(sendEmail(email)).rejects.toBeInstanceOf(TooManyRequestsError);
+    expect(mocks.createTransport).not.toHaveBeenCalled();
     expect(mocks.sendMail).not.toHaveBeenCalled();
   });
 
