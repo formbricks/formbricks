@@ -34,6 +34,32 @@ describe("samlResponseWithoutAssertion", () => {
     expect(parseIssuer(decoded(samlResponseWithoutAssertion(issuer!)))).toBe(issuer);
   });
 
+  test("carries every issuer saml20 can read back exactly, for each BMP code unit and beyond", () => {
+    const issuerFrom = (inner: string) =>
+      parseIssuer(`<samlp:Response xmlns:samlp="${PROTOCOL_NS}"><Issuer>${inner}</Issuer></samlp:Response>`);
+    const reference = (codePoint: number) => `&#x${codePoint.toString(16)};`;
+    const mismatches: string[] = [];
+    const roundTrip = (codePoints: number[]) => {
+      let issuer: string | undefined;
+      try {
+        issuer = issuerFrom(`a${codePoints.map(reference).join("")}b`);
+      } catch {
+        // saml20 cannot parse an issuer holding one of these, so no issuer carries it: try each on its own.
+        if (codePoints.length > 1) for (const codePoint of codePoints) roundTrip([codePoint]);
+        return;
+      }
+      if (issuer === undefined) return;
+      if (parseIssuer(decoded(samlResponseWithoutAssertion(issuer))) !== issuer) mismatches.push(issuer);
+    };
+
+    for (let start = 0; start < 0x10000; start += 1024) {
+      roundTrip(Array.from({ length: 1024 }, (_, i) => start + i));
+    }
+    roundTrip([0x10000, 0x1f600, 0x10ffff]);
+
+    expect(mismatches).toEqual([]);
+  });
+
   test("carries no assertion, so jackson cannot accept it", () => {
     const xml = decoded(samlResponseWithoutAssertion("https://idp.example.com"));
 

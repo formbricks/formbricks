@@ -2,12 +2,12 @@ const PROTOCOL_NS = "urn:oasis:names:tc:SAML:2.0:protocol";
 const ASSERTION_NS = "urn:oasis:names:tc:SAML:2.0:assertion";
 
 /**
- * The characters written as numeric references: markup characters; the line endings a parser turns into a line feed
- * when they appear literally (CR, NEL, LINE SEPARATOR, PARAGRAPH SEPARATOR; xmldom normalizes all four); and lone
- * surrogates, which UTF-8 cannot carry. A reference to any of them parses back to the character itself.
+ * Everything but tab, line feed and printable ASCII other than the markup characters. Written as numeric references,
+ * these parse back to exactly the characters they name, which their literal forms do not always do: a parser turns
+ * CR, NEL, LINE SEPARATOR and PARAGRAPH SEPARATOR into line feeds, saml20 refuses a document holding U+FFFD, and UTF-8
+ * cannot carry a lone surrogate. Since the issuer itself came out of a parse, every character in it can be referenced.
  */
-const NEEDS_REFERENCE =
-  /[&<>\r\u0085\u2028\u2029]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
+const NEEDS_REFERENCE = /[&<>]|[^\t\n\x20-\x7E]/gu;
 
 /** `text` as XML character data that parses back to exactly `text`. */
 const escapeText = (text: string): string =>
