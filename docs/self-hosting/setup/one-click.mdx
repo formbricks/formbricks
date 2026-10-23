@@ -524,6 +524,17 @@ Docker cannot create the network without an IPv6 subnet you choose. Upgrade Dock
 again. If you have set `networks.default` yourself, the script leaves it alone, so add `enable_ipv6: true` to it
 by hand.
 
+To keep IPv6 off, set `enable_ipv6: false` under `networks.default` in `formbricks/docker-compose.yml`; a later update
+leaves that setting alone. If a container that is not part of Formbricks is attached to the network, the update
+cannot recreate it: it puts the previous file back, says so, and finishes the update without IPv6. Detach that
+container and run the update again.
+
+<Note>
+  This relies on Docker routing IPv6 with `ip6tables`, which is on by default from Docker Engine 27.0. If your
+  daemon runs with `"ip6tables": false` (or `--ip6tables=false`), IPv6 visitors still share one address, the
+  network's IPv6 gateway, even after this change.
+</Note>
+
 ## Stop
 
 To stop Formbricks, simply run the following command:

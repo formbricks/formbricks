@@ -1805,6 +1805,15 @@ compose_default_network_has_ipv6() {
   fi
 }
 
+# Prints the name of the project's default network and succeeds when that network exists. After `down`, that means a
+# container from outside the project is still attached to it. Compose renders the network's name as its first key.
+compose_default_network_in_use() {
+  local name
+  name=$(render_compose_project "$1" --format json | tr -d '[:space:]' |
+    grep -oE '"default":\{"name":"[^"]+"' | head -n 1 | sed -E 's/.*"name":"([^"]+)"/\1/')
+  [[ -n "$name" ]] && sudo docker network inspect "$name" >/dev/null 2>&1 && echo "$name"
+}
+
 # Turns on IPv6 for the Compose project's default network (ENG-3897). Docker forwards IPv6 to a container that has
 # no IPv6 address through docker-proxy, which connects from the bridge gateway, so Traefik and the app saw every
 # IPv6 visitor as that one gateway address: one shared rate-limit bucket, and the gateway in logs and response
@@ -2037,8 +2046,10 @@ update_formbricks() {
   fi
   warn_if_docker_exposes_loopback_ports
   # Same contract as the port step. The `down` below removes the network, so the `up` after it recreates it with IPv6.
-  local ipv6_status=0
+  # 0 means this update changed the file; 3, that it left it alone.
+  local ipv6_status=3
   if can_enable_compose_ipv6; then
+    ipv6_status=0
     enable_compose_ipv6 docker-compose.yml validate || ipv6_status=$?
   fi
   if [[ $ipv6_status -eq 2 ]]; then
@@ -2048,6 +2059,18 @@ update_formbricks() {
     echo "⚠️ Continuing the update with IPv6 left off on the Compose network."
   fi
   sudo docker compose down
+  # `down` leaves the network in place while a container from outside the project is attached to it, and `up` cannot
+  # then recreate it with IPv6: it fails and the stack stays down. Put the file back so `up` reuses the network.
+  local network_in_use
+  if [[ $ipv6_status -eq 0 ]] && network_in_use=$(compose_default_network_in_use docker-compose.yml); then
+    if ! restore_compose_files docker-compose.yml docker-compose.yml.before-ipv6-network; then
+      echo "❌ The stack is stopped. Restore docker-compose.yml as above, then run 'sudo docker compose up -d'."
+      exit 1
+    fi
+    echo "⚠️ A container outside Formbricks is attached to the $network_in_use network, so it could not get IPv6."
+    echo "   Continuing the update without it. Detach that container (see 'sudo docker network inspect"
+    echo "   $network_in_use'), then rerun the update."
+  fi
   # Past every gate and with Cube stopped, so the next start serves the release's model. A failed refresh leaves
   # the previous model, which Cube still starts with, so it never stops the update.
   refresh_bundled_cube_files || true

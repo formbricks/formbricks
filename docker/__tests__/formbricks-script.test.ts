@@ -2581,7 +2581,12 @@ volumes:
   });
 
   // update_formbricks with `sudo` faked and the host's IPv6 support decided by the test, not the machine running it.
-  const runUpdate = ({ hostHasIpv6 = true, engineVersion = "29.0.0", failValidation = false } = {}) => {
+  const runUpdate = ({
+    hostHasIpv6 = true,
+    engineVersion = "29.0.0",
+    failValidation = false,
+    networkInUse = false,
+  } = {}) => {
     const tempDir = createTempDir();
     const installationDir = join(tempDir, "formbricks");
     const binDir = join(tempDir, "bin");
@@ -2607,7 +2612,8 @@ printf "%s\\n" "$*" >> "$COMMAND_LOG"
 case "$*" in
   *"config --services") printf "authzed-ops\\nspicedb\\nhub-worker\\nformbricks\\n" ;;
   *"docker version"*) printf "%s\\n" "$ENGINE_VERSION" ;;
-  *"config --format json") [ "$FAIL_VALIDATION" = "1" ] || printf '{"networks":{"default":{"ipam":{},"enable_ipv6":true}}}' ;;
+  *"config --format json") [ "$FAIL_VALIDATION" = "1" ] || printf '{"networks":{"default":{"name":"formbricks_default","ipam":{},"enable_ipv6":true}}}' ;;
+  *"network inspect formbricks_default") [ "$NETWORK_IN_USE" = "1" ] || exit 1 ;;
 esac
 exit 0
 `,
@@ -2631,6 +2637,7 @@ exit 0
           ENGINE_VERSION: engineVersion,
           FAIL_VALIDATION: failValidation ? "1" : "0",
           HOST_HAS_IPV6: hostHasIpv6 ? "1" : "0",
+          NETWORK_IN_USE: networkInUse ? "1" : "0",
           PATH: `${binDir}:${process.env.PATH ?? ""}`,
         },
       }
@@ -2648,6 +2655,24 @@ exit 0
     expect(validation).toBeGreaterThan(commands.indexOf("upgrade check"));
     expect(validation).toBeLessThan(commands.indexOf("docker compose down"));
     expect(commands).toContain("docker compose up -d");
+  });
+
+  test("the updater puts the file back when `down` leaves the network attached to an outside container", () => {
+    const { result, composePath, composeContents, commands } = runUpdate({ networkInUse: true });
+
+    expect(result.status).toBe(0);
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(result.stdout).toContain("attached to the formbricks_default network, so it could not get IPv6");
+    const inspect = commands.indexOf("docker network inspect formbricks_default");
+    expect(inspect).toBeGreaterThan(commands.indexOf("docker compose down"));
+    expect(inspect).toBeLessThan(commands.indexOf("docker compose up -d"));
+    expect(commands).toContain("docker compose up -d\n");
+  });
+
+  test("the updater only looks for a leftover network when it changed the file", () => {
+    const { commands } = runUpdate({ engineVersion: "26.1.4", networkInUse: true });
+
+    expect(commands).not.toContain("network inspect");
   });
 
   test("the updater restores the file and still updates when the result does not validate", () => {
