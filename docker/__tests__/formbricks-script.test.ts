@@ -2391,3 +2391,272 @@ describe("docker/formbricks.sh Traefik label injection", () => {
     expect(existsSync(`${composePath}.tmp`)).toBe(false);
   });
 });
+
+describe("docker/formbricks.sh IPv6 Compose network (ENG-3897)", () => {
+  const ipv6Block = "\nnetworks:\n  default:\n    enable_ipv6: true\n";
+
+  // Runs enable_compose_ipv6 with `sudo` replaced by `prelude`, so a test picks the real Docker Compose or a fake.
+  const enableComposeIpv6 = (
+    composePath: string,
+    mode: "install" | "update",
+    prelude = 'sudo() { "$@"; }'
+  ): ReturnType<typeof spawnSync> =>
+    spawnSync(
+      "bash",
+      [
+        "-c",
+        `source "$1"; set +e; ${prelude}\nenable_compose_ipv6 "$2" "$3"`,
+        "bash",
+        formbricksScriptPath,
+        composePath,
+        mode === "update" ? "validate" : "",
+      ],
+      { encoding: "utf8", env: getDockerComposeProcessEnv() }
+    );
+
+  const getNetworks = (composeContents: string): unknown =>
+    (load(composeContents) as { networks?: unknown }).networks;
+
+  test.each([
+    ["26.1.4", false],
+    ["27.0.0", true],
+    ["27.5.1", true],
+    ["29.9.0-rc.1", true],
+    ["", false],
+    ["unknown", false],
+  ])("docker_engine_supports_ipv6_networks(%s) is %s", (version, supported) => {
+    const result = spawnSync(
+      "bash",
+      [
+        "-c",
+        'source "$1"; set +e; docker_engine_supports_ipv6_networks "$2"',
+        "bash",
+        formbricksScriptPath,
+        version,
+      ],
+      { encoding: "utf8" }
+    );
+
+    expect(result.status === 0).toBe(supported);
+  });
+
+  test.each([
+    ["IPv6 on", true, "0", true],
+    ["IPv6 off by sysctl", true, "1", false],
+    ["IPv6 disabled at boot", false, "", false],
+  ])("host_has_ipv6 with %s is %s", (_name, hasInterfaces, disableIpv6, expected) => {
+    const procRoot = createTempDir();
+    mkdirSync(join(procRoot, "net"));
+    mkdirSync(join(procRoot, "sys/net/ipv6/conf/all"), { recursive: true });
+    if (hasInterfaces) writeFileSync(join(procRoot, "net/if_inet6"), "");
+    if (disableIpv6) writeFileSync(join(procRoot, "sys/net/ipv6/conf/all/disable_ipv6"), `${disableIpv6}\n`);
+
+    const result = spawnSync(
+      "bash",
+      ["-c", 'source "$1"; set +e; host_has_ipv6 "$2"', "bash", formbricksScriptPath, procRoot],
+      { encoding: "utf8" }
+    );
+
+    expect(result.status === 0).toBe(expected);
+  });
+
+  test("on install, adds an IPv6 default network and leaves the rest of the template alone", () => {
+    const composePath = writeDockerComposeTemplate();
+    const originalCompose = readFileSync(composePath, "utf8");
+
+    const result = enableComposeIpv6(composePath, "install");
+
+    expect(result.status).toBe(0);
+    expect(readFileSync(composePath, "utf8")).toBe(originalCompose + ipv6Block);
+    expect(existsSync(`${composePath}.before-ipv6-network`)).toBe(false);
+  });
+
+  dockerComposeTest(
+    "on update, Docker Compose renders the default network with IPv6 and a backup is kept",
+    () => {
+      const { composePath } = writeDockerComposeFixture("POSTGRES_PASSWORD=test-password\n");
+      const originalCompose = readFileSync(composePath, "utf8");
+      chmodSync(composePath, 0o600);
+
+      const result = enableComposeIpv6(composePath, "update");
+
+      expect(result.status).toBe(0);
+      expect(readFileSync(`${composePath}.before-ipv6-network`, "utf8")).toBe(originalCompose);
+      expect(statSync(composePath).mode & 0o777).toBe(0o600);
+      const rendered = JSON.parse(
+        runDockerCompose(["-f", composePath, "config", "--format", "json"], {
+          POSTGRES_PASSWORD: "test-password",
+          AUTHZED_TOKEN: "test-authzed-token",
+          AUTHZED_DATABASE_PASSWORD: "test-authzed-database-password",
+        })
+      ) as { networks: Record<string, { enable_ipv6?: boolean }> };
+      expect(rendered.networks.default.enable_ipv6).toBe(true);
+
+      expect(enableComposeIpv6(composePath, "update").status).toBe(3);
+    }
+  );
+
+  test("on update, restores the original when the result does not turn IPv6 on", () => {
+    const composePath = writeDockerComposeTemplate();
+    const originalCompose = readFileSync(composePath, "utf8");
+
+    const result = enableComposeIpv6(
+      composePath,
+      "update",
+      `sudo() { [[ "$*" == *"--format json" ]] && printf '{"networks":{"default":{"ipam":{}}}}'; return 0; }`
+    );
+
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("would not turn on IPv6 for the default network");
+    expect(readFileSync(composePath, "utf8")).toBe(originalCompose);
+    expect(existsSync(`${composePath}.tmp`)).toBe(false);
+  });
+
+  test("adds default to an existing networks: block at its own indent", () => {
+    const tempDir = createTempDir();
+    const composePath = join(tempDir, "docker-compose.yml");
+    writeFileSync(
+      composePath,
+      `services:
+  formbricks:
+    image: ghcr.io/formbricks/formbricks:latest
+networks:
+    # Shared with the reverse proxy.
+    proxy:
+        external: true
+volumes:
+  postgres:
+`
+    );
+
+    expect(enableComposeIpv6(composePath, "install").status).toBe(0);
+
+    expect(getNetworks(readFileSync(composePath, "utf8"))).toEqual({
+      default: { enable_ipv6: true },
+      proxy: { external: true },
+    });
+  });
+
+  test.each([
+    ["a block default", "networks:\n  default:\n    name: my-network\n"],
+    ["a quoted default", 'networks:\n  "default":\n    driver: bridge\n'],
+    ["an inline networks:", "networks: {default: {name: my-network}}\n"],
+  ])("leaves %s the operator set untouched", (_name, networks) => {
+    const tempDir = createTempDir();
+    const composePath = join(tempDir, "docker-compose.yml");
+    const composeContents = `services:\n  formbricks:\n    image: example\n${networks}`;
+    writeFileSync(composePath, composeContents);
+
+    expect(enableComposeIpv6(composePath, "update").status).toBe(3);
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+  });
+
+  test("leaves the file untouched when an override sets the default network", () => {
+    const composePath = writeDockerComposeTemplate();
+    const originalCompose = readFileSync(composePath, "utf8");
+    writeFileSync(
+      join(dirname(composePath), "docker-compose.override.yml"),
+      "networks:\n  default:\n    enable_ipv6: false\n"
+    );
+
+    expect(enableComposeIpv6(composePath, "update").status).toBe(3);
+    expect(readFileSync(composePath, "utf8")).toBe(originalCompose);
+  });
+
+  // update_formbricks with `sudo` faked and the host's IPv6 support decided by the test, not the machine running it.
+  const runUpdate = ({ hostHasIpv6 = true, engineVersion = "29.0.0", failValidation = false } = {}) => {
+    const tempDir = createTempDir();
+    const installationDir = join(tempDir, "formbricks");
+    const binDir = join(tempDir, "bin");
+    const commandLog = join(tempDir, "commands.log");
+    const composePath = join(installationDir, "docker-compose.yml");
+    const composeContents = `services:
+  authzed-ops:
+  spicedb:
+  hub-worker:
+  formbricks:
+    image: ghcr.io/formbricks/formbricks:latest
+    ports:
+      - "127.0.0.1:3000:3000"
+`;
+    mkdirSync(installationDir, { recursive: true });
+    mkdirSync(binDir, { recursive: true });
+    writeFileSync(composePath, composeContents);
+    writeFileSync(join(installationDir, ".env"), "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true\n");
+    writeFileSync(
+      join(binDir, "sudo"),
+      `#!/bin/sh
+printf "%s\\n" "$*" >> "$COMMAND_LOG"
+case "$*" in
+  *"config --services") printf "authzed-ops\\nspicedb\\nhub-worker\\nformbricks\\n" ;;
+  *"docker version"*) printf "%s\\n" "$ENGINE_VERSION" ;;
+  *"config --format json") [ "$FAIL_VALIDATION" = "1" ] || printf '{"networks":{"default":{"ipam":{},"enable_ipv6":true}}}' ;;
+esac
+exit 0
+`,
+      { mode: 0o700 }
+    );
+
+    const result = spawnSync(
+      "bash",
+      [
+        "-c",
+        `source "$1"; host_has_ipv6() { [[ "$HOST_HAS_IPV6" == "1" ]]; }; update_formbricks`,
+        "bash",
+        formbricksScriptPath,
+      ],
+      {
+        cwd: tempDir,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          COMMAND_LOG: commandLog,
+          ENGINE_VERSION: engineVersion,
+          FAIL_VALIDATION: failValidation ? "1" : "0",
+          HOST_HAS_IPV6: hostHasIpv6 ? "1" : "0",
+          PATH: `${binDir}:${process.env.PATH ?? ""}`,
+        },
+      }
+    );
+
+    return { result, composePath, composeContents, commands: readFileSync(commandLog, "utf8") };
+  };
+
+  test("the updater turns IPv6 on after its last gate and before `down` recreates the network", () => {
+    const { result, composePath, composeContents, commands } = runUpdate();
+
+    expect(result.status).toBe(0);
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents + ipv6Block);
+    const validation = commands.indexOf("docker compose config --format json\n");
+    expect(validation).toBeGreaterThan(commands.indexOf("upgrade check"));
+    expect(validation).toBeLessThan(commands.indexOf("docker compose down"));
+    expect(commands).toContain("docker compose up -d");
+  });
+
+  test("the updater restores the file and still updates when the result does not validate", () => {
+    const { result, composePath, composeContents, commands } = runUpdate({ failValidation: true });
+
+    expect(result.status).toBe(0);
+    expect(result.stdout).toContain("Continuing the update with IPv6 left off on the Compose network");
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(commands).toContain("docker compose up -d");
+  });
+
+  test("the updater leaves the network alone on a host without IPv6", () => {
+    const { result, composePath, composeContents, commands } = runUpdate({ hostHasIpv6: false });
+
+    expect(result.status).toBe(0);
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(commands).not.toContain("config --format json\n");
+    expect(result.stdout).not.toContain("IPv6");
+  });
+
+  test.each(["26.1.4", ""])("the updater says why it left IPv6 off on Docker Engine %j", (engineVersion) => {
+    const { result, composePath, composeContents } = runUpdate({ engineVersion });
+
+    expect(result.status).toBe(0);
+    expect(readFileSync(composePath, "utf8")).toBe(composeContents);
+    expect(result.stdout).toContain("it needs Docker Engine 27.0 or later");
+    expect(result.stdout).toContain("one-click#ipv6-visitors");
+  });
+});

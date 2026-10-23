@@ -944,6 +944,11 @@ EOT
     exit 1
   fi
   warn_if_docker_exposes_loopback_ports "${formbricks_docker_command[@]}"
+  # Give the Compose network IPv6, so IPv6 visitors reach Traefik with their own address. Skipped when the host or
+  # Docker cannot do it, and a failure leaves the file as it was, so neither stops the install.
+  if can_enable_compose_ipv6 "${formbricks_docker_command[@]}"; then
+    enable_compose_ipv6 "docker-compose.yml" || true
+  fi
 
   # Step 1b: Add FeedbackRecords gateway labels to the Hub service.
   awk -v domain_name="$domain_name" -v hsts_enabled="$hsts_enabled" -v https_setup="$https_setup" '
@@ -1669,6 +1674,191 @@ warn_if_docker_exposes_loopback_ports() {
   fi
 }
 
+compose_ipv6_docs_url="https://formbricks.com/docs/self-hosting/setup/one-click#ipv6-visitors"
+
+# Whether this Docker Engine gives a Compose network an IPv6 subnet by itself and routes IPv6 to containers with
+# ip6tables. Both arrived in 27.0: before it, `enable_ipv6` without a subnet fails to create the network. Unlike
+# the loopback check, an unknown version counts as too old, because a wrong guess here stops the stack from starting.
+docker_engine_supports_ipv6_networks() {
+  local version="${1%%[-+]*}"
+  local major
+  IFS=. read -r major _ <<<"$version"
+  [[ "$major" =~ ^[0-9]+$ ]] && ((major >= 27))
+}
+
+# Whether the kernel has IPv6 on. Docker cannot create an IPv6 bridge on a host booted with ipv6.disable=1, and such
+# a host has no IPv6 visitors anyway. Arguments: the proc root to read (default: /proc).
+host_has_ipv6() {
+  local proc_root="${1:-/proc}"
+  [[ -f "$proc_root/net/if_inet6" ]] || return 1
+  [[ "$(cat "$proc_root/sys/net/ipv6/conf/all/disable_ipv6" 2>/dev/null)" == "0" ]]
+}
+
+# Whether enable_compose_ipv6 is safe on this host. Says why not when Docker is what holds it back, since that is
+# something the operator can fix. Arguments: the docker command to ask (default: sudo docker).
+can_enable_compose_ipv6() {
+  local docker_command=("$@")
+  if [[ ${#docker_command[@]} -eq 0 ]]; then
+    docker_command=(sudo docker)
+  fi
+  host_has_ipv6 || return 1
+  local version
+  version=$("${docker_command[@]}" version --format '{{.Server.Version}}' 2>/dev/null) || version=""
+  if ! docker_engine_supports_ipv6_networks "$version"; then
+    echo "ℹ️ Left IPv6 off on the Compose network: it needs Docker Engine 27.0 or later (found ${version:-unknown})."
+    echo "   Until then, IPv6 visitors share one address for rate limits and logs: $compose_ipv6_docs_url"
+    return 1
+  fi
+}
+
+# Whether a Compose file has a top-level networks.default of its own. A networks: written inline (flow style)
+# counts too: the operator owns it, and the rewrite below only handles the block style.
+compose_file_sets_default_network() {
+  awk '
+    function indentation(line) {
+      match(line, /[^ ]/)
+      return RSTART - 1
+    }
+    /^networks:/ {
+      in_networks=1
+      child_indent=-1
+      if ($0 !~ /^networks:[[:space:]]*(#.*)?\r?$/) found=1
+      next
+    }
+    in_networks && /^[^[:space:]#]/ { in_networks=0 }
+    in_networks && /^[ ]+[^[:space:]#]/ {
+      if (child_indent < 0) child_indent=indentation($0)
+      if (indentation($0) == child_indent && $0 ~ /^[ ]+["\047]?default["\047]?:/) found=1
+    }
+    END { exit(found ? 0 : 1) }
+  ' "$1"
+}
+
+# Writes <file> to <output> with `default: enable_ipv6: true` under its top-level networks:, adding that block at
+# the end when there is none. Only for a file compose_file_sets_default_network has said no to.
+rewrite_compose_default_network_ipv6() {
+  local file="$1"
+  local output="$2"
+
+  # Written into a `cp -p` copy so the result keeps the original's mode: the file holds secrets.
+  if ! cp -p "$file" "$output"; then
+    rm -f "$output"
+    return 1
+  fi
+  local status=0
+  # Two passes over the file: the first finds networks: and the indent of its entries, the second writes.
+  awk '
+    function indentation(line) {
+      match(line, /[^ ]/)
+      return RSTART - 1
+    }
+    function spaces(count,    result) {
+      result=""
+      while (count-- > 0) result=result " "
+      return result
+    }
+    FNR == NR {
+      if ($0 ~ /^networks:/) {
+        header=FNR
+        in_networks=1
+      } else if (in_networks && $0 ~ /^[^[:space:]#]/) {
+        in_networks=0
+      } else if (in_networks && !child_indent && $0 ~ /^[ ]+[^[:space:]#]/) {
+        child_indent=indentation($0)
+      }
+      next
+    }
+    { print }
+    FNR == header {
+      pad=spaces(child_indent ? child_indent : 2)
+      print pad "default:"
+      print pad pad "enable_ipv6: true"
+    }
+    END {
+      if (!header) {
+        print ""
+        print "networks:"
+        print "  default:"
+        print "    enable_ipv6: true"
+      }
+    }
+  ' "$file" "$file" >"$output" || status=$?
+  if [[ $status -ne 0 ]]; then
+    rm -f "$output"
+  fi
+  return "$status"
+}
+
+# Accepts the rendered project only when its default network has IPv6 on: the outcome the rewrite is for.
+compose_default_network_has_ipv6() {
+  local rendered
+  rendered=$(render_compose_project "$1" --format json) || return 1
+  # Services list the networks they join without enable_ipv6, so a match is the top-level default network. Its
+  # object can hold flat objects of its own, such as the `"ipam":{}` Compose always renders.
+  if ! printf '%s' "$rendered" | tr -d '[:space:]' |
+    grep -qE '"default":\{([^{}]|\{[^{}]*\})*"enable_ipv6":true'; then
+    echo "❌ The Compose files Docker Compose loads would not turn on IPv6 for the default network."
+    return 1
+  fi
+}
+
+# Turns on IPv6 for the Compose project's default network (ENG-3897). Docker forwards IPv6 to a container that has
+# no IPv6 address through docker-proxy, which connects from the bridge gateway, so Traefik and the app saw every
+# IPv6 visitor as that one gateway address: one shared rate-limit bucket, and the gateway in logs and response
+# metadata. Once Traefik has an IPv6 address, Docker routes the connection with ip6tables and keeps the visitor's
+# address. A networks.default the operator set, in the file or an override, is left alone. With "validate" (the
+# update path) the file is backed up and restored if the project no longer renders or the network would not get
+# IPv6. Returns 3 when there was nothing to change, or 2 when a restore failed and the file must be restored by hand.
+enable_compose_ipv6() {
+  local compose_file="${1:-docker-compose.yml}"
+  local mode="${2:-}"
+
+  if [[ ! -f "$compose_file" ]]; then
+    echo "❌ Cannot turn on IPv6 because $compose_file does not exist."
+    return 1
+  fi
+
+  # COMPOSE_FILE in .env changes which files `docker compose` loads, so the file to change is unknown.
+  local env_file
+  env_file="$(dirname "$compose_file")/.env"
+  if [[ "$mode" == "validate" && -f "$env_file" ]] &&
+    grep -qE '^[[:space:]]*(export[[:space:]]+)?COMPOSE_FILE[[:space:]]*[=:]' "$env_file"; then
+    echo "⚠️ .env sets COMPOSE_FILE, so the update cannot tell which file to turn on IPv6 in."
+    return 1
+  fi
+
+  local file override_file
+  override_file="$(compose_override_file "$compose_file")"
+  for file in "$compose_file" ${override_file:+"$override_file"}; do
+    if compose_file_sets_default_network "$file"; then
+      return 3
+    fi
+  done
+
+  local temp_file="${compose_file}.tmp"
+  if ! rewrite_compose_default_network_ipv6 "$compose_file" "$temp_file"; then
+    echo "❌ Could not turn on IPv6 in $compose_file. Nothing was changed."
+    return 1
+  fi
+
+  if [[ "$mode" != "validate" ]]; then
+    # The installer has just written docker-compose.yml, so it needs no backup.
+    if ! mv "$temp_file" "$compose_file"; then
+      rm -f "$temp_file"
+      echo "❌ Could not write $compose_file. It is unchanged."
+      return 1
+    fi
+    echo "🌐 Turned on IPv6 for the Compose network, so IPv6 visitors keep their own address."
+    return 0
+  fi
+
+  replace_compose_files_validated "$compose_file" compose_default_network_has_ipv6 \
+    "$compose_file" "$temp_file" "${compose_file}.before-ipv6-network" || return $?
+
+  echo "🌐 From this update on, the Compose network has IPv6, so IPv6 visitors keep their own address in rate limits"
+  echo "   and logs. Changed: $compose_file (kept as $compose_file.before-ipv6-network)."
+}
+
 # The git ref holding the Cube model that matches the Formbricks image: its release tag when the image is pinned
 # to one, stable for latest. Prints nothing when the image names no single release, such as a digest pin.
 formbricks_release_ref() {
@@ -1837,6 +2027,17 @@ update_formbricks() {
     echo "⚠️ Continuing the update with port 3000 published as before."
   fi
   warn_if_docker_exposes_loopback_ports
+  # Same contract as the port step. The `down` below removes the network, so the `up` after it recreates it with IPv6.
+  local ipv6_status=0
+  if can_enable_compose_ipv6; then
+    enable_compose_ipv6 docker-compose.yml validate || ipv6_status=$?
+  fi
+  if [[ $ipv6_status -eq 2 ]]; then
+    echo "❌ Stopped the update before touching the running stack. Restore the files above, then rerun it."
+    exit 1
+  elif [[ $ipv6_status -ne 0 && $ipv6_status -ne 3 ]]; then
+    echo "⚠️ Continuing the update with IPv6 left off on the Compose network."
+  fi
   sudo docker compose down
   # Past every gate and with Cube stopped, so the next start serves the release's model. A failed refresh leaves
   # the previous model, which Cube still starts with, so it never stops the update.

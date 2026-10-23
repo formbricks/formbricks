@@ -500,6 +500,29 @@ docker compose restart traefik
 
 A request to `/api/auth/*` with a body over 1 MiB now gets `413 Request Entity Too Large` from Traefik.
 
+### IPv6 visitors
+
+If your domain has an AAAA record, visitors who connect over IPv6 keep their own address only when the Compose
+network has IPv6. Without it, Docker hands their connections to Traefik from its bridge gateway (such as
+`172.18.0.1`), so Formbricks sees every IPv6 visitor as that one address. They then share one rate limit, including
+the sign-in limit of 5 attempts per minute, and logs and response metadata record the gateway instead of the
+visitor.
+
+New installations and `./formbricks.sh update` add this to `formbricks/docker-compose.yml` when the server has
+IPv6 and runs Docker Engine 27.0 or later:
+
+```yaml
+networks:
+  default:
+    enable_ipv6: true
+```
+
+The update keeps the previous file as `docker-compose.yml.before-ipv6-network` and recreates the network when it
+restarts the stack. With an older Docker Engine, the script leaves the network as it is and says so: before 27.0,
+Docker cannot create the network without an IPv6 subnet you choose. Upgrade Docker Engine, then run the update
+again. If you have set `networks.default` yourself, the script leaves it alone, so add `enable_ipv6: true` to it
+by hand.
+
 ## Stop
 
 To stop Formbricks, simply run the following command:
