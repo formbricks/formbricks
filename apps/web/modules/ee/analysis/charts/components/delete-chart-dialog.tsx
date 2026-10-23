@@ -54,7 +54,7 @@ export const DeleteChartDialog = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+        <DialogHeader className="gap-y-2">
           <DialogTitle>{t("workspace.analysis.charts.chart_in_use_title")}</DialogTitle>
           <DialogDescription>
             {t("workspace.analysis.charts.chart_in_use_description", { count: dashboards.length })}

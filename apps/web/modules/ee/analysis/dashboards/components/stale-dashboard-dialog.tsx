@@ -36,7 +36,7 @@ export const StaleDashboardDialog = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+        <DialogHeader className="gap-y-2">
           <DialogTitle>{t("workspace.analysis.dashboards.stale_title")}</DialogTitle>
           <DialogDescription>{t("workspace.analysis.dashboards.stale_description")}</DialogDescription>
         </DialogHeader>
