@@ -1,5 +1,9 @@
 import { EventEmitter } from "node:events";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import type { SamlDecryption } from "./saml-parse-worker";
+
+/** Stands in for jackson's SP key; the fake worker never reads it. */
+const KEY = "sp-private-key";
 
 // The failure paths of the parse pool, driven through a fake worker so each one can be staged exactly: a worker that
 // cannot be created, never starts, dies mid-job, runs out of heap, or answers behind a stalled main thread. The real
@@ -37,9 +41,9 @@ class FakeWorker extends EventEmitter {
   ready() {
     this.port.postMessage({ ready: true });
   }
-  answer(ms = 5) {
+  answer(ms = 5, decryption?: SamlDecryption) {
     const job = this.port.inbox.shift() as { id: number };
-    this.port.postMessage({ id: job.id, ms, claims: { issuer: "https://idp.example.com" } });
+    this.port.postMessage({ id: job.id, ms, claims: { issuer: "https://idp.example.com" }, decryption });
   }
 }
 
@@ -85,14 +89,47 @@ describe("probeSamlResponseParse failure paths", () => {
     vi.useRealTimers();
   });
 
+  /** One job through a fresh worker, answered in 5 ms with `decryption`. */
+  const probeAnswered = async (decryption: SamlDecryption) => {
+    const { probeSamlResponseParse } = await load();
+    const probe = probeSamlResponseParse("PHIvPg==", KEY);
+    await settle();
+    state.workers[0].ready();
+    mainPort(state.workers[0]).flush();
+    await settle();
+    state.workers[0].answer(5, decryption);
+    mainPort(state.workers[0]).flush();
+    return probe;
+  };
+
+  test("refuses a response whose decrypted assertion the worker found past the bounds, with its sizes (ENG-4051)", async () => {
+    const refusal = { reason: "markup", markup: 13_002, depth: 2, decryptedBytes: 52_400 } as const;
+
+    await expect(probeAnswered({ decrypted: true, refusal })).resolves.toEqual({
+      outcome: "refused",
+      refusal,
+    });
+  });
+
+  test("passes a response whose encrypted assertion did not decrypt on to jackson, to fail there alike (ENG-4051)", async () => {
+    // A refusal of its own would tell the sender which ciphertexts decrypt.
+    await expect(probeAnswered({ decrypted: false })).resolves.toMatchObject({ outcome: "parsed" });
+  });
+
+  test("passes a decrypted assertion within the bounds on to jackson (ENG-4051)", async () => {
+    await expect(probeAnswered({ decrypted: true, refusal: null })).resolves.toMatchObject({
+      outcome: "parsed",
+    });
+  });
+
   test("answers failed, and keeps serving, when the thread cannot be created", async () => {
     const { probeSamlResponseParse } = await load();
     state.throwOnCreate = true;
 
-    await expect(probeSamlResponseParse("PHIvPg==")).resolves.toEqual({ outcome: "failed" });
+    await expect(probeSamlResponseParse("PHIvPg==", KEY)).resolves.toEqual({ outcome: "failed" });
 
     state.throwOnCreate = false;
-    const next = probeSamlResponseParse("PHIvPg==");
+    const next = probeSamlResponseParse("PHIvPg==", KEY);
     await settle();
     state.workers[0].ready();
     mainPort(state.workers[0]).flush();
@@ -104,7 +141,7 @@ describe("probeSamlResponseParse failure paths", () => {
 
   test("fails everything waiting when the worker never becomes ready", async () => {
     const { probeSamlResponseParse } = await load();
-    const probes = [probeSamlResponseParse("PHIvPg=="), probeSamlResponseParse("PHIvPg==")];
+    const probes = [probeSamlResponseParse("PHIvPg==", KEY), probeSamlResponseParse("PHIvPg==", KEY)];
 
     await vi.advanceTimersByTimeAsync(5_000);
 
@@ -114,7 +151,7 @@ describe("probeSamlResponseParse failure paths", () => {
 
   test("answers failed when the worker dies mid-job, and the next job gets a fresh worker", async () => {
     const { probeSamlResponseParse } = await load();
-    const first = probeSamlResponseParse("PHIvPg==");
+    const first = probeSamlResponseParse("PHIvPg==", KEY);
     await settle();
     state.workers[0].ready();
     mainPort(state.workers[0]).flush();
@@ -123,7 +160,7 @@ describe("probeSamlResponseParse failure paths", () => {
     state.workers[0].emit("exit", 1);
     await expect(first).resolves.toEqual({ outcome: "failed" });
 
-    const second = probeSamlResponseParse("PHIvPg==");
+    const second = probeSamlResponseParse("PHIvPg==", KEY);
     await settle();
     expect(state.workers).toHaveLength(2);
     state.workers[1].ready();
@@ -136,7 +173,7 @@ describe("probeSamlResponseParse failure paths", () => {
 
   test("counts running out of heap mid-job as the response's cost, not a server failure", async () => {
     const { probeSamlResponseParse } = await load();
-    const probe = probeSamlResponseParse("PHIvPg==");
+    const probe = probeSamlResponseParse("PHIvPg==", KEY);
     await settle();
     state.workers[0].ready();
     mainPort(state.workers[0]).flush();
@@ -149,7 +186,7 @@ describe("probeSamlResponseParse failure paths", () => {
 
   test("takes an answer waiting behind a stalled main thread instead of blaming the response", async () => {
     const { probeSamlResponseParse } = await load();
-    const probe = probeSamlResponseParse("PHIvPg==");
+    const probe = probeSamlResponseParse("PHIvPg==", KEY);
     await settle();
     state.workers[0].ready();
     mainPort(state.workers[0]).flush();
@@ -165,7 +202,7 @@ describe("probeSamlResponseParse failure paths", () => {
 
   test("judges the time the worker measured, not the time the answer took to arrive", async () => {
     const { probeSamlResponseParse } = await load();
-    const probe = probeSamlResponseParse("PHIvPg==");
+    const probe = probeSamlResponseParse("PHIvPg==", KEY);
     await settle();
     state.workers[0].ready();
     mainPort(state.workers[0]).flush();
@@ -179,7 +216,7 @@ describe("probeSamlResponseParse failure paths", () => {
 
   test("terminates the worker and answers too_costly when nothing comes back within the budget", async () => {
     const { probeSamlResponseParse } = await load();
-    const probe = probeSamlResponseParse("PHIvPg==");
+    const probe = probeSamlResponseParse("PHIvPg==", KEY);
     await settle();
     state.workers[0].ready();
     mainPort(state.workers[0]).flush();
@@ -193,7 +230,7 @@ describe("probeSamlResponseParse failure paths", () => {
 
   test("answers busy once this process has spent its main-thread parse allowance, and recovers with time", async () => {
     const { probeSamlResponseParse, SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS } = await load();
-    const probe = probeSamlResponseParse("PHIvPg==");
+    const probe = probeSamlResponseParse("PHIvPg==", KEY);
     await settle();
     state.workers[0].ready();
     mainPort(state.workers[0]).flush();
@@ -203,10 +240,10 @@ describe("probeSamlResponseParse failure paths", () => {
     mainPort(state.workers[0]).flush();
     await probe;
 
-    await expect(probeSamlResponseParse("PHIvPg==")).resolves.toEqual({ outcome: "busy" });
+    await expect(probeSamlResponseParse("PHIvPg==", KEY)).resolves.toEqual({ outcome: "busy" });
 
     await vi.advanceTimersByTimeAsync(1_000);
-    const later = probeSamlResponseParse("PHIvPg==");
+    const later = probeSamlResponseParse("PHIvPg==", KEY);
     await settle();
     state.workers[0].answer();
     mainPort(state.workers[0]).flush();
@@ -216,8 +253,8 @@ describe("probeSamlResponseParse failure paths", () => {
   test("answers busy for a job queued before the allowance ran out, once the job ahead of it spends it", async () => {
     const { probeSamlResponseParse, SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS } = await load();
     // Both are accepted while the whole allowance is left.
-    const first = probeSamlResponseParse("PHIvPg==");
-    const second = probeSamlResponseParse("PHIvPg==");
+    const first = probeSamlResponseParse("PHIvPg==", KEY);
+    const second = probeSamlResponseParse("PHIvPg==", KEY);
     await settle();
     state.workers[0].ready();
     mainPort(state.workers[0]).flush();
@@ -234,7 +271,7 @@ describe("probeSamlResponseParse failure paths", () => {
 
     // A response refused as busy costs nothing: 10 ms of refill is enough for the next one.
     await vi.advanceTimersByTimeAsync(10);
-    const third = probeSamlResponseParse("PHIvPg==");
+    const third = probeSamlResponseParse("PHIvPg==", KEY);
     await settle();
     state.workers[0].answer(1);
     mainPort(state.workers[0]).flush();
@@ -243,7 +280,7 @@ describe("probeSamlResponseParse failure paths", () => {
 
   test("ignores a stale answer for a job it no longer runs", async () => {
     const { probeSamlResponseParse } = await load();
-    const probe = probeSamlResponseParse("PHIvPg==");
+    const probe = probeSamlResponseParse("PHIvPg==", KEY);
     await settle();
     state.workers[0].ready();
     mainPort(state.workers[0]).flush();
