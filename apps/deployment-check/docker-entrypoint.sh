@@ -1,12 +1,11 @@
 #!/bin/sh
 set -eu
 
-# Docker creates a missing bind-mount source (`-v "$PWD/report:/report"`) as root on Linux, which pwuser
-# cannot write. Hand the directory to pwuser only when it is not already writable, then drop privileges.
+# Docker creates a missing bind-mount source (`-v "$PWD/report:/report"`) as root on Linux, and a reused
+# report directory can hold root-owned files from an earlier run. Hand the directory and everything in it
+# to pwuser, then drop privileges.
 if [ "$(id -u)" = "0" ]; then
-  if ! setpriv --reuid=pwuser --regid=pwuser --init-groups test -w "$REPORT_DIR"; then
-    chown pwuser:pwuser "$REPORT_DIR"
-  fi
+  chown -R pwuser:pwuser "$REPORT_DIR"
   export HOME=/home/pwuser
   exec setpriv --reuid=pwuser --regid=pwuser --init-groups node_modules/.bin/playwright test "$@"
 fi
