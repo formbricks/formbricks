@@ -17,6 +17,7 @@ import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
+import { buildFreeTrialEndParams, getFreeTrialEndUnix } from "./free-trial-end";
 import {
   type TStandardCloudPlan,
   getCatalogItemForPlan,
@@ -620,16 +621,14 @@ export const createProTrialSubscription = async (
     }
   }
 
+  // The trial ends on Hobby unless the org explicitly buys a plan, even with a card on file — see
+  // buildFreeTrialEndParams. A concurrent duplicate now differs in trial_end, so Stripe rejects it on the
+  // shared idempotency key instead of returning the first subscription; either way only one trial exists.
   await stripeClient.subscriptions.create(
     {
       customer: customerId,
       items: await getCatalogItemsForPlan("pro", "monthly"),
-      trial_period_days: trialDays,
-      trial_settings: {
-        end_behavior: {
-          missing_payment_method: "cancel",
-        },
-      },
+      ...buildFreeTrialEndParams(getFreeTrialEndUnix(trialDays)),
       payment_settings: {
         save_default_payment_method: "on_subscription",
       },
@@ -845,11 +844,17 @@ const updateSubscriptionItemsImmediately = async (
   // Trade-off: a card needing off-session 3DS also errors here (the update rolls back before the
   // browser can confirm, leaving no PaymentIntent) — translated into a distinct error via
   // toTrialConversionError so the UI can ask for a non-3DS card.
+  //
+  // Clearing cancel_at in this same update is what makes the purchase stick: the free trial is set to
+  // cancel at trial_end (buildFreeTrialEndParams), and a decline rolls the whole update back, so a failed
+  // purchase keeps that Hobby fallback. A trial that already expired is canceled, so this update fails
+  // instead of billing it.
   if (subscription.status === "trialing") {
     try {
       await stripeClient.subscriptions.update(subscription.id, {
         items: [...existingDeletions, ...targetItems],
         trial_end: "now",
+        cancel_at: "",
         proration_behavior: "always_invoice",
         payment_behavior: "error_if_incomplete",
       });
@@ -1041,6 +1046,13 @@ const scheduleSubscriptionPlanChange = async (
     throw new Error("Stripe is not configured");
   }
 
+  // A trial is converted or switched to Hobby immediately (switchOrganizationToCloudPlan), never
+  // scheduled: a schedule phase would bill the trial early, and clearing cancel_at_period_end below would
+  // also drop the trial's cancel_at Hobby fallback.
+  if (subscription.status === "trialing") {
+    throw new Error(`Refusing to schedule a plan change on trialing subscription ${subscription.id}`);
+  }
+
   // Looked up before anything changes, so a failed lookup leaves the subscription as it was. A paid
   // target requires a tax location; a Hobby target is free, so it never blocks the downgrade.
   let automaticTax: TAutomaticTax | null;
@@ -1182,10 +1194,12 @@ const switchTrialToHobbyImmediately = async (
   // (createProTrialSubscription), so ending the trial on a no-card org would CANCEL the subscription
   // instead of leaving it on Hobby — stranding a canceled subscriptionId that then breaks the next
   // upgrade. Hobby is free, so override to "create_invoice": the trial ends into an active $0 Hobby
-  // subscription with no payment method required.
+  // subscription with no payment method required. cancel_at is cleared too: it was the trial's Hobby
+  // fallback, and left in place it would cancel this Hobby subscription at the old trial end.
   await stripeClient.subscriptions.update(subscription.id, {
     items: [...existingDeletions, ...hobbyItems],
     trial_end: "now",
+    cancel_at: "",
     proration_behavior: "none",
     trial_settings: { end_behavior: { missing_payment_method: "create_invoice" } },
   });
