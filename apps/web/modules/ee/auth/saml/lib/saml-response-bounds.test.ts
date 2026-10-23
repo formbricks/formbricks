@@ -174,7 +174,9 @@ describe("measureSamlResponseMarkup", () => {
     const flood = "<a/>".repeat(SAML_RESPONSE_MARKUP_BUDGET * 10);
     expect(count(flood)).toBe(SAML_RESPONSE_MARKUP_BUDGET + 1);
     expect(depth("<a>".repeat(SAML_RESPONSE_MAX_DEPTH * 10))).toBe(SAML_RESPONSE_MAX_DEPTH + 1);
-    expect(elementCounts("<Issuer/>".repeat(1_000))).toEqual({ Issuer: SAML_RESPONSE_MAX_ELEMENTS.Issuer + 1 });
+    expect(elementCounts("<Issuer/>".repeat(1_000))).toEqual({
+      Issuer: SAML_RESPONSE_MAX_ELEMENTS.Issuer + 1,
+    });
   });
 
   test("counts every < inside a comment, CDATA section or processing instruction", () => {

@@ -1,5 +1,5 @@
-import { DOMParser, MIME_TYPE } from "@xmldom/xmldom";
 import saml20 from "@boxyhq/saml20";
+import { DOMParser, MIME_TYPE } from "@xmldom/xmldom";
 import { describe, expect, test, vi } from "vitest";
 import { checkSamlResponseBounds } from "./saml-response-bounds";
 import { createSpKeyPair } from "./tests/encrypted-saml-response";
