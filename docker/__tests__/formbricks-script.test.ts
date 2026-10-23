@@ -38,6 +38,9 @@ const dockerComposeOverrideKeys = [
   "FORMBRICKS_UNSET_PASSWORD_SENTINEL",
 ];
 const dockerComposeTestTimeout = 30_000;
+// Runs update_formbricks as on a host without IPv6, so its commands do not depend on the machine running the test.
+// The IPv6 network step has its own tests (ENG-3897).
+const updateFormbricksWithoutIpv6 = 'source "$1"; host_has_ipv6() { return 1; }; update_formbricks';
 
 const dockerComposeTest = (name: string, testFunction: () => void): void => {
   test(name, testFunction, dockerComposeTestTimeout);
@@ -901,7 +904,7 @@ describe("docker/formbricks.sh AuthZed setup", () => {
       { mode: 0o700 }
     );
 
-    const result = spawnSync("bash", ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath], {
+    const result = spawnSync("bash", ["-c", updateFormbricksWithoutIpv6, "bash", formbricksScriptPath], {
       cwd: tempDir,
       encoding: "utf8",
       env: {
@@ -947,7 +950,7 @@ describe("docker/formbricks.sh AuthZed setup", () => {
       { mode: 0o700 }
     );
 
-    const result = spawnSync("bash", ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath], {
+    const result = spawnSync("bash", ["-c", updateFormbricksWithoutIpv6, "bash", formbricksScriptPath], {
       cwd: tempDir,
       encoding: "utf8",
       env: {
@@ -979,7 +982,7 @@ describe("docker/formbricks.sh AuthZed setup", () => {
       { mode: 0o700 }
     );
 
-    const result = spawnSync("bash", ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath], {
+    const result = spawnSync("bash", ["-c", updateFormbricksWithoutIpv6, "bash", formbricksScriptPath], {
       cwd: tempDir,
       encoding: "utf8",
       env: {
@@ -1020,21 +1023,17 @@ describe("docker/formbricks.sh AuthZed setup", () => {
         }
       );
 
-      const result = spawnSync(
-        "bash",
-        ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath],
-        {
-          cwd: tempDir,
-          encoding: "utf8",
-          env: {
-            ...process.env,
-            CHECK_EXIT_CODE: String(checkExitCode),
-            MIGRATION_EXIT_CODE: String(migrationExitCode),
-            COMMAND_LOG: commandLog,
-            PATH: `${binDir}:${process.env.PATH ?? ""}`,
-          },
-        }
-      );
+      const result = spawnSync("bash", ["-c", updateFormbricksWithoutIpv6, "bash", formbricksScriptPath], {
+        cwd: tempDir,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          CHECK_EXIT_CODE: String(checkExitCode),
+          MIGRATION_EXIT_CODE: String(migrationExitCode),
+          COMMAND_LOG: commandLog,
+          PATH: `${binDir}:${process.env.PATH ?? ""}`,
+        },
+      });
 
       expect(result.status).toBe(checkExitCode || migrationExitCode);
       const commands = readFileSync(commandLog, "utf8").trim().split("\n");
@@ -1351,7 +1350,7 @@ exit 0
       { mode: 0o700 }
     );
 
-    const result = spawnSync("bash", ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath], {
+    const result = spawnSync("bash", ["-c", updateFormbricksWithoutIpv6, "bash", formbricksScriptPath], {
       cwd: tempDir,
       encoding: "utf8",
       env: {
@@ -2008,7 +2007,7 @@ describe("docker/formbricks.sh Cube model refresh (ENG-3951)", () => {
       FORMBRICKS_IMAGE: formbricksImage,
       PATH: `${binDir}:${process.env.PATH ?? ""}`,
     };
-    const result = spawnSync("bash", ["-c", 'source "$1"; update_formbricks', "bash", formbricksScriptPath], {
+    const result = spawnSync("bash", ["-c", updateFormbricksWithoutIpv6, "bash", formbricksScriptPath], {
       cwd: tempDir,
       encoding: "utf8",
       env: { ...env, DOWNLOAD_FAILS: downloadFails, MV_FAILS: replaceFails, CP_FAILS: restoreFails },
