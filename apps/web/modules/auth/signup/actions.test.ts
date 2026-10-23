@@ -4,6 +4,7 @@ import {
   INVITE_TOKEN_INVALID_ERROR_CODE,
   SIGNUP_DISABLED_ERROR_CODE,
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
+  TooManyRequestsError,
 } from "@formbricks/types/errors";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
@@ -14,11 +15,12 @@ import { AuditLoggingCtx } from "@/lib/utils/action-client/types/context";
 import { auth } from "@/modules/auth/lib/auth";
 import { readSignupIntent } from "@/modules/auth/lib/signup-intent";
 import { updateUser } from "@/modules/auth/lib/user";
-import { getInvite, resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
+import { deleteInvite, getInvite, resolveInviteMatch } from "@/modules/auth/signup/lib/invite";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
+import { sendInviteAcceptedEmail } from "@/modules/email";
 import { createUserAction } from "./actions";
 
 vi.mock("next/headers", () => ({
@@ -206,6 +208,32 @@ describe("createUserAction — signup verification email callbackURL", () => {
       },
       headers: requestHeaders,
     });
+  });
+
+  // The notice to the inviter goes through the email caps, so it can be refused after the membership
+  // exists. A refusal must not fail the sign-up or leave the used invite behind.
+  test("completes an invite sign-up and deletes the invite when the inviter's notice is refused", async () => {
+    vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
+    vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: "invite-1", email: "ada@example.com" } as never);
+    vi.mocked(getInvite).mockResolvedValue({
+      id: "invite-1",
+      organizationId: "org-1",
+      role: "member",
+      teamIds: null,
+      creator: { name: "Owner", email: "owner@example.com", locale: "en-US" },
+    } as never);
+    vi.mocked(sendInviteAcceptedEmail).mockRejectedValue(
+      new TooManyRequestsError("Maximum number of requests reached. Please try again later.")
+    );
+
+    const result = await createUserAction({
+      ctx: newCtx(),
+      parsedInput: { ...baseInput, inviteToken: "invite-jwt-123" },
+    } as never);
+
+    expect(result).toEqual({ success: true });
+    expect(createMembership).toHaveBeenCalled();
+    expect(deleteInvite).toHaveBeenCalledWith("invite-1");
   });
 
   // Regression: signup-form.tsx sends `inviteToken: inviteToken ?? ""`, so an uninvited sign-up arrives

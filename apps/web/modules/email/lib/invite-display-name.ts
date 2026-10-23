@@ -20,8 +20,33 @@ const isLinkLike = (token: string): boolean => {
 
   const atIndex = token.indexOf("@");
   const lastDotIndex = token.lastIndexOf(".");
-  return atIndex > 0 && lastDotIndex > atIndex + 1 && lastDotIndex < token.length - 1;
+  if (atIndex > 0 && lastDotIndex > atIndex + 1 && lastDotIndex < token.length - 1) {
+    return true;
+  }
+  return isBareDomain(token);
 };
+
+const DOMAIN_LABEL = /^[\p{L}\p{N}-]+$/u;
+const TOP_LEVEL_DOMAIN = /^\p{L}{2,}$/u;
+const NON_HOST_CHARACTERS = /[^\p{L}\p{N}.-]+/u;
+
+const isDomainLike = (piece: string): boolean => {
+  // Trailing dots trimmed by hand: `/\.+$/` retries from every dot and is quadratic on a run of them.
+  let end = piece.length;
+  while (end > 0 && piece[end - 1] === ".") end--;
+  const labels = piece.slice(0, end).split(".");
+  return (
+    labels.length >= 2 &&
+    labels.every((label) => DOMAIN_LABEL.test(label)) &&
+    TOP_LEVEL_DOMAIN.test(labels.at(-1) ?? "")
+  );
+};
+
+// Bare domains such as `spam.example`, `(spam.example)` or `Anna,spam.example/offer`, which most mail clients
+// turn into links. The token is cut at every character a host cannot contain and each piece is checked,
+// all with linear scans. An initial like `J.R.R.` is kept: its last label is one letter. A name written as
+// `Dr.Smith` reads as a domain too; that is the price of not shipping a list of top-level domains.
+const isBareDomain = (token: string): boolean => token.split(NON_HOST_CHARACTERS).some(isDomainLike);
 
 export const toInviteDisplayName = (name: string, fallback: string): string => {
   const cleaned = name

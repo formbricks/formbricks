@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
 import { sendLinkSurveyEmailAction, validateSurveyPinAction } from "./actions";
-import { getSurveyWithMetadata } from "./lib/data";
+import { getSurveyOwnerId, getSurveyWithMetadata } from "./lib/data";
 import { createLinkSurveyPinToken } from "./lib/pin-token";
 import { isLinkSurveyGoneError } from "./lib/public-access";
 import { getWorkspaceContextForLinkSurvey } from "./lib/workspace";
@@ -23,7 +24,10 @@ vi.mock("@/modules/ee/whitelabel/email-customization/lib/organization", () => ({
   getOrganizationLogoUrl: vi.fn().mockResolvedValue(null),
 }));
 vi.mock("@/modules/email", () => ({ sendLinkSurveyToVerifiedEmail: vi.fn() }));
-vi.mock("./lib/data", () => ({ getSurveyWithMetadata: vi.fn() }));
+vi.mock("./lib/data", () => ({ getSurveyWithMetadata: vi.fn(), getSurveyOwnerId: vi.fn() }));
+vi.mock("@/modules/email/lib/email-actor", () => ({
+  resolveEmailActorUserId: vi.fn(async (ownerUserId: string | null) => ownerUserId ?? "org-owner"),
+}));
 vi.mock("./lib/pin-token", () => ({ createLinkSurveyPinToken: vi.fn() }));
 vi.mock("./lib/workspace", () => ({ getWorkspaceContextForLinkSurvey: vi.fn() }));
 vi.mock("./lib/respondent-custom-css", () => ({
@@ -126,9 +130,18 @@ describe("sendLinkSurveyEmailAction", () => {
   });
 
   test("an in-progress survey with email verification sends the email", async () => {
-    mockSurvey();
+    // `createdBy` is what an API caller may set; the owner is what the server set, and what counts.
+    mockSurvey({ createdBy: "someone-else" });
+    vi.mocked(getSurveyOwnerId).mockResolvedValue("owner-1");
+    vi.mocked(getOrganizationIdFromSurveyId).mockResolvedValue("org-1");
 
     await expect(sendEmail()).resolves.toEqual({ success: true });
     expect(sendLinkSurveyToVerifiedEmail).toHaveBeenCalledTimes(1);
+    // The visitor is anonymous, so the survey's organization and owner carry the limits (ENG-3823).
+    expect(sendLinkSurveyToVerifiedEmail).toHaveBeenCalledWith(expect.anything(), {
+      organizationId: "org-1",
+      actorUserId: "owner-1",
+      externalRecipient: true,
+    });
   });
 });

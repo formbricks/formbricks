@@ -213,7 +213,8 @@ const makeRun = (definition = makeDefinition(), overrides: Record<string, unknow
   attempt: 0,
   triggerPayload,
   workflowVersion: { definition },
-  workflow: { definition },
+  // A real run row carries its workflow's creator, who the email's rate limits count (ENG-3823).
+  workflow: { definition, createdBy: "cm9zr4wcr000108l8creator1" },
   ...overrides,
 });
 

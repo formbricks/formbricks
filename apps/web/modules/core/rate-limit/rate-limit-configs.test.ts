@@ -128,6 +128,7 @@ describe("rateLimitConfigs", () => {
       const actionConfigs = Object.keys(rateLimitConfigs.actions);
       expect(actionConfigs).toEqual([
         "emailUpdate",
+        "passwordResetRequest",
         "accountDeletion",
         "surveyFollowUp",
         "sendLinkSurveyEmail",
