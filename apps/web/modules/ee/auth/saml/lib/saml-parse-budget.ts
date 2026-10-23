@@ -168,11 +168,26 @@ globalThis.samlParsePool ??= {
 };
 const pool = globalThis.samlParsePool;
 
+/** Tops up the main-thread parse allowance for the time passed, up to one second's worth. */
+const refillAllowance = (now: number) => {
+  const elapsed = now - pool.allowanceAt;
+  pool.allowanceAt = now;
+  pool.allowanceMs = Math.min(
+    SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS,
+    pool.allowanceMs + (elapsed * SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS) / 1000
+  );
+};
+
 /**
- * How a job that had begun decrypting ends: parsed, or busy (which depends on the allowance, not the response), as it
- * is; any other end as `refused_encrypted`, since it may have come of the plaintext.
+ * How a job that had begun decrypting ends. Parsed and busy stand as they are (`takeMessage` checks the allowance before
+ * it answers parsed). Any other end may have come of the plaintext, so it is `refused_encrypted`, but only while the
+ * allowance lasts: once it is spent the job answers busy, as a parsed one would, so that whether a response gets busy
+ * never depends on how its plaintext fared.
  */
 const afterDecrypting = (probe: SamlParseProbe, issuer: string): SamlParseProbe => {
+  if (probe.outcome === "parsed" || probe.outcome === "busy") return probe;
+  refillAllowance(performance.now());
+  if (pool.allowanceMs <= 0) return { outcome: "busy" };
   switch (probe.outcome) {
     case "too_costly":
       return { outcome: "refused_encrypted", issuer, cause: { reason: probe.reason } };
@@ -190,16 +205,6 @@ const settleRunning = (probe: SamlParseProbe) => {
   pool.running = null;
   job.resolve(job.decrypting ? afterDecrypting(probe, job.decrypting.issuer) : probe);
   pump();
-};
-
-/** Tops up the main-thread parse allowance for the time passed, up to one second's worth. */
-const refillAllowance = (now: number) => {
-  const elapsed = now - pool.allowanceAt;
-  pool.allowanceAt = now;
-  pool.allowanceMs = Math.min(
-    SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS,
-    pool.allowanceMs + (elapsed * SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS) / 1000
-  );
 };
 
 /**
@@ -291,6 +296,13 @@ const whenReady = (handle: WorkerHandle): Promise<WorkerHandle> => {
     const onFailure = (error: Error | number) => {
       clearTimeout(startup);
       if (pool.handle !== handle) return;
+      // Node reads what is left on a worker's own port before it reports the worker gone, but not this channel, so a
+      // decrypting notice the main thread had not yet got to would be lost with it, and the job judged as if it had
+      // never begun decrypting. Only notices are read here: the job ends by this failure either way.
+      for (let pending = receiveMessageOnPort(port); pending; pending = receiveMessageOnPort(port)) {
+        const message = pending.message as WorkerResult | DecryptingNotice;
+        if ("decrypting" in message) takeMessage(message);
+      }
       discardWorker(handle);
       // Running out of heap mid-job is the response's cost, not a fault of the server.
       if ((error as { code?: unknown }).code === "ERR_WORKER_OUT_OF_MEMORY" && pool.running?.dispatched) {

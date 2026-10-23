@@ -250,7 +250,7 @@ describe("an encrypted assertion the parse worker refuses once opened (ENG-6646)
   const encryptedTo = (publicKey: string, plaintext: string, issuer: string) =>
     Buffer.from(samlResponseWith(encryptAssertion(plaintext, publicKey), issuer)).toString("base64");
 
-  /** Everything a caller learns from the callback's answer: status, redirect and body. */
+  /** Everything a caller learns from the callback's answer: status, every header and body. */
   const answerTo = async (SAMLResponse: string, RelayState: string, browser: boolean) => {
     const response = await callback(
       new Request(ACS_URL, {
@@ -261,7 +261,7 @@ describe("an encrypted assertion the parse worker refuses once opened (ENG-6646)
     );
     return {
       status: response.status,
-      location: response.headers.get("location"),
+      headers: Object.fromEntries(response.headers),
       body: await response.text(),
     };
   };

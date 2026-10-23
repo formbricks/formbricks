@@ -19,6 +19,13 @@ describe("samlResponseWithoutAssertion", () => {
     ["a comment and a child element", "<saml:Issuer>a<!-- c -->b<x>c</x>d</saml:Issuer>"],
     ["surrounding whitespace and a line break", "<saml:Issuer>  spaced \r\n x  </saml:Issuer>"],
     ["no namespace on the Issuer", "<Issuer>no-namespace</Issuer>"],
+    // A parser turns each of these into a line feed when it appears literally.
+    [
+      "references to NEL, LINE SEPARATOR and PARAGRAPH SEPARATOR",
+      "<saml:Issuer>a&#x85;b&#x2028;c&#x2029;d</saml:Issuer>",
+    ],
+    // UTF-8 cannot carry a lone surrogate.
+    ["references to lone surrogates", "<saml:Issuer>a&#xD800;b&#xDC00;</saml:Issuer>"],
   ])("carries an issuer saml20 reads back exactly, from %s", (_name, issuerElement) => {
     const original = `<samlp:Response xmlns:samlp="${PROTOCOL_NS}" xmlns:saml="${ASSERTION_NS}">${issuerElement}</samlp:Response>`;
     const issuer = parseIssuer(original);

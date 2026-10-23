@@ -202,6 +202,67 @@ describe("probeSamlResponseParse failure paths", () => {
     });
   });
 
+  test("reads a decrypting notice the main thread had not got to when the worker died", async () => {
+    const { probe, worker } = await holdingOneJob();
+    // Posted, but not yet read when the worker runs out of heap.
+    worker.decrypting();
+
+    worker.emit("error", Object.assign(new Error("heap"), { code: "ERR_WORKER_OUT_OF_MEMORY" }));
+
+    await expect(probe).resolves.toEqual({
+      outcome: "refused_encrypted",
+      issuer: ISSUER,
+      cause: { reason: "memory" },
+    });
+  });
+
+  // Once the allowance is spent, a job that began decrypting answers busy however it ended, as one whose assertion
+  // did not decrypt does: otherwise busy itself would say how the plaintext fared.
+  test.each([
+    ["did not decrypt", (worker: FakeWorker) => worker.answer(5, { decrypted: false })],
+    [
+      "was refused by the bounds once decrypted",
+      (worker: FakeWorker) =>
+        worker.answer(5, {
+          decrypted: true,
+          refusal: { reason: "depth", markup: 10, depth: 300, decryptedBytes: 900 },
+        }),
+    ],
+    ["was measured past the budget", (worker: FakeWorker) => worker.answer(10_000, { decrypted: false })],
+    [
+      "ran out of heap",
+      (worker: FakeWorker) =>
+        worker.emit("error", Object.assign(new Error("heap"), { code: "ERR_WORKER_OUT_OF_MEMORY" })),
+    ],
+    ["killed its worker", (worker: FakeWorker) => worker.emit("exit", 1)],
+  ])("answers busy once the allowance is spent, for a decrypting job that %s", async (_name, end) => {
+    const budget = await load();
+    const { probeSamlResponseParse } = budget;
+    // All three are accepted while the whole allowance is left.
+    const spenders = [
+      probeSamlResponseParse("PHIvPg==", KEY, null),
+      probeSamlResponseParse("PHIvPg==", KEY, null),
+    ];
+    const last = probeSamlResponseParse("PHIvPg==", KEY, null);
+    await settle();
+    state.workers[0].ready();
+    mainPort(state.workers[0]).flush();
+    for (const ms of spendingTheAllowance(budget)) {
+      await settle();
+      state.workers[0].answer(ms);
+      mainPort(state.workers[0]).flush();
+    }
+    for (const probe of await Promise.all(spenders)) expect(probe.outcome).toBe("parsed");
+
+    await settle();
+    state.workers[0].decrypting();
+    mainPort(state.workers[0]).flush();
+    end(state.workers[0]);
+    mainPort(state.workers[0]).flush();
+
+    await expect(last).resolves.toEqual({ outcome: "busy" });
+  });
+
   test("fails a decrypted refusal the worker never announced, rather than answer it", async () => {
     const { probe, worker } = await holdingOneJob();
     worker.answer(5, {
