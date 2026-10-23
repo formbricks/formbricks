@@ -60,6 +60,12 @@ describe("samlResponseWithoutAssertion", () => {
     expect(mismatches).toEqual([]);
   });
 
+  test("writes ordinary text as it is, so the stand-in is never larger than the issuer it stands in for", () => {
+    const issuer = "https://idp.example.com/sämL/日本/😀";
+
+    expect(decoded(samlResponseWithoutAssertion(issuer))).toContain(`>${issuer}</`);
+  });
+
   test("carries no assertion, so jackson cannot accept it", () => {
     const xml = decoded(samlResponseWithoutAssertion("https://idp.example.com"));
 

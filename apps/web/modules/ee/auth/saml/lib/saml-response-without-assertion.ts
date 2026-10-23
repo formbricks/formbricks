@@ -2,12 +2,15 @@ const PROTOCOL_NS = "urn:oasis:names:tc:SAML:2.0:protocol";
 const ASSERTION_NS = "urn:oasis:names:tc:SAML:2.0:assertion";
 
 /**
- * Everything but tab, line feed and printable ASCII other than the markup characters. Written as numeric references,
- * these parse back to exactly the characters they name, which their literal forms do not always do: a parser turns
- * CR, NEL, LINE SEPARATOR and PARAGRAPH SEPARATOR into line feeds, saml20 refuses a document holding U+FFFD, and UTF-8
- * cannot carry a lone surrogate. Since the issuer itself came out of a parse, every character in it can be referenced.
+ * The characters whose literal form does not parse back to themselves, written as numeric references instead: the
+ * markup characters; CR, NEL, LINE SEPARATOR and PARAGRAPH SEPARATOR, which a parser turns into line feeds; U+FFFD and
+ * the C0 controls, which saml20 refuses literally; and lone surrogates, which UTF-8 cannot carry. Each of these can
+ * only have reached the issuer through a reference or CDATA at least as long as the reference written here, and every
+ * other character is written as it is, so the stand-in's issuer is never longer than the original's: jackson's parse
+ * of it costs no more than its parse of the response it stands in for.
  */
-const NEEDS_REFERENCE = /[&<>]|[^\t\n\x20-\x7E]/gu;
+const NEEDS_REFERENCE =
+  /[&<>\r\u0085\u2028\u2029\uFFFD\x00-\x08\x0B\x0C\x0E-\x1F]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
 
 /** `text` as XML character data that parses back to exactly `text`. */
 const escapeText = (text: string): string =>
