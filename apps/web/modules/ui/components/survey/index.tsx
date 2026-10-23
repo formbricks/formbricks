@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { IS_DEVELOPMENT_BUILD } from "@/lib/env-client";
 import { executeRecaptcha, loadRecaptchaScript } from "@/modules/ui/components/survey/recaptcha";
+import { getSurveysScriptUrl } from "@/modules/ui/components/survey/script-url";
 
 const createContainerId = () => `formbricks-survey-container`;
 
@@ -13,7 +14,12 @@ let isLoadingScript = false;
 // `window.formbricksSurveys` is typed once, in packages/types/surveys.d.ts. A second declaration here
 // had drifted from it (no `setAppearance`), which TypeScript rejects as a conflicting redeclaration.
 
-export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) => {
+type TSurveyInlineProps = Omit<SurveyContainerProps, "containerId"> & {
+  /** The app's release version, which the renderer is loaded under (see `getSurveysScriptUrl`). */
+  rendererVersion?: string;
+};
+
+export const SurveyInline = (props: TSurveyInlineProps) => {
   const containerId = useMemo(() => createContainerId(), []);
   const getRecaptchaToken = useCallback(
     () => executeRecaptcha(props.recaptchaSiteKey),
@@ -31,7 +37,7 @@ export const SurveyInline = (props: Omit<SurveyContainerProps, "containerId">) =
     // Set loading flag immediately to prevent concurrent loads
     isLoadingScript = true;
     try {
-      const scriptUrl = props.appUrl ? `${props.appUrl}/js/surveys.umd.cjs` : "/js/surveys.umd.cjs";
+      const scriptUrl = getSurveysScriptUrl(props.appUrl, props.rendererVersion);
       const response = await fetch(scriptUrl, IS_DEVELOPMENT_BUILD ? { cache: "no-store" } : {});
 
       if (!response.ok) {

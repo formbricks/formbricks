@@ -26,6 +26,12 @@ import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/works
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { SurveyStatusChangeDialog } from "@/modules/ee/creatives/components/survey-side/survey-status-change-dialog";
+import {
+  useSurveyLinkedCreatives,
+  useSurveyStatusChangeWithCreatives,
+} from "@/modules/ee/creatives/hooks/use-survey-linked-creatives";
+import { getLinkedCreativesBlockers, joinCreativeNames } from "@/modules/ee/creatives/lib/survey-side";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
 import { CopySurveyModal } from "@/modules/survey/list/components/copy-survey-modal";
@@ -35,6 +41,8 @@ import { surveyKeys } from "@/modules/survey/list/lib/query";
 import { TSurveyListItem } from "@/modules/survey/list/types/survey-overview";
 import { CollaborateModal } from "@/modules/survey/visibility/components/collaborate-modal";
 import { type TSurveyVisibilityUiGate, showVisibilityControls } from "@/modules/survey/visibility/lib/state";
+import type { TSurveyVisibilityBlocker } from "@/modules/survey/visibility/types";
+import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
@@ -67,6 +75,11 @@ interface SurveyDropDownMenuProps {
   workspaceName: string;
   listQueryKey: ReturnType<typeof surveyKeys.list>;
   onVisibilityNotEnabled: () => void;
+  /**
+   * Shows why the delete was refused (409: creatives open the survey). The list owns that dialog: the
+   * optimistic removal unmounts this row before the answer arrives.
+   */
+  onDeleteBlocked: (blockers: TSurveyVisibilityBlocker[]) => void;
 }
 
 // Non-draft statuses that can be targeted by a status change from the list.
@@ -87,6 +100,7 @@ export const SurveyDropDownMenu = ({
   workspaceName,
   listQueryKey,
   onVisibilityNotEnabled,
+  onDeleteBlocked,
 }: Readonly<SurveyDropDownMenuProps>) => {
   const { workspace } = useWorkspace();
 
@@ -135,7 +149,6 @@ export const SurveyDropDownMenu = ({
   };
 
   const handleStatusChange = async (status: TSurveyStatus) => {
-    setIsDropDownOpen(false);
     const toastId = toast.loading(t("workspace.surveys.status_updating"));
     try {
       await updateSurveyStatus(survey.id, status);
@@ -147,6 +160,21 @@ export const SurveyDropDownMenu = ({
     }
   };
 
+  // Pausing, closing or resuming names the creatives that open the survey first.
+  const statusChange = useSurveyStatusChangeWithCreatives({
+    workspaceId: survey.workspaceId,
+    surveyId: survey.id,
+    currentStatus: survey.status,
+    applyStatus: handleStatusChange,
+  });
+
+  // Archiving pauses the survey and, 30 days on, deletes it: the dialog names the creatives it affects.
+  const archiveLinkedCreatives = useSurveyLinkedCreatives({
+    workspaceId: survey.workspaceId,
+    surveyId: survey.id,
+    enabled: isArchiveDialogOpen,
+  });
+
   const handleDeleteSurvey = async (surveyId: string) => {
     setLoading(true);
 
@@ -154,6 +182,12 @@ export const SurveyDropDownMenu = ({
       await deleteSurvey(surveyId);
       toast.success(t("workspace.surveys.survey_deleted_successfully"));
     } catch (error) {
+      const linkedCreatives = getLinkedCreativesBlockers(error);
+      if (linkedCreatives) {
+        setDeleteDialogOpen(false);
+        onDeleteBlocked(linkedCreatives);
+        return;
+      }
       toast.error(getV3ApiErrorMessage(error, t("workspace.surveys.error_deleting_survey")));
     } finally {
       setLoading(false);
@@ -340,7 +374,8 @@ export const SurveyDropDownMenu = ({
                   <DropdownMenuRadioGroup
                     value={survey.status}
                     onValueChange={(value) => {
-                      void handleStatusChange(value as TSurveyStatus);
+                      setIsDropDownOpen(false);
+                      void statusChange.requestStatusChange(value as TSurveyStatus);
                     }}>
                     {CHANGEABLE_STATUSES.map((status) => (
                       <DropdownMenuRadioItem
@@ -464,7 +499,21 @@ export const SurveyDropDownMenu = ({
               ? t("workspace.surveys.archive_survey_description_in_progress")
               : t("workspace.surveys.archive_survey_description")
           }
-          body={t("workspace.surveys.archive_survey_warning")}
+          body={
+            <div className="space-y-3 whitespace-normal">
+              <p>{t("workspace.surveys.archive_survey_warning")}</p>
+              {archiveLinkedCreatives.length > 0 && (
+                <Alert variant="warning" role="status">
+                  <AlertTitle>{t("workspace.creatives.survey_side.archive_note_title")}</AlertTitle>
+                  <AlertDescription>
+                    {t("workspace.creatives.survey_side.archive_note", {
+                      creatives: joinCreativeNames(archiveLinkedCreatives),
+                    })}
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+          }
           buttonText={isInProgress ? t("workspace.surveys.stop_and_archive") : t("common.archive")}
           buttonVariant={isInProgress ? "destructive" : "default"}
           buttonLoading={isArchiving}
@@ -473,6 +522,8 @@ export const SurveyDropDownMenu = ({
           closeOnOutsideClick={!isInProgress}
         />
       )}
+
+      {canChangeStatus && <SurveyStatusChangeDialog {...statusChange.dialog} />}
 
       {!isArchived && canManageSurvey && (
         <RenameSurveyModal

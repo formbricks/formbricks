@@ -1,0 +1,19 @@
+allOf:
+  - $ref: ./CreateCreativeRequestBase.yml
+  - type: object
+    required:
+      - content
+    properties:
+      type:
+        type: string
+        enum:
+          - banner
+      content:
+        $ref: ./BannerContent.yml
+      styling:
+        $ref: ./BannerStyling.yml
+        description: >-
+          Omit for the top of the page, in page, on every device, with custom styles off (the
+          workspace Look & Feel).
+unevaluatedProperties: false
+description: Create a banner.

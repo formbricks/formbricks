@@ -56,6 +56,13 @@ export const rateLimitConfigs = {
       allowedPerInterval: 1000,
       namespace: "api:client:environment",
     }, // 1000 per minute per environment (Client API)
+    clientCreativeEvents: {
+      interval: 60,
+      allowedPerInterval: 600,
+      namespace: "api:client:creative-events",
+    }, // 600 per minute per IP — the SDK sends one creative events request per page view (ENG-4000);
+    // an office or carrier NAT puts many visitors behind one IP, and a request over it is dropped
+    // silently, so this only bounds a client flooding the counters
   },
 
   // Server actions - varies by action type

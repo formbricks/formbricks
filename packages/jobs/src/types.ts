@@ -62,6 +62,11 @@ export const ZSurveyArchivePurgeJobData = ZGlobalScopeJobData;
 
 export type TSurveyArchivePurgeJobData = TGlobalScopeJobData;
 
+/** Creative counters copied from Redis to the daily rollups, every minute (ENG-4000). */
+export const ZCreativeStatsFlushJobData = ZGlobalScopeJobData;
+
+export type TCreativeStatsFlushJobData = TGlobalScopeJobData;
+
 /** The nightly data retention sweep (ENG-3612). */
 export const ZDataRetentionSweepJobData = ZGlobalScopeJobData;
 

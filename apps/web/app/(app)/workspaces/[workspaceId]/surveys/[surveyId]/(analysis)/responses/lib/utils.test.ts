@@ -236,16 +236,35 @@ describe("utils", () => {
       expect(RESERVED_COLUMN_ENTRIES.map((entry) => entry.name)).toContain("locale");
       // And the five visit fields (ENG-3926), the same way.
       expect(RESERVED_COLUMN_ENTRIES.map((entry) => entry.name)).toContain("visitUrls");
-      expect(RESERVED_COLUMN_ENTRIES).toHaveLength(26);
+      // ENG-4001's "Opened by creative" pair arrived the same way.
+      expect(RESERVED_COLUMN_ENTRIES.map((entry) => entry.name)).toContain("openedByCreativeName");
+      expect(RESERVED_COLUMN_ENTRIES).toHaveLength(28);
     });
 
     test("today's six columns are still visible by default, and the new ones are not", () => {
-      const visible = RESERVED_COLUMN_ENTRIES.filter((entry) =>
-        isReservedColumnVisibleByDefault(entry.display)
-      ).map((entry) => entry.name);
+      const visible = RESERVED_COLUMN_ENTRIES.filter((entry) => isReservedColumnVisibleByDefault(entry)).map(
+        (entry) => entry.name
+      );
 
       expect(visible).toStrictEqual(["source", "url", "country", "action", "browser", "os", "deviceType"]);
-      expect(isReservedColumnVisibleByDefault("secondary")).toBe(false);
+      expect(isReservedColumnVisibleByDefault({ name: "timezone", display: "secondary" })).toBe(false);
+    });
+
+    test("a survey that creatives open also shows who opened each response, by the creative's name", () => {
+      const visible = RESERVED_COLUMN_ENTRIES.filter((entry) =>
+        isReservedColumnVisibleByDefault(entry, { isOpenedByCreatives: true })
+      ).map((entry) => entry.name);
+
+      expect(visible).toStrictEqual([
+        "source",
+        "url",
+        "country",
+        "action",
+        "browser",
+        "os",
+        "deviceType",
+        "openedByCreativeName",
+      ]);
     });
   });
 

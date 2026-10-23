@@ -1,0 +1,252 @@
+get:
+  operationId: getCreativeV3
+  summary: Get a creative
+  description: >-
+    Returns one creative, with its derived `displayStatus`, `displayStatusReason`, `warnings` and
+    `destination.opensAs`. Read access to the creative's workspace, which is resolved from the
+    creative, so no `workspaceId` is accepted. An unknown or inaccessible `creativeId` answers **403**,
+    not **404**, so creative ids cannot be probed for existence.
+  tags:
+    - V3 Creatives
+  parameters:
+    - $ref: ../components/parameters/CreativeIdPath.yml
+  responses:
+    "200":
+      description: Creative retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/CreativeResource.yml
+          examples:
+            pausedWithItsSurvey:
+              summary: A feedback button whose survey is paused
+              value:
+                data:
+                  id: clcr1234567890123456789012
+                  workspaceId: clws1234567890123456789012
+                  name: Site feedback tab
+                  type: feedbackButton
+                  status: inProgress
+                  displayStatus: paused
+                  displayStatusReason: surveyNotActive
+                  createdAt: "2026-10-16T09:00:00.000Z"
+                  updatedAt: "2026-10-16T09:30:00.000Z"
+                  publishedAt: "2026-10-16T09:30:00.000Z"
+                  archivedAt: null
+                  creator:
+                    name: Jane Doe
+                  defaultLanguage: en-US
+                  languages:
+                    - code: en-US
+                      default: true
+                      enabled: true
+                    - code: es-US
+                      default: false
+                      enabled: true
+                  content:
+                    label:
+                      en-US: Feedback
+                      es-US: Comentarios
+                    icon: null
+                  styling:
+                    position:
+                      desktop:
+                        edge: right
+                        offset: 60
+                      phone:
+                        edge: bottom
+                        offset: 90
+                    theme:
+                      customStyles: true
+                      backgroundColor:
+                        light: "#112e51"
+                        dark: "#bfdbfe"
+                      textColor:
+                        light: "#ffffff"
+                        dark: "#0f172a"
+                      borderColor: null
+                      borderRadius: 4
+                      fontWeight: 600
+                      fontSize:
+                        desktop: 16
+                        phone: 14
+                      paddingX:
+                        desktop: 16
+                        phone: null
+                      paddingY:
+                        desktop: 8
+                        phone: null
+                  destination:
+                    type: survey
+                    surveyId: clsv1234567890123456789012
+                    surveyName: Site feedback
+                    opensAs: popup
+                  distribution:
+                    showOn: pageView
+                    triggers: []
+                    conditions:
+                      id: k3m9q2w7e5r1t8y4u6i0o2p5
+                      connector: and
+                      conditions:
+                        - id: x8c2v6b4n1m7q9w3e5r0t2y6
+                          leftOperand:
+                            type: page
+                            value: currentUrl
+                          operator: startsWith
+                          rightOperand:
+                            type: static
+                            value: https://www.medicare.gov/
+                    displayPercentage: null
+                  schedule:
+                    startAt: null
+                    endAt: null
+                  warnings: []
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3CreativesForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+patch:
+  operationId: patchCreativeV3
+  summary: Update a creative
+  description: >
+    Changes a creative. Read/write access to its workspace; an unknown or inaccessible `creativeId`
+    answers **403**. Each group sent replaces the stored one as a whole (see `PatchCreativeRequest`);
+    an empty body changes nothing.
+
+
+    **Status.** Publish with `status: inProgress`, pause with `paused`, close with `completed`, and
+    reopen or resume with `inProgress`. A creative that was ever published can't go back to `draft`.
+    Any status but `draft` must meet the publish rules of `POST /api/v3/creatives`, checked against the
+    creative as it would be after the change. In wind-down (the license does not include Creatives),
+    only a body that sets nothing but `status` to `paused` or `completed` is accepted; any other body,
+    an empty one included, answers **403** `creatives_not_entitled`.
+
+
+    **Custom CSS.** Adding or editing `styling.theme.customCss` follows the rules of
+    `POST /api/v3/creatives`; removing it, or sending it back unchanged, needs no plan and is not
+    processed again.
+
+
+    An archived creative is read-only: restore it first, or the request answers **422**.
+
+
+    **Its survey.** Changing or removing `destination` succeeds even when this creative is the last
+    one that opens a live (`inProgress`) app survey with no actions of its own; that survey then shows
+    nowhere until a creative or an action opens it again. Check before relinking.
+  tags:
+    - V3 Creatives
+  parameters:
+    - $ref: ../components/parameters/CreativeIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/PatchCreativeRequest.yml
+        examples:
+          pause:
+            summary: Pause the creative
+            value:
+              status: paused
+          reschedule:
+            summary: Replace the schedule
+            value:
+              schedule:
+                startAt: "2026-11-01T02:00:00.000Z"
+                endAt: "2026-11-01T04:00:00.000Z"
+  responses:
+    "200":
+      description: Creative updated
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/CreativeResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3CreativesForbidden.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
+delete:
+  operationId: deleteCreativeV3
+  summary: Delete a creative
+  description: >-
+    Deletes a creative and its Impression and Click counts for good. Survey displays and responses it
+    opened keep the creative they recorded. Read/write access to its workspace; an unknown or
+    inaccessible `creativeId` answers **403**. To set a creative aside and keep its counts, archive it
+    instead. Deleting the last creative that opens a live app survey with no actions of its own
+    succeeds; that survey then shows nowhere until a creative or an action opens it again.
+  tags:
+    - V3 Creatives
+  parameters:
+    - $ref: ../components/parameters/CreativeIdPath.yml
+  responses:
+    "204":
+      description: Creative deleted
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3CreativesForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

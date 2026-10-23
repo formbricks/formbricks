@@ -17,7 +17,11 @@ import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } fr
 import { cache } from "@/lib/cache";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { normalizeCustomCssInput, processCustomCss } from "@/modules/custom-css/processor";
+import {
+  type TCustomCssRoot,
+  normalizeCustomCssInput,
+  processCustomCss,
+} from "@/modules/custom-css/processor";
 import { CUSTOM_CSS_PLAN_REQUIRED_MESSAGE, getCustomCssPlanAllowed } from "./access";
 import { toCustomCssSource } from "./source";
 
@@ -53,8 +57,14 @@ const normalizedFields = (input: TCustomCssInput | null | undefined) => {
 export const classifyCustomCssChange = (
   existing: TCustomCssStored | null | undefined,
   input: TCustomCssInput | null
+): TCustomCssChange => classifyCustomCssSourceChange(toCustomCssSource(existing), input);
+
+/** {@link classifyCustomCssChange} for CSS stored as source only (a creative's, ENG-3998). */
+export const classifyCustomCssSourceChange = (
+  existing: TCustomCssInput | null | undefined,
+  input: TCustomCssInput | null | undefined
 ): TCustomCssChange => {
-  const before = normalizedFields(toCustomCssSource(existing));
+  const before = normalizedFields(existing);
   const after = normalizedFields(input);
 
   if (before.light === after.light && before.dark === after.dark) {
@@ -107,9 +117,10 @@ export type TCustomCssPreview =
   | { ok: false; errors: TCustomCssError[] };
 
 /** The processor, with a throw turned into the same `processing_failed` error a rejection carries. */
-const runProcessor = (scope: TCustomCssScope, source: TCustomCssInput) => {
+const runProcessor = (scope: TCustomCssScope, source: TCustomCssInput, root?: TCustomCssRoot) => {
   try {
-    return processCustomCss({ scope, input: source });
+    const args = { scope, input: source };
+    return root ? processCustomCss(args, { root }) : processCustomCss(args);
   } catch (error) {
     logger.error({ error, scope }, "Custom CSS processor threw");
     return {
@@ -135,13 +146,15 @@ const runProcessor = (scope: TCustomCssScope, source: TCustomCssInput) => {
  */
 export const previewCustomCss = (
   scope: TCustomCssScope,
-  input: TCustomCssInput | null
+  input: TCustomCssInput | null,
+  /** The element selectors are scoped to; the survey root `#fbjs` when absent (see `processCustomCss`). */
+  root?: TCustomCssRoot
 ): TCustomCssPreview => {
   const source = toProcessableSource(input);
   if (!source) {
     return { ok: true, compiled: { light: null, dark: null }, warnings: [] };
   }
-  const result = runProcessor(scope, source);
+  const result = runProcessor(scope, source, root);
   return result.ok
     ? { ok: true, compiled: result.compiled, warnings: result.warnings }
     : { ok: false, errors: result.errors };

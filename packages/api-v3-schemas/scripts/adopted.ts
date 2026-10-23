@@ -11,6 +11,17 @@
  * shrink the scope silently, and the freshness check would happily compare one empty file to another.
  */
 export const ADOPTED_OPERATIONS: Readonly<Record<string, readonly string[]>> = {
+  "V3 Creatives": [
+    "getCreativesV3",
+    "createCreativeV3",
+    "getCreativeV3",
+    "patchCreativeV3",
+    "deleteCreativeV3",
+    "archiveCreativeV3",
+    "restoreCreativeV3",
+    "duplicateCreativeV3",
+    "getCreativeStatsV3",
+  ],
   "V3 Responses": [
     "getResponsesV3",
     "createResponseV3",

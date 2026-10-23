@@ -6,6 +6,7 @@ import { FORMBRICKS_EVENTS, emitFormbricksEvent } from "@/lib/common/events";
 import { Logger } from "@/lib/common/logger";
 import { getIsSetup, setIsSetup } from "@/lib/common/status";
 import { filterSurveys, getIsDebug, isNowExpired, wrapThrows } from "@/lib/common/utils";
+import { showCachedCreatives } from "@/lib/creatives/creatives";
 import { addLiveRegionContainer, closeSurvey, prefetchSurveysScript } from "@/lib/survey/widget";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
@@ -226,6 +227,10 @@ export const setup = async (
       logger.debug("User state expired. Syncing.");
       isUserStateExpired = true;
     }
+
+    // Creatives from the cached state right away, expired or not, so an In page banner never waits for
+    // the network; the page view after setup reconciles them with the refreshed state.
+    showCachedCreatives();
 
     try {
       // fetch the workspace state (if expired)
