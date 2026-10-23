@@ -192,8 +192,9 @@ overrides:
   # ENG-2846 / GHSA-6gmq-8vp8-gcm6 (CVE-2026-83610): an EntityReference created via
   # createEntityReference(name) with a name containing `; <tag/> &` breaks out of the `&name;` form when
   # serialized with `requireWellFormed: true`, injecting attacker-controlled XML markup; patched in 0.9.12.
-  # load-bearing: xml-crypto/xml-encryption resolve 0.8.13 and @boxyhq/saml20 resolves 0.9.8, both still
-  # vulnerable to the original chain (GHSA-2v35-w6hq-6mfw + 4 more).
+  # load-bearing for @boxyhq/saml20, which resolves 0.9.8 without it and is still vulnerable to the original chain
+  # (GHSA-2v35-w6hq-6mfw + 4 more). xml-crypto and xml-encryption are pinned to the patched 0.8.15 by the scoped
+  # overrides below, so this one covers saml20's own parse and any other 0.9 consumer.
   "@xmldom/xmldom": 0.9.12
   # ENG-4045: xml-crypto stays on the 0.8 line it declares (`^0.8`, still so in 6.4.0). It calls
   # `parseFromString(xml)` without a mimeType, which every 0.9 release throws on, so on 0.9 jackson can neither

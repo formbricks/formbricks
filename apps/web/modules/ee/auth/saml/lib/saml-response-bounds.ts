@@ -67,7 +67,8 @@ export const SAML_RESPONSE_MAX_ELEMENTS: Readonly<Record<string, number>> = Obje
   SignatureValue: 4,
   Reference: 8,
   KeyInfo: 8,
-  X509Certificate: 8,
+  // A certificate chain can sit in every signature's KeyInfo; the select cost at this count is negligible.
+  X509Certificate: 16,
 });
 
 const CAPPED_ELEMENTS = Object.entries(SAML_RESPONSE_MAX_ELEMENTS);

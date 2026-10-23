@@ -13,7 +13,10 @@ import {
   type SamlResponseClaims,
   probeSamlResponseParse,
 } from "@/modules/ee/auth/saml/lib/saml-parse-budget";
-import { checkSamlResponseBounds } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
+import {
+  type SamlResponseRefusal,
+  checkSamlResponseBounds,
+} from "@/modules/ee/auth/saml/lib/saml-response-bounds";
 
 /**
  * Longest jackson message, reason or error that reaches the log. They are fixed strings on this path today, but
@@ -173,14 +176,17 @@ const readCallbackForm = async (
   return { SAMLResponse, RelayState };
 };
 
-/** What a response past the byte bounds is told: the kind of bound, never the counts. */
-const BOUNDS_REFUSAL_MESSAGES: Record<string, string> = {
+/**
+ * What a response past the byte bounds is told: the kind of bound, never the counts. Keyed by every refusal reason,
+ * so a new one fails typecheck until it has a message of its own.
+ */
+const BOUNDS_REFUSAL_MESSAGES: Record<SamlResponseRefusal["reason"], string> = {
+  length: "SAMLResponse is too large to process",
+  markup: "SAMLResponse is too large to process",
+  depth: "SAMLResponse is too large to process",
   declaration: "SAMLResponse must not contain a DOCTYPE or other declaration",
   elements: "SAMLResponse carries more elements than a SAML response does",
 };
-
-const boundsRefusalMessage = (reason: string): string =>
-  BOUNDS_REFUSAL_MESSAGES[reason] ?? "SAMLResponse is too large to process";
 
 /** The refusal for a response past the byte bounds or the caller's rate limit, or `null` when it may be parsed. */
 const refuseBeforeParsing = async (req: Request, SAMLResponse: string): Promise<Response | null> => {
@@ -191,7 +197,7 @@ const refuseBeforeParsing = async (req: Request, SAMLResponse: string): Promise<
     return refuse(
       req,
       "saml_response_rejected",
-      responses.badRequestResponse(boundsRefusalMessage(refusal.reason))
+      responses.badRequestResponse(BOUNDS_REFUSAL_MESSAGES[refusal.reason])
     );
   }
 
