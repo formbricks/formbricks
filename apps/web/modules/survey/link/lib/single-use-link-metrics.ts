@@ -10,8 +10,8 @@ const validationsTotal = meter.createCounter("formbricks_survey_single_use_link_
 });
 
 /**
- * Which of the six entry points validated the link. `link_page` covers the page's metadata too, since both
- * share one resolution per request.
+ * Which of the six entry points validated the link. `link_page` and `contact_link_page` cover their page's
+ * metadata too, since each page and its metadata share one resolution per request.
  */
 export type TSingleUseLinkSurface =
   | "link_page"

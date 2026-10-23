@@ -23,12 +23,18 @@ interface ContactSurveyPageProps {
 
 export const generateMetadata = async (props: ContactSurveyPageProps): Promise<Metadata> => {
   const { jwt } = await props.params;
+  const { suId, suToken } = await props.searchParams;
   try {
     const result = verifyContactSurveyToken(jwt);
     if (!result.ok) {
       return getGenericSurveyMetadata();
     }
-    return await getMetadataForContactSurvey(result.data.surveyId, await getAcceptedLanguages());
+    return await getMetadataForContactSurvey({
+      surveyId: result.data.surveyId,
+      acceptedLanguages: await getAcceptedLanguages(),
+      suId,
+      suToken,
+    });
   } catch {
     // A token or lookup failure still gets generic metadata rather than an error page.
     return getGenericSurveyMetadata();

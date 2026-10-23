@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { actionClient } from "@/lib/utils/action-client";
 import { generateSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
 import { sendLinkSurveyEmailAction, validateSurveyPinAction } from "./actions";
-import { getSurveyWithMetadata } from "./lib/data";
+import { getResponseBySingleUseId, getSurveyWithMetadata } from "./lib/data";
 import { createLinkSurveyPinToken } from "./lib/pin-token";
 import { isLinkSurveyGoneError } from "./lib/public-access";
 import { recordSingleUseLinkValidation } from "./lib/single-use-link-metrics";
@@ -40,7 +41,7 @@ vi.mock("@/modules/ee/whitelabel/email-customization/lib/organization", () => ({
   getOrganizationLogoUrl: vi.fn().mockResolvedValue(null),
 }));
 vi.mock("@/modules/email", () => ({ sendLinkSurveyToVerifiedEmail: vi.fn() }));
-vi.mock("./lib/data", () => ({ getSurveyWithMetadata: vi.fn() }));
+vi.mock("./lib/data", () => ({ getResponseBySingleUseId: vi.fn(), getSurveyWithMetadata: vi.fn() }));
 vi.mock("./lib/pin-token", () => ({ createLinkSurveyPinToken: vi.fn() }));
 vi.mock("./lib/workspace", () => ({ getWorkspaceContextForLinkSurvey: vi.fn() }));
 vi.mock("./lib/respondent-custom-css", () => ({
@@ -52,6 +53,14 @@ vi.mock("./lib/respondent-custom-css", () => ({
 }));
 
 const surveyId = "clsurvey00000000000000000";
+
+// Captured at import, before any `clearAllMocks`. The handler tests below bypass the schema, so without this
+// a schema that dropped `suId` / `suToken` would strip them from every real call, and every valid single-use
+// link would come back "not found" with all of those tests still green.
+const [, [pinActionSchema]] = vi.mocked(actionClient.inputSchema).mock.calls as unknown as [
+  unknown,
+  [{ parse: (input: unknown) => unknown }],
+];
 
 const mockSurvey = (overrides: Record<string, unknown> = {}) =>
   vi.mocked(getSurveyWithMetadata).mockResolvedValue({
@@ -103,7 +112,11 @@ beforeEach(() => {
     workspace: { styling: { allowStyleOverwrite: true } },
   } as never);
   vi.mocked(createLinkSurveyPinToken).mockReturnValue("pin-token");
+  vi.mocked(getResponseBySingleUseId).mockReturnValue(async () => null);
 });
+
+const answeredWith = (finished: boolean) =>
+  vi.mocked(getResponseBySingleUseId).mockReturnValue(async () => ({ id: "r1", finished }) as never);
 
 describe("validateSurveyPinAction", () => {
   test.each(notOpen)("%s is not found and its definition is not returned", async (_label, state) => {
@@ -166,6 +179,15 @@ const notInvited: [string, () => TLink][] = [
 ];
 
 describe("validateSurveyPinAction on a single-use survey (ENG-4041)", () => {
+  test("its input schema keeps the link it is sent", () => {
+    expect(pinActionSchema.parse({ surveyId, pin: "1234", suId: "invitee-1", suToken: "token" })).toEqual({
+      surveyId,
+      pin: "1234",
+      suId: "invitee-1",
+      suToken: "token",
+    });
+  });
+
   test.each(notInvited)("with %s is not found and its definition is not returned", async (_label, link) => {
     mockSurvey(singleUse());
 
@@ -188,6 +210,25 @@ describe("validateSurveyPinAction on a single-use survey (ENG-4041)", () => {
     mockSurvey(singleUse(isEncrypted));
 
     const result = await validatePinWith("0000", generateSurveySingleUseLinkParams(surveyId, isEncrypted));
+
+    expect(result).toMatchObject({ survey: { id: surveyId } });
+  });
+
+  test("with a link that has already been answered is not found, like the page's 'already answered' screen", async () => {
+    mockSurvey(singleUse());
+    const link = generateSurveySingleUseLinkParams(surveyId, false);
+    answeredWith(true);
+
+    await expectSurveyGone(validatePinWith("0000", link));
+    expect(getResponseBySingleUseId).toHaveBeenCalledWith(surveyId, link.suId);
+    expect(getWorkspaceContextForLinkSurvey).not.toHaveBeenCalled();
+  });
+
+  test("with a link whose response is only partly answered still returns the definition, so it can resume", async () => {
+    mockSurvey(singleUse());
+    answeredWith(false);
+
+    const result = await validatePinWith("0000", generateSurveySingleUseLinkParams(surveyId, false));
 
     expect(result).toMatchObject({ survey: { id: surveyId } });
   });
@@ -219,6 +260,7 @@ describe("validateSurveyPinAction on a single-use survey (ENG-4041)", () => {
 
     expect(result).toMatchObject({ survey: { id: surveyId } });
     expect(recordSingleUseLinkValidation).not.toHaveBeenCalled();
+    expect(getResponseBySingleUseId).not.toHaveBeenCalled();
   });
 });
 
@@ -248,6 +290,14 @@ describe("sendLinkSurveyEmailAction", () => {
       expect(sendLinkSurveyToVerifiedEmail).not.toHaveBeenCalled();
     }
   );
+
+  test("a single-use survey whose link has already been answered is not found and no email is sent", async () => {
+    mockSurvey(singleUse());
+    answeredWith(true);
+
+    await expectSurveyGone(sendEmailWith(generateSurveySingleUseLinkParams(surveyId, false)));
+    expect(sendLinkSurveyToVerifiedEmail).not.toHaveBeenCalled();
+  });
 
   test("a single-use survey with a valid link sends the email carrying that link", async () => {
     mockSurvey(singleUse());
