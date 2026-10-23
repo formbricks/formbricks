@@ -24,6 +24,16 @@ describe("toInviteDisplayName", () => {
     expect(toInviteDisplayName("spam.example", "Anonymous")).toBe("Anonymous");
   });
 
+  test.each([
+    "(spam.example)",
+    "Anna,spam.example",
+    "&spam.example",
+    "'spam.example'",
+    "x|spam.example/offer",
+  ])("removes a bare domain wrapped in punctuation: %s", (token) => {
+    expect(toInviteDisplayName(`Anna ${token}`, "Anonymous")).toBe("Anna");
+  });
+
   test("keeps initials and ordinary punctuation", () => {
     expect(toInviteDisplayName("J.R.R. Tolkien", "Anonymous")).toBe("J.R.R. Tolkien");
     expect(toInviteDisplayName("Anna Müller, PhD.", "Anonymous")).toBe("Anna Müller, PhD.");

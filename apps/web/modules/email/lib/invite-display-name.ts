@@ -28,24 +28,25 @@ const isLinkLike = (token: string): boolean => {
 
 const DOMAIN_LABEL = /^[\p{L}\p{N}-]+$/u;
 const TOP_LEVEL_DOMAIN = /^\p{L}{2,}$/u;
+const NON_HOST_CHARACTERS = /[^\p{L}\p{N}.-]+/u;
 
-// Bare domains such as `spam.example` or `spam.example/offer`, which most mail clients turn into links.
-// Split on dots rather than matched with one regex, for the same backtracking reason as above. An
-// initial like `J.R.R.` is kept: its last label is one letter.
-const TRAILING_PUNCTUATION = new Set([".", ",", ";", "!", "?", ")"]);
-
-const isBareDomain = (token: string): boolean => {
-  // Trimmed by hand: `/[.,;!?)]+$/` retries from every dot and is quadratic on a run of dots.
-  let end = token.length;
-  while (end > 0 && TRAILING_PUNCTUATION.has(token[end - 1])) end--;
-  const host = token.slice(0, end).split(/[/?#:]/u, 1)[0];
-  const labels = host.split(".");
+const isDomainLike = (piece: string): boolean => {
+  // Trailing dots trimmed by hand: `/\.+$/` retries from every dot and is quadratic on a run of them.
+  let end = piece.length;
+  while (end > 0 && piece[end - 1] === ".") end--;
+  const labels = piece.slice(0, end).split(".");
   return (
     labels.length >= 2 &&
     labels.every((label) => DOMAIN_LABEL.test(label)) &&
     TOP_LEVEL_DOMAIN.test(labels[labels.length - 1])
   );
 };
+
+// Bare domains such as `spam.example`, `(spam.example)` or `Anna,spam.example/offer`, which most mail clients
+// turn into links. The token is cut at every character a host cannot contain and each piece is checked,
+// all with linear scans. An initial like `J.R.R.` is kept: its last label is one letter. A name written as
+// `Dr.Smith` reads as a domain too; that is the price of not shipping a list of top-level domains.
+const isBareDomain = (token: string): boolean => token.split(NON_HOST_CHARACTERS).some(isDomainLike);
 
 export const toInviteDisplayName = (name: string, fallback: string): string => {
   const cleaned = name
