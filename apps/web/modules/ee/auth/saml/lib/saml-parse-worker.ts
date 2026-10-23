@@ -22,7 +22,9 @@ import { type SamlDecryptedRefusal, checkDecryptedSamlResponseBounds } from "./s
  *
  * It answers with the identifying fields only (the claimed issuer, the response ID and InResponseTo, cut to a length a
  * log line can carry) and how decryption went, with sizes for a refusal. Nothing else of the response leaves the
- * worker, the decrypted assertion included.
+ * worker, the decrypted assertion included. Just before it decrypts, it says so, with the issuer as jackson reads it:
+ * whatever happens to the job after that point may depend on the plaintext, so the pool must not answer it on its own
+ * (ENG-6646, see `refused_encrypted` in `saml-parse-budget.ts`).
  */
 
 const MAX_FIELD_LENGTH = 1024;
@@ -68,7 +70,7 @@ export type SamlDecryption =
   | { decrypted: true; refusal: SamlDecryptedRefusal | null }
   /**
    * With jackson's key, an encrypted assertion decrypts here exactly as it will in jackson, so one that does not will
-   * fail in jackson too; the pool lets jackson give its usual answer (see its `takeResult`).
+   * fail in jackson too; the pool lets jackson give its usual answer (see its `takeMessage`).
    */
   | { decrypted: false };
 
@@ -138,12 +140,14 @@ const checkSignatureAsJackson = (
 /**
  * One job: parse `xml` as jackson does, decrypt and measure its encrypted assertion with `decryptionKey`, then run
  * jackson's signature check on it with `idpVerification` (`null` when no connection is configured, where jackson
- * refuses before validating). Never throws.
+ * refuses before validating). `onDecrypting` is called with the issuer, untruncated, right before the decryption
+ * starts; there is none without an issuer. Never throws.
  */
 export const parseSamlResponse = (
   xml: string,
   decryptionKey: string | null,
-  idpVerification: SamlIdpVerification | null
+  idpVerification: SamlIdpVerification | null,
+  onDecrypting: (issuer: string) => void = () => undefined
 ): ParsedSamlResponse => {
   // jackson's first call on the response, timed here before anything else as jackson does it (ENG-6648).
   const issuer = issuerAsJackson(xml);
@@ -164,7 +168,11 @@ export const parseSamlResponse = (
     if (idpVerification) checkSignatureAsJackson(xml, undefined, idpVerification);
     return { claims };
   }
-  const { decryption, decryptedXml, checksSignature } = decryptAsJackson(xml, decryptionKey);
+  // jackson refuses a response with no issuer, or one saml20 cannot parse, before it decrypts anything, so the worker
+  // does not decrypt it either.
+  const key = issuer ? decryptionKey : null;
+  if (key && issuer) onDecrypting(issuer);
+  const { decryption, decryptedXml, checksSignature } = decryptAsJackson(xml, key);
   if (idpVerification && checksSignature) checkSignatureAsJackson(xml, decryptedXml, idpVerification);
   return { claims, decryption };
 };
@@ -220,7 +228,9 @@ const serve = (port: MessagePort) => {
       idpVerification: SamlIdpVerification | null;
     }) => {
       const started = performance.now();
-      const { claims, decryption } = parseSamlResponse(xml, decryptionKey, idpVerification);
+      const { claims, decryption } = parseSamlResponse(xml, decryptionKey, idpVerification, (issuer) =>
+        port.postMessage({ id, decrypting: true, issuer })
+      );
       port.postMessage({ id, ms: performance.now() - started, claims, decryption });
     }
   );

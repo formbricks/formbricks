@@ -87,6 +87,40 @@ describe("parseSamlResponse", () => {
     );
   });
 
+  // ENG-6646: the pool must know when decryption begins, since anything after it may depend on the plaintext.
+  test("says it is decrypting, with the issuer as jackson reads it, before it decrypts", () => {
+    const longIssuer = `https://idp.example.com/${"x".repeat(2_000)}`;
+    const onDecrypting = vi.fn();
+
+    parseSamlResponse(
+      samlResponseWith(encryptAssertion(assertion, sp.publicKey), longIssuer),
+      sp.privateKey,
+      IDP,
+      onDecrypting
+    );
+
+    // Untruncated: jackson looks the connection up by the whole of it.
+    expect(onDecrypting).toHaveBeenCalledExactlyOnceWith(longIssuer);
+  });
+
+  test.each([
+    ["without jackson's key", encrypted, null],
+    ["without an encrypted assertion", samlResponseWith(""), sp.privateKey],
+    // jackson refuses a response with no issuer before it decrypts anything, so the worker does not decrypt it either.
+    [
+      "with no issuer",
+      samlResponseWith(encryptAssertion(nestedNamespaceAssertion(4000), sp.publicKey), ""),
+      sp.privateKey,
+    ],
+  ])("neither decrypts nor says so %s", (_name, xml, key) => {
+    const onDecrypting = vi.fn();
+
+    const parsed = parseSamlResponse(xml, key, IDP, onDecrypting);
+
+    expect(onDecrypting).not.toHaveBeenCalled();
+    expect(parsed.decryption?.decrypted ?? false).toBe(false);
+  });
+
   test("returns no claims for a document without a root", () => {
     expect(parseSamlResponse("", sp.privateKey, IDP)).toEqual({ claims: {} });
   });

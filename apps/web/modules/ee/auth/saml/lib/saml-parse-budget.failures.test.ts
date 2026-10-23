@@ -5,6 +5,8 @@ import type { SamlDecryption } from "./saml-parse-worker";
 /** Stands in for jackson's SP key; the fake worker never reads it. */
 const KEY = "sp-private-key";
 
+const ISSUER = "https://idp.example.com";
+
 // The failure paths of the parse pool, driven through a fake worker so each one can be staged exactly: a worker that
 // cannot be created, never starts, dies mid-job, runs out of heap, or answers behind a stalled main thread. The real
 // worker is exercised in saml-parse-budget.test.ts.
@@ -41,9 +43,14 @@ class FakeWorker extends EventEmitter {
   ready() {
     this.port.postMessage({ ready: true });
   }
+  /** Says it is about to decrypt the job it holds, as the real worker does before it decrypts. */
+  decrypting() {
+    const job = this.port.inbox[0] as { id: number };
+    this.port.postMessage({ id: job.id, decrypting: true, issuer: ISSUER });
+  }
   answer(ms = 5, decryption?: SamlDecryption) {
     const job = this.port.inbox.shift() as { id: number };
-    this.port.postMessage({ id: job.id, ms, claims: { issuer: "https://idp.example.com" }, decryption });
+    this.port.postMessage({ id: job.id, ms, claims: { issuer: ISSUER }, decryption });
   }
 }
 
@@ -89,7 +96,7 @@ describe("probeSamlResponseParse failure paths", () => {
     vi.useRealTimers();
   });
 
-  /** One job through a fresh worker, answered in 5 ms with `decryption`. */
+  /** One job through a fresh worker, which says it is decrypting and then answers in 5 ms with `decryption`. */
   const probeAnswered = async (decryption: SamlDecryption) => {
     const { probeSamlResponseParse } = await load();
     const probe = probeSamlResponseParse("PHIvPg==", KEY, null);
@@ -97,18 +104,113 @@ describe("probeSamlResponseParse failure paths", () => {
     state.workers[0].ready();
     mainPort(state.workers[0]).flush();
     await settle();
+    state.workers[0].decrypting();
     state.workers[0].answer(5, decryption);
     mainPort(state.workers[0]).flush();
     return probe;
   };
 
-  test("refuses a response whose decrypted assertion the worker found past the bounds, with its sizes (ENG-4051)", async () => {
+  /** A fresh worker holding one job, with nothing answered yet. */
+  const holdingOneJob = async () => {
+    const budget = await load();
+    const probe = budget.probeSamlResponseParse("PHIvPg==", KEY, null);
+    await settle();
+    state.workers[0].ready();
+    mainPort(state.workers[0]).flush();
+    await settle();
+    return { ...budget, probe, worker: state.workers[0] };
+  };
+
+  test("leaves a response whose decrypted assertion is past the bounds for jackson to answer, with its sizes (ENG-6646)", async () => {
     const refusal = { reason: "markup", markup: 13_002, depth: 2, decryptedBytes: 52_400 } as const;
 
     await expect(probeAnswered({ decrypted: true, refusal })).resolves.toEqual({
-      outcome: "refused",
-      refusal,
+      outcome: "refused_encrypted",
+      issuer: ISSUER,
+      cause: refusal,
     });
+  });
+
+  // ENG-6646: once the worker has begun decrypting, how the job ends can depend on the plaintext, so no end but parsed
+  // or busy is answered as it is.
+  test("leaves a job that ran past the budget once decrypting for jackson to answer", async () => {
+    const { probe, worker, SAML_PARSE_TIME_BUDGET_MS } = await holdingOneJob();
+    worker.decrypting();
+    mainPort(worker).flush();
+
+    await vi.advanceTimersByTimeAsync(SAML_PARSE_TIME_BUDGET_MS);
+
+    await expect(probe).resolves.toEqual({
+      outcome: "refused_encrypted",
+      issuer: ISSUER,
+      cause: { reason: "time" },
+    });
+  });
+
+  test("reads a decrypting notice waiting behind a stalled main thread before it judges the job", async () => {
+    const { probe, worker, SAML_PARSE_TIME_BUDGET_MS } = await holdingOneJob();
+    // Posted, but the main thread did not get to it before the budget timer fired.
+    worker.decrypting();
+
+    await vi.advanceTimersByTimeAsync(SAML_PARSE_TIME_BUDGET_MS);
+
+    await expect(probe).resolves.toEqual({
+      outcome: "refused_encrypted",
+      issuer: ISSUER,
+      cause: { reason: "time" },
+    });
+  });
+
+  test("leaves a job the worker measured past the budget once decrypting for jackson to answer", async () => {
+    const { probe, worker, SAML_PARSE_TIME_BUDGET_MS } = await holdingOneJob();
+    worker.decrypting();
+    worker.answer(SAML_PARSE_TIME_BUDGET_MS + 50, { decrypted: false });
+    mainPort(worker).flush();
+
+    await expect(probe).resolves.toEqual({
+      outcome: "refused_encrypted",
+      issuer: ISSUER,
+      cause: { reason: "time" },
+    });
+  });
+
+  test("leaves a job that ran out of heap once decrypting for jackson to answer", async () => {
+    const { probe, worker } = await holdingOneJob();
+    worker.decrypting();
+    mainPort(worker).flush();
+
+    worker.emit("error", Object.assign(new Error("heap"), { code: "ERR_WORKER_OUT_OF_MEMORY" }));
+
+    await expect(probe).resolves.toEqual({
+      outcome: "refused_encrypted",
+      issuer: ISSUER,
+      cause: { reason: "memory" },
+    });
+  });
+
+  test("leaves a job whose worker died once decrypting for jackson to answer", async () => {
+    const { probe, worker } = await holdingOneJob();
+    worker.decrypting();
+    mainPort(worker).flush();
+
+    worker.emit("exit", 1);
+
+    await expect(probe).resolves.toEqual({
+      outcome: "refused_encrypted",
+      issuer: ISSUER,
+      cause: { reason: "failed" },
+    });
+  });
+
+  test("fails a decrypted refusal the worker never announced, rather than answer it", async () => {
+    const { probe, worker } = await holdingOneJob();
+    worker.answer(5, {
+      decrypted: true,
+      refusal: { reason: "depth", markup: 10, depth: 300, decryptedBytes: 900 },
+    });
+    mainPort(worker).flush();
+
+    await expect(probe).resolves.toEqual({ outcome: "failed" });
   });
 
   test("passes a response whose encrypted assertion did not decrypt on to jackson, to fail there alike (ENG-4051)", async () => {

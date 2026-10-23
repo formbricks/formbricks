@@ -4,7 +4,9 @@ import {
   SAML_RESPONSE_MAX_ELEMENTS,
   checkSamlResponseBounds,
 } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
+import { samlResponseWithoutAssertion } from "@/modules/ee/auth/saml/lib/saml-response-without-assertion";
 import {
+  ENCRYPTED_RESPONSE_ISSUER,
   assertionWithSignatures,
   createSpKeyPair,
   encryptAssertion,
@@ -56,65 +58,66 @@ describe("SAML callback with an encrypted assertion", () => {
     vi.clearAllMocks();
   });
 
-  test("refuses one whose plaintext is too costly to parse before jackson decrypts it", async () => {
-    const SAMLResponse = encryptedResponse(nestedNamespaceAssertion(4000));
-    // Past the byte bounds: they see only the ciphertext.
-    expect(checkSamlResponseBounds(SAMLResponse)).toBeNull();
-    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+  // ENG-6646: refused once decrypted, each is answered by jackson for the response without its assertion, which is
+  // its answer to an assertion that does not decrypt. The decrypted plaintext never reaches jackson.
+  test.each([
+    [
+      "its plaintext is too costly to parse",
+      nestedNamespaceAssertion(4000),
+      [
+        expect.objectContaining({ stage: "parse_budget", reason: "time", decrypting: true }),
+        "Refused a SAML response that was too costly to parse",
+      ],
+    ],
+    [
+      "its decrypted document carries more markup than the bounds allow",
+      flatAssertion(13_000),
+      // The markup bound refuses it, or on a loaded machine the time budget gets there first.
+      [
+        expect.objectContaining({ reason: expect.stringMatching(/^(markup|time)$/) }),
+        expect.stringMatching(
+          /^Refused a SAML response (whose decrypted assertion is past the bounds|that was too costly)/
+        ),
+      ],
+    ],
+    [
+      "its decrypted document carries more Signature elements than the cap",
+      assertionWithSignatures(SAML_RESPONSE_MAX_ELEMENTS.Signature + 1),
+      [
+        expect.objectContaining({
+          reason: "elements",
+          localName: "Signature",
+          count: SAML_RESPONSE_MAX_ELEMENTS.Signature + 1,
+        }),
+        "Refused a SAML response whose decrypted assertion is past the bounds",
+      ],
+    ],
+  ])(
+    "leaves one refused because %s for jackson to answer, without its assertion",
+    async (_name, assertion, logged) => {
+      const SAMLResponse = encryptedResponse(assertion);
+      // The bounds see only the ciphertext.
+      expect(checkSamlResponseBounds(SAMLResponse)).toBeNull();
+      const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+      samlResponseMock.mockRejectedValueOnce(
+        Object.assign(new Error("Unable to validate state from the origin request."), { statusCode: 403 })
+      );
 
-    const response = await POST(callback(SAMLResponse));
+      const response = await POST(callback(SAMLResponse));
 
-    expect(response.status).toBe(400);
-    expect(await response.json()).toMatchObject({ message: "SAMLResponse is too costly to process" });
-    expect(samlResponseMock).not.toHaveBeenCalled();
-    expect(warn).toHaveBeenCalledWith(
-      expect.objectContaining({ stage: "parse_budget", reason: "time" }),
-      "Refused a SAML response that was too costly to parse"
-    );
-  });
-
-  test("refuses one whose decrypted document carries more markup than the bounds allow", async () => {
-    const SAMLResponse = encryptedResponse(flatAssertion(13_000));
-    expect(checkSamlResponseBounds(SAMLResponse)).toBeNull();
-    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
-
-    const response = await POST(callback(SAMLResponse));
-
-    expect(response.status).toBe(400);
-    expect(samlResponseMock).not.toHaveBeenCalled();
-    // The markup bound refuses it, or on a loaded machine the time budget gets there first; either way before jackson.
-    expect(warn).toHaveBeenCalledWith(
-      expect.objectContaining({ reason: expect.stringMatching(/^(markup|time)$/) }),
-      expect.stringMatching(
-        /^Refused a SAML response (whose decrypted assertion is past the bounds|that was too costly)/
-      )
-    );
-  });
-
-  test("refuses one whose decrypted document carries more Signature elements than the cap, as jackson refuses", async () => {
-    const SAMLResponse = encryptedResponse(assertionWithSignatures(SAML_RESPONSE_MAX_ELEMENTS.Signature + 1));
-    expect(checkSamlResponseBounds(SAMLResponse)).toBeNull();
-    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
-
-    const response = await POST(callback(SAMLResponse));
-
-    expect(response.status).toBe(400);
-    // jackson's own generic refusal, so the answer says nothing about what the encrypted assertion held.
-    expect(await response.json()).toEqual({
-      code: "bad_request",
-      message: "The SAML response was not accepted",
-      details: {},
-    });
-    expect(samlResponseMock).not.toHaveBeenCalled();
-    expect(warn).toHaveBeenCalledWith(
-      expect.objectContaining({
-        reason: "elements",
-        localName: "Signature",
-        count: SAML_RESPONSE_MAX_ELEMENTS.Signature + 1,
-      }),
-      "Refused a SAML response whose decrypted assertion is past the bounds"
-    );
-  });
+      expect(response.status).toBe(403);
+      expect(await response.json()).toEqual({
+        code: "forbidden",
+        message: "The SAML response was not accepted",
+        details: {},
+      });
+      expect(samlResponseMock).toHaveBeenCalledExactlyOnceWith({
+        RelayState: "boxyhq_jackson_state",
+        SAMLResponse: samlResponseWithoutAssertion(ENCRYPTED_RESPONSE_ISSUER),
+      });
+      expect(warn).toHaveBeenCalledWith(...logged);
+    }
+  );
 
   test("hands one encrypted to another key to jackson like any other, so its answer never says whether it decrypted", async () => {
     const SAMLResponse = Buffer.from(

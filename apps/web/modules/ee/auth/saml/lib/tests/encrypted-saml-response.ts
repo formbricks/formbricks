@@ -45,10 +45,10 @@ export const encryptAssertion = (plaintext: string, spPublicKey: string): string
   );
 };
 
-/** A response from `ENCRYPTED_RESPONSE_ISSUER` wrapping `inner`. */
-export const samlResponseWith = (inner: string): string =>
+/** A response from `issuer` wrapping `inner`. */
+export const samlResponseWith = (inner: string, issuer = ENCRYPTED_RESPONSE_ISSUER): string =>
   '<saml2p:Response xmlns:saml2p="urn:oasis:names:tc:SAML:2.0:protocol" ID="_resp1" InResponseTo="_req1" Version="2.0">' +
-  `<saml2:Issuer xmlns:saml2="${ASSERTION_NS}">${ENCRYPTED_RESPONSE_ISSUER}</saml2:Issuer>` +
+  `<saml2:Issuer xmlns:saml2="${ASSERTION_NS}">${issuer}</saml2:Issuer>` +
   '<saml2p:Status><saml2p:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/></saml2p:Status>' +
   `${inner}</saml2p:Response>`;
 

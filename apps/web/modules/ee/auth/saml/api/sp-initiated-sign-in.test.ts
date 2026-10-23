@@ -1,13 +1,21 @@
 import { NextRequest } from "next/server";
-import { createHash, createPublicKey, randomBytes } from "node:crypto";
+import { createHash, createPublicKey, randomBytes, randomUUID } from "node:crypto";
 import { createRequire } from "node:module";
 import { inflateRawSync } from "node:zlib";
-import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { SAML_AUDIENCE, SAML_PATH, SAML_PRODUCT, SAML_TENANT, WEBAPP_URL } from "@/lib/constants";
 import jackson from "@/modules/ee/auth/saml/lib/jackson";
+import { SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS } from "@/modules/ee/auth/saml/lib/saml-parse-budget";
+import {
+  createSpKeyPair,
+  encryptAssertion,
+  flatAssertion,
+  nestedNamespaceAssertion,
+  samlResponseWith,
+} from "@/modules/ee/auth/saml/lib/tests/encrypted-saml-response";
 import { createTestIdp } from "@/modules/ee/auth/saml/lib/tests/saml-test-idp";
 import { GET as authorize } from "./authorize/route";
-import { POST as callback } from "./callback/route";
+import { JACKSON_RELAY_STATE_PREFIX, POST as callback } from "./callback/route";
 import { POST as token } from "./token/route";
 import { GET as userinfo } from "./userinfo/route";
 
@@ -227,5 +235,79 @@ describe("SP-initiated SAML sign-in (ENG-4045)", () => {
       expect(await callbackResponse.json()).toMatchObject({ code: "bad_request" });
     },
     30_000
+  );
+});
+
+// ENG-6646: the callback's parse worker opens an encrypted assertion before jackson checks the issuer, the connection
+// and the SP session. When it then refuses what it found, the answer must be the one jackson gives an assertion that
+// does not decrypt, whatever state those checks are in, or it tells an anonymous sender which ciphertexts decrypt.
+describe("an encrypted assertion the parse worker refuses once opened (ENG-6646)", () => {
+  beforeEach(() => {
+    // Each test starts with the whole main-thread allowance, as in saml-parse-budget.test.ts.
+    if (globalThis.samlParsePool) globalThis.samlParsePool.allowanceMs = SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS;
+  });
+
+  const encryptedTo = (publicKey: string, plaintext: string, issuer: string) =>
+    Buffer.from(samlResponseWith(encryptAssertion(plaintext, publicKey), issuer)).toString("base64");
+
+  /** Everything a caller learns from the callback's answer: status, redirect and body. */
+  const answerTo = async (SAMLResponse: string, RelayState: string, browser: boolean) => {
+    const response = await callback(
+      new Request(ACS_URL, {
+        method: "POST",
+        headers: browser ? { "sec-fetch-mode": "navigate" } : {},
+        body: new URLSearchParams({ SAMLResponse, RelayState }),
+      })
+    );
+    return {
+      status: response.status,
+      location: response.headers.get("location"),
+      body: await response.text(),
+    };
+  };
+
+  test.each([
+    // jackson refuses before decrypting: no SP session behind the RelayState.
+    ["no session", "the configured", false, 403],
+    // ...or no connection for the issuer, which it checks first.
+    ["no session", "an unknown", false, 403],
+    ["a live session", "an unknown", true, 403],
+    // jackson gets as far as decrypting, and fails the response.
+    ["a live session", "the configured", true, 400],
+  ])(
+    "answers as for one that does not decrypt, with %s and %s issuer",
+    async (_session, issuerKind, liveSession, status) => {
+      const relayState = liveSession
+        ? (await startSignIn()).relayState
+        : `${JACKSON_RELAY_STATE_PREFIX}${randomUUID()}`;
+      const issuer = issuerKind === "the configured" ? testIdp.entityId : "https://unknown-idp.example.com";
+      const sp = await spPublicKey();
+      const elsewhere = createSpKeyPair().publicKey;
+      const samlResponse = vi.spyOn((await jackson())!.oauthController, "samlResponse");
+      /** The response jackson was last handed, decoded. */
+      const handedToJackson = () =>
+        Buffer.from(samlResponse.mock.lastCall?.[0].SAMLResponse ?? "", "base64").toString("utf8");
+
+      for (const browser of [false, true]) {
+        const undecryptable = await answerTo(
+          encryptedTo(elsewhere, flatAssertion(13_000), issuer),
+          relayState,
+          browser
+        );
+        expect(undecryptable.status).toBe(browser ? 303 : status);
+        expect(handedToJackson()).toContain("EncryptedAssertion");
+        // Opened, then refused: past the byte bounds once decrypted, and too costly to parse once decrypted.
+        for (const plaintext of [flatAssertion(13_000), nestedNamespaceAssertion(4000)]) {
+          expect(await answerTo(encryptedTo(sp, plaintext, issuer), relayState, browser)).toEqual(
+            undecryptable
+          );
+          // jackson judged the response without its assertion: the plaintext never reached it.
+          expect(handedToJackson()).not.toContain("EncryptedAssertion");
+          expect(handedToJackson()).toContain(issuer);
+        }
+      }
+      samlResponse.mockRestore();
+    },
+    60_000
   );
 });

@@ -153,6 +153,13 @@ describe("probeSamlResponseParse", () => {
       });
     });
 
+    // Once the worker has begun decrypting, its refusals are left for jackson to answer (ENG-6646).
+    const OPENED_TOO_COSTLY = {
+      outcome: "refused_encrypted",
+      issuer: ENCRYPTED_RESPONSE_ISSUER,
+      cause: { reason: "time" },
+    } as const;
+
     test("cuts off a plaintext too costly to parse, which the byte bounds pass as ciphertext", async () => {
       const response = encrypted(nestedNamespaceAssertion(4000));
       // The gap this closes: the bounds see only base64 ciphertext, and the outer document is cheap.
@@ -161,7 +168,7 @@ describe("probeSamlResponseParse", () => {
       const started = performance.now();
       const probe = await probeSamlResponseParse(response, sp.privateKey, IDP);
 
-      expect(probe).toEqual({ outcome: "too_costly", reason: "time" });
+      expect(probe).toEqual(OPENED_TOO_COSTLY);
       expect(performance.now() - started).toBeLessThan(SAML_PARSE_TIME_BUDGET_MS + 400);
     });
 
@@ -172,7 +179,11 @@ describe("probeSamlResponseParse", () => {
       // It parses in ~15 ms, so the markup bound refuses it; on a loaded machine the time budget may get there
       // first. The worker's measure is checked exactly in saml-parse-worker.test.ts.
       const probe = await probeSamlResponseParse(response, sp.privateKey, IDP);
-      expect(["refused", "too_costly"]).toContain(probe.outcome);
+      expect(probe).toMatchObject({
+        outcome: "refused_encrypted",
+        issuer: ENCRYPTED_RESPONSE_ISSUER,
+        cause: { reason: expect.stringMatching(/^(markup|time)$/) },
+      });
     });
 
     test("cuts off a decrypted assertion whose signature check is too costly", async () => {
@@ -183,9 +194,17 @@ describe("probeSamlResponseParse", () => {
       const response = encrypted(assertion);
       expect(checkSamlResponseBounds(response)).toBeNull();
 
-      await expect(probeSamlResponseParse(response, sp.privateKey, IDP)).resolves.toEqual({
-        outcome: "too_costly",
-        reason: "time",
+      await expect(probeSamlResponseParse(response, sp.privateKey, IDP)).resolves.toEqual(OPENED_TOO_COSTLY);
+    });
+
+    test("decrypts nothing in a response with no issuer, which jackson refuses before decrypting", async () => {
+      // A plaintext the budget would cut off, were it decrypted.
+      const response = b64(
+        samlResponseWith(encryptAssertion(nestedNamespaceAssertion(4000), sp.publicKey), "")
+      );
+
+      await expect(probeSamlResponseParse(response, sp.privateKey, IDP)).resolves.toMatchObject({
+        outcome: "parsed",
       });
     });
 

@@ -28,7 +28,11 @@ import type { SamlDecryptedRefusal } from "@/modules/ee/auth/saml/lib/saml-respo
  * for ~1-3 s is cut off here, and a real one (500 groups) takes ~5-20 ms. The worker then holds the decrypted document
  * to the same byte bounds as an unencrypted response (`checkDecryptedSamlResponseBounds`): a flood of cheap elements
  * parses well within the budget, but jackson's later passes over it cost several times as much. An encrypted assertion
- * that will not decrypt goes on to jackson, which fails it the same way (see `takeResult`).
+ * that will not decrypt goes on to jackson, which fails it the same way (see `takeMessage`).
+ *
+ * The worker opens an encrypted assertion before jackson has checked the issuer, the connection or the SP session, so
+ * how its job ends after that can depend on the plaintext. Those ends are `refused_encrypted`, which the route answers
+ * with jackson's own verdict on the response without its assertion (ENG-6646).
  */
 export const SAML_PARSE_TIME_BUDGET_MS = 250;
 
@@ -80,8 +84,19 @@ export type SamlParseProbe =
   | { outcome: "parsed"; ms: number; claims: SamlResponseClaims }
   /** It ran past the time budget or the worker's heap limit. */
   | { outcome: "too_costly"; reason: "time" | "memory" }
-  /** Its decrypted assertion, put in place, is past the byte bounds jackson's later passes are sized for. */
-  | { outcome: "refused"; refusal: SamlDecryptedRefusal }
+  /**
+   * Refused once the worker had begun decrypting its encrypted assertion: the decrypted document is past the byte
+   * bounds jackson's later passes are sized for, or the job then ran past the budget or the heap limit, or the worker
+   * died. Any answer of its own would say something about the plaintext before jackson has checked who sent it (the
+   * signal attacks on XML Encryption rely on, W3C XML Encryption 1.1 section 6.1), so the route asks jackson about the
+   * response without its assertion instead. `issuer` is as jackson's `parseIssuer` reads it, untruncated; the worker
+   * decrypts nothing without one, as jackson does not.
+   */
+  | {
+      outcome: "refused_encrypted";
+      issuer: string;
+      cause: SamlDecryptedRefusal | { reason: "time" | "memory" | "failed" };
+    }
   /**
    * The queue was full, or this process has spent its parse allowance for now, either before the job was queued or
    * by the time the worker answered; the response does not reach jackson.
@@ -106,6 +121,13 @@ interface WorkerHandle {
   port: MessagePort;
 }
 
+/** The worker's word that it is about to decrypt the job's encrypted assertion, with the issuer as jackson reads it. */
+interface DecryptingNotice {
+  id: number;
+  decrypting: true;
+  issuer: string;
+}
+
 interface WorkerResult {
   id: number;
   /** How long the parse took, measured in the worker, so a busy main thread does not count against the response. */
@@ -118,8 +140,11 @@ interface WorkerResult {
 interface Pool {
   handle: WorkerHandle | null;
   ready: Promise<WorkerHandle> | null;
-  /** The job holding the worker. Claimed before the worker is ready, so only one job is ever dispatched. */
-  running: (Job & { dispatched?: boolean; timer?: NodeJS.Timeout }) | null;
+  /**
+   * The job holding the worker. Claimed before the worker is ready, so only one job is ever dispatched. `decrypting`
+   * is set once the worker has said it is decrypting the job's encrypted assertion.
+   */
+  running: (Job & { dispatched?: boolean; timer?: NodeJS.Timeout; decrypting?: { issuer: string } }) | null;
   queue: Job[];
   nextId: number;
   /** Main-thread parse time left in the current allowance, and when it was last topped up. */
@@ -143,12 +168,27 @@ globalThis.samlParsePool ??= {
 };
 const pool = globalThis.samlParsePool;
 
+/**
+ * How a job that had begun decrypting ends: parsed, or busy (which depends on the allowance, not the response), as it
+ * is; any other end as `refused_encrypted`, since it may have come of the plaintext.
+ */
+const afterDecrypting = (probe: SamlParseProbe, issuer: string): SamlParseProbe => {
+  switch (probe.outcome) {
+    case "too_costly":
+      return { outcome: "refused_encrypted", issuer, cause: { reason: probe.reason } };
+    case "failed":
+      return { outcome: "refused_encrypted", issuer, cause: { reason: "failed" } };
+    default:
+      return probe;
+  }
+};
+
 const settleRunning = (probe: SamlParseProbe) => {
   const job = pool.running;
   if (!job) return;
   if (job.timer) clearTimeout(job.timer);
   pool.running = null;
-  job.resolve(probe);
+  job.resolve(job.decrypting ? afterDecrypting(probe, job.decrypting.issuer) : probe);
   pump();
 };
 
@@ -163,14 +203,19 @@ const refillAllowance = (now: number) => {
 };
 
 /**
- * Settle the running job with `result` if it is that job's answer; a stale answer from an older job is ignored. The
- * allowance is checked again here, not only when the job was queued: every job in a full queue was accepted while
- * the allowance was still positive, so a burst would otherwise all reach jackson at once. Here only the job that
- * spends the allowance does, and the rest answer busy.
+ * Settle the running job with `message` if it is that job's answer, and return whether it did; a stale message from an
+ * older job is ignored. A decrypting notice only marks the job. The allowance is checked again here, not only when the
+ * job was queued: every job in a full queue was accepted while the allowance was still positive, so a burst would
+ * otherwise all reach jackson at once. Here only the job that spends the allowance does, and the rest answer busy.
  */
-const takeResult = (result: WorkerResult): boolean => {
+const takeMessage = (message: WorkerResult | DecryptingNotice): boolean => {
   const job = pool.running;
-  if (!job?.dispatched || result.id !== job.id) return false;
+  if (!job?.dispatched || message.id !== job.id) return false;
+  if ("decrypting" in message) {
+    job.decrypting = { issuer: message.issuer };
+    return false;
+  }
+  const result = message;
   if (result.ms > SAML_PARSE_TIME_BUDGET_MS) {
     settleRunning({ outcome: "too_costly", reason: "time" });
     return true;
@@ -181,7 +226,18 @@ const takeResult = (result: WorkerResult): boolean => {
   // an anonymous sender which ciphertexts decrypt, the signal attacks on XML Encryption rely on; failed decryptions
   // and failed signature checks have to look alike from outside.
   if (result.decryption?.decrypted && result.decryption.refusal) {
-    settleRunning({ outcome: "refused", refusal: result.decryption.refusal });
+    // The worker says it is decrypting before it does, on this same port, so the notice is always here first. Were it
+    // not, nothing could be answered without telling the sender about the plaintext, so the job fails.
+    if (!job.decrypting) {
+      logger.error("SAML parse worker refused a decrypted assertion it had not announced");
+      settleRunning({ outcome: "failed" });
+      return true;
+    }
+    settleRunning({
+      outcome: "refused_encrypted",
+      issuer: job.decrypting.issuer,
+      cause: result.decryption.refusal,
+    });
     return true;
   }
   refillAllowance(performance.now());
@@ -258,14 +314,14 @@ const whenReady = (handle: WorkerHandle): Promise<WorkerHandle> => {
       WORKER_STARTUP_TIMEOUT_MS
     );
 
-    port.on("message", (message: { ready?: true } & Partial<WorkerResult>) => {
-      if (message.ready) {
+    port.on("message", (message: { ready: true } | WorkerResult | DecryptingNotice) => {
+      if ("ready" in message) {
         clearTimeout(startup);
         ready = true;
         resolve(handle);
         return;
       }
-      takeResult(message as WorkerResult);
+      takeMessage(message);
     });
     worker.on("error", onFailure);
     worker.on("exit", onFailure);
@@ -299,7 +355,7 @@ function pump(): void {
           pending;
           pending = receiveMessageOnPort(handle.port)
         ) {
-          if (takeResult(pending.message as WorkerResult)) return;
+          if (takeMessage(pending.message as WorkerResult | DecryptingNotice)) return;
         }
         // Terminating stops xmldom mid-parse: it is plain JavaScript, which V8 interrupts at once.
         discardWorker(handle);
