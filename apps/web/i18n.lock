@@ -2304,6 +2304,7 @@ checksums:
     workspace/creatives/editor/save_anyway: 7995328d36e8d6563ff5870d959ae6df
     workspace/creatives/editor/schedule: a75428cb811bc50150cecde090a3a0d5
     workspace/creatives/editor/schedule_description: d4693c520451203c6eb8b8614bbe2d2b
+    workspace/creatives/editor/search_surveys: acb2a01b8fba28ca83171ddeab648558
     workspace/creatives/editor/sections: ccc26f9d67241ecf1fb61f66e0bffdff
     workspace/creatives/editor/set_in_light_first: 6a28747920d47d826d9df4e76cf34848
     workspace/creatives/editor/shape_and_size: 3eddb0e0d9992aa5d73998986ef3be70

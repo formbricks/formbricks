@@ -15,18 +15,10 @@ import {
 import { type Dispatch, type SetStateAction, useId } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
-import { isRestrictedSurveyPick } from "@/modules/survey/visibility/lib/outbound";
-import { Badge } from "@/modules/ui/components/badge";
 import { Editor } from "@/modules/ui/components/editor";
 import { Input } from "@/modules/ui/components/input";
+import { InputCombobox, type TComboboxOption } from "@/modules/ui/components/input-combo-box";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
 import { bannerHtmlToRuns, bannerRunsToHtml } from "../../lib/banner-text";
 import type { TDestinationSurveyOption } from "../../lib/destination-options";
@@ -37,6 +29,7 @@ import type {
   TFeedbackButtonIcon,
 } from "../../lib/editor-form";
 import { type TPublishIssue, isValidLink } from "../../lib/publish-check";
+import { getSurveyPickState } from "../../lib/survey-picker";
 import { CREATIVE_TYPE_ICONS } from "../creative-icons";
 import { EditorField, EditorPanel } from "./editor-primitives";
 import { SurveyLanguageWarning } from "./survey-language-warning";
@@ -141,13 +134,22 @@ const SurveyPicker = ({
   languages: TCreativeEditorForm["languages"];
 }>) => {
   const { t } = useTranslation();
+  const pickerId = useId();
   const survey = surveyOptions.find((option) => option.id === surveyId);
-  // The creative's own survey stays selectable, as the server accepts it unchanged.
-  const attachedSurveyIds = linkedSurveyId ? [linkedSurveyId] : [];
-  // The creative rule applies whatever the organization's visibility plan (ENG-3868), hence `true`.
-  const isUnavailable = (option: TDestinationSurveyOption) =>
-    isRestrictedSurveyPick(true, option, attachedSurveyIds);
-  const restrictedLabel = t("workspace.surveys.visibility.restricted");
+  const badgeText = {
+    restricted: t("workspace.surveys.visibility.restricted"),
+    notAllowed: t("workspace.creatives.editor.survey_not_allowed"),
+  };
+  const comboboxOptions = surveyOptions.map((option): TComboboxOption => {
+    const { disabled, badge } = getSurveyPickState(option, linkedSurveyId);
+    return {
+      value: option.id,
+      label: option.name,
+      icon: option.type === "app" ? MessageCircleIcon : LinkIcon,
+      disabled,
+      ...(badge && { meta: { badge: badgeText[badge] } }),
+    };
+  });
 
   if (surveyOptions.length === 0) {
     return <p className="text-xs text-slate-500">{t("workspace.creatives.editor.no_surveys")}</p>;
@@ -155,41 +157,22 @@ const SurveyPicker = ({
 
   return (
     <>
-      <Select value={surveyId ?? undefined} onValueChange={onChange}>
-        <SelectTrigger
-          className="bg-white aria-invalid:border-red-500"
-          aria-label={t("workspace.creatives.editor.choose_survey")}
-          aria-invalid={isInvalid || undefined}>
-          <SelectValue placeholder={t("workspace.creatives.editor.choose_survey")} />
-        </SelectTrigger>
-        <SelectContent>
-          {surveyOptions.map((option) => {
-            const isRestricted = isUnavailable(option);
-            return (
-              <SelectItem key={option.id} value={option.id} disabled={isRestricted}>
-                <span className="flex items-center gap-2">
-                  {option.type === "app" ? (
-                    <MessageCircleIcon className="size-4 shrink-0 text-slate-500" />
-                  ) : (
-                    <LinkIcon className="size-4 shrink-0 text-slate-500" />
-                  )}
-                  <span className="truncate">{option.name}</span>
-                  {isRestricted && <Badge size="tiny" type="gray" text={restrictedLabel} />}
-                  {option.notAllowed && (
-                    <Badge
-                      size="tiny"
-                      type="warning"
-                      text={t("workspace.creatives.editor.survey_not_allowed")}
-                    />
-                  )}
-                </span>
-              </SelectItem>
-            );
-          })}
-        </SelectContent>
-      </Select>
+      <InputCombobox
+        id={pickerId}
+        aria-label={t("workspace.creatives.editor.choose_survey")}
+        aria-invalid={isInvalid || undefined}
+        searchPlaceholder={t("workspace.creatives.editor.search_surveys")}
+        placeholder={t("workspace.creatives.editor.choose_survey")}
+        options={comboboxOptions}
+        value={surveyId}
+        onChangeValue={(value) => onChange(String(value))}
+        emptyDropdownText={t("common.no_surveys_found")}
+        showCheckIcon
+        iconClassName="size-4 shrink-0 text-slate-500"
+        comboboxClasses={cn("max-w-none bg-white", isInvalid && "border-red-500")}
+      />
       {/* A disabled item takes no pointer events, so the reason is said once, under the picker. */}
-      {surveyOptions.some(isUnavailable) && (
+      {comboboxOptions.some((option) => option.disabled) && (
         <p className="text-xs text-slate-500">{t("workspace.creatives.editor.restricted_surveys_note")}</p>
       )}
       {survey && (

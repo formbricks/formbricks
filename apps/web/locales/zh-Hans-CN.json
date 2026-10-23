@@ -2387,6 +2387,7 @@
         "save_anyway": "仍然保存",
         "schedule": "排期",
         "schedule_description": "两项都留空,则发布后立即显示,且不设结束时间。",
+        "search_surveys": "搜索问卷",
         "sections": "编辑器分区",
         "set_in_light_first": "请先在浅色模式下设置",
         "shape_and_size": "形状和尺寸",

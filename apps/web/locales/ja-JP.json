@@ -2387,6 +2387,7 @@
         "save_anyway": "このまま保存",
         "schedule": "スケジュール",
         "schedule_description": "両方を空のままにすると、公開後すぐに表示され、終了日は設定されません。",
+        "search_surveys": "アンケートを検索",
         "sections": "エディターのセクション",
         "set_in_light_first": "先にライトで設定してください",
         "shape_and_size": "形とサイズ",
