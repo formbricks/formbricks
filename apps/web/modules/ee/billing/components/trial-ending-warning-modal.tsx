@@ -99,13 +99,11 @@ export const TrialEndingWarningModal = ({ daysRemaining, billingHref }: TrialEnd
               onClick={() => {
                 posthog.capture("trial_ending_warning_cta_clicked", {
                   days_remaining: daysRemaining,
-                  cta: "add_payment_method",
+                  cta: "upgrade",
                 });
                 handleDismiss();
               }}>
-              <Link href={billingHref}>
-                {t("workspace.settings.billing.trial_ending_add_payment_method")}
-              </Link>
+              <Link href={billingHref}>{t("workspace.settings.billing.trial_ending_upgrade")}</Link>
             </Button>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import Stripe from "stripe";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   DEFAULT_PRO_TRIAL_DAYS,
   addOptimisticBillingFeature,
@@ -1106,6 +1106,7 @@ describe("organization-billing", () => {
         { price: "price_hobby_monthly", quantity: 1 },
       ],
       trial_end: "now",
+      cancel_at: "",
       proration_behavior: "none",
       trial_settings: { end_behavior: { missing_payment_method: "create_invoice" } },
     });
@@ -1190,6 +1191,7 @@ describe("organization-billing", () => {
         { price: "price_hobby_monthly", quantity: 1 },
       ],
       trial_end: "now",
+      cancel_at: "",
       proration_behavior: "none",
       trial_settings: { end_behavior: { missing_payment_method: "create_invoice" } },
     });
@@ -1334,6 +1336,7 @@ describe("organization-billing", () => {
         { price: "price_hobby_monthly", quantity: 1 },
       ],
       trial_end: "now",
+      cancel_at: "",
       proration_behavior: "none",
       trial_settings: { end_behavior: { missing_payment_method: "create_invoice" } },
     });
@@ -1635,12 +1638,13 @@ describe("organization-billing", () => {
     });
 
     expect(result.mode).toBe("immediate");
-    // Single update: ends the trial and charges the full plan price synchronously; no credits,
-    // coupons, or balance mutations ride along.
+    // Single update: ends the trial, drops the trial's cancel_at Hobby fallback, and charges the full
+    // plan price synchronously; no credits, coupons, or balance mutations ride along.
     expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith(
       "sub_trial",
       expect.objectContaining({
         trial_end: "now",
+        cancel_at: "",
         proration_behavior: "always_invoice",
         payment_behavior: "error_if_incomplete",
       })
@@ -1671,6 +1675,15 @@ describe("organization-billing", () => {
       ([id, args]) => id === "sub_trial" && args.trial_end === "now"
     );
     expect(conversionUpdates).toHaveLength(1);
+    // Nothing outside the rolled-back conversion cleared cancel_at (sending cancel_at_period_end false
+    // clears it too), so the trial still ends on Hobby instead of a paid invoice.
+    const fallbackClears = mocks.subscriptionsUpdate.mock.calls.filter(
+      ([id, args]) =>
+        id === "sub_trial" &&
+        args.trial_end !== "now" &&
+        ("cancel_at" in args || "cancel_at_period_end" in args)
+    );
+    expect(fallbackClears).toHaveLength(0);
   });
 
   test("previewImmediateUpgradeCharge quotes Stripe's full invoice total for a trial conversion", async () => {
@@ -3323,29 +3336,57 @@ describe("organization-billing", () => {
       });
     });
 
-    // The trial length only reaches Stripe through `trial_period_days`. Assert on the Stripe call
-    // itself: every other test mocks this function away, so a hardcoded value here would be the
-    // A/B test silently running a 14-day trial for both arms while PostHog reports 7.
-    test("sends the resolved trial length to Stripe as trial_period_days", async () => {
-      await createProTrialSubscription("org_1", "cus_1", 7);
+    // The trial length only reaches Stripe through `trial_end`. Assert on the Stripe call itself:
+    // every other test mocks this function away, so a hardcoded value here would be the A/B test
+    // silently running a 14-day trial for both arms while PostHog reports 7.
+    describe("trial end", () => {
+      const nowMs = Date.UTC(2026, 9, 23, 15, 41, 2);
+      const nowUnix = Math.floor(nowMs / 1000);
 
-      expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          customer: "cus_1",
-          trial_period_days: 7,
-          metadata: { organizationId: "org_1" },
-        }),
-        { idempotencyKey: "create-pro-trial-org_1" }
-      );
-    });
+      beforeEach(() => {
+        vi.useFakeTimers({ now: nowMs, toFake: ["Date"] });
+      });
 
-    test("defaults to the 14-day trial when no trial length is passed", async () => {
-      await createProTrialSubscription("org_1", "cus_1");
+      afterEach(() => {
+        vi.useRealTimers();
+      });
 
-      expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
-        expect.objectContaining({ trial_period_days: DEFAULT_PRO_TRIAL_DAYS }),
-        { idempotencyKey: "create-pro-trial-org_1" }
-      );
+      test("sends the resolved trial length to Stripe as trial_end", async () => {
+        await createProTrialSubscription("org_1", "cus_1", 7);
+
+        expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
+          expect.objectContaining({
+            customer: "cus_1",
+            trial_end: nowUnix + 7 * 86_400,
+            metadata: { organizationId: "org_1" },
+          }),
+          { idempotencyKey: "create-pro-trial-org_1" }
+        );
+      });
+
+      test("defaults to the 14-day trial when no trial length is passed", async () => {
+        await createProTrialSubscription("org_1", "cus_1");
+
+        expect(mocks.subscriptionsCreate).toHaveBeenCalledWith(
+          expect.objectContaining({ trial_end: nowUnix + DEFAULT_PRO_TRIAL_DAYS * 86_400 }),
+          { idempotencyKey: "create-pro-trial-org_1" }
+        );
+      });
+
+      // ENG-4035: a card on file must not turn the free trial into a paid invoice. The subscription
+      // cancels at the exact second the trial ends (any gap is billed), so Stripe never invoices Pro.
+      test("cancels the subscription at the exact trial end so expiry never bills Pro", async () => {
+        await createProTrialSubscription("org_1", "cus_1", 7);
+
+        const [createArgs] = mocks.subscriptionsCreate.mock.calls[0];
+        expect(createArgs).toMatchObject({
+          trial_end: nowUnix + 7 * 86_400,
+          cancel_at: nowUnix + 7 * 86_400,
+          proration_behavior: "none",
+          trial_settings: { end_behavior: { missing_payment_method: "cancel" } },
+        });
+        expect(createArgs.trial_period_days).toBeUndefined();
+      });
     });
 
     test("does not create a trial subscription when the email already used a Pro trial", async () => {

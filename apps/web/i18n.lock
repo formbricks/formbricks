@@ -2925,10 +2925,10 @@ checksums:
     workspace/settings/billing/this_includes: 127e0fe104f47886b54106a057a6b26f
     workspace/settings/billing/trial_alert_description: bd1374047e8bde3771cec7a8cfc45c42
     workspace/settings/billing/trial_already_used: 5433347ff7647fe0aba0fe91a44560ba
-    workspace/settings/billing/trial_cancels_automatically: a6805d9b040b561f50e6deae244a600b
-    workspace/settings/billing/trial_ending_add_payment_method: 38ad2a7f6bc599bf596eab394b379c02
-    workspace/settings/billing/trial_ending_description: 58ef54fe4179fd2d46150d2e0c2a13f7
+    workspace/settings/billing/trial_cancels_automatically: 6e7b13535744b416c8a78afbda2b2b70
+    workspace/settings/billing/trial_ending_description: 77d65d1af4d82ba0eb53e6f8da58e2b7
     workspace/settings/billing/trial_ending_title: 3c2b88e6693450a7f38255076414eed5
+    workspace/settings/billing/trial_ending_upgrade: 63c3b52882e0d779859307d672c178c2
     workspace/settings/billing/trial_warning_200_description: 4549a97c1dc6f0a6764076a90e706311
     workspace/settings/billing/trial_warning_200_title: d4e7da79a479619108b585d9736dbc3d
     workspace/settings/billing/trial_warning_250_description: da984b1877c9ef7a6eb989b18275079d
