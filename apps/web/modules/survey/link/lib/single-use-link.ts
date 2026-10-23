@@ -1,6 +1,8 @@
 import "server-only";
 import { createHash } from "node:crypto";
+import { cache as reactCache } from "react";
 import { logger } from "@formbricks/logger";
+import type { TSurvey } from "@formbricks/types/surveys/types";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt } from "@/lib/crypto";
 import { env } from "@/lib/env";
@@ -22,6 +24,21 @@ import { type TSingleUseLinkSurface, recordSingleUseLinkValidation } from "./sin
  */
 const fingerprintSuToken = (suToken: string): string =>
   createHash("sha256").update(suToken).digest("hex").slice(0, 12);
+
+/** A single-use link value as it arrives from the URL: repeated parameters come back as an array. */
+export type TSingleUseSearchParam = string | string[] | null;
+
+/**
+ * Next's App Router hands back `string[]` for a repeated query parameter, and the page surfaces read
+ * these straight off `searchParams`. `TLinkSurveySearchParams` types them as `string`, but its
+ * `Record<string, string | string[] | undefined>` index signature means the intersection still reports
+ * `string | undefined`, so the compiler cannot catch it. Coerce here rather than at each caller: an
+ * array reaching the validator throws on `.trim()`, and one reaching `createHash` throws
+ * ERR_INVALID_ARG_TYPE, which would turn `?suToken=a&suToken=b` into a 500 plus a Sentry event that any
+ * anonymous caller could repeat at will.
+ */
+export const singleSearchParamValue = (value?: TSingleUseSearchParam): string | undefined =>
+  typeof value === "string" ? value : undefined;
 
 /**
  * The one place that turns a link survey's URL parameters into a canonical single-use id.
@@ -53,23 +70,14 @@ export const resolveSingleUseIdForSurvey = ({
 }: {
   surveyId: string;
   isEncrypted: boolean;
-  suId?: string | string[] | null;
-  suToken?: string | string[] | null;
+  suId?: TSingleUseSearchParam;
+  suToken?: TSingleUseSearchParam;
   surface: TSingleUseLinkSurface;
 }): string | null => {
   const mode = isEncrypted ? "encrypted" : "plaintext";
 
-  // Next's App Router hands back `string[]` for a repeated query parameter, and the page surfaces
-  // read these straight off `searchParams`. `TLinkSurveySearchParams` types them as `string`, but its
-  // `Record<string, string | string[] | undefined>` index signature means the intersection still
-  // reports `string | undefined`, so the compiler cannot catch it. Coerce here rather than at each
-  // caller: an array reaching the validator throws on `.trim()`, and one reaching `createHash` throws
-  // ERR_INVALID_ARG_TYPE, which would turn `?suToken=a&suToken=b` into a 500 plus a Sentry event that
-  // any anonymous caller could repeat at will.
-  const singleValue = (value: string | string[] | null | undefined): string | undefined =>
-    typeof value === "string" ? value : undefined;
-  const rawSuId = singleValue(suId);
-  const rawSuToken = singleValue(suToken);
+  const rawSuId = singleSearchParamValue(suId);
+  const rawSuToken = singleSearchParamValue(suToken);
 
   let result: TSurveySingleUseLinkValidation;
   try {
@@ -146,4 +154,62 @@ export const resolveSingleUseIdForSurvey = ({
     surface,
   });
   return result.singleUseId;
+};
+
+/**
+ * Resolved once per request. The link page and its `generateMetadata` ask the same question about the same
+ * URL, and resolving it twice would count one rejected link twice and log it twice — the metric and the
+ * warn line are how an operator tells an enumeration from a broken email template, so both must stay one
+ * per request. Primitive arguments only, because `cache` compares them by identity.
+ */
+const resolveSingleUseIdOnce = reactCache(
+  (
+    surveyId: string,
+    isEncrypted: boolean,
+    suId: string | undefined,
+    suToken: string | undefined,
+    surface: TSingleUseLinkSurface
+  ): string | null => resolveSingleUseIdForSurvey({ surveyId, isEncrypted, suId, suToken, surface })
+);
+
+/**
+ * `singleUseId` is the canonical id to record against a response, and is absent when the survey does not
+ * use single-use links.
+ */
+export type TLinkSurveySingleUseAccess = { allowed: true; singleUseId?: string } | { allowed: false };
+
+/**
+ * Whether a request to a public link-survey surface carries the single-use link the survey requires.
+ *
+ * The decision every such surface makes, in one place: the link page, the contact page, the page metadata,
+ * and the PIN and verify-email actions. The PIN action once took no link at all and handed a single-use
+ * survey's definition to anyone with its id, while the page refused the same caller (ENG-4041). A surface
+ * that answers "not allowed" must answer exactly as it does for a survey that does not exist.
+ *
+ * `suId` and `suToken` are the raw URL values, never a canonical `singleUseId`: in encrypted mode the
+ * canonical id is the decrypted cuid, while the token signs the ciphertext.
+ */
+export const getLinkSurveySingleUseAccess = ({
+  survey,
+  suId,
+  suToken,
+  surface,
+}: {
+  survey: Pick<TSurvey, "id" | "singleUse">;
+  suId?: TSingleUseSearchParam;
+  suToken?: TSingleUseSearchParam;
+  surface: TSingleUseLinkSurface;
+}): TLinkSurveySingleUseAccess => {
+  if (!survey.singleUse?.enabled) {
+    return { allowed: true };
+  }
+
+  const singleUseId = resolveSingleUseIdOnce(
+    survey.id,
+    survey.singleUse.isEncrypted,
+    singleSearchParamValue(suId),
+    singleSearchParamValue(suToken),
+    surface
+  );
+  return singleUseId ? { allowed: true, singleUseId } : { allowed: false };
 };

@@ -1,14 +1,11 @@
 import { notFound } from "next/navigation";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { generateSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
 import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getBasicSurveyMetadata, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
-import {
-  getGenericContactSurveyMetadata,
-  getMetadataForContactSurvey,
-  getMetadataForLinkSurvey,
-} from "./metadata";
+import { getGenericSurveyMetadata, getMetadataForContactSurvey, getMetadataForLinkSurvey } from "./metadata";
 
 vi.mock("@/modules/survey/link/lib/data", () => ({
   getSurveyWithMetadata: vi.fn(),
@@ -17,6 +14,15 @@ vi.mock("@/modules/survey/link/lib/data", () => ({
 vi.mock("@/modules/survey/link/lib/workspace", () => ({
   getWorkspaceContextForLinkSurvey: vi.fn(),
 }));
+
+// The single-use check runs for real, on real HMAC tokens; see actions.test.ts.
+const { KEY } = vi.hoisted(() => ({ KEY: "0123456789abcdef".repeat(4) }));
+vi.mock("@/lib/env", () => ({ env: { ENCRYPTION_KEY: KEY, SINGLE_USE_LEGACY_UNSIGNED_UNTIL: undefined } }));
+vi.mock("@/lib/constants", async (importOriginal: () => Promise<typeof import("@/lib/constants")>) => ({
+  ...(await importOriginal()),
+  ENCRYPTION_KEY: KEY,
+}));
+vi.mock("@formbricks/logger", () => ({ logger: { warn: vi.fn(), error: vi.fn() } }));
 
 vi.mock("next/navigation", () => ({
   notFound: vi.fn(),
@@ -92,7 +98,7 @@ describe("link-survey metadata", () => {
 
     vi.mocked(getSurveyWithMetadata).mockResolvedValue(mockSurvey);
 
-    const result = await getMetadataForLinkSurvey(mockSurveyId);
+    const result = await getMetadataForLinkSurvey({ surveyId: mockSurveyId });
 
     expect(getSurveyWithMetadata).toHaveBeenCalledWith(mockSurveyId);
     expect(getBasicSurveyMetadata).toHaveBeenCalledWith(mockSurveyId, undefined, mockSurvey, []);
@@ -143,7 +149,7 @@ describe("link-survey metadata", () => {
       ogImage: mockOgImageUrl as any,
     });
 
-    const result = await getMetadataForLinkSurvey(mockSurveyId);
+    const result = await getMetadataForLinkSurvey({ surveyId: mockSurveyId });
 
     expect(result.openGraph?.images).toEqual(mockOgImageUrl);
     expect(result.twitter?.images).toEqual(mockOgImageUrl);
@@ -159,7 +165,7 @@ describe("link-survey metadata", () => {
 
     vi.mocked(getSurveyWithMetadata).mockResolvedValue(mockSurvey as any);
 
-    await getMetadataForLinkSurvey(mockSurveyId);
+    await getMetadataForLinkSurvey({ surveyId: mockSurveyId });
 
     expect(notFound).toHaveBeenCalled();
   });
@@ -174,7 +180,7 @@ describe("link-survey metadata", () => {
 
     vi.mocked(getSurveyWithMetadata).mockResolvedValue(mockSurvey);
 
-    await getMetadataForLinkSurvey(mockSurveyId);
+    await getMetadataForLinkSurvey({ surveyId: mockSurveyId });
 
     expect(notFound).toHaveBeenCalled();
   });
@@ -190,7 +196,7 @@ describe("link-survey metadata", () => {
 
     vi.mocked(getSurveyWithMetadata).mockResolvedValue(mockSurvey);
 
-    await getMetadataForLinkSurvey(mockSurveyId);
+    await getMetadataForLinkSurvey({ surveyId: mockSurveyId });
 
     expect(notFound).toHaveBeenCalled();
   });
@@ -201,14 +207,16 @@ describe("link-survey metadata", () => {
     });
     vi.mocked(getSurveyWithMetadata).mockRejectedValue(new ResourceNotFoundError("Survey", mockSurveyId));
 
-    await expect(getMetadataForLinkSurvey(mockSurveyId)).rejects.toThrow("NEXT_HTTP_ERROR_FALLBACK;404");
+    await expect(getMetadataForLinkSurvey({ surveyId: mockSurveyId })).rejects.toThrow(
+      "NEXT_HTTP_ERROR_FALLBACK;404"
+    );
     expect(notFound).toHaveBeenCalled();
   });
 
   test("rethrows a loader failure that is not a missing survey", async () => {
     vi.mocked(getSurveyWithMetadata).mockRejectedValue(new DatabaseError("connection lost"));
 
-    await expect(getMetadataForLinkSurvey(mockSurveyId)).rejects.toBeInstanceOf(DatabaseError);
+    await expect(getMetadataForLinkSurvey({ surveyId: mockSurveyId })).rejects.toBeInstanceOf(DatabaseError);
     expect(notFound).not.toHaveBeenCalled();
   });
 
@@ -229,7 +237,7 @@ describe("link-survey metadata", () => {
       },
     });
 
-    const result = await getMetadataForLinkSurvey(mockSurveyId);
+    const result = await getMetadataForLinkSurvey({ surveyId: mockSurveyId });
 
     expect(result).toEqual({
       title: mockSurveyName,
@@ -271,7 +279,7 @@ describe("link-survey metadata", () => {
       },
     });
 
-    const result = await getMetadataForLinkSurvey(mockSurveyId);
+    const result = await getMetadataForLinkSurvey({ surveyId: mockSurveyId });
 
     expect(result).toEqual({
       title: mockSurveyName,
@@ -296,6 +304,44 @@ describe("link-survey metadata", () => {
     });
   });
 
+  describe("a single-use survey (ENG-4041)", () => {
+    const singleUseSurvey = {
+      id: mockSurveyId,
+      name: mockSurveyName,
+      type: "link",
+      status: "inProgress",
+      archivedAt: null,
+      singleUse: { enabled: true, isEncrypted: false },
+    } as never;
+    const indexingRules = {
+      alternates: { canonical: `/s/${mockSurveyId}` },
+      robots: { index: false, follow: true, googleBot: { index: false, follow: true, noimageindex: true } },
+    };
+
+    test.each([
+      ["no link", {}],
+      ["a forged token", { suId: "invitee-1", suToken: "0".repeat(64) }],
+      ["a repeated suId", { suId: ["invitee-1", "invitee-2"], suToken: "0".repeat(64) }],
+    ])("opened with %s gets generic metadata that never names it, and stays unindexed", async (_l, link) => {
+      vi.mocked(getSurveyWithMetadata).mockResolvedValue(singleUseSurvey);
+
+      const result = await getMetadataForLinkSurvey({ surveyId: mockSurveyId, ...link });
+
+      expect(result).toEqual({ ...getGenericSurveyMetadata(), ...indexingRules });
+      expect(getBasicSurveyMetadata).not.toHaveBeenCalled();
+      expect(getWorkspaceContextForLinkSurvey).not.toHaveBeenCalled();
+    });
+
+    test("opened with a valid link is named as usual", async () => {
+      vi.mocked(getSurveyWithMetadata).mockResolvedValue(singleUseSurvey);
+      const link = generateSurveySingleUseLinkParams(mockSurveyId, false);
+
+      const result = await getMetadataForLinkSurvey({ surveyId: mockSurveyId, ...link });
+
+      expect(result).toMatchObject({ title: mockSurveyName, ...indexingRules });
+    });
+  });
+
   describe("getMetadataForContactSurvey", () => {
     const contactSurvey = (overrides: Record<string, unknown> = {}) =>
       ({
@@ -315,21 +361,47 @@ describe("link-survey metadata", () => {
     ])("gives %s survey generic metadata, never its name", async (_label, state) => {
       vi.mocked(getSurveyWithMetadata).mockResolvedValue(contactSurvey(state));
 
-      expect(await getMetadataForContactSurvey(mockSurveyId)).toEqual(getGenericContactSurveyMetadata());
+      expect(await getMetadataForContactSurvey({ surveyId: mockSurveyId })).toEqual(
+        getGenericSurveyMetadata()
+      );
       expect(getBasicSurveyMetadata).not.toHaveBeenCalled();
     });
 
     test("gives a survey that can't be loaded generic metadata", async () => {
       vi.mocked(getSurveyWithMetadata).mockRejectedValue(new ResourceNotFoundError("Survey", mockSurveyId));
 
-      expect(await getMetadataForContactSurvey(mockSurveyId)).toEqual(getGenericContactSurveyMetadata());
+      expect(await getMetadataForContactSurvey({ surveyId: mockSurveyId })).toEqual(
+        getGenericSurveyMetadata()
+      );
+    });
+
+    test("gives a single-use survey opened without its link generic metadata (ENG-4041)", async () => {
+      vi.mocked(getSurveyWithMetadata).mockResolvedValue(
+        contactSurvey({ singleUse: { enabled: true, isEncrypted: false } })
+      );
+
+      expect(await getMetadataForContactSurvey({ surveyId: mockSurveyId })).toEqual(
+        getGenericSurveyMetadata()
+      );
+      expect(getBasicSurveyMetadata).not.toHaveBeenCalled();
+    });
+
+    test("names a single-use survey opened with a valid link", async () => {
+      vi.mocked(getSurveyWithMetadata).mockResolvedValue(
+        contactSurvey({ singleUse: { enabled: true, isEncrypted: false } })
+      );
+      const link = generateSurveySingleUseLinkParams(mockSurveyId, false);
+
+      expect(await getMetadataForContactSurvey({ surveyId: mockSurveyId, ...link })).toMatchObject({
+        title: mockSurveyName,
+      });
     });
 
     test("names a public survey, without the /s canonical or robots rules", async () => {
       const survey = contactSurvey();
       vi.mocked(getSurveyWithMetadata).mockResolvedValue(survey);
 
-      const result = await getMetadataForContactSurvey(mockSurveyId, ["de"]);
+      const result = await getMetadataForContactSurvey({ surveyId: mockSurveyId, acceptedLanguages: ["de"] });
 
       expect(getBasicSurveyMetadata).toHaveBeenCalledWith(mockSurveyId, undefined, survey, ["de"]);
       expect(result).toEqual({

@@ -6,13 +6,13 @@ import { verifyContactSurveyToken } from "@/modules/ee/contacts/lib/contact-surv
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
-import { getExistingContactResponse } from "@/modules/survey/link/lib/data";
+import { getExistingContactResponse, getResponseBySingleUseId } from "@/modules/survey/link/lib/data";
 import { getServableLinkSurvey } from "@/modules/survey/link/lib/servable-survey";
-import { resolveSingleUseIdForSurvey } from "@/modules/survey/link/lib/single-use-link";
+import { getLinkSurveySingleUseAccess } from "@/modules/survey/link/lib/single-use-link";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getWorkspaceById } from "@/modules/survey/link/lib/workspace";
-import { getGenericContactSurveyMetadata, getMetadataForContactSurvey } from "@/modules/survey/link/metadata";
+import { getGenericSurveyMetadata, getMetadataForContactSurvey } from "@/modules/survey/link/metadata";
 
 interface ContactSurveyPageProps {
   params: Promise<{
@@ -23,15 +23,21 @@ interface ContactSurveyPageProps {
 
 export const generateMetadata = async (props: ContactSurveyPageProps): Promise<Metadata> => {
   const { jwt } = await props.params;
+  const { suId, suToken } = await props.searchParams;
   try {
     const result = verifyContactSurveyToken(jwt);
     if (!result.ok) {
-      return getGenericContactSurveyMetadata();
+      return getGenericSurveyMetadata();
     }
-    return await getMetadataForContactSurvey(result.data.surveyId, await getAcceptedLanguages());
+    return await getMetadataForContactSurvey({
+      surveyId: result.data.surveyId,
+      acceptedLanguages: await getAcceptedLanguages(),
+      suId,
+      suToken,
+    });
   } catch {
     // A token or lookup failure still gets generic metadata rather than an error page.
-    return getGenericContactSurveyMetadata();
+    return getGenericSurveyMetadata();
   }
 };
 
@@ -77,35 +83,26 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     notFound();
   }
 
-  const isSingleUseSurvey = survey?.singleUse?.enabled;
-  const isSingleUseSurveyEncrypted = survey?.singleUse?.isEncrypted;
-
-  let singleUseId: string | undefined = undefined;
-
-  if (isSingleUseSurvey) {
-    const validatedSingleUseId = resolveSingleUseIdForSurvey({
-      surveyId: survey.id,
-      isEncrypted: Boolean(isSingleUseSurveyEncrypted),
-      suId,
-      suToken,
-      surface: "contact_link_page",
-    });
-    if (!validatedSingleUseId) {
-      const workspaceContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
-      return <SurveyInactive status="link invalid" workspace={workspaceContext.workspace} />;
-    }
-
-    singleUseId = validatedSingleUseId;
+  const singleUse = getLinkSurveySingleUseAccess({ survey, suId, suToken, surface: "contact_link_page" });
+  if (!singleUse.allowed) {
+    const workspaceContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
+    return <SurveyInactive status="link invalid" workspace={workspaceContext.workspace} />;
   }
+  const { singleUseId } = singleUse;
 
   // Parallel fetch of workspace context, locale and the respondent's browser languages
-  const [workspaceContext, locale, acceptedLanguages, singleUseResponse] = await Promise.all([
-    getWorkspaceContextForLinkSurvey(survey.workspaceId),
-    findMatchingLocale(),
-    getAcceptedLanguages(),
-    // Fetch existing response for this contact
-    getExistingContactResponse(survey.id, contactId)(),
-  ]);
+  const [workspaceContext, locale, acceptedLanguages, contactResponse, singleUseLinkResponse] =
+    await Promise.all([
+      getWorkspaceContextForLinkSurvey(survey.workspaceId),
+      findMatchingLocale(),
+      getAcceptedLanguages(),
+      // Fetch existing response for this contact
+      getExistingContactResponse(survey.id, contactId)(),
+      // The single-use link's own response, whoever gave it. Once finished, the link is "already answered"
+      // here as on /s, which is also what the PIN and verify-email actions answer for it (ENG-4041).
+      singleUseId ? getResponseBySingleUseId(survey.id, singleUseId)() : Promise.resolve(null),
+    ]);
+  const singleUseResponse = singleUseLinkResponse?.finished ? singleUseLinkResponse : contactResponse;
 
   // Fetch responseCount only if needed
   const responseCount = survey.welcomeCard.showResponseCount
