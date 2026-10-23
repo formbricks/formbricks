@@ -1,5 +1,6 @@
+import { notFound } from "next/navigation";
 import { cache as reactCache } from "react";
-import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { AuthenticationError } from "@formbricks/types/errors";
 import { can } from "@/lib/authorization";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
@@ -35,8 +36,10 @@ export const getOrganizationAuth = reactCache(async (organizationId: string): Pr
     throw new AuthenticationError(t("common.not_authenticated"));
   }
 
+  // Missing organization and missing membership both 404, so the page does not reveal which ids exist
+  // and the error boundary does not misreport either as a backend failure (ENG-3974).
   if (!organization) {
-    throw new ResourceNotFoundError(t("common.organization"), organizationId);
+    return notFound();
   }
 
   // ENG-2409: the tenancy gate. This was `if (!currentUserMembership) throw`, a decision made by
@@ -61,10 +64,10 @@ export const getOrganizationAuth = reactCache(async (organizationId: string): Pr
 
   // The membership is still required, and not only for the flags below: SpiceDB
   // could allow while the row is absent (projection drift), and `TOrganizationAuth` promises a
-  // non-null membership to every caller. Keeping both conditions on one throw preserves the exact
-  // error this has always raised while making the authorization half of it comparable.
+  // non-null membership to every caller. Both conditions share one 404 so the authorization half stays
+  // comparable.
   if (!hasOrganizationRead || !currentUserMembership) {
-    throw new ResourceNotFoundError(t("common.membership"), null);
+    return notFound();
   }
 
   const { isMember, isOwner, isManager, isBilling } = getAccessFlags(currentUserMembership.role);
