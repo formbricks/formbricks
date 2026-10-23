@@ -9,11 +9,11 @@ import type { SamlDecryptedRefusal } from "@/modules/ee/auth/saml/lib/saml-respo
  *
  * `checkSamlResponseBounds` is the cheap first gate, but it models xmldom from the outside, and a shape it misreads
  * is a way back to a slow parse. This gate does not model anything: a worker thread parses the response the way
- * `@boxyhq/saml20` does and is terminated if it runs past the budget. A response that passes is then parsed again by
- * jackson on this thread, a few times on the signature path, so what this bounds is the cost per parse: no response
- * slower than the budget reaches jackson, whatever its shape. The known shapes the byte bounds let through parse in
- * ~10-30 ms and a real response in ~5-25 ms (1,000 verbose Okta groups ~11 ms), so 100 ms only catches what the
- * bounds misread, with room for a busy host.
+ * `@boxyhq/saml20` does, runs saml20's `parseIssuer` as jackson does first, and is terminated if it runs past the
+ * budget. A response that passes is then parsed again by jackson on this thread, a few times on the signature path,
+ * so what this bounds is the cost per parse: no response slower than the budget reaches jackson, whatever its shape.
+ * The known shapes the byte bounds let through parse in ~10-30 ms and a real response in ~5-25 ms (1,000 verbose
+ * Okta groups ~11 ms), so 100 ms only catches what the bounds misread, with room for a busy host.
  *
  * An encrypted assertion is ciphertext to the byte bounds, and jackson decrypts it and parses the plaintext before it
  * checks any signature (ENG-4051). Given the SP key, the worker does the same within the same budget: the outer parse,

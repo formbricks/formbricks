@@ -1,4 +1,5 @@
 import { decryptXml } from "@boxyhq/saml20/dist/decrypt.js";
+import { parseIssuer } from "@boxyhq/saml20/dist/response.js";
 import { DOMParser, type Element, MIME_TYPE } from "@xmldom/xmldom";
 import { type MessagePort, workerData } from "node:worker_threads";
 // Type-only, so erased: the worker never loads the pool's module.
@@ -14,7 +15,8 @@ import { type SamlDecryptedRefusal, checkDecryptedSamlResponseBounds } from "./s
  *
  * Given the SP key, it also does what jackson does with an encrypted assertion before checking any signature, and
  * holds the decrypted document to the byte bounds, so the plaintext, which the bounds on the response only see as
- * ciphertext, is timed and measured too (ENG-4051).
+ * ciphertext, is timed and measured too (ENG-4051). It runs saml20's `parseIssuer`, jackson's first use of the
+ * response, so that call's cost is timed as well (ENG-6648).
  *
  * It answers with the identifying fields only (the claimed issuer, the response ID and InResponseTo, cut to a length a
  * log line can carry) and how decryption went, with sizes for a refusal. Nothing else of the response leaves the
@@ -23,27 +25,25 @@ import { type SamlDecryptedRefusal, checkDecryptedSamlResponseBounds } from "./s
 
 const MAX_FIELD_LENGTH = 1024;
 
-const SAML_ASSERTION_NS = "urn:oasis:names:tc:SAML:2.0:assertion";
-
 const field = (value: string | null | undefined): string | undefined =>
   value ? value.slice(0, MAX_FIELD_LENGTH) : undefined;
 
 const parseXml = (xml: string) =>
   new DOMParser({ onError: () => undefined }).parseFromString(xml, MIME_TYPE.XML_APPLICATION);
 
-const readClaims = (root: Element): SamlResponseClaims => {
-  let issuer: string | undefined;
-  for (let node = root.firstChild; node; node = node.nextSibling) {
-    if (node.namespaceURI === SAML_ASSERTION_NS && node.localName === "Issuer") {
-      issuer = field(node.textContent);
-      break;
-    }
+/**
+ * jackson's first use of the response (saml20's `parseIssuer`): it parses the whole response and selects the `Issuer`
+ * children of its root, on every callback, before any issuer, connection or RelayState check. The select's cost grows
+ * with the square of the elements it matches, so the byte bounds cap its names (ENG-6648); calling it here puts
+ * jackson's actual call inside the budget too, so a shape the bounds misread is still cut off. Returns `undefined` for
+ * a response saml20 cannot parse, which jackson refuses on its own.
+ */
+const issuerAsJackson = (xml: string): string | undefined => {
+  try {
+    return parseIssuer(xml);
+  } catch {
+    return undefined;
   }
-  return {
-    issuer,
-    id: field(root.getAttribute("ID")),
-    inResponseTo: field(root.getAttribute("InResponseTo")),
-  };
 };
 
 /**
@@ -96,6 +96,8 @@ const decryptAsJackson = (xml: string, decryptionKey: string | null): SamlDecryp
  * throws.
  */
 export const parseSamlResponse = (xml: string, decryptionKey: string | null): ParsedSamlResponse => {
+  // jackson's first call on the response, timed here before anything else as jackson does it (ENG-6648).
+  const issuer = issuerAsJackson(xml);
   let root: Element | null;
   try {
     root = parseXml(xml).documentElement;
@@ -104,7 +106,11 @@ export const parseSamlResponse = (xml: string, decryptionKey: string | null): Pa
     return { claims: {} };
   }
   if (!root) return { claims: {} };
-  const claims = readClaims(root);
+  const claims: SamlResponseClaims = {
+    issuer: field(issuer),
+    id: field(root.getAttribute("ID")),
+    inResponseTo: field(root.getAttribute("InResponseTo")),
+  };
   return hasEncryptedAssertion(root)
     ? { claims, decryption: decryptAsJackson(xml, decryptionKey) }
     : { claims };

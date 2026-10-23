@@ -7,6 +7,7 @@ import { hashString } from "@/lib/hash-string";
 import type { SamlParseProbe } from "@/modules/ee/auth/saml/lib/saml-parse-budget";
 import {
   SAML_RESPONSE_MARKUP_BUDGET,
+  SAML_RESPONSE_MAX_ELEMENTS,
   SAML_RESPONSE_MAX_LENGTH,
 } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
 import { JACKSON_RELAY_STATE_PREFIX, POST, type SamlErrorCode, buildLoginErrorUrl } from "./route";
@@ -114,6 +115,28 @@ describe("SAML callback route", () => {
 
     expect(response.status).toBe(400);
     expect(samlResponseMock).not.toHaveBeenCalled();
+  });
+
+  test("refuses a response over an element cap before jackson parses it", async () => {
+    // saml20's parseIssuer selects every Issuer element one by one through xpath's quadratic node-set add, on every
+    // callback and before any other check: this shape holds the thread ~1.9 s unless it is refused here.
+    const flood = `<samlp:Response>${"<Issuer>x</Issuer>".repeat(4_000)}</samlp:Response>`;
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+
+    const response = await POST(callback({ SAMLResponse: b64(flood), RelayState: "s" }));
+
+    expect(response.status).toBe(400);
+    expect(samlResponseMock).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith(
+      {
+        reason: "elements",
+        localName: "Issuer",
+        count: SAML_RESPONSE_MAX_ELEMENTS.Issuer + 1,
+        length: b64(flood).length,
+        suppressedSinceLast: 0,
+      },
+      "Refused a SAML response before parsing it"
+    );
   });
 
   test("refuses a response with a DOCTYPE before jackson parses it, naming the reason", async () => {
