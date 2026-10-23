@@ -55,6 +55,7 @@ export const PERSONAL_EMAIL_DOMAINS: readonly string[] = [
   "cock.li",
   "tmpmailtor.com",
   "allwebemails.com",
+  "oemails.com", // Cloudflare-routed throwaway domain, flagged disposable by verifymail.io / UserCheck
   // Other mainstream / international
   "gmx.com",
   "gmx.net",
