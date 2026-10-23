@@ -3570,6 +3570,8 @@
         "status_writing_questions": "正在撰寫第 {count} 個問題⋯",
         "status_writing_title": "正在為你的問卷命名⋯",
         "stop": "停止",
+        "survey_language": "問卷語言",
+        "survey_language_match_prompt": "與我的提示詞一致",
         "too_many_requests": "你的產生速度過快，請稍候片刻再試一次。",
         "try_prompt": "查看範例提示",
         "your_prompt": "你的提示"

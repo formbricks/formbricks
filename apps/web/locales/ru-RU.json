@@ -3570,6 +3570,8 @@
         "status_writing_questions": "Пишу вопрос {count}…",
         "status_writing_title": "Придумываю название для опроса…",
         "stop": "Остановить",
+        "survey_language": "Язык опроса",
+        "survey_language_match_prompt": "Как в моём запросе",
         "too_many_requests": "Ты генерируешь слишком быстро. Подожди немного и попробуй снова.",
         "try_prompt": "Посмотреть пример запроса",
         "your_prompt": "Твой запрос"

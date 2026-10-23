@@ -3570,6 +3570,8 @@
         "status_writing_questions": "Rédaction de la question {count}…",
         "status_writing_title": "Attribution d'un nom à ton sondage…",
         "stop": "Arrêter",
+        "survey_language": "Langue du sondage",
+        "survey_language_match_prompt": "Identique à ma requête",
         "too_many_requests": "Tu génères trop rapidement. Attends un instant et réessaie.",
         "try_prompt": "Voir un exemple d'instruction",
         "your_prompt": "Ton invite"

@@ -3570,6 +3570,8 @@
         "status_writing_questions": "Se scrie întrebarea {count}…",
         "status_writing_title": "Se denumește chestionarul…",
         "stop": "Oprește",
+        "survey_language": "Limba sondajului",
+        "survey_language_match_prompt": "Aceeași limbă ca în instrucțiunile mele",
         "too_many_requests": "Generezi prea rapid. Așteaptă un moment și încearcă din nou.",
         "try_prompt": "Vezi exemplu de solicitare",
         "your_prompt": "Prompt-ul tău"

@@ -3570,6 +3570,8 @@
         "status_writing_questions": "Writing question {count}…",
         "status_writing_title": "Naming your survey…",
         "stop": "Stop",
+        "survey_language": "Survey language",
+        "survey_language_match_prompt": "Match my prompt",
         "too_many_requests": "You are generating too quickly. Wait a moment and try again.",
         "try_prompt": "See example prompt",
         "your_prompt": "Your prompt"

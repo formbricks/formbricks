@@ -3570,6 +3570,8 @@
         "status_writing_questions": "Escrevendo pergunta {count}…",
         "status_writing_title": "Nomeando sua pesquisa…",
         "stop": "Parar",
+        "survey_language": "Idioma da pesquisa",
+        "survey_language_match_prompt": "Corresponder ao meu prompt",
         "too_many_requests": "Você está gerando rápido demais. Aguarde um momento e tente novamente.",
         "try_prompt": "Ver exemplo de prompt",
         "your_prompt": "Seu prompt"

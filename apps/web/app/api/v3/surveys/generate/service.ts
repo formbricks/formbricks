@@ -15,9 +15,9 @@ import {
   type TGeneratedSurveyDraft,
   type TGeneratedSurveyElement,
   type TV3SurveyGenerateBody,
-  V3_SURVEY_GENERATE_ALLOWED_LOCALES,
   ZGeneratedSurveyDraft,
-  ZGeneratedSurveyDraftForAI,
+  getGeneratedSurveyDraftForAISchema,
+  getV3SurveyGenerateDraftLanguages,
 } from "./schemas";
 
 export type TV3SurveyGenerateValidation = {
@@ -396,19 +396,22 @@ export function assertV3SurveyGeneratePrompt(prompt: string): void {
  * hand-copied temperature.
  */
 export function buildV3SurveyGenerationRequest(input: TV3SurveyGenerateBody) {
+  const draftLanguages = getV3SurveyGenerateDraftLanguages(input);
+
   return {
     // Deliberately the *ForAI* schema (string ranges), not ZGeneratedSurveyDraft, which
     // z.preprocess-coerces them to numbers. z.preprocess does not survive JSON-Schema conversion,
     // so swapping the two here breaks provider structured output.
-    schema: ZGeneratedSurveyDraftForAI,
+    schema: getGeneratedSurveyDraftForAISchema(draftLanguages),
     schemaName: "FormbricksSurveyDraft",
     schemaDescription: "A concise Formbricks survey draft that can be converted to a v3 create payload.",
-    system: buildV3SurveyGenerationSystemPrompt(V3_SURVEY_GENERATE_ALLOWED_LOCALES, input.type),
+    system: buildV3SurveyGenerationSystemPrompt(draftLanguages, input.type, input.surveyLanguage),
     prompt: buildV3SurveyGenerationPrompt(
       input.prompt,
       input.type,
       input.language ?? DEFAULT_V3_SURVEY_LANGUAGE,
-      V3_SURVEY_GENERATE_ALLOWED_LOCALES
+      draftLanguages,
+      input.surveyLanguage
     ),
     temperature: 0.2,
     maxOutputTokens: V3_SURVEY_GENERATION_MAX_OUTPUT_TOKENS,
@@ -445,6 +448,22 @@ export function buildV3SurveyCreatePayloadFromDraft(
     throw new V3SurveyGeneratedPayloadValidationError(
       formatV3ZodInvalidParams(generatedSurvey.error, "generatedSurvey")
     );
+  }
+
+  // The narrowed schema only binds a provider that enforces structured output; a local model may
+  // ignore it, and a draft under a language code the request did not allow must not be relabelled or
+  // passed on. This checks the declared code only — the text itself is not language-detected, which is
+  // what the review step before "Save and continue" is for.
+  const draftLanguages = getV3SurveyGenerateDraftLanguages(input);
+  if (!draftLanguages.includes(generatedSurvey.data.language)) {
+    throw new V3SurveyGeneratedPayloadValidationError([
+      {
+        name: "generatedSurvey.language",
+        reason: input.surveyLanguage
+          ? `Expected the requested survey language '${input.surveyLanguage}', got '${generatedSurvey.data.language}'`
+          : `Language '${generatedSurvey.data.language}' was not requested; pass it as language or surveyLanguage`,
+      },
+    ]);
   }
 
   const normalizedGeneratedSurvey = normalizeGeneratedSurveyBlocks(generatedSurvey.data);

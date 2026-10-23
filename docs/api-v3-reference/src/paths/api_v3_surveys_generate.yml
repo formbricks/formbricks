@@ -50,6 +50,15 @@ post:
               prompt: >-
                 Understand why new users stop during onboarding and what would
                 help them finish setup.
+          requiredLanguage:
+            summary: Create a Korean survey draft from an English prompt
+            value:
+              workspaceId: clxx1234567890123456789012
+              type: link
+              surveyLanguage: ko-KR
+              prompt: >-
+                Ask customers in Seoul how satisfied they are with delivery
+                times and what we should improve.
   responses:
     "200":
       description: >-
