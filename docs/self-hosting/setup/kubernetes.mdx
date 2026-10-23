@@ -166,7 +166,7 @@ Formbricks v5 does not support `hub.enabled=false`. Keep the default `hub.enable
 Use `hub.image.tag`, `hub.resources`, and `hub.existingSecret` only when you need to pin or customize the Hub
 deployment details.
 
-### Envoy CRD Ownership
+### Envoy CRD ownership
 
 The chart's Envoy Gateway dependency is pinned to **v1.8.4**. Its bundled Gateway API CRDs are **v1.5.1
 Experimental**. Choose who owns the two cluster-wide CRD sets before enabling Envoy:
@@ -190,7 +190,7 @@ helm pull oci://docker.io/envoyproxy/gateway-crds-helm \
 helm template envoy-crds "$crd_dir/gateway-crds-helm" \
   --set crds.gatewayAPI.enabled=false \
   --set crds.envoyGateway.enabled=true \
-  | kubectl apply --server-side -f -
+  | kubectl --context my-cluster apply --server-side -f -
 rm -rf "$crd_dir"
 ```
 

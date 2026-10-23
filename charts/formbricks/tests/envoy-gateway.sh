@@ -102,10 +102,10 @@ for example in bundled platform-gateway-api external-crds shared-controller; do
   grep -q '^kind: BackendTrafficPolicy$' "${render_dir}/${example}.yaml"
 done
 
-grep -q 'name: backendtlspolicies.gateway.networking.k8s.io' "${render_dir}/bundled.yaml"
-grep -q 'name: envoyproxies.gateway.envoyproxy.io' "${render_dir}/bundled.yaml"
+grep -Eq 'name: [a-z0-9-]+\.gateway\.networking\.k8s\.io$' "${render_dir}/bundled.yaml"
+grep -Eq 'name: [a-z0-9-]+\.gateway\.envoyproxy\.io$' "${render_dir}/bundled.yaml"
 for example in platform-gateway-api external-crds shared-controller; do
-  if grep -Eq 'name: (backendtlspolicies.gateway.networking.k8s.io|envoyproxies.gateway.envoyproxy.io)' \
+  if grep -Eq 'name: [a-z0-9-]+\.(gateway\.networking\.k8s\.io|gateway\.envoyproxy\.io)$' \
     "${render_dir}/${example}.yaml"; then
     echo "External CRD example ${example} unexpectedly renders Envoy CRDs" >&2
     exit 1

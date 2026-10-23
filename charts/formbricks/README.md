@@ -62,7 +62,7 @@ helm pull oci://docker.io/envoyproxy/gateway-crds-helm \
 helm template envoy-crds "$crd_dir/gateway-crds-helm" \
   --set crds.gatewayAPI.enabled=false \
   --set crds.envoyGateway.enabled=true \
-  | kubectl apply --server-side -f -
+  | kubectl --context my-cluster apply --server-side -f -
 rm -rf "$crd_dir"
 ```
 
@@ -81,8 +81,11 @@ with `helm install` or `helm upgrade` after it passes.
 
 ### Install and upgrade order
 
+With bundled ownership, Helm installs the Formbricks-owned CRDs during the initial chart installation.
+For externally owned CRDs, use this order:
+
 1. Have the CRD owner apply the compatible Gateway API bundle and Envoy CRDs. Wait until every CRD is
-   `Established`; run the preflight for external ownership.
+   `Established`, then run the preflight.
 2. Install or upgrade the Formbricks release with the matching values example, then verify GatewayClass,
    Gateway, route, and policy status and actual traffic through Envoy.
 3. On later Envoy version changes, upgrade CRDs through their existing owner **before** the controller and

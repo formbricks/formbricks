@@ -49,7 +49,7 @@ trap cleanup EXIT
 case "$(uname -s)-$(uname -m)" in
   Linux-x86_64)
     platform=linux-amd64
-    checksum=aee6151561422756b764a5af5a9eead3cc9985112b1de8d8e0d
+    checksum=aee6151561422756b764a4ae28e7f44cda5af5a9eead3cc9985112b1de8d8e0d
     ;;
   Darwin-arm64)
     platform=darwin-arm64
