@@ -9,7 +9,15 @@ autoscaling:
   enabled: false
 pdb:
   enabled: false
+# Leave CPU headroom for the replacement web Pod during a one-node RollingUpdate.
+deployment:
+  resources:
+    requests:
+      cpu: 100m
 cube:
+  resources:
+    requests:
+      cpu: 100m
   env:
     CUBEJS_DB_HOST: formbricks-postgresql
     CUBEJS_DB_NAME: formbricks
