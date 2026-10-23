@@ -451,10 +451,10 @@ rollback procedure in [AuthZed Operations](/self-hosting/configuration/authzed-o
    ```
 
 <Warning>
-  **Security (existing installs):** these steps — and the [one-click setup script](/self-hosting/setup/one-click)
-  updater — do **not** rewrite your existing
-  `docker-compose.yml`. If your bundled `redis` (Valkey) service still publishes `ports: - "6379:6379"`, it
-  stays exposed to the host after updating. See [Debug](#debug) for how to remove the mapping and, if the port
+  **Security (existing installs):** these steps do **not** rewrite your existing `docker-compose.yml`, and the
+  [one-click setup script](/self-hosting/setup/one-click#update) updater only makes the narrow edits listed in its
+  Update section (such as the IPv6 network setting). Neither removes a published Redis port: if your bundled `redis`
+  (Valkey) service still publishes `ports: - "6379:6379"`, it stays exposed to the host after updating. See [Debug](#debug) for how to remove the mapping and, if the port
   was reachable from an untrusted network, invalidate existing sessions.
 </Warning>
 
