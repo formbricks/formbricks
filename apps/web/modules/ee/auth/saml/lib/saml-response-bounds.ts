@@ -71,7 +71,10 @@ export const SAML_RESPONSE_MAX_ELEMENTS: Readonly<Record<string, number>> = Obje
   X509Certificate: 16,
 });
 
-const CAPPED_ELEMENTS = Object.entries(SAML_RESPONSE_MAX_ELEMENTS);
+/** Each capped name with its limit and its bytes, encoded once for the byte scan to compare against. */
+const CAPPED_ELEMENTS = Object.entries(SAML_RESPONSE_MAX_ELEMENTS).map(
+  ([name, limit]) => [name, limit, Buffer.from(name, "latin1")] as const
+);
 
 const LESS_THAN = 0x3c;
 const GREATER_THAN = 0x3e;
@@ -160,12 +163,9 @@ const isAsciiNameByte = (byte: number) =>
  * continue an ASCII name. xmldom reads a non-ASCII character as part of a name, but the byte scan cannot decode one,
  * so a non-ASCII byte after the name counts as an end (`Issueré` counts as `Issuer`): over-counting is the safe side.
  */
-const matchesCappedName = (xml: Buffer, from: number, nameEnd: number, name: string): boolean => {
+const matchesCappedName = (xml: Buffer, from: number, nameEnd: number, name: Buffer): boolean => {
   const after = from + name.length;
-  if (after > nameEnd) return false;
-  for (let i = 0; i < name.length; i++) {
-    if (xml[from + i] !== name.charCodeAt(i)) return false;
-  }
+  if (after > nameEnd || xml.compare(name, 0, name.length, from, after) !== 0) return false;
   return after === nameEnd || !isAsciiNameByte(xml[after]);
 };
 
@@ -180,8 +180,8 @@ const countCappedElement = (xml: Buffer, from: number, end: number, scan: Markup
   for (let j = from; j < nameEnd; j++) {
     if (xml[j] === COLON) localStart = j + 1;
   }
-  for (const [name, limit] of CAPPED_ELEMENTS) {
-    if (!matchesCappedName(xml, localStart, nameEnd, name)) continue;
+  for (const [name, limit, bytes] of CAPPED_ELEMENTS) {
+    if (!matchesCappedName(xml, localStart, nameEnd, bytes)) continue;
     const count = (scan.elements[name] ?? 0) + 1;
     scan.elements[name] = count;
     if (count > limit && !scan.elementRefusal) scan.elementRefusal = { localName: name, count };
