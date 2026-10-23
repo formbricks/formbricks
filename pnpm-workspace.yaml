@@ -116,6 +116,7 @@ catalog:
   uuid: 14.0.0
   "@paralleldrive/cuid2": 2.3.1
   ai: 6.0.177
+  undici: 7.29.1
 
 # Security overrides for transitive dependencies that still fail audit without a pin.
 # Remove each override once its upstream dependency chain adopts a patched version.

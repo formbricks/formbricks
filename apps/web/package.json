@@ -166,7 +166,7 @@
     "tailwind-merge": "catalog:",
     "tailwindcss": "catalog:",
     "ua-parser-js": "2.0.10",
-    "undici": "7.29.1",
+    "undici": "catalog:",
     "uuid": "catalog:",
     "xlsx": "file:vendor/xlsx-0.20.3.tgz",
     "yaml": "2.9.0",
