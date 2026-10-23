@@ -8,6 +8,7 @@ import { nextCookies } from "better-auth/next-js";
 import { genericOAuth, jwt, twoFactor } from "better-auth/plugins";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import type { TUserLocale } from "@formbricks/types/user";
 import {
   AUTH_SECRET,
@@ -242,6 +243,12 @@ export const auth = betterAuth({
           throw new Error("Verification email was not sent (mailer reported no delivery)");
         }
       } catch (error) {
+        // A capped verification email (ENG-3823) must look the same as a sent one: the resend paths
+        // rethrow, so an error here only for unverified accounts would tell anyone which addresses have
+        // one. The limit is logged where it refused.
+        if (error instanceof TooManyRequestsError) {
+          return;
+        }
         // Domain only — never the address, the token, or the verify URL (all three are sensitive and
         // the URL grants account access).
         logger.error(

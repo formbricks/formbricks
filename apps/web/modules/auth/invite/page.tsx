@@ -107,12 +107,18 @@ export const InvitePage = async (props: InvitePageProps) => {
         );
       }
       await deleteInvite(inviteId);
-      await sendInviteAcceptedEmail(
-        invite.creator.name ?? "",
-        user?.name ?? "",
-        invite.creator.email,
-        invite.creator.locale
-      );
+      // Best-effort: the invite is already accepted, so a failed or rate-limited notice to the inviter must
+      // not stop the rest of the acceptance.
+      try {
+        await sendInviteAcceptedEmail(
+          invite.creator.name ?? "",
+          user?.name ?? "",
+          invite.creator.email,
+          invite.creator.locale
+        );
+      } catch (error) {
+        logger.error({ err: error }, "Failed to send invite accepted email");
+      }
       await updateUser(session.user.id, {
         notificationSettings: {
           ...user.notificationSettings,
