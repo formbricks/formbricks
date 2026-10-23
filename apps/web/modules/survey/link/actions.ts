@@ -10,7 +10,7 @@ import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
-import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
+import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { createLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
 import { isLinkSurveyOpenForResponses } from "@/modules/survey/link/lib/public-access";
 import { getLinkSurveyCustomCss, omitCustomCssSource } from "@/modules/survey/link/lib/respondent-custom-css";
@@ -25,8 +25,10 @@ import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/work
  * shows these as a 404 or as their inactive screen, never their definition (ENG-4032).
  *
  * A single-use survey reached without a valid single-use link is "not found" too, the same way: the page
- * shows it only as "this survey can only be taken by invitation" (ENG-4041). `suId` / `suToken` are the
- * link's raw URL values, which the gate screens pass through.
+ * shows it only as "this survey can only be taken by invitation" (ENG-4041). So is one reached through a link
+ * that has already been answered, which the page shows only as "already answered": a used link stays valid,
+ * and would otherwise keep fetching the survey for whoever holds it. `suId` / `suToken` are the link's raw URL
+ * values, which the gate screens pass through.
  */
 const getSurveyOpenForResponses = async ({
   surveyId,
@@ -40,12 +42,24 @@ const getSurveyOpenForResponses = async ({
   surface: TSingleUseLinkSurface;
 }) => {
   const survey = await getSurveyWithMetadata(surveyId);
-  if (
-    !isLinkSurveyOpenForResponses(survey) ||
-    !getLinkSurveySingleUseAccess({ survey, suId, suToken, surface }).allowed
-  ) {
+  if (!isLinkSurveyOpenForResponses(survey)) {
     throw new ResourceNotFoundError("Survey", surveyId);
   }
+
+  const singleUse = getLinkSurveySingleUseAccess({ survey, suId, suToken, surface });
+  if (!singleUse.allowed) {
+    throw new ResourceNotFoundError("Survey", surveyId);
+  }
+
+  // The page's own "already answered" check: a finished response, not a partial one it lets the respondent
+  // resume.
+  if (singleUse.singleUseId) {
+    const singleUseResponse = await getResponseBySingleUseId(survey.id, singleUse.singleUseId)();
+    if (singleUseResponse?.finished) {
+      throw new ResourceNotFoundError("Survey", surveyId);
+    }
+  }
+
   return survey;
 };
 

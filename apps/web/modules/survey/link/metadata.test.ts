@@ -361,21 +361,47 @@ describe("link-survey metadata", () => {
     ])("gives %s survey generic metadata, never its name", async (_label, state) => {
       vi.mocked(getSurveyWithMetadata).mockResolvedValue(contactSurvey(state));
 
-      expect(await getMetadataForContactSurvey(mockSurveyId)).toEqual(getGenericSurveyMetadata());
+      expect(await getMetadataForContactSurvey({ surveyId: mockSurveyId })).toEqual(
+        getGenericSurveyMetadata()
+      );
       expect(getBasicSurveyMetadata).not.toHaveBeenCalled();
     });
 
     test("gives a survey that can't be loaded generic metadata", async () => {
       vi.mocked(getSurveyWithMetadata).mockRejectedValue(new ResourceNotFoundError("Survey", mockSurveyId));
 
-      expect(await getMetadataForContactSurvey(mockSurveyId)).toEqual(getGenericSurveyMetadata());
+      expect(await getMetadataForContactSurvey({ surveyId: mockSurveyId })).toEqual(
+        getGenericSurveyMetadata()
+      );
+    });
+
+    test("gives a single-use survey opened without its link generic metadata (ENG-4041)", async () => {
+      vi.mocked(getSurveyWithMetadata).mockResolvedValue(
+        contactSurvey({ singleUse: { enabled: true, isEncrypted: false } })
+      );
+
+      expect(await getMetadataForContactSurvey({ surveyId: mockSurveyId })).toEqual(
+        getGenericSurveyMetadata()
+      );
+      expect(getBasicSurveyMetadata).not.toHaveBeenCalled();
+    });
+
+    test("names a single-use survey opened with a valid link", async () => {
+      vi.mocked(getSurveyWithMetadata).mockResolvedValue(
+        contactSurvey({ singleUse: { enabled: true, isEncrypted: false } })
+      );
+      const link = generateSurveySingleUseLinkParams(mockSurveyId, false);
+
+      expect(await getMetadataForContactSurvey({ surveyId: mockSurveyId, ...link })).toMatchObject({
+        title: mockSurveyName,
+      });
     });
 
     test("names a public survey, without the /s canonical or robots rules", async () => {
       const survey = contactSurvey();
       vi.mocked(getSurveyWithMetadata).mockResolvedValue(survey);
 
-      const result = await getMetadataForContactSurvey(mockSurveyId, ["de"]);
+      const result = await getMetadataForContactSurvey({ surveyId: mockSurveyId, acceptedLanguages: ["de"] });
 
       expect(getBasicSurveyMetadata).toHaveBeenCalledWith(mockSurveyId, undefined, survey, ["de"]);
       expect(result).toEqual({

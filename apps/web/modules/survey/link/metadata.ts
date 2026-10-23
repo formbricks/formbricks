@@ -120,14 +120,28 @@ export const getMetadataForLinkSurvey = async ({
 /**
  * Metadata for /c/<token>, once the token has named a survey. The page 404s a survey that is no longer
  * public (draft, archived, non-link) even with a valid token, so its name or welcome headline must not
- * reach <title> / og:title either (ENG-4032). A survey that can't be loaded gets the same generic metadata.
+ * reach <title> / og:title either (ENG-4032). A survey that can't be loaded gets the same generic metadata, and
+ * so does a single-use survey opened without its link, which the page shows as "link invalid" (ENG-4041).
  */
-export const getMetadataForContactSurvey = async (
-  surveyId: string,
-  acceptedLanguages: string[] = []
-): Promise<Metadata> => {
+export const getMetadataForContactSurvey = async ({
+  surveyId,
+  acceptedLanguages = [],
+  suId,
+  suToken,
+}: {
+  surveyId: string;
+  acceptedLanguages?: string[];
+  /** The single-use link, as it appears in the URL. */
+  suId?: string | string[];
+  suToken?: string | string[];
+}): Promise<Metadata> => {
   const survey = await getSurveyWithMetadata(surveyId).catch(() => null);
-  if (!survey || !isLinkSurveyServable(survey)) {
+  if (
+    !survey ||
+    !isLinkSurveyServable(survey) ||
+    // Shares the contact page's one resolution per request.
+    !getLinkSurveySingleUseAccess({ survey, suId, suToken, surface: "contact_link_page" }).allowed
+  ) {
     return getGenericSurveyMetadata();
   }
   return getServableSurveyMetadata(survey, undefined, acceptedLanguages);
