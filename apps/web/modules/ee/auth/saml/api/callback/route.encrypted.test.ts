@@ -1,7 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
-import { checkSamlResponseBounds } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
 import {
+  SAML_RESPONSE_MAX_SIGNATURES,
+  checkSamlResponseBounds,
+} from "@/modules/ee/auth/saml/lib/saml-response-bounds";
+import {
+  assertionWithSignatures,
   createSpKeyPair,
   encryptAssertion,
   flatAssertion,
@@ -82,6 +86,27 @@ describe("SAML callback with an encrypted assertion", () => {
       expect.stringMatching(
         /^Refused a SAML response (whose decrypted assertion is past the bounds|that was too costly)/
       )
+    );
+  });
+
+  test("refuses one whose decrypted document carries more Signature elements than the cap, as jackson refuses", async () => {
+    const SAMLResponse = encryptedResponse(assertionWithSignatures(SAML_RESPONSE_MAX_SIGNATURES + 1));
+    expect(checkSamlResponseBounds(SAMLResponse)).toBeNull();
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+
+    const response = await POST(callback(SAMLResponse));
+
+    expect(response.status).toBe(400);
+    // jackson's own generic refusal, so the answer says nothing about what the encrypted assertion held.
+    expect(await response.json()).toEqual({
+      code: "bad_request",
+      message: "The SAML response was not accepted",
+      details: {},
+    });
+    expect(samlResponseMock).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: "signatures", signatures: SAML_RESPONSE_MAX_SIGNATURES + 1 }),
+      "Refused a SAML response whose decrypted assertion is past the bounds"
     );
   });
 

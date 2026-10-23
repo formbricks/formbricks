@@ -110,3 +110,14 @@ export const flatAssertion = (elements: number): string =>
   `<saml2:Issuer>${ENCRYPTED_RESPONSE_ISSUER}</saml2:Issuer>` +
   "<a/>".repeat(elements) +
   "</saml2:Assertion>";
+
+/**
+ * An assertion holding `signatures` empty `ds:Signature` elements. Past a handful, saml20's fallback lookup of a
+ * signature by local name costs the square of their number (ENG-4108); encrypted, the bounds on the response only see
+ * the ciphertext.
+ */
+export const assertionWithSignatures = (signatures: number): string =>
+  `<saml2:Assertion xmlns:saml2="${ASSERTION_NS}" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" ID="_assert1" Version="2.0">` +
+  `<saml2:Issuer>${ENCRYPTED_RESPONSE_ISSUER}</saml2:Issuer>` +
+  "<ds:Signature/>".repeat(signatures) +
+  "</saml2:Assertion>";
