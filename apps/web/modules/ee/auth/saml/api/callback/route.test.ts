@@ -132,15 +132,31 @@ describe("SAML callback route", () => {
     expect(samlResponseMock).not.toHaveBeenCalled();
   });
 
-  test("refuses a response with more signatures than a SAML response carries before jackson parses it (ENG-4108)", async () => {
-    vi.spyOn(logger, "warn").mockImplementation(() => undefined);
-    const signatures = "<ds:Signature>x</ds:Signature>".repeat(SAML_RESPONSE_MAX_SIGNATURES + 1);
+  test("refuses a response with more Signature elements than the cap before parsing it, by count only", async () => {
+    const xml = ISSUER.replace(
+      "</samlp:Response>",
+      "<ds:Signature/>".repeat(SAML_RESPONSE_MAX_SIGNATURES + 1) + "</samlp:Response>"
+    );
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
 
-    const response = await POST(callback({ SAMLResponse: b64(ISSUER + signatures), RelayState: "s" }));
+    const response = await POST(callback({ SAMLResponse: b64(xml), RelayState: "boxyhq_jackson_state" }));
 
     expect(response.status).toBe(400);
-    expect(await response.json()).toMatchObject({ message: expect.stringContaining("signatures") });
+    expect(await response.json()).toMatchObject({
+      code: "bad_request",
+      message: "SAMLResponse carries more signatures than a SAML response does",
+    });
+    expect(probeMock).not.toHaveBeenCalled();
     expect(samlResponseMock).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith(
+      {
+        reason: "signatures",
+        signatures: SAML_RESPONSE_MAX_SIGNATURES + 1,
+        length: b64(xml).length,
+        suppressedSinceLast: 0,
+      },
+      "Refused a SAML response before parsing it"
+    );
   });
 
   test("refuses a response with a DOCTYPE before jackson parses it, naming the reason", async () => {
