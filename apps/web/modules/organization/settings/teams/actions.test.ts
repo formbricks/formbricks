@@ -290,6 +290,59 @@ describe("invite rate-limit settlement", () => {
     expect(mocks.settleInviteRateLimit).toHaveBeenCalledWith(reservation, 0);
   });
 
+  // Every invite email names the organization it is sent for, which carries its per-recipient cap (ENG-3823).
+  describe("passes the organization to every invite email", () => {
+    const nameless = { user: { id: "user-1", name: null }, auditLoggingCtx: {} };
+
+    test("on a resend, with the inviter and invitee unnamed", async () => {
+      mocks.getInvite.mockResolvedValueOnce({ creator: null });
+      mocks.resendInvite.mockResolvedValueOnce({ email: "invitee@example.com", name: null });
+
+      await resendInviteAction({ ctx, parsedInput: { inviteId: "invite-1", organizationId } } as never);
+
+      expect(mocks.sendInviteMemberEmail).toHaveBeenCalledWith(
+        "invite-1",
+        "invitee@example.com",
+        "",
+        "",
+        organizationId
+      );
+    });
+
+    test("on a single invite from an unnamed user", async () => {
+      await inviteUserAction({
+        ctx: nameless,
+        parsedInput: { organizationId, email: "invitee@example.com", role: "owner", teamIds: [] },
+      } as never);
+
+      expect(mocks.sendInviteMemberEmail).toHaveBeenCalledWith(
+        "invite-1",
+        "invitee@example.com",
+        "",
+        "",
+        organizationId
+      );
+    });
+
+    test("on a bulk invite from an unnamed user", async () => {
+      await bulkInviteUsersAction({
+        ctx: nameless,
+        parsedInput: {
+          organizationId,
+          invitees: [{ email: "First@Example.com", role: "member", teamIds: [] }],
+        },
+      } as never);
+
+      expect(mocks.sendInviteMemberEmail).toHaveBeenCalledWith(
+        "invite-1",
+        "first@example.com",
+        "",
+        "",
+        organizationId
+      );
+    });
+  });
+
   test("keeps a resend unit when refresh succeeds even if email delivery fails", async () => {
     const error = new Error("smtp unavailable");
     mocks.sendInviteMemberEmail.mockRejectedValueOnce(error);

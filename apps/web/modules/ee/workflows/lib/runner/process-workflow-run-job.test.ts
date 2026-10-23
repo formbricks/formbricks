@@ -471,6 +471,29 @@ describe("processWorkflowRunJob", () => {
     );
   });
 
+  // With no organization there is no owner to fall back to and no organization to count against, so the
+  // email reaches the limiter without one, which refuses it rather than skipping its caps.
+  test("passes no organization and the creator unchanged when the workspace has no organization", async () => {
+    mockGetOrganizationByWorkspaceId.mockResolvedValue(null);
+    mockWorkflowRunFindFirst.mockResolvedValue({
+      ...baseRun,
+      workflowVersion: { definition: makeDefinition("contact") },
+      workflow: { createdBy: "creator-1", definition: makeDefinition("contact") },
+    });
+    mockGetResponse.mockResolvedValue({
+      ...mockResponse,
+      data: { contact: ["Jane", "Doe", "jane@example.com", "+1"] },
+    });
+
+    await processWorkflowRunJob(data, baseContext);
+
+    expect(mockSendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        rateLimit: { organizationId: undefined, actorUserId: "creator-1", externalRecipient: true },
+      })
+    );
+  });
+
   test("still sends to a respondent-field recipient even when it is outside the member allowlist", async () => {
     // A field-resolved recipient is the respondent's own address, always allowed regardless of the
     // workspace allowlist — only literal addresses are gated.
