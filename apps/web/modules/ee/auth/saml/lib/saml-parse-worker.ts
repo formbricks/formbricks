@@ -1,4 +1,5 @@
 import { decryptXml } from "@boxyhq/saml20/dist/decrypt.js";
+import { validateSignature } from "@boxyhq/saml20/dist/validateSignature.js";
 import { DOMParser, type Element, MIME_TYPE } from "@xmldom/xmldom";
 import { type MessagePort, workerData } from "node:worker_threads";
 // Type-only, so erased: the worker never loads the pool's module.
@@ -14,7 +15,8 @@ import { type SamlDecryptedRefusal, checkDecryptedSamlResponseBounds } from "./s
  *
  * Given the SP key, it also does what jackson does with an encrypted assertion before checking any signature, and
  * holds the decrypted document to the byte bounds, so the plaintext, which the bounds on the response only see as
- * ciphertext, is timed and measured too (ENG-4051).
+ * ciphertext, is timed and measured too (ENG-4051). Then it runs saml20's signature check as jackson will, so that
+ * step's cost is timed as well (ENG-4108).
  *
  * It answers with the identifying fields only (the claimed issuer, the response ID and InResponseTo, cut to a length a
  * log line can carry) and how decryption went, with sizes for a refusal. Nothing else of the response leaves the
@@ -79,21 +81,51 @@ export interface ParsedSamlResponse {
 /**
  * What jackson does first with an encrypted assertion, before it checks any signature (saml20's `validateInternal`):
  * decrypt it, parse the plaintext and serialize the document with it in place. Then the bounds on that document.
+ * Returns the decrypted document too, for the signature check after it; it never leaves the worker.
  */
-const decryptAsJackson = (xml: string, decryptionKey: string | null): SamlDecryption => {
-  if (!decryptionKey) return { decrypted: false };
+const decryptAsJackson = (
+  xml: string,
+  decryptionKey: string | null
+): { decryption: SamlDecryption; decryptedXml?: string } => {
+  if (!decryptionKey) return { decryption: { decrypted: false } };
   try {
     const { assertion, decrypted } = decryptXml(xml, { privateKey: decryptionKey });
-    if (!decrypted) return { decrypted: false };
-    return { decrypted: true, refusal: checkDecryptedSamlResponseBounds(assertion) };
+    if (!decrypted) return { decryption: { decrypted: false } };
+    return {
+      decryption: { decrypted: true, refusal: checkDecryptedSamlResponseBounds(assertion) },
+      decryptedXml: assertion,
+    };
   } catch {
-    return { decrypted: false };
+    return { decryption: { decrypted: false } };
   }
 };
 
 /**
- * One job: parse `xml`, and decrypt and measure its encrypted assertion with `decryptionKey` as jackson will. Never
- * throws.
+ * Stands in for the IdP certificate, which the worker does not know: the connection is only looked up by jackson.
+ * None is needed. saml20 and xml-crypto do the work this times (finding the signature, canonicalizing and digesting
+ * what it references) before they use the key, and then fail on this one, which is ignored here. A real key adds
+ * only the RSA verification, well under a millisecond.
+ */
+const NO_IDP_CERTIFICATE = "unused";
+
+/**
+ * jackson's signature check on the document it validates (saml20's `validateInternal`): the decrypted one when there
+ * is one, then the response as received, which saml20 falls back to for IdPs that sign the encrypted response. Run
+ * only to be timed; its outcome is jackson's to decide.
+ */
+const checkSignatureAsJackson = (xml: string, decryptedXml: string | undefined) => {
+  for (const document of decryptedXml === undefined ? [xml] : [decryptedXml, xml]) {
+    try {
+      validateSignature(document, NO_IDP_CERTIFICATE, null);
+    } catch {
+      // Expected: the stand-in certificate fails the check.
+    }
+  }
+};
+
+/**
+ * One job: parse `xml`, decrypt and measure its encrypted assertion with `decryptionKey` as jackson will, then run
+ * jackson's signature check on it. Never throws.
  */
 export const parseSamlResponse = (xml: string, decryptionKey: string | null): ParsedSamlResponse => {
   let root: Element | null;
@@ -105,9 +137,14 @@ export const parseSamlResponse = (xml: string, decryptionKey: string | null): Pa
   }
   if (!root) return { claims: {} };
   const claims = readClaims(root);
-  return hasEncryptedAssertion(root)
-    ? { claims, decryption: decryptAsJackson(xml, decryptionKey) }
-    : { claims };
+  if (!hasEncryptedAssertion(root)) {
+    checkSignatureAsJackson(xml, undefined);
+    return { claims };
+  }
+  const { decryption, decryptedXml } = decryptAsJackson(xml, decryptionKey);
+  // A refused document never reaches jackson, so there is no signature check to time.
+  if (!(decryption.decrypted && decryption.refusal)) checkSignatureAsJackson(xml, decryptedXml);
+  return { claims, decryption };
 };
 
 // Warm xmldom up before the first real job, so a fresh worker does not charge its cold start to a real sign-in.

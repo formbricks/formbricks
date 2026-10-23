@@ -174,10 +174,13 @@ const readCallbackForm = async (
 };
 
 /** What a response past the byte bounds is told: the kind of bound, never the counts. */
+const BOUNDS_REFUSAL_MESSAGES: Record<string, string> = {
+  declaration: "SAMLResponse must not contain a DOCTYPE or other declaration",
+  signatures: "SAMLResponse carries more signatures than a SAML response does",
+};
+
 const boundsRefusalMessage = (reason: string): string =>
-  reason === "declaration"
-    ? "SAMLResponse must not contain a DOCTYPE or other declaration"
-    : "SAMLResponse is too large to process";
+  BOUNDS_REFUSAL_MESSAGES[reason] ?? "SAMLResponse is too large to process";
 
 /** The refusal for a response past the byte bounds or the caller's rate limit, or `null` when it may be parsed. */
 const refuseBeforeParsing = async (req: Request, SAMLResponse: string): Promise<Response | null> => {

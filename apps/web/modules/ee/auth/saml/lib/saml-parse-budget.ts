@@ -15,6 +15,10 @@ import type { SamlDecryptedRefusal } from "@/modules/ee/auth/saml/lib/saml-respo
  * ~10-30 ms and a real response in ~5-25 ms (1,000 verbose Okta groups ~11 ms), so 100 ms only catches what the
  * bounds misread, with room for a busy host.
  *
+ * The worker also runs saml20's signature check, with a stand-in certificate (ENG-4108). saml20 and xml-crypto find
+ * the signature, canonicalize what it references and digest it before they use the key, so that cost is incurred
+ * and timed without the IdP's certificate, and a response that makes it too dear never reaches jackson.
+ *
  * An encrypted assertion is ciphertext to the byte bounds, and jackson decrypts it and parses the plaintext before it
  * checks any signature (ENG-4051). Given the SP key, the worker does the same within the same budget: the outer parse,
  * the decryption and the plaintext's parse all count. A plaintext of nested namespace scopes that would block jackson
@@ -45,11 +49,12 @@ const WORKER_STARTUP_TIMEOUT_MS = 5_000;
 /**
  * Main-thread parse time the SAML callback may spend per second, per process. A response that passes the budget is
  * parsed again by jackson on this thread, `JACKSON_PARSES_PER_RESPONSE` times on the signature path (issuer, decrypt,
- * xml2js, signature check), so each one is charged its worker-measured parse time times that; for an encrypted
- * response, that time includes decrypting it and parsing the plaintext. The factor fits real responses (jackson took
- * 1.6-2.5 times the worker's time on signed, encrypted ones), not floods: an unencrypted one of ~12,000 empty
- * elements inside the bounds costs jackson ~60-85 ms, 8-13 times the worker's time, and an encrypted one 5-8 times.
- * The bounds are what cap that per response. Past the allowance
+ * xml2js, signature check), so each one is charged its worker-measured time times that; for an encrypted
+ * response, that time includes decrypting it and parsing the plaintext. The worker also runs saml20's signature
+ * check (ENG-4108), the dearest of those passes: before it did, jackson cost 8-18 times the worker's time on
+ * responses inside the bounds, and the factor was too low for them. Now the worker's time and jackson's signature
+ * check agree (within ~10% on signed responses of 150 to 1,000 groups), and the factor leaves room for the other
+ * passes. Past the allowance
  * the callback answers 503 rather than let many sources together keep the event loop busy with SAML. It is checked
  * when a response is queued and again when its parse finishes, so a burst can overdraw it by one response at most. A real
  * sign-in costs ~10-25 ms x 4, so this is a dozen or more sign-ins a second per process.

@@ -42,6 +42,14 @@ export const SAML_RESPONSE_MAX_LENGTH = 256 * 1024;
  */
 export const SAML_RESPONSE_MAX_DEPTH = 64;
 
+/**
+ * Most elements named `Signature` (in any namespace) a response may carry (ENG-4108). saml20 looks for the
+ * signature to check with XPath selects whose cost grows with the number of such elements, on jackson's thread and
+ * after the parse worker is done, so a response inside every other bound could still block the event loop for
+ * seconds. A real response carries one or two (the response's and the assertion's); four leaves room.
+ */
+export const SAML_RESPONSE_MAX_SIGNATURES = 4;
+
 const LESS_THAN = 0x3c;
 const GREATER_THAN = 0x3e;
 const EQUALS = 0x3d;
@@ -153,6 +161,23 @@ const closesItself = (xml: Buffer, from: number, end: number): boolean => {
   }
 };
 
+const SIGNATURE = Buffer.from("Signature", "latin1");
+const COLON = 0x3a;
+
+/**
+ * Whether the element name starting at `from` has the local name `Signature`, with or without a prefix: what saml20's
+ * `local-name(.)='Signature'` selects match, whatever the namespace.
+ */
+const isSignatureName = (xml: Buffer, from: number, end: number): boolean => {
+  const nameEnd = skipWhile(xml, from, end, isNameByte);
+  const colon = xml.lastIndexOf(COLON, nameEnd - 1);
+  const localStart = colon >= from ? colon + 1 : from;
+  return (
+    nameEnd - localStart === SIGNATURE.length &&
+    xml.compare(SIGNATURE, 0, SIGNATURE.length, localStart, nameEnd) === 0
+  );
+};
+
 /** What `<!` and `<?` open, as xmldom reads them, with the opener's length and its terminator. */
 const OPAQUE_OPENERS = [
   { opener: "<!--", terminator: "-->" },
@@ -182,6 +207,8 @@ export interface SamlResponseMarkup {
   markup: number;
   /** Deepest nesting of open elements. */
   depth: number;
+  /** Elements named `Signature`, in any namespace. */
+  signatures: number;
   /** Whether a DOCTYPE or other `<!` declaration was found; the measure stops there. */
   declaration: boolean;
 }
@@ -189,6 +216,7 @@ export interface SamlResponseMarkup {
 /** The running totals of one measure. */
 interface MarkupScan {
   markup: number;
+  signatures: number;
   /** Elements open at this point. */
   depth: number;
   maxDepth: number;
@@ -222,6 +250,7 @@ const measureTag = (xml: Buffer, lt: number, end: number, scan: MarkupScan): boo
     return true;
   }
   scan.markup += 1 + countAttributes(xml, lt + 1, end);
+  if (isSignatureName(xml, lt + 1, end)) scan.signatures++;
   if (structural && !closesItself(xml, lt + 1, end)) scan.maxDepth = Math.max(scan.maxDepth, ++scan.depth);
   return true;
 };
@@ -238,22 +267,23 @@ const measureTag = (xml: Buffer, lt: number, end: number, scan: MarkupScan): boo
  * fatal to xmldom, so it cannot hide a scope.
  */
 const measureMarkup = (xml: Buffer): SamlResponseMarkup => {
-  const scan: MarkupScan = { markup: 0, depth: 0, maxDepth: 0, opaqueUntil: 0 };
+  const scan: MarkupScan = { markup: 0, signatures: 0, depth: 0, maxDepth: 0, opaqueUntil: 0 };
   let lt = xml.indexOf(LESS_THAN);
 
   while (
     lt !== -1 &&
     scan.markup <= SAML_RESPONSE_MARKUP_BUDGET &&
-    scan.maxDepth <= SAML_RESPONSE_MAX_DEPTH
+    scan.maxDepth <= SAML_RESPONSE_MAX_DEPTH &&
+    scan.signatures <= SAML_RESPONSE_MAX_SIGNATURES
   ) {
     const next = xml.indexOf(LESS_THAN, lt + 1);
     if (!measureTag(xml, lt, next === -1 ? xml.length : next, scan)) {
-      return { markup: scan.markup, depth: scan.maxDepth, declaration: true };
+      return { markup: scan.markup, depth: scan.maxDepth, signatures: scan.signatures, declaration: true };
     }
     lt = next;
   }
 
-  return { markup: scan.markup, depth: scan.maxDepth, declaration: false };
+  return { markup: scan.markup, depth: scan.maxDepth, signatures: scan.signatures, declaration: false };
 };
 
 /** `measureMarkup` on a response as the callback receives it, decoded as jackson decodes it. */
@@ -263,7 +293,8 @@ export const measureSamlResponseMarkup = (samlResponseBase64: string): SamlRespo
 /** A refusal by what the markup holds, with its counts. */
 type SamlMarkupRefusal =
   | { reason: "declaration" }
-  | { reason: "markup" | "depth"; markup: number; depth: number };
+  | { reason: "markup" | "depth"; markup: number; depth: number }
+  | { reason: "signatures"; signatures: number };
 
 /** Why a response is refused before jackson parses it; only sizes, never content, so it is safe to log. */
 export type SamlResponseRefusal =
@@ -282,10 +313,16 @@ export type SamlDecryptedRefusal = SamlMarkupRefusal & {
   decryptedBytes: number;
 };
 
-const markupRefusal = ({ markup, depth, declaration }: SamlResponseMarkup): SamlMarkupRefusal | null => {
+const markupRefusal = ({
+  markup,
+  depth,
+  signatures,
+  declaration,
+}: SamlResponseMarkup): SamlMarkupRefusal | null => {
   if (declaration) return { reason: "declaration" };
   if (markup > SAML_RESPONSE_MARKUP_BUDGET) return { reason: "markup", markup, depth };
   if (depth > SAML_RESPONSE_MAX_DEPTH) return { reason: "depth", markup, depth };
+  if (signatures > SAML_RESPONSE_MAX_SIGNATURES) return { reason: "signatures", signatures };
   return null;
 };
 

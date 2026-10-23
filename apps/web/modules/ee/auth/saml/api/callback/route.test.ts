@@ -8,6 +8,7 @@ import type { SamlParseProbe } from "@/modules/ee/auth/saml/lib/saml-parse-budge
 import {
   SAML_RESPONSE_MARKUP_BUDGET,
   SAML_RESPONSE_MAX_LENGTH,
+  SAML_RESPONSE_MAX_SIGNATURES,
 } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
 import { JACKSON_RELAY_STATE_PREFIX, POST, type SamlErrorCode, buildLoginErrorUrl } from "./route";
 
@@ -113,6 +114,17 @@ describe("SAML callback route", () => {
     const response = await POST(callback({ SAMLResponse, RelayState: "s" }));
 
     expect(response.status).toBe(400);
+    expect(samlResponseMock).not.toHaveBeenCalled();
+  });
+
+  test("refuses a response with more signatures than a SAML response carries before jackson parses it (ENG-4108)", async () => {
+    vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+    const signatures = "<ds:Signature>x</ds:Signature>".repeat(SAML_RESPONSE_MAX_SIGNATURES + 1);
+
+    const response = await POST(callback({ SAMLResponse: b64(ISSUER + signatures), RelayState: "s" }));
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ message: expect.stringContaining("signatures") });
     expect(samlResponseMock).not.toHaveBeenCalled();
   });
 

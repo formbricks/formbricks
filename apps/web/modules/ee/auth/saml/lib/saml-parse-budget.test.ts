@@ -34,6 +34,24 @@ const RESPONSE =
  */
 const SLOW = Array.from({ length: 8000 }, (_, i) => `<a xmlns:p${i}="u">`).join("");
 
+/**
+ * A signed response that passes every byte bound (~11,000 of the 12,000 markup) yet whose signature reference covers
+ * the whole document: the worker's parse takes ~10 ms, the signature check ~250 ms. The signature is not valid, and
+ * does not need to be: the cost is spent before the signature is checked.
+ */
+const WIDE_SIGNED_RESPONSE =
+  '<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="_wide">' +
+  '<saml2:Issuer xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion">https://idp.example.com</saml2:Issuer>' +
+  '<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:SignedInfo>' +
+  '<ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>' +
+  '<ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>' +
+  '<ds:Reference URI=""><ds:Transforms>' +
+  '<ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>' +
+  '<ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/></ds:Transforms>' +
+  '<ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>AAAA</ds:DigestValue>' +
+  "</ds:Reference></ds:SignedInfo><ds:SignatureValue>AAAA</ds:SignatureValue></ds:Signature>" +
+  `<data>${"<n>v</n>".repeat(5_400)}</data></samlp:Response>`;
+
 describe("probeSamlResponseParse", () => {
   test("parses a real response within the budget and reads only its identifiers", async () => {
     const probe = await probeSamlResponseParse(b64(RESPONSE), KEY);
@@ -55,6 +73,19 @@ describe("probeSamlResponseParse", () => {
     expect(elapsed).toBeLessThan(SAML_PARSE_TIME_BUDGET_MS + 400);
 
     await expect(probeSamlResponseParse(b64(RESPONSE), KEY)).resolves.toMatchObject({ outcome: "parsed" });
+  });
+
+  // The bounds count markup and the worker's parse is cheap for a flat document, but jackson's signature check
+  // canonicalizes what the signature references, which costs far more (ENG-4108). The worker runs that step too.
+  test("cuts off a response inside every bound whose signature check is too costly", async () => {
+    const response = b64(WIDE_SIGNED_RESPONSE);
+    expect(checkSamlResponseBounds(response)).toBeNull();
+
+    const started = performance.now();
+    const probe = await probeSamlResponseParse(response, KEY);
+
+    expect(probe).toEqual({ outcome: "too_costly", reason: "time" });
+    expect(performance.now() - started).toBeLessThan(SAML_PARSE_TIME_BUDGET_MS + 400);
   });
 
   test("returns no claims for malformed input, without failing", async () => {
