@@ -99,6 +99,13 @@ describe("validateChartQuery", () => {
   });
 
   describe("Cube options the app never uses", () => {
+    test("an unknown key named like an Object.prototype member still gets a reason", () => {
+      expect(issuesOf({ measures: [COUNT], constructor: 1, toString: 1 })).toEqual([
+        { name: "query.constructor", reason: "Unsupported field 'constructor'.", code: "unsupported_field" },
+        { name: "query.toString", reason: "Unsupported field 'toString'.", code: "unsupported_field" },
+      ]);
+    });
+
     test.each(["ungrouped", "segments", "renewQuery", "joinHints", "total", "timezone"])(
       "refuses %s",
       (option) => {

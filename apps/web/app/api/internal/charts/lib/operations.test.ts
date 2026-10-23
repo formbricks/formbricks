@@ -12,6 +12,7 @@ import {
 } from "@/app/api/v3/lib/dashboards-access";
 import { problemDashboardsPlanRequired, problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import { RedactedAIError } from "@/lib/ai/loggable-error";
 import { CubeQueryError } from "@/modules/ee/analysis/api/lib/cube-client";
 import { AI_CHART_PROMPT_ERROR_CODE } from "@/modules/ee/analysis/charts/lib/ai-chart-errors";
 import { generateAIChartQuery } from "@/modules/ee/analysis/charts/lib/ai-chart-query.server";
@@ -180,13 +181,38 @@ describe("generateInternalChart", () => {
     expect(runChartQuery).not.toHaveBeenCalled();
   });
 
-  test("does not treat any other invalid input as an unchartable prompt", async () => {
+  test("does not treat any other invalid input as an unchartable prompt, nor blame the provider for it", async () => {
     vi.mocked(generateAIChartQuery).mockRejectedValue(new InvalidInputError("something else"));
 
     const response = await generate();
 
-    expect(response.status).toBe(502);
-    expect(await response.json()).toMatchObject({ code: "bad_gateway" });
+    expect(response.status).toBe(500);
+    expect(JSON.stringify(await response.json())).not.toContain("AI provider");
+  });
+
+  test("does not blame the AI provider for the app's own failure inside the generation call", async () => {
+    // The organization lookup and the license check run inside generateAIChartQuery, before the provider.
+    vi.mocked(generateAIChartQuery).mockRejectedValue(new DatabaseError("connection terminated"));
+
+    const response = await generate();
+
+    expect(response.status).toBe(500);
+    expect(JSON.stringify(await response.json())).not.toContain("AI provider");
+  });
+
+  test("does not blame the AI provider for a failure while running the generated query", async () => {
+    vi.mocked(generateAIChartQuery).mockResolvedValue({
+      chartType: "bar",
+      query: validQuery,
+      name: "Responses by source",
+    } as Awaited<ReturnType<typeof generateAIChartQuery>>);
+    vi.mocked(runChartQuery).mockRejectedValue(new Error("option grouping lookup failed"));
+
+    const response = await generate();
+
+    expect(runChartQuery).toHaveBeenCalledTimes(1);
+    expect(response.status).toBe(500);
+    expect(JSON.stringify(await response.json())).not.toContain("AI provider");
   });
 
   test("answers 422 and runs nothing when the validator refuses the model's query", async () => {
@@ -282,8 +308,11 @@ describe("generateInternalChart", () => {
     expect(JSON.stringify(await response.json())).not.toContain("AI provider");
   });
 
-  test("answers any other failure with a generic 502, logging no message that could carry the prompt", async () => {
-    vi.mocked(generateAIChartQuery).mockRejectedValue(new Error("model said: responses by source"));
+  test("answers a provider failure with a generic 502, logging no message that could carry the prompt", async () => {
+    // What generateAIChartQuery throws for an AI SDK error: redacted, never the original.
+    vi.mocked(generateAIChartQuery).mockRejectedValue(
+      new RedactedAIError(new Error("model said: responses by source"))
+    );
 
     const response = await generate();
 

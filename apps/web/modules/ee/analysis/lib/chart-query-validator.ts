@@ -524,7 +524,9 @@ export const validateChartQuery = (
     return { ok: false, issues: issues.issues };
   }
 
-  checkKnownKeys(input, QUERY_KEYS, path, issues, (key) => REFUSED_OPTIONS[key]);
+  checkKnownKeys(input, QUERY_KEYS, path, issues, (key) =>
+    Object.hasOwn(REFUSED_OPTIONS, key) ? REFUSED_OPTIONS[key] : undefined
+  );
 
   const measures = checkFieldList(input.measures, `${path}.measures`, ["measure"], MAX_MEASURES, issues);
   const dimensions = checkFieldList(

@@ -14,6 +14,7 @@ import {
   problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
+import { RedactedAIError } from "@/lib/ai/loggable-error";
 import { CubeQueryError } from "@/modules/ee/analysis/api/lib/cube-client";
 import { AI_CHART_PROMPT_ERROR_CODE } from "@/modules/ee/analysis/charts/lib/ai-chart-errors";
 import { generateAIChartQuery } from "@/modules/ee/analysis/charts/lib/ai-chart-query.server";
@@ -62,9 +63,6 @@ export async function generateInternalChart({
   if (!userId) return problemForbidden(requestId, undefined, instance);
 
   let organizationId = "";
-  // Only a failure inside the model call is the AI provider's; anything before it (an access check, the
-  // database) is mapped like any other v3 failure rather than blamed on the provider.
-  let callingModel = false;
   try {
     const access = await requireDashboardsAccess(
       authentication,
@@ -86,7 +84,6 @@ export async function generateInternalChart({
     );
     if (refused) return refused;
 
-    callingModel = true;
     const { chartType, query, name } = await generateAIChartQuery({
       organizationId,
       workspaceId: access.workspaceId,
@@ -94,7 +91,6 @@ export async function generateInternalChart({
       userId,
       prompt: body.prompt,
     });
-    callingModel = false;
     // The model's query goes through the same validator as one a person or agent writes, so it is
     // held to the same bounds (including the time-bucket limit) and can be saved as it is shown.
     const validated = validateChartQuery(query);
@@ -132,12 +128,16 @@ export async function generateInternalChart({
       instance,
       workspaceId: body.workspaceId,
       organizationId,
-      callingModel,
     });
   }
 }
 
-/** What a failed generation answers: the prompt, the generated query, the AI provider, or anything else. */
+/**
+ * What a failed generation answers: the prompt, the generated query, the AI provider, or anything else.
+ * Only an error from the provider is blamed on it — `generateAIChartQuery` turns every AI SDK error into a
+ * `RedactedAIError` — while the app's own errors (the organization lookup, the license check, the
+ * database) map like any other v3 failure.
+ */
 const generateFailure = (
   error: unknown,
   {
@@ -146,14 +146,12 @@ const generateFailure = (
     instance,
     workspaceId,
     organizationId,
-    callingModel,
   }: {
     log: ReturnType<typeof logger.withContext>;
     requestId: string;
     instance: string;
     workspaceId: string;
     organizationId: string;
-    callingModel: boolean;
   }
 ): Response => {
   if (error instanceof InvalidInputError && error.message === AI_CHART_PROMPT_ERROR_CODE) {
@@ -172,7 +170,7 @@ const generateFailure = (
   });
   if (aiResponse) return aiResponse;
 
-  if (!callingModel) {
+  if (!(error instanceof RedactedAIError)) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: "charts.generate" });
   }
 
