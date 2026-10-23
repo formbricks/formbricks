@@ -212,8 +212,8 @@ overrides:
   protobufjs@8: 8.6.6
   '@tootallnate/once': 2.0.1
   '@xmldom/xmldom': 0.9.12
-  xml-crypto>@xmldom/xmldom: 0.8.15
-  xml-encryption>@xmldom/xmldom: 0.8.15
+  xml-crypto@6>@xmldom/xmldom: 0.8.15
+  xml-encryption@3>@xmldom/xmldom: 0.8.15
   axios: 1.20.0
   '@modelcontextprotocol/sdk@1': 1.31.0
   postcss-selector-parser: 7.1.6

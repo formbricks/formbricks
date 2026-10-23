@@ -1,7 +1,8 @@
 import { NextRequest } from "next/server";
 import { createHash, createPublicKey, randomBytes } from "node:crypto";
+import { createRequire } from "node:module";
 import { inflateRawSync } from "node:zlib";
-import { beforeAll, describe, expect, test, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { SAML_AUDIENCE, SAML_PATH, SAML_PRODUCT, SAML_TENANT, WEBAPP_URL } from "@/lib/constants";
 import jackson from "@/modules/ee/auth/saml/lib/jackson";
 import { createTestIdp } from "@/modules/ee/auth/saml/lib/tests/saml-test-idp";
@@ -56,12 +57,33 @@ const spPublicKey = async () => {
   return createPublicKey(privateKey).export({ type: "spki", format: "pem" }).toString();
 };
 
+interface SignedXmlVerifier {
+  loadSignature(signature: string): void;
+  checkSignature(xml: string): boolean;
+}
+
+/** Whether `xml`'s enveloped signature verifies against `publicKey`, checked with the xml-crypto jackson signs with. */
+const signatureVerifies = (xml: string, publicKey: string): boolean => {
+  const fromJackson = createRequire(createRequire(import.meta.url).resolve("@boxyhq/saml-jackson"));
+  const { SignedXml } = createRequire(fromJackson.resolve("@boxyhq/saml20"))("xml-crypto") as {
+    SignedXml: new (options: { publicCert: string }) => SignedXmlVerifier;
+  };
+  const verifier = new SignedXml({ publicCert: publicKey });
+  verifier.loadSignature(/<(?:\w+:)?Signature\b[\s\S]*<\/(?:\w+:)?Signature>/.exec(xml)?.[0] ?? "");
+  return verifier.checkSignature(xml);
+};
+
 beforeAll(async () => {
   const { mkdtemp, writeFile } = await import("node:fs/promises");
   const { tmpdir } = await import("node:os");
   const path = await import("node:path");
   idp.metadataDir = await mkdtemp(path.join(tmpdir(), "formbricks-saml-"));
   await writeFile(path.join(idp.metadataDir, "idp.xml"), testIdp.metadata);
+});
+
+afterAll(async () => {
+  const { rm } = await import("node:fs/promises");
+  if (idp.metadataDir) await rm(idp.metadataDir, { recursive: true, force: true });
 });
 
 describe("SP-initiated SAML sign-in (ENG-4045)", () => {
@@ -104,7 +126,7 @@ describe("SP-initiated SAML sign-in (ENG-4045)", () => {
         Buffer.from(idpRedirect.searchParams.get("SAMLRequest") ?? "", "base64")
       ).toString("utf8");
       expect(authnRequest).toContain(`AssertionConsumerServiceURL="${ACS_URL}"`);
-      expect(authnRequest).toMatch(/<(\w+:)?Signature\b/);
+      expect(signatureVerifies(authnRequest, await spPublicKey())).toBe(true);
       const requestId = /\bID="([^"]+)"/.exec(authnRequest)?.[1] ?? "";
       expect(requestId).not.toBe("");
 
