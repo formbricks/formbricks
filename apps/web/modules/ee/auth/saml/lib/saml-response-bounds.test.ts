@@ -146,10 +146,10 @@ describe("measureSamlResponseMarkup", () => {
   test("counts elements named Signature by local name, in any namespace or none", () => {
     // xpath's local-name() is what follows the prefix, so all three are what saml20's fallback select matches.
     expect(signatures('<r><Signature/><ds:Signature x="1"></ds:Signature><x:Signature\n/></r>')).toBe(3);
-    // Neighbouring names, closing tags and text are not Signature elements.
+    // Neighbouring names, other cases, closing tags and text are not Signature elements: local-name() is exact.
     expect(
       signatures(
-        "<r><ds:SignatureValue/><SignatureMethod/><xSignature/><Signatures/></r>Signature</Signature>"
+        "<r><ds:SignatureValue/><SignatureMethod/><xSignature/><Signatures/><ds:SigNature/></r>Signature</Signature>"
       )
     ).toBe(0);
     // xmldom splits a name at its first colon, so this one's local name is `b:Signature`; counting it is the safe side.
