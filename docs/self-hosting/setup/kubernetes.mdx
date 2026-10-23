@@ -196,8 +196,11 @@ rm -rf "$crd_dir"
 
 For separately managed **both** sets, use that same Envoy CRD chart with
 `crds.gatewayAPI.enabled=true`, `crds.gatewayAPI.channel=standard`, and
-`crds.envoyGateway.enabled=true`. Do not apply it over provider-owned Gateway API CRDs. Gateway API v1.5.1
-must serve the types Envoy needs, including `BackendTLSPolicy` and `ListenerSet`. The OCI install does not
+`crds.envoyGateway.enabled=true` for a fresh cluster. During a handoff from bundled Experimental CRDs,
+keep `crds.gatewayAPI.channel=experimental` until clients using Experimental-only versions, such as
+`TLSRoute` v1alpha2, have migrated; the v1.5.1 Standard bundle does not serve them. Do not apply the
+both-sets variant over provider-owned Gateway API CRDs. Gateway API v1.5.1 must serve the types Envoy
+needs, including `BackendTLSPolicy` and `ListenerSet`. The OCI install does not
 place chart scripts in your working directory. Obtain the Formbricks repository, then run the optional,
 read-only preflight after the CRD owner provisions the CRDs:
 

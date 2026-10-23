@@ -52,8 +52,11 @@ public ingress at the Gateway's current proxy address and verify a request befor
 When the platform already owns compatible Gateway API v1.5.1 Standard or Experimental CRDs, install **only**
 the Envoy CRDs from the matching v1.8.4 chart. When the platform owns both sets outside the Formbricks
 release, use the same chart with `crds.gatewayAPI.enabled=true`,
-`crds.gatewayAPI.channel=standard`, and `crds.envoyGateway.enabled=true` instead. Do not apply that
-both-sets variant over provider-managed Gateway API CRDs; the Envoy-only command below is appropriate there.
+`crds.gatewayAPI.channel=standard`, and `crds.envoyGateway.enabled=true` for a fresh cluster. During a
+handoff from bundled Experimental CRDs, keep `crds.gatewayAPI.channel=experimental` until clients using
+Experimental-only served versions, such as `TLSRoute` v1alpha2, have migrated. The v1.5.1 Standard bundle
+does not serve those versions. Do not apply the both-sets variant over provider-managed Gateway API CRDs;
+the Envoy-only command below is appropriate there.
 
 ```bash
 crd_dir="$(mktemp -d)"
