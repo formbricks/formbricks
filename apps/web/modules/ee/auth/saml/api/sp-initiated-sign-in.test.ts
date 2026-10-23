@@ -86,6 +86,50 @@ afterAll(async () => {
   if (idp.metadataDir) await rm(idp.metadataDir, { recursive: true, force: true });
 });
 
+/**
+ * "Continue with SAML": Better Auth sends the browser to the authorize route, and jackson redirects it to the IdP
+ * with a signed AuthnRequest (HTTP-Redirect binding: deflated, base64). When signing fails, jackson sends the browser
+ * back to Better Auth with the reason instead, which is what ENG-4045 broke.
+ */
+const startSignIn = async () => {
+  const codeVerifier = base64url(randomBytes(32));
+  const state = base64url(randomBytes(16));
+  const authorizeUrl = new URL(`${WEBAPP_URL}/api/auth/saml/authorize`);
+  for (const [key, value] of Object.entries({
+    response_type: "code",
+    client_id: "dummy",
+    redirect_uri: BETTER_AUTH_CALLBACK,
+    state,
+    code_challenge: base64url(createHash("sha256").update(codeVerifier).digest()),
+    code_challenge_method: "S256",
+    provider: "saml",
+    tenant: SAML_TENANT,
+    product: SAML_PRODUCT,
+  })) {
+    authorizeUrl.searchParams.set(key, value);
+  }
+  const authorizeResponse = await authorize(new NextRequest(authorizeUrl));
+
+  const authorizeBody = authorizeResponse.status >= 400 ? await authorizeResponse.text() : "";
+  expect(authorizeBody).toBe("");
+  const idpRedirect = new URL(authorizeResponse.headers.get("location") ?? "");
+  expect(idpRedirect.searchParams.get("error_description")).toBeNull();
+  expect(`${idpRedirect.origin}${idpRedirect.pathname}`).toBe(testIdp.ssoUrl);
+  const authnRequest = inflateRawSync(
+    Buffer.from(idpRedirect.searchParams.get("SAMLRequest") ?? "", "base64")
+  ).toString("utf8");
+  expect(authnRequest).toContain(`AssertionConsumerServiceURL="${ACS_URL}"`);
+  expect(signatureVerifies(authnRequest, await spPublicKey())).toBe(true);
+  const requestId = /\bID="([^"]+)"/.exec(authnRequest)?.[1] ?? "";
+  expect(requestId).not.toBe("");
+
+  return { codeVerifier, state, relayState: idpRedirect.searchParams.get("RelayState") ?? "", requestId };
+};
+
+/** The IdP's POST back to the callback route. */
+const postToCallback = (SAMLResponse: string, RelayState: string) =>
+  callback(new Request(ACS_URL, { method: "POST", body: new URLSearchParams({ SAMLResponse, RelayState }) }));
+
 describe("SP-initiated SAML sign-in (ENG-4045)", () => {
   test.each([
     ["a signed assertion", false],
@@ -94,41 +138,8 @@ describe("SP-initiated SAML sign-in (ENG-4045)", () => {
   ])(
     "signs the AuthnRequest, accepts %s and hands Better Auth the user",
     async (_name, encrypted) => {
-      const codeVerifier = base64url(randomBytes(32));
-      const state = base64url(randomBytes(16));
-
-      // 1. "Continue with SAML": Better Auth sends the browser to the authorize route.
-      const authorizeUrl = new URL(`${WEBAPP_URL}/api/auth/saml/authorize`);
-      for (const [key, value] of Object.entries({
-        response_type: "code",
-        client_id: "dummy",
-        redirect_uri: BETTER_AUTH_CALLBACK,
-        state,
-        code_challenge: base64url(createHash("sha256").update(codeVerifier).digest()),
-        code_challenge_method: "S256",
-        provider: "saml",
-        tenant: SAML_TENANT,
-        product: SAML_PRODUCT,
-      })) {
-        authorizeUrl.searchParams.set(key, value);
-      }
-      const authorizeResponse = await authorize(new NextRequest(authorizeUrl));
-
-      // jackson redirects to the IdP with a signed AuthnRequest (HTTP-Redirect binding: deflated, base64). When it
-      // fails, it sends the browser back to Better Auth with the reason instead.
-      const authorizeBody = authorizeResponse.status >= 400 ? await authorizeResponse.text() : "";
-      expect(authorizeBody).toBe("");
-      const idpRedirect = new URL(authorizeResponse.headers.get("location") ?? "");
-      expect(idpRedirect.searchParams.get("error_description")).toBeNull();
-      expect(`${idpRedirect.origin}${idpRedirect.pathname}`).toBe(testIdp.ssoUrl);
-      const relayState = idpRedirect.searchParams.get("RelayState") ?? "";
-      const authnRequest = inflateRawSync(
-        Buffer.from(idpRedirect.searchParams.get("SAMLRequest") ?? "", "base64")
-      ).toString("utf8");
-      expect(authnRequest).toContain(`AssertionConsumerServiceURL="${ACS_URL}"`);
-      expect(signatureVerifies(authnRequest, await spPublicKey())).toBe(true);
-      const requestId = /\bID="([^"]+)"/.exec(authnRequest)?.[1] ?? "";
-      expect(requestId).not.toBe("");
+      // 1. "Continue with SAML".
+      const { codeVerifier, state, relayState, requestId } = await startSignIn();
 
       // 2. The IdP posts its signed response back to the callback route.
       const SAMLResponse = testIdp.signedResponse({
@@ -141,12 +152,7 @@ describe("SP-initiated SAML sign-in (ENG-4045)", () => {
       expect(Buffer.from(SAMLResponse, "base64").toString("utf8").includes("EncryptedAssertion")).toBe(
         encrypted
       );
-      const callbackResponse = await callback(
-        new Request(ACS_URL, {
-          method: "POST",
-          body: new URLSearchParams({ SAMLResponse, RelayState: relayState }),
-        })
-      );
+      const callbackResponse = await postToCallback(SAMLResponse, relayState);
 
       const callbackBody = callbackResponse.status >= 400 ? await callbackResponse.text() : "";
       expect(callbackBody).toBe("");
@@ -182,6 +188,43 @@ describe("SP-initiated SAML sign-in (ENG-4045)", () => {
         firstName: "Test",
         lastName: "User",
       });
+    },
+    30_000
+  );
+
+  // ENG-4045 moves xml-crypto, which checks the IdP's signature, onto its own xmldom copy. Signing working is only half
+  // of it: a signature that does not hold must still be refused, with no code handed to Better Auth.
+  const otherIdp = createTestIdp();
+  test.each([
+    [
+      "signed with a key the connection does not trust",
+      (options: Parameters<typeof testIdp.signedResponse>[0]) => otherIdp.signedResponse(options),
+    ],
+    [
+      "changed after it was signed",
+      (options: Parameters<typeof testIdp.signedResponse>[0]) => {
+        const signed = Buffer.from(testIdp.signedResponse(options), "base64").toString("utf8");
+        const changed = signed.replaceAll(options.email, "mallory@example.com");
+        expect(changed).not.toBe(signed);
+        return Buffer.from(changed, "utf8").toString("base64");
+      },
+    ],
+  ])(
+    "refuses a response %s",
+    async (_name, respond) => {
+      const { relayState, requestId } = await startSignIn();
+      const SAMLResponse = respond({
+        requestId,
+        acsUrl: ACS_URL,
+        audience: SAML_AUDIENCE,
+        email: "ada@example.com",
+      });
+
+      const callbackResponse = await postToCallback(SAMLResponse, relayState);
+
+      expect(callbackResponse.status).toBe(400);
+      expect(callbackResponse.headers.get("location")).toBeNull();
+      expect(await callbackResponse.json()).toMatchObject({ code: "bad_request" });
     },
     30_000
   );
