@@ -12,8 +12,8 @@ import {
 import { POST } from "./route";
 
 // The route with its real bounds and its real parse worker (ENG-4051); only jackson, the rate limiter and Next's
-// redirect are stood in for. jackson's own validation cannot run here: it needs a configured connection and, for
-// signed responses, ENG-4045's fix. What this proves is which responses reach it.
+// redirect are stood in for, so this proves which responses reach jackson. jackson accepting a real encrypted
+// assertion is covered by ../sp-initiated-sign-in.test.ts, which runs it with a configured connection.
 
 const sp = createSpKeyPair();
 

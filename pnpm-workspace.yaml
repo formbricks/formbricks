@@ -195,6 +195,14 @@ overrides:
   # load-bearing: xml-crypto/xml-encryption resolve 0.8.13 and @boxyhq/saml20 resolves 0.9.8, both still
   # vulnerable to the original chain (GHSA-2v35-w6hq-6mfw + 4 more).
   "@xmldom/xmldom": 0.9.12
+  # ENG-4045: xml-crypto and xml-encryption stay on the 0.8 line they declare (`^0.8`, still so in xml-crypto
+  # 6.4.0). They call `parseFromString(xml)` without a mimeType, which every 0.9 release throws on, so on 0.9
+  # jackson can neither sign an AuthnRequest nor check a response's signature: SAML sign-in fails outright.
+  # 0.8.15 is the patched 0.8 release; `pnpm audit` reports no xmldom advisory against it. saml20 parses on
+  # 0.9.12 and hands its nodes to both, which works (modules/ee/auth/saml/api/sp-initiated-sign-in.test.ts).
+  # Drop these two once xml-crypto and xml-encryption support 0.9.
+  "xml-crypto>@xmldom/xmldom": 0.8.15
+  "xml-encryption>@xmldom/xmldom": 0.8.15
   # 1.20.0 also fixes HTTP adapter DoS, redirect-control bypass and prototype-pollution gadgets.
   # load-bearing: @boxyhq/saml-jackson pins 1.13.5.
   axios: 1.20.0
