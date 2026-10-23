@@ -23,6 +23,7 @@ const {
   applyIPRateLimitMock,
   redirectMock,
   probeMock,
+  chargeMock,
   IDP_VERIFICATION,
 } = vi.hoisted(() => {
   const samlResponseMock = vi.fn(async (_body: { RelayState: string; SAMLResponse: string }) => ({
@@ -42,6 +43,7 @@ const {
     })),
     applyIPRateLimitMock: vi.fn(async (_config: unknown, _options?: unknown) => ({ allowed: true })),
     redirectMock: vi.fn((url: string) => new Response(null, { status: 307, headers: { location: url } })),
+    chargeMock: vi.fn((_ms: number) => undefined),
     probeMock: vi.fn(
       async (
         _samlResponse: string,
@@ -53,7 +55,10 @@ const {
 });
 
 vi.mock("@/modules/ee/auth/saml/lib/jackson", () => ({ default: jacksonMock }));
-vi.mock("@/modules/ee/auth/saml/lib/saml-parse-budget", () => ({ probeSamlResponseParse: probeMock }));
+vi.mock("@/modules/ee/auth/saml/lib/saml-parse-budget", () => ({
+  probeSamlResponseParse: probeMock,
+  chargeMainThreadParse: chargeMock,
+}));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyIPRateLimit: applyIPRateLimitMock }));
 vi.mock("next/navigation", () => ({ redirect: redirectMock }));
 
@@ -412,6 +417,8 @@ describe("SAML callback route", () => {
             details: {},
           });
           expect(samlResponseMock).toHaveBeenCalledExactlyOnceWith(WITHOUT_ASSERTION);
+          // jackson's time on it is charged like any main-thread SAML parse.
+          expect(chargeMock).toHaveBeenCalledExactlyOnceWith(expect.any(Number));
           expect(warn).toHaveBeenCalledWith(
             { ...refusal, suppressedSinceLast: 0 },
             "Refused a SAML response whose decrypted assertion is past the bounds"

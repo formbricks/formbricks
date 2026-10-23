@@ -12,6 +12,7 @@ import jackson from "@/modules/ee/auth/saml/lib/jackson";
 import {
   type SamlParseProbe,
   type SamlResponseClaims,
+  chargeMainThreadParse,
   probeSamlResponseParse,
 } from "@/modules/ee/auth/saml/lib/saml-parse-budget";
 import {
@@ -375,12 +376,16 @@ const refuseOpenedAssertion = async (
     );
   }
 
+  // jackson's time on the stand-in is main-thread SAML work like any other, so it is charged to the allowance: its wall
+  // time, which includes the store lookups and so errs high.
+  const started = performance.now();
   const result = await runJackson(
     req,
     oauthController,
     { RelayState, SAMLResponse: samlResponseWithoutAssertion(probe.issuer) },
     context
   );
+  chargeMainThreadParse(performance.now() - started);
   if (result instanceof Response) return result;
   // With no assertion it cannot pass validation; were jackson ever to accept it, it is refused all the same.
   if (!result.error)

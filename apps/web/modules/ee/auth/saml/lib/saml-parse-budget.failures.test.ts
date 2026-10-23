@@ -263,6 +263,15 @@ describe("probeSamlResponseParse failure paths", () => {
     await expect(last).resolves.toEqual({ outcome: "busy" });
   });
 
+  test("answers busy once main-thread time charged outside a probe has spent the allowance", async () => {
+    const { probeSamlResponseParse, chargeMainThreadParse, SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS } =
+      await load();
+
+    chargeMainThreadParse(SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS);
+
+    await expect(probeSamlResponseParse("PHIvPg==", KEY, null)).resolves.toEqual({ outcome: "busy" });
+  });
+
   test("fails a decrypted refusal the worker never announced, rather than answer it", async () => {
     const { probe, worker } = await holdingOneJob();
     worker.answer(5, {

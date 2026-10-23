@@ -389,6 +389,15 @@ function pump(): void {
 }
 
 /**
+ * Charges main-thread SAML time spent outside a probe to the allowance: the route's call to jackson in place of a
+ * response refused once its assertion was opened (ENG-6646). Measured on this thread, so it is charged as it is.
+ */
+export const chargeMainThreadParse = (ms: number): void => {
+  refillAllowance(performance.now());
+  pool.allowanceMs -= ms;
+};
+
+/**
  * Parse `samlResponseBase64` in the worker under `SAML_PARSE_TIME_BUDGET_MS`, decoded as jackson decodes it, and with
  * `decryptionKey` (`null` for a response jackson would not decrypt) decrypt its encrypted assertion within the same
  * budget and hold the result to the byte bounds, then run jackson's signature check with `idpVerification` (`null`
