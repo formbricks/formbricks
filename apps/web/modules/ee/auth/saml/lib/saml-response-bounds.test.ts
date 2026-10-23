@@ -152,7 +152,13 @@ describe("measureSamlResponseMarkup", () => {
         "<r><ds:SignatureValue/><SignatureMethod/><xSignature/><Signatures/><ds:SigNature/></r>Signature</Signature>"
       )
     ).toBe(0);
-    // xmldom splits a name at its first colon, so this one's local name is `b:Signature`; counting it is the safe side.
+    // A prefix that starts with a non-ASCII letter is still a prefix to xmldom and xpath.
+    expect(signatures('<r xmlns:\u00e9="http://www.w3.org/2000/09/xmldsig#"><\u00e9:Signature/></r>')).toBe(
+      1
+    );
+    // xmldom ends a name at U+0080, so the name here is `Signature`.
+    expect(signatures("<r><Signature\u0080/></r>")).toBe(1);
+    // xmldom refuses a name with two colons, so counting one costs nothing.
     expect(signatures("<a:b:Signature/>")).toBe(1);
   });
 
@@ -160,6 +166,9 @@ describe("measureSamlResponseMarkup", () => {
     const flood = "<a/>".repeat(SAML_RESPONSE_MARKUP_BUDGET * 10);
     expect(count(flood)).toBe(SAML_RESPONSE_MARKUP_BUDGET + 1);
     expect(depth("<a>".repeat(SAML_RESPONSE_MAX_DEPTH * 10))).toBe(SAML_RESPONSE_MAX_DEPTH + 1);
+    expect(signatures("<Signature/>".repeat(SAML_RESPONSE_MAX_SIGNATURES * 10))).toBe(
+      SAML_RESPONSE_MAX_SIGNATURES + 1
+    );
   });
 
   test("counts every < inside a comment, CDATA section or processing instruction", () => {
@@ -249,14 +258,16 @@ describe("checkSamlResponseBounds", () => {
     [
       "a signed response with a signed assertion",
       SIGNED_RESPONSE_HEAD + SIGNED_ASSERTION + "</samlp:Response>",
+      2,
     ],
     [
       "a signed response with an encrypted assertion",
       SIGNED_RESPONSE_HEAD + ENCRYPTED_ASSERTION + "</samlp:Response>",
+      1,
     ],
-  ])("lets through %s, nested well under the depth cap", (_name, xml) => {
+  ])("lets through %s, nested well under the depth cap", (_name, xml, expected) => {
     expect(depth(xml)).toBeLessThanOrEqual(10);
-    expect(signatures(xml)).toBeLessThanOrEqual(2);
+    expect(signatures(xml)).toBe(expected);
     expect(checkSamlResponseBounds(b64(xml))).toBeNull();
   });
 

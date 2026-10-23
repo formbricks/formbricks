@@ -43,11 +43,11 @@ export const SAML_RESPONSE_MAX_LENGTH = 256 * 1024;
 export const SAML_RESPONSE_MAX_DEPTH = 64;
 
 /**
- * Most elements named `Signature` (in any namespace, or none) the callback lets jackson see (ENG-4108). When saml20
- * finds no XML Signature where it expects one, it falls back to a document-wide select by that local name, and xpath's
- * cost grows with the square of the matches: 4,000 of them fit the budget in 63 KiB and cost its signature check
- * ~2 s on the main thread. A real response carries one or two (the assertion's, the response's, or both, as Okta,
- * Entra and ADFS sign them), so 4 leaves room.
+ * Most elements named `Signature` (in any namespace, or none) the callback lets jackson see (ENG-4108). When
+ * saml20 finds no XML Signature where it expects one, it falls back to a document-wide select by that local name,
+ * and xpath's cost grows with the square of the matches: 4,000 of them fit the budget in 63 KiB and cost its
+ * signature check ~2 s on the main thread. A real response carries one or two (the assertion's, the response's, or
+ * both, as Okta, Entra and ADFS sign them), so 4 leaves room.
  */
 export const SAML_RESPONSE_MAX_SIGNATURES = 4;
 
@@ -165,16 +165,25 @@ const closesItself = (xml: Buffer, from: number, end: number): boolean => {
 
 const SIGNATURE = "Signature";
 
+/** An ASCII byte that can continue an XML name, so a name it follows has not ended. */
+const isAsciiNameByte = (byte: number) =>
+  isNameStart(byte) || (byte >= 0x30 && byte <= 0x39) || byte === 0x2d || byte === 0x2e || byte === COLON;
+
 /**
- * Whether the element name starting at `from` is `Signature` to xpath's `local-name()`: the whole name, or what
- * follows its prefix. xmldom splits a name at its first `:`, so `a:b:Signature` is not one; counting it anyway is the
- * safe side.
+ * Whether the tag name starting at `from` may be `Signature` to xpath's `local-name()`: the whole name, or what
+ * follows a `:` in it. The name counts as ended at any byte that cannot continue an ASCII name, so a non-ASCII
+ * prefix (`é:Signature`) or a non-ASCII byte xmldom ends a name at (U+0080) cannot hide one. xmldom refuses a name
+ * with two colons (`a:b:Signature`), so counting that one too costs nothing.
  */
 const isSignatureName = (xml: Buffer, from: number, end: number): boolean => {
   const nameEnd = skipWhile(xml, from, end, isNameByte);
-  const localStart = nameEnd - SIGNATURE.length;
-  if (localStart < from || xml.toString("latin1", localStart, nameEnd) !== SIGNATURE) return false;
-  return localStart === from || xml[localStart - 1] === COLON;
+  for (let start = from; start + SIGNATURE.length <= nameEnd; start++) {
+    if (start !== from && xml[start - 1] !== COLON) continue;
+    const after = start + SIGNATURE.length;
+    if (xml.toString("latin1", start, after) !== SIGNATURE) continue;
+    if (after === nameEnd || !isAsciiNameByte(xml[after])) return true;
+  }
+  return false;
 };
 
 /** What `<!` and `<?` open, as xmldom reads them, with the opener's length and its terminator. */
@@ -244,12 +253,13 @@ const measureTag = (xml: Buffer, lt: number, end: number, scan: MarkupScan): boo
     scan.opaqueUntil = until;
     return true;
   }
+  // Before the stray check: a name that starts with a non-ASCII letter is weighed as stray, yet can be a Signature.
+  if (isSignatureName(xml, lt + 1, end)) scan.signatures++;
   if (!isNameStart(kind)) {
     scan.markup += STRAY_LESS_THAN_WEIGHT;
     return true;
   }
   scan.markup += 1 + countAttributes(xml, lt + 1, end);
-  if (isSignatureName(xml, lt + 1, end)) scan.signatures++;
   if (structural && !closesItself(xml, lt + 1, end)) scan.maxDepth = Math.max(scan.maxDepth, ++scan.depth);
   return true;
 };
@@ -257,13 +267,14 @@ const measureTag = (xml: Buffer, lt: number, end: number, scan: MarkupScan): boo
 /**
  * Measures the markup in the decoded response in one pass over its bytes, without building a string or a tree
  * (~1 ms at the length cap), and stops as soon as the markup passes the budget, the nesting passes the depth cap or
- * the `Signature` elements pass their cap, so a refused flood costs nothing past that point. Every `<` counts wherever it sits, because xmldom turns
- * each one into a node or into an error it raises and recovers from; one that cannot start anything costs more,
- * so it weighs more. Following XML structure instead lets malformed input hide markup, which is exactly what an
- * attacker sends. A `<` inside a comment or CDATA section is counted too; over-counting that rarity is the safe
- * direction. Depth rises on every tag that does not strictly close itself and falls on every `</`, both only
- * outside comments, CDATA sections and processing instructions: a `</` that does not match the open element is
- * fatal to xmldom, so it cannot hide a scope. A `Signature` start tag counts wherever it sits, like any `<`.
+ * the `Signature` elements pass their cap, so a refused flood costs nothing past that point. Every `<` counts
+ * wherever it sits, because xmldom turns each one into a node or into an error it raises and recovers from; one that
+ * cannot start anything costs more, so it weighs more. Following XML structure instead lets malformed input hide
+ * markup, which is exactly what an attacker sends. A `<` inside a comment or CDATA section is counted too;
+ * over-counting that rarity is the safe direction. Depth rises on every tag that does not strictly close itself and
+ * falls on every `</`, both only outside comments, CDATA sections and processing instructions: a `</` that does not
+ * match the open element is fatal to xmldom, so it cannot hide a scope. A `Signature` start tag counts wherever it
+ * sits, like any `<`.
  */
 const measureMarkup = (xml: Buffer): SamlResponseMarkup => {
   const scan: MarkupScan = { markup: 0, depth: 0, maxDepth: 0, signatures: 0, opaqueUntil: 0 };
@@ -335,11 +346,11 @@ export const checkSamlResponseBounds = (samlResponseBase64: string): SamlRespons
 };
 
 /**
- * The same markup, depth, `Signature` and declaration bounds on a response whose encrypted assertion has been decrypted and put
- * in place (ENG-4051): the document jackson validates from then on. The bounds above only ever see the assertion's
- * ciphertext, and jackson's later passes over this document (xml2js, the signature check's XPath scans) cost
- * several times one parse, so it is held to what an unencrypted response may carry. The parse worker runs it, so the
- * decrypted assertion never leaves the worker.
+ * The same markup, depth, `Signature` and declaration bounds on a response whose encrypted assertion has been
+ * decrypted and put in place (ENG-4051): the document jackson validates from then on. The bounds above only ever
+ * see the assertion's ciphertext, and jackson's later passes over this document (xml2js, the signature check's XPath
+ * scans) cost several times one parse, so it is held to what an unencrypted response may carry. The parse worker
+ * runs it, so the decrypted assertion never leaves the worker.
  */
 export const checkDecryptedSamlResponseBounds = (decryptedXml: string): SamlDecryptedRefusal | null => {
   const xml = Buffer.from(decryptedXml);
