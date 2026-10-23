@@ -161,20 +161,23 @@ export const deleteWidgetRow = (
   dashboardId: string,
   widgetId: string
 ): Promise<{ chartId: string; layout: unknown } | null> =>
-  prisma.$transaction(async (tx) => {
-    const locked = await lockDashboard(tx, dashboardId);
-    if (!locked) return null;
-    const widget = await tx.dashboardWidget.findFirst({
-      where: { id: widgetId, dashboardId },
-      select: { chartId: true, layout: true },
-    });
-    if (!widget) return null;
+  // Retried only for a deadlock, like every other widget write.
+  retryOnTransactionConflict(() =>
+    prisma.$transaction(async (tx) => {
+      const locked = await lockDashboard(tx, dashboardId);
+      if (!locked) return null;
+      const widget = await tx.dashboardWidget.findFirst({
+        where: { id: widgetId, dashboardId },
+        select: { chartId: true, layout: true },
+      });
+      if (!widget) return null;
 
-    const { count } = await tx.dashboardWidget.deleteMany({ where: { id: widgetId, dashboardId } });
-    if (count === 0) return null;
-    await touchDashboard(tx, dashboardId, locked);
-    return widget;
-  });
+      const { count } = await tx.dashboardWidget.deleteMany({ where: { id: widgetId, dashboardId } });
+      if (count === 0) return null;
+      await touchDashboard(tx, dashboardId, locked);
+      return widget;
+    })
+  );
 
 export type TDashboardReplaceResult =
   | {
