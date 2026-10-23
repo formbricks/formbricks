@@ -134,6 +134,13 @@ const config = [
       // `<output>`.
       "jsx-a11y/prefer-tag-over-role": "warn",
 
+      // AGENTS.md asks for `Readonly<>` props on every React component and Sonar enforces it as
+      // S6759, so until now a miss surfaced only after push. eslint-plugin-react (registered by
+      // eslint-config-next) accepts both the `Readonly<Props>` wrapper and `readonly` members; its
+      // autofix writes the latter, so prefer the wrapper when fixing by hand. 1907 violations across
+      // 403 files, no ratchet ticket yet; promote to "error" once the count reaches zero.
+      "react/prefer-read-only-props": "warn",
+
       "no-restricted-syntax": ["error", ...noDirectProcessEnv],
     },
   },
