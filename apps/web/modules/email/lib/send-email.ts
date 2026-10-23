@@ -1,4 +1,5 @@
 import { createTransport } from "nodemailer";
+import addressparser from "nodemailer/lib/addressparser";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
@@ -17,7 +18,6 @@ import {
   SMTP_SECURE_ENABLED,
   SMTP_USER,
 } from "@/lib/constants";
-import { isValidEmail } from "@/lib/utils/email";
 import { type TEmailRateLimitContext, applyEmailRateLimits } from "./email-rate-limits";
 
 // Fixed categories keep CloudWatch cardinality independent of users and surveys.
@@ -54,6 +54,23 @@ interface SendEmailDataProps {
   rateLimit?: TEmailRateLimitContext;
 }
 
+const MAX_ADDRESS_LENGTH = 320;
+
+/**
+ * One plain address, read the way nodemailer will read it: no list, no group, no display name. Parsed rather
+ * than matched against an address regex, so a valid internationalized address still gets through.
+ */
+const isSingleRecipient = (to: string): boolean => {
+  // Bounded before parsing: some callers pass a visitor's input straight through.
+  if (to.length > MAX_ADDRESS_LENGTH) return false;
+  const parsed = addressparser(to);
+  if (parsed.length !== 1) return false;
+  const [entry] = parsed;
+  if ("group" in entry || entry.name !== "" || entry.address !== to) return false;
+  const at = to.indexOf("@");
+  return at > 0 && at === to.lastIndexOf("@") && at < to.length - 1;
+};
+
 export const sendEmail = async ({
   emailType,
   rateLimit,
@@ -61,7 +78,7 @@ export const sendEmail = async ({
 }: SendEmailDataProps): Promise<boolean> => {
   // nodemailer reads `to` as an address list, so "a@x, b@y" would reach both. Every email goes to one
   // person, and every limit on email counts one recipient per send (ENG-6658).
-  if (!isValidEmail(emailData.to)) {
+  if (!isSingleRecipient(emailData.to)) {
     throw new InvalidInputError("An email must have exactly one valid recipient address");
   }
   if (!IS_SMTP_CONFIGURED) {
