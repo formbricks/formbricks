@@ -11,6 +11,8 @@ vi.mock("@/lib/constants", () => ({
   SAML_AUDIENCE: "https://saml.example.com",
   SAML_DATABASE_URL: "unused",
   SAML_PATH: "/api/auth/saml/callback",
+  SAML_TENANT: "formbricks.com",
+  SAML_PRODUCT: "formbricks",
   WEBAPP_URL: "https://app.example.com",
 }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsSamlSsoEnabled: vi.fn(async () => true) }));

@@ -1,7 +1,14 @@
 import { controllers } from "@boxyhq/saml-jackson";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
-import { SAML_AUDIENCE, SAML_DATABASE_URL, SAML_PATH, WEBAPP_URL } from "@/lib/constants";
+import {
+  SAML_AUDIENCE,
+  SAML_DATABASE_URL,
+  SAML_PATH,
+  SAML_PRODUCT,
+  SAML_TENANT,
+  WEBAPP_URL,
+} from "@/lib/constants";
 import { preloadConnection } from "@/modules/ee/auth/saml/lib/preload-connection";
 import { getIsSamlSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 import init from "../jackson";
@@ -10,6 +17,8 @@ vi.mock("@/lib/constants", () => ({
   SAML_AUDIENCE: "test-audience",
   SAML_DATABASE_URL: "test-db-url",
   SAML_PATH: "/test-path",
+  SAML_TENANT: "test-tenant",
+  SAML_PRODUCT: "test-product",
   WEBAPP_URL: "https://test-webapp-url.com",
 }));
 
@@ -27,7 +36,8 @@ vi.mock("@boxyhq/saml-jackson", () => ({
 
 describe("SAML Jackson Initialization", () => {
   const mockOAuthController = { name: "mockOAuthController" };
-  const mockConnectionController = { name: "mockConnectionController" };
+  const getConnections = vi.fn();
+  const mockConnectionController = { name: "mockConnectionController", getConnections };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -35,6 +45,9 @@ describe("SAML Jackson Initialization", () => {
     global.oauthController = undefined;
     global.connectionController = undefined;
     global.samlDecryptionKey = undefined;
+    global.samlIdpVerification = undefined;
+    // The connection preloadConnection configured, with two certificates as during an IdP rollover.
+    getConnections.mockResolvedValue([{ idpMetadata: { publicKey: "cert-a,cert-b", thumbprint: "t" } }]);
 
     vi.mocked(controllers).mockResolvedValue({
       oauthController: mockOAuthController,
@@ -96,8 +109,28 @@ describe("SAML Jackson Initialization", () => {
       oauthController: mockOAuthController,
       connectionController: mockConnectionController,
       getDecryptionKey: global.samlDecryptionKey,
+      // Every certificate, as jackson checks with them; the thumbprint only when there are none (ENG-4108).
+      idpVerification: { publicKey: "cert-a,cert-b" },
     });
     expect(global.samlDecryptionKey).toEqual(expect.any(Function));
+    expect(getConnections).toHaveBeenCalledWith({ tenant: SAML_TENANT, product: SAML_PRODUCT });
+  });
+
+  test.each([
+    [
+      "the thumbprint, for a connection with no certificate",
+      [{ idpMetadata: { thumbprint: "t" } }],
+      { thumbprint: "t" },
+    ],
+    ["nothing, with no connection, which jackson refuses before validating", [], null],
+    ["nothing, for an OIDC connection", [{ oidcProvider: {} }], null],
+  ])("hands the parse worker %s", async (_name, connections, expected) => {
+    vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
+    getConnections.mockResolvedValue(connections);
+
+    const result = await init();
+
+    expect(result?.idpVerification).toEqual(expected);
   });
 
   test("return early when SAML SSO is disabled", async () => {
@@ -122,6 +155,7 @@ describe("SAML Jackson Initialization", () => {
     global.connectionController = mockConnectionController as any;
     const decryptionKey = async () => "sp-private-key";
     global.samlDecryptionKey = decryptionKey;
+    global.samlIdpVerification = { publicKey: "cert-a" };
 
     const result = await init();
 
@@ -135,7 +169,9 @@ describe("SAML Jackson Initialization", () => {
       oauthController: mockOAuthController,
       connectionController: mockConnectionController,
       getDecryptionKey: decryptionKey,
+      idpVerification: { publicKey: "cert-a" },
     });
+    expect(getConnections).not.toHaveBeenCalled();
   });
 
   test("initializes again when the controllers are kept but the decryption key is not", async () => {
