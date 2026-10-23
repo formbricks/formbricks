@@ -3,7 +3,10 @@ import { notFound } from "next/navigation";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { type TLinkSurvey, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { isLinkSurveyServable } from "@/modules/survey/link/lib/public-access";
-import { getLinkSurveySingleUseAccess } from "@/modules/survey/link/lib/single-use-link";
+import {
+  type TSingleUseSearchParam,
+  getLinkSurveySingleUseAccess,
+} from "@/modules/survey/link/lib/single-use-link";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import {
   getBasicSurveyMetadata,
@@ -72,8 +75,8 @@ export const getMetadataForLinkSurvey = async ({
   languageCode?: string;
   acceptedLanguages?: string[];
   /** The single-use link, as it appears in the URL. */
-  suId?: string | string[];
-  suToken?: string | string[];
+  suId?: TSingleUseSearchParam;
+  suToken?: TSingleUseSearchParam;
 }): Promise<Metadata> => {
   // An unknown id takes the same notFound() path as a non-public one, so both get the same page title
   // (ENG-4032). Their responses can still differ in size and timing, since a missing row loads faster.
@@ -132,8 +135,8 @@ export const getMetadataForContactSurvey = async ({
   surveyId: string;
   acceptedLanguages?: string[];
   /** The single-use link, as it appears in the URL. */
-  suId?: string | string[];
-  suToken?: string | string[];
+  suId?: TSingleUseSearchParam;
+  suToken?: TSingleUseSearchParam;
 }): Promise<Metadata> => {
   const survey = await getSurveyWithMetadata(surveyId).catch(() => null);
   if (

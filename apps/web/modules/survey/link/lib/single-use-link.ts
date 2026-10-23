@@ -25,6 +25,9 @@ import { type TSingleUseLinkSurface, recordSingleUseLinkValidation } from "./sin
 const fingerprintSuToken = (suToken: string): string =>
   createHash("sha256").update(suToken).digest("hex").slice(0, 12);
 
+/** A single-use link value as it arrives from the URL: repeated parameters come back as an array. */
+export type TSingleUseSearchParam = string | string[] | null | undefined;
+
 /**
  * Next's App Router hands back `string[]` for a repeated query parameter, and the page surfaces read
  * these straight off `searchParams`. `TLinkSurveySearchParams` types them as `string`, but its
@@ -34,7 +37,7 @@ const fingerprintSuToken = (suToken: string): string =>
  * ERR_INVALID_ARG_TYPE, which would turn `?suToken=a&suToken=b` into a 500 plus a Sentry event that any
  * anonymous caller could repeat at will.
  */
-export const singleSearchParamValue = (value: string | string[] | null | undefined): string | undefined =>
+export const singleSearchParamValue = (value: TSingleUseSearchParam): string | undefined =>
   typeof value === "string" ? value : undefined;
 
 /**
@@ -67,8 +70,8 @@ export const resolveSingleUseIdForSurvey = ({
 }: {
   surveyId: string;
   isEncrypted: boolean;
-  suId?: string | string[] | null;
-  suToken?: string | string[] | null;
+  suId?: TSingleUseSearchParam;
+  suToken?: TSingleUseSearchParam;
   surface: TSingleUseLinkSurface;
 }): string | null => {
   const mode = isEncrypted ? "encrypted" : "plaintext";
@@ -193,8 +196,8 @@ export const getLinkSurveySingleUseAccess = ({
   surface,
 }: {
   survey: Pick<TSurvey, "id" | "singleUse">;
-  suId?: string | string[] | null;
-  suToken?: string | string[] | null;
+  suId?: TSingleUseSearchParam;
+  suToken?: TSingleUseSearchParam;
   surface: TSingleUseLinkSurface;
 }): TLinkSurveySingleUseAccess => {
   if (!survey.singleUse?.enabled) {
