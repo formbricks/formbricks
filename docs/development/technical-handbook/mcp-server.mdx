@@ -308,14 +308,15 @@ curl -sS -X POST http://localhost:3000/api/auth/oauth2/register \
     "token_endpoint_auth_method": "none",
     "grant_types": ["authorization_code", "refresh_token"],
     "response_types": ["code"],
-    "scope": "openid profile email offline_access surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write"
+    "scope": "openid profile email offline_access surveys:read surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write responses:read responses:write dashboards:read dashboards:write"
   }'
 ```
 
 <Note>
   This passes `scope` explicitly, so it does **not** reproduce a real client's behavior — real MCP clients
   register with the scopes from the protected-resource metadata's `scopes_supported` (`surveys:read
-  surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write offline_access`).
+  surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write responses:read
+  responses:write dashboards:read dashboards:write offline_access`, built from `MCP_PROTECTED_RESOURCE_SCOPES`).
   Because the authorization server validates the `/authorize` request against the client's **registered**
   scopes, a client that registers with a narrower set than it later requests (e.g. it registers surveys-only
   but requests `offline_access`) is rejected with `invalid_scope`. To smoke-test the real path, omit `scope`
