@@ -214,15 +214,26 @@ describe("validateSurveyPinAction on a single-use survey (ENG-4041)", () => {
     expect(result).toMatchObject({ survey: { id: surveyId } });
   });
 
-  test("with a link that has already been answered is not found, like the page's 'already answered' screen", async () => {
-    mockSurvey(singleUse());
-    const link = generateSurveySingleUseLinkParams(surveyId, false);
-    answeredWith(true);
+  test.each([
+    ["plaintext", false],
+    ["encrypted", true],
+  ])(
+    "with a %s link that has already been answered is not found, like the page's 'already answered' screen",
+    async (_label, isEncrypted) => {
+      mockSurvey(singleUse(isEncrypted));
+      const link = generateSurveySingleUseLinkParams(surveyId, isEncrypted);
+      answeredWith(true);
 
-    await expectSurveyGone(validatePinWith("0000", link));
-    expect(getResponseBySingleUseId).toHaveBeenCalledWith(surveyId, link.suId);
-    expect(getWorkspaceContextForLinkSurvey).not.toHaveBeenCalled();
-  });
+      await expectSurveyGone(validatePinWith("0000", link));
+      // Looked up by the canonical id the response is stored under: the decrypted cuid for an encrypted
+      // link, never the ciphertext in the URL.
+      expect(getResponseBySingleUseId).toHaveBeenCalledWith(
+        surveyId,
+        isEncrypted ? expect.stringMatching(/^[a-z0-9]{24,}$/) : link.suId
+      );
+      expect(getWorkspaceContextForLinkSurvey).not.toHaveBeenCalled();
+    }
+  );
 
   test("with a link whose response is only partly answered still returns the definition, so it can resume", async () => {
     mockSurvey(singleUse());
