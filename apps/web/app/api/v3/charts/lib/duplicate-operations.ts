@@ -1,19 +1,16 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
 import { getDashboardWorkspaceRow } from "@/app/api/v3/dashboards/lib/service";
+import { createWithCopyNameRetries } from "@/app/api/v3/lib/copy-name-retry";
 import { refuseUnlessFeedbackDatasetAccess } from "@/app/api/v3/lib/dashboards-access";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { createdResponse, problemForbidden, problemUnprocessableContent } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
-import { isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { type TV3ChartOperationContext, getSessionUserId, loadAuthorizedChart } from "./access";
 import type { TV3ChartDuplicateBody } from "./duplicate-schemas";
-import { type TChartDuplicateResult, duplicateChartRow } from "./duplicate-service";
+import { duplicateChartRow } from "./duplicate-service";
 import { chartNameTaken, refuseMatrixUntilUpgraded } from "./problems";
 import { serializeV3Chart } from "./serializers";
-
-/** How often a generated "(copy)" name is retried when a concurrent copy took it first. */
-const MAX_COPY_NAME_ATTEMPTS = 3;
 
 /**
  * `POST /api/v3/charts/{chartId}/duplicate` → 201 `{ data }` with `Location`.
@@ -58,25 +55,20 @@ export async function duplicateV3Chart({
       }
     }
 
-    let result: TChartDuplicateResult;
-    for (let attempt = 1; ; attempt++) {
-      try {
-        result = await duplicateChartRow({
+    const created = await createWithCopyNameRetries(
+      () =>
+        duplicateChartRow({
           sourceId: chartId,
           name: body.name,
           createdBy: getSessionUserId(authentication),
           dashboardId: body.dashboardId,
           layout: body.layout,
-        });
-        break;
-      } catch (error) {
-        // A name the caller chose is theirs to change; a generated one is retried, since a concurrent
-        // copy taking it first is the only way it can clash.
-        if (!isUniqueConstraintError(error)) throw error;
-        if (body.name !== undefined || attempt >= MAX_COPY_NAME_ATTEMPTS) return chartNameTaken(context);
-      }
-    }
+        }),
+      { nameChosen: body.name !== undefined }
+    );
+    if (created.nameTaken) return chartNameTaken(context);
 
+    const result = created.value;
     if (result.kind === "gone") return problemForbidden(requestId, undefined, instance);
     if (result.kind === "overlap") {
       return problemUnprocessableContent(requestId, "The layout overlaps another widget", {

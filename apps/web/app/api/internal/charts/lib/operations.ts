@@ -126,39 +126,64 @@ export async function generateInternalChart({
       { requestId }
     );
   } catch (error) {
-    if (error instanceof InvalidInputError && error.message === AI_CHART_PROMPT_ERROR_CODE) {
-      return promptNotChartable(requestId, instance);
-    }
-    if (error instanceof CubeQueryError) {
-      return problemBadGateway(
-        requestId,
-        "The generated chart could not be run. Try again shortly.",
-        instance
-      );
-    }
-
-    const aiResponse = mapV3AIError(error, {
+    return generateFailure(error, {
+      log,
       requestId,
       instance,
       workspaceId: body.workspaceId,
       organizationId,
-      operation: "charts.generate",
+      callingModel,
     });
-    if (aiResponse) return aiResponse;
-
-    if (!callingModel) {
-      return mapV3ThrownError(error, { log, requestId, instance, operation: "charts.generate" });
-    }
-
-    // Name, frames and provider status only: the message can repeat the prompt or the model's output.
-    log.error({ ...loggableAIError(error) }, "Failed to generate a chart from a prompt");
-    return problemBadGateway(
-      requestId,
-      "The AI provider could not generate a chart. Try again or add more detail.",
-      instance
-    );
   }
 }
+
+/** What a failed generation answers: the prompt, the generated query, the AI provider, or anything else. */
+const generateFailure = (
+  error: unknown,
+  {
+    log,
+    requestId,
+    instance,
+    workspaceId,
+    organizationId,
+    callingModel,
+  }: {
+    log: ReturnType<typeof logger.withContext>;
+    requestId: string;
+    instance: string;
+    workspaceId: string;
+    organizationId: string;
+    callingModel: boolean;
+  }
+): Response => {
+  if (error instanceof InvalidInputError && error.message === AI_CHART_PROMPT_ERROR_CODE) {
+    return promptNotChartable(requestId, instance);
+  }
+  if (error instanceof CubeQueryError) {
+    return problemBadGateway(requestId, "The generated chart could not be run. Try again shortly.", instance);
+  }
+
+  const aiResponse = mapV3AIError(error, {
+    requestId,
+    instance,
+    workspaceId,
+    organizationId,
+    operation: "charts.generate",
+  });
+  if (aiResponse) return aiResponse;
+
+  if (!callingModel) {
+    return mapV3ThrownError(error, { log, requestId, instance, operation: "charts.generate" });
+  }
+
+  // Name, frames and provider status only: the message can repeat the prompt or the model's output.
+  log.error({ ...loggableAIError(error) }, "Failed to generate a chart from a prompt");
+  return problemBadGateway(
+    requestId,
+    "The AI provider could not generate a chart. Try again or add more detail.",
+    instance
+  );
+};
 
 /**
  * `GET /api/internal/matrix-questions?workspaceId=…&datasetId=…` → 200 `{ data }`: the matrix questions a

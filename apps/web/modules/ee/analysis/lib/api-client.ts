@@ -211,7 +211,8 @@ export const getChartData = async ({
   signal?: AbortSignal;
 }): Promise<TAppChartData> => {
   const search = dateRangeSearchParams(dateRange).toString();
-  const path = `${CHARTS_PATH}/${encodeURIComponent(chartId)}/data${search ? `?${search}` : ""}`;
+  const base = `${CHARTS_PATH}/${encodeURIComponent(chartId)}/data`;
+  const path = search ? `${base}?${search}` : base;
   return toAppChartData(await readData<TV3ChartData>(await fetch(path, { cache: "no-store", signal })));
 };
 

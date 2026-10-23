@@ -177,6 +177,20 @@ class IssueCollector {
   }
 }
 
+/** Records an `unsupported_field` issue for every key of `entry` not in `allowed`; `reasonFor` names why. */
+const checkKnownKeys = (
+  entry: Record<string, unknown>,
+  allowed: ReadonlySet<string>,
+  path: string,
+  issues: IssueCollector,
+  reasonFor: (key: string) => string | undefined = () => undefined
+): void => {
+  for (const key of Object.keys(entry)) {
+    if (allowed.has(key)) continue;
+    issues.add(`${path}.${key}`, reasonFor(key) ?? `Unsupported field '${key}'.`, "unsupported_field");
+  }
+};
+
 const KIND_LABELS: Record<TChartFieldKind, string> = {
   measure: "a measure",
   dimension: "a dimension",
@@ -252,47 +266,42 @@ const checkTimeDimensions = (
     return undefined;
   }
 
-  const timeDimensions: TTimeDimension[] = [];
-  value.forEach((entry, index) => {
-    const entryPath = `${path}[${index}]`;
-    if (!isRecord(entry)) {
-      issues.add(entryPath, "Must be an object with a dimension.");
-      return;
-    }
+  return value.flatMap((entry, index) => checkTimeDimension(entry, `${path}[${index}]`, issues) ?? []);
+};
 
-    for (const key of Object.keys(entry)) {
-      if (!TIME_DIMENSION_KEYS.has(key)) {
-        issues.add(
-          `${entryPath}.${key}`,
-          key === "compareDateRange" ? "compareDateRange is not supported." : `Unsupported field '${key}'.`,
-          "unsupported_field"
-        );
-      }
-    }
+const isTimeGranularity = (value: unknown): value is NonNullable<TTimeDimension["granularity"]> =>
+  typeof value === "string" && (TIME_GRANULARITIES as readonly string[]).includes(value);
 
-    const field = checkField(entry.dimension, `${entryPath}.dimension`, ["timeDimension"], issues);
-    const timeDimension: TTimeDimension = { dimension: entry.dimension as string };
+/** One time dimension, or `undefined` with its problems recorded. */
+const checkTimeDimension = (
+  entry: unknown,
+  path: string,
+  issues: IssueCollector
+): TTimeDimension | undefined => {
+  if (!isRecord(entry)) {
+    issues.add(path, "Must be an object with a dimension.");
+    return undefined;
+  }
+  checkKnownKeys(entry, TIME_DIMENSION_KEYS, path, issues, (key) =>
+    key === "compareDateRange" ? "compareDateRange is not supported." : undefined
+  );
 
-    if (entry.granularity !== undefined) {
-      if (
-        typeof entry.granularity === "string" &&
-        (TIME_GRANULARITIES as readonly string[]).includes(entry.granularity)
-      ) {
-        timeDimension.granularity = entry.granularity as TTimeDimension["granularity"];
-      } else {
-        issues.add(`${entryPath}.granularity`, `Must be one of: ${TIME_GRANULARITIES.join(", ")}.`);
-      }
-    }
+  const field = checkField(entry.dimension, `${path}.dimension`, ["timeDimension"], issues);
+  const timeDimension: TTimeDimension = { dimension: entry.dimension as string };
 
-    if (entry.dateRange !== undefined) {
-      const parsed = parseQueryDateRange(entry.dateRange);
-      if (!parsed.ok) issues.add(`${entryPath}.dateRange`, DATE_RANGE_REASON);
-      else if (parsed.dateRange !== undefined) timeDimension.dateRange = parsed.dateRange;
-    }
+  if (isTimeGranularity(entry.granularity)) {
+    timeDimension.granularity = entry.granularity;
+  } else if (entry.granularity !== undefined) {
+    issues.add(`${path}.granularity`, `Must be one of: ${TIME_GRANULARITIES.join(", ")}.`);
+  }
 
-    if (field) timeDimensions.push(timeDimension);
-  });
-  return timeDimensions;
+  if (entry.dateRange !== undefined) {
+    const parsed = parseQueryDateRange(entry.dateRange);
+    if (!parsed.ok) issues.add(`${path}.dateRange`, DATE_RANGE_REASON);
+    else if (parsed.dateRange !== undefined) timeDimension.dateRange = parsed.dateRange;
+  }
+
+  return field ? timeDimension : undefined;
 };
 
 type TFilterBudget = { conditions: number };
@@ -304,11 +313,7 @@ const checkCondition = (
   issues: IssueCollector
 ): TCubeFilter | undefined => {
   budget.conditions += 1;
-
-  for (const key of Object.keys(entry)) {
-    if (!CONDITION_KEYS.has(key))
-      issues.add(`${path}.${key}`, `Unsupported field '${key}'.`, "unsupported_field");
-  }
+  checkKnownKeys(entry, CONDITION_KEYS, path, issues);
 
   const field = checkField(entry.member, `${path}.member`, ["measure", "dimension", "timeDimension"], issues);
   const operator = entry.operator;
@@ -322,35 +327,50 @@ const checkCondition = (
     return undefined;
   }
 
-  const values = entry.values;
+  const values = checkConditionValues(entry.values, operator, `${path}.values`, issues);
+  if (!values || !field) return undefined;
+  return values.length === 0 ? { member: field.name, operator } : { member: field.name, operator, values };
+};
+
+/**
+ * A condition's values for `operator`: `[]` for an operator that takes none, the strings otherwise, or
+ * `undefined` with the problem recorded.
+ */
+const checkConditionValues = (
+  values: unknown,
+  operator: string,
+  path: string,
+  issues: IssueCollector
+): string[] | undefined => {
   if (VALUELESS_OPERATORS.has(operator)) {
-    if (values !== undefined && !(Array.isArray(values) && values.length === 0)) {
-      issues.add(`${path}.values`, `The '${operator}' operator takes no values.`);
-      return undefined;
-    }
-    return field ? { member: field.name, operator } : undefined;
+    if (values === undefined || (Array.isArray(values) && values.length === 0)) return [];
+    issues.add(path, `The '${operator}' operator takes no values.`);
+    return undefined;
   }
 
   if (!Array.isArray(values) || values.length === 0) {
-    issues.add(`${path}.values`, `The '${operator}' operator needs at least one value.`);
+    issues.add(path, `The '${operator}' operator needs at least one value.`);
     return undefined;
   }
   if (values.length > MAX_FILTER_VALUES) {
-    issues.add(`${path}.values`, `At most ${MAX_FILTER_VALUES} values are allowed.`);
+    issues.add(path, `At most ${MAX_FILTER_VALUES} values are allowed.`);
     return undefined;
   }
   const badValue = values.findIndex(
     (value) => typeof value !== "string" || value.length > MAX_FILTER_VALUE_LENGTH
   );
   if (badValue !== -1) {
-    issues.add(
-      `${path}.values[${badValue}]`,
-      `Must be a string of at most ${MAX_FILTER_VALUE_LENGTH} characters.`
-    );
+    issues.add(`${path}[${badValue}]`, `Must be a string of at most ${MAX_FILTER_VALUE_LENGTH} characters.`);
     return undefined;
   }
+  return values as string[];
+};
 
-  return field ? { member: field.name, operator, values: values as string[] } : undefined;
+/** Which group an `and`/`or` filter is, or `null` for a plain condition. */
+const filterGroupKey = (entry: Record<string, unknown>): "and" | "or" | null => {
+  if ("and" in entry) return "and";
+  if ("or" in entry) return "or";
+  return null;
 };
 
 const checkFilter = (
@@ -367,7 +387,7 @@ const checkFilter = (
     return undefined;
   }
 
-  const groupKey = "and" in entry ? "and" : "or" in entry ? "or" : null;
+  const groupKey = filterGroupKey(entry);
   if (!groupKey) return checkCondition(entry, path, budget, issues);
 
   if (Object.keys(entry).length !== 1) {
@@ -389,7 +409,7 @@ const checkFilter = (
   const children = members.map((child, index) =>
     checkFilter(child, `${groupPath}[${index}]`, depth + 1, budget, issues)
   );
-  if (children.some((child) => child === undefined)) return undefined;
+  if (children.includes(undefined)) return undefined;
   return groupKey === "and" ? { and: children as TCubeFilter[] } : { or: children as TCubeFilter[] };
 };
 
@@ -415,6 +435,16 @@ const checkFilters = (value: unknown, path: string, issues: IssueCollector): TCu
 
 const DIRECTIONS = new Set(["asc", "desc"]);
 
+/** `order` as `[field, direction]` pairs, from either of its shapes; `null` for anything else. */
+const orderEntries = (value: unknown): [unknown, unknown][] | null => {
+  if (Array.isArray(value)) {
+    return value.map((entry) =>
+      Array.isArray(entry) && entry.length === 2 ? [entry[0], entry[1]] : [undefined, undefined]
+    );
+  }
+  return isRecord(value) ? Object.entries(value) : null;
+};
+
 const checkOrder = (
   value: unknown,
   path: string,
@@ -422,13 +452,7 @@ const checkOrder = (
 ): TChartQuery["order"] | undefined => {
   if (value === undefined) return undefined;
 
-  const entries: [unknown, unknown][] | null = Array.isArray(value)
-    ? value.map((entry) =>
-        Array.isArray(entry) && entry.length === 2 ? [entry[0], entry[1]] : [undefined, undefined]
-      )
-    : isRecord(value)
-      ? Object.entries(value)
-      : null;
+  const entries = orderEntries(value);
 
   if (!entries) {
     issues.add(path, "Must be an array of [field, direction] pairs or an object of field: direction.");
@@ -468,6 +492,22 @@ const checkInteger = (
   return value;
 };
 
+const lengthOf = (value: unknown): number => (Array.isArray(value) ? value.length : 0);
+
+/** At least one field, and at most `MAX_FIELDS` across measures, dimensions and time dimensions. */
+const checkFieldCount = (input: Record<string, unknown>, path: string, issues: IssueCollector): void => {
+  const fieldCount = lengthOf(input.measures) + lengthOf(input.dimensions) + lengthOf(input.timeDimensions);
+  if (fieldCount > MAX_FIELDS) {
+    issues.add(
+      path,
+      `At most ${MAX_FIELDS} fields are allowed across measures, dimensions and time dimensions.`
+    );
+  }
+  if (fieldCount === 0) {
+    issues.add(path, "A chart query needs at least one measure, dimension or time dimension.");
+  }
+};
+
 /**
  * Validate a caller-supplied chart query against the field catalog and the bounds above. The
  * time-bucket limit is part of it unless `timeBuckets` is off — for a query whose date range is about
@@ -484,10 +524,7 @@ export const validateChartQuery = (
     return { ok: false, issues: issues.issues };
   }
 
-  for (const key of Object.keys(input)) {
-    if (QUERY_KEYS.has(key)) continue;
-    issues.add(`${path}.${key}`, REFUSED_OPTIONS[key] ?? `Unsupported field '${key}'.`, "unsupported_field");
-  }
+  checkKnownKeys(input, QUERY_KEYS, path, issues, (key) => REFUSED_OPTIONS[key]);
 
   const measures = checkFieldList(input.measures, `${path}.measures`, ["measure"], MAX_MEASURES, issues);
   const dimensions = checkFieldList(
@@ -499,19 +536,7 @@ export const validateChartQuery = (
   );
   const timeDimensions = checkTimeDimensions(input.timeDimensions, `${path}.timeDimensions`, issues);
 
-  const fieldCount =
-    (Array.isArray(input.measures) ? input.measures.length : 0) +
-    (Array.isArray(input.dimensions) ? input.dimensions.length : 0) +
-    (Array.isArray(input.timeDimensions) ? input.timeDimensions.length : 0);
-  if (fieldCount > MAX_FIELDS) {
-    issues.add(
-      path,
-      `At most ${MAX_FIELDS} fields are allowed across measures, dimensions and time dimensions.`
-    );
-  }
-  if (fieldCount === 0) {
-    issues.add(path, "A chart query needs at least one measure, dimension or time dimension.");
-  }
+  checkFieldCount(input, path, issues);
 
   const filters = checkFilters(input.filters, `${path}.filters`, issues);
   const order = checkOrder(input.order, `${path}.order`, issues);

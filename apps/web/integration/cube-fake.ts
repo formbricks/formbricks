@@ -72,18 +72,20 @@ const decodeQuery = (raw: unknown): CubeClient.Query =>
 const fakeTransport = (token: string): CubeClient.ITransport<Response> => ({
   authorization: token,
   request: (_method, params) => ({
-    subscribe: async <T>(callback: (result: Response, resubscribe: () => Promise<T>) => T) => {
+    subscribe: <T>(callback: (result: Response, resubscribe: () => Promise<T>) => T): Promise<T> => {
       const query = decodeQuery(params.query);
       cubeFake.calls.push({ claims: jwt.decode(token) as jwt.JwtPayload, query });
 
       if (cubeFake.failure) {
         const failure = cubeFake.failure;
         cubeFake.failure = null;
-        throw failure;
+        return Promise.reject(failure);
       }
 
-      return callback(Response.json(buildLoadResponse(query)), () =>
-        Promise.reject(new Error("unexpected resubscribe"))
+      return Promise.resolve(
+        callback(Response.json(buildLoadResponse(query)), () =>
+          Promise.reject(new Error("unexpected resubscribe"))
+        )
       );
     },
   }),

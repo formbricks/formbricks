@@ -1,6 +1,6 @@
 import "server-only";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { applyV3OperationRateLimit, getV3RateLimitPrincipal } from "./operation-rate-limit";
+import { applyV3OperationRateLimit } from "./operation-rate-limit";
 import type { TV3Authentication } from "./types";
 
 /**
@@ -8,7 +8,7 @@ import type { TV3Authentication } from "./types";
  * workspace writes pass it to the custom CSS service, which charges the same budget when the write
  * actually processes.
  */
-export const getV3CustomCssPrincipal = getV3RateLimitPrincipal;
+export { getV3RateLimitPrincipal as getV3CustomCssPrincipal } from "./operation-rate-limit";
 
 /**
  * Whether a survey validation request runs the custom CSS processor: the CSS-only variant, or a create or

@@ -3,6 +3,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { getSessionUserId } from "@/app/api/v3/charts/lib/access";
+import { createWithCopyNameRetries } from "@/app/api/v3/lib/copy-name-retry";
 import { requireDashboardsAccess } from "@/app/api/v3/lib/dashboards-access";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
@@ -255,9 +256,6 @@ export async function renameV3Dashboard({
   }
 }
 
-/** How often a generated "(copy)" name is retried when a concurrent copy took it first. */
-const MAX_COPY_NAME_ATTEMPTS = 3;
-
 /**
  * `POST /api/v3/dashboards/{dashboardId}/duplicate` → 201 `{ data }` with `Location`.
  *
@@ -282,27 +280,18 @@ export async function duplicateV3Dashboard({
     );
     if (loaded instanceof Response) return loaded;
 
-    let row: TDashboardResourceRow | null = null;
-    for (let attempt = 1; ; attempt++) {
-      try {
-        row = await duplicateDashboardRow({
+    const created = await createWithCopyNameRetries(
+      () =>
+        duplicateDashboardRow({
           sourceId: dashboardId,
           name: body.name,
           createdBy: getSessionUserId(authentication),
-        });
-        break;
-      } catch (error) {
-        // A name the caller chose is theirs to change; a generated one is retried, since a concurrent
-        // copy taking it first is the only way it can clash.
-        if (
-          isUniqueConstraintError(error) &&
-          (body.name !== undefined || attempt >= MAX_COPY_NAME_ATTEMPTS)
-        ) {
-          return dashboardNameTaken(context);
-        }
-        if (!isUniqueConstraintError(error)) throw error;
-      }
-    }
+        }),
+      { nameChosen: body.name !== undefined }
+    );
+    if (created.nameTaken) return dashboardNameTaken(context);
+
+    const row = created.value;
     if (!row) return problemForbidden(requestId, undefined, instance);
 
     const dashboard = serializeV3Dashboard(row);

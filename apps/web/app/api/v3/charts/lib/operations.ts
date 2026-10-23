@@ -24,7 +24,7 @@ import {
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
-import { validateChartQuery } from "@/modules/ee/analysis/lib/chart-query-validator";
+import { type TChartQueryIssue, validateChartQuery } from "@/modules/ee/analysis/lib/chart-query-validator";
 import { type TV3ChartOperationContext, getSessionUserId, loadAuthorizedChart } from "./access";
 import { chartNameTaken, refuseChartQuery, refuseMatrixUntilUpgraded } from "./problems";
 import type { TV3ChartCreateBody, TV3ChartListQuery, TV3ChartUpdateBody } from "./schemas";
@@ -211,6 +211,22 @@ export async function createV3Chart({
  * Needs write access to the chart's workspace. The chart may sit on several dashboards, and the edit
  * shows on every one of them — `dashboards` in the response names them.
  */
+/** The fields a chart update writes, with its query held to the validator. */
+const chartUpdateOf = (
+  body: TV3ChartUpdateBody
+): { ok: true; data: Partial<TChartWrite> } | { ok: false; issues: TChartQueryIssue[] } => {
+  const data: Partial<TChartWrite> = {};
+  if (body.name !== undefined) data.name = body.name;
+  if (body.type !== undefined) data.type = body.type;
+  if (body.config !== undefined) data.config = body.config;
+  if (body.query !== undefined) {
+    const validated = validateChartQuery(body.query);
+    if (!validated.ok) return { ok: false, issues: validated.issues };
+    data.query = validated.query as TChartWrite["query"];
+  }
+  return { ok: true, data };
+};
+
 export async function updateV3Chart({
   chartId,
   body,
@@ -224,17 +240,10 @@ export async function updateV3Chart({
     const loaded = await loadAuthorizedChart(chartId, "readWrite", context);
     if (loaded instanceof Response) return loaded;
 
-    const update: Partial<TChartWrite> = {};
-    if (body.name !== undefined) update.name = body.name;
-    if (body.type !== undefined) update.type = body.type;
-    if (body.config !== undefined) update.config = body.config;
-    if (body.query !== undefined) {
-      const validated = validateChartQuery(body.query);
-      if (!validated.ok) return refuseChartQuery(validated.issues, context);
-      update.query = validated.query as TChartWrite["query"];
-    }
+    const update = chartUpdateOf(body);
+    if (!update.ok) return refuseChartQuery(update.issues, context);
 
-    if (Object.keys(update).length === 0) {
+    if (Object.keys(update.data).length === 0) {
       return problemBadRequest(requestId, "Nothing to update", {
         instance,
         invalid_params: [{ name: "body", reason: "Send at least one of name, type, query or config." }],
@@ -246,7 +255,7 @@ export async function updateV3Chart({
 
     let row: TChartResourceRow;
     try {
-      row = await updateChartRow(chartId, update);
+      row = await updateChartRow(chartId, update.data);
     } catch (error) {
       if (isUniqueConstraintError(error)) return chartNameTaken(context);
       // Deleted since it was loaded: the same 403 as a chart that never existed.
