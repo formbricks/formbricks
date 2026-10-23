@@ -201,8 +201,8 @@ overrides:
   # same call but is only ever handed a node by saml20; it is kept on its declared `^0.8` as well, as upstream
   # saml20 1.22 ships it. 0.8.15 is the patched 0.8 release; `pnpm audit` reports no xmldom advisory against it.
   # saml20 parses on 0.9.12 and hands its nodes to both, which works
-  # (modules/ee/auth/saml/api/sp-initiated-sign-in.test.ts). With `nodeLinker: hoisted` the root copy becomes
-  # 0.8.15, so any workspace that imports @xmldom/xmldom must declare it (apps/web does). Scoped to the current
+  # (modules/ee/auth/saml/api/sp-initiated-sign-in.test.ts). With `nodeLinker: hoisted` either version can land at
+  # the root, so any workspace that imports @xmldom/xmldom must declare it (apps/web does). Scoped to the current
   # majors, so a new major that adopts 0.9 drops out of the pin on its own.
   "xml-crypto@6>@xmldom/xmldom": 0.8.15
   "xml-encryption@3>@xmldom/xmldom": 0.8.15
