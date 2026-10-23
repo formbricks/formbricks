@@ -54,7 +54,7 @@ There is no browser health or administration page. Use the release-matched opera
 | `AUTHZED_INSECURE`          | Uses plaintext gRPC when enabled                                    | `true` for bundled Docker and chart-managed SpiceDB |
 | `AUTHZED_CONSISTENCY`       | Authorization read consistency                                      | `fully_consistent`                                  |
 | `AUTHZED_DATABASE_PASSWORD` | Password for Docker's dedicated `spicedb` PostgreSQL role           | No default                                          |
-| `SPICEDB_IMAGE_REF`         | Reviewed override used by both Docker migration and server services | `authzed/spicedb:v1.52.0`                           |
+| `SPICEDB_IMAGE_REF`         | Reviewed override used by both Docker migration and server services | `authzed/spicedb:v1.56.2`                           |
 
 `AUTHZED_ENABLED` and `AUTHZED_INSECURE` accept `true`, `false`, `1`, and `0`. The endpoint must contain an
 explicit port and no scheme, path, query, credentials, or whitespace. Examples include `spicedb:50051`,

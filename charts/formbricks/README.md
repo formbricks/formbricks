@@ -639,7 +639,7 @@ taxonomy:
       region: us-east-1
 ```
 
-Bedrock needs a taxonomy image of version 0.1.6 or later; earlier images, including the chart's default `v0.1.0`,
+Bedrock needs a taxonomy image of version 0.1.6 or later (the chart default, `0.1.12`, qualifies); earlier images
 ship without the AWS SDK and fail on the first Bedrock request whichever way credentials are supplied. Set
 `taxonomy.image.tag` (or `taxonomy.image.digest`) accordingly.
 
@@ -1104,7 +1104,7 @@ Upgrading from a chart that did not render the web container context:
 | taxonomy.hubReaperIntervalSeconds                                  | string | `"60"`                                                                      | Interval between Hub stale-run reaper passes.             |
 | taxonomy.hubStaleRunTimeoutSeconds                                 | string | `"1800"`                                                                    | Hub stale-run timeout; lower only with a callback-heartbeating taxonomy image. |
 | taxonomy.image.repository                                          | string | `"ghcr.io/formbricks/taxonomy"`                                             | Taxonomy service image repository.                        |
-| taxonomy.image.tag                                                 | string | `"v0.1.0"`                                                                  | Taxonomy service image tag.                               |
+| taxonomy.image.tag                                                 | string | `"0.1.12"`                                                                  | Taxonomy service image tag.                               |
 | taxonomy.llm.baseUrl                                               | string | `""`                                                                        | Defaults to bundled vLLM router URL when `llm.enabled=true`; set for external LLMs. |
 | taxonomy.llm.bedrock.region                                        | string | `""`                                                                        | AWS region for Bedrock; alternatively set `taxonomy.env.AWS_REGION`. |
 | taxonomy.llm.bundledModelSpecName                                  | string | `""`                                                                        | Enabled bundled `modelSpec` used by Taxonomy; required when multiple bundled models are enabled. |

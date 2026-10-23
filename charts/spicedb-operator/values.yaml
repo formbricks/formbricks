@@ -1,7 +1,7 @@
 image:
   repository: ghcr.io/authzed/spicedb-operator
-  tag: v1.25.1
-  digest: sha256:798037034302a60182e601f5399c476c6dc8bb18c253ba1b3f7431bdeda3bafe
+  tag: v1.27.0
+  digest: sha256:c4c64792cd8ab0222983ab5ffc1964687d4366f2e567ae204eb5223ae8c43a78
   pullPolicy: IfNotPresent
 
 # A single operator release can watch one or more namespaces. If empty, only

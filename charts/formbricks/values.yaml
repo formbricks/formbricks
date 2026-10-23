@@ -369,7 +369,7 @@ taxonomy:
 
   image:
     repository: "ghcr.io/formbricks/taxonomy"
-    tag: "v0.1.0"
+    tag: "0.1.12"
     digest: ""
     pullPolicy: IfNotPresent
 
@@ -702,7 +702,7 @@ authzed:
 
   cluster:
     name: ""
-    version: v1.52.0
+    version: v1.56.2
     channel: stable
     replicas: 2
     config:
@@ -1086,7 +1086,7 @@ cube:
   # repository and tag back at an upstream "cubejs/cube" release is supported.
   image:
     repository: "ghcr.io/formbricks/cube"
-    tag: "1.7.50-1"
+    tag: "1.8.8-1"
     digest: ""
     pullPolicy: IfNotPresent
 
