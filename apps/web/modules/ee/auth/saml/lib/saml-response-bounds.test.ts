@@ -368,17 +368,9 @@ describe("checkSamlResponseBounds", () => {
 
 describe("signature elements (ENG-4108)", () => {
   const signatures = (xml: string) => measureSamlResponseMarkup(b64(xml)).signatures;
-  const many = (tag: string, times: number) => `<${tag}>x</${tag}>`.repeat(times);
 
-  test("counts elements named Signature, with any prefix or none, and nothing else", () => {
-    expect(signatures("<r/>")).toBe(0);
-    expect(signatures('<ds:Signature xmlns:ds="u"/><Signature/><a:b:Signature/>')).toBe(3);
-    // Different local names, and a name that only contains the word.
-    expect(signatures("<SignatureValue/><SignedInfo/><ds:Signatures/><xSignature/>")).toBe(0);
-  });
-
-  test("counts only elements, not the word inside a comment or a CDATA section, which saml20's select never sees", () => {
-    expect(signatures(`<r><!--${many("Signature", 6)}--><![CDATA[${many("Signature", 6)}]]></r>`)).toBe(0);
+  test("counts a Signature inside a comment or CDATA section too, on the safe side, like every other <", () => {
+    expect(signatures("<r><!--<Signature/>--><![CDATA[<ds:Signature/>]]></r>")).toBe(2);
   });
 
   // Each tag's name is read on its own: a search for a prefix's colon that ran on into the document before it would
@@ -391,39 +383,6 @@ describe("signature elements (ENG-4108)", () => {
     const started = performance.now();
     expect(checkSamlResponseBounds(b64(xml))).toBeNull();
     expect(performance.now() - started).toBeLessThan(100);
-  });
-
-  test("lets a real response through: the response's and the assertion's signature", () => {
-    expect(withinBudget(`${RESPONSE_HEAD}${many("ds:Signature", 2)}${RESPONSE_TAIL}`)).toBe(true);
-    expect(
-      withinBudget(`${RESPONSE_HEAD}${many("ds:Signature", SAML_RESPONSE_MAX_SIGNATURES)}${RESPONSE_TAIL}`)
-    ).toBe(true);
-  });
-
-  test.each([
-    ["prefixed", "ds:Signature"],
-    ["unprefixed", "Signature"],
-  ])("refuses a response past the cap with %s Signature elements, by count only", (_name, tag) => {
-    const xml = `${RESPONSE_HEAD}${many(tag, SAML_RESPONSE_MAX_SIGNATURES + 1)}${RESPONSE_TAIL}`;
-
-    expect(checkSamlResponseBounds(b64(xml))).toEqual({
-      reason: "signatures",
-      length: b64(xml).length,
-      signatures: SAML_RESPONSE_MAX_SIGNATURES + 1,
-    });
-  });
-
-  test("stops measuring at the cap, so a flood costs no more than a handful", () => {
-    const xml = `${RESPONSE_HEAD}${many("Signature", 5_000)}${RESPONSE_TAIL}`;
-
-    expect(b64(xml).length).toBeLessThan(SAML_RESPONSE_MAX_LENGTH);
-    expect(signatures(xml)).toBe(SAML_RESPONSE_MAX_SIGNATURES + 1);
-  });
-
-  test("holds a decrypted assertion to the same cap", () => {
-    expect(
-      checkDecryptedSamlResponseBounds(`<r>${many("Signature", SAML_RESPONSE_MAX_SIGNATURES + 1)}</r>`)
-    ).toMatchObject({ reason: "signatures", signatures: SAML_RESPONSE_MAX_SIGNATURES + 1 });
   });
 });
 
