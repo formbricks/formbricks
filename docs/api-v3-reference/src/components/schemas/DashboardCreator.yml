@@ -1,0 +1,10 @@
+description: Who created the dashboard, for display only; `null` once that user is gone.
+oneOf:
+  - type: object
+    required:
+      - name
+    properties:
+      name:
+        type: string
+    additionalProperties: false
+  - type: "null"

@@ -110,11 +110,25 @@ describe("rateLimitConfigs", () => {
         "v3SurveyGenerate",
         "v3SurveyVisibility",
         "v3CustomCss",
+        "v3ChartQueries",
+        "internalChartGeneration",
         "internalDatasetPurge",
         "internalRetentionExport",
         "client",
         "clientEnvironment",
       ]);
+      // Chart data, preview and field values share one bucket sized for dashboards (ENG-6586).
+      // One LLM-backed chart generation per user per minute bounds AI spend; looser is a cost regression.
+      expect(rateLimitConfigs.api.internalChartGeneration).toEqual({
+        interval: 60,
+        allowedPerInterval: 1,
+        namespace: "api:internal:charts:generate",
+      });
+      expect(rateLimitConfigs.api.v3ChartQueries).toEqual({
+        interval: 60,
+        allowedPerInterval: 600,
+        namespace: "api:v3:charts:queries",
+      });
       // The values, not just the key: each export streams an organisation's whole retention history,
       // names people, and runs a pre-flight count, so a loosened quota is a load and privacy regression.
       expect(rateLimitConfigs.api.internalRetentionExport).toEqual({
@@ -138,7 +152,6 @@ describe("rateLimitConfigs", () => {
         "inviteMemberPerUser",
         "createOrganization",
         "generateExampleResponses",
-        "aiChartGeneration",
         "integrationMutation",
         "feedbackSourceMutation",
         "historicalResponseImport",
@@ -170,11 +183,6 @@ describe("rateLimitConfigs", () => {
         interval: 3600 * 24,
         allowedPerInterval: 5,
         namespace: "action:create-organization",
-      });
-      expect(rateLimitConfigs.actions.aiChartGeneration).toEqual({
-        interval: 60,
-        allowedPerInterval: 1,
-        namespace: "action:ai-chart-generation",
       });
       expect(rateLimitConfigs.actions.historicalResponseImport).toEqual({
         interval: 3600,

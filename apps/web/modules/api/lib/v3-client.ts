@@ -13,6 +13,7 @@ type TV3ProblemBody = {
   code?: string;
   requestId?: string;
   invalid_params?: TV3InvalidParam[];
+  details?: Record<string, unknown>;
 };
 
 export class V3ApiError extends Error {
@@ -20,6 +21,8 @@ export class V3ApiError extends Error {
   code?: string;
   requestId?: string;
   invalid_params?: TV3InvalidParam[];
+  /** The machine-readable half of a problem, e.g. the current `updatedAt` of a stale write. */
+  details?: Record<string, unknown>;
 
   constructor({
     status,
@@ -27,12 +30,14 @@ export class V3ApiError extends Error {
     code,
     requestId,
     invalid_params,
+    details,
   }: {
     status: number;
     detail: string;
     code?: string;
     requestId?: string;
     invalid_params?: TV3InvalidParam[];
+    details?: Record<string, unknown>;
   }) {
     super(detail);
     this.name = "V3ApiError";
@@ -40,12 +45,24 @@ export class V3ApiError extends Error {
     this.code = code;
     this.requestId = requestId;
     this.invalid_params = invalid_params;
+    this.details = details;
   }
 
   get detail(): string {
     return this.message;
   }
 }
+
+/**
+ * A TanStack Query `retry` policy for v3 reads: a 4xx is the server's answer, and asking again only
+ * delays it — a dashboard the caller may not open spun for seconds through three retries before its
+ * error showed, and every retry spent the caller's rate limit. Network failures and 5xx are retried up
+ * to `maxRetries` times.
+ */
+export const retryUnlessClientError =
+  (maxRetries: number) =>
+  (failureCount: number, error: unknown): boolean =>
+    failureCount < maxRetries && !(error instanceof V3ApiError && error.status >= 400 && error.status < 500);
 
 export function getV3ApiErrorMessage(error: unknown, fallbackMessage: string): string {
   if (error instanceof V3ApiError) {
@@ -74,5 +91,9 @@ export async function parseV3ApiError(response: Response): Promise<V3ApiError> {
     code: problemBody?.code,
     requestId: problemBody?.requestId ?? response.headers.get("X-Request-Id") ?? undefined,
     invalid_params: problemBody?.invalid_params,
+    details:
+      problemBody?.details && typeof problemBody.details === "object" && !Array.isArray(problemBody.details)
+        ? problemBody.details
+        : undefined,
   });
 }

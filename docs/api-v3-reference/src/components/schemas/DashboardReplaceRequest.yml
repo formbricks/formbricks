@@ -1,0 +1,38 @@
+type: object
+description: >-
+  The whole edited dashboard: its name and every widget's place. A widget left out of `widgets` is
+  removed (its chart is kept). `updatedAt` is the dashboard's `updatedAt` from your read; if it changed
+  since, nothing is saved.
+required:
+  - name
+  - updatedAt
+  - widgets
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 255
+  updatedAt:
+    type: string
+    format: date-time
+  widgets:
+    type: array
+    maxItems: 250
+    items:
+      type: object
+      required:
+        - widgetId
+        - layout
+        - order
+      properties:
+        widgetId:
+          type: string
+          format: cuid2
+        layout:
+          $ref: ./WidgetLayout.yml
+        order:
+          type: integer
+          minimum: 0
+          maximum: 250
+      additionalProperties: false
+additionalProperties: false

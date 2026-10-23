@@ -4,6 +4,8 @@ import { resetDb } from "@/integration/reset-db";
 import { MCP_OAUTH_SCOPES } from "@/modules/auth/lib/oauth-urls";
 // The data migration under test (auto-discovered by the migration runner at deploy).
 import { eng2862GrantResponsesScopes } from "../../../packages/database/migration/20260915120000_eng_2862_grant_responses_scopes/migration";
+// A later repair for a later scope family, run after this one where the test states the whole-app property.
+import { eng6581GrantDashboardsScopes } from "../../../packages/database/migration/20261022120000_eng_6581_grant_dashboards_scopes/migration";
 
 /**
  * ENG-2862 against real Postgres. This migration exists because the failure it prevents is silent:
@@ -58,12 +60,14 @@ describe("ENG-2862 responses scope grant", () => {
   });
 
   test("leaves the row able to grant every scope the app advertises", async () => {
-    // The property that actually matters, stated independently of ordering: after the migration no
-    // scope the app can grant is intersected away.
+    // The property that actually matters, stated independently of ordering: after the migrations no
+    // scope the app can grant is intersected away. Later scope families ship their own repair, so the
+    // chain is run as an upgraded instance runs it, in order.
     const identifier = "https://app.example.com/api/mcp";
     await seedResource(identifier, PRE_ENG2862_SCOPES);
 
     await runGrant();
+    await eng6581GrantDashboardsScopes.run!({ prisma, tx: prisma as never });
 
     const allowed = new Set(await scopesOf(identifier));
     expect(MCP_OAUTH_SCOPES.filter((scope) => !allowed.has(scope))).toEqual([]);

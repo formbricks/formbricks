@@ -1,0 +1,25 @@
+description: >-
+  A date range on a time dimension: a named preset from the field catalog's `datePresets`
+  (`last 7 days`, `this month`, …), `all-time` (no range), or a pair of ISO calendar dates
+  `[from, to]`, both inclusive, `from` not after `to`. Every range is read in the organization's
+  display time zone; a `timezone` cannot be supplied.
+
+
+  A chart grouped by time alone (one time dimension with a `granularity`, no other dimensions) gets
+  one row per bucket in its range, empty or not, so its range may span at most 10,000 buckets: about
+  13 months by the hour, or 27 years by the day. A wider explicit range is refused with **422**
+  `limit_exceeded`; use a coarser granularity or a shorter range. Every preset fits at every
+  granularity, and a chart with other dimensions returns only its real rows, so it is not limited.
+oneOf:
+  - type: string
+    description: A preset name from `datePresets`, or `all-time`.
+    example: last 30 days
+  - type: array
+    minItems: 2
+    maxItems: 2
+    items:
+      type: string
+      format: date
+    example:
+      - "2026-01-01"
+      - "2026-03-31"

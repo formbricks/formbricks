@@ -40,6 +40,17 @@ export const rateLimitConfigs = {
       namespace: "api:v3:custom-css",
     }, // 60 per minute per principal, on top of v3 — custom CSS processing is synchronous and CPU-bound, and
     // the editor validates ~300 ms after typing stops, so normal editing stays far below this
+    v3ChartQueries: {
+      interval: 60,
+      allowedPerInterval: 600,
+      namespace: "api:v3:charts:queries",
+    }, // 600 per minute per user or API key, instead of v3 — chart data, preview and field values (ENG-6586).
+    // Sized for dashboards: every widget fetches its own data, so a page load is one query per chart.
+    internalChartGeneration: {
+      interval: 60,
+      allowedPerInterval: 1,
+      namespace: "api:internal:charts:generate",
+    }, // 1 per minute per user — bounds concurrent and repeated LLM-backed chart generations
     internalDatasetPurge: {
       interval: 3600,
       allowedPerInterval: 5,
@@ -96,11 +107,6 @@ export const rateLimitConfigs = {
       allowedPerInterval: 1,
       namespace: "action:generate-example-responses",
     }, // 1 per minute per user — closes the multi-click race and bounds LLM spend
-    aiChartGeneration: {
-      interval: 60,
-      allowedPerInterval: 1,
-      namespace: "action:ai-chart-generation",
-    }, // 1 per minute per user — bounds concurrent and repeated LLM-backed chart generations
     integrationMutation: {
       interval: 60,
       allowedPerInterval: 30,

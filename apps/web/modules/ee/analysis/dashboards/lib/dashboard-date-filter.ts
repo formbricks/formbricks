@@ -28,8 +28,9 @@ const isRealIsoDate = (value: string): boolean => {
 };
 
 // A valid custom range needs two real dates in chronological order. ISO date strings compare
-// lexicographically the same as chronologically, so a plain string comparison is enough.
-const isValidCustomRange = (from: string, to: string): boolean =>
+// lexicographically the same as chronologically, so a plain string comparison is enough. Shared with the
+// chart query validator, so a range the dashboard filter accepts is exactly one the API accepts.
+export const isValidCalendarDateRange = (from: string, to: string): boolean =>
   isRealIsoDate(from) && isRealIsoDate(to) && from <= to;
 
 export type TDashboardDateFilter =
@@ -96,7 +97,7 @@ export const parseDashboardDateFilter = (
     const toRaw = searchParams[DATE_FILTER_TO_PARAM];
     const from = Array.isArray(fromRaw) ? fromRaw[0] : fromRaw;
     const to = Array.isArray(toRaw) ? toRaw[0] : toRaw;
-    if (from && to && isValidCustomRange(from, to)) {
+    if (from && to && isValidCalendarDateRange(from, to)) {
       return { type: "custom", range: [from, to] };
     }
     return null;
@@ -150,7 +151,7 @@ export const deserializeStoredDateFilter = (raw: string | null): TDashboardDateF
 
   if (filter.type === "custom" && Array.isArray(filter.range) && filter.range.length === 2) {
     const [from, to] = filter.range;
-    if (typeof from === "string" && typeof to === "string" && isValidCustomRange(from, to)) {
+    if (typeof from === "string" && typeof to === "string" && isValidCalendarDateRange(from, to)) {
       return { type: "custom", range: [from, to] };
     }
   }
@@ -187,4 +188,17 @@ export const writeStoredDateFilter = (dashboardId: string, filter: TDashboardDat
   } else {
     document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`;
   }
+};
+
+/**
+ * The dashboard filter as the chart data API takes it, or `null` when the charts keep their own ranges.
+ * Both read a range the same way: it replaces the chart's range on collectedAt.
+ */
+export const toChartDateRange = (
+  filter: TDashboardDateFilter | null
+): string | { from: string; to: string } | null => {
+  if (!filter) return null;
+  if (filter.type === "all-time") return "all-time";
+  if (filter.type === "preset") return filter.value;
+  return { from: filter.range[0], to: filter.range[1] };
 };

@@ -1,0 +1,17 @@
+description: >-
+  Conflict (`code: conflict`) — the request clashes with the current state: a chart or dashboard
+  name already used in the workspace, a chart already on the dashboard, or a dashboard changed since
+  the `updatedAt` the caller sent.
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+    description: Request correlation ID
+  Cache-Control:
+    schema:
+      type: string
+    example: private, no-store
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/Problem.yml
