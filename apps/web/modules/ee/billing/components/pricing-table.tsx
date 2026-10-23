@@ -672,6 +672,7 @@ export const PricingTable = ({
           <Trans
             i18nKey="workspace.settings.billing.payment_error_contact_support"
             components={{
+              // eslint-disable-next-line jsx-a11y/anchor-has-content -- Trans injects the link text
               supportLink: <a href="mailto:hola@formbricks.com" className="font-medium underline" />,
             }}
           />

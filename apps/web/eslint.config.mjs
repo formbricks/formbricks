@@ -116,6 +116,31 @@ const config = [
       // Kept as a warning (not off): exhaustive-deps is the main guard against stale closures, and the
       // web lint script has no `--max-warnings 0`, so it surfaces violations without blocking.
       "react-hooks/exhaustive-deps": "warn",
+
+      /*
+       * jsx-a11y's recommended set, which the `next` tier turns on at "error", on the same per-rule
+       * ratchet. Rules at zero stay at the tier's "error" and are deliberately not listed here. Five
+       * of them reach zero only through six inline disables, each on a site that already carries a
+       * NOSONAR for the same deliberate pattern (a `Trans` link whose text is injected, a
+       * stopPropagation wrapper, a focusable scroll region).
+       *
+       * The two below are counted with `--no-inline-config` and have no ratchet ticket yet; promote
+       * each to "error" once its count reaches zero.
+       */
+      // 61 violations across 37 files, nearly all `autoFocus` on the first field of a dialog or form.
+      "jsx-a11y/no-autofocus": "warn",
+      // Not in the recommended set; added because Sonar (S6819) reported a `role="presentation"`
+      // only after push. 109 violations across 78 files, 86 of them `role="status"` that wants
+      // `<output>`.
+      "jsx-a11y/prefer-tag-over-role": "warn",
+
+      // AGENTS.md asks for `Readonly<>` props on every React component and Sonar enforces it as
+      // S6759, so until now a miss surfaced only after push. eslint-plugin-react (registered by
+      // eslint-config-next) accepts both the `Readonly<Props>` wrapper and `readonly` members; its
+      // autofix writes the latter, so prefer the wrapper when fixing by hand. 1907 violations across
+      // 403 files, no ratchet ticket yet; promote to "error" once the count reaches zero.
+      "react/prefer-read-only-props": "warn",
+
       "no-restricted-syntax": ["error", ...noDirectProcessEnv],
     },
   },

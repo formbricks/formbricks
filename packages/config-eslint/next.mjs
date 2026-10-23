@@ -1,5 +1,6 @@
 import js from "@eslint/js";
 import nextConfig from "eslint-config-next";
+import jsxA11y from "eslint-plugin-jsx-a11y";
 import tseslint from "typescript-eslint";
 import { base, commonIgnores, typescriptParsing, unusedVarsConvention } from "./base.mjs";
 
@@ -51,6 +52,15 @@ export const next = [
       "@next/next/no-html-link-for-pages": "off",
       "react/jsx-key": "off",
     },
+  },
+  // eslint-config-next registers the jsx-a11y plugin but enables only six of its rules; this adds
+  // the rest of the recommended set, the floor the react/react-hooks tiers already enforce. Rules
+  // only, scoped to the files eslint-config-next registers the plugin for: it registers its own
+  // copy of the plugin object, so passing ours under the same key throws "Cannot redefine plugin".
+  // Severities below the upstream "error" are set per rule by the consumer (apps/web).
+  {
+    files: ["**/*.{js,jsx,mjs,ts,tsx,mts,cts}"],
+    rules: jsxA11y.flatConfigs.recommended.rules,
   },
   ...base,
 ];

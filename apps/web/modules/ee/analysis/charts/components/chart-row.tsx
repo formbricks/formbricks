@@ -65,6 +65,7 @@ export function ChartRow({ chart, workspaceId, isReadOnly, directories }: Readon
             <div className="ph-no-capture text-slate-900">{timeSinceDate(new Date(chart.updatedAt))}</div>
           </div>
         </div>
+        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- see NOSONAR below */}
         <div // NOSONAR - stopPropagation wrapper to prevent row click when interacting with dropdown
           className="col-span-1 my-auto flex items-center justify-end pr-6"
           onClick={(e) => e.stopPropagation()}
