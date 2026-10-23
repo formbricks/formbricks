@@ -1,6 +1,10 @@
 export type TV3InvalidParam = {
   name: string;
   reason: string;
+  /** What kind of problem, from v3's `InvalidParam.code`, when the operation sets one. */
+  code?: string;
+  /** The thing the problem is about, e.g. the import limit a file is past. */
+  identifier?: string;
 };
 
 type TV3ProblemBody = {

@@ -47,6 +47,8 @@ interface FormFieldProps {
   disabled?: boolean;
   /** Image URL to display above the headline */
   imageUrl?: string;
+  /** Alt text for the image; empty or absent marks it decorative */
+  imageAltText?: string;
   /** Video URL to display above the headline */
   videoUrl?: string;
 }
@@ -64,6 +66,7 @@ function FormField({
   dir = "auto",
   disabled = false,
   imageUrl,
+  imageAltText,
   videoUrl,
 }: Readonly<FormFieldProps>): React.JSX.Element {
   // `value` defaults to {} in the destructuring above, so it is always an object here.
@@ -117,6 +120,7 @@ function FormField({
         required={required}
         requiredLabel={requiredLabel}
         imageUrl={imageUrl}
+        imageAltText={imageAltText}
         videoUrl={videoUrl}
       />
 

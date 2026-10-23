@@ -7,6 +7,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponse, ZResponseInput } from "@formbricks/types/responses";
 import {
+  type TClientResponseCreateContext,
   buildClientResponse,
   createResponseWithQuotaEvaluation as createClientResponseWithQuotaEvaluation,
 } from "@/app/api/client/[workspaceId]/responses/lib/response";
@@ -25,7 +26,32 @@ export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInputV2,
   ingestFlags?: readonly TIngestFlag[]
 ): Promise<TResponseWithQuotaFull> => {
-  return await createClientResponseWithQuotaEvaluation(responseInput, createResponse, ingestFlags);
+  return await createClientResponseWithQuotaEvaluation(
+    responseInput,
+    { resolveContext: resolveCreateResponseContext, createResponse },
+    ingestFlags
+  );
+};
+
+/** The reads a create needs, made before its transaction opens — see `TClientResponseCreateContext`. */
+export const resolveCreateResponseContext = async ({
+  workspaceId,
+  contactId,
+}: Pick<TResponseInputV2, "workspaceId" | "contactId">): Promise<TClientResponseCreateContext> => {
+  try {
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+    const organization = await getOrganization(organizationId);
+    if (!organization) {
+      throw new ResourceNotFoundError("Organization", null);
+    }
+
+    const contact: { id: string; attributes: TContactAttributes } | null = contactId
+      ? await getContact(contactId, workspaceId)
+      : null;
+    return { contact };
+  } catch (error) {
+    return handleClientResponseCreateError(error);
+  }
 };
 
 const buildPrismaResponseData = (
@@ -45,6 +71,7 @@ const buildPrismaResponseData = (
 
 export const createResponse = async (
   responseInput: TResponseInputV2,
+  { contact }: TClientResponseCreateContext,
   tx?: Prisma.TransactionClient,
   ingestFlags?: readonly TIngestFlag[]
 ): Promise<TResponse> => {
@@ -53,18 +80,6 @@ export const createResponse = async (
   const { workspaceId, contactId, finished, ttc: initialTtc } = responseInput;
 
   try {
-    let contact: { id: string; attributes: TContactAttributes } | null = null;
-
-    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
-    const organization = await getOrganization(organizationId);
-    if (!organization) {
-      throw new ResourceNotFoundError("Organization", null);
-    }
-
-    if (contactId) {
-      contact = await getContact(contactId, workspaceId);
-    }
-
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
 
     if (responseInput.displayId) {

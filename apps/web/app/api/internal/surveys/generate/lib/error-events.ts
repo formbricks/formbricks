@@ -1,5 +1,4 @@
-import { AIOutputTokenLimitError, classifyAIProviderError } from "@formbricks/ai";
-import { TooManyRequestsError } from "@formbricks/types/errors";
+import { classifyAIStreamFailure } from "@/app/api/internal/lib/ai-stream-errors";
 import { V3SurveyGeneratedPayloadValidationError } from "@/app/api/v3/surveys/generate/service";
 import { SURVEY_GENERATION_STREAM_ERROR_CODES, type TSurveyGenerationStreamEvent } from "./events";
 
@@ -25,20 +24,6 @@ const STREAM_ERROR_DETAILS = {
 } as const;
 
 /**
- * Whether a failure is the client hanging up rather than a generation problem.
- *
- * Checked *before* classification, and the signal of record is the request signal rather than the
- * error: on abort the AI SDK rejects with a DOMException whose shape varies by runtime, while
- * `signal.aborted` is unambiguous. Getting this order wrong logs every user pressing Stop as a
- * generation failure.
- */
-export function isClientAbort(error: unknown, signal: AbortSignal): boolean {
-  if (signal.aborted) return true;
-
-  return error instanceof Error && error.name === "AbortError";
-}
-
-/**
  * Map a mid-generation failure to the in-band event the client renders.
  *
  * Only failures that can happen *after* the response body has opened belong here — entitlement,
@@ -46,29 +31,9 @@ export function isClientAbort(error: unknown, signal: AbortSignal): boolean {
  * proper RFC 9457 problem response instead.
  */
 export function toStreamErrorEvent(error: unknown): Extract<TSurveyGenerationStreamEvent, { type: "error" }> {
-  if (error instanceof TooManyRequestsError) {
-    return {
-      type: "error",
-      code: SURVEY_GENERATION_STREAM_ERROR_CODES.QUOTA_EXCEEDED,
-      detail: STREAM_ERROR_DETAILS[SURVEY_GENERATION_STREAM_ERROR_CODES.QUOTA_EXCEEDED],
-      retryAfter: error.retryAfter,
-    };
-  }
-
-  if (classifyAIProviderError(error)?.isAuthFailure) {
-    return {
-      type: "error",
-      code: SURVEY_GENERATION_STREAM_ERROR_CODES.AUTH_FAILED,
-      detail: STREAM_ERROR_DETAILS[SURVEY_GENERATION_STREAM_ERROR_CODES.AUTH_FAILED],
-    };
-  }
-
-  if (error instanceof AIOutputTokenLimitError) {
-    return {
-      type: "error",
-      code: SURVEY_GENERATION_STREAM_ERROR_CODES.OUTPUT_TOO_LONG,
-      detail: STREAM_ERROR_DETAILS[SURVEY_GENERATION_STREAM_ERROR_CODES.OUTPUT_TOO_LONG],
-    };
+  const aiFailure = classifyAIStreamFailure(error);
+  if (aiFailure) {
+    return { type: "error", ...aiFailure, detail: STREAM_ERROR_DETAILS[aiFailure.code] };
   }
 
   if (error instanceof V3SurveyGeneratedPayloadValidationError) {

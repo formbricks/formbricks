@@ -2,11 +2,18 @@ import type { Instrumentation } from "next";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 
+vi.mock("./lib/upgrade/pause-delivery", () => ({ registerOnlinePauseDelivery: vi.fn() }));
+
 const mockRegisterJobsWorker = vi.fn();
 const mockRegisterRecurringJobs = vi.fn();
 const mockAssertAuthzedRuntimeConfiguration = vi.fn();
 const mockAssertAuthRuntimeConfiguration = vi.fn();
 const mockWarnOnAuthSecretRisks = vi.fn();
+const mockWarnOnPlainChatMisconfiguration = vi.fn();
+
+vi.mock("@/app/plain/lib/config", () => ({
+  warnOnPlainChatMisconfiguration: mockWarnOnPlainChatMisconfiguration,
+}));
 
 vi.mock("@/lib/env", () => ({
   assertAuthzedRuntimeConfiguration: mockAssertAuthzedRuntimeConfiguration,
@@ -130,6 +137,14 @@ describe("instrumentation register", () => {
     expect(mockWarnOnAuthSecretRisks).toHaveBeenCalledTimes(1);
   });
 
+  test("warns once at startup when the Plain chat is configured without identity verification", async () => {
+    const { register } = await import("./instrumentation");
+
+    await register();
+
+    expect(mockWarnOnPlainChatMisconfiguration).toHaveBeenCalledTimes(1);
+  });
+
   test("skips the auth checks during a production build", async () => {
     vi.stubEnv("NEXT_PHASE", "phase-production-build");
 
@@ -139,6 +154,7 @@ describe("instrumentation register", () => {
 
     expect(mockAssertAuthRuntimeConfiguration).not.toHaveBeenCalled();
     expect(mockWarnOnAuthSecretRisks).not.toHaveBeenCalled();
+    expect(mockWarnOnPlainChatMisconfiguration).not.toHaveBeenCalled();
     // Same guard, so assert the whole block rather than the two calls this change happened to add.
     expect(mockAssertAuthzedRuntimeConfiguration).not.toHaveBeenCalled();
   });

@@ -37,6 +37,7 @@ export const ZSurveyInput = ZSurveyWithoutQuestionType.pick({
   recontactDays: true,
   displayLimit: true,
   autoClose: true,
+  keepEndingCardOpen: true,
   autoComplete: true,
   delay: true,
   publishOn: true,
@@ -50,6 +51,7 @@ export const ZSurveyInput = ZSurveyWithoutQuestionType.pick({
   styling: true,
   workspaceOverwrites: true,
   showLanguageSwitch: true,
+  autoSelectLanguage: true,
 })
   .partial({
     redirectUrl: true,
@@ -58,6 +60,7 @@ export const ZSurveyInput = ZSurveyWithoutQuestionType.pick({
     recontactDays: true,
     displayLimit: true,
     autoClose: true,
+    keepEndingCardOpen: true,
     autoComplete: true,
     surveyClosedMessage: true,
     publishOn: true,
@@ -65,6 +68,7 @@ export const ZSurveyInput = ZSurveyWithoutQuestionType.pick({
     styling: true,
     workspaceOverwrites: true,
     showLanguageSwitch: true,
+    autoSelectLanguage: true,
     inlineTriggers: true,
     displayPercentage: true,
   })

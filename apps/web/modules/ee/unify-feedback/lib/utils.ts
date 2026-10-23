@@ -145,7 +145,10 @@ export const getReadOnlyMetadataEntries = (record: FeedbackRecordData): { key: s
  * the order the survey declared them in.
  */
 export const getEmbeddedDataEntries = (record: FeedbackRecordData): { key: string; value: string }[] => {
-  const embeddedData = record.metadata?.[EMBEDDED_DATA_METADATA_KEY];
+  // `metadata` reads back as whatever JSON was written, so a legacy record can hold an array or a scalar.
+  const embeddedData = isPlainObject(record.metadata)
+    ? record.metadata[EMBEDDED_DATA_METADATA_KEY]
+    : undefined;
   if (!isPlainObject(embeddedData)) return [];
 
   return Object.entries(embeddedData)

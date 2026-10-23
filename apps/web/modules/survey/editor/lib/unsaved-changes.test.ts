@@ -114,6 +114,54 @@ describe("hasUnsavedSurveyChanges", () => {
     expect(hasUnsavedSurveyChanges(renamed, [savedResponse])).toBe(true);
   });
 
+  // ENG-3553: the editor sends an edited CSS field with empty compiled output; the save compiles it.
+  test("custom CSS reads clean once saved, whatever compiled output the server returned", () => {
+    const local = surveyWith({
+      customCss: {
+        light: { source: "#fbjs { color: red; }", compiled: "" },
+        dark: null,
+        processorVersion: 0,
+      },
+    });
+    const saved = surveyWith({
+      customCss: {
+        light: { source: "#fbjs { color: red; }", compiled: "@layer fb-survey{…}" },
+        dark: null,
+        processorVersion: 2,
+      },
+    });
+
+    expect(hasUnsavedSurveyChanges(local, [saved])).toBe(false);
+  });
+
+  test("an edit to the custom CSS source still reads dirty", () => {
+    const saved = surveyWith({
+      customCss: {
+        light: { source: "#fbjs { color: red; }", compiled: "x" },
+        dark: null,
+        processorVersion: 2,
+      },
+    });
+    const local = surveyWith({
+      customCss: {
+        light: { source: "#fbjs { color: blue; }", compiled: "" },
+        dark: null,
+        processorVersion: 2,
+      },
+    });
+
+    expect(hasUnsavedSurveyChanges(local, [saved])).toBe(true);
+    expect(hasUnsavedSurveyChanges(surveyWith({ customCss: null }), [saved])).toBe(true);
+  });
+
+  test("whitespace-only custom CSS is the same as none", () => {
+    const local = surveyWith({
+      customCss: { light: { source: "  \n", compiled: "" }, dark: null, processorVersion: 0 },
+    });
+
+    expect(hasUnsavedSurveyChanges(local, [baseSurvey])).toBe(false);
+  });
+
   test("skips persisted states that are not there yet", () => {
     expect(hasUnsavedSurveyChanges(baseSurvey, [null, undefined, baseSurvey])).toBe(false);
     expect(hasUnsavedSurveyChanges(baseSurvey, [null, undefined])).toBe(true);

@@ -68,7 +68,7 @@ runs:
         echo "SUCCESS: Input validation passed"
 
     - name: Set up Depot CLI
-      uses: depot/setup-action@b0b1ea4f69e92ebf5dea3f8713a1b0c37b2126a5 # v1.6.0
+      uses: depot/setup-action@91bc8495a33ebfc504ffc89e5674379ccf23c29c # v1.7.2
 
     - name: Install cosign
       # Install cosign when requested AND when we might actually sign images
@@ -78,7 +78,7 @@ runs:
 
     - name: Log into registry
       if: ${{ inputs.registry != '' && (inputs.skip_login_on_pr == 'false' || github.event_name != 'pull_request') }}
-      uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+      uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
       with:
         registry: ${{ inputs.registry }}
         username: ${{ github.actor }}

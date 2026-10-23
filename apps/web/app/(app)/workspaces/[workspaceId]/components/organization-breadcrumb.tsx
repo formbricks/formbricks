@@ -7,7 +7,10 @@ import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { getOrganizationsForSwitcherAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
-import { SwitcherDropdownBody } from "@/modules/settings/components/switcher-dropdown-body";
+import {
+  SWITCHER_DROPDOWN_CONTENT_CLASS_NAME,
+  SwitcherDropdownBody,
+} from "@/modules/settings/components/switcher-dropdown-body";
 import { useSwitcherData } from "@/modules/settings/hooks/use-switcher-data";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
 import {
@@ -41,6 +44,11 @@ export const OrganizationBreadcrumb = ({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
+  // Name comes from context, falling back to the prop when there's no context yet.
+  const workspaceContext = useOptionalWorkspaceContext();
+  const currentOrganization = workspaceContext?.organization ?? null;
+  const organizationName = currentOrganization?.name || currentOrganizationName || "";
+
   const organizationSwitcher = useSwitcherData(
     () => getOrganizationsForSwitcherAction({ organizationId: currentOrganizationId }),
     t("common.failed_to_load_organizations"),
@@ -48,14 +56,10 @@ export const OrganizationBreadcrumb = ({
       const error = new Error(message);
       logger.error(error, "Failed to load organizations");
       Sentry.captureException(error);
-    }
+    },
+    organizationName
   );
   const { load: loadOrganizations } = organizationSwitcher;
-
-  // Name comes from context, falling back to the prop when there's no context yet.
-  const workspaceContext = useOptionalWorkspaceContext();
-  const currentOrganization = workspaceContext?.organization ?? null;
-  const organizationName = currentOrganization?.name || currentOrganizationName || "";
 
   // Lazy-load organizations when dropdown opens (the hook guards against duplicate/looping loads).
   useEffect(() => {
@@ -103,7 +107,7 @@ export const OrganizationBreadcrumb = ({
             )}
           </div>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="mt-2">
+        <DropdownMenuContent align="start" className={`mt-2 ${SWITCHER_DROPDOWN_CONTENT_CLASS_NAME}`}>
           {showOrganizationDropdown && (
             <SwitcherDropdownBody
               type="organization"

@@ -40,6 +40,11 @@
     "./zod/*": {
       "types": "./zod/*.ts",
       "import": "./zod/*.ts"
+    },
+    "./upgrade-session": {
+      "types": "./dist/src/scripts/upgrade-session.d.ts",
+      "import": "./dist/scripts/upgrade-session.js",
+      "require": "./dist/scripts/upgrade-session.cjs"
     }
   },
   "scripts": {

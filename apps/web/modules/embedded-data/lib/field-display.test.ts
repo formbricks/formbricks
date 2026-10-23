@@ -6,6 +6,7 @@ import { RESERVED_FIELD_CATALOG } from "@formbricks/types/embedded-data-resolver
 import {
   EMBEDDED_FIELD_ICON_BY_DATA_TYPE,
   RESERVED_FIELD_ICONS,
+  formatReservedFieldValue,
   getReservedFieldIcon,
   getReservedFieldLabel,
 } from "./field-display";
@@ -87,5 +88,18 @@ describe("field icons", () => {
     const reachable = RESERVED_FIELD_CATALOG.filter((entry) => entry.availability !== "server");
 
     expect(reachable.filter((entry) => RESERVED_FIELD_ICONS[entry.name] === undefined)).toEqual([]);
+  });
+});
+
+describe("formatReservedFieldValue", () => {
+  test("shows time on site with its unit, in the viewer's locale", () => {
+    expect(formatReservedFieldValue("visitTimeOnSite", "146", "en-US")).toBe("146 sec");
+    // French separates the unit with a narrow no-break space.
+    expect(formatReservedFieldValue("visitTimeOnSite", "146", "fr-FR")).toMatch(/^146\ss$/);
+  });
+
+  test("leaves every other field, and a value that is not a number, as it is", () => {
+    expect(formatReservedFieldValue("visitPagesViewed", "4", "en-US")).toBe("4");
+    expect(formatReservedFieldValue("visitTimeOnSite", "n/a", "en-US")).toBe("n/a");
   });
 });

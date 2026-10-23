@@ -1,0 +1,12 @@
+type: object
+required:
+  - customCss
+properties:
+  customCss:
+    anyOf:
+      - $ref: ./CustomCssInput.yml
+      - type: "null"
+    description: >-
+      Replaces both fields. `null` clears all workspace CSS. Adding or editing CSS needs the Scale plan
+      on Formbricks Cloud; clearing either field or all CSS never does.
+additionalProperties: false

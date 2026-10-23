@@ -8,7 +8,7 @@ import {
 } from "./utils";
 
 /**
- * The Hub SDK exposes the parsed problem body as `error` on its API errors. These cover the duck-typed
+ * A `HubApiError` exposes the parsed problem body as `error` on its API errors. These cover the duck-typed
  * read of that shape, including the malformed variants a remote service can legitimately return.
  */
 describe("getErrorProblem", () => {
@@ -53,7 +53,7 @@ describe("getErrorProblem", () => {
 
 describe("createHubResultFromError", () => {
   test("keeps message/detail semantics and adds the problem members", () => {
-    // Shaped like a real SDK APIError: an Error subclass carrying status + the parsed problem body.
+    // Shaped like a HubApiError: an Error subclass carrying status + the parsed problem body.
     const err = Object.assign(new Error("400 Bad Request"), {
       status: 400,
       error: { code: "bad_request", detail: "cursor is not valid" },
@@ -78,7 +78,7 @@ describe("isHubNotConfigured", () => {
   });
 
   test("is false for a connection failure, which also has no status", () => {
-    // The SDK reports a dead socket / timeout without a status, so `getErrorStatus` returns 0 for it
+    // A dead socket / timeout has no status, so `getErrorStatus` returns 0 for it
     // too. That is an upstream fault (502), not "the integration is switched off" (503).
     const connectionFailure = createHubResultFromError(new Error("Connection error.")).error;
 
@@ -91,8 +91,8 @@ describe("isHubNotConfigured", () => {
   });
 });
 
-// The fixtures below mirror the chain the real @formbricks/hub SDK produces, captured by driving it
-// against a closed port: APIConnectionError (message "Connection error.", no code) wrapping
+// The fixtures below mirror the chain the Stainless SDK produced against a closed port, which is one
+// wrapper deeper than today's (the real one is driven in `hub-client.test.ts`): an outer error wrapping
 // TypeError "fetch failed" wrapping the Node error that actually carries the errno. When the Hub
 // host resolves to more than one address, Node inserts an AggregateError and the errno lives in
 // `errors[]` instead — both shapes have to be recognized, hence the two positive cases.

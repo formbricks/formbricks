@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { FB_PART } from "@formbricks/survey-ui/parts";
 import { isValidHTML, sanitizeSurveyHtml, stripInlineStyles } from "@/lib/html-utils";
 
 interface HeadlineProps {
@@ -40,16 +41,27 @@ export function Headline({
       <div
         className={`flex items-center ${alignTextCenter ? "justify-center" : "justify-between"}`}
         dir="auto">
+        {/* No Tailwind size or weight utility here: those are `!important` inside a cascade layer,
+            so they outranked the styling editor's headline size/weight on welcome, ending and Cal
+            cards (M2.03). Like every question headline (survey-ui's Label: `label-headline
+            leading-6`), this one takes its typography from `.label-headline` and the
+            --fb-element-headline-* variables, which the editor and custom CSS on the headline hook
+            both reach. The plain-text headline keeps its historical 600 weight as a non-important
+            inline default: it beats the normal `.label-headline` rule, so unstyled surveys look as
+            before, while the editor's and customers' `!important` values still win over it. */}
         {isHeadlineHtml ? (
           <HeadingTag
             data-testid="fb__surveys__headline-text-test"
-            className="label-headline htmlbody text-base"
+            data-fb-part={FB_PART.headline}
+            className="label-headline htmlbody leading-6"
             dangerouslySetInnerHTML={{ __html: safeHtml }}
           />
         ) : (
           <HeadingTag
             data-testid="fb__surveys__headline-text-test"
-            className="label-headline text-base font-semibold">
+            data-fb-part={FB_PART.headline}
+            className="label-headline leading-6"
+            style={{ fontWeight: 600 }}>
             {headline}
           </HeadingTag>
         )}

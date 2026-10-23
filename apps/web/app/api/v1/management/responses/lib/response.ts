@@ -16,7 +16,10 @@ import { getSurvey } from "@/lib/survey/service";
 import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
-import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
+import {
+  evaluateResponseQuotas,
+  loadQuotaEvaluationContext,
+} from "@/modules/ee/quotas/lib/evaluation-service";
 import { getContactByUserId } from "./contact";
 
 export const responseSelection = {
@@ -57,17 +60,33 @@ export const responseSelection = {
   },
 } satisfies Prisma.ResponseSelect;
 
+/**
+ * What a create reads before its transaction opens: the workspace's organization (checked to exist) and
+ * the contact the response links to. These go through the root client, so reading them inside the
+ * transaction would check out a second pool connection while the transaction holds the first, and on a
+ * saturated pool that read queues behind the very transaction waiting for it (ENG-3722).
+ */
+type TCreateResponseContext = {
+  contact: { id: string; attributes: TContactAttributes } | null;
+};
+
 export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInput
 ): Promise<TResponse> => {
+  // Independent reads, so in parallel and before the transaction opens. The quota load never rejects (it
+  // logs and returns null); evaluation checks its context against the survey of the row written.
+  const [responseContext, quotaContext] = await Promise.all([
+    resolveCreateResponseContext(responseInput),
+    loadQuotaEvaluationContext(responseInput.surveyId),
+  ]);
   const txResponse = await prisma.$transaction(async (tx) => {
-    const response = await createResponse(responseInput, tx);
+    const response = await createResponse(responseInput, responseContext, tx);
 
     // Feed quota evaluation the language actually PERSISTED on the response (createResponse ->
     // buildPrismaResponseData canonicalizes it), so the stored value is the single source of truth and a
     // legacy code from a stale client still matches language-scoped quotas. Mirrors the v2/management path.
     const quotaResult = await evaluateResponseQuotas({
-      surveyId: responseInput.surveyId,
+      surveyId: response.surveyId,
       responseId: response.id,
       data: responseInput.data,
       variables: responseInput.variables,
@@ -76,6 +95,7 @@ export const createResponseWithQuotaEvaluation = async (
       // The row just written, so `reserved` quota operands resolve (ENG-1840).
       response,
       tx,
+      quotaContext,
     });
 
     if (quotaResult.shouldEndSurvey && quotaResult.refreshedResponse) {
@@ -92,26 +112,45 @@ export const createResponseWithQuotaEvaluation = async (
   return txResponse;
 };
 
-export const createResponse = async (
-  responseInput: TResponseInput,
-  tx?: Prisma.TransactionClient
-): Promise<TResponse> => {
-  validateInputs([responseInput, ZResponseInput]);
+/** Maps a failure while creating a response to the errors this API has always returned. */
+const handleCreateResponseError = (error: unknown): never => {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === PrismaErrorType.RecordNotFound) {
+      throw new DatabaseError("Display ID does not exist");
+    }
+    throw new DatabaseError(error.message);
+  }
 
-  const { workspaceId, userId, finished, ttc: initialTtc } = responseInput;
+  throw error;
+};
 
+/** The reads a create needs, made before its transaction opens — see `TCreateResponseContext`. */
+export const resolveCreateResponseContext = async ({
+  workspaceId,
+  userId,
+}: Pick<TResponseInput, "workspaceId" | "userId">): Promise<TCreateResponseContext> => {
   try {
-    let contact: { id: string; attributes: TContactAttributes } | null = null;
-
     const organization = await getOrganizationIdFromWorkspaceId(workspaceId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
     }
 
-    if (userId) {
-      contact = await getContactByUserId(workspaceId, userId);
-    }
+    return { contact: userId ? await getContactByUserId(workspaceId, userId) : null };
+  } catch (error) {
+    return handleCreateResponseError(error);
+  }
+};
 
+export const createResponse = async (
+  responseInput: TResponseInput,
+  { contact }: TCreateResponseContext,
+  tx?: Prisma.TransactionClient
+): Promise<TResponse> => {
+  validateInputs([responseInput, ZResponseInput]);
+
+  const { finished, ttc: initialTtc } = responseInput;
+
+  try {
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
 
     const prismaData = buildPrismaResponseData(responseInput, contact, ttc);
@@ -136,14 +175,7 @@ export const createResponse = async (
 
     return response;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === PrismaErrorType.RecordNotFound) {
-        throw new DatabaseError("Display ID does not exist");
-      }
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
+    return handleCreateResponseError(error);
   }
 };
 

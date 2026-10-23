@@ -1,4 +1,18 @@
+import type { TShowConditions } from "@formbricks/types/show-conditions";
+
 type TJsonObject = Record<string, unknown>;
+
+/** Respondent-facing compiled custom CSS for one scope (mirrors `TCustomCssCompiled` in @formbricks/types). */
+export interface TCustomCssCompiled {
+  light?: string;
+  dark?: string;
+}
+
+/** The renderer's explicit `customCss` prop (mirrors `TRendererCustomCss` in @formbricks/types). */
+export interface TRendererCustomCss {
+  workspace?: TCustomCssCompiled | null;
+  survey?: TCustomCssCompiled | null;
+}
 
 export type TActionClassPageUrlRule =
   | "exactMatch"
@@ -66,8 +80,10 @@ export interface TWorkspaceStateSurvey {
   variables: TJsonObject[];
   type: "link" | "app";
   showLanguageSwitch: boolean | null;
+  autoSelectLanguage?: boolean | null;
   endings: TJsonObject[];
   autoClose: number | null;
+  keepEndingCardOpen?: boolean;
   status: "draft" | "inProgress" | "paused" | "completed";
   // This variable should be called `cooldownPeriod`, not `recontactDays`. It is related to the
   // Survey Cooldown Period feature (across surveys) and not the Recontact Options (per survey).
@@ -100,6 +116,8 @@ export interface TWorkspaceStateSurvey {
   // Minimal segment shape; full filter logic is evaluated server-side and must not reach the browser.
   segment?: { id: string; hasFilters: boolean };
   displayPercentage: number | null;
+  // Show conditions checked when a trigger fires (ENG-3926). Absent when the server predates them.
+  showConditions?: TShowConditions;
   styling?: TSurveyStyling;
   // Per-survey gate for the post-interaction segment refresh: whether an interaction with THIS survey
   // (display / response / finish) can change any live survey's membership. Absent for workspaces
@@ -109,6 +127,9 @@ export interface TWorkspaceStateSurvey {
     onResponse: boolean;
     onFinished: boolean;
   };
+  // Compiled survey custom CSS (ENG-3552). Forwarded to the renderer untouched; absent when the
+  // survey has none or the server withholds it.
+  customCss?: TCustomCssCompiled;
 }
 
 export interface TWorkspaceStateSettings {
@@ -120,6 +141,8 @@ export interface TWorkspaceStateSettings {
   placement: "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
   inAppSurveyBranding: boolean;
   styling: TWorkspaceStyling;
+  // Compiled workspace custom CSS (ENG-3552), sent once per workspace state rather than per survey.
+  customCss?: TCustomCssCompiled;
 }
 
 export interface TWorkspaceState {
@@ -171,6 +194,8 @@ export interface TConfigInput {
   environmentId?: string;
   workspaceId?: string;
   appUrl: string;
+  /** How surveys render. Defaults to light; can be changed later with `setAppearance`. */
+  appearance?: "light" | "dark" | "system";
 }
 
 export interface TStylingColor {
@@ -236,7 +261,6 @@ export interface TBaseStyling {
   cardBackgroundColor?: TStylingColor | null;
   cardBorderColor?: TStylingColor | null;
   highlightBorderColor?: TStylingColor | null;
-  isDarkModeEnabled?: boolean | null;
   roundness?: TDimension;
   cardArrangement?: {
     // "cardless" is only supported for link surveys.

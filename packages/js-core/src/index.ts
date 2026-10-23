@@ -1,5 +1,8 @@
+import * as Appearance from "@/lib/common/appearance";
 import { CommandQueue, CommandType } from "@/lib/common/command-queue";
+import { onDebugEvent } from "@/lib/common/debug";
 import {
+  FORMBRICKS_DEBUG_EVENT,
   type TFormbricksEventName,
   type TFormbricksEventPayloads,
   offFormbricksEvent,
@@ -17,7 +20,12 @@ import { type TTrackProperties } from "@/types/survey";
 
 const queue = CommandQueue.getInstance();
 
-const setup = async (setupConfig: TConfigInput): Promise<void> => {
+const setup = async (setupConfigWithAppearance: TConfigInput): Promise<void> => {
+  // Appearance is local, not part of the persisted setup config, and must be in place before the
+  // first survey renders, so it is applied here rather than through the queue.
+  const { appearance, ...setupConfig } = setupConfigWithAppearance;
+  if (appearance !== undefined) setAppearance(appearance);
+
   // If the initConfig has a userId or attributes, we need to use the legacy init
 
   if (
@@ -122,6 +130,9 @@ const clearEmbeddedData = (...args: [] | [key: string]): void => {
  * reality rather than off the `track()` calls it made. The same events, under the same names, go
  * out as `window.dataLayer` pushes for Google Tag Manager.
  *
+ * `formbricks_debug` (debug mode only) explains why each survey did or did not show. It stays off the
+ * dataLayer, and a new subscriber first receives what already happened on the page.
+ *
  * Subscriptions are independent of setup(): registering before or after setup() both work, and a
  * handler stays registered across logout() until it is removed.
  *
@@ -132,7 +143,10 @@ const clearEmbeddedData = (...args: [] | [key: string]): void => {
 const on = <E extends TFormbricksEventName>(
   event: E,
   handler: (payload: TFormbricksEventPayloads[E]) => void
-): (() => void) => onFormbricksEvent(event, handler);
+): (() => void) =>
+  event === FORMBRICKS_DEBUG_EVENT
+    ? onDebugEvent(handler as (payload: TFormbricksEventPayloads[typeof FORMBRICKS_DEBUG_EVENT]) => void)
+    : onFormbricksEvent(event, handler);
 
 /**
  * Remove a subscription registered with on().
@@ -160,6 +174,19 @@ const setNonce = (nonce: string | undefined): void => {
   globalThis.window.formbricksSurveys?.setNonce?.(nonce);
 };
 
+/**
+ * Set how surveys render: "light" (default), "dark", or "system" to follow the browser setting.
+ * Not queued, so it works before setup(), and an open survey switches in place.
+ * @param appearance - "light" | "dark" | "system"
+ */
+const setAppearance = (appearance: Appearance.TAppearance): void => {
+  if (!Appearance.setAppearance(appearance)) {
+    console.warn(
+      `🧱 Formbricks - Warning: Unknown appearance "${String(appearance)}", keeping the current one`
+    );
+  }
+};
+
 const formbricks = {
   /** @deprecated Use setup() instead. This method will be removed in a future version */
   init: (initConfig: TLegacyConfigInput) => setup(initConfig as unknown as TConfigInput),
@@ -173,6 +200,7 @@ const formbricks = {
   logout,
   registerRouteChange,
   setNonce,
+  setAppearance,
   setEmbeddedData,
   clearEmbeddedData,
   on,

@@ -157,6 +157,36 @@ describe("authorizeTraefikRequest", () => {
     expect(response.headers.get("x-envoy-auth-headers-to-remove")).toBeNull();
   });
 
+  // ENG-3658: the Docker installer's forwardAuth forwards the body too (`forwardbody=true`), so the same
+  // refusal has to hold on this transport.
+  test("refuses a create body carrying a case variant of tenant_id", async () => {
+    mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
+    mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_1",
+      organizationId: "org_1",
+      organizationAccess: { accessControl: { read: false, write: false } },
+      workspacePermissions: [{ workspaceId: "workspace_1", workspaceName: "Linked", permission: "manage" }],
+    });
+
+    const response = await authorizeTraefikRequest(
+      createRequest({
+        method: "POST",
+        forwardedMethod: "POST",
+        forwardedUri: "/api/v3/feedbackRecords",
+        headers: {
+          authorization: "Bearer fbk_test",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ tenant_id: feedbackDirectoryId, TENANT_ID: "clyy1234567890123456789012" }),
+      })
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe("Ambiguous tenant_id");
+    expect(mockCan).not.toHaveBeenCalled();
+  });
+
   test("uses the forwarded URI instead of the Traefik auth endpoint URL", async () => {
     mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
     mockAuthenticateApiKeyFromHeaders.mockResolvedValue({

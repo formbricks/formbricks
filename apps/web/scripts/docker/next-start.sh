@@ -63,4 +63,4 @@ run_with_timeout 60 "SAML database setup" node packages/database/dist/scripts/cr
 
 echo "✅ Database setup completed"
 echo "🚀 Starting Next.js server..."
-exec node apps/web/server.js
+exec node apps/web/online-server.js

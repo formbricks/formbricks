@@ -21,8 +21,8 @@ type TSurveyAccessRow = Readonly<{
 /** What this caller is told the survey's visibility is: what is enforced on this request. */
 export const getReportedVisibility = (
   row: TSurveyAccessRow,
-  gates: TSurveyVisibilityGates
-): TSurveyVisibility => (gates.ready ? getEffectiveVisibility(row) : "workspace");
+  _gates: TSurveyVisibilityGates
+): TSurveyVisibility => getEffectiveVisibility(row);
 
 /**
  * `via` is chosen lowest-privilege first: an organization manager who owns a restricted survey sees

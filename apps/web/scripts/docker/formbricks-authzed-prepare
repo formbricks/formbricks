@@ -4,11 +4,15 @@
 set +x
 set -eu
 
+# The optional third argument lists the variables to fix, as quoted names for a JSON array. Never values.
+# The optional fourth adds fields, already rendered as `,"name":value` from closed patterns only.
 result() {
   if [ "$1" = prepared ]; then
     printf '{"status":"prepared","code":"%s","restartRequired":true}\n' "$2"
+  elif [ -n "${3:-}" ]; then
+    printf '{"status":"blocked","code":"%s","variables":[%s]}\n' "$2" "$3"
   else
-    printf '{"status":"blocked","code":"%s"}\n' "$2"
+    printf '{"status":"blocked","code":"%s"%s}\n' "$2" "${4:-}"
   fi
 }
 
@@ -45,25 +49,62 @@ export LOG_LEVEL=fatal
 export NODE_ENV=production
 case "${AUTHZED_ENABLED:-}" in
   true | 1) ;;
-  *) result blocked upgrade_configuration_invalid; exit 2 ;;
+  *) result blocked upgrade_configuration_invalid '"AUTHZED_ENABLED"'; exit 2 ;;
 esac
 if [ "${AUTHZED_CONSISTENCY:-}" != fully_consistent ]; then
-  result blocked upgrade_configuration_invalid
+  result blocked upgrade_configuration_invalid '"AUTHZED_CONSISTENCY"'
   exit 2
 fi
+
+# Each step's limit. The graph step rewrites every organization, so its runtime grows with the instance:
+# EU Cloud needed about 35 minutes for ~51k organizations.
+step_timeout="${FORMBRICKS_AUTHZED_PREPARE_STEP_TIMEOUT_SECONDS:-5400}"
+if ! printf '%s\n' "$step_timeout" | grep -Eq '^[1-9][0-9]{0,4}$' ||
+  [ "$step_timeout" -lt 60 ] || [ "$step_timeout" -gt 86400 ]; then
+  result blocked upgrade_configuration_invalid '"FORMBRICKS_AUTHZED_PREPARE_STEP_TIMEOUT_SECONDS"'
+  exit 2
+fi
+
+# BusyBox `timeout` stops a step with SIGTERM, so a timed-out step exits 143, or with whatever its own
+# SIGTERM handler chooses. Neither identifies a timeout; the elapsed time since `started` does.
+exit_if_timed_out() {
+  if [ $(($(date +%s) - started)) -ge "$step_timeout" ]; then
+    result blocked "$1" "" ",\"reason\":\"timeout\",\"timeoutSeconds\":$step_timeout"
+    exit 2
+  fi
+}
 
 # Do not copy raw migration/SDK output into automation logs. Operators can run
 # individual commands in a restricted session to diagnose a stable step failure.
 run_step() {
   code="$1"
   shift
-  if ! timeout 1800 "$@" >/dev/null 2>&1; then
-    result blocked "$code"
-    exit 2
+  started=$(date +%s)
+  if output=$(timeout "$step_timeout" "$@" 2>/dev/null); then
+    return 0
   fi
+  exit_if_timed_out "$code"
+  # A formbricks-authzed command ends with its own sanitized JSON line. Only its error code and retryable
+  # flag are copied, each matched against a closed pattern, so nothing else of the output reaches the logs.
+  last=$(printf '%s\n' "$output" | grep '^{' | tail -n 1)
+  cause=$(printf '%s\n' "$last" | sed -nE 's/.*"code":"(authzed_[a-z_]{1,48})".*/\1/p')
+  retryable=$(printf '%s\n' "$last" | sed -nE 's/.*"retryable":(true|false)[,}].*/\1/p')
+  fields=""
+  if [ -n "$cause" ]; then fields=",\"cause\":\"$cause\""; fi
+  if [ -n "$retryable" ]; then fields="$fields,\"retryable\":$retryable"; fi
+  result blocked "$code" "" "$fields"
+  exit 2
 }
 
-run_step upgrade_configuration_invalid node /home/nextjs/validate-env.mjs
+# The validator lists each invalid variable as "  - NAME: message". Only the names are reported: they say
+# what to fix, and nothing else of the output is copied, as for every other step.
+started=$(date +%s)
+if ! validation=$(timeout "$step_timeout" node /home/nextjs/validate-env.mjs 2>&1); then
+  exit_if_timed_out upgrade_configuration_invalid
+  invalid=$(printf '%s\n' "$validation" | sed -n 's/^ *- \([A-Z][A-Z0-9_]*\):.*/"\1"/p' | sort -u | tr '\n' , | sed 's/,$//')
+  result blocked upgrade_configuration_invalid "$invalid"
+  exit 2
+fi
 run_step upgrade_spicedb_unhealthy formbricks-authzed health
 run_step upgrade_database_migration_failed node /home/nextjs/packages/database/dist/scripts/apply-migrations.js
 if [ -n "$digest" ]; then

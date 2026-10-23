@@ -39,13 +39,13 @@ export type TV3FeedbackRecord = {
   value_number?: number;
   value_boolean?: boolean;
   value_date?: string;
-  value_id?: string | null;
+  value_id?: string;
   metadata?: Record<string, unknown>;
   sentiment?: string;
   sentiment_score?: number;
-  emotions?: string[] | string | null;
-  translation_lang_key?: string | null;
-  value_text_translated?: string | null;
+  emotions?: FeedbackRecordData["emotions"];
+  translation_lang_key?: string;
+  value_text_translated?: string;
   collected_at?: string;
   created_at?: string;
   updated_at?: string;

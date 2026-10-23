@@ -26,6 +26,8 @@ interface OpenTextProps {
   rows?: number;
   disabled?: boolean;
   imageUrl?: string;
+  /** Alt text for the image; empty or absent marks it decorative */
+  imageAltText?: string;
   videoUrl?: string;
 }
 
@@ -47,6 +49,7 @@ function OpenText({
   rows = 3,
   disabled = false,
   imageUrl,
+  imageAltText,
   videoUrl,
 }: Readonly<OpenTextProps>): React.JSX.Element {
   const [currentLength, setCurrentLength] = useState(value.length);
@@ -61,7 +64,7 @@ function OpenText({
     if (charLimit?.max === undefined) return null;
     const isOverLimit = currentLength >= charLimit.max;
     return (
-      <span className={cn("text-xs", isOverLimit ? "font-semibold text-red-500" : "text-brand")}>
+      <span className={cn("text-xs", isOverLimit ? "font-semibold text-red-500" : "text-brand-readable")}>
         {currentLength}/{charLimit.max}
       </span>
     );
@@ -82,6 +85,7 @@ function OpenText({
         requiredLabel={requiredLabel}
         htmlFor={inputId}
         imageUrl={imageUrl}
+        imageAltText={imageAltText}
         videoUrl={videoUrl}
       />
       <div className="relative" data-element-input>

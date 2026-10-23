@@ -285,32 +285,41 @@ definition survey {
     /** The owner, written only while `visibility = private`. */
     relation private_owner: user
 
+    // Retained throughout 6.1 for readers from stable 6.0 releases.
+    permission read: user | api_key = workspace->read
+    permission write: user | api_key = workspace->write
+    permission manage: user | api_key = workspace->manage
+    permission delete: user | api_key = workspace->write
+    permission publish: user | api_key = workspace->write
+    permission response_read: user | api_key = workspace->read
+    permission response_export: user | api_key = workspace->read
+
     /** View the survey. */
-    permission read: user | api_key = shared_workspace->read + (private_owner & workspace->read) + workspace->administer
+    permission read_v2: user | api_key = shared_workspace->read + (private_owner & workspace->read) + workspace->administer
 
     /** Create or edit the survey (workspace readWrite level). */
-    permission write: user | api_key = shared_workspace->write + (private_owner & workspace->write) + workspace->administer
+    permission write_v2: user | api_key = shared_workspace->write + (private_owner & workspace->write) + workspace->administer
 
     /**
      * Manage-only survey operations, including language configuration and
      * DELETE through the legacy management APIs.
      */
-    permission manage: user | api_key = shared_workspace->manage + (private_owner & workspace->manage) + workspace->administer
+    permission manage_v2: user | api_key = shared_workspace->manage + (private_owner & workspace->manage) + workspace->administer
 
     /**
      * Delete through the Formbricks web application and V3 API. Both use the
      * readWrite gate rather than the manage gate.
      */
-    permission delete: user | api_key = write
+    permission delete_v2: user | api_key = write_v2
 
     /** Publish the survey / change its status — part of survey editing. */
-    permission publish: user | api_key = write
+    permission publish_v2: user | api_key = write_v2
 
     /** View the survey's responses and summaries. */
-    permission response_read: user | api_key = read
+    permission response_read_v2: user | api_key = read_v2
 
     /** Download/export the survey's responses (CSV/XLSX) — same gate as viewing. */
-    permission response_export: user | api_key = read
+    permission response_export_v2: user | api_key = read_v2
 
     /**
      * Make the survey private or workspace-visible: its owner while they still
@@ -367,4 +376,11 @@ definition response {
 
     /** Export the response. */
     permission export: user | api_key = survey->response_export
+
+    // 6.1 readers use the versioned survey semantics.
+    permission read_v2: user | api_key = survey->response_read_v2
+    permission write_v2: user | api_key = survey->write_v2
+    permission manage_v2: user | api_key = survey->manage_v2
+    permission export_v2: user | api_key = survey->response_export_v2
+
 }

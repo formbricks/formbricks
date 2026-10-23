@@ -485,6 +485,18 @@ export const ZAutoCapturedResponseMeta = z.object({
    * rather than something imperfect.
    */
   locale: z.string().optional(),
+  /*
+   * The visit so far, from the web SDK's visit store (ENG-3926): app surveys on websites only, so
+   * link surveys and mobile apps never carry them. A visit is one browser tab.
+   */
+  visitPagesViewed: z.number().optional(),
+  visitUniquePagesViewed: z.number().optional(),
+  /** Seconds spent on the site's own pages in this visit; time on other sites is left out. */
+  visitTimeOnSite: z.number().optional(),
+  /** `document.referrer` of the visit's first page. */
+  visitEntryReferrer: z.string().optional(),
+  /** The pages taken in order, as paths joined by `VISIT_URLS_SEPARATOR` from `./visit` (last 50, first kept). */
+  visitUrls: z.string().optional(),
 });
 
 export type TAutoCapturedResponseMeta = z.infer<typeof ZAutoCapturedResponseMeta>;

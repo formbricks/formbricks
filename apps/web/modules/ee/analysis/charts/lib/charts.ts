@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { ZChartConfig, ZChartQuery } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { assertNewReleaseWorkEnabled } from "@/lib/upgrade/compatibility";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { validateCubeQueryMembers } from "@/modules/ee/analysis/api/lib/cube-query";
@@ -30,6 +31,7 @@ export const selectChart = {
 export const createChart = async (data: TChartCreateInput): Promise<TChart> => {
   validateInputs([data, ZChartCreateInput]);
   validateCubeQueryMembers(data.query);
+  if (data.type === "matrix") await assertNewReleaseWorkEnabled();
 
   try {
     return await prisma.chart.create({
@@ -61,6 +63,7 @@ export const updateChart = async (
   data: TChartUpdateInput
 ): Promise<{ chart: TChart; updatedChart: TChart }> => {
   validateInputs([chartId, ZId], [workspaceId, ZId], [data, ZChartUpdateInput]);
+  if (data.type === "matrix") await assertNewReleaseWorkEnabled();
   if (data.query) {
     validateCubeQueryMembers(data.query);
   }

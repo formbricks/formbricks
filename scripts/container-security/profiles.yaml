@@ -1,0 +1,20 @@
+# Render optional shipped components as well as the default deployment.
+formbricks:
+  webappUrl: https://security-scan.invalid
+llm:
+  enabled: true
+taxonomy:
+  enabled: true
+  llm:
+    contextWindowTokens: "8192"
+hub:
+  embeddings:
+    enabled: true
+    background:
+      enabled: true
+envoy:
+  enabled: true
+  controller:
+    enabled: true
+envoyRedis:
+  enabled: true

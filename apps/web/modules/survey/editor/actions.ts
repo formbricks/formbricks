@@ -224,8 +224,9 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
     await checkExternalUrlsPermission(organizationId, survey, oldObject);
     await assertCanWriteCustomHeadScripts({ type: "user", id: ctx.user.id }, workspaceId, survey, oldObject);
 
-    // Use the draft version that skips validation
-    const result = await updateSurveyDraft(survey);
+    // Use the draft version that skips validation. This is also the autosave's path, so custom CSS it
+    // processes is charged to the user like a manual save.
+    const result = await updateSurveyDraft(survey, { customCssPrincipal: ctx.user.id });
 
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
@@ -278,7 +279,7 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
       parsedInput,
       oldObject
     );
-    const result = await updateSurvey(parsedInput);
+    const result = await updateSurvey(parsedInput, { customCssPrincipal: ctx.user.id });
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
 

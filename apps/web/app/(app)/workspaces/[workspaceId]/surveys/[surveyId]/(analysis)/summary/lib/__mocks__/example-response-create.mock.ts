@@ -1,5 +1,8 @@
 import { vi } from "vitest";
-import type { createResponseWithQuotaEvaluation as createResponseWithQuotaEvaluationImpl } from "@/app/api/v1/client/[workspaceId]/responses/lib/response";
+import type {
+  createResponseWithQuotaEvaluation as createResponseWithQuotaEvaluationImpl,
+  resolveCreateResponseContext as resolveCreateResponseContextImpl,
+} from "@/app/api/v1/client/[workspaceId]/responses/lib/response";
 
 /**
  * Response-creation boundary for the example-response persistence tests. Kept in `__mocks__` (per
@@ -8,7 +11,9 @@ import type { createResponseWithQuotaEvaluation as createResponseWithQuotaEvalua
  * the real second parameter.
  */
 export const createResponseWithQuotaEvaluation = vi.fn<typeof createResponseWithQuotaEvaluationImpl>();
+export const resolveCreateResponseContext = vi.fn<typeof resolveCreateResponseContextImpl>();
 
 vi.mock("@/app/api/v1/client/[workspaceId]/responses/lib/response", () => ({
   createResponseWithQuotaEvaluation,
+  resolveCreateResponseContext,
 }));

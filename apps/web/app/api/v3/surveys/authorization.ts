@@ -2,8 +2,7 @@ import { getV3AuthorizationActor, requireV3WorkspaceAccess } from "@/app/api/v3/
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { can } from "@/lib/authorization";
-import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
-import { getSurvey } from "@/lib/survey/service";
+import { getSurveyWithCustomCss } from "@/lib/survey/service";
 import { resolveV3SurveyResourceVisibility } from "./visibility-context";
 
 export async function getAuthorizedV3Survey(params: {
@@ -14,7 +13,9 @@ export async function getAuthorizedV3Survey(params: {
   instance: string;
 }) {
   const { surveyId, authentication, access, requestId, instance } = params;
-  const survey = await getSurvey(surveyId);
+  // With the stored custom CSS: v3 serializes its source and resolves CSS writes against it, and a
+  // survey loaded without the column would read as having none.
+  const survey = await getSurveyWithCustomCss(surveyId);
 
   if (!survey) {
     return {
@@ -40,7 +41,7 @@ export async function getAuthorizedV3Survey(params: {
   // a restricted survey is its owner's and the administrators'. Same 403 body as an unknown id, so a
   // restricted survey's existence is not probeable. Skipped entirely while the marker is off, so a
   // deployment that has not opted in pays no second check.
-  if (await isSurveyVisibilityReady()) {
+  {
     const actor = getV3AuthorizationActor(authentication);
     const allowed =
       actor !== null &&

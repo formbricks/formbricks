@@ -32,8 +32,10 @@ export const selectSurvey = {
   recontactDays: true,
   displayLimit: true,
   autoClose: true,
+  keepEndingCardOpen: true,
   delay: true,
   displayPercentage: true,
+  showConditions: true,
   autoComplete: true,
   publishOn: true,
   closeOn: true,
@@ -47,6 +49,7 @@ export const selectSurvey = {
   singleUse: true,
   pin: true,
   showLanguageSwitch: true,
+  autoSelectLanguage: true,
   recaptcha: true,
   isBackButtonHidden: true,
   isAutoProgressingEnabled: true,
@@ -54,6 +57,8 @@ export const selectSurvey = {
   slug: true,
   customHeadScripts: true,
   customHeadScriptsMode: true,
+  // ENG-2949: the editor round-trips it; the save path reads only its source and reprocesses on change.
+  customCss: true,
   languages: {
     select: {
       default: true,

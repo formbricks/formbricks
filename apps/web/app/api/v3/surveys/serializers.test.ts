@@ -114,6 +114,7 @@ describe("serializeV3SurveyResource", () => {
       displayLimit: 3,
       recontactDays: 7,
       autoClose: 30,
+      keepEndingCardOpen: true,
       autoComplete: 100,
       delay: 5,
       triggers: [{ actionClass: { id: "claa1234567890123456789012", name: "Checkout" } }],
@@ -142,8 +143,10 @@ describe("serializeV3SurveyResource", () => {
       displayLimit: 3,
       recontactDays: 7,
       autoClose: 30,
+      keepEndingCardOpen: true,
       autoComplete: 100,
       delay: 5,
+      showConditions: null,
       triggers: [{ actionClassId: "claa1234567890123456789012" }],
     });
     expect(resource.targeting).toEqual({
@@ -160,6 +163,21 @@ describe("serializeV3SurveyResource", () => {
         },
       ],
     });
+  });
+
+  test("exposes the language settings, mapping unset columns to null", () => {
+    expect(
+      serializeV3SurveyResource(
+        { ...baseSurvey, showLanguageSwitch: true, autoSelectLanguage: true } as TSurvey,
+        TEST_VISIBILITY
+      )
+    ).toMatchObject({ showLanguageSwitch: true, autoSelectLanguage: true });
+    expect(
+      serializeV3SurveyResource(
+        { ...baseSurvey, showLanguageSwitch: null, autoSelectLanguage: undefined } as TSurvey,
+        TEST_VISIBILITY
+      )
+    ).toMatchObject({ showLanguageSwitch: null, autoSelectLanguage: null });
   });
 
   test("omits distribution and targeting for link surveys", () => {

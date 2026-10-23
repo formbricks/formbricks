@@ -13,7 +13,8 @@ type TPublicLicenseFeatureKey = Exclude<keyof TEnterpriseLicenseFeatures, "isMul
 type TFeatureDefinition = {
   key: TPublicLicenseFeatureKey;
   labelKey: string;
-  docsUrl: string;
+  /** Absent while a feature's page isn't published yet: a link to nothing is worse than none. */
+  docsUrl?: string;
 };
 
 const getFeatureDefinitions = (t: TFunction): TFeatureDefinition[] => {
@@ -96,6 +97,11 @@ const getFeatureDefinitions = (t: TFunction): TFeatureDefinition[] => {
       labelKey: t("workspace.settings.enterprise.workflows"),
       docsUrl: "https://formbricks.com/docs/workflows/overview",
     },
+    {
+      // Its feature page comes with ENG-3698.
+      key: "dataRetention",
+      labelKey: t("workspace.settings.enterprise.data_retention"),
+    },
   ];
 };
 
@@ -158,15 +164,18 @@ const getLicenseFeatureColumns = (
     id: "documentation",
     header: t("common.documentation"),
     headerClassName: "w-[20%]",
-    cell: (feature) => (
-      <Link
-        href={feature.docsUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-sm font-medium text-slate-700 underline underline-offset-2 hover:text-slate-900">
-        {t("common.read_docs")}
-      </Link>
-    ),
+    cell: (feature) =>
+      feature.docsUrl ? (
+        <Link
+          href={feature.docsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm font-medium text-slate-700 underline underline-offset-2 hover:text-slate-900">
+          {t("common.read_docs")}
+        </Link>
+      ) : (
+        "—"
+      ),
   },
 ];
 

@@ -5,6 +5,7 @@ import { logger } from "@formbricks/logger";
 import { type TResponseData, type TResponseInput, type TResponseTtc } from "@formbricks/types/responses";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { type TSurvey } from "@formbricks/types/surveys/types";
+import { loggableAIError } from "@/lib/ai/loggable-error";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
@@ -967,9 +968,10 @@ ${JSON.stringify(buildOpenTextLlmContext(survey, rowsChunk), null, 2)}`,
         timeout: OPEN_TEXT_AI_TIMEOUT_MS,
       });
       aiResponses.push(...result.object.responses);
-    } catch (err) {
+    } catch (error) {
+      // Name, frames and provider status only: the prompt carries the survey's questions.
       logger.error(
-        { err, organizationId },
+        { ...loggableAIError(error), organizationId },
         "Failed to generate open-text example responses with AI; using fallback answers"
       );
     }

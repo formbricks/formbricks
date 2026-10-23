@@ -1,0 +1,267 @@
+---
+title: "Online Kubernetes Upgrade"
+description: "Coordinator phases, recovery boundaries, and outstanding acceptance gates for the 6.1 Kubernetes upgrade."
+icon: "arrows-rotate"
+---
+
+<Warning>
+  This implementation is under validation. It does not yet establish a supported zero-downtime upgrade
+  from the released 6.0 images. Keep the release maintenance checklist until the acceptance matrix below
+  passes. Background job consumption pauses during the source-worker handoff; HTTP requests and job
+  enqueueing continue. Released-image Kubernetes rehearsals have not yet verified this protocol.
+</Warning>
+
+The intended customer action is one Helm upgrade or Argo sync. The chart's default remains
+`upgrade.mode: maintenance` while validation is incomplete. Online mode adds automatic preparation,
+surge capacity, traffic handoff, finalization, and survey-visibility activation. Cleanup of legacy
+columns, permission names, compatibility writes, and creation provenance belongs in a later release.
+
+## Prerequisites
+
+The current implementation requires fixed web replicas of at least two, enough capacity for another
+complete web Deployment, `/health/ready` readiness probes, a termination budget of at least 300 seconds,
+and an immutable application image digest. Target web replicas must have embedded BullMQ workers
+enabled; the chart sets `BULLMQ_WORKER_ENABLED=1`. Autoscaling during handoff is not supported: an HPA
+could recreate source workers after retirement, so preflight rejects it. Source Pods must belong to an
+inventoried Deployment or StatefulSet.
+
+Hub also needs fixed replicas of at least two (`hub.replicas`, default `1`) and no Hub autoscaling. Cube can
+keep its default single replica and in-memory driver: it rolls out with `maxUnavailable: 0`, so it stays
+available during the upgrade. More Cube replicas need Cube Store, as they do outside online mode.
+
+Supply a session-affine `MIGRATE_DATABASE_URL`. Transaction-pooling connections are unsuitable for the
+coordinator's session advisory lock. Set `upgrade.online.sessionAffinity: true` only for a connection
+whose pool mode guarantees that property. The coordinator tests lock ownership throughout the run.
+
+List every application writer and worker in `upgrade.online.workloads`, and pin the compatible paired
+Hub/Cube services and infrastructure in `upgrade.online.dependencies`. Source image digests for 6.0.0,
+6.0.1, and 6.0.2 are bundled with the release. Unknown images, schemas, and migration histories block
+preparation. Dependency API/migration compatibility still requires rehearsal; matching an image digest
+alone does not prove that compatibility.
+
+The current drain adapter targets namespace-local Envoy pods, selected by
+`upgrade.online.ingress.selector`, with an explicit upstream cluster name and readable admin port. Set
+`upgrade.online.ingress.proxyResourceNames` to the exact current `pod-name:admin-port` strings. Proxy
+RBAC is limited to these names; an ingress replacement outside that inventory blocks draining. It
+verifies EndpointSlice withdrawal, removal of old upstream hosts on every selected proxy, and zero
+active upstream requests. The upstream hosts must identify current pod endpoints; a Service virtual IP
+does not establish that old connections drained. Missing telemetry blocks handoff. Ingress discovery, all traffic paths, and
+removed-host accounting must be demonstrated in a real rehearsal before this adapter is supported.
+
+## Pin Hub and Cube by digest on the source release
+
+Preparation compares each dependency's running image string with the 6.1 values exactly, so the 6.0.x
+release and the 6.1 online values must name the **same** Hub digest and the **same** Cube digest. A stock
+6.0.x install is blocked with the non-retryable `dependency_image_changed` code for two reasons:
+
+- 6.0.x renders Cube as `repository:tag`, not as a digest reference.
+- 6.0.x pins Hub to 0.8.5, while 6.1 pins Hub 0.14.1.
+
+Roll the 6.0.x release to Hub 0.14.1 and Cube 1.7.47-1 first and wait for the rollout to finish. Serving
+traffic through an upgrade from 6.0.2 was verified with Hub 0.14.0 and Cube 1.7.47-1. Hub 0.14.1 adds the TLS
+fix for the October 2026 eMudhra certificate compromise and request-size limits, and no database migrations.
+6.0.0 and 6.0.1 still run `cubejs/cube:v1.6.6`, so on them this step also switches to the Formbricks Cube
+image: check
+[Bundled Cube image](/self-hosting/advanced/migration#bundled-cube-image-action-required-for-some-deployments)
+before rolling it out.
+
+```yaml
+hub:
+  image:
+    digest: "sha256:3407fff46303c3c24091f2d0d0a3dbc94b8539ebd84a258575bcbf52bedda745" # hub:0.14.1
+cube:
+  image:
+    repository: ghcr.io/formbricks/cube@sha256
+    tag: "3859ec17f4e81fe5147cde8b6b81bccbed329023b803e4a315f0988e5c9372b8" # cube:1.7.47-1, hex without the sha256: prefix
+```
+
+Then put the same digests in the 6.1 online values (`hub.image.digest`, `cube.image.digest`). The chart adds
+Hub and Cube to the dependency inventory from them, so they need no `upgrade.online.dependencies` entry. The
+6.1 chart defaults Cube to 1.7.50-1 with no digest, so set `cube.image.digest` explicitly to the 1.7.47-1
+digest above.
+
+## Start the upgrade
+
+Online mode is only for the supported **6.0.0, 6.0.1, or 6.0.2 → 6.1** transition. Install a new
+instance in maintenance mode. For an existing installation, set `upgrade.online.existingInstallation: true`
+and select `upgrade.online.controller: helm` or `argo`. Argo always renders Helm charts as installs, so
+its explicit existing-installation setting is required; runtime preflight still verifies the source workloads.
+
+Use the same immutable target and values on every retry:
+
+```sh
+helm upgrade <release> <chart> -n <namespace> -f online-values.yaml --wait --timeout 65m
+```
+
+The **65-minute Helm timeout is required**: each coordinator Job has a 60-minute active deadline,
+including migrations and drain waits. Helm's five-minute default can time out a healthy coordinator.
+Do not start another upgrade while the old coordinator is running: `before-hook-creation` replaces the
+previous hook Job. Inspect its state first. Argo's operation/client timeout must likewise permit each
+60-minute hook; configure its sync retry policy and inspect hook status before starting another sync.
+
+After status reports `complete`, set `upgrade.mode: maintenance` for subsequent releases. Do not carry
+online mode into a 6.1.1 upgrade: this coordinator's checkpoint is deliberately pinned to the 6.1 target
+image and rejects reuse for another target. Future rolling upgrade paths need their own compatibility
+contract. Switching the mode does not clear visibility readiness or weaken stored restrictions.
+
+## Upgrade sequence
+
+<Steps>
+  <Step title="Prepare">
+    The pre-upgrade Helm hook or Argo PreSync hook validates the source, records preparation intent,
+    applies additive database changes, and expands the SpiceDB schema. Deferred cleanup stays unapplied.
+  </Step>
+  <Step title="Hand off traffic">
+    The coordinator creates a deterministic surge Deployment using the primary workload's pod template.
+    After readiness succeeds, it switches the existing Service and verifies draining. A failed hook leaves
+    surge capacity intact. After HTTP drains, the coordinator durably records a queue-pause intent and
+    globally pauses BullMQ. Producers still enqueue work. Active jobs finish before the coordinator
+    scales source workloads to zero and waits for their Pods to disappear. It resumes consumption on the
+    healthy target surge before returning from the hook; Helm or Argo then replaces the primary workloads.
+  </Step>
+  <Step title="Finalize">
+    The post-upgrade Helm hook or Argo PostSync hook verifies target workloads and checks for old Pods,
+    terminating Pods, Jobs, and CronJobs. It records the forward-only boundary before ownership catch-up
+    and the survey trigger, then backfills and reconciles the survey graph in bounded pages.
+  </Step>
+  <Step title="Activate">
+    Activation requires a completed baseline, no unexplained stable-version drift, no dead letters, and
+    healthy revocation delivery. Fresh pending grants need not empty the live outbox. Already-running
+    replicas observe activation through PostgreSQL. Surge endpoints are withdrawn and drained before
+    removal, after the primary workload is healthy.
+  </Step>
+</Steps>
+
+Preparation and finalization run in the coordinator pod, with its mounted release configuration:
+
+```sh
+formbricks-authzed upgrade online prepare
+formbricks-authzed upgrade online finalize
+```
+
+Read status from a running target web replica even after successful hook cleanup:
+
+```sh
+kubectl -n <namespace> exec deployment/<web-deployment> -- formbricks-authzed upgrade online status
+```
+
+Status contains the phase, processed survey count, baseline completion, retryability, a sanitized blocker
+code, queue pause/deadline/resumption timestamps, and whether rollback to 6.0 is still allowed. Queue
+status reflects the durable coordinator checkpoint, not a separate Redis health probe. Repeating the same upgrade resumes durable checkpoints.
+Old admin tabs may require reload; preserving unsaved 6.0 editor state is outside the intended guarantee.
+
+The checkpoint does not keep a failed attempt's blocker, so status read afterwards reports `blockerCode: null`.
+The blocker is in the failed coordinator Job's output. When prepare or finalize stops on an unexpected error
+(`online_upgrade_failed` or `invalid_online_configuration`), that output also has a `cause` with the error's
+type and code, such as `{"name":"Error","code":"ENOENT"}`, and never its message. Read the Job of the phase
+that failed:
+
+```sh
+kubectl -n <namespace> logs job/<web-deployment>-online-prepare
+kubectl -n <namespace> logs job/<web-deployment>-online-finalize
+```
+
+## Background job handoff
+
+`upgrade.online.jobDrainTimeoutSeconds` defaults to 180 seconds (10–900 allowed). This limits the wait
+for active jobs to finish **before** source retirement. If that deadline expires, the coordinator
+resumes the queue and fails the hook without terminating source workloads. A subsequent upgrade retries
+from the stored checkpoint with a fresh drain deadline. An existing operator-owned queue pause blocks preparation instead of being
+silently resumed.
+
+A process crash, eviction, or Job active-deadline expiry can leave consumption paused even **before**
+retirement: a killed process cannot execute timeout cleanup. Jobs retry up to three times; if those
+attempts or the Job deadline are exhausted, repeat the same upgrade. This is a bounded drain attempt,
+not a guarantee of a bounded pause under coordinator failure. Late retries receive a new drain deadline.
+
+Once retirement starts, a failed or interrupted coordinator retains the pause and serving surge. Repeat
+the same upgrade to finish retirement and resume consumption. Recovery can extend the pause beyond the
+drain deadline: blindly resuming with terminating 6.0 workers could lose work. Do not manually resume the
+queue or restart source controllers while retirement is incomplete. PostgreSQL stores the pause intent
+before Redis changes, so retries also cover interruptions between those two operations.
+
+Target web replicas deliver the AuthZed outbox through an independent loop while BullMQ is paused.
+Permission revocations therefore do not wait for job consumption to resume. Existing outbox leases
+coordinate delivery across replicas. Failure to deliver remains subject to authorization freshness checks.
+Job schedulers and incompatible payload producers remain gated until activation.
+
+## Coordinator access and lifecycle
+
+The hook uses namespace-scoped access. Named workload patches are limited to the configured inventory,
+and proxy reads to the ingress allowlist. Dynamic surge creation and patching surge Pod labels still
+require namespace-wide `deployments/create` and `pods/patch`: Kubernetes RBAC cannot constrain top-level
+creation by resource name or dynamic Pod names by label. Treat this as administrative access to the
+application namespace; use a dedicated namespace and your cluster's admission controls. See
+[Kubernetes RBAC restrictions](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#referring-to-resources).
+
+After the durable state becomes complete, the coordinator attaches its ServiceAccount, Role, RoleBinding,
+and ConfigMap to the successful finalization Job. Hook deletion then garbage-collects that temporary
+access. Failed Jobs retain access for recovery. After an abandoned upgrade has been safely recovered
+and serving capacity verified, explicitly remove leftover hook resources before uninstalling:
+
+```sh
+kubectl -n <namespace> delete job <web-deployment>-online-prepare <web-deployment>-online-finalize --ignore-not-found
+kubectl -n <namespace> delete role,rolebinding,serviceaccount,configmap <web-deployment>-online --ignore-not-found
+```
+
+These commands do not drain or remove surge pods and are not a rollback procedure. Never run them while
+a coordinator or its recovery is active. Garbage collection and admission behavior still require the
+Helm/Argo Kubernetes rehearsals listed below.
+
+## Recovery
+
+<Warning>
+  Do not use Helm `--atomic`, automatic GitOps rollback, or direct rollback to 6.0 once finalization begins.
+  Retaining legacy columns does not make that rollback safe. Restricted visibility and new queue work
+  must never be handed back to old consumers.
+</Warning>
+
+A failed prepare deliberately leaves healthy surge pods serving and, when the shared queue is not
+paused, consuming compatible work. **A Helm rollback does not remove these pods.** The supported
+recovery for this implementation is to resume the exact same target and values, inspect status, and let
+finalization drain and remove surge capacity. Do not restore 6.0 workloads, delete surge, uninstall, or
+manually resume the queue during that recovery.
+
+`rollbackTo60Allowed` describes the data compatibility boundary only; it is not an automated traffic
+restoration procedure. A verified controlled rollback procedure before finalization is still an open
+acceptance requirement. After the boundary, resume the same target. Changing the target image currently blocks checkpoint
+reuse; a verified procedure for a compatible 6.1 repair image is still an open acceptance requirement.
+Do not delete or edit upgrade checkpoints to bypass a blocker.
+
+`SURVEY_VISIBILITY_FORCE_DISABLED=1` suppresses feature mutations; it never disables stored visibility
+policy enforcement. Clearing graph readiness uses PostgreSQL policy with workspace authorization and
+must not expose restricted data.
+
+## Acceptance status
+
+The following are release blockers, not optional follow-up cleanup:
+
+| Gate | Status |
+| --- | --- |
+| Application unit suites, migration-phase selection, additive schema assertions | Exercised locally |
+| Real PostgreSQL invalid-index recovery and coordinator lock loss | Exercised locally |
+| Fresh prepare migration retains legacy columns and excludes deferred history | Exercised locally |
+| Container installer build (Next.js, TypeScript, coordinator) and Helm/Argo render ordering | Exercised locally; final runtime image and Kubernetes rollout unverified |
+| Queue pause, active-job drain, HTTP enqueueing and target consumption | Real Redis protocol test passes; released-image handoff unverified |
+| Restricted PodSecurity, ingress proxy RBAC and temporary credential garbage collection | Disposable Kind smoke test passes |
+| Isolated Kubernetes upgrade harness and six source/controller runs | Not implemented or run |
+| Slow HTTP requests, public bundles, sessions, cache and shared queue compatibility across actual images | Not fully rehearsed |
+| Membership revocations, alternate authorization paths, coordinator interruption and capacity exhaustion during rollout | Not fully rehearsed |
+| Dependency upgrades and compatible repair-image recovery | Not validated |
+
+The isolated access smoke test creates and deletes its own Kind cluster and kubeconfig:
+
+```sh
+python3 charts/formbricks/tests/online-access.py
+```
+
+It checks admission of a rendered coordinator Pod, exact ingress proxy permissions, and credential
+cleanup after hook deletion. It does not start application images or exercise an upgrade.
+
+The release gate requires zero upgrade-induced failures for supported public-survey and API journeys,
+no lost submissions, no authorization leaks, and successful interrupted-upgrade recovery. Attach measured
+latency and queue-lag evidence to each of the six source/controller runs; unmeasured values are unknown.
+
+See [AuthZed online schema migrations](https://authzed.com/blog/online-schema-migrations) and
+[Argo's Helm hook mapping](https://argo-cd.readthedocs.io/en/latest/user-guide/helm/). Hook rendering tests
+verify manifests; they do not prove either controller's runtime behavior.

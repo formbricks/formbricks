@@ -3,8 +3,9 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import { createV3Response, updateV3Response } from "./operations";
 
-// Survey visibility (ENG-3282) is not enforced here: the readiness marker is off, not read from a database.
+// Exercise response writes with an authorized actor; denial behavior is covered in visibility.test.ts.
 vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
+vi.mock("@/lib/authorization", () => ({ can: vi.fn(async () => true) }));
 vi.mock("server-only", () => ({}));
 vi.mock("node:crypto", async (importOriginal) => await importOriginal<typeof import("node:crypto")>());
 vi.mock("crypto", async (importOriginal) => await importOriginal<typeof import("crypto")>());
@@ -33,7 +34,10 @@ const {
   mockToResource: vi.fn(),
 }));
 
-vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: mockRequireAccess }));
+vi.mock("@/app/api/v3/lib/auth", () => ({
+  requireV3WorkspaceAccess: mockRequireAccess,
+  getV3AuthorizationActor: () => ({ type: "apiKey", id: "key" }),
+}));
 vi.mock("@/modules/api/lib/validation", () => ({ validateResponseData: mockValidateResponseData }));
 vi.mock("@/lib/workspace/service", () => ({ getWorkspaceLegacyStoragePrefixes: async () => [] }));
 vi.mock("./serializers", () => ({

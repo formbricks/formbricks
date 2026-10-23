@@ -10,8 +10,9 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { PipelineTriggers, Webhook } from "@formbricks/database/prisma-browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { copyToClipboard } from "@/lib/utils/clipboard";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { SurveyCheckboxGroup } from "@/modules/integrations/webhooks/components/survey-checkbox-group";
+import { SurveySelect } from "@/modules/integrations/webhooks/components/survey-select";
 import { TriggerCheckboxGroup } from "@/modules/integrations/webhooks/components/trigger-checkbox-group";
 import { validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
 import { Button } from "@/modules/ui/components/button";
@@ -60,8 +61,11 @@ export const WebhookSettingsTab = ({
   const [showSecret, setShowSecret] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const copyToClipboard = async (text: string) => {
-    await navigator.clipboard.writeText(text);
+  const handleCopySecret = async (text: string) => {
+    if (!(await copyToClipboard(text))) {
+      toast.error(t("common.failed_to_copy_to_clipboard"));
+      return;
+    }
     setCopied(true);
     toast.success(t("common.copied_to_clipboard"));
     setTimeout(() => setCopied(false), 2000);
@@ -104,16 +108,6 @@ export const WebhookSettingsTab = ({
   const handleSelectAllSurveys = () => {
     setSelectedAllSurveys(!selectedAllSurveys);
     setSelectedSurveys([]);
-  };
-
-  const handleSelectedSurveyChange = (surveyId: string) => {
-    setSelectedSurveys((prevSelectedSurveys) => {
-      if (prevSelectedSurveys.includes(surveyId)) {
-        return prevSelectedSurveys.filter((id) => id !== surveyId);
-      } else {
-        return [...prevSelectedSurveys, surveyId];
-      }
-    });
   };
 
   const handleCheckboxChange = (selectedValue: PipelineTriggers) => {
@@ -256,7 +250,7 @@ export const WebhookSettingsTab = ({
                 type="button"
                 variant="secondary"
                 className="ml-2 whitespace-nowrap"
-                onClick={() => copyToClipboard(webhook.secret ?? "")}>
+                onClick={() => handleCopySecret(webhook.secret ?? "")}>
                 {copied ? (
                   <>
                     <CheckIcon className="size-4" />
@@ -294,12 +288,12 @@ export const WebhookSettingsTab = ({
 
         <div>
           <Label htmlFor="Surveys">{t("common.surveys")}</Label>
-          <SurveyCheckboxGroup
+          <SurveySelect
             surveys={surveys}
             selectedSurveys={selectedSurveys}
             selectedAllSurveys={selectedAllSurveys}
             onSelectAllSurveys={handleSelectAllSurveys}
-            onSelectedSurveyChange={handleSelectedSurveyChange}
+            onSelectedSurveysChange={setSelectedSurveys}
             allowChanges={webhook.source === "user" && !isReadOnly}
             surveyVisibilityEnabled={surveyVisibilityEnabled}
             attachedSurveyIds={webhook.surveyIds}

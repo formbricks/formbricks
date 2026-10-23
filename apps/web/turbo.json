@@ -13,7 +13,8 @@
         "POSTHOG_KEY",
         "S3_ENDPOINT_URL",
         "SENTRY_AUTH_TOKEN",
-        "WEBAPP_URL"
+        "WEBAPP_URL",
+        "FORMBRICKS_DEPLOYMENT_ID"
       ],
       "inputs": [
         "$TURBO_DEFAULT$",
@@ -141,7 +142,6 @@
         "PLAIN_APP_ID",
         "PLAIN_CHAT_HMAC_SECRET",
         "PLAYWRIGHT_CI",
-        "PLAYWRIGHT_SERVICE_URL",
         "PRIVACY_URL",
         "PROMETHEUS_ENABLED",
         "PROMETHEUS_EXPORTER_PORT",
@@ -150,6 +150,7 @@
         "RECAPTCHA_SECRET_KEY",
         "RECAPTCHA_SITE_KEY",
         "REDIS_URL",
+        "REDIS_TLS_CA",
         "S3_ACCESS_KEY",
         "S3_BUCKET_NAME",
         "S3_FORCE_PATH_STYLE",
@@ -180,6 +181,7 @@
         "SURVEY_SCHEDULING_LOCAL_MINUTE",
         "SURVEY_SCHEDULING_TIME_ZONE",
         "SURVEY_VISIBILITY_FORCE_DISABLED",
+        "FORMBRICKS_UPGRADE_MODE",
         "SURVEY_WORKSPACE_LIMIT",
         "SURVEYS_PACKAGE_BUILD",
         "SURVEYS_PACKAGE_MODE",

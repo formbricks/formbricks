@@ -26,7 +26,7 @@ export const getMcpOauthProviderOptions = (): TOauthProviderOptions => ({
   // actually approved (GHSA-p2fr-6hmx-4528). 1.7 binds the grant instead.
   //
   // `allowedScopes` intersects the requested scopes rather than rejecting them, so it MUST be the
-  // full MCP_OAUTH_SCOPES set. Narrowing it to the six resource scopes would silently strip openid,
+  // full MCP_OAUTH_SCOPES set. Narrowing it to the resource scopes alone would silently strip openid,
   // profile, email and offline_access from every token — killing id_tokens and refresh with no error
   // anywhere. Derived from the constant so the two cannot drift.
   //

@@ -42,9 +42,13 @@ For other operating systems or a more customized installation, please refer to t
 
 - An Ubuntu Virtual Machine with SSH access.
 
-- A custom domain with an **A record** pointing to your server.
+- A custom domain with an **A and/or AAAA record** pointing to your server. Every A and AAAA record on the domain
+  must point to this server: remove any that point elsewhere, such as an AAAA record left over from a previous
+  host or added by default by your DNS provider.
 
-- Ports **80** and **443** are open in your VM's Security Group, allowing Traefik to create an SSL certificate.
+- Ports **80** and **443** are open in your VM's Security Group and host firewall. Traefik serves HTTPS on port
+  443, which Let's Encrypt also uses to validate the SSL certificate, and plain HTTP on port 80 (redirected to
+  HTTPS by default). If your domain has an AAAA record, open both ports for IPv6 too.
 
 ### Deployment
 
@@ -334,31 +338,52 @@ chmod +x formbricks.sh
 ./formbricks.sh update
 ```
 
-The script first validates the resolved Compose project and requires the baseline `hub-worker`, then pulls
-images and runs the read-only AuthZed upgrade check. A failed preflight leaves the existing application running.
+The script first validates the resolved Compose project and warns — without stopping — when the baseline
+`hub-worker` is missing, then pulls images and runs the read-only AuthZed upgrade check. A failed preflight leaves
+the existing application running.
 Otherwise it stops the stack, waits for PostgreSQL, completes application migrations, and only then starts the
 new stack. A failed migration leaves the stack stopped for recovery; preparation is never run against a live
 installation by the updater.
+
+Once those checks pass, the update also publishes the Formbricks container's port `3000` on `127.0.0.1` only, if
+your `docker-compose.yml` or your Compose override file (such as `docker-compose.override.yml`) still publishes it on
+every interface (`- 3000:3000`). Traefik reaches Formbricks over the Compose network and keeps serving it on ports
+`80` and `443`, so outside traffic always passes through Traefik. Each file it changes is kept as
+`<file>.before-loopback-port`. Before stopping anything, it renders the Compose files exactly as Docker Compose will
+load them and checks that they publish port `3000` once, on `127.0.0.1`; if not, it restores the files it changed and
+continues the update with the port as it was. A mapping with an address you chose, such as `- 0.0.0.0:3000:3000`, is
+left as it is, and so is everything when `.env` sets `COMPOSE_FILE`. On Docker Engine before 28.0, and on 28.2.0 to
+28.3.2, other machines on your local network can still reach a port published on `127.0.0.1`, so the installer and
+the update warn you to upgrade Docker.
 
 Starting with v5.4, the updater also recognizes the old amd64-only bundled Valkey digest. It backs up your
 Compose file, replaces only that exact image reference with the native amd64/arm64 digest, and validates the
 result before pulling. An already-updated or custom Valkey image is left unchanged. The named `redis` volume
 and its AOF data are preserved.
 
+While the stack is stopped, the updater also refreshes the bundled Cube model (`cube/cube.js` and
+`cube/schema/FeedbackRecords.js`), so analytics charts can use members a release adds. It downloads the files
+of the release your Formbricks image runs: the `stable` branch for `latest`, or the tag the image is pinned to.
+It keeps the previous files in `cube/previous/`. The two files change together: if either cannot be
+downloaded, backed up or replaced, both stay as they were, the update finishes, and the updater prints the
+command to retry, `./formbricks.sh refresh-cube`. An image pinned to anything else, such as a digest, leaves
+both files unchanged.
+
 Existing one-click installations keep the database credentials in their local `docker-compose.yml` or `.env`.
 The update command does not regenerate or rotate them.
 
 <Warning>
-  Apart from the exact v5.4 Valkey pin migration described above, `./formbricks.sh update` does **not** rewrite
-  your existing `formbricks/docker-compose.yml`. For a major migration such as Formbricks 4.x to 5.0, follow
+  Apart from the exact v5.4 Valkey pin migration and the port `3000` narrowing described above,
+  `./formbricks.sh update` does **not** rewrite your existing `formbricks/docker-compose.yml`. For a major migration such as Formbricks 4.x to 5.0, follow
   the [migration guide](/self-hosting/advanced/migration#v5) first, merge the current v5 Compose changes into
   your existing deployment, confirm `HUB_API_KEY` is set, and only then run the update command. If your older
   one-click install also uses bundled MinIO for file uploads, review that storage path separately before the
   first v5 restart; newer self-hosting updates move the bundled object-storage path to RustFS, while external
-  S3-compatible storage keeps the same `S3_*` app contract. The updater refuses to continue until the Compose
-  project includes the release-matched `hub-worker`; follow the
-  [Hub worker migration](/self-hosting/advanced/migration#hub-worker-required-for-docker) if that preflight
-  fails. The v6 updater also requires the release-matched AuthZed services and requires `.env` to contain
+  S3-compatible storage keeps the same `S3_*` app contract. The updater warns and continues when the Compose
+  project is missing the release-matched `hub-worker`; adding it is recommended, and the next major release will
+  require it — see the
+  [Hub worker migration](/self-hosting/advanced/migration#hub-worker-for-docker). The v6 updater also requires the
+  release-matched AuthZed services and requires `.env` to contain
   `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` after a clean preparation.
 
   The same applies to pinned third-party images. Because the update command only re-pulls what your Compose
@@ -405,6 +430,75 @@ stores both Formbricks and SpiceDB data.
 
 For upgrades, restoration, schema changes, and relationship repair, follow the canonical
 [AuthZed Operations guide](/self-hosting/configuration/authzed-operations).
+
+### Limit request bodies on authentication routes
+
+New installations cap request bodies on `/api/auth/*` at 1 MiB in Traefik. An oversized upload to a sign-in or
+OAuth endpoint is refused by Traefik, and a slow one is read in full by Traefik first, so it does not tie up
+Formbricks while it arrives. No legitimate request to these routes comes close to that size. The cap applies to
+requests that go through Traefik, which is every outside request once port `3000` is published on `127.0.0.1` only
+(see [Update](#update)). The update command does not add the cap to an existing installation, so add it yourself
+if you want it.
+
+<Warning>
+  These labels need Traefik v3.6.15 or later. Before that version, the buffering middleware turns the empty
+  redirects that sign-in and SSO callbacks answer with into errors (a `500` or a timeout), so nobody can sign in;
+  Traefik v2.7 also lets paths such as `/x/../api/auth/...` skip the cap. Check the `image: traefik:` line in
+  `formbricks/docker-compose.yml` and upgrade Traefik first (new installations use v3.6.25). From Traefik v2,
+  follow the [v2 to v3 migration guide](https://doc.traefik.io/traefik/migration/v2-to-v3/).
+</Warning>
+
+Since v3.6.7, Traefik accepts encoded characters such as `%2F` in request paths, which would let a request reach
+`/api/auth/*` without passing through these routers. In `formbricks/traefik.yaml`, add this block under `http:` of
+both the `web` and the `websecure` entry point (create `http:` under `web` if it has none). New installations
+already have it.
+
+```yaml
+encodedCharacters:
+  allowEncodedSlash: false
+  allowEncodedBackSlash: false
+  allowEncodedNullCharacter: false
+  allowEncodedSemicolon: false
+  allowEncodedPercent: false
+  allowEncodedQuestionMark: false
+  allowEncodedHash: false
+```
+
+In `formbricks/docker-compose.yml`, add these lines to the `labels` of the `formbricks` service, replacing
+`your-domain.com` with your domain:
+
+```yaml
+- "traefik.http.middlewares.auth-body-limit.buffering.maxRequestBodyBytes=1048576"
+- "traefik.http.middlewares.auth-body-limit.buffering.memRequestBodyBytes=1048576"
+- "traefik.http.routers.formbricks-auth.rule=Host(`your-domain.com`) && PathPrefix(`/api/auth`)"
+- "traefik.http.routers.formbricks-auth.entrypoints=websecure"
+- "traefik.http.routers.formbricks-auth.tls=true"
+- "traefik.http.routers.formbricks-auth.service=formbricks"
+- "traefik.http.routers.formbricks-auth.priority=1000"
+- "traefik.http.routers.formbricks-auth.middlewares=auth-body-limit"
+```
+
+Copy the `tls.certresolver` line from your existing `formbricks` router as well, with the router name changed
+to `formbricks-auth`. If your installation also has a `formbricks_http` router (HSTS disabled), add these lines
+too, or plain-HTTP requests to `/api/auth/*` stay uncapped:
+
+```yaml
+- "traefik.http.routers.formbricks-auth-http.rule=Host(`your-domain.com`) && PathPrefix(`/api/auth`)"
+- "traefik.http.routers.formbricks-auth-http.entrypoints=web"
+- "traefik.http.routers.formbricks-auth-http.service=formbricks"
+- "traefik.http.routers.formbricks-auth-http.priority=1000"
+- "traefik.http.routers.formbricks-auth-http.middlewares=auth-body-limit"
+```
+
+Then apply the changes from the `formbricks` directory. Traefik only reads `traefik.yaml` when it starts, hence the
+restart:
+
+```bash
+docker compose up -d formbricks traefik
+docker compose restart traefik
+```
+
+A request to `/api/auth/*` with a body over 1 MiB now gets `413 Request Entity Too Large` from Traefik.
 
 ## Stop
 
@@ -465,13 +559,18 @@ If you encounter any issues, you can check the logs of the containers with:
 
 If you encounter any issues, consider the following steps:
 
-- **Inbound Rules**: Make sure you have added inbound rules for Port 80 and 443 in your VM's Security Group.
+- **Inbound Rules**: Make sure you have added inbound rules for ports 80 and 443 in your VM's Security Group and
+  host firewall: for IPv4 if your domain has an A record, and for IPv6 if it has an AAAA record. Some cloud
+  firewalls, such as AWS Security Groups, need a separate IPv6 rule (source `::/0`).
 
-- **A Record**: Verify that you have set up an A record for your domain, pointing to your VM's IP address.
+- **A/AAAA Records**: Verify that your domain's records point to this VM: A records to its IPv4 address, AAAA
+  records to its IPv6 address. Let's Encrypt connects over IPv6 first when an AAAA record exists, so an AAAA
+  record pointing to another server can make certificate issuance fail even when the A record is correct. If
+  your domain has an AAAA record, ports 80 and 443 must also be open for IPv6; with only an AAAA record, there
+  is no IPv4 to fall back to.
 
 - **Check Docker Instances**: Run `docker ps` to check the status of the Docker instances.
 
 - **Check Formbricks Logs**: Run `cd formbricks && docker compose logs` to check the logs of the Formbricks stack.
 
-If you have any questions or require help, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃[
-](https://formbricks.com/docs/developer-docs/rest-api)
+If you have any questions or require help, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃

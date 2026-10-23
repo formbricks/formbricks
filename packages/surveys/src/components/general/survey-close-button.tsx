@@ -1,5 +1,6 @@
 import { useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
+import { FB_PART } from "@formbricks/survey-ui/parts";
 import { CloseIcon } from "@/components/icons/close-icon";
 import { mixColor } from "@/lib/color";
 
@@ -25,6 +26,7 @@ export function SurveyCloseButton({ onClose, hoverColor, borderRadius }: Readonl
     <div className="z-1001 flex w-fit items-center">
       <button
         type="button"
+        data-fb-part={FB_PART.buttonClose}
         onClick={onClose}
         style={{
           backgroundColor: isHovered ? hoverColorWithOpacity : "transparent",

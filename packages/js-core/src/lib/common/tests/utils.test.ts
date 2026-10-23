@@ -1,16 +1,18 @@
 // utils.test.ts
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { mockSurveyId } from "@/lib/common/tests/__mocks__/config.mock";
 import {
   checkUrlMatch,
   diffInDays,
   evaluateNoCodeConfigClick,
   filterSurveys,
+  getBrowserLanguageCodes,
+  getCustomCss,
   getDefaultLanguageCode,
   getIsDebug,
-  getLanguageCode,
   getSecureRandom,
   getStyling,
+  getSurveyExclusionReason,
   handleUrlFilters,
   isNowExpired,
   shouldDisplayBasedOnPercentage,
@@ -348,6 +350,34 @@ describe("utils.ts", () => {
   });
 
   // ---------------------------------------------------------------------------------
+  // getCustomCss
+  // ---------------------------------------------------------------------------------
+  describe("getCustomCss()", () => {
+    const workspaceCss = { light: "@layer fb-workspace {}" };
+    const surveyCss = { light: "@layer fb-survey {}", dark: "@layer fb-survey-dark {}" };
+
+    test.each([
+      ["styling overwrite disabled", { allowStyleOverwrite: false }, null],
+      ["survey overwrites the theme", { allowStyleOverwrite: true }, { overwriteThemeStyling: true }],
+    ])("sends both scopes whatever the theme selection (%s)", (_, workspaceStyling, surveyStyling) => {
+      const settings = {
+        styling: workspaceStyling,
+        customCss: workspaceCss,
+      } as unknown as TWorkspaceStateSettings;
+      const survey = { styling: surveyStyling, customCss: surveyCss } as unknown as TWorkspaceStateSurvey;
+
+      expect(getCustomCss(settings, survey)).toEqual({ workspace: workspaceCss, survey: surveyCss });
+    });
+
+    test("leaves a scope the server did not send undefined", () => {
+      const settings = { styling: { allowStyleOverwrite: true } } as unknown as TWorkspaceStateSettings;
+      const survey = { customCss: surveyCss } as unknown as TWorkspaceStateSurvey;
+
+      expect(getCustomCss(settings, survey)).toEqual({ workspace: undefined, survey: surveyCss });
+    });
+  });
+
+  // ---------------------------------------------------------------------------------
   // getStyling
   // ---------------------------------------------------------------------------------
   describe("getStyling()", () => {
@@ -433,48 +463,60 @@ describe("utils.ts", () => {
   });
 
   // ---------------------------------------------------------------------------------
-  // getLanguageCode
+  // getBrowserLanguageCodes
   // ---------------------------------------------------------------------------------
-  describe("getLanguageCode()", () => {
-    test("returns 'default' if no language param is passed", () => {
-      const survey = {
-        languages: [{ language: { code: "en" }, default: true, enabled: true }],
-      } as unknown as TWorkspaceStateSurvey;
-      const code = getLanguageCode(survey, undefined);
-      expect(code).toBe("default");
+  describe("getBrowserLanguageCodes()", () => {
+    const withNavigator = (navigatorValue: unknown, assertion: () => void): void => {
+      const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+      try {
+        Object.defineProperty(globalThis, "navigator", { configurable: true, value: navigatorValue });
+        assertion();
+      } finally {
+        if (originalNavigator) {
+          Object.defineProperty(globalThis, "navigator", originalNavigator);
+        } else {
+          Reflect.deleteProperty(globalThis, "navigator");
+        }
+      }
+    };
+
+    test("returns navigator.languages in preference order, without empty entries", () => {
+      withNavigator({ languages: ["de-DE", "", "  ", "en-US"], language: "de-DE" }, () => {
+        expect(getBrowserLanguageCodes()).toEqual(["de-DE", "en-US"]);
+      });
     });
 
-    test("returns 'default' if the chosen language is the default one", () => {
-      const survey = {
-        languages: [
-          { language: { code: "en" }, default: true, enabled: true },
-          { language: { code: "fr" }, default: false, enabled: true },
-        ],
-      } as unknown as TWorkspaceStateSurvey;
-      const code = getLanguageCode(survey, "en");
-      expect(code).toBe("default");
+    test("falls back to navigator.language when navigator.languages is empty", () => {
+      withNavigator({ languages: [], language: "fr-FR" }, () => {
+        expect(getBrowserLanguageCodes()).toEqual(["fr-FR"]);
+      });
     });
 
-    test("returns undefined if language not found or disabled", () => {
-      const survey = {
-        languages: [
-          { language: { code: "en" }, default: true, enabled: true },
-          { language: { code: "fr" }, default: false, enabled: false },
-        ],
-      } as unknown as TWorkspaceStateSurvey;
-      const code = getLanguageCode(survey, "fr");
-      expect(code).toBeUndefined();
+    test("falls back to navigator.language when navigator.languages is undefined", () => {
+      withNavigator({ language: "fr-FR" }, () => {
+        expect(getBrowserLanguageCodes()).toEqual(["fr-FR"]);
+      });
     });
 
-    test("returns the language code if found and enabled", () => {
-      const survey = {
-        languages: [
-          { language: { code: "en", alias: "English" }, default: true, enabled: true },
-          { language: { code: "fr", alias: "fr-FR" }, default: false, enabled: true },
-        ],
-      } as unknown as TWorkspaceStateSurvey;
-      expect(getLanguageCode(survey, "fr")).toBe("fr");
-      expect(getLanguageCode(survey, "fr-FR")).toBe("fr");
+    test("ignores a navigator.languages that is not an array", () => {
+      withNavigator({ languages: "de-DE", language: "fr-FR" }, () => {
+        expect(getBrowserLanguageCodes()).toEqual(["fr-FR"]);
+      });
+    });
+
+    test("returns nothing when neither is available", () => {
+      withNavigator({ language: "" }, () => {
+        expect(getBrowserLanguageCodes()).toEqual([]);
+      });
+      withNavigator({}, () => {
+        expect(getBrowserLanguageCodes()).toEqual([]);
+      });
+    });
+
+    test("returns nothing when navigator is undefined", () => {
+      withNavigator(undefined, () => {
+        expect(getBrowserLanguageCodes()).toEqual([]);
+      });
     });
   });
 
@@ -1184,6 +1226,64 @@ describe("utils.ts", () => {
       });
       expect(getIsDebug()).toBe(false);
     });
+
+    describe("stays on for the tab", () => {
+      const setSearch = (search: string) =>
+        Object.defineProperty(window, "location", { value: { search }, writable: true });
+      let stored: Map<string, string>;
+
+      beforeEach(() => {
+        stored = new Map();
+        vi.stubGlobal("sessionStorage", {
+          getItem: (key: string) => stored.get(key) ?? null,
+          setItem: (key: string, value: string) => stored.set(key, value),
+          removeItem: (key: string) => stored.delete(key),
+        });
+      });
+
+      afterEach(() => {
+        // Other suites run without sessionStorage, as node does.
+        delete (globalThis as { sessionStorage?: unknown }).sessionStorage;
+      });
+
+      test("the next page load stays in debug mode without the parameter", () => {
+        setSearch("?formbricksDebug=true");
+        expect(getIsDebug()).toBe(true);
+
+        setSearch("");
+        expect(getIsDebug()).toBe(true);
+      });
+
+      test("?formbricksDebug=false turns it off for the tab", () => {
+        setSearch("?formbricksDebug=true");
+        getIsDebug();
+
+        setSearch("?formbricksDebug=false");
+        expect(getIsDebug()).toBe(false);
+
+        setSearch("");
+        expect(getIsDebug()).toBe(false);
+      });
+
+      test("with storage blocked, only the URL counts", () => {
+        vi.stubGlobal("sessionStorage", {
+          getItem: () => {
+            throw new Error("SecurityError");
+          },
+          setItem: () => {
+            throw new Error("SecurityError");
+          },
+          removeItem: () => {
+            throw new Error("SecurityError");
+          },
+        });
+
+        setSearch("?formbricksDebug=true");
+        expect(getIsDebug()).toBe(true);
+        setSearch("");
+        expect(getIsDebug()).toBe(false);
+      });
+    });
   });
 
   // ---------------------------------------------------------------------------------
@@ -1368,5 +1468,94 @@ describe("filterSurveys() — interaction targeting × recontact/display-cap mat
     const userState = buildUser(user);
     const result = filterSurveys(workspace, userState);
     expect(result.some((s) => s.id === SURVEY)).toBe(shown);
+  });
+});
+
+describe("getSurveyExclusionReason", () => {
+  // The same decision as `filterSurveys`, with the reason kept: the debug panel shows it to explain
+  // why a survey on the trigger that fired never had a chance to show.
+  const SURVEY = "e3kxlpnzmdp84op9qzxl9olj";
+  const SEGMENT = "p6yrnz3s2tvoe5r0l28unq7k";
+  const DAY = 1000 * 60 * 60 * 24;
+
+  const workspace = (cooldownDays: number): TWorkspaceState => ({
+    expiresAt: new Date(),
+    data: {
+      settings: {
+        recontactDays: cooldownDays,
+        clickOutsideClose: false,
+        overlay: "none",
+        placement: "bottomRight",
+        inAppSurveyBranding: true,
+        styling: { allowStyleOverwrite: false },
+      },
+      surveys: [],
+      actionClasses: [],
+    },
+  });
+
+  const user = (data: Partial<TUserState["data"]>): TUserState => ({
+    expiresAt: null,
+    data: {
+      userId: null,
+      contactId: null,
+      segments: [],
+      displays: [],
+      responses: [],
+      lastDisplayAt: null,
+      ...data,
+    },
+  });
+
+  const survey = (overrides: Partial<TWorkspaceStateSurvey>): TWorkspaceStateSurvey =>
+    ({
+      id: SURVEY,
+      displayOption: "respondMultiple",
+      displayLimit: null,
+      recontactDays: null,
+      segment: { id: SEGMENT, hasFilters: false },
+      ...overrides,
+    }) as TWorkspaceStateSurvey;
+
+  const shownBefore = { displays: [{ surveyId: SURVEY, createdAt: new Date() }] };
+
+  test.each([
+    ["nothing", survey({}), user({}), null],
+    ["shown once already", survey({ displayOption: "displayOnce" }), user(shownBefore), "alreadyDisplayed"],
+    [
+      "already answered",
+      survey({ displayOption: "displayMultiple" }),
+      user({ responses: [SURVEY] }),
+      "alreadyResponded",
+    ],
+    [
+      "shown as often as allowed",
+      survey({ displayOption: "displaySome", displayLimit: 1 }),
+      user(shownBefore),
+      "displayLimitReached",
+    ],
+    [
+      "inside the cooldown",
+      survey({ recontactDays: 3 }),
+      user({ lastDisplayAt: new Date(Date.now() - DAY) }),
+      "cooldown",
+    ],
+    [
+      "an anonymous visitor and a segment with filters",
+      survey({ segment: { id: SEGMENT, hasFilters: true } }),
+      user({}),
+      "segment",
+    ],
+    ["a contact outside the segment", survey({}), user({ userId: "user_abc", segments: [] }), "segment"],
+  ])("excluded by %s → %s", (_, surveyState, userState, expected) => {
+    expect(getSurveyExclusionReason(surveyState, workspace(7), userState)).toBe(expected);
+  });
+
+  test("a survey's own 0-day cooldown wins over the workspace's", () => {
+    const recent = user({ lastDisplayAt: new Date() });
+
+    expect(getSurveyExclusionReason(survey({ recontactDays: 0 }), workspace(7), recent)).toBeNull();
+    expect(getSurveyExclusionReason(survey({}), workspace(7), recent)).toBe("cooldown");
+    expect(getSurveyExclusionReason(survey({}), workspace(0), recent)).toBeNull();
   });
 });

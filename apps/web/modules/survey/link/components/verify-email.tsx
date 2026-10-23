@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, MailIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { Toaster, toast } from "react-hot-toast";
@@ -18,6 +19,7 @@ import { replaceHeadlineRecall } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { sendLinkSurveyEmailAction } from "@/modules/survey/link/actions";
 import { useAppLocale } from "@/modules/survey/link/hooks/use-app-locale";
+import { isLinkSurveyGoneError } from "@/modules/survey/link/lib/public-access";
 import { Button } from "@/modules/ui/components/button";
 import { FormControl, FormError, FormField, FormItem } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
@@ -48,6 +50,7 @@ export const VerifyEmail = ({
   locale,
 }: VerifyEmailProps) => {
   const { t } = useTranslation();
+  const router = useRouter();
   const isLocaleReady = useAppLocale(locale);
 
   const form = useForm<TVerifyEmailInput>({
@@ -86,12 +89,23 @@ export const VerifyEmail = ({
       surveyLanguageCode: languageCode,
     };
 
-    const actionResult = await sendLinkSurveyEmailAction(data);
+    let actionResult: Awaited<ReturnType<typeof sendLinkSurveyEmailAction>>;
+    try {
+      actionResult = await sendLinkSurveyEmailAction(data);
+    } catch {
+      // A rejected call (offline, or an action id a newer deploy no longer serves) still gets feedback.
+      toast.error(t("common.something_went_wrong_please_try_again"));
+      return;
+    }
+
     if (actionResult?.data) {
       setEmailSent(true);
+    } else if (isLinkSurveyGoneError(actionResult?.serverError, localSurvey.id)) {
+      // The survey stopped taking responses (closed, archived or gone) after this page loaded (ENG-4032).
+      // Re-render the page so the server shows what a fresh load would, instead of an error toast.
+      router.refresh();
     } else {
-      const errorMessage = getFormattedErrorMessage(actionResult);
-      toast.error(errorMessage);
+      toast.error(getFormattedErrorMessage(actionResult));
     }
   };
 
@@ -112,7 +126,7 @@ export const VerifyEmail = ({
     return (
       <div className="flex h-screen w-screen flex-col items-center justify-center bg-slate-50">
         <span className="size-24 rounded-full bg-slate-300 p-6 text-5xl">🤔</span>
-        <p className="mt-8 text-4xl font-bold">{t("s.this_looks_fishy")}</p>
+        <p className="mt-8 text-4xl font-bold">{t("s.link_not_valid")}</p>
         <Button variant="ghost" className="mt-4" onClick={handleGoBackClick}>
           {t("s.please_try_again_with_the_original_link")}
         </Button>

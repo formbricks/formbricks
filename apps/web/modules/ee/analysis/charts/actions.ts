@@ -19,7 +19,10 @@ import {
   getCharts,
   updateChart,
 } from "@/modules/ee/analysis/charts/lib/charts";
-import { dropEmptyMeasureRows } from "@/modules/ee/analysis/charts/lib/empty-measure-rows";
+import {
+  dropEmptyMeasureRows,
+  withOptionIdFilter,
+} from "@/modules/ee/analysis/charts/lib/empty-measure-rows";
 import { pruneChartLabels, resolveOptionGrouping } from "@/modules/ee/analysis/charts/lib/option-grouping";
 import { checkFeedbackDirectoryAccess, checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
 import {
@@ -293,7 +296,7 @@ export const executeQueryAction = authenticatedActionClient
       const { rewrittenQuery } = grouping;
 
       const rawRows = await executeTenantScopedQuery({
-        query: rewrittenQuery,
+        query: withOptionIdFilter(rewrittenQuery),
         feedbackDirectoryId,
         workspaceId,
         organizationId,
@@ -356,7 +359,7 @@ export const generateAIChartAction = authenticatedActionClient
       const [grouping, data] = await Promise.all([
         resolveOptionGrouping(validatedQuery, workspaceId, feedbackDirectoryId),
         executeTenantScopedQuery({
-          query: validatedQuery,
+          query: withOptionIdFilter(validatedQuery),
           feedbackDirectoryId,
           workspaceId,
           organizationId,

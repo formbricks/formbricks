@@ -1,9 +1,37 @@
 import { Config } from "@/lib/common/config";
+import { emitDebugSurveyEvent, isDebugEnabled } from "@/lib/common/debug";
 import { FORMBRICKS_EVENTS, emitFormbricksEvent } from "@/lib/common/events";
 import { Logger } from "@/lib/common/logger";
+import { getSurveyExclusionReason } from "@/lib/common/utils";
 import { triggerSurvey } from "@/lib/survey/widget";
 import { type InvalidCodeError, type NetworkError, type Result, err, okVoid } from "@/types/error";
 import { type TTrackProperties } from "@/types/survey";
+
+/**
+ * Debug mode only: a survey on this trigger that was already dropped at setup (display option,
+ * cooldown, segment) never reaches `triggerSurvey`, so it is reported here with the reason. Most
+ * "why didn't it show?" questions are answered by one of these.
+ */
+const reportExcludedSurveys = (actionName: string): void => {
+  const { workspace, user, filteredSurveys } = Config.getInstance().get();
+  const eligibleIds = new Set(filteredSurveys.map((survey) => survey.id));
+
+  for (const survey of workspace.data.surveys) {
+    if (eligibleIds.has(survey.id)) continue;
+    if (!survey.triggers.some((trigger) => trigger.actionClass.name === actionName)) continue;
+
+    const exclusion = getSurveyExclusionReason(survey, workspace, user);
+    if (exclusion) {
+      emitDebugSurveyEvent({
+        surveyId: survey.id,
+        action: actionName,
+        stage: "trigger",
+        outcome: "excluded",
+        exclusion,
+      });
+    }
+  }
+};
 
 /**
  * Tracks an action name and triggers associated surveys
@@ -27,6 +55,8 @@ export const trackAction = async (
   // The shared path under both code and no-code actions, so every tracked action reaches the host
   // exactly once — whether or not it triggers a survey (funnel analytics wants the misses too).
   emitFormbricksEvent(FORMBRICKS_EVENTS.actionTracked, { action: aliasName });
+
+  if (isDebugEnabled()) reportExcludedSurveys(name);
 
   // get a list of surveys that are collecting insights
   const activeSurveys = appConfig.get().filteredSurveys;

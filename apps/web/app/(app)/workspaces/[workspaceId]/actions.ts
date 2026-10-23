@@ -10,6 +10,8 @@ import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationWorkspacesCount } from "@/lib/workspace/service";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
   getAccessControlPermission,
@@ -34,6 +36,9 @@ export const createWorkspaceAction = authenticatedActionClient.inputSchema(ZCrea
       type: "organization",
       id: parsedInput.organizationId,
     });
+    // Defence in depth for ENG-3921: bounds how wide a burst can be. The lock below is what
+    // enforces the cap.
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
 
     const organization = await getOrganization(organizationId);
 
@@ -41,10 +46,15 @@ export const createWorkspaceAction = authenticatedActionClient.inputSchema(ZCrea
       throw new ResourceNotFoundError("Organization", organizationId);
     }
 
-    const organizationWorkspacesLimit = await getOrganizationWorkspacesLimit(organization.id);
-    const organizationWorkspacesCount = await getOrganizationWorkspacesCount(organization.id);
+    const [workspaceLimit, workspaceCount] = await Promise.all([
+      getOrganizationWorkspacesLimit(organization.id),
+      getOrganizationWorkspacesCount(organization.id),
+    ]);
 
-    if (organizationWorkspacesCount >= organizationWorkspacesLimit) {
+    // A fast path for the common case, before the access-control lookup and the transaction. It
+    // cannot enforce the cap on its own (concurrent requests all read the same count), so
+    // createWorkspace checks again under a lock on the organization (ENG-3921).
+    if (workspaceCount >= workspaceLimit) {
       throw new OperationNotAllowedError("Organization workspace limit reached");
     }
 
@@ -56,7 +66,9 @@ export const createWorkspaceAction = authenticatedActionClient.inputSchema(ZCrea
       }
     }
 
-    const workspace = await createWorkspace(parsedInput.organizationId, parsedInput.data);
+    const workspace = await createWorkspace(parsedInput.organizationId, parsedInput.data, {
+      workspaceLimit,
+    });
     const updatedNotificationSettings = {
       ...user.notificationSettings,
       alert: {

@@ -3,6 +3,7 @@ import { performance } from "node:perf_hooks";
 import { cache as reactCache } from "react";
 import { getAuthzedClient } from "@/lib/authzed/client";
 import { assertAuthzedProjectionFreshness } from "@/lib/authzed/outbox-freshness";
+import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { getAuthorizationSurface, recordAuthorizationCheckIssued } from "./context";
 import type { TAuthorizationAction, TAuthorizationActor } from "./contract";
 import { recordAuthorizationDecision } from "./metrics";
@@ -80,6 +81,8 @@ export const filterReadableSurveyIds = async (
   surveyIds: ReadonlyArray<string>
 ): Promise<ReadonlySet<string>> => {
   if (surveyIds.length === 0) return new Set();
+  // Callers already applied workspace authorization and the stored SQL visibility predicate.
+  if (!(await isSurveyVisibilityReady())) return new Set(surveyIds);
 
   recordAuthorizationCheckIssued();
   const startedAt = performance.now();
@@ -93,7 +96,7 @@ export const filterReadableSurveyIds = async (
   try {
     await assertAuthzedProjectionFreshness();
     const allowed = await getAuthzedClient().checkBulkPermissions({
-      permission: "read",
+      permission: "read_v2",
       resourceIds: surveyIds,
       resourceType: getSpicedbObjectType("survey"),
       subject: { objectId: actor.id, objectType: getSpicedbObjectType(actor.type) },

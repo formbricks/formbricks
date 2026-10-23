@@ -143,6 +143,23 @@ describe("putResponseHandler", () => {
     mocks.verifyLinkSurveyPinToken.mockReturnValue(true);
   });
 
+  test("passes the stored response's survey for quota evaluation, never one from the request (ENG-3285)", async () => {
+    mocks.getValidatedResponseUpdateInput.mockResolvedValue({
+      responseUpdateInput: { ...getBaseResponseUpdateInput(), surveyId: "survey_of_another_tenant" },
+    });
+
+    const result = await putResponseHandler(createHandlerParams());
+
+    expect(result.response.status).toBe(200);
+    expect(mocks.getSurvey).toHaveBeenCalledWith(surveyId);
+    expect(mocks.updateResponseWithQuotaEvaluation).toHaveBeenCalledWith(
+      responseId,
+      surveyId,
+      expect.anything(),
+      expect.anything()
+    );
+  });
+
   test("returns a bad request response when the response id is missing", async () => {
     const result = await putResponseHandler(createHandlerParams({ responseId: "" }));
 
@@ -606,7 +623,7 @@ describe("putResponseHandler", () => {
 
     /** What the handler actually persisted, and the flags it computed for it. */
     const persisted = () => {
-      const [, updateInput, ingestFlags] = mocks.updateResponseWithQuotaEvaluation.mock.calls[0];
+      const [, , updateInput, ingestFlags] = mocks.updateResponseWithQuotaEvaluation.mock.calls[0];
       return { data: updateInput.data, ingestFlags };
     };
 

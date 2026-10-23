@@ -3,6 +3,7 @@ import { type Instrumentation } from "next";
 import { logger } from "@formbricks/logger";
 import { isExpectedError } from "@formbricks/types/errors";
 import { isPublicDomainRoute } from "@/app/middleware/endpoint-validator";
+import { warnOnPlainChatMisconfiguration } from "@/app/plain/lib/config";
 import { IS_PRODUCTION, PROMETHEUS_ENABLED, SENTRY_DSN } from "@/lib/constants";
 import {
   assertAuthRuntimeConfiguration,
@@ -41,6 +42,7 @@ export const register = async () => {
       assertAuthzedRuntimeConfiguration();
       assertAuthRuntimeConfiguration();
       warnOnAuthSecretRisks();
+      warnOnPlainChatMisconfiguration();
     }
 
     // Load OpenTelemetry instrumentation when Prometheus metrics or OTLP export is enabled
@@ -51,6 +53,8 @@ export const register = async () => {
     // Skip runtime-only BullMQ bootstrapping during production builds.
     if (process.env.NEXT_PHASE !== "phase-production-build") {
       try {
+        const { registerOnlinePauseDelivery } = await import("./lib/upgrade/pause-delivery");
+        registerOnlinePauseDelivery();
         const { registerJobsWorker, registerRecurringJobs } = await import("./instrumentation-jobs");
         void registerRecurringJobs().catch((error: unknown) => {
           logger.error(

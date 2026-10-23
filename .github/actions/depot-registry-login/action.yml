@@ -1,0 +1,23 @@
+name: Authenticate private build registry
+description: Use a short-lived credential scoped to the saved Depot build
+inputs:
+  depot_build_id:
+    description: "Saved build ID"
+    required: true
+  depot_token:
+    description: "Depot project credential"
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: depot/setup-action@91bc8495a33ebfc504ffc89e5674379ccf23c29c # v1.7.2
+    - name: Log in to private build registry
+      shell: bash
+      env:
+        DEPOT_TOKEN: ${{ inputs.depot_token }}
+        BUILD_ID: ${{ inputs.depot_build_id }}
+      run: |
+        set -euo pipefail
+        token="$(depot pull-token --project tw0fqmsx3c "$BUILD_ID")"
+        echo "::add-mask::$token"
+        printf '%s' "$token" | docker login registry.depot.dev --username x-token --password-stdin

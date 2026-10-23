@@ -94,13 +94,18 @@ const AI_UNAVAILABLE_ERROR_CODE_REASONS = {
  * Undefined for any other code — including a missing one — so callers keep their own feature-specific
  * error handling.
  */
+export const getAIUnavailableReasonForErrorCode = (
+  errorCode: string | undefined
+): TAIUnavailableReason | undefined =>
+  errorCode && Object.hasOwn(AI_UNAVAILABLE_ERROR_CODE_REASONS, errorCode)
+    ? AI_UNAVAILABLE_ERROR_CODE_REASONS[errorCode as keyof typeof AI_UNAVAILABLE_ERROR_CODE_REASONS]
+    : undefined;
+
 export const getAIUnavailableMessageForErrorCode = (
   errorCode: string | undefined,
   t: TTranslate
 ): string | undefined => {
-  if (!errorCode) return undefined;
-  const reason =
-    AI_UNAVAILABLE_ERROR_CODE_REASONS[errorCode as keyof typeof AI_UNAVAILABLE_ERROR_CODE_REASONS];
+  const reason = getAIUnavailableReasonForErrorCode(errorCode);
   return reason ? getAIUnavailableMessage(reason, t) : undefined;
 };
 

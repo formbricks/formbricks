@@ -40,7 +40,7 @@ describe("getTeamsByWorkspaceId", () => {
       { id: "t1", name: "Team 1", permission: "readWrite", memberCount: 2 },
       { id: "t2", name: "Team 2", permission: "manage", memberCount: 3 },
     ]);
-    expect(prisma.workspace.findUnique).toHaveBeenCalledWith({ where: { id: "p1" } });
+    expect(prisma.workspace.findUnique).toHaveBeenCalledWith({ where: { id: "p1" }, select: { id: true } });
     expect(prisma.team.findMany).toHaveBeenCalled();
   });
 

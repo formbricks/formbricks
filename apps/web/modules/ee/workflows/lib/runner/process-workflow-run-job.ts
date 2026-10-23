@@ -19,7 +19,6 @@ import {
   isLiteralEmailRecipient,
   planExecutableSteps,
 } from "@formbricks/workflows";
-import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getResponse } from "@/lib/response/service";
@@ -489,7 +488,7 @@ const loadRunEmailContext = async (
 
   // ENG-3283: the survey may have been restricted after this run was enqueued. A run forwards the
   // response out of the app, so it stops here rather than sending a restricted survey's data.
-  if (!isSurveyOutboundAllowed(survey, await isSurveyVisibilityReady())) {
+  if (!isSurveyOutboundAllowed(survey)) {
     recordSurveyOutboundSkipped("workflow");
     throw new WorkflowRunNotExecutableError(
       `Survey ${triggerPayload.surveyId} is not visible to the whole workspace`

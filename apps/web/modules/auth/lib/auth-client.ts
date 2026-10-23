@@ -15,4 +15,6 @@ export const authClient = createAuthClient({
   plugins: [twoFactorClient(), oauthProviderClient()],
 });
 
-export const { signIn, signUp, signOut, useSession } = authClient;
+// No `signUp` here: credential sign-up goes through `createUserAction` only. Better Auth's
+// `/sign-up/email` is closed over HTTP (ENG-3988), so `authClient.signUp` would only ever get a 404.
+export const { signIn, signOut, useSession } = authClient;

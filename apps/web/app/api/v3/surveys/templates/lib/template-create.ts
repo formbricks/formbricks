@@ -14,7 +14,7 @@ import { replacePresetPlaceholders } from "@/lib/utils/templates";
 import { getWorkspace } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { createV3SurveyResponse } from "../../lib/operations";
-import { ZV3CreateSurveyBody, formatV3ZodInvalidParams } from "../../schemas";
+import { type TV3SurveyCreatedFrom, ZV3CreateSurveyBody, formatV3ZodInvalidParams } from "../../schemas";
 import { buildV3SurveyCreatePayloadFromTemplate } from "./template-to-v3";
 
 export const ZV3TrustedTemplateCreateBody = z.object({
@@ -26,7 +26,7 @@ export const ZV3TrustedTemplateCreateBody = z.object({
 });
 
 type TTrustedTemplateCreateBody = z.infer<typeof ZV3TrustedTemplateCreateBody>;
-type TCreatedFrom = "blank" | "template" | "xm-template";
+type TCreatedFrom = Extract<TV3SurveyCreatedFrom, "blank" | "template" | "xm-template">;
 
 type TResolvedTemplate = {
   template: TTemplate;

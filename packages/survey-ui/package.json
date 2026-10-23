@@ -49,6 +49,10 @@
       "import": "./dist/index.js"
     },
     "./styles": "./dist/survey-ui.css",
+    "./parts": {
+      "types": "./dist/lib/parts.d.ts",
+      "import": "./dist/lib/parts.js"
+    },
     "./youtube-id": {
       "types": "./dist/lib/youtube-id.d.ts",
       "import": "./dist/lib/youtube-id.js"

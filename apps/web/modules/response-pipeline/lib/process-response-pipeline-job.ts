@@ -10,8 +10,7 @@ import {
 } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
-import { can } from "@/lib/authorization";
-import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
+import { filterAuthorizedUserIds } from "@/lib/authorization/user-list";
 import { POSTHOG_KEY } from "@/lib/constants";
 import { selectSurveyEmbeddedDataLinks, withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { handleFeedbackSourcePipeline } from "@/lib/feedback-source/pipeline-handler";
@@ -20,6 +19,7 @@ import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { isSurveyOutboundAllowed, surveyOutboundVisibilitySelect } from "@/lib/survey/visibility/outbound";
 import { sendTelemetryEvents } from "@/lib/telemetry/usage-update";
+import { isNewReleaseWorkEnabled } from "@/lib/upgrade/compatibility";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { type TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { recordResponseCreatedMeterEvent } from "@/modules/ee/billing/lib/metering";
@@ -32,6 +32,7 @@ import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { getFinishedResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { handleIntegrations } from "./handle-integrations";
 import { recordSurveyOutboundSkipped } from "./outbound-visibility-metrics";
+import { processWebhookDeliveryJob } from "./process-webhook-delivery-job";
 
 const DEFAULT_NOTIFICATION_LOCALE: TUserLocale = "en-US";
 
@@ -202,9 +203,34 @@ const enqueueWebhookDeliveryJobs = async ({
     return;
   }
 
+  const enqueue = await isNewReleaseWorkEnabled();
+  const deliver: (...args: Parameters<typeof enqueueWebhookDeliveryJob>) => Promise<unknown> = enqueue
+    ? enqueueWebhookDeliveryJob
+    : async (payload, options) => {
+        const jobId = options?.jobId ?? createWebhookDeliveryJobId(logContext.jobId, payload.webhookId);
+        try {
+          await processWebhookDeliveryJob(payload, {
+            attempt: logContext.attempt,
+            maxAttempts: logContext.maxAttempts,
+            jobId,
+            jobName: "response-pipeline.process",
+            queueName: "formbricks-jobs",
+          });
+        } catch (error) {
+          // Keep the released 6.0 queue contract: transient failures retry this pipeline job before
+          // its other side effects start. Old consumers cannot process a delivery-only retry payload.
+          // A permanently rejected webhook must not make the entire response job unrecoverable.
+          if (!(error instanceof UnrecoverableError)) throw error;
+          logger.error(
+            { ...logContext, err: error, webhookId: payload.webhookId },
+            "Inline webhook delivery failed permanently; continuing response processing"
+          );
+        }
+        return { jobId, jobName: "response-pipeline.process", queueName: "formbricks-jobs" };
+      };
   const results = await Promise.allSettled(
     webhooks.map((webhook) =>
-      enqueueWebhookDeliveryJob(
+      deliver(
         {
           webhookId: webhook.id,
           workspaceId: data.workspaceId,
@@ -307,30 +333,35 @@ const loadResponseCountSafely = async ({
 /**
  * ENG-3282: an alert carries the response, so it only goes to someone who may read it — for a restricted
  * survey, its owner and the organization administrators. A subscription made while the survey was
- * workspace-visible does not survive a restriction. Bounded by the subscriber count; a no-op while
- * survey visibility is not enforced.
+ * workspace-visible does not survive a restriction. The recipient query can include billing-only team
+ * members, so every recipient still needs a response-read decision, including workspace-visible surveys.
  */
 const keepRecipientsWhoMayReadResponses = async <TUser extends { id: string }>(
   users: TUser[],
-  surveyId: string
+  survey: TPipelineSurvey
 ): Promise<TUser[]> => {
-  if (users.length === 0 || !(await isSurveyVisibilityReady())) return users;
-  const allowed = await Promise.all(
-    users.map((user) =>
-      can({ id: user.id, type: "user" }, "survey.response_read", { id: surveyId, type: "survey" })
-    )
+  if (users.length === 0) return users;
+  const allowed = await filterAuthorizedUserIds(
+    users.map((user) => user.id),
+    "survey.response_read",
+    {
+      id: survey.id,
+      type: "survey",
+    }
   );
-  return users.filter((_, index) => allowed[index]);
+  return users.filter((user) => allowed.has(user.id));
 };
 
 const getUsersWithNotifications = async ({
   data,
   logContext,
   workspaceId,
+  survey,
 }: {
   data: TResponsePipelineJobData;
   logContext: ReturnType<typeof getPipelineLogContext>;
   workspaceId: string;
+  survey: TPipelineSurvey;
 }): Promise<Array<{ email: string; locale: TUserLocale }>> => {
   try {
     const users = await prisma.user.findMany({
@@ -387,7 +418,7 @@ const getUsersWithNotifications = async ({
       select: { email: true, id: true, locale: true },
     });
 
-    return (await keepRecipientsWhoMayReadResponses(users, data.surveyId)).map((user) => ({
+    return (await keepRecipientsWhoMayReadResponses(users, survey)).map((user) => ({
       email: user.email,
       locale: toUserLocale(user.locale),
     }));
@@ -662,6 +693,7 @@ const runResponseFinishedSideEffects = async ({
   const [integrations, usersWithNotifications] = await Promise.all([
     outboundAllowed ? loadIntegrationsSafely({ logContext, workspaceId }) : Promise.resolve([]),
     getUsersWithNotifications({
+      survey,
       data,
       logContext,
       workspaceId,
@@ -835,7 +867,7 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
     // ENG-3283: a restricted survey's responses never leave the app — no webhook, integration, feedback
     // source, follow-up or workflow. Metering, telemetry, auto-complete and the (already filtered)
     // alert emails are internal and still run.
-    const outboundAllowed = isSurveyOutboundAllowed(survey, await isSurveyVisibilityReady());
+    const outboundAllowed = isSurveyOutboundAllowed(survey);
     if (outboundAllowed) {
       await enqueueWebhookDeliveryJobs({
         data,

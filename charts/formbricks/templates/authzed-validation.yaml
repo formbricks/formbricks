@@ -1,10 +1,10 @@
 {{- if not .Values.authzed.enabled -}}
 {{- fail "Formbricks v6 requires AuthZed. Follow the v6 migration guide instead of upgrading with authzed.enabled=false" -}}
 {{- end -}}
-{{- if and .Release.IsUpgrade (not .Values.authzed.migrationAcknowledged) -}}
+{{- if and .Release.IsUpgrade (and (ne .Values.upgrade.mode "online") (not .Values.authzed.migrationAcknowledged)) -}}
 {{- fail "AuthZed v6 upgrade preparation is not acknowledged. Complete formbricks-authzed upgrade prepare and upgrade check, then set authzed.migrationAcknowledged=true" -}}
 {{- end -}}
-{{- if and (not .Values.authzed.initialization.enabled) (not .Values.authzed.migrationAcknowledged) -}}
+{{- if and (not .Values.authzed.initialization.enabled) (and (ne .Values.upgrade.mode "online") (not .Values.authzed.migrationAcknowledged)) -}}
 {{- fail "Disabling the AuthZed initialization Job requires authzed.migrationAcknowledged=true after completing the guarded preparation externally" -}}
 {{- end -}}
 {{- if ne .Values.authzed.consistency "fully_consistent" -}}

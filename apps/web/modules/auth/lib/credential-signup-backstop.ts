@@ -21,9 +21,10 @@ export const enforceCredentialSignupBackstop = async (
   email: string
 ): Promise<false | { data: { isBootstrapAdmin: BootstrapAdminMarker } } | undefined> => {
   // createUserAction runs the full personal-email policy (Cloud gate + invite exemption) and marks the
-  // request scope before calling signUpEmail. If that mark is absent, this is a direct POST to Better
-  // Auth's native /sign-up/email — which bypasses the action — so both re-checks below re-enforce what
-  // the action would have applied (no invite is carried on that raw path).
+  // request scope before calling signUpEmail. If that mark is absent, the sign-up did not come through
+  // the action, so both re-checks below re-enforce what the action would have applied (no invite is
+  // carried on that path). The raw HTTP route is closed since ENG-3988, so this covers in-process callers
+  // and any future plugin that creates users.
   if (isSignupDomainAllowed()) {
     // ENG-2247: the action already decided, and recorded WHY it admitted this sign-up. Stamp the
     // marker here rather than there because this is the only point that can reach the insert.

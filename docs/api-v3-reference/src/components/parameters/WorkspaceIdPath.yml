@@ -1,0 +1,7 @@
+in: path
+name: workspaceId
+required: true
+schema:
+  type: string
+  format: cuid2
+description: Workspace identifier.

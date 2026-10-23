@@ -1,6 +1,11 @@
 import type { TSurveyStatus, TSurveyVisibility } from "@formbricks/types/surveys/types";
 import type { TV3SurveyGenerateBody } from "@/app/api/v3/surveys/generate/schemas";
-import type { TV3CreateSurveyBody, TV3SurveyValidationRequestBody } from "@/app/api/v3/surveys/schemas";
+import type {
+  TV3CreateSurveyBody,
+  TV3CreateSurveyRequestBody,
+  TV3SurveyCreatedFrom,
+  TV3SurveyValidationRequestBody,
+} from "@/app/api/v3/surveys/schemas";
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 import { normalizeSurveyFilters } from "@/modules/survey/list/lib/utils";
 import { TSurveyListItem, TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
@@ -359,8 +364,8 @@ export async function validateSurveyCreatePayload(
 }
 
 export async function createV3Survey(
-  payload: TV3CreateSurveyBody,
-  createdFrom?: "blank" | "template" | "xm-template" | "ai"
+  payload: TV3CreateSurveyRequestBody,
+  createdFrom?: TV3SurveyCreatedFrom
 ): Promise<TV3CreateSurveyResponse["data"]> {
   const url = createdFrom
     ? `/api/v3/surveys?createdFrom=${encodeURIComponent(createdFrom)}`

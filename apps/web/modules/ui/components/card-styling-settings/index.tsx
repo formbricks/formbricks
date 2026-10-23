@@ -9,10 +9,12 @@ import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { STYLE_DEFAULTS } from "@/lib/styling/constants";
+import { getDarkDisplayColor } from "@/lib/styling/dark-mode";
 import { CardArrangementTabs } from "@/modules/ui/components/card-arrangement-tabs";
 import { CardWidthTabs } from "@/modules/ui/components/card-width-tabs";
 import { ColorPicker } from "@/modules/ui/components/color-picker";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
+import { useStylingAppearance } from "@/modules/ui/components/styling-appearance";
 import { ColorField, DimensionInput } from "@/modules/ui/components/styling-fields";
 import { Switch } from "@/modules/ui/components/switch";
 
@@ -34,6 +36,7 @@ export const CardStylingSettings = ({
   form,
 }: CardStylingSettingsProps) => {
   const { t } = useTranslation();
+  const appearance = useStylingAppearance();
   const isAppSurvey = surveyType === "app";
   const surveyTypeDerived = isAppSurvey ? "App" : "Link";
 
@@ -90,44 +93,22 @@ export const CardStylingSettings = ({
             description={t("workspace.surveys.edit.roundness_description")}
           />
 
-          <FormField
-            control={form.control}
+          <ColorField
+            form={form}
             name="cardBackgroundColor.light"
-            render={({ field }) => (
-              <FormItem className="space-y-1">
-                <FormLabel>{t("workspace.surveys.edit.card_background_color")}</FormLabel>
-                <FormDescription>
-                  {t("workspace.surveys.edit.card_background_color_description")}
-                </FormDescription>
-
-                <FormControl>
-                  <ColorPicker
-                    color={field.value || STYLE_DEFAULTS.cardBackgroundColor?.light || "#ffffff"}
-                    onChange={(color) => field.onChange(color)}
-                    containerClass="max-w-xs"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
+            label={t("workspace.surveys.edit.card_background_color")}
+            description={t("workspace.surveys.edit.card_background_color_description")}
+            fallbackColor={STYLE_DEFAULTS.cardBackgroundColor?.light || "#ffffff"}
+            containerClass="max-w-xs"
           />
 
-          <FormField
-            control={form.control}
+          <ColorField
+            form={form}
             name="cardBorderColor.light"
-            render={({ field }) => (
-              <FormItem className="space-y-1">
-                <FormLabel>{t("workspace.surveys.edit.card_border_color")}</FormLabel>
-                <FormDescription>{t("workspace.surveys.edit.card_border_color_description")}</FormDescription>
-
-                <FormControl>
-                  <ColorPicker
-                    color={field.value || STYLE_DEFAULTS.cardBorderColor?.light || "#f8fafc"}
-                    onChange={(color) => field.onChange(color)}
-                    containerClass="max-w-xs"
-                  />
-                </FormControl>
-              </FormItem>
-            )}
+            label={t("workspace.surveys.edit.card_border_color")}
+            description={t("workspace.surveys.edit.card_border_color_description")}
+            fallbackColor={STYLE_DEFAULTS.cardBorderColor?.light || "#f8fafc"}
+            containerClass="max-w-xs"
           />
 
           <FormField
@@ -224,16 +205,36 @@ export const CardStylingSettings = ({
                   {!!field.value && (
                     <FormControl>
                       <ColorPicker
-                        color={field.value?.light ?? STYLE_DEFAULTS.highlightBorderColor?.light}
+                        color={
+                          appearance === "dark"
+                            ? (field.value?.dark ??
+                              getDarkDisplayColor(form.watch(), "highlightBorderColor.light") ??
+                              "")
+                            : (field.value?.light ?? STYLE_DEFAULTS.highlightBorderColor?.light)
+                        }
                         onChange={(color: string) =>
                           field.onChange({
                             ...field.value,
-                            light: color,
+                            [appearance]: color,
                           })
                         }
                         containerClass="w-1/2"
                       />
                     </FormControl>
+                  )}
+                  {!!field.value && appearance === "dark" && (
+                    <div className="text-xs text-slate-500">
+                      {field.value.dark ? (
+                        <button
+                          type="button"
+                          className="underline underline-offset-2 hover:text-slate-700"
+                          onClick={() => field.onChange({ ...field.value, dark: null })}>
+                          {t("workspace.look.appearance_use_automatic")}
+                        </button>
+                      ) : (
+                        <span>{t("workspace.look.appearance_automatic")}</span>
+                      )}
+                    </div>
                   )}
                 </FormItem>
               )}

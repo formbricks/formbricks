@@ -11,6 +11,7 @@ import { cn } from "@/lib/cn";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
+import { ShowConditionsBlock } from "@/modules/show-conditions/components/show-conditions-block";
 import { AddActionModal } from "@/modules/survey/editor/components/add-action-modal";
 import { ActionClassInfo } from "@/modules/ui/components/action-class-info";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -89,6 +90,10 @@ export const WhenToSendCard = ({
       const updatedSurvey = { ...localSurvey, autoClose: 10 };
       setLocalSurvey(updatedSurvey);
     }
+  };
+
+  const handleKeepEndingCardOpenToggle = () => {
+    setLocalSurvey({ ...localSurvey, keepEndingCardOpen: !localSurvey.keepEndingCardOpen });
   };
 
   const handleDelayToggle = () => {
@@ -287,6 +292,13 @@ export const WhenToSendCard = ({
                   {t("common.add_action")}
                 </Button>
               </div>
+
+              {/* Inside the trigger box, so it reads as one rule: trigger AND conditions (ENG-3687). */}
+              <ShowConditionsBlock
+                value={localSurvey.showConditions ?? null}
+                onChange={(showConditions) => setLocalSurvey((survey) => ({ ...survey, showConditions }))}
+                isReadOnly={isReadOnly}
+              />
             </div>
 
             {/* Survey Display Settings */}
@@ -358,6 +370,13 @@ export const WhenToSendCard = ({
                 </p>
               </label>
             </AdvancedOptionToggle>
+            <AdvancedOptionToggle
+              htmlId="keepEndingCardOpen"
+              isChecked={localSurvey.keepEndingCardOpen ?? false}
+              onToggle={handleKeepEndingCardOpenToggle}
+              title={t("workspace.surveys.edit.keep_ending_card_open")}
+              description={t("workspace.surveys.edit.keep_ending_card_open_description")}
+            />
             <AdvancedOptionToggle
               htmlId="randomizer"
               isChecked={randomizerToggle}

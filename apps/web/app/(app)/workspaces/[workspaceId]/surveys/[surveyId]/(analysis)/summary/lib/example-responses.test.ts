@@ -1,3 +1,4 @@
+import { LEAKY_AI_ERRORS, findPlantedContent } from "@/lib/ai/__mocks__/leaky-ai-errors";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -303,7 +304,11 @@ describe("generateExampleResponseDataset", () => {
     expect(result.responses[7].data.q_text_1).not.toBe("AI row_7 q_text_1");
     expect(result.responses[7].data.q_text_1).toBeTypeOf("string");
     expect(mocks.loggerError).toHaveBeenCalledWith(
-      { err: providerError, organizationId: "org_1" },
+      {
+        errName: "Error",
+        errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
+        organizationId: "org_1",
+      },
       "Failed to generate open-text example responses with AI; using fallback answers"
     );
   });
@@ -439,10 +444,39 @@ describe("generateExampleResponseDataset", () => {
     expect(result.responses).toHaveLength(EXAMPLE_RESPONSE_COUNT);
     expect(result.responses.some((response) => typeof response.data.q_text === "string")).toBe(true);
     expect(mocks.loggerError).toHaveBeenCalledWith(
-      { err: error, organizationId: "org_1" },
+      {
+        errName: "Error",
+        errStack: expect.stringMatching(/^ +at \S.*(?:\n +at \S.*)*$/),
+        organizationId: "org_1",
+      },
       "Failed to generate open-text example responses with AI; using fallback answers"
     );
   });
+
+  // ENG-3720: the prompt carries the survey's questions, and the AI SDK's errors carry the prompt.
+  test.each(LEAKY_AI_ERRORS)(
+    "logs an open-text call failing with %s without what it carried",
+    async (_, build) => {
+      const survey = makeSurvey([
+        { ...baseQuestion, id: "q_text", type: TSurveyElementTypeEnum.OpenText },
+      ] as unknown as TSurvey["questions"]);
+      const error = build();
+      vi.mocked(mocks.generateOrganizationAIObject).mockRejectedValue(error);
+
+      await generateExampleResponseDataset({
+        survey,
+        organizationId: "org_1",
+        workspaceId: "workspace_1",
+        userId: "user_1",
+      });
+
+      expect(mocks.loggerError).toHaveBeenCalledWith(
+        expect.objectContaining({ errName: error.name, organizationId: "org_1" }),
+        "Failed to generate open-text example responses with AI; using fallback answers"
+      );
+      expect(findPlantedContent(mocks.loggerError.mock.calls)).toBeUndefined();
+    }
+  );
 
   test("strips HTML from headlines before sending them to the LLM", async () => {
     const survey = makeSurvey([

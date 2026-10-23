@@ -2,7 +2,6 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
 import { getEffectiveVisibility } from "./policy";
 import { effectivelyRestrictedWhere } from "./predicate";
 
@@ -12,8 +11,8 @@ import { effectivelyRestrictedWhere } from "./predicate";
  * is workspace-visible *now*. A pending change counts as restricted either way (fail closed).
  *
  * Enforced twice: when a connection is attached (a clear error for the caller) and when a response is
- * dispatched (the attach check cannot see a survey restricted later). Both are no-ops while survey
- * visibility is not enforced, so a deployment that has not opted in behaves exactly as before.
+ * dispatched (the attach check cannot see a survey restricted later). Stored visibility facts are
+ * enforced even before projection readiness or feature activation.
  */
 
 export const SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE =
@@ -22,12 +21,12 @@ export const SURVEY_NOT_WORKSPACE_VISIBLE_MESSAGE =
 /** The rows an outbound check needs: `getEffectiveVisibility(row) === "restricted"`, as SQL. */
 const notWorkspaceVisibleWhere: Prisma.SurveyWhereInput = effectivelyRestrictedWhere;
 
-/** Of `surveyIds`, the ones outbound plumbing must not serve. `[]` while enforcement is off. */
+/** Of `surveyIds`, the ones outbound plumbing must not serve. */
 export const findNotWorkspaceVisibleSurveyIds = async (
   surveyIds: ReadonlyArray<string>
 ): Promise<string[]> => {
   const unique = [...new Set(surveyIds)];
-  if (unique.length === 0 || !(await isSurveyVisibilityReady())) return [];
+  if (unique.length === 0) return [];
 
   const rows = await prisma.survey.findMany({
     where: { id: { in: unique }, ...notWorkspaceVisibleWhere },
@@ -35,6 +34,13 @@ export const findNotWorkspaceVisibleSurveyIds = async (
   });
   return rows.map(({ id }) => id);
 };
+
+/**
+ * The same lookup under a name for callers outside outbound plumbing: of `surveyIds`, the effectively
+ * restricted ones (`getEffectiveVisibility(row) === "restricted"`), from the stored facts, before
+ * projection readiness too.
+ */
+export const findEffectivelyRestrictedSurveyIds = findNotWorkspaceVisibleSurveyIds;
 
 /**
  * Of `next`, the surveys newly attached and not workspace-visible. Only additions are refused: a survey
@@ -61,8 +67,8 @@ export const assertNewlyAttachedSurveysWorkspaceVisible = async (
 type TOutboundVisibilityRow = Parameters<typeof getEffectiveVisibility>[0];
 
 /** Dispatch-time guard over a row already loaded, so the hot path pays no extra query. */
-export const isSurveyOutboundAllowed = (row: TOutboundVisibilityRow, enforced: boolean): boolean =>
-  !enforced || getEffectiveVisibility(row) === "workspace";
+export const isSurveyOutboundAllowed = (row: TOutboundVisibilityRow): boolean =>
+  getEffectiveVisibility(row) === "workspace";
 
 /** The columns {@link isSurveyOutboundAllowed} reads, for callers' `select`. */
 export const surveyOutboundVisibilitySelect = {

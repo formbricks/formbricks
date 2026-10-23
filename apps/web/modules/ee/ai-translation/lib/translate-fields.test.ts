@@ -1,6 +1,7 @@
+import { LEAKY_AI_ERRORS, findPlantedContent } from "@/lib/ai/__mocks__/leaky-ai-errors";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { InvalidInputError, TooManyRequestsError } from "@formbricks/types/errors";
 import {
   AI_TRANSLATION_OUTPUT_TOO_LONG,
   type TAITranslationField,
@@ -160,6 +161,25 @@ describe("translateFields", () => {
     mockGenerateOrganizationAIObject.mockRejectedValue(new Error("provider failed"));
 
     await expect(translateFields({ ...baseInput, fields })).rejects.toThrow("provider failed");
+  });
+
+  // ENG-3720: a rejection from here reaches the server action client, which writes a thrown error whole
+  // to the logs and to Sentry — and an AI SDK error carries the survey text and the model's translation.
+  test.each(LEAKY_AI_ERRORS)("rethrows a failure with %s without what the call carried", async (_, build) => {
+    const error = build();
+    mockGenerateOrganizationAIObject.mockRejectedValue(error);
+
+    const rejection = await translateFields({ ...baseInput, fields }).catch((thrown: unknown) => thrown);
+
+    expect(rejection).toMatchObject({ name: "RedactedAIError", originalName: error.name });
+    expect(findPlantedContent(rejection)).toBeUndefined();
+  });
+
+  test("rethrows the quota error unchanged, so the client still gets its code", async () => {
+    const quotaError = new TooManyRequestsError("ai_quota_exceeded", 30);
+    mockGenerateOrganizationAIObject.mockRejectedValue(quotaError);
+
+    await expect(translateFields({ ...baseInput, fields })).rejects.toBe(quotaError);
   });
 
   test("echoes empty defaultText through without calling the model", async () => {

@@ -1,7 +1,7 @@
 import { FormbricksProvider } from "@/app/formbricks/components/formbricks-provider";
 import { PlainChat } from "@/app/plain/components/plain-chat";
 import { getIsActiveCustomer } from "@/app/plain/lib/customer";
-import { computePlainEmailHash } from "@/app/plain/lib/identity";
+import { computePlainCustomerDetailsSignature } from "@/app/plain/lib/identity";
 import { PostHogIdentify } from "@/app/posthog/PostHogIdentify";
 import {
   FORMBRICKS_APP_URL,
@@ -54,7 +54,11 @@ const AppLayout = async ({ children }: Readonly<{ children: React.ReactNode }>) 
           userEmail={user?.email}
           userName={user?.name}
           userId={user?.id}
-          emailHash={user?.email ? computePlainEmailHash(user.email) : null}
+          customerDetailsSignature={
+            user?.email
+              ? computePlainCustomerDetailsSignature({ email: user.email, externalId: user.id })
+              : null
+          }
           activeCustomerLabelTypeId={plainActiveCustomerLabelTypeId}
         />
       )}

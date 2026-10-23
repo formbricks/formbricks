@@ -18,6 +18,13 @@ import {
 } from "@/lib/authzed/scheduled-reconciliation";
 import { USAGE_TELEMETRY_DAILY_CRON_PATTERN, USAGE_TELEMETRY_TIME_ZONE } from "@/lib/telemetry/constants";
 import { processUsageTelemetryJob } from "@/lib/telemetry/process-usage-telemetry-job";
+import { DELETION_CLEANUP_DRAIN_INTERVAL_MS } from "@/modules/deletion-cleanup/lib/constants";
+import { processDeletionCleanupDrainJob } from "@/modules/deletion-cleanup/lib/process-deletion-cleanup-drain-job";
+import {
+  DATA_RETENTION_SWEEP_DAILY_CRON_PATTERN,
+  DATA_RETENTION_SWEEP_TIME_ZONE,
+} from "@/modules/ee/data-retention/sweep/constants";
+import { processDataRetentionSweepJob } from "@/modules/ee/data-retention/sweep/process-data-retention-sweep-job";
 import {
   WORKFLOWS_USAGE_SNAPSHOT_DAILY_CRON_PATTERN,
   WORKFLOWS_USAGE_SNAPSHOT_TIME_ZONE,
@@ -54,6 +61,7 @@ interface RecurringJobRegistration {
   handler: JobHandler<TGlobalScopeJobData>;
   job: RecurringJobHandle;
   schedule: TRecurringBackgroundJobSchedule;
+  requiresReleaseActivation?: boolean;
 }
 
 /**
@@ -88,10 +96,32 @@ export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, Recurr
   },
   // ENG-3282: daily rather than six-hourly — its cost grows with the number of surveys, not grants.
   authzedSurveyAudit: {
+    requiresReleaseActivation: true,
     handler: processAuthzedSurveyAuditJob,
     job: recurringJobs.authzedSurveyAudit,
     schedule: {
       everyMs: 24 * 60 * 60 * 1_000,
+      kind: "every",
+    },
+  },
+  // New in this release, like the cleanup drain below: during an online upgrade, scheduled only once
+  // the release is activated (older replicas have no handler for either, and the sweep acts on data).
+  dataRetentionSweep: {
+    requiresReleaseActivation: true,
+    handler: processDataRetentionSweepJob,
+    job: recurringJobs.dataRetentionSweep,
+    schedule: {
+      cronPattern: DATA_RETENTION_SWEEP_DAILY_CRON_PATTERN,
+      kind: "cron",
+      timeZone: DATA_RETENTION_SWEEP_TIME_ZONE,
+    },
+  },
+  deletionCleanupDrain: {
+    requiresReleaseActivation: true,
+    handler: processDeletionCleanupDrainJob,
+    job: recurringJobs.deletionCleanupDrain,
+    schedule: {
+      everyMs: DELETION_CLEANUP_DRAIN_INTERVAL_MS,
       kind: "every",
     },
   },

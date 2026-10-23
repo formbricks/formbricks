@@ -37,7 +37,21 @@ describe("getI18nLanguage", () => {
     expect(getI18nLanguage("DE_de", [lang("de-DE"), lang("en-US", true)])).toBe("de-DE");
   });
 
+  test("resolves a regional variant to the configured same-language code", () => {
+    expect(getI18nLanguage("ar", [lang("ar-SA"), lang("en-US", true)])).toBe("ar-SA");
+    expect(getI18nLanguage("en-GB", [lang("de-DE"), lang("en-US", true)])).toBe("en-US");
+  });
+
   test("returns the requested code unchanged when nothing matches", () => {
     expect(getI18nLanguage("fr", [lang("de-DE"), lang("en-US", true)])).toBe("fr");
+  });
+
+  test("resolves a legacy request to the canonical code when the list also carries legacy duplicates", () => {
+    // The client environment endpoint appends `de`/`en` duplicates for old SDKs (ENG-3961); content
+    // is keyed `de-DE`, so the renderer must render — and pick its UI bundle — under `de-DE`.
+    const legacyAugmented = [lang("de-DE"), lang("en-US", true), lang("de"), lang("en", true)];
+    expect(getI18nLanguage("de", legacyAugmented)).toBe("de-DE");
+    expect(getI18nLanguage("de-DE", legacyAugmented)).toBe("de-DE");
+    expect(getI18nLanguage("en", legacyAugmented)).toBe("en-US");
   });
 });

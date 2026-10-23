@@ -4,6 +4,7 @@ import { CopyIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { copyToClipboard } from "@/lib/utils/clipboard";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { CodeBlock } from "@/modules/ui/components/code-block";
@@ -47,9 +48,12 @@ export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {
         className="self-start"
         title={t("common.copy_code")}
         aria-label={t("common.copy_code")}
-        onClick={() => {
-          navigator.clipboard.writeText(iframeCode);
-          toast.success(t("workspace.surveys.share.embed_on_website.embed_code_copied_to_clipboard"));
+        onClick={async () => {
+          if (await copyToClipboard(iframeCode)) {
+            toast.success(t("workspace.surveys.share.embed_on_website.embed_code_copied_to_clipboard"));
+          } else {
+            toast.error(t("common.failed_to_copy_to_clipboard"));
+          }
         }}>
         {t("common.copy_code")}
         <CopyIcon />

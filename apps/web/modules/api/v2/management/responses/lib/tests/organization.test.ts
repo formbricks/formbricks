@@ -2,7 +2,6 @@ import { organizationBilling, organizationId, workspaceId } from "./__mocks__/or
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import {
-  getMonthlyOrganizationResponseCount,
   getOrganizationBilling,
   getOrganizationIdFromWorkspaceId,
 } from "@/modules/api/v2/management/responses/lib/organization";
@@ -11,9 +10,6 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     organization: {
       findFirst: vi.fn(),
-    },
-    response: {
-      count: vi.fn(),
     },
   },
 }));
@@ -114,70 +110,6 @@ describe("Organization Lib", () => {
         expect(result.error).toEqual({
           type: "internal_server_error",
           details: [{ field: "organization", issue: "DB error" }],
-        });
-      }
-    });
-  });
-
-  describe("getMonthlyOrganizationResponseCount", () => {
-    test("return error if getOrganizationBilling returns error", async () => {
-      vi.mocked(prisma.organization.findFirst).mockResolvedValue(null);
-      const result = await getMonthlyOrganizationResponseCount(organizationId);
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error).toEqual({
-          type: "not_found",
-          details: [{ field: "organization", issue: "not found" }],
-        });
-      }
-    });
-
-    test("return response count when usageCycleAnchor is not set", async () => {
-      vi.mocked(prisma.organization.findFirst).mockResolvedValue({
-        billing: { ...organizationBilling, usageCycleAnchor: null },
-      } as any);
-      vi.mocked(prisma.response.count).mockResolvedValue(5);
-
-      const result = await getMonthlyOrganizationResponseCount(organizationId);
-      expect(result.ok).toBe(true);
-      expect(prisma.response.count).toHaveBeenCalledTimes(1);
-      if (result.ok) {
-        expect(result.data).toBe(5);
-      }
-    });
-
-    test("return response count", async () => {
-      vi.mocked(prisma.organization.findFirst).mockResolvedValue({
-        billing: organizationBilling,
-      } as any);
-      vi.mocked(prisma.response.count).mockResolvedValue(5);
-
-      const result = await getMonthlyOrganizationResponseCount(organizationId);
-      expect(prisma.response.count).toHaveBeenCalledWith({
-        where: {
-          survey: { workspace: { organizationId } },
-          createdAt: { gte: expect.any(Date), lt: expect.any(Date) },
-        },
-      });
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data).toBe(5);
-      }
-    });
-
-    test("handle internal_server_error in aggregation", async () => {
-      vi.mocked(prisma.organization.findFirst).mockResolvedValue({
-        billing: organizationBilling,
-      } as any);
-      const error = new Error("Aggregate error");
-      vi.mocked(prisma.response.count).mockRejectedValue(error);
-
-      const result = await getMonthlyOrganizationResponseCount(organizationId);
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error).toEqual({
-          type: "internal_server_error",
-          details: [{ field: "organization", issue: "Aggregate error" }],
         });
       }
     });

@@ -1,19 +1,25 @@
 import { createLocalAccountIssuer } from "@better-auth/core/db";
 import bcrypt from "bcryptjs";
 import { Page } from "playwright";
-import { TestInfo } from "playwright/test";
+import { TestInfo, expect } from "playwright/test";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { waitForAuthzedProjection } from "@/playwright/utils/authzed";
 
 export const login = async (user: Prisma.UserGetPayload<{ include: { memberships: true } }>, page: Page) => {
+  // The fixture and the spec seed authorization rows through Prisma; let SpiceDB catch up before the
+  // first authorized page load, or it redirects to organization setup (ENG-4101).
+  await waitForAuthzedProjection(user.id);
+
   // Better Auth sign-in (replaces the NextAuth csrf + credentials-callback flow; ENG-1054). The
   // fixture's plaintext password is the user name (createUsersFixture hashes `name` into the bcrypt
   // credential account below). Better Auth sets the signed session cookie on the response, which is
   // shared with the browser through Playwright's request/context cookie jar — so the subsequent
   // page.goto sends it.
-  await page.context().request.post("/api/auth/sign-in/email", {
+  const response = await page.context().request.post("/api/auth/sign-in/email", {
     data: { email: user.email, password: user.name },
   });
+  expect(response.ok(), `Fixture sign-in failed with HTTP ${response.status()}`).toBe(true);
 
   await page.goto("/");
 };
@@ -43,6 +49,7 @@ export type UsersFixture = {
     workspaceName?: string;
     withoutWorkspace?: boolean;
     skipSurveySeed?: boolean;
+    passwordCost?: number;
   }) => Promise<UserFixture>;
   get: () => UserFixture[];
 };
@@ -60,10 +67,12 @@ export const createUsersFixture = (page: Page, workerInfo: TestInfo): UsersFixtu
       workspaceName?: string;
       withoutWorkspace?: boolean;
       skipSurveySeed?: boolean;
+      // bcrypt cost of the stored password. Defaults to 10 to keep logins cheap; production hashes at 12.
+      passwordCost?: number;
     }) => {
       const uname = params?.name ?? `user-${workerInfo.workerIndex}-${Date.now()}`;
       const userEmail = params?.email ?? `${uname}@example.com`;
-      const hashedPassword = await bcrypt.hash(uname, 10);
+      const hashedPassword = await bcrypt.hash(uname, params?.passwordCost ?? 10);
 
       const user = await prisma.user.create({
         data: {

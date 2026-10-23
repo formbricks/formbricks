@@ -4,8 +4,7 @@ import { betterAuth } from "better-auth";
 import { memoryAdapter } from "better-auth/adapters/memory";
 import { APIError } from "better-auth/api";
 import { genericOAuth } from "better-auth/plugins/generic-oauth";
-import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
-import { prisma } from "@formbricks/database";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
@@ -15,10 +14,12 @@ import {
   auditVerificationSessionWithheld,
   betterAuthLogger,
   getSignInAuthMethod,
+  isNewSignIn,
+  recordCompletedSignIn,
   recordSsoCallbackOutcome,
   recordSsoCallbackThrow,
   redactEmailsInLogMessage,
-  signInAuditDatabaseHook,
+  signInAuditPlugin,
 } from "./better-auth-observability";
 import { runWithBetterAuthRequestContext } from "./better-auth-request-context";
 import { finalizeSuccessfulSignIn } from "./sign-in-tracking";
@@ -27,10 +28,6 @@ import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   queueAuditEventBackground: vi.fn(),
-}));
-
-vi.mock("@formbricks/database", () => ({
-  prisma: { user: { findUnique: vi.fn() } },
 }));
 
 vi.mock("@sentry/nextjs", () => ({
@@ -98,6 +95,9 @@ describe("getSignInAuthMethod (signedIn audit allow-list)", () => {
     ["/two-factor/verify-backup-code", "password"],
     ["/callback/google", "sso"],
     ["/callback/azuread", "sso"],
+    // Google's ID-token sign-in creates its session here; the redirect branch ends with none, and a
+    // request without a session records nothing.
+    ["/sign-in/social", "sso"],
   ])("audits sign-in completion %s as %s", (path, expected) => {
     expect(getSignInAuthMethod(path)).toBe(expected);
   });
@@ -106,9 +106,9 @@ describe("getSignInAuthMethod (signedIn audit allow-list)", () => {
   test.each([
     "/two-factor/disable",
     "/two-factor/enable",
-    "/two-factor/verify-otp", // ambiguous — also the first-time-enable path → not a sign-in
+    "/two-factor/verify-otp", // no OTP sender is configured
     "/change-password",
-    "/sign-in/social", // OAuth initiation, no session created
+    "/get-session", // a refresh re-sets the session
   ])("does not audit non-sign-in path %s", (path) => {
     expect(getSignInAuthMethod(path)).toBeNull();
   });
@@ -218,21 +218,15 @@ describe("auditFailedAuthAfter (failed-login audit)", () => {
   });
 });
 
-describe("signInAuditDatabaseHook (signedIn success audit)", () => {
-  // Resolve the optional create.after hook once so the arg casts below stay readable.
-  const runSessionCreateAfter = signInAuditDatabaseHook.create!.after!;
-  type Session = Parameters<typeof runSessionCreateAfter>[0];
-  type Context = Parameters<typeof runSessionCreateAfter>[1];
-  const session = { userId: "user-1" } as unknown as Session;
-  const ctxFor = (path: string): Context => ({ path }) as unknown as Context;
+describe("recordCompletedSignIn (signedIn success audit)", () => {
+  const newSession = { user: { id: "user-1", email: "ada@example.com" } };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({ email: "ada@example.com" } as never);
   });
 
   test("queues a signedIn audit for a genuine sign-in completion", async () => {
-    await runSessionCreateAfter(session, ctxFor("/sign-in/email"));
+    await recordCompletedSignIn("/sign-in/email", newSession);
 
     expect(queueAuditEventBackground).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -247,15 +241,8 @@ describe("signInAuditDatabaseHook (signedIn success audit)", () => {
     );
   });
 
-  test("does not audit or track a session re-issue that is not a sign-in", async () => {
-    await runSessionCreateAfter(session, ctxFor("/two-factor/disable"));
-
-    expect(queueAuditEventBackground).not.toHaveBeenCalled();
-    expect(finalizeSuccessfulSignIn).not.toHaveBeenCalled();
-  });
-
-  test("refreshes lastLoginAt and captures the sign-in event for a genuine sign-in", async () => {
-    await runSessionCreateAfter(session, ctxFor("/sign-in/email"));
+  test("refreshes lastLoginAt and captures the sign-in event from the session's own user", async () => {
+    await recordCompletedSignIn("/two-factor/verify-totp", newSession);
 
     expect(finalizeSuccessfulSignIn).toHaveBeenCalledWith({
       userId: "user-1",
@@ -264,25 +251,188 @@ describe("signInAuditDatabaseHook (signedIn success audit)", () => {
     });
   });
 
+  test("records nothing when the request ended without a session (a pending second factor)", async () => {
+    await recordCompletedSignIn("/sign-in/email", null);
+
+    expect(queueAuditEventBackground).not.toHaveBeenCalled();
+    expect(finalizeSuccessfulSignIn).not.toHaveBeenCalled();
+  });
+
+  test("records nothing for a session re-issue that is not a sign-in", async () => {
+    await recordCompletedSignIn("/two-factor/disable", newSession);
+
+    expect(queueAuditEventBackground).not.toHaveBeenCalled();
+    expect(finalizeSuccessfulSignIn).not.toHaveBeenCalled();
+  });
+
   test("never throws when sign-in tracking fails", async () => {
-    vi.mocked(prisma.user.findUnique).mockRejectedValueOnce(new Error("db down"));
+    vi.mocked(finalizeSuccessfulSignIn).mockRejectedValueOnce(new Error("db down"));
 
-    await expect(runSessionCreateAfter(session, ctxFor("/sign-in/email"))).resolves.toBeUndefined();
-    expect(finalizeSuccessfulSignIn).not.toHaveBeenCalled();
+    await expect(recordCompletedSignIn("/sign-in/email", newSession)).resolves.toBeUndefined();
+    expect(queueAuditEventBackground).toHaveBeenCalled();
   });
 
-  test("skips tracking when the user record is missing", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(null);
-
-    await runSessionCreateAfter(session, ctxFor("/sign-in/email"));
-
-    expect(finalizeSuccessfulSignIn).not.toHaveBeenCalled();
-  });
-
-  test("never throws when the audit queue fails", async () => {
+  test("never throws when the audit queue fails, and still records the sign-in", async () => {
     vi.mocked(queueAuditEventBackground).mockRejectedValueOnce(new Error("redis down"));
 
-    await expect(runSessionCreateAfter(session, ctxFor("/sign-in/email"))).resolves.toBeUndefined();
+    await expect(recordCompletedSignIn("/sign-in/email", newSession)).resolves.toBeUndefined();
+    expect(finalizeSuccessfulSignIn).toHaveBeenCalled();
+  });
+});
+
+describe("isNewSignIn", () => {
+  const newSession = {
+    session: { id: "s-new", token: "t-new" },
+    user: { id: "user-1", email: "ada@example.com" },
+  };
+
+  test("a session the request did not arrive with is a sign-in", () => {
+    expect(isNewSignIn({ path: "/sign-in/email", newSession, incomingToken: null, priorSession: null })).toBe(
+      true
+    );
+    // Signed in elsewhere in this browser, signing in again: a new session all the same.
+    expect(
+      isNewSignIn({ path: "/sign-in/email", newSession, incomingToken: "t-old", priorSession: null })
+    ).toBe(true);
+  });
+
+  test("a refresh of the session the request arrived with is not", () => {
+    expect(
+      isNewSignIn({ path: "/verify-email", newSession, incomingToken: "t-new", priorSession: null })
+    ).toBe(false);
+  });
+
+  test("on the two-factor verify endpoints, a challenge is a sign-in and turning 2FA on is not", () => {
+    const challenge = { path: "/two-factor/verify-totp", newSession, incomingToken: null };
+    expect(isNewSignIn({ ...challenge, priorSession: null })).toBe(true);
+    // Another plugin's after hook may set the new session as the request's session: still a sign-in.
+    expect(isNewSignIn({ ...challenge, priorSession: { session: { id: "s-new" } } })).toBe(true);
+    // A signed-in user turning 2FA on: verifyTwoFactor found their session, which is swapped.
+    expect(
+      isNewSignIn({
+        path: "/two-factor/verify-backup-code",
+        newSession,
+        incomingToken: "t-old",
+        priorSession: { session: { id: "s-old" } },
+      })
+    ).toBe(false);
+  });
+
+  test("a prior session only matters on the two-factor verify endpoints", () => {
+    expect(
+      isNewSignIn({
+        path: "/callback/google",
+        newSession,
+        incomingToken: "t-old",
+        priorSession: { session: { id: "s-old" } },
+      })
+    ).toBe(true);
+  });
+});
+
+describe("signInAuditPlugin", () => {
+  test("runs only on sign-in completions", () => {
+    const [{ matcher }] = signInAuditPlugin.hooks.after;
+
+    expect(matcher({ path: "/sign-in/email" })).toBe(true);
+    expect(matcher({ path: "/two-factor/verify-backup-code" })).toBe(true);
+    expect(matcher({ path: "/callback/google" })).toBe(true);
+    expect(matcher({ path: "/sign-in/social" })).toBe(true);
+    expect(matcher({ path: "/get-session" })).toBe(false);
+    expect(matcher({ path: "/two-factor/disable" })).toBe(false);
+  });
+});
+
+/**
+ * The one sign-in path whose endpoint ends by throwing: an SSO callback redirects (`c.redirect` is an
+ * `APIError`). Better Auth still runs the after hooks then, with the session the callback set, so the
+ * plugin records it. This drives a real `betterAuth` instance through a whole generic-OAuth sign-in,
+ * with the identity provider's token and userinfo endpoints answered by a stubbed `fetch`; if an upgrade
+ * stopped running after hooks on a redirect, SSO sign-ins would silently drop out of the audit trail.
+ */
+describe("signInAuditPlugin — a real SSO callback that ends in a redirect (ENG-3271 contract)", () => {
+  const BASE_URL = "http://localhost:3000";
+  const IDP = "https://idp.example.test";
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = input instanceof Request ? input.url : String(input);
+      if (url.startsWith(`${IDP}/token`)) {
+        return Response.json({ access_token: "access", token_type: "Bearer", expires_in: 3600 });
+      }
+      if (url.startsWith(`${IDP}/userinfo`)) {
+        // A plain OAuth provider (no discovery): the account subject is `id`, not OIDC's `sub`.
+        return Response.json({
+          id: "idp-user-1",
+          email: "ada@example.com",
+          name: "Ada",
+          email_verified: true,
+        });
+      }
+      throw new Error(`unexpected fetch ${url}`);
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test("records the sign-in the callback completed", async () => {
+    const auth = betterAuth({
+      baseURL: BASE_URL,
+      secret: "eng-3271-contract-test-secret-0123456789abcdef",
+      database: memoryAdapter({ user: [], session: [], account: [], verification: [] }),
+      plugins: [
+        genericOAuth({
+          config: [
+            {
+              providerId: "openid",
+              clientId: "contract-test",
+              clientSecret: "contract-test",
+              authorizationUrl: `${IDP}/authorize`,
+              tokenUrl: `${IDP}/token`,
+              userInfoUrl: `${IDP}/userinfo`,
+              scopes: ["openid", "email"],
+            },
+          ],
+        }),
+        signInAuditPlugin,
+      ],
+    });
+
+    const start = await auth.handler(
+      new Request(`${BASE_URL}/api/auth/sign-in/social`, {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: BASE_URL },
+        body: JSON.stringify({ provider: "openid", callbackURL: "/" }),
+      })
+    );
+    const state = new URL(((await start.json()) as { url: string }).url).searchParams.get("state");
+    const cookie = start.headers
+      .getSetCookie()
+      .map((value) => value.split(";")[0])
+      .join("; ");
+
+    const callback = await auth.handler(
+      new Request(`${BASE_URL}/api/auth/callback/openid?state=${state}&code=authorization-code`, {
+        headers: { cookie },
+      })
+    );
+
+    // Anti-vacuity: the callback really signed someone in, by redirecting with a session cookie.
+    expect(callback.status).toBe(302);
+    expect(callback.headers.getSetCookie().some((value) => value.includes("session_token"))).toBe(true);
+    expect(queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "signedIn",
+        status: "success",
+        newObject: { authMethod: "sso", sessionStrategy: "database" },
+      })
+    );
+    expect(finalizeSuccessfulSignIn).toHaveBeenCalledWith(
+      expect.objectContaining({ email: "ada@example.com", provider: "sso" })
+    );
   });
 });
 

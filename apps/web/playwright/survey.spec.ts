@@ -1,4 +1,9 @@
+import { createId } from "@paralleldrive/cuid2";
 import { type Locator, type Page, expect } from "@playwright/test";
+import { prisma } from "@formbricks/database";
+import { type Prisma } from "@formbricks/database/prisma";
+import { type TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { surveys } from "@/playwright/utils/mock";
 import { test } from "./lib/fixtures";
 import * as helper from "./utils/helper";
@@ -17,6 +22,8 @@ test.beforeEach(async ({ page }) => {
 // Picture choices are named by position, never by file name (a file name can carry personal data).
 const firstPictureChoiceAlt = "Option 1";
 const secondPictureChoiceAlt = "Option 2";
+// ...unless the creator gave the image alt text (ENG-3417); createAndSubmit sets it on the first choice only.
+const creatorPictureChoiceAlt = surveys.createAndSubmit.pictureSelectQuestion.firstChoiceAltText;
 
 const selectPictureChoice = async (pictureSelectQuestion: Locator, choiceAlt: string) => {
   const choiceImage = pictureSelectQuestion.getByRole("img", { name: choiceAlt });
@@ -186,9 +193,9 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       const pictureSelectQuestion = page.locator("#questionCard-7");
       await expect(pictureSelectQuestion.getByRole("button", { name: "Next" })).toBeVisible();
       await expect(pictureSelectQuestion.getByRole("button", { name: "Back" })).toBeVisible();
-      await expect(pictureSelectQuestion.getByRole("img", { name: firstPictureChoiceAlt })).toBeVisible();
+      await expect(pictureSelectQuestion.getByRole("img", { name: creatorPictureChoiceAlt })).toBeVisible();
       await expect(pictureSelectQuestion.getByRole("img", { name: secondPictureChoiceAlt })).toBeVisible();
-      await selectPictureChoice(pictureSelectQuestion, firstPictureChoiceAlt);
+      await selectPictureChoice(pictureSelectQuestion, creatorPictureChoiceAlt);
       await pictureSelectQuestion.getByRole("button", { name: "Next" }).click();
 
       // File Upload Question
@@ -275,7 +282,7 @@ test.describe("Multi Language Survey Create", async () => {
   // 5 minutes
   test.setTimeout(1000 * 60 * 5);
 
-  test("Create Survey", async ({ page, users }) => {
+  test("Create Survey", async ({ browser, page, users }) => {
     const user = await users.create();
     await user.login();
 
@@ -666,6 +673,36 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByLabel("Copy survey link to clipboard").click();
     const germanSurveyUrl = await page.evaluate("navigator.clipboard.readText()");
     expect(germanSurveyUrl).toContain("lang=de");
+
+    await test.step("Browser language picks the survey language when no ?lang= is given", async () => {
+      const surveyUrl = new URL(germanSurveyUrl as string);
+      surveyUrl.search = "";
+      const surveyId = surveyUrl.pathname.split("/").pop()!;
+      const welcomeCard = (respondent: Page) => respondent.locator("#questionCard--1");
+
+      await prisma.survey.update({ where: { id: surveyId }, data: { autoSelectLanguage: true } });
+      // The runner's default `locale` ("en-US") overrides an Accept-Language in extraHTTPHeaders, so
+      // clear it for the header to reach the server as written.
+      const germanBrowser = await browser.newContext({
+        locale: undefined,
+        extraHTTPHeaders: { "Accept-Language": "de-DE,de;q=0.9,en;q=0.8" },
+      });
+      try {
+        const respondent = await germanBrowser.newPage();
+        await respondent.goto(surveyUrl.toString());
+        await expect(
+          welcomeCard(respondent).getByText(surveys.germanCreate.welcomeCard.headline)
+        ).toBeVisible();
+
+        // With the setting off, the same German browser gets the default (English) language —
+        // this survey keeps the template's English welcome headline.
+        await prisma.survey.update({ where: { id: surveyId }, data: { autoSelectLanguage: false } });
+        await respondent.reload();
+        await expect(welcomeCard(respondent).getByText("Welcome!", { exact: true })).toBeVisible();
+      } finally {
+        await germanBrowser.close();
+      }
+    });
   });
 });
 
@@ -978,6 +1015,131 @@ test.describe("Testing Survey with advanced logic", async () => {
       await expect(secretCell).toBeVisible({
         timeout: 15000,
       });
+    });
+  });
+});
+
+// One card with two upload questions and a text question. Seeded through Prisma because the editor
+// puts each new question on its own card, and the race below needs them on the same one.
+const seedOverlappingUploadsSurvey = async (workspaceId: string, userId: string) => {
+  const ids = { multiUpload: createId(), singleUpload: createId(), text: createId() };
+  const block: TSurveyBlock = {
+    id: createId(),
+    name: "Block 1",
+    elements: [
+      {
+        id: ids.multiUpload,
+        type: TSurveyElementTypeEnum.FileUpload,
+        headline: { default: "Upload your photos" },
+        required: false,
+        allowMultipleFiles: true,
+      },
+      {
+        id: ids.singleUpload,
+        type: TSurveyElementTypeEnum.FileUpload,
+        headline: { default: "Upload your ticket" },
+        required: false,
+        allowMultipleFiles: false,
+      },
+      {
+        id: ids.text,
+        type: TSurveyElementTypeEnum.OpenText,
+        headline: { default: "Anything else?" },
+        required: false,
+        inputType: "text",
+        charLimit: { enabled: false },
+      },
+    ],
+  };
+  const endings = [{ id: createId(), type: "endScreen", headline: { default: "Thank you!" } }];
+
+  const survey = await prisma.survey.create({
+    data: {
+      workspaceId,
+      createdBy: userId,
+      name: "Overlapping uploads",
+      type: "link",
+      status: "inProgress",
+      blocks: [block] as unknown as Prisma.InputJsonValue[],
+      endings: endings as unknown as Prisma.InputJsonValue[],
+    },
+    select: { id: true },
+  });
+  return { surveyId: survey.id, ...ids };
+};
+
+const pngFile = (name: string) => ({ name, mimeType: "image/png", buffer: Buffer.from(name) });
+
+test.describe("Overlapping file uploads", () => {
+  // ENG-3945: an upload that finished after others wrote back the answers from when it started,
+  // dropping the files that had landed since and undoing text typed in the meantime.
+  test("keeps every answer when uploads on one card finish out of order", async ({ page, users }) => {
+    const user = await users.create({ skipSurveySeed: true });
+    if (!user.workspaceId) throw new Error("users.create() did not return a workspaceId");
+    const { surveyId, multiUpload, singleUpload, text } = await seedOverlappingUploadsSurvey(
+      user.workspaceId,
+      user.id
+    );
+
+    // Holds first.png's upload until the test releases it, so it finishes after the others.
+    // Registered after the storage mock in beforeEach, so it runs first and then hands over to it.
+    let markFirstUploadHeld = () => {};
+    let releaseFirstUpload = () => {};
+    const firstUploadHeld = new Promise<void>((resolve) => (markFirstUploadHeld = resolve));
+    const firstUploadReleased = new Promise<void>((resolve) => (releaseFirstUpload = resolve));
+    await page.route("**/api/v1/client/*/storage", async (route) => {
+      const payload = route.request().postDataJSON() as { fileName?: string } | null;
+      if (payload?.fileName === "first.png") {
+        markFirstUploadHeld();
+        await firstUploadReleased;
+      }
+      await route.fallback();
+    });
+
+    const multiUploadQuestion = page.locator(`div[id="${multiUpload}"]`);
+    const singleUploadQuestion = page.locator(`div[id="${singleUpload}"]`);
+    const textInput = page.getByRole("textbox", { name: "Anything else?" });
+
+    await test.step("start an upload, then answer the rest of the card while it runs", async () => {
+      await page.goto(`/s/${surveyId}`);
+      await textInput.fill("typed before the uploads");
+
+      await multiUploadQuestion.locator('input[type="file"]').setInputFiles(pngFile("first.png"));
+      await firstUploadHeld;
+
+      await singleUploadQuestion.locator('input[type="file"]').setInputFiles(pngFile("second.png"));
+      await expect(singleUploadQuestion.getByRole("button", { name: "Delete second.png" })).toBeVisible();
+      await multiUploadQuestion.locator('input[type="file"]').setInputFiles(pngFile("third.png"));
+      await expect(multiUploadQuestion.getByRole("button", { name: "Delete third.png" })).toBeVisible();
+
+      await textInput.fill("typed during the upload");
+    });
+
+    await test.step("the late upload keeps everything answered since it started", async () => {
+      releaseFirstUpload();
+      await expect(multiUploadQuestion.getByRole("button", { name: "Delete first.png" })).toBeVisible();
+
+      await expect(multiUploadQuestion.getByRole("button", { name: "Delete third.png" })).toBeVisible();
+      await expect(singleUploadQuestion.getByRole("button", { name: "Delete second.png" })).toBeVisible();
+      await expect(textInput).toHaveValue("typed during the upload");
+    });
+
+    await test.step("the saved response has every answer", async () => {
+      await page.getByRole("button", { name: "Finish" }).click();
+      await expect(page.getByText("Thank you!")).toBeVisible();
+
+      await expect
+        .poll(async () => {
+          const response = await prisma.response.findFirst({ where: { surveyId }, select: { data: true } });
+          return response?.data;
+        })
+        .toEqual(
+          expect.objectContaining({
+            [multiUpload]: [expect.stringContaining("third.png"), expect.stringContaining("first.png")],
+            [singleUpload]: [expect.stringContaining("second.png")],
+            [text]: "typed during the upload",
+          })
+        );
     });
   });
 });

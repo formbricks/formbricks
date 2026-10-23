@@ -9,10 +9,17 @@ import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/
 import { transformPrismaSurvey } from "@/modules/survey/lib/utils";
 
 /**
+ * A link-page survey with `archivedAt` always loaded. `TSurvey` types the field as optional, so a survey from
+ * a loader that doesn't select it would read as "not archived"; requiring it here makes the public-access
+ * gate (`lib/public-access.ts`) refuse such a survey at compile time instead (ENG-4032).
+ */
+export type TLinkSurvey = TSurvey & { archivedAt: Date | null };
+
+/**
  * Comprehensive survey data fetcher for link surveys
  * Combines all necessary data in a single optimized query
  */
-export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
+export const getSurveyWithMetadata = reactCache(async (surveyId: string): Promise<TLinkSurvey> => {
   try {
     const survey = await prisma.survey.findUnique({
       where: { id: surveyId },
@@ -37,6 +44,7 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
         recontactDays: true,
         displayLimit: true,
         autoClose: true,
+        keepEndingCardOpen: true,
         delay: true,
         displayPercentage: true,
         autoComplete: true,
@@ -58,12 +66,18 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
         styling: true,
         surveyClosedMessage: true,
         showLanguageSwitch: true,
+        autoSelectLanguage: true,
         recaptcha: true,
         metadata: true,
 
         // Custom scripts (self-hosted only)
         customHeadScripts: true,
         customHeadScriptsMode: true,
+
+        // Stored custom CSS (ENG-3552), source included. Server-side input to the compiled CSS the page
+        // delivers; every path that hands this survey to the browser removes it first
+        // (`omitCustomCssSource` in survey-renderer.tsx and validateSurveyPinAction).
+        customCss: true,
 
         // Related data
         languages: {
@@ -137,6 +151,7 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
     // above only because `TSurvey` requires the keys, so blank them out before they leave the server.
     return {
       ...transformedSurvey,
+      archivedAt: survey.archivedAt,
       followUps: [],
       ...(transformedSurvey.segment
         ? { segment: { ...transformedSurvey.segment, filters: [], description: null } }

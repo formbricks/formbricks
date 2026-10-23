@@ -1,48 +1,49 @@
-import type FormbricksHub from "@formbricks/hub";
+import type {
+  CountFeedbackRecordsData,
+  CountFeedbackRecordsOutputBody,
+  CreateFeedbackRecordInputBody,
+  EnrichmentStatusOutputBody,
+  FeedbackRecordTaxonomyOutputBody,
+  EnrichmentTypeStatus as HubEnrichmentTypeStatus,
+  FeedbackRecordData as HubFeedbackRecordData,
+  SemanticSearchResponse as HubSemanticSearchResponse,
+  SemanticSearchResultItem as HubSemanticSearchResultItem,
+  ListFeedbackRecordsData,
+  ListFeedbackRecordsOutputBody,
+  SemanticSearchFeedbackRecordsData,
+  SemanticSearchInputBody,
+  SimilarFeedbackRecordsData,
+  UpdateFeedbackRecordInputBody,
+} from "@formbricks/hub";
 
-// value_id (ENG-1671/ENG-1673): stable id of the selected option in the source system (a survey
-// choice id for Formbricks responses). Lets Hub consolidate the same option across languages
-// instead of splitting it per localized label. The published SDK predates the field, so bridge
-// it as an optional param until the SDK ships it.
-export type FeedbackRecordCreateParams = FormbricksHub.FeedbackRecordCreateParams & {
-  value_id?: string;
-};
-export type FeedbackRecordListParams = FormbricksHub.FeedbackRecordListParams;
-export type FeedbackRecordUpdateParams = FormbricksHub.FeedbackRecordUpdateParams;
+export type FeedbackRecordCreateParams = CreateFeedbackRecordInputBody;
+export type FeedbackRecordListParams = ListFeedbackRecordsData["query"];
+export type FeedbackRecordUpdateParams = UpdateFeedbackRecordInputBody;
 
-// Hub-derived, read-only translation fields (ENG-1255). The published SDK predates them, so bridge
-// them as optional reads; drop once the SDK ships them. May be null when translation is off/pending.
-// `emotions` is a read-only enrichment field that also predates the SDK type (the DB column is a
-// Postgres text[]); absent until a record is enriched. Typed to accept either the serialized array
-// or a comma-joined string, since the serialization is owned by the external hub service.
-export type FeedbackRecordData = FormbricksHub.FeedbackRecordData & {
-  value_text_translated?: string | null;
-  translation_lang_key?: string | null;
-  value_id?: string | null;
-  emotions?: string[] | string | null;
-  // Hub #136 adds this only to single-record reads. Older Hub versions omit it.
-  taxonomy?: FeedbackRecordTaxonomy | null;
-};
-
-export type FeedbackRecordListResponse = Omit<FormbricksHub.FeedbackRecordListResponse, "data"> & {
-  data: FeedbackRecordData[];
-};
+// The SDK's own read shape, translation, enrichment and taxonomy fields included. Hub serializes each
+// enrichment field `omitempty` from a pointer (`internal/models/feedback_records.go`), so an unset one is
+// absent rather than null, and `emotions` is always an array — which is exactly how the SDK types them.
+// `taxonomy` (hub#136) is only on the single-record GET, and null when the lookup is unavailable.
+export type FeedbackRecordData = HubFeedbackRecordData;
+export type FeedbackRecordListResponse = ListFeedbackRecordsOutputBody;
 
 // `GET /v1/feedback-records/count` — the Hub documents it as taking the same query parameters as the
 // list endpoint, minus pagination, and answering with a single total.
-export type FeedbackRecordCountParams = FormbricksHub.FeedbackRecordCountParams;
-export type FeedbackRecordCountResponse = FormbricksHub.FeedbackRecordCountResponse;
+export type FeedbackRecordCountParams = CountFeedbackRecordsData["query"];
+export type FeedbackRecordCountResponse = CountFeedbackRecordsOutputBody;
 
-export type SemanticSearchInput = FormbricksHub.FeedbackRecords.SearchPerformSemanticSearchParams;
-export type SemanticSearchResponse = FormbricksHub.FeedbackRecords.SearchPerformSemanticSearchResponse;
-export type SemanticSearchResultItem = FormbricksHub.FeedbackRecords.SearchPerformSemanticSearchResponse.Data;
+// The Hub takes the search text in the body and its paging controls in the query. Callers pass one flat
+// object and `semanticSearchFeedbackRecords` splits it, as the Stainless SDK used to.
+export type SemanticSearchInput = SemanticSearchInputBody &
+  NonNullable<SemanticSearchFeedbackRecordsData["query"]>;
+export type SemanticSearchResponse = HubSemanticSearchResponse;
+export type SemanticSearchResultItem = HubSemanticSearchResultItem;
 
 // Nearest-neighbour lookup for one record. The Hub returns the same row shape as semantic search (id +
 // score + field label + text), so the two are interchangeable downstream — one serializer covers both.
-export type SimilarRecordsParams = FormbricksHub.FeedbackRecords.FeedbackRecordRetrieveSimilarParams;
-export type SimilarRecordsResponse = FormbricksHub.FeedbackRecords.FeedbackRecordRetrieveSimilarResponse;
-export type SimilarRecordsResultItem =
-  FormbricksHub.FeedbackRecords.FeedbackRecordRetrieveSimilarResponse.Data;
+export type SimilarRecordsParams = NonNullable<SimilarFeedbackRecordsData["query"]>;
+export type SimilarRecordsResponse = HubSemanticSearchResponse;
+export type SimilarRecordsResultItem = HubSemanticSearchResultItem;
 
 // Tenant-scoped enrichment progress (ENG-1670). Counts are data-derived from the directory's feedback
 // records — how many qualify for an enrichment vs. how many carry it — not queue depth, so `done` never
@@ -53,25 +54,31 @@ export type SimilarRecordsResultItem =
 // folded into `eligible - done`: `failed` is a transient failure River will retry; `failed_terminal`
 // gave up for good (content filter, refusal, truncation) and will never complete on its own. Without
 // this, a permanently-failed record read as "still in progress" forever and the poll never stopped.
-// The published SDK predates the fields, so bridge them as optional reads until it ships them.
 // Note: `eligible - done - failed - failed_terminal` is not always 0 — a record whose enrichment was
 // enabled after it already existed was never enqueued at all, and neither done nor failed accounts for
 // it (ENG-2376 tracks auto-requeueing that residual; out of scope here).
 //
+// The SDK types both as always present, which is true of the Hub it was generated from but not of every
+// Hub this app talks to: Hubs older than hub#125 (0.8.5, for example) omit them. So they are re-declared optional — via `Omit`, because intersecting an optional member with the
+// SDK's required one collapses back to required and silently discards the absence.
+//
 // `failed` is intentionally not read by the aggregator: a transient failure is still going to be
 // retried by River, so it stays folded into `pending` the same way it always did — only
 // `failed_terminal` (which will never resolve on its own) is pulled out and shown separately.
-export type EnrichmentTypeStatus = FormbricksHub.TypeStatus & {
+export type EnrichmentTypeStatus = Omit<HubEnrichmentTypeStatus, "failed" | "failed_terminal"> & {
   failed?: number;
   failed_terminal?: number;
 };
 // The three per-enrichment keys are re-declared optional (the SDK types them as always-present)
 // because the aggregator treats an absent key as "disabled" rather than assuming the Hub always
 // answers with all three — matching the `status?.enabled` optional-chaining it already does.
+// `as_of` is optional for the same older-Hub reason as the failure counters: Hubs older than hub#125
+// answer without it.
 export type EnrichmentStatusResponse = Omit<
-  FormbricksHub.EnrichmentStatusRetrieveResponse,
-  "translation" | "sentiment" | "emotions"
+  EnrichmentStatusOutputBody,
+  "as_of" | "translation" | "sentiment" | "emotions"
 > & {
+  as_of?: string;
   translation?: EnrichmentTypeStatus;
   sentiment?: EnrichmentTypeStatus;
   emotions?: EnrichmentTypeStatus;
@@ -153,11 +160,8 @@ export type TaxonomyNode = {
   children?: TaxonomyNode[];
 };
 
-export type FeedbackRecordTaxonomy = {
-  status: "classified" | "unclassified" | "no_active_taxonomy";
-  run_id: string | null;
-  path: Pick<TaxonomyNode, "id" | "label" | "level" | "node_type">[];
-};
+/** A record's place in its directory's active taxonomy — `FeedbackRecordData["taxonomy"]`, non-null. */
+export type FeedbackRecordTaxonomy = FeedbackRecordTaxonomyOutputBody;
 
 export type TaxonomyFieldsResponse = {
   data: TaxonomyFieldOption[];

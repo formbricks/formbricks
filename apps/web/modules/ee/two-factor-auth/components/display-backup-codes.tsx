@@ -2,6 +2,7 @@
 
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { copyToClipboard } from "@/lib/utils/clipboard";
 import { Button } from "@/modules/ui/components/button";
 
 interface DisplayBackupCodesProps {
@@ -59,9 +60,12 @@ export const DisplayBackupCodes = ({ backupCodes, setOpen }: DisplayBackupCodesP
 
         <Button
           size="sm"
-          onClick={() => {
-            navigator.clipboard.writeText(backupCodes.map((code) => formatBackupCode(code)).join("\n"));
-            toast.success(t("common.copied_to_clipboard"));
+          onClick={async () => {
+            if (await copyToClipboard(backupCodes.map((code) => formatBackupCode(code)).join("\n"))) {
+              toast.success(t("common.copied_to_clipboard"));
+            } else {
+              toast.error(t("common.failed_to_copy_to_clipboard"));
+            }
           }}
           data-testid="copy-button">
           {t("common.copy")}

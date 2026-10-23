@@ -199,6 +199,9 @@ const mockResponse = {
 };
 
 const mockSurvey = {
+  visibility: "workspace",
+  visibilityVersion: 0,
+  visibilityProjectedVersion: 0,
   id: "cm9zr4mps000008l8btfy1vtz",
   workspaceId: "cm9zr4wsp000508l8y6nh9r2v",
   blocks: [],

@@ -12,6 +12,10 @@ export const rateLimitConfigs = {
     resetPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:reset-password" }, // 5 per hour
     verifyEmail: { interval: 3600, allowedPerInterval: 10, namespace: "auth:verify" }, // 10 per hour
     emailToken: { interval: 3600, allowedPerInterval: 10, namespace: "auth:email-token" }, // 10 per hour — unauthenticated, tells the caller whether an email is registered
+    // The SAML callback parses the posted XML before it can tell an IdP from a stranger (ENG-3973), so this caps
+    // how often one IP can make it parse. Generous on purpose: every SAML sign-in at a company behind one NAT
+    // address lands here, often in a burst at the start of the day. The markup budget is the real bound.
+    samlCallback: { interval: 60, allowedPerInterval: 120, namespace: "auth:saml-callback" }, // 120 per minute
   },
 
   // API endpoints - higher limits for legitimate usage
@@ -30,11 +34,22 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "api:v3:surveys:visibility",
     }, // 10 per minute per actor — a loop of workspace → restricted must not be able to arm the freshness guard (ENG-3282)
+    v3CustomCss: {
+      interval: 60,
+      allowedPerInterval: 60,
+      namespace: "api:v3:custom-css",
+    }, // 60 per minute per principal, on top of v3 — custom CSS processing is synchronous and CPU-bound, and
+    // the editor validates ~300 ms after typing stops, so normal editing stays far below this
     internalDatasetPurge: {
       interval: 3600,
       allowedPerInterval: 5,
       namespace: "api:internal:feedback-datasets:purge",
     }, // 5 per hour — irreversible and dataset-wide; nobody legitimately purges more often than that
+    internalRetentionExport: {
+      interval: 3600,
+      allowedPerInterval: 10,
+      namespace: "api:internal:retention-runs:export",
+    }, // 10 per hour — each export streams an organisation's whole retention history (data retention)
     client: { interval: 60, allowedPerInterval: 100, namespace: "api:client" }, // 100 per minute (Client API)
     clientEnvironment: {
       interval: 60,
@@ -61,6 +76,21 @@ export const rateLimitConfigs = {
     licenseRecheck: { interval: 60, allowedPerInterval: 5, namespace: "action:license-recheck" }, // 5 per minute
     unsplash: { interval: 60, allowedPerInterval: 30, namespace: "action:unsplash" }, // 30 per minute per user — bounds one account exhausting the instance-wide UNSPLASH_ACCESS_KEY quota
     inviteMember: { interval: 3600 * 24, allowedPerInterval: 50, namespace: "action:invite-member" }, // 50 recipients per day per org; trusted limits are resolved per organization
+    // The same recipient allowance, counted per inviting user across all their organizations. A
+    // per-org budget alone is reset by creating another organization, so one account could mail
+    // thousands of recipients through throwaway orgs.
+    inviteMemberPerUser: {
+      interval: 3600 * 24,
+      allowedPerInterval: 50,
+      namespace: "action:invite-member:user",
+    },
+    // Per user. Creating an organization is free and each one starts with fresh per-org budgets, so
+    // an unbounded create-and-delete loop is a way around every per-org limit.
+    createOrganization: {
+      interval: 3600 * 24,
+      allowedPerInterval: 5,
+      namespace: "action:create-organization",
+    }, // 5 per day
     generateExampleResponses: {
       interval: 60,
       allowedPerInterval: 1,

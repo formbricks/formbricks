@@ -1,11 +1,22 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import type { TCustomCssInput } from "@formbricks/types/custom-css";
+import { DatabaseError, ResourceNotFoundError, TooManyRequestsError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import {
+  type TV3SurveyWriteReport,
+  V3CustomCssInvalidError,
+  V3CustomCssPlanRequiredError,
+} from "@/app/api/v3/lib/custom-css";
 import { getActionClasses } from "@/lib/actionClass/service";
+import { cache } from "@/lib/cache";
 import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
+import { processCustomCss } from "@/modules/custom-css/processor";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import {
   isSurveySchedulingDue,
@@ -23,6 +34,23 @@ import {
 import { V3SurveyWritePermissionError } from "./write-permissions";
 
 vi.mock("server-only", () => ({}));
+
+// ENG-3641: the processor contract and the plan gate; the save rules between them run for real.
+vi.mock("@/modules/custom-css/processor", () => ({
+  CUSTOM_CSS_PROCESSOR_VERSION: 3,
+  processCustomCss: vi.fn(),
+  normalizeCustomCssInput: (input: { light: string | null; dark: string | null } | null | undefined) => {
+    const light = input?.light?.trim() ? input.light : null;
+    const dark = input?.dark?.trim() ? input.dark : null;
+    return light === null && dark === null ? null : { light, dark };
+  },
+}));
+vi.mock("@/modules/custom-css/lib/access", () => ({
+  CUSTOM_CSS_PLAN_REQUIRED_MESSAGE: "Adding or editing custom CSS requires the Scale plan.",
+  getCustomCssPlanAllowed: vi.fn(),
+}));
+vi.mock("@/lib/cache", () => ({ cache: { del: vi.fn() } }));
+vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
 
 vi.mock("@formbricks/database", () => {
   const prisma = {
@@ -52,14 +80,16 @@ vi.mock("@formbricks/database", () => {
       updateMany: vi.fn(),
     },
     // Interactive transaction: run the callback with the mocked client as the tx client.
+    $executeRaw: vi.fn(),
     $transaction: vi.fn((callback: (tx: typeof prisma) => Promise<unknown>) => callback(prisma)),
   };
   return { prisma };
 });
 
 vi.mock("@/lib/survey/service", () => ({
-  selectSurvey: {
+  selectSurveyWithCustomCss: {
     id: true,
+    customCss: true,
   },
 }));
 
@@ -252,7 +282,7 @@ describe("patchV3Survey", () => {
     );
     vi.mocked(prisma.survey.findUniqueOrThrow).mockImplementation((() =>
       Promise.resolve(
-        readBackUpdatedSurvey(vi.mocked(prisma.survey.update).mock.lastCall?.[0].data)
+        readBackUpdatedSurvey(vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0].data)
       )) as unknown as typeof prisma.survey.findUniqueOrThrow);
     vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
     // ENG-1837: the patch reconciles the EmbeddedData rows in the same transaction as the survey
@@ -315,10 +345,35 @@ describe("patchV3Survey", () => {
     );
   });
 
-  test("never writes the dropped legacy columns, and returns the survey read back after the reconcile", async () => {
-    // ENG-2404: `Survey` has no `variables` / `hiddenFields` column, so Prisma would refuse either
-    // key. They reach the database as rows, and the response is re-read after the reconcile so the
-    // projection derived from those rows describes the patched survey rather than the stored one.
+  test("writes a patched language setting and keeps the omitted one as stored", async () => {
+    await patchV3Survey(
+      { ...currentSurvey, showLanguageSwitch: true, autoSelectLanguage: null },
+      { autoSelectLanguage: true },
+      "req_1",
+      "org_1"
+    );
+
+    expect(prisma.survey.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ showLanguageSwitch: true, autoSelectLanguage: true }),
+      })
+    );
+  });
+
+  test("clears a stored language setting when the patch sets it to null", async () => {
+    await patchV3Survey(
+      { ...currentSurvey, autoSelectLanguage: true },
+      { autoSelectLanguage: null },
+      "req_1",
+      "org_1"
+    );
+
+    expect(prisma.survey.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ autoSelectLanguage: null }) })
+    );
+  });
+
+  test("writes compatible legacy columns and returns the survey read back after the reconcile", async () => {
     await patchV3Survey(
       currentSurvey,
       { hiddenFields: { enabled: true, fieldIds: ["utm_source"] } },
@@ -326,9 +381,11 @@ describe("patchV3Survey", () => {
       "org_1"
     );
 
-    const [[updateArgs]] = vi.mocked(prisma.survey.update).mock.calls;
-    expect(updateArgs.data).not.toHaveProperty("variables");
-    expect(updateArgs.data).not.toHaveProperty("hiddenFields");
+    expect(prisma.survey.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ hiddenFields: { enabled: true, fieldIds: ["utm_source"] } }),
+      })
+    );
     expect(vi.mocked(prisma.survey.findUniqueOrThrow).mock.invocationCallOrder[0]).toBeGreaterThan(
       vi.mocked(prisma.surveyEmbeddedData.create).mock.invocationCallOrder[0]
     );
@@ -572,6 +629,8 @@ describe("patchV3Survey", () => {
         metadata: currentSurvey.metadata,
         defaultLanguage: "en-US",
         languages: [{ code: "en-US", enabled: true }],
+        showLanguageSwitch: null,
+        autoSelectLanguage: null,
         welcomeCard: currentSurvey.welcomeCard,
         blocks: currentSurvey.blocks,
         endings: currentSurvey.endings,
@@ -767,7 +826,7 @@ describe("patchV3Survey", () => {
 
     expect(prisma.survey.findUnique).toHaveBeenCalledWith({
       where: { id: currentSurvey.id },
-      select: { id: true },
+      select: { id: true, customCss: true },
     });
     expect(result.name).toBe("Published Feedback");
     expect(result.status).toBe("inProgress");
@@ -986,6 +1045,7 @@ describe("patchV3Survey", () => {
           distribution: {
             displayOption: "displayMultiple",
             recontactDays: 14,
+            keepEndingCardOpen: true,
             triggers: [{ actionClassId: actionClass.id }],
           },
         },
@@ -998,6 +1058,7 @@ describe("patchV3Survey", () => {
           data: expect.objectContaining({
             displayOption: "displayMultiple",
             recontactDays: 14,
+            keepEndingCardOpen: true,
             triggers: { create: [{ actionClassId: actionClass.id }] },
           }),
         })
@@ -1016,6 +1077,135 @@ describe("patchV3Survey", () => {
           }),
         })
       );
+    });
+
+    describe("show conditions", () => {
+      const finished = {
+        id: "cnd1",
+        leftOperand: { type: "visit", value: "timeOnSite" },
+        operator: "isGreaterThanOrEqual",
+        rightOperand: { type: "static", value: 30 },
+      };
+      const unfinished = {
+        id: "cnd2",
+        leftOperand: { type: "page", value: "currentUrl" },
+        operator: "pathIsAnyOf",
+      };
+      const surveyWithDraftRow = {
+        ...appCurrentSurvey,
+        showConditions: { id: "grp1", connector: "and", conditions: [finished, unfinished] },
+      } as unknown as TSurvey;
+
+      test("a patch that leaves them alone keeps a draft's unfinished row", async () => {
+        // The patch reads the survey without that row; writing its copy back would delete the row.
+        await patchV3Survey(surveyWithDraftRow, { name: "Renamed" }, "req_app_patch_sc1", "org_1");
+
+        const { data } = vi.mocked(prisma.survey.update).mock.calls[0][0];
+        expect(data.name).toBe("Renamed");
+        expect(data).not.toHaveProperty("showConditions");
+      });
+
+      test("a patch that changes them writes them, and null clears them", async () => {
+        vi.mocked(getActionClasses).mockResolvedValue([]);
+        const onPricing = {
+          id: "grp2",
+          connector: "and",
+          conditions: [
+            {
+              id: "cnd3",
+              leftOperand: { type: "page", value: "currentUrl" },
+              operator: "pathIsAnyOf",
+              rightOperand: { type: "static", value: ["/pricing"] },
+            },
+          ],
+        };
+
+        await patchV3Survey(
+          surveyWithDraftRow,
+          { distribution: { triggers: [], showConditions: onPricing } },
+          "req_app_patch_sc2",
+          "org_1"
+        );
+        await patchV3Survey(
+          surveyWithDraftRow,
+          { distribution: { triggers: [], showConditions: null } },
+          "req_app_patch_sc3",
+          "org_1"
+        );
+
+        const writes = vi.mocked(prisma.survey.update).mock.calls.map(([args]) => args.data.showConditions);
+        expect(writes).toEqual([onPricing, Prisma.DbNull]);
+      });
+
+      test("an explicit null clears a draft that holds only an unfinished row", async () => {
+        vi.mocked(getActionClasses).mockResolvedValue([]);
+        const onlyUnfinished = {
+          ...appCurrentSurvey,
+          showConditions: { id: "grp1", connector: "and", conditions: [unfinished] },
+        } as unknown as TSurvey;
+
+        await patchV3Survey(
+          onlyUnfinished,
+          { distribution: { triggers: [], showConditions: null } },
+          "req_app_patch_sc4",
+          "org_1"
+        );
+
+        expect(vi.mocked(prisma.survey.update).mock.calls[0][0].data.showConditions).toBe(Prisma.DbNull);
+      });
+
+      test("taking a draft live with an unfinished row is refused, not published wider", async () => {
+        // Dropping the row would turn "AND[time ≥ 30, unfinished]" into just "time ≥ 30".
+        vi.mocked(getActionClasses).mockResolvedValue([actionClass]);
+        const draftWithTrigger = { ...surveyWithDraftRow, triggers: [{ actionClass }] } as unknown as TSurvey;
+
+        const error = await patchV3Survey(
+          draftWithTrigger,
+          { status: "inProgress" },
+          "req_app_patch_sc5",
+          "org_1"
+        ).catch((e: unknown) => e);
+
+        expect(error).toBeInstanceOf(V3SurveyReferenceValidationError);
+        expect((error as V3SurveyReferenceValidationError).invalidParams[0].name).toBe(
+          "distribution.showConditions"
+        );
+        expect(prisma.survey.update).not.toHaveBeenCalled();
+      });
+
+      test("taking a draft live with only finished rows writes them", async () => {
+        vi.mocked(getActionClasses).mockResolvedValue([actionClass]);
+        const finishedDraft = {
+          ...appCurrentSurvey,
+          triggers: [{ actionClass }],
+          showConditions: { id: "grp1", connector: "and", conditions: [finished] },
+        } as unknown as TSurvey;
+
+        await patchV3Survey(finishedDraft, { status: "inProgress" }, "req_app_patch_sc6", "org_1");
+
+        expect(vi.mocked(prisma.survey.update).mock.calls[0][0].data.showConditions).toEqual({
+          id: "grp1",
+          connector: "and",
+          conditions: [finished],
+        });
+      });
+
+      test("sending distribution with the publish replaces the unfinished row instead", async () => {
+        vi.mocked(getActionClasses).mockResolvedValue([actionClass]);
+        const draftWithTrigger = { ...surveyWithDraftRow, triggers: [{ actionClass }] } as unknown as TSurvey;
+
+        await patchV3Survey(
+          draftWithTrigger,
+          {
+            status: "inProgress",
+            distribution: { triggers: [{ actionClassId: actionClass.id }], showConditions: null },
+          },
+          "req_app_patch_sc7",
+          "org_1"
+        );
+
+        expect(vi.mocked(prisma.survey.update).mock.calls[0][0].data.showConditions).toBe(Prisma.DbNull);
+      });
     });
 
     test("updates segment filters when targeting changes and contacts are enabled", async () => {
@@ -1118,6 +1308,184 @@ describe("patchV3Survey", () => {
         )
       ).rejects.toThrow(V3SurveyReferenceValidationError);
 
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("custom CSS (ENG-3641)", () => {
+    const storedCss = {
+      light: { source: "a{}", compiled: "@layer fb-survey{a}" },
+      dark: { source: "b{}", compiled: "@layer fb-survey-dark{b}" },
+      processorVersion: 3,
+    };
+    const surveyWithCss = { ...currentSurvey, customCss: storedCss } as unknown as TSurvey;
+    const lastUpdateData = () => vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0].data ?? {};
+
+    beforeEach(() => {
+      vi.mocked(cache.del).mockResolvedValue({ ok: true, data: undefined });
+      vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(true);
+      vi.mocked(processCustomCss).mockImplementation((({ input }: { input: TCustomCssInput }) => ({
+        ok: true,
+        compiled: {
+          light: input.light ? `C(${input.light})` : null,
+          dark: input.dark ? `CD(${input.dark})` : null,
+        },
+        warnings: [],
+        processorVersion: 3,
+      })) as never);
+    });
+
+    test("an unrelated patch on a downgraded organization keeps the CSS without a plan check or a write", async () => {
+      vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(false);
+      const report: TV3SurveyWriteReport = {};
+
+      await patchV3Survey(
+        surveyWithCss,
+        { name: "Renamed" },
+        "req",
+        "org_1",
+        undefined,
+        undefined,
+        undefined,
+        report
+      );
+
+      expect(getCustomCssPlanAllowed).not.toHaveBeenCalled();
+      expect(processCustomCss).not.toHaveBeenCalled();
+      expect(lastUpdateData()).not.toHaveProperty("customCss");
+      expect(cache.del).not.toHaveBeenCalled();
+      expect(report.customCssWarnings).toBeUndefined();
+    });
+
+    test("echoing the GET source back is unchanged, whitespace-only fields included", async () => {
+      vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(false);
+
+      await patchV3Survey(
+        surveyWithCss,
+        { name: "Renamed", customCss: { light: "a{}", dark: "b{}" } },
+        "req",
+        "org_1"
+      );
+
+      expect(getCustomCssPlanAllowed).not.toHaveBeenCalled();
+      expect(lastUpdateData()).not.toHaveProperty("customCss");
+    });
+
+    test("an addition without the plan is refused and nothing is written", async () => {
+      vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(false);
+
+      await expect(
+        patchV3Survey(currentSurvey, { customCss: { light: "a{}", dark: null } }, "req", "org_1")
+      ).rejects.toBeInstanceOf(V3CustomCssPlanRequiredError);
+      expect(processCustomCss).not.toHaveBeenCalled();
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("an edit is processed, stored with its trusted output, reported and invalidates the workspace state", async () => {
+      const report: TV3SurveyWriteReport = {};
+
+      await patchV3Survey(
+        surveyWithCss,
+        { customCss: { light: "a{color:red}", dark: "b{}" } },
+        "req",
+        "org_1",
+        undefined,
+        undefined,
+        undefined,
+        report
+      );
+
+      expect(processCustomCss).toHaveBeenCalledWith({
+        scope: "survey",
+        input: { light: "a{color:red}", dark: "b{}" },
+      });
+      expect(lastUpdateData()).toMatchObject({
+        customCss: {
+          light: { source: "a{color:red}", compiled: "C(a{color:red})" },
+          dark: { source: "b{}", compiled: "CD(b{})" },
+          processorVersion: 3,
+        },
+      });
+      expect(report.customCssWarnings).toEqual([]);
+      expect(cache.del).toHaveBeenCalledWith([`fb:env:${workspaceId}:state`]);
+    });
+
+    test("clearing is allowed without the plan", async () => {
+      vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(false);
+
+      await patchV3Survey(surveyWithCss, { customCss: null }, "req", "org_1");
+
+      expect(lastUpdateData().customCss).toBe(Prisma.DbNull);
+      expect(processCustomCss).not.toHaveBeenCalled();
+    });
+
+    test("removing one field is a removal too, keeping the other's output", async () => {
+      vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(false);
+
+      await patchV3Survey(surveyWithCss, { customCss: { light: null, dark: "b{}" } }, "req", "org_1");
+
+      expect(lastUpdateData().customCss).toEqual({ light: null, dark: storedCss.dark, processorVersion: 3 });
+    });
+
+    test("malformed CSS is rejected and the stored CSS is untouched", async () => {
+      vi.mocked(processCustomCss).mockReturnValue({
+        ok: false,
+        errors: [
+          {
+            code: "syntax_error",
+            scope: "survey",
+            appearance: "light",
+            line: 1,
+            column: 3,
+            reason: "Unexpected",
+          },
+        ],
+      });
+
+      await expect(
+        patchV3Survey(surveyWithCss, { customCss: { light: "a{", dark: null } }, "req", "org_1")
+      ).rejects.toBeInstanceOf(V3CustomCssInvalidError);
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("an edit spends one unit of the caller's custom CSS budget; a spent budget writes nothing", async () => {
+      const edit = { customCss: { light: "a{color:red}", dark: "b{}" } };
+      const patch = () =>
+        patchV3Survey(surveyWithCss, edit, "req", "org_1", undefined, undefined, undefined, {}, "user_1");
+
+      await patch();
+      expect(applyRateLimit).toHaveBeenCalledTimes(1);
+      expect(applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3CustomCss, "user_1");
+
+      vi.mocked(prisma.survey.update).mockClear();
+      vi.mocked(processCustomCss).mockClear();
+      vi.mocked(applyRateLimit).mockRejectedValueOnce(new TooManyRequestsError("Slow down", 30));
+      await expect(patch()).rejects.toBeInstanceOf(TooManyRequestsError);
+      expect(processCustomCss).not.toHaveBeenCalled();
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+
+    test("unchanged CSS and removals spend nothing from the custom CSS budget", async () => {
+      const patch = (input: unknown) =>
+        patchV3Survey(surveyWithCss, input, "req", "org_1", undefined, undefined, undefined, {}, "user_1");
+
+      await patch({ name: "Renamed" });
+      await patch({ customCss: { light: "a{}", dark: "b{}" } });
+      await patch({ customCss: { light: null, dark: "b{}" } });
+      await patch({ customCss: null });
+
+      expect(applyRateLimit).not.toHaveBeenCalled();
+    });
+
+    test("caller-supplied compiled output is rejected by the strict patch schema", async () => {
+      await expect(
+        patchV3Survey(
+          surveyWithCss,
+          { customCss: { light: "a{}", dark: null, compiled: "#fbjs{position:fixed}" } },
+          "req",
+          "org_1"
+        )
+      ).rejects.toBeInstanceOf(V3SurveyReferenceValidationError);
       expect(prisma.survey.update).not.toHaveBeenCalled();
     });
   });

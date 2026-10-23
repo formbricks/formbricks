@@ -1,4 +1,6 @@
 import {
+  type TRetentionNoticeArchivedSurvey,
+  type TRetentionNoticeResponseDeletion,
   renderAccountDeletionEmail,
   renderEmailCustomizationPreviewEmail,
   renderEmbedSurveyPreviewEmail,
@@ -6,11 +8,13 @@ import {
   renderInviteAcceptedEmail,
   renderInviteEmail,
   renderLinkSurveyEmail,
+  renderMemberRetentionNoticeEmail,
   renderNewEmailVerification,
   renderPasswordResetNotifyEmail,
   renderResponseFinishedEmail,
   renderSsoRecoveryFactorsRemovedEmail,
   renderSsoSignInHintEmail,
+  renderSurveyRetentionNoticeEmail,
   renderVerificationEmail,
 } from "@formbricks/email";
 import { TEmailTemplateLegalProps } from "@formbricks/email/src/types/email";
@@ -38,6 +42,7 @@ import {
   VERIFICATION_LINK_TTL_SECONDS,
   buildVerificationLinks,
 } from "@/modules/auth/lib/verification-links";
+import { toInviteDisplayName } from "@/modules/email/lib/invite-display-name";
 import { sendEmail } from "@/modules/email/lib/send-email";
 import { buildVerifiedLinkSurveyUrl } from "@/modules/email/lib/verified-link-survey-url";
 import { resolveStorageUrl } from "@/modules/storage/utils";
@@ -283,6 +288,74 @@ export const sendSsoSignInHintEmail = async ({
   });
 };
 
+/**
+ * The data retention notice (ENG-3612): what the organisation's policies will act on, for one person.
+ * Dates and counts arrive formatted for the reader (their locale, the organisation's time zone). Returns
+ * false when SMTP isn't configured; throws when sending fails, so the caller leaves the notice unsent.
+ */
+export const sendSurveyRetentionNoticeEmail = async ({
+  email,
+  locale,
+  organizationId,
+  organizationName,
+  archivedSurveys,
+  responseDeletions,
+}: {
+  email: string;
+  locale: TUserLocale;
+  organizationId: string;
+  organizationName: string;
+  archivedSurveys: TRetentionNoticeArchivedSurvey[];
+  responseDeletions: TRetentionNoticeResponseDeletion[];
+}): Promise<boolean> => {
+  const t = await getTranslate(locale);
+  const html = await renderSurveyRetentionNoticeEmail({
+    organizationName,
+    archivedSurveys,
+    responseDeletions,
+    settingsLink: `${WEBAPP_URL}/organizations/${organizationId}/settings/data-retention/exemptions`,
+    t,
+    ...legalProps,
+  });
+  return await sendEmail({
+    emailType: "data_retention_notice",
+    to: email,
+    subject: t("emails.retention_notice_email_subject", { organizationName }),
+    html,
+  });
+};
+
+/**
+ * The members policy's notice (ENG-3612), to the member themself, in their locale. Returns false when
+ * SMTP isn't configured; throws when sending fails, so the caller leaves the notice unsent.
+ */
+export const sendMemberRetentionNoticeEmail = async ({
+  email,
+  locale,
+  organizationName,
+  deactivateDate,
+}: {
+  email: string;
+  locale: TUserLocale;
+  organizationName: string;
+  deactivateDate: string;
+}): Promise<boolean> => {
+  const t = await getTranslate(locale);
+  const html = await renderMemberRetentionNoticeEmail({
+    organizationName,
+    deactivateDate,
+    loginLink: `${WEBAPP_URL}/auth/login`,
+    t,
+    ...legalProps,
+  });
+  return await sendEmail({
+    emailType: "data_retention_notice",
+    to: email,
+    subject: t("emails.member_retention_notice_email_subject", { organizationName }),
+    html,
+  });
+};
+
 export const sendInviteMemberEmail = async (
   inviteId: string,
   email: string,
@@ -296,7 +369,13 @@ export const sendInviteMemberEmail = async (
 
   const verifyLink = `${WEBAPP_URL}/invite?token=${encodeURIComponent(token)}`;
 
-  const html = await renderInviteEmail({ inviteeName, inviterName, verifyLink, t, ...legalProps });
+  const html = await renderInviteEmail({
+    inviteeName: toInviteDisplayName(inviteeName, ""),
+    inviterName: toInviteDisplayName(inviterName, t("common.anonymous")),
+    verifyLink,
+    t,
+    ...legalProps,
+  });
   return await sendEmail({
     emailType: "invite",
     to: email,

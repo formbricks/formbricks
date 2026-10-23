@@ -1,9 +1,8 @@
 import "server-only";
 import { BetterAuthError } from "@better-auth/core/error";
 import * as Sentry from "@sentry/nextjs";
-import type { BetterAuthOptions } from "better-auth";
-import { isAPIError } from "better-auth/api";
-import { prisma } from "@formbricks/database";
+import type { BetterAuthOptions, BetterAuthPlugin } from "better-auth";
+import { createAuthMiddleware, isAPIError } from "better-auth/api";
 import { logger } from "@formbricks/logger";
 import { IS_PRODUCTION, SENTRY_DSN } from "@/lib/constants";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
@@ -29,9 +28,9 @@ import { logAuthAttempt, shouldLogAuthFailure } from "./utils";
 
 /**
  * Map a Better Auth endpoint path to the audit `authMethod`, or `null` when the path is NOT a sign-in
- * completion. `session.create.after` fires for EVERY session creation — including non-sign-in re-issues
- * (`/two-factor/disable`, first-time 2FA enable, `/change-password` with revokeOtherSessions) — so we
- * allow-list the genuine sign-in entry points and skip the rest, matching NextAuth's `events.signIn`
+ * completion. A session is also set on non-sign-in re-issues (`/two-factor/disable`,
+ * `/change-password` with revokeOtherSessions, a session refresh), so we allow-list the genuine
+ * sign-in entry points and skip the rest, matching NextAuth's `events.signIn`
  * (sign-in only). This allow-list MUST grow if a new session-creating sign-in plugin is enabled
  * (magic-link, passkey, email-otp, one-time-token), otherwise those sign-ins won't be audited.
  */
@@ -44,6 +43,9 @@ export const getSignInAuthMethod = (path: string | undefined): string | null => 
   // onto this route before Better Auth sees it. Do not "restore" /oauth2/ here.
   if (path.includes("/callback/")) return "sso";
   if (path === "/sign-in/email") return "password";
+  // Google's ID-token sign-in creates a session on this path; its redirect branch creates none, and a
+  // request that ends without a session records nothing (`signInAuditPlugin`).
+  if (path === "/sign-in/social") return "sso";
   // A session created on the verification endpoint belongs to a credential/email-password account, so
   // audit it as "password". Since ENG-2562 the session is minted by `verificationAutoSignInAfterHandler`
   // rather than by `autoSignInAfterVerification` (now off), and only for the browser that signed up —
@@ -52,65 +54,124 @@ export const getSignInAuthMethod = (path: string | undefined): string | null => 
   // `auditVerificationSessionWithheld`. Idempotent replays of an already-verified token create no
   // session either, so this fires once, on the genuine first verify.
   if (path === "/verify-email") return "password";
-  // The 2FA challenge completes the credentials sign-in → "password" (matches NextAuth). Deliberately
-  // NOT /two-factor/verify-otp (also the first-time-enable path) nor /two-factor/disable|enable.
+  // The 2FA challenge completes the credentials sign-in → "password" (matches NextAuth). The same
+  // endpoints also finish turning 2FA on for a signed-in user, which is no sign-in: `isNewSignIn` tells
+  // them apart. Deliberately NOT /two-factor/verify-otp (no OTP sender is configured) nor
+  // /two-factor/disable|enable.
   if (path === "/two-factor/verify-totp" || path === "/two-factor/verify-backup-code") return "password";
   // The SSO-recovery magic-link sign-in also creates a session (verify-before-link), so audit it as
-  // "sso" — the unified signedIn trail should capture every session creation.
+  // "sso" — the unified signedIn trail should capture every sign-in.
   if (path === "/sso-recovery/sign-in") return "sso";
   return null;
 };
 
-/**
- * Emit the `signedIn` success audit on session creation — parity with the NextAuth route's
- * `events.signIn`. Guarded to genuine sign-in completions (see getSignInAuthMethod) so non-sign-in
- * session re-issues don't produce spurious events. `autoSignIn` is off, so sign-up doesn't create a
- * session; email verification does (autoSignInAfterVerification, ENG-1746) and is allow-listed above.
- * Failures create no session, so they're audited separately by
- * `auditFailedAuthAfter` below (which inspects the returned error in `hooks.after`).
- */
-export const signInAuditDatabaseHook: NonNullable<
-  NonNullable<BetterAuthOptions["databaseHooks"]>["session"]
-> = {
-  create: {
-    after: async (session, context) => {
-      const authMethod = getSignInAuthMethod(context?.path);
-      if (!authMethod) return; // session re-issue that isn't a sign-in → no spurious signedIn audit
-      try {
-        await queueAuditEventBackground({
-          action: "signedIn",
-          targetType: "user",
-          userId: session.userId,
-          targetId: session.userId,
-          organizationId: UNKNOWN_DATA,
-          status: "success",
-          userType: "user",
-          newObject: { authMethod, sessionStrategy: "database" },
-        });
-      } catch {
-        // Auditing must never block a sign-in (parity with the route's try/catch around emission).
-        logger.withContext({ source: "better-auth" }).error("Failed to queue signedIn audit event");
-      }
+/** The session a request ended with (`ctx.context.newSession`): the parts a sign-in record needs. */
+type TCompletedSession = { session: { id: string; token: string }; user: { id: string; email: string } };
 
-      // Parity with the NextAuth route's per-sign-in finalize (events.signIn → finalizeSuccessfulSignIn):
-      // refresh User.lastLoginAt + emit the `user_signed_in` analytics event on every genuine sign-in.
-      // The session record carries only userId, so resolve the email that updateUserLastLoginAt needs.
-      try {
-        const user = await prisma.user.findUnique({
-          where: { id: session.userId },
-          select: { email: true },
-        });
-        if (user?.email) {
-          await finalizeSuccessfulSignIn({ userId: session.userId, email: user.email, provider: authMethod });
-        }
-      } catch {
-        logger
-          .withContext({ source: "better-auth" })
-          .error("Failed to record successful sign-in (lastLoginAt / analytics)");
-      }
-    },
-  },
+/**
+ * Whether the session a request ended with is a sign-in, rather than one the user already had:
+ * - `incomingToken`, the signed session cookie the request arrived with: reading the session on any
+ *   allow-listed path renews it once it is `updateAge` old, which re-sets that same token as
+ *   `newSession`. Only with `SESSION_MAX_AGE` above a day, but then a refresh is no sign-in.
+ * - `priorSession`, the session the two-factor verify endpoints found first (`verifyTwoFactor`): with
+ *   one, the request is a signed-in user turning 2FA on, which swaps that session for a new one. A
+ *   sign-in challenge arrives without a session (the password step's was withdrawn).
+ */
+export const isNewSignIn = ({
+  path,
+  newSession,
+  incomingToken,
+  priorSession,
+}: {
+  path: string | undefined;
+  newSession: TCompletedSession;
+  incomingToken: string | null;
+  priorSession: { session: { id: string } } | null;
+}): boolean => {
+  if (incomingToken !== null && newSession.session.token === incomingToken) return false;
+  const isTwoFactorVerify = path?.startsWith("/two-factor/verify-") ?? false;
+  return !(isTwoFactorVerify && priorSession !== null && priorSession.session.id !== newSession.session.id);
 };
+
+/**
+ * Record a completed sign-in: the `signedIn` success audit (parity with the NextAuth route's
+ * `events.signIn`), then `lastLoginAt` and the `user_signed_in` analytics event
+ * (`finalizeSuccessfulSignIn`). `path` must be a sign-in completion (see getSignInAuthMethod), so a
+ * session re-issue is not a sign-in; `newSession` is null when the request ended without one — a wrong
+ * password, or a password whose second factor is still pending — and then nothing happened to record.
+ * Failures create no session, so they're audited separately by `auditFailedAuthAfter` below.
+ *
+ * Never throws: recording must not fail a sign-in that otherwise succeeded.
+ */
+export const recordCompletedSignIn = async (
+  path: string | undefined,
+  newSession: Pick<TCompletedSession, "user"> | null
+): Promise<void> => {
+  const authMethod = getSignInAuthMethod(path);
+  if (!authMethod || !newSession) return;
+  const { id: userId, email } = newSession.user;
+
+  try {
+    await queueAuditEventBackground({
+      action: "signedIn",
+      targetType: "user",
+      userId,
+      targetId: userId,
+      organizationId: UNKNOWN_DATA,
+      status: "success",
+      userType: "user",
+      newObject: { authMethod, sessionStrategy: "database" },
+    });
+  } catch {
+    // Auditing must never block a sign-in (parity with the route's try/catch around emission).
+    logger.withContext({ source: "better-auth" }).error("Failed to queue signedIn audit event");
+  }
+
+  try {
+    await finalizeSuccessfulSignIn({ userId, email, provider: authMethod });
+  } catch {
+    logger
+      .withContext({ source: "better-auth" })
+      .error("Failed to record successful sign-in (lastLoginAt / analytics)");
+  }
+};
+
+/**
+ * `recordCompletedSignIn` as a plugin, for auth.ts's plugin list, after `twoFactor()` (ENG-3271).
+ *
+ * Not `databaseHooks.session.create`: for a user with two-factor authentication, a correct password
+ * alone creates a session, which the two-factor plugin's after hook then deletes (setting `newSession`
+ * back to null) until the second factor is verified. Recording on session creation audited that
+ * password step as a completed sign-in and moved `lastLoginAt`, even when no second factor ever came;
+ * the challenge then recorded the sign-in a second time. Better Auth runs `hooks.after` first and the
+ * plugins' after hooks in list order — on past an earlier hook's `APIError` (a redirect), while any
+ * other error fails the request before a session cookie is sent — so a plugin after `twoFactor()`
+ * sees the session each request really ended with, including the verify-email session that
+ * `hooks.after` mints and an SSO callback that ends in a redirect. `isNewSignIn` then sets aside a
+ * session the user already had.
+ */
+export const signInAuditPlugin = {
+  id: "formbricks-sign-in-audit",
+  hooks: {
+    after: [
+      {
+        matcher: (ctx: { path?: string }) => getSignInAuthMethod(ctx.path) !== null,
+        handler: createAuthMiddleware(async (ctx) => {
+          const { newSession, session: priorSession, authCookies, secret } = ctx.context;
+          if (!newSession) return;
+          const incomingToken = await ctx.getSignedCookie(authCookies.sessionToken.name, secret);
+          const isSignIn = isNewSignIn({
+            path: ctx.path,
+            newSession,
+            incomingToken: incomingToken || null,
+            priorSession,
+          });
+          if (isSignIn) await recordCompletedSignIn(ctx.path, newSession);
+        }),
+      },
+    ],
+  },
+} satisfies BetterAuthPlugin;
 
 /**
  * Better Auth embeds user email addresses in some log messages — `sign-up.mjs` logs
@@ -203,10 +264,12 @@ const getSafeWarningErrorContext = (cause: Error): { errorType: string; errorCod
  *
  * `state_security_mismatch` carries the load this gate deliberately does not take on, and it is mixed:
  *
- * - The state cookie's `maxAge` is 300s while the verification record lives 10 minutes, so a user who
- *   spends 5–10 minutes at the identity provider loses the cookie first and lands here. Benign, and
- *   probably common — **so this change likely leaves residual noise behind**; it closes the reported
- *   `verification not found` shape (FORMBRICKS-16G), not the whole class.
+ * - A second sign-in started in the same browser while the first is still at the identity provider (a
+ *   second tab, a stale authorize URL): the state cookie is a single slot, so the newer flow overwrites
+ *   it and the older callback finds the wrong value. Benign, and the residual noise this code still
+ *   carries. Until ENG-3314 a user who spent 5–10 minutes at the IdP landed here too, because the
+ *   cookie expired at 300s against a 10-minute state; `auth.ts` now gives it the state's full lifetime,
+ *   so a slow sign-in that runs out of time expires with the state, on `state_mismatch`.
  * - It is also where a `BETTER_AUTH_SECRET` divergence across replicas surfaces, because the signed
  *   cookie cannot be verified with a different secret. That is a genuine outage and must keep paging.
  * - And it is the shape a forged or mixed-up callback takes.
@@ -401,7 +464,7 @@ export const betterAuthLogger: NonNullable<BetterAuthOptions["logger"]> = {
 export const auditFailedAuthAfter = async (ctx: AuthHookContext): Promise<void> => {
   if (ctx.path !== "/sign-in/email") return;
 
-  // A created session (success) is audited by signInAuditDatabaseHook; only a returned APIError here
+  // A completed sign-in (success) is recorded by signInAuditPlugin; only a returned APIError here
   // represents a rejected attempt.
   const returned = (ctx.context as { returned?: unknown }).returned;
   if (!isAPIError(returned)) return;

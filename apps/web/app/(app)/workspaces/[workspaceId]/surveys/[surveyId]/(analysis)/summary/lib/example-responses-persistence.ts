@@ -5,7 +5,11 @@ import {
   type TGeneratedExampleDataset,
   toExampleResponseInput,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/example-responses";
-import { createResponseWithQuotaEvaluation } from "@/app/api/v1/client/[workspaceId]/responses/lib/response";
+import {
+  createResponseWithQuotaEvaluation,
+  resolveCreateResponseContext,
+} from "@/app/api/v1/client/[workspaceId]/responses/lib/response";
+import { loadQuotaEvaluationContext } from "@/modules/ee/quotas/lib/evaluation-service";
 
 /**
  * The dataset is written inside one interactive transaction, so these bound how long that transaction
@@ -41,6 +45,13 @@ export const persistExampleResponseDataset = async ({
   workspaceId,
   dataset,
 }: TPersistExampleResponseDatasetArgs): Promise<{ createdCount: number }> => {
+  // Read once, before the transaction: every example response screens against the same definitions,
+  // and belongs to the same workspace with no contact (`toExampleResponseInput` sets no `userId`).
+  const [quotaContext, responseContext] = await Promise.all([
+    loadQuotaEvaluationContext(surveyId),
+    resolveCreateResponseContext({ workspaceId }),
+  ]);
+
   await prisma.$transaction(
     async (tx: Prisma.TransactionClient) => {
       // Tag every synthetic response so users can tell them apart from real ones in the responses
@@ -66,7 +77,7 @@ export const persistExampleResponseDataset = async ({
           toExampleResponseInput(surveyId, workspaceId, item, display.id),
           // No ingest flags: example responses are seeded, not ingested from a request.
           undefined,
-          tx
+          { tx, quotaContext, responseContext }
         );
 
         await tx.tagsOnResponses.create({ data: { responseId: response.id, tagId: aiTag.id } });

@@ -412,6 +412,28 @@ rollback procedure in [AuthZed Operations](/self-hosting/configuration/authzed-o
    docker compose --profile authzed-ops run --rm --no-deps authzed-ops upgrade check
    ```
 
+1. Refresh the bundled Cube model, so analytics charts can use members the release adds. The commands do
+   nothing when Cube runs outside this Compose project. They download both files before replacing either one,
+   and keep the previous copies in `cube/previous/`. Use the release's tag instead of `stable` when your
+   deployment is pinned.
+
+   ```bash
+   if [ -f cube/schema/FeedbackRecords.js ]; then
+     base=https://raw.githubusercontent.com/formbricks/formbricks/stable/docker
+     curl -fsSL -o cube/cube.js.download "$base/cube/cube.js" &&
+       curl -fsSL -o cube/FeedbackRecords.js.download "$base/cube/schema/FeedbackRecords.js" &&
+       mkdir -p cube/previous/schema &&
+       cp -p cube/cube.js cube/previous/cube.js &&
+       cp -p cube/schema/FeedbackRecords.js cube/previous/schema/FeedbackRecords.js &&
+       mv cube/cube.js.download cube/cube.js &&
+       {
+         # Never leave the new cube.js paired with the old model.
+         mv cube/FeedbackRecords.js.download cube/schema/FeedbackRecords.js ||
+           { cp -p cube/previous/cube.js cube/cube.js; false; }
+       }
+   fi
+   ```
+
 1. Stop the Formbricks stack
 
    ```bash
@@ -419,7 +441,8 @@ rollback procedure in [AuthZed Operations](/self-hosting/configuration/authzed-o
    ```
 
 1. Wait for PostgreSQL and complete application migrations before restarting the updated stack. Stop if a
-   command fails; do not restart against a partially migrated database.
+   command fails; do not restart against a partially migrated database. If `formbricks-migrate` fails, follow
+   [If a migration fails](/self-hosting/advanced/migration#if-a-migration-fails).
 
    ```bash
    docker compose up -d --wait postgres &&
@@ -708,7 +731,8 @@ Common checks:
 - **Missing or empty secrets**: Confirm `.env` contains `BETTER_AUTH_SECRET`, `ENCRYPTION_KEY`, `CRON_SECRET`,
   `HUB_API_KEY`, and `CUBEJS_API_SECRET`.
 - **Migration failures**: Check `formbricks-migrate`, `hub-migrate`, and `postgres` logs. Do not remove Docker
-  volumes on an existing install unless you intend to delete its data.
+  volumes on an existing install unless you intend to delete its data. For a failed `formbricks-migrate`, follow
+  [If a migration fails](/self-hosting/advanced/migration#if-a-migration-fails).
 - **Cube is unhealthy**: Confirm `cube/cube.js`, `cube/schema/FeedbackRecords.js`, and `CUBEJS_API_SECRET`
   exist, then inspect `docker compose logs cube`.
 - **Hub auth errors**: Confirm the same `HUB_API_KEY` from `.env` is used by Formbricks Web and the Hub

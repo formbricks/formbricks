@@ -46,7 +46,9 @@ sudo chmod 600 certs/*
 
 ### Step 5: Update `traefik.yaml`
 
-Modify the file to define HTTP and HTTPS settings:
+Modify the file to define HTTP and HTTPS settings. Keep the `encodedCharacters` blocks: they refuse encoded
+characters such as `%2F` in request paths, which Traefik accepts by default since v3.6.7 and which would let a
+request skip the routes that cap authentication request bodies.
 
 <CodeGroup>
   ```yaml traefik.yaml
@@ -59,8 +61,25 @@ Modify the file to define HTTP and HTTPS settings:
             to: websecure
             scheme: https
             permanent: true
+        encodedCharacters:
+          allowEncodedSlash: false
+          allowEncodedBackSlash: false
+          allowEncodedNullCharacter: false
+          allowEncodedSemicolon: false
+          allowEncodedPercent: false
+          allowEncodedQuestionMark: false
+          allowEncodedHash: false
     websecure:
       address: ":443"
+      http:
+        encodedCharacters:
+          allowEncodedSlash: false
+          allowEncodedBackSlash: false
+          allowEncodedNullCharacter: false
+          allowEncodedSemicolon: false
+          allowEncodedPercent: false
+          allowEncodedQuestionMark: false
+          allowEncodedHash: false
 
   providers:
     docker:
@@ -103,13 +122,13 @@ Modify the configuration to enforce SSL. The rest of the configuration should re
         - "traefik.http.routers.formbricks.tls=true"  # Enable TLS
         - "traefik.http.services.formbricks.loadbalancer.server.port=3000"  # Forward traffic to Formbricks on port 3000
       ports:
-        - 3000:3000
+        - 127.0.0.1:3000:3000  # Host-only: outside traffic goes through Traefik
       volumes:
         - uploads:/home/nextjs/apps/web/uploads/
       <<: *environment
 
     traefik:
-      image: "traefik:v3.6.4"
+      image: "traefik:v3.6.25"
       restart: always
       container_name: "traefik"
       depends_on:

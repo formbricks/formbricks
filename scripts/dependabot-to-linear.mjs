@@ -3,8 +3,9 @@
 // Runs daily in CI (.github/workflows/dependabot-to-linear.yml).
 //
 // Create pass: for each OPEN Dependabot alert it creates one Linear issue (if
-// not already present), on the Engineering team, in the Todo state, with the
-// `security` label and a priority mapped from the alert severity.
+// not already present), on the Engineering team, in the Triage state (so the
+// triage bot can run the security assessment and CWSS rating), with the
+// `vulnerability` label and a priority mapped from the alert severity.
 //
 // Reconcile pass: for each RESOLVED alert (fixed / dismissed / auto-dismissed)
 // it moves the matching Linear issue to a completed state, so tickets don't
@@ -25,12 +26,13 @@
 //                            Generated at Settings → API → Personal API keys.
 // Flags:
 //   --dry-run  log what would be created without writing to Linear
+import { pathToFileURL } from "node:url";
 
 const DRY_RUN = process.argv.includes("--dry-run");
 
 const LINEAR_TEAM_ID = "272e6dd2-fcab-4270-be37-1626dce35d2c"; // Engineering
-const LINEAR_TODO_STATE_ID = "c32c8340-e8f8-48f4-a863-afabe3b19e17"; // Todo
-const LINEAR_SECURITY_LABEL_ID = "f9c50a45-3bd9-45e7-a70a-5b88aba910f9"; // security
+const LINEAR_TRIAGE_STATE_ID = "724f5409-72a6-44ba-a0ad-7f94e025d52f"; // Triage
+const LINEAR_VULNERABILITY_LABEL_ID = "98bce5c9-b5ee-4c4e-887f-1756615b20f9"; // vulnerability
 // The Engineering team uses T-shirt estimation, where the estimate is a plain
 // integer the UI renders as a size: 1=XS, 2=S, 3=M, 5=L. We default every
 // Dependabot issue to "S".
@@ -152,7 +154,7 @@ async function resolveDoneStateId(apiKey) {
 }
 
 // Move an issue to a workflow state. Shared by the reconcile pass (-> Done) and
-// the create pass (reopen a stale closed ticket -> Todo when its alert is open).
+// the create pass (reopen a stale closed ticket -> Triage when its alert is open).
 async function setIssueState(apiKey, issueId, stateId) {
   const data = await linearRequest(
     apiKey,
@@ -182,8 +184,8 @@ async function createIssue(apiKey, { title, description, priority }) {
     {
       input: {
         teamId: LINEAR_TEAM_ID,
-        stateId: LINEAR_TODO_STATE_ID,
-        labelIds: [LINEAR_SECURITY_LABEL_ID],
+        stateId: LINEAR_TRIAGE_STATE_ID,
+        labelIds: [LINEAR_VULNERABILITY_LABEL_ID],
         estimate: LINEAR_ESTIMATE_S,
         title,
         description,
@@ -252,7 +254,7 @@ async function main() {
   // Create pass: open alerts -> new Linear issues (idempotent by title prefix).
   // Every alert here is `state === "open"`, so a matching ticket that's already
   // closed (completed/canceled) means the vulnerability is still live without an
-  // active ticket — reopen it to Todo rather than skipping. Active matches are
+  // active ticket — reopen it to Triage rather than skipping. Active matches are
   // left untouched so re-runs don't churn.
   for (const alert of openAlerts) {
     const issue = buildIssue(alert);
@@ -277,7 +279,7 @@ async function main() {
         continue;
       }
       if (isClosed) {
-        const result = await setIssueState(linearKey, existing.id, LINEAR_TODO_STATE_ID);
+        const result = await setIssueState(linearKey, existing.id, LINEAR_TRIAGE_STATE_ID);
         reopened += 1;
         console.log(`reopen ${result.identifier} (alert open; was "${existing.state.name}") ${result.url}`);
         continue;
@@ -322,7 +324,19 @@ async function main() {
   if (failed > 0) process.exit(1);
 }
 
-main().catch((err) => {
-  console.error(err.message ?? err);
-  process.exit(1);
-});
+// Shared by the container scanner; importing this module must never start a sync.
+export {
+  linearRequest,
+  createIssue,
+  setIssueState,
+  resolveDoneStateId,
+  LINEAR_TEAM_ID,
+  LINEAR_TRIAGE_STATE_ID,
+};
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => {
+    console.error(err.message ?? err);
+    process.exit(1);
+  });
+}

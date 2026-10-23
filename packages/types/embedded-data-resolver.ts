@@ -387,7 +387,7 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
    * travel in on the response input, and that is exactly what makes them resolvable mid-survey.
    *
    * Both link and app surveys render through the same component, so all twelve are captured for
-   * both. What they *describe* differs: on a link survey `pagePath`/`pageReferrer`/`utm*` are about
+   * both (the visit fields further down are the exception). What they *describe* differs: on a link survey `pagePath`/`pageReferrer`/`utm*` are about
    * the Formbricks-hosted survey page and how the respondent reached it; on an app survey they are
    * about the host page the survey was triggered on.
    */
@@ -533,6 +533,54 @@ export const RESERVED_FIELD_CATALOG: readonly TReservedFieldCatalogEntry[] = [
     privacy: "keep",
     display: "secondary",
     read: (r) => r.meta.locale,
+  },
+  /**
+   * **The visit (ENG-3926).** Recorded by the web SDK's visit store and handed to the renderer, which
+   * freezes it at display like the context above. App surveys on websites only: a link survey and a
+   * mobile app have no visit, so these stay unset there. A visit is one browser tab.
+   *
+   * `visitEntryReferrer` is `redactQuery` for the same reason as `pageReferrer`. `visitUrls` holds
+   * paths only, so it has no query to strip.
+   */
+  {
+    name: "visitPagesViewed",
+    dataType: "number",
+    availability: "client",
+    privacy: "keep",
+    display: "secondary",
+    read: (r) => r.meta.visitPagesViewed,
+  },
+  {
+    name: "visitUniquePagesViewed",
+    dataType: "number",
+    availability: "client",
+    privacy: "keep",
+    display: "secondary",
+    read: (r) => r.meta.visitUniquePagesViewed,
+  },
+  {
+    name: "visitTimeOnSite",
+    dataType: "number",
+    availability: "client",
+    privacy: "keep",
+    display: "secondary",
+    read: (r) => r.meta.visitTimeOnSite,
+  },
+  {
+    name: "visitEntryReferrer",
+    dataType: "string",
+    availability: "client",
+    privacy: "redactQuery",
+    display: "secondary",
+    read: (r) => r.meta.visitEntryReferrer,
+  },
+  {
+    name: "visitUrls",
+    dataType: "string",
+    availability: "client",
+    privacy: "keep",
+    display: "secondary",
+    read: (r) => r.meta.visitUrls,
   },
 ];
 

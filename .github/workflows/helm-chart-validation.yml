@@ -20,17 +20,28 @@ jobs:
           egress-policy: audit
 
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Set up Helm
-        uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3.5
+        uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
         with:
           version: v3.15.4
 
       - name: Validate default operator against Kubernetes API
         run: bash charts/formbricks/tests/authzed-api-server.sh
+
+      - name: Validate online Helm and Argo manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Use the repository's parser version without installing the application workspace.
+          parser_version=$(awk '/^  js-yaml: / { print $2 }' pnpm-workspace.yaml)
+          test -n "$parser_version"
+          npm install --ignore-scripts --no-audit --no-fund --prefix "$RUNNER_TEMP/online-chart-deps" "js-yaml@$parser_version"
+          NODE_PATH="$RUNNER_TEMP/online-chart-deps/node_modules" bash charts/formbricks/tests/online-upgrade.sh
+          NODE_PATH="$RUNNER_TEMP/online-chart-deps/node_modules" node scripts/container-security/inventory.mjs "$RUNNER_TEMP/image-inventory.json"
 
       - name: Validate chart renders
         shell: bash
@@ -73,8 +84,10 @@ jobs:
           bash charts/formbricks/tests/envoy-gateway.sh
           bash charts/formbricks/tests/pdb-selectors.sh
           bash charts/formbricks/tests/taxonomy-llm-base-url.sh
+          bash charts/formbricks/tests/taxonomy-thinking.sh
           bash charts/formbricks/tests/web-security-context.sh
           bash charts/formbricks/tests/migration-security-context.sh
+          bash charts/formbricks/tests/hub-migration-wait.sh
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \

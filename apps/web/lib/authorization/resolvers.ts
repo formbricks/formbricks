@@ -63,6 +63,21 @@ export const isAuthorizationUserActive = reactCache(async (userId: string): Prom
   }
 });
 
+/** The active subset of one bounded authorization batch. No cross-request cache. */
+export const getActiveAuthorizationUserIds = async (
+  userIds: ReadonlyArray<string>
+): Promise<ReadonlySet<string>> => {
+  try {
+    const users = await prisma.user.findMany({
+      where: { id: { in: [...userIds] }, isActive: true },
+      select: { id: true },
+    });
+    return new Set(users.map(({ id }) => id));
+  } catch (error) {
+    return rethrowAsDatabaseError(error);
+  }
+};
+
 /** Whether an organization resource still exists. */
 export const getAuthorizationOrganizationId = reactCache(
   async (organizationId: string): Promise<string | null> => {

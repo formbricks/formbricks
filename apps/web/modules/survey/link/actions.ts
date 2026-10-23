@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { resolveSurveyLanguage } from "@formbricks/i18n-utils/survey-language-match";
 import { ZLinkSurveyEmailData } from "@formbricks/types/email";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { actionClient } from "@/lib/utils/action-client";
@@ -10,15 +11,31 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
 import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
-import { resolveSurveyLanguageCode } from "@/modules/survey/link/lib/language";
 import { createLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
+import { isLinkSurveyOpenForResponses } from "@/modules/survey/link/lib/public-access";
+import { getLinkSurveyCustomCss, omitCustomCssSource } from "@/modules/survey/link/lib/respondent-custom-css";
+import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
+
+/**
+ * Loads the survey behind one of the link page's public gate actions. Both run without a session, so a
+ * survey respondents cannot take right now (a draft, archived, non-link, paused, scheduled or completed
+ * one) is "not found" here, before anything else is checked, with the same error as an unknown id. The page
+ * shows these as a 404 or as their inactive screen, never their definition (ENG-4032).
+ */
+const getSurveyOpenForResponses = async (surveyId: string) => {
+  const survey = await getSurveyWithMetadata(surveyId);
+  if (!isLinkSurveyOpenForResponses(survey)) {
+    throw new ResourceNotFoundError("Survey", surveyId);
+  }
+  return survey;
+};
 
 export const sendLinkSurveyEmailAction = actionClient
   .inputSchema(ZLinkSurveyEmailData)
   .action(async ({ parsedInput }) => {
     await applyIPRateLimit(rateLimitConfigs.actions.sendLinkSurveyEmail);
 
-    const survey = await getSurveyWithMetadata(parsedInput.surveyId);
+    const survey = await getSurveyOpenForResponses(parsedInput.surveyId);
 
     if (!survey.isVerifyEmailEnabled) {
       throw new InvalidInputError("EMAIL_VERIFICATION_NOT_ENABLED");
@@ -30,7 +47,12 @@ export const sendLinkSurveyEmailAction = actionClient
     // The language arrives from the client, and it ends up as `?lang=` in the link we email out — so
     // resolve it against this survey's own enabled languages here rather than trusting the payload.
     // Anything that names no enabled language becomes "default" and is left out of the link entirely.
-    const surveyLanguageCode = resolveSurveyLanguageCode(parsedInput.surveyLanguageCode, survey);
+    const surveyLanguageCode =
+      resolveSurveyLanguage({
+        languages: survey.languages,
+        explicitLanguage: parsedInput.surveyLanguageCode,
+        unmatchedExplicitLanguage: "fallback",
+      }) ?? "default";
 
     await sendLinkSurveyToVerifiedEmail({
       ...parsedInput,
@@ -50,19 +72,27 @@ export const validateSurveyPinAction = actionClient
   .action(async ({ parsedInput }) => {
     await applyIPRateLimit(rateLimitConfigs.actions.validateSurveyPin);
 
-    // Get survey data which includes pin information
-    const survey = await getSurveyWithMetadata(parsedInput.surveyId);
-    if (!survey) {
-      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
-    }
+    // Gated before the PIN comparison, so a survey that is not public can't be probed for its PIN either.
+    const survey = await getSurveyOpenForResponses(parsedInput.surveyId);
 
     const surveyPin = survey.pin;
     const originalPin = surveyPin?.toString();
 
-    if (!originalPin) return { survey };
-    if (originalPin !== parsedInput.pin) {
+    if (originalPin && originalPin !== parsedInput.pin) {
       throw new InvalidInputError("INVALID_PIN");
     }
 
-    return { survey, pinAuthToken: createLinkSurveyPinToken(survey.id) };
+    // The survey goes to the respondent's browser: without its stored custom CSS (editable source),
+    // with the compiled CSS the link page would otherwise have rendered (ENG-3552). Resolved only after
+    // the PIN matched, so a PIN-protected survey's CSS is not readable before it is unlocked.
+    const workspaceContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
+    const customCss = await getLinkSurveyCustomCss({
+      workspaceCustomCss: workspaceContext.customCss,
+      allowStyleOverwrite: workspaceContext.workspace.styling?.allowStyleOverwrite,
+      survey,
+    });
+    const publicSurvey = omitCustomCssSource(survey);
+
+    if (!originalPin) return { survey: publicSurvey, customCss };
+    return { survey: publicSurvey, customCss, pinAuthToken: createLinkSurveyPinToken(survey.id) };
   });

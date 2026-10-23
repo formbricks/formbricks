@@ -209,6 +209,7 @@ describe("withAuditLogging", () => {
       ipAddress: "127.0.0.1",
       auditLoggingCtx: {
         ipAddress: "127.0.0.1",
+        userAgent: "test-agent",
         organizationId: "org1",
       },
     };
@@ -247,6 +248,7 @@ describe("withAuditLogging", () => {
       ipAddress: "127.0.0.1",
       auditLoggingCtx: {
         ipAddress: "127.0.0.1",
+        userAgent: "test-agent",
         organizationId: "org1",
       },
     };

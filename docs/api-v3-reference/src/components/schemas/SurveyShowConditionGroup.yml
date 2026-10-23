@@ -1,0 +1,24 @@
+type: object
+description: >
+  A group of show conditions. `and` means every condition must hold; `or` means one is enough. A
+  group can hold one more group, no deeper. An empty group is stored as `null`.
+required:
+  - id
+  - connector
+  - conditions
+properties:
+  id:
+    type: string
+    description: Client-generated id (cuid2), unique within the survey's conditions.
+  connector:
+    type: string
+    enum:
+      - and
+      - or
+  conditions:
+    type: array
+    items:
+      anyOf:
+        - $ref: ./SurveyShowCondition.yml
+        - $ref: ./SurveyShowConditionGroup.yml
+additionalProperties: false

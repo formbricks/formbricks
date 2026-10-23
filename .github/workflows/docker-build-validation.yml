@@ -36,17 +36,17 @@ jobs:
           egress-policy: audit
 
       - name: Checkout Repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Setup repository Node.js version
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
 
       - name: Install pnpm
-        uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda # v4.1.0
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
@@ -79,15 +79,15 @@ jobs:
           egress-policy: audit
 
       - name: Checkout Repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Build Deployment Check Image
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: ./apps/deployment-check/Dockerfile
@@ -113,9 +113,32 @@ jobs:
           grep -q "FORMBRICKS_URL" <<<"$output"
           grep -q "FORMBRICKS_API_KEY" <<<"$output"
 
+  validate-traefik-auth:
+    name: Validate One-Click Traefik Auth Routes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Run one-click Traefik auth-route smoke test
+        run: bash docker/traefik-auth-smoke.sh
+
   validate-docker-build:
     name: Validate Docker Build
     runs-on: ubuntu-latest
+    # Forks cannot access Depot credentials and need time for a cold Node source build.
+    timeout-minutes: 180
     permissions:
       contents: read
 
@@ -148,12 +171,31 @@ jobs:
           egress-policy: audit
 
       - name: Checkout Repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
+      - name: Set up image browser checks
+        uses: ./.github/actions/setup-image-smoke
+
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Select Docker builder
+        id: docker-builder
+        shell: bash
+        env:
+          DEPOT_PROJECT_TOKEN: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+        run: |
+          if [[ -n "$DEPOT_PROJECT_TOKEN" ]]; then
+            echo "depot=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "depot=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Depot CLI
+        if: steps.docker-builder.outputs.depot == 'true'
+        uses: depot/setup-action@91bc8495a33ebfc504ffc89e5674379ccf23c29c # v1.7.2
 
       - name: Verify Valkey Image Platforms
         shell: bash
@@ -173,17 +215,36 @@ jobs:
             any(.manifests[]; .platform.os == "linux" and .platform.architecture == "arm64")
           ' <<<"$manifest"
 
-      # NOTE: deliberately no `cache-from`/`cache-to: type=gha`. Measured over four runs, exporting
-      # the cache cost 222-407s per run while the layers it could restore added up to 12s of work,
-      # because `COPY . .` used to sit ahead of `pnpm install` and invalidated everything after it.
-      # apps/web/Dockerfile now installs from the manifests alone, so the install layer survives a
-      # source-only change (ENG-587). What is still missing is a producer this job can read: no
-      # workflow runs on pushes to main, and merge_group runs write to throwaway
-      # `gh-readonly-queue/...` scopes. Revisit together with a push-to-main build or a registry
-      # cache, which is not branch-scoped. The pnpm store sits in a cache mount, and no exported
-      # cache carries those, so a restored install layer is the whole of the win.
+      # Reuse the release builder's persistent Node compilation and pnpm caches. Load the PR image
+      # onto this runner so every runtime check below still exercises the current checkout.
       - name: Build Docker Image
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        if: steps.docker-builder.outputs.depot == 'true'
+        uses: depot/build-push-action@98e78adca7817480b8185f474a400b451d74e287 # v1.18.0
+        with:
+          project: tw0fqmsx3c
+          token: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          context: .
+          file: ./apps/web/Dockerfile
+          platforms: linux/amd64
+          pull: true
+          push: false
+          load: true
+          build-args: |
+            FORMBRICKS_DEPLOYMENT_ID=${{ github.sha }}-pr
+            FORMBRICKS_BUILD_VARIANT=pr
+          tags: formbricks-test:${{ github.sha }}
+          secrets: |
+            database_url=${{ secrets.DUMMY_DATABASE_URL }}
+            encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
+            redis_url=redis://localhost:6379
+            hub_api_url=http://localhost:4000
+            hub_api_key=build-time-placeholder
+            cubejs_api_url=http://localhost:4000
+            cubejs_api_secret=build-time-placeholder
+
+      - name: Build Docker Image without Depot credentials
+        if: steps.docker-builder.outputs.depot == 'false'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         env:
           GITHUB_SHA: ${{ github.sha }}
         with:
@@ -191,6 +252,9 @@ jobs:
           file: ./apps/web/Dockerfile
           push: false
           load: true
+          build-args: |
+            FORMBRICKS_DEPLOYMENT_ID=${{ github.sha }}-pr
+            FORMBRICKS_BUILD_VARIANT=pr
           tags: formbricks-test:${{ env.GITHUB_SHA }}
           secrets: |
             database_url=${{ secrets.DUMMY_DATABASE_URL }}
@@ -200,6 +264,18 @@ jobs:
             hub_api_key=build-time-placeholder
             cubejs_api_url=http://localhost:4000
             cubejs_api_secret=build-time-placeholder
+
+      - name: Verify assembled Next runtime
+        env:
+          IMAGE: formbricks-test:${{ github.sha }}
+          BUILD_IDENTITY: ${{ github.sha }}-pr
+        run: docker run --rm --network none --entrypoint node "$IMAGE" verify-next-runtime.mjs "$BUILD_IDENTITY" pr
+
+      # Node must trust the OS CA bundle, or a CA-package fix such as the eMudhra distrust never reaches it.
+      - name: Verify Node trusts the OS CA bundle
+        env:
+          IMAGE: formbricks-test:${{ github.sha }}
+        run: bash apps/web/scripts/docker/verify-tls-image.sh "$IMAGE"
 
       - name: Verify Runtime Image Excludes npm
         shell: bash
@@ -517,7 +593,13 @@ jobs:
           fi
 
       - name: Verify and Initialize PostgreSQL
+        env:
+          POSTGRES_SERVICE_ID: ${{ job.services.postgres.id }}
+          REDIS_SERVICE_ID: ${{ job.services.redis.id }}
         run: |
+          # Runner hardening can restart Docker after Actions creates the service containers.
+          # Restore only this job's fixtures before testing the application against them.
+          docker start "$POSTGRES_SERVICE_ID" "$REDIS_SERVICE_ID"
           echo "Verifying PostgreSQL connection..."
           # Install PostgreSQL client to test connection
           sudo apt-get update && sudo apt-get install -y postgresql-client
@@ -573,6 +655,8 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
           DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
         run: |
+          set -euo pipefail
+          trap 'docker rm -f formbricks-test >/dev/null 2>&1 || true' EXIT
           echo "🧪 Testing if the Docker image starts correctly..."
 
           # Add extra docker run args to support host.docker.internal on Linux
@@ -602,8 +686,6 @@ jobs:
           MAX_RETRIES=60  # 60 attempts × 5 seconds = 5 minutes
           RETRY_COUNT=0
           HEALTH_CHECK_SUCCESS=false
-
-          set +e  # Disable exit on error to allow for retries
 
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
             RETRY_COUNT=$((RETRY_COUNT + 1))
@@ -635,6 +717,12 @@ jobs:
             sleep 5
           done
 
+          if [ "$HEALTH_CHECK_SUCCESS" != "true" ]; then
+            echo "❌ Health check failed after $((MAX_RETRIES * 5)) seconds (5 minutes)"
+            docker logs formbricks-test || true
+            exit 1
+          fi
+
           # Show full container logs for debugging and verify startup work ran exactly once
           echo "📋 Full container logs:"
           CONTAINER_LOGS="$(docker logs formbricks-test 2>&1)"
@@ -654,14 +742,8 @@ jobs:
           assert_log_once "Running database migrations"
           assert_log_once "Running SAML database setup"
 
-          # Clean up the container
-          echo "🧹 Cleaning up..."
-          docker rm -f formbricks-test
-
-          # Exit with failure if health check did not succeed
-          if [ "$HEALTH_CHECK_SUCCESS" != "true" ]; then
-            echo "❌ Health check failed after $((MAX_RETRIES * 5)) seconds (5 minutes)"
-            exit 1
-          fi
+          # Exercise browser hydration against the image, not a separate Next build.
+          PGPASSWORD=test psql -h localhost -U test -d formbricks -v ON_ERROR_STOP=1 -f docker/fixtures/image-smoke.sql
+          node docker/smoke-next-browser.mjs http://localhost:3000
 
           echo "✨ Docker validation complete - all checks passed!"

@@ -218,7 +218,7 @@ services:
   # Keep hub, hub-migrate, and any future hub-worker on the same tag — they share one image and
   # drift breaks migrations or job processing.
   hub-migrate:
-    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.8.5}
+    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.14.1}
     restart: "no"
     entrypoint: ["sh", "-c"]
     command:
@@ -233,7 +233,7 @@ services:
 
   # Formbricks Hub API (ghcr.io/formbricks/hub). Uses a dedicated local Hub database by default.
   hub:
-    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.8.5}
+    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.14.1}
     depends_on:
       hub-migrate:
         condition: service_completed_successfully
@@ -297,7 +297,7 @@ services:
 
   # Hub worker processes async jobs enqueued by the API, including embeddings.
   hub-worker:
-    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.8.5}
+    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.14.1}
     depends_on:
       hub-migrate:
         condition: service_completed_successfully
@@ -402,7 +402,7 @@ services:
   # Playground) runs its refresh keys on an embedded Cube Store, which ghcr.io/formbricks/cube leaves
   # out. cube.js refuses to start without CUBEJS_API_SECRET.
   cube:
-    image: cubejs/cube:v1.7.47
+    image: cubejs/cube:v1.7.50
     env_file:
       - path: apps/web/.env
         required: false

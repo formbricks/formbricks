@@ -67,6 +67,7 @@ const licenseFeatures = (
   feedbackDirectories: false,
   dashboards: false,
   workflows: false,
+  dataRetention: false,
   ...overrides,
 });
 
@@ -223,6 +224,24 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
     const result = await getSelfHostedOrganizationEntitlementsContext("org1");
 
     expect(result.features).not.toContain("workflows");
+  });
+
+  test("maps the data retention feature to its entitlement", async () => {
+    mockGetOrg.mockResolvedValue(organization);
+    mockGetLicense.mockResolvedValue(activeLicense({ dataRetention: true }));
+
+    const result = await getSelfHostedOrganizationEntitlementsContext("org1");
+
+    expect(result.features).toContain("data-retention");
+  });
+
+  test("does not map the data retention entitlement when the license flag is off", async () => {
+    mockGetOrg.mockResolvedValue(organization);
+    mockGetLicense.mockResolvedValue(activeLicense({ workflows: true }));
+
+    const result = await getSelfHostedOrganizationEntitlementsContext("org1");
+
+    expect(result.features).not.toContain("data-retention");
   });
 
   test("maps both Hub features when all enabled", async () => {

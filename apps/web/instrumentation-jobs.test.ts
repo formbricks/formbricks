@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+const online = vi.hoisted(() => ({ enabled: true }));
+vi.mock("@/lib/upgrade/compatibility", () => ({ isNewReleaseWorkEnabled: async () => online.enabled }));
+
 const mockStartJobsRuntime = vi.fn();
 const mockRemoveSurveyScheduling = vi.fn();
 const mockUpsertSurveyScheduling = vi.fn();
@@ -13,6 +16,8 @@ const mockRemoveWorkflowsUsageSnapshot = vi.fn();
 const mockUpsertWorkflowsUsageSnapshot = vi.fn();
 const mockUpsertAuthzedProjectionDelivery = vi.fn();
 const mockUpsertAuthzedReconciliationAudit = vi.fn();
+const mockUpsertDeletionCleanupDrain = vi.fn();
+const mockUpsertDataRetentionSweep = vi.fn();
 const mockDebug = vi.fn();
 const mockError = vi.fn();
 const mockWarn = vi.fn();
@@ -27,6 +32,8 @@ const mockProcessWorkflowRunReconcileJob = vi.fn();
 const mockProcessWorkflowsUsageSnapshotJob = vi.fn();
 const mockProcessAuthzedProjectionDeliveryJob = vi.fn();
 const mockProcessAuthzedScheduledReconciliationJob = vi.fn();
+const mockProcessDeletionCleanupDrainJob = vi.fn();
+const mockProcessDataRetentionSweepJob = vi.fn();
 const TEST_TIMEOUT_MS = 15_000;
 
 const slowTest = (name: string, fn: () => Promise<void>): void => {
@@ -59,6 +66,18 @@ vi.mock("@formbricks/jobs", () => ({
       scheduleId: "daily-authzed-survey-audit",
       scope: "global",
       upsert: vi.fn(),
+    },
+    dataRetentionSweep: {
+      name: "data-retention.sweep",
+      scheduleId: "daily-data-retention-sweep",
+      scope: "global",
+      upsert: mockUpsertDataRetentionSweep,
+    },
+    deletionCleanupDrain: {
+      name: "deletion-cleanup.drain",
+      scheduleId: "deletion-cleanup-drain",
+      scope: "global",
+      upsert: mockUpsertDeletionCleanupDrain,
     },
     surveyArchivePurge: {
       name: "survey-archive-purge.process",
@@ -141,6 +160,14 @@ vi.mock("@/modules/ee/workflows/lib/analytics/process-workflows-usage-snapshot-j
   processWorkflowsUsageSnapshotJob: mockProcessWorkflowsUsageSnapshotJob,
 }));
 
+vi.mock("@/modules/ee/data-retention/sweep/process-data-retention-sweep-job", () => ({
+  processDataRetentionSweepJob: mockProcessDataRetentionSweepJob,
+}));
+
+vi.mock("@/modules/deletion-cleanup/lib/process-deletion-cleanup-drain-job", () => ({
+  processDeletionCleanupDrainJob: mockProcessDeletionCleanupDrainJob,
+}));
+
 vi.mock("@/lib/authzed/outbox-processor", () => ({
   processAuthzedProjectionDeliveryJob: mockProcessAuthzedProjectionDeliveryJob,
 }));
@@ -154,6 +181,7 @@ describe("instrumentation-jobs", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
+    online.enabled = true;
     vi.useFakeTimers();
     mockRemoveSurveyScheduling.mockResolvedValue(true);
     mockRemoveSurveyArchivePurge.mockResolvedValue(true);
@@ -246,11 +274,14 @@ describe("instrumentation-jobs", () => {
     expect(second).toBe(mockRuntime);
     expect(mockStartJobsRuntime).toHaveBeenCalledTimes(1);
     expect(mockStartJobsRuntime).toHaveBeenCalledWith({
+      manageSignals: true,
       concurrency: 4,
       jobHandlerOverrides: {
         "authzed-projection.deliver": expect.any(Function),
         "authzed-reconciliation.audit": expect.any(Function),
         "authzed-survey.audit": expect.any(Function),
+        "data-retention.sweep": expect.any(Function),
+        "deletion-cleanup.drain": expect.any(Function),
         "response-pipeline.process": expect.any(Function),
         "survey-scheduling.reconcile": expect.any(Function),
         "survey-archive-purge.process": expect.any(Function),
@@ -480,6 +511,42 @@ describe("instrumentation-jobs", () => {
     await expect(registerJobsWorker()).resolves.toBe(recoveredRuntime);
   });
 
+  test("keeps the survey audit scheduler inactive until durable activation is observed", async () => {
+    online.enabled = false;
+    mockGetJobsQueueingConfig.mockReturnValue({ enabled: true, redisUrl: "redis://localhost:6379" });
+    const { registerRecurringJobs } = await import("./instrumentation-jobs");
+    const { RECURRING_JOB_REGISTRATIONS_BY_KEY } = await import("@/lib/jobs/recurring-registrations");
+    const audit = RECURRING_JOB_REGISTRATIONS_BY_KEY.authzedSurveyAudit.job.upsert;
+    await registerRecurringJobs();
+    expect(audit).not.toHaveBeenCalled();
+    online.enabled = true;
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(audit).toHaveBeenCalledOnce();
+    await registerRecurringJobs();
+    expect(audit).toHaveBeenCalledOnce();
+  });
+
+  test("schedules the data retention sweep and cleanup drain only once the release is activated, but AuthZed delivery at once", async () => {
+    online.enabled = false;
+    mockGetJobsQueueingConfig.mockReturnValue({ enabled: true, redisUrl: "redis://localhost:6379" });
+    const { registerRecurringJobs } = await import("./instrumentation-jobs");
+    const { RECURRING_JOB_REGISTRATIONS_BY_KEY } = await import("@/lib/jobs/recurring-registrations");
+    const sweep = RECURRING_JOB_REGISTRATIONS_BY_KEY.dataRetentionSweep.job.upsert;
+    const drain = RECURRING_JOB_REGISTRATIONS_BY_KEY.deletionCleanupDrain.job.upsert;
+    const delivery = RECURRING_JOB_REGISTRATIONS_BY_KEY.authzedProjectionDelivery.job.upsert;
+
+    await registerRecurringJobs();
+    expect(sweep).not.toHaveBeenCalled();
+    expect(drain).not.toHaveBeenCalled();
+    // Revocations must keep reaching SpiceDB throughout the upgrade, or every check fails closed.
+    expect(delivery).toHaveBeenCalled();
+
+    online.enabled = true;
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(sweep).toHaveBeenCalledOnce();
+    expect(drain).toHaveBeenCalledOnce();
+  });
+
   slowTest(
     "registers recurring schedules once when queueing is enabled without an in-process worker",
     async () => {
@@ -513,6 +580,9 @@ describe("instrumentation-jobs", () => {
         await import("@/modules/ee/workflows/lib/runner/reconcile-constants");
       const { WORKFLOWS_USAGE_SNAPSHOT_DAILY_CRON_PATTERN, WORKFLOWS_USAGE_SNAPSHOT_TIME_ZONE } =
         await import("@/modules/ee/workflows/lib/analytics/constants");
+      const { DELETION_CLEANUP_DRAIN_INTERVAL_MS } = await import("@/modules/deletion-cleanup/lib/constants");
+      const { DATA_RETENTION_SWEEP_DAILY_CRON_PATTERN, DATA_RETENTION_SWEEP_TIME_ZONE } =
+        await import("@/modules/ee/data-retention/sweep/constants");
 
       await registerRecurringJobs();
       await registerRecurringJobs();
@@ -528,6 +598,19 @@ describe("instrumentation-jobs", () => {
       expect(mockUpsertAuthzedReconciliationAudit).toHaveBeenCalledOnce();
       expect(mockUpsertAuthzedReconciliationAudit).toHaveBeenCalledWith({
         everyMs: 6 * 60 * 60 * 1_000,
+        kind: "every",
+      });
+      expect(mockUpsertDataRetentionSweep).toHaveBeenCalledOnce();
+      expect(mockUpsertDataRetentionSweep).toHaveBeenCalledWith({
+        cronPattern: DATA_RETENTION_SWEEP_DAILY_CRON_PATTERN,
+        kind: "cron",
+        timeZone: DATA_RETENTION_SWEEP_TIME_ZONE,
+      });
+      // After the night's scheduling, before the archive purge at 01:30, in the same zone.
+      expect(DATA_RETENTION_SWEEP_TIME_ZONE).toBe(SURVEY_SCHEDULING_TIME_ZONE);
+      expect(mockUpsertDeletionCleanupDrain).toHaveBeenCalledOnce();
+      expect(mockUpsertDeletionCleanupDrain).toHaveBeenCalledWith({
+        everyMs: DELETION_CLEANUP_DRAIN_INTERVAL_MS,
         kind: "every",
       });
       expect(mockUpsertSurveyScheduling).toHaveBeenCalledTimes(1);

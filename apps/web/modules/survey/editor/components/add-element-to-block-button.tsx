@@ -5,10 +5,10 @@ import { PlusIcon } from "lucide-react";
 import { type Dispatch, type SetStateAction, useId, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { type Workspace } from "@formbricks/database/prisma-browser";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
+import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { addElementToBlock } from "@/modules/survey/editor/lib/blocks";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import {
@@ -32,7 +32,7 @@ interface AddElementToBlockButtonProps {
   block: TSurveyBlock;
   setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
   setActiveElementId: (elementId: string) => void;
-  workspace: Workspace;
+  workspace: TWorkspaceWithoutCustomCss;
   isCxMode: boolean;
 }
 
