@@ -1,5 +1,6 @@
-import { describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import {
+  SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS,
   SAML_PARSE_QUEUE_LIMIT,
   SAML_PARSE_TIME_BUDGET_MS,
   probeSamlResponseParse,
@@ -53,6 +54,12 @@ const WIDE_SIGNED_RESPONSE =
   `<data>${"<n>v</n>".repeat(5_400)}</data></samlp:Response>`;
 
 describe("probeSamlResponseParse", () => {
+  // The main-thread allowance is per process, so each test would inherit what the ones before it spent, and on a slow
+  // runner answer busy. Each starts with the whole allowance; spending it is tested in saml-parse-budget.failures.test.ts.
+  beforeEach(() => {
+    if (globalThis.samlParsePool) globalThis.samlParsePool.allowanceMs = SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS;
+  });
+
   test("parses a real response within the budget and reads only its identifiers", async () => {
     const probe = await probeSamlResponseParse(b64(RESPONSE), KEY);
 

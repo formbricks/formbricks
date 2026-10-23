@@ -9,9 +9,9 @@ import type { SamlDecryptedRefusal } from "@/modules/ee/auth/saml/lib/saml-respo
  *
  * `checkSamlResponseBounds` is the cheap first gate, but it models xmldom from the outside, and a shape it misreads
  * is a way back to a slow parse. This gate does not model anything: a worker thread parses the response the way
- * `@boxyhq/saml20` does and is terminated if it runs past the budget. A response that passes is then parsed again by
- * jackson on this thread, a few times on the signature path, so what this bounds is the cost per parse: no response
- * slower than the budget reaches jackson, whatever its shape. The known shapes the byte bounds let through parse in
+ * `@boxyhq/saml20` does and is terminated if it runs past the budget. A response that passes is then processed again by
+ * jackson on this thread, so what this bounds is jackson's cost per response: no response slower than the budget
+ * reaches jackson, whatever its shape. The known shapes the byte bounds let through parse in
  * ~10-30 ms and a real response in ~5-25 ms (1,000 verbose Okta groups ~11 ms), so 100 ms only catches what the
  * bounds misread, with room for a busy host.
  *
@@ -48,19 +48,22 @@ const WORKER_STARTUP_TIMEOUT_MS = 5_000;
 
 /**
  * Main-thread parse time the SAML callback may spend per second, per process. A response that passes the budget is
- * parsed again by jackson on this thread, `JACKSON_PARSES_PER_RESPONSE` times on the signature path (issuer, decrypt,
- * xml2js, signature check), so each one is charged its worker-measured time times that; for an encrypted
- * response, that time includes decrypting it and parsing the plaintext. The worker also runs saml20's signature
- * check (ENG-4108), the dearest of those passes: before it did, jackson cost 8-18 times the worker's time on
- * responses inside the bounds, and the factor was too low for them. Now the worker's time and jackson's signature
- * check agree (within ~10% on signed responses of 150 to 1,000 groups), and the factor leaves room for the other
- * passes. Past the allowance
- * the callback answers 503 rather than let many sources together keep the event loop busy with SAML. It is checked
- * when a response is queued and again when its parse finishes, so a burst can overdraw it by one response at most. A real
- * sign-in costs ~10-25 ms x 4, so this is a dozen or more sign-ins a second per process.
+ * then processed by jackson on this thread (its issuer parse, decryption, two xml2js passes and the signature check),
+ * so each one is charged its worker-measured time times `JACKSON_COST_PER_WORKER_MS`. Past the allowance the callback
+ * answers 503 rather than let many sources together keep the event loop busy with SAML. It is checked when a response
+ * is queued and again when its parse finishes, so a burst can overdraw it by one response at most. A real sign-in
+ * costs ~10-40 ms in the worker, so this is half a dozen or more sign-ins a second per process.
  */
 export const SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS = 300;
-const JACKSON_PARSES_PER_RESPONSE = 4;
+
+/**
+ * jackson's main-thread time per millisecond the worker measured. The worker runs saml20's signature check as well
+ * (ENG-4108), the dearest of jackson's passes, so its time tracks jackson's: measured on Node 26.4, jackson's XML work
+ * (`parseIssuer` then `validate`) took 1.0-1.4 times the worker's time on real signed responses (150-500 groups,
+ * plain and encrypted) and on the costliest shapes the bounds let through (element floods, wide signed references).
+ * Before the worker ran the signature check that was 8-18 times. 2 leaves room for jackson's work around the XML.
+ */
+export const JACKSON_COST_PER_WORKER_MS = 2;
 
 /** What the worker read from the response: identifiers only, for logging. All of it is unauthenticated. */
 export interface SamlResponseClaims {
@@ -180,7 +183,7 @@ const takeResult = (result: WorkerResult): boolean => {
     settleRunning({ outcome: "busy" });
     return true;
   }
-  pool.allowanceMs -= result.ms * JACKSON_PARSES_PER_RESPONSE;
+  pool.allowanceMs -= result.ms * JACKSON_COST_PER_WORKER_MS;
   settleRunning({ outcome: "parsed", ms: result.ms, claims: result.claims });
   return true;
 };

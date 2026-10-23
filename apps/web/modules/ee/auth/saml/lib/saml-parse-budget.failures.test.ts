@@ -228,17 +228,34 @@ describe("probeSamlResponseParse failure paths", () => {
     expect(state.workers[0].terminate).toHaveBeenCalled();
   });
 
+  /**
+   * Worker times that spend the whole allowance in two responses: one at the time budget, then the rest. No single
+   * response can, since one within the budget costs jackson at most the budget times `JACKSON_COST_PER_WORKER_MS`.
+   */
+  const spendingTheAllowance = (module: Awaited<ReturnType<typeof load>>) => {
+    const { SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS, SAML_PARSE_TIME_BUDGET_MS, JACKSON_COST_PER_WORKER_MS } =
+      module;
+    const rest =
+      (SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS - SAML_PARSE_TIME_BUDGET_MS * JACKSON_COST_PER_WORKER_MS) /
+      JACKSON_COST_PER_WORKER_MS;
+    expect(rest).toBeGreaterThan(0);
+    expect(rest).toBeLessThanOrEqual(SAML_PARSE_TIME_BUDGET_MS);
+    return [SAML_PARSE_TIME_BUDGET_MS, rest];
+  };
+
   test("answers busy once this process has spent its main-thread parse allowance, and recovers with time", async () => {
-    const { probeSamlResponseParse, SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS } = await load();
-    const probe = probeSamlResponseParse("PHIvPg==", KEY);
+    const module = await load();
+    const { probeSamlResponseParse } = module;
+    const probes = [probeSamlResponseParse("PHIvPg==", KEY), probeSamlResponseParse("PHIvPg==", KEY)];
     await settle();
     state.workers[0].ready();
     mainPort(state.workers[0]).flush();
-    await settle();
-    // One parse that jackson will repeat four times uses the whole allowance.
-    state.workers[0].answer(SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS / 4);
-    mainPort(state.workers[0]).flush();
-    await probe;
+    for (const ms of spendingTheAllowance(module)) {
+      await settle();
+      state.workers[0].answer(ms);
+      mainPort(state.workers[0]).flush();
+    }
+    for (const probe of await Promise.all(probes)) expect(probe.outcome).toBe("parsed");
 
     await expect(probeSamlResponseParse("PHIvPg==", KEY)).resolves.toEqual({ outcome: "busy" });
 
@@ -251,23 +268,26 @@ describe("probeSamlResponseParse failure paths", () => {
   });
 
   test("answers busy for a job queued before the allowance ran out, once the job ahead of it spends it", async () => {
-    const { probeSamlResponseParse, SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS } = await load();
-    // Both are accepted while the whole allowance is left.
-    const first = probeSamlResponseParse("PHIvPg==", KEY);
-    const second = probeSamlResponseParse("PHIvPg==", KEY);
+    const module = await load();
+    const { probeSamlResponseParse } = module;
+    // All are accepted while the whole allowance is left.
+    const spenders = [probeSamlResponseParse("PHIvPg==", KEY), probeSamlResponseParse("PHIvPg==", KEY)];
+    const last = probeSamlResponseParse("PHIvPg==", KEY);
     await settle();
     state.workers[0].ready();
     mainPort(state.workers[0]).flush();
-    await settle();
-    state.workers[0].answer(SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS / 4);
-    mainPort(state.workers[0]).flush();
-    await expect(first).resolves.toMatchObject({ outcome: "parsed" });
+    for (const ms of spendingTheAllowance(module)) {
+      await settle();
+      state.workers[0].answer(ms);
+      mainPort(state.workers[0]).flush();
+    }
+    for (const probe of await Promise.all(spenders)) expect(probe.outcome).toBe("parsed");
 
     await settle();
     state.workers[0].answer(5);
     mainPort(state.workers[0]).flush();
 
-    await expect(second).resolves.toEqual({ outcome: "busy" });
+    await expect(last).resolves.toEqual({ outcome: "busy" });
 
     // A response refused as busy costs nothing: 10 ms of refill is enough for the next one.
     await vi.advanceTimersByTimeAsync(10);
