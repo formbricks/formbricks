@@ -34,7 +34,10 @@ describe("lockDashboard", () => {
       TemplateStringsArray,
       ...unknown[],
     ];
-    expect(strings.join("?")).toMatch(/FROM "Dashboard" WHERE id = \? FOR UPDATE/);
+    // The alias is what `TLockedDashboard` reads: a typo would leave updatedAt undefined at runtime.
+    expect(strings.join("?")).toMatch(
+      /SELECT "updated_at" AS "updatedAt" FROM "Dashboard" WHERE id = \? FOR UPDATE/
+    );
     expect(values).toEqual(["cldb000000000000000000001"]);
   });
 

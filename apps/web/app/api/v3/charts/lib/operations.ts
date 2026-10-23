@@ -205,12 +205,6 @@ export async function createV3Chart({
   }
 }
 
-/**
- * `PATCH /api/v3/charts/{chartId}` → 200 `{ data }`.
- *
- * Needs write access to the chart's workspace. The chart may sit on several dashboards, and the edit
- * shows on every one of them — `dashboards` in the response names them.
- */
 /** The fields a chart update writes, with its query held to the validator. */
 const chartUpdateOf = (
   body: TV3ChartUpdateBody
@@ -227,6 +221,12 @@ const chartUpdateOf = (
   return { ok: true, data };
 };
 
+/**
+ * `PATCH /api/v3/charts/{chartId}` → 200 `{ data }`.
+ *
+ * Needs write access to the chart's workspace. The chart may sit on several dashboards, and the edit
+ * shows on every one of them — `dashboards` in the response names them.
+ */
 export async function updateV3Chart({
   chartId,
   body,

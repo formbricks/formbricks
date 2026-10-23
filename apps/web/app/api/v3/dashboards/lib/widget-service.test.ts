@@ -79,6 +79,9 @@ const expectNothingWritten = (tx: TTx) => {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // The app's clock reads the locked updatedAt, so a write that took plain "now" would leave the token as
+  // it was: every touch below must land exactly a millisecond past it.
+  vi.useFakeTimers({ now: LOCKED_AT, toFake: ["Date"] });
 });
 
 afterEach(() => {
@@ -167,7 +170,7 @@ describe("addWidgetRow", () => {
     expect(tx.dashboard.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: DASHBOARD_ID } })
     );
-    expect(touchedAt(tx).getTime()).toBeGreaterThan(LOCKED_AT.getTime());
+    expect(touchedAt(tx).getTime()).toBe(LOCKED_AT.getTime() + 1);
   });
 
   test("without a layout, places the chart in the first open slot at its type's default size", async () => {
@@ -280,7 +283,7 @@ describe("updateWidgetRow", () => {
     expect(tx.dashboardWidget.update).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: mine.id }, data: { layout } })
     );
-    expect(touchedAt(tx).getTime()).toBeGreaterThan(LOCKED_AT.getTime());
+    expect(touchedAt(tx).getTime()).toBe(LOCKED_AT.getTime() + 1);
   });
 
   test("repoints in place, writing only the chart, and returns what it showed before", async () => {
@@ -343,7 +346,7 @@ describe("deleteWidgetRow", () => {
     expect(tx.dashboardWidget.deleteMany).toHaveBeenCalledWith({
       where: { id: "clwg_a", dashboardId: DASHBOARD_ID },
     });
-    expect(touchedAt(tx).getTime()).toBeGreaterThan(LOCKED_AT.getTime());
+    expect(touchedAt(tx).getTime()).toBe(LOCKED_AT.getTime() + 1);
   });
 
   test("runs the transaction again after a deadlock, like every other widget write", async () => {
