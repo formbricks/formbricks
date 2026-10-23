@@ -197,11 +197,13 @@ rm -rf "$crd_dir"
 For separately managed **both** sets, use that same Envoy CRD chart with
 `crds.gatewayAPI.enabled=true`, `crds.gatewayAPI.channel=standard`, and
 `crds.envoyGateway.enabled=true`. Do not apply it over provider-owned Gateway API CRDs. Gateway API v1.5.1
-must serve the types Envoy needs, including `BackendTLSPolicy` and `ListenerSet`. Run the optional,
-read-only preflight after the CRD owner provisions them:
+must serve the types Envoy needs, including `BackendTLSPolicy` and `ListenerSet`. The OCI install does not
+place chart scripts in your working directory. Obtain the Formbricks repository, then run the optional,
+read-only preflight after the CRD owner provisions the CRDs:
 
 ```bash
-bash charts/formbricks/scripts/preflight-envoy-crds.sh --context my-cluster
+git clone --depth 1 https://github.com/formbricks/formbricks.git formbricks-preflight
+bash formbricks-preflight/charts/formbricks/scripts/preflight-envoy-crds.sh --context my-cluster
 ```
 
 Replace `my-cluster` with the target kubectl context. The script checks the installed version, channel, and
@@ -216,10 +218,10 @@ in `crds/`.
 For **Argo CD**, keep external CRDs in a platform Application, wait for `Established`, run preflight,
 then sync Formbricks with `envoy.crds.enabled=false`. For **Flux**, use a separate CRD Kustomization
 or release, wait for `Established`, run preflight, then reconcile Formbricks after its Ready condition.
-A global Argo CD
-`spec.source.helm.skipCrds` or Flux `spec.install.crds: Skip` also skips the bundled SpiceDB operator CRD;
-use it only when **all** required CRDs are managed separately. Apply the same ownership order during
-upgrades and keep externally owned resources outside Formbricks pruning.
+A global Argo CD `spec.source.helm.skipCrds` or Flux `spec.install.crds: Skip` or
+`spec.upgrade.crds: Skip` also skips the bundled SpiceDB operator CRD; use these only when **all** required
+CRDs are managed separately. Apply the same ownership order during upgrades and keep externally owned
+resources outside Formbricks pruning.
 
 A shared controller needs a compatible GatewayClass whose `controllerName` belongs to that controller and
 whose proxy settings and Redis rate-limit backend support the Formbricks routes and policies. Configure

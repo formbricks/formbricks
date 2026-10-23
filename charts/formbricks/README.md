@@ -52,8 +52,8 @@ public ingress at the Gateway's current proxy address and verify a request befor
 When the platform already owns compatible Gateway API v1.5.1 Standard or Experimental CRDs, install **only**
 the Envoy CRDs from the matching v1.8.4 chart. When the platform owns both sets outside the Formbricks
 release, use the same chart with `crds.gatewayAPI.enabled=true`,
-`crds.gatewayAPI.channel=standard`, and `crds.envoyGateway.enabled=true` instead. Do not run either command
-against provider-managed Gateway API CRDs.
+`crds.gatewayAPI.channel=standard`, and `crds.envoyGateway.enabled=true` instead. Do not apply that
+both-sets variant over provider-managed Gateway API CRDs; the Envoy-only command below is appropriate there.
 
 ```bash
 crd_dir="$(mktemp -d)"
@@ -67,8 +67,8 @@ rm -rf "$crd_dir"
 ```
 
 If a platform manages Gateway API directly, it must provide v1.5.1 CRDs with the APIs Envoy v1.8.4
-requires, including `BackendTLSPolicy` and `ListenerSet`. Run the optional read-only check **after**
-provisioning external CRDs and **before** installing or upgrading Formbricks:
+requires, including `BackendTLSPolicy` and `ListenerSet`. From a repository checkout, run the optional
+read-only check **after** provisioning external CRDs and **before** installing or upgrading Formbricks:
 
 ```bash
 bash charts/formbricks/scripts/preflight-envoy-crds.sh --context my-cluster
