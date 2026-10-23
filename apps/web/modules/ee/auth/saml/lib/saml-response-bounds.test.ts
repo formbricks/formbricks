@@ -338,6 +338,22 @@ describe("signature elements (ENG-4108)", () => {
     expect(signatures("<SignatureValue/><SignedInfo/><ds:Signatures/><xSignature/>")).toBe(0);
   });
 
+  test("counts only elements, not the word inside a comment or a CDATA section, which saml20's select never sees", () => {
+    expect(signatures(`<r><!--${many("Signature", 6)}--><![CDATA[${many("Signature", 6)}]]></r>`)).toBe(0);
+  });
+
+  // Each tag's name is read on its own: a search for a prefix's colon that ran on into the document before it would
+  // rescan the whole response once per tag, ~0.7 s for this one on the main thread before any other check.
+  test("measures a colon-free flood at the length cap in linear time", () => {
+    // Names as long as "Signature", so each one is looked at, after colon-free text.
+    const xml = "x".repeat(40_000) + "<aaaaaaaaa/>".repeat(11_990);
+    expect(b64(xml).length).toBeLessThan(SAML_RESPONSE_MAX_LENGTH);
+
+    const started = performance.now();
+    expect(checkSamlResponseBounds(b64(xml))).toBeNull();
+    expect(performance.now() - started).toBeLessThan(100);
+  });
+
   test("lets a real response through: the response's and the assertion's signature", () => {
     expect(withinBudget(`${RESPONSE_HEAD}${many("ds:Signature", 2)}${RESPONSE_TAIL}`)).toBe(true);
     expect(

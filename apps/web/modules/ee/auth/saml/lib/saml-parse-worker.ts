@@ -15,8 +15,8 @@ import { type SamlDecryptedRefusal, checkDecryptedSamlResponseBounds } from "./s
  *
  * Given the SP key, it also does what jackson does with an encrypted assertion before checking any signature, and
  * holds the decrypted document to the byte bounds, so the plaintext, which the bounds on the response only see as
- * ciphertext, is timed and measured too (ENG-4051). Then it runs saml20's signature check as jackson will, so that
- * step's cost is timed as well (ENG-4108).
+ * ciphertext, is timed and measured too (ENG-4051). Then it runs saml20's signature check as jackson will, with the
+ * connection's own IdP certificates, so that step's cost is timed as well (ENG-4108).
  *
  * It answers with the identifying fields only (the claimed issuer, the response ID and InResponseTo, cut to a length a
  * log line can carry) and how decryption went, with sizes for a refusal. Nothing else of the response leaves the
@@ -81,53 +81,70 @@ export interface ParsedSamlResponse {
 /**
  * What jackson does first with an encrypted assertion, before it checks any signature (saml20's `validateInternal`):
  * decrypt it, parse the plaintext and serialize the document with it in place. Then the bounds on that document.
- * Returns the decrypted document too, for the signature check after it; it never leaves the worker.
+ * Returns the decrypted document too, for the signature check after it (it never leaves the worker), and whether
+ * jackson gets as far as that check at all: not when it has no key to decrypt with, nor when decryption throws.
  */
 const decryptAsJackson = (
   xml: string,
   decryptionKey: string | null
-): { decryption: SamlDecryption; decryptedXml?: string } => {
-  if (!decryptionKey) return { decryption: { decrypted: false } };
+): { decryption: SamlDecryption; decryptedXml?: string; checksSignature: boolean } => {
+  if (!decryptionKey) return { decryption: { decrypted: false }, checksSignature: false };
   try {
     const { assertion, decrypted } = decryptXml(xml, { privateKey: decryptionKey });
-    if (!decrypted) return { decryption: { decrypted: false } };
-    return {
-      decryption: { decrypted: true, refusal: checkDecryptedSamlResponseBounds(assertion) },
-      decryptedXml: assertion,
-    };
+    if (!decrypted) return { decryption: { decrypted: false }, checksSignature: true };
+    const refusal = checkDecryptedSamlResponseBounds(assertion);
+    // A refused document never reaches jackson, so there is no signature check to time.
+    return { decryption: { decrypted: true, refusal }, decryptedXml: assertion, checksSignature: !refusal };
   } catch {
-    return { decryption: { decrypted: false } };
+    return { decryption: { decrypted: false }, checksSignature: false };
   }
 };
 
 /**
- * Stands in for the IdP certificate, which the worker does not know: the connection is only looked up by jackson.
- * None is needed. saml20 and xml-crypto do the work this times (finding the signature, canonicalizing and digesting
- * what it references) before they use the key, and then fail on this one, which is ignored here. A real key adds
- * only the RSA verification, well under a millisecond.
+ * What jackson checks a response's signature with, read from the configured connection (see `lib/jackson.ts`): its
+ * IdP certificates, comma-joined when there are several, or else its thumbprint. Public data, from the IdP's metadata.
  */
-const NO_IDP_CERTIFICATE = "unused";
+export type SamlIdpVerification = { publicKey: string } | { thumbprint: string };
 
 /**
- * jackson's signature check on the document it validates (saml20's `validateInternal`): the decrypted one when there
- * is one, then the response as received, which saml20 falls back to for IdPs that sign the encrypted response. Run
- * only to be timed; its outcome is jackson's to decide.
+ * jackson's signature check (saml20's `validateInternal`), with the same certificates and in the same order, so its
+ * cost is timed as jackson will spend it: saml20 tries each certificate in turn, the whole check each time, so a
+ * connection with several costs several times as much when none matches (ENG-4108). First the document jackson
+ * validates (the decrypted one, when there is one); then, only when that check finds no signature without failing,
+ * the response as received, which saml20 falls back to for IdPs that sign the encrypted response. Its outcome is
+ * jackson's to decide; here it is only timed.
  */
-const checkSignatureAsJackson = (xml: string, decryptedXml: string | undefined) => {
-  for (const document of decryptedXml === undefined ? [xml] : [decryptedXml, xml]) {
-    try {
-      validateSignature(document, NO_IDP_CERTIFICATE, null);
-    } catch {
-      // Expected: the stand-in certificate fails the check.
-    }
+const checkSignatureAsJackson = (
+  xml: string,
+  decryptedXml: string | undefined,
+  idpVerification: SamlIdpVerification
+) => {
+  const publicKey = "publicKey" in idpVerification ? idpVerification.publicKey : null;
+  const thumbprint = "thumbprint" in idpVerification ? idpVerification.thumbprint : null;
+  let signed: string | null;
+  try {
+    signed = validateSignature(decryptedXml ?? xml, publicKey, thumbprint);
+  } catch {
+    return;
+  }
+  if (decryptedXml === undefined || signed) return;
+  try {
+    validateSignature(xml, publicKey, thumbprint);
+  } catch {
+    // jackson fails the response the same way.
   }
 };
 
 /**
  * One job: parse `xml`, decrypt and measure its encrypted assertion with `decryptionKey` as jackson will, then run
- * jackson's signature check on it. Never throws.
+ * jackson's signature check on it with `idpVerification` (`null` when no connection is configured, where jackson
+ * refuses before validating). Never throws.
  */
-export const parseSamlResponse = (xml: string, decryptionKey: string | null): ParsedSamlResponse => {
+export const parseSamlResponse = (
+  xml: string,
+  decryptionKey: string | null,
+  idpVerification: SamlIdpVerification | null
+): ParsedSamlResponse => {
   let root: Element | null;
   try {
     root = parseXml(xml).documentElement;
@@ -138,21 +155,33 @@ export const parseSamlResponse = (xml: string, decryptionKey: string | null): Pa
   if (!root) return { claims: {} };
   const claims = readClaims(root);
   if (!hasEncryptedAssertion(root)) {
-    checkSignatureAsJackson(xml, undefined);
+    if (idpVerification) checkSignatureAsJackson(xml, undefined, idpVerification);
     return { claims };
   }
-  const { decryption, decryptedXml } = decryptAsJackson(xml, decryptionKey);
-  // A refused document never reaches jackson, so there is no signature check to time.
-  if (!(decryption.decrypted && decryption.refusal)) checkSignatureAsJackson(xml, decryptedXml);
+  const { decryption, decryptedXml, checksSignature } = decryptAsJackson(xml, decryptionKey);
+  if (idpVerification && checksSignature) checkSignatureAsJackson(xml, decryptedXml, idpVerification);
   return { claims, decryption };
 };
 
-// Warm xmldom up before the first real job, so a fresh worker does not charge its cold start to a real sign-in.
+/**
+ * Warms xmldom and the signature check (xml-crypto's canonicalization and digest) up before the first real job, so a
+ * fresh worker does not charge its cold start to a real sign-in. The signature is not valid, and the certificate is not
+ * one: the check does its work and then fails on the key, which is all the warm-up needs.
+ */
 const WARM_UP =
   '<samlp:Response xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol" ID="_w">' +
   '<saml2:Issuer xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion">w</saml2:Issuer>' +
+  '<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:SignedInfo>' +
+  '<ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>' +
+  '<ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/>' +
+  '<ds:Reference URI="#_w"><ds:Transforms>' +
+  '<ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/>' +
+  '<ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/></ds:Transforms>' +
+  '<ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>w</ds:DigestValue>' +
+  "</ds:Reference></ds:SignedInfo><ds:SignatureValue>w</ds:SignatureValue></ds:Signature>" +
   "<a><b c='d'/></a>".repeat(200) +
   "</samlp:Response>";
+const WARM_UP_VERIFICATION: SamlIdpVerification = { publicKey: "warm-up" };
 
 /**
  * xml-encryption's warning when a response declares an insecure algorithm (RSA 1.5, Triple DES), which saml20 gives it
@@ -173,13 +202,23 @@ const serve = (port: MessagePort) => {
   console.warn = dropInsecureAlgorithmWarnings(console.warn.bind(console));
   port.on(
     "message",
-    ({ id, xml, decryptionKey }: { id: number; xml: string; decryptionKey: string | null }) => {
+    ({
+      id,
+      xml,
+      decryptionKey,
+      idpVerification,
+    }: {
+      id: number;
+      xml: string;
+      decryptionKey: string | null;
+      idpVerification: SamlIdpVerification | null;
+    }) => {
       const started = performance.now();
-      const { claims, decryption } = parseSamlResponse(xml, decryptionKey);
+      const { claims, decryption } = parseSamlResponse(xml, decryptionKey, idpVerification);
       port.postMessage({ id, ms: performance.now() - started, claims, decryption });
     }
   );
-  for (let i = 0; i < 20; i++) parseSamlResponse(WARM_UP, null);
+  for (let i = 0; i < 20; i++) parseSamlResponse(WARM_UP, null, WARM_UP_VERIFICATION);
   port.postMessage({ ready: true });
 };
 

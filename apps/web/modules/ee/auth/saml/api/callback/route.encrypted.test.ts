@@ -27,6 +27,8 @@ vi.mock("@/modules/ee/auth/saml/lib/jackson", () => ({
   default: vi.fn(async () => ({
     oauthController: { samlResponse: samlResponseMock },
     getDecryptionKey: async () => sp.privateKey,
+    // No connection: the worker skips the signature check, which these tests do not measure.
+    idpVerification: null,
   })),
 }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({

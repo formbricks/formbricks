@@ -11,10 +11,17 @@ import {
   samlResponseWith,
   signedAssertionWithGroups,
 } from "./tests/encrypted-saml-response";
+import { createTestIdp } from "./tests/saml-test-idp";
 
 // The worker's job in this thread, so each outcome is checked directly and without timing; saml-parse-budget.test.ts
 // runs it as a real worker against the time budget.
 
+/** An IdP certificate, as jackson reads it from the connection's metadata. */
+const IDP = {
+  publicKey: createTestIdp()
+    .certificate.replaceAll(/-----[^-]+-----/g, "")
+    .replaceAll(/\s/g, ""),
+};
 const CLAIMS = { issuer: ENCRYPTED_RESPONSE_ISSUER, id: "_resp1", inResponseTo: "_req1" };
 const sp = createSpKeyPair();
 const assertion = signedAssertionWithGroups(150);
@@ -24,7 +31,7 @@ const encrypted = encryptedWith(assertion);
 
 describe("parseSamlResponse", () => {
   test("decrypts a signed assertion of 150 groups as jackson will, and it passes the bounds", () => {
-    expect(parseSamlResponse(encrypted, sp.privateKey)).toEqual({
+    expect(parseSamlResponse(encrypted, sp.privateKey, IDP)).toEqual({
       claims: CLAIMS,
       decryption: { decrypted: true, refusal: null },
     });
@@ -42,7 +49,7 @@ describe("parseSamlResponse", () => {
       { reason: "depth", markup: expect.any(Number), depth: expect.any(Number) },
     ],
   ])("refuses a decrypted assertion carrying %s, with its sizes only", (_name, plaintext, refusal) => {
-    const { decryption } = parseSamlResponse(encryptedWith(plaintext), sp.privateKey);
+    const { decryption } = parseSamlResponse(encryptedWith(plaintext), sp.privateKey, IDP);
 
     expect(decryption).toEqual({
       decrypted: true,
@@ -56,7 +63,7 @@ describe("parseSamlResponse", () => {
     // saml20 parses the plaintext strictly and gives up on a DOCTYPE, as jackson will.
     ["holding a DOCTYPE", encryptedWith(`<!DOCTYPE r SYSTEM "x">${assertion}`), sp.privateKey],
   ])("reports an encrypted assertion it cannot decrypt (%s), keeping the claims", (_name, xml, key) => {
-    expect(parseSamlResponse(xml, key)).toEqual({ claims: CLAIMS, decryption: { decrypted: false } });
+    expect(parseSamlResponse(xml, key, IDP)).toEqual({ claims: CLAIMS, decryption: { decrypted: false } });
   });
 
   test.each([
@@ -64,7 +71,7 @@ describe("parseSamlResponse", () => {
     // saml20 only decrypts an EncryptedAssertion directly under a root whose name contains "Response".
     ["when the root is not a Response", encrypted.replaceAll("saml2p:Response", "saml2p:Other")],
   ])("has nothing to decrypt %s", (_name, xml) => {
-    expect(parseSamlResponse(xml, sp.privateKey).decryption).toBeUndefined();
+    expect(parseSamlResponse(xml, sp.privateKey, IDP).decryption).toBeUndefined();
   });
 
   test("decrypts with the saml20 release jackson validates with", () => {
@@ -81,7 +88,7 @@ describe("parseSamlResponse", () => {
   });
 
   test("returns no claims for a document without a root", () => {
-    expect(parseSamlResponse("", sp.privateKey)).toEqual({ claims: {} });
+    expect(parseSamlResponse("", sp.privateKey, IDP)).toEqual({ claims: {} });
   });
 });
 

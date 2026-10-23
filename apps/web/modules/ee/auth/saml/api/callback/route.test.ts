@@ -15,26 +15,41 @@ import { JACKSON_RELAY_STATE_PREFIX, POST, type SamlErrorCode, buildLoginErrorUr
 const CLAIMS = { issuer: "https://idp.example.com", id: "_resp1", inResponseTo: "_req1" };
 const PARSED: SamlParseProbe = { outcome: "parsed", ms: 3, claims: CLAIMS };
 
-const { samlResponseMock, decryptionKeyMock, jacksonMock, applyIPRateLimitMock, redirectMock, probeMock } =
-  vi.hoisted(() => {
-    const samlResponseMock = vi.fn(async (_body: { RelayState: string; SAMLResponse: string }) => ({
-      redirect_url: "https://app.example.com/api/auth/saml/authorize?code=c",
-    }));
-    const decryptionKeyMock = vi.fn(async () => "sp-private-key");
-    return {
-      samlResponseMock,
-      decryptionKeyMock,
-      jacksonMock: vi.fn(async () => ({
-        oauthController: { samlResponse: samlResponseMock },
-        getDecryptionKey: decryptionKeyMock,
-      })),
-      applyIPRateLimitMock: vi.fn(async (_config: unknown, _options?: unknown) => ({ allowed: true })),
-      redirectMock: vi.fn((url: string) => new Response(null, { status: 307, headers: { location: url } })),
-      probeMock: vi.fn(
-        async (_samlResponse: string, _decryptionKey?: string): Promise<SamlParseProbe> => PARSED
-      ),
-    };
-  });
+const {
+  samlResponseMock,
+  decryptionKeyMock,
+  jacksonMock,
+  applyIPRateLimitMock,
+  redirectMock,
+  probeMock,
+  IDP_VERIFICATION,
+} = vi.hoisted(() => {
+  const samlResponseMock = vi.fn(async (_body: { RelayState: string; SAMLResponse: string }) => ({
+    redirect_url: "https://app.example.com/api/auth/saml/authorize?code=c",
+  }));
+  const decryptionKeyMock = vi.fn(async () => "sp-private-key");
+  // What jackson checks signatures with; the route passes it to the parse worker as it is (ENG-4108).
+  const IDP_VERIFICATION = { publicKey: "idp-certificate" };
+  return {
+    samlResponseMock,
+    decryptionKeyMock,
+    IDP_VERIFICATION,
+    jacksonMock: vi.fn(async () => ({
+      oauthController: { samlResponse: samlResponseMock },
+      getDecryptionKey: decryptionKeyMock,
+      idpVerification: IDP_VERIFICATION,
+    })),
+    applyIPRateLimitMock: vi.fn(async (_config: unknown, _options?: unknown) => ({ allowed: true })),
+    redirectMock: vi.fn((url: string) => new Response(null, { status: 307, headers: { location: url } })),
+    probeMock: vi.fn(
+      async (
+        _samlResponse: string,
+        _decryptionKey?: string | null,
+        _idpVerification?: unknown
+      ): Promise<SamlParseProbe> => PARSED
+    ),
+  };
+});
 
 vi.mock("@/modules/ee/auth/saml/lib/jackson", () => ({ default: jacksonMock }));
 vi.mock("@/modules/ee/auth/saml/lib/saml-parse-budget", () => ({ probeSamlResponseParse: probeMock }));
@@ -252,7 +267,7 @@ describe("SAML callback route", () => {
       await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "boxyhq_jackson_s" }));
 
       // With jackson's key, so an encrypted assertion is decrypted and timed before jackson does it (ENG-4051).
-      expect(probeMock).toHaveBeenCalledWith(b64(ISSUER), "sp-private-key");
+      expect(probeMock).toHaveBeenCalledWith(b64(ISSUER), "sp-private-key", IDP_VERIFICATION);
       expect(probeMock.mock.invocationCallOrder[0]).toBeLessThan(
         samlResponseMock.mock.invocationCallOrder[0]
       );
@@ -264,7 +279,7 @@ describe("SAML callback route", () => {
         await POST(callback({ SAMLResponse: b64(ISSUER), RelayState }));
 
         expect(decryptionKeyMock).not.toHaveBeenCalled();
-        expect(probeMock).toHaveBeenCalledWith(b64(ISSUER), null);
+        expect(probeMock).toHaveBeenCalledWith(b64(ISSUER), null, IDP_VERIFICATION);
         expect(samlResponseMock).toHaveBeenCalled();
       }
     );

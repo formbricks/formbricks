@@ -1,15 +1,24 @@
 import "server-only";
 import type { IConnectionAPIController, IOAuthController, JacksonOption } from "@boxyhq/saml-jackson";
 import { logger } from "@formbricks/logger";
-import { SAML_AUDIENCE, SAML_DATABASE_URL, SAML_PATH, WEBAPP_URL } from "@/lib/constants";
+import {
+  SAML_AUDIENCE,
+  SAML_DATABASE_URL,
+  SAML_PATH,
+  SAML_PRODUCT,
+  SAML_TENANT,
+  WEBAPP_URL,
+} from "@/lib/constants";
 import { toLogText } from "@/lib/utils/strings";
 import { preloadConnection } from "@/modules/ee/auth/saml/lib/preload-connection";
+import type { SamlIdpVerification } from "@/modules/ee/auth/saml/lib/saml-parse-worker";
 import { getIsSamlSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 
 declare global {
   var oauthController: IOAuthController | undefined;
   var connectionController: IConnectionAPIController | undefined;
   var samlDecryptionKey: (() => Promise<string>) | undefined;
+  var samlIdpVerification: SamlIdpVerification | null | undefined;
 }
 
 const g = global;
@@ -37,8 +46,33 @@ const jacksonLogger = (level: "info" | "warn" | "error") => (message: string, er
     toLogText(message, JACKSON_LOG_TEXT_LIMIT) ?? ""
   );
 
+/**
+ * What jackson checks a response's signature with: the configured connection's IdP certificates (comma-joined when
+ * its metadata lists several, as during a rollover), or else its thumbprint, as jackson picks them for `validate`.
+ * The parse worker runs the same check with them, so it is timed as jackson will run it: once per certificate when
+ * none matches (ENG-4108). `null` when no connection is configured, where jackson refuses before validating.
+ * Formbricks configures its one connection only when jackson starts (`preloadConnection`), so it is read then.
+ */
+const readIdpVerification = async (
+  connectionController: IConnectionAPIController
+): Promise<SamlIdpVerification | null> => {
+  const [connection] = await connectionController.getConnections({
+    tenant: SAML_TENANT,
+    product: SAML_PRODUCT,
+  });
+  if (!connection || !("idpMetadata" in connection)) return null;
+  const { publicKey, thumbprint } = connection.idpMetadata;
+  if (publicKey) return { publicKey };
+  return thumbprint ? { thumbprint } : null;
+};
+
 export default async function init() {
-  if (!g.oauthController || !g.connectionController || !g.samlDecryptionKey) {
+  if (
+    !g.oauthController ||
+    !g.connectionController ||
+    !g.samlDecryptionKey ||
+    g.samlIdpVerification === undefined
+  ) {
     const isSamlSsoEnabled = await getIsSamlSsoEnabled();
     if (!isSamlSsoEnabled) return;
 
@@ -70,7 +104,9 @@ export default async function init() {
     const ret = await controllers(opts);
 
     await preloadConnection(ret.connectionAPIController);
+    const idpVerification = await readIdpVerification(ret.connectionAPIController);
 
+    g.samlIdpVerification = idpVerification;
     g.oauthController = ret.oauthController;
     g.connectionController = ret.connectionAPIController;
     // The private key jackson decrypts encrypted assertions with: its default SP certificate, which `controllers`
@@ -86,5 +122,6 @@ export default async function init() {
     oauthController: g.oauthController,
     connectionController: g.connectionController,
     getDecryptionKey: g.samlDecryptionKey,
+    idpVerification: g.samlIdpVerification,
   };
 }

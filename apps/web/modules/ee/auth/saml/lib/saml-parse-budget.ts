@@ -1,7 +1,7 @@
 import "server-only";
 import { MessageChannel, type MessagePort, Worker, receiveMessageOnPort } from "node:worker_threads";
 import { logger } from "@formbricks/logger";
-import type { SamlDecryption } from "@/modules/ee/auth/saml/lib/saml-parse-worker";
+import type { SamlDecryption, SamlIdpVerification } from "@/modules/ee/auth/saml/lib/saml-parse-worker";
 import type { SamlDecryptedRefusal } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
 
 /**
@@ -11,13 +11,16 @@ import type { SamlDecryptedRefusal } from "@/modules/ee/auth/saml/lib/saml-respo
  * is a way back to a slow parse. This gate does not model anything: a worker thread parses the response the way
  * `@boxyhq/saml20` does and is terminated if it runs past the budget. A response that passes is then processed again by
  * jackson on this thread, so what this bounds is jackson's cost per response: no response slower than the budget
- * reaches jackson, whatever its shape. The known shapes the byte bounds let through parse in
- * ~10-30 ms and a real response in ~5-25 ms (1,000 verbose Okta groups ~11 ms), so 100 ms only catches what the
- * bounds misread, with room for a busy host.
+ * reaches jackson, whatever its shape.
  *
- * The worker also runs saml20's signature check, with a stand-in certificate (ENG-4108). saml20 and xml-crypto find
- * the signature, canonicalize what it references and digest it before they use the key, so that cost is incurred
- * and timed without the IdP's certificate, and a response that makes it too dear never reaches jackson.
+ * The worker also runs saml20's signature check (ENG-4108), with the configured connection's IdP certificates, as
+ * jackson will: saml20 tries them one by one, the whole check each time, so a connection with several (a rollover)
+ * costs several times as much when none matches. That check is most of the time measured: canonicalizing and
+ * digesting the signed document costs far more than parsing it. The largest real response the byte bounds admit (862
+ * verbose Okta groups, 255 KiB) takes ~77 ms with one certificate and ~140 ms with two (Node 26.4, arm64 laptop,
+ * warm); a slower host takes longer. The budget has to let that through, and it is one figure for every connection,
+ * however many certificates it lists, so one response holds jackson's thread for at most ~1.4 times it (see
+ * `JACKSON_COST_PER_WORKER_MS`) whatever the configuration.
  *
  * An encrypted assertion is ciphertext to the byte bounds, and jackson decrypts it and parses the plaintext before it
  * checks any signature (ENG-4051). Given the SP key, the worker does the same within the same budget: the outer parse,
@@ -27,7 +30,7 @@ import type { SamlDecryptedRefusal } from "@/modules/ee/auth/saml/lib/saml-respo
  * parses well within the budget, but jackson's later passes over it cost several times as much. An encrypted assertion
  * that will not decrypt goes on to jackson, which fails it the same way (see `takeResult`).
  */
-export const SAML_PARSE_TIME_BUDGET_MS = 100;
+export const SAML_PARSE_TIME_BUDGET_MS = 250;
 
 /**
  * Jobs that may wait for the worker. One parse runs at a time, so a flood that fills the queue is refused at once
@@ -52,7 +55,8 @@ const WORKER_STARTUP_TIMEOUT_MS = 5_000;
  * so each one is charged its worker-measured time times `JACKSON_COST_PER_WORKER_MS`. Past the allowance the callback
  * answers 503 rather than let many sources together keep the event loop busy with SAML. It is checked when a response
  * is queued and again when its parse finishes, so a burst can overdraw it by one response at most. A real sign-in
- * costs ~10-40 ms in the worker, so this is half a dozen or more sign-ins a second per process.
+ * costs ~12 ms in the worker with 150 groups and ~77 ms at the largest the bounds admit, so this is about a dozen
+ * sign-ins a second per process, or two of the largest.
  */
 export const SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS = 300;
 
@@ -91,6 +95,8 @@ interface Job {
   xml: string;
   /** The SP private key, so the worker can decrypt an encrypted assertion as jackson will; `null` when jackson won't. */
   decryptionKey: string | null;
+  /** What jackson checks the signature with, so the worker can time that check as jackson will run it. */
+  idpVerification: SamlIdpVerification | null;
   resolve: (probe: SamlParseProbe) => void;
 }
 
@@ -300,7 +306,12 @@ function pump(): void {
         settleRunning({ outcome: "too_costly", reason: "time" });
       }, SAML_PARSE_TIME_BUDGET_MS);
       pool.running = { ...job, dispatched: true, timer };
-      handle.port.postMessage({ id: job.id, xml: job.xml, decryptionKey: job.decryptionKey });
+      handle.port.postMessage({
+        id: job.id,
+        xml: job.xml,
+        decryptionKey: job.decryptionKey,
+        idpVerification: job.idpVerification,
+      });
     },
     () => {
       // Settled by the worker's failure handler already; this only guards a job left waiting on a failed start.
@@ -312,11 +323,13 @@ function pump(): void {
 /**
  * Parse `samlResponseBase64` in the worker under `SAML_PARSE_TIME_BUDGET_MS`, decoded as jackson decodes it, and with
  * `decryptionKey` (`null` for a response jackson would not decrypt) decrypt its encrypted assertion within the same
- * budget and hold the result to the byte bounds. Never rejects: every way it can end is an outcome.
+ * budget and hold the result to the byte bounds, then run jackson's signature check with `idpVerification` (`null`
+ * when no connection is configured). Never rejects: every way it can end is an outcome.
  */
 export const probeSamlResponseParse = (
   samlResponseBase64: string,
-  decryptionKey: string | null
+  decryptionKey: string | null,
+  idpVerification: SamlIdpVerification | null
 ): Promise<SamlParseProbe> => {
   refillAllowance(performance.now());
   if (pool.queue.length >= SAML_PARSE_QUEUE_LIMIT || pool.allowanceMs <= 0) {
@@ -328,6 +341,7 @@ export const probeSamlResponseParse = (
       id: pool.nextId++,
       xml: Buffer.from(samlResponseBase64, "base64").toString(),
       decryptionKey,
+      idpVerification,
       resolve,
     });
     pump();

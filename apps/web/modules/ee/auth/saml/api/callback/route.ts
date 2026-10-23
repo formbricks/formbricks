@@ -333,7 +333,7 @@ export const POST = async (req: Request) => {
       responses.forbiddenResponse("SAML SSO is not enabled in your Formbricks license")
     );
   }
-  const { oauthController, getDecryptionKey } = jacksonInstance;
+  const { oauthController, getDecryptionKey, idpVerification } = jacksonInstance;
 
   const form = await readCallbackForm(req);
   if (form instanceof Response) return form;
@@ -347,8 +347,9 @@ export const POST = async (req: Request) => {
 
   // The bounds model xmldom; this measures it. A worker parses the response under a time budget first, so a shape
   // the bounds misread costs the worker at most the budget and never blocks this thread for long. It decrypts an
-  // encrypted assertion with jackson's key and parses that too.
-  const probe = await probeSamlResponseParse(SAMLResponse, decryptionKey);
+  // encrypted assertion with jackson's key and parses that too, then runs jackson's signature check with the
+  // connection's IdP certificates (ENG-4108).
+  const probe = await probeSamlResponseParse(SAMLResponse, decryptionKey, idpVerification);
   if (probe.outcome !== "parsed") return refuseUnparsed(req, probe, SAMLResponse, RelayState);
   const context = failureContext(SAMLResponse, RelayState, probe.claims);
 

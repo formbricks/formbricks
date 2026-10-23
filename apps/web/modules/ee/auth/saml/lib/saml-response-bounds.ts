@@ -166,12 +166,14 @@ const COLON = 0x3a;
 
 /**
  * Whether the element name starting at `from` has the local name `Signature`, with or without a prefix: what saml20's
- * `local-name(.)='Signature'` selects match, whatever the namespace.
+ * `local-name(.)='Signature'` selects match, whatever the namespace. The search for the prefix's colon reads only the
+ * name's own bytes: a search that ran on into the bytes before it would rescan the document for every tag.
  */
 const isSignatureName = (xml: Buffer, from: number, end: number): boolean => {
   const nameEnd = skipWhile(xml, from, end, isNameByte);
-  const colon = xml.lastIndexOf(COLON, nameEnd - 1);
-  const localStart = colon >= from ? colon + 1 : from;
+  if (nameEnd - from < SIGNATURE.length) return false;
+  let localStart = nameEnd;
+  while (localStart > from && xml[localStart - 1] !== COLON) localStart--;
   return (
     nameEnd - localStart === SIGNATURE.length &&
     xml.compare(SIGNATURE, 0, SIGNATURE.length, localStart, nameEnd) === 0
@@ -250,7 +252,8 @@ const measureTag = (xml: Buffer, lt: number, end: number, scan: MarkupScan): boo
     return true;
   }
   scan.markup += 1 + countAttributes(xml, lt + 1, end);
-  if (isSignatureName(xml, lt + 1, end)) scan.signatures++;
+  // Only elements xmldom builds: one inside a comment or CDATA section is text, which saml20's select never sees.
+  if (structural && isSignatureName(xml, lt + 1, end)) scan.signatures++;
   if (structural && !closesItself(xml, lt + 1, end)) scan.maxDepth = Math.max(scan.maxDepth, ++scan.depth);
   return true;
 };
