@@ -12,6 +12,7 @@ import {
   renameV3Dashboard,
   updateV3DashboardLayout,
 } from "@/app/api/v3/dashboards/lib/operations";
+import { MAX_DASHBOARD_WIDGETS } from "@/app/api/v3/dashboards/lib/schemas";
 import {
   addV3DashboardWidget,
   removeV3DashboardWidget,
@@ -382,6 +383,35 @@ describe("chart and dashboard MCP tools", () => {
         body: { dashboardId: DASHBOARD_ID, layout: input.layout },
       })
     );
+  });
+
+  test("write inputs carry the REST body's checks, which the SDK runs before the handler", () => {
+    // The SDK validates arguments against the registered schema instance (Standard Schema), refinements
+    // included, so these are the requests an agent gets refused before any operation runs.
+    const tools = createToolServer();
+    const accepts = (name: string, input: unknown) =>
+      (
+        tools.get(name)?.config.inputSchema as { safeParse: (value: unknown) => { success: boolean } }
+      ).safeParse(input).success;
+    const layout = { x: 0, y: 0, w: 6, h: 4 };
+    const widgets = (ids: string[]) => ids.map((widgetId) => ({ widgetId, layout }));
+    const updatedAt = "2026-10-22T10:00:00.000Z";
+
+    expect(accepts("update_widget", { dashboardId: DASHBOARD_ID, widgetId: WIDGET_ID })).toBe(false);
+    expect(accepts("update_widget", { dashboardId: DASHBOARD_ID, widgetId: WIDGET_ID, layout })).toBe(true);
+
+    expect(accepts("duplicate_chart", { chartId: CHART_ID, layout })).toBe(false);
+    expect(accepts("duplicate_chart", { chartId: CHART_ID, dashboardId: DASHBOARD_ID, layout })).toBe(true);
+
+    const layoutInput = (ids: string[]) => ({ dashboardId: DASHBOARD_ID, updatedAt, widgets: widgets(ids) });
+    expect(accepts("update_dashboard_layout", layoutInput([WIDGET_ID, WIDGET_ID]))).toBe(false);
+    // Distinct ids, so the bound is the only thing refusing the list.
+    const distinctIds = (count: number) =>
+      Array.from({ length: count }, (_, index) => `clwg${String(index).padStart(21, "0")}`);
+    expect(accepts("update_dashboard_layout", layoutInput(distinctIds(MAX_DASHBOARD_WIDGETS + 1)))).toBe(
+      false
+    );
+    expect(accepts("update_dashboard_layout", layoutInput(distinctIds(MAX_DASHBOARD_WIDGETS)))).toBe(true);
   });
 
   test("list_charts and list_dashboards answer what their own output schema accepts", async () => {

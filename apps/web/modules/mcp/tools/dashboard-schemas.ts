@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { refuseLayoutWithoutDashboard } from "@/app/api/v3/charts/lib/duplicate-schemas";
 import {
   ZV3ChartData,
   ZV3ChartFieldCatalog,
@@ -12,7 +13,13 @@ import {
   ZV3DashboardResource,
   ZV3DashboardWidget,
 } from "@/app/api/v3/dashboards/lib/resources";
-import { ZV3DashboardName, ZV3WidgetLayoutInput } from "@/app/api/v3/dashboards/lib/schemas";
+import {
+  MAX_DASHBOARD_WIDGETS,
+  ZV3DashboardName,
+  ZV3WidgetLayoutInput,
+  refuseEmptyWidgetUpdate,
+  refuseRepeatedWidgets,
+} from "@/app/api/v3/dashboards/lib/schemas";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 import { ZMcpCursorListMeta, mcpToolOutput } from "./output-schemas";
 
@@ -233,7 +240,8 @@ export const ZMcpUpdateWidgetInput = z
       "Show another chart in this widget's place, e.g. a copy made with duplicate_chart. It must not already be on the dashboard."
     ),
   })
-  .strict();
+  .strict()
+  .superRefine(refuseEmptyWidgetUpdate);
 export type TMcpUpdateWidgetInput = z.infer<typeof ZMcpUpdateWidgetInput>;
 
 export const ZMcpRemoveChartFromDashboardInput = z
@@ -263,9 +271,11 @@ export const ZMcpUpdateDashboardLayoutInput = z
           })
           .strict()
       )
+      .max(MAX_DASHBOARD_WIDGETS)
       .describe("Every widget on the dashboard, each exactly once, with its new layout."),
   })
-  .strict();
+  .strict()
+  .superRefine((input, ctx) => refuseRepeatedWidgets(input.widgets, ctx));
 export type TMcpUpdateDashboardLayoutInput = z.infer<typeof ZMcpUpdateDashboardLayoutInput>;
 
 export const ZMcpDuplicateChartInput = z
@@ -281,5 +291,6 @@ export const ZMcpDuplicateChartInput = z
       "Where to put the copy on dashboardId. Leave it out for the first open slot."
     ),
   })
-  .strict();
+  .strict()
+  .superRefine(refuseLayoutWithoutDashboard);
 export type TMcpDuplicateChartInput = z.infer<typeof ZMcpDuplicateChartInput>;

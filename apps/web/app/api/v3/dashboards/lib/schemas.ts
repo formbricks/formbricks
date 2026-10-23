@@ -69,13 +69,24 @@ export const ZV3WidgetCreateBody = z
   .strict();
 export type TV3WidgetCreateBody = z.infer<typeof ZV3WidgetCreateBody>;
 
+/**
+ * A widget update must change something: an empty one would still move the dashboard's `updatedAt`, and
+ * every editor's next save would then be refused as stale. Shared with the MCP `update_widget` input.
+ */
+export const refuseEmptyWidgetUpdate = (
+  body: { layout?: unknown; chartId?: unknown },
+  ctx: z.RefinementCtx
+): void => {
+  if (body.layout === undefined && body.chartId === undefined) {
+    ctx.addIssue({ code: "custom", message: "Send a layout, a chartId, or both." });
+  }
+};
+
 /** `PATCH /api/v3/dashboards/{dashboardId}/widgets/{widgetId}`: move, repoint, or both. */
 export const ZV3WidgetUpdateBody = z
   .object({ layout: ZV3WidgetLayoutInput.optional(), chartId: z.cuid2().optional() })
   .strict()
-  .refine((body) => body.layout !== undefined || body.chartId !== undefined, {
-    message: "Send a layout, a chartId, or both.",
-  });
+  .superRefine(refuseEmptyWidgetUpdate);
 export type TV3WidgetUpdateBody = z.infer<typeof ZV3WidgetUpdateBody>;
 
 /** The most widgets a whole-dashboard write carries; far past what a dashboard can show. */
@@ -84,7 +95,8 @@ export const MAX_DASHBOARD_WIDGETS = 250;
 /** The dashboard's `updatedAt` from the caller's read: the write is refused with 409 if it changed since. */
 const ZV3ExpectedDashboardUpdatedAt = z.iso.datetime({ offset: true });
 
-const refuseRepeatedWidgets = (widgets: { widgetId: string }[], ctx: z.RefinementCtx) => {
+/** A whole-dashboard write lists each widget once. Shared with the MCP `update_dashboard_layout` input. */
+export const refuseRepeatedWidgets = (widgets: { widgetId: string }[], ctx: z.RefinementCtx): void => {
   const seen = new Set<string>();
   widgets.forEach(({ widgetId }, index) => {
     if (seen.has(widgetId)) {
@@ -119,8 +131,9 @@ export const ZV3DashboardReplaceBody = z
 export type TV3DashboardReplaceBody = z.infer<typeof ZV3DashboardReplaceBody>;
 
 /**
- * The MCP rearrange: every current widget's layout, and nothing else. Listing exactly the current
- * widgets is the rule, so a rearrange can never remove a widget by leaving it out.
+ * The rearrange `updateV3DashboardLayout` takes: every current widget's layout, and nothing else. Listing
+ * exactly the current widgets is the rule, so a rearrange can never remove a widget by leaving it out. The
+ * MCP `update_dashboard_layout` input carries the same bound and the same repeated-widget check.
  */
 export const ZV3DashboardLayoutBody = z
   .object({
