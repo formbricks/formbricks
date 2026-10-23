@@ -38,6 +38,13 @@ vi.mock("@/modules/auth/lib/auth", () => ({
   auth: { api: { revokeUserSessions: vi.fn(), requestPasswordReset: mocks.requestPasswordReset } },
 }));
 vi.mock("next/headers", () => ({ headers: vi.fn(async () => new Headers()) }));
+// CI's environment turns password reset and email verification off; these tests are about the paths where
+// they are on.
+vi.mock("@/lib/constants", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/constants")>()),
+  PASSWORD_RESET_DISABLED: false,
+  EMAIL_VERIFICATION_DISABLED: false,
+}));
 
 const ctxFor = (identityProvider: string, name = "Doe, Jane") => ({
   user: { id: "user-1", name, email: "jane@corp.test", locale: "en-US", identityProvider },
@@ -93,16 +100,16 @@ describe("updateUserAction — name is IdP-owned for SSO users", () => {
   });
 });
 
-// The signed-in reset shares forgot-password's per-account budget (ENG-3640): it was the one way to have
-// reset emails sent with no limit at all (ENG-3823).
-describe("resetPasswordAction — per-account reset email budget", () => {
+// The signed-in reset has a budget of its own (ENG-3823): it was the one way to have reset emails sent with no
+// limit, and sharing forgot-password's per-account budget would let strangers spend it.
+describe("resetPasswordAction — its own reset email budget", () => {
   const reset = resetPasswordAction as unknown as (a: unknown) => Promise<unknown>;
 
   test("charges the account's reset budget before asking for a reset", async () => {
     await reset({ ctx: ctxFor("email") });
 
     expect(mocks.applyRateLimit).toHaveBeenCalledWith(
-      rateLimitConfigs.auth.forgotPasswordPerAccount,
+      rateLimitConfigs.actions.passwordResetRequest,
       "user-1"
     );
     expect(mocks.requestPasswordReset).toHaveBeenCalledOnce();

@@ -61,6 +61,13 @@ export const rateLimitConfigs = {
   // Server actions - varies by action type
   actions: {
     emailUpdate: { interval: 3600, allowedPerInterval: 3, namespace: "action:email" }, // 3 per hour
+    // A signed-in user asking for a reset link to their own address. Its own budget rather than
+    // forgot-password's per-account one, which strangers can spend for any address (ENG-3823).
+    passwordResetRequest: {
+      interval: 3600,
+      allowedPerInterval: 3,
+      namespace: "action:password-reset-request",
+    }, // 3 per hour
     accountDeletion: { interval: 3600, allowedPerInterval: 5, namespace: "action:account-delete" }, // 5 per hour
     surveyFollowUp: { interval: 3600, allowedPerInterval: 50, namespace: "action:followup" }, // 50 per hour
     sendLinkSurveyEmail: {

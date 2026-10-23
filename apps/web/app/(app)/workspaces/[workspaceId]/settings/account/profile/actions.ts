@@ -133,9 +133,9 @@ export const resetPasswordAction = authenticatedActionClient.action(
       throw new OperationNotAllowedError("Password reset is not allowed for this user.");
     }
 
-    // The same per-account budget as forgot-password (ENG-3640): without it, this was the one way to have
-    // reset emails sent with no limit at all.
-    await applyRateLimit(rateLimitConfigs.auth.forgotPasswordPerAccount, ctx.user.id);
+    // Without a limit this was the one way to have reset emails sent unbounded. A budget of its own, so
+    // strangers spending forgot-password's per-account budget cannot lock the user out of this one.
+    await applyRateLimit(rateLimitConfigs.actions.passwordResetRequest, ctx.user.id);
 
     await auth.api.requestPasswordReset({
       body: { email: ctx.user.email, redirectTo: `${WEBAPP_URL}/auth/forgot-password/reset` },
