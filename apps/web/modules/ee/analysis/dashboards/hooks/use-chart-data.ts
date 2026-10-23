@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { retryUnlessClientError } from "@/modules/api/lib/v3-client";
 import { type TChartDateRangeInput, getChartData } from "@/modules/ee/analysis/lib/api-client";
 import { chartKeys } from "@/modules/ee/analysis/lib/query";
 
@@ -15,6 +16,7 @@ export const useChartData = ({
   useQuery({
     queryKey: chartKeys.data(chartId, dateRange),
     queryFn: ({ signal }) => getChartData({ chartId, dateRange: dateRange ?? undefined, signal }),
-    // A failure here is one widget's; retrying it once is enough before its error shows.
-    retry: 1,
+    // A failure here is one widget's; retrying it once is enough before its error shows, and a 4xx
+    // (a chart query the validator refuses, a chart the caller may not read) is not retried at all.
+    retry: retryUnlessClientError(1),
   });

@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { V3ApiError, getV3ApiErrorMessage, parseV3ApiError } from "@/modules/api/lib/v3-client";
+import {
+  V3ApiError,
+  getV3ApiErrorMessage,
+  parseV3ApiError,
+  retryUnlessClientError,
+} from "@/modules/api/lib/v3-client";
 
 describe("parseV3ApiError", () => {
   test("parses RFC 9457 error responses into a typed V3ApiError", async () => {
@@ -49,5 +54,21 @@ describe("parseV3ApiError", () => {
   test("falls back to a provided fallback message", () => {
     expect(getV3ApiErrorMessage(new Error("boom"), "fallback")).toBe("boom");
     expect(getV3ApiErrorMessage("bad", "fallback")).toBe("fallback");
+  });
+});
+
+describe("retryUnlessClientError", () => {
+  const problem = (status: number) => new V3ApiError({ status, detail: "x" });
+
+  test("never retries a 4xx: the answer will not change", () => {
+    const retry = retryUnlessClientError(3);
+    for (const status of [400, 403, 404, 409, 422, 429]) expect(retry(0, problem(status))).toBe(false);
+  });
+
+  test("retries a 5xx or a network failure up to the limit", () => {
+    const retry = retryUnlessClientError(2);
+    expect(retry(0, problem(502))).toBe(true);
+    expect(retry(1, new TypeError("Failed to fetch"))).toBe(true);
+    expect(retry(2, problem(502))).toBe(false);
   });
 });
