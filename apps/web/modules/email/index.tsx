@@ -42,6 +42,7 @@ import {
   VERIFICATION_LINK_TTL_SECONDS,
   buildVerificationLinks,
 } from "@/modules/auth/lib/verification-links";
+import type { TEmailRateLimitContext } from "@/modules/email/lib/email-rate-limits";
 import { toInviteDisplayName } from "@/modules/email/lib/invite-display-name";
 import { sendEmail } from "@/modules/email/lib/send-email";
 import { buildVerifiedLinkSurveyUrl } from "@/modules/email/lib/verified-link-survey-url";
@@ -532,7 +533,7 @@ export const sendEmailCustomizationPreviewEmail = async (
 
 export const sendLinkSurveyToVerifiedEmail = async (
   data: TLinkSurveyEmailData,
-  rateLimit: { organizationId: string; actorUserId: string | null }
+  rateLimit: TEmailRateLimitContext
 ): Promise<boolean> => {
   const surveyId = data.surveyId;
   const email = data.email;

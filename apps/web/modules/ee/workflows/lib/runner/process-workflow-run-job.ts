@@ -28,6 +28,7 @@ import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
 import { captureWorkflowRunFailed } from "@/modules/ee/workflows/lib/analytics/run-failure";
 import { sendEmail } from "@/modules/email";
+import { resolveEmailActorUserId } from "@/modules/email/lib/email-actor";
 import {
   buildSurveyResponseEmailHtml,
   resolveResponseRecipient,
@@ -162,7 +163,7 @@ interface RunEmailContext {
    * rejected.
    */
   allowedRecipientEmails: Set<string>;
-  /** The organization and workflow creator the run's emails are rate-limited by (ENG-3823). */
+  /** The organization and workflow owner the run's emails are rate-limited by (ENG-3823). */
   rateLimit: { organizationId?: string; actorUserId: string | null };
 }
 
@@ -226,7 +227,8 @@ const sendResolvedEmail = async (
       subject,
       html,
       messageId,
-      rateLimit: { ...emailContext.rateLimit, recipientFromResponse: !isLiteralEmailRecipient(config.to) },
+      // A literal address is a workspace member (the allowlist above); a respondent-field one is external.
+      rateLimit: { ...emailContext.rateLimit, externalRecipient: !isLiteralEmailRecipient(config.to) },
     });
 
     if (sent) {
@@ -518,7 +520,10 @@ const loadRunEmailContext = async (
     response,
     logoUrl,
     allowedRecipientEmails,
-    rateLimit: { organizationId: organization?.id, actorUserId },
+    rateLimit: {
+      organizationId: organization?.id,
+      actorUserId: organization ? await resolveEmailActorUserId(actorUserId, organization.id) : actorUserId,
+    },
   };
 };
 
@@ -567,7 +572,12 @@ const executeClaimedRun = async (
   const definition = resolveExecutableDefinition(run);
   const steps = planExecutableSteps(definition);
 
-  const emailContext = await loadRunEmailContext(triggerPayload, workspaceId, steps, run.workflow.createdBy);
+  const emailContext = await loadRunEmailContext(
+    triggerPayload,
+    workspaceId,
+    steps,
+    run.workflow.createdBy ?? null
+  );
   const outcome = await runSteps(steps, run.id, emailContext, logContext);
 
   if (outcome.bail) {

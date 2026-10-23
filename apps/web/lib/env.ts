@@ -613,9 +613,10 @@ const parsedEnv = createEnv({
     BULLMQ_WORKER_ENABLED: z.enum(["1", "0"]).optional(),
     E2E_TESTING: z.enum(["1", "0"]).optional(),
     EMAIL_AUTH_DISABLED: z.enum(["1", "0"]).optional(),
-    // Scales the per-organization, per-sender and per-deployment email caps (modules/email/lib/email-rate-limits.ts),
-    // for deployments that legitimately send more than the defaults allow. Per-recipient caps are not scaled.
-    // Blank counts as unset, so a templated empty value does not stop boot.
+    // Scales the per-organization, per-sender and per-deployment email caps
+    // (modules/email/lib/email-rate-limits.ts), for deployments that legitimately send more than the defaults
+    // allow. Per-recipient caps are not scaled. Blank counts as unset, so a templated empty value does not stop
+    // boot.
     EMAIL_RATE_LIMIT_MULTIPLIER: z.preprocess(
       (value) => (value === "" ? undefined : value),
       z.coerce.number().positive().max(100).optional().default(1)

@@ -15,14 +15,16 @@ export type TEmailRateLimitContext = {
   /** The organization the email is sent for. Its cap holds however many workspaces and surveys it has. */
   organizationId?: string;
   /**
-   * The user whose action caused the email: the signed-in user, or the owner of the survey or creator of the
-   * workflow that sent it. Both are set by the server from the signed-in user, never by a request body. Counted across every organization they belong to, so creating a fresh organization does
-   * not reset it. `null` when there is none (a survey created through the API, say); the organization's
-   * cap still applies.
+   * The user whose action caused the email: the signed-in user, or the owner of the survey or workflow that
+   * sent it (`resolveEmailActorUserId`). Never a value a request body sets. Counted across every organization
+   * they belong to, so creating a fresh organization does not reset it.
    */
   actorUserId?: string | null;
-  /** The address came from a respondent's answer rather than from the survey or workflow author. */
-  recipientFromResponse?: boolean;
+  /**
+   * The recipient is not one of the organization's members: an address a respondent, visitor or author typed
+   * in. Only such email counts against the limits respondents can drive.
+   */
+  externalRecipient?: boolean;
 };
 
 type TLimit = { allowedPerInterval: number; interval: number };
@@ -39,25 +41,45 @@ type TEmailRateLimit = {
     inOrganization?: TLimit;
     /** One address, from everyone: only for account email, which no other organization sends. */
     total?: TLimit;
-    /** Only when the address came from a respondent: authors legitimately mail their own team on every response. */
-    onlyWhenFromResponse?: boolean;
   };
+  /** Counted together with the other types of the same group, so moving mail between them gains nothing. */
+  group?: string;
+  /**
+   * Only email to an external recipient is counted. Mail to the organization's own members is its own
+   * business, and the respondents who trigger it must not be able to use up its budget.
+   */
+  externalOnly?: boolean;
 };
 
 const limit = (allowedPerInterval: number, interval = HOUR): TLimit => ({ allowedPerInterval, interval });
 
 /**
- * One entry per email type, so a new type cannot compile until someone has decided its limits. The
- * per-organization and per-actor caps are what stop abuse.
+ * Email a survey or workflow sends to an address someone typed in: a respondent's answer, a visitor's
+ * verification request, or an author's literal address outside the organization. One budget per
+ * organization and per owner for all three types, 200 an hour (below INC-5's ~340, so one owner cannot
+ * repeat it), and 5 an hour to one inbox from one organization.
  *
- * A per-deployment cap is shared by every tenant, so anyone who can reach it can stop that email for
- * everyone. Only the types that can mail an address someone else typed in have one, as a backstop for spam
- * spread over many accounts, set well above what a few accounts can reach (Cloud sends about 55 emails an
- * hour across every type). Email to the account itself or to an organization's own members has none.
+ * No per-deployment cap: anonymous respondents drive this email, so a shared cap would let them stop it for
+ * every organization at once. The per-owner cap is what holds when an attacker opens fresh organizations.
+ */
+const externalSurveyEmail: TEmailRateLimit = {
+  group: "survey_external",
+  externalOnly: true,
+  organization: limit(200),
+  actor: limit(200),
+  recipient: { inOrganization: limit(5) },
+};
+
+/**
+ * One entry per email type, so a new type cannot compile until someone has decided its limits.
+ *
+ * A per-deployment cap is shared by every tenant, so whoever can reach it stops that email for everyone. Only
+ * email a signed-in user sends to an address they typed in has one (invites, email changes), set far above
+ * what a few accounts can send. Sign-in and account email has none.
  *
  * A per-recipient cap counts one address from one organization, so a sender can neither flood an inbox nor
- * block that person from hearing from anyone else. Only account email, which an address gets from one
- * account at most, is counted across everyone.
+ * block that person from hearing from anyone else. Only account email, which an address gets from its own
+ * account alone, is counted across everyone.
  *
  * Invites are also counted per inviting user and per organization where they are created
  * (`invite-rate-limit.ts`), which counts recipients before an invite exists.
@@ -76,28 +98,13 @@ export const emailRateLimits: Record<TEmailType, TEmailRateLimit> = {
   sso_recovery_notification: {},
   sso_sign_in_hint: { recipient: { total: limit(3) } },
   data_retention_notice: {},
+  // Sent to the organization's own members; bounds one organization's share of the provider quota.
   response_notification: { organization: limit(2000) },
   survey_preview: { actor: limit(10) },
   customization_preview: { actor: limit(10) },
-  // 200 an hour per organization and per sender: below INC-5's ~340, so one sender cannot repeat it.
-  verified_survey_link: {
-    organization: limit(200),
-    actor: limit(200),
-    recipient: { inOrganization: limit(3) },
-    deployment: limit(3000),
-  },
-  survey_follow_up: {
-    organization: limit(200),
-    actor: limit(200),
-    recipient: { inOrganization: limit(5), onlyWhenFromResponse: true },
-    deployment: limit(5000),
-  },
-  workflow_email: {
-    organization: limit(200),
-    actor: limit(200),
-    recipient: { inOrganization: limit(5), onlyWhenFromResponse: true },
-    deployment: limit(5000),
-  },
+  verified_survey_link: externalSurveyEmail,
+  survey_follow_up: externalSurveyEmail,
+  workflow_email: externalSurveyEmail,
 };
 
 type TEmailRateLimitScope =
@@ -109,18 +116,21 @@ type TEmailRateLimitScope =
 
 type TCharge = { scope: TEmailRateLimitScope; config: TRateLimitConfig; identifier: string };
 
-const toConfig = (emailType: TEmailType, scope: TEmailRateLimitScope, value: TLimit): TRateLimitConfig => ({
-  ...value,
-  namespace: `email:${scope}:${emailType}`,
-});
+let recipientKey: { source: string; key: Buffer } | undefined;
 
 /**
- * HMAC with a key derived for this purpose only: the identifier reaches Redis keys and the limiter's
- * logs, and an unkeyed hash of an address can be reversed by hashing a list of candidate addresses.
+ * HMAC with a key derived for this purpose only: the identifier reaches Redis keys and the limiter's logs,
+ * and an unkeyed hash of an address can be reversed by hashing a list of candidate addresses. Plus and dot
+ * variants of one mailbox count separately on purpose: collapsing them would merge distinct people, and the
+ * organization and owner caps still bound them.
  */
 export const getRecipientIdentifier = (to: string): string => {
-  const key = createHmac("sha256", ENCRYPTION_KEY).update("formbricks:email-rate-limit:v1").digest();
-  return createHmac("sha256", key).update(normalizeEmailForComparison(to)).digest("hex");
+  // Derived once per secret rather than once per email.
+  if (recipientKey?.source !== ENCRYPTION_KEY) {
+    const key = createHmac("sha256", ENCRYPTION_KEY).update("formbricks:email-rate-limit:v1").digest();
+    recipientKey = { source: ENCRYPTION_KEY, key };
+  }
+  return createHmac("sha256", recipientKey.key).update(normalizeEmailForComparison(to)).digest("hex");
 };
 
 const requireOrganizationId = (emailType: TEmailType, context: TEmailRateLimitContext): string => {
@@ -131,16 +141,22 @@ const requireOrganizationId = (emailType: TEmailType, context: TEmailRateLimitCo
   return context.organizationId;
 };
 
+const scaled = ({ allowedPerInterval, interval }: TLimit): TLimit => ({
+  allowedPerInterval: Math.max(1, Math.round(allowedPerInterval * EMAIL_RATE_LIMIT_MULTIPLIER)),
+  interval,
+});
+
 const getCharges = (emailType: TEmailType, to: string, context: TEmailRateLimitContext): TCharge[] => {
   const limits = emailRateLimits[emailType];
+  if (limits.externalOnly && !context.externalRecipient) {
+    return [];
+  }
+
+  const counter = limits.group ?? emailType;
   const charges: TCharge[] = [];
   const charge = (scope: TEmailRateLimitScope, value: TLimit, identifier: string) => {
-    charges.push({ scope, config: toConfig(emailType, scope, value), identifier });
+    charges.push({ scope, identifier, config: { ...value, namespace: `email:${scope}:${counter}` } });
   };
-  const scaled = ({ allowedPerInterval, interval }: TLimit): TLimit => ({
-    allowedPerInterval: Math.max(1, Math.round(allowedPerInterval * EMAIL_RATE_LIMIT_MULTIPLIER)),
-    interval,
-  });
 
   if (limits.organization) {
     charge("organization", scaled(limits.organization), requireOrganizationId(emailType, context));
@@ -153,19 +169,20 @@ const getCharges = (emailType: TEmailType, to: string, context: TEmailRateLimitC
       charge("actor", scaled(limits.actor), context.actorUserId);
     }
   }
-
-  const { recipient } = limits;
-  if (recipient && (!recipient.onlyWhenFromResponse || context.recipientFromResponse)) {
+  if (limits.recipient) {
     const recipientId = getRecipientIdentifier(to);
-    if (recipient.inOrganization) {
+    if (limits.recipient.inOrganization) {
       const organizationId = requireOrganizationId(emailType, context);
-      charge("recipient-in-organization", recipient.inOrganization, `${recipientId}:${organizationId}`);
+      charge(
+        "recipient-in-organization",
+        limits.recipient.inOrganization,
+        `${recipientId}:${organizationId}`
+      );
     }
-    if (recipient.total) {
-      charge("recipient", recipient.total, recipientId);
+    if (limits.recipient.total) {
+      charge("recipient", limits.recipient.total, recipientId);
     }
   }
-
   if (limits.deployment) {
     charge("deployment", scaled(limits.deployment), "all");
   }
@@ -174,9 +191,10 @@ const getCharges = (emailType: TEmailType, to: string, context: TEmailRateLimitC
 
 /**
  * Charges one email against every limit its type has, all or nothing: when one refuses, the others are
- * handed back, so a refused email costs nothing. Throws `TooManyRequestsError` when a limit is spent. Like
- * every other limit in the app it fails open when Redis is unavailable, and `RATE_LIMITING_DISABLED`
- * turns it off.
+ * handed back, so a refused email costs nothing. Throws `TooManyRequestsError` when a limit is spent. An
+ * email that is charged and then fails at the SMTP server keeps its charge, like any other attempt. Like
+ * every other limit in the app it fails open when Redis is unavailable, and `RATE_LIMITING_DISABLED` turns
+ * it off.
  */
 export const applyEmailRateLimits = async (
   emailType: TEmailType,
@@ -184,6 +202,9 @@ export const applyEmailRateLimits = async (
   context: TEmailRateLimitContext = {}
 ): Promise<void> => {
   const charges = getCharges(emailType, to, context);
+  if (charges.length === 0) {
+    return;
+  }
   const results = await Promise.allSettled(
     charges.map((charge) => reserveRateLimitUsage(charge.config, charge.identifier))
   );

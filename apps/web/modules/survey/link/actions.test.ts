@@ -25,6 +25,9 @@ vi.mock("@/modules/ee/whitelabel/email-customization/lib/organization", () => ({
 }));
 vi.mock("@/modules/email", () => ({ sendLinkSurveyToVerifiedEmail: vi.fn() }));
 vi.mock("./lib/data", () => ({ getSurveyWithMetadata: vi.fn(), getSurveyOwnerId: vi.fn() }));
+vi.mock("@/modules/email/lib/email-actor", () => ({
+  resolveEmailActorUserId: vi.fn(async (ownerUserId: string | null) => ownerUserId ?? "org-owner"),
+}));
 vi.mock("./lib/pin-token", () => ({ createLinkSurveyPinToken: vi.fn() }));
 vi.mock("./lib/workspace", () => ({ getWorkspaceContextForLinkSurvey: vi.fn() }));
 vi.mock("./lib/respondent-custom-css", () => ({
@@ -138,6 +141,7 @@ describe("sendLinkSurveyEmailAction", () => {
     expect(sendLinkSurveyToVerifiedEmail).toHaveBeenCalledWith(expect.anything(), {
       organizationId: "org-1",
       actorUserId: "owner-1",
+      externalRecipient: true,
     });
   });
 });

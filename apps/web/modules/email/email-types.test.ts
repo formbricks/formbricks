@@ -129,7 +129,7 @@ const senders: [string, () => Promise<unknown>][] = [
     () =>
       sendLinkSurveyToVerifiedEmail(
         { email, locale, surveyId: "survey", surveyName: "Survey" },
-        { organizationId: "organization", actorUserId: "creator" }
+        { organizationId: "organization", actorUserId: "creator", externalRecipient: true }
       ),
   ],
 ];
@@ -158,7 +158,10 @@ describe("email source attribution", () => {
     ["response_notification", { organizationId: "org" }],
     ["survey_preview", { actorUserId: "user" }],
     ["customization_preview", { actorUserId: "user" }],
-    ["verified_survey_link", { organizationId: "organization", actorUserId: "creator" }],
+    [
+      "verified_survey_link",
+      { organizationId: "organization", actorUserId: "creator", externalRecipient: true },
+    ],
   ] as const)("rate-limits %s by who it is sent for", async (emailType, rateLimit) => {
     const [, send] = senders.find(([type]) => type === emailType)!;
     await send();
@@ -191,7 +194,7 @@ describe("email source attribution", () => {
       survey,
       response,
       attachResponseData: false,
-      rateLimit: { organizationId: "organization", actorUserId: null, recipientFromResponse: true },
+      rateLimit: { organizationId: "organization", actorUserId: "owner", externalRecipient: true },
     });
     expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({ emailType: "survey_follow_up" }));
   });

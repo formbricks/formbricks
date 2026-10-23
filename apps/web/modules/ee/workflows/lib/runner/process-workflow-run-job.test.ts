@@ -110,6 +110,10 @@ vi.mock("@/lib/survey/service", () => ({
   getSurvey: mockGetSurvey,
 }));
 
+vi.mock("@/modules/email/lib/email-actor", () => ({
+  resolveEmailActorUserId: vi.fn(async (ownerUserId: string | null) => ownerUserId ?? "org-owner"),
+}));
+
 vi.mock("@/lib/organization/service", () => ({
   getOrganizationByWorkspaceId: mockGetOrganizationByWorkspaceId,
 }));
@@ -359,7 +363,7 @@ describe("processWorkflowRunJob", () => {
     expect(mockSendEmail).toHaveBeenCalledWith(
       expect.objectContaining({
         to: "teammate@example.com",
-        rateLimit: { organizationId: "org1", actorUserId: "creator-1", recipientFromResponse: false },
+        rateLimit: { organizationId: "org1", actorUserId: "creator-1", externalRecipient: false },
       })
     );
   });
@@ -448,6 +452,25 @@ describe("processWorkflowRunJob", () => {
     );
   });
 
+  // A workflow created with an API key has no creator; its organization's owner is charged instead.
+  test("charges the organization's owner for a workflow without a creator", async () => {
+    mockWorkflowRunFindFirst.mockResolvedValue({
+      ...baseRun,
+      workflowVersion: { definition: makeDefinition("contact") },
+      workflow: { createdBy: null, definition: makeDefinition("contact") },
+    });
+    mockGetResponse.mockResolvedValue({
+      ...mockResponse,
+      data: { contact: ["Jane", "Doe", "jane@example.com", "+1"] },
+    });
+
+    await processWorkflowRunJob(data, baseContext);
+
+    expect(mockSendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({ rateLimit: expect.objectContaining({ actorUserId: "org-owner" }) })
+    );
+  });
+
   test("still sends to a respondent-field recipient even when it is outside the member allowlist", async () => {
     // A field-resolved recipient is the respondent's own address, always allowed regardless of the
     // workspace allowlist — only literal addresses are gated.
@@ -468,7 +491,7 @@ describe("processWorkflowRunJob", () => {
     expect(mockSendEmail).toHaveBeenCalledWith(
       expect.objectContaining({
         to: "jane@example.com",
-        rateLimit: { organizationId: "org1", actorUserId: "creator-1", recipientFromResponse: true },
+        rateLimit: { organizationId: "org1", actorUserId: "creator-1", externalRecipient: true },
       })
     );
   });

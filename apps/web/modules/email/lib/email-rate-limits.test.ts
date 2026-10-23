@@ -71,44 +71,39 @@ const countFor = (namespace: string) =>
     .filter(([key]) => key.includes(`:${namespace}:`))
     .reduce((total, [, count]) => total + count, 0);
 
+const external = (organizationId: string, actorUserId: string | null = "owner-1") => ({
+  organizationId,
+  actorUserId,
+  externalRecipient: true,
+});
+
 describe("emailRateLimits", () => {
-  test("every limit is a valid config with a namespace no other limit uses", async () => {
-    const namespaces: string[] = [];
+  test("every limit is a valid config, and none shares a namespace with the app's other limits", async () => {
+    const namespaces = new Set<string>();
     for (const emailType of Object.keys(emailRateLimits) as TEmailType[]) {
       mocks.store.clear();
-      await send(emailType, "someone@example.com", {
-        organizationId: "org-1",
-        actorUserId: "user-1",
-        recipientFromResponse: true,
-      });
-      namespaces.push(...[...mocks.store.keys()].map((key) => key.split(":").slice(2, 5).join(":")));
+      await send(emailType, "someone@example.com", external("org-1", "user-1"));
+      for (const key of mocks.store.keys()) namespaces.add(key.split(":").slice(2, 5).join(":"));
     }
-    const otherNamespaces = Object.values(rateLimitConfigs).flatMap((group) =>
-      Object.values(group).map((config) => config.namespace)
+    const otherNamespaces = new Set(
+      Object.values(rateLimitConfigs).flatMap((group) =>
+        Object.values(group).map((config) => config.namespace)
+      )
     );
 
+    expect(namespaces.size).toBeGreaterThan(0);
     for (const namespace of namespaces) {
       expect(() => ZRateLimitConfig.parse({ interval: 1, allowedPerInterval: 1, namespace })).not.toThrow();
+      expect(otherNamespaces.has(namespace)).toBe(false);
     }
-    const all = [...namespaces, ...otherNamespaces];
-    expect(new Set(all).size).toBe(all.length);
   });
 
-  // A deployment-wide cap is shared by every tenant, so anyone who can reach it stops that email for everyone.
-  // Only types that can mail an address someone else typed in carry one.
-  test("puts deployment caps only on email to addresses someone else typed in", () => {
+  // A per-deployment cap is shared by every tenant: whoever can reach it stops that email for everyone.
+  test("puts deployment caps only on email a signed-in user sends to an address they typed", () => {
     const withDeploymentCap = (Object.keys(emailRateLimits) as TEmailType[]).filter(
       (emailType) => emailRateLimits[emailType].deployment
     );
-    expect(withDeploymentCap.sort()).toEqual(
-      [
-        "email_change_verification",
-        "invite",
-        "survey_follow_up",
-        "verified_survey_link",
-        "workflow_email",
-      ].sort()
-    );
+    expect(withDeploymentCap.sort()).toEqual(["email_change_verification", "invite"]);
   });
 
   // Counting an address across organizations would let any of them block it for the others.
@@ -131,85 +126,104 @@ describe("applyEmailRateLimits", () => {
     vi.mocked(logger.warn).mockClear();
   });
 
-  const linkContext = (organizationId: string, actorUserId: string | null = "owner-1") => ({
-    organizationId,
-    actorUserId,
-  });
-
   describe("fresh resources do not reset a limit", () => {
-    test("a survey owner's follow-ups count across every organization they own", async () => {
+    test("a survey owner's external email counts across every organization they own", async () => {
       // 200 follow-ups spread over 50 organizations, each far below its own cap.
       await sendTimes(
         200,
         "survey_follow_up",
         (index) => `respondent-${index}@example.com`,
-        (index) => ({ organizationId: `org-${index % 50}`, actorUserId: "spammer" })
+        (index) => external(`org-${index % 50}`, "spammer")
       );
 
-      await refused(
-        send("survey_follow_up", "fresh@example.com", {
-          organizationId: "brand-new-org",
-          actorUserId: "spammer",
-        })
-      );
+      await refused(send("survey_follow_up", "fresh@example.com", external("brand-new-org", "spammer")));
       await expect(
-        send("survey_follow_up", "fresh@example.com", {
-          organizationId: "brand-new-org",
-          actorUserId: "someone-else",
-        })
+        send("survey_follow_up", "fresh@example.com", external("brand-new-org", "someone-else"))
       ).resolves.toBeUndefined();
     });
 
-    test("an organization's workflow emails count across every workflow creator in it", async () => {
+    test("an organization's external email counts across every owner in it", async () => {
       await sendTimes(
         200,
         "workflow_email",
-        (index) => `team-${index}@example.com`,
-        (index) => ({ organizationId: "org-1", actorUserId: `creator-${index % 100}` })
+        (index) => `respondent-${index}@example.com`,
+        (index) => external("org-1", `owner-${index % 100}`)
       );
 
-      await refused(
-        send("workflow_email", "x@example.com", { organizationId: "org-1", actorUserId: "new-creator" })
-      );
+      await refused(send("workflow_email", "x@example.com", external("org-1", "new-owner")));
     });
 
-    test("a deleted or API-created survey has no actor, and its organization's cap still applies", async () => {
+    // Otherwise one owner gets 200 an hour per type, three times over.
+    test("follow-ups, workflow emails and verified links share one budget", async () => {
       await sendTimes(
-        200,
+        70,
+        "survey_follow_up",
+        (index) => `a-${index}@example.com`,
+        () => external("org-1")
+      );
+      await sendTimes(
+        70,
+        "workflow_email",
+        (index) => `b-${index}@example.com`,
+        () => external("org-1")
+      );
+      await sendTimes(
+        60,
         "verified_survey_link",
-        (index) => `v${index}@example.com`,
-        () => linkContext("org-1", null)
+        (index) => `c-${index}@example.com`,
+        () => external("org-1")
       );
 
-      await refused(send("verified_survey_link", "v-new@example.com", linkContext("org-1", null)));
+      await refused(send("verified_survey_link", "d@example.com", external("org-1")));
+    });
+  });
+
+  describe("email to the organization's own members", () => {
+    // Respondents trigger these; letting them spend the budget would stop the organization's mail to itself.
+    test("is not counted for follow-ups and workflow emails", async () => {
+      await sendTimes(
+        300,
+        "survey_follow_up",
+        () => "team@example.com",
+        () => ({
+          organizationId: "org-1",
+          actorUserId: "owner-1",
+          externalRecipient: false,
+        })
+      );
+
+      expect(mocks.store.size).toBe(0);
+      await expect(
+        send("survey_follow_up", "respondent@example.com", external("org-1"))
+      ).resolves.toBeUndefined();
     });
   });
 
   describe("recipient caps", () => {
     test("stop one organization flooding an inbox, without blocking that person for anyone else", async () => {
       await sendTimes(
-        3,
+        5,
         "verified_survey_link",
         () => "victim@example.com",
-        () => linkContext("attacker-org")
+        () => external("attacker-org")
       );
 
-      await refused(send("verified_survey_link", "victim@example.com", linkContext("attacker-org")));
+      await refused(send("verified_survey_link", "victim@example.com", external("attacker-org")));
       await expect(
-        send("verified_survey_link", "victim@example.com", linkContext("real-employer", "owner-2"))
+        send("verified_survey_link", "victim@example.com", external("real-employer", "owner-2"))
       ).resolves.toBeUndefined();
     });
 
     test("count each organization separately, so no number of attacker organizations blocks a person", async () => {
       await sendTimes(
-        60,
+        100,
         "verified_survey_link",
         () => "victim@example.com",
-        (index) => linkContext(`attacker-${index % 20}`)
+        (index) => external(`attacker-${index % 20}`, `attacker-owner-${index % 20}`)
       );
 
       await expect(
-        send("verified_survey_link", "victim@example.com", linkContext("real-employer", "owner-2"))
+        send("verified_survey_link", "victim@example.com", external("real-employer", "owner-2"))
       ).resolves.toBeUndefined();
     });
 
@@ -226,52 +240,31 @@ describe("applyEmailRateLimits", () => {
       await refused(send("email_verification", "NEW@example.com"));
     });
 
-    test("apply to follow-ups only when a respondent chose the address", async () => {
-      const context = { organizationId: "org-1", actorUserId: "author" };
-      // The author mails their own team on every response: not capped per recipient.
-      await sendTimes(
-        10,
-        "survey_follow_up",
-        () => "team@example.com",
-        () => ({ ...context, recipientFromResponse: false })
-      );
-
-      await sendTimes(
-        5,
-        "survey_follow_up",
-        () => "typed@example.com",
-        () => ({ ...context, recipientFromResponse: true })
-      );
-      await refused(
-        send("survey_follow_up", "typed@example.com", { ...context, recipientFromResponse: true })
-      );
-    });
-
     test("are not kept for email changes, so a refusal cannot reveal which addresses have accounts", () => {
       expect(emailRateLimits.email_change_verification.recipient).toBeUndefined();
     });
   });
 
   test("hands every other limit back when one refuses", async () => {
-    mocks.constants.EMAIL_RATE_LIMIT_MULTIPLIER = 0.001; // verified_survey_link: deployment 3, organization and actor 1
+    // Five follow-ups from five owners spend the inbox's per-organization cap; the organization and each
+    // owner still have room (organization cap scaled to 10).
+    mocks.constants.EMAIL_RATE_LIMIT_MULTIPLIER = 0.05;
     await sendTimes(
-      3,
-      "verified_survey_link",
-      (index) => `v${index}@example.com`,
-      (index) => linkContext(`org-${index}`, `owner-${index}`)
+      5,
+      "survey_follow_up",
+      () => "victim@example.com",
+      (index) => external("org-1", `owner-${index}`)
     );
 
     for (let attempt = 0; attempt < 5; attempt++) {
-      await refused(send("verified_survey_link", "blocked@example.com", linkContext("org-new", "owner-new")));
+      await refused(send("survey_follow_up", "victim@example.com", external("org-1", "owner-new")));
     }
 
-    // Only the deployment cap was spent; the refused attempts left nothing behind for org-new or its owner.
-    expect(countFor("email:organization:verified_survey_link")).toBe(3);
-    expect(countFor("email:actor:verified_survey_link")).toBe(3);
-    expect(countFor("email:recipient-in-organization:verified_survey_link")).toBe(3);
-    mocks.constants.EMAIL_RATE_LIMIT_MULTIPLIER = 1;
+    // The refused attempts left nothing behind on the organization or on owner-new.
+    expect(countFor("email:organization:survey_external")).toBe(5);
+    expect(countFor("email:actor:survey_external")).toBe(5);
     await expect(
-      send("verified_survey_link", "blocked@example.com", linkContext("org-new", "owner-new"))
+      send("survey_follow_up", "other@example.com", external("org-1", "owner-new"))
     ).resolves.toBeUndefined();
   });
 
@@ -296,6 +289,9 @@ describe("applyEmailRateLimits", () => {
       "requires an organizationId"
     );
     await expect(send("survey_preview", "me@example.com")).rejects.toThrow("requires an actorUserId");
+    await expect(
+      send("survey_follow_up", "x@example.com", { organizationId: "org-1", externalRecipient: true })
+    ).rejects.toThrow("requires an actorUserId");
     expect(mocks.store.size).toBe(0);
   });
 
