@@ -1,0 +1,14 @@
+# Formbricks owns the Envoy v1.8.4 controller and both CRD sets (Gateway API v1.5.1 Experimental).
+formbricks:
+  webappUrl: https://surveys.example.com
+envoy:
+  enabled: true
+  controller:
+    enabled: true
+  crds:
+    enabled: true
+  formbricks:
+    policies:
+      enabled: true
+envoyRedis:
+  enabled: true

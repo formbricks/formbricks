@@ -1,0 +1,76 @@
+# Disposable single-node kind fixture. Keep every core application service enabled.
+formbricks:
+  webappUrl: https://qa.example.com
+migration:
+  ttlSecondsAfterFinished: 3600
+serviceMonitor:
+  enabled: false
+autoscaling:
+  enabled: false
+pdb:
+  enabled: false
+# Leave CPU headroom for the replacement web Pod during a one-node RollingUpdate.
+deployment:
+  resources:
+    requests:
+      cpu: 100m
+cube:
+  resources:
+    requests:
+      cpu: 100m
+  env:
+    CUBEJS_DB_HOST: formbricks-postgresql
+    CUBEJS_DB_NAME: formbricks
+    CUBEJS_DB_USER: formbricks
+    CUBEJS_DB_PORT: "5432"
+    CUBEJS_DB_PASS:
+      valueFrom:
+        secretKeyRef:
+          name: formbricks-app-secrets
+          key: POSTGRES_USER_PASSWORD
+postgresql:
+  primary:
+    persistence:
+      enabled: false
+redis:
+  master:
+    persistence:
+      enabled: false
+authzed:
+  cluster:
+    replicas: 1
+  # pgvector/pgvector follows the upstream PostgreSQL image's POSTGRES_USER
+  # initialization, so the test's formbricks role is the privileged administrator.
+  bundledPostgresqlBootstrap:
+    adminUsername: formbricks
+    adminDatabase: formbricks
+    adminPasswordSecretName: formbricks-app-secrets
+    adminPasswordKey: POSTGRES_USER_PASSWORD
+envoy:
+  enabled: true
+  controller:
+    enabled: true
+  crds:
+    enabled: false
+  formbricks:
+    policies:
+      enabled: true
+envoyRedis:
+  enabled: true
+  architecture: standalone
+  # The upstream Bitnami tag was moved to the archived repository.
+  global:
+    security:
+      allowInsecureImages: true
+  image:
+    repository: bitnamilegacy/redis
+    tag: 7.4.2-debian-12-r4
+  sentinel:
+    enabled: false
+  master:
+    persistence:
+      enabled: false
+  replica:
+    replicaCount: 0
+    persistence:
+      enabled: false
