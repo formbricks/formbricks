@@ -70,7 +70,8 @@ rm -rf "$crd_dir"
 ```
 
 If a platform manages Gateway API directly, it must provide v1.5.1 CRDs with the APIs Envoy v1.8.4
-requires, including `BackendTLSPolicy` and `ListenerSet`. From a repository checkout, run the optional
+requires, including `BackendTLSPolicy` and `ListenerSet`. From a checkout at the immutable source commit
+used to publish your chart, run the optional
 read-only check **after** provisioning external CRDs and **before** installing or upgrading Formbricks:
 
 ```bash

@@ -201,11 +201,15 @@ keep `crds.gatewayAPI.channel=experimental` until clients using Experimental-onl
 `TLSRoute` v1alpha2, have migrated; the v1.5.1 Standard bundle does not serve them. Do not apply the
 both-sets variant over provider-owned Gateway API CRDs. Gateway API v1.5.1 must serve the types Envoy
 needs, including `BackendTLSPolicy` and `ListenerSet`. The OCI install does not
-place chart scripts in your working directory. Obtain the Formbricks repository, then run the optional,
-read-only preflight after the CRD owner provisions the CRDs:
+place chart scripts in your working directory. Use the immutable source commit from the
+[chart publication run](https://github.com/formbricks/formbricks/actions/workflows/release-helm-chart.yml)
+for your installed chart version, then run the optional, read-only preflight after the CRD owner provisions the CRDs:
 
 ```bash
-git clone --depth 1 https://github.com/formbricks/formbricks.git formbricks-preflight
+FORMBRICKS_SOURCE_COMMIT="<chart publication source commit>"
+git clone --depth 1 --filter=blob:none https://github.com/formbricks/formbricks.git formbricks-preflight
+git -C formbricks-preflight fetch --depth 1 origin "$FORMBRICKS_SOURCE_COMMIT"
+git -C formbricks-preflight checkout --detach FETCH_HEAD
 bash formbricks-preflight/charts/formbricks/scripts/preflight-envoy-crds.sh --context my-cluster
 ```
 
