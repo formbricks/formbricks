@@ -209,8 +209,9 @@ git clone --depth 1 https://github.com/formbricks/formbricks.git formbricks-pref
 bash formbricks-preflight/charts/formbricks/scripts/preflight-envoy-crds.sh --context my-cluster
 ```
 
-Replace `my-cluster` with the target kubectl context. The script checks the installed version, channel, and
-served APIs without changing the cluster. It is separate from Helm rendering, so offline and GitOps
+Replace `my-cluster` with the target kubectl context. The script checks Gateway API version/channel, served
+APIs, and Envoy CRD schemas against v1.8.4 without changing the cluster. Envoy CRDs have no release
+annotation, so their owner must pin the v1.8.4 package. It is separate from Helm rendering, so offline and GitOps
 workflows do not need Kubernetes access to render the chart.
 
 For **Helm**, apply externally owned CRDs first, wait for `Established`, run preflight, then install or

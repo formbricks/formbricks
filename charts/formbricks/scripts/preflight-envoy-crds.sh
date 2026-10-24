@@ -15,13 +15,19 @@ if [[ "$#" -ne 2 || "$1" != "--context" || -z "$2" || "$2" == -* ]]; then
   exit 2
 fi
 context="$2"
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+envoy_schema_hashes="${script_dir}/envoy-v1.8.4-crd-schemas.sha256"
 
-for binary in kubectl jq; do
+for binary in kubectl jq shasum; do
   if ! command -v "$binary" >/dev/null 2>&1; then
     printf 'Missing required command: %s\n' "$binary" >&2
     exit 2
   fi
 done
+if [[ ! -r "$envoy_schema_hashes" ]]; then
+  printf 'Missing Envoy Gateway v1.8.4 schema checksums: %s\n' "$envoy_schema_hashes" >&2
+  exit 2
+fi
 
 if ! crds_json="$(kubectl --context "$context" get customresourcedefinitions -o json 2>&1)"; then
   printf 'Cannot read CRDs in context %s (check connectivity and get/list CRD permission):\n%s\n' \
@@ -36,7 +42,7 @@ fi
 failures=0
 gateway_channel=""
 check_crd() {
-  local name="$1" version="$2" family="$3" annotations channel bundle
+  local name="$1" version="$2" family="$3" channel bundle schema actual_hash expected_hash
   if ! jq -e --arg name "$name" '.items | any(.metadata.name == $name)' <<<"$crds_json" >/dev/null; then
     printf 'Missing %s CRD: %s\n' "$family" "$name" >&2
     failures=$((failures + 1))
@@ -74,6 +80,23 @@ check_crd() {
     else
       gateway_channel="$channel"
     fi
+  else
+    # Envoy's published CRDs have no release marker; compare their served schemas with v1.8.4.
+    schema="$(jq -cS --arg name "$name" --arg version "$version" '.items[] |
+      select(.metadata.name == $name) | .spec.versions[]? |
+      select(.name == $version and .served == true) | .schema.openAPIV3Schema // empty' \
+      <<<"$crds_json")"
+    expected_hash="$(awk -v name="$name" '$1 == name {print $2}' "$envoy_schema_hashes")"
+    if [[ -n "$schema" && -n "$expected_hash" ]]; then
+      actual_hash="$(printf '%s' "$schema" | shasum -a 256 | awk '{print $1}')"
+    else
+      actual_hash="<missing>"
+    fi
+    if [[ "$actual_hash" != "$expected_hash" || -z "$expected_hash" ]]; then
+      printf 'Envoy Gateway CRD %s has an unverified v1.8.4 schema (sha256 %s; expected %s).\n' \
+        "$name" "$actual_hash" "${expected_hash:-<missing>}" >&2
+      failures=$((failures + 1))
+    fi
   fi
 }
 
@@ -98,5 +121,5 @@ if (( failures > 0 )); then
     "$failures" >&2
   exit 1
 fi
-printf 'Envoy CRD preflight passed in context %s: Gateway API v1.5.1 (%s) and Envoy Gateway v1.8.4 CRDs are Established and serve the required APIs.\n' \
+printf 'Envoy CRD preflight passed in context %s: Gateway API v1.5.1 (%s) and Envoy Gateway CRDs matching the v1.8.4 schemas are Established and serve the required APIs.\n' \
   "$context" "$gateway_channel"

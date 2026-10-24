@@ -77,8 +77,9 @@ read-only check **after** provisioning external CRDs and **before** installing o
 bash charts/formbricks/scripts/preflight-envoy-crds.sh --context my-cluster
 ```
 
-The script reads CRDs only, reports their version/channel and served APIs, and rejects missing or unverified
-prerequisites. It is never a Helm hook; offline `helm template` and GitOps rendering stay independent of
+The script reads CRDs only, checks the Envoy CRD schemas against the published v1.8.4 bundle, and rejects
+missing or unverified prerequisites. Envoy CRDs have no release annotation; their owner must pin the CRD
+package to v1.8.4. It is never a Helm hook; offline `helm template` and GitOps rendering stay independent of
 cluster access. Replace `my-cluster` with the target kubectl context and use the corresponding example file
 with `helm install` or `helm upgrade` after it passes.
 

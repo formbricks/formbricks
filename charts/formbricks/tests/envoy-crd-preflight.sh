@@ -5,6 +5,9 @@ script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 preflight="${script_dir}/../scripts/preflight-envoy-crds.sh"
 temp_dir="$(mktemp -d)"
 trap 'rm -rf "${temp_dir}"' EXIT
+mkdir -p "${temp_dir}/scripts"
+cp "$preflight" "${temp_dir}/scripts/preflight-envoy-crds.sh"
+preflight="${temp_dir}/scripts/preflight-envoy-crds.sh"
 
 python3 - "${temp_dir}/valid.json" <<'PY'
 import json
@@ -22,14 +25,27 @@ for family, names, group, version in (
             {"gateway.networking.k8s.io/bundle-version": "v1.5.1", "gateway.networking.k8s.io/channel": "standard"}
             if family == "gateway" else {}
         )
+        envoy_schema = {"type": "object", "description": f"{name} fixture"}
+        version_spec = {"name": version, "served": True}
+        if family == "envoy":
+            version_spec["schema"] = {"openAPIV3Schema": envoy_schema}
         items.append({
             "metadata": {"name": f"{name}.{group}", "annotations": annotations},
-            "spec": {"versions": [{"name": version, "served": True}]},
+            "spec": {"versions": [version_spec]},
             "status": {"conditions": [{"type": "Established", "status": "True"}]},
         })
 with open(sys.argv[1], "w", encoding="utf-8") as output:
     json.dump({"items": items}, output)
 PY
+
+jq -r '.items[] | select(.metadata.name | endswith(".gateway.envoyproxy.io")) | .metadata.name' \
+  "${temp_dir}/valid.json" | while IFS= read -r crd_name; do
+    crd_schema="$(jq -cS --arg name "$crd_name" '.items[] | select(.metadata.name == $name) |
+      .spec.versions[] | select(.name == "v1alpha1") | .schema.openAPIV3Schema' \
+      "${temp_dir}/valid.json")"
+    crd_hash="$(printf '%s' "$crd_schema" | shasum -a 256 | awk '{print $1}')"
+    printf '%s %s\n' "$crd_name" "$crd_hash"
+  done >"${temp_dir}/scripts/envoy-v1.8.4-crd-schemas.sha256"
 
 cat > "${temp_dir}/kubectl" <<'STUB'
 #!/usr/bin/env bash
@@ -82,6 +98,12 @@ expect_failure "${temp_dir}/missing-gateway.json" 'Missing Gateway API CRD: http
 jq '(.items[] | select(.metadata.name == "listenersets.gateway.networking.k8s.io") |
   .spec.versions[0].served) = false' "${temp_dir}/valid.json" >"${temp_dir}/unserved.json"
 expect_failure "${temp_dir}/unserved.json" 'does not serve v1'
+
+jq '(.items[] | select(.metadata.name == "securitypolicies.gateway.envoyproxy.io") |
+  .spec.versions[0].schema.openAPIV3Schema.description) = "another Envoy release"' \
+  "${temp_dir}/valid.json" >"${temp_dir}/envoy-schema.json"
+expect_failure "${temp_dir}/envoy-schema.json" \
+  'securitypolicies.gateway.envoyproxy.io has an unverified v1.8.4 schema'
 
 jq '(.items[] | select(.metadata.name == "gateways.gateway.networking.k8s.io") |
   .metadata.annotations["gateway.networking.k8s.io/bundle-version"]) = "v1.4.1"' \
