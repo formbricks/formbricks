@@ -469,7 +469,9 @@ taxonomy:
   terminationGracePeriodSeconds: 930
 
   envFrom: []
-  env: {}
+  # The v0.1.0 image runs uv at startup, which needs a writable cache as a non-root user.
+  env:
+    UV_CACHE_DIR: /tmp/uv-cache
 
   resources:
     requests:
@@ -534,8 +536,19 @@ taxonomy:
 
   podAnnotations: {}
   podLabels: {}
-  podSecurityContext: {}
-  securityContext: {}
+  podSecurityContext:
+    fsGroup: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
   nodeSelector: {}
   tolerations: []
   affinity: {}
