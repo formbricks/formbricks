@@ -272,6 +272,25 @@ describe("probeSamlResponseParse failure paths", () => {
     await expect(probeSamlResponseParse("PHIvPg==", KEY, null)).resolves.toEqual({ outcome: "busy" });
   });
 
+  test("floors the allowance debt, so sign-ins are answered again within about a second of a burst", async () => {
+    const { probeSamlResponseParse, chargeMainThreadParse, SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS } =
+      await load();
+    // Far more than the allowance, as queued jobs settling after it ran out can charge.
+    for (let i = 0; i < 20; i++) chargeMainThreadParse(SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS);
+    await expect(probeSamlResponseParse("PHIvPg==", KEY, null)).resolves.toEqual({ outcome: "busy" });
+
+    await vi.advanceTimersByTimeAsync(1_100);
+    const next = probeSamlResponseParse("PHIvPg==", KEY, null);
+    await settle();
+    state.workers[0].ready();
+    mainPort(state.workers[0]).flush();
+    await settle();
+    state.workers[0].answer();
+    mainPort(state.workers[0]).flush();
+
+    await expect(next).resolves.toMatchObject({ outcome: "parsed" });
+  });
+
   test("fails a decrypted refusal the worker never announced, rather than answer it", async () => {
     const { probe, worker } = await holdingOneJob();
     worker.answer(5, {

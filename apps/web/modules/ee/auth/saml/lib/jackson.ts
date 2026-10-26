@@ -52,14 +52,24 @@ const jacksonLogger = (level: "info" | "warn" | "error") => (message: string, er
  * The parse worker runs the same check with them, so it is timed as jackson will run it: once per certificate when
  * none matches (ENG-4108). `null` when no connection is configured, where jackson refuses before validating.
  * Formbricks configures its one connection only when jackson starts (`preloadConnection`), so it is read then.
+ *
+ * Only the worker's cost estimate depends on it: jackson validates with the connection it reads per request. So a
+ * failed read is logged and gives `null`, which skips the worker's signature-check timing, rather than failing
+ * jackson's start and with it every SAML sign-in.
  */
 const readIdpVerification = async (
   connectionController: IConnectionAPIController
 ): Promise<SamlIdpVerification | null> => {
-  const [connection] = await connectionController.getConnections({
-    tenant: SAML_TENANT,
-    product: SAML_PRODUCT,
-  });
+  let connection: Awaited<ReturnType<IConnectionAPIController["getConnections"]>>[number] | undefined;
+  try {
+    [connection] = await connectionController.getConnections({ tenant: SAML_TENANT, product: SAML_PRODUCT });
+  } catch (error) {
+    logger.error(
+      { error: error instanceof Error ? toLogText(error.message, JACKSON_LOG_TEXT_LIMIT) : undefined },
+      "Could not read the SAML connection's certificates; the parse worker will not time signature checks"
+    );
+    return null;
+  }
   if (!connection || !("idpMetadata" in connection)) return null;
   const { publicKey, thumbprint } = connection.idpMetadata;
   if (publicKey) return { publicKey };

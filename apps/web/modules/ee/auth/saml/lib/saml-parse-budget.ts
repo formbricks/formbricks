@@ -60,7 +60,8 @@ const WORKER_STARTUP_TIMEOUT_MS = 5_000;
  * answers 503 rather than let many sources together keep the event loop busy with SAML. It is checked when a response
  * is queued and again when its parse finishes, so a burst can overdraw it by one response at most. A real sign-in
  * costs ~12 ms in the worker with 150 groups and ~77 ms at the largest the bounds admit, so this is about a dozen
- * sign-ins a second per process, or two of the largest.
+ * sign-ins a second per process, or two of the largest. The debt is floored at one allowance (`spendAllowance`), so
+ * however many queued jobs settle after it runs out, sign-ins are answered again within about a second.
  */
 export const SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS = 300;
 
@@ -179,6 +180,15 @@ const refillAllowance = (now: number) => {
 };
 
 /**
+ * Spends `ms` of the allowance. Every job queued while it was positive still settles after it runs out, and each may
+ * charge up to a whole budget, so unfloored debt would keep sign-ins at 503 long after a burst; at most one allowance
+ * of debt means about a second.
+ */
+const spendAllowance = (ms: number) => {
+  pool.allowanceMs = Math.max(-SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS, pool.allowanceMs - ms);
+};
+
+/**
  * How a job that had begun decrypting ends. Parsed and busy stand as they are (`takeMessage` checks the allowance before
  * it answers parsed). Any other end may have come of the plaintext, so it is `refused_encrypted`, but only while the
  * allowance lasts: once it is spent the job answers busy, as a parsed one would, so that whether a response gets busy
@@ -250,7 +260,7 @@ const takeMessage = (message: WorkerResult | DecryptingNotice): boolean => {
     settleRunning({ outcome: "busy" });
     return true;
   }
-  pool.allowanceMs -= result.ms * JACKSON_COST_PER_WORKER_MS;
+  spendAllowance(result.ms * JACKSON_COST_PER_WORKER_MS);
   settleRunning({ outcome: "parsed", ms: result.ms, claims: result.claims });
   return true;
 };
@@ -394,7 +404,7 @@ function pump(): void {
  */
 export const chargeMainThreadParse = (ms: number): void => {
   refillAllowance(performance.now());
-  pool.allowanceMs -= ms;
+  spendAllowance(ms);
 };
 
 /**

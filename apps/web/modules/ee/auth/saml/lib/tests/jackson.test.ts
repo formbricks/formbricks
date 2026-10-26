@@ -133,6 +133,22 @@ describe("SAML Jackson Initialization", () => {
     expect(result?.idpVerification).toEqual(expected);
   });
 
+  test("starts without the certificates, and logs it, when the connection cannot be read", async () => {
+    vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
+    getConnections.mockRejectedValue(new Error("connection refused"));
+    const error = vi.spyOn(logger, "error").mockImplementation(() => undefined);
+
+    const result = await init();
+
+    // jackson still starts; only the worker's signature-check timing is skipped.
+    expect(result?.oauthController).toBeDefined();
+    expect(result?.idpVerification).toBeNull();
+    expect(error).toHaveBeenCalledWith(
+      { error: "connection refused" },
+      "Could not read the SAML connection's certificates; the parse worker will not time signature checks"
+    );
+  });
+
   test("return early when SAML SSO is disabled", async () => {
     vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(false);
 
