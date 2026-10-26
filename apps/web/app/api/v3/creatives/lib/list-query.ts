@@ -43,7 +43,20 @@ const ZRawQuery = z.object({
 });
 
 const CURSOR_VERSION = 1;
-const MAX_CURSOR_LENGTH = 1024;
+
+/**
+ * The longest token the encoder issues, so every cursor it mints parses back and nothing much longer is
+ * decoded. The worst case is a name sort on a name at the contract's 255 UTF-16 code units, each taking
+ * six bytes once JSON-escaped and UTF-8 encoded (a control character such as `\u001f`; CJK takes three).
+ * The rest of the token (version, sort, fingerprint, id) stays under 128 bytes, and base64url spends
+ * four characters on every three bytes.
+ */
+const MAX_NAME_CODE_UNITS = 255;
+const MAX_ENCODED_BYTES_PER_CODE_UNIT = 6;
+const MAX_CURSOR_ENVELOPE_BYTES = 128;
+const MAX_CURSOR_LENGTH = Math.ceil(
+  ((MAX_NAME_CODE_UNITS * MAX_ENCODED_BYTES_PER_CODE_UNIT + MAX_CURSOR_ENVELOPE_BYTES) * 4) / 3
+);
 
 const ZCursor = z.strictObject({
   version: z.literal(CURSOR_VERSION),
