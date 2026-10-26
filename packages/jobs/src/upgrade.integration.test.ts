@@ -1,9 +1,9 @@
 import { QueueEvents, Worker } from "bullmq";
-import IORedis from "ioredis";
 import { randomUUID } from "node:crypto";
 import { once } from "node:events";
 import { createServer } from "node:http";
 import { expect, test } from "vitest";
+import { createWorkerConnection } from "./connection";
 import { JOBS_QUEUE_NAME } from "./constants";
 import { createJobsQueue } from "./queue";
 import { openJobsUpgradeQueue } from "./upgrade";
@@ -15,7 +15,7 @@ test.skipIf(!redisUrl)(
   "HTTP can enqueue during a pause; active source work finishes and target workers consume every queued job",
   async () => {
     const prefix = `{handoff-test-${randomUUID()}}`;
-    const connection = new IORedis(redisUrl!, { maxRetriesPerRequest: null });
+    const connection = createWorkerConnection({ redisUrl: redisUrl! });
     const queue = createJobsQueue({ connection, prefix });
     const events = new QueueEvents(JOBS_QUEUE_NAME, { connection, prefix });
     const control = await openJobsUpgradeQueue(redisUrl!, prefix);

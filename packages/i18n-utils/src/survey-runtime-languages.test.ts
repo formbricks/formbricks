@@ -97,6 +97,8 @@ describe("isSurveyRuntimeLanguage", () => {
     expect(isSurveyRuntimeLanguage("pt-PT")).toBe(true);
     expect(isSurveyRuntimeLanguage("km-KH")).toBe(true);
     expect(isSurveyRuntimeLanguage("ne-NP")).toBe(true);
+    expect(isSurveyRuntimeLanguage("ms-MY")).toBe(true);
+    expect(isSurveyRuntimeLanguage("ms")).toBe(true);
   });
 
   test("is false for a language with no strings at all", () => {

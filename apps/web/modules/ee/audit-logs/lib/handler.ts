@@ -1,9 +1,13 @@
+import { after } from "next/server";
 import { logger } from "@formbricks/logger";
 import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP } from "@/lib/constants";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
-import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { deepDiff, redactPII } from "@/lib/utils/logger-helpers";
+import {
+  UNKNOWN_AUDIT_REQUEST_METADATA,
+  getAuditRequestMetadata,
+} from "@/modules/ee/audit-logs/lib/request-metadata";
 import { logAuditEvent } from "@/modules/ee/audit-logs/lib/service";
 import {
   TActor,
@@ -13,6 +17,7 @@ import {
   TAuditTarget,
   UNKNOWN_DATA,
 } from "@/modules/ee/audit-logs/types/audit-log";
+import type { TAuditRequestMetadata } from "@/modules/ee/audit-logs/types/request-metadata";
 import { getIsAuditLogsEnabled } from "@/modules/ee/license-check/lib/utils";
 
 export type TAuditEventInput = {
@@ -27,34 +32,36 @@ export type TAuditEventInput = {
   newObject?: Record<string, unknown> | null;
   eventId?: string;
   apiUrl?: string;
+  /** Server-captured metadata for work that outlives its originating request. */
+  requestMetadata?: TAuditRequestMetadata;
 };
 
 type TBuildAuditEventInput = TAuditEventInput & {
-  ipAddress: string;
+  requestMetadata: TAuditRequestMetadata;
+  // When the audited action happened. Taken by the entry point, since the write itself is deferred.
+  timestamp: string;
 };
 
 /**
  * Builds an audit event and logs it.
  * Redacts sensitive data from the old and new objects before logging.
+ * Every exported entry point checks `getIsAuditLogsEnabled` before building or writing an event.
  */
-export const buildAndLogAuditEvent = async ({
+const buildAndLogAuditEvent = async ({
   action,
   targetType,
   userId,
   userType,
   targetId,
   organizationId,
-  ipAddress,
+  requestMetadata,
   status,
   oldObject,
   newObject,
   eventId,
   apiUrl,
+  timestamp,
 }: TBuildAuditEventInput) => {
-  if (!AUDIT_LOG_ENABLED && !(await getIsAuditLogsEnabled())) {
-    return;
-  }
-
   try {
     let changes;
 
@@ -71,10 +78,11 @@ export const buildAndLogAuditEvent = async ({
       actor: { id: userId, type: userType },
       action,
       target: { id: targetId, type: targetType },
-      timestamp: new Date().toISOString(),
+      timestamp,
       organizationId,
       status,
-      ipAddress: AUDIT_LOG_GET_USER_IP ? ipAddress : UNKNOWN_DATA,
+      ipAddress: AUDIT_LOG_GET_USER_IP ? requestMetadata.ipAddress : UNKNOWN_DATA,
+      userAgent: requestMetadata.userAgent,
       apiUrl,
       ...(changes ? { changes } : {}),
       ...(status === "failure" && eventId ? { eventId } : {}),
@@ -86,108 +94,44 @@ export const buildAndLogAuditEvent = async ({
   }
 };
 
-/**
- * Logs an audit event.
- * The audit logging runs in the background to avoid blocking the main request.
- */
-export const queueAuditEventBackground = async ({
-  action,
-  targetType,
-  userId,
-  userType,
-  targetId,
-  organizationId,
-  oldObject,
-  newObject,
-  status,
-  eventId,
-  apiUrl,
-}: TAuditEventInput) => {
-  setImmediate(async () => {
-    const ipAddress = await getClientIpFromHeaders();
-    await buildAndLogAuditEvent({
-      action,
-      targetType,
-      userId,
-      userType,
-      targetId,
-      organizationId,
-      ipAddress,
-      status,
-      oldObject,
-      newObject,
-      eventId,
-      apiUrl,
-    });
-  });
+/** Licence checks and writes remain off the response path for request-bound audit entry points. */
+const logRequestAuditEvent = async (input: TAuditEventInput, timestamp: string) => {
+  try {
+    if (!(await getIsAuditLogsEnabled())) return;
+    const requestMetadata = input.requestMetadata ?? (await getAuditRequestMetadata());
+    await buildAndLogAuditEvent({ ...input, requestMetadata, timestamp });
+  } catch (err) {
+    const { action, targetType, targetId, eventId } = input;
+    logger.error({ err, action, targetType, targetId, eventId }, "Failed to queue audit event");
+  }
+};
+
+/** Snapshot metadata while headers are readable, before the unprotected background callback. */
+export const queueAuditEventBackground = async (input: TAuditEventInput): Promise<void> => {
+  const timestamp = new Date().toISOString();
+  const requestMetadata =
+    input.requestMetadata ??
+    (AUDIT_LOG_ENABLED ? await getAuditRequestMetadata() : UNKNOWN_AUDIT_REQUEST_METADATA);
+  setImmediate(() => void logRequestAuditEvent({ ...input, requestMetadata }, timestamp));
 };
 
 /**
- * Logs an audit event.
- * This function will block the main request. Use it only in edge runtime functions, like api routes.
+ * Log after the response without delaying it on a licence lookup. Next.js keeps headers readable in
+ * after() for Route Handlers and Server Functions. Outside a request, return a rejection to the caller.
  */
-export const queueAuditEvent = async ({
-  action,
-  targetType,
-  userId,
-  userType,
-  targetId,
-  organizationId,
-  oldObject,
-  newObject,
-  status,
-  eventId,
-  apiUrl,
-}: TAuditEventInput) => {
-  const ipAddress = await getClientIpFromHeaders();
-
-  await buildAndLogAuditEvent({
-    action,
-    targetType,
-    userId,
-    userType,
-    targetId,
-    organizationId,
-    ipAddress,
-    status,
-    oldObject,
-    newObject,
-    eventId,
-    apiUrl,
-  });
+export const queueAuditEvent = (input: TAuditEventInput): Promise<void> => {
+  const timestamp = new Date().toISOString();
+  return Promise.try(() => after(() => logRequestAuditEvent(input, timestamp)));
 };
 
-/**
- * Logs an audit event without reading request headers.
- * Use this from background workers or other contexts without a request lifecycle.
- */
-export const queueAuditEventWithoutRequest = async ({
-  action,
-  targetType,
-  userId,
-  userType,
-  targetId,
-  organizationId,
-  oldObject,
-  newObject,
-  status,
-  eventId,
-  apiUrl,
-  ipAddress = UNKNOWN_DATA,
-}: TAuditEventInput & { ipAddress?: string }) => {
+/** Workers never read request headers. Deferred user work must pass its captured metadata explicitly. */
+export const queueAuditEventWithoutRequest = async (input: TAuditEventInput): Promise<void> => {
+  const timestamp = new Date().toISOString();
+  if (!(await getIsAuditLogsEnabled())) return;
   await buildAndLogAuditEvent({
-    action,
-    targetType,
-    userId,
-    userType,
-    targetId,
-    organizationId,
-    ipAddress,
-    status,
-    oldObject,
-    newObject,
-    eventId,
-    apiUrl,
+    ...input,
+    requestMetadata: input.requestMetadata ?? UNKNOWN_AUDIT_REQUEST_METADATA,
+    timestamp,
   });
 };
 
@@ -223,25 +167,25 @@ export const withAuditLogging = <
       error = err;
     }
 
-    if (!AUDIT_LOG_ENABLED) {
-      if (status === "failure") throw error;
-      return result;
-    }
-
-    if (!auditLoggingCtx) {
-      logger.error("No audit logging context found");
-      return result;
-    }
-
     // The handler ran fine but reported that the audited thing did not actually happen, so `action`
     // here would be a false record (see AuditLoggingCtx.suppressEvent). Deliberately gated on success:
     // a failure is always audited, so this cannot be used to hide one.
-    if (status === "success" && auditLoggingCtx.suppressEvent) {
+    if (status === "success" && auditLoggingCtx?.suppressEvent) {
       return result;
     }
 
+    // The gate is checked off the request path, so a cold licence lookup never delays the action's
+    // response.
+    const timestamp = new Date().toISOString();
     setImmediate(async () => {
       try {
+        if (!(await getIsAuditLogsEnabled())) return;
+
+        if (!auditLoggingCtx) {
+          logger.error("No audit logging context found");
+          return;
+        }
+
         const userId: string = ctx?.user?.id ?? UNKNOWN_DATA;
         let organizationId =
           auditLoggingCtx?.organizationId || // NOSONAR // We want to use the organizationId from the auditLoggingCtx if it is present and not empty
@@ -347,8 +291,12 @@ export const withAuditLogging = <
           userType: "user",
           targetId,
           organizationId,
-          ipAddress: AUDIT_LOG_GET_USER_IP ? auditLoggingCtx.ipAddress : UNKNOWN_DATA,
+          requestMetadata: {
+            ipAddress: auditLoggingCtx.ipAddress,
+            userAgent: auditLoggingCtx.userAgent ?? UNKNOWN_DATA,
+          },
           status,
+          timestamp,
           oldObject: auditLoggingCtx.oldObject,
           newObject: auditLoggingCtx.newObject,
           eventId: auditLoggingCtx.eventId,

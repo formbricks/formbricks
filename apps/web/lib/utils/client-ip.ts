@@ -127,10 +127,10 @@ export const resolveClientIp = (headersList: Headers, hopCount: number): string 
 };
 
 /** Read only the private identity established by Proxy; raw forwarding headers are never fallbacks. */
-export async function getClientIpFromHeaders(): Promise<string> {
+export async function getClientIpFromHeaders(requestHeaders?: Headers): Promise<string> {
   let headersList: Headers;
   try {
-    headersList = await headers();
+    headersList = requestHeaders ?? (await headers());
   } catch (error) {
     logger.error(error, "Failed to get headers in getClientIpFromHeaders");
     return UNTRUSTED_CLIENT_IP;

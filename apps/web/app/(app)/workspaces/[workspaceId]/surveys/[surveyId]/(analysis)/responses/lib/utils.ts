@@ -6,7 +6,11 @@ import {
   listDisplayableReservedFields,
 } from "@formbricks/types/embedded-data-resolver";
 import { TResponse } from "@formbricks/types/responses";
-import { RESERVED_FIELD_ICONS, getReservedFieldLabel } from "@/modules/embedded-data/lib/field-display";
+import {
+  RESERVED_FIELD_ICONS,
+  formatReservedFieldValue,
+  getReservedFieldLabel,
+} from "@/modules/embedded-data/lib/field-display";
 
 export const getAddressFieldLabel = (field: string, t: TFunction) => {
   switch (field) {
@@ -104,11 +108,16 @@ export const getReservedColumnIcon = (name: string) => RESERVED_FIELD_ICONS[name
  * Every reserved value a response carries, keyed by column id — one pass over the catalog per row
  * rather than a switch consulted once per column.
  */
-export const getReservedColumnValues = (response: TResponse): Record<string, string> => {
+export const getReservedColumnValues = (response: TResponse, locale: string): Record<string, string> => {
   const fields: TDisplayableReservedField[] = [
     ...listDisplayableReservedFields(RESERVED_FIELD_CATALOG, response, "primary"),
     ...listDisplayableReservedFields(RESERVED_FIELD_CATALOG, response, "secondary"),
   ];
 
-  return Object.fromEntries(fields.map(({ entry, value }) => [reservedColumnId(entry.name), value]));
+  return Object.fromEntries(
+    fields.map(({ entry, value }) => [
+      reservedColumnId(entry.name),
+      formatReservedFieldValue(entry.name, value, locale),
+    ])
+  );
 };

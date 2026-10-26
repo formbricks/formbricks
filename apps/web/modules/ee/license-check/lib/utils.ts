@@ -1,4 +1,5 @@
 import "server-only";
+import { logger } from "@formbricks/logger";
 import {
   AUDIT_LOG_ENABLED,
   CLOUD_HOBBY_WORKSPACE_LIMIT,
@@ -138,9 +139,31 @@ export const getIsAISmartToolsEnabled = async (organizationId: string): Promise<
   return getCustomPlanFeaturePermission(organizationId, "aiSmartTools");
 };
 
+// Per module instance (Next can load more than one per process): whether the last check found the
+// licence withholding audit logging (see below).
+let isAuditLogWithheldByLicense = false;
+
+/**
+ * The single gate for emitting audit events: every audit entry point asks this, and nothing else
+ * reads `AUDIT_LOG_ENABLED` to decide whether an event is written. Self-hosted needs the env var and
+ * an active licence with `auditLogs`, so a licence that lapses past its grace period turns logging off
+ * like any other Enterprise feature. On Cloud the stream is Formbricks' own operational trail rather
+ * than a per-plan feature, so the env var alone decides.
+ */
 export const getIsAuditLogsEnabled = async (): Promise<boolean> => {
   if (!AUDIT_LOG_ENABLED) return false;
-  return getSpecificFeatureFlag("auditLogs");
+  if (IS_FORMBRICKS_CLOUD) return true;
+
+  const isLicensed = await getSpecificFeatureFlag("auditLogs");
+  // An operator who set AUDIT_LOG_ENABLED would otherwise only see the stream go quiet. Warn once each
+  // time the licence starts withholding it (missing, lapsed past grace, or without audit logs).
+  if (!isLicensed && !isAuditLogWithheldByLicense) {
+    logger.warn(
+      "AUDIT_LOG_ENABLED is set, but the Enterprise license is not active or does not include audit logs: no audit events are written"
+    );
+  }
+  isAuditLogWithheldByLicense = !isLicensed;
+  return isLicensed;
 };
 
 export const getIsSamlSsoEnabled = async (): Promise<boolean> => {

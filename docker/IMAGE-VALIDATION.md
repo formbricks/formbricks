@@ -64,6 +64,30 @@ docker run --rm --network none --entrypoint node REPOSITORY@sha256:DIGEST \
 Assertion failures report their specific reason and affected file paths, without actual/expected
 configuration values. Unexpected errors, including malformed JSON, retain a generic diagnostic.
 
+## CA trust
+
+Node trusts the OS CA bundle (Alpine's `ca-certificates`), not the Mozilla list compiled into
+its binary: the Dockerfile builds Node with `--openssl-use-def-ca-store` and pins a minimum
+CA package version. Both matter. A CA-package fix, such as the distrust of the compromised
+eMudhra intermediates, only reaches Node through this switch, and it holds even when a
+deployment sets its own `NODE_OPTIONS`.
+
+The image build checks the installed CA package versions, that the compromised root is absent
+from the OS bundle, and that Node defaults to the OS store. Two scripts prove the behaviour
+with real handshakes. Both need Docker; the first also needs `openssl`:
+
+```sh
+# Offline, a few seconds. Runs on every PR and on each release candidate digest.
+bash apps/web/scripts/docker/verify-tls-image.sh REPOSITORY@sha256:DIGEST
+
+# Needs network. Evidence for a rollout: the 12 published eMudhra chains must be rejected
+# through tls, https, fetch and undici, and a valid public chain accepted.
+bash apps/web/scripts/docker/verify-tls-image.sh REPOSITORY@sha256:DIGEST --incident-hosts
+```
+
+The live check depends on hosts we do not run, so it is not a PR gate. Node keeps honouring
+`NODE_EXTRA_CA_CERTS` on top of the OS store. `SSL_CERT_FILE` and `SSL_CERT_DIR` now apply too.
+
 ## Repair and recovery
 
 Use `rebuild_application: true` on **Deploy Selected Branch to Apollo** or

@@ -9,7 +9,7 @@ readonly PROD_COMPOSE_FILE="${SCRIPT_DIR}/docker-compose.yml"
 
 readonly AUTHZED_TOKEN="${AUTHZED_TOKEN:-0000000000000000000000000000000000000000000000000000000000000001}"
 readonly AUTHZED_DATABASE_PASSWORD="${AUTHZED_DATABASE_PASSWORD:-0000000000000000000000000000000000000000000000000000000000000002}"
-readonly SPICEDB_IMAGE_REF="authzed/spicedb:v1.52.0"
+readonly SPICEDB_IMAGE_REF="authzed/spicedb:v1.56.2"
 readonly SPICEDB_GRPC_PORT="50051"
 readonly AUTHZED_GRPCUI_PORT="50052"
 readonly GRPCUI_IMAGE_REF="fullstorydev/grpcui:v1.5.2"
@@ -31,7 +31,7 @@ docker compose --file "${PROD_COMPOSE_FILE}" config --services >"${temp_dir}/pro
 docker compose --file "${DEV_COMPOSE_FILE}" --profile authzed-ui --profile authzed-tools config --format json >"${temp_dir}/development.json"
 
 jq --exit-status --arg token "${AUTHZED_TOKEN}" '
-  .services.spicedb.image == "authzed/spicedb:v1.52.0" and
+  .services.spicedb.image == "authzed/spicedb:v1.56.2" and
   .services["spicedb-migrate"].image == .services.spicedb.image and
   .services.spicedb.mem_limit == "536870912" and
   (.services.spicedb | has("cpus") | not) and
@@ -75,7 +75,7 @@ if grep --fixed-strings --line-regexp "authzed-ops" "${temp_dir}/production-serv
 fi
 
 jq --exit-status --arg token "${AUTHZED_TOKEN}" '
-  .services.spicedb.image == "authzed/spicedb:v1.52.0" and
+  .services.spicedb.image == "authzed/spicedb:v1.56.2" and
   .services["spicedb-migrate"].image == .services.spicedb.image and
   .services.spicedb.mem_limit == "536870912" and
   (.services.spicedb | has("cpus") | not) and

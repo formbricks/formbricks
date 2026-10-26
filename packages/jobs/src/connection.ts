@@ -1,5 +1,6 @@
 import IORedis, { type RedisOptions } from "ioredis";
 import { logger } from "@formbricks/logger";
+import { getRedisTlsOptions } from "@formbricks/redis-config";
 
 export interface JobsConnectionConfig {
   redisUrl: string;
@@ -29,6 +30,7 @@ export const createProducerConnection = ({
 }: JobsConnectionConfig): IORedis =>
   addConnectionErrorLogging(
     new IORedis(redisUrl, {
+      tls: getRedisTlsOptions(redisUrl, process.env.REDIS_TLS_CA),
       ...getCommonConnectionOptions(connectionName),
       maxRetriesPerRequest: 1,
       enableOfflineQueue: false,
@@ -42,6 +44,7 @@ export const createWorkerConnection = ({
 }: JobsConnectionConfig): IORedis =>
   addConnectionErrorLogging(
     new IORedis(redisUrl, {
+      tls: getRedisTlsOptions(redisUrl, process.env.REDIS_TLS_CA),
       ...getCommonConnectionOptions(connectionName),
       maxRetriesPerRequest: null,
     }),

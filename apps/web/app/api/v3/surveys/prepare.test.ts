@@ -352,6 +352,45 @@ describe("v3 survey preparation", () => {
     }
   });
 
+  test("a draft holding an unfinished show condition stays patchable, without that condition", () => {
+    // Autosave stores the row an author has not filled in yet. Parsed strictly, it made every patch
+    // of the survey fail as `stored_survey_invalid` (review on #9655).
+    const finished = {
+      id: "cnd1",
+      leftOperand: { type: "visit", value: "timeOnSite" },
+      operator: "isGreaterThanOrEqual",
+      rightOperand: { type: "static", value: 30 },
+    };
+    const unfinished = {
+      id: "cnd2",
+      leftOperand: { type: "page", value: "currentUrl" },
+      operator: "pathIsAnyOf",
+    };
+    const draftAppSurvey = {
+      ...survey,
+      type: "app",
+      displayOption: "displayOnce",
+      displayPercentage: null,
+      displayLimit: null,
+      recontactDays: null,
+      autoClose: null,
+      autoComplete: null,
+      delay: 0,
+      triggers: [],
+      segment: null,
+      showConditions: { id: "grp1", connector: "and", conditions: [finished, unfinished] },
+    } as unknown as TSurvey;
+
+    const renamed = prepareV3SurveyPatchInput(draftAppSurvey, { name: "Renamed" });
+
+    expect(renamed.ok).toBe(true);
+    expect(renamed.ok && renamed.document.distribution?.showConditions).toEqual({
+      id: "grp1",
+      connector: "and",
+      conditions: [finished],
+    });
+  });
+
   test("applies a patch over the current document before validating references", () => {
     const preparation = prepareV3SurveyPatchInput(survey, {
       blocks: [

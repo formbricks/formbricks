@@ -3,6 +3,7 @@ import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/typ
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { createI18nString } from "@/lib/i18n/utils";
+import { DEFAULT_ENDING_CARD_BUTTON_LINK } from "@/lib/survey/default-ending-card";
 import { checkExternalUrlsPermission } from "./check-external-urls-permission";
 
 vi.mock("@/modules/survey/lib/survey", () => ({
@@ -182,6 +183,55 @@ describe("checkExternalUrlsPermission", () => {
     };
 
     await expect(checkExternalUrlsPermission(mockOrganizationId, newSurvey, oldSurvey)).rejects.toThrow(
+      OperationNotAllowedError
+    );
+  });
+
+  test("should allow re-enabling the default ending card button link without permission", async () => {
+    vi.mocked(getOrganizationBilling).mockResolvedValue(mockOrganizationBilling as never);
+    vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
+
+    const oldSurvey: TSurvey = {
+      ...baseSurvey,
+      endings: [{ id: "end1", type: "endScreen", headline: createI18nString("Thank you", ["en"]) }],
+    };
+    const newSurvey: TSurvey = {
+      ...baseSurvey,
+      endings: [
+        {
+          id: "end1",
+          type: "endScreen",
+          headline: createI18nString("Thank you", ["en"]),
+          buttonLink: DEFAULT_ENDING_CARD_BUTTON_LINK,
+        },
+      ],
+    };
+
+    await expect(
+      checkExternalUrlsPermission(mockOrganizationId, newSurvey, oldSurvey)
+    ).resolves.not.toThrow();
+  });
+
+  test("should throw OperationNotAllowedError for a tampered default ending card button link without permission", async () => {
+    vi.mocked(getOrganizationBilling).mockResolvedValue(mockOrganizationBilling as never);
+    vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
+
+    const newSurvey: TSurvey = {
+      ...baseSurvey,
+      endings: [
+        {
+          id: "end1",
+          type: "endScreen",
+          headline: createI18nString("Thank you", ["en"]),
+          buttonLink: DEFAULT_ENDING_CARD_BUTTON_LINK.replace(
+            "https://formbricks.com",
+            "https://formbricks.com/phish"
+          ),
+        },
+      ],
+    };
+
+    await expect(checkExternalUrlsPermission(mockOrganizationId, newSurvey, null)).rejects.toThrow(
       OperationNotAllowedError
     );
   });

@@ -28,10 +28,10 @@
     }
   },
   "scripts": {
-    "dev": "vite build --watch --mode dev",
-    "build": "vite build",
-    "build:dev": "vite build --mode dev",
-    "go": "vite build --watch --mode dev",
+    "dev": "cross-env BUILD_DEBUG_PANEL=true vite build --mode dev && vite build --watch --mode dev",
+    "build": "vite build && cross-env BUILD_DEBUG_PANEL=true vite build",
+    "build:dev": "vite build --mode dev && cross-env BUILD_DEBUG_PANEL=true vite build --mode dev",
+    "go": "cross-env BUILD_DEBUG_PANEL=true vite build --mode dev && vite build --watch --mode dev",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "clean": "rimraf .turbo node_modules dist coverage",
@@ -42,9 +42,11 @@
   "devDependencies": {
     "@formbricks/config-eslint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
+    "@formbricks/types": "workspace:*",
     "@formbricks/vite-plugins": "workspace:*",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
+    "cross-env": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "vite-plugin-dts": "catalog:",

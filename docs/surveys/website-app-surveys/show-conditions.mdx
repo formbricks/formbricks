@@ -1,0 +1,118 @@
+---
+title: "Show Conditions"
+description: "Show a website survey only on the pages, visits and devices you choose: URL lists, query parameters, referrers, pages viewed, time on site, device, browser and window width. Works for anonymous visitors on every plan."
+icon: "filter"
+---
+
+A trigger decides **when** Formbricks tries to show a survey: a page view, a click, exit intent. Show conditions decide **whether** it actually shows at that moment, based on the page, the visit so far and the device. They work for anonymous visitors, need no login and no user ID, and are available on every plan.
+
+**Example:** show an exit survey only on the plan pages, never on the print pages, and only to visitors who have spent two minutes on the site or seen three pages:
+
+```text
+Trigger survey when one of the actions is fired… Exit intent
+…and only show it, when all are true:
+    Current URL      contains any of   /plan-compare
+                                       /drug-coverage
+    Current URL      contains none of  /plan-compare/print
+    any is true:
+        Time on site     is at least       120 seconds
+        Pages viewed     is at least       3 pages
+```
+
+## Set up show conditions
+
+<Steps>
+  <Step title="Open the Survey Trigger card">
+    In the survey editor, go to **Settings** and open the **Survey Trigger** card. Show conditions are for website and app surveys; link surveys don't have them.
+  </Step>
+  <Step title="Add a condition">
+    Under **…and only show it**, click **Add condition**. Pick what to check, how to compare, and the value. Add more conditions with the row menu, and choose whether **all** or **any** of them must hold.
+  </Step>
+  <Step title="Group conditions when you need both">
+    To mix "all" and "any" in one rule, use **Create group** in a row's menu. A group can't hold another group.
+  </Step>
+  <Step title="Test your URL">
+    Paste a URL into **Test your URL** to see which of your URL conditions it matches, before you publish.
+  </Step>
+</Steps>
+
+Leave the block empty to show the survey on every trigger, exactly as before.
+
+## What you can check
+
+Text comparisons ignore upper and lower case.
+
+| Condition | What it reads | Comparisons |
+| --- | --- | --- |
+| **Current URL** | The full URL of the page, query string included | path is any of, path is none of, contains any of, contains none of, is, is not, contains, does not contain, starts with, ends with |
+| **Query parameter** | One parameter of the current URL, by name | is, is not, contains, does not contain, starts with, ends with, is set, is not set |
+| **Page referrer** | The page the visitor came from to this page | is, is not, contains, does not contain, starts with, ends with, contains any of, contains none of |
+| **Entry referrer (this visit)** | Where the visit started: the referrer of its first page | as Page referrer |
+| **Visited URL (this visit)** | The pages seen in this visit, the current one included. One exact page, compared like **path is any of** | includes, does not include |
+| **Pages viewed (this visit)** | Every page load in this visit, reloads included | is, is more than, is less than, is at least, is at most |
+| **Unique pages viewed (this visit)** | Different pages in this visit, counted up to 200 | as Pages viewed, up to 200 |
+| **Time on site (this visit)** | Seconds spent on your site's pages in this visit | as Pages viewed |
+| **Device** | Desktop, tablet or phone | is, is not |
+| **Browser** | Chrome, Safari, Firefox, Edge, Opera, Samsung Internet or other | is, is not |
+| **Window width** | The browser window's width in pixels, not the screen's | as Pages viewed |
+
+### Pasting a list of pages
+
+Paste one entry per line. Blank lines are ignored, and a list can hold up to 200 entries. A line is always one entry: `/plans, /pricing` is never split into two. The two kinds of list match differently:
+
+- **Path is any of** and **path is none of** (Current URL only) compare each line with the page's path, exactly. `/plans` matches `https://www.medicare.gov/plans` and `/plans?ref=email`, but not `/plans/compare`. Case, a trailing slash, the query string and the `#hash` don't count, and a full URL pasted from the address bar is reduced to its path. A new Current URL condition starts with **path is any of**.
+- **Contains any of** and **contains none of** pass when the URL contains a line anywhere, so one line covers a whole section: `/plans` also matches `/plans/compare`. Keep fragments specific, because `/blog/planning` also matches `/blog/planning-for-retirement`.
+
+### What counts as a visit
+
+A visit is one browser tab. A new tab starts a new visit; reloading, going back, or leaving the site and coming back in the same tab continues it. Time on site counts only time on your own pages, so time spent on another site in between is left out. A change of only the URL's `#hash` is not a new page.
+
+Pages are told apart by their path, the same way **path is any of** compares them: `/plans`, `/plans/` and `/Plans` are one page. A visit remembers up to 200 different pages; past that, **Unique pages viewed** stops counting and **Visited URL** doesn't see the newer ones.
+
+<Note>
+  If the visitor's browser blocks storage, the visit can't be recorded and every visit condition fails, so the survey doesn't show. Page and device conditions still work.
+</Note>
+
+## When conditions are checked
+
+Conditions are checked when a trigger fires, and again right before the survey appears: after its **delay** if it has one, so time on site has grown and a visitor who moved to an excluded page in the meantime doesn't see it. Conditions never show a survey by themselves: a visitor who meets them but triggers nothing sees nothing.
+
+They apply on top of everything else that decides whether a survey shows: the action's own page filters, [Recontact Options](/surveys/website-app-surveys/recontact), the [Cooldown Period](/surveys/website-app-surveys/cooldown-period) and [segment targeting](/surveys/website-app-surveys/attribute-based-targeting). The [display percentage](/surveys/website-app-surveys/show-survey-to-percent-of-users) comes after them, so it samples only visitors who meet the conditions. See [Survey Display Logic](/surveys/website-app-surveys/survey-display-logic) for the full order.
+
+<Warning>
+  Show conditions are for websites only. The mobile SDKs (iOS, Android, React Native, Flutter) ignore them and show the survey on its trigger as before.
+</Warning>
+
+## Find out why a survey didn't show
+
+Add `?formbricksDebug=true` to the URL of a page with the Formbricks snippet. A small debug panel opens in the corner of the page and lists, for every survey on a trigger that fired:
+
+- whether it was dropped before the trigger fired, and why (shown once already, already answered, display limit, Cooldown Period, segment);
+- each show condition with what it read on this page, marked ✓ or ✗, grouped as in the editor: every "all of" or "any of" group shows its own ✓ or ✗, so a ✗ inside an "any of" group that passed did not stop the survey;
+- whether the display percentage or another open survey stopped it.
+
+It also shows the live visit: pages viewed, time on site, entry referrer, visited paths and the detected device.
+
+Debug mode stays on for the rest of the browser tab, so you can click through a multi-page site without adding the parameter to every link. Turn it off with **Turn off** in the panel, or with `?formbricksDebug=false`.
+
+### Read the same information in code
+
+In debug mode, the SDK sends the same information as a `formbricks_debug` event. Subscribe to it to log it or to check it in a test:
+
+```js
+formbricks.on("formbricks_debug", (event) => console.log(event));
+```
+
+A new subscriber first receives everything that already happened on the page. Unlike the other [Formbricks events](/surveys/website-app-surveys/lifecycle-events), this one is not pushed to the GTM `dataLayer`, because it contains the visitor's URLs and referrers. Its shape can change between versions, so use it for debugging, not to build features on.
+
+## What lands on each response
+
+Every response to a website survey records the visit at the moment the survey showed, as five [reserved fields](/surveys/embedded-data/reserved-fields): **Pages Viewed**, **Unique Pages Viewed**, **Time on Site**, **Entry Referrer** and **Visited URLs**. They appear on the response card, as table columns, in the response filter and in the CSV export, and you can use them in survey logic and recall. **Visited URLs** is the journey in order: the first page and the last 49 steps.
+
+<Note>
+  The **Device** shown on a response comes from the server, which can't tell an iPad from a Mac: iPads are recorded as desktop there. The **Device** show condition runs in the browser and detects them as tablets.
+</Note>
+
+---
+
+Still have questions? [Join us in GitHub Discussions](https://github.com/formbricks/formbricks/discussions) and we'll be glad to help.
