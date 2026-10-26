@@ -127,7 +127,7 @@ jobs:
           # such as `x-undocumented` that the CLI's strict validator rejects). This check gates
           # every merge, so a CodeRabbit-side problem must not block the queue — but it must be
           # loud rather than silently green.
-          if printf '%s' "$output" | grep -qE "Could not (load|use) the current CodeRabbit configuration schema"; then
+          if grep -qE '^✖ Could not (load|use) the current CodeRabbit configuration schema:' <<< "$output"; then
             echo "::warning file=.coderabbit.yaml::Could not load or compile the CodeRabbit schema; skipped schema validation. The path_filters check above still ran."
             exit 0
           fi
