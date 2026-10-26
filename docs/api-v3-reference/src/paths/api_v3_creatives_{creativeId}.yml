@@ -141,7 +141,9 @@ patch:
     **Status.** Publish with `status: inProgress`, pause with `paused`, close with `completed`, and
     reopen or resume with `inProgress`. A creative that was ever published can't go back to `draft`.
     Any status but `draft` must meet the publish rules of `POST /api/v3/creatives`, checked against the
-    creative as it would be after the change. In wind-down (the license does not include Creatives),
+    creative as it would be after the change, except for pausing or closing a published creative with
+    a body that changes nothing else: taking it down works even when it no longer meets them (its last
+    action was deleted, or its survey unlinked). In wind-down (the license does not include Creatives),
     only a body that sets nothing but `status` to `paused` or `completed` (with `expectedUpdatedAt`
     or without) is accepted; any other body, an empty one included, answers **403**
     `creatives_not_entitled`.

@@ -248,9 +248,23 @@ const getPublishProblems = (state: TCreativeState): InvalidParam[] => {
 };
 
 /**
+ * Whether the change pauses or closes a published creative and does nothing else. That takes it down,
+ * which needs none of the publish rules: a creative can stop meeting them through no edit of its own
+ * (its last action deleted, its survey unlinked by an archive purge), and taking it down must not wait
+ * on repairs it may not even be allowed to make (wind-down). Anything changed alongside the status, and
+ * a Draft being paused or closed (which publishes it), is checked as usual.
+ */
+const isTakedown = (next: TCreativeState, previous: TCreativeState | null): boolean =>
+  previous !== null &&
+  previous.status !== "draft" &&
+  (next.status === "paused" || next.status === "completed") &&
+  JSON.stringify({ ...next, status: previous.status }) === JSON.stringify(previous);
+
+/**
  * Everything wrong with `next`, as `invalid_params`. `previous` is the stored state on a patch, where
- * a published creative may not go back to Draft. References that need the database (the survey, the
- * action classes) are checked by the service inside the write's transaction.
+ * a published creative may not go back to Draft, and pausing or closing it needs no publish rules
+ * (`isTakedown`). References that need the database (the survey, the action classes) are checked by
+ * the service inside the write's transaction.
  */
 export const validateCreativeState = (
   next: TCreativeState,
@@ -274,7 +288,7 @@ export const validateCreativeState = (
       reason: "A published creative can't go back to Draft: pause or close it instead.",
     });
   }
-  if (next.status !== "draft") problems.push(...getPublishProblems(next));
+  if (next.status !== "draft" && !isTakedown(next, previous)) problems.push(...getPublishProblems(next));
   return problems;
 };
 

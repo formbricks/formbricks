@@ -770,6 +770,63 @@ describe("patchV3Creative", () => {
     expect(await invalidParamNames(response)).toEqual(["destination"]);
   });
 
+  describe("taking down a creative that no longer meets the publish rules", () => {
+    const statusChange = async (id: string, body: Record<string, unknown>) => {
+      const response = await patchV3Creative({ ...base, creativeId: id, body: patch(body) });
+      return { status: response.status, invalidParams: response.ok ? [] : await invalidParamNames(response) };
+    };
+
+    test("pauses or closes one whose last action was deleted, but doesn't resume it", async () => {
+      const { id } = await created(
+        feedbackButton({
+          status: "inProgress",
+          distribution: {
+            showOn: "action",
+            triggers: [{ actionClassId: ACTION_CLASS_ID }],
+            conditions: null,
+            displayPercentage: null,
+          },
+        })
+      );
+      // Deleting the action cascades to the creative's trigger.
+      store.set(id, { ...store.get(id)!, triggers: [] });
+
+      expect(await statusChange(id, { status: "paused" })).toEqual({ status: 200, invalidParams: [] });
+      expect(await statusChange(id, { status: "completed" })).toEqual({ status: 200, invalidParams: [] });
+      expect(await statusChange(id, { status: "inProgress" })).toEqual({
+        status: 422,
+        invalidParams: ["distribution.triggers"],
+      });
+    });
+
+    test("closes one whose survey was unlinked, but doesn't reopen it", async () => {
+      const { id } = await created(feedbackButton({ status: "inProgress" }));
+      // The archive purge unlinks every creative of the survey it deletes.
+      store.set(id, { ...store.get(id)!, surveyId: null });
+
+      expect(await statusChange(id, { status: "completed" })).toEqual({ status: 200, invalidParams: [] });
+      expect(await statusChange(id, { status: "inProgress" })).toEqual({
+        status: 422,
+        invalidParams: ["destination"],
+      });
+    });
+
+    test("still checks a change made alongside, and a Draft being paused, which publishes it", async () => {
+      const { id: published } = await created(feedbackButton({ status: "inProgress" }));
+      store.set(published, { ...store.get(published)!, surveyId: null });
+      const { id: draft } = await created(feedbackButton({ destination: null }));
+
+      expect(await statusChange(published, { status: "paused", name: "Renamed" })).toEqual({
+        status: 422,
+        invalidParams: ["destination"],
+      });
+      expect(await statusChange(draft, { status: "paused" })).toEqual({
+        status: 422,
+        invalidParams: ["destination"],
+      });
+    });
+  });
+
   test("checks a survey being linked, but not one already linked when something else changes", async () => {
     const { id } = await created(feedbackButton({ status: "inProgress" }));
     const relink = await patchV3Creative({
