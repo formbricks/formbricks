@@ -78,7 +78,25 @@ fi
       "bash",
       [
         "-c",
-        `source "$1"; sudo() { if [[ "\${SUDO_FAIL_SOURCE:-0}" == 1 && "$1" == install && "$5" == *.list.formbricks.* ]]; then echo 'simulated source publication failure' >&2; return 1; fi; "$@"; }; ${script}`,
+        `source "$1"
+command() {
+  if [[ "$1" == -v && "$2" == docker ]]; then
+    if [[ -x "$DOCKER_TEST_BIN_DIR/docker" ]]; then
+      printf '%s\\n' "$DOCKER_TEST_BIN_DIR/docker"
+      return 0
+    fi
+    return 1
+  fi
+  builtin command "$@"
+}
+sudo() {
+  if [[ "\${SUDO_FAIL_SOURCE:-0}" == 1 && "$1" == install && "$5" == *.list.formbricks.* ]]; then
+    echo 'simulated source publication failure' >&2
+    return 1
+  fi
+  "$@"
+}
+${script}`,
         "bash",
         scriptPath,
         ...args,
@@ -89,6 +107,7 @@ fi
         env: {
           ...process.env,
           PATH: `${binDir}:/usr/bin:/bin:/usr/sbin:/sbin`,
+          DOCKER_TEST_BIN_DIR: binDir,
           APT_CALL_LOG: aptLogPath,
           ...overrides,
         },
