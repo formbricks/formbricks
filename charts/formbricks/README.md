@@ -39,10 +39,12 @@ Gateway CRDs. The optional safe-upgrade policy remains disabled by default becau
 | Separate platform installation | Separate platform installation | Formbricks | [External CRDs](examples/envoy/external-crds.yaml) |
 | Platform | Platform | Shared platform controller | [Shared controller](examples/envoy/shared-controller.yaml) |
 
-All examples enable Formbricks rate-limit policies. Bundled-controller examples use the dedicated
-`envoyRedis` backend; a shared controller must supply a compatible Redis backend itself. Configure the
-public ingress or load balancer to send traffic to the Envoy proxy before exposing the app. The shared
-controller's `controllerName` must own the named GatewayClass. If the class needs proxy settings, point
+All examples enable Formbricks rate-limit policies. Bundled-controller examples use a dedicated external
+Redis/Valkey backend because chart 6.1.0's bundled Envoy Redis images are unavailable upstream. Replace
+`redis.example.internal:6379` with your backend and set `maxmemory-policy noeviction`. A shared controller
+must supply a compatible Redis backend itself. Configure the public ingress or load balancer to send traffic
+to the Envoy proxy before exposing the app. The shared controller's `controllerName` must own the named
+GatewayClass. If the class needs proxy settings, point
 its `parametersRef` at a platform-owned `EnvoyProxy` so it survives a Formbricks uninstall.
 On a controller handoff, the proxy Service may move into the shared controller's namespace. Point the
 public ingress at the Gateway's current proxy address and verify a request before retiring the old proxy.

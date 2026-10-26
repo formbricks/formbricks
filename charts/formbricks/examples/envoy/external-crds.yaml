@@ -8,8 +8,15 @@ envoy:
     enabled: true
   crds:
     enabled: false
+  config:
+    envoyGateway:
+      rateLimit:
+        backend:
+          type: Redis
+          redis:
+            url: "redis.example.internal:6379"
   formbricks:
     policies:
       enabled: true
 envoyRedis:
-  enabled: true
+  enabled: false

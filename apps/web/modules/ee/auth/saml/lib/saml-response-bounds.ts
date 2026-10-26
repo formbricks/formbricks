@@ -1,4 +1,5 @@
-import "server-only";
+// No "server-only" guard: the SAML parse worker imports this module as well (ENG-4051), and it runs as a plain
+// worker thread where that guard throws. It holds no secrets and imports nothing, so it stays safe to load anywhere.
 
 /**
  * Most markup a `SAMLResponse` may carry before jackson parses it (ENG-3973, ENG-3248).
@@ -236,8 +237,7 @@ const measureTag = (xml: Buffer, lt: number, end: number, scan: MarkupScan): boo
  * outside comments, CDATA sections and processing instructions: a `</` that does not match the open element is
  * fatal to xmldom, so it cannot hide a scope.
  */
-export const measureSamlResponseMarkup = (samlResponseBase64: string): SamlResponseMarkup => {
-  const xml = Buffer.from(samlResponseBase64, "base64");
+const measureMarkup = (xml: Buffer): SamlResponseMarkup => {
   const scan: MarkupScan = { markup: 0, depth: 0, maxDepth: 0, opaqueUntil: 0 };
   let lt = xml.indexOf(LESS_THAN);
 
@@ -256,19 +256,57 @@ export const measureSamlResponseMarkup = (samlResponseBase64: string): SamlRespo
   return { markup: scan.markup, depth: scan.maxDepth, declaration: false };
 };
 
+/** `measureMarkup` on a response as the callback receives it, decoded as jackson decodes it. */
+export const measureSamlResponseMarkup = (samlResponseBase64: string): SamlResponseMarkup =>
+  measureMarkup(Buffer.from(samlResponseBase64, "base64"));
+
+/** A refusal by what the markup holds, with its counts. */
+type SamlMarkupRefusal =
+  | { reason: "declaration" }
+  | { reason: "markup" | "depth"; markup: number; depth: number };
+
 /** Why a response is refused before jackson parses it; only sizes, never content, so it is safe to log. */
 export type SamlResponseRefusal =
-  | { reason: "length" | "declaration"; length: number }
-  | { reason: "markup" | "depth"; length: number; markup: number; depth: number };
+  | { reason: "length"; length: number }
+  | (SamlMarkupRefusal & {
+      /** The response's length in base64 characters, as the callback received it. */
+      length: number;
+    });
+
+/** Why a response's decrypted assertion is refused; only sizes, never content, so it is safe to log. */
+export type SamlDecryptedRefusal = SamlMarkupRefusal & {
+  /**
+   * The size in bytes of the response as saml20 re-serialized it with the assertion decrypted in place, which is what
+   * jackson parses next. Not comparable with a response's base64 `length`.
+   */
+  decryptedBytes: number;
+};
+
+const markupRefusal = ({ markup, depth, declaration }: SamlResponseMarkup): SamlMarkupRefusal | null => {
+  if (declaration) return { reason: "declaration" };
+  if (markup > SAML_RESPONSE_MARKUP_BUDGET) return { reason: "markup", markup, depth };
+  if (depth > SAML_RESPONSE_MAX_DEPTH) return { reason: "depth", markup, depth };
+  return null;
+};
 
 /** The refusal for a response past any bound, or `null` when jackson may parse it. Length is checked first. */
 export const checkSamlResponseBounds = (samlResponseBase64: string): SamlResponseRefusal | null => {
   const length = samlResponseBase64.length;
   if (length > SAML_RESPONSE_MAX_LENGTH) return { reason: "length", length };
 
-  const { markup, depth, declaration } = measureSamlResponseMarkup(samlResponseBase64);
-  if (declaration) return { reason: "declaration", length };
-  if (markup > SAML_RESPONSE_MARKUP_BUDGET) return { reason: "markup", length, markup, depth };
-  if (depth > SAML_RESPONSE_MAX_DEPTH) return { reason: "depth", length, markup, depth };
-  return null;
+  const refusal = markupRefusal(measureSamlResponseMarkup(samlResponseBase64));
+  return refusal && { ...refusal, length };
+};
+
+/**
+ * The same markup, depth and declaration bounds on a response whose encrypted assertion has been decrypted and put
+ * in place (ENG-4051): the document jackson validates from then on. The bounds above only ever see the assertion's
+ * ciphertext, and jackson's later passes over this document (xml2js, the signature check's XPath scans) cost
+ * several times one parse, so it is held to what an unencrypted response may carry. The parse worker runs it, so the
+ * decrypted assertion never leaves the worker.
+ */
+export const checkDecryptedSamlResponseBounds = (decryptedXml: string): SamlDecryptedRefusal | null => {
+  const xml = Buffer.from(decryptedXml);
+  const refusal = markupRefusal(measureMarkup(xml));
+  return refusal && { ...refusal, decryptedBytes: xml.length };
 };

@@ -8,6 +8,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      force_local_builder:
+        description: Validate the fallback Docker builder even when Depot credentials are available
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -95,6 +101,12 @@ jobs:
     permissions:
       contents: read
 
+    # Public fixtures for this disposable validation environment, including Dependabot/fork runs.
+    # These values must never authenticate to external services.
+    env:
+      DUMMY_DATABASE_URL: postgresql://test:test@127.0.0.1:5432/formbricks
+      DUMMY_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+
     # Add PostgreSQL and Redis service containers
     services:
       postgres:
@@ -139,8 +151,9 @@ jobs:
         shell: bash
         env:
           DEPOT_PROJECT_TOKEN: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          FORCE_LOCAL_BUILDER: ${{ inputs.force_local_builder }}
         run: |
-          if [[ -n "$DEPOT_PROJECT_TOKEN" ]]; then
+          if [[ "$FORCE_LOCAL_BUILDER" != "true" && -n "$DEPOT_PROJECT_TOKEN" ]]; then
             echo "depot=true" >> "$GITHUB_OUTPUT"
           else
             echo "depot=false" >> "$GITHUB_OUTPUT"
@@ -187,8 +200,8 @@ jobs:
             FORMBRICKS_BUILD_VARIANT=pr
           tags: formbricks-test:${{ github.sha }}
           secrets: |
-            database_url=${{ secrets.DUMMY_DATABASE_URL }}
-            encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
+            database_url=${{ env.DUMMY_DATABASE_URL }}
+            encryption_key=${{ env.DUMMY_ENCRYPTION_KEY }}
             redis_url=redis://localhost:6379
             hub_api_url=http://localhost:4000
             hub_api_key=build-time-placeholder
@@ -210,8 +223,8 @@ jobs:
             FORMBRICKS_BUILD_VARIANT=pr
           tags: formbricks-test:${{ env.GITHUB_SHA }}
           secrets: |
-            database_url=${{ secrets.DUMMY_DATABASE_URL }}
-            encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
+            database_url=${{ env.DUMMY_DATABASE_URL }}
+            encryption_key=${{ env.DUMMY_ENCRYPTION_KEY }}
             redis_url=redis://localhost:6379
             hub_api_url=http://localhost:4000
             hub_api_key=build-time-placeholder
@@ -247,7 +260,6 @@ jobs:
         shell: bash
         env:
           GITHUB_SHA: ${{ github.sha }}
-          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
         run: |
           set -euo pipefail
 
@@ -263,6 +275,7 @@ jobs:
           AUTHZED_CLI_ENV=(
             -e DATABASE_URL="postgresql://test:test@192.0.2.1:5432/formbricks"
             -e ENCRYPTION_KEY="$DUMMY_ENCRYPTION_KEY"
+            -e BETTER_AUTH_SECRET="$DUMMY_ENCRYPTION_KEY"
             -e REDIS_URL="redis://192.0.2.1:6379"
             -e HUB_API_URL="http://192.0.2.1:4000"
             -e HUB_API_KEY="build-time-placeholder"
@@ -320,7 +333,6 @@ jobs:
         shell: bash
         env:
           GITHUB_SHA: ${{ github.sha }}
-          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
         run: |
           set -euo pipefail
 
@@ -446,7 +458,6 @@ jobs:
         shell: bash
         env:
           GITHUB_SHA: ${{ github.sha }}
-          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
         run: |
           set -euo pipefail
 
@@ -496,7 +507,6 @@ jobs:
         shell: bash
         env:
           GITHUB_SHA: ${{ github.sha }}
-          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
         run: |
           set -euo pipefail
 
@@ -606,7 +616,6 @@ jobs:
         shell: bash
         env:
           GITHUB_SHA: ${{ github.sha }}
-          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
         run: |
           set -euo pipefail
           trap 'docker rm -f formbricks-test >/dev/null 2>&1 || true' EXIT

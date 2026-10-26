@@ -7,6 +7,9 @@ icon: "circle-nodes"
 Deploy Formbricks on Kubernetes using the current OCI Helm chart published from the `charts/formbricks`
 directory in the Formbricks repository.
 
+See [deployment components](/self-hosting/deployment-components) for required services, managed alternatives
+and the release-specific image inventory.
+
 <Info>
   Formbricks v5 self-hosting expects Hub to be part of the runtime. The chart handles that by default. Use the
   [migration guide](/self-hosting/advanced/migration#v5) before upgrading an existing 4.x deployment.
@@ -177,6 +180,37 @@ Experimental**. Choose who owns the two cluster-wide CRD sets before enabling En
 | Platform Gateway API, separate Envoy CRDs | Yes | Neither set | [Platform Gateway API](https://github.com/formbricks/formbricks/blob/main/charts/formbricks/examples/envoy/platform-gateway-api.yaml) |
 | Both CRD sets managed externally | Yes | Neither set | [External CRDs](https://github.com/formbricks/formbricks/blob/main/charts/formbricks/examples/envoy/external-crds.yaml) |
 | Shared platform Envoy controller and CRDs | No | Neither set | [Shared controller](https://github.com/formbricks/formbricks/blob/main/charts/formbricks/examples/envoy/shared-controller.yaml) |
+
+For a chart-managed Envoy controller, configure a dedicated Redis/Valkey rate-limit backend:
+
+<Warning>
+  Chart 6.1.0's bundled Envoy Redis images are unavailable upstream. Use external Redis/Valkey instead;
+  the example below keeps the bundled backend disabled.
+</Warning>
+
+```yaml
+envoy:
+  enabled: true
+  controller:
+    enabled: true
+  crds:
+    enabled: true
+  config:
+    envoyGateway:
+      rateLimit:
+        backend:
+          type: Redis
+          redis:
+            url: "redis.example.internal:6379"
+
+envoyRedis:
+  enabled: false
+```
+
+Replace the address with your dedicated backend. Set its `maxmemory-policy` to `noeviction` and configure
+authentication/TLS as needed.
+This installs Envoy Gateway 1.8.4 with Gateway API 1.5.1; the backend keeps rate-limiting state separate from
+the application's own Redis traffic.
 
 `envoy.crds.enabled=false` disables **both** Gateway API and Envoy Gateway CRDs, plus the bundled Gateway
 API safe-upgrade admission resources. A platform that manages only Gateway API must install matching Envoy

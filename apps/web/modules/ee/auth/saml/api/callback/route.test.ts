@@ -1,3 +1,4 @@
+import { createRequire } from "node:module";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
@@ -8,23 +9,31 @@ import {
   SAML_RESPONSE_MARKUP_BUDGET,
   SAML_RESPONSE_MAX_LENGTH,
 } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
-import { POST, type SamlErrorCode, buildLoginErrorUrl } from "./route";
+import { JACKSON_RELAY_STATE_PREFIX, POST, type SamlErrorCode, buildLoginErrorUrl } from "./route";
 
 const CLAIMS = { issuer: "https://idp.example.com", id: "_resp1", inResponseTo: "_req1" };
 const PARSED: SamlParseProbe = { outcome: "parsed", ms: 3, claims: CLAIMS };
 
-const { samlResponseMock, jacksonMock, applyIPRateLimitMock, redirectMock, probeMock } = vi.hoisted(() => {
-  const samlResponseMock = vi.fn(async (_body: { RelayState: string; SAMLResponse: string }) => ({
-    redirect_url: "https://app.example.com/api/auth/saml/authorize?code=c",
-  }));
-  return {
-    samlResponseMock,
-    jacksonMock: vi.fn(async () => ({ oauthController: { samlResponse: samlResponseMock } })),
-    applyIPRateLimitMock: vi.fn(async (_config: unknown, _options?: unknown) => ({ allowed: true })),
-    redirectMock: vi.fn((url: string) => new Response(null, { status: 307, headers: { location: url } })),
-    probeMock: vi.fn(async (_samlResponse: string): Promise<SamlParseProbe> => PARSED),
-  };
-});
+const { samlResponseMock, decryptionKeyMock, jacksonMock, applyIPRateLimitMock, redirectMock, probeMock } =
+  vi.hoisted(() => {
+    const samlResponseMock = vi.fn(async (_body: { RelayState: string; SAMLResponse: string }) => ({
+      redirect_url: "https://app.example.com/api/auth/saml/authorize?code=c",
+    }));
+    const decryptionKeyMock = vi.fn(async () => "sp-private-key");
+    return {
+      samlResponseMock,
+      decryptionKeyMock,
+      jacksonMock: vi.fn(async () => ({
+        oauthController: { samlResponse: samlResponseMock },
+        getDecryptionKey: decryptionKeyMock,
+      })),
+      applyIPRateLimitMock: vi.fn(async (_config: unknown, _options?: unknown) => ({ allowed: true })),
+      redirectMock: vi.fn((url: string) => new Response(null, { status: 307, headers: { location: url } })),
+      probeMock: vi.fn(
+        async (_samlResponse: string, _decryptionKey?: string): Promise<SamlParseProbe> => PARSED
+      ),
+    };
+  });
 
 vi.mock("@/modules/ee/auth/saml/lib/jackson", () => ({ default: jacksonMock }));
 vi.mock("@/modules/ee/auth/saml/lib/saml-parse-budget", () => ({ probeSamlResponseParse: probeMock }));
@@ -228,11 +237,48 @@ describe("SAML callback route", () => {
 
   describe("parse budget", () => {
     test("parses within the budget before jackson sees the response", async () => {
-      await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "s" }));
+      await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "boxyhq_jackson_s" }));
 
-      expect(probeMock).toHaveBeenCalledWith(b64(ISSUER));
+      // With jackson's key, so an encrypted assertion is decrypted and timed before jackson does it (ENG-4051).
+      expect(probeMock).toHaveBeenCalledWith(b64(ISSUER), "sp-private-key");
       expect(probeMock.mock.invocationCallOrder[0]).toBeLessThan(
         samlResponseMock.mock.invocationCallOrder[0]
+      );
+    });
+
+    test.each(["", "s", "BOXYHQ_JACKSON_s"])(
+      "reads no key for a response jackson would not decrypt (RelayState %j), so the worker decrypts nothing",
+      async (RelayState) => {
+        await POST(callback({ SAMLResponse: b64(ISSUER), RelayState }));
+
+        expect(decryptionKeyMock).not.toHaveBeenCalled();
+        expect(probeMock).toHaveBeenCalledWith(b64(ISSUER), null);
+        expect(samlResponseMock).toHaveBeenCalled();
+      }
+    );
+
+    test("knows jackson's RelayState prefix", () => {
+      // jackson decrypts only for responses carrying it, so the worker's decision has to follow the same mark.
+      const jacksonUtils = createRequire(import.meta.url)("@boxyhq/saml-jackson/dist/controller/utils") as {
+        relayStatePrefix: string;
+      };
+
+      expect(JACKSON_RELAY_STATE_PREFIX).toBe(jacksonUtils.relayStatePrefix);
+    });
+
+    test("refuses rather than parse without jackson's key, which an encrypted assertion would need", async () => {
+      const error = vi.spyOn(logger, "error").mockImplementation(() => undefined);
+      decryptionKeyMock.mockRejectedValueOnce(new Error("Certificate store not initialized"));
+
+      const response = await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "boxyhq_jackson_s" }));
+
+      expect(response.status).toBe(503);
+      expect(response.headers.get("Retry-After")).toBe("1");
+      expect(probeMock).not.toHaveBeenCalled();
+      expect(samlResponseMock).not.toHaveBeenCalled();
+      expect(error).toHaveBeenCalledWith(
+        expect.objectContaining({ error: "Certificate store not initialized", length: b64(ISSUER).length }),
+        "SAML decryption key could not be read; refused a SAML response"
       );
     });
 
@@ -249,6 +295,32 @@ describe("SAML callback route", () => {
         expect(warn).toHaveBeenCalledWith(
           expect.objectContaining({ stage: "parse_budget", reason }),
           "Refused a SAML response that was too costly to parse"
+        );
+      }
+    );
+
+    test.each([
+      ["past the markup budget", { reason: "markup", markup: 13_002, depth: 2, decryptedBytes: 52_400 }],
+      ["carrying a DOCTYPE", { reason: "declaration", decryptedBytes: 900 }],
+    ] as const)(
+      "refuses a response whose decrypted assertion is %s as jackson refuses one, logged by size",
+      async (_name, refusal) => {
+        const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+        probeMock.mockResolvedValueOnce({ outcome: "refused", refusal });
+
+        const response = await POST(callback({ SAMLResponse: b64(ISSUER), RelayState: "s" }));
+
+        // jackson's own answer to a response it rejects, so it says nothing about what the assertion held.
+        expect(response.status).toBe(400);
+        expect(await response.json()).toEqual({
+          code: "bad_request",
+          message: "The SAML response was not accepted",
+          details: {},
+        });
+        expect(samlResponseMock).not.toHaveBeenCalled();
+        expect(warn).toHaveBeenCalledWith(
+          { ...refusal, suppressedSinceLast: 0 },
+          "Refused a SAML response whose decrypted assertion is past the bounds"
         );
       }
     );
@@ -387,10 +459,26 @@ describe("SAML callback route", () => {
         "saml_response_rejected",
       ],
       [
+        "a decrypted assertion past the bounds",
+        VALID,
+        () =>
+          probeMock.mockResolvedValueOnce({
+            outcome: "refused",
+            refusal: { reason: "depth", markup: 80, depth: 70, decryptedBytes: 4_000 },
+          }),
+        "saml_response_rejected",
+      ],
+      [
         "SAML not being licensed",
         VALID,
         () => jacksonMock.mockResolvedValueOnce(undefined as never),
         "saml_connection_unavailable",
+      ],
+      [
+        "jackson's decryption key being unreadable",
+        { ...VALID, RelayState: "boxyhq_jackson_s" },
+        () => decryptionKeyMock.mockRejectedValueOnce(new Error("Certificate store not initialized")),
+        "saml_unavailable",
       ],
     ];
 

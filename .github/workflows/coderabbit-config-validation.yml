@@ -122,11 +122,13 @@ jobs:
             exit 0
           fi
 
-          # The CLI exits 1 both for an invalid config and when it cannot load or parse its
-          # remote schema. This check gates every merge, so a CodeRabbit schema failure must not block the
-          # queue — but it must be loud rather than silently green.
-          if printf '%s' "$output" | grep -Eq 'Could not (load|use) the current CodeRabbit configuration schema'; then
-            echo "::warning file=.coderabbit.yaml::Could not use the CodeRabbit schema; skipped schema validation. The path_filters check above still ran."
+          # The CLI exits 1 both for an invalid config and for its own inability to fetch the
+          # schema ("Could not load") or to compile it ("Could not use" — e.g. a new keyword
+          # such as `x-undocumented` that the CLI's strict validator rejects). This check gates
+          # every merge, so a CodeRabbit-side problem must not block the queue — but it must be
+          # loud rather than silently green.
+          if grep -qE '^✖ Could not (load|use) the current CodeRabbit configuration schema:' <<< "$output"; then
+            echo "::warning file=.coderabbit.yaml::Could not load or compile the CodeRabbit schema; skipped schema validation. The path_filters check above still ran."
             exit 0
           fi
 
