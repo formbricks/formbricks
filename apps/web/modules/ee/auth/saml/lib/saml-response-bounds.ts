@@ -147,6 +147,23 @@ const isNameByte = (byte: number) =>
   byte !== SINGLE_QUOTE &&
   byte !== LESS_THAN;
 
+/**
+ * Where the element name starting at `from` ends, short of `end`. Like `isNameByte`, except that a byte 0x80 ends it
+ * only as part of U+0080 (C2 80), which xmldom reads as a space: any other 0x80 is a continuation byte of a
+ * non-ASCII character that xmldom keeps in the name. Taking every 0x80 as an end would cut a prefix that holds such a
+ * character short of its colon, and the capped local name after it would go uncounted.
+ */
+const elementNameEnd = (xml: Buffer, from: number, end: number): number => {
+  let j = from;
+  while (j < end) {
+    const byte = xml[j];
+    if (byte === 0xc2 && j + 1 < end && xml[j + 1] === 0x80) break;
+    if (byte !== 0x80 && !isNameByte(byte)) break;
+    j++;
+  }
+  return j;
+};
+
 /** The first index from `from` on, short of `end`, whose byte fails `test`; `end` if none does. */
 const skipWhile = (xml: Buffer, from: number, end: number, test: (byte: number) => boolean): number => {
   let j = from;
@@ -175,7 +192,7 @@ const matchesCappedName = (xml: Buffer, from: number, nameEnd: number, name: Buf
  * xpath's `local-name()` reads it, and the name is read at most once per tag: nothing here searches past it.
  */
 const countCappedElement = (xml: Buffer, from: number, end: number, scan: MarkupScan): void => {
-  const nameEnd = skipWhile(xml, from, end, isNameByte);
+  const nameEnd = elementNameEnd(xml, from, end);
   let localStart = from;
   for (let j = from; j < nameEnd; j++) {
     if (xml[j] === COLON) localStart = j + 1;

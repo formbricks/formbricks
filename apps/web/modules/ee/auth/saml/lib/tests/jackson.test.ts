@@ -46,6 +46,7 @@ describe("SAML Jackson Initialization", () => {
     global.connectionController = undefined;
     global.samlDecryptionKey = undefined;
     global.samlIdpVerification = undefined;
+    global.samlIdpVerificationRetryAt = undefined;
     // The connection preloadConnection configured, with two certificates as during an IdP rollover.
     getConnections.mockResolvedValue([{ idpMetadata: { publicKey: "cert-a,cert-b", thumbprint: "t" } }]);
 
@@ -147,6 +148,28 @@ describe("SAML Jackson Initialization", () => {
       { error: "connection refused" },
       "Could not read the SAML connection's certificates; the parse worker will not time signature checks"
     );
+  });
+
+  test("reads the certificates again after a failed read, at most once per retry interval", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
+      vi.spyOn(logger, "error").mockImplementation(() => undefined);
+      getConnections.mockRejectedValueOnce(new Error("connection refused"));
+      expect((await init())?.idpVerification).toBeNull();
+
+      // Within the interval, no request reads again, and jackson is not started again either.
+      vi.advanceTimersByTime(29_000);
+      expect((await init())?.idpVerification).toBeNull();
+      expect(getConnections).toHaveBeenCalledTimes(1);
+
+      vi.advanceTimersByTime(1_000);
+      expect((await init())?.idpVerification).toEqual({ publicKey: "cert-a,cert-b" });
+      expect(getConnections).toHaveBeenCalledTimes(2);
+      expect(controllers).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test("return early when SAML SSO is disabled", async () => {

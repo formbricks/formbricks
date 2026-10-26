@@ -170,6 +170,23 @@ describe("measureSamlResponseMarkup", () => {
     expect(elementCounts("<a:b:Issuer/>")).toEqual({ Issuer: 1 });
   });
 
+  // A 0x80 byte ends a name only as part of U+0080: in any other character it is a continuation byte xmldom keeps,
+  // so the local name after a prefix holding one is what saml20's selects match.
+  test("counts an Issuer behind a prefix whose character holds a 0x80 byte, as saml20 reads it", () => {
+    expect(elementCounts("<r><a\u0400:Issuer>x</a\u0400:Issuer></r>")).toEqual({ Issuer: 1 });
+
+    const flood = `<r>${"<a\u0400:Issuer/>".repeat(SAML_RESPONSE_MAX_ELEMENTS.Issuer + 1)}</r>`;
+    expect(checkSamlResponseBounds(b64(flood))).toMatchObject({
+      reason: "elements",
+      localName: "Issuer",
+      count: SAML_RESPONSE_MAX_ELEMENTS.Issuer + 1,
+    });
+  });
+
+  test("ends a name at U+0080 inside a prefix, as xmldom does, so no capped local name is read past it", () => {
+    expect(elementCounts("<r><a\u0080:Issuer/></r>")).toEqual({});
+  });
+
   test("counts a Signature behind a non-ASCII prefix or ending at U+0080, as xmldom reads the name", () => {
     // A prefix that starts with a non-ASCII letter is still a prefix to xmldom and xpath.
     expect(

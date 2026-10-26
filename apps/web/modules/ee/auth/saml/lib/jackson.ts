@@ -19,6 +19,8 @@ declare global {
   var connectionController: IConnectionAPIController | undefined;
   var samlDecryptionKey: (() => Promise<string>) | undefined;
   var samlIdpVerification: SamlIdpVerification | null | undefined;
+  /** When the next request may read the connection's certificates again, after a failed read; unset otherwise. */
+  var samlIdpVerificationRetryAt: number | undefined;
 }
 
 const g = global;
@@ -52,28 +54,41 @@ const jacksonLogger = (level: "info" | "warn" | "error") => (message: string, er
  * The parse worker runs the same check with them, so it is timed as jackson will run it: once per certificate when
  * none matches (ENG-4108). `null` when no connection is configured, where jackson refuses before validating.
  * Formbricks configures its one connection only when jackson starts (`preloadConnection`), so it is read then.
- *
- * Only the worker's cost estimate depends on it: jackson validates with the connection it reads per request. So a
- * failed read is logged and gives `null`, which skips the worker's signature-check timing, rather than failing
- * jackson's start and with it every SAML sign-in.
  */
 const readIdpVerification = async (
   connectionController: IConnectionAPIController
 ): Promise<SamlIdpVerification | null> => {
-  let connection: Awaited<ReturnType<IConnectionAPIController["getConnections"]>>[number] | undefined;
+  const [connection] = await connectionController.getConnections({
+    tenant: SAML_TENANT,
+    product: SAML_PRODUCT,
+  });
+  if (!connection || !("idpMetadata" in connection)) return null;
+  const { publicKey, thumbprint } = connection.idpMetadata;
+  if (publicKey) return { publicKey };
+  return thumbprint ? { thumbprint } : null;
+};
+
+/** How long after a failed read of the connection's certificates the next request tries again. */
+const IDP_VERIFICATION_RETRY_MS = 30_000;
+
+/**
+ * Reads the connection's certificates into `g.samlIdpVerification`. Only the worker's cost estimate depends on them:
+ * jackson validates with the connection it reads per request. So a failed read is logged and leaves `null`, which
+ * skips the worker's signature-check timing, rather than failing jackson's start and with it every SAML sign-in; a
+ * request after `IDP_VERIFICATION_RETRY_MS` reads them again (see `init`).
+ */
+const loadIdpVerification = async (connectionController: IConnectionAPIController): Promise<void> => {
   try {
-    [connection] = await connectionController.getConnections({ tenant: SAML_TENANT, product: SAML_PRODUCT });
+    g.samlIdpVerification = await readIdpVerification(connectionController);
+    g.samlIdpVerificationRetryAt = undefined;
   } catch (error) {
     logger.error(
       { error: error instanceof Error ? toLogText(error.message, JACKSON_LOG_TEXT_LIMIT) : undefined },
       "Could not read the SAML connection's certificates; the parse worker will not time signature checks"
     );
-    return null;
+    g.samlIdpVerification = null;
+    g.samlIdpVerificationRetryAt = Date.now() + IDP_VERIFICATION_RETRY_MS;
   }
-  if (!connection || !("idpMetadata" in connection)) return null;
-  const { publicKey, thumbprint } = connection.idpMetadata;
-  if (publicKey) return { publicKey };
-  return thumbprint ? { thumbprint } : null;
 };
 
 export default async function init() {
@@ -114,9 +129,8 @@ export default async function init() {
     const ret = await controllers(opts);
 
     await preloadConnection(ret.connectionAPIController);
-    const idpVerification = await readIdpVerification(ret.connectionAPIController);
+    await loadIdpVerification(ret.connectionAPIController);
 
-    g.samlIdpVerification = idpVerification;
     g.oauthController = ret.oauthController;
     g.connectionController = ret.connectionAPIController;
     // The private key jackson decrypts encrypted assertions with: its default SP certificate, which `controllers`
@@ -128,10 +142,17 @@ export default async function init() {
     g.samlDecryptionKey = async () => (await x509.getDefaultCertificate()).privateKey;
   }
 
+  // A failed certificate read is retried apart from jackson's start, one request at a time.
+  const retryAt = g.samlIdpVerificationRetryAt;
+  if (retryAt !== undefined && Date.now() >= retryAt && g.connectionController) {
+    g.samlIdpVerificationRetryAt = Date.now() + IDP_VERIFICATION_RETRY_MS;
+    await loadIdpVerification(g.connectionController);
+  }
+
   return {
     oauthController: g.oauthController,
     connectionController: g.connectionController,
     getDecryptionKey: g.samlDecryptionKey,
-    idpVerification: g.samlIdpVerification,
+    idpVerification: g.samlIdpVerification ?? null,
   };
 }
