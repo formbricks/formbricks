@@ -1,29 +1,34 @@
 "use client";
 
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { TFunction } from "i18next";
-import { X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { type ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import type { TWorkflowSortBy, TWorkflowStatus } from "@formbricks/workflows";
-import { FORMBRICKS_WORKFLOWS_FILTERS_KEY_LS } from "@/lib/localStorage";
+import type { TWorkflowListItem, TWorkflowSortBy, TWorkflowStatus } from "@formbricks/workflows";
 import { timeSince } from "@/lib/time";
-import { useDebouncedValue } from "@/lib/use-debounced-value";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
-import { CardTableHeader, CardTableRow } from "@/modules/ui/components/card-table";
-import { FilterDropdown, type TFilterOption } from "@/modules/ui/components/filter-dropdown";
-import { SearchBar } from "@/modules/ui/components/search-bar";
+import { ListTable, TableToolbar } from "@/modules/ui/components/table-toolbar";
+import { useTableColumnState } from "@/modules/ui/components/table-toolbar/hooks/use-table-column-state";
+import { useTableUrlState } from "@/modules/ui/components/table-toolbar/hooks/use-table-url-state";
+import { buildColumnSettings } from "@/modules/ui/components/table-toolbar/lib/column-settings";
 import { WorkflowListActions } from "../components/workflow-list-actions";
-import { WorkflowSortDropdown } from "../components/workflow-sort-dropdown";
 import { WorkflowStatusPill } from "../components/workflow-status-pill";
 import { WorkflowsEmptyState } from "../components/workflows-empty-state";
 import { useTrackWorkflowListFilters } from "../hooks/use-track-workflow-list-filters";
 import { useTrackWorkflowSurface } from "../hooks/use-track-workflow-surface";
 import { useWorkflows } from "../hooks/use-workflows";
 import { resolveWorkflowListSurface } from "../lib/analytics";
-import { computeStatusIn, parseStoredWorkflowFilters } from "../lib/list-filters";
-import { WorkflowsListBodyLoading } from "../loading";
+import {
+  DEFAULT_WORKFLOW_SORT,
+  WORKFLOW_SORT_VALUES,
+  getWorkflowFilterProperties,
+  getWorkflowSortOptions,
+  isShowingArchived,
+  setShowArchived,
+  toWorkflowStatusIn,
+} from "../lib/table-filters";
 
 interface WorkflowsListPageProps {
   workspaceId: string;
@@ -31,77 +36,42 @@ interface WorkflowsListPageProps {
   workflowsPerPage: number;
 }
 
-// Archived is one more status, set apart by a divider because it is the only one excluded from the
-// default list. Same shape as the surveys status filter.
-const getStatusFilterOptions = (t: TFunction): TFilterOption<TWorkflowStatus>[] => [
-  { label: t("common.draft"), value: "draft" },
-  { label: t("common.enabled"), value: "enabled" },
-  { label: t("common.disabled"), value: "disabled" },
-  { label: t("common.archived"), value: "archived", separatorBefore: true },
-];
+const WORKFLOW_COLUMN_IDS = ["name", "status", "runs", "createdAt", "updatedAt", "createdBy", "actions"];
 
+/** The Workflows list as a real table on the shared toolbar (ENG-3541). */
 export const WorkflowsListPage = ({
   workspaceId,
   isReadOnly,
   workflowsPerPage,
 }: Readonly<WorkflowsListPageProps>) => {
   const { t, i18n } = useTranslation();
+  const router = useRouter();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
-  const [animationParent] = useAutoAnimate();
 
-  const [searchValue, setSearchValue] = useState("");
-  const debouncedSearchValue = useDebouncedValue(searchValue, 300);
-  const [selectedStatuses, setSelectedStatuses] = useState<TWorkflowStatus[]>([]);
-  const [sortBy, setSortBy] = useState<TWorkflowSortBy>("updatedAt");
-  const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
-  const [isFilterInitialized, setIsFilterInitialized] = useState(false);
+  const filterProperties = getWorkflowFilterProperties(t);
+  const tableState = useTableUrlState({
+    properties: filterProperties,
+    sortOptions: WORKFLOW_SORT_VALUES,
+    defaultSortBy: DEFAULT_WORKFLOW_SORT,
+  });
+  const sortBy = tableState.sortBy as TWorkflowSortBy;
+  const statusIn = toWorkflowStatusIn(tableState.filters);
+  const nameContains = tableState.search.trim();
+  const hasActiveFilters = tableState.filters.length > 0 || nameContains.length > 0;
+  const columnState = useTableColumnState({
+    storagePrefix: `${workspaceId}-workflows`,
+    columnIds: WORKFLOW_COLUMN_IDS,
+  });
 
-  const statusIn = useMemo(() => computeStatusIn(selectedStatuses), [selectedStatuses]);
-
-  // Hydrate the toolbar filters from localStorage once on mount (mirrors the surveys list). Reading
-  // happens post-mount because localStorage is unavailable during SSR.
-  useEffect(() => {
-    if (globalThis.window === undefined) return;
-    const stored = globalThis.window.localStorage.getItem(FORMBRICKS_WORKFLOWS_FILTERS_KEY_LS);
-    const parsed = parseStoredWorkflowFilters(stored);
-    if (stored && !parsed) {
-      globalThis.window.localStorage.removeItem(FORMBRICKS_WORKFLOWS_FILTERS_KEY_LS);
-    } else if (parsed) {
-      setSearchValue(parsed.searchValue);
-      setSelectedStatuses(parsed.selectedStatuses);
-      setSortBy(parsed.sortBy);
-    }
-    setIsFilterInitialized(true);
-  }, []);
-
-  // Persist on change, but only after hydration so the empty defaults don't overwrite the stored
-  // value before it has been read.
-  useEffect(() => {
-    if (!isFilterInitialized || globalThis.window === undefined) return;
-    globalThis.window.localStorage.setItem(
-      FORMBRICKS_WORKFLOWS_FILTERS_KEY_LS,
-      JSON.stringify({ searchValue, selectedStatuses, sortBy })
-    );
-  }, [searchValue, selectedStatuses, sortBy, isFilterInitialized]);
-
+  const selectedStatuses: TWorkflowStatus[] = statusIn ?? [];
+  // The URL is the settled state: search is already debounced by the toolbar before it lands there.
   useTrackWorkflowListFilters({
-    isFilterInitialized,
-    searchValue,
-    debouncedSearchValue,
+    isFilterInitialized: true,
+    searchValue: nameContains,
+    debouncedSearchValue: nameContains,
     selectedStatuses,
     sortBy,
   });
-
-  const toggleStatus = (value: TWorkflowStatus) => {
-    setSelectedStatuses((prev) =>
-      prev.includes(value) ? prev.filter((status) => status !== value) : [...prev, value]
-    );
-  };
-
-  const clearFilters = () => {
-    setSelectedStatuses([]);
-    setSearchValue("");
-  };
 
   const {
     workflows,
@@ -113,16 +83,19 @@ export const WorkflowsListPage = ({
     isFetchingNextPage,
     fetchNextPage,
     queryKey,
+    totalCount,
   } = useWorkflows({
     workspaceId,
     limit: workflowsPerPage,
-    nameContains: debouncedSearchValue.trim(),
-    statusIn,
+    nameContains,
+    statusIn: statusIn ?? undefined,
     sortBy,
+    // Filters that exclude every status cannot match anything; there is nothing to ask the API.
+    enabled: statusIn !== null,
   });
 
-  const showInitialLoading = isLoading && workflows.length === 0;
-  const hasActiveFilters = selectedStatuses.length > 0 || searchValue.length > 0;
+  const rows = statusIn === null ? [] : workflows;
+  const showInitialLoading = statusIn !== null && isLoading && workflows.length === 0;
 
   // Reported once per screen the user lands on; `null` while loading or erroring, neither of which
   // is a visit. `hasActiveFilters` is what separates an empty workspace from an emptied filter.
@@ -131,118 +104,159 @@ export const WorkflowsListPage = ({
       showInitialLoading,
       isError,
       hasActiveFilters,
-      workflowCount: workflows.length,
+      workflowCount: rows.length,
     })
   );
 
-  let listContent: React.ReactNode;
+  const columnLabels = [
+    { id: "name", label: t("common.name") },
+    { id: "status", label: t("common.status") },
+    { id: "runs", label: t("common.runs") },
+    { id: "createdAt", label: t("common.created_at") },
+    { id: "updatedAt", label: t("common.updated_at") },
+    { id: "createdBy", label: t("common.created_by") },
+  ];
 
-  if (showInitialLoading) {
-    listContent = <WorkflowsListBodyLoading />;
-  } else if (isError && workflows.length === 0) {
-    listContent = (
-      <div className="flex w-full flex-col items-center justify-center gap-4 py-16 text-slate-600">
-        <p>{getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"))}</p>
-        <Button variant="secondary" size="sm" onClick={() => refetch()}>
-          {t("common.try_again")}
-        </Button>
-      </div>
-    );
-  } else if (workflows.length === 0) {
-    // The toolbar stays put either way, so the filter that emptied the list stays reachable.
-    listContent = <WorkflowsEmptyState filtered={hasActiveFilters} />;
-  } else {
-    listContent = (
-      <div>
-        <div ref={animationParent} className="space-y-3">
-          <CardTableHeader className="grid-cols-7">
-            <div className="col-span-2 place-self-start">{t("common.name")}</div>
-            <div className="col-span-1">{t("common.status")}</div>
-            <div className="col-span-1">{t("common.runs")}</div>
-            <div className="col-span-1">{t("common.created_at")}</div>
-            <div className="col-span-1">{t("common.updated_at")}</div>
-            <div className="col-span-1">{t("common.created_by")}</div>
-          </CardTableHeader>
-
-          {workflows.map((workflow) => (
-            <CardTableRow
-              key={workflow.id}
-              href={`/workspaces/${workspaceId}/workflows/${workflow.id}`}
-              className="grid-cols-7"
-              actions={
-                <WorkflowListActions
-                  workflowId={workflow.id}
-                  workflowName={workflow.name}
-                  status={workflow.status}
-                  workspaceId={workspaceId}
-                  isReadOnly={isReadOnly}
-                  queryKey={queryKey}
-                />
-              }>
-              <div className="col-span-2 flex max-w-full items-center justify-self-start text-sm font-medium text-slate-900">
-                <div className="min-w-0 truncate">{workflow.name}</div>
-              </div>
-              <div className="col-span-1">
-                <WorkflowStatusPill status={workflow.status} />
-              </div>
-              <div className="col-span-1 text-sm text-slate-600">{workflow.runCount}</div>
-              <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
-                {timeSince(workflow.createdAt, locale)}
-              </div>
-              <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
-                {timeSince(workflow.updatedAt, locale)}
-              </div>
-              <div className="col-span-1 max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-slate-600">
-                {workflow.creator?.name ?? "-"}
-              </div>
-            </CardTableRow>
-          ))}
-        </div>
-
-        {hasNextPage ? (
-          <div className="flex justify-center py-5">
-            <Button
-              onClick={() => fetchNextPage()}
-              variant="secondary"
-              size="sm"
-              loading={isFetchingNextPage}>
-              {t("common.load_more")}
-            </Button>
+  const columns = useMemo<ColumnDef<TWorkflowListItem>[]>(
+    () => [
+      {
+        id: "name",
+        header: t("common.name"),
+        size: 300,
+        cell: ({ row }) => (
+          <Link
+            href={`/workspaces/${workspaceId}/workflows/${row.original.id}`}
+            className="focus-visible:ring-ring min-w-0 truncate font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:outline-hidden">
+            {row.original.name}
+          </Link>
+        ),
+      },
+      {
+        id: "status",
+        header: t("common.status"),
+        size: 140,
+        cell: ({ row }) => <WorkflowStatusPill status={row.original.status} />,
+      },
+      {
+        id: "runs",
+        header: t("common.runs"),
+        size: 100,
+        cell: ({ row }) => <span className="text-slate-900">{row.original.runCount}</span>,
+      },
+      {
+        id: "createdAt",
+        header: t("common.created_at"),
+        size: 130,
+        cell: ({ row }) => (
+          <span className="truncate text-slate-500">{timeSince(row.original.createdAt, locale)}</span>
+        ),
+      },
+      {
+        id: "updatedAt",
+        header: t("common.updated_at"),
+        size: 130,
+        cell: ({ row }) => (
+          <span className="truncate text-slate-500">{timeSince(row.original.updatedAt, locale)}</span>
+        ),
+      },
+      {
+        id: "createdBy",
+        header: t("common.created_by"),
+        size: 150,
+        cell: ({ row }) => (
+          <span className="truncate text-slate-500">{row.original.creator?.name ?? "-"}</span>
+        ),
+      },
+      {
+        id: "actions",
+        header: () => <span className="sr-only">{t("common.actions")}</span>,
+        size: 64,
+        cell: ({ row }) => (
+          <div className="flex w-full justify-end">
+            <WorkflowListActions
+              workflowId={row.original.id}
+              workflowName={row.original.name}
+              status={row.original.status}
+              workspaceId={workspaceId}
+              isReadOnly={isReadOnly}
+              queryKey={queryKey}
+            />
           </div>
-        ) : null}
-      </div>
-    );
-  }
+        ),
+      },
+    ],
+    [t, locale, workspaceId, isReadOnly, queryKey]
+  );
+
+  const table = useReactTable({
+    data: rows,
+    columns,
+    getRowId: (workflow) => workflow.id,
+    getCoreRowModel: getCoreRowModel(),
+    state: { columnOrder: columnState.columnOrder, columnVisibility: columnState.columnVisibility },
+  });
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-x-2">
-          <SearchBar
-            value={searchValue}
-            onChange={setSearchValue}
-            placeholder={t("workspace.workflows.search_by_workflow_name")}
-            className="w-80 border-slate-700"
-          />
-          <FilterDropdown
-            title={t("common.status")}
-            className="workflowFilterDropdown"
-            options={getStatusFilterOptions(t)}
-            selectedOptions={selectedStatuses}
-            onToggleOption={toggleStatus}
-            isOpen={isStatusDropdownOpen}
-            onOpenChange={setIsStatusDropdownOpen}
-          />
-          {hasActiveFilters ? (
-            <Button size="sm" className="h-8" onClick={clearFilters}>
-              {t("common.clear_filters")}
-              <X />
-            </Button>
-          ) : null}
+    <div className="space-y-3">
+      <TableToolbar
+        settings={{
+          sort: {
+            options: getWorkflowSortOptions(t),
+            value: tableState.sortBy,
+            onChange: tableState.setSortBy,
+          },
+          toggles: [
+            {
+              id: "show-archived",
+              label: t("common.table_toolbar.show_archived"),
+              checked: isShowingArchived(tableState.filters),
+              onCheckedChange: (checked) =>
+                tableState.setFilters(setShowArchived(tableState.filters, checked)),
+            },
+          ],
+          columns: {
+            items: buildColumnSettings(columnLabels, columnState.columnOrder, columnState.columnVisibility, [
+              "name",
+            ]),
+            onVisibilityChange: (id, visible) =>
+              columnState.setColumnVisibility((current) => ({ ...current, [id]: visible })),
+            onMove: columnState.moveColumn,
+          },
+        }}
+        search={{
+          value: tableState.search,
+          onChange: tableState.setSearch,
+          placeholder: t("workspace.workflows.search_by_workflow_name"),
+        }}
+        filter={{
+          properties: filterProperties,
+          filters: tableState.filters,
+          onFiltersChange: tableState.setFilters,
+        }}
+        matchCount={{ count: statusIn === null ? 0 : totalCount }}
+        isLoading={isLoading}
+      />
+      {isError && rows.length === 0 ? (
+        <div className="flex w-full flex-col items-center justify-center gap-4 py-16 text-slate-600">
+          <p>{getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"))}</p>
+          <Button variant="secondary" size="sm" onClick={() => refetch()}>
+            {t("common.try_again")}
+          </Button>
         </div>
-        <WorkflowSortDropdown sortBy={sortBy} onSortChange={setSortBy} />
-      </div>
-      {listContent}
+      ) : (
+        <ListTable
+          table={table}
+          testId="workflows-list-table"
+          isLoading={showInitialLoading}
+          hasFilters={hasActiveFilters}
+          onClearFilters={tableState.clearFilters}
+          onRowClick={(row) => router.push(`/workspaces/${workspaceId}/workflows/${row.original.id}`)}
+          emptyContent={<WorkflowsEmptyState filtered={false} />}
+          hasNextPage={statusIn !== null && Boolean(hasNextPage)}
+          isFetchingNextPage={isFetchingNextPage}
+          onLoadMore={() => void fetchNextPage()}
+        />
+      )}
     </div>
   );
 };

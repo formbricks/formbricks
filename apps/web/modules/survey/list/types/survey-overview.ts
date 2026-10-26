@@ -5,6 +5,7 @@ export const ZSurveyOverviewType = z.enum(["link", "app"]);
 export const ZSurveyOverviewSort = z.enum(["createdAt", "updatedAt", "name", "relevance"]);
 // "archived" is a pseudo-status used only by the list filter UI. It is not a real
 // SurveyStatus; the server translates it into an archivedAt filter.
+export const ZSurveyOverviewOwner = z.enum(["me", "others"]);
 export const ZSurveyOverviewStatus = z.union([ZSurveyStatus, z.literal("archived")]);
 export const ZSurveyOverviewFilters = z.object({
   name: z.string(),
@@ -12,6 +13,8 @@ export const ZSurveyOverviewFilters = z.object({
   type: z.array(ZSurveyOverviewType),
   // ENG-3395: session-only — never written to or read from the remembered filters.
   visibility: z.array(ZSurveyVisibility),
+  // Relative to the signed-in user: surveys they own, or everyone else's.
+  owner: z.array(ZSurveyOverviewOwner).optional(),
   sortBy: ZSurveyOverviewSort,
 });
 
@@ -51,6 +54,7 @@ export const ZSurveyListItem = z.object({
 });
 
 export type TSurveyOverviewType = z.infer<typeof ZSurveyOverviewType>;
+export type TSurveyOverviewOwner = z.infer<typeof ZSurveyOverviewOwner>;
 export type TSurveyOverviewStatus = z.infer<typeof ZSurveyOverviewStatus>;
 export type TSurveyOverviewSort = z.infer<typeof ZSurveyOverviewSort>;
 export type TSurveyOverviewFilters = z.infer<typeof ZSurveyOverviewFilters>;

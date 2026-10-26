@@ -33,16 +33,20 @@ export const useWorkflows = ({
         limit,
         cursor: pageParam,
         filters: { nameContains, statusIn, sortBy },
+        // The match count only needs computing once per filter change, not on every page.
+        includeTotalCount: pageParam === null,
         signal,
       }),
     getNextPageParam: (lastPage) => lastPage.meta.nextCursor ?? undefined,
   });
 
   const workflows = flattenWorkflowPages(query.data);
+  const totalCount = query.data?.pages[0]?.meta.totalCount ?? null;
 
   return {
     ...query,
     queryKey,
     workflows,
+    totalCount,
   };
 };

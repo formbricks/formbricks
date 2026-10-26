@@ -65,11 +65,12 @@ const create = vi.fn<WorkflowDelegate["create"]>();
 const update = vi.fn<WorkflowDelegate["update"]>();
 const deleteFn = vi.fn<WorkflowDelegate["delete"]>();
 const updateMany = vi.fn<WorkflowDelegate["updateMany"]>();
+const count = vi.fn<WorkflowDelegate["count"]>();
 const versionFindFirst = vi.fn<WorkflowVersionDelegate["findFirst"]>();
 const versionCreate = vi.fn<WorkflowVersionDelegate["create"]>();
 const runFindMany = vi.fn<WorkflowRunDelegate["findMany"]>();
 const runFindUnique = vi.fn<WorkflowRunDelegate["findUnique"]>();
-const workflow = { findMany, findUnique, create, update, delete: deleteFn, updateMany };
+const workflow = { findMany, findUnique, create, update, delete: deleteFn, updateMany, count };
 const workflowVersion = { findFirst: versionFindFirst, create: versionCreate };
 const workflowRun = { findMany: runFindMany, findUnique: runFindUnique };
 const prisma: WorkflowsDb = {
@@ -159,7 +160,12 @@ describe("listWorkflows", () => {
   test("excludes archived workflows by default and over-fetches by one", async () => {
     findMany.mockResolvedValue([makeRow()]);
 
-    const page = await service.listWorkflows({ workspaceId, limit: 20, sortBy: "updatedAt" });
+    const page = await service.listWorkflows({
+      workspaceId,
+      limit: 20,
+      sortBy: "updatedAt",
+      includeTotalCount: false,
+    });
 
     const findManyArgs = findMany.mock.calls[0][0];
     expect(findManyArgs.where).toMatchObject({ workspaceId, status: { not: "archived" } });
@@ -175,6 +181,7 @@ describe("listWorkflows", () => {
       workspaceId,
       limit: 20,
       sortBy: "updatedAt",
+      includeTotalCount: false,
       statusIn: ["draft", "disabled"],
     });
     expect(findMany.mock.calls[0][0].where).toMatchObject({ status: { in: ["draft", "disabled"] } });
@@ -182,7 +189,13 @@ describe("listWorkflows", () => {
 
   test("applies a case-insensitive name filter", async () => {
     findMany.mockResolvedValue([]);
-    await service.listWorkflows({ workspaceId, limit: 20, sortBy: "name", nameContains: "csat" });
+    await service.listWorkflows({
+      workspaceId,
+      limit: 20,
+      sortBy: "name",
+      includeTotalCount: false,
+      nameContains: "csat",
+    });
     const findManyArgs = findMany.mock.calls[0][0];
     expect(findManyArgs.where).toMatchObject({ name: { contains: "csat", mode: "insensitive" } });
     expect(findManyArgs.orderBy).toEqual([{ name: "asc" }, { id: "asc" }]);
@@ -196,10 +209,65 @@ describe("listWorkflows", () => {
     ];
     findMany.mockResolvedValue(rows);
 
-    const page = await service.listWorkflows({ workspaceId, limit: 2, sortBy: "updatedAt" });
+    const page = await service.listWorkflows({
+      workspaceId,
+      limit: 2,
+      sortBy: "updatedAt",
+      includeTotalCount: false,
+    });
 
     expect(page.workflows).toHaveLength(2);
     expect(page.nextCursor).toEqual(expect.any(String));
+  });
+
+  test("does not count unless includeTotalCount is set", async () => {
+    findMany.mockResolvedValue([makeRow()]);
+
+    const page = await service.listWorkflows({
+      workspaceId,
+      limit: 20,
+      sortBy: "updatedAt",
+      includeTotalCount: false,
+    });
+
+    expect(count).not.toHaveBeenCalled();
+    expect(page.totalCount).toBeNull();
+  });
+
+  test("counts the same filters without the cursor when includeTotalCount is set", async () => {
+    findMany.mockResolvedValue([makeRow()]);
+    count.mockResolvedValue(42);
+    const first = await service.listWorkflows({
+      workspaceId,
+      limit: 1,
+      sortBy: "updatedAt",
+      includeTotalCount: false,
+    });
+    findMany.mockResolvedValue([
+      makeRow({ id: "cm9zr4t2b000208l8h2m1aq30", updatedAt: new Date("2026-06-12T09:30:00.000Z") }),
+      makeRow({ id: "cm9zr4t2b000208l8h2m1aq31", updatedAt: new Date("2026-06-11T09:30:00.000Z") }),
+    ]);
+    const withCursor = await service.listWorkflows({
+      workspaceId,
+      limit: 1,
+      sortBy: "updatedAt",
+      includeTotalCount: false,
+    });
+    expect(first.totalCount).toBeNull();
+
+    const page = await service.listWorkflows({
+      workspaceId,
+      limit: 1,
+      sortBy: "updatedAt",
+      includeTotalCount: true,
+      statusIn: ["draft"],
+      ...(withCursor.nextCursor ? { cursor: withCursor.nextCursor } : {}),
+    });
+
+    expect(page.totalCount).toBe(42);
+    expect(count).toHaveBeenCalledTimes(1);
+    const countWhere = count.mock.calls[0][0].where;
+    expect(countWhere).toEqual({ workspaceId, status: { in: ["draft"] } });
   });
 });
 

@@ -52,7 +52,13 @@ const CONTRACT_IDS = {
   WORKFLOW_TEST: "clctworkflowtest00000001",
   ACTION_CLASS_READ: "clctactionclassread00001",
   RESPONSE_READ: "clctresponseread00000001",
+  ATTRIBUTE_KEY_PLAN: "clctattributekeyplan0001",
+  CONTACT_READ: "clctcontactread000000001",
+  SEGMENT_READ: "clctsegmentread000000001",
 } as const;
+
+/** The custom attribute the contact list and the distinct-values endpoint are exercised against. */
+const CONTRACT_ATTRIBUTE_KEY = "contractFixturePlan";
 
 /**
  * Pinned `updatedAt` for every seeded survey, so the block operations' `expectedUpdatedAt` override can
@@ -241,6 +247,65 @@ async function seedCustomCss(readSurveyId: string): Promise<void> {
   });
 }
 
+/**
+ * One contact with a custom string attribute, and one public segment, so
+ * `GET /api/v3/contacts`, `/contacts/attribute-values` and `/segments` return a populated item rather
+ * than an empty page (which validates the envelope and never the resource). The segment is
+ * `isPrivate: false` because private segments are never listed. It is attached to no survey on
+ * purpose: attaching it to a fixture survey would change that survey's targeting and with it the
+ * survey operations' responses.
+ */
+async function seedContactsAndSegment(): Promise<void> {
+  const attributeKey = await prisma.contactAttributeKey.upsert({
+    where: { key_workspaceId: { key: CONTRACT_ATTRIBUTE_KEY, workspaceId: SEED_IDS.WORKSPACE } },
+    update: {},
+    create: {
+      id: CONTRACT_IDS.ATTRIBUTE_KEY_PLAN,
+      key: CONTRACT_ATTRIBUTE_KEY,
+      name: "Contract fixture plan",
+      description: "Disposable fixture for the v3 API contract tests.",
+      type: "custom",
+      dataType: "string",
+      workspaceId: SEED_IDS.WORKSPACE,
+    },
+  });
+  const emailKey = await prisma.contactAttributeKey.findUnique({
+    where: { key_workspaceId: { key: "email", workspaceId: SEED_IDS.WORKSPACE } },
+    select: { id: true },
+  });
+
+  await prisma.contact.upsert({
+    where: { id: CONTRACT_IDS.CONTACT_READ },
+    update: {},
+    create: { id: CONTRACT_IDS.CONTACT_READ, workspaceId: SEED_IDS.WORKSPACE },
+  });
+
+  const values = [
+    { attributeKeyId: attributeKey.id, value: "Enterprise" },
+    ...(emailKey ? [{ attributeKeyId: emailKey.id, value: "contract-fixture@example.com" }] : []),
+  ];
+  for (const { attributeKeyId, value } of values) {
+    await prisma.contactAttribute.upsert({
+      where: { contactId_attributeKeyId: { contactId: CONTRACT_IDS.CONTACT_READ, attributeKeyId } },
+      update: { value },
+      create: { contactId: CONTRACT_IDS.CONTACT_READ, attributeKeyId, value },
+    });
+  }
+
+  const segmentFields = {
+    title: "Contract fixture — segment",
+    description: "Disposable fixture for the v3 API contract tests.",
+    isPrivate: false,
+    filters: [],
+    workspaceId: SEED_IDS.WORKSPACE,
+  };
+  await prisma.segment.upsert({
+    where: { id: CONTRACT_IDS.SEGMENT_READ },
+    update: segmentFields,
+    create: { id: CONTRACT_IDS.SEGMENT_READ, ...segmentFields },
+  });
+}
+
 async function seedWorkflow(
   id: string,
   name: string,
@@ -366,6 +431,8 @@ async function main(): Promise<void> {
     },
   });
 
+  await seedContactsAndSegment();
+
   // No tag fixtures: every /api/v3/tags operation is `auth: "session"`, so an API key is rejected
   // with a documented 401 before a handler ever looks for a row. Seeding them would read as coverage
   // that does not exist. Add them here if tags ever accept an API key.
@@ -426,6 +493,9 @@ async function main(): Promise<void> {
       archiveWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_ARCHIVE } },
       unarchiveWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_UNARCHIVE } },
       testWorkflowV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_TEST } },
+      // `key` is required and must name an attribute of the workspace, or the operation only ever
+      // exercises its documented 400.
+      listContactAttributeValuesV3: { query: { key: CONTRACT_ATTRIBUTE_KEY } },
     },
   };
 

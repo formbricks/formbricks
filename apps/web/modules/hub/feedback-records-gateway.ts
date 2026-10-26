@@ -33,6 +33,7 @@ const ZFeedbackRecordId = z.uuid();
 
 type TFeedbackRecordsGatewayOperation =
   | "list"
+  | "count"
   | "create"
   | "bulkDelete"
   | "semanticSearch"
@@ -87,6 +88,11 @@ const parseFeedbackRecordsGatewayRoute = (method: string, pathname: string): TPa
       default:
         return null;
     }
+  }
+
+  // The number of records matching the same filters `list` takes, for a list's match count.
+  if (normalizedPath === "/count" && method === "GET") {
+    return { operation: "count", requiredPermission: "read", tenantSource: "query" };
   }
 
   if (normalizedPath === "/search/semantic" && method === "POST") {

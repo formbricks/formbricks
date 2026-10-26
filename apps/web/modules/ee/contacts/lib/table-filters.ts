@@ -1,0 +1,146 @@
+import type { TFunction } from "i18next";
+import type { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
+import { resolveDateFilterBounds } from "@/modules/ui/components/table-toolbar/lib/date-filter";
+import {
+  DATE_RULE_OPERATORS,
+  NUMBER_RULE_OPERATORS,
+  STRING_RULE_OPERATORS,
+} from "@/modules/ui/components/table-toolbar/lib/operators";
+import type {
+  TFilterOption,
+  TFilterProperty,
+  TSortOption,
+  TTableFilter,
+} from "@/modules/ui/components/table-toolbar/lib/types";
+
+export const CONTACT_SORT_VALUES = ["-createdAt", "createdAt"] as const;
+export const DEFAULT_CONTACT_SORT = "-createdAt";
+export const ATTRIBUTE_PROPERTY_PREFIX = "attribute.";
+
+export const getContactSortOptions = (t: TFunction): TSortOption[] => [
+  { value: "-createdAt", label: t("common.table_toolbar.sort_newest_first") },
+  { value: "createdAt", label: t("common.table_toolbar.sort_oldest_first") },
+];
+
+/**
+ * Every contact attribute is a filter property (ENG-3542), with operators by its data type: text and
+ * numbers tick values or take a rule, dates take a preset, a range or before/after. `loadAttributeValues`
+ * fetches one attribute's distinct values, bounded on the server, when its value list opens.
+ */
+export const getContactFilterProperties = (
+  t: TFunction,
+  attributeKeys: readonly TContactAttributeKey[],
+  loadAttributeValues: (key: string, search: string) => Promise<TFilterOption[]>
+): TFilterProperty[] => [
+  {
+    id: "createdAt",
+    label: t("common.created_at"),
+    valueType: "date",
+    quick: true,
+    ruleOperators: ["isBefore", "isAfter"],
+    datePresets: DATE_RANGE_PRESETS,
+  },
+  ...attributeKeys.map((attributeKey): TFilterProperty => {
+    const id = `${ATTRIBUTE_PROPERTY_PREFIX}${attributeKey.key}`;
+    const label = attributeKey.name ?? attributeKey.key;
+    switch (attributeKey.dataType) {
+      case "date":
+        return { id, label, valueType: "date", quick: true, ruleOperators: DATE_RULE_OPERATORS };
+      case "number":
+        return {
+          id,
+          label,
+          valueType: "number",
+          quick: true,
+          ruleOperators: NUMBER_RULE_OPERATORS,
+          loadOptions: (search) => loadAttributeValues(attributeKey.key, search),
+        };
+      default:
+        return {
+          id,
+          label,
+          valueType: "string",
+          quick: true,
+          ruleOperators: STRING_RULE_OPERATORS,
+          loadOptions: (search) => loadAttributeValues(attributeKey.key, search),
+        };
+    }
+  }),
+];
+
+const SINGLE_VALUE_KEY = (property: string, operator: string) => `filter[${property}][${operator}]`;
+
+const tightenDate = (bounds: Map<string, string>, key: string, iso: string, keep: "later" | "earlier") => {
+  const current = bounds.get(key);
+  if (current === undefined || (keep === "later" ? iso > current : iso < current)) bounds.set(key, iso);
+};
+
+/**
+ * The table's filters, search and sort as v3 contacts list parameters. The API takes one value per
+ * single-value operator, so two rules that cannot both hold (`is a` and `is b`) answer null — nothing
+ * can match — and date bounds on one attribute collapse to the tightest pair. Two different text
+ * rules of the same kind on one attribute (`contains a`, `contains b`) keep the last one: the API has
+ * no way to send both.
+ */
+export const toContactListParams = (
+  filters: readonly TTableFilter[],
+  search: string,
+  sortBy: string,
+  timeZone: string,
+  now: Date = new Date()
+): [string, string][] | null => {
+  const entries = new Map<string, string[]>();
+  const dateBounds = new Map<string, string>();
+
+  for (const filter of filters) {
+    const { property, operator, values } = filter;
+    const isDateProperty = property === "createdAt";
+    const bounds =
+      operator === "preset" || operator === "between" || operator === "isBefore" || operator === "isAfter"
+        ? resolveDateFilterBounds(filter, timeZone, now)
+        : null;
+
+    if (bounds) {
+      if (bounds.from)
+        tightenDate(dateBounds, SINGLE_VALUE_KEY(property, "gte"), bounds.from.toISOString(), "later");
+      if (bounds.to)
+        tightenDate(dateBounds, SINGLE_VALUE_KEY(property, "lte"), bounds.to.toISOString(), "earlier");
+      continue;
+    }
+    if (isDateProperty) continue;
+
+    const key = SINGLE_VALUE_KEY(property, operator);
+    if (operator === "in") {
+      const existing = entries.get(key);
+      const next = existing ? existing.filter((value) => values.includes(value)) : [...values];
+      if (next.length === 0) return null;
+      entries.set(key, next);
+      continue;
+    }
+    if (operator === "isSet" || operator === "isNotSet") {
+      entries.set(key, ["true"]);
+      continue;
+    }
+    const existing = entries.get(key);
+    if (operator === "equals" && existing && existing[0] !== values[0]) return null;
+    entries.set(key, [values[0]]);
+  }
+
+  for (const [key, value] of dateBounds) entries.set(key, [value]);
+  for (const property of new Set([...dateBounds.keys()].map((key) => key.split("][")[0]))) {
+    const from = dateBounds.get(`${property}][gte]`);
+    const to = dateBounds.get(`${property}][lte]`);
+    if (from && to && from > to) return null;
+  }
+
+  const params: [string, string][] = [];
+  for (const [key, values] of entries) for (const value of values) params.push([key, value]);
+  const trimmed = search.trim();
+  if (trimmed) params.push(["search", trimmed]);
+  params.push([
+    "sortBy",
+    (CONTACT_SORT_VALUES as readonly string[]).includes(sortBy) ? sortBy : DEFAULT_CONTACT_SORT,
+  ]);
+  return params;
+};

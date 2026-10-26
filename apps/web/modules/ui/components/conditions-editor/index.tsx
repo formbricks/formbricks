@@ -37,6 +37,8 @@ interface ConditionsEditorProps {
   depth?: number;
   quotaErrors?: FieldErrors<TSurveyQuotaInput>;
   isSubmitted?: boolean;
+  /** Hides the all/any picker: every condition combines with the group's fixed connector. */
+  isConnectorLocked?: boolean;
 }
 
 export function ConditionsEditor({
@@ -46,6 +48,7 @@ export function ConditionsEditor({
   depth = 0,
   quotaErrors,
   isSubmitted = false,
+  isConnectorLocked = false,
 }: Readonly<ConditionsEditorProps>) {
   const { t } = useTranslation();
   const [parent] = useAutoAnimate();
@@ -281,7 +284,7 @@ export function ConditionsEditor({
   return (
     <div ref={parent} className="@container flex flex-col gap-y-4">
       {/* Dropdown for changing the connector */}
-      {conditions.conditions.length > 1 && (
+      {conditions.conditions.length > 1 && !isConnectorLocked && (
         <div className="flex items-center gap-x-2 text-sm">
           <p className="flex w-10 shrink-0 items-center justify-end font-medium text-slate-900">
             {t("workspace.surveys.edit.when")}

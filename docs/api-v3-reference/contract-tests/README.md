@@ -52,7 +52,8 @@ Three things to know before reading the result:
 
 - **Workflow endpoints need an enterprise license.** Thirteen of the twenty-eight operations (every
   `/workflows` path, the two `/workflows/runs` reads included — they all authorize through
-  `buildWorkflowApiContext`), plus `contact-attribute-keys`, are entitlement-gated. Without
+  `buildWorkflowApiContext`), plus `contact-attribute-keys`, `contacts`,
+  `contacts/attribute-values` and `segments` (the Contacts entitlement), are entitlement-gated. Without
   `ENTERPRISE_LICENSE_KEY` they answer a documented 403, so the run stays green but tests those
   operations shallowly. A licence is necessary but not sufficient: it also has to _grant_ the
   feature. CI's key grants `contacts` and not `workflows` (ENG-2553), so the 13 workflow operations

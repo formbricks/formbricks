@@ -14,10 +14,8 @@ import {
   generatePersonalLinks,
   getContact,
   getContactInWorkspace,
-  getContacts,
   getContactsInSegment,
 } from "./contacts";
-import { transformPrismaContact } from "./utils";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -90,16 +88,6 @@ const mockPrismaContact = {
       attributeKey: { key: "name", name: "Name" },
     },
   ],
-};
-
-const mockTransformedContact = {
-  id: mockContactId,
-  createdAt: new Date("2024-01-01"),
-  updatedAt: new Date("2024-01-02"),
-  attributes: {
-    email: "john@example.com",
-    name: "John Doe",
-  },
 };
 
 describe("Contacts Lib", () => {
@@ -269,86 +257,6 @@ describe("Contacts Lib", () => {
           },
         },
       ]);
-    });
-  });
-
-  describe("getContacts", () => {
-    test("returns contacts without search or offset", async () => {
-      vi.mocked(prisma.contact.findMany).mockResolvedValue([mockPrismaContact] as any);
-      vi.mocked(transformPrismaContact).mockReturnValue(mockTransformedContact as any);
-
-      const result = await getContacts(mockWorkspaceId);
-
-      expect(result).toEqual([mockTransformedContact]);
-      expect(prisma.contact.findMany).toHaveBeenCalledWith({
-        where: { workspaceId: mockWorkspaceId },
-        select: expect.any(Object),
-        take: 30,
-        skip: undefined,
-        orderBy: { createdAt: "desc" },
-      });
-    });
-
-    test("returns contacts with offset for pagination", async () => {
-      vi.mocked(prisma.contact.findMany).mockResolvedValue([mockPrismaContact] as any);
-      vi.mocked(transformPrismaContact).mockReturnValue(mockTransformedContact as any);
-
-      const result = await getContacts(mockWorkspaceId, 30);
-
-      expect(result).toEqual([mockTransformedContact]);
-      expect(prisma.contact.findMany).toHaveBeenCalledWith({
-        where: { workspaceId: mockWorkspaceId },
-        select: expect.any(Object),
-        take: 30,
-        skip: 30,
-        orderBy: { createdAt: "desc" },
-      });
-    });
-
-    test("returns contacts with search value", async () => {
-      const searchValue = "john";
-      vi.mocked(prisma.contact.findMany).mockResolvedValue([mockPrismaContact] as any);
-      vi.mocked(transformPrismaContact).mockReturnValue(mockTransformedContact as any);
-
-      const result = await getContacts(mockWorkspaceId, undefined, searchValue);
-
-      expect(result).toEqual([mockTransformedContact]);
-      expect(prisma.contact.findMany).toHaveBeenCalledWith({
-        where: buildContactWhereClause(mockWorkspaceId, searchValue),
-        select: expect.any(Object),
-        take: 30,
-        skip: undefined,
-        orderBy: { createdAt: "desc" },
-      });
-    });
-
-    test("throws DatabaseError on Prisma error", async () => {
-      const prismaError = new Prisma.PrismaClientKnownRequestError("DB Error", {
-        code: "P2002",
-        clientVersion: "5.0.0",
-      });
-      vi.mocked(prisma.contact.findMany).mockRejectedValue(prismaError);
-
-      await expect(getContacts(mockWorkspaceId)).rejects.toThrow(DatabaseError);
-    });
-
-    test("re-throws non-Prisma errors", async () => {
-      const error = new Error("Unknown error");
-      vi.mocked(prisma.contact.findMany).mockRejectedValue(error);
-
-      await expect(getContacts(mockWorkspaceId)).rejects.toThrow(error);
-    });
-
-    test("returns multiple contacts", async () => {
-      const contact2 = { ...mockPrismaContact, id: "contact-2" };
-      vi.mocked(prisma.contact.findMany).mockResolvedValue([mockPrismaContact, contact2] as any);
-      vi.mocked(transformPrismaContact)
-        .mockReturnValueOnce(mockTransformedContact as any)
-        .mockReturnValueOnce({ ...mockTransformedContact, id: "contact-2" } as any);
-
-      const result = await getContacts(mockWorkspaceId);
-
-      expect(result).toHaveLength(2);
     });
   });
 

@@ -1,16 +1,19 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
+import { type ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { TFunction } from "i18next";
-import { ChevronDownIcon, MessageSquareTextIcon, PlusIcon, RefreshCwIcon } from "lucide-react";
+import { ChevronDownIcon, PlusIcon, RefreshCwIcon, Trash2Icon } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TFeedbackSourceFieldMapping } from "@formbricks/types/feedback-source";
-import { getFeedbackRecordContactsAction, listFeedbackRecordsAction } from "@/lib/feedback-source/actions";
+import { useOrganization } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
+import { getReportingTimeZone } from "@/lib/date-ranges";
+import { getFeedbackRecordContactsAction } from "@/lib/feedback-source/actions";
 import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { enrichmentStatusKeys } from "@/modules/ee/unify-feedback/enrichment-status/lib/query";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import { Badge } from "@/modules/ui/components/badge";
@@ -23,18 +26,38 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { ListTable, TableToolbar } from "@/modules/ui/components/table-toolbar";
+import { useTableColumnState } from "@/modules/ui/components/table-toolbar/hooks/use-table-column-state";
+import { useTableUrlState } from "@/modules/ui/components/table-toolbar/hooks/use-table-url-state";
+import { buildColumnSettings } from "@/modules/ui/components/table-toolbar/lib/column-settings";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { deleteFeedbackRecordAction } from "../actions";
+import { feedbackRecordKeys, useFeedbackRecords } from "../hooks/use-feedback-records";
 import { FieldTypeIcon } from "../lib/field-type-icons";
+import {
+  DEFAULT_RECORD_SORT,
+  RECORD_SORT_VALUES,
+  getRecordFilterProperties,
+  getRecordSortOptions,
+  toHubRecordQuery,
+} from "../lib/table-filters";
 import { formatFieldType, formatSourceType, resolveFeedbackDisplayText } from "../lib/utils";
 import { CsvImportModal } from "../sources/components/csv-import-modal";
 import { FeedbackRecordFormDrawer } from "./feedback-record-form-drawer";
-import { FeedbackRecordsTableToolbarLeft } from "./feedback-records-table-toolbar-left";
 import { TranslatedBadge } from "./translated-badge";
 
-const RECORDS_PER_PAGE = 50;
 // Must not exceed the getFeedbackRecordContactsAction input cap (`userIds` is `.max(1000)`).
 const CONTACT_RESOLVE_BATCH_SIZE = 1000;
+const RECORD_COLUMN_IDS = [
+  "select",
+  "collectedAt",
+  "sourceType",
+  "sourceName",
+  "fieldLabel",
+  "fieldType",
+  "value",
+  "userId",
+];
 
 // resolvedText (translation-preferred) is computed once by the caller; null falls through to other types.
 const formatValue = (
@@ -50,94 +73,84 @@ const formatValue = (
   return "—";
 };
 
+const RecordValueCell = ({ record, locale }: Readonly<{ record: FeedbackRecordData; locale: string }>) => {
+  const { t } = useTranslation();
+  const { text, isTranslated, original, langKey } = resolveFeedbackDisplayText(record);
+  const value = formatValue(record, text, t, locale);
+  return (
+    <div className="flex min-w-0 items-center gap-1.5" title={value}>
+      {value.length > 60 ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="block min-w-0 cursor-default truncate">{value}</span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-sm whitespace-pre-wrap">
+              {value}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <span className="block min-w-0 truncate">{value}</span>
+      )}
+      {isTranslated && <TranslatedBadge langKey={langKey} original={original} locale={locale} />}
+    </div>
+  );
+};
+
 interface FeedbackRecordsTableProps {
   workspaceId: string;
-  initialRecords: FeedbackRecordData[];
-  initialCursors: Record<string, string>;
-  initialContactIdByUserId: Record<string, string>;
   frdMap: Record<string, string>;
   csvSources: { id: string; name: string; fieldMappings: TFeedbackSourceFieldMapping[] }[];
+  /** Every feedback source name in the workspace: the Source filter's values. */
+  sourceNames: string[];
   canWrite: boolean;
   /** Owners/managers only — records are directory-level, not workspace-level (ENG-1770). */
   canDeleteRecords: boolean;
 }
 
-interface FeedbackRecordRowProps {
-  record: FeedbackRecordData;
-  workspaceId: string;
-  contactId?: string;
-  locale: string;
-  t: TFunction;
-  isSelectable: boolean;
-  isSelected: boolean;
-  onSelectChange: (checked: boolean) => void;
-  onClick: () => void;
-}
-
 export const FeedbackRecordsTable = ({
   workspaceId,
-  initialRecords,
-  initialCursors,
-  initialContactIdByUserId,
   frdMap,
   csvSources,
+  sourceNames,
   canWrite,
   canDeleteRecords,
 }: Readonly<FeedbackRecordsTableProps>) => {
   const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+  // Calendar days are cut in the organization's reporting zone, never the browser's (ADR 0003).
+  const { organization } = useOrganization();
+  const timeZone = getReportingTimeZone(organization?.displayTimeZone);
   // Reaches the same query client as the enrichment-status banner (provided above this table by
   // `feedback-records-page-client.tsx`), so a CSV import here can invalidate that read instead of
   // leaving it stale until a manual reload — see EnrichmentStatus's doc comment.
   const queryClient = useQueryClient();
-  const [records, setRecords] = useState<FeedbackRecordData[]>(initialRecords);
-  const [cursors, setCursors] = useState<Record<string, string>>(initialCursors);
-  const [contactIdByUserId, setContactIdByUserId] =
-    useState<Record<string, string>>(initialContactIdByUserId);
+
+  const [contactIdByUserId, setContactIdByUserId] = useState<Record<string, string>>({});
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [drawerRecordId, setDrawerRecordId] = useState<string | undefined>();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [csvImportSource, setCsvImportSource] = useState<{
-    id: string;
-    name: string;
-    fieldMappings: TFeedbackSourceFieldMapping[];
-  } | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [csvImportSource, setCsvImportSource] = useState<(typeof csvSources)[number] | null>(null);
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const hasMore = Object.keys(cursors).length > 0;
-  const selectedCount = selectedIds.size;
-  const allOnPageSelected = records.length > 0 && records.every((record) => selectedIds.has(record.id));
-  const someOnPageSelected = records.some((record) => selectedIds.has(record.id));
-
-  const toggleAllOnPage = (checked: boolean) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (checked) {
-        records.forEach((record) => next.add(record.id));
-      } else {
-        records.forEach((record) => next.delete(record.id));
-      }
-      return next;
-    });
-  };
-
-  const toggleOne = (recordId: string, checked: boolean) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (checked) {
-        next.add(recordId);
-      } else {
-        next.delete(recordId);
-      }
-      return next;
-    });
-  };
-
-  const clearSelection = () => setSelectedIds(new Set());
-
+  const filterProperties = getRecordFilterProperties(t, { sourceNames });
+  const tableState = useTableUrlState({
+    properties: filterProperties,
+    sortOptions: RECORD_SORT_VALUES,
+    defaultSortBy: DEFAULT_RECORD_SORT,
+  });
+  const filtersKey = JSON.stringify(tableState.filters);
+  // Resolved once per filter change: a relative preset resolved on every render would change the query
+  // (and refetch) on every render.
+  const hubQuery = useMemo(
+    () => toHubRecordQuery(tableState.filters, tableState.sortBy, timeZone),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `filtersKey` stands in for the filter list
+    [filtersKey, tableState.sortBy, timeZone]
+  );
+  const directoryIds = useMemo(() => Object.keys(frdMap).sort(), [frdMap]);
   const directories = useMemo(
     () =>
       Object.entries(frdMap)
@@ -146,70 +159,37 @@ export const FeedbackRecordsTable = ({
     [frdMap]
   );
 
-  type FetchResult =
-    | { ok: true; records: FeedbackRecordData[]; newCursors: Record<string, string> }
-    | { ok: false; errorMessage: string };
+  const {
+    records,
+    isLoading,
+    isError,
+    error,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    refetch,
+    matchCount,
+  } = useFeedbackRecords({ workspaceId, directoryIds, query: hubQuery });
 
-  const fetchRecords = async (mode: "refresh" | "loadMore"): Promise<FetchResult> => {
-    const directoryIds = Object.keys(frdMap);
-    const frdIdsToFetch = mode === "refresh" ? directoryIds : directoryIds.filter((id) => cursors[id]);
+  const columnState = useTableColumnState({
+    storagePrefix: `${workspaceId}-feedback-records`,
+    columnIds: RECORD_COLUMN_IDS,
+  });
 
-    if (frdIdsToFetch.length === 0) {
-      return { ok: true, records: [], newCursors: {} };
-    }
-
-    const results = await Promise.all(
-      frdIdsToFetch.map((frdId) =>
-        listFeedbackRecordsAction({
-          workspaceId,
-          frdId,
-          limit: RECORDS_PER_PAGE,
-          ...(mode === "loadMore" && cursors[frdId] ? { cursor: cursors[frdId] } : {}),
-        })
-      )
-    );
-
-    const firstFailure = results.find((result) => !result?.data);
-    if (firstFailure) {
-      // getFormattedErrorMessage returns "" (not nullish) when the action failed without a
-      // serverError, so `??` never reached the fallback and the user got a blank error.
-      return {
-        ok: false,
-        errorMessage:
-          getFormattedErrorMessage(firstFailure) || t("workspace.unify.failed_to_load_feedback_records"),
-      };
-    }
-
-    const fetchedRecords = results.flatMap((result) => result?.data?.data ?? []);
-
-    const newCursors: Record<string, string> = {};
-    for (let i = 0; i < frdIdsToFetch.length; i++) {
-      const nextCursor = results[i]?.data?.next_cursor;
-      if (nextCursor) {
-        newCursors[frdIdsToFetch[i]] = nextCursor;
-      }
-    }
-
-    return { ok: true, records: fetchedRecords, newCursors };
-  };
-
-  // Resolve any not-yet-known user_ids from a freshly fetched page to contact ids. Chunked to stay
-  // within the action's input cap, and failures are swallowed since contact links are a non-critical
-  // enhancement — the records still render without them.
+  // Resolve any not-yet-known user_ids on the loaded records to contact ids. Chunked to stay within the
+  // action's input cap; failures are swallowed since contact links are a non-critical enhancement.
   const resolveContactsForRecords = useCallback(
     async (recs: FeedbackRecordData[]) => {
       const missing = [
         ...new Set(recs.map((record) => record.user_id).filter((id): id is string => Boolean(id))),
       ].filter((id) => !(id in contactIdByUserId));
       if (missing.length === 0) return;
-
       try {
         for (let i = 0; i < missing.length; i += CONTACT_RESOLVE_BATCH_SIZE) {
           const batch = missing.slice(i, i + CONTACT_RESOLVE_BATCH_SIZE);
           const result = await getFeedbackRecordContactsAction({ workspaceId, userIds: batch });
-          if (result?.data) {
-            setContactIdByUserId((prev) => ({ ...prev, ...result.data }));
-          }
+          const resolved = result?.data;
+          if (resolved) setContactIdByUserId((prev) => ({ ...prev, ...resolved }));
         }
       } catch {
         // Ignore — contact deep-links are best-effort.
@@ -218,27 +198,24 @@ export const FeedbackRecordsTable = ({
     [contactIdByUserId, workspaceId]
   );
 
+  useEffect(() => {
+    void resolveContactsForRecords(records);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs per loaded set of records, not per resolved contact
+  }, [records]);
+
   const handleRefresh = async () => {
-    if (isRefreshing || isLoadingMore) return;
+    if (isRefreshing) return;
     setIsRefreshing(true);
-    setError(null);
-
     const toastId = toast.loading(t("workspace.unify.refreshing_feedback_records"));
-    const result = await fetchRecords("refresh");
-
-    if (!result.ok) {
-      toast.error(result.errorMessage, { id: toastId });
+    try {
+      await refetch();
+      setRowSelection({});
+      toast.success(t("workspace.unify.feedback_records_refreshed"), { id: toastId });
+    } catch {
+      toast.error(t("workspace.unify.failed_to_load_feedback_records"), { id: toastId });
+    } finally {
       setIsRefreshing(false);
-      return;
     }
-
-    const mergedRecords = result.records.toSorted((a, b) => (a.collected_at < b.collected_at ? 1 : -1));
-    setRecords(mergedRecords);
-    setCursors(result.newCursors);
-    setSelectedIds(new Set());
-    setIsRefreshing(false);
-    toast.success(t("workspace.unify.feedback_records_refreshed"), { id: toastId });
-    void resolveContactsForRecords(mergedRecords);
   };
 
   // A CSV import creates records this list and the enrichment-status banner above it don't know
@@ -250,51 +227,16 @@ export const FeedbackRecordsTable = ({
     void queryClient.invalidateQueries({ queryKey: enrichmentStatusKeys.all });
   };
 
-  const handleLoadMore = async () => {
-    if (isLoadingMore || isRefreshing || !hasMore) return;
-    setIsLoadingMore(true);
-
-    const result = await fetchRecords("loadMore");
-
-    if (!result.ok) {
-      toast.error(result.errorMessage);
-      setIsLoadingMore(false);
-      return;
-    }
-
-    setRecords((prev) =>
-      [...prev, ...result.records].toSorted((a, b) => (a.collected_at < b.collected_at ? 1 : -1))
-    );
-    setCursors(result.newCursors);
-    setIsLoadingMore(false);
-    void resolveContactsForRecords(result.records);
-  };
-
-  if (error) {
-    return (
-      <div className="rounded-xl border border-slate-200 bg-white shadow-xs">
-        <div className="flex h-48 flex-col items-center justify-center gap-3 px-4 text-center">
-          <MessageSquareTextIcon className="size-8 text-slate-400" />
-          <p className="text-sm text-slate-500">{error}</p>
-          <Button variant="secondary" size="sm" onClick={handleRefresh}>
-            {t("common.retry")}
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  const isEmpty = records.length === 0 && !isRefreshing;
+  const selectedIds = Object.keys(rowSelection).filter((id) => rowSelection[id]);
 
   const handleBulkDelete = async () => {
-    const ids = Array.from(selectedIds);
-    if (ids.length === 0 || !canDeleteRecords) return;
+    if (selectedIds.length === 0 || !canDeleteRecords) return;
     setIsDeleting(true);
     const CHUNK_SIZE = 5;
     const failedIds: string[] = [];
     try {
-      for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
-        const chunk = ids.slice(i, i + CHUNK_SIZE);
+      for (let i = 0; i < selectedIds.length; i += CHUNK_SIZE) {
+        const chunk = selectedIds.slice(i, i + CHUNK_SIZE);
         const results = await Promise.all(
           chunk.map(async (recordId) => ({
             recordId,
@@ -306,14 +248,14 @@ export const FeedbackRecordsTable = ({
         });
       }
 
-      const succeeded = ids.filter((id) => !failedIds.includes(id));
+      const succeeded = selectedIds.filter((id) => !failedIds.includes(id));
       if (succeeded.length > 0) {
-        setRecords((prev) => prev.filter((record) => !succeeded.includes(record.id)));
-        setSelectedIds((prev) => {
-          const next = new Set(prev);
-          succeeded.forEach((id) => next.delete(id));
+        setRowSelection((prev) => {
+          const next = { ...prev };
+          succeeded.forEach((id) => delete next[id]);
           return next;
         });
+        await queryClient.invalidateQueries({ queryKey: feedbackRecordKeys.all });
       }
 
       if (failedIds.length === 0) {
@@ -326,7 +268,7 @@ export const FeedbackRecordsTable = ({
         toast.error(
           t("workspace.unify.feedback_records_partially_deleted", {
             succeeded: succeeded.length,
-            total: ids.length,
+            total: selectedIds.length,
           })
         );
       }
@@ -341,141 +283,285 @@ export const FeedbackRecordsTable = ({
     setIsDrawerOpen(true);
   };
 
-  const hasCsvSources = csvSources.length > 0;
+  const columnLabels = [
+    { id: "collectedAt", label: t("workspace.unify.collected_at") },
+    { id: "sourceType", label: t("workspace.unify.source_type") },
+    { id: "sourceName", label: t("workspace.unify.source_name") },
+    { id: "fieldLabel", label: t("workspace.unify.field_label") },
+    { id: "fieldType", label: t("workspace.unify.field_type") },
+    { id: "value", label: t("workspace.unify.value") },
+    { id: "userId", label: t("workspace.unify.user_identifier") },
+  ];
 
-  let headerCheckboxChecked: boolean | "indeterminate" = false;
-  if (allOnPageSelected) {
-    headerCheckboxChecked = true;
-  } else if (someOnPageSelected) {
-    headerCheckboxChecked = "indeterminate";
-  }
+  const columns = useMemo<ColumnDef<FeedbackRecordData>[]>(() => {
+    const dataColumns: ColumnDef<FeedbackRecordData>[] = [
+      {
+        id: "collectedAt",
+        header: t("workspace.unify.collected_at"),
+        size: 170,
+        cell: ({ row }) => {
+          const collectedAt = formatDateTimeForDisplay(new Date(row.original.collected_at), locale);
+          return (
+            <span className="truncate text-slate-500" title={collectedAt}>
+              {collectedAt}
+            </span>
+          );
+        },
+      },
+      {
+        id: "sourceType",
+        header: t("workspace.unify.source_type"),
+        size: 160,
+        cell: ({ row }) => (
+          <Badge
+            text={formatSourceType(row.original.source_type, t)}
+            type="gray"
+            size="tiny"
+            className="inline-block max-w-40 truncate align-middle"
+          />
+        ),
+      },
+      {
+        id: "sourceName",
+        header: t("workspace.unify.source_name"),
+        size: 170,
+        cell: ({ row }) => {
+          const record = row.original;
+          const isFormbricksSurveySource =
+            (record.source_type === "formbricks" || record.source_type === "formbricks_survey") &&
+            !!record.source_id;
+          return isFormbricksSurveySource ? (
+            <Link
+              href={`/workspaces/${workspaceId}/surveys/${record.source_id}/summary`}
+              className="block min-w-0 truncate text-slate-700 underline underline-offset-2 hover:text-slate-900">
+              {record.source_name ?? "—"}
+            </Link>
+          ) : (
+            <span className="block min-w-0 truncate" title={record.source_name ?? undefined}>
+              {record.source_name ?? "—"}
+            </span>
+          );
+        },
+      },
+      {
+        id: "fieldLabel",
+        header: t("workspace.unify.field_label"),
+        size: 210,
+        cell: ({ row }) => (
+          // The row's keyboard entry point: opens the record like a click on the row does.
+          <button
+            type="button"
+            onClick={() => openViewDrawer(row.original.id)}
+            className="focus-visible:ring-ring block min-w-0 truncate text-left font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:outline-hidden">
+            {row.original.field_label ?? row.original.field_id}
+          </button>
+        ),
+      },
+      {
+        id: "fieldType",
+        header: t("workspace.unify.field_type"),
+        size: 120,
+        cell: ({ row }) => (
+          <span className="inline-flex items-center gap-1 whitespace-nowrap text-slate-600">
+            <FieldTypeIcon fieldType={row.original.field_type} className="size-3.5" />
+            {formatFieldType(row.original.field_type)}
+          </span>
+        ),
+      },
+      {
+        id: "value",
+        header: t("workspace.unify.value"),
+        size: 280,
+        cell: ({ row }) => <RecordValueCell record={row.original} locale={locale} />,
+      },
+      {
+        id: "userId",
+        header: t("workspace.unify.user_identifier"),
+        size: 170,
+        cell: ({ row }) => {
+          const record = row.original;
+          const contactId = record.user_id ? contactIdByUserId[record.user_id] : undefined;
+          return record.user_id && contactId ? (
+            <Link
+              href={`/workspaces/${workspaceId}/contacts/${contactId}`}
+              title={record.user_id}
+              className="block min-w-0 truncate text-slate-700 underline underline-offset-2 hover:text-slate-900">
+              {record.user_id}
+            </Link>
+          ) : (
+            <span className="block min-w-0 truncate text-slate-500" title={record.user_id ?? undefined}>
+              {record.user_id ?? "—"}
+            </span>
+          );
+        },
+      },
+    ];
+    if (!canDeleteRecords) return dataColumns;
+    return [
+      {
+        id: "select",
+        size: 44,
+        header: ({ table }) => (
+          <Checkbox
+            aria-label={t("common.select_all")}
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              (table.getIsSomePageRowsSelected() ? "indeterminate" : false)
+            }
+            onCheckedChange={(checked) => table.toggleAllPageRowsSelected(checked === true)}
+          />
+        ),
+        cell: ({ row }) => (
+          <Checkbox
+            aria-label={row.original.field_label ?? row.original.field_id}
+            checked={row.getIsSelected()}
+            onCheckedChange={(checked) => row.toggleSelected(checked === true)}
+          />
+        ),
+      },
+      ...dataColumns,
+    ];
+  }, [t, locale, workspaceId, contactIdByUserId, canDeleteRecords]);
+
+  const table = useReactTable({
+    data: records,
+    columns,
+    getRowId: (record) => record.id,
+    getCoreRowModel: getCoreRowModel(),
+    enableRowSelection: canDeleteRecords,
+    onRowSelectionChange: setRowSelection,
+    state: {
+      rowSelection,
+      columnOrder: columnState.columnOrder,
+      columnVisibility: columnState.columnVisibility,
+    },
+  });
+
+  const hasCsvSources = csvSources.length > 0;
+  const hasFilters = tableState.filters.length > 0;
+
+  const selectionContent =
+    selectedIds.length > 0 ? (
+      <div className="flex items-center gap-x-2 rounded-md bg-primary p-1 px-2 text-xs text-white">
+        <span>{t("workspace.unify.feedback_records_count_selected", { count: selectedIds.length })}</span>
+        <span aria-hidden="true">|</span>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-6 border-none px-2"
+          onClick={() => setRowSelection({})}>
+          {t("common.clear_selection")}
+        </Button>
+        <span aria-hidden="true">|</span>
+        <Button
+          variant="secondary"
+          size="sm"
+          className="h-6 gap-1 px-2"
+          onClick={() => setIsBulkDeleteDialogOpen(true)}>
+          {t("common.delete")}
+          <Trash2Icon />
+        </Button>
+      </div>
+    ) : undefined;
+
+  const actions = (
+    <div className="flex items-center gap-2">
+      {canWrite && hasCsvSources && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="sm" variant="secondary">
+              <PlusIcon className="size-4" />
+              {t("workspace.unify.import_feedback")}
+              <ChevronDownIcon className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {csvSources.map((source) => (
+              <DropdownMenuItem key={source.id} onClick={() => setCsvImportSource(source)}>
+                {t("workspace.unify.import_via_source_name", { sourceName: source.name })}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+      <Button size="sm" asChild>
+        <Link href={`/workspaces/${workspaceId}/unify/sources`}>
+          {t("workspace.unify.manage_feedback_sources")}
+        </Link>
+      </Button>
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={handleRefresh}
+        disabled={isRefreshing}
+        aria-label={t("workspace.unify.refresh_feedback_records")}>
+        <RefreshCwIcon className="size-3.5" aria-hidden="true" />
+      </Button>
+    </div>
+  );
 
   return (
     <>
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <FeedbackRecordsTableToolbarLeft
-            selectedCount={selectedCount}
-            recordsCount={records.length}
-            isEmpty={isEmpty}
-            onClearSelection={clearSelection}
-            onBulkDelete={() => setIsBulkDeleteDialogOpen(true)}
+        <TableToolbar
+          settings={{
+            sort: {
+              options: getRecordSortOptions(t),
+              value: tableState.sortBy,
+              onChange: tableState.setSortBy,
+            },
+            columns: {
+              items: buildColumnSettings(
+                columnLabels,
+                columnState.columnOrder,
+                columnState.columnVisibility,
+                ["fieldLabel"]
+              ),
+              onVisibilityChange: (id, visible) =>
+                columnState.setColumnVisibility((current) => ({ ...current, [id]: visible })),
+              onMove: columnState.moveColumn,
+            },
+          }}
+          filter={{
+            properties: filterProperties,
+            filters: tableState.filters,
+            onFiltersChange: (next) => {
+              setRowSelection({});
+              tableState.setFilters(next);
+            },
+          }}
+          matchCount={{ count: matchCount }}
+          actions={actions}
+          selectionContent={selectionContent}
+          isLoading={isLoading}
+        />
+
+        {isError && records.length === 0 ? (
+          <div className="flex h-48 flex-col items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 text-center">
+            <p className="text-sm text-slate-500">
+              {getV3ApiErrorMessage(error, t("workspace.unify.failed_to_load_feedback_records"))}
+            </p>
+            <Button variant="secondary" size="sm" onClick={() => void refetch()}>
+              {t("common.retry")}
+            </Button>
+          </div>
+        ) : (
+          <ListTable
+            table={table}
+            testId="feedback-records-table"
+            isLoading={isLoading}
+            hasFilters={hasFilters}
+            onClearFilters={tableState.clearFilters}
+            onRowClick={(row) => openViewDrawer(row.original.id)}
+            emptyContent={
+              <div className="flex h-32 items-center justify-center px-4 text-center">
+                <p className="text-sm text-slate-500">{t("workspace.unify.no_feedback_records")}</p>
+              </div>
+            }
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onLoadMore={() => void fetchNextPage()}
           />
-          <div className="flex items-center gap-2">
-            {canWrite && hasCsvSources && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="secondary">
-                    <PlusIcon className="size-4" />
-                    {t("workspace.unify.import_feedback")}
-                    <ChevronDownIcon className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {csvSources.map((source) => (
-                    <DropdownMenuItem
-                      key={source.id}
-                      onClick={() => {
-                        setCsvImportSource(source);
-                      }}>
-                      {t("workspace.unify.import_via_source_name", { sourceName: source.name })}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-            <Button size="sm" asChild>
-              <Link href={`/workspaces/${workspaceId}/unify/sources`}>
-                {t("workspace.unify.manage_feedback_sources")}
-              </Link>
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isRefreshing || isLoadingMore}
-              aria-label={t("workspace.unify.refresh_feedback_records")}>
-              <RefreshCwIcon className="size-3.5" aria-hidden="true" />
-            </Button>
-          </div>
-        </div>
-
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xs">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[1040px] table-fixed">
-              <colgroup>
-                {canDeleteRecords && <col className="w-10" />}
-                <col className="w-40" />
-                <col className="w-40" />
-                <col className="w-40" />
-                <col className="w-52" />
-                <col className="w-28" />
-                <col />
-                <col className="w-44" />
-              </colgroup>
-              <thead>
-                <tr className="border-b border-slate-200 text-left text-sm text-slate-900 [&>th]:font-semibold">
-                  {canDeleteRecords && (
-                    <th className="w-10 px-4 py-3">
-                      <Checkbox
-                        aria-label={t("common.select_all")}
-                        checked={headerCheckboxChecked}
-                        onCheckedChange={(checked) => toggleAllOnPage(checked === true)}
-                      />
-                    </th>
-                  )}
-                  <th className="px-4 py-3 whitespace-nowrap">{t("workspace.unify.collected_at")}</th>
-                  <th className="px-4 py-3 whitespace-nowrap">{t("workspace.unify.source_type")}</th>
-                  <th className="px-4 py-3 whitespace-nowrap">{t("workspace.unify.source_name")}</th>
-                  <th className="px-4 py-3 whitespace-nowrap">{t("workspace.unify.field_label")}</th>
-                  <th className="px-4 py-3 whitespace-nowrap">{t("workspace.unify.field_type")}</th>
-                  <th className="px-4 py-3 whitespace-nowrap">{t("workspace.unify.value")}</th>
-                  <th className="px-4 py-3 whitespace-nowrap">{t("workspace.unify.user_identifier")}</th>
-                </tr>
-              </thead>
-              {isEmpty ? (
-                <tbody>
-                  <tr>
-                    <td colSpan={canDeleteRecords ? 8 : 7}>
-                      <div className="flex h-32 items-center justify-center">
-                        <p className="text-sm text-slate-500">{t("workspace.unify.no_feedback_records")}</p>
-                      </div>
-                    </td>
-                  </tr>
-                </tbody>
-              ) : (
-                <tbody className="divide-y divide-slate-100">
-                  {records.map((record) => (
-                    <FeedbackRecordRow
-                      key={record.id}
-                      record={record}
-                      workspaceId={workspaceId}
-                      contactId={record.user_id ? contactIdByUserId[record.user_id] : undefined}
-                      locale={i18n.resolvedLanguage ?? i18n.language ?? "en-US"}
-                      t={t}
-                      isSelectable={canDeleteRecords}
-                      isSelected={selectedIds.has(record.id)}
-                      onSelectChange={(checked) => toggleOne(record.id, checked)}
-                      onClick={() => openViewDrawer(record.id)}
-                    />
-                  ))}
-                </tbody>
-              )}
-            </table>
-          </div>
-        </div>
-
-        {hasMore && (
-          <div className="flex justify-center">
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleLoadMore}
-              disabled={isLoadingMore || isRefreshing}
-              loading={isLoadingMore}>
-              {t("common.load_more")}
-            </Button>
-          </div>
         )}
       </div>
 
@@ -493,7 +579,7 @@ export const FeedbackRecordsTable = ({
         open={isBulkDeleteDialogOpen}
         setOpen={setIsBulkDeleteDialogOpen}
         deleteWhat={t("workspace.unify.feedback_records")}
-        text={t("workspace.unify.delete_feedback_records_confirmation", { count: selectedCount })}
+        text={t("workspace.unify.delete_feedback_records_confirmation", { count: selectedIds.length })}
         onDelete={handleBulkDelete}
         isDeleting={isDeleting}
       />
@@ -502,9 +588,7 @@ export const FeedbackRecordsTable = ({
         <CsvImportModal
           open={csvImportSource !== null}
           onOpenChange={(open) => {
-            if (!open) {
-              setCsvImportSource(null);
-            }
+            if (!open) setCsvImportSource(null);
           }}
           feedbackSourceId={csvImportSource.id}
           workspaceId={workspaceId}
@@ -513,116 +597,5 @@ export const FeedbackRecordsTable = ({
         />
       )}
     </>
-  );
-};
-
-const FeedbackRecordRow = ({
-  record,
-  workspaceId,
-  contactId,
-  locale,
-  t,
-  isSelectable,
-  isSelected,
-  onSelectChange,
-  onClick,
-}: Readonly<FeedbackRecordRowProps>) => {
-  const { text, isTranslated, original, langKey } = resolveFeedbackDisplayText(record);
-  const value = formatValue(record, text, t, locale);
-  const isLongValue = value.length > 60;
-  const collectedAt = formatDateTimeForDisplay(new Date(record.collected_at), locale);
-  const isFormbricksSurveySource =
-    (record.source_type === "formbricks" || record.source_type === "formbricks_survey") && !!record.source_id;
-  const surveySummaryHref = `/workspaces/${workspaceId}/surveys/${record.source_id}/summary`;
-
-  return (
-    <tr
-      className={`cursor-pointer text-sm text-slate-700 transition-colors focus-within:bg-slate-50 hover:bg-slate-50 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-400 ${isSelected ? "bg-slate-50" : ""}`}
-      tabIndex={0}
-      aria-label={record.field_label ?? record.field_id}
-      aria-selected={isSelected}
-      onClick={onClick}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onClick();
-        }
-      }}>
-      {isSelectable && (
-        <td
-          className="w-10 px-4 py-3"
-          onClick={(event) => event.stopPropagation()}
-          onKeyDown={(event) => event.stopPropagation()}>
-          <Checkbox
-            aria-label={record.field_label ?? record.field_id}
-            checked={isSelected}
-            onCheckedChange={(checked) => onSelectChange(checked === true)}
-          />
-        </td>
-      )}
-      <td className="px-4 py-3 text-slate-500" title={collectedAt}>
-        <span className="block min-w-0 truncate">{collectedAt}</span>
-      </td>
-      <td className="px-4 py-3" title={formatSourceType(record.source_type, t)}>
-        <Badge
-          text={formatSourceType(record.source_type, t)}
-          type="gray"
-          size="tiny"
-          className="inline-block max-w-40 truncate align-middle"
-        />
-      </td>
-      <td className="px-4 py-3" title={record.source_name ?? undefined}>
-        {isFormbricksSurveySource ? (
-          <Link
-            href={surveySummaryHref}
-            className="block min-w-0 truncate text-slate-700 underline underline-offset-2 hover:text-slate-900"
-            onClick={(event) => event.stopPropagation()}>
-            {record.source_name ?? "—"}
-          </Link>
-        ) : (
-          <span className="block min-w-0 truncate">{record.source_name ?? "—"}</span>
-        )}
-      </td>
-      <td className="px-4 py-3" title={record.field_label ?? undefined}>
-        <span className="block min-w-0 truncate">{record.field_label ?? record.field_id}</span>
-      </td>
-      <td className="px-4 py-3 whitespace-nowrap">
-        <span className="inline-flex items-center gap-1 text-slate-600">
-          <FieldTypeIcon fieldType={record.field_type} className="size-3.5" />
-          {formatFieldType(record.field_type)}
-        </span>
-      </td>
-      <td className="px-4 py-3" title={value}>
-        <div className="flex min-w-0 items-center gap-1.5">
-          {isLongValue ? (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="block min-w-0 cursor-default truncate">{value}</span>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-sm whitespace-pre-wrap">
-                  {value}
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : (
-            <span className="block min-w-0 truncate">{value}</span>
-          )}
-          {isTranslated && <TranslatedBadge langKey={langKey} original={original} locale={locale} />}
-        </div>
-      </td>
-      <td className="px-4 py-3 text-slate-500" title={record.user_id}>
-        {record.user_id && contactId ? (
-          <Link
-            href={`/workspaces/${workspaceId}/contacts/${contactId}`}
-            className="block min-w-0 truncate text-slate-700 underline underline-offset-2 hover:text-slate-900"
-            onClick={(event) => event.stopPropagation()}>
-            {record.user_id}
-          </Link>
-        ) : (
-          <span className="block min-w-0 truncate">{record.user_id ?? "—"}</span>
-        )}
-      </td>
-    </tr>
   );
 };

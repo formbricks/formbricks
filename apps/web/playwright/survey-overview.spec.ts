@@ -1,6 +1,7 @@
 import { expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
+import { clearAllFilters, setTableSort, tableRow, toggleQuickFilter } from "./utils/table-toolbar";
 
 const getUserIdForEmail = async (email: string) => {
   const user = await prisma.user.findUnique({
@@ -145,19 +146,15 @@ test.describe("Survey overview", () => {
     await page.reload();
     await expect(page.getByText(mixedSurveyName, { exact: true })).toBeVisible({ timeout: 10000 });
 
-    const listHeader = page.getByTestId("survey-list-header");
+    const listHeader = page.getByTestId("survey-list-table").locator("thead");
     await expect(listHeader.getByText("Completed", { exact: true })).toBeVisible();
     await expect(listHeader.getByText("Responses", { exact: true })).toHaveCount(0);
 
-    const mixedRow = page.locator("div.relative.block", {
-      has: page.getByText(mixedSurveyName, { exact: true }),
-    });
+    const mixedRow = tableRow(page, "survey-list-table", mixedSurveyName);
     await expect(mixedRow.getByText("5", { exact: true })).toBeVisible();
     await expect(mixedRow.getByText("11", { exact: true })).toHaveCount(0);
 
-    const partialsRow = page.locator("div.relative.block", {
-      has: page.getByText(partialsSurveyName, { exact: true }),
-    });
+    const partialsRow = tableRow(page, "survey-list-table", partialsSurveyName);
     await expect(partialsRow.getByText("0", { exact: true })).toBeVisible();
 
     // Regression guard: the caution dialog is driven by the total, so it must still appear for a
@@ -223,40 +220,48 @@ test.describe("Survey overview", () => {
     }
 
     await page.reload();
-    await expect(page.locator(".surveyFilterDropdown").filter({ hasText: "Created by" })).toHaveCount(0);
     await expect(page.getByText(targetSurveyName, { exact: true })).toBeVisible({ timeout: 10000 });
     await expect(page.getByText(pausedSurveyName, { exact: true })).toBeVisible();
     await expect(page.getByText(appSurveyName, { exact: true })).toBeVisible();
     await expect(page.getByRole("button", { name: "Load more" })).toBeVisible();
+    await expect(page.getByTestId("table-match-count")).toHaveText("14 results");
 
-    await page.getByPlaceholder("Search by survey name").fill(targetSurveyName);
-    await expect(page.getByText(targetSurveyName, { exact: true })).toBeVisible();
-    await expect(page.getByText(pausedSurveyName, { exact: true })).toHaveCount(0);
-    await expect(page.getByText(appSurveyName, { exact: true })).toHaveCount(0);
+    await test.step("search narrows the list and survives a reload", async () => {
+      await page.getByPlaceholder("Search by survey name").fill(targetSurveyName);
+      await expect(page.getByText(pausedSurveyName, { exact: true })).toHaveCount(0);
+      await expect(page.getByText(targetSurveyName, { exact: true })).toBeVisible();
+      await expect(page).toHaveURL(/search=/);
+      await page.reload();
+      await expect(page.getByPlaceholder("Search by survey name")).toHaveValue(targetSurveyName);
+      await expect(page.getByText(appSurveyName, { exact: true })).toHaveCount(0);
+      await page.getByRole("button", { name: "Clear search" }).click();
+      await expect(page.getByText(pausedSurveyName, { exact: true })).toBeVisible();
+    });
 
-    await page.getByRole("button", { name: "Clear filters" }).click();
-    await expect(page.getByText(pausedSurveyName, { exact: true })).toBeVisible();
+    await test.step("quick filters show as chips, narrow the list and survive a reload", async () => {
+      await toggleQuickFilter(page, "Status", "Draft");
+      await expect(page.getByTestId("table-filter-chips")).toContainText("Status:");
+      await expect(page.getByText(targetSurveyName, { exact: true })).toBeVisible();
+      await expect(page.getByText(pausedSurveyName, { exact: true })).toHaveCount(0);
 
-    await page.locator(".surveyFilterDropdown").filter({ hasText: "Status" }).click();
-    await page.getByRole("menuitem", { name: "Draft" }).click();
-    await page.keyboard.press("Escape");
-    await expect(page.getByText(targetSurveyName, { exact: true })).toBeVisible();
-    await expect(page.getByText(pausedSurveyName, { exact: true })).toHaveCount(0);
+      await toggleQuickFilter(page, "Type", "Link");
+      await expect(page.getByText(appSurveyName, { exact: true })).toHaveCount(0);
+      await expect(page).toHaveURL(/filter%5Bstatus%5D%5Bin%5D=draft/);
 
-    await page.locator(".surveyFilterDropdown").filter({ hasText: "Type" }).click();
-    await page.getByRole("menuitem", { name: "Link" }).click();
-    await page.keyboard.press("Escape");
-    await expect(page.getByText(appSurveyName, { exact: true })).toHaveCount(0);
+      await page.reload();
+      await expect(page.getByTestId("table-filter-chips")).toContainText("Type:");
+      await expect(page.getByText(appSurveyName, { exact: true })).toHaveCount(0);
+      await expect(page.getByText(pausedSurveyName, { exact: true })).toHaveCount(0);
+    });
 
-    await page.locator(".surveyFilterDropdown").filter({ hasText: "Sort by" }).click();
-    await page.getByRole("menuitem", { name: "Created at" }).click();
-    await expect(
-      page.locator(".surveyFilterDropdown").filter({ hasText: "Sort by: Created at" })
-    ).toBeVisible();
+    await test.step("sort comes from the gear and Clear all brings everything back", async () => {
+      await setTableSort(page, "Created at");
+      await expect(page).toHaveURL(/sortBy=createdAt/);
 
-    await page.getByRole("button", { name: "Clear filters" }).click();
-    await expect(page.getByText(appSurveyName, { exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Load more" })).toBeVisible();
+      await clearAllFilters(page);
+      await expect(page.getByText(appSurveyName, { exact: true })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Load more" })).toBeVisible();
+    });
 
     await page.getByRole("button", { name: "Load more" }).click();
     await expect(page.getByText(paginatedSurveyName, { exact: true })).toBeVisible();
@@ -513,16 +518,12 @@ test.describe("Survey overview", () => {
     });
 
     await page.reload();
-    const linkRow = page.locator("div.relative.block", {
-      has: page.getByText(linkSurveyName, { exact: true }),
-    });
+    const linkRow = tableRow(page, "survey-list-table", linkSurveyName);
     await linkRow.locator("[data-testid='survey-dropdown-trigger']").click();
     await expect(page.getByRole("button", { name: "Preview", exact: true })).toBeVisible();
     await expect(page.getByTestId("copy-link")).toBeVisible();
 
-    const appRow = page.locator("div.relative.block", {
-      has: page.getByText(appSurveyName, { exact: true }),
-    });
+    const appRow = tableRow(page, "survey-list-table", appSurveyName);
     await expect(appRow.locator("[data-testid='survey-dropdown-trigger']")).toHaveCount(0);
   });
 });

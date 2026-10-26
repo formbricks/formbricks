@@ -46,11 +46,14 @@ export const useSurveys = ({
   const surveys = flattenSurveyPages(query.data).filter((survey) => !pendingRemovals.includes(survey.id));
   // Read from page one: cursor pages are requested with includeTotalCount=false and carry null.
   const workspaceSurveyCount = query.data?.pages[0]?.meta.workspaceSurveyCount ?? null;
+  // Surveys matching the current filters — the toolbar's match count.
+  const totalCount = query.data?.pages[0]?.meta.totalCount ?? null;
 
   return {
     ...query,
     queryKey,
     surveys,
     workspaceSurveyCount,
+    totalCount,
   };
 };

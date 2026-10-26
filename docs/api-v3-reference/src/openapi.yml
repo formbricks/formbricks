@@ -55,7 +55,8 @@ info:
     `workspaceId` is the canonical container identifier for this API. It is a
     **required query parameter on collection read endpoints** (`GET
     /api/v3/surveys`, `GET /api/v3/action-classes`, `GET
-    /api/v3/contact-attribute-keys`) because those operate within a workspace.
+    /api/v3/contact-attribute-keys`, `GET /api/v3/contacts`, `GET
+    /api/v3/segments`) because those operate within a workspace.
     **`POST /api/v3/surveys` instead requires `workspaceId` in the request
     body**, not as a query parameter. Single-resource endpoints
     (`GET`/`PATCH`/`DELETE /api/v3/surveys/{surveyId}`) locate the resource by
@@ -77,13 +78,14 @@ info:
 
     Cursor-based pagination with **limit** + opaque **cursor** token. Responses
     return `meta.nextCursor`; pass that value back as `cursor` to fetch the next
-    page. Survey list responses also include `meta.totalCount`, the total number
-    of surveys matching the current filters across all pages. Workflow list
-    responses do not require total counts in Scope 1. There is no `offset` in
-    this contract.
+    page. Survey, contact and segment list responses also include
+    `meta.totalCount`, the total number of items matching the current filters
+    across all pages (`null` when `includeTotalCount=false`). The
+    contact-attribute-key and workflow lists report it only when asked with
+    `includeTotalCount=true`. There is no `offset` in this contract.
 
-    The page-size **maximum is 250** for responses, surveys, action classes and contact attribute
-    keys; only the *default* varies by resource (20 for surveys, 50 for the workspace reference
+    The page-size **maximum is 250** for responses, surveys, action classes, contact attribute
+    keys, contacts and segments; only the *default* varies by resource (20 for surveys, 50 for the workspace reference
     lists). **The workflows and workflow-run lists remain at 100** — their bound lives in the
     `packages/workflows` contracts and moves with that package, so each documents the value it
     actually enforces. A `limit` above an endpoint's maximum is rejected with **400** rather than
@@ -374,6 +376,12 @@ paths:
     $ref: paths/api_v3_action-classes.yml
   /api/v3/contact-attribute-keys:
     $ref: paths/api_v3_contact-attribute-keys.yml
+  /api/v3/contacts:
+    $ref: paths/api_v3_contacts.yml
+  /api/v3/contacts/attribute-values:
+    $ref: paths/api_v3_contacts_attribute-values.yml
+  /api/v3/segments:
+    $ref: paths/api_v3_segments.yml
   /api/v3/tags:
     $ref: paths/api_v3_tags.yml
   /api/v3/tags/{tagId}:
