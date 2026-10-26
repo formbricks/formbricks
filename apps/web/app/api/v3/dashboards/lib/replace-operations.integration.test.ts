@@ -229,3 +229,64 @@ describe("update_dashboard_layout (MCP rearrange)", () => {
     ]);
   });
 });
+
+describe("a dashboard that grew past the widget cap before it existed", () => {
+  test("saves whole, moving every widget in one write, and can shrink", async () => {
+    const count = 300;
+    const chartIds = await prisma.chart.createManyAndReturn({
+      data: Array.from({ length: count }, (_, index) => ({
+        name: `Pre-cap ${index}`,
+        type: "big_number" as const,
+        workspaceId: fixture.workspaceId,
+        feedbackDirectoryId: fixture.datasetId,
+        query: { measures: ["FeedbackRecords.count"] },
+        config: {},
+      })),
+      select: { id: true },
+    });
+    const board = await prisma.dashboard.create({
+      data: {
+        name: "Pre-cap board",
+        workspaceId: fixture.workspaceId,
+        widgets: {
+          create: chartIds.map(({ id }, index) => ({
+            chartId: id,
+            layout: { x: (index % 4) * 3, y: Math.floor(index / 4) * 2, w: 3, h: 2 },
+            order: index,
+          })),
+        },
+      },
+      include: { widgets: { orderBy: { order: "asc" }, select: { id: true } } },
+    });
+
+    // Reverse the order and move every widget one row down, keeping all but the last.
+    const kept = board.widgets.slice(0, count - 1);
+    const response = await replaceV3Dashboard({
+      dashboardId: board.id,
+      body: {
+        name: "Pre-cap board, saved",
+        expectedUpdatedAt: board.updatedAt.toISOString(),
+        widgets: kept.map(({ id }, index) => ({
+          widgetId: id,
+          layout: { x: (index % 4) * 3, y: Math.floor(index / 4) * 2 + 1, w: 3, h: 2 },
+          order: count - index,
+        })),
+      },
+      auditLog: {} as never,
+      ...context(),
+    });
+
+    expect(response.status).toBe(200);
+    const stored = await prisma.dashboardWidget.findMany({
+      where: { dashboardId: board.id },
+      select: { id: true, layout: true, order: true },
+    });
+    expect(stored).toHaveLength(count - 1);
+    const byId = new Map(stored.map((widget) => [widget.id, widget]));
+    expect(byId.get(kept[0].id)).toMatchObject({ order: count, layout: { x: 0, y: 1, w: 3, h: 2 } });
+    expect(byId.get(kept[count - 2].id)).toMatchObject({ order: 2 });
+
+    await prisma.dashboard.delete({ where: { id: board.id } });
+    await prisma.chart.deleteMany({ where: { id: { in: chartIds.map(({ id }) => id) } } });
+  });
+});

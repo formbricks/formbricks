@@ -40,6 +40,7 @@ const makeTx = ({
   touched = 1,
 }: { locked?: Date | null; siblings?: TSibling[]; touched?: number } = {}) => ({
   $queryRaw: vi.fn(async () => (locked ? [{ updatedAt: locked }] : [])),
+  $executeRaw: vi.fn(async () => 1),
   dashboardWidget: {
     findMany: vi.fn(async () => siblings),
     findFirst: vi.fn(),
@@ -76,6 +77,21 @@ const expectNothingWritten = (tx: TTx) => {
   expect(tx.dashboardWidget.create).not.toHaveBeenCalled();
   expect(tx.dashboardWidget.update).not.toHaveBeenCalled();
   expect(tx.dashboardWidget.deleteMany).not.toHaveBeenCalled();
+  expect(tx.$executeRaw).not.toHaveBeenCalled();
+};
+
+/** The widget places a save wrote in its one UPDATE: the ids, layouts and orders it was given, in order. */
+const placesWritten = (tx: TTx) => {
+  expect(tx.$executeRaw).toHaveBeenCalledTimes(1);
+  const [strings, ids, layouts, orders, dashboardId] = tx.$executeRaw.mock.calls[0] as unknown as [
+    TemplateStringsArray,
+    string[],
+    string[],
+    (number | null)[],
+    string,
+  ];
+  expect(strings.join("?")).toContain('w."dashboardId" = ?');
+  return { ids, layouts: layouts.map((layout) => JSON.parse(layout) as unknown), orders, dashboardId };
 };
 
 beforeEach(() => {
@@ -494,10 +510,11 @@ describe("replaceDashboardRow", () => {
     expect(tx.dashboardWidget.deleteMany).toHaveBeenCalledWith({
       where: { dashboardId: DASHBOARD_ID, id: { in: [widgetB.id] } },
     });
-    expect(tx.dashboardWidget.update).toHaveBeenCalledTimes(1);
-    expect(tx.dashboardWidget.update).toHaveBeenCalledWith({
-      where: { id: widgetA.id },
-      data: { layout: moved, order: 5 },
+    expect(placesWritten(tx)).toEqual({
+      ids: [widgetA.id],
+      layouts: [moved],
+      orders: [5],
+      dashboardId: DASHBOARD_ID,
     });
     expect(tx.dashboard.update).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -520,10 +537,13 @@ describe("replaceDashboardRow", () => {
     });
 
     expect(tx.dashboardWidget.deleteMany).not.toHaveBeenCalled();
-    expect(tx.dashboardWidget.update.mock.calls.map(([args]) => args)).toEqual([
-      { where: { id: widgetA.id }, data: { layout: widgetA.layout } },
-      { where: { id: widgetB.id }, data: { layout: widgetB.layout } },
-    ]);
+    // A null order keeps the stored one (COALESCE in the statement).
+    expect(placesWritten(tx)).toEqual({
+      ids: [widgetA.id, widgetB.id],
+      layouts: [widgetA.layout, widgetB.layout],
+      orders: [null, null],
+      dashboardId: DASHBOARD_ID,
+    });
     const [[dashboardUpdate]] = tx.dashboard.update.mock.calls as unknown as [[{ data: object }]];
     expect(dashboardUpdate.data).not.toHaveProperty("name");
     expect(dashboardUpdate.data).toHaveProperty("updatedAt");

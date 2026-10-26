@@ -208,6 +208,35 @@ export type TDashboardReplaceResult =
   | { kind: "overlap"; widgetIds: [string, string] };
 
 /**
+ * A whole-dashboard write may carry up to `MAX_WIDGETS_PER_WRITE` widgets and reads the dashboard back with
+ * every chart, so it gets more than Prisma's default five seconds.
+ */
+const REPLACE_TRANSACTION_OPTIONS = { timeout: 15_000 };
+
+/**
+ * Every sent widget's layout, and its order where one is given, in one statement: a save of a large
+ * dashboard is one round trip, not one per widget, while it holds the dashboard's lock. Only this
+ * dashboard's widgets can match.
+ */
+const writeWidgetPlaces = async (
+  tx: Prisma.TransactionClient,
+  dashboardId: string,
+  widgets: { widgetId: string; layout: TWidgetLayout; order?: number }[]
+): Promise<void> => {
+  if (widgets.length === 0) return;
+  await tx.$executeRaw`
+    UPDATE "DashboardWidget" AS w
+    SET "layout" = v."layout"::jsonb, "order" = COALESCE(v."order", w."order"), "updated_at" = NOW()
+    FROM unnest(
+      ${widgets.map((widget) => widget.widgetId)}::text[],
+      ${widgets.map((widget) => JSON.stringify(widget.layout))}::text[],
+      ${widgets.map((widget) => widget.order ?? null)}::int[]
+    ) AS v("id", "layout", "order")
+    WHERE w."id" = v."id" AND w."dashboardId" = ${dashboardId}
+  `;
+};
+
+/**
  * Replace a dashboard's name and its widgets' places in one transaction, provided it is still the
  * version the caller read (`expectedUpdatedAt`). Every check runs against the transaction's own read,
  * before anything is written, so a refused write changes nothing.
@@ -264,12 +293,7 @@ export const replaceDashboardRow = ({
       if (omitted.length > 0) {
         await tx.dashboardWidget.deleteMany({ where: { dashboardId, id: { in: omitted } } });
       }
-      for (const widget of widgets) {
-        await tx.dashboardWidget.update({
-          where: { id: widget.widgetId },
-          data: { layout: widget.layout, ...(widget.order === undefined ? {} : { order: widget.order }) },
-        });
-      }
+      await writeWidgetPlaces(tx, dashboardId, widgets);
       const row = await tx.dashboard.update({
         where: { id: dashboardId },
         data: { ...(name === undefined ? {} : { name }), updatedAt: nextDashboardUpdatedAt(locked) },
@@ -277,5 +301,5 @@ export const replaceDashboardRow = ({
       });
 
       return { kind: "ok", row, previous: { name: current.name, widgets: current.widgets } };
-    })
+    }, REPLACE_TRANSACTION_OPTIONS)
   );
