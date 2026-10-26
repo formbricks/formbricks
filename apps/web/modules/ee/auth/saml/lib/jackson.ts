@@ -68,14 +68,20 @@ const readIdpVerification = async (
   return thumbprint ? { thumbprint } : null;
 };
 
-/** How long after a failed read of the connection's certificates the next request tries again. */
-const IDP_VERIFICATION_RETRY_MS = 30_000;
+/**
+ * How long after a failed read of the connection's certificates the next request tries again. Short, because the
+ * worker does not time jackson's signature check until a read succeeds; one store read per interval is nothing next
+ * to the reads jackson makes on every request.
+ */
+const IDP_VERIFICATION_RETRY_MS = 5_000;
 
 /**
- * Reads the connection's certificates into `g.samlIdpVerification`. Only the worker's cost estimate depends on them:
- * jackson validates with the connection it reads per request. So a failed read is logged and leaves `null`, which
- * skips the worker's signature-check timing, rather than failing jackson's start and with it every SAML sign-in; a
- * request after `IDP_VERIFICATION_RETRY_MS` reads them again (see `init`).
+ * Reads the connection's certificates into `g.samlIdpVerification`. jackson validates with the connection it reads per
+ * request, so a failed read here costs no sign-in; it does turn off the worker's timing of jackson's signature check
+ * (ENG-4108) until a read succeeds, since there is nothing to time it with. That window is only opened by the store
+ * failing, which jackson needs too, not by a request. So a failed read is logged and leaves `null` rather than failing
+ * jackson's start and with it every SAML sign-in, and a request after `IDP_VERIFICATION_RETRY_MS` reads again (see
+ * `init`). A read that fails after an earlier one succeeded keeps the certificates it has.
  */
 const loadIdpVerification = async (connectionController: IConnectionAPIController): Promise<void> => {
   try {
@@ -86,8 +92,10 @@ const loadIdpVerification = async (connectionController: IConnectionAPIControlle
       { error: error instanceof Error ? toLogText(error.message, JACKSON_LOG_TEXT_LIMIT) : undefined },
       "Could not read the SAML connection's certificates; the parse worker will not time signature checks"
     );
-    g.samlIdpVerification = null;
-    g.samlIdpVerificationRetryAt = Date.now() + IDP_VERIFICATION_RETRY_MS;
+    if (g.samlIdpVerification == null) {
+      g.samlIdpVerification = null;
+      g.samlIdpVerificationRetryAt = Date.now() + IDP_VERIFICATION_RETRY_MS;
+    }
   }
 };
 

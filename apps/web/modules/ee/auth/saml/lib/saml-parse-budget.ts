@@ -60,8 +60,9 @@ const WORKER_STARTUP_TIMEOUT_MS = 5_000;
  * answers 503 rather than let many sources together keep the event loop busy with SAML. It is checked when a response
  * is queued and again when its parse finishes, so a burst can overdraw it by one response at most. A real sign-in
  * costs ~12 ms in the worker with 150 groups and ~77 ms at the largest the bounds admit, so this is about a dozen
- * sign-ins a second per process, or two of the largest. The debt is floored at one allowance (`spendAllowance`), so
- * however many queued jobs settle after it runs out, sign-ins are answered again within about a second.
+ * sign-ins a second per process, or two of the largest. The debt is floored at one response's largest charge
+ * (`spendAllowance`), so however many queued jobs settle after it runs out, sign-ins are answered again within about
+ * two seconds.
  */
 export const SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS = 300;
 
@@ -181,11 +182,14 @@ const refillAllowance = (now: number) => {
 
 /**
  * Spends `ms` of the allowance. Every job queued while it was positive still settles after it runs out, and each may
- * charge up to a whole budget, so unfloored debt would keep sign-ins at 503 long after a burst; at most one allowance
- * of debt means about a second.
+ * charge up to a whole budget, so unfloored debt would keep sign-ins at 503 long after a burst. The floor is one
+ * response's largest charge, so it never forgives part of the response that crossed zero, and recovery takes at most
+ * about two seconds.
  */
+const ALLOWANCE_DEBT_FLOOR_MS = -(SAML_PARSE_TIME_BUDGET_MS * JACKSON_COST_PER_WORKER_MS);
+
 const spendAllowance = (ms: number) => {
-  pool.allowanceMs = Math.max(-SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS, pool.allowanceMs - ms);
+  pool.allowanceMs = Math.max(ALLOWANCE_DEBT_FLOOR_MS, pool.allowanceMs - ms);
 };
 
 /**

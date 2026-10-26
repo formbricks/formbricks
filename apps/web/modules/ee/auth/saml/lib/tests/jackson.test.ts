@@ -150,6 +150,19 @@ describe("SAML Jackson Initialization", () => {
     );
   });
 
+  test("keeps the certificates it has when a later read fails", async () => {
+    vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
+    vi.spyOn(logger, "error").mockImplementation(() => undefined);
+    getConnections.mockResolvedValueOnce([{ idpMetadata: { publicKey: "cert-a" } }]);
+    expect((await init())?.idpVerification).toEqual({ publicKey: "cert-a" });
+
+    // A read that fails after one succeeded (a racing start or retry) does not throw the certificates away.
+    global.samlIdpVerificationRetryAt = 0;
+    getConnections.mockRejectedValueOnce(new Error("connection refused"));
+
+    expect((await init())?.idpVerification).toEqual({ publicKey: "cert-a" });
+  });
+
   test("reads the certificates again after a failed read, at most once per retry interval", async () => {
     vi.useFakeTimers();
     try {
@@ -159,13 +172,15 @@ describe("SAML Jackson Initialization", () => {
       expect((await init())?.idpVerification).toBeNull();
 
       // Within the interval, no request reads again, and jackson is not started again either.
-      vi.advanceTimersByTime(29_000);
+      vi.advanceTimersByTime(4_000);
       expect((await init())?.idpVerification).toBeNull();
       expect(getConnections).toHaveBeenCalledTimes(1);
 
+      // At the retry moment, of two concurrent requests only one reads.
       vi.advanceTimersByTime(1_000);
-      expect((await init())?.idpVerification).toEqual({ publicKey: "cert-a,cert-b" });
+      await Promise.all([init(), init()]);
       expect(getConnections).toHaveBeenCalledTimes(2);
+      expect((await init())?.idpVerification).toEqual({ publicKey: "cert-a,cert-b" });
       expect(controllers).toHaveBeenCalledTimes(1);
     } finally {
       vi.useRealTimers();

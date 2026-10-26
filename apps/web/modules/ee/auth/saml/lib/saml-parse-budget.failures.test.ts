@@ -272,14 +272,14 @@ describe("probeSamlResponseParse failure paths", () => {
     await expect(probeSamlResponseParse("PHIvPg==", KEY, null)).resolves.toEqual({ outcome: "busy" });
   });
 
-  test("floors the allowance debt, so sign-ins are answered again within about a second of a burst", async () => {
+  test("floors the allowance debt, so sign-ins are answered again within about two seconds of a burst", async () => {
     const { probeSamlResponseParse, chargeMainThreadParse, SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS } =
       await load();
     // Far more than the allowance, as queued jobs settling after it ran out can charge.
     for (let i = 0; i < 20; i++) chargeMainThreadParse(SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS);
     await expect(probeSamlResponseParse("PHIvPg==", KEY, null)).resolves.toEqual({ outcome: "busy" });
 
-    await vi.advanceTimersByTimeAsync(1_100);
+    await vi.advanceTimersByTimeAsync(1_800);
     const next = probeSamlResponseParse("PHIvPg==", KEY, null);
     await settle();
     state.workers[0].ready();
@@ -289,6 +289,28 @@ describe("probeSamlResponseParse failure paths", () => {
     mainPort(state.workers[0]).flush();
 
     await expect(next).resolves.toMatchObject({ outcome: "parsed" });
+  });
+
+  test("charges a response that crosses zero in full, never forgiving part of it to the floor", async () => {
+    const budget = await load();
+    const { probeSamlResponseParse, chargeMainThreadParse, SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS } = budget;
+    const { SAML_PARSE_TIME_BUDGET_MS, JACKSON_COST_PER_WORKER_MS } = budget;
+    // Leave a sliver of the allowance, then admit a response that parses just within the budget.
+    chargeMainThreadParse(SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS - 10);
+    const slow = probeSamlResponseParse("PHIvPg==", KEY, null);
+    await settle();
+    state.workers[0].ready();
+    mainPort(state.workers[0]).flush();
+    await settle();
+    const ms = SAML_PARSE_TIME_BUDGET_MS - 5;
+    state.workers[0].answer(ms);
+    mainPort(state.workers[0]).flush();
+    await expect(slow).resolves.toMatchObject({ outcome: "parsed" });
+
+    // Its whole charge is owed: refilling for less time than it takes to pay it off still answers busy.
+    const owed = ms * JACKSON_COST_PER_WORKER_MS - 10;
+    await vi.advanceTimersByTimeAsync(Math.floor(((owed - 20) * 1000) / SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS));
+    await expect(probeSamlResponseParse("PHIvPg==", KEY, null)).resolves.toEqual({ outcome: "busy" });
   });
 
   test("fails a decrypted refusal the worker never announced, rather than answer it", async () => {
