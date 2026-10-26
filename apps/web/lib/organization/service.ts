@@ -186,7 +186,7 @@ export const createOrganization = async (
       select,
     });
 
-    logger.audit(
+    logger.warn(
       { securityEvent: "organization.created", organizationId: organization.id },
       "Organization created"
     );

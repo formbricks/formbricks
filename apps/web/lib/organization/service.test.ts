@@ -53,7 +53,7 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@formbricks/logger", () => ({ logger: { audit: vi.fn(), error: vi.fn() } }));
+vi.mock("@formbricks/logger", () => ({ logger: { warn: vi.fn(), error: vi.fn() } }));
 
 vi.mock("@/lib/user/service", () => ({
   updateUser: vi.fn(),
@@ -251,7 +251,7 @@ describe("Organization Service", () => {
         },
         select: organizationSelect,
       });
-      expect(logger.audit).toHaveBeenCalledWith(
+      expect(logger.warn).toHaveBeenCalledWith(
         {
           securityEvent: "organization.created",
           organizationId: "org1",
@@ -270,7 +270,7 @@ describe("Organization Service", () => {
       vi.mocked(prisma.organization.create).mockRejectedValue(prismaError);
 
       await expect(createOrganization({ name: "Test Org" })).rejects.toThrow(DatabaseError);
-      expect(logger.audit).not.toHaveBeenCalled();
+      expect(logger.warn).not.toHaveBeenCalled();
     });
   });
 
