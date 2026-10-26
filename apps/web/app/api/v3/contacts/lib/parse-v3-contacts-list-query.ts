@@ -275,6 +275,50 @@ const parseNumber = (raw: string): number | null => {
   return Number.isFinite(value) ? value : null;
 };
 
+type TTypedValues<T> = { ok: true; values: T[] } | { ok: false; reason: string };
+
+const typeStringValues = (values: string[]): TTypedValues<string> => {
+  for (const value of values) {
+    const result = ZFilterText.safeParse(value);
+    if (!result.success) {
+      return {
+        ok: false,
+        reason: `Values must be 1–${String(MAX_FILTER_VALUE_LENGTH)} characters: ${result.error.issues[0]?.message ?? "invalid"}.`,
+      };
+    }
+  }
+  return { ok: true, values };
+};
+
+const typeNumberValues = (filter: TV3RawAttributeFilter): TTypedValues<number> => {
+  const numbers: number[] = [];
+  // A number cannot contain a comma, so `in` also accepts the comma-separated spelling here.
+  const raw = filter.operator === "in" ? filter.values.flatMap((value) => value.split(",")) : filter.values;
+  for (const value of raw) {
+    const parsed = parseNumber(value);
+    if (parsed === null) return { ok: false, reason: `"${value}" is not a finite number.` };
+    numbers.push(parsed);
+  }
+  if (numbers.length > V3_CONTACTS_MAX_IN_VALUES) {
+    return {
+      ok: false,
+      reason: `At most ${String(V3_CONTACTS_MAX_IN_VALUES)} values are allowed per filter.`,
+    };
+  }
+  return { ok: true, values: [...new Set(numbers)] };
+};
+
+const typeDateValues = (values: string[]): TTypedValues<Date> => {
+  const dates: Date[] = [];
+  for (const value of values) {
+    if (!ZFilterDate.safeParse(value.trim()).success) {
+      return { ok: false, reason: "Must be an ISO 8601 datetime with a UTC offset." };
+    }
+    dates.push(new Date(value.trim()));
+  }
+  return { ok: true, values: dates };
+};
+
 /** Types one filter's values, or returns the reason they do not fit the key's `dataType`. */
 const typeFilterValues = (
   filter: TV3RawAttributeFilter,
@@ -282,46 +326,9 @@ const typeFilterValues = (
 ): { ok: true; values: string[] | number[] | Date[] } | { ok: false; reason: string } => {
   // isSet / isNotSet ignore their value (the frontend sends `true`), so nothing is validated.
   if (isValueless(filter.operator)) return { ok: true, values: [] };
-
-  if (dataType === "string") {
-    for (const value of filter.values) {
-      const result = ZFilterText.safeParse(value);
-      if (!result.success) {
-        return {
-          ok: false,
-          reason: `Values must be 1–${String(MAX_FILTER_VALUE_LENGTH)} characters: ${result.error.issues[0]?.message ?? "invalid"}.`,
-        };
-      }
-    }
-    return { ok: true, values: filter.values };
-  }
-
-  if (dataType === "number") {
-    const numbers: number[] = [];
-    // A number cannot contain a comma, so `in` also accepts the comma-separated spelling here.
-    const raw = filter.operator === "in" ? filter.values.flatMap((value) => value.split(",")) : filter.values;
-    for (const value of raw) {
-      const parsed = parseNumber(value);
-      if (parsed === null) return { ok: false, reason: `"${value}" is not a finite number.` };
-      numbers.push(parsed);
-    }
-    if (numbers.length > V3_CONTACTS_MAX_IN_VALUES) {
-      return {
-        ok: false,
-        reason: `At most ${String(V3_CONTACTS_MAX_IN_VALUES)} values are allowed per filter.`,
-      };
-    }
-    return { ok: true, values: [...new Set(numbers)] };
-  }
-
-  const dates: Date[] = [];
-  for (const value of filter.values) {
-    if (!ZFilterDate.safeParse(value.trim()).success) {
-      return { ok: false, reason: "Must be an ISO 8601 datetime with a UTC offset." };
-    }
-    dates.push(new Date(value.trim()));
-  }
-  return { ok: true, values: dates };
+  if (dataType === "string") return typeStringValues(filter.values);
+  if (dataType === "number") return typeNumberValues(filter);
+  return typeDateValues(filter.values);
 };
 
 /**

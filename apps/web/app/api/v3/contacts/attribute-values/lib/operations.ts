@@ -17,6 +17,9 @@ type TListV3ContactAttributeValuesParams = {
   instance: string;
 };
 
+/** A LIKE pattern matching `value` anywhere, with its own wildcards escaped. */
+const toContainsPattern = (value: string): string => `%${escapeLikePattern(value)}%`;
+
 /**
  * The distinct-values query, bounded at the database.
  *
@@ -34,9 +37,7 @@ export const buildAttributeValuesQuery = ({
   search?: string;
   limit: number;
 }): Prisma.Sql => {
-  const searchCondition = search
-    ? Prisma.sql`AND "value" ILIKE ${`%${escapeLikePattern(search)}%`}`
-    : Prisma.empty;
+  const searchCondition = search ? Prisma.sql`AND "value" ILIKE ${toContainsPattern(search)}` : Prisma.empty;
 
   return Prisma.sql`
     SELECT DISTINCT "value"

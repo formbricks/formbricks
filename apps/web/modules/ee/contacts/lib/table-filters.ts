@@ -76,6 +76,55 @@ const tightenDate = (bounds: Map<string, string>, key: string, iso: string, keep
   if (current === undefined || (keep === "later" ? iso > current : iso < current)) bounds.set(key, iso);
 };
 
+const DATE_BOUND_OPERATORS = new Set(["preset", "between", "isBefore", "isAfter"]);
+
+/** Folds a date filter into the tightest `gte`/`lte` pair; false when the filter is not a date bound. */
+const addDateBounds = (
+  dateBounds: Map<string, string>,
+  filter: TTableFilter,
+  timeZone: string,
+  now: Date
+): boolean => {
+  const bounds = DATE_BOUND_OPERATORS.has(filter.operator)
+    ? resolveDateFilterBounds(filter, timeZone, now)
+    : null;
+  if (!bounds) return false;
+  if (bounds.from)
+    tightenDate(dateBounds, SINGLE_VALUE_KEY(filter.property, "gte"), bounds.from.toISOString(), "later");
+  if (bounds.to)
+    tightenDate(dateBounds, SINGLE_VALUE_KEY(filter.property, "lte"), bounds.to.toISOString(), "earlier");
+  return true;
+};
+
+/** Adds a non-date filter's parameter; false when it contradicts one already added. */
+const addValueEntry = (entries: Map<string, string[]>, filter: TTableFilter): boolean => {
+  const { property, operator, values } = filter;
+  const key = SINGLE_VALUE_KEY(property, operator);
+  const existing = entries.get(key);
+  if (operator === "in") {
+    const next = existing ? existing.filter((value) => values.includes(value)) : [...values];
+    if (next.length === 0) return false;
+    entries.set(key, next);
+    return true;
+  }
+  if (operator === "isSet" || operator === "isNotSet") {
+    entries.set(key, ["true"]);
+    return true;
+  }
+  if (operator === "equals" && existing && existing[0] !== values[0]) return false;
+  entries.set(key, [values[0]]);
+  return true;
+};
+
+const hasInvertedDateRange = (dateBounds: Map<string, string>): boolean => {
+  for (const property of new Set([...dateBounds.keys()].map((key) => key.split("][")[0]))) {
+    const from = dateBounds.get(`${property}][gte]`);
+    const to = dateBounds.get(`${property}][lte]`);
+    if (from && to && from > to) return true;
+  }
+  return false;
+};
+
 /**
  * The table's filters, search and sort as v3 contacts list parameters. The API takes one value per
  * single-value operator, so two rules that cannot both hold (`is a` and `is b`) answer null — nothing
@@ -94,45 +143,12 @@ export const toContactListParams = (
   const dateBounds = new Map<string, string>();
 
   for (const filter of filters) {
-    const { property, operator, values } = filter;
-    const isDateProperty = property === "createdAt";
-    const bounds =
-      operator === "preset" || operator === "between" || operator === "isBefore" || operator === "isAfter"
-        ? resolveDateFilterBounds(filter, timeZone, now)
-        : null;
-
-    if (bounds) {
-      if (bounds.from)
-        tightenDate(dateBounds, SINGLE_VALUE_KEY(property, "gte"), bounds.from.toISOString(), "later");
-      if (bounds.to)
-        tightenDate(dateBounds, SINGLE_VALUE_KEY(property, "lte"), bounds.to.toISOString(), "earlier");
-      continue;
-    }
-    if (isDateProperty) continue;
-
-    const key = SINGLE_VALUE_KEY(property, operator);
-    if (operator === "in") {
-      const existing = entries.get(key);
-      const next = existing ? existing.filter((value) => values.includes(value)) : [...values];
-      if (next.length === 0) return null;
-      entries.set(key, next);
-      continue;
-    }
-    if (operator === "isSet" || operator === "isNotSet") {
-      entries.set(key, ["true"]);
-      continue;
-    }
-    const existing = entries.get(key);
-    if (operator === "equals" && existing && existing[0] !== values[0]) return null;
-    entries.set(key, [values[0]]);
+    if (addDateBounds(dateBounds, filter, timeZone, now) || filter.property === "createdAt") continue;
+    if (!addValueEntry(entries, filter)) return null;
   }
 
   for (const [key, value] of dateBounds) entries.set(key, [value]);
-  for (const property of new Set([...dateBounds.keys()].map((key) => key.split("][")[0]))) {
-    const from = dateBounds.get(`${property}][gte]`);
-    const to = dateBounds.get(`${property}][lte]`);
-    if (from && to && from > to) return null;
-  }
+  if (hasInvertedDateRange(dateBounds)) return null;
 
   const params: [string, string][] = [];
   for (const [key, values] of entries) for (const value of values) params.push([key, value]);

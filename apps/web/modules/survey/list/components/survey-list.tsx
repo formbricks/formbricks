@@ -304,14 +304,15 @@ export const SurveysList = ({
       aiUnavailableReason={aiUnavailableReason}
     />
   );
+  const headerCta = isReadOnly ? <></> : createSurveyButton;
 
   if (showInitialLoading) {
     return (
       <PageContentWrapper>
         {/* The CTA depends on nothing the query fetches, so it stays live while the list loads —
             someone who came to create a survey should not wait for a list they did not ask for
-            (ENG-2579). Same expression as the loaded state below, so the header does not shift. */}
-        <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : createSurveyButton} />
+            (ENG-2579). Same CTA as the loaded state below, so the header does not shift. */}
+        <PageHeader pageTitle={t("common.surveys")} cta={headerCta} />
         <SurveyLoading />
       </PageContentWrapper>
     );
@@ -380,7 +381,7 @@ export const SurveysList = ({
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : createSurveyButton} />
+      <PageHeader pageTitle={t("common.surveys")} cta={headerCta} />
       <div className="space-y-6">
         {!isReadOnly && showFeaturedTemplates && (
           <FeaturedTemplates

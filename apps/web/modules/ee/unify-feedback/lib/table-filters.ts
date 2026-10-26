@@ -201,6 +201,15 @@ const pickBound = (current: string | undefined, next: string, keep: "max" | "min
   return next > current === pickLater ? next : current;
 };
 
+const tightenNumber = (
+  query: THubRecordQuery,
+  key: string,
+  value: number,
+  pick: (a: number, b: number) => number
+) => {
+  query[key] = String(query[key] === undefined ? value : pick(Number(query[key]), value));
+};
+
 const applyNumberBounds = (
   query: THubRecordQuery,
   filters: readonly TTableFilter[],
@@ -211,14 +220,8 @@ const applyNumberBounds = (
   for (const filter of filters.filter((f) => f.property === property)) {
     const value = Number(filter.values[0]);
     if (!Number.isFinite(value)) continue;
-    if (filter.operator === "greaterEqual") {
-      const current = query[minKey] === undefined ? undefined : Number(query[minKey]);
-      query[minKey] = String(current === undefined ? value : Math.max(current, value));
-    }
-    if (filter.operator === "lessEqual") {
-      const current = query[maxKey] === undefined ? undefined : Number(query[maxKey]);
-      query[maxKey] = String(current === undefined ? value : Math.min(current, value));
-    }
+    if (filter.operator === "greaterEqual") tightenNumber(query, minKey, value, Math.max);
+    if (filter.operator === "lessEqual") tightenNumber(query, maxKey, value, Math.min);
   }
 };
 
@@ -243,6 +246,51 @@ const applyDateBounds = (
 };
 
 /**
+ * Writes every list filter to the query; false when one of them excludes every value. "Formbricks
+ * surveys" is stored as `formbricks` by older connectors and `formbricks_survey` by newer ones; the
+ * filter offers it once and asks for both.
+ */
+const applyListFilters = (query: THubRecordQuery, filters: readonly TTableFilter[]): boolean => {
+  const sourceTypes = collectEquals(filters, "sourceType")?.flatMap((value) =>
+    value === "formbricks" ? ["formbricks", "formbricks_survey"] : [value]
+  );
+  const lists: [string, string[] | null][] = [
+    ["source_type", sourceTypes ?? null],
+    ["source_name", collectEquals(filters, "source")],
+    ["language", collectEquals(filters, "language")],
+    ["user_id", collectEquals(filters, "userId")],
+    ["emotions", collectEquals(filters, "emotion")],
+    ["field_type", resolveEnumFilter(filters, "fieldType", FIELD_TYPES)],
+    ["sentiment", resolveEnumFilter(filters, "sentiment", SENTIMENTS)],
+  ];
+  for (const [key, values] of lists) {
+    if (values === null) continue;
+    if (values.length === 0) return false;
+    query[key] = values;
+  }
+  return true;
+};
+
+const DATE_RANGE_KEYS = [
+  ["since", "until"],
+  ["created_since", "created_until"],
+  ["value_date_min", "value_date_max"],
+] as const;
+const NUMBER_RANGE_KEYS = [
+  ["value_number_min", "value_number_max"],
+  ["sentiment_score_min", "sentiment_score_max"],
+] as const;
+
+/** True when some lower bound sits above its upper bound, so no record can match. */
+const hasEmptyRange = (query: THubRecordQuery): boolean =>
+  DATE_RANGE_KEYS.some(
+    ([minKey, maxKey]) => query[minKey] && query[maxKey] && query[minKey] > query[maxKey]
+  ) ||
+  NUMBER_RANGE_KEYS.some(
+    ([minKey, maxKey]) => query[minKey] && query[maxKey] && Number(query[minKey]) > Number(query[maxKey])
+  );
+
+/**
  * The table's filters and sort as Hub list parameters (the v3 feedbackRecords list and count take the
  * Hub's query unchanged). Returns null when the filters exclude every value of some property, so the
  * table answers empty without asking the Hub.
@@ -254,53 +302,14 @@ export const toHubRecordQuery = (
   now: Date = new Date()
 ): THubRecordQuery | null => {
   const query: THubRecordQuery = {};
-
-  // "Formbricks surveys" is stored as `formbricks` by older connectors and `formbricks_survey` by newer
-  // ones; the filter offers it once and asks for both.
-  const sourceTypes = collectEquals(filters, "sourceType")?.flatMap((value) =>
-    value === "formbricks" ? ["formbricks", "formbricks_survey"] : [value]
-  );
-  const sources = collectEquals(filters, "source");
-  const languages = collectEquals(filters, "language");
-  const userIds = collectEquals(filters, "userId");
-  const emotions = collectEquals(filters, "emotion");
-  const fieldTypes = resolveEnumFilter(filters, "fieldType", FIELD_TYPES);
-  const sentiments = resolveEnumFilter(filters, "sentiment", SENTIMENTS);
-
-  const lists: [string, string[] | null][] = [
-    ["source_type", sourceTypes ?? null],
-    ["source_name", sources],
-    ["language", languages],
-    ["user_id", userIds],
-    ["emotions", emotions],
-    ["field_type", fieldTypes],
-    ["sentiment", sentiments],
-  ];
-  for (const [key, values] of lists) {
-    if (values === null) continue;
-    if (values.length === 0) return null;
-    query[key] = values;
-  }
+  if (!applyListFilters(query, filters)) return null;
 
   applyDateBounds(query, filters, "collectedAt", "since", "until", timeZone, now);
   applyDateBounds(query, filters, "importedAt", "created_since", "created_until", timeZone, now);
   applyDateBounds(query, filters, "valueDate", "value_date_min", "value_date_max", timeZone, now);
   applyNumberBounds(query, filters, "valueNumber", "value_number_min", "value_number_max");
   applyNumberBounds(query, filters, "sentimentScore", "sentiment_score_min", "sentiment_score_max");
-
-  for (const [minKey, maxKey] of [
-    ["since", "until"],
-    ["created_since", "created_until"],
-    ["value_date_min", "value_date_max"],
-  ]) {
-    if (query[minKey] && query[maxKey] && query[minKey] > query[maxKey]) return null;
-  }
-  for (const [minKey, maxKey] of [
-    ["value_number_min", "value_number_max"],
-    ["sentiment_score_min", "sentiment_score_max"],
-  ]) {
-    if (query[minKey] && query[maxKey] && Number(query[minKey]) > Number(query[maxKey])) return null;
-  }
+  if (hasEmptyRange(query)) return null;
 
   const sort = (RECORD_SORT_VALUES as readonly string[]).includes(sortBy) ? sortBy : DEFAULT_RECORD_SORT;
   query.sort = sort.endsWith("importedAt") ? "created_at" : "collected_at";

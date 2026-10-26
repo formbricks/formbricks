@@ -58,7 +58,7 @@ export const conditionGroupToRules = (
 
     const property = propertyById.get(condition.leftOperand.value);
     const operator = condition.operator as TRuleOperator;
-    if (!property || !property.ruleOperators?.includes(operator)) {
+    if (!property?.ruleOperators?.includes(operator)) {
       incomplete.push(condition.id);
       continue;
     }

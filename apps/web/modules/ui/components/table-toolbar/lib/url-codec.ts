@@ -83,6 +83,41 @@ const normalizeFilter = (property: TFilterProperty, filter: TTableFilter): TTabl
   return values.length > 0 ? { ...filter, values: [values[0]] } : null;
 };
 
+type TDateRange = { gte?: string; lte?: string };
+
+const isQuickDateBound = (property: TFilterProperty, operator: string): operator is keyof TDateRange =>
+  property.valueType === "date" && !!property.quick && (operator === "gte" || operator === "lte");
+
+/** The filters one `filter[<property>][<operator>]` key holds, or none when the property does not take it. */
+const parseKeyFilters = (property: TFilterProperty, operator: string, values: string[]): TTableFilter[] => {
+  if (!isOperator(operator) || operator === "between") return [];
+  if (!getAllowedOperators(property).includes(operator)) return [];
+
+  // Rules stack: "Status is not Draft" and "Status is not Paused" share a key, so every value but
+  // an `in` list's is its own rule. Without that, the second rule would vanish on the next read.
+  const valueGroups =
+    operator === "in" || !operatorTakesValue(operator) ? [values] : [...new Set(values)].map((v) => [v]);
+  return valueGroups
+    .map((group) => normalizeFilter(property, { property: property.id, operator, values: group }))
+    .filter((filter): filter is TTableFilter => filter !== null);
+};
+
+/** A quick date property's `gte`/`lte` pair as one `between` filter. */
+const parseDateRangeFilter = (
+  property: TFilterProperty | undefined,
+  range: TDateRange,
+  filters: readonly TTableFilter[]
+): TTableFilter | null => {
+  if (!property || !range.gte || !range.lte) return null;
+  // A preset already on the property wins: a property carries one date quick filter.
+  if (filters.some((filter) => filter.property === property.id && filter.operator === "preset")) return null;
+  return normalizeFilter(property, {
+    property: property.id,
+    operator: "between",
+    values: [range.gte, range.lte],
+  });
+};
+
 /**
  * Reads the active filters out of a URL. Anything a table does not publish — an unknown property, an
  * operator the property does not take, a value outside its list — is dropped rather than reported:
@@ -94,13 +129,9 @@ export const parseTableFilters = (
 ): TTableFilter[] => {
   const propertyById = new Map(properties.map((property) => [property.id, property]));
   const filters: TTableFilter[] = [];
-  const dateRanges = new Map<string, { gte?: string; lte?: string }>();
-  const seenKeys = new Set<string>();
+  const dateRanges = new Map<string, TDateRange>();
 
-  for (const key of searchParams.keys()) {
-    if (seenKeys.has(key)) continue;
-    seenKeys.add(key);
-
+  for (const key of new Set(searchParams.keys())) {
     const match = FILTER_KEY_PATTERN.exec(key);
     if (!match) continue;
     const [, propertyId, operator] = match;
@@ -108,36 +139,17 @@ export const parseTableFilters = (
     if (!property) continue;
     const values = searchParams.getAll(key);
 
-    if (property.valueType === "date" && property.quick && (operator === "gte" || operator === "lte")) {
+    if (isQuickDateBound(property, operator)) {
       const range = dateRanges.get(propertyId) ?? {};
       range[operator] = values[0];
       dateRanges.set(propertyId, range);
       continue;
     }
-
-    if (!isOperator(operator) || operator === "between") continue;
-    if (!getAllowedOperators(property).includes(operator)) continue;
-
-    // Rules stack: "Status is not Draft" and "Status is not Paused" share a key, so every value but
-    // an `in` list's is its own rule. Without that, the second rule would vanish on the next read.
-    const valueGroups =
-      operator === "in" || !operatorTakesValue(operator) ? [values] : [...new Set(values)].map((v) => [v]);
-    for (const group of valueGroups) {
-      const filter = normalizeFilter(property, { property: propertyId, operator, values: group });
-      if (filter) filters.push(filter);
-    }
+    filters.push(...parseKeyFilters(property, operator, values));
   }
 
   for (const [propertyId, range] of dateRanges) {
-    const property = propertyById.get(propertyId);
-    if (!property || !range.gte || !range.lte) continue;
-    // A preset already on the property wins: a property carries one date quick filter.
-    if (filters.some((filter) => filter.property === propertyId && filter.operator === "preset")) continue;
-    const filter = normalizeFilter(property, {
-      property: propertyId,
-      operator: "between",
-      values: [range.gte, range.lte],
-    });
+    const filter = parseDateRangeFilter(propertyById.get(propertyId), range, filters);
     if (filter) filters.push(filter);
   }
 

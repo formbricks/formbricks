@@ -68,6 +68,148 @@ type TSurveysTableProps = {
   onVisibilityNotEnabled: () => void;
 };
 
+type TSurveyColumnContext = Pick<
+  TSurveysTableProps,
+  | "workspaceName"
+  | "locale"
+  | "publicDomain"
+  | "isReadOnly"
+  | "deleteSurvey"
+  | "updateSurveyStatus"
+  | "archiveSurvey"
+  | "restoreSurvey"
+  | "renameSurvey"
+  | "surveyVisibilityGate"
+  | "listQueryKey"
+  | "onVisibilityNotEnabled"
+> & { t: TFunction; rowStates: Map<string, ReturnType<typeof getSurveyRowState>> };
+
+/** The table's columns, built outside the component so each cell renderer is not a nested component. */
+const getSurveyColumns = ({
+  t,
+  rowStates,
+  workspaceName,
+  locale,
+  publicDomain,
+  isReadOnly,
+  deleteSurvey,
+  updateSurveyStatus,
+  archiveSurvey,
+  restoreSurvey,
+  renameSurvey,
+  surveyVisibilityGate,
+  listQueryKey,
+  onVisibilityNotEnabled,
+}: TSurveyColumnContext): ColumnDef<TSurveyListItem>[] => [
+  {
+    id: "name",
+    header: t("common.name"),
+    meta: { label: t("common.name") },
+    size: 260,
+    cell: ({ row }) => {
+      const state = rowStates.get(row.original.id);
+      const nameCell = (
+        <SurveyNameCell
+          name={row.original.name}
+          marker={state?.visibilityMarker ?? null}
+          workspaceName={workspaceName}
+          author={getRestrictedAuthor(row.original.access, row.original.owner?.name ?? null)}
+        />
+      );
+      // The name is the row's link, so the row opens with a keyboard and in a new tab too.
+      return state?.href ? (
+        <Link
+          href={state.href}
+          className="focus-visible:ring-ring flex min-w-0 items-center gap-1 font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:outline-hidden">
+          {nameCell}
+        </Link>
+      ) : (
+        <div className="flex min-w-0 items-center gap-1 font-medium text-slate-900">{nameCell}</div>
+      );
+    },
+  },
+  {
+    id: "status",
+    header: t("common.status"),
+    meta: { label: t("common.status") },
+    size: 140,
+    cell: ({ row }) => {
+      const state = rowStates.get(row.original.id);
+      return (
+        <SurveyStatusPill
+          status={row.original.status}
+          isArchived={state?.isArchived ?? false}
+          isScheduled={state?.isScheduled ?? false}
+        />
+      );
+    },
+  },
+  {
+    id: "responses",
+    header: t("workspace.surveys.completed_responses"),
+    meta: { label: t("workspace.surveys.completed_responses") },
+    size: 110,
+    cell: ({ row }) => <span className="text-slate-900">{row.original.completedResponseCount}</span>,
+  },
+  {
+    id: "type",
+    header: t("common.type"),
+    meta: { label: t("common.type") },
+    size: 100,
+    cell: ({ row }) => <SurveyTypeIndicator type={row.original.type} />,
+  },
+  {
+    id: "createdAt",
+    header: t("common.created_at"),
+    meta: { label: t("common.created_at") },
+    size: 150,
+    cell: ({ row }) => (
+      <span className="truncate text-slate-500">{formatDateForDisplay(row.original.createdAt, locale)}</span>
+    ),
+  },
+  {
+    id: "updatedAt",
+    header: t("common.updated_at"),
+    meta: { label: t("common.updated_at") },
+    size: 150,
+    cell: ({ row }) => (
+      <span className="truncate text-slate-500">{timeSince(row.original.updatedAt.toString(), locale)}</span>
+    ),
+  },
+  {
+    id: "createdBy",
+    header: t("common.created_by"),
+    meta: { label: t("common.created_by") },
+    size: 150,
+    cell: ({ row }) => <span className="truncate text-slate-500">{row.original.creator?.name ?? "—"}</span>,
+  },
+  {
+    id: "actions",
+    header: () => <span className="sr-only">{t("common.actions")}</span>,
+    size: 64,
+    cell: ({ row }) => (
+      <div className="flex w-full justify-end">
+        <SurveyDropDownMenu
+          survey={row.original}
+          publicDomain={publicDomain}
+          disabled={rowStates.get(row.original.id)?.isDropdownDisabled}
+          isSurveyCreationDeletionDisabled={isReadOnly}
+          isReadOnly={isReadOnly}
+          deleteSurvey={deleteSurvey}
+          updateSurveyStatus={updateSurveyStatus}
+          archiveSurvey={archiveSurvey}
+          restoreSurvey={restoreSurvey}
+          renameSurvey={renameSurvey}
+          surveyVisibilityGate={surveyVisibilityGate}
+          workspaceName={workspaceName}
+          listQueryKey={listQueryKey}
+          onVisibilityNotEnabled={onVisibilityNotEnabled}
+        />
+      </div>
+    ),
+  },
+];
+
 /** The Survey list as a real table (ENG-3541), so its columns can be shown, hidden and reordered. */
 export const SurveysTable = ({
   surveys,
@@ -108,122 +250,24 @@ export const SurveysTable = ({
     [surveys, isReadOnly, surveyVisibilityGate, workspaceBasePath]
   );
 
-  const columns = useMemo<ColumnDef<TSurveyListItem>[]>(
-    () => [
-      {
-        id: "name",
-        header: t("common.name"),
-        meta: { label: t("common.name") },
-        size: 260,
-        cell: ({ row }) => {
-          const state = rowStates.get(row.original.id);
-          const nameCell = (
-            <SurveyNameCell
-              name={row.original.name}
-              marker={state?.visibilityMarker ?? null}
-              workspaceName={workspaceName}
-              author={getRestrictedAuthor(row.original.access, row.original.owner?.name ?? null)}
-            />
-          );
-          // The name is the row's link, so the row opens with a keyboard and in a new tab too.
-          return state?.href ? (
-            <Link
-              href={state.href}
-              className="focus-visible:ring-ring flex min-w-0 items-center gap-1 font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:outline-hidden">
-              {nameCell}
-            </Link>
-          ) : (
-            <div className="flex min-w-0 items-center gap-1 font-medium text-slate-900">{nameCell}</div>
-          );
-        },
-      },
-      {
-        id: "status",
-        header: t("common.status"),
-        meta: { label: t("common.status") },
-        size: 140,
-        cell: ({ row }) => {
-          const state = rowStates.get(row.original.id);
-          return (
-            <SurveyStatusPill
-              status={row.original.status}
-              isArchived={state?.isArchived ?? false}
-              isScheduled={state?.isScheduled ?? false}
-            />
-          );
-        },
-      },
-      {
-        id: "responses",
-        header: t("workspace.surveys.completed_responses"),
-        meta: { label: t("workspace.surveys.completed_responses") },
-        size: 110,
-        cell: ({ row }) => <span className="text-slate-900">{row.original.completedResponseCount}</span>,
-      },
-      {
-        id: "type",
-        header: t("common.type"),
-        meta: { label: t("common.type") },
-        size: 100,
-        cell: ({ row }) => <SurveyTypeIndicator type={row.original.type} />,
-      },
-      {
-        id: "createdAt",
-        header: t("common.created_at"),
-        meta: { label: t("common.created_at") },
-        size: 150,
-        cell: ({ row }) => (
-          <span className="truncate text-slate-500">
-            {formatDateForDisplay(row.original.createdAt, locale)}
-          </span>
-        ),
-      },
-      {
-        id: "updatedAt",
-        header: t("common.updated_at"),
-        meta: { label: t("common.updated_at") },
-        size: 150,
-        cell: ({ row }) => (
-          <span className="truncate text-slate-500">
-            {timeSince(row.original.updatedAt.toString(), locale)}
-          </span>
-        ),
-      },
-      {
-        id: "createdBy",
-        header: t("common.created_by"),
-        meta: { label: t("common.created_by") },
-        size: 150,
-        cell: ({ row }) => (
-          <span className="truncate text-slate-500">{row.original.creator?.name ?? "—"}</span>
-        ),
-      },
-      {
-        id: "actions",
-        header: () => <span className="sr-only">{t("common.actions")}</span>,
-        size: 64,
-        cell: ({ row }) => (
-          <div className="flex w-full justify-end">
-            <SurveyDropDownMenu
-              survey={row.original}
-              publicDomain={publicDomain}
-              disabled={rowStates.get(row.original.id)?.isDropdownDisabled}
-              isSurveyCreationDeletionDisabled={isReadOnly}
-              isReadOnly={isReadOnly}
-              deleteSurvey={deleteSurvey}
-              updateSurveyStatus={updateSurveyStatus}
-              archiveSurvey={archiveSurvey}
-              restoreSurvey={restoreSurvey}
-              renameSurvey={renameSurvey}
-              surveyVisibilityGate={surveyVisibilityGate}
-              workspaceName={workspaceName}
-              listQueryKey={listQueryKey}
-              onVisibilityNotEnabled={onVisibilityNotEnabled}
-            />
-          </div>
-        ),
-      },
-    ],
+  const columns = useMemo(
+    () =>
+      getSurveyColumns({
+        t,
+        rowStates,
+        workspaceName,
+        locale,
+        publicDomain,
+        isReadOnly,
+        deleteSurvey,
+        updateSurveyStatus,
+        archiveSurvey,
+        restoreSurvey,
+        renameSurvey,
+        surveyVisibilityGate,
+        listQueryKey,
+        onVisibilityNotEnabled,
+      }),
     [
       t,
       rowStates,

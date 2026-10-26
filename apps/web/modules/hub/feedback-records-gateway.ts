@@ -69,6 +69,57 @@ const RECORD_MUTATING_OPERATIONS = new Set<TFeedbackRecordsGatewayOperation>([
   "bulkDelete",
 ]);
 
+const parseCollectionRoute = (method: string): TParsedGatewayRoute | null => {
+  switch (method) {
+    case "GET":
+      return { operation: "list", requiredPermission: "read", tenantSource: "query" };
+    case "POST":
+      return { operation: "create", requiredPermission: "write", tenantSource: "body" };
+    case "DELETE":
+      // `manage`, not `write`: everywhere else in the API `methodPermissionMap` reserves DELETE for
+      // `manage`, and feedback-record deletion is unrecoverable (ENG-2083).
+      return { operation: "bulkDelete", requiredPermission: "manage", tenantSource: "query" };
+    default:
+      return null;
+  }
+};
+
+const parseRecordRoute = (method: string, recordId: string): TParsedGatewayRoute | null => {
+  if (!ZFeedbackRecordId.safeParse(recordId).success) {
+    return null;
+  }
+
+  switch (method) {
+    case "GET":
+      return { operation: "retrieve", requiredPermission: "read", tenantSource: "recordLookup", recordId };
+    case "PATCH":
+      return { operation: "update", requiredPermission: "write", tenantSource: "recordLookup", recordId };
+    case "DELETE":
+      // `manage` for the same reason as `bulkDelete` above (ENG-2083).
+      return {
+        operation: "delete",
+        requiredPermission: "manage",
+        tenantSource: "recordLookup",
+        recordId,
+      };
+    default:
+      return null;
+  }
+};
+
+const parseSimilarRecordsRoute = (method: string, recordId: string): TParsedGatewayRoute | null => {
+  if (method !== "GET" || !ZFeedbackRecordId.safeParse(recordId).success) {
+    return null;
+  }
+
+  return {
+    operation: "retrieveSimilar",
+    requiredPermission: "read",
+    tenantSource: "recordLookup",
+    recordId,
+  };
+};
+
 const parseFeedbackRecordsGatewayRoute = (method: string, pathname: string): TParsedGatewayRoute | null => {
   const normalizedPath = normalizeFeedbackRecordsPath(pathname);
   if (!normalizedPath) {
@@ -76,18 +127,7 @@ const parseFeedbackRecordsGatewayRoute = (method: string, pathname: string): TPa
   }
 
   if (normalizedPath === "/") {
-    switch (method) {
-      case "GET":
-        return { operation: "list", requiredPermission: "read", tenantSource: "query" };
-      case "POST":
-        return { operation: "create", requiredPermission: "write", tenantSource: "body" };
-      case "DELETE":
-        // `manage`, not `write`: everywhere else in the API `methodPermissionMap` reserves DELETE for
-        // `manage`, and feedback-record deletion is unrecoverable (ENG-2083).
-        return { operation: "bulkDelete", requiredPermission: "manage", tenantSource: "query" };
-      default:
-        return null;
-    }
+    return parseCollectionRoute(method);
   }
 
   // The number of records matching the same filters `list` takes, for a list's match count.
@@ -101,41 +141,11 @@ const parseFeedbackRecordsGatewayRoute = (method: string, pathname: string): TPa
 
   const pathSegments = normalizedPath.split("/").filter(Boolean);
   if (pathSegments.length === 1) {
-    const [recordId] = pathSegments;
-    if (!ZFeedbackRecordId.safeParse(recordId).success) {
-      return null;
-    }
-
-    switch (method) {
-      case "GET":
-        return { operation: "retrieve", requiredPermission: "read", tenantSource: "recordLookup", recordId };
-      case "PATCH":
-        return { operation: "update", requiredPermission: "write", tenantSource: "recordLookup", recordId };
-      case "DELETE":
-        // `manage` for the same reason as `bulkDelete` above (ENG-2083).
-        return {
-          operation: "delete",
-          requiredPermission: "manage",
-          tenantSource: "recordLookup",
-          recordId,
-        };
-      default:
-        return null;
-    }
+    return parseRecordRoute(method, pathSegments[0]);
   }
 
-  if (pathSegments.length === 2 && pathSegments[1] === "similar" && method === "GET") {
-    const [recordId] = pathSegments;
-    if (!ZFeedbackRecordId.safeParse(recordId).success) {
-      return null;
-    }
-
-    return {
-      operation: "retrieveSimilar",
-      requiredPermission: "read",
-      tenantSource: "recordLookup",
-      recordId,
-    };
+  if (pathSegments.length === 2 && pathSegments[1] === "similar") {
+    return parseSimilarRecordsRoute(method, pathSegments[0]);
   }
 
   return null;

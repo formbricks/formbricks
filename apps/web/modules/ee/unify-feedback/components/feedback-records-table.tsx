@@ -118,6 +118,150 @@ interface FeedbackRecordsTableProps {
   canDeleteRecords: boolean;
 }
 
+/** The table's columns, built outside the component so each cell renderer is not a nested component. */
+const getRecordColumns = ({
+  t,
+  locale,
+  workspaceId,
+  contactIdByUserId,
+  canDeleteRecords,
+  onOpenRecord,
+}: {
+  t: TFunction;
+  locale: string;
+  workspaceId: string;
+  contactIdByUserId: Record<string, string>;
+  canDeleteRecords: boolean;
+  onOpenRecord: (recordId: string) => void;
+}): ColumnDef<FeedbackRecordData>[] => {
+  const dataColumns: ColumnDef<FeedbackRecordData>[] = [
+    {
+      id: "collectedAt",
+      header: t("workspace.unify.collected_at"),
+      size: 225,
+      cell: ({ row }) => {
+        const date = new Date(row.original.collected_at);
+        return (
+          <span className="truncate text-slate-500" title={formatDateTimeForDisplay(date, locale)}>
+            {formatDateTimeForDisplay(date, locale, COMPACT_DATE_TIME)}
+          </span>
+        );
+      },
+    },
+    {
+      id: "sourceType",
+      header: t("workspace.unify.source_type"),
+      size: 180,
+      cell: ({ row }) => (
+        <Badge
+          text={formatSourceType(row.original.source_type, t)}
+          type="gray"
+          size="tiny"
+          className="inline-block max-w-40 truncate align-middle"
+        />
+      ),
+    },
+    {
+      id: "sourceName",
+      header: t("workspace.unify.source_name"),
+      size: 150,
+      cell: ({ row }) => {
+        const record = row.original;
+        const isFormbricksSurveySource =
+          (record.source_type === "formbricks" || record.source_type === "formbricks_survey") &&
+          !!record.source_id;
+        return isFormbricksSurveySource ? (
+          <Link
+            href={`/workspaces/${workspaceId}/surveys/${record.source_id}/summary`}
+            className="block min-w-0 truncate text-slate-700 underline underline-offset-2 hover:text-slate-900">
+            {record.source_name ?? "—"}
+          </Link>
+        ) : (
+          <span className="block min-w-0 truncate" title={record.source_name ?? undefined}>
+            {record.source_name ?? "—"}
+          </span>
+        );
+      },
+    },
+    {
+      id: "fieldLabel",
+      header: t("workspace.unify.field_label"),
+      size: 200,
+      cell: ({ row }) => (
+        // The row's keyboard entry point: opens the record like a click on the row does.
+        <button
+          type="button"
+          onClick={() => onOpenRecord(row.original.id)}
+          className="focus-visible:ring-ring block min-w-0 truncate text-left font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:outline-hidden">
+          {row.original.field_label ?? row.original.field_id}
+        </button>
+      ),
+    },
+    {
+      id: "fieldType",
+      header: t("workspace.unify.field_type"),
+      size: 110,
+      cell: ({ row }) => (
+        <span className="inline-flex items-center gap-1 whitespace-nowrap text-slate-600">
+          <FieldTypeIcon fieldType={row.original.field_type} className="size-3.5" />
+          {formatFieldType(row.original.field_type)}
+        </span>
+      ),
+    },
+    {
+      id: "value",
+      header: t("workspace.unify.value"),
+      size: 180,
+      cell: ({ row }) => <RecordValueCell record={row.original} locale={locale} />,
+    },
+    {
+      id: "userId",
+      header: t("workspace.unify.user_identifier"),
+      size: 100,
+      cell: ({ row }) => {
+        const record = row.original;
+        const contactId = record.user_id ? contactIdByUserId[record.user_id] : undefined;
+        return record.user_id && contactId ? (
+          <Link
+            href={`/workspaces/${workspaceId}/contacts/${contactId}`}
+            title={record.user_id}
+            className="block min-w-0 truncate text-slate-700 underline underline-offset-2 hover:text-slate-900">
+            {record.user_id}
+          </Link>
+        ) : (
+          <span className="block min-w-0 truncate text-slate-500" title={record.user_id ?? undefined}>
+            {record.user_id ?? "—"}
+          </span>
+        );
+      },
+    },
+  ];
+  if (!canDeleteRecords) return dataColumns;
+  return [
+    {
+      id: "select",
+      size: 44,
+      header: ({ table }) => (
+        <Checkbox
+          aria-label={t("common.select_all")}
+          checked={
+            table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() ? "indeterminate" : false)
+          }
+          onCheckedChange={(checked) => table.toggleAllPageRowsSelected(checked === true)}
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          aria-label={row.original.field_label ?? row.original.field_id}
+          checked={row.getIsSelected()}
+          onCheckedChange={(checked) => row.toggleSelected(checked === true)}
+        />
+      ),
+    },
+    ...dataColumns,
+  ];
+};
+
 export const FeedbackRecordsTable = ({
   workspaceId,
   frdMap,
@@ -159,7 +303,7 @@ export const FeedbackRecordsTable = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `filtersKey` stands in for the filter list
     [filtersKey, tableState.sortBy, timeZone]
   );
-  const directoryIds = useMemo(() => Object.keys(frdMap).sort(), [frdMap]);
+  const directoryIds = useMemo(() => Object.keys(frdMap).sort((a, b) => a.localeCompare(b)), [frdMap]);
   const directories = useMemo(
     () =>
       Object.entries(frdMap)
@@ -302,135 +446,18 @@ export const FeedbackRecordsTable = ({
     { id: "userId", label: t("workspace.unify.user_identifier") },
   ];
 
-  const columns = useMemo<ColumnDef<FeedbackRecordData>[]>(() => {
-    const dataColumns: ColumnDef<FeedbackRecordData>[] = [
-      {
-        id: "collectedAt",
-        header: t("workspace.unify.collected_at"),
-        size: 225,
-        cell: ({ row }) => {
-          const date = new Date(row.original.collected_at);
-          return (
-            <span className="truncate text-slate-500" title={formatDateTimeForDisplay(date, locale)}>
-              {formatDateTimeForDisplay(date, locale, COMPACT_DATE_TIME)}
-            </span>
-          );
-        },
-      },
-      {
-        id: "sourceType",
-        header: t("workspace.unify.source_type"),
-        size: 180,
-        cell: ({ row }) => (
-          <Badge
-            text={formatSourceType(row.original.source_type, t)}
-            type="gray"
-            size="tiny"
-            className="inline-block max-w-40 truncate align-middle"
-          />
-        ),
-      },
-      {
-        id: "sourceName",
-        header: t("workspace.unify.source_name"),
-        size: 150,
-        cell: ({ row }) => {
-          const record = row.original;
-          const isFormbricksSurveySource =
-            (record.source_type === "formbricks" || record.source_type === "formbricks_survey") &&
-            !!record.source_id;
-          return isFormbricksSurveySource ? (
-            <Link
-              href={`/workspaces/${workspaceId}/surveys/${record.source_id}/summary`}
-              className="block min-w-0 truncate text-slate-700 underline underline-offset-2 hover:text-slate-900">
-              {record.source_name ?? "—"}
-            </Link>
-          ) : (
-            <span className="block min-w-0 truncate" title={record.source_name ?? undefined}>
-              {record.source_name ?? "—"}
-            </span>
-          );
-        },
-      },
-      {
-        id: "fieldLabel",
-        header: t("workspace.unify.field_label"),
-        size: 200,
-        cell: ({ row }) => (
-          // The row's keyboard entry point: opens the record like a click on the row does.
-          <button
-            type="button"
-            onClick={() => openViewDrawer(row.original.id)}
-            className="focus-visible:ring-ring block min-w-0 truncate text-left font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:outline-hidden">
-            {row.original.field_label ?? row.original.field_id}
-          </button>
-        ),
-      },
-      {
-        id: "fieldType",
-        header: t("workspace.unify.field_type"),
-        size: 110,
-        cell: ({ row }) => (
-          <span className="inline-flex items-center gap-1 whitespace-nowrap text-slate-600">
-            <FieldTypeIcon fieldType={row.original.field_type} className="size-3.5" />
-            {formatFieldType(row.original.field_type)}
-          </span>
-        ),
-      },
-      {
-        id: "value",
-        header: t("workspace.unify.value"),
-        size: 180,
-        cell: ({ row }) => <RecordValueCell record={row.original} locale={locale} />,
-      },
-      {
-        id: "userId",
-        header: t("workspace.unify.user_identifier"),
-        size: 100,
-        cell: ({ row }) => {
-          const record = row.original;
-          const contactId = record.user_id ? contactIdByUserId[record.user_id] : undefined;
-          return record.user_id && contactId ? (
-            <Link
-              href={`/workspaces/${workspaceId}/contacts/${contactId}`}
-              title={record.user_id}
-              className="block min-w-0 truncate text-slate-700 underline underline-offset-2 hover:text-slate-900">
-              {record.user_id}
-            </Link>
-          ) : (
-            <span className="block min-w-0 truncate text-slate-500" title={record.user_id ?? undefined}>
-              {record.user_id ?? "—"}
-            </span>
-          );
-        },
-      },
-    ];
-    if (!canDeleteRecords) return dataColumns;
-    return [
-      {
-        id: "select",
-        size: 44,
-        header: ({ table }) => (
-          <Checkbox
-            aria-label={t("common.select_all")}
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              (table.getIsSomePageRowsSelected() ? "indeterminate" : false)
-            }
-            onCheckedChange={(checked) => table.toggleAllPageRowsSelected(checked === true)}
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            aria-label={row.original.field_label ?? row.original.field_id}
-            checked={row.getIsSelected()}
-            onCheckedChange={(checked) => row.toggleSelected(checked === true)}
-          />
-        ),
-      },
-      ...dataColumns,
-    ];
-  }, [t, locale, workspaceId, contactIdByUserId, canDeleteRecords]);
+  const columns = useMemo(
+    () =>
+      getRecordColumns({
+        t,
+        locale,
+        workspaceId,
+        contactIdByUserId,
+        canDeleteRecords,
+        onOpenRecord: openViewDrawer,
+      }),
+    [t, locale, workspaceId, contactIdByUserId, canDeleteRecords]
+  );
 
   const table = useReactTable({
     data: records,

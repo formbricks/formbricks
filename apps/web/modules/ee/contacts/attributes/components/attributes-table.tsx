@@ -2,6 +2,7 @@
 
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { type ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { TFunction } from "i18next";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
@@ -35,6 +36,30 @@ interface AttributesTableProps {
   workspaceId: string;
   locale: TUserLocale;
 }
+
+/** Only custom attributes can be deleted, so a default one shows no checkbox at all. */
+const withCustomOnlySelection = (
+  generated: ColumnDef<TContactAttributeKey>[],
+  t: TFunction
+): ColumnDef<TContactAttributeKey>[] =>
+  generated.map((column) =>
+    column.id === "select"
+      ? {
+          ...column,
+          cell: ({ row }) =>
+            // Same wrapper as the header checkbox, so the column lines up.
+            row.getCanSelect() ? (
+              <div className="flex w-full items-center justify-center pr-4">
+                <Checkbox
+                  checked={row.getIsSelected()}
+                  onCheckedChange={(value) => row.toggleSelected(!!value)}
+                  aria-label={t("common.table_toolbar.select_row")}
+                />
+              </div>
+            ) : null,
+        }
+      : column
+  );
 
 /** Contact attributes on the shared table toolbar, filtered and sorted on the server. */
 export const AttributesTable = ({ isReadOnly, workspaceId, locale }: Readonly<AttributesTableProps>) => {
@@ -93,25 +118,7 @@ export const AttributesTable = ({ isReadOnly, workspaceId, locale }: Readonly<At
       t,
       locale
     );
-    // Only custom attributes can be deleted, so a default one shows no checkbox at all.
-    return generated.map((column) =>
-      column.id === "select"
-        ? {
-            ...column,
-            cell: ({ row }) =>
-              // Same wrapper as the header checkbox, so the column lines up.
-              row.getCanSelect() ? (
-                <div className="flex w-full items-center justify-center pr-4">
-                  <Checkbox
-                    checked={row.getIsSelected()}
-                    onCheckedChange={(value) => row.toggleSelected(!!value)}
-                    aria-label={t("common.table_toolbar.select_row")}
-                  />
-                </div>
-              ) : null,
-          }
-        : column
-    );
+    return withCustomOnlySelection(generated, t);
   }, [tableState.search, isReadOnly, columnState.isExpanded, t, locale]);
 
   const table = useReactTable({

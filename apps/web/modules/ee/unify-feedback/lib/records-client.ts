@@ -70,7 +70,8 @@ export const sortRecords = (
   return records.toSorted((a, b) => {
     const left = (a as Record<string, unknown>)[field] as string | undefined;
     const right = (b as Record<string, unknown>)[field] as string | undefined;
-    if (left === right) return a.id < b.id ? direction : -direction;
+    // Ties follow the same direction by id, so the merged order is stable across directories.
+    if (left === right) return direction * a.id.localeCompare(b.id);
     return (left ?? "") < (right ?? "") ? -direction : direction;
   });
 };

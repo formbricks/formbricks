@@ -1,6 +1,7 @@
 "use client";
 
 import { type ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { TFunction } from "i18next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
@@ -20,6 +21,7 @@ import { useTrackWorkflowListFilters } from "../hooks/use-track-workflow-list-fi
 import { useTrackWorkflowSurface } from "../hooks/use-track-workflow-surface";
 import { useWorkflows } from "../hooks/use-workflows";
 import { resolveWorkflowListSurface } from "../lib/analytics";
+import type { workflowKeys } from "../lib/query";
 import {
   DEFAULT_WORKFLOW_SORT,
   WORKFLOW_SORT_VALUES,
@@ -42,6 +44,85 @@ interface WorkflowsListPageProps {
 const WORKFLOW_COLUMN_IDS = ["name", "status", "runs", "createdAt", "updatedAt", "createdBy", "actions"];
 
 /** The Workflows list as a real table on the shared toolbar (ENG-3541). */
+/** The table's columns, built outside the component so each cell renderer is not a nested component. */
+const getWorkflowColumns = ({
+  t,
+  locale,
+  workspaceId,
+  isReadOnly,
+  queryKey,
+}: {
+  t: TFunction;
+  locale: string;
+  workspaceId: string;
+  isReadOnly: boolean;
+  queryKey: ReturnType<typeof workflowKeys.list>;
+}): ColumnDef<TWorkflowListItem>[] => [
+  {
+    id: "name",
+    header: t("common.name"),
+    size: 300,
+    cell: ({ row }) => (
+      <Link
+        href={`/workspaces/${workspaceId}/workflows/${row.original.id}`}
+        className="focus-visible:ring-ring min-w-0 truncate font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:outline-hidden">
+        {row.original.name}
+      </Link>
+    ),
+  },
+  {
+    id: "status",
+    header: t("common.status"),
+    size: 140,
+    cell: ({ row }) => <WorkflowStatusPill status={row.original.status} />,
+  },
+  {
+    id: "runs",
+    header: t("common.runs"),
+    size: 100,
+    cell: ({ row }) => <span className="text-slate-900">{row.original.runCount}</span>,
+  },
+  {
+    id: "createdAt",
+    header: t("common.created_at"),
+    size: 130,
+    cell: ({ row }) => (
+      <span className="truncate text-slate-500">{timeSince(row.original.createdAt, locale)}</span>
+    ),
+  },
+  {
+    id: "updatedAt",
+    header: t("common.updated_at"),
+    size: 130,
+    cell: ({ row }) => (
+      <span className="truncate text-slate-500">{timeSince(row.original.updatedAt, locale)}</span>
+    ),
+  },
+  {
+    id: "createdBy",
+    header: t("common.created_by"),
+    size: 150,
+    cell: ({ row }) => <span className="truncate text-slate-500">{row.original.creator?.name ?? "—"}</span>,
+  },
+  {
+    id: "actions",
+    header: () => <span className="sr-only">{t("common.actions")}</span>,
+    size: 64,
+    cell: ({ row }) => (
+      <div className="flex w-full justify-end">
+        <WorkflowListActions
+          workflowId={row.original.id}
+          workflowName={row.original.name}
+          status={row.original.status}
+          workspaceId={workspaceId}
+          isReadOnly={isReadOnly}
+          queryKey={queryKey}
+        />
+      </div>
+    ),
+  },
+];
+
 export const WorkflowsListPage = ({
   workspaceId,
   isReadOnly,
@@ -120,74 +201,8 @@ export const WorkflowsListPage = ({
     { id: "createdBy", label: t("common.created_by") },
   ];
 
-  const columns = useMemo<ColumnDef<TWorkflowListItem>[]>(
-    () => [
-      {
-        id: "name",
-        header: t("common.name"),
-        size: 300,
-        cell: ({ row }) => (
-          <Link
-            href={`/workspaces/${workspaceId}/workflows/${row.original.id}`}
-            className="focus-visible:ring-ring min-w-0 truncate font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:outline-hidden">
-            {row.original.name}
-          </Link>
-        ),
-      },
-      {
-        id: "status",
-        header: t("common.status"),
-        size: 140,
-        cell: ({ row }) => <WorkflowStatusPill status={row.original.status} />,
-      },
-      {
-        id: "runs",
-        header: t("common.runs"),
-        size: 100,
-        cell: ({ row }) => <span className="text-slate-900">{row.original.runCount}</span>,
-      },
-      {
-        id: "createdAt",
-        header: t("common.created_at"),
-        size: 130,
-        cell: ({ row }) => (
-          <span className="truncate text-slate-500">{timeSince(row.original.createdAt, locale)}</span>
-        ),
-      },
-      {
-        id: "updatedAt",
-        header: t("common.updated_at"),
-        size: 130,
-        cell: ({ row }) => (
-          <span className="truncate text-slate-500">{timeSince(row.original.updatedAt, locale)}</span>
-        ),
-      },
-      {
-        id: "createdBy",
-        header: t("common.created_by"),
-        size: 150,
-        cell: ({ row }) => (
-          <span className="truncate text-slate-500">{row.original.creator?.name ?? "—"}</span>
-        ),
-      },
-      {
-        id: "actions",
-        header: () => <span className="sr-only">{t("common.actions")}</span>,
-        size: 64,
-        cell: ({ row }) => (
-          <div className="flex w-full justify-end">
-            <WorkflowListActions
-              workflowId={row.original.id}
-              workflowName={row.original.name}
-              status={row.original.status}
-              workspaceId={workspaceId}
-              isReadOnly={isReadOnly}
-              queryKey={queryKey}
-            />
-          </div>
-        ),
-      },
-    ],
+  const columns = useMemo(
+    () => getWorkflowColumns({ t, locale, workspaceId, isReadOnly, queryKey }),
     [t, locale, workspaceId, isReadOnly, queryKey]
   );
 
