@@ -33,11 +33,20 @@ Registry and scanner errors fail the job. Reports remain available as workflow a
 14 days. The existing Docker Security Scan continues publishing its app/Cube SARIF to Code scanning;
 this stack-wide sync reads JSON directly, not Dependabot alerts or the Code scanning API.
 
-Critical/high findings (including those without a fix) enter the existing Engineering triage queue
-with the vulnerability label. Identity includes repository, image repository, package ecosystem,
-package and CVE; tags, digests and architectures are occurrences in the same ticket. A finding at a
-lower severity keeps its existing ticket open. A vulnerability ticket closes only when every current
-tag and published architecture of its image repository scans successfully and no longer reports it.
+Each image repository with critical/high findings (including those without a fix) gets one ticket in
+the Engineering **Backlog** with the `container-scan` label. These tickets track dependency maintenance,
+so they stay out of the triage queue and the vulnerability process; a finding that needs a security
+assessment is filed by hand. The ticket lists every critical/high CVE with its package, tags,
+architectures and fixed version, plus the scanned digests and their Helm/Compose sources; medium/low
+findings are only counted. `linux-libc-dev` is ignored: it carries kernel headers, and containers run
+the host's kernel. Identity is the repository plus the image repository; the description is rewritten
+when the CVE set changes. An image ticket closes only when every current tag and published
+architecture of its repository scans successfully with no critical/high finding left.
+Priority is High for a critical finding and Medium for a high one: these are unassessed upstream
+CVEs, and Urgent is kept for our own security bugs.
+Per-CVE tickets from before this grouping are canceled once their repository scans successfully,
+since the image ticket now carries whatever is still present. Only tickets still in Triage are
+canceled; one that someone already assessed or started on is left for its owner.
 Scan-failure tickets close when their exact image scans successfully or leaves the inventory.
 Missing/failed scans create high-priority scan-failure tickets, permit creating tickets from successful
 results, and block closure for the affected repository, without blocking unrelated successful scans.
