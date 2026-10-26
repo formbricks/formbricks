@@ -91,18 +91,18 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   const { singleUseId } = singleUse;
 
   // Parallel fetch of workspace context, locale and the respondent's browser languages
-  const [workspaceContext, locale, acceptedLanguages, contactResponse, singleUseLinkResponse] =
-    await Promise.all([
-      getWorkspaceContextForLinkSurvey(survey.workspaceId),
-      findMatchingLocale(),
-      getAcceptedLanguages(),
-      // Fetch existing response for this contact
-      getExistingContactResponse(survey.id, contactId)(),
-      // The single-use link's own response, whoever gave it. Once finished, the link is "already answered"
-      // here as on /s, which is also what the PIN and verify-email actions answer for it (ENG-4041).
-      singleUseId ? getResponseBySingleUseId(survey.id, singleUseId)() : Promise.resolve(null),
-    ]);
-  const singleUseResponse = singleUseLinkResponse?.finished ? singleUseLinkResponse : contactResponse;
+  const [workspaceContext, locale, acceptedLanguages, singleUseLinkResponse] = await Promise.all([
+    getWorkspaceContextForLinkSurvey(survey.workspaceId),
+    findMatchingLocale(),
+    getAcceptedLanguages(),
+    // The single-use link's own response, whoever gave it. Once finished, the link is "already answered"
+    // here as on /s, which is also what the PIN and verify-email actions answer for it (ENG-4041): the
+    // client routes accept one response per single-use id, so the link is spent whichever contact opens it.
+    singleUseId ? getResponseBySingleUseId(survey.id, singleUseId)() : Promise.resolve(null),
+  ]);
+  // Only a finished response changes this page. A contact's own response, partial or not, was answered above
+  // by "response submitted" before the survey was even loaded, so there is none left to resume here.
+  const singleUseResponse = singleUseLinkResponse?.finished ? singleUseLinkResponse : undefined;
 
   // Fetch responseCount only if needed
   const responseCount = survey.welcomeCard.showResponseCount

@@ -57,10 +57,8 @@ const surveyId = "clsurvey00000000000000000";
 // Captured at import, before any `clearAllMocks`. The handler tests below bypass the schema, so without this
 // a schema that dropped `suId` / `suToken` would strip them from every real call, and every valid single-use
 // link would come back "not found" with all of those tests still green.
-const [, [pinActionSchema]] = vi.mocked(actionClient.inputSchema).mock.calls as unknown as [
-  unknown,
-  [{ parse: (input: unknown) => unknown }],
-];
+const [[emailActionSchema], [pinActionSchema]] = vi.mocked(actionClient.inputSchema).mock
+  .calls as unknown as [[{ parse: (input: unknown) => unknown }], [{ parse: (input: unknown) => unknown }]];
 
 const mockSurvey = (overrides: Record<string, unknown> = {}) =>
   vi.mocked(getSurveyWithMetadata).mockResolvedValue({
@@ -77,10 +75,15 @@ const mockSurvey = (overrides: Record<string, unknown> = {}) =>
   } as never);
 
 const validatePin = (pin = "1234") => validateSurveyPinAction({ parsedInput: { surveyId, pin } } as never);
+const emailInput = (link: { suId?: string; suToken?: string }) => ({
+  surveyId,
+  email: "respondent@example.com",
+  surveyName: "s",
+  locale: "en-US",
+  ...link,
+});
 const sendEmailWith = (link: { suId?: string; suToken?: string }) =>
-  sendLinkSurveyEmailAction({
-    parsedInput: { surveyId, email: "respondent@example.com", surveyName: "s", ...link },
-  } as never);
+  sendLinkSurveyEmailAction({ parsedInput: emailInput(link) } as never);
 // What the verify-email screen sends for a survey without single-use links.
 const sendEmail = () => sendEmailWith({ suId: "" });
 
@@ -186,6 +189,25 @@ describe("validateSurveyPinAction on a single-use survey (ENG-4041)", () => {
       suId: "invitee-1",
       suToken: "token",
     });
+  });
+
+  // They reach a decrypt and a hash before the link is judged, so anything longer than a link we mint is
+  // refused by the schema, for both actions.
+  test.each([
+    ["suId", { suId: "a".repeat(256) }],
+    ["suToken", { suToken: "a".repeat(65) }],
+  ])("its input schema refuses an over-long %s, as does the email action's", (_label, link) => {
+    // The same input one character shorter passes, so it is the length that is refused and nothing else.
+    expect(() => emailActionSchema.parse(emailInput({}))).not.toThrow();
+    expect(() => pinActionSchema.parse({ surveyId, pin: "1234", ...link })).toThrow();
+    expect(() => emailActionSchema.parse(emailInput(link))).toThrow();
+  });
+
+  test("its input schema accepts the longest link we mint", () => {
+    const longest = { suId: "a".repeat(255), suToken: "a".repeat(64) };
+
+    expect(pinActionSchema.parse({ surveyId, pin: "1234", ...longest })).toMatchObject(longest);
+    expect(emailActionSchema.parse(emailInput(longest))).toMatchObject(longest);
   });
 
   test.each(notInvited)("with %s is not found and its definition is not returned", async (_label, link) => {

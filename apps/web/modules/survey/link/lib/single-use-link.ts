@@ -157,10 +157,12 @@ export const resolveSingleUseIdForSurvey = ({
 };
 
 /**
- * Resolved once per request. The link page and its `generateMetadata` ask the same question about the same
+ * Resolved once per render. The link page and its `generateMetadata` ask the same question about the same
  * URL, and resolving it twice would count one rejected link twice and log it twice — the metric and the
- * warn line are how an operator tells an enumeration from a broken email template, so both must stay one
- * per request. Primitive arguments only, because `cache` compares them by identity.
+ * warn line are how an operator tells an enumeration from a broken email template. `cache` only dedupes
+ * within one React render, which is all that case needs: a server action isn't a render, so it may not share
+ * it, but it resolves the link once per call, so each attempt still counts once. Primitive arguments only,
+ * because `cache` compares them by identity.
  */
 const resolveSingleUseIdOnce = reactCache(
   (
