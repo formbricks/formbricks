@@ -5,8 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { TChartConfig } from "@formbricks/types/analysis";
+import type { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
 import { sanitizeChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
+import { chartUpdateFromEditor } from "@/modules/ee/analysis/charts/lib/chart-update";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { useDashboardOptions } from "@/modules/ee/analysis/dashboards/hooks/use-dashboard-options";
 import {
@@ -71,6 +72,8 @@ export function useChartDialog({
   // Last name we prefilled from a suggestion; lets a regenerate replace its own
   // stale suggestion without ever clobbering a name the user typed.
   const lastSuggestedNameRef = useRef<string | null>(null);
+  // The type and query as the saved chart was loaded, so a save sends them only when they changed.
+  const loadedChartRef = useRef<{ type: TChartType; query: TChartQuery } | null>(null);
 
   const dashboardOptions = useDashboardOptions({ workspaceId, enabled: isAddToDashboardDialogOpen });
   const dashboards = dashboardOptions.data ?? NO_DASHBOARDS;
@@ -95,6 +98,7 @@ export function useChartDialog({
       setChartName("");
       setSavedChartName("");
       lastSuggestedNameRef.current = null;
+      loadedChartRef.current = null;
       setSelectedChartType(undefined);
       setCurrentChartId(undefined);
       setChartConfig({});
@@ -129,6 +133,7 @@ export function useChartDialog({
 
         // The server-rewritten effective query, so the renderer's xAxisKey matches the returned data
         // columns (e.g. valueText → valueId for single-select).
+        loadedChartRef.current = { type: chartType, query: result.query };
         setChartData({
           query: result.query,
           chartType,
@@ -197,7 +202,8 @@ export function useChartDialog({
       };
 
       if (currentChartId) {
-        await updateChart(currentChartId, chartToSave);
+        await updateChart(currentChartId, chartUpdateFromEditor(chartToSave, loadedChartRef.current));
+        loadedChartRef.current = { type: chartToSave.type, query: chartToSave.query };
         toast.success(t("workspace.analysis.charts.chart_updated_successfully"));
       } else {
         const created = await createChart({ workspaceId, datasetId: selectedDirectoryId, ...chartToSave });
