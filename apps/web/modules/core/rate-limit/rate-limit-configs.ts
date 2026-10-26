@@ -11,6 +11,9 @@ export const rateLimitConfigs = {
     // Keep redemption independent so requesting an email cannot exhaust the budget to use its token.
     resetPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:reset-password" }, // 5 per hour
     verifyEmail: { interval: 3600, allowedPerInterval: 10, namespace: "auth:verify" }, // 10 per hour
+    // Verification email anyone can request for one account, keyed by user id. Below that email's
+    // per-recipient cap of 5, so a signed-in resend always has room left (ENG-3823).
+    verifyEmailPerAccount: { interval: 3600, allowedPerInterval: 3, namespace: "auth:verify:account" }, // 3 per hour
     emailToken: { interval: 3600, allowedPerInterval: 10, namespace: "auth:email-token" }, // 10 per hour — unauthenticated, tells the caller whether an email is registered
     // The SAML callback parses the posted XML before it can tell an IdP from a stranger (ENG-3973), so this caps
     // how often one IP can make it parse. Generous on purpose: every SAML sign-in at a company behind one NAT

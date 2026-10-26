@@ -128,9 +128,9 @@ describe("applyEmailRateLimits", () => {
 
   describe("fresh resources do not reset a limit", () => {
     test("a survey owner's external email counts across every organization they own", async () => {
-      // 200 follow-ups spread over 50 organizations, each far below its own cap.
+      // 300 follow-ups spread over 50 organizations, each far below its own cap.
       await sendTimes(
-        200,
+        300,
         "survey_follow_up",
         (index) => `respondent-${index}@example.com`,
         (index) => external(`org-${index % 50}`, "spammer")
@@ -139,6 +139,22 @@ describe("applyEmailRateLimits", () => {
       await refused(send("survey_follow_up", "fresh@example.com", external("brand-new-org", "spammer")));
       await expect(
         send("survey_follow_up", "fresh@example.com", external("brand-new-org", "someone-else"))
+      ).resolves.toBeUndefined();
+    });
+
+    // The owner's cap sits above the organization's, so respondents flooding one organization stop at its
+    // cap and cannot use up the owner's email in their other organizations.
+    test("a flood in one organization leaves the owner room in their others", async () => {
+      await sendTimes(
+        200,
+        "verified_survey_link",
+        (index) => `flood-${index}@example.com`,
+        () => external("flooded-org", "owner-1")
+      );
+      await refused(send("verified_survey_link", "next@example.com", external("flooded-org", "owner-1")));
+
+      await expect(
+        send("survey_follow_up", "customer@example.com", external("other-org", "owner-1"))
       ).resolves.toBeUndefined();
     });
 

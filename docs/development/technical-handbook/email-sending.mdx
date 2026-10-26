@@ -32,12 +32,15 @@ Three rules shape those limits:
 
 - **Whoever can trigger an email must not be able to stop it for anyone else.** A per-deployment cap is shared by
   every tenant, so only email a signed-in user sends to an address they typed in has one. Respondents and visitors
-  trigger follow-ups, workflow emails and verified links, so those have none, and mail they trigger to the
-  organization's own members is not counted at all.
+  trigger follow-ups, workflow emails and verified links, so those have none. A follow-up or workflow email to an
+  address the author typed that belongs to a member is not counted at all.
 - **A per-recipient cap must not let one sender block someone.** It counts one address from one organization. Only
-  account email, which an address gets from its own account alone, is counted across everyone.
+  account email, which an address gets from its own account alone, is counted across everyone. Where a stranger can
+  ask for account email (forgot password, a verification resend), the per-account limit where it starts sits below
+  the recipient cap, so strangers cannot spend all of it.
 - **Spreading email across types gains nothing.** Follow-ups, workflow emails and verified links to outside
-  addresses share one budget per organization and per owner.
+  addresses share one budget per organization and per owner. The owner's cap is the higher of the two, so
+  respondents flooding one organization stop at its cap and cannot use up the owner's email elsewhere.
 
 Some flows also limit where they start, before any email exists: invites count recipients per organization and
 per inviting user, and forgot-password counts per IP and per account.
@@ -49,9 +52,9 @@ anyone's.
 
 | Email type | Sent when | Who picks the recipient | Who it is limited by |
 | --- | --- | --- | --- |
-| `invite` | Single, bulk, onboarding and resend invites | The inviting user | Inviting user and organization (where the invite is created); recipient |
+| `invite` | Single, bulk, onboarding and resend invites | The inviting user | Inviting user and organization (where the invite is created); recipient; deployment |
 | `invite_accepted` | An invite is accepted | Server (the inviter) | Bounded by invites |
-| `email_verification` | Sign-up, resend, sign-in to an unverified account | Whoever signs up | IP (where it starts); recipient |
+| `email_verification` | Sign-up, resend, sign-in to an unverified account | Whoever signs up | IP, and account for a resend (where it starts); recipient |
 | `sso_recovery_verification` | SSO account recovery | Server (the account) | Recipient; the SSO callback itself is unmetered (ENG-2558) |
 | `email_change_verification` | A user changes their email | The user | User (where it starts); deployment |
 | `password_reset` | Forgot password; reset from profile settings | Whoever asks, or the user | IP and account, or the signed-in user (where it starts); recipient |

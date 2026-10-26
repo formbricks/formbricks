@@ -55,18 +55,19 @@ const limit = (allowedPerInterval: number, interval = HOUR): TLimit => ({ allowe
 
 /**
  * Email a survey or workflow sends to an address someone typed in: a respondent's answer, a visitor's
- * verification request, or an author's literal address outside the organization. One budget per
- * organization and per owner for all three types, 200 an hour (below INC-5's ~340, so one owner cannot
- * repeat it), and 5 an hour to one inbox from one organization.
+ * verification request, or an author's literal address outside the organization. One budget for all three
+ * types: 200 an hour per organization, 300 per owner, and 5 an hour to one inbox from one organization.
  *
  * No per-deployment cap: anonymous respondents drive this email, so a shared cap would let them stop it for
- * every organization at once. The per-owner cap is what holds when an attacker opens fresh organizations.
+ * every organization at once. The per-owner cap is what holds when an attacker opens fresh organizations,
+ * and stays below INC-5's ~340 an hour so one owner cannot repeat it. It sits above the organization's cap
+ * so that respondents flooding one organization stop there and leave the owner room in their others.
  */
 const externalSurveyEmail: TEmailRateLimit = {
   group: "survey_external",
   externalOnly: true,
   organization: limit(200),
-  actor: limit(200),
+  actor: limit(300),
   recipient: { inOrganization: limit(5) },
 };
 
@@ -92,7 +93,9 @@ export const emailRateLimits: Record<TEmailType, TEmailRateLimit> = {
   // Limited to 3 an hour per user where the change is requested. No recipient cap: an address that already
   // has an account is refused silently, so counting only the others would reveal which addresses exist.
   email_change_verification: { deployment: limit(1000) },
-  password_reset: { recipient: { total: limit(5) } },
+  // Six an hour: strangers can ask for three (forgot password, per account) and the signed-in user for three
+  // more (profile settings), so neither can use up the other's.
+  password_reset: { recipient: { total: limit(6) } },
   password_reset_notification: {},
   account_deletion: {},
   sso_recovery_notification: {},

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import { resetDb } from "@/integration/reset-db";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { auth } from "@/modules/auth/lib/auth";
@@ -94,6 +95,25 @@ describe("Better Auth email verification (real Postgres)", () => {
     // afterEmailVerification fires once per user — the replay must NOT re-emit the event
     expect(capturePostHogEvent).toHaveBeenCalledTimes(1);
     expect(queueAuditEventBackground).not.toHaveBeenCalled();
+  });
+
+  // A resend reaches the caller, so a capped one must answer like a sent one: an error only for addresses
+  // with an unverified account would say which addresses have one (ENG-3823). Other failures still surface.
+  test("a capped resend answers like a sent one, while other send failures still surface", async () => {
+    await auth.api.signUpEmail({
+      body: { email: "capped@example.com", password: "Passw0rd!", name: "Cap" },
+      asResponse: true,
+    });
+
+    vi.mocked(sendVerificationLinkEmail).mockRejectedValueOnce(
+      new TooManyRequestsError("Maximum number of requests reached. Please try again later.")
+    );
+    await expect(
+      auth.api.sendVerificationEmail({ body: { email: "capped@example.com" } })
+    ).resolves.toMatchObject({ status: true });
+
+    vi.mocked(sendVerificationLinkEmail).mockRejectedValueOnce(new Error("smtp connection refused"));
+    await expect(auth.api.sendVerificationEmail({ body: { email: "capped@example.com" } })).rejects.toThrow();
   });
 });
 
