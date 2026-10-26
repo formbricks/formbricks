@@ -281,6 +281,8 @@ describe("resendVerificationEmailAction", () => {
       expect(getUserByEmail).toHaveBeenCalledWith(validInput.email);
       expect(sendVerificationEmail).not.toHaveBeenCalled();
       expect(result).toEqual({ success: true });
+      // Nothing was sent, so strangers cannot use this to spend the account's resends (ENG-3823).
+      expect(applyRateLimit).not.toHaveBeenCalled();
     });
 
     test("should resend an SSO recovery email for a verified user", async () => {

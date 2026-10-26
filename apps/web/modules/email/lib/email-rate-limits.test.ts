@@ -308,6 +308,10 @@ describe("applyEmailRateLimits", () => {
     await expect(
       send("survey_follow_up", "x@example.com", { organizationId: "org-1", externalRecipient: true })
     ).rejects.toThrow("requires an actorUserId");
+    // A forgotten flag must not pass for mail to a member, which no cap counts.
+    await expect(
+      send("verified_survey_link", "x@example.com", { organizationId: "org-1", actorUserId: "owner-1" })
+    ).rejects.toThrow("requires externalRecipient");
     expect(mocks.store.size).toBe(0);
   });
 

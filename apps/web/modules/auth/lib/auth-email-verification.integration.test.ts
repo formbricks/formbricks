@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { resetDb } from "@/integration/reset-db";
+import { WEBAPP_URL } from "@/lib/constants";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { auth } from "@/modules/auth/lib/auth";
 import * as brevo from "@/modules/auth/lib/brevo";
@@ -95,6 +96,29 @@ describe("Better Auth email verification (real Postgres)", () => {
     // afterEmailVerification fires once per user — the replay must NOT re-emit the event
     expect(capturePostHogEvent).toHaveBeenCalledTimes(1);
     expect(queueAuditEventBackground).not.toHaveBeenCalled();
+  });
+
+  // ENG-3823: anyone could call the HTTP route for any address and spend its verification-email cap. It is
+  // closed with `disabledPaths`, which only the HTTP router reads; the in-process call the app uses stays.
+  test("the native resend route is closed over HTTP, and the in-process call still sends", async () => {
+    await auth.api.signUpEmail({
+      body: { email: "route@example.com", password: "Passw0rd!", name: "Route" },
+      asResponse: true,
+    });
+    vi.mocked(sendVerificationLinkEmail).mockClear();
+
+    const response = await auth.handler(
+      new Request(`${WEBAPP_URL}/api/auth/send-verification-email`, {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: WEBAPP_URL },
+        body: JSON.stringify({ email: "route@example.com" }),
+      })
+    );
+    expect(response.status).toBe(404);
+    expect(sendVerificationLinkEmail).not.toHaveBeenCalled();
+
+    await auth.api.sendVerificationEmail({ body: { email: "route@example.com" } });
+    expect(sendVerificationLinkEmail).toHaveBeenCalledOnce();
   });
 
   // A resend reaches the caller, so a capped one must answer like a sent one: an error only for addresses

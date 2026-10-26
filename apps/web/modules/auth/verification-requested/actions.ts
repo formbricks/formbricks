@@ -117,9 +117,6 @@ export const resendVerificationEmailAction = actionClient.inputSchema(ZResendVer
     if (!user) {
       throw new ResourceNotFoundError("user", parsedInput.email);
     }
-    // Anyone can ask for this account's email from here. Counted per account and below the recipient cap,
-    // so strangers rotating IPs cannot spend the whole cap and leave the user's own sign-in with none.
-    await applyRateLimit(rateLimitConfigs.auth.verifyEmailPerAccount, user.id);
     const validatedCallbackUrl = getValidatedCallbackUrl(parsedInput.callbackUrl, WEBAPP_URL) ?? undefined;
     const resolution = await resolveSsoRecoveryResend({
       callbackUrl: validatedCallbackUrl,
@@ -141,6 +138,10 @@ export const resendVerificationEmailAction = actionClient.inputSchema(ZResendVer
         success: true,
       };
     }
+    // Anyone can ask for this account's email from here. Counted per account, only when an email is sent,
+    // and below the recipient cap, so strangers rotating IPs cannot spend the whole cap and leave the
+    // user's own sign-in with none.
+    await applyRateLimit(rateLimitConfigs.auth.verifyEmailPerAccount, user.id);
     ctx.auditLoggingCtx.userId = user.id;
     if (ssoRecoveryResend) {
       // ENG-2783: the resent link and the refreshed intent get ONE lifetime, computed once here.
