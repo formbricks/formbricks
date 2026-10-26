@@ -6,6 +6,7 @@ import {
   CREATIVE_COUNTER_TTL_SECONDS,
   MAX_COUNTED_PAGES_PER_DAY,
   type TCreativeEventCounts,
+  claimCountedCreatives,
   incrementCreativeCounters,
 } from "./counters";
 import { flushCreativeCounters } from "./stats-flush";
@@ -138,6 +139,23 @@ describe("counting and flushing", () => {
     await flushCreativeCounters(AT_NOON);
     expect((await stored(creativeId, workspaceId)).devices).toEqual([
       { date: TODAY, deviceType: "tablet", impressions: 2, clicks: 0 },
+    ]);
+  });
+
+  test("a creative counted again after a failed flush is written once by the retry", async () => {
+    const { workspaceId, ids } = await seedCreatives(1);
+    const [creativeId] = ids;
+    const view = counts("example.com/", "phone", [{ creativeId, impressions: 1, clicks: 0 }]);
+    await incrementCreativeCounters(view, AT_NOON);
+    // A flush claimed it and failed before releasing it, so it stays claimed…
+    await claimCountedCreatives(TODAY, 100);
+    // …and the next event puts it back in `pending` too.
+    await incrementCreativeCounters(view, AT_NOON);
+
+    await flushCreativeCounters(AT_NOON);
+
+    expect((await stored(creativeId, workspaceId)).devices).toEqual([
+      { date: TODAY, deviceType: "phone", impressions: 2, clicks: 0 },
     ]);
   });
 

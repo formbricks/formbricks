@@ -88,6 +88,8 @@ const INCREMENT_SCRIPT = `
  * Moves up to ARGV[1] creatives from the day's pending set (KEYS[1]) into its flushing set (KEYS[2]) and
  * returns the whole flushing set. A flush that failed leaves its creatives there, so the next run picks
  * them up first; two runs that overlap flush some creatives twice, which `GREATEST` makes harmless.
+ * A creative counted again since a failed flush is in both sets: it is returned once, because one upsert
+ * can't write the same row twice.
  */
 const CLAIM_SCRIPT = `
   local claimed = redis.call('SMEMBERS', KEYS[2])
@@ -95,8 +97,9 @@ const CLAIM_SCRIPT = `
   if wanted > 0 then
     local popped = redis.call('SPOP', KEYS[1], wanted)
     for _, id in ipairs(popped) do
-      redis.call('SADD', KEYS[2], id)
-      table.insert(claimed, id)
+      if redis.call('SADD', KEYS[2], id) == 1 then
+        table.insert(claimed, id)
+      end
     end
   end
   if #claimed > 0 and redis.call('TTL', KEYS[2]) == -1 then
