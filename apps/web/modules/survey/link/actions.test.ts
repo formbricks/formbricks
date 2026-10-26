@@ -57,8 +57,22 @@ const surveyId = "clsurvey00000000000000000";
 // Captured at import, before any `clearAllMocks`. The handler tests below bypass the schema, so without this
 // a schema that dropped `suId` / `suToken` would strip them from every real call, and every valid single-use
 // link would come back "not found" with all of those tests still green.
-const [[emailActionSchema], [pinActionSchema]] = vi.mocked(actionClient.inputSchema).mock
-  .calls as unknown as [[{ parse: (input: unknown) => unknown }], [{ parse: (input: unknown) => unknown }]];
+//
+// By the field each schema alone declares, not by call order: a positional capture would silently swap the
+// two if the actions were ever declared in the other order.
+type TActionSchema = { shape: Record<string, unknown>; parse: (input: unknown) => unknown };
+const capturedSchemas = vi
+  .mocked(actionClient.inputSchema)
+  .mock.calls.map(([schema]) => schema) as unknown as TActionSchema[];
+const schemaDeclaring = (field: string): TActionSchema => {
+  const schema = capturedSchemas.find((candidate) => field in candidate.shape);
+  if (!schema) {
+    throw new Error(`No captured action schema declares "${field}"`);
+  }
+  return schema;
+};
+const emailActionSchema = schemaDeclaring("email");
+const pinActionSchema = schemaDeclaring("pin");
 
 const mockSurvey = (overrides: Record<string, unknown> = {}) =>
   vi.mocked(getSurveyWithMetadata).mockResolvedValue({
