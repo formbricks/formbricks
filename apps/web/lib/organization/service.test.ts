@@ -251,10 +251,13 @@ describe("Organization Service", () => {
         },
         select: organizationSelect,
       });
-      expect(logger.audit).toHaveBeenCalledWith({
-        securityEvent: "organization.created",
-        organizationId: "org1",
-      });
+      expect(logger.audit).toHaveBeenCalledWith(
+        {
+          securityEvent: "organization.created",
+          organizationId: "org1",
+        },
+        "Organization created"
+      );
       // Stripe setup is now handled by the caller after membership creation
       expect(ensureCloudStripeSetupForOrganization).not.toHaveBeenCalled();
     });

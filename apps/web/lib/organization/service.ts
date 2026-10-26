@@ -186,7 +186,10 @@ export const createOrganization = async (
       select,
     });
 
-    logger.audit({ securityEvent: "organization.created", organizationId: organization.id });
+    logger.audit(
+      { securityEvent: "organization.created", organizationId: organization.id },
+      "Organization created"
+    );
 
     return mapOrganization(organization);
   } catch (error) {
