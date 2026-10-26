@@ -13,15 +13,20 @@ import {
   loadFormbricksSurveysExternally,
   openSurveyForCreative,
 } from "@/lib/survey/widget";
+import type * as Widget from "@/lib/survey/widget";
 import { resetDeviceCache } from "@/lib/visit/device";
 import { recordNavigation, recordPageLoad } from "@/lib/visit/visit-store";
 import type { TConfig, TWorkspaceStateSurvey } from "@/types/config";
 
 vi.mock("@/lib/survey/widget", () => ({
   getOpenSurveyIds: vi.fn(() => []),
-  openSurveyForCreative: vi.fn(() => Promise.resolve()),
+  openSurveyForCreative: vi.fn(() => Promise.resolve(true)),
   loadFormbricksSurveysExternally: vi.fn(() => Promise.resolve({})),
 }));
+
+// Imported with this file, not inside a test: `vitest.setup.ts` resets the module registry before each
+// test, and a later import would get a `Config` other than the one the tests stub.
+const actualWidget = await vi.importActual<typeof Widget>("@/lib/survey/widget");
 
 const NOW = Date.parse("2026-10-20T01:59:00.000Z");
 
@@ -102,7 +107,7 @@ beforeEach(() => {
         workspace: {
           expiresAt: new Date(NOW + 3_600_000),
           clockOffset: state.clockOffset,
-          data: { surveys: state.surveys, actionClasses: [], creatives: state.creatives },
+          data: { surveys: state.surveys, actionClasses: [], creatives: state.creatives, settings: {} },
         },
         user: { data: { language: state.language } },
       }) as unknown as TConfig,
@@ -782,6 +787,49 @@ describe("banners (ENG-3576)", () => {
 
     expect(open).toHaveBeenCalledTimes(1);
     expect(bannerHosts()).toHaveLength(1);
+  });
+
+  test("its button leaves the banner in place, and counts no Click, until its survey is on screen", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.mocked(getOpenSurveyIds).mockReturnValue([]);
+    // The real opener, so the press goes all the way to loading the surveys renderer.
+    vi.mocked(openSurveyForCreative).mockImplementationOnce(actualWidget.openSurveyForCreative);
+    state.creatives = [
+      banner("notice", {
+        content: {
+          message: { "en-US": [{ text: "Tell us how we did." }] },
+          button: { label: { "en-US": "Take the survey" } },
+          dismissible: true,
+          accessibleName: null,
+        },
+        destination: { type: "survey", surveyId: mockSurvey.id, opensAs: "popup" },
+      }),
+    ];
+    reconcileCreatives();
+
+    controlOf("notice", ".fb-creative-banner-button").click();
+    // The renderer fails to load: no survey opens.
+    const renderer = document.head.querySelector('script[src*="/js/surveys.umd.cjs"]');
+    expect(renderer).not.toBeNull();
+    renderer?.dispatchEvent(new Event("error"));
+    await vi.advanceTimersByTimeAsync(2_000);
+
+    expect(bannerHosts()).toHaveLength(1);
+    expect(tabStorage.has("formbricks-dismissed-creatives")).toBe(false);
+    expect(sentEvents().map(({ body }) => body)).toEqual([
+      expect.objectContaining({ events: [{ creativeId: "notice", type: "impression" }] }),
+    ]);
+
+    // Pressed again, the survey opens this time: now it is a Click, and the banner has done its job.
+    controlOf("notice", ".fb-creative-banner-button").click();
+    await vi.advanceTimersByTimeAsync(2_000);
+
+    expect(openSurveyForCreative).toHaveBeenCalledTimes(2);
+    expect(bannerHosts()).toEqual([]);
+    expect(sentEvents().map(({ body }) => body)).toEqual([
+      expect.objectContaining({ events: [{ creativeId: "notice", type: "impression" }] }),
+      expect.objectContaining({ events: [{ creativeId: "notice", type: "click" }] }),
+    ]);
   });
 });
 

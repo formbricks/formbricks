@@ -138,9 +138,17 @@ describe("survey concurrency guard", () => {
     const renderedSurveyIds = (): string[] =>
       renderSurvey.mock.calls.map(([props]) => (props as { survey: TWorkspaceStateSurvey }).survey.id);
 
-    test("opens its survey right away, ignoring the survey's delay and auto-close", async () => {
-      await widget.openSurveyForCreative({ ...survey, delay: 60, autoClose: 10 }, "creative-1", []);
+    /** A click, waited out: it resolves once its survey has had its turn at the screen. */
+    const openForCreative = async (
+      ...args: Parameters<typeof widget.openSurveyForCreative>
+    ): Promise<boolean> => {
+      const opening = widget.openSurveyForCreative(...args);
       await vi.advanceTimersByTimeAsync(0);
+      return opening;
+    };
+
+    test("opens its survey right away, ignoring the survey's delay and auto-close", async () => {
+      expect(await openForCreative({ ...survey, delay: 60, autoClose: 10 }, "creative-1", [])).toBe(true);
 
       expect(renderSurvey).toHaveBeenCalledTimes(1);
       const [[props]] = renderSurvey.mock.calls as [[{ survey: TWorkspaceStateSurvey }]];
@@ -149,8 +157,7 @@ describe("survey concurrency guard", () => {
     });
 
     test("tells the renderer which creative opened it, so the display and response record it", async () => {
-      await widget.openSurveyForCreative(survey, "creative-1", []);
-      await vi.advanceTimersByTimeAsync(0);
+      await openForCreative(survey, "creative-1", []);
 
       const [[props]] = renderSurvey.mock.calls as [[{ creativeId?: string }]];
       expect(props.creativeId).toBe("creative-1");
@@ -168,8 +175,7 @@ describe("survey concurrency guard", () => {
       await widget.renderWidget({ ...survey, id: "triggered" }, PAGE_VIEW_ACTION);
       await vi.advanceTimersByTimeAsync(10);
 
-      await widget.openSurveyForCreative(survey, "creative-1", widget.getOpenSurveyIds());
-      await vi.advanceTimersByTimeAsync(0);
+      await openForCreative(survey, "creative-1", widget.getOpenSurveyIds());
 
       expect(renderedSurveyIds()).toEqual(["triggered", survey.id]);
       expect(widget.getOpenSurveyIds()).toEqual([survey.id]);
@@ -181,7 +187,7 @@ describe("survey concurrency guard", () => {
       // Waiting out its delay is not open: nothing is on screen yet.
       expect(widget.getOpenSurveyIds()).toEqual([]);
 
-      await widget.openSurveyForCreative(survey, "creative-1", widget.getOpenSurveyIds());
+      await openForCreative(survey, "creative-1", widget.getOpenSurveyIds());
       await vi.advanceTimersByTimeAsync(60_000);
 
       expect(renderedSurveyIds()).toEqual([survey.id]);
@@ -193,8 +199,7 @@ describe("survey concurrency guard", () => {
       // Not open, so `resolveClick` opens it instead of treating the press as one on its open survey.
       expect(widget.getOpenSurveyIds()).not.toContain(survey.id);
 
-      await widget.openSurveyForCreative(survey, "creative-1", widget.getOpenSurveyIds());
-      await vi.advanceTimersByTimeAsync(0);
+      await openForCreative(survey, "creative-1", widget.getOpenSurveyIds());
       expect(renderedSurveyIds()).toEqual([survey.id]);
 
       // The delayed render was called off: the survey shows once, not again when the delay ends.
@@ -206,7 +211,18 @@ describe("survey concurrency guard", () => {
       const opening = widget.openSurveyForCreative(survey, "creative-1", []);
 
       expect(widget.getOpenSurveyIds()).toEqual([survey.id]);
+      await vi.advanceTimersByTimeAsync(0);
       await opening;
+    });
+
+    test("tells the click whether its survey reached the screen, which a later click can call off", async () => {
+      const first = widget.openSurveyForCreative(survey, "creative-1", []);
+      const second = widget.openSurveyForCreative({ ...survey, id: "second-survey" }, "creative-2", []);
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(await first).toBe(false);
+      expect(await second).toBe(true);
+      expect(renderedSurveyIds()).toEqual(["second-survey"]);
     });
   });
 });

@@ -119,6 +119,14 @@ const getBrowserStorage = (): Storage | null => {
   }
 };
 
+/** A press that opened the creative's Destination. */
+const handleDestinationOpened = (view: TCreativeView): void => {
+  countClick(view.id);
+  // A dismissible banner whose button opened its Destination has done its job for this visit (ENG-3576);
+  // one that can't be dismissed stays, so a critical notice can't be clicked away.
+  if (view.type === "banner" && view.dismissible) dismissBanner(view.id);
+};
+
 /** The click path: never the survey trigger. */
 const handleCreativeClick = (view: TCreativeView): void => {
   const click = resolveClick(view, getOpenSurveyIds());
@@ -126,23 +134,22 @@ const handleCreativeClick = (view: TCreativeView): void => {
 
   if (click.kind === "openTab") {
     window.open(click.url, "_blank", "noopener");
-  } else {
-    const survey = Config.getInstance()
-      .get()
-      .workspace.data.surveys.find(({ id }) => id === click.surveyId);
-    if (!survey) {
-      Logger.getInstance().debug(
-        `Creative "${view.id}" opens survey "${click.surveyId}", which isn't loaded.`
-      );
-      return;
-    }
-    void openSurveyForCreative(survey, view.id, click.close);
+    handleDestinationOpened(view);
+    return;
   }
 
-  countClick(view.id);
-  // A dismissible banner whose button opened its Destination has done its job for this visit (ENG-3576);
-  // one that can't be dismissed stays, so a critical notice can't be clicked away.
-  if (view.type === "banner" && view.dismissible) dismissBanner(view.id);
+  const survey = Config.getInstance()
+    .get()
+    .workspace.data.surveys.find(({ id }) => id === click.surveyId);
+  if (!survey) {
+    Logger.getInstance().debug(`Creative "${view.id}" opens survey "${click.surveyId}", which isn't loaded.`);
+    return;
+  }
+  // Once the survey is on screen: one that failed to open (its renderer did not load, say) leaves the
+  // creative as it was, uncounted, so the visitor can press it again.
+  void openSurveyForCreative(survey, view.id, click.close).then((isShown) => {
+    if (isShown) handleDestinationOpened(view);
+  });
 };
 
 const showCreatives = (views: readonly TCreativeView[], appearance: "light" | "dark" = "light"): void => {

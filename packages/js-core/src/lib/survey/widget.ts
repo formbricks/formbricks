@@ -140,13 +140,17 @@ const skipsWithoutIdentification = (
  * Shows a survey. Its triggers call it with the `action` that fired; a creative's click calls it with an
  * `opener` (through `openSurveyForCreative`), which skips the one-survey-at-a-time guard and segment
  * filters; the click path also takes away the survey's delay and auto-close.
+ *
+ * Resolves to whether the survey reached the screen. A creative's click waits until it has: it has no
+ * delay, and nothing but a later click calls it off. A trigger's call resolves once its survey is
+ * scheduled, since a delay can still call it off (its timeout cleared) long after.
  */
 export const renderWidget = async (
   survey: TWorkspaceStateSurvey,
   action?: string,
   hiddenFieldsObject?: TTrackProperties["hiddenFields"],
   opener?: TSurveyOpener
-): Promise<void> => {
+): Promise<boolean> => {
   const logger = Logger.getInstance();
   const config = Config.getInstance();
   const timeoutStack = TimeoutStack.getInstance();
@@ -154,7 +158,7 @@ export const renderWidget = async (
   if (isSurveyRunning && !opener) {
     logger.debug("A survey is already running. Skipping.");
     emitDebugSurveyEvent({ surveyId: survey.id, action, stage: "trigger", outcome: "anotherSurveyOpen" });
-    return;
+    return false;
   }
 
   setIsSurveyRunning(true);
@@ -174,10 +178,10 @@ export const renderWidget = async (
     logger.debug("Waiting for pending user identification before rendering survey");
   }
   const identificationSucceeded = !hasPendingIdentification || (await updateQueue.waitForPendingWork());
-  if (isSuperseded()) return;
+  if (isSuperseded()) return false;
   if (!identificationSucceeded && skipsWithoutIdentification(survey, opener)) {
     release();
-    return;
+    return false;
   }
 
   if (survey.delay) {
@@ -199,9 +203,9 @@ export const renderWidget = async (
   } catch (error) {
     logger.error(`Failed to load surveys library: ${String(error)}`);
     release();
-    return;
+    return false;
   }
-  if (isSuperseded()) return;
+  if (isSuperseded()) return false;
 
   // Resolved here, after the surveys bundle loads but before anything is scheduled, recorded or shown:
   // a skip below leaves no display, event or timeout behind, only the released `isSurveyRunning`.
@@ -209,7 +213,7 @@ export const renderWidget = async (
   if (!languageCode) {
     logger.debug(`Survey "${survey.id}" is not available in specified language.`);
     release();
-    return;
+    return false;
   }
 
   const recaptchaSiteKey = config.get().workspace.data.recaptchaSiteKey;
@@ -221,10 +225,19 @@ export const renderWidget = async (
 
   if (isSpamProtectionEnabled) await loadRecaptchaScript(recaptchaSiteKey);
   // Without spam protection nothing was awaited since the check above, so this one is false then.
-  if (isSuperseded()) return;
+  if (isSuperseded()) return false;
+
+  // Settled by the timeout below, once it has run: whether the survey reached the screen.
+  let settleShown: (isShown: boolean) => void = () => undefined;
+  const shown = new Promise<boolean>((resolve) => {
+    settleShown = resolve;
+  });
 
   const timeoutId = setTimeout(() => {
-    if (isSuperseded()) return;
+    if (isSuperseded()) {
+      settleShown(false);
+      return;
+    }
 
     // Checked again right before it shows (ENG-3875). Time has passed since the check in
     // `triggerSurvey`, even with no delay: identification, the surveys bundle and reCAPTCHA all load
@@ -233,6 +246,7 @@ export const renderWidget = async (
     if (!opener && !passesShowConditions(survey, action, "beforeShow")) {
       timeoutStack.remove(timeoutId as unknown as number);
       release();
+      settleShown(false);
       return;
     }
 
@@ -367,23 +381,28 @@ export const renderWidget = async (
       },
       getSetIsResponseSendingFinished: (_f: (value: boolean) => void) => undefined,
     });
+    settleShown(true);
   }, survey.delay * 1000);
 
   if (action) {
     timeoutStack.add(action, timeoutId as unknown as number);
   }
+
+  return opener ? shown : true;
 };
 
 /**
  * The click path: opens the survey a creative was pressed for, right away.
  * `close` is what `resolveClick` says to close first — the surveys on screen, each reported as closed —
  * and anything still on its way to the screen (a delay, a renderer load) is called off for good.
+ * Resolves to whether the survey reached the screen: one that did not (its renderer failed to load, a
+ * later click called it off) is no Click.
  */
 export const openSurveyForCreative = async (
   survey: TWorkspaceStateSurvey,
   creativeId: string,
   close: readonly string[]
-): Promise<void> => {
+): Promise<boolean> => {
   renderGeneration += 1;
 
   const timeoutStack = TimeoutStack.getInstance();
@@ -396,7 +415,7 @@ export const openSurveyForCreative = async (
   // After the closes above, which clear it: the survey is on its way to the screen.
   surveyInFlight = survey.id;
   // Shown right away, and until the visitor closes it: no delay, no auto-close.
-  await renderWidget({ ...survey, delay: 0, autoClose: null }, undefined, undefined, { creativeId });
+  return renderWidget({ ...survey, delay: 0, autoClose: null }, undefined, undefined, { creativeId });
 };
 
 export const closeSurvey = (surveyId?: string): void => {
