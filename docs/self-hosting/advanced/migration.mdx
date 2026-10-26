@@ -224,13 +224,14 @@ The Helm chart and Formbricks image are versioned independently. A chart-only pa
 
 ### Charts and dashboards API
 
-Charts and dashboards are now part of API v3 and the MCP server, and the app uses the same API. Three things
+Charts and dashboards are now part of API v3 and the MCP server, and the app uses the same API. Four things
 change for an existing installation:
 
 - **Every write API key can manage charts and dashboards.** An API key with `write` or `manage` on a workspace
   can now create and change its charts and dashboards through `/api/v3` and the MCP server, and delete them
   through `/api/v3` (the MCP server has no delete tools). Reading a chart's numbers also needs access to its
-  feedback dataset. Review your keys if that is broader than you want.
+  feedback dataset, and changing or deleting a chart needs write access to it. Review your keys if that is
+  broader than you want.
 - **OAuth apps ask again.** Two data migrations add the `dashboards:read` and `dashboards:write` scopes to the
   MCP resource and to each registered OAuth client that already holds an MCP scope: `dashboards:read` with
   any MCP read scope, `dashboards:write` with any MCP write scope. Clients set to skip consent are left
@@ -238,6 +239,10 @@ change for an existing installation:
   they approve, the client keeps its current access and has no dashboard tools.
 - **Deleting a chart that is on a dashboard is refused**, in the app and in the API, naming the dashboards that
   hold it. Remove the chart from them first. Deleting a dashboard still keeps its charts.
+- **Widget layouts are tidied once.** Dashboards can now only be saved with widgets that fit the grid (at most
+  8 rows tall) and do not overlap, and older versions could store either. The data migration
+  `20261026120000_normalize_dashboard_widget_layouts` shortens over-tall widgets and moves overlapping ones down,
+  keeping each in its column. It is a short pass over the widget table that only updates rows that change.
 
 The Cube configuration file `cube/cube.js` changed too: it now accepts queries made with an API key, which the
 previous file rejects. Refresh it the way [Cube model files for Docker](#cube-model-files-for-docker) describes
