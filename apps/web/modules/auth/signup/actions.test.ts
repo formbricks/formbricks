@@ -4,7 +4,6 @@ import {
   INVITE_TOKEN_INVALID_ERROR_CODE,
   SIGNUP_DISABLED_ERROR_CODE,
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
-  TooManyRequestsError,
 } from "@formbricks/types/errors";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { verifyInviteToken } from "@/lib/jwt";
@@ -210,9 +209,9 @@ describe("createUserAction — signup verification email callbackURL", () => {
     });
   });
 
-  // The notice to the inviter goes through the email caps, so it can be refused after the membership
-  // exists. A refusal must not fail the sign-up or leave the used invite behind.
-  test("completes an invite sign-up and deletes the invite when the inviter's notice is refused", async () => {
+  // The notice to the inviter is sent after the membership exists, so a failed send must not fail the
+  // sign-up or leave the used invite behind.
+  test("completes an invite sign-up and deletes the invite when the inviter's notice fails", async () => {
     vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
     vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: "invite-1", email: "ada@example.com" } as never);
     vi.mocked(getInvite).mockResolvedValue({
@@ -222,9 +221,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
       teamIds: null,
       creator: { name: "Owner", email: "owner@example.com", locale: "en-US" },
     } as never);
-    vi.mocked(sendInviteAcceptedEmail).mockRejectedValue(
-      new TooManyRequestsError("Maximum number of requests reached. Please try again later.")
-    );
+    vi.mocked(sendInviteAcceptedEmail).mockRejectedValue(new Error("smtp unavailable"));
 
     const result = await createUserAction({
       ctx: newCtx(),

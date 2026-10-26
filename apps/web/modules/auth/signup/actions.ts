@@ -235,8 +235,8 @@ async function handleInviteAcceptance(
     },
   });
 
-  // Best-effort: the membership exists by now, so a failed or rate-limited notice to the inviter must not
-  // leave the used invite behind.
+  // Best-effort: the membership exists by now, so a notice the SMTP server refuses must not leave the used
+  // invite behind.
   try {
     await sendInviteAcceptedEmail(
       invite.creator.name ?? "",

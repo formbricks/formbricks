@@ -228,7 +228,7 @@ export const sendFollowUpsForResponse = async (
     // not `createdBy`, which an API caller can set to anyone.
     const rateLimit = {
       organizationId: organization.id,
-      actorUserId: await resolveEmailActorUserId(survey.ownerId ?? null, organization.id),
+      actorUserId: await resolveEmailActorUserId(survey.ownerId, organization.id),
     };
 
     // Process each follow-up

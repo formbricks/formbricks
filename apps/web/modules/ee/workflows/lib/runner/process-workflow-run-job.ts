@@ -511,19 +511,17 @@ const loadRunEmailContext = async (
   // yields an empty allowlist, so a literal external recipient is rejected rather than allowed
   // through unchecked.
   const needsRecipientAllowlist = steps.some((step) => isLiteralEmailRecipient(step.node.config.to));
-  const allowedRecipientEmails = needsRecipientAllowlist
-    ? await getWorkspaceMemberEmails(workspaceId)
-    : new Set<string>();
+  const [allowedRecipientEmails, rateLimitActorUserId] = await Promise.all([
+    needsRecipientAllowlist ? getWorkspaceMemberEmails(workspaceId) : new Set<string>(),
+    organization ? resolveEmailActorUserId(actorUserId, organization.id) : actorUserId,
+  ]);
 
   return {
     survey,
     response,
     logoUrl,
     allowedRecipientEmails,
-    rateLimit: {
-      organizationId: organization?.id,
-      actorUserId: organization ? await resolveEmailActorUserId(actorUserId, organization.id) : actorUserId,
-    },
+    rateLimit: { organizationId: organization?.id, actorUserId: rateLimitActorUserId },
   };
 };
 

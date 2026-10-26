@@ -107,8 +107,8 @@ export const InvitePage = async (props: InvitePageProps) => {
         );
       }
       await deleteInvite(inviteId);
-      // Best-effort: the invite is already accepted, so a failed or rate-limited notice to the inviter must
-      // not stop the rest of the acceptance.
+      // Best-effort: the invite is already accepted, so a notice the SMTP server refuses must not stop the
+      // rest of the acceptance.
       try {
         await sendInviteAcceptedEmail(
           invite.creator.name ?? "",
