@@ -1,4 +1,5 @@
 import { afterAll, beforeEach, describe, expect, test, vi } from "vitest";
+import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { cache } from "@/lib/cache";
@@ -20,6 +21,20 @@ import { findCreativeDayDeviceCounts, findCreativePageCounts } from "./stats-rep
 
 vi.mock("node:crypto", async (importOriginal) => await importOriginal<typeof import("node:crypto")>());
 vi.mock("crypto", async (importOriginal) => await importOriginal<typeof import("crypto")>());
+
+/** Every `getRedisClient` call gets the real client, unless `isDown` says Redis is unavailable for it. */
+const redisOutage = vi.hoisted(() => ({ isDown: async (): Promise<boolean> => false }));
+vi.mock("@/lib/cache", async (importOriginal) => {
+  const { cache } = await importOriginal<typeof import("@/lib/cache")>();
+  return {
+    cache: new Proxy(cache, {
+      get: (target, prop: keyof typeof cache) =>
+        prop === "getRedisClient"
+          ? async () => ((await redisOutage.isDown()) ? null : await target.getRedisClient())
+          : target[prop],
+    }),
+  };
+});
 
 const TODAY = "2026-10-16";
 const AT_NOON = new Date(`${TODAY}T12:00:00.000Z`);
@@ -75,6 +90,7 @@ const stored = async (creativeId: string, workspaceId: string, day = TODAY) => (
 const byPage = (pages: { page: string }[]) => [...pages].sort((a, b) => (a.page < b.page ? -1 : 1));
 
 beforeEach(async () => {
+  redisOutage.isDown = async () => false;
   await resetDb();
   await clearCounters();
 });
@@ -156,6 +172,30 @@ describe("counting and flushing", () => {
 
     expect((await stored(creativeId, workspaceId)).devices).toEqual([
       { date: TODAY, deviceType: "phone", impressions: 2, clicks: 0 },
+    ]);
+  });
+
+  test("a flush that loses Redis after claiming fails and keeps its claim, so the next flush writes the count", async () => {
+    const { workspaceId, ids } = await seedCreatives(1);
+    const [creativeId] = ids;
+    await incrementCreativeCounters(
+      counts("example.com/", "phone", [{ creativeId, impressions: 1, clicks: 0 }]),
+      AT_NOON
+    );
+    // Redis is unavailable for one call, the first after the claim (the read), and back for the rest.
+    const redis = await redisClient();
+    let wasDown = false;
+    redisOutage.isDown = async () => {
+      if (wasDown || (await redis.sCard(createCacheKey.creativeStats.flushing(TODAY))) === 0) return false;
+      wasDown = true;
+      return true;
+    };
+
+    await expect(flushCreativeCounters(AT_NOON)).rejects.toThrow();
+    await flushCreativeCounters(AT_NOON);
+
+    expect((await stored(creativeId, workspaceId)).devices).toEqual([
+      { date: TODAY, deviceType: "phone", impressions: 1, clicks: 0 },
     ]);
   });
 

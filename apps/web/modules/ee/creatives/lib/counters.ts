@@ -183,13 +183,16 @@ const readTotals = (hash: Record<string, string>): Map<string, { impressions: nu
 const isDeviceType = (value: string): value is TShowConditionDeviceType =>
   (SHOW_CONDITION_DEVICE_TYPES as readonly string[]).includes(value);
 
-/** The running totals of `day` for each creative, as rollup rows. */
+/**
+ * The running totals of `day` for each creative, as rollup rows. Throws when Redis isn't available: the
+ * creatives are claimed, and reading them as empty would let the flush release totals it never wrote.
+ */
 export const readCreativeCounters = async (
   day: string,
   creativeIds: readonly string[]
 ): Promise<{ deviceRows: TCreativeDeviceCountRow[]; pageRows: TCreativePageCountRow[] }> => {
   const redis = await getRedis();
-  if (!redis) return { deviceRows: [], pageRows: [] };
+  if (!redis) throw new Error("Redis is not available to read the claimed creative counters");
 
   const hashes = await Promise.all(
     creativeIds.map(async (creativeId) => {
