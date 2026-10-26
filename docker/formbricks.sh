@@ -521,6 +521,9 @@ EOF
   append_if_missing "AUTHZED_TOKEN" "$authzed_token"
   append_if_missing "AUTHZED_DATABASE_PASSWORD" "$authzed_database_password"
   append_if_missing "AUTHZED_ENABLED" "true"
+  # The migration container reads this file but does not inherit the app service's Compose defaults.
+  append_if_missing "AUTHZED_ENDPOINT" "spicedb:50051"
+  append_if_missing "AUTHZED_SYSTEM_KEY" "formbricks"
   append_if_missing "AUTHZED_CONSISTENCY" "fully_consistent"
   append_if_missing "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED" "true"
 
@@ -1441,8 +1444,8 @@ EOF
 set -e
 docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb formbricks-migrate
 docker compose wait formbricks-migrate
-docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
-docker compose --profile authzed-ops run --rm authzed-ops upgrade check
+docker compose --profile authzed-ops run --rm --interactive=false -T authzed-ops upgrade prepare
+docker compose --profile authzed-ops run --rm --interactive=false -T authzed-ops upgrade check
 docker compose up -d
 
 echo "🔗 To edit more variables and deeper config, go to the formbricks/docker-compose.yml, edit the file, and restart the container!"

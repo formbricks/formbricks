@@ -7,8 +7,11 @@ icon: "rocket"
 See [deployment components](/self-hosting/deployment-components) for the stack, managed alternatives and
 the release-specific image inventory.
 
-<Note>The one-click installer supports Debian 12/13 and Ubuntu hosts. For other distributions or derivatives,
-use the [manual Docker setup](/self-hosting/setup/docker).</Note>
+<Note>
+  The one-click installer supports Debian 12/13 and Ubuntu hosts. Fresh Debian 12 and 13 arm64 installs were
+  verified in Docker-in-Docker through app startup and a clean apt update. For other distributions or derivatives,
+  use the [manual Docker setup](/self-hosting/setup/docker).
+</Note>
 
 Use this script to set up Formbricks on a Debian or Ubuntu server. It installs Docker when needed and configures
 Postgres, SpiceDB, Traefik, and an optional SSL certificate.
