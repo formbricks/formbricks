@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
+import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { lookupAuthorizedOrganizationIds } from "@/lib/authorization/resource-list";
 import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
@@ -51,6 +52,8 @@ vi.mock("@formbricks/database", () => ({
     },
   },
 }));
+
+vi.mock("@formbricks/logger", () => ({ logger: { audit: vi.fn(), error: vi.fn() } }));
 
 vi.mock("@/lib/user/service", () => ({
   updateUser: vi.fn(),
@@ -248,6 +251,10 @@ describe("Organization Service", () => {
         },
         select: organizationSelect,
       });
+      expect(logger.audit).toHaveBeenCalledWith({
+        securityEvent: "organization.created",
+        organizationId: "org1",
+      });
       // Stripe setup is now handled by the caller after membership creation
       expect(ensureCloudStripeSetupForOrganization).not.toHaveBeenCalled();
     });
@@ -260,6 +267,7 @@ describe("Organization Service", () => {
       vi.mocked(prisma.organization.create).mockRejectedValue(prismaError);
 
       await expect(createOrganization({ name: "Test Org" })).rejects.toThrow(DatabaseError);
+      expect(logger.audit).not.toHaveBeenCalled();
     });
   });
 
