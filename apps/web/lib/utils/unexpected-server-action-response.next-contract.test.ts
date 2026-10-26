@@ -6,8 +6,7 @@ import { isUnexpectedServerActionResponseError } from "@/lib/utils/unexpected-se
 /**
  * Contract test against the installed Next.js (ENG-2899).
  *
- * `isUnexpectedServerActionResponseError` relies on two things Next.js does not document: the `E394`
- * code it stamps on an action's non-Flight response, and the absence of a `digest` on that error.
+ * `isUnexpectedServerActionResponseError` relies on two things Next.js does not document: the generic message it raises for an action's non-Flight response, and the absence of a `digest` on that error.
  * There is no public boundary that produces this rejection short of a full browser run, so this file
  * deliberately drives Next's own client-side server-action reducer with a stubbed `fetch`. That makes
  * it a canary: if an upgrade renames the code, adds a digest, or moves the throw, this file fails and
@@ -108,18 +107,17 @@ describe("Next.js server-action rejections, as the installed version raises them
 
     // The shape the classifier and its unit-test fixtures rely on.
     expect(rejection).toBeInstanceOf(Error);
-    expect(rejection).toMatchObject({ __NEXT_ERROR_CODE: "E394" });
     expect(rejection).not.toHaveProperty("digest");
     expect(isUnexpectedServerActionResponseError(rejection)).toBe(true);
   });
 
-  test("a 4xx/5xx text/plain body becomes the message and is still recognized", async () => {
+  test("a 4xx/5xx text/plain body becomes the message", async () => {
     const rejection = await rejectionFor(
       new Response("upstream connect error", { status: 503, headers: { "content-type": "text/plain" } })
     );
 
+    // Next.js 16.4.1 stamps no error code, so a body-as-message rejection cannot be told from any other Error.
     expect((rejection as Error).message).toBe("upstream connect error");
-    expect(isUnexpectedServerActionResponseError(rejection)).toBe(true);
   });
 
   test("a stale action is left to the reload prompt", async () => {
@@ -134,12 +132,11 @@ describe("Next.js server-action rejections, as the installed version raises them
     expect(isUnexpectedServerActionResponseError(rejection)).toBe(false);
   });
 
-  test("an action's redirect() is not mistaken for one, though it shares the code", () => {
+  test("an action's redirect() is not mistaken for one, ", () => {
     // The real error a redirecting action rejects with: E394 too, but with a digest.
     const { getRedirectError } = require("next/dist/client/components/redirect");
     const redirect = getRedirectError("/workspaces/w1/surveys", "push");
 
-    expect(redirect.__NEXT_ERROR_CODE).toBe("E394");
     expect(redirect).toHaveProperty("digest");
     expect(isUnexpectedServerActionResponseError(redirect)).toBe(false);
   });
