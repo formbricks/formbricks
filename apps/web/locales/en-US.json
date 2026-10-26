@@ -3241,7 +3241,7 @@
         "license_status_invalid": "Invalid License",
         "license_status_unreachable": "Unreachable",
         "license_unreachable_grace_period": "License server cannot be reached. Your enterprise features remain active during a 3-day grace period ending {gracePeriodEnd}.",
-        "lite_license_description": "We will send you a complimentary Lite Enterprise License with two-factor authentication, spam protection and one additional workspace. No strings attached. Free forever.",
+        "lite_license_description": "We will send you a complimentary Lite Enterprise License with two-factor authentication, AI Smart Functionality to create and translate surveys with AI, and one additional workspace. No strings attached. Free forever.",
         "lite_license_title": "Free Lite License",
         "oidc_sso": "OIDC SSO (AzureAD, Google, OpenID)",
         "questions_please_reach_out_to_email": "Questions? Please reach out to <contactLink>hola@formbricks.com</contactLink>",

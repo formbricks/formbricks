@@ -3241,7 +3241,7 @@
         "license_status_invalid": "Ogiltig licens",
         "license_status_unreachable": "Otillgänglig",
         "license_unreachable_grace_period": "Licensservern kan inte nås. Dina enterprise-funktioner är aktiva under en 3-dagars respitperiod som slutar {gracePeriodEnd}.",
-        "lite_license_description": "Vi skickar dig en kostnadsfri Lite Enterprise-licens med tvåfaktorsautentisering, skräppostskydd och en extra arbetsyta. Inga krav. Gratis för alltid.",
+        "lite_license_description": "Vi skickar dig en kostnadsfri Lite Enterprise-licens med tvåfaktorsautentisering, AI Smart Functionality för att skapa och översätta enkäter med AI samt ytterligare en arbetsyta. Utan krav på motprestation. Gratis för alltid.",
         "lite_license_title": "Gratis Lite-licens",
         "oidc_sso": "OIDC SSO (AzureAD, Google, OpenID)",
         "questions_please_reach_out_to_email": "Frågor? Kontakta oss gärna på <contactLink>hola@formbricks.com</contactLink>",

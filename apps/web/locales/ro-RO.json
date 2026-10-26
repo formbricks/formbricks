@@ -3241,7 +3241,7 @@
         "license_status_invalid": "Licență invalidă",
         "license_status_unreachable": "Indisponibilă",
         "license_unreachable_grace_period": "Serverul de licențe nu poate fi contactat. Funcționalitățile enterprise rămân active timp de 3 zile, până la data de {gracePeriodEnd}.",
-        "lite_license_description": "Îți vom trimite o Licență Lite Enterprise gratuită cu autentificare cu doi factori, protecție anti-spam și un workspace suplimentar. Fără obligații. Gratis pentru totdeauna.",
+        "lite_license_description": "Îți vom trimite gratuit o licență Lite Enterprise cu autentificare în doi factori, funcționalitate inteligentă bazată pe AI pentru crearea și traducerea chestionarelor, plus un spațiu de lucru suplimentar. Fără obligații. Gratuit pentru totdeauna.",
         "lite_license_title": "Licență Lite gratuită",
         "oidc_sso": "OIDC SSO (AzureAD, Google, OpenID)",
         "questions_please_reach_out_to_email": "Ai întrebări? Te rugăm să ne contactezi la <contactLink>hola@formbricks.com</contactLink>",

@@ -3241,7 +3241,7 @@
         "license_status_invalid": "Ongeldige licentie",
         "license_status_unreachable": "Niet bereikbaar",
         "license_unreachable_grace_period": "Licentieserver is niet bereikbaar. Je enterprise functies blijven actief tijdens een respijtperiode van 3 dagen die eindigt op {gracePeriodEnd}.",
-        "lite_license_description": "We sturen je een gratis Lite Enterprise-licentie met tweefactorauthenticatie, spambescherming en één extra werkruimte. Geen verplichtingen. Voor altijd gratis.",
+        "lite_license_description": "We sturen je een gratis Lite Enterprise-licentie met tweestapsverificatie, AI Smart Functionality om enquêtes met AI te maken en te vertalen, en één extra werkruimte. Zonder addertjes onder het gras. Voor altijd gratis.",
         "lite_license_title": "Gratis Lite-licentie",
         "oidc_sso": "OIDC SSO (AzureAD, Google, OpenID)",
         "questions_please_reach_out_to_email": "Vragen? Neem contact op via <contactLink>hola@formbricks.com</contactLink>",

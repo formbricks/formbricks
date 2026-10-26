@@ -3241,7 +3241,7 @@
         "license_status_invalid": "Geçersiz Lisans",
         "license_status_unreachable": "Ulaşılamıyor",
         "license_unreachable_grace_period": "Lisans sunucusuna ulaşılamıyor. Kurumsal özelliklerin {gracePeriodEnd} tarihinde sona erecek 3 günlük ek süre boyunca aktif kalacak.",
-        "lite_license_description": "Size iki faktörlü kimlik doğrulama, spam koruması ve bir ek çalışma alanı içeren ücretsiz bir Lite Kurumsal Lisansı göndereceğiz. Hiçbir koşul yok. Sonsuza kadar ücretsiz.",
+        "lite_license_description": "Sana iki faktörlü kimlik doğrulama, yapay zekâyla anket oluşturup çevirmeni sağlayan Yapay Zekâ Akıllı İşlevselliği ve ek bir çalışma alanı içeren ücretsiz bir Lite Enterprise Lisansı göndereceğiz. Hiçbir şart yok. Sonsuza dek ücretsiz.",
         "lite_license_title": "Ücretsiz Lite Lisans",
         "oidc_sso": "OIDC SSO (AzureAD, Google, OpenID)",
         "questions_please_reach_out_to_email": "Sorularınız mı var? Lütfen <contactLink>hola@formbricks.com</contactLink> adresinden bize ulaşın",
