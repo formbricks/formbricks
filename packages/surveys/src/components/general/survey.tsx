@@ -1398,12 +1398,12 @@ export function Survey({
 
                 {isCloseButtonVisible || isLanguageSwitchVisible ? (
                   <div
-                    // Below the progress bar (h-2) when there is one.
-                    className={
-                      isCloseButtonBesideContent
-                        ? cn("absolute end-0 w-fit", !isCardless && showProgressBar ? "top-2" : "top-0")
-                        : "relative w-full"
-                    }>
+                    className={cn(
+                      isCloseButtonBesideContent ? "absolute end-0 w-fit" : "relative w-full",
+                      // Below the progress bar (h-2) when there is one.
+                      isCloseButtonBesideContent && !isCardless && showProgressBar && "top-2",
+                      isCloseButtonBesideContent && (isCardless || !showProgressBar) && "top-0"
+                    )}>
                     <div
                       className={cn(
                         "flex w-full items-center justify-end",
