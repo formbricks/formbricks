@@ -3,8 +3,8 @@ import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { MCP_OAUTH_SCOPES } from "@/modules/auth/lib/oauth-urls";
 // The data migrations under test (auto-discovered by the migration runner at deploy).
-import { eng6581GrantDashboardsScopes } from "../../../packages/database/migration/20261022120000_eng_6581_grant_dashboards_scopes/migration";
-import { eng6581GrantDashboardsScopesToClients } from "../../../packages/database/migration/20261022120001_eng_6581_grant_dashboards_scopes_to_clients/migration";
+import { grantDashboardsScopes } from "../../../packages/database/migration/20261022120000_grant_dashboards_scopes/migration";
+import { grantDashboardsScopesToClients } from "../../../packages/database/migration/20261022120001_grant_dashboards_scopes_to_clients/migration";
 
 /**
  * ENG-6581 against real Postgres: the two repairs that let upgraded instances grant `dashboards:*`.
@@ -14,8 +14,8 @@ import { eng6581GrantDashboardsScopesToClients } from "../../../packages/databas
  * The runner supplies `run` with its interactive transaction; here `prisma` stands in, the same shape the
  * ENG-2862 and ENG-3470 suites use.
  */
-const runResourceGrant = () => eng6581GrantDashboardsScopes.run!({ prisma, tx: prisma as never });
-const runClientGrant = () => eng6581GrantDashboardsScopesToClients.run!({ prisma, tx: prisma as never });
+const runResourceGrant = () => grantDashboardsScopes.run!({ prisma, tx: prisma as never });
+const runClientGrant = () => grantDashboardsScopesToClients.run!({ prisma, tx: prisma as never });
 
 /** What an upgraded instance holds after ENG-2862 and ENG-3470, before this change. */
 const PRE_ENG6581_SCOPES = [

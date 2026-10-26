@@ -35,10 +35,10 @@ const MCP_WRITE_SCOPES = [
   "responses:write",
 ] as const;
 
-export const eng6581GrantDashboardsScopesToClients: MigrationScript = {
+export const grantDashboardsScopesToClients: MigrationScript = {
   type: "data",
   id: "v8k34tz7ey4mih96vnwxprc6",
-  name: "20261022120001_eng_6581_grant_dashboards_scopes_to_clients",
+  name: "20261022120001_grant_dashboards_scopes_to_clients",
   run: async ({ tx }) => {
     const migrationTx = tx as unknown as {
       $executeRaw: (query: TemplateStringsArray, ...values: readonly unknown[]) => Promise<number>;

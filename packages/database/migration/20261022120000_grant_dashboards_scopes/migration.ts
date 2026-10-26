@@ -22,10 +22,10 @@ import type { MigrationScript } from "../../src/scripts/migration-runner";
 
 const DASHBOARD_SCOPES = ["dashboards:read", "dashboards:write"] as const;
 
-export const eng6581GrantDashboardsScopes: MigrationScript = {
+export const grantDashboardsScopes: MigrationScript = {
   type: "data",
   id: "xkz4p520cpnnlf97mxzd9xbu",
-  name: "20261022120000_eng_6581_grant_dashboards_scopes",
+  name: "20261022120000_grant_dashboards_scopes",
   run: async ({ tx }) => {
     const migrationTx = tx as unknown as {
       $executeRaw: (query: TemplateStringsArray, ...values: readonly unknown[]) => Promise<number>;

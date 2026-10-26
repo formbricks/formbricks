@@ -71,7 +71,7 @@ const REPAIR_MIGRATIONS = [
     declaration: /const RESPONSE_SCOPES = \[([^\]]*)\]/,
   },
   {
-    path: "../../packages/database/migration/20261022120000_eng_6581_grant_dashboards_scopes/migration.ts",
+    path: "../../packages/database/migration/20261022120000_grant_dashboards_scopes/migration.ts",
     declaration: /const DASHBOARD_SCOPES = \[([^\]]*)\]/,
   },
 ];

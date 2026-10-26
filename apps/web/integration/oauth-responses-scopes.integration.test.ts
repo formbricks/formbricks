@@ -5,7 +5,7 @@ import { MCP_OAUTH_SCOPES } from "@/modules/auth/lib/oauth-urls";
 // The data migration under test (auto-discovered by the migration runner at deploy).
 import { eng2862GrantResponsesScopes } from "../../../packages/database/migration/20260915120000_eng_2862_grant_responses_scopes/migration";
 // A later repair for a later scope family, run after this one where the test states the whole-app property.
-import { eng6581GrantDashboardsScopes } from "../../../packages/database/migration/20261022120000_eng_6581_grant_dashboards_scopes/migration";
+import { grantDashboardsScopes } from "../../../packages/database/migration/20261022120000_grant_dashboards_scopes/migration";
 
 /**
  * ENG-2862 against real Postgres. This migration exists because the failure it prevents is silent:
@@ -67,7 +67,7 @@ describe("ENG-2862 responses scope grant", () => {
     await seedResource(identifier, PRE_ENG2862_SCOPES);
 
     await runGrant();
-    await eng6581GrantDashboardsScopes.run!({ prisma, tx: prisma as never });
+    await grantDashboardsScopes.run!({ prisma, tx: prisma as never });
 
     const allowed = new Set(await scopesOf(identifier));
     expect(MCP_OAUTH_SCOPES.filter((scope) => !allowed.has(scope))).toEqual([]);
