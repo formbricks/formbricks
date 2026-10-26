@@ -414,6 +414,24 @@ describe("chart and dashboard MCP tools", () => {
     expect(accepts("update_dashboard_layout", layoutInput(distinctIds(MAX_DASHBOARD_WIDGETS)))).toBe(true);
   });
 
+  test("marks the tools that overwrite or remove something destructive, as the other update tools are", () => {
+    const tools = createToolServer();
+    const destructive = [...tools]
+      .filter(([, tool]) => (tool.config.annotations as { destructiveHint?: boolean }).destructiveHint)
+      .map(([name]) => name)
+      .sort();
+
+    expect(destructive).toEqual(
+      [
+        "remove_chart_from_dashboard",
+        "update_chart",
+        "update_dashboard",
+        "update_dashboard_layout",
+        "update_widget",
+      ].sort()
+    );
+  });
+
   test("list_charts and list_dashboards answer what their own output schema accepts", async () => {
     // The list operations answer v3's cursor envelope ({ limit, nextCursor }, no totals). The SDK
     // validates structured content against `outputSchema`, so a schema that wants more fails every call.

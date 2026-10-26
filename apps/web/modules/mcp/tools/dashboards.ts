@@ -68,7 +68,12 @@ import {
 import { registerScopedTool } from "./guard-scopes";
 import { ZMcpAcknowledgement } from "./output-schemas";
 import { runMcpMutation } from "./run-mcp-mutation";
-import { READ_ANNOTATIONS, WRITE_ANNOTATIONS, toolContext } from "./tool-context";
+import {
+  DESTRUCTIVE_WRITE_ANNOTATIONS,
+  READ_ANNOTATIONS,
+  WRITE_ANNOTATIONS,
+  toolContext,
+} from "./tool-context";
 
 type TMutationRun = Parameters<Parameters<typeof runMcpMutation>[2]>[0];
 
@@ -222,7 +227,7 @@ export function registerDashboardTools(server: McpServer): void {
       inputSchema: ZMcpUpdateChartInput,
       outputSchema: ZMcpChartOutput,
       audit: { action: "updated", targetType: "chart", targetIdArg: "chartId" },
-      annotations: WRITE_ANNOTATIONS,
+      annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
     },
     ["dashboards:write"],
     async ({ chartId, ...body }: TMcpUpdateChartInput, ctx) =>
@@ -350,7 +355,7 @@ export function registerDashboardTools(server: McpServer): void {
       inputSchema: ZMcpUpdateDashboardInput,
       outputSchema: ZMcpDashboardOutput,
       audit: { action: "updated", targetType: "dashboard", targetIdArg: "dashboardId" },
-      annotations: WRITE_ANNOTATIONS,
+      annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
     },
     ["dashboards:write"],
     async ({ dashboardId, ...body }: TMcpUpdateDashboardInput, ctx) =>
@@ -407,7 +412,7 @@ export function registerDashboardTools(server: McpServer): void {
       inputSchema: ZMcpUpdateWidgetInput,
       outputSchema: ZMcpWidgetOutput,
       audit: { action: "updated", targetType: "dashboardWidget", targetIdArg: "widgetId" },
-      annotations: WRITE_ANNOTATIONS,
+      annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
     },
     ["dashboards:write"],
     async ({ dashboardId, widgetId, ...body }: TMcpUpdateWidgetInput, ctx) =>
@@ -426,7 +431,7 @@ export function registerDashboardTools(server: McpServer): void {
       inputSchema: ZMcpRemoveChartFromDashboardInput,
       outputSchema: ZMcpAcknowledgement,
       audit: { action: "deleted", targetType: "dashboardWidget", targetIdArg: "widgetId" },
-      annotations: WRITE_ANNOTATIONS,
+      annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
     },
     ["dashboards:write"],
     async ({ dashboardId, widgetId }: TMcpRemoveChartFromDashboardInput, ctx) =>
@@ -445,7 +450,7 @@ export function registerDashboardTools(server: McpServer): void {
       inputSchema: ZMcpUpdateDashboardLayoutInput,
       outputSchema: ZMcpDashboardOutput,
       audit: { action: "updated", targetType: "dashboard", targetIdArg: "dashboardId" },
-      annotations: WRITE_ANNOTATIONS,
+      annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
     },
     ["dashboards:write"],
     async ({ dashboardId, ...body }: TMcpUpdateDashboardLayoutInput, ctx) =>

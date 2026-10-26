@@ -22,6 +22,17 @@ export const WRITE_ANNOTATIONS = {
   openWorldHint: true,
 } as const;
 
+/**
+ * Write tools that overwrite or remove something already there — an update, a rearrange, taking a chart off
+ * a dashboard — as the survey and workflow update tools are marked, so a client can ask before running one.
+ */
+export const DESTRUCTIVE_WRITE_ANNOTATIONS = {
+  readOnlyHint: false,
+  destructiveHint: true,
+  idempotentHint: false,
+  openWorldHint: true,
+} as const;
+
 /** The context every tool derives the same way, so no tool invents its own request id. */
 export const toolContext = (ctx: TMcpToolContext) => {
   const authInfo = getMcpToolAuthInfo(ctx);
