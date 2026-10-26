@@ -18,6 +18,8 @@ const abortReason = (signal: AbortSignal): unknown =>
  * away or a query cancelled by TanStack never holds up the rest.
  */
 export const takeChartDataTurn = async <T>(signal: AbortSignal | undefined, request: () => Promise<T>) => {
+  // A waiter is handed the finishing request's turn directly, so the count never dips for a newcomer to
+  // slip past the queue.
   if (running >= MAX_CHART_DATA_IN_FLIGHT) {
     await new Promise<void>((resolve, reject) => {
       if (signal?.aborted) {
@@ -36,13 +38,15 @@ export const takeChartDataTurn = async <T>(signal: AbortSignal | undefined, requ
       waiting.push(start);
       signal?.addEventListener("abort", onAbort, { once: true });
     });
+  } else {
+    running++;
   }
 
-  running++;
   try {
     return await request();
   } finally {
-    running--;
-    waiting.shift()?.();
+    const next = waiting.shift();
+    if (next) next();
+    else running--;
   }
 };

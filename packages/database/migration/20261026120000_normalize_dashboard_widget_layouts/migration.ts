@@ -21,7 +21,9 @@ const widgetsByDashboard = async (tx: TTx, dashboardIds: string[]): Promise<Map<
   `;
   const grouped = new Map<string, TStoredWidget[]>();
   for (const { dashboardId, ...widget } of widgets) {
-    grouped.set(dashboardId, [...(grouped.get(dashboardId) ?? []), widget]);
+    const group = grouped.get(dashboardId);
+    if (group) group.push(widget);
+    else grouped.set(dashboardId, [widget]);
   }
   return grouped;
 };

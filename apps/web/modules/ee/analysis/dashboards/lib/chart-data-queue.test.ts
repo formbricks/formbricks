@@ -76,4 +76,31 @@ describe("takeChartDataTurn", () => {
     await Promise.all(failing);
     expect(await takeChartDataTurn(undefined, async () => "ran")).toBe("ran");
   });
+
+  test("serves a waiting request before one that asks later", async () => {
+    const { request, releases } = tracker();
+    const busy = Array.from({ length: MAX_CHART_DATA_IN_FLIGHT }, () =>
+      takeChartDataTurn(undefined, request)
+    );
+    const started: string[] = [];
+    const waiter = takeChartDataTurn(undefined, async () => {
+      started.push("waiter");
+      return request(); // holds its turn until released
+    });
+
+    releases.shift()?.();
+    // Asks in the same tick the turn is freed, before the waiter has resumed.
+    const newcomer = takeChartDataTurn(undefined, async () => {
+      started.push("newcomer");
+    });
+    await flush();
+    expect(started).toEqual(["waiter"]);
+
+    releases.shift()?.();
+    await flush();
+    expect(started).toEqual(["waiter", "newcomer"]);
+
+    for (const release of releases) release();
+    await Promise.all([...busy, waiter, newcomer]);
+  });
 });
