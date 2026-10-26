@@ -112,7 +112,8 @@ jobs:
           aws_role_arn: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          # Identity only needs presence; keep the upload credential in the build job.
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN != '' && 'enabled' || '' }}
           POSTHOG_KEY: ${{ inputs.registry_type == 'ecr' && secrets.POSTHOG_KEY || '' }}
 
       - name: Identify candidate repository and tags
@@ -167,14 +168,14 @@ jobs:
           registry_type: ${{ inputs.registry_type }}
           ecr_region: ${{ vars.ECR_REGION }}
           aws_role_arn: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
-      - uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184 # v2
+      - uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184 # v2.2.0
         with:
           # Preserve the validated trial caches at cutover. PR builds use separate keys.
           cache-key: apps/web/Dockerfile-blacksmith-trial-${{ matrix.arch }}
           nofallback: true
       - name: Build native candidate
         id: build
-        uses: useblacksmith/build-push-action@9b0579bbec7a6cad2f171596c57e7ac1e7658850 # v2
+        uses: useblacksmith/build-push-action@9b0579bbec7a6cad2f171596c57e7ac1e7658850 # v2.3.0
         with:
           context: .
           file: apps/web/Dockerfile

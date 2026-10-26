@@ -8,6 +8,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      force_local_builder:
+        description: Use an isolated GitHub runner instead of the persistent Blacksmith builder
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -89,13 +95,18 @@ jobs:
 
   validate-docker-build:
     name: Validate Docker Build
-    runs-on: ${{ github.event_name != 'merge_group' && !github.event.repository.fork && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'blacksmith-16vcpu-ubuntu-2404' || 'ubuntu-latest' }}
+    runs-on: ${{ !inputs.force_local_builder && github.event_name != 'merge_group' && !github.event.repository.fork && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'blacksmith-16vcpu-ubuntu-2404' || 'ubuntu-latest' }}
     # Forks and merge groups (which can include forks) use isolated GitHub runners.
     timeout-minutes: 180
-    env:
-      BLACKSMITH_BUILD: ${{ github.event_name != 'merge_group' && !github.event.repository.fork && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     permissions:
       contents: read
+
+    # Public fixtures for this disposable validation environment, including Dependabot/fork runs.
+    # These values must never authenticate to external services.
+    env:
+      BLACKSMITH_BUILD: ${{ !inputs.force_local_builder && github.event_name != 'merge_group' && !github.event.repository.fork && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+      DUMMY_DATABASE_URL: postgresql://test:test@127.0.0.1:5432/formbricks
+      DUMMY_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 
     # Add PostgreSQL and Redis service containers
     services:
@@ -140,7 +151,7 @@ jobs:
 
       - name: Set up persistent PR Docker builder
         if: env.BLACKSMITH_BUILD == 'true'
-        uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184 # v2
+        uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184 # v2.2.0
         with:
           cache-key: apps/web/Dockerfile-pr-amd64
           nofallback: true
@@ -168,7 +179,7 @@ jobs:
       - name: Build Docker Image
         id: build
         if: env.BLACKSMITH_BUILD == 'true'
-        uses: useblacksmith/build-push-action@9b0579bbec7a6cad2f171596c57e7ac1e7658850 # v2
+        uses: useblacksmith/build-push-action@9b0579bbec7a6cad2f171596c57e7ac1e7658850 # v2.3.0
         with:
           context: .
           file: ./apps/web/Dockerfile
@@ -182,8 +193,8 @@ jobs:
             FORMBRICKS_BUILD_VARIANT=pr
           tags: formbricks-test:${{ github.sha }}
           secrets: |
-            database_url=${{ secrets.DUMMY_DATABASE_URL }}
-            encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
+            database_url=${{ env.DUMMY_DATABASE_URL }}
+            encryption_key=${{ env.DUMMY_ENCRYPTION_KEY }}
             redis_url=redis://localhost:6379
             hub_api_url=http://localhost:4000
             hub_api_key=build-time-placeholder
@@ -205,8 +216,8 @@ jobs:
             FORMBRICKS_BUILD_VARIANT=pr
           tags: formbricks-test:${{ env.GITHUB_SHA }}
           secrets: |
-            database_url=${{ secrets.DUMMY_DATABASE_URL }}
-            encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
+            database_url=${{ env.DUMMY_DATABASE_URL }}
+            encryption_key=${{ env.DUMMY_ENCRYPTION_KEY }}
             redis_url=redis://localhost:6379
             hub_api_url=http://localhost:4000
             hub_api_key=build-time-placeholder
@@ -242,7 +253,6 @@ jobs:
         shell: bash
         env:
           GITHUB_SHA: ${{ github.sha }}
-          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
         run: |
           set -euo pipefail
 
@@ -258,6 +268,7 @@ jobs:
           AUTHZED_CLI_ENV=(
             -e DATABASE_URL="postgresql://test:test@192.0.2.1:5432/formbricks"
             -e ENCRYPTION_KEY="$DUMMY_ENCRYPTION_KEY"
+            -e BETTER_AUTH_SECRET="$DUMMY_ENCRYPTION_KEY"
             -e REDIS_URL="redis://192.0.2.1:6379"
             -e HUB_API_URL="http://192.0.2.1:4000"
             -e HUB_API_KEY="build-time-placeholder"
@@ -315,7 +326,6 @@ jobs:
         shell: bash
         env:
           GITHUB_SHA: ${{ github.sha }}
-          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
         run: |
           set -euo pipefail
 
@@ -441,7 +451,6 @@ jobs:
         shell: bash
         env:
           GITHUB_SHA: ${{ github.sha }}
-          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
         run: |
           set -euo pipefail
 
@@ -491,7 +500,6 @@ jobs:
         shell: bash
         env:
           GITHUB_SHA: ${{ github.sha }}
-          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
         run: |
           set -euo pipefail
 
@@ -601,7 +609,6 @@ jobs:
         shell: bash
         env:
           GITHUB_SHA: ${{ github.sha }}
-          DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
         run: |
           set -euo pipefail
           trap 'docker rm -f formbricks-test >/dev/null 2>&1 || true' EXIT

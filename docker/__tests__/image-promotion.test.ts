@@ -38,27 +38,32 @@ describe("PR builder isolation", () => {
     { event: "pull_request", fork: false, head: "contributor/formbricks", blacksmith: false },
     { event: "pull_request", fork: true, head: "formbricks/formbricks", blacksmith: false },
     { event: "workflow_dispatch", fork: false, blacksmith: true },
+    { event: "workflow_dispatch", fork: false, forceLocal: true, blacksmith: false },
     { event: "workflow_dispatch", fork: true, blacksmith: false },
     { event: "merge_group", fork: false, blacksmith: false },
     { event: "merge_group", fork: false, head: "contributor/formbricks", blacksmith: false },
-  ])("routes $event with fork=$fork and head=$head", ({ event, fork, head, blacksmith }) => {
-    const job = validation.jobs["validate-docker-build"];
-    const github = {
-      event_name: event,
-      repository: "formbricks/formbricks",
-      event: {
-        repository: { fork },
-        ...(head ? { pull_request: { head: { repo: { full_name: head } } } } : {}),
-      },
-    };
-    // These workflow expressions use boolean/string operators shared with JavaScript.
-    // Execute the actual routing expressions so runner choice and builder setup stay aligned.
-    const evaluate = (expression: string) => runInNewContext(expression.slice(3, -2), { github });
-    expect(evaluate(job.env?.BLACKSMITH_BUILD ?? "")).toBe(blacksmith);
-    expect(evaluate(job["runs-on"] ?? "")).toBe(
-      blacksmith ? "blacksmith-16vcpu-ubuntu-2404" : "ubuntu-latest"
-    );
-  });
+  ])(
+    "routes $event with fork=$fork and head=$head",
+    ({ event, fork, head, forceLocal = false, blacksmith }) => {
+      const job = validation.jobs["validate-docker-build"];
+      const github = {
+        event_name: event,
+        repository: "formbricks/formbricks",
+        event: {
+          repository: { fork },
+          ...(head ? { pull_request: { head: { repo: { full_name: head } } } } : {}),
+        },
+      };
+      // These workflow expressions use boolean/string operators shared with JavaScript.
+      // Execute the actual routing expressions so runner choice and builder setup stay aligned.
+      const evaluate = (expression: string) =>
+        runInNewContext(expression.slice(3, -2), { github, inputs: { force_local_builder: forceLocal } });
+      expect(evaluate(job.env?.BLACKSMITH_BUILD ?? "")).toBe(blacksmith);
+      expect(evaluate(job["runs-on"] ?? "")).toBe(
+        blacksmith ? "blacksmith-16vcpu-ubuntu-2404" : "ubuntu-latest"
+      );
+    }
+  );
 });
 
 describe("image startup validation", () => {

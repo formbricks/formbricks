@@ -29,6 +29,34 @@ tags within that same repository. The workflow checks every destination against 
 tested index digest and signs GHCR images. Authentication is specific to the chosen
 registry; community builds do not need AWS access.
 
+**Do not delete GHCR package versions to clean up candidate tags.** GHCR deletes
+the whole version (digest), not just the selected tag. A `blacksmith-candidate-*`
+tag can share its digest with a published version, `latest`, or a branch alias;
+deleting that package version removes those release tags too. Check every tag on
+the digest before any cleanup, and preserve released images and their signatures.
+
+Candidate tags are retained for diagnosis and retries; this workflow does not
+remove them or configure expiry. An ECR policy that expires only untagged images
+will not remove images still carrying candidate tags. Verify the repository's
+live lifecycle policy before assuming candidates age out. Do not add a blanket
+candidate-prefix expiration rule: ECR expires the image, which may also carry
+release or deployment tags. Retention changes need to protect every released
+digest, including architecture manifests referenced by a published index.
+
+## Build-provider credentials
+
+Native release builds run on Blacksmith VMs with registry push credentials:
+the existing ECR push role for cloud builds or a `packages: write` token for GHCR,
+plus the Sentry upload token when configured. These credentials are not limited
+to candidate tags; they can also update release or deployment tags. The workflow
+gates normal promotion, but those gates are not an IAM restriction on the builder.
+`harden-runner` does not run on these Blacksmith VMs. This extends trust in
+Blacksmith beyond the existing E2E workload and must be considered at cutover.
+Preparation receives only a Sentry-presence flag; the actual token is used by
+the build job. PR validation uses public disposable fixtures and no publish credentials.
+
+## Native candidate validation
+
 Separate AMD64 and ARM64 jobs validate the exact index digest in parallel on matching native
 runners. They do not install QEMU or pull different architectures into the same Docker image
 store. Promotion depends on both jobs succeeding. Browser assertions and actions have bounded

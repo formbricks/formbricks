@@ -14,7 +14,14 @@ Candidate tags remain for retries and diagnosis under the registry's existing re
 settings. The workflow does not delete images or install a new expiry policy.
 
 PR builds use a separate AMD64 cache; fork PRs and merge groups retain an isolated GitHub runner, since merge groups can contain fork changes.
+Manual validation can also select that isolated path with `force_local_builder: true`.
 These changes take effect when the migration PR is merged.
+
+Candidate retention and the release builder's credential access are documented in
+[Image assembly and promotion](IMAGE-VALIDATION.md). Candidate tags are not an automatic expiry policy.
+After cutover, the opt-in trial workflow/input and this historical trial guide can
+be retired. Preserve the existing release cache keys until a deliberate cache
+reset is wanted; their `blacksmith-trial` names do not restrict them to a branch.
 
 ## Native build trial
 

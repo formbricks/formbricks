@@ -1,6 +1,6 @@
 name: Blacksmith Docker Trial
 
-# Invoked explicitly from the experimental workflow on the trial branch.
+# Invoked explicitly with blacksmith_trial from the experimental release workflow.
 # No registry credentials or publishing permissions: this measures the builder first.
 on:
   workflow_call:
@@ -44,7 +44,7 @@ jobs:
         run: test "$(uname -m)" = "$EXPECTED_MACHINE"
 
       - name: Set up persistent Docker builder
-        uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184 # v2
+        uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184 # v2.2.0
         with:
           cache-key: apps/web/Dockerfile-blacksmith-trial-${{ matrix.arch }}
           nofallback: true
@@ -54,7 +54,7 @@ jobs:
 
       - name: Build release Dockerfile
         id: build
-        uses: useblacksmith/build-push-action@9b0579bbec7a6cad2f171596c57e7ac1e7658850 # v2
+        uses: useblacksmith/build-push-action@9b0579bbec7a6cad2f171596c57e7ac1e7658850 # v2.3.0
         with:
           context: .
           file: apps/web/Dockerfile
