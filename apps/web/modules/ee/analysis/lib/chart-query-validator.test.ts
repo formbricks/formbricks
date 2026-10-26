@@ -360,6 +360,11 @@ describe("parseRequestedDateRange", () => {
         { name: "dateRange.timezone", reason: expect.stringContaining("time zone cannot be supplied") },
       ],
     });
+    // In a body's dateRange object, even a nested dateRange is just a stray key.
+    expect(parseRequestedDateRange({ dateRange: "today", from: "2026-01-01", to: "2026-01-02" })).toEqual({
+      ok: false,
+      issues: [{ name: "dateRange.dateRange", reason: "Not part of a date range: send from and to." }],
+    });
     expect(parseRequestedDateRange({ dateRange: "this month", from: "2026-01-01" }, names)).toEqual({
       ok: false,
       issues: [{ name: "dateRange", reason: "Send either a date preset or from and to, not both." }],
@@ -380,6 +385,17 @@ describe("legacy relative date ranges", () => {
       expect(validateChartQuery(withRange(dateRange)).ok).toBe(false);
     }
   );
+
+  test("accepts only the listed relative ranges when given a set, and a preset regardless", () => {
+    const kept = new Set(["last 3 months"]);
+    expect(validateChartQuery(withRange("last 3 months"), { legacyDateRanges: kept }).ok).toBe(true);
+    expect(validateChartQuery(withRange("last 4 months"), { legacyDateRanges: kept }).ok).toBe(false);
+    expect(validateChartQuery(withRange("last 7 days"), { legacyDateRanges: kept }).ok).toBe(true);
+    // A set entry still has to be a range Cube reads itself.
+    expect(
+      validateChartQuery(withRange("since forever"), { legacyDateRanges: new Set(["since forever"]) }).ok
+    ).toBe(false);
+  });
 
   test.each(["last 9999 days", "next 3 months", "last 3 months; drop", "since forever"])(
     "refuses %s even on a saved chart",

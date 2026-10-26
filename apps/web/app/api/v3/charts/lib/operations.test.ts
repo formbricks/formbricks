@@ -436,20 +436,28 @@ describe("updateV3Chart", () => {
     expect(updateChartRow).toHaveBeenCalledTimes(1);
   });
 
-  test("keeps a stored relative range when the query comes back unchanged, but not in a new query", async () => {
+  test("keeps a relative range the stored query already had, however the editor normalized it, and only that", async () => {
     const legacy = {
       measures: ["FeedbackRecords.count"],
+      dimensions: ["FeedbackRecords.sourceType"],
       timeDimensions: [
         { dimension: "FeedbackRecords.collectedAt", granularity: "month", dateRange: "last 3 months" },
       ],
     };
-    vi.mocked(getChartResourceRow).mockResolvedValue(rowOf({ query: legacy }));
+    vi.mocked(getChartResourceRow).mockResolvedValue(rowOf({ type: "big_number", query: legacy }));
 
-    // The editor sends the stored query back with a rename.
-    expect((await update({ name: "Renamed", query: structuredClone(legacy) })).status).toBe(200);
+    // The editor sends back the query the data route ran: a big number's has no grouping left.
+    const asRun = {
+      measures: ["FeedbackRecords.count"],
+      timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", dateRange: "last 3 months" }],
+    };
+    expect((await update({ name: "Renamed", query: asRun })).status).toBe(200);
 
-    const changed = { ...legacy, dimensions: ["FeedbackRecords.sentiment"] };
-    expect((await update({ query: changed })).status).toBe(422);
+    const otherRange = {
+      ...asRun,
+      timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", dateRange: "last 4 months" }],
+    };
+    expect((await update({ query: otherRange })).status).toBe(422);
   });
 
   test("writes only the fields sent, needs readWrite, and audits before and after", async () => {

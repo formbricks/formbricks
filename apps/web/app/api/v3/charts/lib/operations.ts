@@ -1,5 +1,4 @@
 import "server-only";
-import { isDeepStrictEqual } from "node:util";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
@@ -206,10 +205,26 @@ export async function createV3Chart({
   }
 }
 
+/** The string date ranges a stored chart query holds, read defensively: it is a JSON column. */
+const storedDateRanges = (query: unknown): Set<string> => {
+  const timeDimensions =
+    typeof query === "object" && query !== null ? (query as { timeDimensions?: unknown }).timeDimensions : [];
+  return new Set(
+    (Array.isArray(timeDimensions) ? timeDimensions : []).flatMap((entry: unknown) => {
+      const dateRange =
+        typeof entry === "object" && entry !== null
+          ? (entry as { dateRange?: unknown }).dateRange
+          : undefined;
+      return typeof dateRange === "string" ? [dateRange] : [];
+    })
+  );
+};
+
 /**
  * The fields a chart update writes, with its query held to the validator. The editor sends the chart's
- * query back on every save, so a query unchanged from the stored one may keep a relative range older charts
- * were saved with; a changed query must use the current ranges.
+ * query back on every save — as the data route ran it, so normalized, not byte for byte as stored — so an
+ * update may keep a relative range older charts were saved with, as long as the stored query already had
+ * that exact range; any other range must be a current one.
  */
 const chartUpdateOf = (
   body: TV3ChartUpdateBody,
@@ -221,7 +236,7 @@ const chartUpdateOf = (
   if (body.config !== undefined) data.config = body.config;
   if (body.query !== undefined) {
     const validated = validateChartQuery(body.query, {
-      legacyDateRanges: isDeepStrictEqual(body.query, storedQuery),
+      legacyDateRanges: storedDateRanges(storedQuery),
     });
     if (!validated.ok) return { ok: false, issues: validated.issues };
     data.query = validated.query as TChartWrite["query"];

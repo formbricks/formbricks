@@ -112,10 +112,22 @@ const isLegacyRelativeDateRange = (value: string): boolean =>
  * `[from, to]` pair of ISO calendar dates with `from` not after `to`. With `legacy`, also a relative
  * range Cube reads itself (`LEGACY_RELATIVE_DATE_RANGES`).
  */
-export const parseQueryDateRange = (value: unknown, { legacy = false } = {}): TParsedDateRange => {
+/**
+ * Which relative ranges older charts were saved with a read may accept: any of them (`true`, a saved
+ * chart being read), only these (an update keeping the ranges its chart already had), or none.
+ */
+export type TLegacyDateRanges = boolean | ReadonlySet<string>;
+
+const acceptsLegacy = (value: string, legacy: TLegacyDateRanges): boolean =>
+  legacy !== false && isLegacyRelativeDateRange(value) && (legacy === true || legacy.has(value));
+
+export const parseQueryDateRange = (
+  value: unknown,
+  { legacy = false }: { legacy?: TLegacyDateRanges } = {}
+): TParsedDateRange => {
   if (value === ALL_TIME_DATE_RANGE) return { ok: true, dateRange: undefined };
   if (typeof value === "string")
-    return DATE_PRESETS.has(value) || (legacy && isLegacyRelativeDateRange(value))
+    return DATE_PRESETS.has(value) || acceptsLegacy(value, legacy)
       ? { ok: true, dateRange: value }
       : { ok: false };
   if (
@@ -135,21 +147,14 @@ export const REQUESTED_DATE_RANGE_REASON =
   "Must be a date preset from the field catalog or 'all-time'; for a custom range, send from and to instead.";
 const CALENDAR_DATE_REASON = "Must be an ISO calendar date (YYYY-MM-DD).";
 
-/**
- * A date range a caller asks a chart's data for: a preset, `all-time`, or `{ from, to }` ISO calendar
- * dates. It replaces the range saved on the chart's `collectedAt` (`applyDashboardDateFilter`), exactly as
- * the dashboard date filter does, so an agent reading a chart for "last week" gets the numbers a person
- * sees on a dashboard filtered to last week. `null` when none was asked for.
- *
- * A refusal names the parameter at fault — `names` says what the caller calls them: the data route's
- * query parameters are `dateRange`, `from` and `to`, the preview body's `dateRange.from` and so on.
- */
 /** Why a key beside `from` and `to` is refused, named as the caller sent it. */
 const unexpectedDateRangeKey = (key: string, names: TRequestedDateRangeNames): TChartQueryIssue => {
-  if (key === "dateRange") {
+  // The data route's range is its own query parameters, so a `dateRange` beside `from` and `to` is the
+  // preset sent with the pair; in a body's `dateRange` object every other key is simply out of place.
+  const pairIsNested = names.from.startsWith(`${names.dateRange}.`);
+  if (key === "dateRange" && !pairIsNested) {
     return { name: names.dateRange, reason: "Send either a date preset or from and to, not both." };
   }
-  // Only a body's `dateRange` object can carry other keys: the data route's query parameters are strict.
   return {
     name: `${names.dateRange}.${key}`,
     reason: Object.hasOwn(REFUSED_OPTIONS, key)
@@ -167,6 +172,15 @@ const BODY_DATE_RANGE_NAMES: TRequestedDateRangeNames = {
   to: "dateRange.to",
 };
 
+/**
+ * A date range a caller asks a chart's data for: a preset, `all-time`, or `{ from, to }` ISO calendar
+ * dates. It replaces the range saved on the chart's `collectedAt` (`applyDashboardDateFilter`), exactly as
+ * the dashboard date filter does, so an agent reading a chart for "last week" gets the numbers a person
+ * sees on a dashboard filtered to last week. `null` when none was asked for.
+ *
+ * A refusal names the parameter at fault — `names` says what the caller calls them: the data route's
+ * query parameters are `dateRange`, `from` and `to`, the preview body's `dateRange.from` and so on.
+ */
 export const parseRequestedDateRange = (
   value: unknown,
   names: TRequestedDateRangeNames = BODY_DATE_RANGE_NAMES
@@ -318,7 +332,7 @@ const checkFieldList = (
   return names;
 };
 
-type TTimeDimensionOptions = { legacyDateRanges: boolean };
+type TTimeDimensionOptions = { legacyDateRanges: TLegacyDateRanges };
 
 const checkTimeDimensions = (
   value: unknown,
@@ -595,8 +609,8 @@ export const validateChartQuery = (
   }: {
     path?: string;
     timeBuckets?: boolean;
-    /** A saved chart being read: also accept the relative ranges older charts were saved with. */
-    legacyDateRanges?: boolean;
+    /** Also accept the relative ranges older charts were saved with: see `TLegacyDateRanges`. */
+    legacyDateRanges?: TLegacyDateRanges;
   } = {}
 ): TChartQueryValidation => {
   const issues = new IssueCollector();
