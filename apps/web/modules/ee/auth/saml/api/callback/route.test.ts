@@ -3,6 +3,7 @@ import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import {
   SAML_RESPONSE_MARKUP_BUDGET,
+  SAML_RESPONSE_MAX_ELEMENTS,
   SAML_RESPONSE_MAX_LENGTH,
 } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
 import { POST } from "./route";
@@ -108,6 +109,32 @@ describe("SAML callback route", () => {
     expect(response.status).toBe(400);
     expect(await response.json()).toMatchObject({ message: expect.stringContaining("DOCTYPE") });
     expect(samlResponseMock).not.toHaveBeenCalled();
+  });
+
+  test("refuses a response over an element cap before jackson parses it", async () => {
+    // saml20's parseIssuer selects every Issuer element one by one through xpath's quadratic node-set add, on every
+    // callback and before any other check, so a flood of them is refused here (ENG-6648).
+    const flood = `<samlp:Response>${"<Issuer>x</Issuer>".repeat(SAML_RESPONSE_MAX_ELEMENTS.Issuer + 1)}</samlp:Response>`;
+    const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+
+    const response = await POST(callback({ SAMLResponse: b64(flood), RelayState: "s" }));
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({
+      code: "bad_request",
+      message: "SAMLResponse carries more elements than a SAML response does",
+    });
+    expect(samlResponseMock).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith(
+      {
+        reason: "elements",
+        localName: "Issuer",
+        count: SAML_RESPONSE_MAX_ELEMENTS.Issuer + 1,
+        length: b64(flood).length,
+        suppressedSinceLast: 0,
+      },
+      "Refused a SAML response before parsing it"
+    );
   });
 
   test("logs refusals at most once per window, counting the rest", async () => {

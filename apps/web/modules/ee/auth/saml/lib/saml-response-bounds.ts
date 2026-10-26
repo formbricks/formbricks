@@ -41,6 +41,40 @@ export const SAML_RESPONSE_MAX_LENGTH = 256 * 1024;
  */
 export const SAML_RESPONSE_MAX_DEPTH = 64;
 
+/**
+ * Most elements of each local name that a select in jackson's validation path matches (ENG-6648, ENG-4108).
+ *
+ * xpath 0.0.33, saml20's and xml-crypto's pin, builds every select's result set through `XNodeSet.add`, which scans
+ * the nodes already collected before each push, so a select whose result set grows with attacker-chosen elements
+ * costs the square of their number. `saml20.parseIssuer` makes one such select on every callback, before any issuer,
+ * connection or RelayState check: 4,000 `Issuer` elements (72 KiB) hold the main thread for ~1.9 s, inside the
+ * markup budget and the length cap. xml-crypto's `loadSignature` and `checkSignature` select
+ * `CanonicalizationMethod`, `SignatureMethod`, `SignatureValue`, `KeyInfo`, `SignedInfo` and `Reference` the same way,
+ * as does its certificate lookup for `X509Certificate`.
+ *
+ * Real responses carry one or two of each: one per signature for the XML Signature names, `Issuer` once in the
+ * response and once in the assertion. These leave room for four signatures while keeping every select's result set
+ * tiny. Counted by local name, in any namespace or none, wherever the element sits; like every other `<`, one inside
+ * a comment or CDATA section counts too, the safe direction.
+ */
+export const SAML_RESPONSE_MAX_ELEMENTS: Readonly<Record<string, number>> = Object.freeze({
+  Issuer: 4,
+  Signature: 4,
+  SignedInfo: 4,
+  SignatureMethod: 4,
+  CanonicalizationMethod: 4,
+  SignatureValue: 4,
+  Reference: 8,
+  KeyInfo: 8,
+  // A certificate chain can sit in every signature's KeyInfo; the select cost at this count is negligible.
+  X509Certificate: 16,
+});
+
+/** Each capped name with its limit and its bytes, encoded once for the byte scan to compare against. */
+const CAPPED_ELEMENTS = Object.entries(SAML_RESPONSE_MAX_ELEMENTS).map(
+  ([name, limit]) => [name, limit, Buffer.from(name, "latin1")] as const
+);
+
 const LESS_THAN = 0x3c;
 const GREATER_THAN = 0x3e;
 const EQUALS = 0x3d;
@@ -49,6 +83,7 @@ const BANG = 0x21;
 const QUESTION = 0x3f;
 const DOUBLE_QUOTE = 0x22;
 const SINGLE_QUOTE = 0x27;
+const COLON = 0x3a;
 
 /**
  * What separates attributes, as xmldom reads it: any byte up to a space, so form feed and NUL count as well as
@@ -118,6 +153,41 @@ const skipWhile = (xml: Buffer, from: number, end: number, test: (byte: number) 
   return j;
 };
 
+/** An ASCII byte that can continue an element name, so a name it follows has not ended. */
+const isAsciiNameByte = (byte: number) =>
+  isNameStart(byte) || (byte >= 0x30 && byte <= 0x39) || byte === 0x2d || byte === 0x2e || byte === COLON;
+
+/**
+ * Whether the bytes from `from` spell `name` as a local name: the name, followed by nothing or by a byte that cannot
+ * continue an ASCII name. xmldom reads a non-ASCII character as part of a name, but the byte scan cannot decode one,
+ * so a non-ASCII byte after the name counts as an end (`Issueré` counts as `Issuer`): over-counting is the safe side.
+ */
+const matchesCappedName = (xml: Buffer, from: number, nameEnd: number, name: Buffer): boolean => {
+  const after = from + name.length;
+  if (after > nameEnd || xml.compare(name, 0, name.length, from, after) !== 0) return false;
+  return after === nameEnd || !isAsciiNameByte(xml[after]);
+};
+
+/**
+ * Adds the element name starting at `from` to `scan`'s per-local-name counts when it is one of the names a select in
+ * jackson's path matches (`SAML_RESPONSE_MAX_ELEMENTS`). The local name is what follows the last `:` in the name, as
+ * xpath's `local-name()` reads it, and the name is read at most once per tag: nothing here searches past it.
+ */
+const countCappedElement = (xml: Buffer, from: number, end: number, scan: MarkupScan): void => {
+  const nameEnd = skipWhile(xml, from, end, isNameByte);
+  let localStart = from;
+  for (let j = from; j < nameEnd; j++) {
+    if (xml[j] === COLON) localStart = j + 1;
+  }
+  for (const [name, limit, bytes] of CAPPED_ELEMENTS) {
+    if (!matchesCappedName(xml, localStart, nameEnd, bytes)) continue;
+    const count = (scan.elements[name] ?? 0) + 1;
+    scan.elements[name] = count;
+    if (count > limit && !scan.elementRefusal) scan.elementRefusal = { localName: name, count };
+    return;
+  }
+};
+
 /**
  * Just past the quoted `name="value"` attribute (spaces allowed around the `=`) starting at `from`, or `null` when
  * what starts there is anything else, an unquoted or unterminated value included.
@@ -181,6 +251,11 @@ export interface SamlResponseMarkup {
   markup: number;
   /** Deepest nesting of open elements. */
   depth: number;
+  /**
+   * How many elements of each name in `SAML_RESPONSE_MAX_ELEMENTS` the response carries, counted up to one past its
+   * cap. Names with none are absent.
+   */
+  elements: Readonly<Record<string, number>>;
   /** Whether a DOCTYPE or other `<!` declaration was found; the measure stops there. */
   declaration: boolean;
 }
@@ -191,6 +266,9 @@ interface MarkupScan {
   /** Elements open at this point. */
   depth: number;
   maxDepth: number;
+  /** Per-local-name counts for `CAPPED_ELEMENTS`, and the first cap one passed. */
+  elements: Record<string, number>;
+  elementRefusal: { localName: string; count: number } | null;
   /** Just past the comment, CDATA section or processing instruction a `<` sits in; nothing there moves the depth. */
   opaqueUntil: number;
 }
@@ -217,9 +295,12 @@ const measureTag = (xml: Buffer, lt: number, end: number, scan: MarkupScan): boo
     return true;
   }
   if (!isNameStart(kind)) {
+    // Before the stray check: a name that starts with a non-ASCII letter is weighed as stray, yet is an element.
+    countCappedElement(xml, lt + 1, end, scan);
     scan.markup += STRAY_LESS_THAN_WEIGHT;
     return true;
   }
+  countCappedElement(xml, lt + 1, end, scan);
   scan.markup += 1 + countAttributes(xml, lt + 1, end);
   if (structural && !closesItself(xml, lt + 1, end)) scan.maxDepth = Math.max(scan.maxDepth, ++scan.depth);
   return true;
@@ -227,48 +308,66 @@ const measureTag = (xml: Buffer, lt: number, end: number, scan: MarkupScan): boo
 
 /**
  * Measures the markup in the decoded response in one pass over its bytes, without building a string or a tree
- * (~1 ms at the length cap), and stops as soon as the markup passes the budget or the nesting passes the depth
- * cap, so a refused flood costs nothing past that point. Every `<` counts wherever it sits, because xmldom turns
- * each one into a node or into an error it raises and recovers from; one that cannot start anything costs more,
- * so it weighs more. Following XML structure instead lets malformed input hide markup, which is exactly what an
- * attacker sends. A `<` inside a comment or CDATA section is counted too; over-counting that rarity is the safe
- * direction. Depth rises on every tag that does not strictly close itself and falls on every `</`, both only
- * outside comments, CDATA sections and processing instructions: a `</` that does not match the open element is
- * fatal to xmldom, so it cannot hide a scope.
+ * (~1 ms at the length cap), and stops as soon as the markup passes the budget, the nesting passes the depth cap or
+ * an element passes its per-local-name cap, so a refused flood costs nothing past that point. Every `<` counts
+ * wherever it sits, because xmldom turns each one into a node or into an error it raises and recovers from; one that
+ * cannot start anything costs more, so it weighs more. Following XML structure instead lets malformed input hide
+ * markup, which is exactly what an attacker sends. A `<` inside a comment or CDATA section is counted too;
+ * over-counting that rarity is the safe direction. Depth rises on every tag that does not strictly close itself and
+ * falls on every `</`, both only outside comments, CDATA sections and processing instructions: a `</` that does not
+ * match the open element is fatal to xmldom, so it cannot hide a scope.
  */
 export const measureSamlResponseMarkup = (samlResponseBase64: string): SamlResponseMarkup => {
   const xml = Buffer.from(samlResponseBase64, "base64");
-  const scan: MarkupScan = { markup: 0, depth: 0, maxDepth: 0, opaqueUntil: 0 };
+  const scan: MarkupScan = {
+    markup: 0,
+    depth: 0,
+    maxDepth: 0,
+    elements: {},
+    elementRefusal: null,
+    opaqueUntil: 0,
+  };
   let lt = xml.indexOf(LESS_THAN);
 
   while (
     lt !== -1 &&
     scan.markup <= SAML_RESPONSE_MARKUP_BUDGET &&
-    scan.maxDepth <= SAML_RESPONSE_MAX_DEPTH
+    scan.maxDepth <= SAML_RESPONSE_MAX_DEPTH &&
+    scan.elementRefusal === null
   ) {
     const next = xml.indexOf(LESS_THAN, lt + 1);
     if (!measureTag(xml, lt, next === -1 ? xml.length : next, scan)) {
-      return { markup: scan.markup, depth: scan.maxDepth, declaration: true };
+      return {
+        markup: scan.markup,
+        depth: scan.maxDepth,
+        elements: scan.elements,
+        declaration: true,
+      };
     }
     lt = next;
   }
 
-  return { markup: scan.markup, depth: scan.maxDepth, declaration: false };
+  return { markup: scan.markup, depth: scan.maxDepth, elements: scan.elements, declaration: false };
 };
 
 /** Why a response is refused before jackson parses it; only sizes, never content, so it is safe to log. */
 export type SamlResponseRefusal =
   | { reason: "length" | "declaration"; length: number }
-  | { reason: "markup" | "depth"; length: number; markup: number; depth: number };
+  | { reason: "markup" | "depth"; length: number; markup: number; depth: number }
+  | { reason: "elements"; length: number; localName: string; count: number };
 
 /** The refusal for a response past any bound, or `null` when jackson may parse it. Length is checked first. */
 export const checkSamlResponseBounds = (samlResponseBase64: string): SamlResponseRefusal | null => {
   const length = samlResponseBase64.length;
   if (length > SAML_RESPONSE_MAX_LENGTH) return { reason: "length", length };
 
-  const { markup, depth, declaration } = measureSamlResponseMarkup(samlResponseBase64);
+  const { markup, depth, elements, declaration } = measureSamlResponseMarkup(samlResponseBase64);
   if (declaration) return { reason: "declaration", length };
   if (markup > SAML_RESPONSE_MARKUP_BUDGET) return { reason: "markup", length, markup, depth };
   if (depth > SAML_RESPONSE_MAX_DEPTH) return { reason: "depth", length, markup, depth };
+  for (const [localName, limit] of CAPPED_ELEMENTS) {
+    const count = elements[localName] ?? 0;
+    if (count > limit) return { reason: "elements", length, localName, count };
+  }
   return null;
 };
