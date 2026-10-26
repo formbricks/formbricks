@@ -1,4 +1,5 @@
 import "server-only";
+import { createHash } from "node:crypto";
 import { isBot } from "ua-parser-js/bot-detection";
 import { z } from "zod";
 import { createCacheKey } from "@formbricks/cache";
@@ -27,10 +28,8 @@ import { type TCreativeEventCounts, incrementCreativeCounters } from "./counters
 
 /** A full batch is about 6 KB; anything far beyond it isn't from the SDK. */
 const MAX_BODY_BYTES = 16 * 1024;
-/** How long the workspace's countable creatives are cached: as long as the SDK's own workspace state. */
+/** How long a request's countable creatives are cached: as long as the SDK's own workspace state. */
 const COUNTABLE_CREATIVES_TTL_MS = 60 * 1000;
-/** Far above what a workspace publishes; the newest ones are kept. */
-const MAX_COUNTABLE_CREATIVES = 1000;
 
 /** A page is a host (port and IPv6 brackets allowed) followed by a path, so never `(other)`. */
 const COUNTED_PAGE_PATTERN = /^[a-zA-Z0-9.:[\]-]+\//;
@@ -45,28 +44,42 @@ export const ZCreativeEventsBody = z.object({
 }) satisfies z.ZodType<TCreativeEventsBody>;
 
 /**
- * The creatives an events request may count for: neither a Draft nor archived, in the workspace the SDK
- * names (by workspace id or, for SDKs set up with one, legacy environment id). The stored status decides,
- * not `publishedAt`: a restored creative keeps the date it was first published but is a Draft again, and
- * any status but Draft was published. None while the licence doesn't include Creatives (ENG-6602): sites
- * aren't sent any then, so nothing is counted. Cached like the SDK's workspace state (no write invalidates
- * it), so counting costs no database query per page view and follows a publish, restore or archive, and
- * a licence change the instance has read, within the TTL.
+ * Which of `creativeIds` (sorted, unique) an events request may count for: neither a Draft nor archived,
+ * in the workspace the SDK names (by workspace id or, for SDKs set up with one, legacy environment id).
+ * The stored status decides, not `publishedAt`: a restored creative keeps the date it was first published
+ * but is a Draft again, and any status but Draft was published. None while the licence doesn't include
+ * Creatives (ENG-6602): sites aren't sent any then, so nothing is counted.
+ *
+ * Only the ids the request names are looked up, by primary key, so the query is bounded by the request
+ * (at most `MAX_CREATIVE_EVENTS_PER_REQUEST`) and no number of paused or closed creatives can crowd out
+ * one still shown. Cached per workspace and set of ids like the SDK's workspace state (no write
+ * invalidates it): a site shows the same creatives to its visitors, so counting costs about one query
+ * per set and minute, not one per page view, and follows a publish, restore or archive, and a licence
+ * change the instance has read, within the TTL.
  */
-const getCountableCreativeIds = (workspaceIdParam: string): Promise<string[]> =>
+const getCountableCreativeIds = (
+  workspaceIdParam: string,
+  creativeIds: readonly string[]
+): Promise<string[]> =>
   cache.withCache(
     async () => {
       const workspace = await findWorkspaceByIdOrLegacyEnvId(workspaceIdParam);
       if (!workspace || !(await getIsCreativesEnabled(workspace.organizationId))) return [];
       const creatives = await prisma.creative.findMany({
-        where: { workspaceId: workspace.id, archivedAt: null, status: { not: "draft" } },
+        where: {
+          id: { in: [...creativeIds] },
+          workspaceId: workspace.id,
+          archivedAt: null,
+          status: { not: "draft" },
+        },
         select: { id: true },
-        orderBy: { updatedAt: "desc" },
-        take: MAX_COUNTABLE_CREATIVES,
       });
       return creatives.map(({ id }) => id);
     },
-    createCacheKey.workspace.creativeIds(workspaceIdParam),
+    createCacheKey.workspace.creativeIds(
+      workspaceIdParam,
+      createHash("sha256").update(creativeIds.join(",")).digest("hex")
+    ),
     COUNTABLE_CREATIVES_TTL_MS
   );
 
@@ -119,7 +132,8 @@ export const countCreativeEvents = async (request: Request, workspaceIdParam: st
   const body = await parseBody(request);
   if (!body) return;
 
-  const countable = new Set(await getCountableCreativeIds(workspaceIdParam));
+  const named = [...new Set(body.events.map(({ creativeId }) => creativeId))].sort();
+  const countable = new Set(await getCountableCreativeIds(workspaceIdParam, named));
   const counts = toCreativeEventCounts(body, countable);
   if (counts.creatives.length === 0) return;
 

@@ -21,8 +21,12 @@ export const createCacheKey = {
     config: (workspaceId: string): CacheKey => makeCacheKey("env", workspaceId, "config"),
     segments: (workspaceId: string): CacheKey => makeCacheKey("env", workspaceId, "segments"),
     languages: (workspaceId: string): CacheKey => makeCacheKey("env", workspaceId, "languages"),
-    /** The creatives a client events request may count for (ENG-4000), keyed by the id the SDK sends. */
-    creativeIds: (workspaceId: string): CacheKey => makeCacheKey("env", workspaceId, "creative-ids"),
+    /**
+     * Which of the creatives a client events request names it may count for (ENG-4000), keyed by the
+     * workspace id the SDK sends and a hash of the set of creative ids.
+     */
+    creativeIds: (workspaceId: string, creativeIdsHash: string): CacheKey =>
+      makeCacheKey("env", workspaceId, "creative-ids", creativeIdsHash),
   },
 
   // Creative counters (ENG-4000): one UTC day's running totals, which the flush job copies to

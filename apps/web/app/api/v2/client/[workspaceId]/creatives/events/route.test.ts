@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   findCreatives: vi.fn(),
   getIsCreativesEnabled: vi.fn(),
   incrementCreativeCounters: vi.fn(),
+  withCache: vi.fn(),
   warn: vi.fn(),
 }));
 
@@ -22,9 +23,10 @@ vi.mock("@/lib/utils/resolve-client-id", () => ({
   findWorkspaceByIdOrLegacyEnvId: mocks.findWorkspaceByIdOrLegacyEnvId,
 }));
 vi.mock("@formbricks/database", () => ({ prisma: { creative: { findMany: mocks.findCreatives } } }));
-vi.mock("@/lib/cache", () => ({
-  cache: { withCache: async <T>(fn: () => Promise<T>) => fn() },
-}));
+vi.mock("@/lib/cache", () => ({ cache: { withCache: mocks.withCache } }));
+// The cache key hashes the creative ids; the unit setup's `crypto` mock would give every set one hash.
+vi.mock("node:crypto", async (importOriginal) => await importOriginal<typeof import("node:crypto")>());
+vi.mock("crypto", async (importOriginal) => await importOriginal<typeof import("crypto")>());
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsCreativesEnabled: mocks.getIsCreativesEnabled,
 }));
@@ -69,11 +71,61 @@ const pageView = (events: { creativeId: string; type: "impression" | "click" }[]
 
 const counted = () => mocks.incrementCreativeCounters.mock.calls.map(([counts]) => counts);
 
+type TStoredCreative = Record<"id" | "workspaceId" | "status", string> &
+  Record<"publishedAt" | "archivedAt", Date | null> & { updatedAt: Date };
+
+const creative = (id: string, overrides: Partial<TStoredCreative> = {}): TStoredCreative => ({
+  id,
+  workspaceId: WORKSPACE_ID,
+  status: "inProgress",
+  publishedAt: new Date("2026-09-01T00:00:00Z"),
+  archivedAt: null,
+  updatedAt: new Date("2026-10-01T00:00:00Z"),
+  ...overrides,
+});
+
+const matches = (value: unknown, condition: unknown): boolean => {
+  if (condition === null || typeof condition !== "object") return value === condition;
+  if ("not" in condition) return value !== condition.not;
+  if ("in" in condition && Array.isArray(condition.in)) return condition.in.includes(value);
+  throw new Error(`Unsupported condition ${JSON.stringify(condition)}`);
+};
+
+/** Prisma's `findMany` over `stored`: `where` (equality, `null`, `{ not }`, `{ in }`), `orderBy`, `take`. */
+const storeCreatives = (stored: TStoredCreative[]) =>
+  mocks.findCreatives.mockImplementation(
+    async ({
+      where,
+      orderBy,
+      take,
+    }: {
+      where: Record<string, unknown>;
+      orderBy?: { updatedAt: "asc" | "desc" };
+      take?: number;
+    }) => {
+      const rows = stored.filter((row) =>
+        Object.entries(where).every(([field, condition]) =>
+          matches(row[field as keyof TStoredCreative], condition)
+        )
+      );
+      if (orderBy) {
+        const direction = orderBy.updatedAt === "desc" ? -1 : 1;
+        rows.sort((a, b) => direction * (a.updatedAt.getTime() - b.updatedAt.getTime()));
+      }
+      return rows.slice(0, take).map(({ id }) => ({ id }));
+    }
+  );
+
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.applyIPRateLimit.mockResolvedValue({ allowed: true });
   mocks.findWorkspaceByIdOrLegacyEnvId.mockResolvedValue({ id: WORKSPACE_ID, organizationId: "clorg" });
-  mocks.findCreatives.mockResolvedValue([{ id: BUTTON_ID }, { id: BANNER_ID }]);
+  storeCreatives([
+    creative(BUTTON_ID),
+    creative(BANNER_ID),
+    creative(FOREIGN_ID, { workspaceId: "clwo1234567890123456789012" }),
+  ]);
+  mocks.withCache.mockImplementation(async <T>(fn: () => Promise<T>) => fn());
   mocks.getIsCreativesEnabled.mockResolvedValue(true);
   mocks.incrementCreativeCounters.mockResolvedValue(true);
 });
@@ -124,41 +176,11 @@ describe("POST /api/v2/client/[workspaceId]/creatives/events", () => {
     );
 
     expect(counted()[0].creatives).toEqual([{ creativeId: BUTTON_ID, impressions: 0, clicks: 1 }]);
-    expect(mocks.findCreatives).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { workspaceId: WORKSPACE_ID, archivedAt: null, status: { not: "draft" } },
-      })
-    );
   });
 
   test("drops a restored Draft's events, though it keeps the date it was first published", async () => {
     const RESTORED_ID = "clcd1234567890123456789012";
-    const stored: Record<string, unknown>[] = [
-      {
-        id: BUTTON_ID,
-        workspaceId: WORKSPACE_ID,
-        status: "inProgress",
-        publishedAt: new Date(),
-        archivedAt: null,
-      },
-      {
-        id: RESTORED_ID,
-        workspaceId: WORKSPACE_ID,
-        status: "draft",
-        publishedAt: new Date(),
-        archivedAt: null,
-      },
-    ];
-    // Prisma's `where` on these fields: equality, `null`, or `{ not }`.
-    mocks.findCreatives.mockImplementation(async ({ where }: { where: Record<string, unknown> }) =>
-      stored.filter((row) =>
-        Object.entries(where).every(([field, condition]) =>
-          condition !== null && typeof condition === "object" && "not" in condition
-            ? row[field] !== condition.not
-            : row[field] === condition
-        )
-      )
-    );
+    storeCreatives([creative(BUTTON_ID), creative(RESTORED_ID, { status: "draft" })]);
 
     await send(
       pageView([
@@ -168,6 +190,44 @@ describe("POST /api/v2/client/[workspaceId]/creatives/events", () => {
     );
 
     expect(counted()[0].creatives).toEqual([{ creativeId: BUTTON_ID, impressions: 0, clicks: 1 }]);
+  });
+
+  test("counts a creative still shown when the workspace has 1,000 newer closed ones", async () => {
+    const closed = Array.from({ length: 1000 }, (_, index) =>
+      creative(`clcl${String(index).padStart(22, "0")}`, {
+        status: "completed",
+        updatedAt: new Date("2026-10-20T00:00:00Z"),
+      })
+    );
+    storeCreatives([creative(BUTTON_ID), ...closed]);
+
+    await send(pageView([{ creativeId: BUTTON_ID, type: "impression" }]));
+
+    expect(counted()).toEqual([
+      expect.objectContaining({ creatives: [{ creativeId: BUTTON_ID, impressions: 1, clicks: 0 }] }),
+    ]);
+  });
+
+  test("caches the lookup once per workspace and set of creatives, whatever their order or repeats", async () => {
+    await send(
+      pageView([
+        { creativeId: BUTTON_ID, type: "impression" },
+        { creativeId: BANNER_ID, type: "impression" },
+      ])
+    );
+    await send(
+      pageView([
+        { creativeId: BANNER_ID, type: "impression" },
+        { creativeId: BUTTON_ID, type: "click" },
+        { creativeId: BANNER_ID, type: "click" },
+      ])
+    );
+    await send(pageView([{ creativeId: BUTTON_ID, type: "impression" }]));
+
+    const [first, reordered, other] = mocks.withCache.mock.calls.map(([, key]) => key as string);
+    expect(first).toMatch(new RegExp(`^fb:env:${WORKSPACE_ID}:creative-ids:[0-9a-f]{64}$`));
+    expect(reordered).toBe(first);
+    expect(other).not.toBe(first);
   });
 
   test("counts nothing for an unknown workspace or when no event names a known creative", async () => {

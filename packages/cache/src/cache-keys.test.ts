@@ -135,8 +135,8 @@ describe("@formbricks/cache cacheKeys", () => {
         );
       });
 
-      test("keys the workspace's countable creative ids next to its state", () => {
-        expect(createCacheKey.workspace.creativeIds("clws1")).toBe("fb:env:clws1:creative-ids");
+      test("keys the countable creative ids by workspace, next to its state, and by the ids' hash", () => {
+        expect(createCacheKey.workspace.creativeIds("clws1", "ab12")).toBe("fb:env:clws1:creative-ids:ab12");
       });
     });
 
