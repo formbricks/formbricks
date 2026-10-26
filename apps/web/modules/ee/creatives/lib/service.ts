@@ -10,32 +10,82 @@ import {
   toCreativeState,
 } from "./record";
 import {
+  type TCreativeLifecycleColumns,
   type TCreativeRecord,
   type TCreativeTx,
+  type TDestinationSurveyFacts,
   deleteCreativeRecord,
   ensureCreativeLanguages,
   findWorkspaceActionClassIds,
   insertCreativeRecord,
+  lockCreativeRecord,
   lockDestinationSurvey,
   replaceCreativeRecord,
   runInCreativeTransaction,
+  updateCreativeLifecycleColumns,
 } from "./repository";
 import { getCreativeReferenceProblems, planCreativeDuplicate, planCreativeRestore } from "./write-rules";
 
 /**
  * Creative writes (ENG-3993). Each one runs the pure rules in `write-rules.ts` against the stored facts
  * they need, inside the write's transaction: a survey being linked is locked the way a Restrict locks it,
- * so the two can't interleave. Callers authorize first (`authorization.ts`) and validate the state
- * (`validateCreativeState`); what only the database can answer surfaces as `CreativeReferenceError`.
+ * so the two can't interleave. Callers authorize first (`authorization.ts`).
+ *
+ * A write to an existing creative reads it under its row lock (`lockCreativeRecord`) and plans from that
+ * read, never from one taken before the transaction, so a pause, archive or survey-side unlink committed
+ * meanwhile can't be undone by a request that never mentioned it (ENG-6602 review). Lock order: the
+ * survey a write links comes first, then the creative's row, the order a survey-side change takes them
+ * (its survey's lock, then the rows of the creatives it unlinks), so the two never deadlock.
  */
 
+/** The write's resulting creative is invalid, or archived and read-only: a 422 with these params. */
+export class CreativeInvalidError extends Error {
+  constructor(
+    readonly invalidParams: InvalidParam[],
+    message = "The creative failed validation"
+  ) {
+    super(message);
+    this.name = "CreativeInvalidError";
+  }
+}
+
 /** A reference in the write that the database refused: an ineligible survey, an unknown action. */
-export class CreativeReferenceError extends Error {
-  constructor(readonly invalidParams: InvalidParam[]) {
-    super("Creative references failed validation");
+export class CreativeReferenceError extends CreativeInvalidError {
+  constructor(invalidParams: InvalidParam[]) {
+    super(invalidParams, "Creative references failed validation");
     this.name = "CreativeReferenceError";
   }
 }
+
+/** The creative changed since the `updatedAt` the caller read (its precondition): nothing was written. */
+export class CreativeChangedError extends Error {
+  constructor(
+    readonly expectedUpdatedAt: Date,
+    readonly currentUpdatedAt: Date
+  ) {
+    super("The creative changed since it was last read");
+    this.name = "CreativeChangedError";
+  }
+}
+
+const ARCHIVED_PARAM: InvalidParam = {
+  name: "archivedAt",
+  reason: "This creative is archived. Restore it before editing.",
+};
+
+/**
+ * Refuses a change to `record`: its precondition no longer holds (checked first, as RFC 9110 evaluates a
+ * precondition before the method), or it is archived and read-only until restored.
+ */
+export const assertCreativeEditable = (
+  record: Pick<TCreativeRecord, "updatedAt" | "archivedAt">,
+  expectedUpdatedAt: Date | undefined
+): void => {
+  if (expectedUpdatedAt && record.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
+    throw new CreativeChangedError(expectedUpdatedAt, record.updatedAt);
+  }
+  if (record.archivedAt) throw new CreativeInvalidError([ARCHIVED_PARAM], "Creative is archived");
+};
 
 const linkedSurveyId = (state: Pick<TCreativeState, "destination">): string | null =>
   state.destination?.type === "survey" ? state.destination.surveyId : null;
@@ -76,10 +126,8 @@ export const createCreative = async ({
   workspaceId: string;
   createdBy: string | null;
   state: TCreativeState;
-}): Promise<TCreativeRecord> => {
-  const languages = await ensureCreativeLanguages(workspaceId, getCreativeLanguageRequests(state));
-
-  return runInCreativeTransaction(async (tx) => {
+}): Promise<TCreativeRecord> =>
+  runInCreativeTransaction(async (tx) => {
     await assertCreativeReferences(tx, workspaceId, state, null);
     return insertCreativeRecord(tx, {
       workspaceId,
@@ -87,10 +135,9 @@ export const createCreative = async ({
       createdBy,
       row: toCreativeRowData(state),
       actionClassIds: actionClassIdsOf(state),
-      languages,
+      languages: await ensureCreativeLanguages(tx, workspaceId, getCreativeLanguageRequests(state)),
     });
   });
-};
 
 const isRecordGone = (error: unknown): boolean =>
   error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025";
@@ -103,59 +150,114 @@ const rethrowGone =
     throw error;
   };
 
-/** Stores `next` over the creative whose stored state was `previous`. */
+/** A write to an existing creative: the creative as it was stored before it, and after. */
+export type TCreativeChange = { before: TCreativeRecord; after: TCreativeRecord };
+
+/**
+ * Plans a change from the creative as stored now (`current`), throwing `CreativeInvalidError` (or the
+ * custom CSS errors) to refuse it. Runs inside the write's transaction, under the creative's row lock.
+ */
+export type TCreativeChangePlan = (current: TCreativeState) => Promise<TCreativeState>;
+
+/**
+ * Applies `plan` to the creative as stored now, under its row lock, and stores the result.
+ * `expectedUpdatedAt` is the caller's precondition (`CreativeChangedError` when it no longer holds);
+ * without one the change simply builds on whatever was committed meanwhile. `surveyIdToLink` is the
+ * survey the change may link, locked before the creative (see the lock order above).
+ */
 export const updateCreative = async ({
   creativeId,
   workspaceId,
-  previous,
-  next,
+  expectedUpdatedAt,
+  surveyIdToLink,
+  plan,
 }: {
   creativeId: string;
   workspaceId: string;
-  previous: TCreativeState;
-  next: TCreativeState;
-}): Promise<TCreativeRecord> => {
-  const languages = await ensureCreativeLanguages(workspaceId, getCreativeLanguageRequests(next));
+  expectedUpdatedAt?: Date;
+  surveyIdToLink: string | null;
+  plan: TCreativeChangePlan;
+}): Promise<TCreativeChange> =>
+  runInCreativeTransaction(async (tx) => {
+    // Its facts are read again under this same lock by `assertCreativeReferences`, if it links it.
+    if (surveyIdToLink) await lockDestinationSurvey(tx, surveyIdToLink, workspaceId);
+    const before = await lockCreativeRecord(tx, creativeId, workspaceId);
+    if (!before) throw new ResourceNotFoundError("creative", creativeId);
+    assertCreativeEditable(before, expectedUpdatedAt);
 
-  return runInCreativeTransaction(async (tx) => {
+    const previous = toCreativeState(before);
+    const next = await plan(previous);
+    // Rechecked against the stored link, so relinking a survey a Restrict unlinked meanwhile is refused.
     await assertCreativeReferences(tx, workspaceId, next, linkedSurveyId(previous));
-    return replaceCreativeRecord(tx, creativeId, workspaceId, {
+    const after = await replaceCreativeRecord(tx, creativeId, workspaceId, {
       row: toCreativeRowData(next),
       actionClassIds: actionClassIdsOf(next),
-      languages,
+      languages: await ensureCreativeLanguages(tx, workspaceId, getCreativeLanguageRequests(next)),
     });
+    return { before, after };
   }).catch(rethrowGone(creativeId));
+
+/** Archives the creative, writing only `archivedAt`; an archived one is returned as it is. */
+export const archiveCreative = async (
+  creativeId: string,
+  workspaceId: string,
+  now: Date
+): Promise<TCreativeChange> =>
+  runInCreativeTransaction(async (tx) => {
+    const before = await lockCreativeRecord(tx, creativeId, workspaceId);
+    if (!before) throw new ResourceNotFoundError("creative", creativeId);
+    if (before.archivedAt) return { before, after: before };
+    const after = await updateCreativeLifecycleColumns(tx, creativeId, workspaceId, { archivedAt: now });
+    return { before, after };
+  }).catch(rethrowGone(creativeId));
+
+/** The columns a restore writes: always status and `archivedAt`, the survey only when it unlinks it. */
+const getRestoreColumns = (record: TCreativeRecord, survey: TDestinationSurveyFacts | null) => {
+  const restored = planCreativeRestore(
+    toCreativeState(record),
+    record.surveyId ? getDestinationSurveyIssue(survey) : null
+  );
+  const columns: TCreativeLifecycleColumns = { status: restored.status, archivedAt: restored.archivedAt };
+  if (record.surveyId && restored.destination === null) columns.surveyId = null;
+  return columns;
 };
 
-/** Archives the creative; an archived one is returned as it is. */
-export const archiveCreative = async (record: TCreativeRecord, now: Date): Promise<TCreativeRecord> => {
-  if (record.archivedAt) return record;
-  const state = toCreativeState(record);
-  return runInCreativeTransaction((tx) =>
-    replaceCreativeRecord(tx, record.id, record.workspaceId, {
-      row: toCreativeRowData({ ...state, archivedAt: now }),
-    })
-  ).catch(rethrowGone(record.id));
-};
+/** How many times a restore re-reads a creative relinked to another survey before its lock was taken. */
+const RESTORE_ATTEMPTS = 2;
+
+type TRelinked = { relinkedTo: string };
 
 /**
  * Restores an archived creative (a restored one is returned as it is). Its survey is re-checked under
  * the survey's lock: one that can no longer be a Destination is unlinked, and `planCreativeRestore`
  * brings back as Draft a creative left without the Destination it needs.
+ *
+ * The survey is locked before the creative (see the lock order above), so it is the one `surveyId` names,
+ * read before the transaction. A creative relinked to another survey before the row lock was taken is
+ * restored again against that survey; anything that keeps moving after that is not a state a restore
+ * can explain.
  */
-export const restoreCreative = async (record: TCreativeRecord): Promise<TCreativeRecord> => {
-  if (!record.archivedAt) return record;
-  const state = toCreativeState(record);
-  const surveyId = linkedSurveyId(state);
+export const restoreCreative = async (
+  creativeId: string,
+  workspaceId: string,
+  surveyId: string | null
+): Promise<TCreativeChange> => {
+  let surveyToLock = surveyId;
+  for (let attempt = 1; attempt <= RESTORE_ATTEMPTS; attempt++) {
+    const restored = await runInCreativeTransaction(async (tx): Promise<TCreativeChange | TRelinked> => {
+      const survey = surveyToLock ? await lockDestinationSurvey(tx, surveyToLock, workspaceId) : null;
+      const before = await lockCreativeRecord(tx, creativeId, workspaceId);
+      if (!before) throw new ResourceNotFoundError("creative", creativeId);
+      if (!before.archivedAt) return { before, after: before };
+      if (before.surveyId && before.surveyId !== surveyToLock) return { relinkedTo: before.surveyId };
 
-  return runInCreativeTransaction(async (tx) => {
-    const destinationIssue = surveyId
-      ? getDestinationSurveyIssue(await lockDestinationSurvey(tx, surveyId, record.workspaceId))
-      : null;
-    return replaceCreativeRecord(tx, record.id, record.workspaceId, {
-      row: toCreativeRowData(planCreativeRestore(state, destinationIssue)),
-    });
-  }).catch(rethrowGone(record.id));
+      const columns = getRestoreColumns(before, survey);
+      return { before, after: await updateCreativeLifecycleColumns(tx, creativeId, workspaceId, columns) };
+    }).catch(rethrowGone(creativeId));
+    if ("after" in restored) return restored;
+    surveyToLock = restored.relinkedTo;
+  }
+  throw new Error(`Creative ${creativeId} kept changing its survey while it was being restored`);
 };
 
 /** Copies the creative into a new Draft, without counts, created by `createdBy`. */
@@ -167,7 +269,6 @@ export const duplicateCreative = async ({
   createdBy: string | null;
 }): Promise<TCreativeRecord> => {
   const state = toCreativeState(record);
-  const languages = await ensureCreativeLanguages(record.workspaceId, getCreativeLanguageRequests(state));
   const surveyId = linkedSurveyId(state);
 
   return runInCreativeTransaction(async (tx) => {
@@ -183,7 +284,7 @@ export const duplicateCreative = async ({
       createdBy,
       row: toCreativeRowData(copy),
       actionClassIds: actionClassIdsOf(copy),
-      languages,
+      languages: await ensureCreativeLanguages(tx, record.workspaceId, getCreativeLanguageRequests(copy)),
     });
   });
 };

@@ -2299,6 +2299,7 @@
         "button": "按鈕",
         "button_label": "按鈕文字",
         "button_label_placeholder": "例如:瞭解更多",
+        "changed_since_opened": "這個創意素材在你開啟後已經有更新，請重新載入以查看最新內容。",
         "choose_action": "選擇動作",
         "choose_survey": "選擇問卷",
         "colors": "顏色",

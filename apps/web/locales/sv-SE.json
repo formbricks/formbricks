@@ -2299,6 +2299,7 @@
         "button": "Knapp",
         "button_label": "Knapptext",
         "button_label_placeholder": "t.ex. Läs mer",
+        "changed_since_opened": "Den här kreativen har ändrats sedan du öppnade den. Ladda om för att se den senaste versionen.",
         "choose_action": "Välj en åtgärd",
         "choose_survey": "Välj en enkät",
         "colors": "Färger",

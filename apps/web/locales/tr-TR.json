@@ -2299,6 +2299,7 @@
         "button": "Düğme",
         "button_label": "Düğme etiketi",
         "button_label_placeholder": "ör. Daha fazla bilgi",
+        "changed_since_opened": "Bu kreatif, sen açtığından beri değişti. En son hâlini görmek için sayfayı yeniden yükle.",
         "choose_action": "Bir eylem seç",
         "choose_survey": "Bir anket seç",
         "colors": "Renkler",

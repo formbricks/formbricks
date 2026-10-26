@@ -2299,6 +2299,7 @@
         "button": "按钮",
         "button_label": "按钮文字",
         "button_label_placeholder": "例如:了解更多",
+        "changed_since_opened": "自你打开后，此创意已有更新。请重新加载以查看最新内容。",
         "choose_action": "选择操作",
         "choose_survey": "选择问卷",
         "colors": "颜色",

@@ -62,12 +62,12 @@ export const canWriteCreatives = (access: TCreativesAccess): boolean => access =
 /**
  * The operation a creative PATCH body performs: `pause` or `close` when it sets `status` to `paused` or
  * `completed` and nothing else, `update` for anything else, an empty body included. Keys whose value is
- * `undefined` don't count, as they change nothing.
+ * `undefined` don't count, as they change nothing, and neither does the `expectedUpdatedAt` precondition.
  */
 export const getCreativePatchOperation = (
   body: Readonly<Record<string, unknown>>
 ): Extract<TCreativesOperation, "pause" | "close" | "update"> => {
-  const setKeys = Object.keys(body).filter((key) => body[key] !== undefined);
+  const setKeys = Object.keys(body).filter((key) => key !== "expectedUpdatedAt" && body[key] !== undefined);
   if (setKeys.length !== 1 || setKeys[0] !== "status") return "update";
   if (body.status === "paused") return "pause";
   if (body.status === "completed") return "close";

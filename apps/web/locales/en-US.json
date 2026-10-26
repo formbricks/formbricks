@@ -2299,6 +2299,7 @@
         "button": "Button",
         "button_label": "Button label",
         "button_label_placeholder": "e.g. Learn more",
+        "changed_since_opened": "This creative changed since you opened it. Reload to see the latest.",
         "choose_action": "Choose an action",
         "choose_survey": "Choose a survey",
         "colors": "Colors",

@@ -2299,6 +2299,7 @@
         "button": "ボタン",
         "button_label": "ボタンのラベル",
         "button_label_placeholder": "例：詳しく見る",
+        "changed_since_opened": "このクリエイティブは、開いた後に変更されました。再読み込みして最新の状態を確認してください。",
         "choose_action": "アクションを選択",
         "choose_survey": "アンケートを選択",
         "colors": "カラー",

@@ -4257,11 +4257,13 @@ paths:
       description: |
         Changes a creative. Read/write access to its workspace; an unknown or inaccessible `creativeId` answers **403**. Each group sent replaces the stored one as a whole (see `PatchCreativeRequest`); an empty body changes nothing.
 
-        **Status.** Publish with `status: inProgress`, pause with `paused`, close with `completed`, and reopen or resume with `inProgress`. A creative that was ever published can't go back to `draft`. Any status but `draft` must meet the publish rules of `POST /api/v3/creatives`, checked against the creative as it would be after the change. In wind-down (the license does not include Creatives), only a body that sets nothing but `status` to `paused` or `completed` is accepted; any other body, an empty one included, answers **403** `creatives_not_entitled`.
+        **Status.** Publish with `status: inProgress`, pause with `paused`, close with `completed`, and reopen or resume with `inProgress`. A creative that was ever published can't go back to `draft`. Any status but `draft` must meet the publish rules of `POST /api/v3/creatives`, checked against the creative as it would be after the change. In wind-down (the license does not include Creatives), only a body that sets nothing but `status` to `paused` or `completed` (with `expectedUpdatedAt` or without) is accepted; any other body, an empty one included, answers **403** `creatives_not_entitled`.
 
         **Custom CSS.** Adding or editing `styling.theme.customCss` follows the rules of `POST /api/v3/creatives`; removing it, or sending it back unchanged, needs no plan and is not processed again.
 
         An archived creative is read-only: restore it first, or the request answers **422**.
+
+        **Concurrent changes.** The change applies to the creative as it is stored when the request runs, so a pause, close or archive made meanwhile is never undone by a request that doesn't mention it. Send `expectedUpdatedAt` (the `updatedAt` you last read) to have the change refused with **409** instead when the creative changed since your read.
 
         **Its survey.** Changing or removing `destination` succeeds even when this creative is the last one that opens a live (`inProgress`) app survey with no actions of its own; that survey then shows nowhere until a creative or an action opens it again. Check before relinking.
       tags:
@@ -4312,6 +4314,21 @@ paths:
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3CreativesForbidden'
+        '409':
+          description: Conflict — `expectedUpdatedAt` did not match the stored creative, so it changed since your read. Nothing was written. `details` carries `expectedUpdatedAt` and the live `currentUpdatedAt`, so a client can re-read and retry without guessing.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+              example:
+                title: Conflict
+                status: 409
+                detail: The creative changed since it was last read; updatedAt is now 2026-10-16T09:45:00.000Z. Re-read the creative and retry.
+                code: conflict
+                requestId: 6f1f7f3e-3b0e-4a1a-9f0a-7c9a1d2b3c4d
+                details:
+                  expectedUpdatedAt: '2026-10-16T09:30:00.000Z'
+                  currentUpdatedAt: '2026-10-16T09:45:00.000Z'
         '422':
           $ref: '#/components/responses/V3UnprocessableContent'
         '429':
@@ -12263,6 +12280,10 @@ components:
           $ref: '#/components/schemas/CreativeDistribution'
         schedule:
           $ref: '#/components/schemas/CreativeSchedule'
+        expectedUpdatedAt:
+          type: string
+          format: date-time
+          description: 'Optimistic-concurrency precondition: the creative''s `updatedAt` from your last read. The change is applied only if the creative hasn''t changed since; otherwise nothing is written and the request answers **409**. Omit it to apply the change to the creative as it is stored when the request runs.'
       additionalProperties: false
     CreativeStatsCounts:
       type: object

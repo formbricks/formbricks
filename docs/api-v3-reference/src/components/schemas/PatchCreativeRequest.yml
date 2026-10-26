@@ -39,4 +39,12 @@ properties:
     $ref: ./CreativeDistribution.yml
   schedule:
     $ref: ./CreativeSchedule.yml
+  expectedUpdatedAt:
+    type: string
+    format: date-time
+    description: >-
+      Optimistic-concurrency precondition: the creative's `updatedAt` from your last read. The change
+      is applied only if the creative hasn't changed since; otherwise nothing is written and the
+      request answers **409**. Omit it to apply the change to the creative as it is stored when the
+      request runs.
 additionalProperties: false

@@ -2216,6 +2216,7 @@ checksums:
     workspace/creatives/editor/button: c18d641c4d53381e61330584334ad656
     workspace/creatives/editor/button_label: 9efe293aca430ecf0424c68b105608d7
     workspace/creatives/editor/button_label_placeholder: fc584894dbc79579392bf38c7fa0fc53
+    workspace/creatives/editor/changed_since_opened: 3f0753d1398edea11960aa3d42d87b45
     workspace/creatives/editor/choose_action: 321f1c0211eb130466fc72bbff94ff57
     workspace/creatives/editor/choose_survey: 3ad86527b3340cbfd2dbd105ca446f12
     workspace/creatives/editor/colors: a1afeb33ae765ec4f8caab2d13c1fc0c

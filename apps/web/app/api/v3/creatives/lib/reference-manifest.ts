@@ -90,4 +90,5 @@ export const V3_CREATIVE_BODY_FIELDS: Readonly<Record<string, TV3CreativeReferen
   "distribution.displayPercentage": none(),
   "schedule.startAt": none(),
   "schedule.endAt": none(),
+  expectedUpdatedAt: none("a precondition compared with the creative's own updatedAt"),
 };

@@ -2299,6 +2299,7 @@
         "button": "Gomb",
         "button_label": "Gomb felirata",
         "button_label_placeholder": "pl. Tudjon meg többet",
+        "changed_since_opened": "Ez a kreatív elem a megnyitása óta módosult. Kérjük, töltse újra az oldalt a legfrissebb verzió megtekintéséhez.",
         "choose_action": "Válasszon műveletet",
         "choose_survey": "Válasszon felmérést",
         "colors": "Színek",

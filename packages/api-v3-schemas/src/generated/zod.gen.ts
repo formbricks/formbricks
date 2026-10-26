@@ -1482,6 +1482,7 @@ export const zPatchCreativeRequest = z.strictObject({
   destination: zCreativeDestinationInput.nullish(),
   distribution: zCreativeDistribution.optional(),
   schedule: zCreativeSchedule.optional(),
+  expectedUpdatedAt: z.iso.datetime({ offset: true }).optional(),
 });
 
 export type PatchCreativeRequestZodType = z.infer<typeof zPatchCreativeRequest>;

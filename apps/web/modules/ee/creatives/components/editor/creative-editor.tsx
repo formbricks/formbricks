@@ -196,7 +196,29 @@ export const CreativeEditor = ({
     return true;
   };
 
+  // Someone else saved it (or its status changed) since this editor loaded it: the save would overwrite
+  // what they did, so the server refused it. Reloading shows theirs; the edits here are lost.
+  const toastChangedSinceOpened = () =>
+    toast.error(
+      () => (
+        <span className="flex items-center gap-3">
+          <span>{t("workspace.creatives.editor.changed_since_opened")}</span>
+          <button
+            type="button"
+            className="shrink-0 text-sm font-medium text-slate-900 underline hover:text-slate-700"
+            onClick={() => globalThis.location.reload()}>
+            {t("common.reload_page")}
+          </button>
+        </span>
+      ),
+      { id: "creative-changed-since-opened", duration: Infinity }
+    );
+
   const onSaveError = (error: Error) => {
+    if (error instanceof V3ApiError && error.status === 409 && error.code === "conflict") {
+      toastChangedSinceOpened();
+      return;
+    }
     const refused = error instanceof V3ApiError ? error.invalid_params?.[0] : undefined;
     if (refused) {
       const tab = getInvalidParamTab(refused.name);
@@ -268,11 +290,15 @@ export const CreativeEditor = ({
     setRelinkWarningIntent(null);
     setServerIssueTab(null);
     setPendingIntent(intent);
-    updateCreative.mutate(body, {
-      onSuccess: (saved) => onSaved(intent, saved, keptPaused),
-      onError: onSaveError,
-      onSettled: () => setPendingIntent(null),
-    });
+    // Refused (409) if the creative changed since this editor last read it, rather than overwriting that.
+    updateCreative.mutate(
+      { ...body, expectedUpdatedAt: creative.updatedAt },
+      {
+        onSuccess: (saved) => onSaved(intent, saved, keptPaused),
+        onError: onSaveError,
+        onSettled: () => setPendingIntent(null),
+      }
+    );
   };
 
   // The look the visitor gets, computed as the server computes it for the environment payload.

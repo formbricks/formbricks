@@ -87,6 +87,23 @@ export const findCreativeRecord = (
 ): Promise<TCreativeRecord | null> =>
   prisma.creative.findFirst({ where: { id: creativeId, workspaceId }, include: creativeRecordInclude });
 
+/**
+ * The creative as stored now, its row locked FOR UPDATE until the transaction ends: every write that
+ * changes an existing creative plans from this read, so a change committed meanwhile (a pause, an
+ * archive, a survey-side unlink) is what it builds on rather than something it overwrites. `null` when
+ * no such creative is in the workspace.
+ */
+export const lockCreativeRecord = async (
+  tx: TCreativeTx,
+  creativeId: string,
+  workspaceId: string
+): Promise<TCreativeRecord | null> => {
+  await tx.$queryRaw`
+    SELECT 1 FROM "Creative" WHERE "id" = ${creativeId} AND "workspaceId" = ${workspaceId} FOR UPDATE
+  `;
+  return tx.creative.findFirst({ where: { id: creativeId, workspaceId }, include: creativeRecordInclude });
+};
+
 export type TCreativeListSortBy = "updatedAt" | "createdAt" | "name";
 
 export type TCreativePageQuery = {
@@ -208,10 +225,11 @@ export const findWorkspaceActionClassIds = async (
 
 /** The workspace `Language` rows for these codes, created when missing (as v3 surveys do). */
 export const ensureCreativeLanguages = async (
+  tx: TCreativeTx,
   workspaceId: string,
   languages: { code: string; default: boolean; enabled: boolean }[]
 ): Promise<NonNullable<TCreativeWriteData["languages"]>> => {
-  const ensured = await ensureV3WorkspaceLanguages(workspaceId, languages);
+  const ensured = await ensureV3WorkspaceLanguages(workspaceId, languages, undefined, tx);
   return ensured.map(({ language, default: isDefault, enabled }) => ({
     languageId: language.id,
     default: isDefault,
@@ -258,6 +276,21 @@ export const replaceCreativeRecord = (
       }),
       ...(data.languages && { languages: { deleteMany: {}, create: data.languages } }),
     },
+    include: creativeRecordInclude,
+  });
+
+/** The columns a lifecycle change (archive, restore) owns; it writes these and nothing else. */
+export type TCreativeLifecycleColumns = Partial<Pick<TCreativeRowData, "status" | "archivedAt" | "surveyId">>;
+
+export const updateCreativeLifecycleColumns = (
+  tx: TCreativeTx,
+  creativeId: string,
+  workspaceId: string,
+  columns: TCreativeLifecycleColumns
+): Promise<TCreativeRecord> =>
+  tx.creative.update({
+    where: { id: creativeId, workspaceId },
+    data: columns,
     include: creativeRecordInclude,
   });
 

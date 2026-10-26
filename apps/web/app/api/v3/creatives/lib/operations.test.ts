@@ -9,6 +9,7 @@ import {
   type TCreativeRecord,
   type TCreativeWriteData,
   type TDestinationSurveyFacts,
+  findCreativeRecord,
   findCreativeRecordsPage,
   insertCreativeRecord,
   replaceCreativeRecord,
@@ -129,6 +130,11 @@ vi.mock("@/modules/ee/creatives/lib/repository", () => ({
     const record = store.get(id);
     return record && record.workspaceId === workspaceId ? withRelations(record) : null;
   }),
+  // The fake has no locks: the row read "under the lock" is simply what is stored when the write runs.
+  lockCreativeRecord: vi.fn(async (_tx: unknown, id: string, workspaceId: string) => {
+    const record = store.get(id);
+    return record && record.workspaceId === workspaceId ? withRelations(record) : null;
+  }),
   findCreativeRecordsPage: vi.fn(async () => []),
   runInCreativeTransaction: vi.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn({})),
   lockDestinationSurvey: vi.fn(async (_tx: unknown, surveyId: string, workspaceId: string) => {
@@ -141,7 +147,11 @@ vi.mock("@/modules/ee/creatives/lib/repository", () => ({
     ids.filter((id) => ACTION_CLASS_IDS.has(id))
   ),
   ensureCreativeLanguages: vi.fn(
-    async (_workspaceId: string, languages: { code: string; default: boolean; enabled: boolean }[]) =>
+    async (
+      _tx: unknown,
+      _workspaceId: string,
+      languages: { code: string; default: boolean; enabled: boolean }[]
+    ) =>
       languages.map(({ code, default: isDefault, enabled }) => ({
         languageId: `lang_${code}`,
         default: isDefault,
@@ -191,6 +201,15 @@ vi.mock("@/modules/ee/creatives/lib/repository", () => ({
         }),
         ...(data.languages && { languages: toLanguages(data.languages) }),
       } as TCreativeRecord;
+      store.set(id, record);
+      return withRelations(record);
+    }
+  ),
+  updateCreativeLifecycleColumns: vi.fn(
+    async (_tx: unknown, id: string, workspaceId: string, columns: Partial<TCreativeRecord>) => {
+      const current = store.get(id);
+      if (current?.workspaceId !== workspaceId) throw new Error("not found");
+      const record = { ...current, ...columns, updatedAt: new Date() } as TCreativeRecord;
       store.set(id, record);
       return withRelations(record);
     }
@@ -803,6 +822,176 @@ describe("patchV3Creative", () => {
 
     expect(response.status).toBe(403);
     expect(replaceCreativeRecord).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Two requests on one creative, interleaved: the next request reads the creative, then `meanwhile`
+ * runs to completion, and only then does that request go on to write. A write must build on what
+ * `meanwhile` committed, not on its own earlier read (ENG-6602 review).
+ */
+const interleave = (meanwhile: () => Promise<unknown>) =>
+  vi.mocked(findCreativeRecord).mockImplementationOnce(async (id: string, workspaceId: string) => {
+    const stored = store.get(id);
+    const read = stored?.workspaceId === workspaceId ? withRelations(stored) : null;
+    await meanwhile();
+    return read;
+  });
+
+describe("concurrent writes", () => {
+  test("a stale rename keeps a pause made meanwhile", async () => {
+    const { id } = await created(feedbackButton({ status: "inProgress" }));
+    interleave(() => patchV3Creative({ ...base, creativeId: id, body: patch({ status: "paused" }) }));
+
+    const response = await patchV3Creative({ ...base, creativeId: id, body: patch({ name: "Renamed" }) });
+
+    expect(response.status).toBe(200);
+    expect((await readBody(response)).data).toMatchObject({ name: "Renamed", status: "paused" });
+    expect(store.get(id)).toMatchObject({ name: "Renamed", status: "paused" });
+  });
+
+  test("a stale rename can't bring back a creative archived meanwhile", async () => {
+    const { id } = await created(feedbackButton({ status: "inProgress" }));
+    interleave(() => archiveV3Creative({ ...base, creativeId: id }));
+
+    const response = await patchV3Creative({ ...base, creativeId: id, body: patch({ name: "Renamed" }) });
+
+    expect(response.status).toBe(422);
+    expect(await invalidParamNames(response)).toEqual(["archivedAt"]);
+    expect(store.get(id)).toMatchObject({ name: "Site feedback tab", archivedAt: expect.any(Date) });
+  });
+
+  describe("and its survey restricted meanwhile", () => {
+    const LATER_RESTRICTED_SURVEY_ID = "clsx1234567890123456789012";
+
+    /** Restricting the survey, as the survey side does it: it unlinks the archived creatives first. */
+    const restrictSurvey = () => {
+      SURVEYS.set(
+        LATER_RESTRICTED_SURVEY_ID,
+        surveyFacts(LATER_RESTRICTED_SURVEY_ID, { visibility: "restricted" })
+      );
+      for (const [id, record] of store) {
+        if (record.surveyId === LATER_RESTRICTED_SURVEY_ID && record.archivedAt) {
+          store.set(id, { ...record, surveyId: null });
+        }
+      }
+    };
+
+    const linkedCreative = () =>
+      created(
+        feedbackButton({
+          status: "inProgress",
+          destination: { type: "survey", surveyId: LATER_RESTRICTED_SURVEY_ID },
+        })
+      );
+
+    beforeEach(() => {
+      SURVEYS.set(LATER_RESTRICTED_SURVEY_ID, surveyFacts(LATER_RESTRICTED_SURVEY_ID));
+      return () => {
+        SURVEYS.delete(LATER_RESTRICTED_SURVEY_ID);
+      };
+    });
+
+    test("a stale rename after Archive and Restrict doesn't relink, unarchive or resume it", async () => {
+      const { id } = await linkedCreative();
+      interleave(async () => {
+        await archiveV3Creative({ ...base, creativeId: id });
+        restrictSurvey();
+      });
+
+      const response = await patchV3Creative({ ...base, creativeId: id, body: patch({ name: "Renamed" }) });
+
+      expect(response.status).toBe(422);
+      expect(store.get(id)).toMatchObject({
+        name: "Site feedback tab",
+        surveyId: null,
+        archivedAt: expect.any(Date),
+      });
+    });
+
+    test("an editor still showing the survey can't link it again once it is Restricted", async () => {
+      const { id } = await linkedCreative();
+      // Relinked elsewhere meanwhile, which frees the survey to be restricted.
+      interleave(async () => {
+        await patchV3Creative({
+          ...base,
+          creativeId: id,
+          body: patch({ destination: { type: "survey", surveyId: APP_SURVEY_ID } }),
+        });
+        restrictSurvey();
+      });
+
+      const response = await patchV3Creative({
+        ...base,
+        creativeId: id,
+        body: patch({
+          name: "Renamed",
+          destination: { type: "survey", surveyId: LATER_RESTRICTED_SURVEY_ID },
+        }),
+      });
+
+      expect(response.status).toBe(422);
+      expect(await invalidParamNames(response)).toEqual(["destination.surveyId"]);
+      expect(store.get(id)?.surveyId).toBe(APP_SURVEY_ID);
+    });
+  });
+
+  describe("with expectedUpdatedAt", () => {
+    const READ_AT = new Date("2026-10-16T09:30:00.000Z");
+
+    /** A creative last written at `READ_AT`, so a write made now is told apart from it. */
+    const readCreative = async (): Promise<string> => {
+      const { id } = await created(feedbackButton({ status: "inProgress" }));
+      store.set(id, { ...store.get(id)!, updatedAt: READ_AT });
+      return id;
+    };
+
+    test("applies the change when the creative is as the caller read it", async () => {
+      const id = await readCreative();
+
+      const response = await patchV3Creative({
+        ...base,
+        creativeId: id,
+        body: patch({ name: "Renamed", expectedUpdatedAt: READ_AT.toISOString() }),
+      });
+
+      expect(response.status).toBe(200);
+      expect(store.get(id)?.name).toBe("Renamed");
+    });
+
+    test("answers 409 when it changed since, naming both times, and writes nothing", async () => {
+      const id = await readCreative();
+      interleave(() => patchV3Creative({ ...base, creativeId: id, body: patch({ status: "paused" }) }));
+
+      const response = await patchV3Creative({
+        ...base,
+        creativeId: id,
+        body: patch({ name: "Renamed", expectedUpdatedAt: READ_AT.toISOString() }),
+      });
+
+      expect(response.status).toBe(409);
+      expect(await readBody(response)).toMatchObject({
+        code: "conflict",
+        details: {
+          expectedUpdatedAt: READ_AT.toISOString(),
+          currentUpdatedAt: store.get(id)?.updatedAt.toISOString(),
+        },
+      });
+      expect(store.get(id)).toMatchObject({ name: "Site feedback tab", status: "paused" });
+    });
+
+    test("a stale one fails even when the patch would change nothing", async () => {
+      const id = await readCreative();
+      await patchV3Creative({ ...base, creativeId: id, body: patch({ status: "paused" }) });
+
+      const response = await patchV3Creative({
+        ...base,
+        creativeId: id,
+        body: patch({ expectedUpdatedAt: READ_AT.toISOString() }),
+      });
+
+      expect(response.status).toBe(409);
+    });
   });
 });
 

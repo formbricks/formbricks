@@ -63,6 +63,12 @@ describe("Creatives access rules (ENG-6602)", () => {
       expect(getCreativePatchOperation({ status: "completed", name: undefined })).toBe("close");
     });
 
+    test("the expectedUpdatedAt precondition changes nothing, so it doesn't make a pause an update", () => {
+      const expectedUpdatedAt = "2026-10-16T09:30:00.000Z";
+      expect(getCreativePatchOperation({ status: "paused", expectedUpdatedAt })).toBe("pause");
+      expect(getCreativePatchOperation({ expectedUpdatedAt })).toBe("update");
+    });
+
     test.each([
       [{ status: "inProgress" }],
       [{ status: "draft" }],

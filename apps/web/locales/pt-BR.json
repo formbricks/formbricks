@@ -2299,6 +2299,7 @@
         "button": "Botão",
         "button_label": "Rótulo do botão",
         "button_label_placeholder": "ex.: Saiba mais",
+        "changed_since_opened": "Este criativo foi alterado desde que você o abriu. Recarregue para ver a versão mais recente.",
         "choose_action": "Escolha uma ação",
         "choose_survey": "Escolha uma pesquisa",
         "colors": "Cores",

@@ -2299,6 +2299,7 @@
         "button": "Bouton",
         "button_label": "Libellé du bouton",
         "button_label_placeholder": "ex. : En savoir plus",
+        "changed_since_opened": "Ce visuel a été modifié depuis que tu l'as ouvert. Recharge la page pour voir la dernière version.",
         "choose_action": "Choisis une action",
         "choose_survey": "Choisis un sondage",
         "colors": "Couleurs",

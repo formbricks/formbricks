@@ -3,7 +3,7 @@ import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { DEFAULT_CREATIVE_DISTRIBUTION, DEFAULT_CREATIVE_STYLING, type TCreativeState } from "./creative";
 import { type TCreativeRecord, findCreativeRecordsPage, workspaceHasCreatives } from "./repository";
-import { CreativeReferenceError, createCreative } from "./service";
+import { CreativeReferenceError, archiveCreative, createCreative, updateCreative } from "./service";
 
 /**
  * The creatives storage against a real PostgreSQL: the list query (the derived-status filter, the
@@ -213,5 +213,42 @@ describe("the Destination foreign key", () => {
     await prisma.workspace.delete({ where: { id: workspaceId } });
     expect(await prisma.creative.count({ where: { workspaceId } })).toBe(0);
     await prisma.organization.delete({ where: { id: organizationId } });
+  });
+});
+
+describe("a write to an existing creative", () => {
+  test("plans under the row lock from the row as stored, and a lifecycle change writes only its own columns", async () => {
+    const { workspaceId, activeSurvey } = await seedWorkspace("Locked");
+    const creative = await create(workspaceId, {
+      destination: { type: "survey", surveyId: activeSurvey.id },
+    });
+    // Paused by another request after this one first read the creative.
+    await prisma.creative.update({ where: { id: creative.id }, data: { status: "paused" } });
+
+    let lockedWhilePlanning = false;
+    const renamed = await updateCreative({
+      creativeId: creative.id,
+      workspaceId,
+      surveyIdToLink: null,
+      plan: async (current) => {
+        // Another connection can't take the row while the write plans from it.
+        await prisma.$queryRaw`SELECT 1 FROM "Creative" WHERE "id" = ${creative.id} FOR UPDATE NOWAIT`.catch(
+          () => {
+            lockedWhilePlanning = true;
+          }
+        );
+        return { ...current, name: "Renamed" };
+      },
+    });
+    const archived = await archiveCreative(creative.id, workspaceId, NOW);
+
+    expect(lockedWhilePlanning).toBe(true);
+    expect(renamed.after).toMatchObject({ name: "Renamed", status: "paused" });
+    expect(archived.after).toMatchObject({
+      name: "Renamed",
+      status: "paused",
+      archivedAt: NOW,
+      surveyId: activeSurvey.id,
+    });
   });
 });

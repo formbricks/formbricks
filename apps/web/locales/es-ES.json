@@ -2299,6 +2299,7 @@
         "button": "Botón",
         "button_label": "Texto del botón",
         "button_label_placeholder": "p. ej., Más información",
+        "changed_since_opened": "Este creativo ha cambiado desde que lo abriste. Recarga para ver la última versión.",
         "choose_action": "Elige una acción",
         "choose_survey": "Elige una encuesta",
         "colors": "Colores",

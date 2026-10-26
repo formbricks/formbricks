@@ -9,6 +9,7 @@ import {
   createdResponse,
   noContentResponse,
   problemBadRequest,
+  problemConflict,
   problemCreativesNotEntitled,
   problemCustomCssInvalid,
   problemCustomCssPlanRequired,
@@ -34,15 +35,17 @@ import {
 } from "@/modules/ee/creatives/lib/authorization";
 import type { TCreativeState } from "@/modules/ee/creatives/lib/creative";
 import { assertCreativeCustomCssWrite } from "@/modules/ee/creatives/lib/custom-css-write";
-import { toCreativeState } from "@/modules/ee/creatives/lib/record";
 import {
   type TCreativeRecord,
   findCreativeRecord,
   findCreativeRecordsPage,
 } from "@/modules/ee/creatives/lib/repository";
 import {
-  CreativeReferenceError,
+  CreativeChangedError,
+  CreativeInvalidError,
+  type TCreativeChange,
   archiveCreative,
+  assertCreativeEditable,
   createCreative,
   deleteCreative,
   duplicateCreative,
@@ -116,10 +119,15 @@ const problemInvalidCreative = (
     instance,
   });
 
-const problemCreativeArchived = (requestId: string, instance: string): Response =>
-  problemInvalidCreative(requestId, instance, [
-    { name: "archivedAt", reason: "This creative is archived. Restore it before editing." },
-  ]);
+const problemCreativeChanged = (requestId: string, instance: string, error: CreativeChangedError) => {
+  const currentUpdatedAt = error.currentUpdatedAt.toISOString();
+  return problemConflict(
+    requestId,
+    `The creative changed since it was last read; updatedAt is now ${currentUpdatedAt}. Re-read the creative and retry.`,
+    instance,
+    { details: { expectedUpdatedAt: error.expectedUpdatedAt.toISOString(), currentUpdatedAt } }
+  );
+};
 
 const recordAudit = (
   auditLog: TV3AuditLog | undefined,
@@ -134,6 +142,21 @@ const recordAudit = (
   if (objects.newObject !== undefined) auditLog.newObject = objects.newObject;
 };
 
+/** Audits a write to an existing creative as stored right before and after it; returns the result. */
+const auditChange = (
+  auditLog: TV3AuditLog | undefined,
+  organizationId: string,
+  { before, after }: TCreativeChange,
+  now: Date
+): TV3CreativeResource => {
+  const resource = serializeV3Creative(after, now);
+  recordAudit(auditLog, organizationId, after.id, {
+    oldObject: serializeV3Creative(before, now),
+    newObject: resource,
+  });
+  return resource;
+};
+
 const mapWriteError = (
   error: unknown,
   {
@@ -143,12 +166,20 @@ const mapWriteError = (
     operation,
   }: { log: ReturnType<typeof logger.withContext>; requestId: string; instance: string; operation: string }
 ): Response => {
-  if (error instanceof CreativeReferenceError) {
-    log.warn(
-      { statusCode: 422, invalidParams: error.invalidParams },
-      "Creative references failed validation"
-    );
+  if (error instanceof CreativeInvalidError) {
+    log.warn({ statusCode: 422, invalidParams: error.invalidParams }, error.message);
     return problemInvalidCreative(requestId, instance, error.invalidParams);
+  }
+  if (error instanceof CreativeChangedError) {
+    log.warn(
+      {
+        statusCode: 409,
+        expectedUpdatedAt: error.expectedUpdatedAt.toISOString(),
+        currentUpdatedAt: error.currentUpdatedAt.toISOString(),
+      },
+      "Creative precondition failed"
+    );
+    return problemCreativeChanged(requestId, instance, error);
   }
   if (error instanceof CustomCssPlanRequiredError) {
     log.warn({ statusCode: 403 }, "Creative custom CSS needs the plan");
@@ -363,33 +394,31 @@ export async function patchV3Creative(
     const { record, organizationId } = loaded;
 
     const now = new Date();
-    const before = serializeV3Creative(record, now);
-    if (record.archivedAt) {
-      log.warn({ statusCode: 422 }, "Creative is archived");
-      return problemCreativeArchived(requestId, instance);
+    const { expectedUpdatedAt, ...changes } = body;
+    const precondition = expectedUpdatedAt === undefined ? undefined : new Date(expectedUpdatedAt);
+    // An empty patch changes nothing, `updatedAt` included; its precondition and the archive still apply.
+    if (Object.keys(changes).length === 0) {
+      assertCreativeEditable(record, precondition);
+      return successResponse(serializeV3Creative(record, now), { requestId });
     }
-    // An empty patch changes nothing, `updatedAt` included.
-    if (Object.keys(body).length === 0) return successResponse(before, { requestId });
 
-    const previous = toCreativeState(record);
-    const planned = applyCreativePatch(previous, body, now);
-    const problems = planned.ok ? validateCreativeState(planned.state, previous) : planned.invalidParams;
-    if (!planned.ok || problems.length > 0) {
-      log.warn({ statusCode: 422, invalidParams: problems }, "Creative failed validation");
-      return problemInvalidCreative(requestId, instance, problems);
-    }
-    await assertCustomCssWrite(previous, planned.state, organizationId, params.authentication);
-
-    const updated = await updateCreative({
+    // Planned inside the write, from the creative as stored then (see `updateCreative`).
+    const plan = async (previous: TCreativeState): Promise<TCreativeState> => {
+      const planned = applyCreativePatch(previous, changes, now);
+      const problems = planned.ok ? validateCreativeState(planned.state, previous) : planned.invalidParams;
+      if (!planned.ok || problems.length > 0) throw new CreativeInvalidError(problems);
+      await assertCustomCssWrite(previous, planned.state, organizationId, params.authentication);
+      return planned.state;
+    };
+    const change = await updateCreative({
       creativeId: record.id,
       workspaceId: record.workspaceId,
-      previous,
-      next: planned.state,
+      expectedUpdatedAt: precondition,
+      surveyIdToLink: changes.destination?.type === "survey" ? changes.destination.surveyId : null,
+      plan,
     });
-    const resource = serializeV3Creative(updated, now);
-    recordAudit(auditLog, organizationId, record.id, { oldObject: before, newObject: resource });
 
-    return successResponse(resource, { requestId });
+    return successResponse(auditChange(auditLog, organizationId, change, now), { requestId });
   } catch (error) {
     return mapWriteError(error, { log, requestId, instance, operation: "creatives.patch" });
   }
@@ -417,7 +446,7 @@ export async function deleteV3Creative(params: TCreativeOperationParams): Promis
 const runLifecycleOperation = async (
   params: TCreativeOperationParams,
   operation: "archive" | "restore",
-  mutate: (record: TCreativeRecord, now: Date) => Promise<TCreativeRecord>
+  mutate: (record: TCreativeRecord, now: Date) => Promise<TCreativeChange>
 ): Promise<Response> => {
   const { creativeId, requestId, instance, auditLog } = params;
   const log = logger.withContext({ requestId, creativeId });
@@ -428,23 +457,23 @@ const runLifecycleOperation = async (
     const { record, organizationId } = loaded;
 
     const now = new Date();
-    const resource = serializeV3Creative(await mutate(record, now), now);
-    recordAudit(auditLog, organizationId, record.id, {
-      oldObject: serializeV3Creative(record, now),
-      newObject: resource,
-    });
-
-    return successResponse(resource, { requestId });
+    const change = await mutate(record, now);
+    return successResponse(auditChange(auditLog, organizationId, change, now), { requestId });
   } catch (error) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: `creatives.${operation}` });
   }
 };
 
+// Each reads the creative again under its row lock: `record` only names it (and the survey to lock).
 export const archiveV3Creative = (params: TCreativeOperationParams): Promise<Response> =>
-  runLifecycleOperation(params, "archive", archiveCreative);
+  runLifecycleOperation(params, "archive", (record, now) =>
+    archiveCreative(record.id, record.workspaceId, now)
+  );
 
 export const restoreV3Creative = (params: TCreativeOperationParams): Promise<Response> =>
-  runLifecycleOperation(params, "restore", (record) => restoreCreative(record));
+  runLifecycleOperation(params, "restore", (record) =>
+    restoreCreative(record.id, record.workspaceId, record.surveyId)
+  );
 
 export async function duplicateV3Creative(params: TCreativeOperationParams): Promise<Response> {
   const { creativeId, authentication, requestId, instance, auditLog } = params;

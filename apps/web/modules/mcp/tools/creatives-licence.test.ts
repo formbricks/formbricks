@@ -14,7 +14,9 @@ import {
   findCreativeRecordsPage,
   findCreativeWorkspaceId,
   insertCreativeRecord,
+  lockCreativeRecord,
   replaceCreativeRecord,
+  updateCreativeLifecycleColumns,
 } from "@/modules/ee/creatives/lib/repository";
 import { buildCreativeCreateState } from "@/modules/ee/creatives/lib/write-rules";
 import { registerCreativeTools } from "./creatives";
@@ -39,6 +41,7 @@ vi.mock("@/modules/ee/creatives/lib/access", () => ({ getCreativesAccess: vi.fn(
 vi.mock("@/modules/ee/creatives/lib/repository", () => ({
   findCreativeWorkspaceId: vi.fn(),
   findCreativeRecord: vi.fn(),
+  lockCreativeRecord: vi.fn(),
   findCreativeRecordsPage: vi.fn(),
   runInCreativeTransaction: vi.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn({})),
   ensureCreativeLanguages: vi.fn(async () => [{ languageId: "lang_en", default: true, enabled: true }]),
@@ -46,6 +49,7 @@ vi.mock("@/modules/ee/creatives/lib/repository", () => ({
   lockDestinationSurvey: vi.fn(async () => null),
   insertCreativeRecord: vi.fn(),
   replaceCreativeRecord: vi.fn(),
+  updateCreativeLifecycleColumns: vi.fn(),
   deleteCreativeRecord: vi.fn(async () => undefined),
 }));
 vi.mock("@/modules/ee/creatives/lib/stats-repository", () => ({
@@ -195,6 +199,7 @@ const expectNotEntitled = (result: TToolResult, label: string) => {
 const expectNothingWritten = () => {
   expect(insertCreativeRecord).not.toHaveBeenCalled();
   expect(replaceCreativeRecord).not.toHaveBeenCalled();
+  expect(updateCreativeLifecycleColumns).not.toHaveBeenCalled();
   expect(deleteCreativeRecord).not.toHaveBeenCalled();
 };
 
@@ -207,6 +212,11 @@ beforeEach(() => {
   }));
   vi.mocked(findCreativeWorkspaceId).mockResolvedValue(workspaceId);
   vi.mocked(findCreativeRecord).mockResolvedValue(record);
+  vi.mocked(lockCreativeRecord).mockResolvedValue(record);
+  vi.mocked(updateCreativeLifecycleColumns).mockImplementation(async (_tx, _id, _workspaceId, columns) => ({
+    ...record,
+    ...columns,
+  }));
   vi.mocked(findCreativeRecordsPage).mockResolvedValue([record]);
   vi.mocked(insertCreativeRecord).mockResolvedValue(record);
   vi.mocked(replaceCreativeRecord).mockImplementation(async (_tx, _id, _workspaceId, data) => ({

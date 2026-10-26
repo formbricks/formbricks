@@ -2299,6 +2299,7 @@
         "button": "Button",
         "button_label": "Button-Beschriftung",
         "button_label_placeholder": "z. B. Mehr erfahren",
+        "changed_since_opened": "Dieses Creative wurde geändert, seit Du es geöffnet hast. Lade neu, um die neueste Version zu sehen.",
         "choose_action": "Aktion auswählen",
         "choose_survey": "Umfrage auswählen",
         "colors": "Farben",
