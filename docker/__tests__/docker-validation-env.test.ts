@@ -3,6 +3,7 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 
 type Step = { name: string; env?: Record<string, string>; run?: string; with?: { secrets?: string } };
@@ -79,21 +80,44 @@ describe("Docker validation without repository secrets", () => {
 
   test("operator CLI receives authentication config before testing disabled or unreachable AuthZed", () => {
     const step = job.steps.find((step) => step.name === "Verify Release-Matched AuthZed Operator CLI")!;
-    // Execute through the first CLI invocation and capture its Docker arguments in `output`.
-    // Silence the earlier image-inspection call; no Docker daemon or image is needed here.
+    const directory = mkdtempSync(join(tmpdir(), "authzed-cli-test-"));
+    const output = join(directory, "docker-calls.jsonl");
+    // Run the complete workflow step against deterministic Docker responses, without a daemon or timeout.
     const script = [
-      'docker() { printf "%s\\n" "$@"; }',
-      "{",
-      step.run!.split("status=$?")[0],
-      "} >/dev/null",
-      'printf "%s\\n" "$output"',
+      'docker() { "$TEST_NODE_PATH" "$MOCK_DOCKER_PATH" "$@"; }',
+      'timeout() { shift; "$@"; }',
+      step.run!,
     ].join("\n");
-    const args = execFileSync("bash", ["-c", script], {
-      env: { PATH: process.env.PATH, GITHUB_SHA: "test", ...job.env },
-      encoding: "utf8",
-    }).split("\n");
-    expect(args.slice(0, 4)).toEqual(["run", "--rm", "--entrypoint", "formbricks-authzed"]);
-    expect(args).toContain(`BETTER_AUTH_SECRET=${job.env?.DUMMY_ENCRYPTION_KEY}`);
-    expect(args).toContain("AUTHZED_ENABLED=false");
+    try {
+      execFileSync("bash", ["-c", script], {
+        env: {
+          PATH: process.env.PATH,
+          GITHUB_SHA: "test",
+          ...job.env,
+          TEST_NODE_PATH: process.execPath,
+          MOCK_DOCKER_PATH: fileURLToPath(new URL("./__mocks__/authzed-cli-docker.mjs", import.meta.url)),
+          DOCKER_CALLS: output,
+        },
+      });
+      const calls: string[][] = readFileSync(output, "utf8")
+        .trim()
+        .split("\n")
+        .map((line) => JSON.parse(line));
+      const cliCalls = calls.filter(
+        (args) => args[args.indexOf("--entrypoint") + 1] === "formbricks-authzed"
+      );
+      expect(cliCalls).toHaveLength(3);
+      for (const args of cliCalls) {
+        expect(args).toContain(`BETTER_AUTH_SECRET=${job.env?.DUMMY_ENCRYPTION_KEY}`);
+        expect(args).toContain(`ENCRYPTION_KEY=${job.env?.DUMMY_ENCRYPTION_KEY}`);
+      }
+      expect(cliCalls.map((args) => args.findLast((arg) => arg.startsWith("AUTHZED_ENABLED=")))).toEqual([
+        "AUTHZED_ENABLED=false",
+        "AUTHZED_ENABLED=true",
+        "AUTHZED_ENABLED=false",
+      ]);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
   });
 });
