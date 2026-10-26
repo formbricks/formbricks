@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { collectImages, composeDefault, inventory } from "./inventory.mjs";
 import { imageRepository, normalizeReport, selectPlatforms } from "./scan.mjs";
-import { findings, reconciliation } from "./sync.mjs";
+import { description, findings, reconciliation } from "./sync.mjs";
 
 const digest = `sha256:${"a".repeat(64)}`;
 const vulnerability = {
@@ -103,17 +103,66 @@ describe("immutable image selection", () => {
 describe("Linear reconciliation", () => {
   const repo = "formbricks/formbricks";
   const prefix = [...findings(repo, [result()]).keys()][0];
-  const existing = [{ id: "issue", title: `${prefix} vulnerability`, state: { type: "started" } }];
+  const existing = [
+    {
+      id: "issue",
+      title: `${prefix} Critical/high vulnerabilities in docker.io/example/server`,
+      state: { type: "started" },
+    },
+  ];
   const expected = [{ image: "example/server:1" }];
 
-  it("deduplicates a CVE across versions and architectures and retains unfixed critical findings", () => {
-    const other = result("example/server:2");
+  it("groups every CVE, tag and architecture of an image repository into one ticket", () => {
+    const other = result("example/server:2", [
+      vulnerability,
+      { ...vulnerability, VulnerabilityID: "CVE-2026-9999", PkgName: "zlib", Severity: "HIGH" },
+    ]);
     other.scans[0].platform = "linux/arm64";
-    const grouped = findings(repo, [result(), other]);
-    expect(grouped.size).toBe(1);
-    expect(grouped.get(prefix)?.priority).toBe(1);
-    expect(grouped.get(prefix)?.occurrences.size).toBe(2);
-    expect([...grouped.get(prefix)!.occurrences][0]).toContain("fix: not available");
+    const grouped = findings(repo, [result(), other, result("example/other:1")]);
+    expect(grouped.size).toBe(2);
+    const server = grouped.get(prefix)!;
+    expect(server.title).toBe(`${prefix} Critical/high vulnerabilities in docker.io/example/server`);
+    expect(server.priority).toBe(2);
+    expect([...server.occurrences].sort()).toEqual([
+      "- CRITICAL CVE-2026-1234 in libssl (debian): example/server:1: 1, fix: not available (linux/amd64); example/server:2: 1, fix: not available (linux/arm64)",
+      "- HIGH CVE-2026-9999 in zlib (debian): example/server:2: 1, fix: not available (linux/arm64)",
+    ]);
+    expect(server.scans.size).toBe(2);
+  });
+
+  it("ignores kernel headers and only opens tickets for critical/high findings", () => {
+    const headers = { ...vulnerability, PkgName: "linux-libc-dev" };
+    const medium = { ...vulnerability, VulnerabilityID: "CVE-2026-5555", Severity: "MEDIUM" };
+    expect(findings(repo, [result("example/server:1", [headers, medium])]).size).toBe(0);
+    const [ticket] = findings(repo, [result("example/server:1", [vulnerability, headers, medium])]).values();
+    const body = description(repo, ticket);
+    expect(body).not.toContain("linux-libc-dev");
+    expect(body).toContain("Image repository: `docker.io/example/server`");
+    expect(body).toContain("Not listed: 1 medium/low/unrated findings.");
+    expect(body.indexOf("CVE-2026-1234")).toBeLessThan(body.indexOf("Not listed"));
+    expect(body).toContain(`- example/server:1 (linux/amd64, ${digest}). Sources: compose.yml#server`);
+  });
+
+  it("supersedes untouched legacy per-CVE tickets once their repository scans completely", () => {
+    const legacy = {
+      id: "legacy",
+      title: "[Container formbricks/formbricks 0123456789abcdef01234567] CVE-2026-1234 in libssl",
+      description: "Image repository: `docker.io/example/server`",
+      state: { type: "triage" },
+    };
+    const assessed = { ...legacy, id: "assessed", state: { type: "unstarted" } };
+    const edited = { ...existing[0], id: "edited", title: `${existing[0].title} (bumped upstream)` };
+    const plan = reconciliation(repo, expected, [result("example/server:1", [])], [legacy, assessed, edited]);
+    expect(plan.supersede).toEqual([legacy]);
+    expect(plan.close).toEqual([edited]);
+    const failed = { ...result(), errors: ["registry unavailable"] };
+    for (const [inventory, results] of [
+      [expected, [failed]],
+      [expected, [{ ...result(), expectedPlatforms: ["linux/amd64", "linux/arm64"] }]],
+      [[], []],
+    ] as const) {
+      expect(reconciliation(repo, [...inventory], [...results], [legacy]).supersede).toEqual([]);
+    }
   });
 
   it("raises a high-priority finding when an image cannot be scanned", () => {
@@ -144,9 +193,13 @@ describe("Linear reconciliation", () => {
     expect(reconciliation(repo, [], [], existing).complete).toBe(false);
   });
 
-  it("keeps a ticket open when severity drops but the vulnerability is still present", () => {
+  it("keeps an image ticket open while any critical/high finding remains, then resolves it", () => {
+    const remaining = { ...vulnerability, VulnerabilityID: "CVE-2026-7777", Severity: "HIGH" };
+    expect(reconciliation(repo, expected, [result("example/server:1", [remaining])], existing).close).toEqual(
+      []
+    );
     const lower = result("example/server:1", [{ ...vulnerability, Severity: "MEDIUM" }]);
-    expect(reconciliation(repo, expected, [lower], existing).close).toEqual([]);
+    expect(reconciliation(repo, expected, [lower], existing).close).toEqual(existing);
   });
 
   it("closes a healthy repository's ticket despite an unrelated failure, but retains unscoped tickets", () => {

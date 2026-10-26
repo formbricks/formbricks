@@ -7,6 +7,7 @@ import {
   readRequestBodyWithLimit,
 } from "@/app/lib/api/request-body";
 import { handleAuthenticatedMcpRequest } from "@/modules/mcp/auth";
+import { getMcpRequestBudgetError } from "@/modules/mcp/request-budget";
 import { mcpHandler } from "@/modules/mcp/server";
 
 export const runtime = "nodejs";
@@ -95,6 +96,22 @@ async function handleBoundedMcpRequest(request: Request): Promise<Response> {
           code: JSON_RPC_INVALID_PARAMS,
           message: `Invalid params: ${param.reason} at ${param.name}`,
           data: { invalid_params: [param] },
+        },
+      },
+      { status: 400 }
+    );
+  }
+
+  const budgetError = getMcpRequestBudgetError(message);
+  if (budgetError) {
+    return Response.json(
+      {
+        jsonrpc: "2.0",
+        id: jsonRpcIdOf(message),
+        error: {
+          code: JSON_RPC_INVALID_PARAMS,
+          message: `Invalid params: ${budgetError}`,
+          data: { invalid_params: [{ name: "body", reason: budgetError }] },
         },
       },
       { status: 400 }
