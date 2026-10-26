@@ -78,4 +78,17 @@ describe("repairLayouts", () => {
     const after = stored.map((w) => ({ ...w, layout: repaired.get(w.id) ?? w.layout }));
     expect(repairLayouts(after)).toEqual([]);
   });
+
+  test("repairs thousands of identical layouts in linear time, stacking them in saved order", () => {
+    const planted = Array.from({ length: 5000 }, (_, index) =>
+      widget(`w${index}`, { x: 0, y: 0, w: 12, h: 1 }, index)
+    );
+
+    const started = performance.now();
+    const repaired = repairLayouts(planted);
+    expect(performance.now() - started).toBeLessThan(1000);
+
+    expect(repaired).toHaveLength(4999);
+    expect(repaired[repaired.length - 1]).toEqual({ id: "w4999", layout: { x: 0, y: 4999, w: 12, h: 1 } });
+  });
 });

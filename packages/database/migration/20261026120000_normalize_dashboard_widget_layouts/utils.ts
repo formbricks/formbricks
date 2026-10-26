@@ -28,9 +28,6 @@ export const boundLayout = (stored: unknown): TWidgetLayout => {
   return { x, y, w, h };
 };
 
-const overlaps = (a: TWidgetLayout, b: TWidgetLayout): boolean =>
-  a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
-
 const sameLayout = (stored: unknown, layout: TWidgetLayout): boolean => {
   if (typeof stored !== "object" || stored === null) return false;
   const raw = stored as Record<string, unknown>;
@@ -46,8 +43,13 @@ const sameLayout = (stored: unknown, layout: TWidgetLayout): boolean => {
 /**
  * The layouts one dashboard's widgets need so the API accepts them back: each within the grid's
  * bounds, and none overlapping. Widgets are taken top to bottom, then left to right, then in their
- * saved order; one that overlaps a widget already placed moves straight down until it is clear, the
- * way the editor's grid pushes widgets. Its column and size are kept, so the dashboard reads the same.
+ * saved order, and each lands no higher than it was and below everything already placed in its columns
+ * (a per-column skyline), so its column and size are kept and the dashboard reads the same. A layout
+ * the API already accepts comes back unchanged: in it, nothing placed earlier reaches below a later
+ * widget's top in the columns they share.
+ *
+ * Linear in the number of widgets, so a dashboard planted with thousands of identical layouts cannot
+ * stall the migration.
  *
  * Returns only the widgets whose stored layout changes.
  */
@@ -62,15 +64,14 @@ export const repairLayouts = (widgets: TStoredWidget[]): { id: string; layout: T
         a.id.localeCompare(b.id)
     );
 
-  const placed: TWidgetLayout[] = [];
+  // The first free row in each column, below every widget placed so far.
+  const skyline = new Array<number>(GRID_COLUMNS).fill(0);
   const changed: { id: string; layout: TWidgetLayout }[] = [];
   for (const widget of bounded) {
-    const layout = { ...widget.bounded };
-    for (let clash = placed.find((other) => overlaps(layout, other)); clash; ) {
-      layout.y = clash.y + clash.h;
-      clash = placed.find((other) => overlaps(layout, other));
-    }
-    placed.push(layout);
+    const { x, w, h } = widget.bounded;
+    const columns = skyline.slice(x, x + w);
+    const layout = { ...widget.bounded, y: Math.max(widget.bounded.y, ...columns) };
+    skyline.fill(layout.y + h, x, x + w);
     if (!sameLayout(widget.layout, layout)) changed.push({ id: widget.id, layout });
   }
   return changed;
