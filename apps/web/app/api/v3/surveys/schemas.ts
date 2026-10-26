@@ -2,6 +2,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { z } from "zod";
 import { ZCustomCssInput, ZCustomCssScope } from "@formbricks/types/custom-css";
 import { ZSegmentFilters } from "@formbricks/types/segment";
+import { ZShowConditions } from "@formbricks/types/show-conditions";
 import { ZSurveyBlocks } from "@formbricks/types/surveys/blocks";
 import {
   type TSurveyType,
@@ -434,6 +435,7 @@ export const V3_DISTRIBUTION_SCALAR_KEYS = [
   "keepEndingCardOpen",
   "autoComplete",
   "delay",
+  "showConditions",
 ] as const;
 // App-survey distribution/targeting key sets (validated only when type === "app").
 const DISTRIBUTION_KEYS = new Set<string>([...V3_DISTRIBUTION_SCALAR_KEYS, "triggers"]);
@@ -1186,6 +1188,8 @@ const createZV3SurveyDistribution = (bound: boolean) =>
         .nullable()
         .prefault(null),
       delay: z.number().int().nonnegative().prefault(0),
+      // Every plan, so deliberately outside `targeting` and its Contacts entitlement (ENG-3573).
+      showConditions: ZShowConditions.prefault(null),
       triggers: documentArray(ZV3SurveyTrigger, { max: V3_SURVEY_MAX_TRIGGERS }, bound).prefault([]),
     })
     .strict();

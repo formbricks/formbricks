@@ -8,8 +8,9 @@ icon: file-shield
 Audit logs record **who** did **what**, **when**, **from where**, and **with what outcome** across your Formbricks instance.
 
 <Note>
-  Audit logging is an Enterprise feature. Configure your
-  [Enterprise license](/self-hosting/advanced/license) before enabling it.
+  Audit logging is an Enterprise feature. Formbricks writes audit events only while `AUDIT_LOG_ENABLED=1` is set
+  **and** your [Enterprise license](/self-hosting/advanced/license) is active and includes audit logs. Either one
+  alone writes nothing.
 </Note>
 
 ## Benefits Of Audit Logging
@@ -20,7 +21,8 @@ Audit logs record **who** did **what**, **when**, **from where**, and **with wha
 
 ## Enabling Audit Logging
 
-1. Set the following environment variables in your deployment (Docker Compose, Kubernetes, etc.):
+1. Activate an [Enterprise license](/self-hosting/advanced/license) that includes audit logs.
+2. Set the following environment variables in your deployment (Docker Compose, Kubernetes, etc.):
 
 ```bash title=".env"
 # --- Audit logging ---
@@ -31,8 +33,16 @@ AUDIT_LOG_GET_USER_IP=1
 TRUSTED_PROXY_HOP_COUNT=1
 ```
 
-2. Redeploy your containers.
-3. Confirm you can see audit logs in the output of your containers.
+3. Redeploy your containers.
+4. Confirm you can see audit logs in the output of your containers. If none appear, check that the license is
+   active and includes audit logs.
+
+<Warning>
+  Audit logging follows the license like every other Enterprise feature. If a license check fails or reports the
+  key as expired, audit events keep flowing for up to 3 days from the last successful check, then stop until the
+  license is active again. A key the license server rejects as invalid, or as bound to another instance, stops
+  them right away. Formbricks logs a warning when this happens; monitor your log pipeline for it and for gaps.
+</Warning>
 
 Audit logs are written to **stdout** as JSON Lines. Configure your container platform or logging agent to forward
 records with `level: "audit"` to your central logging destination.
@@ -74,7 +84,7 @@ deployment:
 Audit logs are **JSON Lines** (one JSON object per line). A typical entry looks like this:
 
 ```json
-{"level":"audit","time":1749207302158,"pid":20023,"hostname":"formbricks-node-1","name":"formbricks","actor":{"id":"cm90t4t7l0000vrws5hpo5ta5","type":"api"},"action":"created","target":{"id":"cmbkov4dn0000vrg72i7oznqv","type":"webhook"},"timestamp":"2025-06-06T10:55:02.145Z","organizationId":"cm8zovtbm0001vr3efa4n03ms","status":"success","ipAddress":"unknown","apiUrl":"http://localhost:3000/api/v1/webhooks","changes":{"id":"cmbkov4dn0000vrg72i7oznqv","name":"********","createdAt":"2025-06-06T10:55:02.123Z","updatedAt":"2025-06-06T10:55:02.123Z","url":"https://eoy8o887lmsqmhz.m.pipedream.net","source":"user","workspaceId":"cm8zowv0b0009vr3ec56w2qf3","environmentId":"cm8zowv0b0009vr3ec56w2qf3","triggers":["responseCreated","responseUpdated","responseFinished"],"surveyIds":[]}}
+{"level":"audit","time":1749207302158,"pid":20023,"hostname":"formbricks-node-1","name":"formbricks","actor":{"id":"cm90t4t7l0000vrws5hpo5ta5","type":"api"},"action":"created","target":{"id":"cmbkov4dn0000vrg72i7oznqv","type":"webhook"},"timestamp":"2025-06-06T10:55:02.145Z","organizationId":"cm8zovtbm0001vr3efa4n03ms","status":"success","ipAddress":"203.0.113.7","userAgent":"ExampleClient/1.0","actorId":"cm90t4t7l0000vrws5hpo5ta5","actorType":"api","apiUrl":"http://localhost:3000/api/v1/webhooks","changes":{"id":"cmbkov4dn0000vrg72i7oznqv","name":"********","createdAt":"2025-06-06T10:55:02.123Z","updatedAt":"2025-06-06T10:55:02.123Z","url":"https://eoy8o887lmsqmhz.m.pipedream.net","source":"user","workspaceId":"cm8zowv0b0009vr3ec56w2qf3","environmentId":"cm8zowv0b0009vr3ec56w2qf3","triggers":["responseCreated","responseUpdated","responseFinished"],"surveyIds":[]}}
 ```
 
 Key fields:
@@ -87,15 +97,37 @@ Key fields:
 | `hostname` | Hostname of the server generating the log |
 | `name` | Application name, typically `"formbricks"` |
 | `timestamp` | ISO‑8601 time of the action |
-| `actor` | User or API key responsible (object with `id` and `type`) |
+| `actor` | User, API key, or system responsible (object with `id` and `type`) |
+| `actorId`, `actorType` | Scalar copies of `actor.id` and `actor.type` for log search filters |
 | `action` | Action value such as `created`, `updated`, `authenticationAttempted`, or `signedIn` |
 | `target` | The resource affected (object with `id` and `type`) |
 | `status` | `success` or `failure` |
 | `organizationId` | Organization identifier where the action occurred |
 | `ipAddress` | Resolved client IP when capture is enabled; otherwise `"unknown"`. An untrusted forwarding chain produces `"untrusted-client-ip"` |
+| `userAgent` | Client-reported User-Agent, stripped of control characters and limited to 1,024 characters; `"unknown"` when absent |
 | `apiUrl` | (Optional) API endpoint URL when the event was generated through an API call |
 | `eventId` | (Optional) Available on failure events for correlation with the application log |
 | `changes` | (Optional) Only the fields that actually changed (sensitive values redacted) |
+
+Both `ipAddress` and `userAgent` are present on every emitted event. Scheduled system jobs have no client
+request and use `"unknown"` for both. Deferred work triggered by a user retains its originating request's
+metadata. IP capture remains opt-in through `AUDIT_LOG_GET_USER_IP=1`; user agents are included whenever
+auditing is enabled. IPv6 addresses use the same `/64` network identity as IP-based rate limiting.
+
+A user agent is supplied by the client and can be forged. Treat it as an investigation hint, not proof
+that a request came from a browser, a script, or a particular agent.
+
+### Search In SigNoz
+
+Select the environment's application service and a bounded time window in Logs Explorer. Add an
+`actorId` attribute filter equal to the user ID or API key ID, or an `ipAddress` attribute filter equal
+to the recorded canonical address. Combine either filter with `actorType`, `organizationId`, or
+`userAgent` to narrow the investigation. The original nested `actor` remains in the JSON event.
+
+The OpenTelemetry log transport sends these scalar fields as log attributes. If collecting stdout,
+configure JSON parsing before filtering on fields. Verify a known test-account event is returned by
+both the actor and IP filters; a successful application response alone does not prove log delivery.
+Existing events are not backfilled.
 
 ## Centralized Logging And Compliance
 

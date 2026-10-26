@@ -65,6 +65,7 @@ describe("resolveFallbackBundles", () => {
     expect(resolveFallbackBundles("vi")).toEqual(["vi-VN", "en-US"]);
     expect(resolveFallbackBundles("km")).toEqual(["km-KH", "en-US"]);
     expect(resolveFallbackBundles("ne")).toEqual(["ne-NP", "en-US"]);
+    expect(resolveFallbackBundles("ms")).toEqual(["ms-MY", "en-US"]);
   });
 
   test("an unknown but syntactically valid tag falls back to English", () => {
@@ -107,7 +108,7 @@ describe("shipped bundles", () => {
   });
 
   test("survey strings resolve once a shipped bundle is loaded", () => {
-    for (const code of ["id-ID", "km-KH", "ne-NP", "ur-PK", "vi-VN", "zh-Hant-TW"]) {
+    for (const code of ["id-ID", "km-KH", "ms-MY", "ne-NP", "ur-PK", "vi-VN", "zh-Hant-TW"]) {
       const bundle = JSON.parse(
         readFileSync(new URL(`../../locales/${code}.json`, import.meta.url), "utf-8")
       ) as Record<string, unknown>;
@@ -118,6 +119,25 @@ describe("shipped bundles", () => {
       expect(required).not.toBe(i18n.getFixedT("en-US")("common.required"));
 
       i18n.removeResourceBundle(code, "translation");
+    }
+  });
+
+  // ENG-3938: a Malay survey renders its controls and validation messages in Malay, not English.
+  test("Malay survey strings resolve from the ms-MY bundle", () => {
+    const bundle = JSON.parse(
+      readFileSync(new URL("../../locales/ms-MY.json", import.meta.url), "utf-8")
+    ) as Record<string, unknown>;
+    i18n.addResourceBundle("ms-MY", "translation", bundle);
+
+    try {
+      const t = i18n.getFixedT(toI18nLanguage("ms"));
+      expect(t("common.required")).toBe("Wajib");
+      expect(t("common.next")).toBe("Seterusnya");
+      // "Tatal" and "e-mel" are Malaysian Malay; the Indonesian bundle says "Gulir" and "email".
+      expect(t("common.scroll_to_bottom")).toBe("Tatal ke bawah");
+      expect(t("errors.please_enter_a_valid_email_address")).toBe("Sila masukkan alamat e-mel yang sah");
+    } finally {
+      i18n.removeResourceBundle("ms-MY", "translation");
     }
   });
 });

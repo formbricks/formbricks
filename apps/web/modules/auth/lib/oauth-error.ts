@@ -66,6 +66,13 @@ const VARIANT_BY_CODE = new Map<string, TOAuthErrorVariant>([
   ["oauth_provider_not_found", "misconfigured"],
   ["invalid_scope", "misconfigured"],
 
+  // The SAML callback's own refusals (ENG-3973). jackson's raw reasons stay in the server log; the browser gets
+  // one of these fixed codes. A response that is malformed, oversized or failed validation may be fixed by
+  // signing in again; a connection that is missing or switched off may not.
+  ["saml_response_rejected", "generic"],
+  ["saml_unavailable", "generic"],
+  ["saml_connection_unavailable", "misconfigured"],
+
   ...Object.entries(VARIANT_BY_REJECT_REASON),
 ]);
 

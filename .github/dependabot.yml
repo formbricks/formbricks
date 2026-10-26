@@ -29,13 +29,13 @@ updates:
       - dependencies
       - github_actions
 
-  # The digest-pinned base images of ghcr.io/formbricks/cube, weekly because new digests are where OS
+  # The digest-pinned base images of ghcr.io/formbricks/cube, daily because new digests are where OS
   # security fixes arrive. A new digest changes the image, so the PR also needs a
   # docker/cube-image/REVISION bump: cube-image.yml fails until it has one.
   - package-ecosystem: docker
     directory: "/docker/cube-image"
     schedule:
-      interval: weekly
+      interval: daily
     # The build stage stays on the runtime's Node major (the distroless base is nodejs24).
     ignore:
       - dependency-name: node
@@ -72,3 +72,43 @@ updates:
       prefix: "chore(devcontainer)"
     labels:
       - dependencies
+
+  # Version PRs complement Trivy: they do not detect CVEs inside an image.
+  # Keep review required for datastore majors and chart/image compatibility changes.
+  - package-ecosystem: helm
+    directories:
+      - "/charts/formbricks"
+      - "/charts/spicedb-operator"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 15
+    labels:
+      - dependencies
+    commit-message:
+      prefix: "chore(helm)"
+
+  - package-ecosystem: docker-compose
+    directories:
+      - "/"
+      - "/docker"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 15
+    labels:
+      - dependencies
+    commit-message:
+      prefix: "chore(docker)"
+
+  - package-ecosystem: docker
+    directory: "/apps/web"
+    schedule:
+      interval: daily
+    # Keep the build-stage Node major aligned with .nvmrc and the compiled runtime.
+    ignore:
+      - dependency-name: node
+        update-types:
+          - version-update:semver-major
+    labels:
+      - dependencies
+    commit-message:
+      prefix: "chore(docker)"

@@ -289,6 +289,44 @@ describe("validateElementResponse", () => {
       expect(result.errors[0].ruleId).toBe("invalidOption");
     });
 
+    test("should accept the rendered default label when the default language's code key holds a stale value (ENG-4103)", () => {
+      // The renderer shows `default` but reports the response language as the default's real code,
+      // whose key here carries an older label respondents never see.
+      const element = {
+        id: "single1",
+        type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+        headline: { default: "Tier" },
+        required: true,
+        choices: [
+          { id: "gold", label: { default: "Gold (200만원)", "ko-KR": "Gold | 2,000,000 KRW" } },
+          { id: "silver", label: { default: "Silver (100만원)", "ko-KR": "Silver | 1,000,000 KRW" } },
+        ],
+      } as unknown as TSurveyElement;
+
+      expect(validateElementResponse(element, "Gold (200만원)", "ko-KR").valid).toBe(true);
+      expect(validateElementResponse(element, "Silver | 1,000,000 KRW", "ko-KR").valid).toBe(true);
+
+      const injected = validateElementResponse(element, "Platinum", "ko-KR");
+      expect(injected.valid).toBe(false);
+      expect(injected.errors[0].ruleId).toBe("invalidOption");
+    });
+
+    test("should accept a multi-select label stored under another language than the response's (ENG-4103)", () => {
+      const element = {
+        id: "mc1",
+        type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+        headline: { default: "Pick" },
+        required: true,
+        choices: [
+          { id: "opt1", label: { default: "Option 1", de: "Option eins" } },
+          { id: "opt2", label: { default: "Option 2", de: "Option zwei" } },
+        ],
+      } as unknown as TSurveyElement;
+
+      expect(validateElementResponse(element, ["Option 1", "Option zwei"], "de").valid).toBe(true);
+      expect(validateElementResponse(element, ["Option 1", "Option drei"], "de").valid).toBe(false);
+    });
+
     test("should accept arbitrary free text for a single-select with an Other option", () => {
       const element = {
         id: "single1",

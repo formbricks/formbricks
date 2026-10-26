@@ -4,11 +4,13 @@ import { v4 as uuidv4 } from "uuid";
 import { logger } from "@formbricks/logger";
 import { AuthenticationError, AuthorizationError, isExpectedError } from "@formbricks/types/errors";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
-import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP } from "@/lib/constants";
+import { AUDIT_LOG_ENABLED } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
-import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getSession } from "@/modules/auth/lib/session";
-import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import {
+  UNKNOWN_AUDIT_REQUEST_METADATA,
+  getAuditRequestMetadata,
+} from "@/modules/ee/audit-logs/lib/request-metadata";
 import { ActionClientCtx } from "./types/context";
 
 export const actionClient = createSafeActionClient({
@@ -37,17 +39,11 @@ export const actionClient = createSafeActionClient({
 }).use(async ({ next }) => {
   // Create a unique event id
   const eventId = uuidv4();
-  const ctx: ActionClientCtx = { auditLoggingCtx: { eventId, ipAddress: UNKNOWN_DATA } };
-
-  if (AUDIT_LOG_ENABLED && AUDIT_LOG_GET_USER_IP) {
-    try {
-      const ipAddress = await getClientIpFromHeaders();
-      ctx.auditLoggingCtx.ipAddress = ipAddress;
-    } catch (err) {
-      // Non-fatal – we keep UNKNOWN_DATA
-      logger.warn({ err }, "Failed to resolve client IP for audit logging");
-    }
-  }
+  // Snapshot before the audit callback runs outside the request. Licence checks stay off this path.
+  const requestMetadata = AUDIT_LOG_ENABLED
+    ? await getAuditRequestMetadata()
+    : UNKNOWN_AUDIT_REQUEST_METADATA;
+  const ctx: ActionClientCtx = { auditLoggingCtx: { eventId, ...requestMetadata } };
 
   return next({ ctx });
 });

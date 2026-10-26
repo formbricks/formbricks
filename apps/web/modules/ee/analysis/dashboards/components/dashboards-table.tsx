@@ -48,16 +48,18 @@ export const DashboardsTable = async ({
           return (
             <div
               key={dashboard.id}
-              className="grid h-12 w-full grid-cols-8 content-center text-left transition-colors ease-in-out hover:bg-slate-100">
+              className="relative grid h-12 w-full grid-cols-8 content-center text-left transition-colors ease-in-out hover:bg-slate-100">
               <Link
                 href={`/workspaces/${workspaceId}/dashboards/${dashboard.id}`}
                 className="col-span-7 grid cursor-pointer grid-cols-7 content-center p-2">
-                <div className="col-span-3 flex items-center pl-6 text-sm">
-                  <div className="flex items-center gap-4">
+                <div className="col-span-3 flex min-w-0 items-center pl-6 text-sm">
+                  <div className="flex min-w-0 items-center gap-4">
                     <div className="w-8 shrink-0 text-slate-500">
                       <BarChart3Icon className="size-5" />
                     </div>
-                    <div className="font-medium text-slate-900">{dashboard.name}</div>
+                    <div className="truncate font-medium text-slate-900" title={dashboard.name}>
+                      {dashboard.name}
+                    </div>
                   </div>
                 </div>
                 <div className="col-span-1 my-auto hidden text-center text-sm whitespace-nowrap text-slate-500 sm:block">

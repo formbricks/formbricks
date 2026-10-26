@@ -71,6 +71,16 @@ properties:
     minimum: 0
     default: 0
     description: Seconds to wait after a trigger fires before showing the survey.
+  showConditions:
+    anyOf:
+      - $ref: ./SurveyShowConditionGroup.yml
+      - type: "null"
+    default: null
+    description: >
+      Conditions on the page, the visit and the device, checked in the visitor's browser when a
+      trigger fires and again when `delay` ends. The survey shows only if they hold. `null` (or an
+      empty group) means no conditions. Available on every plan. At most 20 conditions, one nested
+      group, 200 entries per list and 10 KB in total. Mobile SDKs ignore them.
   triggers:
     type: array
     default: []
@@ -93,5 +103,27 @@ example:
   keepEndingCardOpen: false
   autoComplete: null
   delay: 0
+  showConditions:
+    id: grp1
+    connector: and
+    conditions:
+      - id: cnd1
+        leftOperand:
+          type: page
+          value: currentUrl
+        operator: pathIsAnyOf
+        rightOperand:
+          type: static
+          value:
+            - /plan-compare
+            - /drug-coverage
+      - id: cnd2
+        leftOperand:
+          type: visit
+          value: pagesViewed
+        operator: isGreaterThanOrEqual
+        rightOperand:
+          type: static
+          value: 3
   triggers:
     - actionClassId: clyy1234567890123456789012

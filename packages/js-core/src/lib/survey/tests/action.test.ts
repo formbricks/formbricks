@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { Config } from "@/lib/common/config";
+import { emitDebugSurveyEvent, isDebugEnabled } from "@/lib/common/debug";
 import { Logger } from "@/lib/common/logger";
+import { getSurveyExclusionReason } from "@/lib/common/utils";
 import { trackAction, trackCodeAction, trackNoCodeAction } from "@/lib/survey/action";
 import { SurveyStore } from "@/lib/survey/store";
 import { triggerSurvey } from "@/lib/survey/widget";
@@ -33,6 +35,12 @@ vi.mock("@/lib/common/logger", () => ({
 
 vi.mock("@/lib/common/utils", () => ({
   shouldDisplayBasedOnPercentage: vi.fn(),
+  getSurveyExclusionReason: vi.fn(),
+}));
+
+vi.mock("@/lib/common/debug", () => ({
+  isDebugEnabled: vi.fn(() => false),
+  emitDebugSurveyEvent: vi.fn(),
 }));
 
 vi.mock("@/lib/survey/widget", () => ({
@@ -93,6 +101,34 @@ describe("survey/action.ts", () => {
 
       expect(result.ok).toBe(true);
       expect(mockLogger.debug).toHaveBeenCalledWith('Formbricks: Action "aliasName" tracked');
+    });
+
+    test("in debug mode, reports surveys on this trigger that setup already dropped, with the reason", async () => {
+      const dropped = { ...mockSurvey, id: "survey_dropped" };
+      const otherTrigger = {
+        ...mockSurvey,
+        id: "survey_other",
+        triggers: [{ actionClass: { name: "other" } }],
+      };
+      mockConfig.get.mockReturnValue({
+        filteredSurveys: [mockSurvey],
+        workspace: { data: { surveys: [mockSurvey, dropped, otherTrigger] } },
+        user: { data: {} },
+      });
+      vi.mocked(isDebugEnabled).mockReturnValue(true);
+      vi.mocked(getSurveyExclusionReason).mockReturnValue("cooldown");
+
+      await trackAction("testAction");
+
+      expect(emitDebugSurveyEvent).toHaveBeenCalledTimes(1);
+      expect(emitDebugSurveyEvent).toHaveBeenCalledWith({
+        surveyId: "survey_dropped",
+        action: "testAction",
+        stage: "trigger",
+        outcome: "excluded",
+        exclusion: "cooldown",
+      });
+      vi.mocked(isDebugEnabled).mockReturnValue(false);
     });
 
     test("triggers survey if action matches survey trigger", async () => {

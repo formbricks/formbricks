@@ -1,13 +1,7 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import {
-  FingerprintIcon,
-  MonitorSmartphoneIcon,
-  MousePointerClickIcon,
-  TagIcon,
-  Users2Icon,
-} from "lucide-react";
+import { FingerprintIcon, MousePointerClickIcon, TagIcon, Users2Icon } from "lucide-react";
 import React, { type JSX, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
@@ -191,20 +185,9 @@ export function AddFilterModal({
       icon: <TagIcon className="size-4" />,
     },
     { id: "segments", label: t("common.segments"), icon: <Users2Icon className="size-4" /> },
-    {
-      id: "devices",
-      label: t("workspace.segments.devices"),
-      icon: <MonitorSmartphoneIcon className="size-4" />,
-    },
+    // No "Devices" tab: device targeting moved to the survey's show conditions, which also work for
+    // anonymous visitors (ENG-3574). Existing device filters still render and edit in segment-filter.tsx.
   ];
-
-  const devices = useMemo(
-    () => [
-      { id: "phone", name: t("workspace.segments.phone") },
-      { id: "desktop", name: t("workspace.segments.desktop") },
-    ],
-    [t]
-  );
 
   const contactAttributeKeysForPicker = useMemo(() => {
     // `userId` is represented by the person filter (fingerprint icon), so hide it from attribute entries.
@@ -244,12 +227,6 @@ export function AddFilterModal({
       .filter((segment) => segment.title.toLowerCase().includes(searchValue.toLowerCase()));
   }, [segments, searchValue]);
 
-  const deviceTypesFiltered = useMemo(() => {
-    if (!searchValue) return devices;
-
-    return devices.filter((deviceType) => deviceType.name.toLowerCase().includes(searchValue.toLowerCase()));
-  }, [devices, searchValue]);
-
   const surveyInteractionLabel = t("workspace.segments.survey_interaction");
   const showSurveyInteraction = useMemo(() => {
     if (!searchValue) return true;
@@ -262,17 +239,10 @@ export function AddFilterModal({
         attributes: contactAttributeKeysFiltered,
         contactAttributeFiltered,
         segments: segmentsFiltered,
-        devices: deviceTypesFiltered,
         surveyInteraction: showSurveyInteraction,
       },
     ],
-    [
-      contactAttributeKeysFiltered,
-      deviceTypesFiltered,
-      contactAttributeFiltered,
-      segmentsFiltered,
-      showSurveyInteraction,
-    ]
+    [contactAttributeKeysFiltered, contactAttributeFiltered, segmentsFiltered, showSurveyInteraction]
   );
 
   const getAllTabContent = () => {
@@ -282,7 +252,6 @@ export function AddFilterModal({
           return (
             filterArr.attributes.length === 0 &&
             filterArr.segments.length === 0 &&
-            filterArr.devices.length === 0 &&
             filterArr.contactAttributeFiltered.length === 0 &&
             !filterArr.surveyInteraction
           );
@@ -398,34 +367,6 @@ export function AddFilterModal({
                 }}
               />
             ))}
-
-            {filters.devices.map((deviceType) => (
-              <FilterButton
-                key={deviceType.id}
-                data-testid={`filter-btn-device-${deviceType.id}`}
-                icon={<MonitorSmartphoneIcon className="size-4" />}
-                label={deviceType.name}
-                onClick={() => {
-                  handleAddFilter({
-                    type: "device",
-                    onAddFilter,
-                    setOpen,
-                    deviceType: deviceType.id,
-                  });
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    handleAddFilter({
-                      type: "device",
-                      onAddFilter,
-                      setOpen,
-                      deviceType: deviceType.id,
-                    });
-                  }
-                }}
-              />
-            ))}
           </div>
         ))}
       </>
@@ -484,40 +425,6 @@ export function AddFilterModal({
     );
   };
 
-  const getDevicesTabContent = () => {
-    return (
-      <div className="flex flex-col">
-        {deviceTypesFiltered.map((deviceType) => (
-          <FilterButton
-            key={deviceType.id}
-            data-testid={`filter-btn-device-${deviceType.id}`}
-            icon={<MonitorSmartphoneIcon className="size-4" />}
-            label={deviceType.name}
-            onClick={() => {
-              handleAddFilter({
-                type: "device",
-                onAddFilter,
-                setOpen,
-                deviceType: deviceType.id,
-              });
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                handleAddFilter({
-                  type: "device",
-                  onAddFilter,
-                  setOpen,
-                  deviceType: deviceType.id,
-                });
-              }
-            }}
-          />
-        ))}
-      </div>
-    );
-  };
-
   const getTabContent = (): JSX.Element => {
     switch (activeTabId) {
       case "all": {
@@ -528,9 +435,6 @@ export function AddFilterModal({
       }
       case "segments": {
         return getSegmentsTabContent();
-      }
-      case "devices": {
-        return getDevicesTabContent();
       }
       default: {
         return getAllTabContent();

@@ -9,10 +9,10 @@ import { getSessionTokensByUserId } from "@/modules/auth/lib/auth-session-reposi
  *
  * Sessions live in two places (see `auth.ts`): Postgres, because `session.storeSessionInDatabase` is
  * required for the forward-auth proxies, and Redis via `secondaryStorage`. `findSession` consults Redis
- * first, so a bare `prisma.session.deleteMany()` is NOT a revocation — it leaves the session fully valid
- * for `auth.api.getSession` while breaking only the proxy path, which is strictly worse than doing
- * nothing. Better Auth's `internalAdapter.deleteSessions` clears both: `secondaryStorage.delete(token)`
- * per token, then the rows.
+ * first, so a bare `prisma.session.deleteMany()` is NOT a revocation. The app's own DAL (`getSession` in
+ * session.ts) checks the row and rejects the session, but Better Auth's endpoints (`/api/auth/*`, the
+ * OAuth provider) keep resolving the Redis copy until its TTL. Better Auth's
+ * `internalAdapter.deleteSessions` clears both: `secondaryStorage.delete(token)` per token, then the rows.
  *
  * Enumeration comes from Postgres (`getSessionTokensByUserId`) rather than `internalAdapter.listSessions`,
  * which under `secondaryStorage` reads only the `active-sessions-<userId>` index and returns an empty
@@ -21,12 +21,13 @@ import { getSessionTokensByUserId } from "@/modules/auth/lib/auth-session-reposi
  * Known residual, shared with `revokeSessionsOnPasswordReset`: `cookieCache` serves a still-valid
  * `session_data` cookie from its signature alone, so a revoked session's holder keeps a cached session
  * for up to `cookieCache.maxAge` (5 min in auth.ts) without ever hitting either store. Stateless by
- * design upstream (ENG-2591).
+ * design upstream (ENG-2591). `getSession` closes that window for the app's own surface by checking the
+ * row on every request (ENG-3418), so the residual is Better Auth's endpoints only.
  *
  * Do not read that as "5 minutes of exposure": the window is bounded but what can be done inside it is
- * not. A still-cached session can mint an API key or complete an OAuth authorization, neither of which
- * expires with the session. That is why the ENG-2557 strip revokes OAuth grants in its transaction
- * rather than relying on the sweep alone.
+ * not. A still-cached session can complete an OAuth authorization through Better Auth's provider, and the
+ * grant does not expire with the session. That is why the ENG-2557 strip revokes OAuth grants in its
+ * transaction rather than relying on the sweep alone.
  *
  * One upstream wrinkle: `deleteSessions` prunes the per-token keys and the rows but does not rewrite the
  * `active-sessions-<userId>` index, so `auth.api.listSessions` keeps listing revoked sessions until their

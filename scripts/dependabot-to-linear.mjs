@@ -26,6 +26,7 @@
 //                            Generated at Settings → API → Personal API keys.
 // Flags:
 //   --dry-run  log what would be created without writing to Linear
+import { pathToFileURL } from "node:url";
 
 const DRY_RUN = process.argv.includes("--dry-run");
 
@@ -171,7 +172,16 @@ async function setIssueState(apiKey, issueId, stateId) {
   return data.issueUpdate.issue;
 }
 
-async function createIssue(apiKey, { title, description, priority }) {
+async function createIssue(
+  apiKey,
+  {
+    title,
+    description,
+    priority,
+    stateId = LINEAR_TRIAGE_STATE_ID,
+    labelIds = [LINEAR_VULNERABILITY_LABEL_ID],
+  }
+) {
   const data = await linearRequest(
     apiKey,
     `mutation CreateIssue($input: IssueCreateInput!) {
@@ -183,8 +193,8 @@ async function createIssue(apiKey, { title, description, priority }) {
     {
       input: {
         teamId: LINEAR_TEAM_ID,
-        stateId: LINEAR_TRIAGE_STATE_ID,
-        labelIds: [LINEAR_VULNERABILITY_LABEL_ID],
+        stateId,
+        labelIds,
         estimate: LINEAR_ESTIMATE_S,
         title,
         description,
@@ -323,7 +333,19 @@ async function main() {
   if (failed > 0) process.exit(1);
 }
 
-main().catch((err) => {
-  console.error(err.message ?? err);
-  process.exit(1);
-});
+// Shared by the container scanner; importing this module must never start a sync.
+export {
+  linearRequest,
+  createIssue,
+  setIssueState,
+  resolveDoneStateId,
+  LINEAR_TEAM_ID,
+  LINEAR_TRIAGE_STATE_ID,
+};
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => {
+    console.error(err.message ?? err);
+    process.exit(1);
+  });
+}

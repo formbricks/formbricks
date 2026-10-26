@@ -7,6 +7,7 @@ import {
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
+import { DEFAULT_ENDING_CARD_BUTTON_LINK } from "@/lib/survey/default-ending-card";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
@@ -239,6 +240,26 @@ describe("checkFeaturePermissions", () => {
     expect(responses.forbiddenResponse).toHaveBeenCalledWith(
       "External URLs are not enabled for this organization. Upgrade to use external button links."
     );
+  });
+
+  test("should allow adding the default ending card buttonLink without permission", async () => {
+    vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
+    const surveyData = {
+      ...baseSurveyData,
+      endings: [
+        {
+          id: "ending1",
+          type: "endScreen" as const,
+          headline: { default: "Thanks" },
+          subheader: { default: "" },
+          buttonLink: DEFAULT_ENDING_CARD_BUTTON_LINK,
+          buttonLabel: { default: "Create your own survey" },
+        },
+      ],
+    };
+    const result = await checkFeaturePermissions(surveyData, mockOrganization);
+    expect(result).toBeNull();
+    expect(responses.forbiddenResponse).not.toHaveBeenCalled();
   });
 
   test("should return forbiddenResponse when changing ending buttonLink without permission", async () => {

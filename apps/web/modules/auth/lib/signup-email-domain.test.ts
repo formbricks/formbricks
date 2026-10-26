@@ -41,6 +41,7 @@ describe("isBlockedEmailDomain", () => {
       "test@gmx.com",
       "test@yandex.com",
       "test@aol.com",
+      "test@oemails.com",
       "test@fastmail.com",
       "test@live.nl",
       "test@yahoo.fr",

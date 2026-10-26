@@ -15,7 +15,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
         with:
           egress-policy: audit
 
@@ -41,6 +41,7 @@ jobs:
           test -n "$parser_version"
           npm install --ignore-scripts --no-audit --no-fund --prefix "$RUNNER_TEMP/online-chart-deps" "js-yaml@$parser_version"
           NODE_PATH="$RUNNER_TEMP/online-chart-deps/node_modules" bash charts/formbricks/tests/online-upgrade.sh
+          NODE_PATH="$RUNNER_TEMP/online-chart-deps/node_modules" node scripts/container-security/inventory.mjs "$RUNNER_TEMP/image-inventory.json"
 
       - name: Validate chart renders
         shell: bash
@@ -81,9 +82,11 @@ jobs:
           bash charts/formbricks/tests/authzed-security-context.sh
           bash charts/formbricks/tests/embeddings-external.sh
           bash charts/formbricks/tests/envoy-gateway.sh
+          bash charts/formbricks/tests/envoy-crd-preflight.sh
           bash charts/formbricks/tests/pdb-selectors.sh
           bash charts/formbricks/tests/taxonomy-llm-base-url.sh
           bash charts/formbricks/tests/taxonomy-thinking.sh
+          bash charts/formbricks/tests/taxonomy-security-context.sh
           bash charts/formbricks/tests/web-security-context.sh
           bash charts/formbricks/tests/migration-security-context.sh
           bash charts/formbricks/tests/hub-migration-wait.sh
@@ -670,3 +673,29 @@ jobs:
       - name: Validate the AuthZed bootstrap against real PostgreSQL
         shell: bash
         run: bash charts/formbricks/tests/authzed-bootstrap-runtime.sh
+
+  integrate-envoy:
+    name: Full-stack Envoy ownership on kind
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Helm
+        uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+        with:
+          version: v3.15.4
+
+      - name: Install, upgrade, and uninstall the full chart
+        shell: bash
+        run: bash charts/formbricks/tests/envoy-kind-integration.sh
