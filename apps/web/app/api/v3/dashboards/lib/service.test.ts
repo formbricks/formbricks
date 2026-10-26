@@ -45,7 +45,7 @@ describe("getDashboardResourceRow", () => {
     expect(args.select).toMatchObject({
       workspaceId: true,
       widgets: {
-        orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+        orderBy: [{ order: "asc" }, { createdAt: "asc" }, { id: "asc" }],
         select: { chart: { select: expect.objectContaining({ id: true, workspaceId: true }) } },
       },
     });
@@ -227,6 +227,32 @@ describe("duplicateDashboardRow", () => {
         ],
       },
     });
+  });
+
+  test("reads the source's widgets in display order and numbers the copy's plainly, so tied orders keep it", async () => {
+    tx.dashboard.findUnique.mockResolvedValue({
+      ...source,
+      widgets: [
+        { chartId: CHART_ID, layout: { x: 0, y: 0, w: 6, h: 4 } },
+        { chartId: "clch000000000000000000002", layout: { x: 6, y: 0, w: 6, h: 4 } },
+      ],
+    });
+
+    await duplicateDashboardRow({ sourceId: DASHBOARD_ID, createdBy: null, name: "Copy" });
+
+    expect(tx.dashboard.findUnique.mock.calls[0][0].select.widgets.orderBy).toEqual([
+      { order: "asc" },
+      { createdAt: "asc" },
+      { id: "asc" },
+    ]);
+    expect(
+      tx.dashboard.create.mock.calls[0][0].data.widgets.create.map(
+        (widget: { chartId: string; order: number }) => [widget.chartId, widget.order]
+      )
+    ).toEqual([
+      [CHART_ID, 0],
+      ["clch000000000000000000002", 1],
+    ]);
   });
 
   test("without a name, takes the first free copy name among the workspace's dashboards", async () => {

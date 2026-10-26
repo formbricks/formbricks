@@ -44,9 +44,20 @@ export const selectWidgetResource = {
 
 export type TWidgetResourceRow = Prisma.DashboardWidgetGetPayload<{ select: typeof selectWidgetResource }>;
 
+/**
+ * How a dashboard's widgets read back: by `order`, then the order they were added, then id. Orders may tie
+ * (a widget added at the order column's cap, a save that sends the same order twice), so the tail keeps
+ * every read the same.
+ */
+export const WIDGET_READ_ORDER = [
+  { order: "asc" as const },
+  { createdAt: "asc" as const },
+  { id: "asc" as const },
+];
+
 export const selectDashboardResource = {
   ...selectDashboardBase,
-  widgets: { orderBy: [{ order: "asc" }, { createdAt: "asc" }], select: selectWidgetResource },
+  widgets: { orderBy: WIDGET_READ_ORDER, select: selectWidgetResource },
 } satisfies Prisma.DashboardSelect;
 
 export type TDashboardResourceRow = Prisma.DashboardGetPayload<{ select: typeof selectDashboardResource }>;
@@ -151,7 +162,8 @@ export const duplicateDashboardRow = ({
       select: {
         name: true,
         workspaceId: true,
-        widgets: { select: { chartId: true, layout: true, order: true } },
+        // In the order the source shows them, so the copy can number them plainly: orders may tie.
+        widgets: { orderBy: WIDGET_READ_ORDER, select: { chartId: true, layout: true } },
       },
     });
     if (!source) return null;
@@ -178,10 +190,10 @@ export const duplicateDashboardRow = ({
         workspaceId: source.workspaceId,
         createdBy,
         widgets: {
-          create: source.widgets.map((widget) => ({
+          create: source.widgets.map((widget, order) => ({
             chartId: widget.chartId,
             layout: (widget.layout ?? {}) as Prisma.InputJsonValue,
-            order: widget.order,
+            order,
           })),
         },
       },
