@@ -734,6 +734,15 @@ The chart runs Taxonomy as UID/GID 65532 with a read-only root filesystem and a 
 `UV_CACHE_DIR` default keeps older `v0.1.0` images usable under these settings. Set
 `taxonomy.securityContext` and `taxonomy.podSecurityContext` for custom images that use a different UID or GID.
 
+### Upgrading a custom Taxonomy image
+
+The new Taxonomy security defaults are a breaking change for custom images that require root or write outside
+`/tmp`: those images may fail to start after an upgrade. Set `taxonomy.securityContext.runAsUser` and
+`runAsGroup`, plus `taxonomy.podSecurityContext.fsGroup`, to match the image's UID/GID. For other writable paths, set
+`taxonomy.securityContext.readOnlyRootFilesystem: false` or add writable volume mounts to a customized
+Deployment. Root-only images also need `taxonomy.securityContext.runAsNonRoot: false`, where the cluster's
+admission policy permits it.
+
 The older `v0.1.0` taxonomy image exposes public `/health`, so the chart uses it for both liveness and readiness
 probes. Newer images that implement the readiness contract also expose `/ready` for cached Hub-auth,
 context-budget, provider, and structured-output readiness; set `taxonomy.probes.readinessProbe.httpGet.path` to
