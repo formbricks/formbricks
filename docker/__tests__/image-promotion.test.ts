@@ -39,7 +39,8 @@ describe("PR builder isolation", () => {
     { event: "pull_request", fork: true, head: "formbricks/formbricks", blacksmith: false },
     { event: "workflow_dispatch", fork: false, blacksmith: true },
     { event: "workflow_dispatch", fork: true, blacksmith: false },
-    { event: "merge_group", fork: false, blacksmith: true },
+    { event: "merge_group", fork: false, blacksmith: false },
+    { event: "merge_group", fork: false, head: "contributor/formbricks", blacksmith: false },
   ])("routes $event with fork=$fork and head=$head", ({ event, fork, head, blacksmith }) => {
     const job = validation.jobs["validate-docker-build"];
     const github = {
@@ -203,7 +204,7 @@ describe("release promotion boundary", () => {
     }
   );
 
-  test.each(["success", "source changed", "destination changed", "wrong repository"])(
+  test.each(["success", "source changed", "destination changed", "wrong repository", "no release tags"])(
     "binds publication to the validated digest (%s)",
     (scenario) => {
       const directory = mkdtempSync(join(tmpdir(), "image-promotion-"));
@@ -232,15 +233,21 @@ describe("release promotion boundary", () => {
             TRACE: trace,
             IMAGE: `registry.example/app@${digest}`,
             RELEASE_TAGS:
-              scenario === "wrong repository"
-                ? "registry.example/app:6.1.0\nregistry.example/other:latest"
-                : "registry.example/app:6.1.0",
+              scenario === "no release tags"
+                ? ""
+                : scenario === "wrong repository"
+                  ? "registry.example/app:6.1.0\nregistry.example/other:latest"
+                  : "registry.example/app:6.1.0",
             SOURCE_DIGEST: scenario === "source changed" ? "sha256:wrong" : digest,
             DESTINATION_DIGEST: scenario === "destination changed" ? "sha256:wrong" : digest,
           },
         });
         expect(result.status).toBe(scenario === "success" ? 0 : 1);
-        if (scenario === "source changed" || scenario === "wrong repository") {
+        if (
+          scenario === "source changed" ||
+          scenario === "wrong repository" ||
+          scenario === "no release tags"
+        ) {
           expect(existsSync(trace)).toBe(false);
         } else {
           expect(readFileSync(trace, "utf8").trim()).toBe(
@@ -254,13 +261,7 @@ describe("release promotion boundary", () => {
     }
   );
 
-  test("checks promoted tags against the tested digest and keeps explicit repair cache bypass", () => {
-    const promotion = composite("promote-verified-image").runs.steps;
-    const publish = promotion.find((step) => step.run?.includes("skopeo copy"));
-    expect(publish?.run).toContain('test "$saved" = "${IMAGE##*@}"');
-    expect(publish?.run).toContain('test "${#tags[@]}" -gt 0');
-    expect(publish?.run).toContain("skopeo copy --all --preserve-digests");
-    expect(publish?.run).toContain('test "$actual" = "${IMAGE##*@}"');
+  test("keeps explicit repair cache bypass", () => {
     const build = workflow("build-docker-candidate").jobs.build.steps.find(
       (step) => step.name === "Build native candidate"
     );

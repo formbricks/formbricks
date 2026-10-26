@@ -89,11 +89,11 @@ jobs:
 
   validate-docker-build:
     name: Validate Docker Build
-    runs-on: ${{ !github.event.repository.fork && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'blacksmith-16vcpu-ubuntu-2404' || 'ubuntu-latest' }}
-    # Forks use an isolated GitHub runner without access to the shared Blacksmith cache.
+    runs-on: ${{ github.event_name != 'merge_group' && !github.event.repository.fork && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) && 'blacksmith-16vcpu-ubuntu-2404' || 'ubuntu-latest' }}
+    # Forks and merge groups (which can include forks) use isolated GitHub runners.
     timeout-minutes: 180
     env:
-      BLACKSMITH_BUILD: ${{ !github.event.repository.fork && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+      BLACKSMITH_BUILD: ${{ github.event_name != 'merge_group' && !github.event.repository.fork && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
     permissions:
       contents: read
 
@@ -190,7 +190,7 @@ jobs:
             cubejs_api_url=http://localhost:4000
             cubejs_api_secret=build-time-placeholder
 
-      - name: Build Docker Image on isolated fork runner
+      - name: Build Docker Image on isolated GitHub runner
         if: env.BLACKSMITH_BUILD != 'true'
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         env:

@@ -13,7 +13,7 @@ existing AWS OIDC role; community jobs use `GITHUB_TOKEN` package permissions.
 Candidate tags remain for retries and diagnosis under the registry's existing retention
 settings. The workflow does not delete images or install a new expiry policy.
 
-PR builds use a separate AMD64 cache; fork PRs retain an isolated GitHub runner.
+PR builds use a separate AMD64 cache; fork PRs and merge groups retain an isolated GitHub runner, since merge groups can contain fork changes.
 These changes take effect when the migration PR is merged.
 
 ## Native build trial
