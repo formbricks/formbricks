@@ -6,16 +6,17 @@ import { ZLinkSurveyEmailData } from "@formbricks/types/email";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { actionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
+import { SINGLE_USE_ID_MAX_LENGTH, SINGLE_USE_TOKEN_MAX_LENGTH } from "@/lib/utils/single-use-surveys";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
-import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
+import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { createLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
 import { isLinkSurveyOpenForResponses } from "@/modules/survey/link/lib/public-access";
 import { getLinkSurveyCustomCss, omitCustomCssSource } from "@/modules/survey/link/lib/respondent-custom-css";
-import { getLinkSurveySingleUseAccess } from "@/modules/survey/link/lib/single-use-link";
 import type { TSingleUseLinkSurface } from "@/modules/survey/link/lib/single-use-link-metrics";
+import { getUnansweredLinkSurveySingleUseAccess } from "@/modules/survey/link/lib/single-use-unanswered";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 
 /**
@@ -29,6 +30,13 @@ import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/work
  * that has already been answered, which the page shows only as "already answered": a used link stays valid,
  * and would otherwise keep fetching the survey for whoever holds it. `suId` / `suToken` are the link's raw URL
  * values, which the gate screens pass through.
+ *
+ * What this does not hide: a valid unanswered link costs one more query than a forged link or an unknown id,
+ * so the three can still be told apart by latency, as the page and its metadata can. And `/c` also shows
+ * "response submitted" for a contact who already answered, which these actions can't mirror: they have no
+ * contact to check (the PIN screen holds a contact id, but a client-supplied one can't be trusted, and a
+ * caller who wants the definition just leaves it out). That is no extra exposure, since the same PIN opens
+ * the survey on `/s/<id>`.
  */
 const getSurveyOpenForResponses = async ({
   surveyId,
@@ -46,25 +54,25 @@ const getSurveyOpenForResponses = async ({
     throw new ResourceNotFoundError("Survey", surveyId);
   }
 
-  const singleUse = getLinkSurveySingleUseAccess({ survey, suId, suToken, surface });
+  const singleUse = await getUnansweredLinkSurveySingleUseAccess({ survey, suId, suToken, surface });
   if (!singleUse.allowed) {
     throw new ResourceNotFoundError("Survey", surveyId);
-  }
-
-  // The page's own "already answered" check: a finished response, not a partial one it lets the respondent
-  // resume.
-  if (singleUse.singleUseId) {
-    const singleUseResponse = await getResponseBySingleUseId(survey.id, singleUse.singleUseId)();
-    if (singleUseResponse?.finished) {
-      throw new ResourceNotFoundError("Survey", surveyId);
-    }
   }
 
   return survey;
 };
 
+// The single-use link values arrive from the client and reach a decrypt and a hash, so they are bounded to what
+// a link we minted can carry before anything runs on them.
+const ZSingleUseLinkParams = {
+  suId: z.string().max(SINGLE_USE_ID_MAX_LENGTH).optional(),
+  suToken: z.string().max(SINGLE_USE_TOKEN_MAX_LENGTH).optional(),
+};
+
+const ZSendLinkSurveyEmailAction = ZLinkSurveyEmailData.extend(ZSingleUseLinkParams);
+
 export const sendLinkSurveyEmailAction = actionClient
-  .inputSchema(ZLinkSurveyEmailData)
+  .inputSchema(ZSendLinkSurveyEmailAction)
   .action(async ({ parsedInput }) => {
     await applyIPRateLimit(rateLimitConfigs.actions.sendLinkSurveyEmail);
 
@@ -104,8 +112,7 @@ const ZValidateSurveyPinAction = z.object({
   surveyId: z.cuid2(),
   pin: z.string(),
   // The single-use link the PIN screen was opened with, as it appears in the URL.
-  suId: z.string().optional(),
-  suToken: z.string().optional(),
+  ...ZSingleUseLinkParams,
 });
 
 export const validateSurveyPinAction = actionClient

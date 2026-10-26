@@ -2,12 +2,13 @@ import { notFound } from "next/navigation";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { generateSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
-import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
+import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getBasicSurveyMetadata, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
 import { getGenericSurveyMetadata, getMetadataForContactSurvey, getMetadataForLinkSurvey } from "./metadata";
 
 vi.mock("@/modules/survey/link/lib/data", () => ({
+  getResponseBySingleUseId: vi.fn(),
   getSurveyWithMetadata: vi.fn(),
 }));
 
@@ -45,9 +46,12 @@ describe("link-survey metadata", () => {
   const mockOgTitle = "Test Survey | Formbricks";
   const mockDescription = "Please complete this survey.";
   const mockOgImageUrl = "https://example.com/custom-image.png";
+  const answeredWith = (finished: boolean) =>
+    vi.mocked(getResponseBySingleUseId).mockReturnValue(async () => ({ id: "r1", finished }) as never);
 
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(getResponseBySingleUseId).mockReturnValue(async () => null);
 
     vi.mocked(getBasicSurveyMetadata).mockResolvedValue({
       title: mockSurveyName,
@@ -340,6 +344,30 @@ describe("link-survey metadata", () => {
 
       expect(result).toMatchObject({ title: mockSurveyName, ...indexingRules });
     });
+
+    test("opened with a link that has already been answered gets generic metadata, like the actions' not found", async () => {
+      vi.mocked(getSurveyWithMetadata).mockResolvedValue(singleUseSurvey);
+      const link = generateSurveySingleUseLinkParams(mockSurveyId, false);
+      answeredWith(true);
+
+      const result = await getMetadataForLinkSurvey({ surveyId: mockSurveyId, ...link });
+
+      expect(result).toEqual({ ...getGenericSurveyMetadata(), ...indexingRules });
+      expect(getResponseBySingleUseId).toHaveBeenCalledWith(mockSurveyId, link.suId);
+      expect(getBasicSurveyMetadata).not.toHaveBeenCalled();
+    });
+
+    test("opened with a link whose response is only partly answered is still named, since it resumes", async () => {
+      vi.mocked(getSurveyWithMetadata).mockResolvedValue(singleUseSurvey);
+      answeredWith(false);
+
+      const result = await getMetadataForLinkSurvey({
+        surveyId: mockSurveyId,
+        ...generateSurveySingleUseLinkParams(mockSurveyId, false),
+      });
+
+      expect(result).toMatchObject({ title: mockSurveyName, ...indexingRules });
+    });
   });
 
   describe("getMetadataForContactSurvey", () => {
@@ -395,6 +423,19 @@ describe("link-survey metadata", () => {
       expect(await getMetadataForContactSurvey({ surveyId: mockSurveyId, ...link })).toMatchObject({
         title: mockSurveyName,
       });
+    });
+
+    test("gives a single-use survey opened with an already answered link generic metadata", async () => {
+      vi.mocked(getSurveyWithMetadata).mockResolvedValue(
+        contactSurvey({ singleUse: { enabled: true, isEncrypted: false } })
+      );
+      const link = generateSurveySingleUseLinkParams(mockSurveyId, false);
+      answeredWith(true);
+
+      expect(await getMetadataForContactSurvey({ surveyId: mockSurveyId, ...link })).toEqual(
+        getGenericSurveyMetadata()
+      );
+      expect(getBasicSurveyMetadata).not.toHaveBeenCalled();
     });
 
     test("names a public survey, without the /s canonical or robots rules", async () => {
