@@ -23,7 +23,7 @@ import {
   CHART_FIELD_CATALOG,
   getChartField,
 } from "@/modules/ee/analysis/lib/field-catalog";
-import { applyChartQueryRateLimit } from "./data-operations";
+import { applyChartQueryRateLimit, withChartQuerySlot } from "./data-operations";
 import type { TV3ChartFieldCatalog } from "./resources";
 import type { TV3ChartFieldValuesQuery } from "./schemas";
 
@@ -143,20 +143,21 @@ export async function listV3ChartFieldValues({
     const actor = getV3AuthorizationActor(authentication);
     if (!actor) return problemUnauthorized(requestId, "Not authenticated", instance);
 
-    const rows = await executeTenantScopedQuery({
-      query: buildDimensionValueQuery({
-        dimension: field,
-        limit: FIELD_VALUE_LOOKUP_LIMIT,
-        search: query.search,
-      }),
-      feedbackDirectoryId: query.datasetId,
-      workspaceId: access.workspaceId,
-      organizationId: access.organizationId,
-      actor,
-      source: "v3.charts.fieldValues",
+    return await withChartQuerySlot(context, async () => {
+      const rows = await executeTenantScopedQuery({
+        query: buildDimensionValueQuery({
+          dimension: field,
+          limit: FIELD_VALUE_LOOKUP_LIMIT,
+          search: query.search,
+        }),
+        feedbackDirectoryId: query.datasetId,
+        workspaceId: access.workspaceId,
+        organizationId: access.organizationId,
+        actor,
+        source: "v3.charts.fieldValues",
+      });
+      return successResponse(collectDimensionValues(rows, field, FIELD_VALUE_LOOKUP_LIMIT), { requestId });
     });
-
-    return successResponse(collectDimensionValues(rows, field, FIELD_VALUE_LOOKUP_LIMIT), { requestId });
   } catch (error) {
     if (error instanceof CubeQueryError) {
       return problemBadGateway(

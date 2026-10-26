@@ -46,6 +46,13 @@ export const rateLimitConfigs = {
       namespace: "api:v3:charts:queries",
     }, // 600 per minute per user or API key, instead of v3 — chart data, preview and field values (ENG-6586).
     // Sized for dashboards: every widget fetches its own data, so a page load is one query per chart.
+    v3ChartQueriesInFlight: {
+      interval: 120,
+      allowedPerInterval: 20,
+      namespace: "api:v3:charts:in-flight",
+    }, // At most 20 chart queries running at once per user or API key, so one caller cannot fill the shared
+    // Cube's queue with 60-second queries. An in-flight limit (`in-flight.ts`), not a window: `interval` is
+    // each slot's lease, twice the query timeout, after which a slot a crashed pod never released frees itself.
     internalChartGeneration: {
       interval: 60,
       allowedPerInterval: 1,

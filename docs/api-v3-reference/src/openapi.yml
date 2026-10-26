@@ -58,7 +58,8 @@ info:
       replaces the chart's own range on `collectedAt`, the way a dashboard's date filter does.
     - **Data needs the dataset.** Reading a chart's rows, previewing one and looking up field values
       need read access to its Feedback Dataset as well as the workspace. They share one budget of
-      **600 per minute** per user or key, sized for dashboards that load one query per widget.
+      **600 per minute** per user or key, sized for dashboards that load one query per widget, and at
+      most **20 run at once** (429 with `Retry-After: 1` past that).
     - **Plan.** Every operation answers **403 `dashboards_plan_required`** for an organization without
       the Dashboards feature, after authorization.
     - **Shared charts.** A chart can sit on several dashboards; each chart says which in `dashboards`.

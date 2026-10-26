@@ -2,6 +2,7 @@ import "server-only";
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { acquireInFlightSlot, releaseInFlightSlot } from "@/modules/core/rate-limit/in-flight";
 import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { problemTooManyRequests } from "./response";
 import type { TV3Authentication } from "./types";
@@ -48,5 +49,46 @@ export const applyV3OperationRateLimit = async ({
       error instanceof TooManyRequestsError ? error.retryAfter : undefined,
       instance
     );
+  }
+};
+
+/** How soon a caller refused an in-flight slot should retry: a slot frees as soon as a query ends. */
+export const IN_FLIGHT_RETRY_AFTER_SECONDS = 1;
+
+/**
+ * Run `operation` holding one of the principal's in-flight slots in `config` (see `in-flight.ts`): a limit
+ * on how many such operations run at once rather than how many start per minute. The slot is taken before
+ * the operation and given back when it settles, success or failure. Answers 429 with a one-second
+ * `Retry-After` when every slot is taken. Like every limit here it fails open.
+ */
+export const withV3OperationSlot = async (
+  {
+    config,
+    authentication,
+    requestId,
+    instance,
+  }: { config: TRateLimitConfig; authentication: TV3Authentication; requestId: string; instance: string },
+  operation: () => Promise<Response>
+): Promise<Response> => {
+  const principal = getV3RateLimitPrincipal(authentication);
+  if (!principal) return operation();
+
+  const { allowed, slot } = await acquireInFlightSlot(config, principal);
+  if (!allowed) {
+    logger
+      .withContext({ requestId })
+      .warn({ statusCode: 429, namespace: config.namespace }, "V3 operation concurrency limit reached");
+    return problemTooManyRequests(
+      requestId,
+      `At most ${config.allowedPerInterval} of these can run at once. Retry when one finishes.`,
+      IN_FLIGHT_RETRY_AFTER_SECONDS,
+      instance
+    );
+  }
+
+  try {
+    return await operation();
+  } finally {
+    if (slot) await releaseInFlightSlot(slot);
   }
 };

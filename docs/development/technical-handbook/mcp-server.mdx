@@ -1392,13 +1392,13 @@ writes the chart query itself.
 - **Numbers need feedback access.** `preview_chart`, `get_chart_data` and `list_chart_field_values` return
   respondents' answers in aggregate, so they declare `dashboards:read` **and** `feedbackRecords:read`, and the
   operation also checks read access to the chart's feedback dataset. They spend from the same 600/min budget as
-  the REST data routes, charged inside the operation.
+  the REST data routes, and share their limit of 20 queries running at once, both charged inside the operation.
 - **Shared charts.** `update_chart`'s description says an edit shows on every dashboard holding the chart, and
   points at `duplicate_chart` + `update_widget` for a per-dashboard change. `duplicate_dashboard` says the copy
   shares its charts. `remove_chart_from_dashboard` says the chart is kept.
-- **Rearranging.** `update_dashboard_layout` takes `{ updatedAt, widgets: [{ widgetId, layout }] }` and is
+- **Rearranging.** `update_dashboard_layout` takes `{ expectedUpdatedAt, widgets: [{ widgetId, layout }] }` and is
   refused unless it lists exactly the current widgets, so it can never remove a widget by omission. A stale
-  `updatedAt` answers `409` with the current one in `details`.
+  `expectedUpdatedAt` answers `409` with the current one in `details`.
 
 Every write runs through `runMcpMutation`, so it leaves the same audit event as the REST call.
 

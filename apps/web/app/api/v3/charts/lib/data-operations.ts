@@ -6,7 +6,7 @@ import {
   requireDashboardsAccess,
 } from "@/app/api/v3/lib/dashboards-access";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
-import { applyV3OperationRateLimit } from "@/app/api/v3/lib/operation-rate-limit";
+import { applyV3OperationRateLimit, withV3OperationSlot } from "@/app/api/v3/lib/operation-rate-limit";
 import {
   type InvalidParam,
   problemBadGateway,
@@ -42,6 +42,13 @@ import type { TV3ChartDataQuery, TV3ChartPreviewBody } from "./schemas";
  */
 export const applyChartQueryRateLimit = (context: TV3ChartOperationContext): Promise<Response | null> =>
   applyV3OperationRateLimit({ config: rateLimitConfigs.api.v3ChartQueries, ...context });
+
+/** Run a Cube query holding one of the caller's in-flight chart query slots. */
+export const withChartQuerySlot = (
+  context: TV3ChartOperationContext,
+  query: () => Promise<Response>
+): Promise<Response> =>
+  withV3OperationSlot({ config: rateLimitConfigs.api.v3ChartQueriesInFlight, ...context }, query);
 
 /**
  * A chart query that could not run: Cube unreachable, rejected, or out of time. Cube's own error never
@@ -112,27 +119,29 @@ export async function runV3ChartQuery({
   );
   if (bucketIssue) return refuseChartQuery([bucketIssue], context);
 
-  try {
-    const run = await runChartQuery({
-      query: runnable,
-      datasetId,
-      workspaceId: access.workspaceId,
-      organizationId: access.organizationId,
-      actor,
-      source,
-    });
+  return withChartQuerySlot(context, async () => {
+    try {
+      const run = await runChartQuery({
+        query: runnable,
+        datasetId,
+        workspaceId: access.workspaceId,
+        organizationId: access.organizationId,
+        actor,
+        source,
+      });
 
-    const data: TV3ChartData = {
-      rows: run.rows as TV3ChartData["rows"],
-      optionLabels: run.optionLabels ?? {},
-      fieldLabels: run.fieldLabels ?? {},
-      query: run.effectiveQuery as TV3ChartData["query"],
-    };
-    return successResponse(data, { requestId: context.requestId });
-  } catch (error) {
-    if (error instanceof CubeQueryError) return cubeFailure(error, context);
-    throw error;
-  }
+      const data: TV3ChartData = {
+        rows: run.rows as TV3ChartData["rows"],
+        optionLabels: run.optionLabels ?? {},
+        fieldLabels: run.fieldLabels ?? {},
+        query: run.effectiveQuery as TV3ChartData["query"],
+      };
+      return successResponse(data, { requestId: context.requestId });
+    } catch (error) {
+      if (error instanceof CubeQueryError) return cubeFailure(error, context);
+      throw error;
+    }
+  });
 }
 
 /**

@@ -8,6 +8,7 @@ import {
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { acquireInFlightSlot } from "@/modules/core/rate-limit/in-flight";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { CubeQueryError, executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "./field-operations";
@@ -27,6 +28,10 @@ vi.mock("@/app/api/v3/lib/dashboards-access", () => ({
 }));
 vi.mock("@/app/api/v3/lib/auth", () => ({ getV3AuthorizationActor: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
+vi.mock("@/modules/core/rate-limit/in-flight", () => ({
+  acquireInFlightSlot: vi.fn(),
+  releaseInFlightSlot: vi.fn(),
+}));
 vi.mock("@/modules/ee/analysis/api/lib/cube-client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/analysis/api/lib/cube-client")>()),
   executeTenantScopedQuery: vi.fn(),
@@ -54,6 +59,10 @@ const problemOf = async (response: Response) => (await response.json()) as TProb
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(applyRateLimit).mockResolvedValue(undefined as never);
+  vi.mocked(acquireInFlightSlot).mockResolvedValue({
+    allowed: true,
+    slot: { key: "k", member: "m", released: false },
+  });
   vi.mocked(requireDashboardsAccess).mockResolvedValue(access);
   vi.mocked(refuseUnlessFeedbackDatasetAccess).mockResolvedValue(null);
   vi.mocked(getV3AuthorizationActor).mockReturnValue(actor);

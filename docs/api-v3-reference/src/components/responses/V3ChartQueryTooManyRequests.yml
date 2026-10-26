@@ -1,7 +1,8 @@
 description: >-
   Too Many Requests (`code: too_many_requests`). Chart data, preview and field-value lookups share
   one budget of 600 requests per minute per user or API key, separate from the 100 per minute of
-  the rest of v3, so a dashboard can load every widget's data. `Retry-After` says when to retry.
+  the rest of v3, so a dashboard can load every widget's data. At most 20 of them run at once per
+  user or key; past that the answer is 429 with `Retry-After: 1`. `Retry-After` says when to retry.
 headers:
   X-Request-Id:
     schema:

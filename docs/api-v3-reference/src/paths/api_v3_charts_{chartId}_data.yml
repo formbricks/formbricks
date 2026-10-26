@@ -12,7 +12,7 @@ get:
     `dateRange`: request a shorter range, or use a chart with a coarser granularity.
 
     Needs read access to the chart's workspace and to its Feedback Dataset. Counts against the
-    chart-query budget (600 per minute per user or API key), not the v3 default.
+    chart-query budget (600 per minute, 20 at once, per user or API key), not the v3 default.
   tags:
     - V3 Charts
   parameters:

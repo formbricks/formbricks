@@ -95,6 +95,28 @@ describe("useChartData", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  test("waits out a brief 429 — every chart query slot taken — instead of showing it", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        Response.json(
+          { status: 429, detail: "Busy", code: "too_many_requests" },
+          { status: 429, headers: { "Retry-After": "1" } }
+        )
+      )
+      .mockResolvedValueOnce(
+        Response.json(
+          { status: 429, detail: "Busy", code: "too_many_requests" },
+          { status: 429, headers: { "Retry-After": "1" } }
+        )
+      )
+      .mockResolvedValueOnce(dataResponse());
+
+    const { result } = renderHook(() => useChartData({ chartId: CHART_ID, dateRange: null }), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
   test("recovers when the one retry succeeds", async () => {
     fetchMock.mockRejectedValueOnce(new TypeError("Failed to fetch")).mockResolvedValueOnce(dataResponse());
 

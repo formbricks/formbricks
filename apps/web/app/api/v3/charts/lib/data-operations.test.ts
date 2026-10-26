@@ -6,6 +6,7 @@ import {
 } from "@/app/api/v3/lib/dashboards-access";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { acquireInFlightSlot, releaseInFlightSlot } from "@/modules/core/rate-limit/in-flight";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { CubeQueryError } from "@/modules/ee/analysis/api/lib/cube-client";
 import { REQUESTED_DATE_RANGE_REASON } from "@/modules/ee/analysis/lib/chart-query-validator";
@@ -22,6 +23,10 @@ import type { TChartResourceRow } from "./service";
  */
 
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
+vi.mock("@/modules/core/rate-limit/in-flight", () => ({
+  acquireInFlightSlot: vi.fn(),
+  releaseInFlightSlot: vi.fn(),
+}));
 vi.mock("@/app/api/v3/lib/dashboards-access", () => ({
   requireDashboardsAccess: vi.fn(),
   refuseUnlessFeedbackDatasetAccess: vi.fn(),
@@ -106,6 +111,10 @@ const sentQuery = () => vi.mocked(runChartQuery).mock.calls[0][0].query;
 describe("chart queries within budget", () => {
   beforeEach(() => {
     vi.mocked(applyRateLimit).mockResolvedValue(undefined as never);
+    vi.mocked(acquireInFlightSlot).mockResolvedValue({
+      allowed: true,
+      slot: { key: "k", member: "m", released: false },
+    });
     vi.mocked(requireDashboardsAccess).mockResolvedValue(access);
     vi.mocked(refuseUnlessFeedbackDatasetAccess).mockResolvedValue(null);
     vi.mocked(runChartQuery).mockImplementation(async ({ query }) => ({
@@ -123,6 +132,25 @@ describe("chart queries within budget", () => {
         ...context,
         authentication,
       });
+
+    test("runs Cube in one of the caller's in-flight slots, and answers 429 without running when none is free", async () => {
+      await preview();
+      expect(acquireInFlightSlot).toHaveBeenCalledWith(rateLimitConfigs.api.v3ChartQueriesInFlight, "key_1");
+      expect(releaseInFlightSlot).toHaveBeenCalledTimes(1);
+
+      vi.mocked(runChartQuery).mockClear();
+      vi.mocked(acquireInFlightSlot).mockResolvedValueOnce({ allowed: false });
+      const busy = await preview();
+      expect(busy.status).toBe(429);
+      expect(busy.headers.get("Retry-After")).toBe("1");
+      expect(runChartQuery).not.toHaveBeenCalled();
+    });
+
+    test("holds no slot for a query the validator refuses", async () => {
+      vi.mocked(acquireInFlightSlot).mockClear();
+      expect((await preview({ query: { measures: ["FeedbackRecords.nope"] } })).status).toBe(422);
+      expect(acquireInFlightSlot).not.toHaveBeenCalled();
+    });
 
     test("runs the query in the authorized workspace's tenant and returns rows, labels and the query run", async () => {
       const response = await preview();

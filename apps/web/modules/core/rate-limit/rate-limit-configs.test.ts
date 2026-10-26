@@ -111,6 +111,7 @@ describe("rateLimitConfigs", () => {
         "v3SurveyVisibility",
         "v3CustomCss",
         "v3ChartQueries",
+        "v3ChartQueriesInFlight",
         "internalChartGeneration",
         "internalDatasetPurge",
         "internalRetentionExport",
@@ -128,6 +129,12 @@ describe("rateLimitConfigs", () => {
         interval: 60,
         allowedPerInterval: 600,
         namespace: "api:v3:charts:queries",
+      });
+      // 20 running at once; each slot's lease is twice the 60 s Cube query timeout.
+      expect(rateLimitConfigs.api.v3ChartQueriesInFlight).toEqual({
+        interval: 120,
+        allowedPerInterval: 20,
+        namespace: "api:v3:charts:in-flight",
       });
       // The values, not just the key: each export streams an organisation's whole retention history,
       // names people, and runs a pre-flight count, so a loosened quota is a load and privacy regression.

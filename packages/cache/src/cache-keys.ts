@@ -64,6 +64,9 @@ export const createCacheKey = {
   rateLimit: {
     core: (namespace: string, identifier: string, windowStart: number): CacheKey =>
       makeCacheKey("rate_limit", namespace, identifier, String(windowStart)),
+    // A sorted set of the operations a principal has running now, for a limit on how many run at once.
+    inFlight: (namespace: string, identifier: string): CacheKey =>
+      makeCacheKey("rate_limit", namespace, identifier, "in_flight"),
   },
 
   // Custom keys with validation

@@ -10,7 +10,7 @@ post:
     (`limit_exceeded`).
 
     Needs read access to the workspace and the Feedback Dataset. Counts against the chart-query
-    budget (600 per minute per user or API key), not the v3 default.
+    budget (600 per minute, 20 at once, per user or API key), not the v3 default.
   tags:
     - V3 Charts
   requestBody:

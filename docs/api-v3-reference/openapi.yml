@@ -23,7 +23,8 @@ info:
       replaces the chart's own range on `collectedAt`, the way a dashboard's date filter does.
     - **Data needs the dataset.** Reading a chart's rows, previewing one and looking up field values
       need read access to its Feedback Dataset as well as the workspace. They share one budget of
-      **600 per minute** per user or key, sized for dashboards that load one query per widget.
+      **600 per minute** per user or key, sized for dashboards that load one query per widget, and at
+      most **20 run at once** (429 with `Retry-After: 1` past that).
     - **Plan.** Every operation answers **403 `dashboards_plan_required`** for an organization without
       the Dashboards feature, after authorization.
     - **Shared charts.** A chart can sit on several dashboards; each chart says which in `dashboards`.
@@ -4004,7 +4005,7 @@ paths:
         422. Narrow a field with more values using `search`. The list is not paged.
 
         Needs read access to the workspace and the Feedback Dataset. Counts against the chart-query
-        budget (600 per minute per user or API key), not the v3 default.
+        budget (600 per minute, 20 at once, per user or API key), not the v3 default.
       tags:
         - V3 Charts
       parameters:
@@ -4089,7 +4090,7 @@ paths:
         (`limit_exceeded`).
 
         Needs read access to the workspace and the Feedback Dataset. Counts against the chart-query
-        budget (600 per minute per user or API key), not the v3 default.
+        budget (600 per minute, 20 at once, per user or API key), not the v3 default.
       tags:
         - V3 Charts
       requestBody:
@@ -4311,7 +4312,7 @@ paths:
         `dateRange`: request a shorter range, or use a chart with a coarser granularity.
 
         Needs read access to the chart's workspace and to its Feedback Dataset. Counts against the
-        chart-query budget (600 per minute per user or API key), not the v3 default.
+        chart-query budget (600 per minute, 20 at once, per user or API key), not the v3 default.
       tags:
         - V3 Charts
       parameters:
@@ -4673,8 +4674,8 @@ paths:
       description: |
         Replaces a dashboard's name and every widget's place in one transaction — all of it or none of
         it. A widget left out is removed; its chart is kept. Widgets may leave gaps but not overlap (422).
-        Send the `updatedAt` from your read: if the dashboard changed since, the save is refused with 409
-        and nothing is written. Needs write access to the dashboard's workspace.
+        Send the `updatedAt` from your read as `expectedUpdatedAt`: if the dashboard changed since, the save
+        is refused with 409 and nothing is written. Needs write access to the dashboard's workspace.
       tags:
         - V3 Dashboards
       parameters:
@@ -12201,19 +12202,20 @@ components:
       additionalProperties: false
     DashboardReplaceRequest:
       type: object
-      description: 'The whole edited dashboard: its name and every widget''s place. A widget left out of `widgets` is removed (its chart is kept). `updatedAt` is the dashboard''s `updatedAt` from your read; if it changed since, nothing is saved.'
+      description: 'The whole edited dashboard: its name and every widget''s place. A widget left out of `widgets` is removed (its chart is kept). `expectedUpdatedAt` is the dashboard''s `updatedAt` from your read; if it changed since, nothing is saved.'
       required:
         - name
-        - updatedAt
+        - expectedUpdatedAt
         - widgets
       properties:
         name:
           type: string
           minLength: 1
           maxLength: 255
-        updatedAt:
+        expectedUpdatedAt:
           type: string
           format: date-time
+          description: The dashboard's `updatedAt` from your read.
         widgets:
           type: array
           maxItems: 250
@@ -13208,7 +13210,7 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     V3ChartQueryTooManyRequests:
-      description: 'Too Many Requests (`code: too_many_requests`). Chart data, preview and field-value lookups share one budget of 600 requests per minute per user or API key, separate from the 100 per minute of the rest of v3, so a dashboard can load every widget''s data. `Retry-After` says when to retry.'
+      description: 'Too Many Requests (`code: too_many_requests`). Chart data, preview and field-value lookups share one budget of 600 requests per minute per user or API key, separate from the 100 per minute of the rest of v3, so a dashboard can load every widget''s data. At most 20 of them run at once per user or key; past that the answer is 429 with `Retry-After: 1`. `Retry-After` says when to retry.'
       headers:
         X-Request-Id:
           schema:
