@@ -1,20 +1,21 @@
 type: object
 description: >-
   The whole edited dashboard: its name and every widget's place. A widget left out of `widgets` is
-  removed (its chart is kept). `updatedAt` is the dashboard's `updatedAt` from your read; if it changed
-  since, nothing is saved.
+  removed (its chart is kept). `expectedUpdatedAt` is the dashboard's `updatedAt` from your read; if it
+  changed since, nothing is saved.
 required:
   - name
-  - updatedAt
+  - expectedUpdatedAt
   - widgets
 properties:
   name:
     type: string
     minLength: 1
     maxLength: 255
-  updatedAt:
+  expectedUpdatedAt:
     type: string
     format: date-time
+    description: The dashboard's `updatedAt` from your read.
   widgets:
     type: array
     maxItems: 250

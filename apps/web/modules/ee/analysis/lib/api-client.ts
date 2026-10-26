@@ -325,7 +325,7 @@ export const createDashboard = async ({
   );
 
 /**
- * Saves the whole edited dashboard — its name and every widget's place — in one call. `updatedAt` is the
+ * Saves the whole edited dashboard — its name and every widget's place — in one call. `expectedUpdatedAt` is the
  * version the edit started from; if the dashboard changed since, nothing is saved and the call throws
  * the 409 `isStaleDashboardError` recognises. A widget left out is removed.
  */
@@ -333,7 +333,7 @@ export const replaceDashboard = async (
   dashboardId: string,
   dashboard: {
     name: string;
-    updatedAt: string;
+    expectedUpdatedAt: string;
     widgets: { widgetId: string; layout: TDashboardWidget["layout"]; order: number }[];
   }
 ): Promise<TAppDashboard> =>
@@ -341,7 +341,7 @@ export const replaceDashboard = async (
     await readData<TV3DashboardResource>(await sendJson("PUT", dashboardPath(dashboardId), dashboard))
   );
 
-/** The dashboard changed after the caller read it, so a save carrying the old `updatedAt` was refused. */
+/** The dashboard changed after the caller read it, so a save expecting the old `updatedAt` was refused. */
 export const isStaleDashboardError = (error: unknown): boolean =>
   error instanceof V3ApiError && error.status === 409 && typeof error.details?.currentUpdatedAt === "string";
 

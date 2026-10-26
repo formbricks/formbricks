@@ -446,7 +446,7 @@ export function registerDashboardTools(server: McpServer): void {
     {
       title: "Rearrange dashboard",
       description:
-        "Move and resize every widget on a dashboard at once, as one change. List every current widget exactly once — a rearrange never removes a widget, and a list that leaves one out is refused. Pass the updatedAt from get_dashboard; if the dashboard changed since, nothing is saved.",
+        "Move and resize every widget on a dashboard at once, as one change. List every current widget exactly once — a rearrange never removes a widget, and a list that leaves one out is refused. Pass the updatedAt from get_dashboard as expectedUpdatedAt; if the dashboard changed since, nothing is saved.",
       inputSchema: ZMcpUpdateDashboardLayoutInput,
       outputSchema: ZMcpDashboardOutput,
       audit: { action: "updated", targetType: "dashboard", targetIdArg: "dashboardId" },

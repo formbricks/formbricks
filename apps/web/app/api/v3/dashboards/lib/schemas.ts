@@ -92,7 +92,10 @@ export type TV3WidgetUpdateBody = z.infer<typeof ZV3WidgetUpdateBody>;
 /** The most widgets a whole-dashboard write carries; far past what a dashboard can show. */
 export const MAX_DASHBOARD_WIDGETS = 250;
 
-/** The dashboard's `updatedAt` from the caller's read: the write is refused with 409 if it changed since. */
+/**
+ * `expectedUpdatedAt`: the dashboard's `updatedAt` from the caller's read, the write's precondition. Named as
+ * the survey writes name it, so it never reads as a timestamp the caller sets; 409 if it changed since.
+ */
 const ZV3ExpectedDashboardUpdatedAt = z.iso.datetime({ offset: true });
 
 /** A whole-dashboard write lists each widget once. Shared with the MCP `update_dashboard_layout` input. */
@@ -113,7 +116,7 @@ export const refuseRepeatedWidgets = (widgets: { widgetId: string }[], ctx: z.Re
 export const ZV3DashboardReplaceBody = z
   .object({
     name: ZV3DashboardName,
-    updatedAt: ZV3ExpectedDashboardUpdatedAt,
+    expectedUpdatedAt: ZV3ExpectedDashboardUpdatedAt,
     widgets: z
       .array(
         z
@@ -137,7 +140,7 @@ export type TV3DashboardReplaceBody = z.infer<typeof ZV3DashboardReplaceBody>;
  */
 export const ZV3DashboardLayoutBody = z
   .object({
-    updatedAt: ZV3ExpectedDashboardUpdatedAt,
+    expectedUpdatedAt: ZV3ExpectedDashboardUpdatedAt,
     widgets: z
       .array(z.object({ widgetId: z.cuid2(), layout: ZV3WidgetLayoutInput }).strict())
       .max(MAX_DASHBOARD_WIDGETS),

@@ -257,7 +257,7 @@ export const ZMcpWidgetOutput = mcpToolOutput(ZV3DashboardWidget);
 export const ZMcpUpdateDashboardLayoutInput = z
   .object({
     dashboardId: ZId.describe("The dashboard to rearrange."),
-    updatedAt: z.iso
+    expectedUpdatedAt: z.iso
       .datetime({ offset: true })
       .describe(
         "The dashboard's updatedAt from your get_dashboard read. If it changed since, nothing is saved: read it again and retry."

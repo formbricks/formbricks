@@ -385,7 +385,7 @@ describe("analysis api client requests", () => {
     const fetchMock = stubFetch(dashboardResource);
     const replacement = {
       name: "Renamed",
-      updatedAt: dashboardResource.updatedAt,
+      expectedUpdatedAt: dashboardResource.updatedAt,
       widgets: [{ widgetId: "wid", layout: { x: 0, y: 0, w: 2, h: 2 }, order: 0 }],
     };
 

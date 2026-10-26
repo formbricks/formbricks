@@ -105,8 +105,8 @@ put:
   description: |
     Replaces a dashboard's name and every widget's place in one transaction — all of it or none of
     it. A widget left out is removed; its chart is kept. Widgets may leave gaps but not overlap (422).
-    Send the `updatedAt` from your read: if the dashboard changed since, the save is refused with 409
-    and nothing is written. Needs write access to the dashboard's workspace.
+    Send the `updatedAt` from your read as `expectedUpdatedAt`: if the dashboard changed since, the save
+    is refused with 409 and nothing is written. Needs write access to the dashboard's workspace.
   tags:
     - V3 Dashboards
   parameters:

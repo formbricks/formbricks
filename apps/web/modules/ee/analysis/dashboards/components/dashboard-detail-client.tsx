@@ -433,7 +433,7 @@ function DashboardDetailView({
       try {
         const saved = await replaceDashboard(dashboard.id, {
           name: savedName.trim(),
-          updatedAt: baseUpdatedAt,
+          expectedUpdatedAt: baseUpdatedAt,
           widgets: toSavedWidgets(savedWidgets),
         });
         queryClient.setQueryData(dashboardKeys.detail(dashboard.id), saved);

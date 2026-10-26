@@ -590,7 +590,7 @@ describe("replaceV3Dashboard (PUT)", () => {
   const replace = (log?: TV3AuditLog) =>
     replaceV3Dashboard({
       dashboardId: DASHBOARD_ID,
-      body: { name: "Saved", updatedAt: EXPECTED_UPDATED_AT, widgets },
+      body: { name: "Saved", expectedUpdatedAt: EXPECTED_UPDATED_AT, widgets },
       auditLog: log,
       ...contextOf(),
     });
@@ -724,7 +724,7 @@ describe("updateV3DashboardLayout (MCP update_dashboard_layout)", () => {
   const rearrange = (log?: TV3AuditLog) =>
     updateV3DashboardLayout({
       dashboardId: DASHBOARD_ID,
-      body: { updatedAt: EXPECTED_UPDATED_AT, widgets },
+      body: { expectedUpdatedAt: EXPECTED_UPDATED_AT, widgets },
       auditLog: log,
       ...contextOf(),
     });

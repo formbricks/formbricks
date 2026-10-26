@@ -90,7 +90,7 @@ describe("PUT /api/v3/dashboards/{dashboardId}", () => {
       dashboardId,
       body: {
         name: "Board v2",
-        updatedAt: await currentUpdatedAt(),
+        expectedUpdatedAt: await currentUpdatedAt(),
         widgets: [
           { widgetId: widgets.c, layout: { x: 0, y: 0, w: 12, h: 4 }, order: 0 },
           { widgetId: widgets.a, layout: { x: 0, y: 4, w: 6, h: 4 }, order: 1 },
@@ -118,7 +118,7 @@ describe("PUT /api/v3/dashboards/{dashboardId}", () => {
 
     const response = await replaceV3Dashboard({
       dashboardId,
-      body: { name: "Overwritten", updatedAt: stale, widgets: [] },
+      body: { name: "Overwritten", expectedUpdatedAt: stale, widgets: [] },
       ...context(),
     });
     expect(response.status).toBe(409);
@@ -142,7 +142,7 @@ describe("PUT /api/v3/dashboards/{dashboardId}", () => {
       dashboardId,
       body: {
         name: "Board",
-        updatedAt: before.updatedAt.toISOString(),
+        expectedUpdatedAt: before.updatedAt.toISOString(),
         widgets: [...keepAll.slice(0, 2), { ...keepAll[2], layout: { x: 6, y: 0, w: 4, h: 4 } }],
       },
       ...context(),
@@ -151,7 +151,7 @@ describe("PUT /api/v3/dashboards/{dashboardId}", () => {
 
     const nameTaken = await replaceV3Dashboard({
       dashboardId,
-      body: { name: "Taken", updatedAt: before.updatedAt.toISOString(), widgets: keepAll },
+      body: { name: "Taken", expectedUpdatedAt: before.updatedAt.toISOString(), widgets: keepAll },
       ...context(),
     });
     expect(await outcomeOf(nameTaken)).toEqual({ status: 409, code: "conflict" });
@@ -173,7 +173,7 @@ describe("PUT /api/v3/dashboards/{dashboardId}", () => {
       dashboardId,
       body: {
         name: "Board",
-        updatedAt: await currentUpdatedAt(),
+        expectedUpdatedAt: await currentUpdatedAt(),
         widgets: [{ widgetId: other.widgets[0].id, layout: { x: 0, y: 8, w: 4, h: 4 }, order: 0 }],
       },
       ...context(),
@@ -189,7 +189,7 @@ describe("update_dashboard_layout (MCP rearrange)", () => {
     const response = await updateV3DashboardLayout({
       dashboardId,
       body: {
-        updatedAt: before.updatedAt.toISOString(),
+        expectedUpdatedAt: before.updatedAt.toISOString(),
         widgets: [
           { widgetId: widgets.a, layout: { x: 0, y: 0, w: 6, h: 4 } },
           { widgetId: widgets.b, layout: { x: 6, y: 0, w: 6, h: 4 } },
@@ -208,7 +208,7 @@ describe("update_dashboard_layout (MCP rearrange)", () => {
     const response = await updateV3DashboardLayout({
       dashboardId,
       body: {
-        updatedAt: await currentUpdatedAt(),
+        expectedUpdatedAt: await currentUpdatedAt(),
         widgets: [
           { widgetId: widgets.c, layout: { x: 0, y: 8, w: 12, h: 4 } },
           { widgetId: widgets.a, layout: { x: 0, y: 0, w: 6, h: 4 } },

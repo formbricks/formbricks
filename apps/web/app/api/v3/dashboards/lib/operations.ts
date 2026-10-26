@@ -448,11 +448,11 @@ export async function replaceV3Dashboard({
 
   try {
     return await runDashboardReplace(
-      { dashboardId, expectedUpdatedAt: body.updatedAt, auditLog, context },
+      { dashboardId, expectedUpdatedAt: body.expectedUpdatedAt, auditLog, context },
       () =>
         replaceDashboardRow({
           dashboardId,
-          expectedUpdatedAt: new Date(body.updatedAt),
+          expectedUpdatedAt: new Date(body.expectedUpdatedAt),
           name: body.name,
           widgets: body.widgets,
         })
@@ -477,11 +477,11 @@ export async function updateV3DashboardLayout({
 
   try {
     return await runDashboardReplace(
-      { dashboardId, expectedUpdatedAt: body.updatedAt, auditLog, context },
+      { dashboardId, expectedUpdatedAt: body.expectedUpdatedAt, auditLog, context },
       () =>
         replaceDashboardRow({
           dashboardId,
-          expectedUpdatedAt: new Date(body.updatedAt),
+          expectedUpdatedAt: new Date(body.expectedUpdatedAt),
           widgets: body.widgets,
           requireEveryWidget: true,
         })

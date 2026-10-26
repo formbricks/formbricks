@@ -353,7 +353,7 @@ describe("chart and dashboard MCP tools", () => {
     vi.mocked(updateV3DashboardLayout).mockResolvedValue(successResponse({}, { requestId: "req" }));
     const input = {
       dashboardId: DASHBOARD_ID,
-      updatedAt: "2026-10-22T10:00:00.000Z",
+      expectedUpdatedAt: "2026-10-22T10:00:00.000Z",
       widgets: [{ widgetId: WIDGET_ID, layout: { x: 0, y: 0, w: 12, h: 4 } }],
     };
 
@@ -364,7 +364,7 @@ describe("chart and dashboard MCP tools", () => {
     expect(updateV3DashboardLayout).toHaveBeenCalledWith(
       expect.objectContaining({
         dashboardId: DASHBOARD_ID,
-        body: { updatedAt: input.updatedAt, widgets: input.widgets },
+        body: { expectedUpdatedAt: input.expectedUpdatedAt, widgets: input.widgets },
       })
     );
   });
@@ -395,7 +395,7 @@ describe("chart and dashboard MCP tools", () => {
       ).safeParse(input).success;
     const layout = { x: 0, y: 0, w: 6, h: 4 };
     const widgets = (ids: string[]) => ids.map((widgetId) => ({ widgetId, layout }));
-    const updatedAt = "2026-10-22T10:00:00.000Z";
+    const expectedUpdatedAt = "2026-10-22T10:00:00.000Z";
 
     expect(accepts("update_widget", { dashboardId: DASHBOARD_ID, widgetId: WIDGET_ID })).toBe(false);
     expect(accepts("update_widget", { dashboardId: DASHBOARD_ID, widgetId: WIDGET_ID, layout })).toBe(true);
@@ -403,7 +403,11 @@ describe("chart and dashboard MCP tools", () => {
     expect(accepts("duplicate_chart", { chartId: CHART_ID, layout })).toBe(false);
     expect(accepts("duplicate_chart", { chartId: CHART_ID, dashboardId: DASHBOARD_ID, layout })).toBe(true);
 
-    const layoutInput = (ids: string[]) => ({ dashboardId: DASHBOARD_ID, updatedAt, widgets: widgets(ids) });
+    const layoutInput = (ids: string[]) => ({
+      dashboardId: DASHBOARD_ID,
+      expectedUpdatedAt,
+      widgets: widgets(ids),
+    });
     expect(accepts("update_dashboard_layout", layoutInput([WIDGET_ID, WIDGET_ID]))).toBe(false);
     // Distinct ids, so the bound is the only thing refusing the list.
     const distinctIds = (count: number) =>
