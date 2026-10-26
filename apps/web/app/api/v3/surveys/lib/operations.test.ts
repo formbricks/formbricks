@@ -805,7 +805,7 @@ describe("deleteV3Survey", () => {
     expect(response.status).toBe(409);
     expect(await response.json()).toMatchObject({
       code: "survey_has_linked_creatives",
-      detail: "Relink, archive or delete the creatives that open this survey before deleting it",
+      detail: "Delete the creatives that open this survey before deleting it",
       details: { creatives },
       requestId,
     });

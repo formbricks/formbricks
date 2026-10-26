@@ -1,7 +1,7 @@
 description: >-
   Conflict — non-archived creatives open this survey (code `survey_has_linked_creatives`).
-  `details.creatives` lists them. Relink each one to another survey or a link, archive it, or delete it,
-  then retry. Archived creatives never block: they are unlinked with the survey.
+  `details.creatives` lists them. Delete them, then retry: pausing or closing a creative keeps it linked.
+  Archived creatives never block: they are unlinked with the survey.
 headers:
   X-Request-Id:
     schema:
@@ -18,7 +18,7 @@ content:
     example:
       title: Conflict
       status: 409
-      detail: Relink, archive or delete the creatives that open this survey before deleting it
+      detail: Delete the creatives that open this survey before deleting it
       code: survey_has_linked_creatives
       requestId: req_01j8z5
       details:

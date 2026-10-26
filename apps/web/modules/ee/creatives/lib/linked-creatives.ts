@@ -161,8 +161,9 @@ const BLOCKED_CHANGE_LABELS: Readonly<Record<TLinkedCreativesBlockedChange, stri
 
 /**
  * Refuses a change to a survey that its linked creatives would not survive, naming them. A 409: the
- * request is fine, the survey's state isn't, and relinking, archiving or deleting the creatives clears
- * it. Listed in `EXPECTED_ERROR_NAMES`, so server actions and the v1 API surface its message.
+ * request is fine, the survey's state isn't. The message tells the author to delete the creatives:
+ * pausing or closing one keeps its link. Listed in `EXPECTED_ERROR_NAMES`, so server actions and the v1
+ * API surface its message.
  */
 export class SurveyLinkedCreativesError extends Error {
   readonly statusCode = 409;
@@ -173,7 +174,7 @@ export class SurveyLinkedCreativesError extends Error {
   ) {
     const names = creatives.map(({ id, name }) => `"${name}" (${id})`).join(", ");
     super(
-      `${BLOCKED_CHANGE_LABELS[blockedChange]} while creatives open this survey: ${names}. Relink, archive or delete them first.`
+      `${BLOCKED_CHANGE_LABELS[blockedChange]} while creatives open this survey: ${names}. Delete them first.`
     );
     this.name = "SurveyLinkedCreativesError";
   }

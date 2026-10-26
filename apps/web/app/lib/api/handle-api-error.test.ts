@@ -92,7 +92,7 @@ describe("handleApiError", () => {
       const body = await result.response.json();
       expect(body.code).toBe("conflict");
       expect(body.message).toBe(
-        `This survey can't be deleted while creatives open this survey: "Feedback tab" (clcr1234567890123456789012). Relink, archive or delete them first.`
+        `This survey can't be deleted while creatives open this survey: "Feedback tab" (clcr1234567890123456789012). Delete them first.`
       );
     });
 

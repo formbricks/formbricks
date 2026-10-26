@@ -172,7 +172,7 @@ describe("getLinkedCreativesBlockers", () => {
   const refusal = (details: unknown) =>
     new V3ApiError({
       status: 409,
-      detail: "Relink, archive or delete the creatives that open this survey before deleting it",
+      detail: "Delete the creatives that open this survey before deleting it",
       code: "survey_has_linked_creatives",
       details,
     });

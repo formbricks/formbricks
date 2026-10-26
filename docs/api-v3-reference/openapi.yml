@@ -9096,7 +9096,7 @@ components:
     SurveyVisibilityBlocker:
       type: object
       description: |-
-        An outbound connection that must be removed before the survey can become restricted. A `creative` is a non-archived creative whose Destination is this survey: relink it, switch it to a link, archive it or delete it.
+        An outbound connection that must be removed before the survey can become restricted. A `creative` is a non-archived creative whose Destination is this survey: delete it (pausing or closing it keeps it linked).
 
         New `type` values may appear as Formbricks gains connection types (`creative` was added in 6.2). Treat a value you don't recognise as a generic connection: list it by `name`.
       required:
@@ -13179,7 +13179,7 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     V3SurveyHasLinkedCreatives:
-      description: 'Conflict — non-archived creatives open this survey (code `survey_has_linked_creatives`). `details.creatives` lists them. Relink each one to another survey or a link, archive it, or delete it, then retry. Archived creatives never block: they are unlinked with the survey.'
+      description: 'Conflict — non-archived creatives open this survey (code `survey_has_linked_creatives`). `details.creatives` lists them. Delete them, then retry: pausing or closing a creative keeps it linked. Archived creatives never block: they are unlinked with the survey.'
       headers:
         X-Request-Id:
           schema:
@@ -13196,7 +13196,7 @@ components:
           example:
             title: Conflict
             status: 409
-            detail: Relink, archive or delete the creatives that open this survey before deleting it
+            detail: Delete the creatives that open this survey before deleting it
             code: survey_has_linked_creatives
             requestId: req_01j8z5
             details:

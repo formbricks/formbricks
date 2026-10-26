@@ -35,7 +35,7 @@ describe("parseV3ApiError", () => {
     const response = new Response(
       JSON.stringify({
         status: 409,
-        detail: "Relink, archive or delete the creatives that open this survey before deleting it",
+        detail: "Delete the creatives that open this survey before deleting it",
         code: "survey_has_linked_creatives",
         details: { creatives: [{ id: "creative_1", name: "Feedback tab" }] },
       }),

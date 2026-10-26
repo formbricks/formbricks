@@ -386,7 +386,7 @@ export function problemVisibilityBlocked(
 
 /**
  * A survey delete refused while non-archived creatives open the survey; lists them so the caller
- * can relink, archive or delete each one.
+ * can delete each one (pausing or closing a creative keeps its link).
  */
 export function problemSurveyHasLinkedCreatives(
   requestId: string,
@@ -396,7 +396,7 @@ export function problemSurveyHasLinkedCreatives(
   return problemResponse(
     409,
     "Conflict",
-    "Relink, archive or delete the creatives that open this survey before deleting it",
+    "Delete the creatives that open this survey before deleting it",
     requestId,
     {
       code: "survey_has_linked_creatives",

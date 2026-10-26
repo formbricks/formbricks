@@ -1,8 +1,8 @@
 type: object
 description: >-
   An outbound connection that must be removed before the survey can become restricted. A `creative` is a
-  non-archived creative whose Destination is this survey: relink it, switch it to a link, archive it or
-  delete it.
+  non-archived creative whose Destination is this survey: delete it (pausing or closing it keeps it
+  linked).
 
 
   New `type` values may appear as Formbricks gains connection types (`creative` was added in 6.2). Treat a

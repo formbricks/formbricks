@@ -2384,8 +2384,8 @@ checksums:
     workspace/creatives/survey_side/close_button: 36e6aaa19051cb253aa155ad69a9edbc
     workspace/creatives/survey_side/close_intro: 2d1dd011b947fc26c008f83cf83e82e6
     workspace/creatives/survey_side/close_title: de65690b1340e4a34b36e82aacfea19f
-    workspace/creatives/survey_side/delete_blocked_description: 836ece022b8a32e4d8e8efc53cc40d2e
-    workspace/creatives/survey_side/delete_blocked_list_title: 4e65ccc86411351c2b750bb77a0268a1
+    workspace/creatives/survey_side/delete_blocked_description: 57cba989c3888a0cfb88a7b3c809cf1c
+    workspace/creatives/survey_side/delete_blocked_list_title: 6d28950ad49ac14a61bbff3cadd1275f
     workspace/creatives/survey_side/delete_blocked_title: 765eba5959981e6e80dc8d86a31031a0
     workspace/creatives/survey_side/go_to_creatives: a8b298c98a11d9898b0d679061947529
     workspace/creatives/survey_side/keep_paused: 99fc2bf5d7398ad70095ff5d658b46a2
@@ -2395,13 +2395,13 @@ checksums:
     workspace/creatives/survey_side/pause_button: ae8598f0e6ab87e6c2a467ee949ba5a3
     workspace/creatives/survey_side/pause_intro: 5dd2ccfc11310718b657526f0bd2c7d1
     workspace/creatives/survey_side/pause_title: 5884e521723d7b4131c8a7f356e636c6
-    workspace/creatives/survey_side/pin_locked: 2fa83b710a5026c3fe8be69eba40f157
+    workspace/creatives/survey_side/pin_locked: f9e8dac286e0a0d34c6a3b020975c7d9
     workspace/creatives/survey_side/recontact_creatives_and_actions: 3e5c7bb8591657320682a14a24d91800
     workspace/creatives/survey_side/recontact_creatives_only: 72227bb0bff1046ce35f25386dd604ba
     workspace/creatives/survey_side/resume_button: 36b298f0f3cdba1f467afb8b8e763ff1
     workspace/creatives/survey_side/resume_intro: a6cf0c93a1f04fe77ed9c862aa756033
     workspace/creatives/survey_side/resume_title: 6ac77107561f27fe054589a4aec75a42
-    workspace/creatives/survey_side/single_use_locked: 4a81cc1775e96214c06ab823a1de5d9e
+    workspace/creatives/survey_side/single_use_locked: 10bfe8e24603109f5e688879b220ad1f
     workspace/creatives/toast_archived: b8c185eff266a4828b05687cd7087519
     workspace/creatives/toast_deleted: 1f6ffb134e5be73aeb01585f61cef90d
     workspace/creatives/toast_duplicated: 8e6df0a50f5bd158fe8ad87445094f69

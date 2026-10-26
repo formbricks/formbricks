@@ -370,7 +370,7 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Delete survey",
       description:
-        "Delete a Formbricks survey using the v3 Surveys API contract. Refused with a 409 (code survey_has_linked_creatives, listing them in details.creatives) while non-archived creatives open the survey: relink, archive or delete those first.",
+        "Delete a Formbricks survey using the v3 Surveys API contract. Refused with a 409 (code survey_has_linked_creatives, listing them in details.creatives) while non-archived creatives open the survey: delete those first (pausing or closing one keeps it linked).",
       inputSchema: ZMcpDeleteSurveyInput,
       audit: { action: "deleted", targetType: "survey", targetIdArg: "surveyId" },
       annotations: {
