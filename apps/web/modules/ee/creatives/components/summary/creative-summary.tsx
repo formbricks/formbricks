@@ -24,13 +24,7 @@ import { useCreativeStats } from "../../hooks/use-creative-summary";
 import { type TCreativesAccess, canWriteCreatives } from "../../lib/access-rules";
 import type { TCreativeResource } from "../../lib/editor-form";
 import { getCreativeEditPath } from "../../lib/paths";
-import {
-  type TCreativeStatsRangeSelection,
-  buildCreativeStatsSearchParams,
-  getSummaryStatusControl,
-  isWaitingForStart,
-  resolveCreativeStatsRange,
-} from "../../lib/summary";
+import { getSummaryStatusControl, isWaitingForStart } from "../../lib/summary";
 import { getUiLocale } from "../../lib/ui-locale";
 import { CreativeTypeIcon } from "../creative-icons";
 import { CreativeStatusPill } from "../creative-status-pill";
@@ -92,11 +86,7 @@ export const CreativeSummary = ({
   const { t } = useTranslation();
   const router = useRouter();
   const { data: creative, refetch: refetchCreative } = useCreativeResource(initialCreative);
-  const [selection, setSelection] = useState<TCreativeStatsRangeSelection>({ preset: "last 30 days" });
-  // When "today" is: set on load and whenever a range is picked, so a rolling preset follows the UTC day.
-  const [now, setNow] = useState(() => new Date());
-  const range = resolveCreativeStatsRange(selection, now);
-  const stats = useCreativeStats(creative.id, buildCreativeStatsSearchParams(selection, now).toString());
+  const { stats, selection, range, now, select, refresh: refreshStats } = useCreativeStats(creative.id);
   const statusChange = useCreativeStatusChange(creative.id);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const fallbackError = t("common.something_went_wrong_please_try_again");
@@ -104,7 +94,7 @@ export const CreativeSummary = ({
   const refresh = async () => {
     setIsRefreshing(true);
     try {
-      await Promise.all([refetchCreative({ throwOnError: true }), stats.refetch({ throwOnError: true })]);
+      await Promise.all([refetchCreative({ throwOnError: true }), refreshStats()]);
       toast.success(t("common.data_refreshed_successfully"));
     } catch (error) {
       toast.error(getV3ApiErrorMessage(error, fallbackError));
@@ -184,15 +174,7 @@ export const CreativeSummary = ({
       {creativesAccess === "windDown" && <CreativesWindDownNotice />}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <StatsRangeFilter
-          selection={selection}
-          range={range}
-          now={now}
-          onChange={(next) => {
-            setNow(new Date());
-            setSelection(next);
-          }}
-        />
+        <StatsRangeFilter selection={selection} range={range} now={now} onChange={select} />
         <span className="inline-flex items-center gap-1.5 text-xs text-slate-500">
           <ClockIcon className="size-3.5" aria-hidden="true" />
           {t("workspace.creatives.summary.freshness")}
