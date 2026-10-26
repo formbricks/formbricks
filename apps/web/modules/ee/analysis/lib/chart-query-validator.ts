@@ -96,18 +96,26 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  * AI generator wrote into saved queries before ranges were limited to the presets. Accepted only when
  * reading a saved chart, so those charts keep rendering; a write must use a preset or a `[from, to]` pair.
  */
-const LEGACY_RELATIVE_DATE_RANGE =
-  /^(?:today|yesterday|(?:this|last) (?:week|month|quarter|year)|last \d{1,3} (?:minute|hour|day|week|month|quarter|year)s?|from \d{1,3} (?:minute|hour|day|week|month|quarter|year)s? ago to now)$/i;
+const RELATIVE_UNIT = "(?:minute|hour|day|week|month|quarter|year)s?";
+const LEGACY_RELATIVE_DATE_RANGES: readonly RegExp[] = [
+  /^(?:today|yesterday)$/i,
+  /^(?:this|last) (?:week|month|quarter|year)$/i,
+  new RegExp(`^last \\d{1,3} ${RELATIVE_UNIT}$`, "i"),
+  new RegExp(`^from \\d{1,3} ${RELATIVE_UNIT} ago to now$`, "i"),
+];
+
+const isLegacyRelativeDateRange = (value: string): boolean =>
+  LEGACY_RELATIVE_DATE_RANGES.some((pattern) => pattern.test(value));
 
 /**
  * A date range in the chart query's shape: a preset name, `all-time` (→ `undefined`), or a
  * `[from, to]` pair of ISO calendar dates with `from` not after `to`. With `legacy`, also a relative
- * range Cube reads itself (`LEGACY_RELATIVE_DATE_RANGE`).
+ * range Cube reads itself (`LEGACY_RELATIVE_DATE_RANGES`).
  */
 export const parseQueryDateRange = (value: unknown, { legacy = false } = {}): TParsedDateRange => {
   if (value === ALL_TIME_DATE_RANGE) return { ok: true, dateRange: undefined };
   if (typeof value === "string")
-    return DATE_PRESETS.has(value) || (legacy && LEGACY_RELATIVE_DATE_RANGE.test(value))
+    return DATE_PRESETS.has(value) || (legacy && isLegacyRelativeDateRange(value))
       ? { ok: true, dateRange: value }
       : { ok: false };
   if (
@@ -136,13 +144,32 @@ const CALENDAR_DATE_REASON = "Must be an ISO calendar date (YYYY-MM-DD).";
  * A refusal names the parameter at fault — `names` says what the caller calls them: the data route's
  * query parameters are `dateRange`, `from` and `to`, the preview body's `dateRange.from` and so on.
  */
+/** Why a key beside `from` and `to` is refused, named as the caller sent it. */
+const unexpectedDateRangeKey = (key: string, names: TRequestedDateRangeNames): TChartQueryIssue => {
+  if (key === "dateRange") {
+    return { name: names.dateRange, reason: "Send either a date preset or from and to, not both." };
+  }
+  // Only a body's `dateRange` object can carry other keys: the data route's query parameters are strict.
+  return {
+    name: `${names.dateRange}.${key}`,
+    reason: Object.hasOwn(REFUSED_OPTIONS, key)
+      ? REFUSED_OPTIONS[key]
+      : "Not part of a date range: send from and to.",
+  };
+};
+
+export type TRequestedDateRangeNames = { dateRange: string; from: string; to: string };
+
+/** The preview body's names: one `dateRange` field holding a preset or `{ from, to }`. */
+const BODY_DATE_RANGE_NAMES: TRequestedDateRangeNames = {
+  dateRange: "dateRange",
+  from: "dateRange.from",
+  to: "dateRange.to",
+};
+
 export const parseRequestedDateRange = (
   value: unknown,
-  names: { dateRange: string; from: string; to: string } = {
-    dateRange: "dateRange",
-    from: "dateRange.from",
-    to: "dateRange.to",
-  }
+  names: TRequestedDateRangeNames = BODY_DATE_RANGE_NAMES
 ): { ok: true; filter: TDashboardDateFilter | null } | { ok: false; issues: TChartQueryIssue[] } => {
   if (value === undefined) return { ok: true, filter: null };
   if (value === ALL_TIME_DATE_RANGE) return { ok: true, filter: { type: "all-time" } };
@@ -151,11 +178,12 @@ export const parseRequestedDateRange = (
       ? { ok: true, filter: { type: "preset", value } }
       : { ok: false, issues: [{ name: names.dateRange, reason: REQUESTED_DATE_RANGE_REASON }] };
   }
-  if (!isRecord(value) || Object.keys(value).some((key) => key !== "from" && key !== "to")) {
-    const reason = isRecord(value)
-      ? "Send either a date preset or from and to, not both."
-      : REQUESTED_DATE_RANGE_REASON;
-    return { ok: false, issues: [{ name: names.dateRange, reason }] };
+  if (!isRecord(value)) {
+    return { ok: false, issues: [{ name: names.dateRange, reason: REQUESTED_DATE_RANGE_REASON }] };
+  }
+  const extra = Object.keys(value).filter((key) => key !== "from" && key !== "to");
+  if (extra.length > 0) {
+    return { ok: false, issues: extra.map((key) => unexpectedDateRangeKey(key, names)) };
   }
 
   const issues: TChartQueryIssue[] = [];

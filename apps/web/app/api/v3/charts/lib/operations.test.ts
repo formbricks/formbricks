@@ -436,6 +436,22 @@ describe("updateV3Chart", () => {
     expect(updateChartRow).toHaveBeenCalledTimes(1);
   });
 
+  test("keeps a stored relative range when the query comes back unchanged, but not in a new query", async () => {
+    const legacy = {
+      measures: ["FeedbackRecords.count"],
+      timeDimensions: [
+        { dimension: "FeedbackRecords.collectedAt", granularity: "month", dateRange: "last 3 months" },
+      ],
+    };
+    vi.mocked(getChartResourceRow).mockResolvedValue(rowOf({ query: legacy }));
+
+    // The editor sends the stored query back with a rename.
+    expect((await update({ name: "Renamed", query: structuredClone(legacy) })).status).toBe(200);
+
+    const changed = { ...legacy, dimensions: ["FeedbackRecords.sentiment"] };
+    expect((await update({ query: changed })).status).toBe(422);
+  });
+
   test("writes only the fields sent, needs readWrite, and audits before and after", async () => {
     const auditLog = {} as TV3AuditLog;
 

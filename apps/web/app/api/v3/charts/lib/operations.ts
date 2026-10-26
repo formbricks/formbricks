@@ -1,4 +1,5 @@
 import "server-only";
+import { isDeepStrictEqual } from "node:util";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
@@ -205,16 +206,23 @@ export async function createV3Chart({
   }
 }
 
-/** The fields a chart update writes, with its query held to the validator. */
+/**
+ * The fields a chart update writes, with its query held to the validator. The editor sends the chart's
+ * query back on every save, so a query unchanged from the stored one may keep a relative range older charts
+ * were saved with; a changed query must use the current ranges.
+ */
 const chartUpdateOf = (
-  body: TV3ChartUpdateBody
+  body: TV3ChartUpdateBody,
+  storedQuery: unknown
 ): { ok: true; data: Partial<TChartWrite> } | { ok: false; issues: TChartQueryIssue[] } => {
   const data: Partial<TChartWrite> = {};
   if (body.name !== undefined) data.name = body.name;
   if (body.type !== undefined) data.type = body.type;
   if (body.config !== undefined) data.config = body.config;
   if (body.query !== undefined) {
-    const validated = validateChartQuery(body.query);
+    const validated = validateChartQuery(body.query, {
+      legacyDateRanges: isDeepStrictEqual(body.query, storedQuery),
+    });
     if (!validated.ok) return { ok: false, issues: validated.issues };
     data.query = validated.query as TChartWrite["query"];
   }
@@ -242,7 +250,7 @@ export async function updateV3Chart({
     });
     if (loaded instanceof Response) return loaded;
 
-    const update = chartUpdateOf(body);
+    const update = chartUpdateOf(body, loaded.row.query);
     if (!update.ok) return refuseChartQuery(update.issues, context);
 
     if (Object.keys(update.data).length === 0) {

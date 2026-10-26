@@ -331,7 +331,11 @@ describe("parseRequestedDateRange", () => {
   test.each([
     ["an unknown preset", "last 8 days", "dateRange"],
     ["a reversed pair", { from: "2026-02-01", to: "2026-01-01" }, "dateRange.from"],
-    ["a pair with a time zone", { from: "2026-01-01", to: "2026-01-07", timezone: "UTC" }, "dateRange"],
+    [
+      "a pair with a time zone",
+      { from: "2026-01-01", to: "2026-01-07", timezone: "UTC" },
+      "dateRange.timezone",
+    ],
     ["a tuple", ["2026-01-01", "2026-01-07"], "dateRange"],
     ["a pair missing its end", { from: "2026-01-01" }, "dateRange.to"],
     ["an impossible date", { from: "2026-02-30", to: "2026-03-01" }, "dateRange.from"],
@@ -348,6 +352,12 @@ describe("parseRequestedDateRange", () => {
       issues: [
         { name: "from", reason: "Must be an ISO calendar date (YYYY-MM-DD)." },
         { name: "to", reason: "Must be an ISO calendar date (YYYY-MM-DD)." },
+      ],
+    });
+    expect(parseRequestedDateRange({ from: "2026-01-01", to: "2026-01-07", timezone: "UTC" })).toEqual({
+      ok: false,
+      issues: [
+        { name: "dateRange.timezone", reason: expect.stringContaining("time zone cannot be supplied") },
       ],
     });
     expect(parseRequestedDateRange({ dateRange: "this month", from: "2026-01-01" }, names)).toEqual({
