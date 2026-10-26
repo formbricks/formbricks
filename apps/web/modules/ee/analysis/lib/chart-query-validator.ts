@@ -100,8 +100,8 @@ const RELATIVE_UNIT = "(?:minute|hour|day|week|month|quarter|year)s?";
 const LEGACY_RELATIVE_DATE_RANGES: readonly RegExp[] = [
   /^(?:today|yesterday)$/i,
   /^(?:this|last) (?:week|month|quarter|year)$/i,
-  new RegExp(`^last \\d{1,3} ${RELATIVE_UNIT}$`, "i"),
-  new RegExp(`^from \\d{1,3} ${RELATIVE_UNIT} ago to now$`, "i"),
+  new RegExp(String.raw`^last \d{1,3} ${RELATIVE_UNIT}$`, "i"),
+  new RegExp(String.raw`^from \d{1,3} ${RELATIVE_UNIT} ago to now$`, "i"),
 ];
 
 const isLegacyRelativeDateRange = (value: string): boolean =>
