@@ -108,6 +108,7 @@ jobs:
         run: docker image rm "$IMAGE"
 
       - name: Bound persistent build cache
+        if: ${{ !cancelled() && (steps.build.outcome == 'success' || steps.build.outcome == 'failure') }}
         run: |
           docker buildx prune --force --max-used-space 30gb
           docker buildx du >> "$GITHUB_STEP_SUMMARY"

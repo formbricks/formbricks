@@ -173,6 +173,7 @@ jobs:
           cache-key: apps/web/Dockerfile-blacksmith-trial-${{ matrix.arch }}
           nofallback: true
       - name: Build native candidate
+        id: build
         uses: useblacksmith/build-push-action@9b0579bbec7a6cad2f171596c57e7ac1e7658850 # v2
         with:
           context: .
@@ -198,6 +199,7 @@ jobs:
             sentry_auth_token=${{ secrets.SENTRY_AUTH_TOKEN }}
             posthog_key=${{ inputs.registry_type == 'ecr' && secrets.POSTHOG_KEY || '' }}
       - name: Bound persistent build cache
+        if: ${{ !cancelled() && (steps.build.outcome == 'success' || steps.build.outcome == 'failure') }}
         run: |
           docker buildx prune --force --max-used-space 30gb
           docker buildx du >> "$GITHUB_STEP_SUMMARY"

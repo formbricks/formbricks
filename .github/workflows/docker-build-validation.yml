@@ -701,7 +701,7 @@ jobs:
         run: docker image rm "formbricks-test:$GITHUB_SHA"
 
       - name: Bound persistent PR build cache
-        if: env.BLACKSMITH_BUILD == 'true'
+        if: ${{ !cancelled() && env.BLACKSMITH_BUILD == 'true' && (steps.build.outcome == 'success' || steps.build.outcome == 'failure') }}
         run: |
           docker buildx prune --force --max-used-space 30gb
           docker buildx du >> "$GITHUB_STEP_SUMMARY"
