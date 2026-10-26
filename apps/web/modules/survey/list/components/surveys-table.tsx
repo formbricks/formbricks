@@ -114,7 +114,7 @@ export const SurveysTable = ({
         id: "name",
         header: t("common.name"),
         meta: { label: t("common.name") },
-        size: 280,
+        size: 260,
         cell: ({ row }) => {
           const state = rowStates.get(row.original.id);
           const nameCell = (
@@ -141,7 +141,7 @@ export const SurveysTable = ({
         id: "status",
         header: t("common.status"),
         meta: { label: t("common.status") },
-        size: 150,
+        size: 140,
         cell: ({ row }) => {
           const state = rowStates.get(row.original.id);
           return (
@@ -164,14 +164,14 @@ export const SurveysTable = ({
         id: "type",
         header: t("common.type"),
         meta: { label: t("common.type") },
-        size: 110,
+        size: 100,
         cell: ({ row }) => <SurveyTypeIndicator type={row.original.type} />,
       },
       {
         id: "createdAt",
         header: t("common.created_at"),
         meta: { label: t("common.created_at") },
-        size: 130,
+        size: 150,
         cell: ({ row }) => (
           <span className="truncate text-slate-500">
             {formatDateForDisplay(row.original.createdAt, locale)}
@@ -182,7 +182,7 @@ export const SurveysTable = ({
         id: "updatedAt",
         header: t("common.updated_at"),
         meta: { label: t("common.updated_at") },
-        size: 130,
+        size: 150,
         cell: ({ row }) => (
           <span className="truncate text-slate-500">
             {timeSince(row.original.updatedAt.toString(), locale)}
@@ -193,7 +193,7 @@ export const SurveysTable = ({
         id: "createdBy",
         header: t("common.created_by"),
         meta: { label: t("common.created_by") },
-        size: 140,
+        size: 150,
         cell: ({ row }) => (
           <span className="truncate text-slate-500">{row.original.creator?.name ?? "-"}</span>
         ),
