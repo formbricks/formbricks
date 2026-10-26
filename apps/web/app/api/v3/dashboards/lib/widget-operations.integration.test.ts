@@ -8,7 +8,7 @@ import {
   sessionOf,
 } from "@/integration/dashboards-fixture";
 import type { TV3DashboardWidget } from "./resources";
-import { MAX_DASHBOARD_WIDGETS, ZV3WidgetLayoutInput } from "./schemas";
+import { MAX_DASHBOARD_WIDGETS, MAX_WIDGET_ORDER, ZV3WidgetLayoutInput } from "./schemas";
 import { renameDashboardRow } from "./service";
 import {
   addV3DashboardWidget,
@@ -156,6 +156,40 @@ describe("POST /api/v3/dashboards/{dashboardId}/widgets", () => {
         )
       ).toEqual({ status: 403, code: "forbidden" });
     }
+  });
+});
+
+describe("widget order at the column's limit", () => {
+  test("adds after a widget a save gave the highest order the column holds, instead of overflowing it", async () => {
+    const board = await prisma.dashboard.create({
+      data: { name: "Order cap", workspaceId: fixture.workspaceId },
+    });
+    await prisma.dashboardWidget.create({
+      data: {
+        dashboardId: board.id,
+        chartId: charts.bar,
+        layout: { x: 0, y: 0, w: 4, h: 4 },
+        order: MAX_WIDGET_ORDER,
+      },
+    });
+
+    const added = await addV3DashboardWidget({
+      dashboardId: board.id,
+      body: { chartId: charts.spare },
+      ...context(editor()),
+    });
+    expect(added.status).toBe(201);
+    const listed = await prisma.dashboardWidget.findMany({
+      where: { dashboardId: board.id },
+      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+      select: { chartId: true, order: true },
+    });
+    expect(listed).toEqual([
+      { chartId: charts.bar, order: MAX_WIDGET_ORDER },
+      { chartId: charts.spare, order: MAX_WIDGET_ORDER },
+    ]);
+
+    await prisma.dashboard.delete({ where: { id: board.id } });
   });
 });
 

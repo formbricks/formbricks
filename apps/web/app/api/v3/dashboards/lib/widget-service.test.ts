@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
-import { MAX_DASHBOARD_WIDGETS } from "./schemas";
+import { MAX_DASHBOARD_WIDGETS, MAX_WIDGET_ORDER } from "./schemas";
 import {
   addWidgetRow,
   deleteWidgetRow,
@@ -170,6 +170,14 @@ describe("addWidgetRow", () => {
       })
     ).toEqual({ kind: "overlap", widgetId: "clwg_a" });
     expectNothingWritten(tx);
+  });
+
+  test("never numbers a new widget past the order column, however high a save set the last one", async () => {
+    const tx = stubTransaction(makeTx({ siblings: [{ ...sibling, order: MAX_WIDGET_ORDER }] }));
+    await addWidgetRow({ dashboardId: DASHBOARD_ID, chartId: "clch_b", chartType: "bar" });
+    expect(tx.dashboardWidget.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ order: MAX_WIDGET_ORDER }) })
+    );
   });
 
   test("puts a chart exactly at a free layout, after the highest order, and moves updatedAt", async () => {

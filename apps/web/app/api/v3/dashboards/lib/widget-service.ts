@@ -10,7 +10,7 @@ import {
 } from "@/modules/ee/analysis/dashboards/lib/widget-placement";
 import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 import { type TLockedDashboard, lockDashboard, nextDashboardUpdatedAt } from "./dashboard-lock";
-import { MAX_DASHBOARD_WIDGETS } from "./schemas";
+import { MAX_DASHBOARD_WIDGETS, MAX_WIDGET_ORDER } from "./schemas";
 import {
   type TDashboardResourceRow,
   type TWidgetResourceRow,
@@ -92,7 +92,12 @@ export const planNewWidget = (
   | { kind: "full" } => {
   // The cap a whole-dashboard save carries, so an add never makes a dashboard the editor cannot save.
   if (siblings.length >= MAX_DASHBOARD_WIDGETS) return { kind: "full" };
-  const order = siblings.reduce((max, widget) => Math.max(max, widget.order), -1) + 1;
+  // After the last widget, but never past the column: a save may set any order up to it, and ties are read
+  // back in creation order, so a widget added at the cap still lands last.
+  const order = Math.min(
+    siblings.reduce((max, widget) => Math.max(max, widget.order), -1) + 1,
+    MAX_WIDGET_ORDER
+  );
   if (layout) {
     const clash = findOverlappingWidget(layout, siblings);
     return clash ? { kind: "overlap", widgetId: clash.id } : { kind: "ok", layout, order };

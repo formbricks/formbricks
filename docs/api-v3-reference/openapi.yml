@@ -4192,7 +4192,8 @@ paths:
         Edits a chart's name, type, chart query or display settings. The chart may sit on several
         dashboards (`dashboards` in the response), and the edit shows on every one of them — duplicate
         the chart and repoint one dashboard's widget to change it there only. A chart's Feedback Dataset
-        cannot change. Needs write access to the chart's workspace and to its Feedback Dataset.
+        cannot change. Needs write access to the chart's workspace, and to its Feedback Dataset when the
+        edit changes `query` or `type`; a rename or display settings alone touch no data.
       tags:
         - V3 Charts
       parameters:
@@ -4250,7 +4251,9 @@ paths:
         `chart_in_use`, naming those dashboards in `details.dashboards` — remove it from them first
         (`DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}`); there is no force option. The
         check and the delete are one transaction, so a widget added at the same moment is never removed
-        with the chart. Needs write access to the chart's workspace and to its Feedback Dataset.
+        with the chart. Needs write access to the chart's workspace and, while its Feedback Dataset is
+        assigned to that workspace, to the dataset; a chart whose dataset was unassigned can still be
+        deleted.
       tags:
         - V3 Charts
       parameters:
@@ -11504,6 +11507,8 @@ components:
       description: |-
         A date range on a time dimension: a named preset from the field catalog's `datePresets` (`last 7 days`, `this month`, …), `all-time` (no range), or a pair of ISO calendar dates `[from, to]`, both inclusive, `from` not after `to`. Every range is read in the organization's display time zone; a `timezone` cannot be supplied.
 
+        Charts saved before ranges were limited to presets may hold a relative range Cube reads itself (`last 3 months`, `this week`). Such a chart still renders, can be previewed, and can be saved with that same range kept; a new chart, or an update to another range, must use a preset or a pair.
+
         A chart grouped by time alone (one time dimension with a `granularity`, no other dimensions) gets one row per bucket in its range, empty or not, so its range may span at most 10,000 buckets: about 13 months by the hour, or 27 years by the day. A wider explicit range is refused with **422** `limit_exceeded`; use a coarser granularity or a shorter range. Every preset fits at every granularity, and a chart with other dimensions returns only its real rows, so it is not limited.
       oneOf:
         - type: string
@@ -12218,7 +12223,7 @@ components:
           description: The dashboard's `updatedAt` from your read.
         widgets:
           type: array
-          maxItems: 250
+          maxItems: 1000
           items:
             type: object
             required:

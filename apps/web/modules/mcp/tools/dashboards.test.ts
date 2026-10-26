@@ -12,7 +12,7 @@ import {
   renameV3Dashboard,
   updateV3DashboardLayout,
 } from "@/app/api/v3/dashboards/lib/operations";
-import { MAX_DASHBOARD_WIDGETS } from "@/app/api/v3/dashboards/lib/schemas";
+import { MAX_WIDGETS_PER_WRITE } from "@/app/api/v3/dashboards/lib/schemas";
 import {
   addV3DashboardWidget,
   removeV3DashboardWidget,
@@ -412,10 +412,10 @@ describe("chart and dashboard MCP tools", () => {
     // Distinct ids, so the bound is the only thing refusing the list.
     const distinctIds = (count: number) =>
       Array.from({ length: count }, (_, index) => `clwg${String(index).padStart(21, "0")}`);
-    expect(accepts("update_dashboard_layout", layoutInput(distinctIds(MAX_DASHBOARD_WIDGETS + 1)))).toBe(
+    expect(accepts("update_dashboard_layout", layoutInput(distinctIds(MAX_WIDGETS_PER_WRITE + 1)))).toBe(
       false
     );
-    expect(accepts("update_dashboard_layout", layoutInput(distinctIds(MAX_DASHBOARD_WIDGETS)))).toBe(true);
+    expect(accepts("update_dashboard_layout", layoutInput(distinctIds(MAX_WIDGETS_PER_WRITE)))).toBe(true);
   });
 
   test("marks the tools that overwrite or remove something destructive, as the other update tools are", () => {

@@ -6,6 +6,10 @@
 export const GRID_COLUMNS = 12;
 export const MAX_WIDGET_HEIGHT = 8;
 export const MAX_WIDGET_Y = 1000;
+/** A dashboard this full takes no more widgets. */
+export const MAX_DASHBOARD_WIDGETS = 250;
+/** The most widgets one whole-dashboard save carries. */
+export const MAX_WIDGETS_PER_WRITE = 1000;
 const DEFAULT_LAYOUT = { x: 0, y: 0, w: 4, h: 3 } as const;
 
 export type TWidgetLayout = { x: number; y: number; w: number; h: number };

@@ -18,7 +18,7 @@ properties:
     description: The dashboard's `updatedAt` from your read.
   widgets:
     type: array
-    maxItems: 250
+    maxItems: 1000
     items:
       type: object
       required:

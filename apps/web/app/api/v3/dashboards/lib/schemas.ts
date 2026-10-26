@@ -89,15 +89,25 @@ export const ZV3WidgetUpdateBody = z
   .superRefine(refuseEmptyWidgetUpdate);
 export type TV3WidgetUpdateBody = z.infer<typeof ZV3WidgetUpdateBody>;
 
-/** The most widgets a whole-dashboard write carries; far past what a dashboard can show. */
+/**
+ * The most widgets a dashboard can grow to: an add or a copy onto a dashboard this full is refused (409).
+ * Far past what a dashboard can usefully show.
+ */
 export const MAX_DASHBOARD_WIDGETS = 250;
+
+/**
+ * The most widgets a whole-dashboard write (save, rearrange) carries: a bound on the request, not the
+ * dashboard. Such a write only keeps or removes widgets already there, never adds one, so a dashboard that
+ * grew past `MAX_DASHBOARD_WIDGETS` before the cap existed can still be saved, and shrunk.
+ */
+export const MAX_WIDGETS_PER_WRITE = 1000;
 
 /**
  * A widget's `order` is only a sort key. Adds take the highest one plus one and removals never renumber,
  * so a dashboard edited over time holds orders past its widget count; bounded by its integer column only,
  * so a dashboard read through the API can always be written back.
  */
-const MAX_WIDGET_ORDER = 2_147_483_647;
+export const MAX_WIDGET_ORDER = 2_147_483_647;
 
 /**
  * `expectedUpdatedAt`: the dashboard's `updatedAt` from the caller's read, the write's precondition. Named as
@@ -134,7 +144,7 @@ export const ZV3DashboardReplaceBody = z
           })
           .strict()
       )
-      .max(MAX_DASHBOARD_WIDGETS),
+      .max(MAX_WIDGETS_PER_WRITE),
   })
   .strict()
   .superRefine((body, ctx) => refuseRepeatedWidgets(body.widgets, ctx));
@@ -150,7 +160,7 @@ export const ZV3DashboardLayoutBody = z
     expectedUpdatedAt: ZV3ExpectedDashboardUpdatedAt,
     widgets: z
       .array(z.object({ widgetId: z.cuid2(), layout: ZV3WidgetLayoutInput }).strict())
-      .max(MAX_DASHBOARD_WIDGETS),
+      .max(MAX_WIDGETS_PER_WRITE),
   })
   .strict()
   .superRefine((body, ctx) => refuseRepeatedWidgets(body.widgets, ctx));

@@ -1,6 +1,12 @@
 import { logger } from "@formbricks/logger";
 import type { DataMigrationContext, MigrationScript } from "../../src/scripts/migration-runner";
-import { MAX_WIDGET_Y, type TStoredWidget, repairLayouts } from "./utils";
+import {
+  MAX_DASHBOARD_WIDGETS,
+  MAX_WIDGETS_PER_WRITE,
+  MAX_WIDGET_Y,
+  type TStoredWidget,
+  repairLayouts,
+} from "./utils";
 
 const DASHBOARD_BATCH_SIZE = 500;
 
@@ -36,6 +42,38 @@ const repairDashboard = async (
   return { repaired: changes.length, belowGrid: changes.some(({ layout }) => layout.y > MAX_WIDGET_Y) };
 };
 
+/** What the repair did, and the dashboards an operator may want to look at. */
+const reportRepair = ({
+  repairedWidgets,
+  repairedDashboards,
+  stillBelowGrid,
+  full,
+  tooLargeToSave,
+}: {
+  repairedWidgets: number;
+  repairedDashboards: number;
+  stillBelowGrid: string[];
+  full: string[];
+  tooLargeToSave: string[];
+}): void => {
+  logger.info(
+    `Dashboard widget layout repair: ${repairedWidgets.toString()} widgets on ${repairedDashboards.toString()} dashboards`
+  );
+  const warnings: [string[], string][] = [
+    // Only a dashboard with more stacked widgets than 1000 grid rows hold; it opens, but a save is refused.
+    [stillBelowGrid, "some widgets sit below the grid's last row"],
+    // Older versions had no widget cap. These still open and save; they take no more widgets.
+    [full, `some dashboards hold more than ${MAX_DASHBOARD_WIDGETS.toString()} widgets and take no more`],
+    [
+      tooLargeToSave,
+      `some dashboards hold more than ${MAX_WIDGETS_PER_WRITE.toString()} widgets; the editor cannot save them whole until widgets are removed`,
+    ],
+  ];
+  for (const [dashboardIds, message] of warnings) {
+    if (dashboardIds.length > 0) logger.warn({ dashboardIds }, `Dashboard widget layout repair: ${message}`);
+  }
+};
+
 /**
  * Bring every stored widget layout within the rules the dashboard API now enforces, once.
  *
@@ -59,6 +97,8 @@ export const normalizeDashboardWidgetLayouts: MigrationScript = {
     let repairedWidgets = 0;
     let repairedDashboards = 0;
     const stillBelowGrid: string[] = [];
+    const full: string[] = [];
+    const tooLargeToSave: string[] = [];
 
     for (;;) {
       const dashboards = await tx.$queryRaw<{ id: string }[]>`
@@ -72,6 +112,8 @@ export const normalizeDashboardWidgetLayouts: MigrationScript = {
         dashboards.map((dashboard) => dashboard.id)
       );
       for (const [dashboardId, widgets] of grouped) {
+        if (widgets.length > MAX_WIDGETS_PER_WRITE) tooLargeToSave.push(dashboardId);
+        else if (widgets.length > MAX_DASHBOARD_WIDGETS) full.push(dashboardId);
         const { repaired, belowGrid } = await repairDashboard(tx, widgets);
         if (repaired === 0) continue;
         repairedWidgets += repaired;
@@ -80,16 +122,6 @@ export const normalizeDashboardWidgetLayouts: MigrationScript = {
       }
     }
 
-    logger.info(
-      `Dashboard widget layout repair: ${repairedWidgets.toString()} widgets on ${repairedDashboards.toString()} dashboards`
-    );
-    if (stillBelowGrid.length > 0) {
-      // Only a dashboard with more stacked widgets than 1000 grid rows hold; it still opens, but a save
-      // is refused until widgets are removed or resized.
-      logger.warn(
-        { dashboardIds: stillBelowGrid },
-        "Dashboard widget layout repair: some widgets sit below the grid's last row"
-      );
-    }
+    reportRepair({ repairedWidgets, repairedDashboards, stillBelowGrid, full, tooLargeToSave });
   },
 };

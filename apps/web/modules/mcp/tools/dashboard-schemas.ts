@@ -14,7 +14,7 @@ import {
   ZV3DashboardWidget,
 } from "@/app/api/v3/dashboards/lib/resources";
 import {
-  MAX_DASHBOARD_WIDGETS,
+  MAX_WIDGETS_PER_WRITE,
   ZV3DashboardName,
   ZV3WidgetLayoutInput,
   refuseEmptyWidgetUpdate,
@@ -271,7 +271,7 @@ export const ZMcpUpdateDashboardLayoutInput = z
           })
           .strict()
       )
-      .max(MAX_DASHBOARD_WIDGETS)
+      .max(MAX_WIDGETS_PER_WRITE)
       .describe("Every widget on the dashboard, each exactly once, with its new layout."),
   })
   .strict()
