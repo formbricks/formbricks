@@ -8,7 +8,7 @@ import { problemForbidden } from "@/app/api/v3/lib/response";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { CubeQueryError } from "@/modules/ee/analysis/api/lib/cube-client";
-import { DATE_RANGE_REASON } from "@/modules/ee/analysis/lib/chart-query-validator";
+import { REQUESTED_DATE_RANGE_REASON } from "@/modules/ee/analysis/lib/chart-query-validator";
 import { runChartQuery } from "@/modules/ee/analysis/lib/run-chart-query";
 import { loadAuthorizedChart } from "./access";
 import { getV3ChartData, previewV3Chart } from "./data-operations";
@@ -186,17 +186,21 @@ describe("chart queries within budget", () => {
       expect(problem.invalid_params?.map((param) => param.name).sort()).toEqual(
         ["dateRange", "query.measures[0]", "query.ungrouped"].sort()
       );
-      expect(problem.invalid_params).toContainEqual({ name: "dateRange", reason: DATE_RANGE_REASON });
+      expect(problem.detail).toBe("The chart query is not valid");
+      expect(problem.invalid_params).toContainEqual({
+        name: "dateRange",
+        reason: REQUESTED_DATE_RANGE_REASON,
+      });
       expect(runChartQuery).not.toHaveBeenCalled();
     });
 
-    test("refuses only the range when the query is valid", async () => {
+    test("refuses only the range when the query is valid, naming the part at fault", async () => {
       const response = await preview({ dateRange: { from: "2026-02-01", to: "2026-01-01" } });
 
       expect(response.status).toBe(422);
-      expect((await problemOf(response)).invalid_params).toEqual([
-        { name: "dateRange", reason: DATE_RANGE_REASON },
-      ]);
+      const problem = await problemOf(response);
+      expect(problem.detail).toBe("The date range is not valid");
+      expect(problem.invalid_params).toEqual([{ name: "dateRange.from", reason: "Must not be after to." }]);
       expect(runChartQuery).not.toHaveBeenCalled();
     });
 
@@ -302,15 +306,9 @@ describe("chart queries within budget", () => {
       const response = await read();
 
       expect(response.status).toBe(200);
-      expect(loadAuthorizedChart).toHaveBeenCalledWith(chartId, "read", context);
-      expect(refuseUnlessFeedbackDatasetAccess).toHaveBeenCalledWith(
-        context.authentication,
-        access,
-        datasetId,
-        "read",
-        "req",
-        context.instance
-      );
+      expect(loadAuthorizedChart).toHaveBeenCalledWith(chartId, "read", context, {
+        datasetPermission: "read",
+      });
       expect(runChartQuery).toHaveBeenCalledWith(
         expect.objectContaining({
           query: RANGED,
@@ -334,21 +332,35 @@ describe("chart queries within budget", () => {
       ]);
     });
 
-    test("refuses a half-given pair, or a preset mixed with a pair, as an invalid dateRange", async () => {
-      const invalidRanges: Record<string, string>[] = [
-        { from: "2026-01-01" },
-        { to: "2026-01-01" },
-        { dateRange: "today", from: "2026-01-01", to: "2026-01-02" },
-        { dateRange: "yesterday-ish" },
+    test("refuses a half-given pair, a preset mixed with a pair, or a bad date, naming the parameter", async () => {
+      const invalidRanges: [Record<string, string>, string][] = [
+        [{ from: "2026-01-01" }, "to"],
+        [{ to: "2026-01-01" }, "from"],
+        [{ from: "01/02/2026", to: "2026-01-03" }, "from"],
+        [{ dateRange: "today", from: "2026-01-01", to: "2026-01-02" }, "dateRange"],
+        [{ dateRange: "yesterday-ish" }, "dateRange"],
       ];
-      for (const query of invalidRanges) {
+      for (const [query, name] of invalidRanges) {
         const response = await read(query);
         expect(response.status).toBe(422);
-        expect((await problemOf(response)).invalid_params).toEqual([
-          { name: "dateRange", reason: DATE_RANGE_REASON },
-        ]);
+        const problem = await problemOf(response);
+        expect(problem.detail).toBe("The date range is not valid");
+        expect(problem.invalid_params?.map((param) => param.name)).toEqual([name]);
       }
       expect(runChartQuery).not.toHaveBeenCalled();
+    });
+
+    test("still reads a saved chart whose range is one Cube reads itself, as older charts were saved", async () => {
+      vi.mocked(loadAuthorizedChart).mockResolvedValue({
+        row: chartOf({
+          ...RANGED,
+          timeDimensions: [{ dimension: COLLECTED_AT, granularity: "week", dateRange: "last 3 months" }],
+        }),
+        access,
+      });
+
+      expect((await read()).status).toBe(200);
+      expect(runChartQuery).toHaveBeenCalledTimes(1);
     });
 
     test("names a requested range too wide for the chart's granularity as dateRange", async () => {
@@ -397,13 +409,6 @@ describe("chart queries within budget", () => {
     test("runs nothing for a chart the caller cannot read, or whose dataset they cannot use", async () => {
       vi.mocked(loadAuthorizedChart).mockResolvedValueOnce(problemForbidden("req", undefined, "/"));
       expect((await read()).status).toBe(403);
-      expect(refuseUnlessFeedbackDatasetAccess).not.toHaveBeenCalled();
-
-      vi.mocked(refuseUnlessFeedbackDatasetAccess).mockResolvedValueOnce(
-        problemForbidden("req", undefined, "/")
-      );
-      expect((await read()).status).toBe(403);
-
       expect(runChartQuery).not.toHaveBeenCalled();
     });
 

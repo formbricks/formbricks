@@ -2,6 +2,7 @@ import type { TChartQuery, TCubeFilter, TTimeDimension } from "@formbricks/types
 import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import {
   type TDashboardDateFilter,
+  isRealIsoDate,
   isValidCalendarDateRange,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
 import { ALL_TIME_DATE_RANGE, type TChartField, type TChartFieldKind, getChartField } from "./field-catalog";
@@ -91,13 +92,24 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
 /**
- * A date range in the chart query's shape: a preset name, `all-time` (→ `undefined`), or a
- * `[from, to]` pair of ISO calendar dates with `from` not after `to`.
+ * The relative ranges Cube reads itself ("last 3 months", "this week"), which the chart builder's earlier
+ * AI generator wrote into saved queries before ranges were limited to the presets. Accepted only when
+ * reading a saved chart, so those charts keep rendering; a write must use a preset or a `[from, to]` pair.
  */
-export const parseQueryDateRange = (value: unknown): TParsedDateRange => {
+const LEGACY_RELATIVE_DATE_RANGE =
+  /^(?:today|yesterday|(?:this|last) (?:week|month|quarter|year)|last \d{1,3} (?:minute|hour|day|week|month|quarter|year)s?|from \d{1,3} (?:minute|hour|day|week|month|quarter|year)s? ago to now)$/i;
+
+/**
+ * A date range in the chart query's shape: a preset name, `all-time` (→ `undefined`), or a
+ * `[from, to]` pair of ISO calendar dates with `from` not after `to`. With `legacy`, also a relative
+ * range Cube reads itself (`LEGACY_RELATIVE_DATE_RANGE`).
+ */
+export const parseQueryDateRange = (value: unknown, { legacy = false } = {}): TParsedDateRange => {
   if (value === ALL_TIME_DATE_RANGE) return { ok: true, dateRange: undefined };
   if (typeof value === "string")
-    return DATE_PRESETS.has(value) ? { ok: true, dateRange: value } : { ok: false };
+    return DATE_PRESETS.has(value) || (legacy && LEGACY_RELATIVE_DATE_RANGE.test(value))
+      ? { ok: true, dateRange: value }
+      : { ok: false };
   if (
     Array.isArray(value) &&
     value.length === 2 &&
@@ -110,30 +122,57 @@ export const parseQueryDateRange = (value: unknown): TParsedDateRange => {
   return { ok: false };
 };
 
+/** Why a requested date range was refused, for each parameter at fault. */
+export const REQUESTED_DATE_RANGE_REASON =
+  "Must be a date preset from the field catalog or 'all-time'; for a custom range, send from and to instead.";
+const CALENDAR_DATE_REASON = "Must be an ISO calendar date (YYYY-MM-DD).";
+
 /**
  * A date range a caller asks a chart's data for: a preset, `all-time`, or `{ from, to }` ISO calendar
  * dates. It replaces the range saved on the chart's `collectedAt` (`applyDashboardDateFilter`), exactly as
  * the dashboard date filter does, so an agent reading a chart for "last week" gets the numbers a person
  * sees on a dashboard filtered to last week. `null` when none was asked for.
+ *
+ * A refusal names the parameter at fault — `names` says what the caller calls them: the data route's
+ * query parameters are `dateRange`, `from` and `to`, the preview body's `dateRange.from` and so on.
  */
 export const parseRequestedDateRange = (
-  value: unknown
-): { ok: true; filter: TDashboardDateFilter | null } | { ok: false } => {
+  value: unknown,
+  names: { dateRange: string; from: string; to: string } = {
+    dateRange: "dateRange",
+    from: "dateRange.from",
+    to: "dateRange.to",
+  }
+): { ok: true; filter: TDashboardDateFilter | null } | { ok: false; issues: TChartQueryIssue[] } => {
   if (value === undefined) return { ok: true, filter: null };
   if (value === ALL_TIME_DATE_RANGE) return { ok: true, filter: { type: "all-time" } };
   if (typeof value === "string") {
-    return DATE_PRESETS.has(value) ? { ok: true, filter: { type: "preset", value } } : { ok: false };
+    return DATE_PRESETS.has(value)
+      ? { ok: true, filter: { type: "preset", value } }
+      : { ok: false, issues: [{ name: names.dateRange, reason: REQUESTED_DATE_RANGE_REASON }] };
   }
-  if (
-    isRecord(value) &&
-    Object.keys(value).length === 2 &&
-    typeof value.from === "string" &&
-    typeof value.to === "string" &&
-    isValidCalendarDateRange(value.from, value.to)
-  ) {
-    return { ok: true, filter: { type: "custom", range: [value.from, value.to] } };
+  if (!isRecord(value) || Object.keys(value).some((key) => key !== "from" && key !== "to")) {
+    const reason = isRecord(value)
+      ? "Send either a date preset or from and to, not both."
+      : REQUESTED_DATE_RANGE_REASON;
+    return { ok: false, issues: [{ name: names.dateRange, reason }] };
   }
-  return { ok: false };
+
+  const issues: TChartQueryIssue[] = [];
+  for (const side of ["from", "to"] as const) {
+    const date = value[side];
+    if (date === undefined) issues.push({ name: names[side], reason: "Send from and to together." });
+    else if (typeof date !== "string" || !isRealIsoDate(date))
+      issues.push({ name: names[side], reason: CALENDAR_DATE_REASON });
+  }
+  if (issues.length > 0) return { ok: false, issues };
+
+  const from = value.from as string;
+  const to = value.to as string;
+  if (!isValidCalendarDateRange(from, to)) {
+    return { ok: false, issues: [{ name: names.from, reason: "Must not be after to." }] };
+  }
+  return { ok: true, filter: { type: "custom", range: [from, to] } };
 };
 
 /**
@@ -251,10 +290,13 @@ const checkFieldList = (
   return names;
 };
 
+type TTimeDimensionOptions = { legacyDateRanges: boolean };
+
 const checkTimeDimensions = (
   value: unknown,
   path: string,
-  issues: IssueCollector
+  issues: IssueCollector,
+  options: TTimeDimensionOptions
 ): TTimeDimension[] | undefined => {
   if (value === undefined) return undefined;
   if (!Array.isArray(value)) {
@@ -266,7 +308,9 @@ const checkTimeDimensions = (
     return undefined;
   }
 
-  return value.flatMap((entry, index) => checkTimeDimension(entry, `${path}[${index}]`, issues) ?? []);
+  return value.flatMap(
+    (entry, index) => checkTimeDimension(entry, `${path}[${index}]`, issues, options) ?? []
+  );
 };
 
 const isTimeGranularity = (value: unknown): value is NonNullable<TTimeDimension["granularity"]> =>
@@ -276,7 +320,8 @@ const isTimeGranularity = (value: unknown): value is NonNullable<TTimeDimension[
 const checkTimeDimension = (
   entry: unknown,
   path: string,
-  issues: IssueCollector
+  issues: IssueCollector,
+  { legacyDateRanges }: TTimeDimensionOptions
 ): TTimeDimension | undefined => {
   if (!isRecord(entry)) {
     issues.add(path, "Must be an object with a dimension.");
@@ -296,7 +341,7 @@ const checkTimeDimension = (
   }
 
   if (entry.dateRange !== undefined) {
-    const parsed = parseQueryDateRange(entry.dateRange);
+    const parsed = parseQueryDateRange(entry.dateRange, { legacy: legacyDateRanges });
     if (!parsed.ok) issues.add(`${path}.dateRange`, DATE_RANGE_REASON);
     else if (parsed.dateRange !== undefined) timeDimension.dateRange = parsed.dateRange;
   }
@@ -515,7 +560,16 @@ const checkFieldCount = (input: Record<string, unknown>, path: string, issues: I
  */
 export const validateChartQuery = (
   input: unknown,
-  { path = "query", timeBuckets = true }: { path?: string; timeBuckets?: boolean } = {}
+  {
+    path = "query",
+    timeBuckets = true,
+    legacyDateRanges = false,
+  }: {
+    path?: string;
+    timeBuckets?: boolean;
+    /** A saved chart being read: also accept the relative ranges older charts were saved with. */
+    legacyDateRanges?: boolean;
+  } = {}
 ): TChartQueryValidation => {
   const issues = new IssueCollector();
 
@@ -536,7 +590,9 @@ export const validateChartQuery = (
     MAX_DIMENSIONS,
     issues
   );
-  const timeDimensions = checkTimeDimensions(input.timeDimensions, `${path}.timeDimensions`, issues);
+  const timeDimensions = checkTimeDimensions(input.timeDimensions, `${path}.timeDimensions`, issues, {
+    legacyDateRanges,
+  });
 
   checkFieldCount(input, path, issues);
 

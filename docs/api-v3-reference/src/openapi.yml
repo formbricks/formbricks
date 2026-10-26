@@ -47,7 +47,7 @@ info:
     /api/v3/charts/fields/{field}/values**), and dashboards (**GET**, **POST /api/v3/dashboards**;
     **GET**, **PATCH**, **PUT**, **DELETE /api/v3/dashboards/{dashboardId}**; **POST
     /api/v3/dashboards/{dashboardId}/duplicate**; **POST
-    /api/v3/dashboards/{dashboardId}/widgets**; **PATCH**, **DELETE
+    /api/v3/dashboards/{dashboardId}/widgets**; **GET**, **PATCH**, **DELETE
     /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**).
 
     - **Field catalog.** A chart query names fields exactly as `GET /api/v3/charts/fields` lists

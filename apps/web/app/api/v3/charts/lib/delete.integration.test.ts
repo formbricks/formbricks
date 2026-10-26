@@ -29,13 +29,13 @@ const context = (authentication = sessionOf(fixture.users.editor)) => ({
   instance: "/api/v3/charts",
 });
 
-const createChart = (name: string) =>
+const createChart = (name: string, feedbackDirectoryId = fixture.datasetId) =>
   prisma.chart.create({
     data: {
       name,
       type: "bar",
       workspaceId: fixture.workspaceId,
-      feedbackDirectoryId: fixture.datasetId,
+      feedbackDirectoryId,
       query: { measures: ["FeedbackRecords.count"] },
       config: {},
     },
@@ -102,6 +102,14 @@ describe("DELETE /api/v3/charts/{chartId}", () => {
         }
       );
     }
+    expect(await prisma.chart.findUnique({ where: { id: chart.id } })).not.toBeNull();
+  });
+
+  test("needs write access to the chart's Feedback Dataset too, even for the organization owner", async () => {
+    const chart = await createChart("On an unassigned dataset", fixture.unassignedDatasetId);
+    expect(
+      await outcomeOf(await deleteV3Chart({ chartId: chart.id, ...context(sessionOf(fixture.users.owner)) }))
+    ).toEqual({ status: 403, code: "forbidden" });
     expect(await prisma.chart.findUnique({ where: { id: chart.id } })).not.toBeNull();
   });
 

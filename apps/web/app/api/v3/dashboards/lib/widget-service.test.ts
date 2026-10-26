@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
+import { MAX_DASHBOARD_WIDGETS } from "./schemas";
 import {
   addWidgetRow,
   deleteWidgetRow,
@@ -136,6 +137,26 @@ describe("addWidgetRow", () => {
       kind: "duplicate",
     });
     expectNothingWritten(tx);
+  });
+
+  test("refuses an add once the dashboard holds the most widgets a save carries, and writes nothing", async () => {
+    const full = Array.from({ length: MAX_DASHBOARD_WIDGETS }, (_, index) => ({
+      ...sibling,
+      id: `clwg_${index}`,
+      chartId: `clch_${index}`,
+      layout: { x: 0, y: index, w: 1, h: 1 },
+      order: index,
+    }));
+    const tx = stubTransaction(makeTx({ siblings: full }));
+    expect(await addWidgetRow({ dashboardId: DASHBOARD_ID, chartId: "clch_new", chartType: "bar" })).toEqual({
+      kind: "full",
+    });
+    expectNothingWritten(tx);
+
+    stubTransaction(makeTx({ siblings: full.slice(1) }));
+    expect(
+      (await addWidgetRow({ dashboardId: DASHBOARD_ID, chartId: "clch_new", chartType: "bar" })).kind
+    ).toBe("ok");
   });
 
   test("refuses a layout that covers a widget, naming it, and writes nothing", async () => {

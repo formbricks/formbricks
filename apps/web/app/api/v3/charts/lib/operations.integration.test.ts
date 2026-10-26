@@ -401,6 +401,19 @@ describe("PATCH /api/v3/charts/{chartId}", () => {
     );
   });
 
+  test("needs write access to the chart's Feedback Dataset too, even for the organization owner", async () => {
+    expect(
+      await outcomeOf(
+        await update(sessionOf(fixture.users.owner), charts.other, {
+          query: { measures: ["FeedbackRecords.count"], dimensions: ["FeedbackRecords.sentiment"] },
+        })
+      )
+    ).toEqual({ status: 403, code: "forbidden" });
+    expect((await prisma.chart.findUniqueOrThrow({ where: { id: charts.other } })).query).toEqual({
+      measures: ["FeedbackRecords.count"],
+    });
+  });
+
   test("answers 409 for a taken name and 422 for an invalid query", async () => {
     expect(
       await outcomeOf(await update(sessionOf(fixture.users.editor), charts.newer, { name: "NPS by month" }))

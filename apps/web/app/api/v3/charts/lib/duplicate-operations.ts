@@ -2,14 +2,13 @@ import "server-only";
 import { logger } from "@formbricks/logger";
 import { getDashboardWorkspaceRow } from "@/app/api/v3/dashboards/lib/service";
 import { createWithCopyNameRetries } from "@/app/api/v3/lib/copy-name-retry";
-import { refuseUnlessFeedbackDatasetAccess } from "@/app/api/v3/lib/dashboards-access";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { createdResponse, problemForbidden, problemUnprocessableContent } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { type TV3ChartOperationContext, getSessionUserId, loadAuthorizedChart } from "./access";
 import type { TV3ChartDuplicateBody } from "./duplicate-schemas";
 import { duplicateChartRow } from "./duplicate-service";
-import { chartNameTaken, refuseMatrixUntilUpgraded } from "./problems";
+import { chartNameTaken, dashboardFull, refuseMatrixUntilUpgraded } from "./problems";
 import { serializeV3Chart } from "./serializers";
 
 /**
@@ -34,18 +33,12 @@ export async function duplicateV3Chart({
   const log = logger.withContext({ requestId, chartId });
 
   try {
-    const loaded = await loadAuthorizedChart(chartId, "readWrite", context);
+    const loaded = await loadAuthorizedChart(chartId, "readWrite", context, {
+      datasetPermission: "readWrite",
+    });
     if (loaded instanceof Response) return loaded;
 
-    const refused =
-      (await refuseUnlessFeedbackDatasetAccess(
-        authentication,
-        loaded.access,
-        loaded.row.feedbackDirectoryId,
-        "readWrite",
-        requestId,
-        instance
-      )) ?? (await refuseMatrixUntilUpgraded(loaded.row.type, context));
+    const refused = await refuseMatrixUntilUpgraded(loaded.row.type, context);
     if (refused) return refused;
 
     if (body.dashboardId) {
@@ -70,6 +63,7 @@ export async function duplicateV3Chart({
 
     const result = created.value;
     if (result.kind === "gone") return problemForbidden(requestId, undefined, instance);
+    if (result.kind === "full") return dashboardFull(context);
     if (result.kind === "overlap") {
       return problemUnprocessableContent(requestId, "The layout overlaps another widget", {
         instance,

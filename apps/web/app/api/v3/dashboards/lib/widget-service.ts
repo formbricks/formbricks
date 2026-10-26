@@ -10,6 +10,7 @@ import {
 } from "@/modules/ee/analysis/dashboards/lib/widget-placement";
 import type { TChartType } from "@/modules/ee/analysis/types/analysis";
 import { type TLockedDashboard, lockDashboard, nextDashboardUpdatedAt } from "./dashboard-lock";
+import { MAX_DASHBOARD_WIDGETS } from "./schemas";
 import {
   type TDashboardResourceRow,
   type TWidgetResourceRow,
@@ -33,6 +34,8 @@ export type TWidgetWriteResult =
   | { kind: "duplicate" }
   /** The layout would cover this widget. */
   | { kind: "overlap"; widgetId: string }
+  /** The dashboard already holds `MAX_DASHBOARD_WIDGETS` widgets. */
+  | { kind: "full" }
   /** The dashboard or widget is gone — deleted after it was authorized. */
   | { kind: "gone" };
 
@@ -83,7 +86,12 @@ export const planNewWidget = (
   siblings: { id: string; layout: unknown; order: number }[],
   chartType: TChartType,
   layout?: TWidgetLayout
-): { kind: "ok"; layout: TWidgetLayout; order: number } | { kind: "overlap"; widgetId: string } => {
+):
+  | { kind: "ok"; layout: TWidgetLayout; order: number }
+  | { kind: "overlap"; widgetId: string }
+  | { kind: "full" } => {
+  // The cap a whole-dashboard save carries, so an add never makes a dashboard the editor cannot save.
+  if (siblings.length >= MAX_DASHBOARD_WIDGETS) return { kind: "full" };
   const order = siblings.reduce((max, widget) => Math.max(max, widget.order), -1) + 1;
   if (layout) {
     const clash = findOverlappingWidget(layout, siblings);

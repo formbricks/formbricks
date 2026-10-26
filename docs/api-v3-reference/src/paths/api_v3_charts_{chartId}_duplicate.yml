@@ -5,8 +5,8 @@ post:
     Copies a chart — same Feedback Dataset, type, chart query and display settings — so the copy can
     change without touching the dashboards that show the original. With `dashboardId`, the copy is
     also put on that dashboard (first open slot, or `layout`) in the same transaction, and the
-    dashboard's `updatedAt` moves. Needs write access to the chart's workspace and to its Feedback
-    Dataset.
+    dashboard's `updatedAt` moves; a dashboard already holding 250 widgets answers 409 and no copy is
+    made. Needs write access to the chart's workspace and to its Feedback Dataset.
   tags:
     - V3 Charts
   parameters:

@@ -8,9 +8,14 @@ import {
   sessionOf,
 } from "@/integration/dashboards-fixture";
 import type { TV3DashboardWidget } from "./resources";
-import { ZV3WidgetLayoutInput } from "./schemas";
+import { MAX_DASHBOARD_WIDGETS, ZV3WidgetLayoutInput } from "./schemas";
 import { renameDashboardRow } from "./service";
-import { addV3DashboardWidget, removeV3DashboardWidget, updateV3DashboardWidget } from "./widget-operations";
+import {
+  addV3DashboardWidget,
+  getV3DashboardWidget,
+  removeV3DashboardWidget,
+  updateV3DashboardWidget,
+} from "./widget-operations";
 import { replaceDashboardRow } from "./widget-service";
 
 /**
@@ -98,6 +103,24 @@ describe("POST /api/v3/dashboards/{dashboardId}/widgets", () => {
     expect(second).toMatchObject({ layout: { x: 4, y: 0, w: 3, h: 2 }, order: 1 });
   });
 
+  test("serves the widget its Location names to a reader, and nothing for a widget not on that dashboard", async () => {
+    const read = (authentication: ReturnType<typeof sessionOf>, onDashboard = dashboardId) =>
+      getV3DashboardWidget({ dashboardId: onDashboard, widgetId: firstWidgetId, ...context(authentication) });
+
+    const response = await read(apiKeyOf(fixture, "readKey"));
+    expect(response.status).toBe(200);
+    expect((await bodyOf<{ data: TV3DashboardWidget }>(response)).data).toMatchObject({
+      id: firstWidgetId,
+      chartId: charts.bar,
+    });
+
+    const other = await prisma.dashboard.create({
+      data: { name: "Other", workspaceId: fixture.workspaceId },
+    });
+    expect(await outcomeOf(await read(editor(), other.id))).toEqual({ status: 403, code: "forbidden" });
+    await prisma.dashboard.delete({ where: { id: other.id } });
+  });
+
   test("answers 409 for a chart already on the dashboard, and changes nothing", async () => {
     expect(await outcomeOf(await add(charts.bar))).toEqual({ status: 409, code: "conflict" });
     expect(await prisma.dashboardWidget.count({ where: { dashboardId } })).toBe(2);
@@ -133,6 +156,48 @@ describe("POST /api/v3/dashboards/{dashboardId}/widgets", () => {
         )
       ).toEqual({ status: 403, code: "forbidden" });
     }
+  });
+});
+
+describe("the widget cap", () => {
+  test("refuses an add past the most widgets a save carries, and takes one again once there is room", async () => {
+    const full = await prisma.dashboard.create({ data: { name: "Full", workspaceId: fixture.workspaceId } });
+    const chartIds = await prisma.chart.createManyAndReturn({
+      data: Array.from({ length: MAX_DASHBOARD_WIDGETS + 1 }, (_, index) => ({
+        name: `Cap ${index}`,
+        type: "bar" as const,
+        workspaceId: fixture.workspaceId,
+        feedbackDirectoryId: fixture.datasetId,
+        query: { measures: ["FeedbackRecords.count"] },
+        config: {},
+      })),
+      select: { id: true },
+    });
+    await prisma.dashboardWidget.createMany({
+      data: chartIds.slice(0, MAX_DASHBOARD_WIDGETS).map(({ id }, index) => ({
+        dashboardId: full.id,
+        chartId: id,
+        layout: { x: 0, y: index, w: 1, h: 1 },
+        order: index,
+      })),
+    });
+    const addToFull = () =>
+      addV3DashboardWidget({
+        dashboardId: full.id,
+        body: { chartId: chartIds[MAX_DASHBOARD_WIDGETS].id },
+        ...context(editor()),
+      });
+
+    expect(await outcomeOf(await addToFull())).toEqual({ status: 409, code: "conflict" });
+    expect(await prisma.dashboardWidget.count({ where: { dashboardId: full.id } })).toBe(
+      MAX_DASHBOARD_WIDGETS
+    );
+
+    await prisma.dashboardWidget.deleteMany({ where: { dashboardId: full.id, order: 0 } });
+    expect((await addToFull()).status).toBe(201);
+
+    await prisma.dashboard.delete({ where: { id: full.id } });
+    await prisma.chart.deleteMany({ where: { id: { in: chartIds.map(({ id }) => id) } } });
   });
 });
 

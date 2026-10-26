@@ -3,8 +3,13 @@ import { Prisma } from "@formbricks/database/prisma";
 import { requireDashboardsAccess } from "@/app/api/v3/lib/dashboards-access";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
-import { getDashboardWorkspaceRow } from "./service";
-import { addV3DashboardWidget, removeV3DashboardWidget, updateV3DashboardWidget } from "./widget-operations";
+import { getDashboardWorkspaceRow, getWidgetResourceRow } from "./service";
+import {
+  addV3DashboardWidget,
+  getV3DashboardWidget,
+  removeV3DashboardWidget,
+  updateV3DashboardWidget,
+} from "./widget-operations";
 import {
   type TWidgetWriteResult,
   addWidgetRow,
@@ -28,7 +33,7 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 vi.mock("@/app/api/v3/lib/dashboards-access", () => ({ requireDashboardsAccess: vi.fn() }));
-vi.mock("./service", () => ({ getDashboardWorkspaceRow: vi.fn() }));
+vi.mock("./service", () => ({ getDashboardWorkspaceRow: vi.fn(), getWidgetResourceRow: vi.fn() }));
 vi.mock("./widget-service", () => ({
   addWidgetRow: vi.fn(),
   updateWidgetRow: vi.fn(),
@@ -222,6 +227,15 @@ describe("addV3DashboardWidget", () => {
     expect((await add()).status).toBe(403);
   });
 
+  test("answers 409 when the dashboard already holds the most widgets it can, unaudited", async () => {
+    vi.mocked(addWidgetRow).mockResolvedValueOnce({ kind: "full" });
+    const auditLog = freshAuditLog();
+    const response = await add(auditLog);
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({ code: "conflict", detail: expect.stringContaining("250") });
+    expect(auditLog).toEqual({});
+  });
+
   test("answers a concurrent add of the same chart (unique violation) as 409", async () => {
     vi.mocked(addWidgetRow).mockRejectedValueOnce(prismaError("P2002"));
     const response = await add();
@@ -328,5 +342,40 @@ describe("removeV3DashboardWidget", () => {
     const auditLog = freshAuditLog();
     expect((await remove(auditLog)).status).toBe(403);
     expect(auditLog).toEqual({});
+  });
+});
+
+describe("getV3DashboardWidget", () => {
+  const get = () => getV3DashboardWidget({ dashboardId: DASHBOARD_ID, widgetId: WIDGET_ID, ...context });
+
+  test("answers the widget an add's Location names, on read access to its dashboard's workspace", async () => {
+    vi.mocked(getWidgetResourceRow).mockResolvedValueOnce(widgetRow() as never);
+
+    const response = await get();
+
+    expect(response.status).toBe(200);
+    expect(getWidgetResourceRow).toHaveBeenCalledWith(DASHBOARD_ID, WIDGET_ID);
+    expect(requireDashboardsAccess).toHaveBeenCalledWith(
+      context.authentication,
+      WORKSPACE_ID,
+      "read",
+      context.requestId,
+      context.instance
+    );
+    const { data } = (await response.json()) as { data: Record<string, unknown> };
+    expect(data).toMatchObject({ id: WIDGET_ID, chartId: CHART_ID, layout, order: 2 });
+  });
+
+  test("answers 403 for a widget not on the dashboard, a missing dashboard, or a caller without access", async () => {
+    vi.mocked(getWidgetResourceRow).mockResolvedValueOnce(null);
+    expect((await get()).status).toBe(403);
+
+    vi.mocked(getWidgetResourceRow).mockResolvedValueOnce(widgetRow() as never);
+    vi.mocked(getDashboardWorkspaceRow).mockResolvedValueOnce(null);
+    expect((await get()).status).toBe(403);
+
+    vi.mocked(getWidgetResourceRow).mockResolvedValueOnce(widgetRow() as never);
+    vi.mocked(requireDashboardsAccess).mockResolvedValueOnce(problemForbidden("req_1", undefined, "/"));
+    expect((await get()).status).toBe(403);
   });
 });

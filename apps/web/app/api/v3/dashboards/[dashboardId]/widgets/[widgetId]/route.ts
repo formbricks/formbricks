@@ -1,11 +1,22 @@
 /**
- * PATCH (move or repoint) and DELETE (take off the dashboard; the chart stays)
+ * GET (read), PATCH (move or repoint) and DELETE (take off the dashboard; the chart stays)
  * /api/v3/dashboards/{dashboardId}/widgets/{widgetId}.
  */
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { ZV3EmptyQuery } from "@/app/api/v3/lib/schemas";
 import { ZV3DashboardWidgetParams, ZV3WidgetUpdateBody } from "../../../lib/schemas";
-import { removeV3DashboardWidget, updateV3DashboardWidget } from "../../../lib/widget-operations";
+import {
+  getV3DashboardWidget,
+  removeV3DashboardWidget,
+  updateV3DashboardWidget,
+} from "../../../lib/widget-operations";
+
+export const GET = withV3ApiWrapper({
+  auth: "both",
+  schemas: { params: ZV3DashboardWidgetParams, query: ZV3EmptyQuery },
+  handler: async ({ authentication, parsedInput, requestId, instance }) =>
+    getV3DashboardWidget({ ...parsedInput.params, authentication, requestId, instance }),
+});
 
 export const PATCH = withV3ApiWrapper({
   auth: "both",

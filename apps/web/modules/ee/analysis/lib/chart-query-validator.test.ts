@@ -329,11 +329,52 @@ describe("parseRequestedDateRange", () => {
   });
 
   test.each([
-    ["an unknown preset", "last 8 days"],
-    ["a reversed pair", { from: "2026-02-01", to: "2026-01-01" }],
-    ["a pair with a time zone", { from: "2026-01-01", to: "2026-01-07", timezone: "UTC" }],
-    ["a tuple", ["2026-01-01", "2026-01-07"]],
-  ])("refuses %s", (_label, value) => {
-    expect(parseRequestedDateRange(value)).toEqual({ ok: false });
+    ["an unknown preset", "last 8 days", "dateRange"],
+    ["a reversed pair", { from: "2026-02-01", to: "2026-01-01" }, "dateRange.from"],
+    ["a pair with a time zone", { from: "2026-01-01", to: "2026-01-07", timezone: "UTC" }, "dateRange"],
+    ["a tuple", ["2026-01-01", "2026-01-07"], "dateRange"],
+    ["a pair missing its end", { from: "2026-01-01" }, "dateRange.to"],
+    ["an impossible date", { from: "2026-02-30", to: "2026-03-01" }, "dateRange.from"],
+  ])("refuses %s, naming the part at fault", (_label, value, name) => {
+    const parsed = parseRequestedDateRange(value);
+    expect(parsed.ok).toBe(false);
+    expect(parsed.ok ? [] : parsed.issues.map((issue) => issue.name)).toEqual([name]);
   });
+
+  test("names the data route's own query parameters, and each bad date on its own", () => {
+    const names = { dateRange: "dateRange", from: "from", to: "to" };
+    expect(parseRequestedDateRange({ from: "yesterday", to: "2026-13-01" }, names)).toEqual({
+      ok: false,
+      issues: [
+        { name: "from", reason: "Must be an ISO calendar date (YYYY-MM-DD)." },
+        { name: "to", reason: "Must be an ISO calendar date (YYYY-MM-DD)." },
+      ],
+    });
+    expect(parseRequestedDateRange({ dateRange: "this month", from: "2026-01-01" }, names)).toEqual({
+      ok: false,
+      issues: [{ name: "dateRange", reason: "Send either a date preset or from and to, not both." }],
+    });
+  });
+});
+
+describe("legacy relative date ranges", () => {
+  const withRange = (dateRange: string) => ({
+    measures: ["FeedbackRecords.count"],
+    timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", granularity: "week", dateRange }],
+  });
+
+  test.each(["last 3 months", "Last 12 weeks", "this week", "from 7 days ago to now"])(
+    "reads %s on a saved chart, but refuses it as new input",
+    (dateRange) => {
+      expect(validateChartQuery(withRange(dateRange), { legacyDateRanges: true }).ok).toBe(true);
+      expect(validateChartQuery(withRange(dateRange)).ok).toBe(false);
+    }
+  );
+
+  test.each(["last 9999 days", "next 3 months", "last 3 months; drop", "since forever"])(
+    "refuses %s even on a saved chart",
+    (dateRange) => {
+      expect(validateChartQuery(withRange(dateRange), { legacyDateRanges: true }).ok).toBe(false);
+    }
+  );
 });

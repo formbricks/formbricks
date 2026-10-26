@@ -1,6 +1,7 @@
 import "server-only";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
+import { dashboardFull } from "@/app/api/v3/charts/lib/problems";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
   createdResponse,
@@ -15,7 +16,7 @@ import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/
 import { type TV3DashboardOperationContext, authorizeLoadedDashboard } from "./access";
 import type { TV3WidgetCreateBody, TV3WidgetUpdateBody } from "./schemas";
 import { serializeV3DashboardWidget } from "./serializers";
-import { getDashboardWorkspaceRow } from "./service";
+import { getDashboardWorkspaceRow, getWidgetResourceRow } from "./service";
 import {
   type TWidgetWriteResult,
   addWidgetRow,
@@ -60,6 +61,8 @@ const refuseWidgetWrite = (
       return chartAlreadyOnDashboard(context);
     case "overlap":
       return overlapsWidget(result.widgetId, context);
+    case "full":
+      return dashboardFull(context);
     case "gone":
       return problemForbidden(context.requestId, undefined, context.instance);
   }
@@ -121,6 +124,34 @@ export async function addV3DashboardWidget({
     });
   } catch (error) {
     return mapV3ThrownError(error, { log, requestId, instance, operation: "dashboards.widgets.add" });
+  }
+}
+
+/**
+ * `GET /api/v3/dashboards/{dashboardId}/widgets/{widgetId}` → 200 `{ data }`: the widget an add's
+ * `Location` names. Needs read access to the dashboard's workspace; a widget not on that dashboard
+ * answers the same 403 as a dashboard the caller cannot see.
+ */
+export async function getV3DashboardWidget({
+  dashboardId,
+  widgetId,
+  ...context
+}: TV3DashboardOperationContext & { dashboardId: string; widgetId: string }): Promise<Response> {
+  const { requestId, instance } = context;
+  const log = logger.withContext({ requestId, dashboardId, widgetId });
+
+  try {
+    const [dashboard, widget] = await Promise.all([
+      getDashboardWorkspaceRow(dashboardId),
+      getWidgetResourceRow(dashboardId, widgetId),
+    ]);
+    const loaded = await authorizeLoadedDashboard(dashboard, "read", context);
+    if (loaded instanceof Response) return loaded;
+    if (!widget) return problemForbidden(requestId, undefined, instance);
+
+    return successResponse(serializeV3DashboardWidget(widget), { requestId });
+  } catch (error) {
+    return mapV3ThrownError(error, { log, requestId, instance, operation: "dashboards.widgets.get" });
   }
 }
 

@@ -233,6 +233,15 @@ describe("duplicateV3Chart", () => {
     expect(problem.invalid_params?.[0].reason).toContain("clwg000000000000000000007");
   });
 
+  test("refuses a copy onto a dashboard already holding the most widgets it can with 409", async () => {
+    vi.mocked(duplicateChartRow).mockResolvedValue({ kind: "full" });
+
+    const response = await duplicate({ dashboardId });
+
+    expect(response.status).toBe(409);
+    expect((await problemOf(response)).code).toBe("conflict");
+  });
+
   test("answers any other failure with a 500 that does not echo it", async () => {
     vi.mocked(duplicateChartRow).mockRejectedValue(new Error("relation secret_table"));
 

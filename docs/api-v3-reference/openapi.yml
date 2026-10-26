@@ -14,7 +14,7 @@ info:
 
     **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and **GET /api/v3/workflows/runs/{runId}**.
 
-    **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**; **GET**, **PATCH**, **DELETE /api/v3/charts/{chartId}**; **POST /api/v3/charts/{chartId}/duplicate**), their numbers (**GET /api/v3/charts/{chartId}/data**, **POST /api/v3/charts/preview**), the field catalog (**GET /api/v3/charts/fields**, **GET /api/v3/charts/fields/{field}/values**), and dashboards (**GET**, **POST /api/v3/dashboards**; **GET**, **PATCH**, **PUT**, **DELETE /api/v3/dashboards/{dashboardId}**; **POST /api/v3/dashboards/{dashboardId}/duplicate**; **POST /api/v3/dashboards/{dashboardId}/widgets**; **PATCH**, **DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**).
+    **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**; **GET**, **PATCH**, **DELETE /api/v3/charts/{chartId}**; **POST /api/v3/charts/{chartId}/duplicate**), their numbers (**GET /api/v3/charts/{chartId}/data**, **POST /api/v3/charts/preview**), the field catalog (**GET /api/v3/charts/fields**, **GET /api/v3/charts/fields/{field}/values**), and dashboards (**GET**, **POST /api/v3/dashboards**; **GET**, **PATCH**, **PUT**, **DELETE /api/v3/dashboards/{dashboardId}**; **POST /api/v3/dashboards/{dashboardId}/duplicate**; **POST /api/v3/dashboards/{dashboardId}/widgets**; **GET**, **PATCH**, **DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**).
     - **Field catalog.** A chart query names fields exactly as `GET /api/v3/charts/fields` lists
       them; the validator refuses anything else, and Cube options (`timezone`, `segments`, `ungrouped`,
       …), with **422** naming each problem. Counts, filter depth, `limit` and `offset` are bounded.
@@ -4191,7 +4191,7 @@ paths:
         Edits a chart's name, type, chart query or display settings. The chart may sit on several
         dashboards (`dashboards` in the response), and the edit shows on every one of them — duplicate
         the chart and repoint one dashboard's widget to change it there only. A chart's Feedback Dataset
-        cannot change. Needs write access to the chart's workspace.
+        cannot change. Needs write access to the chart's workspace and to its Feedback Dataset.
       tags:
         - V3 Charts
       parameters:
@@ -4249,7 +4249,7 @@ paths:
         `chart_in_use`, naming those dashboards in `details.dashboards` — remove it from them first
         (`DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}`); there is no force option. The
         check and the delete are one transaction, so a widget added at the same moment is never removed
-        with the chart. Needs write access to the chart's workspace.
+        with the chart. Needs write access to the chart's workspace and to its Feedback Dataset.
       tags:
         - V3 Charts
       parameters:
@@ -4382,8 +4382,8 @@ paths:
         Copies a chart — same Feedback Dataset, type, chart query and display settings — so the copy can
         change without touching the dashboards that show the original. With `dashboardId`, the copy is
         also put on that dashboard (first open slot, or `layout`) in the same transaction, and the
-        dashboard's `updatedAt` moves. Needs write access to the chart's workspace and to its Feedback
-        Dataset.
+        dashboard's `updatedAt` moves; a dashboard already holding 250 widgets answers 409 and no copy is
+        made. Needs write access to the chart's workspace and to its Feedback Dataset.
       tags:
         - V3 Charts
       parameters:
@@ -4842,7 +4842,8 @@ paths:
         Puts an existing chart on a dashboard. Without a `layout` the chart lands in the first open slot
         at its chart type's default size; with one, exactly there. Widgets may leave gaps but not overlap:
         a layout covering another widget answers 422 naming it. A chart appears at most once per
-        dashboard (409), and must live in the dashboard's workspace. Moves the dashboard's `updatedAt`.
+        dashboard (409), and must live in the dashboard's workspace. A dashboard holds at most 250
+        widgets; an add past that answers 409. Moves the dashboard's `updatedAt`.
         Needs write access to the dashboard's workspace.
       tags:
         - V3 Dashboards
@@ -4898,6 +4899,53 @@ paths:
         - apiKeyAuth: []
         - bearerAuth: []
   /api/v3/dashboards/{dashboardId}/widgets/{widgetId}:
+    get:
+      operationId: getDashboardWidgetV3
+      summary: Get a widget
+      description: |
+        Returns one widget on a dashboard with its full chart: the resource an add's `Location` names.
+        Needs read access to the dashboard's workspace; a widget that is not on the dashboard, or a
+        dashboard the caller cannot see, answers 403.
+      tags:
+        - V3 Dashboards
+      parameters:
+        - $ref: '#/components/parameters/DashboardIdPath'
+        - $ref: '#/components/parameters/WidgetIdPath'
+      responses:
+        '200':
+          description: The widget
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/DashboardWidget'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3DashboardsForbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
     patch:
       operationId: updateDashboardWidgetV3
       summary: Move a widget or show another chart in it
@@ -13145,7 +13193,7 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     V3DashboardsConflict:
-      description: 'Conflict (`code: conflict`) — the request clashes with the current state: a chart or dashboard name already used in the workspace, a chart already on the dashboard, or a dashboard changed since the `updatedAt` the caller sent.'
+      description: 'Conflict (`code: conflict`) — the request clashes with the current state: a chart or dashboard name already used in the workspace, a chart already on the dashboard, a dashboard already holding its 250 widgets, or a dashboard changed since the `updatedAt` the caller sent.'
       headers:
         X-Request-Id:
           schema:

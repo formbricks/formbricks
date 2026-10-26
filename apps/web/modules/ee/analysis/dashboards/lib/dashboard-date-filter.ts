@@ -20,7 +20,7 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 // ISO_DATE only checks the shape, so "2026-02-30" slips through. Reconstruct the date in UTC and
 // confirm every component round-trips to reject impossible calendar dates.
-const isRealIsoDate = (value: string): boolean => {
+export const isRealIsoDate = (value: string): boolean => {
   if (!ISO_DATE.test(value)) return false;
   const [year, month, day] = value.split("-").map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));

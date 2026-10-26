@@ -51,7 +51,7 @@ patch:
     Edits a chart's name, type, chart query or display settings. The chart may sit on several
     dashboards (`dashboards` in the response), and the edit shows on every one of them — duplicate
     the chart and repoint one dashboard's widget to change it there only. A chart's Feedback Dataset
-    cannot change. Needs write access to the chart's workspace.
+    cannot change. Needs write access to the chart's workspace and to its Feedback Dataset.
   tags:
     - V3 Charts
   parameters:
@@ -109,7 +109,7 @@ delete:
     `chart_in_use`, naming those dashboards in `details.dashboards` — remove it from them first
     (`DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}`); there is no force option. The
     check and the delete are one transaction, so a widget added at the same moment is never removed
-    with the chart. Needs write access to the chart's workspace.
+    with the chart. Needs write access to the chart's workspace and to its Feedback Dataset.
   tags:
     - V3 Charts
   parameters:

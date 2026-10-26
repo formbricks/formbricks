@@ -417,6 +417,25 @@ describe("updateV3Chart", () => {
     vi.mocked(updateChartRow).mockResolvedValue(rowOf({ name: "Renamed" }));
   });
 
+  test("needs write access to the chart's Feedback Dataset too, and writes nothing without it", async () => {
+    await update({ name: "Renamed" });
+    expect(refuseUnlessFeedbackDatasetAccess).toHaveBeenCalledWith(
+      session,
+      expect.objectContaining({ workspaceId: internalWorkspaceId }),
+      datasetId,
+      "readWrite",
+      requestId,
+      instance
+    );
+
+    vi.mocked(refuseUnlessFeedbackDatasetAccess).mockResolvedValueOnce(
+      problemForbidden(requestId, "You are not authorized to use this Feedback Dataset", instance)
+    );
+    const refused = await update({ query: { measures: ["FeedbackRecords.count"] } });
+    expect(refused.status).toBe(403);
+    expect(updateChartRow).toHaveBeenCalledTimes(1);
+  });
+
   test("writes only the fields sent, needs readWrite, and audits before and after", async () => {
     const auditLog = {} as TV3AuditLog;
 
@@ -512,6 +531,23 @@ describe("updateV3Chart", () => {
 describe("deleteV3Chart", () => {
   const remove = (auditLog?: TV3AuditLog) =>
     deleteV3Chart({ chartId, authentication: session, requestId, instance, auditLog });
+
+  test("needs write access to the chart's Feedback Dataset too, and deletes nothing without it", async () => {
+    vi.mocked(refuseUnlessFeedbackDatasetAccess).mockResolvedValueOnce(
+      problemForbidden(requestId, "You are not authorized to use this Feedback Dataset", instance)
+    );
+
+    expect((await remove()).status).toBe(403);
+    expect(refuseUnlessFeedbackDatasetAccess).toHaveBeenCalledWith(
+      session,
+      expect.objectContaining({ workspaceId: internalWorkspaceId }),
+      datasetId,
+      "readWrite",
+      requestId,
+      instance
+    );
+    expect(deleteChartRow).not.toHaveBeenCalled();
+  });
 
   test("deletes a chart on no dashboard with 204, audited", async () => {
     vi.mocked(deleteChartRow).mockResolvedValue({ kind: "deleted" });

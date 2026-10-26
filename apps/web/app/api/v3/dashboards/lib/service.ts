@@ -1,6 +1,7 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
+import { V3_NAME_MAX_LENGTH } from "@/app/api/v3/charts/lib/schemas";
 import { selectChartResource } from "@/app/api/v3/charts/lib/service";
 import { escapeLikePattern } from "@/lib/utils/like-pattern";
 import { copyNamePrefix, nextCopyName } from "@/modules/ee/analysis/lib/copy-name";
@@ -52,6 +53,13 @@ export type TDashboardResourceRow = Prisma.DashboardGetPayload<{ select: typeof 
 
 export const getDashboardResourceRow = (dashboardId: string): Promise<TDashboardResourceRow | null> =>
   prisma.dashboard.findUnique({ where: { id: dashboardId }, select: selectDashboardResource });
+
+/** One widget on one dashboard, as the widget resource serializes it. */
+export const getWidgetResourceRow = (
+  dashboardId: string,
+  widgetId: string
+): Promise<TWidgetResourceRow | null> =>
+  prisma.dashboardWidget.findFirst({ where: { id: widgetId, dashboardId }, select: selectWidgetResource });
 
 /** Just enough of a dashboard to authorize a write to its widgets. */
 export const getDashboardWorkspaceRow = (
@@ -156,11 +164,12 @@ export const duplicateDashboardRow = ({
           await tx.dashboard.findMany({
             where: {
               workspaceId: source.workspaceId,
-              name: { startsWith: escapeLikePattern(copyNamePrefix(source.name)) },
+              name: { startsWith: escapeLikePattern(copyNamePrefix(source.name, V3_NAME_MAX_LENGTH)) },
             },
             select: { name: true },
           })
-        ).map((dashboard) => dashboard.name)
+        ).map((dashboard) => dashboard.name),
+        V3_NAME_MAX_LENGTH
       );
 
     return tx.dashboard.create({

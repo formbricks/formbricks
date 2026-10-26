@@ -1,3 +1,50 @@
+get:
+  operationId: getDashboardWidgetV3
+  summary: Get a widget
+  description: |
+    Returns one widget on a dashboard with its full chart: the resource an add's `Location` names.
+    Needs read access to the dashboard's workspace; a widget that is not on the dashboard, or a
+    dashboard the caller cannot see, answers 403.
+  tags:
+    - V3 Dashboards
+  parameters:
+    - $ref: ../components/parameters/DashboardIdPath.yml
+    - $ref: ../components/parameters/WidgetIdPath.yml
+  responses:
+    "200":
+      description: The widget
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/DashboardWidget.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3DashboardsForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []
 patch:
   operationId: updateDashboardWidgetV3
   summary: Move a widget or show another chart in it

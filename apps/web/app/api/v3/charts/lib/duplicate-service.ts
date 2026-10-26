@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import type { TWidgetLayout } from "@formbricks/types/analysis";
+import { V3_NAME_MAX_LENGTH } from "@/app/api/v3/charts/lib/schemas";
 import { lockDashboard } from "@/app/api/v3/dashboards/lib/dashboard-lock";
 import { planNewWidget, siblingsOf, touchDashboard } from "@/app/api/v3/dashboards/lib/widget-service";
 import { escapeLikePattern } from "@/lib/utils/like-pattern";
@@ -14,7 +15,9 @@ export type TChartDuplicateResult =
   /** The source chart or the target dashboard is gone — deleted after it was authorized. */
   | { kind: "gone" }
   /** The requested layout would cover this widget on the target dashboard. */
-  | { kind: "overlap"; widgetId: string };
+  | { kind: "overlap"; widgetId: string }
+  /** The target dashboard already holds `MAX_DASHBOARD_WIDGETS` widgets. */
+  | { kind: "full" };
 
 /**
  * Copy a chart — same Feedback Dataset, type, query and display settings — and, given a `dashboardId`,
@@ -69,11 +72,12 @@ export const duplicateChartRow = ({
             await tx.chart.findMany({
               where: {
                 workspaceId: source.workspaceId,
-                name: { startsWith: escapeLikePattern(copyNamePrefix(source.name)) },
+                name: { startsWith: escapeLikePattern(copyNamePrefix(source.name, V3_NAME_MAX_LENGTH)) },
               },
               select: { name: true },
             })
-          ).map((chart) => chart.name)
+          ).map((chart) => chart.name),
+          V3_NAME_MAX_LENGTH
         );
 
       const copy = await tx.chart.create({

@@ -5,7 +5,8 @@ post:
     Puts an existing chart on a dashboard. Without a `layout` the chart lands in the first open slot
     at its chart type's default size; with one, exactly there. Widgets may leave gaps but not overlap:
     a layout covering another widget answers 422 naming it. A chart appears at most once per
-    dashboard (409), and must live in the dashboard's workspace. Moves the dashboard's `updatedAt`.
+    dashboard (409), and must live in the dashboard's workspace. A dashboard holds at most 250
+    widgets; an add past that answers 409. Moves the dashboard's `updatedAt`.
     Needs write access to the dashboard's workspace.
   tags:
     - V3 Dashboards

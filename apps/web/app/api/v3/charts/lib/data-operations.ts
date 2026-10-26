@@ -23,7 +23,6 @@ import {
   applyDashboardDateFilter,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
 import {
-  DATE_RANGE_REASON,
   checkTimeBucketLimit,
   parseRequestedDateRange,
   validateChartQuery,
@@ -82,11 +81,22 @@ export async function runV3ChartQuery({
   source: TCubeQuerySource;
   context: TV3ChartOperationContext;
 }): Promise<Response> {
-  const validated = validateChartQuery(query, { timeBuckets: false });
-  const requested = parseRequestedDateRange(dateRange);
-  const invalidParams: InvalidParam[] = validated.ok ? [] : [...validated.issues];
-  if (!requested.ok) invalidParams.push({ name: "dateRange", reason: DATE_RANGE_REASON });
-  if (!validated.ok || !requested.ok) return refuseChartQuery(invalidParams, context);
+  // A saved chart may hold a relative range older charts were saved with; a preview's query is new input.
+  const validated = validateChartQuery(query, {
+    timeBuckets: false,
+    legacyDateRanges: source === "v3.charts.data",
+  });
+  // The data route takes the range as query parameters; the preview takes it as one body field.
+  const requested = parseRequestedDateRange(
+    dateRange,
+    source === "v3.charts.data" ? { dateRange: "dateRange", from: "from", to: "to" } : undefined
+  );
+  const invalidParams: InvalidParam[] = [
+    ...(validated.ok ? [] : validated.issues),
+    ...(requested.ok ? [] : requested.issues),
+  ];
+  if (!validated.ok) return refuseChartQuery(invalidParams, context);
+  if (!requested.ok) return refuseChartQuery(invalidParams, context, "The date range is not valid");
 
   const actor = getV3AuthorizationActor(context.authentication);
   if (!actor) return problemUnauthorized(context.requestId, "Not authenticated", context.instance);
@@ -208,18 +218,8 @@ export async function getV3ChartData({
     const limited = await applyChartQueryRateLimit(context);
     if (limited) return limited;
 
-    const loaded = await loadAuthorizedChart(chartId, "read", context);
+    const loaded = await loadAuthorizedChart(chartId, "read", context, { datasetPermission: "read" });
     if (loaded instanceof Response) return loaded;
-
-    const refused = await refuseUnlessFeedbackDatasetAccess(
-      context.authentication,
-      loaded.access,
-      loaded.row.feedbackDirectoryId,
-      "read",
-      context.requestId,
-      context.instance
-    );
-    if (refused) return refused;
 
     return await runV3ChartQuery({
       access: loaded.access,

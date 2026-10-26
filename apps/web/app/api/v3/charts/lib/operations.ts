@@ -224,8 +224,8 @@ const chartUpdateOf = (
 /**
  * `PATCH /api/v3/charts/{chartId}` → 200 `{ data }`.
  *
- * Needs write access to the chart's workspace. The chart may sit on several dashboards, and the edit
- * shows on every one of them — `dashboards` in the response names them.
+ * Needs write access to the chart's workspace and its Feedback Dataset. The chart may sit on several
+ * dashboards, and the edit shows on every one of them — `dashboards` in the response names them.
  */
 export async function updateV3Chart({
   chartId,
@@ -237,7 +237,9 @@ export async function updateV3Chart({
   const log = logger.withContext({ requestId, chartId });
 
   try {
-    const loaded = await loadAuthorizedChart(chartId, "readWrite", context);
+    const loaded = await loadAuthorizedChart(chartId, "readWrite", context, {
+      datasetPermission: "readWrite",
+    });
     if (loaded instanceof Response) return loaded;
 
     const update = chartUpdateOf(body);
@@ -282,7 +284,7 @@ export async function updateV3Chart({
 /**
  * `DELETE /api/v3/charts/{chartId}` → 204 for a chart on no dashboard. A chart still on one answers 409
  * `chart_in_use` naming them in `details.dashboards`; there is no force option. Needs write access to the
- * chart's workspace.
+ * chart's workspace and its Feedback Dataset.
  */
 export async function deleteV3Chart({
   chartId,
@@ -293,7 +295,9 @@ export async function deleteV3Chart({
   const log = logger.withContext({ requestId, chartId });
 
   try {
-    const loaded = await loadAuthorizedChart(chartId, "readWrite", context);
+    const loaded = await loadAuthorizedChart(chartId, "readWrite", context, {
+      datasetPermission: "readWrite",
+    });
     if (loaded instanceof Response) return loaded;
 
     const result = await deleteChartRow(chartId);
