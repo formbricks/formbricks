@@ -1082,7 +1082,9 @@ describe("docker/formbricks.sh AuthZed setup", () => {
 
   test("reaches application startup when Compose run can consume the setup input", () => {
     const script = readFileSync(formbricksScriptPath, "utf8");
-    const setupCommands = script.match(/newgrp docker <<END\n([\s\S]*?)\nEND/)?.[1];
+    const setupCommands = script.match(
+      /newgrp docker <<[ \t]*([^\r\n]+)\r?\n([\s\S]*?)\r?\n\1(?:\r?\n|$)/
+    )?.[2];
     expect(setupCommands).toBeDefined();
 
     const tempDir = createTempDir();

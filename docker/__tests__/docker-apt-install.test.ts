@@ -226,6 +226,7 @@ describe("docker/formbricks.sh Docker apt setup", () => {
 
   test("reuses a matching existing source and rejects an unfamiliar one", () => {
     const { sourcePath, keyPath, run } = createAptFixture();
+    writeFileSync(keyPath, "existing Docker key");
     writeFileSync(
       sourcePath,
       `deb [arch=amd64 signed-by=${keyPath}] https://download.docker.com/linux/debian bookworm stable\n`
@@ -248,6 +249,7 @@ describe("docker/formbricks.sh Docker apt setup", () => {
     const { sourcePath, keyPath, run } = createAptFixture();
     const modernSourcePath = sourcePath.replace(/\.list$/, ".sources");
     const source = `Types: deb\nURIs: https://download.docker.com/linux/debian\nSuites: bookworm\nComponents: stable\nSigned-By: ${keyPath}\n`;
+    writeFileSync(keyPath, "existing Docker key");
     writeFileSync(modernSourcePath, source);
 
     const matching = run('existing_docker_apt_source debian bookworm amd64 "$2" "$3"', [sourcePath, keyPath]);
@@ -258,6 +260,58 @@ describe("docker/formbricks.sh Docker apt setup", () => {
     const disabled = run('existing_docker_apt_source debian bookworm amd64 "$2" "$3"', [sourcePath, keyPath]);
     expect(disabled.status).not.toBe(0);
     expect(readFileSync(modernSourcePath, "utf8")).toBe(`${source}Enabled: no\n`);
+  });
+
+  test.each(["list", "sources"])("rejects a matching %s source whose signing key is missing", (format) => {
+    const { tempDir, sourcePath, keyPath, aptLogPath, run } = createAptFixture();
+    const osReleasePath = join(tempDir, "os-release");
+    const path = format === "list" ? sourcePath : sourcePath.replace(/\.list$/, ".sources");
+    const source =
+      format === "list"
+        ? `deb [arch=amd64 signed-by=${keyPath}] https://download.docker.com/linux/debian bookworm stable\n`
+        : `Types: deb\nURIs: https://download.docker.com/linux/debian\nSuites: bookworm\nComponents: stable\nSigned-By: ${keyPath}\n`;
+    writeFileSync(osReleasePath, "ID=debian\nVERSION_CODENAME=bookworm\n");
+    writeFileSync(path, source);
+
+    const result = run('install_formbricks "$2" "$3" "$4" "$5"', [
+      osReleasePath,
+      sourcePath,
+      keyPath,
+      tempDir,
+    ]);
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain(path);
+    expect(result.stderr).toContain(keyPath);
+    expect(result.stdout).not.toContain("reuse");
+    expect(readFileSync(path, "utf8")).toBe(source);
+    expect(existsSync(keyPath)).toBe(false);
+    expect(existsSync(aptLogPath)).toBe(false);
+  });
+
+  test("reuses an existing Docker binary on an Ubuntu derivative", () => {
+    const { tempDir, binDir, sourcePath, keyPath, aptLogPath, run } = createAptFixture();
+    const osReleasePath = join(tempDir, "os-release");
+    const source = "deb https://example.com/docker noble stable\n";
+    writeFileSync(osReleasePath, 'ID=linuxmint\nID_LIKE=ubuntu\nPRETTY_NAME="Linux Mint 22"\n');
+    writeFileSync(sourcePath, source);
+    writeFileSync(join(binDir, "docker"), "#!/bin/sh\nexit 0\n", { mode: 0o755 });
+
+    const result = run(
+      `existing_docker_apt_source() { echo 'unexpected repository inspection' >&2; return 1; }
+configure_formbricks_docker_command() { return 1; }
+install_formbricks "$2" "$3" "$4" "$5"`,
+      [osReleasePath, sourcePath, keyPath, tempDir]
+    );
+
+    expect(result.status).not.toBe(0);
+    expect(result.stdout).toContain("Linux Mint 22");
+    expect(result.stdout).toContain("Docker is already installed");
+    expect(result.stderr).not.toContain("Automatic setup supports Debian and Ubuntu");
+    expect(result.stderr).not.toContain("unexpected repository inspection");
+    expect(readFileSync(sourcePath, "utf8")).toBe(source);
+    const aptLog = readFileSync(aptLogPath, "utf8");
+    expect(aptLog).toContain("-o APT::Update::Error-Mode=any update");
+    expect(aptLog).not.toContain("docker-ce");
   });
 
   test("keeps an existing Docker binary and skips Docker repository and package setup", () => {

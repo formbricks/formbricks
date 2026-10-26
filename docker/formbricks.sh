@@ -220,7 +220,7 @@ quarantine_legacy_docker_apt_source() {
 # decision; writing another Docker source beside it can create conflicting Signed-By settings.
 existing_docker_apt_source() {
   local distro="$1" codename="$2" architecture="$3" source_file="$4" key_file="$5"
-  local modern_source="${source_file%.list}.sources" contents normalized expected
+  local modern_source="${source_file%.list}.sources" contents normalized expected modern_key_file
 
   if [[ -e "$source_file" && -e "$modern_source" ]]; then
     echo "❌ Both $source_file and $modern_source exist. Resolve the Docker apt sources before continuing." >&2
@@ -232,6 +232,10 @@ existing_docker_apt_source() {
     normalized=$(printf '%s\n' "$contents" | awk '{$1=$1; print}') || return 1
     expected=$(docker_apt_source_line "$distro" "$codename" "$architecture" "$key_file")
     if [[ "$normalized" == "$expected" ]]; then
+      if [[ ! -f "$key_file" || ! -r "$key_file" ]]; then
+        echo "❌ Docker apt source $source_file references missing or unreadable key $key_file." >&2
+        return 1
+      fi
       printf 'reuse\n'
       return
     fi
@@ -245,6 +249,11 @@ existing_docker_apt_source() {
       (! grep -Eq '^Architectures:' "$modern_source" ||
         grep -Eq "^Architectures:[[:space:]]+$architecture[[:space:]]*$" "$modern_source") &&
       grep -Eq '^Signed-By:[[:space:]]+/[^[:space:]]+[[:space:]]*$' "$modern_source"; then
+      modern_key_file=$(sed -nE 's/^Signed-By:[[:space:]]+(\/[^[:space:]]+)[[:space:]]*$/\1/p' "$modern_source") || return 1
+      if [[ ! -f "$modern_key_file" || ! -r "$modern_key_file" ]]; then
+        echo "❌ Docker apt source $modern_source references missing or unreadable key $modern_key_file." >&2
+        return 1
+      fi
       printf 'reuse\n'
       return
     fi
@@ -332,7 +341,7 @@ setup_docker_apt_repository() (
 
   echo "🔄 Updating your package list again."
   if ! sudo apt-get -o APT::Update::Error-Mode=any update; then
-    echo "❌ Docker's $distro repository could not be updated. Its new apt source has been removed." >&2
+    echo "❌ Package lists could not be updated after adding Docker's $distro source. The new source has been removed; check the apt error above." >&2
     exit 1
   fi
   validated=true
@@ -704,32 +713,40 @@ END {
 
 install_formbricks() {
   local docker_apt_repository docker_apt_distro docker_apt_codename docker_apt_architecture
-  local docker_apt_source_status os_description
+  local docker_apt_source_status os_description docker_installed=false
   local os_release_file="${1:-/etc/os-release}"
   local docker_apt_source_file="${2:-/etc/apt/sources.list.d/docker.list}"
   local docker_apt_key_file="${3:-/etc/apt/keyrings/docker.gpg}"
   local docker_apt_backup_dir="${4:-/var/tmp}"
 
-  if ! docker_apt_repository=$(detect_docker_apt_repository "$os_release_file"); then
+  if command -v docker >/dev/null 2>&1; then
+    docker_installed=true
+  fi
+
+  if docker_apt_repository=$(detect_docker_apt_repository "$os_release_file"); then
+    read -r docker_apt_distro docker_apt_codename <<<"$docker_apt_repository"
+    if ! docker_apt_architecture=$(dpkg --print-architecture) || [[ -z "$docker_apt_architecture" ]]; then
+      echo "❌ Could not determine the host's Debian package architecture." >&2
+      return 1
+    fi
+
+    # A previous version wrote Debian's codename under the Ubuntu URI. Remove that exact
+    # broken entry before the first apt update, even if Docker was installed afterward.
+    if ! quarantine_legacy_docker_apt_source "$docker_apt_distro" "$docker_apt_codename" \
+      "$docker_apt_architecture" "$docker_apt_source_file" "$docker_apt_key_file" "$docker_apt_backup_dir" >/dev/null; then
+      return 1
+    fi
+  elif [[ "$docker_installed" != true ]]; then
     echo "❌ Automatic setup supports Debian and Ubuntu hosts with a release codename." >&2
     echo "Install Docker and Compose manually on other systems." >&2
     return 1
   fi
-  read -r docker_apt_distro docker_apt_codename <<<"$docker_apt_repository"
-  if ! docker_apt_architecture=$(dpkg --print-architecture) || [[ -z "$docker_apt_architecture" ]]; then
-    echo "❌ Could not determine the host's Debian package architecture." >&2
-    return 1
-  fi
-  os_description=$(. "$os_release_file" && printf '%s' "${PRETTY_NAME:-Linux}") || os_description=Linux
-
-  # A previous version wrote Debian's codename under the Ubuntu URI. Remove that exact
-  # broken entry before the first apt update, even if Docker was installed afterward.
-  if ! quarantine_legacy_docker_apt_source "$docker_apt_distro" "$docker_apt_codename" \
-    "$docker_apt_architecture" "$docker_apt_source_file" "$docker_apt_key_file" "$docker_apt_backup_dir" >/dev/null; then
-    return 1
+  os_description=Linux
+  if [[ -r "$os_release_file" ]]; then
+    os_description=$(. "$os_release_file" && printf '%s' "${PRETTY_NAME:-Linux}") || os_description=Linux
   fi
 
-  if ! command -v docker >/dev/null 2>&1; then
+  if [[ "$docker_installed" != true ]]; then
     if ! docker_apt_source_status=$(existing_docker_apt_source "$docker_apt_distro" "$docker_apt_codename" \
       "$docker_apt_architecture" "$docker_apt_source_file" "$docker_apt_key_file"); then
       return 1
@@ -757,7 +774,7 @@ install_formbricks() {
     jq
 
   # Reuse an existing Docker installation instead of replacing it implicitly.
-  if command -v docker >/dev/null 2>&1; then
+  if [[ "$docker_installed" == true ]]; then
     echo "✅ Docker is already installed."
   else
     # Remove old Docker packages only when Docker is not installed at all.
