@@ -1,4 +1,6 @@
 import { cookies } from "next/headers";
+import { notFound } from "next/navigation";
+import { getDashboardWorkspaceRow } from "@/app/api/v3/dashboards/lib/service";
 import { getAISmartToolsUnavailableReason, getOrganizationAIConfig } from "@/lib/ai/service";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
@@ -27,7 +29,13 @@ export async function DashboardDetailPage({
 
   const { isReadOnly, organization, session } = await getWorkspaceAuth(workspaceId);
 
-  const isDashboardsAllowed = await getIsDashboardsEnabled(organization.id);
+  const [isDashboardsAllowed, dashboardRow] = await Promise.all([
+    getIsDashboardsEnabled(organization.id),
+    getDashboardWorkspaceRow(dashboardId),
+  ]);
+  // The page belongs to the workspace in its URL: its role, chart list and "create chart" all come from
+  // there, so a dashboard of another workspace is not found here, as one that does not exist.
+  if (dashboardRow?.workspaceId !== workspaceId) notFound();
   if (!isDashboardsAllowed) {
     return (
       <AnalysisPageLayout pageTitle={t("common.analysis")} workspaceId={workspaceId}>

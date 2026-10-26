@@ -45,13 +45,15 @@ export function ChartRow({ chart, workspaceId, isReadOnly, directories }: Readon
         aria-label={isReadOnly ? undefined : t("workspace.analysis.charts.open_chart", { name: chart.name })}
         className={`grid h-12 w-full grid-cols-7 content-center p-2 text-left transition-colors ease-in-out hover:bg-slate-100 ${isReadOnly ? "" : "cursor-pointer"}`}>
         <div className="col-span-6 grid grid-cols-6 content-center">
-          <div className="col-span-3 flex items-center pl-6 text-sm">
-            <div className="flex items-center gap-4">
+          <div className="col-span-3 flex min-w-0 items-center pl-6 text-sm">
+            <div className="flex min-w-0 items-center gap-4">
               <div className="ph-no-capture w-8 shrink-0 text-slate-500">
                 <IconComponent className="size-5" />
               </div>
-              <div className="flex flex-col">
-                <div className="ph-no-capture font-medium text-slate-900">{chart.name}</div>
+              <div className="flex min-w-0 flex-col">
+                <div className="ph-no-capture truncate font-medium text-slate-900" title={chart.name}>
+                  {chart.name}
+                </div>
               </div>
             </div>
           </div>

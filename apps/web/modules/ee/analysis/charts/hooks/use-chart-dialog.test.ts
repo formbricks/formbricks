@@ -31,12 +31,12 @@ let mockPathname = "/other-page";
 
 vi.mock("@/modules/ee/analysis/lib/api-client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/analysis/lib/api-client")>()),
-  createChart: (...args: any[]) => mockCreateChart(...args),
-  updateChart: (...args: any[]) => mockUpdateChart(...args),
-  getChart: (...args: any[]) => mockGetChart(...args),
-  getChartData: (...args: any[]) => mockGetChartData(...args),
-  addDashboardWidget: (...args: any[]) => mockAddDashboardWidget(...args),
-  deleteChart: (...args: any[]) => mockDeleteChart(...args),
+  createChart: (...args: unknown[]) => mockCreateChart(...args),
+  updateChart: (...args: unknown[]) => mockUpdateChart(...args),
+  getChart: (...args: unknown[]) => mockGetChart(...args),
+  getChartData: (...args: unknown[]) => mockGetChartData(...args),
+  addDashboardWidget: (...args: unknown[]) => mockAddDashboardWidget(...args),
+  deleteChart: (...args: unknown[]) => mockDeleteChart(...args),
 }));
 
 vi.mock("@/modules/ee/analysis/charts/lib/chart-utils", () => ({
@@ -44,13 +44,13 @@ vi.mock("@/modules/ee/analysis/charts/lib/chart-utils", () => ({
 }));
 
 vi.mock("@/lib/utils/error-message", () => ({
-  getFormattedErrorMessage: (result: any) => result?.serverError ?? "formatted-error",
+  getFormattedErrorMessage: (result?: { serverError?: string }) => result?.serverError ?? "formatted-error",
 }));
 
 vi.mock("react-hot-toast", () => ({
   default: {
-    success: (...args: any[]) => mockToastSuccess(...args),
-    error: (...args: any[]) => mockToastError(...args),
+    success: (...args: unknown[]) => mockToastSuccess(...args),
+    error: (...args: unknown[]) => mockToastError(...args),
   },
 }));
 
