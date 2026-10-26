@@ -149,17 +149,22 @@ const scaled = ({ allowedPerInterval, interval }: TLimit): TLimit => ({
   interval,
 });
 
-const getCharges = (emailType: TEmailType, to: string, context: TEmailRateLimitContext): TCharge[] => {
-  const limits = emailRateLimits[emailType];
-  if (limits.externalOnly) {
-    if (context.externalRecipient === undefined) {
-      // Treating a forgotten flag as internal mail would skip every cap on email respondents can drive.
-      throw new Error(`Sending ${emailType} email requires externalRecipient for its rate limits`);
-    }
-    if (!context.externalRecipient) {
-      return [];
-    }
+const isCounted = (emailType: TEmailType, context: TEmailRateLimitContext): boolean => {
+  if (!emailRateLimits[emailType].externalOnly) {
+    return true;
   }
+  if (context.externalRecipient === undefined) {
+    // Treating a forgotten flag as internal mail would skip every cap on email respondents can drive.
+    throw new Error(`Sending ${emailType} email requires externalRecipient for its rate limits`);
+  }
+  return context.externalRecipient;
+};
+
+const getCharges = (emailType: TEmailType, to: string, context: TEmailRateLimitContext): TCharge[] => {
+  if (!isCounted(emailType, context)) {
+    return [];
+  }
+  const limits = emailRateLimits[emailType];
 
   const counter = limits.group ?? emailType;
   const charges: TCharge[] = [];
