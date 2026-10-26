@@ -622,20 +622,39 @@ export const createProTrialSubscription = async (
   }
 
   // The trial ends on Hobby unless the org explicitly buys a plan, even with a card on file — see
-  // buildFreeTrialEndParams. A concurrent duplicate now differs in trial_end, so Stripe rejects it on the
-  // shared idempotency key instead of returning the first subscription; either way only one trial exists.
-  await stripeClient.subscriptions.create(
-    {
-      customer: customerId,
-      items: await getCatalogItemsForPlan("pro", "monthly"),
-      ...buildFreeTrialEndParams(getFreeTrialEndUnix(trialDays)),
-      payment_settings: {
-        save_default_payment_method: "on_subscription",
+  // buildFreeTrialEndParams.
+  try {
+    await stripeClient.subscriptions.create(
+      {
+        customer: customerId,
+        items: await getCatalogItemsForPlan("pro", "monthly"),
+        ...buildFreeTrialEndParams(getFreeTrialEndUnix(trialDays)),
+        payment_settings: {
+          save_default_payment_method: "on_subscription",
+        },
+        metadata: { organizationId },
       },
-      metadata: { organizationId },
-    },
-    { idempotencyKey: `create-pro-trial-${organizationId}` }
-  );
+      { idempotencyKey: `create-pro-trial-${organizationId}` }
+    );
+  } catch (error) {
+    // A repeated call reuses the idempotency key with a later trial_end, so Stripe rejects it instead of
+    // replaying the first response. The trial that first call created is the result; return it as before.
+    if (!(error instanceof Stripe.errors.StripeIdempotencyError)) throw error;
+    if (!(await hasTrialSubscriptionForOrganization(organizationId, customerId))) throw error;
+  }
+};
+
+const hasTrialSubscriptionForOrganization = async (
+  organizationId: string,
+  customerId: string
+): Promise<boolean> => {
+  if (!stripeClient) return false;
+  const trialing = await stripeClient.subscriptions.list({
+    customer: customerId,
+    status: "trialing",
+    limit: 20,
+  });
+  return trialing.data.some((subscription) => subscription.metadata?.organizationId === organizationId);
 };
 
 export const createPaidPlanCheckoutSession = async (input: {

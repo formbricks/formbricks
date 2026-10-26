@@ -3389,6 +3389,43 @@ describe("organization-billing", () => {
       });
     });
 
+    describe("a repeated call on the same idempotency key", () => {
+      // No email means the trial-already-used check is skipped, so a second call reaches Stripe again,
+      // now with a later trial_end on the same key — Stripe rejects it instead of replaying the first.
+      const idempotencyConflict = () =>
+        new Stripe.errors.StripeIdempotencyError({
+          type: "idempotency_error",
+          message:
+            "Keys for idempotent requests can only be used with the same parameters they were first used with.",
+        });
+
+      beforeEach(() => {
+        mocks.customersRetrieve.mockResolvedValue({ id: "cus_1", deleted: false, email: null });
+        mocks.subscriptionsCreate.mockRejectedValueOnce(idempotencyConflict());
+      });
+
+      test("returns the trial the first call created", async () => {
+        mocks.subscriptionsList.mockResolvedValue({
+          data: [{ id: "sub_trial", status: "trialing", metadata: { organizationId: "org_1" } }],
+        });
+
+        await expect(createProTrialSubscription("org_1", "cus_1", 7)).resolves.toBeUndefined();
+        expect(mocks.subscriptionsList).toHaveBeenCalledWith(
+          expect.objectContaining({ customer: "cus_1", status: "trialing" })
+        );
+      });
+
+      test("still fails when no trial exists for the organization", async () => {
+        mocks.subscriptionsList.mockResolvedValue({
+          data: [{ id: "sub_other", status: "trialing", metadata: { organizationId: "org_2" } }],
+        });
+
+        await expect(createProTrialSubscription("org_1", "cus_1", 7)).rejects.toBeInstanceOf(
+          Stripe.errors.StripeIdempotencyError
+        );
+      });
+    });
+
     test("does not create a trial subscription when the email already used a Pro trial", async () => {
       mocks.customersList.mockResolvedValue({ data: [{ id: "cus_old" }] });
       mocks.subscriptionsList.mockResolvedValue({
