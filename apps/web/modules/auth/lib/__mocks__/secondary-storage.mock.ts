@@ -33,5 +33,8 @@ export const createSecondaryStorageMock = () => {
     failReads: () => {
       failReads = true;
     },
+    clear: () => {
+      values.clear();
+    },
   };
 };

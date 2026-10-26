@@ -191,6 +191,7 @@
                       "surveys/website-app-surveys/actions",
                       "surveys/website-app-surveys/user-identification",
                       "surveys/website-app-surveys/attribute-based-targeting",
+                      "surveys/website-app-surveys/show-conditions",
                       "surveys/website-app-surveys/recontact",
                       "surveys/website-app-surveys/cooldown-period",
                       "surveys/website-app-surveys/survey-display-logic",

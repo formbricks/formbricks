@@ -43,9 +43,9 @@ catalog:
   # Note: the workspace root declares `vite` alongside `vitest`. Without it, the root's vitest
   # (and `@vitest/eslint-plugin`'s optional `vitest` peer, and packages/types' vitest) resolved
   # their vite peer to the newest 8.x instead of this catalog's 7.3.5.
-  vite: 7.3.5
-  vitest: 4.1.11
-  "@vitest/coverage-v8": 4.1.11
+  vite: 7.3.7
+  vitest: 4.1.12
+  "@vitest/coverage-v8": 4.1.12
   vite-plugin-dts: 4.5.4
   vite-tsconfig-paths: 6.1.1
   "@vitejs/plugin-react": 5.1.4
@@ -76,9 +76,9 @@ catalog:
   "@types/react": 19.2.14
   "@types/react-dom": 19.2.3
   # --- storybook ---
-  storybook: 10.3.6
-  "@storybook/react": 10.3.6
-  "@storybook/react-vite": 10.3.6
+  storybook: 10.6.2
+  "@storybook/react": 10.6.2
+  "@storybook/react-vite": 10.6.2
   # --- ui runtime shared by apps/web, survey-ui, surveys and email ---
   react: 19.2.6
   react-dom: 19.2.6
@@ -126,6 +126,11 @@ catalog:
 # The `load-bearing:` notes record the consumer that keeps the vulnerable version in the
 # tree, so the next cleanup can check that single upstream instead of re-deriving it.
 overrides:
+  # GHSA-q3jh-wrc6-jgq8, GHSA-8r9p-f939-6h3c (ENG-4090, ENG-4091): follow-redirects before 1.16.1 leaks
+  # credential headers across origins (array-form headers, sensitiveHeaders regex escaping); 1.16.1 is the
+  # lowest release closing both.
+  # load-bearing: axios and other HTTP clients resolve follow-redirects 1.16.0 transitively.
+  "follow-redirects": 1.16.1
   # ENG-1324 / GHSA-5375-pq7m-f5r2, ENG-1325 / GHSA-99f4-grh7-6pcq:
   # @grpc/grpc-js 1.14.5 also fixes unauthorized certificate acceptance and error-message disclosure
   # (CVE-2026-101916 / CVE-2026-101915), alongside the malformed-message crash fixes in 1.14.4.

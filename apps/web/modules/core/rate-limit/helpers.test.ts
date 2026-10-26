@@ -18,6 +18,7 @@ import { rateLimitConfigs } from "./rate-limit-configs";
 
 // Mock all dependencies
 vi.mock("@/lib/utils/client-ip", () => ({
+  UNTRUSTED_CLIENT_IP: "untrusted-client-ip",
   getClientIpFromHeaders: vi.fn(),
 }));
 
@@ -281,6 +282,34 @@ describe("helpers", () => {
       await expect(applyIPRateLimit(mockConfig)).rejects.toThrow(
         "Maximum number of requests reached. Please try again later."
       );
+    });
+
+    test("skips the shared untrusted identity only when asked, without counting it", async () => {
+      const mockConfig = { interval: 60, allowedPerInterval: 120, namespace: "auth:saml-callback" };
+      (getClientIpFromHeaders as any).mockResolvedValue("untrusted-client-ip");
+      (hashString as any).mockReturnValue("hashed-untrusted");
+      (checkRateLimit as any).mockResolvedValue(ok({ allowed: true }));
+
+      await expect(applyIPRateLimit(mockConfig, { skipUntrustedClient: true })).resolves.toEqual({
+        allowed: true,
+      });
+      expect(checkRateLimit).not.toHaveBeenCalled();
+      expect(getClientIpFromHeaders).toHaveBeenCalledTimes(1);
+
+      // Without the option the shared identity is counted like any other.
+      await applyIPRateLimit(mockConfig);
+      expect(checkRateLimit).toHaveBeenCalledWith(mockConfig, "hashed-untrusted");
+    });
+
+    test("still counts a trusted client when asked to skip untrusted ones", async () => {
+      const mockConfig = { interval: 60, allowedPerInterval: 120, namespace: "auth:saml-callback" };
+      (getClientIpFromHeaders as any).mockResolvedValue("203.0.113.7");
+      (hashString as any).mockReturnValue("hashed-trusted");
+      (checkRateLimit as any).mockResolvedValue(ok({ allowed: true }));
+
+      await applyIPRateLimit(mockConfig, { skipUntrustedClient: true });
+
+      expect(checkRateLimit).toHaveBeenCalledWith(mockConfig, "hashed-trusted");
     });
   });
 

@@ -3,7 +3,6 @@
 import { ZodCustomIssue, ZodIssue } from "zod";
 import { logger } from "@formbricks/logger";
 import { TApiAuditLog } from "@/app/lib/api/with-api-logging";
-import { AUDIT_LOG_ENABLED } from "@/lib/constants";
 import { responses } from "@/modules/api/v2/lib/response";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
@@ -98,7 +97,8 @@ export const logApiError = (
 };
 
 const logAuditLog = (request: Request, auditLog?: TApiAuditLog): void => {
-  if (AUDIT_LOG_ENABLED && auditLog) {
+  // queueAuditEvent decides whether audit logging is enabled
+  if (auditLog) {
     const correlationId = request.headers.get("x-request-id") ?? "";
     queueAuditEvent({
       ...auditLog,

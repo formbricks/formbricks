@@ -118,8 +118,10 @@ export const renderSurvey = (renderProps: SurveyContainerProps) => {
         element
       );
     } else {
-      // For non-link surveys, pass placement through so it can be used in StackedCard
-      const { overlay, onClose, clickOutside, ...surveyInlineProps } = props;
+      // For non-link surveys, pass placement through so it can be used in StackedCard, and onClose so
+      // the host learns the survey closed: RenderSurvey renders nothing once closed, and a host that
+      // never hears about it (the editor preview, which reopens on close) is left with an empty card.
+      const { overlay, clickOutside, ...surveyInlineProps } = props;
 
       render(
         withPortalContainer(

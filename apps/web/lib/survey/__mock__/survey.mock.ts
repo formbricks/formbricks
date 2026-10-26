@@ -279,6 +279,7 @@ export const mockSyncSurveyOutput: SurveyMock = {
   customHeadScripts: null,
   customHeadScriptsMode: null,
   customCss: null,
+  showConditions: null,
   ownershipInitialized: true,
   variables: [],
 };
@@ -316,6 +317,7 @@ export const mockSurveyOutput: SurveyMock = {
   customHeadScripts: null,
   customHeadScriptsMode: null,
   customCss: null,
+  showConditions: null,
   ownershipInitialized: true,
   variables: [],
 };

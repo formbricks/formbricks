@@ -1,0 +1,5 @@
+{
+  "envoyProxyImage": "docker.io/envoyproxy/envoy:distroless-v1.38.4@sha256:b28fbee81528c5b6e8857412e5e0f48ea5baa0199cf73ab611aa7f88a808eba7",
+  "gatewayChartVersion": "v1.8.4",
+  "source": "https://github.com/envoyproxy/gateway/blob/v1.8.4/api/v1alpha1/shared_types.go"
+}

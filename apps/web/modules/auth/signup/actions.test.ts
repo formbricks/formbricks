@@ -136,7 +136,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
   const baseInput = { name: "Ada", email: "Ada@Example.com", password: "Password123!", inviteToken: "" };
 
   const newCtx = (): { auditLoggingCtx: AuditLoggingCtx } => ({
-    auditLoggingCtx: { organizationId: "", userId: "", ipAddress: UNKNOWN_DATA },
+    auditLoggingCtx: { organizationId: "", userId: "", ipAddress: UNKNOWN_DATA, userAgent: "test-agent" },
   });
 
   beforeEach(() => {
@@ -374,7 +374,7 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
     inviteToken: "",
   };
   const newCtx = (): { auditLoggingCtx: AuditLoggingCtx } => ({
-    auditLoggingCtx: { organizationId: "", userId: "", ipAddress: UNKNOWN_DATA },
+    auditLoggingCtx: { organizationId: "", userId: "", ipAddress: UNKNOWN_DATA, userAgent: "test-agent" },
   });
 
   beforeEach(() => {

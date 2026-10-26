@@ -1,3 +1,5 @@
+import type { TDebugEvent } from "@/types/debug";
+
 /**
  * The SDK's outbound event bus (ENG-1846 / ENG-1814): lifecycle signals the host page can react to —
  * fire GA/GTM tags, link session replays, run frequency capping off what was actually shown, and
@@ -23,6 +25,7 @@
  * common keys in any ecommerce dataLayer. `on()` handlers receive the payload object directly.
  *
  * No PII: payloads carry ids and the `finished` boolean, never response content or scores.
+ * `formbricks_debug` is the one exception, so it reaches `on()` only, and only in debug mode.
  */
 
 /**
@@ -44,9 +47,19 @@ export interface TFormbricksEventPayloads {
    * arrival order: that event is ack-gated, so it can follow this one, or never arrive at all if the
    * response fails to save. Fires once per rendered survey. */
   formbricks_survey_closed: { surveyId: string };
+  /**
+   * Debug mode only (`?formbricksDebug=true`): the visit, and for each survey on a fired trigger
+   * whether it showed and why, with every show condition's result. The debug panel is built on it.
+   * Unlike the events above it carries the visitor's URLs and referrers, so it never goes to the
+   * dataLayer, and its shape may change between versions: use it to debug, not to build on.
+   * A new subscriber first receives what already happened on this page.
+   */
+  formbricks_debug: TDebugEvent;
 }
 
 export type TFormbricksEventName = keyof TFormbricksEventPayloads;
+/** Every event except `formbricks_debug`: the ones that also go to the dataLayer. */
+type TDataLayerEventName = Exclude<TFormbricksEventName, "formbricks_debug">;
 
 export const FORMBRICKS_EVENTS = {
   setupSuccessful: "formbricks_setup_successful",
@@ -54,7 +67,10 @@ export const FORMBRICKS_EVENTS = {
   surveyShown: "formbricks_survey_shown",
   responseSubmitted: "formbricks_response_submitted",
   surveyClosed: "formbricks_survey_closed",
-} as const satisfies Record<string, TFormbricksEventName>;
+} as const satisfies Record<string, TDataLayerEventName>;
+
+/** Kept out of `FORMBRICKS_EVENTS`, which lists the events that also go to the dataLayer. */
+export const FORMBRICKS_DEBUG_EVENT = "formbricks_debug" satisfies TFormbricksEventName;
 
 /**
  * Every key the event contract can carry, `null` where an event does not set it. The dataLayer push
@@ -129,7 +145,19 @@ const notifySubscribers = (event: TFormbricksEventName, payload: unknown): void 
   });
 };
 
-export const emitFormbricksEvent = <E extends TFormbricksEventName>(
+/**
+ * Notifies `on()` subscribers only, with no dataLayer push. For `formbricks_debug`: the dataLayer feeds
+ * the host's analytics tags, and this bus promises those no PII.
+ */
+export const notifyFormbricksSubscribers = <E extends TFormbricksEventName>(
+  event: E,
+  payload: TFormbricksEventPayloads[E]
+): void => {
+  if (typeof window === "undefined") return;
+  notifySubscribers(event, payload);
+};
+
+export const emitFormbricksEvent = <E extends TDataLayerEventName>(
   event: E,
   payload: TFormbricksEventPayloads[E]
 ): void => {

@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import type { cookies } from "next/headers";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { MainNavigation } from "@/app/(app)/workspaces/[workspaceId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/workspaces/[workspaceId]/components/TopControlBar";
@@ -14,12 +14,15 @@ import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-bann
 import { PendingDowngradeBanner } from "@/modules/ui/components/pending-downgrade-banner";
 import { TWorkspaceLayoutData } from "@/modules/workspaces/types/workspace-auth";
 
+type TCookieStore = Awaited<ReturnType<typeof cookies>>;
+
 interface WorkspaceLayoutProps {
   layoutData: TWorkspaceLayoutData;
+  // Resolved by the parent layout before the `page` authorization surface opens. Reading `cookies()`
+  // here would race a mid-render request close (ENG-3375).
+  cookieStore: TCookieStore;
   children?: React.ReactNode;
 }
-
-type TCookieStore = Awaited<ReturnType<typeof cookies>>;
 
 // Response-limit warning for Hobby (free) plan: 200 = 80% of the 250/mo cap, 250 = limit reached.
 const getResponseWarningThreshold = (
@@ -53,7 +56,7 @@ const getTrialEndingDaysRemaining = (trialEnd: string | Date, cookieStore: TCook
   return null;
 };
 
-export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutProps) => {
+export const WorkspaceLayout = async ({ layoutData, cookieStore, children }: WorkspaceLayoutProps) => {
   const t = await getTranslate();
 
   // Destructure all data from props (NO database queries)
@@ -77,10 +80,7 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
   // Hobby (free) plan only — excludes trial and paid (Pro/Scale) orgs.
   const isHobby = IS_FORMBRICKS_CLOUD && organization.billing?.stripe?.plan === "hobby";
 
-  const [organizationWorkspacesLimit, cookieStore] = await Promise.all([
-    getOrganizationWorkspacesLimit(organization.id),
-    isTrialing || isHobby ? cookies() : Promise.resolve(null),
-  ]);
+  const organizationWorkspacesLimit = await getOrganizationWorkspacesLimit(organization.id);
   const isOwnerOrManager = isOwner || isManager;
 
   // Validate that workspace permission exists for members
@@ -89,12 +89,11 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
   }
 
   // (Hobby response warning and trial-ending target mutually exclusive audiences, so no stacking.)
-  const responseWarningThreshold =
-    isHobby && cookieStore ? getResponseWarningThreshold(responseCount, cookieStore) : null;
+  const responseWarningThreshold = isHobby ? getResponseWarningThreshold(responseCount, cookieStore) : null;
 
   const trialEnd = organization.billing?.stripe?.trialEnd;
   const trialEndingDaysRemaining =
-    isTrialing && cookieStore && trialEnd ? getTrialEndingDaysRemaining(trialEnd, cookieStore) : null;
+    isTrialing && trialEnd ? getTrialEndingDaysRemaining(trialEnd, cookieStore) : null;
 
   // Countdown for the sidebar's trial banner. `isTrialing` already carries the same cloud +
   // "trialing" subscription guard the sidebar used to apply itself.

@@ -373,8 +373,8 @@ Existing one-click installations keep the database credentials in their local `d
 The update command does not regenerate or rotate them.
 
 <Warning>
-  Apart from the exact v5.4 Valkey pin migration and the port `3000` narrowing described above,
-  `./formbricks.sh update` does **not** rewrite your existing `formbricks/docker-compose.yml`. For a major migration such as Formbricks 4.x to 5.0, follow
+  Apart from the exact v5.4 Valkey pin migration, the port `3000` narrowing described above, and the IPv6
+  network setting described in [IPv6 visitors](#ipv6-visitors), `./formbricks.sh update` does **not** rewrite your existing `formbricks/docker-compose.yml`. For a major migration such as Formbricks 4.x to 5.0, follow
   the [migration guide](/self-hosting/advanced/migration#v5) first, merge the current v5 Compose changes into
   your existing deployment, confirm `HUB_API_KEY` is set, and only then run the update command. If your older
   one-click install also uses bundled MinIO for file uploads, review that storage path separately before the
@@ -396,7 +396,8 @@ The update command does not regenerate or rotate them.
 
 ### Add SpiceDB to an Existing One-Click Installation
 
-The update command intentionally preserves your customized Compose file, so it cannot add SpiceDB by itself.
+Beyond the narrow edits listed in the warning above, the update command preserves your customized Compose file, so
+it cannot add SpiceDB by itself.
 Before upgrading to a release that uses AuthZed:
 
 1. Follow the [maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade): stop writers and
@@ -499,6 +500,40 @@ docker compose restart traefik
 ```
 
 A request to `/api/auth/*` with a body over 1 MiB now gets `413 Request Entity Too Large` from Traefik.
+
+### IPv6 visitors
+
+If your domain has an AAAA record, visitors who connect over IPv6 keep their own address only when the Compose
+network has IPv6. Without it, Docker hands their connections to Traefik from its bridge gateway (such as
+`172.18.0.1`), so Formbricks sees every IPv6 visitor as that one address. They then share one rate limit, including
+the sign-in limit of 5 attempts per minute, and logs and response metadata record the gateway instead of the
+visitor.
+
+New installations and `./formbricks.sh update` add this to `formbricks/docker-compose.yml` when the server has
+IPv6 and runs Docker Engine 27.0 or later:
+
+```yaml
+networks:
+  default:
+    enable_ipv6: true
+```
+
+The update keeps the previous file as `docker-compose.yml.before-ipv6-network` and recreates the network when it
+restarts the stack. With an older Docker Engine, the script leaves the network as it is and says so: before 27.0,
+Docker cannot create the network without an IPv6 subnet you choose. Upgrade Docker Engine, then run the update
+again. If you have set `networks.default` yourself, the script leaves it alone, so add `enable_ipv6: true` to it
+by hand.
+
+To keep IPv6 off, set `enable_ipv6: false` under `networks.default` in `formbricks/docker-compose.yml`; a later update
+leaves that setting alone. If a container that is not part of Formbricks is attached to the network, the update
+cannot recreate it: it puts the previous file back, says so, and finishes the update without IPv6. Detach that
+container and run the update again.
+
+<Note>
+  This relies on Docker routing IPv6 with `ip6tables`, which is on by default from Docker Engine 27.0. If your
+  daemon runs with `"ip6tables": false` (or `--ip6tables=false`), IPv6 visitors still share one address, the
+  network's IPv6 gateway, even after this change.
+</Note>
 
 ## Stop
 

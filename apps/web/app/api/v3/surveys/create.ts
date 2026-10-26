@@ -8,6 +8,7 @@ import type { InvalidParam } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
+import { isDefaultEndingCardButtonLink } from "@/lib/survey/default-ending-card";
 import { createSurvey, getSurveyWithCustomCss } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
@@ -77,7 +78,7 @@ function getCreatedBy(authentication: TV3Authentication): string | null {
 function hasExternalUrlReferences(input: TV3CreateSurveyBody): boolean {
   const hasExternalEndingLink = input.endings.some((ending) => {
     if (ending.type === "endScreen") {
-      return Boolean(ending.buttonLink);
+      return Boolean(ending.buttonLink) && !isDefaultEndingCardButtonLink(ending.buttonLink);
     }
 
     return Boolean(ending.url);

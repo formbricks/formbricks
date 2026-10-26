@@ -108,7 +108,9 @@ export const ZAuditLogEventSchema = z.object({
   status: ZAuditStatus,
   timestamp: z.iso.datetime(),
   organizationId: z.string(),
-  ipAddress: z.string().optional(), // Not using the .ip() here because if we don't enabled it we want to put UNKNOWN_DATA string, to keep the same pattern as the other fields
+  // Explicit sentinels cover capture opt-out, system events, and untrusted forwarding chains.
+  ipAddress: z.string(),
+  userAgent: z.string(),
   changes: z.record(z.string(), z.any()).optional(),
   eventId: z.string().optional(),
   apiUrl: z.url().optional(),
