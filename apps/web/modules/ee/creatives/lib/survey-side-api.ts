@@ -1,7 +1,6 @@
 import { queryOptions } from "@tanstack/react-query";
-import type { CreativeResourceZodType } from "@formbricks/api-v3-schemas";
 import { readCreativesApiData, requestCreativesApi } from "./creatives-api-client";
-import { ACTIVE_CREATIVES_LIMIT } from "./list-api";
+import { ACTIVE_CREATIVES_LIMIT, type TCreativeListPage } from "./list-api";
 import type { TOpenedSurveyFacts, TSurveyLinkedCreative } from "./survey-side";
 
 // The survey screens' calls to `/api/v3/creatives`: the creatives that open one survey, and pausing
@@ -13,8 +12,15 @@ export const surveyLinkedCreativesKeys = {
 };
 
 /**
- * The survey's linked creatives, by name: the list leaves archived creatives out by default. One page
- * at the API's ceiling; no survey is expected to be opened by more.
+ * The most pages of linked creatives one read follows: 40 × 250 = 10 000 creatives on one survey, the
+ * ceiling the survey-side unlink keeps too (`MAX_UNLINK_PAGES`). A survey opened by more makes the read
+ * fail rather than return some of them: a resume that keeps its creatives paused must see every one.
+ */
+export const MAX_LINKED_CREATIVE_PAGES = 40;
+
+/**
+ * The survey's linked creatives, by name: the list leaves archived creatives out by default. Every page,
+ * so a status change names, and a resume keeps paused, all of them rather than the first page's.
  */
 export const listSurveyLinkedCreatives = async ({
   workspaceId,
@@ -25,13 +31,24 @@ export const listSurveyLinkedCreatives = async ({
   surveyId: string;
   signal?: AbortSignal;
 }): Promise<TSurveyLinkedCreative[]> => {
-  const query = new URLSearchParams({
-    workspaceId,
-    surveyId,
-    limit: String(ACTIVE_CREATIVES_LIMIT),
-    sortBy: "name",
-  });
-  return readCreativesApiData<CreativeResourceZodType[]>(await requestCreativesApi({ query, signal }));
+  const creatives: TSurveyLinkedCreative[] = [];
+  let cursor: string | null = null;
+  for (let page = 0; page < MAX_LINKED_CREATIVE_PAGES; page++) {
+    const query = new URLSearchParams({
+      workspaceId,
+      surveyId,
+      limit: String(ACTIVE_CREATIVES_LIMIT),
+      sortBy: "name",
+    });
+    if (cursor) query.set("cursor", cursor);
+    const { data, meta } = (await (await requestCreativesApi({ query, signal })).json()) as TCreativeListPage;
+    creatives.push(...data);
+    if (!meta.nextCursor) return creatives;
+    cursor = meta.nextCursor;
+  }
+  throw new Error(
+    `Survey ${surveyId} is opened by more than ${MAX_LINKED_CREATIVE_PAGES * ACTIVE_CREATIVES_LIMIT} creatives`
+  );
 };
 
 export const surveyLinkedCreativesQuery = ({
