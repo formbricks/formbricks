@@ -46,6 +46,15 @@ import { CsvImportModal } from "../sources/components/csv-import-modal";
 import { FeedbackRecordFormDrawer } from "./feedback-record-form-drawer";
 import { TranslatedBadge } from "./translated-badge";
 
+// A short month keeps the date and time readable in the column; the tooltip carries the long form.
+const COMPACT_DATE_TIME: Intl.DateTimeFormatOptions = {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+};
+
 // Must not exceed the getFeedbackRecordContactsAction input cap (`userIds` is `.max(1000)`).
 const CONTACT_RESOLVE_BATCH_SIZE = 1000;
 const RECORD_COLUMN_IDS = [
@@ -298,12 +307,12 @@ export const FeedbackRecordsTable = ({
       {
         id: "collectedAt",
         header: t("workspace.unify.collected_at"),
-        size: 250,
+        size: 225,
         cell: ({ row }) => {
-          const collectedAt = formatDateTimeForDisplay(new Date(row.original.collected_at), locale);
+          const date = new Date(row.original.collected_at);
           return (
-            <span className="truncate text-slate-500" title={collectedAt}>
-              {collectedAt}
+            <span className="truncate text-slate-500" title={formatDateTimeForDisplay(date, locale)}>
+              {formatDateTimeForDisplay(date, locale, COMPACT_DATE_TIME)}
             </span>
           );
         },
@@ -377,7 +386,7 @@ export const FeedbackRecordsTable = ({
       {
         id: "userId",
         header: t("workspace.unify.user_identifier"),
-        size: 120,
+        size: 100,
         cell: ({ row }) => {
           const record = row.original;
           const contactId = record.user_id ? contactIdByUserId[record.user_id] : undefined;
@@ -549,7 +558,7 @@ export const FeedbackRecordsTable = ({
           <ListTable
             table={table}
             testId="feedback-records-table"
-            minWidth={1200}
+            minWidth={1040}
             isLoading={isLoading}
             hasFilters={hasFilters}
             onClearFilters={tableState.clearFilters}
