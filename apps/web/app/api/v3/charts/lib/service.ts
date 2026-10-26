@@ -35,6 +35,13 @@ export const selectChartResource = {
 export type TChartResourceRow = Prisma.ChartGetPayload<{ select: typeof selectChartResource }>;
 
 /** One chart with what its resource embeds, or `null`. The caller authorizes `workspaceId` before use. */
+/** Whether a Feedback Dataset is still assigned to a workspace; an unassigned one grants nobody access there. */
+export const isFeedbackDatasetAssigned = async (datasetId: string, workspaceId: string): Promise<boolean> =>
+  (await prisma.feedbackDirectoryWorkspace.findUnique({
+    where: { feedbackDirectoryId_workspaceId: { feedbackDirectoryId: datasetId, workspaceId } },
+    select: { workspaceId: true },
+  })) !== null;
+
 export const getChartResourceRow = (chartId: string): Promise<TChartResourceRow | null> =>
   prisma.chart.findUnique({ where: { id: chartId }, select: selectChartResource });
 

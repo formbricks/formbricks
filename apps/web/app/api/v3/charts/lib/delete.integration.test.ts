@@ -105,12 +105,12 @@ describe("DELETE /api/v3/charts/{chartId}", () => {
     expect(await prisma.chart.findUnique({ where: { id: chart.id } })).not.toBeNull();
   });
 
-  test("needs write access to the chart's Feedback Dataset too, even for the organization owner", async () => {
+  test("lets a chart whose dataset is no longer assigned to its workspace be cleaned up", async () => {
+    // Nobody can hold that dataset in this workspace any more, so no dataset grant could ever allow this.
     const chart = await createChart("On an unassigned dataset", fixture.unassignedDatasetId);
-    expect(
-      await outcomeOf(await deleteV3Chart({ chartId: chart.id, ...context(sessionOf(fixture.users.owner)) }))
-    ).toEqual({ status: 403, code: "forbidden" });
-    expect(await prisma.chart.findUnique({ where: { id: chart.id } })).not.toBeNull();
+    const response = await deleteV3Chart({ chartId: chart.id, ...context(sessionOf(fixture.users.owner)) });
+    expect(response.status).toBe(204);
+    expect(await prisma.chart.findUnique({ where: { id: chart.id } })).toBeNull();
   });
 
   test("never cascades away a widget added at the same moment", async () => {

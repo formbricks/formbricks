@@ -34,6 +34,7 @@ import {
   type TChartWrite,
   createChartRow,
   deleteChartRow,
+  isFeedbackDatasetAssigned,
   listChartResourceRows,
   updateChartRow,
 } from "./service";
@@ -247,8 +248,10 @@ const chartUpdateOf = (
 /**
  * `PATCH /api/v3/charts/{chartId}` → 200 `{ data }`.
  *
- * Needs write access to the chart's workspace and its Feedback Dataset. The chart may sit on several
- * dashboards, and the edit shows on every one of them — `dashboards` in the response names them.
+ * Needs write access to the chart's workspace, and to its Feedback Dataset too when the edit changes the
+ * query or the type — what the chart reads. A rename or new display settings touch no data. The chart may
+ * sit on several dashboards, and the edit shows on every one of them — `dashboards` in the response names
+ * them.
  */
 export async function updateV3Chart({
   chartId,
@@ -260,8 +263,9 @@ export async function updateV3Chart({
   const log = logger.withContext({ requestId, chartId });
 
   try {
+    const changesWhatItReads = body.query !== undefined || body.type !== undefined;
     const loaded = await loadAuthorizedChart(chartId, "readWrite", context, {
-      datasetPermission: "readWrite",
+      datasetPermission: changesWhatItReads ? "readWrite" : undefined,
     });
     if (loaded instanceof Response) return loaded;
 
@@ -307,7 +311,8 @@ export async function updateV3Chart({
 /**
  * `DELETE /api/v3/charts/{chartId}` → 204 for a chart on no dashboard. A chart still on one answers 409
  * `chart_in_use` naming them in `details.dashboards`; there is no force option. Needs write access to the
- * chart's workspace and its Feedback Dataset.
+ * chart's workspace and, while the dataset is still assigned to that workspace, to its Feedback Dataset: a
+ * chart whose dataset was unassigned can still be cleaned up, since nobody can be granted that dataset there.
  */
 export async function deleteV3Chart({
   chartId,
@@ -318,10 +323,19 @@ export async function deleteV3Chart({
   const log = logger.withContext({ requestId, chartId });
 
   try {
-    const loaded = await loadAuthorizedChart(chartId, "readWrite", context, {
-      datasetPermission: "readWrite",
-    });
+    const loaded = await loadAuthorizedChart(chartId, "readWrite", context);
     if (loaded instanceof Response) return loaded;
+    if (await isFeedbackDatasetAssigned(loaded.row.feedbackDirectoryId, loaded.row.workspaceId)) {
+      const refused = await refuseUnlessFeedbackDatasetAccess(
+        context.authentication,
+        loaded.access,
+        loaded.row.feedbackDirectoryId,
+        "readWrite",
+        requestId,
+        instance
+      );
+      if (refused) return refused;
+    }
 
     const result = await deleteChartRow(chartId);
     if (result.kind === "inUse") return problemChartInUse(requestId, result.dashboards, instance);

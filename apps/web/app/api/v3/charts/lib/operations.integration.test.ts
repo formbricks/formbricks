@@ -401,7 +401,13 @@ describe("PATCH /api/v3/charts/{chartId}", () => {
     );
   });
 
-  test("needs write access to the chart's Feedback Dataset too, even for the organization owner", async () => {
+  test("renames a chart whose dataset was unassigned: a rename touches no data", async () => {
+    const renamed = await update(sessionOf(fixture.users.owner), charts.other, { name: "50% done, renamed" });
+    expect(renamed.status).toBe(200);
+    await update(sessionOf(fixture.users.owner), charts.other, { name: "50% done" });
+  });
+
+  test("needs write access to the chart's Feedback Dataset to change its query, even for the organization owner", async () => {
     expect(
       await outcomeOf(
         await update(sessionOf(fixture.users.owner), charts.other, {
