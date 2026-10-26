@@ -109,6 +109,9 @@ export function useChartDialog({
     const load = async () => {
       setIsLoadingChart(true);
       setChartLoadError(null);
+      // Set again once this chart's data loads: until then there is nothing to compare a save with, so it
+      // sends everything rather than another chart's type and query.
+      loadedChartRef.current = null;
 
       try {
         const chart: TChart = initialChart?.id === chartId ? initialChart : await getChart(chartId);
@@ -333,6 +336,7 @@ export function useChartDialog({
     setChartName("");
     setSavedChartName("");
     lastSuggestedNameRef.current = null;
+    loadedChartRef.current = null;
     setSelectedChartType(undefined);
     setCurrentChartId(undefined);
     setChartConfig({});

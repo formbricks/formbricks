@@ -222,6 +222,62 @@ describe("useChartDialog", () => {
     });
   });
 
+  describe("saving an edited chart", () => {
+    const chartOf = (id: string, type: string) => ({
+      id,
+      name: `Chart ${id}`,
+      type,
+      config: {},
+      feedbackDirectoryId: DIRECTORY_ID,
+    });
+    const loadedQuery = { measures: ["FeedbackRecords.count"] };
+
+    test("sends the type and query only when they changed from the chart as loaded", async () => {
+      mockGetChart.mockResolvedValue(chartOf(CHART_ID, "bar"));
+      mockGetChartData.mockResolvedValue({ query: loadedQuery, rows: [] });
+      mockUpdateChart.mockResolvedValue({ id: CHART_ID });
+
+      const { result } = renderHook(() => useChartDialog({ ...baseProps, chartId: CHART_ID }));
+      await waitFor(() => expect(result.current.chartData).not.toBeNull());
+      act(() => result.current.setChartName("Renamed"));
+      await act(async () => {
+        await result.current.handleSaveChart();
+      });
+
+      expect(mockUpdateChart.mock.calls[0][1]).toEqual({ name: "Renamed", config: {} });
+    });
+
+    test("never compares a chart with the one opened before it, whose data loaded when its own did not", async () => {
+      mockGetChart.mockImplementation(async (id: string) => chartOf(id, id === CHART_ID ? "area" : "bar"));
+      mockGetChartData.mockImplementation(async ({ chartId }: { chartId: string }) => {
+        if (chartId === CHART_ID) return { query: loadedQuery, rows: [] };
+        throw new Error("no access to its dataset");
+      });
+      mockUpdateChart.mockResolvedValue({ id: "chart-2" });
+
+      let chartId = CHART_ID;
+      const { result, rerender } = renderHook(() => useChartDialog({ ...baseProps, chartId }));
+      await waitFor(() => expect(result.current.chartData).not.toBeNull());
+
+      chartId = "chart-2";
+      rerender();
+      await waitFor(() => expect(mockGetChartData).toHaveBeenCalledTimes(2));
+      // The user builds the first chart's area query again for the second chart, a bar, and saves.
+      await act(async () => {
+        result.current.handleChartGenerated({ query: loadedQuery, chartType: "area", data: [] });
+        result.current.setChartName("Second");
+      });
+      await act(async () => {
+        await result.current.handleSaveChart();
+      });
+
+      expect(mockUpdateChart.mock.calls.at(-1)).toEqual([
+        "chart-2",
+        expect.objectContaining({ type: "area", query: loadedQuery }),
+      ]);
+    });
+  });
+
   describe("closing clears the session", () => {
     // A chart left behind after a close is not just stale data: the next open renders one frame
     // still carrying it, and the unsaved-changes baseline captured on that frame concludes a fresh,
