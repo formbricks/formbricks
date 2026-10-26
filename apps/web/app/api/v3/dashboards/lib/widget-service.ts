@@ -226,7 +226,7 @@ const writeWidgetPlaces = async (
   if (widgets.length === 0) return;
   await tx.$executeRaw`
     UPDATE "DashboardWidget" AS w
-    SET "layout" = v."layout"::jsonb, "order" = COALESCE(v."order", w."order"), "updated_at" = NOW()
+    SET "layout" = v."layout"::jsonb, "order" = COALESCE(v."order", w."order"), "updated_at" = NOW() AT TIME ZONE 'UTC'
     FROM unnest(
       ${widgets.map((widget) => widget.widgetId)}::text[],
       ${widgets.map((widget) => JSON.stringify(widget.layout))}::text[],
