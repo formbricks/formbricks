@@ -6,9 +6,9 @@ icon: "server"
 
 ## System requirements
 
-Formbricks is not a single container. The v6 baseline runs eight long-running services — the app,
-Formbricks Hub (API and worker), Cube, PostgreSQL, Redis/Valkey, SpiceDB and its operator — so size the
-host for the whole stack rather than for the app alone.
+Size the host for the whole Formbricks stack: the app, Hub API and worker, Cube, PostgreSQL,
+Redis/Valkey and SpiceDB. Kubernetes also uses a SpiceDB operator for chart-managed authorization.
+See [deployment components](/self-hosting/deployment-components) for the image inventory and managed-service options.
 
 | Deployment                | CPU       | Memory    | Disk      |
 | ------------------------- | --------- | --------- | --------- |
@@ -41,9 +41,9 @@ carry an uptime SLA.
 For Kubernetes, start at 3 nodes of at least 4 vCPU and 8 GB, autoscaling to 6, with PostgreSQL, Redis and
 object storage as managed services outside the cluster. Capacity is deliberately provider-neutral: a 2 vCPU
 node cannot hold the app's 1 vCPU request alongside the platform reserve, some providers exclude burstable
-instance families from system node pools, and a free control-plane tier carries no uptime SLA. Nothing is
-highly available out of the box — every replica count in the chart ships as `1`. Object storage must speak
-the S3 API, so a service without one, such as Azure Blob Storage, needs an
+instance families from system node pools, and a free control-plane tier carries no uptime SLA. Most chart
+workloads start with one replica; SpiceDB starts with two. Configure availability for the whole stack.
+Object storage must speak the S3 API, so a service without one, such as Azure Blob Storage, needs an
 [S3-compatible gateway](/self-hosting/configuration/file-uploads) in front of it. The
 [Kubernetes deployment guide](/self-hosting/setup/kubernetes) has the replica, autoscaling and
 managed-service settings.

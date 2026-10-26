@@ -7,6 +7,9 @@ icon: "circle-nodes"
 Deploy Formbricks on Kubernetes using the current OCI Helm chart published from the `charts/formbricks`
 directory in the Formbricks repository.
 
+See [deployment components](/self-hosting/deployment-components) for required services, managed alternatives
+and the release-specific image inventory.
+
 <Info>
   Formbricks v5 self-hosting expects Hub to be part of the runtime. The chart handles that by default. Use the
   [migration guide](/self-hosting/advanced/migration#v5) before upgrading an existing 4.x deployment.
@@ -179,7 +182,12 @@ The chart supports these edge patterns for the v5-covered routes:
 - **Equivalent external edge protection**: keep using your platform's own ingress or gateway layer if it already
   provides equivalent rate-limiting coverage
 
-If you use the chart-managed Envoy rate-limiting path, enable a dedicated backend with:
+If you use the chart-managed Envoy rate-limiting path, configure a dedicated Redis/Valkey backend:
+
+<Warning>
+  Chart 6.1.0's bundled Envoy Redis images are unavailable upstream. Use external Redis/Valkey instead;
+  the example below keeps the bundled backend disabled.
+</Warning>
 
 ```yaml
 envoy:
@@ -188,13 +196,22 @@ envoy:
     enabled: true
   crds:
     enabled: true
+  config:
+    envoyGateway:
+      rateLimit:
+        backend:
+          type: Redis
+          redis:
+            url: "redis.example.internal:6379"
 
 envoyRedis:
-  enabled: true
+  enabled: false
 ```
 
-This installs Envoy Gateway 1.8.4 with Gateway API 1.5.1 and keeps Envoy rate-limiting state separate from the
-application's own Redis traffic.
+Replace the address with your dedicated backend. Set its `maxmemory-policy` to `noeviction` and configure
+authentication/TLS as needed.
+This installs Envoy Gateway 1.8.4 with Gateway API 1.5.1; the backend keeps rate-limiting state separate from
+the application's own Redis traffic.
 
 If your platform already manages compatible Gateway API CRDs, install only the matching Envoy Gateway CRDs:
 
