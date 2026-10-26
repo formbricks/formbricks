@@ -95,6 +95,7 @@ const TranslationFields = ({
               excludedToolbarItems={BANNER_EXCLUDED_TOOLBAR_ITEMS}
               isExternalUrlsAllowed
               placeholder={defaults.message.map((run) => run.text).join("")}
+              keepEscapedText
               getText={() => bannerRunsToHtml(translation.message)}
               setText={(html) => update({ message: bannerHtmlToRuns(html) })}
             />

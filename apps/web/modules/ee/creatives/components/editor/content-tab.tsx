@@ -380,6 +380,7 @@ const BannerContent = ({
             isExternalUrlsAllowed
             placeholder={t("workspace.creatives.editor.message_placeholder")}
             isInvalid={issues.includes("message_missing")}
+            keepEscapedText
             getText={() => bannerRunsToHtml(content.message)}
             setText={(html) => setForm(updateBanner({ message: bannerHtmlToRuns(html) }))}
           />

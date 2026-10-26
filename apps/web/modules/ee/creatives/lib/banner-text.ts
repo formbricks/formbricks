@@ -6,7 +6,8 @@ import type { TCreativeTextRun } from "./editor-form";
  * runs, never HTML (the v3 `CreativeTextRun`); the editor reuses the shared rich-text editor, which reads
  * and writes HTML. These two functions are the only crossing: runs become minimal markup the editor
  * imports, and whatever markup the editor exports is read back into runs, keeping only bold, italic,
- * underline and links the banner may carry. Paragraphs and line breaks become `\n`.
+ * underline and links the banner may carry. Paragraphs and line breaks become `\n`. The exported markup
+ * must keep its text escaped (the editor's `keepEscapedText`), or a `<` someone typed is read as a tag.
  */
 
 type TRunFormat = Omit<TCreativeTextRun, "text">;

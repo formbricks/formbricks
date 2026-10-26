@@ -1,5 +1,9 @@
 // @vitest-environment jsdom
+import { $generateHtmlFromNodes } from "@lexical/html";
+import { $createParagraphNode, $createTextNode, $getRoot, createEditor } from "lexical";
 import { describe, expect, test } from "vitest";
+import { exampleTheme } from "@/modules/ui/components/editor/lib/example-theme";
+import { toEditorOutputHtml } from "@/modules/ui/components/editor/lib/exported-html";
 import { bannerHtmlToRuns, bannerRunsToHtml, getBannerPlainText } from "./banner-text";
 
 // What the shared rich-text editor (Lexical) hands back for "Down tonight. **Back at 4** [Details](…)"
@@ -16,6 +20,32 @@ describe("bannerHtmlToRuns", () => {
       { text: "Down tonight. " },
       { text: "Back at 4", bold: true },
       { text: "Details", underline: true, href: "https://example.com/status" },
+    ]);
+  });
+
+  test("keeps the < and > someone typed as text, from the markup the banner's editor hands back", () => {
+    // The shared editor's own export (Lexical, with its theme) of two typed paragraphs, as `setText`
+    // gets it with `keepEscapedText`, the option the banner's editors set.
+    const editor = createEditor({
+      namespace: "banner",
+      theme: exampleTheme,
+      onError: (error) => {
+        throw error;
+      },
+    });
+    editor.update(
+      () => {
+        $getRoot().append(
+          $createParagraphNode().append($createTextNode("Contact <support@example.com>")),
+          $createParagraphNode().append($createTextNode("Use <b>literal tags</b>"))
+        );
+      },
+      { discrete: true }
+    );
+    const exported = editor.getEditorState().read(() => $generateHtmlFromNodes(editor));
+
+    expect(bannerHtmlToRuns(toEditorOutputHtml(exported, { keepEscapedText: true }))).toEqual([
+      { text: "Contact <support@example.com>\nUse <b>literal tags</b>" },
     ]);
   });
 
