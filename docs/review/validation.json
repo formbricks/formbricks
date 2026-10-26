@@ -1,0 +1,357 @@
+{
+  "checks": {
+    "anchors": "267 public MDX parsed with Mintlify heading generation; no unresolved local fragments",
+    "build": "passed: cd docs && NODE_USE_ENV_PROXY=1 npx mint@4.2.1126 validate",
+    "formatting": "passed for changed JSON; MDX follows repository formatter exclusions",
+    "isolated_failure": "lib/utils/validate-webhook-url.toctou.test.ts:36 times out at 5000ms fetching a reserved .invalid hostname; reproduced in isolation. Source unchanged by this PR.",
+    "links": "passed: no broken links",
+    "mintlify_version": "4.2.1126",
+    "unit_suite": "pnpm test: 30 successful tasks; web task fails one DNS baseline test. Web: 16731 passed, 4 skipped, 1 failed."
+  },
+  "coverage": {
+    "publication": "No merge, live publication, live search/sitemap/LLM-index verification performed",
+    "runtime": "No infrastructure deployment, database upgrade or restore rehearsal performed",
+    "structural": "244 baseline and 267 resulting public MDX pages; targeted semantic review only"
+  },
+  "evidence": [
+    {
+      "claim": "Single-use signing boundary is 6.1, not 6.0",
+      "source": "c84c3fa415 in release tag ancestry; absent from 6.0 tags, present in 6.1.0"
+    },
+    {
+      "claim": "Server appearance API first present among inspected tags in 6.1.0",
+      "source": "packages/js-core/src/index.ts at 6.0.0, 6.0.2, 6.0.4 and 6.1.0"
+    },
+    {
+      "claim": "Published JS 5.1.0 does not export setAppearance",
+      "source": "npm @formbricks/js tarball declaration inspection; compared 5.0.0 and 5.1.0"
+    },
+    {
+      "claim": "React Native 3.3.0 exports appearance and custom CSS support; 3.2.0 includes Embedded Data",
+      "source": "npm @formbricks/react-native 3.2.0 and 3.3.0 tarball inspection"
+    },
+    {
+      "claim": "LOG_LEVEL defaults are info/development, warn/production, error/build",
+      "source": "packages/logger/src/logger.ts"
+    },
+    {
+      "claim": "SAML URL uses pg TLS/CA connection options; ACS derives from WEBAPP_URL",
+      "source": "apps/web/modules/ee/auth/saml/lib/jackson.ts and installed pg-connection-string parser; no live TLS connection tested"
+    },
+    {
+      "claim": "v1 key test endpoint and response shape",
+      "source": "apps/web/app/api/v1/management/me/route.ts"
+    },
+    {
+      "claim": "Follow-up date is an announcement, not a runtime shutdown gate",
+      "source": "apps/web/modules/survey/follow-ups/lib/deprecation.ts"
+    },
+    {
+      "claim": "Permission datastore ownership, secret delivery and backup responsibility cross-checked",
+      "source": "formbricks/infra: docs/AUTHZED-DATABASES.md, platform/core-eks/README.md and core-data backup configuration. Private deployment values intentionally omitted."
+    },
+    {
+      "claim": "Task-oriented entry, deployment recipe and release-delta structure",
+      "source": "https://docs.gitlab.com/update/ and https://docs.nextcloud.com/server/stable/admin_manual/maintenance/upgrade.html"
+    }
+  ],
+  "open_review_items": [
+    "Operational owner: validate procedures against the intended enterprise topology and runtime upgrade/restore evidence.",
+    "Product/release owners: verify minimum published iOS, Android and Flutter feature versions.",
+    "Product owner: confirm Community follow-up replacement entitlement and a version-specific removal path.",
+    "Compatibility owner: approve the explicit patch/minor contract and historical 6.1 exceptions; enforcement remains with existing release-authoring work."
+  ],
+  "preview": [
+    {
+      "heading": "Upgrade Formbricks",
+      "port": 3001,
+      "route": "self-hosting/advanced/upgrade",
+      "status": 200
+    },
+    {
+      "heading": "Upgrading Formbricks",
+      "port": 3000,
+      "route": "self-hosting/advanced/upgrade",
+      "status": 200
+    },
+    {
+      "heading": "Upgrade Kubernetes",
+      "port": 3000,
+      "route": "self-hosting/upgrade/kubernetes",
+      "status": 200
+    },
+    {
+      "heading": "Integrate with Formbricks",
+      "port": 3000,
+      "route": "integrate/overview",
+      "status": 200
+    },
+    {
+      "mobileOverflow": false
+    },
+    {
+      "heading": "Version-specific upgrade notes",
+      "route": "self-hosting/advanced/migration",
+      "status": 200
+    },
+    {
+      "heading": "Upgrade to 6.0",
+      "route": "self-hosting/upgrade/versions/6.0",
+      "status": 200
+    },
+    {
+      "heading": "Upgrade to 6.1",
+      "route": "self-hosting/upgrade/versions/6.1",
+      "status": 200
+    },
+    {
+      "heading": "Regenerate encrypted single-use links",
+      "route": "self-hosting/upgrade/versions/6.1-single-use-links",
+      "status": 200
+    },
+    {
+      "heading": "Upgrade to 5.4",
+      "route": "self-hosting/upgrade/versions/5.4",
+      "status": 200
+    },
+    {
+      "heading": "Prepare permissions",
+      "route": "self-hosting/upgrade/prepare",
+      "status": 200
+    },
+    {
+      "heading": "Backup and restore",
+      "route": "self-hosting/operate/backup-restore",
+      "status": 200
+    },
+    {
+      "heading": "Components and ownership",
+      "route": "self-hosting/operate/components",
+      "status": 200
+    },
+    {
+      "heading": "Upgrade Docker and one-click",
+      "route": "self-hosting/upgrade/docker",
+      "status": 200
+    },
+    {
+      "heading": "Troubleshoot an upgrade",
+      "route": "self-hosting/upgrade/troubleshooting",
+      "status": 200
+    },
+    {
+      "heading": "Test an API key",
+      "route": "api-reference/test-key",
+      "status": 200
+    },
+    {
+      "heading": "Release and Maintenance Policy",
+      "route": "self-hosting/advanced/release-maintenance-policy",
+      "status": 200
+    },
+    {
+      "legacyAnchors": 124,
+      "missing": []
+    },
+    {
+      "expected": "/docs/platform/features/integrations/n8n",
+      "location": "/docs/platform/features/integrations/n8n",
+      "redirect": "/docs/self-hosting/configuration/integrations/n8n",
+      "status": 307
+    },
+    {
+      "expected": "/platform/features/integrations/n8n",
+      "location": "/platform/features/integrations/n8n",
+      "redirect": "/self-hosting/configuration/integrations/n8n",
+      "status": 307
+    },
+    {
+      "expected": "/docs/platform/features/integrations/zapier",
+      "location": "/docs/platform/features/integrations/zapier",
+      "redirect": "/docs/self-hosting/configuration/integrations/zapier",
+      "status": 307
+    },
+    {
+      "expected": "/platform/features/integrations/zapier",
+      "location": "/platform/features/integrations/zapier",
+      "redirect": "/self-hosting/configuration/integrations/zapier",
+      "status": 307
+    },
+    {
+      "expected": "/docs/platform/features/integrations/activepieces",
+      "location": "/docs/platform/features/integrations/activepieces",
+      "redirect": "/docs/self-hosting/configuration/integrations/activepieces",
+      "status": 307
+    },
+    {
+      "expected": "/platform/features/integrations/activepieces",
+      "location": "/platform/features/integrations/activepieces",
+      "redirect": "/self-hosting/configuration/integrations/activepieces",
+      "status": 307
+    },
+    {
+      "expected": "/docs/platform/features/styling-theme",
+      "location": "/docs/platform/features/styling-theme",
+      "redirect": "/docs/self-hosting/advanced/enterprise-features/hide-powered-by-formbricks",
+      "status": 307
+    },
+    {
+      "expected": "/platform/features/styling-theme",
+      "location": "/platform/features/styling-theme",
+      "redirect": "/self-hosting/advanced/enterprise-features/hide-powered-by-formbricks",
+      "status": 307
+    },
+    {
+      "expected": "/docs/platform/features/email-customization",
+      "location": "/docs/platform/features/email-customization",
+      "redirect": "/docs/self-hosting/advanced/enterprise-features/whitelabel-email-follow-ups",
+      "status": 307
+    },
+    {
+      "expected": "/platform/features/email-customization",
+      "location": "/platform/features/email-customization",
+      "redirect": "/self-hosting/advanced/enterprise-features/whitelabel-email-follow-ups",
+      "status": 307
+    },
+    {
+      "expected": "/docs/platform/features/user-management",
+      "location": "/docs/platform/features/user-management",
+      "redirect": "/docs/self-hosting/advanced/enterprise-features/team-access",
+      "status": 307
+    },
+    {
+      "expected": "/platform/features/user-management",
+      "location": "/platform/features/user-management",
+      "redirect": "/self-hosting/advanced/enterprise-features/team-access",
+      "status": 307
+    },
+    {
+      "expected": "/docs/platform/features/contacts",
+      "location": "/docs/platform/features/contacts",
+      "redirect": "/docs/self-hosting/advanced/enterprise-features/contact-management-segments",
+      "status": 307
+    },
+    {
+      "expected": "/platform/features/contacts",
+      "location": "/platform/features/contacts",
+      "redirect": "/self-hosting/advanced/enterprise-features/contact-management-segments",
+      "status": 307
+    },
+    {
+      "expected": "/docs/self-hosting/configuration/auth-sso/open-id-connect",
+      "location": "/docs/self-hosting/configuration/auth-sso/open-id-connect",
+      "redirect": "/docs/self-hosting/advanced/enterprise-features/oidc-sso",
+      "status": 307
+    },
+    {
+      "expected": "/self-hosting/configuration/auth-sso/open-id-connect",
+      "location": "/self-hosting/configuration/auth-sso/open-id-connect",
+      "redirect": "/self-hosting/advanced/enterprise-features/oidc-sso",
+      "status": 307
+    },
+    {
+      "expected": "/docs/self-hosting/configuration/auth-sso/saml-sso",
+      "location": "/docs/self-hosting/configuration/auth-sso/saml-sso",
+      "redirect": "/docs/self-hosting/advanced/enterprise-features/saml-sso",
+      "status": 307
+    },
+    {
+      "expected": "/self-hosting/configuration/auth-sso/saml-sso",
+      "location": "/self-hosting/configuration/auth-sso/saml-sso",
+      "redirect": "/self-hosting/advanced/enterprise-features/saml-sso",
+      "status": 307
+    },
+    {
+      "expected": "/docs/unify-feedback/overview",
+      "location": "/docs/unify-feedback/overview",
+      "redirect": "/docs/self-hosting/advanced/enterprise-features/unify-feedback",
+      "status": 307
+    },
+    {
+      "expected": "/unify-feedback/overview",
+      "location": "/unify-feedback/overview",
+      "redirect": "/self-hosting/advanced/enterprise-features/unify-feedback",
+      "status": 307
+    },
+    {
+      "expected": "/docs/unify-feedback/dashboards-charts",
+      "location": "/docs/unify-feedback/dashboards-charts",
+      "redirect": "/docs/self-hosting/advanced/enterprise-features/dashboards",
+      "status": 307
+    },
+    {
+      "expected": "/unify-feedback/dashboards-charts",
+      "location": "/unify-feedback/dashboards-charts",
+      "redirect": "/self-hosting/advanced/enterprise-features/dashboards",
+      "status": 307
+    },
+    {
+      "expected": "/docs/self-hosting/configuration/ai-features",
+      "location": "/docs/self-hosting/configuration/ai-features",
+      "redirect": "/docs/self-hosting/advanced/enterprise-features/ai-features",
+      "status": 307
+    },
+    {
+      "expected": "/self-hosting/configuration/ai-features",
+      "location": "/self-hosting/configuration/ai-features",
+      "redirect": "/self-hosting/advanced/enterprise-features/ai-features",
+      "status": 307
+    },
+    {
+      "expected": "/docs/workflows/overview",
+      "location": "/docs/workflows/overview",
+      "redirect": "/docs/self-hosting/advanced/enterprise-features/workflows",
+      "status": 307
+    },
+    {
+      "expected": "/workflows/overview",
+      "location": "/workflows/overview",
+      "redirect": "/self-hosting/advanced/enterprise-features/workflows",
+      "status": 307
+    }
+  ],
+  "release_source_checks": [
+    {
+      "expected": "formbricks-authzed-prepare",
+      "found": true,
+      "path": "apps/web/Dockerfile",
+      "release": "6.1.0"
+    },
+    {
+      "expected": "migrationAcknowledged",
+      "found": true,
+      "path": "charts/formbricks/values.yaml",
+      "release": "6.1.0"
+    },
+    {
+      "expected": "authzed-ops",
+      "found": true,
+      "path": "docker/docker-compose.yml",
+      "release": "6.1.0"
+    },
+    {
+      "expected": "hub-migrate",
+      "found": true,
+      "path": "docker/docker-compose.yml",
+      "release": "6.1.0"
+    },
+    {
+      "expected": "ghcr.io/formbricks/cube",
+      "found": true,
+      "path": "docker/docker-compose.yml",
+      "release": "6.0.2"
+    },
+    {
+      "expected": "ghcr.io/formbricks/cube",
+      "found": true,
+      "path": "docker/docker-compose.yml",
+      "release": "5.4.5"
+    },
+    {
+      "expected": "before-loopback-port",
+      "found": true,
+      "path": "docker/formbricks.sh",
+      "release": "6.1.1"
+    }
+  ]
+}

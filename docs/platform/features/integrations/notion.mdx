@@ -6,7 +6,7 @@ icon: "book"
 
 <Note>
   If you are on a self-hosted instance, you will need to configure this integration separately. Please follow
-  the guides [here](/self-hosting/configuration/integrations) to configure integrations on your self-hosted
+  the [Notion operator guide](/self-hosting/configuration/integrations/notion) to configure integrations on your self-hosted
   instance.
 </Note>
 
@@ -47,39 +47,16 @@ Congratulations! You have successfully linked a Notion database with Formbricks.
 
 ## Setup in self-hosted Formbricks
 
-Enabling the Notion Integration in a self-hosted environment requires a setup using Notion account and changing the environment variables of your Formbricks instance.
-
-1. Sign up for a [Notion](https://www.notion.so/) account, if you don't have one already.
-
-2. Go to the [my integrations](https://www.notion.so/my-integrations) page and click on **New integration**.
-
-3. Fill up the basic information like **Name**, **Logo** and click on **Submit**.
-
-4. Now, click on **Distribution** tab on the sidebar. A text will appear which will ask you to make the integration public. Click on that toggle button. A form will appear below the text.
-
-5. Now provide it the details such as requested. Under **Redirect URIs** field:
-
-   - If you are running formbricks locally, you can enter `http://localhost:3000/api/v1/integrations/notion/callback`.
-
-   - Or, you can enter `https://<your-public-facing-url>/api/v1/integrations/notion/callback`
-
-6. Once you've filled all the necessary details, click on **Submit**.
-
-7. A screen will appear which will have **Client ID** and **Client secret**. Copy them and set them as the environment variables in your Formbricks instance as:
-
-   - `NOTION_OAUTH_CLIENT_ID` - OAuth Client ID
-
-   - `NOTION_OAUTH_CLIENT_SECRET` - OAuth Client Secret
-
-Voila! You have successfully enabled the Notion integration in your self-hosted Formbricks instance. Now you can follow the steps mentioned in the [Formbricks Cloud](#formbricks-cloud) section to link a Notion database with Formbricks.
+Ask your operator to complete the [Notion OAuth setup](/self-hosting/configuration/integrations/notion).
+Then follow the connection steps above using your instance URL.
 
 ## Remove Integration with Notion Account
 
-To remove the integration with Slack Workspace,
+To remove the integration with your Notion account,
 
 1. Visit the Integrations tab in your Formbricks Cloud dashboard.
 
-2. Select "Manage" button in the Slack card.
+2. Select "Manage" button in the Notion card.
 
 3. Click on the "Delete Integration" button.
 

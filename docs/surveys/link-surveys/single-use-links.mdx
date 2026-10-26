@@ -180,9 +180,11 @@ Formbricks re-validates the URL and rejects the response if the two do not match
   invalidates every single-use link that was already handed out.
 - **Since Formbricks 5.0**, unencrypted single-use links must carry a valid `suToken`. Links
   generated before 5.0 without a token are rejected — regenerate them.
-- **Since Formbricks 6.0**, the same applies to *encrypted* single-use links: they now carry a
-  `suToken` binding them to one survey. Encrypted links generated before 6.0 have no token and are
+- **Since Formbricks 6.1**, the same applies to *encrypted* single-use links: they now carry a
+  `suToken` binding them to one survey. Encrypted links generated before 6.1 have no token and are
   rejected — regenerate them. See the
   [migration guide](/self-hosting/advanced/migration) if you handed out a batch before upgrading.
 - The *"already answered"* screen can be customized via the `singleUse.heading` and
   `singleUse.subheading` fields on the survey in the Management API.
+
+For self-hosted upgrades, follow the [6.1 link regeneration steps](/self-hosting/upgrade/versions/6.1#encrypted-single-use-survey-links-must-be-regenerated-action-required-if-you-use-them).

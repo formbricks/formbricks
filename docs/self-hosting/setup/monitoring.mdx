@@ -47,7 +47,7 @@ Formbricks uses JSON format for logs, which is structured and easy to parse. Eac
 ### Configuring Log Levels
 
 You can configure the minimum log level using the `LOG_LEVEL` environment variable. Valid values: `debug`, `info`, `warn`, `error`, `fatal`.
-The default log level in production environments is `warn`, while in development environments it is `debug`.
+The default log level in production environments is `warn`, while in development environments it is `info`. Builds default to `error`. An explicit `LOG_LEVEL` overrides these defaults.
 
 ```env
 LOG_LEVEL=debug

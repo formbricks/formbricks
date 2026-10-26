@@ -1,0 +1,28 @@
+---
+title: "Upgrade to 1.2"
+description: "Version-specific changes and preserved upgrade instructions."
+icon: "arrow-up-right-dots"
+---
+
+<Note>
+  Historical upgrade notes. Check the [maintenance policy](/self-hosting/advanced/release-maintenance-policy)
+  for support status. These instructions describe this release, not the current installation defaults.
+</Note>
+
+Read the notes for every version you cross. Use the [upgrade checklist](/self-hosting/advanced/upgrade)
+to plan backups, service interruption and recovery. Old commands using `latest` or `stable` must be
+resolved to the historical target release before use; they must not jump to today's release.
+
+Formbricks v1.2 introduces new features for Link Surveys and enhances security. However, there are some breaking changes related to environment variables. This guide will help you upgrade your Formbricks instance to v1.2 smoothly.
+
+### New Environment Variables
+
+| Environment Variable | Required | Recommended Generation | Comments                           |
+| -------------------- | -------- | ---------------------- | ---------------------------------- |
+| `ENCRYPTION_KEY`     | true     | `openssl rand -hex 32` | Needed for 2 Factor Authentication |
+
+### Deprecated / Removed Environment Variables
+
+| Environment Variable | Comments                                                                    |
+| -------------------- | --------------------------------------------------------------------------- |
+| `SURVEY_BASE_URL`    | The `WEBAPP_URL` is now used to determine the survey base URL in all places |

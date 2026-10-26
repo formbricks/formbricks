@@ -1,0 +1,245 @@
+---
+title: "Deploy optional AI services"
+description: "Deployment-specific examples for Qwen, vLLM and taxonomy."
+icon: "sparkles"
+---
+
+These services are optional. Start with [AI configuration](/self-hosting/configuration/ai-features)
+and confirm license, provider and capacity requirements before enabling them.
+
+<Tabs>
+<Tab title="Docker">
+
+### Enable Bundled Qwen/vLLM For AI
+
+The Docker stack can optionally run Qwen through vLLM as an OpenAI-compatible `/v1` endpoint. Baseline
+installs do not start vLLM and can still use Google Vertex, Azure, AWS Bedrock, or another OpenAI-compatible
+endpoint.
+
+The bundled Qwen/vLLM service requires a GPU-capable Docker host with the NVIDIA Container Toolkit installed.
+Model files are stored in the `qwen-model-cache` Docker volume. Startup can take several minutes while vLLM
+downloads and loads the model.
+
+To use the bundled Qwen runtime, add these values to `.env`:
+
+```bash
+cat <<EOF >> .env
+COMPOSE_PROFILES=qwen
+AI_PROVIDER=openai-compatible
+AI_MODEL=qwen3-14b-awq
+AI_OPENAI_COMPATIBLE_BASE_URL=http://vllm:8000/v1
+AI_OPENAI_COMPATIBLE_PROVIDER_NAME=vllm
+AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS=1
+EOF
+```
+
+Then start the stack with the profile and check vLLM:
+
+```bash
+docker compose --profile qwen up -d
+docker compose --profile qwen ps
+docker compose logs --tail=100 vllm formbricks
+curl -fsS http://127.0.0.1:8000/health
+```
+
+The vLLM endpoint is available inside the Compose network at `http://vllm:8000/v1` and is bound to
+`127.0.0.1:8000` by default for local checks.
+
+If you run your own Qwen/vLLM service, do not enable the `qwen` profile. Set `AI_PROVIDER`, `AI_MODEL`, and
+`AI_OPENAI_COMPATIBLE_BASE_URL` to your external endpoint instead.
+
+### Enable AI Taxonomy Beta
+
+The standalone AI taxonomy service is included as an opt-in Docker Compose profile. Baseline installs do not
+start taxonomy and do not require taxonomy or LLM secrets.
+
+To enable taxonomy with the bundled Qwen runtime, add these values to `.env`:
+
+```bash
+cat <<EOF >> .env
+COMPOSE_PROFILES=qwen,taxonomy
+TAXONOMY_SERVICE_URL=http://taxonomy:8000
+TAXONOMY_SERVICE_TOKEN=$(openssl rand -hex 32)
+HUB_INTERNAL_API_TOKEN=$(openssl rand -hex 32)
+TAXONOMY_IMAGE_REF=:v0.1.0
+TAXONOMY_LLM_PROVIDER=openai-compatible
+TAXONOMY_LLM_MODEL=qwen3-14b-awq
+TAXONOMY_LLM_BASE_URL=http://vllm:8000/v1
+TAXONOMY_LLM_API_KEY=not-used
+EOF
+```
+
+Replace `:v0.1.0` with the current released `ghcr.io/formbricks/taxonomy` image tag for your Formbricks
+version. Production installs should pin a release tag instead of relying on `:latest`.
+
+If you run your own OpenAI-compatible endpoint, use `COMPOSE_PROFILES=taxonomy` instead and point
+`TAXONOMY_LLM_BASE_URL` at that `/v1` endpoint. The selected model must reliably return strict JSON because
+taxonomy generation validates an exact 5-level tree.
+
+To use Amazon Bedrock instead of an OpenAI-compatible endpoint, replace the taxonomy LLM values with:
+
+```bash
+TAXONOMY_LLM_PROVIDER=bedrock
+TAXONOMY_LLM_MODEL=eu.anthropic.claude-sonnet-4-5-20250929-v1:0
+AWS_REGION=eu-north-1
+AWS_BEARER_TOKEN_BEDROCK=<bedrock-api-key>
+```
+
+To use Gemini on Vertex AI instead, replace the taxonomy LLM values with:
+
+```bash
+TAXONOMY_LLM_PROVIDER=vertex-gemini
+TAXONOMY_LLM_MODEL=gemini-2.5-flash
+TAXONOMY_VERTEX_PROJECT=<google-cloud-project>
+TAXONOMY_VERTEX_LOCATION=<vertex-location>
+TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON=<service-account-json>
+```
+
+Start the stack after updating `.env`. Compose reads `COMPOSE_PROFILES` from `.env`, so the same command works
+for `taxonomy` and `qwen,taxonomy` setups:
+
+```bash
+docker compose up -d
+docker compose ps
+docker compose logs --tail=100 taxonomy hub
+```
+
+If you enabled the bundled Qwen profile, also check vLLM:
+
+```bash
+docker compose logs --tail=100 vllm
+```
+
+Run the authenticated preflight after startup to verify Hub internal auth and LLM reachability:
+
+```bash
+docker compose --profile taxonomy exec -T taxonomy python - <<'PY'
+import os
+import urllib.request
+
+request = urllib.request.Request(
+    "http://127.0.0.1:8000/v1/preflight",
+    headers={"Authorization": "Bearer " + os.environ["TAXONOMY_SERVICE_TOKEN"]},
+)
+print(urllib.request.urlopen(request, timeout=10).read().decode())
+PY
+```
+
+This command runs inside the taxonomy container, so `127.0.0.1:8000` refers to the taxonomy service itself.
+The preflight endpoint then checks Hub internal auth and LLM reachability from taxonomy.
+
+The taxonomy service remains internal to the compose network by default. `TAXONOMY_MAX_RECORDS` defaults to
+`10000`; change it only after sizing CPU, memory, and LLM capacity.
+
+<Info>
+  The taxonomy service is internal to the Docker network. Formbricks Web still calls Hub with
+  <code>HUB_API_KEY</code>; Hub calls taxonomy with <code>TAXONOMY_SERVICE_TOKEN</code>; taxonomy calls Hub
+  internal APIs with <code>HUB_INTERNAL_API_TOKEN</code>.
+</Info>
+
+<Info>
+  The one-click installer does not prompt for AI taxonomy settings. One-click users can enable the beta later
+  by editing `./formbricks/.env`, adding the taxonomy variables above, ensuring `COMPOSE_PROFILES=taxonomy` is
+  set, and restarting with `docker compose up -d`.
+</Info>
+
+<Info>
+  If you use the one-click Traefik setup, FeedbackRecords are available on the Formbricks origin at
+  `/api/v3/feedbackRecords` and `/v1/feedback-records`. Custom Docker reverse proxies need equivalent wiring:
+  run gateway auth against the Formbricks app, rewrite `/api/v3/feedbackRecords` to Hub's
+  `/v1/feedback-records`, and inject `Authorization: Bearer <HUB_API_KEY>` only on the Hub-bound hop.
+</Info>
+
+
+</Tab>
+<Tab title="Kubernetes">
+
+### Optional Bundled Qwen/vLLM For AI
+
+The Helm chart can optionally deploy a Formbricks-provided Qwen runtime through vLLM. This is disabled by
+default and requires GPU-capable Kubernetes nodes.
+
+To deploy Qwen/vLLM and automatically point the Formbricks app at the in-cluster OpenAI-compatible endpoint:
+
+```yaml
+llm:
+  enabled: true
+```
+
+With `llm.enabled: true`, the chart renders the vLLM router and Qwen serving engine, then injects the required
+`AI_PROVIDER=openai-compatible` app environment variables unless you override them in `deployment.env`.
+
+If you want to deploy the bundled Qwen runtime without changing the Formbricks app AI configuration:
+
+```yaml
+llm:
+  enabled: true
+  autoConfigureApp: false
+```
+
+Keep `llm.enabled: false` when you use Google Vertex, Azure, AWS Bedrock, or an externally managed
+OpenAI-compatible endpoint. Configure those providers through `deployment.env`.
+
+### Optional AI Taxonomy Beta
+
+The Helm chart can optionally deploy the standalone taxonomy service. This is disabled by default and does not
+force the bundled Qwen/vLLM runtime.
+
+To deploy taxonomy and reuse the bundled Qwen/vLLM runtime:
+
+```yaml
+llm:
+  enabled: true
+
+taxonomy:
+  enabled: true
+```
+
+With this setup, taxonomy uses the in-cluster vLLM router for cluster labeling and 5-level taxonomy generation.
+The chart also injects `TAXONOMY_SERVICE_URL`, `TAXONOMY_SERVICE_TOKEN`, and `HUB_INTERNAL_API_TOKEN` into Hub API.
+
+To use your own OpenAI-compatible LLM endpoint instead, keep `llm.enabled: false` and set the taxonomy LLM values:
+
+```yaml
+taxonomy:
+  enabled: true
+  llm:
+    model: qwen3-14b-awq
+    baseUrl: http://my-llm-gateway:8000/v1
+    existingSecret: taxonomy-llm-secret
+```
+
+The `taxonomy-llm-secret` secret must contain `TAXONOMY_LLM_API_KEY`. If your endpoint does not enforce
+authentication, store a non-empty dummy value.
+
+To use Gemini on Vertex AI instead, keep `llm.enabled: false`, create a secret containing
+`TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON`, and configure the Vertex provider:
+
+```yaml
+taxonomy:
+  enabled: true
+  llm:
+    provider: vertex-gemini
+    model: gemini-2.5-flash
+    vertex:
+      project: formbricks-cloud
+      location: europe-west3
+      existingSecret: taxonomy-vertex-secret
+```
+
+The service account in `TAXONOMY_GOOGLE_CLOUD_CREDENTIALS_JSON` must be allowed to call Vertex AI for the selected
+project and location.
+
+After startup, run the authenticated preflight check from inside the taxonomy pod:
+
+```sh
+kubectl exec -n formbricks deploy/formbricks-taxonomy -- \
+  python -c 'import os, urllib.request; req = urllib.request.Request("http://127.0.0.1:8000/v1/preflight", headers={"Authorization": "Bearer " + os.environ["TAXONOMY_SERVICE_TOKEN"]}); print(urllib.request.urlopen(req, timeout=10).read().decode())'
+```
+
+The taxonomy service is internal-only by default. Kubernetes probes use public `/health`; `/v1/preflight` is for
+operator validation and requires the internal taxonomy bearer token.
+
+
+</Tab>
+</Tabs>

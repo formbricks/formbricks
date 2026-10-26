@@ -25,6 +25,24 @@ Formbricks follows [Semantic Versioning](https://semver.org/): `Major.Minor.Patc
 Every release is published on [GitHub Releases](https://github.com/formbricks/formbricks/releases) with its
 release notes.
 
+## Integration compatibility
+
+**Patch and minor releases preserve supported SDK and stable public API integrations within the
+same Formbricks major version.** You do not need to rewrite a supported integration for a routine
+patch or minor upgrade. Breaking changes to that contract require a major release and migration guidance.
+
+- Existing documented requests, response fields and SDK behavior remain compatible. New features
+  may require a newer SDK; see [SDK compatibility](/surveys/website-app-surveys/sdk-compatibility).
+- API versions and SDK package versions are independent of the Formbricks app version. Beta and
+  private-beta interfaces carry their stated stability limits.
+- If an urgent security fix must change existing behavior, its release notes identify the exception,
+  affected versions and required action. Historical exceptions remain documented in the
+  [version notes](/self-hosting/advanced/migration).
+
+This commitment covers integrations. It does not promise mixed-version deployment safety,
+uninterrupted service or reversible database migrations. Use the
+[upgrade procedure](/self-hosting/advanced/upgrade) for service impact and recovery.
+
 ## Maintained Versions
 
 Each minor release is maintained for **three calendar months**, starting on the day its first stable version
@@ -77,8 +95,8 @@ even if the work finishes after it.
 
 - Run the latest stable release. It is the only version that receives every fix.
 - Pin a release tag in production instead of a moving tag such as `latest`.
-- Read the [migration guide](/self-hosting/advanced/migration) before a major upgrade. Major versions can
-  carry breaking changes that need steps before you switch images.
+- Read the [version notes](/self-hosting/advanced/migration) before every upgrade, including patches.
+  Follow the [deployment procedure](/self-hosting/advanced/upgrade) before switching images.
 - Plan to move to a newer minor before your current one reaches its support-end date.
 
 ## Exceptions

@@ -1,0 +1,79 @@
+---
+title: "Upgrade to 2.6"
+description: "Version-specific changes and preserved upgrade instructions."
+icon: "arrow-up-right-dots"
+---
+
+<Note>
+  Historical upgrade notes. Check the [maintenance policy](/self-hosting/advanced/release-maintenance-policy)
+  for support status. These instructions describe this release, not the current installation defaults.
+</Note>
+
+Read the notes for every version you cross. Use the [upgrade checklist](/self-hosting/advanced/upgrade)
+to plan backups, service interruption and recovery. Old commands using `latest` or `stable` must be
+resolved to the historical target release before use; they must not jump to today's release.
+
+Formbricks v2.6 introduces advanced logic jumps for surveys, allowing more complex branching logic, including variables, conditions, and more. This release also includes numerous bug fixes, significant performance improvements for website and app surveys, and enhanced stability.
+
+<Info>
+  This release includes the final step of deprecating server-side action tracking (previously used for segment
+  filtering by performed actions). The migrations will delete all tracked actions from the database. If you
+  still need these action records, ensure you export them before upgrading.
+</Info>
+
+### Steps to Migrate
+
+This guide is for users who are self-hosting Formbricks using our one-click setup. If you're using a different setup, you might need to adjust the commands accordingly.
+
+To run these steps, navigate to the folder where your `docker-compose.yml` file is located.
+
+- **Backup your Database:** This is an important step. Make sure to back up your database before proceeding with the upgrade. You can use this command to back up your database:
+
+```bash
+docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v2.6_$(date +%Y%m%d_%H%M%S).dump
+```
+
+<Info>
+  If you get a "No such container" error, run `docker ps` to find your container name, for example,
+  `formbricks_postgres_1`.
+</Info>
+
+<Info>
+  If you prefer storing the backup as an `*.sql` file remove the `-Fc` (custom format) option. In case of a
+  restore scenario, you will need to use `psql` then with an empty `formbricks` database.
+</Info>
+
+- Pull the latest version of Formbricks:
+
+```bash
+docker compose pull
+```
+
+- Stop the running Formbricks instance & remove the related containers:
+
+```bash
+docker compose down
+```
+
+- Restarting the containers with the latest version of Formbricks:
+
+```bash
+docker compose up -d
+```
+
+- Now let's migrate the data to the latest schema:
+
+<Info>To find the Docker network name for your Postgres database, run the command:</Info>
+
+```bash
+docker pull ghcr.io/formbricks/data-migrations:latest && \
+docker run --rm \
+  --network=formbricks_default \
+  -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
+  -e UPGRADE_TO_VERSION="v2.6" \
+  ghcr.io/formbricks/data-migrations:v2.6.0
+```
+
+The command above will migrate your data to the latest schema. This is an important step to update your existing data to the new structure. Changes will only be made if the script runs successfully. You can run the script multiple times without issues.
+
+- Once the migration is complete, **you can access your Formbricks instance** at the same URL as before.

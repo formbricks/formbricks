@@ -69,7 +69,15 @@ To configure SAML SSO in Formbricks, follow these steps:
 
 <Steps>
   <Step title="Database Setup">
-    Configure a dedicated database for SAML by setting the `SAML_DATABASE_URL` environment variable in your `docker-compose.yml` file (e.g., `postgres://postgres:postgres@postgres:5432/formbricks-saml`). If you're using a self-signed certificate for Postgres, include the `sslmode=disable` parameter.
+    Configure a dedicated PostgreSQL database with `SAML_DATABASE_URL`. For a private certificate
+    authority, mount its CA certificate read-only into the app and require hostname verification:
+
+    ```text
+    postgresql://USER:PASSWORD@db.example.com:5432/formbricks-saml?sslmode=verify-full&sslrootcert=/run/certs/postgres-ca.pem
+    ```
+
+    The database certificate must cover the hostname in the URL. Use your secret manager for credentials
+    and verify the connection from the deployed runtime. Do not disable TLS to work around certificate errors.
   </Step>
   
   <Step title="IdP Application">
@@ -87,7 +95,7 @@ To configure SAML SSO in Formbricks, follow these steps:
   </Step>
 
   <Step title="Restart Formbricks">
-    Restart Formbricks to apply the changes. You can do this by running `docker compose down` and then `docker compose up -d`.
+    Recreate the app to apply environment and mounted-file changes: `docker compose up -d --no-deps --force-recreate formbricks`. For Kubernetes, deploy the changed Secret and volume configuration through Helm or GitOps. Verify sign-in in a fresh session.
   </Step>
 </Steps>
 

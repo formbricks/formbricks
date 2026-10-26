@@ -1,3 +1,7 @@
 # Engineering records and agent configuration, not product docs
 adr/
 agents/
+
+# The published v3 reference uses the bundled openapi.yml, not its split authoring inputs.
+api-v3-reference/src/
+review/

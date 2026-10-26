@@ -4,7 +4,7 @@ description: "What Embedded Data changes for surveys that already use hidden fie
 icon: "arrow-right-arrow-left"
 ---
 
-If you already use hidden fields or variables, the short version is: **nothing renames, nothing moves, and no survey needs editing.** Embedded Data is the name for the concepts you already have, now sharing one type system and one read path, plus a set of fields Formbricks fills in for you.
+If you already use hidden fields or variables, the short version is: **existing fields keep their names and stored values.** Embedded Data is the name for the concepts you already have, now sharing one type system and one read path, plus a set of fields Formbricks fills in for you.
 
 ## The Mapping
 
@@ -54,7 +54,7 @@ Nothing about your data moved. Existing fields appear in the new card at the add
 | A field belonged to one survey           | Or to the workspace — see [Field library](/surveys/embedded-data/library) |
 
 <Note>
-  **Nothing changed for URL parameters, `setEmbeddedData()` or the API.** `?plan=gold` fills the same field
+  **Existing field names remain valid for URL parameters, `setEmbeddedData()` and the API.** `?plan=gold` fills the same field
   it always did, the SDK call is unchanged, and `hiddenFields` and `variables` on the survey resource keep
   their shape (only `hiddenFields.enabled` is derived, as above). This release changes where you author a
   field, not how anything reads or writes one.
@@ -103,3 +103,9 @@ Only if you want the new capability:
     country or the parsed device details stored, and read what it does and does not cover first.
   </Step>
 </Steps>
+
+## Check validation and imports
+
+Preserved field names do not mean every request is unchanged. Check declared field types, reserved names,
+legacy-field handling and imported survey validation. Test an existing integration and a representative
+import against the target release. See the [6.1 API changes](/self-hosting/upgrade/versions/6.1#integration-changes-requiring-action).

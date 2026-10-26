@@ -11,19 +11,9 @@ instance to another after a split. It uses nothing but the public management API
 can be on different versions, different databases, and different object storage.
 
 <Note>
-  **Moving a whole instance? Do not use this page.** If you control both machines and want everything
-  — users, organizations, workspaces, contacts, displays, tags, file uploads, webhooks — then a
-  Postgres dump plus a copy of your S3 bucket is faster, complete, and keeps every ID intact:
-
-  ```bash
-  pg_dump "$OLD_DB_URL" -Fc -f formbricks.dump
-  pg_restore -d "$NEW_DB_URL" --no-owner formbricks.dump
-  ```
-
-  Restore into an instance running the **same Formbricks version** as the source, then upgrade it
-  following the [migration guide](/self-hosting/advanced/migration). The API route below exists for
-  the cases a dump cannot serve: you only want some surveys, the target already has data you must
-  keep, or you do not own the database on one of the two ends.
+  Moving or recovering a whole instance? Use [backup and restore](/self-hosting/operate/backup-restore).
+  Keep databases, permission state, storage, secrets and configuration together. A PostgreSQL dump and
+  an S3 copy alone are not a complete recovery plan.
 </Note>
 
 ## What carries over

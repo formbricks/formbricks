@@ -1,0 +1,257 @@
+---
+title: "Run RustFS with Docker"
+description: "Optional single-server storage examples for development and custom Compose deployments."
+icon: "database"
+---
+
+## Optional: Add RustFS for File Storage
+
+RustFS provides S3-compatible object storage for file uploads in Formbricks. It is not required for the
+baseline Docker setup. Add it only when you want features like image uploads, survey file uploads, or custom
+logos.
+
+<Note>
+  For a broader overview of file storage options and required environment variables, see our [File Uploads
+  Configuration](/self-hosting/configuration/file-uploads) guide.
+</Note>
+
+<Warning>
+  **For production deployments with HTTPS**, use the [one-click setup script](/self-hosting/setup/one-click)
+  which automatically configures RustFS with Traefik, SSL certificates, a dedicated `files.` subdomain, and
+  least-privilege service credentials. The examples below are best suited for development, testing, or custom
+  local setups.
+</Warning>
+
+<Warning>
+  The bundled RustFS examples on this page are convenience-oriented single-server setups. They work well for
+  development, evaluation, and smaller self-hosted deployments, but they are not the ideal RustFS architecture
+  for high-availability or larger-scale production storage. For stricter production requirements, use external
+  object storage or run a dedicated RustFS deployment separately.
+</Warning>
+
+### Quick Start: Repository Development Stack
+
+If you cloned the Formbricks repository, the fastest way to test file uploads locally is to use the included
+`docker-compose.dev.yml`, which already starts RustFS and auto-creates the `formbricks` bucket.
+
+<Note>
+  This development compose file is not downloaded by the manual production quickstart above. If you only
+  downloaded `docker-compose.yml`, use the manual RustFS setup below or the one-click production setup.
+</Note>
+
+1. **Start the local stack**
+
+   From the repository root:
+
+   ```bash
+   docker compose -f docker-compose.dev.yml up -d
+   ```
+
+   This starts PostgreSQL, Valkey (Redis), Mailhog, RustFS, a permissions helper, a one-time bucket
+   bootstrap job, Formbricks Hub, and a local Cube instance for analytics testing.
+
+2. **Access the RustFS console**
+
+   Open http://localhost:9001 in your browser and sign in with:
+   - Username: `devrustfs`
+   - Password: `devrustfs123`
+
+3. **Configure Formbricks**
+
+   Update your `.env` file or environment variables:
+
+   ```bash
+   S3_ACCESS_KEY="devrustfs"
+   S3_SECRET_KEY="devrustfs123"
+   S3_REGION="us-east-1"
+   S3_BUCKET_NAME="formbricks"
+   S3_ENDPOINT_URL="http://localhost:9000"
+   S3_FORCE_PATH_STYLE="1"
+   ```
+
+4. **Verify uploads**
+
+   After uploading a file in Formbricks, open http://localhost:9001 and navigate to **Buckets → formbricks**
+   to confirm the object was stored successfully.
+
+<Note>
+  The development compose file also runs a `rustfs-init` job so you do not need to create the bucket manually.
+</Note>
+
+### Manual RustFS Setup (Custom Configuration)
+
+<Note>
+  <strong>Recommended:</strong> Prefer <code>docker-compose.dev.yml</code> for local development unless you
+  need to fold RustFS into an existing custom Compose stack.
+</Note>
+
+If you want to add RustFS to your own `docker-compose.yml`, use a pinned RustFS image plus two helper
+services:
+
+```yaml
+services:
+  rustfs-perms:
+    image: busybox:1.36.1
+    user: "0:0"
+    command: ["sh", "-c", "mkdir -p /data && chown -R 10001:10001 /data"]
+    volumes:
+      - rustfs-data:/data
+
+  rustfs:
+    image: rustfs/rustfs:1.0.0-rc.2@sha256:7d6d361c49c08d427250fb59aae5d78df83d644c3405d9ccf4b21cda0b0692d0
+    restart: always
+    depends_on:
+      rustfs-perms:
+        condition: service_completed_successfully
+    command: /data
+    environment:
+      RUSTFS_ACCESS_KEY: "${FORMBRICKS_RUSTFS_ADMIN_USER}"
+      RUSTFS_SECRET_KEY: "${FORMBRICKS_RUSTFS_ADMIN_PASSWORD}"
+      RUSTFS_ADDRESS: ":9000"
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: ":9001"
+      # CORS for browser uploads: set to your Formbricks origin(s), comma-separated.
+      # Unset = no CORS headers are emitted, so browser uploads fail; a value is treated as an allow-list.
+      # See the File Uploads guide.
+      RUSTFS_CORS_ALLOWED_ORIGINS: "https://app.yourdomain.com"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - rustfs-data:/data
+
+  rustfs-init:
+    image: rustfs/rc:v0.1.36@sha256:ab024bfebee49a750ce886b4c70963ccd9ddaa03f491704a90710641d7a26699
+    depends_on:
+      - rustfs
+    environment:
+      RUSTFS_ADMIN_USER: "${FORMBRICKS_RUSTFS_ADMIN_USER}"
+      RUSTFS_ADMIN_PASSWORD: "${FORMBRICKS_RUSTFS_ADMIN_PASSWORD}"
+      RUSTFS_SERVICE_USER: "${FORMBRICKS_RUSTFS_SERVICE_USER}"
+      RUSTFS_SERVICE_PASSWORD: "${FORMBRICKS_RUSTFS_SERVICE_PASSWORD}"
+      RUSTFS_BUCKET_NAME: "${FORMBRICKS_RUSTFS_BUCKET_NAME}"
+      RUSTFS_POLICY_NAME: "${FORMBRICKS_RUSTFS_POLICY_NAME}"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        until rc alias set rustfs http://rustfs:9000 "$RUSTFS_ADMIN_USER" "$RUSTFS_ADMIN_PASSWORD" >/dev/null 2>&1 \
+          && rc bucket list rustfs >/dev/null 2>&1; do
+          sleep 2
+        done
+        rc bucket create rustfs/"$RUSTFS_BUCKET_NAME" --ignore-existing
+        cat > /tmp/formbricks-policy.json << EOF
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": ["s3:DeleteObject", "s3:GetObject", "s3:PutObject"],
+              "Resource": ["arn:aws:s3:::$RUSTFS_BUCKET_NAME/*"]
+            },
+            {
+              "Effect": "Allow",
+              "Action": ["s3:ListBucket"],
+              "Resource": ["arn:aws:s3:::$RUSTFS_BUCKET_NAME"]
+            }
+          ]
+        }
+        EOF
+        if ! rc admin policy info rustfs "$RUSTFS_POLICY_NAME" >/dev/null 2>&1; then
+          rc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json
+        fi
+        if ! rc admin user info rustfs "$RUSTFS_SERVICE_USER" >/dev/null 2>&1; then
+          rc admin user add rustfs "$RUSTFS_SERVICE_USER" "$RUSTFS_SERVICE_PASSWORD"
+        fi
+        rc admin policy attach rustfs "$RUSTFS_POLICY_NAME" --user "$RUSTFS_SERVICE_USER"
+```
+
+Declare the corresponding volume:
+
+```yaml
+volumes:
+  rustfs-data:
+    driver: local
+```
+
+Store the generated RustFS credentials in a local `.env` file next to your `docker-compose.yml` instead of
+hardcoding them in Compose:
+
+```bash
+FORMBRICKS_RUSTFS_ADMIN_USER=formbricks-root
+FORMBRICKS_RUSTFS_ADMIN_PASSWORD=change-this-secure-password
+FORMBRICKS_RUSTFS_SERVICE_USER=formbricks-service
+FORMBRICKS_RUSTFS_SERVICE_PASSWORD=change-this-service-password
+FORMBRICKS_RUSTFS_BUCKET_NAME=formbricks
+FORMBRICKS_RUSTFS_POLICY_NAME=formbricks-policy
+FORMBRICKS_RUSTFS_REGION=us-east-1
+```
+
+Then configure Formbricks to use the RustFS service credentials:
+
+```bash
+S3_ACCESS_KEY="${FORMBRICKS_RUSTFS_SERVICE_USER}"
+S3_SECRET_KEY="${FORMBRICKS_RUSTFS_SERVICE_PASSWORD}"
+S3_REGION="${FORMBRICKS_RUSTFS_REGION}"
+S3_BUCKET_NAME="${FORMBRICKS_RUSTFS_BUCKET_NAME}"
+S3_ENDPOINT_URL="http://rustfs:9000"
+S3_FORCE_PATH_STYLE="1"
+```
+
+Start the stack:
+
+```bash
+docker compose up -d
+```
+
+The bucket and service account are created automatically by the `rustfs-init` job defined above, so no manual
+RustFS console step is required.
+
+<Note>
+  Restrict the `.env` file to `0600` and do not commit it to source control. For production, prefer the
+  [one-click setup script](/self-hosting/setup/one-click), which creates a separate least-privilege service
+  account automatically.
+</Note>
+
+#### Tips & Common Gotchas
+
+- **Permission denied on `/data`**: Ensure the mounted directory or volume is owned by UID `10001`. The
+  `rustfs-perms` helper handles this for Compose-managed volumes.
+- **Storage medium matters**: Prefer local SSD or NVMe storage for `rustfs-data`, use XFS on dedicated
+  host-managed disks where possible, and avoid NFS or other network filesystems for RustFS data.
+- **Connection refused**: Ensure the `rustfs` container is running and port `9000` is reachable from the
+  Formbricks container.
+- **Bucket not found**: Confirm that `rustfs-init` completed successfully or create the bucket manually with
+  `rc`.
+- **Auth failed**: Confirm that `S3_ACCESS_KEY` and `S3_SECRET_KEY` match the RustFS credentials configured on
+  the server.
+- **Backups**: Back up the `rustfs-data` volume regularly, especially for single-server deployments.
+- **Console exposure**: Do not expose the RustFS console port publicly in production. Keep it on a private
+  network or behind admin-only controls.
+- **Health check**: From the Formbricks container:
+
+  ```bash
+  docker compose exec formbricks sh -c 'wget -O- http://rustfs:9000/health'
+  ```
+
+### Production Setup with Traefik
+
+For production deployments, use the [one-click setup script](/self-hosting/setup/one-click), which
+automatically configures:
+
+- RustFS behind Traefik on a dedicated `files.yourdomain.com` subdomain
+- Automatic SSL certificate generation via Let's Encrypt
+- CORS configuration scoped to your Formbricks domain
+- Rate limiting middleware
+- Separate RustFS admin and Formbricks service credentials
+- A `rustfs-init` job that creates the bucket and access policy
+
+The production setup from [formbricks.sh](https://github.com/formbricks/formbricks/blob/main/docker/formbricks.sh)
+adds the reverse proxy wiring and bootstrap automation needed for long-lived deployments.
+
+<Note>
+  Even in the one-click flow, bundled RustFS remains a convenience-oriented single-server deployment. For
+  higher availability, stricter operational requirements, or larger storage footprints, prefer external object
+  storage or a dedicated RustFS deployment managed separately from Formbricks.
+</Note>

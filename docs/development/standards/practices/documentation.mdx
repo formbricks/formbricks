@@ -50,7 +50,7 @@ void window.formbricks.setup(...args);
    - All new API endpoints must be documented in the OpenAPI specification
    - Include request/response schemas, authentication requirements, and examples
    - Document both Client API and Management API endpoints
-   - Place API documentation in the `docs/api-reference` directory
+   - Use `docs/api-reference/openapi.json` for v1, `docs/api-v2-reference/openapi.yml` for v2, and the v3 sources under `docs/api-v3-reference/src/`; regenerate the v3 bundle with `pnpm api:v3:sync`
 
 2. **Authentication**
    - Clearly specify authentication requirements
@@ -127,3 +127,39 @@ mint dev
    - Ensure proper formatting and rendering
 
 These documentation requirements ensure that our codebase remains maintainable, accessible, and well-documented for both current and future developers.
+
+## One home for each instruction
+
+| Content | Canonical home |
+| --- | --- |
+| Compatibility and support promises | Release and maintenance policy |
+| Ordered deployment commands | Self Hosting → Upgrade deployment recipe |
+| Release-specific actions | Target-minor upgrade note; patch exceptions within that note |
+| Product and integration behavior | Product guide or public integration setup |
+| Migration authoring and release checks | Development and existing release-authoring gates |
+| What shipped | Changelog, linking to exact upgrade actions |
+
+Keep shared procedures version-neutral. Link to `stable` for discovery; deployment examples record a
+chosen release rather than silently following a moving image. Preserve historical release boundaries.
+Do not create a new guide for a release with no additional operator action merely to fill navigation.
+
+### Target-version note
+
+Start with who must act and use short **Before / During / After** sections. Include:
+
+- Source/target applicability, deployment methods, editions, intermediate stops and reported test evidence.
+- Integration/configuration changes, dependencies, service impact and known affected/fixed patches.
+- Validation, stop conditions, recovery limits and links to the canonical recipe and release notes.
+
+Say “No additional upgrade steps beyond the standard procedure” only after verification. Missing notes
+are not a compatibility guarantee. Record unknowns in the PR, not as unsupported customer promises.
+
+### Review a documentation change
+
+- Inventory routes; record keep, update, move or remove with the exact replacement and reason.
+- Preserve useful URLs. Add exact redirects for moved pages and preserve old heading anchors separately.
+- Check navigation, links, anchors, MDX rendering and mobile layout in preview. Include screenshots in the PR.
+- Distinguish source review, document walkthroughs and runtime rehearsals. A build does not prove an upgrade works.
+- Check live search, sitemap and LLM-index discovery after authorized publication, separately from merge status.
+
+Use the existing release-authoring migration-guide checks. Do not create a second approval process.

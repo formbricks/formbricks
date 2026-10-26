@@ -5,18 +5,22 @@ icon: "envelope"
 ---
 
 <Warning>
-  Email Follow-ups are deprecated in favor of [Workflows](/workflows/overview) and stop working on **1
-  December 2026**. Workflows cover the same ground — a completed response, optionally narrowed to specific
-  ending cards, sending an email — and are where this is being developed. Build new email automations as
-  Workflows, and rebuild your existing follow-ups as Workflows before that date.
-
-  The Follow-ups tab is now hidden in the survey editor unless the survey already has follow-ups, or
-  your plan includes follow-ups but not Workflows.
+  Email Follow-ups are deprecated in favor of [Workflows](/workflows/overview). The announced removal
+  date is **1 December 2026** (UTC calendar date). This is not evidence of a midnight shutdown on
+  every self-hosted installation; behavior depends on the installed release.
 </Warning>
 
-<Note>
-  Email followups is a paid feature. It is only available for users on paid plans or if you have [Enterprise Edition](/self-hosting/advanced/license).
-</Note>
+## Move to Workflows
+
+1. Confirm Workflows is available in your Cloud plan or self-hosted Enterprise license and release.
+2. Rebuild each follow-up using **Response completed**, its ending-card filter and **Send email**.
+3. Copy recipients, reply-to, subject, content and response-data settings. Test with a sample response.
+4. Disable the old follow-up when enabling its replacement to avoid duplicate email delivery.
+
+Workflows is in Beta. Check [current capabilities](/workflows/overview) before switching.
+Existing follow-ups keep their editor tab. Self-hosted Community installations can still have follow-ups
+without Workflows entitlement; confirm the replacement path with your support contact before removing them.
+The published announcement does not establish a removal release for those installations.
 
 ## What are Email Follow-ups?
 

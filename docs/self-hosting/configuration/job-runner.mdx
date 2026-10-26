@@ -15,6 +15,9 @@ application by default, so a standard self-hosted deployment does not need a sep
   configuration.
 </Note>
 
+Hub workers are separate: they consume PostgreSQL-backed Hub jobs and must also be included in maintenance.
+See [components](/self-hosting/operate/components).
+
 ## Runtime architecture
 
 The web application creates jobs and consumes them from shared Redis-backed queues:
@@ -57,8 +60,8 @@ not change it. Its Redis keys sit next to the default queue's, under
 Before this queue existed, the delivery schedule lived on `background-jobs`. A process that starts on the
 new version removes that old schedule after it creates the new one, so you need to do nothing when you
 upgrade. During a rolling update, older replicas may run a delivery from the old queue while newer
-replicas run one from the new queue. That is safe: deliveries already run in parallel across replicas,
-and each one claims its own outbox rows.
+replicas run one from the new queue. That delivery operation supports parallel execution because each process claims its own outbox rows.
+This does not establish full-app mixed-version safety; use the [upgrade procedure](/self-hosting/advanced/upgrade).
 
 Redis is also used to coordinate recurring jobs. The web process retries worker and recurring-job registration
 after 30 seconds if startup fails.
@@ -277,7 +280,7 @@ Formbricks writes structured logs to stdout and stderr. Search the `msg` field f
 | `Webhook delivery skipped: webhook no longer subscribed to this event`                             | The webhook's triggers or surveys were changed after the event was queued. Expected after editing a webhook with deliveries in flight.                                                                                                                                                                                                                                                                                                                                 |
 | `Webhook delivery could not load the webhook and will be retried`                                  | The database refused the webhook lookup, so no request was made and the attempt is retried. Check database health and the connection pool; the companion message names pool exhaustion explicitly.                                                                                                                                                                                                                                                                     |
 | `Dropping BullMQ job with no registered processor: its schedule outlived the code that handled it` | A schedule in Redis outlived the build that handles it — typically after a rollback to a version without that feature. The job is completed rather than retried, so it does not accumulate in the failed set. Redeploy the build that owns `jobName`, or remove the stale schedule from Redis.                                                                                                                                                                         |
-| `Dropping BullMQ job with no registered processor` for `webhook-delivery.process`                  | Seen only while upgrading to the first version that fans webhook delivery out into its own job: replicas still on the older build share the queue but do not know the name, so they complete the job **without delivering it** — the event is not retried and cannot be replayed. It stops as soon as every replica runs the new build. Upgrade during a quiet period if losing a few minutes of webhook events matters, or scale to a single replica for the upgrade. |
+| `Dropping BullMQ job with no registered processor` for `webhook-delivery.process`                  | Seen only while upgrading to the first version that fans webhook delivery out into its own job: replicas still on the older build share the queue but do not know the name, so they complete the job **without delivering it** — the event is not retried and cannot be replayed. It stops as soon as every replica runs the new build. Stop all old writers and consumers during the [maintenance upgrade](/self-hosting/advanced/upgrade). A quiet period or one remaining old replica does not prevent job loss. Check the target release notes for the introduction of this job type; this is not a warning about every upgrade. |
 
 If background jobs stay queued:
 

@@ -80,3 +80,11 @@ In the action itself we can determine the data and layout of the message. Here, 
 We now receive a notifcation in our Slack channel whenever a Churn survey is completed:
 
 ![Zapier Message](/images/platform/features/integrations/zapier/zapier-message.webp)
+## Self-hosted Formbricks
+
+Use your instance's public HTTPS URL instead of `https://app.formbricks.com` when creating the
+connection. Create a [scoped API key](/api-reference/generate-key) on that same instance.
+No Formbricks server environment variable is needed for this API-key connection.
+
+Make sure the automation service can reach your instance, then submit a test survey response and
+verify the expected workflow runs. Check host, key scopes and network access if it fails.

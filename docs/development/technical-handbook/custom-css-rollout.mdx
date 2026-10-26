@@ -27,7 +27,7 @@ Data and renderer first, so nothing a creator saves reaches a renderer that does
 1. **Server and renderer.** Deploy the migration, processor, API, editor cards and renderer together. Existing surveys must look exactly the same: nothing is saved yet.
 2. **Purge the CDN** for `/js/surveys.umd.cjs` and `/js/formbricks.umd.cjs`. Both URLs are unversioned and cached for up to 30 days at the edge, so without a purge some apps and websites keep the old renderer for weeks. Repeat the purge after any renderer rollback.
 3. **Stripe entitlement on Cloud**, right after the purge (see below). Until it is attached, every Cloud organization sees the upgrade prompt in the editor cards, Scale included.
-4. **SDK packages:** `@formbricks/js`, then the iOS, Android, React Native and Flutter SDKs, each from its own repository. Publication does not have to be atomic. Record every released version in [SDK Compatibility](/surveys/website-app-surveys/sdk-compatibility), replacing "Pending release". Customers whose apps use the mobile SDKs need to ship an app update before their Custom CSS shows in the app; tell them early.
+4. **SDK packages:** `@formbricks/js`, then the iOS, Android, React Native and Flutter SDKs, each from its own repository. Publication does not have to be atomic. Record every released version in [SDK Compatibility](/surveys/website-app-surveys/sdk-compatibility), verifying the published package rather than inferring publication from source. Customers whose apps use the mobile SDKs need to ship an app update before their Custom CSS shows in the app; tell them early.
 5. **Self-hosted** gets everything with the release that contains steps 1 and 2. There is no plan check, flag or environment variable. Add one release-note line: Custom CSS styles the card; Custom Head Scripts keep scripts, tags and page-level styles.
 
 ## Before Enabling On Cloud
@@ -76,3 +76,5 @@ Every mobile SDK must pass `customCss: { workspace, survey }` explicitly, from `
 ## Styling Contract
 
 The `data-fb-part` hook names are declared once, in `FB_PART` (`packages/survey-ui/src/lib/parts.ts`), exported from `@formbricks/survey-ui` and, without any components, from `@formbricks/survey-ui/parts`. Customers' stylesheets depend on these names: renaming or removing one is a breaking change. `parts.test.ts` fails when the customer docs and the constant disagree.
+
+Customer cache troubleshooting is maintained in [SDK compatibility](/surveys/website-app-surveys/sdk-compatibility#when-changes-reach-respondents). Keep privileged rollout and entitlement operations in this handbook.

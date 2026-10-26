@@ -1,0 +1,78 @@
+---
+title: "Enable survey visibility"
+description: "Detailed actions for the 6.1 upgrade."
+icon: "arrow-up-right-dots"
+---
+
+[Back to the 6.1 checklist](/self-hosting/upgrade/versions/6.1).
+
+## Survey visibility (opt-in)
+
+Surveys can now be restricted to their owner and the organization's owners and managers. New columns on the
+`Survey` table record each survey's owner and visibility. The migrations set every existing survey to
+workspace-visible and make its creator the owner, so **access is unchanged after the upgrade**.
+
+<Note>
+  Once the marker is set, every survey a person creates starts **Restricted** to its author and the
+  organization's owners and managers. They can make it visible to the workspace from **Collaborate** or
+  when activating it. See [Survey visibility](/surveys/general-features/visibility).
+</Note>
+
+Stored visibility is always enforced. New visibility mutations and survey graph checks become available
+once an operator marks the survey scope ready:
+
+```bash
+formbricks-authzed backfill --scope=survey --apply --mark-ready
+```
+
+Once activated, a survey a person creates is restricted until they share it with the workspace.
+Regardless of readiness, API keys cannot see restricted surveys or responses; webhooks, integrations,
+feedback sources, follow-ups and workflows cannot receive them.
+
+Two new environment variables:
+
+- **SURVEY_VISIBILITY_FORCE_DISABLED**: `1` disables visibility mutations. Stored restrictions remain
+  enforced. Takes effect on restart.
+- **SURVEY_WORKSPACE_LIMIT**: most surveys one workspace may hold, archived ones included (default `10000`).
+  This applies whether or not visibility is enforced: creating a survey past it answers
+  `422 workspace_survey_limit_reached`. Raise it before upgrading if a workspace is near the default.
+
+To stop new visibility mutations and use PostgreSQL policy while repairing the survey graph, clear the marker. Stored restrictions remain enforced:
+
+```bash
+formbricks-authzed backfill --scope=survey --clear-ready
+```
+
+
+
+
+
+## Complete the visibility rollout
+
+1. Once every container or pod runs the new version, check durable delivery and replay any dead-lettered
+   survey events. The migration adds the survey trigger while the previous version may still be delivering
+   outbox events, and that version dead-letters the `survey` event type it does not know. A dead-lettered
+   survey revocation makes every enforced authorization check fail closed until it is replayed:
+
+   ```bash
+   formbricks-authzed outbox status
+   formbricks-authzed outbox replay
+   formbricks-authzed outbox drain
+   ```
+
+   `replay` resets every unresolved dead letter, so investigate any that are not survey events first. See
+   [AuthZed operations](/self-hosting/configuration/authzed-operations#audit-and-repair-surveys) for how to
+   list them.
+
+2. After the upgrade, repair the survey scope and mark it ready. This runs the repair, then two further dry
+   runs, and sets the marker only if both come back clean:
+
+   ```bash
+   formbricks-authzed backfill --scope=survey --apply --mark-ready
+   ```
+
+3. Confirm `formbricks-authzed upgrade check` reports `scopes.survey` as ready.
+
+To go back to workspace permissions, run `formbricks-authzed backfill --scope=survey --clear-ready`. See
+[AuthZed operations](/self-hosting/configuration/authzed-operations#audit-and-repair-surveys) for the audit
+and repair commands.

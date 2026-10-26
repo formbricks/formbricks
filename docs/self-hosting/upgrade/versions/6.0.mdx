@@ -1,0 +1,204 @@
+---
+title: "Upgrade to 6.0"
+description: "Required actions, compatibility exceptions and recovery for this release."
+icon: "arrow-up-right-dots"
+---
+
+## Before
+
+- Applies to self-hosted v5 installations moving to v6, Community and Enterprise.
+- Upgrade one major at a time. Review [5.4 prerequisites](/self-hosting/upgrade/versions/5.4).
+- Add SpiceDB with a dedicated database/login and private connectivity. Keep Hub, its worker, Cube,
+  Redis and your existing storage. See the [component inventory](/self-hosting/operate/components).
+- Merge the target release's Compose services or chart values; retain your database, SMTP, proxy and secrets.
+- A self-hosted Cloud bridge is not required. Use the target image's preparation command.
+
+## During and after
+
+Follow [Kubernetes](/self-hosting/upgrade/kubernetes) or [Docker Compose](/self-hosting/upgrade/docker).
+Stop writers before migration and permission preparation. Keep maintenance until allow, deny,
+API-key and revocation checks pass. Respondent traffic, APIs and admin access are unavailable during
+maintenance; background work pauses.
+
+**Test evidence:** these notes do not establish a tested v5/v6 pair. Check the target release's
+published evidence and rehearse your source/target pair before production.
+
+**Recovery:** restore coordinated state and matching images when required; an image downgrade cannot
+reverse database changes. See [backup and restore](/self-hosting/operate/backup-restore).
+
+## Patch-specific changes
+
+The Cube image change below first applies to **6.0.2**, and was also released in **5.4.5**.
+Do not apply every later v6 change to 6.0.0.
+
+## Changes in Environment Variables
+
+<Note>
+  `DEFAULT_ORGANIZATION_ID` and `DEFAULT_ORGANIZATION_ROLE` drive SSO just-in-time provisioning, which is
+  part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license). On a community instance
+  they have no effect, so there is nothing to rename.
+</Note>
+
+- **DEFAULT_ORGANIZATION_ID** has been renamed to **AUTH_SSO_DEFAULT_ORGANIZATION_ID**, matching the
+  `AUTH_SSO_DEFAULT_TEAM_ID` naming pattern. Rename the variable in your configuration; the value is
+  unchanged. Support for this variable was missing between v3.0 and v5.x, so it takes effect again on v6.
+
+- **DEFAULT_ORGANIZATION_ROLE** has been renamed to **AUTH_SSO_DEFAULT_ORGANIZATION_ROLE**.
+
+- **AUTHZED_CONSISTENCY** must be `fully_consistent`. v6 refuses to start with any other value, or with the
+  variable unset. An existing `.env` that still sets `AUTHZED_CONSISTENCY=minimize_latency` must be changed
+  to `AUTHZED_CONSISTENCY=fully_consistent` before upgrading.
+
+- **BETTER_AUTH_URL** and **BETTER_AUTH_SECRET** are now the documented names for the auth base URL and
+  the session-signing secret. This is a documentation change, not a rename: `NEXTAUTH_URL` and
+  `NEXTAUTH_SECRET` keep working exactly as before, so **an existing instance needs no action**. New
+  installs configure the `BETTER_AUTH_*` names, which is what the setup guides now show.
+
+  <Warning>
+    If you do choose to move to the new names, **copy the existing value across** rather than generating a
+    new one. `BETTER_AUTH_SECRET` takes precedence, so setting it to a *different* value signs everyone
+    out and invalidates outstanding invite, email-verification and email-change links. Formbricks logs a
+    warning at startup when both are set to different values. The secret is no longer rejected for being
+    shorter than 32 characters, so a shorter legacy value can be renamed as-is — you will see a startup
+    warning recommending a longer one, which you can act on whenever a forced sign-out is acceptable.
+  </Warning>
+
+  Formbricks now refuses to start when neither variable has a value, in every environment. Before this
+  release that refusal applied only when `NODE_ENV=production`; a development or test instance with
+  neither variable set still started, using a fallback value for the signing secret, and only invites
+  and verification links failed. So a production instance is already required
+  to have one of these set and is unaffected. If a non-production instance of yours set neither,
+  generate a secret before upgrading — doing so **signs every current user out**, because their cookies
+  were signed with that fallback value rather than with a secret of yours.
+
+
+
+## Bundled Cube image (action required for some deployments)
+
+From 6.0.2, the bundled Cube service runs `ghcr.io/formbricks/cube:1.7.47-2` instead of `cubejs/cube:v1.6.6`;
+6.0.0 and 6.0.1 still run the upstream image. 5.4.5 makes the same change (see
+[Bundled Cube image update](/self-hosting/upgrade/versions/5.4#bundled-cube-image-update-action-required-for-some-deployments)). The new image
+contains only the Cube 1.7.47 API server and its Postgres driver on a distroless Node 24 runtime, without the
+shell, Python and Cube Store that made image scanners report critical CVEs against the upstream image.
+Cube 1.7 returns every numeric measure and dimension as a JSON string. Formbricks converts number-typed members
+back into numbers, so dashboards need no change; anything else that queries your Cube API directly now receives
+strings for them.
+
+- **Docker Compose and one-click**: `formbricks.sh update` keeps your local `docker-compose.yml`, so the stack
+  stays on `cubejs/cube:v1.6.6` until you replace its whole `cube` service with the one from the release you
+  are upgrading to. Changing only `image:` is not enough. The new image has no shell, so the old
+  `command: sh -c '… exec cubejs server'` wrapper exits with `Error: Cannot find module '/cube/conf/sh'`. The
+  image's own command starts Cube, which still refuses to start without `CUBEJS_API_SECRET`. Keep your own
+  `CUBEJS_*` overrides when you merge the block.
+
+  ```bash
+  version=6.0.2 # the release you are upgrading to, for example 5.4.5
+  cp -p docker-compose.yml docker-compose.yml.before-cube-image
+  curl -fsSL -o docker-compose.release.yml \
+    "https://raw.githubusercontent.com/formbricks/formbricks/${version}/docker/docker-compose.yml"
+  # Copy the release's `cube` service into docker-compose.yml, then:
+  docker compose config >/dev/null
+  docker compose pull cube
+  docker compose up -d --no-deps --force-recreate cube
+  docker compose ps cube
+  ```
+
+- **Helm**: the chart defaults to the new image. If your values set `cube.image.tag` without
+  `cube.image.repository`, the chart now pulls a non-existent `ghcr.io/formbricks/cube:<your old tag>` and the
+  pod fails with `ImagePullBackOff`. Drop the tag override, or set both values. Pointing them back at an upstream
+  `cubejs/cube` release is supported.
+- **Helm security context**: the Cube container now runs with a read-only root filesystem, no privilege
+  escalation and all capabilities dropped. The bundled image and upstream `cubejs/cube` releases need no change.
+  A custom image or configuration that writes files, or dev mode on an upstream image, needs
+  `cube.containerSecurityContext.readOnlyRootFilesystem: false`.
+- **`CUBEJS_DEV_MODE=true`**: not supported on the new image. Dev mode relies on the embedded Cube Store the image
+  leaves out, so `/readyz` answers 500 and the Helm probes and Compose healthcheck never pass. Leave it unset in
+  production.
+- **Air-gapped installs and registry mirrors**: mirror `ghcr.io/formbricks/cube:1.7.47-2` along with the other
+  Formbricks images, then point the Compose `image:` or `cube.image.repository` at your mirror.
+
+Cube keeps no state of its own, so rolling back only this change means restoring the backed-up Compose file or
+your previous `cube.image` values and recreating the `cube` service.
+
+## Release details
+
+Reviewed on 26 October 2026. See [release notes](https://github.com/formbricks/formbricks/releases) for affected and fixed patches.
+
+## Docker dependency setup
+
+
+The normal image update commands do not add new services to an existing customized Compose file. Before the
+first release that requires the AuthZed runtime:
+
+1. Follow the [maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade): stop all writers and
+   controllers, drain in-flight work, then back up configuration, secrets, and databases.
+2. Download `authzed-postgres-bootstrap.sh` from the same Formbricks release as the Compose file.
+3. Generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` with `openssl rand -hex 32` and add them to `.env`.
+4. Merge `authzed-db-bootstrap`, `spicedb-migrate`, `spicedb`, `authzed-initialize`, and the profiled
+   `authzed-ops` service, plus the six `AUTHZED_*` Formbricks variables, from the released Compose file into your
+   customized file. Use `AUTHZED_CONSISTENCY=fully_consistent`. Preserve proxy, storage, and SMTP settings.
+5. Validate the reviewed Compose configuration privately and pull the pinned images. Keep writers stopped.
+6. Wait for PostgreSQL and SpiceDB, then run the target image's maintenance command. It runs application
+   migrations before graph preparation and verification:
+
+   ```bash
+   docker compose up -d --wait postgres spicedb
+   docker compose --profile authzed-ops run --rm --no-deps \
+     --entrypoint formbricks-authzed-prepare authzed-ops \
+     --backup-confirmed --writers-stopped
+   ```
+
+   A non-empty mismatched schema requires the reviewed `remoteDigest` as described in
+   [AuthZed Operations](/self-hosting/configuration/authzed-operations#upgrade-an-existing-installation-to-v6).
+7. Only after preparation and verification exit `0`, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env` and
+   run `docker compose up -d`. The one-click updater only checks the already-prepared graph; it does not perform
+   online preparation. Keep maintenance active until authorization checks pass.
+8. Confirm `authzed-db-bootstrap`, `spicedb-migrate`, and `authzed-initialize` completed and `spicedb` is healthy
+   with `docker compose ps -a`.
+9. Back up the new authorization database with
+   `docker compose exec -T postgres pg_dump -U postgres -d spicedb > spicedb-backup.sql` after validation and
+   include it in future database backup procedures.
+
+After database changes, restoring the old image alone may not be safe. Remain in maintenance and either fix
+forward or restore coordinated backups with the matching v5 configuration. Never delete volumes. See the
+rollback procedure in [AuthZed Operations](/self-hosting/configuration/authzed-operations#roll-back-a-v6-upgrade).
+
+
+## One-click dependency setup
+
+
+Beyond the narrow edits listed in the warning above, the update command preserves your customized Compose file, so
+it cannot add SpiceDB by itself.
+Before upgrading to a release that uses AuthZed:
+
+1. Follow the [maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade): stop writers and
+   controllers, drain in-flight work, then back up configuration, secrets, and databases.
+2. Download the release-matched `authzed-postgres-bootstrap.sh` into the `formbricks` directory.
+3. Generate and add `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` to `.env` using `openssl rand -hex 32`.
+4. Merge `authzed-db-bootstrap`, `spicedb-migrate`, `spicedb`, `authzed-initialize`, and the profiled
+   `authzed-ops` service from the released Compose file while preserving installer-added Traefik, storage, and
+   mail configuration. Add the six application variables and use `AUTHZED_CONSISTENCY=fully_consistent`.
+5. Validate the target Compose file privately and pull the pinned images from the `formbricks` directory.
+   Keep maintenance active and writers stopped.
+6. Wait for the datastores, then run migrations, preparation, and verification using the target image:
+
+   ```bash
+   docker compose up -d --wait postgres spicedb
+   docker compose --profile authzed-ops run --rm --no-deps \
+     --entrypoint formbricks-authzed-prepare authzed-ops \
+     --backup-confirmed --writers-stopped
+   ```
+
+   A mismatched non-empty schema requires the reviewed digest described in the maintenance guide.
+7. If preparation exits `0`, add `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` to `.env` and run
+   `./formbricks.sh update`. Do not bypass a blocked check. Keep maintenance active until access tests pass.
+8. Verify `authzed-db-bootstrap`, `spicedb-migrate`, and `authzed-initialize` completed and `spicedb` is healthy.
+9. Back up the authorization database with
+   `docker compose exec -T postgres pg_dump -U postgres -d spicedb > spicedb-backup.sql` and add it to your
+   regular backup procedure.
+
+Do not use `docker compose down -v` during this migration or rollback because the existing PostgreSQL volume
+stores both Formbricks and SpiceDB data.
+
+For upgrades, restoration, schema changes, and relationship repair, follow the canonical
+[AuthZed Operations guide](/self-hosting/configuration/authzed-operations).

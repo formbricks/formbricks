@@ -1,0 +1,100 @@
+---
+title: "Upgrade Docker and one-click"
+description: "Upgrade your Compose installation with a recoverable maintenance window."
+icon: "docker"
+---
+
+Run commands from your Compose directory; for one-click this is usually `formbricks/`.
+Keep the same project name, environment file and volume names. Complete the
+[planning checklist](/self-hosting/advanced/upgrade) first.
+
+<Steps>
+  <Step title="Review and download the target">
+    Merge dependency and configuration changes from the [version notes](/self-hosting/advanced/migration).
+    Keep your SMTP, storage, proxy and secret settings. The updater preserves customized Compose files;
+    pulling images alone does not add missing services.
+
+    Use the same target Formbricks image for `formbricks`, `formbricks-migrate`, `authzed-ops` and
+    `authzed-initialize`. Keep Hub API, worker and migration images matched too.
+
+    ```bash
+    docker compose config --quiet
+    docker compose pull
+    ```
+  </Step>
+  <Step title="Stop traffic and writers">
+    Enable maintenance at the proxy and let in-flight work finish. Stop app and Hub writers:
+
+    ```bash
+    docker compose stop formbricks hub hub-worker
+    ```
+
+    Also stop optional taxonomy, external scripts and scheduled writers if present.
+    Keep databases running. Take a [coordinated backup](/self-hosting/operate/backup-restore).
+  </Step>
+  <Step title="Prepare migrations and permissions">
+    For an existing SpiceDB deployment:
+
+    ```bash
+    docker compose --profile authzed-ops run --rm --no-deps       --entrypoint formbricks-authzed-prepare authzed-ops       --backup-confirmed --writers-stopped
+    ```
+
+    For the first v6 upgrade, add and initialize its dependencies using the
+    [preparation reference](/self-hosting/upgrade/prepare#docker-and-one-click) first.
+    Stop on any failure. Review a changed schema before passing its expected digest.
+  </Step>
+  <Step title="Refresh assets and start the target">
+    **One-click:** from the directory containing `formbricks/`, download the current updater:
+
+    ```bash
+    cd ..
+    curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/formbricks.sh -o formbricks.sh
+    chmod +x formbricks.sh
+    ./formbricks.sh update
+    ```
+
+    For a first v6 upgrade, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env`
+    only after preparation. Review the [updater behavior](/self-hosting/upgrade/one-click-details).
+
+    **Manually managed Compose:** refresh the Cube model below, then start the stack:
+
+    ```bash
+    docker compose up -d
+    docker compose ps -a
+    ```
+
+    Check application and Hub migration services completed successfully before accepting traffic.
+  </Step>
+  <Step title="Verify and reopen">
+    Complete the [acceptance checks](/self-hosting/advanced/upgrade#after-the-upgrade).
+    Check worker delivery and renderer assets, then remove maintenance.
+    Keep backups and the previous configuration until acceptance.
+  </Step>
+</Steps>
+
+## Refresh the Cube model
+
+Skip this when Cube is external. Use the source tag matching your selected image in place of `stable`
+if the deployment is pinned. Keep both files together; stop on download or replacement failure.
+
+```bash
+if [ -f cube/schema/FeedbackRecords.js ]; then
+  base=https://raw.githubusercontent.com/formbricks/formbricks/stable/docker
+  curl -fsSL -o cube/cube.js.download "$base/cube/cube.js" &&
+    curl -fsSL -o cube/FeedbackRecords.js.download "$base/cube/schema/FeedbackRecords.js" &&
+    mkdir -p cube/previous/schema &&
+    cp -p cube/cube.js cube/previous/cube.js &&
+    cp -p cube/schema/FeedbackRecords.js cube/previous/schema/FeedbackRecords.js &&
+    mv cube/cube.js.download cube/cube.js &&
+    {
+      # Never leave the new cube.js paired with the old model.
+      mv cube/FeedbackRecords.js.download cube/schema/FeedbackRecords.js ||
+        { cp -p cube/previous/cube.js cube/cube.js; false; }
+    }
+fi
+```
+
+## Recovery
+
+Do not run `docker compose down -v`. An old image cannot reverse migrations.
+Use [troubleshooting](/self-hosting/upgrade/troubleshooting) or [coordinated restore](/self-hosting/operate/backup-restore).

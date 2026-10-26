@@ -251,3 +251,10 @@ periodically for safety.
 
 Need the tool schemas, response shapes, or the API-key fallback? See the
 [MCP server technical handbook](/development/technical-handbook/mcp-server).
+
+## API-key fallback
+
+If your client cannot use OAuth, configure its HTTP headers to send `x-api-key` to your instance's
+`/api/mcp` endpoint. [Create a scoped API key](/api-reference/generate-key) for the required tools.
+Store it in the client's secret settings, not a committed configuration file. Tool access still depends
+on scopes, workspace permissions and feature availability. Prefer OAuth where your client supports it.

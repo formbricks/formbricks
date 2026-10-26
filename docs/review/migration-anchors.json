@@ -1,0 +1,622 @@
+[
+  {
+    "heading": "If a migration fails",
+    "old_anchor": "if-a-migration-fails",
+    "target": "/self-hosting/upgrade/troubleshooting#if-a-migration-fails"
+  },
+  {
+    "heading": "Open a SQL session",
+    "old_anchor": "open-a-sql-session",
+    "target": "/self-hosting/upgrade/troubleshooting#open-a-sql-session"
+  },
+  {
+    "heading": "1. Find the failed migration",
+    "old_anchor": "1-find-the-failed-migration",
+    "target": "/self-hosting/upgrade/troubleshooting#1-find-the-failed-migration"
+  },
+  {
+    "heading": "2. Find the real error",
+    "old_anchor": "2-find-the-real-error",
+    "target": "/self-hosting/upgrade/troubleshooting#2-find-the-real-error"
+  },
+  {
+    "heading": "3. Check what the migration left behind",
+    "old_anchor": "3-check-what-the-migration-left-behind",
+    "target": "/self-hosting/upgrade/troubleshooting#3-check-what-the-migration-left-behind"
+  },
+  {
+    "heading": "4. Mark it rolled back and run the migrations again",
+    "old_anchor": "4-mark-it-rolled-back-and-run-the-migrations-again",
+    "target": "/self-hosting/upgrade/troubleshooting#4-mark-it-rolled-back-and-run-the-migrations-again"
+  },
+  {
+    "heading": "Data migrations",
+    "old_anchor": "data-migrations",
+    "target": "/self-hosting/upgrade/troubleshooting#data-migrations"
+  },
+  {
+    "heading": "v6",
+    "old_anchor": "v6",
+    "target": "/self-hosting/upgrade/versions/6.0"
+  },
+  {
+    "heading": "Survey visibility (opt-in)",
+    "old_anchor": "survey-visibility-opt-in",
+    "target": "/self-hosting/upgrade/versions/6.1-visibility#survey-visibility-opt-in"
+  },
+  {
+    "heading": "Bundled TEI log level",
+    "old_anchor": "bundled-tei-log-level",
+    "target": "/self-hosting/upgrade/versions/6.1-runtime#bundled-tei-log-level"
+  },
+  {
+    "heading": "Database transaction limits",
+    "old_anchor": "database-transaction-limits",
+    "target": "/self-hosting/upgrade/versions/6.1-runtime#database-transaction-limits"
+  },
+  {
+    "heading": "Idle transactions (opt-in)",
+    "old_anchor": "idle-transactions-opt-in",
+    "target": "/self-hosting/upgrade/versions/6.1-runtime#idle-transactions-opt-in"
+  },
+  {
+    "heading": "One-click: port 3000 is published on the host only",
+    "old_anchor": "one-click-port-3000-is-published-on-the-host-only",
+    "target": "/self-hosting/upgrade/versions/6.1-runtime"
+  },
+  {
+    "heading": "Changes in Environment Variables",
+    "old_anchor": "changes-in-environment-variables",
+    "target": "/self-hosting/upgrade/versions/6.0#changes-in-environment-variables"
+  },
+  {
+    "heading": "Encrypted single-use survey links must be regenerated (action required if you use them)",
+    "old_anchor": "encrypted-single-use-survey-links-must-be-regenerated-action-required-if-you-use-them",
+    "target": "/self-hosting/upgrade/versions/6.1-single-use-links#encrypted-single-use-survey-links-must-be-regenerated-action-required-if-you-use-them"
+  },
+  {
+    "heading": "What to do when upgrading",
+    "old_anchor": "what-to-do-when-upgrading",
+    "target": "/self-hosting/upgrade/versions/6.1-single-use-links#what-to-do-when-upgrading"
+  },
+  {
+    "heading": "What you will see if you skip it",
+    "old_anchor": "what-you-will-see-if-you-skip-it",
+    "target": "/self-hosting/upgrade/versions/6.1-single-use-links#what-you-will-see-if-you-skip-it"
+  },
+  {
+    "heading": "Why",
+    "old_anchor": "why",
+    "target": "/self-hosting/upgrade/versions/6.1-single-use-links#why"
+  },
+  {
+    "heading": "If you cannot re-issue in time",
+    "old_anchor": "if-you-cannot-re-issue-in-time",
+    "target": "/self-hosting/upgrade/versions/6.1-single-use-links#if-you-cannot-re-issue-in-time"
+  },
+  {
+    "heading": "Rollback",
+    "old_anchor": "rollback",
+    "target": "/self-hosting/upgrade/versions/6.1-single-use-links#rollback"
+  },
+  {
+    "heading": "Hub worker for Docker",
+    "old_anchor": "hub-worker-for-docker",
+    "target": "/self-hosting/upgrade/versions/6.1-runtime#hub-worker-for-docker"
+  },
+  {
+    "heading": "Cube model files for Docker",
+    "old_anchor": "cube-model-files-for-docker",
+    "target": "/self-hosting/upgrade/versions/6.1-runtime#cube-model-files-for-docker"
+  },
+  {
+    "heading": "Bundled Cube image (action required for some deployments)",
+    "old_anchor": "bundled-cube-image-action-required-for-some-deployments",
+    "target": "/self-hosting/upgrade/versions/6.0#bundled-cube-image-action-required-for-some-deployments"
+  },
+  {
+    "heading": "v5.4",
+    "old_anchor": "v5-4",
+    "target": "/self-hosting/upgrade/versions/5.4"
+  },
+  {
+    "heading": "Bundled Cube image update (action required for some deployments)",
+    "old_anchor": "bundled-cube-image-update-action-required-for-some-deployments",
+    "target": "/self-hosting/upgrade/versions/5.4#bundled-cube-image-update-action-required-for-some-deployments"
+  },
+  {
+    "heading": "Envoy Gateway 1.8.4 CRD Upgrade",
+    "old_anchor": "envoy-gateway-1-8-4-crd-upgrade",
+    "target": "/self-hosting/upgrade/versions/5.4#envoy-gateway-1-8-4-crd-upgrade"
+  },
+  {
+    "heading": "Database migrations",
+    "old_anchor": "database-migrations",
+    "target": "/self-hosting/upgrade/versions/5.4#database-migrations"
+  },
+  {
+    "heading": "Build the response index before you upgrade",
+    "old_anchor": "build-the-response-index-before-you-upgrade",
+    "target": "/self-hosting/upgrade/versions/5.4#build-the-response-index-before-you-upgrade"
+  },
+  {
+    "heading": "Bundled Valkey 8.1.9 Upgrade (action required for some self-hosted deployments)",
+    "old_anchor": "bundled-valkey-8-1-9-upgrade-action-required-for-some-self-hosted-deployments",
+    "target": "/self-hosting/upgrade/versions/5.4#bundled-valkey-8-1-9-upgrade-action-required-for-some-self-hosted-deployments"
+  },
+  {
+    "heading": "Feedback Record Mutations by API Key (action required for some integrations)",
+    "old_anchor": "feedback-record-mutations-by-api-key-action-required-for-some-integrations",
+    "target": "/self-hosting/upgrade/versions/5.4#feedback-record-mutations-by-api-key-action-required-for-some-integrations"
+  },
+  {
+    "heading": "What to do before upgrading",
+    "old_anchor": "what-to-do-before-upgrading",
+    "target": "/self-hosting/upgrade/versions/5.4#what-to-do-before-upgrading"
+  },
+  {
+    "heading": "Rollback",
+    "old_anchor": "rollback-2",
+    "target": "/self-hosting/upgrade/versions/5.4#rollback"
+  },
+  {
+    "heading": "Better Auth 1.7 upgrade (no action required for most instances)",
+    "old_anchor": "better-auth-1-7-upgrade-no-action-required-for-most-instances",
+    "target": "/self-hosting/upgrade/versions/5.4#better-auth-1-7-upgrade-no-action-required-for-most-instances"
+  },
+  {
+    "heading": "AZUREAD_TENANT_ID: set a concrete tenant for full id_token verification",
+    "old_anchor": "azuread_tenant_id-set-a-concrete-tenant-for-full-id_token-verification",
+    "target": "/self-hosting/upgrade/versions/5.4#azuread_tenant_id-set-a-concrete-tenant-for-full-id_token-verification"
+  },
+  {
+    "heading": "SSO callback URLs are unchanged",
+    "old_anchor": "sso-callback-urls-are-unchanged",
+    "target": "/self-hosting/upgrade/versions/5.4#sso-callback-urls-are-unchanged"
+  },
+  {
+    "heading": "MCP access tokens now end with their session",
+    "old_anchor": "mcp-access-tokens-now-end-with-their-session",
+    "target": "/self-hosting/upgrade/versions/5.4#mcp-access-tokens-now-end-with-their-session"
+  },
+  {
+    "heading": "Rollback (Better Auth 1.7)",
+    "old_anchor": "rollback-better-auth-1-7",
+    "target": "/self-hosting/upgrade/versions/5.4#rollback-better-auth-1-7"
+  },
+  {
+    "heading": "v5.3",
+    "old_anchor": "v5-3",
+    "target": "/self-hosting/upgrade/versions/5.3"
+  },
+  {
+    "heading": "Client IP Resolution Behind a Proxy (recommended)",
+    "old_anchor": "client-ip-resolution-behind-a-proxy-recommended",
+    "target": "/self-hosting/upgrade/versions/5.3#client-ip-resolution-behind-a-proxy-recommended"
+  },
+  {
+    "heading": "Renamed Configuration",
+    "old_anchor": "renamed-configuration",
+    "target": "/self-hosting/upgrade/versions/5.3#renamed-configuration"
+  },
+  {
+    "heading": "Optional New Configuration",
+    "old_anchor": "optional-new-configuration",
+    "target": "/self-hosting/upgrade/versions/5.3#optional-new-configuration"
+  },
+  {
+    "heading": "Survey Scheduling",
+    "old_anchor": "survey-scheduling",
+    "target": "/self-hosting/upgrade/versions/5.3#survey-scheduling"
+  },
+  {
+    "heading": "Password Breach Check",
+    "old_anchor": "password-breach-check",
+    "target": "/self-hosting/upgrade/versions/5.3#password-breach-check"
+  },
+  {
+    "heading": "Analytics (Cube)",
+    "old_anchor": "analytics-cube",
+    "target": "/self-hosting/upgrade/versions/5.3#analytics-cube"
+  },
+  {
+    "heading": "Upgrade Steps",
+    "old_anchor": "upgrade-steps",
+    "target": "/self-hosting/upgrade/versions/5.3#upgrade-steps"
+  },
+  {
+    "heading": "Rollback",
+    "old_anchor": "rollback-3",
+    "target": "/self-hosting/upgrade/versions/5.3#rollback"
+  },
+  {
+    "heading": "v5.2",
+    "old_anchor": "v5-2",
+    "target": "/self-hosting/upgrade/versions/5.2"
+  },
+  {
+    "heading": "SSO Callback URL Change (action required for SSO users)",
+    "old_anchor": "sso-callback-url-change-action-required-for-sso-users",
+    "target": "/self-hosting/upgrade/versions/5.2#sso-callback-url-change-action-required-for-sso-users"
+  },
+  {
+    "heading": "Authentication Environment Variables",
+    "old_anchor": "authentication-environment-variables",
+    "target": "/self-hosting/upgrade/versions/5.2#authentication-environment-variables"
+  },
+  {
+    "heading": "Optional New Configuration",
+    "old_anchor": "optional-new-configuration-2",
+    "target": "/self-hosting/upgrade/versions/5.2#optional-new-configuration"
+  },
+  {
+    "heading": "Hub Enrichment (sentiment, emotion, translation)",
+    "old_anchor": "hub-enrichment-sentiment-emotion-translation",
+    "target": "/self-hosting/upgrade/versions/5.2#hub-enrichment-sentiment-emotion-translation"
+  },
+  {
+    "heading": "AI Taxonomy (beta)",
+    "old_anchor": "ai-taxonomy-beta",
+    "target": "/self-hosting/upgrade/versions/5.2#ai-taxonomy-beta"
+  },
+  {
+    "heading": "Bundled Qwen / vLLM Runtime",
+    "old_anchor": "bundled-qwen-/-vllm-runtime",
+    "target": "/self-hosting/upgrade/versions/5.2#bundled-qwen-/-vllm-runtime"
+  },
+  {
+    "heading": "OpenTelemetry Log Export",
+    "old_anchor": "opentelemetry-log-export",
+    "target": "/self-hosting/upgrade/versions/5.2#opentelemetry-log-export"
+  },
+  {
+    "heading": "Upgrade Steps",
+    "old_anchor": "upgrade-steps-2",
+    "target": "/self-hosting/upgrade/versions/5.2#upgrade-steps"
+  },
+  {
+    "heading": "Rollback",
+    "old_anchor": "rollback-4",
+    "target": "/self-hosting/upgrade/versions/5.2#rollback"
+  },
+  {
+    "heading": "v5",
+    "old_anchor": "v5",
+    "target": "/self-hosting/upgrade/versions/5.0"
+  },
+  {
+    "heading": "What Changes In v5",
+    "old_anchor": "what-changes-in-v5",
+    "target": "/self-hosting/upgrade/versions/5.0#what-changes-in-v5"
+  },
+  {
+    "heading": "Before You Upgrade",
+    "old_anchor": "before-you-upgrade",
+    "target": "/self-hosting/upgrade/versions/5.0#before-you-upgrade"
+  },
+  {
+    "heading": "Required Config And Infrastructure Changes",
+    "old_anchor": "required-config-and-infrastructure-changes",
+    "target": "/self-hosting/upgrade/versions/5.0#required-config-and-infrastructure-changes"
+  },
+  {
+    "heading": "Formbricks Hub",
+    "old_anchor": "formbricks-hub",
+    "target": "/self-hosting/upgrade/versions/5.0#formbricks-hub"
+  },
+  {
+    "heading": "Edge Rate Limiting",
+    "old_anchor": "edge-rate-limiting",
+    "target": "/self-hosting/upgrade/versions/5.0#edge-rate-limiting"
+  },
+  {
+    "heading": "AI Features",
+    "old_anchor": "ai-features",
+    "target": "/self-hosting/upgrade/versions/5.0#ai-features"
+  },
+  {
+    "heading": "Cube",
+    "old_anchor": "cube",
+    "target": "/self-hosting/upgrade/versions/5.0#cube"
+  },
+  {
+    "heading": "Upgrade Steps By Deployment Type",
+    "old_anchor": "upgrade-steps-by-deployment-type",
+    "target": "/self-hosting/upgrade/versions/5.0#upgrade-steps-by-deployment-type"
+  },
+  {
+    "heading": "Post-Upgrade Verification",
+    "old_anchor": "post-upgrade-verification",
+    "target": "/self-hosting/upgrade/versions/5.0#post-upgrade-verification"
+  },
+  {
+    "heading": "Troubleshooting And Rollback",
+    "old_anchor": "troubleshooting-and-rollback",
+    "target": "/self-hosting/upgrade/versions/5.0#troubleshooting-and-rollback"
+  },
+  {
+    "heading": "v4.7",
+    "old_anchor": "v4-7",
+    "target": "/self-hosting/upgrade/versions/4.7"
+  },
+  {
+    "heading": "What Happens Automatically",
+    "old_anchor": "what-happens-automatically",
+    "target": "/self-hosting/upgrade/versions/4.7#what-happens-automatically"
+  },
+  {
+    "heading": "Steps to Migrate",
+    "old_anchor": "steps-to-migrate",
+    "target": "/self-hosting/upgrade/versions/4.7#steps-to-migrate"
+  },
+  {
+    "heading": "v4.0",
+    "old_anchor": "v4-0",
+    "target": "/self-hosting/upgrade/versions/4.0"
+  },
+  {
+    "heading": "What's New in Formbricks 4.0",
+    "old_anchor": "whats-new-in-formbricks-4-0",
+    "target": "/self-hosting/upgrade/versions/4.0#whats-new-in-formbricks-4-0"
+  },
+  {
+    "heading": "What This Means for Your Self-Hosting Setup",
+    "old_anchor": "what-this-means-for-your-self-hosting-setup",
+    "target": "/self-hosting/upgrade/versions/4.0#what-this-means-for-your-self-hosting-setup"
+  },
+  {
+    "heading": "Why We Made These Changes",
+    "old_anchor": "why-we-made-these-changes",
+    "target": "/self-hosting/upgrade/versions/4.0#why-we-made-these-changes"
+  },
+  {
+    "heading": "Migration Steps for v4.0",
+    "old_anchor": "migration-steps-for-v4-0",
+    "target": "/self-hosting/upgrade/versions/4.0#migration-steps-for-v4-0"
+  },
+  {
+    "heading": "Legacy one-click v4.0 upgrade",
+    "old_anchor": "legacy-one-click-v4-0-upgrade",
+    "target": "/self-hosting/upgrade/versions/4.0#legacy-one-click-v4-0-upgrade"
+  },
+  {
+    "heading": "Manual Setup",
+    "old_anchor": "manual-setup",
+    "target": "/self-hosting/upgrade/versions/4.0#manual-setup"
+  },
+  {
+    "heading": "Redis",
+    "old_anchor": "redis",
+    "target": "/self-hosting/upgrade/versions/4.0#redis"
+  },
+  {
+    "heading": "S3-compatible storage",
+    "old_anchor": "s3-compatible-storage",
+    "target": "/self-hosting/upgrade/versions/4.0#s3-compatible-storage"
+  },
+  {
+    "heading": "Upgrade Process",
+    "old_anchor": "upgrade-process",
+    "target": "/self-hosting/upgrade/versions/4.0#upgrade-process"
+  },
+  {
+    "heading": "v3.3",
+    "old_anchor": "v3-3",
+    "target": "/self-hosting/upgrade/versions/3.3"
+  },
+  {
+    "heading": "Steps to Migrate",
+    "old_anchor": "steps-to-migrate-2",
+    "target": "/self-hosting/upgrade/versions/3.3#steps-to-migrate"
+  },
+  {
+    "heading": "v3.2",
+    "old_anchor": "v3-2",
+    "target": "/self-hosting/upgrade/versions/3.2"
+  },
+  {
+    "heading": "Steps to Migrate",
+    "old_anchor": "steps-to-migrate-3",
+    "target": "/self-hosting/upgrade/versions/3.2#steps-to-migrate"
+  },
+  {
+    "heading": "v3.1",
+    "old_anchor": "v3-1",
+    "target": "/self-hosting/upgrade/versions/3.1"
+  },
+  {
+    "heading": "Steps to Migrate",
+    "old_anchor": "steps-to-migrate-4",
+    "target": "/self-hosting/upgrade/versions/3.1#steps-to-migrate"
+  },
+  {
+    "heading": "v3.0",
+    "old_anchor": "v3-0",
+    "target": "/self-hosting/upgrade/versions/3.0"
+  },
+  {
+    "heading": "Steps to Migrate",
+    "old_anchor": "steps-to-migrate-5",
+    "target": "/self-hosting/upgrade/versions/3.0#steps-to-migrate"
+  },
+  {
+    "heading": "v2.7",
+    "old_anchor": "v2-7",
+    "target": "/self-hosting/upgrade/versions/2.7"
+  },
+  {
+    "heading": "Additional Updates",
+    "old_anchor": "additional-updates",
+    "target": "/self-hosting/upgrade/versions/2.7#additional-updates"
+  },
+  {
+    "heading": "Steps to Migrate",
+    "old_anchor": "steps-to-migrate-6",
+    "target": "/self-hosting/upgrade/versions/2.7#steps-to-migrate"
+  },
+  {
+    "heading": "v2.6",
+    "old_anchor": "v2-6",
+    "target": "/self-hosting/upgrade/versions/2.6"
+  },
+  {
+    "heading": "Steps to Migrate",
+    "old_anchor": "steps-to-migrate-7",
+    "target": "/self-hosting/upgrade/versions/2.6#steps-to-migrate"
+  },
+  {
+    "heading": "v2.5",
+    "old_anchor": "v2-5",
+    "target": "/self-hosting/upgrade/versions/2.5"
+  },
+  {
+    "heading": "Steps to Migrate",
+    "old_anchor": "steps-to-migrate-8",
+    "target": "/self-hosting/upgrade/versions/2.5#steps-to-migrate"
+  },
+  {
+    "heading": "v2.4",
+    "old_anchor": "v2-4",
+    "target": "/self-hosting/upgrade/versions/2.4"
+  },
+  {
+    "heading": "Steps to Migrate",
+    "old_anchor": "steps-to-migrate-9",
+    "target": "/self-hosting/upgrade/versions/2.4#steps-to-migrate"
+  },
+  {
+    "heading": "Additional Updates",
+    "old_anchor": "additional-updates-2",
+    "target": "/self-hosting/upgrade/versions/2.4#additional-updates"
+  },
+  {
+    "heading": "v2.3",
+    "old_anchor": "v2-3",
+    "target": "/self-hosting/upgrade/versions/2.3"
+  },
+  {
+    "heading": "Steps to Migrate",
+    "old_anchor": "steps-to-migrate-10",
+    "target": "/self-hosting/upgrade/versions/2.3#steps-to-migrate"
+  },
+  {
+    "heading": "Additional Updates",
+    "old_anchor": "additional-updates-3",
+    "target": "/self-hosting/upgrade/versions/2.3#additional-updates"
+  },
+  {
+    "heading": "v2.2",
+    "old_anchor": "v2-2",
+    "target": "/self-hosting/upgrade/versions/2.2"
+  },
+  {
+    "heading": "Steps to Migrate",
+    "old_anchor": "steps-to-migrate-11",
+    "target": "/self-hosting/upgrade/versions/2.2#steps-to-migrate"
+  },
+  {
+    "heading": "Changes in Environment Variables",
+    "old_anchor": "changes-in-environment-variables-2",
+    "target": "/self-hosting/upgrade/versions/2.2#changes-in-environment-variables"
+  },
+  {
+    "heading": "v2.1",
+    "old_anchor": "v2-1",
+    "target": "/self-hosting/upgrade/versions/2.1"
+  },
+  {
+    "heading": "Steps to Migrate",
+    "old_anchor": "steps-to-migrate-12",
+    "target": "/self-hosting/upgrade/versions/2.1#steps-to-migrate"
+  },
+  {
+    "heading": "Changes in Environment Variables",
+    "old_anchor": "changes-in-environment-variables-3",
+    "target": "/self-hosting/upgrade/versions/2.1#changes-in-environment-variables"
+  },
+  {
+    "heading": "v2.0",
+    "old_anchor": "v2-0",
+    "target": "/self-hosting/upgrade/versions/2.0"
+  },
+  {
+    "heading": "Steps to Migrate",
+    "old_anchor": "steps-to-migrate-13",
+    "target": "/self-hosting/upgrade/versions/2.0#steps-to-migrate"
+  },
+  {
+    "heading": "App Surveys with @formbricks/js",
+    "old_anchor": "app-surveys-with-@formbricks/js",
+    "target": "/self-hosting/upgrade/versions/2.0#app-surveys-with-@formbricks/js"
+  },
+  {
+    "heading": "v1.6",
+    "old_anchor": "v1-6",
+    "target": "/self-hosting/upgrade/versions/1.6"
+  },
+  {
+    "heading": "Steps to Migrate",
+    "old_anchor": "steps-to-migrate-14",
+    "target": "/self-hosting/upgrade/versions/1.6#steps-to-migrate"
+  },
+  {
+    "heading": "Restoring the database after a failed upgrade",
+    "old_anchor": "restoring-the-database-after-a-failed-upgrade",
+    "target": "/self-hosting/upgrade/versions/1.6#restoring-the-database-after-a-failed-upgrade"
+  },
+  {
+    "heading": "App Surveys with @formbricks/js",
+    "old_anchor": "app-surveys-with-@formbricks/js-2",
+    "target": "/self-hosting/upgrade/versions/1.6#app-surveys-with-@formbricks/js"
+  },
+  {
+    "heading": "Upgrade and pin the client package",
+    "old_anchor": "upgrade-and-pin-the-client-package",
+    "target": "/self-hosting/upgrade/versions/1.6#upgrade-and-pin-the-client-package"
+  },
+  {
+    "heading": "Deprecated Environment Variables",
+    "old_anchor": "deprecated-environment-variables",
+    "target": "/self-hosting/upgrade/versions/1.6#deprecated-environment-variables"
+  },
+  {
+    "heading": "v1.2",
+    "old_anchor": "v1-2",
+    "target": "/self-hosting/upgrade/versions/1.2"
+  },
+  {
+    "heading": "New Environment Variables",
+    "old_anchor": "new-environment-variables",
+    "target": "/self-hosting/upgrade/versions/1.2#new-environment-variables"
+  },
+  {
+    "heading": "Deprecated / Removed Environment Variables",
+    "old_anchor": "deprecated-/-removed-environment-variables",
+    "target": "/self-hosting/upgrade/versions/1.2#deprecated-/-removed-environment-variables"
+  },
+  {
+    "heading": "v1.1",
+    "old_anchor": "v1-1",
+    "target": "/self-hosting/upgrade/versions/1.1"
+  },
+  {
+    "heading": "Renamed Environment Variables",
+    "old_anchor": "renamed-environment-variables",
+    "target": "/self-hosting/upgrade/versions/1.1#renamed-environment-variables"
+  },
+  {
+    "heading": "Deprecated Environment Variables",
+    "old_anchor": "deprecated-environment-variables-2",
+    "target": "/self-hosting/upgrade/versions/1.1#deprecated-environment-variables"
+  },
+  {
+    "heading": "Helper Shell Script",
+    "old_anchor": "helper-shell-script",
+    "target": "/self-hosting/upgrade/versions/1.1#helper-shell-script"
+  },
+  {
+    "heading": "Docker & Single Script Setup",
+    "old_anchor": "docker-&-single-script-setup",
+    "target": "/self-hosting/upgrade/versions/1.1#docker-&-single-script-setup"
+  }
+]
