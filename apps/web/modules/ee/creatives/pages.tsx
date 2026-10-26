@@ -18,9 +18,8 @@ import { CreativeEditor } from "./components/editor/creative-editor";
 import { CreativeSummary } from "./components/summary/creative-summary";
 import { canWriteCreatives } from "./lib/access-rules";
 import { authorizeCreativePage } from "./lib/authorization";
-import { toDestinationSurveyOptions } from "./lib/destination-options";
+import { toLinkedSurveyOption } from "./lib/destination-options";
 import { getCreativeSummaryPath } from "./lib/paths";
-import { findDestinationSurveyCandidates } from "./lib/repository";
 import { getCreativesRouteAuth } from "./lib/route-auth";
 
 // Server entry points for the Creatives routes. Each runs the Creatives route gate (the workspace auth
@@ -102,17 +101,12 @@ export const CreativeEditorPage = async ({ params }: Readonly<{ params: TCreativ
   if (!canWriteCreatives(creativesAccess)) redirect(getCreativeSummaryPath(workspaceId, creativeId));
   const { workspace, organization, record } = authorized;
 
-  const [surveyCandidates, actionClasses, isCustomCssPlanAllowed, workspaceLanguages] = await Promise.all([
-    findDestinationSurveyCandidates(workspaceId),
+  const [actionClasses, isCustomCssPlanAllowed, workspaceLanguages] = await Promise.all([
     getActionClasses(workspaceId),
     getCustomCssPlanAllowed(organization.id),
     getWorkspaceLanguages(workspaceId),
   ]);
 
-  const surveyOptions = toDestinationSurveyOptions(
-    record.survey ? [...surveyCandidates, record.survey] : surveyCandidates,
-    record.surveyId
-  );
   // Creative texts are keyed by canonical codes only, as the v3 API takes them (ENG-4003).
   const workspaceLanguageCodes = workspaceLanguages
     .map(({ code }) => code)
@@ -123,7 +117,8 @@ export const CreativeEditorPage = async ({ params }: Readonly<{ params: TCreativ
       workspaceId={workspaceId}
       siteName={workspace.name}
       initialCreative={serializeV3Creative(record, new Date())}
-      surveyOptions={surveyOptions}
+      // Only the survey it already opens: the picker searches the ones the editor can read (ENG-3868).
+      linkedSurvey={record.survey ? toLinkedSurveyOption(record.survey) : null}
       actionOptions={actionClasses.map(({ id, name }) => ({ id, name }))}
       workspaceStyling={workspace.styling}
       customCss={{

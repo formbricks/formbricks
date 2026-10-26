@@ -22,3 +22,20 @@ export const getSurveyPickState = (
   if (disabled) return { disabled, badge: "restricted" };
   return { disabled, badge: option.notAllowed ? "notAllowed" : null };
 };
+
+/**
+ * The picker's surveys: the chosen one and the one the creative already opens, then the search results.
+ * Those two stay whatever the search returns, since the combobox shows its value by finding it among the
+ * options; and they win over a result with the same id, because only they know a linked survey is
+ * `notAllowed` or archived.
+ */
+export const withPinnedSurveyOptions = (
+  results: readonly TDestinationSurveyOption[],
+  pinned: readonly (TDestinationSurveyOption | null)[]
+): TDestinationSurveyOption[] => {
+  const pinnedById = new Map<string, TDestinationSurveyOption>();
+  for (const option of pinned) {
+    if (option && !pinnedById.has(option.id)) pinnedById.set(option.id, option);
+  }
+  return [...pinnedById.values(), ...results.filter(({ id }) => !pinnedById.has(id))];
+};

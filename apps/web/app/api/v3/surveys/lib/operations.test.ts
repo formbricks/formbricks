@@ -310,6 +310,30 @@ describe("listV3Surveys", () => {
     });
   });
 
+  test("applies the single-use and PIN filters to the page and its total alike", async () => {
+    const filterCriteria = { type: ["app", "link"], singleUse: false, pinProtected: false };
+    mockListQuery({ filterCriteria });
+
+    const response = await listV3Surveys({
+      searchParams: new URLSearchParams({ workspaceId }),
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(200);
+    expect(vi.mocked(getSurveyListPage)).toHaveBeenCalledWith(
+      workspaceId,
+      expect.objectContaining({ filterCriteria })
+    );
+    expect(vi.mocked(getSurveyCount)).toHaveBeenCalledWith(
+      workspaceId,
+      filterCriteria,
+      VISIBILITY_CONTEXT.actorContext,
+      {}
+    );
+  });
+
   test("reports an empty workspace when it holds no survey at all", async () => {
     vi.mocked(getWorkspaceSurveyCount).mockResolvedValue(0);
 

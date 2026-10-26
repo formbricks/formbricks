@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { Prisma } from "@formbricks/database/prisma";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyFilterCriteria, TSurveyStatus, TSurveyType } from "@formbricks/types/surveys/types";
@@ -148,6 +149,31 @@ describe("Survey Utils", () => {
       const filterCriteria: TSurveyFilterCriteria = { type: ["link", "app"] };
       const result = buildWhereClause(filterCriteria);
       expect(result.AND).toContainEqual({ type: { in: ["link", "app"] } });
+    });
+
+    test("keeps only single-use surveys for singleUse true", () => {
+      const result = buildWhereClause({ singleUse: true });
+      expect(result.AND).toContainEqual({ singleUse: { path: ["enabled"], equals: true } });
+    });
+
+    // NOT (singleUse->enabled = true) is NULL for a NULL column or a missing key, which drops the row.
+    test("keeps surveys without single-use settings for singleUse false", () => {
+      const result = buildWhereClause({ singleUse: false });
+      expect(result.AND).toContainEqual({
+        OR: [
+          { singleUse: { path: ["enabled"], equals: Prisma.DbNull } },
+          { NOT: { singleUse: { path: ["enabled"], equals: true } } },
+        ],
+      });
+    });
+
+    test("treats an empty PIN as no PIN for pinProtected", () => {
+      expect(buildWhereClause({ pinProtected: false }).AND).toContainEqual({
+        OR: [{ pin: null }, { pin: "" }],
+      });
+      expect(buildWhereClause({ pinProtected: true }).AND).toContainEqual({
+        AND: [{ pin: { not: null } }, { pin: { not: "" } }],
+      });
     });
 
     test("should build where clause for createdBy 'you'", () => {

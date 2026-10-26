@@ -1,5 +1,6 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,
   LinkIcon,
@@ -12,9 +13,11 @@ import {
   SparklesIcon,
   SquareMousePointerIcon,
 } from "lucide-react";
-import { type Dispatch, type SetStateAction, useId } from "react";
+import { type Dispatch, type SetStateAction, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { useDebouncedValue } from "@/lib/use-debounced-value";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Editor } from "@/modules/ui/components/editor";
 import { Input } from "@/modules/ui/components/input";
 import { InputCombobox, type TComboboxOption } from "@/modules/ui/components/input-combo-box";
@@ -22,6 +25,7 @@ import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group"
 import { Switch } from "@/modules/ui/components/switch";
 import { bannerHtmlToRuns, bannerRunsToHtml } from "../../lib/banner-text";
 import type { TDestinationSurveyOption } from "../../lib/destination-options";
+import { destinationSurveySearchQuery } from "../../lib/destination-survey-api";
 import type {
   TBannerForm,
   TCreativeEditorForm,
@@ -29,7 +33,7 @@ import type {
   TFeedbackButtonIcon,
 } from "../../lib/editor-form";
 import { type TPublishIssue, isValidLink } from "../../lib/publish-check";
-import { getSurveyPickState } from "../../lib/survey-picker";
+import { getSurveyPickState, withPinnedSurveyOptions } from "../../lib/survey-picker";
 import { CREATIVE_TYPE_ICONS } from "../creative-icons";
 import { EditorField, EditorPanel } from "./editor-primitives";
 import { SurveyLanguageWarning } from "./survey-language-warning";
@@ -118,30 +122,47 @@ const IconPicker = ({
   );
 };
 
+const SEARCH_DEBOUNCE_MS = 250;
+
+/**
+ * Searches the workspace's surveys on the server as the author types (`destination-survey-api.ts`): only
+ * those the editor can read, none that can never be a Destination.
+ */
 const SurveyPicker = ({
-  surveyId,
+  workspaceId,
+  survey,
+  linkedSurvey,
   onChange,
-  surveyOptions,
-  linkedSurveyId,
   isInvalid,
   languages,
 }: Readonly<{
-  surveyId: string | null;
-  onChange: (surveyId: string) => void;
-  surveyOptions: TDestinationSurveyOption[];
-  linkedSurveyId: string | null;
+  workspaceId: string;
+  /** The chosen survey, with its languages once read. */
+  survey: TDestinationSurveyOption | null;
+  /** The survey the stored creative opens, which stays listed and selectable whatever it became. */
+  linkedSurvey: TDestinationSurveyOption | null;
+  onChange: (survey: TDestinationSurveyOption) => void;
   isInvalid: boolean;
   languages: TCreativeEditorForm["languages"];
 }>) => {
   const { t } = useTranslation();
   const pickerId = useId();
-  const survey = surveyOptions.find((option) => option.id === surveyId);
+  const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
+  const {
+    data: results = [],
+    isFetching,
+    isSuccess,
+    isPlaceholderData,
+    error,
+  } = useQuery(destinationSurveySearchQuery({ workspaceId, search: debouncedSearch }));
+  const surveyOptions = withPinnedSurveyOptions(results, [survey, linkedSurvey]);
   const badgeText = {
     restricted: t("workspace.surveys.visibility.restricted"),
     notAllowed: t("workspace.creatives.editor.survey_not_allowed"),
   };
   const comboboxOptions = surveyOptions.map((option): TComboboxOption => {
-    const { disabled, badge } = getSurveyPickState(option, linkedSurveyId);
+    const { disabled, badge } = getSurveyPickState(option, linkedSurvey?.id ?? null);
     return {
       value: option.id,
       label: option.name,
@@ -150,8 +171,14 @@ const SurveyPicker = ({
       ...(badge && { meta: { badge: badgeText[badge] } }),
     };
   });
+  const getEmptyText = () => {
+    if (error) return getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"));
+    if (isFetching) return t("common.loading");
+    return t("common.no_surveys_found");
+  };
 
-  if (surveyOptions.length === 0) {
+  // Nothing at all to open, not a search that matched nothing.
+  if (isSuccess && !isPlaceholderData && debouncedSearch === "" && surveyOptions.length === 0) {
     return <p className="text-xs text-slate-500">{t("workspace.creatives.editor.no_surveys")}</p>;
   }
 
@@ -164,9 +191,13 @@ const SurveyPicker = ({
         searchPlaceholder={t("workspace.creatives.editor.search_surveys")}
         placeholder={t("workspace.creatives.editor.choose_survey")}
         options={comboboxOptions}
-        value={surveyId}
-        onChangeValue={(value) => onChange(String(value))}
-        emptyDropdownText={t("common.no_surveys_found")}
+        value={survey?.id ?? null}
+        onChangeValue={(value) => {
+          const picked = surveyOptions.find((option) => option.id === value);
+          if (picked) onChange(picked);
+        }}
+        onSearchChange={setSearch}
+        emptyDropdownText={getEmptyText()}
         showCheckIcon
         iconClassName="size-4 shrink-0 text-slate-500"
         comboboxClasses={cn("max-w-none bg-white", isInvalid && "border-red-500")}
@@ -195,7 +226,7 @@ const SurveyPicker = ({
           {t("workspace.creatives.editor.survey_not_running")}
         </p>
       )}
-      <SurveyLanguageWarning languages={languages} survey={survey ?? null} />
+      <SurveyLanguageWarning languages={languages} survey={survey} />
     </>
   );
 };
@@ -236,12 +267,22 @@ const LinkInput = ({
   );
 };
 
+/** What the On click panel's survey picker reads and reports, passed down from the editor. */
+export type TSurveyPickerContext = {
+  workspaceId: string;
+  /** The chosen survey, with its languages once read. */
+  pickedSurvey: TDestinationSurveyOption | null;
+  /** The survey the stored creative opens, which stays selectable whatever its visibility. */
+  linkedSurvey: TDestinationSurveyOption | null;
+  /** Remembers a picked survey's facts; the form keeps only its id. */
+  onPickSurvey: (survey: TDestinationSurveyOption) => void;
+};
+
 type TOnClickPanelProps = {
   destination: TCreativeEditorForm["destination"];
   languages: TCreativeEditorForm["languages"];
   setForm: TSetForm;
-  surveyOptions: TDestinationSurveyOption[];
-  linkedSurveyId: string | null;
+  surveyPicker: TSurveyPickerContext;
   issues: TPublishIssue[];
 };
 
@@ -249,8 +290,7 @@ const OnClickPanel = ({
   destination,
   languages,
   setForm,
-  surveyOptions,
-  linkedSurveyId,
+  surveyPicker,
   issues,
 }: Readonly<TOnClickPanelProps>) => {
   const { t } = useTranslation();
@@ -285,10 +325,13 @@ const OnClickPanel = ({
             </label>
             {destination.type === "survey" && (
               <SurveyPicker
-                surveyId={destination.surveyId}
-                onChange={(surveyId) => setDestination({ type: "survey", surveyId })}
-                surveyOptions={surveyOptions}
-                linkedSurveyId={linkedSurveyId}
+                workspaceId={surveyPicker.workspaceId}
+                survey={surveyPicker.pickedSurvey}
+                linkedSurvey={surveyPicker.linkedSurvey}
+                onChange={(survey) => {
+                  surveyPicker.onPickSurvey(survey);
+                  setDestination({ type: "survey", surveyId: survey.id });
+                }}
                 isInvalid={issues.includes("survey_missing") || issues.includes("survey_not_allowed")}
                 languages={languages}
               />
@@ -458,15 +501,12 @@ const BannerContent = ({
 export const ContentTab = ({
   form,
   setForm,
-  surveyOptions,
-  linkedSurveyId,
+  surveyPicker,
   issues,
 }: Readonly<{
   form: TCreativeEditorForm;
   setForm: TSetForm;
-  surveyOptions: TDestinationSurveyOption[];
-  /** The survey the stored creative opens, which stays selectable whatever its visibility. */
-  linkedSurveyId: string | null;
+  surveyPicker: TSurveyPickerContext;
   issues: TPublishIssue[];
 }>) => {
   const { content } = form;
@@ -475,8 +515,7 @@ export const ContentTab = ({
       destination={form.destination}
       languages={form.languages}
       setForm={setForm}
-      surveyOptions={surveyOptions}
-      linkedSurveyId={linkedSurveyId}
+      surveyPicker={surveyPicker}
       issues={issues}
     />
   );

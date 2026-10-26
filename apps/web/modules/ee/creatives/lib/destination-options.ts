@@ -1,22 +1,16 @@
 import type { TSurveyVisibility } from "@formbricks/types/surveys/types";
 import { getEffectiveVisibility } from "@/lib/survey/visibility/policy";
 import type { TLanguageCheckSurvey } from "./languages-form";
-import { getDestinationSurveyIssue, isSingleUseEnabled } from "./record";
+import { getDestinationSurveyIssue } from "./record";
 import type { TDestinationSurveyFacts } from "./repository";
 
 /**
- * The surveys the On click picker offers (ENG-3868). Single-use and PIN-protected surveys can never
- * be a Destination, so they are left out; Restricted ones are listed so the author sees why a survey is
- * missing, and the picker shows them disabled with their badge. Archived surveys are left out too: they
- * never run again unless restored. The survey a creative already opens always stays, so the picker can
- * show it whatever happened to it since.
+ * A survey the On click picker shows (ENG-3868). The picker searches `GET /api/v3/surveys`, which only
+ * lists surveys the editor can read and leaves out single-use, PIN-protected and archived ones (none can
+ * be a Destination); Restricted ones it can read stay listed, disabled with their badge, so the author
+ * sees why. The survey a creative already opens is read with the creative and always shown, whatever
+ * happened to it since.
  */
-
-/** `languages` is absent for a survey read without them (the linked one, when not among the candidates). */
-export type TDestinationSurveyCandidate = TDestinationSurveyFacts & {
-  languages?: TLanguageCheckSurvey["languages"];
-};
-
 export type TDestinationSurveyOption = {
   id: string;
   name: string;
@@ -35,30 +29,13 @@ export type TDestinationSurveyOption = {
   notAllowed?: true;
 };
 
-const isOffered = (candidate: TDestinationSurveyCandidate): boolean =>
-  !candidate.archivedAt && !isSingleUseEnabled(candidate.singleUse) && !candidate.pin;
-
-export const toDestinationSurveyOptions = (
-  candidates: TDestinationSurveyCandidate[],
-  linkedSurveyId: string | null
-): TDestinationSurveyOption[] => {
-  const seen = new Set<string>();
-  return candidates.flatMap((candidate) => {
-    if (seen.has(candidate.id)) return [];
-    seen.add(candidate.id);
-    if (candidate.id !== linkedSurveyId && !isOffered(candidate)) return [];
-    return [
-      {
-        id: candidate.id,
-        name: candidate.name,
-        type: candidate.type,
-        status: candidate.status,
-        ...(candidate.archivedAt && { archivedAt: candidate.archivedAt }),
-        visibility: getEffectiveVisibility(candidate),
-        ...(candidate.languages && { languages: candidate.languages }),
-        ...(candidate.id === linkedSurveyId &&
-          getDestinationSurveyIssue(candidate) && { notAllowed: true as const }),
-      },
-    ];
-  });
-};
+/** The survey the stored creative opens, as the picker shows it, from the creative's own record. */
+export const toLinkedSurveyOption = (survey: TDestinationSurveyFacts): TDestinationSurveyOption => ({
+  id: survey.id,
+  name: survey.name,
+  type: survey.type,
+  status: survey.status,
+  ...(survey.archivedAt && { archivedAt: survey.archivedAt }),
+  visibility: getEffectiveVisibility(survey),
+  ...(getDestinationSurveyIssue(survey) && { notAllowed: true as const }),
+});

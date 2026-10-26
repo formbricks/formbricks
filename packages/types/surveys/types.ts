@@ -4684,6 +4684,10 @@ export const ZSurveyFilterCriteria = z.object({
   // When true, include archived surveys (archivedAt not null) in results.
   // When false/undefined, archived surveys are excluded (hidden by default).
   includeArchived: z.boolean().optional(),
+  // true keeps only single-use surveys (`singleUse.enabled`), false only the others; undefined keeps both.
+  singleUse: z.boolean().optional(),
+  // true keeps only surveys with a PIN, false only the others; undefined keeps both.
+  pinProtected: z.boolean().optional(),
 });
 
 export type TSurveyFilterCriteria = z.infer<typeof ZSurveyFilterCriteria>;

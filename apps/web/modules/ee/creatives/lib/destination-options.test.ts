@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { type TDestinationSurveyCandidate, toDestinationSurveyOptions } from "./destination-options";
+import { toLinkedSurveyOption } from "./destination-options";
+import type { TDestinationSurveyFacts } from "./repository";
 
-const survey = (
-  patch: Partial<TDestinationSurveyCandidate> & { id: string }
-): TDestinationSurveyCandidate => ({
-  name: `Survey ${patch.id}`,
+const survey = (patch: Partial<TDestinationSurveyFacts> = {}): TDestinationSurveyFacts => ({
+  id: "linked",
+  name: "Site feedback",
   type: "app",
   status: "inProgress",
   archivedAt: null,
@@ -16,94 +16,35 @@ const survey = (
   ...patch,
 });
 
-describe("toDestinationSurveyOptions", () => {
-  test("offers workspace-visible surveys of either type and any status, in the order given", () => {
-    const options = toDestinationSurveyOptions(
-      [
-        survey({ id: "app", name: "Site feedback" }),
-        survey({ id: "link", name: "Plan finder", type: "link", status: "draft" }),
-      ],
-      null
-    );
+describe("toLinkedSurveyOption", () => {
+  test("shows a survey that can still be a Destination as it is", () => {
+    expect(toLinkedSurveyOption(survey({ type: "link", status: "paused" }))).toEqual({
+      id: "linked",
+      name: "Site feedback",
+      type: "link",
+      status: "paused",
+      visibility: "workspace",
+    });
+  });
 
-    expect(options).toEqual([
-      { id: "app", name: "Site feedback", type: "app", status: "inProgress", visibility: "workspace" },
-      { id: "link", name: "Plan finder", type: "link", status: "draft", visibility: "workspace" },
+  test("keeps an archived survey's archivedAt: it isn't Active, whatever its status", () => {
+    const archivedAt = new Date("2026-10-01T00:00:00.000Z");
+    expect(toLinkedSurveyOption(survey({ archivedAt })).archivedAt).toBe(archivedAt);
+  });
+
+  test("flags a survey that can no longer be a Destination, a pending visibility change included", () => {
+    const flagged = [
+      survey({ visibility: "restricted" }),
+      survey({ visibilityVersion: 2, visibilityProjectedVersion: 1 }),
+      survey({ singleUse: { enabled: true, isEncrypted: true } }),
+      survey({ pin: "1234" }),
+    ].map(toLinkedSurveyOption);
+
+    expect(flagged.map(({ visibility, notAllowed }) => ({ visibility, notAllowed }))).toEqual([
+      { visibility: "restricted", notAllowed: true },
+      { visibility: "restricted", notAllowed: true },
+      { visibility: "workspace", notAllowed: true },
+      { visibility: "workspace", notAllowed: true },
     ]);
-  });
-
-  test("lists Restricted surveys by their effective visibility, a pending visibility change included", () => {
-    const options = toDestinationSurveyOptions(
-      [
-        survey({ id: "restricted", visibility: "restricted" }),
-        survey({
-          id: "pending",
-          visibility: "workspace",
-          visibilityVersion: 2,
-          visibilityProjectedVersion: 1,
-        }),
-      ],
-      null
-    );
-
-    expect(options.map(({ id, visibility }) => ({ id, visibility }))).toEqual([
-      { id: "restricted", visibility: "restricted" },
-      { id: "pending", visibility: "restricted" },
-    ]);
-  });
-
-  test("leaves out single-use, PIN-protected and archived surveys", () => {
-    const options = toDestinationSurveyOptions(
-      [
-        survey({ id: "single-use", type: "link", singleUse: { enabled: true, isEncrypted: true } }),
-        survey({ id: "pin", type: "link", pin: "1234" }),
-        survey({ id: "restricted-pin", type: "link", pin: "1234", visibility: "restricted" }),
-        survey({ id: "archived", archivedAt: new Date("2026-10-01T00:00:00.000Z") }),
-        survey({ id: "ok" }),
-      ],
-      null
-    );
-
-    expect(options.map(({ id }) => id)).toEqual(["ok"]);
-  });
-
-  test("always keeps the survey the creative already opens, once", () => {
-    const linked = survey({ id: "linked", archivedAt: new Date("2026-10-01T00:00:00.000Z") });
-    const options = toDestinationSurveyOptions([survey({ id: "ok" }), linked, linked], "linked");
-
-    expect(options.map(({ id }) => id)).toEqual(["ok", "linked"]);
-    // Archived, it isn't Active whatever its status, which the editor's Save rule needs to know.
-    expect(options.map(({ archivedAt }) => archivedAt)).toEqual([undefined, linked.archivedAt]);
-  });
-
-  test("flags the survey the creative already opens once it can no longer be a Destination", () => {
-    const options = toDestinationSurveyOptions(
-      [
-        survey({ id: "ok" }),
-        survey({ id: "now-restricted", visibility: "restricted" }),
-        survey({ id: "now-pin", type: "link", pin: "1234" }),
-      ],
-      "now-restricted"
-    );
-    const withPin = toDestinationSurveyOptions(
-      [survey({ id: "now-pin", type: "link", pin: "1234" })],
-      "now-pin"
-    );
-
-    expect(options.map(({ id, notAllowed }) => ({ id, notAllowed }))).toEqual([
-      { id: "ok", notAllowed: undefined },
-      { id: "now-restricted", notAllowed: true },
-    ]);
-    expect(withPin[0].notAllowed).toBe(true);
-  });
-
-  test("carries a survey's languages when they were read, for the editor's language check", () => {
-    const languages = [{ default: true, enabled: true, language: { code: "en-US", alias: null } }];
-    const options = toDestinationSurveyOptions(
-      [survey({ id: "translated", languages }), survey({ id: "unread" })],
-      null
-    );
-
-    expect(options.map((option) => option.languages)).toEqual([languages, undefined]);
   });
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeftIcon,
   LanguagesIcon,
@@ -28,6 +28,7 @@ import { useCreativeResource, useUpdateCreative } from "../../hooks/use-creative
 import { useCreativeStatusChange } from "../../hooks/use-creative-status-change";
 import { useCreativeWarningText } from "../../hooks/use-creative-warning-text";
 import type { TDestinationSurveyOption } from "../../lib/destination-options";
+import { destinationSurveyLanguagesQuery } from "../../lib/destination-survey-api";
 import {
   type TCreativeEditorForm,
   type TCreativeResource,
@@ -79,7 +80,7 @@ export const CreativeEditor = ({
   workspaceId,
   siteName,
   initialCreative,
-  surveyOptions,
+  linkedSurvey,
   actionOptions,
   workspaceStyling,
   customCss,
@@ -89,7 +90,8 @@ export const CreativeEditor = ({
   workspaceId: string;
   siteName: string;
   initialCreative: TCreativeResource;
-  surveyOptions: TDestinationSurveyOption[];
+  /** The survey the creative opens, read with it; the picker searches for any other. */
+  linkedSurvey: TDestinationSurveyOption | null;
   /** The workspace's actions, for Show on: When an action fires. */
   actionOptions: TCreativeActionOption[];
   /** The workspace Look & Feel a creative starts from (never the linked survey's own styling). */
@@ -108,6 +110,11 @@ export const CreativeEditor = ({
   const updateCreative = useUpdateCreative(initialCreative.id);
   const statusChange = useCreativeStatusChange(initialCreative.id);
   const [form, setForm] = useState(() => toCreativeEditorForm(initialCreative));
+  // Every Destination survey the editor has seen: the one the creative opened on load and each one
+  // picked since (the form keeps only the id), so the Save rule reads both sides of a relink.
+  const [knownSurveys, setKnownSurveys] = useState<ReadonlyMap<string, TDestinationSurveyOption>>(
+    () => new Map(linkedSurvey ? [[linkedSurvey.id, linkedSurvey]] : [])
+  );
   const [activeTab, setActiveTab] = useState<TCreativeEditorTab>("content");
   const [device, setDevice] = useState<TCreativeDevice>("desktop");
   const [appearance, setAppearance] = useState<TStylingAppearance>("light");
@@ -130,7 +137,9 @@ export const CreativeEditor = ({
   const isArchived = creative.archivedAt !== null;
   const canSave = !isArchived && !isReadOnly;
   // A linked survey that can no longer be a Destination stays picked but blocks Publish (it is flagged).
-  const notAllowedSurveyIds = surveyOptions.filter((option) => option.notAllowed).map(({ id }) => id);
+  const notAllowedSurveyIds = [...knownSurveys.values()]
+    .filter((option) => option.notAllowed)
+    .map(({ id }) => id);
   const getIssues = (intent: TCreativeSaveIntent): TPublishIssue[] =>
     intent === "publish"
       ? getPublishIssues(form, { notAllowedSurveyIds })
@@ -139,7 +148,16 @@ export const CreativeEditor = ({
   const tabsWithIssues = new Set([...issues.map((issue) => PUBLISH_ISSUE_TABS[issue]), serverIssueTab]);
   const linkedSurveyId = creative.destination?.type === "survey" ? creative.destination.surveyId : null;
   const pickedSurveyId = form.destination.type === "survey" ? form.destination.surveyId : null;
-  const pickedSurvey = surveyOptions.find((option) => option.id === pickedSurveyId) ?? null;
+  // Its languages are read on their own, for the language warning (ENG-4003); unknown until then.
+  const { data: pickedSurveyLanguages } = useQuery({
+    ...destinationSurveyLanguagesQuery(pickedSurveyId ?? ""),
+    enabled: pickedSurveyId !== null,
+  });
+  const knownPickedSurvey = pickedSurveyId ? (knownSurveys.get(pickedSurveyId) ?? null) : null;
+  const pickedSurvey =
+    knownPickedSurvey && pickedSurveyLanguages
+      ? { ...knownPickedSurvey, languages: pickedSurveyLanguages }
+      : knownPickedSurvey;
   const pickedSurveyName = pickedSurvey?.name ?? null;
 
   useBeforeUnloadPrompt(() => hasUnsavedChanges(form, creative), { enabled: canSave });
@@ -232,7 +250,7 @@ export const CreativeEditor = ({
     if (flag(intent, getIssues(intent))) return;
     // A Save never takes it live by itself (`save-status.ts`); Publish is the author going live.
     const { body, keptPaused } = keepSaveFromGoingLive(creative, buildCreativePatch(form, creative, intent), {
-      surveys: toSurveyStates(surveyOptions),
+      surveys: toSurveyStates([...knownSurveys.values()]),
       now: new Date(),
     });
     // A relink that leaves a live app survey nothing opens asks first; the save is allowed anyway.
@@ -406,8 +424,13 @@ export const CreativeEditor = ({
               <ContentTab
                 form={form}
                 setForm={setForm}
-                surveyOptions={surveyOptions}
-                linkedSurveyId={linkedSurveyId}
+                surveyPicker={{
+                  workspaceId,
+                  pickedSurvey,
+                  linkedSurvey: linkedSurveyId ? (knownSurveys.get(linkedSurveyId) ?? null) : null,
+                  onPickSurvey: (survey) =>
+                    setKnownSurveys((current) => new Map(current).set(survey.id, survey)),
+                }}
                 issues={issues}
               />
             )}
