@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { z } from "zod";
+import { MCP_REQUEST_MAX_ELEMENTS } from "./request-budget";
 import { mcpRequestStateCodec } from "./request-state";
 import { MCP_HANDLER_OPTIONS, identifyMcpUser } from "./server";
 
@@ -33,6 +35,60 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 describe("mcpHandler options", () => {
+  test("the real adapter enforces the SDK input budget before validating a tool", async () => {
+    const { createMcpHandler } = await vi.importActual<typeof import("mcp-handler")>("mcp-handler");
+    const execute = vi.fn(async () => ({ content: [{ type: "text" as const, text: "ok" }] }));
+    const handler = createMcpHandler((server) => {
+      server.registerTool(
+        "accept_record",
+        {
+          inputSchema: z.object({ data: z.record(z.string(), z.unknown()) }),
+        },
+        execute
+      );
+    }, MCP_HANDLER_OPTIONS);
+    const call = async (data: Record<string, unknown>) => {
+      const response = await handler(
+        new Request("http://localhost/api/mcp", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            accept: "application/json, text/event-stream",
+            "mcp-protocol-version": "2025-06-18",
+          },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method: "tools/call",
+            params: { name: "accept_record", arguments: { data } },
+          }),
+        })
+      );
+      const text = await response.text();
+      const payload =
+        text
+          .split("\n")
+          .find((line) => line.startsWith("data:"))
+          ?.slice(5) ?? text;
+      return JSON.parse(payload);
+    };
+
+    const oversized = Object.fromEntries(
+      Array.from({ length: MCP_REQUEST_MAX_ELEMENTS }, (_, index) => [`key${index}`, null])
+    );
+    const refused = await call(oversized);
+    expect(refused.result).toMatchObject({
+      isError: true,
+      content: [
+        { type: "text", text: expect.stringContaining(`maximum of ${MCP_REQUEST_MAX_ELEMENTS} elements`) },
+      ],
+    });
+    expect(execute).not.toHaveBeenCalled();
+
+    expect((await call({ ordinary: "value" })).result.content).toEqual([{ type: "text", text: "ok" }]);
+    expect(execute).toHaveBeenCalledOnce();
+  });
+
   /**
    * Pins the declared value only. The behaviour it produces — a `subscriptions/listen` request refused with
    * `-32603 Subscription limit reached` instead of being accepted and held open — is covered end to end

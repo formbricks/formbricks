@@ -2049,6 +2049,12 @@ query, like `create_feedback_record`.
   versions, or surveys.
 - Query-string credentials are rejected; use headers for API keys.
 - Large request bodies are rejected before the MCP handler using the same body-size policy as v3 APIs.
+- A whole MCP request may contain at most 50,000 object members and array entries combined, including
+  protocol metadata and all calls in a legacy batch. An over-budget request returns HTTP 400 with
+  JSON-RPC code `-32602` before any tool executes. Reduce the arguments or split batches into smaller
+  requests. Existing limits of 2 MiB, 1,000 entries per array, and 256 nesting levels still apply.
+- Legacy JSON-RPC batches are limited to 100 messages by SDK 2.3. Larger batches return HTTP 400 with
+  JSON-RPC code `-32600`; split them into requests of at most 100 messages. Individual calls are unaffected.
 - Tool arguments are strict: undeclared keys are rejected rather than ignored (see [Tool
   Arguments](#tool-arguments)).
 - Resources and prompts are not exposed — the server registers tools only, so there is no MCP resource

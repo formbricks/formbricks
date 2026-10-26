@@ -6,7 +6,7 @@ Follow this guide to get your Formbricks instance up and running with a Postgres
 
 Before you proceed, make sure you have the following:
 
-- A Linux Ubuntu Virtual Machine deployed with SSH access.
+- A Debian 12/13 or Ubuntu server with SSH access, `curl`, and a user with `sudo` privileges.
 
 - An A record set up to connect a custom domain to your instance. Formbricks will automatically create an SSL certificate for your domain using Let's Encrypt.
 
@@ -15,16 +15,16 @@ Before you proceed, make sure you have the following:
 Copy and paste the following command into your terminal:
 
 ```bash
-/bin/sh -c "$(curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/formbricks.sh)"
+curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/formbricks.sh -o formbricks.sh && chmod +x formbricks.sh && ./formbricks.sh install
 ```
 
 The script will prompt you for the following information:
 
-1. **Overwriting Docker GPG Keys**: If Docker GPG keys already exist, the script will ask if you want to overwrite them.
+1. **Legacy Docker packages**: If Docker is absent, choose whether to remove conflicting packages.
 
-2. **Email Address**: Provide your email address for SSL certificate registration with Let's Encrypt.
+2. **Domain Name**: Enter the domain Traefik will use to route requests to Formbricks.
 
-3. **Domain Name**: Enter the domain name that Traefik will use to create the SSL certificate and forward requests to Formbricks.
+3. **HTTPS and Email Address**: Choose HTTPS and provide an email address for Let's Encrypt if enabled.
 
 That's it! After running the command and providing the required information, visit the domain name you entered, and you should see the Formbricks home wizard!
 

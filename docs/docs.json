@@ -313,7 +313,7 @@
         "groups": [
           {
             "group": "Self Hosting",
-            "pages": ["self-hosting/overview"]
+            "pages": ["self-hosting/overview", "self-hosting/deployment-components"]
           },
           {
             "group": "Setup",
