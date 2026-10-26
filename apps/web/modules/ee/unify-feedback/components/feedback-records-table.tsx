@@ -298,7 +298,7 @@ export const FeedbackRecordsTable = ({
       {
         id: "collectedAt",
         header: t("workspace.unify.collected_at"),
-        size: 170,
+        size: 250,
         cell: ({ row }) => {
           const collectedAt = formatDateTimeForDisplay(new Date(row.original.collected_at), locale);
           return (
@@ -311,7 +311,7 @@ export const FeedbackRecordsTable = ({
       {
         id: "sourceType",
         header: t("workspace.unify.source_type"),
-        size: 160,
+        size: 180,
         cell: ({ row }) => (
           <Badge
             text={formatSourceType(row.original.source_type, t)}
@@ -324,7 +324,7 @@ export const FeedbackRecordsTable = ({
       {
         id: "sourceName",
         header: t("workspace.unify.source_name"),
-        size: 170,
+        size: 150,
         cell: ({ row }) => {
           const record = row.original;
           const isFormbricksSurveySource =
@@ -346,7 +346,7 @@ export const FeedbackRecordsTable = ({
       {
         id: "fieldLabel",
         header: t("workspace.unify.field_label"),
-        size: 210,
+        size: 200,
         cell: ({ row }) => (
           // The row's keyboard entry point: opens the record like a click on the row does.
           <button
@@ -360,7 +360,7 @@ export const FeedbackRecordsTable = ({
       {
         id: "fieldType",
         header: t("workspace.unify.field_type"),
-        size: 120,
+        size: 110,
         cell: ({ row }) => (
           <span className="inline-flex items-center gap-1 whitespace-nowrap text-slate-600">
             <FieldTypeIcon fieldType={row.original.field_type} className="size-3.5" />
@@ -371,13 +371,13 @@ export const FeedbackRecordsTable = ({
       {
         id: "value",
         header: t("workspace.unify.value"),
-        size: 280,
+        size: 180,
         cell: ({ row }) => <RecordValueCell record={row.original} locale={locale} />,
       },
       {
         id: "userId",
         header: t("workspace.unify.user_identifier"),
-        size: 170,
+        size: 120,
         cell: ({ row }) => {
           const record = row.original;
           const contactId = record.user_id ? contactIdByUserId[record.user_id] : undefined;
@@ -549,6 +549,7 @@ export const FeedbackRecordsTable = ({
           <ListTable
             table={table}
             testId="feedback-records-table"
+            minWidth={1200}
             isLoading={isLoading}
             hasFilters={hasFilters}
             onClearFilters={tableState.clearFilters}

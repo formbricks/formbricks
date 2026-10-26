@@ -49,7 +49,14 @@ export const AttributesTable = ({ isReadOnly, workspaceId, locale }: Readonly<At
     sortOptions: ATTRIBUTE_SORT_VALUES,
     defaultSortBy: DEFAULT_ATTRIBUTE_SORT,
   });
-  const listParams = toAttributeListParams(tableState.filters, tableState.search, tableState.sortBy);
+  const filtersKey = JSON.stringify(tableState.filters);
+  // Memoized so the rows below stay the same array between renders; the table resets its state, and
+  // renders again, whenever it is handed a new one.
+  const listParams = useMemo(
+    () => toAttributeListParams(tableState.filters, tableState.search, tableState.sortBy),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `filtersKey` stands in for the filter list
+    [filtersKey, tableState.search, tableState.sortBy]
+  );
   const hasFilters = tableState.filters.length > 0 || tableState.search.trim().length > 0;
 
   const query = useInfiniteQuery({
@@ -92,12 +99,15 @@ export const AttributesTable = ({ isReadOnly, workspaceId, locale }: Readonly<At
         ? {
             ...column,
             cell: ({ row }) =>
+              // Same wrapper as the header checkbox, so the column lines up.
               row.getCanSelect() ? (
-                <Checkbox
-                  checked={row.getIsSelected()}
-                  onCheckedChange={(value) => row.toggleSelected(!!value)}
-                  aria-label={t("common.table_toolbar.select_row")}
-                />
+                <div className="flex w-full items-center justify-center pr-4">
+                  <Checkbox
+                    checked={row.getIsSelected()}
+                    onCheckedChange={(value) => row.toggleSelected(!!value)}
+                    aria-label={t("common.table_toolbar.select_row")}
+                  />
+                </div>
               ) : null,
           }
         : column

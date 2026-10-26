@@ -195,7 +195,7 @@ export const SurveysTable = ({
         meta: { label: t("common.created_by") },
         size: 150,
         cell: ({ row }) => (
-          <span className="truncate text-slate-500">{row.original.creator?.name ?? "-"}</span>
+          <span className="truncate text-slate-500">{row.original.creator?.name ?? "—"}</span>
         ),
       },
       {

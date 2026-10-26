@@ -33,6 +33,8 @@ export const generateContactTableColumns = (
     header: t("common.user_id"),
     cell: ({ row }) => {
       const userId = row.original.userId;
+      // A contact without a user ID has nothing to copy, so it shows a dash rather than an empty badge.
+      if (!userId) return <span className="text-slate-400">—</span>;
       return <IdBadge id={userId} />;
     },
   };

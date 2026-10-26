@@ -31,6 +31,7 @@ import {
   toSurveyListFilters,
 } from "@/modules/survey/list/lib/table-filters";
 import { normalizeSurveyFilters } from "@/modules/survey/list/lib/utils";
+import type { TSurveyListItem } from "@/modules/survey/list/types/survey-overview";
 import { TemplateContainerWithPreview } from "@/modules/survey/templates/components/template-container";
 import { useUpdateSurveyVisibility } from "@/modules/survey/visibility/hooks/use-update-survey-visibility";
 import {
@@ -55,6 +56,9 @@ import { buildColumnSettings } from "@/modules/ui/components/table-toolbar/lib/c
 import { FeaturedTemplates } from "./featured-templates";
 import { SurveyLoading } from "./survey-loading";
 import { SURVEY_TABLE_COLUMN_IDS, SurveysTable, getSurveyColumnLabels } from "./surveys-table";
+
+// One shared empty list, so filters that match nothing do not hand the table a new array each render.
+const NO_SURVEYS: TSurveyListItem[] = [];
 
 interface SurveysListProps {
   workspace: ComponentProps<typeof TemplateContainerWithPreview>["workspace"];
@@ -348,7 +352,7 @@ export const SurveysList = ({
       </div>
     ) : (
       <SurveysTable
-        surveys={listFilters === null ? [] : surveys}
+        surveys={listFilters === null ? NO_SURVEYS : surveys}
         isLoading={listFilters !== null && isLoading && surveys.length === 0}
         hasFilters={hasFilters}
         onClearFilters={tableState.clearFilters}

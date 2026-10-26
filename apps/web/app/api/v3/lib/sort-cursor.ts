@@ -21,13 +21,23 @@ const SORT_CURSOR_VERSION = 1 as const;
 /** Bounds the token before it reaches `JSON.parse`. */
 const MAX_SORT_CURSOR_LENGTH = 2048;
 
+/**
+ * Longest sort value a token carries. Names and titles have no stored maximum, so a longer one is left
+ * out (`value: null`) and the list re-reads it from the row named by `id` — the token stays bounded
+ * without capping what can be stored.
+ */
+export const MAX_SORT_CURSOR_VALUE_LENGTH = 1024;
+
 export type TSortCursor = {
   version: typeof SORT_CURSOR_VERSION;
   kind: string;
   sortBy: string;
   fp: string;
-  /** The sort column's value at the last row of the previous page, rendered as a string. */
-  value: string;
+  /**
+   * The sort column's value at the last row of the previous page, rendered as a string; `null` when it
+   * is longer than {@link MAX_SORT_CURSOR_VALUE_LENGTH} and has to be re-read from the row `id`.
+   */
+  value: string | null;
   id: string;
 };
 
@@ -36,7 +46,7 @@ const ZSortCursor = z.strictObject({
   kind: z.string().min(1).max(64),
   sortBy: z.string().min(1).max(64),
   fp: z.string().min(1).max(64),
-  value: z.string().max(1024),
+  value: z.string().max(MAX_SORT_CURSOR_VALUE_LENGTH).nullable(),
   id: z.string().min(1).max(64),
 });
 
@@ -117,8 +127,15 @@ export const buildSortCursorPage = <T extends { id: string }>({
     return { page, nextCursor: null };
   }
 
+  const value = sortValue(last);
   return {
     page,
-    nextCursor: encodeSortCursor({ kind, sortBy, fp, value: sortValue(last), id: last.id }),
+    nextCursor: encodeSortCursor({
+      kind,
+      sortBy,
+      fp,
+      value: value.length > MAX_SORT_CURSOR_VALUE_LENGTH ? null : value,
+      id: last.id,
+    }),
   };
 };

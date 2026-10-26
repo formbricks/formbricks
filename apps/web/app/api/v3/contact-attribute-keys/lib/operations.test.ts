@@ -283,6 +283,25 @@ describe("listV3ContactAttributeKeys — search, filters, sort, totals", () => {
     ]);
   });
 
+  test("pages past a name longer than a cursor can carry", async () => {
+    vi.mocked(getContactAttributeKeys).mockResolvedValue([
+      makeKey({ ...keys[0], name: `A${"a".repeat(2000)}` }),
+      keys[1],
+      keys[2],
+    ]);
+
+    const page1 = await (
+      await listV3ContactAttributeKeys(buildParams({ sortBy: "name", limit: "1" }))
+    ).json();
+    const page2 = await listV3ContactAttributeKeys(
+      buildParams({ sortBy: "name", limit: "1", cursor: page1.meta.nextCursor })
+    );
+
+    expect(page1.data[0].id).toBe("clak0000000000000000000001");
+    expect(page2.status).toBe(200);
+    expect(await ids(page2)).toEqual(["clak0000000000000000000003"]);
+  });
+
   test("rejects a cursor reused under a different sort with 400", async () => {
     const page1 = await (
       await listV3ContactAttributeKeys(buildParams({ sortBy: "name", limit: "1" }))

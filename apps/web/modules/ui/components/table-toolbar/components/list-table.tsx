@@ -32,6 +32,7 @@ export const ListTable = <TData,>({
   isExpanded,
   emptyContent,
   testId,
+  minWidth,
 }: Readonly<{
   table: TTable<TData>;
   isLoading: boolean;
@@ -48,6 +49,8 @@ export const ListTable = <TData,>({
   /** Shown instead of the no-match state when nothing is filtered and the table is empty. */
   emptyContent?: ReactNode;
   testId?: string;
+  /** For wide tables: below this width the card scrolls sideways instead of squeezing every column. */
+  minWidth?: number;
 }>) => {
   const { t } = useTranslation();
   const visibleColumns = table.getVisibleLeafColumns();
@@ -90,14 +93,12 @@ export const ListTable = <TData,>({
             className={cn("group", clickable && "cursor-pointer hover:bg-slate-50")}
             onClick={(event) => {
               if (!clickable) return;
+              const target = event.target as HTMLElement;
+              // A dialog or menu opened from the row renders in a portal: its clicks still bubble here
+              // through React, but they are not clicks on the row.
+              if (!event.currentTarget.contains(target)) return;
               // A click on a control inside the row (menu, checkbox, link) is that control's.
-              if (
-                (event.target as HTMLElement).closest(
-                  "button, a, input, [role='menuitem'], [role='checkbox']"
-                )
-              ) {
-                return;
-              }
+              if (target.closest("button, a, input, [role='menuitem'], [role='checkbox']")) return;
               onRowClick?.(row);
             }}>
             {row.getVisibleCells().map((cell) => (
@@ -112,7 +113,8 @@ export const ListTable = <TData,>({
                 <div
                   className={cn(
                     "flex min-w-0 items-center",
-                    !isExpanded && !CONTROL_COLUMNS.has(cell.column.id) && "truncate"
+                    // Ellipsis has to sit on the text itself: a flex wrapper clips its child without one.
+                    !isExpanded && !CONTROL_COLUMNS.has(cell.column.id) && "*:min-w-0 *:truncate"
                   )}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </div>
@@ -134,7 +136,7 @@ export const ListTable = <TData,>({
   return (
     <div className="space-y-4" data-testid={testId}>
       <div className="w-full overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <Table className="w-full table-fixed">
+        <Table className="w-full table-fixed" style={minWidth ? { minWidth } : undefined}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-white">

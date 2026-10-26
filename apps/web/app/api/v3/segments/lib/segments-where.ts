@@ -1,5 +1,4 @@
 import type { SegmentOrderByWithRelationInput, SegmentWhereInput } from "@formbricks/database/prisma";
-import type { TSortCursor } from "@/app/api/v3/lib/sort-cursor";
 import { escapeLikePattern } from "@/lib/utils/like-pattern";
 import type { TV3SegmentSort } from "./parse-v3-segments-list-query";
 
@@ -29,7 +28,7 @@ export const buildV3SegmentsOrderBy = (sortBy: TV3SegmentSort): SegmentOrderByWi
 
 /** The keyset condition for the page after `cursor`, matching {@link buildV3SegmentsOrderBy}. */
 export const buildV3SegmentsCursorWhere = (
-  cursor: Pick<TSortCursor, "value" | "id">,
+  cursor: { value: string; id: string },
   sortBy: TV3SegmentSort
 ): SegmentWhereInput => {
   const { column, direction } = SORT_SPECS[sortBy];

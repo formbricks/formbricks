@@ -9,7 +9,7 @@ vi.mock("node:crypto", async (importOriginal) => await importOriginal<typeof imp
 vi.mock("crypto", async (importOriginal) => await importOriginal<typeof import("crypto")>());
 
 vi.mock("@formbricks/database", () => ({
-  prisma: { segment: { findMany: vi.fn(), count: vi.fn() } },
+  prisma: { segment: { findMany: vi.fn(), findFirst: vi.fn(), count: vi.fn() } },
 }));
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: vi.fn() }));
 vi.mock("@/app/api/v3/surveys/visibility-context", () => ({ resolveV3VisibleSurveyWhere: vi.fn() }));
@@ -127,6 +127,51 @@ describe("listV3Segments", () => {
         { OR: [{ title: { gt: "Alpha" } }, { title: "Alpha", id: { gt: "clsg0000000000000000000001" } }] },
       ],
     });
+  });
+
+  test("re-reads a title too long for the cursor from its segment, in the same workspace", async () => {
+    const longTitle = "A".repeat(2000);
+    vi.mocked(prisma.segment.findMany).mockResolvedValue([
+      segmentRow("clsg0000000000000000000001", longTitle, "2026-02-01T00:00:00.000Z"),
+      segmentRow("clsg0000000000000000000002", "Beta", "2026-03-01T00:00:00.000Z"),
+    ] as never);
+    const first = await (
+      await call([
+        ["sortBy", "name"],
+        ["limit", "1"],
+      ])
+    ).json();
+
+    vi.mocked(prisma.segment.findMany).mockClear();
+    vi.mocked(prisma.segment.findMany).mockResolvedValue([] as never);
+    vi.mocked(prisma.segment.findFirst).mockResolvedValue({ title: longTitle } as never);
+    const next = await call([
+      ["sortBy", "name"],
+      ["limit", "1"],
+      ["cursor", first.meta.nextCursor],
+    ]);
+
+    expect(next.status).toBe(200);
+    expect(vi.mocked(prisma.segment.findFirst).mock.calls[0][0]?.where).toEqual({
+      id: "clsg0000000000000000000001",
+      workspaceId,
+    });
+    expect(vi.mocked(prisma.segment.findMany).mock.calls[0][0]?.where).toEqual({
+      AND: [
+        { workspaceId, isPrivate: false },
+        {
+          OR: [{ title: { gt: longTitle } }, { title: longTitle, id: { gt: "clsg0000000000000000000001" } }],
+        },
+      ],
+    });
+
+    vi.mocked(prisma.segment.findFirst).mockResolvedValue(null);
+    const gone = await call([
+      ["sortBy", "name"],
+      ["limit", "1"],
+      ["cursor", first.meta.nextCursor],
+    ]);
+    expect(gone.status).toBe(400);
   });
 
   test("skips the count when includeTotalCount=false", async () => {

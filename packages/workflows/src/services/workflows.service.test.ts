@@ -254,6 +254,8 @@ describe("listWorkflows", () => {
       includeTotalCount: false,
     });
     expect(first.totalCount).toBeNull();
+    // A later page must really carry a cursor, or this would not prove the count ignores it.
+    expect(withCursor.nextCursor).not.toBeNull();
 
     const page = await service.listWorkflows({
       workspaceId,
@@ -261,7 +263,7 @@ describe("listWorkflows", () => {
       sortBy: "updatedAt",
       includeTotalCount: true,
       statusIn: ["draft"],
-      ...(withCursor.nextCursor ? { cursor: withCursor.nextCursor } : {}),
+      cursor: withCursor.nextCursor ?? undefined,
     });
 
     expect(page.totalCount).toBe(42);

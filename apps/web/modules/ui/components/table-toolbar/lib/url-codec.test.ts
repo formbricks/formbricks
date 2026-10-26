@@ -133,6 +133,16 @@ describe("serializeTableFilters", () => {
     expect(roundTrip(filters)).toHaveLength(filters.length);
   });
 
+  test("keeps several rules on one property and operator apart", () => {
+    const filters: TTableFilter[] = [
+      { property: "status", operator: "notEquals", values: ["draft"] },
+      { property: "status", operator: "notEquals", values: ["inProgress"] },
+      { property: "score", operator: "greaterThan", values: ["3"] },
+      { property: "score", operator: "greaterThan", values: ["8"] },
+    ];
+    expect(roundTrip(filters)).toEqual(filters);
+  });
+
   test("writes a range as gte and lte", () => {
     expect(
       serializeTableFilters([

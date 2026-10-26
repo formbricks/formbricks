@@ -5,7 +5,7 @@ import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { assertV3ContactsEnabled } from "@/app/api/v3/lib/contacts-entitlement";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import { problemBadRequest, successListResponse } from "@/app/api/v3/lib/response";
-import { buildSortCursorPage } from "@/app/api/v3/lib/sort-cursor";
+import { type TSortCursor, buildSortCursorPage } from "@/app/api/v3/lib/sort-cursor";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { resolveV3VisibleSurveyWhere } from "@/app/api/v3/surveys/visibility-context";
 import { selectSegment, transformPrismaSegment } from "@/modules/ee/contacts/segments/lib/segments";
@@ -23,6 +23,22 @@ type TListV3SegmentsParams = {
   authentication: TV3Authentication;
   requestId: string;
   instance: string;
+};
+
+/**
+ * The cursor's position. A title too long to carry in the token is re-read from the segment it names,
+ * scoped to the workspace; `null` when that segment is gone, which the list answers with a 400 cursor.
+ */
+const resolveSegmentsCursor = async (
+  cursor: TSortCursor,
+  workspaceId: string
+): Promise<{ value: string; id: string } | null> => {
+  if (cursor.value !== null) return { value: cursor.value, id: cursor.id };
+  const anchor = await prisma.segment.findFirst({
+    where: { id: cursor.id, workspaceId },
+    select: { title: true },
+  });
+  return anchor ? { value: anchor.title, id: cursor.id } : null;
 };
 
 export async function listV3Segments({
@@ -61,9 +77,16 @@ export async function listV3Segments({
     const visibleSurveyWhere = await resolveV3VisibleSurveyWhere(authentication, authResult.organizationId);
 
     const where = buildV3SegmentsWhere(authResult.workspaceId, query.search);
-    const pageWhere = query.cursor
-      ? { AND: [where, buildV3SegmentsCursorWhere(query.cursor, query.sortBy)] }
-      : where;
+    const cursor = query.cursor
+      ? await resolveSegmentsCursor(query.cursor, authResult.workspaceId)
+      : undefined;
+    if (cursor === null) {
+      return problemBadRequest(requestId, "Invalid query parameters", {
+        invalid_params: [{ name: "cursor", reason: "The cursor is invalid." }],
+        instance,
+      });
+    }
+    const pageWhere = cursor ? { AND: [where, buildV3SegmentsCursorWhere(cursor, query.sortBy)] } : where;
 
     const [rows, totalCount] = await Promise.all([
       prisma.segment.findMany({

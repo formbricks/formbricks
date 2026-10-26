@@ -9,7 +9,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
@@ -72,50 +71,54 @@ export const FilterMenu = ({
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-52">
-        <DropdownMenuLabel className="text-xs font-semibold text-slate-800">
-          {t("common.filter")}
-        </DropdownMenuLabel>
-        {quickProperties.map((property) => {
-          const current = getQuickFilter(filters, property.id);
-          return (
-            <DropdownMenuSub key={property.id}>
-              <DropdownMenuSubTrigger className="font-normal text-slate-700">
-                <span className="truncate">{property.label}</span>
-                {current && (
-                  <span className="ml-auto pl-2 text-xs text-slate-500">
-                    {current.operator === "in" ? current.values.length : 1}
-                  </span>
-                )}
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent className="max-h-none p-1">
-                {property.valueType === "date" ? (
-                  <DateFilterEditor
-                    property={property}
-                    filter={current}
-                    onChange={(next) => onFiltersChange(setDateQuickFilter(filters, property.id, next))}
-                  />
-                ) : (
-                  <FilterValueList
-                    property={property}
-                    selected={current?.values ?? []}
-                    onToggle={(value) => onFiltersChange(toggleQuickFilterValue(filters, property.id, value))}
-                  />
-                )}
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-          );
-        })}
+      {/* The property list scrolls on its own so Advanced filter stays reachable with many properties. */}
+      <DropdownMenuContent align="start" className="flex w-52 flex-col overflow-hidden p-0">
+        <div className="min-h-0 overflow-y-auto p-1">
+          <DropdownMenuLabel className="text-xs font-semibold text-slate-800">
+            {t("common.filter")}
+          </DropdownMenuLabel>
+          {quickProperties.map((property) => {
+            const current = getQuickFilter(filters, property.id);
+            return (
+              <DropdownMenuSub key={property.id}>
+                <DropdownMenuSubTrigger className="font-normal text-slate-700">
+                  <span className="truncate">{property.label}</span>
+                  {current && (
+                    <span className="ml-auto pl-2 text-xs text-slate-500">
+                      {current.operator === "in" ? current.values.length : 1}
+                    </span>
+                  )}
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="max-h-none p-1">
+                  {property.valueType === "date" ? (
+                    <DateFilterEditor
+                      property={property}
+                      filter={current}
+                      onChange={(next) => onFiltersChange(setDateQuickFilter(filters, property.id, next))}
+                    />
+                  ) : (
+                    <FilterValueList
+                      property={property}
+                      selected={current?.values ?? []}
+                      onToggle={(value) =>
+                        onFiltersChange(toggleQuickFilterValue(filters, property.id, value))
+                      }
+                    />
+                  )}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+            );
+          })}
+        </div>
         {onOpenAdvancedFilter && (
-          <>
-            {quickProperties.length > 0 && <DropdownMenuSeparator />}
+          <div className={cn("shrink-0 p-1", quickProperties.length > 0 && "border-t border-slate-200")}>
             <DropdownMenuItem
               icon={<PlusIcon className="size-4" />}
               className="font-normal text-slate-700"
               onSelect={() => onOpenAdvancedFilter()}>
               {t("common.table_toolbar.advanced_filter")}
             </DropdownMenuItem>
-          </>
+          </div>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

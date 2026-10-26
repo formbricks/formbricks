@@ -118,8 +118,14 @@ export const parseTableFilters = (
     if (!isOperator(operator) || operator === "between") continue;
     if (!getAllowedOperators(property).includes(operator)) continue;
 
-    const filter = normalizeFilter(property, { property: propertyId, operator, values });
-    if (filter) filters.push(filter);
+    // Rules stack: "Status is not Draft" and "Status is not Paused" share a key, so every value but
+    // an `in` list's is its own rule. Without that, the second rule would vanish on the next read.
+    const valueGroups =
+      operator === "in" || !operatorTakesValue(operator) ? [values] : [...new Set(values)].map((v) => [v]);
+    for (const group of valueGroups) {
+      const filter = normalizeFilter(property, { property: propertyId, operator, values: group });
+      if (filter) filters.push(filter);
+    }
   }
 
   for (const [propertyId, range] of dateRanges) {

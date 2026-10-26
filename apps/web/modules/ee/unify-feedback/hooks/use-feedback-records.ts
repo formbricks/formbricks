@@ -78,8 +78,11 @@ export const useFeedbackRecords = ({
     hasNextPage: enabled && list.hasNextPage,
     isFetchingNextPage: list.isFetchingNextPage,
     fetchNextPage: list.fetchNextPage,
+    // `refetch` resolves even when the request fails; rethrow so Refresh reports the failure.
     refetch: async () => {
-      await Promise.all([list.refetch(), count.refetch()]);
+      const [listResult, countResult] = await Promise.all([list.refetch(), count.refetch()]);
+      const failed = [listResult, countResult].find((result) => result.isError);
+      if (failed) throw failed.error;
     },
     matchCount: query === null ? 0 : (count.data ?? null),
   };

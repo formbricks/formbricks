@@ -129,7 +129,8 @@ export const buildV3ContactsWhere = ({
     });
   }
 
-  const base = buildContactWhereClause(workspaceId, search);
+  // Escaped for the same reason as `rowCondition`: a search for `%` would otherwise match every contact.
+  const base = buildContactWhereClause(workspaceId, search ? escapeLikePattern(search) : search);
   return and.length > 0 ? { ...base, AND: and } : base;
 };
 

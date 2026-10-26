@@ -116,6 +116,15 @@ describe("buildV3ContactsWhere", () => {
       ],
     });
   });
+
+  test("escapes LIKE wildcards in the search so `%` does not match every contact", () => {
+    const where = buildV3ContactsWhere({ workspaceId, search: "50%_off", filters: [] });
+
+    expect(where.OR).toEqual([
+      { attributes: { some: { value: { contains: String.raw`50\%\_off`, mode: "insensitive" } } } },
+      { id: { contains: String.raw`50\%\_off`, mode: "insensitive" } },
+    ]);
+  });
 });
 
 describe("keyset helpers", () => {

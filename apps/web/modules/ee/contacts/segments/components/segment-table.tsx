@@ -2,7 +2,7 @@
 
 import { keepPreviousData, useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type { TSegmentWithSurveyRefs } from "@formbricks/types/segment";
@@ -74,7 +74,11 @@ export function SegmentTable({
   const segmentsVersion = allSegments
     .map((segment) => `${segment.id}:${String(segment.updatedAt)}`)
     .join("|");
+  // Starts at the mounted set, so the first run does not cancel and repeat the list's initial request.
+  const seenSegmentsVersion = useRef(segmentsVersion);
   useEffect(() => {
+    if (seenSegmentsVersion.current === segmentsVersion) return;
+    seenSegmentsVersion.current = segmentsVersion;
     void queryClient.invalidateQueries({ queryKey: [...contactQueryKeys.all, "segments", workspaceId] });
   }, [segmentsVersion, queryClient, workspaceId]);
 

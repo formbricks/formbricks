@@ -1,6 +1,11 @@
 import { describe, expect, test } from "vitest";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { buildSortCursorPage, decodeSortCursor, encodeSortCursor } from "./sort-cursor";
+import {
+  MAX_SORT_CURSOR_VALUE_LENGTH,
+  buildSortCursorPage,
+  decodeSortCursor,
+  encodeSortCursor,
+} from "./sort-cursor";
 
 const expected = { kind: "segments", sortBy: "name", fp: "fingerprint00000" };
 const token = encodeSortCursor({ ...expected, value: "Beta", id: "clsg0000000000000000000002" });
@@ -50,5 +55,22 @@ describe("sort cursor", () => {
     const last = buildSortCursorPage({ rows, limit: 3, ...expected, sortValue });
     expect(last.page).toHaveLength(3);
     expect(last.nextCursor).toBeNull();
+  });
+
+  test("leaves out a sort value too long to carry, and the token still decodes", () => {
+    const long = "x".repeat(MAX_SORT_CURSOR_VALUE_LENGTH + 1);
+    const rows = [
+      { id: "a", title: long },
+      { id: "b", title: "Beta" },
+    ];
+
+    const { nextCursor } = buildSortCursorPage({
+      rows,
+      limit: 1,
+      ...expected,
+      sortValue: (row) => row.title,
+    });
+
+    expect(decodeSortCursor(nextCursor as string, expected)).toMatchObject({ value: null, id: "a" });
   });
 });

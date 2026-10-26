@@ -83,7 +83,7 @@ const decodeCursor = (
   raw: string,
   sortBy: TV3ContactAttributeKeysListQuery["sortBy"],
   fp: string
-): { value: string; id: string } => {
+): { value: string | null; id: string } => {
   try {
     return decodeSortCursor(raw, { kind: CONTACT_ATTRIBUTE_KEYS_CURSOR_KIND, sortBy, fp });
   } catch (error) {
@@ -112,7 +112,11 @@ export function listContactAttributeKeysPage(
 
   let remaining = matching;
   if (query.cursor) {
-    const cursor = decodeCursor(query.cursor, query.sortBy, fp);
+    const decoded = decodeCursor(query.cursor, query.sortBy, fp);
+    // A name too long to carry in the token is re-read from the key it names.
+    const anchor = decoded.value === null ? keys.find((key) => key.id === decoded.id) : undefined;
+    if (decoded.value === null && !anchor) throw new InvalidInputError("The cursor is invalid.");
+    const cursor = anchor ? position(anchor) : { value: decoded.value as string, id: decoded.id };
     remaining = matching.filter((key) => comparePositions(position(key), cursor, sort.direction) > 0);
   }
 

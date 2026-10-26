@@ -30,6 +30,9 @@ import {
   toWorkflowStatusIn,
 } from "../lib/table-filters";
 
+// One shared empty list, so a filter that matches nothing does not hand the table a new array each render.
+const NO_WORKFLOWS: TWorkflowListItem[] = [];
+
 interface WorkflowsListPageProps {
   workspaceId: string;
   isReadOnly: boolean;
@@ -94,7 +97,7 @@ export const WorkflowsListPage = ({
     enabled: statusIn !== null,
   });
 
-  const rows = statusIn === null ? [] : workflows;
+  const rows = statusIn === null ? NO_WORKFLOWS : workflows;
   const showInitialLoading = statusIn !== null && isLoading && workflows.length === 0;
 
   // Reported once per screen the user lands on; `null` while loading or erroring, neither of which
@@ -164,7 +167,7 @@ export const WorkflowsListPage = ({
         header: t("common.created_by"),
         size: 150,
         cell: ({ row }) => (
-          <span className="truncate text-slate-500">{row.original.creator?.name ?? "-"}</span>
+          <span className="truncate text-slate-500">{row.original.creator?.name ?? "—"}</span>
         ),
       },
       {
