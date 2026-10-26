@@ -904,6 +904,47 @@ describe("counting Impressions and Clicks", () => {
     ]);
   });
 
+  test("counts a new Impression on coming back to a page through a route that showed no creatives", async () => {
+    state.creatives = [
+      feedbackButton({
+        conditions: {
+          id: "group",
+          connector: "and",
+          conditions: [
+            {
+              id: "url",
+              leftOperand: { type: "page", value: "currentUrl" },
+              operator: "contains",
+              rightOperand: { type: "static", value: "/pricing" },
+            },
+          ],
+        },
+      }),
+    ];
+    window.history.pushState({}, "", "/pricing");
+    reconcileCreatives();
+    await vi.advanceTimersByTimeAsync(2_000);
+
+    window.history.pushState({}, "", "/home");
+    reconcileCreatives();
+    expect(shownButtons()).toEqual([]);
+
+    window.history.pushState({}, "", "/pricing");
+    reconcileCreatives();
+    await vi.advanceTimersByTimeAsync(2_000);
+
+    expect(sentEvents().map(({ body }) => body)).toEqual([
+      expect.objectContaining({
+        page: "localhost:3000/pricing",
+        events: [{ creativeId: "creative-1", type: "impression" }],
+      }),
+      expect.objectContaining({
+        page: "localhost:3000/pricing",
+        events: [{ creativeId: "creative-1", type: "impression" }],
+      }),
+    ]);
+  });
+
   test("counts a Click for each press that opens the Destination, and none for a press on its open survey", async () => {
     vi.mocked(getOpenSurveyIds).mockReturnValue([]);
     reconcileCreatives();

@@ -185,7 +185,6 @@ const showCreatives = (views: readonly TCreativeView[], appearance: "light" | "d
   }
 
   arrangeCreatives(drawn);
-  if (shownCreatives.size > 0) countImpressions(shownCreatives.keys());
 };
 
 const scheduleNextChange = (nextChangeAt: number | null, now: number): void => {
@@ -224,6 +223,9 @@ const drawCreatives = (): void => {
       creatives.filter(({ id }) => !getDismissed().has(id)),
       getCreativeAppearance()
     );
+    // With none shown too: a page view with no creatives still ends the last one, so coming back to
+    // that page counts its creatives again.
+    countImpressions(shownCreatives.keys());
     scheduleNextChange(nextChangeAt, now);
   } catch (error) {
     Logger.getInstance().error(`Could not show creatives: ${String(error)}`);
