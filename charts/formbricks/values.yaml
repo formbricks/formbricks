@@ -807,8 +807,10 @@ envoy:
   controller:
     enabled: false
 
-  # Install the Gateway API and Envoy Gateway CRDs bundled with the controller.
-  # Set this to false when the platform manages both CRD sets separately.
+  # The Envoy v1.8.4 dependency installs Gateway API v1.5.1 Experimental and Envoy Gateway CRDs together.
+  # false omits BOTH CRD sets and bundled Gateway API safe-upgrade admission resources.
+  # If the platform owns only Gateway API, install matching Envoy Gateway v1.8.4 CRDs separately first.
+  # The controller and Formbricks Gateway/routes/policies remain enabled independently.
   crds:
     enabled: true
     gatewayAPI:
