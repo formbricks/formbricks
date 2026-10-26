@@ -1,6 +1,8 @@
 import { load } from "js-yaml";
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 
 type Step = { name: string; env?: Record<string, string>; run?: string; with?: { secrets?: string } };
@@ -21,6 +23,29 @@ const expectTestKey = (value: string | undefined) => {
 };
 
 describe("Docker validation without repository secrets", () => {
+  test.each([
+    { token: "", forceLocal: "", expected: "false" },
+    { token: "test-depot-token", forceLocal: "false", expected: "true" },
+    { token: "test-depot-token", forceLocal: "true", expected: "false" },
+  ])("selects depot=$expected with forced local builder=$forceLocal", ({ token, forceLocal, expected }) => {
+    const step = job.steps.find((step) => step.name === "Select Docker builder")!;
+    const directory = mkdtempSync(join(tmpdir(), "docker-builder-test-"));
+    const output = join(directory, "output");
+    try {
+      execFileSync("bash", ["-e", "-c", step.run!], {
+        env: {
+          PATH: process.env.PATH,
+          DEPOT_PROJECT_TOKEN: token,
+          FORCE_LOCAL_BUILDER: forceLocal,
+          GITHUB_OUTPUT: output,
+        },
+      });
+      expect(readFileSync(output, "utf8").trim()).toBe(`depot=${expected}`);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   test.each(["Build Docker Image", "Build Docker Image without Depot credentials"])(
     "%s receives isolated build fixtures",
     (name) => {
@@ -36,25 +61,38 @@ describe("Docker validation without repository secrets", () => {
     }
   );
 
-  test("runtime checks retain the test key when secrets are absent", () => {
-    const consumers = job.steps.filter((step) => step.run?.includes("$DUMMY_ENCRYPTION_KEY"));
-    expect(consumers.length).toBeGreaterThan(0);
-    for (const step of consumers) {
-      const overrides = Object.fromEntries(
-        Object.entries(step.env ?? {}).map(([key, value]) => [key, withoutSecrets(value, job.env ?? {})])
-      );
-      expectTestKey({ ...job.env, ...overrides }.DUMMY_ENCRYPTION_KEY);
-    }
+  test.each([
+    "Verify Release-Matched AuthZed Operator CLI",
+    "Reject Invalid Environment Before Database Setup",
+    "Validate Docker Compose Migration Environment",
+    "Preserve Startup Migration Skip Behavior",
+    "Test Docker Image with Health Check",
+  ])("%s retains the test key when secrets are absent", (name) => {
+    const step = job.steps.find((step) => step.name === name)!;
+    expect(step).toBeDefined();
+    expect(step.run).toContain("$DUMMY_ENCRYPTION_KEY");
+    const overrides = Object.fromEntries(
+      Object.entries(step.env ?? {}).map(([key, value]) => [key, withoutSecrets(value, job.env ?? {})])
+    );
+    expectTestKey({ ...job.env, ...overrides }.DUMMY_ENCRYPTION_KEY);
   });
 
   test("operator CLI receives authentication config before testing disabled or unreachable AuthZed", () => {
     const step = job.steps.find((step) => step.name === "Verify Release-Matched AuthZed Operator CLI")!;
-    // Execute the actual argument construction; no Docker daemon or image is needed here.
-    const script = `docker() { :; }\n${step.run!.split("set +e")[0]}\nprintf '%s\\n' "\${AUTHZED_CLI_ENV[@]}"`;
+    // Execute through the first CLI invocation and capture its Docker arguments in `output`.
+    // Silence the earlier image-inspection call; no Docker daemon or image is needed here.
+    const script = [
+      'docker() { printf "%s\\n" "$@"; }',
+      "{",
+      step.run!.split("status=$?")[0],
+      "} >/dev/null",
+      'printf "%s\\n" "$output"',
+    ].join("\n");
     const args = execFileSync("bash", ["-c", script], {
       env: { PATH: process.env.PATH, GITHUB_SHA: "test", ...job.env },
       encoding: "utf8",
     }).split("\n");
+    expect(args.slice(0, 4)).toEqual(["run", "--rm", "--entrypoint", "formbricks-authzed"]);
     expect(args).toContain(`BETTER_AUTH_SECRET=${job.env?.DUMMY_ENCRYPTION_KEY}`);
     expect(args).toContain("AUTHZED_ENABLED=false");
   });

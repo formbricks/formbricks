@@ -8,6 +8,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      force_local_builder:
+        description: Validate the fallback Docker builder even when Depot credentials are available
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -145,8 +151,9 @@ jobs:
         shell: bash
         env:
           DEPOT_PROJECT_TOKEN: ${{ secrets.DEPOT_PROJECT_TOKEN }}
+          FORCE_LOCAL_BUILDER: ${{ inputs.force_local_builder }}
         run: |
-          if [[ -n "$DEPOT_PROJECT_TOKEN" ]]; then
+          if [[ "$FORCE_LOCAL_BUILDER" != "true" && -n "$DEPOT_PROJECT_TOKEN" ]]; then
             echo "depot=true" >> "$GITHUB_OUTPUT"
           else
             echo "depot=false" >> "$GITHUB_OUTPUT"
