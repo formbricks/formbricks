@@ -146,6 +146,19 @@ describe("chart queries within budget", () => {
       expect(runChartQuery).not.toHaveBeenCalled();
     });
 
+    test("previews a query with a relative range older charts were saved with, as the builder re-runs one", async () => {
+      const response = await preview({
+        query: {
+          measures: ["FeedbackRecords.count"],
+          timeDimensions: [{ dimension: COLLECTED_AT, granularity: "month", dateRange: "last 3 months" }],
+        },
+      });
+      expect(response.status).toBe(200);
+      expect(sentQuery().timeDimensions).toEqual([
+        { dimension: COLLECTED_AT, granularity: "month", dateRange: "last 3 months" },
+      ]);
+    });
+
     test("holds no slot for a query the validator refuses", async () => {
       vi.mocked(acquireInFlightSlot).mockClear();
       expect((await preview({ query: { measures: ["FeedbackRecords.nope"] } })).status).toBe(422);

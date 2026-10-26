@@ -88,11 +88,9 @@ export async function runV3ChartQuery({
   source: TCubeQuerySource;
   context: TV3ChartOperationContext;
 }): Promise<Response> {
-  // A saved chart may hold a relative range older charts were saved with; a preview's query is new input.
-  const validated = validateChartQuery(query, {
-    timeBuckets: false,
-    legacyDateRanges: source === "v3.charts.data",
-  });
+  // Reads take the relative ranges older charts were saved with: a saved chart's, and a preview of one being
+  // edited in the builder. Nothing is saved here; a write keeps such a range only if its chart already had it.
+  const validated = validateChartQuery(query, { timeBuckets: false, legacyDateRanges: true });
   // The data route takes the range as query parameters; the preview takes it as one body field.
   const requested = parseRequestedDateRange(
     dateRange,
