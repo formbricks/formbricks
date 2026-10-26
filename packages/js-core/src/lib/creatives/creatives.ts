@@ -193,7 +193,9 @@ const scheduleNextChange = (nextChangeAt: number | null, now: number): void => {
   boundaryTimer = null;
   if (nextChangeAt === null) return;
 
-  boundaryTimer = setTimeout(reconcileCreatives, Math.min(nextChangeAt - now, MAX_BOUNDARY_WAIT_MS));
+  // Not gated on setup, so the cached creatives drawn before it keep their schedule while setup waits
+  // for the refresh. Only a draw arms this timer, and `removeCreatives` clears it.
+  boundaryTimer = setTimeout(drawCreatives, Math.min(nextChangeAt - now, MAX_BOUNDARY_WAIT_MS));
 };
 
 /** Makes the page show what `resolve` decides from the cached state, set up or not. */
@@ -235,7 +237,8 @@ export const reconcileCreatives = (): void => {
 /**
  * At SDK start, the cached state's creatives before setup waits for its refresh, expired or not:
  * an In page banner shows with the page instead of after the network. Setup reconciles again
- * once the refreshed state is in; until then the schedule still applies on the server's clock.
+ * once the refreshed state is in; until then the schedule still applies on the server's clock. A setup
+ * that fails takes them off again (`removeCreatives`).
  */
 export const showCachedCreatives = drawCreatives;
 

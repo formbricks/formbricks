@@ -8,7 +8,7 @@ import { handleErrorOnFirstSetup, setup, tearDown } from "@/lib/common/setup";
 import { setIsSetup } from "@/lib/common/status";
 import { filterSurveys, getIsDebug, isNowExpired } from "@/lib/common/utils";
 import type * as Utils from "@/lib/common/utils";
-import { showCachedCreatives } from "@/lib/creatives/creatives";
+import { removeCreatives, showCachedCreatives } from "@/lib/creatives/creatives";
 import { addLiveRegionContainer } from "@/lib/survey/widget";
 import { DEFAULT_USER_STATE_NO_USER_ID } from "@/lib/user/state";
 import { sendUpdatesToBackend } from "@/lib/user/update";
@@ -86,6 +86,7 @@ vi.mock("@/lib/survey/no-code-action", () => ({
 // Creatives draw into the page; here only when setup asks for it matters.
 vi.mock("@/lib/creatives/creatives", () => ({
   showCachedCreatives: vi.fn(),
+  removeCreatives: vi.fn(),
 }));
 
 // 9) Mock survey widget
@@ -525,7 +526,40 @@ describe("setup.ts", () => {
 
       expect(result.ok).toBe(true);
       expect(fetchWorkspaceState).toHaveBeenCalledTimes(1);
+      expect(removeCreatives).not.toHaveBeenCalled();
     });
+
+    test.each([
+      ["workspace state", { workspaceExpired: true, userId: null }],
+      ["user state", { workspaceExpired: false, userId: "user_abc" }],
+    ])(
+      "takes the cached creatives off again when the %s refresh fails, leaving the SDK not set up",
+      async (_state, { workspaceExpired, userId }) => {
+        const mockConfig = {
+          get: vi.fn().mockReturnValue({
+            workspaceId: "ws_123",
+            appUrl: "https://my.url",
+            workspace: { expiresAt: new Date(), data: { actionClasses: [] } },
+            user: { data: { userId }, expiresAt: new Date() },
+            status: { value: "success", expiresAt: null },
+          }),
+          update: vi.fn(),
+        };
+        getInstanceConfigMock.mockReturnValue(mockConfig as unknown as Config);
+        // Checked for the workspace state first, then for the user state.
+        (isNowExpired as unknown as Mock).mockReturnValueOnce(workspaceExpired).mockReturnValueOnce(true);
+        const failure = { ok: false, error: { code: "network_error", message: "Failed to fetch" } };
+        const refresh = workspaceExpired ? fetchWorkspaceState : sendUpdatesToBackend;
+        (refresh as unknown as Mock).mockResolvedValueOnce(failure);
+
+        const result = await setup({ workspaceId: "ws_123", appUrl: "https://my.url" });
+
+        expect(result.ok).toBe(false);
+        expect(showCachedCreatives).toHaveBeenCalledTimes(1);
+        expect(removeCreatives).toHaveBeenCalledTimes(1);
+        expect(addEventListeners).not.toHaveBeenCalled();
+      }
+    );
 
     test("resets config if no valid config found, fetches workspace state, sets default user", async () => {
       const mockConfig = {

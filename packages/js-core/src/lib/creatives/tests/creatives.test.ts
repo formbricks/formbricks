@@ -151,6 +151,17 @@ describe("reconcileCreatives", () => {
     expect(document.querySelector('[data-formbricks-creative="creative-1"]')).not.toBeNull();
   });
 
+  test("takes a cached creative off at its end time while setup still waits for its refresh", async () => {
+    setIsSetup(false);
+    state.creatives = [feedbackButton({ endAt: new Date(NOW + 1_000).toISOString() })];
+
+    showCachedCreatives();
+    expect(shownButtons()).toHaveLength(1);
+
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(shownButtons()).toHaveLength(0);
+  });
+
   test("leaves a creative that is still shown in place on the next page view", () => {
     reconcileCreatives();
     const [button] = shownButtons();
