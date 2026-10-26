@@ -1,8 +1,40 @@
 import { logger } from "@formbricks/logger";
-import type { MigrationScript } from "../../src/scripts/migration-runner";
+import type { DataMigrationContext, MigrationScript } from "../../src/scripts/migration-runner";
 import { MAX_WIDGET_Y, type TStoredWidget, repairLayouts } from "./utils";
 
 const DASHBOARD_BATCH_SIZE = 500;
+
+type TTx = DataMigrationContext["tx"];
+
+/** The widgets of a batch of dashboards, grouped by dashboard. */
+const widgetsByDashboard = async (tx: TTx, dashboardIds: string[]): Promise<Map<string, TStoredWidget[]>> => {
+  const widgets = await tx.$queryRaw<(TStoredWidget & { dashboardId: string })[]>`
+    SELECT "id", "dashboardId", "layout", "order"
+    FROM "DashboardWidget"
+    WHERE "dashboardId" = ANY(${dashboardIds}::text[])
+  `;
+  const grouped = new Map<string, TStoredWidget[]>();
+  for (const { dashboardId, ...widget } of widgets) {
+    grouped.set(dashboardId, [...(grouped.get(dashboardId) ?? []), widget]);
+  }
+  return grouped;
+};
+
+/** Write one dashboard's repaired layouts; how many widgets changed, and whether any sit below the grid. */
+const repairDashboard = async (
+  tx: TTx,
+  widgets: TStoredWidget[]
+): Promise<{ repaired: number; belowGrid: boolean }> => {
+  const changes = repairLayouts(widgets);
+  for (const { id, layout } of changes) {
+    await tx.$executeRaw`
+      UPDATE "DashboardWidget"
+      SET "layout" = ${JSON.stringify(layout)}::jsonb, "updated_at" = NOW()
+      WHERE "id" = ${id}
+    `;
+  }
+  return { repaired: changes.length, belowGrid: changes.some(({ layout }) => layout.y > MAX_WIDGET_Y) };
+};
 
 /**
  * Bring every stored widget layout within the rules the dashboard API now enforces, once.
@@ -25,7 +57,7 @@ export const normalizeDashboardWidgetLayouts: MigrationScript = {
   run: async ({ tx }) => {
     let cursor = "";
     let repairedWidgets = 0;
-    const repairedDashboards: string[] = [];
+    let repairedDashboards = 0;
     const stillBelowGrid: string[] = [];
 
     for (;;) {
@@ -35,35 +67,21 @@ export const normalizeDashboardWidgetLayouts: MigrationScript = {
       if (dashboards.length === 0) break;
       cursor = dashboards[dashboards.length - 1].id;
 
-      const widgets = await tx.$queryRaw<(TStoredWidget & { dashboardId: string })[]>`
-        SELECT "id", "dashboardId", "layout", "order"
-        FROM "DashboardWidget"
-        WHERE "dashboardId" = ANY(${dashboards.map((dashboard) => dashboard.id)}::text[])
-      `;
-
-      const byDashboard = new Map<string, TStoredWidget[]>();
-      for (const { dashboardId, ...widget } of widgets) {
-        byDashboard.set(dashboardId, [...(byDashboard.get(dashboardId) ?? []), widget]);
-      }
-
-      for (const [dashboardId, dashboardWidgets] of byDashboard) {
-        const changes = repairLayouts(dashboardWidgets);
-        if (changes.length === 0) continue;
-        for (const { id, layout } of changes) {
-          await tx.$executeRaw`
-            UPDATE "DashboardWidget"
-            SET "layout" = ${JSON.stringify(layout)}::jsonb, "updated_at" = NOW()
-            WHERE "id" = ${id}
-          `;
-        }
-        repairedWidgets += changes.length;
-        repairedDashboards.push(dashboardId);
-        if (changes.some(({ layout }) => layout.y > MAX_WIDGET_Y)) stillBelowGrid.push(dashboardId);
+      const grouped = await widgetsByDashboard(
+        tx,
+        dashboards.map((dashboard) => dashboard.id)
+      );
+      for (const [dashboardId, widgets] of grouped) {
+        const { repaired, belowGrid } = await repairDashboard(tx, widgets);
+        if (repaired === 0) continue;
+        repairedWidgets += repaired;
+        repairedDashboards += 1;
+        if (belowGrid) stillBelowGrid.push(dashboardId);
       }
     }
 
     logger.info(
-      `Dashboard widget layout repair: ${repairedWidgets.toString()} widgets on ${repairedDashboards.length.toString()} dashboards`
+      `Dashboard widget layout repair: ${repairedWidgets.toString()} widgets on ${repairedDashboards.toString()} dashboards`
     );
     if (stillBelowGrid.length > 0) {
       // Only a dashboard with more stacked widgets than 1000 grid rows hold; it still opens, but a save
