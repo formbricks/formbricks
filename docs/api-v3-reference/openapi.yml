@@ -12234,7 +12234,8 @@ components:
               order:
                 type: integer
                 minimum: 0
-                maximum: 250
+                maximum: 2147483647
+                description: Sort key; any non-negative integer, in the order widgets should list.
             additionalProperties: false
       additionalProperties: false
     DashboardRenameRequest:
@@ -13195,7 +13196,7 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     V3DashboardsConflict:
-      description: 'Conflict (`code: conflict`) — the request clashes with the current state: a chart or dashboard name already used in the workspace, a chart already on the dashboard, a dashboard already holding its 250 widgets, or a dashboard changed since the `updatedAt` the caller sent.'
+      description: 'Conflict (`code: conflict`) — the request clashes with the current state: a chart or dashboard name already used in the workspace, a chart already on the dashboard, a dashboard already holding its 250 widgets, or a dashboard changed since the `expectedUpdatedAt` the caller sent.'
       headers:
         X-Request-Id:
           schema:

@@ -34,6 +34,7 @@ properties:
         order:
           type: integer
           minimum: 0
-          maximum: 250
+          maximum: 2147483647
+          description: Sort key; any non-negative integer, in the order widgets should list.
       additionalProperties: false
 additionalProperties: false

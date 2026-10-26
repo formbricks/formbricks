@@ -93,6 +93,13 @@ export type TV3WidgetUpdateBody = z.infer<typeof ZV3WidgetUpdateBody>;
 export const MAX_DASHBOARD_WIDGETS = 250;
 
 /**
+ * A widget's `order` is only a sort key. Adds take the highest one plus one and removals never renumber,
+ * so a dashboard edited over time holds orders past its widget count; bounded by its integer column only,
+ * so a dashboard read through the API can always be written back.
+ */
+const MAX_WIDGET_ORDER = 2_147_483_647;
+
+/**
  * `expectedUpdatedAt`: the dashboard's `updatedAt` from the caller's read, the write's precondition. Named as
  * the survey writes name it, so it never reads as a timestamp the caller sets; 409 if it changed since.
  */
@@ -123,7 +130,7 @@ export const ZV3DashboardReplaceBody = z
           .object({
             widgetId: z.cuid2(),
             layout: ZV3WidgetLayoutInput,
-            order: z.number().int().min(0).max(MAX_DASHBOARD_WIDGETS),
+            order: z.number().int().min(0).max(MAX_WIDGET_ORDER),
           })
           .strict()
       )
