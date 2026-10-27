@@ -196,9 +196,6 @@ export const getResponseBySingleUseId = reactCache((surveyId: string, singleUseI
       select: {
         id: true,
         finished: true,
-        // Include additional fields that might be useful
-        createdAt: true,
-        data: true,
       },
     });
 

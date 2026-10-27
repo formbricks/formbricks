@@ -260,11 +260,9 @@ describe("data", () => {
     const mockResponse = {
       id: "response-1",
       finished: true,
-      createdAt: new Date(),
-      data: { answer1: "test" },
     };
 
-    test("should find response by single use ID", async () => {
+    test("returns only the response status needed by public link pages", async () => {
       const surveyId = "survey-1";
       const singleUseId = "single-use-1";
 
@@ -281,8 +279,6 @@ describe("data", () => {
         select: {
           id: true,
           finished: true,
-          createdAt: true,
-          data: true,
         },
       });
     });

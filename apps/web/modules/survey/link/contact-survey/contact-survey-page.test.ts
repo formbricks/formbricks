@@ -1,7 +1,9 @@
+import { createInstance } from "i18next";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { findMatchingLocale, getAcceptedLanguages } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { verifyContactSurveyToken } from "@/modules/ee/contacts/lib/contact-survey-link";
+import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getExistingContactResponse, getResponseBySingleUseId } from "@/modules/survey/link/lib/data";
 import { getServableLinkSurvey } from "@/modules/survey/link/lib/servable-survey";
@@ -35,9 +37,15 @@ describe("ContactSurveyPage single-use response handoff", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getResponseBySingleUseId).mockReturnValue(
-      async () => ({ id: "response-1", finished: false }) as never
+      async () =>
+        ({
+          id: "response-1",
+          finished: false,
+          data: { answer: "private answer" },
+          createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        }) as never
     );
-    vi.mocked(getExistingContactResponse).mockReturnValue(async () => null);
+    vi.mocked(getExistingContactResponse).mockReturnValue(async () => undefined);
     vi.mocked(getServableLinkSurvey).mockResolvedValue({
       id: "survey-1",
       status: "inProgress",
@@ -52,14 +60,17 @@ describe("ContactSurveyPage single-use response handoff", () => {
       ok: true,
       data: { surveyId: "survey-1", contactId: "contact-1" },
     } as never);
-    vi.mocked(getTranslate).mockResolvedValue((key: string) => key as never);
+    vi.mocked(getTranslate).mockResolvedValue(createInstance().getFixedT("en-US"));
     vi.mocked(getWorkspaceContextForLinkSurvey).mockResolvedValue({ workspace: {} } as never);
     vi.mocked(findMatchingLocale).mockResolvedValue("en-US" as never);
     vi.mocked(getAcceptedLanguages).mockResolvedValue([]);
   });
 
   test("passes an unfinished response id to the renderer so the respondent can resume it", async () => {
-    await ContactSurveyPage({
+    const renderResult = { rendered: true };
+    vi.mocked(renderSurvey).mockResolvedValue(renderResult as never);
+
+    const result = await ContactSurveyPage({
       params: Promise.resolve({ jwt: "contact-token" }),
       searchParams: Promise.resolve({ suId: "single-use-1", suToken: "token" }),
     });
@@ -69,5 +80,35 @@ describe("ContactSurveyPage single-use response handoff", () => {
         singleUseResponse: { id: "response-1", finished: false },
       })
     );
+    expect(result).toBe(renderResult);
+  });
+
+  test("does not reject an unfinished contact response before checking the single-use response", async () => {
+    vi.mocked(getExistingContactResponse).mockReturnValue(
+      async () => ({ id: "response-1", finished: false }) as never
+    );
+
+    await ContactSurveyPage({
+      params: Promise.resolve({ jwt: "contact-token" }),
+      searchParams: Promise.resolve({ suId: "single-use-1", suToken: "token" }),
+    });
+
+    expect(getResponseBySingleUseId).toHaveBeenCalledWith("survey-1", "single-use-1");
+    expect(SurveyInactive).not.toHaveBeenCalled();
+    expect(renderSurvey).toHaveBeenCalled();
+  });
+
+  test("keeps the submitted response screen for a finished contact response", async () => {
+    vi.mocked(getExistingContactResponse).mockReturnValue(
+      async () => ({ id: "response-1", finished: true }) as never
+    );
+
+    const result = await ContactSurveyPage({
+      params: Promise.resolve({ jwt: "contact-token" }),
+      searchParams: Promise.resolve({ suId: "single-use-1", suToken: "token" }),
+    });
+
+    expect(result).toMatchObject({ type: SurveyInactive, props: { status: "response submitted" } });
+    expect(getResponseBySingleUseId).not.toHaveBeenCalled();
   });
 });

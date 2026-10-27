@@ -68,7 +68,7 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   // component for whoever opens the contact link. Only a survey this page may serve comes back, so neither
   // early return below can confirm that a non-public one exists (ENG-4032).
   const existingResponse = await getExistingContactResponse(surveyId, contactId)();
-  if (existingResponse) {
+  if (existingResponse?.finished) {
     const survey = await getServableLinkSurvey(surveyId);
     if (!survey) {
       notFound();
@@ -102,7 +102,9 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   ]);
   // Keep unfinished responses so the survey client updates the existing row instead of creating a second
   // response for the same single-use id. The renderer handles finished responses as already answered.
-  const singleUseResponse = singleUseLinkResponse ?? undefined;
+  const singleUseResponse = singleUseLinkResponse
+    ? { id: singleUseLinkResponse.id, finished: singleUseLinkResponse.finished }
+    : undefined;
 
   // Fetch responseCount only if needed
   const responseCount = survey.welcomeCard.showResponseCount
