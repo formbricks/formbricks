@@ -11,6 +11,6 @@ Throughput limits (the v1/v2/v3 and client APIs, `stateMutation`, storage, custo
 ## Consequences
 
 - A refused request gets the ordinary `TooManyRequestsError` (429, "try again later", no `Retry-After`), so every caller already handles it. Better Auth's `sendVerificationEmail` hook swallows that error, but the per-IP sign-up and resend limits refuse first.
-- An outage is no longer silent: every check that cannot reach Redis logs `Redis unavailable` or `Rate limit check failed` at error level and counts `formbricks_rate_limiter_unavailable_total{fail_mode, reason}`. That counter is what the on-call alert watches.
+- An outage is no longer silent: every check that cannot reach Redis logs `Redis unavailable` or `Rate limit check failed` at error level and counts `formbricks_rate_limiter_unavailable_total{fail_mode, reason}`. That counter is the signal for paging on-call; the SigNoz alert and its owner are still pending under ENG-3822, so until it is deployed an outage pages nobody.
 - `RATE_LIMITING_DISABLED=1` still turns every limit off, including these.
 - A new limit fails open unless it sets `failClosed: true`. Decide which group it belongs to when you add it.

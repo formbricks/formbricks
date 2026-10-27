@@ -213,7 +213,7 @@ This setting disables only the **application-level** limiter. It does **not** di
 - Redis/Valkey is required for the application-level limiter (`REDIS_URL`).
 - If you deploy Envoy rate limiting, use a dedicated Redis/Valkey backend for Envoy instead of sharing the app cache.
 - If application Redis is unavailable at runtime, abuse limits **fail closed** and every other limit **fails open**:
-  - **Refused until Redis is back** (the user sees "Maximum number of requests reached"): every outbound email, sign-up and organization creation, and the brute-force guards (survey PIN, password-reset and email-change links, the email-token check, failed MCP authentication).
+  - **Refused until Redis is back** (the user sees "Maximum number of requests reached"): every counted outbound email, sign-up and organization creation, and the brute-force guards (survey PIN, password-reset and email-change links, the email-token check, failed MCP authentication).
   - **Allowed without enforcement:** API throughput, settings changes, storage, AI features and SAML sign-in, so the app and your surveys keep working.
 - Every check that cannot reach Redis is logged at error level (`Redis unavailable` or `Rate limit check failed`) and counted in the `formbricks_rate_limiter_unavailable_total` metric, with `fail_mode` (`open` / `closed`) and `reason` (`no_client` / `error`) labels. The metric is exported when `PROMETHEUS_ENABLED` or `OTEL_EXPORTER_OTLP_ENDPOINT` is set. To be paged on a Redis outage, alert when it keeps increasing, for example `sum(rate(formbricks_rate_limiter_unavailable_total[5m])) > 0` for 5 minutes.
 - Client storage upload rate limits count signed upload URL issuance, not successful object creation in S3-compatible storage.
