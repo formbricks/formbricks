@@ -96,6 +96,21 @@ export const POST = withV1ApiWrapper({
       };
     }
 
+    // A survey that is no longer collecting answers must not hand out upload URLs either. The response
+    // API already refuses its writes (ENG-872), so anything stored here lands in the workspace's bucket
+    // under a survey prefix no response can reference — an orphan that counts against storage, and one
+    // an anonymous caller can keep producing for a survey closed precisely to stop abuse (ENG-4044).
+    // `archivedAt` is checked alongside `status` because archiving only forces `paused` on a survey that
+    // was `inProgress`; a draft, scheduled or completed one keeps its status while archived. Answer both
+    // the way the response API answers a closed survey, so the two surfaces cannot be told apart.
+    if (survey.status !== "inProgress" || survey.archivedAt) {
+      return {
+        response: responses.forbiddenResponse("Survey is not accepting submissions", true, {
+          surveyId: survey.id,
+        }),
+      };
+    }
+
     try {
       await applyRateLimit(rateLimitConfigs.storage.uploadPerWorkspace, workspaceId);
     } catch (error) {
