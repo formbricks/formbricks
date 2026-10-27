@@ -8,8 +8,10 @@
  * outcome is unknown: the request may never have reached the app, or it may have run and its
  * response been lost.
  *
- * The code is matched rather than the message because the message is not stable: Next.js passes the
- * body through as the message when the response is a 4xx/5xx `text/plain`.
+ * The code is matched first because the message is not stable: Next.js passes the body through as the
+ * message when the response is a 4xx/5xx `text/plain`. Next.js 16.4.1 ships without any error codes,
+ * so the generic message Next.js uses for every other non-Flight response is matched too; a
+ * `text/plain` 4xx/5xx body can only be recognised while the code is present.
  *
  * The code alone is not unique, though: `E394` is what Next.js stamps on every `new Error(<dynamic
  * message>)` it throws, including the `NEXT_REDIRECT` error a server action's `redirect()` rejects
@@ -18,12 +20,14 @@
  * rejection carries none -- so a `digest` rules an error out.
  */
 const NEXT_UNEXPECTED_ACTION_RESPONSE_ERROR_CODE = "E394";
+const NEXT_UNEXPECTED_ACTION_RESPONSE_MESSAGE = "An unexpected response was received from the server.";
 
 export const isUnexpectedServerActionResponseError = (error: unknown): error is Error =>
   error instanceof Error &&
   !("digest" in error) &&
-  "__NEXT_ERROR_CODE" in error &&
-  error.__NEXT_ERROR_CODE === NEXT_UNEXPECTED_ACTION_RESPONSE_ERROR_CODE;
+  error.name !== "UnrecognizedActionError" &&
+  (error.message === NEXT_UNEXPECTED_ACTION_RESPONSE_MESSAGE ||
+    ("__NEXT_ERROR_CODE" in error && error.__NEXT_ERROR_CODE === NEXT_UNEXPECTED_ACTION_RESPONSE_ERROR_CODE));
 
 /**
  * Calls `onFailure` for every unexpected-response rejection that no call site consumed.
