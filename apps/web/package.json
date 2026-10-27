@@ -166,6 +166,7 @@
     "stripe": "20.4.1",
     "tailwind-merge": "catalog:",
     "tailwindcss": "catalog:",
+    "tldts": "7.0.19",
     "ua-parser-js": "2.0.10",
     "undici": "catalog:",
     "uuid": "catalog:",

@@ -42,6 +42,7 @@ import {
   VERIFICATION_LINK_TTL_SECONDS,
   buildVerificationLinks,
 } from "@/modules/auth/lib/verification-links";
+import type { TEmailRateLimitContext } from "@/modules/email/lib/email-rate-limits";
 import { toInviteDisplayName } from "@/modules/email/lib/invite-display-name";
 import { sendEmail } from "@/modules/email/lib/send-email";
 import { buildVerifiedLinkSurveyUrl } from "@/modules/email/lib/verified-link-survey-url";
@@ -360,7 +361,8 @@ export const sendInviteMemberEmail = async (
   inviteId: string,
   email: string,
   inviterName: string,
-  inviteeName: string
+  inviteeName: string,
+  organizationId: string
 ): Promise<boolean> => {
   const token = createInviteToken(inviteId, email, {
     expiresIn: "7d",
@@ -381,6 +383,7 @@ export const sendInviteMemberEmail = async (
     to: email,
     subject: t("emails.invite_member_email_subject"),
     html,
+    rateLimit: { organizationId },
   });
 };
 
@@ -391,7 +394,13 @@ export const sendInviteAcceptedEmail = async (
   inviterLocale?: TUserLocale
 ): Promise<void> => {
   const t = await getTranslate(inviterLocale);
-  const html = await renderInviteAcceptedEmail({ inviteeName, inviterName, t, ...legalProps });
+  // Both names are profile text the invitee or inviter chose, shown in a Formbricks-branded email.
+  const html = await renderInviteAcceptedEmail({
+    inviteeName: toInviteDisplayName(inviteeName, t("common.anonymous")),
+    inviterName: toInviteDisplayName(inviterName, ""),
+    t,
+    ...legalProps,
+  });
   await sendEmail({
     emailType: "invite_accepted",
     to: email,
@@ -465,6 +474,7 @@ export const sendResponseFinishedEmail = async (
     }),
     replyTo: personEmail?.toString() ?? MAIL_FROM,
     html,
+    rateLimit: { organizationId: organization.id },
   });
 };
 
@@ -473,6 +483,7 @@ export const sendEmbedSurveyPreviewEmail = async (
   innerHtml: string,
   workspaceId: string,
   locale: TUserLocale,
+  actorUserId: string,
   logoUrl?: string
 ): Promise<boolean> => {
   const t = await getTranslate(locale);
@@ -490,6 +501,7 @@ export const sendEmbedSurveyPreviewEmail = async (
     to,
     subject: t("emails.embed_survey_preview_email_subject"),
     html,
+    rateLimit: { actorUserId },
   });
 };
 
@@ -497,6 +509,7 @@ export const sendEmailCustomizationPreviewEmail = async (
   to: string,
   userName: string,
   locale: TUserLocale,
+  actorUserId: string,
   logoUrl?: string
 ): Promise<boolean> => {
   const t = await getTranslate(locale);
@@ -514,10 +527,14 @@ export const sendEmailCustomizationPreviewEmail = async (
     to,
     subject: t("emails.email_customization_preview_email_subject"),
     html: emailHtmlBody,
+    rateLimit: { actorUserId },
   });
 };
 
-export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData): Promise<boolean> => {
+export const sendLinkSurveyToVerifiedEmail = async (
+  data: TLinkSurveyEmailData,
+  rateLimit: TEmailRateLimitContext
+): Promise<boolean> => {
   const surveyId = data.surveyId;
   const email = data.email;
   const surveyName = data.surveyName;
@@ -542,5 +559,6 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
     to: data.email,
     subject: t("emails.verified_link_survey_email_subject"),
     html,
+    rateLimit,
   });
 };

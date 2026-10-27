@@ -318,6 +318,18 @@ mapping, so it leaves an address you chose alone; putting the bare mapping back 
 Compose setups that don't use the one-click script are not changed. If yours publishes `3000:3000` and a reverse
 proxy on the same host is the intended way in, bind it to `127.0.0.1:3000:3000` as well.
 
+### Outgoing email caps
+
+Every email Formbricks sends now counts against limits for its type: per organization, per sending user, per
+recipient address and per deployment (see [Email Limits](/self-hosting/configuration/rate-limiting#email-limits)).
+They sit far above normal traffic, so most instances never reach them. An instance that legitimately sends more,
+for example thousands of response notifications an hour from one organization, should raise them with
+`EMAIL_RATE_LIMIT_MULTIPLIER` before upgrading; per-recipient caps do not change. Like the other limits, they need
+Redis/Valkey and are off when `RATE_LIMITING_DISABLED=1`.
+
+Every email now goes to exactly one address. Nothing in Formbricks sends to several at once, so this only matters
+if you patched a sender to do so.
+
 ### Changes in Environment Variables
 
 <Note>
