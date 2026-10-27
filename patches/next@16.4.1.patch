@@ -1,7 +1,7 @@
 diff --git a/dist/server/next-server.js b/dist/server/next-server.js
 --- a/dist/server/next-server.js
 +++ b/dist/server/next-server.js
-@@ -1181,7 +1181,11 @@
+@@ -1192,7 +1192,11 @@
              },
              url: url,
              page,
@@ -17,7 +17,7 @@ diff --git a/dist/server/next-server.js b/dist/server/next-server.js
 diff --git a/dist/esm/server/next-server.js b/dist/esm/server/next-server.js
 --- a/dist/esm/server/next-server.js
 +++ b/dist/esm/server/next-server.js
-@@ -1112,7 +1112,11 @@
+@@ -1124,7 +1124,11 @@
              },
              url: url,
              page,
@@ -33,7 +33,7 @@ diff --git a/dist/esm/server/next-server.js b/dist/esm/server/next-server.js
 diff --git a/dist/server/lib/router-server.js b/dist/server/lib/router-server.js
 --- a/dist/server/lib/router-server.js
 +++ b/dist/server/lib/router-server.js
-@@ -414,7 +414,10 @@
+@@ -467,7 +467,10 @@
              }
              if (finished && parsedUrl.protocol) {
                  var _getRequestMeta;
@@ -48,7 +48,7 @@ diff --git a/dist/server/lib/router-server.js b/dist/server/lib/router-server.js
 diff --git a/dist/esm/server/lib/router-server.js b/dist/esm/server/lib/router-server.js
 --- a/dist/esm/server/lib/router-server.js
 +++ b/dist/esm/server/lib/router-server.js
-@@ -359,7 +359,10 @@
+@@ -412,7 +412,10 @@
              }
              if (finished && parsedUrl.protocol) {
                  var _getRequestMeta;
