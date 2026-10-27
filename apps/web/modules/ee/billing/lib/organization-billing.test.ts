@@ -2459,6 +2459,62 @@ describe("organization-billing", () => {
     expect(mocks.subscriptionSchedulesUpdate).not.toHaveBeenCalled();
   });
 
+  test("undoPendingOrganizationPlanChange on a trial keeps its Hobby fallback while dropping the flag", async () => {
+    // Clearing cancel_at_period_end would also clear cancel_at, so a saved card would be billed at trial end.
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_trial",
+          status: "trialing",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: true,
+          cancel_at: 1742515200,
+          trial_end: 1742515200,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_trial",
+        plan: "pro",
+        interval: "monthly",
+        subscriptionStatus: "trialing",
+      },
+    });
+
+    await undoPendingOrganizationPlanChange("org_1", "cus_1");
+
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith("sub_trial", { cancel_at: 1742515200 });
+    expect(mocks.subscriptionsUpdate).not.toHaveBeenCalledWith("sub_trial", { cancel_at_period_end: false });
+    expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { stripe: expect.objectContaining({ pendingChange: null }) },
+      })
+    );
+  });
+
   test("undoPendingOrganizationPlanChange clears the pending snapshot", async () => {
     mocks.subscriptionsList.mockResolvedValue({
       data: [
