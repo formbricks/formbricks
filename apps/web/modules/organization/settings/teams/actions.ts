@@ -7,6 +7,7 @@ import { logger } from "@formbricks/logger";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
+import { ZUserEmail } from "@formbricks/types/user";
 import { assertCan, can } from "@/lib/authorization";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { createInviteToken } from "@/lib/jwt";
@@ -198,7 +199,8 @@ export const resendInviteAction = authenticatedActionClient.inputSchema(ZResendI
       parsedInput.inviteId,
       updatedInvite.email,
       invite?.creator?.name ?? "",
-      updatedInvite.name ?? ""
+      updatedInvite.name ?? "",
+      parsedInput.organizationId
     );
 
     return updatedInvite;
@@ -283,7 +285,9 @@ const assertInviterMayInvite = async ({
 
 const ZInviteUserAction = z.object({
   organizationId: ZId,
-  email: z.string(),
+  // One address: anything else would let one invite, and one unit of the invite budget, reach several
+  // inboxes (ENG-6658). Bulk and onboarding invites already validate the same way.
+  email: ZUserEmail,
   name: z.string().trim().min(1, "Name is required"),
   role: ZOrganizationRole,
   // Bounded because a team admin's authorization is now decided per named team: without a cap the
@@ -381,7 +385,13 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
       // link, so a failing/misconfigured SMTP must not fail the whole action — otherwise the created
       // invite is stranded behind an "Invite already exists" error on the user's next attempt.
       try {
-        await sendInviteMemberEmail(inviteId, parsedInput.email, ctx.user.name ?? "", parsedInput.name ?? "");
+        await sendInviteMemberEmail(
+          inviteId,
+          parsedInput.email,
+          ctx.user.name ?? "",
+          parsedInput.name ?? "",
+          parsedInput.organizationId
+        );
       } catch (error) {
         logger.error(error, "Failed to send invite email");
       }
@@ -473,7 +483,13 @@ export const bulkInviteUsersAction = authenticatedActionClient.inputSchema(ZBulk
             // Best-effort email (see inviteUserAction): a failed send must not flip a created invite
             // to "failed" — the invitee exists and can be reached via the invite link.
             try {
-              await sendInviteMemberEmail(inviteId, email, ctx.user.name ?? "", invitee.name ?? "");
+              await sendInviteMemberEmail(
+                inviteId,
+                email,
+                ctx.user.name ?? "",
+                invitee.name ?? "",
+                organizationId
+              );
             } catch (error) {
               logger.error(error, "Failed to send bulk invite email");
             }

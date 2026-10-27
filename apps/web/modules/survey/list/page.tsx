@@ -1,13 +1,11 @@
 import { Metadata } from "next";
-import { redirect } from "next/navigation";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { notFound, redirect } from "next/navigation";
 import { DEFAULT_LOCALE, IS_FORMBRICKS_CLOUD, SURVEYS_PER_PAGE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { resolveDefaultSurveyLanguage } from "@/lib/i18n/default-survey-language";
 import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getUserLocale } from "@/lib/user/service";
-import { getTranslate } from "@/lingodotdev/server";
 import { getSurveyAIAvailability } from "@/modules/survey/lib/get-survey-ai-availability";
 import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
 import { SurveysList } from "@/modules/survey/list/components/survey-list";
@@ -27,12 +25,11 @@ interface SurveyTemplateProps {
 export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) => {
   const publicDomain = getPublicDomain();
   const params = await paramsProps;
-  const t = await getTranslate();
 
   const workspace = await getWorkspaceWithTeamIds(params.workspaceId);
 
   if (!workspace) {
-    throw new ResourceNotFoundError(t("common.workspace"), null);
+    return notFound();
   }
 
   const { session, isBilling, isReadOnly } = await getWorkspaceAuth(params.workspaceId);

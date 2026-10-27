@@ -1,0 +1,145 @@
+---
+title: "Deployment components"
+description: "Required services, managed alternatives, and container images for self-hosted Formbricks."
+icon: "cubes"
+---
+
+Use this page to choose which Formbricks services to run and prepare your container image allowlist.
+
+## Components
+
+| Component | Required for | External option |
+| --- | --- | --- |
+| [Formbricks app](https://github.com/formbricks/formbricks) | Always: UI, APIs and application jobs | Run the Formbricks image |
+| [Hub API and worker](https://github.com/formbricks/hub) | Always: feedback processing and Hub jobs | Run the Hub image |
+| [Cube](https://github.com/formbricks/formbricks/tree/stable/docker/cube-image) | Always: analytics queries | Your own Cube deployment |
+| PostgreSQL with [pgvector](https://github.com/pgvector/pgvector) | Always: application and Hub data | [RDS for PostgreSQL](https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-extensions.html) with the `vector` extension |
+| Redis/[Valkey](https://github.com/valkey-io/valkey) | Always: jobs, caching and application rate limits | [ElastiCache](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/Durability.Options.html) with `noeviction` |
+| [SpiceDB](https://github.com/authzed/spicedb) | Always in v6: permission checks | An external AuthZed endpoint |
+| [SpiceDB operator](https://github.com/authzed/spicedb-operator) | Kubernetes-managed SpiceDB only | An existing compatible operator, or external AuthZed |
+| Edge gateway ([Envoy](https://github.com/envoyproxy/gateway) or equivalent) | Public routing and edge rate limiting | A gateway providing [equivalent coverage](/self-hosting/configuration/rate-limiting) |
+| S3-compatible storage | File uploads, images and branding | [Amazon S3 or another S3-compatible service](/self-hosting/configuration/file-uploads) |
+| [Taxonomy](/self-hosting/configuration/ai-features), [embeddings](https://github.com/huggingface/text-embeddings-inference) and [LLM runtimes](https://github.com/vllm-project/vllm) | Enabled AI features only | Hosted inference endpoints replace model runtimes; taxonomy still needs its service |
+| SMTP | Sending email | [An SMTP provider](/self-hosting/configuration/smtp), including Amazon SES |
+
+Self-hosted SpiceDB needs a separate database and role on the application's PostgreSQL server or another server.
+Keep it private. See [AuthZed operations](/self-hosting/configuration/authzed-operations).
+
+Envoy supplies gateway routing and edge rate limiting. Helm leaves it disabled by default. A load balancer
+or the one-click installer's Traefik proxy alone does not supply the documented edge rate-limit coverage.
+
+## Container images
+
+Repository names are listed below. Use the tags or digests shipped with your Formbricks release and
+deployment configuration; migrations and initialization reuse the app or Hub image.
+
+Sources: [Compose](https://github.com/formbricks/formbricks/blob/stable/docker/docker-compose.yml),
+[one-click installer](https://github.com/formbricks/formbricks/blob/stable/docker/formbricks.sh), and
+[Helm values](https://github.com/formbricks/formbricks/blob/stable/charts/formbricks/values.yaml).
+
+<Info>
+  `latest` is a moving tag. Keep the versions selected by your deployment files when mirroring images;
+  PostgreSQL major versions and other dependencies must remain compatible with your release.
+</Info>
+
+<Tabs>
+  <Tab title="Docker">
+
+<AccordionGroup>
+  <Accordion title="Baseline images">
+
+Omit a bundled service's image when supplying that service externally.
+
+| Image repository | Used by |
+| --- | --- |
+| `ghcr.io/formbricks/formbricks` | App, migrations and authorization initialization |
+| `ghcr.io/formbricks/hub` | Hub API, worker and migrations |
+| `ghcr.io/formbricks/cube` | Cube |
+| `docker.io/pgvector/pgvector` | PostgreSQL and authorization database bootstrap |
+| `docker.io/valkey/valkey` | Redis-compatible cache and jobs |
+| `docker.io/authzed/spicedb` | SpiceDB server and datastore migrations |
+
+  </Accordion>
+  <Accordion title="Optional AI images">
+
+| Image repository | Required when |
+| --- | --- |
+| `ghcr.io/formbricks/taxonomy` | The `taxonomy` profile is enabled |
+| `docker.io/vllm/vllm-openai` | The `qwen` profile is enabled; requires an NVIDIA GPU |
+
+  </Accordion>
+</AccordionGroup>
+
+  </Tab>
+  <Tab title="One-click additions">
+
+The installer adds [Traefik](https://github.com/traefik/traefik) to the Docker stack.
+[RustFS](https://github.com/rustfs/rustfs) and its setup helpers are needed only for bundled object storage.
+
+| Image repository | Used by |
+| --- | --- |
+| `docker.io/library/traefik` | Reverse proxy |
+| `docker.io/rustfs/rustfs` | Optional bundled object storage |
+| `docker.io/rustfs/rc` | RustFS bucket and credentials bootstrap |
+| `docker.io/library/busybox` | RustFS volume permissions bootstrap |
+
+  </Tab>
+  <Tab title="Kubernetes">
+
+<AccordionGroup>
+  <Accordion title="Baseline images">
+
+Omit PostgreSQL, Valkey or authorization images only when their external replacements are configured.
+
+| Image repository | Used by |
+| --- | --- |
+| `ghcr.io/formbricks/formbricks` | App, migrations, wait helpers and authorization initialization |
+| `ghcr.io/formbricks/hub` | Hub API, worker and migrations |
+| `ghcr.io/formbricks/cube` | Cube |
+| `docker.io/pgvector/pgvector` | Bundled PostgreSQL |
+| `docker.io/valkey/valkey` | Bundled Redis-compatible cache and jobs |
+| `docker.io/library/postgres` | Authorization database bootstrap, when enabled |
+| `ghcr.io/authzed/spicedb-operator` | Chart-managed authorization, unless an existing operator is used |
+| `ghcr.io/authzed/spicedb` | Operator-created SpiceDB server and migrations |
+
+  </Accordion>
+  <Accordion title="Optional Envoy images">
+
+| Image repository | Used by |
+| --- | --- |
+| `docker.io/envoyproxy/gateway` | Controller, certificate hooks and shutdown sidecar |
+| `docker.io/envoyproxy/envoy` | Controller-created proxy |
+| `docker.io/envoyproxy/ratelimit` | Controller-created rate-limit service |
+| `docker.io/bitnami/redis` | Bundled Envoy Redis only (`envoyRedis.enabled`) |
+| `docker.io/bitnami/redis-sentinel` | Bundled Envoy Redis failover |
+| `docker.io/bitnami/kubectl` | Bundled Envoy Redis service management |
+
+External Redis/Valkey removes the three bundled backend images. Set its `maxmemory-policy` to
+`noeviction` and configure authentication/TLS. See the
+[gateway setup](/self-hosting/setup/kubernetes#envoy-bundle-modes).
+
+  </Accordion>
+  <Accordion title="Optional AI images">
+
+| Image repository | Required when |
+| --- | --- |
+| `docker.io/lmcache/lmstack-router` | Bundled Qwen is enabled (`llm.enabled`) |
+| `docker.io/vllm/vllm-openai` | Bundled Qwen is enabled; requires an NVIDIA GPU |
+| `ghcr.io/formbricks/taxonomy` | `taxonomy.enabled` |
+| `ghcr.io/huggingface/text-embeddings-inference` | Bundled embeddings are enabled (`hub.embeddings.enabled` and `hub.embeddings.deployRuntime`) |
+
+  </Accordion>
+</AccordionGroup>
+
+  </Tab>
+</Tabs>
+
+External inference endpoints remove their corresponding runtime images. Check the selected images'
+architecture and GPU requirements; model files are downloaded separately.
+
+## Configuration
+
+Follow the [Docker](/self-hosting/setup/docker), [one-click](/self-hosting/setup/one-click) or
+[Kubernetes](/self-hosting/setup/kubernetes) guide for setup. Configure optional
+[AI services](/self-hosting/configuration/ai-features) and an
+[Enterprise license](/self-hosting/advanced/license) before using Enterprise features.

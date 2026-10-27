@@ -1,4 +1,4 @@
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { notFound } from "next/navigation";
 import { sanitizeThemeStyling } from "@formbricks/types/styling-values";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
@@ -36,7 +36,7 @@ export const WorkspaceLookSettingsPage = async (props: { params: Promise<{ works
   const workspace = await getWorkspace(params.workspaceId);
 
   if (!workspace) {
-    throw new ResourceNotFoundError(t("common.workspace"), null);
+    return notFound();
   }
 
   const [canRemoveBranding, isCustomCssPlanAllowed] = await Promise.all([

@@ -71,7 +71,9 @@ describe("rateLimitConfigs", () => {
         "forgotPasswordPerAccount",
         "resetPassword",
         "verifyEmail",
+        "verifyEmailPerAccount",
         "emailToken",
+        "samlCallback",
       ]);
       expect(rateLimitConfigs.auth.resetPassword).toEqual({
         interval: 3600,
@@ -84,12 +86,24 @@ describe("rateLimitConfigs", () => {
         allowedPerInterval: 3,
         namespace: "auth:forgot:account",
       });
+      // Below email_verification's per-recipient cap of 5, so strangers cannot spend all of it (ENG-3823).
+      expect(rateLimitConfigs.auth.verifyEmailPerAccount).toEqual({
+        interval: 3600,
+        allowedPerInterval: 3,
+        namespace: "auth:verify:account",
+      });
       // The values, not just the key: emailToken throttles an unauthenticated endpoint that also
       // reveals whether an address is registered, so a loosened quota is a security regression.
       expect(rateLimitConfigs.auth.emailToken).toEqual({
         interval: 3600,
         allowedPerInterval: 10,
         namespace: "auth:email-token",
+      });
+      // How often one IP can make the SAML callback parse an anonymous XML document (ENG-3973).
+      expect(rateLimitConfigs.auth.samlCallback).toEqual({
+        interval: 60,
+        allowedPerInterval: 120,
+        namespace: "auth:saml-callback",
       });
     });
 
@@ -121,6 +135,7 @@ describe("rateLimitConfigs", () => {
       const actionConfigs = Object.keys(rateLimitConfigs.actions);
       expect(actionConfigs).toEqual([
         "emailUpdate",
+        "passwordResetRequest",
         "accountDeletion",
         "surveyFollowUp",
         "sendLinkSurveyEmail",

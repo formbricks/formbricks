@@ -9,12 +9,13 @@ import { unstable_isUnrecognizedActionError } from "next/navigation";
 const NEXT_ACTION_NOT_FOUND_HEADER = "x-nextjs-action-not-found";
 
 /**
- * The code Next.js stamps onto that rejection, alongside the `UnrecognizedActionError` name. Checking
- * the name on its own would accept any application error that happens to carry it, and a false
- * positive costs twice: it raises the reload prompt over a working page, and drops a real error from
- * Sentry in `beforeSend`.
+ * The docs page Next.js links in that rejection's message, alongside the `UnrecognizedActionError`
+ * name. Checking the name on its own would accept any application error that happens to carry it, and
+ * a false positive costs twice: it raises the reload prompt over a working page, and drops a real
+ * error from Sentry in `beforeSend`. The message is matched rather than the `E715` error code because
+ * Next.js 16.4 no longer stamps error codes at all.
  */
-const NEXT_UNRECOGNIZED_ACTION_ERROR_CODE = "E715";
+const NEXT_UNRECOGNIZED_ACTION_DOCS_SLUG = "failed-to-find-server-action";
 
 /**
  * A server action id is minted at build time, so it only exists in the deployment that compiled it.
@@ -38,8 +39,7 @@ export const isStaleServerActionError = (error: unknown): boolean => {
   return (
     error instanceof Error &&
     error.name === "UnrecognizedActionError" &&
-    "__NEXT_ERROR_CODE" in error &&
-    error.__NEXT_ERROR_CODE === NEXT_UNRECOGNIZED_ACTION_ERROR_CODE
+    error.message.includes(NEXT_UNRECOGNIZED_ACTION_DOCS_SLUG)
   );
 };
 

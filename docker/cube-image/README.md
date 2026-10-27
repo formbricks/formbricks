@@ -20,7 +20,7 @@ Compared with the upstream `cubejs/cube` image, it leaves out:
 
 ## Tag
 
-Every published image gets an immutable tag `<Cube version>-<revision>`, for example `1.7.50-1`, and moves
+Every published image gets an immutable tag `<Cube version>-<revision>`, for example `1.8.8-1`, and moves
 `latest`. The Cube version is the `@cubejs-backend/server` version pinned in `package.json`; the revision is
 the number in `REVISION`. [`image-tag.sh`](image-tag.sh) prints the current tag.
 
@@ -36,6 +36,11 @@ tag in the same pull request, and, when the Cube version changed, `docker-compos
 the three does not match.
 
 Dependabot security updates for `package-lock.json` need the same `REVISION` bump before they can merge.
+
+The `@azure/identity` override pins `@azure/msal-node` to `7.1.1` until Identity's supported range includes
+the fixed release. MSAL 7 removes `responseMode` from interactive browser authentication; this server
+image uses Cube's Postgres driver, not interactive Azure login. Keep the image smoke test passing when
+updating the override, and remove it once Identity's declared dependency includes the fixed version.
 
 ## Build and test locally
 
@@ -109,7 +114,7 @@ To check a published image's signature, pin the exact workflow identity, so a fo
 satisfy it:
 
 ```bash
-cosign verify ghcr.io/formbricks/cube:1.7.50-1 \
+cosign verify ghcr.io/formbricks/cube:1.8.8-2 \
   --certificate-identity https://github.com/formbricks/formbricks/.github/workflows/cube-image.yml@refs/heads/main \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
