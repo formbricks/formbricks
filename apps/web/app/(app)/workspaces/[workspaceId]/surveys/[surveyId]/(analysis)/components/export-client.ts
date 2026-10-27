@@ -1,3 +1,4 @@
+import type { TExcelSizeVerdict } from "@/lib/analysis-export/excel-size";
 import type { TExportRequest } from "@/lib/analysis-export/export-request";
 
 /** The export route's refusal, with the reason it gave when it gave one. */
@@ -76,7 +77,13 @@ export const requestExport = async ({
   return { blob: new Blob(chunks, { type }), fileName };
 };
 
-export type TExportCounts = { included: number; lowQualityLeftOut: number; kind: "standard" | "analysis" };
+export type TExportCounts = {
+  included: number;
+  lowQualityLeftOut: number;
+  kind: "standard" | "analysis";
+  /** Excel's size for this selection against the cap. `null` for the Standard export. */
+  excel: TExcelSizeVerdict | null;
+};
 
 /** The numbers behind the modal's "Include X responses" line. */
 export const fetchExportCounts = async ({
