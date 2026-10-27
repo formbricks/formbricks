@@ -42,6 +42,15 @@ describe("buildAttributeFilterCondition — string", () => {
     expect(buildAttributeFilterCondition(filter)).toEqual(expected);
   });
 
+  test("ANDs one condition per value of a repeated operator", () => {
+    expect(buildAttributeFilterCondition(str("contains", ["a", "b"]))).toEqual({
+      AND: [
+        some({ value: { contains: "a", mode: "insensitive" } }),
+        some({ value: { contains: "b", mode: "insensitive" } }),
+      ],
+    });
+  });
+
   test("escapes LIKE wildcards in pattern operators", () => {
     expect(buildAttributeFilterCondition(str("contains", ["50%_off"]))).toEqual(
       some({ value: { contains: String.raw`50\%\_off`, mode: "insensitive" } })

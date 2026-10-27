@@ -4,9 +4,10 @@ import { type ColumnDef, getCoreRowModel, useReactTable } from "@tanstack/react-
 import { TFunction } from "i18next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowListItem, TWorkflowSortBy, TWorkflowStatus } from "@formbricks/workflows";
+import { removeStaleFilterStorage } from "@/lib/stale-filter-storage";
 import { timeSince } from "@/lib/time";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
@@ -131,6 +132,8 @@ export const WorkflowsListPage = ({
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+
+  useEffect(() => removeStaleFilterStorage(globalThis.window?.localStorage), []);
 
   const filterProperties = getWorkflowFilterProperties(t);
   const tableState = useTableUrlState({

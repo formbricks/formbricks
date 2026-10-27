@@ -9,7 +9,10 @@ vi.mock("node:crypto", async (importOriginal) => await importOriginal<typeof imp
 vi.mock("crypto", async (importOriginal) => await importOriginal<typeof import("crypto")>());
 
 vi.mock("@formbricks/database", () => ({
-  prisma: { segment: { findMany: vi.fn(), findFirst: vi.fn(), count: vi.fn() } },
+  prisma: {
+    segment: { findMany: vi.fn(), findFirst: vi.fn(), count: vi.fn() },
+    survey: { findMany: vi.fn() },
+  },
 }));
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: vi.fn() }));
 vi.mock("@/app/api/v3/surveys/visibility-context", () => ({ resolveV3VisibleSurveyWhere: vi.fn() }));
@@ -95,6 +98,42 @@ describe("listV3Segments", () => {
     expect((args?.select as { surveys: { where: unknown } }).surveys.where).toBe(visibleSurveyWhere);
     expect(resolveV3VisibleSurveyWhere).toHaveBeenCalledWith(null, organizationId);
     expect(prisma.segment.count).toHaveBeenCalledWith({ where });
+  });
+
+  test("takes survey ids the caller cannot see out of survey-interaction filters", async () => {
+    const visibleId = "clsv0000000000000000000001";
+    const hiddenId = "clsv0000000000000000000009";
+    const interaction = (id: string, surveyIds: string[]) => ({
+      id,
+      connector: null,
+      resource: {
+        id: `${id}-f`,
+        root: { type: "surveyInteraction" },
+        value: { surveyScope: "specific", surveyIds, within: { amount: 7, unit: "days" } },
+        qualifier: { operator: "responded" },
+      },
+    });
+    vi.mocked(prisma.segment.findMany).mockResolvedValue([
+      {
+        ...segmentRow("clsg0000000000000000000001", "Alpha", "2026-02-01T00:00:00.000Z"),
+        filters: [
+          interaction("a", [visibleId, hiddenId]),
+          { id: "g", connector: "and", resource: [interaction("b", [hiddenId])] },
+        ],
+      },
+    ] as never);
+    vi.mocked(prisma.survey.findMany).mockResolvedValue([{ id: visibleId }] as never);
+
+    const body = await (await call()).json();
+
+    expect(prisma.survey.findMany).toHaveBeenCalledWith({
+      where: { AND: [{ workspaceId, id: { in: [visibleId, hiddenId] } }, visibleSurveyWhere] },
+      select: { id: true },
+    });
+    const [filter, group] = body.data[0].filters;
+    expect(filter.resource.value.surveyIds).toEqual([visibleId]);
+    expect(group.resource[0].resource.value.surveyIds).toEqual([]);
+    expect(JSON.stringify(body)).not.toContain(hiddenId);
   });
 
   test("pages by title with a keyset on (title, id)", async () => {

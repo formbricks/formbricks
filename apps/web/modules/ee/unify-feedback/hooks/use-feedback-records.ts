@@ -78,8 +78,11 @@ export const useFeedbackRecords = ({
     hasNextPage: enabled && list.hasNextPage,
     isFetchingNextPage: list.isFetchingNextPage,
     fetchNextPage: list.fetchNextPage,
-    // `refetch` resolves even when the request fails; rethrow so Refresh reports the failure.
+    // `refetch` resolves even when the request fails; rethrow so Refresh reports the failure. It also
+    // ignores `enabled`, so with nothing to ask (a filter that matches nothing, no directory) it would
+    // run the query function anyway and fail — there is nothing to refresh.
     refetch: async () => {
+      if (!enabled) return;
       const [listResult, countResult] = await Promise.all([list.refetch(), count.refetch()]);
       const failed = [listResult, countResult].find((result) => result.isError);
       if (failed) throw failed.error;

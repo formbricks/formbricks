@@ -1,5 +1,12 @@
 import { describe, expect, test } from "vitest";
-import type { TFilterProperty, TTableFilter } from "./types";
+import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
+import {
+  TABLE_FILTER_OPERATORS,
+  type TFilterProperty,
+  type TRuleOperator,
+  type TTableFilter,
+  type TTableFilterOperator,
+} from "./types";
 import {
   buildTableSearchParams,
   datePresetFromSlug,
@@ -177,5 +184,67 @@ describe("date presets and calendar days", () => {
     expect(isCalendarDay("2024-02-29")).toBe(true);
     expect(isCalendarDay("2026-02-29")).toBe(false);
     expect(isCalendarDay("2026-1-1")).toBe(false);
+  });
+});
+
+describe("every operator round-trips through the URL", () => {
+  const ruleOperators = TABLE_FILTER_OPERATORS.filter(
+    (operator): operator is TRuleOperator =>
+      !["in", "preset", "between", "isBefore", "isAfter"].includes(operator)
+  );
+  const allProperties: TFilterProperty[] = [
+    {
+      id: "text",
+      label: "Text",
+      valueType: "string",
+      quick: true,
+      loadOptions: async () => [],
+      ruleOperators,
+    },
+    {
+      id: "day",
+      label: "Day",
+      valueType: "date",
+      quick: true,
+      ruleOperators: ["isBefore", "isAfter", "isSet", "isNotSet"],
+      datePresets: DATE_RANGE_PRESETS,
+    },
+  ];
+
+  const sample = (operator: TTableFilterOperator): TTableFilter => {
+    switch (operator) {
+      case "preset":
+        return { property: "day", operator, values: [datePresetToSlug(DATE_RANGE_PRESETS[0])] };
+      case "between":
+        return { property: "day", operator, values: ["2026-01-01", "2026-01-31"] };
+      case "isBefore":
+      case "isAfter":
+        return { property: "day", operator, values: ["2026-01-15"] };
+      case "isSet":
+      case "isNotSet":
+        return { property: "text", operator, values: [] };
+      case "in":
+      case "includesOneOf":
+      case "includesAllOf":
+        return { property: "text", operator, values: ["a", "b, c"] };
+      default:
+        return { property: "text", operator, values: ["42"] };
+    }
+  };
+
+  test.each([...TABLE_FILTER_OPERATORS])("%s", (operator) => {
+    const filter = sample(operator);
+    const params = new URLSearchParams();
+    for (const [key, value] of serializeTableFilters([filter])) params.append(key, value);
+    expect(parseTableFilters(params, allProperties)).toEqual([filter]);
+  });
+
+  test("value-less operators also round-trip on a date property", () => {
+    for (const operator of ["isSet", "isNotSet"] as const) {
+      const filter: TTableFilter = { property: "day", operator, values: [] };
+      const params = new URLSearchParams();
+      for (const [key, value] of serializeTableFilters([filter])) params.append(key, value);
+      expect(parseTableFilters(params, allProperties)).toEqual([filter]);
+    }
   });
 });

@@ -58,10 +58,6 @@ vi.mock("@/modules/ee/contacts/lib/contact-survey-link", () => ({
   getContactSurveyLink: vi.fn(),
 }));
 
-vi.mock("./utils", () => ({
-  transformPrismaContact: vi.fn(),
-}));
-
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),

@@ -124,3 +124,52 @@ describe("toContactListParams", () => {
     ).toBeNull();
   });
 });
+
+describe("toContactListParams — stacked rules on one attribute", () => {
+  const params = (filters: Parameters<typeof toContactListParams>[0]) =>
+    toContactListParams(filters, "", "-createdAt", "UTC", now);
+
+  test("numeric bounds keep the tightest value, not the last one", () => {
+    expect(
+      params([
+        { property: "attribute.seats", operator: "greaterThan", values: ["90"] },
+        { property: "attribute.seats", operator: "greaterThan", values: ["3"] },
+        { property: "attribute.seats", operator: "lessEqual", values: ["500"] },
+        { property: "attribute.seats", operator: "lessEqual", values: ["200"] },
+      ])
+    ).toEqual([
+      ["filter[attribute.seats][greaterThan]", "90"],
+      ["filter[attribute.seats][lessEqual]", "200"],
+      ["sortBy", "-createdAt"],
+    ]);
+  });
+
+  test("date bounds keep the latest isAfter and the earliest isBefore", () => {
+    expect(
+      params([
+        { property: "attribute.renewal", operator: "isAfter", values: ["2026-10-20"] },
+        { property: "attribute.renewal", operator: "isAfter", values: ["2026-10-01"] },
+        { property: "attribute.renewal", operator: "isBefore", values: ["2026-12-01"] },
+        { property: "attribute.renewal", operator: "isBefore", values: ["2026-12-31"] },
+      ])
+    ).toEqual([
+      ["filter[attribute.renewal][gte]", "2026-10-21T00:00:00.000Z"],
+      ["filter[attribute.renewal][lte]", "2026-11-30T23:59:59.999Z"],
+      ["sortBy", "-createdAt"],
+    ]);
+  });
+
+  test("repeatable text rules send every value", () => {
+    expect(
+      params([
+        { property: "attribute.plan", operator: "doesNotContain", values: ["trial"] },
+        { property: "attribute.plan", operator: "doesNotContain", values: ["legacy"] },
+        { property: "attribute.plan", operator: "doesNotContain", values: ["trial"] },
+      ])
+    ).toEqual([
+      ["filter[attribute.plan][doesNotContain]", "trial"],
+      ["filter[attribute.plan][doesNotContain]", "legacy"],
+      ["sortBy", "-createdAt"],
+    ]);
+  });
+});

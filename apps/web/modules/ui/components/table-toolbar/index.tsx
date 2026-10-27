@@ -8,6 +8,7 @@ import { AdvancedFilterDialog } from "./components/advanced-filter-dialog";
 import { FilterChipRow } from "./components/filter-chip-row";
 import { FilterMenu } from "./components/filter-menu";
 import { type TTableSettingsProps, TableSettingsPopover } from "./components/table-settings-popover";
+import { isSameSearch } from "./lib/search-sync";
 import type { TFilterProperty, TTableFilter } from "./lib/types";
 
 export type { TTableColumnSetting, TTableToggleSetting } from "./components/table-settings-popover";
@@ -28,14 +29,15 @@ const ToolbarSearch = ({
   const [lastValue, setLastValue] = useState(value);
 
   // An outside change (Clear all, back navigation) replaces what is in the box. Adjusted while
-  // rendering rather than in an effect, so the box never shows the stale text for a frame.
+  // rendering rather than in an effect, so the box never shows the stale text for a frame. Our own
+  // write comes back trimmed, so it only counts as outside when it differs after trimming both.
   if (value !== lastValue) {
     setLastValue(value);
-    setText(value);
+    if (!isSameSearch(text, value)) setText(value);
   }
 
   useEffect(() => {
-    if (text === value) return;
+    if (isSameSearch(text, value)) return;
     const timeout = setTimeout(() => onChange(text), SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only a change of the typed text schedules a write

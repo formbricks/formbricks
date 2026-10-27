@@ -6,6 +6,8 @@ import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/
 import { FeedbackDataEmptyState } from "@/modules/ee/unify-feedback/components/feedback-data-empty-state";
 import { UnifyConfigNavigation } from "@/modules/ee/unify-feedback/components/unify-config-navigation";
 import { getAuthorizedWorkspaceFeedbackDirectories } from "@/modules/ee/unify-feedback/lib/access";
+import { getConnectedSurveyIds, getRecordSourceNames } from "@/modules/ee/unify-feedback/lib/source-names";
+import { getWorkspaceSurveyNames } from "@/modules/ee/unify-feedback/lib/survey-names";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
@@ -94,8 +96,13 @@ export default async function UnifyFeedbackRecordsPage(
       fieldMappings: feedbackSource.fieldMappings,
     }));
 
-  // Records are read by the table itself, through the v3 list with the filters in the page URL.
-  const sourceNames = feedbackSources.map((feedbackSource) => feedbackSource.name);
+  // Records are read by the table itself, through the v3 list with the filters in the page URL. The
+  // Source filter offers the `source_name` values records carry — a survey connector's survey names.
+  const surveyNamesById = await getWorkspaceSurveyNames(
+    params.workspaceId,
+    getConnectedSurveyIds(feedbackSources)
+  );
+  const sourceNames = getRecordSourceNames(feedbackSources, surveyNamesById);
 
   return (
     <FeedbackRecordsPageClient

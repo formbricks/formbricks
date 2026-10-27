@@ -10,7 +10,7 @@ import type {
 const DATA_TYPES = ["string", "number", "date"] as const;
 const ATTRIBUTE_TYPES = ["default", "custom"] as const;
 
-export const ATTRIBUTE_SORT_VALUES = ["name", "-createdAt", "createdAt", "-updatedAt", "updatedAt"] as const;
+export const ATTRIBUTE_SORT_VALUES = ["name", "-createdAt", "createdAt", "-updatedAt"] as const;
 export const DEFAULT_ATTRIBUTE_SORT = "name";
 
 export const getAttributeSortOptions = (t: TFunction): TSortOption[] => [

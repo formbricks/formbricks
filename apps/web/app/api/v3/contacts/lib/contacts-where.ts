@@ -99,6 +99,14 @@ const rowCondition = (filter: TV3ContactAttributeFilter): ContactAttributeWhereI
 export const buildAttributeFilterCondition = (
   filter: TV3ContactAttributeFilter
 ): Prisma.ContactWhereInput => {
+  // A repeated single-value operator (`contains=a&contains=b`) ANDs one condition per value.
+  if (filter.operator !== "in" && filter.values.length > 1) {
+    return {
+      AND: filter.values.map((value) =>
+        buildAttributeFilterCondition({ ...filter, values: [value] } as TV3ContactAttributeFilter)
+      ),
+    };
+  }
   const row = { attributeKeyId: filter.attributeKeyId, ...rowCondition(filter) };
   return filter.operator === "isNotSet" ? { attributes: { none: row } } : { attributes: { some: row } };
 };

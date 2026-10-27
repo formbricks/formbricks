@@ -39,7 +39,7 @@ describe("parseV3ContactsListQuery", () => {
       workspaceId,
       limit: 50,
       cursor: undefined,
-      includeTotalCount: true,
+      includeTotalCount: false,
       search: undefined,
       sortBy: "-createdAt",
       createdAtGte: undefined,
@@ -52,7 +52,7 @@ describe("parseV3ContactsListQuery", () => {
     const result = parseOk([
       ["search", "  ada  "],
       ["sortBy", "createdAt"],
-      ["includeTotalCount", "false"],
+      ["includeTotalCount", "true"],
       ["limit", "250"],
       ["filter[createdAt][gte]", "2026-01-01T00:00:00+02:00"],
       ["filter[createdAt][lte]", "2026-02-01T00:00:00Z"],
@@ -60,7 +60,7 @@ describe("parseV3ContactsListQuery", () => {
     expect(result).toMatchObject({
       search: "ada",
       sortBy: "createdAt",
-      includeTotalCount: false,
+      includeTotalCount: true,
       limit: 250,
       createdAtGte: new Date("2025-12-31T22:00:00.000Z"),
       createdAtLte: new Date("2026-02-01T00:00:00.000Z"),
@@ -141,6 +141,34 @@ describe("parseV3ContactsListQuery", () => {
   test("caps a comma-separated number in filter at 100 values", () => {
     const numbers = Array.from({ length: V3_CONTACTS_MAX_IN_VALUES + 1 }, (_u, i) => String(i)).join(",");
     expect(resolve([["filter[attribute.seats][in]", numbers]]).ok).toBe(false);
+  });
+
+  test("accepts a repeated AND-able text operator and keeps every distinct value", () => {
+    expect(
+      parseOk([
+        ["filter[attribute.plan][doesNotContain]", "trial"],
+        ["filter[attribute.plan][doesNotContain]", "legacy"],
+        ["filter[attribute.plan][doesNotContain]", "trial"],
+      ]).attributeFilters
+    ).toEqual([
+      {
+        param: "filter[attribute.plan][doesNotContain]",
+        key: "plan",
+        operator: "doesNotContain",
+        values: ["trial", "legacy"],
+      },
+    ]);
+  });
+
+  test.each(["greaterThan", "gte", "isSet"])("still rejects a repeated %s", (operator) => {
+    const name = `filter[attribute.seats][${operator}]`;
+    const result = parseV3ContactsListQuery(
+      params([
+        [name, "1"],
+        [name, "2"],
+      ])
+    );
+    expect(result.ok).toBe(false);
   });
 
   test("keeps every repeated in value verbatim, commas included", () => {

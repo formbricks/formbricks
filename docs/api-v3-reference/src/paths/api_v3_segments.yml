@@ -3,8 +3,8 @@ get:
   summary: List segments
   description: |
     Returns a workspace's segments, searched, sorted and counted on the server. Private segments
-    (survey-local targeting drafts) are never listed. A segment's survey references only name surveys
-    the caller may see. Requires the Contacts entitlement (**403** without it). The cursor is bound to
+    (survey-local targeting drafts) are never listed. A segment's survey references — including the
+    `surveyIds` of its survey-interaction filters — only name surveys the caller may see. Requires the Contacts entitlement (**403** without it). The cursor is bound to
     `sortBy` and `search`; changing either while paging → **400** naming `cursor`. Unknown query
     parameters → **400**. Session cookie, `x-api-key`, or a Bearer token.
   tags:

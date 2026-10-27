@@ -32,11 +32,9 @@ export const listContacts = async ({
 }): Promise<TV3ContactListPage> => {
   const searchParams = new URLSearchParams({ workspaceId, limit: String(limit) });
   for (const [key, value] of params) searchParams.append(key, value);
-  if (cursor) {
-    searchParams.set("cursor", cursor);
-    // The match count only needs computing for the first page of a filter.
-    searchParams.set("includeTotalCount", "false");
-  }
+  // The match count only needs computing for the first page of a filter; the API skips it by default.
+  if (cursor) searchParams.set("cursor", cursor);
+  else searchParams.set("includeTotalCount", "true");
   const response = await fetch(`/api/v3/contacts?${searchParams.toString()}`, {
     method: "GET",
     cache: "no-store",

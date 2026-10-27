@@ -151,4 +151,17 @@ describe("useTableUrlState", () => {
 
     expect(replaceState).toHaveBeenCalledWith(null, "", "/surveys");
   });
+
+  test("keeps the BASE_PATH prefix that usePathname leaves out", () => {
+    // Next.js reports the route without the base path; the browser URL carries it.
+    navigation.pathname = "/surveys";
+    globalThis.window.history.replaceState(null, "", "/formbricks/surveys?search=hello");
+    const { result } = render();
+
+    act(() => result.current.setFilters([{ property: "status", operator: "in", values: ["live"] }]));
+    expect(globalThis.window.location.pathname).toBe("/formbricks/surveys");
+
+    act(() => result.current.clearFilters());
+    expect(replaceState).toHaveBeenLastCalledWith(null, "", "/formbricks/surveys");
+  });
 });

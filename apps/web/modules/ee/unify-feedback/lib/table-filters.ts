@@ -183,17 +183,40 @@ export const getRecordFilterProperties = (
 /** Hub list query parameters: repeatable ones as arrays, the rest as single strings. */
 export type THubRecordQuery = Record<string, string | string[]>;
 
-const collectEquals = (filters: readonly TTableFilter[], property: string): string[] | null => {
-  const relevant = filters.filter((filter) => filter.property === property);
-  if (relevant.length === 0) return null;
-  // `in` and `equals` both narrow to listed values; several filters on one property intersect.
-  const valueSets = relevant
+/** Each `in` / `equals` filter on a property as the set of values it allows. */
+const collectValueSets = (filters: readonly TTableFilter[], property: string): Set<string>[] =>
+  filters
+    .filter((filter) => filter.property === property)
     .filter((filter) => filter.operator === "in" || filter.operator === "equals")
     .map((filter) => new Set(filter.operator === "equals" ? filter.values.slice(0, 1) : filter.values));
+
+/** For single-valued fields: several filters on one property intersect. */
+const collectEquals = (filters: readonly TTableFilter[], property: string): string[] | null => {
+  const valueSets = collectValueSets(filters, property);
   if (valueSets.length === 0) return null;
   const [first, ...rest] = valueSets;
   return [...first].filter((value) => rest.every((set) => set.has(value)));
 };
+
+/**
+ * For emotions, which are multi-label: a record carrying joy *and* anger matches both `is joy` and
+ * `is anger`, so intersecting the rules (as for a single-valued field) would wrongly match nothing.
+ * The Hub's `emotions` filter only matches "carries any of", with no "carries all" form, so the
+ * narrowest rule is sent. That is exact when one rule's values sit inside every other's, and otherwise
+ * a superset — it never hides a record that matches every rule.
+ */
+const collectAnyOf = (filters: readonly TTableFilter[], property: string): string[] | null => {
+  const valueSets = collectValueSets(filters, property);
+  if (valueSets.length === 0) return null;
+  return [...valueSets.reduce((narrowest, set) => (set.size < narrowest.size ? set : narrowest))];
+};
+
+/** The Hub stores a language tag of at most 10 characters, so a longer one matches no record. */
+const LANGUAGE_MAX_LENGTH = 10;
+const collectLanguages = (filters: readonly TTableFilter[]): string[] | null =>
+  collectEquals(filters, "language")
+    ?.map((value) => value.trim())
+    .filter((value) => value.length > 0 && value.length <= LANGUAGE_MAX_LENGTH) ?? null;
 
 const pickBound = (current: string | undefined, next: string, keep: "max" | "min"): string => {
   if (current === undefined) return next;
@@ -210,20 +233,38 @@ const tightenNumber = (
   query[key] = String(query[key] === undefined ? value : pick(Number(query[key]), value));
 };
 
+/**
+ * Folds a property's `≥` / `≤` rules into the tightest pair. With a `range` (the values the field can
+ * hold, which the Hub also enforces on the bound), a bound outside it is clamped to its edge rather than
+ * sent and rejected — `≥ -5` still means "has a score" — and one that no value can meet answers false:
+ * nothing matches.
+ */
 const applyNumberBounds = (
   query: THubRecordQuery,
   filters: readonly TTableFilter[],
   property: string,
   minKey: string,
-  maxKey: string
-) => {
+  maxKey: string,
+  range?: { min: number; max: number }
+): boolean => {
   for (const filter of filters.filter((f) => f.property === property)) {
-    const value = Number(filter.values[0]);
-    if (!Number.isFinite(value)) continue;
-    if (filter.operator === "greaterEqual") tightenNumber(query, minKey, value, Math.max);
-    if (filter.operator === "lessEqual") tightenNumber(query, maxKey, value, Math.min);
+    const raw = Number(filter.values[0]);
+    if (!Number.isFinite(raw)) continue;
+    const value = range ? Math.min(range.max, Math.max(range.min, raw)) : raw;
+    if (filter.operator === "greaterEqual") {
+      if (raw > value) return false;
+      tightenNumber(query, minKey, value, Math.max);
+    }
+    if (filter.operator === "lessEqual") {
+      if (raw < value) return false;
+      tightenNumber(query, maxKey, value, Math.min);
+    }
   }
+  return true;
 };
+
+/** Hub sentiment scores lie in [-1, 1]. */
+const SENTIMENT_SCORE_RANGE = { min: -1, max: 1 };
 
 const applyDateBounds = (
   query: THubRecordQuery,
@@ -257,9 +298,9 @@ const applyListFilters = (query: THubRecordQuery, filters: readonly TTableFilter
   const lists: [string, string[] | null][] = [
     ["source_type", sourceTypes ?? null],
     ["source_name", collectEquals(filters, "source")],
-    ["language", collectEquals(filters, "language")],
+    ["language", collectLanguages(filters)],
     ["user_id", collectEquals(filters, "userId")],
-    ["emotions", collectEquals(filters, "emotion")],
+    ["emotions", collectAnyOf(filters, "emotion")],
     ["field_type", resolveEnumFilter(filters, "fieldType", FIELD_TYPES)],
     ["sentiment", resolveEnumFilter(filters, "sentiment", SENTIMENTS)],
   ];
@@ -308,8 +349,15 @@ export const toHubRecordQuery = (
   applyDateBounds(query, filters, "importedAt", "created_since", "created_until", timeZone, now);
   applyDateBounds(query, filters, "valueDate", "value_date_min", "value_date_max", timeZone, now);
   applyNumberBounds(query, filters, "valueNumber", "value_number_min", "value_number_max");
-  applyNumberBounds(query, filters, "sentimentScore", "sentiment_score_min", "sentiment_score_max");
-  if (hasEmptyRange(query)) return null;
+  const sentimentScoreCanMatch = applyNumberBounds(
+    query,
+    filters,
+    "sentimentScore",
+    "sentiment_score_min",
+    "sentiment_score_max",
+    SENTIMENT_SCORE_RANGE
+  );
+  if (!sentimentScoreCanMatch || hasEmptyRange(query)) return null;
 
   const sort = (RECORD_SORT_VALUES as readonly string[]).includes(sortBy) ? sortBy : DEFAULT_RECORD_SORT;
   query.sort = sort.endsWith("importedAt") ? "created_at" : "collected_at";

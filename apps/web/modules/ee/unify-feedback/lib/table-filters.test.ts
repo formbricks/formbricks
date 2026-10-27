@@ -120,3 +120,58 @@ describe("appendHubQuery", () => {
     expect(params.toString()).toBe("source_type=a&source_type=b&sort=collected_at");
   });
 });
+
+describe("toHubRecordQuery — values the Hub would reject", () => {
+  const query = (filters: Parameters<typeof toHubRecordQuery>[0]) =>
+    toHubRecordQuery(filters, "-collectedAt", "UTC", now);
+
+  test("clamps a sentiment score bound to [-1, 1] instead of sending it", () => {
+    const result = query([
+      { property: "sentimentScore", operator: "greaterEqual", values: ["-5"] },
+      { property: "sentimentScore", operator: "lessEqual", values: ["3"] },
+    ]);
+    expect(result?.sentiment_score_min).toBe("-1");
+    expect(result?.sentiment_score_max).toBe("1");
+  });
+
+  test("a sentiment score bound no record can meet matches nothing", () => {
+    expect(query([{ property: "sentimentScore", operator: "greaterEqual", values: ["1.5"] }])).toBeNull();
+    expect(query([{ property: "sentimentScore", operator: "lessEqual", values: ["-2"] }])).toBeNull();
+  });
+
+  test("a language longer than the stored 10 characters matches nothing", () => {
+    expect(
+      query([{ property: "language", operator: "equals", values: ["english-united-states"] }])
+    ).toBeNull();
+    expect(query([{ property: "language", operator: "equals", values: [" pt-BR "] }])?.language).toEqual([
+      "pt-BR",
+    ]);
+  });
+});
+
+describe("toHubRecordQuery — emotions are multi-label", () => {
+  test("two emotion rules do not collapse to nothing; the narrowest rule is sent", () => {
+    expect(
+      toHubRecordQuery(
+        [
+          { property: "emotion", operator: "equals", values: ["joy"] },
+          { property: "emotion", operator: "equals", values: ["anger"] },
+        ],
+        "-collectedAt",
+        "UTC",
+        now
+      )?.emotions
+    ).toEqual(["joy"]);
+    expect(
+      toHubRecordQuery(
+        [
+          { property: "emotion", operator: "in", values: ["joy", "anger", "fear"] },
+          { property: "emotion", operator: "equals", values: ["anger"] },
+        ],
+        "-collectedAt",
+        "UTC",
+        now
+      )?.emotions
+    ).toEqual(["anger"]);
+  });
+});

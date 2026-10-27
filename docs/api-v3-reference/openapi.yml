@@ -4017,10 +4017,12 @@ paths:
         | `number` | `in`, `equals`, `notEquals`, `greaterThan`, `greaterEqual`, `lessThan`, `lessEqual`, `isSet`, `isNotSet` |
         | `date`   | `gte`, `lte` (ISO 8601 date-time with offset, inclusive), `isSet`, `isNotSet` |
 
-        Text comparisons are case-insensitive. `in` is the only multi-value operator: repeat the key once
-        per value (`filter[attribute.plan][in]=Pro&filter[attribute.plan][in]=Team`). String values are
-        taken verbatim — never split on commas, since a value can contain one; a `number` `in` also accepts
-        comma-separated values. Every other operator takes exactly one value (repeating it → **400**).
+        Text comparisons are case-insensitive. `in` matches any of its values: repeat the key once per
+        value (`filter[attribute.plan][in]=Pro&filter[attribute.plan][in]=Team`). String values are taken
+        verbatim — never split on commas, since a value can contain one; a `number` `in` also accepts
+        comma-separated values. `notEquals`, `contains`, `doesNotContain`, `startsWith` and `endsWith` may
+        also be repeated, and then every value must hold (AND). Every other operator takes exactly one
+        value (repeating it → **400**).
         `isSet` / `isNotSet` ignore their value (send `true`). A value is *set* when the attribute row
         exists and carries a value (non-empty text, or a non-null number/date). `notEquals` and
         `doesNotContain` match only contacts whose value is set and differs — use `isNotSet` for contacts
@@ -4056,9 +4058,9 @@ paths:
           name: includeTotalCount
           schema:
             type: boolean
-            default: true
+            default: false
           description: |
-            Whether to calculate `meta.totalCount`. Set to `false` on follow-up pages to skip the count query; `meta.totalCount` is then `null`.
+            Whether to calculate `meta.totalCount`. Send `true` on the first page to get the count; when omitted or `false` the count query is skipped and `meta.totalCount` is `null`.
         - in: query
           name: search
           schema:
@@ -4218,8 +4220,8 @@ paths:
       summary: List segments
       description: |
         Returns a workspace's segments, searched, sorted and counted on the server. Private segments
-        (survey-local targeting drafts) are never listed. A segment's survey references only name surveys
-        the caller may see. Requires the Contacts entitlement (**403** without it). The cursor is bound to
+        (survey-local targeting drafts) are never listed. A segment's survey references — including the
+        `surveyIds` of its survey-interaction filters — only name surveys the caller may see. Requires the Contacts entitlement (**403** without it). The cursor is bound to
         `sortBy` and `search`; changing either while paging → **400** naming `cursor`. Unknown query
         parameters → **400**. Session cookie, `x-api-key`, or a Bearer token.
       tags:

@@ -51,7 +51,7 @@ describe("listContacts", () => {
     expect(params.get("limit")).toBe("25");
     expect(params.getAll("filter[attributes.plan][in]")).toEqual(["pro", "team"]);
     expect(params.has("cursor")).toBe(false);
-    expect(params.has("includeTotalCount")).toBe(false);
+    expect(params.get("includeTotalCount")).toBe("true");
     expect(fetchMock.mock.calls[0][1]).toEqual(expect.objectContaining({ method: "GET", signal }));
   });
 
@@ -62,7 +62,7 @@ describe("listContacts", () => {
 
     const { params } = requestedParams(fetchMock);
     expect(params.get("cursor")).toBe("cur_2");
-    expect(params.get("includeTotalCount")).toBe("false");
+    expect(params.has("includeTotalCount")).toBe(false);
   });
 
   test("throws the API's problem as a V3ApiError", async () => {

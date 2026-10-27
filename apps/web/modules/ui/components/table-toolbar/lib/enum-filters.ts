@@ -36,9 +36,3 @@ export const resolveEnumFilter = <TValue extends string>(
   }
   return allValues.filter((value) => allowed.has(value));
 };
-
-/** Visible filters: everything a user set through the Filter menu or Advanced filter. */
-export const countVisibleFilters = (
-  filters: readonly TTableFilter[],
-  hiddenProperties: ReadonlySet<string>
-): number => filters.filter((filter) => !hiddenProperties.has(filter.property)).length;

@@ -96,6 +96,26 @@ const addDateBounds = (
   return true;
 };
 
+/** Rules the API ANDs when the key is repeated, so every stacked rule is sent. */
+const REPEATABLE_RULE_OPERATORS = new Set([
+  "notEquals",
+  "contains",
+  "doesNotContain",
+  "startsWith",
+  "endsWith",
+]);
+/** Numeric bounds: stacked rules collapse to the tightest one. */
+const LOWER_BOUND_OPERATORS = new Set(["greaterThan", "greaterEqual"]);
+const UPPER_BOUND_OPERATORS = new Set(["lessThan", "lessEqual"]);
+
+const tightestNumber = (operator: string, existing: string | undefined, value: string): string => {
+  if (existing === undefined) return value;
+  const [a, b] = [Number(existing), Number(value)];
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return value;
+  if (LOWER_BOUND_OPERATORS.has(operator)) return b > a ? value : existing;
+  return b < a ? value : existing;
+};
+
 /** Adds a non-date filter's parameter; false when it contradicts one already added. */
 const addValueEntry = (entries: Map<string, string[]>, filter: TTableFilter): boolean => {
   const { property, operator, values } = filter;
@@ -111,8 +131,17 @@ const addValueEntry = (entries: Map<string, string[]>, filter: TTableFilter): bo
     entries.set(key, ["true"]);
     return true;
   }
-  if (operator === "equals" && existing && existing[0] !== values[0]) return false;
-  entries.set(key, [values[0]]);
+  const [value] = values;
+  if (REPEATABLE_RULE_OPERATORS.has(operator)) {
+    entries.set(key, existing?.includes(value) ? existing : [...(existing ?? []), value]);
+    return true;
+  }
+  if (LOWER_BOUND_OPERATORS.has(operator) || UPPER_BOUND_OPERATORS.has(operator)) {
+    entries.set(key, [tightestNumber(operator, existing?.[0], value)]);
+    return true;
+  }
+  if (operator === "equals" && existing && existing[0] !== value) return false;
+  entries.set(key, [value]);
   return true;
 };
 
@@ -126,11 +155,10 @@ const hasInvertedDateRange = (dateBounds: Map<string, string>): boolean => {
 };
 
 /**
- * The table's filters, search and sort as v3 contacts list parameters. The API takes one value per
- * single-value operator, so two rules that cannot both hold (`is a` and `is b`) answer null — nothing
- * can match — and date bounds on one attribute collapse to the tightest pair. Two different text
- * rules of the same kind on one attribute (`contains a`, `contains b`) keep the last one: the API has
- * no way to send both.
+ * The table's filters, search and sort as v3 contacts list parameters. Every stacked rule on one
+ * attribute must hold: text rules of one kind (`contains a`, `contains b`) are all sent and the API
+ * ANDs them; numeric and date bounds collapse to the tightest one; two rules that cannot both hold
+ * (`is a` and `is b`) answer null — nothing can match.
  */
 export const toContactListParams = (
   filters: readonly TTableFilter[],

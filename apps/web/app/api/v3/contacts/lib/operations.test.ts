@@ -69,6 +69,7 @@ describe("listV3Contacts", () => {
 
     const response = await call([
       ["limit", "1"],
+      ["includeTotalCount", "true"],
       ["filter[attribute.seats][greaterThan]", "10"],
     ]);
 
@@ -155,10 +156,13 @@ describe("listV3Contacts", () => {
     expect(otherSort.status).toBe(400);
   });
 
-  test("skips the count when includeTotalCount=false", async () => {
+  test.each([
+    ["includeTotalCount=false", [["includeTotalCount", "false"]]],
+    ["includeTotalCount is omitted", []],
+  ] as [string, [string, string][]][])("skips the count when %s", async (_label, entries) => {
     vi.mocked(prisma.contact.findMany).mockResolvedValue([] as never);
 
-    const body = await (await call([["includeTotalCount", "false"]])).json();
+    const body = await (await call(entries)).json();
 
     expect(body.meta).toEqual({ limit: 50, nextCursor: null, totalCount: null });
     expect(prisma.contact.count).not.toHaveBeenCalled();

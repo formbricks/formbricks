@@ -150,4 +150,14 @@ describe("useFeedbackRecords", () => {
       await expect(result.current.refetch()).rejects.toThrow("count failed");
     });
   });
+
+  test("refetch does nothing when the query is disabled, instead of failing", async () => {
+    const { result } = renderRecords({ directoryIds: ["dir_a"], query: null });
+
+    await act(async () => {
+      await expect(result.current.refetch()).resolves.toBeUndefined();
+    });
+    expect(listDirectoryRecords).not.toHaveBeenCalled();
+    expect(countDirectoryRecords).not.toHaveBeenCalled();
+  });
 });

@@ -2,7 +2,7 @@
 
 import { ChevronDownIcon, LayoutTemplateIcon, PlusCircleIcon, UploadIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type ComponentProps, useCallback, useMemo, useState } from "react";
+import { type ComponentProps, useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TSurveyStatus, TSurveyType, TSurveyVisibility } from "@formbricks/types/surveys/types";
@@ -10,6 +10,7 @@ import type { TUserLocale } from "@formbricks/types/user";
 import type { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
 import { CUSTOM_SURVEY_TEMPLATE_ID } from "@/app/lib/templates";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
+import { removeStaleFilterStorage } from "@/lib/stale-filter-storage";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { CreateWithAIDialog } from "@/modules/survey/components/template-list/components/create-with-ai-dialog";
 import { useCreateSurveyFromTemplate } from "@/modules/survey/components/template-list/hooks/use-create-survey-from-template";
@@ -202,6 +203,8 @@ export const SurveysList = ({
   const visibilityGate = isVisibilityTurnedOff
     ? withoutVisibilityControls(surveyVisibilityGate)
     : surveyVisibilityGate;
+
+  useEffect(() => removeStaleFilterStorage(globalThis.window?.localStorage), []);
 
   const filterProperties = getSurveyFilterProperties(t, {
     channel: currentWorkspaceChannel,

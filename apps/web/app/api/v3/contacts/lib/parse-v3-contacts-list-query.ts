@@ -74,6 +74,19 @@ export const NUMBER_OPERATORS = [
 ] as const;
 export const DATE_OPERATORS = ["gte", "lte", "isSet", "isNotSet"] as const;
 
+/**
+ * Operators that may be repeated on one key. `in` ORs its values; the rest AND them — a contact
+ * matches `contains=a&contains=b` only when its value contains both.
+ */
+export const REPEATABLE_OPERATORS: ReadonlySet<string> = new Set([
+  "in",
+  "notEquals",
+  "contains",
+  "doesNotContain",
+  "startsWith",
+  "endsWith",
+]);
+
 const OPERATORS_BY_DATA_TYPE: Record<TContactAttributeDataType, readonly string[]> = {
   string: STRING_OPERATORS,
   number: NUMBER_OPERATORS,
@@ -129,7 +142,7 @@ const ZFixedQuery = z.object({
   includeTotalCount: z
     .enum(["true", "false"])
     .transform((value) => value === "true")
-    .default(true),
+    .default(false),
   search: zPostgresText()
     .max(512)
     .optional()
@@ -171,14 +184,14 @@ const collectAttributeFilters = (
     }
 
     const rawValues = searchParams.getAll(param);
-    // `in` is the only multi-value operator. Values are taken verbatim per repeated key — never split
-    // on commas, because a string attribute value can legitimately contain one.
-    if (operator !== "in" && rawValues.length > 1) {
+    // Values are taken verbatim per repeated key — never split on commas, because a string attribute
+    // value can legitimately contain one.
+    if (!REPEATABLE_OPERATORS.has(operator) && rawValues.length > 1) {
       invalid.push({ name: param, reason: `Operator "${operator}" accepts a single value.` });
       continue;
     }
 
-    const values = operator === "in" ? [...new Set(rawValues)] : rawValues;
+    const values = [...new Set(rawValues)];
     if (values.length > V3_CONTACTS_MAX_IN_VALUES) {
       invalid.push({
         name: param,

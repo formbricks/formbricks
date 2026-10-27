@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
+import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { assertV3ContactsEnabled } from "@/app/api/v3/lib/contacts-entitlement";
@@ -9,7 +10,7 @@ import { type TSortCursor, buildSortCursorPage } from "@/app/api/v3/lib/sort-cur
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { resolveV3VisibleSurveyWhere } from "@/app/api/v3/surveys/visibility-context";
 import { selectSegment, transformPrismaSegment } from "@/modules/ee/contacts/segments/lib/segments";
-import { serializeV3Segment } from "../serializers";
+import { collectSegmentFilterSurveyIds, serializeV3Segment } from "../serializers";
 import { SEGMENTS_CURSOR_KIND, parseV3SegmentsListQuery } from "./parse-v3-segments-list-query";
 import {
   buildV3SegmentsCursorWhere,
@@ -17,6 +18,24 @@ import {
   buildV3SegmentsWhere,
   segmentSortValue,
 } from "./segments-where";
+
+/**
+ * Which of the surveys the page's survey-interaction filters name the caller may see — one query for
+ * the whole page, bounded by the filter tree's survey-id cap times the page size.
+ */
+const resolveVisibleFilterSurveyIds = async (
+  surveyIds: readonly string[],
+  workspaceId: string,
+  visibleSurveyWhere: Prisma.SurveyWhereInput
+): Promise<Set<string>> => {
+  const ids = [...new Set(surveyIds)];
+  if (ids.length === 0) return new Set();
+  const surveys = await prisma.survey.findMany({
+    where: { AND: [{ workspaceId, id: { in: ids } }, visibleSurveyWhere] },
+    select: { id: true },
+  });
+  return new Set(surveys.map((survey) => survey.id));
+};
 
 type TListV3SegmentsParams = {
   searchParams: URLSearchParams;
@@ -107,8 +126,15 @@ export async function listV3Segments({
       sortValue: (row) => segmentSortValue(row, query.sortBy),
     });
 
+    const segments = page.map(transformPrismaSegment);
+    const visibleSurveyIds = await resolveVisibleFilterSurveyIds(
+      segments.flatMap((segment) => collectSegmentFilterSurveyIds(segment.filters)),
+      authResult.workspaceId,
+      visibleSurveyWhere
+    );
+
     return successListResponse(
-      page.map((row) => serializeV3Segment(transformPrismaSegment(row))),
+      segments.map((segment) => serializeV3Segment(segment, visibleSurveyIds)),
       { limit: query.limit, nextCursor, totalCount },
       { requestId, cache: "private, no-store" }
     );

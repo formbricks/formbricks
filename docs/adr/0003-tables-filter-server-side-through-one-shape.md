@@ -16,6 +16,6 @@ A date preset is kept by name in the URL (`filter[createdAt][preset]=last7Days`)
 
 - Attributes and Segments gain `/api/v3` list endpoints with filters, sort, paging and a total count, and Contacts gets a new one.
 - Whatever a table can filter by has to be expressible as a v3 query parameter, so new filter properties are public API changes held to v3's compatibility rules.
-- Surveys and Workflows stop remembering filters between visits; sort and column choices stay in browser storage.
+- Surveys and Workflows stop remembering filters between visits, and their old `formbricks-*-filters` storage keys are removed on the next visit. Sort lives in the URL with the filters (`sortBy`, omitted for the table's default); only column choices stay in browser storage.
 - Responses moves onto `/api/v3/responses`, whose filters now run through the same where-builder as Summary and downloads. Its match count stops at 10,000 and reads "10,000+" beyond that.
 - Quick-filter value lists come from a bounded per-property endpoint, never from loading every row.
