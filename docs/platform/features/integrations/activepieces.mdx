@@ -10,17 +10,16 @@ Activepieces is a versatile tool to automate workflows between Formbricks and nu
   Ensure your survey is finalized before setting up Activepieces. Any changes in the survey will require additional adjustments in the workflow.
 </Note>
 
-## Step 1: Setup your survey incl. `questionId` for every question
+## Step 1: Check your question codes
 
-Set up the `questionId`s of your survey questions before activating it.
-
-![Update Question ID](/images/platform/features/integrations/activepieces/update-question-id.webp)
-
-_Update the Question ID on every question — it is the first field behind **Show Question settings** at the foot of a question card._
+Every question has a **question code**, such as `q1` or `nps`, and the `dataByQuestionCode` group of the trigger output shows your answers under these codes. You can read and change the code in the **Settings** tab of a question, under **Recode**, **before** you activate the survey. Once the survey is active, codes are locked, so the flow you build on them keeps working.
 
 <Note>
-  Already activated? Duplicate survey You can only update the questionId before activating the survey. If already activated, simply duplicate it.
-  ![Duplicate Survey](/images/platform/features/integrations/activepieces/duplicate-survey.webp)
+  Question codes start with a lowercase letter and use lowercase letters, digits and `_`. Pick short, readable names such as `nps` or `visit_reason`. Learn more in [Question codes and answer codes](/surveys/analysis/question-codes).
+</Note>
+
+<Note>
+  The Question ID of a question is generated and cannot be changed. If you need it, choose **Copy question ID** in the question's **⋯** menu.
 </Note>
 
 ## Step 2: Setup Activepieces
