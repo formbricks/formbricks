@@ -282,11 +282,15 @@ describe("per-unit failure isolation", () => {
 
   test("reports the first hundred failures in organization order however the calls finish", async () => {
     // Past the 100-entry reporting cap, so the merge decides which failures are reported, not only their order.
+    // Split like production pages, so the cap also has to hold across a page boundary.
     const organizationIds = Array.from(
       { length: 105 },
       (_, index) => `org-${String(index).padStart(3, "0")}`
     );
-    vi.mocked(source.readOrganizationIdPage).mockResolvedValueOnce(organizationIds).mockResolvedValueOnce([]);
+    vi.mocked(source.readOrganizationIdPage)
+      .mockResolvedValueOnce(organizationIds.slice(0, 100))
+      .mockResolvedValueOnce(organizationIds.slice(100))
+      .mockResolvedValueOnce([]);
     vi.mocked(source.readOrganizationSource).mockImplementation(async (organizationId) => {
       // Among calls started together, a lower ID fails later, so completion order inverts ID order.
       const slot = organizationIds.indexOf(organizationId) % AUTHZED_BACKFILL_ORGANIZATION_CONCURRENCY;
