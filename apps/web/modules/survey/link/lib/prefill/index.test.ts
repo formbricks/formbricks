@@ -309,3 +309,59 @@ describe("prefill integration tests", () => {
     expect(result).toEqual({ q4: ["Option 4", "Option 5"] });
   });
 });
+
+describe("prefill by question code", () => {
+  const openText = (id: string, code?: string) => ({
+    id,
+    ...(code ? { code } : {}),
+    type: TSurveyElementTypeEnum.OpenText,
+    headline: { default: id },
+    required: false,
+    inputType: "text" as const,
+    charLimit: { enabled: false },
+  });
+  const survey = {
+    id: "survey1",
+    blocks: [
+      {
+        id: "block1",
+        elements: [
+          openText("rnd9k2x", "age"),
+          openText("plain"),
+          openText("clash", "other_code"),
+          openText("legacy", "clash"),
+          openText("langq", "lang"),
+        ],
+      },
+    ],
+  } as unknown as TSurvey;
+
+  test("fills the question that carries the code", () => {
+    expect(getPrefillValue(survey, new URLSearchParams("age=34"), "default")).toEqual({ rnd9k2x: "34" });
+  });
+
+  test("still fills by Question ID", () => {
+    expect(getPrefillValue(survey, new URLSearchParams("rnd9k2x=34"), "default")).toEqual({ rnd9k2x: "34" });
+  });
+
+  test("the ID wins when it equals another question's code", () => {
+    expect(getPrefillValue(survey, new URLSearchParams("clash=x"), "default")).toEqual({ clash: "x" });
+  });
+
+  test("the ID param wins over the code param of the same question, in either order", () => {
+    expect(getPrefillValue(survey, new URLSearchParams("age=1&rnd9k2x=2"), "default")).toEqual({
+      rnd9k2x: "2",
+    });
+    expect(getPrefillValue(survey, new URLSearchParams("rnd9k2x=2&age=1"), "default")).toEqual({
+      rnd9k2x: "2",
+    });
+  });
+
+  test("ignores unknown names and a question without a code is not reachable as 'undefined'", () => {
+    expect(getPrefillValue(survey, new URLSearchParams("nope=1&undefined=2"), "default")).toBeUndefined();
+  });
+
+  test("a code never captures a link system param", () => {
+    expect(getPrefillValue(survey, new URLSearchParams("lang=de"), "default")).toBeUndefined();
+  });
+});

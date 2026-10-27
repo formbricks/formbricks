@@ -1,6 +1,7 @@
 import { TResponseData } from "@formbricks/types/responses";
+import { findElementByIdOrCode } from "@formbricks/types/surveys/element-lookup";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { FORBIDDEN_IDS } from "@formbricks/types/surveys/validation";
+import { FORBIDDEN_IDS, LINK_SURVEY_SYSTEM_PARAM_KEYS } from "@formbricks/types/surveys/validation";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { transformElement } from "./transformers";
 import { validateElement } from "./validators";
@@ -16,6 +17,8 @@ import { validateElement } from "./validators";
  * @param survey - The survey object containing blocks and elements
  * @param searchParams - URL search parameters (e.g., from useSearchParams() or new URLSearchParams())
  * @param languageId - Current language code for label matching
+ * Each parameter name is a Question ID or, failing that, a question code (`?age=34`).
+ *
  * @returns Object with element IDs as keys and prefilled values, or undefined if no valid prefills
  *
  * @example
@@ -41,6 +44,9 @@ export const getPrefillValue = (
 ): TResponseData | undefined => {
   const prefillData: TResponseData = {};
   const elements = getElementsFromBlocks(survey.blocks);
+  // Elements filled through their Question ID param: a question-code param for the same question must
+  // not overwrite them, whatever the order of the query string.
+  const filledById = new Set<string>();
 
   searchParams.forEach((value, key) => {
     try {
@@ -50,8 +56,17 @@ export const getPrefillValue = (
       }
 
       // Find matching element
-      const element = elements.find((el) => el.id === key);
+      // The name is a Question ID first, then a question code (ADR 0016). A code never captures a
+      // link system param such as `?lang=`.
+      const isId = elements.some((el) => el.id === key);
+      if (!isId && LINK_SURVEY_SYSTEM_PARAM_KEYS.has(key)) {
+        return;
+      }
+      const element = findElementByIdOrCode(elements, key);
       if (!element) {
+        return;
+      }
+      if (!isId && filledById.has(element.id)) {
         return;
       }
 
@@ -64,6 +79,9 @@ export const getPrefillValue = (
       // Transform the value using pre-matched data from validation
       const transformedValue = transformElement(validationResult, value, languageId);
       prefillData[element.id] = transformedValue;
+      if (isId) {
+        filledById.add(element.id);
+      }
     } catch (error) {
       // Catch any errors to prevent one bad prefill from breaking all prefills
       console.error(`[Prefill] Error processing prefill for ${key}:`, error);
