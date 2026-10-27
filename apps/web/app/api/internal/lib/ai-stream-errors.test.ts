@@ -36,19 +36,10 @@ describe("isClientAbort", () => {
   };
 
   test("treats any failure on an aborted request as a client abort", () => {
-    expect(isClientAbort(new Error("stream closed"), abortedSignal())).toBe(true);
+    expect(isClientAbort(abortedSignal())).toBe(true);
   });
 
-  test("recognises an AbortError even when the signal has not settled", () => {
-    const error = new Error("The operation was aborted");
-    error.name = "AbortError";
-
-    expect(isClientAbort(error, new AbortController().signal)).toBe(true);
-  });
-
-  test("does not swallow a real failure", () => {
-    expect(
-      isClientAbort(new TooManyRequestsError("ai_quota_exceeded", 30), new AbortController().signal)
-    ).toBe(false);
+  test("does not classify an active request as cancelled", () => {
+    expect(isClientAbort(new AbortController().signal)).toBe(false);
   });
 });

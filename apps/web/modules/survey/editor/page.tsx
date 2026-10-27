@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import {
@@ -109,7 +110,7 @@ export const SurveyEditorPage = async (props: {
   ]);
 
   if (!workspaceWithTeamIds) {
-    throw new ResourceNotFoundError(t("common.workspace"), null);
+    return notFound();
   }
 
   const organizationBilling = await getOrganizationBilling(workspaceWithTeamIds.organizationId);
@@ -148,14 +149,12 @@ export const SurveyEditorPage = async (props: {
     getTeamMemberDetails(workspaceWithTeamIds.teamIds),
   ]);
 
-  if (
-    !survey ||
-    !actionClasses ||
-    !contactAttributeKeys ||
-    !workspaceWithTeamIds ||
-    !userEmail ||
-    isSurveyCreationDeletionDisabled
-  ) {
+  // A survey that is gone, or that this viewer may not edit, 404s like any other inaccessible resource.
+  if (!survey || isSurveyCreationDeletionDisabled) {
+    return notFound();
+  }
+
+  if (!actionClasses || !contactAttributeKeys || !workspaceWithTeamIds || !userEmail) {
     return <ErrorComponent />;
   }
 

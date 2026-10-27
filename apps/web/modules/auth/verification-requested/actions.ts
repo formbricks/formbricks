@@ -7,6 +7,7 @@ import {
   InvalidInputError,
   ResourceNotFoundError,
   SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE,
+  TooManyRequestsError,
 } from "@formbricks/types/errors";
 import { ZUserEmail } from "@formbricks/types/user";
 import { WEBAPP_URL } from "@/lib/constants";
@@ -25,7 +26,7 @@ import {
   TVerificationRequestPurpose,
   normalizeRoutePathname,
 } from "@/modules/auth/lib/verification-links";
-import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
+import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
@@ -137,6 +138,20 @@ export const resendVerificationEmailAction = actionClient.inputSchema(ZResendVer
       return {
         success: true,
       };
+    }
+    // Anyone can ask for this account's email from here. Counted per account, only when an email is sent,
+    // and below the recipient cap, so strangers rotating IPs cannot spend the whole cap and leave the
+    // user's own sign-in with none.
+    try {
+      await applyRateLimit(rateLimitConfigs.auth.verifyEmailPerAccount, user.id);
+    } catch (error) {
+      // Answer quietly, exactly as a sent email does. Only unverified accounts reach this line, so an error
+      // here would tell anyone which addresses have one — the same reasoning that makes the callback in
+      // auth.ts swallow the same refusal.
+      if (error instanceof TooManyRequestsError) {
+        return { success: true };
+      }
+      throw error;
     }
     ctx.auditLoggingCtx.userId = user.id;
     if (ssoRecoveryResend) {

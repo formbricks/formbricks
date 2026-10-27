@@ -21,10 +21,10 @@ export const ErrorComponent: React.FC<ErrorComponentProps> = ({ title, descripti
         </div>
         <div className="ml-3">
           <h3 className="text-sm font-medium text-red-800" data-testid="error-title">
-            {title || t("common.error_component_title")}
+            {title || t("common.something_went_wrong")}
           </h3>
           <div className="mt-2 text-sm text-red-700" data-testid="error-description">
-            <p>{description || t("common.error_component_description")}</p>
+            <p>{description || t("common.error_boundary_description")}</p>
           </div>
         </div>
       </div>

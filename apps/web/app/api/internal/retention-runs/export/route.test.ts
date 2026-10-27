@@ -11,7 +11,7 @@ const {
   mockIterate,
   mockQueueAuditEvent,
   mockQueueAuditEventWithoutRequest,
-  mockGetClientIp,
+  mockGetRequestMetadata,
 } = vi.hoisted(() => ({
   mockCan: vi.fn(),
   mockGetSession: vi.fn(),
@@ -20,7 +20,7 @@ const {
   mockIterate: vi.fn(),
   mockQueueAuditEvent: vi.fn(),
   mockQueueAuditEventWithoutRequest: vi.fn(),
-  mockGetClientIp: vi.fn(),
+  mockGetRequestMetadata: vi.fn(),
 }));
 
 vi.mock("@/lib/authorization", () => ({ can: mockCan }));
@@ -29,7 +29,9 @@ vi.mock("@/modules/ee/data-retention/lib/runs-service", () => ({
   countRetentionExportRows: mockCount,
   iterateRetentionExportRows: mockIterate,
 }));
-vi.mock("@/lib/utils/client-ip", () => ({ getClientIpFromHeaders: mockGetClientIp }));
+vi.mock("@/modules/ee/audit-logs/lib/request-metadata", () => ({
+  getAuditRequestMetadata: mockGetRequestMetadata,
+}));
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: mockGetSession }));
 vi.mock("@/app/api/v1/auth", () => ({ authenticateRequest: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
@@ -82,7 +84,7 @@ describe("GET /api/internal/retention-runs/export", () => {
     });
     mockQueueAuditEvent.mockResolvedValue(undefined);
     mockQueueAuditEventWithoutRequest.mockResolvedValue(undefined);
-    mockGetClientIp.mockResolvedValue("203.0.113.7");
+    mockGetRequestMetadata.mockResolvedValue({ ipAddress: "203.0.113.7", userAgent: "export-test-agent" });
   });
 
   test("streams the CSV as a download and audits the export once it has finished", async () => {
@@ -111,7 +113,7 @@ describe("GET /api/internal/retention-runs/export", () => {
         organizationId: ORG_ID,
         targetId: ORG_ID,
         status: "success",
-        ipAddress: "203.0.113.7",
+        requestMetadata: { ipAddress: "203.0.113.7", userAgent: "export-test-agent" },
         newObject: { rows: 1, from: "2030-01-01T00:00:00.000Z", to: null },
       })
     );
