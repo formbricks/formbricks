@@ -275,6 +275,10 @@ describe("the coarsest tier", () => {
     const element = result.payload.blocks[0].elements[0];
     if (element.type !== "multipleChoiceSingle") throw new Error("type");
     expect(element.choices).toHaveLength(10);
-    expect(element.choices.at(-1)).toEqual({ id: "other", label: { "en-US": "Other, please specify" } });
+    expect(element.choices.at(-1)).toEqual({
+      id: "other",
+      label: { "en-US": "Other, please specify" },
+      code: "10",
+    });
   });
 });

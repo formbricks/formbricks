@@ -28,6 +28,7 @@ import {
   describeDeclaredFieldNameErrors,
   validateNewDeclaredFields,
 } from "@formbricks/types/surveys/declared-field-guard";
+import { carryOverCodes } from "@formbricks/types/surveys/fill-missing-codes";
 import {
   TSurvey,
   TSurveyCreateInput,
@@ -49,6 +50,7 @@ import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
+import { fillSurveyBlockCodes } from "@/lib/survey/fill-codes";
 import type { TSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import {
@@ -879,7 +881,12 @@ export const updateSurveyInternal = async (
 
     // Strip isDraft from elements before saving
     if (updatedSurvey.blocks && updatedSurvey.blocks.length > 0) {
-      data.blocks = stripIsDraftFromBlocks(updatedSurvey.blocks);
+      // ENG-6782: an element re-sent without a code (an older client, the v1 API) keeps its stored
+      // code, matched by id; what is still uncoded then gets the next default.
+      data.blocks = fillSurveyBlockCodes(
+        carryOverCodes(currentSurvey.blocks, stripIsDraftFromBlocks(updatedSurvey.blocks)),
+        updatedSurvey
+      );
     }
 
     const normalizedScheduling = normalizeSurveyScheduling({
@@ -1208,6 +1215,9 @@ export const createSurvey = async (
 
     const baseData = {
       ...restSurveyBody,
+      ...(restSurveyBody.blocks
+        ? { blocks: fillSurveyBlockCodes(restSurveyBody.blocks, parsedSurveyBody) }
+        : {}),
       styling: styling === null ? Prisma.JsonNull : styling,
       showConditions: restSurveyBody.showConditions === null ? Prisma.DbNull : restSurveyBody.showConditions,
       ...normalizeSurveyScheduling({

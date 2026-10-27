@@ -4,8 +4,11 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { updateElementInBlock } from "@/modules/survey/editor/lib/blocks";
 import { TBlockCardMemoProps, areBlockCardPropsEqual, getReferencedElementIds } from "./block-card-memo";
 
+// Coded like a saved survey: an uncoded one would get every element coded on the first edit, which
+// is correct (ENG-6782) but not what these tests are about.
 const element = (id: string, headline: string) => ({
   id,
+  code: id,
   type: "openText",
   headline: { default: headline },
   required: true,

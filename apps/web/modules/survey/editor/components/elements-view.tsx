@@ -44,6 +44,7 @@ import {
   moveElementInBlock,
   renumberAutoNamedBlocks,
   updateElementInBlock,
+  withFilledCodes,
 } from "@/modules/survey/editor/lib/blocks";
 import {
   findBlockUsedInLogic,
@@ -485,7 +486,9 @@ export const ElementsView = ({
 
     // Create a duplicate of the element with a new ID
     const newElementId = createId();
-    const duplicatedElement = { ...element, id: newElementId };
+    // The copy drops the question code so it takes the next unused one (answer codes stay).
+    const { code: _code, ...elementWithoutCode } = element as TSurveyElement & { code?: string };
+    const duplicatedElement = { ...elementWithoutCode, id: newElementId } as TSurveyElement;
 
     // Add the duplicated element to the same block
     const result = addElementToBlock(localSurvey, blockId, duplicatedElement);
@@ -518,10 +521,10 @@ export const ElementsView = ({
         backButtonLabel: createI18nString("", []),
       };
 
-      return {
+      return withFilledCodes({
         ...prevSurvey,
         blocks: [...prevSurvey.blocks, newBlock],
-      };
+      });
     });
 
     setActiveElementId(element.id);
