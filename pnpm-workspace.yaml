@@ -386,4 +386,4 @@ patchedDependencies:
   # anonymous caller can pin 16 MB per connection on any path. proxy.ts never reads the body, so the patch
   # stops handing it one and the route reads the unread stream itself; a rewrite now streams the request to
   # its target. Re-check on every Next upgrade; drop it if Next makes the clone lazy or opt-out.
-  "next@16.3.8": patches/next@16.3.8.patch
+  "next@16.4.1": patches/next@16.4.1.patch
