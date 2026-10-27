@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook as renderHookBase, waitFor } from "@testing-library/react";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { V3ApiError } from "@/modules/api/lib/v3-client";
 import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
 
 /** The dialog invalidates the chart queries after a save, so it renders inside a query client. */
@@ -245,6 +246,54 @@ describe("useChartDialog", () => {
       });
 
       expect(mockUpdateChart.mock.calls[0][1]).toEqual({ name: "Renamed", config: {} });
+    });
+
+    test("renames a chart whose data cannot load, sending the name alone even after a type was picked", async () => {
+      mockGetChart.mockResolvedValue({ ...chartOf(CHART_ID, "bar"), query: loadedQuery });
+      mockGetChartData.mockRejectedValue(
+        new V3ApiError({ status: 403, detail: "You are not authorized to use this Feedback Dataset" })
+      );
+      mockUpdateChart.mockResolvedValue({ id: CHART_ID });
+
+      const { result } = renderHook(() => useChartDialog({ ...baseProps, chartId: CHART_ID }));
+      await waitFor(() => expect(result.current.canSaveDetailsOnly).toBe(true));
+      expect(result.current.chartData).toBeNull();
+      // Opened from a dashboard, with no initialChart: the builder still starts from the stored query.
+      expect(result.current.initialQuery).toEqual(loadedQuery);
+
+      act(() => {
+        result.current.setChartName("Renamed orphan");
+        result.current.handleChartTypeChange("pie");
+      });
+      await act(async () => {
+        await result.current.handleSaveChart();
+      });
+
+      expect(mockUpdateChart).toHaveBeenCalledWith(CHART_ID, { name: "Renamed orphan" });
+    });
+
+    test("keeps the full editor when the data failed for another reason, and drops the error once a query runs", async () => {
+      mockGetChart.mockResolvedValue({ ...chartOf(CHART_ID, "bar"), query: loadedQuery });
+      mockGetChartData.mockRejectedValue(
+        new V3ApiError({ status: 422, detail: "The date range spans too many buckets" })
+      );
+
+      const { result } = renderHook(() => useChartDialog({ ...baseProps, chartId: CHART_ID }));
+      await waitFor(() => expect(result.current.chartLoadError).not.toBeNull());
+
+      expect(result.current.isChartLoaded).toBe(true);
+      expect(result.current.canSaveDetailsOnly).toBe(false);
+      act(() => result.current.handleChartGenerated(sampleChartData));
+      expect(result.current.chartLoadError).toBeNull();
+    });
+
+    test("offers no rename when the chart itself could not load", async () => {
+      mockGetChart.mockRejectedValue(new Error("You are not authorized to access this chart"));
+
+      const { result } = renderHook(() => useChartDialog({ ...baseProps, chartId: CHART_ID }));
+      await waitFor(() => expect(result.current.chartLoadError).not.toBeNull());
+
+      expect(result.current.canSaveDetailsOnly).toBe(false);
     });
 
     test("never compares a chart with the one opened before it, whose data loaded when its own did not", async () => {

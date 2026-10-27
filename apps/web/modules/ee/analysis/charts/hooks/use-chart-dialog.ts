@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TChartConfig, TChartQuery } from "@formbricks/types/analysis";
+import { V3ApiError } from "@/modules/api/lib/v3-client";
 import { sanitizeChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
 import { chartUpdateFromEditor } from "@/modules/ee/analysis/charts/lib/chart-update";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
@@ -74,6 +75,13 @@ export function useChartDialog({
   const lastSuggestedNameRef = useRef<string | null>(null);
   // The type and query as the saved chart was loaded, so a save sends them only when they changed.
   const loadedChartRef = useRef<{ type: TChartType; query: TChartQuery } | null>(null);
+  // The saved chart whose own details loaded, whether or not its data did, with its stored query and
+  // whether its data was refused (403): its Feedback Dataset out of the caller's reach.
+  const [loadedChart, setLoadedChart] = useState<{
+    id: string;
+    query: TChartQuery;
+    dataRefused: boolean;
+  } | null>(null);
 
   const dashboardOptions = useDashboardOptions({ workspaceId, enabled: isAddToDashboardDialogOpen });
   const dashboards = dashboardOptions.data ?? NO_DASHBOARDS;
@@ -99,6 +107,7 @@ export function useChartDialog({
       setSavedChartName("");
       lastSuggestedNameRef.current = null;
       loadedChartRef.current = null;
+      setLoadedChart(null);
       setSelectedChartType(undefined);
       setCurrentChartId(undefined);
       setChartConfig({});
@@ -112,6 +121,7 @@ export function useChartDialog({
       // Set again once this chart's data loads: until then there is nothing to compare a save with, so it
       // sends everything rather than another chart's type and query.
       loadedChartRef.current = null;
+      setLoadedChart(null);
 
       try {
         const chart: TChart = initialChart?.id === chartId ? initialChart : await getChart(chartId);
@@ -123,11 +133,15 @@ export function useChartDialog({
         setCurrentChartId(chart.id);
         setChartConfig(chart.config ?? {});
         setSelectedDirectoryId(chart.feedbackDirectoryId);
+        setLoadedChart({ id: chart.id, query: chart.query, dataRefused: false });
 
         // The saved chart's own data. The server shapes the query for the chart type, so a big number
         // saved while its query still carried groups shows the measure over the whole range.
         const chartType = resolveChartType(chart.type);
         const result = await getChartData({ chartId: chart.id }).catch((error: unknown) => {
+          if (error instanceof V3ApiError && error.status === 403 && !cancelled) {
+            setLoadedChart({ id: chart.id, query: chart.query, dataRefused: true });
+          }
           throw new Error(
             getChartApiErrorMessage(error, t("workspace.analysis.charts.failed_to_load_chart_data"))
           );
@@ -166,6 +180,9 @@ export function useChartDialog({
 
   const handleChartGenerated = (data: AnalyticsResponse) => {
     setChartData(data);
+    // A saved chart whose data failed to load (a timeout, a range over the bucket limit) is fixed by
+    // running another query; once one runs, the old error no longer describes the preview.
+    setChartLoadError(null);
     setSelectedChartType(data.chartType);
     if (data.config) setChartConfig(data.config);
     const suggestedName = data.suggestedName?.trim();
@@ -180,7 +197,41 @@ export function useChartDialog({
     }
   };
 
+  /** The saved chart itself loaded, so the editor opens even if its data did not. */
+  const isChartLoaded = loadedChart !== null && loadedChart.id === currentChartId;
+
+  /**
+   * A saved chart whose data was refused — its Feedback Dataset no longer reachable — can still be renamed,
+   * and only that: the editor shows no query, type or display settings, and the save sends the name alone.
+   * Any other data failure leaves the full editor, where running a query fixes it.
+   */
+  const canSaveDetailsOnly = isChartLoaded && loadedChart.dataRefused && !chartData && !isLoadingChart;
+
+  const saveChartDetails = async (chartId: string) => {
+    if (!chartName.trim()) {
+      toast.error(t("workspace.analysis.charts.please_enter_chart_name"));
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await updateChart(chartId, { name: chartName.trim() });
+      toast.success(t("workspace.analysis.charts.chart_updated_successfully"));
+      closeDialog();
+      void queryClient.invalidateQueries({ queryKey: chartKeys.all });
+      void queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
+      onSuccess?.();
+    } catch (error: unknown) {
+      toast.error(getChartApiErrorMessage(error, t("workspace.analysis.charts.failed_to_save_chart")));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleSaveChart = async () => {
+    if (canSaveDetailsOnly && currentChartId) {
+      await saveChartDetails(currentChartId);
+      return;
+    }
     if (!chartData || !chartName.trim()) {
       toast.error(t("workspace.analysis.charts.please_enter_chart_name"));
       return;
@@ -337,6 +388,7 @@ export function useChartDialog({
     setSavedChartName("");
     lastSuggestedNameRef.current = null;
     loadedChartRef.current = null;
+    setLoadedChart(null);
     setSelectedChartType(undefined);
     setCurrentChartId(undefined);
     setChartConfig({});
@@ -358,7 +410,11 @@ export function useChartDialog({
     setChartData((prev) => (prev ? { ...prev, chartType: type } : null));
   };
 
-  const initialQuery = initialChart && initialChart.id === chartId ? initialChart.query : undefined;
+  // The stored query, so the builder starts from it rather than empty — and so counts as unchanged — also
+  // when the editor fetched the chart itself, as it does when opened from a dashboard.
+  const initialQuery = chartId
+    ? [initialChart, loadedChart].find((chart) => chart?.id === chartId)?.query
+    : undefined;
 
   return {
     chartData,
@@ -380,6 +436,8 @@ export function useChartDialog({
     isSaving,
     isLoadingChart,
     chartLoadError,
+    isChartLoaded,
+    canSaveDetailsOnly,
     selectedDirectoryId,
     setSelectedDirectoryId,
     handleChartGenerated,
