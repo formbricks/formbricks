@@ -18,6 +18,7 @@ import {
   CUSTOM_CSS_MAX_WARNINGS,
   CUSTOM_CSS_PROCESSOR_VERSION,
   type TCustomCssProcessOptions,
+  type TCustomCssRoot,
   getCustomCssProcessorVersion,
   normalizeCustomCssInput,
   processCustomCss,
@@ -813,6 +814,113 @@ describe("declarations that do nothing", () => {
     expect(codes(warnings).slice(0, 2)).toEqual(["import_removed", "fixed_position_removed"]);
     expect(warnings).toHaveLength(CUSTOM_CSS_MAX_WARNINGS);
   });
+});
+
+describe("scoping root", () => {
+  // One stylesheet through every rewrite the root takes part in: aliases, anchoring, dark anchoring,
+  // nesting, arguments, at-rules — plus the third-party loads stripped on the way.
+  const CORPUS_LIGHT = `@import url("https://fonts.googleapis.com/css2?family=Inter");
+@font-face { font-family: "Acme"; src: url(https://cdn.example/acme.woff2); }
+:root { --brand: #1f5f8b; }
+html.page, body > * { color: var(--brand); }
+#fbjs [data-fb-part="headline"] { font-weight: 600; background: url(https://cdn.example/a.png); }
+.card { padding: 4px; &:hover { color: red } & + .card { margin: 0 } :root & { color: blue } }
+:is(html, body) .x, .y:has(> input:checked) { color: blue }
+@media (max-width: 600px) { .a { font-size: 12px } }
+@keyframes pulse { from { opacity: 0 } to { opacity: 1 } }
+.pulse { animation: pulse 1s }
+.host-page :root .x { color: red }`;
+  const CORPUS_DARK = `:root { --brand: #7ab8e0; }
+html.x, .card { color: white; animation: pulse 2s }`;
+
+  test("with no root, survey CSS compiles byte-for-byte as before the root option existed", () => {
+    const result = compile(CORPUS_LIGHT, CORPUS_DARK);
+    expect(codes(result.warnings)).toEqual([
+      "import_removed",
+      "font_face_removed",
+      "external_resource_removed",
+      "unsafe_selector_removed",
+      "unsafe_selector_removed",
+    ]);
+    // Captured from the processor before the root option existed; it must never move.
+    expect(result.compiled.light).toBe(
+      "@layer fb-survey{#fbjs{--brand:#1f5f8b!important}#fbjs.page,#fbjs>*{color:var(--brand)!important}" +
+        "#fbjs [data-fb-part=headline]{font-weight:600!important}#fbjs .card{padding:4px!important}" +
+        "#fbjs .card:hover{color:red!important}#fbjs .card+.card{margin:0!important}" +
+        "#fbjs :is(#fbjs,#fbjs) .x,#fbjs .y:has(>input:checked){color:#00f!important}" +
+        "@media (max-width:600px){#fbjs .a{font-size:12px!important}}" +
+        "@keyframes fb-survey--pulse{0%{opacity:0}to{opacity:1}}" +
+        "#fbjs .pulse{animation:1s fb-survey--pulse!important}}"
+    );
+    expect(result.compiled.dark).toBe(
+      "@layer fb-survey-dark{#fbjs[data-appearance=dark]{--brand:#7ab8e0!important}" +
+        "#fbjs[data-appearance=dark].x,#fbjs[data-appearance=dark] .card{color:#fff!important;animation:2s fb-survey--pulse!important}}"
+    );
+  });
+
+  const CREATIVE_ROOT: TCustomCssRoot = { type: "class", name: "fb-creative" };
+  const compileInRoot = (light: string | null, dark: string | null, root: TCustomCssRoot) => {
+    const result = run(light, dark, "survey", { root });
+    if (!result.ok) throw new Error(`expected success, got ${JSON.stringify(result.errors)}`);
+    return result;
+  };
+
+  test("scopes to a given root, stripping the same third-party loads", () => {
+    const result = compileInRoot(CORPUS_LIGHT, CORPUS_DARK, CREATIVE_ROOT);
+    expect(codes(result.warnings)).toEqual([
+      "import_removed",
+      "font_face_removed",
+      "external_resource_removed",
+      "unsafe_selector_removed",
+      "unsafe_selector_removed",
+    ]);
+    // `#fbjs` is no root alias here: it is an element like any other, looked for inside the root.
+    expect(result.compiled.light).toBe(
+      "@layer fb-survey{.fb-creative{--brand:#1f5f8b!important}.fb-creative.page,.fb-creative>*{color:var(--brand)!important}" +
+        ".fb-creative #fbjs [data-fb-part=headline]{font-weight:600!important}.fb-creative .card{padding:4px!important}" +
+        ".fb-creative .card:hover{color:red!important}.fb-creative .card+.card{margin:0!important}" +
+        ".fb-creative :is(.fb-creative,.fb-creative) .x,.fb-creative .y:has(>input:checked){color:#00f!important}" +
+        "@media (max-width:600px){.fb-creative .a{font-size:12px!important}}" +
+        "@keyframes fb-survey--pulse{0%{opacity:0}to{opacity:1}}" +
+        ".fb-creative .pulse{animation:1s fb-survey--pulse!important}}"
+    );
+    expect(result.compiled.dark).toBe(
+      "@layer fb-survey-dark{.fb-creative[data-appearance=dark]{--brand:#7ab8e0!important}" +
+        ".fb-creative[data-appearance=dark].x,.fb-creative[data-appearance=dark] .card{color:#fff!important;animation:2s fb-survey--pulse!important}}"
+    );
+  });
+
+  test.each([
+    [
+      CREATIVE_ROOT,
+      ".fb-creative:hover .b { color: red }",
+      "@layer fb-survey{.fb-creative:hover .b{color:red!important}}",
+    ],
+    [
+      CREATIVE_ROOT,
+      "div.fb-creative { color: red }",
+      "@layer fb-survey{div.fb-creative{color:red!important}}",
+    ],
+    [
+      { type: "id", name: "creative" },
+      ".a, #creative > .b { color: red }",
+      "@layer fb-survey{#creative .a,#creative>.b{color:red!important}}",
+    ],
+  ] satisfies [TCustomCssRoot, string, string][])(
+    "the root itself anchors a selector: %o %s",
+    (root, source, expected) => {
+      expect(compileInRoot(source, null, root).compiled.light).toBe(expected);
+    }
+  );
+
+  test.each([".page .fb-creative { color: red }", ".fb-creative ~ .x { color: red }"])(
+    "removes a selector that reaches outside a given root: %s",
+    (source) => {
+      const result = compileInRoot(source, null, CREATIVE_ROOT);
+      expect(codes(result.warnings)).toEqual(["unsafe_selector_removed"]);
+      expect(result.compiled.light).toBe("@layer fb-survey{}");
+    }
+  );
 });
 
 describe("normalizeCustomCssInput", () => {

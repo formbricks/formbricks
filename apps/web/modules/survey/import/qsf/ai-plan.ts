@@ -1,5 +1,6 @@
 import { NoObjectGeneratedError, NoOutputGeneratedError, TypeValidationError } from "ai";
 import { AIOutputTokenLimitError } from "@formbricks/ai";
+import { AI_DEFAULT_TIMEOUT_MS } from "@formbricks/types/ai-timeout";
 import { decideQsfRetry, waitForRetry } from "./call-retry";
 import { QsfImportFailedError, QsfImportTimeoutError } from "./errors";
 import { QSF_MAX_QUESTIONS } from "./limits";
@@ -78,7 +79,7 @@ const QSF_CHUNK_DATA_CHARS = QSF_PROMPT_MAX_CALL_CHARS - 20_000;
  */
 export const QSF_MAX_PARALLEL_CALLS = 4;
 /** One call's time budget. */
-export const QSF_AI_CALL_TIMEOUT_MS = 45_000;
+export const QSF_AI_CALL_TIMEOUT_MS = AI_DEFAULT_TIMEOUT_MS;
 /** Time kept back for assembly when a call is sized against the deadline. */
 export const QSF_ASSEMBLY_RESERVE_MS = 5_000;
 /**
@@ -516,8 +517,10 @@ export async function planQsfImport(params: {
   signal: AbortSignal;
   /** When the import must be finished by, as `performance.now()` time. */
   deadline: number;
+  /** Resolved per-call budget, before clipping it to the import deadline. */
+  callTimeoutMs?: number;
 }): Promise<TQsfPlanResult> {
-  const { survey, texts, generate, deadline } = params;
+  const { survey, texts, generate, deadline, callTimeoutMs = QSF_AI_CALL_TIMEOUT_MS } = params;
   const { refs, issues } = preSkip(survey);
   // Refused before any AI call when no limits fit the survey into the prompt budget.
   const limits = chooseQsfPromptLimits(survey, refs, texts);
@@ -542,7 +545,7 @@ export async function planQsfImport(params: {
   context.outputBudget = Math.min(outputBudgetFor(chunks.length), QSF_MAX_OUTPUT_TOKENS);
 
   const callTimeout = () =>
-    Math.min(QSF_AI_CALL_TIMEOUT_MS, Math.floor(deadline - performance.now() - QSF_ASSEMBLY_RESERVE_MS));
+    Math.min(callTimeoutMs, Math.floor(deadline - performance.now() - QSF_ASSEMBLY_RESERVE_MS));
 
   let plan = await planRound(context, chunks, callTimeout, abort);
 

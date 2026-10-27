@@ -13,6 +13,12 @@ apps/web/app/api/INTERNAL_ROUTES.md
 charts/spicedb-operator/crds/authzed.com_spicedbclusters.yaml
 charts/spicedb-operator/files/update-graph.yaml
 
+# Agent skills installed from upstream and pinned by hash in skills-lock.json.
+# The next `skills` update overwrites any local formatting, so leave them as
+# shipped.
+.agents/skills/
+skills-lock.json
+
 # Helm templates are Go templates that only look like YAML — Prettier's YAML
 # parser cannot parse them.
 charts/**/templates/

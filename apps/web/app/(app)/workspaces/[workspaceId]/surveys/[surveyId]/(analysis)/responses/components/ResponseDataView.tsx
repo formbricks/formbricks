@@ -27,6 +27,8 @@ interface ResponseDataViewProps {
   locale: TUserLocale;
   isQuotasAllowed: boolean;
   quotas: TSurveyQuota[];
+  /** Creatives open this survey: its table then shows "Opened by creative" by default. */
+  isOpenedByCreatives: boolean;
 }
 
 // Helper function to format array values to record with specified keys
@@ -115,7 +117,7 @@ const mapResponsesToTableData = (
   }));
 };
 
-export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
+export const ResponseDataView: React.FC<Readonly<ResponseDataViewProps>> = ({
   survey,
   responses,
   user,
@@ -129,6 +131,7 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   locale,
   isQuotasAllowed,
   quotas,
+  isOpenedByCreatives,
 }) => {
   const { t } = useTranslation();
   const [selectedResponseId, setSelectedResponseId] = React.useState<string | null>(null);
@@ -156,6 +159,7 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
         quotas={quotas}
         selectedResponseId={selectedResponseId}
         setSelectedResponseId={setSelectedResponseIdTransition}
+        isOpenedByCreatives={isOpenedByCreatives}
       />
     </div>
   );

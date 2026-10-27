@@ -19,11 +19,11 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => ({ warn: vi.fn(), error: vi.fn() })) },
 }));
-vi.mock("@/app/api/v3/lib/auth", async (importOriginal) => ({
-  getV3AuthorizationActor: (await importOriginal<typeof import("@/app/api/v3/lib/auth")>())
-    .getV3AuthorizationActor,
-  requireV3WorkspaceAccess: vi.fn(),
-}));
+vi.mock("@/app/api/v3/lib/auth", async (importOriginal) => {
+  const { getV3AuthorizationActor, getV3SessionUserId } =
+    await importOriginal<typeof import("@/app/api/v3/lib/auth")>();
+  return { getV3AuthorizationActor, getV3SessionUserId, requireV3WorkspaceAccess: vi.fn() };
+});
 vi.mock("@/lib/survey/visibility/actor-context", () => ({ resolveSurveyActorContext: vi.fn() }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
 const visibility = vi.hoisted(() => ({ ready: false }));

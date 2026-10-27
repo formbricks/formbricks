@@ -9,8 +9,10 @@ describe("isValidEditorLinkUrl", () => {
     expect(isValidEditorLinkUrl("https://[::1]")).toBe(true);
   });
 
-  test("rejects http(s) links without a dotted host", () => {
+  test("rejects http(s) links without a real host", () => {
     expect(isValidEditorLinkUrl("https://formbricks")).toBe(false);
+    expect(isValidEditorLinkUrl("https://asdasd.")).toBe(false);
+    expect(isValidEditorLinkUrl("https://asd.")).toBe(false);
   });
 
   test("accepts mailto: links that name a recipient", () => {

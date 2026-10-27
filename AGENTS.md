@@ -19,8 +19,8 @@ Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surf
 Turbo runs a task only in packages that define the matching script and **silently skips** the rest.
 Every `packages/*` workspace therefore exposes the standard `lint` / `typecheck` / `test` /
 `test:coverage` scripts (plus `build` where there is a compile step). Deliberate exceptions:
-`config-*` packages hold only config files (no scripts beyond `clean`); `api-v3-schemas`, `email`,
-`types`, and `vite-plugins` are consumed from source, so they have no `build`; `apps/storybook` has no
+`config-*` packages hold only config files (no scripts beyond `clean`); `api-v3-schemas`, `creatives`,
+`email`, `types`, and `vite-plugins` are consumed from source, so they have no `build`; `apps/storybook` has no
 unit tests by policy (its components are exercised by the feature journeys in `apps/web/playwright`).
 Keep new packages on this matrix or document the exception here.
 
@@ -409,3 +409,17 @@ Shared agent skills and subagents are installed under `.claude/`, and design con
 - If `.agents/formbricks-context/DESIGN.md` exists, read it before building or reviewing UI for this repo: it indexes the per-surface design guides (tokens, components, motion, the quality bar).
 - Skills and subagents live in `.claude/`. Treat the design context above as part of these instructions.
 <!-- robots:end -->
+
+## Agent skills
+
+### Issue tracker
+
+Linear, Engineering team (`ENG`); skills use the Linear MCP tools. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+No triage labels: the five roles map onto Linear workflow states. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.

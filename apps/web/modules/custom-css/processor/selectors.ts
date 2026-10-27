@@ -2,17 +2,18 @@ import type { Selector, SelectorComponent } from "lightningcss";
 import {
   ALLOWED_COMBINATORS,
   APPEARANCE_ATTRIBUTE,
-  SURVEY_ROOT_ID,
+  type TCustomCssRoot,
   UNSAFE_PSEUDO_CLASSES,
   UNSAFE_PSEUDO_ELEMENTS,
 } from "./constants";
 
 /**
- * Selector isolation (ENG-2950). Every selector must match only the survey root (`#fbjs`) or elements
- * inside it:
+ * Selector isolation (ENG-2950). Every selector must match only the root or elements inside it. The root
+ * is the survey root `#fbjs` unless the caller names another (ENG-3992); the examples below use `#fbjs`.
  *
- * - `:root`, `html`, `body` and `#fbjs` are root aliases. A selector that starts with one is anchored
- *   there (`body > *` → `#fbjs > *`, `html.x` → `#fbjs.x`); any other selector gets `#fbjs ` in front.
+ * - `:root`, `html`, `body` and the root itself are root aliases. A selector that starts with one is
+ *   anchored there (`body > *` → `#fbjs > *`, `html.x` → `#fbjs.x`); any other selector gets `#fbjs ` in
+ *   front.
  * - Nothing may come before the anchor (`.x :root`, `.x #fbjs` read the host page) and a sibling
  *   combinator may not follow the root itself (`:root ~ div`, `html + x` would leave it). Once a step has
  *   gone below the root, siblings stay inside, so `#fbjs .a + .b` is fine.
@@ -51,7 +52,19 @@ export const SELECTOR_REASONS = {
   malformed: "This selector cannot be scoped to the survey.",
 } as const;
 
-const ROOT_ID_COMPONENT: SelectorComponent = { type: "id", name: SURVEY_ROOT_ID };
+/** What a selector is scoped to: the root, and whether the CSS is for dark mode. */
+export interface TScopeTarget {
+  root: TCustomCssRoot;
+  dark: boolean;
+}
+
+const toRootComponent = (root: TCustomCssRoot): SelectorComponent => ({ type: root.type, name: root.name });
+
+const isRootComponent = (component: SelectorComponent, root: TCustomCssRoot): boolean =>
+  (component.type === "id" || component.type === "class") &&
+  component.type === root.type &&
+  component.name === root.name;
+
 const DARK_ATTRIBUTE_COMPONENT: SelectorComponent = {
   type: "attribute",
   namespace: null,
@@ -73,8 +86,8 @@ const MATCHES_ANY_KINDS = new Set(["is", "where", "any"]);
 
 type TPseudoClass = Extract<SelectorComponent, { type: "pseudo-class" }>;
 
-export const isRootAlias = (component: SelectorComponent): boolean =>
-  (component.type === "id" && component.name === SURVEY_ROOT_ID) ||
+export const isRootAlias = (component: SelectorComponent, root: TCustomCssRoot): boolean =>
+  isRootComponent(component, root) ||
   (component.type === "pseudo-class" && component.kind === "root") ||
   (component.type === "type" && ROOT_ALIAS_TYPES.has(component.name.toLowerCase()));
 
@@ -221,14 +234,14 @@ const joinCompounds = (compounds: SelectorComponent[][], combinators: string[]):
   return selector;
 };
 
-/** Rewrites root aliases to `#fbjs`, in this component and inside its arguments. */
-const rewriteRootAliases = (component: SelectorComponent): SelectorComponent => {
-  if (isRootAlias(component)) return { ...ROOT_ID_COMPONENT };
+/** Rewrites root aliases to the root, in this component and inside its arguments. */
+const rewriteRootAliases = (component: SelectorComponent, root: TCustomCssRoot): SelectorComponent => {
+  if (isRootAlias(component, root)) return toRootComponent(root);
   const args = getArgumentSelectors(component);
   if (args.length === 0 || component.type !== "pseudo-class" || component.kind === "host") return component;
   return withArgumentSelectors(
     component,
-    args.map((argument) => argument.map(rewriteRootAliases))
+    args.map((argument) => argument.map((inner) => rewriteRootAliases(inner, root)))
   );
 };
 
@@ -245,21 +258,25 @@ const walkFromAnchor = (start: TSubjectPosition, combinators: string[]): TSubjec
   return subject;
 };
 
-const buildAnchorCompound = (extras: SelectorComponent[], dark: boolean): SelectorComponent[] => {
+const buildAnchorCompound = (extras: SelectorComponent[], target: TScopeTarget): SelectorComponent[] => {
   // A type selector has to lead its compound (`div#fbjs`, never `#fbjsdiv`).
   const typeSelectors = extras.filter((component) => component.type === "type");
   const others = extras.filter((component) => component.type !== "type");
-  const needsDark = dark && !others.some(isDarkAttribute);
+  const needsDark = target.dark && !others.some(isDarkAttribute);
   return [
     ...typeSelectors,
-    { ...ROOT_ID_COMPONENT },
+    toRootComponent(target.root),
     ...(needsDark ? [{ ...DARK_ATTRIBUTE_COMPONENT }] : []),
     ...others,
   ];
 };
 
-/** Scopes a top-level selector (one not nested in a style rule) to the survey root. */
-export const scopeTopLevelSelector = (selector: Selector, dark: boolean): TSelectorOutcome => {
+/** Scopes a top-level selector (one not nested in a style rule) to the root. */
+export const scopeTopLevelSelector = (selector: Selector, target: TScopeTarget): TSelectorOutcome => {
+  const isAlias = (component: SelectorComponent): boolean => isRootAlias(component, target.root);
+  const rewrite = (component: SelectorComponent): SelectorComponent =>
+    rewriteRootAliases(component, target.root);
+
   const unsupported = findUnsupportedComponent(selector, { allowNesting: false });
   if (unsupported) return { ok: false, reason: unsupported };
 
@@ -268,12 +285,12 @@ export const scopeTopLevelSelector = (selector: Selector, dark: boolean): TSelec
     return { ok: false, reason: SELECTOR_REASONS.malformed };
   }
 
-  const anchorIndex = compounds.findIndex((compound) => compound.some(isRootAlias));
+  const anchorIndex = compounds.findIndex((compound) => compound.some(isAlias));
   if (anchorIndex > 0) return { ok: false, reason: SELECTOR_REASONS.outsideRoot };
 
   const isAnchored = anchorIndex === 0;
   const anchorExtras = isAnchored
-    ? compounds[0].filter((component) => !isRootAlias(component) && component.type !== "universal")
+    ? compounds[0].filter((component) => !isAlias(component) && component.type !== "universal")
     : [];
   const rest = isAnchored ? compounds.slice(1) : compounds;
   const restCombinators = isAnchored ? combinators : ["descendant", ...combinators];
@@ -286,8 +303,8 @@ export const scopeTopLevelSelector = (selector: Selector, dark: boolean): TSelec
 
   const scoped = joinCompounds(
     [
-      buildAnchorCompound(anchorExtras.map(rewriteRootAliases), dark),
-      ...rest.map((compound) => compound.map(rewriteRootAliases)),
+      buildAnchorCompound(anchorExtras.map(rewrite), target),
+      ...rest.map((compound) => compound.map(rewrite)),
     ],
     restCombinators
   );
@@ -297,7 +314,8 @@ export const scopeTopLevelSelector = (selector: Selector, dark: boolean): TSelec
 /** Checks a selector nested in a style rule whose subject can be at `parentSubject`. */
 export const scopeNestedSelector = (
   selector: Selector,
-  parentSubject: TSubjectPosition
+  parentSubject: TSubjectPosition,
+  root: TCustomCssRoot
 ): TSelectorOutcome => {
   const unsupported = findUnsupportedComponent(selector, { allowNesting: true });
   if (unsupported) return { ok: false, reason: unsupported };
@@ -321,45 +339,45 @@ export const scopeNestedSelector = (
     return { ok: false, reason: SELECTOR_REASONS.siblingOfRoot };
   }
 
-  return { ok: true, selector: selector.map(rewriteRootAliases), subject };
+  return { ok: true, selector: selector.map((component) => rewriteRootAliases(component, root)), subject };
 };
 
-/** `#fbjs` itself, with the dark attribute when the CSS is dark. */
-const isCompiledRootAnchor = (compound: SelectorComponent[], dark: boolean): boolean =>
-  compound.some((component) => component.type === "id" && component.name === SURVEY_ROOT_ID) &&
-  (!dark || compound.some(isDarkAttribute));
+/** The root itself, with the dark attribute when the CSS is dark. */
+const isCompiledRootAnchor = (compound: SelectorComponent[], target: TScopeTarget): boolean =>
+  compound.some((component) => isRootComponent(component, target.root)) &&
+  (!target.dark || compound.some(isDarkAttribute));
 
 /** An `:is()` whose every argument verifies anchors where its arguments do; anything else is null. */
-const getMatchesAnyAnchor = (component: SelectorComponent, dark: boolean): TSubjectPosition | null => {
+const getMatchesAnyAnchor = (component: SelectorComponent, target: TScopeTarget): TSubjectPosition | null => {
   if (component.type !== "pseudo-class" || !MATCHES_ANY_KINDS.has(component.kind)) return null;
   const args = getArgumentSelectors(component);
-  const positions = args.map((argument) => verifyCompiledSelector(argument, dark));
+  const positions = args.map((argument) => verifyCompiledSelector(argument, target));
   if (args.length === 0 || !positions.every((position) => position !== null)) return null;
   return positions.includes("root") ? "root" : "inside";
 };
 
 /** Where a compiled selector's first compound anchors it, or null when it is not anchored. */
-const findCompiledAnchor = (first: SelectorComponent[], dark: boolean): TSubjectPosition | null => {
-  if (isCompiledRootAnchor(first, dark)) return "root";
+const findCompiledAnchor = (first: SelectorComponent[], target: TScopeTarget): TSubjectPosition | null => {
+  if (isCompiledRootAnchor(first, target)) return "root";
   for (const component of first) {
-    const anchor = getMatchesAnyAnchor(component, dark);
+    const anchor = getMatchesAnyAnchor(component, target);
     if (anchor) return anchor;
   }
   return null;
 };
 
 /**
- * Verifies a selector in the final, flattened output: anchored on `#fbjs` (with the dark attribute for
+ * Verifies a selector in the final, flattened output: anchored on the root (with the dark attribute for
  * dark CSS) or on an `:is()` whose every argument is, with no sibling step off the root. Returns where
  * its subject can be, or null when the selector is not safely scoped.
  */
-export const verifyCompiledSelector = (selector: Selector, dark: boolean): TSubjectPosition | null => {
+export const verifyCompiledSelector = (selector: Selector, target: TScopeTarget): TSubjectPosition | null => {
   if (findUnsupportedComponent(selector, { allowNesting: false })) return null;
   const { compounds, combinators } = splitCompounds(selector);
   if (compounds.some((compound) => compound.length === 0)) return null;
 
   const first = compounds[0];
-  const anchor = findCompiledAnchor(first, dark);
+  const anchor = findCompiledAnchor(first, target);
   if (!anchor) return null;
   if (anchor === "root" && readsSiblingsThroughHas(first)) return null;
   return walkFromAnchor(anchor, combinators);

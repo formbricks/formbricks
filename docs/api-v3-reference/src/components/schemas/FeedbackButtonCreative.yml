@@ -1,0 +1,17 @@
+allOf:
+  - $ref: ./CreativeResourceBase.yml
+  - type: object
+    required:
+      - content
+      - styling
+    properties:
+      type:
+        type: string
+        enum:
+          - feedbackButton
+      content:
+        $ref: ./FeedbackButtonContent.yml
+      styling:
+        $ref: ./FeedbackButtonStyling.yml
+unevaluatedProperties: false
+description: A feedback button.

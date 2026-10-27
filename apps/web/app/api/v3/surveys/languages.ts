@@ -47,14 +47,16 @@ export function deriveV3SurveyLanguageRequests(input: TV3SurveyDocument): TV3Sur
 export async function ensureV3WorkspaceLanguages(
   workspaceId: string,
   languageRequests: TV3SurveyLanguageRequest[],
-  requestId?: string
+  requestId?: string,
+  /** A transaction to create them in, so they roll back with the write that needs them. */
+  client: Pick<Prisma.TransactionClient, "language"> = prisma
 ): Promise<TSurveyLanguage[]> {
   const log = logger.withContext({ requestId, workspaceId });
 
   try {
     const languages = await Promise.all(
       languageRequests.map((languageRequest) =>
-        prisma.language.upsert({
+        client.language.upsert({
           where: {
             workspaceId_code: {
               workspaceId,

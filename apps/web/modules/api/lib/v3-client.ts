@@ -13,7 +13,7 @@ type TV3ProblemBody = {
   code?: string;
   requestId?: string;
   invalid_params?: TV3InvalidParam[];
-  details?: Record<string, unknown>;
+  details?: unknown;
 };
 
 export class V3ApiError extends Error {
@@ -21,8 +21,8 @@ export class V3ApiError extends Error {
   code?: string;
   requestId?: string;
   invalid_params?: TV3InvalidParam[];
-  /** The machine-readable half of a problem a client has to act on, e.g. what a conflict collided with. */
-  details?: Record<string, unknown>;
+  /** The problem's `details`, unparsed: their shape depends on `code`, so the caller reads them. */
+  details?: unknown;
 
   constructor({
     status,
@@ -38,7 +38,7 @@ export class V3ApiError extends Error {
     code?: string;
     requestId?: string;
     invalid_params?: TV3InvalidParam[];
-    details?: Record<string, unknown>;
+    details?: unknown;
     cause?: unknown;
   }) {
     super(detail, { cause });
@@ -74,7 +74,9 @@ export function getV3ApiErrorMessage(error: unknown, fallbackMessage: string): s
  */
 export function getV3ApiErrorReason(error: unknown, fallbackMessage: string): string {
   if (error instanceof V3ApiError) {
-    const reason = error.details?.reason;
+    const { details } = error;
+    const reason =
+      typeof details === "object" && details !== null ? Reflect.get(details, "reason") : undefined;
     return typeof reason === "string" ? reason : error.detail || fallbackMessage;
   }
   return fallbackMessage;

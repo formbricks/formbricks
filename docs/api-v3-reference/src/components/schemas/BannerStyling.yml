@@ -1,0 +1,44 @@
+type: object
+description: A banner's position and custom styles. The position applies whether or not custom styles are on.
+required:
+  - position
+  - theme
+properties:
+  position:
+    type: object
+    required:
+      - desktop
+      - phone
+    properties:
+      desktop:
+        $ref: ./BannerPlacement.yml
+      phone:
+        anyOf:
+          - $ref: ./BannerPlacement.yml
+          - type: "null"
+        description: Applies below 768 px viewport width. `null` uses the desktop position.
+    additionalProperties: false
+  theme:
+    $ref: ./BannerTheme.yml
+additionalProperties: false
+example:
+  position:
+    desktop:
+      placement: top
+      layout: inPage
+    phone: null
+  theme:
+    customStyles: false
+    backgroundColor: null
+    textColor: null
+    borderColor: null
+    fontWeight: null
+    fontSize:
+      desktop: null
+      phone: null
+    paddingX:
+      desktop: null
+      phone: null
+    paddingY:
+      desktop: null
+      phone: null

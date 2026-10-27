@@ -63,7 +63,13 @@ export const ShowConditionsUrlTester = ({ conditions }: Readonly<ShowConditionsU
             runTest();
           }}
         />
-        <Button type="button" variant="secondary" disabled={url.trim() === ""} onClick={runTest}>
+        {/* `h-10`: the input's height, so the pair lines up in every editor that shows the tester. */}
+        <Button
+          type="button"
+          variant="secondary"
+          className="h-10 shrink-0"
+          disabled={url.trim() === ""}
+          onClick={runTest}>
           {t("workspace.actions.test_match")}
         </Button>
       </div>

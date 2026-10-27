@@ -63,7 +63,11 @@ export const renderSurvey = (renderProps: SurveyContainerProps) => {
   // Before the first render, so the survey never paints in the wrong appearance.
   setAppearance(renderProps.appearance);
   addStylesToDom();
-  addCustomThemeToDom({ styling: renderProps.styling });
+  // Page font only for an app survey: a link survey keeps the survey font on any page (ENG-3864).
+  addCustomThemeToDom({
+    styling: renderProps.styling,
+    pageFont: renderProps.pageFont === true && renderProps.survey.type !== "link",
+  });
   // Only from the explicit prop (ENG-3552): CSS on `props.survey` or `props.styling` is never read.
   // Before the render, so the first paint already has it; replaces whatever an earlier survey applied.
   applyCustomCss(renderProps.customCss);
@@ -118,8 +122,10 @@ export const renderSurvey = (renderProps: SurveyContainerProps) => {
         element
       );
     } else {
-      // For non-link surveys, pass placement through so it can be used in StackedCard
-      const { overlay, onClose, clickOutside, ...surveyInlineProps } = props;
+      // For non-link surveys, pass placement through so it can be used in StackedCard, and onClose so
+      // the host learns the survey closed: RenderSurvey renders nothing once closed, and a host that
+      // never hears about it (the editor preview, which reopens on close) is left with an empty card.
+      const { overlay, clickOutside, ...surveyInlineProps } = props;
 
       render(
         withPortalContainer(

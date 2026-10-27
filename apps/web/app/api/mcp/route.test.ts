@@ -110,6 +110,19 @@ vi.mock("@/app/api/v3/responses/lib/operations", () => ({
   updateV3ResponseFromRawInput: vi.fn(),
 }));
 
+// Mocked like the other operations: this file tests the route, and the real module reaches the repository.
+vi.mock("@/app/api/v3/creatives/lib/operations", () => ({
+  archiveV3Creative: vi.fn(),
+  createV3Creative: vi.fn(),
+  deleteV3Creative: vi.fn(),
+  duplicateV3Creative: vi.fn(),
+  getV3Creative: vi.fn(),
+  getV3CreativeStats: vi.fn(),
+  listV3Creatives: vi.fn(),
+  patchV3Creative: vi.fn(),
+  restoreV3Creative: vi.fn(),
+}));
+
 vi.mock("@/app/api/v3/responses/lib/validate-operations", () => ({
   validateV3ResponseFromRawInput: vi.fn(),
 }));
@@ -144,7 +157,10 @@ const apiKeyAuth = {
   ],
 };
 
-function createMcpRequest(body: Record<string, unknown>, headers: Record<string, string> = {}): NextRequest {
+function createMcpRequest(
+  body: Record<string, unknown> | Record<string, unknown>[],
+  headers: Record<string, string> = {}
+): NextRequest {
   return new NextRequest("http://localhost/api/mcp", {
     method: "POST",
     headers: {
@@ -238,6 +254,144 @@ describe("POST /api/mcp", () => {
       code: -32603,
       message: expect.stringContaining("Subscription limit"),
     });
+  });
+
+  test.each(["legacy", "modern"])(
+    "rejects wide object arguments before SDK validation (%s, ENG-4099)",
+    async (era) => {
+      const modern = era === "modern";
+      const response = await POST(
+        createMcpRequest(
+          {
+            jsonrpc: "2.0",
+            id: 31,
+            method: "tools/call",
+            params: {
+              name: "list_surveys",
+              arguments: Object.fromEntries(Array.from({ length: 50_001 }, (_, index) => [`key${index}`, 0])),
+              ...(modern
+                ? {
+                    _meta: {
+                      "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                      "io.modelcontextprotocol/clientCapabilities": {},
+                      "io.modelcontextprotocol/clientInfo": { name: "route-test", version: "1.0.0" },
+                    },
+                  }
+                : {}),
+            },
+          },
+          modern
+            ? { "mcp-protocol-version": "2026-07-28", "mcp-method": "tools/call", "mcp-name": "list_surveys" }
+            : {}
+        )
+      );
+
+      expect(response.status).toBe(400);
+      const text = await response.text();
+      expect(text.length).toBeLessThan(1000);
+      expect(JSON.parse(text)).toMatchObject({
+        id: 31,
+        error: { code: -32602, message: expect.stringContaining("50000") },
+      });
+      expect(listV3Surveys).not.toHaveBeenCalled();
+    }
+  );
+
+  test("preserves normal legacy batches and modern tool calls", async () => {
+    const call = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/call",
+      params: { name: "list_surveys", arguments: { workspaceId: "clxx1234567890123456789012" } },
+    };
+    const batchResponse = await POST(createMcpRequest([call, { ...call, id: 2 }]));
+    expect(batchResponse.status).toBe(200);
+    const batchText = await batchResponse.text();
+    expect(batchText).toContain('"id":1');
+    expect(batchText).toContain('"id":2');
+    expect(listV3Surveys).toHaveBeenCalledTimes(2);
+
+    const modernResponse = await POST(
+      createMcpRequest(
+        {
+          ...call,
+          params: {
+            ...call.params,
+            _meta: {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientCapabilities": {},
+              "io.modelcontextprotocol/clientInfo": { name: "route-test", version: "1.0.0" },
+            },
+          },
+        },
+        { "mcp-protocol-version": "2026-07-28", "mcp-method": "tools/call", "mcp-name": "list_surveys" }
+      )
+    );
+    expect(modernResponse.status).toBe(200);
+    const message = await readMcpResponse(modernResponse);
+    expect(message.error).toBeUndefined();
+    expect(message.result.isError).not.toBe(true);
+    expect(listV3Surveys).toHaveBeenCalledTimes(3);
+  });
+
+  test("preserves the SDK's 100-message legacy batch boundary", async () => {
+    const ping = (id: number) => ({ jsonrpc: "2.0", id, method: "ping" });
+    const accepted = await POST(createMcpRequest(Array.from({ length: 100 }, (_, id) => ping(id))));
+    expect(accepted.status).toBe(200);
+    const text = await accepted.text();
+    expect(text).toContain('"id":99');
+
+    const refused = await POST(createMcpRequest(Array.from({ length: 101 }, (_, id) => ping(id))));
+    expect(refused.status).toBe(400);
+    expect(await refused.json()).toMatchObject({
+      error: { code: -32600, message: expect.stringContaining("100 messages") },
+    });
+  });
+
+  test("leaves malformed JSON to the SDK's parse error", async () => {
+    const request = new NextRequest("http://localhost/api/mcp", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json, text/event-stream",
+        "x-api-key": "fbk_test",
+      },
+      body: "{",
+    });
+    const response = await POST(request);
+    expect(await response.json()).toMatchObject({ error: { code: -32700 } });
+    expect(listV3Surveys).not.toHaveBeenCalled();
+  });
+
+  test("bounds object members across a legacy batch before any tool runs (ENG-4099)", async () => {
+    const argumentsForCall = Object.fromEntries(
+      Array.from({ length: 14_000 }, (_, index) => [`key${index}`, 0])
+    );
+    const response = await POST(
+      createMcpRequest([
+        {
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/call",
+          params: { name: "list_surveys", arguments: { workspaceId: "clxx1234567890123456789012" } },
+        },
+        ...Array.from({ length: 4 }, (_, index) => ({
+          jsonrpc: "2.0",
+          id: index + 2,
+          method: "tools/call",
+          params: { name: "list_surveys", arguments: argumentsForCall },
+        })),
+      ])
+    );
+
+    expect(response.status).toBe(400);
+    const text = await response.text();
+    expect(text.length).toBeLessThan(1000);
+    expect(JSON.parse(text)).toMatchObject({
+      id: null,
+      error: { code: -32602, message: expect.stringContaining("50000") },
+    });
+    expect(listV3Surveys).not.toHaveBeenCalled();
   });
 
   test("returns 401 before MCP handling when authentication fails", async () => {
@@ -413,6 +567,15 @@ describe("POST /api/mcp", () => {
       "update_response",
       "delete_response",
       "batch_delete_responses",
+      "list_creatives",
+      "get_creative",
+      "get_creative_stats",
+      "create_creative",
+      "patch_creative",
+      "delete_creative",
+      "duplicate_creative",
+      "archive_creative",
+      "restore_creative",
     ]);
     const tools = new Map(message.result.tools.map((tool: { name: string }) => [tool.name, tool]));
     expect(Object.keys((tools.get("create_survey") as any).inputSchema.properties)).toEqual(

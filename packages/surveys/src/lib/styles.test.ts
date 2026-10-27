@@ -252,6 +252,20 @@ describe("addCustomThemeToDom", () => {
     expect(document.head.contains(styleElement)).toBe(true);
   });
 
+  // ENG-3864: Page font lets the survey take the page's font instead of the survey font.
+  test("renders in the page's font when told to, and in the survey font otherwise", () => {
+    const pageFontRule =
+      /:root #fbjs \*,\s*:root #fbjs ::before,\s*:root #fbjs ::after\s*\{\s*font-family: inherit/;
+    const styling = getBaseWorkspaceStyling({ pageFont: true });
+
+    addCustomThemeToDom({ styling, pageFont: true });
+    expect(document.getElementById("formbricks__css__custom")?.innerHTML).toMatch(pageFontRule);
+
+    // Never from the styling alone: a WebView or a link survey has no page font to take.
+    addCustomThemeToDom({ styling });
+    expect(document.getElementById("formbricks__css__custom")?.innerHTML).not.toMatch(pageFontRule);
+  });
+
   test("should reuse existing custom theme style element", () => {
     const styling1 = getBaseWorkspaceStyling({ brandColor: { light: "#FF0000" } });
     addCustomThemeToDom({ styling: styling1 });

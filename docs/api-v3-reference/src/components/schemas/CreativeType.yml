@@ -1,0 +1,8 @@
+type: string
+enum:
+  - feedbackButton
+  - banner
+description: >-
+  The kind of creative, which fixes its `content` and `styling` shape. A `feedbackButton` is a tab on
+  an edge of the page that always opens its Destination; a `banner` is a bar across the top or bottom
+  of the page with a message and an optional button. Fixed at creation: it can never change.

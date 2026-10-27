@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import {
@@ -21,6 +22,7 @@ import { getCustomCssHealth, toDeliveredCustomCss } from "@/modules/custom-css/l
 import { getWorkspaceCustomCssRecord, parseStoredCustomCss } from "@/modules/custom-css/lib/service";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
+import { getSurveyLinkedCreatives } from "@/modules/ee/creatives/lib/survey-linked-creatives";
 import { getSurveyDataRetentionContext } from "@/modules/ee/data-retention/lib/survey-context";
 import {
   getIsContactsEnabled,
@@ -109,7 +111,7 @@ export const SurveyEditorPage = async (props: {
   ]);
 
   if (!workspaceWithTeamIds) {
-    throw new ResourceNotFoundError(t("common.workspace"), null);
+    return notFound();
   }
 
   const organizationBilling = await getOrganizationBilling(workspaceWithTeamIds.organizationId);
@@ -148,23 +150,23 @@ export const SurveyEditorPage = async (props: {
     getTeamMemberDetails(workspaceWithTeamIds.teamIds),
   ]);
 
-  if (
-    !survey ||
-    !actionClasses ||
-    !contactAttributeKeys ||
-    !workspaceWithTeamIds ||
-    !userEmail ||
-    isSurveyCreationDeletionDisabled
-  ) {
+  // A survey that is gone, or that this viewer may not edit, 404s like any other inaccessible resource.
+  if (!survey || isSurveyCreationDeletionDisabled) {
+    return notFound();
+  }
+
+  if (!actionClasses || !contactAttributeKeys || !workspaceWithTeamIds || !userEmail) {
     return <ErrorComponent />;
   }
 
   const isCxMode = searchParams.mode === "cx";
   const publicDomain = getPublicDomain();
-  const [{ surveyVisibilityGate, visibility, surveyAccess, ownerName }, dataRetention] = await Promise.all([
-    getSurveyVisibilityViewer(survey, session.user.id, workspaceWithTeamIds.organizationId),
-    getSurveyDataRetentionContext(organization, session.user.id),
-  ]);
+  const [{ surveyVisibilityGate, visibility, surveyAccess, ownerName }, dataRetention, linkedCreatives] =
+    await Promise.all([
+      getSurveyVisibilityViewer(survey, session.user.id, workspaceWithTeamIds.organizationId),
+      getSurveyDataRetentionContext(organization, session.user.id),
+      getSurveyLinkedCreatives({ surveyId: survey.id, workspaceId: survey.workspaceId }),
+    ]);
 
   // The workspace row reaches the editor without its CSS columns (source, compiled output and the
   // previous revision); the editor gets only what the Custom CSS card shows, read here on the server.
@@ -213,6 +215,7 @@ export const SurveyEditorPage = async (props: {
       ownerName={ownerName}
       customCssEditor={customCssEditor}
       dataRetention={dataRetention}
+      linkedCreatives={linkedCreatives}
     />
   );
 };

@@ -1,5 +1,5 @@
 # sha256 of Cube's Python-free native module, one line per architecture, keyed by the release tag of
 # the installed @cubejs-backend/native. The Dockerfile fails the build when the line is missing or the
 # download does not match. To add a Cube version, see "Bumping Cube" in README.md.
-75c55ee4825dc7822e2a9e9c94d463581b8147edff60c512f3dc9b48feb7207a  v1.7.50/native-linux-x64-glibc-fallback.tar.gz
-f5dc8ad87640a8e0b6213adcea64188e6563008616d65c19a41d33ca9ebdc95e  v1.7.50/native-linux-arm64-glibc-fallback.tar.gz
+c9e8b30d0ff8226cdfb5fe595f98bb69b04ae38483386e8c292188751fd55e28  v1.8.8/native-linux-x64-glibc-fallback.tar.gz
+1b09288c1e53fc0455617c8087ac6bdb3609001df9ddd65a490e669a5a5c3b4e  v1.8.8/native-linux-arm64-glibc-fallback.tar.gz

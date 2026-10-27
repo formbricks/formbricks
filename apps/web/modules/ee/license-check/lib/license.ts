@@ -15,6 +15,20 @@ import {
   TEnterpriseLicenseFeatures,
   TLicenseStatus,
 } from "@/modules/ee/license-check/types/enterprise-license";
+import { getDefaultLicenseServerUrl, resolveLicenseServerUrl } from "./license-server-url";
+
+const LICENSE_SERVER_URL = resolveLicenseServerUrl({
+  nodeEnv: env.NODE_ENV,
+  environment: env.ENVIRONMENT,
+  overrideUrl: env.ENTERPRISE_LICENSE_SERVER_URL,
+});
+const IS_LICENSE_SERVER_OVERRIDDEN = LICENSE_SERVER_URL !== getDefaultLicenseServerUrl(env.ENVIRONMENT);
+
+if (env.ENTERPRISE_LICENSE_SERVER_URL && !IS_LICENSE_SERVER_OVERRIDDEN) {
+  logger.warn(
+    "ENTERPRISE_LICENSE_SERVER_URL is ignored: it only applies to a development server with a loopback host"
+  );
+}
 
 // Configuration
 const CONFIG = {
@@ -27,10 +41,7 @@ const CONFIG = {
     RETRY_DELAY_MS: 1000,
   },
   API: {
-    ENDPOINT:
-      env.ENVIRONMENT === "staging"
-        ? "https://staging.ee.formbricks.com/api/licenses/check"
-        : "https://ee.formbricks.com/api/licenses/check",
+    ENDPOINT: `${LICENSE_SERVER_URL}/api/licenses/check`,
     TIMEOUT_MS: 5000,
   },
 } as const;
@@ -102,6 +113,8 @@ const LicenseFeaturesSchema = z.object({
   dashboards: z.boolean().default(false),
   workflows: z.boolean().default(false),
   dataRetention: z.boolean().default(false),
+  // A licence server that predates the flag omits it, which keeps Creatives off (ENG-6602).
+  creatives: z.boolean().default(false),
 });
 
 const LicenseDetailsSchema = z.object({
@@ -138,6 +151,11 @@ const getCacheIdentifier = () => {
   if (!env.ENTERPRISE_LICENSE_KEY) {
     return "no-license"; // No license key provided
   }
+  // A local licence server's answers (development only, see `resolveLicenseServerUrl`) get their own
+  // slots, so turning the override off doesn't serve them as the real server's for up to four days.
+  if (IS_LICENSE_SERVER_OVERRIDDEN) {
+    return hashString(`${env.ENTERPRISE_LICENSE_KEY}@${LICENSE_SERVER_URL}`);
+  }
   return hashString(env.ENTERPRISE_LICENSE_KEY); // Valid license key
 };
 
@@ -173,6 +191,7 @@ const DEFAULT_FEATURES: TEnterpriseLicenseFeatures = {
   dashboards: false,
   workflows: false,
   dataRetention: false,
+  creatives: false,
 };
 
 // Helper functions

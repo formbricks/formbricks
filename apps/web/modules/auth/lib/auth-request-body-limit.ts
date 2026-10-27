@@ -8,7 +8,7 @@ import { RequestBodyTooLargeError, readRequestBytesWithLimit } from "@/app/lib/a
  * Every route under that prefix answers anonymous callers, and none of them buffers its body with a
  * bound of its own: Better Auth's handler, the dynamic-client-registration preprocessing and the SAML
  * bridge's `formData()` each read the whole thing. This guard is the first thing to read the body:
- * `patches/next@16.3.8.patch` stops Next cloning it for the proxy (ENG-3972), so an oversized or slow
+ * `patches/next@16.4.1.patch` stops Next cloning it for the proxy (ENG-3972), so an oversized or slow
  * upload is refused as soon as it passes the limit, not after the client's last byte.
  *
  * 256 KiB is far above anything these routes legitimately receive — credentials, an OAuth/OIDC

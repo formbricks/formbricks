@@ -1,0 +1,47 @@
+type: object
+description: >
+  Show when: the page, visit and device conditions that must hold, joined by `connector`. The same
+  conditions surveys use. At most 20 conditions in all, groups nested at most two levels deep, and
+  10 240 characters of JSON; a set beyond those answers **400**. Empty groups are dropped on write,
+  and a top-level group left empty is stored as `null` (always show).
+required:
+  - id
+  - connector
+  - conditions
+properties:
+  id:
+    type: string
+    format: cuid2
+  connector:
+    type: string
+    enum:
+      - and
+      - or
+  conditions:
+    type: array
+    maxItems: 20
+    items:
+      oneOf:
+        - $ref: ./ShowCondition.yml
+        - $ref: ./ShowConditionSubgroup.yml
+additionalProperties: false
+example:
+  id: k3m9q2w7e5r1t8y4u6i0o2p5
+  connector: and
+  conditions:
+    - id: x8c2v6b4n1m7q9w3e5r0t2y6
+      leftOperand:
+        type: page
+        value: currentUrl
+      operator: startsWith
+      rightOperand:
+        type: static
+        value: https://www.medicare.gov/
+    - id: z5x1c9v3b7n2m6q0w4e8r2t6
+      leftOperand:
+        type: device
+        value: deviceType
+      operator: doesNotEqual
+      rightOperand:
+        type: static
+        value: phone

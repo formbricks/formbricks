@@ -64,6 +64,7 @@ export const V3_PROBLEM_CODES = [
   "bad_gateway",
   "bad_request",
   "conflict",
+  "creatives_not_entitled",
   "custom_css_plan_required",
   "forbidden",
   "internal_server_error",
@@ -74,6 +75,7 @@ export const V3_PROBLEM_CODES = [
   "projection_pending",
   "service_unavailable",
   "stored_survey_invalid",
+  "survey_has_linked_creatives",
   "survey_not_workspace_visible",
   "too_many_requests",
   "unprocessable_content",
@@ -319,6 +321,27 @@ export function problemCustomCssPlanRequired(requestId: string, detail: string, 
 }
 
 /**
+ * ENG-6602: the instance's license doesn't include Creatives. In wind-down (the workspace still has
+ * creatives) only reading them and taking them down stay allowed, and the detail says so; otherwise
+ * every creatives operation answers this. Only ever answered after the caller's own access to the
+ * workspace, so it reveals nothing about a workspace the caller can't see.
+ */
+export function problemCreativesNotEntitled(
+  requestId: string,
+  options: { windDown: boolean; instance?: string }
+): Response {
+  const detail = options.windDown
+    ? "Creatives is not included in this instance's license: existing creatives can only be listed, read, paused, closed or deleted"
+    : // Not "license": Formbricks Cloud has none, and Creatives isn't offered there.
+      "Creatives is not available on this instance";
+
+  return problemResponse(403, "Forbidden", detail, requestId, {
+    code: "creatives_not_entitled",
+    instance: options.instance,
+  });
+}
+
+/**
  * ENG-3641: custom CSS that the processor rejected (syntax, size or complexity limits, processing
  * failure). A 422 like any other semantic document failure; `details.errors` carries the processor's
  * located errors (code, scope, appearance, line, column, reason), `invalid_params` the same as fields.
@@ -365,6 +388,28 @@ export function problemVisibilityBlocked(
     "Remove the connections that use this survey before restricting it",
     requestId,
     { code: "visibility_blocked_by_connections", details: { blockers }, instance }
+  );
+}
+
+/**
+ * A survey delete refused while non-archived creatives open the survey; lists them so the caller
+ * can delete each one (pausing or closing a creative keeps its link).
+ */
+export function problemSurveyHasLinkedCreatives(
+  requestId: string,
+  creatives: ReadonlyArray<Readonly<{ id: string; name: string }>>,
+  instance?: string
+): Response {
+  return problemResponse(
+    409,
+    "Conflict",
+    "Delete the creatives that open this survey before deleting it",
+    requestId,
+    {
+      code: "survey_has_linked_creatives",
+      details: { creatives: creatives.map(({ id, name }) => ({ id, name })) },
+      instance,
+    }
   );
 }
 

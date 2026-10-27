@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   enforceVerifiedEmailGate: vi.fn(),
   findRecentDuplicateResponse: vi.fn(),
   getContactByUserId: vi.fn(),
+  getOpenedByCreativeMeta: vi.fn(),
   formatValidationErrorsForV1Api: vi.fn((errors) => errors),
   getClientIpFromHeaders: vi.fn(),
   getIsContactsEnabled: vi.fn(),
@@ -71,6 +72,10 @@ vi.mock("@/modules/api/lib/verify-response-recaptcha", () => ({
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsContactsEnabled: mocks.getIsContactsEnabled,
+}));
+
+vi.mock("@/modules/ee/creatives/lib/attribution", () => ({
+  getOpenedByCreativeMeta: mocks.getOpenedByCreativeMeta,
 }));
 
 vi.mock("@/modules/ee/quotas/lib/helpers", () => ({
@@ -284,5 +289,70 @@ describe("POST /api/v1/client/[workspaceId]/responses — duplicate submissions 
     expect(result.response.status).toBe(200);
     expect(mocks.createResponseWithQuotaEvaluation).toHaveBeenCalledTimes(1);
     expect(mocks.sendToPipeline).toHaveBeenCalledWith(expect.objectContaining({ event: "responseFinished" }));
+  });
+});
+
+describe("POST /api/v1/client/[workspaceId]/responses — opened by creative (ENG-4001)", () => {
+  const creativeId = "clh7m1qkx0000qwer1234abcd";
+
+  const persistedMeta = () => mocks.createResponseWithQuotaEvaluation.mock.calls[0][0].meta;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    mocks.resolveClientApiIds.mockResolvedValue({ workspaceId });
+    mocks.getSurvey.mockResolvedValue({ ...getSurveyWithFields([]), isAnonymizeResponsesEnabled: true });
+    mocks.verifyLinkSurveyPinToken.mockReturnValue(true);
+    mocks.enforceVerifiedEmailGate.mockReturnValue(null);
+    mocks.verifyResponseRecaptcha.mockResolvedValue(null);
+    mocks.validateSingleUseResponseInput.mockReturnValue(undefined);
+    mocks.validateClientFileUploads.mockReturnValue(true);
+    mocks.validateResponseData.mockReturnValue(null);
+    mocks.createQuotaFullObject.mockReturnValue({});
+    mocks.findRecentDuplicateResponse.mockResolvedValue(null);
+    mocks.createResponseWithQuotaEvaluation.mockResolvedValue({
+      id: responseId,
+      surveyId,
+      finished: false,
+      quotaFull: undefined,
+    });
+  });
+
+  test("stamps the creative's own name, whatever name the client sent, and keeps it when anonymized", async () => {
+    mocks.getOpenedByCreativeMeta.mockResolvedValue({
+      openedByCreativeId: creativeId,
+      openedByCreativeName: "Feedback tab",
+    });
+
+    const result = await postRawBody(
+      { q1: "answer" },
+      { meta: { openedByCreativeId: creativeId, openedByCreativeName: "Forged name" } }
+    );
+
+    expect(result.response.status).toBe(200);
+    expect(mocks.getOpenedByCreativeMeta).toHaveBeenCalledWith({ creativeId, workspaceId, surveyId });
+    expect(persistedMeta()).toEqual(
+      expect.objectContaining({ openedByCreativeId: creativeId, openedByCreativeName: "Feedback tab" })
+    );
+  });
+
+  test("stores no creative when it does not check out, and still creates the response", async () => {
+    mocks.getOpenedByCreativeMeta.mockResolvedValue({});
+
+    const result = await postRawBody(
+      { q1: "answer" },
+      { meta: { openedByCreativeId: creativeId, openedByCreativeName: "Forged name" } }
+    );
+
+    expect(result.response.status).toBe(200);
+    expect(persistedMeta()).not.toHaveProperty("openedByCreativeId");
+    expect(persistedMeta()).not.toHaveProperty("openedByCreativeName");
+  });
+
+  test("never takes a name from a client that names no creative", async () => {
+    await postRawBody({ q1: "answer" }, { meta: { openedByCreativeName: "Forged name" } });
+
+    expect(mocks.getOpenedByCreativeMeta).not.toHaveBeenCalled();
+    expect(persistedMeta()).not.toHaveProperty("openedByCreativeName");
   });
 });

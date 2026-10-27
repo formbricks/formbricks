@@ -172,7 +172,16 @@ async function setIssueState(apiKey, issueId, stateId) {
   return data.issueUpdate.issue;
 }
 
-async function createIssue(apiKey, { title, description, priority }) {
+async function createIssue(
+  apiKey,
+  {
+    title,
+    description,
+    priority,
+    stateId = LINEAR_TRIAGE_STATE_ID,
+    labelIds = [LINEAR_VULNERABILITY_LABEL_ID],
+  }
+) {
   const data = await linearRequest(
     apiKey,
     `mutation CreateIssue($input: IssueCreateInput!) {
@@ -184,8 +193,8 @@ async function createIssue(apiKey, { title, description, priority }) {
     {
       input: {
         teamId: LINEAR_TEAM_ID,
-        stateId: LINEAR_TRIAGE_STATE_ID,
-        labelIds: [LINEAR_VULNERABILITY_LABEL_ID],
+        stateId,
+        labelIds,
         estimate: LINEAR_ESTIMATE_S,
         title,
         description,

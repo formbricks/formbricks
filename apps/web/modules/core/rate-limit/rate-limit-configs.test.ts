@@ -71,6 +71,7 @@ describe("rateLimitConfigs", () => {
         "forgotPasswordPerAccount",
         "resetPassword",
         "verifyEmail",
+        "verifyEmailPerAccount",
         "emailToken",
         "samlCallback",
       ]);
@@ -84,6 +85,12 @@ describe("rateLimitConfigs", () => {
         interval: 3600,
         allowedPerInterval: 3,
         namespace: "auth:forgot:account",
+      });
+      // Below email_verification's per-recipient cap of 5, so strangers cannot spend all of it (ENG-3823).
+      expect(rateLimitConfigs.auth.verifyEmailPerAccount).toEqual({
+        interval: 3600,
+        allowedPerInterval: 3,
+        namespace: "auth:verify:account",
       });
       // The values, not just the key: emailToken throttles an unauthenticated endpoint that also
       // reveals whether an address is registered, so a loosened quota is a security regression.
@@ -114,7 +121,14 @@ describe("rateLimitConfigs", () => {
         "internalRetentionExport",
         "client",
         "clientEnvironment",
+        "clientCreativeEvents",
       ]);
+      // Per IP: one events request per page view, from every visitor behind one office NAT.
+      expect(rateLimitConfigs.api.clientCreativeEvents).toEqual({
+        interval: 60,
+        allowedPerInterval: 600,
+        namespace: "api:client:creative-events",
+      });
       // The values, not just the key: each export streams an organisation's whole retention history,
       // names people, and runs a pre-flight count, so a loosened quota is a load and privacy regression.
       expect(rateLimitConfigs.api.internalRetentionExport).toEqual({
@@ -128,6 +142,7 @@ describe("rateLimitConfigs", () => {
       const actionConfigs = Object.keys(rateLimitConfigs.actions);
       expect(actionConfigs).toEqual([
         "emailUpdate",
+        "passwordResetRequest",
         "accountDeletion",
         "surveyFollowUp",
         "sendLinkSurveyEmail",

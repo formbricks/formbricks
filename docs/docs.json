@@ -313,7 +313,7 @@
         "groups": [
           {
             "group": "Self Hosting",
-            "pages": ["self-hosting/overview"]
+            "pages": ["self-hosting/overview", "self-hosting/deployment-components"]
           },
           {
             "group": "Setup",
@@ -321,6 +321,7 @@
               "self-hosting/setup/one-click",
               "self-hosting/setup/docker",
               "self-hosting/setup/monitoring",
+              "self-hosting/setup/deployment-check",
               "self-hosting/setup/cluster-setup",
               "self-hosting/setup/kubernetes"
             ]
@@ -418,6 +419,8 @@
               "development/technical-handbook/cube-tenant-isolation",
               "development/technical-handbook/custom-css-rollout",
               "development/technical-handbook/database-model",
+              "development/technical-handbook/email-sending",
+              "development/technical-handbook/license-check",
               "development/technical-handbook/tenant-separation"
             ]
           },

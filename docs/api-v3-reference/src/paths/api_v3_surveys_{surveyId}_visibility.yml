@@ -4,7 +4,8 @@ get:
   description: >
     Returns the survey's enforced visibility, its owner, the caller's access, and what a change would do:
     `blockers[]` lists the outbound connections that currently make `restricted` refusable (webhooks,
-    integrations, active feedback sources, and draft or enabled workflows), `impact` carries the numbers the
+    integrations, active feedback sources, draft or enabled workflows, and non-archived creatives that open
+    it), `impact` carries the numbers the
     confirmation dialogues show, `allowedTargets[]` the values a `POST` would act on right now, and `pending`
     / `version` describe a change still in flight. Read this before offering "Make restricted"; the `POST`
     answers **409** while `blockers[]` is non-empty.
@@ -196,9 +197,10 @@ post:
 
 
     Going `workspace → restricted` is refused with **409** while any outbound connection depends on the survey;
-    resolve them first. It is refused with **422** when the survey has no owner, because
-    "restricted" would then mean "administrators only" — duplicate the survey for a restricted
-    copy. Going `restricted → workspace` has no preconditions.
+    resolve them first. Archived creatives don't block it: a restriction unlinks them (each unlink is audited
+    as an update of that creative), so restoring one later needs a new Destination. It is refused with
+    **422** when the survey has no owner, because "restricted" would then mean "administrators only" —
+    duplicate the survey for a restricted copy. Going `restricted → workspace` has no preconditions.
 
 
     This is the only way to change visibility: `PATCH /api/v3/surveys/{surveyId}` accepts `visibility`,
