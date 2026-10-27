@@ -1,4 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
+// Registers every action's schema through the mocked client.
+import "./actions";
 
 // The invite schema is declared inside the action module, so it is captured from the mocked action
 // client rather than exported for tests.
@@ -27,7 +29,9 @@ vi.mock("@/lib/utils/action-client", () => ({
 }));
 vi.mock("@/lib/utils/helper", () => ({ getOrganizationIdFromInviteId: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyIPRateLimit: vi.fn(), applyRateLimit: vi.fn() }));
-vi.mock("@/modules/core/rate-limit/rate-limit-configs", () => ({ rateLimitConfigs: { actions: {}, auth: {} } }));
+vi.mock("@/modules/core/rate-limit/rate-limit-configs", () => ({
+  rateLimitConfigs: { actions: {}, auth: {} },
+}));
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   withAuditLogging: vi.fn((_event: string, _type: string, fn: unknown) => fn),
 }));
@@ -52,9 +56,6 @@ vi.mock("./lib/invite", () => ({
 }));
 vi.mock("./lib/invite-failure", () => ({ getInviteFailureReason: vi.fn() }));
 vi.mock("./lib/invite-rate-limit", () => ({ applyInviteRateLimit: vi.fn() }));
-
-// Registers every action's schema through the mocked client.
-import "./actions";
 
 describe("single invite input (ENG-6658)", () => {
   const validInvite = {
