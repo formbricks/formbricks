@@ -14,6 +14,19 @@ Choose your [upgrade path](/self-hosting/upgrade/paths), then follow the [standa
 Older releases: [GitHub Releases](https://github.com/formbricks/formbricks/releases) and
 [historical upgrade instructions](/self-hosting/advanced/migration). Missing notes do not mean no action is needed.
 
+<Update label="Unreleased" description="On main; not yet in a stable release">
+<span id="release-unreleased" />
+
+**Deployment impact: action required for high-volume email senders or custom senders.**
+Outgoing email gains per-type organization, sender, recipient and deployment caps. Review
+[email limits](/self-hosting/configuration/rate-limiting#email-limits) and set `EMAIL_RATE_LIMIT_MULTIPLIER`
+for legitimate higher volume before upgrading; per-recipient caps do not scale. Redis/Valkey is required,
+and `RATE_LIMITING_DISABLED=1` disables these limits too. Custom senders must send to one recipient at a time.
+
+These changes are on main and are not included in the stable tags reviewed below. Move this entry to the
+actual release when published. [Change details](https://github.com/formbricks/formbricks/pull/9796).
+</Update>
+
 <Update label="6.1.1" description="22 October 2026">
 <span id="release-6-1-1" />
 

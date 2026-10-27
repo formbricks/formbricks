@@ -17,6 +17,63 @@ describe("toInviteDisplayName", () => {
     expect(toInviteDisplayName("Anna anna@spam.example", "Anonymous")).toBe("Anna");
   });
 
+  // Mail clients turn a bare domain into a link just like a URL (ENG-3823).
+  test("removes bare domains, with or without a path", () => {
+    expect(toInviteDisplayName("Claim at spam.example now", "Anonymous")).toBe("Claim at now");
+    expect(toInviteDisplayName("Go to win.spam.example/offer?x=1.", "Anonymous")).toBe("Go to");
+    expect(toInviteDisplayName("spam.example", "Anonymous")).toBe("Anonymous");
+  });
+
+  test.each([
+    "(spam.example)",
+    "Anna,spam.example",
+    "&spam.example",
+    "'spam.example'",
+    "x|spam.example/offer",
+  ])("removes a bare domain wrapped in punctuation: %s", (token) => {
+    expect(toInviteDisplayName(`Anna ${token}`, "Anonymous")).toBe("Anna");
+  });
+
+  test("keeps initials and ordinary punctuation", () => {
+    expect(toInviteDisplayName("J.R.R. Tolkien", "Anonymous")).toBe("J.R.R. Tolkien");
+    expect(toInviteDisplayName("Anna Müller, PhD.", "Anonymous")).toBe("Anna Müller, PhD.");
+  });
+
+  // An ordinary dotted name is not a host: only a delegated top-level domain makes a token a domain.
+  test("keeps dotted names whose suffix is not a domain", () => {
+    expect(toInviteDisplayName("john.doe", "Anonymous")).toBe("john.doe");
+    expect(toInviteDisplayName("J.Smith", "Anonymous")).toBe("J.Smith");
+    expect(toInviteDisplayName("Anna.Müller", "Anonymous")).toBe("Anna.Müller");
+    expect(toInviteDisplayName("Dr.Smith", "Anonymous")).toBe("Dr.Smith");
+  });
+
+  // Reserved TLDs and delegated ones are both linkified by clients, so both go.
+  test("removes real and reserved domains whatever the suffix", () => {
+    expect(toInviteDisplayName("evil.com", "Anonymous")).toBe("Anonymous");
+    expect(toInviteDisplayName("win.spam.co.uk", "Anonymous")).toBe("Anonymous");
+    expect(toInviteDisplayName("foo.museum", "Anonymous")).toBe("Anonymous");
+    expect(toInviteDisplayName("spam.test", "Anonymous")).toBe("Anonymous");
+  });
+
+  // `tldts` folds case for ASCII suffixes but not for a non-ASCII one, so the candidate is lower-cased first.
+  test("removes a domain whose internationalized suffix is upper-cased", () => {
+    expect(toInviteDisplayName("foo.РФ", "Anonymous")).toBe("Anonymous");
+    expect(toInviteDisplayName("foo.рф", "Anonymous")).toBe("Anonymous");
+  });
+
+  test("checks long dotted names in linear time", () => {
+    const started = performance.now();
+
+    expect(Array.from(toInviteDisplayName(`${"a.".repeat(100_000)}x`, "Anonymous"))).toHaveLength(
+      MAX_INVITE_DISPLAY_NAME_LENGTH
+    );
+    // A run of dots before the last letter is what a trailing-punctuation regex backtracks on.
+    expect(Array.from(toInviteDisplayName(`${".".repeat(100_000)}a`, "Anonymous"))).toHaveLength(
+      MAX_INVITE_DISPLAY_NAME_LENGTH
+    );
+    expect(performance.now() - started).toBeLessThan(1000);
+  });
+
   test("removes links that hide an invisible character inside the scheme or host", () => {
     expect(toInviteDisplayName(`Win https:${WORD_JOINER}//spam.example now`, "Anonymous")).toBe("Win now");
     expect(toInviteDisplayName(`Visit www${WORD_JOINER}.spam.example today`, "Anonymous")).toBe(

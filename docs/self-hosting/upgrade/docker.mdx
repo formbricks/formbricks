@@ -40,7 +40,14 @@ Keep the same project name, environment file and volume names. Complete the
   <Step title="Prepare migrations and permissions">
     For a first v6 upgrade, add the [v6 dependencies](/self-hosting/upgrade/versions/6.0#first-v6-dependency-setup)
     while writers stay stopped. Start and verify PostgreSQL, datastore bootstrap, SpiceDB migrations and SpiceDB
-    using the reviewed configuration. Then, for both first and later v6 upgrades:
+    using the reviewed configuration. For the bundled datastore, this starts its dependencies without the app:
+
+    ```bash
+    docker compose up -d --wait postgres spicedb
+    ```
+
+    For external datastores, verify their health through their own deployment instead.
+    Then, for both first and later v6 upgrades:
 
     ```bash
     docker compose --profile authzed-ops run --rm --no-deps \
@@ -52,6 +59,9 @@ Keep the same project name, environment file and volume names. Complete the
     Stop on any failure. Review a changed schema before passing its expected digest.
   </Step>
   <Step title="Refresh assets and start the target">
+    For a first v6 upgrade, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env`
+    only after preparation. Review the [updater behavior](/self-hosting/upgrade/one-click-details).
+
     **One-click:** from the directory containing `formbricks/`, download the updater for your recorded target release:
 
     ```bash
@@ -60,9 +70,6 @@ Keep the same project name, environment file and volume names. Complete the
     chmod +x formbricks.sh
     ./formbricks.sh update
     ```
-
-    For a first v6 upgrade, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env`
-    only after preparation. Review the [updater behavior](/self-hosting/upgrade/one-click-details).
 
     **Manually managed Compose:** refresh the Cube model below. Preparation has completed application
     migrations; run Hub migrations before starting its API and workers:

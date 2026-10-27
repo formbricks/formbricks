@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { actionClient } from "@/lib/utils/action-client";
+import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
 import { generateSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
 import { sendLinkSurveyEmailAction, validateSurveyPinAction } from "./actions";
-import { getResponseBySingleUseId, getSurveyWithMetadata } from "./lib/data";
+import { getResponseBySingleUseId, getSurveyOwnerId, getSurveyWithMetadata } from "./lib/data";
 import { createLinkSurveyPinToken } from "./lib/pin-token";
 import { isLinkSurveyGoneError } from "./lib/public-access";
 import { recordSingleUseLinkValidation } from "./lib/single-use-link-metrics";
@@ -41,7 +42,14 @@ vi.mock("@/modules/ee/whitelabel/email-customization/lib/organization", () => ({
   getOrganizationLogoUrl: vi.fn().mockResolvedValue(null),
 }));
 vi.mock("@/modules/email", () => ({ sendLinkSurveyToVerifiedEmail: vi.fn() }));
-vi.mock("./lib/data", () => ({ getResponseBySingleUseId: vi.fn(), getSurveyWithMetadata: vi.fn() }));
+vi.mock("./lib/data", () => ({
+  getResponseBySingleUseId: vi.fn(),
+  getSurveyOwnerId: vi.fn(),
+  getSurveyWithMetadata: vi.fn(),
+}));
+vi.mock("@/modules/email/lib/email-actor", () => ({
+  resolveEmailActorUserId: vi.fn(async (ownerUserId: string | null) => ownerUserId ?? "org-owner"),
+}));
 vi.mock("./lib/pin-token", () => ({ createLinkSurveyPinToken: vi.fn() }));
 vi.mock("./lib/workspace", () => ({ getWorkspaceContextForLinkSurvey: vi.fn() }));
 vi.mock("./lib/respondent-custom-css", () => ({
@@ -320,10 +328,19 @@ describe("sendLinkSurveyEmailAction", () => {
   });
 
   test("an in-progress survey with email verification sends the email", async () => {
-    mockSurvey();
+    // `createdBy` is what an API caller may set; the owner is what the server set, and what counts.
+    mockSurvey({ createdBy: "someone-else" });
+    vi.mocked(getSurveyOwnerId).mockResolvedValue("owner-1");
+    vi.mocked(getOrganizationIdFromSurveyId).mockResolvedValue("org-1");
 
     await expect(sendEmail()).resolves.toEqual({ success: true });
     expect(sendLinkSurveyToVerifiedEmail).toHaveBeenCalledTimes(1);
+    // The visitor is anonymous, so the survey's organization and owner carry the limits (ENG-3823).
+    expect(sendLinkSurveyToVerifiedEmail).toHaveBeenCalledWith(expect.anything(), {
+      organizationId: "org-1",
+      actorUserId: "owner-1",
+      externalRecipient: true,
+    });
   });
 
   // The page never shows the verify-email screen for a single-use survey without its link, so the action must
@@ -348,10 +365,16 @@ describe("sendLinkSurveyEmailAction", () => {
 
   test("a single-use survey with a valid link sends the email carrying that link", async () => {
     mockSurvey(singleUse());
+    vi.mocked(getOrganizationIdFromSurveyId).mockResolvedValue("org-1");
+    vi.mocked(getSurveyOwnerId).mockResolvedValue("owner-1");
     const link = generateSurveySingleUseLinkParams(surveyId, false);
 
     await expect(sendEmailWith(link)).resolves.toEqual({ success: true });
-    expect(sendLinkSurveyToVerifiedEmail).toHaveBeenCalledWith(expect.objectContaining(link));
+    expect(sendLinkSurveyToVerifiedEmail).toHaveBeenCalledWith(expect.objectContaining(link), {
+      organizationId: "org-1",
+      actorUserId: "owner-1",
+      externalRecipient: true,
+    });
     expect(recordSingleUseLinkValidation).toHaveBeenCalledWith(
       expect.objectContaining({ outcome: "accepted", surface: "link_email_action" })
     );
