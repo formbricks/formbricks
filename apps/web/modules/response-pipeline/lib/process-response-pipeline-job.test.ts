@@ -731,12 +731,10 @@ describe("processResponsePipelineJob", () => {
     ).resolves.toBeUndefined();
 
     expect(mockLoggerError).toHaveBeenCalledWith(
-      expect.objectContaining({
-        err: expect.any(Error),
-        userEmail: "owner@example.com",
-      }),
+      expect.objectContaining({ err: expect.any(Error) }),
       "Response pipeline notification email failed"
     );
+    expect(JSON.stringify(mockLoggerError.mock.calls)).not.toContain("owner@example.com");
     expect(mockLoggerError).toHaveBeenCalledWith(
       expect.objectContaining({
         err: expect.any(Error),
