@@ -2,18 +2,17 @@
 
 import * as Sentry from "@sentry/nextjs";
 import { TFunction } from "i18next";
-import { Loader2 } from "lucide-react";
+import { DownloadIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { useOrganization } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
+import { ExportModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/export-modal";
 import {
   DateRange,
   useResponseFilter,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
-import { getResponsesDownloadUrlAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/actions";
-import { downloadResponsesFile } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/utils";
 import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
 import {
   DATE_RANGE_PRESETS,
@@ -38,11 +37,6 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { PopoverTriggerButton, ResponseFilter } from "./ResponseFilter";
-
-enum FilterDownload {
-  ALL = "common.all",
-  FILTER = "common.filter",
-}
 
 const getFilterDropDownLabels = (t: TFunction) => ({
   ALL_TIME: t("workspace.surveys.summary.all_time"),
@@ -141,8 +135,7 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
   );
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
   const [isFilterDropDownOpen, setIsFilterDropDownOpen] = useState<boolean>(false);
-  const [isDownloadDropDownOpen, setIsDownloadDropDownOpen] = useState<boolean>(false);
-  const [isDownloading, setIsDownloading] = useState<boolean>(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
 
   const firstMountRef = useRef(true);
 
@@ -200,12 +193,10 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
    * answer with an error, and a problem document rendered into the tab would replace this page. So ask
    * for the counts first, toast anything the user needs to know, and only then navigate.
    */
-  const handleDownloadAttachments = async (filter: FilterDownload) => {
+  const handleDownloadAttachments = async () => {
     const buildUrl = (extra?: Record<string, string>) => {
       const params = new URLSearchParams(extra);
-      if (filter === FilterDownload.FILTER) {
-        params.set("filters", JSON.stringify(filters));
-      }
+      params.set("filters", JSON.stringify(filters));
       return `/api/surveys/${survey.id}/attachments?${params.toString()}`;
     };
 
@@ -215,8 +206,6 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
     const toastId = toast.loading(t("workspace.surveys.responses.preparing_attachments_download"));
 
     try {
-      setIsDownloading(true);
-
       const preflight = await fetch(buildUrl({ dryRun: "true" }));
       if (!preflight.ok) {
         toast.error(t("workspace.surveys.responses.error_downloading_attachments"), { id: toastId });
@@ -250,36 +239,6 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
     } catch (err) {
       Sentry.captureException(err);
       toast.error(t("workspace.surveys.responses.error_downloading_attachments"), { id: toastId });
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
-  const handleDownloadResponses = async (filter: FilterDownload, fileType: "csv" | "xlsx") => {
-    try {
-      const responseFilters = filter === FilterDownload.ALL ? {} : filters;
-      setIsDownloading(true);
-
-      const responsesDownloadUrlResponse = await getResponsesDownloadUrlAction({
-        surveyId: survey.id,
-        format: fileType,
-        filterCriteria: responseFilters,
-      });
-
-      if (responsesDownloadUrlResponse?.data) {
-        downloadResponsesFile(
-          responsesDownloadUrlResponse.data.fileName,
-          responsesDownloadUrlResponse.data.fileContents,
-          fileType
-        );
-      } else {
-        toast.error(t("workspace.surveys.responses.error_downloading_responses"));
-      }
-    } catch (err) {
-      Sentry.captureException(err);
-      toast.error(t("workspace.surveys.responses.error_downloading_responses"));
-    } finally {
-      setIsDownloading(false);
     }
   };
 
@@ -342,72 +301,25 @@ export const CustomFilter = ({ survey }: Readonly<CustomFilterProps>) => {
             </DropdownMenuLabel>
           </DropdownMenuContent>
         </DropdownMenu>
-        <DropdownMenu
-          onOpenChange={(value) => {
-            value && handleDatePickerClose();
-            setIsDownloadDropDownOpen(value);
-          }}>
-          <DropdownMenuTrigger asChild>
-            <PopoverTriggerButton isOpen={isDownloadDropDownOpen} disabled={isDownloading}>
-              <span className="flex items-center gap-2">
-                {t("common.download")}
-                {isDownloading && <Loader2 className="size-3 animate-spin" strokeWidth={1.5} />}
-              </span>
-            </PopoverTriggerButton>
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem
-              data-testid="fb__custom-filter-download-all-csv"
-              onClick={async () => {
-                await handleDownloadResponses(FilterDownload.ALL, "csv");
-              }}>
-              <p className="text-slate-700">{t("workspace.surveys.summary.all_responses_csv")}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              data-testid="fb__custom-filter-download-all-xlsx"
-              onClick={async () => {
-                await handleDownloadResponses(FilterDownload.ALL, "xlsx");
-              }}>
-              <p className="text-slate-700">{t("workspace.surveys.summary.all_responses_excel")}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              data-testid="fb__custom-filter-download-filtered-csv"
-              onClick={async () => {
-                await handleDownloadResponses(FilterDownload.FILTER, "csv");
-              }}>
-              <p className="text-slate-700">{t("workspace.surveys.summary.filtered_responses_csv")}</p>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              data-testid="fb__custom-filter-download-filtered-xlsx"
-              onClick={async () => {
-                await handleDownloadResponses(FilterDownload.FILTER, "xlsx");
-              }}>
-              <p className="text-slate-700">{t("workspace.surveys.summary.filtered_responses_excel")}</p>
-            </DropdownMenuItem>
-            {hasFileUploadElements && (
-              <>
-                <DropdownMenuItem
-                  data-testid="fb__custom-filter-download-all-attachments"
-                  onClick={async () => {
-                    await handleDownloadAttachments(FilterDownload.ALL);
-                  }}>
-                  <p className="text-slate-700">{t("workspace.surveys.summary.all_responses_attachments")}</p>
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  data-testid="fb__custom-filter-download-filtered-attachments"
-                  onClick={async () => {
-                    await handleDownloadAttachments(FilterDownload.FILTER);
-                  }}>
-                  <p className="text-slate-700">
-                    {t("workspace.surveys.summary.filtered_responses_attachments")}
-                  </p>
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <button
+          type="button"
+          data-testid="fb__custom-filter-export"
+          onClick={() => {
+            handleDatePickerClose();
+            setIsExportModalOpen(true);
+          }}
+          className="flex cursor-pointer items-center gap-2 rounded-md border border-slate-300 bg-white p-2 text-sm text-slate-700 hover:border-slate-400">
+          <DownloadIcon className="size-4" strokeWidth={1.5} />
+          {t("workspace.surveys.export.button")}
+        </button>
       </div>
+      <ExportModal
+        open={isExportModalOpen}
+        onOpenChange={setIsExportModalOpen}
+        surveyId={survey.id}
+        scope={{ filter: filters }}
+        onDownloadAttachments={hasFileUploadElements ? handleDownloadAttachments : undefined}
+      />
       {isDatePickerOpen && (
         <div ref={datePickerRef} className="absolute top-full z-50 my-2 rounded-md border bg-white">
           {/* The calendar speaks calendar days while the filter stores instants, so translate at the

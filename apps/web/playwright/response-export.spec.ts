@@ -108,9 +108,10 @@ test.describe("Response export columns @slow", () => {
     await owner.login();
     await page.goto(`/workspaces/${owner.workspaceId}/surveys/${surveyId}/responses`);
 
-    await page.getByRole("button", { name: "Download" }).click();
+    // The Export modal opens on the Standard defaults (CSV, Text only), which is today's file.
+    await page.getByTestId("fb__custom-filter-export").click();
     const downloadPromise = page.waitForEvent("download");
-    await page.getByTestId("fb__custom-filter-download-all-csv").click();
+    await page.getByTestId("export-submit").click();
     const download = await downloadPromise;
 
     // saveAs into the test's output dir keeps the CSV beside the failure artifacts.

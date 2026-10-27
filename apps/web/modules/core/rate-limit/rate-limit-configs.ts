@@ -179,5 +179,12 @@ export const rateLimitConfigs = {
       allowedPerInterval: 3,
       namespace: "storage:attachments-export",
     }, // 3 downloads per 10 minutes
+    // The Export modal's download (ENG-6792): a full pass over a survey's responses, in the app's own
+    // process. Charged on the download path only; the modal's count requests are not.
+    responsesExport: {
+      interval: 600,
+      allowedPerInterval: 20,
+      namespace: "storage:responses-export",
+    }, // 20 exports per 10 minutes: enough to try settings, not enough to loop a full pass over a survey
   },
 } as const;

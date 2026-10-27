@@ -1,0 +1,144 @@
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { TExportRequest } from "@/lib/analysis-export/export-request";
+import { handleExportRequest } from "./handle-export";
+
+vi.mock("server-only", () => ({}));
+
+const mocks = vi.hoisted(() => ({
+  getAuthorizedV3Survey: vi.fn(),
+  can: vi.fn(),
+  checkRateLimit: vi.fn(),
+  getOrganization: vi.fn(),
+  getIsQuotasEnabled: vi.fn(),
+  buildExportResponse: vi.fn(),
+  countExportResponses: vi.fn(),
+  capturePostHogEvent: vi.fn(),
+}));
+
+vi.mock("@/app/api/v3/surveys/authorization", () => ({ getAuthorizedV3Survey: mocks.getAuthorizedV3Survey }));
+vi.mock("@/lib/authorization", () => ({ can: mocks.can }));
+vi.mock("@/modules/core/rate-limit/rate-limit", () => ({ checkRateLimit: mocks.checkRateLimit }));
+vi.mock("@/lib/organization/service", () => ({ getOrganization: mocks.getOrganization }));
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsQuotasEnabled: mocks.getIsQuotasEnabled }));
+vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: mocks.capturePostHogEvent }));
+vi.mock("./export-response", () => ({
+  buildExportResponse: mocks.buildExportResponse,
+  countExportResponses: mocks.countExportResponses,
+  ExportCancelledError: class ExportCancelledError extends Error {},
+}));
+
+const survey = { id: "survey1", name: "Survey", workspaceId: "ws1" };
+const authentication = { user: { id: "user1" } } as never;
+const forbidden = new Response("forbidden", { status: 403 });
+const defaults: TExportRequest = { format: "csv", display: "text", spss: false, advanced: [] };
+
+const run = (overrides: Partial<Parameters<typeof handleExportRequest>[0]> = {}) =>
+  handleExportRequest({
+    surveyId: "survey1",
+    body: { ...defaults },
+    dryRun: false,
+    authentication,
+    signal: new AbortController().signal,
+    requestId: "req1",
+    instance: "/api/surveys/survey1/export",
+    ...overrides,
+  });
+
+beforeEach(() => {
+  vi.resetAllMocks();
+  mocks.getAuthorizedV3Survey.mockResolvedValue({
+    survey,
+    authResult: { organizationId: "org1", workspaceId: "ws1" },
+    response: null,
+  });
+  mocks.can.mockResolvedValue(true);
+  mocks.checkRateLimit.mockResolvedValue({ ok: true, data: { allowed: true } });
+  mocks.getOrganization.mockResolvedValue({ displayTimeZone: "Europe/Berlin" });
+  mocks.getIsQuotasEnabled.mockResolvedValue(false);
+  mocks.buildExportResponse.mockResolvedValue({ ok: true, response: new Response("file") });
+  mocks.countExportResponses.mockResolvedValue({ included: 7, lowQualityLeftOut: 2 });
+});
+
+describe("handleExportRequest authorization and scoping", () => {
+  test("a survey the caller cannot read answers with the authorization response and exports nothing", async () => {
+    mocks.getAuthorizedV3Survey.mockResolvedValue({ survey: null, authResult: null, response: forbidden });
+    expect(await run()).toBe(forbidden);
+    expect(mocks.buildExportResponse).not.toHaveBeenCalled();
+    expect(mocks.countExportResponses).not.toHaveBeenCalled();
+  });
+
+  test("read access alone is not enough: survey.response_export is checked on the survey", async () => {
+    mocks.can.mockResolvedValue(false);
+    const response = await run();
+    expect(response.status).toBe(403);
+    expect(mocks.can).toHaveBeenCalledWith({ type: "user", id: "user1" }, "survey.response_export", {
+      type: "survey",
+      id: "survey1",
+    });
+    expect(mocks.buildExportResponse).not.toHaveBeenCalled();
+  });
+
+  test("the survey is loaded for read access, so a read-only seat can export", async () => {
+    await run();
+    expect(mocks.getAuthorizedV3Survey).toHaveBeenCalledWith(
+      expect.objectContaining({ surveyId: "survey1", access: "read" })
+    );
+    expect(mocks.buildExportResponse).toHaveBeenCalled();
+  });
+
+  test("an unauthenticated request has no actor and is refused", async () => {
+    expect((await run({ authentication: null })).status).toBe(403);
+    expect(mocks.can).not.toHaveBeenCalled();
+  });
+
+  test("the export is scoped to the path's survey; selected ids travel in the filter", async () => {
+    const filter = { responseIds: ["clxxxxxxxxxxxxxxxxxxxxxxx"] };
+    await run({ body: { ...defaults, filter } });
+    expect(mocks.buildExportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ survey, filter, timeZone: "Europe/Berlin", isQuotasAllowed: false })
+    );
+  });
+});
+
+describe("handleExportRequest outcomes", () => {
+  test("the defaults are planned as the Standard export", async () => {
+    await run();
+    expect(mocks.buildExportResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ plan: { kind: "standard", format: "csv" } })
+    );
+  });
+
+  test("dryRun answers the counts, writes no file, spends no rate limit and audits a query", async () => {
+    const auditLog = { action: "exported" } as never;
+    const response = await run({ dryRun: true, auditLog });
+    expect(await response.json()).toEqual({ data: { included: 7, lowQualityLeftOut: 2, kind: "standard" } });
+    expect(mocks.buildExportResponse).not.toHaveBeenCalled();
+    expect(mocks.checkRateLimit).not.toHaveBeenCalled();
+    expect((auditLog as { action: string }).action).toBe("queried");
+  });
+
+  test("over the rate limit the download is a 429", async () => {
+    mocks.checkRateLimit.mockResolvedValue({ ok: true, data: { allowed: false, retryAfter: 30 } });
+    expect((await run()).status).toBe(429);
+    expect(mocks.buildExportResponse).not.toHaveBeenCalled();
+  });
+
+  test("a workbook over the cell cap is a 422 with the reason", async () => {
+    mocks.buildExportResponse.mockResolvedValue({ ok: false, reason: "excel_too_large", message: "too big" });
+    const response = await run({ body: { ...defaults, format: "xlsx", display: "codes" } });
+    expect(response.status).toBe(422);
+    expect(await response.text()).toContain("too big");
+  });
+
+  test("a download the client abandoned is a 499, not a server error", async () => {
+    const { ExportCancelledError } = await import("./export-response");
+    mocks.buildExportResponse.mockRejectedValue(new ExportCancelledError());
+    expect((await run()).status).toBe(499);
+  });
+
+  test("a successful download is recorded once", async () => {
+    const response = await run();
+    expect(await response.text()).toBe("file");
+    expect(mocks.capturePostHogEvent).toHaveBeenCalledTimes(1);
+  });
+});

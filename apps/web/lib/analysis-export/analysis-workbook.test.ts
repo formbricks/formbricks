@@ -140,4 +140,23 @@ describe("buildAnalysisWorkbook", () => {
       XlsxLimitError
     );
   });
+
+  test("include leaves out the Datamap and the Unmapped values sheets when they are off", async () => {
+    const book = xlsx.read(
+      await buildAnalysisWorkbook(buildSampleExport("both"), {
+        display: "both",
+        include: { datamap: false, unmappedValues: false },
+      }),
+      { type: "buffer", raw: true }
+    );
+    expect(book.SheetNames).toEqual(["Labels", "Codes"]);
+    const onlyDatamap = xlsx.read(
+      await buildAnalysisWorkbook(buildSampleExport("codes"), {
+        display: "codes",
+        include: { datamap: true, unmappedValues: false },
+      }),
+      { type: "buffer", raw: true }
+    );
+    expect(onlyDatamap.SheetNames).toEqual(["Codes", "Datamap"]);
+  });
 });

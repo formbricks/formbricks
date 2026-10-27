@@ -9,6 +9,8 @@ export type TAnalysisFileOptions = {
   display: TAnswerDisplay;
   /** The zone the Timestamp column is written in. Only the SPSS syntax mentions it. Default UTC. */
   timeZone?: string;
+  /** Which extras come with the data tables. Each is on unless set to `false`. */
+  include?: { datamap?: boolean; unmappedValues?: boolean; spssSyntax?: boolean };
 };
 
 export const rowCells = (
@@ -40,7 +42,7 @@ export type TAnalysisWorkbookOptions = TAnalysisFileOptions & {
  */
 export const buildAnalysisWorkbook = async (
   exported: TAnalysisExport,
-  { display, maxCells }: TAnalysisWorkbookOptions
+  { display, maxCells, include }: TAnalysisWorkbookOptions
 ): Promise<Buffer> => {
   const workbook = createXlsxWorkbook();
   const parts = dataParts(display).map((part) => ({
@@ -63,12 +65,16 @@ export const buildAnalysisWorkbook = async (
   }
 
   const summary = exported.summary();
-  const datamap = workbook.addSheet("Datamap", DATAMAP_HEADERS);
-  for (const row of buildDatamap(exported.columns, { unmappedColumns: unmappedColumnNames(summary) })) {
-    datamap.addRow(row);
+  if (include?.datamap !== false) {
+    const datamap = workbook.addSheet("Datamap", DATAMAP_HEADERS);
+    for (const row of buildDatamap(exported.columns, { unmappedColumns: unmappedColumnNames(summary) })) {
+      datamap.addRow(row);
+    }
   }
-  const unmapped = workbook.addSheet("Unmapped values", UNMAPPED_HEADERS);
-  for (const row of buildUnmappedValuesTable(summary)) unmapped.addRow(row);
+  if (include?.unmappedValues !== false) {
+    const unmapped = workbook.addSheet("Unmapped values", UNMAPPED_HEADERS);
+    for (const row of buildUnmappedValuesTable(summary)) unmapped.addRow(row);
+  }
 
   return workbook.toBuffer();
 };
