@@ -2,6 +2,7 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { AI_PROVIDERS } from "@formbricks/types/ai";
+import { AI_MAX_TIMEOUT_MULTIPLIER } from "@formbricks/types/ai-timeout";
 import { isValidIanaTimeZone } from "@formbricks/types/common";
 import { throwEnvValidationError } from "./env-validation-error";
 
@@ -562,6 +563,10 @@ const parsedEnv = createEnv({
    * Will throw if you access these variables on the client.
    */
   server: {
+    AI_TIMEOUT_MULTIPLIER: z.preprocess(
+      emptyStringToUndefined,
+      z.coerce.number().min(1).max(AI_MAX_TIMEOUT_MULTIPLIER).default(1)
+    ),
     AI_PROVIDER: ZActiveAIProvider.optional(),
     AI_MODEL: z.string().optional(),
     AIRTABLE_CLIENT_ID: z.string().optional(),
@@ -816,6 +821,7 @@ const parsedEnv = createEnv({
    * 💡 You'll get type errors if not all variables from `server` & `client` are included here.
    */
   runtimeEnv: {
+    AI_TIMEOUT_MULTIPLIER: process.env.AI_TIMEOUT_MULTIPLIER,
     AI_PROVIDER: process.env.AI_PROVIDER,
     AI_MODEL: process.env.AI_MODEL,
     AIRTABLE_CLIENT_ID: process.env.AIRTABLE_CLIENT_ID,
