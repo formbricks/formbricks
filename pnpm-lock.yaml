@@ -832,6 +832,9 @@ importers:
       tailwindcss:
         specifier: 'catalog:'
         version: 4.3.1
+      tldts:
+        specifier: 7.0.19
+        version: 7.0.19
       ua-parser-js:
         specifier: 2.0.10
         version: 2.0.10

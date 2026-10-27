@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { InvalidInputError, TooManyRequestsError } from "@formbricks/types/errors";
 import { inviteOrganizationMemberAction } from "./actions";
 
 const mocks = vi.hoisted(() => ({
@@ -9,6 +9,8 @@ const mocks = vi.hoisted(() => ({
   sendInviteMemberEmail: vi.fn(),
   settleInviteRateLimit: vi.fn(),
 }));
+
+vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn() } }));
 
 vi.mock("@/lib/constants", () => ({
   INVITE_DISABLED: false,
@@ -76,12 +78,23 @@ describe("setup invite rate-limit settlement", () => {
     expect(mocks.sendInviteMemberEmail).not.toHaveBeenCalled();
   });
 
-  test("keeps the unit after persistence even if email delivery fails", async () => {
-    const error = new Error("smtp unavailable");
-    mocks.sendInviteMemberEmail.mockRejectedValueOnce(error);
+  // The invite exists by then and can be shared by link, so a failed or rate-limited email must not fail the
+  // action: a retry would only meet "Invite already exists" (ENG-3823).
+  test.each([new Error("smtp unavailable"), new TooManyRequestsError("Maximum number of requests")])(
+    "keeps the invite and its unit when the email fails with %s",
+    async (error) => {
+      mocks.sendInviteMemberEmail.mockRejectedValueOnce(error);
 
-    await expect(inviteOrganizationMemberAction({ ctx, parsedInput } as never)).rejects.toBe(error);
+      await expect(inviteOrganizationMemberAction({ ctx, parsedInput } as never)).resolves.toBe("invite-1");
 
-    expect(mocks.settleInviteRateLimit).toHaveBeenCalledWith(reservation, 1);
-  });
+      expect(mocks.settleInviteRateLimit).toHaveBeenCalledWith(reservation, 1);
+      expect(mocks.sendInviteMemberEmail).toHaveBeenCalledWith(
+        "invite-1",
+        "invitee@example.com",
+        "Inviter",
+        "",
+        organizationId
+      );
+    }
+  );
 });

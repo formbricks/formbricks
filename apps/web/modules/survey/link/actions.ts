@@ -11,7 +11,8 @@ import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
 import { sendLinkSurveyToVerifiedEmail } from "@/modules/email";
-import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
+import { resolveEmailActorUserId } from "@/modules/email/lib/email-actor";
+import { getSurveyOwnerId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { createLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
 import { isLinkSurveyOpenForResponses } from "@/modules/survey/link/lib/public-access";
 import { getLinkSurveyCustomCss, omitCustomCssSource } from "@/modules/survey/link/lib/respondent-custom-css";
@@ -87,8 +88,16 @@ export const sendLinkSurveyEmailAction = actionClient
       throw new InvalidInputError("EMAIL_VERIFICATION_NOT_ENABLED");
     }
 
-    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-    const organizationLogoUrl = await getOrganizationLogoUrl(organizationId);
+    const [organizationId, surveyOwnerId] = await Promise.all([
+      getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      getSurveyOwnerId(parsedInput.surveyId),
+    ]);
+    // Independent reads on the hot path of an unauthenticated action: run them together. `ownerId` stays out
+    // of the survey the page loads, which reaches the browser, so it is read here instead.
+    const [organizationLogoUrl, actorUserId] = await Promise.all([
+      getOrganizationLogoUrl(organizationId),
+      resolveEmailActorUserId(surveyOwnerId, organizationId),
+    ]);
 
     // The language arrives from the client, and it ends up as `?lang=` in the link we email out — so
     // resolve it against this survey's own enabled languages here rather than trusting the payload.
@@ -100,11 +109,20 @@ export const sendLinkSurveyEmailAction = actionClient
         unmatchedExplicitLanguage: "fallback",
       }) ?? "default";
 
-    await sendLinkSurveyToVerifiedEmail({
-      ...parsedInput,
-      surveyLanguageCode,
-      logoUrl: organizationLogoUrl || "",
-    });
+    await sendLinkSurveyToVerifiedEmail(
+      {
+        ...parsedInput,
+        surveyLanguageCode,
+        logoUrl: organizationLogoUrl || "",
+      },
+      // The visitor is anonymous, so the survey's organization and owner carry the limits: a fresh
+      // survey or organization does not reset them.
+      {
+        organizationId,
+        actorUserId,
+        externalRecipient: true,
+      }
+    );
     return { success: true };
   });
 
