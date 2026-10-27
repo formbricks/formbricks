@@ -1,4 +1,5 @@
 import { createTransport } from "nodemailer";
+import addressparser from "nodemailer/lib/addressparser";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
@@ -49,7 +50,48 @@ interface SendEmailDataProps {
   messageId?: string;
 }
 
+const MAX_ADDRESS_LENGTH = 320;
+
+/**
+ * One plain address, read the way nodemailer will read it: no list, no group, no display name, no angle
+ * brackets. Parsed rather than matched against an address regex, so a valid internationalized address still
+ * gets through, and the address is not compared to the input: the parser normalizes forms nodemailer still
+ * delivers to that one inbox (a quoted local part, a trailing comma).
+ */
+const isSingleRecipient = (to: string): boolean => {
+  // Bounded before parsing: some callers pass a visitor's input straight through.
+  if (to.length > MAX_ADDRESS_LENGTH) return false;
+  // A display-name wrapper is not a bare address, and nodemailer reads `<a@x>` as one.
+  if (to.includes("<") || to.includes(">")) return false;
+  // Exactly one `@` outside a quoted local part: `a@b@x.com` parses as a single address but is not one.
+  let atSigns = 0;
+  let quoted = false;
+  for (let index = 0; index < to.length; index++) {
+    const character = to[index];
+    if (quoted && character === "\\") {
+      index++;
+      continue;
+    }
+    if (character === '"') {
+      quoted = !quoted;
+      continue;
+    }
+    if (character === "@" && !quoted) atSigns++;
+  }
+  if (quoted || atSigns !== 1) return false;
+
+  const parsed = addressparser(to);
+  if (parsed.length !== 1) return false;
+  const [entry] = parsed;
+  return !("group" in entry) && entry.name === "";
+};
+
 export const sendEmail = async ({ emailType, ...emailData }: SendEmailDataProps): Promise<boolean> => {
+  // nodemailer reads `to` as an address list, so "a@x, b@y" would reach both. Every email goes to one
+  // person (ENG-6658).
+  if (!isSingleRecipient(emailData.to)) {
+    throw new InvalidInputError("An email must have exactly one valid recipient address");
+  }
   if (!IS_SMTP_CONFIGURED) {
     logger.info("SMTP is not configured, skipping email sending");
     return false;
