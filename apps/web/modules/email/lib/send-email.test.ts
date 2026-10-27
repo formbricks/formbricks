@@ -134,3 +134,34 @@ describe("sendEmail SES event publishing", () => {
     await expect(sendEmail(email)).rejects.toThrow("Incorrect SMTP credentials");
   });
 });
+
+describe("sendEmail recipient guard (ENG-6658)", () => {
+  beforeEach(() => {
+    mocks.createTransport.mockReturnValue({ sendMail: mocks.sendMail });
+    mocks.sendMail.mockResolvedValue({ messageId: "smtp-message-id" });
+    mocks.constants.IS_SMTP_CONFIGURED = true;
+  });
+
+  // nodemailer reads `to` as an address list: one invite must not reach several inboxes.
+  test.each([
+    "a@example.com, b@example.com",
+    "a@example.com; b@example.com",
+    '"Bob" <b@example.com>',
+    "group: a@example.com, b@example.com;",
+    "<a@example.com>",
+    "a@b@example.com",
+    `${"a".repeat(320)}@example.com`,
+    "not-an-address",
+  ])("refuses %j before opening a connection", async (to) => {
+    await expect(sendEmail({ ...email, to })).rejects.toThrow("exactly one valid recipient");
+    expect(mocks.createTransport).not.toHaveBeenCalled();
+  });
+
+  // nodemailer delivers these to one inbox; refusing them (as an input comparison would) blocks valid mail.
+  test.each(['"a b"@example.com', '"a@b"@example.com', "a@example.com,", "josé@bücher.example"])(
+    "sends to one address the parser normalizes: %j",
+    async (to) => {
+      await expect(sendEmail({ ...email, to })).resolves.toBe(true);
+    }
+  );
+});

@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   resendInvite: vi.fn(),
   sendInviteMemberEmail: vi.fn(),
   settleInviteRateLimit: vi.fn(),
+  actionSchemas: [] as Array<{ safeParse: (value: unknown) => { success: boolean } }>,
 }));
 
 vi.mock("@formbricks/database", () => ({
@@ -64,9 +65,12 @@ vi.mock("@/lib/posthog", () => ({
 
 vi.mock("@/lib/utils/action-client", () => ({
   authenticatedActionClient: {
-    inputSchema: vi.fn(() => ({
-      action: vi.fn((fn) => fn),
-    })),
+    inputSchema: vi.fn((schema: unknown) => {
+      mocks.actionSchemas.push(schema as { safeParse: (value: unknown) => { success: boolean } });
+      return {
+        action: vi.fn((fn) => fn),
+      };
+    }),
   },
 }));
 
@@ -261,5 +265,30 @@ describe("invite rate-limit settlement", () => {
     ).rejects.toBe(error);
 
     expect(mocks.settleInviteRateLimit).toHaveBeenCalledWith(reservation, 1);
+  });
+});
+
+describe("single invite input (ENG-6658)", () => {
+  const validInvite = {
+    organizationId: "clxyz1234567890abcdefghij",
+    email: "invitee@example.com",
+    name: "Invitee",
+    role: "member",
+    teamIds: [],
+  };
+  const inviteSchema = mocks.actionSchemas.find((schema) => schema.safeParse(validInvite).success);
+
+  test("accepts one address", () => {
+    expect(inviteSchema).toBeDefined();
+  });
+
+  // One invite, and one unit of the invite budget, must not reach several inboxes.
+  test.each([
+    "a@example.com, b@example.com",
+    "a@example.com; b@example.com",
+    '"Bob" <b@example.com>',
+    "nobody",
+  ])("rejects %j as the invitee address", (email) => {
+    expect(inviteSchema?.safeParse({ ...validInvite, email }).success).toBe(false);
   });
 });
