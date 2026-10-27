@@ -4,6 +4,7 @@ import { type TAuthzedBackfillRequest, runAuthzedBackfill } from "./backfill";
 import * as source from "./backfill-source";
 import type { TAuthzedOrganizationSource } from "./backfill-source";
 import {
+  AUTHZED_BACKFILL_ORGANIZATION_CONCURRENCY,
   AUTHZED_MAX_RELATIONSHIP_READS,
   AUTHZED_MAX_TRACKED_ORPHAN_REFS,
   AUTHZED_TARGET_CHUNK_SIZE,
@@ -253,6 +254,59 @@ describe("per-unit failure isolation", () => {
       2,
       expect.objectContaining({ afterOrganizationId: "org-2" })
     );
+  });
+
+  test("processes a page's organizations a bounded number at a time", async () => {
+    const organizationIds = Array.from({ length: 20 }, (_, index) => `org-${String(index).padStart(2, "0")}`);
+    vi.mocked(source.readOrganizationIdPage).mockResolvedValueOnce(organizationIds).mockResolvedValueOnce([]);
+    let inFlight = 0;
+    let peak = 0;
+    vi.mocked(source.readOrganizationSource).mockImplementation(async () => {
+      inFlight++;
+      peak = Math.max(peak, inFlight);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      inFlight--;
+
+      return emptySource;
+    });
+
+    const result = await runAuthzedBackfill(
+      request({ mode: "dry_run", scope: { kind: "all" } }),
+      dependencies
+    );
+
+    expect(peak).toBe(AUTHZED_BACKFILL_ORGANIZATION_CONCURRENCY);
+    expect(result.counters.scanned).toBe(organizationIds.length);
+    expect(result.lastOrganizationId).toBe(organizationIds.at(-1));
+  });
+
+  test("reports failures in organization order however the calls finish", async () => {
+    vi.mocked(source.readOrganizationIdPage)
+      .mockResolvedValueOnce(["org-1", "org-2"])
+      .mockResolvedValueOnce([]);
+    vi.mocked(source.readOrganizationSource).mockImplementation(async (organizationId) => {
+      // org-1 fails after org-2 does, so completion order is the reverse of ID order.
+      if (organizationId === "org-1") {
+        await new Promise((resolve) => setTimeout(resolve, 5));
+      }
+      throw new Error("statement timeout");
+    });
+
+    const result = await runAuthzedBackfill(request({ scope: { kind: "all" } }), dependencies);
+
+    expect(result.failures.map(({ organizationId }) => organizationId)).toEqual(["org-1", "org-2"]);
+  });
+
+  test("keeps the resume cursor on the last finished page when the next page cannot be read", async () => {
+    vi.mocked(source.readOrganizationIdPage)
+      .mockResolvedValueOnce(["org-1", "org-2"])
+      .mockRejectedValueOnce(new Error("connection reset"));
+
+    const result = await runAuthzedBackfill(request({ scope: { kind: "all" } }), dependencies);
+
+    expect(result.lastOrganizationId).toBe("org-2");
+    expect(result.truncated).toBe(true);
+    expect(result.counters).toMatchObject({ failed: 1, reconciled: 2, scanned: 2 });
   });
 
   test("rejects a scope naming an organization that does not exist", async () => {

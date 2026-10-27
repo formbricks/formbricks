@@ -1,4 +1,5 @@
 import "server-only";
+import { mapWithConcurrency } from "@/lib/utils/map-with-concurrency";
 import type { TApiKeyProjectionTargets } from "./api-key";
 import {
   SURVEY_SCOPED_RESOURCE_TYPES,
@@ -32,6 +33,7 @@ import {
 } from "./backfill-source";
 import type { TAuthzedClient, TAuthzedRelationship } from "./client";
 import {
+  AUTHZED_BACKFILL_ORGANIZATION_CONCURRENCY,
   AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE,
   AUTHZED_BACKFILL_SURVEY_PAGE_SIZE,
   AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES,
@@ -48,7 +50,7 @@ import { forEachRelationshipPage, readAllRelationships } from "./relationship-re
 import type { TTeamWorkspaceProjectionTargets } from "./team-workspace";
 
 /**
- * Relationship backfill and repair, organized around one organization at a time.
+ * Relationship backfill and repair, organized around the organization as the unit of work.
  *
  * **Command-line use only** — see the note on `./backfill-source`. This module performs no
  * authorization check, because it runs as an operator against the whole database.
@@ -58,6 +60,10 @@ import type { TTeamWorkspaceProjectionTargets } from "./team-workspace";
  * without consulting any other. It also means backfill and single-organization repair are the same
  * code path with a different unit list, and that a partial run leaves complete graphs for the
  * organizations it finished rather than a fragment of every tenant's graph.
+ *
+ * Closed units are also what let a full sweep process several at once: no two organizations share a
+ * resource, so their writes cannot collide. Each records into its own tallies, merged in ID order once
+ * its page is done, so concurrency changes how long a run takes and not what it reports.
  *
  * This module cannot write. It reaches mutations only through an injected capability object, and it
  * imports neither `getAuthzedClient` nor any reconciler — so a dry run is inert by construction rather
@@ -683,6 +689,33 @@ const recordMismatchedPermissions = (
 };
 
 /**
+ * Fold one organization's tallies into the run's.
+ *
+ * The snapshot and the survey cursor are run-level and never set by a unit, so they are left alone.
+ */
+const mergeUnitState = (run: TRunState, unit: TRunState): void => {
+  run.failed += unit.failed;
+  run.ignored += unit.ignored;
+  run.invalid += unit.invalid;
+  run.mismatchedParentCount += unit.mismatchedParentCount;
+  run.mismatchedPermissionCount += unit.mismatchedPermissionCount;
+  run.missingCount += unit.missingCount;
+  run.orphaned += unit.orphaned;
+  run.pruned += unit.pruned;
+  run.reconciled += unit.reconciled;
+  run.scanned += unit.scanned;
+  run.skipped += unit.skipped;
+  run.unmanagedCount += unit.unmanagedCount;
+  run.truncated ||= unit.truncated;
+  run.lastOrganizationId = unit.lastOrganizationId ?? run.lastOrganizationId;
+  pushCapped(run.failures, unit.failures);
+  pushCapped(run.mismatchedParents, unit.mismatchedParents);
+  pushCapped(run.mismatchedPermissions, unit.mismatchedPermissions);
+  pushCapped(run.orphans, unit.orphans);
+  pushCapped(run.unmanaged, unit.unmanaged);
+};
+
+/**
  * What a unit is permitted to prune.
  *
  * `overBudget` is carried separately rather than inferred from an empty `refs`, because "nothing to
@@ -1177,6 +1210,33 @@ const processWorkspace = async (ctx: TRunContext, workspaceId: string): Promise<
   state.reconciled++;
 };
 
+/**
+ * Process one page of organizations a bounded number at a time, then record them in ID order.
+ *
+ * Each organization tallies into its own state rather than the run's, so the capped report lists come
+ * out in the same order however the calls interleave — otherwise which hundred failures a broken run
+ * reports would depend on which round trips happened to finish first.
+ */
+const processOrganizationPage = async (
+  ctx: TRunContext,
+  organizationIds: ReadonlyArray<string>
+): Promise<void> => {
+  const units = await mapWithConcurrency(
+    organizationIds,
+    AUTHZED_BACKFILL_ORGANIZATION_CONCURRENCY,
+    async (organizationId) => {
+      const unit = createRunState();
+      await processOrganization({ ...ctx, state: unit }, organizationId);
+
+      return unit;
+    }
+  );
+
+  for (const unit of units) {
+    mergeUnitState(ctx.state, unit);
+  }
+};
+
 /** Walk every organization by keyset page. */
 const enumerateOrganizations = async (ctx: TRunContext, afterOrganizationId?: string): Promise<void> => {
   let cursor = afterOrganizationId;
@@ -1202,12 +1262,10 @@ const enumerateOrganizations = async (ctx: TRunContext, afterOrganizationId?: st
       return;
     }
 
-    // Strictly sequential, and not only to avoid write contention: `lastOrganizationId` is the resume
-    // cursor, so processing out of order would let a resume skip an organization that failed while a
-    // later one succeeded.
-    for (const organizationId of organizationIds) {
-      await processOrganization(ctx, organizationId);
-    }
+    // Pages stay strictly sequential, because `lastOrganizationId` is the resume cursor: it may only
+    // advance past an organization once that organization has finished. Merging a page only after every
+    // unit on it is done keeps that true even though the units within it run concurrently.
+    await processOrganizationPage(ctx, organizationIds);
     cursor = organizationIds.at(-1);
   }
 };
