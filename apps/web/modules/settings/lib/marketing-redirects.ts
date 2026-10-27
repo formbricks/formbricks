@@ -171,8 +171,11 @@ export const getSettingsDestination = (
  * Appends the incoming query string (e.g. UTM params) to an app path. `search` is the `search`
  * property of a `URL`.
  */
-export const appendSearch = (path: string, search: string): string =>
-  search && search !== "?" ? `${path}${search.startsWith("?") ? search : `?${search}`}` : path;
+export const appendSearch = (path: string, search: string): string => {
+  if (!search || search === "?") return path;
+  const query = search.startsWith("?") ? search : "?" + search;
+  return path + query;
+};
 
 interface TMarketingRedirectInput {
   organizationId: string | undefined;

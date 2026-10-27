@@ -1,41 +1,31 @@
+import { marketingLinksData } from "./__mocks__/marketing-links.mock";
 import { notFound, redirect } from "next/navigation";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { WEBAPP_URL } from "@/lib/constants";
 import { GET } from "./route";
 
 // Drives the real route handler end to end (session -> active organization/workspace -> redirect),
-// with only the session, cookies and data layer mocked.
-const mocks = vi.hoisted(() => ({
-  getSession: vi.fn(),
-  cookies: {} as Record<string, string>,
-  organizations: [] as { id: string }[],
-  workspaces: [] as { id: string; name: string }[],
-  workspaceOrganization: {} as Record<string, string>,
-  role: "owner",
-}));
+// with only the session, cookies and data layer mocked (see ./__mocks__/marketing-links.mock.ts).
+const mocks = vi.hoisted(() => ({ getSession: vi.fn() }));
 
 vi.mock("@/lib/constants", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/constants")>()),
   IS_FORMBRICKS_CLOUD: true,
 }));
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: () => mocks.getSession() }));
-vi.mock("next/headers", () => ({
-  cookies: () => Promise.resolve({ get: (name: string) => ({ value: mocks.cookies[name] }) }),
-}));
-vi.mock("@/app/(app)/workspaces/[workspaceId]/lib/organization", () => ({
-  getOrganizationsByUserId: () => Promise.resolve(mocks.organizations),
-}));
-vi.mock("@/app/(app)/workspaces/[workspaceId]/lib/workspace", () => ({
-  getWorkspacesByUserId: () => Promise.resolve(mocks.workspaces),
-}));
-vi.mock("@/lib/workspace/service", () => ({
-  getWorkspace: (id: string) =>
-    Promise.resolve(
-      mocks.workspaceOrganization[id] ? { id, organizationId: mocks.workspaceOrganization[id] } : null
-    ),
-}));
-vi.mock("@/lib/membership/service", () => ({
-  getMembershipByUserIdOrganizationId: () => Promise.resolve({ role: mocks.role }),
-}));
+vi.mock("next/headers", async () => (await import("./__mocks__/marketing-links.mock")).mockCookiesModule());
+vi.mock("@/app/(app)/workspaces/[workspaceId]/lib/organization", async () =>
+  (await import("./__mocks__/marketing-links.mock")).mockOrganizationModule()
+);
+vi.mock("@/app/(app)/workspaces/[workspaceId]/lib/workspace", async () =>
+  (await import("./__mocks__/marketing-links.mock")).mockWorkspaceModule()
+);
+vi.mock("@/lib/workspace/service", async () =>
+  (await import("./__mocks__/marketing-links.mock")).mockWorkspaceServiceModule()
+);
+vi.mock("@/lib/membership/service", async () =>
+  (await import("./__mocks__/marketing-links.mock")).mockMembershipServiceModule()
+);
 
 // The proxy rewrites /contacts/segments to /marketing-links/contacts/segments; `path` is what follows.
 const visit = async (pathname: string) => {
@@ -49,14 +39,14 @@ const visit = async (pathname: string) => {
 describe("ID-free marketing links", () => {
   beforeEach(() => {
     mocks.getSession.mockResolvedValue({ user: { id: "user-1" } });
-    mocks.cookies = { "formbricks-workspace-id": "ws-2" };
-    mocks.organizations = [{ id: "org-1" }];
-    mocks.workspaces = [
+    marketingLinksData.cookies = { "formbricks-workspace-id": "ws-2" };
+    marketingLinksData.organizations = [{ id: "org-1" }];
+    marketingLinksData.workspaces = [
       { id: "ws-1", name: "One" },
       { id: "ws-2", name: "Two" },
     ];
-    mocks.workspaceOrganization = { "ws-2": "org-1" };
-    mocks.role = "owner";
+    marketingLinksData.workspaceOrganization = { "ws-2": "org-1" };
+    marketingLinksData.role = "owner";
   });
   afterEach(() => vi.clearAllMocks());
 
@@ -84,28 +74,30 @@ describe("ID-free marketing links", () => {
   });
 
   test("a stale workspace cookie falls back to the first accessible workspace", async () => {
-    mocks.cookies = { "formbricks-workspace-id": "ws-deleted" };
+    marketingLinksData.cookies = { "formbricks-workspace-id": "ws-deleted" };
     expect(await visit("/surveys")).toBe("/workspaces/ws-1/surveys?utm_source=x");
   });
 
   test("a workspace link without an accessible workspace opens the landing page", async () => {
-    mocks.workspaces = [];
+    marketingLinksData.workspaces = [];
     expect(await visit("/contacts")).toBe("/organizations/org-1/landing?utm_source=x");
   });
 
   test("a billing member without a workspace goes to billing", async () => {
-    mocks.workspaces = [];
-    mocks.role = "billing";
+    marketingLinksData.workspaces = [];
+    marketingLinksData.role = "billing";
     expect(await visit("/contacts")).toBe("/organizations/org-1/settings/billing?utm_source=x");
   });
 
   test("a user without an organization goes to the root page", async () => {
-    mocks.organizations = [];
+    marketingLinksData.organizations = [];
     expect(await visit("/surveys")).toBe("/");
   });
 
-  test("an expired session goes to login", async () => {
+  test("an expired session goes to login and comes back to the link", async () => {
     mocks.getSession.mockResolvedValue(null);
-    expect(await visit("/surveys")).toBe("/auth/login");
+    expect(await visit("/contacts/segments")).toBe(
+      `/auth/login?callbackUrl=${encodeURIComponent(`${WEBAPP_URL}/contacts/segments?utm_source=x`)}`
+    );
   });
 });

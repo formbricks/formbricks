@@ -1,6 +1,6 @@
 import "server-only";
 import { notFound, redirect } from "next/navigation";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getSession } from "@/modules/auth/lib/session";
@@ -21,13 +21,18 @@ import {
  */
 const handleMarketingRedirect = async (
   request: Request,
+  linkPath: string,
   destination: TMarketingDestination
 ): Promise<never> => {
+  const { search } = new URL(request.url);
   const session = await getSession();
   const userId = session?.user?.id;
   // The proxy already sends logged-out visitors to login with this link as callbackUrl; this only
-  // catches a session that expired in between.
-  if (!userId) return redirect("/auth/login");
+  // catches a session that expired in between, and keeps the same callbackUrl (the link as visited,
+  // not the rewritten route).
+  if (!userId) {
+    return redirect(`/auth/login?callbackUrl=${encodeURIComponent(WEBAPP_URL + linkPath + search)}`);
+  }
 
   const organizationId = await getActiveOrganizationIdForUser(userId);
   const workspaceId =
@@ -46,7 +51,7 @@ const handleMarketingRedirect = async (
       workspaceId,
       isBillingMember,
       isFormbricksCloud: IS_FORMBRICKS_CLOUD,
-      search: new URL(request.url).search,
+      search,
       destination,
     })
   );
@@ -60,5 +65,5 @@ export const marketingLinksRoute = async (
   const { path } = await context.params;
   const destination = getMarketingDestination(path, IS_FORMBRICKS_CLOUD);
   if (!destination) return notFound();
-  return handleMarketingRedirect(request, destination);
+  return handleMarketingRedirect(request, `/${(path ?? []).join("/")}`, destination);
 };
