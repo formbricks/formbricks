@@ -309,6 +309,31 @@ describe("per-unit failure isolation", () => {
     expect(result.counters).toMatchObject({ failed: 1, reconciled: 2, scanned: 2 });
   });
 
+  test("records an apply capability that throws against its organization and finishes the sweep", async () => {
+    vi.mocked(source.readOrganizationIdPage)
+      .mockResolvedValueOnce(["org-1", "org-2"])
+      .mockResolvedValueOnce([]);
+    vi.mocked(source.readOrganizationSource).mockImplementation(async (organizationId) => ({
+      ...emptySource,
+      teamIds: [`team-of-${organizationId}`],
+    }));
+    apply.reconcileTeamWorkspace.mockImplementation(async ({ teamIds }: { teamIds: string[] }) => {
+      if (teamIds.includes("team-of-org-1")) {
+        throw new Error("socket hang up");
+      }
+      return PROJECTED;
+    });
+
+    const result = await runAuthzedBackfill(request({ scope: { kind: "all" } }), dependencies);
+
+    expect(result.status).toBe("failed");
+    expect(result.counters).toMatchObject({ failed: 1, reconciled: 1, scanned: 2 });
+    expect(result.failures).toEqual([
+      { attempts: 1, code: "authzed_internal", organizationId: "org-1", retryable: false },
+    ]);
+    expect(result.lastOrganizationId).toBe("org-2");
+  });
+
   test("rejects a scope naming an organization that does not exist", async () => {
     vi.mocked(source.organizationExists).mockResolvedValue(false);
 

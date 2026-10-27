@@ -58,7 +58,7 @@ fi
 
 # Each step's limit. The graph step rewrites every organization, so its runtime grows with the instance:
 # EU Cloud needed about 35 minutes for ~51k organizations processed one at a time. They now run several at
-# once (ENG-4038), so that is an upper bound and this default leaves room for much larger instances.
+# once (ENG-4038). That figure is a reference, not a bound: operators size the limit from a timed rehearsal.
 step_timeout="${FORMBRICKS_AUTHZED_PREPARE_STEP_TIMEOUT_SECONDS:-5400}"
 if ! printf '%s\n' "$step_timeout" | grep -Eq '^[1-9][0-9]{0,4}$' ||
   [ "$step_timeout" -lt 60 ] || [ "$step_timeout" -gt 86400 ]; then

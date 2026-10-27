@@ -1226,7 +1226,15 @@ const processOrganizationPage = async (
     AUTHZED_BACKFILL_ORGANIZATION_CONCURRENCY,
     async (organizationId) => {
       const unit = createRunState();
-      await processOrganization({ ...ctx, state: unit }, organizationId);
+      try {
+        await processOrganization({ ...ctx, state: unit }, organizationId);
+      } catch (error) {
+        // `processOrganization` reports its own failures, so this only meets the unexpected — an injected
+        // apply capability that rejects instead of returning `{ status: "failed" }`, say. Recorded rather
+        // than rethrown: a rejection would abandon the page while its other workers kept writing, and the
+        // run would end with no report and no resume cursor.
+        recordFailure(unit, organizationId, error);
+      }
 
       return unit;
     }
