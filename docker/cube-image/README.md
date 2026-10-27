@@ -37,6 +37,11 @@ the three does not match.
 
 Dependabot security updates for `package-lock.json` need the same `REVISION` bump before they can merge.
 
+The `@azure/identity` override pins `@azure/msal-node` to `7.1.1` until Identity's supported range includes
+the fixed release. MSAL 7 removes `responseMode` from interactive browser authentication; this server
+image uses Cube's Postgres driver, not interactive Azure login. Keep the image smoke test passing when
+updating the override, and remove it once Identity's declared dependency includes the fixed version.
+
 ## Build and test locally
 
 ```bash
@@ -109,7 +114,7 @@ To check a published image's signature, pin the exact workflow identity, so a fo
 satisfy it:
 
 ```bash
-cosign verify ghcr.io/formbricks/cube:1.8.8-1 \
+cosign verify ghcr.io/formbricks/cube:1.8.8-2 \
   --certificate-identity https://github.com/formbricks/formbricks/.github/workflows/cube-image.yml@refs/heads/main \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
