@@ -1476,6 +1476,76 @@ describe("Response Utils", () => {
       expect(result[0]["person.email"]).toBe("test@example.com");
     });
 
+    describe("matrix rows in two languages (ENG-6779)", () => {
+      const matrixSurvey = asRead({
+        id: "survey1",
+        languages: [
+          { default: true, enabled: true, language: { code: "en" } },
+          { default: false, enabled: true, language: { code: "ar" } },
+        ],
+        blocks: [
+          {
+            id: "block1",
+            name: "Block 1",
+            elements: [
+              {
+                id: "qm",
+                type: TSurveyElementTypeEnum.Matrix,
+                headline: { default: "Rate us" },
+                required: false,
+                rows: [
+                  { id: "r1", label: { default: "Speed", ar: "السرعة" } },
+                  { id: "r2", label: { default: "Quality", ar: "الجودة" } },
+                ],
+                columns: [{ id: "c1", label: { default: "Good", ar: "جيد" } }],
+              },
+            ],
+          },
+        ],
+        hiddenFields: { enabled: false, fieldIds: [] },
+      } as unknown as Partial<TSurvey>);
+      const headlines = [["1. Rate us - Speed", "1. Rate us - Quality"]];
+      const exportRow = (language: string | null, data: Record<string, string>) =>
+        getResponsesJson(
+          matrixSurvey,
+          [
+            {
+              id: "r",
+              surveyId: "survey1",
+              data: { qm: data },
+              language,
+              meta: {},
+              contactAttributes: {},
+              variables: {},
+              finished: true,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              tags: [],
+            } as unknown as TResponse,
+          ],
+          headlines,
+          []
+        )[0];
+
+      test("reads rows by the default label for a default-language response", () => {
+        const row = exportRow("default", { Speed: "Good", Quality: "Good" });
+        expect(row["1. Rate us - Speed"]).toBe("Good");
+        expect(row["1. Rate us - Quality"]).toBe("Good");
+      });
+
+      test("reads rows by the respondent-language label for an Arabic response", () => {
+        const row = exportRow("ar", { السرعة: "جيد", الجودة: "جيد" });
+        expect(row["1. Rate us - Speed"]).toBe("جيد");
+        expect(row["1. Rate us - Quality"]).toBe("جيد");
+      });
+
+      test("still reads default-label keys for a response in another language", () => {
+        const row = exportRow("ar", { Speed: "Good" });
+        expect(row["1. Rate us - Speed"]).toBe("Good");
+        expect(row["1. Rate us - Quality"]).toBe("");
+      });
+    });
+
     test("a computed field named `__proto__` keeps its value, and reaches both writers", async () => {
       // `ZEmbeddedDataName` is a non-blank string, so `__proto__` is a legal variable name. On an
       // ordinary row object, assigning that key runs Object.prototype's inherited setter instead of

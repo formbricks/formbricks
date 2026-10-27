@@ -6624,6 +6624,11 @@ components:
         isDraft:
           type: boolean
           description: Draft marker used by the editor and future update rules.
+    SurveyQuestionCode:
+      type: string
+      maxLength: 30
+      pattern: ^[a-z][a-z0-9_]*$
+      description: Question code, the name the question carries in exports, webhooks and links. Optional. Starts with a lowercase letter, then lowercase letters, digits and `_`; no `__`, no trailing `_`, at most 30 characters. It must not be an SPSS reserved word (`all`, `and`, `by`, `eq`, `ge`, `gt`, `le`, `lt`, `ne`, `not`, `or`, `to`, `with`) or an export column name (`response_id`, `language`, `outcome`, ...), and must be unique among the survey's question codes, Embedded Data names and the Question IDs of other questions, ignoring case. CTA elements have no code.
     SurveyCharLimit:
       type: object
       description: Optional `openText` character limit configuration.
@@ -6714,6 +6719,8 @@ components:
         - $ref: '#/components/schemas/SurveyElementBase'
         - type: object
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -6746,6 +6753,8 @@ components:
           required:
             - label
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -6755,6 +6764,11 @@ components:
             validation:
               $ref: '#/components/schemas/SurveyValidation'
       unevaluatedProperties: false
+    SurveyAnswerCode:
+      type: string
+      maxLength: 20
+      pattern: ^[a-z0-9][a-z0-9_]*$
+      description: Answer code of an option, a matrix row or a matrix column. Optional. Lowercase letters, digits and `_`; it may start with a digit, but not with `_`; no `__`, no trailing `_`, at most 20 characters. It must not be an SPSS reserved word or an export column name, and must be unique within its question (a matrix's rows and columns are checked separately), ignoring case.
     SurveyChoice:
       type: object
       required:
@@ -6766,6 +6780,8 @@ components:
           description: Stable choice id.
         label:
           $ref: '#/components/schemas/TranslatableText'
+        code:
+          $ref: '#/components/schemas/SurveyAnswerCode'
       additionalProperties: false
     SurveyShuffleOption:
       type: string
@@ -6787,6 +6803,8 @@ components:
           required:
             - choices
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -6810,6 +6828,8 @@ components:
           required:
             - choices
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -6833,6 +6853,8 @@ components:
         - $ref: '#/components/schemas/SurveyElementBase'
         - type: object
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -6881,6 +6903,8 @@ components:
             - scale
             - range
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -6917,6 +6941,8 @@ components:
         id:
           type: string
           description: Stable picture choice id.
+        code:
+          $ref: '#/components/schemas/SurveyAnswerCode'
         imageUrl:
           type: string
         imageAltText:
@@ -6931,6 +6957,8 @@ components:
           required:
             - choices
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -6953,6 +6981,8 @@ components:
           required:
             - format
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -6975,6 +7005,8 @@ components:
           required:
             - allowMultipleFiles
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -6997,6 +7029,8 @@ components:
           required:
             - calUserName
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -7015,6 +7049,8 @@ components:
             - rows
             - columns
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -7059,6 +7095,8 @@ components:
             - zip
             - country
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -7085,6 +7123,8 @@ components:
           required:
             - choices
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -7113,6 +7153,8 @@ components:
             - phone
             - company
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -7138,6 +7180,8 @@ components:
             - scale
             - range
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:
@@ -7168,6 +7212,8 @@ components:
             - scale
             - range
           properties:
+            code:
+              $ref: '#/components/schemas/SurveyQuestionCode'
             type:
               type: string
               enum:

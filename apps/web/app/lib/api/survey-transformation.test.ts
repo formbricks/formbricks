@@ -1285,6 +1285,13 @@ describe("Edge Cases", () => {
   });
 });
 
+type TCoded = {
+  code: string;
+  choices: { code: string }[];
+  rows: { code: string }[];
+  columns: { code: string }[];
+};
+
 describe("round-trip transformation", () => {
   test("should maintain question structure through round-trip transformation", () => {
     const originalQuestions = [
@@ -1317,6 +1324,42 @@ describe("round-trip transformation", () => {
     expect(transformedQuestions[0].headline).toEqual({ default: "What is your name?" });
     expect(transformedQuestions[0].buttonLabel).toEqual({ default: "Next" });
     expect(transformedQuestions[1].type).toBe("multipleChoiceSingle");
+  });
+
+  test("carries question, answer, row and column codes both ways (ENG-6778)", () => {
+    const originalQuestions = [
+      {
+        id: "q2",
+        code: "age",
+        type: "multipleChoiceSingle",
+        headline: { default: "Choose one" },
+        required: false,
+        choices: [
+          { id: "c1", code: "1", label: { default: "Option 1" } },
+          { id: "c2", code: "2", label: { default: "Option 2" } },
+        ],
+        shuffleOption: "none",
+      },
+      {
+        id: "q3",
+        code: "grid",
+        type: "matrix",
+        headline: { default: "Grid" },
+        required: false,
+        rows: [{ id: "r1", code: "1", label: { default: "Row" } }],
+        columns: [{ id: "k1", code: "9", label: { default: "Col" } }],
+        shuffleOption: "none",
+      },
+    ] as unknown as TSurveyQuestion[];
+
+    const blocks = transformQuestionsToBlocks(originalQuestions, []);
+    expect(blocks[0].elements[0]).toMatchObject({ code: "age" });
+
+    const questions = transformBlocksToQuestions(blocks, []) as unknown as TCoded[];
+    expect(questions[0].code).toBe("age");
+    expect(questions[0].choices.map((choice: { code: string }) => choice.code)).toEqual(["1", "2"]);
+    expect(questions[1].rows[0].code).toBe("1");
+    expect(questions[1].columns[0].code).toBe("9");
   });
 
   test("should maintain logic through round-trip transformation", () => {

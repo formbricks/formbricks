@@ -844,6 +844,17 @@ A block is `{ name, elements[], id? }`; an element is `{ id, type, headline, ...
 leaves draft; block ids are generated when omitted. Translatable fields are keyed by locale code and
 must carry every configured language — the internal `default` key is rejected.
 
+Every element except `cta` may carry an optional **question code**, and every choice, matrix row or
+column and picture choice an optional **answer code**: `{ "id": "satisfaction", "code": "q1", ... }`
+and `{ "id": "c1", "code": "1", "label": { ... } }`. A missing code is not an error. A question code
+starts with a lowercase letter, then lowercase letters, digits and `_` (no `__`, no trailing `_`, at
+most 30 characters); an answer code uses the same characters, may start with a digit and is at most 20
+characters. Neither may be an SPSS reserved word (`all`, `and`, `by`, `eq`, `ge`, `gt`, `le`, `lt`,
+`ne`, `not`, `or`, `to`, `with`) or an export column name (`response_id`, `language`, `outcome`, ...).
+Question codes are unique across the survey, its Embedded Data names and the other questions' ids,
+ignoring case; answer codes are unique within their question, with a matrix's rows and columns checked
+separately. A clash is reported as `invalid_params`, and `validate_survey` runs the same check.
+
 The same list is carried on the tool's own `blocks` description, generated from
 `TSurveyElementTypeEnum` so the two cannot drift. Per-type required fields are not restated here.
 `validate_survey` will reject an element that is missing them, but it reports the element **by its

@@ -9,6 +9,7 @@ import {
   validateNewDeclaredFieldNames,
   validateNewDeclaredFields,
   validateNewElementIdClashes,
+  validateNewQuestionCodeClashes,
 } from "./declared-field-guard";
 import { TValidateIdErrorCode } from "./validation";
 
@@ -734,5 +735,74 @@ describe("the embeddedFields carrier", () => {
         })
       ).toEqual([{ code: TValidateIdErrorCode.Duplicate, field: "plan" }]);
     });
+  });
+});
+
+describe("validateNewQuestionCodeClashes (ENG-6778)", () => {
+  /** Blocks holding one coded element per code, as `TSurvey.blocks` carries them. */
+  const coded = (...codes: string[]) => [{ elements: codes.map((code, i) => ({ id: `e${i}`, code })) }];
+
+  const codeClashes = (params: { existing: TDeclaredFieldSource; incoming: TDeclaredFieldSource }) =>
+    validateNewQuestionCodeClashes(params).map((error) => error.field);
+
+  test("a new hidden field may not take a question code, ignoring case", () => {
+    expect(
+      codeClashes({
+        existing: { blocks: coded("q1") },
+        incoming: { ...declared({ hiddenFields: ["Q1"] }), blocks: coded("q1") },
+      })
+    ).toEqual(["Q1"]);
+  });
+
+  test("a new variable may not take a question code", () => {
+    expect(
+      codeClashes({
+        existing: { blocks: coded("score") },
+        incoming: { ...declared({ variables: ["score"] }), blocks: coded("score") },
+      })
+    ).toEqual(["score"]);
+  });
+
+  test("a create declaring both under one name is refused", () => {
+    expect(
+      validateNewQuestionCodeClashes({
+        existing: {},
+        incoming: { ...declared({ hiddenFields: ["plan"] }), blocks: coded("plan") },
+      })
+    ).toEqual([{ code: TValidateIdErrorCode.Duplicate, field: "plan" }]);
+  });
+
+  test("a clash the survey already holds is grandfathered", () => {
+    const both = { ...declared({ hiddenFields: ["plan"] }), blocks: coded("plan") };
+    expect(codeClashes({ existing: both, incoming: both })).toEqual([]);
+  });
+
+  test("blocks the payload does not carry are the survey's current ones", () => {
+    expect(
+      codeClashes({
+        existing: { blocks: coded("plan") },
+        incoming: declared({ hiddenFields: ["plan"] }),
+      })
+    ).toEqual(["plan"]);
+  });
+
+  test("distinct names, uncoded elements and malformed blocks never clash", () => {
+    expect(
+      codeClashes({
+        existing: {},
+        incoming: {
+          ...declared({ hiddenFields: ["plan"] }),
+          blocks: [{ elements: [{ id: "plan" }, null] }, "nope", { elements: [{ id: "x", code: "q1" }] }],
+        },
+      })
+    ).toEqual([]);
+  });
+
+  test("validateNewDeclaredFields reports it once, with the other clashes", () => {
+    const errors = validateNewDeclaredFields({
+      existing: { blocks: coded("plan") },
+      incoming: { ...declared({ hiddenFields: ["plan"] }), blocks: coded("plan") },
+    });
+    expect(errors).toEqual([{ code: TValidateIdErrorCode.Duplicate, field: "plan" }]);
   });
 });

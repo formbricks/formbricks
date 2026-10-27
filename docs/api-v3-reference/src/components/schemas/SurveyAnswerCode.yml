@@ -1,0 +1,8 @@
+type: string
+maxLength: 20
+pattern: ^[a-z0-9][a-z0-9_]*$
+description: >-
+  Answer code of an option, a matrix row or a matrix column. Optional. Lowercase letters, digits and `_`;
+  it may start with a digit, but not with `_`; no `__`, no trailing `_`, at most 20 characters. It must
+  not be an SPSS reserved word or an export column name, and must be unique within its question (a
+  matrix's rows and columns are checked separately), ignoring case.

@@ -5,6 +5,8 @@ allOf:
       - scale
       - range
     properties:
+      code:
+        $ref: ./SurveyQuestionCode.yml
       type:
         type: string
         enum:
