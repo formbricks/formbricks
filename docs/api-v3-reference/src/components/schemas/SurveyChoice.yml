@@ -8,4 +8,6 @@ properties:
     description: Stable choice id.
   label:
     $ref: ./TranslatableText.yml
+  code:
+    $ref: ./SurveyAnswerCode.yml
 additionalProperties: false

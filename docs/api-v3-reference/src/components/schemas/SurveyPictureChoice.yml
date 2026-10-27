@@ -6,6 +6,8 @@ properties:
   id:
     type: string
     description: Stable picture choice id.
+  code:
+    $ref: ./SurveyAnswerCode.yml
   imageUrl:
     type: string
   imageAltText:
