@@ -810,6 +810,113 @@ describe("Tests for updateSurvey", () => {
       expect(prisma.survey.update).not.toHaveBeenCalled();
     });
 
+    // ENG-6783: the published lock holds on the editor save and v1 PUT, which both land here.
+    describe("published lock (ENG-6783)", () => {
+      const choiceElement = (overrides: Record<string, unknown> = {}) => ({
+        id: "fruit",
+        type: "multipleChoiceSingle",
+        headline: { default: "Pick one" },
+        required: false,
+        code: "fruit",
+        shuffleOption: "none",
+        choices: [
+          { id: "apple", label: { default: "Apple" }, code: "1" },
+          { id: "pear", label: { default: "Pear" }, code: "2" },
+          { id: "plum", label: { default: "Plum" }, code: "3" },
+        ],
+        ...overrides,
+      });
+      const withElement = (element: unknown) => [{ id: "block1", name: "Block 1", elements: [element] }];
+      const stored = (status: string) =>
+        ({ ...mockSurveyOutput, status, blocks: withElement(choiceElement()) }) as any;
+      const incoming = (element: unknown, status = "inProgress") =>
+        ({ ...updateSurveyInput, status, blocks: withElement(element) }) as any;
+
+      test.each([
+        ["a question code", { code: "renamed" }, /question code "fruit"/],
+        [
+          "option text",
+          {
+            choices: [
+              { id: "apple", label: { default: "Apples" }, code: "1" },
+              { id: "pear", label: { default: "Pear" }, code: "2" },
+              { id: "plum", label: { default: "Plum" }, code: "3" },
+            ],
+          },
+          /text of option "apple"/,
+        ],
+        [
+          "an answer code",
+          {
+            choices: [
+              { id: "apple", label: { default: "Apple" }, code: "7" },
+              { id: "pear", label: { default: "Pear" }, code: "2" },
+              { id: "plum", label: { default: "Plum" }, code: "3" },
+            ],
+          },
+          /answer code "1"/,
+        ],
+        [
+          "an option deleted",
+          {
+            choices: [
+              { id: "apple", label: { default: "Apple" }, code: "1" },
+              { id: "pear", label: { default: "Pear" }, code: "2" },
+            ],
+          },
+          /option "plum".*cannot be deleted/,
+        ],
+        ["the question type", { type: "multipleChoiceMulti" }, /type of question "fruit"/],
+        [
+          "an isDraft flag the stored element does not have",
+          { isDraft: true, code: "renamed" },
+          /question code/,
+        ],
+      ])("refuses %s on a published survey and does not write", async (_label, change, message) => {
+        prisma.survey.findUnique.mockResolvedValueOnce(stored("inProgress"));
+
+        const attempt = updateSurveyInternal(incoming(choiceElement(change)));
+
+        await expect(attempt).rejects.toThrow(InvalidInputError);
+        await expect(attempt).rejects.toThrow(/^published_survey_locked: /);
+        await expect(attempt).rejects.toThrow(message);
+        expect(prisma.survey.update).not.toHaveBeenCalled();
+      });
+
+      test.each(["paused", "completed"])("also applies to a %s survey", async (status) => {
+        prisma.survey.findUnique.mockResolvedValueOnce(stored(status));
+
+        await expect(
+          updateSurveyInternal(incoming(choiceElement({ code: "renamed" }), status))
+        ).rejects.toThrow(/^published_survey_locked: /);
+      });
+
+      test("does not apply to a draft", async () => {
+        prisma.survey.findUnique.mockResolvedValueOnce(stored("draft"));
+        prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as any);
+
+        await updateSurveyInternal(incoming(choiceElement({ code: "renamed" }), "draft"), true);
+
+        expect(prisma.survey.update).toHaveBeenCalledTimes(1);
+      });
+
+      test("allows adding an option and editing the headline on a published survey", async () => {
+        prisma.survey.findUnique.mockResolvedValueOnce(stored("inProgress"));
+        prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+        await updateSurveyInternal(
+          incoming(
+            choiceElement({
+              headline: { default: "Pick one, please" },
+              choices: [...choiceElement().choices, { id: "fig", label: { default: "Fig" }, code: "4" }],
+            })
+          )
+        );
+
+        expect(prisma.survey.update).toHaveBeenCalledTimes(1);
+      });
+    });
+
     describe("Feedback source reconciliation (ENG-2064)", () => {
       // The blocks that come back from prisma.survey.update, deliberately distinguishable from the
       // caller's payload. Reconciling against the payload deletes mappings for questions that are

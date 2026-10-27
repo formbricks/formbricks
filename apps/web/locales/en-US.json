@@ -4259,6 +4259,7 @@
         "protect_survey_with_pin_description": "Only users who have the PIN can access the survey.",
         "publish": "Activate",
         "publish_survey_on_date": "Activate survey on date",
+        "published_survey_locked": "Your changes were not saved. {details}",
         "question": "Question",
         "question_deleted": "Question deleted.",
         "question_duplicated": "Question duplicated.",

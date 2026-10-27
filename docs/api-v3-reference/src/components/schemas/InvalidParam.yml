@@ -25,7 +25,12 @@ properties:
       - duplicate_identifier
       - duplicate_locale
       - forbidden_identifier
+      - immutable_answer_code
       - immutable_identifier
+      - immutable_option_deletion
+      - immutable_option_text
+      - immutable_question_code
+      - immutable_question_type
       - invalid_locale
       - invalid_reference
       - missing_required_field
@@ -44,6 +49,16 @@ properties:
       today and nothing more — `INVALID_PARAM_CODES` in `app/api/v3/lib/response.ts` is the
       registry, and a code absent from it is dropped before the response is built. Categories for
       operations that do not exist yet are added with the code that emits them, not ahead of it.
+
+
+      `immutable_question_code`, `immutable_answer_code`, `immutable_question_type`,
+      `immutable_option_text` and `immutable_option_deletion` come from the published-survey lock: once
+      a survey has left `draft` (`inProgress`, `paused` or `completed`; a scheduled survey is `paused`),
+      question codes, answer codes, question types and option text in every language are locked, and an
+      option, matrix row or matrix column that existed when the survey was published cannot be deleted.
+      `name` points at the offending field (at the option list for a deletion) and `identifier` is the
+      option id, or the element id when the option is not the subject. Adding questions and options is
+      still allowed.
 
 
       `qsf_not_recognized` and `qsf_limit_exceeded` come from the Qualtrics import (an internal,

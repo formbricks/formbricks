@@ -131,6 +131,10 @@ patch:
         `duplicate_identifier` (inserting an id that already exists), `missing_required_field` (an
         inserted block whose `id` is present but empty — omitting `id` entirely is fine, the server
         generates one), `immutable_identifier` (`block.id` contradicting the op's `id`),
+        `immutable_question_code`, `immutable_answer_code`, `immutable_question_type`,
+        `immutable_option_text` and `immutable_option_deletion` (an op that would change a code, a
+        question type or option text of a published survey, or delete an option that existed at
+        launch),
         and `stored_survey_invalid` when the stored survey itself fails the document contract.
         The edit is also refused when it newly *introduces* a loop in the conditional logic —
         jumps, fallbacks and next blocks leading back on themselves, so a respondent could never

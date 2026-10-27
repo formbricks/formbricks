@@ -29,6 +29,10 @@ import {
   validateNewDeclaredFields,
 } from "@formbricks/types/surveys/declared-field-guard";
 import {
+  describePublishedLockViolations,
+  getPublishedLockViolations,
+} from "@formbricks/types/surveys/published-lock";
+import {
   TSurvey,
   TSurveyCreateInput,
   TSurveyVariables,
@@ -480,6 +484,16 @@ export const updateSurveyInternal = async (
     // Archive/restore themselves bypass this guard: they write archivedAt directly, not via update.
     if (currentSurvey.archivedAt) {
       throw new InvalidInputError("This survey is archived. Restore it before editing.");
+    }
+
+    // ENG-6783: once published, codes, question types and option text are locked (ADR 0015). The
+    // comparison is against the stored survey, so a client cannot unlock an element by flagging it
+    // `isDraft`. Covers the editor save and v1 PUT; v3 PATCH runs the same function in its own path.
+    if (currentSurvey.status !== "draft") {
+      const lockViolations = getPublishedLockViolations(currentSurvey, updatedSurvey);
+      if (lockViolations.length > 0) {
+        throw new InvalidInputError(describePublishedLockViolations(lockViolations));
+      }
     }
 
     // ENG-1749: workspaceId and id are the survey's tenant anchors. Always resolve the workspace from
