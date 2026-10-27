@@ -803,8 +803,9 @@ export const SurveyMenuBar = ({
         return;
       }
 
-      isSurveyPublishingRef.current = false;
-      setIsSurveyPublishing(false);
+      // Publishing stays "in progress" until the editor unmounts: the summary page can take a while to
+      // render for a large survey, and resetting here re-enabled Activate mid-navigation, inviting a
+      // second publish.
 
       // When the user publishes their second survey, fire an in-app code action so a
       // Formbricks survey can be triggered from the dashboard. The flag is computed
@@ -868,8 +869,7 @@ export const SurveyMenuBar = ({
         return;
       }
 
-      isSurveyPublishingRef.current = false;
-      setIsSurveyPublishing(false);
+      // Stays in progress until the editor unmounts, as in handleSurveyPublish.
       isSuccessfullySavedRef.current = true;
       router.push(`${workspaceBasePath}/surveys/${localSurvey.id}/summary?scheduled=true`);
     } catch (error) {

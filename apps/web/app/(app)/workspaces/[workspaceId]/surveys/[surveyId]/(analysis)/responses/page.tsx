@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { prisma } from "@formbricks/database";
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { SurveyAnalysisNavigation } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
@@ -48,7 +49,7 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string; sur
   ]);
 
   if (!survey) {
-    throw new ResourceNotFoundError(t("common.survey"), params.surveyId);
+    return notFound();
   }
 
   if (!user) {
