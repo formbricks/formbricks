@@ -22,7 +22,8 @@ import { type TWebhookDeliveryOutcome, recordWebhookDeliveryOutcome } from "./we
 /**
  * The wire body. Byte-for-byte what the pipeline job sent before deliveries were fanned out — receivers
  * and their signature checks must not notice the refactor — so this shape is pinned by a parity test and
- * is not the place for new fields.
+ * is not the place for new fields. The one addition is `outcome` (ENG-6780), always present and `null`
+ * when unset, including for a job queued before the column existed.
  */
 export const buildWebhookDeliveryBody = (data: TWebhookDeliveryJobData): string =>
   JSON.stringify({
@@ -30,6 +31,7 @@ export const buildWebhookDeliveryBody = (data: TWebhookDeliveryJobData): string 
     event: data.event,
     data: {
       ...data.response,
+      outcome: data.response.outcome ?? null,
       data: resolveStorageUrlsInObject(data.response.data),
       survey: {
         title: data.survey.name,

@@ -658,6 +658,18 @@ describe("surveys", () => {
       expect(result.finished).toBe(true);
     });
 
+    test("should filter by the Low quality outcome without touching finished", () => {
+      const selectedFilter: SelectedFilterValue = {
+        responseStatus: "lowQuality",
+        filter: [],
+      };
+
+      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+
+      expect(result.outcome).toBe("lowQuality");
+      expect(result.finished).toBeUndefined();
+    });
+
     test("should filter by date range", () => {
       const selectedFilter: SelectedFilterValue = {
         responseStatus: "all",
