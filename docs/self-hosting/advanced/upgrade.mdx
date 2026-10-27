@@ -5,7 +5,8 @@ icon: "arrow-up-right-dots"
 ---
 
 Keep your deployment on a [maintained release](/self-hosting/advanced/release-maintenance-policy).
-Choose your deployment method, then read the notes for the versions you cross.
+Start with [Release notes](/platform/changelog) to see what changed and who needs to act.
+Then choose your deployment procedure below.
 
 <span id="docker-and-one-click" />
 <span id="kubernetes-helm" />
@@ -22,7 +23,8 @@ Choose your deployment method, then read the notes for the versions you cross.
 ## Before you start
 
 - Record your current version and choose a target from [stable releases](https://github.com/formbricks/formbricks/releases/latest).
-  Read the [version notes](/self-hosting/advanced/migration) for every version you cross.
+  Read the [release notes](/platform/changelog) for every version you cross, including patches.
+  Follow the linked actions; missing historical notes do not establish that an upgrade needs no extra steps.
 - Upgrade one major at a time, including any intermediate stops in those notes. A supported path is
   distinct from a **tested pair**: only claim the latter when release evidence names both versions.
 - Rehearse with a restored copy of your data. Check your integrations and measure the maintenance window.
@@ -57,6 +59,10 @@ Keep public traffic closed while you check:
 Open a fresh browser session and hard-refresh an old tab. If you use a CDN, verify
 [current renderer assets](/self-hosting/configuration/cdn) reach clients.
 Resume controllers and traffic only after acceptance. Retain backups until the upgrade is accepted.
+
+
+Run the [deployment check](/self-hosting/setup/deployment-check) in a dedicated workspace before reopening
+traffic. It complements the permission, worker and release-specific checks; skipped checks are not proof of success.
 
 ## If something fails
 

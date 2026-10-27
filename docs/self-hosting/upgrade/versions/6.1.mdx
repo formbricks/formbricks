@@ -4,6 +4,11 @@ description: "Required actions, compatibility exceptions and recovery for this r
 icon: "arrow-up-right-dots"
 ---
 
+<Note>
+  Upgrading to 6.1.1 or later on this release line? Also read the
+  [October security patch actions](/self-hosting/upgrade/versions/2026-10-security-patches).
+</Note>
+
 ## Before
 
 - Applies to self-hosted 6.0 → 6.1 upgrades. From v5, complete the [6.0 prerequisites](/self-hosting/upgrade/versions/6.0) first.
@@ -29,11 +34,15 @@ Use [coordinated recovery](/self-hosting/operate/backup-restore) if repair canno
 These are historical compatibility exceptions; the [compatibility commitment](/self-hosting/advanced/release-maintenance-policy#integration-compatibility)
 does not erase them.
 
-- Ending-card URLs require a dotted hostname, `localhost` or an IP. A single-label host returns `400` on save.
-- New hidden fields cannot share a question name on v1 survey creation/update (`400`).
-- Survey creation/copying returns `422 workspace_survey_limit_reached` at the configured workspace limit.
-  Review `SURVEY_WORKSPACE_LIMIT` before upgrading; the default is `10000`, including archived surveys.
-- Helm custom images must support the new container security settings. Review the [6.1 changelog](/platform/changelog).
+- Regenerate [encrypted single-use links](/self-hosting/upgrade/versions/6.1-single-use-links).
+- Review [Helm security contexts and taxonomy timeouts](/self-hosting/upgrade/versions/6.1-runtime#helm-security-contexts-and-taxonomy-timeouts)
+  if you use custom images or override taxonomy settings.
+
+**API**
+
+* **Ending-card URLs need a real host.** `buttonLink` and `url` on ending cards (v1, v2 and v3 survey create and update) must use a hostname with a dot (`intranet.example.com`), `localhost` or an IP address. A host like `http://intranet` now returns 400. Existing surveys keep loading; the rule applies when they are next saved ([#9399](https://github.com/formbricks/formbricks/pull/9399))
+* **Hidden fields can't share a name with a question.** Adding one on `POST` or `PUT /api/v1/management/surveys` returns 400. Existing surveys keep saving ([#9467](https://github.com/formbricks/formbricks/pull/9467))
+* **New survey limit per workspace.** `SURVEY_WORKSPACE_LIMIT` (a number, default `10000`, archived surveys included) caps the surveys in one workspace. Creating or copying a survey past it returns `422 workspace_survey_limit_reached` on v1 and v3. Raise it before upgrading if a workspace is close ([#9412](https://github.com/formbricks/formbricks/pull/9412))
 
 
 ## Survey visibility (opt-in)

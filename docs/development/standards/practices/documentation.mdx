@@ -134,16 +134,33 @@ These documentation requirements ensure that our codebase remains maintainable, 
 | --- | --- |
 | Compatibility and support promises | Release and maintenance policy |
 | Ordered deployment commands | Self Hosting → Upgrade deployment recipe |
-| Release-specific actions | Target-minor upgrade note; patch exceptions within that note |
+| Release summary and deployment impact | Release notes at `/platform/changelog`, one entry per stable release |
+| Detailed release-specific actions | A focused procedure linked from the release entry |
 | Product and integration behavior | Product guide or public integration setup |
 | Migration authoring and release checks | Development and existing release-authoring gates |
-| What shipped | Changelog, linking to exact upgrade actions |
 
 Keep shared procedures version-neutral. Link to `stable` for discovery; deployment examples record a
 chosen release rather than silently following a moving image. Preserve historical release boundaries.
 Do not create a new guide for a release with no additional operator action merely to fill navigation.
 
-### Target-version note
+### Release notes for every release
+
+Add an entry to `docs/platform/changelog.mdx` for **every stable release, including patches and backports**.
+Keep the existing URL. Each entry contains:
+
+- Version, publication date and a short summary of user-visible changes.
+- **Deployment impact:** action required for named setups, or standard procedure only after verification.
+- Links to exact actions, the shared upgrade procedure and the complete GitHub release changes.
+
+Write the deployment summary once and reuse it in GitHub release notes. Short actions can stay in the
+entry; longer commands belong in a linked procedure. Do not maintain two copies of the instructions.
+A release with no extra steps still gets an entry, but does not need an empty migration guide.
+
+For historical releases without enough evidence, say **Review required**. Do not infer safety from a
+missing guide or from the absence of a breaking-change label. Review migrations, dependencies, chart
+values, configuration and security exceptions through the existing release-authoring checks.
+
+### Detailed upgrade actions
 
 Start with who must act and use short **Before / During / After** sections. Include:
 
@@ -151,8 +168,8 @@ Start with who must act and use short **Before / During / After** sections. Incl
 - Integration/configuration changes, dependencies, service impact and known affected/fixed patches.
 - Validation, stop conditions, recovery limits and links to the canonical recipe and release notes.
 
-Say “No additional upgrade steps beyond the standard procedure” only after verification. Missing notes
-are not a compatibility guarantee. Record unknowns in the PR, not as unsupported customer promises.
+Use **Before / During / After** only where each section adds information. Link the procedure from its
+release entry and from the relevant target-minor note, so operators crossing several patches find it.
 
 ### Review a documentation change
 

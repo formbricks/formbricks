@@ -9,6 +9,9 @@ baseline Formbricks stack: Formbricks Web, PostgreSQL, Redis/Valkey, Formbricks 
 services such as Qwen/vLLM, AI taxonomy, and RustFS are documented after the baseline stack is running. The
 baseline also runs a single SpiceDB instance for Formbricks authorization data.
 
+See [deployment components](/self-hosting/deployment-components) for required services, managed alternatives
+and the release-specific image inventory.
+
 ### Requirements
 
 Make sure the following tools are installed:
@@ -28,7 +31,7 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
 ## Choose Your Setup Path
 
 - Use this manual Docker Compose guide for local installs, custom servers, or custom reverse-proxy setups.
-- Use the [one-click setup script](/self-hosting/setup/one-click) for production Ubuntu servers where you want
+- Use the [one-click setup script](/self-hosting/setup/one-click) for Debian 12/13 or Ubuntu servers where you want
   Traefik, HTTPS certificates, and optional RustFS automation.
 - Use the [migration guide](/self-hosting/advanced/migration#v5) before updating an existing Formbricks 4.x
   install or an older v5 compose file.
@@ -335,3 +338,7 @@ Common checks:
 
 If you have any questions or require help, reach out on
 [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions).
+
+## Verify the installation
+
+Run the [deployment check](/self-hosting/setup/deployment-check) in a dedicated workspace before collecting real responses.

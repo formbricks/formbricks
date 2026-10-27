@@ -49,6 +49,9 @@ Use this procedure for Helm, Argo CD and Flux deployments. First complete the
     The chart's permission gate checks prepared state; it does not replace the preparation Job.
   </Step>
   <Step title="Verify, then reopen traffic">
+    Run the [deployment check](/self-hosting/setup/deployment-check) in a dedicated workspace.
+    Also complete the permission, worker and release-specific checks below; skipped checks are not a pass.
+
     Complete the [acceptance checks](/self-hosting/advanced/upgrade#after-the-upgrade), including any
     version-specific backfill or enablement. Read actual pod image IDs and check Jobs completed.
     Restore controllers against the new desired state, then reopen traffic and watch queues and errors.

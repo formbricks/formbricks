@@ -1,7 +1,6 @@
-#!/bin/env bash
+#!/usr/bin/env bash
 
 set -e
-ubuntu_version=$(lsb_release -a 2>/dev/null | grep -v "No LSB modules are available." | grep "Description:" | awk -F "Description:\t" '{print $2}')
 legacy_valkey_image="valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d"
 multi_arch_valkey_image="valkey/valkey@sha256:e0eb7c480958d32bdc4357a74bdd70653ae15f2f9b4c93c4a5a9fad1dc471c84"
 # v3.6.15 or later: before it, the buffering middleware on the auth routers turned an empty chunked response,
@@ -172,6 +171,181 @@ write_rustfs_env_file() {
   upsert_dotenv_var "FORMBRICKS_RUSTFS_POLICY_NAME" "$rustfs_policy_name" "$env_file"
   upsert_dotenv_var "FORMBRICKS_RUSTFS_REGION" "us-east-1" "$env_file"
 }
+
+detect_docker_apt_repository() {
+  local os_release_file="${1:-/etc/os-release}"
+  local distro codename
+
+  [ -r "$os_release_file" ] || return 1
+  distro=$(. "$os_release_file" && printf '%s' "${ID:-}") || return 1
+
+  case "$distro" in
+    debian) codename=$(. "$os_release_file" && printf '%s' "${VERSION_CODENAME:-}") || return 1 ;;
+    ubuntu) codename=$(. "$os_release_file" && printf '%s' "${UBUNTU_CODENAME:-${VERSION_CODENAME:-}}") || return 1 ;;
+    *) return 1 ;;
+  esac
+
+  [[ "$codename" =~ ^[a-z][a-z0-9-]*$ ]] || return 1
+  printf '%s %s\n' "$distro" "$codename"
+}
+
+docker_apt_source_line() {
+  printf 'deb [arch=%s signed-by=%s] https://download.docker.com/linux/%s %s stable\n' "$3" "$4" "$1" "$2"
+}
+
+# The old installer wrote this one invalid entry on Debian. Disable only that exact entry so
+# its apt failure cannot prevent a rerun, and keep the original outside apt's source directory.
+quarantine_legacy_docker_apt_source() {
+  local distro="$1" codename="$2" architecture="$3" source_file="$4" key_file="$5"
+  local backup_dir="${6:-/var/tmp}" contents normalized expected backup_file
+
+  [[ "$distro" == debian && -f "$source_file" ]] || return 0
+  contents=$(cat "$source_file") || return 1
+  normalized=$(printf '%s\n' "$contents" | awk '{$1=$1; print}') || return 1
+  expected=$(docker_apt_source_line ubuntu "$codename" "$architecture" "$key_file")
+  [[ "$normalized" == "$expected" ]] || return 0
+
+  backup_file=$(mktemp "$backup_dir/formbricks-docker-list.XXXXXXXX") || return 1
+  if ! sudo cp -p "$source_file" "$backup_file" || ! sudo rm "$source_file"; then
+    echo "❌ Could not safely disable the old Docker apt source at $source_file." >&2
+    echo "Its backup is at $backup_file; check the active source before updating apt." >&2
+    return 1
+  fi
+
+  echo "ℹ️ Disabled the old invalid Docker apt source; backup: $backup_file" >&2
+  printf '%s\n' "$backup_file"
+}
+
+# Reuse a matching source without modifying its key. An unfamiliar source needs an operator's
+# decision; writing another Docker source beside it can create conflicting Signed-By settings.
+existing_docker_apt_source() {
+  local distro="$1" codename="$2" architecture="$3" source_file="$4" key_file="$5"
+  local modern_source="${source_file%.list}.sources" contents normalized expected modern_key_file
+
+  if [[ -e "$source_file" && -e "$modern_source" ]]; then
+    echo "❌ Both $source_file and $modern_source exist. Resolve the Docker apt sources before continuing." >&2
+    return 1
+  fi
+
+  if [[ -e "$source_file" ]]; then
+    contents=$(cat "$source_file") || return 1
+    normalized=$(printf '%s\n' "$contents" | awk '{$1=$1; print}') || return 1
+    expected=$(docker_apt_source_line "$distro" "$codename" "$architecture" "$key_file")
+    if [[ "$normalized" == "$expected" ]]; then
+      if [[ ! -f "$key_file" || ! -r "$key_file" ]]; then
+        echo "❌ Docker apt source $source_file references missing or unreadable key $key_file." >&2
+        return 1
+      fi
+      printf 'reuse\n'
+      return
+    fi
+  elif [[ -e "$modern_source" ]]; then
+    if [[ $(grep -Ec '^Types:' "$modern_source") -eq 1 ]] &&
+      ! grep -Eqi '^Enabled:[[:space:]]+no[[:space:]]*$' "$modern_source" &&
+      grep -Eq '^Types:[[:space:]]+deb[[:space:]]*$' "$modern_source" &&
+      grep -Eq "^URIs:[[:space:]]+https://download[.]docker[.]com/linux/$distro[[:space:]]*$" "$modern_source" &&
+      grep -Eq "^Suites:[[:space:]]+$codename[[:space:]]*$" "$modern_source" &&
+      grep -Eq '^Components:[[:space:]]+stable[[:space:]]*$' "$modern_source" &&
+      (! grep -Eq '^Architectures:' "$modern_source" ||
+        grep -Eq "^Architectures:[[:space:]]+$architecture[[:space:]]*$" "$modern_source") &&
+      grep -Eq '^Signed-By:[[:space:]]+/[^[:space:]]+[[:space:]]*$' "$modern_source"; then
+      modern_key_file=$(sed -nE 's/^Signed-By:[[:space:]]+(\/[^[:space:]]+)[[:space:]]*$/\1/p' "$modern_source") || return 1
+      if [[ ! -f "$modern_key_file" || ! -r "$modern_key_file" ]]; then
+        echo "❌ Docker apt source $modern_source references missing or unreadable key $modern_key_file." >&2
+        return 1
+      fi
+      printf 'reuse\n'
+      return
+    fi
+  else
+    printf 'create\n'
+    return
+  fi
+
+  echo "❌ An unfamiliar Docker apt source exists. Resolve it before automatic Docker installation." >&2
+  echo "Check $source_file and $modern_source; neither was changed." >&2
+  return 1
+}
+
+setup_docker_apt_repository() (
+  # These variables belong to this subshell. Keep them visible to its EXIT trap on Bash 3.2 too.
+  distro="$1"
+  codename="$2"
+  architecture="$3"
+  source_file="$4"
+  key_file="$5"
+  key_backup=""
+  key_published=false
+  source_published=false
+  validated=false
+
+  temp_dir=$(mktemp -d) || exit 1
+  key_stage="${key_file}.formbricks.$$"
+  source_stage="${source_file}.formbricks.$$"
+
+  cleanup_docker_apt_repository() {
+    if [[ "$validated" != true ]]; then
+      if [[ "$source_published" == true ]] && ! sudo rm -f "$source_file"; then
+        echo "❌ Could not remove $source_file after repository failure; remove it before using apt." >&2
+      fi
+      if [[ "$key_published" == true ]]; then
+        if [[ -n "$key_backup" ]]; then
+          if ! sudo cp -p "$key_backup" "$key_file"; then
+            echo "❌ Could not restore the previous Docker key at $key_file." >&2
+          fi
+        elif ! sudo rm -f "$key_file"; then
+          echo "❌ Could not remove the new Docker key at $key_file." >&2
+        fi
+      fi
+    fi
+    sudo rm -f "$key_stage" "$source_stage" || true
+    rm -rf "$temp_dir"
+  }
+  trap cleanup_docker_apt_repository EXIT
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+
+  if ! curl -fsSL -o "$temp_dir/docker-key.asc" "https://download.docker.com/linux/$distro/gpg"; then
+    echo "❌ Could not download Docker's $distro repository key." >&2
+    exit 1
+  fi
+  if ! gpg --batch --dearmor -o "$temp_dir/docker.gpg" "$temp_dir/docker-key.asc"; then
+    echo "❌ Could not decode Docker's $distro repository key." >&2
+    exit 1
+  fi
+  docker_apt_source_line "$distro" "$codename" "$architecture" "$key_file" >"$temp_dir/docker.list"
+
+  if ! sudo mkdir -m 0755 -p "$(dirname "$key_file")"; then
+    echo "❌ Could not create the Docker apt keyring directory." >&2
+    exit 1
+  fi
+  if [[ -e "$key_file" ]]; then
+    key_backup="$temp_dir/previous-docker.gpg"
+    if ! sudo cp -p "$key_file" "$key_backup"; then
+      echo "❌ Could not back up the existing Docker repository key." >&2
+      exit 1
+    fi
+  fi
+  if ! sudo install -m 0644 "$temp_dir/docker.gpg" "$key_stage" || ! sudo mv -f "$key_stage" "$key_file"; then
+    echo "❌ Could not publish the Docker repository key." >&2
+    exit 1
+  fi
+  key_published=true
+
+  # A hard link publishes atomically without replacing a source that appeared after preflight.
+  if ! sudo install -m 0644 "$temp_dir/docker.list" "$source_stage" || ! sudo ln "$source_stage" "$source_file"; then
+    echo "❌ Could not publish the Docker apt source." >&2
+    exit 1
+  fi
+  source_published=true
+
+  echo "🔄 Updating your package list again."
+  if ! sudo apt-get -o APT::Update::Error-Mode=any update; then
+    echo "❌ Package lists could not be updated after adding Docker's $distro source. The new source has been removed; check the apt error above." >&2
+    exit 1
+  fi
+  validated=true
+)
 
 formbricks_docker_command=(docker)
 
@@ -356,6 +530,9 @@ EOF
   append_if_missing "AUTHZED_TOKEN" "$authzed_token"
   append_if_missing "AUTHZED_DATABASE_PASSWORD" "$authzed_database_password"
   append_if_missing "AUTHZED_ENABLED" "true"
+  # The migration container reads this file but does not inherit the app service's Compose defaults.
+  append_if_missing "AUTHZED_ENDPOINT" "spicedb:50051"
+  append_if_missing "AUTHZED_SYSTEM_KEY" "formbricks"
   append_if_missing "AUTHZED_CONSISTENCY" "fully_consistent"
   append_if_missing "FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED" "true"
 
@@ -535,26 +712,69 @@ END {
 }
 
 install_formbricks() {
+  local docker_apt_repository docker_apt_distro docker_apt_codename docker_apt_architecture
+  local docker_apt_source_status os_description docker_installed=false
+  local os_release_file="${1:-/etc/os-release}"
+  local docker_apt_source_file="${2:-/etc/apt/sources.list.d/docker.list}"
+  local docker_apt_key_file="${3:-/etc/apt/keyrings/docker.gpg}"
+  local docker_apt_backup_dir="${4:-/var/tmp}"
+
+  if command -v docker >/dev/null 2>&1; then
+    docker_installed=true
+  fi
+
+  if docker_apt_repository=$(detect_docker_apt_repository "$os_release_file"); then
+    read -r docker_apt_distro docker_apt_codename <<<"$docker_apt_repository"
+    if ! docker_apt_architecture=$(dpkg --print-architecture) || [[ -z "$docker_apt_architecture" ]]; then
+      echo "❌ Could not determine the host's Debian package architecture." >&2
+      return 1
+    fi
+
+    # A previous version wrote Debian's codename under the Ubuntu URI. Remove that exact
+    # broken entry before the first apt update, even if Docker was installed afterward.
+    if ! quarantine_legacy_docker_apt_source "$docker_apt_distro" "$docker_apt_codename" \
+      "$docker_apt_architecture" "$docker_apt_source_file" "$docker_apt_key_file" "$docker_apt_backup_dir" >/dev/null; then
+      return 1
+    fi
+  elif [[ "$docker_installed" != true ]]; then
+    echo "❌ Automatic setup supports Debian and Ubuntu hosts with a release codename." >&2
+    echo "Install Docker and Compose manually on other systems." >&2
+    return 1
+  fi
+  os_description=Linux
+  if [[ -r "$os_release_file" ]]; then
+    os_description=$(. "$os_release_file" && printf '%s' "${PRETTY_NAME:-Linux}") || os_description=Linux
+  fi
+
+  if [[ "$docker_installed" != true ]]; then
+    if ! docker_apt_source_status=$(existing_docker_apt_source "$docker_apt_distro" "$docker_apt_codename" \
+      "$docker_apt_architecture" "$docker_apt_source_file" "$docker_apt_key_file"); then
+      return 1
+    fi
+  fi
+
   # Friendly welcome
   echo "🧱 Welcome to the Formbricks Setup Script"
   echo ""
-  echo "🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your $ubuntu_version server."
+  echo "🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your $os_description server."
   echo ""
 
   # Update package list
   echo "🔄 Updating your package list."
-  sudo apt-get update >/dev/null 2>&1
+  if ! sudo apt-get -o APT::Update::Error-Mode=any update; then
+    echo "❌ Could not update the host package list. Resolve the apt error above and rerun the installer." >&2
+    return 1
+  fi
 
   # Install dependencies
   echo "📦 Installing the necessary dependencies."
   sudo apt-get install -y \
     ca-certificates \
     curl \
-    jq \
-    lsb-release >/dev/null 2>&1
+    jq
 
   # Reuse an existing Docker installation instead of replacing it implicitly.
-  if command -v docker >/dev/null 2>&1; then
+  if [[ "$docker_installed" == true ]]; then
     echo "✅ Docker is already installed."
   else
     # Remove old Docker packages only when Docker is not installed at all.
@@ -570,24 +790,20 @@ install_formbricks() {
       echo "If Docker installation fails due to conflicting packages, rerun the script and allow the removal step."
     fi
 
-    echo "📦 Installing Docker-specific dependencies."
-    sudo apt-get install -y gnupg >/dev/null 2>&1
+    if [[ "$docker_apt_source_status" == create ]]; then
+      echo "📦 Installing Docker-specific dependencies."
+      sudo apt-get install -y gnupg
 
-    # Set up Docker's official GPG key & stable repository.
-    echo "🔑 Adding Docker's official GPG key and setting up the stable repository."
-    sudo mkdir -m 0755 -p /etc/apt/keyrings >/dev/null 2>&1
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg >/dev/null 2>&1
-    echo \
-      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-    $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null 2>&1
-
-    # Update package list again after adding the Docker repository.
-    echo "🔄 Updating your package list again."
-    sudo apt-get update >/dev/null 2>&1
+      echo "🔑 Adding Docker's official GPG key and setting up the stable repository."
+      setup_docker_apt_repository "$docker_apt_distro" "$docker_apt_codename" "$docker_apt_architecture" \
+        "$docker_apt_source_file" "$docker_apt_key_file"
+    else
+      echo "✅ Reusing the existing Docker apt repository."
+    fi
 
     # Install Docker only when it is not already present on the system.
     echo "🐳 Installing Docker."
-    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin >/dev/null 2>&1
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
     # Test Docker installation.
     echo "🚀 Testing your Docker installation."
@@ -1245,8 +1461,8 @@ EOF
 set -e
 docker compose up -d postgres authzed-db-bootstrap spicedb-migrate spicedb formbricks-migrate
 docker compose wait formbricks-migrate
-docker compose --profile authzed-ops run --rm authzed-ops upgrade prepare
-docker compose --profile authzed-ops run --rm authzed-ops upgrade check
+docker compose --profile authzed-ops run --rm --interactive=false -T authzed-ops upgrade prepare
+docker compose --profile authzed-ops run --rm --interactive=false -T authzed-ops upgrade check
 docker compose up -d
 
 echo "🔗 To edit more variables and deeper config, go to the formbricks/docker-compose.yml, edit the file, and restart the container!"

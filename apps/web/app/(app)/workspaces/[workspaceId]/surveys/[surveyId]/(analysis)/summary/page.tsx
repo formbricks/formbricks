@@ -49,7 +49,7 @@ const SurveyPage = async (
   const survey = await getSurvey(params.surveyId);
 
   if (!survey) {
-    throw new ResourceNotFoundError(t("common.survey"), params.surveyId);
+    return notFound();
   }
 
   const user = await getUser(session.user.id);

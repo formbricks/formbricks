@@ -1,17 +1,17 @@
 {
   "checks": {
-    "anchors": "267 public MDX parsed with Mintlify heading generation; no unresolved local fragments",
+    "anchors": "272 public MDX parsed with Mintlify heading generation; no unresolved local fragments",
     "build": "passed: cd docs && NODE_USE_ENV_PROXY=1 npx mint@4.2.1126 validate",
     "formatting": "passed for changed JSON; MDX follows repository formatter exclusions",
     "isolated_failure": "lib/utils/validate-webhook-url.toctou.test.ts:36 times out at 5000ms fetching a reserved .invalid hostname; reproduced in isolation. Source unchanged by this PR.",
     "links": "passed: no broken links",
     "mintlify_version": "4.2.1126",
-    "unit_suite": "pnpm test: 30 successful tasks; web task fails one DNS baseline test. Web: 16731 passed, 4 skipped, 1 failed."
+    "unit_suite": "Initial documentation revision 98a46c9864: pnpm test, 30 successful tasks; web task fails one unchanged DNS baseline test. Web: 16731 passed, 4 skipped, 1 failed. Not rerun for the documentation-only main-sync follow-up."
   },
   "coverage": {
     "publication": "No merge, live publication, live search/sitemap/LLM-index verification performed",
     "runtime": "No infrastructure deployment, database upgrade or restore rehearsal performed",
-    "structural": "244 baseline and 267 resulting public MDX pages; targeted semantic review only"
+    "structural": "246 baseline and 272 resulting public MDX pages; targeted semantic review only"
   },
   "evidence": [
     {
@@ -53,41 +53,115 @@
     {
       "claim": "Task-oriented entry, deployment recipe and release-delta structure",
       "source": "https://docs.gitlab.com/update/ and https://docs.nextcloud.com/server/stable/admin_manual/maintenance/upgrade.html"
+    },
+    {
+      "claim": "Recent release metadata and patch deployment actions",
+      "source": "GitHub Releases API: 6.1.1, 6.0.4, 5.4.7, 6.0.3, 5.4.6, 5.3.5 and 6.1.0; fetched 2026-10-27. Historical missing operator checklists explicitly marked Review required."
+    },
+    {
+      "claim": "Deployment-check image tags follow application releases; latest is only promoted with the latest app release",
+      "source": ".github/workflows/release-docker-github.yml, deployment-check job"
+    },
+    {
+      "claim": "Hub environment reaches both API and worker",
+      "source": "charts/formbricks/templates/hub-deployment.yaml and hub-worker-deployment.yaml"
+    },
+    {
+      "claim": "Release summaries link to task-oriented version-specific upgrade procedures",
+      "source": "https://docs.gitlab.com/update/versions/ and https://docs.nextcloud.com/server/stable/admin_manual/release_notes/index.html"
     }
   ],
+  "main_sync": {
+    "commit": "f2f2da8f395eab16a91fcd6302bc2c0d246a5998",
+    "date": "2026-10-27",
+    "incoming_docs": [
+      "docs/api-v3-reference/openapi.yml",
+      "docs/api-v3-reference/src/components/schemas/AISurveyGenerationLocaleCode.yml",
+      "docs/api-v3-reference/src/components/schemas/GenerateSurveyRequest.yml",
+      "docs/api-v3-reference/src/components/schemas/GenerateSurveyResult.yml",
+      "docs/api-v3-reference/src/paths/api_v3_surveys_generate.yml",
+      "docs/development/standards/technical/language-specific-conventions.mdx",
+      "docs/development/technical-handbook/mcp-server.mdx",
+      "docs/docs.json",
+      "docs/self-hosting/configuration/ai-features.mdx",
+      "docs/self-hosting/configuration/environment-variables.mdx",
+      "docs/self-hosting/deployment-components.mdx",
+      "docs/self-hosting/overview.mdx",
+      "docs/self-hosting/setup/deployment-check.mdx",
+      "docs/self-hosting/setup/docker.mdx",
+      "docs/self-hosting/setup/kubernetes.mdx",
+      "docs/self-hosting/setup/monitoring.mdx",
+      "docs/self-hosting/setup/one-click.mdx",
+      "docs/surveys/website-app-surveys/framework-guides.mdx"
+    ],
+    "other_changes": "Preserved AI API schemas/bundle, MCP request limits, framework examples, coding conventions, Debian installer guidance, monitoring and replica corrections.",
+    "placements": {
+      "platform/changelog": "Release notes: existing URL, global navigation link, explicit deployment status and seven recent stable releases.",
+      "self-hosting/configuration/ai-timeouts": "Configure: focused timeout procedure; original AI heading retained as a link.",
+      "self-hosting/configuration/envoy": "Configure: CRD ownership, backend and GitOps details extracted from Kubernetes setup; old headings retained.",
+      "self-hosting/deployment-components": "Overview: canonical required-service and image inventory; ownership links to Operate.",
+      "self-hosting/operate/components": "Operate: ownership and deployed inventory; component list lives in Deployment components.",
+      "self-hosting/setup/deployment-check": "Operate: reused from install, monitoring and upgrade completion checks; original URL retained.",
+      "self-hosting/upgrade/versions/2026-10-security-patches": "Shared detailed actions linked from the three affected patch releases and target-minor notes."
+    },
+    "previous_base": "f77455cdee1eacd6bd9f8bfbdd6888d6a907932c"
+  },
   "open_review_items": [
     "Operational owner: validate procedures against the intended enterprise topology and runtime upgrade/restore evidence.",
     "Product/release owners: verify minimum published iOS, Android and Flutter feature versions.",
     "Product owner: confirm Community follow-up replacement entitlement and a version-specific removal path.",
-    "Compatibility owner: approve the explicit patch/minor contract and historical 6.1 exceptions; enforcement remains with existing release-authoring work."
+    "Compatibility owner: approve the explicit patch/minor contract and historical 6.1 exceptions; enforcement remains with existing release-authoring work.",
+    "Release authors: maintain one entry and an explicit deployment-impact result for every stable release; no automatic release-note synchronization was added."
   ],
   "preview": [
     {
-      "heading": "Upgrade Formbricks",
-      "port": 3001,
-      "route": "self-hosting/advanced/upgrade",
+      "heading": "Release notes",
+      "route": "platform/changelog",
       "status": 200
     },
     {
+      "releaseAnchors": true,
+      "releaseEntries": 7
+    },
+    {
       "heading": "Upgrading Formbricks",
-      "port": 3000,
       "route": "self-hosting/advanced/upgrade",
       "status": 200
     },
     {
       "heading": "Upgrade Kubernetes",
-      "port": 3000,
       "route": "self-hosting/upgrade/kubernetes",
       "status": 200
     },
     {
       "heading": "Integrate with Formbricks",
-      "port": 3000,
       "route": "integrate/overview",
       "status": 200
     },
     {
-      "mobileOverflow": false
+      "heading": "Envoy Gateway",
+      "route": "self-hosting/configuration/envoy",
+      "status": 200
+    },
+    {
+      "heading": "Deployment check",
+      "route": "self-hosting/setup/deployment-check",
+      "status": 200
+    },
+    {
+      "heading": "Deployment components",
+      "route": "self-hosting/deployment-components",
+      "status": 200
+    },
+    {
+      "heading": "AI timeouts",
+      "route": "self-hosting/configuration/ai-timeouts",
+      "status": 200
+    },
+    {
+      "heading": "October security patch actions",
+      "route": "self-hosting/upgrade/versions/2026-10-security-patches",
+      "status": 200
     },
     {
       "heading": "Version-specific upgrade notes",
@@ -95,9 +169,8 @@
       "status": 200
     },
     {
-      "heading": "Upgrade to 6.0",
-      "route": "self-hosting/upgrade/versions/6.0",
-      "status": 200
+      "legacyAnchors": 124,
+      "missing": 0
     },
     {
       "heading": "Upgrade to 6.1",
@@ -105,209 +178,21 @@
       "status": 200
     },
     {
-      "heading": "Regenerate encrypted single-use links",
-      "route": "self-hosting/upgrade/versions/6.1-single-use-links",
+      "heading": "One-Click Setup",
+      "route": "self-hosting/setup/one-click",
       "status": 200
     },
     {
-      "heading": "Upgrade to 5.4",
-      "route": "self-hosting/upgrade/versions/5.4",
-      "status": 200
+      "passed": true,
+      "redirects": 26
     },
     {
-      "heading": "Prepare permissions",
-      "route": "self-hosting/upgrade/prepare",
-      "status": 200
+      "mobileOverflow": false,
+      "route": "self-hosting/advanced/upgrade"
     },
     {
-      "heading": "Backup and restore",
-      "route": "self-hosting/operate/backup-restore",
-      "status": 200
-    },
-    {
-      "heading": "Components and ownership",
-      "route": "self-hosting/operate/components",
-      "status": 200
-    },
-    {
-      "heading": "Upgrade Docker and one-click",
-      "route": "self-hosting/upgrade/docker",
-      "status": 200
-    },
-    {
-      "heading": "Troubleshoot an upgrade",
-      "route": "self-hosting/upgrade/troubleshooting",
-      "status": 200
-    },
-    {
-      "heading": "Test an API key",
-      "route": "api-reference/test-key",
-      "status": 200
-    },
-    {
-      "heading": "Release and Maintenance Policy",
-      "route": "self-hosting/advanced/release-maintenance-policy",
-      "status": 200
-    },
-    {
-      "legacyAnchors": 124,
-      "missing": []
-    },
-    {
-      "expected": "/docs/platform/features/integrations/n8n",
-      "location": "/docs/platform/features/integrations/n8n",
-      "redirect": "/docs/self-hosting/configuration/integrations/n8n",
-      "status": 307
-    },
-    {
-      "expected": "/platform/features/integrations/n8n",
-      "location": "/platform/features/integrations/n8n",
-      "redirect": "/self-hosting/configuration/integrations/n8n",
-      "status": 307
-    },
-    {
-      "expected": "/docs/platform/features/integrations/zapier",
-      "location": "/docs/platform/features/integrations/zapier",
-      "redirect": "/docs/self-hosting/configuration/integrations/zapier",
-      "status": 307
-    },
-    {
-      "expected": "/platform/features/integrations/zapier",
-      "location": "/platform/features/integrations/zapier",
-      "redirect": "/self-hosting/configuration/integrations/zapier",
-      "status": 307
-    },
-    {
-      "expected": "/docs/platform/features/integrations/activepieces",
-      "location": "/docs/platform/features/integrations/activepieces",
-      "redirect": "/docs/self-hosting/configuration/integrations/activepieces",
-      "status": 307
-    },
-    {
-      "expected": "/platform/features/integrations/activepieces",
-      "location": "/platform/features/integrations/activepieces",
-      "redirect": "/self-hosting/configuration/integrations/activepieces",
-      "status": 307
-    },
-    {
-      "expected": "/docs/platform/features/styling-theme",
-      "location": "/docs/platform/features/styling-theme",
-      "redirect": "/docs/self-hosting/advanced/enterprise-features/hide-powered-by-formbricks",
-      "status": 307
-    },
-    {
-      "expected": "/platform/features/styling-theme",
-      "location": "/platform/features/styling-theme",
-      "redirect": "/self-hosting/advanced/enterprise-features/hide-powered-by-formbricks",
-      "status": 307
-    },
-    {
-      "expected": "/docs/platform/features/email-customization",
-      "location": "/docs/platform/features/email-customization",
-      "redirect": "/docs/self-hosting/advanced/enterprise-features/whitelabel-email-follow-ups",
-      "status": 307
-    },
-    {
-      "expected": "/platform/features/email-customization",
-      "location": "/platform/features/email-customization",
-      "redirect": "/self-hosting/advanced/enterprise-features/whitelabel-email-follow-ups",
-      "status": 307
-    },
-    {
-      "expected": "/docs/platform/features/user-management",
-      "location": "/docs/platform/features/user-management",
-      "redirect": "/docs/self-hosting/advanced/enterprise-features/team-access",
-      "status": 307
-    },
-    {
-      "expected": "/platform/features/user-management",
-      "location": "/platform/features/user-management",
-      "redirect": "/self-hosting/advanced/enterprise-features/team-access",
-      "status": 307
-    },
-    {
-      "expected": "/docs/platform/features/contacts",
-      "location": "/docs/platform/features/contacts",
-      "redirect": "/docs/self-hosting/advanced/enterprise-features/contact-management-segments",
-      "status": 307
-    },
-    {
-      "expected": "/platform/features/contacts",
-      "location": "/platform/features/contacts",
-      "redirect": "/self-hosting/advanced/enterprise-features/contact-management-segments",
-      "status": 307
-    },
-    {
-      "expected": "/docs/self-hosting/configuration/auth-sso/open-id-connect",
-      "location": "/docs/self-hosting/configuration/auth-sso/open-id-connect",
-      "redirect": "/docs/self-hosting/advanced/enterprise-features/oidc-sso",
-      "status": 307
-    },
-    {
-      "expected": "/self-hosting/configuration/auth-sso/open-id-connect",
-      "location": "/self-hosting/configuration/auth-sso/open-id-connect",
-      "redirect": "/self-hosting/advanced/enterprise-features/oidc-sso",
-      "status": 307
-    },
-    {
-      "expected": "/docs/self-hosting/configuration/auth-sso/saml-sso",
-      "location": "/docs/self-hosting/configuration/auth-sso/saml-sso",
-      "redirect": "/docs/self-hosting/advanced/enterprise-features/saml-sso",
-      "status": 307
-    },
-    {
-      "expected": "/self-hosting/configuration/auth-sso/saml-sso",
-      "location": "/self-hosting/configuration/auth-sso/saml-sso",
-      "redirect": "/self-hosting/advanced/enterprise-features/saml-sso",
-      "status": 307
-    },
-    {
-      "expected": "/docs/unify-feedback/overview",
-      "location": "/docs/unify-feedback/overview",
-      "redirect": "/docs/self-hosting/advanced/enterprise-features/unify-feedback",
-      "status": 307
-    },
-    {
-      "expected": "/unify-feedback/overview",
-      "location": "/unify-feedback/overview",
-      "redirect": "/self-hosting/advanced/enterprise-features/unify-feedback",
-      "status": 307
-    },
-    {
-      "expected": "/docs/unify-feedback/dashboards-charts",
-      "location": "/docs/unify-feedback/dashboards-charts",
-      "redirect": "/docs/self-hosting/advanced/enterprise-features/dashboards",
-      "status": 307
-    },
-    {
-      "expected": "/unify-feedback/dashboards-charts",
-      "location": "/unify-feedback/dashboards-charts",
-      "redirect": "/self-hosting/advanced/enterprise-features/dashboards",
-      "status": 307
-    },
-    {
-      "expected": "/docs/self-hosting/configuration/ai-features",
-      "location": "/docs/self-hosting/configuration/ai-features",
-      "redirect": "/docs/self-hosting/advanced/enterprise-features/ai-features",
-      "status": 307
-    },
-    {
-      "expected": "/self-hosting/configuration/ai-features",
-      "location": "/self-hosting/configuration/ai-features",
-      "redirect": "/self-hosting/advanced/enterprise-features/ai-features",
-      "status": 307
-    },
-    {
-      "expected": "/docs/workflows/overview",
-      "location": "/docs/workflows/overview",
-      "redirect": "/docs/self-hosting/advanced/enterprise-features/workflows",
-      "status": 307
-    },
-    {
-      "expected": "/workflows/overview",
-      "location": "/workflows/overview",
-      "redirect": "/self-hosting/advanced/enterprise-features/workflows",
-      "status": 307
+      "mobileOverflow": false,
+      "route": "platform/changelog"
     }
   ],
   "release_source_checks": [

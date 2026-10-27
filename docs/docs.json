@@ -35,6 +35,10 @@
   "navbar": {
     "links": [
       {
+        "href": "/platform/changelog",
+        "label": "Release notes"
+      },
+      {
         "href": "https://github.com/formbricks/formbricks/discussions",
         "label": "Support"
       }
@@ -313,7 +317,7 @@
         "groups": [
           {
             "group": "Overview",
-            "pages": ["self-hosting/overview", "self-hosting/operate/components"]
+            "pages": ["self-hosting/overview", "self-hosting/deployment-components"]
           },
           {
             "group": "Install",
@@ -353,7 +357,9 @@
               "self-hosting/configuration/cdn",
               "self-hosting/configuration/custom-subpath",
               "self-hosting/configuration/ai-features",
+              "self-hosting/configuration/ai-timeouts",
               "self-hosting/configuration/rate-limiting",
+              "self-hosting/configuration/envoy",
               {
                 "group": "Auth & SSO",
                 "icon": "lock",
@@ -384,6 +390,8 @@
           {
             "group": "Operate",
             "pages": [
+              "self-hosting/operate/components",
+              "self-hosting/setup/deployment-check",
               "self-hosting/setup/cluster-setup",
               "self-hosting/setup/monitoring",
               "self-hosting/configuration/job-runner",

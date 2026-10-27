@@ -167,3 +167,15 @@ breakdown** chart presets use them. On Docker the model is two files next to you
   the directory containing your `docker-compose.yml`. If you refresh outside an update, recreate Cube
   afterwards with `docker compose up -d --force-recreate cube`.
 - **Helm:** the chart ships the model, so `helm upgrade` replaces it. No action is needed.
+
+## Envoy Redis images
+
+Chart 6.1.0's bundled Envoy Redis images are unavailable upstream. Configure a dedicated external
+Redis/Valkey backend and keep `envoyRedis.enabled=false`; see [Envoy Gateway](/self-hosting/configuration/envoy).
+Keep the rate-limit backend separate from the application's Redis traffic.
+
+## Helm security contexts and taxonomy timeouts
+
+* **Helm: the web container is locked down.** It now runs with a read-only root filesystem, as non-root user `1001`, with all Linux capabilities dropped. This only affects custom images or sidecars that write inside the container: mount a writable path with `deployment.extraVolumes` and `deployment.extraVolumeMounts`, or set `deployment.containerSecurityContext.readOnlyRootFilesystem: false`. If you set `deployment.securityContext.runAsUser`, move it to `deployment.containerSecurityContext.runAsUser`, which now takes precedence ([#9450](https://github.com/formbricks/formbricks/pull/9450))
+* **Helm: AuthZed hooks run as user `1001`.** If your custom image needs another user, set `authzed.initialization.securityContext.runAsUser` ([#9516](https://github.com/formbricks/formbricks/pull/9516))
+* **Helm: taxonomy timeout overrides are validated.** With `taxonomy.enabled=true`, rendering fails unless `taxonomy.terminationGracePeriodSeconds` is at least `taxonomy.runDeadlineSeconds` + 30, and `taxonomy.hubStaleRunTimeoutSeconds` is greater than `taxonomy.runDeadlineSeconds`. The defaults (900, 930 and 1800 seconds) pass ([#9451](https://github.com/formbricks/formbricks/pull/9451))

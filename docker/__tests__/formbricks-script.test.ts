@@ -858,9 +858,22 @@ describe("docker/formbricks.sh AuthZed setup", () => {
     expect(env.get("AUTHZED_TOKEN")).toBe(authzedToken);
     expect(env.get("AUTHZED_DATABASE_PASSWORD")).toBe(authzedDatabasePassword);
     expect(env.get("AUTHZED_ENABLED")).toBe("true");
+    expect(env.get("AUTHZED_ENDPOINT")).toBe("spicedb:50051");
+    expect(env.get("AUTHZED_SYSTEM_KEY")).toBe("formbricks");
     expect(env.get("AUTHZED_CONSISTENCY")).toBe("fully_consistent");
     expect(env.get("FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED")).toBe("true");
     expect(statSync(envPath).mode & 0o777).toBe(0o600);
+  });
+
+  dockerComposeTest("passes generated AuthZed defaults to the migration service", () => {
+    const envPath = join(createTempDir(), ".env");
+    writeGeneratedEnvFile(envPath);
+
+    const config = renderDockerCompose(readFileSync(envPath, "utf8"));
+    const migrationEnvironment = getRenderedServiceEnvironment(config, "formbricks-migrate");
+
+    expect(migrationEnvironment.AUTHZED_ENDPOINT).toBe("spicedb:50051");
+    expect(migrationEnvironment.AUTHZED_SYSTEM_KEY).toBe("formbricks");
   });
 
   test("blocks customized updates until the AuthZed v6 contract is present and acknowledged", () => {
@@ -1065,6 +1078,42 @@ describe("docker/formbricks.sh AuthZed setup", () => {
     expect(setupStart).toBeGreaterThanOrEqual(0);
     expect(migrationWait).toBeGreaterThan(setupStart);
     expect(upgradePrepare).toBeGreaterThan(migrationWait);
+  });
+
+  test("reaches application startup when Compose run can consume the setup input", () => {
+    const script = readFileSync(formbricksScriptPath, "utf8");
+    const setupCommands = script.match(
+      /newgrp docker <<[ \t]*([^\r\n]+)\r?\n([\s\S]*?)\r?\n\1(?:\r?\n|$)/
+    )?.[2];
+    expect(setupCommands).toBeDefined();
+
+    const tempDir = createTempDir();
+    const binDir = join(tempDir, "bin");
+    const commandLog = join(tempDir, "commands.log");
+    mkdirSync(binDir);
+    writeFileSync(
+      join(binDir, "docker"),
+      `#!/usr/bin/env bash
+printf '%s\\n' "$*" >> "$COMMAND_LOG"
+if [[ "$*" == *" run "* && "$*" != *" --interactive=false "* ]]; then
+  cat >/dev/null
+fi
+`,
+      { mode: 0o700 }
+    );
+
+    const result = spawnSync("bash", [], {
+      input: `set -e\n${setupCommands}\n`,
+      cwd: tempDir,
+      encoding: "utf8",
+      env: { ...process.env, COMMAND_LOG: commandLog, PATH: `${binDir}:${process.env.PATH ?? ""}` },
+    });
+
+    expect(result.status).toBe(0);
+    const commands = readFileSync(commandLog, "utf8").trim().split("\n");
+    expect(commands.some((command) => command.includes("authzed-ops upgrade prepare"))).toBe(true);
+    expect(commands.some((command) => command.includes("authzed-ops upgrade check"))).toBe(true);
+    expect(commands.at(-1)).toBe("compose up -d");
   });
 
   test("pins and verifies the downloaded bootstrap helper before making it executable", () => {

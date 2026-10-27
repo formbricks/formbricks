@@ -1,8 +1,8 @@
 {
-  "baseline_commit": "f77455cdee1eacd6bd9f8bfbdd6888d6a907932c",
-  "baseline_mdx_count": 244,
+  "baseline_commit": "f2f2da8f395eab16a91fcd6302bc2c0d246a5998",
+  "baseline_mdx_count": 246,
   "coverage": "All public MDX structurally parsed; navigation, internal links and anchors checked. Targeted semantic/source review, not exhaustive factual or runtime validation. Generated API operation routes are not counted as orphaned MDX.",
-  "current_mdx_count": 267,
+  "current_mdx_count": 272,
   "existing_redirects_preserved": true,
   "new_redirects": [
     {
@@ -110,7 +110,7 @@
       "source": "/self-hosting/advanced/enterprise-features/workflows"
     }
   ],
-  "review_date": "2026-10-26",
+  "review_date": "2026-10-27",
   "routes": [
     {
       "action": "keep",
@@ -686,7 +686,7 @@
       "action": "update",
       "navigation_after": true,
       "navigation_before": true,
-      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "reason": "Release notes: existing URL, global navigation link, explicit deployment status and seven recent stable releases.",
       "route": "platform/changelog",
       "runtime_validation": false,
       "structural_scan": true,
@@ -1193,6 +1193,16 @@
       "target": "self-hosting/configuration/ai-features"
     },
     {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Configure: focused timeout procedure; original AI heading retained as a link.",
+      "route": "self-hosting/configuration/ai-timeouts",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/ai-timeouts"
+    },
+    {
       "action": "keep",
       "navigation_after": true,
       "navigation_before": true,
@@ -1333,6 +1343,16 @@
       "target": "self-hosting/configuration/environment-variables"
     },
     {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Configure: CRD ownership, backend and GitOps details extracted from Kubernetes setup; old headings retained.",
+      "route": "self-hosting/configuration/envoy",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/envoy"
+    },
+    {
       "action": "update",
       "navigation_after": true,
       "navigation_before": true,
@@ -1433,7 +1453,7 @@
       "target": "self-hosting/configuration/job-runner"
     },
     {
-      "action": "navigation",
+      "action": "keep",
       "navigation_after": true,
       "navigation_before": false,
       "reason": "Place existing content in the relevant operator or integration journey.",
@@ -1463,6 +1483,16 @@
       "target": "self-hosting/configuration/smtp"
     },
     {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Overview: canonical required-service and image inventory; ownership links to Operate.",
+      "route": "self-hosting/deployment-components",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/deployment-components"
+    },
+    {
       "action": "add",
       "navigation_after": true,
       "navigation_before": false,
@@ -1476,7 +1506,7 @@
       "action": "add",
       "navigation_after": true,
       "navigation_before": false,
-      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "reason": "Operate: ownership and deployed inventory; component list lives in Deployment components.",
       "route": "self-hosting/operate/components",
       "runtime_validation": false,
       "structural_scan": true,
@@ -1501,6 +1531,16 @@
       "runtime_validation": false,
       "structural_scan": true,
       "target": "self-hosting/setup/cluster-setup"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Operate: reused from install, monitoring and upgrade completion checks; original URL retained.",
+      "route": "self-hosting/setup/deployment-check",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/setup/deployment-check"
     },
     {
       "action": "update",
@@ -1701,6 +1741,16 @@
       "runtime_validation": false,
       "structural_scan": true,
       "target": "self-hosting/upgrade/versions/2.7"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Shared detailed actions linked from the three affected patch releases and target-minor notes.",
+      "route": "self-hosting/upgrade/versions/2026-10-security-patches",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/2026-10-security-patches"
     },
     {
       "action": "add",
