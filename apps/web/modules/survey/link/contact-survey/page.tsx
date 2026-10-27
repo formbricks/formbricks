@@ -100,9 +100,9 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     // client routes accept one response per single-use id, so the link is spent whichever contact opens it.
     singleUseId ? getResponseBySingleUseId(survey.id, singleUseId)() : Promise.resolve(null),
   ]);
-  // Only a finished response changes this page. A contact's own response, partial or not, was answered above
-  // by "response submitted" before the survey was even loaded, so there is none left to resume here.
-  const singleUseResponse = singleUseLinkResponse?.finished ? singleUseLinkResponse : undefined;
+  // Keep unfinished responses so the survey client updates the existing row instead of creating a second
+  // response for the same single-use id. The renderer handles finished responses as already answered.
+  const singleUseResponse = singleUseLinkResponse ?? undefined;
 
   // Fetch responseCount only if needed
   const responseCount = survey.welcomeCard.showResponseCount
