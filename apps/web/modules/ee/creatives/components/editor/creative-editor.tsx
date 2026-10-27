@@ -11,7 +11,7 @@ import {
   ZapIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TWorkspaceStyling } from "@formbricks/types/workspace";
@@ -126,8 +126,11 @@ export const CreativeEditor = ({
   const [activeTab, setActiveTab] = useState<TCreativeEditorTab>("content");
   // The folding panels that are open, kept here so they stay open across tab switches.
   const [openPanels, setOpenPanels] = useState(() => getInitialOpenPanels(form.styling));
-  const setPanelsOpen = (ids: readonly TEditorPanelId[], open: boolean) =>
-    setOpenPanels((current) => withPanelsOpen(current, ids, open));
+  const setPanelsOpen = useCallback(
+    (ids: readonly TEditorPanelId[], open: boolean) =>
+      setOpenPanels((current) => withPanelsOpen(current, ids, open)),
+    []
+  );
   const [device, setDevice] = useState<TCreativeDevice>("desktop");
   const [appearance, setAppearance] = useState<TStylingAppearance>("light");
   const cssValidation = useCustomCssValidation({

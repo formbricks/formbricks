@@ -2,7 +2,7 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronDownIcon, type LucideIcon } from "lucide-react";
-import { type ReactNode, createContext, useContext } from "react";
+import { type ReactNode, createContext, useContext, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { Tabs, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
@@ -23,11 +23,10 @@ export const EditorPanelsProvider = ({
   openPanels,
   setPanelsOpen,
   children,
-}: Readonly<TEditorPanels & { children: ReactNode }>) => (
-  <EditorPanelsContext.Provider value={{ openPanels, setPanelsOpen }}>
-    {children}
-  </EditorPanelsContext.Provider>
-);
+}: Readonly<TEditorPanels & { children: ReactNode }>) => {
+  const panels = useMemo(() => ({ openPanels, setPanelsOpen }), [openPanels, setPanelsOpen]);
+  return <EditorPanelsContext.Provider value={panels}>{children}</EditorPanelsContext.Provider>;
+};
 
 export const useEditorPanels = (): TEditorPanels => {
   const panels = useContext(EditorPanelsContext);
