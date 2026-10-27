@@ -15,6 +15,9 @@ import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { createI18nString } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
+import { CopyIdButton } from "@/modules/survey/editor/components/copy-id-button";
+import { PublishedLockNotice } from "@/modules/survey/editor/components/published-lock-notice";
+import { TElementLock } from "@/modules/survey/editor/lib/published-lock";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { isLabelValidForAllLanguages } from "../lib/validation";
@@ -34,6 +37,8 @@ interface ChoiceProps {
   surveyLanguageCodes: string[];
   locale: TUserLocale;
   isStorageConfigured: boolean;
+  /** What the published lock leaves open for this question (ENG-6790). */
+  lock: TElementLock;
 }
 
 export const ElementOptionChoice = ({
@@ -51,6 +56,7 @@ export const ElementOptionChoice = ({
   updateElement,
   locale,
   isStorageConfigured,
+  lock,
 }: ChoiceProps) => {
   const { t } = useTranslation();
   const isSpecialChoice = choice.id === "other" || choice.id === "none";
@@ -81,6 +87,9 @@ export const ElementOptionChoice = ({
     return t("workspace.surveys.edit.option_idx", { choiceIndex: choiceIdx + 1 });
   };
 
+  const isTextLocked = lock.isOptionTextLocked("choices", choice.id, "default");
+  const isDeleteLocked = lock.isOptionLocked("choices", choice.id);
+
   const normalChoice = element.choices?.filter((c) => c.id !== "other" && c.id !== "none") || [];
 
   return (
@@ -106,6 +115,7 @@ export const ElementOptionChoice = ({
           className={`${isSpecialChoice ? "border border-dashed" : ""} mt-0`}
           locale={locale}
           isStorageConfigured={isStorageConfigured}
+          disabled={isTextLocked}
           onKeyDown={(e) => {
             if (e.key === "Enter" && choice.id !== "other") {
               e.preventDefault();
@@ -154,13 +164,22 @@ export const ElementOptionChoice = ({
           />
         )}
       </div>
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
+        {isTextLocked && <PublishedLockNotice kind="optionText" />}
+        <CopyIdButton id={choice.id} label={t("workspace.surveys.edit.copy_option_id")} />
         {(normalChoice.length > 1 || isSpecialChoice) && (
-          <TooltipRenderer tooltipContent={t("workspace.surveys.edit.delete_choice")}>
+          <TooltipRenderer
+            tooltipContent={
+              isDeleteLocked
+                ? t("workspace.surveys.edit.lock_explanation_option_delete")
+                : t("workspace.surveys.edit.delete_choice")
+            }
+            className={isDeleteLocked ? "max-w-xs text-xs" : undefined}>
             <Button
               variant="secondary"
               size="icon"
               aria-label="Delete choice"
+              disabled={isDeleteLocked}
               onClick={(e) => {
                 e.preventDefault();
                 deleteChoice(choiceIdx);

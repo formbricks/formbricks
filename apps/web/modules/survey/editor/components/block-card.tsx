@@ -42,6 +42,7 @@ import { RatingElementForm } from "@/modules/survey/editor/components/rating-ele
 import { areBlockCardPropsEqual } from "@/modules/survey/editor/lib/block-card-memo";
 import { BLOCK_NAME_MAX_LENGTH } from "@/modules/survey/editor/lib/blocks";
 import { getElementCodeIssues } from "@/modules/survey/editor/lib/element-codes";
+import { getElementLock } from "@/modules/survey/editor/lib/published-lock";
 import { formatTextWithSlashes } from "@/modules/survey/editor/lib/utils";
 import { getElementIconMap, getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
@@ -50,6 +51,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/component
 
 interface BlockCardProps {
   localSurvey: TSurvey;
+  /** The survey as last saved. The published lock is read from it, not from the working copy. */
+  persistedSurvey: TSurvey;
   workspace: TWorkspaceWithoutCustomCss;
   block: TSurveyBlock;
   blockIdx: number;
@@ -92,6 +95,7 @@ interface BlockCardProps {
 
 const BlockCardComponent = ({
   localSurvey,
+  persistedSurvey,
   workspace,
   block,
   blockIdx,
@@ -207,6 +211,7 @@ const BlockCardComponent = ({
     locale,
     isStorageConfigured,
     isExternalUrlsAllowed,
+    lock: getElementLock(persistedSurvey, element.id),
   });
 
   // Element form components mapped by type
@@ -456,6 +461,7 @@ const BlockCardComponent = ({
                               <div className="flex items-center gap-x-2">
                                 <EditorCardMenu
                                   survey={localSurvey}
+                                  isTypeLocked={getElementLock(persistedSurvey, element.id).isTypeLocked}
                                   cardIdx={elementIdx}
                                   lastCard={lastElement && elementIndex === lastElementIndex}
                                   blockId={block.id}
@@ -499,6 +505,7 @@ const BlockCardComponent = ({
                                   element={element}
                                   elementIdx={elementIdx}
                                   localSurvey={localSurvey}
+                                  lock={getElementLock(persistedSurvey, element.id)}
                                   updateElement={updateElement}
                                   updateBlockLogic={updateBlockLogic}
                                   updateBlockLogicFallback={updateBlockLogicFallback}

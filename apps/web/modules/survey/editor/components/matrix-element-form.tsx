@@ -15,6 +15,7 @@ import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { MatrixSortableItem } from "@/modules/survey/editor/components/matrix-sortable-item";
+import { NO_ELEMENT_LOCK, TElementLock } from "@/modules/survey/editor/lib/published-lock";
 import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
@@ -29,6 +30,7 @@ interface MatrixElementFormProps {
   locale: TUserLocale;
   isStorageConfigured: boolean;
   isExternalUrlsAllowed?: boolean;
+  lock?: TElementLock;
 }
 
 export const MatrixElementForm = ({
@@ -40,6 +42,7 @@ export const MatrixElementForm = ({
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
+  lock = NO_ELEMENT_LOCK,
 }: MatrixElementFormProps): JSX.Element => {
   const languageCodes = extractLanguageCodes(localSurvey.languages);
   const { t } = useTranslation();
@@ -69,6 +72,7 @@ export const MatrixElementForm = ({
   const handleDeleteLabel = (type: "row" | "column", index: number) => {
     const labels = type === "row" ? element.rows : element.columns;
     if (labels.length <= 2) return; // Prevent deleting below minimum length
+    if (lock.isOptionLocked(type === "row" ? "rows" : "columns", labels[index].id)) return;
 
     // check if the label is used in logic
     if (type === "column") {
@@ -246,6 +250,7 @@ export const MatrixElementForm = ({
                       }
                       locale={locale}
                       isStorageConfigured={isStorageConfigured}
+                      lock={lock}
                     />
                   ))}
                 </div>
@@ -290,6 +295,7 @@ export const MatrixElementForm = ({
                       }
                       locale={locale}
                       isStorageConfigured={isStorageConfigured}
+                      lock={lock}
                     />
                   ))}
                 </div>
