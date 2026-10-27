@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { buildSampleExport } from "@/lib/analysis-export/__fixtures__/sample-export";
+import { buildSampleExport, sampleSurvey } from "@/lib/analysis-export/__fixtures__/sample-export";
 import {
   ExportCancelledError,
   buildExportResponse,
@@ -13,6 +13,13 @@ const mocks = vi.hoisted(() => ({
   count: vi.fn(),
   getResponseDownloadFile: vi.fn(),
   openAnalysisExport: vi.fn(),
+  cap: { value: undefined as number | undefined },
+}));
+
+vi.mock("./export-limits", () => ({
+  get EXCEL_EXPORT_MAX_CELLS() {
+    return mocks.cap.value;
+  },
 }));
 
 vi.mock("@formbricks/database", () => ({ prisma: { response: { count: mocks.count } } }));
@@ -27,8 +34,18 @@ const survey = { id: "survey1", name: "My Survey" } as never;
 const signal = new AbortController().signal;
 const baseArgs = { survey, isQuotasAllowed: false, timeZone: "UTC", signal };
 
+const analysisPlan = (display: "codes" | "both", output: "csv" | "xlsx") =>
+  ({
+    kind: "analysis",
+    format: output === "xlsx" ? "xlsx" : "csv",
+    display,
+    output,
+    include: { datamap: false, unmappedValues: false, spssSyntax: false },
+  }) as const;
+
 beforeEach(() => {
   vi.resetAllMocks();
+  mocks.cap.value = undefined;
 });
 
 describe("countExportResponses", () => {
@@ -37,6 +54,7 @@ describe("countExportResponses", () => {
     expect(await countExportResponses({ survey, plan: { kind: "standard", format: "csv" } })).toEqual({
       included: 9,
       lowQualityLeftOut: 0,
+      excel: null,
     });
     expect(mocks.count).toHaveBeenCalledWith({ where: { surveyId: "survey1", finished: true } });
   });
@@ -52,7 +70,10 @@ describe("countExportResponses", () => {
       output: "csv",
       include: { datamap: false, unmappedValues: false, spssSyntax: false },
     } as const;
-    expect(await countExportResponses({ survey, plan })).toEqual({ included: 8, lowQualityLeftOut: 3 });
+    expect(await countExportResponses({ survey: sampleSurvey as never, plan })).toMatchObject({
+      included: 8,
+      lowQualityLeftOut: 3,
+    });
   });
 
   test("a filter that selects Low quality leaves nothing out", async () => {
@@ -64,9 +85,43 @@ describe("countExportResponses", () => {
       output: "csv",
       include: { datamap: false, unmappedValues: false, spssSyntax: false },
     } as const;
-    expect(await countExportResponses({ survey, plan, filter: { outcome: "lowQuality" } })).toEqual({
+    expect(
+      await countExportResponses({ survey: sampleSurvey as never, plan, filter: { outcome: "lowQuality" } })
+    ).toMatchObject({
       included: 4,
       lowQualityLeftOut: 0,
+    });
+  });
+
+  describe("the Excel size an Analysis export would have", () => {
+    const sampleCount = (display: "codes" | "both", cap: number | undefined) => {
+      mocks.cap.value = cap;
+      mocks.count.mockResolvedValue(8);
+      return countExportResponses({
+        survey: sampleSurvey as never,
+        plan: analysisPlan(display, "csv"),
+      });
+    };
+
+    test("is the data sheets' cells, whichever format is chosen, against the cap", async () => {
+      // one data sheet: columns x (8 responses + header), so the cells are a multiple of 9
+      const cells = (await sampleCount("codes", undefined)).excel?.cells ?? 0;
+      expect(cells).toBeGreaterThan(0);
+      expect(cells % 9).toBe(0);
+      expect((await sampleCount("codes", cells)).excel).toEqual({ cells, maxCells: cells, tooLarge: false });
+      expect((await sampleCount("codes", cells - 1)).excel?.tooLarge).toBe(true);
+    });
+
+    test("Text and code is two sheets", async () => {
+      const one = (await sampleCount("codes", undefined)).excel?.cells ?? 0;
+      expect((await sampleCount("both", undefined)).excel?.cells).toBe(2 * one);
+    });
+
+    test("with no cap nothing is too large and the cap reads null", async () => {
+      expect((await sampleCount("codes", undefined)).excel).toMatchObject({
+        maxCells: null,
+        tooLarge: false,
+      });
     });
   });
 });
@@ -125,6 +180,28 @@ describe("buildExportResponse", () => {
       expect.objectContaining({ surveyId: "survey1", answers: "codes" })
     );
     expect(result.response.headers.get("Content-Disposition")).toMatch(/\.csv"$/);
+  });
+});
+
+describe("buildExportResponse Excel cap", () => {
+  const run = (cap: number | undefined) => {
+    mocks.cap.value = cap;
+    mocks.openAnalysisExport.mockResolvedValue(buildSampleExport("both"));
+    return buildExportResponse({ ...baseArgs, plan: analysisPlan("both", "xlsx") });
+  };
+
+  test("a workbook over the cap is refused before any row is read, and the message points to CSV", async () => {
+    const result = await run(10);
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.reason).toBe("excel_too_large");
+    expect(result.message).toMatch(/CSV/);
+    expect(result.message).toContain("10");
+  });
+
+  test("a workbook within the cap is built", async () => {
+    const result = await run(10_000);
+    expect(result.ok).toBe(true);
   });
 });
 

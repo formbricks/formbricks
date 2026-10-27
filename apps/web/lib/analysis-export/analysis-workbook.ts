@@ -1,5 +1,6 @@
 import { dataHeaderCells, dataParts } from "./data-files";
 import { DATAMAP_HEADERS, buildDatamap } from "./datamap";
+import { analysisWorkbookCells } from "./excel-size";
 import type { TAnalysisCell, TAnalysisExport, TAnswerDisplay } from "./types";
 import { UNMAPPED_HEADERS, buildUnmappedValuesTable, unmappedColumnNames } from "./unmapped-values";
 import { XlsxLimitError, createXlsxWorkbook } from "./xlsx-writer";
@@ -53,7 +54,11 @@ export const buildAnalysisWorkbook = async (
   const tooBig = (cells: number): XlsxLimitError =>
     new XlsxLimitError(`The workbook would hold ${cells} cells, more than the ${maxCells} allowed`);
   if (maxCells !== undefined) {
-    const expected = parts.length * exported.columns.length * (exported.counts.included + 1);
+    const expected = analysisWorkbookCells({
+      display,
+      columns: exported.columns.length,
+      responses: exported.counts.included,
+    });
     if (expected > maxCells) throw tooBig(expected);
   }
 

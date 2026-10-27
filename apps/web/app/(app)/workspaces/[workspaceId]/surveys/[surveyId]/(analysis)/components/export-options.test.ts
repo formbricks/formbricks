@@ -2,6 +2,9 @@ import { describe, expect, test } from "vitest";
 import { planExport } from "@/lib/analysis-export/export-request";
 import {
   DEFAULT_EXPORT_OPTIONS,
+  excelAlternative,
+  isExcelBlocked,
+  isExcelTooLarge,
   isSpssAvailable,
   isTextOnlyAvailable,
   setDisplay,
@@ -54,5 +57,30 @@ describe("the Export modal's options", () => {
     expect(toExportRequest(DEFAULT_EXPORT_OPTIONS, { responseIds: ["a", "b"] }).filter).toEqual({
       responseIds: ["a", "b"],
     });
+  });
+});
+
+describe("Excel against the size cap", () => {
+  const over = { excel: { cells: 2_000_000, maxCells: 1_000_000, tooLarge: true } };
+  const under = { excel: { cells: 10, maxCells: 1_000_000, tooLarge: false } };
+  const xlsx = setFormat(DEFAULT_EXPORT_OPTIONS, "xlsx");
+
+  test("Excel is too large only when the count says so; the Standard export and a loading count never are", () => {
+    expect(isExcelTooLarge(over)).toBe(true);
+    expect(isExcelTooLarge(under)).toBe(false);
+    expect(isExcelTooLarge({ excel: null })).toBe(false);
+    expect(isExcelTooLarge(undefined)).toBe(false);
+  });
+
+  test("an Excel export over the cap is blocked, and choosing CSV unblocks it", () => {
+    expect(isExcelBlocked(xlsx, over)).toBe(true);
+    expect(isExcelBlocked(setFormat(xlsx, "csv"), over)).toBe(false);
+    expect(isExcelBlocked(xlsx, under)).toBe(false);
+  });
+
+  test("the alternative is a zip of CSV files when the same choices make a zip, else one CSV", () => {
+    expect(excelAlternative(setDisplay(xlsx, "codes"))).toBe("csv");
+    expect(excelAlternative(setDisplay(xlsx, "both"))).toBe("zip");
+    expect(excelAlternative(toggleAdvanced(setDisplay(xlsx, "codes"), "datamap", true))).toBe("zip");
   });
 });

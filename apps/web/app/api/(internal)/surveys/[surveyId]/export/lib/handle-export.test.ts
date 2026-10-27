@@ -117,6 +117,17 @@ describe("handleExportRequest outcomes", () => {
     expect((auditLog as { action: string }).action).toBe("queried");
   });
 
+  test("dryRun passes the quota licence on and returns the Excel size the counts report", async () => {
+    mocks.getIsQuotasEnabled.mockResolvedValue(true);
+    const excel = { cells: 1_200_000, maxCells: 1_000_000, tooLarge: true };
+    mocks.countExportResponses.mockResolvedValue({ included: 7, lowQualityLeftOut: 0, excel });
+    const response = await run({ dryRun: true, body: { ...defaults, format: "xlsx", display: "codes" } });
+    expect(mocks.countExportResponses).toHaveBeenCalledWith(
+      expect.objectContaining({ isQuotasAllowed: true })
+    );
+    expect((await response.json()).data.excel).toEqual(excel);
+  });
+
   test("over the rate limit the download is a 429", async () => {
     mocks.checkRateLimit.mockResolvedValue({ ok: true, data: { allowed: false, retryAfter: 30 } });
     expect((await run()).status).toBe(429);
