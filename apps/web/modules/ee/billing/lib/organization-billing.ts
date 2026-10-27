@@ -492,11 +492,13 @@ const resolvePendingChangeEffectiveAt = (
 
 type TAutomaticTax = { enabled: true };
 
+const TAX_LOCATION_REQUIRED_ERROR_CODE = "tax_location_required";
+
 /**
  * Stripe Tax (VAT) for a paid subscription of this customer. Stripe rejects automatic tax when it
  * cannot place the customer, and the Hobby and Pro-trial subscriptions are created at signup, before
  * any billing address exists. So it is only turned on once Stripe reports a usable location (the
- * checkouts collect the billing address); without one the subscription keeps billing without tax.
+ * checkouts collect the billing address); `null` when there is none.
  */
 const getAutomaticTaxForCustomer = async (customerId: string): Promise<TAutomaticTax | null> => {
   if (!stripeClient) return null;
@@ -510,17 +512,29 @@ const getAutomaticTaxForCustomer = async (customerId: string): Promise<TAutomati
     return { enabled: true };
   }
 
-  logger.warn({ customerId, status }, "Stripe cannot locate the customer for tax; billing without tax");
+  logger.warn({ customerId, status }, "Stripe cannot locate the customer for tax");
   return null;
 };
 
-/** Automatic tax for a subscription moving to a paid plan; `null` when it's already on or unavailable. */
+/**
+ * Automatic tax for a move onto a paid plan. Without a tax location the change would invoice without
+ * VAT, so it is refused before anything is charged, canceled or rescheduled (ENG-4033).
+ */
+const requireAutomaticTaxForCustomer = async (customerId: string): Promise<TAutomaticTax> => {
+  const automaticTax = await getAutomaticTaxForCustomer(customerId);
+  if (!automaticTax) {
+    throw new OperationNotAllowedError(TAX_LOCATION_REQUIRED_ERROR_CODE);
+  }
+  return automaticTax;
+};
+
+/** Automatic tax for a subscription moving to a paid plan; `null` when it's already on. */
 const getMissingAutomaticTax = async (
   subscription: Pick<Stripe.Subscription, "automatic_tax">,
   customerId: string
 ): Promise<TAutomaticTax | null> => {
   if (subscription.automatic_tax?.enabled) return null;
-  return getAutomaticTaxForCustomer(customerId);
+  return requireAutomaticTaxForCustomer(customerId);
 };
 
 const ensureHobbySubscription = async (
@@ -1027,10 +1041,16 @@ const scheduleSubscriptionPlanChange = async (
     throw new Error("Stripe is not configured");
   }
 
-  // Looked up before anything changes, so a failed lookup leaves the subscription as it was.
-  const automaticTax = subscription.automatic_tax?.enabled
-    ? { enabled: true as const }
-    : await getAutomaticTaxForCustomer(customerId);
+  // Looked up before anything changes, so a failed lookup leaves the subscription as it was. A paid
+  // target requires a tax location; a Hobby target is free, so it never blocks the downgrade.
+  let automaticTax: TAutomaticTax | null;
+  if (subscription.automatic_tax?.enabled) {
+    automaticTax = { enabled: true };
+  } else if (targetPlan === "hobby") {
+    automaticTax = await getAutomaticTaxForCustomer(customerId);
+  } else {
+    automaticTax = await requireAutomaticTaxForCustomer(customerId);
+  }
 
   const hadCancelAtPeriodEnd = subscription.cancel_at_period_end;
   if (hadCancelAtPeriodEnd) {
@@ -1373,7 +1393,7 @@ const replaceSubscriptionInCatalogCurrency = async (input: {
   const targetItems = await getCatalogItemsForPlan(targetPlan, targetInterval);
   const card = isHobbyTarget ? null : await resolveReplacementCard(subscription, customerId);
   // Before the cancel: a failed lookup must not leave the org without its subscription.
-  const automaticTax = isHobbyTarget ? null : await getAutomaticTaxForCustomer(customerId);
+  const automaticTax = isHobbyTarget ? null : await requireAutomaticTaxForCustomer(customerId);
   await assertNoOtherCurrencyBillingObjects(subscription, customerId);
 
   // A schedule would keep driving the canceled subscription's phases; release it while it still can be.

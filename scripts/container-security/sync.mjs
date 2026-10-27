@@ -3,7 +3,6 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import {
   LINEAR_TEAM_ID,
-  LINEAR_TRIAGE_STATE_ID,
   createIssue,
   linearRequest,
   resolveDoneStateId,
@@ -11,12 +10,26 @@ import {
 } from "../dependabot-to-linear.mjs";
 import { imageRepository } from "./scan.mjs";
 
+// Kernel headers for compiling against glibc. Containers run the host's kernel, so its CVEs never apply.
+const IGNORED_PACKAGES = new Set(["linux-libc-dev"]);
+// Upstream image CVEs are unassessed maintenance work, so they top out at High; Urgent is for our own security bugs.
+const PRIORITY_BY_SEVERITY = { CRITICAL: 2, HIGH: 3 };
+// Per-CVE titles from before per-image grouping: `[Container <repo> <key>] <CVE> in <package>`.
+const LEGACY_TITLE = /^\[Container [^\]]+\] \S+ in \S+$/;
+// Tickets are kept out of Engineering triage: they track dependency maintenance, not assessed vulnerabilities.
+const LINEAR_BACKLOG_STATE_ID = "74fa7d3b-6dba-4dbb-b88a-2febcb0b35bf"; // Backlog
+const LINEAR_CANCELED_STATE_ID = "8df294bf-6430-4686-aa12-4161b849e4a1"; // Canceled
+const LINEAR_CONTAINER_SCAN_LABEL_ID = "4a766aa3-2a4a-416f-ba80-834333907cd6"; // container-scan
+
+const ticketPrefix = (repo, identity) =>
+  `[Container ${repo} ${createHash("sha256").update(identity).digest("hex").slice(0, 24)}]`;
+
 export function findings(repo, results) {
   const groups = new Map();
+  const images = new Map();
   for (const result of results) {
     if (result.errors.length) {
-      const key = createHash("sha256").update(`scan-error:${result.image}`).digest("hex").slice(0, 24);
-      const prefix = `[Container ${repo} ${key}]`;
+      const prefix = ticketPrefix(repo, `scan-error:${result.image}`);
       groups.set(prefix, {
         title: `${prefix} Cannot scan ${result.image}`,
         priority: 2,
@@ -26,34 +39,69 @@ export function findings(repo, results) {
         ),
       });
     }
+    const image = imageRepository(result.image);
+    if (!images.has(image))
+      images.set(image, { scans: new Set(), vulnerabilities: new Map(), lower: new Set() });
+    const entry = images.get(image);
     for (const scan of result.scans) {
+      entry.scans.add(
+        `- ${result.image} (${scan.platform}, ${scan.digest}). Sources: ${result.sources.join(", ")}`
+      );
       for (const target of scan.report.Results) {
         for (const vuln of target.Vulnerabilities ?? []) {
-          const image = imageRepository(result.image);
-          const key = createHash("sha256")
-            .update(JSON.stringify([image, target.Type, vuln.PkgName, vuln.VulnerabilityID]))
-            .digest("hex")
-            .slice(0, 24);
-          const prefix = `[Container ${repo} ${key}]`;
+          if (IGNORED_PACKAGES.has(vuln.PkgName)) continue;
           const severity = vuln.Severity?.toUpperCase();
-          const priority = severity === "CRITICAL" ? 1 : severity === "HIGH" ? 2 : 3;
-          if (!groups.has(prefix))
-            groups.set(prefix, {
-              title: `${prefix} ${vuln.VulnerabilityID} in ${vuln.PkgName}`,
-              priority,
-              scope: { repository: image },
-              occurrences: new Set(),
-            });
-          const group = groups.get(prefix);
-          group.priority = Math.min(group.priority, priority);
-          group.occurrences.add(
-            `- ${result.image} (${scan.platform}, ${scan.digest}): ${vuln.PkgName} ${vuln.InstalledVersion}; ${severity}; fix: ${vuln.FixedVersion || "not available"}. Sources: ${result.sources.join(", ")}`
-          );
+          const id = `${vuln.VulnerabilityID} in ${vuln.PkgName} (${target.Type})`;
+          if (!PRIORITY_BY_SEVERITY[severity]) {
+            entry.lower.add(id);
+            continue;
+          }
+          if (!entry.vulnerabilities.has(id)) entry.vulnerabilities.set(id, { severity, details: new Map() });
+          const finding = entry.vulnerabilities.get(id);
+          if (PRIORITY_BY_SEVERITY[severity] < PRIORITY_BY_SEVERITY[finding.severity])
+            finding.severity = severity;
+          const detail = `${result.image}: ${vuln.InstalledVersion}, fix: ${vuln.FixedVersion || "not available"}`;
+          if (!finding.details.has(detail)) finding.details.set(detail, new Set());
+          finding.details.get(detail).add(scan.platform);
         }
       }
     }
   }
+  // One ticket per image repository, open while any tag or architecture has a critical/high finding.
+  for (const [image, entry] of images) {
+    if (!entry.vulnerabilities.size) continue;
+    const prefix = ticketPrefix(repo, JSON.stringify(["image", image]));
+    const listed = [...entry.vulnerabilities].map(
+      ([id, { severity, details }]) =>
+        `- ${severity} ${id}: ${[...details]
+          .map(([detail, platforms]) => `${detail} (${[...platforms].sort().join(", ")})`)
+          .sort()
+          .join("; ")}`
+    );
+    const lower = [...entry.lower].filter((id) => !entry.vulnerabilities.has(id)).length;
+    groups.set(prefix, {
+      title: `${prefix} Critical/high vulnerabilities in ${image}`,
+      priority: Math.min(...[...entry.vulnerabilities.values()].map((v) => PRIORITY_BY_SEVERITY[v.severity])),
+      scope: { repository: image },
+      occurrences: new Set([
+        ...listed,
+        ...(lower ? [`\nNot listed: ${lower} medium/low/unrated findings. See the scan artifacts.`] : []),
+      ]),
+      scans: entry.scans,
+    });
+  }
   return groups;
+}
+
+export function description(repo, finding) {
+  const scope = finding.scope.repository
+    ? `Image repository: \`${finding.scope.repository}\``
+    : `Scan image: \`${finding.scope.image}\``;
+  const scans = finding.scans ? `\n\nScanned:\n${[...finding.scans].sort().join("\n")}` : "";
+  const occurrences = [...finding.occurrences].sort(
+    (a, b) => a.startsWith("\n") - b.startsWith("\n") || a.localeCompare(b)
+  );
+  return `Container vulnerability on main.\n\n${scope}\n\n${occurrences.join("\n")}${scans}\n\nDaily scan: https://github.com/${repo}/actions/workflows/container-security.yml\n\nA merge is not a customer deployment; publish and communicate the patched chart/image.`;
 }
 
 export function reconciliation(repo, inventory, results, existing) {
@@ -93,15 +141,19 @@ export function reconciliation(repo, inventory, results, existing) {
   const current = findings(repo, results);
   const activePrefixes = new Set(current.keys());
   const prefixOf = (title) => title.slice(0, title.indexOf("]") + 1);
+  const resolved = existing.filter(
+    (issue) =>
+      !activePrefixes.has(prefixOf(issue.title)) &&
+      !["completed", "canceled"].includes(issue.state.type) &&
+      canClose(issue)
+  );
   return {
     complete,
     current,
-    close: existing.filter(
-      (issue) =>
-        !activePrefixes.has(prefixOf(issue.title)) &&
-        !["completed", "canceled"].includes(issue.state.type) &&
-        canClose(issue)
-    ),
+    close: resolved.filter((issue) => !LEGACY_TITLE.test(issue.title)),
+    // The image's ticket now lists what is still present. Only untouched triage tickets are canceled:
+    // one someone already assessed or started on is left for its owner.
+    supersede: resolved.filter((issue) => LEGACY_TITLE.test(issue.title) && issue.state.type === "triage"),
   };
 }
 
@@ -155,21 +207,23 @@ async function main() {
   const plan = reconciliation(repo, inventory, results, existing);
   for (const [prefix, finding] of plan.current) {
     const issue = existing.find((i) => i.title.startsWith(prefix));
-    if (!issue && finding.priority > 2) continue;
-    const scope = finding.scope.repository
-      ? `Image repository: \`${finding.scope.repository}\``
-      : `Scan image: \`${finding.scope.image}\``;
-    const description = `Container vulnerability on main.\n\n${scope}\n\n${[...finding.occurrences].sort().join("\n")}\n\nDaily scan: https://github.com/${repo}/actions/workflows/container-security.yml\n\nA merge is not a customer deployment; publish and communicate the patched chart/image.`;
+    const body = description(repo, finding);
     if (dryRun) {
       console.log(`${issue ? "update" : "create"} ${finding.title}`);
       continue;
     }
     if (!issue) {
-      await createIssue(apiKey, { ...finding, description });
+      await createIssue(apiKey, {
+        title: finding.title,
+        description: body,
+        priority: finding.priority,
+        stateId: LINEAR_BACKLOG_STATE_ID,
+        labelIds: [LINEAR_CONTAINER_SCAN_LABEL_ID],
+      });
     } else {
-      const input = { description, priority: finding.priority };
-      if (["completed", "canceled"].includes(issue.state.type)) input.stateId = LINEAR_TRIAGE_STATE_ID;
-      if (issue.description === description && issue.priority === input.priority && !input.stateId) continue;
+      const input = { description: body, priority: finding.priority };
+      if (["completed", "canceled"].includes(issue.state.type)) input.stateId = LINEAR_BACKLOG_STATE_ID;
+      if (issue.description === body && issue.priority === input.priority && !input.stateId) continue;
       const data = await linearRequest(
         apiKey,
         `mutation UpdateContainerIssue($id: String!, $input: IssueUpdateInput!) {
@@ -189,12 +243,19 @@ async function main() {
     done ??= await resolveDoneStateId(apiKey);
     await setIssueState(apiKey, issue.id, done);
   }
+  for (const issue of plan.supersede) {
+    if (dryRun) {
+      console.log(`supersede ${issue.title}`);
+      continue;
+    }
+    await setIssueState(apiKey, issue.id, LINEAR_CANCELED_STATE_ID);
+  }
   if (!plan.complete)
     throw new Error(
-      `Incomplete image scan: ${plan.close.length} tickets resolved in successful or removed scopes; other tickets retained. Inspect failed jobs/artifacts.`
+      `Incomplete image scan: ${plan.close.length + plan.supersede.length} tickets resolved in successful or removed scopes; other tickets retained. Inspect failed jobs/artifacts.`
     );
   console.log(
-    `Complete inventory: ${inventory.length} images. ${plan.current.size} vulnerability groups; ${plan.close.length} resolved tickets.`
+    `Complete inventory: ${inventory.length} images. ${plan.current.size} tickets; ${plan.close.length} resolved; ${plan.supersede.length} superseded per-CVE tickets.`
   );
 }
 

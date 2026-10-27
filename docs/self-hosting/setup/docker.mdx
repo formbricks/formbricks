@@ -9,6 +9,9 @@ baseline Formbricks stack: Formbricks Web, PostgreSQL, Redis/Valkey, Formbricks 
 services such as Qwen/vLLM, AI taxonomy, and RustFS are documented after the baseline stack is running. The
 baseline also runs a single SpiceDB instance for Formbricks authorization data.
 
+See [deployment components](/self-hosting/deployment-components) for required services, managed alternatives
+and the release-specific image inventory.
+
 ### Requirements
 
 Make sure the following tools are installed:
@@ -28,7 +31,7 @@ Docker and Docker Compose are usually included in tools like Docker Desktop and 
 ## Choose Your Setup Path
 
 - Use this manual Docker Compose guide for local installs, custom servers, or custom reverse-proxy setups.
-- Use the [one-click setup script](/self-hosting/setup/one-click) for production Ubuntu servers where you want
+- Use the [one-click setup script](/self-hosting/setup/one-click) for Debian 12/13 or Ubuntu servers where you want
   Traefik, HTTPS certificates, and optional RustFS automation.
 - Use the [migration guide](/self-hosting/advanced/migration#v5) before updating an existing Formbricks 4.x
   install or an older v5 compose file.
@@ -451,12 +454,29 @@ rollback procedure in [AuthZed Operations](/self-hosting/configuration/authzed-o
    ```
 
 <Warning>
-  **Security (existing installs):** these steps — and the [one-click setup script](/self-hosting/setup/one-click)
-  updater — do **not** rewrite your existing
-  `docker-compose.yml`. If your bundled `redis` (Valkey) service still publishes `ports: - "6379:6379"`, it
-  stays exposed to the host after updating. See [Debug](#debug) for how to remove the mapping and, if the port
+  **Security (existing installs):** these steps do **not** rewrite your existing `docker-compose.yml`, and the
+  [one-click setup script](/self-hosting/setup/one-click#update) updater only makes the narrow edits listed in its
+  Update section (such as the IPv6 network setting). Neither removes a published Redis port: if your bundled `redis`
+  (Valkey) service still publishes `ports: - "6379:6379"`, it stays exposed to the host after updating. See [Debug](#debug) for how to remove the mapping and, if the port
   was reachable from an untrusted network, invalidate existing sessions.
 </Warning>
+
+## IPv6 visitors
+
+If a container in this Compose project publishes the ports visitors connect to over IPv6, such as a reverse proxy
+you added, give the network IPv6. Otherwise Docker hands those connections to the container from its bridge
+gateway, and Formbricks sees every IPv6 visitor as that one address, for rate limiting and in logs. With Docker
+Engine 27.0 or later and IPv6 on the host, add this to `docker-compose.yml`:
+
+```yaml
+networks:
+  default:
+    enable_ipv6: true
+```
+
+Then recreate the network with `docker compose down` and `docker compose up -d`. The
+[one-click setup](/self-hosting/setup/one-click#ipv6-visitors) adds this for you. A reverse proxy that runs on the
+host itself and forwards to `127.0.0.1:3000` does not need it.
 
 ## Optional: Add RustFS for File Storage
 

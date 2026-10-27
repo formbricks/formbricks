@@ -8,12 +8,16 @@ vi.mock("next/navigation", () => ({
   unstable_isUnrecognizedActionError: mockIsUnrecognizedActionError,
 }));
 
-/** Both markers Next.js stamps on the rejection, so this matches what a real stale action produces. */
+/** The name and message Next.js gives the rejection, so this matches what a real stale action produces. */
 const staleActionError = () =>
-  Object.assign(new Error('Server Action "7f8e93d" was not found on the server.'), {
-    name: "UnrecognizedActionError",
-    __NEXT_ERROR_CODE: "E715",
-  });
+  Object.assign(
+    new Error(
+      'Server Action "7f8e93d" was not found on the server. \nRead more: https://nextjs.org/docs/messages/failed-to-find-server-action'
+    ),
+    {
+      name: "UnrecognizedActionError",
+    }
+  );
 
 // The module latches once a stale action has been reported, so every test gets its own copy.
 const loadModule = async () => {

@@ -1,6 +1,10 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { type TLinkSurvey, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
+import { isLinkSurveyServable } from "@/modules/survey/link/lib/public-access";
+import type { TSingleUseSearchParam } from "@/modules/survey/link/lib/single-use-link";
+import { getUnansweredLinkSurveySingleUseAccess } from "@/modules/survey/link/lib/single-use-unanswered";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import {
   getBasicSurveyMetadata,
@@ -8,19 +12,24 @@ import {
   getSurveyOpenGraphMetadata,
 } from "./lib/metadata-utils";
 
-export const getMetadataForLinkSurvey = async (
-  surveyId: string,
-  languageCode?: string,
-  acceptedLanguages: string[] = []
+/**
+ * What a survey page shows while it can't name the survey: /c/<token> with a bad token or a survey that isn't
+ * public, and /s/<id> for a single-use survey opened without a valid link. A fresh object per call, since Next
+ * receives it by reference.
+ */
+export const getGenericSurveyMetadata = (): Metadata => ({
+  title: "Survey",
+  description: "Please complete this survey.",
+});
+
+/** Title, description, social previews and favicon for a survey the link page serves. */
+const getServableSurveyMetadata = async (
+  survey: TLinkSurvey,
+  languageCode: string | undefined,
+  acceptedLanguages: string[]
 ): Promise<Metadata> => {
-  const survey = await getSurveyWithMetadata(surveyId);
-
-  if (!survey || survey?.type !== "link" || survey?.status === "draft") {
-    notFound();
-  }
-
   const { title, ogTitle, description, ogImage } = await getBasicSurveyMetadata(
-    surveyId,
+    survey.id,
     languageCode,
     survey,
     acceptedLanguages
@@ -45,15 +54,45 @@ export const getMetadataForLinkSurvey = async (
     baseMetadata.twitter.description = description;
   }
 
-  const canonicalPath = `/s/${surveyId}`;
-
   return {
     title,
     description,
     ...baseMetadata,
     ...(customFaviconUrl && { icons: customFaviconUrl }),
+  };
+};
+
+export const getMetadataForLinkSurvey = async ({
+  surveyId,
+  languageCode,
+  acceptedLanguages = [],
+  suId,
+  suToken,
+}: {
+  surveyId: string;
+  languageCode?: string;
+  acceptedLanguages?: string[];
+  /** The single-use link, as it appears in the URL. */
+  suId?: TSingleUseSearchParam;
+  suToken?: TSingleUseSearchParam;
+}): Promise<Metadata> => {
+  // An unknown id takes the same notFound() path as a non-public one, so both get the same page title
+  // (ENG-4032). Their responses can still differ in size and timing, since a missing row loads faster.
+  const survey = await getSurveyWithMetadata(surveyId).catch((error: unknown) => {
+    if (error instanceof ResourceNotFoundError) {
+      notFound();
+    }
+    throw error;
+  });
+
+  // Same gate as the page: an archived survey's name must not reach <title> or og:title on its 404.
+  if (!isLinkSurveyServable(survey)) {
+    notFound();
+  }
+
+  const pageMetadata: Metadata = {
     alternates: {
-      canonical: canonicalPath,
+      canonical: `/s/${surveyId}`,
     },
     robots: {
       index: false,
@@ -65,4 +104,60 @@ export const getMetadataForLinkSurvey = async (
       },
     },
   };
+
+  // Same single-use gate as the page, sharing its one resolution per request. Without a valid link the page
+  // shows only "this survey can only be taken by invitation", and for an answered one only "already
+  // answered", so the survey's name or welcome headline must not reach <title> / og:title above either
+  // (ENG-4041).
+  const singleUse = await getUnansweredLinkSurveySingleUseAccess({
+    survey,
+    suId,
+    suToken,
+    surface: "link_page",
+  });
+  if (!singleUse.allowed) {
+    return { ...getGenericSurveyMetadata(), ...pageMetadata };
+  }
+
+  return {
+    ...(await getServableSurveyMetadata(survey, languageCode, acceptedLanguages)),
+    ...pageMetadata,
+  };
+};
+
+/**
+ * Metadata for /c/<token>, once the token has named a survey. The page 404s a survey that is no longer
+ * public (draft, archived, non-link) even with a valid token, so its name or welcome headline must not
+ * reach <title> / og:title either (ENG-4032). A survey that can't be loaded gets the same generic metadata, and
+ * so does a single-use survey opened without its link, which the page shows as "link invalid", or through one
+ * already answered (ENG-4041).
+ */
+export const getMetadataForContactSurvey = async ({
+  surveyId,
+  acceptedLanguages = [],
+  suId,
+  suToken,
+}: {
+  surveyId: string;
+  acceptedLanguages?: string[];
+  /** The single-use link, as it appears in the URL. */
+  suId?: TSingleUseSearchParam;
+  suToken?: TSingleUseSearchParam;
+}): Promise<Metadata> => {
+  const survey = await getSurveyWithMetadata(surveyId).catch(() => null);
+  if (!survey || !isLinkSurveyServable(survey)) {
+    return getGenericSurveyMetadata();
+  }
+
+  // Shares the contact page's one resolution per request.
+  const singleUse = await getUnansweredLinkSurveySingleUseAccess({
+    survey,
+    suId,
+    suToken,
+    surface: "contact_link_page",
+  });
+  if (!singleUse.allowed) {
+    return getGenericSurveyMetadata();
+  }
+  return getServableSurveyMetadata(survey, undefined, acceptedLanguages);
 };

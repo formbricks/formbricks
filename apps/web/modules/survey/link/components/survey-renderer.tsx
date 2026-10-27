@@ -19,15 +19,18 @@ import { SurveyClientWrapper } from "@/modules/survey/link/components/survey-cli
 import { SurveyCompletedMessage } from "@/modules/survey/link/components/survey-completed-message";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
+import type { TLinkSurvey } from "@/modules/survey/link/lib/data";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
+import { isLinkSurveyServable } from "@/modules/survey/link/lib/public-access";
 import { getLinkSurveyCustomCss, omitCustomCssSource } from "@/modules/survey/link/lib/respondent-custom-css";
+import { singleSearchParamValue } from "@/modules/survey/link/lib/single-use-link";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { hasUserIdSearchParam } from "@/modules/survey/link/lib/user-id";
 import { getGateLocale, resolveLinkSurveyLanguage } from "@/modules/survey/link/lib/utils";
 import { TWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 
 interface SurveyRendererProps {
-  survey: TSurvey;
+  survey: TLinkSurvey;
   searchParams: TLinkSurveySearchParams;
   singleUseId?: string;
   singleUseResponse?: Pick<Response, "id" | "finished">;
@@ -80,7 +83,7 @@ export const renderSurvey = async ({
 
   // Archived surveys are absent from the workspace for respondents — treat the public link as a
   // missing survey (same as a draft or non-link survey) rather than showing an inactive/scheduled state.
-  if (survey.status === "draft" || survey.type !== "link" || survey.archivedAt) {
+  if (!isLinkSurveyServable(survey)) {
     notFound();
   }
 
@@ -92,6 +95,13 @@ export const renderSurvey = async ({
   // server-side (see the `survey.pin` branch below and `validateSurveyPinAction`) — nor its stored
   // custom CSS, which carries the editable source. Compiled CSS goes through `customCss` below.
   const publicSurvey: TSurvey = { ...omitCustomCssSource(survey), pin: null };
+
+  // The single-use link exactly as it appears in the URL. The PIN and verify-email screens hand it back to
+  // their actions, which repeat the single-use check this page already passed (ENG-4041). A repeated
+  // parameter arrives as an array, which those actions' schemas would reject outright, leaving the gate
+  // impossible to pass.
+  const linkSuId = singleSearchParamValue(searchParams.suId);
+  const linkSuToken = singleSearchParamValue(searchParams.suToken);
 
   const isSpamProtectionEnabled = Boolean(IS_RECAPTCHA_CONFIGURED && survey.recaptcha?.enabled);
   const isScheduled = survey.status === "paused" && survey.publishOn !== null;
@@ -140,8 +150,8 @@ export const renderSurvey = async ({
     }
     return (
       <VerifyEmail
-        singleUseId={searchParams.suId ?? ""}
-        singleUseToken={searchParams.suToken}
+        singleUseId={linkSuId ?? ""}
+        singleUseToken={linkSuToken}
         survey={publicSurvey}
         languageCode={languageCode}
         styling={workspace.styling}
@@ -169,6 +179,8 @@ export const renderSurvey = async ({
         publicDomain={publicDomain}
         workspace={workspace}
         singleUseId={singleUseId}
+        suId={linkSuId}
+        suToken={linkSuToken}
         singleUseResponse={singleUseResponse}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}

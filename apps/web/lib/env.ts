@@ -2,6 +2,7 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { AI_PROVIDERS } from "@formbricks/types/ai";
+import { AI_MAX_TIMEOUT_MULTIPLIER } from "@formbricks/types/ai-timeout";
 import { isValidIanaTimeZone } from "@formbricks/types/common";
 import { throwEnvValidationError } from "./env-validation-error";
 
@@ -562,6 +563,10 @@ const parsedEnv = createEnv({
    * Will throw if you access these variables on the client.
    */
   server: {
+    AI_TIMEOUT_MULTIPLIER: z.preprocess(
+      emptyStringToUndefined,
+      z.coerce.number().min(1).max(AI_MAX_TIMEOUT_MULTIPLIER).default(1)
+    ),
     AI_PROVIDER: ZActiveAIProvider.optional(),
     AI_MODEL: z.string().optional(),
     AIRTABLE_CLIENT_ID: z.string().optional(),
@@ -613,6 +618,14 @@ const parsedEnv = createEnv({
     BULLMQ_WORKER_ENABLED: z.enum(["1", "0"]).optional(),
     E2E_TESTING: z.enum(["1", "0"]).optional(),
     EMAIL_AUTH_DISABLED: z.enum(["1", "0"]).optional(),
+    // Scales the per-organization, per-sender and per-deployment email caps
+    // (modules/email/lib/email-rate-limits.ts), for deployments that legitimately send more than the defaults
+    // allow. Per-recipient caps are not scaled. Blank counts as unset, so a templated empty value does not stop
+    // boot.
+    EMAIL_RATE_LIMIT_MULTIPLIER: z.preprocess(
+      (value) => (value === "" ? undefined : value),
+      z.coerce.number().positive().max(100).optional().default(1)
+    ),
     EMAIL_VERIFICATION_DISABLED: z.enum(["1", "0"]).optional(),
     ENCRYPTION_KEY: z.string(),
     ENTERPRISE_LICENSE_KEY: z.string().optional(),
@@ -808,6 +821,7 @@ const parsedEnv = createEnv({
    * 💡 You'll get type errors if not all variables from `server` & `client` are included here.
    */
   runtimeEnv: {
+    AI_TIMEOUT_MULTIPLIER: process.env.AI_TIMEOUT_MULTIPLIER,
     AI_PROVIDER: process.env.AI_PROVIDER,
     AI_MODEL: process.env.AI_MODEL,
     AIRTABLE_CLIENT_ID: process.env.AIRTABLE_CLIENT_ID,
@@ -844,6 +858,7 @@ const parsedEnv = createEnv({
     BULLMQ_WORKER_ENABLED: process.env.BULLMQ_WORKER_ENABLED,
     E2E_TESTING: process.env.E2E_TESTING,
     EMAIL_AUTH_DISABLED: process.env.EMAIL_AUTH_DISABLED,
+    EMAIL_RATE_LIMIT_MULTIPLIER: process.env.EMAIL_RATE_LIMIT_MULTIPLIER,
     EMAIL_VERIFICATION_DISABLED: process.env.EMAIL_VERIFICATION_DISABLED,
     ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
     ENTERPRISE_LICENSE_KEY: process.env.ENTERPRISE_LICENSE_KEY,
