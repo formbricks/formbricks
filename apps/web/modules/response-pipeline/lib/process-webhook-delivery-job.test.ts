@@ -6,6 +6,7 @@ import {
   WebhookDeliveryTimeoutError,
   sendSignedWebhookRequest,
 } from "@/modules/integrations/webhooks/lib/send-signed-webhook";
+import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { buildWebhookDeliveryBody, processWebhookDeliveryJob } from "./process-webhook-delivery-job";
 import { recordWebhookDeliveryOutcome } from "./webhook-delivery-metrics";
 
@@ -153,6 +154,109 @@ describe("buildWebhookDeliveryBody", () => {
     const body = JSON.parse(buildWebhookDeliveryBody({ ...data, response: { ...data.response, outcome } }));
 
     expect(body.data.outcome).toBe(outcome);
+  });
+});
+
+describe("buildWebhookDeliveryBody dataByQuestionCode", () => {
+  const withData = (
+    responseData: Record<string, unknown>,
+    questionCodes: Record<string, string> | undefined
+  ): TWebhookDeliveryJobData => ({
+    ...data,
+    response: { ...data.response, data: responseData as TWebhookDeliveryJobData["response"]["data"] },
+    survey: { ...data.survey, questionCodes },
+  });
+
+  // Resolve like the real helper does for a file answer, so the map is proven to read the resolved data.
+  const build = (input: TWebhookDeliveryJobData) => {
+    vi.mocked(resolveStorageUrlsInObject).mockImplementationOnce((value) => {
+      const copy = JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
+      if (typeof copy.file === "string") copy.file = `https://cdn.example.com/${copy.file}`;
+      return copy as never;
+    });
+    return JSON.parse(buildWebhookDeliveryBody(input));
+  };
+
+  // A new response column would otherwise appear in every receiver's payload without anyone choosing it.
+  test("pins the literal key list of body.data", () => {
+    const body = build(withData({ el1: "a" }, { el1: "age" }));
+
+    expect(Object.keys(body.data).sort()).toEqual(
+      [
+        "contact",
+        "contactAttributes",
+        "createdAt",
+        "data",
+        "dataByQuestionCode",
+        "displayId",
+        "endingId",
+        "finished",
+        "id",
+        "language",
+        "meta",
+        "outcome",
+        "singleUseId",
+        "survey",
+        "surveyId",
+        "tags",
+        "updatedAt",
+        "variables",
+      ].sort()
+    );
+  });
+
+  test("keeps data keyed by Question ID and mirrors the same values under the question code", () => {
+    const body = build(
+      withData({ el1: "34", el2: ["a", "b"], el3: { x: 1 } }, { el1: "age", el2: "tags", el3: "grid" })
+    );
+
+    expect(body.data.data).toEqual({ el1: "34", el2: ["a", "b"], el3: { x: 1 } });
+    expect(body.data.dataByQuestionCode).toEqual({ age: "34", tags: ["a", "b"], grid: { x: 1 } });
+  });
+
+  test("lists every coded question, null when nothing is stored", () => {
+    const body = build(withData({ el1: "34" }, { el1: "age", el2: "skipped" }));
+
+    expect(body.data.dataByQuestionCode).toEqual({ age: "34", skipped: null });
+  });
+
+  test("leaves out an answer whose question has no code, and hidden fields", () => {
+    const body = build(withData({ el1: "34", nocode: "x", utm_source: "mail" }, { el1: "age" }));
+
+    expect(body.data.dataByQuestionCode).toEqual({ age: "34" });
+    expect(body.data.data.utm_source).toBe("mail");
+  });
+
+  test("a code equal to a hidden field name does not touch the hidden field in data", () => {
+    const body = build(withData({ el1: "34", utm_source: "mail" }, { el1: "utm_source" }));
+
+    expect(body.data.data).toEqual({ el1: "34", utm_source: "mail" });
+    expect(body.data.dataByQuestionCode).toEqual({ utm_source: "34" });
+  });
+
+  test("resolves file URLs the same way as data", () => {
+    const body = build(withData({ file: "a.png" }, { file: "upload" }));
+
+    expect(body.data.data.file).toBe("https://cdn.example.com/a.png");
+    expect(body.data.dataByQuestionCode.upload).toBe("https://cdn.example.com/a.png");
+  });
+
+  test.each(["constructor", "toString", "hasOwnProperty"])("accepts the code %s", (code) => {
+    const body = build(withData({ el1: "34" }, { el1: code }));
+
+    expect(Object.hasOwn(body.data.dataByQuestionCode, code)).toBe(true);
+    expect(body.data.dataByQuestionCode[code]).toBe("34");
+  });
+
+  test("a job queued before question codes existed carries no dataByQuestionCode", () => {
+    const body = build(withData({ el1: "34" }, undefined));
+
+    expect("dataByQuestionCode" in body.data).toBe(false);
+    expect(body.data.data).toEqual({ el1: "34" });
+  });
+
+  test("a survey with no coded question gets an empty object", () => {
+    expect(build(withData({ el1: "34" }, {})).data.dataByQuestionCode).toEqual({});
   });
 });
 

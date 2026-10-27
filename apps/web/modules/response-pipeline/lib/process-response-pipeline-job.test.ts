@@ -404,6 +404,7 @@ describe("processResponsePipelineJob", () => {
           status: "inProgress",
           createdAt: survey.createdAt,
           updatedAt: survey.updatedAt,
+          questionCodes: {},
         },
       },
       { jobId: "whd-job_123-webhook_123" }
@@ -415,6 +416,30 @@ describe("processResponsePipelineJob", () => {
     });
     expect(mockSendTelemetryEvents).toHaveBeenCalledTimes(1);
     expect(mockHandleIntegrations).not.toHaveBeenCalled();
+  });
+
+  test("hands the delivery job the Question ID to question code map of the survey's coded questions", async () => {
+    const openText = (id: string, code?: string) => ({
+      id,
+      ...(code ? { code } : {}),
+      type: "openText",
+      headline: { default: id },
+    });
+    mockPrismaSurveyFindUnique.mockResolvedValue({
+      ...survey,
+      blocks: [
+        { id: "b1", elements: [openText("el1", "age"), openText("el2")] },
+        { id: "b2", elements: [openText("el3", "constructor")] },
+      ],
+    });
+    mockPrismaWebhookFindMany.mockResolvedValue([webhookRow]);
+
+    await processResponsePipelineJob(baseData, baseContext);
+
+    expect(mockEnqueueWebhookDeliveryJob.mock.calls[0][0].survey.questionCodes).toEqual({
+      el1: "age",
+      el3: "constructor",
+    });
   });
 
   test("derives a stable webhook id from the pipeline job across retry attempts", async () => {

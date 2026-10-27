@@ -540,6 +540,26 @@ describe("findBlockByElementId", () => {
     const block = findBlockByElementId(survey.blocks, "nonexistent");
     expect(block).toBeUndefined();
   });
+
+  test("should find the block by question code when no element has that ID", () => {
+    const coded = {
+      ...survey,
+      blocks: survey.blocks.map((b) =>
+        b.id === "block2" ? { ...b, elements: b.elements.map((e) => ({ ...e, code: "age" })) } : b
+      ),
+    };
+    expect(findBlockByElementId(coded.blocks, "age")?.id).toBe("block2");
+  });
+
+  test("the Question ID wins when it equals another question's code", () => {
+    const clash = {
+      ...survey,
+      blocks: survey.blocks.map((b) =>
+        b.id === "block2" ? { ...b, elements: b.elements.map((e) => ({ ...e, code: "q1" })) } : b
+      ),
+    };
+    expect(findBlockByElementId(clash.blocks, "q1")?.id).toBe("block1");
+  });
 });
 
 describe("isRTL", () => {
