@@ -9,6 +9,7 @@ import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import formbricks from "@formbricks/js";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { parsePublishedLockErrorMessage } from "@formbricks/types/surveys/published-lock";
 import {
   TSurvey,
   TSurveyEditorTabs,
@@ -723,7 +724,13 @@ export const SurveyMenuBar = ({
       } else {
         saveAttemptOrder.settle(attempt);
         const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
-        toast.error(errorMessage);
+        // ENG-6783: the server refused an edit to a locked field; say why, with its details.
+        const lockDetails = parsePublishedLockErrorMessage(errorMessage);
+        toast.error(
+          lockDetails === null
+            ? errorMessage
+            : t("workspace.surveys.edit.published_survey_locked", { details: lockDetails })
+        );
         return false;
       }
 

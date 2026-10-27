@@ -401,6 +401,44 @@ describe("patchV3Survey", () => {
    * recall, the logic engine, export columns and the response filters keep reading the pre-patch set.
    * v3 patch is the one write path that did not do this.
    */
+  // ENG-6783: PATCH, the block routes and the MCP tools all end in patchV3Survey, so one test here
+  // proves the lock stops the write for all of them (the cases live in prepare.test.ts).
+  describe("published lock (ENG-6783)", () => {
+    const publishedWithCode = {
+      ...currentSurvey,
+      status: "inProgress",
+      blocks: currentSurvey.blocks.map((block) => ({
+        ...block,
+        elements: block.elements.map((element) => ({ ...element, code: "feedback" })),
+      })),
+    } as unknown as TSurvey;
+
+    test("refuses to change a question code and does not write", async () => {
+      const input = {
+        blocks: [
+          {
+            id: publishedWithCode.blocks[0].id,
+            name: "Main Block",
+            elements: [
+              {
+                id: "satisfaction",
+                type: "openText",
+                headline: { "en-US": "What should we improve?" },
+                required: true,
+                code: "renamed",
+              },
+            ],
+          },
+        ],
+      };
+
+      await expect(patchV3Survey(publishedWithCode, input, "req_lock_1", "org_1")).rejects.toMatchObject({
+        invalidParams: [expect.objectContaining({ code: "immutable_question_code" })],
+      });
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+    });
+  });
+
   describe("Embedded Data reconcile", () => {
     test("writes a row and a link for a variable the patch adds", async () => {
       await patchV3Survey(
