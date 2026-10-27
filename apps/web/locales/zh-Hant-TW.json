@@ -3241,7 +3241,7 @@
         "license_status_invalid": "授權無效",
         "license_status_unreachable": "無法連線",
         "license_unreachable_grace_period": "無法連線至授權伺服器。在 3 天的寬限期內，你的企業功能仍可使用，寬限期將於 {gracePeriodEnd} 結束。",
-        "lite_license_description": "我們會贈送你一個免費的 Lite 企業版授權,包含雙因素驗證、垃圾郵件防護以及一個額外的工作區。沒有任何附加條件,永久免費。",
+        "lite_license_description": "我們會免費送你一份 Lite 企業版授權，內含雙重驗證、可用 AI 建立與翻譯問卷的 AI 智慧功能，以及一個額外的工作區。完全沒有附加條件，永久免費。",
         "lite_license_title": "免費精簡版授權",
         "oidc_sso": "OIDC 單一登入(AzureAD、Google、OpenID)",
         "questions_please_reach_out_to_email": "有任何問題嗎?請聯絡 <contactLink>hola@formbricks.com</contactLink>",

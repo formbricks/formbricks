@@ -3241,7 +3241,7 @@
         "license_status_invalid": "Licença inválida",
         "license_status_unreachable": "Inacessível",
         "license_unreachable_grace_period": "O servidor de licenças não pode ser alcançado. Seus recursos empresariais permanecem ativos durante um período de carência de 3 dias que termina em {gracePeriodEnd}.",
-        "lite_license_description": "Vamos te enviar uma Licença Lite Enterprise gratuita com autenticação de dois fatores, proteção contra spam e um workspace adicional. Sem pegadinhas. Grátis para sempre.",
+        "lite_license_description": "Vamos enviar para você uma Licença Enterprise Lite de cortesia com autenticação de dois fatores, funcionalidades inteligentes de IA para criar e traduzir pesquisas com IA e um workspace adicional. Sem pegadinhas. Grátis para sempre.",
         "lite_license_title": "Licença Lite Gratuita",
         "oidc_sso": "SSO OIDC (AzureAD, Google, OpenID)",
         "questions_please_reach_out_to_email": "Dúvidas? Entre em contato com <contactLink>hola@formbricks.com</contactLink>",
