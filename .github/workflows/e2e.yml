@@ -5,6 +5,9 @@ on:
     secrets:
       ENTERPRISE_LICENSE_KEY:
         required: true
+      # A license created on staging.ee.formbricks.com: license keys are per server.
+      ENTERPRISE_LICENSE_KEY_STAGING:
+        required: false
       # A secret added here must also be named in pr.yml's e2e-test job: the caller does not
       # `inherit`, so an unnamed optional secret arrives empty and a required one fails the call.
   workflow_dispatch:
@@ -118,10 +121,30 @@ jobs:
       # Pull requests check the license against staging.ee.formbricks.com, where formbricks/ee deploys on
       # every merge to its main, so a PR that needs a new license flag passes before ee's next release. The
       # merge queue (and a manual run) keeps checking ee.formbricks.com, the server main ships against.
+      # Keys are per server, so staging takes its own, and staging data can be reset: the key is checked
+      # first, and a run whose key staging doesn't answer as active stays on production with a warning
+      # instead of failing every Enterprise spec.
       # `github.event_name` is the caller's event here (pr.yml). ENVIRONMENT also labels logs and traces.
       - name: Check the license against the staging license server on pull requests
         if: github.event_name == 'pull_request'
-        run: echo "ENVIRONMENT=staging" >> .env
+        env:
+          STAGING_LICENSE_KEY: ${{ secrets.ENTERPRISE_LICENSE_KEY_STAGING }}
+        run: |
+          if [ -z "${STAGING_LICENSE_KEY}" ]; then
+            echo "::warning::ENTERPRISE_LICENSE_KEY_STAGING is not set; checking the license against production."
+            exit 0
+          fi
+          status=$(jq -n --arg key "${STAGING_LICENSE_KEY}" '{licenseKey: $key, usage: {responseCount: 0}}' \
+            | curl -sS --max-time 20 -X POST https://staging.ee.formbricks.com/api/licenses/check \
+                -H "Content-Type: application/json" --data-binary @- \
+            | jq -r '.data.status // empty' 2>/dev/null) || true
+          if [ "${status}" != "active" ]; then
+            echo "::warning::staging.ee.formbricks.com answered ENTERPRISE_LICENSE_KEY_STAGING with '${status:-nothing}' (was staging reset?); checking the license against production."
+            exit 0
+          fi
+          sed -i "/^ENTERPRISE_LICENSE_KEY=/d" .env
+          printf 'ENTERPRISE_LICENSE_KEY=%s\n' "${STAGING_LICENSE_KEY}" >> .env
+          echo "ENVIRONMENT=staging" >> .env
         shell: bash
 
       - name: Start AuthZed CI fixture
