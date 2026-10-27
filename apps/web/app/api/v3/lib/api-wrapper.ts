@@ -29,12 +29,14 @@ import {
 import { buildV3AuditLog, queueV3AuditLog } from "./audit";
 import { mapV3ThrownError } from "./errors";
 import { BoundedInvalidParams } from "./invalid-params";
+import { getCrossOriginRefusal } from "./origin-check";
 import {
   type InvalidParam,
   isInvalidParamCode,
   problemBadRequest,
   problemCapacityReached,
   problemConcurrencyLimitReached,
+  problemForbidden,
   problemPayloadTooLarge,
   problemTooManyRequests,
   problemUnauthorized,
@@ -45,6 +47,11 @@ import type { TV3AuditLog, TV3Authentication } from "./types";
 type TV3Schema = z.ZodTypeAny;
 type MaybePromise<T> = T | Promise<T>;
 
+/**
+ * How a route authenticates. `session` and `none` serve browsers on this origin only: their unsafe
+ * methods pass the cross-origin check (`origin-check.ts`), so a script or another site gets a 403 there.
+ * `both` checks the session path the same way and leaves API-key callers alone.
+ */
 export type TV3AuthMode = "none" | "session" | "apiKey" | "both";
 
 export type TV3Schemas = {
@@ -508,6 +515,38 @@ function ensureRequestIdHeader(response: Response, requestId: string): Response 
   });
 }
 
+/**
+ * Whether this request carries an ambient credential and so needs the cross-origin check: a session
+ * cookie, or nothing at all on a pre-login (`auth: "none"`) route. API-key requests carry no ambient
+ * credential, so a forged cross-site request has nothing to ride on.
+ */
+function carriesAmbientCredential(authMode: TV3AuthMode, authentication: TV3Authentication): boolean {
+  if (authMode === "none") return true;
+  return Boolean(authentication && "user" in authentication);
+}
+
+/** A 403 for a cross-origin request that carries the browser's credentials; null for any other request. */
+function refuseCrossOriginOrContinue(params: {
+  req: NextRequest;
+  authMode: TV3AuthMode;
+  authentication: TV3Authentication;
+  requestId: string;
+  instance?: string;
+  log: ReturnType<typeof logger.withContext>;
+}): Response | null {
+  const { req, authMode, authentication, requestId, instance, log } = params;
+  if (!carriesAmbientCredential(authMode, authentication)) return null;
+
+  const refusal = getCrossOriginRefusal(req);
+  if (!refusal) return null;
+
+  log.warn(
+    { reason: refusal, secFetchSite: req.headers.get("sec-fetch-site"), origin: req.headers.get("origin") },
+    "V3 API refused a cross-origin request"
+  );
+  return problemForbidden(requestId, "Cross-origin requests are not allowed.", instance);
+}
+
 async function authenticateV3RequestOrRespond(
   req: NextRequest,
   authMode: TV3AuthMode,
@@ -691,15 +730,27 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         return authResult.response;
       }
 
-      const rateLimitResponse = await applyV3RateLimitOrRespond({
-        authentication: authResult.authentication,
-        enabled: rateLimit,
-        config: customRateLimitConfig ?? rateLimitConfigs.api.v3,
-        requestId,
-        log,
-      });
-      if (rateLimitResponse) {
-        return rateLimitResponse;
+      // The cross-origin check runs before rate limiting, so a forged request spends nothing, and after
+      // authentication, because whether it applies depends on how the caller authenticated
+      // (see `origin-check.ts`).
+      const guardResponse =
+        refuseCrossOriginOrContinue({
+          req,
+          authMode: auth,
+          authentication: authResult.authentication,
+          requestId,
+          instance,
+          log,
+        }) ??
+        (await applyV3RateLimitOrRespond({
+          authentication: authResult.authentication,
+          enabled: rateLimit,
+          config: customRateLimitConfig ?? rateLimitConfigs.api.v3,
+          requestId,
+          log,
+        }));
+      if (guardResponse) {
+        return guardResponse;
       }
 
       if (concurrency) {

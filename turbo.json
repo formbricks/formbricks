@@ -313,6 +313,7 @@
         "AUTHZED_INSECURE",
         "AUTHZED_SYSTEM_KEY",
         "AUTHZED_TOKEN",
+        "BETTER_AUTH_TRUSTED_ORIGINS",
         "DATABASE_URL",
         "DEBUG",
         "ENCRYPTION_KEY",

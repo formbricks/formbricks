@@ -708,6 +708,9 @@ const parsedEnv = createEnv({
     // instead (`warnOnAuthSecretRisks`).
     BETTER_AUTH_SECRET: ZOptionalVerbatimSecret,
     BETTER_AUTH_URL: z.url().optional(),
+    // Comma-separated extra origins. Better Auth reads it from the environment itself; the app reads it
+    // too so its cross-origin check trusts exactly what sign-in trusts.
+    BETTER_AUTH_TRUSTED_ORIGINS: z.string().optional(),
     MCP_OAUTH_JWKS_URL: ZMcpOauthJwksUrl.optional(),
     MCP_DCR_ALLOWED_REDIRECT_URIS: ZDcrRedirectUriList,
     MAIL_FROM_NAME: z.string().optional(),
@@ -833,6 +836,7 @@ const parsedEnv = createEnv({
     AZUREAD_TENANT_ID: process.env.AZUREAD_TENANT_ID,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
     BETTER_AUTH_URL: process.env.BETTER_AUTH_URL,
+    BETTER_AUTH_TRUSTED_ORIGINS: process.env.BETTER_AUTH_TRUSTED_ORIGINS,
     MCP_OAUTH_JWKS_URL: process.env.MCP_OAUTH_JWKS_URL,
     MCP_DCR_ALLOWED_REDIRECT_URIS: process.env.MCP_DCR_ALLOWED_REDIRECT_URIS,
     BREVO_API_KEY: process.env.BREVO_API_KEY,
