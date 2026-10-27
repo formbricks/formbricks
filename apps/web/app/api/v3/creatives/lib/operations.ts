@@ -477,7 +477,7 @@ export async function pauseV3SurveyCreatives({
     });
     if (authorized instanceof Response) return authorized;
 
-    const creativeIds = await pauseSurveyCreatives(body.surveyId, authorized.workspaceId);
+    const creativeIds = await pauseSurveyCreatives(body.surveyId, authorized.workspaceId, new Date());
     if (!creativeIds) {
       log.warn({ statusCode: 403 }, "Survey not found in the workspace");
       return problemForbidden(requestId, "You are not authorized to access this resource", instance);

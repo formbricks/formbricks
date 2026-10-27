@@ -266,10 +266,14 @@ export const restoreCreative = async (
  * no such survey is in the workspace. A survey-side change, so it takes its locks in the order above:
  * the survey's first, then the creatives' rows, which the single update takes as it reaches them.
  */
-export const pauseSurveyCreatives = (surveyId: string, workspaceId: string): Promise<string[] | null> =>
+export const pauseSurveyCreatives = (
+  surveyId: string,
+  workspaceId: string,
+  now: Date
+): Promise<string[] | null> =>
   runInCreativeTransaction(async (tx) => {
     if (!(await lockDestinationSurvey(tx, surveyId, workspaceId))) return null;
-    return pauseSurveyCreativeRecords(tx, surveyId, workspaceId);
+    return pauseSurveyCreativeRecords(tx, surveyId, workspaceId, now);
   });
 
 /** Copies the creative into a new Draft, without counts, created by `createdBy`. */

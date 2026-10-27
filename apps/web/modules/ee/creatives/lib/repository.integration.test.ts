@@ -264,22 +264,34 @@ describe("pauseSurveyCreatives", () => {
   const opens = (surveyId: string) => ({ destination: { type: "survey" as const, surveyId } });
   const readRow = (id: string) => prisma.creative.findUniqueOrThrow({ where: { id } });
 
-  test("pauses only the survey's own In progress creatives that aren't archived, writing only their status", async () => {
+  test("pauses only the survey's own In progress creatives that aren't archived or ended, writing only their status", async () => {
     const { workspaceId, activeSurvey, pausedSurvey } = await seedWorkspace("Pause");
     const other = await seedWorkspace("Pause elsewhere");
     const live = await create(workspaceId, { name: "live", ...opens(activeSurvey.id) });
+    const endsLater = await create(workspaceId, {
+      name: "ends later",
+      schedule: { startAt: null, endAt: hoursFromNow(1) },
+      ...opens(activeSurvey.id),
+    });
     const untouched = await Promise.all([
       create(workspaceId, { name: "draft", status: "draft", publishedAt: null, ...opens(activeSurvey.id) }),
       create(workspaceId, { name: "paused", status: "paused", ...opens(activeSurvey.id) }),
       create(workspaceId, { name: "closed", status: "completed", ...opens(activeSurvey.id) }),
       create(workspaceId, { name: "archived", archivedAt: hoursFromNow(-1), ...opens(activeSurvey.id) }),
+      create(workspaceId, {
+        name: "schedule ended",
+        schedule: { startAt: null, endAt: hoursFromNow(-1) },
+        ...opens(activeSurvey.id),
+      }),
       create(workspaceId, { name: "another survey's", ...opens(pausedSurvey.id) }),
       create(other.workspaceId, { name: "another workspace's", ...opens(other.activeSurvey.id) }),
     ]);
     const liveBefore = await readRow(live.id);
     const untouchedBefore = await Promise.all(untouched.map(({ id }) => readRow(id)));
 
-    expect(await pauseSurveyCreatives(activeSurvey.id, workspaceId)).toEqual([live.id]);
+    expect((await pauseSurveyCreatives(activeSurvey.id, workspaceId, NOW))?.sort()).toEqual(
+      [live.id, endsLater.id].sort()
+    );
 
     const { status, updatedAt, ...rest } = await readRow(live.id);
     const { status: _status, updatedAt: _updatedAt, ...restBefore } = liveBefore;
@@ -304,7 +316,7 @@ describe("pauseSurveyCreatives", () => {
       })),
     });
 
-    const paused = await pauseSurveyCreatives(activeSurvey.id, workspaceId);
+    const paused = await pauseSurveyCreatives(activeSurvey.id, workspaceId, NOW);
 
     expect(paused).toHaveLength(251);
     expect(await prisma.creative.count({ where: { surveyId: activeSurvey.id, status: "paused" } })).toBe(251);
@@ -315,8 +327,8 @@ describe("pauseSurveyCreatives", () => {
     const other = await seedWorkspace("Theirs");
     const theirs = await create(other.workspaceId, opens(other.activeSurvey.id));
 
-    expect(await pauseSurveyCreatives(other.activeSurvey.id, workspaceId)).toBeNull();
-    expect(await pauseSurveyCreatives("clunknownsurvey000000001", workspaceId)).toBeNull();
+    expect(await pauseSurveyCreatives(other.activeSurvey.id, workspaceId, NOW)).toBeNull();
+    expect(await pauseSurveyCreatives("clunknownsurvey000000001", workspaceId, NOW)).toBeNull();
     expect((await readRow(theirs.id)).status).toBe("inProgress");
   });
 });

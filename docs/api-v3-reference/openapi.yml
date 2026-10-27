@@ -4128,7 +4128,7 @@ paths:
       operationId: pauseCreativesV3
       summary: Pause every creative that opens a survey
       description: |
-        Pauses, in one request, every creative whose Destination is `surveyId` and whose `status` is `inProgress`, however many there are. Each one's `status` becomes `paused`, set by its author, so it stays paused whatever the survey does until it is resumed; nothing else about it changes. Drafts, creatives already paused or closed, archived creatives and the creatives of other surveys are left as they are. A creative whose schedule has ended but whose `status` is still `inProgress` is paused too. The survey screens call it before resuming a survey whose creatives the author keeps paused.
+        Pauses, in one request, every creative whose Destination is `surveyId` and whose `status` is `inProgress`, however many there are. Each one's `status` becomes `paused`, set by its author, so it stays paused whatever the survey does until it is resumed; nothing else about it changes. Drafts, creatives already paused or closed, archived creatives and the creatives of other surveys are left as they are, and so is a creative whose schedule has ended (it shows as closed, and nothing brings it back). The survey screens call it before resuming a survey whose creatives the author keeps paused.
 
         Read/write access to `workspaceId`, the same access pausing one creative needs; an unknown `surveyId`, or one in another workspace, answers **403**. Allowed in wind-down, like pausing one creative. A survey with nothing to pause answers **200** with `paused: 0`. Each paused creative is audited as an update of its `status`.
       tags:

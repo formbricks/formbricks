@@ -295,18 +295,27 @@ export const updateCreativeLifecycleColumns = (
   });
 
 /**
- * Pauses every non-archived, In progress creative the survey opens, in one statement, and returns the
- * ids it paused. Writes `status` (and `updatedAt`) and nothing else. Each row is locked as the statement
- * reaches it, and one a concurrent write changed meanwhile is checked again against these conditions
- * once that write commits, so a creative paused, closed or archived in between is left alone.
+ * Pauses every non-archived, In progress creative the survey opens whose schedule has not ended, in one
+ * statement, and returns the ids it paused. Writes `status` (and `updatedAt`) and nothing else. Each row
+ * is locked as the statement reaches it, and one a concurrent write changed meanwhile is checked again
+ * against these conditions once that write commits, so a creative paused, closed or archived in between
+ * is left alone.
  */
 export const pauseSurveyCreativeRecords = async (
   tx: TCreativeTx,
   surveyId: string,
-  workspaceId: string
+  workspaceId: string,
+  now: Date
 ): Promise<string[]> => {
   const paused = await tx.creative.updateManyAndReturn({
-    where: { surveyId, workspaceId, archivedAt: null, status: "inProgress" },
+    // A finished schedule shows Closed and nothing brings it back, so pausing it would only relabel it.
+    where: {
+      surveyId,
+      workspaceId,
+      archivedAt: null,
+      status: "inProgress",
+      OR: [{ endAt: null }, { endAt: { gt: now } }],
+    },
     data: { status: "paused" },
     select: { id: true },
   });

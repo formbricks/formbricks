@@ -1537,7 +1537,12 @@ describe("pauseV3SurveyCreatives", () => {
     expect(store.get(first.id)?.status).toBe("paused");
     expect(store.get(draft.id)?.status).toBe("draft");
     expect(pauseSurveyCreativeRecords).toHaveBeenCalledOnce();
-    expect(pauseSurveyCreativeRecords).toHaveBeenCalledWith(expect.anything(), APP_SURVEY_ID, WORKSPACE_ID);
+    expect(pauseSurveyCreativeRecords).toHaveBeenCalledWith(
+      expect.anything(),
+      APP_SURVEY_ID,
+      WORKSPACE_ID,
+      expect.any(Date)
+    );
     // The survey-side lock order: the survey first, then the creatives' rows.
     expect(vi.mocked(lockDestinationSurvey).mock.invocationCallOrder[0]).toBeLessThan(
       vi.mocked(pauseSurveyCreativeRecords).mock.invocationCallOrder[0]
