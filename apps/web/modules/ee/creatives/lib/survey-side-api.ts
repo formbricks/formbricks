@@ -4,7 +4,7 @@ import { ACTIVE_CREATIVES_LIMIT, type TCreativeListPage } from "./list-api";
 import type { TOpenedSurveyFacts, TSurveyLinkedCreative } from "./survey-side";
 
 // The survey screens' calls to `/api/v3/creatives`: the creatives that open one survey, and pausing
-// one when a resume keeps them paused. Their query keys live in the surveys' own query client.
+// them when a resume keeps them paused. Their query keys live in the surveys' own query client.
 
 export const surveyLinkedCreativesKeys = {
   all: ["creatives", "linkedToSurvey"] as const,
@@ -14,13 +14,13 @@ export const surveyLinkedCreativesKeys = {
 /**
  * The most pages of linked creatives one read follows: 40 × 250 = 10 000 creatives on one survey, the
  * ceiling the survey-side unlink keeps too (`MAX_UNLINK_PAGES`). A survey opened by more makes the read
- * fail rather than return some of them: a resume that keeps its creatives paused must see every one.
+ * fail rather than return some of them: a status change names every creative it affects.
  */
 export const MAX_LINKED_CREATIVE_PAGES = 40;
 
 /**
  * The survey's linked creatives, by name: the list leaves archived creatives out by default. Every page,
- * so a status change names, and a resume keeps paused, all of them rather than the first page's.
+ * so a status change names all of them rather than the first page's.
  */
 export const listSurveyLinkedCreatives = async ({
   workspaceId,
@@ -76,7 +76,14 @@ export const openedSurveyFactsQuery = (surveyId: string) =>
     },
   });
 
-/** Pauses the creative by its author's hand, so it stays paused whatever its survey does. */
-export const pauseCreative = async (creativeId: string): Promise<void> => {
-  await requestCreativesApi({ path: [creativeId], method: "PATCH", body: { status: "paused" } });
+/**
+ * Pauses, by their author's hand, every In progress creative the survey opens, so they stay paused
+ * whatever the survey does. One request however many there are: one PATCH each would run into the
+ * API's 100 requests a minute.
+ */
+export const pauseSurveyCreatives = async ({
+  workspaceId,
+  surveyId,
+}: Readonly<{ workspaceId: string; surveyId: string }>): Promise<void> => {
+  await requestCreativesApi({ path: ["pause"], method: "POST", body: { workspaceId, surveyId } });
 };

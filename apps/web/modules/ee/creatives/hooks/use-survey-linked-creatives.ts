@@ -10,10 +10,14 @@ import { isCreativesVisible } from "../lib/access-rules";
 import {
   type TSurveyLinkedCreative,
   type TSurveyStatusChangePlan,
-  getCreativesToKeepPaused,
   planSurveyStatusChange,
+  shouldKeepCreativesPaused,
 } from "../lib/survey-side";
-import { pauseCreative, surveyLinkedCreativesKeys, surveyLinkedCreativesQuery } from "../lib/survey-side-api";
+import {
+  pauseSurveyCreatives,
+  surveyLinkedCreativesKeys,
+  surveyLinkedCreativesQuery,
+} from "../lib/survey-side-api";
 
 const NO_CREATIVES: TSurveyLinkedCreative[] = [];
 
@@ -113,7 +117,9 @@ export const useSurveyStatusChangeWithCreatives = ({
     if (!pending) return;
     setIsSubmitting(true);
     try {
-      await Promise.all(getCreativesToKeepPaused(pending.plan, pending.keepPaused).map(pauseCreative));
+      if (shouldKeepCreativesPaused(pending.plan, pending.keepPaused)) {
+        await pauseSurveyCreatives({ workspaceId, surveyId });
+      }
     } catch {
       // The dialog stays open: the author can retry, or resume without keeping them paused.
       toast.error(t("workspace.creatives.survey_side.keep_paused_failed"));

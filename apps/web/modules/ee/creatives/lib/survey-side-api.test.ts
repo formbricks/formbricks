@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { type TSurveyLinkedCreative, getCreativesToKeepPaused, planSurveyStatusChange } from "./survey-side";
-import { MAX_LINKED_CREATIVE_PAGES, listSurveyLinkedCreatives } from "./survey-side-api";
+import type { TSurveyLinkedCreative } from "./survey-side";
+import {
+  MAX_LINKED_CREATIVE_PAGES,
+  listSurveyLinkedCreatives,
+  pauseSurveyCreatives,
+} from "./survey-side-api";
 
 /** A creative paused with its survey: the ones a resume brings back, unless kept paused. */
 const pausedWithSurvey = (index: number): TSurveyLinkedCreative => ({
@@ -33,14 +37,12 @@ afterEach(() => {
 });
 
 describe("listSurveyLinkedCreatives", () => {
-  test("reads every page, so a resume that keeps them paused pauses all 251", async () => {
+  test("reads every page, so a status change names all 251", async () => {
     const fetchMock = serveLinkedCreatives(251);
 
     const creatives = await listSurveyLinkedCreatives({ workspaceId: "ws", surveyId: "sv" });
-    const plan = planSurveyStatusChange({ from: "paused", to: "inProgress", creatives, now: new Date() });
 
     expect(creatives).toHaveLength(251);
-    expect(getCreativesToKeepPaused(plan!, true)).toHaveLength(251);
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
@@ -51,5 +53,34 @@ describe("listSurveyLinkedCreatives", () => {
       "Survey sv is opened by more than"
     );
     expect(fetchMock).toHaveBeenCalledTimes(MAX_LINKED_CREATIVE_PAGES);
+  });
+});
+
+describe("pauseSurveyCreatives", () => {
+  test("keeps every creative of the survey paused with one request, however many there are", async () => {
+    const fetchMock = vi.fn(async () => Response.json({ data: { paused: 251, creativeIds: [] } }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await pauseSurveyCreatives({ workspaceId: "ws", surveyId: "sv" });
+
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v3/creatives/pause",
+      expect.objectContaining({ method: "POST", body: JSON.stringify({ workspaceId: "ws", surveyId: "sv" }) })
+    );
+  });
+
+  test("rejects when the server refuses, so the survey is not resumed", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        Response.json(
+          { title: "Forbidden", status: 403, code: "forbidden", detail: "Not allowed" },
+          { status: 403, headers: { "Content-Type": "application/problem+json" } }
+        )
+      )
+    );
+
+    await expect(pauseSurveyCreatives({ workspaceId: "ws", surveyId: "sv" })).rejects.toThrow();
   });
 });

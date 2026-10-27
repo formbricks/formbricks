@@ -3,11 +3,11 @@ import { V3ApiError } from "@/modules/api/lib/v3-client";
 import {
   type TSurveyLinkedCreative,
   getCreativeOpenedMode,
-  getCreativesToKeepPaused,
   getLinkedCreativesBlockers,
   isDestinationSettingLocked,
   leavesSurveyUnopened,
   planSurveyStatusChange,
+  shouldKeepCreativesPaused,
 } from "./survey-side";
 
 const NOW = new Date("2026-10-16T12:00:00.000Z");
@@ -117,31 +117,29 @@ describe("planSurveyStatusChange", () => {
   });
 });
 
-describe("getCreativesToKeepPaused", () => {
+describe("shouldKeepCreativesPaused", () => {
   const back = creative({ id: "back", displayStatus: "paused", displayStatusReason: "surveyNotActive" });
-  const alsoBack = creative({
-    id: "also-back",
-    displayStatus: "paused",
-    displayStatusReason: "surveyNotActive",
-  });
+  const stays = creative({ id: "stays", status: "paused", displayStatus: "paused" });
 
-  test("keeping them paused pauses every creative the resume would bring back", () => {
-    // A creative its author paused stays out of it: pausing it again would change nothing.
-    const stays = creative({ id: "stays", status: "paused", displayStatus: "paused" });
-    const plan = { kind: "resume" as const, creatives: [back, stays, alsoBack], affected: [back, alsoBack] };
-
-    expect(getCreativesToKeepPaused(plan, true)).toEqual(["back", "also-back"]);
+  test("keeping them paused pauses the survey's creatives when the resume would bring some back", () => {
+    expect(
+      shouldKeepCreativesPaused({ kind: "resume", creatives: [back, stays], affected: [back] }, true)
+    ).toBe(true);
   });
 
   test("letting them come back pauses nothing", () => {
-    expect(getCreativesToKeepPaused({ kind: "resume", creatives: [back], affected: [back] }, false)).toEqual(
-      []
+    expect(shouldKeepCreativesPaused({ kind: "resume", creatives: [back], affected: [back] }, false)).toBe(
+      false
     );
   });
 
+  test("a resume that brings none back pauses nothing", () => {
+    expect(shouldKeepCreativesPaused({ kind: "resume", creatives: [stays], affected: [] }, true)).toBe(false);
+  });
+
   test("only a resume offers the choice", () => {
-    expect(getCreativesToKeepPaused({ kind: "pause", creatives: [back], affected: [back] }, true)).toEqual(
-      []
+    expect(shouldKeepCreativesPaused({ kind: "pause", creatives: [back], affected: [back] }, true)).toBe(
+      false
     );
   });
 });
