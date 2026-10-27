@@ -2225,8 +2225,8 @@ checksums:
     workspace/creatives/editor/custom_css_description: b6708c9f38284a0922f36ab0c7c26d7a
     workspace/creatives/editor/custom_css_off_hint: b2efa931366ea9bca6047b4a7576f70d
     workspace/creatives/editor/custom_styles: d782ffe4a1e7b7c2b18b76b45c7d9865
-    workspace/creatives/editor/custom_styles_description_banner: 9b655f7752a9b17c3e12d0eb485234ab
-    workspace/creatives/editor/custom_styles_description_feedback_button: 25f24a4a153333341b1fc932533b0737
+    workspace/creatives/editor/custom_styles_description_banner: a4d5decd1d6d1f8047b973a0273e0e49
+    workspace/creatives/editor/custom_styles_description_feedback_button: e8fb59ee56fc61bae47ad7a88fbc727e
     workspace/creatives/editor/decided_once_per_visitor: 46a7a01bd5e2a1b858d98ad732ea5ef1
     workspace/creatives/editor/default_button_label: e598091d132f890c37a6d4ed94f6d794
     workspace/creatives/editor/default_label: 6fac88806e0c269a30777b283988c61c
@@ -2313,6 +2313,7 @@ checksums:
     workspace/creatives/editor/size_and_position_for: 16738983578c7ef9254bcd084075d8f5
     workspace/creatives/editor/starts: 3153990a4ade414f501a7e63ab771362
     workspace/creatives/editor/starts_placeholder: 1169b2b565bd56f8a1bcdb3f80fc5bc2
+    workspace/creatives/editor/summary_appearance: cdd8c41c5fb859234e8a603544fce631
     workspace/creatives/editor/summary_colors_set: 6749170ff7e87287902b71a16b8a3c68
     workspace/creatives/editor/summary_conditions: bf91c437e7b444e82522fafbed443b92
     workspace/creatives/editor/summary_contrast: 6408a5a6eb440c9942abffa7e3219d8e
@@ -2320,7 +2321,6 @@ checksums:
     workspace/creatives/editor/summary_css_empty: 0ae6634426bd0372d82f5bcd0441f67e
     workspace/creatives/editor/summary_css_lines: b875a24a90df57111124600e8ae5db0d
     workspace/creatives/editor/summary_everywhere: 18c850f314fea615d7b4fe47344e08bd
-    workspace/creatives/editor/summary_look_and_feel: 9125503712626d495cedec7a79f1418c
     workspace/creatives/editor/summary_own_phone_position: e511dc4855fd7b2cc4cba0a34492bdeb
     workspace/creatives/editor/summary_position_banner: 0f7a54c11943dd42fe984311124686a4
     workspace/creatives/editor/summary_position_from_left: 2e77d5156fb65fba8381f089bfaca3a0

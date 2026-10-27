@@ -61,7 +61,7 @@ export const ColorsSummary = ({
 }>) => {
   const { t } = useTranslation();
   if (summary.kind === "lookAndFeel") {
-    return <SummaryText>{t("workspace.creatives.editor.summary_look_and_feel")}</SummaryText>;
+    return <SummaryText>{t("workspace.creatives.editor.summary_appearance")}</SummaryText>;
   }
   const getText = () => {
     if (contrastRatio !== null) {
@@ -96,7 +96,7 @@ export const ShapeSummary = ({
 }: Readonly<{ summary: TShapeSummary; device: TCreativeDevice }>) => {
   const { t } = useTranslation();
   if (summary.kind === "lookAndFeel") {
-    return <SummaryText>{t("workspace.creatives.editor.summary_look_and_feel")}</SummaryText>;
+    return <SummaryText>{t("workspace.creatives.editor.summary_appearance")}</SummaryText>;
   }
   const values = {
     font: summary.pageFont ? t("workspace.look.font_page") : t("workspace.look.font_survey"),

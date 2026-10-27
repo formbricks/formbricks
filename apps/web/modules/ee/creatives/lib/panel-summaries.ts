@@ -75,7 +75,7 @@ export type TPositionSummary =
       ownPhonePosition: boolean;
     };
 
-/** Position applies whether or not custom styles are on, so it never reads "Look & Feel". */
+/** Position applies whether or not custom styles are on, so it never reads "Appearance". */
 export const getPositionSummary = (
   styling: TCreativeStylingForm,
   device: TCreativeDevice
