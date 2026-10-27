@@ -12,7 +12,6 @@ import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
-import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -199,17 +198,6 @@ export const FileUploadElementForm = ({
           </label>
         </AdvancedOptionToggle>
       </div>
-
-      <ValidationRulesEditor
-        elementType={element.type}
-        validation={element.validation}
-        onUpdateValidation={(validation) => {
-          updateElement(elementIdx, {
-            validation,
-          });
-        }}
-        element={element}
-      />
     </form>
   );
 };

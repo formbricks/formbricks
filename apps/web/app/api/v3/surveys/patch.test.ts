@@ -539,7 +539,8 @@ describe("patchV3Survey", () => {
     expect(scheduleFeedbackSourceReconciliation).toHaveBeenCalledWith(
       currentSurvey.id,
       currentSurvey.workspaceId,
-      currentSurvey.blocks
+      // ENG-6782: the stored blocks now arrive coded, which is what the write carried.
+      vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0].data.blocks
     );
     expect(currentSurvey.blocks.length).toBeGreaterThan(0);
   });
@@ -692,6 +693,61 @@ describe("patchV3Survey", () => {
         }),
       })
     );
+  });
+
+  test("carries stored codes over a replaced block by id and codes what is new (ENG-6782)", async () => {
+    const storedElement = {
+      id: "q-single",
+      type: "multipleChoiceSingle",
+      code: "age",
+      headline: { default: "Age?" },
+      required: true,
+      choices: [
+        { id: "c1", code: "1", label: { default: "Young" } },
+        { id: "c2", code: "2", label: { default: "Old" } },
+      ],
+    };
+    const replacedElement = {
+      ...storedElement,
+      code: undefined,
+      choices: [
+        { id: "c1", label: { default: "Young" } },
+        { id: "c2", label: { default: "Old" } },
+        { id: "c3", label: { default: "Ancient" } },
+      ],
+    };
+    const newElement = { id: "q-new", type: "openText", headline: { default: "Why?" }, required: false };
+
+    await executeV3SurveyPatch({
+      currentSurvey: {
+        ...currentSurvey,
+        blocks: [{ id: "block-1", name: "Block 1", elements: [storedElement] }],
+      } as unknown as TSurvey,
+      document: {
+        name: currentSurvey.name,
+        status: currentSurvey.status,
+        metadata: currentSurvey.metadata,
+        defaultLanguage: "en-US",
+        languages: [{ code: "en-US", enabled: true }],
+        showLanguageSwitch: null,
+        autoSelectLanguage: null,
+        welcomeCard: currentSurvey.welcomeCard,
+        blocks: [{ id: "block-1", name: "Block 1", elements: [replacedElement, newElement] }],
+        endings: currentSurvey.endings,
+        hiddenFields: currentSurvey.hiddenFields,
+        variables: currentSurvey.variables,
+      } as unknown as Parameters<typeof executeV3SurveyPatch>[0]["document"],
+      languageRequests: [{ code: "en-US", default: true, enabled: true }],
+      requestId: "req_1",
+    });
+
+    const written = vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0].data.blocks as {
+      elements: { id: string; code?: string; choices?: { code?: string }[] }[];
+    }[];
+    const [single, added] = written[0].elements;
+    expect(single.code).toBe("age");
+    expect(single.choices?.map((choice) => choice.code)).toEqual(["1", "2", "3"]);
+    expect(added.code).toBe("q1");
   });
 
   test("rejects setting a non-draft status on an app survey with no triggers", async () => {

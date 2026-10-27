@@ -1,4 +1,5 @@
 import { logger } from "@formbricks/logger";
+import { collectDeclaredFieldNames } from "@formbricks/types/surveys/declared-field-guard";
 import { ZSurveyCreateInputWithWorkspaceId } from "@formbricks/types/surveys/types";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { checkSurveyWritePermissions } from "@/app/api/v1/management/surveys/lib/utils";
@@ -148,7 +149,11 @@ export const POST = withV1ApiWrapper({
       const { hasQuestions } = validateResult.data;
 
       if (hasQuestions) {
-        surveyData.blocks = transformQuestionsToBlocks(surveyData.questions, surveyData.endings || []);
+        surveyData.blocks = transformQuestionsToBlocks(
+          surveyData.questions,
+          surveyData.endings || [],
+          collectDeclaredFieldNames(surveyData)
+        );
         surveyData.questions = [];
       }
 

@@ -1,6 +1,7 @@
 import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { collectDeclaredFieldNames } from "@formbricks/types/surveys/declared-field-guard";
 import { ZSurveyUpdateInput } from "@formbricks/types/surveys/types";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { deleteSurvey } from "@/app/api/v1/management/surveys/[surveyId]/lib/surveys";
@@ -214,7 +215,8 @@ export const PUT = withV1ApiWrapper({
       if (hasQuestions) {
         surveyUpdate.blocks = transformQuestionsToBlocks(
           surveyUpdate.questions ?? [],
-          surveyUpdate.endings || result.survey.endings
+          surveyUpdate.endings || result.survey.endings,
+          collectDeclaredFieldNames({ ...result.survey, ...surveyUpdate })
         );
         surveyUpdate.questions = [];
       }

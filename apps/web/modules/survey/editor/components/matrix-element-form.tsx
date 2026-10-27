@@ -15,11 +15,9 @@ import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { MatrixSortableItem } from "@/modules/survey/editor/components/matrix-sortable-item";
-import { ValidationRulesEditor } from "@/modules/survey/editor/components/validation-rules-editor";
 import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
-import { ShuffleOptionSelect } from "@/modules/ui/components/shuffle-option-select";
 import { isLabelValidForAllLanguages } from "../lib/validation";
 
 interface MatrixElementFormProps {
@@ -168,33 +166,6 @@ export const MatrixElementForm = ({
     [elementIdx, updateElement, element.rows, element.columns]
   );
 
-  const shuffleOptionsTypes = {
-    none: {
-      id: "none",
-      label: t("workspace.surveys.edit.keep_current_order"),
-      show: true,
-    },
-    all: {
-      id: "all",
-      label: t("workspace.surveys.edit.randomize_all"),
-      show: true,
-    },
-    exceptLast: {
-      id: "exceptLast",
-      label: t("workspace.surveys.edit.randomize_all_except_last"),
-      show: true,
-    },
-    reverseOrderOccasionally: {
-      id: "reverseOrderOccasionally",
-      label: t("workspace.surveys.edit.reverse_order_occasionally"),
-      show: true,
-    },
-    reverseOrderExceptLast: {
-      id: "reverseOrderExceptLast",
-      label: t("workspace.surveys.edit.reverse_order_occasionally_except_last"),
-      show: true,
-    },
-  };
   const [parent] = useAutoAnimate();
 
   return (
@@ -336,26 +307,8 @@ export const MatrixElementForm = ({
               {t("workspace.surveys.edit.add_column")}
             </Button>
           </div>
-          <div className="mt-3 flex flex-1 items-center justify-end gap-2">
-            <ShuffleOptionSelect
-              shuffleOptionsTypes={shuffleOptionsTypes}
-              elementIdx={elementIdx}
-              updateElement={updateElement}
-              shuffleOption={element.shuffleOption}
-            />
-          </div>
         </div>
       </div>
-      <ValidationRulesEditor
-        elementType={element.type}
-        validation={element.validation}
-        onUpdateValidation={(validation) => {
-          updateElement(elementIdx, {
-            validation,
-          });
-        }}
-        element={element}
-      />
     </form>
   );
 };
