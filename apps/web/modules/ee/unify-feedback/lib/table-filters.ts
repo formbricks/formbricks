@@ -206,9 +206,9 @@ const collectEquals = (filters: readonly TTableFilter[], property: string): stri
  * a superset — it never hides a record that matches every rule.
  */
 const collectAnyOf = (filters: readonly TTableFilter[], property: string): string[] | null => {
-  const valueSets = collectValueSets(filters, property);
-  if (valueSets.length === 0) return null;
-  return [...valueSets.reduce((narrowest, set) => (set.size < narrowest.size ? set : narrowest))];
+  const [first, ...rest] = collectValueSets(filters, property);
+  if (!first) return null;
+  return [...rest.reduce((narrowest, set) => (set.size < narrowest.size ? set : narrowest), first)];
 };
 
 /** The Hub stores a language tag of at most 10 characters, so a longer one matches no record. */

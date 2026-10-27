@@ -1,18 +1,6 @@
 "use client";
 
-import {
-  DndContext,
-  type DragEndEvent,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
-import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { arrayMove } from "@dnd-kit/sortable";
 import * as Sentry from "@sentry/nextjs";
 import { VisibilityState, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useEffect, useMemo, useState } from "react";
@@ -28,25 +16,18 @@ import {
   type TResponseToolbarState,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/ResponseToolbar";
 import { ResponseCardModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
-import { ResponseTableCell } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
 import { generateResponseTableColumns } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
 import { getResponsesDownloadUrlAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/actions";
 import { downloadResponsesFile } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
-import { Button } from "@/modules/ui/components/button";
-import { DataTableHeader, DataTableSettingsModal } from "@/modules/ui/components/data-table";
 import { SelectedRowSettings } from "@/modules/ui/components/data-table/components/selected-row-settings";
-import { Skeleton } from "@/modules/ui/components/skeleton";
-import { Table, TableBody, TableHeader, TableRow } from "@/modules/ui/components/table";
+import { ListTable } from "@/modules/ui/components/table-toolbar";
 import { buildColumnSettings } from "@/modules/ui/components/table-toolbar/lib/column-settings";
 import { reconcileColumnOrder, seedReservedColumnVisibility } from "../lib/column-state";
 
-const SkeletonCell = () => (
-  <Skeleton className="w-full">
-    <div className="h-6"></div>
-  </Skeleton>
-);
+/** Pinned to the left while the table scrolls sideways, in this order. */
+const PINNED_COLUMNS = ["select", "createdAt"];
 
 interface ResponseTableProps {
   data: TResponseTableData[];
@@ -97,11 +78,9 @@ export const ResponseTable = ({
   const { t } = useTranslation();
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
-  const [isTableSettingsModalOpen, setIsTableSettingsModalOpen] = useState(false);
   const selectedResponse = responses?.find((response) => response.id === selectedResponseId) ?? null;
   const [isExpanded, setIsExpanded] = useState<boolean | null>(null);
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
-  const [parent] = useAutoAnimate();
 
   const showQuotasColumn = isQuotasAllowed && quotas.length > 0;
   // Generate columns
@@ -123,56 +102,22 @@ export const ResponseTable = ({
     }
   }, [columnOrder, columnVisibility, isExpanded, survey.id]);
 
-  // Initialize DnD sensors
-  const sensors = useSensors(
-    useSensor(MouseSensor, {}),
-    useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {})
-  );
-
-  // Memoize table data and columns
-  const tableData: TResponseTableData[] = useMemo(
-    () =>
-      isFetchingFirstPage
-        ? Array.from(
-            { length: 10 },
-            (_, index) => ({ responseId: `skeleton-${index}` }) as TResponseTableData
-          )
-        : data,
-    [data, isFetchingFirstPage]
-  );
-
-  const tableColumns = useMemo(
-    () =>
-      isFetchingFirstPage
-        ? columns.map((column) => ({
-            ...column,
-            cell: SkeletonCell,
-          }))
-        : columns,
-    [columns, isFetchingFirstPage]
-  );
-
   // React Table instance
   const table = useReactTable({
-    data: tableData,
-    columns: tableColumns,
+    data,
+    columns,
     getRowId: (originalRow) => originalRow.responseId,
     getCoreRowModel: getCoreRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     onColumnOrderChange: setColumnOrder,
-    columnResizeMode: "onChange",
-    columnResizeDirection: "ltr",
     manualPagination: true,
     defaultColumn: { size: 300 },
     state: {
       columnOrder,
       columnVisibility,
       rowSelection,
-      columnPinning: {
-        left: ["select", "createdAt"],
-      },
+      columnPinning: { left: PINNED_COLUMNS },
     },
   });
 
@@ -202,18 +147,6 @@ export const ResponseTable = ({
       setIsExpanded(JSON.parse(savedExpandedSettings));
     }
   }, [survey.id, defaultColumnOrder]);
-
-  // Handle column drag end
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (active && over && active.id !== over.id) {
-      setColumnOrder((prevOrder) => {
-        const oldIndex = prevOrder.indexOf(active.id as string);
-        const newIndex = prevOrder.indexOf(over.id as string);
-        return arrayMove(prevOrder, oldIndex, newIndex);
-      });
-    }
-  };
 
   const deleteResponse = async (responseId: string, params?: { decrementQuotas?: boolean }) => {
     const result = await deleteResponseAction({
@@ -247,147 +180,84 @@ export const ResponseTable = ({
 
   return (
     <div>
-      <DndContext
-        id="response-table"
-        collisionDetection={closestCenter}
-        modifiers={[restrictToHorizontalAxis]}
-        onDragEnd={handleDragEnd}
-        sensors={sensors}>
-        <ResponseToolbar
-          survey={survey}
-          {...toolbar}
-          className="mb-3"
-          settings={{
-            toggles: [
-              {
-                id: "expand-rows",
-                label: t("common.expand_rows"),
-                checked: isExpanded ?? false,
-                onCheckedChange: setIsExpanded,
-              },
-            ],
-            columns: {
-              items: buildColumnSettings(
-                getColumnLabels(table),
-                // Date is pinned to the left of the table, so it leads the gear's list too.
-                ["createdAt", ...columnOrder.filter((id) => id !== "createdAt")],
-                columnVisibility,
-                ["createdAt"]
-              ),
-              onVisibilityChange: (id, visible) =>
-                setColumnVisibility((current) => ({ ...current, [id]: visible })),
-              onMove: (activeId, overId) =>
-                setColumnOrder((order) => {
-                  const from = order.indexOf(activeId);
-                  const to = order.indexOf(overId);
-                  return from === -1 || to === -1 ? order : arrayMove(order, from, to);
-                }),
+      <ResponseToolbar
+        survey={survey}
+        {...toolbar}
+        className="mb-3"
+        settings={{
+          toggles: [
+            {
+              id: "expand-rows",
+              label: t("common.expand_rows"),
+              checked: isExpanded ?? false,
+              onCheckedChange: setIsExpanded,
             },
+          ],
+          columns: {
+            items: buildColumnSettings(
+              getColumnLabels(table),
+              // Date is pinned to the left of the table, so it leads the gear's list too.
+              ["createdAt", ...columnOrder.filter((id) => id !== "createdAt")],
+              columnVisibility,
+              ["createdAt"]
+            ),
+            onVisibilityChange: (id, visible) =>
+              setColumnVisibility((current) => ({ ...current, [id]: visible })),
+            onMove: (activeId, overId) =>
+              setColumnOrder((order) => {
+                const from = order.indexOf(activeId);
+                const to = order.indexOf(overId);
+                return from === -1 || to === -1 ? order : arrayMove(order, from, to);
+              }),
+          },
+        }}
+        selectionContent={
+          table.getFilteredSelectedRowModel().rows.length > 0 ? (
+            <SelectedRowSettings
+              table={table}
+              updateRowList={updateResponseList}
+              type="response"
+              deleteAction={deleteResponse}
+              downloadRowsAction={downloadSelectedRows}
+              isQuotasAllowed={isQuotasAllowed}
+            />
+          ) : undefined
+        }
+      />
+      <ListTable
+        table={table}
+        testId="response-table"
+        isLoading={isFetchingFirstPage}
+        hasFilters={toolbar.filterState.hasFilters}
+        onClearFilters={toolbar.filterState.clearFilters}
+        // A row opens that response's card; its checkbox and links keep their own clicks.
+        onRowClick={(row) => setSelectedResponseId(row.id)}
+        isExpanded={isExpanded ?? false}
+        hasNextPage={hasMore && data.length > 0}
+        onLoadMore={fetchNextPage}
+        pinnedColumnIds={PINNED_COLUMNS}
+      />
+
+      {responses && (
+        <ResponseCardModal
+          survey={survey}
+          responses={responses}
+          user={user}
+          environmentTags={environmentTags}
+          isReadOnly={isReadOnly}
+          updateResponse={updateResponse}
+          updateResponseList={updateResponseList}
+          setSelectedResponseId={setSelectedResponseId}
+          selectedResponseId={selectedResponseId}
+          open={selectedResponse !== null}
+          locale={locale}
+          setOpen={(open) => {
+            if (!open) {
+              setSelectedResponseId(null);
+            }
           }}
-          selectionContent={
-            table.getFilteredSelectedRowModel().rows.length > 0 ? (
-              <SelectedRowSettings
-                table={table}
-                updateRowList={updateResponseList}
-                type="response"
-                deleteAction={deleteResponse}
-                downloadRowsAction={downloadSelectedRows}
-                isQuotasAllowed={isQuotasAllowed}
-              />
-            ) : undefined
-          }
         />
-        <div className="w-fit max-w-full overflow-hidden overflow-x-auto rounded-xl border border-slate-200">
-          <div className="w-full overflow-x-auto">
-            <Table className="w-full" style={{ tableLayout: "fixed" }} id="response-table">
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    <SortableContext items={columnOrder} strategy={horizontalListSortingStrategy}>
-                      {headerGroup.headers.map((header) => (
-                        <DataTableHeader
-                          key={header.id}
-                          header={header}
-                          setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
-                        />
-                      ))}
-                    </SortableContext>
-                  </TableRow>
-                ))}
-              </TableHeader>
-              {/* disable auto animation if there are more than 200 responses for performance optimizations  */}
-              <TableBody ref={responses && responses.length > 200 ? undefined : parent}>
-                {table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                    className={"group cursor-pointer"}>
-                    {row.getVisibleCells().map((cell) => (
-                      <ResponseTableCell
-                        key={cell.id}
-                        cell={cell}
-                        row={row}
-                        isExpanded={isExpanded ?? false}
-                        setSelectedResponseId={setSelectedResponseId}
-                      />
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-          {/* Outside the scrolling table: centred across every column, the message would sit off-screen. */}
-          {table.getRowModel().rows.length === 0 && (
-            <div className="flex h-32 flex-col items-center justify-center gap-2 border-t border-slate-200">
-              <p className="text-sm text-slate-500">
-                {toolbar.filterState.hasFilters
-                  ? t("common.table_toolbar.no_rows_match")
-                  : t("common.no_results")}
-              </p>
-              {toolbar.filterState.hasFilters && (
-                <Button size="sm" variant="secondary" onClick={toolbar.filterState.clearFilters}>
-                  {t("common.clear_filters")}
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
-
-        {data && hasMore && data.length > 0 && (
-          <div className="mt-4 flex justify-center">
-            <Button onClick={fetchNextPage}>{t("common.load_more")}</Button>
-          </div>
-        )}
-
-        <DataTableSettingsModal
-          open={isTableSettingsModalOpen}
-          setOpen={setIsTableSettingsModalOpen}
-          table={table}
-          columnOrder={columnOrder}
-          handleDragEnd={handleDragEnd}
-        />
-
-        {responses && (
-          <ResponseCardModal
-            survey={survey}
-            responses={responses}
-            user={user}
-            environmentTags={environmentTags}
-            isReadOnly={isReadOnly}
-            updateResponse={updateResponse}
-            updateResponseList={updateResponseList}
-            setSelectedResponseId={setSelectedResponseId}
-            selectedResponseId={selectedResponseId}
-            open={selectedResponse !== null}
-            locale={locale}
-            setOpen={(open) => {
-              if (!open) {
-                setSelectedResponseId(null);
-              }
-            }}
-          />
-        )}
-      </DndContext>
+      )}
     </div>
   );
 };

@@ -33,10 +33,10 @@ import type {
 // ENG-6703), then `question.<id>`, `question.<id>.<rowId>`, `attribute.<key>`, `hiddenField.<key>`,
 // `variable.<key>`, `meta.<name>` and `quota.<id>` for Advanced filter.
 
-export const STATUS_PROPERTY = "status";
-export const CREATED_AT_PROPERTY = "createdAt";
-export const TAG_PROPERTY = "tag";
-export const LANGUAGE_PROPERTY = "language";
+const STATUS_PROPERTY = "status";
+const CREATED_AT_PROPERTY = "createdAt";
+const TAG_PROPERTY = "tag";
+const LANGUAGE_PROPERTY = "language";
 
 type TResponseFieldKind =
   | "question"

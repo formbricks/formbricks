@@ -1,7 +1,7 @@
 "use client";
 
 import { type Row, type Table as TTable, flexRender } from "@tanstack/react-table";
-import { Fragment, type ReactNode } from "react";
+import { type CSSProperties, Fragment, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { Button } from "@/modules/ui/components/button";
@@ -33,6 +33,7 @@ export const ListTable = <TData,>({
   emptyContent,
   testId,
   minWidth,
+  pinnedColumnIds = [],
 }: Readonly<{
   table: TTable<TData>;
   isLoading: boolean;
@@ -51,6 +52,11 @@ export const ListTable = <TData,>({
   testId?: string;
   /** For wide tables: below this width the card scrolls sideways instead of squeezing every column. */
   minWidth?: number;
+  /**
+   * Leading columns that stay put while a wide table scrolls sideways (Responses keeps its checkbox and
+   * date). Pinning switches the table to pixel widths, so each pinned column's offset is exact.
+   */
+  pinnedColumnIds?: readonly string[];
 }>) => {
   const { t } = useTranslation();
   const visibleColumns = table.getVisibleLeafColumns();
@@ -59,7 +65,50 @@ export const ListTable = <TData,>({
   // Column sizes are proportions, not pixels: the table always fills its card and never scrolls
   // sideways because the visible columns happen to add up to more than the screen is wide.
   const totalSize = visibleColumns.reduce((sum, column) => sum + column.getSize(), 0) || 1;
-  const widthOf = (size: number) => `${((size / totalSize) * 100).toFixed(3)}%`;
+  const isPinned = pinnedColumnIds.length > 0;
+  const widthOf = (size: number) => (isPinned ? `${size}px` : `${((size / totalSize) * 100).toFixed(3)}%`);
+
+  // Each pinned column sticks at the summed width of the pinned columns before it.
+  const pinOffsets = new Map<string, number>();
+  let pinnedWidth = 0;
+  for (const column of visibleColumns) {
+    if (!pinnedColumnIds.includes(column.id)) continue;
+    pinOffsets.set(column.id, pinnedWidth);
+    pinnedWidth += column.getSize();
+  }
+  const lastPinnedId = [...pinOffsets.keys()].at(-1);
+  const pinStyle = (columnId: string, size: number): CSSProperties => {
+    const offset = pinOffsets.get(columnId);
+    return offset === undefined
+      ? { width: widthOf(size) }
+      : { width: widthOf(size), left: offset, position: "sticky", zIndex: 1 };
+  };
+  const pinClass = (columnId: string, isHeader = false) =>
+    pinOffsets.has(columnId) &&
+    cn(
+      "bg-white",
+      !isHeader && "group-hover:bg-slate-50 group-data-[state=selected]:bg-slate-50",
+      columnId === lastPinnedId && "border-r border-slate-200"
+    );
+  const tableStyle = (): CSSProperties | undefined => {
+    if (isPinned) return { width: totalSize, minWidth: "100%" };
+    return minWidth ? { minWidth } : undefined;
+  };
+  const emptyState = () => {
+    if (!hasFilters && emptyContent) return emptyContent;
+    return (
+      <div className="flex h-32 flex-col items-center justify-center gap-2">
+        <p className="text-sm text-slate-500">
+          {hasFilters ? t("common.table_toolbar.no_rows_match") : t("common.no_results")}
+        </p>
+        {hasFilters && (
+          <Button size="sm" variant="secondary" onClick={onClearFilters}>
+            {t("common.clear_filters")}
+          </Button>
+        )}
+      </div>
+    );
+  };
 
   const renderBody = () => {
     if (isLoading) {
@@ -74,6 +123,8 @@ export const ListTable = <TData,>({
       ));
     }
     if (rows.length === 0) {
+      // A wide, scrolling table shows its empty state under the table, where it is in view.
+      if (isPinned) return null;
       if (!hasFilters && emptyContent) {
         return (
           <tr>
@@ -104,9 +155,10 @@ export const ListTable = <TData,>({
             {row.getVisibleCells().map((cell) => (
               <TableCell
                 key={cell.id}
-                style={{ width: widthOf(cell.column.getSize()) }}
+                style={pinStyle(cell.column.id, cell.column.getSize())}
                 className={cn(
                   "text-sm text-slate-700",
+                  pinClass(cell.column.id),
                   CONTROL_COLUMNS.has(cell.column.id) ? "px-2" : "px-4",
                   isExpanded ? "py-4" : "py-2.5"
                 )}>
@@ -136,16 +188,17 @@ export const ListTable = <TData,>({
   return (
     <div className="space-y-4" data-testid={testId}>
       <div className="w-full overflow-x-auto rounded-xl border border-slate-200 bg-white">
-        <Table className="w-full table-fixed" style={minWidth ? { minWidth } : undefined}>
+        <Table className="w-full table-fixed" style={tableStyle()}>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-white">
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    style={{ width: widthOf(header.getSize()) }}
+                    style={pinStyle(header.column.id, header.getSize())}
                     className={cn(
                       "h-10 text-xs font-medium whitespace-nowrap text-slate-600",
+                      pinClass(header.column.id, true),
                       CONTROL_COLUMNS.has(header.column.id) ? "px-2" : "px-4"
                     )}>
                     {header.isPlaceholder
@@ -158,6 +211,9 @@ export const ListTable = <TData,>({
           </TableHeader>
           <TableBody className="[&_tr:last-child]:border-0">{renderBody()}</TableBody>
         </Table>
+        {isPinned && !isLoading && rows.length === 0 && (
+          <div className="sticky left-0 border-t border-slate-200">{emptyState()}</div>
+        )}
       </div>
       {hasNextPage && onLoadMore && !isLoading && (
         <div className="flex justify-center">

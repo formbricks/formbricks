@@ -313,7 +313,6 @@ checksums:
     common/hidden: fa290c6ada5869d744ed35e9cca64699
     common/hidden_field: 3ed5c58d0ed359e558cdf7bd33606d2d
     common/hidden_fields: 3de6cfd308293a826cb8679fd1d49972
-    common/hide_column: 23ce94db148f2d8e4a0923defead6cf1
     common/hide_password: dd9813264cfc4a7ae515cd5644943c1b
     common/html: f750870203043349d570d8f5865ca0f8
     common/id: c8886d38aeea2ed5f785aba4fc96784b
@@ -448,7 +447,6 @@ checksums:
     common/remove_from_team: 69bcc7a1001c3017f9de578ee22cffd6
     common/remove_item: 5e882910b55d90dfe0b2d96acb411602
     common/rename: 6f9413e4606e8d83a010685008fb2931
-    common/reorder_and_hide_columns: a5e3d7c0c7ef879211d05a37be1c5069
     common/replace: 98b2268975b1a737b2e4ad837df96703
     common/report_survey: 147dd05db52e35f5d1f837460fb720f5
     common/request_lite_license: 5bf4ddd64c056c5cf00ecd254f3e1390

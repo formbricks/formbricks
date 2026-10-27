@@ -44,7 +44,7 @@ const pendingProperties = (known: readonly TFilterProperty[], search: string): T
   }));
 };
 
-export const surveyFilterDataKey = (surveyId: string) => ["surveys", surveyId, "filter-data"] as const;
+const surveyFilterDataKey = (surveyId: string) => ["surveys", surveyId, "filter-data"] as const;
 
 /**
  * The Responses / Summary filter, kept in the page URL so it follows a tab switch, a reload and a shared
