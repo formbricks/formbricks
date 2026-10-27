@@ -25,7 +25,9 @@ const {
   mockHandleIntegrations,
   mockLoggerError,
   mockLoggerWarn,
+  mockHandleFeedbackSourcePipeline,
   mockPrismaOrganizationFindFirst,
+  mockPrismaResponseFindUnique,
   mockPrismaSurveyFindUnique,
   mockPrismaSurveyUpdate,
   mockPrismaUserFindMany,
@@ -50,7 +52,9 @@ const {
     mockHandleIntegrations: vi.fn(),
     mockLoggerError: vi.fn(),
     mockLoggerWarn: vi.fn(),
+    mockHandleFeedbackSourcePipeline: vi.fn(),
     mockPrismaOrganizationFindFirst: vi.fn(),
+    mockPrismaResponseFindUnique: vi.fn(),
     mockPrismaSurveyFindUnique: vi.fn(),
     mockPrismaSurveyUpdate: vi.fn(),
     mockPrismaUserFindMany: vi.fn(),
@@ -67,6 +71,9 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     organization: {
       findFirst: mockPrismaOrganizationFindFirst,
+    },
+    response: {
+      findUnique: mockPrismaResponseFindUnique,
     },
     survey: {
       findUnique: mockPrismaSurveyFindUnique,
@@ -106,6 +113,10 @@ vi.mock("./handle-integrations", () => ({
 
 vi.mock("@/lib/telemetry/usage-update", () => ({
   sendTelemetryEvents: mockSendTelemetryEvents,
+}));
+
+vi.mock("@/lib/feedback-source/pipeline-handler", () => ({
+  handleFeedbackSourcePipeline: mockHandleFeedbackSourcePipeline,
 }));
 
 vi.mock("@/lib/integration/service", () => ({
@@ -252,6 +263,57 @@ describe("processResponsePipelineJob", () => {
     mockEnqueueResponseCompletedWorkflowRuns.mockResolvedValue(undefined);
     mockSendTelemetryEvents.mockResolvedValue(undefined);
     mockPrismaSurveyUpdate.mockResolvedValue(undefined);
+    mockPrismaResponseFindUnique.mockResolvedValue({ outcome: null });
+    mockHandleFeedbackSourcePipeline.mockResolvedValue(undefined);
+  });
+
+  describe("Feedback Records and the response's current outcome (ENG-6785)", () => {
+    const finished = { ...baseData, event: "responseFinished" as const };
+
+    test("publishes a finished response whose outcome is empty", async () => {
+      await processResponsePipelineJob(finished, baseContext);
+
+      expect(mockHandleFeedbackSourcePipeline).toHaveBeenCalledTimes(1);
+      expect(mockPrismaResponseFindUnique).toHaveBeenCalledWith({
+        where: { id: "response_123" },
+        select: { outcome: true },
+      });
+    });
+
+    // The job carries the copy taken when the response was a partial: marked Low quality afterwards, then
+    // finished by the respondent, the copy still says "no outcome". The database is the truth.
+    test("publishes nothing for a response marked Low quality after the job's copy was taken", async () => {
+      mockPrismaResponseFindUnique.mockResolvedValue({ outcome: "lowQuality" });
+
+      await processResponsePipelineJob(finished, baseContext);
+
+      expect(mockHandleFeedbackSourcePipeline).not.toHaveBeenCalled();
+      // Nothing else is held back: Low quality changes only Feedback Records (ADR 0017).
+      expect(mockEnqueueResponseCompletedWorkflowRuns).toHaveBeenCalledTimes(1);
+      expect(mockSendFollowUpsForResponse).not.toHaveBeenCalled();
+    });
+
+    // The restore queued its own rebuild, but the rule is the same either way: the database decides.
+    test("a response restored before the job ran is published, whatever its copy says", async () => {
+      await processResponsePipelineJob(
+        { ...finished, response: { ...finished.response, outcome: "lowQuality" } },
+        baseContext
+      );
+
+      expect(mockHandleFeedbackSourcePipeline).toHaveBeenCalledTimes(1);
+    });
+
+    test("an unreadable outcome publishes nothing, logs, and does not fail the job", async () => {
+      mockPrismaResponseFindUnique.mockRejectedValue(new Error("db blip"));
+
+      await expect(processResponsePipelineJob(finished, baseContext)).resolves.toBeUndefined();
+
+      expect(mockHandleFeedbackSourcePipeline).not.toHaveBeenCalled();
+      expect(mockLoggerError).toHaveBeenCalledWith(
+        expect.objectContaining({ err: expect.any(Error) }),
+        "Response pipeline feedbackSource handling failed"
+      );
+    });
   });
 
   test("invokes the workflow runner on responseFinished", async () => {

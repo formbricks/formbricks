@@ -1722,6 +1722,9 @@ enum DeletionCleanupKind {
   storageFiles
   /// A deleted survey's whole upload folder, `{workspaceId}/private/surveys/{surveyId}/`.
   storageSurveyFolder
+  /// One live response whose Low quality outcome changed: its Hub records are removed or rebuilt to match
+  /// the response's outcome as the drain reads it (ENG-6785). The only kind whose response still exists.
+  hubResponseOutcome
 }
 
 /// Work left over after a delete commits (ENG-3612, ENG-3614: deleted means deleted): Hub records and
@@ -1739,7 +1742,7 @@ model DeletionCleanup {
   surveyId       String
   /// Hub kinds: the organisation's feedback directories, read inside the delete's transaction.
   tenantIds      String[]            @default([])
-  /// `hubResponses`: the deleted responses whose records go.
+  /// `hubResponses`: the deleted responses whose records go. `hubResponseOutcome`: exactly one live response.
   responseIds    String[]            @default([])
   /// `storageFiles`: the object keys or URLs to delete.
   fileKeys       String[]            @default([])
