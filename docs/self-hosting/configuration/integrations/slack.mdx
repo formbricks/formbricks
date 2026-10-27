@@ -59,3 +59,22 @@ Voila! You have successfully enabled the Slack integration in your self-hosted F
 
 
 Still struggling or something not working as expected? [Join our Github Discussions](https://github.com/formbricks/formbricks/discussions) and we'd be glad to assist you!
+
+## Local development
+
+<Note>
+  If you are running Formbricks locally:
+
+  You need to use `https` instead of `http` for the redirect URI.
+
+  * You can update the `go` script in your `apps/web/package.json` to include the `--experimental-https` flag. The
+    command will look like: <br />
+
+    ```bash
+      "go": next dev --experimental-https -p 3000
+    ```
+
+  * You also need to update the .env file in the `apps/web` directory to include the `WEBAPP_URL` as `https://localhost:3000` instead of `http://localhost:3000`.
+
+  * You also need to run the terminal in admin mode to run the `go` script(to acquire the SSL certificate). You can do this by running the terminal as an administrator or using the `sudo` command in Unix-based systems.
+</Note>

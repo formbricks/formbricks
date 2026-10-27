@@ -1,0 +1,70 @@
+---
+title: "Upgrade to 4.0"
+description: "Prepare Redis and S3 storage for the v4 runtime."
+icon: "arrow-up-right-dots"
+---
+
+**Applies to:** installations entering v4, Docker/one-click and Kubernetes, both editions.
+If you already run v4, use the [4.x changes](/self-hosting/upgrade/versions/4.x) and
+[upgrade-path table](/self-hosting/upgrade/paths). Older release notes remain available for recovery;
+this does not extend their maintenance window.
+
+<span id="whats-new-in-formbricks-4-0" />
+<span id="what-this-means-for-your-self-hosting-setup" />
+<span id="why-we-made-these-changes" />
+<span id="migration-steps-for-v4-0" />
+<span id="legacy-one-click-v4-0-upgrade" />
+<span id="manual-setup" />
+<span id="redis" />
+<span id="s3-compatible-storage" />
+<span id="upgrade-process" />
+
+## Before
+
+| Change | Required action |
+| --- | --- |
+| Redis becomes required | Provide Redis/Valkey and set `REDIS_URL`. Preserve durable queue/session state. |
+| Local upload storage is removed | Move existing local uploads to S3-compatible storage before accepting uploads on v4. |
+| Database cleanup | Back up the database: v4 removes deprecated tables and fields. An older image cannot restore them. |
+
+S3 storage is required **when using files**, including uploads, image choices, logos and survey backgrounds.
+Existing S3/MinIO installations can keep their bucket and credentials. RustFS is not a v4 migration requirement.
+Configure:
+
+```yaml
+S3_ACCESS_KEY: your-access-key
+S3_SECRET_KEY: your-secret-key
+S3_REGION: us-east-1
+S3_BUCKET_NAME: formbricks-uploads
+S3_ENDPOINT_URL: https://files.example.com
+S3_FORCE_PATH_STYLE: "1"
+```
+
+Omit the custom endpoint/path-style override for standard AWS S3. Check browser access, TLS and CORS.
+Keep the local upload backup until old files have been verified in the new storage.
+
+### Legacy local-upload migration
+
+The [v4 migration script](https://github.com/formbricks/formbricks/blob/4.0.0/docker/migrate-to-v4.sh)
+contains the original Redis/MinIO setup and local-file transfer procedure. Review it against your existing
+volumes, proxy and chosen storage, then rehearse on a copy. It changes Compose and can restart services;
+back up files and configuration and pin the app to your chosen **v4** image first.
+Do not download today's updater or replace an existing MinIO setup just to enter v4.
+
+## During
+
+Follow the [4.x/5.x maintenance procedure](/self-hosting/upgrade/legacy). Keep traffic closed while the
+app's startup migrations complete. Stop on migration or file-transfer errors; do not discard the old upload volume.
+
+## After
+
+- Open existing surveys and compare stored responses with the baseline.
+- Open old images/files and upload/download a new file through the public hostname.
+- Confirm Redis connectivity, sign-in and the [shared acceptance checks](/self-hosting/upgrade/rehearse#acceptance-at-every-stop).
+
+## Recovery
+
+Restore the pre-upgrade database, files, configuration and matching images together. Retain the old upload
+volume until acceptance. See [backup and restore](/self-hosting/operate/backup-restore).
+
+Source: [4.0.0 release](https://github.com/formbricks/formbricks/releases/tag/4.0.0) and its tagged deployment/migration files.

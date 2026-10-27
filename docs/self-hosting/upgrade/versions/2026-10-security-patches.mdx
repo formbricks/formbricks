@@ -1,0 +1,88 @@
+---
+title: "October security patch actions"
+description: "Deployment checks for Formbricks 6.1.1, 6.0.4 and 5.4.7."
+icon: "shield-halved"
+---
+
+These actions apply when crossing into **6.1.1**, **6.0.4** or **5.4.7** on the corresponding release line.
+They supplement the [standard upgrade procedure](/self-hosting/advanced/upgrade).
+If you also cross a minor or major release, complete its [upgrade notes](/self-hosting/advanced/migration).
+
+## Before
+
+### Redis private certificates
+
+If you use `rediss://` with a private CA and previously relied on `NODE_TLS_REJECT_UNAUTHORIZED=0`,
+configure `REDIS_TLS_CA` with your PEM CA bundle before upgrading. Redis now verifies certificates even
+when that global flag is set. Keep verification enabled. Plain Redis connections and publicly trusted
+certificates need no change for this fix.
+
+See [environment variables](/self-hosting/configuration/environment-variables) for CA configuration.
+
+### MCP clients
+
+Split legacy JSON-RPC batches larger than 100 messages. Individual MCP calls are unaffected.
+
+### Hub API and worker
+
+| Formbricks target | Hub change | Deployment action |
+| --- | --- | --- |
+| 6.1.1 | 0.14.0 → 0.14.1 | Update both API and worker. The published notes report no Hub migrations or required configuration for this pair. |
+| 6.0.4 or 5.4.7 | 0.8.5 → 0.14.1 | Allow time for migrations and decide whether to run the enrichment backfill below. |
+
+For Helm targets 6.0.4 and 5.4.7, Hub migrations run in the pre-upgrade `hub-migration` Job.
+For Compose, run `hub-migrate` after app migrations and before starting Hub. Older Compose files do not
+include `hub-worker`; use the [worker guidance](/self-hosting/upgrade/versions/6.1-runtime#hub-worker-for-docker)
+when adding a worker for asynchronous processing, preserving the selected Hub version. Estimate the size of
+`feedback_records` in the Hub database:
+
+```sql
+SELECT reltuples::bigint FROM pg_class WHERE relname = 'feedback_records';
+```
+
+The release notes recommend allowing more time above roughly five million rows. Add
+`--timeout 30m --set hub.migration.activeDeadlineSeconds=3600` to your normal Helm upgrade command.
+Rehearse against your data: the estimate is not a runtime guarantee.
+
+Hub also backfills missing sentiment, emotions and translations, which consumes AI-provider calls.
+To opt out, set `ENRICHMENT_RECONCILE_ENABLED=false` on the Hub services before starting the target release;
+with Helm, use:
+
+```yaml
+hub:
+  env:
+    ENRICHMENT_RECONCILE_ENABLED: "false"
+```
+
+### One-click port binding in 6.1.1
+
+The updater binds port `3000` to `127.0.0.1`. Public access continues through Traefik on ports `80` and `443`.
+If another host connects directly to port `3000`, change that route or follow the
+[explicit binding instructions](/self-hosting/upgrade/versions/6.1-runtime#one-click-port-3000-is-published-on-the-host-only).
+This installer change is documented for 6.1.1; do not assume the same behavior on the older release lines.
+
+## During
+
+Use the procedure for your target: [4.x/5.x](/self-hosting/upgrade/legacy), or v6
+[Docker](/self-hosting/upgrade/docker) / [Kubernetes](/self-hosting/upgrade/kubernetes).
+Keep traffic closed and writers stopped until app and Hub migrations finish; do not start a worker on the
+new image against an unmigrated Hub database.
+
+## After
+
+- Confirm Redis TLS connections succeed without disabling certificate verification.
+- Verify both Hub services use the selected image, migrations complete and background jobs resume.
+- Check sign-in, SAML if configured, MCP clients and public survey access through your proxy.
+
+Run the [deployment check](/self-hosting/setup/deployment-check) when a matching check image is available.
+If a required check fails, keep maintenance active and follow [recovery](/self-hosting/operate/backup-restore).
+
+## Recovery
+
+Restore coordinated state and matching app/Hub images if repair cannot complete. The absence of an app
+schema migration does not establish that a Hub downgrade is safe.
+
+Sources: published notes for [6.1.1](https://github.com/formbricks/formbricks/releases/tag/6.1.1),
+[6.0.4](https://github.com/formbricks/formbricks/releases/tag/6.0.4) and
+[5.4.7](https://github.com/formbricks/formbricks/releases/tag/5.4.7). These are release-source checks,
+not an upgrade rehearsal of your instance.

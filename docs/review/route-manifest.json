@@ -1,0 +1,3086 @@
+{
+  "baseline_commit": "6a8e76651f73a12671275e1af91d07ec77809131",
+  "baseline_mdx_count": 247,
+  "coverage": "All public MDX structurally parsed; navigation, internal links and anchors checked. Targeted semantic/source review, not exhaustive factual or runtime validation. Generated API operation routes are not counted as orphaned MDX.",
+  "current_mdx_count": 284,
+  "existing_redirects_preserved": true,
+  "new_redirects": [
+    {
+      "destination": "/docs/platform/features/integrations/n8n",
+      "source": "/docs/self-hosting/configuration/integrations/n8n"
+    },
+    {
+      "destination": "/platform/features/integrations/n8n",
+      "source": "/self-hosting/configuration/integrations/n8n"
+    },
+    {
+      "destination": "/docs/platform/features/integrations/zapier",
+      "source": "/docs/self-hosting/configuration/integrations/zapier"
+    },
+    {
+      "destination": "/platform/features/integrations/zapier",
+      "source": "/self-hosting/configuration/integrations/zapier"
+    },
+    {
+      "destination": "/docs/platform/features/integrations/activepieces",
+      "source": "/docs/self-hosting/configuration/integrations/activepieces"
+    },
+    {
+      "destination": "/platform/features/integrations/activepieces",
+      "source": "/self-hosting/configuration/integrations/activepieces"
+    },
+    {
+      "destination": "/docs/platform/features/styling-theme",
+      "source": "/docs/self-hosting/advanced/enterprise-features/hide-powered-by-formbricks"
+    },
+    {
+      "destination": "/platform/features/styling-theme",
+      "source": "/self-hosting/advanced/enterprise-features/hide-powered-by-formbricks"
+    },
+    {
+      "destination": "/docs/platform/features/email-customization",
+      "source": "/docs/self-hosting/advanced/enterprise-features/whitelabel-email-follow-ups"
+    },
+    {
+      "destination": "/platform/features/email-customization",
+      "source": "/self-hosting/advanced/enterprise-features/whitelabel-email-follow-ups"
+    },
+    {
+      "destination": "/docs/platform/features/user-management",
+      "source": "/docs/self-hosting/advanced/enterprise-features/team-access"
+    },
+    {
+      "destination": "/platform/features/user-management",
+      "source": "/self-hosting/advanced/enterprise-features/team-access"
+    },
+    {
+      "destination": "/docs/platform/features/contacts",
+      "source": "/docs/self-hosting/advanced/enterprise-features/contact-management-segments"
+    },
+    {
+      "destination": "/platform/features/contacts",
+      "source": "/self-hosting/advanced/enterprise-features/contact-management-segments"
+    },
+    {
+      "destination": "/docs/self-hosting/configuration/auth-sso/open-id-connect",
+      "source": "/docs/self-hosting/advanced/enterprise-features/oidc-sso"
+    },
+    {
+      "destination": "/self-hosting/configuration/auth-sso/open-id-connect",
+      "source": "/self-hosting/advanced/enterprise-features/oidc-sso"
+    },
+    {
+      "destination": "/docs/self-hosting/configuration/auth-sso/saml-sso",
+      "source": "/docs/self-hosting/advanced/enterprise-features/saml-sso"
+    },
+    {
+      "destination": "/self-hosting/configuration/auth-sso/saml-sso",
+      "source": "/self-hosting/advanced/enterprise-features/saml-sso"
+    },
+    {
+      "destination": "/docs/unify-feedback/overview",
+      "source": "/docs/self-hosting/advanced/enterprise-features/unify-feedback"
+    },
+    {
+      "destination": "/unify-feedback/overview",
+      "source": "/self-hosting/advanced/enterprise-features/unify-feedback"
+    },
+    {
+      "destination": "/docs/unify-feedback/dashboards-charts",
+      "source": "/docs/self-hosting/advanced/enterprise-features/dashboards"
+    },
+    {
+      "destination": "/unify-feedback/dashboards-charts",
+      "source": "/self-hosting/advanced/enterprise-features/dashboards"
+    },
+    {
+      "destination": "/docs/self-hosting/configuration/ai-features",
+      "source": "/docs/self-hosting/advanced/enterprise-features/ai-features"
+    },
+    {
+      "destination": "/self-hosting/configuration/ai-features",
+      "source": "/self-hosting/advanced/enterprise-features/ai-features"
+    },
+    {
+      "destination": "/docs/workflows/overview",
+      "source": "/docs/self-hosting/advanced/enterprise-features/workflows"
+    },
+    {
+      "destination": "/workflows/overview",
+      "source": "/self-hosting/advanced/enterprise-features/workflows"
+    }
+  ],
+  "review_date": "2026-10-27",
+  "routes": [
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/client-api--display/create-display",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/client-api--display/create-display"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/client-api--response/create-response",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/client-api--response/create-response"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/client-api--response/update-response",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/client-api--response/update-response"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/generate-key",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/generate-key"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--action-class/create-action-class",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--action-class/create-action-class"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--action-class/delete-action-class",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--action-class/delete-action-class"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--action-class/get-action-class-by-id",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--action-class/get-action-class-by-id"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--action-class/get-all-action-classes",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--action-class/get-all-action-classes"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--contact-attribute-keys/get-all-contact-attribute-keys",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--contact-attribute-keys/get-all-contact-attribute-keys"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--contact-attribute-keys/get-contact-attribute-key-by-id",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--contact-attribute-keys/get-contact-attribute-key-by-id"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--contact-attributes/get-all-contact-attributes",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--contact-attributes/get-all-contact-attributes"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--contacts/get-all-contacts",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--contacts/get-all-contacts"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--contacts/get-contact-by-id",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--contacts/get-contact-by-id"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--me/me",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--me/me"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--response/create-response",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--response/create-response"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--response/delete-response",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--response/delete-response"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--response/get-response-by-id",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--response/get-response-by-id"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--response/get-survey-responses",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--response/get-survey-responses"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--response/update-response",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--response/update-response"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--storage/upload-public-file",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--storage/upload-public-file"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--survey/create-survey",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--survey/create-survey"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--survey/delete-survey",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--survey/delete-survey"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--survey/get-all-surveys",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--survey/get-all-surveys"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--survey/get-singleuse-links",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--survey/get-singleuse-links"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--survey/get-survey-by-id",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--survey/get-survey-by-id"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--survey/update-survey",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--survey/update-survey"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--webhook/create-webhook",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--webhook/create-webhook"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--webhook/delete-webhook",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--webhook/delete-webhook"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--webhook/get-all-webhooks",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--webhook/get-all-webhooks"
+    },
+    {
+      "action": "keep",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain useful existing content.",
+      "route": "api-reference/management-api--webhook/get-webhook",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/management-api--webhook/get-webhook"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "api-reference/rest-api",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/rest-api"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "api-reference/test-key",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-reference/test-key"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "api-v2-reference/introduction",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-v2-reference/introduction"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "api-v3-reference/introduction",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "api-v3-reference/introduction"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "development/overview",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/overview"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "development/standards/organization/file-and-directory-organization",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/standards/organization/file-and-directory-organization"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "development/standards/organization/module-component-structure",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/standards/organization/module-component-structure"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "development/standards/organization/naming-conventions",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/standards/organization/naming-conventions"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "development/standards/practices/code-formatting",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/standards/practices/code-formatting"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "development/standards/practices/documentation",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/standards/practices/documentation"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "development/standards/practices/error-handling",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/standards/practices/error-handling"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "development/standards/practices/naming-conventions",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/standards/practices/naming-conventions"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "development/standards/qa/code-reviews",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/standards/qa/code-reviews"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "development/standards/qa/screen-reader-pass",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/standards/qa/screen-reader-pass"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "development/standards/qa/testing-methodology",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/standards/qa/testing-methodology"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "development/standards/technical/framework-usage",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/standards/technical/framework-usage"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "development/standards/technical/language-specific-conventions",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/standards/technical/language-specific-conventions"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "development/technical-handbook/api-gateway",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/technical-handbook/api-gateway"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "development/technical-handbook/api-v3-schema-generation",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/technical-handbook/api-v3-schema-generation"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "development/technical-handbook/cube-tenant-isolation",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/technical-handbook/cube-tenant-isolation"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "development/technical-handbook/custom-css-rollout",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/technical-handbook/custom-css-rollout"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "development/technical-handbook/database-model",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/technical-handbook/database-model"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "development/technical-handbook/email-sending",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/technical-handbook/email-sending"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "development/technical-handbook/mcp-server",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/technical-handbook/mcp-server"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "development/technical-handbook/overview",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/technical-handbook/overview"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "development/technical-handbook/tenant-separation",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/technical-handbook/tenant-separation"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "integrate/overview",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "integrate/overview"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/accessibility",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/accessibility"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Release notes: existing URL, global navigation link, explicit deployment status and seven recent stable releases.",
+      "route": "platform/changelog",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/changelog"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/features/ai-features",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/ai-features"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/features/contacts",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/contacts"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/features/email-customization",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/email-customization"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "platform/features/integrations/activepieces",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/integrations/activepieces"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/features/integrations/airtable",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/integrations/airtable"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "platform/features/integrations/attio",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/integrations/attio"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/features/integrations/google-sheets",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/integrations/google-sheets"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/features/integrations/hubspot",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/integrations/hubspot"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/features/integrations/make",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/integrations/make"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "platform/features/integrations/n8n",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/integrations/n8n"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "platform/features/integrations/notion",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/integrations/notion"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/features/integrations/overview",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/integrations/overview"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "platform/features/integrations/salesforce",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/integrations/salesforce"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "platform/features/integrations/slack",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/integrations/slack"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/features/integrations/webhooks",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/integrations/webhooks"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/features/integrations/wordpress",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/integrations/wordpress"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "platform/features/integrations/zapier",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/integrations/zapier"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/features/styling-theme",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/styling-theme"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/features/user-management",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/user-management"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/features/user-management/invite-members",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/user-management/invite-members"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/features/user-management/organizations-and-roles",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/user-management/organizations-and-roles"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/features/user-management/teams-and-roles",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/user-management/teams-and-roles"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/features/user-management/two-factor-auth",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/user-management/two-factor-auth"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/introduction",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/introduction"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/mcp/overview",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/mcp/overview"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "platform/mcp/setup",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/mcp/setup"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/open-source",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/open-source"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "platform/what-is-formbricks",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/what-is-formbricks"
+    },
+    {
+      "action": "redirect",
+      "navigation_after": false,
+      "navigation_before": true,
+      "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
+      "route": "self-hosting/advanced/enterprise-features/ai-features",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/ai-features"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "self-hosting/advanced/enterprise-features/audit-logging",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/advanced/enterprise-features/audit-logging"
+    },
+    {
+      "action": "redirect",
+      "navigation_after": false,
+      "navigation_before": true,
+      "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
+      "route": "self-hosting/advanced/enterprise-features/contact-management-segments",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/contacts"
+    },
+    {
+      "action": "redirect",
+      "navigation_after": false,
+      "navigation_before": true,
+      "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
+      "route": "self-hosting/advanced/enterprise-features/dashboards",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "unify-feedback/dashboards-charts"
+    },
+    {
+      "action": "redirect",
+      "navigation_after": false,
+      "navigation_before": true,
+      "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
+      "route": "self-hosting/advanced/enterprise-features/hide-powered-by-formbricks",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/styling-theme"
+    },
+    {
+      "action": "redirect",
+      "navigation_after": false,
+      "navigation_before": true,
+      "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
+      "route": "self-hosting/advanced/enterprise-features/oidc-sso",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/auth-sso/open-id-connect"
+    },
+    {
+      "action": "redirect",
+      "navigation_after": false,
+      "navigation_before": true,
+      "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
+      "route": "self-hosting/advanced/enterprise-features/saml-sso",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/auth-sso/saml-sso"
+    },
+    {
+      "action": "redirect",
+      "navigation_after": false,
+      "navigation_before": true,
+      "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
+      "route": "self-hosting/advanced/enterprise-features/team-access",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/user-management"
+    },
+    {
+      "action": "redirect",
+      "navigation_after": false,
+      "navigation_before": true,
+      "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
+      "route": "self-hosting/advanced/enterprise-features/unify-feedback",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "unify-feedback/overview"
+    },
+    {
+      "action": "redirect",
+      "navigation_after": false,
+      "navigation_before": true,
+      "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
+      "route": "self-hosting/advanced/enterprise-features/whitelabel-email-follow-ups",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/email-customization"
+    },
+    {
+      "action": "redirect",
+      "navigation_after": false,
+      "navigation_before": true,
+      "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
+      "route": "self-hosting/advanced/enterprise-features/workflows",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "workflows/overview"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/advanced/license",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/advanced/license"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "self-hosting/advanced/license-activation",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/advanced/license-activation"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/advanced/migrating-surveys",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/advanced/migrating-surveys"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/advanced/migration",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/advanced/migration"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/advanced/release-maintenance-policy",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/advanced/release-maintenance-policy"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/advanced/upgrade",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/advanced/upgrade"
+    },
+    {
+      "action": "update",
+      "navigation_after": false,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/advanced/v6-maintenance-upgrade",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/advanced/v6-maintenance-upgrade"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "self-hosting/auth-behavior",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/auth-behavior"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/configuration",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/configuration/ai-deployment",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/ai-deployment"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/configuration/ai-features",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/ai-features"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Configure: focused timeout procedure; original AI heading retained as a link.",
+      "route": "self-hosting/configuration/ai-timeouts",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/ai-timeouts"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "self-hosting/configuration/auth-sso/azure-ad-oauth",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/auth-sso/azure-ad-oauth"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/configuration/auth-sso/google-oauth",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/auth-sso/google-oauth"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "self-hosting/configuration/auth-sso/keycloak-oidc",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/auth-sso/keycloak-oidc"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "self-hosting/configuration/auth-sso/okta-oidc",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/auth-sso/okta-oidc"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "self-hosting/configuration/auth-sso/open-id-connect",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/auth-sso/open-id-connect"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/configuration/auth-sso/saml-sso",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/auth-sso/saml-sso"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/configuration/auth-sso/setup-saml-with-identity-providers",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/auth-sso/setup-saml-with-identity-providers"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/configuration/authzed-operations",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/authzed-operations"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/configuration/cdn",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/cdn"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "self-hosting/configuration/custom-ssl",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/custom-ssl"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "self-hosting/configuration/custom-subpath",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/custom-subpath"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/configuration/docker-storage",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/docker-storage"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "self-hosting/configuration/domain-configuration",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/domain-configuration"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/configuration/environment-variables",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/environment-variables"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Configure: CRD ownership, backend and GitOps details extracted from Kubernetes setup; old headings retained.",
+      "route": "self-hosting/configuration/envoy",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/envoy"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/configuration/file-uploads",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/file-uploads"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/configuration/integrations",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/integrations"
+    },
+    {
+      "action": "redirect",
+      "navigation_after": false,
+      "navigation_before": true,
+      "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
+      "route": "self-hosting/configuration/integrations/activepieces",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/integrations/activepieces"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "self-hosting/configuration/integrations/airtable",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/integrations/airtable"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "self-hosting/configuration/integrations/google-sheets",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/integrations/google-sheets"
+    },
+    {
+      "action": "redirect",
+      "navigation_after": false,
+      "navigation_before": true,
+      "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
+      "route": "self-hosting/configuration/integrations/n8n",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/integrations/n8n"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "self-hosting/configuration/integrations/notion",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/integrations/notion"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/configuration/integrations/slack",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/integrations/slack"
+    },
+    {
+      "action": "redirect",
+      "navigation_after": false,
+      "navigation_before": true,
+      "reason": "Consolidate duplicate setup or capability stub into its canonical guide.",
+      "route": "self-hosting/configuration/integrations/zapier",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "platform/features/integrations/zapier"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/configuration/job-runner",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/job-runner"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Place existing content in the relevant operator or integration journey.",
+      "route": "self-hosting/configuration/online-upgrade",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/online-upgrade"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "self-hosting/configuration/rate-limiting",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/rate-limiting"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "self-hosting/configuration/smtp",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/configuration/smtp"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Overview: canonical required-service and image inventory; ownership links to Operate.",
+      "route": "self-hosting/deployment-components",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/deployment-components"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/operate/backup-restore",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/operate/backup-restore"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Operate: ownership and deployed inventory; component list lives in Deployment components.",
+      "route": "self-hosting/operate/components",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/operate/components"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/overview",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/overview"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/setup/cluster-setup",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/setup/cluster-setup"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Operate: reused from install, monitoring and upgrade completion checks; original URL retained.",
+      "route": "self-hosting/setup/deployment-check",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/setup/deployment-check"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/setup/docker",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/setup/docker"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/setup/kubernetes",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/setup/kubernetes"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/setup/monitoring",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/setup/monitoring"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "self-hosting/setup/one-click",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/setup/one-click"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/configuration",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/configuration"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/docker",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/docker"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/kubernetes",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/kubernetes"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/legacy",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/legacy"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/one-click-details",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/one-click-details"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/paths",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/paths"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/prepare",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/prepare"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/rehearse",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/rehearse"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/troubleshooting",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/troubleshooting"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/1.1",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/1.1"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/1.2",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/1.2"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/1.6",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/1.6"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/2.0",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/2.0"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/2.1",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/2.1"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/2.2",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/2.2"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/2.3",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/2.3"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/2.4",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/2.4"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/2.5",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/2.5"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/2.6",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/2.6"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/2.7",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/2.7"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Shared detailed actions linked from the three affected patch releases and target-minor notes.",
+      "route": "self-hosting/upgrade/versions/2026-10-security-patches",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/2026-10-security-patches"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/3.0",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/3.0"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/3.1",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/3.1"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/3.2",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/3.2"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/3.3",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/3.3"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/4.0",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/4.0"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/4.7",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/4.7"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/versions/4.x",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/4.x"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/5.0",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/5.0"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/versions/5.1",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/5.1"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/5.2",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/5.2"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/5.3",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/5.3"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/5.4",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/5.4"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/versions/5.4-api-permissions",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/5.4-api-permissions"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/versions/5.4-authentication",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/5.4-authentication"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/versions/5.4-database",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/5.4-database"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/versions/5.4-runtime",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/5.4-runtime"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/6.0",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/6.0"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/6.1",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/6.1"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/6.1-runtime",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/6.1-runtime"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/6.1-single-use-links",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/6.1-single-use-links"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Provide a focused operator task, integration entry or extracted historical note.",
+      "route": "self-hosting/upgrade/versions/6.1-visibility",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/6.1-visibility"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/versions/cube",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/cube"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/analysis/reading-results",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/analysis/reading-results"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/best-practices/cancel-subscription",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/best-practices/cancel-subscription"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/best-practices/contact-form",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/best-practices/contact-form"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/best-practices/docs-feedback",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/best-practices/docs-feedback"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/best-practices/feature-chaser",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/best-practices/feature-chaser"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/best-practices/feedback-box",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/best-practices/feedback-box"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/best-practices/google-reviews",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/best-practices/google-reviews"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "surveys/best-practices/headless-surveys",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/best-practices/headless-surveys"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/best-practices/improve-email-content",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/best-practices/improve-email-content"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/best-practices/improve-trial-cr",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/best-practices/improve-trial-cr"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/best-practices/interview-prompt",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/best-practices/interview-prompt"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/best-practices/pmf-survey",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/best-practices/pmf-survey"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/best-practices/quiz-time",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/best-practices/quiz-time"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/best-practices/research-panel",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/best-practices/research-panel"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/best-practices/understanding-survey-types",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/best-practices/understanding-survey-types"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/embedded-data/library",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/embedded-data/library"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "surveys/embedded-data/migration",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/embedded-data/migration"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "surveys/embedded-data/mobile-sdks",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/embedded-data/mobile-sdks"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/embedded-data/overview",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/embedded-data/overview"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/embedded-data/reserved-fields",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/embedded-data/reserved-fields"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/embedded-data/set-embedded-data",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/embedded-data/set-embedded-data"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/general-features/add-image-or-video-question",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/general-features/add-image-or-video-question"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/general-features/conditional-logic",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/general-features/conditional-logic"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/general-features/custom-css",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/general-features/custom-css"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "surveys/general-features/email-followups",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/general-features/email-followups"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/general-features/hidden-fields",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/general-features/hidden-fields"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/general-features/hide-back-button",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/general-features/hide-back-button"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/general-features/limit-submissions",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/general-features/limit-submissions"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/general-features/metadata",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/general-features/metadata"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/general-features/migrate-from-qualtrics",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/general-features/migrate-from-qualtrics"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/general-features/multi-language-surveys",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/general-features/multi-language-surveys"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/general-features/overwrite-styling",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/general-features/overwrite-styling"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/general-features/partial-submissions",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/general-features/partial-submissions"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/general-features/quota-management",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/general-features/quota-management"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/general-features/recall",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/general-features/recall"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/general-features/spam-protection",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/general-features/spam-protection"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/general-features/survey-scheduling",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/general-features/survey-scheduling"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/general-features/tags",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/general-features/tags"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/general-features/validation-rules",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/general-features/validation-rules"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/general-features/variables",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/general-features/variables"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "surveys/general-features/visibility",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/general-features/visibility"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/link-surveys/custom-head-scripts",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/link-surveys/custom-head-scripts"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/link-surveys/data-prefilling",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/link-surveys/data-prefilling"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/link-surveys/embed-surveys",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/link-surveys/embed-surveys"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/link-surveys/link-settings",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/link-surveys/link-settings"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/link-surveys/market-research-panel",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/link-surveys/market-research-panel"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/link-surveys/offline-support",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/link-surveys/offline-support"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/link-surveys/personal-links",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/link-surveys/personal-links"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/link-surveys/pin-protected-surveys",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/link-surveys/pin-protected-surveys"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/link-surveys/pretty-url",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/link-surveys/pretty-url"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/link-surveys/quickstart",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/link-surveys/quickstart"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "surveys/link-surveys/single-use-links",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/link-surveys/single-use-links"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/link-surveys/source-tracking",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/link-surveys/source-tracking"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/link-surveys/start-at-block",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/link-surveys/start-at-block"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/link-surveys/verify-email-before-survey",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/link-surveys/verify-email-before-survey"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/overview",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/overview"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/question-type/address",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/question-type/address"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/question-type/ces",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/question-type/ces"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/question-type/consent",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/question-type/consent"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/question-type/contact-info",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/question-type/contact-info"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/question-type/csat",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/question-type/csat"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/question-type/date",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/question-type/date"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/question-type/file-upload",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/question-type/file-upload"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/question-type/free-text",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/question-type/free-text"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/question-type/matrix",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/question-type/matrix"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/question-type/net-promoter-score",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/question-type/net-promoter-score"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/question-type/ranking",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/question-type/ranking"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/question-type/rating",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/question-type/rating"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/question-type/schedule-a-meeting",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/question-type/schedule-a-meeting"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/question-type/select-multiple",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/question-type/select-multiple"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/question-type/select-picture",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/question-type/select-picture"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/question-type/select-single",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/question-type/select-single"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/question-type/statement-cta",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/question-type/statement-cta"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/question-type/thank-you-card",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/question-type/thank-you-card"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/website-app-surveys/actions",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/website-app-surveys/actions"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/website-app-surveys/attribute-based-targeting",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/website-app-surveys/attribute-based-targeting"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/website-app-surveys/cooldown-period",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/website-app-surveys/cooldown-period"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/website-app-surveys/custom-css",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/website-app-surveys/custom-css"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/website-app-surveys/framework-guides",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/website-app-surveys/framework-guides"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/website-app-surveys/google-tag-manager",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/website-app-surveys/google-tag-manager"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/website-app-surveys/lifecycle-events",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/website-app-surveys/lifecycle-events"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "surveys/website-app-surveys/quickstart",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/website-app-surveys/quickstart"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/website-app-surveys/recontact",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/website-app-surveys/recontact"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "surveys/website-app-surveys/sdk-compatibility",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/website-app-surveys/sdk-compatibility"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/website-app-surveys/show-conditions",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/website-app-surveys/show-conditions"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/website-app-surveys/show-survey-to-percent-of-users",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/website-app-surveys/show-survey-to-percent-of-users"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/website-app-surveys/survey-display-logic",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/website-app-surveys/survey-display-logic"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "surveys/website-app-surveys/user-identification",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/website-app-surveys/user-identification"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "surveys/website-app-surveys/workspace-id-migration",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "surveys/website-app-surveys/workspace-id-migration"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "unify-feedback/dashboards-charts",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "unify-feedback/dashboards-charts"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "unify-feedback/dashboards-charts/creating-your-first-charts",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "unify-feedback/dashboards-charts/creating-your-first-charts"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "unify-feedback/enrichment",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "unify-feedback/enrichment"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "unify-feedback/feedback-datasets",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "unify-feedback/feedback-datasets"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "unify-feedback/feedback-records",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "unify-feedback/feedback-records"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "unify-feedback/feedback-sources",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "unify-feedback/feedback-sources"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "unify-feedback/formbricks-hub",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "unify-feedback/formbricks-hub"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "unify-feedback/journey-management/close-the-loop",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "unify-feedback/journey-management/close-the-loop"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "unify-feedback/journey-management/detection-signals",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "unify-feedback/journey-management/detection-signals"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "unify-feedback/journey-management/journey-scorecards",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "unify-feedback/journey-management/journey-scorecards"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "unify-feedback/journey-management/map-feedback-to-journeys",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "unify-feedback/journey-management/map-feedback-to-journeys"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "unify-feedback/journey-management/recurring-patterns",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "unify-feedback/journey-management/recurring-patterns"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "unify-feedback/overview",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "unify-feedback/overview"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "unify-feedback/topics-subtopics",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "unify-feedback/topics-subtopics"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "workflows/build",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "workflows/build"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain useful existing content.",
+      "route": "workflows/manage-and-monitor",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "workflows/manage-and-monitor"
+    },
+    {
+      "action": "update",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Correct verified guidance, preserve links, or consolidate instructions.",
+      "route": "workflows/overview",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "workflows/overview"
+    }
+  ]
+}

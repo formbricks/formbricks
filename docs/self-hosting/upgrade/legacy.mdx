@@ -1,0 +1,72 @@
+---
+title: "Upgrade within 4.x or to 5.x"
+description: "Maintenance procedure for historical releases before SpiceDB was introduced."
+icon: "arrow-up-right-dots"
+---
+
+Use this procedure when the **target is 4.x or 5.x**. For a v6 target, use the
+[Docker](/self-hosting/upgrade/docker) or [Kubernetes](/self-hosting/upgrade/kubernetes) procedure instead.
+Choose [release stops](/self-hosting/upgrade/paths), read all crossed version notes and
+[rehearse](/self-hosting/upgrade/rehearse) first.
+
+## Before
+
+- [Prepare release-matched configuration](/self-hosting/upgrade/configuration). Preserve databases,
+  volumes, storage, proxy settings and secrets. Pull the selected images without starting them.
+- For a first v5 upgrade, add Hub, Cube, their secrets and edge rate limiting before starting the app.
+- Plan downtime for surveys, APIs and admin access. Prepare a recovery point for every affected datastore.
+
+## During
+
+<Tabs>
+  <Tab title="Docker and one-click">
+    Run from your existing Compose directory, with its normal project name and environment file.
+    Use these explicit steps for historical upgrades; today's one-click updater can require v6 services.
+
+    1. Close traffic at the proxy and stop `formbricks`. Stop Hub, workers and scheduled/external writers
+       **if present**. Leave databases running and take the [coordinated backup](/self-hosting/operate/backup-restore).
+    2. Install the reviewed configuration and Cube files. Start only the required infrastructure; keep the
+       same PostgreSQL major and existing volumes. Verify it is healthy.
+    3. For a **5.1–5.4 target**, run application migrations, then Hub migrations explicitly:
+
+       ```bash
+       docker compose run --rm --no-deps formbricks-migrate
+       # Continue only after exit 0:
+       docker compose run --rm --no-deps hub-migrate
+       ```
+
+       Both commands must finish with exit `0`. The target Compose file's app migration command may have
+       a 300-second timeout. Measure large migrations in rehearsal and review that limit before maintenance.
+       See the [5.4 index procedure](/self-hosting/upgrade/versions/5.4-database) for large response tables.
+    4. For a **4.x target**, migrations run on app startup. The original **5.0 target** also runs app
+       migrations at startup, with Hub migrations in its separate service. Keep traffic closed until all
+       migrations complete. Prefer the [recommended 5.4 stop](/self-hosting/upgrade/paths) when crossing from v4.
+    5. Start the reviewed stack with `docker compose up -d`. Inspect `docker compose ps -a` and migration
+       logs; a running app alone does not prove Hub migrations completed.
+
+    No SpiceDB command, `authzed-ops` service or v6 acknowledgement applies to these targets.
+  </Tab>
+  <Tab title="Kubernetes and GitOps">
+    1. Render the selected published chart with reviewed values and explicit images. Keep Secret names,
+       PVCs, external datastores and operator ownership. Check which migration hooks this chart actually ships.
+    2. Close ingress traffic; pause GitOps, autoscalers, schedules and all app/Hub writers. Take coordinated backups.
+    3. Apply prerequisite infrastructure and Secrets. Deploy the selected chart with `--wait --wait-for-jobs`
+       and a rehearsed timeout. Monitor application migrations and, for v5, Hub migrations in order.
+       Argo CD hooks and Helm hooks differ; inspect the rendered hooks for your deployment method.
+    4. Keep ingress closed through the checks below, then resume controllers against the new desired state.
+
+    Do not add v6 permission Jobs or `authzed.migrationAcknowledged` to a v4/v5 release.
+  </Tab>
+</Tabs>
+
+## After
+
+Complete the [acceptance checklist](/self-hosting/upgrade/rehearse#acceptance-at-every-stop) and every
+release-specific backfill. Check existing-user SSO and old uploads, not only a newly created survey.
+Only reopen traffic or advance to the next stop after acceptance.
+
+## Recovery
+
+Keep maintenance active on failure. Restore matching images, configuration and coordinated data if repair
+cannot complete. Schema renames, dropped columns and data rewrites can make an image-only downgrade unsafe.
+Never run `docker compose down -v`. See [backup and restore](/self-hosting/operate/backup-restore).

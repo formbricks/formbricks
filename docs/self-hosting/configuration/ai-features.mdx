@@ -146,60 +146,7 @@ provider configuration, and the server log records the failure without the secre
 
 ## Longer timeouts
 
-Local models can take longer to generate a response, especially through a tunnel or gateway. Set
-`AI_TIMEOUT_MULTIPLIER` to give every web app AI operation more time. It accepts numbers from `1` to `10`,
-including decimals such as `1.5`. The default is `1`; leaving it unset or blank preserves today's limits.
-Invalid values prevent the app from starting.
-
-| Operation | Default | With `AI_TIMEOUT_MULTIPLIER=3` |
-| --- | --- | --- |
-| AI chart creation | 30 seconds | 90 seconds |
-| Survey generation, translation, example responses, and each QSF AI call | 45 seconds | 135 seconds |
-| Complete QSF import | 120 seconds | 360 seconds |
-
-The call budget includes retries. QSF attempts share their call's budget and are also limited by the remaining
-import deadline; five seconds remain reserved for assembling the draft. The setting applies to every AI
-provider configured for the web app. Hub and taxonomy have their own configuration, and OAuth token requests
-retain their separate ten-second timeout.
-
-<Steps>
-  <Step title="Set the multiplier">
-    For Docker Compose, add this to `docker/.env`:
-
-    ```bash
-    AI_TIMEOUT_MULTIPLIER=3
-    ```
-
-    For Helm, set the application environment in your values:
-
-    ```yaml
-    deployment:
-      env:
-        AI_TIMEOUT_MULTIPLIER: "3"
-    ```
-  </Step>
-  <Step title="Apply the environment change">
-    From the Docker Compose directory, recreate the app container so it reads the updated environment:
-
-    ```bash
-    docker compose up -d --force-recreate formbricks
-    ```
-
-    For Kubernetes, apply your Helm values with your usual upgrade command and let the app pods restart.
-  </Step>
-  <Step title="Verify a slow operation">
-    Generate a survey or translate one against your model and confirm it finishes. Pressing **Stop** during
-    survey generation still cancels the model request immediately. To restore the default limits, set the
-    multiplier to `1` and apply the environment change again.
-  </Step>
-</Steps>
-
-<Note>
-  Your ingress, reverse tunnel, gateway, and model server can impose shorter limits. Increase those limits
-  as needed: non-streaming operations may send no response until generation finishes. Survey generation and
-  QSF imports send a keepalive after ten seconds of silence, but that does not override a proxy's maximum
-  request duration or a provider's own timeout.
-</Note>
+For slow models, configure [AI timeouts](/self-hosting/configuration/ai-timeouts) and check your proxy limits.
 
 ## Google Cloud
 
@@ -295,3 +242,7 @@ The usual causes are `AI_MODEL` left unset, credentials that do not match the ch
 
 The full list of `AI_*` variables, including the optional ones, is in the [environment variables
 reference](/self-hosting/configuration/environment-variables).
+
+## Deployment examples
+
+See [AI deployment options](/self-hosting/configuration/ai-deployment) for optional Docker and Kubernetes runtime configuration.

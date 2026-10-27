@@ -1,0 +1,218 @@
+---
+title: "Prepare permissions"
+description: "Run the target image’s guarded migration and permission preparation."
+icon: "arrow-up-right-dots"
+---
+
+Use this reference at the preparation step of the [Kubernetes](/self-hosting/upgrade/kubernetes)
+or [Docker Compose](/self-hosting/upgrade/docker) procedure. It applies to releases that include
+`formbricks-authzed-prepare`; verify that executable in the selected release image before maintenance.
+An upgrade **from v5 to v6** first needs the dependencies in [Upgrade to 6.0](/self-hosting/upgrade/versions/6.0).
+
+## Preparation contract
+
+- Run only the selected target image, with `AUTHZED_CONSISTENCY=fully_consistent`.
+- The command validates configuration and SpiceDB health, applies application migrations, prepares the
+  schema, drains the outbox, repairs relationships and performs independent verification.
+- A different non-empty schema is blocked. Review `formbricks-authzed schema check` and the release's
+  schema changes before passing `--expected-current-digest sha256:<reviewed-digest>`.
+- Exit `0` and `upgrade_prepared` permit the next deployment step. Any nonzero result keeps maintenance active.
+
+## What runs where
+
+Deployment tooling owns maintenance, workload shutdown, infrastructure, and restart. The release image
+owns database migrations and authorization preparation. Neither the application nor the chart maintains
+an activation receipt, a migration authority switch, or a second authorization engine for this process.
+
+`formbricks-authzed-prepare` is a preparation command, **not an unattended installer**. It does not
+discover or stop writers, suspend controllers, take backups, or restart workloads. Its confirmations are
+operator acknowledgements, not proof that maintenance is active. Complete and verify those steps first.
+
+The command reuses the image's existing migration runner and `formbricks-authzed upgrade prepare` and
+`upgrade check` implementations. It does not automatically prune unexplained relationships.
+
+## Before the maintenance window
+
+- [Rehearse with an isolated copy](/self-hosting/upgrade/rehearse) of the installation. Measure migrations, backfill, verification, and
+  restoration time; use those measurements to communicate the maintenance window.
+- Pin the target Formbricks image by digest and the matching chart/Compose files. Preserve the current
+  images, chart, values, secrets, and volume names. Do not combine this change with a PostgreSQL major
+  upgrade, a storage migration, or unrelated Hub/Cube changes.
+- Treat the Helm chart version and application image version as separate pins. A chart-only patch can
+  keep the same Formbricks `appVersion`; verify both values and the rendered image before upgrading.
+- Prepare private SpiceDB connectivity, dedicated datastore credentials, its reviewed version, and
+  completed datastore migrations. Retain existing operator ownership; never install a second operator
+  over an existing cluster-wide operator. See [SpiceDB operations](/self-hosting/configuration/authzed-operations).
+
+Identify **all writers**, including Formbricks replicas, Hub/Hub workers, workflow workers, scheduled
+jobs, import jobs, integrations, and administrative scripts. Include workloads outside the application
+namespace or Compose project that write to the same databases. Identify Argo CD/Flux, image updaters,
+autoscalers, and other controllers that can recreate those workloads.
+
+Record their original state for restoration. Do not print Secret contents or expanded Compose
+configuration into shared CI logs. Prepare and render the exact target manifests before maintenance.
+
+## Docker and one-click
+
+Keep the **same Compose project name, database images, and volumes**. Prepare a target Compose file
+that retains customized SMTP, storage, networking, and Traefik settings. Pin `formbricks`,
+`formbricks-migrate`, `authzed-ops`, and `authzed-initialize` to the same target image digest. Do not copy a
+fresh-install Compose file over an existing installation without reviewing those differences.
+
+After stopping the old project's writers and verifying external writers/controllers are stopped,
+start only the required infrastructure from the reviewed target configuration. Never use `down -v`.
+
+With infrastructure already healthy, run the existing operations service without starting dependencies:
+
+```bash
+docker compose --profile authzed-ops run --rm --no-deps \
+  --entrypoint formbricks-authzed-prepare authzed-ops \
+  --backup-confirmed --writers-stopped
+```
+
+Supply your normal `--project-name`, `--env-file`, and `-f` options when customized. The operator service
+must receive the application database URL, migration credentials when different, and the six AuthZed
+client variables. The distributed default uses the bundled PostgreSQL database; customize it when your
+installation uses a managed database. No database or SpiceDB port needs public exposure.
+
+After successful preparation, a one-click installation also sets
+`FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` before its explicit v6 update. Do not invoke an
+unattended update or move a floating image tag until the release-specific installation tests pass.
+
+## Helm and GitOps
+
+Prepare SpiceDB before the application upgrade. Keep the current database/storage settings and existing
+Secrets. During maintenance, use an explicit, temporary Kubernetes Job with the target Formbricks image,
+the same database/AuthZed environment bindings, and this command:
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: formbricks-v6-prepare
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 7200
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+      containers:
+        - name: prepare
+          image: ghcr.io/formbricks/formbricks@sha256:<target-image-digest>
+          command: ["formbricks-authzed-prepare"]
+          args: ["--backup-confirmed", "--writers-stopped"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          envFrom:
+            - secretRef:
+                name: formbricks-maintenance-env
+          # Inert placeholders for the shared environment check. Preparation never reads them, and they are
+          # not application secrets: never reuse these values in a running installation.
+          env:
+            - { name: ENCRYPTION_KEY, value: maintenance-unused }
+            - { name: CUBEJS_API_SECRET, value: maintenance-unused }
+            - { name: CUBEJS_API_URL, value: "http://localhost" }
+            - { name: HUB_API_KEY, value: maintenance-unused }
+            - { name: HUB_API_URL, value: "http://localhost" }
+            - { name: REDIS_URL, value: "redis://localhost" }
+```
+
+This is a template, not a ready-to-apply manifest: set the namespace, digest, resource requests/limits,
+image-pull credentials, network policy, and environment bindings for your installation. The
+`formbricks-maintenance-env` Secret holds what preparation uses, with the values your release already uses:
+
+- `DATABASE_URL`
+- `AUTHZED_ENABLED=true`, `AUTHZED_ENDPOINT`, `AUTHZED_TOKEN`, `AUTHZED_SYSTEM_KEY`, `AUTHZED_INSECURE`, and
+  `AUTHZED_CONSISTENCY=fully_consistent`
+- `WEBAPP_URL`, in every case. Preparation runs the database migrations, and the OAuth resource-link data
+  migration (`eng_2343_backfill_oauth_resource_links`, first released in 5.4.0) derives each MCP OAuth client's
+  resource link from it. Whenever that migration runs on a database with MCP OAuth clients, as in any upgrade
+  from before 5.4.0, preparation stops with `upgrade_database_migration_failed` without it.
+
+The chart's application Secret does not necessarily contain `DATABASE_URL` or the AuthZed values, which the
+chart injects separately. Prefer explicit `valueFrom.secretKeyRef` bindings to existing Secrets when possible.
+Never put secrets on a command line or commit their values. If migrations use a different database credential,
+bind `MIGRATE_DATABASE_URL` as well as `DATABASE_URL`; the target image's migration runner uses it when set. If
+the configuration is still incomplete, the Job reports `upgrade_configuration_invalid` with the names of the
+variables to fix.
+
+Wait for Job completion and inspect its sanitized result before running `helm upgrade` or resuming an
+Argo CD/Flux reconciliation. Preparation is not a Helm migration hook or a permanent chart component.
+Delete the Job and any temporary environment Secret after acceptance; retain only sanitized evidence.
+There is no activation table to clean up.
+
+## Exit checklist
+
+Keep maintenance active until all of these are true:
+
+- `formbricks-authzed-prepare` exited `0`, including its two clean full audits, and the v6 migration
+  acknowledgement is set only for this prepared upgrade.
+- The running image ID, chart values, schema, outbox, and a fresh `formbricks-authzed upgrade check` match
+  the reviewed target.
+- Allowed and denied users, a scoped API key, organization/workspace lists, and a grant revocation work
+  from a fresh browser session; an old tab recovers after a hard refresh.
+
+Only then resume controllers and writers and remove the ingress maintenance page.
+
+## Results and recovery
+
+Success prints one JSON result and exits `0`:
+
+```json
+{"status":"prepared","code":"upgrade_prepared","restartRequired":true}
+```
+
+Blocked preparation exits `2`, without a `restartRequired` field. It never authorizes restarting workloads,
+including when arguments were rejected before any work ran. The code identifies the failed step:
+
+| Code | Operator action |
+| --- | --- |
+| `upgrade_maintenance_required` | Complete and acknowledge backup and writer shutdown. |
+| `upgrade_invalid_arguments` | Check options and the reviewed digest format. |
+| `upgrade_timeout_unavailable` | Use the supported release image containing `timeout`. |
+| `upgrade_configuration_invalid` | Correct the required runtime environment and fully consistent mode. The result's `variables` array, when present, names the variables to fix, never their values. |
+| `upgrade_spicedb_unhealthy` | Check datastore migrations, networking, TLS, and token configuration. |
+| `upgrade_database_migration_failed` | Diagnose the migration in a restricted operator session; do not restart v5 blindly. |
+| `upgrade_graph_not_ready` | Inspect `schema check`, outbox status, and aggregate `upgrade check`; investigate invalid/orphaned data. |
+| `upgrade_verification_failed` | Keep maintenance active and resolve remaining graph or outbox drift. |
+
+A blocked result can carry more fields, never values from your data:
+
+- `"reason":"timeout"` and `timeoutSeconds`: the step ran out its time limit. It did not report a failure, so
+  the code names the step, not a problem in it. Raise the limit and run preparation again.
+- `cause` and `retryable`: the step's own error code, such as `authzed_unavailable`, and whether that error is
+  transient. Retry a `"retryable":true` result once its cause, such as SpiceDB availability, has recovered.
+
+Each step has a 90-minute limit. Set `FORMBRICKS_AUTHZED_PREPARE_STEP_TIMEOUT_SECONDS` (60 to 86400) to change
+it. The graph step rewrites every organization's relationships and then audits them all, so its runtime grows
+with the number of organizations: an instance with about 50,000 organizations needed about 35 minutes. Time the
+rehearsal, and keep the Job's `activeDeadlineSeconds` above the sum of its steps: a Job deadline stops the
+container before the wrapper can print a result. Interrupted containers can exit with a signal code rather
+than JSON; any nonzero exit remains blocked.
+
+The command never restarts a workload on success, failure, or interruption. Retry preparation with the
+same image after correcting the cause, provided the interrupted migration is safe to rerun. Never mark
+a failed Prisma migration applied without investigating it.
+
+### Diagnose migration failures privately
+
+The wrapper deliberately does not offer raw output in shared Job logs: migration errors can contain
+credentials, SQL, or customer identifiers. In a restricted PostgreSQL operator session, inspect failed
+Prisma migration records in `_prisma_migrations` (`migration_name`, `started_at`, `finished_at`,
+`rolled_back_at`, and `logs`). Treat `logs` as sensitive; do not paste it into CI, tickets, or Slack.
+For failures before Prisma records the attempt, check connectivity and permissions in that restricted
+session. If a migration must be retried, first establish whether partial changes need repair, then use
+the target image's `node /home/nextjs/packages/database/dist/scripts/apply-migrations.js` under maintenance.
+Capture any diagnostic output only in operator-controlled storage; never enable it on normal startup.
+[If a migration fails](/self-hosting/advanced/migration#if-a-migration-fails) shows how to find the real error,
+check what the failed migration left behind, and clear its failed record before retrying.
+
+After database changes, **`helm rollback` or changing the image is not necessarily a safe rollback**.
+Remain in maintenance and either complete the v6 preparation or restore the coordinated backup and
+matching v5 images/configuration. Resuming writes before restoration risks losing those new writes.

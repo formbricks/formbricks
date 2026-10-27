@@ -5,7 +5,7 @@ description: "Everything you can configure on a self-hosted Formbricks instance,
 icon: "sliders"
 ---
 
-A fresh instance runs with sensible defaults. Everything below is optional, and most of it is a matter of adding environment variables and restarting your containers.
+A fresh instance includes required dependencies such as PostgreSQL, Redis, Hub, Cube and SpiceDB. Keep those connected; see [components and ownership](/self-hosting/operate/components). The pages below cover both required configuration and optional features. Save environment changes persistently, then recreate or roll out the affected containers.
 
 <Note>
   Almost every setting on this page is an environment variable. [Environment
@@ -110,6 +110,11 @@ Out of the box people sign in with an email address and a password. Point the in
 
 ## Connecting third-party tools
 
-[Airtable](/self-hosting/configuration/integrations/airtable), [Google Sheets](/self-hosting/configuration/integrations/google-sheets), [Notion](/self-hosting/configuration/integrations/notion) and [Slack](/self-hosting/configuration/integrations/slack) each need an OAuth app you register with the service, and its credentials as environment variables. [n8n](/self-hosting/configuration/integrations/n8n), [Zapier](/self-hosting/configuration/integrations/zapier) and [ActivePieces](/self-hosting/configuration/integrations/activepieces) connect the other way round, through a Formbricks API key, and need no server configuration at all.
+[Airtable](/self-hosting/configuration/integrations/airtable), [Google Sheets](/self-hosting/configuration/integrations/google-sheets), [Notion](/self-hosting/configuration/integrations/notion) and [Slack](/self-hosting/configuration/integrations/slack) each need an OAuth app you register with the service, and its credentials as environment variables. [n8n](/platform/features/integrations/n8n), [Zapier](/platform/features/integrations/zapier) and [ActivePieces](/platform/features/integrations/activepieces) connect the other way round, through a Formbricks API key, and need no server configuration at all.
 
 Still struggling or something not working as expected? [Join our GitHub Discussions](https://github.com/formbricks/formbricks/discussions) and we'd be glad to assist you!
+
+<Warning>
+  [Custom subpaths](/self-hosting/configuration/custom-subpath) have an authentication limitation.
+  Use a dedicated hostname for a supported login flow; review that limitation before choosing a subpath.
+</Warning>

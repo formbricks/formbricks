@@ -1,0 +1,40 @@
+---
+title: "Upgrade to 5.1"
+description: "Apply ordered migrations and review renamed feedback-source data."
+icon: "arrow-up-right-dots"
+---
+
+**Applies to:** installations crossing 5.1, including upgrades from v4 to a later v5 target.
+Both editions and deployment methods. Apply [5.0 prerequisites](/self-hosting/upgrade/versions/5.0) first when coming from v4.
+
+## Before
+
+| Change | Required action |
+| --- | --- |
+| Separate Compose app migration service | Merge `formbricks-migrate` and its environment/ordering. Use the same app image for migration and runtime. |
+| Hub migration ordering | Run application migrations before Hub migrations; make external Secrets available before Argo migration hooks. |
+| Connector renamed to FeedbackSource | Back up first; verify existing feedback-source connections after the automatic rename. |
+| Prisma 7 runtime | Use the migration runner bundled in the target image. Do not run an older Prisma CLI against the target schema. |
+| Cube configuration/healthcheck corrections | Merge the target Cube service and model files while preserving its secret and database overrides. |
+
+The [configuration checklist](/self-hosting/upgrade/configuration) covers image pins, existing credentials
+and storage/proxy preservation. New optional features are not prerequisites for this upgrade.
+
+## During
+
+Use the [4.x/5.x maintenance procedure](/self-hosting/upgrade/legacy). Keep traffic and writers stopped
+through app and Hub migrations. Require both to exit successfully before starting the target app.
+A Compose `up -d` or an Argo sync beginning is not evidence that migrations finished.
+
+## After
+
+Verify existing feedback sources, dashboards, SSO, uploads and the
+[shared acceptance checks](/self-hosting/upgrade/rehearse#acceptance-at-every-stop).
+Check the migration containers/Jobs themselves for completion and inspect any failure before continuing.
+
+## Recovery
+
+The table and enum rename is not reversed by an older image. Restore matching configuration, images and
+coordinated data when rolling back across this boundary. See [recovery](/self-hosting/operate/backup-restore).
+
+Source: [5.0.2 → 5.1.0](https://github.com/formbricks/formbricks/compare/5.0.2...5.1.0).

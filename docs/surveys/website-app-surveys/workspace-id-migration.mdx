@@ -24,7 +24,7 @@ and align product terminology across the app, SDKs, and API surfaces.
 ## What Still Works
 
 - SDK setups using `workspaceId` are the recommended and future-proof option.
-- SDK setups using `environmentId` are still accepted during the migration period.
+- SDK setups using `environmentId` are still accepted for backward compatibility; no removal date is announced here.
 - If your app is already connected and sending data with a legacy Environment ID, no immediate outage is expected.
 
 ## Recommended Migration
@@ -59,7 +59,7 @@ formbricks.setup({
 
 ### Do I Need To Rotate IDs Immediately?
 
-No. Legacy setups continue to work during the migration period. However, new implementations should always use
+No. Legacy setups continue to work for backward compatibility; no removal date is announced here. However, new implementations should always use
 `workspaceId`.
 
 ### Do Test And Production Workflows Change?
@@ -71,3 +71,5 @@ identifier you should use in SDK setup.
 
 Use the [Framework Guides](https://formbricks.com/docs/surveys/website-app-surveys/framework-guides)
 for framework-specific SDK instructions.
+
+Use an SDK release that supports `workspaceId` before changing its setup options. This guide does not promise that every historical package accepts the new option.

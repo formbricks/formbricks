@@ -1,0 +1,92 @@
+---
+title: "Upgrade to 5.3"
+description: "Version-specific changes and preserved upgrade instructions."
+icon: "arrow-up-right-dots"
+---
+
+**Applies to:** installations crossing 5.3, Docker/one-click and Kubernetes, both editions.
+Apply earlier [5.x notes](/self-hosting/advanced/migration#version-5) when coming from an older source.
+
+<span id="upgrade-steps" />
+<span id="rollback" />
+
+## Before
+
+Review proxy trust, Hub/Cube configuration and optional scheduling settings below. The release adds
+workflow, archive and 2FA-lockout data structures; allow the target migration runner to apply them.
+No new mandatory environment variable is introduced for a standard v5.2 installation.
+
+### Client IP Resolution Behind a Proxy (recommended)
+
+v5.3 resolves the client IP from the `X-Forwarded-For` chain using a configurable number of trusted proxy
+hops:
+
+- `TRUSTED_PROXY_HOP_COUNT` — optional, **defaults to `1`**. Set it to the number of trusted proxies /
+  load balancers in front of Formbricks (e.g. an ingress plus a CDN = `2`). An explicit `0` trusts no
+  proxy at all: the runtime exposes no socket peer address, so the client IP then resolves to a fixed
+  "untrusted" placeholder that rate limiting and response audit logging record in place of a real address.
+  A forwarding chain shorter than the configured count, or a malformed selected hop, also fails closed.
+  Ports appended by gateways such as
+  [Azure Application Gateway](https://learn.microsoft.com/en-us/azure/application-gateway/how-application-gateway-works#modifications-to-the-request)
+  are removed, and IPv6 addresses are normalized to their `/64` network. Leave the setting at `1` (or
+  your real hop count) unless you deliberately want to stop capturing client IPs.
+
+<Warning>
+  Setting `TRUSTED_PROXY_HOP_COUNT` **higher** than your real hop count lets a client spoof its IP by
+  sending a forged `X-Forwarded-For` header. Set it to the exact number of proxies in front of the app —
+  no higher. The default of `1` is correct for a single reverse proxy / ingress.
+</Warning>
+
+### Renamed Configuration
+
+- **Scheduling variables renamed.** `NEXT_PUBLIC_SURVEY_SCHEDULING_*` → `SURVEY_SCHEDULING_*` (the
+  `NEXT_PUBLIC_` prefix was dropped). This only affects you if you ran a v5.3 release candidate that used
+  the old names; a clean v5.2 → v5.3 upgrade never set them.
+
+### Optional New Configuration
+
+None of the following is required to run v5.3. Add them only if you want the associated feature.
+
+#### Survey Scheduling
+
+The new survey-scheduling feature runs on a fixed daily local time. All three are optional and defaulted:
+
+- `SURVEY_SCHEDULING_TIME_ZONE` — a valid IANA time zone. Default `Europe/Berlin`.
+- `SURVEY_SCHEDULING_LOCAL_HOUR` — default `0`.
+- `SURVEY_SCHEDULING_LOCAL_MINUTE` — default `0`.
+
+#### Password Breach Check
+
+- `PASSWORD_HIBP_CHECK_DISABLED` — set to `"1"` to disable the "Have I Been Pwned" breached-password
+  check on sign-up and password reset (`"0"` or unset keeps it on).
+
+### Analytics (Cube)
+
+Two Cube-related deltas in v5.3. Neither changes the Cube schema, so there is **no schema refresh to run**:
+
+- **`CUBEJS_EXTERNAL_DEFAULT` now defaults to `false`** (in both `docker/docker-compose.yml` and the Helm
+  chart). Cube Store is used only when you explicitly opt into external pre-aggregations — a safe default
+  for most self-hosters. Set it back to `true` only if you run external pre-aggregations.
+- **Hub images must be pinned together.** Read the selected patch's Helm values/release notes for its
+  Hub version. Docker's default `HUB_IMAGE_REF` tracks `latest`; override it with that selected version.
+  Do not assume all 5.3 patches ship the same Hub image.
+
+## During
+
+Follow the [4.x/5.x maintenance procedure](/self-hosting/upgrade/legacy). Merge the target's deployment
+changes before pulling; preserve local settings and run migrations with writers stopped.
+Do not enable optional AI services just because they appear in the reference Compose file.
+
+## After
+
+- Test sign-in, 2FA, password reset and client-IP handling through your actual proxy chain.
+- Create/schedule a test survey, open dashboard charts and verify enabled workflows process work.
+- Complete the [shared acceptance checks](/self-hosting/upgrade/rehearse#acceptance-at-every-stop).
+
+## Recovery
+
+The v5.3 application schema additions do not by themselves require a database restore for v5.2, but this
+is not a guarantee for changed Hub versions or work accepted by new features. Keep maintenance active,
+restore coordinated state when needed, and check jobs before reopening. See [recovery](/self-hosting/operate/backup-restore).
+
+Source: [5.2.2 → 5.3.0](https://github.com/formbricks/formbricks/compare/5.2.2...5.3.0) and later 5.3 patch tags.

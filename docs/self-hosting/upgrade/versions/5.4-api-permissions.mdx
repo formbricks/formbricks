@@ -1,0 +1,62 @@
+---
+title: "5.4 feedback API permissions"
+description: "Detailed actions linked from the 5.4 upgrade checklist."
+icon: "arrow-up-right-dots"
+---
+
+[Back to the 5.4 checklist](/self-hosting/upgrade/versions/5.4).
+
+### Feedback Record Mutations by API Key (action required for some integrations)
+
+**Applies to API-key authentication**, including MCP tools using a key. Deleting feedback records now
+requires `manage`. Updating or deleting records in a dataset assigned to multiple workspaces is denied,
+regardless of key permissions, because a record cannot be attributed to one workspace.
+
+| Operation | Before | After |
+| --- | --- | --- |
+| `GET`, search, similar, count | `read` | unchanged |
+| `POST /api/v3/feedbackRecords` (create) | `write` | unchanged |
+| `PATCH /api/v3/feedbackRecords/{id}` | `write` | `write`, **and** the dataset assigned to one workspace |
+| `DELETE /api/v3/feedbackRecords/{id}` | `write` | `manage`, **and** the dataset assigned to one workspace |
+| `DELETE /api/v3/feedbackRecords?tenant_id=…` | `write` | `manage`, **and** the dataset assigned to one workspace |
+
+The same applies to the MCP tools `update_feedback_record` and `delete_feedback_record` when the client
+authenticates with an API key. The required MCP **scope** is unchanged — both remain `feedbackRecords:write`.
+
+<Note>
+  **Only API keys are affected.** Users signing in through the UI, OAuth/MCP connections, and SAML/OIDC
+  sessions authorize through their organization role instead, which is unchanged: organization owners and
+  managers can still update and delete feedback records, including in a shared dataset. Reading, searching
+  and creating records are unaffected for every principal.
+</Note>
+
+To find out whether any dataset on your instance is shared, and would therefore start refusing API-key
+mutations:
+
+```sql
+SELECT d.id, d.name, d."organizationId", COUNT(w."workspaceId") AS workspaces
+FROM "FeedbackDirectory" d
+JOIN "FeedbackDirectoryWorkspace" w ON w."feedbackDirectoryId" = d.id
+WHERE d."isArchived" = false
+GROUP BY d.id, d.name, d."organizationId"
+HAVING COUNT(w."workspaceId") > 1;
+```
+
+For each returned dataset used by a mutating integration, choose one workspace in
+**Settings → Organization → Datasets**, or use a supported organization-owner/manager authentication flow.
+Check the integration's intended access before broadening permissions.
+
+#### What to do before upgrading
+
+1. Run the query above. If it returns rows, decide how each affected integration should proceed.
+2. Raise any API key that deletes feedback records from `write` to `manage`.
+3. After deploying, smoke test your feedback-record integrations. Two log lines identify an integration
+   caught by the new rules — grep for `Feedback record mutation denied` (the MCP path, which names the
+   reason) and for `Feedback records gateway authorization denied` (the REST path, which logs
+   `verdict: "deny"` alongside the `operation` and `feedbackDirectoryId`).
+
+#### Rollback
+
+Changing an API key's scope does not undo or require a database migration. Keep the added permission
+only where needed. For a full application rollback, also review the [database/authentication recovery
+notes](/self-hosting/upgrade/versions/5.4-database#recovery-across-5-4) and Hub changes; the access rule alone does not establish rollback safety.

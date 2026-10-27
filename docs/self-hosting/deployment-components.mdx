@@ -116,7 +116,7 @@ Omit PostgreSQL, Valkey or authorization images only when their external replace
 
 External Redis/Valkey removes the three bundled backend images. Set its `maxmemory-policy` to
 `noeviction` and configure authentication/TLS. See the
-[gateway setup](/self-hosting/setup/kubernetes#envoy-bundle-modes).
+[gateway setup](/self-hosting/configuration/envoy).
 
   </Accordion>
   <Accordion title="Optional AI images">
@@ -143,3 +143,6 @@ Follow the [Docker](/self-hosting/setup/docker), [one-click](/self-hosting/setup
 [Kubernetes](/self-hosting/setup/kubernetes) guide for setup. Configure optional
 [AI services](/self-hosting/configuration/ai-features) and an
 [Enterprise license](/self-hosting/advanced/license) before using Enterprise features.
+
+See [components and ownership](/self-hosting/operate/components) for operating responsibilities,
+bootstrap credentials and recording your deployed inventory.

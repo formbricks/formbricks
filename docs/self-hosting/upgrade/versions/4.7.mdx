@@ -1,0 +1,68 @@
+---
+title: "Upgrade to 4.7"
+description: "Complete typed contact attributes and verify migrated storage URLs."
+icon: "arrow-up-right-dots"
+---
+
+**Applies to:** installations crossing 4.7, including upgrades to a later 4.x or 5.x target.
+Docker/one-click and Kubernetes, both editions. See the [upgrade path](/self-hosting/upgrade/paths).
+
+<span id="what-happens-automatically" />
+<span id="steps-to-migrate" />
+<span id="docker-2" />
+<span id="kubernetes-2" />
+<span id="docker-3" />
+<span id="kubernetes-3" />
+<span id="docker-4" />
+<span id="kubernetes-4" />
+
+## Before
+
+- Back up application data and files. Allow time for contact-attribute and storage-URL data migrations.
+- The attribute migration infers `text`, `number` or `date` for each key. Below **1,000,000 attribute rows**, it
+  also fills the typed value columns. At or above that threshold, the value backfill is skipped.
+- Storage URLs in surveys, styling, branding and response data are converted to relative paths. Keep the
+  existing S3 endpoint, bucket and proxy route; this is not a transfer to another storage provider.
+
+## During
+
+Use the [4.x/5.x procedure](/self-hosting/upgrade/legacy) for those targets, or the v6 procedure for a v6 target.
+Check the application/migration logs for `Skipping value backfill`. A successful schema migration does not
+mean a skipped backfill has completed.
+
+### Complete a skipped backfill
+
+Run the script from the **installed release image**, after its migrations succeed. Do not run multiple
+copies concurrently. On the recommended route, complete it at the 4.9 stop before moving to v5.
+
+<Tabs>
+  <Tab title="Docker">
+    ```bash
+    docker compose exec -T formbricks node packages/database/dist/scripts/backfill-attribute-values.js
+    ```
+  </Tab>
+  <Tab title="Kubernetes">
+    ```bash
+    kubectl exec -n <namespace> deploy/<app-deployment> --       node packages/database/dist/scripts/backfill-attribute-values.js
+    ```
+    Replace the namespace and app deployment with your existing names.
+  </Tab>
+</Tabs>
+
+Wait for exit `0` and `Backfill Complete!`. The script fills only missing typed values and can resume after
+interruption; batches commit independently. It avoids the migration transaction timeout but still uses
+database resources. Stop and investigate any error before advancing.
+
+## After
+
+- Check number/date segment filters against known contacts, including invalid or empty values.
+- Open old survey images and previously uploaded response files through the public route.
+- Compare surveys and responses with the baseline and complete the [acceptance checks](/self-hosting/upgrade/rehearse#acceptance-at-every-stop).
+
+## Recovery
+
+Keep the old configuration and coordinated backup. Use [restore](/self-hosting/operate/backup-restore) if
+repair cannot complete; reverting an image does not undo URL or attribute-data rewrites.
+
+Sources: [4.7.0 changes](https://github.com/formbricks/formbricks/compare/4.6.1...4.7.0) and the
+[backfill script](https://github.com/formbricks/formbricks/blob/4.9.7/packages/database/src/scripts/backfill-attribute-values.ts).

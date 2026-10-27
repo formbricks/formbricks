@@ -1,0 +1,154 @@
+---
+title: "5.4 database preparation"
+description: "Detailed actions linked from the 5.4 upgrade checklist."
+icon: "arrow-up-right-dots"
+---
+
+[Back to the 5.4 checklist](/self-hosting/upgrade/versions/5.4).
+
+### Database migrations
+
+All seven migrations apply automatically during the upgrade. Two want something from you first: one needs
+`WEBAPP_URL` set if you use MCP OAuth, and one deserves a step of its own on large instances. So here
+is the full list rather than a summary:
+
+| Migration | What it does | Impact |
+| --- | --- | --- |
+| `add_feedback_source_import_mode` | Adds `FeedbackSource.import_mode`, which controls whether a source's historical import includes partial responses. Existing sources take the `completedOnly` default, which aligns the historical import with the live ingestion path — that path only ever ran on finished responses, while the import used to pull partials too. Records already in Hub are left alone, so this shows up the next time you run an import: set a source to `all` if it should keep importing partial responses. | Instant |
+| `add_organization_display_time_zone` | Adds the nullable `Organization.displayTimeZone`, which formats response timestamps in file exports and in the payloads pushed to Google Sheets, Slack and Airtable (Notion is passed a raw date and is unaffected). | Instant |
+| `eng_2343_better_auth_17_resource_model` | The Better Auth 1.7 schema: the `oauthResource` tables, resource columns on OAuth tokens and consents, `alg`/`crv` on `jwks`, and `Account.issuer` with its backfill. See [authentication changes](/self-hosting/upgrade/versions/5.4-authentication). | Additive and fast. The issuer backfill is what keeps password sign-in working on 1.7, so it must not be skipped — it runs on its own, listed here so it is not mistaken for optional |
+| `eng_2343_backfill_oauth_resource_links` | Data migration linking existing MCP OAuth clients, refresh tokens and consents to this instance's `${WEBAPP_URL}/api/mcp` resource, so already-registered MCP clients survive the upgrade. It is a no-op only when the instance has no OAuth client at all, which in practice means a fresh install. | **Set `WEBAPP_URL` before upgrading if you use MCP OAuth.** The resource identifier is derived from it, so on an instance that has OAuth clients an unset or unparseable `WEBAPP_URL` fails this migration and stops the upgrade — set it and re-run |
+| `add_feedback_source_element_scope` | Adds `FeedbackSource.elementScope`, which controls whether a source picks up survey questions added later. Existing sources keep the current behaviour (`specific`). | Instant |
+| `add_response_survey_finished_index` | Adds an index on `Response(surveyId, finished)` so the survey list's response counts are served from the index instead of scanning the table. | **Blocks response writes while it builds, unless you build the index first — see below** |
+| `repair_account_issuer` | Data migration rewriting `Account.issuer` rows that were written with a non-canonical value, which locked the affected Google SSO users into a sign-in loop. Idempotent; a no-op when nothing is wrong. | Fast |
+
+<Warning>
+  `add_response_survey_finished_index` builds its index with a plain `CREATE INDEX`, which holds a `SHARE`
+  lock on `Response` for the whole build: reads keep working, but **survey responses cannot be written until
+  the index is built**. `Response` is usually the largest table on an instance. On small instances the build
+  takes seconds. If yours holds millions of responses, [build the index before you
+  upgrade](#build-the-response-index-before-you-upgrade) so the migration has nothing left to do, or run the
+  upgrade in a window where a pause in response collection is acceptable.
+
+  Use the maintenance procedure with traffic closed and writers stopped. Historical Compose files do not
+  make the app wait for `formbricks-migrate`; run it explicitly before app startup. Its 300-second timeout
+  can interrupt a long build. Rehearse the duration or build the index ahead of time as below.
+</Warning>
+
+#### Build the response index before you upgrade
+
+The migration creates its index only `IF NOT EXISTS`, so an index you build beforehand makes it a no-op. Built
+with `CONCURRENTLY`, the index takes longer but never locks out writes, and the instance keeps running v5.3
+while it builds. It does add disk and WAL load, so some writes can slow down while it runs. On a large table the
+build can take a while, so run it from a session that survives a dropped connection, such as `tmux` or `screen`:
+
+<Tabs>
+  <Tab title="One-Click / Docker Compose">
+    From the directory that contains your `docker-compose.yml` (`formbricks` for One-Click installs):
+
+    ```bash
+    docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U postgres -d formbricks <<'SQL'
+    SET statement_timeout = 0;
+    SET lock_timeout = 0;
+    CREATE INDEX CONCURRENTLY IF NOT EXISTS "Response_surveyId_finished_idx" ON "Response"("surveyId", "finished");
+    SELECT indisvalid FROM pg_index WHERE indexrelid = to_regclass('"Response_surveyId_finished_idx"');
+    SQL
+    ```
+  </Tab>
+  <Tab title="Kubernetes">
+    If you are using the in-cluster PostgreSQL deployed by the Helm chart:
+
+    ```bash
+    kubectl exec -i -n formbricks formbricks-postgresql-0 -- psql -v ON_ERROR_STOP=1 -U formbricks -d formbricks <<'SQL'
+    SET statement_timeout = 0;
+    SET lock_timeout = 0;
+    CREATE INDEX CONCURRENTLY IF NOT EXISTS "Response_surveyId_finished_idx" ON "Response"("surveyId", "finished");
+    SELECT indisvalid FROM pg_index WHERE indexrelid = to_regclass('"Response_surveyId_finished_idx"');
+    SQL
+    ```
+
+    <Info>
+      If your PostgreSQL pod has a different name, run `kubectl get pods -n formbricks` to find it.
+    </Info>
+  </Tab>
+</Tabs>
+
+With an external or managed PostgreSQL, run the same statements with `psql` as the user that owns the Formbricks
+tables, connected directly to the primary rather than through a transaction-pooling connection pooler such as
+PgBouncer. A pooler can run the `SET` and the `CREATE` on different server connections. Any other SQL client must
+run the `CREATE INDEX` statement on its own, outside a transaction, because `CONCURRENTLY` cannot run inside one.
+
+The two `SET` lines keep a timeout configured on the server, the database or your user from cancelling the
+build: `lock_timeout` also limits how long the build waits for other transactions to finish. On PostgreSQL 17 or
+later, if `SHOW transaction_timeout;` returns anything other than `0`, add `SET transaction_timeout = 0;` before
+the `CREATE` line too.
+
+Then read the `indisvalid` result:
+
+- **`t`**: the index is ready. Upgrade as usual; the migration finds the index and skips the build.
+- **`f`**: the index exists but is not usable yet. Do not upgrade over it, because the migration would see the
+  name, skip the build, and leave `Response` with an index PostgreSQL never uses. See below.
+- **No row**: the `CREATE` failed before it started, for example under the wrong user or on a read-only replica.
+  Fix the error it printed and run the commands again.
+- **No result at all**: `psql` lost its connection, or never got one, before the check ran. Read on under `f`.
+
+An `f`, or no result at all, means the build is still running or stopped part-way. If the `CREATE` printed an
+error, it stopped: fix that cause (often a timeout), drop the index as below, and run the commands again. If your
+session dropped instead, the build can still be running on the server, so first check, the same way and as the
+same user as above:
+
+```sql
+SELECT phase, current_locker_pid FROM pg_stat_progress_create_index
+WHERE datname = current_database() AND relid = '"Response"'::regclass;
+```
+
+While that returns a row, wait for it to finish and check `indisvalid` again. A `waiting for writers` phase is
+waiting for transactions that wrote to `Response`. `waiting for old snapshots` waits for every older transaction
+in this database that still holds a snapshot, on any table, so a long report or a `pg_dump` backup counts too.
+Either way, `current_locker_pid` is the session it waits for, which you can look up in `pg_stat_activity`. If the
+query returns nothing, the build has ended: check `indisvalid` again. `t` means it finished after all, so upgrade
+as usual. Still `f` means it was interrupted: drop the index the same way, with the same `SET` lines first, since
+a concurrent drop waits under `lock_timeout` too:
+
+```sql
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+DROP INDEX CONCURRENTLY IF EXISTS "Response_surveyId_finished_idx";
+```
+
+Add `SET transaction_timeout = 0;` here too if you needed it for the build. Then run the commands above again.
+
+An extra index is harmless to v5.3, so building it early needs no rollback plan of its own.
+
+### Recovery across 5.4
+
+The seven application migrations are additive from the perspective of v5.3. v5.3 reads none of the new columns and tables, and the two
+`NOT NULL` columns added to existing tables both carry a database default, so a v5.3 instance keeps
+writing to those tables exactly as before. Rolling the application images / Helm values back to v5.3 is
+possible for these application changes without reversing the schema. Check Hub/dependency changes and new writes separately; the coordinated recovery procedure still applies.
+
+Coming back **forward** has one catch, and only if accounts were created while you were rolled back.
+`Account.issuer` does not exist in v5.3, so any account signed up or linked on that version is written
+without one — and both issuer backfills are already recorded as applied, so rolling forward does not
+re-run them. Better Auth 1.7 keys accounts on `(issuer, accountId)`, which makes those rows invisible to
+password sign-in and password reset. SSO accounts repair themselves on the next successful sign-in;
+password accounts have no such path. If anyone signed up during the rollback window, re-run the repair
+after rolling forward. This is the statement the `repair_account_issuer` migration runs, and it is
+idempotent — it matches the providers v5.4 ships, so if you have since enabled one that is not listed
+here, take the current mapping from that migration rather than this copy:
+
+```sql
+UPDATE "Account"
+SET "issuer" = CASE
+  WHEN "provider" = 'credential' THEN 'local:credential'
+  WHEN "provider" = 'google' THEN 'https://accounts.google.com'
+  ELSE 'local:oauth:' || "provider"
+END
+WHERE "issuer" IS DISTINCT FROM (
+  CASE
+    WHEN "provider" = 'credential' THEN 'local:credential'
+    WHEN "provider" = 'google' THEN 'https://accounts.google.com'
+    ELSE 'local:oauth:' || "provider"
+  END
+);
+```

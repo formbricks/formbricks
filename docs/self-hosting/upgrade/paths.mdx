@@ -1,0 +1,51 @@
+---
+title: "Choose your upgrade path"
+description: "Choose release stops, read the changes you cross, and record exact deployment versions."
+icon: "arrow-up-right-dots"
+---
+
+Start here before changing images. Use the latest stable patch **within each release line below**, then
+record the exact tags for rehearsal and production. Do not use a moving `latest` image to cross major versions.
+
+## Choose your next stop
+
+| Running version | Next recommended stop | Read before deploying | Finish before continuing |
+| --- | --- | --- | --- |
+| 4.0–4.8 | Latest 4.9 patch | [4.x changes](/self-hosting/upgrade/versions/4.x) and [4.7 backfill](/self-hosting/upgrade/versions/4.7) | Complete migrations and any skipped attribute backfill; check existing files and SSO. |
+| 4.9 | Latest 5.4 patch | [5.0](/self-hosting/upgrade/versions/5.0), [5.1](/self-hosting/upgrade/versions/5.1), [5.2](/self-hosting/upgrade/versions/5.2), [5.3](/self-hosting/upgrade/versions/5.3), [5.4](/self-hosting/upgrade/versions/5.4) | Verify Hub, Cube, existing-user SSO, uploads, integrations and background work. |
+| 5.0–5.3 | Latest 5.4 patch | All later 5.x notes in the row above | Complete the response index and authentication migrations; test API permissions. |
+| 5.4 | Latest 6.0 patch | [6.0](/self-hosting/upgrade/versions/6.0) and its patch actions | Prepare SpiceDB, then verify allow, deny, API keys and revocation. |
+| 6.0 | Latest 6.1 patch | [6.1](/self-hosting/upgrade/versions/6.1) and its patch actions | Check permissions, encrypted links, Cube models and workers. |
+| Staying on the same minor | Latest patch of that minor | Its [release notes](/platform/changelog) and patch actions | Repeat the release-specific acceptance checks. |
+
+These are recommended rehearsal stops based on the released migrations and deployment assets. They are
+not a claim that every source/target combination has passed runtime testing. Reading the notes for 5.0,
+5.1, 5.2 and 5.3 does **not** mean installing each of those versions before 5.4: the target includes earlier
+migrations. Stop at each row you cross to verify the result and retain a recovery point.
+
+**Example:** a 4.9.5 instance follows `4.9.x → 5.4.x → 6.0.x → 6.1.x`. The reviewed 5.4.7 release is a
+candidate for the 5.x stop; it includes the earlier 5.x changes and the [security patch actions](/self-hosting/upgrade/versions/2026-10-security-patches).
+Rehearse the complete route with your data before production. There is no documented requirement to install 5.0.0 first.
+
+## Record the selected versions
+
+- Choose stable tags from [GitHub releases](https://github.com/formbricks/formbricks/releases); exclude release candidates.
+- Match Compose files, Cube models and migration images to the selected app release. The
+  [configuration checklist](/self-hosting/upgrade/configuration) explains the pins to change.
+- For Helm, record **both** chart version and app image. Check the published chart's rendered images;
+  a source checkout's `Chart.yaml` may contain development metadata.
+- Include Hub and other dependency images. Do not replace an existing PostgreSQL major or storage engine
+  just because a fresh-install example uses a newer one.
+
+## What has been tested?
+
+The published 6.1 release notes name **6.0.2 → 6.1.0** as a tested pair. That evidence does not cover
+4.x → 5.x, 5.x → 6.x, other patches, or your topology. It is not a recommendation to choose an older,
+unpatched release solely to match that pair.
+
+For a route without published runtime evidence, follow the table in an [isolated rehearsal](/self-hosting/upgrade/rehearse).
+Record the exact versions, migration results, acceptance checks and restore result. If any step fails,
+stop there and share redacted logs and configuration with support before scheduling production.
+
+Historical releases may be outside the [maintenance window](/self-hosting/advanced/release-maintenance-policy).
+Their use as an intermediate stop does not extend support. Keep those stops private during rehearsal.

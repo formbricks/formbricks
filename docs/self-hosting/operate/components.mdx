@@ -1,0 +1,29 @@
+---
+title: "Components and ownership"
+description: "Understand the runtime, image sources and responsibilities before operating Formbricks."
+icon: "boxes-stacked"
+---
+
+Use [Deployment components](/self-hosting/deployment-components) for required services, managed alternatives
+and the container image inventory. This page explains who operates them.
+
+## Who owns what
+
+| Owner | Responsibility |
+| --- | --- |
+| Your platform team | Datastores, backups, TLS, secret delivery, CRDs, capacity and recovery |
+| Deployment tooling | Maintenance, stopping writers, configuration, ordered rollout and restart |
+| Formbricks release image | Application migrations and permission preparation/checks |
+| SpiceDB operator or datastore operator | SpiceDB datastore schema migrations and runtime health |
+
+Managed services replace bundled infrastructure, not these responsibilities. Keep application and
+SpiceDB credentials separate. Mount database-administrator credentials only in bootstrap jobs that
+need them, never in the app. Keep permission traffic private and use TLS for external endpoints.
+
+## Record the deployed inventory
+
+Before an upgrade, render the selected chart or inspect the resolved Compose images privately.
+Record app/chart versions, dependency images and enabled services with your deployment configuration.
+Do not put expanded Secrets or credentials in shared logs.
+
+For rollout and scaling, see [architecture](/self-hosting/setup/cluster-setup).

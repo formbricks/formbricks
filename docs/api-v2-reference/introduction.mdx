@@ -1,13 +1,18 @@
 ---
 title: "API v2 Reference (Beta)"
+description: "Beta API access, versioning and scoped key setup."
 icon: "code-compare"
 ---
+
+v2 is in Beta and can change during Beta. API versions are independent of the Formbricks application version.
+See the [compatibility policy](/self-hosting/advanced/release-maintenance-policy#integration-compatibility).
+
 
 Formbricks offers two types of APIs: the **Public Client API** and the **Management API**. Each API serves a different purpose, has *different* authentication requirements, and provides access to different data and settings.
 
 ### API Key Setup
 
-Checkout the [API Key Setup](/api-reference/rest-api) to access the Management APIs with an API Key.
+Checkout the [API Key Setup](/api-reference/generate-key) to access the Management APIs with an API Key.
 
 If you’ve forked the collection and are running it, update the `apiKey` and `workspaceId` in the collection variables with your values. The API still accepts `environmentId` as a deprecated alias for backward compatibility. We also provide post-run scripts to help auto-assign variables when running scripts.
 

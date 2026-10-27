@@ -1,0 +1,84 @@
+---
+title: "Upgrade to 5.4"
+description: "Prepare database indexes, authentication, API permissions and dependency changes."
+icon: "arrow-up-right-dots"
+---
+
+**Applies to:** installations crossing 5.4, both editions and deployment methods.
+From v4, complete all earlier [5.x changes](/self-hosting/advanced/migration#version-5).
+Choose the latest 5.4 patch as the [recommended v5 stop](/self-hosting/upgrade/paths).
+
+## Before
+
+| Who needs to act | Action |
+| --- | --- |
+| Every installation | Preserve secrets and configure `WEBAPP_URL` for migrations, including existing MCP OAuth clients. |
+| Large response tables | [Build and validate the response index](/self-hosting/upgrade/versions/5.4-database) ahead of maintenance, or allow time for its blocking build. |
+| Feedback APIs using keys | [Review delete permissions and shared datasets](/self-hosting/upgrade/versions/5.4-api-permissions). |
+| SSO/MCP users | [Review authentication changes](/self-hosting/upgrade/versions/5.4-authentication); test existing-user sign-in and token renewal. |
+| Bundled dependencies | [Update Valkey and review Cube/Envoy changes](/self-hosting/upgrade/versions/5.4-runtime) for the selected patch. |
+
+### Patch actions
+
+| First affected patch | Additional action |
+| --- | --- |
+| 5.4.1 | Microsoft multi-tenant SSO fixes; use a concrete Entra tenant for full token verification where appropriate. |
+| 5.4.3 | Envoy Gateway/CRD update and controller values move; coordinate cluster ownership. |
+| 5.4.4 | Bundled storage setup switches its helper client to RustFS CLI. Preserve existing MinIO/S3 data and settings. |
+| 5.4.5 | Copy the whole updated Cube service; image-only replacement is insufficient. |
+| 5.4.7 | [Redis private CA, Hub update/enrichment and MCP batch actions](/self-hosting/upgrade/versions/2026-10-security-patches). |
+
+Read the [published patch notes](https://github.com/formbricks/formbricks/releases) for other fixes too.
+A patch without an additional row still needs the standard checks.
+
+## During
+
+Use the [4.x/5.x maintenance procedure](/self-hosting/upgrade/legacy). Keep traffic closed and writers
+stopped. Run app migrations before Hub migrations; inspect their exit status. The response-index build
+can exceed the historical Compose migration timeout. Do not continue over a failed or invalid index.
+
+## After
+
+- Verify existing password/SSO accounts, 2FA and MCP clients, including token renewal after sign-out.
+- Check dashboard queries, feedback mutations with their intended API keys, and Hub job delivery.
+- Confirm migrations and the response index completed; run the [shared acceptance checks](/self-hosting/upgrade/rehearse#acceptance-at-every-stop).
+
+## Recovery
+
+Application schema changes are additive relative to 5.3, but Hub/dependency updates require their own
+recovery assessment. After a rollback to 5.3, accounts created there may need the
+[issuer repair before rolling forward](/self-hosting/upgrade/versions/5.4-database#recovery-across-5-4).
+Use [coordinated restore](/self-hosting/operate/backup-restore) when required.
+
+Sources: [5.3.5 → 5.4.0](https://github.com/formbricks/formbricks/compare/5.3.5...5.4.0),
+[5.4 patches](https://github.com/formbricks/formbricks/compare/5.4.0...5.4.7).
+
+<span id="bundled-cube-image-update-action-required-for-some-deployments" />
+<span id="envoy-gateway-1-8-4-crd-upgrade" />
+<span id="bundled-valkey-8-1-9-upgrade-action-required-for-some-self-hosted-deployments" />
+<span id="one-click" />
+<span id="docker-compose" />
+<span id="helm" />
+
+[Dependency changes](/self-hosting/upgrade/versions/5.4-runtime)
+
+<span id="database-migrations" />
+<span id="build-the-response-index-before-you-upgrade" />
+<span id="one-click-%2F-docker-compose" />
+<span id="kubernetes" />
+
+[Database preparation and recovery](/self-hosting/upgrade/versions/5.4-database)
+
+<span id="feedback-record-mutations-by-api-key-action-required-for-some-integrations" />
+<span id="what-to-do-before-upgrading" />
+<span id="rollback" />
+
+[Feedback API permissions](/self-hosting/upgrade/versions/5.4-api-permissions)
+
+<span id="better-auth-1-7-upgrade-no-action-required-for-most-instances" />
+<span id="azuread_tenant_id-set-a-concrete-tenant-for-full-id_token-verification" />
+<span id="sso-callback-urls-are-unchanged" />
+<span id="mcp-access-tokens-now-end-with-their-session" />
+<span id="rollback-better-auth-1-7" />
+
+[Authentication changes](/self-hosting/upgrade/versions/5.4-authentication)

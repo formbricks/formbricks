@@ -1,0 +1,50 @@
+---
+title: "One-click updater behavior"
+description: "What a release-matched updater changes and what you must prepare yourself."
+icon: "terminal"
+---
+
+Choose your [upgrade path](/self-hosting/upgrade/paths) first. For v6 targets, use the
+[Docker and one-click procedure](/self-hosting/upgrade/docker). For 4.x/5.x targets, use the
+[historical procedure](/self-hosting/upgrade/legacy); today's updater may require v6 services.
+
+## What it preserves
+
+The updater keeps your customized Compose file, environment, SMTP, storage and credentials except for
+specific migrations implemented by that script. It does **not** add missing services or merge a new stack.
+Pulling an image does not update a pinned dependency tag.
+
+- Merge the target's required services, configuration and model files before updating.
+- Keep existing MinIO/S3 data and proxy routing; moving to RustFS is a separate storage migration.
+- Retain database passwords, `ENCRYPTION_KEY`, auth secrets and Hub/Cube credentials.
+- Pin app, migration and dependency images. Download the updater from the same selected release tag.
+
+See [Prepare the target configuration](/self-hosting/upgrade/configuration).
+
+## Targeted changes by release
+
+| Starting release | Updater behavior | Check |
+| --- | --- | --- |
+| 5.4 | Replaces the exact old amd64-only Valkey digest with the multi-architecture image; backs up and validates Compose. | Custom pins remain your responsibility. Preserve the Redis volume/AOF. |
+| 6.0 | Requires the v6 services and `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true`. | Complete maintenance preparation first; the updater checks prepared permissions. |
+| 6.1 | Refreshes both Cube model files from the app's release tag, retaining the previous pair. Warns if `hub-worker` is absent. | Check refresh results and worker delivery; a warning is not successful processing. |
+| 6.1.1 | Narrows a bare host `3000:3000` binding to loopback, retaining the original file. | Traefik still serves 80/443. Review any intentional direct access from another host. |
+
+For Cube, a `latest` app tag resolves models from `stable`; a digest or custom tag may prevent automatic
+refresh. Use the [manual model refresh](/self-hosting/upgrade/docker#refresh-the-cube-model) with the app's
+source release. Failed downloads leave old files in place, so inspect the result before accepting analytics.
+
+The port migration preserves an explicit address you chose and does not rewrite configurations selected
+through `COMPOSE_FILE`. If rendering/validation fails, it restores the edited files and continues with the
+old binding. Verify the resolved ports rather than assuming they changed. See
+[port-binding details](/self-hosting/upgrade/versions/6.1-runtime#one-click-port-3000-is-published-on-the-host-only),
+including Docker Engine versions with loopback isolation limitations.
+
+Other installer behavior, such as [IPv6 network setup](/self-hosting/setup/one-click#ipv6-visitors), depends
+on the script version. Review the script you selected; do not attribute today's behavior to every old release.
+
+## Recovery
+
+Keep the saved configuration and model files until acceptance. An image-only rollback is not a general
+recovery plan for database, Hub or storage changes. Use the target's release notes and
+[coordinated restore](/self-hosting/operate/backup-restore); never delete the data volumes.

@@ -97,110 +97,13 @@ before updating apt and prints the path to its backup.
 
 ## Update
 
-To update Formbricks for a minor or patch release, first go to the directory that contains your
-`formbricks/` folder. Download the current stable updater there, replacing any older `formbricks.sh`, and
-then run it:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/formbricks.sh \
-  -o formbricks.sh
-chmod +x formbricks.sh
-./formbricks.sh update
-```
-
-The script first validates the resolved Compose project and warns — without stopping — when the baseline
-`hub-worker` is missing, then pulls images and runs the read-only AuthZed upgrade check. A failed preflight leaves
-the existing application running.
-Otherwise it stops the stack, waits for PostgreSQL, completes application migrations, and only then starts the
-new stack. A failed migration leaves the stack stopped for recovery; preparation is never run against a live
-installation by the updater.
-
-Once those checks pass, the update also publishes the Formbricks container's port `3000` on `127.0.0.1` only, if
-your `docker-compose.yml` or your Compose override file (such as `docker-compose.override.yml`) still publishes it on
-every interface (`- 3000:3000`). Traefik reaches Formbricks over the Compose network and keeps serving it on ports
-`80` and `443`, so outside traffic always passes through Traefik. Each file it changes is kept as
-`<file>.before-loopback-port`. Before stopping anything, it renders the Compose files exactly as Docker Compose will
-load them and checks that they publish port `3000` once, on `127.0.0.1`; if not, it restores the files it changed and
-continues the update with the port as it was. A mapping with an address you chose, such as `- 0.0.0.0:3000:3000`, is
-left as it is, and so is everything when `.env` sets `COMPOSE_FILE`. On Docker Engine before 28.0, and on 28.2.0 to
-28.3.2, other machines on your local network can still reach a port published on `127.0.0.1`, so the installer and
-the update warn you to upgrade Docker.
-
-Starting with v5.4, the updater also recognizes the old amd64-only bundled Valkey digest. It backs up your
-Compose file, replaces only that exact image reference with the native amd64/arm64 digest, and validates the
-result before pulling. An already-updated or custom Valkey image is left unchanged. The named `redis` volume
-and its AOF data are preserved.
-
-While the stack is stopped, the updater also refreshes the bundled Cube model (`cube/cube.js` and
-`cube/schema/FeedbackRecords.js`), so analytics charts can use members a release adds. It downloads the files
-of the release your Formbricks image runs: the `stable` branch for `latest`, or the tag the image is pinned to.
-It keeps the previous files in `cube/previous/`. The two files change together: if either cannot be
-downloaded, backed up or replaced, both stay as they were, the update finishes, and the updater prints the
-command to retry, `./formbricks.sh refresh-cube`. An image pinned to anything else, such as a digest, leaves
-both files unchanged.
-
-Existing one-click installations keep the database credentials in their local `docker-compose.yml` or `.env`.
-The update command does not regenerate or rotate them.
-
-<Warning>
-  Apart from the exact v5.4 Valkey pin migration, the port `3000` narrowing described above, and the IPv6
-  network setting described in [IPv6 visitors](#ipv6-visitors), `./formbricks.sh update` does **not** rewrite your existing `formbricks/docker-compose.yml`. For a major migration such as Formbricks 4.x to 5.0, follow
-  the [migration guide](/self-hosting/advanced/migration#v5) first, merge the current v5 Compose changes into
-  your existing deployment, confirm `HUB_API_KEY` is set, and only then run the update command. If your older
-  one-click install also uses bundled MinIO for file uploads, review that storage path separately before the
-  first v5 restart; newer self-hosting updates move the bundled object-storage path to RustFS, while external
-  S3-compatible storage keeps the same `S3_*` app contract. The updater warns and continues when the Compose
-  project is missing the release-matched `hub-worker`; adding it is recommended, and the next major release will
-  require it — see the
-  [Hub worker migration](/self-hosting/advanced/migration#hub-worker-for-docker). The v6 updater also requires the
-  release-matched AuthZed services and requires `.env` to contain
-  `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` after a clean preparation.
-
-  The same applies to pinned third-party images. Because the update command only re-pulls what your Compose
-  file already names, a bundled `rustfs` service stays on whatever version it was installed with — `docker
-  compose pull` cannot move a pinned tag. To take a newer RustFS, edit the `image:` line of the `rustfs`
-  service in `formbricks/docker-compose.yml` to match the version in the [Docker
-  guide](/self-hosting/setup/docker), then run the update command. Your `rustfs-data` volume is reused as-is;
-  roll back by restoring the previous `image:` line.
-</Warning>
+Follow [Upgrade Docker and one-click](/self-hosting/upgrade/docker) for preparation, maintenance,
+ordered commands and completion checks. Read [version-specific notes](/self-hosting/advanced/migration)
+before changing images.
 
 ### Add SpiceDB to an Existing One-Click Installation
 
-Beyond the narrow edits listed in the warning above, the update command preserves your customized Compose file, so
-it cannot add SpiceDB by itself.
-Before upgrading to a release that uses AuthZed:
-
-1. Follow the [maintenance upgrade guide](/self-hosting/advanced/v6-maintenance-upgrade): stop writers and
-   controllers, drain in-flight work, then back up configuration, secrets, and databases.
-2. Download the release-matched `authzed-postgres-bootstrap.sh` into the `formbricks` directory.
-3. Generate and add `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` to `.env` using `openssl rand -hex 32`.
-4. Merge `authzed-db-bootstrap`, `spicedb-migrate`, `spicedb`, `authzed-initialize`, and the profiled
-   `authzed-ops` service from the released Compose file while preserving installer-added Traefik, storage, and
-   mail configuration. Add the six application variables and use `AUTHZED_CONSISTENCY=fully_consistent`.
-5. Validate the target Compose file privately and pull the pinned images from the `formbricks` directory.
-   Keep maintenance active and writers stopped.
-6. Wait for the datastores, then run migrations, preparation, and verification using the target image:
-
-   ```bash
-   docker compose up -d --wait postgres spicedb
-   docker compose --profile authzed-ops run --rm --no-deps \
-     --entrypoint formbricks-authzed-prepare authzed-ops \
-     --backup-confirmed --writers-stopped
-   ```
-
-   A mismatched non-empty schema requires the reviewed digest described in the maintenance guide.
-7. If preparation exits `0`, add `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` to `.env` and run
-   `./formbricks.sh update`. Do not bypass a blocked check. Keep maintenance active until access tests pass.
-8. Verify `authzed-db-bootstrap`, `spicedb-migrate`, and `authzed-initialize` completed and `spicedb` is healthy.
-9. Back up the authorization database with
-   `docker compose exec -T postgres pg_dump -U postgres -d spicedb > spicedb-backup.sql` and add it to your
-   regular backup procedure.
-
-Do not use `docker compose down -v` during this migration or rollback because the existing PostgreSQL volume
-stores both Formbricks and SpiceDB data.
-
-For upgrades, restoration, schema changes, and relationship repair, follow the canonical
-[AuthZed Operations guide](/self-hosting/configuration/authzed-operations).
+See [v6 dependency setup](/self-hosting/upgrade/versions/6.0#one-click-dependency-setup).
 
 ### Limit request bodies on authentication routes
 
@@ -379,3 +282,7 @@ If you encounter any issues, consider the following steps:
 - **Check Formbricks Logs**: Run `cd formbricks && docker compose logs` to check the logs of the Formbricks stack.
 
 If you have any questions or require help, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃
+
+## Verify the installation
+
+Run the [deployment check](/self-hosting/setup/deployment-check) in a dedicated workspace before collecting real responses.

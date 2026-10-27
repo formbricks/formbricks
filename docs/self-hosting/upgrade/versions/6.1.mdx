@@ -1,0 +1,94 @@
+---
+title: "Upgrade to 6.1"
+description: "Required actions, compatibility exceptions and recovery for this release."
+icon: "arrow-up-right-dots"
+---
+
+**Applies to:** 6.0 installations entering 6.1, both editions and deployment methods.
+Follow the [upgrade-path table](/self-hosting/upgrade/paths) when starting on an older major.
+
+<Note>
+  Upgrading to 6.1.1 or later on this release line? Also read the
+  [October security patch actions](/self-hosting/upgrade/versions/2026-10-security-patches).
+</Note>
+
+## Before
+
+- Applies to self-hosted 6.0 → 6.1 upgrades. From v5, complete the [6.0 prerequisites](/self-hosting/upgrade/versions/6.0) first.
+- The [published release notes](/platform/changelog) identify **6.0.2 → 6.1.0** as the tested pair.
+  This is reported release evidence, not a runtime rehearsal of your deployment.
+- Plan maintenance for respondent traffic, APIs and admin access; pause background workers.
+- Read the integration changes below before scheduling the upgrade.
+- The target runner builds and verifies response keyset indexes and backfills remaining Embedded Data and
+  survey ownership. Allow time and disk/WAL headroom; require migration completion before reopening.
+- Refresh Cube model files and add the Hub worker where absent. Review [runtime changes](/self-hosting/upgrade/versions/6.1-runtime).
+
+## During
+
+Use [Kubernetes](/self-hosting/upgrade/kubernetes) or [Docker Compose](/self-hosting/upgrade/docker).
+This release changes the permission schema. Review its current digest before preparation; do not bypass
+the mismatch check. The [online mode](/self-hosting/configuration/online-upgrade) remains under validation.
+
+## After
+
+Verify permissions, respondent submission, a scoped API key, background delivery and dashboard charts.
+Regenerate encrypted single-use links after deployment. Enable survey visibility only after its checks pass.
+Also check existing SSO, old/new uploads and the [shared acceptance checklist](/self-hosting/upgrade/rehearse#acceptance-at-every-stop).
+
+## Recovery
+
+Keep maintenance active if migrations, permissions or acceptance checks fail. Restore matching app,
+Hub and SpiceDB state with configuration/images when repair cannot complete. Do not downgrade to recover
+unsigned links; it reintroduces the fixed vulnerability. See [coordinated recovery](/self-hosting/operate/backup-restore).
+
+## Integration changes requiring action
+
+These are historical compatibility exceptions; the [compatibility commitment](/self-hosting/advanced/release-maintenance-policy#integration-compatibility)
+does not erase them.
+
+- Regenerate [encrypted single-use links](/self-hosting/upgrade/versions/6.1-single-use-links).
+- Review [Helm security contexts and taxonomy timeouts](/self-hosting/upgrade/versions/6.1-runtime#helm-security-contexts-and-taxonomy-timeouts)
+  if you use custom images or override taxonomy settings.
+
+**API**
+
+* **Ending-card URLs need a real host.** `buttonLink` and `url` on ending cards (v1, v2 and v3 survey create and update) must use a hostname with a dot (`intranet.example.com`), `localhost` or an IP address. A host like `http://intranet` now returns 400. Existing surveys keep loading; the rule applies when they are next saved ([#9399](https://github.com/formbricks/formbricks/pull/9399))
+* **Hidden fields can't share a name with a question.** Adding one on `POST` or `PUT /api/v1/management/surveys` returns 400. Existing surveys keep saving ([#9467](https://github.com/formbricks/formbricks/pull/9467))
+* **New survey limit per workspace.** `SURVEY_WORKSPACE_LIMIT` (a number, default `10000`, archived surveys included) caps the surveys in one workspace. Creating or copying a survey past it returns `422 workspace_survey_limit_reached` on v1 and v3. Raise it before upgrading if a workspace is close ([#9412](https://github.com/formbricks/formbricks/pull/9412))
+
+
+## Survey visibility (opt-in)
+
+See [Enable survey visibility](/self-hosting/upgrade/versions/6.1-visibility#survey-visibility-opt-in).
+
+## Complete the visibility rollout
+
+See [Enable survey visibility](/self-hosting/upgrade/versions/6.1-visibility#complete-the-visibility-rollout).
+
+## Encrypted single-use survey links must be regenerated (action required if you use them)
+
+See [Regenerate encrypted single-use links](/self-hosting/upgrade/versions/6.1-single-use-links#encrypted-single-use-survey-links-must-be-regenerated-action-required-if-you-use-them).
+
+## Bundled TEI log level
+
+See [6.1 runtime changes](/self-hosting/upgrade/versions/6.1-runtime#bundled-tei-log-level).
+
+## Database transaction limits
+
+See [6.1 runtime changes](/self-hosting/upgrade/versions/6.1-runtime#database-transaction-limits).
+
+## 6.1.1: one-click port binding
+
+See [6.1 runtime changes](/self-hosting/upgrade/versions/6.1-runtime#one-click-port-3000-is-published-on-the-host-only).
+
+## Hub worker for Docker
+
+See [6.1 runtime changes](/self-hosting/upgrade/versions/6.1-runtime#hub-worker-for-docker).
+
+## Cube model files for Docker
+
+See [6.1 runtime changes](/self-hosting/upgrade/versions/6.1-runtime#cube-model-files-for-docker).
+
+## Release details
+
+Reviewed on 26 October 2026. See [release notes](https://github.com/formbricks/formbricks/releases) for affected and fixed patches.

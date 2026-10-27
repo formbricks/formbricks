@@ -1,0 +1,101 @@
+---
+title: "Upgrade to 2.7"
+description: "Version-specific changes and preserved upgrade instructions."
+icon: "arrow-up-right-dots"
+---
+
+<Note>
+  Historical upgrade notes. Check the [maintenance policy](/self-hosting/advanced/release-maintenance-policy)
+  for support status. These instructions describe this release, not the current installation defaults.
+</Note>
+
+Read the notes for every version you cross. Use the [upgrade checklist](/self-hosting/advanced/upgrade)
+to plan backups, service interruption and recovery. Old commands using `latest` or `stable` must be
+resolved to the historical target release before use; they must not jump to today's release.
+
+<Info>
+  AI Features & Database Update: This release lays the groundwork for upcoming AI features, now in private beta. Formbricks requires the `pgvector` extension in PostgreSQL.
+
+One-Click Setup Users: Use the `pgvector/pgvector:pg15` image instead of `postgres:15-alpine` to ensure compatibility.
+
+</Info>
+
+Formbricks v2.7 includes all the features and improvements developed by the community during Hacktoberfest 2024. Additionally, this release introduces an advanced team-based access control system, which is available in the Formbricks Enterprise Edition.
+
+### Additional Updates
+
+If you previously used organisation-based access control (an enterprise feature) and the `DEFAULT_ORGANIZATION_ROLE` environment variable, update its value to one of these roles: `owner`, `manager`, or `member`. Read more about the new roles in the [documentation](/platform/features/user-management).
+
+### Steps to Migrate
+
+This guide is for users who are self-hosting Formbricks using our one-click setup. If you are using a different setup, you might adjust the commands accordingly.
+
+To run all these steps, please navigate to the Formbricks folder where your `docker-compose.yml` file is located.
+
+- **Backup your Database:** This is a crucial step. Please make sure to backup your database before proceeding with the upgrade. You can use the following command to backup your database.&#x20;
+
+```bash
+docker exec formbricks-postgres-1 pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v2.7_$(date +%Y%m%d_%H%M%S).dump
+```
+
+<Note>
+  If you run into “No such container”, use `docker ps` to find your container name,
+  e.g. `formbricks_postgres_1`.
+</Note>
+
+<Note>
+  If you want to store the backup as an \*.sql file, remove the `-Fc` option. To restore, use `psql` with an
+  empty Formbricks database.
+</Note>
+
+- If you use an older `docker-compose.yml` file from the one-click setup, modify it to use the `pgvector/pgvector:pg15` image instead of `postgres:15-alpine`:
+
+```yaml
+services:
+  postgres:
+    image: pgvector/pgvector:pg15
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 5432:5432
+```
+
+- Pull the latest version of Formbricks:
+
+```bash
+docker compose pull
+```
+
+- Stop the running Formbricks instance and remove the related containers:
+
+```bash
+docker compose down
+```
+
+- Restarting the containers with the latest version of Formbricks:
+
+```bash
+docker compose up -d
+```
+
+- Now let's migrate the data to the latest schema:
+
+<Tip>To find the Docker network name for your Postgres database, run `docker network ls`.</Tip>
+
+```bash
+docker pull ghcr.io/formbricks/data-migrations:latest && \
+docker run --rm \
+  --network=formbricks_default \
+  -e DATABASE_URL="postgresql://postgres:postgres@postgres:5432/formbricks?schema=public" \
+  -e UPGRADE_TO_VERSION="v2.7" \
+  ghcr.io/formbricks/data-migrations:v2.7.0
+
+```
+
+The command above will migrate your data to the latest schema. This step is important to update your existing data to the new structure. The changes will only be made if the script runs successfully. You can run the script multiple times safely.
+
+- That's it! Once the migration is finished, you can **access your Formbricks instance** at the same URL as before.

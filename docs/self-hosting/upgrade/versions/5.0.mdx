@@ -1,0 +1,106 @@
+---
+title: "Upgrade to 5.0"
+description: "Add Hub and Cube, preserve existing infrastructure, and migrate environments to workspaces."
+icon: "arrow-up-right-dots"
+---
+
+**Applies to:** 4.x installations entering 5.x, both editions, Docker/one-click and Kubernetes.
+The [recommended path](/self-hosting/upgrade/paths) uses the latest 5.4 patch as the v5 stop. Also apply
+[5.1](/self-hosting/upgrade/versions/5.1), [5.2](/self-hosting/upgrade/versions/5.2),
+[5.3](/self-hosting/upgrade/versions/5.3) and [5.4](/self-hosting/upgrade/versions/5.4) changes when targeting that stop.
+
+<span id="what-changes-in-v5" />
+<span id="before-you-upgrade" />
+<span id="required-config-and-infrastructure-changes" />
+<span id="formbricks-hub" />
+<span id="edge-rate-limiting" />
+<span id="ai-features" />
+<span id="cube" />
+<span id="upgrade-steps-by-deployment-type" />
+<span id="one-click" />
+<span id="docker-compose" />
+<span id="kubernetes" />
+<span id="one-click-2" />
+<span id="docker-compose-2" />
+<span id="kubernetes-2" />
+<span id="post-upgrade-verification" />
+<span id="troubleshooting-and-rollback" />
+
+## Before
+
+| Change | Required action |
+| --- | --- |
+| Hub becomes mandatory | Add Hub and its migration service; configure `HUB_API_URL` and `HUB_API_KEY`. Include its worker where supplied by your deployment. |
+| Cube becomes mandatory | Add Cube, both model files, `CUBEJS_API_URL` and `CUBEJS_API_SECRET`. Allow additional memory; the original sizing estimate is about 500 MB. |
+| Edge rate limiting | Protect the documented public/API-key routes with Envoy or equivalent coverage before exposing v5. Keep Redis for remaining app limits. |
+| Unencrypted single-use links gain signatures | Regenerate affected links after the v5 upgrade; preserve the full signed URL in custom integrations. |
+| Projects/environments become workspaces | Back up before the schema/data migration. Check development-environment data and integration scope after it. |
+| New fresh-install defaults | Preserve your PostgreSQL major, MinIO/S3 storage, proxy and credentials. Do not replace them with the new defaults. |
+
+Use [Prepare the target configuration](/self-hosting/upgrade/configuration) for release-matched files,
+secret generation and service bindings. The one-click updater does not merge the v5 stack into a customized
+Compose file; pulling images alone cannot add the services.
+
+### Hub, Cube and databases
+
+- Hub can share application PostgreSQL or use `HUB_DATABASE_URL`. Include either choice in backup/restore.
+  Verify pgvector support and the migration role's permissions on the chosen database.
+- Keep Hub API, migration and worker images matched. Historical Docker assets use a floating Hub tag;
+  pin the version selected by your target release before pulling.
+- Copy the target's whole Cube service and its `cube.js` and `schema/FeedbackRecords.js`. Use its Node
+  healthcheck; old examples using `wget` fail on images without that executable.
+- Keep existing database credentials. Some v5 examples embed the default password in connection URLs;
+  update the app, migration, Hub and Cube bindings explicitly.
+- Kubernetes can use external Cube with `cube.enabled=false` and matching endpoint/secret overrides.
+  Keep `hub.enabled=true`.
+
+### Existing integrations and SSO
+
+- Data-bearing development environments become separate workspaces; production data remains in its workspace.
+  The old environment table is removed after backfill. Check workspace memberships, API-key scope and webhooks.
+- Legacy Environment IDs have a compatibility mapping. Follow the [Workspace ID migration guide](/surveys/website-app-surveys/workspace-id-migration)
+  when updating SDK configuration; verify existing embedded surveys before changing IDs.
+- If `AUTH_SKIP_INVITE_FOR_SSO` enables automatic team provisioning, supply a valid
+  `AUTH_SSO_DEFAULT_TEAM_ID`. Test both existing-user sign-in and new-user provisioning.
+- When crossing 5.2, register its [new SSO callback](/self-hosting/upgrade/versions/5.2) before restart.
+
+### Single-use links and custom clients
+
+- Unencrypted single-use links now require a survey-bound `suToken` as well as `suId`. Old unsigned links,
+  including hand-built custom IDs, are rejected after upgrading from v4.
+- Plan to regenerate and redistribute affected links **after** deploying v5. Use the share modal or
+  `GET /api/v1/management/surveys/{surveyId}/singleUseIds`; retain the full returned URL. Do not append an
+  arbitrary `suId` to a survey URL and expect it to work.
+- Encrypted links have a separate signature change in [6.1](/self-hosting/upgrade/versions/6.1-single-use-links).
+  If upgrading through both majors in one window, regenerate links on the final target.
+- Custom v1/v2 client-response integrations can no longer choose `createdAt` / `updatedAt` on creation;
+  the server sets them. Verify any imports using those public client endpoints against the target API contract.
+
+### Optional AI
+
+AI is not required to complete the v5 upgrade. Configure instance-level `AI_*` settings only for enabled
+features. Bundled taxonomy/Qwen services belong to later v5 assets; use your target release's configuration,
+not a newer example. Invalid provider credentials can prevent an enabled service from starting.
+
+## During
+
+Follow the [4.x/5.x maintenance procedure](/self-hosting/upgrade/legacy).
+Stop writers, take coordinated backups, apply app migrations before Hub migrations, then start the reviewed stack.
+The original 5.0 assets run app migrations at startup; 5.1 and later provide `formbricks-migrate` separately.
+Use the target's ordering rather than copying a current startup command.
+
+## After
+
+- Sign in as an existing user and verify production/development workspaces and permissions.
+- Regenerate affected single-use links, submit a response, check SDK/API integrations and verify Hub-backed feedback/jobs.
+- Open analytics, old files and a new upload; test public routes through the proxy and edge rate limiter.
+- Complete the [shared acceptance checks](/self-hosting/upgrade/rehearse#acceptance-at-every-stop) before advancing to v6.
+
+## Recovery
+
+The environment/workspace migration renames tables and removes old columns. Reverting to a v4 image
+alone is unsafe. Restore the pre-v5 database, files, configuration and images together using
+[backup and restore](/self-hosting/operate/backup-restore).
+
+Sources: [4.9.7 → 5.0.0](https://github.com/formbricks/formbricks/compare/4.9.7...5.0.0),
+[target 5.4.7 Compose](https://github.com/formbricks/formbricks/blob/5.4.7/docker/docker-compose.yml).

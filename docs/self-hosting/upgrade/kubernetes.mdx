@@ -1,0 +1,80 @@
+---
+title: "Upgrade Kubernetes"
+description: "An ordered maintenance procedure for Helm and GitOps deployments."
+icon: "dharmachakra"
+---
+
+Use this procedure for **v6 targets** with Helm, Argo CD or Flux. For a 4.x/5.x target, use the
+[historical procedure](/self-hosting/upgrade/legacy). First complete the
+[upgrade checklist](/self-hosting/advanced/upgrade) and your [version notes](/self-hosting/advanced/migration).
+
+<Steps>
+  <Step title="Prepare the target configuration">
+    Follow the [configuration checklist](/self-hosting/upgrade/configuration). Record the chart version and all image references from its rendered manifests. Keep the application
+    image used for preparation identical to the image used for rollout. Chart and app versions are independent.
+
+    Preserve Secrets, storage bindings and custom values. Review CRD ownership before changing Envoy or
+    SpiceDB operators; use the [installation reference](/self-hosting/setup/kubernetes#envoy-bundle-modes).
+    Keep existing cluster-wide operators under their current owner.
+  </Step>
+  <Step title="Enter maintenance and stop writers">
+    Close public traffic at your ingress. Pause GitOps reconciliation, image updaters and autoscalers;
+    suspend schedules. Record their original settings.
+
+    Stop app replicas, Hub API/workers, optional taxonomy workers, running Jobs and external writers.
+    Suspending a CronJob does not stop its existing Jobs. Wait for in-flight transactions to finish.
+    Leave PostgreSQL, Redis and SpiceDB available.
+  </Step>
+  <Step title="Back up coordinated state">
+    Take [backups](/self-hosting/operate/backup-restore) after the final writes.
+    Include every affected datastore, object storage, configuration and secrets.
+  </Step>
+  <Step title="Prepare with the target image">
+    For releases using SpiceDB, run the [preparation Job](/self-hosting/upgrade/prepare#helm-and-gitops).
+    It applies application migrations and prepares permissions. Run only one preparation process.
+
+    Require exit `0` and `upgrade_prepared`. Review a schema mismatch before supplying the expected
+    digest. On failure, keep writers stopped and use [troubleshooting](/self-hosting/upgrade/troubleshooting).
+  </Step>
+  <Step title="Deploy the reviewed release">
+    Set `authzed.migrationAcknowledged: true` in the values tracked by your deployment system only
+    after preparation succeeds. Keep `AUTHZED_CONSISTENCY=fully_consistent`.
+
+    For direct Helm deployments:
+
+    ```bash
+    helm upgrade <release> oci://ghcr.io/formbricks/helm-charts/formbricks \
+      --namespace <namespace> --version <target-chart-version> \
+      --values values.yaml --wait --wait-for-jobs --timeout <rehearsed-timeout>
+    ```
+
+    Replace placeholders with your recorded values; use a timeout measured in rehearsal, such as `30m`.
+    The chart's permission gate checks prepared state; it does not replace the preparation Job.
+  </Step>
+  <Step title="Verify, then reopen traffic">
+    Run the [deployment check](/self-hosting/setup/deployment-check) in a dedicated workspace when a matching
+    published image exists; otherwise use the [manual checks](/self-hosting/upgrade/rehearse#acceptance-at-every-stop).
+    Also complete the permission, worker and release-specific checks below; skipped checks are not a pass.
+
+    Complete the [acceptance checks](/self-hosting/advanced/upgrade#after-the-upgrade), including any
+    version-specific backfill or enablement. Read actual pod image IDs and check Jobs completed.
+    Restore controllers against the new desired state, then reopen traffic and watch queues and errors.
+  </Step>
+</Steps>
+
+## GitOps sequencing
+
+- Commit the reviewed target chart, images and values before resuming reconciliation.
+- Make external Secrets and datastore prerequisites ready before the preparation Job.
+- Complete preparation before the application sync. Argo CD sync waves order chart resources;
+  they do not stop writers outside the release or prove maintenance is active.
+- Keep Flux CRD handling aligned with the platform owner. Do not let an automated rollback restart
+  old images against migrated data.
+
+If a Job already exists, inspect its result before deleting it to rerun. Keep sanitized evidence and
+remove temporary preparation resources after acceptance.
+
+## Recovery
+
+`helm rollback` restores manifests, not database state. Keep traffic closed and follow
+[backup and restore](/self-hosting/operate/backup-restore) if completing the target upgrade is unsafe.

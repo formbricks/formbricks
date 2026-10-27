@@ -1,0 +1,121 @@
+---
+title: "Upgrade Docker and one-click"
+description: "Upgrade your Compose installation with a recoverable maintenance window."
+icon: "docker"
+---
+
+This procedure applies to **v6 targets**. For a target in 4.x or 5.x, use the
+[historical procedure](/self-hosting/upgrade/legacy).
+
+Run commands from your Compose directory; for one-click this is usually `formbricks/`.
+Keep the same project name, environment file and volume names. Complete the
+[planning checklist](/self-hosting/advanced/upgrade) first.
+
+<Steps>
+  <Step title="Review and download the target">
+    Follow the [configuration checklist](/self-hosting/upgrade/configuration), merging changes from the [version notes](/self-hosting/advanced/migration).
+    Keep your SMTP, storage, proxy and secret settings. The updater preserves customized Compose files;
+    pulling images alone does not add missing services.
+
+    Use the same target Formbricks image for `formbricks`, `formbricks-migrate`, `authzed-ops` and
+    `authzed-initialize`. Keep Hub API, worker and migration images matched too.
+
+    ```bash
+    docker compose config --quiet
+    docker compose pull
+    ```
+  </Step>
+  <Step title="Stop traffic and writers">
+    Enable maintenance at the proxy and let in-flight work finish. Stop app and Hub writers:
+
+    ```bash
+    docker compose stop formbricks hub
+    # If this project has a worker, also stop it:
+    # docker compose stop hub-worker
+    ```
+
+    Check `docker compose config --services` and stop every worker present. Also stop optional taxonomy, external scripts and scheduled writers if present.
+    Keep databases running. Take a [coordinated backup](/self-hosting/operate/backup-restore).
+  </Step>
+  <Step title="Prepare migrations and permissions">
+    For a first v6 upgrade, add the [v6 dependencies](/self-hosting/upgrade/versions/6.0#first-v6-dependency-setup)
+    while writers stay stopped. Start and verify PostgreSQL, datastore bootstrap, SpiceDB migrations and SpiceDB
+    using the reviewed configuration. For the bundled datastore, this starts its dependencies without the app:
+
+    ```bash
+    docker compose up -d --wait postgres spicedb
+    ```
+
+    For external datastores, verify their health through their own deployment instead.
+    Then, for both first and later v6 upgrades:
+
+    ```bash
+    docker compose --profile authzed-ops run --rm --no-deps \
+      --entrypoint formbricks-authzed-prepare authzed-ops \
+      --backup-confirmed --writers-stopped
+    ```
+
+    Use the [preparation reference](/self-hosting/upgrade/prepare#docker-and-one-click) for configuration details.
+    Stop on any failure. Review a changed schema before passing its expected digest.
+  </Step>
+  <Step title="Refresh assets and start the target">
+    For a first v6 upgrade, set `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` in `.env`
+    only after preparation. Review the [updater behavior](/self-hosting/upgrade/one-click-details).
+
+    **One-click:** from the directory containing `formbricks/`, download the updater for your recorded target release:
+
+    ```bash
+    cd ..
+    curl -fsSL "https://raw.githubusercontent.com/formbricks/formbricks/${target_version:?Set your target release tag}/docker/formbricks.sh" -o formbricks.sh
+    chmod +x formbricks.sh
+    ./formbricks.sh update
+    ```
+
+    **Manually managed Compose:** refresh the Cube model below. Preparation has completed application
+    migrations; run Hub migrations before starting its API and workers:
+
+    ```bash
+    docker compose run --rm --no-deps hub-migrate
+    # Continue only after exit 0:
+    docker compose up -d
+    docker compose ps -a
+    ```
+
+    Check application and Hub migration services completed successfully before accepting traffic.
+  </Step>
+  <Step title="Verify and reopen">
+    Run the [deployment check](/self-hosting/setup/deployment-check) in a dedicated workspace when a matching
+    published image exists; otherwise use the [manual checks](/self-hosting/upgrade/rehearse#acceptance-at-every-stop).
+    Also complete the permission, worker and release-specific checks below; skipped checks are not a pass.
+
+    Complete the [acceptance checks](/self-hosting/advanced/upgrade#after-the-upgrade).
+    Check worker delivery and renderer assets, then remove maintenance.
+    Keep backups and the previous configuration until acceptance.
+  </Step>
+</Steps>
+
+## Refresh the Cube model
+
+Skip this when Cube is external. Use the source tag matching your selected app image. Keep both files together; stop on download or replacement failure.
+
+```bash
+if [ -f cube/schema/FeedbackRecords.js ]; then
+  base="https://raw.githubusercontent.com/formbricks/formbricks/${target_version:?Set your target release tag}/docker"
+  curl -fsSL -o cube/cube.js.download "$base/cube/cube.js" &&
+    curl -fsSL -o cube/FeedbackRecords.js.download "$base/cube/schema/FeedbackRecords.js" &&
+    mkdir -p cube/previous/schema &&
+    cp -p cube/cube.js cube/previous/cube.js &&
+    cp -p cube/schema/FeedbackRecords.js cube/previous/schema/FeedbackRecords.js &&
+    mv cube/cube.js.download cube/cube.js &&
+    {
+      # Never leave the new cube.js paired with the old model.
+      mv cube/FeedbackRecords.js.download cube/schema/FeedbackRecords.js ||
+        { cp -p cube/previous/cube.js cube/cube.js; false; }
+    }
+fi
+```
+
+## Recovery
+
+Do not run `docker compose down -v`. An old image cannot reverse migrations.
+Use [troubleshooting](/self-hosting/upgrade/troubleshooting) or [coordinated restore](/self-hosting/operate/backup-restore).

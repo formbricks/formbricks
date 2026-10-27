@@ -50,7 +50,7 @@ void window.formbricks.setup(...args);
    - All new API endpoints must be documented in the OpenAPI specification
    - Include request/response schemas, authentication requirements, and examples
    - Document both Client API and Management API endpoints
-   - Place API documentation in the `docs/api-reference` directory
+   - Use `docs/api-reference/openapi.json` for v1, `docs/api-v2-reference/openapi.yml` for v2, and the v3 sources under `docs/api-v3-reference/src/`; regenerate the v3 bundle with `pnpm api:v3:sync`
 
 2. **Authentication**
    - Clearly specify authentication requirements
@@ -127,3 +127,63 @@ mint dev
    - Ensure proper formatting and rendering
 
 These documentation requirements ensure that our codebase remains maintainable, accessible, and well-documented for both current and future developers.
+
+## One home for each instruction
+
+| Content | Canonical home |
+| --- | --- |
+| Compatibility and support promises | Release and maintenance policy |
+| Ordered deployment commands | Self Hosting → Upgrade deployment recipe |
+| Release summary and deployment impact | Release notes at `/platform/changelog`, one entry per stable release |
+| Detailed release-specific actions | A focused procedure linked from the release entry |
+| Product and integration behavior | Product guide or public integration setup |
+| Migration authoring and release checks | Development and existing release-authoring gates |
+
+Keep shared procedures version-neutral. Link to `stable` for discovery; deployment examples record a
+chosen release rather than silently following a moving image. Preserve historical release boundaries.
+Do not create a new guide for a release with no additional operator action merely to fill navigation.
+
+### Release notes for every release
+
+Add an entry to `docs/platform/changelog.mdx` for **every stable release, including patches and backports**.
+Keep the existing URL. Each entry contains:
+
+- Version, publication date and a short summary of user-visible changes.
+- **Deployment impact:** action required for named setups, or standard procedure only after verification.
+- Links to exact actions, the shared upgrade procedure and the complete GitHub release changes.
+
+Write the deployment summary once and reuse it in GitHub release notes. Short actions can stay in the
+entry; longer commands belong in a linked procedure. Do not maintain two copies of the instructions.
+A release with no extra steps still gets an entry, but does not need an empty migration guide.
+
+For historical releases without enough evidence, say **Review required**. Do not infer safety from a
+missing guide or from the absence of a breaking-change label. Review migrations, dependencies, chart
+values, configuration and security exceptions through the existing release-authoring checks.
+
+### Copyable release template
+
+Use `docs/templates/release-guidance.md` in the repository for the release-note entry, upgrade checklist
+and author review. It includes the comparisons needed for patch releases and backports as well as majors.
+Keep release paths in [Choose your upgrade path](/self-hosting/upgrade/paths), with exact runtime evidence
+separate from source review. Do not send operators searching for an unnamed tested pair.
+
+### Detailed upgrade actions
+
+Start with who must act and use short **Before / During / After / Recovery** sections. Include:
+
+- Source/target applicability, deployment methods, editions, intermediate stops and reported test evidence.
+- Integration/configuration changes, dependencies, service impact and known affected/fixed patches.
+- Validation, stop conditions, recovery limits and links to the canonical recipe and release notes.
+
+Use the same four sections for a release checklist; move long commands to focused linked procedures. Link the procedure from its
+release entry and from the relevant target-minor note, so operators crossing several patches find it.
+
+### Review a documentation change
+
+- Inventory routes; record keep, update, move or remove with the exact replacement and reason.
+- Preserve useful URLs. Add exact redirects for moved pages and preserve old heading anchors separately.
+- Check navigation, links, anchors, MDX rendering and mobile layout in preview. Include screenshots in the PR.
+- Distinguish source review, document walkthroughs and runtime rehearsals. A build does not prove an upgrade works.
+- Check live search, sitemap and LLM-index discovery after authorized publication, separately from merge status.
+
+Use the existing release-authoring migration-guide checks. Do not create a second approval process.

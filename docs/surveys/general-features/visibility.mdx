@@ -70,3 +70,5 @@ visibility on when both checks are clean. To go back to workspace permissions, f
 `--clear-ready` instead of `--apply --mark-ready`. That stops new visibility changes; surveys that are already
 restricted stay restricted. Details are in
 [SpiceDB operations](/self-hosting/configuration/authzed-operations#audit-and-repair-surveys).
+
+Self-hosted operators: follow the [6.1 backfill and enablement steps](/self-hosting/upgrade/versions/6.1#complete-the-visibility-rollout) before enabling new visibility mutations. Stored restrictions remain enforced even while the readiness marker is cleared.

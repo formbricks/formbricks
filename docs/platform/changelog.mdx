@@ -1,38 +1,124 @@
 ---
-title: "Changelog"
-description: "What changed in each Formbricks release, mirroring the release notes on GitHub."
+title: "Release notes"
+description: "What changed, who needs to act and where to find upgrade steps."
 icon: "clock-rotate-left"
 ---
 
-Each release lists what changed, what to watch out for when upgrading, and every merged pull request. The same
-notes are published on [GitHub](https://github.com/formbricks/formbricks/releases). Self-hosting? Follow the
-[upgrade steps](/self-hosting/advanced/upgrade) for every upgrade.
+Read the releases between your installed and target versions, including patches.
+Choose your [upgrade path](/self-hosting/upgrade/paths), then follow the [standard upgrade procedure](/self-hosting/advanced/upgrade) plus any actions below.
+
+- **Action required:** follow the linked steps for your setup.
+- **Standard procedure only:** no extra steps identified in release review.
+- **Review required:** deployment impact still needs confirmation.
+
+Older releases: [GitHub Releases](https://github.com/formbricks/formbricks/releases) and
+[historical upgrade instructions](/self-hosting/advanced/migration). Missing notes do not mean no action is needed.
+
+<Update label="Unreleased" description="On main; not yet in a stable release">
+<span id="release-unreleased" />
+
+**Deployment impact: action required for high-volume email senders or custom senders.**
+Outgoing email gains per-type organization, sender, recipient and deployment caps. Review
+[email limits](/self-hosting/configuration/rate-limiting#email-limits) and set `EMAIL_RATE_LIMIT_MULTIPLIER`
+for legitimate higher volume before upgrading; per-recipient caps do not scale. Redis/Valkey is required,
+and `RATE_LIMITING_DISABLED=1` disables these limits too. Custom senders must send to one recipient at a time.
+
+These changes are on main and are not included in the stable tags reviewed below. Move this entry to the
+actual release when published. [Change details](https://github.com/formbricks/formbricks/pull/9796).
+</Update>
+
+<Update label="6.1.1" description="22 October 2026">
+<span id="release-6-1-1" />
+
+Security fixes for authentication, SAML and dependencies; Redis CA handling and Hub updates.
+
+**Deployment impact: action required for affected setups.** Check private-CA Redis connections,
+legacy MCP batches, one-click port binding and both Hub services.
+[Read the patch actions](/self-hosting/upgrade/versions/2026-10-security-patches).
+When crossing from 6.0, also complete the [6.1 upgrade steps](/self-hosting/upgrade/versions/6.1).
+
+[Complete changes](https://github.com/formbricks/formbricks/releases/tag/6.1.1)
+</Update>
+
+<Update label="6.0.4" description="22 October 2026">
+<span id="release-6-0-4" />
+
+Security fixes for SAML and dependencies, Redis CA handling and a Hub update.
+
+**Deployment impact: action required for affected setups.** Check private-CA Redis connections,
+legacy MCP batches, Hub migration timeouts and the AI enrichment backfill.
+[Read the patch actions](/self-hosting/upgrade/versions/2026-10-security-patches).
+
+[Complete changes](https://github.com/formbricks/formbricks/releases/tag/6.0.4)
+</Update>
+
+<Update label="5.4.7" description="22 October 2026">
+<span id="release-5-4-7" />
+
+Security fixes for SAML and dependencies, Redis CA handling and a Hub update.
+
+**Deployment impact: action required for affected setups.** Check private-CA Redis connections,
+legacy MCP batches, Hub migration timeouts and the AI enrichment backfill.
+[Read the patch actions](/self-hosting/upgrade/versions/2026-10-security-patches).
+
+[Complete changes](https://github.com/formbricks/formbricks/releases/tag/5.4.7)
+</Update>
+
+<Update label="6.0.3" description="21 October 2026">
+<span id="release-6-0-3" />
+
+Security fixes for the application image and anonymous request bodies; AuthZed hooks use a numeric UID.
+
+**Deployment impact: review required.** The published notes do not include a complete deployment checklist.
+Review custom AuthZed hook security contexts and authentication request-body limits before upgrading.
+
+[Published release notes](https://github.com/formbricks/formbricks/releases/tag/6.0.3)
+</Update>
+
+<Update label="5.4.6" description="21 October 2026">
+<span id="release-5-4-6" />
+
+Security fixes for anonymous request bodies and XML parsing dependencies.
+
+**Deployment impact: review required.** The published notes do not include a complete deployment checklist.
+Check authentication request-body limits in your proxy setup before upgrading.
+
+[Published release notes](https://github.com/formbricks/formbricks/releases/tag/5.4.6)
+</Update>
+
+<Update label="5.3.5" description="21 October 2026">
+<span id="release-5-3-5" />
+
+Security fixes for SSO recovery, sign-up, request bodies and XML parsing; RustFS replaces the storage setup CLI.
+
+**Deployment impact: review required.** The published notes do not include a complete deployment checklist.
+Review authentication request-body limits and custom object-storage initialization before upgrading.
+
+[Published release notes](https://github.com/formbricks/formbricks/releases/tag/5.3.5)
+</Update>
 
 <Update label="6.1.0" description="19 October 2026">
+<span id="release-6-1-0" />
 ### Overview
 
 Formbricks 6.1 adds survey visibility, so organizations can restrict who sees each survey and its responses, and brings dark mode and Custom CSS to surveys. It also adds Qualtrics survey import from .qsf files, Embedded Data V2 with a shared field library, the v3 Responses API with matching MCP tools, and new chart types and filters.
 
-Self-hosters: follow the [upgrade steps](/self-hosting/advanced/upgrade), and see the [migration guide](/self-hosting/advanced/migration#v6) for details on each change. The tested upgrade pair for this release is **6.0.2 → 6.1.0**. Kubernetes installs can opt into the [online upgrade mode](/self-hosting/configuration/online-upgrade) instead of a maintenance window; it is still under validation, so the maintenance path remains the default.
+Self-hosters: follow the [upgrade steps](/self-hosting/advanced/upgrade), and see the [6.1 upgrade notes](/self-hosting/upgrade/versions/6.1) for details on each change. The tested upgrade pair for this release is **6.0.2 → 6.1.0**. The [online upgrade mode](/self-hosting/configuration/online-upgrade) is still under validation and is not a supported replacement for the maintenance path.
 
 Formbricks 6.1 receives bug fixes and security fixes until **19 January 2027**.
 
 ### ⚠️ Breaking changes
 
-6.1 is a minor release. It has no major breaking changes, only the smaller ones below, each of which affects a specific setup. As with every upgrade, follow the [upgrade steps](/self-hosting/advanced/upgrade), which include a short maintenance window.
+**Deployment impact: action required.**
 
-**Self-hosting**
+6.1 includes the compatibility changes below. Review the required actions even though this is a minor release. These historical exceptions remain documented separately from the [compatibility commitment](/self-hosting/advanced/release-maintenance-policy#integration-compatibility). Follow the [6.1 upgrade notes](/self-hosting/upgrade/versions/6.1) and plan maintenance.
 
-* **Encrypted single-use links stop working.** Links created before 6.1 with URL encryption on (the default) are rejected after the upgrade. Re-create and re-send them. If you need more time, set `SINGLE_USE_LEGACY_UNSIGNED_UNTIL` to a date in `YYYY-MM-DD` format, for example `2026-11-15`: old links keep working until 00:00 UTC on that day. Use it only on an instance that serves a single organization, because it re-opens the issue this release fixes. Unencrypted links and custom single-use IDs are not affected ([#9131](https://github.com/formbricks/formbricks/pull/9131))
-* **Helm: the web container is locked down.** It now runs with a read-only root filesystem, as non-root user `1001`, with all Linux capabilities dropped. This only affects custom images or sidecars that write inside the container: mount a writable path with `deployment.extraVolumes` and `deployment.extraVolumeMounts`, or set `deployment.containerSecurityContext.readOnlyRootFilesystem: false`. If you set `deployment.securityContext.runAsUser`, move it to `deployment.containerSecurityContext.runAsUser`, which now takes precedence ([#9450](https://github.com/formbricks/formbricks/pull/9450))
-* **Helm: AuthZed hooks run as user `1001`.** If your custom image needs another user, set `authzed.initialization.securityContext.runAsUser` ([#9516](https://github.com/formbricks/formbricks/pull/9516))
-* **Helm: taxonomy timeout overrides are validated.** With `taxonomy.enabled=true`, rendering fails unless `taxonomy.terminationGracePeriodSeconds` is at least `taxonomy.runDeadlineSeconds` + 30, and `taxonomy.hubStaleRunTimeoutSeconds` is greater than `taxonomy.runDeadlineSeconds`. The defaults (900, 930 and 1800 seconds) pass ([#9451](https://github.com/formbricks/formbricks/pull/9451))
-
-**API**
-
-* **Ending-card URLs need a real host.** `buttonLink` and `url` on ending cards (v1, v2 and v3 survey create and update) must use a hostname with a dot (`intranet.example.com`), `localhost` or an IP address. A host like `http://intranet` now returns 400. Existing surveys keep loading; the rule applies when they are next saved ([#9399](https://github.com/formbricks/formbricks/pull/9399))
-* **Hidden fields can't share a name with a question.** Adding one on `POST` or `PUT /api/v1/management/surveys` returns 400. Existing surveys keep saving ([#9467](https://github.com/formbricks/formbricks/pull/9467))
-* **New survey limit per workspace.** `SURVEY_WORKSPACE_LIMIT` (a number, default `10000`, archived surveys included) caps the surveys in one workspace. Creating or copying a survey past it returns `422 workspace_survey_limit_reached` on v1 and v3. Raise it before upgrading if a workspace is close ([#9412](https://github.com/formbricks/formbricks/pull/9412))
+| Affected deployment | Check before upgrading |
+| --- | --- |
+| Every self-hosted deployment | Permission preparation, maintenance and [6.1 acceptance checks](/self-hosting/upgrade/versions/6.1) |
+| Encrypted single-use links | [Regenerate links](/self-hosting/upgrade/versions/6.1-single-use-links) |
+| Custom Helm images or taxonomy overrides | [Security contexts and timeout validation](/self-hosting/upgrade/versions/6.1-runtime#helm-security-contexts-and-taxonomy-timeouts) |
+| API integrations | [URL validation, hidden-field names and workspace limits](/self-hosting/upgrade/versions/6.1#integration-changes-requiring-action) |
 
 <Accordion title="All 273 changes">
 

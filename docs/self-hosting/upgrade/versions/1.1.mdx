@@ -1,0 +1,127 @@
+---
+title: "Upgrade to 1.1"
+description: "Version-specific changes and preserved upgrade instructions."
+icon: "arrow-up-right-dots"
+---
+
+<Note>
+  Historical upgrade notes. Check the [maintenance policy](/self-hosting/advanced/release-maintenance-policy)
+  for support status. These instructions describe this release, not the current installation defaults.
+</Note>
+
+Read the notes for every version you cross. Use the [upgrade checklist](/self-hosting/advanced/upgrade)
+to plan backups, service interruption and recovery. Old commands using `latest` or `stable` must be
+resolved to the historical target release before use; they must not jump to today's release.
+
+Formbricks v1.1 introduces new features and improvements but includes breaking changes with environment variables. This guide will help you upgrade your Formbricks instance to v1.1 without data loss.
+
+### Renamed Environment Variables
+
+| till v1.0                                 | v1.1                          |
+| ----------------------------------------- | ----------------------------- |
+| `NEXT_PUBLIC_EMAIL_VERIFICATION_DISABLED` | `EMAIL_VERIFICATION_DISABLED` |
+| `NEXT_PUBLIC_PASSWORD_RESET_DISABLED`     | `PASSWORD_RESET_DISABLED`     |
+| `NEXT_PUBLIC_SIGNUP_DISABLED`             | `SIGNUP_DISABLED`             |
+| `NEXT_PUBLIC_INVITE_DISABLED`             | `INVITE_DISABLED`             |
+| `NEXT_PUBLIC_PRIVACY_URL`                 | `PRIVACY_URL`                 |
+| `NEXT_PUBLIC_TERMS_URL`                   | `TERMS_URL`                   |
+| `NEXT_PUBLIC_IMPRINT_URL`                 | `IMPRINT_URL`                 |
+| `NEXT_PUBLIC_GITHUB_AUTH_ENABLED`         | `GITHUB_AUTH_ENABLED`         |
+| `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED`         | `GOOGLE_AUTH_ENABLED`         |
+| `NEXT_PUBLIC_WEBAPP_URL`                  | `WEBAPP_URL`                  |
+| `NEXT_PUBLIC_IS_FORMBRICKS_CLOUD`         | `IS_FORMBRICKS_CLOUD`         |
+| `NEXT_PUBLIC_SURVEY_BASE_URL`             | `SURVEY_BASE_URL`             |
+
+Please note that their values and the logic remains exactly the same. Only the prefix has been deprecated. The other environment variables remain the same as well.
+
+### Deprecated Environment Variables
+
+- **`NEXT_PUBLIC_VERCEL_URL`**: Was used as deployment URL fallback (used instead of `WEBAPP_URL`), but from v1.1, you can just set the `WEBAPP_URL` environment variable.
+
+- **`RAILWAY_STATIC_URL`**: Was used as Railway Static URL (used instead of `WEBAPP_URL`), but from v1.1, you can just set the `WEBAPP_URL` environment variable.
+
+- **`RENDER_EXTERNAL_URL`**: Was used as an external URL to Render (used instead of `WEBAPP_URL`), but from v1.1, you can just set the `WEBAPP_URL` environment variable.
+
+- **`HEROKU_APP_NAME`**: Was used to build the App name on a Heroku hosted webapp, but from v1.1, you can just set the `WEBAPP_URL` environment variable.
+
+- **`NEXT_PUBLIC_WEBAPP_URL`**: Was used for the same purpose as `WEBAPP_URL`, but from v1.1, you can just set the `WEBAPP_URL` environment variable.
+
+- **`PRISMA_GENERATE_DATAPROXY`**: Was used to tell Prisma that it should generate the runtime for Dataproxy usage. But its officially deprecated now.
+
+### Helper Shell Script
+
+For a seamless migration, below is a shell script for your self-hosted instance that will automatically update your environment variables to be compliant with the new naming conventions.
+
+### Docker & Single Script Setup
+
+Now that these variables can be defined at runtime, you can append them inside your `x-environment` in the `docker-compose.yml` itself.
+For a more detailed guide on these environment variables, please refer to the
+[Environment Variables](/self-hosting/configuration/environment-variables) page.
+
+```yaml docker-compose.yml
+version: "3.3"
+x-environment: &environment
+  environment:
+    # The url of your Formbricks instance used in the admin panel
+    WEBAPP_URL:
+
+    # Required for next-auth. Should be the same as WEBAPP_URL
+    NEXTAUTH_URL:
+
+    # PostgreSQL DB for Formbricks to connect to
+    DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
+
+    # NextJS Auth
+    # @see: https://next-auth.js.org/configuration/options#nextauth_secret
+    # You can use: `openssl rand -hex 32` to generate one
+    NEXTAUTH_SECRET:
+
+    # PostgreSQL password
+    POSTGRES_PASSWORD: postgres
+
+    # Email Configuration
+    MAIL_FROM:
+    MAIL_FROM_NAME:
+    SMTP_HOST:
+    SMTP_PORT:
+    SMTP_SECURE_ENABLED:
+    SMTP_USER:
+    SMTP_PASSWORD:
+
+    # Uncomment the below and set it to 1 to disable Email Verification for new signups
+    # EMAIL_VERIFICATION_DISABLED:
+
+    # Uncomment the below and set it to 1 to disable Password Reset
+    # PASSWORD_RESET_DISABLED:
+
+    # Uncomment the below and set it to 1 to disable Signups
+    # SIGNUP_DISABLED:
+
+    # Uncomment the below and set it to 1 to disable loging in with email
+    # EMAIL_AUTH_DISABLED:
+
+    # Uncomment the below and set it to 1 to disable Invites
+    # INVITE_DISABLED:
+
+    # Uncomment the below and set a value to have your own Privacy Page URL on the signup & login page
+    # PRIVACY_URL:
+
+    # Uncomment the below and set a value to have your own Terms Page URL on the auth and the surveys page
+    # TERMS_URL:
+
+    # Uncomment the below and set a value to have your own Imprint Page URL on the auth and the surveys page
+    # IMPRINT_URL:
+
+    # Uncomment the below and set to 1 if you want to enable GitHub OAuth
+    # GITHUB_AUTH_ENABLED:
+    # GITHUB_ID:
+    # GITHUB_SECRET:
+
+    # Uncomment the below and set to 1 if you want to enable Google OAuth
+    # GOOGLE_AUTH_ENABLED:
+    # GOOGLE_CLIENT_ID:
+    # GOOGLE_CLIENT_SECRET:
+```
+
+If you have any questions or require help, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃[
+](https://formbricks.com/docs/developer-docs/rest-api)

@@ -1,0 +1,85 @@
+---
+title: "5.4 authentication changes"
+description: "SSO, MCP tokens and recovery checks when crossing 5.4."
+icon: "arrow-up-right-dots"
+---
+
+[Back to the 5.4 checklist](/self-hosting/upgrade/versions/5.4). These actions apply to configured SSO/MCP
+integrations. Use the latest 5.4 patch, including the Microsoft authority fixes first shipped in 5.4.1.
+
+<span id="better-auth-1-7-upgrade-no-action-required-for-most-instances" />
+
+## Before
+
+Better Auth 1.7 updates account identity and OAuth resource handling, including
+[GHSA-p2fr-6hmx-4528](https://github.com/advisories/GHSA-p2fr-6hmx-4528). Backfills run automatically.
+Set `WEBAPP_URL` for existing MCP OAuth clients and preserve auth/encryption secrets and signing keys.
+The nullable `jwks.alg` / `jwks.crv` additions preserve existing keys; migrations must finish before new keys are minted.
+
+<span id="azuread_tenant_id-set-a-concrete-tenant-for-full-id_token-verification" />
+
+### Microsoft Entra tenants
+
+| `AZUREAD_TENANT_ID` | Behavior on the patched 5.4 line | Action |
+| --- | --- | --- |
+| Concrete tenant GUID or verified domain | Verifies ID tokens against the tenant issuer. | Keep it; this is the preferred configuration. |
+| `common` or `organizations` | Uses the authenticated userinfo response because discovery advertises a placeholder issuer; logs a warning. | Set a concrete tenant for full ID-token verification where appropriate. |
+| Unset | Behaves as `common`. | Review whether multi-tenant access is intended. |
+| `consumers` | Uses Microsoft's concrete personal-account tenant and keeps ID-token verification. | No change needed. |
+
+`organizations` still restricts sign-in to work/school accounts. For a Microsoft authority configured
+through generic OIDC, prefer the dedicated [Azure AD provider](/self-hosting/configuration/auth-sso/azure-ad-oauth),
+but rehearse existing-account linking before changing providers.
+
+<span id="sso-callback-urls-are-unchanged" />
+
+### Keep the existing callback
+
+Callbacks introduced in 5.2 remain pinned; the authentication-library update does not move them.
+When crossing from 5.1 or earlier, first apply the [5.2 callback change](/self-hosting/upgrade/versions/5.2).
+
+| Provider | Callback path |
+| --- | --- |
+| Azure AD / Entra | `/api/auth/oauth2/callback/azuread` |
+| Generic OIDC / Keycloak | `/api/auth/oauth2/callback/openid` |
+| SAML / Jackson | `/api/auth/oauth2/callback/saml` |
+| Google / GitHub | `/api/auth/callback/{provider}` |
+
+Prefix the path with your configured auth origin: `BETTER_AUTH_URL`, otherwise `NEXTAUTH_URL`, otherwise
+`WEBAPP_URL`. If an extra callback was registered in anticipation of a change, Formbricks does not use it;
+keeping it registered does not require changing the app.
+
+### Generic OIDC and `issuer_missing`
+
+The older unconditional requirement for an RFC 9207 `iss` response parameter is removed. The issuer is
+still checked when returned. `OIDC_EMAIL_CLAIM` is not a supported override and does not resolve this error.
+Test your actual provider's existing-user sign-in. See the
+[5.4.7 provider configuration](https://github.com/formbricks/formbricks/blob/5.4.7/apps/web/modules/ee/sso/lib/better-auth-providers.ts).
+
+<span id="mcp-access-tokens-now-end-with-their-session" />
+
+### MCP token lifetime
+
+- Access tokens become inactive when their authorizing session ends or is revoked, even before token expiry.
+- Custom clients that cache tokens across sessions must obtain a fresh token after rejection. `/introspect`
+  reports `active: false`; `/api/auth/oauth2/userinfo` rejects the expired session's token.
+- Refresh tokens granted `offline_access` can survive sign-out. Signing out alone does not permanently revoke a client.
+
+## During
+
+Follow the [5.4 maintenance checklist](/self-hosting/upgrade/versions/5.4#during).
+Let account-identity and OAuth-resource migrations finish before starting the target application.
+
+## After
+
+Test existing password users, each SSO provider, 2FA and an existing MCP client. Verify account linking and
+that a client recovers after an access token becomes inactive. Do not accept only a successful new-user sign-up.
+
+<span id="rollback-better-auth-1-7" />
+
+## Recovery
+
+The application additions are compatible with 5.3's schema usage, but this does not prove Hub/dependency
+rollback safety. Callbacks stay the same between 5.3 and 5.4. Accounts created after rolling back to 5.3
+can lack `Account.issuer`; complete the [issuer repair](/self-hosting/upgrade/versions/5.4-database#recovery-across-5-4)
+before rolling forward again. Keep coordinated backups and matching images.

@@ -36,3 +36,9 @@ The documentation will be available at `http://localhost:3000`.
 - If `mint dev` isn't running, try `mint update` to get the latest version of the CLI. If both `mint` and the legacy `mintlify` package are installed, uninstall `mintlify`
 - If a page loads as a 404, ensure you're in the `docs` folder with the `docs.json` file
 - For other issues, please check our [Contributing Guidelines](https://github.com/formbricks/formbricks/blob/main/CONTRIBUTING.md)
+
+### Release and upgrade guidance
+
+Use the [release guidance template](templates/release-guidance.md) for each stable release and backport.
+It covers source comparison, the release-note entry, the Before / During / After / Recovery checklist,
+and evidence for upgrade paths. Keep generic procedures timeless and version-specific actions tied to released artifacts.

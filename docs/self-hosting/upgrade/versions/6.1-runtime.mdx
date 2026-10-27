@@ -1,0 +1,189 @@
+---
+title: "6.1 runtime changes"
+description: "Detailed actions for the 6.1 upgrade."
+icon: "arrow-up-right-dots"
+---
+
+[Back to the 6.1 checklist](/self-hosting/upgrade/versions/6.1).
+
+## Bundled TEI log level
+
+The Helm chart now defaults `hub.embeddings.env.RUST_LOG` to `warn` because TEI 1.9 includes its API key in
+INFO-level startup arguments. If you need a different log level, set `hub.embeddings.env.RUST_LOG` explicitly
+and use it only with a runtime that redacts credentials from its logs.
+
+
+
+
+
+## Database transaction limits
+
+Formbricks now sets its database transaction limits explicitly instead of relying on library defaults.
+Under load, the old 5-second limit was cancelling writes that were about to succeed: user identification,
+response updates and survey resets. The new limits are at least as permissive as the old ones, so they need
+no upgrade step of their own.
+
+- Transactions may run for up to 20 seconds.
+- Waiting for a free database connection is bounded by `connect_timeout` in `DATABASE_URL` (5 seconds
+  by default). With `connect_timeout=0`, transactions give up waiting after 6 seconds; other queries
+  wait until a connection is free.
+
+#### Idle transactions (opt-in)
+
+PostgreSQL can end any session left idle inside an open transaction, which releases the locks that session
+holds and frees its connection. Formbricks does not ask for this by default: it travels as a startup
+parameter, and a server or pooler that does not accept the parameter refuses the whole connection instead
+of ignoring it. Turn it on by adding it to `DATABASE_URL` in **milliseconds**:
+
+```bash
+DATABASE_URL="postgresql://user:password@host:5432/formbricks?idle_in_transaction_session_timeout=60000"
+```
+
+Leaving the parameter out, or setting it to `0`, sends nothing and keeps your server's own setting. An
+invalid value (anything but digits, or past PostgreSQL's 32-bit limit) sends nothing and logs a warning.
+It applies to every process that connects with that `DATABASE_URL` — the migration runner uses
+`MIGRATE_DATABASE_URL` instead when that is set, so it follows that one. Keep the value well above the
+longest a migration leaves a transaction idle, or leave the parameter out.
+
+<Warning>
+  Do not set it if Formbricks reaches PostgreSQL through **PgBouncer, Supavisor, RDS Proxy or another
+  pooler**: PgBouncer answers a connection carrying a startup parameter it does not know with
+  `FATAL: unsupported startup parameter: idle_in_transaction_session_timeout`. Listing the parameter in
+  PgBouncer's `ignore_startup_parameters` lets the connection through, but PgBouncer then drops it, so the
+  safeguard does not apply either way. If `DATABASE_URL` carries both the parameter and `pgbouncer=true`,
+  Formbricks sends it and logs a warning.
+</Warning>
+
+
+
+
+
+<span id="one-click-port-3000-is-published-on-the-host-only" />
+
+## 6.1.1: one-click port binding
+
+The one-click installer now publishes the Formbricks container's port `3000` on `127.0.0.1` instead of every
+interface, and `./formbricks.sh update` changes an existing one-click installation the same way, in
+`docker-compose.yml` and in your Compose override file if you have one, keeping each original as
+`<file>.before-loopback-port`. Traefik keeps serving Formbricks on ports `80` and `443`, so the app is only reachable
+from outside through Traefik and its TLS and request limits. For that to hold against other machines on the same
+local network, Docker Engine must be 28.0 or later and not 28.2.0 to 28.3.2; the installer and the update warn on
+those versions.
+
+If you reach port `3000` from other machines on purpose, publish it on an explicit address after updating, such as
+`- 0.0.0.0:3000:3000` (add `- "[::]:3000:3000"` for IPv6). The update only rewrites the bare `- 3000:3000`
+mapping, so it leaves an address you chose alone; putting the bare mapping back would be narrowed again next time.
+
+Compose setups that don't use the one-click script are not changed. If yours publishes `3000:3000` and a reverse
+proxy on the same host is the intended way in, bind it to `127.0.0.1:3000:3000` as well.
+
+
+
+
+
+## Hub worker for Docker
+
+Fresh Docker and one-click installations add `hub-worker` in **6.1**. Earlier v5/v6.0 Compose files
+do not include it, although Helm already has a worker. The worker consumes every PostgreSQL-backed asynchronous Hub job,
+including webhook deliveries and any configured enrichment, so an installation that runs the Hub API without it
+leaves those jobs queued.
+
+An existing installation keeps its local `docker-compose.yml` during `formbricks.sh update`, so the updater
+cannot add the service for you. Adding it is recommended rather than required in this release: the updater prints
+a warning and continues when the resolved Compose project does not contain `hub-worker`. Keep the worker enabled so asynchronous processing completes; do not infer a future enforcement date from this warning.
+
+1. Start in the directory containing your customized `docker-compose.yml`, then back it up and download the file
+   from the release you are upgrading to. For a one-click installation, run `cd formbricks` first. Use that
+   release's tag instead of `stable` when your deployment is pinned.
+
+   ```bash
+   cp -p docker-compose.yml docker-compose.yml.before-hub-worker
+   curl -fsSL -o docker-compose.release.yml \
+     "https://raw.githubusercontent.com/formbricks/formbricks/${target_version:?Set your target release tag}/docker/docker-compose.yml"
+   ```
+
+2. Compare the two files. Merge `x-hub-runtime-environment` and the release's `hub` and `hub-worker` sections as
+   one unit so the API and worker retain the same database and taxonomy configuration. Preserve local proxy,
+   storage, database, and image-pin customizations. `hub`, `hub-worker`, and `hub-migrate` must resolve to the
+   same Hub image reference.
+3. Validate the result before changing the running stack:
+
+   ```bash
+   docker compose config >/dev/null
+   docker compose config --services | grep -Fx hub-worker
+   ```
+
+4. During the maintenance procedure, keep app/Hub writers stopped and complete application migrations first.
+   For a one-click installation, rerun `./formbricks.sh update` — the warning disappears once the resolved project
+   contains `hub-worker`. For a manually managed Compose installation, apply Hub migrations before starting the
+   API and worker from the new image:
+
+   ```bash
+   docker compose pull hub hub-migrate hub-worker
+   docker compose run --rm --no-deps hub-migrate
+   docker compose up -d hub hub-worker
+   ```
+
+5. Verify that the worker stays running and that the existing River backlog decreases:
+
+   ```bash
+   docker compose ps hub-worker
+   docker compose logs --tail=200 hub-worker
+   ```
+
+The worker has no HTTP health endpoint. A stable process and decreasing queue are the readiness signals. If it
+restarts, verify PostgreSQL connectivity and every configured enrichment provider credential. Jobs already in
+River remain stored in PostgreSQL and begin draining when the worker starts; no repair or re-enqueue is required.
+
+To roll back only this change, remove the worker container before restoring the backed-up Compose file so its
+`restart: always` policy cannot start it again:
+
+```bash
+docker compose rm -fs hub-worker
+cp -p docker-compose.yml.before-hub-worker docker-compose.yml
+```
+
+Completed jobs remain committed and pending jobs remain queued, but all Hub asynchronous processing pauses
+again. A fully custom deployment that runs Hub workers outside this Compose project can ignore the warning: the
+update is not blocked.
+
+
+
+
+
+## Cube model files for Docker
+
+6.1 adds the `npsCount` measure and the `valueBand` dimension to the Cube model. The **NPS breakdown** and **CSAT
+breakdown** chart presets use them. On Docker the model is two files next to your Compose file,
+`cube/cube.js` and `cube/schema/FeedbackRecords.js`. Until they are refreshed, those presets fail with
+`'npsCount' not found`.
+
+- **One-click:** `./formbricks.sh update`, run with the current updater as described under
+  [Update](/self-hosting/setup/one-click#update), refreshes both files while the stack is stopped. It takes them
+  from the release your Formbricks image runs, and keeps the previous copies in `cube/previous/`. If either file
+  cannot be refreshed, both stay as they were, and the update finishes and prints the command to retry.
+  If the image is pinned to a digest or a custom tag, the updater leaves both files alone; use the Docker
+  Compose step below with your release's tag.
+- **Docker Compose:** run the Cube refresh step of the [Docker update](/self-hosting/setup/docker#update) from
+  the directory containing your `docker-compose.yml`. If you refresh outside an update, recreate Cube
+  afterwards with `docker compose up -d --force-recreate cube`.
+- **Helm:** the chart ships the model, so `helm upgrade` replaces it. No action is needed.
+
+## Envoy Redis images
+
+Chart 6.1.0's bundled Envoy Redis images are unavailable upstream. Configure a dedicated external
+Redis/Valkey backend and keep `envoyRedis.enabled=false`; see [Envoy Gateway](/self-hosting/configuration/envoy).
+Keep the rate-limit backend separate from the application's Redis traffic.
+
+## Helm security contexts and taxonomy timeouts
+
+* **Helm: the web container is locked down.** It now runs with a read-only root filesystem, as non-root user `1001`, with all Linux capabilities dropped. This only affects custom images or sidecars that write inside the container: mount a writable path with `deployment.extraVolumes` and `deployment.extraVolumeMounts`, or set `deployment.containerSecurityContext.readOnlyRootFilesystem: false`. If you set `deployment.securityContext.runAsUser`, move it to `deployment.containerSecurityContext.runAsUser`, which now takes precedence ([#9450](https://github.com/formbricks/formbricks/pull/9450))
+* **Helm: AuthZed hooks run as user `1001`.** If your custom image needs another user, set `authzed.initialization.securityContext.runAsUser` ([#9516](https://github.com/formbricks/formbricks/pull/9516))
+* **Helm: taxonomy timeout overrides are validated.** With `taxonomy.enabled=true`, rendering fails unless `taxonomy.terminationGracePeriodSeconds` is at least `taxonomy.runDeadlineSeconds` + 30, and `taxonomy.hubStaleRunTimeoutSeconds` is greater than `taxonomy.runDeadlineSeconds`. The defaults (900, 930 and 1800 seconds) pass ([#9451](https://github.com/formbricks/formbricks/pull/9451))
+
+## Auth environment aliases
+
+The docs use `BETTER_AUTH_URL` and `BETTER_AUTH_SECRET` for new installations. Existing `NEXTAUTH_URL`
+and `NEXTAUTH_SECRET` remain supported; no rename is needed. If renaming, copy the existing values.
+A different secret invalidates sessions and outstanding authentication links. Keep a configured secret
+in test environments too; the current runtime rejects a missing value.

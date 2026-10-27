@@ -1,0 +1,71 @@
+---
+title: "Backup and restore"
+description: "Keep a coordinated recovery point for your application, permissions and files."
+icon: "database"
+---
+
+A database dump alone is not a complete instance backup. Define a recovery point that includes
+all state your deployment uses, and rehearse restoration before a production upgrade.
+
+## What to keep
+
+- Application PostgreSQL and Hub data, including separately managed Hub databases.
+- The SpiceDB datastore, plus any separate SAML database.
+- Object storage, durable queue state and any other state changed by the release.
+- Secrets and encryption keys, configuration, Helm values or Compose files, and exact image references.
+
+Preserve Redis-backed pending work according to your Redis backup policy. PostgreSQL-backed Hub jobs
+are part of its database backup. Avoid replaying completed emails or webhooks after restoration.
+
+Protect backups like production data. Encrypt them, restrict access and verify that the keys needed
+to decrypt data are recoverable. Keep copies outside the machine or cluster being upgraded.
+
+## Before an upgrade
+
+1. Stop traffic and all writers using your [deployment procedure](/self-hosting/advanced/upgrade).
+2. Take coordinated snapshots after the final accepted writes. Include storage and separate datastores.
+3. Verify backups completed and record their recovery point with the current deployment configuration.
+
+For bundled Compose PostgreSQL, back up the application database. Run the second command **only if your
+source already uses the bundled SpiceDB database** (v6). These commands do not back up separate Hub/SAML
+databases, files or other state:
+
+```bash
+umask 077
+backup_time=$(date -u +%Y%m%dT%H%M%SZ)
+docker compose exec -T postgres pg_dump -Fc -U postgres -d formbricks > "formbricks-${backup_time}.dump"
+# v6 only, when this database exists:
+docker compose exec -T postgres pg_dump -Fc -U postgres -d spicedb > "spicedb-${backup_time}.dump"
+```
+
+Check each exit status. Use your provider's snapshot procedure for managed databases; verify its
+consistency and retention guarantees. Include the remaining state listed above.
+
+## Restore an instance
+
+<Steps>
+  <Step title="Keep maintenance active">
+    Stop writers, schedules and reconciliation. Preserve the failed state privately for diagnosis.
+    Record whether any writes were accepted after the backup; restoring loses those writes.
+  </Step>
+  <Step title="Restore coordinated state">
+    Restore databases and object storage to the same recovery point using your rehearsed datastore
+    procedure. Restore matching configuration, secrets and images. Avoid overwriting the only copy
+    of your current data while investigating.
+  </Step>
+  <Step title="Verify permissions and pending work">
+    For a SpiceDB-backed release, check its restored schema and authorization graph with the
+    [release-matched operations tools](/self-hosting/configuration/authzed-operations).
+    Check outbox state, allow/deny decisions and revocations before opening traffic.
+    Reconcile pending jobs without blindly replaying external side effects.
+  </Step>
+  <Step title="Accept the restored deployment">
+    Run the [completion checks](/self-hosting/advanced/upgrade#after-the-upgrade), restore controllers
+    against the recovered configuration and reopen traffic. Record any lost or replayed work.
+  </Step>
+</Steps>
+
+`helm rollback` and an older container image do not restore database state. If the release changed
+stored data incompatibly, restore the backup before starting the earlier version.
+
+To copy selected surveys rather than recover an instance, use [survey transfer](/self-hosting/advanced/migrating-surveys).

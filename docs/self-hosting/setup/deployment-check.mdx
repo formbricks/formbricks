@@ -1,5 +1,5 @@
 ---
-title: "Deployment Check"
+title: "Deployment check"
 description: "Verify a self-hosted Formbricks instance works end to end after you deploy or upgrade it."
 icon: "clipboard-check"
 ---
@@ -48,7 +48,8 @@ Run it after the first install, after every upgrade, and after changing a proxy,
   </Step>
 </Steps>
 
-Use the image tag that matches your Formbricks version, for example `ghcr.io/formbricks/deployment-check:6.0.0`.
+Use `latest` only when your app runs the latest stable release. Otherwise, use the published check image
+tag matching your Formbricks version. Confirm that tag exists before scheduling the check.
 
 ## Configuration
 

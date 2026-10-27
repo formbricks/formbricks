@@ -4,27 +4,42 @@ description: "Which SDK versions support dark mode and Custom CSS, how each plat
 icon: "code-compare"
 ---
 
-Dark mode and [Custom CSS](/surveys/general-features/custom-css) need support on two sides: the Formbricks server that delivers the survey, and the SDK that shows it. This page lists the versions and explains what happens while they do not match yet.
+## Compatibility commitment
 
-Upgrade in this order: the Formbricks server first, then your SDKs. A newer server never breaks an older SDK, and a newer SDK never breaks against an older server: surveys keep working, they only lack the new styling until both sides support it.
+Patch and minor Formbricks releases preserve supported SDK and stable API integrations within the same
+major version. See the [compatibility policy](/self-hosting/advanced/release-maintenance-policy#integration-compatibility)
+for scope and security exceptions. This is not an all-versions compatibility promise.
 
-## Minimum Versions
+Upgrade the server first, then adopt SDK features supported by that server. App, API and SDK versions
+are independent. A server release does not mean every mobile package has been published.
 
-| Component | Package | Dark mode (`setAppearance`) | Custom CSS |
-| --- | --- | --- | --- |
-| Formbricks server (self-hosted) | Formbricks | Pending release | Pending release |
-| JavaScript, script tag | Served by your Formbricks server | Included with the server | Included with the server |
-| JavaScript, npm | `@formbricks/js` | Pending release | Included with the server, no upgrade needed |
-| iOS | `FormbricksSDK` | Pending release | Pending release |
-| Android | `com.formbricks:android` | Pending release | Pending release |
-| React Native | `@formbricks/react-native` | Pending release | Pending release |
-| Flutter | `formbricks` | Pending release | Pending release |
+<span id="minimum-versions" />
 
-Formbricks Cloud always runs the current server. The JavaScript SDK loads its survey code from the server, so website and app surveys get Custom CSS as soon as the server supports it. Mobile SDKs have to pass Custom CSS to the survey themselves, so they need the release listed above.
+## Styling feature availability
+
+| Component | Dark mode (`setAppearance`) | Custom CSS |
+| --- | --- | --- |
+| Formbricks server / server-served JavaScript | 6.1 | 6.1 |
+| npm `@formbricks/js` | Not exported by published 5.1.0; verify a later package before use | Loaded from a compatible server |
+| React Native `@formbricks/react-native` | 3.3.0 | 3.3.0 |
+| iOS `FormbricksSDK` | Published minimum not yet verified | Published minimum not yet verified |
+| Android `com.formbricks:android` | Published minimum not yet verified | Published minimum not yet verified |
+| Flutter `formbricks` | Published minimum not yet verified | Published minimum not yet verified |
+
+Publication checked on 26 October 2026. The React Native 3.3.0 package includes these features; 3.2.0
+does not. For platforms without a verified minimum, confirm the installed package's release notes
+before adopting the feature. Source code alone is not publication evidence.
+
+## Embedded Data on mobile
+
+`setEmbeddedData` and `clearEmbeddedData` are present in the published React Native **3.2.0** package
+(and 3.3.0). This verifies availability in those versions, not the earliest release.
+Minimum published iOS, Android and Flutter versions remain unverified here. Check your package before
+using the [mobile examples](/surveys/embedded-data/mobile-sdks).
 
 ## Appearance
 
-Every SDK shares one appearance contract:
+SDK implementations with appearance support use this contract:
 
 - Choose `"light"`, `"dark"` or `"system"`, either as the `appearance` setup option or with `setAppearance` at any time.
 - Without a choice, surveys render **light**.
@@ -32,7 +47,7 @@ Every SDK shares one appearance contract:
 - The choice is kept in memory for the current app or page session. It survives logout and identity reset, and is forgotten when the app restarts or the page reloads. It is not stored as a contact attribute and sends no request to Formbricks.
 - The appearance is applied before the survey first appears. Changing it while a survey is open switches the colors in place and keeps the respondent's answers, progress and focus.
 
-```javascript Setting the appearance with the JavaScript SDK
+```javascript Appearance on a server-served SDK with support
 formbricks.setup({
   workspaceId: "<workspace-id>",
   appUrl: "<app-url>",
@@ -77,7 +92,7 @@ An SDK that has `setAppearance` but talks to an older self-hosted server accepts
 - **Mobile apps** need an SDK version with Custom CSS support. It passes both the workspace CSS and the survey CSS to the survey, in light and dark mode, whether or not the survey overrides the workspace theme.
 - **Older mobile SDKs** show surveys without any Custom CSS. They never apply only part of it, such as the survey CSS without the workspace CSS it builds on.
 
-Saved changes reach respondents within about an hour, as SDKs refresh the survey configuration. A survey that is already open keeps the styling it opened with until the respondent finishes it.
+Saved changes depend on separate [configuration and renderer caches](#when-changes-reach-respondents). A survey that is already open keeps the styling it opened with until the respondent finishes it.
 
 ## Mixed Versions
 
@@ -87,7 +102,7 @@ Saved changes reach respondents within about an hour, as SDKs refresh the survey
 | New server, older `@formbricks/js` | Custom CSS applies. `setAppearance` is not available yet, so surveys stay light |
 | Older self-hosted server, new SDK | Surveys work and stay light, without Custom CSS. `setAppearance` is accepted and has no effect |
 | No Custom CSS saved | The theme styling only, unchanged |
-| Configuration cached before Custom CSS was saved | No Custom CSS until the SDK refreshes its configuration, at most about an hour later |
+| Configuration cached before Custom CSS was saved | No Custom CSS until the SDK refreshes its configuration, according to its refresh schedule |
 
 ## Browser And WebView Support
 
@@ -99,3 +114,15 @@ Saved changes reach respondents within about an hour, as SDKs refresh the survey
 | React Native and Flutter apps | As iOS and Android above | As iOS and Android above |
 
 These are the browser versions the survey styles are built for. The SDKs keep their existing minimum OS versions. On a device below the supported range, surveys still open but colors and layout can be off.
+
+## When changes reach respondents
+
+| Layer | What refreshes it |
+| --- | --- |
+| Server/CDN configuration response | Normally cached for one minute; stale revalidation may extend this. |
+| SDK-held survey configuration | Uses its expiry, commonly one hour; behavior depends on SDK and session state. |
+| Static renderer and js-core assets | Browser/CDN policy; self-hosted operators must invalidate changed mutable URLs. |
+
+A one-minute response cache does not force an already-open SDK session to refresh.
+Test a fresh session after saving changes. A survey already open keeps its initial styling.
+For stale assets after an upgrade, use [CDN configuration](/self-hosting/configuration/cdn).

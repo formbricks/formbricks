@@ -102,3 +102,11 @@ Fill in the `Webhook URL` and the `Content` that you want to receive in the resp
 Once the execution is successful, you'll receive the content in the discord channel.
 
 ![Discord Response](/images/platform/features/integrations/n8n/discord-response.webp)
+## Self-hosted Formbricks
+
+Use your instance's public HTTPS URL instead of `https://app.formbricks.com` when creating the
+connection. Create a [scoped API key](/api-reference/generate-key) on that same instance.
+No Formbricks server environment variable is needed for this API-key connection.
+
+Make sure the automation service can reach your instance, then submit a test survey response and
+verify the expected workflow runs. Check host, key scopes and network access if it fails.

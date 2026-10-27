@@ -1,0 +1,89 @@
+---
+title: "Upgrade to 6.0"
+description: "Add SpiceDB, prepare permissions and verify the first v6 deployment."
+icon: "arrow-up-right-dots"
+---
+
+**Applies to:** v5 installations entering v6, Community and Enterprise, Docker/one-click and Kubernetes.
+From v4, first complete the [5.4 stop](/self-hosting/upgrade/paths). Review all crossed
+[5.x actions](/self-hosting/advanced/migration#version-5), including SSO and the response index.
+
+<span id="during-and-after" />
+<span id="patch-specific-changes" />
+<span id="changes-in-environment-variables" />
+<span id="bundled-cube-image-action-required-for-some-deployments" />
+<span id="release-details" />
+<span id="docker-dependency-setup" />
+<span id="one-click-dependency-setup" />
+
+## Before
+
+| Change | Required action |
+| --- | --- |
+| SpiceDB becomes required | Add a dedicated datastore/login and private connectivity; prepare its schema and relationships before app startup. |
+| Consistency requirement | Set `AUTHZED_CONSISTENCY=fully_consistent`; unset or `minimize_latency` is rejected. |
+| SSO provisioning variables | Rename `DEFAULT_ORGANIZATION_ID` / `DEFAULT_ORGANIZATION_ROLE` to `AUTH_SSO_DEFAULT_ORGANIZATION_ID` / `AUTH_SSO_DEFAULT_ORGANIZATION_ROLE`, preserving values. They affect Enterprise just-in-time provisioning. |
+| Hidden fields/variables become Embedded Data | Review the [migration behavior](/surveys/embedded-data/migration), including skipped/conflicting fields; verify old responses and SDK integrations. |
+| Response/email and chart changes | The non-functional single-response-per-email option is removed; use signed single-use links when one response per link is required. Line charts become area charts. |
+
+Keep Hub, Cube, Redis, storage, PostgreSQL major and existing credentials. A self-hosted Cloud bridge
+is not required. [Prepare the target configuration](/self-hosting/upgrade/configuration) before maintenance.
+
+### First v6 dependency setup
+
+<Tabs>
+  <Tab title="Docker and one-click">
+    - Merge `authzed-db-bootstrap`, `spicedb-migrate`, `spicedb`, `authzed-initialize` and profiled `authzed-ops`
+      from the **selected release**. Download its `docker/authzed-postgres-bootstrap.sh` beside Compose.
+    - Generate only missing `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD`; wire both ends consistently.
+      Keep the existing PostgreSQL password and ensure bootstrap/migration images use its existing major.
+    - Set `AUTHZED_ENABLED=true`, `AUTHZED_ENDPOINT`, `AUTHZED_TOKEN`, `AUTHZED_SYSTEM_KEY`,
+      `AUTHZED_INSECURE` and `AUTHZED_CONSISTENCY=fully_consistent` on the app and permission tools.
+      Insecure transport is only for the private bundled network; use TLS for external endpoints.
+    - Keep all Formbricks services on the same target image. The updater preserves customized Compose files
+      and cannot add these services for you.
+  </Tab>
+  <Tab title="Kubernetes">
+    - Configure the target chart for existing/external SpiceDB or the bundled operator, preserving cluster ownership.
+    - Provision the dedicated database/login and Secrets before running permission preparation. Do not install
+      a second operator over one managed by the platform team.
+    - Render the selected chart with your existing PVCs, database credentials and network policy.
+      Follow [SpiceDB operations](/self-hosting/configuration/authzed-operations) for the selected topology.
+  </Tab>
+</Tabs>
+
+### Patch actions
+
+| First affected patch | Action |
+| --- | --- |
+| 6.0.1 | Storage setup helper changes to RustFS CLI; retain existing MinIO/S3 data and configuration. |
+| 6.0.2 | Apply the [complete Cube service update](/self-hosting/upgrade/versions/cube). |
+| 6.0.3 | Helm AuthZed hooks use numeric user `1001`; review custom-image user overrides. |
+| 6.0.4 | Apply [Redis CA, Hub/enrichment and MCP batch actions](/self-hosting/upgrade/versions/2026-10-security-patches). |
+
+## During
+
+Use [Docker](/self-hosting/upgrade/docker) or [Kubernetes](/self-hosting/upgrade/kubernetes).
+Stop all writers, back up coordinated state and start only the required infrastructure. Run the selected
+image's [permission preparation](/self-hosting/upgrade/prepare); it applies app migrations before preparing
+and verifying permissions. Require exit `0` and `upgrade_prepared`; inspect failures instead of bypassing them.
+
+Only then set the deployment's v6 acknowledgement and start app/Hub services. Keep traffic closed.
+The released v6 images include the preparation executable; verify it in your selected image before maintenance,
+especially when using custom images or an older release candidate.
+
+## After
+
+- Verify allowed access, denied access, scoped API keys and revocation, including existing SSO users.
+- Check Embedded Data, existing responses, charts, old/new uploads and background work.
+- Include SpiceDB in backups and restore rehearsal. Run the [shared acceptance checks](/self-hosting/upgrade/rehearse#acceptance-at-every-stop).
+
+## Recovery
+
+An image downgrade cannot undo app migrations or permission changes. Keep maintenance active and repair
+forward or restore coordinated data with matching v5 configuration/images. Never delete volumes.
+See [backup and restore](/self-hosting/operate/backup-restore).
+
+Source review: [5.4.0 → 6.0.0](https://github.com/formbricks/formbricks/compare/5.4.0...6.0.0) and
+[6.0 patches](https://github.com/formbricks/formbricks/compare/6.0.0...6.0.4).
+No published runtime evidence for a specific v5 → v6 pair is established here; [rehearse your route](/self-hosting/upgrade/rehearse).
