@@ -51,8 +51,9 @@ const isDomainLike = (piece: string): boolean => {
   }
   // A delegated top-level domain is what a mail client turns into a link. Testing against the public suffix
   // list keeps ordinary dotted names — `john.doe`, `J.Smith`, `Anna.Müller`, `Dr.Smith` — out of the
-  // stripper, while `spam.example`, `evil.com` and `win.spam.co.uk` still go.
-  if (parse(candidate, { allowPrivateDomains: false }).isIcann) {
+  // stripper, while `spam.example`, `evil.com` and `win.spam.co.uk` still go. Lower-cased first: `tldts` does
+  // not fold case for a non-ASCII suffix, so `foo.РФ` would miss the lookup that `foo.рф` hits.
+  if (parse(candidate.toLowerCase(), { allowPrivateDomains: false }).isIcann) {
     return true;
   }
   return RESERVED_TOP_LEVEL_DOMAINS[(labels.at(-1) ?? "").toLowerCase()] === true;

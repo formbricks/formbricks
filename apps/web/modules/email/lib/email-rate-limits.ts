@@ -1,4 +1,5 @@
 import { createHmac } from "node:crypto";
+import addressparser from "nodemailer/lib/addressparser";
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { EMAIL_RATE_LIMIT_MULTIPLIER, ENCRYPTION_KEY } from "@/lib/constants";
@@ -139,6 +140,17 @@ type TCharge = { scope: TEmailRateLimitScope; config: TRateLimitConfig; identifi
 let recipientKey: { source: string; key: Buffer } | undefined;
 
 /**
+ * The mailbox a `to` value names, read the way nodemailer reads it. The parser drops a trailing comma,
+ * surrounding whitespace and a quoted local part that a bare addr-spec spells identically, so
+ * `victim@x.com`, `victim@x.com,` and `"victim"@x.com` all key one per-recipient counter instead of three.
+ * Falls back to the input when it does not parse as a single address.
+ */
+const canonicalRecipient = (to: string): string => {
+  const [entry] = addressparser(to);
+  return entry && "address" in entry && entry.address ? entry.address : to;
+};
+
+/**
  * HMAC with a key derived for this purpose only: the identifier reaches Redis keys and the limiter's logs,
  * and an unkeyed hash of an address can be reversed by hashing a list of candidate addresses. Plus and dot
  * variants of one mailbox count separately on purpose: collapsing them would merge distinct people, and the
@@ -150,7 +162,9 @@ export const getRecipientIdentifier = (to: string): string => {
     const key = createHmac("sha256", ENCRYPTION_KEY).update("formbricks:email-rate-limit:v1").digest();
     recipientKey = { source: ENCRYPTION_KEY, key };
   }
-  return createHmac("sha256", recipientKey.key).update(normalizeEmailForComparison(to)).digest("hex");
+  return createHmac("sha256", recipientKey.key)
+    .update(normalizeEmailForComparison(canonicalRecipient(to)))
+    .digest("hex");
 };
 
 const requireOrganizationId = (emailType: TEmailType, context: TEmailRateLimitContext): string => {

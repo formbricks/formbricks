@@ -277,6 +277,22 @@ describe("applyEmailRateLimits", () => {
       await refused(send("email_verification", "NEW@example.com"));
     });
 
+    // nodemailer delivers all of these to the same inbox, so they must spend one counter rather than five.
+    test("count a trailing comma and a quoted local part as the same inbox", async () => {
+      const forms = [
+        "victim@example.com",
+        "victim@example.com,",
+        '"victim"@example.com',
+        "VICTIM@example.com ",
+      ];
+      for (const form of forms) {
+        await send("verified_survey_link", form, external("org-1"));
+      }
+      await send("verified_survey_link", "victim@example.com", external("org-1"));
+
+      await refused(send("verified_survey_link", '"victim"@example.com', external("org-1")));
+    });
+
     test("are kept for email changes, so one inbox cannot be flooded across accounts", async () => {
       await sendTimes(
         3,

@@ -55,6 +55,12 @@ describe("toInviteDisplayName", () => {
     expect(toInviteDisplayName("spam.test", "Anonymous")).toBe("Anonymous");
   });
 
+  // `tldts` folds case for ASCII suffixes but not for a non-ASCII one, so the candidate is lower-cased first.
+  test("removes a domain whose internationalized suffix is upper-cased", () => {
+    expect(toInviteDisplayName("foo.РФ", "Anonymous")).toBe("Anonymous");
+    expect(toInviteDisplayName("foo.рф", "Anonymous")).toBe("Anonymous");
+  });
+
   test("checks long dotted names in linear time", () => {
     const started = performance.now();
 

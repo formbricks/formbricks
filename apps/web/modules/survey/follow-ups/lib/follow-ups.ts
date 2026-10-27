@@ -226,21 +226,24 @@ export const sendFollowUpsForResponse = async (
       };
     }
 
-    // The only addresses this run classifies are the literal ones each follow-up names; the answer depends
-    // on the address and the organization, so it is resolved once here instead of once per follow-up.
-    const organizationMemberEmails = await getOrganizationMemberEmails(
-      organization.id,
-      survey.followUps.flatMap((followUp) => {
-        const parsedTo = z.email().safeParse(followUp.action.properties.to);
-        return parsedTo.success ? [parsedTo.data] : [];
-      })
-    );
+    // The only addresses this run classifies are the literal ones each follow-up names, and the actor is only
+    // looked up for a survey without an owner; the two reads are independent, so they run together.
+    const [organizationMemberEmails, actorUserId] = await Promise.all([
+      getOrganizationMemberEmails(
+        organization.id,
+        survey.followUps.flatMap((followUp) => {
+          const parsedTo = z.email().safeParse(followUp.action.properties.to);
+          return parsedTo.success ? [parsedTo.data] : [];
+        })
+      ),
+      // The respondent is anonymous, so the survey's organization and owner carry the email limits. The owner,
+      // not `createdBy`, which an API caller can set to anyone.
+      resolveEmailActorUserId(survey.ownerId, organization.id),
+    ]);
 
-    // The respondent is anonymous, so the survey's organization and owner carry the email limits. The owner,
-    // not `createdBy`, which an API caller can set to anyone.
     const rateLimit = {
       organizationId: organization.id,
-      actorUserId: await resolveEmailActorUserId(survey.ownerId, organization.id),
+      actorUserId,
     };
 
     // Process each follow-up
