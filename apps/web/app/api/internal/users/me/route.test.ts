@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthorizationError, TooManyRequestsError } from "@formbricks/types/errors";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { POST as REQUEST_DELETION } from "./deletion-requests/route";
 import { GET as GET_NOTIFICATIONS, PATCH as PATCH_NOTIFICATIONS } from "./notification-settings/route";
 import { POST as REQUEST_PASSWORD_RESET } from "./password-resets/route";
@@ -227,6 +228,17 @@ describe("PATCH /api/internal/users/me", () => {
     expect(mocks.verifyUserPassword).not.toHaveBeenCalled();
   });
 
+  test("answers the same 204 when the verification email is capped, so the cap says nothing either", async () => {
+    mocks.sendVerificationNewEmail.mockRejectedValue(
+      new TooManyRequestsError("Maximum number of requests reached. Please try again later.", 3600)
+    );
+
+    const response = await patchProfile({ email: "new@example.com", password: "Correct-horse-1" });
+
+    expect(response.status).toBe(204);
+    expect(mocks.updateUser).not.toHaveBeenCalled();
+  });
+
   test("answers 429 once the email-change rate limit is hit", async () => {
     mocks.applyRateLimit.mockImplementation(async (config: { namespace: string }) => {
       if (config.namespace === "action:email")
@@ -325,6 +337,20 @@ describe("POST /api/internal/users/me/password-resets", () => {
   test("answers 403 for an SSO user, who has no password", async () => {
     mocks.getUser.mockResolvedValue(ssoUser);
     expect((await send(REQUEST_PASSWORD_RESET, "/password-resets", "POST")).status).toBe(403);
+    expect(mocks.requestPasswordReset).not.toHaveBeenCalled();
+  });
+
+  test("answers 429 from its own budget, without sending the email", async () => {
+    mocks.applyRateLimit.mockImplementation(async (config: { namespace: string }) => {
+      if (config.namespace === rateLimitConfigs.actions.passwordResetRequest.namespace)
+        throw new TooManyRequestsError("Maximum number of requests reached. Please try again later.", 3600);
+    });
+
+    const response = await send(REQUEST_PASSWORD_RESET, "/password-resets", "POST");
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("Retry-After")).toBe("3600");
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.actions.passwordResetRequest, USER_ID);
     expect(mocks.requestPasswordReset).not.toHaveBeenCalled();
   });
 

@@ -1,5 +1,10 @@
 import "server-only";
-import { AuthenticationError, AuthorizationError, OperationNotAllowedError } from "@formbricks/types/errors";
+import {
+  AuthenticationError,
+  AuthorizationError,
+  OperationNotAllowedError,
+  TooManyRequestsError,
+} from "@formbricks/types/errors";
 import type { TUser, TUserPersonalInfoUpdateInput, TUserUpdateInput } from "@formbricks/types/user";
 import { getIsEmailUnique } from "@/app/(app)/workspaces/[workspaceId]/settings/account/profile/lib/user";
 import { EMAIL_VERIFICATION_DISABLED } from "@/lib/constants";
@@ -63,7 +68,13 @@ const applyEmailChange = async (
     await updateBrevoCustomer({ id: user.id, email: inputEmail });
     return { ...payload, email: inputEmail };
   }
-  await sendVerificationNewEmail(user.id, inputEmail, user.locale);
+  try {
+    await sendVerificationNewEmail(user.id, inputEmail, user.locale);
+  } catch (error) {
+    // A taken address returns quietly above, so a capped email (ENG-3823) must too, or the refusal would
+    // tell the user which addresses are free.
+    if (!(error instanceof TooManyRequestsError)) throw error;
+  }
   return payload;
 };
 

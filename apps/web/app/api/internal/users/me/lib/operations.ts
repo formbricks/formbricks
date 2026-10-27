@@ -144,6 +144,15 @@ export async function requestPasswordResetOperation(context: TRequestContext): P
     return problemForbidden(requestId, "Password reset is not allowed for this user.", instance);
   }
 
+  // Without a limit this was the one way to have reset emails sent unbounded. A budget of its own, so
+  // strangers spending forgot-password's per-account budget cannot lock the user out of this one.
+  const limited = await applyRateLimitOrRespond(
+    rateLimitConfigs.actions.passwordResetRequest,
+    user.id,
+    context
+  );
+  if (limited) return limited;
+
   await auth.api.requestPasswordReset({
     body: { email: user.email, redirectTo: `${WEBAPP_URL}/auth/forgot-password/reset` },
     headers: await headers(),
