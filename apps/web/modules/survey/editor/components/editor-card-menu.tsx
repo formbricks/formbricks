@@ -1,7 +1,15 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import { ArrowDownIcon, ArrowRightIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
+import {
+  ArrowDownIcon,
+  ArrowRightIcon,
+  ArrowUpIcon,
+  CopyIcon,
+  EllipsisIcon,
+  LockIcon,
+  TrashIcon,
+} from "lucide-react";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
@@ -9,6 +17,7 @@ import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyEndScreenCard, TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
+import { useCopyId } from "@/modules/survey/editor/components/copy-id-button";
 import { getBlockDisplayName } from "@/modules/survey/editor/lib/blocks";
 import { getChoiceTypeSwitchUpdate } from "@/modules/survey/editor/lib/element-type-switch";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -52,6 +61,8 @@ interface EditorCardMenuProps {
   cardType: "element" | "ending";
   workspace?: TWorkspaceWithoutCustomCss;
   isCxMode?: boolean;
+  /** The question existed when the survey was published: its type can no longer change. */
+  isTypeLocked?: boolean;
 }
 
 export const EditorCardMenu = ({
@@ -71,8 +82,10 @@ export const EditorCardMenu = ({
   moveElementToBlock,
   cardType,
   isCxMode = false,
+  isTypeLocked = false,
 }: EditorCardMenuProps) => {
   const { t } = useTranslation();
+  const copyId = useCopyId();
   const [logicWarningModal, setLogicWarningModal] = useState(false);
   const menuId = useId();
   const [changeToType, setChangeToType] = useState(() => {
@@ -214,6 +227,41 @@ export const EditorCardMenu = ({
         <DropdownMenuContent>
           <div className="flex flex-col">
             {cardType === "element" && (
+              <>
+                <DropdownMenuItem
+                  className="h-auto min-h-8 items-start"
+                  data-testid="copy-question-id"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    void copyId(card.id);
+                  }}
+                  icon={<CopyIcon className="size-4" />}>
+                  <span className="ml-2 flex flex-col">
+                    <span>{t("workspace.surveys.edit.copy_question_id")}</span>
+                    <span className="font-mono text-xs text-slate-500" data-testid="question-id-value">
+                      {card.id}
+                    </span>
+                  </span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+            {cardType === "element" && isTypeLocked && (
+              <DropdownMenuItem
+                disabled
+                className="h-auto min-h-8 items-start"
+                data-testid="change-question-type-locked"
+                title={t("workspace.surveys.edit.lock_explanation_type")}
+                icon={<LockIcon className="size-4" />}>
+                <span className="ml-2 flex flex-col">
+                  <span>{t("workspace.surveys.edit.change_question_type")}</span>
+                  <span className="text-xs text-slate-500">
+                    {t("workspace.surveys.edit.locked_after_publishing")}
+                  </span>
+                </span>
+              </DropdownMenuItem>
+            )}
+            {cardType === "element" && !isTypeLocked && (
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger
                   className="cursor-pointer text-sm text-slate-600 hover:text-slate-700"

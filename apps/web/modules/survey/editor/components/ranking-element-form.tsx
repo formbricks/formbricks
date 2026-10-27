@@ -17,6 +17,7 @@ import { TUserLocale } from "@formbricks/types/user";
 import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { ElementOptionChoice } from "@/modules/survey/editor/components/element-option-choice";
+import { NO_ELEMENT_LOCK, TElementLock } from "@/modules/survey/editor/lib/published-lock";
 import {
   ensureSpecialChoicesOrder,
   getShuffleOptionAfterAddingSpecialChoice,
@@ -35,6 +36,7 @@ interface RankingElementFormProps {
   locale: TUserLocale;
   isStorageConfigured: boolean;
   isExternalUrlsAllowed?: boolean;
+  lock?: TElementLock;
 }
 
 export const RankingElementForm = ({
@@ -47,6 +49,7 @@ export const RankingElementForm = ({
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
+  lock = NO_ELEMENT_LOCK,
 }: RankingElementFormProps): JSX.Element => {
   const { t } = useTranslation();
   const lastChoiceRef = useRef<HTMLInputElement>(null);
@@ -122,6 +125,7 @@ export const RankingElementForm = ({
   };
 
   const deleteChoice = (choiceIdx: number) => {
+    if (lock.isOptionLocked("choices", element.choices[choiceIdx].id)) return;
     const newChoices = element.choices.filter((_, idx) => idx !== choiceIdx);
     const choiceValue = element.choices[choiceIdx].label[selectedLanguageCode];
 
@@ -239,6 +243,7 @@ export const RankingElementForm = ({
                     surveyLanguageCodes={surveyLanguageCodes}
                     locale={locale}
                     isStorageConfigured={isStorageConfigured}
+                    lock={lock}
                   />
                 ))}
               </div>

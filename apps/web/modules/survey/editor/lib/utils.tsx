@@ -38,6 +38,7 @@ import {
 } from "@/modules/embedded-data/lib/field-display";
 import { findElementLocation, getBlockDisplayName } from "@/modules/survey/editor/lib/blocks";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { formatCodedLabel } from "@/modules/survey/lib/element-code-label";
 import { type TElement, getElementTypes, getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
 import { TConditionValueProps } from "@/modules/ui/components/conditions-editor/types";
 import { TComboboxGroupedOption, TComboboxOption } from "@/modules/ui/components/input-combo-box";
@@ -148,6 +149,13 @@ const getElementHeadline = (
   }
   return getTSurveyElementTypeEnumName(element.type, t) ?? "";
 };
+
+/** How a question reads in a picker: "q1 · question text" (ENG-6790), or the plain text before it has a code. */
+const getElementPickerLabel = (localSurvey: TSurvey, element: TSurveyElement, t: TFunction): string =>
+  formatCodedLabel(
+    "code" in element ? element.code : undefined,
+    getElementHeadline(localSurvey, element, "default", t)
+  );
 
 /**
  * ENG-1837: the editor's view of one computed Embedded Data field. The calculate action renders and
@@ -362,7 +370,7 @@ export const getConditionValueOptions = (
 
   allElements.forEach((element) => {
     if (element.type === TSurveyElementTypeEnum.Matrix) {
-      const elementHeadline = getElementHeadline(localSurvey, element, "default", t);
+      const elementHeadline = getElementPickerLabel(localSurvey, element, t);
 
       // Rows submenu
       const rows = element.rows.map((row, rowIdx) => {
@@ -403,7 +411,7 @@ export const getConditionValueOptions = (
     } else {
       elementOptions.push({
         icon: getElementIconMapping(t)[element.type],
-        label: getElementHeadline(localSurvey, element, "default", t),
+        label: getElementPickerLabel(localSurvey, element, t),
         value: element.id,
         meta: {
           type: "element",
@@ -822,7 +830,7 @@ export const getMatchValueProps = (
 
   const toElementOption = (element: TSurveyElement): TComboboxOption => ({
     icon: getElementIconMapping(t)[element.type],
-    label: getElementHeadline(localSurvey, element, "default", t),
+    label: getElementPickerLabel(localSurvey, element, t),
     value: element.id,
     meta: {
       type: "element",
@@ -922,7 +930,7 @@ export const getActionTargetOptions = (
     return nonRequiredElements.map((element) => {
       return {
         icon: getElementIconMapping(t)[element.type],
-        label: getElementHeadline(localSurvey, element, "default", t),
+        label: getElementPickerLabel(localSurvey, element, t),
         value: element.id,
       };
     });
@@ -1080,7 +1088,7 @@ export const getActionValueOptions = (
   return toOperandGroups(t, {
     questions: allowedElements.map((element) => ({
       icon: getElementIconMapping(t)[element.type],
-      label: getElementHeadline(localSurvey, element, "default", t),
+      label: getElementPickerLabel(localSurvey, element, t),
       value: element.id,
       meta: {
         type: "element",
