@@ -99,7 +99,7 @@ const nextConfig = {
   },
   turbopack: {},
   experimental: {
-    // With patches/next@16.3.8.patch applied, Next clones no request body for proxy.ts or for an external
+    // With patches/next@16.4.1.patch applied, Next clones no request body for proxy.ts or for an external
     // rewrite such as the PostHog /ingest proxy (ENG-3972), so this only bounds the body Next hands an
     // edge-runtime function, and this app has none. Kept as the fallback for a Next without the patch, which
     // would clone again and cut bodies off at this size, so the import routes keep their limits below it.
