@@ -4,6 +4,25 @@ description: "Formbricks Self-hosted version migration"
 icon: "arrow-right"
 ---
 
+## Bundled Valkey 9.1.2 image
+
+The current Compose and Helm defaults use Valkey 9.1.2, pinned to the multi-architecture index
+`sha256:418652cfb58ef879d4978c33553735d7147016032d5aefaa14c828e611eb9dfd`. This is a major-version
+upgrade from the previous bundled 8.1.9 image. Both `linux/amd64` and `linux/arm64` remain supported.
+
+Existing installations that keep their Compose file or reuse an explicit Helm digest retain their current
+image. To upgrade, back up the Valkey data volume, change only the `redis` image to
+`valkey/valkey@sha256:418652cfb58ef879d4978c33553735d7147016032d5aefaa14c828e611eb9dfd`, then pull and recreate
+that service. For Helm, update `redis.image.digest` to the index above. The one-click updater also uses
+9.1.2 when replacing the legacy amd64-only 8.1.1 pin; its Compose backup retains the historical
+`.before-valkey-8.1.9` suffix. Custom pins are unchanged.
+
+<Warning>
+  Keep the existing data volume and expect a brief interruption during restart. Do not delete the volume
+  or run `FLUSHDB`. Keep a pre-upgrade data backup for rollback; do not assume older Valkey versions can
+  read persistence files rewritten by 9.1.2.
+</Warning>
+
 ## If a migration fails
 
 From Formbricks 5.3 on, one runner applies every database migration in order: the `formbricks-migrate` service on
