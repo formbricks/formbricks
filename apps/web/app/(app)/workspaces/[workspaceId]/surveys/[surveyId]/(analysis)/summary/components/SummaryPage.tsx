@@ -1,6 +1,5 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -11,11 +10,12 @@ import {
   getDisplaysWithContactAction,
   getSurveySummaryAction,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/actions";
+import { ResponseToolbar } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/ResponseToolbar";
 import { useResponseFilter } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
+import { useResponseTableFilters } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/hooks/use-response-table-filters";
 import ScrollToTop from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/ScrollToTop";
 import { SummaryDropOffs } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/SummaryDropOffs";
 import { SummaryImpressions } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/SummaryImpressions";
-import { CustomFilter } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/CustomFilter";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
@@ -61,7 +61,6 @@ export const SummaryPage = ({
   isReadOnly,
 }: Readonly<SummaryPageProps>) => {
   const { t } = useTranslation();
-  const searchParams = useSearchParams();
 
   const [surveySummary, setSurveySummary] = useState<TSurveySummary>(
     initialSurveySummary || defaultSurveySummary
@@ -70,7 +69,9 @@ export const SummaryPage = ({
   const [tab, setTab] = useState<"dropOffs" | "quotas" | "impressions" | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(!initialSurveySummary);
 
-  const { selectedFilter, dateRange, resetState, registerAnalysisRefreshHandler } = useResponseFilter();
+  const { registerAnalysisRefreshHandler } = useResponseFilter();
+  const filterState = useResponseTableFilters(survey);
+  const { selectedFilter, dateRange } = filterState;
 
   const [displays, setDisplays] = useState<TDisplayWithContact[]>([]);
   const [isDisplaysLoading, setIsDisplaysLoading] = useState(false);
@@ -217,11 +218,10 @@ export const SummaryPage = ({
     return replaceHeadlineRecall(survey, "default");
   }, [survey]);
 
-  useEffect(() => {
-    if (!searchParams?.get("referer")) {
-      resetState();
-    }
-  }, [searchParams, resetState]);
+  const criteria = useMemo(
+    () => getFormattedFilters(survey, selectedFilter, dateRange),
+    [survey, selectedFilter, dateRange]
+  );
 
   return (
     <>
@@ -246,9 +246,12 @@ export const SummaryPage = ({
       )}
       {tab === "dropOffs" && <SummaryDropOffs dropOff={surveySummary.dropOff} survey={surveyMemoized} />}
       {isQuotasAllowed && tab === "quotas" && <QuotasSummary quotas={surveySummary.quotas} />}
-      <div className="flex gap-1.5">
-        <CustomFilter survey={surveyMemoized} />
-      </div>
+      <ResponseToolbar
+        survey={surveyMemoized}
+        filterState={filterState}
+        criteria={criteria}
+        matchCount={isLoading ? null : surveySummary.meta.totalResponses}
+      />
       <ScrollToTop containerId="mainContent" />
       <SummaryList
         summary={surveySummary.summary}

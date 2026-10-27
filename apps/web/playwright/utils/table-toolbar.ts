@@ -44,3 +44,27 @@ export const setTableToggle = async (page: Page, label: string, checked: boolean
   if ((await toggle.getAttribute("aria-checked")) !== String(checked)) await toggle.click();
   await page.keyboard.press("Escape");
 };
+
+/** Adds one Advanced filter rule (`property · operator · value`) and saves it. */
+export const addAdvancedRule = async (
+  page: Page,
+  rule: { property: string; operator: string; value?: string }
+) => {
+  await page.getByTestId("table-filter-button").click();
+  await page.getByRole("menuitem", { name: "Advanced filter" }).click();
+  const dialog = page.getByRole("dialog");
+  // With no rules saved the dialog opens on one empty row; otherwise the new rule needs a row of its own.
+  const rows = await dialog.locator("[id$='-conditionValue']").count();
+  const firstRowEmpty = (await dialog.locator("#condition-0-0-conditionOperator").innerText()).trim() === "";
+  const index = firstRowEmpty ? 0 : rows;
+  if (!firstRowEmpty) await dialog.getByRole("button", { name: "Add filter" }).click();
+  await dialog.locator(`#condition-0-${index}-conditionValue`).click();
+  await page.getByRole("option", { name: rule.property, exact: true }).click();
+  await dialog.locator(`#condition-0-${index}-conditionOperator`).click();
+  await page.getByRole("option", { name: rule.operator, exact: true }).click();
+  if (rule.value !== undefined) {
+    await dialog.locator(`#condition-0-${index}-conditionMatchValue-input`).fill(rule.value);
+  }
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(dialog).toBeHidden();
+};

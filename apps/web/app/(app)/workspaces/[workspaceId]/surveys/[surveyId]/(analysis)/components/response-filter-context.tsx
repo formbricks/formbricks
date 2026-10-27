@@ -1,13 +1,11 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
-import {
-  ElementOption,
-  ElementOptions,
-} from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ElementsComboBox";
-import { ElementFilterOptions } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ResponseFilter";
-import { getTodayDate } from "@/app/lib/surveys/surveys";
+import React, { createContext, useCallback, useContext, useMemo, useRef } from "react";
+import { type ElementOption } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
 import { type TDateRangePreset } from "@/lib/date-ranges";
+
+// The filter itself lives in the page URL (`useResponseTableFilters`), shared by Responses and Summary.
+// What is left here is the refresh hook-up: the survey header's actions refresh whichever tab is open.
 
 export interface FilterValue {
   elementType: Partial<ElementOption>;
@@ -24,63 +22,22 @@ export interface SelectedFilterValue {
   responseStatus: TResponseStatus;
 }
 
-interface SelectedFilterOptions {
-  elementOptions: ElementOptions[];
-  elementFilterOptions: ElementFilterOptions[];
-}
-
 export interface DateRange {
   from: Date | undefined;
   to?: Date;
-  // Which preset produced this range, if any — set by the preset dropdown, cleared by the manual
-  // calendar picker. The label is read from here instead of reverse-matching the range, since several
-  // presets span byte-identical days on period-boundary dates (e.g. "this month" and "last 7 days" on
-  // the 7th of any month) and cannot be told apart by their bounds alone.
+  /** Which preset produced this range, if any. */
   preset?: TDateRangePreset;
 }
 
-interface FilterDateContextProps {
-  selectedFilter: SelectedFilterValue;
-  setSelectedFilter: React.Dispatch<React.SetStateAction<SelectedFilterValue>>;
-  selectedOptions: SelectedFilterOptions;
-  setSelectedOptions: React.Dispatch<React.SetStateAction<SelectedFilterOptions>>;
-  dateRange: DateRange;
-  setDateRange: React.Dispatch<React.SetStateAction<DateRange>>;
-  resetState: () => void;
+interface ResponseFilterContextProps {
   refreshAnalysisData: () => Promise<void>;
   registerAnalysisRefreshHandler: (handler: () => Promise<void>) => () => void;
 }
 
-const ResponseFilterContext = createContext<FilterDateContextProps | undefined>(undefined);
+const ResponseFilterContext = createContext<ResponseFilterContextProps | undefined>(undefined);
 
 const ResponseFilterProvider = ({ children }: { children: React.ReactNode }) => {
-  // state holds the filter selected value
-  const [selectedFilter, setSelectedFilter] = useState<SelectedFilterValue>({
-    filter: [],
-    responseStatus: "all",
-  });
-  // state holds all the options of the responses fetched
-  const [selectedOptions, setSelectedOptions] = useState<SelectedFilterOptions>({
-    elementFilterOptions: [],
-    elementOptions: [],
-  });
-
-  const [dateRange, setDateRange] = useState<DateRange>({
-    from: undefined,
-    to: getTodayDate(),
-  });
   const refreshHandlerRef = useRef<(() => Promise<void>) | null>(null);
-
-  const resetState = useCallback(() => {
-    setDateRange({
-      from: undefined,
-      to: getTodayDate(),
-    });
-    setSelectedFilter({
-      filter: [],
-      responseStatus: "all",
-    });
-  }, []);
 
   const refreshAnalysisData = useCallback(async () => {
     await refreshHandlerRef.current?.();
@@ -97,25 +54,8 @@ const ResponseFilterProvider = ({ children }: { children: React.ReactNode }) => 
   }, []);
 
   const contextValue = useMemo(
-    () => ({
-      setSelectedFilter,
-      selectedFilter,
-      selectedOptions,
-      setSelectedOptions,
-      dateRange,
-      setDateRange,
-      resetState,
-      refreshAnalysisData,
-      registerAnalysisRefreshHandler,
-    }),
-    [
-      dateRange,
-      refreshAnalysisData,
-      registerAnalysisRefreshHandler,
-      resetState,
-      selectedFilter,
-      selectedOptions,
-    ]
+    () => ({ refreshAnalysisData, registerAnalysisRefreshHandler }),
+    [refreshAnalysisData, registerAnalysisRefreshHandler]
   );
 
   return <ResponseFilterContext.Provider value={contextValue}>{children}</ResponseFilterContext.Provider>;
@@ -124,7 +64,7 @@ const ResponseFilterProvider = ({ children }: { children: React.ReactNode }) => 
 const useResponseFilter = () => {
   const context = useContext(ResponseFilterContext);
   if (context === undefined) {
-    throw new Error("useFilterDate must be used within a FilterDateProvider");
+    throw new Error("useResponseFilter must be used within a ResponseFilterProvider");
   }
   return context;
 };

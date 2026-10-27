@@ -23,6 +23,10 @@ import { TResponseTableData, TResponseWithQuotas } from "@formbricks/types/respo
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import {
+  ResponseToolbar,
+  type TResponseToolbarState,
+} from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/ResponseToolbar";
 import { ResponseCardModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseCardModal";
 import { ResponseTableCell } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableCell";
 import { generateResponseTableColumns } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseTableColumns";
@@ -31,13 +35,11 @@ import { downloadResponsesFile } from "@/app/(app)/workspaces/[workspaceId]/surv
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { deleteResponseAction } from "@/modules/analysis/components/SingleResponseCard/actions";
 import { Button } from "@/modules/ui/components/button";
-import {
-  DataTableHeader,
-  DataTableSettingsModal,
-  DataTableToolbar,
-} from "@/modules/ui/components/data-table";
+import { DataTableHeader, DataTableSettingsModal } from "@/modules/ui/components/data-table";
+import { SelectedRowSettings } from "@/modules/ui/components/data-table/components/selected-row-settings";
 import { Skeleton } from "@/modules/ui/components/skeleton";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/modules/ui/components/table";
+import { buildColumnSettings } from "@/modules/ui/components/table-toolbar/lib/column-settings";
 import { reconcileColumnOrder, seedReservedColumnVisibility } from "../lib/column-state";
 
 const SkeletonCell = () => (
@@ -63,7 +65,15 @@ interface ResponseTableProps {
   quotas: TSurveyQuota[];
   selectedResponseId: string | null;
   setSelectedResponseId: (id: string | null) => void;
+  toolbar: TResponseToolbarState;
 }
+
+/** The gear's column names: each column's text label, which its rendered header does not give. */
+const getColumnLabels = (table: ReturnType<typeof useReactTable<TResponseTableData>>) =>
+  table.getAllLeafColumns().flatMap((column) => {
+    const label = (column.columnDef.meta as { label?: string } | undefined)?.label;
+    return label ? [{ id: column.id, label }] : [];
+  });
 
 export const ResponseTable = ({
   data,
@@ -82,6 +92,7 @@ export const ResponseTable = ({
   quotas,
   selectedResponseId,
   setSelectedResponseId,
+  toolbar,
 }: ResponseTableProps) => {
   const { t } = useTranslation();
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -242,16 +253,45 @@ export const ResponseTable = ({
         modifiers={[restrictToHorizontalAxis]}
         onDragEnd={handleDragEnd}
         sensors={sensors}>
-        <DataTableToolbar
-          setIsExpanded={setIsExpanded}
-          setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
-          isExpanded={isExpanded ?? false}
-          table={table}
-          updateRowList={updateResponseList}
-          type="response"
-          deleteAction={deleteResponse}
-          downloadRowsAction={downloadSelectedRows}
-          isQuotasAllowed={isQuotasAllowed}
+        <ResponseToolbar
+          survey={survey}
+          {...toolbar}
+          className="mb-3"
+          settings={{
+            toggles: [
+              {
+                id: "expand-rows",
+                label: t("common.expand_rows"),
+                checked: isExpanded ?? false,
+                onCheckedChange: setIsExpanded,
+              },
+            ],
+            columns: {
+              items: buildColumnSettings(getColumnLabels(table), columnOrder, columnVisibility, [
+                "createdAt",
+              ]),
+              onVisibilityChange: (id, visible) =>
+                setColumnVisibility((current) => ({ ...current, [id]: visible })),
+              onMove: (activeId, overId) =>
+                setColumnOrder((order) => {
+                  const from = order.indexOf(activeId);
+                  const to = order.indexOf(overId);
+                  return from === -1 || to === -1 ? order : arrayMove(order, from, to);
+                }),
+            },
+          }}
+          selectionContent={
+            table.getFilteredSelectedRowModel().rows.length > 0 ? (
+              <SelectedRowSettings
+                table={table}
+                updateRowList={updateResponseList}
+                type="response"
+                deleteAction={deleteResponse}
+                downloadRowsAction={downloadSelectedRows}
+                isQuotasAllowed={isQuotasAllowed}
+              />
+            ) : undefined
+          }
         />
         <div className="w-fit max-w-full overflow-hidden overflow-x-auto rounded-xl border border-slate-200">
           <div className="w-full overflow-x-auto">

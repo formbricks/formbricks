@@ -1,6 +1,6 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -9,13 +9,15 @@ import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
-import { getResponsesAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/actions";
+import {
+  getResponseCountAction,
+  getResponsesAction,
+} from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/actions";
 import { useResponseFilter } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
+import { useResponseTableFilters } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/hooks/use-response-table-filters";
 import { ResponseDataView } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponseDataView";
-import { CustomFilter } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/CustomFilter";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { replaceHeadlineRecall } from "@/lib/utils/recall";
 
 interface ResponsePageProps {
   survey: TSurvey;
@@ -46,7 +48,9 @@ export const ResponsePage = ({
   const [page, setPage] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(initialResponses.length >= responsesPerPage);
   const [isFetchingFirstPage, setIsFetchingFirstPage] = useState<boolean>(false);
-  const { selectedFilter, dateRange, resetState, registerAnalysisRefreshHandler } = useResponseFilter();
+  const { registerAnalysisRefreshHandler } = useResponseFilter();
+  const filterState = useResponseTableFilters(survey);
+  const { selectedFilter, dateRange } = filterState;
   const { t } = useTranslation();
   const computedFilters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
@@ -66,7 +70,13 @@ export const ResponsePage = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the filter value, not its identity
   const filters = useMemo(() => computedFilters, [filtersKey]);
 
-  const searchParams = useSearchParams();
+  // Rows matching the filters, for the toolbar. Refetched with the list, so a delete or a refresh
+  // keeps it honest.
+  const matchCountQuery = useQuery({
+    queryKey: ["surveys", surveyId, "response-count", filtersKey],
+    queryFn: async () => (await getResponseCountAction({ surveyId, filterCriteria: filters }))?.data ?? null,
+  });
+  const { refetch: refetchMatchCount } = matchCountQuery;
 
   const fetchNextPage = useCallback(async () => {
     if (page === null) return;
@@ -91,6 +101,7 @@ export const ResponsePage = ({
 
   const updateResponseList = (responseIds: string[]) => {
     setResponses((prev) => prev.filter((r) => !responseIds.includes(r.id)));
+    void refetchMatchCount();
   };
 
   const updateResponse = (responseId: string, updatedResponse: TResponseWithQuotas) => {
@@ -114,26 +125,17 @@ export const ResponsePage = ({
 
       const freshResponses = getResponsesActionResponse?.data ?? [];
       setResponses(freshResponses);
+      void refetchMatchCount();
       setPage(1);
       setHasMore(freshResponses.length >= responsesPerPage);
     } finally {
       setIsFetchingFirstPage(false);
     }
-  }, [filters, responsesPerPage, surveyId, t]);
+  }, [filters, refetchMatchCount, responsesPerPage, surveyId, t]);
 
   useEffect(() => {
     return registerAnalysisRefreshHandler(refetchResponses);
   }, [refetchResponses, registerAnalysisRefreshHandler]);
-
-  const surveyMemoized = useMemo(() => {
-    return replaceHeadlineRecall(survey, "default");
-  }, [survey]);
-
-  useEffect(() => {
-    if (!searchParams?.get("referer")) {
-      resetState();
-    }
-  }, [searchParams, resetState]);
 
   // Only fetch if filters are applied (not on initial mount with no filters)
   const hasFilters =
@@ -180,9 +182,6 @@ export const ResponsePage = ({
 
   return (
     <>
-      <div className="flex h-9 gap-1.5">
-        <CustomFilter survey={surveyMemoized} />
-      </div>
       <ResponseDataView
         survey={survey}
         responses={responses}
@@ -197,6 +196,7 @@ export const ResponsePage = ({
         locale={locale}
         isQuotasAllowed={isQuotasAllowed}
         quotas={quotas}
+        toolbar={{ filterState, criteria: filters, matchCount: matchCountQuery.data ?? null }}
       />
     </>
   );

@@ -3,7 +3,7 @@ import type {
   TGenericCondition,
   TGenericConditionGroup,
 } from "@/modules/ui/components/conditions-editor/types";
-import { operatorTakesValue } from "./operators";
+import { operatorTakesValue, operatorTakesValues } from "./operators";
 import type { TFilterProperty, TRuleOperator, TTableFilter } from "./types";
 import { isCalendarDay } from "./url-codec";
 
@@ -16,6 +16,19 @@ export const emptyCondition = (): TGenericCondition => ({
   operator: "",
 });
 
+const toRightOperand = (rule: TTableFilter): TGenericCondition["rightOperand"] => {
+  if (operatorTakesValues(rule.operator)) return { value: [...rule.values], type: "static" };
+  return rule.values[0] === undefined ? undefined : { value: rule.values[0], type: "static" };
+};
+
+/** A list operator's picked values, trimmed and de-duplicated. */
+const toValues = (condition: TGenericCondition): string[] => {
+  const value = condition.rightOperand?.value;
+  const raw = Array.isArray(value) ? value : [value];
+  const values = raw.map((item) => (item === undefined || item === null ? "" : String(item).trim()));
+  return [...new Set(values.filter((item) => item.length > 0))];
+};
+
 export const rulesToConditionGroup = (rules: readonly TTableFilter[]): TGenericConditionGroup => ({
   id: "advanced-filter",
   connector: "and",
@@ -25,7 +38,7 @@ export const rulesToConditionGroup = (rules: readonly TTableFilter[]): TGenericC
           id: createId(),
           leftOperand: { value: rule.property, type: "property" },
           operator: rule.operator,
-          rightOperand: rule.values[0] === undefined ? undefined : { value: rule.values[0], type: "static" },
+          rightOperand: toRightOperand(rule),
         }))
       : [emptyCondition()],
 });
@@ -64,6 +77,12 @@ export const conditionGroupToRules = (
     }
     if (!operatorTakesValue(operator)) {
       rules.push({ property: property.id, operator, values: [] });
+      continue;
+    }
+    if (operatorTakesValues(operator)) {
+      const values = toValues(condition);
+      if (values.length === 0) incomplete.push(condition.id);
+      else rules.push({ property: property.id, operator, values });
       continue;
     }
     const value = toValue(condition);

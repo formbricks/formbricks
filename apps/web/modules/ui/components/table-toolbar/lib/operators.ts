@@ -1,8 +1,14 @@
 import type { TFunction } from "i18next";
-import type { TFilterValueType, TRuleOperator, TTableFilterOperator } from "./types";
+import type { TRuleOperator, TTableFilterOperator } from "./types";
 
 /** The rule operators that compare against nothing. */
 export const NO_VALUE_OPERATORS: readonly TTableFilterOperator[] = ["isSet", "isNotSet"];
+
+/** The rule operators that compare against a list of values, so a rule keeps every value it holds. */
+export const MULTI_VALUE_OPERATORS: readonly TTableFilterOperator[] = ["includesOneOf", "includesAllOf"];
+
+export const operatorTakesValues = (operator: TTableFilterOperator): boolean =>
+  MULTI_VALUE_OPERATORS.includes(operator);
 
 export const STRING_RULE_OPERATORS: TRuleOperator[] = [
   "equals",
@@ -30,19 +36,6 @@ export const DATE_RULE_OPERATORS: TRuleOperator[] = ["isBefore", "isAfter", "isS
 
 export const ENUM_RULE_OPERATORS: TRuleOperator[] = ["equals", "notEquals"];
 
-export const getDefaultRuleOperators = (valueType: TFilterValueType): TRuleOperator[] => {
-  switch (valueType) {
-    case "number":
-      return NUMBER_RULE_OPERATORS;
-    case "date":
-      return DATE_RULE_OPERATORS;
-    case "enum":
-      return ENUM_RULE_OPERATORS;
-    default:
-      return STRING_RULE_OPERATORS;
-  }
-};
-
 export const operatorTakesValue = (operator: TTableFilterOperator): boolean =>
   !NO_VALUE_OPERATORS.includes(operator);
 
@@ -59,8 +52,16 @@ export const getOperatorLabel = (operator: TTableFilterOperator, t: TFunction): 
       return t("common.table_toolbar.operator_does_not_contain");
     case "startsWith":
       return t("common.table_toolbar.operator_starts_with");
+    case "doesNotStartWith":
+      return t("common.table_toolbar.operator_does_not_start_with");
     case "endsWith":
       return t("common.table_toolbar.operator_ends_with");
+    case "doesNotEndWith":
+      return t("common.table_toolbar.operator_does_not_end_with");
+    case "includesOneOf":
+      return t("common.table_toolbar.operator_includes_one_of");
+    case "includesAllOf":
+      return t("common.table_toolbar.operator_includes_all_of");
     case "greaterThan":
       return ">";
     case "greaterEqual":

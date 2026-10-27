@@ -88,6 +88,9 @@ const getElementColumnsData = (
       return element.rows.map((matrixRow) => {
         return {
           accessorKey: "ELEMENT_" + element.id + "_" + matrixRow.label.default,
+          meta: {
+            label: `${getTextContent(getLocalizedValue(element.headline, "default"))} - ${getLocalizedValue(matrixRow.label, "default")}`,
+          },
           header: () => {
             return (
               <div className="flex items-center justify-between">
@@ -115,6 +118,7 @@ const getElementColumnsData = (
       return addressFields.map((addressField) => {
         return {
           accessorKey: "ELEMENT_" + element.id + "_" + addressField,
+          meta: { label: getAddressFieldLabel(addressField, t) },
           header: () => {
             return (
               <div className="flex items-center justify-between">
@@ -138,6 +142,7 @@ const getElementColumnsData = (
       return contactInfoFields.map((contactInfoField) => {
         return {
           accessorKey: "ELEMENT_" + element.id + "_" + contactInfoField,
+          meta: { label: getContactInfoFieldLabel(contactInfoField, t) },
           header: () => {
             return (
               <div className="flex items-center justify-between">
@@ -166,6 +171,7 @@ const getElementColumnsData = (
         {
           accessorKey: "ELEMENT_" + element.id,
           header: createElementHeader(element.type, elementHeadline),
+          meta: { label: elementHeadline },
           cell: ({ row }) => {
             const responseValue = row.original.responseData[element.id];
             const language = row.original.language;
@@ -184,6 +190,7 @@ const getElementColumnsData = (
         },
         {
           accessorKey: "ELEMENT_" + element.id + "optionIds",
+          meta: { label: `${elementHeadline} - ${t("common.option_id")}` },
           header: createElementHeader(element.type, elementHeadline, t("common.option_id")),
           cell: ({ row }) => {
             const responseValue = row.original.responseData[element.id];
@@ -206,6 +213,11 @@ const getElementColumnsData = (
       return [
         {
           accessorKey: "ELEMENT_" + element.id,
+          meta: {
+            label: getTextContent(
+              getLocalizedValue(recallToHeadline(element.headline, survey, false, "default"), "default")
+            ),
+          },
           header: () => (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-x-2 overflow-hidden">
@@ -253,6 +265,7 @@ const getMetadataColumnsData = (t: TFunction): ColumnDef<TResponseTableData>[] =
 
     return {
       accessorKey: columnId,
+      meta: { label: getReservedColumnLabel(entry.name, t) },
       header: () => (
         <div className="flex items-center gap-x-2 overflow-hidden">
           <span className="size-4">{IconComponent && <IconComponent className="h-4 w-4" />}</span>
@@ -284,6 +297,7 @@ export const generateResponseTableColumns = (
 
   const dateColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "createdAt",
+    meta: { label: t("common.date") },
     header: () => t("common.date"),
     size: 200,
     cell: ({ row }) => {
@@ -294,6 +308,7 @@ export const generateResponseTableColumns = (
 
   const personColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "personId",
+    meta: { label: t("common.person") },
     header: () => (
       <div className="flex items-center gap-x-1.5">
         {t("common.person")}
@@ -327,6 +342,7 @@ export const generateResponseTableColumns = (
 
   const singleUseIdColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "singleUseId",
+    meta: { label: t("workspace.surveys.responses.single_use_id") },
     header: () => <div className="gap-x-1.5">{t("workspace.surveys.responses.single_use_id")}</div>,
     cell: ({ row }) => {
       return <p className="truncate text-slate-900">{row.original.singleUseId}</p>;
@@ -335,6 +351,7 @@ export const generateResponseTableColumns = (
 
   const responseIdColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "responseId",
+    meta: { label: t("common.response_id") },
     header: () => <div className="gap-x-1.5">{t("common.response_id")}</div>,
     cell: ({ row }) => {
       return <IdBadge id={row.original.responseId} />;
@@ -343,6 +360,7 @@ export const generateResponseTableColumns = (
 
   const quotasColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "quota",
+    meta: { label: t("common.quota") },
     header: t("common.quota"),
     cell: ({ row }) => {
       const quotas = row.original.quotas;
@@ -354,6 +372,7 @@ export const generateResponseTableColumns = (
 
   const statusColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "status",
+    meta: { label: t("common.status") },
     size: 200,
     header: () => <div className="gap-x-1.5">{t("common.status")}</div>,
     cell: ({ row }) => {
@@ -364,6 +383,7 @@ export const generateResponseTableColumns = (
 
   const tagsColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "tags",
+    meta: { label: t("common.tags") },
     header: () => <div className="gap-x-1.5">{t("common.tags")}</div>,
     cell: ({ row }) => {
       const tags = row.original.tags;
@@ -388,6 +408,7 @@ export const generateResponseTableColumns = (
     ({ field, link }) => {
       return {
         accessorKey: "VARIABLE_" + link.storageKey,
+        meta: { label: field.name },
         header: () => (
           <div className="flex items-center gap-x-2 overflow-hidden">
             <span className="size-4">
@@ -413,6 +434,7 @@ export const generateResponseTableColumns = (
   ).map(({ link, label }) => {
     return {
       accessorKey: "HIDDEN_FIELD_" + link.storageKey,
+      meta: { label },
       header: () => (
         <div className="flex items-center gap-x-2 overflow-hidden">
           <span className="size-4">
@@ -434,6 +456,7 @@ export const generateResponseTableColumns = (
 
   const verifiedEmailColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "verifiedEmail",
+    meta: { label: t("common.verified_email") },
     header: () => (
       <div className="flex items-center gap-x-2 overflow-hidden">
         <span className="size-4">

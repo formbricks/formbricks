@@ -25,8 +25,8 @@ import {
   ElementOption,
   ElementOptions,
   OptionsType,
-} from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ElementsComboBox";
-import { ElementFilterOptions } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ResponseFilter";
+} from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
+import { ElementFilterOptions } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getReservedFilterEntries } from "@/lib/response/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
@@ -719,7 +719,9 @@ const processEqualsNotEqualsFilter = (
     }
   } else if (targetKey === "others") {
     filters.others = filters.others || {};
-    if (filterType.filterValue === "Equals") {
+    if (filterType.filterValue === "Is any of" && Array.isArray(filterType.filterComboBoxValue)) {
+      filters.others[label ?? ""] = { op: "in", value: filterType.filterComboBoxValue };
+    } else if (filterType.filterValue === "Equals") {
       filters.others[label ?? ""] = { op: "equals", value: filterType.filterComboBoxValue as string };
     } else if (filterType.filterValue === "Not equals") {
       filters.others[label ?? ""] = { op: "notEquals", value: filterType.filterComboBoxValue as string };

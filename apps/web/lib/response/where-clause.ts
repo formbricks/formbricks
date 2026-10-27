@@ -583,6 +583,13 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
             },
           });
           break;
+        case "in":
+          others.push({
+            [key.toLocaleLowerCase()]: {
+              in: val.value,
+            },
+          });
+          break;
       }
     });
     whereClause.push({

@@ -32,6 +32,24 @@ const INPUT_TYPE_BY_VALUE_TYPE: Record<TFilterProperty["valueType"], string> = {
   enum: "text",
 };
 
+/** The picker's option groups, in the order the properties first name them. */
+const groupProperties = (properties: readonly TFilterProperty[], defaultGroup: string) => {
+  const groups = new Map<string, TFilterProperty[]>();
+  for (const property of properties) {
+    const group = property.group ?? defaultGroup;
+    groups.set(group, [...(groups.get(group) ?? []), property]);
+  }
+  return [...groups].map(([label, members]) => ({
+    label,
+    value: label,
+    options: members.map((property) => ({
+      label: property.label,
+      value: property.id,
+      meta: { type: "property" },
+    })),
+  }));
+};
+
 const isCondition = (item: TGenericCondition | TGenericConditionGroup): item is TGenericCondition =>
   !("conditions" in item);
 
@@ -68,17 +86,7 @@ export const AdvancedFilterDialog = ({
   };
 
   const config: TConditionsEditorConfig = {
-    getLeftOperandOptions: () => [
-      {
-        label: t("common.table_toolbar.properties"),
-        value: "properties",
-        options: ruleProperties.map((property) => ({
-          label: property.label,
-          value: property.id,
-          meta: { type: "property" },
-        })),
-      },
-    ],
+    getLeftOperandOptions: () => groupProperties(ruleProperties, t("common.table_toolbar.properties")),
     getOperatorOptions: (condition) =>
       (propertyFor(condition)?.ruleOperators ?? []).map((operator) => ({
         label: getOperatorName(operator, t),

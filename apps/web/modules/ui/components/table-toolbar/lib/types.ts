@@ -7,7 +7,8 @@ import type { TDateRangePreset } from "@/lib/date-ranges";
  * - `in`: a quick filter. The row matches any of the ticked values.
  * - `preset` / `between`: a date quick filter. `between` holds two calendar days (`yyyy-MM-dd`); the URL
  *   writes them as `gte` / `lte`.
- * - The rest are Advanced filter rules.
+ * - The rest are Advanced filter rules. `includesOneOf` / `includesAllOf` hold a list of values (a
+ *   multi-select question's choices); every other rule holds one value or none.
  */
 export const TABLE_FILTER_OPERATORS = [
   "in",
@@ -18,7 +19,9 @@ export const TABLE_FILTER_OPERATORS = [
   "contains",
   "doesNotContain",
   "startsWith",
+  "doesNotStartWith",
   "endsWith",
+  "doesNotEndWith",
   "greaterThan",
   "greaterEqual",
   "lessThan",
@@ -27,6 +30,8 @@ export const TABLE_FILTER_OPERATORS = [
   "isAfter",
   "isSet",
   "isNotSet",
+  "includesOneOf",
+  "includesAllOf",
 ] as const;
 
 export type TTableFilterOperator = (typeof TABLE_FILTER_OPERATORS)[number];
@@ -66,6 +71,8 @@ export type TFilterProperty = {
   options?: TFilterOption[];
   /** Values loaded on demand, for value lists too long or too dynamic to ship with the page. */
   loadOptions?: (search: string) => Promise<TFilterOption[]>;
+  /** Heading the property sits under in Advanced filter's picker. Absent: the table's one list. */
+  group?: string;
   /** Operators offered in Advanced filter. Empty or absent: the property is not offered there. */
   ruleOperators?: TRuleOperator[];
   /** Date quick filters only: the presets offered, in order. */

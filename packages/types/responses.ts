@@ -381,10 +381,14 @@ const ZResponseFilterCriteriaFields = z.object({
   others: z
     .record(
       z.string(),
-      z.object({
-        op: z.enum(["equals", "notEquals"]),
-        value: z.union([z.string(), z.number()]),
-      })
+      z.union([
+        z.object({
+          op: z.enum(["equals", "notEquals"]),
+          value: z.union([z.string(), z.number()]),
+        }),
+        // "Language is any of": the Responses quick filter ticks several languages at once.
+        z.object({ op: z.literal("in"), value: z.array(z.string()).min(1).max(MAX_FILTER_VALUES) }),
+      ])
     )
     .optional(),
 

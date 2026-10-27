@@ -1,25 +1,16 @@
 import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
-import {
-  DATE_RULE_OPERATORS,
-  ENUM_RULE_OPERATORS,
-  NUMBER_RULE_OPERATORS,
-  STRING_RULE_OPERATORS,
-  getDefaultRuleOperators,
-  getOperatorLabel,
-  getOperatorName,
-  operatorTakesValue,
-} from "./operators";
+import { getOperatorLabel, getOperatorName, operatorTakesValue, operatorTakesValues } from "./operators";
 import type { TTableFilterOperator } from "./types";
 
 const t = ((key: string) => key) as unknown as TFunction;
 
-describe("getDefaultRuleOperators", () => {
-  test("offers the operator list that fits each value type", () => {
-    expect(getDefaultRuleOperators("number")).toBe(NUMBER_RULE_OPERATORS);
-    expect(getDefaultRuleOperators("date")).toBe(DATE_RULE_OPERATORS);
-    expect(getDefaultRuleOperators("enum")).toBe(ENUM_RULE_OPERATORS);
-    expect(getDefaultRuleOperators("string")).toBe(STRING_RULE_OPERATORS);
+describe("operatorTakesValues", () => {
+  test("is true only for the list operators", () => {
+    expect(operatorTakesValues("includesOneOf")).toBe(true);
+    expect(operatorTakesValues("includesAllOf")).toBe(true);
+    expect(operatorTakesValues("equals")).toBe(false);
+    expect(operatorTakesValues("in")).toBe(false);
   });
 });
 
@@ -47,6 +38,10 @@ describe("getOperatorLabel", () => {
     ["doesNotContain", "common.table_toolbar.operator_does_not_contain"],
     ["startsWith", "common.table_toolbar.operator_starts_with"],
     ["endsWith", "common.table_toolbar.operator_ends_with"],
+    ["doesNotStartWith", "common.table_toolbar.operator_does_not_start_with"],
+    ["doesNotEndWith", "common.table_toolbar.operator_does_not_end_with"],
+    ["includesOneOf", "common.table_toolbar.operator_includes_one_of"],
+    ["includesAllOf", "common.table_toolbar.operator_includes_all_of"],
     ["isBefore", "common.table_toolbar.operator_is_before"],
     ["isAfter", "common.table_toolbar.operator_is_after"],
     ["isSet", "common.table_toolbar.operator_is_set"],

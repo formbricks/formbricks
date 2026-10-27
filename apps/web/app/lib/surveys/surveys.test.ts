@@ -13,7 +13,7 @@ import {
   DateRange,
   SelectedFilterValue,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
-import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ElementsComboBox";
+import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
 import {
   buildDateFieldCondition,
   generateElementAndFilterOptions,

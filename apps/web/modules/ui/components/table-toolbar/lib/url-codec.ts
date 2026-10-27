@@ -1,5 +1,5 @@
 import { DATE_RANGE_PRESETS, type TDateRangePreset } from "@/lib/date-ranges";
-import { operatorTakesValue } from "./operators";
+import { operatorTakesValue, operatorTakesValues } from "./operators";
 import {
   TABLE_FILTER_OPERATORS,
   type TFilterProperty,
@@ -77,7 +77,7 @@ const normalizeFilter = (property: TFilterProperty, filter: TTableFilter): TTabl
     const [from, to] = validValues;
     return from <= to ? { ...filter, values: [from, to] } : { ...filter, values: [to, from] };
   }
-  if (filter.operator === "in") {
+  if (filter.operator === "in" || operatorTakesValues(filter.operator)) {
     return values.length > 0 ? { ...filter, values: values.slice(0, MAX_FILTER_VALUES) } : null;
   }
   return values.length > 0 ? { ...filter, values: [values[0]] } : null;
@@ -93,10 +93,10 @@ const parseKeyFilters = (property: TFilterProperty, operator: string, values: st
   if (!isOperator(operator) || operator === "between") return [];
   if (!getAllowedOperators(property).includes(operator)) return [];
 
-  // Rules stack: "Status is not Draft" and "Status is not Paused" share a key, so every value but
-  // an `in` list's is its own rule. Without that, the second rule would vanish on the next read.
-  const valueGroups =
-    operator === "in" || !operatorTakesValue(operator) ? [values] : [...new Set(values)].map((v) => [v]);
+  // Rules stack: "Status is not Draft" and "Status is not Paused" share a key, so every value but a
+  // list operator's is its own rule. Without that, the second rule would vanish on the next read.
+  const holdsList = operator === "in" || operatorTakesValues(operator) || !operatorTakesValue(operator);
+  const valueGroups = holdsList ? [values] : [...new Set(values)].map((v) => [v]);
   return valueGroups
     .map((group) => normalizeFilter(property, { property: property.id, operator, values: group }))
     .filter((filter): filter is TTableFilter => filter !== null);
