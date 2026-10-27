@@ -4575,6 +4575,7 @@
       "filter": {
         "complete_and_partial_responses": "Complete and partial responses",
         "complete_responses": "Complete responses",
+        "low_quality_responses": "Low quality responses",
         "partial_responses": "Partial responses"
       },
       "import": {

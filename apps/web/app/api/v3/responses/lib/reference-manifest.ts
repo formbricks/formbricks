@@ -145,6 +145,8 @@ export const V3_RESPONSE_BODY_FIELDS: Record<string, TV3ReferenceKind> = {
   // Element ids are survey-local and the survey is authorized before the write, so there is no tenant
   // question here; if `ttc` ever gains meaning beyond telemetry this is the line that has to change.
   finished: "none",
+  // The response's own reviewer verdict, a two-value enum; it names nothing outside the response.
+  outcome: "none",
   meta: "none",
   ttc: "none",
   // The validate envelope's discriminator. Picks which planner runs, names nothing.

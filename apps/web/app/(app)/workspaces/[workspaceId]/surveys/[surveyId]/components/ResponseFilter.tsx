@@ -287,6 +287,9 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
                 </SelectItem>
                 <SelectItem value="complete">{t("workspace.surveys.filter.complete_responses")}</SelectItem>
                 <SelectItem value="partial">{t("workspace.surveys.filter.partial_responses")}</SelectItem>
+                <SelectItem value="lowQuality">
+                  {t("workspace.surveys.filter.low_quality_responses")}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>

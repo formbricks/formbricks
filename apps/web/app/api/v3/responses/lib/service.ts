@@ -329,6 +329,7 @@ export const v3ResponseReadSelect = {
   finished: true,
   endingId: true,
   language: true,
+  outcome: true,
   data: true,
   variables: true,
   ttc: true,

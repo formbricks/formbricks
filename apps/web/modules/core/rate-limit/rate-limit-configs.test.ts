@@ -113,6 +113,7 @@ describe("rateLimitConfigs", () => {
         "v1",
         "v2",
         "v3",
+        "v3StateMutation",
         "mcpAuth",
         "v3SurveyGenerate",
         "v3SurveyVisibility",
@@ -123,6 +124,12 @@ describe("rateLimitConfigs", () => {
         "clientEnvironment",
         "clientCreativeEvents",
       ]);
+      // The API twin of `actions.stateMutation`, per principal, for writes that fan out to the pipeline.
+      expect(rateLimitConfigs.api.v3StateMutation).toEqual({
+        interval: 60,
+        allowedPerInterval: 120,
+        namespace: "api:v3:state-mutation",
+      });
       // Per IP: one events request per page view, from every visitor behind one office NAT.
       expect(rateLimitConfigs.api.clientCreativeEvents).toEqual({
         interval: 60,

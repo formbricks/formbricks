@@ -479,6 +479,7 @@ export const zResponseBase = z.object({
   finished: z.boolean(),
   endingId: z.string().nullable(),
   language: z.string().nullable(),
+  outcome: z.enum(["lowQuality"]).nullable(),
   durationSeconds: z.number().gte(0).optional(),
   resolution: zResponseResolution,
   answers: z.array(zResponseAnswer),
@@ -505,6 +506,7 @@ export const zResponseListItem = z.strictObject({
   finished: z.boolean(),
   endingId: z.string().nullable(),
   language: z.string().nullable(),
+  outcome: z.enum(["lowQuality"]).nullable(),
   durationSeconds: z.number().gte(0).optional(),
   resolution: zResponseResolution,
   answers: z.array(zResponseAnswer),
@@ -702,6 +704,7 @@ export const zResponseResource = z.strictObject({
   finished: z.boolean(),
   endingId: z.string().nullable(),
   language: z.string().nullable(),
+  outcome: z.enum(["lowQuality"]).nullable(),
   durationSeconds: z.number().gte(0).optional(),
   resolution: zResponseResolution,
   answers: z.array(zResponseAnswer),
@@ -791,6 +794,17 @@ export const zBatchDeleteResponsesRequest = z.strictObject({
 export type BatchDeleteResponsesRequestZodType = z.infer<typeof zBatchDeleteResponsesRequest>;
 
 /**
+ * Responses to mark Low quality, or to restore. A POST custom method modelled on `batch-delete`, so one request is one transaction over at most 100 ids. `outcome` is required: leaving it out must not read as a restore.
+ *
+ */
+export const zBatchSetResponsesOutcomeRequest = z.strictObject({
+  ids: z.array(z.cuid2()).min(1).max(100),
+  outcome: z.enum(["lowQuality"]).nullable(),
+});
+
+export type BatchSetResponsesOutcomeRequestZodType = z.infer<typeof zBatchSetResponsesOutcomeRequest>;
+
+/**
  * Partially updates a response. Strict at the top level: unknown keys return **400** rather than being ignored, and at least one patchable field must be present.
  *
  * `data` is **replaced wholesale**, not deep-merged — send the complete answer map you want stored. `embeddedData` is the exception and merges by name: it addresses individual fields, so a field the payload omits keeps its value rather than being cleared.
@@ -806,6 +820,7 @@ export const zPatchResponseRequest = z.strictObject({
   finished: z.boolean().optional(),
   endingId: z.string().nullish(),
   language: z.string().nullish(),
+  outcome: z.enum(["lowQuality"]).nullish(),
   data: zResponseDataMap.optional(),
   embeddedData: zResponseEmbeddedDataInput.optional(),
   tags: z.array(z.cuid2()).max(100).optional(),
@@ -1688,6 +1703,16 @@ export const zBatchDeleteResponsesV3Query = z.object({
 });
 
 export type BatchDeleteResponsesV3QueryZodType = z.infer<typeof zBatchDeleteResponsesV3Query>;
+
+export const zBatchSetResponsesOutcomeV3Body = zBatchSetResponsesOutcomeRequest;
+
+export type BatchSetResponsesOutcomeV3BodyZodType = z.infer<typeof zBatchSetResponsesOutcomeV3Body>;
+
+export const zBatchSetResponsesOutcomeV3Query = z.object({
+  workspaceId: z.cuid2(),
+});
+
+export type BatchSetResponsesOutcomeV3QueryZodType = z.infer<typeof zBatchSetResponsesOutcomeV3Query>;
 
 export const zDeleteResponseV3Path = z.object({
   responseId: z.cuid2(),

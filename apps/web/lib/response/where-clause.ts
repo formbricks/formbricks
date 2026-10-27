@@ -425,6 +425,10 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
     });
   }
 
+  if (filterCriteria?.outcome) {
+    whereClause.push({ outcome: filterCriteria.outcome });
+  }
+
   if (filterCriteria?.createdAt) {
     const createdAt: { lte?: Date; gte?: Date } = {};
     if (filterCriteria?.createdAt?.max) {
