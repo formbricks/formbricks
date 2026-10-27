@@ -342,6 +342,10 @@ const createFilterTags = (tags: TResponseFilterCriteria["tags"]) => {
     filterTags.push(appliedTags);
   }
 
+  if (tags?.appliedAny?.length) {
+    filterTags.push({ tags: { some: { tag: { name: { in: tags.appliedAny } } } } });
+  }
+
   if (tags?.notApplied) {
     const notAppliedTags = {
       tags: {

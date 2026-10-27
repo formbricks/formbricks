@@ -431,6 +431,23 @@ const tagFilterValue = (name: string, applied: boolean): FilterValue => ({
   filterType: { filterValue: "is", filterComboBoxValue: applied ? "Applied" : "Not applied" },
 });
 
+/**
+ * Ticked tags mean "tagged with any of them", like every quick filter; an `is` / `is not` rule names
+ * one tag that must, or must not, be on the response.
+ */
+const tagFilterValues = (filter: TTableFilter): FilterValue[] => {
+  if (filter.operator === "in") {
+    return [
+      {
+        elementType: { type: OptionsType.TAGS, id: TAG_PROPERTY, label: "Tags" },
+        filterType: { filterValue: "Is any of", filterComboBoxValue: [...filter.values] },
+      },
+    ];
+  }
+  if (filter.operator !== "equals" && filter.operator !== "notEquals") return [];
+  return filter.values.map((name) => tagFilterValue(name, filter.operator === "equals"));
+};
+
 const languageFilterValue = (filter: TTableFilter): FilterValue | null => {
   const elementType = { type: OptionsType.OTHERS, id: LANGUAGE_PROPERTY, label: "Language" };
   if (filter.operator === "in") {
@@ -468,10 +485,7 @@ export const toResponseFilterState = (
   const rows: FilterValue[] = [];
   for (const filter of filters) {
     if (filter.property === TAG_PROPERTY) {
-      const applied = filter.operator === "in" || filter.operator === "equals";
-      if (applied || filter.operator === "notEquals") {
-        rows.push(...filter.values.map((name) => tagFilterValue(name, applied)));
-      }
+      rows.push(...tagFilterValues(filter));
       continue;
     }
     if (filter.property === LANGUAGE_PROPERTY) {
@@ -531,6 +545,32 @@ export const filterValueToTableFilter = (row: FilterValue, survey: TSurvey): TTa
     return { property: `question.${element.id}.${matrixRow.id}`, operator: "equals", values: [value] };
   }
   return questionRule(element, filterType);
+};
+
+/**
+ * The Summary's answer links label their operator in the viewer's language ("Enthält eines von"), and a
+ * picture choice as "Bild 2"; the filter model reads the canonical English forms. Maps them back.
+ */
+export const normalizeSummaryFilterRow = (row: FilterValue, t: TFunction): FilterValue => {
+  const operators: Record<string, string> = {
+    [t("workspace.surveys.summary.includes_either")]: "Includes either",
+    [t("workspace.surveys.summary.includes_all")]: "Includes all",
+    [t("workspace.surveys.summary.is_equal_to")]: "Is equal to",
+    [t("workspace.surveys.summary.is_less_than")]: "Is less than",
+  };
+  const { filterValue, filterComboBoxValue } = row.filterType;
+  const isPicture = row.elementType.elementType === TSurveyElementTypeEnum.PictureSelection;
+  const toPicture = (value: string) => value.replace(/^\D*(\d+)$/, "Picture $1");
+  return {
+    ...row,
+    filterType: {
+      filterValue: (filterValue && operators[filterValue]) ?? filterValue,
+      filterComboBoxValue:
+        isPicture && Array.isArray(filterComboBoxValue)
+          ? filterComboBoxValue.map(toPicture)
+          : filterComboBoxValue,
+    },
+  };
 };
 
 /** Whether a table filter belongs to a question, matrix rows included. */

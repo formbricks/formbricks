@@ -20,6 +20,7 @@ import {
   buildResponseFilterModel,
   filterValueToTableFilter,
   isQuestionFilter,
+  normalizeSummaryFilterRow,
   toResponseFilterState,
 } from "../lib/response-table-filters";
 
@@ -106,16 +107,20 @@ export const useResponseTableFilters = (survey: TSurvey) => {
   // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the value, so the identity holds while it does
   const state = useMemo<{ selectedFilter: SelectedFilterValue; dateRange: DateRange }>(() => raw, [stateKey]);
 
-  /** The Summary's "filter by this answer": replaces whatever rules that question had. */
+  /**
+   * The Summary's "filter by this answer": replaces whatever rules that question had. Returns whether
+   * a filter was applied, so the caller only confirms one that was.
+   */
   const applyQuestionFilter = useCallback(
-    (row: FilterValue) => {
-      const rule = filterValueToTableFilter(row, survey);
+    (row: FilterValue): boolean => {
+      const rule = filterValueToTableFilter(normalizeSummaryFilterRow(row, t), survey);
       const questionId = row.elementType.id;
-      if (!rule || !questionId) return;
+      if (!rule || !questionId) return false;
       setFilters([...filters.filter((filter) => !isQuestionFilter(filter, questionId)), rule]);
+      return true;
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `surveyKey` stands in for `survey`
-    [filtersKey, setFilters, surveyKey]
+    [filtersKey, setFilters, surveyKey, t]
   );
 
   return {

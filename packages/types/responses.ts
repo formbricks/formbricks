@@ -375,6 +375,8 @@ const ZResponseFilterCriteriaFields = z.object({
       // same clause-expansion risk as the data filters above.
       applied: z.array(z.string()).max(MAX_FILTER_VALUES).optional(),
       notApplied: z.array(z.string()).max(MAX_FILTER_VALUES).optional(),
+      // "Tagged with any of": the Responses quick filter ticks several tags and means either.
+      appliedAny: z.array(z.string()).max(MAX_FILTER_VALUES).optional(),
     })
     .optional(),
 

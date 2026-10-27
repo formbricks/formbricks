@@ -110,6 +110,20 @@ describe("Response Utils", () => {
       expect(result.AND).toHaveLength(1);
     });
 
+    test("tagged with any of: one clause that matches either tag, beside the must-have ones", () => {
+      const result = buildWhereClause(mockSurvey as TSurvey, {
+        tags: { applied: ["beta"], appliedAny: ["vip", "churn risk"] },
+      });
+      expect(result.AND).toEqual([
+        {
+          AND: [
+            { tags: { some: { tag: { name: "beta" } } } },
+            { tags: { some: { tag: { name: { in: ["vip", "churn risk"] } } } } },
+          ],
+        },
+      ]);
+    });
+
     test("should build where clause with contact attributes", () => {
       const filterCriteria = {
         contactAttributes: {

@@ -9,6 +9,7 @@ import {
   buildResponseFilterModel,
   filterValueToTableFilter,
   isQuestionFilter,
+  normalizeSummaryFilterRow,
   toResponseFilterState,
 } from "./response-table-filters";
 
@@ -130,20 +131,31 @@ describe("toResponseFilterState → getFormattedFilters", () => {
     );
   });
 
-  test("a date preset resolves to bounds in the reporting time zone at request time", () => {
-    const criteria = criteriaFor([{ property: "createdAt", operator: "preset", values: ["last_7_days"] }]);
-    expect(criteria.createdAt?.min).toBeInstanceOf(Date);
-    expect(criteria.createdAt?.max).toBeInstanceOf(Date);
-    expect(criteria.createdAt!.min! < criteria.createdAt!.max!).toBe(true);
+  test("a date preset resolves to whole days in the reporting time zone at request time", () => {
+    const now = new Date("2026-10-27T12:00:00.000Z");
+    const filters: TTableFilter[] = [{ property: "createdAt", operator: "preset", values: ["last_7_days"] }];
+    const bounds = (timeZone: string) => {
+      const { selectedFilter, dateRange } = toResponseFilterState(filters, model.fields, timeZone, now);
+      const { min, max } = getFormattedFilters(survey, selectedFilter, dateRange).createdAt ?? {};
+      return { min: min?.toISOString(), max: max?.toISOString() };
+    };
+    // Noon UTC on Oct 27 is already Oct 28 in Auckland (UTC+13), so its seven days end a day later and
+    // each starts at that zone's local midnight.
+    expect(bounds("UTC")).toEqual({ min: "2026-10-21T00:00:00.000Z", max: "2026-10-27T23:59:59.999Z" });
+    expect(bounds("Pacific/Auckland")).toEqual({
+      min: "2026-10-21T11:00:00.000Z",
+      max: "2026-10-28T10:59:59.999Z",
+    });
   });
 
-  test("ticked tags are applied tags; a not-equals rule is a not-applied tag", () => {
+  test("ticked tags mean any of them; is / is not rules name one tag each", () => {
     expect(
       criteriaFor([
         { property: "tag", operator: "in", values: ["vip", "churn risk"] },
+        { property: "tag", operator: "equals", values: ["beta"] },
         { property: "tag", operator: "notEquals", values: ["spam"] },
       ]).tags
-    ).toEqual({ applied: ["vip", "churn risk"], notApplied: ["spam"] });
+    ).toEqual({ applied: ["beta"], notApplied: ["spam"], appliedAny: ["vip", "churn risk"] });
   });
 
   test("ticked languages become one any-of condition", () => {
@@ -261,5 +273,44 @@ describe("isQuestionFilter", () => {
     expect(isQuestionFilter({ property: "question.gridx", operator: "isSet", values: [] }, "grid")).toBe(
       false
     );
+  });
+});
+
+describe("normalizeSummaryFilterRow", () => {
+  const german = ((key: string) =>
+    ({
+      "workspace.surveys.summary.includes_either": "Enthält eines von",
+      "workspace.surveys.summary.is_equal_to": "Ist gleich",
+    })[key] ?? key) as unknown as TFunction;
+
+  test("maps a translated Summary operator back, so a click filters in every language", () => {
+    const row = {
+      elementType: {
+        type: OptionsType.ELEMENTS,
+        id: "plan",
+        label: "plan",
+        elementType: TSurveyElementTypeEnum.MultipleChoiceMulti,
+      },
+      filterType: { filterValue: "Enthält eines von", filterComboBoxValue: ["Pro"] },
+    };
+    expect(filterValueToTableFilter(row, survey)).toBeNull();
+    expect(filterValueToTableFilter(normalizeSummaryFilterRow(row, german), survey)).toEqual({
+      property: "question.plan",
+      operator: "includesOneOf",
+      values: ["Pro"],
+    });
+  });
+
+  test("maps translated picture names to the option values", () => {
+    const row = {
+      elementType: {
+        type: OptionsType.ELEMENTS,
+        id: "pics",
+        label: "pics",
+        elementType: TSurveyElementTypeEnum.PictureSelection,
+      },
+      filterType: { filterValue: "Includes all", filterComboBoxValue: ["Bild 2"] },
+    };
+    expect(normalizeSummaryFilterRow(row, german).filterType.filterComboBoxValue).toEqual(["Picture 2"]);
   });
 });

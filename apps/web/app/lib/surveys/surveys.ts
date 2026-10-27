@@ -884,7 +884,9 @@ export const getFormattedFilters = (
       notApplied: [],
     };
     tags.forEach((tag) => {
-      if (tag.filterType.filterComboBoxValue === "Applied") {
+      if (tag.filterType.filterValue === "Is any of" && Array.isArray(tag.filterType.filterComboBoxValue)) {
+        filters.tags!.appliedAny = [...tag.filterType.filterComboBoxValue];
+      } else if (tag.filterType.filterComboBoxValue === "Applied") {
         filters.tags?.applied?.push(tag.elementType.label ?? "");
       } else {
         filters.tags?.notApplied?.push(tag.elementType.label ?? "");

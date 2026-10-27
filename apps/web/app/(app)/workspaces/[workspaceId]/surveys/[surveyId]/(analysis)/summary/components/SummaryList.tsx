@@ -61,7 +61,7 @@ export const SummaryList = ({
     filterComboBoxValue?: string | string[]
   ) => {
     const hasFilter = filters.some((filter) => isQuestionFilter(filter, elementId));
-    applyQuestionFilter({
+    const isApplied = applyQuestionFilter({
       elementType: {
         id: elementId,
         label: getTextContent(getLocalizedValue(label, "default")),
@@ -70,6 +70,7 @@ export const SummaryList = ({
       },
       filterType: { filterComboBoxValue, filterValue },
     });
+    if (!isApplied) return;
     toast.success(
       hasFilter
         ? t("workspace.surveys.summary.filter_updated_successfully")
