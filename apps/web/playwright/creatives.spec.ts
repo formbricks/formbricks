@@ -54,9 +54,9 @@ test.describe("Creatives", () => {
 
     const licensed = await test.step("the instance's license includes Creatives", () =>
       hasCreativesLicense(page.request, workspaceId));
-    // TEMPORARY: CI's license lacks `creatives` until formbricks/ee#142 is deployed. Once it has the
-    // flag, replace this skip with `expect(licensed).toBe(true)`, so a license without Creatives fails
-    // the journey again instead of hiding it.
+    // TEMPORARY (ENG-6772): CI's license lacks `creatives` until formbricks/ee#142 is deployed. Once it
+    // has the flag, replace this skip with `expect(licensed).toBe(true)`, so a license without Creatives
+    // fails the journey again instead of hiding it.
     test.skip(
       !licensed,
       "The instance's Enterprise license doesn't include Creatives (403 creatives_not_entitled)"
