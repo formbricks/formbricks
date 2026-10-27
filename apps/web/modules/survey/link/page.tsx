@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import { findMatchingLocale, getAcceptedLanguages } from "@/lib/utils/locale";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
-import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
-import { resolveSingleUseIdForSurvey } from "@/modules/survey/link/lib/single-use-link";
+import { getResponseBySingleUseId } from "@/modules/survey/link/lib/data";
+import { getServableLinkSurvey } from "@/modules/survey/link/lib/servable-survey";
+import { getLinkSurveySingleUseAccess } from "@/modules/survey/link/lib/single-use-link";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getMetadataForLinkSurvey } from "@/modules/survey/link/metadata";
@@ -31,7 +30,13 @@ export const generateMetadata = async (props: LinkSurveyPageProps): Promise<Meta
   // Extract language code from URL params
   const languageCode = typeof searchParams.lang === "string" ? searchParams.lang : undefined;
 
-  return getMetadataForLinkSurvey(params.surveyId, languageCode, await getAcceptedLanguages());
+  return getMetadataForLinkSurvey({
+    surveyId: params.surveyId,
+    languageCode,
+    acceptedLanguages: await getAcceptedLanguages(),
+    suId: searchParams.suId,
+    suToken: searchParams.suToken,
+  });
 };
 
 export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
@@ -65,42 +70,26 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
    * generateMetadata and this page component are automatically deduplicated.
    */
 
-  // Stage 1: Fetch survey first (required for all subsequent logic)
-  let survey: TSurvey | null = null;
-  try {
-    survey = await getSurveyWithMetadata(params.surveyId);
-  } catch (error) {
-    logger.error(error, "Error fetching survey");
-    return notFound();
-  }
-
+  // Stage 1: Fetch survey first (required for all subsequent logic). Only a survey this page may serve
+  // comes back, so the single-use screen below can't confirm a non-public one exists (ENG-4032).
+  const survey = await getServableLinkSurvey(params.surveyId);
   if (!survey) {
     return notFound();
   }
 
-  const suId = searchParams.suId;
-  const suToken = searchParams.suToken;
-
-  // Validate single-use ID early (no I/O, just validation)
-  const isSingleUseSurvey = survey.singleUse?.enabled;
-  const isSingleUseSurveyEncrypted = survey.singleUse?.isEncrypted;
-  let singleUseId: string | undefined = undefined;
-
-  if (isSingleUseSurvey) {
-    const validatedSingleUseId = resolveSingleUseIdForSurvey({
-      surveyId: survey.id,
-      isEncrypted: Boolean(isSingleUseSurveyEncrypted),
-      suId,
-      suToken,
-      surface: "link_page",
-    });
-    if (!validatedSingleUseId) {
-      // Need to fetch workspace for error page - fetch environmentContext for it
-      const environmentContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
-      return <SurveyInactive status="link invalid" workspace={environmentContext.workspace} />;
-    }
-    singleUseId = validatedSingleUseId;
+  // Validate the single-use link early (no I/O, just validation)
+  const singleUse = getLinkSurveySingleUseAccess({
+    survey,
+    suId: searchParams.suId,
+    suToken: searchParams.suToken,
+    surface: "link_page",
+  });
+  if (!singleUse.allowed) {
+    // Need to fetch workspace for error page - fetch environmentContext for it
+    const environmentContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
+    return <SurveyInactive status="link invalid" workspace={environmentContext.workspace} />;
   }
+  const { singleUseId } = singleUse;
 
   // Stage 2: Parallel fetch of all remaining data
   const [workspaceContext, locale, acceptedLanguages, singleUseResponse] = await Promise.all([
@@ -108,10 +97,12 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
     findMatchingLocale(),
     getAcceptedLanguages(),
     // Only fetch single-use response if we have a validated ID
-    isSingleUseSurvey && singleUseId
-      ? getResponseBySingleUseId(survey.id, singleUseId)()
-      : Promise.resolve(undefined),
+    singleUseId ? getResponseBySingleUseId(survey.id, singleUseId)() : Promise.resolve(undefined),
   ]);
+
+  const singleUseResponseSummary = singleUseResponse
+    ? { id: singleUseResponse.id, finished: singleUseResponse.finished }
+    : undefined;
 
   // Fetch responseCount only if needed (depends on survey config)
   const responseCount = survey.welcomeCard.showResponseCount
@@ -123,7 +114,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
     survey,
     searchParams,
     singleUseId,
-    singleUseResponse: singleUseResponse ?? undefined,
+    singleUseResponse: singleUseResponseSummary,
     allowUrlUserIdLookup: true,
     isPreview,
     workspaceContext,

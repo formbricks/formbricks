@@ -1,7 +1,7 @@
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { hashString } from "@/lib/hash-string";
-import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
+import { UNTRUSTED_CLIENT_IP, getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import {
   type TRateLimitReservation,
   checkRateLimit,
@@ -12,16 +12,7 @@ import {
 import { rateLimitConfigs } from "./rate-limit-configs";
 import { type TRateLimitConfig, type TRateLimitResponse } from "./types/rate-limit";
 
-/**
- * Get client identifier for rate limiting with IP hashing
- * Used when the user is not authenticated or the api is called from the client
- *
- * @returns {Promise<string>} Hashed IP address for rate limiting
- * @throws {Error} When IP hashing fails due to invalid IP format or hashing algorithm issues
- */
-export const getClientIdentifier = async (): Promise<string> => {
-  const ip = await getClientIpFromHeaders();
-
+const hashClientIp = (ip: string): string => {
   try {
     return hashString(ip);
   } catch (error) {
@@ -30,6 +21,15 @@ export const getClientIdentifier = async (): Promise<string> => {
     throw new Error(errorMessage);
   }
 };
+
+/**
+ * Get client identifier for rate limiting with IP hashing
+ * Used when the user is not authenticated or the api is called from the client
+ *
+ * @returns {Promise<string>} Hashed IP address for rate limiting
+ * @throws {Error} When IP hashing fails due to invalid IP format or hashing algorithm issues
+ */
+export const getClientIdentifier = async (): Promise<string> => hashClientIp(await getClientIpFromHeaders());
 
 /**
  * Generic rate limit application function
@@ -108,11 +108,18 @@ export const recordRateLimitUsage = applyRateLimit;
  * Generic function for IP-based rate limiting in authentication flows and public pages
  *
  * @param config - Rate limit configuration to apply
+ * @param options.skipUntrustedClient - Allow, without counting, a request whose client IP Proxy could not
+ *   establish. Every such request shares one identity, so counting them would let one caller exhaust the limit
+ *   for everyone behind an untrusted forwarding chain; use it where the endpoint has another bound per request.
  * @throws {Error} When rate limit is exceeded or IP hashing fails
  */
-export const applyIPRateLimit = async (config: TRateLimitConfig): Promise<TRateLimitResponse> => {
-  const identifier = await getClientIdentifier();
-  return await applyRateLimit(config, identifier);
+export const applyIPRateLimit = async (
+  config: TRateLimitConfig,
+  options: { skipUntrustedClient?: boolean } = {}
+): Promise<TRateLimitResponse> => {
+  const ip = await getClientIpFromHeaders();
+  if (options.skipUntrustedClient && ip === UNTRUSTED_CLIENT_IP) return { allowed: true };
+  return await applyRateLimit(config, hashClientIp(ip));
 };
 
 /**

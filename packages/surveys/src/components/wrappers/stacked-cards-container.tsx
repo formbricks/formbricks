@@ -6,6 +6,7 @@ import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { type TWorkspaceStyling } from "@formbricks/types/workspace";
+import { isEndSlotEmpty, isSlotRendered } from "@/lib/end-slot";
 import { cn } from "@/lib/utils";
 import { StackedCard } from "./stacked-card";
 
@@ -22,6 +23,7 @@ interface StackedCardsContainerProps {
   shouldResetBlockId?: boolean;
   fullSizeCards: boolean;
   placement?: TPlacement;
+  hasError: boolean;
 }
 
 export function StackedCardsContainer({
@@ -34,6 +36,7 @@ export function StackedCardsContainer({
   shouldResetBlockId = true,
   fullSizeCards = false,
   placement = "bottomRight",
+  hasError,
 }: Readonly<StackedCardsContainerProps>) {
   const [hovered, setHovered] = useState(false);
   const highlightBorderColor = survey.styling?.overwriteThemeStyling
@@ -57,6 +60,15 @@ export function StackedCardsContainer({
 
     return survey.blocks.findIndex((block) => block.id === currentBlockId);
   }, [currentBlockId, survey]);
+
+  const endSlotInput = {
+    blockCount: survey.blocks.length,
+    endingCount: survey.endings.length,
+    blockIdx: blockIdxTemp,
+    hasError,
+  };
+  // A finished survey without an ending card collapses instead of leaving a blank card (ENG-4069)
+  const endSlotEmpty = isEndSlotEmpty(endSlotInput);
 
   const [prevBlockIdx, setPrevBlockIdx] = useState(blockIdxTemp - 1);
   const [currentBlockIdx, setCurrentBlockIdx] = useState(blockIdxTemp);
@@ -139,7 +151,8 @@ export function StackedCardsContainer({
       clearTimeout(timer);
       clearTimeout(resizeTimeout);
     };
-  }, [blockIdxTemp, cardArrangement, cardRefs]);
+    // hasError: the end slot of a survey without an ending card only mounts once an error shows
+  }, [blockIdxTemp, cardArrangement, cardRefs, hasError]);
 
   // Reset block progress, when card arrangement changes
   useEffect(() => {
@@ -160,48 +173,46 @@ export function StackedCardsContainer({
         setHovered(false);
       }}>
       {(cardArrangement === "straight" || cardArrangement === "casual") && (
-        <div style={{ height: cardHeight }} />
+        <div style={{ height: endSlotEmpty ? 0 : cardHeight }} />
       )}
-      {cardArrangement === "simple" || isCardless ? (
-        <div
-          id={`questionCard-${blockIdxTemp.toString()}`}
-          data-testid={`questionCard-${blockIdxTemp.toString()}`}
-          // Public styling hook (ENG-3554). A cardless layout has no card surface to style.
-          data-fb-part={isCardless ? undefined : FB_PART.card}
-          className={cn(
-            "w-full",
-            !isCardless && "bg-survey-bg overflow-hidden",
-            fullSizeCards && !isCardless ? "h-full" : ""
-          )}
-          style={isCardless ? undefined : borderStyles}>
-          {getCardContent(blockIdxTemp, 0)}
-        </div>
-      ) : (
-        blockIdxTemp !== undefined &&
-        [prevBlockIdx, currentBlockIdx, nextBlockIdx, nextBlockIdx + 1].map((dynamicBlockIndex, index) => {
-          const hasEndingCard = survey.endings.length > 0;
-          // Check for hiding extra card
-          if (dynamicBlockIndex > survey.blocks.length + (hasEndingCard ? 0 : -1)) return;
-          const offset = index - 1;
-          return (
-            <StackedCard
-              key={dynamicBlockIndex}
-              cardRefs={cardRefs}
-              dynamicQuestionIndex={dynamicBlockIndex}
-              offset={offset}
-              fullSizeCards={fullSizeCards}
-              borderStyles={borderStyles}
-              getCardContent={getCardContent}
-              cardHeight={cardHeight}
-              survey={survey}
-              cardWidth={cardWidth}
-              hovered={hovered}
-              cardArrangement={cardArrangement}
-              placement={placement}
-            />
-          );
-        })
-      )}
+      {cardArrangement === "simple" || isCardless
+        ? !endSlotEmpty && (
+            <div
+              id={`questionCard-${blockIdxTemp.toString()}`}
+              data-testid={`questionCard-${blockIdxTemp.toString()}`}
+              // Public styling hook (ENG-3554). A cardless layout has no card surface to style.
+              data-fb-part={isCardless ? undefined : FB_PART.card}
+              className={cn(
+                "w-full",
+                !isCardless && "bg-survey-bg overflow-hidden",
+                fullSizeCards && !isCardless ? "h-full" : ""
+              )}
+              style={isCardless ? undefined : borderStyles}>
+              {getCardContent(blockIdxTemp, 0)}
+            </div>
+          )
+        : [prevBlockIdx, currentBlockIdx, nextBlockIdx, nextBlockIdx + 1].map((dynamicBlockIndex, index) => {
+            // Check for hiding extra card
+            if (!isSlotRendered(dynamicBlockIndex, endSlotInput)) return;
+            const offset = index - 1;
+            return (
+              <StackedCard
+                key={dynamicBlockIndex}
+                cardRefs={cardRefs}
+                dynamicQuestionIndex={dynamicBlockIndex}
+                offset={offset}
+                fullSizeCards={fullSizeCards}
+                borderStyles={borderStyles}
+                getCardContent={getCardContent}
+                cardHeight={cardHeight}
+                survey={survey}
+                cardWidth={cardWidth}
+                hovered={hovered}
+                cardArrangement={cardArrangement}
+                placement={placement}
+              />
+            );
+          })}
     </div>
   );
 }

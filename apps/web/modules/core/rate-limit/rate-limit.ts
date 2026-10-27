@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import { randomUUID } from "node:crypto";
 import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 import { Result, ok } from "@formbricks/types/error-handlers";
@@ -71,6 +72,7 @@ export const peekRateLimit = async (
     if (!response.allowed) {
       logger.error(
         {
+          violationId: randomUUID(),
           identifier,
           currentCount,
           limit: config.allowedPerInterval,
@@ -199,6 +201,7 @@ const consumeRateLimit = async (
     // Log rate limit violations for security monitoring
     if (!response.allowed) {
       const violationContext = {
+        violationId: randomUUID(),
         identifier,
         currentCount,
         limit: config.allowedPerInterval,

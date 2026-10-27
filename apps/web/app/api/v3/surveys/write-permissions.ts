@@ -2,6 +2,7 @@ import "server-only";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import type { TSurvey, TSurveyEnding } from "@formbricks/types/surveys/types";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
+import { isDefaultEndingCardButtonLink } from "@/lib/survey/default-ending-card";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import type { TV3SurveyDocument } from "./schemas";
@@ -30,6 +31,10 @@ export class V3SurveyWritePermissionError extends Error {
 
 function getEndingExternalUrl(ending: TSurveyEnding): string | null {
   if (ending.type === "endScreen") {
+    // The product-provided default CTA is not a user-chosen external URL.
+    if (isDefaultEndingCardButtonLink(ending.buttonLink)) {
+      return null;
+    }
     return ending.buttonLink ?? null;
   }
 

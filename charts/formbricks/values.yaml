@@ -369,7 +369,7 @@ taxonomy:
 
   image:
     repository: "ghcr.io/formbricks/taxonomy"
-    tag: "v0.1.0"
+    tag: "0.1.14"
     digest: ""
     pullPolicy: IfNotPresent
 
@@ -469,7 +469,9 @@ taxonomy:
   terminationGracePeriodSeconds: 930
 
   envFrom: []
-  env: {}
+  # The v0.1.0 image runs uv at startup, which needs a writable cache as a non-root user.
+  env:
+    UV_CACHE_DIR: /tmp/uv-cache
 
   resources:
     requests:
@@ -534,8 +536,19 @@ taxonomy:
 
   podAnnotations: {}
   podLabels: {}
-  podSecurityContext: {}
-  securityContext: {}
+  podSecurityContext:
+    fsGroup: 65532
+    seccompProfile:
+      type: RuntimeDefault
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
   nodeSelector: {}
   tolerations: []
   affinity: {}
@@ -702,7 +715,7 @@ authzed:
 
   cluster:
     name: ""
-    version: v1.52.0
+    version: v1.56.2
     channel: stable
     replicas: 2
     config:
@@ -807,8 +820,10 @@ envoy:
   controller:
     enabled: false
 
-  # Install the Gateway API and Envoy Gateway CRDs bundled with the controller.
-  # Set this to false when the platform manages both CRD sets separately.
+  # The Envoy v1.8.4 dependency installs Gateway API v1.5.1 Experimental and Envoy Gateway CRDs together.
+  # false omits BOTH CRD sets and bundled Gateway API safe-upgrade admission resources.
+  # If the platform owns only Gateway API, install matching Envoy Gateway v1.8.4 CRDs separately first.
+  # The controller and Formbricks Gateway/routes/policies remain enabled independently.
   crds:
     enabled: true
     gatewayAPI:
@@ -1086,7 +1101,7 @@ cube:
   # repository and tag back at an upstream "cubejs/cube" release is supported.
   image:
     repository: "ghcr.io/formbricks/cube"
-    tag: "1.7.50-1"
+    tag: "1.8.8-2"
     digest: ""
     pullPolicy: IfNotPresent
 

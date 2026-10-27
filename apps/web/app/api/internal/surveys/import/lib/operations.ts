@@ -11,6 +11,7 @@ import { problemInternalError, problemUnprocessableContent } from "@/app/api/v3/
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getSessionUserId } from "@/app/api/v3/surveys/lib/operations";
 import { assertOrganizationAIConfigured } from "@/lib/ai/service";
+import { getAITimeoutMs } from "@/lib/ai/timeout";
 import {
   QsfImportInputError,
   QsfImportTimeoutError,
@@ -107,7 +108,8 @@ export async function streamQsfImport({
     return problemInternalError(requestId, undefined, instance);
   }
 
-  const importAbort = createRequestAbort(req, { deadlineMs: QSF_IMPORT_DEADLINE_MS });
+  const deadlineMs = getAITimeoutMs(QSF_IMPORT_DEADLINE_MS);
+  const importAbort = createRequestAbort(req, { deadlineMs });
   const startedAt = performance.now();
   let stage: TQsfImportStage = "reading";
   let outcome: TImportOutcome = "failed";
@@ -131,7 +133,7 @@ export async function streamQsfImport({
         organizationId,
         userId,
         signal: importAbort.signal,
-        deadlineMs: QSF_IMPORT_DEADLINE_MS,
+        deadlineMs,
         onProgress: reportStage,
       });
 
@@ -147,11 +149,11 @@ export async function streamQsfImport({
         outcome = "timed_out";
         const event = importTimedOutEvent();
         errorCode = event.code;
-        log.warn({ deadlineMs: QSF_IMPORT_DEADLINE_MS, planTimedOut }, "QSF import hit its deadline");
+        log.warn({ deadlineMs, planTimedOut }, "QSF import hit its deadline");
         return event;
       }
 
-      if (isClientAbort(error, importAbort.signal)) {
+      if (isClientAbort(importAbort.signal)) {
         // Pressing Stop is not an incident. The socket is gone, so there is nobody to tell either.
         outcome = "aborted";
         return null;

@@ -11,9 +11,11 @@ import { TUserLocale } from "@formbricks/types/user";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
+import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { validateInputs } from "@/lib/utils/validate";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { getOrganizationMemberEmails, resolveEmailActorUserId } from "@/modules/email/lib/email-actor";
 import { sendFollowUpEmail } from "@/modules/survey/follow-ups/lib/email";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { FollowUpResult, FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
@@ -23,6 +25,8 @@ const evaluateFollowUp = async (
   survey: TSurvey,
   response: TResponse,
   organization: TOrganization,
+  rateLimit: { organizationId: string; actorUserId: string | null },
+  organizationMemberEmails: ReadonlySet<string>,
   locale?: TUserLocale
 ): Promise<FollowUpResult> => {
   try {
@@ -46,6 +50,11 @@ const evaluateFollowUp = async (
         includeHiddenFields: properties.includeHiddenFields,
         logoUrl,
         locale,
+        // The author can type any address, so only a member's counts as the organization's own mail.
+        rateLimit: {
+          ...rateLimit,
+          externalRecipient: !organizationMemberEmails.has(normalizeEmailForComparison(parsedEmailTo.data)),
+        },
       });
 
       return {
@@ -79,6 +88,7 @@ const evaluateFollowUp = async (
           includeVariables: properties.includeVariables,
           includeHiddenFields: properties.includeHiddenFields,
           locale,
+          rateLimit: { ...rateLimit, externalRecipient: true },
         });
 
         return {
@@ -115,6 +125,7 @@ const evaluateFollowUp = async (
           includeVariables: properties.includeVariables,
           includeHiddenFields: properties.includeHiddenFields,
           locale,
+          rateLimit: { ...rateLimit, externalRecipient: true },
         });
 
         return {
@@ -215,6 +226,26 @@ export const sendFollowUpsForResponse = async (
       };
     }
 
+    // The only addresses this run classifies are the literal ones each follow-up names, and the actor is only
+    // looked up for a survey without an owner; the two reads are independent, so they run together.
+    const [organizationMemberEmails, actorUserId] = await Promise.all([
+      getOrganizationMemberEmails(
+        organization.id,
+        survey.followUps.flatMap((followUp) => {
+          const parsedTo = z.email().safeParse(followUp.action.properties.to);
+          return parsedTo.success ? [parsedTo.data] : [];
+        })
+      ),
+      // The respondent is anonymous, so the survey's organization and owner carry the email limits. The owner,
+      // not `createdBy`, which an API caller can set to anyone.
+      resolveEmailActorUserId(survey.ownerId, organization.id),
+    ]);
+
+    const rateLimit = {
+      organizationId: organization.id,
+      actorUserId,
+    };
+
     // Process each follow-up
     const followUpPromises = survey.followUps.map(async (followUp): Promise<FollowUpResult> => {
       const { trigger } = followUp;
@@ -232,7 +263,15 @@ export const sendFollowUpsForResponse = async (
         }
       }
 
-      return evaluateFollowUp(followUp, survey, response, organization, locale);
+      return evaluateFollowUp(
+        followUp,
+        survey,
+        response,
+        organization,
+        rateLimit,
+        organizationMemberEmails,
+        locale
+      );
     });
 
     const followUpResults = await Promise.all(followUpPromises);

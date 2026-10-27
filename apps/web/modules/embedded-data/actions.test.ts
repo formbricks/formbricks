@@ -115,7 +115,7 @@ let ctx: TTestCtx;
 
 beforeEach(() => {
   vi.clearAllMocks();
-  ctx = { user: { id: userId }, auditLoggingCtx: { ipAddress: "unknown" } };
+  ctx = { user: { id: userId }, auditLoggingCtx: { ipAddress: "unknown", userAgent: "test-agent" } };
   vi.mocked(assertCan).mockResolvedValue(undefined);
   mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue(organizationId);
   mocks.getEmbeddedDataWorkspaceId.mockResolvedValue(workspaceId);
