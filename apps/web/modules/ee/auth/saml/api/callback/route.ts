@@ -5,7 +5,19 @@ import { responses } from "@/app/lib/api/response";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import jackson from "@/modules/ee/auth/saml/lib/jackson";
-import { checkSamlResponseBounds } from "@/modules/ee/auth/saml/lib/saml-response-bounds";
+import {
+  type SamlResponseRefusal,
+  checkSamlResponseBounds,
+} from "@/modules/ee/auth/saml/lib/saml-response-bounds";
+
+/** What a response past the byte bounds is told: the kind of bound, never the counts. */
+const BOUNDS_REFUSAL_MESSAGES: Record<SamlResponseRefusal["reason"], string> = {
+  length: "SAMLResponse is too large to process",
+  markup: "SAMLResponse is too large to process",
+  depth: "SAMLResponse is too large to process",
+  declaration: "SAMLResponse must not contain a DOCTYPE or other declaration",
+  elements: "SAMLResponse carries more elements than a SAML response does",
+};
 
 /**
  * Refusals before parsing cost an anonymous caller one small request each, so they are logged at most once per
@@ -46,11 +58,7 @@ export const POST = async (req: Request) => {
   if (refusal) {
     // Sizes only, never content.
     warnThrottled(`bounds:${refusal.reason}`, refusal, "Refused a SAML response before parsing it");
-    return responses.badRequestResponse(
-      refusal.reason === "declaration"
-        ? "SAMLResponse must not contain a DOCTYPE or other declaration"
-        : "SAMLResponse is too large to process"
-    );
+    return responses.badRequestResponse(BOUNDS_REFUSAL_MESSAGES[refusal.reason]);
   }
 
   // Only a response about to be parsed counts against the per-IP limit, so junk refused above cannot spend the
