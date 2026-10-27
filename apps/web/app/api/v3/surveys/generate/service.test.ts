@@ -9,7 +9,21 @@ import {
   generateV3SurveyCreatePayloadFromPrompt,
 } from "./service";
 
+const aiTimeoutEnv = vi.hoisted(() => ({ multiplier: 1 }));
+
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/env", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/env")>();
+  return {
+    ...original,
+    env: {
+      ...original.env,
+      get AI_TIMEOUT_MULTIPLIER() {
+        return aiTimeoutEnv.multiplier;
+      },
+    },
+  };
+});
 
 vi.mock("@/lib/ai/service", () => ({
   generateOrganizationAIObject: vi.fn(),
@@ -60,6 +74,7 @@ function generatedElement(overrides: GeneratedElementOverrides) {
 
 describe("generateV3SurveyCreatePayloadFromPrompt", () => {
   beforeEach(() => {
+    aiTimeoutEnv.multiplier = 1;
     vi.clearAllMocks();
   });
 
@@ -97,7 +112,8 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
     expect(generateOrganizationAIObject).not.toHaveBeenCalled();
   });
 
-  test("returns a validated draft v3 create payload", async () => {
+  test.each([1, 3])("validates a draft with timeout multiplier %i", async (multiplier) => {
+    aiTimeoutEnv.multiplier = multiplier;
     vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
       object: {
         language: "en-US",
@@ -162,7 +178,7 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
         schemaName: "FormbricksSurveyDraft",
         temperature: 0.2,
         maxOutputTokens: 8192,
-        timeout: 45_000,
+        timeout: 45_000 * multiplier,
       })
     );
     const generationOptions = vi.mocked(generateOrganizationAIObject).mock.calls[0][0];

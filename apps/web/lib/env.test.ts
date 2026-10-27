@@ -23,6 +23,7 @@ const setTestEnv = (overrides: Record<string, string | undefined> = {}) => {
     AUTHZED_TOKEN: undefined,
     MCP_OAUTH_JWKS_URL: undefined,
     MCP_DCR_ALLOWED_REDIRECT_URIS: undefined,
+    AI_TIMEOUT_MULTIPLIER: undefined,
     SES_CONFIGURATION_SET: undefined,
     SES_EMAIL_ENVIRONMENT: undefined,
     ...overrides,
@@ -37,6 +38,26 @@ describe("env", () => {
   afterEach(() => {
     process.env = ORIGINAL_ENV;
   });
+
+  test.each([undefined, "", "   "])("defaults the AI timeout multiplier for %j", async (value) => {
+    setTestEnv({ AI_TIMEOUT_MULTIPLIER: value });
+    const { env } = await import("./env");
+    expect(env.AI_TIMEOUT_MULTIPLIER).toBe(1);
+  });
+
+  test.each(["1", "1.5", "3", "10"])("accepts AI timeout multiplier %s", async (value) => {
+    setTestEnv({ AI_TIMEOUT_MULTIPLIER: value });
+    const { env } = await import("./env");
+    expect(env.AI_TIMEOUT_MULTIPLIER).toBe(Number(value));
+  });
+
+  test.each(["0", "-1", "0.99", "10.01", "NaN", "Infinity", "-Infinity", "abc"])(
+    "rejects invalid AI timeout multiplier %s",
+    async (value) => {
+      setTestEnv({ AI_TIMEOUT_MULTIPLIER: value });
+      await expect(import("./env")).rejects.toThrow("AI_TIMEOUT_MULTIPLIER");
+    }
+  );
 
   test("allows SES tagging to remain disabled for ordinary SMTP", async () => {
     setTestEnv();

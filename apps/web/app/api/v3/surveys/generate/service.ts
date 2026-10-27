@@ -1,8 +1,10 @@
 import "server-only";
 import { createId } from "@paralleldrive/cuid2";
+import { AI_DEFAULT_TIMEOUT_MS } from "@formbricks/types/ai-timeout";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
+import { getAITimeoutMs } from "@/lib/ai/timeout";
 import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
 import { type TV3SurveyPrepareResult, prepareV3SurveyCreateInput } from "../prepare";
 import { DEFAULT_V3_SURVEY_LANGUAGE, type TV3CreateSurveyBody, formatV3ZodInvalidParams } from "../schemas";
@@ -32,7 +34,7 @@ export type TV3SurveyGenerateResult = {
   validation: TV3SurveyGenerateValidation;
 };
 
-const V3_SURVEY_GENERATION_TIMEOUT_MS = 45_000;
+const V3_SURVEY_GENERATION_TIMEOUT_MS = AI_DEFAULT_TIMEOUT_MS;
 
 // Gemini 2.5 Flash spends a large share of the output budget on reasoning tokens before emitting
 // the survey JSON; 8192 leaves headroom for both so long prompts don't stop with finishReason
@@ -415,7 +417,7 @@ export function buildV3SurveyGenerationRequest(input: TV3SurveyGenerateBody) {
     ),
     temperature: 0.2,
     maxOutputTokens: V3_SURVEY_GENERATION_MAX_OUTPUT_TOKENS,
-    timeout: V3_SURVEY_GENERATION_TIMEOUT_MS,
+    timeout: getAITimeoutMs(V3_SURVEY_GENERATION_TIMEOUT_MS),
   };
 }
 
