@@ -1150,9 +1150,11 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
   // Question codes and answer codes (ENG-6778). Embedded Data names are read from the derived legacy
   // columns, which hold both the hidden fields and the variables whichever carrier the payload used.
   if (hasBlocks) {
+    // Typed as optional on purpose: the create-input schema reaches this refinement with both absent.
+    const declared: { hiddenFields?: { fieldIds?: string[] }; variables?: { name: string }[] } = survey;
     const embeddedDataNames = [
-      ...(survey.hiddenFields.fieldIds ?? []),
-      ...survey.variables.map((variable) => variable.name),
+      ...(declared.hiddenFields?.fieldIds ?? []),
+      ...(declared.variables ?? []).map((variable) => variable.name),
     ];
     for (const issue of validateSurveyCodes({ blocks, embeddedDataNames })) {
       ctx.addIssue({ code: "custom", message: issue.message, path: issue.path });
