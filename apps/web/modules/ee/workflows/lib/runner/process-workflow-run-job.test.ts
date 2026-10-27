@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import type { TWorkflowRunJobData } from "@formbricks/jobs";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import { processWorkflowRunJob } from "./process-workflow-run-job";
 
 const {
@@ -730,11 +731,53 @@ describe("processWorkflowRunJob", () => {
     // Claimed the failed row via updateMany (failed→running), then re-sent, then updated to succeeded.
     expect(mockWorkflowRunLogUpdateMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { runId: baseRun.id, stepId: "send-email", status: { in: ["failed", "pending"] } },
+        where: { runId: baseRun.id, stepId: "send-email", status: { in: ["failed", "pending", "skipped"] } },
         data: expect.objectContaining({ status: "running" }),
       })
     );
     expect(mockWorkflowRunLogCreate).not.toHaveBeenCalled();
+    expect(mockSendEmail).toHaveBeenCalledTimes(1);
+    const completion = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+    expect(completion.data.status).toBe("completed");
+    expect(completion.data.data.steps[0]).toMatchObject({ status: "succeeded" });
+  });
+
+  test("a rate-limited send is recorded as skipped and completes the run, not as a failure", async () => {
+    mockSendEmail.mockRejectedValue(new TooManyRequestsError("Maximum number of requests reached"));
+    mockWorkflowRunUpdateMany.mockResolvedValue({ count: 1 });
+
+    await expect(processWorkflowRunJob(data, baseContext)).resolves.toBeUndefined();
+
+    // The step says why it did not send, and it is not a `failed` row: no error trace, no run failure.
+    expect(mockWorkflowRunLogUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: "skipped",
+          error: null,
+          output: { reason: "email_rate_limited" },
+        }),
+      })
+    );
+    const completion = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+    expect(completion.data.status).toBe("completed");
+    expect(completion.data.data.steps[0]).toMatchObject({ status: "skipped" });
+    expect(mockCapturePostHogEvent).not.toHaveBeenCalled();
+  });
+
+  test("retry of a throttled step: claims the skipped row and re-sends (it never went out)", async () => {
+    mockWorkflowRunFindFirst.mockResolvedValue({ ...baseRun, status: "running" });
+    mockWorkflowRunUpdateMany.mockResolvedValue({ count: 0 });
+    mockWorkflowRunLogFindFirst.mockResolvedValue(existingStepLog("skipped"));
+    mockWorkflowRunLogUpdateMany.mockResolvedValue({ count: 1 });
+
+    await expect(processWorkflowRunJob(data, baseContext)).resolves.toBeUndefined();
+
+    expect(mockWorkflowRunLogUpdateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { runId: baseRun.id, stepId: "send-email", status: { in: ["failed", "pending", "skipped"] } },
+        data: expect.objectContaining({ status: "running" }),
+      })
+    );
     expect(mockSendEmail).toHaveBeenCalledTimes(1);
     const completion = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
     expect(completion.data.status).toBe("completed");

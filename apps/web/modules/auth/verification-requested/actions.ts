@@ -7,6 +7,7 @@ import {
   InvalidInputError,
   ResourceNotFoundError,
   SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE,
+  TooManyRequestsError,
 } from "@formbricks/types/errors";
 import { ZUserEmail } from "@formbricks/types/user";
 import { WEBAPP_URL } from "@/lib/constants";
@@ -141,7 +142,17 @@ export const resendVerificationEmailAction = actionClient.inputSchema(ZResendVer
     // Anyone can ask for this account's email from here. Counted per account, only when an email is sent,
     // and below the recipient cap, so strangers rotating IPs cannot spend the whole cap and leave the
     // user's own sign-in with none.
-    await applyRateLimit(rateLimitConfigs.auth.verifyEmailPerAccount, user.id);
+    try {
+      await applyRateLimit(rateLimitConfigs.auth.verifyEmailPerAccount, user.id);
+    } catch (error) {
+      // Answer quietly, exactly as a sent email does. Only unverified accounts reach this line, so an error
+      // here would tell anyone which addresses have one — the same reasoning that makes the callback in
+      // auth.ts swallow the same refusal.
+      if (error instanceof TooManyRequestsError) {
+        return { success: true };
+      }
+      throw error;
+    }
     ctx.auditLoggingCtx.userId = user.id;
     if (ssoRecoveryResend) {
       // ENG-2783: the resent link and the refreshed intent get ONE lifetime, computed once here.

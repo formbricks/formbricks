@@ -6,6 +6,7 @@ import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { getOrganizationMemberEmails } from "@/modules/email/lib/email-actor";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { sendFollowUpEmail } from "./email";
 import { sendFollowUpsForResponse } from "./follow-ups";
@@ -27,8 +28,9 @@ vi.mock("@/lib/survey/service", () => ({
 // Owners resolve to themselves; only team@example.com and direct@example.com are members of the organization.
 vi.mock("@/modules/email/lib/email-actor", () => ({
   resolveEmailActorUserId: vi.fn(async (ownerUserId: string | null) => ownerUserId ?? "org-owner"),
-  isOrganizationMemberEmail: vi.fn(async (_organizationId: string, email: string) =>
-    ["team@example.com", "direct@example.com"].includes(email)
+  getOrganizationMemberEmails: vi.fn(
+    async (_organizationId: string, emails: readonly string[]) =>
+      new Set(emails.filter((email) => ["team@example.com", "direct@example.com"].includes(email)))
   ),
 }));
 
@@ -353,6 +355,9 @@ describe("Follow-ups", () => {
           rateLimit: { organizationId: "org1", actorUserId: "owner-1", externalRecipient: true },
         })
       );
+      // One lookup for the run's literal addresses, not one per follow-up.
+      expect(getOrganizationMemberEmails).toHaveBeenCalledTimes(1);
+      expect(getOrganizationMemberEmails).toHaveBeenCalledWith("org1", ["stranger@example.com"]);
     });
 
     // A survey created with an API key has no owner; its organization's owner is charged instead.

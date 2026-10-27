@@ -72,15 +72,30 @@ const externalSurveyEmail: TEmailRateLimit = {
 };
 
 /**
+ * The verification link a visitor asks a public link survey to email them. Same external-address shape, but
+ * its own counter: anyone who can open the page can trigger it, so sharing `survey_external` let an
+ * anonymous caller spend an organization's follow-up and workflow budget and silence those emails
+ * (ENG-3823).
+ */
+const visitorRequestedSurveyLink: TEmailRateLimit = {
+  group: "survey_link_verification",
+  externalOnly: true,
+  organization: limit(200),
+  actor: limit(300),
+  recipient: { inOrganization: limit(5) },
+};
+
+/**
  * One entry per email type, so a new type cannot compile until someone has decided its limits.
  *
  * A per-deployment cap is shared by every tenant, so whoever can reach it stops that email for everyone. Only
- * email a signed-in user sends to an address they typed in has one (invites, email changes), set far above
- * what a few accounts can send. Sign-in and account email has none.
+ * email a signed-in user sends to an address they typed in has one, set far above what a few accounts can
+ * send. Sign-in and account email has none.
  *
  * A per-recipient cap counts one address from one organization, so a sender can neither flood an inbox nor
- * block that person from hearing from anyone else. Only account email, which an address gets from its own
- * account alone, is counted across everyone.
+ * block that person from hearing from anyone else. Account email, which an address gets from its own account
+ * alone, and the self-service address change are counted across everyone, because nobody else should be able
+ * to spend that address's inbox either.
  *
  * Invites are also counted per inviting user and per organization where they are created
  * (`invite-rate-limit.ts`), which counts recipients before an invite exists.
@@ -90,9 +105,11 @@ export const emailRateLimits: Record<TEmailType, TEmailRateLimit> = {
   invite_accepted: {},
   email_verification: { recipient: { total: limit(5) } },
   sso_recovery_verification: { recipient: { total: limit(5) } },
-  // Limited to 3 an hour per user where the change is requested. No recipient cap: an address that already
-  // has an account is refused silently, so counting only the others would reveal which addresses exist.
-  email_change_verification: { deployment: limit(1000) },
+  // Limited to 3 an hour per user where the change is requested, and to 3 an hour for one address across
+  // users: the recipient is still someone's inbox, whoever asked. No per-deployment cap, which every tenant
+  // shares and a few hundred accounts could spend to silence everyone else's email change. A taken address
+  // is refused before any send and that refusal is swallowed, so the recipient cap reveals nothing.
+  email_change_verification: { recipient: { total: limit(3) } },
   // Six an hour: strangers can ask for three (forgot password, per account) and the signed-in user for three
   // more (profile settings), so neither can use up the other's.
   password_reset: { recipient: { total: limit(6) } },
@@ -105,7 +122,7 @@ export const emailRateLimits: Record<TEmailType, TEmailRateLimit> = {
   response_notification: { organization: limit(2000) },
   survey_preview: { actor: limit(10) },
   customization_preview: { actor: limit(10) },
-  verified_survey_link: externalSurveyEmail,
+  verified_survey_link: visitorRequestedSurveyLink,
   survey_follow_up: externalSurveyEmail,
   workflow_email: externalSurveyEmail,
 };
@@ -228,11 +245,17 @@ export const applyEmailRateLimits = async (
     return;
   }
 
-  await Promise.all(
+  const refunds = await Promise.allSettled(
     results.map((result) =>
       result.status === "fulfilled" ? settleRateLimitUsage(result.value, 0) : Promise.resolve()
     )
   );
+  for (const refund of refunds) {
+    if (refund.status === "rejected") {
+      // A cap left spent only costs capacity. The caller must still see the refusal below, never this.
+      logger.warn({ emailType, error: refund.reason }, "Failed to hand back email rate-limit usage");
+    }
+  }
 
   const { reason } = results[refusedIndex] as PromiseRejectedResult;
   if (reason instanceof TooManyRequestsError) {

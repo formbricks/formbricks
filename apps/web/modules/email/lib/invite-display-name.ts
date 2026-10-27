@@ -1,3 +1,5 @@
+import { parse } from "tldts";
+
 // The inviter's profile name is the one piece of free text a stranger controls in an invite email
 // that Formbricks sends from its own domain. Names from SSO or older accounts are not guaranteed to
 // satisfy `ZUserName`, so the email bounds what it shows instead of trusting the stored value.
@@ -27,25 +29,38 @@ const isLinkLike = (token: string): boolean => {
 };
 
 const DOMAIN_LABEL = /^[\p{L}\p{N}-]+$/u;
-const TOP_LEVEL_DOMAIN = /^\p{L}{2,}$/u;
 const NON_HOST_CHARACTERS = /[^\p{L}\p{N}.-]+/u;
+
+// RFC 2606 reserves these for documentation and tests. Mail clients still linkify them, so they are stripped
+// like a real top-level domain even though the public suffix list does not carry them.
+const RESERVED_TOP_LEVEL_DOMAINS: Record<string, true> = {
+  example: true,
+  invalid: true,
+  localhost: true,
+  test: true,
+};
 
 const isDomainLike = (piece: string): boolean => {
   // Trailing dots trimmed by hand: `/\.+$/` retries from every dot and is quadratic on a run of them.
   let end = piece.length;
   while (end > 0 && piece[end - 1] === ".") end--;
-  const labels = piece.slice(0, end).split(".");
-  return (
-    labels.length >= 2 &&
-    labels.every((label) => DOMAIN_LABEL.test(label)) &&
-    TOP_LEVEL_DOMAIN.test(labels.at(-1) ?? "")
-  );
+  const candidate = piece.slice(0, end);
+  const labels = candidate.split(".");
+  if (labels.length < 2 || !labels.every((label) => DOMAIN_LABEL.test(label))) {
+    return false;
+  }
+  // A delegated top-level domain is what a mail client turns into a link. Testing against the public suffix
+  // list keeps ordinary dotted names — `john.doe`, `J.Smith`, `Anna.Müller`, `Dr.Smith` — out of the
+  // stripper, while `spam.example`, `evil.com` and `win.spam.co.uk` still go.
+  if (parse(candidate, { allowPrivateDomains: false }).isIcann) {
+    return true;
+  }
+  return RESERVED_TOP_LEVEL_DOMAINS[(labels.at(-1) ?? "").toLowerCase()] === true;
 };
 
 // Bare domains such as `spam.example`, `(spam.example)` or `Anna,spam.example/offer`, which most mail clients
 // turn into links. The token is cut at every character a host cannot contain and each piece is checked,
-// all with linear scans. An initial like `J.R.R.` is kept: its last label is one letter. A name written as
-// `Dr.Smith` reads as a domain too; that is the price of not shipping a list of top-level domains.
+// all with linear scans.
 const isBareDomain = (token: string): boolean => token.split(NON_HOST_CHARACTERS).some(isDomainLike);
 
 export const toInviteDisplayName = (name: string, fallback: string): string => {

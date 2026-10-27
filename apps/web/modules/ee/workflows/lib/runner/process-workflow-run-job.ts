@@ -5,6 +5,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { type JobHandler, type TWorkflowRunJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import type { TResponse } from "@formbricks/types/responses";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
@@ -236,6 +237,11 @@ const sendResolvedEmail = async (
     }
     return { status: "failed", error: "SMTP is not configured; workflow email was not sent", output: {} };
   } catch (sendError) {
+    // A spent email cap is not a send failure: nothing reached SMTP, and the run history and failure
+    // analytics should say "throttled", not "broken". Recorded as skipped, which a later attempt retries.
+    if (sendError instanceof TooManyRequestsError) {
+      return { status: "skipped", error: null, output: { reason: "email_rate_limited" } };
+    }
     return {
       status: "failed",
       error: toError(sendError, "Failed to send workflow email").message,
@@ -362,9 +368,10 @@ const claimAndSendStep = async (
     return sendOwnedStep(step, runId, emailContext);
   }
 
-  // A prior attempt left a `failed`/`pending` row — take it over only if it is still in that state.
+  // A prior attempt left a `failed`/`pending`/`skipped` row — take it over only if it is still in that
+  // state. `skipped` means a rate-limited send that never went out, so re-attempting it is safe.
   const claim = await prisma.workflowRunLog.updateMany({
-    where: { runId, stepId: step.stepId, status: { in: ["failed", "pending"] } },
+    where: { runId, stepId: step.stepId, status: { in: ["failed", "pending", "skipped"] } },
     data: { status: "running", startedAt, output: {}, error: null, finishedAt: null },
   });
   if (claim.count === 0) {
@@ -387,8 +394,8 @@ const STEP_BAIL = Symbol("workflow-step-bail");
  * Runs one planned step with a per-step claim guard:
  *  - `succeeded` row → resume (no send).
  *  - `running` row → owned by a concurrent delivery / stalled attempt → BAIL (no send, don't finalize).
- *  - no row / `failed` / `pending` → claim, then send (a `failed` send never went out, so re-sending is safe).
- *    A lost claim (concurrent `create`/`updateMany` won) also BAILs.
+ *  - no row / `failed` / `pending` / `skipped` → claim, then send (none of those ever went out, so
+ *    re-sending is safe). A lost claim (concurrent `create`/`updateMany` won) also BAILs.
  */
 const runStep = async (
   step: TWorkflowExecutableStep,

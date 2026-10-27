@@ -103,16 +103,24 @@ describe("emailRateLimits", () => {
     const withDeploymentCap = (Object.keys(emailRateLimits) as TEmailType[]).filter(
       (emailType) => emailRateLimits[emailType].deployment
     );
-    expect(withDeploymentCap.sort()).toEqual(["email_change_verification", "invite"]);
+    expect(withDeploymentCap.sort()).toEqual(["invite"]);
   });
 
-  // Counting an address across organizations would let any of them block it for the others.
-  test("counts a recipient across organizations only for account email", () => {
+  // Counting an address across organizations would let any of them block it for the others. Account email is
+  // the exception: only its own account sends it. So is a self-service address change, whose recipient is
+  // someone's inbox whichever account asked.
+  test("counts a recipient across organizations only for account email and address changes", () => {
     const withTotal = (Object.keys(emailRateLimits) as TEmailType[]).filter(
       (emailType) => emailRateLimits[emailType].recipient?.total
     );
     expect(withTotal.sort()).toEqual(
-      ["email_verification", "password_reset", "sso_recovery_verification", "sso_sign_in_hint"].sort()
+      [
+        "email_change_verification",
+        "email_verification",
+        "password_reset",
+        "sso_recovery_verification",
+        "sso_sign_in_hint",
+      ].sort()
     );
   });
 });
@@ -169,28 +177,41 @@ describe("applyEmailRateLimits", () => {
       await refused(send("workflow_email", "x@example.com", external("org-1", "new-owner")));
     });
 
-    // Otherwise one owner gets 200 an hour per type, three times over.
-    test("follow-ups, workflow emails and verified links share one budget", async () => {
+    // Otherwise one owner gets 200 an hour per type, twice over.
+    test("follow-ups and workflow emails share one budget", async () => {
       await sendTimes(
-        70,
+        100,
         "survey_follow_up",
         (index) => `a-${index}@example.com`,
         () => external("org-1")
       );
       await sendTimes(
-        70,
+        100,
         "workflow_email",
         (index) => `b-${index}@example.com`,
         () => external("org-1")
       );
+
+      await refused(send("survey_follow_up", "d@example.com", external("org-1")));
+    });
+
+    // The visitor asks for a verification link from a public page: a stranger must not be able to spend the
+    // organization's follow-up budget with it (ENG-3823).
+    test("verified links have their own budget, so a public page cannot drain the survey's", async () => {
       await sendTimes(
-        60,
+        200,
         "verified_survey_link",
-        (index) => `c-${index}@example.com`,
+        (index) => `v-${index}@example.com`,
         () => external("org-1")
       );
+      await refused(send("verified_survey_link", "next@example.com", external("org-1")));
 
-      await refused(send("verified_survey_link", "d@example.com", external("org-1")));
+      await expect(
+        send("survey_follow_up", "customer@example.com", external("org-1"))
+      ).resolves.toBeUndefined();
+      await expect(
+        send("workflow_email", "customer@example.com", external("org-1"))
+      ).resolves.toBeUndefined();
     });
   });
 
@@ -256,8 +277,21 @@ describe("applyEmailRateLimits", () => {
       await refused(send("email_verification", "NEW@example.com"));
     });
 
-    test("are not kept for email changes, so a refusal cannot reveal which addresses have accounts", () => {
-      expect(emailRateLimits.email_change_verification.recipient).toBeUndefined();
+    test("are kept for email changes, so one inbox cannot be flooded across accounts", async () => {
+      await sendTimes(
+        3,
+        "email_change_verification",
+        () => "victim@example.com",
+        (index) => ({ organizationId: `org-${index}` })
+      );
+
+      await refused(
+        send("email_change_verification", "victim@example.com", { organizationId: "another-org" })
+      );
+      // A refusal is swallowed by the caller, exactly like the taken-address path, so it reveals nothing.
+      await expect(
+        send("email_change_verification", "free@example.com", { organizationId: "another-org" })
+      ).resolves.toBeUndefined();
     });
   });
 

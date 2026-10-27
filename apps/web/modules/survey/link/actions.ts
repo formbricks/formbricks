@@ -46,7 +46,12 @@ export const sendLinkSurveyEmailAction = actionClient
       getOrganizationIdFromSurveyId(parsedInput.surveyId),
       getSurveyOwnerId(parsedInput.surveyId),
     ]);
-    const organizationLogoUrl = await getOrganizationLogoUrl(organizationId);
+    // Independent reads on the hot path of an unauthenticated action: run them together. `ownerId` stays out
+    // of the survey the page loads, which reaches the browser, so it is read here instead.
+    const [organizationLogoUrl, actorUserId] = await Promise.all([
+      getOrganizationLogoUrl(organizationId),
+      resolveEmailActorUserId(surveyOwnerId, organizationId),
+    ]);
 
     // The language arrives from the client, and it ends up as `?lang=` in the link we email out — so
     // resolve it against this survey's own enabled languages here rather than trusting the payload.
@@ -68,7 +73,7 @@ export const sendLinkSurveyEmailAction = actionClient
       // survey or organization does not reset them.
       {
         organizationId,
-        actorUserId: await resolveEmailActorUserId(surveyOwnerId, organizationId),
+        actorUserId,
         externalRecipient: true,
       }
     );

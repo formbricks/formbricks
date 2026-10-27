@@ -26,14 +26,21 @@ export const resolveEmailActorUserId = async (
 };
 
 /**
- * Whether an address belongs to a member of the organization. A follow-up author can type any address, so
- * one outside the organization is counted like a respondent's (`externalRecipient`).
+ * The members among `emails`, in one query. The membership answer depends only on the address and the
+ * organization, so a caller that classifies several addresses (one per follow-up, per response) resolves
+ * them together instead of once each. Returns normalized addresses.
  */
-export const isOrganizationMemberEmail = async (organizationId: string, email: string): Promise<boolean> => {
-  const membership = await prisma.membership.findFirst({
-    // Better Auth stores addresses lowercased, the rule `normalizeEmailForComparison` matches.
-    where: { organizationId, user: { email: normalizeEmailForComparison(email) } },
-    select: { userId: true },
+export const getOrganizationMemberEmails = async (
+  organizationId: string,
+  emails: readonly string[]
+): Promise<Set<string>> => {
+  const normalized = [...new Set(emails.map(normalizeEmailForComparison))];
+  if (normalized.length === 0) {
+    return new Set();
+  }
+  const members = await prisma.membership.findMany({
+    where: { organizationId, user: { email: { in: normalized } } },
+    select: { user: { select: { email: true } } },
   });
-  return membership !== null;
+  return new Set(members.map((membership) => membership.user.email));
 };

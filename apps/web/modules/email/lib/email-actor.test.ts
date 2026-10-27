@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { isOrganizationMemberEmail, resolveEmailActorUserId } from "./email-actor";
+import { getOrganizationMemberEmails, resolveEmailActorUserId } from "./email-actor";
 
-vi.mock("@formbricks/database", () => ({ prisma: { membership: { findFirst: vi.fn() } } }));
+vi.mock("@formbricks/database", () => ({
+  prisma: { membership: { findFirst: vi.fn(), findMany: vi.fn() } },
+}));
 
 describe("resolveEmailActorUserId", () => {
   beforeEach(() => vi.mocked(prisma.membership.findFirst).mockReset());
@@ -31,22 +33,28 @@ describe("resolveEmailActorUserId", () => {
   });
 });
 
-describe("isOrganizationMemberEmail", () => {
-  beforeEach(() => vi.mocked(prisma.membership.findFirst).mockReset());
+describe("getOrganizationMemberEmails", () => {
+  beforeEach(() => vi.mocked(prisma.membership.findMany).mockReset());
 
-  test("matches the address the way accounts store it", async () => {
-    vi.mocked(prisma.membership.findFirst).mockResolvedValue({ userId: "u1" } as never);
+  test("resolves every address in one query, matched the way accounts store them", async () => {
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([
+      { user: { email: "team@example.com" } },
+    ] as never);
 
-    await expect(isOrganizationMemberEmail("org-1", " Team@Example.com ")).resolves.toBe(true);
-    expect(prisma.membership.findFirst).toHaveBeenCalledWith({
-      where: { organizationId: "org-1", user: { email: "team@example.com" } },
-      select: { userId: true },
+    await expect(
+      getOrganizationMemberEmails("org-1", [" Team@Example.com ", "team@example.com", "stranger@example.com"])
+    ).resolves.toEqual(new Set(["team@example.com"]));
+    expect(prisma.membership.findMany).toHaveBeenCalledWith({
+      where: {
+        organizationId: "org-1",
+        user: { email: { in: ["team@example.com", "stranger@example.com"] } },
+      },
+      select: { user: { select: { email: true } } },
     });
   });
 
-  test("is false for an address outside the organization", async () => {
-    vi.mocked(prisma.membership.findFirst).mockResolvedValue(null);
-
-    await expect(isOrganizationMemberEmail("org-1", "stranger@example.com")).resolves.toBe(false);
+  test("does not query when no address names a literal recipient", async () => {
+    await expect(getOrganizationMemberEmails("org-1", [])).resolves.toEqual(new Set());
+    expect(prisma.membership.findMany).not.toHaveBeenCalled();
   });
 });

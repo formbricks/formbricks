@@ -150,6 +150,15 @@ describe("sendEmail SES event publishing", () => {
     expect(mocks.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to: "josé@bücher.example" }));
   });
 
+  // nodemailer delivers these to one inbox; refusing them (as an input comparison would) blocks valid mail.
+  test.each(['"a b"@example.com', '"a@b"@example.com', "a@example.com,"])(
+    "sends to one address the parser normalizes: %j",
+    async (to) => {
+      await expect(sendEmail({ ...email, to })).resolves.toBe(true);
+      expect(mocks.sendMail).toHaveBeenCalledWith(expect.objectContaining({ to }));
+    }
+  );
+
   test("skips unconfigured SMTP without spending any email budget", async () => {
     mocks.constants.IS_SMTP_CONFIGURED = false;
     expect(await sendEmail(email)).toBe(false);

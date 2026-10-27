@@ -11,10 +11,11 @@ import { TUserLocale } from "@formbricks/types/user";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
+import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { validateInputs } from "@/lib/utils/validate";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { isOrganizationMemberEmail, resolveEmailActorUserId } from "@/modules/email/lib/email-actor";
+import { getOrganizationMemberEmails, resolveEmailActorUserId } from "@/modules/email/lib/email-actor";
 import { sendFollowUpEmail } from "@/modules/survey/follow-ups/lib/email";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { FollowUpResult, FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
@@ -25,6 +26,7 @@ const evaluateFollowUp = async (
   response: TResponse,
   organization: TOrganization,
   rateLimit: { organizationId: string; actorUserId: string | null },
+  organizationMemberEmails: ReadonlySet<string>,
   locale?: TUserLocale
 ): Promise<FollowUpResult> => {
   try {
@@ -51,7 +53,7 @@ const evaluateFollowUp = async (
         // The author can type any address, so only a member's counts as the organization's own mail.
         rateLimit: {
           ...rateLimit,
-          externalRecipient: !(await isOrganizationMemberEmail(organization.id, parsedEmailTo.data)),
+          externalRecipient: !organizationMemberEmails.has(normalizeEmailForComparison(parsedEmailTo.data)),
         },
       });
 
@@ -224,6 +226,16 @@ export const sendFollowUpsForResponse = async (
       };
     }
 
+    // The only addresses this run classifies are the literal ones each follow-up names; the answer depends
+    // on the address and the organization, so it is resolved once here instead of once per follow-up.
+    const organizationMemberEmails = await getOrganizationMemberEmails(
+      organization.id,
+      survey.followUps.flatMap((followUp) => {
+        const parsedTo = z.email().safeParse(followUp.action.properties.to);
+        return parsedTo.success ? [parsedTo.data] : [];
+      })
+    );
+
     // The respondent is anonymous, so the survey's organization and owner carry the email limits. The owner,
     // not `createdBy`, which an API caller can set to anyone.
     const rateLimit = {
@@ -248,7 +260,15 @@ export const sendFollowUpsForResponse = async (
         }
       }
 
-      return evaluateFollowUp(followUp, survey, response, organization, rateLimit, locale);
+      return evaluateFollowUp(
+        followUp,
+        survey,
+        response,
+        organization,
+        rateLimit,
+        organizationMemberEmails,
+        locale
+      );
     });
 
     const followUpResults = await Promise.all(followUpPromises);

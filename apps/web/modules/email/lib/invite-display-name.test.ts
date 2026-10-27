@@ -39,6 +39,22 @@ describe("toInviteDisplayName", () => {
     expect(toInviteDisplayName("Anna Müller, PhD.", "Anonymous")).toBe("Anna Müller, PhD.");
   });
 
+  // An ordinary dotted name is not a host: only a delegated top-level domain makes a token a domain.
+  test("keeps dotted names whose suffix is not a domain", () => {
+    expect(toInviteDisplayName("john.doe", "Anonymous")).toBe("john.doe");
+    expect(toInviteDisplayName("J.Smith", "Anonymous")).toBe("J.Smith");
+    expect(toInviteDisplayName("Anna.Müller", "Anonymous")).toBe("Anna.Müller");
+    expect(toInviteDisplayName("Dr.Smith", "Anonymous")).toBe("Dr.Smith");
+  });
+
+  // Reserved TLDs and delegated ones are both linkified by clients, so both go.
+  test("removes real and reserved domains whatever the suffix", () => {
+    expect(toInviteDisplayName("evil.com", "Anonymous")).toBe("Anonymous");
+    expect(toInviteDisplayName("win.spam.co.uk", "Anonymous")).toBe("Anonymous");
+    expect(toInviteDisplayName("foo.museum", "Anonymous")).toBe("Anonymous");
+    expect(toInviteDisplayName("spam.test", "Anonymous")).toBe("Anonymous");
+  });
+
   test("checks long dotted names in linear time", () => {
     const started = performance.now();
 

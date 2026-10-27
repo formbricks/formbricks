@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { ResourceNotFoundError, SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE } from "@formbricks/types/errors";
+import {
+  ResourceNotFoundError,
+  SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE,
+  TooManyRequestsError,
+} from "@formbricks/types/errors";
 import { auth } from "@/modules/auth/lib/auth";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 // Import mocked functions
@@ -193,6 +197,22 @@ describe("resendVerificationEmailAction", () => {
       await expect(
         resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as any)
       ).rejects.toThrow("Maximum number of requests reached. Please try again later.");
+
+      expect(auth.api.sendVerificationEmail).not.toHaveBeenCalled();
+      expect(sendVerificationEmail).not.toHaveBeenCalled();
+    });
+
+    // A spent cap must look like a sent email: only unverified accounts reach it, so an error here would
+    // tell anyone which addresses have one (ENG-3823).
+    test("answers success once the account's resends are spent, so it reveals nothing", async () => {
+      vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
+      vi.mocked(applyRateLimit).mockRejectedValue(
+        new TooManyRequestsError("Maximum number of requests reached")
+      );
+
+      await expect(
+        resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as any)
+      ).resolves.toEqual({ success: true });
 
       expect(auth.api.sendVerificationEmail).not.toHaveBeenCalled();
       expect(sendVerificationEmail).not.toHaveBeenCalled();
