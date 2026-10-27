@@ -19,7 +19,21 @@ const mocks = vi.hoisted(() => ({
   loggerError: vi.fn(),
 }));
 
+const aiTimeoutEnv = vi.hoisted(() => ({ multiplier: 1 }));
+
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/env", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/env")>();
+  return {
+    ...original,
+    env: {
+      ...original.env,
+      get AI_TIMEOUT_MULTIPLIER() {
+        return aiTimeoutEnv.multiplier;
+      },
+    },
+  };
+});
 
 vi.mock("@/lib/ai/service", () => ({
   generateOrganizationAIObject: mocks.generateOrganizationAIObject,
@@ -87,7 +101,10 @@ const getOpenTextRowsFromPrompt = (
 };
 
 describe("buildExampleResponsesSchema", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    aiTimeoutEnv.multiplier = 1;
+  });
 
   test("collects supported elements and tracks open-text ids for the text-only LLM schema", () => {
     const survey = makeSurvey([
@@ -172,7 +189,10 @@ describe("buildExampleResponsesSchema", () => {
 });
 
 describe("generateExampleResponseDataset", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    aiTimeoutEnv.multiplier = 1;
+  });
 
   test("returns an empty dataset when the survey has no supported question types", async () => {
     const survey = makeSurvey([
@@ -232,7 +252,8 @@ describe("generateExampleResponseDataset", () => {
     expect(mocks.generateOrganizationAIObject).not.toHaveBeenCalled();
   });
 
-  test("asks the LLM only for open-text answers and merges them with planned answers", async () => {
+  test.each([1, 3])("fills open text at multiplier %i", async (multiplier) => {
+    aiTimeoutEnv.multiplier = multiplier;
     const survey = makeSurvey([
       { ...baseQuestion, id: "q_text", type: TSurveyElementTypeEnum.OpenText },
       { ...baseQuestion, id: "q_nps", type: TSurveyElementTypeEnum.NPS },
@@ -259,7 +280,7 @@ describe("generateExampleResponseDataset", () => {
     expect(call.prompt).not.toContain("Generate 10 diverse example responses");
     expect(call.temperature).toBe(0);
     expect(call.maxOutputTokens).toBe(4096);
-    expect(call.timeout).toBe(45_000);
+    expect(call.timeout).toBe(45_000 * multiplier);
   });
 
   test("chunks large open-text batches and falls back only for failed chunks", async () => {
@@ -665,7 +686,10 @@ describe("generateExampleResponseDataset", () => {
 });
 
 describe("response language", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    aiTimeoutEnv.multiplier = 1;
+  });
 
   const withLanguages = (survey: TSurvey, languages: TSurvey["languages"]): TSurvey =>
     ({ ...survey, languages }) as TSurvey;

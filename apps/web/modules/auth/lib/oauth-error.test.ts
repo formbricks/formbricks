@@ -66,4 +66,11 @@ describe("getOAuthErrorVariant", () => {
       expect(getOAuthErrorVariant(reason)).not.toBe("generic");
     }
   );
+
+  test("classifies the SAML callback's own refusals", () => {
+    expect(getOAuthErrorVariant("saml_response_rejected")).toBe("generic");
+    expect(getOAuthErrorVariant("saml_unavailable")).toBe("generic");
+    // A missing or switched-off connection is the operator's to fix; retrying cannot help.
+    expect(getOAuthErrorVariant("saml_connection_unavailable")).toBe("misconfigured");
+  });
 });

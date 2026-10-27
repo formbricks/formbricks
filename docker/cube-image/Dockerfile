@@ -5,7 +5,7 @@
 # The build stage runs on the builder's own platform and only downloads files: npm is told the target
 # platform and the native module is fetched for the target architecture, so a multi-arch build needs
 # no emulation.
-FROM --platform=$BUILDPLATFORM node:24-trixie-slim@sha256:8ec5d7557396cfe32d21c3f9c13072355ceab22b584578ca4bb28af31120cffe AS build
+FROM --platform=$BUILDPLATFORM node:24-trixie-slim@sha256:173f125896c3b47ddf056734c7ea789d04595a6a08769a8f78e0df642781fb66 AS build
 
 ARG TARGETARCH
 
@@ -41,7 +41,7 @@ RUN set -eu; \
   rm /tmp/native.tar.gz; \
   find node_modules -type f -name '*.map' -delete
 
-FROM gcr.io/distroless/nodejs24-debian13:nonroot@sha256:9eeb7f5887d0e239e78264b06f7f11d2e14be534050481803a9e4728fcdd278e
+FROM gcr.io/distroless/nodejs24-debian13:nonroot@sha256:78f07ef1b5ea71ad7c055df15d0dd8997f2d288f9158623c4d4ae3d765b7d50d
 
 LABEL org.opencontainers.image.source="https://github.com/formbricks/formbricks" \
   org.opencontainers.image.description="Cube API server for Formbricks analytics, on a distroless Node runtime"

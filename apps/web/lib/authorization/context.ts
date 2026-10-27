@@ -95,6 +95,11 @@ const createSurfaceContext = (surface: TAuthorizationSurface): TAuthorizationCon
 /**
  * Register the one post-response observation for a surface. Shared by both boundaries so they cannot
  * drift, and fail-safe: an unavailable `after()` costs the histogram observation, never the decision.
+ *
+ * `after()` saves the calling render's store, and Next flips every saved store to phase "after" when the
+ * request closes. A render still running then throws on its next fresh `cookies()` / `headers()` call
+ * (ENG-3375). On `page` routes, read those request APIs before the surface opens (or through a
+ * `cache()`d helper that was called first, like `getSession()`), not later in the render.
  */
 const scheduleChecksPerRequestObservation = (context: TAuthorizationContext): void => {
   try {

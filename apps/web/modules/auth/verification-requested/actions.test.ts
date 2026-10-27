@@ -1,9 +1,13 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { ResourceNotFoundError, SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE } from "@formbricks/types/errors";
+import {
+  ResourceNotFoundError,
+  SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE,
+  TooManyRequestsError,
+} from "@formbricks/types/errors";
 import { auth } from "@/modules/auth/lib/auth";
 import { getUserByEmail } from "@/modules/auth/lib/user";
 // Import mocked functions
-import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
+import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { sendVerificationEmail } from "@/modules/email";
@@ -12,12 +16,14 @@ import { resendVerificationEmailAction } from "./actions";
 // Mock dependencies
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
   applyIPRateLimit: vi.fn(),
+  applyRateLimit: vi.fn(),
 }));
 
 vi.mock("@/modules/core/rate-limit/rate-limit-configs", () => ({
   rateLimitConfigs: {
     auth: {
       verifyEmail: { interval: 3600, allowedPerInterval: 10, namespace: "auth:verify" },
+      verifyEmailPerAccount: { interval: 3600, allowedPerInterval: 3, namespace: "auth:verify:account" },
     },
   },
 }));
@@ -172,6 +178,46 @@ describe("resendVerificationEmailAction", () => {
       });
     });
 
+    // Anyone can ask for an account's verification email, so it is counted per account too: strangers on
+    // many IPs must not spend the recipient's whole cap and leave the user's own resend with none (ENG-3823).
+    test("counts each resend against the account", async () => {
+      vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
+
+      await resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as any);
+
+      expect(applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.auth.verifyEmailPerAccount, mockUser.id);
+    });
+
+    test("sends nothing once the account's resends are spent", async () => {
+      vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
+      vi.mocked(applyRateLimit).mockRejectedValue(
+        new Error("Maximum number of requests reached. Please try again later.")
+      );
+
+      await expect(
+        resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as any)
+      ).rejects.toThrow("Maximum number of requests reached. Please try again later.");
+
+      expect(auth.api.sendVerificationEmail).not.toHaveBeenCalled();
+      expect(sendVerificationEmail).not.toHaveBeenCalled();
+    });
+
+    // A spent cap must look like a sent email: only unverified accounts reach it, so an error here would
+    // tell anyone which addresses have one (ENG-3823).
+    test("answers success once the account's resends are spent, so it reveals nothing", async () => {
+      vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
+      vi.mocked(applyRateLimit).mockRejectedValue(
+        new TooManyRequestsError("Maximum number of requests reached")
+      );
+
+      await expect(
+        resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as any)
+      ).resolves.toEqual({ success: true });
+
+      expect(auth.api.sendVerificationEmail).not.toHaveBeenCalled();
+      expect(sendVerificationEmail).not.toHaveBeenCalled();
+    });
+
     test("should apply rate limiting even when user doesn't exist", async () => {
       vi.mocked(getUserByEmail).mockResolvedValue(null);
 
@@ -255,6 +301,8 @@ describe("resendVerificationEmailAction", () => {
       expect(getUserByEmail).toHaveBeenCalledWith(validInput.email);
       expect(sendVerificationEmail).not.toHaveBeenCalled();
       expect(result).toEqual({ success: true });
+      // Nothing was sent, so strangers cannot use this to spend the account's resends (ENG-3823).
+      expect(applyRateLimit).not.toHaveBeenCalled();
     });
 
     test("should resend an SSO recovery email for a verified user", async () => {
