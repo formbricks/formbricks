@@ -85,7 +85,7 @@ if (process.argv.includes("--dependencies")) {
   // Minimum patched versions for every npm package in the live Inspector finding inventory.
   // Inspect nested copies too: a safe hoisted version does not fix an older transitive install.
   const minimumVersions = {
-    next: "16.3.8",
+    next: "16.4.1",
     "@grpc/grpc-js": "1.14.5",
     sharp: "0.35.5",
     "ip-address": "10.7.1",
