@@ -197,9 +197,6 @@ export const getResponseBySingleUseId = reactCache((surveyId: string, singleUseI
       select: {
         id: true,
         finished: true,
-        // Include additional fields that might be useful
-        createdAt: true,
-        data: true,
       },
     });
 
@@ -218,10 +215,16 @@ export const getResponseBySingleUseId = reactCache((surveyId: string, singleUseI
  */
 export const getExistingContactResponse = reactCache((surveyId: string, contactId: string) => async () => {
   try {
+    // A contact can hold a finished response and an unfinished attempt at once, so the unordered pick could
+    // return the unfinished one and hide the finished one. Prefer the finished row: the contact page gates
+    // "already answered" on it, and only an unfinished row is left to resume.
     const response = await prisma.response.findFirst({
       where: {
         surveyId,
         contactId,
+      },
+      orderBy: {
+        finished: "desc",
       },
       select: {
         id: true,
