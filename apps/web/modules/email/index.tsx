@@ -52,6 +52,7 @@ import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { TElementResponseMappingSurvey, getElementResponseMapping } from "@/lib/responses";
 import { getTranslate } from "@/lingodotdev/server";
 import { TVerificationRequestPurpose, buildVerificationLinks } from "@/modules/auth/lib/verification-links";
+import { isSingleRecipient } from "@/modules/email/lib/single-recipient";
 import { buildVerifiedLinkSurveyUrl } from "@/modules/email/lib/verified-link-survey-url";
 import { resolveStorageUrl } from "@/modules/storage/utils";
 
@@ -81,6 +82,11 @@ export type TResponseFinishedEmailSurvey = TElementResponseMappingSurvey &
   Pick<TSurvey, "id" | "name" | "variables" | "hiddenFields" | "embeddedFields">;
 
 export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean> => {
+  // nodemailer reads `to` as an address list, so "a@x, b@y" would reach both. Every email goes to one
+  // person (ENG-6658).
+  if (!isSingleRecipient(emailData.to)) {
+    throw new InvalidInputError("An email must have exactly one valid recipient address");
+  }
   if (!IS_SMTP_CONFIGURED) {
     logger.info("SMTP is not configured, skipping email sending");
     return false;
