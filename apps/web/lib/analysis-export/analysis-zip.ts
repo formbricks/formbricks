@@ -57,7 +57,7 @@ const appendEntry = (archive: Archiver, source: Readable | string, name: string)
  */
 export const createAnalysisZip = (
   exported: TAnalysisExport,
-  { display, timeZone }: TAnalysisFileOptions
+  { display, timeZone, include }: TAnalysisFileOptions
 ): Readable => {
   const archive = new ZipArchive({ zlib: { level: 6 } });
   const parts = dataParts(display);
@@ -107,26 +107,32 @@ export const createAnalysisZip = (
       const summary = exported.summary();
       const unmappedColumns = unmappedColumnNames(summary);
 
-      const datamap = [
-        analysisCsvLine([...DATAMAP_HEADERS]),
-        ...buildDatamap(exported.columns, { unmappedColumns }).map(analysisCsvLine),
-      ].join("");
-      await appendEntry(archive, CSV_BOM + datamap, "datamap.csv");
+      if (include?.datamap !== false) {
+        const datamap = [
+          analysisCsvLine([...DATAMAP_HEADERS]),
+          ...buildDatamap(exported.columns, { unmappedColumns }).map(analysisCsvLine),
+        ].join("");
+        await appendEntry(archive, CSV_BOM + datamap, "datamap.csv");
+      }
 
-      const unmapped = [
-        analysisCsvLine([...UNMAPPED_HEADERS]),
-        ...buildUnmappedValuesTable(summary).map(analysisCsvLine),
-      ].join("");
-      await appendEntry(archive, CSV_BOM + unmapped, "unmapped-values.csv");
+      if (include?.unmappedValues !== false) {
+        const unmapped = [
+          analysisCsvLine([...UNMAPPED_HEADERS]),
+          ...buildUnmappedValuesTable(summary).map(analysisCsvLine),
+        ].join("");
+        await appendEntry(archive, CSV_BOM + unmapped, "unmapped-values.csv");
+      }
 
-      const syntax = buildSpssSyntax({
-        columns: exported.columns,
-        display,
-        stats: stats.result(),
-        unmappedColumns,
-        timeZone,
-      });
-      await appendEntry(archive, CSV_BOM + syntax, "labels.sps");
+      if (include?.spssSyntax !== false) {
+        const syntax = buildSpssSyntax({
+          columns: exported.columns,
+          display,
+          stats: stats.result(),
+          unmappedColumns,
+          timeZone,
+        });
+        await appendEntry(archive, CSV_BOM + syntax, "labels.sps");
+      }
 
       await archive.finalize();
     } finally {

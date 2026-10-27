@@ -1,0 +1,140 @@
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { buildSampleExport } from "@/lib/analysis-export/__fixtures__/sample-export";
+import {
+  ExportCancelledError,
+  buildExportResponse,
+  countExportResponses,
+  stopWhenAborted,
+} from "./export-response";
+
+vi.mock("server-only", () => ({}));
+
+const mocks = vi.hoisted(() => ({
+  count: vi.fn(),
+  getResponseDownloadFile: vi.fn(),
+  openAnalysisExport: vi.fn(),
+}));
+
+vi.mock("@formbricks/database", () => ({ prisma: { response: { count: mocks.count } } }));
+vi.mock("@/lib/response/service", () => ({ getResponseDownloadFile: mocks.getResponseDownloadFile }));
+vi.mock("@/lib/response/where-clause", () => ({ buildWhereClause: () => ({ finished: true }) }));
+vi.mock("@/lib/analysis-export", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/analysis-export")>()),
+  openAnalysisExport: mocks.openAnalysisExport,
+}));
+
+const survey = { id: "survey1", name: "My Survey" } as never;
+const signal = new AbortController().signal;
+const baseArgs = { survey, isQuotasAllowed: false, timeZone: "UTC", signal };
+
+beforeEach(() => {
+  vi.resetAllMocks();
+});
+
+describe("countExportResponses", () => {
+  test("the Standard export counts every matching response and leaves none out", async () => {
+    mocks.count.mockResolvedValue(9);
+    expect(await countExportResponses({ survey, plan: { kind: "standard", format: "csv" } })).toEqual({
+      included: 9,
+      lowQualityLeftOut: 0,
+    });
+    expect(mocks.count).toHaveBeenCalledWith({ where: { surveyId: "survey1", finished: true } });
+  });
+
+  test("an Analysis export counts without Low quality and reports how many it leaves out", async () => {
+    mocks.count.mockImplementation(async ({ where }: { where: { AND: [unknown, { outcome: unknown }] } }) =>
+      where.AND[1].outcome === null ? 8 : 3
+    );
+    const plan = {
+      kind: "analysis",
+      format: "csv",
+      display: "codes",
+      output: "csv",
+      include: { datamap: false, unmappedValues: false, spssSyntax: false },
+    } as const;
+    expect(await countExportResponses({ survey, plan })).toEqual({ included: 8, lowQualityLeftOut: 3 });
+  });
+
+  test("a filter that selects Low quality leaves nothing out", async () => {
+    mocks.count.mockResolvedValue(4);
+    const plan = {
+      kind: "analysis",
+      format: "csv",
+      display: "codes",
+      output: "csv",
+      include: { datamap: false, unmappedValues: false, spssSyntax: false },
+    } as const;
+    expect(await countExportResponses({ survey, plan, filter: { outcome: "lowQuality" } })).toEqual({
+      included: 4,
+      lowQualityLeftOut: 0,
+    });
+  });
+});
+
+describe("buildExportResponse", () => {
+  test("the Standard CSV is the existing path's bytes, untouched", async () => {
+    mocks.getResponseDownloadFile.mockResolvedValue({
+      fileContents: 'No.,Response ID\n"1","r1"',
+      fileName: "export-my-survey-2026-10-27-00-00-00.csv",
+    });
+    const result = await buildExportResponse({
+      ...baseArgs,
+      plan: { kind: "standard", format: "csv" },
+      filter: { responseIds: ["a"] },
+    });
+    if (!result.ok) throw new Error("expected a file");
+    expect(mocks.getResponseDownloadFile).toHaveBeenCalledWith("survey1", "csv", { responseIds: ["a"] });
+    expect(await result.response.text()).toBe('No.,Response ID\n"1","r1"');
+    expect(mocks.openAnalysisExport).not.toHaveBeenCalled();
+    expect(result.response.headers.get("Content-Disposition")).toBe(
+      'attachment; filename="export-my-survey-2026-10-27-00-00-00.csv"'
+    );
+  });
+
+  test("the Standard Excel file is the base64 the existing path built, decoded", async () => {
+    mocks.getResponseDownloadFile.mockResolvedValue({
+      fileContents: Buffer.from([1, 2, 3, 250]).toString("base64"),
+      fileName: "x.xlsx",
+    });
+    const result = await buildExportResponse({
+      ...baseArgs,
+      plan: { kind: "standard", format: "xlsx" },
+    });
+    if (!result.ok) throw new Error("expected a file");
+    expect([...new Uint8Array(await result.response.arrayBuffer())]).toEqual([1, 2, 3, 250]);
+  });
+
+  test("a Code only CSV streams: BOM, header, then one row per response", async () => {
+    mocks.openAnalysisExport.mockResolvedValue(buildSampleExport("codes"));
+    const result = await buildExportResponse({
+      ...baseArgs,
+      plan: {
+        kind: "analysis",
+        format: "csv",
+        display: "codes",
+        output: "csv",
+        include: { datamap: false, unmappedValues: false, spssSyntax: false },
+      },
+    });
+    if (!result.ok) throw new Error("expected a file");
+    const bytes = new Uint8Array(await result.response.arrayBuffer());
+    expect([...bytes.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf]);
+    const text = new TextDecoder().decode(bytes);
+    expect(text.split("\r\n").filter(Boolean)).toHaveLength(4);
+    expect(mocks.openAnalysisExport).toHaveBeenCalledWith(
+      expect.objectContaining({ surveyId: "survey1", answers: "codes" })
+    );
+    expect(result.response.headers.get("Content-Disposition")).toMatch(/\.csv"$/);
+  });
+});
+
+describe("stopWhenAborted", () => {
+  test("stops reading once the client is gone", async () => {
+    const controller = new AbortController();
+    const exported = stopWhenAborted(buildSampleExport("codes"), controller.signal);
+    const batches = exported.rows();
+    await batches.next();
+    controller.abort();
+    await expect(batches.next()).rejects.toBeInstanceOf(ExportCancelledError);
+  });
+});

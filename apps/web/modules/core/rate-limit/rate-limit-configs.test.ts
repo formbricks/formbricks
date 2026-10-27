@@ -212,7 +212,13 @@ describe("rateLimitConfigs", () => {
 
     test("should have all storage configurations", () => {
       const storageConfigs = Object.keys(rateLimitConfigs.storage);
-      expect(storageConfigs).toEqual(["upload", "uploadPerWorkspace", "delete", "attachmentsExport"]);
+      expect(storageConfigs).toEqual([
+        "upload",
+        "uploadPerWorkspace",
+        "delete",
+        "attachmentsExport",
+        "responsesExport",
+      ]);
     });
   });
 

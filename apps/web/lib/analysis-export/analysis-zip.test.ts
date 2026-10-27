@@ -177,4 +177,19 @@ describe("createAnalysisZip", () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(batches).toBeLessThan(200);
   });
+
+  test("include leaves out the datamap, the unmapped values and the syntax file when they are off", async () => {
+    const names = async (include: { datamap?: boolean; unmappedValues?: boolean; spssSyntax?: boolean }) =>
+      (
+        await readZip(
+          await collect(createAnalysisZip(buildSampleExport("codes"), { display: "codes", include }))
+        )
+      ).map((entry) => entry.name);
+    expect(await names({ datamap: false, unmappedValues: false, spssSyntax: false })).toEqual(["data.csv"]);
+    expect(await names({ datamap: true, unmappedValues: false, spssSyntax: true })).toEqual([
+      "data.csv",
+      "datamap.csv",
+      "labels.sps",
+    ]);
+  });
 });

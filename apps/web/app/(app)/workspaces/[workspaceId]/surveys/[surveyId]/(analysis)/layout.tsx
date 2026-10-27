@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { ExportManagerProvider } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/export-manager";
 import { ResponseFilterProvider } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -34,7 +35,11 @@ export const generateMetadata = async (props: Props): Promise<Metadata> => {
 };
 
 const SurveyLayout = async ({ children }: Readonly<{ children: React.ReactNode }>) => {
-  return <ResponseFilterProvider>{children}</ResponseFilterProvider>;
+  return (
+    <ResponseFilterProvider>
+      <ExportManagerProvider>{children}</ExportManagerProvider>
+    </ResponseFilterProvider>
+  );
 };
 
 export default SurveyLayout;
