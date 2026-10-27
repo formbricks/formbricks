@@ -68,6 +68,7 @@ jobs:
           # Docker Hub serves every container image used by this workflow.
           allowed-endpoints: |
             ee.formbricks.com:443
+            staging.ee.formbricks.com:443
             registry-1.docker.io:443
             docker.io:443
 
@@ -112,6 +113,15 @@ jobs:
           echo "S3_ACCESS_KEY=devrustfs-service" >> .env
           echo "S3_SECRET_KEY=devrustfs-service123" >> .env
           echo "S3_FORCE_PATH_STYLE=1" >> .env
+        shell: bash
+
+      # Pull requests check the license against staging.ee.formbricks.com, where formbricks/ee deploys on
+      # every merge to its main, so a PR that needs a new license flag passes before ee's next release. The
+      # merge queue (and a manual run) keeps checking ee.formbricks.com, the server main ships against.
+      # `github.event_name` is the caller's event here (pr.yml). ENVIRONMENT also labels logs and traces.
+      - name: Check the license against the staging license server on pull requests
+        if: github.event_name == 'pull_request'
+        run: echo "ENVIRONMENT=staging" >> .env
         shell: bash
 
       - name: Start AuthZed CI fixture

@@ -11,6 +11,10 @@ icon: "key"
 - **Read:** feature code asks the helpers in `lib/utils.ts` (`getIsDashboardsEnabled`, `getIsCreativesEnabled`, …) rather than reading the license itself.
 - A flag added after the first release (`dashboards`, `workflows`, `creatives`, …) defaults to **off** when the server's answer omits it, so a license server that predates the flag never unlocks the feature.
 
+## License Server in CI
+
+The E2E job checks its license against `https://staging.ee.formbricks.com` on pull requests (`ENVIRONMENT=staging`) and against `https://ee.formbricks.com` in the merge queue. `formbricks/ee` deploys to staging on every merge to its main and to production only on a release, so a PR that needs a new license flag passes its own E2E once the ee change merges, but enters the merge queue only after ee is released.
+
 ## Point the App at a Local License Server
 
 `ENTERPRISE_LICENSE_SERVER_URL` (see `lib/license-server-url.ts`) replaces `https://ee.formbricks.com`, but only when both hold:
