@@ -23,7 +23,7 @@ info:
 
 
     **Responses**: **GET /api/v3/responses**, **GET /api/v3/responses/count**, **POST
-    /api/v3/responses/validate**, **POST /api/v3/responses/batch-delete**, **GET
+    /api/v3/responses/validate**, **POST /api/v3/responses/batch-delete**, **POST /api/v3/responses/batch-outcome**, **GET
     /api/v3/responses/{responseId}**, **POST /api/v3/responses**, **PATCH
     /api/v3/responses/{responseId}**, and **DELETE /api/v3/responses/{responseId}**.
 
@@ -366,6 +366,8 @@ paths:
     $ref: paths/api_v3_responses_validate.yml
   /api/v3/responses/batch-delete:
     $ref: paths/api_v3_responses_batch-delete.yml
+  /api/v3/responses/batch-outcome:
+    $ref: paths/api_v3_responses_batch-outcome.yml
   /api/v3/responses/{responseId}:
     $ref: paths/api_v3_responses_{responseId}.yml
   /api/v3/workflows:

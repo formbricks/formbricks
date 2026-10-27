@@ -865,6 +865,8 @@ export const getFormattedFilters = (
     filters["finished"] = true;
   } else if (selectedFilter.responseStatus === "partial") {
     filters["finished"] = false;
+  } else if (selectedFilter.responseStatus === "lowQuality") {
+    filters["outcome"] = "lowQuality";
   }
 
   // for date range responses

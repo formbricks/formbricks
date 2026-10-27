@@ -9,6 +9,7 @@ import type {
   TResponseData,
   TResponseDataValue,
   TResponseMeta,
+  TResponseOutcome,
   TResponseTtc,
   TResponseVariables,
 } from "@formbricks/types/responses";
@@ -16,6 +17,7 @@ import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { inlineSurveyEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
+import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { getUniqueConstraintFields, isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
 import {
   evaluateResponseQuotas,
@@ -533,6 +535,8 @@ export type TV3UpdateResponsePersist = {
     finished?: boolean;
     endingId?: string | null;
     language?: string | null;
+    /** `null` restores — see `ResponseOutcome`. */
+    outcome?: TResponseOutcome | null;
     data?: TResponseData;
     variables?: Record<string, TResponseDataValue>;
     tagIds?: string[];
@@ -582,6 +586,7 @@ export async function updateScopedResponse({
           ...(patch.finished === undefined ? {} : { finished: patch.finished }),
           ...(patch.endingId === undefined ? {} : { endingId: patch.endingId }),
           ...(patch.language === undefined ? {} : { language: patch.language }),
+          ...(patch.outcome === undefined ? {} : { outcome: patch.outcome }),
           ...(patch.data === undefined ? {} : { data: patch.data }),
           ...(patch.ttc === undefined ? {} : { ttc: patch.ttc }),
           ...(patch.variables === undefined ? {} : { variables: patch.variables }),
@@ -628,6 +633,103 @@ export async function updateScopedResponse({
   }
 }
 
+type TOutcomeScope = {
+  /** ENG-3282: responses of a survey the caller cannot see are scope-filtered out, like foreign ids. */
+  visibleSurveyWhere?: Prisma.SurveyWhereInput;
+  workspaceId: string;
+};
+
+const outcomeScopeWhere = (
+  ids: string[],
+  { visibleSurveyWhere = {}, workspaceId }: TOutcomeScope
+): Prisma.ResponseWhereInput => ({
+  id: { in: ids },
+  survey: { workspaceId, ...andVisibleSurveys(visibleSurveyWhere) },
+});
+
+/**
+ * Which of `ids` are in scope, and the survey each belongs to — what a batch authorizes against before it
+ * writes anything. One query for up to a batch of ids; the caller checks one response per distinct survey.
+ */
+export async function listScopedResponseSurveyRefs(
+  ids: string[],
+  scope: TOutcomeScope
+): Promise<{ id: string; surveyId: string }[]> {
+  return prisma.response.findMany({
+    where: outcomeScopeWhere(ids, scope),
+    select: { id: true, surveyId: true },
+  });
+}
+
+export type TV3OutcomeChange = { id: string; surveyId: string; previous: TResponseOutcome | null };
+
+export type TV3BatchOutcomeResult = {
+  /** Responses in scope, including those that already carried the outcome: a retry reports the same number. */
+  matched: number;
+  /** Only the responses whose outcome actually changed, with what it was — the audit trail and the events. */
+  changes: TV3OutcomeChange[];
+  /** The changed responses as the pipeline needs them, read back after commit. */
+  rows: TV3WriteReadbackRow[];
+};
+
+/**
+ * Set `outcome` on every response of `ids` that is in scope, in one transaction.
+ *
+ * Scope-filters rather than rejecting, like the batch delete: the workspace (and the caller's visible
+ * surveys) sit in every statement's `where`, so a foreign or missing id matches nothing. Only responses
+ * whose outcome differs are written — a retry, or a batch that overlaps an earlier one, neither churns
+ * `updatedAt` nor re-fires `responseUpdated` for rows that did not change.
+ *
+ * The read-back runs after commit and is scoped the same way; a row that vanished in between simply
+ * drops out of `rows`.
+ */
+export async function setScopedResponsesOutcome(
+  ids: string[],
+  outcome: TResponseOutcome | null,
+  scope: TOutcomeScope
+): Promise<TV3BatchOutcomeResult> {
+  let matched = 0;
+  let changes: TV3OutcomeChange[] = [];
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      const inScope = await tx.response.findMany({
+        where: outcomeScopeWhere(ids, scope),
+        select: { id: true, surveyId: true, outcome: true },
+      });
+      matched = inScope.length;
+      changes = inScope
+        .filter((row) => row.outcome !== outcome)
+        .map((row) => ({ id: row.id, surveyId: row.surveyId, previous: row.outcome }));
+
+      if (changes.length === 0) return;
+
+      await tx.response.updateMany({
+        where: outcomeScopeWhere(
+          changes.map(({ id }) => id),
+          scope
+        ),
+        data: { outcome },
+      });
+    });
+  } catch (error) {
+    rethrowScopedNotFound(error);
+    throw error;
+  }
+
+  if (changes.length === 0) return { matched, changes, rows: [] };
+
+  const rows = await prisma.response.findMany({
+    where: outcomeScopeWhere(
+      changes.map(({ id }) => id),
+      scope
+    ),
+    select: v3WriteReadbackSelect,
+  });
+
+  return { matched, changes, rows };
+}
+
 /**
  * Reshape a read-back row into the `TResponse` the pipeline is parsed against.
  *
@@ -667,6 +769,7 @@ export function toV3PipelineResponse(row: TV3WriteReadbackRow): TResponse {
     meta: (row.meta ?? {}) as TResponse["meta"],
     singleUseId: row.singleUseId,
     language: row.language,
+    outcome: row.outcome,
   };
 }
 

@@ -83,6 +83,16 @@ describe("Response Utils", () => {
       expect(result.AND).toContainEqual({ finished: true });
     });
 
+    test("should build where clause with the Low quality outcome filter", () => {
+      const result = buildWhereClause(mockSurvey as TSurvey, { outcome: "lowQuality" });
+      expect(result.AND).toContainEqual({ outcome: "lowQuality" });
+    });
+
+    test("should not constrain the outcome unless asked to", () => {
+      const result = buildWhereClause(mockSurvey as TSurvey, { finished: true });
+      expect(result.AND).not.toContainEqual(expect.objectContaining({ outcome: expect.anything() }));
+    });
+
     test("should build where clause with date range", () => {
       const filterCriteria = {
         createdAt: {

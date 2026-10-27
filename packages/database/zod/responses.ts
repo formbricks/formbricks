@@ -117,6 +117,13 @@ export const ZResponse = z.object({
     })
     .describe("The language of the response"),
   displayId: z.string().nullable().describe("The display ID of the response"),
+  outcome: z
+    .enum(["lowQuality"])
+    .nullable()
+    .meta({
+      example: null,
+    })
+    .describe("A reviewer's verdict on the response; null when none. A low quality response is not deleted"),
   // `ingestFlags` is deliberately omitted rather than described: this schema is the management API's
   // public shape and the OpenAPI document, and the column is internal Embedded Data bookkeeping
   // (ENG-1845) that the Prisma client omits from every read without a `select`

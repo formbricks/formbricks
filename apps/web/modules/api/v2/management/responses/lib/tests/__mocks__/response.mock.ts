@@ -18,6 +18,7 @@ export const responseInput: Omit<Response, "id"> = {
   contactAttributes: {},
   contactId: null,
   ingestFlags: null,
+  outcome: null,
 };
 
 export const responseInputNotFinished: Omit<Response, "id"> = {
@@ -36,6 +37,7 @@ export const responseInputNotFinished: Omit<Response, "id"> = {
   contactAttributes: {},
   contactId: null,
   ingestFlags: null,
+  outcome: null,
 };
 
 export const responseInputWithoutTtc: Omit<Response, "id"> = {
@@ -54,6 +56,7 @@ export const responseInputWithoutTtc: Omit<Response, "id"> = {
   contactAttributes: {},
   contactId: null,
   ingestFlags: null,
+  outcome: null,
 };
 
 export const responseInputWithoutDisplay: Omit<Response, "id"> = {
@@ -72,6 +75,7 @@ export const responseInputWithoutDisplay: Omit<Response, "id"> = {
   contactAttributes: {},
   contactId: null,
   ingestFlags: null,
+  outcome: null,
 };
 
 export const response: Response = {

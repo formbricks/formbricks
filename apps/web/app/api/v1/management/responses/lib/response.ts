@@ -36,6 +36,7 @@ export const responseSelection = {
   contactAttributes: true,
   singleUseId: true,
   language: true,
+  outcome: true,
   displayId: true,
   contact: {
     select: {

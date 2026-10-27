@@ -180,6 +180,10 @@ model Response {
   /// and surfacing that in the UI (v2) would have nothing to read.
   /// [ResponseIngestFlags]
   ingestFlags       Json?               @map(name: "ingest_flags")
+  /// A reviewer's verdict on the response; null means none. `lowQuality` hides it from the Analysis
+  /// export by default and from Feedback Records, and nothing else: it is never deleted and every
+  /// count, list, webhook and integration still includes it (ENG-6780).
+  outcome           ResponseOutcome?
   tags              TagsOnResponses[]
   quotaLinks        ResponseQuotaLink[]
   /// [ResponseContactAttributes]
@@ -207,6 +211,11 @@ model Response {
   @@index([contactId, createdAt]) // superseded; also the monthly identified users (persons)
   @@index([contactId, createdAt, id])
   @@index([surveyId, finished]) // survey list's (surveyId, finished) count aggregation — keeps it an index-only scan
+}
+
+/// What a reviewer decided about a response. One value today; null on `Response.outcome` means none.
+enum ResponseOutcome {
+  lowQuality
 }
 
 /// Represents a label that can be applied to survey responses.
