@@ -63,6 +63,11 @@ export type {
   WorkflowVersion,
   WorkflowRun,
   WorkflowRunLog,
+  Creative,
+  CreativeTrigger,
+  CreativeLanguage,
+  CreativeDailyStat,
+  CreativeDailyPageStat,
 } from "../generated/prisma/client";
 // Reaches into the generator's `internal/` path because Prisma 7's
 // `prisma-client` provider does not re-export PrismaClientKnownRequestError
@@ -106,6 +111,12 @@ export namespace Prisma {
   export type ContactInclude = PrismaModelTypes.ContactInclude;
   export type ContactSelect = PrismaModelTypes.ContactSelect;
   export type ContactWhereInput = PrismaModelTypes.ContactWhereInput;
+  export type CreativeGetPayload<
+    S extends boolean | null | undefined | PrismaModelTypes.CreativeDefaultArgs,
+  > = PrismaModelTypes.CreativeGetPayload<S>;
+  export type CreativeInclude = PrismaModelTypes.CreativeInclude;
+  export type CreativeSelect = PrismaModelTypes.CreativeSelect;
+  export type CreativeWhereInput = PrismaModelTypes.CreativeWhereInput;
   export type DashboardFindManyArgs = PrismaModelTypes.DashboardFindManyArgs;
   export type DashboardGetPayload<
     S extends boolean | null | undefined | PrismaModelTypes.DashboardDefaultArgs,

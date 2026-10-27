@@ -66,6 +66,11 @@ export type TextEditorProps = {
   autoFocus?: boolean;
   id?: string;
   isExternalUrlsAllowed?: boolean;
+  /**
+   * Hand `setText` text's `<` and `>` still escaped, for a consumer that parses the markup as HTML again;
+   * by default they come decoded (see `toEditorOutputHtml`).
+   */
+  keepEscapedText?: boolean;
 };
 
 const editorConfig = {
@@ -146,6 +151,7 @@ export const Editor = (props: TextEditorProps) => {
               setShowFallbackInput={setShowFallbackInput}
               setShowLinkEditor={setShowLinkEditor}
               isExternalUrlsAllowed={props.isExternalUrlsAllowed}
+              keepEscapedText={props.keepEscapedText}
             />
             {props.onEmptyChange ? <EditorContentChecker onEmptyChange={props.onEmptyChange} /> : null}
             <div className="editor-inner scroll-bar" style={{ height: props.height }}>

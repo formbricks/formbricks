@@ -1,0 +1,50 @@
+type: object
+description: >
+  Changes to a creative. Each top-level field is a group that **replaces** the stored one as a whole:
+  send the complete `content`, `styling`, `destination`, `distribution` or `schedule` you want, and
+  omit a group to leave it untouched. `defaultLanguage` and `languages` replace the languages; the
+  stored texts must still fit them, so send `content` alongside when they no longer do.
+
+
+  `content` and `styling` must have the shape of the creative's own `type`, which never changes; `type`
+  itself is not accepted. Publish, pause, close and reopen by setting `status`. Unknown fields are
+  rejected with **400**.
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 255
+  status:
+    $ref: ./CreativeStatus.yml
+  defaultLanguage:
+    $ref: ./LocaleCode.yml
+  languages:
+    type: array
+    maxItems: 50
+    items:
+      $ref: ./CreativeLanguageInput.yml
+  content:
+    oneOf:
+      - $ref: ./FeedbackButtonContent.yml
+      - $ref: ./BannerContent.yml
+  styling:
+    oneOf:
+      - $ref: ./FeedbackButtonStyling.yml
+      - $ref: ./BannerStyling.yml
+  destination:
+    anyOf:
+      - $ref: ./CreativeDestinationInput.yml
+      - type: "null"
+  distribution:
+    $ref: ./CreativeDistribution.yml
+  schedule:
+    $ref: ./CreativeSchedule.yml
+  expectedUpdatedAt:
+    type: string
+    format: date-time
+    description: >-
+      Optimistic-concurrency precondition: the creative's `updatedAt` from your last read. The change
+      is applied only if the creative hasn't changed since; otherwise nothing is written and the
+      request answers **409**. Omit it to apply the change to the creative as it is stored when the
+      request runs.
+additionalProperties: false

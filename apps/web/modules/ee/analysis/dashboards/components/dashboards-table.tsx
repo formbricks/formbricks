@@ -65,7 +65,7 @@ export const DashboardsTable = ({ workspaceId, isReadOnly }: Readonly<Dashboards
           {dashboards.map((dashboard) => (
             <div
               key={dashboard.id}
-              className="grid h-12 w-full grid-cols-8 content-center text-left transition-colors ease-in-out hover:bg-slate-100">
+              className="relative grid h-12 w-full grid-cols-8 content-center text-left transition-colors ease-in-out hover:bg-slate-100">
               <Link
                 href={`/workspaces/${workspaceId}/dashboards/${dashboard.id}`}
                 className="col-span-7 grid cursor-pointer grid-cols-7 content-center p-2">

@@ -1,0 +1,13 @@
+# Apply after docker-compose.yml for a pre-provisioned SpiceDB PostgreSQL database.
+# Requires Docker Compose 2.24.4 or later. Keep this override active for every Compose command.
+services:
+  authzed-db-bootstrap: !reset null
+
+  spicedb-migrate:
+    depends_on: !reset null
+    environment:
+      SPICEDB_DATASTORE_CONN_URI: ${SPICEDB_DATASTORE_CONN_URI:?Set SPICEDB_DATASTORE_CONN_URI for external SpiceDB PostgreSQL}
+
+  spicedb:
+    environment:
+      SPICEDB_DATASTORE_CONN_URI: ${SPICEDB_DATASTORE_CONN_URI:?Set SPICEDB_DATASTORE_CONN_URI for external SpiceDB PostgreSQL}

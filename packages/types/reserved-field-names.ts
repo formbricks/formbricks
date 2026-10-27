@@ -66,4 +66,7 @@ export const RESERVED_FIELD_NAMES: ReadonlySet<string> = new Set([
   "visittimeonsite",
   "visitentryreferrer",
   "visiturls",
+  // Opened by creative, stamped by the ingest routes (ENG-4001).
+  "openedbycreativeid",
+  "openedbycreativename",
 ]);

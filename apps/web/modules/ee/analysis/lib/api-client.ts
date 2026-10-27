@@ -27,6 +27,10 @@ const JSON_HEADERS = { "Content-Type": "application/json" };
 /** Bounds a write so a stalled request cannot leave a dialog's spinner running forever. */
 export const MUTATION_TIMEOUT_MS = 15_000;
 
+/** A problem's `details` are typed `unknown`; the operations that set them put a JSON object there. */
+const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 export type TV3ListPage<T> = { data: T[]; meta: { limit: number; nextCursor: string | null } };
 
 /**
@@ -343,7 +347,10 @@ export const replaceDashboard = async (
 
 /** The dashboard changed after the caller read it, so a save expecting the old `updatedAt` was refused. */
 export const isStaleDashboardError = (error: unknown): boolean =>
-  error instanceof V3ApiError && error.status === 409 && typeof error.details?.currentUpdatedAt === "string";
+  error instanceof V3ApiError &&
+  error.status === 409 &&
+  isPlainRecord(error.details) &&
+  typeof error.details.currentUpdatedAt === "string";
 
 /** A copy whose widgets point at the same charts; without a `name` the server picks the "(copy)" one. */
 export const duplicateDashboard = async (dashboardId: string, name?: string): Promise<TAppDashboard> =>
@@ -433,7 +440,7 @@ export const deleteChart = (chartId: string): Promise<void> =>
 /** The dashboards a refused chart delete names, or `null` when the error is anything else. */
 export const chartInUseDashboards = (error: unknown): { id: string; name: string }[] | null => {
   if (!(error instanceof V3ApiError) || error.code !== "chart_in_use") return null;
-  const dashboards = error.details?.dashboards;
+  const dashboards = isPlainRecord(error.details) ? error.details.dashboards : undefined;
   return Array.isArray(dashboards)
     ? dashboards.filter(
         (dashboard): dashboard is { id: string; name: string } =>

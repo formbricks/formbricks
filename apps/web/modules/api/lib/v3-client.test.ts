@@ -37,19 +37,20 @@ describe("parseV3ApiError", () => {
     expect(error.invalid_params).toEqual([{ name: "surveyId", reason: "Invalid id" }]);
   });
 
-  test("keeps a problem's details object and drops a details value that is not one", async () => {
-    const problem = (details: unknown) =>
-      parseV3ApiError(
-        new Response(JSON.stringify({ status: 409, detail: "Changed", code: "conflict", details }), {
-          status: 409,
-        })
-      );
+  test("keeps the problem's details for callers that explain a refusal", async () => {
+    const response = new Response(
+      JSON.stringify({
+        status: 409,
+        detail: "Delete the creatives that open this survey before deleting it",
+        code: "survey_has_linked_creatives",
+        details: { creatives: [{ id: "creative_1", name: "Feedback tab" }] },
+      }),
+      { status: 409, headers: { "Content-Type": "application/problem+json" } }
+    );
 
-    expect((await problem({ currentUpdatedAt: "2026-10-22T11:30:00.000Z" })).details).toEqual({
-      currentUpdatedAt: "2026-10-22T11:30:00.000Z",
-    });
-    expect((await problem(["not", "an", "object"])).details).toBeUndefined();
-    expect((await problem(undefined)).details).toBeUndefined();
+    const error = await parseV3ApiError(response);
+
+    expect(error.details).toEqual({ creatives: [{ id: "creative_1", name: "Feedback tab" }] });
   });
 
   test("reads a 429's Retry-After in seconds, and ignores a form v3 does not send", async () => {

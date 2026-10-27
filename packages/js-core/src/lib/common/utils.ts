@@ -151,6 +151,16 @@ export const getStyling = (
 };
 
 /**
+ * Page font (ENG-3864): whether the survey renders in the page's font. A workspace Look & Feel setting;
+ * a survey whose own styling applies overrides it, unless that styling predates the setting.
+ */
+export const getPageFont = (settings: TWorkspaceStateSettings, survey: TWorkspaceStateSurvey): boolean => {
+  const surveyStyling =
+    settings.styling.allowStyleOverwrite && survey.styling?.overwriteThemeStyling ? survey.styling : null;
+  return (surveyStyling?.pageFont ?? settings.styling.pageFont) === true;
+};
+
+/**
  * The renderer's explicit `customCss` prop (ENG-3552): the workspace CSS, sent once in the workspace
  * settings, plus this survey's own. Unlike `getStyling`, nothing here picks one object over the other:
  * the server already leaves out a survey's CSS while its style overrides are off. A state cached before

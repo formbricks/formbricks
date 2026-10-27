@@ -210,8 +210,11 @@ export const getDarkThemeCss = (rawStyling: TWorkspaceStyling | TSurveyStyling):
 
 export const addCustomThemeToDom = ({
   styling: rawStyling,
+  pageFont = false,
 }: {
   styling: TWorkspaceStyling | TSurveyStyling;
+  /** Page font (ENG-3864): the host passes it; it is never read from `styling`. */
+  pageFont?: boolean;
 }): void => {
   // Every styling value below is written into stylesheet text, and stored styling can predate write-time
   // validation: an unsafe value (one that could add declarations or rules) falls back as if it were
@@ -599,6 +602,13 @@ export const addCustomThemeToDom = ({
   addRule("html body #fbjs .cardless-progress-bar div.progress-track", "  border-radius: 0 !important;\n");
 
   cssVariables += getDarkThemeCss(styling);
+
+  // Page font (ENG-3864): every element inherits its font from #fbjs, which inherits the page's, instead
+  // of the survey font preflight sets on `#fbjs *`. `:root` outranks that rule wherever either loads.
+  if (pageFont) {
+    cssVariables +=
+      ":root #fbjs *,\n:root #fbjs ::before,\n:root #fbjs ::after {\n  font-family: inherit;\n}\n";
+  }
 
   // Set the innerHTML of the style element
   styleElement.innerHTML = cssVariables;

@@ -29,6 +29,8 @@ import {
   CUSTOM_CSS_MAX_UNIVERSAL_COMPOUNDS,
   CUSTOM_CSS_TARGETS,
   REMOVED_AT_RULE_NAMES,
+  SURVEY_ROOT,
+  type TCustomCssRoot,
   getCustomCssLayerName,
   getCustomCssProcessorVersion,
 } from "./constants";
@@ -50,6 +52,7 @@ import {
 } from "./issues";
 import { prescanCustomCss, removePrescanImports } from "./prescan";
 import {
+  type TScopeTarget,
   type TSubjectPosition,
   measureSelector,
   scopeNestedSelector,
@@ -69,6 +72,13 @@ export type TCustomCssProcessResult =
 export interface TCustomCssProcessOptions {
   /** Defaults to `BLOCK_EXTERNAL_CUSTOM_CSS_RESOURCES`. Only tests pass anything else. */
   blockExternalResources?: boolean;
+  /**
+   * The element every selector is scoped to. Defaults to the survey root, `#fbjs`, and without it the
+   * output is exactly what it was before the option existed. Another root — the element a creative
+   * renders in, inside its shadow root — takes `#fbjs`'s place everywhere: as a root alias, as the
+   * anchor and in the dark anchor.
+   */
+  root?: TCustomCssRoot;
 }
 
 const APPEARANCES: TCustomCssAppearance[] = ["light", "dark"];
@@ -107,9 +117,8 @@ interface TParentStyle {
   printedSize: number;
 }
 
-interface TFieldContext {
+interface TFieldContext extends TScopeTarget {
   appearance: TCustomCssAppearance;
-  dark: boolean;
   layer: string;
   policy: TDeclarationPolicy;
   sink: WarningSink;
@@ -208,8 +217,8 @@ const processStyleRule = (
   const next: TParentStyle = { subject: "inside", compounds: 0, universals: 0, printedSize: 0 };
   for (const selector of rule.selectors) {
     const outcome = parent
-      ? scopeNestedSelector(selector, parent.subject)
-      : scopeTopLevelSelector(selector, ctx.dark);
+      ? scopeNestedSelector(selector, parent.subject, ctx.root)
+      : scopeTopLevelSelector(selector, ctx);
     if (!outcome.ok) {
       ctx.sink.add("unsafe_selector_removed", ctx.appearance, outcome.reason, location);
       continue;
@@ -457,7 +466,7 @@ const verifyCompiledField = (wrapped: string, ctx: TFieldContext): void => {
 
   const verifyStyleRule = (rule: Extract<Rule, { type: "style" }>["value"]): void => {
     if ((rule.rules?.length ?? 0) > 0) problems.push("nesting");
-    if (rule.selectors.some((selector) => verifyCompiledSelector(selector, ctx.dark) === null)) {
+    if (rule.selectors.some((selector) => verifyCompiledSelector(selector, ctx) === null)) {
       problems.push("selector");
     }
     verifyDeclarations(rule.declarations, true);
@@ -604,7 +613,13 @@ const wrapAndVerifyField = (css: string, ctx: TFieldContext): string => {
 /** Compiles and verifies each field; dark CSS may use the keyframes its light CSS defines. */
 const compileFields = (
   fields: TField[],
-  options: { scope: TCustomCssScope; budget: number; blockExternalResources: boolean; sink: WarningSink }
+  options: {
+    scope: TCustomCssScope;
+    root: TCustomCssRoot;
+    budget: number;
+    blockExternalResources: boolean;
+    sink: WarningSink;
+  }
 ): { compiled: Record<TCustomCssAppearance, string | null>; rejections: CustomCssRejection[] } => {
   const compiled: Record<TCustomCssAppearance, string | null> = { light: null, dark: null };
   const rejections: CustomCssRejection[] = [];
@@ -615,6 +630,7 @@ const compileFields = (
     if (!field.source) continue;
     const ctx: TFieldContext = {
       appearance: field.appearance,
+      root: options.root,
       dark: field.appearance === "dark",
       layer: getCustomCssLayerName(options.scope, field.appearance),
       policy: { blockExternalResources: options.blockExternalResources },
@@ -697,6 +713,7 @@ export const processCustomCss = (
 
     const { compiled, rejections } = compileFields(prescan.fields, {
       scope,
+      root: options.root ?? SURVEY_ROOT,
       budget,
       blockExternalResources,
       sink,

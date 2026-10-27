@@ -2,7 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import type { TSurveyVisibility } from "@formbricks/types/surveys/types";
-import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
+import { queueV3AuditLog, skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
 import {
@@ -18,9 +18,14 @@ import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { can } from "@/lib/authorization";
 import { lockSurveyVisibility, reconcileSurveyRelationships } from "@/lib/authzed/survey";
 import { getPendingVisibility } from "@/lib/survey/visibility/policy";
+import {
+  type TLinkedCreative,
+  toUnlinkedCreativeAuditEvents,
+  unlinkSurveyCreatives,
+} from "@/modules/ee/creatives/lib/linked-creatives";
 import { getAuthorizedV3Survey } from "../authorization";
 import { type TV3SurveyResourceVisibility, serializeV3SurveyVisibilityFields } from "../serializers";
-import { type TSurveyVisibilityBlocker, findSurveyOutboundBlockers } from "./blockers";
+import { type TSurveyVisibilityBlocker, findCreativeBlockers, findSurveyOutboundBlockers } from "./blockers";
 import { getSurveyVisibilityImpact } from "./impact";
 import { ZV3SurveyVisibilityBody } from "./schemas";
 import {
@@ -168,11 +173,17 @@ export async function getV3SurveyVisibility(params: TVisibilityOperationParams):
   }
 }
 
-/** `previous` is the row as read under the lock, before this change: what the audit records as old. */
+/**
+ * `previous` is the row as read under the lock, before this change: what the audit records as old.
+ * `blockers` are the ones the plan was made with; `unlinkedCreatives` the archived creatives a
+ * restriction unlinked.
+ */
 type TStoredChange = Readonly<{
+  blockers: TSurveyVisibilityBlocker[];
   plan: TVisibilityTransitionPlan;
   previous: TVisibilityRow;
   row: TVisibilityRow;
+  unlinkedCreatives: TLinkedCreative[];
 }>;
 
 /**
@@ -183,11 +194,16 @@ type TStoredChange = Readonly<{
  * `updatedAt` — that would reorder every list and fail the next editor save's precondition with a 409.
  * The row is re-read under the lock: the plan is made against what is stored now, not what the
  * authorization read saw.
+ *
+ * Creatives: a creative write that links a survey takes this same lock and refuses a restricted one
+ * (a pending change counts as restricted), so a restriction re-reads the creative blockers here, after
+ * the lock, and the two can't interleave. A restriction also unlinks the survey's archived creatives,
+ * which never block it.
  */
 const storeVisibilityChange = (
   surveyId: string,
   requested: TSurveyVisibility,
-  blockerCount: number,
+  blockersBeforeLock: TSurveyVisibilityBlocker[],
   userId: string
 ): Promise<TStoredChange> =>
   prisma.$transaction(async (tx) => {
@@ -196,9 +212,18 @@ const storeVisibilityChange = (
       where: { id: surveyId },
       select: visibilityRowSelect,
     });
-    const plan = planVisibilityTransition({ blockerCount, requested, row: previous });
+    const blockers =
+      requested === "restricted"
+        ? [
+            ...blockersBeforeLock.filter(({ type }) => type !== "creative"),
+            ...(await findCreativeBlockers(tx, surveyId, previous.workspaceId)),
+          ]
+        : blockersBeforeLock;
+    const plan = planVisibilityTransition({ blockerCount: blockers.length, requested, row: previous });
 
-    if (plan.kind !== "change" && plan.kind !== "cancel") return { plan, previous, row: previous };
+    if (plan.kind !== "change" && plan.kind !== "cancel") {
+      return { blockers, plan, previous, row: previous, unlinkedCreatives: [] };
+    }
 
     await tx.$executeRaw`
       UPDATE "Survey"
@@ -208,10 +233,20 @@ const storeVisibilityChange = (
           "visibilityChangedById" = ${userId}
       WHERE id = ${surveyId}
     `;
+    const unlinkedCreatives =
+      plan.to === "restricted"
+        ? await unlinkSurveyCreatives(tx, {
+            surveyId,
+            workspaceId: previous.workspaceId,
+            include: "archived",
+          })
+        : [];
     return {
+      blockers,
       plan,
       previous,
       row: await tx.survey.findUniqueOrThrow({ where: { id: surveyId }, select: visibilityRowSelect }),
+      unlinkedCreatives,
     };
   });
 
@@ -262,12 +297,15 @@ export async function changeV3SurveyVisibility(
 
     // Read outside the lock: attaching a connection does not take it. A race between a flip and an
     // attach is closed at dispatch instead, which skips a restricted survey whatever references it.
-    const blockers = requested === "restricted" ? await findRelevantBlockers(caller.row) : [];
+    // Creatives are the exception: linking one takes the lock, so they are re-read under it.
+    const blockersBeforeLock = requested === "restricted" ? await findRelevantBlockers(caller.row) : [];
     const {
+      blockers,
       plan,
       previous,
       row: stored,
-    } = await storeVisibilityChange(surveyId, requested, blockers.length, userId);
+      unlinkedCreatives,
+    } = await storeVisibilityChange(surveyId, requested, blockersBeforeLock, userId);
 
     if (plan.kind === "reject") {
       log.warn({ code: plan.code, statusCode: plan.status }, "Survey visibility change refused");
@@ -279,6 +317,9 @@ export async function changeV3SurveyVisibility(
     if (auditLog) {
       auditLog.organizationId = organizationId;
       auditLog.targetId = surveyId;
+      // Committed with the restriction: one event per unlinked creative, by the same caller.
+      const events = toUnlinkedCreativeAuditEvents(auditLog, surveyId, unlinkedCreatives);
+      await Promise.all(events.map((event) => queueV3AuditLog(event, requestId, log)));
     }
 
     if (plan.kind === "noop") {

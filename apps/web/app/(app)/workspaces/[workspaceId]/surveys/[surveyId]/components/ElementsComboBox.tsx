@@ -163,11 +163,6 @@ const getIconBackground = (type: OptionsType | string): string => {
   return backgroundMap[type] ?? "bg-amber-500";
 };
 
-const getLabelClassName = (type: OptionsType | string, label?: string): string => {
-  if (type !== OptionsType.META) return "";
-  return label === "os" || label === "url" ? "uppercase" : "capitalize";
-};
-
 /**
  * The option's own text, with the one group whose labels we author — "Other filters" — translated
  * for display. Every other group's label is survey or workspace data, shown verbatim.
@@ -211,9 +206,8 @@ export const SelectedCommandItem = ({ label, elementType, type, id }: Partial<El
         )}>
         {getDisplayIcon()}
       </span>
-      <p className={clsx("truncate text-sm text-slate-600", getLabelClassName(type ?? "", label))}>
-        {getDisplayLabel(label, type, t)}
-      </p>
+      {/* Reserved fields (Meta) arrive with their translated label, already cased: shown as they are. */}
+      <p className="truncate text-sm text-slate-600">{getDisplayLabel(label, type, t)}</p>
     </div>
   );
 };

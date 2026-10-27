@@ -127,7 +127,7 @@
       "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"]
     },
     "@formbricks/js-core#build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "@formbricks/surveys#build"],
       "outputs": [
         "dist/**",
         "$TURBO_ROOT$/apps/web/public/js/formbricks.*",

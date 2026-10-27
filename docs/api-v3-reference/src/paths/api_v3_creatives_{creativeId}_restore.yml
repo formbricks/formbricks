@@ -1,0 +1,50 @@
+post:
+  operationId: restoreCreativeV3
+  summary: Restore a creative
+  description: >-
+    Brings an archived creative back, always as a **draft**, whatever status it had: it never
+    reappears on a site by surprise, and showing it again means publishing it again. Its content,
+    styling and counts come back as they were, and so does its Destination, unless its survey can no
+    longer be one (it became Restricted, single-use or PIN-protected), in which case it is unlinked
+    now. `publishedAt` keeps when it was first published. Restoring a creative that isn't archived
+    changes nothing. Read/write access to its workspace; an unknown or inaccessible `creativeId`
+    answers **403**.
+  tags:
+    - V3 Creatives
+  parameters:
+    - $ref: ../components/parameters/CreativeIdPath.yml
+  responses:
+    "200":
+      description: Creative restored
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/CreativeResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3CreativesForbidden.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

@@ -18,7 +18,9 @@ export function SubmitButton({
   focus = false,
   onClick,
   disabled,
-  type,
+  // An inline survey can sit inside the host page's own <form>. A default `submit` button there would
+  // submit that form on click, and would become its Enter-to-submit default button.
+  type = "button",
   ...props
 }: Readonly<SubmitButtonProps>) {
   const buttonRef = useRef<HTMLButtonElement>(null);

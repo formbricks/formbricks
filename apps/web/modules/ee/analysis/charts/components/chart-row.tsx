@@ -43,7 +43,7 @@ export function ChartRow({ chart, workspaceId, isReadOnly, directories }: Readon
         onClick={isReadOnly ? undefined : handleChartClick}
         onKeyDown={isReadOnly ? undefined : handleRowKeyDown}
         aria-label={isReadOnly ? undefined : t("workspace.analysis.charts.open_chart", { name: chart.name })}
-        className={`grid h-12 w-full grid-cols-7 content-center p-2 text-left transition-colors ease-in-out hover:bg-slate-100 ${isReadOnly ? "" : "cursor-pointer"}`}>
+        className={`relative grid h-12 w-full grid-cols-7 content-center p-2 text-left transition-colors ease-in-out hover:bg-slate-100 ${isReadOnly ? "" : "cursor-pointer"}`}>
         <div className="col-span-6 grid grid-cols-6 content-center">
           <div className="col-span-3 flex min-w-0 items-center pl-6 text-sm">
             <div className="flex min-w-0 items-center gap-4">

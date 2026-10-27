@@ -1,0 +1,18 @@
+type: object
+description: >-
+  A banner at the top of the page, either `inPage` (in the page flow, scrolling away with it) or
+  `overlay` (fixed and always visible).
+required:
+  - placement
+  - layout
+properties:
+  placement:
+    type: string
+    enum:
+      - top
+  layout:
+    type: string
+    enum:
+      - inPage
+      - overlay
+additionalProperties: false

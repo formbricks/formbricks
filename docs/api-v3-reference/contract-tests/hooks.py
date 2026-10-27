@@ -5,7 +5,8 @@ Two jobs, both generic over the contract rather than per endpoint:
 1. Teach Schemathesis the ``cuid2`` string format every v3 identifier declares. Without it an
    unknown format degrades to an arbitrary string — including values like ``""`` or ``"0"`` that
    route somewhere other than the operation under test, producing failures that say nothing about
-   the contract.
+   the contract. ``web-url`` (a creative's link Destination) is registered for the same reason: a
+   generated host would mostly be one the API refuses, so the write would never be exercised.
 
 2. Point identifiers at the seeded data so authenticated endpoints answer with real payloads
    instead of a wall of 401/403s. Substitution is keyed by parameter name and operationId, from the
@@ -34,6 +35,10 @@ DEFAULT_FIXTURES_PATH = Path(__file__).with_name("fixtures.json")
 # cuid2 as the v3 routes validate it (`z.cuid2()` in packages/types/common.ts): lowercase
 # alphanumeric. The fixed length keeps generated ids visually distinct from real ones in reports.
 CUID2_STRATEGY = st.from_regex(r"\A[a-z][a-z0-9]{23}\Z")
+
+# `web-url` as the creative routes validate it (`isWebUrl` in packages/types/web-url.ts): http(s) with a
+# real host. A fixed domain keeps every generated link valid; the path varies.
+WEB_URL_STRATEGY = st.from_regex(r"\Ahttps://www\.example\.com(/[a-z0-9-]{1,16})?\Z")
 
 # Any parameter or body field with this name identifies the tenant, on every current and future v3
 # operation, so it is substituted globally rather than per operation.
@@ -76,6 +81,7 @@ READ_IDS: dict[str, str] = _FIXTURES.get("read", {})
 OPERATION_IDS: dict[str, dict[str, dict[str, Any]]] = _FIXTURES.get("operations", {})
 
 schemathesis.openapi.format("cuid2", CUID2_STRATEGY)
+schemathesis.openapi.format("web-url", WEB_URL_STRATEGY)
 
 
 def _operation_id(case: Any) -> str | None:
