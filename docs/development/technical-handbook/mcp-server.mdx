@@ -844,6 +844,13 @@ A block is `{ name, elements[], id? }`; an element is `{ id, type, headline, ...
 leaves draft; block ids are generated when omitted. Translatable fields are keyed by locale code and
 must carry every configured language — the internal `default` key is rejected.
 
+Once a survey has left `draft` (active, paused, completed, or scheduled, which is paused until its
+publish date), its question codes, answer codes, question types and option text in every language are
+locked, and an option, matrix row or column that existed at launch cannot be deleted. The tools refuse
+such an edit with `immutable_question_code`, `immutable_answer_code`, `immutable_question_type`,
+`immutable_option_text` or `immutable_option_deletion`, naming the field. Adding questions and options is
+still allowed, and an agent can unlock a survey by reverting it to `draft`.
+
 Every element except `cta` may carry an optional **question code**, and every choice, matrix row or
 column and picture choice an optional **answer code**: `{ "id": "satisfaction", "code": "q1", ... }`
 and `{ "id": "c1", "code": "1", "label": { ... } }`. A missing code is not an error. A question code
