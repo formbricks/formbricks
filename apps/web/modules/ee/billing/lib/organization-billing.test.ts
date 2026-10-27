@@ -1576,6 +1576,88 @@ describe("organization-billing", () => {
     );
   });
 
+  test("a declined upgrade keeps a trial's cancel flag, so its Hobby fallback survives", async () => {
+    // Sending cancel_at_period_end false also clears cancel_at on Stripe. Only the conversion update may
+    // clear it: error_if_incomplete rolls that back on a decline, a separate earlier update would not.
+    // A trial carrying a pending downgrade tracked via cancel_at_period_end (no schedule). Adding a
+    // card and upgrading to paid Pro must supersede that pending downgrade, otherwise the Hobby card
+    // keeps showing a stale "Scheduled" badge after the upgrade.
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_trial",
+          status: "trialing",
+          automatic_tax: { enabled: true },
+          billing_cycle_anchor: 1739923200,
+          // The pending hobby downgrade is tracked here, not via a schedule.
+          cancel_at_period_end: true,
+          default_payment_method: "pm_sub",
+          trial_end: 1742515200,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_trial",
+        plan: "pro",
+        interval: "monthly",
+        subscriptionStatus: "trialing",
+        hasPaymentMethod: true,
+        pendingChange: {
+          type: "plan_change",
+          targetPlan: "hobby",
+          targetInterval: "monthly",
+          effectiveAt: "2026-08-11T00:00:00.000Z",
+        },
+      },
+    });
+
+    mocks.subscriptionsUpdate.mockImplementation(async (_id: string, args: Record<string, unknown>) => {
+      if (args.trial_end === "now") throw new Error("card_declined");
+      return {};
+    });
+
+    await expect(
+      switchOrganizationToCloudPlan({
+        organizationId: "org_1",
+        customerId: "cus_1",
+        targetPlan: "pro",
+        targetInterval: "monthly",
+      })
+    ).rejects.toThrow("card_declined");
+
+    const cancelFlagClears = mocks.subscriptionsUpdate.mock.calls.filter(
+      ([, args]) => "cancel_at_period_end" in args || ("cancel_at" in args && args.trial_end !== "now")
+    );
+    expect(cancelFlagClears).toHaveLength(0);
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith(
+      "sub_trial",
+      expect.objectContaining({ trial_end: "now", cancel_at: "", payment_behavior: "error_if_incomplete" })
+    );
+  });
+
   // Shared fixture: a card-backed Pro trial with `remaining` days left on the trial.
   const setupCardBackedProTrial = (remainingDays: number) => {
     const trialEnd = Math.floor(Date.now() / 1000) + remainingDays * 86_400;
@@ -1780,7 +1862,7 @@ describe("organization-billing", () => {
     });
 
     const [previewArgs] = mocks.invoicesCreatePreview.mock.calls[0];
-    expect(previewArgs.subscription_details).toMatchObject({ trial_end: "now" });
+    expect(previewArgs.subscription_details).toMatchObject({ trial_end: "now", cancel_at: "" });
   });
 
   test("switchOrganizationToCloudPlan uses pending_if_incomplete for immediate upgrades so the plan is granted only once paid", async () => {

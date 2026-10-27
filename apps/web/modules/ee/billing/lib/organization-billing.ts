@@ -804,7 +804,9 @@ const previewFullConversionChargeCents = async (
       // must mirror that. Never send it otherwise — trial_end re-anchors the billing cycle, which
       // would turn an ordinary mid-cycle proration into a full-period charge (matches the real update
       // in updateSubscriptionItemsImmediately, which sends no trial_end when not trialing).
-      ...(subscription.status === "trialing" ? { trial_end: "now" as const } : {}),
+      // cancel_at too: the real conversion clears the trial's cancel_at, and left in the preview Stripe
+      // prorates the quote to it — a fraction of the full price the card is actually charged.
+      ...(subscription.status === "trialing" ? { trial_end: "now" as const, cancel_at: "" as const } : {}),
     },
   });
   return { amountDue: preview.amount_due, currency: preview.currency };
@@ -847,10 +849,13 @@ const updateSubscriptionItemsImmediately = async (
   const automaticTax = targetPlan === "hobby" ? null : await getMissingAutomaticTax(subscription, customerId);
 
   // Neither is a pending-update attribute, so set them in a separate plain update first. Tax goes on
-  // before the item change so the upgrade invoice already carries it.
-  if (subscription.cancel_at_period_end || automaticTax) {
+  // before the item change so the upgrade invoice already carries it. A trial's cancel flag is left to
+  // the conversion update below: clearing it here would also clear cancel_at before the charge, so a
+  // declined card would lose the trial's Hobby fallback (that update's cancel_at "" clears both).
+  const clearCancelAtPeriodEnd = subscription.cancel_at_period_end && subscription.status !== "trialing";
+  if (clearCancelAtPeriodEnd || automaticTax) {
     await stripeClient.subscriptions.update(subscription.id, {
-      ...(subscription.cancel_at_period_end ? { cancel_at_period_end: false } : {}),
+      ...(clearCancelAtPeriodEnd ? { cancel_at_period_end: false } : {}),
       ...(automaticTax ? { automatic_tax: automaticTax } : {}),
     });
   }
