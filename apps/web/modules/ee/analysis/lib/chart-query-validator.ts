@@ -96,16 +96,56 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  * AI generator wrote into saved queries before ranges were limited to the presets. Accepted only when
  * reading a saved chart, so those charts keep rendering; a write must use a preset or a `[from, to]` pair.
  */
-const RELATIVE_UNIT = "(?:minute|hour|day|week|month|quarter|year)s?";
-const LEGACY_RELATIVE_DATE_RANGES: readonly RegExp[] = [
+const RELATIVE_UNIT = "(minute|hour|day|week|month|quarter|year)s?";
+/** The open-ended ones, N units back from now; their count and unit are captured for the bucket limit. */
+const LEGACY_SPANS: readonly RegExp[] = [
+  new RegExp(String.raw`^last (\d{1,3}) ${RELATIVE_UNIT}$`, "i"),
+  new RegExp(String.raw`^from (\d{1,3}) ${RELATIVE_UNIT} ago to now$`, "i"),
+];
+/** At most a year long, so they fit every granularity the validator allows. */
+const LEGACY_BOUNDED_RANGES: readonly RegExp[] = [
   /^(?:today|yesterday)$/i,
   /^(?:this|last) (?:week|month|quarter|year)$/i,
-  new RegExp(String.raw`^last \d{1,3} ${RELATIVE_UNIT}$`, "i"),
-  new RegExp(String.raw`^from \d{1,3} ${RELATIVE_UNIT} ago to now$`, "i"),
 ];
 
 const isLegacyRelativeDateRange = (value: string): boolean =>
-  LEGACY_RELATIVE_DATE_RANGES.some((pattern) => pattern.test(value));
+  [...LEGACY_BOUNDED_RANGES, ...LEGACY_SPANS].some((pattern) => pattern.test(value));
+
+/**
+ * The instants a relative range older charts were saved with covers, counted back from `now`, so the
+ * time-bucket limit holds for it as for an explicit pair: `last 999 years` by the hour is as refused as
+ * the same dates written out. `null` for the bounded ones (`today`, `this month`, …), which every
+ * granularity fits, and for anything else.
+ */
+export const legacyRangeBounds = (value: string, now = new Date()): [string, string] | null => {
+  const match = LEGACY_SPANS.map((pattern) => pattern.exec(value)).find(Boolean);
+  if (!match) return null;
+  const count = Number(match[1]);
+  const start = new Date(now);
+  switch (match[2].toLowerCase()) {
+    case "minute":
+      start.setUTCMinutes(start.getUTCMinutes() - count);
+      break;
+    case "hour":
+      start.setUTCHours(start.getUTCHours() - count);
+      break;
+    case "day":
+      start.setUTCDate(start.getUTCDate() - count);
+      break;
+    case "week":
+      start.setUTCDate(start.getUTCDate() - count * 7);
+      break;
+    case "month":
+      start.setUTCMonth(start.getUTCMonth() - count);
+      break;
+    case "quarter":
+      start.setUTCMonth(start.getUTCMonth() - count * 3);
+      break;
+    default:
+      start.setUTCFullYear(start.getUTCFullYear() - count);
+  }
+  return [start.toISOString(), now.toISOString()];
+};
 
 /**
  * A date range in the chart query's shape: a preset name, `all-time` (→ `undefined`), or a
@@ -222,7 +262,8 @@ export const parseRequestedDateRange = (
  * date range, empty or not — the Cube client fills them when the query's only grouping is one granular
  * time dimension, the first — so that range may span at most `MAX_TIME_BUCKETS` buckets. A chart with
  * any other grouping only ever returns its real rows and is not limited. Presets need no check: the
- * widest, a year, is 8,784 hours. `nameOf` names the problem for a time dimension's index; `null` when
+ * widest, a year, is 8,784 hours. A relative range older charts were saved with is measured back from
+ * now (`legacyRangeBounds`). `nameOf` names the problem for a time dimension's index; `null` when
  * the query is within the limit.
  */
 export const checkTimeBucketLimit = (
@@ -236,9 +277,10 @@ export const checkTimeBucketLimit = (
   }
 
   const { granularity, dateRange } = timeDimensions[0];
-  if (!granularity || !Array.isArray(dateRange)) return null;
+  const bounds = typeof dateRange === "string" ? legacyRangeBounds(dateRange) : dateRange;
+  if (!granularity || !Array.isArray(bounds)) return null;
 
-  const buckets = countTimeBuckets(dateRange[0], dateRange[1], granularity);
+  const buckets = countTimeBuckets(bounds[0], bounds[1], granularity);
   if (buckets <= MAX_TIME_BUCKETS) return null;
   return {
     name: nameOf(0),

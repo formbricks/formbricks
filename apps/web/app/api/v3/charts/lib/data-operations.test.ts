@@ -159,6 +159,20 @@ describe("chart queries within budget", () => {
       ]);
     });
 
+    test("holds an older chart's relative range to the bucket limit, as an explicit pair is", async () => {
+      const response = await preview({
+        query: {
+          measures: ["FeedbackRecords.count"],
+          timeDimensions: [{ dimension: COLLECTED_AT, granularity: "hour", dateRange: "last 999 years" }],
+        },
+      });
+      expect(response.status).toBe(422);
+      expect((await problemOf(response)).invalid_params).toEqual([
+        expect.objectContaining({ name: "query.timeDimensions[0].dateRange", code: "limit_exceeded" }),
+      ]);
+      expect(runChartQuery).not.toHaveBeenCalled();
+    });
+
     test("holds no slot for a query the validator refuses", async () => {
       vi.mocked(acquireInFlightSlot).mockClear();
       expect((await preview({ query: { measures: ["FeedbackRecords.nope"] } })).status).toBe(422);

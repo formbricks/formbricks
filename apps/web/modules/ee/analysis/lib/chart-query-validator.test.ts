@@ -8,6 +8,8 @@ import {
   MAX_MEASURES,
   MAX_OFFSET,
   MAX_ORDER_ENTRIES,
+  checkTimeBucketLimit,
+  legacyRangeBounds,
   parseQueryDateRange,
   parseRequestedDateRange,
   validateChartQuery,
@@ -369,6 +371,37 @@ describe("parseRequestedDateRange", () => {
       ok: false,
       issues: [{ name: "dateRange", reason: "Send either a date preset or from and to, not both." }],
     });
+  });
+});
+
+describe("legacyRangeBounds", () => {
+  const now = new Date("2026-10-27T12:00:00.000Z");
+
+  test("measures a relative range back from now, in the units it names", () => {
+    expect(legacyRangeBounds("last 3 months", now)).toEqual(["2026-07-27T12:00:00.000Z", now.toISOString()]);
+    expect(legacyRangeBounds("from 2 weeks ago to now", now)).toEqual([
+      "2026-10-13T12:00:00.000Z",
+      now.toISOString(),
+    ]);
+    expect(legacyRangeBounds("Last 999 years", now)?.[0]).toBe("1027-10-27T12:00:00.000Z");
+  });
+
+  test("leaves a bounded or unknown range alone", () => {
+    for (const range of ["today", "this month", "last quarter", "since forever"]) {
+      expect(legacyRangeBounds(range, now)).toBeNull();
+    }
+  });
+
+  test("holds a relative range to the time-bucket limit like the same dates written out", () => {
+    const byHour = (dateRange: string) => ({
+      measures: ["FeedbackRecords.count"],
+      timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", granularity: "hour" as const, dateRange }],
+    });
+    expect(checkTimeBucketLimit(byHour("last 999 years"), () => "dateRange")).toMatchObject({
+      name: "dateRange",
+      code: "limit_exceeded",
+    });
+    expect(checkTimeBucketLimit(byHour("last 3 months"), () => "dateRange")).toBeNull();
   });
 });
 

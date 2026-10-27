@@ -224,7 +224,7 @@ The Helm chart and Formbricks image are versioned independently. A chart-only pa
 
 ### Charts and dashboards API
 
-Charts and dashboards are now part of API v3 and the MCP server, and the app uses the same API. Four things
+Charts and dashboards are now part of API v3 and the MCP server, and the app uses the same API. Five things
 change for an existing installation:
 
 - **Every write API key can manage charts and dashboards.** An API key with `write` or `manage` on a workspace
@@ -246,6 +246,9 @@ change for an existing installation:
   keeping each in its column. It is a short pass over the widget table that only updates rows that change.
   A dashboard now takes at most 250 widgets; one that grew past that before still opens and saves, and the
   migration log lists any such dashboards.
+- **A chart grouped by time alone spans at most 10,000 buckets.** Each bucket is a row, empty or not, so a
+  saved chart wider than that, such as two years by the hour, now shows a `limit_exceeded` error instead of
+  rendering. Change it to a coarser granularity or a shorter range.
 
 The Cube configuration file `cube/cube.js` changed too: it now accepts queries made with an API key, which the
 previous file rejects. Refresh it the way [Cube model files for Docker](#cube-model-files-for-docker) describes
