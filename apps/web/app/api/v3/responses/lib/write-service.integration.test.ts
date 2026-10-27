@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
+import { listScopedResponseSurveyRefs, setScopedResponsesOutcome } from "./write-service";
 
 /**
  * The scoped `connect`s, against a real Postgres.
@@ -197,5 +198,65 @@ describe("scoped connects, against real Postgres", () => {
     expect(created.displayId).toBe(mine.displayId);
     expect(created.tags.map((row) => row.tagId)).toEqual([mine.tagId]);
     expect(await responseCount(mine.surveyId)).toBe(1);
+  });
+});
+
+describe("the batch outcome write, against real Postgres", () => {
+  const makeResponse = async (surveyId: string, outcome: "lowQuality" | null = null) =>
+    (
+      await prisma.response.create({
+        data: { surveyId, finished: true, data: {}, outcome },
+        select: { id: true },
+      })
+    ).id;
+
+  test("marks only what is in the workspace, and a foreign id is simply not matched", async () => {
+    const mine = await makeTenant("Mine");
+    const theirs = await makeTenant("Theirs");
+    const own = await makeResponse(mine.surveyId);
+    const foreign = await makeResponse(theirs.surveyId);
+
+    const result = await setScopedResponsesOutcome([own, foreign], "lowQuality", {
+      workspaceId: mine.workspaceId,
+    });
+
+    expect(result.matched).toBe(1);
+    expect(result.changes).toEqual([{ id: own, surveyId: mine.surveyId, previous: null }]);
+    expect(result.rows.map((row) => [row.id, row.outcome])).toEqual([[own, "lowQuality"]]);
+    expect((await prisma.response.findUniqueOrThrow({ where: { id: foreign } })).outcome).toBeNull();
+    expect(await responseCount(mine.surveyId)).toBe(1);
+  });
+
+  test("a restore clears the mark, and a repeat changes nothing and touches nothing", async () => {
+    const mine = await makeTenant("Mine");
+    const marked = await makeResponse(mine.surveyId, "lowQuality");
+    const scope = { workspaceId: mine.workspaceId };
+
+    const restored = await setScopedResponsesOutcome([marked], null, scope);
+    expect(restored.changes).toEqual([{ id: marked, surveyId: mine.surveyId, previous: "lowQuality" }]);
+
+    const before = await prisma.response.findUniqueOrThrow({ where: { id: marked } });
+    expect(before.outcome).toBeNull();
+
+    const again = await setScopedResponsesOutcome([marked], null, scope);
+    expect(again).toEqual({ matched: 1, changes: [], rows: [] });
+    const after = await prisma.response.findUniqueOrThrow({ where: { id: marked } });
+    expect(after.updatedAt).toEqual(before.updatedAt);
+  });
+
+  test("a survey outside the caller's visibility is filtered out like a foreign id", async () => {
+    const mine = await makeTenant("Mine");
+    const own = await makeResponse(mine.surveyId);
+
+    const hidden = { id: "not-a-survey-of-mine" };
+    expect(
+      await listScopedResponseSurveyRefs([own], { workspaceId: mine.workspaceId, visibleSurveyWhere: hidden })
+    ).toEqual([]);
+    expect(
+      await listScopedResponseSurveyRefs([own], {
+        workspaceId: mine.workspaceId,
+        visibleSurveyWhere: { id: mine.surveyId },
+      })
+    ).toEqual([{ id: own, surveyId: mine.surveyId }]);
   });
 });

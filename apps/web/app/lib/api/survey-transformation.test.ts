@@ -103,6 +103,31 @@ describe("transformQuestionsToBlocks", () => {
     expect(blocks[1].name).toBe("Block 2");
   });
 
+  test("codes the converted questions and answer options, skipping the names it is given (ENG-6782)", () => {
+    const questions = [
+      { id: "a", type: TSurveyQuestionTypeEnum.OpenText, headline: { default: "A" } },
+      {
+        id: "b",
+        type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+        headline: { default: "B" },
+        choices: [
+          { id: "x", label: { default: "X" } },
+          { id: "y", label: { default: "Y" } },
+        ],
+      },
+      { id: "c", type: TSurveyQuestionTypeEnum.OpenText, headline: { default: "C" }, code: "mine" },
+    ] as unknown as TSurveyQuestion[];
+
+    const blocks = transformQuestionsToBlocks(questions, [], ["Q1"]);
+
+    const [a, b, c] = blocks.map((block) => block.elements[0]) as unknown as {
+      code: string;
+      choices?: { code: string }[];
+    }[];
+    expect([a.code, b.code, c.code]).toEqual(["q2", "q3", "mine"]);
+    expect(b.choices?.map((choice) => choice.code)).toEqual(["1", "2"]);
+  });
+
   test("should migrate CTA question with external button", () => {
     const questions = [
       {

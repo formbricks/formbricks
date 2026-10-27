@@ -8,7 +8,9 @@ import {
   createScopedResponse,
   dispatchV3ResponsePipeline,
   getSurveyForV3Write,
+  listScopedResponseSurveyRefs,
   readbackV3Response,
+  setScopedResponsesOutcome,
   toV3PipelineResponse,
   updateScopedResponse,
 } from "./write-service";
@@ -21,6 +23,7 @@ const {
   mockEvaluateQuotas,
   mockLoggerError,
   mockResponseFindFirst,
+  mockResponseFindMany,
   mockSurveyFindUnique,
   mockLoadQuotaContext,
 } = vi.hoisted(() => ({
@@ -29,6 +32,7 @@ const {
   mockEvaluateQuotas: vi.fn(),
   mockLoggerError: vi.fn(),
   mockResponseFindFirst: vi.fn(),
+  mockResponseFindMany: vi.fn(),
   mockSurveyFindUnique: vi.fn(),
   mockLoadQuotaContext: vi.fn(),
 }));
@@ -36,7 +40,7 @@ const {
 vi.mock("@formbricks/database", () => ({
   prisma: {
     $transaction: mockTransaction,
-    response: { findFirst: mockResponseFindFirst },
+    response: { findFirst: mockResponseFindFirst, findMany: mockResponseFindMany },
     survey: { findUnique: mockSurveyFindUnique },
   },
 }));
@@ -117,6 +121,7 @@ const readbackRow = (over: Record<string, unknown> = {}): TV3WriteReadbackRow =>
     meta: { source: "smoke" },
     displayId: null,
     singleUseId: null,
+    outcome: null,
     contactAttributes: { userId: "user-42" },
     contact: { id: "clct000000000000000000001", attributes: [{ value: "user-42" }] },
     tags: [
@@ -390,6 +395,13 @@ describe("toV3PipelineResponse", () => {
     expect(parsed.success).toBe(true);
   });
 
+  test.each([null, "lowQuality"] as const)("the outcome %s is carried, never dropped", (outcome) => {
+    const payload = toV3PipelineResponse(readbackRow({ outcome }));
+
+    expect(payload.outcome).toBe(outcome);
+    expect(ZResponse.parse(payload).outcome).toBe(outcome);
+  });
+
   test("join rows are flattened to the tag itself", () => {
     expect(toV3PipelineResponse(readbackRow()).tags).toEqual([
       expect.objectContaining({ id: "cltg000000000000000000001", name: "tag-a" }),
@@ -659,6 +671,19 @@ describe("updateScopedResponse — what actually reaches Prisma", () => {
     expect(tx.response.update.mock.calls[0][0].data).toEqual({ endingId: null });
   });
 
+  test.each(["lowQuality", null] as const)("outcome %s reaches the update", async (outcome) => {
+    const tx = runTx(txStub());
+
+    await updateScopedResponse({
+      responseId: "clrs1",
+      workspaceId: survey.workspaceId,
+      survey,
+      patch: { outcome },
+    });
+
+    expect(tx.response.update.mock.calls[0][0].data).toEqual({ outcome });
+  });
+
   /** `tags` is the complete set, so the join rows are cleared and rewritten rather than added to. */
   test("patching tags replaces the set", async () => {
     const tx = runTx(txStub({ tag: { findMany: vi.fn().mockResolvedValue([{ id: "cltg1" }]) } }));
@@ -716,5 +741,71 @@ describe("scoped reads", () => {
       id: "clrs1",
       survey: { workspaceId: survey.workspaceId },
     });
+  });
+});
+
+describe("the batch outcome write", () => {
+  const WORKSPACE_ID = survey.workspaceId;
+  const IDS = ["clrs000000000000000000001", "clrs000000000000000000002", "clrs000000000000000000003"];
+  const batchTx = (rows: { id: string; surveyId: string; outcome: string | null }[]) => {
+    const tx = { response: { findMany: vi.fn().mockResolvedValue(rows), updateMany: vi.fn() } };
+    mockTransaction.mockImplementationOnce(async (fn: (client: unknown) => Promise<unknown>) => fn(tx));
+    return tx;
+  };
+
+  test("the ids in scope are listed with their survey, filtered by workspace and visibility", async () => {
+    mockResponseFindMany.mockResolvedValueOnce([{ id: IDS[0], surveyId: survey.id }]);
+
+    const refs = await listScopedResponseSurveyRefs(IDS, {
+      workspaceId: WORKSPACE_ID,
+      visibleSurveyWhere: { id: "visible" },
+    });
+
+    expect(refs).toEqual([{ id: IDS[0], surveyId: survey.id }]);
+    expect(mockResponseFindMany.mock.calls[0][0].where).toEqual({
+      id: { in: IDS },
+      survey: { workspaceId: WORKSPACE_ID, AND: [{ id: "visible" }] },
+    });
+  });
+
+  test("only the responses whose outcome differs are written, scoped by workspace", async () => {
+    const tx = batchTx([
+      { id: IDS[0], surveyId: survey.id, outcome: null },
+      { id: IDS[1], surveyId: survey.id, outcome: "lowQuality" },
+    ]);
+    mockResponseFindMany.mockResolvedValueOnce([readbackRow({ id: IDS[0] })]);
+
+    const result = await setScopedResponsesOutcome(IDS, "lowQuality", { workspaceId: WORKSPACE_ID });
+
+    expect(tx.response.updateMany).toHaveBeenCalledTimes(1);
+    const { where, data } = tx.response.updateMany.mock.calls[0][0];
+    expect(data).toEqual({ outcome: "lowQuality" });
+    expect(where.id).toEqual({ in: [IDS[0]] });
+    expect(JSON.stringify(where.survey)).toContain(WORKSPACE_ID);
+    // Matched counts everything in scope, including what already carried the outcome: a retry of the
+    // same batch reports the same number.
+    expect(result.matched).toBe(2);
+    expect(result.changes).toEqual([{ id: IDS[0], surveyId: survey.id, previous: null }]);
+    expect(result.rows).toHaveLength(1);
+  });
+
+  test("a restore clears the outcome and remembers what it was", async () => {
+    const tx = batchTx([{ id: IDS[0], surveyId: survey.id, outcome: "lowQuality" }]);
+    mockResponseFindMany.mockResolvedValueOnce([readbackRow({ id: IDS[0] })]);
+
+    const result = await setScopedResponsesOutcome(IDS, null, { workspaceId: WORKSPACE_ID });
+
+    expect(tx.response.updateMany.mock.calls[0][0].data).toEqual({ outcome: null });
+    expect(result.changes).toEqual([{ id: IDS[0], surveyId: survey.id, previous: "lowQuality" }]);
+  });
+
+  test("nothing in scope, or nothing to change, writes and reads back nothing", async () => {
+    const tx = batchTx([{ id: IDS[0], surveyId: survey.id, outcome: "lowQuality" }]);
+
+    const result = await setScopedResponsesOutcome(IDS, "lowQuality", { workspaceId: WORKSPACE_ID });
+
+    expect(tx.response.updateMany).not.toHaveBeenCalled();
+    expect(mockResponseFindMany).not.toHaveBeenCalled();
+    expect(result).toEqual({ matched: 1, changes: [], rows: [] });
   });
 });

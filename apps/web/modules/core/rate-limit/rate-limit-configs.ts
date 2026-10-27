@@ -26,6 +26,11 @@ export const rateLimitConfigs = {
     v1: { interval: 60, allowedPerInterval: 100, namespace: "api:v1" }, // 100 per minute (Management API)
     v2: { interval: 60, allowedPerInterval: 100, namespace: "api:v2" }, // 100 per minute
     v3: { interval: 60, allowedPerInterval: 100, namespace: "api:v3" }, // 100 per minute
+    v3StateMutation: {
+      interval: 60,
+      allowedPerInterval: 120,
+      namespace: "api:v3:state-mutation",
+    }, // 120 per minute per principal — the API twin of `actions.stateMutation`, for batch writes that fan out to the response pipeline
     mcpAuth: { interval: 60, allowedPerInterval: 30, namespace: "api:mcp:auth" }, // 30 per minute
     v3SurveyGenerate: {
       interval: 60,

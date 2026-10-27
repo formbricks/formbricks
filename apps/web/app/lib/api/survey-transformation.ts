@@ -6,6 +6,7 @@ import {
   type TSurveyBlockLogic,
   type TSurveyBlockLogicAction,
 } from "@formbricks/types/surveys/blocks";
+import { fillMissingCodes } from "@formbricks/types/surveys/fill-missing-codes";
 import { type TConditionGroup, type TSingleCondition } from "@formbricks/types/surveys/logic";
 import {
   type TSurveyEnding,
@@ -356,9 +357,14 @@ const reverseLogicFallback = (
   return undefined;
 };
 
+/**
+ * @param takenNames Embedded Data names of the survey, which a default question code must not take
+ *   (ENG-6782). The converted blocks come back with every missing question and answer code filled.
+ */
 export const transformQuestionsToBlocks = (
   questions: TSurveyQuestion[],
-  endings: TSurveyEnding[] = []
+  endings: TSurveyEnding[] = [],
+  takenNames: readonly string[] = []
 ): TSurveyBlock[] => {
   if (questions.length === 0) {
     return [];
@@ -416,7 +422,7 @@ export const transformQuestionsToBlocks = (
     }
   }
 
-  return blocks as TSurveyBlock[];
+  return fillMissingCodes(blocks as TSurveyBlock[], takenNames);
 };
 
 const transformBlockLogicToQuestionLogic = (

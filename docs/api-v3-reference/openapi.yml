@@ -10,7 +10,7 @@ info:
 
     **Custom CSS**: survey CSS through `customCss` on **POST /api/v3/surveys**, **GET** and **PATCH /api/v3/surveys/{surveyId}**, workspace CSS through **GET** and **PATCH /api/v3/workspaces/{workspaceId}/custom-css**, and previews through `operation: customCss` on **POST /api/v3/surveys/validate**. Writes take and reads return source only; the server compiles it, returns removed constructs as top-level `warnings`, and never accepts compiled output.
 
-    **Responses**: **GET /api/v3/responses**, **GET /api/v3/responses/count**, **POST /api/v3/responses/validate**, **POST /api/v3/responses/batch-delete**, **GET /api/v3/responses/{responseId}**, **POST /api/v3/responses**, **PATCH /api/v3/responses/{responseId}**, and **DELETE /api/v3/responses/{responseId}**.
+    **Responses**: **GET /api/v3/responses**, **GET /api/v3/responses/count**, **POST /api/v3/responses/validate**, **POST /api/v3/responses/batch-delete**, **POST /api/v3/responses/batch-outcome**, **GET /api/v3/responses/{responseId}**, **POST /api/v3/responses**, **PATCH /api/v3/responses/{responseId}**, and **DELETE /api/v3/responses/{responseId}**.
 
     **Creatives**: **GET /api/v3/creatives**, **POST /api/v3/creatives**, **GET**, **PATCH** and **DELETE /api/v3/creatives/{creativeId}**, **POST /api/v3/creatives/{creativeId}/archive**, **/restore** and **/duplicate**, **GET /api/v3/creatives/{creativeId}/stats**, and **POST /api/v3/creatives/pause**, which pauses every creative that opens a survey. A creative is a feedback button or a banner the web SDK renders on the customer's site; pressing it opens its Destination, a survey or a link. Writes set the author's `status`; reads add the derived `displayStatus`; `stats` returns its daily Impressions and Clicks.
 
@@ -2141,6 +2141,7 @@ paths:
                         finished: true
                         endingId: cmpthankyou00000000000000
                         language: de
+                        outcome: null
                         durationSeconds: 107.9
                         resolution:
                           labelPolicy: currentSurveyDefinition
@@ -2686,6 +2687,90 @@ paths:
         - sessionAuth: []
         - apiKeyAuth: []
         - bearerAuth: []
+  /api/v3/responses/batch-outcome:
+    post:
+      operationId: batchSetResponsesOutcomeV3
+      summary: Mark responses Low quality in bulk
+      description: |
+        Sets `outcome` on up to 100 responses in one transaction: `lowQuality` marks them, `null` restores them. Nothing is deleted. Requires read-write access to the workspace and write access to every survey the responses belong to.
+
+        **It scope-filters rather than rejecting**, exactly like `batch-delete`. Ids belonging to another workspace, ids that no longer exist, and responses of a survey the caller cannot see are ignored, and `updated` reports how many responses in the caller's scope now carry the requested outcome — including ones that already did, so a client can safely retry the same batch. If the batch reaches a survey the caller can see but may not write to, the whole call answers **403** and nothing is changed.
+
+        Each response whose outcome actually changed emits `responseUpdated`, so webhooks and integrations hear about a mark and a restore. A response that already carried the outcome is left untouched and emits nothing.
+
+        **`workspaceId` is the scope, and it is required**, for the reason `batch-delete` explains.
+      tags:
+        - V3 Responses
+      parameters:
+        - $ref: '#/components/parameters/WorkspaceIdQuery'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchSetResponsesOutcomeRequest'
+            examples:
+              markThree:
+                summary: Mark three responses Low quality
+                value:
+                  ids:
+                    - clrs1234567890123456789012
+                    - clrs2234567890123456789012
+                    - clrs3234567890123456789012
+                  outcome: lowQuality
+              restoreOne:
+                summary: Clear the mark on one response
+                value:
+                  ids:
+                    - clrs1234567890123456789012
+                  outcome: null
+      responses:
+        '200':
+          description: Batch processed. `updated` counts the responses in scope that now carry the requested outcome, which may be fewer than the ids submitted.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    type: object
+                    required:
+                      - updated
+                    properties:
+                      updated:
+                        type: integer
+                        minimum: 0
+                        description: How many responses in scope now carry the requested outcome. Lower than `ids.length` when some ids were gone, foreign or of a survey the caller cannot see.
+                    additionalProperties: false
+        '400':
+          description: Bad Request — malformed body, an empty `ids` array, more than 100 ids, duplicate ids, a missing or unknown `outcome`, or an unsupported field.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
   /api/v3/responses/{responseId}:
     get:
       operationId: getResponseV3
@@ -2737,6 +2822,7 @@ paths:
                       finished: true
                       endingId: cmpthankyou00000000000000
                       language: de
+                      outcome: null
                       durationSeconds: 8.2
                       resolution:
                         labelPolicy: currentSurveyDefinition
@@ -2871,6 +2957,7 @@ paths:
                       finished: false
                       endingId: null
                       language: null
+                      outcome: null
                       resolution:
                         labelPolicy: currentSurveyDefinition
                         labelsLanguage: null
@@ -2913,6 +3000,8 @@ paths:
         `PATCH` is the only update verb — there is no `PUT`. Within it, `data` is replaced wholesale rather than deep-merged, so send the complete answer map; `embeddedData` merges by field name. Unknown top-level keys are rejected with **400** rather than ignored.
 
         Every patch emits `responseUpdated` and runs the response pipeline, including Hub ingestion. Transitioning `finished` to `true` additionally emits `responseFinished`; patching a response that is already finished does not re-emit it.
+
+        `outcome` marks a response **Low quality** (`"lowQuality"`) or clears the mark (`null`). Nothing is deleted: the response keeps counting in summaries, counts, lists, webhooks and integrations, and the mark only changes the Analysis export default, the Outcome column and filter, and Feedback Records. A mark or a restore emits `responseUpdated` like any other patch.
       tags:
         - V3 Responses
       parameters:
@@ -2937,6 +3026,14 @@ paths:
                   data:
                     nps_score: 8
                     what_could_be_better: Etwas schneller wäre gut.
+              markLowQuality:
+                summary: Mark a response Low quality
+                value:
+                  outcome: lowQuality
+              restoreOutcome:
+                summary: Clear the outcome again
+                value:
+                  outcome: null
               retagResponse:
                 summary: Replace the response's tags
                 value:
@@ -10003,6 +10100,7 @@ components:
         - finished
         - endingId
         - language
+        - outcome
         - resolution
         - answers
         - embeddedData
@@ -10051,6 +10149,14 @@ components:
             - string
             - 'null'
           description: The survey language this response was collected in, as a survey language code (not necessarily a BCP-47 locale — `default` is a legitimate value). `null` when the survey is single-language or no language was stamped.
+        outcome:
+          type:
+            - string
+            - 'null'
+          enum:
+            - lowQuality
+            - null
+          description: 'A reviewer''s verdict on the response; `null` when none. `lowQuality` hides the response from the Analysis export by default and from Feedback Records, and from nothing else: it is never deleted and every count, list, webhook and integration still includes it. Set through `PATCH /api/v3/responses/{responseId}` or `POST /api/v3/responses/batch-outcome`.'
         durationSeconds:
           readOnly: true
           type: number
@@ -10525,6 +10631,32 @@ components:
             type: string
             format: cuid2
       additionalProperties: false
+    BatchSetResponsesOutcomeRequest:
+      type: object
+      description: |
+        Responses to mark Low quality, or to restore. A POST custom method modelled on `batch-delete`, so one request is one transaction over at most 100 ids. `outcome` is required: leaving it out must not read as a restore.
+      required:
+        - ids
+        - outcome
+      properties:
+        ids:
+          type: array
+          minItems: 1
+          maxItems: 100
+          uniqueItems: true
+          description: Response ids to update, at most 100 per call.
+          items:
+            type: string
+            format: cuid2
+        outcome:
+          type:
+            - string
+            - 'null'
+          enum:
+            - lowQuality
+            - null
+          description: The outcome to set on every response. `lowQuality` marks, `null` clears the mark.
+      additionalProperties: false
     PatchResponseRequest:
       type: object
       description: |
@@ -10549,6 +10681,14 @@ components:
           type:
             - string
             - 'null'
+        outcome:
+          type:
+            - string
+            - 'null'
+          enum:
+            - lowQuality
+            - null
+          description: 'A reviewer''s verdict: `lowQuality` marks the response, `null` clears the mark. The response is never deleted — see `ResponseBase.outcome`.'
         data:
           $ref: '#/components/schemas/ResponseDataMapInput'
         embeddedData:

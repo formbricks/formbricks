@@ -1,6 +1,8 @@
 import { createId } from "@paralleldrive/cuid2";
 import type { TFunction } from "i18next";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { collectDeclaredFieldNames } from "@formbricks/types/surveys/declared-field-guard";
+import { fillMissingCodes } from "@formbricks/types/surveys/fill-missing-codes";
 import type {
   TSurveyEndScreenCard,
   TSurveyEnding,
@@ -151,3 +153,16 @@ export const buildSurvey = (
     },
   };
 };
+
+/**
+ * A template with every question and answer option coded (ENG-6782). Templates are built in code
+ * without codes; coding them here means the preview, the editor and every survey created from one
+ * start fully coded.
+ */
+export const withTemplateCodes = (template: TTemplate): TTemplate => ({
+  ...template,
+  preset: {
+    ...template.preset,
+    blocks: fillMissingCodes(template.preset.blocks, collectDeclaredFieldNames(template.preset)),
+  },
+});

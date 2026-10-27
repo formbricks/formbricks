@@ -932,3 +932,85 @@ describe("fillEmptyBlockButtonLabels", () => {
     expect(fillEmptyBlockButtonLabels(survey, "backButtonLabel", label, -1, "default")).toBe(survey);
   });
 });
+
+describe("default codes (ENG-6782)", () => {
+  const coded = (id: string, code: string) => ({ ...createMockElement(id), code }) as TSurveyElement;
+  const codesIn = (survey: TSurvey) =>
+    survey.blocks.flatMap((block) => block.elements.map((e) => (e as { code?: string }).code));
+  const choice = (id: string, code?: string) => ({ id, label: { default: id }, ...(code ? { code } : {}) });
+  const single = (id: string, code: string, choices: ReturnType<typeof choice>[]) =>
+    ({
+      id,
+      code,
+      type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+      headline: { default: id },
+      required: false,
+      shuffleOption: "none",
+      choices,
+    }) as unknown as TSurveyElement;
+
+  test("a question added to a block takes the next q<n>, never renumbering the rest", () => {
+    const survey = createMockSurvey([createMockBlock("b1", "Block 1", [coded("a", "q1"), coded("b", "q4")])]);
+    const result = addElementToBlock(survey, "b1", createMockElement("c"), 0);
+    expect(result.ok && codesIn(result.data)).toEqual(["q5", "q1", "q4"]);
+  });
+
+  test("a new block's questions are coded", () => {
+    const survey = createMockSurvey([createMockBlock("b1", "Block 1", [coded("a", "q1")])]);
+    const result = addBlock(mockT, survey, { elements: [createMockElement("b")] });
+    expect(result.ok && codesIn(result.data)).toEqual(["q1", "q2"]);
+  });
+
+  test("a duplicated question gets the next q<n> and keeps its answer codes", () => {
+    const survey = createMockSurvey([
+      createMockBlock("b1", "Block 1", [single("a", "q1", [choice("x", "1"), choice("y", "2")])]),
+    ]);
+    const result = duplicateElementInBlock(survey, "b1", "a");
+    if (!result.ok) throw result.error;
+    const [original, copy] = result.data.blocks[0].elements as unknown as {
+      code: string;
+      choices: { code: string }[];
+    }[];
+    expect(original.code).toBe("q1");
+    expect(copy.code).toBe("q2");
+    expect(copy.choices.map((c) => c.code)).toEqual(["1", "2"]);
+  });
+
+  test("a duplicated block's questions get fresh codes after the survey's highest", () => {
+    const survey = createMockSurvey([
+      createMockBlock("b1", "Block 1", [coded("a", "q1"), coded("b", "q2")]),
+      createMockBlock("b2", "Block 2", [coded("c", "q3")]),
+    ]);
+    const result = duplicateBlock(survey, "b1");
+    expect(result.ok && codesIn(result.data)).toEqual(["q1", "q2", "q4", "q5", "q3"]);
+  });
+
+  test("an option added to a question is coded, and the existing codes stay", () => {
+    const survey = createMockSurvey([
+      createMockBlock("b1", "Block 1", [single("a", "q1", [choice("x", "1"), choice("y", "2")])]),
+    ]);
+    const result = updateElementInBlock(survey, "b1", "a", {
+      choices: [choice("x", "1"), choice("y", "2"), choice("z")],
+    } as Partial<TSurveyElement>);
+    if (!result.ok) throw result.error;
+    const element = result.data.blocks[0].elements[0] as unknown as { choices: { code: string }[] };
+    expect(element.choices.map((c) => c.code)).toEqual(["1", "2", "3"]);
+  });
+
+  test("deleting a question does not renumber the others", () => {
+    const survey = createMockSurvey([
+      createMockBlock("b1", "Block 1", [coded("a", "q1"), coded("b", "q2"), coded("c", "q3")]),
+    ]);
+    const result = deleteElementFromBlock(survey, "b1", "b");
+    expect(result.ok && codesIn(result.data)).toEqual(["q1", "q3"]);
+  });
+
+  test("an Embedded Data name is skipped", () => {
+    const survey = {
+      ...createMockSurvey([createMockBlock("b1", "Block 1", [])]),
+      hiddenFields: { enabled: true, fieldIds: ["q1"] },
+    } as TSurvey;
+    const result = addElementToBlock(survey, "b1", createMockElement("a"));
+    expect(result.ok && codesIn(result.data)).toEqual(["q2"]);
+  });
+});

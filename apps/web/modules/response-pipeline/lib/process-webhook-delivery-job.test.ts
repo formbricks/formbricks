@@ -132,7 +132,27 @@ describe("buildWebhookDeliveryBody", () => {
       },
     });
 
-    expect(buildWebhookDeliveryBody(data)).toBe(legacyBody);
+    // `outcome` is the one addition (ENG-6780): the fixture predates the column, so the body carries it
+    // as null. Everything else is untouched.
+    expect(JSON.parse(buildWebhookDeliveryBody(data))).toEqual({
+      ...JSON.parse(legacyBody),
+      data: { ...JSON.parse(legacyBody).data, outcome: null },
+    });
+  });
+
+  // Always present inside the response object, next to `data`: a receiver must be able to read it
+  // without first checking the key exists, and a job queued before the column existed has no key.
+  test("carries the outcome as null when the snapshot has none", () => {
+    const body = JSON.parse(buildWebhookDeliveryBody(data));
+
+    expect(Object.keys(body.data)).toContain("outcome");
+    expect(body.data.outcome).toBeNull();
+  });
+
+  test.each([null, "lowQuality"] as const)("carries the stored outcome %s", (outcome) => {
+    const body = JSON.parse(buildWebhookDeliveryBody({ ...data, response: { ...data.response, outcome } }));
+
+    expect(body.data.outcome).toBe(outcome);
   });
 });
 
