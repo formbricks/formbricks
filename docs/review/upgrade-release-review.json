@@ -1154,6 +1154,96 @@
       "to": "6.1.1"
     }
   ],
+  "compose_config_validation": {
+    "method": "docker compose config --format json against tagged files with synthetic placeholder environment; no containers started",
+    "results": [
+      {
+        "config_validation": "passed",
+        "postgres_image": "pgvector/pgvector:pg17",
+        "services": ["formbricks", "postgres", "redis"],
+        "tag": "4.0.0"
+      },
+      {
+        "config_validation": "passed",
+        "postgres_image": "pgvector/pgvector:pg17",
+        "services": ["formbricks", "postgres", "redis"],
+        "tag": "4.7.0"
+      },
+      {
+        "config_validation": "passed",
+        "postgres_image": "pgvector/pgvector:pg17",
+        "services": ["formbricks", "postgres", "redis"],
+        "tag": "4.9.7"
+      },
+      {
+        "config_validation": "passed",
+        "postgres_image": "pgvector/pgvector:pg18",
+        "services": ["cube", "formbricks", "hub", "hub-migrate", "postgres", "redis"],
+        "tag": "5.0.0"
+      },
+      {
+        "config_validation": "passed",
+        "postgres_image": "pgvector/pgvector:pg18",
+        "services": ["cube", "formbricks", "formbricks-migrate", "hub", "hub-migrate", "postgres", "redis"],
+        "tag": "5.1.0"
+      },
+      {
+        "config_validation": "passed",
+        "postgres_image": "pgvector/pgvector:pg18",
+        "services": ["cube", "formbricks", "formbricks-migrate", "hub", "hub-migrate", "postgres", "redis"],
+        "tag": "5.2.2"
+      },
+      {
+        "config_validation": "passed",
+        "postgres_image": "pgvector/pgvector:pg18",
+        "services": ["cube", "formbricks", "formbricks-migrate", "hub", "hub-migrate", "postgres", "redis"],
+        "tag": "5.3.5"
+      },
+      {
+        "config_validation": "passed",
+        "postgres_image": "pgvector/pgvector:pg18",
+        "services": ["cube", "formbricks", "formbricks-migrate", "hub", "hub-migrate", "postgres", "redis"],
+        "tag": "5.4.7"
+      },
+      {
+        "config_validation": "passed",
+        "postgres_image": "pgvector/pgvector:pg18",
+        "services": [
+          "authzed-db-bootstrap",
+          "authzed-initialize",
+          "cube",
+          "formbricks",
+          "formbricks-migrate",
+          "hub",
+          "hub-migrate",
+          "postgres",
+          "redis",
+          "spicedb",
+          "spicedb-migrate"
+        ],
+        "tag": "6.0.4"
+      },
+      {
+        "config_validation": "passed",
+        "postgres_image": "pgvector/pgvector:pg18",
+        "services": [
+          "authzed-db-bootstrap",
+          "authzed-initialize",
+          "cube",
+          "formbricks",
+          "formbricks-migrate",
+          "hub",
+          "hub-migrate",
+          "hub-worker",
+          "postgres",
+          "redis",
+          "spicedb",
+          "spicedb-migrate"
+        ],
+        "tag": "6.1.1"
+      }
+    ]
+  },
   "key_findings": [
     {
       "finding": "v4 Compose uses pg17; v5 uses pg18. Preserve the installed PostgreSQL major and volume rather than copying the fresh-install default.",
@@ -1203,10 +1293,150 @@
         "5.4.7:packages/database/migration",
         "6.1.1:packages/database/migration"
       ]
+    },
+    {
+      "finding": "5.0 requires suToken for unencrypted single-use links; 6.1 separately signs encrypted links. Regenerate on the final target and retain the full returned URL.",
+      "sources": [
+        "96b08fbe23",
+        "5.0.0:apps/web/lib/utils/single-use-surveys.ts",
+        "5.0.0:apps/web/app/api/v1/management/surveys/[surveyId]/singleUseIds/route.ts",
+        "c84c3fa415"
+      ]
+    },
+    {
+      "finding": "5.0 public client response creation no longer accepts client-owned createdAt/updatedAt.",
+      "sources": ["770041923f"]
+    },
+    {
+      "finding": "6.0 Embedded Data conversion needs checks for skipped/conflicting fields; the removed single-response-per-email option was non-functional.",
+      "sources": [
+        "6.0.0:packages/database/migration",
+        "6.0.0:docs/surveys/embedded-data/migration.mdx",
+        "https://github.com/formbricks/formbricks/pull/8975"
+      ]
     }
   ],
   "method": "Compare adjacent stable tags and inspect first-minor/latest-patch assets. Cross-minor comparisons include branch/backport divergence; review actual target files for claims.",
+  "published_image_checks": {
+    "method": "docker manifest inspect; availability only, not runtime validation",
+    "results": [
+      {
+        "error": null,
+        "image": "ghcr.io/formbricks/formbricks:5.4.7",
+        "published_manifest": true
+      },
+      {
+        "error": null,
+        "image": "ghcr.io/formbricks/formbricks:6.0.4",
+        "published_manifest": true
+      },
+      {
+        "error": null,
+        "image": "ghcr.io/formbricks/formbricks:6.1.1",
+        "published_manifest": true
+      }
+    ]
+  },
+  "reference_practices": [
+    "https://docs.gitlab.com/update/upgrade_paths/",
+    "https://docs.gitlab.com/update/plan_your_upgrade/",
+    "https://docs.gitlab.com/update/background_migrations/",
+    "https://docs.gitlab.com/administration/silent_mode/"
+  ],
   "release_count": 72,
+  "retained_version_anchors": [
+    {
+      "page": "docs/self-hosting/upgrade/versions/4.0.mdx",
+      "retained": [
+        "whats-new-in-formbricks-4-0",
+        "what-this-means-for-your-self-hosting-setup",
+        "why-we-made-these-changes",
+        "migration-steps-for-v4-0",
+        "legacy-one-click-v4-0-upgrade",
+        "manual-setup",
+        "redis",
+        "s3-compatible-storage",
+        "upgrade-process"
+      ]
+    },
+    {
+      "page": "docs/self-hosting/upgrade/versions/4.7.mdx",
+      "retained": [
+        "what-happens-automatically",
+        "steps-to-migrate",
+        "docker-2",
+        "kubernetes-2",
+        "docker-3",
+        "kubernetes-3",
+        "docker-4",
+        "kubernetes-4"
+      ]
+    },
+    {
+      "page": "docs/self-hosting/upgrade/versions/5.0.mdx",
+      "retained": [
+        "what-changes-in-v5",
+        "before-you-upgrade",
+        "required-config-and-infrastructure-changes",
+        "formbricks-hub",
+        "edge-rate-limiting",
+        "ai-features",
+        "cube",
+        "upgrade-steps-by-deployment-type",
+        "one-click",
+        "docker-compose",
+        "kubernetes",
+        "one-click-2",
+        "docker-compose-2",
+        "kubernetes-2",
+        "post-upgrade-verification",
+        "troubleshooting-and-rollback"
+      ]
+    },
+    {
+      "page": "docs/self-hosting/upgrade/versions/5.2.mdx",
+      "retained": ["upgrade-steps", "rollback"]
+    },
+    {
+      "page": "docs/self-hosting/upgrade/versions/5.3.mdx",
+      "retained": ["upgrade-steps", "rollback"]
+    },
+    {
+      "page": "docs/self-hosting/upgrade/versions/5.4.mdx",
+      "retained": [
+        "bundled-cube-image-update-action-required-for-some-deployments",
+        "envoy-gateway-1-8-4-crd-upgrade",
+        "database-migrations",
+        "build-the-response-index-before-you-upgrade",
+        "one-click-%2F-docker-compose",
+        "kubernetes",
+        "bundled-valkey-8-1-9-upgrade-action-required-for-some-self-hosted-deployments",
+        "one-click",
+        "docker-compose",
+        "helm",
+        "feedback-record-mutations-by-api-key-action-required-for-some-integrations",
+        "what-to-do-before-upgrading",
+        "rollback",
+        "better-auth-1-7-upgrade-no-action-required-for-most-instances",
+        "azuread_tenant_id-set-a-concrete-tenant-for-full-id_token-verification",
+        "sso-callback-urls-are-unchanged",
+        "mcp-access-tokens-now-end-with-their-session",
+        "rollback-better-auth-1-7"
+      ]
+    },
+    {
+      "page": "docs/self-hosting/upgrade/versions/6.0.mdx",
+      "retained": [
+        "during-and-after",
+        "patch-specific-changes",
+        "changes-in-environment-variables",
+        "bundled-cube-image-action-required-for-some-deployments",
+        "release-details",
+        "docker-dependency-setup",
+        "one-click-dependency-setup"
+      ]
+    }
+  ],
   "reviewed_at": "2026-10-27",
   "runtime_evidence": "No full application upgrade or restore rehearsal performed. Published 6.0.2 -> 6.1.0 evidence retained as reported evidence only. Recommended catch-up stops are source-reviewed rehearsal routes.",
   "scope": "All stable 4.x, 5.x and 6.x tags available at review time; operator-facing deployment assets, application schema/data migrations, environment and SSO configuration. Earlier guides retained without re-review. This is not an exhaustive product/API audit."

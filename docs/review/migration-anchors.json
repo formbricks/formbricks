@@ -618,5 +618,10 @@
     "heading": "Docker & Single Script Setup",
     "old_anchor": "docker-&-single-script-setup",
     "target": "/self-hosting/upgrade/versions/1.1#docker-&-single-script-setup"
+  },
+  {
+    "heading": "Outgoing email caps",
+    "old_anchor": "outgoing-email-caps",
+    "target": "/platform/changelog#release-unreleased"
   }
 ]

@@ -1,6 +1,6 @@
 {
   "checks": {
-    "anchors": "272 public MDX parsed with Mintlify heading generation; no unresolved local fragments",
+    "anchors": "284 public MDX parsed with Mintlify heading generation; 212 local fragments; zero unresolved",
     "build": "passed: cd docs && NODE_USE_ENV_PROXY=1 npx mint@4.2.1126 validate",
     "formatting": "passed for changed JSON; MDX follows repository formatter exclusions",
     "isolated_failure": "lib/utils/validate-webhook-url.toctou.test.ts:36 times out at 5000ms fetching a reserved .invalid hostname; reproduced in isolation. Source unchanged by this PR.",
@@ -11,12 +11,12 @@
   "coverage": {
     "publication": "No merge, live publication, live search/sitemap/LLM-index verification performed",
     "runtime": "No infrastructure deployment, database upgrade or restore rehearsal performed",
-    "structural": "246 baseline and 272 resulting public MDX pages; targeted semantic review only"
+    "structural": "247 baseline and 284 resulting public MDX pages; targeted semantic/source review, not runtime validation"
   },
   "evidence": [
     {
-      "claim": "Single-use signing boundary is 6.1, not 6.0",
-      "source": "c84c3fa415 in release tag ancestry; absent from 6.0 tags, present in 6.1.0"
+      "claim": "Encrypted single-use signing boundary is 6.1, not 6.0; unencrypted links separately require signatures starting in 5.0",
+      "source": "c84c3fa415 in release tag ancestry; absent from 6.0 tags, present in 6.1.0; 96b08fbe23 and 5.0.0 single-use-surveys.ts for unencrypted links"
     },
     {
       "claim": "Server appearance API first present among inspected tags in 6.1.0",
@@ -72,7 +72,7 @@
     }
   ],
   "main_sync": {
-    "commit": "f2f2da8f395eab16a91fcd6302bc2c0d246a5998",
+    "commit": "6a8e76651f73a12671275e1af91d07ec77809131",
     "date": "2026-10-27",
     "incoming_docs": [
       "docs/api-v3-reference/openapi.yml",
@@ -80,11 +80,15 @@
       "docs/api-v3-reference/src/components/schemas/GenerateSurveyRequest.yml",
       "docs/api-v3-reference/src/components/schemas/GenerateSurveyResult.yml",
       "docs/api-v3-reference/src/paths/api_v3_surveys_generate.yml",
+      "docs/development/standards/qa/testing-methodology.mdx",
       "docs/development/standards/technical/language-specific-conventions.mdx",
+      "docs/development/technical-handbook/email-sending.mdx",
       "docs/development/technical-handbook/mcp-server.mdx",
       "docs/docs.json",
+      "docs/self-hosting/advanced/migration.mdx",
       "docs/self-hosting/configuration/ai-features.mdx",
       "docs/self-hosting/configuration/environment-variables.mdx",
+      "docs/self-hosting/configuration/rate-limiting.mdx",
       "docs/self-hosting/deployment-components.mdx",
       "docs/self-hosting/overview.mdx",
       "docs/self-hosting/setup/deployment-check.mdx",
@@ -94,8 +98,9 @@
       "docs/self-hosting/setup/one-click.mdx",
       "docs/surveys/website-app-surveys/framework-guides.mdx"
     ],
-    "other_changes": "Preserved AI API schemas/bundle, MCP request limits, framework examples, coding conventions, Debian installer guidance, monitoring and replica corrections.",
+    "other_changes": "Preserved AI API schemas/bundle, MCP request limits, framework examples, coding conventions, Debian installer guidance, monitoring and replica corrections. Retained new outgoing-email caps, environment reference, rate-limit guidance and email handbook; not attributed to an existing stable release.",
     "placements": {
+      "development/technical-handbook/email": "Development: retain email implementation handbook; outgoing caps appear as Unreleased in release notes and preserve the old migration anchor.",
       "platform/changelog": "Release notes: existing URL, global navigation link, explicit deployment status and seven recent stable releases.",
       "self-hosting/configuration/ai-timeouts": "Configure: focused timeout procedure; original AI heading retained as a link.",
       "self-hosting/configuration/envoy": "Configure: CRD ownership, backend and GitOps details extracted from Kubernetes setup; old headings retained.",
@@ -169,7 +174,7 @@
       "status": 200
     },
     {
-      "legacyAnchors": 124,
+      "legacyAnchors": 125,
       "missing": 0
     },
     {
@@ -238,5 +243,175 @@
       "path": "docker/formbricks.sh",
       "release": "6.1.1"
     }
-  ]
+  ],
+  "upgrade_review": {
+    "preview": [
+      {
+        "heading": "Choose your upgrade path",
+        "route": "self-hosting/upgrade/paths",
+        "status": 200
+      },
+      {
+        "heading": "Prepare the target configuration",
+        "route": "self-hosting/upgrade/configuration",
+        "status": 200
+      },
+      {
+        "heading": "Rehearse an upgrade",
+        "route": "self-hosting/upgrade/rehearse",
+        "status": 200
+      },
+      {
+        "heading": "Upgrade within 4.x or to 5.x",
+        "route": "self-hosting/upgrade/legacy",
+        "status": 200
+      },
+      {
+        "heading": "Upgrade Docker and one-click",
+        "route": "self-hosting/upgrade/docker",
+        "status": 200
+      },
+      {
+        "heading": "Upgrade Kubernetes",
+        "route": "self-hosting/upgrade/kubernetes",
+        "status": 200
+      },
+      {
+        "heading": "One-click updater behavior",
+        "route": "self-hosting/upgrade/one-click-details",
+        "status": 200
+      },
+      {
+        "heading": "Prepare permissions",
+        "route": "self-hosting/upgrade/prepare",
+        "status": 200
+      },
+      {
+        "heading": "Upgrade to 4.0",
+        "route": "self-hosting/upgrade/versions/4.0",
+        "status": 200
+      },
+      {
+        "heading": "Other 4.x changes",
+        "route": "self-hosting/upgrade/versions/4.x",
+        "status": 200
+      },
+      {
+        "heading": "Upgrade to 4.7",
+        "route": "self-hosting/upgrade/versions/4.7",
+        "status": 200
+      },
+      {
+        "heading": "Upgrade to 5.0",
+        "route": "self-hosting/upgrade/versions/5.0",
+        "status": 200
+      },
+      {
+        "heading": "Upgrade to 5.1",
+        "route": "self-hosting/upgrade/versions/5.1",
+        "status": 200
+      },
+      {
+        "heading": "Upgrade to 5.2",
+        "route": "self-hosting/upgrade/versions/5.2",
+        "status": 200
+      },
+      {
+        "heading": "Upgrade to 5.3",
+        "route": "self-hosting/upgrade/versions/5.3",
+        "status": 200
+      },
+      {
+        "heading": "Upgrade to 5.4",
+        "route": "self-hosting/upgrade/versions/5.4",
+        "status": 200
+      },
+      {
+        "heading": "5.4 database preparation",
+        "route": "self-hosting/upgrade/versions/5.4-database",
+        "status": 200
+      },
+      {
+        "heading": "5.4 authentication changes",
+        "route": "self-hosting/upgrade/versions/5.4-authentication",
+        "status": 200
+      },
+      {
+        "heading": "5.4 feedback API permissions",
+        "route": "self-hosting/upgrade/versions/5.4-api-permissions",
+        "status": 200
+      },
+      {
+        "heading": "5.4 dependency changes",
+        "route": "self-hosting/upgrade/versions/5.4-runtime",
+        "status": 200
+      },
+      {
+        "heading": "Upgrade to 6.0",
+        "route": "self-hosting/upgrade/versions/6.0",
+        "status": 200
+      },
+      {
+        "heading": "Upgrade to 6.1",
+        "route": "self-hosting/upgrade/versions/6.1",
+        "status": 200
+      },
+      {
+        "heading": "6.1 runtime changes",
+        "route": "self-hosting/upgrade/versions/6.1-runtime",
+        "status": 200
+      },
+      {
+        "heading": "Regenerate encrypted single-use links",
+        "route": "self-hosting/upgrade/versions/6.1-single-use-links",
+        "status": 200
+      },
+      {
+        "heading": "Enable survey visibility",
+        "route": "self-hosting/upgrade/versions/6.1-visibility",
+        "status": 200
+      },
+      {
+        "heading": "Update the bundled Cube service",
+        "route": "self-hosting/upgrade/versions/cube",
+        "status": 200
+      },
+      {
+        "heading": "October security patch actions",
+        "route": "self-hosting/upgrade/versions/2026-10-security-patches",
+        "status": 200
+      },
+      {
+        "heading": "Version-specific upgrade notes",
+        "route": "self-hosting/advanced/migration",
+        "status": 200
+      },
+      {
+        "heading": "Upgrading Formbricks",
+        "route": "self-hosting/advanced/upgrade",
+        "status": 200
+      },
+      {
+        "heading": "Release notes",
+        "route": "platform/changelog",
+        "status": 200
+      },
+      {
+        "heading": "Email Sending",
+        "route": "development/technical-handbook/email-sending",
+        "status": 200
+      },
+      {
+        "mobileOverflow": false,
+        "route": "self-hosting/upgrade/paths"
+      },
+      {
+        "mobileOverflow": false,
+        "route": "self-hosting/upgrade/versions/5.4"
+      }
+    ],
+    "release_count": 72,
+    "runtime": "No full application upgrade or restore rehearsal performed; source-reviewed routes are explicitly distinguished from tested pairs.",
+    "source_evidence": "upgrade-release-review.json"
+  }
 }

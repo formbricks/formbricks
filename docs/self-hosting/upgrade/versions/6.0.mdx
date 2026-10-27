@@ -23,8 +23,8 @@ From v4, first complete the [5.4 stop](/self-hosting/upgrade/paths). Review all 
 | SpiceDB becomes required | Add a dedicated datastore/login and private connectivity; prepare its schema and relationships before app startup. |
 | Consistency requirement | Set `AUTHZED_CONSISTENCY=fully_consistent`; unset or `minimize_latency` is rejected. |
 | SSO provisioning variables | Rename `DEFAULT_ORGANIZATION_ID` / `DEFAULT_ORGANIZATION_ROLE` to `AUTH_SSO_DEFAULT_ORGANIZATION_ID` / `AUTH_SSO_DEFAULT_ORGANIZATION_ROLE`, preserving values. They affect Enterprise just-in-time provisioning. |
-| Hidden fields become Embedded Data | Automatic migrations move existing data; check integrations and representative historical responses. |
-| Response/email and chart changes | The old single-response-per-email field is removed; line charts become area charts. Review affected survey behavior and saved charts. |
+| Hidden fields/variables become Embedded Data | Review the [migration behavior](/surveys/embedded-data/migration), including skipped/conflicting fields; verify old responses and SDK integrations. |
+| Response/email and chart changes | The non-functional single-response-per-email option is removed; use signed single-use links when one response per link is required. Line charts become area charts. |
 
 Keep Hub, Cube, Redis, storage, PostgreSQL major and existing credentials. A self-hosted Cloud bridge
 is not required. [Prepare the target configuration](/self-hosting/upgrade/configuration) before maintenance.

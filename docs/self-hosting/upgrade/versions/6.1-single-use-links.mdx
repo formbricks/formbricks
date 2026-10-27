@@ -26,7 +26,8 @@ like the first.
 4. Re-send. Formbricks never stores generated links, so there is nothing to migrate and nothing to
    back up — the new links simply replace the old ones.
 
-**Links with URL encryption off are unaffected**, including custom single-use IDs. Those have carried
+**Links with URL encryption off that already have a valid signature are unaffected**, including signed custom single-use IDs.
+If coming from v4, first account for the [v5 signature change](/self-hosting/upgrade/versions/5.0#single-use-links-and-custom-clients). Those have carried
 a `suToken` signature since 5.0 and validate exactly as before, so integrations that mint their own
 IDs need no changes.
 

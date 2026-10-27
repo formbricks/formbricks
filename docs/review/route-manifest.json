@@ -1,8 +1,8 @@
 {
-  "baseline_commit": "f2f2da8f395eab16a91fcd6302bc2c0d246a5998",
-  "baseline_mdx_count": 246,
+  "baseline_commit": "6a8e76651f73a12671275e1af91d07ec77809131",
+  "baseline_mdx_count": 247,
   "coverage": "All public MDX structurally parsed; navigation, internal links and anchors checked. Targeted semantic/source review, not exhaustive factual or runtime validation. Generated API operation routes are not counted as orphaned MDX.",
-  "current_mdx_count": 272,
+  "current_mdx_count": 284,
   "existing_redirects_preserved": true,
   "new_redirects": [
     {
@@ -631,6 +631,16 @@
       "runtime_validation": false,
       "structural_scan": true,
       "target": "development/technical-handbook/database-model"
+    },
+    {
+      "action": "keep",
+      "navigation_after": true,
+      "navigation_before": true,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "development/technical-handbook/email-sending",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "development/technical-handbook/email-sending"
     },
     {
       "action": "update",
@@ -1586,6 +1596,16 @@
       "action": "add",
       "navigation_after": true,
       "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/configuration",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/configuration"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/docker",
       "runtime_validation": false,
@@ -1606,6 +1626,16 @@
       "action": "add",
       "navigation_after": true,
       "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/legacy",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/legacy"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/one-click-details",
       "runtime_validation": false,
@@ -1616,11 +1646,31 @@
       "action": "add",
       "navigation_after": true,
       "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/paths",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/paths"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/prepare",
       "runtime_validation": false,
       "structural_scan": true,
       "target": "self-hosting/upgrade/prepare"
+    },
+    {
+      "action": "add",
+      "navigation_after": true,
+      "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/rehearse",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/rehearse"
     },
     {
       "action": "add",
@@ -1816,11 +1866,31 @@
       "action": "add",
       "navigation_after": false,
       "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/versions/4.x",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/4.x"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
       "reason": "Provide a focused operator task, integration entry or extracted historical note.",
       "route": "self-hosting/upgrade/versions/5.0",
       "runtime_validation": false,
       "structural_scan": true,
       "target": "self-hosting/upgrade/versions/5.0"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/versions/5.1",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/5.1"
     },
     {
       "action": "add",
@@ -1851,6 +1921,46 @@
       "runtime_validation": false,
       "structural_scan": true,
       "target": "self-hosting/upgrade/versions/5.4"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/versions/5.4-api-permissions",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/5.4-api-permissions"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/versions/5.4-authentication",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/5.4-authentication"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/versions/5.4-database",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/5.4-database"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/versions/5.4-runtime",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/5.4-runtime"
     },
     {
       "action": "add",
@@ -1901,6 +2011,16 @@
       "runtime_validation": false,
       "structural_scan": true,
       "target": "self-hosting/upgrade/versions/6.1-visibility"
+    },
+    {
+      "action": "add",
+      "navigation_after": false,
+      "navigation_before": false,
+      "reason": "Retain incoming documentation in its existing canonical section.",
+      "route": "self-hosting/upgrade/versions/cube",
+      "runtime_validation": false,
+      "structural_scan": true,
+      "target": "self-hosting/upgrade/versions/cube"
     },
     {
       "action": "keep",

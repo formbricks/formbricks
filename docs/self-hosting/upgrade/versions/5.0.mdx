@@ -33,6 +33,7 @@ The [recommended path](/self-hosting/upgrade/paths) uses the latest 5.4 patch as
 | Hub becomes mandatory | Add Hub and its migration service; configure `HUB_API_URL` and `HUB_API_KEY`. Include its worker where supplied by your deployment. |
 | Cube becomes mandatory | Add Cube, both model files, `CUBEJS_API_URL` and `CUBEJS_API_SECRET`. Allow additional memory; the original sizing estimate is about 500 MB. |
 | Edge rate limiting | Protect the documented public/API-key routes with Envoy or equivalent coverage before exposing v5. Keep Redis for remaining app limits. |
+| Unencrypted single-use links gain signatures | Regenerate affected links after the v5 upgrade; preserve the full signed URL in custom integrations. |
 | Projects/environments become workspaces | Back up before the schema/data migration. Check development-environment data and integration scope after it. |
 | New fresh-install defaults | Preserve your PostgreSQL major, MinIO/S3 storage, proxy and credentials. Do not replace them with the new defaults. |
 
@@ -43,6 +44,7 @@ Compose file; pulling images alone cannot add the services.
 ### Hub, Cube and databases
 
 - Hub can share application PostgreSQL or use `HUB_DATABASE_URL`. Include either choice in backup/restore.
+  Verify pgvector support and the migration role's permissions on the chosen database.
 - Keep Hub API, migration and worker images matched. Historical Docker assets use a floating Hub tag;
   pin the version selected by your target release before pulling.
 - Copy the target's whole Cube service and its `cube.js` and `schema/FeedbackRecords.js`. Use its Node
@@ -62,6 +64,18 @@ Compose file; pulling images alone cannot add the services.
   `AUTH_SSO_DEFAULT_TEAM_ID`. Test both existing-user sign-in and new-user provisioning.
 - When crossing 5.2, register its [new SSO callback](/self-hosting/upgrade/versions/5.2) before restart.
 
+### Single-use links and custom clients
+
+- Unencrypted single-use links now require a survey-bound `suToken` as well as `suId`. Old unsigned links,
+  including hand-built custom IDs, are rejected after upgrading from v4.
+- Plan to regenerate and redistribute affected links **after** deploying v5. Use the share modal or
+  `GET /api/v1/management/surveys/{surveyId}/singleUseIds`; retain the full returned URL. Do not append an
+  arbitrary `suId` to a survey URL and expect it to work.
+- Encrypted links have a separate signature change in [6.1](/self-hosting/upgrade/versions/6.1-single-use-links).
+  If upgrading through both majors in one window, regenerate links on the final target.
+- Custom v1/v2 client-response integrations can no longer choose `createdAt` / `updatedAt` on creation;
+  the server sets them. Verify any imports using those public client endpoints against the target API contract.
+
 ### Optional AI
 
 AI is not required to complete the v5 upgrade. Configure instance-level `AI_*` settings only for enabled
@@ -78,7 +92,7 @@ Use the target's ordering rather than copying a current startup command.
 ## After
 
 - Sign in as an existing user and verify production/development workspaces and permissions.
-- Submit a survey response, check SDK/API integrations and verify Hub-backed feedback and jobs.
+- Regenerate affected single-use links, submit a response, check SDK/API integrations and verify Hub-backed feedback/jobs.
 - Open analytics, old files and a new upload; test public routes through the proxy and edge rate limiter.
 - Complete the [shared acceptance checks](/self-hosting/upgrade/rehearse#acceptance-at-every-stop) before advancing to v6.
 
