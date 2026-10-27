@@ -162,7 +162,6 @@ describe("rateLimitConfigs", () => {
         "integrationMutation",
         "feedbackSourceMutation",
         "historicalResponseImport",
-        "chartCreation",
         "feedbackDirectoryMutation",
         "feedbackRecordDeletion",
         "stateMutation",

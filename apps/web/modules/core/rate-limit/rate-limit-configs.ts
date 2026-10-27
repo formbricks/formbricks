@@ -131,11 +131,6 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "action:historical-response-import",
     }, // 10 per hour per user — bounds repeated full-survey imports
-    chartCreation: {
-      interval: 60,
-      allowedPerInterval: 60,
-      namespace: "action:chart-creation",
-    }, // 60 per minute per user
     feedbackDirectoryMutation: {
       interval: 60,
       allowedPerInterval: 60,
