@@ -137,6 +137,16 @@ must receive the application database URL, migration credentials when different,
 client variables. The distributed default uses the bundled PostgreSQL database; customize it when your
 installation uses a managed database. No database or SpiceDB port needs public exposure.
 
+For a pre-provisioned external SpiceDB database, apply the release-matched
+[external Compose override](/self-hosting/setup/docker#external-postgresql-for-spicedb) before starting
+`spicedb-migrate` or running this preparation. Keep `COMPOSE_FILE` in `.env` so validation, preparation, checks,
+and cutover all use the same override; if you pass `-f`, specify both files in the same order every time. Its URI
+and any private CA mount must reach both SpiceDB migration and
+runtime services. Confirm `docker compose config --services` omits `authzed-db-bootstrap`, then use
+`docker compose ps -a` to verify a completed migration and healthy SpiceDB. The database administrator provisions
+the database and scoped login once, outside Compose; no administrator URL belongs in the application stack.
+Include the external SpiceDB database in the coordinated backup before preparation and in the rollback plan.
+
 After successful preparation, a one-click installation also sets
 `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` before its explicit v6 update. Do not invoke an
 unattended update or move a floating image tag until the release-specific installation tests pass.

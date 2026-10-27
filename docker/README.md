@@ -35,7 +35,7 @@ The stack includes the [Formbricks Hub](https://github.com/formbricks/hub) API a
 default, and all three services start as part of the baseline `docker compose up`.
 
 - **Migrations**: A `formbricks-migrate` service runs Formbricks Prisma migrations before `hub-migrate` writes Hub tables to the shared database. `hub-migrate` then runs Hub's database migrations (goose + river) before the Hub API and `hub-worker` start. Both migration services run on every `docker compose up` and are idempotent. The worker consumes PostgreSQL-backed asynchronous jobs such as webhook delivery and configured enrichments.
-- **Production** (`docker/docker-compose.yml`): Set `POSTGRES_PASSWORD` to a unique random value and set
+- **Production with bundled PostgreSQL** (`docker/docker-compose.yml`): Set `POSTGRES_PASSWORD` to a unique random value and set
   non-empty `HUB_API_KEY`, `CUBEJS_API_SECRET`, `AUTHZED_TOKEN`, and `AUTHZED_DATABASE_PASSWORD` values in
   `.env` before starting the stack. Keep
   `POSTGRES_PASSWORD` unchanged after the database volume has been initialized. The installer also writes a
@@ -74,7 +74,13 @@ The production and development Compose stacks include one SpiceDB v1.56.2 servic
 database credentials, `spicedb-migrate` applies datastore migrations, and only then does `spicedb` start. Both
 one-shot services are idempotent.
 
-For production Docker, generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` with
+For a pre-provisioned external PostgreSQL database, use the release-matched
+`docker-compose.spicedb-external.yml` override and set `SPICEDB_DATASTORE_CONN_URI` to the database-scoped
+connection URI. The override removes bootstrap, while SpiceDB still waits for its migration. Keep it active for
+every Compose command; the [manual Docker guide](../docs/self-hosting/setup/docker.mdx#external-postgresql-for-spicedb)
+covers TLS, privileges, installation, and upgrades. The one-click installer continues to use bundled PostgreSQL.
+
+For bundled production Docker, generate `AUTHZED_TOKEN` and `AUTHZED_DATABASE_PASSWORD` with
 `openssl rand -hex 32` and keep them in the mode-`0600` `.env` file. SpiceDB remains internal at
 `spicedb:50051`; it is not published through Traefik. The one-click installer generates both values and
 downloads `authzed-postgres-bootstrap.sh` automatically.
