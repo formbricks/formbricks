@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { findMatchingLocale, getAcceptedLanguages } from "@/lib/utils/locale";
-import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getResponseBySingleUseId } from "@/modules/survey/link/lib/data";
 import { getServableLinkSurvey } from "@/modules/survey/link/lib/servable-survey";

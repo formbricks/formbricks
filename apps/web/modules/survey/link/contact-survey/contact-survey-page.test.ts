@@ -111,4 +111,23 @@ describe("ContactSurveyPage single-use response handoff", () => {
     expect(result).toMatchObject({ type: SurveyInactive, props: { status: "response submitted" } });
     expect(getResponseBySingleUseId).not.toHaveBeenCalled();
   });
+
+  test("resumes the contact's own unfinished response when the link is not single-use", async () => {
+    vi.mocked(getLinkSurveySingleUseAccess).mockReturnValue({ allowed: true } as never);
+    vi.mocked(getExistingContactResponse).mockReturnValue(
+      async () => ({ id: "contact-response-1", finished: false }) as never
+    );
+
+    await ContactSurveyPage({
+      params: Promise.resolve({ jwt: "contact-token" }),
+      searchParams: Promise.resolve({}),
+    });
+
+    expect(getResponseBySingleUseId).not.toHaveBeenCalled();
+    expect(renderSurvey).toHaveBeenCalledWith(
+      expect.objectContaining({
+        singleUseResponse: { id: "contact-response-1", finished: false },
+      })
+    );
+  });
 });
