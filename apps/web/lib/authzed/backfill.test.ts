@@ -280,21 +280,26 @@ describe("per-unit failure isolation", () => {
     expect(result.lastOrganizationId).toBe(organizationIds.at(-1));
   });
 
-  test("reports failures in organization order however the calls finish", async () => {
-    vi.mocked(source.readOrganizationIdPage)
-      .mockResolvedValueOnce(["org-1", "org-2"])
-      .mockResolvedValueOnce([]);
+  test("reports the first hundred failures in organization order however the calls finish", async () => {
+    // Past the 100-entry reporting cap, so the merge decides which failures are reported, not only their order.
+    const organizationIds = Array.from(
+      { length: 105 },
+      (_, index) => `org-${String(index).padStart(3, "0")}`
+    );
+    vi.mocked(source.readOrganizationIdPage).mockResolvedValueOnce(organizationIds).mockResolvedValueOnce([]);
     vi.mocked(source.readOrganizationSource).mockImplementation(async (organizationId) => {
-      // org-1 fails after org-2 does, so completion order is the reverse of ID order.
-      if (organizationId === "org-1") {
-        await new Promise((resolve) => setTimeout(resolve, 5));
-      }
+      // Among calls started together, a lower ID fails later, so completion order inverts ID order.
+      const slot = organizationIds.indexOf(organizationId) % AUTHZED_BACKFILL_ORGANIZATION_CONCURRENCY;
+      await new Promise((resolve) => setTimeout(resolve, AUTHZED_BACKFILL_ORGANIZATION_CONCURRENCY - slot));
       throw new Error("statement timeout");
     });
 
     const result = await runAuthzedBackfill(request({ scope: { kind: "all" } }), dependencies);
 
-    expect(result.failures.map(({ organizationId }) => organizationId)).toEqual(["org-1", "org-2"]);
+    expect(result.counters.failed).toBe(organizationIds.length);
+    expect(result.failures.map(({ organizationId }) => organizationId)).toEqual(
+      organizationIds.slice(0, 100)
+    );
   });
 
   test("keeps the resume cursor on the last finished page when the next page cannot be read", async () => {
