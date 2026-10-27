@@ -100,10 +100,12 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     // client routes accept one response per single-use id, so the link is spent whichever contact opens it.
     singleUseId ? getResponseBySingleUseId(survey.id, singleUseId)() : Promise.resolve(null),
   ]);
-  // Keep unfinished responses so the survey client updates the existing row instead of creating a second
-  // response for the same single-use id. The renderer handles finished responses as already answered.
-  const singleUseResponse = singleUseLinkResponse
-    ? { id: singleUseLinkResponse.id, finished: singleUseLinkResponse.finished }
+  // Hand the renderer the row this page should resume, so the survey client updates it instead of creating a
+  // second response: the single-use link's own response when the link carries one, otherwise the contact's
+  // unfinished attempt (a finished one returned above as "response submitted" already).
+  const resumableResponse = singleUseId ? singleUseLinkResponse : existingResponse;
+  const singleUseResponse = resumableResponse
+    ? { id: resumableResponse.id, finished: resumableResponse.finished }
     : undefined;
 
   // Fetch responseCount only if needed

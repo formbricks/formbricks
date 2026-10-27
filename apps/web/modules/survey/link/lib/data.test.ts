@@ -338,6 +338,9 @@ describe("data", () => {
           surveyId,
           contactId,
         },
+        orderBy: {
+          finished: "desc",
+        },
         select: {
           id: true,
           finished: true,
