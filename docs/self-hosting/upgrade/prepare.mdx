@@ -7,7 +7,7 @@ icon: "arrow-up-right-dots"
 Use this reference at the preparation step of the [Kubernetes](/self-hosting/upgrade/kubernetes)
 or [Docker Compose](/self-hosting/upgrade/docker) procedure. It applies to releases that include
 `formbricks-authzed-prepare`; verify that executable in the selected release image before maintenance.
-A v5 upgrade first needs the dependencies in [Upgrade to 6.0](/self-hosting/upgrade/versions/6.0).
+An upgrade **from v5 to v6** first needs the dependencies in [Upgrade to 6.0](/self-hosting/upgrade/versions/6.0).
 
 ## Preparation contract
 
@@ -33,7 +33,7 @@ The command reuses the image's existing migration runner and `formbricks-authzed
 
 ## Before the maintenance window
 
-- Rehearse with a restored copy of the installation. Measure migrations, backfill, verification, and
+- [Rehearse with an isolated copy](/self-hosting/upgrade/rehearse) of the installation. Measure migrations, backfill, verification, and
   restoration time; use those measurements to communicate the maintenance window.
 - Pin the target Formbricks image by digest and the matching chart/Compose files. Preserve the current
   images, chart, values, secrets, and volume names. Do not combine this change with a PostgreSQL major

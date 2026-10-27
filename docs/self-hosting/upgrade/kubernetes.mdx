@@ -4,12 +4,13 @@ description: "An ordered maintenance procedure for Helm and GitOps deployments."
 icon: "dharmachakra"
 ---
 
-Use this procedure for Helm, Argo CD and Flux deployments. First complete the
+Use this procedure for **v6 targets** with Helm, Argo CD or Flux. For a 4.x/5.x target, use the
+[historical procedure](/self-hosting/upgrade/legacy). First complete the
 [upgrade checklist](/self-hosting/advanced/upgrade) and your [version notes](/self-hosting/advanced/migration).
 
 <Steps>
   <Step title="Prepare the target configuration">
-    Record the chart version and all image references from its rendered manifests. Keep the application
+    Follow the [configuration checklist](/self-hosting/upgrade/configuration). Record the chart version and all image references from its rendered manifests. Keep the application
     image used for preparation identical to the image used for rollout. Chart and app versions are independent.
 
     Preserve Secrets, storage bindings and custom values. Review CRD ownership before changing Envoy or
@@ -42,14 +43,17 @@ Use this procedure for Helm, Argo CD and Flux deployments. First complete the
     For direct Helm deployments:
 
     ```bash
-    helm upgrade <release> oci://ghcr.io/formbricks/helm-charts/formbricks       --namespace <namespace> --version <target-chart-version>       --values values.yaml --wait --wait-for-jobs --timeout <rehearsed-timeout>
+    helm upgrade <release> oci://ghcr.io/formbricks/helm-charts/formbricks \
+      --namespace <namespace> --version <target-chart-version> \
+      --values values.yaml --wait --wait-for-jobs --timeout <rehearsed-timeout>
     ```
 
     Replace placeholders with your recorded values; use a timeout measured in rehearsal, such as `30m`.
     The chart's permission gate checks prepared state; it does not replace the preparation Job.
   </Step>
   <Step title="Verify, then reopen traffic">
-    Run the [deployment check](/self-hosting/setup/deployment-check) in a dedicated workspace.
+    Run the [deployment check](/self-hosting/setup/deployment-check) in a dedicated workspace when a matching
+    published image exists; otherwise use the [manual checks](/self-hosting/upgrade/rehearse#acceptance-at-every-stop).
     Also complete the permission, worker and release-specific checks below; skipped checks are not a pass.
 
     Complete the [acceptance checks](/self-hosting/advanced/upgrade#after-the-upgrade), including any

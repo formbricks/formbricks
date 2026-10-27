@@ -83,8 +83,8 @@ proxy on the same host is the intended way in, bind it to `127.0.0.1:3000:3000` 
 
 ## Hub worker for Docker
 
-Fresh Docker and one-click installations start `hub-worker` with the Hub API. It has been part of the stack since
-v5 and is what the bundled Compose file ships. The worker consumes every PostgreSQL-backed asynchronous Hub job,
+Fresh Docker and one-click installations add `hub-worker` in **6.1**. Earlier v5/v6.0 Compose files
+do not include it, although Helm already has a worker. The worker consumes every PostgreSQL-backed asynchronous Hub job,
 including webhook deliveries and any configured enrichment, so an installation that runs the Hub API without it
 leaves those jobs queued.
 
@@ -99,7 +99,7 @@ a warning and continues when the resolved Compose project does not contain `hub-
    ```bash
    cp -p docker-compose.yml docker-compose.yml.before-hub-worker
    curl -fsSL -o docker-compose.release.yml \
-     https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
+     "https://raw.githubusercontent.com/formbricks/formbricks/${target_version:?Set your target release tag}/docker/docker-compose.yml"
    ```
 
 2. Compare the two files. Merge `x-hub-runtime-environment` and the release's `hub` and `hub-worker` sections as
@@ -113,13 +113,14 @@ a warning and continues when the resolved Compose project does not contain `hub-
    docker compose config --services | grep -Fx hub-worker
    ```
 
-4. For a one-click installation, rerun `./formbricks.sh update` — the warning disappears once the resolved project
+4. During the maintenance procedure, keep app/Hub writers stopped and complete application migrations first.
+   For a one-click installation, rerun `./formbricks.sh update` — the warning disappears once the resolved project
    contains `hub-worker`. For a manually managed Compose installation, apply Hub migrations before starting the
    API and worker from the new image:
 
    ```bash
    docker compose pull hub hub-migrate hub-worker
-   docker compose up --force-recreate hub-migrate
+   docker compose run --rm --no-deps hub-migrate
    docker compose up -d hub hub-worker
    ```
 
@@ -179,3 +180,10 @@ Keep the rate-limit backend separate from the application's Redis traffic.
 * **Helm: the web container is locked down.** It now runs with a read-only root filesystem, as non-root user `1001`, with all Linux capabilities dropped. This only affects custom images or sidecars that write inside the container: mount a writable path with `deployment.extraVolumes` and `deployment.extraVolumeMounts`, or set `deployment.containerSecurityContext.readOnlyRootFilesystem: false`. If you set `deployment.securityContext.runAsUser`, move it to `deployment.containerSecurityContext.runAsUser`, which now takes precedence ([#9450](https://github.com/formbricks/formbricks/pull/9450))
 * **Helm: AuthZed hooks run as user `1001`.** If your custom image needs another user, set `authzed.initialization.securityContext.runAsUser` ([#9516](https://github.com/formbricks/formbricks/pull/9516))
 * **Helm: taxonomy timeout overrides are validated.** With `taxonomy.enabled=true`, rendering fails unless `taxonomy.terminationGracePeriodSeconds` is at least `taxonomy.runDeadlineSeconds` + 30, and `taxonomy.hubStaleRunTimeoutSeconds` is greater than `taxonomy.runDeadlineSeconds`. The defaults (900, 930 and 1800 seconds) pass ([#9451](https://github.com/formbricks/formbricks/pull/9451))
+
+## Auth environment aliases
+
+The docs use `BETTER_AUTH_URL` and `BETTER_AUTH_SECRET` for new installations. Existing `NEXTAUTH_URL`
+and `NEXTAUTH_SECRET` remain supported; no rename is needed. If renaming, copy the existing values.
+A different secret invalidates sessions and outstanding authentication links. Keep a configured secret
+in test environments too; the current runtime rejects a missing value.

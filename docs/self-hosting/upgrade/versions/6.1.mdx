@@ -4,6 +4,9 @@ description: "Required actions, compatibility exceptions and recovery for this r
 icon: "arrow-up-right-dots"
 ---
 
+**Applies to:** 6.0 installations entering 6.1, both editions and deployment methods.
+Follow the [upgrade-path table](/self-hosting/upgrade/paths) when starting on an older major.
+
 <Note>
   Upgrading to 6.1.1 or later on this release line? Also read the
   [October security patch actions](/self-hosting/upgrade/versions/2026-10-security-patches).
@@ -16,6 +19,9 @@ icon: "arrow-up-right-dots"
   This is reported release evidence, not a runtime rehearsal of your deployment.
 - Plan maintenance for respondent traffic, APIs and admin access; pause background workers.
 - Read the integration changes below before scheduling the upgrade.
+- The target runner builds and verifies response keyset indexes and backfills remaining Embedded Data and
+  survey ownership. Allow time and disk/WAL headroom; require migration completion before reopening.
+- Refresh Cube model files and add the Hub worker where absent. Review [runtime changes](/self-hosting/upgrade/versions/6.1-runtime).
 
 ## During
 
@@ -27,7 +33,13 @@ the mismatch check. The [online mode](/self-hosting/configuration/online-upgrade
 
 Verify permissions, respondent submission, a scoped API key, background delivery and dashboard charts.
 Regenerate encrypted single-use links after deployment. Enable survey visibility only after its checks pass.
-Use [coordinated recovery](/self-hosting/operate/backup-restore) if repair cannot complete.
+Also check existing SSO, old/new uploads and the [shared acceptance checklist](/self-hosting/upgrade/rehearse#acceptance-at-every-stop).
+
+## Recovery
+
+Keep maintenance active if migrations, permissions or acceptance checks fail. Restore matching app,
+Hub and SpiceDB state with configuration/images when repair cannot complete. Do not downgrade to recover
+unsigned links; it reintroduces the fixed vulnerability. See [coordinated recovery](/self-hosting/operate/backup-restore).
 
 ## Integration changes requiring action
 

@@ -30,7 +30,10 @@ Split legacy JSON-RPC batches larger than 100 messages. Individual MCP calls are
 | 6.1.1 | 0.14.0 → 0.14.1 | Update both API and worker. The published notes report no Hub migrations or required configuration for this pair. |
 | 6.0.4 or 5.4.7 | 0.8.5 → 0.14.1 | Allow time for migrations and decide whether to run the enrichment backfill below. |
 
-For 6.0.4 and 5.4.7, Hub migrations run in the pre-upgrade `hub-migration` Job. Estimate the size of
+For Helm targets 6.0.4 and 5.4.7, Hub migrations run in the pre-upgrade `hub-migration` Job.
+For Compose, run `hub-migrate` after app migrations and before starting Hub. Older Compose files do not
+include `hub-worker`; use the [worker guidance](/self-hosting/upgrade/versions/6.1-runtime#hub-worker-for-docker)
+when adding a worker for asynchronous processing, preserving the selected Hub version. Estimate the size of
 `feedback_records` in the Hub database:
 
 ```sql
@@ -58,6 +61,13 @@ If another host connects directly to port `3000`, change that route or follow th
 [explicit binding instructions](/self-hosting/upgrade/versions/6.1-runtime#one-click-port-3000-is-published-on-the-host-only).
 This installer change is documented for 6.1.1; do not assume the same behavior on the older release lines.
 
+## During
+
+Use the procedure for your target: [4.x/5.x](/self-hosting/upgrade/legacy), or v6
+[Docker](/self-hosting/upgrade/docker) / [Kubernetes](/self-hosting/upgrade/kubernetes).
+Keep traffic closed and writers stopped until app and Hub migrations finish; do not start a worker on the
+new image against an unmigrated Hub database.
+
 ## After
 
 - Confirm Redis TLS connections succeed without disabling certificate verification.
@@ -66,6 +76,11 @@ This installer change is documented for 6.1.1; do not assume the same behavior o
 
 Run the [deployment check](/self-hosting/setup/deployment-check) when a matching check image is available.
 If a required check fails, keep maintenance active and follow [recovery](/self-hosting/operate/backup-restore).
+
+## Recovery
+
+Restore coordinated state and matching app/Hub images if repair cannot complete. The absence of an app
+schema migration does not establish that a Hub downgrade is safe.
 
 Sources: published notes for [6.1.1](https://github.com/formbricks/formbricks/releases/tag/6.1.1),
 [6.0.4](https://github.com/formbricks/formbricks/releases/tag/6.0.4) and

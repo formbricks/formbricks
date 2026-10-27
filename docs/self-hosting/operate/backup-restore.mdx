@@ -26,12 +26,15 @@ to decrypt data are recoverable. Keep copies outside the machine or cluster bein
 2. Take coordinated snapshots after the final accepted writes. Include storage and separate datastores.
 3. Verify backups completed and record their recovery point with the current deployment configuration.
 
-For the bundled Compose PostgreSQL, these commands back up the two databases only:
+For bundled Compose PostgreSQL, back up the application database. Run the second command **only if your
+source already uses the bundled SpiceDB database** (v6). These commands do not back up separate Hub/SAML
+databases, files or other state:
 
 ```bash
 umask 077
 backup_time=$(date -u +%Y%m%dT%H%M%SZ)
 docker compose exec -T postgres pg_dump -Fc -U postgres -d formbricks > "formbricks-${backup_time}.dump"
+# v6 only, when this database exists:
 docker compose exec -T postgres pg_dump -Fc -U postgres -d spicedb > "spicedb-${backup_time}.dump"
 ```
 

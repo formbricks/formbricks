@@ -1,57 +1,50 @@
 ---
 title: "One-click updater behavior"
-description: "What the updater changes and what remains your responsibility."
+description: "What a release-matched updater changes and what you must prepare yourself."
 icon: "terminal"
 ---
 
-Use the [Docker and one-click procedure](/self-hosting/upgrade/docker) to run an upgrade.
-The updater preserves your local configuration except for the targeted changes below.
+Choose your [upgrade path](/self-hosting/upgrade/paths) first. For v6 targets, use the
+[Docker and one-click procedure](/self-hosting/upgrade/docker). For 4.x/5.x targets, use the
+[historical procedure](/self-hosting/upgrade/legacy); today's updater may require v6 services.
 
-Once those checks pass, the update also publishes the Formbricks container's port `3000` on `127.0.0.1` only, if
-your `docker-compose.yml` or your Compose override file (such as `docker-compose.override.yml`) still publishes it on
-every interface (`- 3000:3000`). Traefik reaches Formbricks over the Compose network and keeps serving it on ports
-`80` and `443`, so outside traffic always passes through Traefik. Each file it changes is kept as
-`<file>.before-loopback-port`. Before stopping anything, it renders the Compose files exactly as Docker Compose will
-load them and checks that they publish port `3000` once, on `127.0.0.1`; if not, it restores the files it changed and
-continues the update with the port as it was. A mapping with an address you chose, such as `- 0.0.0.0:3000:3000`, is
-left as it is, and so is everything when `.env` sets `COMPOSE_FILE`. On Docker Engine before 28.0, and on 28.2.0 to
-28.3.2, other machines on your local network can still reach a port published on `127.0.0.1`, so the installer and
-the update warn you to upgrade Docker.
+## What it preserves
 
-Starting with v5.4, the updater also recognizes the old amd64-only bundled Valkey digest. It backs up your
-Compose file, replaces only that exact image reference with the native amd64/arm64 digest, and validates the
-result before pulling. An already-updated or custom Valkey image is left unchanged. The named `redis` volume
-and its AOF data are preserved.
+The updater keeps your customized Compose file, environment, SMTP, storage and credentials except for
+specific migrations implemented by that script. It does **not** add missing services or merge a new stack.
+Pulling an image does not update a pinned dependency tag.
 
-While the stack is stopped, the updater also refreshes the bundled Cube model (`cube/cube.js` and
-`cube/schema/FeedbackRecords.js`), so analytics charts can use members a release adds. It downloads the files
-of the release your Formbricks image runs: the `stable` branch for `latest`, or the tag the image is pinned to.
-It keeps the previous files in `cube/previous/`. The two files change together: if either cannot be
-downloaded, backed up or replaced, both stay as they were, the update finishes, and the updater prints the
-command to retry, `./formbricks.sh refresh-cube`. An image pinned to anything else, such as a digest, leaves
-both files unchanged.
+- Merge the target's required services, configuration and model files before updating.
+- Keep existing MinIO/S3 data and proxy routing; moving to RustFS is a separate storage migration.
+- Retain database passwords, `ENCRYPTION_KEY`, auth secrets and Hub/Cube credentials.
+- Pin app, migration and dependency images. Download the updater from the same selected release tag.
 
-Existing one-click installations keep the database credentials in their local `docker-compose.yml` or `.env`.
-The update command does not regenerate or rotate them.
+See [Prepare the target configuration](/self-hosting/upgrade/configuration).
 
-<Warning>
-  Apart from the exact v5.4 Valkey pin migration, the port `3000` narrowing described above, and the IPv6
-  network setting described in [IPv6 visitors](/self-hosting/setup/one-click#ipv6-visitors), `./formbricks.sh update` does **not** rewrite your existing `formbricks/docker-compose.yml`. For a major migration such as Formbricks 4.x to 5.0, follow
-  the [migration guide](/self-hosting/advanced/migration#v5) first, merge the current v5 Compose changes into
-  your existing deployment, confirm `HUB_API_KEY` is set, and only then run the update command. If your older
-  one-click install also uses bundled MinIO for file uploads, review that storage path separately before the
-  first v5 restart; newer self-hosting updates move the bundled object-storage path to RustFS, while external
-  S3-compatible storage keeps the same `S3_*` app contract. The updater warns and continues when the Compose
-  project is missing the release-matched `hub-worker`; adding it is recommended, and the next major release will
-  require it — see the
-  [Hub worker migration](/self-hosting/advanced/migration#hub-worker-for-docker). The v6 updater also requires the
-  release-matched AuthZed services and requires `.env` to contain
-  `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true` after a clean preparation.
+## Targeted changes by release
 
-  The same applies to pinned third-party images. Because the update command only re-pulls what your Compose
-  file already names, a bundled `rustfs` service stays on whatever version it was installed with — `docker
-  compose pull` cannot move a pinned tag. To take a newer RustFS, edit the `image:` line of the `rustfs`
-  service in `formbricks/docker-compose.yml` to match the version in the [Docker
-  guide](/self-hosting/setup/docker), then run the update command. Your `rustfs-data` volume is reused as-is;
-  roll back by restoring the previous `image:` line.
-</Warning>
+| Starting release | Updater behavior | Check |
+| --- | --- | --- |
+| 5.4 | Replaces the exact old amd64-only Valkey digest with the multi-architecture image; backs up and validates Compose. | Custom pins remain your responsibility. Preserve the Redis volume/AOF. |
+| 6.0 | Requires the v6 services and `FORMBRICKS_AUTHZED_V6_MIGRATION_ACKNOWLEDGED=true`. | Complete maintenance preparation first; the updater checks prepared permissions. |
+| 6.1 | Refreshes both Cube model files from the app's release tag, retaining the previous pair. Warns if `hub-worker` is absent. | Check refresh results and worker delivery; a warning is not successful processing. |
+| 6.1.1 | Narrows a bare host `3000:3000` binding to loopback, retaining the original file. | Traefik still serves 80/443. Review any intentional direct access from another host. |
+
+For Cube, a `latest` app tag resolves models from `stable`; a digest or custom tag may prevent automatic
+refresh. Use the [manual model refresh](/self-hosting/upgrade/docker#refresh-the-cube-model) with the app's
+source release. Failed downloads leave old files in place, so inspect the result before accepting analytics.
+
+The port migration preserves an explicit address you chose and does not rewrite configurations selected
+through `COMPOSE_FILE`. If rendering/validation fails, it restores the edited files and continues with the
+old binding. Verify the resolved ports rather than assuming they changed. See
+[port-binding details](/self-hosting/upgrade/versions/6.1-runtime#one-click-port-3000-is-published-on-the-host-only),
+including Docker Engine versions with loopback isolation limitations.
+
+Other installer behavior, such as [IPv6 network setup](/self-hosting/setup/one-click#ipv6-visitors), depends
+on the script version. Review the script you selected; do not attribute today's behavior to every old release.
+
+## Recovery
+
+Keep the saved configuration and model files until acceptance. An image-only rollback is not a general
+recovery plan for database, Hub or storage changes. Use the target's release notes and
+[coordinated restore](/self-hosting/operate/backup-restore); never delete the data volumes.

@@ -160,15 +160,22 @@ For historical releases without enough evidence, say **Review required**. Do not
 missing guide or from the absence of a breaking-change label. Review migrations, dependencies, chart
 values, configuration and security exceptions through the existing release-authoring checks.
 
+### Copyable release template
+
+Use `docs/templates/release-guidance.md` in the repository for the release-note entry, upgrade checklist
+and author review. It includes the comparisons needed for patch releases and backports as well as majors.
+Keep release paths in [Choose your upgrade path](/self-hosting/upgrade/paths), with exact runtime evidence
+separate from source review. Do not send operators searching for an unnamed tested pair.
+
 ### Detailed upgrade actions
 
-Start with who must act and use short **Before / During / After** sections. Include:
+Start with who must act and use short **Before / During / After / Recovery** sections. Include:
 
 - Source/target applicability, deployment methods, editions, intermediate stops and reported test evidence.
 - Integration/configuration changes, dependencies, service impact and known affected/fixed patches.
 - Validation, stop conditions, recovery limits and links to the canonical recipe and release notes.
 
-Use **Before / During / After** only where each section adds information. Link the procedure from its
+Use the same four sections for a release checklist; move long commands to focused linked procedures. Link the procedure from its
 release entry and from the relevant target-minor note, so operators crossing several patches find it.
 
 ### Review a documentation change

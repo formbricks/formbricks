@@ -1,0 +1,47 @@
+---
+title: "Other 4.x changes"
+description: "Changes to review when catching up within the 4.x release line."
+icon: "arrow-up-right-dots"
+---
+
+**Applies to:** existing 4.x installations, both editions and deployment methods. Use the latest 4.9
+patch as the [recommended stop](/self-hosting/upgrade/paths) before v5. Read only the rows you cross.
+The detailed [4.0](/self-hosting/upgrade/versions/4.0) and [4.7](/self-hosting/upgrade/versions/4.7) instructions remain separate.
+
+## Before
+
+| Release boundary | What changed | What to check |
+| --- | --- | --- |
+| 4.1 | API-key storage/scopes and survey card content migrate automatically. | Retain existing API keys and verify their allowed/denied operations after migration. |
+| 4.2 | No new application database migration in the tagged comparison. | Review the release's product changes and run the shared acceptance checks. |
+| 4.3 | Survey questions migrate to blocks; integration mappings are migrated too. | Test existing surveys, branching and integrations with representative response data. |
+| 4.4 | Empty image/video URLs are cleaned from stored survey elements. | Check existing survey media. |
+| 4.5 | Survey slugs are added. | Check existing public links and any custom slug usage. |
+| 4.6 | Webhook secrets, IP-capture settings and validation rules change; unused indexes are removed. | Verify webhook consumers, custom scripts, validation and response IP settings. |
+| 4.7 | Typed contact attributes and storage URLs migrate. | Complete the [large-dataset backfill](/self-hosting/upgrade/versions/4.7) when skipped. |
+| 4.8 | Organization billing data moves to its own table. | Verify enterprise entitlement and organization settings; retain a database backup. |
+| 4.9 | Sessions/password-reset tokens become database-backed; SSO linking and optional Envoy deployment change. | Test existing-user SSO, password sign-in/reset and any configured gateway. |
+
+4.9.0's SSO auto-linking change was adjusted in 4.9.1. Later 4.9 patches also change SSO account-deletion
+confirmation. Use the latest patch of the line and test the flows you rely on rather than selecting `.0`.
+Do not copy a newer chart's gateway configuration into an older release without checking its supported values.
+
+## During
+
+Use the [4.x/5.x maintenance procedure](/self-hosting/upgrade/legacy). Startup applies pending schema and
+data migrations. Keep all writers stopped and traffic closed until migrations and required backfills complete.
+There is no requirement here to install every 4.x minor individually.
+
+## After
+
+Complete the row-specific checks and the [shared acceptance checklist](/self-hosting/upgrade/rehearse#acceptance-at-every-stop).
+Verify an existing account and an existing integration; testing only newly created data can miss migration failures.
+
+## Recovery
+
+These releases include dropped fields, renamed structures and data rewrites. Use a coordinated restore
+when required; do not assume an image-only downgrade is safe across 4.x minors.
+
+Sources: tagged deployment files and application migrations from
+[4.0.0 through 4.9.7](https://github.com/formbricks/formbricks/compare/4.0.0...4.9.7).
+See each [published release](https://github.com/formbricks/formbricks/releases) for the complete product changes.

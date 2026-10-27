@@ -6,7 +6,9 @@ icon: "arrow-up-right-dots"
 
 Keep your deployment on a [maintained release](/self-hosting/advanced/release-maintenance-policy).
 Start with [Release notes](/platform/changelog) to see what changed and who needs to act.
-Then choose your deployment procedure below.
+Choose your [upgrade path](/self-hosting/upgrade/paths), [rehearse it](/self-hosting/upgrade/rehearse),
+then use the deployment procedure for your target. For **4.x/5.x targets**, use the
+[historical maintenance procedure](/self-hosting/upgrade/legacy). The recipes below apply to **v6**.
 
 <span id="docker-and-one-click" />
 <span id="kubernetes-helm" />
@@ -25,9 +27,10 @@ Then choose your deployment procedure below.
 - Record your current version and choose a target from [stable releases](https://github.com/formbricks/formbricks/releases/latest).
   Read the [release notes](/platform/changelog) for every version you cross, including patches.
   Follow the linked actions; missing historical notes do not establish that an upgrade needs no extra steps.
-- Upgrade one major at a time, including any intermediate stops in those notes. A supported path is
-  distinct from a **tested pair**: only claim the latter when release evidence names both versions.
-- Rehearse with a restored copy of your data. Check your integrations and measure the maintenance window.
+- Follow the [recommended stops and evidence](/self-hosting/upgrade/paths). Apply every change you cross,
+  even when you do not install that intermediate minor. Finish required backfills before advancing.
+- [Rehearse with an isolated copy](/self-hosting/upgrade/rehearse). Check existing integrations,
+  uploads and SSO; measure the maintenance and recovery windows.
 - Prepare a [recoverable backup](/self-hosting/operate/backup-restore) and retain the current configuration and images.
 - Review [components and ownership](/self-hosting/operate/components), including managed dependencies and workers.
 
@@ -61,8 +64,8 @@ Open a fresh browser session and hard-refresh an old tab. If you use a CDN, veri
 Resume controllers and traffic only after acceptance. Retain backups until the upgrade is accepted.
 
 
-Run the [deployment check](/self-hosting/setup/deployment-check) in a dedicated workspace before reopening
-traffic. It complements the permission, worker and release-specific checks; skipped checks are not proof of success.
+Run the [deployment check](/self-hosting/setup/deployment-check) in a dedicated workspace when a matching
+release image is published; otherwise use the manual acceptance checklist. It complements the permission, worker and release-specific checks; skipped checks are not proof of success.
 
 ## If something fails
 

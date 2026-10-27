@@ -4,14 +4,14 @@ description: "Version-specific changes and preserved upgrade instructions."
 icon: "arrow-up-right-dots"
 ---
 
-<Note>
-  Historical upgrade notes. Check the [maintenance policy](/self-hosting/advanced/release-maintenance-policy)
-  for support status. These instructions describe this release, not the current installation defaults.
-</Note>
+**Applies to:** installations crossing 5.2, both editions; SSO-specific actions apply to Enterprise.
+Also read [5.0](/self-hosting/upgrade/versions/5.0) and [5.1](/self-hosting/upgrade/versions/5.1) when coming from v4.
+Use the [upgrade-path table](/self-hosting/upgrade/paths) to choose a target patch.
 
-Read the notes for every version you cross. Use the [upgrade checklist](/self-hosting/advanced/upgrade)
-to plan backups, service interruption and recovery. Old commands using `latest` or `stable` must be
-resolved to the historical target release before use; they must not jump to today's release.
+<span id="upgrade-steps" />
+<span id="rollback" />
+
+## Before
 
 Formbricks v5.2 migrates authentication from NextAuth to **Better Auth**. For most self-hosted
 instances this is a drop-in upgrade, but **if you use SSO (Azure AD / Entra ID, generic OIDC, or SAML)
@@ -51,6 +51,19 @@ with your instance URL:
   Leave the old `/api/auth/callback/*` redirect URIs registered through the transition. Keeping them in
   place is harmless and makes a rollback to v5.1 clean.
 </Note>
+
+### OIDC: missing issuer response
+
+A changed callback and `issuer_missing` are different failures. The older generic OIDC provider requires
+an RFC 9207 `iss` response parameter that some identity providers do not send. Setting `OIDC_EMAIL_CLAIM`
+does not fix this; it is not a supported configuration option in these releases.
+
+- For Microsoft Entra, use the [dedicated Azure AD provider](/self-hosting/configuration/auth-sso/azure-ad-oauth).
+  Changing providers also requires testing existing-account linking; do not switch a production provider without rehearsal.
+- For generic OIDC, the [5.4 authentication update](/self-hosting/upgrade/versions/5.4-authentication)
+  removes the unconditional missing-`iss` requirement. Prefer the recommended latest 5.4 stop and verify
+  sign-in against your actual provider. This does not disable issuer validation when `iss` is returned.
+- Keep a working administrator sign-in available during rehearsal. Capture redacted callback errors if it fails.
 
 ### Authentication Environment Variables
 
@@ -118,21 +131,27 @@ Docker Compose can now run a bundled OpenAI-compatible LLM for self-hosted AI fe
 - `OTEL_LOGS_ENABLED=1` — export Pino application logs via OTLP (off by default; also needs
   `OTEL_EXPORTER_OTLP_ENDPOINT`).
 
-### Upgrade Steps
+## During
 
 v5.2 requires no manual database migration step beyond the standard automatic Prisma migrations on startup
 (the credential-account backfill runs automatically). The Helm chart is unchanged from v5.1.
 
-1. **If you use SSO**, add the new `/api/auth/oauth2/callback/{providerId}` redirect URIs at your IdP (see
-   the table above), keeping the old ones in place.
-2. Back up your database.
-3. Pull the v5.2 images and restart (`docker compose pull && docker compose down && docker compose up -d`,
-   or `helm upgrade` with the new tag).
-4. After startup, sign in again (the one-time forced re-login) and verify each configured SSO provider
-   completes sign-in.
+Use the [4.x/5.x maintenance procedure](/self-hosting/upgrade/legacy) with the selected release's assets.
+Add the new SSO callbacks before restart and keep the old ones registered for recovery. Run the target's
+application and Hub migrations before starting services; stop on errors.
 
-### Rollback
+## After
 
-Because the old `/api/auth/callback/*` redirect URIs are left in place, rolling back to v5.1 is clean:
-revert your image tags / Helm values, and the previous NextAuth callback path works again. Restore the
-database backup only if you need to undo schema changes.
+- Sign in with an **existing** user through every configured SSO provider, plus password/2FA where enabled.
+- Verify API keys, MCP OAuth and feedback-source connections. Language codes are canonicalized by a data
+  migration; check integrations that compare stored locale values.
+- Run the [shared acceptance checks](/self-hosting/upgrade/rehearse#acceptance-at-every-stop), including old uploads.
+
+## Recovery
+
+Keeping the old callback registered allows the identity provider to redirect to an older deployment,
+but does not undo the authentication database migration. Restore coordinated data and matching images
+when needed; do not describe a callback change alone as proof that an image-only rollback is safe.
+See [backup and restore](/self-hosting/operate/backup-restore).
+
+Source: [5.1.5 → 5.2.0](https://github.com/formbricks/formbricks/compare/5.1.5...5.2.0).

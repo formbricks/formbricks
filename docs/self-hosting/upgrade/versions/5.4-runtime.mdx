@@ -1,0 +1,76 @@
+---
+title: "5.4 dependency changes"
+description: "Valkey, Cube and Envoy actions for the 5.4 release line."
+icon: "arrow-up-right-dots"
+---
+
+[Back to the 5.4 checklist](/self-hosting/upgrade/versions/5.4).
+
+## Cube from 5.4.5
+
+The bundled image changes from upstream Cube to the Formbricks image, starting with `1.7.47-1` in 5.4.5.
+Use the image shipped by your selected patch. Follow the [Cube service update](/self-hosting/upgrade/versions/cube)
+with that **5.4** tag, not a v6 Compose file.
+
+### Bundled Valkey 8.1.9 Upgrade (action required for some self-hosted deployments)
+
+The old bundled digest selects only `linux/amd64`. The new digest selects the matching native image on
+`linux/amd64` and `linux/arm64`, without requiring QEMU or `binfmt`. Valkey 8.1.9 also contains upstream
+security fixes that are not present in 8.1.1.
+
+<Warning>
+  Valkey stores sessions, queues, cache entries and rate-limit state in the named `redis` volume with AOF
+  enabled. Do not run `docker compose down -v`, delete the volume, or use `FLUSHDB` during this upgrade.
+  Recreating only the container preserves the volume. Expect a brief interruption while Valkey restarts.
+</Warning>
+
+Use the `redis` image selected in the target release's Compose/chart, preserving its volume/PVC and
+configuration. Apply it during the maintenance procedure; validate the rendered configuration before rollout.
+For Helm, update any old `redis.image.digest` override as well as the repository/tag so it does not mask the new image.
+
+After rollout, verify `valkey-cli ping`, `valkey-server --version` and the actual image architecture.
+The one-click updater can replace the exact old pin, but use the release-matched updater for your target;
+do not download today's `stable` script for a historical upgrade.
+
+The chart also stops publishing the bundled cache to the host. If a component outside the deployment
+previously used that port, provide a private authenticated route or external Redis instead of reopening it publicly.
+
+### Envoy Gateway 1.8.4 CRD Upgrade
+
+**From 5.4.3**, the Helm chart replaces Envoy Gateway 1.7.1 and Gateway API 1.4.1 with Envoy Gateway 1.8.4 and Gateway
+API 1.5.1. Fresh installations receive the new CRDs automatically. Helm does not update CRDs during an ordinary
+upgrade, so existing installations using the bundled controller must apply the matching CRDs before upgrading:
+
+```bash
+crd_dir="$(mktemp -d)"
+helm pull oci://docker.io/envoyproxy/gateway-crds-helm \
+  --version v1.8.4 --untar --untardir "${crd_dir}"
+helm template envoy-gateway-crds "${crd_dir}/gateway-crds-helm" \
+  --set crds.gatewayAPI.enabled=true \
+  --set crds.gatewayAPI.channel=experimental \
+  --set crds.envoyGateway.enabled=true \
+  > "${crd_dir}/crds.yaml"
+# Review the rendered CRDs and ownership before applying:
+kubectl apply --server-side -f "${crd_dir}/crds.yaml"
+```
+
+If field ownership conflicts, coordinate with the existing platform owner; do not automatically force ownership.
+Pulling the OCI chart first keeps Helm 4's pull messages out of the manifest pipe. Remove the temporary directory
+after the apply succeeds.
+
+The chart does not install Envoy Gateway's cluster-wide safe-upgrade admission policy by default. Enabling
+`envoy.crds.gatewayAPI.safeUpgradePolicy.enabled` denies Gateway API CRD versions older than v1.5.0 across the
+whole cluster, including CRDs reconciled by unrelated releases. Enable it only after platform review; a chart
+rollback does not remove that policy automatically.
+
+If the platform already manages compatible Gateway API CRDs, do not install another Gateway API bundle. Install
+only the Envoy Gateway CRDs as described in the [Kubernetes guide](/self-hosting/setup/kubernetes), set
+`envoy.crds.enabled=false`, and configure Flux to skip CRD installation and upgrades. Upgrade the CRDs before the
+controller and never downgrade them during rollback.
+
+The controller scheduling values also move from the ineffective `envoy.deployment.envoyGateway.pod` path to
+`envoy.deployment.pod`. Move any node selectors, tolerations, topology spread constraints, extra volumes, or
+pod annotations that you placed under the old path before upgrading.
+
+The parent chart no longer repeats the bundled controller's default port list. The
+`envoy.deployment.ports` override remains supported, so existing port overrides need no migration.

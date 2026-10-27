@@ -331,6 +331,8 @@
             "group": "Upgrade",
             "pages": [
               "self-hosting/advanced/upgrade",
+              "self-hosting/upgrade/paths",
+              "self-hosting/upgrade/rehearse",
               "self-hosting/upgrade/kubernetes",
               "self-hosting/upgrade/docker",
               "self-hosting/advanced/migration",
@@ -338,6 +340,8 @@
               {
                 "group": "Advanced",
                 "pages": [
+                  "self-hosting/upgrade/configuration",
+                  "self-hosting/upgrade/legacy",
                   "self-hosting/upgrade/prepare",
                   "self-hosting/configuration/online-upgrade",
                   "self-hosting/upgrade/one-click-details"

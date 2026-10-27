@@ -1,0 +1,1213 @@
+{
+  "comparisons": [
+    {
+      "commit": "91dab12a815e8322262717b5af6fdd3d057e16fd",
+      "from": "3.17.2",
+      "new_application_migrations": [
+        "20250812114145_adds_id_to_matrix_question_labels",
+        "20250813071701_remove_user_image_url",
+        "20250818052302_add_quotas",
+        "20250904145727_removes_cron_and_survey_scheduling",
+        "20250911192630_remove_deprecated_fields_and_tables"
+      ],
+      "operator_source_paths_changed": [
+        "apps/web/lib/env.ts",
+        "apps/web/modules/ee/sso/lib/providers.ts",
+        "apps/web/modules/ee/sso/lib/tests/__mock__/sso-handlers.mock.ts",
+        "apps/web/scripts/docker/next-start.sh",
+        "apps/web/scripts/docker/read-secrets.sh",
+        "docker/cronjobs",
+        "docker/docker-compose.yml",
+        "docker/formbricks.sh",
+        "docker/migrate-to-v4.sh",
+        "packages/database/migration/20250812114145_adds_id_to_matrix_question_labels/migration.ts",
+        "packages/database/migration/20250813071701_remove_user_image_url/migration.sql",
+        "packages/database/migration/20250818052302_add_quotas/migration.sql",
+        "packages/database/migration/20250904145727_removes_cron_and_survey_scheduling/migration.sql",
+        "packages/database/migration/20250911192630_remove_deprecated_fields_and_tables/migration.sql"
+      ],
+      "to": "4.0.0"
+    },
+    {
+      "commit": "d49517be91fae7214fd521a3673be00ca127cc75",
+      "from": "4.0.0",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": ["docker/formbricks.sh"],
+      "to": "4.0.1"
+    },
+    {
+      "commit": "40203d77ba53c1796746c0181395989d712227f2",
+      "from": "4.0.1",
+      "new_application_migrations": [
+        "20251008104151_api_key_v2",
+        "20251014110903_move_html_to_subheader_for_cta_consent_and_welcome_card"
+      ],
+      "operator_source_paths_changed": [
+        "apps/web/modules/ee/sso/components/azure-button.tsx",
+        "apps/web/modules/ee/sso/components/github-button.tsx",
+        "apps/web/modules/ee/sso/components/google-button.tsx",
+        "apps/web/modules/ee/sso/components/open-id-button.tsx",
+        "apps/web/modules/ee/sso/components/saml-button.tsx",
+        "apps/web/modules/ee/sso/components/sso-options.tsx",
+        "apps/web/modules/ee/sso/lib/providers.ts",
+        "apps/web/modules/ee/sso/lib/sso-handlers.ts",
+        "apps/web/modules/ee/sso/lib/team.ts",
+        "apps/web/modules/ee/sso/lib/tests/__mock__/team.mock.ts",
+        "docker/README.md",
+        "docker/formbricks.sh",
+        "docker/migrate-to-v4.sh",
+        "packages/database/migration/20251008104151_api_key_v2/migration.sql",
+        "packages/database/migration/20251014110903_move_html_to_subheader_for_cta_consent_and_welcome_card/migration.ts"
+      ],
+      "to": "4.1.0"
+    },
+    {
+      "commit": "e61aef9873103a45356f15ef4e3617681329488b",
+      "from": "4.1.0",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.1.1"
+    },
+    {
+      "commit": "11921582c6fe94ddfc71b05a104be488b7aa2dad",
+      "from": "4.1.1",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.1.2"
+    },
+    {
+      "commit": "01d85f66dcc9f85929cb61161430ae9e6afefa4a",
+      "from": "4.1.2",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.2.0"
+    },
+    {
+      "commit": "018cef61a6237d05175286e823ed43a04c1929a5",
+      "from": "4.2.0",
+      "new_application_migrations": [
+        "20251029165242_add_blocks_to_survey",
+        "20251118032116_migrate_questions_to_blocks"
+      ],
+      "operator_source_paths_changed": [
+        "apps/web/lib/env.ts",
+        "packages/database/migration/20251029165242_add_blocks_to_survey/migration.sql",
+        "packages/database/migration/20251118032116_migrate_questions_to_blocks/migration.ts",
+        "packages/database/migration/20251118032116_migrate_questions_to_blocks/types.ts",
+        "packages/database/migration/20251118032116_migrate_questions_to_blocks/utils.ts"
+      ],
+      "to": "4.3.0"
+    },
+    {
+      "commit": "1f0042b55c8bbf4cf8719e9581c97ba42afe3134",
+      "from": "4.3.0",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.3.1"
+    },
+    {
+      "commit": "06beb30bb2fbaee67c7176ac7af45c8c5f3e7cf3",
+      "from": "4.3.1",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.3.2"
+    },
+    {
+      "commit": "5c7867ccd1d34c5f3b84f509e7d084d1d18d71f9",
+      "from": "4.3.2",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.3.3"
+    },
+    {
+      "commit": "68f1f42f81796ea469b933f31c494fd0d65a7cce",
+      "from": "4.3.3",
+      "new_application_migrations": ["20251208033316_remove_empty_image_and_video_urls_from_elements"],
+      "operator_source_paths_changed": [
+        "apps/web/lib/env.ts",
+        "docker/docker-compose.yml",
+        "docker/formbricks.sh",
+        "packages/database/migration/20251208033316_remove_empty_image_and_video_urls_from_elements/migration.ts",
+        "packages/database/migration/20251208033316_remove_empty_image_and_video_urls_from_elements/types.ts"
+      ],
+      "to": "4.4.0"
+    },
+    {
+      "commit": "5b308d10dcffb8ed95ba8a0b34dfa98691368784",
+      "from": "4.4.0",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.4.1"
+    },
+    {
+      "commit": "7260a1a3a45de0ae5cf8b0e5a8b36bbd7c4707dc",
+      "from": "4.4.1",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.4.2"
+    },
+    {
+      "commit": "d12ef3ef4e2253e68edda1ba7a6c88294313e3e8",
+      "from": "4.4.2",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.4.3"
+    },
+    {
+      "commit": "ed285f6fdfed9e16a46df58e38e5e1627f8d1e60",
+      "from": "4.4.3",
+      "new_application_migrations": ["20251218095804_added_slug_to_survey_model"],
+      "operator_source_paths_changed": [
+        "packages/database/migration/20251218095804_added_slug_to_survey_model/migration.sql"
+      ],
+      "to": "4.5.0"
+    },
+    {
+      "commit": "fcbb99c43d0550dc045ce701b53ae0d69afecf46",
+      "from": "4.5.0",
+      "new_application_migrations": [
+        "20260106093952_added_secret_to_webhook_model",
+        "20260107060838_add_custom_head_scripts_to_surveys_and_project",
+        "20260107110956_add_is_capture_ip_enabled_to_survey",
+        "20260113160531_remove_unused_indexes",
+        "20260119123112_migrate_legacy_validation_to_rules"
+      ],
+      "operator_source_paths_changed": [
+        "apps/web/lib/env.ts",
+        "apps/web/scripts/docker/next-start.sh",
+        "packages/database/migration/20260106093952_added_secret_to_webhook_model/migration.sql",
+        "packages/database/migration/20260107060838_add_custom_head_scripts_to_surveys_and_project/migration.sql",
+        "packages/database/migration/20260107110956_add_is_capture_ip_enabled_to_survey/migration.sql",
+        "packages/database/migration/20260113160531_remove_unused_indexes/migration.sql",
+        "packages/database/migration/20260119123112_migrate_legacy_validation_to_rules/migration.ts",
+        "packages/database/migration/20260119123112_migrate_legacy_validation_to_rules/types.ts",
+        "packages/database/migration/20260119123112_migrate_legacy_validation_to_rules/utils.ts"
+      ],
+      "to": "4.6.0"
+    },
+    {
+      "commit": "972407eb939cec2212f992c087b9b70f1f2b2359",
+      "from": "4.6.0",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.6.1"
+    },
+    {
+      "commit": "e3f3516fa7d629a2b6637f7d116b100b8047839c",
+      "from": "4.6.1",
+      "new_application_migrations": [
+        "20260203082134_replaced_dark_overlay_with_overlay",
+        "20260204083137_added_data_type_and_value_fields",
+        "20260204124556_add_language_default_attribute_key",
+        "20260204174943_migrate_storage_urls_to_relative",
+        "20260205033241_added_attributes_data_types"
+      ],
+      "operator_source_paths_changed": [
+        "apps/web/lib/env.ts",
+        "apps/web/scripts/docker/next-start.sh",
+        "charts/formbricks/Chart.lock",
+        "charts/formbricks/Chart.yaml",
+        "charts/formbricks/README.md",
+        "charts/formbricks/charts/postgresql-16.4.16.tgz",
+        "charts/formbricks/charts/redis-20.11.2.tgz",
+        "charts/formbricks/templates/NOTES.txt",
+        "charts/formbricks/templates/_helpers.tpl",
+        "charts/formbricks/templates/deployment.yaml",
+        "charts/formbricks/templates/externalsecrets.yaml",
+        "charts/formbricks/templates/hpa.yaml",
+        "charts/formbricks/templates/ingress.yaml",
+        "charts/formbricks/templates/migration-job.yaml",
+        "charts/formbricks/templates/secrets.yaml",
+        "charts/formbricks/templates/service.yaml",
+        "charts/formbricks/templates/serviceaccount.yaml",
+        "charts/formbricks/templates/servicemonitor.yaml",
+        "charts/formbricks/values.yaml",
+        "docker/docker-compose.yml",
+        "packages/database/migration/20260203082134_replaced_dark_overlay_with_overlay/migration.sql",
+        "packages/database/migration/20260204083137_added_data_type_and_value_fields/migration.sql",
+        "packages/database/migration/20260204124556_add_language_default_attribute_key/migration.ts",
+        "packages/database/migration/20260204174943_migrate_storage_urls_to_relative/migration.ts",
+        "packages/database/migration/20260204174943_migrate_storage_urls_to_relative/types.ts",
+        "packages/database/migration/20260204174943_migrate_storage_urls_to_relative/utils.ts",
+        "packages/database/migration/20260205033241_added_attributes_data_types/migration.ts",
+        "packages/database/migration/20260205033241_added_attributes_data_types/types.ts"
+      ],
+      "to": "4.7.0"
+    },
+    {
+      "commit": "5b776b04b11689adff508f44c813711a55633e0c",
+      "from": "4.7.0",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.7.1"
+    },
+    {
+      "commit": "2eaa0986024525cbd5ff5b9ebd9b664a1dc8b87c",
+      "from": "4.7.1",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.7.2"
+    },
+    {
+      "commit": "56d6d201f831d8bc16afe28cbd5c268a311e435f",
+      "from": "4.7.2",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.7.3"
+    },
+    {
+      "commit": "be38c41c6ded2b92d32ca474b2e4d6c228a325ab",
+      "from": "4.7.3",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [
+        "charts/formbricks/templates/NOTES.txt",
+        "charts/formbricks/templates/pdb.yaml",
+        "charts/formbricks/values.yaml"
+      ],
+      "to": "4.7.4"
+    },
+    {
+      "commit": "5b4cb4fc4916df3c5f9daf7ab514e86d4f653a62",
+      "from": "4.7.4",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.7.5"
+    },
+    {
+      "commit": "a51a006c26798b6459d7cd7f6a76d7d0a64634ec",
+      "from": "4.7.5",
+      "new_application_migrations": ["20260305102749_move_billing_json_to_organization_billing_table"],
+      "operator_source_paths_changed": [
+        "apps/web/lib/env.ts",
+        "apps/web/modules/ee/sso/lib/providers.ts",
+        "apps/web/modules/ee/sso/lib/sso-handlers.ts",
+        "apps/web/modules/ee/sso/lib/team.ts",
+        "apps/web/modules/ee/sso/lib/tests/__mock__/sso-handlers.mock.ts",
+        "apps/web/scripts/docker/read-secrets.sh",
+        "charts/formbricks/templates/migration-job.yaml",
+        "packages/database/migration/20260305102749_move_billing_json_to_organization_billing_table/migration.sql"
+      ],
+      "to": "4.8.0"
+    },
+    {
+      "commit": "a10404ba1d0c120d757f2fff19b58de556f7a9c3",
+      "from": "4.8.0",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.8.1"
+    },
+    {
+      "commit": "913ab98d621e3fe36f1f7f82b098525035c97072",
+      "from": "4.8.1",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.8.2"
+    },
+    {
+      "commit": "fac7369b3ca159f9f44ed75b9ed42f47481d43e1",
+      "from": "4.8.2",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.8.3"
+    },
+    {
+      "commit": "ce576b33acc2a46f35064570bd4a8b09d56eb8ca",
+      "from": "4.8.3",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.8.4"
+    },
+    {
+      "commit": "5bf884d529995dc2840d8c7cbff40dc4d4bbaccc",
+      "from": "4.8.4",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.8.5"
+    },
+    {
+      "commit": "e07b6fb3d199e679b5f41b8e0f61ffec729f3a07",
+      "from": "4.8.5",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.8.6"
+    },
+    {
+      "commit": "74b679403d323d93bb549e7654d1cb457dabd898",
+      "from": "4.8.6",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.8.7"
+    },
+    {
+      "commit": "e823e10f9a2fd19909056399cb3ffc58ffe3ee8e",
+      "from": "4.8.7",
+      "new_application_migrations": [
+        "20260302000000_replace_is_ai_enabled_with_dual_toggles",
+        "20260325090000_add_auth_sessions",
+        "20260330120000_add_password_reset_tokens"
+      ],
+      "operator_source_paths_changed": [
+        "apps/web/lib/env.ts",
+        "apps/web/modules/ee/sso/components/azure-button.tsx",
+        "apps/web/modules/ee/sso/components/github-button.tsx",
+        "apps/web/modules/ee/sso/components/google-button.tsx",
+        "apps/web/modules/ee/sso/components/open-id-button.tsx",
+        "apps/web/modules/ee/sso/components/saml-button.tsx",
+        "apps/web/modules/ee/sso/components/sso-options.tsx",
+        "apps/web/modules/ee/sso/lib/providers.ts",
+        "apps/web/modules/ee/sso/lib/sso-handlers.ts",
+        "apps/web/modules/ee/sso/lib/team.ts",
+        "apps/web/modules/ee/sso/lib/tests/__mock__/sso-handlers.mock.ts",
+        "apps/web/modules/ee/sso/lib/utils.ts",
+        "charts/formbricks/Chart.lock",
+        "charts/formbricks/Chart.yaml",
+        "charts/formbricks/README.md",
+        "charts/formbricks/charts/gateway-helm-v1.7.1.tgz",
+        "charts/formbricks/templates/_helpers.tpl",
+        "charts/formbricks/templates/envoy-api-ingress.yaml",
+        "charts/formbricks/templates/envoy-gateway-resources.yaml",
+        "charts/formbricks/templates/envoy-rate-limit-policies.yaml",
+        "charts/formbricks/templates/envoy-validation.yaml",
+        "charts/formbricks/templates/ingress.yaml",
+        "charts/formbricks/values.yaml",
+        "docker/docker-compose.yml",
+        "packages/database/migration/20260302000000_replace_is_ai_enabled_with_dual_toggles/migration.sql",
+        "packages/database/migration/20260325090000_add_auth_sessions/migration.sql",
+        "packages/database/migration/20260330120000_add_password_reset_tokens/migration.sql"
+      ],
+      "to": "4.9.0"
+    },
+    {
+      "commit": "8204a5c6528a0cfa08552bffd9d02fd8957cb64f",
+      "from": "4.9.0",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [
+        "apps/web/modules/ee/sso/lib/providers.ts",
+        "apps/web/modules/ee/sso/lib/sso-handlers.ts"
+      ],
+      "to": "4.9.1"
+    },
+    {
+      "commit": "7988d7775c02b44d4393e345b3ecbbecdeccf178",
+      "from": "4.9.1",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.9.2"
+    },
+    {
+      "commit": "7f5b2bf69d2d851ad9c6176803f563d735d067a7",
+      "from": "4.9.2",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.9.3"
+    },
+    {
+      "commit": "bad3b7a7713bd4d320d6b140a10b0558dcc4bc15",
+      "from": "4.9.3",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.9.4"
+    },
+    {
+      "commit": "bd05387d9964f50e2dfd8ab804a4b65cf770f1c3",
+      "from": "4.9.4",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.9.5"
+    },
+    {
+      "commit": "c296abdde90da08e546b4bfb3ab200535c8775db",
+      "from": "4.9.5",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [
+        "apps/web/lib/env.ts",
+        "apps/web/modules/ee/sso/lib/provider-normalization.ts",
+        "apps/web/modules/ee/sso/lib/providers.ts"
+      ],
+      "to": "4.9.6"
+    },
+    {
+      "commit": "be1194a0fbc6907fad283593d6e30d2a7fda7cf3",
+      "from": "4.9.6",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "4.9.7"
+    },
+    {
+      "commit": "880385029d28d25b3d52c518680cf8ce8b174b91",
+      "from": "4.9.7",
+      "new_application_migrations": [
+        "20260330000000_rename_project_to_workspace",
+        "20260401000000_add_workspace_id_to_environment_owned_models",
+        "20260401000001_promote_dev_environments",
+        "20260401000002_backfill_workspace_id",
+        "20260402000000_make_workspace_id_not_null",
+        "20260403000000_remove_environment_model",
+        "20260409120000_add_is_auto_progressing_enabled_to_survey",
+        "20260410120000_add_dashboards_and_charts_to_workspace",
+        "20260414000000_added_connector_model",
+        "20260414054415_added_feedback_directory",
+        "20260416110000_backfill_legacy_sso_accounts",
+        "20260417120000_add_survey_publish_pause_scheduling",
+        "20260420000000_migrate_legacy_styling_fields",
+        "20260521000000_remove_is_ai_data_analysis_enabled"
+      ],
+      "operator_source_paths_changed": [
+        "apps/web/lib/env.ts",
+        "apps/web/modules/ee/sso/components/open-id-button.tsx",
+        "apps/web/modules/ee/sso/lib/account-linking.ts",
+        "apps/web/modules/ee/sso/lib/constants.ts",
+        "apps/web/modules/ee/sso/lib/providers.ts",
+        "apps/web/modules/ee/sso/lib/sso-handlers.ts",
+        "apps/web/modules/ee/sso/lib/sso-recovery.ts",
+        "apps/web/modules/ee/sso/lib/tests/__mock__/sso-handlers.mock.ts",
+        "apps/web/modules/ee/sso/lib/tests/__mock__/team.mock.ts",
+        "apps/web/scripts/docker/read-secrets.sh",
+        "charts/formbricks/Chart.lock",
+        "charts/formbricks/Chart.yaml",
+        "charts/formbricks/README.md",
+        "charts/formbricks/cube/cube.js",
+        "charts/formbricks/cube/schema/FeedbackRecords.js",
+        "charts/formbricks/templates/NOTES.txt",
+        "charts/formbricks/templates/_helpers.tpl",
+        "charts/formbricks/templates/cube-configmap.yaml",
+        "charts/formbricks/templates/cube-deployment.yaml",
+        "charts/formbricks/templates/cube-service.yaml",
+        "charts/formbricks/templates/deployment.yaml",
+        "charts/formbricks/templates/envoy-api-ingress.yaml",
+        "charts/formbricks/templates/envoy-gateway-resources.yaml",
+        "charts/formbricks/templates/externalsecrets.yaml",
+        "charts/formbricks/templates/hub-deployment.yaml",
+        "charts/formbricks/templates/hub-embeddings-deployment.yaml",
+        "charts/formbricks/templates/hub-embeddings-pvc.yaml",
+        "charts/formbricks/templates/hub-embeddings-secret.yaml",
+        "charts/formbricks/templates/hub-embeddings-service.yaml",
+        "charts/formbricks/templates/hub-hpa.yaml",
+        "charts/formbricks/templates/hub-migration-job.yaml",
+        "charts/formbricks/templates/hub-migration-wait-rbac.yaml",
+        "charts/formbricks/templates/hub-pdb.yaml",
+        "charts/formbricks/templates/hub-service.yaml",
+        "charts/formbricks/templates/hub-worker-deployment.yaml",
+        "charts/formbricks/templates/migration-job.yaml",
+        "charts/formbricks/templates/redis-configmap.yaml",
+        "charts/formbricks/templates/redis-networkpolicy.yaml",
+        "charts/formbricks/templates/redis-pdb.yaml",
+        "charts/formbricks/templates/redis-service.yaml",
+        "charts/formbricks/templates/redis-statefulset.yaml",
+        "charts/formbricks/templates/redis-validation.yaml",
+        "charts/formbricks/templates/secrets.yaml",
+        "charts/formbricks/values.yaml",
+        "docker/README.md",
+        "docker/cube/cube.js",
+        "docker/cube/schema/FeedbackRecords.js",
+        "docker/docker-compose.yml",
+        "docker/formbricks.sh",
+        "docker/rustfs-init.sh",
+        "packages/database/migration/20241209110456_xm_segment_migration/migration.ts",
+        "packages/database/migration/20250326111101_move_api_keys_to_api_keys_new/migration.ts",
+        "packages/database/migration/20260330000000_rename_project_to_workspace/migration.sql",
+        "packages/database/migration/20260401000000_add_workspace_id_to_environment_owned_models/migration.sql",
+        "packages/database/migration/20260401000001_promote_dev_environments/migration.ts",
+        "packages/database/migration/20260401000002_backfill_workspace_id/migration.ts",
+        "packages/database/migration/20260402000000_make_workspace_id_not_null/migration.sql",
+        "packages/database/migration/20260403000000_remove_environment_model/migration.sql",
+        "packages/database/migration/20260409120000_add_is_auto_progressing_enabled_to_survey/migration.sql",
+        "packages/database/migration/20260410120000_add_dashboards_and_charts_to_workspace/migration.sql",
+        "packages/database/migration/20260414000000_added_connector_model/migration.sql",
+        "packages/database/migration/20260414054415_added_feedback_directory/migration.sql",
+        "packages/database/migration/20260416110000_backfill_legacy_sso_accounts/migration.ts",
+        "packages/database/migration/20260417120000_add_survey_publish_pause_scheduling/migration.sql",
+        "packages/database/migration/20260420000000_migrate_legacy_styling_fields/migration.sql",
+        "packages/database/migration/20260521000000_remove_is_ai_data_analysis_enabled/migration.sql"
+      ],
+      "to": "5.0.0"
+    },
+    {
+      "commit": "70dcad3c0c09b94c91c9790b07cfcd87456a003f",
+      "from": "5.0.0",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": ["apps/web/modules/ee/sso/lib/provider-normalization.ts"],
+      "to": "5.0.1"
+    },
+    {
+      "commit": "111884b102a4111852392911a157a930e1f218e9",
+      "from": "5.0.1",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "5.0.2"
+    },
+    {
+      "commit": "4cd18c56df210ece7532abbc4db8df0c97f7e445",
+      "from": "5.0.2",
+      "new_application_migrations": ["20260528120000_rename_connector_to_feedback_source"],
+      "operator_source_paths_changed": [
+        "apps/web/lib/env.ts",
+        "apps/web/modules/ee/sso/lib/account-linking.ts",
+        "apps/web/modules/ee/sso/lib/organization.ts",
+        "apps/web/modules/ee/sso/lib/provider-normalization.ts",
+        "apps/web/modules/ee/sso/lib/providers.ts",
+        "apps/web/modules/ee/sso/lib/sso-handlers.ts",
+        "apps/web/modules/ee/sso/lib/sso-recovery.ts",
+        "apps/web/modules/ee/sso/lib/team.ts",
+        "apps/web/modules/ee/sso/lib/tests/__mock__/team.mock.ts",
+        "charts/formbricks/README.md",
+        "charts/formbricks/templates/NOTES.txt",
+        "charts/formbricks/templates/_helpers.tpl",
+        "charts/formbricks/templates/cube-deployment.yaml",
+        "charts/formbricks/templates/deployment.yaml",
+        "charts/formbricks/templates/externalsecrets.yaml",
+        "charts/formbricks/templates/hub-deployment.yaml",
+        "charts/formbricks/templates/hub-embeddings-secret.yaml",
+        "charts/formbricks/templates/hub-migration-job.yaml",
+        "charts/formbricks/templates/hub-migration-wait-rbac.yaml",
+        "charts/formbricks/templates/migration-job.yaml",
+        "charts/formbricks/templates/secrets.yaml",
+        "charts/formbricks/values.yaml",
+        "docker/README.md",
+        "docker/docker-compose.yml",
+        "packages/database/migration/20241209104738_xm_user_identification/migration.ts",
+        "packages/database/migration/20241209111404_xm_attribute_removal/migration.ts",
+        "packages/database/migration/20251014110903_move_html_to_subheader_for_cta_consent_and_welcome_card/migration.ts",
+        "packages/database/migration/20251208033316_remove_empty_image_and_video_urls_from_elements/migration.ts",
+        "packages/database/migration/20260119123112_migrate_legacy_validation_to_rules/migration.ts",
+        "packages/database/migration/20260204174943_migrate_storage_urls_to_relative/migration.ts",
+        "packages/database/migration/20260528120000_rename_connector_to_feedback_source/migration.sql"
+      ],
+      "to": "5.1.0"
+    },
+    {
+      "commit": "09c08a61c160410ff3f65c5401d2ab6786e41f02",
+      "from": "5.1.0",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "5.1.1"
+    },
+    {
+      "commit": "827af4fee53e3353502c30aff913cd8956615e60",
+      "from": "5.1.1",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "5.1.2"
+    },
+    {
+      "commit": "902f694be0918b6c3705bc5fa1ce9d1f918d3f23",
+      "from": "5.1.2",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "5.1.3"
+    },
+    {
+      "commit": "cf0375c607473dbdd97c10e7da5354daa6e3ff8b",
+      "from": "5.1.3",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "5.1.4"
+    },
+    {
+      "commit": "4095c77886ee4430cf10ec309fa9d3db8914978c",
+      "from": "5.1.4",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "5.1.5"
+    },
+    {
+      "commit": "82e7077d64b2ffc6831a50171f1a416ab07274e3",
+      "from": "5.1.5",
+      "new_application_migrations": [
+        "20260618120000_eng_1054_better_auth_foundation",
+        "20260619120000_eng_1054_credential_account_backfill",
+        "20260620000000_eng_1054_emailverified_boolean_account_type_nullable",
+        "20260625104904_canonicalize_language_codes",
+        "20260702093000_add_better_auth_oauth_provider",
+        "20260706000000_delete_orphaned_feedback_sources",
+        "20260706000001_add_feedback_source_directory_workspace_fk"
+      ],
+      "operator_source_paths_changed": [
+        "apps/web/lib/env.ts",
+        "apps/web/modules/ee/sso/components/azure-button.tsx",
+        "apps/web/modules/ee/sso/components/github-button.tsx",
+        "apps/web/modules/ee/sso/components/google-button.tsx",
+        "apps/web/modules/ee/sso/components/open-id-button.tsx",
+        "apps/web/modules/ee/sso/components/saml-button.tsx",
+        "apps/web/modules/ee/sso/components/sso-options.tsx",
+        "apps/web/modules/ee/sso/lib/account-linking.ts",
+        "apps/web/modules/ee/sso/lib/better-auth-hooks.ts",
+        "apps/web/modules/ee/sso/lib/better-auth-providers.ts",
+        "apps/web/modules/ee/sso/lib/better-auth-recovery-signin.ts",
+        "apps/web/modules/ee/sso/lib/providers.ts",
+        "apps/web/modules/ee/sso/lib/sso-handlers.ts",
+        "apps/web/modules/ee/sso/lib/sso-provisioning.ts",
+        "apps/web/modules/ee/sso/lib/sso-recovery.ts",
+        "apps/web/modules/ee/sso/lib/sso-request-context.ts",
+        "apps/web/modules/ee/sso/lib/tests/__mock__/sso-handlers.mock.ts",
+        "apps/web/scripts/docker/next-start.sh",
+        "apps/web/scripts/docker/validate-env.ts",
+        "charts/formbricks/Chart.lock",
+        "charts/formbricks/Chart.yaml",
+        "charts/formbricks/README.md",
+        "charts/formbricks/charts/vllm-stack-0.1.11.tgz",
+        "charts/formbricks/cube/cube.js",
+        "charts/formbricks/cube/schema/FeedbackRecords.js",
+        "charts/formbricks/templates/_helpers.tpl",
+        "charts/formbricks/templates/deployment.yaml",
+        "charts/formbricks/templates/hub-deployment.yaml",
+        "charts/formbricks/templates/hub-hpa.yaml",
+        "charts/formbricks/templates/hub-pdb.yaml",
+        "charts/formbricks/templates/migration-job.yaml",
+        "charts/formbricks/templates/taxonomy-deployment.yaml",
+        "charts/formbricks/templates/taxonomy-secret.yaml",
+        "charts/formbricks/templates/taxonomy-service.yaml",
+        "charts/formbricks/values.yaml",
+        "docker/README.md",
+        "docker/cube/cube.js",
+        "docker/cube/schema/FeedbackRecords.js",
+        "docker/docker-compose.yml",
+        "docker/formbricks.sh",
+        "docker/package.json",
+        "packages/database/migration/20260618120000_eng_1054_better_auth_foundation/migration.sql",
+        "packages/database/migration/20260619120000_eng_1054_credential_account_backfill/migration.ts",
+        "packages/database/migration/20260620000000_eng_1054_emailverified_boolean_account_type_nullable/migration.sql",
+        "packages/database/migration/20260625104904_canonicalize_language_codes/migration.ts",
+        "packages/database/migration/20260625104904_canonicalize_language_codes/types.ts",
+        "packages/database/migration/20260625104904_canonicalize_language_codes/utils.ts",
+        "packages/database/migration/20260702093000_add_better_auth_oauth_provider/migration.sql",
+        "packages/database/migration/20260706000000_delete_orphaned_feedback_sources/migration.ts",
+        "packages/database/migration/20260706000001_add_feedback_source_directory_workspace_fk/migration.sql"
+      ],
+      "to": "5.2.0"
+    },
+    {
+      "commit": "dec36468ee2daa2d40be77cf38641b21ebc1bb70",
+      "from": "5.2.0",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "5.2.1"
+    },
+    {
+      "commit": "1d34c22400fc09d311614fb117e9964c556b5c0c",
+      "from": "5.2.1",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "5.2.2"
+    },
+    {
+      "commit": "e80ed0b0cbbc2779842f810efb8ae589be03fb3e",
+      "from": "5.2.2",
+      "new_application_migrations": [
+        "20260608120000_add_workflows_foundation",
+        "20260701000000_workflow_run_log_unique_step",
+        "20260709120000_drop_workflow_name_uniqueness",
+        "20260717000000_add_workflow_run_dispatched_at",
+        "20260722000000_add_survey_archived_at",
+        "20260725070000_add_two_factor_lockout_fields"
+      ],
+      "operator_source_paths_changed": [
+        "apps/web/lib/env.ts",
+        "apps/web/modules/ee/sso/lib/better-auth-hooks.ts",
+        "apps/web/modules/ee/sso/lib/sso-handlers.ts",
+        "apps/web/modules/ee/sso/lib/sso-provisioning.ts",
+        "apps/web/modules/ee/sso/lib/tests/__mock__/sso-handlers.mock.ts",
+        "charts/formbricks/README.md",
+        "charts/formbricks/templates/hub-deployment.yaml",
+        "charts/formbricks/templates/hub-worker-deployment.yaml",
+        "charts/formbricks/values.yaml",
+        "docker/README.md",
+        "docker/docker-compose.yml",
+        "packages/database/migration/20260608120000_add_workflows_foundation/migration.sql",
+        "packages/database/migration/20260701000000_workflow_run_log_unique_step/migration.sql",
+        "packages/database/migration/20260709120000_drop_workflow_name_uniqueness/migration.sql",
+        "packages/database/migration/20260717000000_add_workflow_run_dispatched_at/migration.sql",
+        "packages/database/migration/20260722000000_add_survey_archived_at/migration.sql",
+        "packages/database/migration/20260725070000_add_two_factor_lockout_fields/migration.sql"
+      ],
+      "to": "5.3.0"
+    },
+    {
+      "commit": "1ef7aa60023bcb1f6b18c10fec96ff408e87fd26",
+      "from": "5.3.0",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "5.3.1"
+    },
+    {
+      "commit": "0c4d701a2d6e96863fafa8afdbe0fbad833916f7",
+      "from": "5.3.1",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "5.3.2"
+    },
+    {
+      "commit": "95afc46c428fff0f2894404bf7525fcf3468ea1a",
+      "from": "5.3.2",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "5.3.3"
+    },
+    {
+      "commit": "b39985ab2f8983803915be9b6e040a0518463ddb",
+      "from": "5.3.3",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "5.3.4"
+    },
+    {
+      "commit": "d13008113e1e26c807ecef07beb2408334293748",
+      "from": "5.3.4",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [
+        "apps/web/modules/ee/sso/lib/better-auth-hooks.ts",
+        "apps/web/modules/ee/sso/lib/sso-recovery.ts",
+        "docker/formbricks.sh",
+        "docker/rustfs-init.sh"
+      ],
+      "to": "5.3.5"
+    },
+    {
+      "commit": "286958e36464663489bfbc73d87abbd0f573825f",
+      "from": "5.3.5",
+      "new_application_migrations": [
+        "20260807120000_add_feedback_source_import_mode",
+        "20260810000000_add_organization_display_time_zone",
+        "20260812110000_eng_2343_better_auth_17_resource_model",
+        "20260812110001_eng_2343_backfill_oauth_resource_links",
+        "20260812120000_add_feedback_source_element_scope",
+        "20260821000000_add_response_survey_finished_index",
+        "20260821165535_repair_account_issuer"
+      ],
+      "operator_source_paths_changed": [
+        "apps/web/lib/env.ts",
+        "apps/web/modules/ee/sso/components/azure-button.tsx",
+        "apps/web/modules/ee/sso/components/open-id-button.tsx",
+        "apps/web/modules/ee/sso/components/saml-button.tsx",
+        "apps/web/modules/ee/sso/lib/account-linking.ts",
+        "apps/web/modules/ee/sso/lib/better-auth-hooks.ts",
+        "apps/web/modules/ee/sso/lib/better-auth-providers.ts",
+        "apps/web/modules/ee/sso/lib/constants.ts",
+        "apps/web/modules/ee/sso/lib/sso-recovery.ts",
+        "apps/web/scripts/docker/read-secrets.sh",
+        "charts/formbricks/Chart.yaml",
+        "charts/formbricks/README.md",
+        "charts/formbricks/templates/_helpers.tpl",
+        "charts/formbricks/templates/deployment.yaml",
+        "charts/formbricks/templates/hub-embedding-backfill-job.yaml",
+        "charts/formbricks/templates/hub-embeddings-background-service.yaml",
+        "charts/formbricks/templates/hub-embeddings-background-statefulset.yaml",
+        "charts/formbricks/templates/hub-embeddings-deployment.yaml",
+        "charts/formbricks/templates/hub-hpa.yaml",
+        "charts/formbricks/templates/hub-worker-deployment.yaml",
+        "charts/formbricks/values.yaml",
+        "docker/docker-compose.yml",
+        "docker/formbricks.sh",
+        "docker/migrate-to-v4.sh",
+        "docker/package.json",
+        "docker/rustfs-init.sh",
+        "packages/database/migration/20260807120000_add_feedback_source_import_mode/migration.sql",
+        "packages/database/migration/20260810000000_add_organization_display_time_zone/migration.sql",
+        "packages/database/migration/20260812110000_eng_2343_better_auth_17_resource_model/migration.sql",
+        "packages/database/migration/20260812110001_eng_2343_backfill_oauth_resource_links/migration.ts",
+        "packages/database/migration/20260812120000_add_feedback_source_element_scope/migration.sql",
+        "packages/database/migration/20260821000000_add_response_survey_finished_index/migration.sql",
+        "packages/database/migration/20260821165535_repair_account_issuer/migration.ts"
+      ],
+      "to": "5.4.0"
+    },
+    {
+      "commit": "81618eda67b90c7875b244b065189987589cc8e6",
+      "from": "5.4.0",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [
+        "apps/web/modules/ee/sso/lib/better-auth-providers.ts",
+        "apps/web/modules/ee/sso/lib/sso-recovery.ts"
+      ],
+      "to": "5.4.1"
+    },
+    {
+      "commit": "c5c6ed5f0944f310990e98629419ee9ef602dbc1",
+      "from": "5.4.1",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "5.4.2"
+    },
+    {
+      "commit": "f05f0b5f26fcc32fa083b688fef8b14e9083fd36",
+      "from": "5.4.2",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [
+        "charts/formbricks/Chart.lock",
+        "charts/formbricks/Chart.yaml",
+        "charts/formbricks/README.md",
+        "charts/formbricks/charts/gateway-helm-v1.7.1.tgz",
+        "charts/formbricks/charts/gateway-helm-v1.8.4.tgz",
+        "charts/formbricks/tests/envoy-gateway.sh",
+        "charts/formbricks/values.yaml",
+        "docker/formbricks.sh",
+        "docker/migrate-to-v4.sh"
+      ],
+      "to": "5.4.3"
+    },
+    {
+      "commit": "c131ad1d5ead98797c1fda800dc1202ba600b76a",
+      "from": "5.4.3",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": ["docker/formbricks.sh", "docker/rustfs-init.sh"],
+      "to": "5.4.4"
+    },
+    {
+      "commit": "9e13c7039ff2282647c3d500a6e2de8f0a48c762",
+      "from": "5.4.4",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [
+        "charts/formbricks/README.md",
+        "charts/formbricks/values.yaml",
+        "docker/docker-compose.yml"
+      ],
+      "to": "5.4.5"
+    },
+    {
+      "commit": "f01b99db8008bbda5c9d823cab2206aa14f268ad",
+      "from": "5.4.5",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [],
+      "to": "5.4.6"
+    },
+    {
+      "commit": "a2153ca3ae435627d76dad34981615aff75f16fc",
+      "from": "5.4.6",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [
+        "apps/web/lib/env.ts",
+        "apps/web/scripts/docker/next-start.sh",
+        "charts/formbricks/README.md",
+        "charts/formbricks/values.yaml"
+      ],
+      "to": "5.4.7"
+    },
+    {
+      "commit": "ac7bf6f2104e37b7e0299ddaa5f752f04b3e59a3",
+      "from": "5.4.7",
+      "new_application_migrations": [
+        "20260806000000_add_embedded_data_tables",
+        "20260812121944_backfill_embedded_data",
+        "20260817000000_add_survey_is_anonymize_responses_enabled",
+        "20260818120000_add_authzed_projection_outbox",
+        "20260820000000_add_response_ingest_flags",
+        "20260825000000_remove_is_single_response_per_email_enabled_from_survey",
+        "20260826120000_eng_2612_merge_line_chart_type_into_area"
+      ],
+      "operator_source_paths_changed": [
+        "apps/web/lib/env.ts",
+        "apps/web/modules/ee/sso/components/azure-button.tsx",
+        "apps/web/modules/ee/sso/components/github-button.tsx",
+        "apps/web/modules/ee/sso/components/google-button.tsx",
+        "apps/web/modules/ee/sso/components/open-id-button.tsx",
+        "apps/web/modules/ee/sso/components/saml-button.tsx",
+        "apps/web/modules/ee/sso/lib/account-linking.ts",
+        "apps/web/modules/ee/sso/lib/better-auth-hooks.ts",
+        "apps/web/modules/ee/sso/lib/better-auth-providers.ts",
+        "apps/web/modules/ee/sso/lib/default-organization.ts",
+        "apps/web/modules/ee/sso/lib/email-verification-policy.ts",
+        "apps/web/modules/ee/sso/lib/provider-normalization.ts",
+        "apps/web/modules/ee/sso/lib/sso-provisioning.ts",
+        "apps/web/modules/ee/sso/lib/sso-recovery.ts",
+        "apps/web/modules/ee/sso/lib/team.ts",
+        "apps/web/scripts/docker/authzed-cli.ts",
+        "apps/web/scripts/docker/formbricks-authzed",
+        "apps/web/scripts/docker/formbricks-authzed-prepare",
+        "apps/web/scripts/docker/next-start.sh",
+        "apps/web/scripts/docker/server-only-empty.ts",
+        "apps/web/scripts/docker/validate-env.ts",
+        "charts/formbricks/Chart.lock",
+        "charts/formbricks/Chart.yaml",
+        "charts/formbricks/README.md",
+        "charts/formbricks/charts/spicedb-operator-0.1.0.tgz",
+        "charts/formbricks/cube/cube.js",
+        "charts/formbricks/cube/schema/FeedbackRecords.js",
+        "charts/formbricks/templates/NOTES.txt",
+        "charts/formbricks/templates/_helpers.tpl",
+        "charts/formbricks/templates/authzed-cluster.yaml",
+        "charts/formbricks/templates/authzed-initialize-job.yaml",
+        "charts/formbricks/templates/authzed-postgresql-bootstrap.yaml",
+        "charts/formbricks/templates/authzed-secret.yaml",
+        "charts/formbricks/templates/authzed-validation.yaml",
+        "charts/formbricks/templates/deployment.yaml",
+        "charts/formbricks/templates/hub-deployment.yaml",
+        "charts/formbricks/templates/hub-migration-job.yaml",
+        "charts/formbricks/templates/hub-worker-deployment.yaml",
+        "charts/formbricks/templates/secrets.yaml",
+        "charts/formbricks/templates/taxonomy-deployment.yaml",
+        "charts/formbricks/tests/authzed-api-server.sh",
+        "charts/formbricks/tests/authzed-bootstrap-runtime.sh",
+        "charts/formbricks/tests/authzed-operations.sh",
+        "charts/formbricks/values.yaml",
+        "docker/README.md",
+        "docker/authzed-compose-contract.sh",
+        "docker/authzed-postgres-bootstrap.sh",
+        "docker/authzed-smoke.sh",
+        "docker/cube/cube.js",
+        "docker/cube/schema/FeedbackRecords.js",
+        "docker/docker-compose.yml",
+        "docker/formbricks.sh",
+        "docker/rustfs-init.sh",
+        "packages/database/migration/20260625104904_canonicalize_language_codes/migration.ts",
+        "packages/database/migration/20260625104904_canonicalize_language_codes/utils.ts",
+        "packages/database/migration/20260806000000_add_embedded_data_tables/migration.sql",
+        "packages/database/migration/20260812121944_backfill_embedded_data/migration.ts",
+        "packages/database/migration/20260812121944_backfill_embedded_data/utils.ts",
+        "packages/database/migration/20260817000000_add_survey_is_anonymize_responses_enabled/migration.sql",
+        "packages/database/migration/20260818120000_add_authzed_projection_outbox/migration.sql",
+        "packages/database/migration/20260820000000_add_response_ingest_flags/migration.sql",
+        "packages/database/migration/20260825000000_remove_is_single_response_per_email_enabled_from_survey/migration.sql",
+        "packages/database/migration/20260826120000_eng_2612_merge_line_chart_type_into_area/migration.sql"
+      ],
+      "to": "6.0.0"
+    },
+    {
+      "commit": "fd4afeef6a6fc8bfb8817458bb9a85bf4c268b5e",
+      "from": "6.0.0",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [
+        "charts/formbricks/README.md",
+        "charts/formbricks/templates/NOTES.txt",
+        "charts/formbricks/templates/hub-pdb.yaml",
+        "charts/formbricks/tests/authzed-operations.sh",
+        "charts/formbricks/tests/pdb-selectors.sh",
+        "charts/formbricks/values.yaml",
+        "docker/formbricks.sh",
+        "docker/rustfs-init.sh"
+      ],
+      "to": "6.0.1"
+    },
+    {
+      "commit": "eea4eb2a1fd916c26c2625404d2f81793e86bc91",
+      "from": "6.0.1",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [
+        "charts/formbricks/README.md",
+        "charts/formbricks/values.yaml",
+        "docker/docker-compose.yml"
+      ],
+      "to": "6.0.2"
+    },
+    {
+      "commit": "9d73f0d9d8640d51c00f3080dcb09b17c9fb9503",
+      "from": "6.0.2",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [
+        "apps/web/scripts/docker/verify-runtime.mjs",
+        "charts/formbricks/README.md",
+        "charts/formbricks/templates/authzed-initialize-job.yaml",
+        "charts/formbricks/tests/authzed-security-context.sh",
+        "charts/formbricks/values.yaml"
+      ],
+      "to": "6.0.3"
+    },
+    {
+      "commit": "4f939c263ea2ff2ebbb52e082f6517fef2f24150",
+      "from": "6.0.3",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [
+        "apps/web/lib/env.ts",
+        "apps/web/scripts/docker/verify-runtime.mjs",
+        "apps/web/scripts/docker/verify-tls-image.sh",
+        "apps/web/scripts/docker/verify-tls.mjs",
+        "charts/formbricks/README.md",
+        "charts/formbricks/values.yaml"
+      ],
+      "to": "6.0.4"
+    },
+    {
+      "commit": "40ceda5846196519af533158911525bc0f3ebdf6",
+      "from": "6.0.4",
+      "new_application_migrations": [
+        "20260909120000_response_keyset_index_tiebreakers",
+        "20260909120001_verify_response_keyset_indexes_valid",
+        "20260915120000_eng_2862_grant_responses_scopes",
+        "20260921120000_eng_2247_bootstrap_admin_marker",
+        "20260928120000_add_matrix_chart_type",
+        "20260928120000_eng_2404_backfill_remaining_embedded_data",
+        "20261001120000_add_workspace_overlay_color_opacity",
+        "20261002120000_add_survey_compatibility_provenance",
+        "20261002120000_add_survey_visibility_columns",
+        "20261002120001_backfill_survey_owner",
+        "20261002120002_add_survey_projection_trigger",
+        "20261005120000_add_custom_css_columns",
+        "20261005120000_add_survey_auto_select_language",
+        "20261005130000_eng_3470_grant_responses_scopes_to_clients",
+        "20261013120000_add_online_upgrade_state",
+        "20261013130000_add_online_upgrade_queue_pause"
+      ],
+      "operator_source_paths_changed": [
+        "apps/web/lib/env.ts",
+        "apps/web/modules/ee/sso/lib/better-auth-hooks.ts",
+        "apps/web/modules/ee/sso/lib/better-auth-providers.ts",
+        "apps/web/modules/ee/sso/lib/constants.ts",
+        "apps/web/modules/ee/sso/lib/default-organization.ts",
+        "apps/web/modules/ee/sso/lib/provider-display-name.ts",
+        "apps/web/modules/ee/sso/lib/recovery-intent.ts",
+        "apps/web/modules/ee/sso/lib/sso-availability.ts",
+        "apps/web/modules/ee/sso/lib/sso-provisioning.ts",
+        "apps/web/modules/ee/sso/lib/sso-recovery.ts",
+        "apps/web/scripts/docker/authzed-cli.ts",
+        "apps/web/scripts/docker/build-next-runtime.mjs",
+        "apps/web/scripts/docker/formbricks-authzed-prepare",
+        "apps/web/scripts/docker/next-start.sh",
+        "apps/web/scripts/docker/server.js",
+        "apps/web/scripts/docker/shutdown.js",
+        "apps/web/scripts/docker/validate-env.ts",
+        "apps/web/scripts/docker/verify-next-runtime.mjs",
+        "apps/web/scripts/docker/verify-runtime.mjs",
+        "apps/web/scripts/docker/verify-tls-image.sh",
+        "apps/web/scripts/docker/verify-tls.mjs",
+        "charts/formbricks/Chart.yaml",
+        "charts/formbricks/README.md",
+        "charts/formbricks/cube/schema/FeedbackRecords.js",
+        "charts/formbricks/templates/NOTES.txt",
+        "charts/formbricks/templates/_helpers.tpl",
+        "charts/formbricks/templates/_online.tpl",
+        "charts/formbricks/templates/_web-deployment.tpl",
+        "charts/formbricks/templates/authzed-initialize-job.yaml",
+        "charts/formbricks/templates/authzed-validation.yaml",
+        "charts/formbricks/templates/cube-deployment.yaml",
+        "charts/formbricks/templates/deployment.yaml",
+        "charts/formbricks/templates/hub-deployment.yaml",
+        "charts/formbricks/templates/hub-embeddings-background-service.yaml",
+        "charts/formbricks/templates/hub-embeddings-background-statefulset.yaml",
+        "charts/formbricks/templates/hub-embeddings-deployment.yaml",
+        "charts/formbricks/templates/hub-embeddings-pvc.yaml",
+        "charts/formbricks/templates/hub-embeddings-service.yaml",
+        "charts/formbricks/templates/hub-hpa.yaml",
+        "charts/formbricks/templates/hub-pdb.yaml",
+        "charts/formbricks/templates/migration-job.yaml",
+        "charts/formbricks/templates/online-upgrade.yaml",
+        "charts/formbricks/templates/secrets.yaml",
+        "charts/formbricks/templates/service.yaml",
+        "charts/formbricks/templates/taxonomy-deployment.yaml",
+        "charts/formbricks/templates/taxonomy-serviceaccount.yaml",
+        "charts/formbricks/tests/authzed-operations.sh",
+        "charts/formbricks/tests/embeddings-external.sh",
+        "charts/formbricks/tests/migration-security-context.sh",
+        "charts/formbricks/tests/online-access.py",
+        "charts/formbricks/tests/online-upgrade.sh",
+        "charts/formbricks/tests/postgresql-overrides.sh",
+        "charts/formbricks/tests/taxonomy-llm-base-url.sh",
+        "charts/formbricks/tests/taxonomy-thinking.sh",
+        "charts/formbricks/tests/web-security-context.sh",
+        "charts/formbricks/values.yaml",
+        "docker/IMAGE-VALIDATION.md",
+        "docker/README.md",
+        "docker/authzed-smoke.sh",
+        "docker/cube-image/.trivyignore.yaml",
+        "docker/cube-image/Dockerfile",
+        "docker/cube-image/README.md",
+        "docker/cube-image/REVISION",
+        "docker/cube-image/image-tag.sh",
+        "docker/cube-image/native.sha256",
+        "docker/cube-image/package-lock.json",
+        "docker/cube-image/package.json",
+        "docker/cube-image/smoke-test.mjs",
+        "docker/cube-image/smoke-test.sh",
+        "docker/cube/schema/FeedbackRecords.js",
+        "docker/docker-compose.yml",
+        "docker/fixtures/image-smoke.sql",
+        "docker/formbricks.sh",
+        "docker/smoke-next-browser.mjs",
+        "docker/smoke-release-image.sh",
+        "packages/database/migration/20260812110001_eng_2343_backfill_oauth_resource_links/migration.ts",
+        "packages/database/migration/20260812121944_backfill_embedded_data/migration.ts",
+        "packages/database/migration/20260909120000_response_keyset_index_tiebreakers/migration.sql",
+        "packages/database/migration/20260909120001_verify_response_keyset_indexes_valid/migration.sql",
+        "packages/database/migration/20260915120000_eng_2862_grant_responses_scopes/migration.ts",
+        "packages/database/migration/20260921120000_eng_2247_bootstrap_admin_marker/migration.sql",
+        "packages/database/migration/20260928120000_add_matrix_chart_type/migration.sql",
+        "packages/database/migration/20260928120000_eng_2404_backfill_remaining_embedded_data/migration.ts",
+        "packages/database/migration/20260928120000_eng_2404_backfill_remaining_embedded_data/utils.ts",
+        "packages/database/migration/20261001120000_add_workspace_overlay_color_opacity/migration.sql",
+        "packages/database/migration/20261002120000_add_survey_compatibility_provenance/migration.sql",
+        "packages/database/migration/20261002120000_add_survey_visibility_columns/migration.sql",
+        "packages/database/migration/20261002120001_backfill_survey_owner/migration.ts",
+        "packages/database/migration/20261002120001_backfill_survey_owner/utils.ts",
+        "packages/database/migration/20261002120002_add_survey_projection_trigger/migration.sql",
+        "packages/database/migration/20261005120000_add_custom_css_columns/migration.sql",
+        "packages/database/migration/20261005120000_add_survey_auto_select_language/migration.sql",
+        "packages/database/migration/20261005130000_eng_3470_grant_responses_scopes_to_clients/migration.ts",
+        "packages/database/migration/20261013120000_add_online_upgrade_state/migration.sql",
+        "packages/database/migration/20261013130000_add_online_upgrade_queue_pause/migration.sql"
+      ],
+      "to": "6.1.0"
+    },
+    {
+      "commit": "d5f5b7c2da5ca22f2af00afb253b4e4bc4751485",
+      "from": "6.1.0",
+      "new_application_migrations": [],
+      "operator_source_paths_changed": [
+        "apps/web/lib/env.ts",
+        "apps/web/scripts/docker/formbricks-authzed-prepare",
+        "apps/web/scripts/docker/verify-runtime.mjs",
+        "apps/web/scripts/docker/verify-tls-image.sh",
+        "apps/web/scripts/docker/verify-tls.mjs",
+        "charts/formbricks/README.md",
+        "charts/formbricks/values.yaml",
+        "docker/IMAGE-VALIDATION.md",
+        "docker/formbricks.sh",
+        "docker/smoke-release-image.sh"
+      ],
+      "to": "6.1.1"
+    }
+  ],
+  "key_findings": [
+    {
+      "finding": "v4 Compose uses pg17; v5 uses pg18. Preserve the installed PostgreSQL major and volume rather than copying the fresh-install default.",
+      "sources": ["4.9.7:docker/docker-compose.yml", "5.0.0:docker/docker-compose.yml"]
+    },
+    {
+      "finding": "5.1 adds the separate Compose app migration service; v5.4 app startup does not wait for it. Explicit app/Hub sequencing is required.",
+      "sources": [
+        "5.0.0:docker/docker-compose.yml",
+        "5.1.0:docker/docker-compose.yml",
+        "5.4.7:docker/docker-compose.yml"
+      ]
+    },
+    {
+      "finding": "5.4 generic OIDC removes unconditional response iss requirement; OIDC_EMAIL_CLAIM is not a supported override.",
+      "sources": [
+        "5.2.2:apps/web/modules/ee/sso/lib/better-auth-providers.ts",
+        "5.4.7:apps/web/modules/ee/sso/lib/better-auth-providers.ts"
+      ]
+    },
+    {
+      "finding": "Hub worker is absent in v5/v6.0 Compose and present in 6.1; Helm already includes it.",
+      "sources": [
+        "5.4.7:docker/docker-compose.yml",
+        "6.0.4:docker/docker-compose.yml",
+        "6.1.0:docker/docker-compose.yml",
+        "5.4.7:charts/formbricks/templates/hub-worker-deployment.yaml"
+      ]
+    },
+    {
+      "finding": "Envoy 1.8.4 starts at 5.4.3, not all of 5.4. Cube 5.4.5 and 6.0.2 initially ship 1.7.47-1, not -2.",
+      "sources": [
+        "5.4.0:charts/formbricks/Chart.yaml",
+        "5.4.3:charts/formbricks/Chart.yaml",
+        "5.4.5:docker/docker-compose.yml",
+        "6.0.2:docker/docker-compose.yml"
+      ]
+    },
+    {
+      "finding": "Released 6.0 includes the maintenance preparation executable. Do not require operators to locate an unnamed tested pair.",
+      "sources": ["6.0.0:apps/web/Dockerfile", "6.0.4:apps/web/scripts/docker/formbricks-authzed-prepare"]
+    },
+    {
+      "finding": "Workspace/environment conversion, storage URL conversion, typed-attribute backfill, Better Auth account identity and large response indexes need checks on existing data.",
+      "sources": [
+        "4.9.7:packages/database/migration",
+        "5.4.7:packages/database/migration",
+        "6.1.1:packages/database/migration"
+      ]
+    }
+  ],
+  "method": "Compare adjacent stable tags and inspect first-minor/latest-patch assets. Cross-minor comparisons include branch/backport divergence; review actual target files for claims.",
+  "release_count": 72,
+  "reviewed_at": "2026-10-27",
+  "runtime_evidence": "No full application upgrade or restore rehearsal performed. Published 6.0.2 -> 6.1.0 evidence retained as reported evidence only. Recommended catch-up stops are source-reviewed rehearsal routes.",
+  "scope": "All stable 4.x, 5.x and 6.x tags available at review time; operator-facing deployment assets, application schema/data migrations, environment and SSO configuration. Earlier guides retained without re-review. This is not an exhaustive product/API audit."
+}
