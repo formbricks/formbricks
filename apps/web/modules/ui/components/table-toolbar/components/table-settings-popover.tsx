@@ -17,7 +17,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { EllipsisVerticalIcon, SettingsIcon } from "lucide-react";
+import { GripVerticalIcon, SettingsIcon } from "lucide-react";
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
@@ -85,7 +85,20 @@ const SortableColumnRow = ({
         transition,
         zIndex: isDragging ? 10 : undefined,
       }}
-      className="flex items-center justify-between gap-2 rounded-md bg-white px-1 py-1 hover:bg-slate-50">
+      className="group flex items-center gap-1 rounded-md bg-white px-1 py-1 hover:bg-slate-50">
+      {/* The grip leads the row, as drag handles do; a locked column keeps its place with a spacer. */}
+      {column.locked ? (
+        <span className="size-5 shrink-0" aria-hidden="true" />
+      ) : (
+        <button
+          type="button"
+          className="focus-visible:ring-ring flex size-5 shrink-0 cursor-grab items-center justify-center rounded text-slate-300 group-hover:text-slate-500 hover:text-slate-700 focus-visible:text-slate-700 focus-visible:ring-1 focus-visible:outline-hidden active:cursor-grabbing"
+          aria-label={t("common.table_toolbar.reorder_column", { column: column.label })}
+          {...attributes}
+          {...listeners}>
+          <GripVerticalIcon className="size-4" />
+        </button>
+      )}
       <label htmlFor={checkboxId} className="flex min-w-0 flex-1 cursor-pointer items-center gap-2">
         <Checkbox
           id={checkboxId}
@@ -97,16 +110,6 @@ const SortableColumnRow = ({
           {column.label}
         </span>
       </label>
-      {!column.locked && (
-        <button
-          type="button"
-          className="focus-visible:ring-ring cursor-grab rounded p-0.5 text-slate-400 hover:text-slate-700 focus-visible:ring-1 focus-visible:outline-hidden active:cursor-grabbing"
-          aria-label={t("common.table_toolbar.reorder_column", { column: column.label })}
-          {...attributes}
-          {...listeners}>
-          <EllipsisVerticalIcon className="size-4" />
-        </button>
-      )}
     </li>
   );
 };
@@ -140,7 +143,11 @@ export const TableSettingsPopover = ({ sort, toggles, columns }: Readonly<TTable
           <SettingsIcon />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-80 p-2">
+      <PopoverContent
+        align="start"
+        className="w-80 p-2"
+        // Opened by mouse, a focus ring on the first control reads as if it were already picked.
+        onOpenAutoFocus={(event) => event.preventDefault()}>
         <div className="space-y-1">
           {sort && (
             <div className="flex items-center justify-between gap-2 px-1 py-1">
@@ -190,7 +197,7 @@ export const TableSettingsPopover = ({ sort, toggles, columns }: Readonly<TTable
                 <SortableContext
                   items={columns.items.map((c) => c.id)}
                   strategy={verticalListSortingStrategy}>
-                  <ul className="max-h-72 overflow-y-auto">
+                  <ul className="max-h-72 [scrollbar-width:thin] overflow-y-auto">
                     {columns.items.map((column) => (
                       <SortableColumnRow
                         key={column.id}

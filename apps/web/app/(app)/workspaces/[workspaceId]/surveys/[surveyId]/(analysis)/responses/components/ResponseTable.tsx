@@ -38,7 +38,7 @@ import { Button } from "@/modules/ui/components/button";
 import { DataTableHeader, DataTableSettingsModal } from "@/modules/ui/components/data-table";
 import { SelectedRowSettings } from "@/modules/ui/components/data-table/components/selected-row-settings";
 import { Skeleton } from "@/modules/ui/components/skeleton";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/modules/ui/components/table";
+import { Table, TableBody, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { buildColumnSettings } from "@/modules/ui/components/table-toolbar/lib/column-settings";
 import { reconcileColumnOrder, seedReservedColumnVisibility } from "../lib/column-state";
 
@@ -267,9 +267,13 @@ export const ResponseTable = ({
               },
             ],
             columns: {
-              items: buildColumnSettings(getColumnLabels(table), columnOrder, columnVisibility, [
-                "createdAt",
-              ]),
+              items: buildColumnSettings(
+                getColumnLabels(table),
+                // Date is pinned to the left of the table, so it leads the gear's list too.
+                ["createdAt", ...columnOrder.filter((id) => id !== "createdAt")],
+                columnVisibility,
+                ["createdAt"]
+              ),
               onVisibilityChange: (id, visible) =>
                 setColumnVisibility((current) => ({ ...current, [id]: visible })),
               onMove: (activeId, overId) =>
