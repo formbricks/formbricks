@@ -139,7 +139,10 @@ export const describeCodeIssue = (issue: TCodeIssue, kind: "question" | "answer"
   }
 };
 
-/** The empty string means "not coded yet", the same as a survey stored before codes existed. */
+/**
+ * The empty string means "not coded yet". The editor's write path (`withFilledCodes`, ENG-6782)
+ * then gives the question its default code at once, so clearing a code is how you ask for the default.
+ */
 export const setElementCode = (value: string): { code: string | undefined } => ({
   code: value === "" ? undefined : value,
 });
@@ -159,11 +162,8 @@ export const setOptionCode = (
 };
 
 /**
- * "Reset all": drops the question code and every answer code of one question.
- *
- * ENG-6782 seam: codes are filled on every write path (the save), so a cleared code comes back as
- * the default (`q<n>`, 1..n) the next time the survey is saved. Replace the `undefined`s with that
- * module's pure fill function when it is on this branch, to show the defaults immediately.
+ * "Reset all": drops the question code and every answer code of one question. The editor's write
+ * path fills each one with the next default (`q<n>`, 1..n), so a reset question is recoded, not blank.
  */
 export const resetElementCodes = (
   element: TSurveyElement

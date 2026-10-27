@@ -4001,7 +4001,7 @@
         "close_survey_on_date": "Close survey on date",
         "close_survey_on_response_limit": "Close survey on response limit",
         "code": "Code",
-        "code_auto_placeholder": "Set on save",
+        "code_auto_placeholder": "Automatic",
         "code_error_answer_format": "Use only lowercase letters, digits and _, and do not start with _",
         "code_error_duplicate_answer": "This code is already used by another answer",
         "code_error_duplicate_question": "This code is already used by another question",

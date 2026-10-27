@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TCodeIssue } from "@formbricks/types/surveys/codes";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
@@ -44,11 +45,14 @@ export const CodeField = ({
   className,
 }: Readonly<CodeFieldProps>) => {
   const { t } = useTranslation();
+  // An empty field is not committed while it has focus: the editor gives an uncoded question or
+  // option its default code at once, which would refill the field under the cursor mid-edit.
+  const [draft, setDraft] = useState<string | null>(null);
   return (
     <div className={className}>
       <Input
         id={id}
-        value={value ?? ""}
+        value={draft ?? value ?? ""}
         placeholder={t("workspace.surveys.edit.code_auto_placeholder")}
         aria-label={ariaLabel}
         aria-invalid={issue ? true : undefined}
@@ -56,7 +60,14 @@ export const CodeField = ({
         isInvalid={Boolean(issue)}
         autoComplete="off"
         spellCheck={false}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => {
+          setDraft(event.target.value);
+          if (event.target.value !== "") onChange(event.target.value);
+        }}
+        onBlur={() => {
+          if (draft === "") onChange("");
+          setDraft(null);
+        }}
         className="h-9 font-mono"
       />
       {issue && (
