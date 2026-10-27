@@ -114,7 +114,7 @@ To check a published image's signature, pin the exact workflow identity, so a fo
 satisfy it:
 
 ```bash
-cosign verify ghcr.io/formbricks/cube:1.8.8-1 \
+cosign verify ghcr.io/formbricks/cube:1.8.8-2 \
   --certificate-identity https://github.com/formbricks/formbricks/.github/workflows/cube-image.yml@refs/heads/main \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```

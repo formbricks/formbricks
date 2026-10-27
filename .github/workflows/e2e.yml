@@ -18,9 +18,9 @@ jobs:
     name: Run E2E Tests
     # Browsers run on this runner (the Azure Playwright service is retired, ENG-3763). Default is an
     # 8 vCPU Blacksmith runner: measured 7.6–8.7 min per job against 17.8+ on GitHub's 4 vCPU runner.
-    # The repository variable E2E_RUNNER overrides it, and setting it to `ubuntu-24.04` is the
-    # rollback; Playwright sizes its workers to the runner's CPUs. A label with no runner behind it
-    # queues until the job timeout, so check the runner exists before setting it. Fork PRs stay on
+    # For non-fork runs, E2E_RUNNER overrides it; `ubuntu-24.04` is the GitHub-hosted rollback.
+    # Fork PRs ignore E2E_RUNNER. Playwright sizes its workers to the runner's CPUs. A label with no
+    # runner behind it queues until the job timeout, so check it exists before setting it. Fork PRs stay on
     # GitHub's free runner: a third-party runner may not serve them, and they shouldn't spend paid
     # minutes. Pin their OS too: Playwright 1.58.2 does not support Ubuntu 26.04.
     # merge_group and same-repo PRs have no fork flag and take the default.
