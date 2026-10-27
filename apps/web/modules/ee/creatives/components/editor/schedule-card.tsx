@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modu
 import type { TCreativeEditorForm } from "../../lib/editor-form";
 import { getUiLocale } from "../../lib/ui-locale";
 import { EditorField, EditorPanel } from "./editor-primitives";
+import { ScheduleSummary } from "./panel-summaries";
 
 type TSchedule = TCreativeEditorForm["schedule"];
 
@@ -40,7 +41,12 @@ export const ScheduleCard = ({
     <EditorPanel
       title={t("workspace.creatives.editor.schedule")}
       icon={CalendarClockIcon}
-      description={t("workspace.creatives.editor.schedule_description")}>
+      description={t("workspace.creatives.editor.schedule_description")}
+      fold={{
+        id: "schedule",
+        summary: <ScheduleSummary schedule={schedule} />,
+        attention: rangeError ? "error" : undefined,
+      }}>
       <div className="grid gap-4 sm:grid-cols-2">
         <EditorField label={t("workspace.creatives.editor.starts")} htmlFor={`${ids}-start`}>
           <DateTimePicker

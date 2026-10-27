@@ -218,7 +218,8 @@ export const SettingsTab = ({
       <ShowConditionsCard
         value={distribution.conditions}
         onChange={(conditions) => update({ conditions })}
-        showErrors={showConditionErrors}>
+        showErrors={showConditionErrors}
+        displayPercentage={distribution.displayPercentage}>
         <ShareOfVisitors
           displayPercentage={distribution.displayPercentage}
           onChange={(displayPercentage) => update({ displayPercentage })}

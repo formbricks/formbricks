@@ -19,8 +19,10 @@ import { getCustomCssEditMode } from "@/modules/custom-css/components/lib/edit-m
 import type { TCustomCssValidationState } from "@/modules/custom-css/components/lib/validation";
 import { Button } from "@/modules/ui/components/button";
 import { useStylingAppearance } from "@/modules/ui/components/styling-appearance";
+import { getCustomCssSummary } from "../../lib/panel-summaries";
 import { CREATIVE_CSS_SCOPE } from "../../lib/style";
-import { EditorPanel } from "./editor-primitives";
+import { EditorPanel, type TEditorPanelFold } from "./editor-primitives";
+import { CustomCssSummary } from "./panel-summaries";
 
 export interface TCreativeCustomCssConfig {
   /** Cloud: the Scale `custom-css` entitlement. Self-hosted: always true. */
@@ -31,8 +33,9 @@ export interface TCreativeCustomCssConfig {
 /**
  * The creative's own Custom CSS (ENG-3865): a base field and a dark one, checked live and
  * compiled for the creative's root element, with the survey CSS plan gate. It doesn't offer the survey
- * CSS hints, which name the survey card's parts. The Light / Dark in its header (`action`, shared with
- * the Colors card and the preview) picks the field, so dark rules are written against the dark creative.
+ * CSS hints, which name the survey card's parts. The Light / Dark at the top of its body
+ * (`appearanceSwitch`, shared with the Colors card and the preview) picks the field, so dark rules are
+ * written against the dark creative.
  */
 export const CustomCssPanel = ({
   className,
@@ -41,7 +44,7 @@ export const CustomCssPanel = ({
   validation,
   config,
   disabled,
-  action,
+  appearanceSwitch,
 }: Readonly<{
   /** The CSS a feedback button or a banner targets. */
   className: string;
@@ -49,9 +52,9 @@ export const CustomCssPanel = ({
   onChange: (source: TCustomCssInput) => void;
   validation: TCustomCssValidationState;
   config: TCreativeCustomCssConfig;
-  /** Custom styles off: the field dims and locks; the header's `action` stays usable. */
+  /** Custom styles off: the field dims and locks; `appearanceSwitch` stays usable. */
   disabled: boolean;
-  action?: ReactNode;
+  appearanceSwitch: ReactNode;
 }>) => {
   const { t } = useTranslation();
   const appearance = useStylingAppearance();
@@ -72,6 +75,11 @@ export const CustomCssPanel = ({
     (error) => error.appearance === appearance || error.appearance === null
   );
   const hasIssues = validation.errors.length > 0 || validation.warnings.length > 0;
+  const getAttention = (): TEditorPanelFold["attention"] => {
+    if (validation.errors.length > 0 || byteSize > byteLimit) return "error";
+    if (validation.warnings.length > 0) return "warning";
+    return undefined;
+  };
   const describedBy = [helpId, canType && keyboardHintId, statusId, hasIssues && issuesId]
     .filter(Boolean)
     .join(" ");
@@ -88,7 +96,12 @@ export const CustomCssPanel = ({
       title={t("workspace.custom_css.title")}
       icon={CodeIcon}
       description={t("workspace.creatives.editor.custom_css_description", { className })}
-      action={action}>
+      fold={{
+        id: "customCss",
+        summary: <CustomCssSummary summary={getCustomCssSummary(source, !disabled)} />,
+        attention: getAttention(),
+      }}>
+      {appearanceSwitch}
       {/* Outside the dimmed fieldset, so it reads as the way to unlock the card rather than part of it. */}
       {disabled && (
         <p className="flex items-start gap-1.5 rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-600">

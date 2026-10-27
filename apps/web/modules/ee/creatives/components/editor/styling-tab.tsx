@@ -32,6 +32,8 @@ import { StylingAppearanceProvider } from "@/modules/ui/components/styling-appea
 import { Switch } from "@/modules/ui/components/switch";
 import { type TCreativeContrastWarning, getCreativeContrastWarning } from "../../lib/contrast";
 import type { TCreativeColorKey } from "../../lib/creative";
+import { CUSTOM_STYLE_PANELS } from "../../lib/editor-panels";
+import { getColorsSummary, getPositionSummary, getShapeSummary } from "../../lib/panel-summaries";
 import {
   type TBannerPlacement,
   type TCreativeDevice,
@@ -48,7 +50,8 @@ import {
   withTheme,
 } from "../../lib/styling-form";
 import { CustomCssPanel, type TCreativeCustomCssConfig } from "./custom-css-panel";
-import { EditorField, EditorPanel, Segmented } from "./editor-primitives";
+import { EditorField, EditorPanel, Segmented, useEditorPanels } from "./editor-primitives";
+import { ColorsSummary, PositionSummary, ShapeSummary } from "./panel-summaries";
 
 const FONT_WEIGHTS = [400, 500, 600, 700] as const;
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
@@ -141,8 +144,9 @@ const DeviceSwitch = ({
 };
 
 /**
- * Light / Dark, in the header of each card that differs by appearance (Colors, Custom CSS). Every copy
- * drives the one appearance the preview's sun / moon switch drives too.
+ * Light / Dark, at the top of each card that differs by appearance (Colors, Custom CSS): in the body, as
+ * a folding card's header is only its toggle. Every copy drives the one appearance the preview's sun /
+ * moon switch drives too.
  */
 const AppearanceSwitch = ({
   appearance,
@@ -150,43 +154,48 @@ const AppearanceSwitch = ({
 }: Readonly<{ appearance: TStylingAppearance; onChange: (appearance: TStylingAppearance) => void }>) => {
   const { t } = useTranslation();
   return (
-    <Segmented
-      ariaLabel={t("common.appearance")}
-      value={appearance}
-      onChange={onChange}
-      options={[
-        { value: "light", label: t("workspace.look.appearance_light"), icon: SunIcon },
-        { value: "dark", label: t("workspace.look.appearance_dark"), icon: MoonIcon },
-      ]}
-    />
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <span className="text-sm font-medium text-slate-700">{t("common.appearance")}</span>
+      <Segmented
+        ariaLabel={t("common.appearance")}
+        value={appearance}
+        onChange={onChange}
+        options={[
+          { value: "light", label: t("workspace.look.appearance_light"), icon: SunIcon },
+          { value: "dark", label: t("workspace.look.appearance_dark"), icon: MoonIcon },
+        ]}
+      />
+    </div>
   );
 };
 
 /**
- * The contrast of the appearance being edited, like the survey's dark contrast warnings. Shown once the
- * colours stop changing, so a warning doesn't flicker mid-drag.
+ * The contrast of the appearance being edited, like the survey's dark contrast warnings, once the
+ * colours stop changing, so the warning and the Colors header's dot don't flicker mid-drag.
  */
-const ContrastWarning = ({
-  style,
-  appearance,
-}: Readonly<{ style: TCreativeStyle; appearance: TStylingAppearance }>) => {
-  const { t } = useTranslation();
+const useSettledContrastWarning = (
+  style: TCreativeStyle,
+  appearance: TStylingAppearance
+): TCreativeContrastWarning | null => {
   // Debounced as a string: the style is a new object on every render.
   const settled = useDebouncedValue(
     JSON.stringify(getCreativeContrastWarning(style, appearance)),
     WARNINGS_SETTLE_MS
   );
   const warning = JSON.parse(settled) as TCreativeContrastWarning | null;
-
   // Switching appearance hides the other one's warning at once rather than after the delay.
-  if (warning?.appearance !== appearance) return null;
+  return warning?.appearance === appearance ? warning : null;
+};
+
+const ContrastWarning = ({ warning }: Readonly<{ warning: TCreativeContrastWarning }>) => {
+  const { t } = useTranslation();
   const values = { ratio: warning.ratio.toFixed(1) };
   return (
     <output className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
       <AlertTriangleIcon className="mt-0.5 size-3.5 shrink-0" aria-hidden="true" />
       <span>
         {/* Literal keys keep the i18n scanner happy. */}
-        {appearance === "dark"
+        {warning.appearance === "dark"
           ? t("workspace.creatives.editor.contrast_warning_dark", values)
           : t("workspace.creatives.editor.contrast_warning_light", values)}
       </span>
@@ -198,9 +207,10 @@ const ContrastWarning = ({
  * The Styling tab (ENG-3580, ENG-4005): "Add custom styles" over the cards Colors · Shape & size ·
  * Position · Custom CSS. A creative starts from the workspace Look & Feel; with custom styles on, each
  * field set here overrides it, and a reset hands it back. Position is edited with custom styles off too.
- * Only colours and Custom CSS differ by appearance, so Light / Dark sits in those two cards' headers (one
- * state, also the preview's); Shape & size and Position are shared by both appearances and have Desktop
- * and Phone values instead, where the device switch also turns the preview.
+ * Only colours and Custom CSS differ by appearance, so Light / Dark sits in those two cards (one state,
+ * also the preview's); Shape & size and Position are shared by both appearances and have Desktop and
+ * Phone values instead, where the device switch also turns the preview. Each card folds to a row that
+ * summarises its values (`panel-summaries.ts`).
  */
 export const StylingTab = ({
   styling,
@@ -227,6 +237,8 @@ export const StylingTab = ({
 }>) => {
   const { t } = useTranslation();
   const ids = useId();
+  const { setPanelsOpen } = useEditorPanels();
+  const contrastWarning = useSettledContrastWarning(style, appearance);
   const { theme } = styling;
   const isOn = theme.customStyles;
   const { element } = style;
@@ -284,7 +296,11 @@ export const StylingTab = ({
           <Switch
             id={`${ids}-custom`}
             checked={isOn}
-            onCheckedChange={(customStyles) => setTheme({ customStyles })}
+            onCheckedChange={(customStyles) => {
+              setTheme({ customStyles });
+              // Off locks these cards, so they close; on, Colors opens as the place to start.
+              setPanelsOpen(customStyles ? ["colors"] : CUSTOM_STYLE_PANELS, customStyles);
+            }}
           />
         </div>
       </section>
@@ -292,7 +308,18 @@ export const StylingTab = ({
       <EditorPanel
         title={t("workspace.creatives.editor.colors")}
         icon={PaletteIcon}
-        action={appearanceSwitch}>
+        fold={{
+          id: "colors",
+          summary: (
+            <ColorsSummary
+              summary={getColorsSummary(styling, style, appearance)}
+              appearance={appearance}
+              contrastRatio={contrastWarning?.ratio ?? null}
+            />
+          ),
+          attention: contrastWarning ? "warning" : undefined,
+        }}>
+        {appearanceSwitch}
         {isDark && (
           <Alert variant="info" size="small">
             <AlertDescription className="whitespace-normal">
@@ -328,10 +355,16 @@ export const StylingTab = ({
             );
           })}
         </fieldset>
-        <ContrastWarning style={style} appearance={appearance} />
+        {contrastWarning && <ContrastWarning warning={contrastWarning} />}
       </EditorPanel>
 
-      <EditorPanel title={t("workspace.creatives.editor.shape_and_size")} icon={ScalingIcon}>
+      <EditorPanel
+        title={t("workspace.creatives.editor.shape_and_size")}
+        icon={ScalingIcon}
+        fold={{
+          id: "shapeAndSize",
+          summary: <ShapeSummary summary={getShapeSummary(styling, style, device)} device={device} />,
+        }}>
         <fieldset disabled={!isOn} className="min-w-0 space-y-4 disabled:opacity-60">
           <div className="space-y-3">
             <EditorField label={t("workspace.look.font")} htmlFor={`${ids}-font`}>
@@ -452,7 +485,7 @@ export const StylingTab = ({
         validation={customCss.validation}
         config={customCss.config}
         disabled={!isOn}
-        action={appearanceSwitch}
+        appearanceSwitch={appearanceSwitch}
       />
     </StylingAppearanceProvider>
   );
@@ -480,7 +513,11 @@ const PositionPanel = ({
     <EditorPanel
       title={t("workspace.creatives.editor.position")}
       icon={MoveIcon}
-      description={t("workspace.creatives.editor.position_description")}>
+      description={t("workspace.creatives.editor.position_description")}
+      fold={{
+        id: "position",
+        summary: <PositionSummary summary={getPositionSummary(styling, device)} device={device} />,
+      }}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-xs text-slate-500">
           {followsDesktop && t("workspace.creatives.editor.same_as_desktop")}

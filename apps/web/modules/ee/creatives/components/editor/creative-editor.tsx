@@ -37,6 +37,13 @@ import {
   stopsOpeningSurvey,
   toCreativeEditorForm,
 } from "../../lib/editor-form";
+import {
+  PUBLISH_ISSUE_PANELS,
+  type TEditorPanelId,
+  getInitialOpenPanels,
+  getInvalidParamPanel,
+  withPanelsOpen,
+} from "../../lib/editor-panels";
 import { getOpenedSurveyName, surveyLeftUnopenedQuery } from "../../lib/last-opener-check";
 import { getCreativesPath } from "../../lib/paths";
 import { toPreviewView } from "../../lib/preview-view";
@@ -59,6 +66,7 @@ import { CreativeStatusDropdown } from "../summary/creative-status-dropdown";
 import { ContentTab } from "./content-tab";
 import { CreativePreview } from "./creative-preview";
 import type { TCreativeCustomCssConfig } from "./custom-css-panel";
+import { EditorPanelsProvider } from "./editor-primitives";
 import { LanguageTab } from "./language-tab";
 import { SettingsTab, type TCreativeActionOption } from "./settings-tab";
 import { StylingTab } from "./styling-tab";
@@ -116,6 +124,10 @@ export const CreativeEditor = ({
     () => new Map(linkedSurvey ? [[linkedSurvey.id, linkedSurvey]] : [])
   );
   const [activeTab, setActiveTab] = useState<TCreativeEditorTab>("content");
+  // The folding panels that are open, kept here so they stay open across tab switches.
+  const [openPanels, setOpenPanels] = useState(() => getInitialOpenPanels(form.styling));
+  const setPanelsOpen = (ids: readonly TEditorPanelId[], open: boolean) =>
+    setOpenPanels((current) => withPanelsOpen(current, ids, open));
   const [device, setDevice] = useState<TCreativeDevice>("desktop");
   const [appearance, setAppearance] = useState<TStylingAppearance>("light");
   const cssValidation = useCustomCssValidation({
@@ -192,6 +204,11 @@ export const CreativeEditor = ({
     if (found.length === 0) return false;
     const [first] = found;
     goTo(PUBLISH_ISSUE_TABS[first]);
+    // A folded panel holding a flagged field opens, so the field is in view.
+    setPanelsOpen(
+      found.flatMap((issue) => PUBLISH_ISSUE_PANELS[issue] ?? []),
+      true
+    );
     toast.error(issueMessages[first]);
     return true;
   };
@@ -224,6 +241,8 @@ export const CreativeEditor = ({
       const tab = getInvalidParamTab(refused.name);
       setServerIssueTab(tab);
       if (tab || refused.name === "name") goTo(tab);
+      const panel = getInvalidParamPanel(refused.name);
+      if (panel) setPanelsOpen([panel], true);
     }
     toast.error(
       refused?.reason ?? getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"))
@@ -446,54 +465,58 @@ export const CreativeEditor = ({
                 </AlertDescription>
               </Alert>
             )}
-            {activeTab === "content" && (
-              <ContentTab
-                form={form}
-                setForm={setForm}
-                surveyPicker={{
-                  workspaceId,
-                  pickedSurvey,
-                  linkedSurvey: linkedSurveyId ? (knownSurveys.get(linkedSurveyId) ?? null) : null,
-                  onPickSurvey: (survey) =>
-                    setKnownSurveys((current) => new Map(current).set(survey.id, survey)),
-                }}
-                issues={issues}
-              />
-            )}
-            {activeTab === "language" && (
-              <LanguageTab
-                workspaceId={workspaceId}
-                form={form}
-                setForm={setForm}
-                workspaceLanguageCodes={workspaceLanguageCodes}
-                survey={pickedSurvey}
-              />
-            )}
-            {activeTab === "styling" && (
-              <StylingTab
-                styling={form.styling}
-                onChange={(styling) => setForm((current) => ({ ...current, styling }))}
-                style={style}
-                workspaceStyle={workspaceStyle}
-                device={device}
-                onDeviceChange={setDevice}
-                appearance={appearance}
-                onAppearanceChange={setAppearance}
-                customCss={{ config: customCss, validation: cssValidation }}
-              />
-            )}
-            {activeTab === "settings" && (
-              <SettingsTab
-                distribution={form.distribution}
-                onDistributionChange={(distribution) => setForm((current) => ({ ...current, distribution }))}
-                schedule={form.schedule}
-                onScheduleChange={(schedule) => setForm((current) => ({ ...current, schedule }))}
-                actionOptions={actionOptions}
-                userActionsHref={workspaceSettingsPath(workspaceId, "user-actions")}
-                showActionError={issues.includes("action_missing")}
-                showConditionErrors={issues.includes("condition_incomplete")}
-              />
-            )}
+            <EditorPanelsProvider openPanels={openPanels} setPanelsOpen={setPanelsOpen}>
+              {activeTab === "content" && (
+                <ContentTab
+                  form={form}
+                  setForm={setForm}
+                  surveyPicker={{
+                    workspaceId,
+                    pickedSurvey,
+                    linkedSurvey: linkedSurveyId ? (knownSurveys.get(linkedSurveyId) ?? null) : null,
+                    onPickSurvey: (survey) =>
+                      setKnownSurveys((current) => new Map(current).set(survey.id, survey)),
+                  }}
+                  issues={issues}
+                />
+              )}
+              {activeTab === "language" && (
+                <LanguageTab
+                  workspaceId={workspaceId}
+                  form={form}
+                  setForm={setForm}
+                  workspaceLanguageCodes={workspaceLanguageCodes}
+                  survey={pickedSurvey}
+                />
+              )}
+              {activeTab === "styling" && (
+                <StylingTab
+                  styling={form.styling}
+                  onChange={(styling) => setForm((current) => ({ ...current, styling }))}
+                  style={style}
+                  workspaceStyle={workspaceStyle}
+                  device={device}
+                  onDeviceChange={setDevice}
+                  appearance={appearance}
+                  onAppearanceChange={setAppearance}
+                  customCss={{ config: customCss, validation: cssValidation }}
+                />
+              )}
+              {activeTab === "settings" && (
+                <SettingsTab
+                  distribution={form.distribution}
+                  onDistributionChange={(distribution) =>
+                    setForm((current) => ({ ...current, distribution }))
+                  }
+                  schedule={form.schedule}
+                  onScheduleChange={(schedule) => setForm((current) => ({ ...current, schedule }))}
+                  actionOptions={actionOptions}
+                  userActionsHref={workspaceSettingsPath(workspaceId, "user-actions")}
+                  showActionError={issues.includes("action_missing")}
+                  showConditionErrors={issues.includes("condition_incomplete")}
+                />
+              )}
+            </EditorPanelsProvider>
           </div>
         </div>
 

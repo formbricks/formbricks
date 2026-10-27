@@ -2314,6 +2314,22 @@ checksums:
     workspace/creatives/editor/size_and_position_for: 16738983578c7ef9254bcd084075d8f5
     workspace/creatives/editor/starts: 3153990a4ade414f501a7e63ab771362
     workspace/creatives/editor/starts_placeholder: 1169b2b565bd56f8a1bcdb3f80fc5bc2
+    workspace/creatives/editor/summary_colors_set: 6749170ff7e87287902b71a16b8a3c68
+    workspace/creatives/editor/summary_conditions: bf91c437e7b444e82522fafbed443b92
+    workspace/creatives/editor/summary_contrast: 6408a5a6eb440c9942abffa7e3219d8e
+    workspace/creatives/editor/summary_css_dark_lines: 2640bfd131fa1ba09487901405832165
+    workspace/creatives/editor/summary_css_empty: 0ae6634426bd0372d82f5bcd0441f67e
+    workspace/creatives/editor/summary_css_lines: b875a24a90df57111124600e8ae5db0d
+    workspace/creatives/editor/summary_everywhere: 18c850f314fea615d7b4fe47344e08bd
+    workspace/creatives/editor/summary_look_and_feel: 9125503712626d495cedec7a79f1418c
+    workspace/creatives/editor/summary_own_phone_position: e511dc4855fd7b2cc4cba0a34492bdeb
+    workspace/creatives/editor/summary_position_banner: 0f7a54c11943dd42fe984311124686a4
+    workspace/creatives/editor/summary_position_from_left: 2e77d5156fb65fba8381f089bfaca3a0
+    workspace/creatives/editor/summary_position_from_top: 78cc3eb4f2e8be0a0034530a637860ed
+    workspace/creatives/editor/summary_schedule: 0d8cf8a468e9f0f8fefaf5c6294aec12
+    workspace/creatives/editor/summary_shape_banner: c70cfbb2c7636b95acfeb862dbbccacb
+    workspace/creatives/editor/summary_shape_feedback_button: efe0c09f14aad01022b78ddadfe3c619
+    workspace/creatives/editor/summary_share: c88cbc6856cfa432cd338303919a68b2
     workspace/creatives/editor/survey_language_missing_default: de94c2f8bd867fc1299fc54ca6a37d06
     workspace/creatives/editor/survey_language_missing_hidden: 50067ae0c44f153b4916102bc2a0466d
     workspace/creatives/editor/survey_not_allowed: 650438ea1558d63970e7e21432dddd74
