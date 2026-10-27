@@ -28,7 +28,21 @@ const mocks = vi.hoisted(() => ({
   realCheckQsfDraft: undefined as unknown as typeof import("./final-gate").checkQsfDraft,
 }));
 
+const aiTimeoutEnv = vi.hoisted(() => ({ multiplier: 1 }));
+
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/env", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/env")>();
+  return {
+    ...original,
+    env: {
+      ...original.env,
+      get AI_TIMEOUT_MULTIPLIER() {
+        return aiTimeoutEnv.multiplier;
+      },
+    },
+  };
+});
 // Only the AI call is replaced; the reader, sanitizer, checks, assembly and the create's own checks run.
 vi.mock("@/lib/ai/service", () => ({ generateOrganizationAIObject: mocks.generateOrganizationAIObject }));
 vi.mock("@/modules/survey/lib/permission", () => ({
@@ -166,6 +180,7 @@ const EXPECTED_REPORTS: Record<TImportableQsfFixture, TExpectedReport> = {
 };
 
 beforeEach(() => {
+  aiTimeoutEnv.multiplier = 1;
   vi.resetAllMocks();
   mocks.getExternalUrlsPermission.mockResolvedValue(true);
   mocks.checkQsfDraft.mockImplementation(mocks.realCheckQsfDraft);
@@ -202,6 +217,15 @@ describe("prepareQsfImport", () => {
 });
 
 describe("runQsfImport on recorded plans", () => {
+  test.each([1, 3])("passes the scaled per-call budget to the model (%i)", async (multiplier) => {
+    aiTimeoutEnv.multiplier = multiplier;
+    answerFrom("simple.qsf");
+    await run("simple.qsf", { deadlineMs: 120_000 * multiplier });
+    expect(mocks.generateOrganizationAIObject).toHaveBeenCalledWith(
+      expect.objectContaining({ timeout: 45_000 * multiplier })
+    );
+  });
+
   test.each(IMPORTABLE_QSF_FIXTURES)(
     "%s becomes a draft the create accepts, with its report",
     async (fixture) => {

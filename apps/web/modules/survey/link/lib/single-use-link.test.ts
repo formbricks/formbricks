@@ -8,7 +8,7 @@ import {
   generateSurveySingleUseLinkParams,
   generateSurveySingleUseSignature,
 } from "@/lib/utils/single-use-surveys";
-import { resolveSingleUseIdForSurvey } from "./single-use-link";
+import { getLinkSurveySingleUseAccess, resolveSingleUseIdForSurvey } from "./single-use-link";
 import { recordSingleUseLinkValidation } from "./single-use-link-metrics";
 
 // 64 hex characters -> exactly 32 bytes once decoded.
@@ -263,5 +263,72 @@ describe("resolveSingleUseIdForSurvey (ENG-2758)", () => {
 
       expect(openOn(SURVEY_A, legacySuId())).toBeNull();
     });
+  });
+});
+
+describe("getLinkSurveySingleUseAccess (ENG-4041)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const access = (
+    singleUse: { enabled: boolean; isEncrypted: boolean } | null,
+    suId?: string | string[],
+    suToken?: string | string[]
+  ) =>
+    getLinkSurveySingleUseAccess({
+      survey: { id: SURVEY_A, singleUse },
+      suId,
+      suToken,
+      surface: "link_page",
+    });
+
+  test("lets a survey without single-use links through without checking, or counting, any link", () => {
+    expect(access(null, "anything", "forged")).toEqual({ allowed: true });
+    expect(access({ enabled: false, isEncrypted: true }, "anything", "forged")).toEqual({ allowed: true });
+    expect(recordSingleUseLinkValidation).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ["plaintext", false],
+    ["encrypted", true],
+  ])("hands back the canonical id for a valid %s link", (_label, isEncrypted) => {
+    const minted = generateSurveySingleUseLinkParams(SURVEY_A, isEncrypted);
+
+    const result = access({ enabled: true, isEncrypted }, minted.suId, minted.suToken);
+
+    expect(result).toEqual({
+      allowed: true,
+      singleUseId: resolveSingleUseIdForSurvey({
+        surveyId: SURVEY_A,
+        isEncrypted,
+        suId: minted.suId,
+        suToken: minted.suToken,
+        surface: "link_page",
+      }),
+    });
+  });
+
+  test("refuses another survey's link, a forged one, and none at all", () => {
+    const foreign = generateSurveySingleUseLinkParams(SURVEY_B, false);
+
+    expect(access({ enabled: true, isEncrypted: false }, foreign.suId, foreign.suToken)).toEqual({
+      allowed: false,
+    });
+    expect(access({ enabled: true, isEncrypted: false }, "invitee-1", "0".repeat(64))).toEqual({
+      allowed: false,
+    });
+    expect(access({ enabled: true, isEncrypted: false })).toEqual({ allowed: false });
+  });
+
+  test("refuses a repeated parameter instead of throwing on it", () => {
+    const minted = generateSurveySingleUseLinkParams(SURVEY_A, false);
+
+    expect(access({ enabled: true, isEncrypted: false }, [minted.suId, minted.suId], minted.suToken)).toEqual(
+      {
+        allowed: false,
+      }
+    );
+    expect(logger.error).not.toHaveBeenCalled();
   });
 });

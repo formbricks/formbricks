@@ -156,6 +156,42 @@ describe("provider HTTP contracts", () => {
     }
   );
 
+  test("OAuth model requests use the model dispatcher while token requests stay isolated", async () => {
+    const tokenUrl = "https://idp.example.test/oauth/token";
+    const environment: AIEnvironment = {
+      ...compatible,
+      AI_OPENAI_COMPATIBLE_API_KEY: undefined,
+      AI_OPENAI_COMPATIBLE_AUTH_MODE: "oauth2-client-credentials",
+      AI_OPENAI_COMPATIBLE_OAUTH_TOKEN_URL: tokenUrl,
+      AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_ID: "test-client",
+      AI_OPENAI_COMPATIBLE_OAUTH_CLIENT_SECRET: "test-secret",
+    };
+    fetchMock.mockImplementation((input, init) => {
+      const request = new Request(input, init);
+      requests.push(request);
+      return Promise.resolve(
+        Response.json(
+          request.url === tokenUrl
+            ? { access_token: "oauth-access-token", token_type: "Bearer", expires_in: 600 }
+            : compatibleResponse(output, false)
+        )
+      );
+    });
+
+    const result = await generateText({ prompt: "Label this cluster", maxRetries: 0 }, environment);
+
+    expect(result.text).toBe(output);
+    expect(requests.map((request) => request.url)).toEqual([
+      tokenUrl,
+      "https://llm.example.test/v1/chat/completions",
+    ]);
+    expect(requests[1].headers.get("Authorization")).toBe("Bearer oauth-access-token");
+    const tokenInit = fetchMock.mock.calls[0][1];
+    const modelInit = fetchMock.mock.calls[1][1];
+    expect(tokenInit).not.toHaveProperty("dispatcher");
+    expect(modelInit).toHaveProperty("dispatcher.dispatch", expect.any(Function));
+  });
+
   test("Gemini defaults are left to the selected model when callers omit provider options", async () => {
     fetchMock.mockResolvedValue(Response.json(googleResponse(output)));
     await generateText({ prompt: "Label this cluster", temperature: 0 }, google);

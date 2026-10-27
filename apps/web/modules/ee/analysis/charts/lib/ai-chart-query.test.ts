@@ -10,7 +10,21 @@ const mocks = vi.hoisted(() => ({
   getAIDataProfile: vi.fn(),
 }));
 
+const aiTimeoutEnv = vi.hoisted(() => ({ multiplier: 1 }));
+
 vi.mock("server-only", () => ({}));
+vi.mock("@/lib/env", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/env")>();
+  return {
+    ...original,
+    env: {
+      ...original.env,
+      get AI_TIMEOUT_MULTIPLIER() {
+        return aiTimeoutEnv.multiplier;
+      },
+    },
+  };
+});
 
 vi.mock("@/lib/ai/service", () => ({
   generateOrganizationAIObject: mocks.generateOrganizationAIObject,
@@ -26,6 +40,7 @@ vi.mock("@/modules/ee/analysis/lib/ai-data-profile.server", () => ({
 
 describe("generateAIChartQuery", () => {
   beforeEach(() => {
+    aiTimeoutEnv.multiplier = 1;
     vi.clearAllMocks();
     mocks.getAIDataProfile.mockResolvedValue(null);
   });
@@ -34,7 +49,8 @@ describe("generateAIChartQuery", () => {
     vi.restoreAllMocks();
   });
 
-  test("returns the AI-generated chart type and normalized query for a clean response", async () => {
+  test.each([1, 3])("generates a chart with timeout multiplier %i", async (multiplier) => {
+    aiTimeoutEnv.multiplier = multiplier;
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: {
         answerable: true,
@@ -72,7 +88,7 @@ describe("generateAIChartQuery", () => {
         // Counts reasoning tokens too: at 1024 a thinking model spent the whole budget before
         // writing a field. Dropping this back below a few thousand reintroduces that failure.
         maxOutputTokens: 8192,
-        timeout: 30000,
+        timeout: 30_000 * multiplier,
       })
     );
   });

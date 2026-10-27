@@ -60,7 +60,7 @@ describe("PR builder isolation", () => {
         runInNewContext(expression.slice(3, -2), { github, inputs: { force_local_builder: forceLocal } });
       expect(evaluate(job.env?.BLACKSMITH_BUILD ?? "")).toBe(blacksmith);
       expect(evaluate(job["runs-on"] ?? "")).toBe(
-        blacksmith ? "blacksmith-16vcpu-ubuntu-2404" : "ubuntu-latest"
+        blacksmith ? "blacksmith-16vcpu-ubuntu-2404" : "ubuntu-24.04"
       );
     }
   );
