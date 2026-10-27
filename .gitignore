@@ -87,11 +87,27 @@ authzed/*.perf.jsonl
 .next-docs/
 
 # robots (installed agent assets - machine-local, do not commit)
-# .claude is machine-local except committed symlinks into .agents/skills
+# .claude is machine-local except committed symlinks into .agents/skills.
+# Codex reads .agents/skills directly; Claude Code needs the symlink, so every
+# skill added to .agents/skills gets an exception here.
 .claude/*
 !.claude/skills/
 .claude/skills/*
 !.claude/skills/nextjs-docs
+!.claude/skills/code-review
+!.claude/skills/domain-modeling
+!.claude/skills/grill-with-docs
+!.claude/skills/grilling
+!.claude/skills/implement
+!.claude/skills/implement-spec
+!.claude/skills/retro
+!.claude/skills/tdd
+!.claude/skills/to-spec
+!.claude/skills/to-tickets
+!.claude/skills/writing-for-agents
+
+# Local tickets from /to-tickets (see docs/agents/issue-tracker.md)
+.scratch/
 .agents/formbricks-context
 
 # v3 API contract tests: generated fixture id map, Schemathesis' local replay cache, and the
