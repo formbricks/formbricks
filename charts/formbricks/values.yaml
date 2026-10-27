@@ -369,7 +369,7 @@ taxonomy:
 
   image:
     repository: "ghcr.io/formbricks/taxonomy"
-    tag: "v0.1.0"
+    tag: "0.1.14"
     digest: ""
     pullPolicy: IfNotPresent
 
@@ -461,7 +461,7 @@ taxonomy:
   # below hubStaleRunTimeoutSeconds for normal production operation.
   heartbeatIntervalSeconds: "30"
   runDeadlineSeconds: "900"
-  # Keep this compatible with the default v0.1.0 image, which does not heartbeat through
+  # Keep this compatible with the older v0.1.0 image, which does not heartbeat through
   # terminal Hub callbacks. The chart requires it to exceed runDeadlineSeconds while that
   # image is pinned; relax that guard when moving to a heartbeat-capable image.
   hubStaleRunTimeoutSeconds: "1800"
@@ -520,7 +520,7 @@ taxonomy:
       periodSeconds: 10
       timeoutSeconds: 5
       httpGet:
-        # The default v0.1.0 image exposes /health. Override this to /ready only
+        # The older v0.1.0 image exposes /health. Override this to /ready only
         # when using a taxonomy image that implements the readiness contract.
         path: /health
         port: http
