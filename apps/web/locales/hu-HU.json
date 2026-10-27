@@ -3836,6 +3836,8 @@
         "status_writing_questions": "{count}. kérdés írása…",
         "status_writing_title": "Kérdőív elnevezése…",
         "stop": "Leállítás",
+        "survey_language": "A felmérés nyelve",
+        "survey_language_match_prompt": "Egyezzen meg a megadott kéréssel",
         "too_many_requests": "Túl gyorsan állított elő. Várjon egy pillanatot, és próbálja újra.",
         "try_prompt": "Nézze meg a példautasítást",
         "your_prompt": "Az Ön utasítása"

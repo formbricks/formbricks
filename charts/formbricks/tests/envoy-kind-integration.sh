@@ -62,7 +62,14 @@ curl --fail --silent --show-error --location --retry 3 \
   --output "$kind_bin"
 printf '%s  %s\n' "$checksum" "$kind_bin" | shasum -a 256 --check
 chmod 700 "$kind_bin"
+
+# This PR's Cube tag is only published after merge. Build the candidate locally so a revision bump
+# cannot leave Helm waiting for an image that does not exist in GHCR yet. The fixture uses Never to
+# forbid registry fallback and ensure the deployed image is this candidate.
+echo 'Building the Cube candidate for the kind lifecycle test'
+docker build --tag formbricks-cube:envoy-kind "${CHART_DIR}/../../docker/cube-image"
 "$kind_bin" create cluster --name "$CLUSTER_NAME" --image "$NODE_IMAGE" --wait 120s
+"$kind_bin" load docker-image formbricks-cube:envoy-kind --name "$CLUSTER_NAME"
 
 # The platform installs Gateway API Standard and the matching Envoy CRDs as separate ownership units.
 curl --fail --silent --show-error --location --retry 3 \

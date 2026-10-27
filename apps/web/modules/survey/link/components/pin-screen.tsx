@@ -21,6 +21,9 @@ interface PinScreenProps {
   surveyId: string;
   workspace: Pick<Workspace, "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts">;
   singleUseId?: string;
+  /** The single-use link as it appears in the URL, which `validateSurveyPinAction` checks again. */
+  suId?: string;
+  suToken?: string;
   singleUseResponse?: Pick<Response, "id" | "finished">;
   publicDomain: string;
   IMPRINT_URL?: string;
@@ -49,6 +52,8 @@ export const PinScreen = (props: Readonly<PinScreenProps>) => {
     workspace,
     publicDomain,
     singleUseId,
+    suId,
+    suToken,
     singleUseResponse,
     IMPRINT_URL,
     PRIVACY_URL,
@@ -104,7 +109,7 @@ export const PinScreen = (props: Readonly<PinScreenProps>) => {
       if (isValidPin) {
         setLoading(true);
         try {
-          const response = await validateSurveyPinAction({ surveyId, pin: localPinEntry });
+          const response = await validateSurveyPinAction({ surveyId, pin: localPinEntry, suId, suToken });
           if (response?.data?.survey) {
             setSurvey(response.data.survey);
             setPinAuthToken(response.data.pinAuthToken ?? undefined);
@@ -130,7 +135,7 @@ export const PinScreen = (props: Readonly<PinScreenProps>) => {
     };
 
     void validateSurveyPin();
-  }, [localPinEntry, router, surveyId]);
+  }, [localPinEntry, router, surveyId, suId, suToken]);
 
   if (!survey) {
     // The gate is nothing but translated chrome, so it waits for its locale instead of asking for the

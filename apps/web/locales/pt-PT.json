@@ -3836,6 +3836,8 @@
         "status_writing_questions": "A escrever a pergunta {count}…",
         "status_writing_title": "A dar nome ao teu inquérito…",
         "stop": "Parar",
+        "survey_language": "Idioma do inquérito",
+        "survey_language_match_prompt": "Igual ao meu pedido",
         "too_many_requests": "Estás a gerar demasiado rápido. Aguarda um momento e tenta novamente.",
         "try_prompt": "Ver exemplo de prompt",
         "your_prompt": "O teu prompt"

@@ -3836,6 +3836,8 @@
         "status_writing_questions": "質問{count}を作成中…",
         "status_writing_title": "アンケート名を設定中…",
         "stop": "停止",
+        "survey_language": "アンケートの言語",
+        "survey_language_match_prompt": "プロンプトに合わせる",
         "too_many_requests": "生成速度が速すぎます。少し待ってから再度お試しください。",
         "try_prompt": "プロンプト例を見る",
         "your_prompt": "あなたのプロンプト"

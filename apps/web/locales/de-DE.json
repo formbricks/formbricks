@@ -3836,6 +3836,8 @@
         "status_writing_questions": "Schreibe Frage {count}…",
         "status_writing_title": "Benenne deine Umfrage…",
         "stop": "Stopp",
+        "survey_language": "Sprache der Umfrage",
+        "survey_language_match_prompt": "Wie in meinem Prompt",
         "too_many_requests": "Du generierst zu schnell. Warte einen Moment und versuche es erneut.",
         "try_prompt": "Beispiel-Prompt ansehen",
         "your_prompt": "Deine Eingabe"
