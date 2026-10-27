@@ -181,23 +181,21 @@ export const ResponsePage = ({
   }, [filtersKey, responsesPerPage, selectedFilter, dateRange, surveyId]);
 
   return (
-    <>
-      <ResponseDataView
-        survey={survey}
-        responses={responses}
-        user={user}
-        environmentTags={environmentTags}
-        isReadOnly={isReadOnly}
-        fetchNextPage={fetchNextPage}
-        hasMore={hasMore}
-        updateResponseList={updateResponseList}
-        updateResponse={updateResponse}
-        isFetchingFirstPage={isFetchingFirstPage}
-        locale={locale}
-        isQuotasAllowed={isQuotasAllowed}
-        quotas={quotas}
-        toolbar={{ filterState, criteria: filters, matchCount: matchCountQuery.data ?? null }}
-      />
-    </>
+    <ResponseDataView
+      survey={survey}
+      responses={responses}
+      user={user}
+      environmentTags={environmentTags}
+      isReadOnly={isReadOnly}
+      fetchNextPage={fetchNextPage}
+      hasMore={hasMore}
+      updateResponseList={updateResponseList}
+      updateResponse={updateResponse}
+      isFetchingFirstPage={isFetchingFirstPage}
+      locale={locale}
+      isQuotasAllowed={isQuotasAllowed}
+      quotas={quotas}
+      toolbar={{ filterState, criteria: filters, matchCount: matchCountQuery.data ?? null }}
+    />
   );
 };

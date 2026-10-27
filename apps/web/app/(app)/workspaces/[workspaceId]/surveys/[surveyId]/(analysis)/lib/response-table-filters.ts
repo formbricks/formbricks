@@ -8,10 +8,10 @@ import type {
   TResponseStatus,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import {
+  type ElementFilterOptions,
   type ElementOptions,
   OptionsType,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
-import type { ElementFilterOptions } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
 import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -173,6 +173,162 @@ const groupLabel = (kind: TResponseFieldKind, t: TFunction): string => {
   }
 };
 
+type TModelEntry = { property: TFilterProperty; field?: TResponseFilterField };
+
+type TBuildContext = {
+  t: TFunction;
+  filterOptionFor: (type: string, id: string) => ElementFilterOptions | undefined;
+  surveyElements: ReturnType<typeof getElementsFromBlocks>;
+};
+
+/** A matrix filters per row: one property for each, keyed by the row's id. */
+const matrixRowEntries = (
+  id: string,
+  label: string,
+  filterOption: ElementFilterOptions,
+  { t, surveyElements }: TBuildContext
+): TModelEntry[] => {
+  const element = surveyElements.find((item) => item.id === id);
+  if (element?.type !== TSurveyElementTypeEnum.Matrix) return [];
+  const columns = toOptions(filterOption.filterComboBoxOptions);
+  return element.rows.map((row) => {
+    const rowLabel = getLocalizedValue(row.label, "default");
+    return {
+      property: {
+        id: `question.${id}.${row.id}`,
+        group: t("common.elements"),
+        label: `${label} · ${rowLabel}`,
+        valueType: "enum",
+        options: columns,
+        ruleOperators: ["equals"],
+      },
+      field: { kind: "matrixRow", id, label, elementType: TSurveyElementTypeEnum.Matrix, rowLabel },
+    };
+  });
+};
+
+const elementEntries = (
+  id: string,
+  label: string,
+  elementType: TSurveyElementTypeEnum,
+  context: TBuildContext
+): TModelEntry[] => {
+  const filterOption = context.filterOptionFor(elementType, id);
+  if (!filterOption) return [];
+  if (elementType === TSurveyElementTypeEnum.Matrix)
+    return matrixRowEntries(id, label, filterOption, context);
+  const propertyId = `question.${id}`;
+  return [
+    {
+      property: {
+        ...questionProperty(propertyId, label, elementType, filterOption),
+        group: context.t("common.elements"),
+      },
+      field: { kind: "question", id, label, elementType },
+    },
+  ];
+};
+
+/** Attributes, hidden fields, variables, meta fields and quotas. */
+const typedFieldEntries = (
+  id: string,
+  label: string,
+  optionType: OptionsType,
+  context: TBuildContext
+): TModelEntry[] => {
+  const typed = TYPED_KINDS[optionType];
+  const filterOption = typed ? context.filterOptionFor(optionType, id) : undefined;
+  if (!typed || !filterOption) return [];
+  const isEnum = typed === "attribute" || typed === "quota";
+  const valueType = isEnum ? "enum" : fieldValueType(filterOption.fieldDataType);
+  const ruleOperators: TRuleOperator[] =
+    typed === "quota" ? ["equals"] : mapOperators(filterOption.filterOptions, FIELD_OPERATORS);
+  const options = toOptions(filterOption.filterComboBoxOptions);
+  return [
+    {
+      property: {
+        id: `${typed}.${id}`,
+        label,
+        group: groupLabel(typed, context.t),
+        valueType,
+        // Observed values are suggestions for a free-text field, not the only values it may hold.
+        ...(valueType === "enum" ? { options, loadOptions: () => Promise.resolve(options) } : {}),
+        ruleOperators,
+      },
+      field: { kind: typed, id, label },
+    },
+  ];
+};
+
+const optionEntries = (option: ElementOptions["option"][number], context: TBuildContext): TModelEntry[] => {
+  const id = String(option.id ?? "");
+  if (!id) return [];
+  const label = String(option.label ?? id);
+  if (option.type === OptionsType.ELEMENTS) {
+    return option.elementType
+      ? elementEntries(id, label, option.elementType as TSurveyElementTypeEnum, context)
+      : [];
+  }
+  return typedFieldEntries(id, label, option.type as OptionsType, context);
+};
+
+const leadingProperties = (t: TFunction): TFilterProperty[] => [
+  {
+    id: STATUS_PROPERTY,
+    label: t("common.status"),
+    valueType: "enum",
+    quick: true,
+    options: [
+      { value: "complete", label: t("workspace.surveys.filter.complete_responses") },
+      { value: "partial", label: t("workspace.surveys.filter.partial_responses") },
+    ],
+  },
+  {
+    id: CREATED_AT_PROPERTY,
+    label: t("common.date"),
+    valueType: "date",
+    quick: true,
+    datePresets: DATE_RANGE_PRESETS,
+  },
+];
+
+/**
+ * Tags and language come last: Advanced filter lists its groups in the order properties name them,
+ * and a survey's own questions belong at the top. Their quick filters keep their place in the menu.
+ */
+const trailingProperties = (
+  survey: TSurvey,
+  tagNames: readonly string[],
+  t: TFunction
+): TFilterProperty[] => {
+  const tagOptions = tagNames.map((name) => ({ value: name, label: name }));
+  const tag: TFilterProperty = {
+    id: TAG_PROPERTY,
+    label: t("common.tags"),
+    valueType: "enum",
+    quick: true,
+    options: tagOptions,
+    // Tags arrive after the page does; a tag in a shared link must survive until they have.
+    loadOptions: () => Promise.resolve(tagOptions),
+    ruleOperators: ["equals", "notEquals"],
+    group: t("common.other_filters"),
+  };
+  if (!survey.languages?.length) return [tag];
+  const codes = survey.languages.map((language) => language.language.code);
+  return [
+    tag,
+    {
+      id: LANGUAGE_PROPERTY,
+      label: t("common.language"),
+      valueType: "enum",
+      quick: true,
+      options: codes.map((code) => ({ value: code, label: code })),
+      ruleOperators: ["equals", "notEquals"],
+      group: t("common.other_filters"),
+    },
+  ];
+};
+
 /** Every filter property the Responses table offers, from the survey and its filter options. */
 export const buildResponseFilterModel = ({
   survey,
@@ -187,120 +343,27 @@ export const buildResponseFilterModel = ({
   tagNames: readonly string[];
   t: TFunction;
 }): TResponseFilterModel => {
+  const context: TBuildContext = {
+    t,
+    filterOptionFor: (type, id) =>
+      elementFilterOptions.find((option) => option.type === type && option.id === id),
+    surveyElements: getElementsFromBlocks(survey.blocks),
+  };
+  const entries = elementOptions.flatMap((group) =>
+    group.option.flatMap((option) => optionEntries(option, context))
+  );
   const fields = new Map<string, TResponseFilterField>();
-  const properties: TFilterProperty[] = [
-    {
-      id: STATUS_PROPERTY,
-      label: t("common.status"),
-      valueType: "enum",
-      quick: true,
-      options: [
-        { value: "complete", label: t("workspace.surveys.filter.complete_responses") },
-        { value: "partial", label: t("workspace.surveys.filter.partial_responses") },
-      ],
-    },
-    {
-      id: CREATED_AT_PROPERTY,
-      label: t("common.date"),
-      valueType: "date",
-      quick: true,
-      datePresets: DATE_RANGE_PRESETS,
-    },
-  ];
-
-  const filterOptionFor = (type: string, id: string) =>
-    elementFilterOptions.find((option) => option.type === type && option.id === id);
-  const surveyElements = getElementsFromBlocks(survey.blocks);
-
-  for (const group of elementOptions) {
-    for (const option of group.option) {
-      const id = String(option.id ?? "");
-      const label = String(option.label ?? id);
-      if (!id) continue;
-
-      if (option.type === OptionsType.ELEMENTS && option.elementType) {
-        const elementType = option.elementType as TSurveyElementTypeEnum;
-        const filterOption = filterOptionFor(elementType, id);
-        if (!filterOption) continue;
-        if (elementType === TSurveyElementTypeEnum.Matrix) {
-          const element = surveyElements.find((item) => item.id === id);
-          if (element?.type !== TSurveyElementTypeEnum.Matrix) continue;
-          const columns = toOptions(filterOption.filterComboBoxOptions);
-          for (const row of element.rows) {
-            const rowLabel = getLocalizedValue(row.label, "default");
-            const propertyId = `question.${id}.${row.id}`;
-            properties.push({
-              id: propertyId,
-              group: t("common.elements"),
-              label: `${label} · ${rowLabel}`,
-              valueType: "enum",
-              options: columns,
-              ruleOperators: ["equals"],
-            });
-            fields.set(propertyId, { kind: "matrixRow", id, label, elementType, rowLabel });
-          }
-          continue;
-        }
-        const propertyId = `question.${id}`;
-        properties.push({
-          ...questionProperty(propertyId, label, elementType, filterOption),
-          group: t("common.elements"),
-        });
-        fields.set(propertyId, { kind: "question", id, label, elementType });
-        continue;
-      }
-
-      const typed = TYPED_KINDS[option.type as OptionsType];
-      if (!typed) continue;
-      const filterOption = filterOptionFor(option.type as string, id);
-      if (!filterOption) continue;
-      const propertyId = `${typed}.${id}`;
-      const valueType =
-        typed === "attribute" || typed === "quota" ? "enum" : fieldValueType(filterOption.fieldDataType);
-      const ruleOperators =
-        typed === "quota"
-          ? (["equals"] as TRuleOperator[])
-          : mapOperators(filterOption.filterOptions, FIELD_OPERATORS);
-      const options = toOptions(filterOption.filterComboBoxOptions);
-      properties.push({
-        id: propertyId,
-        label,
-        group: groupLabel(typed, t),
-        valueType,
-        // Observed values are suggestions for a free-text field, not the only values it may hold.
-        ...(valueType === "enum" ? { options, loadOptions: async () => options } : {}),
-        ruleOperators,
-      });
-      fields.set(propertyId, { kind: typed, id, label });
-    }
+  for (const { property, field } of entries) {
+    if (field) fields.set(property.id, field);
   }
-
-  // Tags and language come last: Advanced filter lists its groups in the order properties name them,
-  // and a survey's own questions belong at the top. Their quick filters keep their place in the menu.
-  properties.push({
-    id: TAG_PROPERTY,
-    label: t("common.tags"),
-    valueType: "enum",
-    quick: true,
-    options: tagNames.map((name) => ({ value: name, label: name })),
-    // Tags arrive after the page does; a tag in a shared link must survive until they have.
-    loadOptions: async () => tagNames.map((name) => ({ value: name, label: name })),
-    ruleOperators: ["equals", "notEquals"],
-    group: t("common.other_filters"),
-  });
-  if (survey.languages?.length > 0) {
-    const codes = survey.languages.map((language) => language.language.code);
-    properties.push({
-      id: LANGUAGE_PROPERTY,
-      label: t("common.language"),
-      valueType: "enum",
-      quick: true,
-      options: codes.map((code) => ({ value: code, label: code })),
-      ruleOperators: ["equals", "notEquals"],
-      group: t("common.other_filters"),
-    });
-  }
-  return { properties, fields };
+  return {
+    properties: [
+      ...leadingProperties(t),
+      ...entries.map((entry) => entry.property),
+      ...trailingProperties(survey, tagNames, t),
+    ],
+    fields,
+  };
 };
 
 const KIND_OPTIONS_TYPE: Record<TResponseFieldKind, OptionsType> = {

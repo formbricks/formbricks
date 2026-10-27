@@ -22,11 +22,11 @@ import {
   SelectedFilterValue,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import {
+  ElementFilterOptions,
   ElementOption,
   ElementOptions,
   OptionsType,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
-import { ElementFilterOptions } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getReservedFilterEntries } from "@/lib/response/utils";
 import { recallToHeadline } from "@/lib/utils/recall";

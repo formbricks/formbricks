@@ -32,7 +32,7 @@ export const ResponseToolbar = ({
   criteria: TResponseFilterCriteria;
   matchCount: number | null;
   isLoading?: boolean;
-  settings?: ComponentProps<typeof TableToolbar>["settings"];
+  settings?: NonNullable<ComponentProps<typeof TableToolbar>["settings"]>;
   selectionContent?: ReactNode;
   className?: string;
 }>) => (

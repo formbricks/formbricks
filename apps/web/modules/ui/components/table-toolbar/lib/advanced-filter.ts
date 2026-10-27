@@ -51,6 +51,27 @@ const toValue = (condition: TGenericCondition): string => {
 
 export type TRuleValidation = { rules: TTableFilter[]; incomplete: string[] };
 
+const isValidSingleValue = (property: TFilterProperty, value: string): boolean =>
+  value.length > 0 &&
+  (property.valueType !== "number" || Number.isFinite(Number(value))) &&
+  (property.valueType !== "date" || isCalendarDay(value));
+
+/** One row as a rule, or null when it was started but left unfinished. */
+const conditionToRule = (
+  condition: TGenericCondition,
+  property: TFilterProperty | undefined
+): TTableFilter | null => {
+  const operator = condition.operator as TRuleOperator;
+  if (!property?.ruleOperators?.includes(operator)) return null;
+  if (!operatorTakesValue(operator)) return { property: property.id, operator, values: [] };
+  if (operatorTakesValues(operator)) {
+    const values = toValues(condition);
+    return values.length > 0 ? { property: property.id, operator, values } : null;
+  }
+  const value = toValue(condition);
+  return isValidSingleValue(property, value) ? { property: property.id, operator, values: [value] } : null;
+};
+
 /**
  * The finished rows as rules, and the ids of rows started but left unfinished. A row nobody touched
  * (no property) is simply dropped; a row with a property but no operator, or a missing or malformed
@@ -65,36 +86,10 @@ export const conditionGroupToRules = (
   const incomplete: string[] = [];
 
   for (const item of group.conditions) {
-    if ("conditions" in item) continue;
-    const condition = item;
-    if (!condition.leftOperand.value) continue;
-
-    const property = propertyById.get(condition.leftOperand.value);
-    const operator = condition.operator as TRuleOperator;
-    if (!property?.ruleOperators?.includes(operator)) {
-      incomplete.push(condition.id);
-      continue;
-    }
-    if (!operatorTakesValue(operator)) {
-      rules.push({ property: property.id, operator, values: [] });
-      continue;
-    }
-    if (operatorTakesValues(operator)) {
-      const values = toValues(condition);
-      if (values.length === 0) incomplete.push(condition.id);
-      else rules.push({ property: property.id, operator, values });
-      continue;
-    }
-    const value = toValue(condition);
-    const isValid =
-      value.length > 0 &&
-      (property.valueType !== "number" || Number.isFinite(Number(value))) &&
-      (property.valueType !== "date" || isCalendarDay(value));
-    if (!isValid) {
-      incomplete.push(condition.id);
-      continue;
-    }
-    rules.push({ property: property.id, operator, values: [value] });
+    if ("conditions" in item || !item.leftOperand.value) continue;
+    const rule = conditionToRule(item, propertyById.get(item.leftOperand.value));
+    if (rule) rules.push(rule);
+    else incomplete.push(item.id);
   }
 
   return { rules, incomplete };
