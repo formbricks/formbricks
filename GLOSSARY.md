@@ -36,3 +36,25 @@ that is not listed here.
 **Layout** — The positions and sizes of a dashboard's widgets. Widgets may not overlap; gaps close upward when the dashboard is drawn.
 
 **In use** — A chart is in use while it sits on at least one dashboard. A chart in use cannot be deleted; the refusal names the dashboards holding it.
+
+## Recoding and exports
+
+**Question code** — The short name a question carries in exported data and in webhooks, prefill and start-at links, such as `q1`. Set automatically, editable until the survey is published. It starts with a lowercase letter, then lowercase letters, digits and `_`, and is unique in the survey across question codes and Embedded Data names. _Avoid_: variable name, question number.
+
+**Answer code** — The short code of one answer option, or one matrix row or column, such as `1` or `98`. Defaults to 1…n, may use lowercase letters, digits and `_`, is unique within its question and is never reused. Scale questions (NPS, rating, CSAT, CES) use their number instead. The editor section that holds them is labelled "Recode". _Avoid_: option code, value.
+
+**Question ID** — The generated, read-only key of a question. Responses are stored under it, and links and the API accept it next to the question code. **Option ID** is the same for an answer option. _Avoid_: element id in user-facing copy.
+
+**Published** — A survey that has left draft: active, paused or completed. From then on its question codes, answer codes, question types and option text are locked, and an option that existed at launch cannot be deleted. A scheduled survey counts as published once scheduled.
+
+**Standard export** — Today's CSV or Excel file, which the export modal's default settings reproduce unchanged.
+
+**Analysis export** — Any export that is not the Standard export: codes for questions or answers, any analysis option, or an SPSS syntax file. It leaves Low quality responses out by default.
+
+**Datamap** — The codebook that comes with an Analysis export: one row per column and per answer code, with the question text, type and labels.
+
+**Unmapped value** — An answer that matches no option of its question. An Analysis export keeps it as given and lists it, instead of coding it or counting it as Other.
+
+**Outcome** — The single status of a response. It is empty unless a reviewer or a survey rule sets one; Low quality is the only value for now.
+
+**Low quality** — The outcome of a response that should not count. It is set and undone by hand, nothing is deleted, and the response drops out of the Analysis export and of Dashboards. _Avoid_: rejected, deleted.
