@@ -93,7 +93,9 @@ const SortableColumnRow = ({
           disabled={column.locked}
           onCheckedChange={(checked) => onVisibilityChange(column.id, checked === true)}
         />
-        <span className="truncate text-sm text-slate-700">{column.label}</span>
+        <span className="truncate text-sm text-slate-700" title={column.label}>
+          {column.label}
+        </span>
       </label>
       {!column.locked && (
         <button
@@ -138,7 +140,7 @@ export const TableSettingsPopover = ({ sort, toggles, columns }: Readonly<TTable
           <SettingsIcon />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-64 p-2">
+      <PopoverContent align="start" className="w-80 p-2">
         <div className="space-y-1">
           {sort && (
             <div className="flex items-center justify-between gap-2 px-1 py-1">

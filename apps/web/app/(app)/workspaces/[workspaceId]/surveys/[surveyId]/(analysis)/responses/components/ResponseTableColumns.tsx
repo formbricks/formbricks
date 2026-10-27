@@ -37,6 +37,14 @@ import {
   reservedColumnId,
 } from "../lib/utils";
 
+const COMPACT_DATE_TIME: Intl.DateTimeFormatOptions = {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+};
+
 const getElementColumnsData = (
   element: TSurveyElement,
   survey: TSurvey,
@@ -190,7 +198,7 @@ const getElementColumnsData = (
         },
         {
           accessorKey: "ELEMENT_" + element.id + "optionIds",
-          meta: { label: `${elementHeadline} - ${t("common.option_id")}` },
+          meta: { label: `${t("common.option_id")}: ${elementHeadline}` },
           header: createElementHeader(element.type, elementHeadline, t("common.option_id")),
           cell: ({ row }) => {
             const responseValue = row.original.responseData[element.id];
@@ -302,7 +310,12 @@ export const generateResponseTableColumns = (
     size: 200,
     cell: ({ row }) => {
       const date = new Date(row.original.createdAt);
-      return <p className="text-slate-900">{formatDateTimeForDisplay(date, locale)}</p>;
+      // A short month keeps date and time inside the column; the tooltip carries the long form.
+      return (
+        <p className="truncate text-slate-900" title={formatDateTimeForDisplay(date, locale)}>
+          {formatDateTimeForDisplay(date, locale, COMPACT_DATE_TIME)}
+        </p>
+      );
     },
   };
 

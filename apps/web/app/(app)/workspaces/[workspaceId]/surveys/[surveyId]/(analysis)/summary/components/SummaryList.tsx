@@ -80,7 +80,7 @@ export const SummaryList = ({
   };
 
   return (
-    <div className="mt-10 space-y-8">
+    <div className="mt-4 space-y-8">
       {survey.type === "app" && responseCount === 0 && !workspace.appSetupCompleted ? (
         <EmptyAppSurveys />
       ) : summary.length === 0 ? (

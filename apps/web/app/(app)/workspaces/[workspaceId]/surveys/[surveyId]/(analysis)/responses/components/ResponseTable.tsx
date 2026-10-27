@@ -329,16 +329,24 @@ export const ResponseTable = ({
                     ))}
                   </TableRow>
                 ))}
-                {table.getRowModel().rows.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center">
-                      {t("common.no_results")}
-                    </TableCell>
-                  </TableRow>
-                )}
               </TableBody>
             </Table>
           </div>
+          {/* Outside the scrolling table: centred across every column, the message would sit off-screen. */}
+          {table.getRowModel().rows.length === 0 && (
+            <div className="flex h-32 flex-col items-center justify-center gap-2 border-t border-slate-200">
+              <p className="text-sm text-slate-500">
+                {toolbar.filterState.hasFilters
+                  ? t("common.table_toolbar.no_rows_match")
+                  : t("common.no_results")}
+              </p>
+              {toolbar.filterState.hasFilters && (
+                <Button size="sm" variant="secondary" onClick={toolbar.filterState.clearFilters}>
+                  {t("common.clear_filters")}
+                </Button>
+              )}
+            </div>
+          )}
         </div>
 
         {data && hasMore && data.length > 0 && (

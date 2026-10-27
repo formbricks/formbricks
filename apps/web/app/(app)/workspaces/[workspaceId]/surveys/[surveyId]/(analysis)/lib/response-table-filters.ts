@@ -206,31 +206,7 @@ export const buildResponseFilterModel = ({
       quick: true,
       datePresets: DATE_RANGE_PRESETS,
     },
-    {
-      id: TAG_PROPERTY,
-      label: t("common.tags"),
-      valueType: "enum",
-      quick: true,
-      options: tagNames.map((name) => ({ value: name, label: name })),
-      // Tags arrive after the page does; a tag in a shared link must survive until they have.
-      loadOptions: async () => tagNames.map((name) => ({ value: name, label: name })),
-      ruleOperators: ["equals", "notEquals"],
-      group: t("common.other_filters"),
-    },
   ];
-
-  if (survey.languages?.length > 0) {
-    const codes = survey.languages.map((language) => language.language.code);
-    properties.push({
-      id: LANGUAGE_PROPERTY,
-      label: t("common.language"),
-      valueType: "enum",
-      quick: true,
-      options: codes.map((code) => ({ value: code, label: code })),
-      ruleOperators: ["equals", "notEquals"],
-      group: t("common.other_filters"),
-    });
-  }
 
   const filterOptionFor = (type: string, id: string) =>
     elementFilterOptions.find((option) => option.type === type && option.id === id);
@@ -299,6 +275,31 @@ export const buildResponseFilterModel = ({
     }
   }
 
+  // Tags and language come last: Advanced filter lists its groups in the order properties name them,
+  // and a survey's own questions belong at the top. Their quick filters keep their place in the menu.
+  properties.push({
+    id: TAG_PROPERTY,
+    label: t("common.tags"),
+    valueType: "enum",
+    quick: true,
+    options: tagNames.map((name) => ({ value: name, label: name })),
+    // Tags arrive after the page does; a tag in a shared link must survive until they have.
+    loadOptions: async () => tagNames.map((name) => ({ value: name, label: name })),
+    ruleOperators: ["equals", "notEquals"],
+    group: t("common.other_filters"),
+  });
+  if (survey.languages?.length > 0) {
+    const codes = survey.languages.map((language) => language.language.code);
+    properties.push({
+      id: LANGUAGE_PROPERTY,
+      label: t("common.language"),
+      valueType: "enum",
+      quick: true,
+      options: codes.map((code) => ({ value: code, label: code })),
+      ruleOperators: ["equals", "notEquals"],
+      group: t("common.other_filters"),
+    });
+  }
   return { properties, fields };
 };
 
