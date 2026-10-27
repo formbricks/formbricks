@@ -19,6 +19,8 @@ import { inlineSurveyEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
 import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
 import { getUniqueConstraintFields, isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
+import { drainDeletionCleanups } from "@/modules/deletion-cleanup/lib/drain";
+import { enqueueResponseOutcomeCleanups } from "@/modules/deletion-cleanup/lib/enqueue";
 import {
   evaluateResponseQuotas,
   loadQuotaEvaluationContext,
@@ -566,7 +568,7 @@ export async function updateScopedResponse({
   const quotaContext = await loadQuotaEvaluationContext(survey.id);
 
   try {
-    return await prisma.$transaction(async (tx) => {
+    const written = await prisma.$transaction(async (tx) => {
       const { issues } = await collectReferenceIssues(tx, {
         workspaceId,
         surveyId: survey.id,
@@ -577,6 +579,11 @@ export async function updateScopedResponse({
       if (issues.length > 0) {
         return { ok: false as const, issues };
       }
+
+      // Read in the transaction that writes it, so the change the cleanup follows is the change made here.
+      const outcomeChanged =
+        patch.outcome !== undefined &&
+        (await readStoredOutcome(tx, responseId, workspaceId)) !== patch.outcome;
 
       // Scoped `where`, never a bare id — a response outside the workspace matches nothing and
       // Prisma raises P2025, which the operation renders as the same 403 as a pre-flight rejection.
@@ -622,8 +629,16 @@ export async function updateScopedResponse({
         quotaContext,
       });
 
-      return { ok: true as const, responseId: updated.id };
+      const { drainNowIds } = outcomeChanged
+        ? await enqueueOutcomeCleanup(tx, workspaceId, [{ id: updated.id, surveyId: survey.id }])
+        : { drainNowIds: [] };
+
+      return { ok: true as const, responseId: updated.id, drainNowIds };
     });
+    if (!written.ok) return written;
+
+    await drainOutcomeCleanups(written.drainNowIds, workspaceId);
+    return { ok: true, responseId: written.responseId };
   } catch (error) {
     const raceIssues = raceIssuesFromUniqueViolation(error);
     if (raceIssues) return { ok: false, issues: raceIssues };
@@ -632,6 +647,51 @@ export async function updateScopedResponse({
     throw error;
   }
 }
+
+const readStoredOutcome = async (
+  tx: Prisma.TransactionClient,
+  responseId: string,
+  workspaceId: string
+): Promise<TResponseOutcome | null | undefined> =>
+  (
+    await tx.response.findFirst({
+      where: { id: responseId, survey: { workspaceId } },
+      select: { outcome: true },
+    })
+  )?.outcome;
+
+/**
+ * Queue the Hub cleanup for responses whose outcome changed, in the transaction that wrote it (ENG-6785):
+ * a write that commits always gets it, and one that rolls back queues nothing.
+ */
+const enqueueOutcomeCleanup = async (
+  tx: Prisma.TransactionClient,
+  workspaceId: string,
+  changes: { id: string; surveyId: string }[]
+): Promise<{ drainNowIds: string[] }> => {
+  const { organizationId } = await tx.workspace.findUniqueOrThrow({
+    where: { id: workspaceId },
+    select: { organizationId: true },
+  });
+  return enqueueResponseOutcomeCleanups(tx, { organizationId, workspaceId, changes });
+};
+
+/**
+ * The first attempt at the Hub cleanup, straight after commit. A Hub outage, or any failure here, only
+ * delays it to the drain job with its backoff: the outcome is already committed, so it must never fail the
+ * request that set it.
+ */
+const drainOutcomeCleanups = async (drainNowIds: string[], workspaceId: string): Promise<void> => {
+  if (drainNowIds.length === 0) return;
+  try {
+    await drainDeletionCleanups({ ids: drainNowIds });
+  } catch (error) {
+    logger.error(
+      { err: error, workspaceId, responseCount: drainNowIds.length },
+      "Deferred the Feedback Record cleanup of an outcome change to the drain job"
+    );
+  }
+};
 
 type TOutcomeScope = {
   /** ENG-3282: responses of a survey the caller cannot see are scope-filtered out, like foreign ids. */
@@ -690,6 +750,7 @@ export async function setScopedResponsesOutcome(
 ): Promise<TV3BatchOutcomeResult> {
   let matched = 0;
   let changes: TV3OutcomeChange[] = [];
+  let drainNowIds: string[] = [];
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -711,6 +772,12 @@ export async function setScopedResponsesOutcome(
         ),
         data: { outcome },
       });
+
+      ({ drainNowIds } = await enqueueOutcomeCleanup(
+        tx,
+        scope.workspaceId,
+        changes.map(({ id, surveyId }) => ({ id, surveyId }))
+      ));
     });
   } catch (error) {
     rethrowScopedNotFound(error);
@@ -718,6 +785,8 @@ export async function setScopedResponsesOutcome(
   }
 
   if (changes.length === 0) return { matched, changes, rows: [] };
+
+  await drainOutcomeCleanups(drainNowIds, scope.workspaceId);
 
   const rows = await prisma.response.findMany({
     where: outcomeScopeWhere(

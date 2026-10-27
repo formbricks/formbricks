@@ -102,7 +102,7 @@ export const getResponseContact = (
   };
 };
 
-const mapResponsePrismaToResponse = (
+export const mapResponsePrismaToResponse = (
   responsePrisma: Prisma.ResponseGetPayload<{ select: typeof responseSelection }>
 ): TResponse => ({
   ...responsePrisma,
