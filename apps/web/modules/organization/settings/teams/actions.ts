@@ -7,6 +7,7 @@ import { logger } from "@formbricks/logger";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
+import { ZUserEmail } from "@formbricks/types/user";
 import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { createInviteToken } from "@/lib/jwt";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
@@ -244,7 +245,9 @@ const validateTeamAdminInvitePermissions = (
 
 const ZInviteUserAction = z.object({
   organizationId: ZId,
-  email: z.string(),
+  // One address: nodemailer reads `to` as a list, so a comma-separated value would reach several inboxes
+  // from one budgeted invite (ENG-6658).
+  email: ZUserEmail,
   name: z.string().trim().min(1, "Name is required"),
   role: ZOrganizationRole,
   teamIds: z.array(ZId),
